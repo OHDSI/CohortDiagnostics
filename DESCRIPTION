@@ -13,11 +13,13 @@ Depends:
 	DatabaseConnector
 Imports:
 	SqlRender,
-	ggplot2
+	ggplot2,
+	ROhdsiWebApi,
+	ParallelLogger
 Suggests:
-    testthat,
-    knitr,
-    rmarkdown
+  testthat,
+  knitr,
+  rmarkdown
 License: Apache License
 VignetteBuilder: knitr
 URL: https://ohdsi.github.io/StudyDiagnostics, https://github.com/OHDSI/StudyDiagnostics
