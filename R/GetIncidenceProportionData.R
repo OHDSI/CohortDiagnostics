@@ -43,7 +43,7 @@ GetIncidenceProportionData <- function(connectionDetails,
                                        cohortDatabaseSchema,
                                        cohortTable,
                                        cdmDatabaseSchema,
-                                       firstOccurrenceOnly = TRUE, # allows multiple cohort entry in num, drops from denom after first event
+                                       firstOccurrenceOnly = TRUE,
                                        minObservationTime = 365,
                                        cohortDefinitionId,
                                        workFolder = NULL) {
