@@ -10,6 +10,9 @@ r_packages:
   - covr
   - drat
   - devtools
+  
+r_github_packages:
+  - OHDSI/ROhdsiWebApi
 
 before_script:
   - export PKG_NAME=$(Rscript -e 'cat(paste0(devtools::as.package(".")$package))')
