@@ -123,7 +123,9 @@ findIncludedSourceCodes <- function(connectionDetails,
   if (is.null(cohortJson)) {
     cohortExpression <- ROhdsiWebApi::getCohortDefinitionExpression(definitionId = cohortId, baseUrl = baseUrl)
     cohortJson <- cohortExpression$expression
-    cohortSql <- ROhdsiWebApi::getCohortDefinitionSql(definitionId = cohortId, baseUrl = baseUrl)
+    cohortSql <- ROhdsiWebApi::getCohortDefinitionSql(definitionId = cohortId, 
+                                                      baseUrl = baseUrl,
+                                                      generateStats = FALSE)
   }
 
   # outputFile <- "c:/temp/report.html"
@@ -134,12 +136,7 @@ findIncludedSourceCodes <- function(connectionDetails,
   on.exit(DatabaseConnector::disconnect(connection))
   
   ParallelLogger::logInfo("Instantiating concept sets")
-  sql <- gsub("with primary_events.*", "", cohortSql)   
-  sql <- SqlRender::render(sql, vocabulary_database_schema = cdmDatabaseSchema)
-  sql <- SqlRender::translate(sql,
-                              targetDialect = connectionDetails$dbms,
-                              oracleTempSchema = oracleTempSchema)
-  DatabaseConnector::executeSql(connection, sql)
+  instantiateConceptSets(connection, cdmDatabaseSchema, oracleTempSchema, cohortSql)
   
   ParallelLogger::logInfo("Counting codes in concept sets")
   sql <- SqlRender::loadRenderTranslateSql("CohortSourceCodes.sql",
@@ -166,6 +163,10 @@ findIncludedSourceCodes <- function(connectionDetails,
                                              oracleTempSchema = oracleTempSchema,
                                              cdm_database_schema = cdmDatabaseSchema)
     backgroundCounts <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
+    
+    sql <- "TRUNCATE TABLE #Codesets; DROP TABLE #Codesets;"
+    DatabaseConnector::renderTranslateExecuteSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
+    
     backgroundCounts$startCount[is.na(backgroundCounts$startCount)] <- 0
     backgroundCounts$endCount[is.na(backgroundCounts$endCount)] <- 0
     backgroundCounts$net <- backgroundCounts$startCount - backgroundCounts$endCount
@@ -196,4 +197,14 @@ findIncludedSourceCodes <- function(connectionDetails,
   writeLines(paste("Finding source codes took", signif(delta, 3), attr(delta, "units")))
   return(counts)
 }
+
+instantiateConceptSets <- function(connection, cdmDatabaseSchema, oracleTempSchema, cohortSql) {
+  sql <- gsub("with primary_events.*", "", cohortSql)   
+  sql <- SqlRender::render(sql, vocabulary_database_schema = cdmDatabaseSchema)
+  sql <- SqlRender::translate(sql,
+                              targetDialect = connection@dbms,
+                              oracleTempSchema = oracleTempSchema)
+  DatabaseConnector::executeSql(connection, sql)
+}
+
 

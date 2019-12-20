@@ -13,6 +13,10 @@ oracleTempSchema <- NULL
 baseUrl <- Sys.getenv("baseUrl")
 cohortId <- 7399 # LEGEND Cardiac Arrhythmia
 
+cohortId <- 7362 # LEGEND cardiovascular-related mortality
+
+cohortId <- 13567 # Test cohort with two initial event criteria
+
 counts <- findIncludedSourceCodes(connectionDetails = connectionDetails,
                                   cdmDatabaseSchema = cdmDatabaseSchema,
                                   oracleTempSchema = oracleTempSchema,
@@ -28,3 +32,14 @@ counts <- findIncludedSourceCodes(connectionDetails = connectionDetails,
                                   cohortId = cohortId,
                                   byMonth = FALSE,
                                   useSourceValues = TRUE)
+
+counts <- breakDownIndexEvents(connectionDetails = connectionDetails,
+                               cdmDatabaseSchema = cdmDatabaseSchema,
+                               oracleTempSchema = oracleTempSchema,
+                               baseUrl = baseUrl,
+                               cohortId = cohortId,
+                               cohortDatabaseSchema = cohortDatabaseSchema,
+                               cohortTable = cohortTable,
+                               createCohortTable = TRUE,
+                               instantiateCohort = TRUE,
+                               instantiatedCohortId = cohortId)

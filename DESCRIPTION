@@ -15,7 +15,9 @@ Imports:
 	SqlRender,
 	ggplot2,
 	ROhdsiWebApi,
-	ParallelLogger
+	ParallelLogger,
+	readr,
+	tibble
 Suggests:
   testthat,
   knitr,
