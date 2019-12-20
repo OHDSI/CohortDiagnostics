@@ -107,17 +107,24 @@ CREATE TABLE #inc_summary with (distribution = replicate) AS
     in1.age_group_10y,
     c1.concept_name AS gender,
     in1.person_count AS num_count,
+    {@first_occurrence_only} ? {
     id1.person_count - CASE WHEN ide1.person_count IS NULL then 0 ELSE ide1.person_count END AS denom_count,
     1000.0 * in1.person_count / (id1.person_count - CASE WHEN ide1.person_count is NULL THEN 0 ELSE ide1.person_count END) AS ip_1000p
+    } : {
+    id1.person_count AS denom_count,
+    1000.0 * in1.person_count / id1.person_count AS ip_1000p
+    }
   FROM #inc_num in1
   INNER JOIN #inc_denom id1
     ON in1.index_year = id1.index_year
     AND in1.age_group_10y = id1.age_group_10y
     AND in1.gender_concept_id = id1.gender_concept_id
+  {@first_occurrence_only} ? {
   LEFT JOIN #inc_denom_exclude ide1
     ON in1.index_year = ide1.index_year
     AND in1.age_group_10y = ide1.age_group_10y
     AND in1.gender_concept_id = ide1.gender_concept_id
+  } 
   INNER JOIN @cdm_database_schema.concept c1
     ON in1.gender_concept_id = c1.concept_id
 ;

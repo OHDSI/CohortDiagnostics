@@ -7,7 +7,7 @@ connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "pdw",
                                                                 port = Sys.getenv("port"))
 
 
-# first ischemic stroke --------------------------------------------------------
+# ischemic stroke --------------------------------------------------------------
 cdmDatabaseSchema <- "cdm_ibm_ccae_v1061.dbo"
 cohortDatabaseSchema <- "cdm_ibm_ccae_v1061.ohdsi_results"
 cohortTable <- "cohort"
@@ -40,8 +40,8 @@ ipDataAll <- GetIncidenceProportionData(connectionDetails = connectionDetails,
                                         cohortDefinitionId = cohortDefinitionId,
                                         workFolder = workFolder)
 ipDataAll[[1]]
-# NUM_COUNT DENOM_COUNT IP_1000P
-# 1    305781   364785821 0.838248
+# NUM_COUNT DENOM_COUNT  IP_1000P
+# 1    305781   365298156 0.8370724
 
 
 # cardiac arrhythmia -----------------------------------------------------------
@@ -71,7 +71,6 @@ ipPlots <- GenerateStabilityPlots(ipData = ipDataFirst,
 
 
 # angioedema -------------------------------------------------------------------
-
 cdmDatabaseSchema <- "cdm_optum_extended_dod_v1064.dbo"
 cohortDatabaseSchema <- "cdm_optum_extended_dod_v1064.ohdsi_results"
 cohortTable <- "cohort"
@@ -96,7 +95,6 @@ ipPlots <- GenerateStabilityPlots(ipData = ipDataFirst,
                                   workFolder = workFolder,
                                   restrictToFullAgeData = TRUE)
 
-
 ipDataAll <- GetIncidenceProportionData(connectionDetails = connectionDetails,
                                         cohortDatabaseSchema = cohortDatabaseSchema,
                                         cohortTable = cohortTable,
@@ -108,7 +106,7 @@ ipDataAll <- GetIncidenceProportionData(connectionDetails = connectionDetails,
 
 ipDataAll[[1]]
 # NUM_COUNT DENOM_COUNT  IP_1000P
-# 1    107007   278817850 0.3837882
+# 1    107007   279092991 0.3834098
 
 ipPlots <- GenerateStabilityPlots(ipData = ipDataAll,
                                   panel = "age", # "gender",
