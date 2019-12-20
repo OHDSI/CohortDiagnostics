@@ -29,7 +29,7 @@
 #' with option to save dataframes.
 #'
 #' @return
-#' A list of 4 dataframe objects with option to save as an *.rds file.
+#' A list of 7 dataframe objects with option to save as an *.rds file.
 #'
 #' @param connectionDetails      The connection details to your database server
 #' @param cohortDatabaseSchema   The database name where your phenotype is instantiated as a standard cohort table.
