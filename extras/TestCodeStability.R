@@ -14,7 +14,7 @@ cohortTable <- "cohort"
 cohortDefinitionId <- 13397 # LEGEND ischemic stroke
 workFolder <- file.path("S:/StudyResults/StudyDiagnostics/IschemicStroke")
 
-ipDataFirst <- GetIncidenceProportionData(connectionDetails = connectionDetails,
+ipDataFirst <- getIncidenceProportionData(connectionDetails = connectionDetails,
                                           cohortDatabaseSchema = cohortDatabaseSchema,
                                           cohortTable = cohortTable,
                                           cdmDatabaseSchema = cdmDatabaseSchema,
@@ -26,7 +26,7 @@ ipDataFirst[[1]]
 # NUM_COUNT DENOM_COUNT  IP_1000P
 # 1    260154   364785821 0.7131692
 
-ipPlots <- GenerateStabilityPlots(ipData = ipDataFirst,
+ipPlots <- generateStabilityPlots(ipData = ipDataFirst,
                                   panel = "age", # "gender",
                                   workFolder = workFolder,
                                   restrictToFullAgeData = TRUE)

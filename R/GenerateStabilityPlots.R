@@ -15,7 +15,7 @@
 # limitations under the License.
 
 #' @title
-#' GenerateStabilityPlots
+#' Generate stability plots
 #' 
 #' @description
 #' Characterizes the incidence proportion of a phenotype as a time series visualization
@@ -30,12 +30,12 @@
 #' file and 4 png files.
 #'
 #' @param ipData   Incidence proportion time series data for plotting generated using
-#'                 GetIncidenceProportionData function
+#'                 \code{\link{GetIncidenceProportionData function}}.
 #' @param panel    Create trellis panels by gender or by age? select "age" or "gender", defaults to "age"
 #' @param fileName Optional: directory and filename of plot to be saved
 #'
 #' @export
-GenerateStabilityPlots <- function(ipData,
+generateStabilityPlots <- function(ipData,
                                    panel = "age",
                                    restrictToFullAgeData = FALSE,
                                    workFolder = NULL) {

@@ -15,7 +15,7 @@
 # limitations under the License.
 
 #' @title
-#' GetIncidenceProportionData
+#' Get incidence proportion data
 #' 
 #' @description
 #' Returns yearly incidence proportion time series data stratified by age and gender
@@ -39,7 +39,7 @@
 #' @param workFolder             Optional: directory where time series data to be saved as ipData.rds
 #'
 #' @export
-GetIncidenceProportionData <- function(connectionDetails,
+getIncidenceProportionData <- function(connectionDetails,
                                        cohortDatabaseSchema,
                                        cohortTable,
                                        cdmDatabaseSchema,
@@ -109,10 +109,10 @@ recodes <- function(ipData) {
   ageGroups <- unique(ipData$AGE_GROUP_10Y)
   ageGroups <- min(ageGroups):max(ageGroups)
   for (i in ageGroups) {
-    ipData$AGE_GROUP_10Y[ipData$AGE_GROUP_10Y == i] <- paste(10*i, 10*i+9, sep = "-")
+    ipData$AGE_GROUP_10Y[ipData$AGE_GROUP_10Y == i] <- paste(10*i, 10*i + 9, sep = "-")
   }
   ipData$AGE_GROUP_10Y <- factor(ipData$AGE_GROUP_10Y,
-                                 levels = paste(10*ageGroups, 10*ageGroups+9, sep = "-"),
+                                 levels = paste(10*ageGroups, 10*ageGroups + 9, sep = "-"),
                                  ordered = TRUE)
   ipData$GENDER[ipData$GENDER == "FEMALE"] <- "Female"
   ipData$GENDER[ipData$GENDER == "MALE"] <- "Male"
