@@ -17,7 +17,8 @@ Imports:
 	ROhdsiWebApi,
 	ParallelLogger,
 	readr,
-	tibble
+	tibble,
+	dplyr
 Suggests:
   testthat,
   knitr,

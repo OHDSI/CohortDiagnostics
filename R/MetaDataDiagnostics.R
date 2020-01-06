@@ -58,15 +58,153 @@
 #' in the CDM.
 #' 
 #' @export
-findOrphanConcepts <- function(connectionDetails,
+findOrphanConcepts <- function(connectionDetails = NULL,
+                               connection = NULL,
                                cdmDatabaseSchema,
                                oracleTempSchema = NULL,
-                               baseUrl = NULL,
-                               cohortId = NULL,
-                               cohortJson = NULL,
-                               cohortSql = NULL) {
+                               conceptIds,
+                               workDatabaseSchema = cdmDatabaseSchema,
+                               conceptCountsTable = "concept_counts") {
+  ParallelLogger::logInfo("Finding orphan concepts")
+  if (is.null(connection)) {
+    connection <- DatabaseConnector::connect(connectionDetails) 
+    on.exit(DatabaseConnector::disconnect(connection))
+  }
+  sql <- SqlRender::loadRenderTranslateSql("OrphanCodes.sql",
+                                           packageName = "StudyDiagnostics",
+                                           dbms = connection@dbms,
+                                           oracleTempSchema = oracleTempSchema,
+                                           cdm_database_schema = cdmDatabaseSchema,
+                                           work_database_schema = workDatabaseSchema,
+                                           concept_counts_table = conceptCountsTable,
+                                           concept_ids = conceptIds)
+  DatabaseConnector::executeSql(connection, sql)
+  ParallelLogger::logTrace("- Fetching orphan concepts from server")
+  sql <- "SELECT rc1.concept_count, 
+    c1.*
+  FROM #recommended_concepts rc1
+  INNER JOIN @cdm_database_schema.concept c1
+    ON rc1.concept_id = c1.concept_id
+  ORDER BY domain_id, 
+    standard_concept DESC, 
+    concept_count DESC;"
+  orphanConcepts <- DatabaseConnector::renderTranslateQuerySql(sql = sql,
+                                                               connection = connection,
+                                                               oracleTempSchema = oracleTempSchema,
+                                                               snakeCaseToCamelCase = TRUE,
+                                                               cdm_database_schema = cdmDatabaseSchema)
   
+  ParallelLogger::logTrace("- Dropping orhpan temp tables")
+  sql <- SqlRender::loadRenderTranslateSql("DropOrphanConceptTempTables.sql",
+                                           packageName = "StudyDiagnostics",
+                                           dbms = connection@dbms,
+                                           oracleTempSchema = oracleTempSchema)
+  DatabaseConnector::executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
+  return(orphanConcepts)
+}
+
+
+#' Title
+#'
+#' @param connectionDetails 
+#' @param connection 
+#' @param cdmDatabaseSchema 
+#' @param oracleTempSchema 
+#' @param baseUrl 
+#' @param cohortId 
+#' @param cohortJson 
+#' @param workDatabaseSchema 
+#' @param conceptCountsTable 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+findCohortOrphanConcepts <- function(connectionDetails = NULL,
+                                     connection = NULL,
+                                     cdmDatabaseSchema,
+                                     oracleTempSchema = NULL,
+                                     baseUrl = NULL,
+                                     cohortId = NULL,
+                                     cohortJson = NULL,
+                                     workDatabaseSchema = cdmDatabaseSchema,
+                                     conceptCountsTable = "concept_counts") {
   
+  if (is.null(baseUrl) && is.null(cohortJson)) {
+    stop("Must provide either baseUrl and cohortId, or cohortJson and cohortSql")
+  }
+  if (!is.null(cohortJson) && !is.character(cohortJson)) {
+    stop("cohortJson should be character (a JSON string).") 
+  }
+  start <- Sys.time()
+  if (is.null(cohortJson)) {
+    cohortExpression <- ROhdsiWebApi::getCohortDefinitionExpression(definitionId = cohortId, baseUrl = baseUrl)
+    cohortJson <- cohortExpression$expression
+  }
+  getConceptIdFromItem <- function(item) {
+    if (item$isExcluded) {
+      return(NULL)
+    } else {
+      return(item$concept$CONCEPT_ID)
+    }
+
+  }
+  if (is.null(connection)) {
+    connection <- DatabaseConnector::connect(connectionDetails) 
+    on.exit(DatabaseConnector::disconnect(connection))
+  }
+  cohortDefinition <- RJSONIO::fromJSON(cohortJson)
+  conceptSets <- cohortDefinition$ConceptSets
+  allOrphanConcepts <- data.frame()
+  for (conceptSet in conceptSets) {
+    ParallelLogger::logInfo("Finding orphan concepts for concept set '", conceptSet$name, "'")
+    conceptIds <- lapply(conceptSet$expression$items, getConceptIdFromItem)
+    conceptIds <- do.call(c, conceptIds)
+    orphanConcepts <- findOrphanConcepts(connection = connection,
+                                         cdmDatabaseSchema = cdmDatabaseSchema,
+                                         oracleTempSchema = NULL,
+                                         conceptIds = conceptIds,
+                                         workDatabaseSchema = workDatabaseSchema,
+                                         conceptCountsTable = "concept_counts")
+    if (nrow(orphanConcepts) > 0) {
+      orphanConcepts$conceptSetId <- conceptSet$id
+      orphanConcepts$conceptSetName <- conceptSet$name
+      allOrphanConcepts <- rbind(allOrphanConcepts, orphanConcepts)
+    }
+  }
+  delta <- Sys.time() - start
+  ParallelLogger::logInfo(paste("Finding orphan concepts took", signif(delta, 3), attr(delta, "units")))
+  return(allOrphanConcepts)
+}
+
+#' Title
+#'
+#' @param connectionDetails 
+#' @param cdmDatabaseSchema 
+#' @param workDatabaseSchema 
+#' @param conceptCountsTable 
+#'
+#' @return
+#' @export
+#'
+#' @examples
+createConceptCountsTable <- function(connectionDetails = NULL,
+                                     connection = NULL,
+                                     cdmDatabaseSchema,
+                                     workDatabaseSchema = cdmDatabaseSchema,
+                                     conceptCountsTable = "concept_counts") {
+  ParallelLogger::logInfo("Creating concept counts table")
+  if (is.null(connection)) {
+    connection <- DatabaseConnector::connect(connectionDetails) 
+    on.exit(DatabaseConnector::disconnect(connection))
+  }
+  sql <- SqlRender::loadRenderTranslateSql("CreateConceptCountTable.sql",
+                                           packageName = "StudyDiagnostics",
+                                           dbms = connectionDetails$dbms,
+                                           cdm_database_schema = cdmDatabaseSchema,
+                                           work_database_schema = workDatabaseSchema,
+                                           concept_counts_table = conceptCountsTable)
+  DatabaseConnector::executeSql(connection, sql)
 }
 
 #' Check source codes used in a cohort definition
@@ -104,15 +242,16 @@ findOrphanConcepts <- function(connectionDetails,
 #' in the CDM.
 #' 
 #' @export
-findIncludedSourceCodes <- function(connectionDetails,
-                                    cdmDatabaseSchema,
-                                    oracleTempSchema = NULL,
-                                    baseUrl = NULL,
-                                    cohortId = NULL,
-                                    cohortJson = NULL,
-                                    cohortSql = NULL,
-                                    byMonth = FALSE,
-                                    useSourceValues = FALSE) {
+findCohortIncludedSourceConcepts <- function(connectionDetails = NULL,
+                                             connection = NULL,
+                                             cdmDatabaseSchema,
+                                             oracleTempSchema = NULL,
+                                             baseUrl = NULL,
+                                             cohortId = NULL,
+                                             cohortJson = NULL,
+                                             cohortSql = NULL,
+                                             byMonth = FALSE,
+                                             useSourceValues = FALSE) {
   if (is.null(baseUrl) && is.null(cohortJson)) {
     stop("Must provide either baseUrl and cohortId, or cohortJson and cohortSql")
   }
@@ -127,13 +266,12 @@ findIncludedSourceCodes <- function(connectionDetails,
                                                       baseUrl = baseUrl,
                                                       generateStats = FALSE)
   }
-
-  # outputFile <- "c:/temp/report.html"
-  
   cohortDefinition <- RJSONIO::fromJSON(cohortJson)
   
-  connection <- DatabaseConnector::connect(connectionDetails) 
-  on.exit(DatabaseConnector::disconnect(connection))
+  if (is.null(connection)) {
+    connection <- DatabaseConnector::connect(connectionDetails) 
+    on.exit(DatabaseConnector::disconnect(connection))
+  }
   
   ParallelLogger::logInfo("Instantiating concept sets")
   instantiateConceptSets(connection, cdmDatabaseSchema, oracleTempSchema, cohortSql)
@@ -194,7 +332,7 @@ findIncludedSourceCodes <- function(connectionDetails,
                            counts$sourceVocabularyId), ]
   }
   delta <- Sys.time() - start
-  writeLines(paste("Finding source codes took", signif(delta, 3), attr(delta, "units")))
+  ParallelLogger::logInfo(paste("Finding source codes took", signif(delta, 3), attr(delta, "units")))
   return(counts)
 }
 
