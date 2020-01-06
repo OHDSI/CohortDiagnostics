@@ -14,47 +14,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#' Find source codes that do not roll up to their ancestor
+#' Find (source) concepts that do not roll up to their ancestor(s)
 #' 
 #' @description
-#' \code{findOrphanConcepts} searches for concepts that should belong to the concept sets in a cohort definition but don't, for
-#' example because of missing source-to-standard concept maps, or erroneous hierachical relationships.
-#' 
-#' There are two ways to call this function:
-#' \itemize{
-#'   \item \code{findOrphanConcepts(connectionDetails, cdmDatabaseSchema, oracleTempSchema, baseUrl, cohortId)}
-#'   \item \code{findOrphanConcepts(connectionDetails, cdmDatabaseSchema, oracleTempSchema, cohortJson, cohortSql)}
-#' }
-#'
-#' @usage
-#' NULL
+#' Searches for concepts that should belong to the set of concepts but don't, for
+#' example because of missing source-to-standard concept maps, or erroneous hierarchical relationships.
 #' 
 #' @details 
-#' Logically, this function performs the following steps for each concept set expression in the cohort definition:
+#' Logically, this function performs the following steps for the input set of concept IDs:
 #' 
 #' \itemize{
-#' \item  Given the concept set expression, find all included concepts.
-#' \item  Find all names of those concepts, including synonyms, and the names of source concepts that map to them.
+#' \item  Find all names of the input concepts, including synonyms, and the names of source concepts that map to them.
 #' \item  Search for concepts (standard and source) that contain any of those names as substring.
 #' \item  Filter those concepts to those that are not in the original set of concepts (i.e. orphans).
 #' \item  Restrict the set of orphan concepts to those that appear in the CDM database and across network concept prevalence (as either source concept or standard concept).
 #' }
 #' 
-#' @param connectionDetails    An object of type \code{connectionDetails} as created using the
-#'                             \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-#'                             DatabaseConnector package.
-#' @param cdmDatabaseSchema    Schema name where your patient-level data in OMOP CDM format resides.
-#'                             Note that for SQL Server, this should include both the database and
-#'                             schema name, for example 'cdm_data.dbo'.
-#' @param oracleTempSchema     Should be used in Oracle to specify a schema where the user has write
-#'                             priviliges for storing temporary tables.
-#' @param baseUrl              The base URL for the WebApi instance, for example: "http://server.org:80/WebAPI".
-#' @param cohortId             The ID of the cohort in the WebAPI instance.
-#' @param cohortJson           A characteric string containing the JSON of a cohort definition.
-#' @param cohortSql            The OHDSI SQL representation of the same cohort definition.
+#' @template Connection
+#' 
+#' @template OracleTempSchema
+#' 
+#' @template ConceptCounts
+#' 
+#' @template CdmDatabaseSchema
+#' 
+#' @param conceptIds A vector of concept IDs for which we want to find orphans.
 #'
 #' @return 
-#' A data frame with orhan concepts, with counts per domain how often the code was encountered
+#' A data frame with orphan concepts, with counts how often the code was encountered
 #' in the CDM.
 #' 
 #' @export
@@ -63,7 +50,7 @@ findOrphanConcepts <- function(connectionDetails = NULL,
                                cdmDatabaseSchema,
                                oracleTempSchema = NULL,
                                conceptIds,
-                               workDatabaseSchema = cdmDatabaseSchema,
+                               conceptCountsDatabaseSchema = cdmDatabaseSchema,
                                conceptCountsTable = "concept_counts") {
   ParallelLogger::logInfo("Finding orphan concepts")
   if (is.null(connection)) {
@@ -75,7 +62,7 @@ findOrphanConcepts <- function(connectionDetails = NULL,
                                            dbms = connection@dbms,
                                            oracleTempSchema = oracleTempSchema,
                                            cdm_database_schema = cdmDatabaseSchema,
-                                           work_database_schema = workDatabaseSchema,
+                                           work_database_schema = conceptCountsDatabaseSchema,
                                            concept_counts_table = conceptCountsTable,
                                            concept_ids = conceptIds)
   DatabaseConnector::executeSql(connection, sql)
@@ -103,23 +90,43 @@ findOrphanConcepts <- function(connectionDetails = NULL,
   return(orphanConcepts)
 }
 
-
-#' Title
-#'
-#' @param connectionDetails 
-#' @param connection 
-#' @param cdmDatabaseSchema 
-#' @param oracleTempSchema 
-#' @param baseUrl 
-#' @param cohortId 
-#' @param cohortJson 
-#' @param workDatabaseSchema 
-#' @param conceptCountsTable 
-#'
-#' @return
+#' Find orphan concepts for all concept sets in a cohort
+#' 
+#' @description
+#' Searches for concepts that should belong to the concept sets in a cohort definition but don't, for
+#' example because of missing source-to-standard concept maps, or erroneous hierarchical relationships.
+#' 
+#' @details 
+#' Logically, this function performs the following steps for each concept set expression in the cohort definition:
+#' 
+#' \itemize{
+#' \item  Given the concept set expression, find all included concepts.
+#' \item  Find all names of the input concepts, including synonyms, and the names of source concepts that map to them.
+#' \item  Search for concepts (standard and source) that contain any of those names as substring.
+#' \item  Filter those concepts to those that are not in the original set of concepts (i.e. orphans).
+#' \item  Restrict the set of orphan concepts to those that appear in the CDM database and across network concept prevalence (as either source concept or standard concept).
+#' }
+#' 
+#' @template Connection
+#' 
+#' @template OracleTempSchema
+#' 
+#' @template ConceptCounts
+#' 
+#' @template CdmDatabaseSchema
+#' 
+#' @param baseUrl              The base URL for the WebApi instance, for example: "http://server.org:80/WebAPI". 
+#'                             Needn't be provided if \code{cohortJson} is provided.
+#' @param cohortId             The ID of the cohort in the WebAPI instance.
+#'                             Needn't be provided if \code{cohortJson} is provided.
+#' @param cohortJson           A characteric string containing the JSON of a cohort definition.
+#'                             Needn't be provided if \code{baseUrl} and \code{cohortId} are provided.
+#' 
+#' @return 
+#' A data frame with orphan concepts, with counts how often the code was encountered
+#' in the CDM.
+#' 
 #' @export
-#'
-#' @examples
 findCohortOrphanConcepts <- function(connectionDetails = NULL,
                                      connection = NULL,
                                      cdmDatabaseSchema,
@@ -127,7 +134,7 @@ findCohortOrphanConcepts <- function(connectionDetails = NULL,
                                      baseUrl = NULL,
                                      cohortId = NULL,
                                      cohortJson = NULL,
-                                     workDatabaseSchema = cdmDatabaseSchema,
+                                     conceptCountsDatabaseSchema = cdmDatabaseSchema,
                                      conceptCountsTable = "concept_counts") {
   
   if (is.null(baseUrl) && is.null(cohortJson)) {
@@ -162,10 +169,10 @@ findCohortOrphanConcepts <- function(connectionDetails = NULL,
     conceptIds <- do.call(c, conceptIds)
     orphanConcepts <- findOrphanConcepts(connection = connection,
                                          cdmDatabaseSchema = cdmDatabaseSchema,
-                                         oracleTempSchema = NULL,
+                                         oracleTempSchema = oracleTempSchema,
                                          conceptIds = conceptIds,
-                                         workDatabaseSchema = workDatabaseSchema,
-                                         conceptCountsTable = "concept_counts")
+                                         conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
+                                         conceptCountsTable = conceptCountsTable)
     if (nrow(orphanConcepts) > 0) {
       orphanConcepts$conceptSetId <- conceptSet$id
       orphanConcepts$conceptSetName <- conceptSet$name
@@ -177,21 +184,22 @@ findCohortOrphanConcepts <- function(connectionDetails = NULL,
   return(allOrphanConcepts)
 }
 
-#' Title
+#' Create concept counts table
+#' 
+#' @description 
+#' Create a table with counts of how often each concept ID occurs in the CDM.
 #'
-#' @param connectionDetails 
-#' @param cdmDatabaseSchema 
-#' @param workDatabaseSchema 
-#' @param conceptCountsTable 
+#' @template Connection
+#' 
+#' @template CdmDatabaseSchema
+#' 
+#' @template ConceptCounts
 #'
-#' @return
 #' @export
-#'
-#' @examples
 createConceptCountsTable <- function(connectionDetails = NULL,
                                      connection = NULL,
                                      cdmDatabaseSchema,
-                                     workDatabaseSchema = cdmDatabaseSchema,
+                                     conceptCountsDatabaseSchema = cdmDatabaseSchema,
                                      conceptCountsTable = "concept_counts") {
   ParallelLogger::logInfo("Creating concept counts table")
   if (is.null(connection)) {
@@ -202,7 +210,7 @@ createConceptCountsTable <- function(connectionDetails = NULL,
                                            packageName = "StudyDiagnostics",
                                            dbms = connectionDetails$dbms,
                                            cdm_database_schema = cdmDatabaseSchema,
-                                           work_database_schema = workDatabaseSchema,
+                                           work_database_schema = conceptCountsDatabaseSchema,
                                            concept_counts_table = conceptCountsTable)
   DatabaseConnector::executeSql(connection, sql)
 }
@@ -213,26 +221,16 @@ createConceptCountsTable <- function(connectionDetails = NULL,
 #' This function first extracts all concept sets used in a cohort definition. Then, for each concept set
 #' the concept found in the CDM database the contributing source codes are identified.
 #' 
-#' There are two ways to call this function:
-#' \itemize{
-#'   \item \code{findIncludedSourceCodes(connectionDetails, cdmDatabaseSchema, oracleTempSchema, baseUrl, cohortId)}
-#'   \item \code{findIncludedSourceCodes(connectionDetails, cdmDatabaseSchema, oracleTempSchema, cohortJson, cohortSql)}
-#' }
+#' @template Connection
 #' 
-#' @param connectionDetails    An object of type \code{connectionDetails} as created using the
-#'                             \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-#'                             DatabaseConnector package.
-#' @param cdmDatabaseSchema    Schema name where your patient-level data in OMOP CDM format resides.
-#'                             Note that for SQL Server, this should include both the database and
-#'                             schema name, for example 'cdm_data.dbo'.
-#' @param oracleTempSchema     Should be used in Oracle to specify a schema where the user has write
-#'                             priviliges for storing temporary tables.
-#' @param baseUrl              The base URL for the WebApi instance, for example: "http://server.org:80/WebAPI".
-#' @param cohortId             The ID of the cohort in the WebAPI instance.
-#' @param cohortJson           A characteric string containing the JSON of a cohort definition.
-#' @param cohortSql            The OHDSI SQL representation of the same cohort definition.
+#' @template CdmDatabaseSchema
+#' 
+#' @template OracleTempSchema
+#' 
+#' @template CohortDef
+#'
 #' @param byMonth              Compute counts by month? If FALSE, only overall counts are computed.
-#' @param useSourceValues      Use the source_value fields to find the codesa used in the data? If not,
+#' @param useSourceValues      Use the source_value fields to find the codes used in the data? If not,
 #'                             this analysis will rely entirely on the source_concept_id fields instead. 
 #'                             Note that, depending on the source data and ETL, it might be possible for the
 #'                             source_value fields to contain patient-identifiable information by accident.
@@ -344,5 +342,3 @@ instantiateConceptSets <- function(connection, cdmDatabaseSchema, oracleTempSche
                               oracleTempSchema = oracleTempSchema)
   DatabaseConnector::executeSql(connection, sql)
 }
-
-

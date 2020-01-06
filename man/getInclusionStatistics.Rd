@@ -2,35 +2,45 @@
 % Please edit documentation in R/CohortConstruction.R
 \name{getInclusionStatistics}
 \alias{getInclusionStatistics}
-\title{Title}
+\title{Get statistics on cohort inclusion criteria}
 \usage{
-getInclusionStatistics(connectionDetails, resultsDatabaseSchema,
-  instantiatedCohortId, cohortTable = "cohort",
+getInclusionStatistics(connectionDetails = NULL, connection = NULL,
+  resultsDatabaseSchema, instantiatedCohortId, cohortTable = "cohort",
   cohortInclusionTable = paste0(cohortTable, "_inclusion"),
   cohortInclusionResultTable = paste0(cohortTable, "_inclusion_result"),
   cohortInclusionStatsTable = paste0(cohortTable, "_inclusion_stats"),
   cohortSummaryStatsTable = paste0(cohortTable, "_inclusion_stats"))
 }
 \arguments{
-\item{connectionDetails}{}
+\item{connectionDetails}{An object of type \code{connectionDetails} as created using the
+\code{\link[DatabaseConnector]{createConnectionDetails}} function in the
+DatabaseConnector package. Can be left NULL if \code{connection} is provided.}
 
-\item{resultsDatabaseSchema}{}
+\item{connection}{An object of type \code{connection} as created using the
+\code{\link[DatabaseConnector]{connect}} function in the
+DatabaseConnector package. Can be left NULL if \code{connectionDetails} is provided,
+in which case a new connection will be opened at the start of the function, and closed
+when the function finishes.}
 
-\item{instantiatedCohortId}{}
+\item{resultsDatabaseSchema}{Schema name where the statistics tables reside.
+Note that for SQL Server, this should include both the database and
+schema name, for example 'scratch.dbo'.}
 
-\item{cohortTable}{}
+\item{instantiatedCohortId}{The cohort definition ID used to reference the cohort in the cohort table.}
 
-\item{cohortInclusionTable}{}
+\item{cohortTable}{Name of the cohort table. Used only to conveniently derive names of the four rule statistics tables.}
 
-\item{cohortInclusionResultTable}{}
+\item{cohortInclusionTable}{Name of the inclusion table, one of the tables for storing inclusion rule statistics.}
 
-\item{cohortInclusionStatsTable}{}
+\item{cohortInclusionResultTable}{Name of the inclusion result table, one of the tables for storing inclusion rule statistics.}
 
-\item{cohortSummaryStatsTable}{}
+\item{cohortInclusionStatsTable}{Name of the inclusion stats table, one of the tables for storing inclusion rule statistics.}
+
+\item{cohortSummaryStatsTable}{Name of the summary stats table, one of the tables for storing inclusion rule statistics.}
 }
 \value{
 A list of data frames.
 }
 \description{
-Title
+Get statistics on cohort inclusion criteria
 }

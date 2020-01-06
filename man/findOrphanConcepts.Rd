@@ -2,47 +2,52 @@
 % Please edit documentation in R/MetaDataDiagnostics.R
 \name{findOrphanConcepts}
 \alias{findOrphanConcepts}
-\title{Find source codes that do not roll up to their ancestor}
+\title{Find (source) concepts that do not roll up to their ancestor(s)}
+\usage{
+findOrphanConcepts(connectionDetails = NULL, connection = NULL,
+  cdmDatabaseSchema, oracleTempSchema = NULL, conceptIds,
+  conceptCountsDatabaseSchema = cdmDatabaseSchema,
+  conceptCountsTable = "concept_counts")
+}
 \arguments{
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-DatabaseConnector package.}
+DatabaseConnector package. Can be left NULL if \code{connection} is provided.}
+
+\item{connection}{An object of type \code{connection} as created using the
+\code{\link[DatabaseConnector]{connect}} function in the
+DatabaseConnector package. Can be left NULL if \code{connectionDetails} is provided,
+in which case a new connection will be opened at the start of the function, and closed
+when the function finishes.}
 
 \item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
 Note that for SQL Server, this should include both the database and
 schema name, for example 'cdm_data.dbo'.}
 
 \item{oracleTempSchema}{Should be used in Oracle to specify a schema where the user has write
-priviliges for storing temporary tables.}
+privileges for storing temporary tables.}
 
-\item{baseUrl}{The base URL for the WebApi instance, for example: "http://server.org:80/WebAPI".}
+\item{conceptIds}{A vector of concept IDs for which we want to find orphans.}
 
-\item{cohortId}{The ID of the cohort in the WebAPI instance.}
+\item{conceptCountsDatabaseSchema}{Schema name where your concept counts table resides.
+Note that for SQL Server, this should include both the database and
+schema name, for example 'scratch.dbo'.}
 
-\item{cohortJson}{A characteric string containing the JSON of a cohort definition.}
-
-\item{cohortSql}{The OHDSI SQL representation of the same cohort definition.}
+\item{conceptCountsTable}{Name of the concept counts table. This table can be created using the \code{\link{createConceptCountsTable}}.}
 }
 \value{
-A data frame with orhan concepts, with counts per domain how often the code was encountered
+A data frame with orphan concepts, with counts how often the code was encountered
 in the CDM.
 }
 \description{
-\code{findOrphanConcepts} searches for concepts that should belong to the concept sets in a cohort definition but don't, for
-example because of missing source-to-standard concept maps, or erroneous hierachical relationships.
-
-There are two ways to call this function:
-\itemize{
-  \item \code{findOrphanConcepts(connectionDetails, cdmDatabaseSchema, oracleTempSchema, baseUrl, cohortId)}
-  \item \code{findOrphanConcepts(connectionDetails, cdmDatabaseSchema, oracleTempSchema, cohortJson, cohortSql)}
-}
+Searches for concepts that should belong to the set of concepts but don't, for
+example because of missing source-to-standard concept maps, or erroneous hierarchical relationships.
 }
 \details{
-Logically, this function performs the following steps for each concept set expression in the cohort definition:
+Logically, this function performs the following steps for the input set of concept IDs:
 
 \itemize{
-\item  Given the concept set expression, find all included concepts.
-\item  Find all names of those concepts, including synonyms, and the names of source concepts that map to them.
+\item  Find all names of the input concepts, including synonyms, and the names of source concepts that map to them.
 \item  Search for concepts (standard and source) that contain any of those names as substring.
 \item  Filter those concepts to those that are not in the original set of concepts (i.e. orphans).
 \item  Restrict the set of orphan concepts to those that appear in the CDM database and across network concept prevalence (as either source concept or standard concept).

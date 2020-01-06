@@ -31,7 +31,7 @@ cohortId <- 5665 # Zoledronic acid new users with prostate cancer (many inclusio
 createCohortTable(connectionDetails = connectionDetails,
                   cohortDatabaseSchema = cohortDatabaseSchema,
                   cohortTable = cohortTable,
-                  createInclusionStatsTables = FALSE)
+                  createInclusionStatsTables = TRUE)
 
 instantiateCohort(connectionDetails = connectionDetails,
                   cdmDatabaseSchema = cdmDatabaseSchema,
@@ -39,7 +39,8 @@ instantiateCohort(connectionDetails = connectionDetails,
                   cohortDatabaseSchema = cohortDatabaseSchema,
                   cohortTable = cohortTable,
                   baseUrl = baseUrl,
-                  cohortId = cohortId)
+                  cohortId = cohortId,
+                  generateInclusionStats = TRUE)
 
 # Source concepts -------------------------------------------------------------------------
 createConceptCountsTable(connectionDetails = connectionDetails,
@@ -78,3 +79,7 @@ incidenceProportion <- getIncidenceProportion(connectionDetails = connectionDeta
                                               firstOccurrenceOnly = TRUE,
                                               minObservationTime = 365,
                                               instantiatedCohortId = cohortId)
+
+plotIncidenceProportionByYear(incidenceProportion)
+
+plotIncidenceProportion(incidenceProportion, restrictToFullAgeData = TRUE)

@@ -2,7 +2,7 @@
 % Please edit documentation in R/CohortLevelDiagnostics.R
 \name{breakDownIndexEvents}
 \alias{breakDownIndexEvents}
-\title{Check source codes used in a cohort definition}
+\title{Break down index events}
 \usage{
 breakDownIndexEvents(connectionDetails = NULL, connection = NULL,
   cdmDatabaseSchema, oracleTempSchema = NULL,
@@ -13,44 +13,44 @@ breakDownIndexEvents(connectionDetails = NULL, connection = NULL,
 \arguments{
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-DatabaseConnector package.}
+DatabaseConnector package. Can be left NULL if \code{connection} is provided.}
+
+\item{connection}{An object of type \code{connection} as created using the
+\code{\link[DatabaseConnector]{connect}} function in the
+DatabaseConnector package. Can be left NULL if \code{connectionDetails} is provided,
+in which case a new connection will be opened at the start of the function, and closed
+when the function finishes.}
 
 \item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
 Note that for SQL Server, this should include both the database and
 schema name, for example 'cdm_data.dbo'.}
 
 \item{oracleTempSchema}{Should be used in Oracle to specify a schema where the user has write
-priviliges for storing temporary tables.}
+privileges for storing temporary tables.}
 
-\item{baseUrl}{The base URL for the WebApi instance, for example: "http://server.org:80/WebAPI".}
+\item{cohortDatabaseSchema}{Schema name where your cohort table resides.
+Note that for SQL Server, this should include both the database and
+schema name, for example 'scratch.dbo'.}
 
-\item{cohortId}{The ID of the cohort in the WebAPI instance.}
+\item{cohortTable}{Name of the cohort table.}
 
-\item{cohortJson}{A characteric string containing the JSON of a cohort definition.}
+\item{baseUrl}{The base URL for the WebApi instance, for example: "http://server.org:80/WebAPI". 
+Needn't be provided if \code{cohortJson} and \code{cohortSql} are provided.}
 
-\item{cohortSql}{The OHDSI SQL representation of the same cohort definition.}
+\item{cohortId}{The ID of the cohort in the WebAPI instance.
+Needn't be provided if \code{cohortJson} and \code{cohortSql} are provided.}
 
-\item{instantiatedCohortId}{The cohort definition ID used in the cohort table.}
+\item{cohortJson}{A character string containing the JSON of a cohort definition.
+Needn't be provided if \code{baseUrl} and \code{cohortId} are provided.}
 
-\item{byMonth}{Compute counts by month? If FALSE, only overall counts are computed.}
+\item{cohortSql}{The OHDSI SQL representation of the same cohort definition.
+Needn't be provided if \code{baseUrl} and \code{cohortId} are provided.}
 
-\item{createCohortTable}{A logical value indicating whether a new cohort table should be created. If it
-already exists it will be deleted first. If \code{createCohortTable = FALSE}, the
-cohort table is assumed to already exits.}
-
-\item{instantiateCohort}{A logical value indicating whether the cohort should be instantiated in the cohort
-table. If not, the cohort is assumed to already exists.}
+\item{instantiatedCohortId}{The cohort definition ID used to reference the cohort in the cohort table.}
 }
 \value{
 A data frame with concepts, and per concept the count of how often the concept was encountered at the index date.
 }
 \description{
-This function first extracts all concept sets used in a cohort definition. Then, for each concept set
-the concept found in the CDM database the contributing source codes are identified.
-
-There are two ways to call this function:
-\itemize{
-  \item \code{findIncludedSourceCodes(connectionDetails, cdmDatabaseSchema, oracleTempSchema, baseUrl, cohortId)}
-  \item \code{findIncludedSourceCodes(connectionDetails, cdmDatabaseSchema, oracleTempSchema, cohortJson, cohortSql)}
-}
+For the concepts included in the index event definition, count how often they are encountered at the cohort index date.
 }

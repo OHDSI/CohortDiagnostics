@@ -15,27 +15,33 @@
 # limitations under the License.
 
 #' @title
-#' Get incidence proportion data
+#' Compute incidence proportion for a cohort
 #' 
 #' @description
 #' Returns yearly incidence proportion time series data stratified by age and gender
 #'
 #' @details
-#' Returns a list of 7 dataframes of cohort count, database count, and 
+#' Returns a data frame of cohort count, background count, and 
 #' incidence proportion per 1000 persons of cohort entry with the following
 #' stratifications: 1) no stratification, 2) gender stratification, 3) age (10-year)
 #' stratification, 4) calendar year and age (10-year) stratification, 5) calendar year and
 #' gender stratification, 6) calendar year, age (10-year), and gender stratification
 #' with option to save dataframes.
+#' 
+#' @template Connection
+#' 
+#' @template CohortTable
+#' 
+#' @template CdmDatabaseSchema
+#' 
+#' @param firstOccurrenceOnly  Use only the first occurrence of the cohort per person?
+#' 
+#' @param minObservationTime   The minimum amount of observation time required before the occurrence of a cohort entry. This is also used to eliminate
+#'                             immortal time from the denominator.
+#' @param instantiatedCohortId The cohort definition ID used to reference the cohort in the cohort table.
 #'
 #' @return
-#' A list of 7 dataframe objects with option to save as an *.rds file.
-#'
-#' @param connectionDetails      The connection details to your database server
-#' @param cohortDatabaseSchema   The database name where your phenotype is instantiated as a standard cohort table.
-#' @param cohortTable            The table name where your phenotype is instantiated as a standard cohort table.
-#' @param cdmDatabaseSchema      The name of your CDM source
-#' @param instantiatedCohortId     Cohort ID
+#' A data frame
 #'
 #' @export
 getIncidenceProportion <- function(connectionDetails = NULL,
@@ -80,15 +86,15 @@ getIncidenceProportion <- function(connectionDetails = NULL,
                                            dbms = connectionDetails$dbms)
   ipYearAgeGenderData <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
   ipYearAgeGenderData <- recode(ipYearAgeGenderData)
-
+  
   sql <- SqlRender::loadRenderTranslateSql(sqlFilename = "RemoveTempTables.sql",
                                            packageName = "StudyDiagnostics",
                                            dbms = connectionDetails$dbms)
   DatabaseConnector::executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
-
+  
   ipData <- data.frame(numCount = sum(ipYearAgeGenderData$numCount),
                        denomCount = sum(ipYearAgeGenderData$denomCount),
-                       ip1000P = 1000 * sum(ipYearAgeGenderData$numCount) / sum(ipYearAgeGenderData$denomCount))
+                       ip1000p = 1000 * sum(ipYearAgeGenderData$numCount) / sum(ipYearAgeGenderData$denomCount))
   ipGender <- aggregateGetIp(ipYearAgeGenderData, list(gender = ipYearAgeGenderData$gender))
   ipGender <- ipGender[order(ipGender$gender), ]
   ipAge <- aggregateGetIp(ipYearAgeGenderData, list(ageGroup10y = ipYearAgeGenderData$ageGroup10y))
@@ -113,8 +119,8 @@ recode <- function(ipData) {
     ipData$ageGroup10y[ipData$ageGroup10y == i] <- paste(10*i, 10*i + 9, sep = "-")
   }
   ipData$ageGroup10y <- factor(ipData$ageGroup10y,
-                                 levels = paste(10*ageGroups, 10*ageGroups + 9, sep = "-"),
-                                 ordered = TRUE)
+                               levels = paste(10*ageGroups, 10*ageGroups + 9, sep = "-"),
+                               ordered = TRUE)
   ipData$gender[ipData$gender == "FEMALE"] <- "Female"
   ipData$gender[ipData$gender == "MALE"] <- "Male"
   ipData$indexYear <- as.factor(ipData$indexYear)
@@ -127,134 +133,98 @@ aggregateGetIp <- function(ipData, aggregateList) {
                             denomCount = ipData$denomCount),
                       by = aggregateList,
                       FUN = sum)
-  ipData$ip1000P <- 1000 * ipData$numCount / ipData$denomCount
+  ipData$ip1000p <- 1000 * ipData$numCount / ipData$denomCount
   return(ipData)
 }
 
-
-#' @title
-#' Generate stability plots
+#' Plot incidence proportion by year
 #' 
 #' @description
 #' Characterizes the incidence proportion of a phenotype as a time series visualization
 #'
 #' @details
 #' Generates time series plots of the incidence proportion per 1000 persons of phenotype
-#' entry by year, by year and 10-year age group, by year and gender, and by year and
-#' 10-year age group and gender
+#' entry by year.
+#'
+#' @param incidenceProportion Incidence proportion time series data for plotting generated using
+#'                            \code{\link{getIncidenceProportion}} function.
+#' @param fileName            Optional: name of the file where the plot should be saved, for example 'plot.png'.
+#'                            See the function \code{ggsave} in the ggplot2 package for supported file
+#'                            formats.
 #'
 #' @return
-#' A list of 4 gg objects generated by the ggplot2 package with option to save as 1 *.rds
-#' file and 4 png files.
-#'
-#' @param incidenceProportion   Incidence proportion time series data for plotting generated using
-#'                              \code{\link{getIncidenceProportion}} function.
-#' @param panel    Create trellis panels by gender or by age? select "age" or "gender", defaults to "age"
-#' @param fileName Optional: directory and filename of plot to be saved
-#'
+#' A ggplot object. Use the \code{\link[ggplot2]{ggsave}} function to save to file in a different
+#' format.
+#' 
 #' @export
-plotIncidenceProportion <- function(incidenceProportion,
-                                    panel = "age",
-                                    restrictToFullAgeData = FALSE,
-                                    fileName = NULL) {
-  # To do: rewrite for new format. One function per plot
-  
-  # stratified by year
-  ipYearData <- incidenceProportion[incidenceProportion]
-  ipYearPlot <- ggplot2::ggplot(data = ipYearData,
-                                ggplot2::aes(x = INDEX_YEAR, y = IP_1000P, group = 1)) +
-    ggplot2::geom_line(ggplot2::aes(color = "red"), size = 1.25) +
+plotIncidenceProportionByYear <- function(incidenceProportion,
+                                          fileName = NULL) {
+  data <- incidenceProportion[is.na(incidenceProportion$gender) &
+                                is.na(incidenceProportion$ageGroup10y) &
+                                !is.na(incidenceProportion$indexYear), ]
+  data$indexYear <- as.numeric(as.character(data$indexYear))
+  plot <- ggplot2::ggplot(data = data,  ggplot2::aes(x = indexYear, y = ip1000p, group = 1)) +
+    ggplot2::geom_line(color = rgb(0, 0, 0.8), size = 1.25, alpha = 0.6) +
     ggplot2::xlab("Year") +
     ggplot2::ylab("Incidence proportion (/1000 persons)") +
     ggplot2::theme(legend.position = "none",
-                   axis.text.x = ggplot2::element_text(angle = 90))
-  
-  # stratified by year, age
-  ipYearAgeData <- ipData$ipYearAgeData
+                   axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5))
+  if (!is.null(fileName)) 
+    ggplot2::ggsave(fileName, plot, width = 5, height = 3.5, dpi = 400)
+  return(plot)
+}
+
+#' Plot incidence proportion by year, age, and gender
+#' 
+#' @description
+#' Characterizes the incidence proportion of a phenotype as a time series visualization
+#'
+#' @details
+#' Generates time series plots of the incidence proportion per 1000 persons of phenotype
+#' entry by year, age, and gender.
+#'
+#' @param incidenceProportion Incidence proportion time series data for plotting generated using
+#'                            \code{\link{getIncidenceProportion}} function.
+#' @param restrictToFullAgeData Restrict to panels having data on all ages?
+#' @param fileName            Optional: name of the file where the plot should be saved, for example 'plot.png'.
+#'                            See the function \code{ggsave} in the ggplot2 package for supported file
+#'                            formats.
+#'
+#' @return
+#' A ggplot object. Use the \code{\link[ggplot2]{ggsave}} function to save to file in a different
+#' format.
+#' 
+#' @export
+plotIncidenceProportion <- function(incidenceProportion,
+                                    restrictToFullAgeData = FALSE,
+                                    fileName = NULL) {
+  data <- incidenceProportion[!is.na(incidenceProportion$gender) &
+                                !is.na(incidenceProportion$ageGroup10y) &
+                                !is.na(incidenceProportion$indexYear), ]
+  data$gender <- as.factor(data$gender)
+  data$indexYear <- as.numeric(as.character(data$indexYear))
   if (restrictToFullAgeData) {
-    ipYearAgeData <- useFullData(ipYearAgeData)
+    data <- useFullData(data)
   }
-  if (panel == "age") {
-    width <- 12
-    ipYearAgePlot <- ggplot2::ggplot(data = ipYearAgeData,
-                                     ggplot2::aes(x = INDEX_YEAR, y = IP_1000P, group = 1)) +
-      ggplot2::geom_line(ggplot2::aes(color = "red"), size = 1.25) +
-      ggplot2::facet_grid(. ~ AGE_GROUP_10Y) +
-      ggplot2::xlab("Year") +
-      ggplot2::ylab("Incidence proportion (/1000 persons)") +
-      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, size = 6),
-                     legend.position = "none")
-  }
-  if (panel == "gender") {
-    width <- 6
-    ipYearAgePlot <- ggplot2::ggplot(data = ipYearAgeData,
-                                     ggplot2::aes(x = INDEX_YEAR, y = IP_1000P, group = AGE_GROUP_10Y)) +
-      ggplot2::geom_line(ggplot2::aes(color = AGE_GROUP_10Y), size = 1.25) +
-      ggplot2::xlab("Year") +
-      ggplot2::ylab("Incidence proportion (/1000 persons)") +
-      ggplot2::labs(color = "Age (years)") +
-      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90))
-  }
-  
-  # stratified by year, gender
-  ipYearGenderData <- ipData$ipYearGenderData
-  ipYearGenderPlot <- ggplot2::ggplot(data = ipYearGenderData,
-                                      ggplot2::aes(x = INDEX_YEAR, y = IP_1000P, group = GENDER)) +
-    ggplot2::geom_line(ggplot2::aes(color = GENDER), size = 1.25) +
+  plot <- ggplot2::ggplot(data = data,  ggplot2::aes(x = indexYear, y = ip1000p, group = gender, color = gender)) +
+    ggplot2::geom_line(size = 1.25, alpha = 0.6) +
     ggplot2::xlab("Year") +
     ggplot2::ylab("Incidence proportion (/1000 persons)") +
-    ggplot2::labs(color = "Gender") +
-    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90))
-  
-  # stratified by year, age, gender
-  ipYearAgeGenderData <- ipData$ipYearAgeGenderData
-  if (restrictToFullAgeData) {
-    ipYearAgeGenderData <- useFullData(ipYearAgeGenderData)
-  }
-  if (panel == "age") {
-    ipYearAgeGenderPlot <- ggplot2::ggplot(data = ipYearAgeGenderData,
-                                           ggplot2::aes(x = INDEX_YEAR, y = IP_1000P, group = GENDER)) +
-      ggplot2::geom_line(ggplot2::aes(color = GENDER),  size = 1.25) +
-      ggplot2::facet_grid(. ~ AGE_GROUP_10Y) +
-      ggplot2::xlab("Year") +
-      ggplot2::ylab("Incidence proportion (/1000 persons)") +
-      ggplot2::labs(color = "Gender") +
-      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90, size = 6))
-  }
-  if (panel == "gender") {
-    ipYearAgeGenderPlot <- ggplot2::ggplot(data = ipYearAgeGenderData,
-                                           ggplot2::aes(x = INDEX_YEAR, y = IP_1000P, group = AGE_GROUP_10Y)) +
-      ggplot2::geom_line(ggplot2::aes(color = AGE_GROUP_10Y),  size = 1.25) +
-      ggplot2::facet_grid(. ~ GENDER) +
-      ggplot2::xlab("Year") +
-      ggplot2::ylab("Incidence proportion (/1000 persons)") +
-      ggplot2::labs(color = "Age (years)") +
-      ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 90))
-  }
-  
-  ipPlotList <- list(ipYearPlot = ipYearPlot,
-                     ipYearAgePlot = ipYearAgePlot,
-                     ipYearGenderPlot = ipYearGenderPlot,
-                     ipYearAgeGenderPlot = ipYearAgeGenderPlot)
-  if (!is.null(workFolder)) {
-    if (!file.exists(workFolder)) {
-      dir.create(workFolder, recursive = TRUE)
-    }
-    saveRDS(ipPlotList, file.path(workFolder, "ipPlots.rds"))
-    ggplot2::ggsave(file.path(workFolder, "ipYearPlot.png"), ipYearPlot, width = 6, height = 4.5, dpi = 400)
-    ggplot2::ggsave(file.path(workFolder, "ipYearAgePlot.png"), ipYearAgePlot, width = width, height = 4.5, dpi = 400)
-    ggplot2::ggsave(file.path(workFolder, "ipYearGenderPlot.png"), ipYearGenderPlot, width = 6, height = 4.5, dpi = 400)
-    ggplot2::ggsave(file.path(workFolder, "ipYearAgeGenderPlot.png"), ipYearAgeGenderPlot, width = 12, height = 4.5, dpi = 400)
-  }
-  return(ipPlotList)
+    ggplot2::facet_grid( ~ageGroup10y) + 
+    ggplot2::theme(legend.position = "top",
+                   legend.title = ggplot2::element_blank(),
+                   axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5))
+  if (!is.null(fileName)) 
+    ggplot2::ggsave(fileName, plot, width = 5, height = 3.5, dpi = 400)
+  return(plot)
 }
 
 useFullData <- function(df) {
   yearList <- list()
-  for (year in unique(df$INDEX_YEAR)) {
-    yearList[[length(yearList) + 1]] <- unique(df$AGE_GROUP_10Y[df$INDEX_YEAR == year])
+  for (year in unique(df$indexYear)) {
+    yearList[[length(yearList) + 1]] <- unique(df$ageGroup10y[df$indexYear == year])
   }
   ageGroups <- Reduce(intersect, yearList)
-  df <- df[df$AGE_GROUP_10Y %in% ageGroups, ]
+  df <- df[df$ageGroup10y %in% ageGroups, ]
   return(df)
 }

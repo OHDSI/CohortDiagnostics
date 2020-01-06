@@ -12,26 +12,36 @@ findCohortIncludedSourceConcepts(connectionDetails = NULL,
 \arguments{
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-DatabaseConnector package.}
+DatabaseConnector package. Can be left NULL if \code{connection} is provided.}
+
+\item{connection}{An object of type \code{connection} as created using the
+\code{\link[DatabaseConnector]{connect}} function in the
+DatabaseConnector package. Can be left NULL if \code{connectionDetails} is provided,
+in which case a new connection will be opened at the start of the function, and closed
+when the function finishes.}
 
 \item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
 Note that for SQL Server, this should include both the database and
 schema name, for example 'cdm_data.dbo'.}
 
 \item{oracleTempSchema}{Should be used in Oracle to specify a schema where the user has write
-priviliges for storing temporary tables.}
+privileges for storing temporary tables.}
 
-\item{baseUrl}{The base URL for the WebApi instance, for example: "http://server.org:80/WebAPI".}
+\item{baseUrl}{The base URL for the WebApi instance, for example: "http://server.org:80/WebAPI". 
+Needn't be provided if \code{cohortJson} and \code{cohortSql} are provided.}
 
-\item{cohortId}{The ID of the cohort in the WebAPI instance.}
+\item{cohortId}{The ID of the cohort in the WebAPI instance.
+Needn't be provided if \code{cohortJson} and \code{cohortSql} are provided.}
 
-\item{cohortJson}{A characteric string containing the JSON of a cohort definition.}
+\item{cohortJson}{A character string containing the JSON of a cohort definition.
+Needn't be provided if \code{baseUrl} and \code{cohortId} are provided.}
 
-\item{cohortSql}{The OHDSI SQL representation of the same cohort definition.}
+\item{cohortSql}{The OHDSI SQL representation of the same cohort definition.
+Needn't be provided if \code{baseUrl} and \code{cohortId} are provided.}
 
 \item{byMonth}{Compute counts by month? If FALSE, only overall counts are computed.}
 
-\item{useSourceValues}{Use the source_value fields to find the codesa used in the data? If not,
+\item{useSourceValues}{Use the source_value fields to find the codes used in the data? If not,
 this analysis will rely entirely on the source_concept_id fields instead. 
 Note that, depending on the source data and ETL, it might be possible for the
 source_value fields to contain patient-identifiable information by accident.}
@@ -43,10 +53,4 @@ in the CDM.
 \description{
 This function first extracts all concept sets used in a cohort definition. Then, for each concept set
 the concept found in the CDM database the contributing source codes are identified.
-
-There are two ways to call this function:
-\itemize{
-  \item \code{findIncludedSourceCodes(connectionDetails, cdmDatabaseSchema, oracleTempSchema, baseUrl, cohortId)}
-  \item \code{findIncludedSourceCodes(connectionDetails, cdmDatabaseSchema, oracleTempSchema, cohortJson, cohortSql)}
-}
 }

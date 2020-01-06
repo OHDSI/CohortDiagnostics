@@ -18,7 +18,8 @@ Imports:
 	ParallelLogger,
 	readr,
 	tibble,
-	dplyr
+	dplyr,
+	RJSONIO
 Suggests:
   testthat,
   knitr,

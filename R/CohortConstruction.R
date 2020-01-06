@@ -14,36 +14,42 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 #' Create cohort table(s)
 #' 
 #' @description 
-#' This function first extracts all concept sets used in a cohort definition. Then, for each concept set
-#' the concept found in the CDM database the contributing source codes are identified.
+#' This function creates an empty cohort table. Optionally, additional empty tables are created 
+#' to store statistics on the various inclusion criteria.
 #' 
+#' @template Connection
 #' 
-#' @param connectionDetails    An object of type \code{connectionDetails} as created using the
-#'                             \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-#'                             DatabaseConnector package.
-#' @param cohortDatabaseSchema Schema name where your cohort table will be created.
-#'                             Note that for SQL Server, this should include both the database and
-#'                             schema name, for example 'scratch.dbo'.
-#' @param cohortTable          Name of the cohort table.
+#' @template CohortTable
+#' 
+#' @param createInclusionStatsTables Create the four additional tables for storing inclusion rule statistics?
+#' @param resultsDatabaseSchema      Schema name where the statistics tables reside.
+#'                                   Note that for SQL Server, this should include both the database and
+#'                                   schema name, for example 'scratch.dbo'.
+#' @param cohortInclusionTable       Name of the inclusion table, one of the tables for storing inclusion rule statistics.
+#' @param cohortInclusionResultTable Name of the inclusion result table, one of the tables for storing inclusion rule statistics.
+#' @param cohortInclusionStatsTable  Name of the inclusion stats table, one of the tables for storing inclusion rule statistics.
+#' @param cohortSummaryStatsTable    Name of the summary stats table, one of the tables for storing inclusion rule statistics.
 #'
 #' @export
-createCohortTable <- function(connectionDetails,
+createCohortTable <- function(connectionDetails = NULL,
+                              connection = NULL,
                               cohortDatabaseSchema,
                               cohortTable = "cohort",
                               createInclusionStatsTables = FALSE,
                               resultsDatabaseSchema = cohortDatabaseSchema,
                               cohortInclusionTable = paste0(cohortTable, "_inclusion"),
-                              cohortInclusionResultTable = paste0(cohortTable, "_inc_result"),
-                              cohortInclusionStatsTable = paste0(cohortTable, "_inc_stats"),
-                              cohortSummaryStatsTable = paste0(cohortTable, "_sum_stats"))  {
+                              cohortInclusionResultTable = paste0(cohortTable, "_inclusion_result"),
+                              cohortInclusionStatsTable = paste0(cohortTable, "_inclusion_stats"),
+                              cohortSummaryStatsTable = paste0(cohortTable, "_summary_stats"))  {
   start <- Sys.time()
   ParallelLogger::logInfo("Creating cohort table")
-  connection <- DatabaseConnector::connect(connectionDetails) 
-  on.exit(DatabaseConnector::disconnect(connection))
+  if (is.null(connection)) {
+    connection <- DatabaseConnector::connect(connectionDetails) 
+    on.exit(DatabaseConnector::disconnect(connection))
+  }
   sql <- SqlRender::loadRenderTranslateSql("CreateCohortTable.sql",
                                            packageName = "StudyDiagnostics",
                                            dbms = connectionDetails$dbms,
@@ -69,48 +75,41 @@ createCohortTable <- function(connectionDetails,
     ParallelLogger::logDebug("- Created table ", cohortDatabaseSchema, ".", cohortSummaryStatsTable)
   }
   delta <- Sys.time() - start
-  writeLines(paste("Creating cohort taBLE took", signif(delta, 3), attr(delta, "units")))
+  writeLines(paste("Creating cohort table took", signif(delta, 3), attr(delta, "units")))
 }
 
 
 
-#' Check source codes used in a cohort definition
+#' Instantiate a cohort
 #' 
 #' @description 
-#' This function first extracts all concept sets used in a cohort definition. Then, for each concept set
-#' the concept found in the CDM database the contributing source codes are identified.
+#' This function instantiates the cohort in the cohort table. Optionally, the inclusion rule statistics are computed and stored in
+#' the inclusion rule statistics tables described in \code{\link{createCohortTable}}).
 #' 
-#' There are two ways to call this function:
-#' \itemize{
-#'   \item \code{findIncludedSourceCodes(connectionDetails, cdmDatabaseSchema, oracleTempSchema, baseUrl, cohortId)}
-#'   \item \code{findIncludedSourceCodes(connectionDetails, cdmDatabaseSchema, oracleTempSchema, cohortJson, cohortSql)}
-#' }
+#' @template Connection
 #' 
-#' @param connectionDetails    An object of type \code{connectionDetails} as created using the
-#'                             \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-#'                             DatabaseConnector package.
-#' @param cdmDatabaseSchema    Schema name where your patient-level data in OMOP CDM format resides.
-#'                             Note that for SQL Server, this should include both the database and
-#'                             schema name, for example 'cdm_data.dbo'.
-#' @param oracleTempSchema     Should be used in Oracle to specify a schema where the user has write
-#'                             priviliges for storing temporary tables.
-#' @param baseUrl              The base URL for the WebApi instance, for example: "http://server.org:80/WebAPI".
-#' @param cohortId             The ID of the cohort in the WebAPI instance.
-#' @param cohortJson           A characteric string containing the JSON of a cohort definition.
-#' @param cohortSql            The OHDSI SQL representation of the same cohort definition.
-#' @param byMonth              Compute counts by month? If FALSE, only overall counts are computed.
-#' @param createCohortTable    A logical value indicating whether a new cohort table should be created. If it
-#'                             already exists it will be deleted first. If \code{createCohortTable = FALSE}, the
-#'                             cohort table is assumed to already exits.
-#' @param instantiateCohort    A logical value indicating whether the cohort should be instantiated in the cohort
-#'                             table. If not, the cohort is assumed to already exists.
-#' @param instantiatedCohortId The cohort definition ID used in the cohort table. 
+#' @template CohortTable
+#' 
+#' @template CohortDef
+#' 
+#' @template OracleTempSchema
+#' 
+#' @template CdmDatabaseSchema
+#' 
+#' @param instantiatedCohortId       The cohort definition ID used to reference the cohort in the cohort table.
+#' 
+#' @param generateInclusionStats     Compute and store inclusion rule statistics?
+#' @param resultsDatabaseSchema      Schema name where the statistics tables reside.
+#'                                   Note that for SQL Server, this should include both the database and
+#'                                   schema name, for example 'scratch.dbo'.
+#' @param cohortInclusionTable       Name of the inclusion table, one of the tables for storing inclusion rule statistics.
+#' @param cohortInclusionResultTable Name of the inclusion result table, one of the tables for storing inclusion rule statistics.
+#' @param cohortInclusionStatsTable  Name of the inclusion stats table, one of the tables for storing inclusion rule statistics.
+#' @param cohortSummaryStatsTable    Name of the summary stats table, one of the tables for storing inclusion rule statistics.
 #'
-#' @return 
-#' A data frame with concepts, and per concept the count of how often the concept was encountered at the index date.
-#' 
 #' @export
-instantiateCohort <- function(connectionDetails,
+instantiateCohort <- function(connectionDetails = NULL,
+                              connection = NULL,
                               cdmDatabaseSchema,
                               oracleTempSchema = NULL,
                               cohortDatabaseSchema = cdmDatabaseSchema,
@@ -156,8 +155,10 @@ instantiateCohort <- function(connectionDetails,
     }
   }
   
-  connection <- DatabaseConnector::connect(connectionDetails) 
-  on.exit(DatabaseConnector::disconnect(connection))
+  if (is.null(connection)) {
+    connection <- DatabaseConnector::connect(connectionDetails) 
+    on.exit(DatabaseConnector::disconnect(connection))
+  }
   
   ParallelLogger::logInfo("Instantiation cohort with cohort_definition_id = ", instantiatedCohortId)
   sql <- cohortSql
@@ -199,21 +200,25 @@ instantiateCohort <- function(connectionDetails,
   
 }
 
-#' Title
+#' Get statistics on cohort inclusion criteria
+#' 
+#' @template Connection
 #'
-#' @param connectionDetails 
-#' @param resultsDatabaseSchema 
-#' @param instantiatedCohortId 
-#' @param cohortTable 
-#' @param cohortInclusionTable 
-#' @param cohortInclusionResultTable 
-#' @param cohortInclusionStatsTable 
-#' @param cohortSummaryStatsTable 
+#' @param cohortTable                Name of the cohort table. Used only to conveniently derive names of the four rule statistics tables.
+#' @param instantiatedCohortId       The cohort definition ID used to reference the cohort in the cohort table.
+#' @param resultsDatabaseSchema      Schema name where the statistics tables reside.
+#'                                   Note that for SQL Server, this should include both the database and
+#'                                   schema name, for example 'scratch.dbo'.
+#' @param cohortInclusionTable       Name of the inclusion table, one of the tables for storing inclusion rule statistics.
+#' @param cohortInclusionResultTable Name of the inclusion result table, one of the tables for storing inclusion rule statistics.
+#' @param cohortInclusionStatsTable  Name of the inclusion stats table, one of the tables for storing inclusion rule statistics.
+#' @param cohortSummaryStatsTable    Name of the summary stats table, one of the tables for storing inclusion rule statistics.
 #'
 #' @return A list of data frames.
 #' 
 #' @export
-getInclusionStatistics <- function(connectionDetails,
+getInclusionStatistics <- function(connectionDetails = NULL,
+                                   connection = NULL,
                                    resultsDatabaseSchema,
                                    instantiatedCohortId,
                                    cohortTable = "cohort",
@@ -223,8 +228,10 @@ getInclusionStatistics <- function(connectionDetails,
                                    cohortSummaryStatsTable = paste0(cohortTable, "_inclusion_stats")) {
   start <- Sys.time()
   ParallelLogger::logInfo("Fetching inclusion statistics for cohort with cohort_definition_id = ", instantiatedCohortId)
-  connection <- DatabaseConnector::connect(connectionDetails) 
-  on.exit(DatabaseConnector::disconnect(connection))
+  if (is.null(connection)) {
+    connection <- DatabaseConnector::connect(connectionDetails) 
+    on.exit(DatabaseConnector::disconnect(connection))
+  }
   fetchStats <- function(table) {
     ParallelLogger::logDebug("- Fetching data from ", table)
     sql <- "SELECT * FROM @database_schema.@table WHERE cohort_definition_id = @cohort_id"

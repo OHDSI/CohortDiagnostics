@@ -2,7 +2,7 @@
 % Please edit documentation in R/IncidenceProportion.R
 \name{getIncidenceProportion}
 \alias{getIncidenceProportion}
-\title{Get incidence proportion data}
+\title{Compute incidence proportion for a cohort}
 \usage{
 getIncidenceProportion(connectionDetails = NULL, connection = NULL,
   cohortDatabaseSchema, cohortTable, cdmDatabaseSchema,
@@ -10,24 +10,41 @@ getIncidenceProportion(connectionDetails = NULL, connection = NULL,
   instantiatedCohortId)
 }
 \arguments{
-\item{connectionDetails}{The connection details to your database server}
+\item{connectionDetails}{An object of type \code{connectionDetails} as created using the
+\code{\link[DatabaseConnector]{createConnectionDetails}} function in the
+DatabaseConnector package. Can be left NULL if \code{connection} is provided.}
 
-\item{cohortDatabaseSchema}{The database name where your phenotype is instantiated as a standard cohort table.}
+\item{connection}{An object of type \code{connection} as created using the
+\code{\link[DatabaseConnector]{connect}} function in the
+DatabaseConnector package. Can be left NULL if \code{connectionDetails} is provided,
+in which case a new connection will be opened at the start of the function, and closed
+when the function finishes.}
 
-\item{cohortTable}{The table name where your phenotype is instantiated as a standard cohort table.}
+\item{cohortDatabaseSchema}{Schema name where your cohort table resides.
+Note that for SQL Server, this should include both the database and
+schema name, for example 'scratch.dbo'.}
 
-\item{cdmDatabaseSchema}{The name of your CDM source}
+\item{cohortTable}{Name of the cohort table.}
 
-\item{instantiatedCohortId}{Cohort ID}
+\item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
+Note that for SQL Server, this should include both the database and
+schema name, for example 'cdm_data.dbo'.}
+
+\item{firstOccurrenceOnly}{Use only the first occurrence of the cohort per person?}
+
+\item{minObservationTime}{The minimum amount of observation time required before the occurrence of a cohort entry. This is also used to eliminate
+immortal time from the denominator.}
+
+\item{instantiatedCohortId}{The cohort definition ID used to reference the cohort in the cohort table.}
 }
 \value{
-A list of 7 dataframe objects with option to save as an *.rds file.
+A data frame
 }
 \description{
 Returns yearly incidence proportion time series data stratified by age and gender
 }
 \details{
-Returns a list of 7 dataframes of cohort count, database count, and 
+Returns a data frame of cohort count, background count, and 
 incidence proportion per 1000 persons of cohort entry with the following
 stratifications: 1) no stratification, 2) gender stratification, 3) age (10-year)
 stratification, 4) calendar year and age (10-year) stratification, 5) calendar year and

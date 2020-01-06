@@ -17,7 +17,7 @@ vignette: >
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
 options(width = 200)
-library(CohortMethod)
+library(StudyDiagnostics)
 knitr::opts_chunk$set(
   cache = FALSE,
   comment = "#>",
@@ -56,6 +56,7 @@ createCohortTable(connectionDetails = connectionDetails,
                   createInclusionStatsTables = FALSE)
 ```
 
+```{r eval=FALSE}
 instantiateCohort(connectionDetails = connectionDetails,
                   cdmDatabaseSchema = cdmDatabaseSchema,
                   oracleTempSchema = oracleTempSchema,
@@ -63,6 +64,7 @@ instantiateCohort(connectionDetails = connectionDetails,
                   cohortTable = cohortTable,
                   baseUrl = baseUrl,
                   cohortId = cohortId)
+```
 
 ## Using insertCohortDefinitionSetInPackage
 

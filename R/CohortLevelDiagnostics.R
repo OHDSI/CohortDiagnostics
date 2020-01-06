@@ -14,37 +14,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#' Check source codes used in a cohort definition
+#' Break down index events
 #' 
 #' @description 
-#' This function first extracts all concept sets used in a cohort definition. Then, for each concept set
-#' the concept found in the CDM database the contributing source codes are identified.
+#' For the concepts included in the index event definition, count how often they are encountered at the cohort index date.
 #' 
-#' There are two ways to call this function:
-#' \itemize{
-#'   \item \code{findIncludedSourceCodes(connectionDetails, cdmDatabaseSchema, oracleTempSchema, baseUrl, cohortId)}
-#'   \item \code{findIncludedSourceCodes(connectionDetails, cdmDatabaseSchema, oracleTempSchema, cohortJson, cohortSql)}
-#' }
+#' @template Connection
 #' 
-#' @param connectionDetails    An object of type \code{connectionDetails} as created using the
-#'                             \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-#'                             DatabaseConnector package.
-#' @param cdmDatabaseSchema    Schema name where your patient-level data in OMOP CDM format resides.
-#'                             Note that for SQL Server, this should include both the database and
-#'                             schema name, for example 'cdm_data.dbo'.
-#' @param oracleTempSchema     Should be used in Oracle to specify a schema where the user has write
-#'                             priviliges for storing temporary tables.
-#' @param baseUrl              The base URL for the WebApi instance, for example: "http://server.org:80/WebAPI".
-#' @param cohortId             The ID of the cohort in the WebAPI instance.
-#' @param cohortJson           A characteric string containing the JSON of a cohort definition.
-#' @param cohortSql            The OHDSI SQL representation of the same cohort definition.
-#' @param byMonth              Compute counts by month? If FALSE, only overall counts are computed.
-#' @param createCohortTable    A logical value indicating whether a new cohort table should be created. If it
-#'                             already exists it will be deleted first. If \code{createCohortTable = FALSE}, the
-#'                             cohort table is assumed to already exits.
-#' @param instantiateCohort    A logical value indicating whether the cohort should be instantiated in the cohort
-#'                             table. If not, the cohort is assumed to already exists.
-#' @param instantiatedCohortId The cohort definition ID used in the cohort table. 
+#' @template CdmDatabaseSchema
+#' 
+#' @template OracleTempSchema
+#' 
+#' @template CohortTable
+#' 
+#' @template CohortDef
+#' 
+#' @param instantiatedCohortId       The cohort definition ID used to reference the cohort in the cohort table.
 #'
 #' @return 
 #' A data frame with concepts, and per concept the count of how often the concept was encountered at the index date.
@@ -120,7 +105,7 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
     return(data.frame())
   } 
   ParallelLogger::logInfo("Instantiating concept sets")
-  StudyDiagnostics:::instantiateConceptSets(connection, cdmDatabaseSchema, oracleTempSchema, cohortSql)
+  instantiateConceptSets(connection, cdmDatabaseSchema, oracleTempSchema, cohortSql)
   
   ParallelLogger::logInfo("Computing counts")
   domains <- readr::read_csv(system.file("csv", "domains.csv", package = "StudyDiagnostics"), col_types = readr::cols())
@@ -139,6 +124,7 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
                                              domain_concept_id = domain$domainConceptId,
                                              primary_codeset_ids = row$codeSetIds)
     counts <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
+    return(counts)
   }
   counts <- lapply(split(primaryCodesetIds, 1:nrow(primaryCodesetIds)), getCounts)
   counts <- do.call(rbind, counts)
