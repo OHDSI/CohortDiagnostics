@@ -5,11 +5,12 @@
 \title{Get statistics on cohort inclusion criteria}
 \usage{
 getInclusionStatistics(connectionDetails = NULL, connection = NULL,
-  resultsDatabaseSchema, instantiatedCohortId, cohortTable = "cohort",
-  cohortInclusionTable = paste0(cohortTable, "_inclusion"),
-  cohortInclusionResultTable = paste0(cohortTable, "_inclusion_result"),
-  cohortInclusionStatsTable = paste0(cohortTable, "_inclusion_stats"),
-  cohortSummaryStatsTable = paste0(cohortTable, "_inclusion_stats"))
+  resultsDatabaseSchema, instantiatedCohortId, simplify = TRUE,
+  cohortTable = "cohort", cohortInclusionTable = paste0(cohortTable,
+  "_inclusion"), cohortInclusionResultTable = paste0(cohortTable,
+  "_inclusion_result"), cohortInclusionStatsTable = paste0(cohortTable,
+  "_inclusion_stats"), cohortSummaryStatsTable = paste0(cohortTable,
+  "_summary_stats"))
 }
 \arguments{
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
@@ -28,6 +29,8 @@ schema name, for example 'scratch.dbo'.}
 
 \item{instantiatedCohortId}{The cohort definition ID used to reference the cohort in the cohort table.}
 
+\item{simplify}{Simply output the attrition table?}
+
 \item{cohortTable}{Name of the cohort table. Used only to conveniently derive names of the four rule statistics tables.}
 
 \item{cohortInclusionTable}{Name of the inclusion table, one of the tables for storing inclusion rule statistics.}
@@ -39,7 +42,7 @@ schema name, for example 'scratch.dbo'.}
 \item{cohortSummaryStatsTable}{Name of the summary stats table, one of the tables for storing inclusion rule statistics.}
 }
 \value{
-A list of data frames.
+If `simplify = TRUE`, this function returns a single data frame. Else a list of data frames is returned.
 }
 \description{
 Get statistics on cohort inclusion criteria

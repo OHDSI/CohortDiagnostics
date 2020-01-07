@@ -1,5 +1,5 @@
 library(StudyDiagnostics)
-
+options(fftempdir = "c:/FFtemp")
 connectionDetails <- createConnectionDetails(dbms = "pdw",
                                              server = Sys.getenv("PDW_SERVER"),
                                              port = Sys.getenv("PDW_PORT"),
@@ -8,23 +8,23 @@ oracleTempSchema <- NULL
 workDatabaseSchema <- "scratch.dbo"
 baseUrl <- Sys.getenv("baseUrl")
 
-# Using private cohort table:
-cdmDatabaseSchema <- "CDM_IBM_MDCR_V1062.dbo"
+# Using private cohort table: cdmDatabaseSchema <- 'CDM_IBM_MDCR_V1062.dbo'
+cdmDatabaseSchema <- "CDM_jmdc_v1063.dbo"
 cohortDatabaseSchema <- workDatabaseSchema
-resultDatabaseSchema <- workDatabaseSchema
+resultsDatabaseSchema <- workDatabaseSchema
 cohortTable <- "mschuemi_temp"
 
 # Using ATLAS cohort table:
 cohortDatabaseSchema <- "CDM_IBM_MDCR_V1062.dbo"
-resultDatabaseSchema <- "CDM_IBM_MDCR_V1062.ohdsi_results"
+resultsDatabaseSchema <- "CDM_IBM_MDCR_V1062.ohdsi_results"
 
-cohortId <- 7399 # LEGEND Cardiac Arrhythmia
+cohortId <- 7399  # LEGEND Cardiac Arrhythmia
 
-cohortId <- 7362 # LEGEND cardiovascular-related mortality
+cohortId <- 7362  # LEGEND cardiovascular-related mortality
 
-cohortId <- 13567 # Test cohort with two initial event criteria
+cohortId <- 13567  # Test cohort with two initial event criteria
 
-cohortId <- 5665 # Zoledronic acid new users with prostate cancer (many inclusion rules)
+cohortId <- 5665  # Zoledronic acid new users with prostate cancer (many inclusion rules)
 
 
 # Cohort construction (when not using ATLAS cohorts) -------------------------------------
@@ -42,10 +42,15 @@ instantiateCohort(connectionDetails = connectionDetails,
                   cohortId = cohortId,
                   generateInclusionStats = TRUE)
 
+inclusionStatistics <- getInclusionStatistics(connectionDetails = connectionDetails,
+                                              resultsDatabaseSchema = resultsDatabaseSchema,
+                                              instantiatedCohortId = cohortId,
+                                              cohortTable = cohortTable)
+
 # Source concepts -------------------------------------------------------------------------
 createConceptCountsTable(connectionDetails = connectionDetails,
                          cdmDatabaseSchema = cdmDatabaseSchema,
-                         workDatabaseSchema = workDatabaseSchema)
+                         conceptCountsDatabaseSchema = workDatabaseSchema)
 
 includedSourceConcepts <- findCohortIncludedSourceConcepts(connectionDetails = connectionDetails,
                                                            cdmDatabaseSchema = cdmDatabaseSchema,
@@ -58,7 +63,7 @@ includedSourceConcepts <- findCohortIncludedSourceConcepts(connectionDetails = c
 orphanConcepts <- findCohortOrphanConcepts(connectionDetails = connectionDetails,
                                            cdmDatabaseSchema = cdmDatabaseSchema,
                                            oracleTempSchema = oracleTempSchema,
-                                           workDatabaseSchema = workDatabaseSchema,
+                                           conceptCountsDatabaseSchema = workDatabaseSchema,
                                            baseUrl = baseUrl,
                                            cohortId = cohortId)
 
@@ -83,3 +88,35 @@ incidenceProportion <- getIncidenceProportion(connectionDetails = connectionDeta
 plotIncidenceProportionByYear(incidenceProportion)
 
 plotIncidenceProportion(incidenceProportion, restrictToFullAgeData = TRUE)
+
+overlap <- computeCohortOverlap(connectionDetails = connectionDetails,
+                                cohortDatabaseSchema = cohortDatabaseSchema,
+                                cohortTable = cohortTable,
+                                targetCohortId = 7399,
+                                comparatorCohortId = 5665)
+
+# Cohort characteristics level ---------------------------------------------------
+chars <- getCohortCharacteristics(connectionDetails = connectionDetails,
+                                  oracleTempSchema = oracleTempSchema,
+                                  cdmDatabaseSchema = cdmDatabaseSchema,
+                                  cohortDatabaseSchema = cohortDatabaseSchema,
+                                  cohortTable = cohortTable,
+                                  instantiatedCohortId = cohortId)
+
+chars1 <- getCohortCharacteristics(connectionDetails = connectionDetails,
+                                   oracleTempSchema = oracleTempSchema,
+                                   cdmDatabaseSchema = cdmDatabaseSchema,
+                                   cohortDatabaseSchema = cohortDatabaseSchema,
+                                   cohortTable = cohortTable,
+                                   instantiatedCohortId = 7362)
+
+chars2 <- getCohortCharacteristics(connectionDetails = connectionDetails,
+                                   oracleTempSchema = oracleTempSchema,
+                                   cdmDatabaseSchema = cdmDatabaseSchema,
+                                   cohortDatabaseSchema = cohortDatabaseSchema,
+                                   cohortTable = cohortTable,
+                                   instantiatedCohortId = 5665)
+
+# saveRDS(chars1, 'c:/temp/chars1.rds') saveRDS(chars2, 'c:/temp/chars2.rds')
+
+comparison <- compareCohortCharacteristics(chars1, chars2)

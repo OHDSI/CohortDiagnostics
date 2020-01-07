@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Get statistics on cohort inclusion criteria — getInclusionStatistics • StudyDiagnostics</title>
+<title>Compute overlap between two cohorts — computeCohortOverlap • StudyDiagnostics</title>
 
 
 <!-- jquery -->
@@ -35,8 +35,8 @@
 
 
 
-<meta property="og:title" content="Get statistics on cohort inclusion criteria — getInclusionStatistics" />
-<meta property="og:description" content="Get statistics on cohort inclusion criteria" />
+<meta property="og:title" content="Compute overlap between two cohorts — computeCohortOverlap" />
+<meta property="og:description" content="Computes the overlap between a target and a comparator cohort." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -120,22 +120,18 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Get statistics on cohort inclusion criteria</h1>
-    <small class="dont-index">Source: <a href='https://github.com/OHDSI/StudyDiagnostics/blob/master/R/CohortConstruction.R'><code>R/CohortConstruction.R</code></a></small>
-    <div class="hidden name"><code>getInclusionStatistics.Rd</code></div>
+    <h1>Compute overlap between two cohorts</h1>
+    <small class="dont-index">Source: <a href='https://github.com/OHDSI/StudyDiagnostics/blob/master/R/CohortComparisonDiagnostics.R'><code>R/CohortComparisonDiagnostics.R</code></a></small>
+    <div class="hidden name"><code>computeCohortOverlap.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Get statistics on cohort inclusion criteria</p>
+    <p>Computes the overlap between a target and a comparator cohort.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>getInclusionStatistics</span>(<span class='kw'>connectionDetails</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>connection</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='no'>resultsDatabaseSchema</span>, <span class='no'>instantiatedCohortId</span>, <span class='kw'>simplify</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>cohortTable</span> <span class='kw'>=</span> <span class='st'>"cohort"</span>, <span class='kw'>cohortInclusionTable</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span>(<span class='no'>cohortTable</span>,
-  <span class='st'>"_inclusion"</span>), <span class='kw'>cohortInclusionResultTable</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span>(<span class='no'>cohortTable</span>,
-  <span class='st'>"_inclusion_result"</span>), <span class='kw'>cohortInclusionStatsTable</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span>(<span class='no'>cohortTable</span>,
-  <span class='st'>"_inclusion_stats"</span>), <span class='kw'>cohortSummaryStatsTable</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span>(<span class='no'>cohortTable</span>,
-  <span class='st'>"_summary_stats"</span>))</pre>
+    <pre class="usage"><span class='fu'>computeCohortOverlap</span>(<span class='kw'>connectionDetails</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>connection</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>cohortDatabaseSchema</span> <span class='kw'>=</span> <span class='no'>cdmDatabaseSchema</span>, <span class='kw'>cohortTable</span> <span class='kw'>=</span> <span class='st'>"cohort"</span>,
+  <span class='no'>targetCohortId</span>, <span class='no'>comparatorCohortId</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -155,44 +151,28 @@ in which case a new connection will be opened at the start of the function, and 
 when the function finishes.</p></td>
     </tr>
     <tr>
-      <th>resultsDatabaseSchema</th>
-      <td><p>Schema name where the statistics tables reside.
+      <th>cohortDatabaseSchema</th>
+      <td><p>Schema name where your cohort table resides.
 Note that for SQL Server, this should include both the database and
 schema name, for example 'scratch.dbo'.</p></td>
     </tr>
     <tr>
-      <th>instantiatedCohortId</th>
-      <td><p>The cohort definition ID used to reference the cohort in the cohort table.</p></td>
-    </tr>
-    <tr>
-      <th>simplify</th>
-      <td><p>Simply output the attrition table?</p></td>
-    </tr>
-    <tr>
       <th>cohortTable</th>
-      <td><p>Name of the cohort table. Used only to conveniently derive names of the four rule statistics tables.</p></td>
+      <td><p>Name of the cohort table.</p></td>
     </tr>
     <tr>
-      <th>cohortInclusionTable</th>
-      <td><p>Name of the inclusion table, one of the tables for storing inclusion rule statistics.</p></td>
+      <th>targetCohortId</th>
+      <td><p>The cohort definition ID used to reference the target cohort in the cohort table.</p></td>
     </tr>
     <tr>
-      <th>cohortInclusionResultTable</th>
-      <td><p>Name of the inclusion result table, one of the tables for storing inclusion rule statistics.</p></td>
-    </tr>
-    <tr>
-      <th>cohortInclusionStatsTable</th>
-      <td><p>Name of the inclusion stats table, one of the tables for storing inclusion rule statistics.</p></td>
-    </tr>
-    <tr>
-      <th>cohortSummaryStatsTable</th>
-      <td><p>Name of the summary stats table, one of the tables for storing inclusion rule statistics.</p></td>
+      <th>comparatorCohortId</th>
+      <td><p>The cohort definition ID used to reference the comparator cohort in the cohort table.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>If `simplify = TRUE`, this function returns a single data frame. Else a list of data frames is returned.</p>
+    <p>A data frame with overlap statistics.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">

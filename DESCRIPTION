@@ -19,7 +19,9 @@ Imports:
 	readr,
 	tibble,
 	dplyr,
-	RJSONIO
+	RJSONIO,
+	FeatureExtraction,
+	ff
 Suggests:
   testthat,
   knitr,

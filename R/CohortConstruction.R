@@ -186,7 +186,7 @@ instantiateCohort <- function(connectionDetails = NULL,
                               oracleTempSchema = oracleTempSchema)
   DatabaseConnector::executeSql(connection, sql)
   
-  if (generateInclusionStats) {
+  if (generateInclusionStats && nrow(inclusionRules) > 0) {
     DatabaseConnector::insertTable(connection = connection,
                                    tableName = paste(resultsDatabaseSchema, cohortInclusionTable, sep = "."),
                                    data = inclusionRules,
@@ -206,6 +206,7 @@ instantiateCohort <- function(connectionDetails = NULL,
 #'
 #' @param cohortTable                Name of the cohort table. Used only to conveniently derive names of the four rule statistics tables.
 #' @param instantiatedCohortId       The cohort definition ID used to reference the cohort in the cohort table.
+#' @param simplify                   Simply output the attrition table?
 #' @param resultsDatabaseSchema      Schema name where the statistics tables reside.
 #'                                   Note that for SQL Server, this should include both the database and
 #'                                   schema name, for example 'scratch.dbo'.
@@ -214,18 +215,20 @@ instantiateCohort <- function(connectionDetails = NULL,
 #' @param cohortInclusionStatsTable  Name of the inclusion stats table, one of the tables for storing inclusion rule statistics.
 #' @param cohortSummaryStatsTable    Name of the summary stats table, one of the tables for storing inclusion rule statistics.
 #'
-#' @return A list of data frames.
+#' @return 
+#' If `simplify = TRUE`, this function returns a single data frame. Else a list of data frames is returned.
 #' 
 #' @export
 getInclusionStatistics <- function(connectionDetails = NULL,
                                    connection = NULL,
                                    resultsDatabaseSchema,
                                    instantiatedCohortId,
+                                   simplify = TRUE,
                                    cohortTable = "cohort",
                                    cohortInclusionTable = paste0(cohortTable, "_inclusion"),
                                    cohortInclusionResultTable = paste0(cohortTable, "_inclusion_result"),
                                    cohortInclusionStatsTable = paste0(cohortTable, "_inclusion_stats"),
-                                   cohortSummaryStatsTable = paste0(cohortTable, "_inclusion_stats")) {
+                                   cohortSummaryStatsTable = paste0(cohortTable, "_summary_stats")) {
   start <- Sys.time()
   ParallelLogger::logInfo("Fetching inclusion statistics for cohort with cohort_definition_id = ", instantiatedCohortId)
   if (is.null(connection)) {
@@ -243,13 +246,37 @@ getInclusionStatistics <- function(connectionDetails = NULL,
                                                cohort_id = instantiatedCohortId) 
   }
   inclusion <- fetchStats(cohortInclusionTable)
-  inclusionResults <- fetchStats(cohortInclusionResultTable)
-  inclusionStats <- fetchStats(cohortInclusionStatsTable)
   summaryStats <- fetchStats(cohortSummaryStatsTable)
+  inclusionStats <- fetchStats(cohortInclusionStatsTable)
+  inclusionResults <- fetchStats(cohortInclusionResultTable)
+  if (simplify) {
+    if (nrow(inclusion) == 0 || nrow(inclusionStats) == 0) {
+      return(data.frame())
+    }
+    result <- merge(unique(inclusion[, c("ruleSequence", "name")]),
+                    inclusionStats[inclusionStats$modeId == 0, c("ruleSequence", 
+                                                                 "personCount", 
+                                                                 "gainCount", 
+                                                                 "personTotal")],)
+    
+    result$remain <- 0
+    inclusionResults <- inclusionResults[inclusionResults$modeId == 0, ]
+    mask <- 0
+    for (ruleId in 0:(nrow(result) - 1)) {
+      mask <- bitwOr(mask, 2^ruleId)  
+      idx <- bitwAnd(inclusionResults$inclusionRuleMask, mask) == mask
+      result$remain[result$ruleSequence == ruleId] <- sum(inclusionResults$personCount[idx])
+    }
+  } else {
+    if (nrow(inclusion) == 0) {
+      return(list())
+    }
+    result <- list(inclusion = inclusion,
+                   inclusionResults = inclusionResults,
+                   inclusionStats = inclusionStats,
+                   summaryStats = summaryStats)
+  }
   delta <- Sys.time() - start
   writeLines(paste("Fetching inclusion statistics took", signif(delta, 3), attr(delta, "units")))
-  return(list(inclusion = inclusion,
-              inclusionResults = inclusionResults,
-              inclusionStats = inclusionStats,
-              summaryStats = summaryStats))
+  return(result)
 }

@@ -1,4 +1,5 @@
 extras
+man-roxygen
 license_header_stub.txt
 pom.xml
 ^.*\.Rproj$

@@ -18,4 +18,7 @@
 #'
 #' @docType package
 #' @name StudyDiagnostics
+#' @import DatabaseConnector
+#' @importFrom grDevices rgb
+#' @importFrom stats aggregate
 NULL
