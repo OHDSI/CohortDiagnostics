@@ -5,7 +5,7 @@
 \title{Get statistics on cohort inclusion criteria}
 \usage{
 getInclusionStatistics(connectionDetails = NULL, connection = NULL,
-  resultsDatabaseSchema, instantiatedCohortId, simplify = TRUE,
+  resultsDatabaseSchema, cohortId, simplify = TRUE,
   cohortTable = "cohort", cohortInclusionTable = paste0(cohortTable,
   "_inclusion"), cohortInclusionResultTable = paste0(cohortTable,
   "_inclusion_result"), cohortInclusionStatsTable = paste0(cohortTable,
@@ -27,7 +27,7 @@ when the function finishes.}
 Note that for SQL Server, this should include both the database and
 schema name, for example 'scratch.dbo'.}
 
-\item{instantiatedCohortId}{The cohort definition ID used to reference the cohort in the cohort table.}
+\item{cohortId}{The cohort definition ID used to reference the cohort in the cohort table.}
 
 \item{simplify}{Simply output the attrition table?}
 

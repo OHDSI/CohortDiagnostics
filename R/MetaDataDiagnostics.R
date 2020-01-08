@@ -117,10 +117,10 @@ findOrphanConcepts <- function(connectionDetails = NULL,
 #' 
 #' @param baseUrl              The base URL for the WebApi instance, for example: "http://server.org:80/WebAPI". 
 #'                             Needn't be provided if \code{cohortJson} is provided.
-#' @param cohortId             The ID of the cohort in the WebAPI instance.
+#' @param webApiCohortId       The ID of the cohort in the WebAPI instance.
 #'                             Needn't be provided if \code{cohortJson} is provided.
 #' @param cohortJson           A characteric string containing the JSON of a cohort definition.
-#'                             Needn't be provided if \code{baseUrl} and \code{cohortId} are provided.
+#'                             Needn't be provided if \code{baseUrl} and \code{webApiCohortId} are provided.
 #' 
 #' @return 
 #' A data frame with orphan concepts, with counts how often the code was encountered
@@ -132,20 +132,20 @@ findCohortOrphanConcepts <- function(connectionDetails = NULL,
                                      cdmDatabaseSchema,
                                      oracleTempSchema = NULL,
                                      baseUrl = NULL,
-                                     cohortId = NULL,
+                                     webApiCohortId = NULL,
                                      cohortJson = NULL,
                                      conceptCountsDatabaseSchema = cdmDatabaseSchema,
                                      conceptCountsTable = "concept_counts") {
   
   if (is.null(baseUrl) && is.null(cohortJson)) {
-    stop("Must provide either baseUrl and cohortId, or cohortJson and cohortSql")
+    stop("Must provide either baseUrl and webApiCohortId, or cohortJson and cohortSql")
   }
   if (!is.null(cohortJson) && !is.character(cohortJson)) {
     stop("cohortJson should be character (a JSON string).") 
   }
   start <- Sys.time()
   if (is.null(cohortJson)) {
-    cohortExpression <- ROhdsiWebApi::getCohortDefinitionExpression(definitionId = cohortId, baseUrl = baseUrl)
+    cohortExpression <- ROhdsiWebApi::getCohortDefinitionExpression(definitionId = webApiCohortId, baseUrl = baseUrl)
     cohortJson <- cohortExpression$expression
   }
   getConceptIdFromItem <- function(item) {
@@ -208,7 +208,7 @@ createConceptCountsTable <- function(connectionDetails = NULL,
   }
   sql <- SqlRender::loadRenderTranslateSql("CreateConceptCountTable.sql",
                                            packageName = "StudyDiagnostics",
-                                           dbms = connectionDetails$dbms,
+                                           dbms = connection@dbms,
                                            cdm_database_schema = cdmDatabaseSchema,
                                            work_database_schema = conceptCountsDatabaseSchema,
                                            concept_counts_table = conceptCountsTable)
@@ -245,22 +245,22 @@ findCohortIncludedSourceConcepts <- function(connectionDetails = NULL,
                                              cdmDatabaseSchema,
                                              oracleTempSchema = NULL,
                                              baseUrl = NULL,
-                                             cohortId = NULL,
+                                             webApiCohortId = NULL,
                                              cohortJson = NULL,
                                              cohortSql = NULL,
                                              byMonth = FALSE,
                                              useSourceValues = FALSE) {
   if (is.null(baseUrl) && is.null(cohortJson)) {
-    stop("Must provide either baseUrl and cohortId, or cohortJson and cohortSql")
+    stop("Must provide either baseUrl and webApiCohortId, or cohortJson and cohortSql")
   }
   if (!is.null(cohortJson) && !is.character(cohortJson)) {
     stop("cohortJson should be character (a JSON string).") 
   }
   start <- Sys.time()
   if (is.null(cohortJson)) {
-    cohortExpression <- ROhdsiWebApi::getCohortDefinitionExpression(definitionId = cohortId, baseUrl = baseUrl)
+    cohortExpression <- ROhdsiWebApi::getCohortDefinitionExpression(definitionId = webApiCohortId, baseUrl = baseUrl)
     cohortJson <- cohortExpression$expression
-    cohortSql <- ROhdsiWebApi::getCohortDefinitionSql(definitionId = cohortId, 
+    cohortSql <- ROhdsiWebApi::getCohortDefinitionSql(definitionId = webApiCohortId, 
                                                       baseUrl = baseUrl,
                                                       generateStats = FALSE)
   }
@@ -277,7 +277,7 @@ findCohortIncludedSourceConcepts <- function(connectionDetails = NULL,
   ParallelLogger::logInfo("Counting codes in concept sets")
   sql <- SqlRender::loadRenderTranslateSql("CohortSourceCodes.sql",
                                            packageName = "StudyDiagnostics",
-                                           dbms = connectionDetails$dbms,
+                                           dbms = connection@dbms,
                                            oracleTempSchema = oracleTempSchema,
                                            cdm_database_schema = cdmDatabaseSchema,
                                            by_month = byMonth,
@@ -295,22 +295,18 @@ findCohortIncludedSourceConcepts <- function(connectionDetails = NULL,
   if (byMonth) {
     sql <- SqlRender::loadRenderTranslateSql("ObservedPerCalendarMonth.sql",
                                              packageName = "StudyDiagnostics",
-                                             dbms = connectionDetails$dbms,
+                                             dbms = connection@dbms,
                                              oracleTempSchema = oracleTempSchema,
                                              cdm_database_schema = cdmDatabaseSchema)
     backgroundCounts <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
-    
-    sql <- "TRUNCATE TABLE #Codesets; DROP TABLE #Codesets;"
-    DatabaseConnector::renderTranslateExecuteSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
-    
     backgroundCounts$startCount[is.na(backgroundCounts$startCount)] <- 0
     backgroundCounts$endCount[is.na(backgroundCounts$endCount)] <- 0
     backgroundCounts$net <- backgroundCounts$startCount - backgroundCounts$endCount
     backgroundCounts$time <- backgroundCounts$eventYear + (backgroundCounts$eventMonth - 1) / 12
     backgroundCounts <- backgroundCounts[order(backgroundCounts$time), ]
-    backgroundCounts$backgroundCount <- cumsum(backgroundCounts$net)
-    backgroundCounts$backgroundCount <- backgroundCounts$backgroundCount + backgroundCounts$endCount
-    counts <- merge(counts, backgroundCounts[, c("eventYear", "eventMonth", "backgroundCount")], all.x = TRUE)
+    backgroundCounts$backgroundSubjects <- cumsum(backgroundCounts$net)
+    backgroundCounts$backgroundSubjects <- backgroundCounts$backgroundSubjects + backgroundCounts$endCount
+    counts <- merge(counts, backgroundCounts[, c("eventYear", "eventMonth", "backgroundSubjects")], all.x = TRUE)
     
     if (any(is.na(counts$backgroundCount))) {
       stop("code counts in calendar months without observation period starts or ends. Need to do some lookup here") 
@@ -329,6 +325,9 @@ findCohortIncludedSourceConcepts <- function(connectionDetails = NULL,
                            counts$sourceConceptName, 
                            counts$sourceVocabularyId), ]
   }
+  sql <- "TRUNCATE TABLE #Codesets; DROP TABLE #Codesets;"
+  DatabaseConnector::renderTranslateExecuteSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
+  
   delta <- Sys.time() - start
   ParallelLogger::logInfo(paste("Finding source codes took", signif(delta, 3), attr(delta, "units")))
   return(counts)

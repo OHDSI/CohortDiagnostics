@@ -6,7 +6,7 @@
 \usage{
 findCohortIncludedSourceConcepts(connectionDetails = NULL,
   connection = NULL, cdmDatabaseSchema, oracleTempSchema = NULL,
-  baseUrl = NULL, cohortId = NULL, cohortJson = NULL,
+  baseUrl = NULL, webApiCohortId = NULL, cohortJson = NULL,
   cohortSql = NULL, byMonth = FALSE, useSourceValues = FALSE)
 }
 \arguments{
@@ -30,7 +30,7 @@ privileges for storing temporary tables.}
 \item{baseUrl}{The base URL for the WebApi instance, for example: "http://server.org:80/WebAPI". 
 Needn't be provided if \code{cohortJson} and \code{cohortSql} are provided.}
 
-\item{cohortId}{The ID of the cohort in the WebAPI instance.
+\item{webApiCohortId}{The ID of the cohort in the WebAPI instance.
 Needn't be provided if \code{cohortJson} and \code{cohortSql} are provided.}
 
 \item{cohortJson}{A character string containing the JSON of a cohort definition.

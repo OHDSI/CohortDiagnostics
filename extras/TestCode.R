@@ -39,12 +39,12 @@ instantiateCohort(connectionDetails = connectionDetails,
                   cohortDatabaseSchema = cohortDatabaseSchema,
                   cohortTable = cohortTable,
                   baseUrl = baseUrl,
-                  cohortId = cohortId,
+                  webApiCohortId = cohortId,
                   generateInclusionStats = TRUE)
 
 inclusionStatistics <- getInclusionStatistics(connectionDetails = connectionDetails,
                                               resultsDatabaseSchema = resultsDatabaseSchema,
-                                              instantiatedCohortId = cohortId,
+                                              cohortId = cohortId,
                                               cohortTable = cohortTable)
 
 # Source concepts -------------------------------------------------------------------------
@@ -56,7 +56,7 @@ includedSourceConcepts <- findCohortIncludedSourceConcepts(connectionDetails = c
                                                            cdmDatabaseSchema = cdmDatabaseSchema,
                                                            oracleTempSchema = oracleTempSchema,
                                                            baseUrl = baseUrl,
-                                                           cohortId = cohortId,
+                                                           webApiCohortId = cohortId,
                                                            byMonth = FALSE,
                                                            useSourceValues = FALSE)
 
@@ -65,17 +65,17 @@ orphanConcepts <- findCohortOrphanConcepts(connectionDetails = connectionDetails
                                            oracleTempSchema = oracleTempSchema,
                                            conceptCountsDatabaseSchema = workDatabaseSchema,
                                            baseUrl = baseUrl,
-                                           cohortId = cohortId)
+                                           webApiCohortId = cohortId)
 
 # Cohort-level ------------------------------------------------------------------
 breakdown <- breakDownIndexEvents(connectionDetails = connectionDetails,
                                   cdmDatabaseSchema = cdmDatabaseSchema,
                                   oracleTempSchema = oracleTempSchema,
                                   baseUrl = baseUrl,
-                                  cohortId = cohortId,
+                                  webApiCohortId = cohortId,
                                   cohortDatabaseSchema = cohortDatabaseSchema,
                                   cohortTable = cohortTable,
-                                  instantiatedCohortId = cohortId)
+                                  cohortId = cohortId)
 
 incidenceProportion <- getIncidenceProportion(connectionDetails = connectionDetails,
                                               cohortDatabaseSchema = cohortDatabaseSchema,
@@ -83,7 +83,7 @@ incidenceProportion <- getIncidenceProportion(connectionDetails = connectionDeta
                                               cdmDatabaseSchema = cdmDatabaseSchema,
                                               firstOccurrenceOnly = TRUE,
                                               minObservationTime = 365,
-                                              instantiatedCohortId = cohortId)
+                                              cohortId = cohortId)
 
 plotIncidenceProportionByYear(incidenceProportion)
 
@@ -101,22 +101,58 @@ chars <- getCohortCharacteristics(connectionDetails = connectionDetails,
                                   cdmDatabaseSchema = cdmDatabaseSchema,
                                   cohortDatabaseSchema = cohortDatabaseSchema,
                                   cohortTable = cohortTable,
-                                  instantiatedCohortId = cohortId)
+                                  cohortId = cohortId)
 
 chars1 <- getCohortCharacteristics(connectionDetails = connectionDetails,
                                    oracleTempSchema = oracleTempSchema,
                                    cdmDatabaseSchema = cdmDatabaseSchema,
                                    cohortDatabaseSchema = cohortDatabaseSchema,
                                    cohortTable = cohortTable,
-                                   instantiatedCohortId = 7362)
+                                   cohortId = 7362)
 
 chars2 <- getCohortCharacteristics(connectionDetails = connectionDetails,
                                    oracleTempSchema = oracleTempSchema,
                                    cdmDatabaseSchema = cdmDatabaseSchema,
                                    cohortDatabaseSchema = cohortDatabaseSchema,
                                    cohortTable = cohortTable,
-                                   instantiatedCohortId = 5665)
+                                   cohortId = 5665)
 
 # saveRDS(chars1, 'c:/temp/chars1.rds') saveRDS(chars2, 'c:/temp/chars2.rds')
 
 comparison <- compareCohortCharacteristics(chars1, chars2)
+
+
+
+
+dbms <- "pdw"
+user <- NULL
+pw <- NULL
+server <- Sys.getenv("PDW_SERVER")
+port <- Sys.getenv("PDW_PORT")
+oracleTempSchema <- NULL
+connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = dbms,
+                                                                server = server,
+                                                                user = user,
+                                                                password = pw,
+                                                                port = port)
+
+studyFolder <- "c:/BarcelonaStudyAThon"
+
+cdmDatabaseSchema <- "cdm_synpuf_v667.dbo"
+cohortDatabaseSchema <- "scratch.dbo"
+cohortTable <- "barca_synpuf"
+databaseId <- "Synpuf"
+databaseName <- "Medicare Claims Synthetic Public Use Files (SynPUFs)"
+databaseDescription <- "Medicare Claims Synthetic Public Use Files (SynPUFs) were created to allow interested parties to gain familiarity using Medicare claims data while protecting beneficiary privacy. These files are intended to promote development of software and applications that utilize files in this format, train researchers on the use and complexities of Centers for Medicare and Medicaid Services (CMS) claims, and support safe data mining innovations. The SynPUFs were created by combining randomized information from multiple unique beneficiaries and changing variable values. This randomization and combining of beneficiary information ensures privacy of health information."
+folder <- file.path(studyFolder, "synpuf")
+
+
+inclusionStatisticsFolder <- folder
+cohortId = 13666 
+getInclusionStatisticsFromFiles(instantiatedCohortId = 13666,
+                                folder = folder,
+                                simplify = TRUE)
+
+
+packageName = "BarcelonaStudyAThon"
+exportFolder <- file.path(folder, "export")

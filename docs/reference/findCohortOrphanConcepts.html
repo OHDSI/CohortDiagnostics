@@ -133,7 +133,7 @@ example because of missing source-to-standard concept maps, or erroneous hierarc
 
     <pre class="usage"><span class='fu'>findCohortOrphanConcepts</span>(<span class='kw'>connectionDetails</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>connection</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='no'>cdmDatabaseSchema</span>, <span class='kw'>oracleTempSchema</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>baseUrl</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cohortId</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>cohortJson</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>webApiCohortId</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>cohortJson</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>conceptCountsDatabaseSchema</span> <span class='kw'>=</span> <span class='no'>cdmDatabaseSchema</span>,
   <span class='kw'>conceptCountsTable</span> <span class='kw'>=</span> <span class='st'>"concept_counts"</span>)</pre>
 
@@ -171,14 +171,14 @@ privileges for storing temporary tables.</p></td>
 Needn't be provided if <code>cohortJson</code> is provided.</p></td>
     </tr>
     <tr>
-      <th>cohortId</th>
+      <th>webApiCohortId</th>
       <td><p>The ID of the cohort in the WebAPI instance.
 Needn't be provided if <code>cohortJson</code> is provided.</p></td>
     </tr>
     <tr>
       <th>cohortJson</th>
       <td><p>A characteric string containing the JSON of a cohort definition.
-Needn't be provided if <code>baseUrl</code> and <code>cohortId</code> are provided.</p></td>
+Needn't be provided if <code>baseUrl</code> and <code>webApiCohortId</code> are provided.</p></td>
     </tr>
     <tr>
       <th>conceptCountsDatabaseSchema</th>

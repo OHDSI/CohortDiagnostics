@@ -6,7 +6,7 @@
 \usage{
 findCohortOrphanConcepts(connectionDetails = NULL, connection = NULL,
   cdmDatabaseSchema, oracleTempSchema = NULL, baseUrl = NULL,
-  cohortId = NULL, cohortJson = NULL,
+  webApiCohortId = NULL, cohortJson = NULL,
   conceptCountsDatabaseSchema = cdmDatabaseSchema,
   conceptCountsTable = "concept_counts")
 }
@@ -31,11 +31,11 @@ privileges for storing temporary tables.}
 \item{baseUrl}{The base URL for the WebApi instance, for example: "http://server.org:80/WebAPI". 
 Needn't be provided if \code{cohortJson} is provided.}
 
-\item{cohortId}{The ID of the cohort in the WebAPI instance.
+\item{webApiCohortId}{The ID of the cohort in the WebAPI instance.
 Needn't be provided if \code{cohortJson} is provided.}
 
 \item{cohortJson}{A characteric string containing the JSON of a cohort definition.
-Needn't be provided if \code{baseUrl} and \code{cohortId} are provided.}
+Needn't be provided if \code{baseUrl} and \code{webApiCohortId} are provided.}
 
 \item{conceptCountsDatabaseSchema}{Schema name where your concept counts table resides.
 Note that for SQL Server, this should include both the database and

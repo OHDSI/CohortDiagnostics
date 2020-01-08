@@ -27,7 +27,7 @@
 #' 
 #' @template CohortTable
 #' 
-#' @param instantiatedCohortId       The cohort definition ID used to reference the cohort in the cohort table.
+#' @param cohortId                   The cohort definition ID used to reference the cohort in the cohort table.
 #' @param covariateSettings          Either an object of type \code{covariateSettings} as created using one of the createCovariate 
 #'                                   functions in the FeatureExtraction package, or a list of such objects.
 #'
@@ -41,7 +41,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
                                      oracleTempSchema = NULL,
                                      cohortDatabaseSchema = cdmDatabaseSchema,
                                      cohortTable = "cohort",
-                                     instantiatedCohortId,
+                                     cohortId,
                                      covariateSettings = FeatureExtraction::createDefaultCovariateSettings()) {
   if (!file.exists(getOption("fftempdir"))) {
     stop("This function uses ff, but the fftempdir '", getOption("fftempdir"), "' does not exist. Either create it, or set fftempdir to another location using options(fftempdir = \"<path>\")")
@@ -57,8 +57,8 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
   if (!checkIfCohortInstantiated(connection = connection,
                                  cohortDatabaseSchema = cohortDatabaseSchema,
                                  cohortTable = cohortTable,
-                                 instantiatedCohortId = instantiatedCohortId)) {
-    warning("Cohort with ID ", instantiatedCohortId, " appears to be empty. Was it instantiated?")
+                                 cohortId = cohortId)) {
+    warning("Cohort with ID ", cohortId, " appears to be empty. Was it instantiated?")
     delta <- Sys.time() - start
     ParallelLogger::logInfo(paste("Cohort characterization took", signif(delta, 3), attr(delta, "units")))
     return(data.frame())
@@ -69,7 +69,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
                                                 cdmDatabaseSchema = cdmDatabaseSchema,
                                                 cohortDatabaseSchema = cohortDatabaseSchema,
                                                 cohortTable = cohortTable,
-                                                cohortId = instantiatedCohortId,
+                                                cohortId = cohortId,
                                                 covariateSettings = covariateSettings,
                                                 aggregated = TRUE)
   result <- data.frame()

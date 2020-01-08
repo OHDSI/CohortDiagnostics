@@ -38,7 +38,7 @@
 #' 
 #' @param minObservationTime   The minimum amount of observation time required before the occurrence of a cohort entry. This is also used to eliminate
 #'                             immortal time from the denominator.
-#' @param instantiatedCohortId The cohort definition ID used to reference the cohort in the cohort table.
+#' @param cohortId The cohort definition ID used to reference the cohort in the cohort table.
 #'
 #' @return
 #' A data frame
@@ -51,7 +51,7 @@ getIncidenceProportion <- function(connectionDetails = NULL,
                                    cdmDatabaseSchema,
                                    firstOccurrenceOnly = TRUE,
                                    minObservationTime = 365,
-                                   instantiatedCohortId) {
+                                   cohortId) {
   start <- Sys.time()
   
   if (is.null(connection)) {
@@ -62,8 +62,8 @@ getIncidenceProportion <- function(connectionDetails = NULL,
   if (!checkIfCohortInstantiated(connection = connection,
                                  cohortDatabaseSchema = cohortDatabaseSchema,
                                  cohortTable = cohortTable,
-                                 instantiatedCohortId = instantiatedCohortId)) {
-    warning("Cohort with ID ", instantiatedCohortId, " appears to be empty. Was it instantiated?")
+                                 cohortId = cohortId)) {
+    warning("Cohort with ID ", cohortId, " appears to be empty. Was it instantiated?")
     delta <- Sys.time() - start
     ParallelLogger::logInfo(paste("Getting incidence proportion data took", signif(delta, 3), attr(delta, "units")))
     return(data.frame())
@@ -78,7 +78,7 @@ getIncidenceProportion <- function(connectionDetails = NULL,
                                            cdm_database_schema = cdmDatabaseSchema,
                                            first_occurrence_only = firstOccurrenceOnly,
                                            min_observation_time = minObservationTime,
-                                           cohort_definition_id = instantiatedCohortId)
+                                           cohort_definition_id = cohortId)
   DatabaseConnector::executeSql(connection, sql)
   
   sql <- SqlRender::loadRenderTranslateSql(sqlFilename = "GetIncidenceProportionData.sql",

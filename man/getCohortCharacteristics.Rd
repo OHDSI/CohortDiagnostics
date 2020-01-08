@@ -7,7 +7,7 @@
 getCohortCharacteristics(connectionDetails = NULL, connection = NULL,
   cdmDatabaseSchema, oracleTempSchema = NULL,
   cohortDatabaseSchema = cdmDatabaseSchema, cohortTable = "cohort",
-  instantiatedCohortId,
+  cohortId,
   covariateSettings = FeatureExtraction::createDefaultCovariateSettings())
 }
 \arguments{
@@ -34,7 +34,7 @@ schema name, for example 'scratch.dbo'.}
 
 \item{cohortTable}{Name of the cohort table.}
 
-\item{instantiatedCohortId}{The cohort definition ID used to reference the cohort in the cohort table.}
+\item{cohortId}{The cohort definition ID used to reference the cohort in the cohort table.}
 
 \item{covariateSettings}{Either an object of type \code{covariateSettings} as created using one of the createCovariate 
 functions in the FeatureExtraction package, or a list of such objects.}

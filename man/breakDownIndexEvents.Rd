@@ -7,8 +7,8 @@
 breakDownIndexEvents(connectionDetails = NULL, connection = NULL,
   cdmDatabaseSchema, oracleTempSchema = NULL,
   cohortDatabaseSchema = cdmDatabaseSchema, cohortTable = "cohort",
-  baseUrl = NULL, cohortId = NULL, cohortJson = NULL,
-  cohortSql = NULL, instantiatedCohortId = cohortId)
+  baseUrl = NULL, webApiCohortId = NULL, cohortJson = NULL,
+  cohortSql = NULL, cohortId = cohortId)
 }
 \arguments{
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
@@ -37,7 +37,7 @@ schema name, for example 'scratch.dbo'.}
 \item{baseUrl}{The base URL for the WebApi instance, for example: "http://server.org:80/WebAPI". 
 Needn't be provided if \code{cohortJson} and \code{cohortSql} are provided.}
 
-\item{cohortId}{The ID of the cohort in the WebAPI instance.
+\item{webApiCohortId}{The ID of the cohort in the WebAPI instance.
 Needn't be provided if \code{cohortJson} and \code{cohortSql} are provided.}
 
 \item{cohortJson}{A character string containing the JSON of a cohort definition.
@@ -46,7 +46,7 @@ Needn't be provided if \code{baseUrl} and \code{cohortId} are provided.}
 \item{cohortSql}{The OHDSI SQL representation of the same cohort definition.
 Needn't be provided if \code{baseUrl} and \code{cohortId} are provided.}
 
-\item{instantiatedCohortId}{The cohort definition ID used to reference the cohort in the cohort table.}
+\item{cohortId}{The cohort definition ID used to reference the cohort in the cohort table.}
 }
 \value{
 A data frame with concepts, and per concept the count of how often the concept was encountered at the index date.

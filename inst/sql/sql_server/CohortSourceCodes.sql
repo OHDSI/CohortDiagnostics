@@ -15,7 +15,7 @@ SELECT codeset_id AS concept_set_id,
 	event_year,
 	event_month,
 }
-	person_count
+	concept_subjects
 FROM (
 
 -- condition_occurrence

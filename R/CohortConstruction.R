@@ -96,7 +96,7 @@ createCohortTable <- function(connectionDetails = NULL,
 #' 
 #' @template CdmDatabaseSchema
 #' 
-#' @param instantiatedCohortId       The cohort definition ID used to reference the cohort in the cohort table.
+#' @param cohortId       The cohort definition ID used to reference the cohort in the cohort table.
 #' 
 #' @param generateInclusionStats     Compute and store inclusion rule statistics?
 #' @param resultsDatabaseSchema      Schema name where the statistics tables reside.
@@ -115,10 +115,10 @@ instantiateCohort <- function(connectionDetails = NULL,
                               cohortDatabaseSchema = cdmDatabaseSchema,
                               cohortTable = "cohort",
                               baseUrl = NULL,
-                              cohortId = NULL,
+                              webApiCohortId = NULL,
                               cohortJson = NULL,
                               cohortSql = NULL,
-                              instantiatedCohortId = cohortId,
+                              cohortId = webApiCohortId,
                               generateInclusionStats = FALSE,
                               resultsDatabaseSchema = cohortDatabaseSchema,
                               cohortInclusionTable = paste0(cohortTable, "_inclusion"),
@@ -126,7 +126,7 @@ instantiateCohort <- function(connectionDetails = NULL,
                               cohortInclusionStatsTable = paste0(cohortTable, "_inclusion_stats"),
                               cohortSummaryStatsTable = paste0(cohortTable, "_summary_stats")) {
   if (is.null(baseUrl) && is.null(cohortJson)) {
-    stop("Must provide either baseUrl and cohortId, or cohortJson and cohortSql")
+    stop("Must provide either baseUrl and webApiCohortId, or cohortJson and cohortSql")
   }
   if (!is.null(cohortJson) && !is.character(cohortJson)) {
     stop("cohortJson should be character (a JSON string).") 
@@ -134,9 +134,9 @@ instantiateCohort <- function(connectionDetails = NULL,
   start <- Sys.time()
   if (is.null(cohortJson)) {
     ParallelLogger::logInfo("Retrieving cohort definition from WebAPI")
-    cohortExpression <- ROhdsiWebApi::getCohortDefinitionExpression(definitionId = cohortId, baseUrl = baseUrl)
+    cohortExpression <- ROhdsiWebApi::getCohortDefinitionExpression(definitionId = webApiCohortId, baseUrl = baseUrl)
     cohortJson <- cohortExpression$expression
-    cohortSql <- ROhdsiWebApi::getCohortDefinitionSql(definitionId = cohortId, 
+    cohortSql <- ROhdsiWebApi::getCohortDefinitionSql(definitionId = webApiCohortId, 
                                                       baseUrl = baseUrl, 
                                                       generateStats = generateInclusionStats)
   }
@@ -147,7 +147,7 @@ instantiateCohort <- function(connectionDetails = NULL,
       nrOfRules <- length(cohortDefinition$InclusionRules)
       if (nrOfRules > 0) {
         for (i in 1:nrOfRules) {
-          inclusionRules <- rbind(inclusionRules, data.frame(cohortDefinitionId = instantiatedCohortId,
+          inclusionRules <- rbind(inclusionRules, data.frame(cohortDefinitionId = cohortId,
                                                              ruleSequence = i - 1,
                                                              name = cohortDefinition$InclusionRules[[i]]$name))
         }
@@ -160,7 +160,7 @@ instantiateCohort <- function(connectionDetails = NULL,
     on.exit(DatabaseConnector::disconnect(connection))
   }
   
-  ParallelLogger::logInfo("Instantiation cohort with cohort_definition_id = ", instantiatedCohortId)
+  ParallelLogger::logInfo("Instantiation cohort with cohort_definition_id = ", cohortId)
   sql <- cohortSql
   if (generateInclusionStats) {
     sql <- SqlRender::render(sql, 
@@ -168,7 +168,7 @@ instantiateCohort <- function(connectionDetails = NULL,
                              vocabulary_database_schema = cdmDatabaseSchema,
                              target_database_schema = cohortDatabaseSchema,
                              target_cohort_table = cohortTable,
-                             target_cohort_id = instantiatedCohortId,
+                             target_cohort_id = cohortId,
                              results_database_schema.cohort_inclusion = paste(resultsDatabaseSchema, cohortInclusionTable, sep = "."),  
                              results_database_schema.cohort_inclusion_result = paste(resultsDatabaseSchema, cohortInclusionResultTable, sep = "."),  
                              results_database_schema.cohort_inclusion_stats = paste(resultsDatabaseSchema, cohortInclusionStatsTable, sep = "."),  
@@ -179,7 +179,7 @@ instantiateCohort <- function(connectionDetails = NULL,
                              vocabulary_database_schema = cdmDatabaseSchema,
                              target_database_schema = cohortDatabaseSchema,
                              target_cohort_table = cohortTable,
-                             target_cohort_id = instantiatedCohortId)
+                             target_cohort_id = cohortId)
   }
   sql <- SqlRender::translate(sql,
                               targetDialect = connectionDetails$dbms,
@@ -205,7 +205,7 @@ instantiateCohort <- function(connectionDetails = NULL,
 #' @template Connection
 #'
 #' @param cohortTable                Name of the cohort table. Used only to conveniently derive names of the four rule statistics tables.
-#' @param instantiatedCohortId       The cohort definition ID used to reference the cohort in the cohort table.
+#' @param cohortId       The cohort definition ID used to reference the cohort in the cohort table.
 #' @param simplify                   Simply output the attrition table?
 #' @param resultsDatabaseSchema      Schema name where the statistics tables reside.
 #'                                   Note that for SQL Server, this should include both the database and
@@ -222,7 +222,7 @@ instantiateCohort <- function(connectionDetails = NULL,
 getInclusionStatistics <- function(connectionDetails = NULL,
                                    connection = NULL,
                                    resultsDatabaseSchema,
-                                   instantiatedCohortId,
+                                   cohortId,
                                    simplify = TRUE,
                                    cohortTable = "cohort",
                                    cohortInclusionTable = paste0(cohortTable, "_inclusion"),
@@ -230,7 +230,7 @@ getInclusionStatistics <- function(connectionDetails = NULL,
                                    cohortInclusionStatsTable = paste0(cohortTable, "_inclusion_stats"),
                                    cohortSummaryStatsTable = paste0(cohortTable, "_summary_stats")) {
   start <- Sys.time()
-  ParallelLogger::logInfo("Fetching inclusion statistics for cohort with cohort_definition_id = ", instantiatedCohortId)
+  ParallelLogger::logInfo("Fetching inclusion statistics for cohort with cohort_definition_id = ", cohortId)
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails) 
     on.exit(DatabaseConnector::disconnect(connection))
@@ -243,12 +243,75 @@ getInclusionStatistics <- function(connectionDetails = NULL,
                                                snakeCaseToCamelCase = TRUE,
                                                database_schema = resultsDatabaseSchema,
                                                table = table,
-                                               cohort_id = instantiatedCohortId) 
+                                               cohort_id = cohortId) 
   }
   inclusion <- fetchStats(cohortInclusionTable)
   summaryStats <- fetchStats(cohortSummaryStatsTable)
   inclusionStats <- fetchStats(cohortInclusionStatsTable)
   inclusionResults <- fetchStats(cohortInclusionResultTable)
+  result <- processInclusionStats(inclusion = inclusion,
+                                  inclusionResults = inclusionResults,
+                                  inclusionStats = inclusionStats,
+                                  summaryStats = summaryStats,
+                                  simplify = simplify)
+  delta <- Sys.time() - start
+  writeLines(paste("Fetching inclusion statistics took", signif(delta, 3), attr(delta, "units")))
+  return(result)
+}
+
+#' Get inclusion criteria statistics from files
+#' 
+#' @description 
+#' Gets inclusion criteria statistics from files, as stored when using the \code{ROhdsiWebApi::insertCohortDefinitionSetInPackage} function
+#' with \code{generateStats = TRUE}.
+#' 
+#' @param cohortId       The cohort definition ID used to reference the cohort in the cohort table.
+#' @param simplify                   Simply output the attrition table?
+#' @param folder                    The path to the folder where the inclusion statistics are stored.
+#' @param cohortInclusionFile       Name of the inclusion table, one of the tables for storing inclusion rule statistics.
+#' @param cohortInclusionResultFile Name of the inclusion result table, one of the tables for storing inclusion rule statistics.
+#' @param cohortInclusionStatsFile  Name of the inclusion stats table, one of the tables for storing inclusion rule statistics.
+#' @param cohortSummaryStatsFile    Name of the summary stats table, one of the tables for storing inclusion rule statistics.
+#'
+#' @return 
+#' If `simplify = TRUE`, this function returns a single data frame. Else a list of data frames is returned.
+#' 
+#' @export
+getInclusionStatisticsFromFiles <- function(cohortId,
+                                            folder,
+                                            cohortInclusionFile = file.path(folder, "cohortInclusion.csv"),
+                                            cohortInclusionResultFile = file.path(folder, "cohortIncResult.csv"),
+                                            cohortInclusionStatsFile = file.path(folder, "cohortIncStats.csv"),
+                                            cohortSummaryStatsFile = file.path(folder, "cohortSummaryStats.csv"),
+                                            simplify = TRUE) {
+  start <- Sys.time()
+  ParallelLogger::logInfo("Fetching inclusion statistics for cohort with cohort_definition_id = ", cohortId)
+  
+  fetchStats <- function(file) {
+    ParallelLogger::logDebug("- Fetching data from ", file)
+    stats <- readr::read_csv(file, col_types = readr::cols())
+    stats <- stats[stats$cohortDefinitionId == cohortId, ]
+    return(stats)                                             
+  }
+  inclusion <- fetchStats(cohortInclusionFile)
+  summaryStats <- fetchStats(cohortSummaryStatsFile)
+  inclusionStats <- fetchStats(cohortInclusionStatsFile)
+  inclusionResults <- fetchStats(cohortInclusionResultFile)
+  result <- processInclusionStats(inclusion = inclusion,
+                                  inclusionResults = inclusionResults,
+                                  inclusionStats = inclusionStats,
+                                  summaryStats = summaryStats,
+                                  simplify = simplify)
+  delta <- Sys.time() - start
+  writeLines(paste("Fetching inclusion statistics took", signif(delta, 3), attr(delta, "units")))
+  return(result)
+}
+
+processInclusionStats <- function(inclusion,
+                                  inclusionResults,
+                                  inclusionStats,
+                                  summaryStats,
+                                  simplify) {
   if (simplify) {
     if (nrow(inclusion) == 0 || nrow(inclusionStats) == 0) {
       return(data.frame())
@@ -259,7 +322,7 @@ getInclusionStatistics <- function(connectionDetails = NULL,
                                                                  "gainCount", 
                                                                  "personTotal")],)
     
-    result$remain <- 0
+    result$remain <- rep(0, nrow(result))
     inclusionResults <- inclusionResults[inclusionResults$modeId == 0, ]
     mask <- 0
     for (ruleId in 0:(nrow(result) - 1)) {
@@ -267,6 +330,7 @@ getInclusionStatistics <- function(connectionDetails = NULL,
       idx <- bitwAnd(inclusionResults$inclusionRuleMask, mask) == mask
       result$remain[result$ruleSequence == ruleId] <- sum(inclusionResults$personCount[idx])
     }
+    colnames(result) <- c("ruleSequenceId", "ruleName", "meetSubjects", "gainSubjects", "totalSubjects", "remainSubjects")
   } else {
     if (nrow(inclusion) == 0) {
       return(list())
@@ -276,7 +340,5 @@ getInclusionStatistics <- function(connectionDetails = NULL,
                    inclusionStats = inclusionStats,
                    summaryStats = summaryStats)
   }
-  delta <- Sys.time() - start
-  writeLines(paste("Fetching inclusion statistics took", signif(delta, 3), attr(delta, "units")))
   return(result)
 }

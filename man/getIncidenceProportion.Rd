@@ -6,8 +6,7 @@
 \usage{
 getIncidenceProportion(connectionDetails = NULL, connection = NULL,
   cohortDatabaseSchema, cohortTable, cdmDatabaseSchema,
-  firstOccurrenceOnly = TRUE, minObservationTime = 365,
-  instantiatedCohortId)
+  firstOccurrenceOnly = TRUE, minObservationTime = 365, cohortId)
 }
 \arguments{
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
@@ -35,7 +34,7 @@ schema name, for example 'cdm_data.dbo'.}
 \item{minObservationTime}{The minimum amount of observation time required before the occurrence of a cohort entry. This is also used to eliminate
 immortal time from the denominator.}
 
-\item{instantiatedCohortId}{The cohort definition ID used to reference the cohort in the cohort table.}
+\item{cohortId}{The cohort definition ID used to reference the cohort in the cohort table.}
 }
 \value{
 A data frame
