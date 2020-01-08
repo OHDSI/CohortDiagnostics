@@ -86,26 +86,27 @@ getIncidenceProportion <- function(connectionDetails = NULL,
                                            dbms = connectionDetails$dbms)
   ipYearAgeGenderData <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
   ipYearAgeGenderData <- recode(ipYearAgeGenderData)
+  ipYearAgeGenderData$incidenceProportion = 1000 * ipYearAgeGenderData$cohortSubjects / ipYearAgeGenderData$backgroundSubjects
   
   sql <- SqlRender::loadRenderTranslateSql(sqlFilename = "RemoveTempTables.sql",
                                            packageName = "StudyDiagnostics",
                                            dbms = connectionDetails$dbms)
   DatabaseConnector::executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
   
-  ipData <- data.frame(numCount = sum(ipYearAgeGenderData$numCount),
-                       denomCount = sum(ipYearAgeGenderData$denomCount),
-                       ip1000p = 1000 * sum(ipYearAgeGenderData$numCount) / sum(ipYearAgeGenderData$denomCount))
+  ipData <- data.frame(cohortSubjects = sum(ipYearAgeGenderData$cohortSubjects),
+                       backgroundSubjects = sum(ipYearAgeGenderData$backgroundSubjects),
+                       incidenceProportion = 1000 * sum(ipYearAgeGenderData$cohortSubjects) / sum(ipYearAgeGenderData$backgroundSubjects))
   ipGender <- aggregateGetIp(ipYearAgeGenderData, list(gender = ipYearAgeGenderData$gender))
   ipGender <- ipGender[order(ipGender$gender), ]
-  ipAge <- aggregateGetIp(ipYearAgeGenderData, list(ageGroup10y = ipYearAgeGenderData$ageGroup10y))
-  ipAge <- ipAge[order(ipAge$ageGroup10y), ]
+  ipAge <- aggregateGetIp(ipYearAgeGenderData, list(ageGroup = ipYearAgeGenderData$ageGroup))
+  ipAge <- ipAge[order(ipAge$ageGroup), ]
   ipYearData <- aggregateGetIp(ipYearAgeGenderData, list(indexYear = ipYearAgeGenderData$indexYear))
   ipYearData <- ipYearData[order(ipYearData$indexYear), ]
-  ipYearAgeData <- aggregateGetIp(ipYearAgeGenderData, list(indexYear = ipYearAgeGenderData$indexYear, ageGroup10y = ipYearAgeGenderData$ageGroup10y))
-  ipYearAgeData <- ipYearAgeData[order(ipYearAgeData$indexYear, ipYearAgeData$ageGroup10y), ]
+  ipYearAgeData <- aggregateGetIp(ipYearAgeGenderData, list(indexYear = ipYearAgeGenderData$indexYear, ageGroup = ipYearAgeGenderData$ageGroup))
+  ipYearAgeData <- ipYearAgeData[order(ipYearAgeData$indexYear, ipYearAgeData$ageGroup), ]
   ipYearGenderData <- aggregateGetIp(ipYearAgeGenderData, list(indexYear = ipYearAgeGenderData$indexYear, gender = ipYearAgeGenderData$gender))
   ipYearGenderData <- ipYearGenderData[order(ipYearGenderData$indexYear, ipYearGenderData$gender), ]
-  ipYearAgeGenderData <- ipYearAgeGenderData[order(ipYearAgeGenderData$indexYear, ipYearAgeGenderData$ageGroup10y, ipYearAgeGenderData$gender), ]
+  ipYearAgeGenderData <- ipYearAgeGenderData[order(ipYearAgeGenderData$indexYear, ipYearAgeGenderData$ageGroup, ipYearAgeGenderData$gender), ]
   result <- dplyr::bind_rows(ipData, ipGender, ipAge, ipYearData, ipYearAgeData, ipYearGenderData, ipYearAgeGenderData)
   delta <- Sys.time() - start
   ParallelLogger::logInfo(paste("Getting incidence proportion data took", signif(delta, 3), attr(delta, "units")))
@@ -113,27 +114,27 @@ getIncidenceProportion <- function(connectionDetails = NULL,
 }
 
 recode <- function(ipData) {
-  ageGroups <- unique(ipData$ageGroup10y)
+  ageGroups <- unique(ipData$ageGroup)
   ageGroups <- min(ageGroups):max(ageGroups)
   for (i in ageGroups) {
-    ipData$ageGroup10y[ipData$ageGroup10y == i] <- paste(10*i, 10*i + 9, sep = "-")
+    ipData$ageGroup[ipData$ageGroup == i] <- paste(10*i, 10*i + 9, sep = "-")
   }
-  ipData$ageGroup10y <- factor(ipData$ageGroup10y,
+  ipData$ageGroup <- factor(ipData$ageGroup,
                                levels = paste(10*ageGroups, 10*ageGroups + 9, sep = "-"),
                                ordered = TRUE)
   ipData$gender[ipData$gender == "FEMALE"] <- "Female"
   ipData$gender[ipData$gender == "MALE"] <- "Male"
   ipData$indexYear <- as.factor(ipData$indexYear)
-  ipData <- ipData[!is.na(ipData$numCount), ]
+  ipData <- ipData[!is.na(ipData$cohortSubjects), ]
   return(ipData)
 }
 
 aggregateGetIp <- function(ipData, aggregateList) {
-  ipData <- aggregate(cbind(numCount = ipData$numCount,
-                            denomCount = ipData$denomCount),
+  ipData <- aggregate(cbind(cohortSubjects = ipData$cohortSubjects,
+                            backgroundSubjects = ipData$backgroundSubjects),
                       by = aggregateList,
                       FUN = sum)
-  ipData$ip1000p <- 1000 * ipData$numCount / ipData$denomCount
+  ipData$incidenceProportion <- 1000 * ipData$cohortSubjects / ipData$backgroundSubjects
   return(ipData)
 }
 
@@ -160,10 +161,10 @@ aggregateGetIp <- function(ipData, aggregateList) {
 plotIncidenceProportionByYear <- function(incidenceProportion,
                                           fileName = NULL) {
   data <- incidenceProportion[is.na(incidenceProportion$gender) &
-                                is.na(incidenceProportion$ageGroup10y) &
+                                is.na(incidenceProportion$ageGroup) &
                                 !is.na(incidenceProportion$indexYear), ]
   data$indexYear <- as.numeric(as.character(data$indexYear))
-  plot <- ggplot2::ggplot(data = data,  ggplot2::aes(x = indexYear, y = ip1000p, group = 1)) +
+  plot <- ggplot2::ggplot(data = data,  ggplot2::aes(x = indexYear, y = incidenceProportion, group = 1)) +
     ggplot2::geom_line(color = rgb(0, 0, 0.8), size = 1.25, alpha = 0.6) +
     ggplot2::xlab("Year") +
     ggplot2::ylab("Incidence proportion (/1000 persons)") +
@@ -199,18 +200,18 @@ plotIncidenceProportion <- function(incidenceProportion,
                                     restrictToFullAgeData = FALSE,
                                     fileName = NULL) {
   data <- incidenceProportion[!is.na(incidenceProportion$gender) &
-                                !is.na(incidenceProportion$ageGroup10y) &
+                                !is.na(incidenceProportion$ageGroup) &
                                 !is.na(incidenceProportion$indexYear), ]
   data$gender <- as.factor(data$gender)
   data$indexYear <- as.numeric(as.character(data$indexYear))
   if (restrictToFullAgeData) {
     data <- useFullData(data)
   }
-  plot <- ggplot2::ggplot(data = data,  ggplot2::aes(x = indexYear, y = ip1000p, group = gender, color = gender)) +
+  plot <- ggplot2::ggplot(data = data,  ggplot2::aes(x = indexYear, y = incidenceProportion, group = gender, color = gender)) +
     ggplot2::geom_line(size = 1.25, alpha = 0.6) +
     ggplot2::xlab("Year") +
     ggplot2::ylab("Incidence proportion (/1000 persons)") +
-    ggplot2::facet_grid( ~ageGroup10y) + 
+    ggplot2::facet_grid( ~ageGroup) + 
     ggplot2::theme(legend.position = "top",
                    legend.title = ggplot2::element_blank(),
                    axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5))
@@ -222,9 +223,9 @@ plotIncidenceProportion <- function(incidenceProportion,
 useFullData <- function(df) {
   yearList <- list()
   for (year in unique(df$indexYear)) {
-    yearList[[length(yearList) + 1]] <- unique(df$ageGroup10y[df$indexYear == year])
+    yearList[[length(yearList) + 1]] <- unique(df$ageGroup[df$indexYear == year])
   }
   ageGroups <- Reduce(intersect, yearList)
-  df <- df[df$ageGroup10y %in% ageGroups, ]
+  df <- df[df$ageGroup %in% ageGroups, ]
   return(df)
 }

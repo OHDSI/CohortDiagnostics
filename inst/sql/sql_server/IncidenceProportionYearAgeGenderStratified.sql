@@ -93,15 +93,13 @@ IF OBJECT_ID('tempdb..#inc_summary') IS NOT NULL
   DROP TABLE #inc_summary;
 
 SELECT in1.index_year,
-	in1.age_group_10y,
+	in1.age_group_10y AS age_group,
 	c1.concept_name AS gender,
-	in1.person_count AS num_count,
+	in1.person_count AS cohort_subjects,
 	{@first_occurrence_only} ? {
-	id1.person_count - CASE WHEN ide1.person_count IS NULL then 0 ELSE ide1.person_count END AS denom_count,
-	1000.0 * in1.person_count / (id1.person_count - CASE WHEN ide1.person_count is NULL THEN 0 ELSE ide1.person_count END) AS ip_1000p
+	id1.person_count - CASE WHEN ide1.person_count IS NULL then 0 ELSE ide1.person_count END AS background_subjects
 	} : {
-	id1.person_count AS denom_count,
-	1000.0 * in1.person_count / id1.person_count AS ip_1000p
+	id1.person_count AS background_subjects
 	}
 INTO #inc_summary
 FROM #inc_num in1

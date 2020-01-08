@@ -87,7 +87,7 @@ incidenceProportion <- getIncidenceProportion(connectionDetails = connectionDeta
 
 plotIncidenceProportionByYear(incidenceProportion)
 
-plotIncidenceProportion(incidenceProportion, restrictToFullAgeData = TRUE)
+plotIncidenceProportion(incidenceProportion, restrictToFullAgeData = F)
 
 overlap <- computeCohortOverlap(connectionDetails = connectionDetails,
                                 cohortDatabaseSchema = cohortDatabaseSchema,

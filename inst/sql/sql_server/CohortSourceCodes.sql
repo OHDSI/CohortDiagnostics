@@ -29,7 +29,7 @@ FROM (
 		YEAR(condition_start_date) AS event_year,
 		MONTH(condition_start_date) AS event_month,
 }
-		COUNT(DISTINCT observation_period.person_id) AS person_count
+		COUNT(DISTINCT observation_period.person_id) AS concept_subjects
 	FROM #Codesets
 	INNER JOIN @cdm_database_schema.condition_occurrence
 		ON condition_concept_id = concept_id
@@ -61,7 +61,7 @@ FROM (
 		YEAR(drug_exposure_start_date) AS event_year,
 		MONTH(drug_exposure_start_date) AS event_month,
 }
-		COUNT(DISTINCT observation_period.person_id) AS person_count
+		COUNT(DISTINCT observation_period.person_id) AS concept_subjects
 	FROM #Codesets
 	INNER JOIN @cdm_database_schema.drug_exposure
 		ON drug_concept_id = concept_id
@@ -93,7 +93,7 @@ FROM (
 		YEAR(procedure_date) AS event_year,
 		MONTH(procedure_date) AS event_month,
 }
-		COUNT(DISTINCT observation_period.person_id) AS person_count
+		COUNT(DISTINCT observation_period.person_id) AS concept_subjects
 	FROM #Codesets
 	INNER JOIN @cdm_database_schema.procedure_occurrence
 		ON procedure_concept_id = concept_id
@@ -125,7 +125,7 @@ FROM (
 		YEAR(measurement_date) AS event_year,
 		MONTH(measurement_date) AS event_month,
 }
-		COUNT(DISTINCT observation_period.person_id) AS person_count
+		COUNT(DISTINCT observation_period.person_id) AS concept_subjects
 	FROM #Codesets
 	INNER JOIN @cdm_database_schema.measurement
 		ON measurement_concept_id = concept_id
@@ -157,7 +157,7 @@ FROM (
 		YEAR(observation_date) AS event_year,
 		MONTH(observation_date) AS event_month,
 }
-		COUNT(DISTINCT observation_period.person_id) AS person_count
+		COUNT(DISTINCT observation_period.person_id) AS concept_subjects
 	FROM #Codesets
 	INNER JOIN @cdm_database_schema.observation
 		ON observation_concept_id = concept_id
@@ -189,7 +189,7 @@ FROM (
 		YEAR(visit_start_date) AS event_year,
 		MONTH(visit_start_date) AS event_month,
 }
-		COUNT(DISTINCT observation_period.person_id) AS person_count
+		COUNT(DISTINCT observation_period.person_id) AS concept_subjects
 	FROM #Codesets
 	INNER JOIN @cdm_database_schema.visit_occurrence
 		ON visit_concept_id = concept_id

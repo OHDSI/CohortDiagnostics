@@ -4,13 +4,13 @@
 {DEFAULT @comparator_cohort_id = 12770}
 
 
-SELECT union_counts.num_persons_in_either,
-	union_counts.num_persons_in_both,
-	union_counts.num_persons_in_t_only,
-	union_counts.num_persons_in_c_only,
-	intersection_counts.num_persons_in_t_before_c,
-	intersection_counts.num_persons_in_c_before_t,
-	intersection_counts.num_persons_in_t_c_sameday
+SELECT union_counts.num_persons_in_either AS either_subjects,
+	union_counts.num_persons_in_both AS both_subjects,
+	union_counts.num_persons_in_t_only AS t_only_subjects,
+	union_counts.num_persons_in_c_only AS c_only_subjects,
+	intersection_counts.num_persons_in_t_before_c AS t_before_c_subjects,
+	intersection_counts.num_persons_in_c_before_t AS c_before_t_subjects,
+	intersection_counts.num_persons_in_t_c_sameday AS same_day_subjects
 FROM (
 	SELECT COUNT(all_persons.subject_id) AS num_persons_in_either,
 		SUM(CASE 

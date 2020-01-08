@@ -46,7 +46,7 @@ computeCohortOverlap <- function(connectionDetails = NULL,
   if (!checkIfCohortInstantiated(connection = connection,
                                  cohortDatabaseSchema = cohortDatabaseSchema,
                                  cohortTable = cohortTable,
-                                 instantiatedCohortId = targetCohortId)) {
+                                 cohortId = targetCohortId)) {
     warning("Target cohort with ID ", targetCohortId, " appears to be empty. Was it instantiated?")
     delta <- Sys.time() - start
     ParallelLogger::logInfo(paste("Computing overlap took", signif(delta, 3), attr(delta, "units")))
@@ -55,7 +55,7 @@ computeCohortOverlap <- function(connectionDetails = NULL,
   if (!checkIfCohortInstantiated(connection = connection,
                                  cohortDatabaseSchema = cohortDatabaseSchema,
                                  cohortTable = cohortTable,
-                                 instantiatedCohortId = comparatorCohortId)) {
+                                 cohortId = comparatorCohortId)) {
     warning("Comparator cohort with ID ", comparatorCohortId, " appears to be empty. Was it instantiated?")
     delta <- Sys.time() - start
     ParallelLogger::logInfo(paste("Computing overlap took", signif(delta, 3), attr(delta, "units")))
