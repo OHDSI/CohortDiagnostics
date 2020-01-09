@@ -131,13 +131,29 @@ function." />
 function.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>runStudyDiagnostics</span>(<span class='no'>packageName</span>,
+    <pre class="usage"><span class='fu'>runStudyDiagnostics</span>(
+  <span class='no'>packageName</span>,
   <span class='kw'>cohortToCreateFile</span> <span class='kw'>=</span> <span class='st'>"settings/CohortsToCreate.csv"</span>,
-  <span class='kw'>connectionDetails</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>connection</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>cohortDatabaseSchema</span>,
-  <span class='kw'>cohortTable</span> <span class='kw'>=</span> <span class='st'>"cohort"</span>, <span class='kw'>cohortIds</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>inclusionStatisticsFolder</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>exportFolder</span>,
-  <span class='kw'>runInclusionStatistics</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>runIncludedSourceConcepts</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>runOrphanConcepts</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>runBreakdownIndexEvents</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)</pre>
+  <span class='kw'>connectionDetails</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>connection</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='no'>cdmDatabaseSchema</span>,
+  <span class='kw'>oracleTempSchema</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='no'>cohortDatabaseSchema</span>,
+  <span class='kw'>cohortTable</span> <span class='kw'>=</span> <span class='st'>"cohort"</span>,
+  <span class='kw'>cohortIds</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>inclusionStatisticsFolder</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='no'>exportFolder</span>,
+  <span class='no'>databaseId</span>,
+  <span class='no'>databaseName</span>,
+  <span class='no'>databaseDescription</span>,
+  <span class='kw'>runInclusionStatistics</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>runIncludedSourceConcepts</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>runOrphanConcepts</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>runBreakdownIndexEvents</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>runIncidenceProportion</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>runCohortOverlap</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>runCohortCharacterization</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -148,7 +164,7 @@ function.</p>
     </tr>
     <tr>
       <th>cohortToCreateFile</th>
-      <td><p>The location of the cohortToCreate file witing the package.</p></td>
+      <td><p>The location of the cohortToCreate file within the package.</p></td>
     </tr>
     <tr>
       <th>connectionDetails</th>
@@ -163,6 +179,17 @@ DatabaseConnector package. Can be left NULL if <code>connection</code> is provid
 DatabaseConnector package. Can be left NULL if <code>connectionDetails</code> is provided,
 in which case a new connection will be opened at the start of the function, and closed
 when the function finishes.</p></td>
+    </tr>
+    <tr>
+      <th>cdmDatabaseSchema</th>
+      <td><p>Schema name where your patient-level data in OMOP CDM format resides.
+Note that for SQL Server, this should include both the database and
+schema name, for example 'cdm_data.dbo'.</p></td>
+    </tr>
+    <tr>
+      <th>oracleTempSchema</th>
+      <td><p>Should be used in Oracle to specify a schema where the user has write
+privileges for storing temporary tables.</p></td>
     </tr>
     <tr>
       <th>cohortDatabaseSchema</th>
@@ -188,6 +215,18 @@ schema name, for example 'scratch.dbo'.</p></td>
       <td><p>The folder where the output will be exported to. If this folder does not exist it will be created.</p></td>
     </tr>
     <tr>
+      <th>databaseId</th>
+      <td><p>A short string for identifying the database (e.g. 'Synpuf').</p></td>
+    </tr>
+    <tr>
+      <th>databaseName</th>
+      <td><p>The full name of the database.</p></td>
+    </tr>
+    <tr>
+      <th>databaseDescription</th>
+      <td><p>A short description (several sentences) of the database.</p></td>
+    </tr>
+    <tr>
       <th>runInclusionStatistics</th>
       <td><p>Generate and export statistic on the cohort incusion rules?</p></td>
     </tr>
@@ -202,6 +241,18 @@ schema name, for example 'scratch.dbo'.</p></td>
     <tr>
       <th>runBreakdownIndexEvents</th>
       <td><p>Generate and export the breakdown of index events?</p></td>
+    </tr>
+    <tr>
+      <th>runIncidenceProportion</th>
+      <td><p>Generate and export the cohort incidence proportions?</p></td>
+    </tr>
+    <tr>
+      <th>runCohortOverlap</th>
+      <td><p>Generate and export the cohort overlap?</p></td>
+    </tr>
+    <tr>
+      <th>runCohortCharacterization</th>
+      <td><p>Generate and export the cohort characterization?</p></td>
     </tr>
     </table>
 

@@ -131,11 +131,17 @@ example because of missing source-to-standard concept maps, or erroneous hierarc
 example because of missing source-to-standard concept maps, or erroneous hierarchical relationships.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>findCohortOrphanConcepts</span>(<span class='kw'>connectionDetails</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>connection</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='no'>cdmDatabaseSchema</span>, <span class='kw'>oracleTempSchema</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>baseUrl</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>webApiCohortId</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>cohortJson</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+    <pre class="usage"><span class='fu'>findCohortOrphanConcepts</span>(
+  <span class='kw'>connectionDetails</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>connection</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='no'>cdmDatabaseSchema</span>,
+  <span class='kw'>oracleTempSchema</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>baseUrl</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>webApiCohortId</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>cohortJson</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>conceptCountsDatabaseSchema</span> <span class='kw'>=</span> <span class='no'>cdmDatabaseSchema</span>,
-  <span class='kw'>conceptCountsTable</span> <span class='kw'>=</span> <span class='st'>"concept_counts"</span>)</pre>
+  <span class='kw'>conceptCountsTable</span> <span class='kw'>=</span> <span class='st'>"concept_counts"</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -177,7 +183,7 @@ Needn't be provided if <code>cohortJson</code> is provided.</p></td>
     </tr>
     <tr>
       <th>cohortJson</th>
-      <td><p>A characteric string containing the JSON of a cohort definition.
+      <td><p>A character string containing the JSON of a cohort definition.
 Needn't be provided if <code>baseUrl</code> and <code>webApiCohortId</code> are provided.</p></td>
     </tr>
     <tr>

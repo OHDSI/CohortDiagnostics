@@ -129,13 +129,18 @@
     <p>Get statistics on cohort inclusion criteria</p>
     </div>
 
-    <pre class="usage"><span class='fu'>getInclusionStatistics</span>(<span class='kw'>connectionDetails</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>connection</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='no'>resultsDatabaseSchema</span>, <span class='no'>cohortId</span>, <span class='kw'>simplify</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>cohortTable</span> <span class='kw'>=</span> <span class='st'>"cohort"</span>, <span class='kw'>cohortInclusionTable</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span>(<span class='no'>cohortTable</span>,
-  <span class='st'>"_inclusion"</span>), <span class='kw'>cohortInclusionResultTable</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span>(<span class='no'>cohortTable</span>,
-  <span class='st'>"_inclusion_result"</span>), <span class='kw'>cohortInclusionStatsTable</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span>(<span class='no'>cohortTable</span>,
-  <span class='st'>"_inclusion_stats"</span>), <span class='kw'>cohortSummaryStatsTable</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span>(<span class='no'>cohortTable</span>,
-  <span class='st'>"_summary_stats"</span>))</pre>
+    <pre class="usage"><span class='fu'>getInclusionStatistics</span>(
+  <span class='kw'>connectionDetails</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>connection</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='no'>resultsDatabaseSchema</span>,
+  <span class='no'>cohortId</span>,
+  <span class='kw'>simplify</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>cohortTable</span> <span class='kw'>=</span> <span class='st'>"cohort"</span>,
+  <span class='kw'>cohortInclusionTable</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span>(<span class='no'>cohortTable</span>, <span class='st'>"_inclusion"</span>),
+  <span class='kw'>cohortInclusionResultTable</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span>(<span class='no'>cohortTable</span>, <span class='st'>"_inclusion_result"</span>),
+  <span class='kw'>cohortInclusionStatsTable</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span>(<span class='no'>cohortTable</span>, <span class='st'>"_inclusion_stats"</span>),
+  <span class='kw'>cohortSummaryStatsTable</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span>(<span class='no'>cohortTable</span>, <span class='st'>"_summary_stats"</span>)
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">

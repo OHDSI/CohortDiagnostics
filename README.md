@@ -10,9 +10,13 @@ This is an R package for performing various study diagnostics, many of which are
 
 Features
 ========
+- Show cohort inclusion rule attrition. 
+- List all source codes used when running a cohort definition on a specific database.
 - Find orphan codes, (source) codes that should be, but are not included in a particular concept set.
-- Plot amount of observation time before and after cohort index date.
-- TODO
+- Compute cohort incidence across calendar years, age, and gender.
+- Break down index events into the specific concepts that triggered them.
+- Compute overlap between two cohorts.
+- Characterize cohorts, and compare these characterizations.
 
 Examples
 ========

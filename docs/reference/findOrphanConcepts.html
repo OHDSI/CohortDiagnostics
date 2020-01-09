@@ -131,10 +131,15 @@ example because of missing source-to-standard concept maps, or erroneous hierarc
 example because of missing source-to-standard concept maps, or erroneous hierarchical relationships.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>findOrphanConcepts</span>(<span class='kw'>connectionDetails</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>connection</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='no'>cdmDatabaseSchema</span>, <span class='kw'>oracleTempSchema</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='no'>conceptIds</span>,
+    <pre class="usage"><span class='fu'>findOrphanConcepts</span>(
+  <span class='kw'>connectionDetails</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>connection</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='no'>cdmDatabaseSchema</span>,
+  <span class='kw'>oracleTempSchema</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='no'>conceptIds</span>,
   <span class='kw'>conceptCountsDatabaseSchema</span> <span class='kw'>=</span> <span class='no'>cdmDatabaseSchema</span>,
-  <span class='kw'>conceptCountsTable</span> <span class='kw'>=</span> <span class='st'>"concept_counts"</span>)</pre>
+  <span class='kw'>conceptCountsTable</span> <span class='kw'>=</span> <span class='st'>"concept_counts"</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
