@@ -148,9 +148,9 @@ folder <- file.path(studyFolder, "synpuf")
 
 
 inclusionStatisticsFolder <- folder
-cohortId = 13666 
+cohortId <- 13666
 
-packageName = "BarcelonaStudyAThon"
+packageName <- "BarcelonaStudyAThon"
 exportFolder <- file.path(folder, "export")
 
 library(StudyDiagnostics)
@@ -172,4 +172,3 @@ runStudyDiagnostics(packageName = "BarcelonaStudyAThon",
                     runIncidenceProportion = TRUE,
                     runCohortOverlap = TRUE,
                     runCohortCharacterization = TRUE)
-                    

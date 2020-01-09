@@ -15,20 +15,22 @@
 # limitations under the License.
 
 #' Compute overlap between two cohorts
-#' 
-#' @description 
-#' Computes the overlap between a target and a comparator cohort.
-#' 
-#' @template Connection
-#' 
-#' @template CohortTable
-#' 
-#' @param targetCohortId       The cohort definition ID used to reference the target cohort in the cohort table.
-#' @param comparatorCohortId   The cohort definition ID used to reference the comparator cohort in the cohort table.
 #'
-#' @return 
+#' @description
+#' Computes the overlap between a target and a comparator cohort.
+#'
+#' @template Connection
+#'
+#' @template CohortTable
+#'
+#' @param targetCohortId       The cohort definition ID used to reference the target cohort in the
+#'                             cohort table.
+#' @param comparatorCohortId   The cohort definition ID used to reference the comparator cohort in the
+#'                             cohort table.
+#'
+#' @return
 #' A data frame with overlap statistics.
-#' 
+#'
 #' @export
 computeCohortOverlap <- function(connectionDetails = NULL,
                                  connection = NULL,
@@ -39,10 +41,10 @@ computeCohortOverlap <- function(connectionDetails = NULL,
   start <- Sys.time()
 
   if (is.null(connection)) {
-    connection <- DatabaseConnector::connect(connectionDetails) 
+    connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-  
+
   if (!checkIfCohortInstantiated(connection = connection,
                                  cohortDatabaseSchema = cohortDatabaseSchema,
                                  cohortTable = cohortTable,
@@ -51,16 +53,18 @@ computeCohortOverlap <- function(connectionDetails = NULL,
     delta <- Sys.time() - start
     ParallelLogger::logInfo(paste("Computing overlap took", signif(delta, 3), attr(delta, "units")))
     return(data.frame())
-  } 
+  }
   if (!checkIfCohortInstantiated(connection = connection,
                                  cohortDatabaseSchema = cohortDatabaseSchema,
                                  cohortTable = cohortTable,
                                  cohortId = comparatorCohortId)) {
-    warning("Comparator cohort with ID ", comparatorCohortId, " appears to be empty. Was it instantiated?")
+    warning("Comparator cohort with ID ",
+            comparatorCohortId,
+            " appears to be empty. Was it instantiated?")
     delta <- Sys.time() - start
     ParallelLogger::logInfo(paste("Computing overlap took", signif(delta, 3), attr(delta, "units")))
     return(data.frame())
-  } 
+  }
   ParallelLogger::logInfo("Computing overlap")
   sql <- SqlRender::loadRenderTranslateSql("CohortOverlap.sql",
                                            packageName = "StudyDiagnostics",

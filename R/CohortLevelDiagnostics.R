@@ -15,25 +15,27 @@
 # limitations under the License.
 
 #' Break down index events
-#' 
-#' @description 
-#' For the concepts included in the index event definition, count how often they are encountered at the cohort index date.
-#' 
-#' @template Connection
-#' 
-#' @template CdmDatabaseSchema
-#' 
-#' @template OracleTempSchema
-#' 
-#' @template CohortTable
-#' 
-#' @template CohortDef
-#' 
-#' @param cohortId       The cohort definition ID used to reference the cohort in the cohort table.
 #'
-#' @return 
-#' A data frame with concepts, and per concept the count of how often the concept was encountered at the index date.
-#' 
+#' @description
+#' For the concepts included in the index event definition, count how often they are encountered at
+#' the cohort index date.
+#'
+#' @template Connection
+#'
+#' @template CdmDatabaseSchema
+#'
+#' @template OracleTempSchema
+#'
+#' @template CohortTable
+#'
+#' @template CohortDef
+#'
+#' @param cohortId   The cohort definition ID used to reference the cohort in the cohort table.
+#'
+#' @return
+#' A data frame with concepts, and per concept the count of how often the concept was encountered at
+#' the index date.
+#'
 #' @export
 breakDownIndexEvents <- function(connectionDetails = NULL,
                                  connection = NULL,
@@ -50,19 +52,20 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
     stop("Must provide either baseUrl and webApiCohortId, or cohortJson and cohortSql")
   }
   if (!is.null(cohortJson) && !is.character(cohortJson)) {
-    stop("cohortJson should be character (a JSON string).") 
+    stop("cohortJson should be character (a JSON string).")
   }
   start <- Sys.time()
   if (is.null(cohortJson)) {
     ParallelLogger::logInfo("Retrieving cohort definition from WebAPI")
-    cohortExpression <- ROhdsiWebApi::getCohortDefinitionExpression(definitionId = webApiCohortId, baseUrl = baseUrl)
+    cohortExpression <- ROhdsiWebApi::getCohortDefinitionExpression(definitionId = webApiCohortId,
+                                                                    baseUrl = baseUrl)
     cohortJson <- cohortExpression$expression
-    cohortSql <- ROhdsiWebApi::getCohortDefinitionSql(definitionId = webApiCohortId, 
-                                                      baseUrl = baseUrl, 
+    cohortSql <- ROhdsiWebApi::getCohortDefinitionSql(definitionId = webApiCohortId,
+                                                      baseUrl = baseUrl,
                                                       generateStats = FALSE)
   }
   cohortDefinition <- RJSONIO::fromJSON(cohortJson)
-  
+
   getCodeSetId <- function(criterion) {
     if (is.list(criterion)) {
       criterion$CodesetId
@@ -76,7 +79,7 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
     codeSetIds <- lapply(criterionList, getCodeSetId)
     codeSetIds <- do.call(c, codeSetIds)
     if (is.null(codeSetIds)) {
-      return(NULL) 
+      return(NULL)
     } else {
       return(tibble::tibble(domain = names(criterionList), codeSetIds = codeSetIds))
     }
@@ -89,26 +92,29 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
     return(data.frame())
   }
   primaryCodesetIds <- aggregate(codeSetIds ~ domain, primaryCodesetIds, c)
-  
+
   if (is.null(connection)) {
-    connection <- DatabaseConnector::connect(connectionDetails) 
+    connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-  
+
   if (!checkIfCohortInstantiated(connection = connection,
                                  cohortDatabaseSchema = cohortDatabaseSchema,
                                  cohortTable = cohortTable,
                                  cohortId = cohortId)) {
     warning("Cohort with ID ", cohortId, " appears to be empty. Was it instantiated?")
     delta <- Sys.time() - start
-    ParallelLogger::logInfo(paste("Breaking down index events took", signif(delta, 3), attr(delta, "units")))
+    ParallelLogger::logInfo(paste("Breaking down index events took",
+                                  signif(delta, 3),
+                                  attr(delta, "units")))
     return(data.frame())
-  } 
+  }
   ParallelLogger::logInfo("Instantiating concept sets")
   instantiateConceptSets(connection, cdmDatabaseSchema, oracleTempSchema, cohortSql)
-  
+
   ParallelLogger::logInfo("Computing counts")
-  domains <- readr::read_csv(system.file("csv", "domains.csv", package = "StudyDiagnostics"), col_types = readr::cols())
+  domains <- readr::read_csv(system.file("csv", "domains.csv", package = "StudyDiagnostics"),
+                             col_types = readr::cols())
   getCounts <- function(row) {
     domain <- domains[domains$domain == row$domain, ]
     sql <- SqlRender::loadRenderTranslateSql("CohortEntryBreakdown.sql",
@@ -130,19 +136,24 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
   counts <- do.call(rbind, counts)
   rownames(counts) <- NULL
   counts <- counts[order(-counts$conceptCount), ]
- 
+
   ParallelLogger::logInfo("Cleaning up concept sets")
   sql <- "TRUNCATE TABLE #Codesets; DROP TABLE #Codesets;"
-  DatabaseConnector::renderTranslateExecuteSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
-  
+  DatabaseConnector::renderTranslateExecuteSql(connection,
+                                               sql,
+                                               progressBar = FALSE,
+                                               reportOverallTime = FALSE)
+
   delta <- Sys.time() - start
-  ParallelLogger::logInfo(paste("Breaking down index events took", signif(delta, 3), attr(delta, "units")))
+  ParallelLogger::logInfo(paste("Breaking down index events took",
+                                signif(delta, 3),
+                                attr(delta, "units")))
   return(counts)
 }
 
 checkIfCohortInstantiated <- function(connection, cohortDatabaseSchema, cohortTable, cohortId) {
   sql <- "SELECT COUNT(*) FROM @cohort_database_schema.@cohort_table WHERE cohort_definition_id = @cohort_id;"
-  count <- DatabaseConnector::renderTranslateQuerySql(connection = connection, 
+  count <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                       sql,
                                                       cohort_database_schema = cohortDatabaseSchema,
                                                       cohort_table = cohortTable,
