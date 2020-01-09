@@ -4,9 +4,13 @@
 \alias{createConceptCountsTable}
 \title{Create concept counts table}
 \usage{
-createConceptCountsTable(connectionDetails = NULL, connection = NULL,
-  cdmDatabaseSchema, conceptCountsDatabaseSchema = cdmDatabaseSchema,
-  conceptCountsTable = "concept_counts")
+createConceptCountsTable(
+  connectionDetails = NULL,
+  connection = NULL,
+  cdmDatabaseSchema,
+  conceptCountsDatabaseSchema = cdmDatabaseSchema,
+  conceptCountsTable = "concept_counts"
+)
 }
 \arguments{
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the

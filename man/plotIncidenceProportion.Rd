@@ -4,8 +4,11 @@
 \alias{plotIncidenceProportion}
 \title{Plot incidence proportion by year, age, and gender}
 \usage{
-plotIncidenceProportion(incidenceProportion,
-  restrictToFullAgeData = FALSE, fileName = NULL)
+plotIncidenceProportion(
+  incidenceProportion,
+  restrictToFullAgeData = FALSE,
+  fileName = NULL
+)
 }
 \arguments{
 \item{incidenceProportion}{Incidence proportion time series data for plotting generated using

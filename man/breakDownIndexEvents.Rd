@@ -4,11 +4,19 @@
 \alias{breakDownIndexEvents}
 \title{Break down index events}
 \usage{
-breakDownIndexEvents(connectionDetails = NULL, connection = NULL,
-  cdmDatabaseSchema, oracleTempSchema = NULL,
-  cohortDatabaseSchema = cdmDatabaseSchema, cohortTable = "cohort",
-  baseUrl = NULL, webApiCohortId = NULL, cohortJson = NULL,
-  cohortSql = NULL, cohortId = cohortId)
+breakDownIndexEvents(
+  connectionDetails = NULL,
+  connection = NULL,
+  cdmDatabaseSchema,
+  oracleTempSchema = NULL,
+  cohortDatabaseSchema = cdmDatabaseSchema,
+  cohortTable = "cohort",
+  baseUrl = NULL,
+  webApiCohortId = NULL,
+  cohortJson = NULL,
+  cohortSql = NULL,
+  cohortId = cohortId
+)
 }
 \arguments{
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the

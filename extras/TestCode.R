@@ -149,10 +149,27 @@ folder <- file.path(studyFolder, "synpuf")
 
 inclusionStatisticsFolder <- folder
 cohortId = 13666 
-getInclusionStatisticsFromFiles(instantiatedCohortId = 13666,
-                                folder = folder,
-                                simplify = TRUE)
-
 
 packageName = "BarcelonaStudyAThon"
 exportFolder <- file.path(folder, "export")
+
+library(StudyDiagnostics)
+runStudyDiagnostics(packageName = "BarcelonaStudyAThon",
+                    connectionDetails = connectionDetails,
+                    cdmDatabaseSchema = cdmDatabaseSchema,
+                    oracleTempSchema = oracleTempSchema,
+                    cohortDatabaseSchema = cohortDatabaseSchema,
+                    cohortTable = cohortTable,
+                    inclusionStatisticsFolder = outputFolder,
+                    exportFolder = file.path(outputFolder, "export"),
+                    databaseId = databaseId,
+                    databaseName = databaseName,
+                    databaseDescription = databaseDescription,
+                    runInclusionStatistics = TRUE,
+                    runIncludedSourceConcepts = TRUE,
+                    runOrphanConcepts = TRUE,
+                    runBreakdownIndexEvents = TRUE,
+                    runIncidenceProportion = TRUE,
+                    runCohortOverlap = TRUE,
+                    runCohortCharacterization = TRUE)
+                    

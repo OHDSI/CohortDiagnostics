@@ -4,18 +4,34 @@
 \alias{runStudyDiagnostics}
 \title{Run study diagnostics}
 \usage{
-runStudyDiagnostics(packageName,
+runStudyDiagnostics(
+  packageName,
   cohortToCreateFile = "settings/CohortsToCreate.csv",
-  connectionDetails = NULL, connection = NULL, cohortDatabaseSchema,
-  cohortTable = "cohort", cohortIds = NULL,
-  inclusionStatisticsFolder = NULL, exportFolder,
-  runInclusionStatistics = TRUE, runIncludedSourceConcepts = TRUE,
-  runOrphanConcepts = TRUE, runBreakdownIndexEvents = TRUE)
+  connectionDetails = NULL,
+  connection = NULL,
+  cdmDatabaseSchema,
+  oracleTempSchema = NULL,
+  cohortDatabaseSchema,
+  cohortTable = "cohort",
+  cohortIds = NULL,
+  inclusionStatisticsFolder = NULL,
+  exportFolder,
+  databaseId,
+  databaseName,
+  databaseDescription,
+  runInclusionStatistics = TRUE,
+  runIncludedSourceConcepts = TRUE,
+  runOrphanConcepts = TRUE,
+  runBreakdownIndexEvents = TRUE,
+  runIncidenceProportion = TRUE,
+  runCohortOverlap = TRUE,
+  runCohortCharacterization = TRUE
+)
 }
 \arguments{
 \item{packageName}{The name of the package containing the cohort definitions}
 
-\item{cohortToCreateFile}{The location of the cohortToCreate file witing the package.}
+\item{cohortToCreateFile}{The location of the cohortToCreate file within the package.}
 
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
@@ -26,6 +42,13 @@ DatabaseConnector package. Can be left NULL if \code{connection} is provided.}
 DatabaseConnector package. Can be left NULL if \code{connectionDetails} is provided,
 in which case a new connection will be opened at the start of the function, and closed
 when the function finishes.}
+
+\item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
+Note that for SQL Server, this should include both the database and
+schema name, for example 'cdm_data.dbo'.}
+
+\item{oracleTempSchema}{Should be used in Oracle to specify a schema where the user has write
+privileges for storing temporary tables.}
 
 \item{cohortDatabaseSchema}{Schema name where your cohort table resides.
 Note that for SQL Server, this should include both the database and
@@ -40,6 +63,12 @@ schema name, for example 'scratch.dbo'.}
 
 \item{exportFolder}{The folder where the output will be exported to. If this folder does not exist it will be created.}
 
+\item{databaseId}{A short string for identifying the database (e.g. 'Synpuf').}
+
+\item{databaseName}{The full name of the database.}
+
+\item{databaseDescription}{A short description (several sentences) of the database.}
+
 \item{runInclusionStatistics}{Generate and export statistic on the cohort incusion rules?}
 
 \item{runIncludedSourceConcepts}{Generate and export the source concepts included in the cohorts?}
@@ -47,6 +76,12 @@ schema name, for example 'scratch.dbo'.}
 \item{runOrphanConcepts}{Generate and export potential orphan concepts?}
 
 \item{runBreakdownIndexEvents}{Generate and export the breakdown of index events?}
+
+\item{runIncidenceProportion}{Generate and export the cohort incidence proportions?}
+
+\item{runCohortOverlap}{Generate and export the cohort overlap?}
+
+\item{runCohortCharacterization}{Generate and export the cohort characterization?}
 }
 \description{
 Runs the study diagnostics on all (or a subset of) the cohorts instantiated using the \code{ROhdsiWebApi::insertCohortDefinitionSetInPackage}

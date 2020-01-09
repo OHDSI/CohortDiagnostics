@@ -32,7 +32,7 @@
 #' @export
 computeCohortOverlap <- function(connectionDetails = NULL,
                                  connection = NULL,
-                                 cohortDatabaseSchema = cdmDatabaseSchema,
+                                 cohortDatabaseSchema,
                                  cohortTable = "cohort",
                                  targetCohortId,
                                  comparatorCohortId) {
@@ -64,7 +64,7 @@ computeCohortOverlap <- function(connectionDetails = NULL,
   ParallelLogger::logInfo("Computing overlap")
   sql <- SqlRender::loadRenderTranslateSql("CohortOverlap.sql",
                                            packageName = "StudyDiagnostics",
-                                           dbms = connectionDetails$dbms,
+                                           dbms = connection@dbms,
                                            cohort_database_schema = cohortDatabaseSchema,
                                            cohort_table = cohortTable,
                                            target_cohort_id = targetCohortId,

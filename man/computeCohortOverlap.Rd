@@ -4,9 +4,14 @@
 \alias{computeCohortOverlap}
 \title{Compute overlap between two cohorts}
 \usage{
-computeCohortOverlap(connectionDetails = NULL, connection = NULL,
-  cohortDatabaseSchema = cdmDatabaseSchema, cohortTable = "cohort",
-  targetCohortId, comparatorCohortId)
+computeCohortOverlap(
+  connectionDetails = NULL,
+  connection = NULL,
+  cohortDatabaseSchema,
+  cohortTable = "cohort",
+  targetCohortId,
+  comparatorCohortId
+)
 }
 \arguments{
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the

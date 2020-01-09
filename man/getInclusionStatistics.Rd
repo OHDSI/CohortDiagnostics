@@ -4,13 +4,18 @@
 \alias{getInclusionStatistics}
 \title{Get statistics on cohort inclusion criteria}
 \usage{
-getInclusionStatistics(connectionDetails = NULL, connection = NULL,
-  resultsDatabaseSchema, cohortId, simplify = TRUE,
-  cohortTable = "cohort", cohortInclusionTable = paste0(cohortTable,
-  "_inclusion"), cohortInclusionResultTable = paste0(cohortTable,
-  "_inclusion_result"), cohortInclusionStatsTable = paste0(cohortTable,
-  "_inclusion_stats"), cohortSummaryStatsTable = paste0(cohortTable,
-  "_summary_stats"))
+getInclusionStatistics(
+  connectionDetails = NULL,
+  connection = NULL,
+  resultsDatabaseSchema,
+  cohortId,
+  simplify = TRUE,
+  cohortTable = "cohort",
+  cohortInclusionTable = paste0(cohortTable, "_inclusion"),
+  cohortInclusionResultTable = paste0(cohortTable, "_inclusion_result"),
+  cohortInclusionStatsTable = paste0(cohortTable, "_inclusion_stats"),
+  cohortSummaryStatsTable = paste0(cohortTable, "_summary_stats")
+)
 }
 \arguments{
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the

@@ -30,5 +30,5 @@ License: Apache License
 VignetteBuilder: knitr
 URL: https://ohdsi.github.io/StudyDiagnostics, https://github.com/OHDSI/StudyDiagnostics
 BugReports: https://github.com/OHDSI/StudyDiagnostics/issues
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2
 Encoding: UTF-8

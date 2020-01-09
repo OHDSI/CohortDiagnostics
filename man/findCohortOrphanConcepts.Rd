@@ -4,11 +4,17 @@
 \alias{findCohortOrphanConcepts}
 \title{Find orphan concepts for all concept sets in a cohort}
 \usage{
-findCohortOrphanConcepts(connectionDetails = NULL, connection = NULL,
-  cdmDatabaseSchema, oracleTempSchema = NULL, baseUrl = NULL,
-  webApiCohortId = NULL, cohortJson = NULL,
+findCohortOrphanConcepts(
+  connectionDetails = NULL,
+  connection = NULL,
+  cdmDatabaseSchema,
+  oracleTempSchema = NULL,
+  baseUrl = NULL,
+  webApiCohortId = NULL,
+  cohortJson = NULL,
   conceptCountsDatabaseSchema = cdmDatabaseSchema,
-  conceptCountsTable = "concept_counts")
+  conceptCountsTable = "concept_counts"
+)
 }
 \arguments{
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
@@ -34,7 +40,7 @@ Needn't be provided if \code{cohortJson} is provided.}
 \item{webApiCohortId}{The ID of the cohort in the WebAPI instance.
 Needn't be provided if \code{cohortJson} is provided.}
 
-\item{cohortJson}{A characteric string containing the JSON of a cohort definition.
+\item{cohortJson}{A character string containing the JSON of a cohort definition.
 Needn't be provided if \code{baseUrl} and \code{webApiCohortId} are provided.}
 
 \item{conceptCountsDatabaseSchema}{Schema name where your concept counts table resides.

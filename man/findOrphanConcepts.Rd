@@ -4,10 +4,15 @@
 \alias{findOrphanConcepts}
 \title{Find (source) concepts that do not roll up to their ancestor(s)}
 \usage{
-findOrphanConcepts(connectionDetails = NULL, connection = NULL,
-  cdmDatabaseSchema, oracleTempSchema = NULL, conceptIds,
+findOrphanConcepts(
+  connectionDetails = NULL,
+  connection = NULL,
+  cdmDatabaseSchema,
+  oracleTempSchema = NULL,
+  conceptIds,
   conceptCountsDatabaseSchema = cdmDatabaseSchema,
-  conceptCountsTable = "concept_counts")
+  conceptCountsTable = "concept_counts"
+)
 }
 \arguments{
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the

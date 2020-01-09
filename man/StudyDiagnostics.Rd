@@ -3,7 +3,6 @@
 \docType{package}
 \name{StudyDiagnostics}
 \alias{StudyDiagnostics}
-\alias{StudyDiagnostics-package}
 \title{StudyDiagnostics}
 \description{
 StudyDiagnostics

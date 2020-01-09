@@ -4,17 +4,25 @@
 \alias{instantiateCohort}
 \title{Instantiate a cohort}
 \usage{
-instantiateCohort(connectionDetails = NULL, connection = NULL,
-  cdmDatabaseSchema, oracleTempSchema = NULL,
-  cohortDatabaseSchema = cdmDatabaseSchema, cohortTable = "cohort",
-  baseUrl = NULL, webApiCohortId = NULL, cohortJson = NULL,
-  cohortSql = NULL, cohortId = webApiCohortId,
+instantiateCohort(
+  connectionDetails = NULL,
+  connection = NULL,
+  cdmDatabaseSchema,
+  oracleTempSchema = NULL,
+  cohortDatabaseSchema = cdmDatabaseSchema,
+  cohortTable = "cohort",
+  baseUrl = NULL,
+  webApiCohortId = NULL,
+  cohortJson = NULL,
+  cohortSql = NULL,
+  cohortId = webApiCohortId,
   generateInclusionStats = FALSE,
   resultsDatabaseSchema = cohortDatabaseSchema,
   cohortInclusionTable = paste0(cohortTable, "_inclusion"),
   cohortInclusionResultTable = paste0(cohortTable, "_inclusion_result"),
   cohortInclusionStatsTable = paste0(cohortTable, "_inclusion_stats"),
-  cohortSummaryStatsTable = paste0(cohortTable, "_summary_stats"))
+  cohortSummaryStatsTable = paste0(cohortTable, "_summary_stats")
+)
 }
 \arguments{
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the

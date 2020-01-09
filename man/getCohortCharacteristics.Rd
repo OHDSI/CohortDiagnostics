@@ -4,11 +4,16 @@
 \alias{getCohortCharacteristics}
 \title{Create characterization of a cohort}
 \usage{
-getCohortCharacteristics(connectionDetails = NULL, connection = NULL,
-  cdmDatabaseSchema, oracleTempSchema = NULL,
-  cohortDatabaseSchema = cdmDatabaseSchema, cohortTable = "cohort",
+getCohortCharacteristics(
+  connectionDetails = NULL,
+  connection = NULL,
+  cdmDatabaseSchema,
+  oracleTempSchema = NULL,
+  cohortDatabaseSchema = cdmDatabaseSchema,
+  cohortTable = "cohort",
   cohortId,
-  covariateSettings = FeatureExtraction::createDefaultCovariateSettings())
+  covariateSettings = FeatureExtraction::createDefaultCovariateSettings()
+)
 }
 \arguments{
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the

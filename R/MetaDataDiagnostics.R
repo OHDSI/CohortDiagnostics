@@ -119,7 +119,7 @@ findOrphanConcepts <- function(connectionDetails = NULL,
 #'                             Needn't be provided if \code{cohortJson} is provided.
 #' @param webApiCohortId       The ID of the cohort in the WebAPI instance.
 #'                             Needn't be provided if \code{cohortJson} is provided.
-#' @param cohortJson           A characteric string containing the JSON of a cohort definition.
+#' @param cohortJson           A character string containing the JSON of a cohort definition.
 #'                             Needn't be provided if \code{baseUrl} and \code{webApiCohortId} are provided.
 #' 
 #' @return 

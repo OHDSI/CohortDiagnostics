@@ -72,7 +72,7 @@ getIncidenceProportion <- function(connectionDetails = NULL,
   ParallelLogger::logInfo("Calculating incidence proportion per year by age and gender...")
   sql <- SqlRender::loadRenderTranslateSql(sqlFilename = "IncidenceProportionYearAgeGenderStratified.sql",
                                            packageName = "StudyDiagnostics",
-                                           dbms = connectionDetails$dbms,
+                                           dbms = connection@dbms,
                                            cohort_database_schema = cohortDatabaseSchema,
                                            cohort_table = cohortTable,
                                            cdm_database_schema = cdmDatabaseSchema,
@@ -83,14 +83,14 @@ getIncidenceProportion <- function(connectionDetails = NULL,
   
   sql <- SqlRender::loadRenderTranslateSql(sqlFilename = "GetIncidenceProportionData.sql",
                                            packageName = "StudyDiagnostics",
-                                           dbms = connectionDetails$dbms)
+                                           dbms = connection@dbms)
   ipYearAgeGenderData <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
   ipYearAgeGenderData <- recode(ipYearAgeGenderData)
   ipYearAgeGenderData$incidenceProportion = 1000 * ipYearAgeGenderData$cohortSubjects / ipYearAgeGenderData$backgroundSubjects
   
   sql <- SqlRender::loadRenderTranslateSql(sqlFilename = "RemoveTempTables.sql",
                                            packageName = "StudyDiagnostics",
-                                           dbms = connectionDetails$dbms)
+                                           dbms = connection@dbms)
   DatabaseConnector::executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
   
   ipData <- data.frame(cohortSubjects = sum(ipYearAgeGenderData$cohortSubjects),

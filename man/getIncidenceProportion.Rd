@@ -4,9 +4,16 @@
 \alias{getIncidenceProportion}
 \title{Compute incidence proportion for a cohort}
 \usage{
-getIncidenceProportion(connectionDetails = NULL, connection = NULL,
-  cohortDatabaseSchema, cohortTable, cdmDatabaseSchema,
-  firstOccurrenceOnly = TRUE, minObservationTime = 365, cohortId)
+getIncidenceProportion(
+  connectionDetails = NULL,
+  connection = NULL,
+  cohortDatabaseSchema,
+  cohortTable,
+  cdmDatabaseSchema,
+  firstOccurrenceOnly = TRUE,
+  minObservationTime = 365,
+  cohortId
+)
 }
 \arguments{
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the

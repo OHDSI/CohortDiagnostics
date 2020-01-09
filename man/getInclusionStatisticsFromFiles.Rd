@@ -4,12 +4,15 @@
 \alias{getInclusionStatisticsFromFiles}
 \title{Get inclusion criteria statistics from files}
 \usage{
-getInclusionStatisticsFromFiles(cohortId, folder,
+getInclusionStatisticsFromFiles(
+  cohortId,
+  folder,
   cohortInclusionFile = file.path(folder, "cohortInclusion.csv"),
   cohortInclusionResultFile = file.path(folder, "cohortIncResult.csv"),
   cohortInclusionStatsFile = file.path(folder, "cohortIncStats.csv"),
   cohortSummaryStatsFile = file.path(folder, "cohortSummaryStats.csv"),
-  simplify = TRUE)
+  simplify = TRUE
+)
 }
 \arguments{
 \item{cohortId}{The cohort definition ID used to reference the cohort in the cohort table.}

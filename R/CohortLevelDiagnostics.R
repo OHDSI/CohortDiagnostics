@@ -113,7 +113,7 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
     domain <- domains[domains$domain == row$domain, ]
     sql <- SqlRender::loadRenderTranslateSql("CohortEntryBreakdown.sql",
                                              packageName = "StudyDiagnostics",
-                                             dbms = connectionDetails$dbms,
+                                             dbms = connection@dbms,
                                              oracleTempSchema = oracleTempSchema,
                                              cdm_database_schema = cdmDatabaseSchema,
                                              cohort_database_schema = cohortDatabaseSchema,

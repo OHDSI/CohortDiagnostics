@@ -4,10 +4,18 @@
 \alias{findCohortIncludedSourceConcepts}
 \title{Check source codes used in a cohort definition}
 \usage{
-findCohortIncludedSourceConcepts(connectionDetails = NULL,
-  connection = NULL, cdmDatabaseSchema, oracleTempSchema = NULL,
-  baseUrl = NULL, webApiCohortId = NULL, cohortJson = NULL,
-  cohortSql = NULL, byMonth = FALSE, useSourceValues = FALSE)
+findCohortIncludedSourceConcepts(
+  connectionDetails = NULL,
+  connection = NULL,
+  cdmDatabaseSchema,
+  oracleTempSchema = NULL,
+  baseUrl = NULL,
+  webApiCohortId = NULL,
+  cohortJson = NULL,
+  cohortSql = NULL,
+  byMonth = FALSE,
+  useSourceValues = FALSE
+)
 }
 \arguments{
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the

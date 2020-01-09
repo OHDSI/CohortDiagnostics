@@ -4,14 +4,18 @@
 \alias{createCohortTable}
 \title{Create cohort table(s)}
 \usage{
-createCohortTable(connectionDetails = NULL, connection = NULL,
-  cohortDatabaseSchema, cohortTable = "cohort",
+createCohortTable(
+  connectionDetails = NULL,
+  connection = NULL,
+  cohortDatabaseSchema,
+  cohortTable = "cohort",
   createInclusionStatsTables = FALSE,
   resultsDatabaseSchema = cohortDatabaseSchema,
   cohortInclusionTable = paste0(cohortTable, "_inclusion"),
   cohortInclusionResultTable = paste0(cohortTable, "_inclusion_result"),
   cohortInclusionStatsTable = paste0(cohortTable, "_inclusion_stats"),
-  cohortSummaryStatsTable = paste0(cohortTable, "_summary_stats"))
+  cohortSummaryStatsTable = paste0(cohortTable, "_summary_stats")
+)
 }
 \arguments{
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
