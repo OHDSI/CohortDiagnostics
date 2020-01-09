@@ -15,24 +15,30 @@ getInclusionStatisticsFromFiles(
 )
 }
 \arguments{
-\item{cohortId}{The cohort definition ID used to reference the cohort in the cohort table.}
+\item{cohortId}{The cohort definition ID used to reference the cohort in the
+cohort table.}
 
 \item{folder}{The path to the folder where the inclusion statistics are stored.}
 
-\item{cohortInclusionFile}{Name of the inclusion table, one of the tables for storing inclusion rule statistics.}
+\item{cohortInclusionFile}{Name of the inclusion table, one of the tables for storing
+inclusion rule statistics.}
 
-\item{cohortInclusionResultFile}{Name of the inclusion result table, one of the tables for storing inclusion rule statistics.}
+\item{cohortInclusionResultFile}{Name of the inclusion result table, one of the tables for storing
+inclusion rule statistics.}
 
-\item{cohortInclusionStatsFile}{Name of the inclusion stats table, one of the tables for storing inclusion rule statistics.}
+\item{cohortInclusionStatsFile}{Name of the inclusion stats table, one of the tables for storing
+inclusion rule statistics.}
 
-\item{cohortSummaryStatsFile}{Name of the summary stats table, one of the tables for storing inclusion rule statistics.}
+\item{cohortSummaryStatsFile}{Name of the summary stats table, one of the tables for storing
+inclusion rule statistics.}
 
 \item{simplify}{Simply output the attrition table?}
 }
 \value{
-If `simplify = TRUE`, this function returns a single data frame. Else a list of data frames is returned.
+If `simplify = TRUE`, this function returns a single data frame. Else a list of data frames is
+returned.
 }
 \description{
-Gets inclusion criteria statistics from files, as stored when using the \code{ROhdsiWebApi::insertCohortDefinitionSetInPackage} function
-with \code{generateStats = TRUE}.
+Gets inclusion criteria statistics from files, as stored when using the
+\code{ROhdsiWebApi::insertCohortDefinitionSetInPackage} function with \code{generateStats = TRUE}.
 }

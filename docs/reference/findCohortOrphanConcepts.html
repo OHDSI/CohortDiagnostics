@@ -37,7 +37,8 @@
 
 <meta property="og:title" content="Find orphan concepts for all concept sets in a cohort — findCohortOrphanConcepts" />
 <meta property="og:description" content="Searches for concepts that should belong to the concept sets in a cohort definition but don't, for
-example because of missing source-to-standard concept maps, or erroneous hierarchical relationships." />
+example because of missing source-to-standard concept maps, or erroneous hierarchical
+relationships." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -128,7 +129,8 @@ example because of missing source-to-standard concept maps, or erroneous hierarc
 
     <div class="ref-description">
     <p>Searches for concepts that should belong to the concept sets in a cohort definition but don't, for
-example because of missing source-to-standard concept maps, or erroneous hierarchical relationships.</p>
+example because of missing source-to-standard concept maps, or erroneous hierarchical
+relationships.</p>
     </div>
 
     <pre class="usage"><span class='fu'>findCohortOrphanConcepts</span>(
@@ -150,15 +152,16 @@ example because of missing source-to-standard concept maps, or erroneous hierarc
       <th>connectionDetails</th>
       <td><p>An object of type <code>connectionDetails</code> as created using the
 <code><a href='https://rdrr.io/pkg/DatabaseConnector/man/createConnectionDetails.html'>createConnectionDetails</a></code> function in the
-DatabaseConnector package. Can be left NULL if <code>connection</code> is provided.</p></td>
+DatabaseConnector package. Can be left NULL if <code>connection</code> is
+provided.</p></td>
     </tr>
     <tr>
       <th>connection</th>
       <td><p>An object of type <code>connection</code> as created using the
 <code><a href='https://rdrr.io/pkg/DatabaseConnector/man/connect.html'>connect</a></code> function in the
-DatabaseConnector package. Can be left NULL if <code>connectionDetails</code> is provided,
-in which case a new connection will be opened at the start of the function, and closed
-when the function finishes.</p></td>
+DatabaseConnector package. Can be left NULL if <code>connectionDetails</code>
+is provided, in which case a new connection will be opened at the start
+of the function, and closed when the function finishes.</p></td>
     </tr>
     <tr>
       <th>cdmDatabaseSchema</th>
@@ -173,44 +176,47 @@ privileges for storing temporary tables.</p></td>
     </tr>
     <tr>
       <th>baseUrl</th>
-      <td><p>The base URL for the WebApi instance, for example: "http://server.org:80/WebAPI". 
-Needn't be provided if <code>cohortJson</code> is provided.</p></td>
+      <td><p>The base URL for the WebApi instance, for example:
+"http://server.org:80/WebAPI". Needn't be provided if <code>cohortJson</code> is
+provided.</p></td>
     </tr>
     <tr>
       <th>webApiCohortId</th>
-      <td><p>The ID of the cohort in the WebAPI instance.
-Needn't be provided if <code>cohortJson</code> is provided.</p></td>
+      <td><p>The ID of the cohort in the WebAPI instance. Needn't be provided if
+<code>cohortJson</code> is provided.</p></td>
     </tr>
     <tr>
       <th>cohortJson</th>
-      <td><p>A character string containing the JSON of a cohort definition.
-Needn't be provided if <code>baseUrl</code> and <code>webApiCohortId</code> are provided.</p></td>
+      <td><p>A character string containing the JSON of a cohort definition. Needn't be
+provided if <code>baseUrl</code> and <code>webApiCohortId</code> are provided.</p></td>
     </tr>
     <tr>
       <th>conceptCountsDatabaseSchema</th>
-      <td><p>Schema name where your concept counts table resides.
-Note that for SQL Server, this should include both the database and
+      <td><p>Schema name where your concept counts table resides. Note that
+for SQL Server, this should include both the database and
 schema name, for example 'scratch.dbo'.</p></td>
     </tr>
     <tr>
       <th>conceptCountsTable</th>
-      <td><p>Name of the concept counts table. This table can be created using the <code><a href='createConceptCountsTable.html'>createConceptCountsTable</a></code>.</p></td>
+      <td><p>Name of the concept counts table. This table can be created
+using the <code><a href='createConceptCountsTable.html'>createConceptCountsTable</a></code>.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A data frame with orphan concepts, with counts how often the code was encountered
-in the CDM.</p>
+    <p>A data frame with orphan concepts, with counts how often the code was encountered in the CDM.</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>Logically, this function performs the following steps for each concept set expression in the cohort definition:</p>
-<ul>
+    <p>Logically, this function performs the following steps for each concept set expression in the cohort
+definition:</p><ul>
 <li><p>Given the concept set expression, find all included concepts.</p></li>
-<li><p>Find all names of the input concepts, including synonyms, and the names of source concepts that map to them.</p></li>
+<li><p>Find all names of the input concepts, including synonyms, and the names of source concepts
+        that map to them.</p></li>
 <li><p>Search for concepts (standard and source) that contain any of those names as substring.</p></li>
 <li><p>Filter those concepts to those that are not in the original set of concepts (i.e. orphans).</p></li>
-<li><p>Restrict the set of orphan concepts to those that appear in the CDM database and across network concept prevalence (as either source concept or standard concept).</p></li>
+<li><p>Restrict the set of orphan concepts to those that appear in the CDM database and across
+        network concept prevalence (as either source concept or standard concept).</p></li>
 </ul>
 
 

@@ -21,11 +21,13 @@ Imports:
 	dplyr,
 	RJSONIO,
 	FeatureExtraction,
-	ff
+	ff,
+	shiny
 Suggests:
   testthat,
   knitr,
-  rmarkdown
+  rmarkdown,
+  DT
 License: Apache License
 VignetteBuilder: knitr
 URL: https://ohdsi.github.io/StudyDiagnostics, https://github.com/OHDSI/StudyDiagnostics

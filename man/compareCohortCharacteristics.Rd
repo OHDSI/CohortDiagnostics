@@ -7,9 +7,11 @@
 compareCohortCharacteristics(characteristics1, characteristics2)
 }
 \arguments{
-\item{characteristics1}{Characteristics of the first cohort, as created using the \code{\link{getCohortCharacteristics}} function.}
+\item{characteristics1}{Characteristics of the first cohort, as created using the
+\code{\link{getCohortCharacteristics}} function.}
 
-\item{characteristics2}{Characteristics of the second cohort, as created using the \code{\link{getCohortCharacteristics}} function.}
+\item{characteristics2}{Characteristics of the second cohort, as created using the
+\code{\link{getCohortCharacteristics}} function.}
 }
 \value{
 A data frame comparing the characteristics of the two cohorts.

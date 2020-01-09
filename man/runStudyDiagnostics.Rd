@@ -35,13 +35,14 @@ runStudyDiagnostics(
 
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-DatabaseConnector package. Can be left NULL if \code{connection} is provided.}
+DatabaseConnector package. Can be left NULL if \code{connection} is
+provided.}
 
 \item{connection}{An object of type \code{connection} as created using the
 \code{\link[DatabaseConnector]{connect}} function in the
-DatabaseConnector package. Can be left NULL if \code{connectionDetails} is provided,
-in which case a new connection will be opened at the start of the function, and closed
-when the function finishes.}
+DatabaseConnector package. Can be left NULL if \code{connectionDetails}
+is provided, in which case a new connection will be opened at the start
+of the function, and closed when the function finishes.}
 
 \item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
 Note that for SQL Server, this should include both the database and
@@ -50,18 +51,20 @@ schema name, for example 'cdm_data.dbo'.}
 \item{oracleTempSchema}{Should be used in Oracle to specify a schema where the user has write
 privileges for storing temporary tables.}
 
-\item{cohortDatabaseSchema}{Schema name where your cohort table resides.
-Note that for SQL Server, this should include both the database and
-schema name, for example 'scratch.dbo'.}
+\item{cohortDatabaseSchema}{Schema name where your cohort table resides. Note that for SQL Server,
+this should include both the database and schema name, for example
+'scratch.dbo'.}
 
 \item{cohortTable}{Name of the cohort table.}
 
-\item{cohortIds}{Optionally, provide a subset of cohort IDs to restrict the diagnostics to.}
+\item{cohortIds}{Optionally, provide a subset of cohort IDs to restrict the
+diagnostics to.}
 
-\item{inclusionStatisticsFolder}{The folder where the inclusion rule statistics are stored. Can be left NULL if 
-\code{runInclusionStatistics = FALSE}.}
+\item{inclusionStatisticsFolder}{The folder where the inclusion rule statistics are stored. Can be
+left NULL if \code{runInclusionStatistics = FALSE}.}
 
-\item{exportFolder}{The folder where the output will be exported to. If this folder does not exist it will be created.}
+\item{exportFolder}{The folder where the output will be exported to. If this folder
+does not exist it will be created.}
 
 \item{databaseId}{A short string for identifying the database (e.g. 'Synpuf').}
 
@@ -84,6 +87,6 @@ schema name, for example 'scratch.dbo'.}
 \item{runCohortCharacterization}{Generate and export the cohort characterization?}
 }
 \description{
-Runs the study diagnostics on all (or a subset of) the cohorts instantiated using the \code{ROhdsiWebApi::insertCohortDefinitionSetInPackage}
-function.
+Runs the study diagnostics on all (or a subset of) the cohorts instantiated using the
+\code{ROhdsiWebApi::insertCohortDefinitionSetInPackage} function.
 }

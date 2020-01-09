@@ -122,6 +122,9 @@ chars2 <- getCohortCharacteristics(connectionDetails = connectionDetails,
 comparison <- compareCohortCharacteristics(chars1, chars2)
 
 
+# Launch Shiny app ------------------------------------------------
+launchDiagnosticsExplorer("C:/BarcelonaStudyAThon/ccae/export")
+
 
 
 dbms <- "pdw"

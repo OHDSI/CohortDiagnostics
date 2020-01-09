@@ -21,5 +21,5 @@
 #' @import DatabaseConnector
 #' @importFrom grDevices rgb
 #' @importFrom stats aggregate
-#' @importFrom utils write.csv
+#' @importFrom utils write.csv install.packages menu
 NULL

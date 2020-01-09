@@ -281,7 +281,7 @@ runStudyDiagnostics <- function(packageName,
     data <- do.call(rbind, data)
     covariates <- unique(data[, c("covariateId", "covariateName", "analysisId")])
     colnames(covariates)[[3]] <- "covariateAnalysisId"
-    writeToCsv(covariates, file.path(exportFolder, "covariates.csv"))
+    writeToCsv(covariates, file.path(exportFolder, "covariate.csv"))
     data$covariateName <- NULL
     data$analysisId <- NULL
     if (nrow(data) > 0) {
@@ -307,7 +307,8 @@ runStudyDiagnostics <- function(packageName,
 
 writeToCsv <- function(data, fileName) {
   colnames(data) <- SqlRender::camelCaseToSnakeCase(colnames(data))
-  write.csv(data, fileName, row.names = FALSE)
+  # write.csv(data, fileName, row.names = FALSE)
+  readr::write_csv(data, fileName)
 }
 
 swapColumnContents <- function(df, column1 = "targetId", column2 = "comparatorId") {

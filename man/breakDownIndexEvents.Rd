@@ -21,13 +21,14 @@ breakDownIndexEvents(
 \arguments{
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-DatabaseConnector package. Can be left NULL if \code{connection} is provided.}
+DatabaseConnector package. Can be left NULL if \code{connection} is
+provided.}
 
 \item{connection}{An object of type \code{connection} as created using the
 \code{\link[DatabaseConnector]{connect}} function in the
-DatabaseConnector package. Can be left NULL if \code{connectionDetails} is provided,
-in which case a new connection will be opened at the start of the function, and closed
-when the function finishes.}
+DatabaseConnector package. Can be left NULL if \code{connectionDetails}
+is provided, in which case a new connection will be opened at the start
+of the function, and closed when the function finishes.}
 
 \item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
 Note that for SQL Server, this should include both the database and
@@ -36,29 +37,32 @@ schema name, for example 'cdm_data.dbo'.}
 \item{oracleTempSchema}{Should be used in Oracle to specify a schema where the user has write
 privileges for storing temporary tables.}
 
-\item{cohortDatabaseSchema}{Schema name where your cohort table resides.
-Note that for SQL Server, this should include both the database and
-schema name, for example 'scratch.dbo'.}
+\item{cohortDatabaseSchema}{Schema name where your cohort table resides. Note that for SQL Server,
+this should include both the database and schema name, for example
+'scratch.dbo'.}
 
 \item{cohortTable}{Name of the cohort table.}
 
-\item{baseUrl}{The base URL for the WebApi instance, for example: "http://server.org:80/WebAPI". 
-Needn't be provided if \code{cohortJson} and \code{cohortSql} are provided.}
+\item{baseUrl}{The base URL for the WebApi instance, for example:
+"http://server.org:80/WebAPI". Needn't be provided if \code{cohortJson} and
+\code{cohortSql} are provided.}
 
-\item{webApiCohortId}{The ID of the cohort in the WebAPI instance.
-Needn't be provided if \code{cohortJson} and \code{cohortSql} are provided.}
+\item{webApiCohortId}{The ID of the cohort in the WebAPI instance. Needn't be provided if
+\code{cohortJson} and \code{cohortSql} are provided.}
 
-\item{cohortJson}{A character string containing the JSON of a cohort definition.
-Needn't be provided if \code{baseUrl} and \code{cohortId} are provided.}
+\item{cohortJson}{A character string containing the JSON of a cohort definition. Needn't be
+provided if \code{baseUrl} and \code{cohortId} are provided.}
 
-\item{cohortSql}{The OHDSI SQL representation of the same cohort definition.
-Needn't be provided if \code{baseUrl} and \code{cohortId} are provided.}
+\item{cohortSql}{The OHDSI SQL representation of the same cohort definition. Needn't be
+provided if \code{baseUrl} and \code{cohortId} are provided.}
 
 \item{cohortId}{The cohort definition ID used to reference the cohort in the cohort table.}
 }
 \value{
-A data frame with concepts, and per concept the count of how often the concept was encountered at the index date.
+A data frame with concepts, and per concept the count of how often the concept was encountered at
+the index date.
 }
 \description{
-For the concepts included in the index event definition, count how often they are encountered at the cohort index date.
+For the concepts included in the index event definition, count how often they are encountered at
+the cohort index date.
 }

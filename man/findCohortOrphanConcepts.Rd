@@ -19,13 +19,14 @@ findCohortOrphanConcepts(
 \arguments{
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-DatabaseConnector package. Can be left NULL if \code{connection} is provided.}
+DatabaseConnector package. Can be left NULL if \code{connection} is
+provided.}
 
 \item{connection}{An object of type \code{connection} as created using the
 \code{\link[DatabaseConnector]{connect}} function in the
-DatabaseConnector package. Can be left NULL if \code{connectionDetails} is provided,
-in which case a new connection will be opened at the start of the function, and closed
-when the function finishes.}
+DatabaseConnector package. Can be left NULL if \code{connectionDetails}
+is provided, in which case a new connection will be opened at the start
+of the function, and closed when the function finishes.}
 
 \item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
 Note that for SQL Server, this should include both the database and
@@ -34,37 +35,41 @@ schema name, for example 'cdm_data.dbo'.}
 \item{oracleTempSchema}{Should be used in Oracle to specify a schema where the user has write
 privileges for storing temporary tables.}
 
-\item{baseUrl}{The base URL for the WebApi instance, for example: "http://server.org:80/WebAPI". 
-Needn't be provided if \code{cohortJson} is provided.}
+\item{baseUrl}{The base URL for the WebApi instance, for example:
+"http://server.org:80/WebAPI". Needn't be provided if \code{cohortJson} is
+provided.}
 
-\item{webApiCohortId}{The ID of the cohort in the WebAPI instance.
-Needn't be provided if \code{cohortJson} is provided.}
+\item{webApiCohortId}{The ID of the cohort in the WebAPI instance. Needn't be provided if
+\code{cohortJson} is provided.}
 
-\item{cohortJson}{A character string containing the JSON of a cohort definition.
-Needn't be provided if \code{baseUrl} and \code{webApiCohortId} are provided.}
+\item{cohortJson}{A character string containing the JSON of a cohort definition. Needn't be
+provided if \code{baseUrl} and \code{webApiCohortId} are provided.}
 
-\item{conceptCountsDatabaseSchema}{Schema name where your concept counts table resides.
-Note that for SQL Server, this should include both the database and
+\item{conceptCountsDatabaseSchema}{Schema name where your concept counts table resides. Note that
+for SQL Server, this should include both the database and
 schema name, for example 'scratch.dbo'.}
 
-\item{conceptCountsTable}{Name of the concept counts table. This table can be created using the \code{\link{createConceptCountsTable}}.}
+\item{conceptCountsTable}{Name of the concept counts table. This table can be created
+using the \code{\link{createConceptCountsTable}}.}
 }
 \value{
-A data frame with orphan concepts, with counts how often the code was encountered
-in the CDM.
+A data frame with orphan concepts, with counts how often the code was encountered in the CDM.
 }
 \description{
 Searches for concepts that should belong to the concept sets in a cohort definition but don't, for
-example because of missing source-to-standard concept maps, or erroneous hierarchical relationships.
+example because of missing source-to-standard concept maps, or erroneous hierarchical
+relationships.
 }
 \details{
-Logically, this function performs the following steps for each concept set expression in the cohort definition:
-
+Logically, this function performs the following steps for each concept set expression in the cohort
+definition:
 \itemize{
-\item  Given the concept set expression, find all included concepts.
-\item  Find all names of the input concepts, including synonyms, and the names of source concepts that map to them.
-\item  Search for concepts (standard and source) that contain any of those names as substring.
-\item  Filter those concepts to those that are not in the original set of concepts (i.e. orphans).
-\item  Restrict the set of orphan concepts to those that appear in the CDM database and across network concept prevalence (as either source concept or standard concept).
+  \item Given the concept set expression, find all included concepts.
+  \item Find all names of the input concepts, including synonyms, and the names of source concepts
+        that map to them.
+  \item Search for concepts (standard and source) that contain any of those names as substring.
+  \item Filter those concepts to those that are not in the original set of concepts (i.e. orphans).
+  \item Restrict the set of orphan concepts to those that appear in the CDM database and across
+        network concept prevalence (as either source concept or standard concept).
 }
 }

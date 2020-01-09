@@ -17,13 +17,14 @@ findOrphanConcepts(
 \arguments{
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-DatabaseConnector package. Can be left NULL if \code{connection} is provided.}
+DatabaseConnector package. Can be left NULL if \code{connection} is
+provided.}
 
 \item{connection}{An object of type \code{connection} as created using the
 \code{\link[DatabaseConnector]{connect}} function in the
-DatabaseConnector package. Can be left NULL if \code{connectionDetails} is provided,
-in which case a new connection will be opened at the start of the function, and closed
-when the function finishes.}
+DatabaseConnector package. Can be left NULL if \code{connectionDetails}
+is provided, in which case a new connection will be opened at the start
+of the function, and closed when the function finishes.}
 
 \item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
 Note that for SQL Server, this should include both the database and
@@ -34,27 +35,28 @@ privileges for storing temporary tables.}
 
 \item{conceptIds}{A vector of concept IDs for which we want to find orphans.}
 
-\item{conceptCountsDatabaseSchema}{Schema name where your concept counts table resides.
-Note that for SQL Server, this should include both the database and
+\item{conceptCountsDatabaseSchema}{Schema name where your concept counts table resides. Note that
+for SQL Server, this should include both the database and
 schema name, for example 'scratch.dbo'.}
 
-\item{conceptCountsTable}{Name of the concept counts table. This table can be created using the \code{\link{createConceptCountsTable}}.}
+\item{conceptCountsTable}{Name of the concept counts table. This table can be created
+using the \code{\link{createConceptCountsTable}}.}
 }
 \value{
-A data frame with orphan concepts, with counts how often the code was encountered
-in the CDM.
+A data frame with orphan concepts, with counts how often the code was encountered in the CDM.
 }
 \description{
-Searches for concepts that should belong to the set of concepts but don't, for
-example because of missing source-to-standard concept maps, or erroneous hierarchical relationships.
+Searches for concepts that should belong to the set of concepts but don't, for example because of
+missing source-to-standard concept maps, or erroneous hierarchical relationships.
 }
 \details{
 Logically, this function performs the following steps for the input set of concept IDs:
-
 \itemize{
-\item  Find all names of the input concepts, including synonyms, and the names of source concepts that map to them.
-\item  Search for concepts (standard and source) that contain any of those names as substring.
-\item  Filter those concepts to those that are not in the original set of concepts (i.e. orphans).
-\item  Restrict the set of orphan concepts to those that appear in the CDM database and across network concept prevalence (as either source concept or standard concept).
+  \item Find all names of the input concepts, including synonyms, and the names of source concepts
+        that map to them.
+  \item Search for concepts (standard and source) that contain any of those names as substring.
+  \item Filter those concepts to those that are not in the original set of concepts (i.e. orphans).
+  \item Restrict the set of orphan concepts to those that appear in the CDM database and across
+        network concept prevalence (as either source concept or standard concept).
 }
 }

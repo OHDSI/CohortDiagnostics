@@ -15,23 +15,25 @@ createConceptCountsTable(
 \arguments{
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-DatabaseConnector package. Can be left NULL if \code{connection} is provided.}
+DatabaseConnector package. Can be left NULL if \code{connection} is
+provided.}
 
 \item{connection}{An object of type \code{connection} as created using the
 \code{\link[DatabaseConnector]{connect}} function in the
-DatabaseConnector package. Can be left NULL if \code{connectionDetails} is provided,
-in which case a new connection will be opened at the start of the function, and closed
-when the function finishes.}
+DatabaseConnector package. Can be left NULL if \code{connectionDetails}
+is provided, in which case a new connection will be opened at the start
+of the function, and closed when the function finishes.}
 
 \item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
 Note that for SQL Server, this should include both the database and
 schema name, for example 'cdm_data.dbo'.}
 
-\item{conceptCountsDatabaseSchema}{Schema name where your concept counts table resides.
-Note that for SQL Server, this should include both the database and
+\item{conceptCountsDatabaseSchema}{Schema name where your concept counts table resides. Note that
+for SQL Server, this should include both the database and
 schema name, for example 'scratch.dbo'.}
 
-\item{conceptCountsTable}{Name of the concept counts table. This table can be created using the \code{\link{createConceptCountsTable}}.}
+\item{conceptCountsTable}{Name of the concept counts table. This table can be created
+using the \code{\link{createConceptCountsTable}}.}
 }
 \description{
 Create a table with counts of how often each concept ID occurs in the CDM.

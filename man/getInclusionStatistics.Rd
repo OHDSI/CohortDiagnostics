@@ -20,34 +20,42 @@ getInclusionStatistics(
 \arguments{
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-DatabaseConnector package. Can be left NULL if \code{connection} is provided.}
+DatabaseConnector package. Can be left NULL if \code{connection} is
+provided.}
 
 \item{connection}{An object of type \code{connection} as created using the
 \code{\link[DatabaseConnector]{connect}} function in the
-DatabaseConnector package. Can be left NULL if \code{connectionDetails} is provided,
-in which case a new connection will be opened at the start of the function, and closed
-when the function finishes.}
+DatabaseConnector package. Can be left NULL if \code{connectionDetails}
+is provided, in which case a new connection will be opened at the start
+of the function, and closed when the function finishes.}
 
-\item{resultsDatabaseSchema}{Schema name where the statistics tables reside.
-Note that for SQL Server, this should include both the database and
-schema name, for example 'scratch.dbo'.}
+\item{resultsDatabaseSchema}{Schema name where the statistics tables reside. Note that for
+SQL Server, this should include both the database and schema
+name, for example 'scratch.dbo'.}
 
-\item{cohortId}{The cohort definition ID used to reference the cohort in the cohort table.}
+\item{cohortId}{The cohort definition ID used to reference the cohort in the
+cohort table.}
 
 \item{simplify}{Simply output the attrition table?}
 
-\item{cohortTable}{Name of the cohort table. Used only to conveniently derive names of the four rule statistics tables.}
+\item{cohortTable}{Name of the cohort table. Used only to conveniently derive names
+of the four rule statistics tables.}
 
-\item{cohortInclusionTable}{Name of the inclusion table, one of the tables for storing inclusion rule statistics.}
+\item{cohortInclusionTable}{Name of the inclusion table, one of the tables for storing
+inclusion rule statistics.}
 
-\item{cohortInclusionResultTable}{Name of the inclusion result table, one of the tables for storing inclusion rule statistics.}
+\item{cohortInclusionResultTable}{Name of the inclusion result table, one of the tables for
+storing inclusion rule statistics.}
 
-\item{cohortInclusionStatsTable}{Name of the inclusion stats table, one of the tables for storing inclusion rule statistics.}
+\item{cohortInclusionStatsTable}{Name of the inclusion stats table, one of the tables for storing
+inclusion rule statistics.}
 
-\item{cohortSummaryStatsTable}{Name of the summary stats table, one of the tables for storing inclusion rule statistics.}
+\item{cohortSummaryStatsTable}{Name of the summary stats table, one of the tables for storing
+inclusion rule statistics.}
 }
 \value{
-If `simplify = TRUE`, this function returns a single data frame. Else a list of data frames is returned.
+If `simplify = TRUE`, this function returns a single data frame. Else a list of data frames is
+returned.
 }
 \description{
 Get statistics on cohort inclusion criteria

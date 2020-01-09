@@ -27,13 +27,14 @@ instantiateCohort(
 \arguments{
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-DatabaseConnector package. Can be left NULL if \code{connection} is provided.}
+DatabaseConnector package. Can be left NULL if \code{connection} is
+provided.}
 
 \item{connection}{An object of type \code{connection} as created using the
 \code{\link[DatabaseConnector]{connect}} function in the
-DatabaseConnector package. Can be left NULL if \code{connectionDetails} is provided,
-in which case a new connection will be opened at the start of the function, and closed
-when the function finishes.}
+DatabaseConnector package. Can be left NULL if \code{connectionDetails}
+is provided, in which case a new connection will be opened at the start
+of the function, and closed when the function finishes.}
 
 \item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
 Note that for SQL Server, this should include both the database and
@@ -42,41 +43,48 @@ schema name, for example 'cdm_data.dbo'.}
 \item{oracleTempSchema}{Should be used in Oracle to specify a schema where the user has write
 privileges for storing temporary tables.}
 
-\item{cohortDatabaseSchema}{Schema name where your cohort table resides.
-Note that for SQL Server, this should include both the database and
-schema name, for example 'scratch.dbo'.}
+\item{cohortDatabaseSchema}{Schema name where your cohort table resides. Note that for SQL Server,
+this should include both the database and schema name, for example
+'scratch.dbo'.}
 
 \item{cohortTable}{Name of the cohort table.}
 
-\item{baseUrl}{The base URL for the WebApi instance, for example: "http://server.org:80/WebAPI". 
-Needn't be provided if \code{cohortJson} and \code{cohortSql} are provided.}
+\item{baseUrl}{The base URL for the WebApi instance, for example:
+"http://server.org:80/WebAPI". Needn't be provided if \code{cohortJson} and
+\code{cohortSql} are provided.}
 
-\item{webApiCohortId}{The ID of the cohort in the WebAPI instance.
-Needn't be provided if \code{cohortJson} and \code{cohortSql} are provided.}
+\item{webApiCohortId}{The ID of the cohort in the WebAPI instance. Needn't be provided if
+\code{cohortJson} and \code{cohortSql} are provided.}
 
-\item{cohortJson}{A character string containing the JSON of a cohort definition.
-Needn't be provided if \code{baseUrl} and \code{cohortId} are provided.}
+\item{cohortJson}{A character string containing the JSON of a cohort definition. Needn't be
+provided if \code{baseUrl} and \code{cohortId} are provided.}
 
-\item{cohortSql}{The OHDSI SQL representation of the same cohort definition.
-Needn't be provided if \code{baseUrl} and \code{cohortId} are provided.}
+\item{cohortSql}{The OHDSI SQL representation of the same cohort definition. Needn't be
+provided if \code{baseUrl} and \code{cohortId} are provided.}
 
-\item{cohortId}{The cohort definition ID used to reference the cohort in the cohort table.}
+\item{cohortId}{The cohort definition ID used to reference the cohort in the
+cohort table.}
 
 \item{generateInclusionStats}{Compute and store inclusion rule statistics?}
 
-\item{resultsDatabaseSchema}{Schema name where the statistics tables reside.
-Note that for SQL Server, this should include both the database and
-schema name, for example 'scratch.dbo'.}
+\item{resultsDatabaseSchema}{Schema name where the statistics tables reside. Note that for
+SQL Server, this should include both the database and schema
+name, for example 'scratch.dbo'.}
 
-\item{cohortInclusionTable}{Name of the inclusion table, one of the tables for storing inclusion rule statistics.}
+\item{cohortInclusionTable}{Name of the inclusion table, one of the tables for storing
+inclusion rule statistics.}
 
-\item{cohortInclusionResultTable}{Name of the inclusion result table, one of the tables for storing inclusion rule statistics.}
+\item{cohortInclusionResultTable}{Name of the inclusion result table, one of the tables for
+storing inclusion rule statistics.}
 
-\item{cohortInclusionStatsTable}{Name of the inclusion stats table, one of the tables for storing inclusion rule statistics.}
+\item{cohortInclusionStatsTable}{Name of the inclusion stats table, one of the tables for storing
+inclusion rule statistics.}
 
-\item{cohortSummaryStatsTable}{Name of the summary stats table, one of the tables for storing inclusion rule statistics.}
+\item{cohortSummaryStatsTable}{Name of the summary stats table, one of the tables for storing
+inclusion rule statistics.}
 }
 \description{
-This function instantiates the cohort in the cohort table. Optionally, the inclusion rule statistics are computed and stored in
-the inclusion rule statistics tables described in \code{\link{createCohortTable}}).
+This function instantiates the cohort in the cohort table. Optionally, the inclusion rule
+statistics are computed and stored in the inclusion rule statistics tables described in
+\code{\link{createCohortTable}}).
 }
