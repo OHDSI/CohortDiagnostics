@@ -30,5 +30,6 @@ for (i in 1:length(zipFiles)) {
 }
 
 cohort <- unique(cohort)
+covariate <- unique(covariate)
 conceptSets <- unique(includedSourceConcept[, c("cohortId", "conceptSetId", "conceptSetName")])
 

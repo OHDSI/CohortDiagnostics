@@ -28,7 +28,8 @@ shinyServer(function(input, output, session) {
   
 
   output$incidenceProportionPlot <- renderPlot({
-    data <- incidenceProportion[incidenceProportion$cohortId == cohortId(), ]
+    data <- incidenceProportion[incidenceProportion$cohortId == cohortId() & 
+                                  incidenceProportion$databaseId == input$database, ]
     plot <- StudyDiagnostics::plotIncidenceProportion(data)
     return(plot)
   })

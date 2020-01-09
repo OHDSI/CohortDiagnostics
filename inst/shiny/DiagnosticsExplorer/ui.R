@@ -33,8 +33,6 @@ shinyUI(
                      )
               ),
               column(9,
-                     # dataTableOutput("mainTable"),
-                     # conditionalPanel("output.rowIsSelected == true",
                      tabsetPanel(id = "detailsTabsetPanel",
                                  tabPanel("Incidence proportion",
                                           value = 1,
