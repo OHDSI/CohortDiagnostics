@@ -148,7 +148,9 @@ recode <- function(ipData) {
 
 aggregateGetIp <- function(ipData, aggregateList) {
   ipData <- aggregate(cbind(cohortSubjects = ipData$cohortSubjects,
-                            backgroundSubjects = ipData$backgroundSubjects), by = aggregateList, FUN = sum)
+                            backgroundSubjects = ipData$backgroundSubjects), 
+                      by = aggregateList, 
+                      FUN = sum)
   ipData$incidenceProportion <- 1000 * ipData$cohortSubjects/ipData$backgroundSubjects
   return(ipData)
 }
