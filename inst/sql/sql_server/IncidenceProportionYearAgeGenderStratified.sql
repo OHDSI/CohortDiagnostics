@@ -1,4 +1,4 @@
-IF OBJECT_ID('tempdb..#inc_num') IS NOT NULL
+IF OBJECT_ID('tempdb..#inc_num', 'U') IS NOT NULL
   DROP TABLE #inc_num;
 
 SELECT YEAR(c.cohort_start_date) AS index_year,
@@ -33,7 +33,7 @@ FROM (
 	FLOOR((YEAR(c.cohort_start_date) - p.year_of_birth) / 10),
 	p.gender_concept_id;
 
-IF OBJECT_ID('tempdb..#inc_denom') IS NOT NULL
+IF OBJECT_ID('tempdb..#inc_denom', 'U') IS NOT NULL
   DROP TABLE #inc_denom;
 
 SELECT iy.index_year,
@@ -56,7 +56,7 @@ GROUP BY iy.index_year,
 	FLOOR((iy.index_year - p.year_of_birth) / 10),
 	p.gender_concept_id;
 
-IF OBJECT_ID('tempdb..#inc_denom_exclude') IS NOT NULL
+IF OBJECT_ID('tempdb..#inc_denom_exclude', 'U') IS NOT NULL
   DROP TABLE #inc_denom_exclude;
 
 SELECT iy.index_year,
@@ -89,7 +89,7 @@ GROUP BY iy.index_year,
 	FLOOR((iy.index_year - p.year_of_birth) / 10),
 	p.gender_concept_id;
 
-IF OBJECT_ID('tempdb..#inc_summary') IS NOT NULL
+IF OBJECT_ID('tempdb..#inc_summary', 'U') IS NOT NULL
   DROP TABLE #inc_summary;
 
 SELECT in1.index_year,
