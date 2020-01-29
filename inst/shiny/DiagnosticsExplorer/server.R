@@ -90,6 +90,9 @@ shinyServer(function(input, output, session) {
   
   output$inclusionRuleTable <- renderDataTable({
     table <- inclusionRuleStats[inclusionRuleStats$cohortId == cohortId() & inclusionRuleStats$databaseId == input$database, ]
+    if (nrow(table) == 0) {
+      return(NULL)
+    }
     table <- table[order(table$ruleSequenceId), ]
     table$cohortId <- NULL
     table$databaseId <- NULL

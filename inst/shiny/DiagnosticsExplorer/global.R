@@ -1,4 +1,4 @@
-# shinySettings <- list(dataFolder = "C:/BarcelonaStudyAThon/ccae/export")
+# shinySettings <- list(dataFolder = "C:/temp/StudyDiagnostics")
 dataFolder <- shinySettings$dataFolder
 
 zipFiles <- list.files(dataFolder, pattern = ".zip", full.names = TRUE)
@@ -6,7 +6,7 @@ zipFiles <- list.files(dataFolder, pattern = ".zip", full.names = TRUE)
 loadFile <- function(file, folder, overwrite) {
   tableName <- gsub(".csv$", "", file)
   camelCaseName <- SqlRender::snakeCaseToCamelCase(tableName)
-  data <- readr::read_csv(file.path(folder, file), col_types = readr::cols(), locale = readr::locale(encoding = "UTF-8"))
+  data <- readr::read_csv(file.path(folder, file), col_types = readr::cols(), guess_max = 1e7, locale = readr::locale(encoding = "UTF-8"))
   colnames(data) <- SqlRender::snakeCaseToCamelCase(colnames(data))
 
   if (!overwrite && exists(camelCaseName, envir = .GlobalEnv)) {
