@@ -1,6 +1,6 @@
 # Copyright 2020 Observational Health Data Sciences and Informatics
 #
-# This file is part of StudyDiagnostics
+# This file is part of CohortDiagnostics
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ getIncidenceProportion <- function(connectionDetails = NULL,
 
   ParallelLogger::logInfo("Calculating incidence proportion per year by age and gender...")
   sql <- SqlRender::loadRenderTranslateSql(sqlFilename = "IncidenceProportionYearAgeGenderStratified.sql",
-                                           packageName = "StudyDiagnostics",
+                                           packageName = "CohortDiagnostics",
                                            dbms = connection@dbms,
                                            cohort_database_schema = cohortDatabaseSchema,
                                            cohort_table = cohortTable,
@@ -85,14 +85,14 @@ getIncidenceProportion <- function(connectionDetails = NULL,
   DatabaseConnector::executeSql(connection, sql)
 
   sql <- SqlRender::loadRenderTranslateSql(sqlFilename = "GetIncidenceProportionData.sql",
-                                           packageName = "StudyDiagnostics",
+                                           packageName = "CohortDiagnostics",
                                            dbms = connection@dbms)
   ipYearAgeGenderData <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
   ipYearAgeGenderData <- recode(ipYearAgeGenderData)
   ipYearAgeGenderData$incidenceProportion <- 1000 * ipYearAgeGenderData$cohortSubjects/ipYearAgeGenderData$backgroundSubjects
 
   sql <- SqlRender::loadRenderTranslateSql(sqlFilename = "RemoveTempTables.sql",
-                                           packageName = "StudyDiagnostics",
+                                           packageName = "CohortDiagnostics",
                                            dbms = connection@dbms)
   DatabaseConnector::executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
 

@@ -1,4 +1,4 @@
-Package: StudyDiagnostics
+Package: CohortDiagnostics
 Type: Package
 Title: Diagnostics for OHDSI studies
 Version: 0.0.2
@@ -33,7 +33,7 @@ Suggests:
   RColorBrewer
 License: Apache License
 VignetteBuilder: knitr
-URL: https://ohdsi.github.io/StudyDiagnostics, https://github.com/OHDSI/StudyDiagnostics
-BugReports: https://github.com/OHDSI/StudyDiagnostics/issues
+URL: https://ohdsi.github.io/CohortDiagnostics, https://github.com/OHDSI/CohortDiagnostics
+BugReports: https://github.com/OHDSI/CohortDiagnostics/issues
 RoxygenNote: 7.0.2
 Encoding: UTF-8

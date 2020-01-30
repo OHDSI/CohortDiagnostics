@@ -30,7 +30,7 @@ shinyServer(function(input, output, session) {
   output$incidenceProportionPlot <- renderPlot({
     data <- incidenceProportion[incidenceProportion$cohortId == cohortId() & 
                                   incidenceProportion$databaseId == input$database, ]
-    plot <- StudyDiagnostics::plotIncidenceProportion(data)
+    plot <- CohortDiagnostics::plotIncidenceProportion(data)
     return(plot)
   })
 
@@ -199,7 +199,7 @@ shinyServer(function(input, output, session) {
     # covs2 <- covariateValue[covariateValue$cohortId == 13666, ]
     covs1 <- merge(covs1, covariate)
     covs2 <- merge(covs2, covariate)
-    balance <- StudyDiagnostics::compareCohortCharacteristics(covs1, covs2)
+    balance <- CohortDiagnostics::compareCohortCharacteristics(covs1, covs2)
     
     
 

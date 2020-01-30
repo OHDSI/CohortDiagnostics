@@ -1,6 +1,6 @@
 # Copyright 2020 Observational Health Data Sciences and Informatics
 #
-# This file is part of StudyDiagnostics
+# This file is part of CohortDiagnostics
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,10 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#' StudyDiagnostics
+#' CohortDiagnostics
 #'
 #' @docType package
-#' @name StudyDiagnostics
+#' @name CohortDiagnostics
 #' @import DatabaseConnector
 #' @importFrom grDevices rgb
 #' @importFrom stats aggregate

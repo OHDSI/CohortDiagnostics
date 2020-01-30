@@ -17,7 +17,7 @@ vignette: >
 
 ```{r, echo = FALSE, message = FALSE, warning = FALSE}
 options(width = 200)
-library(StudyDiagnostics)
+library(CohortDiagnostics)
 knitr::opts_chunk$set(
   cache = FALSE,
   comment = "#>",
@@ -31,7 +31,7 @@ knitr::opts_chunk$set(
 Most of the diagnostics included in this package require the cohorts designed in ATLAS to be instantiated in a cohort table. There are several ways in which we can instantiate cohorts:
 
 1. Using ATLAS to instantiate the cohorts. 
-2. Using the StudyDiagnostics package to instantiate the cohorts.
+2. Using the CohortDiagnostics package to instantiate the cohorts.
 3. Using the insertCohortDefinitionSetInPackage function in the ROhdsiWebApi package.
 
 Instantiated cohorts are stored in a cohort table with the fields defined in the Common Data Model. note that this table need not be called 'cohort'. If we are interested in statistics on how many subject meet the various inclusion rules, we also need additional tables to store these results.
@@ -47,7 +47,7 @@ For inclusion rule statistics you also need to identify the results database sch
 3. `cohortInclusionStatsTable`, e.g. `cohortInclusionStatsTable <- "cohort_inclusion_stats"`
 4. `cohortSummaryStatsTable`, e.g. `cohortSummaryStatsTable <- "cohort_summary_stats"`
 
-## Using StudyDiagnostics
+## Using CohortDiagnostics
 
 ```{r eval=FALSE}
 createCohortTable(connectionDetails = connectionDetails,

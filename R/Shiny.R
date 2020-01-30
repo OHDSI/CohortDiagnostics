@@ -1,6 +1,6 @@
 # Copyright 2020 Observational Health Data Sciences and Informatics
 #
-# This file is part of StudyDiagnostics
+# This file is part of CohortDiagnostics
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@
 #' @export
 launchDiagnosticsExplorer <- function(dataFolder, launch.browser = FALSE) {
   ensure_installed("DT")
-  appDir <- system.file("shiny", "DiagnosticsExplorer", package = "StudyDiagnostics")
+  appDir <- system.file("shiny", "DiagnosticsExplorer", package = "CohortDiagnostics")
   shinySettings <- list(dataFolder = dataFolder)
   .GlobalEnv$shinySettings <- shinySettings
   on.exit(rm(shinySettings, envir = .GlobalEnv))
@@ -72,7 +72,7 @@ launchCohortExplorer <- function(connectionDetails,
                                    sampleSize = sampleSize,
                                    subjectIds = subjectIds)
   on.exit(rm(shinySettings, envir = .GlobalEnv))
-  appDir <- system.file("shiny", "CohortExplorer", package = "StudyDiagnostics")
+  appDir <- system.file("shiny", "CohortExplorer", package = "CohortDiagnostics")
   shiny::runApp(appDir)
 }
 

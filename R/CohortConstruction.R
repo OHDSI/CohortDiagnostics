@@ -1,6 +1,6 @@
 # Copyright 2020 Observational Health Data Sciences and Informatics
 #
-# This file is part of StudyDiagnostics
+# This file is part of CohortDiagnostics
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ createCohortTable <- function(connectionDetails = NULL,
     on.exit(DatabaseConnector::disconnect(connection))
   }
   sql <- SqlRender::loadRenderTranslateSql("CreateCohortTable.sql",
-                                           packageName = "StudyDiagnostics",
+                                           packageName = "CohortDiagnostics",
                                            dbms = connectionDetails$dbms,
                                            cohort_database_schema = cohortDatabaseSchema,
                                            cohort_table = cohortTable)
@@ -66,7 +66,7 @@ createCohortTable <- function(connectionDetails = NULL,
   if (createInclusionStatsTables) {
     ParallelLogger::logInfo("Creating inclusion rule statistics tables")
     sql <- SqlRender::loadRenderTranslateSql("CreateInclusionStatsTables.sql",
-                                             packageName = "StudyDiagnostics",
+                                             packageName = "CohortDiagnostics",
                                              dbms = connectionDetails$dbms,
                                              cohort_database_schema = resultsDatabaseSchema,
                                              cohort_inclusion_table = cohortInclusionTable,
