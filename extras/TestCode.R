@@ -122,8 +122,17 @@ chars2 <- getCohortCharacteristics(connectionDetails = connectionDetails,
 comparison <- compareCohortCharacteristics(chars1, chars2)
 
 
-# Launch Shiny app ------------------------------------------------
+# Launch Diagnostics Explorer app ----------------------------------------------
 launchDiagnosticsExplorer("C:/BarcelonaStudyAThon/ccae/export")
+
+
+
+# Launch Cohort Explorer app ---------------------------------------------------
+launchCohortExplorer(connectionDetails = connectionDetails,
+                     cdmDatabaseSchema = cdmDatabaseSchema,
+                     cohortDatabaseSchema = cohortDatabaseSchema,
+                     cohortTable = cohortTable,
+                     cohortId = cohortId)
 
 
 

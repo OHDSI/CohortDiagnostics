@@ -17,6 +17,7 @@ Features
 - Break down index events into the specific concepts that triggered them.
 - Compute overlap between two cohorts.
 - Characterize cohorts, and compare these characterizations.
+- Explore patient profiles of a random sample of subjects in a cohort.
 
 Examples
 ========
