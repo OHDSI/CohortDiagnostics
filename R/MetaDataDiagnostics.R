@@ -1,6 +1,6 @@
 # Copyright 2020 Observational Health Data Sciences and Informatics
 #
-# This file is part of StudyDiagnostics
+# This file is part of CohortDiagnostics
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ findOrphanConcepts <- function(connectionDetails = NULL,
     on.exit(DatabaseConnector::disconnect(connection))
   }
   sql <- SqlRender::loadRenderTranslateSql("OrphanCodes.sql",
-                                           packageName = "StudyDiagnostics",
+                                           packageName = "CohortDiagnostics",
                                            dbms = connection@dbms,
                                            oracleTempSchema = oracleTempSchema,
                                            cdm_database_schema = cdmDatabaseSchema,
@@ -81,7 +81,7 @@ findOrphanConcepts <- function(connectionDetails = NULL,
 
   ParallelLogger::logTrace("- Dropping orhpan temp tables")
   sql <- SqlRender::loadRenderTranslateSql("DropOrphanConceptTempTables.sql",
-                                           packageName = "StudyDiagnostics",
+                                           packageName = "CohortDiagnostics",
                                            dbms = connection@dbms,
                                            oracleTempSchema = oracleTempSchema)
   DatabaseConnector::executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
@@ -212,7 +212,7 @@ createConceptCountsTable <- function(connectionDetails = NULL,
     on.exit(DatabaseConnector::disconnect(connection))
   }
   sql <- SqlRender::loadRenderTranslateSql("CreateConceptCountTable.sql",
-                                           packageName = "StudyDiagnostics",
+                                           packageName = "CohortDiagnostics",
                                            dbms = connection@dbms,
                                            cdm_database_schema = cdmDatabaseSchema,
                                            work_database_schema = conceptCountsDatabaseSchema,
@@ -283,7 +283,7 @@ findCohortIncludedSourceConcepts <- function(connectionDetails = NULL,
 
   ParallelLogger::logInfo("Counting codes in concept sets")
   sql <- SqlRender::loadRenderTranslateSql("CohortSourceCodes.sql",
-                                           packageName = "StudyDiagnostics",
+                                           packageName = "CohortDiagnostics",
                                            dbms = connection@dbms,
                                            oracleTempSchema = oracleTempSchema,
                                            cdm_database_schema = cdmDatabaseSchema,
@@ -300,7 +300,7 @@ findCohortIncludedSourceConcepts <- function(connectionDetails = NULL,
 
   if (byMonth) {
     sql <- SqlRender::loadRenderTranslateSql("ObservedPerCalendarMonth.sql",
-                                             packageName = "StudyDiagnostics",
+                                             packageName = "CohortDiagnostics",
                                              dbms = connection@dbms,
                                              oracleTempSchema = oracleTempSchema,
                                              cdm_database_schema = cdmDatabaseSchema)

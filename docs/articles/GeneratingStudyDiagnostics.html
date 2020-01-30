@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Generating Study Diagnostics • StudyDiagnostics</title>
+<title>Generating Study Diagnostics • CohortDiagnostics</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/cosmo/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous">
@@ -30,7 +30,7 @@
         <span class="icon-bar"></span>
       </button>
       <span class="navbar-brand">
-        <a class="navbar-link" href="../index.html">StudyDiagnostics</a>
+        <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
         <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.1</span>
       </span>
     </div>
@@ -64,7 +64,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/OHDSI/StudyDiagnostics">
+  <a href="https://github.com/OHDSI/CohortDiagnostics">
     <span class="fab fa fab fa-github fa-lg"></span>
      
   </a>
@@ -87,7 +87,7 @@
             
             <h4 class="date">2020-01-10</h4>
       
-      <small class="dont-index">Source: <a href="https://github.com/OHDSI/StudyDiagnostics/blob/master/vignettes/GeneratingStudyDiagnostics.Rmd"><code>vignettes/GeneratingStudyDiagnostics.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/master/vignettes/GeneratingStudyDiagnostics.Rmd"><code>vignettes/GeneratingStudyDiagnostics.Rmd</code></a></small>
       <div class="hidden name"><code>GeneratingStudyDiagnostics.Rmd</code></div>
 
     </div>
@@ -104,7 +104,7 @@
 <p>Most of the diagnostics included in this package require the cohorts designed in ATLAS to be instantiated in a cohort table. There are several ways in which we can instantiate cohorts:</p>
 <ol style="list-style-type: decimal">
 <li>Using ATLAS to instantiate the cohorts.</li>
-<li>Using the StudyDiagnostics package to instantiate the cohorts.</li>
+<li>Using the CohortDiagnostics package to instantiate the cohorts.</li>
 <li>Using the insertCohortDefinitionSetInPackage function in the ROhdsiWebApi package.</li>
 </ol>
 <p>Instantiated cohorts are stored in a cohort table with the fields defined in the Common Data Model. note that this table need not be called ‘cohort’. If we are interested in statistics on how many subject meet the various inclusion rules, we also need additional tables to store these results.</p>
@@ -130,7 +130,7 @@
 </div>
 <div id="using-studydiagnostics" class="section level2">
 <h2 class="hasAnchor">
-<a href="#using-studydiagnostics" class="anchor"></a>Using StudyDiagnostics</h2>
+<a href="#using-studydiagnostics" class="anchor"></a>Using CohortDiagnostics</h2>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw"><a href="../reference/createCohortTable.html">createCohortTable</a></span>(<span class="dt">connectionDetails =</span> connectionDetails,</span>
 <span id="cb1-2"><a href="#cb1-2"></a>                  <span class="dt">cohortDatabaseSchema =</span> cohortDatabaseSchema,</span>
 <span id="cb1-3"><a href="#cb1-3"></a>                  <span class="dt">cohortTable =</span> cohortTable,</span>
@@ -160,7 +160,7 @@
       <li>
 <a href="#cohort-instantiation">Cohort Instantiation</a><ul class="nav nav-pills nav-stacked">
 <li><a href="#using-atlas">Using ATLAS</a></li>
-      <li><a href="#using-studydiagnostics">Using StudyDiagnostics</a></li>
+      <li><a href="#using-studydiagnostics">Using CohortDiagnostics</a></li>
       <li><a href="#using-insertcohortdefinitionsetinpackage">Using insertCohortDefinitionSetInPackage</a></li>
       </ul>
 </li>

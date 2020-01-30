@@ -1,4 +1,4 @@
-# shinySettings <- list(dataFolder = "C:/temp/StudyDiagnostics")
+# shinySettings <- list(dataFolder = "C:/temp/CohortDiagnostics")
 dataFolder <- shinySettings$dataFolder
 
 zipFiles <- list.files(dataFolder, pattern = ".zip", full.names = TRUE)

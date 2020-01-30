@@ -1,8 +1,8 @@
-StudyDiagnostics
+CohortDiagnostics
 ================
 
-[![Build Status](https://travis-ci.org/OHDSI/StudyDiagnostics.svg?branch=master)](https://travis-ci.org/OHDSI/StudyDiagnostics)
-[![codecov.io](https://codecov.io/github/OHDSI/StudyDiagnostics/coverage.svg?branch=master)](https://codecov.io/github/OHDSI/StudyDiagnostics?branch=master)
+[![Build Status](https://travis-ci.org/OHDSI/CohortDiagnostics.svg?branch=master)](https://travis-ci.org/OHDSI/CohortDiagnostics)
+[![codecov.io](https://codecov.io/github/OHDSI/CohortDiagnostics/coverage.svg?branch=master)](https://codecov.io/github/OHDSI/CohortDiagnostics?branch=master)
 
 Introduction
 ============
@@ -25,7 +25,7 @@ TODO
 
 Technology
 ==========
-The StudyDiagnostics package is an R package.
+The CohortDiagnostics package is an R package.
 
 System Requirements
 ===================
@@ -41,25 +41,25 @@ To install the latest development version, install from GitHub:
 install.packages("devtools")
 devtools::install_github("ohdsi/ROhdsiWebApi")
 devtools::install_github("ohdsi/FeatureExtraction")
-devtools::install_github("ohdsi/StudyDiagnostics")
+devtools::install_github("ohdsi/CohortDiagnostics")
 ```
 
 User Documentation
 ==================
-* Package manual: [StudyDiagnostics manual](https://ohdsi.github.io/StudyDiagnostics/reference/index.html) 
+* Package manual: [CohortDiagnostics manual](https://ohdsi.github.io/CohortDiagnostics/reference/index.html) 
 
 Support
 =======
 * Developer questions/comments/feedback: <a href="http://forums.ohdsi.org/c/developers">OHDSI Forum</a>
-* We use the <a href="https://github.com/OHDSI/StudyDiagnostics/issues">GitHub issue tracker</a> for all bugs/issues/enhancements
+* We use the <a href="https://github.com/OHDSI/CohortDiagnostics/issues">GitHub issue tracker</a> for all bugs/issues/enhancements
 
 License
 =======
-StudyDiagnostics is licensed under Apache License 2.0
+CohortDiagnostics is licensed under Apache License 2.0
 
 Development
 ===========
-StudyDiagnostics is being developed in R Studio.
+CohortDiagnostics is being developed in R Studio.
 
 ### Development status
 

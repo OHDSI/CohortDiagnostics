@@ -1,4 +1,4 @@
-library(StudyDiagnostics)
+library(CohortDiagnostics)
 options(fftempdir = "c:/FFtemp")
 connectionDetails <- createConnectionDetails(dbms = "pdw",
                                              server = Sys.getenv("PDW_SERVER"),
@@ -165,7 +165,7 @@ cohortId <- 13666
 packageName <- "BarcelonaStudyAThon"
 exportFolder <- file.path(folder, "export")
 
-library(StudyDiagnostics)
+library(CohortDiagnostics)
 runStudyDiagnostics(packageName = "BarcelonaStudyAThon",
                     connectionDetails = connectionDetails,
                     cdmDatabaseSchema = cdmDatabaseSchema,

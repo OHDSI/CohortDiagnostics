@@ -1,6 +1,6 @@
 # Copyright 2020 Observational Health Data Sciences and Informatics
 #
-# This file is part of StudyDiagnostics
+# This file is part of CohortDiagnostics
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -113,12 +113,12 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
   instantiateConceptSets(connection, cdmDatabaseSchema, oracleTempSchema, cohortSql)
 
   ParallelLogger::logInfo("Computing counts")
-  domains <- readr::read_csv(system.file("csv", "domains.csv", package = "StudyDiagnostics"),
+  domains <- readr::read_csv(system.file("csv", "domains.csv", package = "CohortDiagnostics"),
                              col_types = readr::cols())
   getCounts <- function(row) {
     domain <- domains[domains$domain == row$domain, ]
     sql <- SqlRender::loadRenderTranslateSql("CohortEntryBreakdown.sql",
-                                             packageName = "StudyDiagnostics",
+                                             packageName = "CohortDiagnostics",
                                              dbms = connection@dbms,
                                              oracleTempSchema = oracleTempSchema,
                                              cdm_database_schema = cdmDatabaseSchema,

@@ -1,4 +1,4 @@
-StudyDiagnostics 0.0.1
+CohortDiagnostics 0.0.1
 ======================
 
 Initial version

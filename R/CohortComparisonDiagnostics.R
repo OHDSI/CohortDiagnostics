@@ -1,6 +1,6 @@
 # Copyright 2020 Observational Health Data Sciences and Informatics
 #
-# This file is part of StudyDiagnostics
+# This file is part of CohortDiagnostics
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ computeCohortOverlap <- function(connectionDetails = NULL,
   }
   ParallelLogger::logInfo("Computing overlap")
   sql <- SqlRender::loadRenderTranslateSql("CohortOverlap.sql",
-                                           packageName = "StudyDiagnostics",
+                                           packageName = "CohortDiagnostics",
                                            dbms = connection@dbms,
                                            cohort_database_schema = cohortDatabaseSchema,
                                            cohort_table = cohortTable,
