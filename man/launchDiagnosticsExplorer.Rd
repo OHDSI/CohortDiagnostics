@@ -8,7 +8,7 @@ launchDiagnosticsExplorer(dataFolder, launch.browser = FALSE)
 }
 \arguments{
 \item{dataFolder}{A folder where the exported zip files for the diagnostics are stored. Use
-the \code{\link{runStudyDiagnostics}} function to generate these zip files. 
+the \code{\link{runCohortDiagnostics}} function to generate these zip files. 
 Zip files containing results from multiple databases can be placed in the same
 folder.}
 
