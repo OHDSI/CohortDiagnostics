@@ -3,7 +3,6 @@
 \docType{package}
 \name{exampleStudy}
 \alias{exampleStudy}
-\alias{exampleStudy-package}
 \title{exampleStudy}
 \description{
 exampleStudy

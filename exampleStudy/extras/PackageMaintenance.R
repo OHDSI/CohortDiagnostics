@@ -39,7 +39,7 @@ rmarkdown::render("vignettes/DataModel.Rmd",
 # Insert cohort definitions from ATLAS into package -----------------------
 ### Modified from standard template to use ROhdsiWebApi, and to generate stats ###
 ROhdsiWebApi::insertCohortDefinitionSetInPackage(fileName = "inst/settings/CohortsToCreate.csv",
-                                                 baseUrl = Sys.getenv("baseUrl"),
+                                                 baseUrl = Sys.getenv("ohdsiBaseUrl"),
                                                  insertTableSql = TRUE,
                                                  insertCohortCreationR = TRUE,
                                                  generateStats = TRUE,

@@ -85,16 +85,16 @@ runFeasibility <- function(connectionDetails,
   
   if (runDiagnostics) {
     ParallelLogger::logInfo("Running study diagnostics")
-    StudyDiagnostics::runStudyDiagnostics(packageName = "exampleStudy",
-                                          connectionDetails = connectionDetails,
-                                          cdmDatabaseSchema = cdmDatabaseSchema,
-                                          oracleTempSchema = oracleTempSchema,
-                                          cohortDatabaseSchema = cohortDatabaseSchema,
-                                          cohortTable = cohortTable,
-                                          inclusionStatisticsFolder = outputFolder,
-                                          exportFolder = file.path(outputFolder, "feasibilityExport"),
-                                          databaseId = databaseId,
-                                          databaseName = databaseName,
-                                          databaseDescription = databaseDescription)
+    CohortDiagnostics::runCohortDiagnostics(packageName = "exampleStudy",
+                                            connectionDetails = connectionDetails,
+                                            cdmDatabaseSchema = cdmDatabaseSchema,
+                                            oracleTempSchema = oracleTempSchema,
+                                            cohortDatabaseSchema = cohortDatabaseSchema,
+                                            cohortTable = cohortTable,
+                                            inclusionStatisticsFolder = outputFolder,
+                                            exportFolder = file.path(outputFolder, "feasibilityExport"),
+                                            databaseId = databaseId,
+                                            databaseName = databaseName,
+                                            databaseDescription = databaseDescription)
   }
 }

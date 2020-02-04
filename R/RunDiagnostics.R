@@ -14,10 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#' Run study diagnostics
+#' Run cohort diagnostics
 #'
 #' @description
-#' Runs the study diagnostics on all (or a subset of) the cohorts instantiated using the
+#' Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the
 #' \code{ROhdsiWebApi::insertCohortDefinitionSetInPackage} function.
 #'
 #' @template Connection
@@ -48,37 +48,37 @@
 #' @param runCohortCharacterization   Generate and export the cohort characterization?
 #'
 #' @export
-runStudyDiagnostics <- function(packageName,
-                                cohortToCreateFile = "settings/CohortsToCreate.csv",
-                                connectionDetails = NULL,
-                                connection = NULL,
-                                cdmDatabaseSchema,
-                                oracleTempSchema = NULL,
-                                cohortDatabaseSchema,
-                                cohortTable = "cohort",
-                                cohortIds = NULL,
-                                inclusionStatisticsFolder = NULL,
-                                exportFolder,
-                                databaseId,
-                                databaseName,
-                                databaseDescription,
-                                runInclusionStatistics = TRUE,
-                                runIncludedSourceConcepts = TRUE,
-                                runOrphanConcepts = TRUE,
-                                runBreakdownIndexEvents = TRUE,
-                                runIncidenceProportion = TRUE,
-                                runCohortOverlap = TRUE,
-                                runCohortCharacterization = TRUE) {
+runCohortDiagnostics <- function(packageName,
+                                 cohortToCreateFile = "settings/CohortsToCreate.csv",
+                                 connectionDetails = NULL,
+                                 connection = NULL,
+                                 cdmDatabaseSchema,
+                                 oracleTempSchema = NULL,
+                                 cohortDatabaseSchema,
+                                 cohortTable = "cohort",
+                                 cohortIds = NULL,
+                                 inclusionStatisticsFolder = NULL,
+                                 exportFolder,
+                                 databaseId,
+                                 databaseName,
+                                 databaseDescription,
+                                 runInclusionStatistics = TRUE,
+                                 runIncludedSourceConcepts = TRUE,
+                                 runOrphanConcepts = TRUE,
+                                 runBreakdownIndexEvents = TRUE,
+                                 runIncidenceProportion = TRUE,
+                                 runCohortOverlap = TRUE,
+                                 runCohortCharacterization = TRUE) {
   start <- Sys.time()
   if (!file.exists(exportFolder)) {
     dir.create(exportFolder)
   }
-
+  
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-
+  
   # Load created cohorts
   pathToCsv <- system.file(cohortToCreateFile, package = packageName)
   cohorts <- readr::read_csv(pathToCsv, col_types = readr::cols())
@@ -86,9 +86,13 @@ runStudyDiagnostics <- function(packageName,
   if (!is.null(cohortIds)) {
     cohorts <- cohorts[cohorts$cohortId %in% cohortIds, ]
   }
-  cohorts <- dplyr::rename(cohorts, cohortName = "name", cohortFullName = "fullName")
+  if ("atlasName" %in% colnames(cohorts)) {
+    cohorts <- dplyr::rename(cohorts, cohortName = "name", cohortFullName = "atlasName")
+  } else {
+    cohorts <- dplyr::rename(cohorts, cohortName = "name", cohortFullName = "fullName")
+  }
   writeToCsv(cohorts, file.path(exportFolder, "cohort.csv"))
-
+  
   getSql <- function(name) {
     pathToSql <- system.file("sql", "sql_server", paste0(name, ".sql"), package = packageName)
     sql <- readChar(pathToSql, file.info(pathToSql)$size)
@@ -101,14 +105,14 @@ runStudyDiagnostics <- function(packageName,
     return(json)
   }
   cohorts$json <- sapply(cohorts$cohortName, getJson)
-
+  
   ParallelLogger::logInfo("Saving database metadata")
   database <- data.frame(databaseId = databaseId,
                          databaseName = databaseName,
                          description = databaseDescription,
                          isMetaAnalysis = 0)
   writeToCsv(database, file.path(exportFolder, "database.csv"))
-
+  
   if (runInclusionStatistics) {
     ParallelLogger::logInfo("Fetching inclusion rule statistics")
     runInclusionStatistics <- function(row) {
@@ -128,7 +132,7 @@ runStudyDiagnostics <- function(packageName,
     }
     writeToCsv(stats, file.path(exportFolder, "inclusion_rule_stats.csv"))
   }
-
+  
   if (runIncludedSourceConcepts) {
     ParallelLogger::logInfo("Fetching included source concepts")
     runIncludedSourceConcepts <- function(row) {
@@ -152,13 +156,13 @@ runStudyDiagnostics <- function(packageName,
     }
     writeToCsv(data, file.path(exportFolder, "included_source_concept.csv"))
   }
-
+  
   if (runOrphanConcepts) {
     ParallelLogger::logInfo("Finding orphan concepts")
     createConceptCountsTable(connection = connection,
                              cdmDatabaseSchema = cdmDatabaseSchema,
                              conceptCountsDatabaseSchema = cohortDatabaseSchema)
-
+    
     runOrphanConcepts <- function(row) {
       ParallelLogger::logInfo("- Finding orphan concepts for cohort ", row$cohortName)
       data <- findCohortOrphanConcepts(connection = connection,
@@ -178,10 +182,10 @@ runStudyDiagnostics <- function(packageName,
     }
     writeToCsv(data, file.path(exportFolder, "orphan_concept.csv"))
   }
-
+  
   if (runBreakdownIndexEvents) {
     ParallelLogger::logInfo("Breaking down index events")
-
+    
     runBreakdownIndexEvents <- function(row) {
       ParallelLogger::logInfo("- Breaking down index events for cohort ", row$cohortName)
       data <- breakDownIndexEvents(connection = connection,
@@ -204,10 +208,10 @@ runStudyDiagnostics <- function(packageName,
     }
     writeToCsv(data, file.path(exportFolder, "index_event_breakdown.csv"))
   }
-
+  
   if (runIncidenceProportion) {
     ParallelLogger::logInfo("Breaking down index events")
-
+    
     runIncidenceProportion <- function(row) {
       ParallelLogger::logInfo("- Computing incidence proportion for cohort ", row$cohortName)
       data <- getIncidenceProportion(connection = connection,
@@ -227,12 +231,12 @@ runStudyDiagnostics <- function(packageName,
     }
     writeToCsv(data, file.path(exportFolder, "incidence_proportion.csv"))
   }
-
+  
   if (runCohortOverlap) {
     ParallelLogger::logInfo("Computing cohort overlap")
     combis <- expand.grid(targetCohortId = cohorts$cohortId, comparatorCohortId = cohorts$cohortId)
     combis <- combis[combis$targetCohortId < combis$comparatorCohortId, ]
-
+    
     runCohortOverlap <- function(row) {
       ParallelLogger::logInfo("- Computing overlap for cohorts ",
                               row$targetCohortId,
@@ -261,10 +265,10 @@ runStudyDiagnostics <- function(packageName,
     }
     writeToCsv(data, file.path(exportFolder, "cohort_overlap.csv"))
   }
-
+  
   if (runCohortCharacterization) {
     ParallelLogger::logInfo("Creating cohort characterizations")
-
+    
     runCohortCharacterization <- function(row) {
       ParallelLogger::logInfo("- Creating characterization for cohort ", row$cohortName)
       data <- getCohortCharacteristics(connection = connection,
@@ -289,7 +293,7 @@ runStudyDiagnostics <- function(packageName,
     }
     writeToCsv(data, file.path(exportFolder, "covariate_value.csv"))
   }
-
+  
   # Add all to zip file -------------------------------------------------------------------------------
   ParallelLogger::logInfo("Adding results to zip file")
   zipName <- file.path(exportFolder, paste0("Results_", databaseId, ".zip"))
@@ -298,7 +302,7 @@ runStudyDiagnostics <- function(packageName,
   on.exit(setwd(oldWd))
   DatabaseConnector::createZipFile(zipFile = zipName, files = files)
   ParallelLogger::logInfo("Results are ready for sharing at:", zipName)
-
+  
   delta <- Sys.time() - start
   ParallelLogger::logInfo(paste("Computing all diagnostics took",
                                 signif(delta, 3),

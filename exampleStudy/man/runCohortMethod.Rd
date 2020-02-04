@@ -4,8 +4,15 @@
 \alias{runCohortMethod}
 \title{Run CohortMethod package}
 \usage{
-runCohortMethod(connectionDetails, cdmDatabaseSchema, cohortDatabaseSchema,
-  cohortTable, oracleTempSchema, outputFolder, maxCores)
+runCohortMethod(
+  connectionDetails,
+  cdmDatabaseSchema,
+  cohortDatabaseSchema,
+  cohortTable,
+  oracleTempSchema,
+  outputFolder,
+  maxCores
+)
 }
 \arguments{
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the

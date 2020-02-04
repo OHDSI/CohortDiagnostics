@@ -4,8 +4,14 @@
 \alias{createCohorts}
 \title{Create the exposure and outcome cohorts}
 \usage{
-createCohorts(connectionDetails, cdmDatabaseSchema, cohortDatabaseSchema,
-  cohortTable = "cohort", oracleTempSchema, outputFolder)
+createCohorts(
+  connectionDetails,
+  cdmDatabaseSchema,
+  cohortDatabaseSchema,
+  cohortTable = "cohort",
+  oracleTempSchema,
+  outputFolder
+)
 }
 \arguments{
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the

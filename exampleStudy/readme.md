@@ -8,4 +8,4 @@ This study package demonstrates how to currently use the CohortDiagnostics packa
 3. Added a dependency to CohortDiagnostics to DESCRIPTION
 4. Added the file R/Feasibility.R, which defines the runFeasibility function.
 
-
+Don't forget to build the package before running!
