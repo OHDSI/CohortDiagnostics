@@ -61,6 +61,7 @@ shinyUI(
                                  ),
                                  tabPanel("Cohort overlap",
                                           value = 7,
+                                          plotOutput("overlapPlot"),
                                           uiOutput("overlapUi")
                                  ),
                                  tabPanel("Compare cohort characterization",

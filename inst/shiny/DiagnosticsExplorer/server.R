@@ -171,6 +171,7 @@ shinyServer(function(input, output, session) {
     return(table)
   })
   
+  
   output$overlapUi <- renderUI({
     
     data <- cohortOverlap[cohortOverlap$targetCohortId == cohortId() & 
@@ -191,6 +192,25 @@ shinyServer(function(input, output, session) {
       sep = "\n")
     return(HTML(html))
   })
+  
+  output$overlapPlot <- renderPlot({
+    data <- cohortOverlap[cohortOverlap$targetCohortId == cohortId() & 
+                            cohortOverlap$comparatorCohortId == comparatorCohortId() &
+                            cohortOverlap$databaseId == input$database, ]
+    if (nrow(data) == 0) {
+      return(NULL)
+    }
+    VennDiagram::draw.pairwise.venn(area1 = data$tOnlySubjects + data$bothSubjects,
+                                    area2 = data$cOnlySubjects + data$bothSubjects,
+                                    cross.area = data$bothSubjects,
+                                    category = c("Target", "Comparator"), 
+                                    col = c(rgb(0.8, 0, 0), rgb(0, 0, 0.8)),
+                                    fill = c(rgb(0.8, 0, 0), rgb(0, 0, 0.8)),
+                                    alpha = 0.2,
+                                    fontfamily = rep("sans", 3),
+                                    cat.fontfamily = rep("sans", 2),
+                                    margin = 0.1)
+  }, res = 100)
   
   output$charCompareTable <- renderDataTable({
     covs1 <- covariateValue[covariateValue$cohortId == cohortId() & covariateValue$databaseId == input$database, ]
@@ -238,5 +258,4 @@ shinyServer(function(input, output, session) {
                        class = "stripe nowrap compact")
     return(table)
   })
-  
 })
