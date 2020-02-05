@@ -32,7 +32,10 @@ dashboardPage(
   dashboardBody(
     tabItems(
       tabItem(tabName = "incidenceProportion",
-              plotOutput("incidenceProportionPlot")
+              box(
+                title = "Incidence Proportion", width = NULL, status = "primary",
+                plotOutput("incidenceProportionPlot")
+              )
       ),
       tabItem(tabName = "includedConcepts",
               radioButtons("includedType", "", c("Source Concepts", "Standard Concepts"), selected = "Source Concepts", inline = TRUE),
@@ -52,9 +55,14 @@ dashboardPage(
               dataTableOutput("characterizationTable")
       ),
       tabItem(tabName = "cohortOverlap",
-              plotOutput("overlapPlot"),
-              # uiOutput("overlapUi")
-              dataTableOutput("overlapTable")
+              box(
+                title = "Cohort Overlap (Subjects)", width = NULL, status = "primary",
+                plotOutput("overlapPlot")
+              ),
+              box(
+                title = "Cohort Overlap Statistics", width = NULL, status = "primary",
+                dataTableOutput("overlapTable")
+              )
       ),
       tabItem(tabName = "compareCohortCharacterization",
               radioButtons("charCompareType", "", c("Pretty", "Raw"), selected = "Pretty", inline = TRUE),

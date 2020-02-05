@@ -25,8 +25,6 @@ shinyServer(function(input, output, session) {
                       choices = subset)
   })
   
-  
-  
   output$incidenceProportionPlot <- renderPlot({
     data <- incidenceProportion[incidenceProportion$cohortId == cohortId() & 
                                   incidenceProportion$databaseId %in% input$databases, ]
@@ -35,7 +33,7 @@ shinyServer(function(input, output, session) {
     }
     plot <- CohortDiagnostics::plotIncidenceProportion(data)
     return(plot)
-  })
+  }, res = 100)
   
   output$includedConceptsTable <- renderDataTable({
     table <- includedSourceConcept[includedSourceConcept$cohortId == cohortId() &
