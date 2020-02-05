@@ -31,7 +31,7 @@ shinyServer(function(input, output, session) {
   
   output$incidenceProportionPlot <- renderPlot({
     data <- incidenceProportion[incidenceProportion$cohortId == cohortId() & 
-                                  incidenceProportion$databaseId == input$database, ]
+                                  incidenceProportion$databaseId %in% input$databases, ]
     if (nrow(data) == 0) {
       return(NULL)
     }
@@ -142,7 +142,6 @@ shinyServer(function(input, output, session) {
   
   output$characterizationTable <- renderDataTable({
     table <- covariateValue[covariateValue$cohortId == cohortId() & covariateValue$databaseId == input$database, ]
-    # table <- covariateValue[covariateValue$cohortId == 13646, ]
     table <- merge(table, covariate)
     table$cohortId <- NULL
     table$databaseId <- NULL
@@ -220,8 +219,6 @@ shinyServer(function(input, output, session) {
   output$charCompareTable <- renderDataTable({
     covs1 <- covariateValue[covariateValue$cohortId == cohortId() & covariateValue$databaseId == input$database, ]
     covs2 <- covariateValue[covariateValue$cohortId == comparatorCohortId() & covariateValue$databaseId == input$database, ]
-    # covs1 <- covariateValue[covariateValue$cohortId == 13646, ]
-    # covs2 <- covariateValue[covariateValue$cohortId == 13666, ]
     covs1 <- merge(covs1, covariate)
     covs2 <- merge(covs2, covariate)
     balance <- CohortDiagnostics::compareCohortCharacteristics(covs1, covs2)

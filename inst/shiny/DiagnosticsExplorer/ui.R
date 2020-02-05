@@ -14,7 +14,12 @@ dashboardPage(
       menuItem("Cohort Characterization", tabName = "cohortCharacterization"),
       menuItem("Cohort Overlap", tabName = "cohortOverlap"),
       menuItem("Compare Cohort Characterization", tabName = "compareCohortCharacterization"),
-      selectInput("database", "Database", database$databaseId),
+      conditionalPanel(condition="input.tabs!='incidenceProportion'",
+                       selectInput("database", "Database", database$databaseId)
+      ),
+      conditionalPanel(condition="input.tabs=='incidenceProportion'",
+                       checkboxGroupInput("databases", "Database", database$databaseId, selected = database$databaseId[1])
+      ),
       selectInput("cohort", "Cohort", cohort$cohortName),
       conditionalPanel(condition="input.tabs=='includedConcepts' | input.tabs=='orphanConcepts'",
                        selectInput("conceptSet", "Concept Set", c(""))
