@@ -37,13 +37,21 @@ shinyServer(function(input, output, session) {
     return(plot)
   })
   
-  output$includedSourceConceptsTable <- renderDataTable({
+  output$includedConceptsTable <- renderDataTable({
     table <- includedSourceConcept[includedSourceConcept$cohortId == cohortId() &
                                      includedSourceConcept$conceptSetName == input$conceptSet & 
                                      includedSourceConcept$databaseId == input$database, ]
-    table <- table[, c("conceptSubjects", "sourceVocabularyId", "conceptCode", "sourceConceptName")]
-    table <- table[order(-table$conceptSubjects), ]
-    colnames(table) <- c("Subjects", "Vocabulary", "Code", "Name")
+    if (input$includedType == "Source Concepts") {
+      table <- table[, c("conceptSubjects", "sourceVocabularyId", "conceptCode", "sourceConceptName")]
+      table <- table[order(-table$conceptSubjects), ]
+      colnames(table) <- c("Subjects", "Vocabulary", "Code", "Name")
+    } else {
+      table$absConceptSubjects <- abs(table$conceptSubjects)
+      table <- aggregate(absConceptSubjects ~ conceptId + conceptName, data = table, sum)
+      table <- table[order(-table$absConceptSubjects), ]
+      table <- table[, c("absConceptSubjects", "conceptId", "conceptName")]
+      colnames(table) <- c("Subjects", "Concept ID", "Concept Name")
+    }
     lims <- c(0, max(table$Subjects))
     options = list(pageLength = 25,
                    searching = TRUE,

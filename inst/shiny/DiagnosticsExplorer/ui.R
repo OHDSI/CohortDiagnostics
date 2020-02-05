@@ -35,7 +35,8 @@ dashboardPage(
               plotOutput("incidenceProportionPlot")
       ),
       tabItem(tabName = "includedConcepts",
-              dataTableOutput("includedSourceConceptsTable")
+              radioButtons("includedType", "", c("Source Concepts", "Standard Concepts"), selected = "Source Concepts", inline = TRUE),
+              dataTableOutput("includedConceptsTable")
       ),
       tabItem(tabName = "orphanConcepts",
               dataTableOutput("orphanConceptsTable")
