@@ -35,6 +35,62 @@ shinyServer(function(input, output, session) {
     return(plot)
   }, res = 100)
   
+  output$timeDisPlot <- renderPlot({
+    data <- timeDistribution[timeDistribution$cohortId == cohortId() & 
+                               timeDistribution$databaseId %in% input$databases, ]
+    if (nrow(data) == 0) {
+      return(NULL)
+    }
+    data$x <- 1
+    plot <- ggplot2::ggplot(data, ggplot2::aes(x = x,
+                                               ymin = minValue,
+                                               lower = p25Value,
+                                               middle = medianValue,
+                                               upper = p75Value,
+                                               ymax = maxValue)) +
+      ggplot2::geom_errorbar(ggplot2::aes(ymin = minValue, ymax = minValue), size = 1) +
+      ggplot2::geom_errorbar(ggplot2::aes(ymin = maxValue, ymax = maxValue), size = 1) +
+      ggplot2::geom_boxplot(stat = "identity", fill = rgb(0, 0, 0.8, alpha = 0.25), size = 1) +
+      ggplot2::facet_grid(databaseId~covariateName, scale = "free") +
+      ggplot2::coord_flip() +
+      ggplot2::theme(panel.grid.major.y = ggplot2::element_blank(),
+                     panel.grid.minor.y = ggplot2::element_blank(),
+                     axis.title.y = ggplot2::element_blank(),
+                     axis.ticks.y = ggplot2::element_blank(),
+                     axis.text.y = ggplot2::element_blank())
+    
+    return(plot)
+  }, res = 100)
+  
+  output$timeDistTable <- renderDataTable({
+    data <- timeDistribution[timeDistribution$cohortId == cohortId() & 
+                               timeDistribution$databaseId %in% input$databases, ]
+    if (nrow(data) == 0) {
+      return(NULL)
+    }
+    columns <- c("covariateName", "averageValue", "standardDeviation", "minValue", "p10Value", "p25Value", "medianValue", "p75Value", "p90Value", "maxValue")
+    headers <- c("Time Measure", "Average", "SD", "Min", "P10", "P25", "Median", "P75", "P90", "Max")
+    if (length(unique(data$databaseId)) > 1) {
+      columns <- c("databaseId", columns)
+      headers <- c("Database", headers)
+    }
+    table <- data[, columns]
+    options = list(pageLength = 25,
+                   searching = TRUE,
+                   lengthChange = TRUE,
+                   ordering = TRUE,
+                   paging = TRUE,
+                   info = TRUE)
+    table <- datatable(table,
+                       options = options,
+                       rownames = FALSE,
+                       colnames = headers,
+                       class = "stripe nowrap compact")
+    table <- formatRound(table, c("averageValue", "standardDeviation"), digits = 2)
+    table <- formatRound(table, c("minValue", "p10Value", "p25Value", "medianValue", "p75Value", "p90Value", "maxValue"), digits = 0)
+    return(table)
+  })
+  
   output$includedConceptsTable <- renderDataTable({
     table <- includedSourceConcept[includedSourceConcept$cohortId == cohortId() &
                                      includedSourceConcept$conceptSetName == input$conceptSet & 
@@ -61,6 +117,7 @@ shinyServer(function(input, output, session) {
                        rownames = FALSE,
                        escape = FALSE,
                        class = "stripe nowrap compact")
+    table <- formatRound(table, "Subjects", digits = 0)
     table <- DT::formatStyle(table = table,
                              columns = 1,
                              background = DT::styleColorBar(lims, "lightblue"),
@@ -88,6 +145,7 @@ shinyServer(function(input, output, session) {
                        rownames = FALSE,
                        escape = FALSE,
                        class = "stripe nowrap compact")
+    table <- formatRound(table, "Count", digits = 0)
     table <- DT::formatStyle(table = table,
                              columns = 1,
                              background = DT::styleColorBar(lims, "lightblue"),
@@ -116,6 +174,7 @@ shinyServer(function(input, output, session) {
                        rownames = FALSE,
                        escape = FALSE,
                        class = "stripe nowrap compact")
+    table <- formatRound(table, c("Meet", "Gain", "Total", "Remain"), digits = 0)
     return(table)
   })
   
@@ -135,6 +194,7 @@ shinyServer(function(input, output, session) {
                        rownames = FALSE,
                        escape = FALSE,
                        class = "stripe nowrap compact")
+    table <- formatRound(table, "Count", digits = 0)
     table <- DT::formatStyle(table = table,
                              columns = 1,
                              background = DT::styleColorBar(lims, "lightblue"),
@@ -220,10 +280,11 @@ shinyServer(function(input, output, session) {
                    paging = FALSE,
                    info = FALSE)
     table <- datatable(table,
-                     options = options,
-                     rownames = TRUE,
-                     class = "stripe nowrap compact")
-  return(table)
+                       options = options,
+                       rownames = TRUE,
+                       class = "stripe nowrap compact")
+    table <- formatRound(table, "Value", digits = 0)
+    return(table)
   })
   
   output$overlapPlot <- renderPlot({

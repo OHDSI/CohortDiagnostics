@@ -68,6 +68,14 @@ orphanConcepts <- findCohortOrphanConcepts(connectionDetails = connectionDetails
                                            webApiCohortId = cohortId)
 
 # Cohort-level ------------------------------------------------------------------
+timeDist <- getTimeDistributions(connectionDetails = connectionDetails,
+                                 oracleTempSchema = oracleTempSchema,
+                                 cdmDatabaseSchema = cdmDatabaseSchema,
+                                 cohortDatabaseSchema = cohortDatabaseSchema,
+                                 cohortTable = cohortTable,
+                                 cohortId = cohortId)
+
+
 breakdown <- breakDownIndexEvents(connectionDetails = connectionDetails,
                                   cdmDatabaseSchema = cdmDatabaseSchema,
                                   oracleTempSchema = oracleTempSchema,

@@ -42,6 +42,7 @@
 #' @param runInclusionStatistics      Generate and export statistic on the cohort incusion rules?
 #' @param runIncludedSourceConcepts   Generate and export the source concepts included in the cohorts?
 #' @param runOrphanConcepts           Generate and export potential orphan concepts?
+#' @param runTimeDistributions        Generate and export cohort time distributions?
 #' @param runBreakdownIndexEvents     Generate and export the breakdown of index events?
 #' @param runIncidenceProportion      Generate and export the cohort incidence proportions?
 #' @param runCohortOverlap            Generate and export the cohort overlap?
@@ -65,6 +66,7 @@ runCohortDiagnostics <- function(packageName,
                                  runInclusionStatistics = TRUE,
                                  runIncludedSourceConcepts = TRUE,
                                  runOrphanConcepts = TRUE,
+                                 runTimeDistributions = TRUE,
                                  runBreakdownIndexEvents = TRUE,
                                  runIncidenceProportion = TRUE,
                                  runCohortOverlap = TRUE,
@@ -181,6 +183,30 @@ runCohortDiagnostics <- function(packageName,
       data$databaseId <- databaseId
     }
     writeToCsv(data, file.path(exportFolder, "orphan_concept.csv"))
+  }
+  
+  if (runTimeDistributions) {
+    ParallelLogger::logInfo("Creating time distributions")
+
+    runTimeDist <- function(row) {
+      ParallelLogger::logInfo("- Creating time distributions for cohort ", row$cohortName)
+      data <- getTimeDistributions(connection = connection,
+                                   oracleTempSchema = oracleTempSchema,
+                                   cdmDatabaseSchema = cdmDatabaseSchema,
+                                   cohortDatabaseSchema = cohortDatabaseSchema,
+                                   cohortTable = cohortTable,
+                                   cohortId = row$cohortId)
+      if (nrow(data) > 0) {
+        data$cohortId <- row$cohortId
+      }
+      return(data)
+    }
+    data <- lapply(split(cohorts, cohorts$cohortId), runTimeDist)
+    data <- do.call(rbind, data)
+    if (nrow(data) > 0) {
+      data$databaseId <- databaseId
+    }
+    writeToCsv(data, file.path(exportFolder, "time_distribution.csv"))
   }
   
   if (runBreakdownIndexEvents) {
@@ -311,7 +337,6 @@ runCohortDiagnostics <- function(packageName,
 
 writeToCsv <- function(data, fileName) {
   colnames(data) <- SqlRender::camelCaseToSnakeCase(colnames(data))
-  # write.csv(data, fileName, row.names = FALSE)
   readr::write_csv(data, fileName)
 }
 

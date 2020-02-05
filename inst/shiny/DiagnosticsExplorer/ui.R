@@ -7,6 +7,7 @@ dashboardPage(
   dashboardSidebar(
     sidebarMenu(id = "tabs",
       menuItem("Incidence Proportion", tabName = "incidenceProportion"),
+      menuItem("Time Distributions", tabName = "timeDistribution"),
       menuItem("Included (Source) Concepts", tabName = "includedConcepts"),
       menuItem("Orphan (Source) Concepts", tabName = "orphanConcepts"),
       menuItem("Inclusion Rule Statistics", tabName = "inclusionRuleStats"),
@@ -14,10 +15,10 @@ dashboardPage(
       menuItem("Cohort Characterization", tabName = "cohortCharacterization"),
       menuItem("Cohort Overlap", tabName = "cohortOverlap"),
       menuItem("Compare Cohort Characterization", tabName = "compareCohortCharacterization"),
-      conditionalPanel(condition="input.tabs!='incidenceProportion'",
+      conditionalPanel(condition="input.tabs!='incidenceProportion' & input.tabs!='timeDistribution'",
                        selectInput("database", "Database", database$databaseId, selectize = FALSE)
       ),
-      conditionalPanel(condition="input.tabs=='incidenceProportion'",
+      conditionalPanel(condition="input.tabs=='incidenceProportion' | input.tabs=='timeDistribution'",
                        checkboxGroupInput("databases", "Database", database$databaseId, selected = database$databaseId[1])
       ),
       selectInput("cohort", "Cohort", choices = cohort$cohortName, selectize = FALSE),
@@ -35,6 +36,16 @@ dashboardPage(
               box(
                 title = "Incidence Proportion", width = NULL, status = "primary",
                 plotOutput("incidenceProportionPlot")
+              )
+      ),
+      tabItem(tabName = "timeDistribution",
+              box(
+                title = "Time Distributions", width = NULL, status = "primary",
+                plotOutput("timeDisPlot")
+              ),
+              box(
+                title = "Time Distributions Table", width = NULL, status = "primary",
+                dataTableOutput("timeDistTable")
               )
       ),
       tabItem(tabName = "includedConcepts",
