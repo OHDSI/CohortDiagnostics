@@ -87,6 +87,7 @@ getTimeDistributions <- function(connectionDetails = NULL,
     result$analysisId <- NULL
     result$covariateId <- NULL
     result$countValue <- NULL
+    colnames(result)[colnames(result) == "covariateName"] <- "timeMetric"
   }
   attr(result, "cohortSize") <- data$metaData$populationSize
   delta <- Sys.time() - start

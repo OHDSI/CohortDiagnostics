@@ -51,7 +51,7 @@ shinyServer(function(input, output, session) {
       ggplot2::geom_errorbar(ggplot2::aes(ymin = minValue, ymax = minValue), size = 1) +
       ggplot2::geom_errorbar(ggplot2::aes(ymin = maxValue, ymax = maxValue), size = 1) +
       ggplot2::geom_boxplot(stat = "identity", fill = rgb(0, 0, 0.8, alpha = 0.25), size = 1) +
-      ggplot2::facet_grid(databaseId~covariateName, scale = "free") +
+      ggplot2::facet_grid(databaseId~timeMetric, scale = "free") +
       ggplot2::coord_flip() +
       ggplot2::theme(panel.grid.major.y = ggplot2::element_blank(),
                      panel.grid.minor.y = ggplot2::element_blank(),
@@ -68,7 +68,7 @@ shinyServer(function(input, output, session) {
     if (nrow(data) == 0) {
       return(NULL)
     }
-    columns <- c("covariateName", "averageValue", "standardDeviation", "minValue", "p10Value", "p25Value", "medianValue", "p75Value", "p90Value", "maxValue")
+    columns <- c("timeMetric", "averageValue", "standardDeviation", "minValue", "p10Value", "p25Value", "medianValue", "p75Value", "p90Value", "maxValue")
     headers <- c("Time Measure", "Average", "SD", "Min", "P10", "P25", "Median", "P75", "P90", "Max")
     if (length(unique(data$databaseId)) > 1) {
       columns <- c("databaseId", columns)
