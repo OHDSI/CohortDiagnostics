@@ -185,26 +185,39 @@ shinyServer(function(input, output, session) {
     return(table)
   })
   
-  
-  output$overlapUi <- renderUI({
-    
+  output$overlapTable <- renderDataTable({
     data <- cohortOverlap[cohortOverlap$targetCohortId == cohortId() & 
                             cohortOverlap$comparatorCohortId == comparatorCohortId() &
                             cohortOverlap$databaseId == input$database, ]
     if (nrow(data) == 0) {
       return(NULL)
     }
-    html <- paste("<table>",
-                  sprintf("<tr><td><b>Subject in either cohort</b></td><td>&nbsp;</td><td>%s</td></tr>", data$eitherSubjects),
-                  sprintf("<tr><td><b>Subject in both cohort</b></td><td>&nbsp;</td><td>%s</td></tr>", data$bothSubjects),
-                  sprintf("<tr><td><b>Subject in target not in comparator</b></td><td>&nbsp;</td><td>%s</td></tr>", data$tOnlySubjects),
-                  sprintf("<tr><td><b>Subject in comparator not in target</b></td><td>&nbsp;</td><td>%s</td></tr>", data$cOnlySubjects),
-                  sprintf("<tr><td><b>Subject in target before comparator</b></td><td>&nbsp;</td><td>%s</td></tr>", data$tBeforeCSubjects),
-                  sprintf("<tr><td><b>Subject in comparator before target</b></td><td>&nbsp;</td><td>%s</td></tr>", data$cBeforeTSubjects),
-                  sprintf("<tr><td><b>Subject in target and comparator on same day</b></td><td>&nbsp;</td><td>%s</td></tr>", data$sameDaySubjects),
-                  "</table>",
-                  sep = "\n")
-    return(HTML(html))
+    
+    table <- data.frame(row.names = c("Subject in either cohort",
+                                      "Subject in both cohort",
+                                      "Subject in target not in comparator",
+                                      "Subject in comparator not in target",
+                                      "Subject in target before comparator",
+                                      "Subject in comparator before target",
+                                      "Subject in target and comparator on same day"),
+                        Value = c(data$eitherSubjects,
+                                  data$bothSubjects,
+                                  data$tOnlySubjects,
+                                  data$cOnlySubjects,
+                                  data$tBeforeCSubjects,
+                                  data$cBeforeTSubjects,
+                                  data$sameDaySubjects))
+    options = list(pageLength = 7,
+                   searching = FALSE,
+                   lengthChange = FALSE,
+                   ordering = FALSE,
+                   paging = FALSE,
+                   info = FALSE)
+    table <- datatable(table,
+                     options = options,
+                     rownames = TRUE,
+                     class = "stripe nowrap compact")
+  return(table)
   })
   
   output$overlapPlot <- renderPlot({
@@ -223,7 +236,7 @@ shinyServer(function(input, output, session) {
                                     alpha = 0.2,
                                     fontfamily = rep("sans", 3),
                                     cat.fontfamily = rep("sans", 2),
-                                    margin = 0.1)
+                                    margin = 0.01)
   }, res = 100)
   
   output$charCompareTable <- renderDataTable({

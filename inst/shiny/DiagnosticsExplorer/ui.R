@@ -15,17 +15,17 @@ dashboardPage(
       menuItem("Cohort Overlap", tabName = "cohortOverlap"),
       menuItem("Compare Cohort Characterization", tabName = "compareCohortCharacterization"),
       conditionalPanel(condition="input.tabs!='incidenceProportion'",
-                       selectInput("database", "Database", database$databaseId)
+                       selectInput("database", "Database", database$databaseId, selectize = FALSE)
       ),
       conditionalPanel(condition="input.tabs=='incidenceProportion'",
                        checkboxGroupInput("databases", "Database", database$databaseId, selected = database$databaseId[1])
       ),
-      selectInput("cohort", "Cohort", cohort$cohortName),
+      selectInput("cohort", "Cohort", choices = cohort$cohortName, selectize = FALSE),
       conditionalPanel(condition="input.tabs=='includedConcepts' | input.tabs=='orphanConcepts'",
-                       selectInput("conceptSet", "Concept Set", c(""))
+                       selectInput("conceptSet", "Concept Set", c(""), selectize = FALSE)
       ),
       conditionalPanel(condition="input.tabs=='cohortOverlap' | input.tabs=='compareCohortCharacterization'",
-                       selectInput("comparator", "Comparator", cohort$cohortName)
+                       selectInput("comparator", "Comparator", cohort$cohortName, selectize = FALSE)
       )
     )
   ),
@@ -52,7 +52,8 @@ dashboardPage(
       ),
       tabItem(tabName = "cohortOverlap",
               plotOutput("overlapPlot"),
-              uiOutput("overlapUi")
+              # uiOutput("overlapUi")
+              dataTableOutput("overlapTable")
       ),
       tabItem(tabName = "compareCohortCharacterization",
               radioButtons("charCompareType", "", c("Pretty", "Raw"), selected = "Pretty", inline = TRUE),
