@@ -1,4 +1,5 @@
 library(shiny)
+library(shinydashboard)
 library(DT)
 source("PlotsAndTables.R")
 
@@ -10,7 +11,7 @@ truncatestrings <- function(strings, maxLength = 100) {
 }
 
 shinyServer(function(input, output, session) {
-
+  
   cohortId <- reactive({
     return(cohort$cohortId[cohort$cohortName == input$cohort])
   })
@@ -26,14 +27,18 @@ shinyServer(function(input, output, session) {
                       choices = subset)
   })
   
-
+  
+  
   output$incidenceProportionPlot <- renderPlot({
     data <- incidenceProportion[incidenceProportion$cohortId == cohortId() & 
                                   incidenceProportion$databaseId == input$database, ]
+    if (nrow(data) == 0) {
+      return(NULL)
+    }
     plot <- CohortDiagnostics::plotIncidenceProportion(data)
     return(plot)
   })
-
+  
   output$includedSourceConceptsTable <- renderDataTable({
     table <- includedSourceConcept[includedSourceConcept$cohortId == cohortId() &
                                      includedSourceConcept$conceptSetName == input$conceptSet & 
@@ -60,7 +65,7 @@ shinyServer(function(input, output, session) {
                              backgroundPosition = "center")
     return(table)
   })
-
+  
   output$orphanConceptsTable <- renderDataTable({
     table <- orphanConcept[orphanConcept$cohortId == cohortId() &
                              orphanConcept$conceptSetName == input$conceptSet & 
@@ -143,12 +148,12 @@ shinyServer(function(input, output, session) {
     table$databaseId <- NULL
     
     if (input$charType == "Pretty") {
-    table <- prepareTable1(table, output = "HTML")
-    options = list(pageLength = 999,
-                   searching = FALSE,
-                   lengthChange = FALSE,
-                   ordering = FALSE,
-                   paging = FALSE)
+      table <- prepareTable1(table, output = "HTML")
+      options = list(pageLength = 999,
+                     searching = FALSE,
+                     lengthChange = FALSE,
+                     ordering = FALSE,
+                     paging = FALSE)
     } else {
       table <- table[order(table$covariateName), ]
       table <- table[, c("covariateName", "mean", "sd")]
@@ -175,21 +180,21 @@ shinyServer(function(input, output, session) {
   output$overlapUi <- renderUI({
     
     data <- cohortOverlap[cohortOverlap$targetCohortId == cohortId() & 
-                             cohortOverlap$comparatorCohortId == comparatorCohortId() &
-                             cohortOverlap$databaseId == input$database, ]
+                            cohortOverlap$comparatorCohortId == comparatorCohortId() &
+                            cohortOverlap$databaseId == input$database, ]
     if (nrow(data) == 0) {
       return(NULL)
     }
     html <- paste("<table>",
-      sprintf("<tr><td><b>Subject in either cohort</b></td><td>&nbsp;</td><td>%s</td></tr>", data$eitherSubjects),
-      sprintf("<tr><td><b>Subject in both cohort</b></td><td>&nbsp;</td><td>%s</td></tr>", data$bothSubjects),
-      sprintf("<tr><td><b>Subject in target not in comparator</b></td><td>&nbsp;</td><td>%s</td></tr>", data$tOnlySubjects),
-      sprintf("<tr><td><b>Subject in comparator not in target</b></td><td>&nbsp;</td><td>%s</td></tr>", data$cOnlySubjects),
-      sprintf("<tr><td><b>Subject in target before comparator</b></td><td>&nbsp;</td><td>%s</td></tr>", data$tBeforeCSubjects),
-      sprintf("<tr><td><b>Subject in comparator before target</b></td><td>&nbsp;</td><td>%s</td></tr>", data$cBeforeTSubjects),
-      sprintf("<tr><td><b>Subject in target and comparator on same day</b></td><td>&nbsp;</td><td>%s</td></tr>", data$sameDaySubjects),
-      "</table>",
-      sep = "\n")
+                  sprintf("<tr><td><b>Subject in either cohort</b></td><td>&nbsp;</td><td>%s</td></tr>", data$eitherSubjects),
+                  sprintf("<tr><td><b>Subject in both cohort</b></td><td>&nbsp;</td><td>%s</td></tr>", data$bothSubjects),
+                  sprintf("<tr><td><b>Subject in target not in comparator</b></td><td>&nbsp;</td><td>%s</td></tr>", data$tOnlySubjects),
+                  sprintf("<tr><td><b>Subject in comparator not in target</b></td><td>&nbsp;</td><td>%s</td></tr>", data$cOnlySubjects),
+                  sprintf("<tr><td><b>Subject in target before comparator</b></td><td>&nbsp;</td><td>%s</td></tr>", data$tBeforeCSubjects),
+                  sprintf("<tr><td><b>Subject in comparator before target</b></td><td>&nbsp;</td><td>%s</td></tr>", data$cBeforeTSubjects),
+                  sprintf("<tr><td><b>Subject in target and comparator on same day</b></td><td>&nbsp;</td><td>%s</td></tr>", data$sameDaySubjects),
+                  "</table>",
+                  sep = "\n")
     return(HTML(html))
   })
   
@@ -222,7 +227,7 @@ shinyServer(function(input, output, session) {
     balance <- CohortDiagnostics::compareCohortCharacteristics(covs1, covs2)
     
     
-
+    
     if (input$charCompareType == "Pretty") {
       balance <- merge(balance, covariate[, c("covariateId", "covariateAnalysisId")])
       table <- prepareTable1Comp(balance, output = "HTML")
