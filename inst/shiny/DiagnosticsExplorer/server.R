@@ -3,12 +3,10 @@ library(shinydashboard)
 library(DT)
 source("PlotsAndTables.R")
 
-truncatestrings <- function(strings, maxLength = 100) {
-  lens <- sapply(strings, function(x) tryCatch(nchar(x), error = function(e) 0), USE.NAMES = FALSE)
-  idx <- lens > maxLength
-  strings[idx] <- paste("...", substr(strings[idx], lens[idx] - maxLength, lens[idx])) 
-  return(strings)
-}
+truncScript <- "function(data, type, row, meta) {\n
+      return type === 'display' && data != null && data.length > %s ?\n
+        '<span title=\"' + data + '\">' + data.substr(0, %s) + '...</span>' : data;\n
+     }"
 
 shinyServer(function(input, output, session) {
   
@@ -152,20 +150,32 @@ shinyServer(function(input, output, session) {
                      searching = FALSE,
                      lengthChange = FALSE,
                      ordering = FALSE,
-                     paging = FALSE)
+                     paging = FALSE,
+                     columnDefs = list(
+                       list(
+                         targets = 0,
+                         render = JS(sprintf(truncScript, 150, 150))
+                       )
+                     ))
     } else {
       table <- table[order(table$covariateName), ]
       table <- table[, c("covariateName", "mean", "sd")]
       table$mean <- round(table$mean, 3)
       table$sd <- round(table$sd, 3)
-      table$covariateName <- truncatestrings(table$covariateName, 140)
       colnames(table) <- c("Covariate name", "Mean", "SD")
       
       options = list(pageLength = 25,
                      searching = TRUE,
                      lengthChange = TRUE,
                      ordering = TRUE,
-                     paging = TRUE)
+                     paging = TRUE,
+                     columnDefs = list(
+                       list(
+                         targets = 0,
+                         render = JS(sprintf(truncScript, 150, 150))
+                       )
+                     )
+      )
     }
     table <- datatable(table,
                        options = options,
@@ -237,7 +247,6 @@ shinyServer(function(input, output, session) {
       table <- balance
       
       lens <- sapply(table$covariateName, function(x) tryCatch(nchar(x), error = function(e) 0), USE.NAMES = FALSE)
-      table$covariateName <- truncatestrings(table$covariateName, 100)
       table <- table[order(table$covariateName), ]
       table <- table[, c("covariateName", "mean1", "sd1", "mean2", "sd2", "stdDiff")]
       table$mean1 <- round(table$mean1, 3)
@@ -251,7 +260,14 @@ shinyServer(function(input, output, session) {
                      searching = TRUE,
                      lengthChange = TRUE,
                      ordering = TRUE,
-                     paging = TRUE)
+                     paging = TRUE,
+                     columnDefs = list(
+                       list(
+                         targets = 0,
+                         render = JS(sprintf(truncScript, 150, 150))
+                       )
+                     )
+      )
     }
     table <- datatable(table,
                        options = options,
