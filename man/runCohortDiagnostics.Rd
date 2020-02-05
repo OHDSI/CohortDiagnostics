@@ -22,6 +22,7 @@ runCohortDiagnostics(
   runInclusionStatistics = TRUE,
   runIncludedSourceConcepts = TRUE,
   runOrphanConcepts = TRUE,
+  runTimeDistributions = TRUE,
   runBreakdownIndexEvents = TRUE,
   runIncidenceProportion = TRUE,
   runCohortOverlap = TRUE,
@@ -77,6 +78,8 @@ does not exist it will be created.}
 \item{runIncludedSourceConcepts}{Generate and export the source concepts included in the cohorts?}
 
 \item{runOrphanConcepts}{Generate and export potential orphan concepts?}
+
+\item{runTimeDistributions}{Generate and export cohort time distributions?}
 
 \item{runBreakdownIndexEvents}{Generate and export the breakdown of index events?}
 
