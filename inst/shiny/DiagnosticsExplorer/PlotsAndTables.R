@@ -39,7 +39,6 @@ prepareTable1 <- function(covariates,
           if (specifications$covariateIds[i] == "" || length(covariateIds) > 1) {
             resultsTable <- rbind(resultsTable, data.frame(Characteristic = specifications$label[i],
                                                            mean = NA,
-                                                           sd = NA,
                                                            stringsAsFactors = FALSE))
             resultsTable <- rbind(resultsTable, data.frame(Characteristic = paste0(space,
                                                                                    space,
@@ -47,19 +46,17 @@ prepareTable1 <- function(covariates,
                                                                                    space,
                                                                                    covariatesSubset$covariateName),
                                                            mean = covariatesSubset$mean,
-                                                           sd = covariatesSubset$sd,
                                                            stringsAsFactors = FALSE))
           } else {
             resultsTable <- rbind(resultsTable, data.frame(Characteristic = specifications$label[i],
                                                            mean = covariatesSubset$mean,
-                                                           sd = covariatesSubset$sd,
                                                            stringsAsFactors = FALSE))
           }
         }
       }
     }
   }
-  colnames(resultsTable) <- c("Characteristic", "Mean (%)", "SD")
+  colnames(resultsTable) <- c("Characteristic", "Mean (%)")
   return(resultsTable)
 }
 

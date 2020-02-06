@@ -29,7 +29,7 @@ dashboardPage(
                        selectInput("conceptSet", "Concept Set", c(""), selectize = FALSE)
       ),
       conditionalPanel(condition = "input.tabs=='cohortOverlap' | input.tabs=='compareCohortCharacterization'",
-                       selectInput("comparator", "Comparator", cohort$cohortFullName, selectize = FALSE)
+                       selectInput("comparator", "Comparator", cohort$cohortFullName, selectize = FALSE, selected = cohort$cohortFullName[min(2, nrow(cohort))])
       )
     )
   ),

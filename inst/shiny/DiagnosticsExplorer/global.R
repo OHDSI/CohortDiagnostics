@@ -1,4 +1,6 @@
-# shinySettings <- list(dataFolder = "C:/temp/exampleStudy")
+if (!exists("shinySettings")) {
+  shinySettings <- list(dataFolder = "C:/temp/exampleStudy")
+}
 dataFolder <- shinySettings$dataFolder
 
 if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {

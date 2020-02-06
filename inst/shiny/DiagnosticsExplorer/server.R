@@ -232,6 +232,7 @@ shinyServer(function(input, output, session) {
     table <- table[order(table$ruleSequenceId), ]
     table$cohortId <- NULL
     table$databaseId <- NULL
+    lims <- c(0, max(table$remainSubjects))
     colnames(table) <- c("Sequence", "Name", "Meet", "Gain", "Total", "Remain")
     options = list(pageLength = 25,
                    searching = TRUE,
@@ -243,6 +244,12 @@ shinyServer(function(input, output, session) {
                        rownames = FALSE,
                        escape = FALSE,
                        class = "stripe nowrap compact")
+    table <- formatStyle(table = table,
+                         columns = 6,
+                         background = styleColorBar(lims, "lightblue"),
+                         backgroundSize = "98% 88%",
+                         backgroundRepeat = "no-repeat",
+                         backgroundPosition = "center")
     table <- formatRound(table, c("Meet", "Gain", "Total", "Remain"), digits = 0)
     return(table)
   })
@@ -282,13 +289,13 @@ shinyServer(function(input, output, session) {
       data <- merge(data, covariate)
       table <- data[data$databaseId == databaseIds[1], ]
       table <- prepareTable1(table)
-      colnames(table)[2:3] <- paste(colnames(table)[2:3], databaseIds[1], sep = "_")
+      colnames(table)[2] <- paste(colnames(table)[2], databaseIds[1], sep = "_")
       table$order <- 1:nrow(table)
       if (length(databaseIds) > 1) {
         for (i in 2:length(databaseIds)) {
           temp <- data[data$databaseId == databaseIds[i],]
           temp <- prepareTable1(temp)
-          colnames(temp)[2:3] <- paste(colnames(temp)[2:3], databaseIds[i], sep = "_")
+          colnames(temp)[2] <- paste(colnames(temp)[2], databaseIds[i], sep = "_")
           table <- merge(table, temp, all.x = TRUE)
         }
       }
@@ -310,10 +317,10 @@ shinyServer(function(input, output, session) {
         thead(
           tr(
             th(rowspan = 2, 'Covariate Name'),
-            lapply(databaseIds, th, colspan = 2, class = "dt-center")
+            lapply(databaseIds, th, colspan = 1, class = "dt-center")
           ),
           tr(
-            lapply(rep(c("Proportion", "SD"), length(databaseIds)), th)
+            lapply(rep(c("Proportion"), length(databaseIds)), th)
           )
         )
       ))
@@ -325,14 +332,13 @@ shinyServer(function(input, output, session) {
                          class = "stripe nowrap compact")
       
       table <- formatStyle(table = table,
-                           columns = 2*(1:length(databaseIds)),
+                           columns = 1 + (1:length(databaseIds)),
                            background = styleColorBar(c(0,1), "lightblue"),
                            backgroundSize = "98% 88%",
                            backgroundRepeat = "no-repeat",
                            backgroundPosition = "center")
       
-      table <- formatRound(table, 2*(1:length(databaseIds)) + 1, digits = 2)
-      table <- formatPercentage(table, 2*(1:length(databaseIds)), digits = 1)
+      table <- formatPercentage(table, 1 + (1:length(databaseIds)), digits = 1)
     } else {
       table <- data[data$databaseId == databaseIds[1], c("covariateId", "mean", "sd")]
       colnames(table)[2:3] <- paste(colnames(table)[2:3], databaseIds[1], sep = "_")
@@ -433,7 +439,7 @@ shinyServer(function(input, output, session) {
     if (nrow(data) == 0) {
       return(NULL)
     }
-    VennDiagram::draw.pairwise.venn(area1 = data$tOnlySubjects + data$bothSubjects,
+    plot <- VennDiagram::draw.pairwise.venn(area1 = data$tOnlySubjects + data$bothSubjects,
                                     area2 = data$cOnlySubjects + data$bothSubjects,
                                     cross.area = data$bothSubjects,
                                     category = c("Target", "Comparator"), 
@@ -442,7 +448,16 @@ shinyServer(function(input, output, session) {
                                     alpha = 0.2,
                                     fontfamily = rep("sans", 3),
                                     cat.fontfamily = rep("sans", 2),
-                                    margin = 0.01)
+                                    margin = 0.01,
+                                    ind = FALSE)
+    # Borrowed from https://stackoverflow.com/questions/37239128/how-to-put-comma-in-large-number-of-venndiagram
+    idx <- sapply(plot, function(i) grepl("text", i$name))
+    for (i in 1:3) {
+      plot[idx][[i]]$label <- format(as.numeric(plot[idx][[i]]$label), big.mark = ",", scientific = FALSE)
+    }
+    grid.draw(plot)
+    
+    return(plot)
   }, res = 100)
   
   output$charCompareTable <- renderDataTable({
