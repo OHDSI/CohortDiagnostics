@@ -1,13 +1,6 @@
 prepareTable1 <- function(covariates,
-                          percentDigits = 1,
-                          stdDiffDigits = 2,
-                          output = "latex",
                           pathToCsv = "Table1Specs.csv") {
-  if (output == "latex") {
-    space <- " "
-  } else {
-    space <- "&nbsp;"
-  }
+  space <- "&nbsp;"
   specifications <- read.csv(pathToCsv, stringsAsFactors = FALSE)
   
   fixCase <- function(label) {
@@ -17,21 +10,6 @@ prepareTable1 <- function(covariates,
                            tolower(substr(label[idx], 2, nchar(label[idx]))))
     }
     return(label)
-  }
-  
-  formatPercent <- function(x) {
-    result <- format(round(100 * x, percentDigits), digits = percentDigits + 1, justify = "right")
-    result <- gsub("^-", "<", result)
-    result <- gsub("NA", "", result)
-    result <- gsub(" ", space, result)
-    return(result)
-  }
-  
-  formatStdDiff <- function(x) {
-    result <- format(round(x, stdDiffDigits), digits = stdDiffDigits + 1, justify = "right")
-    result <- gsub("NA", "", result)
-    result <- gsub(" ", space, result)
-    return(result)
   }
   
   resultsTable <- data.frame()
@@ -81,23 +59,14 @@ prepareTable1 <- function(covariates,
       }
     }
   }
-  resultsTable$mean <- formatPercent(resultsTable$mean)
-  resultsTable$sd <- formatStdDiff(resultsTable$sd)
   colnames(resultsTable) <- c("Characteristic", "Mean (%)", "SD")
   return(resultsTable)
 }
 
 
 prepareTable1Comp <- function(balance,
-                              percentDigits = 1,
-                              stdDiffDigits = 2,
-                              output = "latex",
                               pathToCsv = "Table1Specs.csv") {
-  if (output == "latex") {
-    space <- " "
-  } else {
-    space <- "&nbsp;"
-  }
+  space <- "&nbsp;"
   specifications <- read.csv(pathToCsv, stringsAsFactors = FALSE)
   
   fixCase <- function(label) {
@@ -108,22 +77,7 @@ prepareTable1Comp <- function(balance,
     }
     return(label)
   }
-  
-  formatPercent <- function(x) {
-    result <- format(round(100 * x, percentDigits), digits = percentDigits + 1, justify = "right")
-    result <- gsub("^-", "<", result)
-    result <- gsub("NA", "", result)
-    result <- gsub(" ", space, result)
-    return(result)
-  }
-  
-  formatStdDiff <- function(x) {
-    result <- format(round(x, stdDiffDigits), digits = stdDiffDigits + 1, justify = "right")
-    result <- gsub("NA", "", result)
-    result <- gsub(" ", space, result)
-    return(result)
-  }
-  
+
   resultsTable <- data.frame()
   for (i in 1:nrow(specifications)) {
     if (specifications$analysisId[i] == "") {
@@ -174,9 +128,6 @@ prepareTable1Comp <- function(balance,
       }
     }
   }
-  resultsTable$MeanT <- formatPercent(resultsTable$MeanT)
-  resultsTable$MeanC <- formatPercent(resultsTable$MeanC)
-  resultsTable$StdDiff <- formatStdDiff(resultsTable$StdDiff)
-  colnames(resultsTable) <- c("Characteristic", "Mean T (%)", "Mean C (%)", "StdDiff")
+  colnames(resultsTable) <- c("Characteristic", "Proportion T", "Proportion C", "StdDiff")
   return(resultsTable)
 }

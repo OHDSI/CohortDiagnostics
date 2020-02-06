@@ -15,10 +15,10 @@ dashboardPage(
       if (exists("covariateValue")) menuItem("Cohort Characterization", tabName = "cohortCharacterization"),
       if (exists("cohortOverlap")) menuItem("Cohort Overlap", tabName = "cohortOverlap"),
       if (exists("covariateValue")) menuItem("Compare Cohort Characterization", tabName = "compareCohortCharacterization"),
-      conditionalPanel(condition="input.tabs!='incidenceProportion' & input.tabs!='timeDistribution'",
+      conditionalPanel(condition="input.tabs!='incidenceProportion' & input.tabs!='timeDistribution' & input.tabs!='cohortCharacterization'",
                        selectInput("database", "Database", database$databaseId, selectize = FALSE)
       ),
-      conditionalPanel(condition="input.tabs=='incidenceProportion' | input.tabs=='timeDistribution'",
+      conditionalPanel(condition="input.tabs=='incidenceProportion' | input.tabs=='timeDistribution' | input.tabs=='cohortCharacterization'",
                        checkboxGroupInput("databases", "Database", database$databaseId, selected = database$databaseId[1])
       ),
       selectInput("cohort", "Cohort", choices = cohort$cohortName, selectize = FALSE),

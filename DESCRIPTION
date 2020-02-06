@@ -32,7 +32,8 @@ Suggests:
   shiny,
   shinydashboard,
   RColorBrewer,
-  VennDiagram
+  VennDiagram,
+  htmltools
 License: Apache License
 VignetteBuilder: knitr
 URL: https://ohdsi.github.io/CohortDiagnostics, https://github.com/OHDSI/CohortDiagnostics

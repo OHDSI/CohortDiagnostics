@@ -8,6 +8,11 @@ truncScript <- "function(data, type, row, meta) {\n
         '<span title=\"' + data + '\">' + data.substr(0, %s) + '...</span>' : data;\n
      }"
 
+styleAbsColorBar <- function(maxValue, colorPositive, colorNegative, angle = 90) {
+  JS(sprintf("isNaN(parseFloat(value))? '' : 'linear-gradient(%fdeg, transparent ' + (%f - Math.abs(value))/%f * 100 + '%%, ' + (value > 0 ? '%s ' : '%s ') + (%f - Math.abs(value))/%f * 100 + '%%)'", 
+             angle, maxValue, maxValue, colorPositive, colorNegative, maxValue, maxValue))
+}
+
 shinyServer(function(input, output, session) {
   
   cohortId <- reactive({
@@ -118,12 +123,12 @@ shinyServer(function(input, output, session) {
                        escape = FALSE,
                        class = "stripe nowrap compact")
     table <- formatRound(table, "Subjects", digits = 0)
-    table <- DT::formatStyle(table = table,
-                             columns = 1,
-                             background = DT::styleColorBar(lims, "lightblue"),
-                             backgroundSize = "98% 88%",
-                             backgroundRepeat = "no-repeat",
-                             backgroundPosition = "center")
+    table <- formatStyle(table = table,
+                         columns = 1,
+                         background = styleColorBar(lims, "lightblue"),
+                         backgroundSize = "98% 88%",
+                         backgroundRepeat = "no-repeat",
+                         backgroundPosition = "center")
     return(table)
   })
   
@@ -146,12 +151,12 @@ shinyServer(function(input, output, session) {
                        escape = FALSE,
                        class = "stripe nowrap compact")
     table <- formatRound(table, "Count", digits = 0)
-    table <- DT::formatStyle(table = table,
-                             columns = 1,
-                             background = DT::styleColorBar(lims, "lightblue"),
-                             backgroundSize = "98% 88%",
-                             backgroundRepeat = "no-repeat",
-                             backgroundPosition = "center")
+    table <- formatStyle(table = table,
+                         columns = 1,
+                         background = styleColorBar(lims, "lightblue"),
+                         backgroundSize = "98% 88%",
+                         backgroundRepeat = "no-repeat",
+                         backgroundPosition = "center")
     return(table)
   })
   
@@ -195,23 +200,36 @@ shinyServer(function(input, output, session) {
                        escape = FALSE,
                        class = "stripe nowrap compact")
     table <- formatRound(table, "Count", digits = 0)
-    table <- DT::formatStyle(table = table,
-                             columns = 1,
-                             background = DT::styleColorBar(lims, "lightblue"),
-                             backgroundSize = "98% 88%",
-                             backgroundRepeat = "no-repeat",
-                             backgroundPosition = "center")
+    table <- formatStyle(table = table,
+                         columns = 1,
+                         background = styleColorBar(lims, "lightblue"),
+                         backgroundSize = "98% 88%",
+                         backgroundRepeat = "no-repeat",
+                         backgroundPosition = "center")
     return(table)
   })
   
   output$characterizationTable <- renderDataTable({
-    table <- covariateValue[covariateValue$cohortId == cohortId() & covariateValue$databaseId == input$database, ]
-    table <- merge(table, covariate)
-    table$cohortId <- NULL
-    table$databaseId <- NULL
+    data <- covariateValue[covariateValue$cohortId == cohortId() & covariateValue$databaseId %in% input$databases, ]
+    data$cohortId <- NULL
+    databaseIds <- unique(data$databaseId)
     
     if (input$charType == "Pretty") {
-      table <- prepareTable1(table, output = "HTML")
+      data <- merge(data, covariate)
+      table <- data[data$databaseId == databaseIds[1], ]
+      table <- prepareTable1(table)
+      colnames(table)[2:3] <- paste(colnames(table)[2:3], databaseIds[1], sep = "_")
+      table$order <- 1:nrow(table)
+      if (length(databaseIds) > 1) {
+        for (i in 2:length(databaseIds)) {
+          temp <- data[data$databaseId == databaseIds[i],]
+          temp <- prepareTable1(temp)
+          colnames(temp)[2:3] <- paste(colnames(temp)[2:3], databaseIds[i], sep = "_")
+          table <- merge(table, temp, all.x = TRUE)
+        }
+      }
+      table <- table[order(table$order), ]
+      table$order <- NULL
       options = list(pageLength = 999,
                      searching = FALSE,
                      lengthChange = FALSE,
@@ -223,13 +241,48 @@ shinyServer(function(input, output, session) {
                          render = JS(sprintf(truncScript, 150, 150))
                        )
                      ))
-    } else {
-      table <- table[order(table$covariateName), ]
-      table <- table[, c("covariateName", "mean", "sd")]
-      table$mean <- round(table$mean, 3)
-      table$sd <- round(table$sd, 3)
-      colnames(table) <- c("Covariate name", "Mean", "SD")
+      sketch <- htmltools::withTags(table(
+        class = 'display',
+        thead(
+          tr(
+            th(rowspan = 2, 'Covariate Name'),
+            lapply(databaseIds, th, colspan = 2, class = "dt-center")
+          ),
+          tr(
+            lapply(rep(c("Proportion", "SD"), length(databaseIds)), th)
+          )
+        )
+      ))
+      table <- datatable(table,
+                         options = options,
+                         rownames = FALSE,
+                         container = sketch, 
+                         escape = FALSE,
+                         class = "stripe nowrap compact")
       
+      table <- formatStyle(table = table,
+                           columns = 2*(1:length(databaseIds)),
+                           background = styleColorBar(c(0,1), "lightblue"),
+                           backgroundSize = "98% 88%",
+                           backgroundRepeat = "no-repeat",
+                           backgroundPosition = "center")
+      
+      table <- formatRound(table, 2*(1:length(databaseIds)) + 1, digits = 2)
+      table <- formatPercentage(table, 2*(1:length(databaseIds)), digits = 1)
+    } else {
+      table <- data[data$databaseId == databaseIds[1], c("covariateId", "mean", "sd")]
+      colnames(table)[2:3] <- paste(colnames(table)[2:3], databaseIds[1], sep = "_")
+      if (length(databaseIds) > 1) {
+        for (i in 2:length(databaseIds)) {
+          temp <- data[data$databaseId == databaseIds[i], c("covariateId", "mean", "sd")]
+          colnames(temp)[2:3] <- paste(colnames(temp)[2:3], databaseIds[i], sep = "_")
+          table <- merge(table, temp, all = TRUE)
+        }
+      }
+      table <- merge(covariate, table)    
+      table$covariateAnalysisId <- NULL
+      table$covariateId <- NULL
+      table <- table[order(table$covariateName), ]
       options = list(pageLength = 25,
                      searching = TRUE,
                      lengthChange = TRUE,
@@ -242,12 +295,34 @@ shinyServer(function(input, output, session) {
                        )
                      )
       )
+      sketch <- htmltools::withTags(table(
+        class = 'display',
+        thead(
+          tr(
+            th(rowspan = 2, 'Covariate Name'),
+            lapply(databaseIds, th, colspan = 2, class = "dt-center")
+          ),
+          tr(
+            lapply(rep(c("Mean", "SD"), length(databaseIds)), th)
+          )
+        )
+      ))
+      table <- datatable(table,
+                         options = options,
+                         rownames = FALSE,
+                         container = sketch, 
+                         escape = FALSE,
+                         class = "stripe nowrap compact")
+      table <- formatStyle(table = table,
+                           columns = 2*(1:length(databaseIds)),
+                           background = styleColorBar(c(0,1), "lightblue"),
+                           backgroundSize = "98% 88%",
+                           backgroundRepeat = "no-repeat",
+                           backgroundPosition = "center")
+      
+      table <- formatRound(table, 1:(2*length(databaseIds)) + 1, digits = 2)
+      
     }
-    table <- datatable(table,
-                       options = options,
-                       rownames = FALSE,
-                       escape = FALSE,
-                       class = "stripe nowrap compact")
     return(table)
   })
   
@@ -317,23 +392,37 @@ shinyServer(function(input, output, session) {
     
     if (input$charCompareType == "Pretty") {
       balance <- merge(balance, covariate[, c("covariateId", "covariateAnalysisId")])
-      table <- prepareTable1Comp(balance, output = "HTML")
+      table <- prepareTable1Comp(balance)
       options = list(pageLength = 999,
                      searching = FALSE,
                      lengthChange = FALSE,
                      ordering = FALSE,
                      paging = FALSE)
+      table <- datatable(table,
+                         options = options,
+                         rownames = FALSE,
+                         escape = FALSE,
+                         class = "stripe nowrap compact")
+      table <- formatStyle(table = table,
+                           columns = 2:3,
+                           background = styleColorBar(c(0,1), "lightblue"),
+                           backgroundSize = "98% 88%",
+                           backgroundRepeat = "no-repeat",
+                           backgroundPosition = "center")
+      table <- formatStyle(table = table,
+                           columns = 4,
+                           background = styleAbsColorBar(1, "lightblue", "pink"),
+                           backgroundSize = "98% 88%",
+                           backgroundRepeat = "no-repeat",
+                           backgroundPosition = "center")
+      table <- formatRound(table, 4, digits = 2)
+      table <- formatPercentage(table, 2:3, digits = 1)
     } else {
       table <- balance
       
       lens <- sapply(table$covariateName, function(x) tryCatch(nchar(x), error = function(e) 0), USE.NAMES = FALSE)
       table <- table[order(table$covariateName), ]
       table <- table[, c("covariateName", "mean1", "sd1", "mean2", "sd2", "stdDiff")]
-      table$mean1 <- round(table$mean1, 3)
-      table$sd1 <- round(table$sd1, 3)
-      table$mean2 <- round(table$mean2, 3)
-      table$sd2 <- round(table$sd2, 3)
-      table$stdDiff <- round(table$stdDiff, 3)
       colnames(table) <- c("Covariate name", "Mean T", "SD T", "Mean C", "SD C", "StdDiff")
       
       options = list(pageLength = 25,
@@ -348,12 +437,25 @@ shinyServer(function(input, output, session) {
                        )
                      )
       )
+      table <- datatable(table,
+                         options = options,
+                         rownames = FALSE,
+                         escape = FALSE,
+                         class = "stripe nowrap compact")
+      table <- formatStyle(table = table,
+                           columns = c(2,4),
+                           background = styleColorBar(c(0,1), "lightblue"),
+                           backgroundSize = "98% 88%",
+                           backgroundRepeat = "no-repeat",
+                           backgroundPosition = "center")
+      table <- formatStyle(table = table,
+                           columns = 6,
+                           background = styleAbsColorBar(1, "lightblue", "pink"),
+                           backgroundSize = "98% 88%",
+                           backgroundRepeat = "no-repeat",
+                           backgroundPosition = "center")
+      table <- formatRound(table, 2:6, digits = 2)
     }
-    table <- datatable(table,
-                       options = options,
-                       rownames = FALSE,
-                       escape = FALSE,
-                       class = "stripe nowrap compact")
     return(table)
   })
 })

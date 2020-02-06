@@ -32,6 +32,7 @@ launchDiagnosticsExplorer <- function(dataFolder, launch.browser = FALSE) {
   ensure_installed("shinydashboard")
   ensure_installed("DT")
   ensure_installed("VennDiagram")
+  ensure_installed("htmltools")
   appDir <- system.file("shiny", "DiagnosticsExplorer", package = "CohortDiagnostics")
   shinySettings <- list(dataFolder = dataFolder)
   .GlobalEnv$shinySettings <- shinySettings
