@@ -115,6 +115,17 @@ runCohortDiagnostics <- function(packageName,
                          isMetaAnalysis = 0)
   writeToCsv(database, file.path(exportFolder, "database.csv"))
   
+  ParallelLogger::logInfo("Counting cohorts")
+  counts <- getCohortCounts(connection = connection,
+                            cohortDatabaseSchema = cohortDatabaseSchema,
+                            cohortTable = cohortTable,
+                            cohortIds = cohorts$cohortId)
+  if (nrow(counts) > 0) {
+    counts$databaseId <- databaseId
+  }
+  writeToCsv(counts, file.path(exportFolder, "cohort_count.csv"))
+  
+  
   if (runInclusionStatistics) {
     ParallelLogger::logInfo("Fetching inclusion rule statistics")
     runInclusionStatistics <- function(row) {
@@ -325,7 +336,7 @@ runCohortDiagnostics <- function(packageName,
   zipName <- file.path(exportFolder, paste0("Results_", databaseId, ".zip"))
   files <- list.files(exportFolder, pattern = ".*\\.csv$")
   oldWd <- setwd(exportFolder)
-  on.exit(setwd(oldWd))
+  on.exit(setwd(oldWd), add = TRUE)
   DatabaseConnector::createZipFile(zipFile = zipName, files = files)
   ParallelLogger::logInfo("Results are ready for sharing at:", zipName)
   
