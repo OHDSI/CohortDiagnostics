@@ -16,11 +16,11 @@ styleAbsColorBar <- function(maxValue, colorPositive, colorNegative, angle = 90)
 shinyServer(function(input, output, session) {
   
   cohortId <- reactive({
-    return(cohort$cohortId[cohort$cohortName == input$cohort])
+    return(cohort$cohortId[cohort$cohortFullName == input$cohort])
   })
   
   comparatorCohortId <- reactive({
-    return(cohort$cohortId[cohort$cohortName == input$comparator])
+    return(cohort$cohortId[cohort$cohortFullName == input$comparator])
   })
   
   observe({
@@ -30,9 +30,73 @@ shinyServer(function(input, output, session) {
                       choices = subset)
   })
   
+  output$cohortCountsTable <- renderDataTable({
+    data <- cohortCount[cohortCount$databaseId %in% input$databases, ]
+    if (nrow(data) == 0) {
+      return(NULL)
+    }
+    databaseIds <- unique(data$databaseId)
+    table <- data[data$databaseId == databaseIds[1], c("cohortId", "cohortEntries", "cohortSubjects")]
+    colnames(table)[2:3] <- paste(colnames(table)[2:3], databaseIds[1], sep = "_")
+    if (length(databaseIds) > 1) {
+      for (i in 2:length(databaseIds)) {
+        temp <- data[data$databaseId == databaseIds[i], c("cohortId", "cohortEntries", "cohortSubjects")]
+        colnames(temp)[2:3] <- paste(colnames(temp)[2:3], databaseIds[i], sep = "_")
+        table <- merge(table, temp, all = TRUE)
+      }
+    }
+    table <- merge(cohort, table)
+    table$cohortId <- NULL
+    table$cohortName <- NULL
+    
+    sketch <- htmltools::withTags(table(
+      class = 'display',
+      thead(
+        tr(
+          th(rowspan = 2, 'Cohort'),
+          lapply(databaseIds, th, colspan = 2, class = "dt-center")
+        ),
+        tr(
+          lapply(rep(c("Entries", "Subjects"), length(databaseIds)), th)
+        )
+      )
+    ))
+    
+    options = list(pageLength = 25,
+                   searching = TRUE,
+                   lengthChange = TRUE,
+                   ordering = TRUE,
+                   paging = TRUE,
+                   info = TRUE)
+    
+    dataTable <- datatable(table,
+                           options = options,
+                           rownames = FALSE,
+                           container = sketch, 
+                           escape = FALSE,
+                           class = "stripe nowrap compact")
+    dataTable <- formatRound(dataTable, 2:(2*length(databaseIds) + 1), digits = 0)
+    for (i in 1:length(databaseIds)) {
+      dataTable <- formatStyle(table = dataTable,
+                               columns = i*2,
+                               background = styleColorBar(c(0, max(table[, i*2], na.rm = TRUE)), "lightblue"),
+                               backgroundSize = "98% 88%",
+                               backgroundRepeat = "no-repeat",
+                               backgroundPosition = "center")
+      dataTable <- formatStyle(table = dataTable,
+                               columns = i*2 + 1,
+                               background = styleColorBar(c(0, max(table[, i*2 + 1], na.rm = TRUE)), "#ffd699"),
+                               backgroundSize = "98% 88%",
+                               backgroundRepeat = "no-repeat",
+                               backgroundPosition = "center")
+    }
+    return(dataTable)
+  })
+  
   output$incidenceProportionPlot <- renderPlot({
     data <- incidenceProportion[incidenceProportion$cohortId == cohortId() & 
                                   incidenceProportion$databaseId %in% input$databases, ]
+
     if (nrow(data) == 0) {
       return(NULL)
     }

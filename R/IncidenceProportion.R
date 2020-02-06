@@ -203,6 +203,8 @@ plotIncidenceProportionByYear <- function(incidenceProportion, fileName = NULL) 
 #' @param incidenceProportion     Incidence proportion time series data for plotting generated using
 #'                                \code{\link{getIncidenceProportion}} function.
 #' @param restrictToFullAgeData   Restrict to panels having data on all ages?
+#' @param minBackgroundSubjects   Estimates get very unstable with low background counts, so removing them
+#'                                makes for cleaner plots.
 #' @param fileName                Optional: name of the file where the plot should be saved, for
 #'                                example 'plot.png'. See the function \code{ggsave} in the ggplot2
 #'                                package for supported file formats.
@@ -214,9 +216,11 @@ plotIncidenceProportionByYear <- function(incidenceProportion, fileName = NULL) 
 #' @export
 plotIncidenceProportion <- function(incidenceProportion,
                                     restrictToFullAgeData = FALSE,
+                                    minBackgroundSubjects = 1000, 
                                     fileName = NULL) {
   data <- incidenceProportion[!is.na(incidenceProportion$gender) & !is.na(incidenceProportion$ageGroup) &
     !is.na(incidenceProportion$indexYear), ]
+  data <- data[data$backgroundSubjects > minBackgroundSubjects, ]
   data$gender <- as.factor(data$gender)
   data$indexYear <- as.numeric(as.character(data$indexYear))
   if (restrictToFullAgeData) {
@@ -235,12 +239,11 @@ plotIncidenceProportion <- function(incidenceProportion,
           ggplot2::geom_line(size = 1.25, alpha = 0.6) +
           ggplot2::xlab("Year") +
           ggplot2::ylab("Incidence proportion (/1000 persons)") +
-          ggplot2::facet_grid(~ageGroup) +
           ggplot2::theme(legend.position = "top",
                          legend.title = ggplot2::element_blank(),
                          axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5))
   if (!is.null(incidenceProportion$databaseId) && length(unique(incidenceProportion$databaseId)) > 1) {
-    plot <- plot + ggplot2::facet_grid(databaseId~ageGroup) 
+    plot <- plot + ggplot2::facet_grid(databaseId~ageGroup, scales = "free_y") 
   } else {
     plot <- plot + ggplot2::facet_grid(~ageGroup) 
   }

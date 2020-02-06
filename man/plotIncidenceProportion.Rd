@@ -7,6 +7,7 @@
 plotIncidenceProportion(
   incidenceProportion,
   restrictToFullAgeData = FALSE,
+  minBackgroundSubjects = 1000,
   fileName = NULL
 )
 }
@@ -15,6 +16,9 @@ plotIncidenceProportion(
 \code{\link{getIncidenceProportion}} function.}
 
 \item{restrictToFullAgeData}{Restrict to panels having data on all ages?}
+
+\item{minBackgroundSubjects}{Estimates get very unstable with low background counts, so removing them
+makes for cleaner plots.}
 
 \item{fileName}{Optional: name of the file where the plot should be saved, for
 example 'plot.png'. See the function \code{ggsave} in the ggplot2
