@@ -26,7 +26,8 @@ runCohortDiagnostics(
   runBreakdownIndexEvents = TRUE,
   runIncidenceProportion = TRUE,
   runCohortOverlap = TRUE,
-  runCohortCharacterization = TRUE
+  runCohortCharacterization = TRUE,
+  minCellCount = 5
 )
 }
 \arguments{
@@ -88,6 +89,8 @@ does not exist it will be created.}
 \item{runCohortOverlap}{Generate and export the cohort overlap?}
 
 \item{runCohortCharacterization}{Generate and export the cohort characterization?}
+
+\item{minCellCount}{The minimum cell count for fields contains person counts or fractions.}
 }
 \description{
 Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the

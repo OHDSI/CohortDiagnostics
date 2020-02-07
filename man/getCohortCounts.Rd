@@ -7,8 +7,6 @@
 getCohortCounts(
   connectionDetails = NULL,
   connection = NULL,
-  cdmDatabaseSchema,
-  oracleTempSchema = NULL,
   cohortDatabaseSchema = cdmDatabaseSchema,
   cohortTable = "cohort",
   cohortIds = c()
@@ -25,13 +23,6 @@ provided.}
 DatabaseConnector package. Can be left NULL if \code{connectionDetails}
 is provided, in which case a new connection will be opened at the start
 of the function, and closed when the function finishes.}
-
-\item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
-Note that for SQL Server, this should include both the database and
-schema name, for example 'cdm_data.dbo'.}
-
-\item{oracleTempSchema}{Should be used in Oracle to specify a schema where the user has write
-privileges for storing temporary tables.}
 
 \item{cohortDatabaseSchema}{Schema name where your cohort table resides. Note that for SQL Server,
 this should include both the database and schema name, for example

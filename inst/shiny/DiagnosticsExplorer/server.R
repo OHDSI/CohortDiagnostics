@@ -8,6 +8,39 @@ truncScript <- "function(data, type, row, meta) {\n
         '<span title=\"' + data + '\">' + data.substr(0, %s) + '...</span>' : data;\n
      }"
 
+minCellCountDef <- function(columns) {
+  list(
+    targets = columns,
+    render = JS("function(data, type) {
+    if (type !== 'display' || isNaN(parseFloat(data))) return data;
+    if (data >= 0) return data.toString().replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,');
+    return '<' + Math.abs(data).toString().replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,');
+  }")
+  )
+}
+
+minCellPercentDef <- function(columns) {
+  list(
+    targets = columns,
+    render = JS("function(data, type) {
+    if (type !== 'display' || isNaN(parseFloat(data))) return data;
+    if (data >= 0) return (100 * data).toFixed(1).replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,') + '%';
+    return '<' + Math.abs(100 * data).toFixed(1).replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,') + '%';
+  }")
+  )
+}
+
+minCellRealDef <- function(columns, digits = 1) {
+  list(
+    targets = columns,
+    render = JS(sprintf("function(data, type) {
+    if (type !== 'display' || isNaN(parseFloat(data))) return data;
+    if (data >= 0) return data.toFixed(%s).replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,');
+    return '<' + Math.abs(data).toFixed(%s).replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,');
+  }", digits, digits))
+  )
+}
+
 styleAbsColorBar <- function(maxValue, colorPositive, colorNegative, angle = 90) {
   JS(sprintf("isNaN(parseFloat(value))? '' : 'linear-gradient(%fdeg, transparent ' + (%f - Math.abs(value))/%f * 100 + '%%, ' + (value > 0 ? '%s ' : '%s ') + (%f - Math.abs(value))/%f * 100 + '%%)'", 
              angle, maxValue, maxValue, colorPositive, colorNegative, maxValue, maxValue))
@@ -67,7 +100,8 @@ shinyServer(function(input, output, session) {
                    lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
-                   info = TRUE)
+                   info = TRUE,
+                   columnDefs = list(minCellCountDef(2:(2*length(databaseIds) - 1))))
     
     dataTable <- datatable(table,
                            options = options,
@@ -75,7 +109,7 @@ shinyServer(function(input, output, session) {
                            container = sketch, 
                            escape = FALSE,
                            class = "stripe nowrap compact")
-    dataTable <- formatRound(dataTable, 2:(2*length(databaseIds) + 1), digits = 0)
+    # dataTable <- formatRound(dataTable, 2:(2*length(databaseIds) + 1), digits = 0)
     for (i in 1:length(databaseIds)) {
       dataTable <- formatStyle(table = dataTable,
                                columns = i*2,
@@ -180,13 +214,14 @@ shinyServer(function(input, output, session) {
                    searching = TRUE,
                    lengthChange = TRUE,
                    ordering = TRUE,
-                   paging = TRUE)
+                   paging = TRUE,
+                   columnDefs = list(minCellCountDef(0)))
     table <- datatable(table,
                        options = options,
                        rownames = FALSE,
                        escape = FALSE,
                        class = "stripe nowrap compact")
-    table <- formatRound(table, "Subjects", digits = 0)
+    # table <- formatRound(table, "Subjects", digits = 0)
     table <- formatStyle(table = table,
                          columns = 1,
                          background = styleColorBar(lims, "lightblue"),
@@ -208,13 +243,13 @@ shinyServer(function(input, output, session) {
                    searching = TRUE,
                    lengthChange = TRUE,
                    ordering = TRUE,
-                   paging = TRUE)
+                   paging = TRUE,
+                   columnDefs = list(minCellCountDef(0)))
     table <- datatable(table,
                        options = options,
                        rownames = FALSE,
                        escape = FALSE,
                        class = "stripe nowrap compact")
-    table <- formatRound(table, "Count", digits = 0)
     table <- formatStyle(table = table,
                          columns = 1,
                          background = styleColorBar(lims, "lightblue"),
@@ -238,7 +273,8 @@ shinyServer(function(input, output, session) {
                    searching = TRUE,
                    lengthChange = TRUE,
                    ordering = TRUE,
-                   paging = TRUE)
+                   paging = TRUE,
+                   columnDefs = list(minCellCountDef(2:5)))
     table <- datatable(table,
                        options = options,
                        rownames = FALSE,
@@ -250,7 +286,7 @@ shinyServer(function(input, output, session) {
                          backgroundSize = "98% 88%",
                          backgroundRepeat = "no-repeat",
                          backgroundPosition = "center")
-    table <- formatRound(table, c("Meet", "Gain", "Total", "Remain"), digits = 0)
+    # table <- formatRound(table, c("Meet", "Gain", "Total", "Remain"), digits = 0)
     return(table)
   })
   
@@ -264,13 +300,14 @@ shinyServer(function(input, output, session) {
                    searching = TRUE,
                    lengthChange = TRUE,
                    ordering = TRUE,
-                   paging = TRUE)
+                   paging = TRUE,
+                   columnDefs = list(minCellCountDef(0)))
     table <- datatable(table,
                        options = options,
                        rownames = FALSE,
                        escape = FALSE,
                        class = "stripe nowrap compact")
-    table <- formatRound(table, "Count", digits = 0)
+    # table <- formatRound(table, "Count", digits = 0)
     table <- formatStyle(table = table,
                          columns = 1,
                          background = styleColorBar(lims, "lightblue"),
@@ -310,7 +347,8 @@ shinyServer(function(input, output, session) {
                        list(
                          targets = 0,
                          render = JS(sprintf(truncScript, 150, 150))
-                       )
+                       ),
+                       minCellPercentDef(1:length(databaseIds))
                      ))
       sketch <- htmltools::withTags(table(
         class = 'display',
@@ -338,7 +376,7 @@ shinyServer(function(input, output, session) {
                            backgroundRepeat = "no-repeat",
                            backgroundPosition = "center")
       
-      table <- formatPercentage(table, 1 + (1:length(databaseIds)), digits = 1)
+      # table <- formatPercentage(table, 1 + (1:length(databaseIds)), digits = 1)
     } else {
       table <- data[data$databaseId == databaseIds[1], c("covariateId", "mean", "sd")]
       colnames(table)[2:3] <- paste(colnames(table)[2:3], databaseIds[1], sep = "_")
@@ -362,7 +400,8 @@ shinyServer(function(input, output, session) {
                        list(
                          targets = 0,
                          render = JS(sprintf(truncScript, 150, 150))
-                       )
+                       ),
+                       minCellRealDef(1:(2*length(databaseIds)))
                      )
       )
       sketch <- htmltools::withTags(table(
@@ -390,7 +429,7 @@ shinyServer(function(input, output, session) {
                            backgroundRepeat = "no-repeat",
                            backgroundPosition = "center")
       
-      table <- formatRound(table, 1:(2*length(databaseIds)) + 1, digits = 2)
+      # table <- formatRound(table, 1:(2*length(databaseIds)) + 1, digits = 2)
       
     }
     return(table)
@@ -418,17 +457,26 @@ shinyServer(function(input, output, session) {
                                   data$tBeforeCSubjects,
                                   data$cBeforeTSubjects,
                                   data$sameDaySubjects))
+    if (!is.null(data$tInCSubjects)) {
+       table <- rbind(table,
+                      data.frame(row.names = c("Subject having target start during comparator",
+                                               "Subject having comparator start during target"),
+                                 Value = c(data$tInCSubjects,
+                                           data$cInTSubjects)))
+    }
+    table$Value[is.na(table$Value)] <- 0
     options = list(pageLength = 7,
                    searching = FALSE,
                    lengthChange = FALSE,
                    ordering = FALSE,
                    paging = FALSE,
-                   info = FALSE)
+                   info = FALSE,
+                   columnDefs = list(minCellCountDef(1)))
     table <- datatable(table,
                        options = options,
                        rownames = TRUE,
                        class = "stripe nowrap compact")
-    table <- formatRound(table, "Value", digits = 0)
+    # table <- formatRound(table, "Value", digits = 0)
     return(table)
   })
   
@@ -455,7 +503,7 @@ shinyServer(function(input, output, session) {
     for (i in 1:3) {
       plot[idx][[i]]$label <- format(as.numeric(plot[idx][[i]]$label), big.mark = ",", scientific = FALSE)
     }
-    grid.draw(plot)
+    grid::grid.draw(plot)
     
     return(plot)
   }, res = 100)
@@ -476,7 +524,9 @@ shinyServer(function(input, output, session) {
                      searching = FALSE,
                      lengthChange = FALSE,
                      ordering = FALSE,
-                     paging = FALSE)
+                     paging = FALSE,
+                     columnDefs = list(minCellPercentDef(1:2))
+                     )
       table <- datatable(table,
                          options = options,
                          rownames = FALSE,
@@ -495,11 +545,11 @@ shinyServer(function(input, output, session) {
                            backgroundRepeat = "no-repeat",
                            backgroundPosition = "center")
       table <- formatRound(table, 4, digits = 2)
-      table <- formatPercentage(table, 2:3, digits = 1)
+      # table <- formatPercentage(table, 2:3, digits = 1)
     } else {
       table <- balance
       
-      lens <- sapply(table$covariateName, function(x) tryCatch(nchar(x), error = function(e) 0), USE.NAMES = FALSE)
+      # lens <- sapply(table$covariateName, function(x) tryCatch(nchar(x), error = function(e) 0), USE.NAMES = FALSE)
       table <- table[order(table$covariateName), ]
       table <- table[, c("covariateName", "mean1", "sd1", "mean2", "sd2", "stdDiff")]
       colnames(table) <- c("Covariate name", "Mean T", "SD T", "Mean C", "SD C", "StdDiff")
@@ -513,7 +563,8 @@ shinyServer(function(input, output, session) {
                        list(
                          targets = 0,
                          render = JS(sprintf(truncScript, 150, 150))
-                       )
+                       ),
+                       minCellRealDef(c(1,3), 2)
                      )
       )
       table <- datatable(table,
@@ -533,7 +584,8 @@ shinyServer(function(input, output, session) {
                            backgroundSize = "98% 88%",
                            backgroundRepeat = "no-repeat",
                            backgroundPosition = "center")
-      table <- formatRound(table, 2:6, digits = 2)
+      # table <- formatRound(table, 2:6, digits = 2)
+      table <- formatRound(table, c(3, 5, 6), digits = 2)
     }
     return(table)
   })

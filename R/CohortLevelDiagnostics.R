@@ -21,10 +21,6 @@
 #'
 #' @template Connection
 #'
-#' @template CdmDatabaseSchema
-#'
-#' @template OracleTempSchema
-#'
 #' @template CohortTable
 #'
 #' @param cohortIds            The cohort definition ID(s0 used to reference the cohort in the cohort
@@ -36,8 +32,6 @@
 #' @export
 getCohortCounts <- function(connectionDetails = NULL,
                             connection = NULL,
-                            cdmDatabaseSchema,
-                            oracleTempSchema = NULL,
                             cohortDatabaseSchema = cdmDatabaseSchema,
                             cohortTable = "cohort",
                             cohortIds = c()) {

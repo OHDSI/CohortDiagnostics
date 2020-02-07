@@ -65,7 +65,6 @@ computeCohortOverlap <- function(connectionDetails = NULL,
     ParallelLogger::logInfo(paste("Computing overlap took", signif(delta, 3), attr(delta, "units")))
     return(data.frame())
   }
-  ParallelLogger::logInfo("Computing overlap")
   sql <- SqlRender::loadRenderTranslateSql("CohortOverlap.sql",
                                            packageName = "CohortDiagnostics",
                                            dbms = connection@dbms,

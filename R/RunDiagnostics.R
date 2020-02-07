@@ -47,6 +47,7 @@
 #' @param runIncidenceProportion      Generate and export the cohort incidence proportions?
 #' @param runCohortOverlap            Generate and export the cohort overlap?
 #' @param runCohortCharacterization   Generate and export the cohort characterization?
+#' @param minCellCount                The minimum cell count for fields contains person counts or fractions.
 #'
 #' @export
 runCohortDiagnostics <- function(packageName,
@@ -70,7 +71,8 @@ runCohortDiagnostics <- function(packageName,
                                  runBreakdownIndexEvents = TRUE,
                                  runIncidenceProportion = TRUE,
                                  runCohortOverlap = TRUE,
-                                 runCohortCharacterization = TRUE) {
+                                 runCohortCharacterization = TRUE,
+                                 minCellCount = 5) {
   start <- Sys.time()
   if (!file.exists(exportFolder)) {
     dir.create(exportFolder)
@@ -122,9 +124,10 @@ runCohortDiagnostics <- function(packageName,
                             cohortIds = cohorts$cohortId)
   if (nrow(counts) > 0) {
     counts$databaseId <- databaseId
+    counts <- enforceMinCellValue(counts, "cohortEntries", minCellCount)
+    counts <- enforceMinCellValue(counts, "cohortSubjects", minCellCount)
   }
   writeToCsv(counts, file.path(exportFolder, "cohort_count.csv"))
-  
   
   if (runInclusionStatistics) {
     ParallelLogger::logInfo("Fetching inclusion rule statistics")
@@ -142,6 +145,10 @@ runCohortDiagnostics <- function(packageName,
     stats <- do.call(rbind, stats)
     if (nrow(stats) > 0) {
       stats$databaseId <- databaseId
+      stats <- enforceMinCellValue(stats, "meetSubjects", minCellCount)
+      stats <- enforceMinCellValue(stats, "gainSubjects", minCellCount)
+      stats <- enforceMinCellValue(stats, "totalSubjects", minCellCount)
+      stats <- enforceMinCellValue(stats, "remainSubjects", minCellCount)
     }
     writeToCsv(stats, file.path(exportFolder, "inclusion_rule_stats.csv"))
   }
@@ -166,6 +173,7 @@ runCohortDiagnostics <- function(packageName,
     data <- do.call(rbind, data)
     if (nrow(data) > 0) {
       data$databaseId <- databaseId
+      data <- enforceMinCellValue(data, "conceptSubjects", minCellCount)
     }
     writeToCsv(data, file.path(exportFolder, "included_source_concept.csv"))
   }
@@ -192,6 +200,7 @@ runCohortDiagnostics <- function(packageName,
     data <- do.call(rbind, data)
     if (nrow(data) > 0) {
       data$databaseId <- databaseId
+      data <- enforceMinCellValue(data, "conceptCount", minCellCount)
     }
     writeToCsv(data, file.path(exportFolder, "orphan_concept.csv"))
   }
@@ -242,12 +251,13 @@ runCohortDiagnostics <- function(packageName,
     data <- do.call(rbind, data)
     if (nrow(data) > 0) {
       data$databaseId <- databaseId
+      data <- enforceMinCellValue(data, "conceptCount", minCellCount)
     }
     writeToCsv(data, file.path(exportFolder, "index_event_breakdown.csv"))
   }
   
   if (runIncidenceProportion) {
-    ParallelLogger::logInfo("Breaking down index events")
+    ParallelLogger::logInfo("Computing incidence proportion")
     
     runIncidenceProportion <- function(row) {
       ParallelLogger::logInfo("- Computing incidence proportion for cohort ", row$cohortName)
@@ -265,6 +275,10 @@ runCohortDiagnostics <- function(packageName,
     data <- do.call(rbind, data)
     if (nrow(data) > 0) {
       data$databaseId <- databaseId
+      data <- enforceMinCellValue(data, "cohortSubjects", minCellCount)
+      data <- enforceMinCellValue(data, "backgroundSubjects", minCellCount)
+      data <- enforceMinCellValue(data, "incidenceProportion", 1000*minCellCount/data$backgroundSubjects)
+      
     }
     writeToCsv(data, file.path(exportFolder, "incidence_proportion.csv"))
   }
@@ -297,8 +311,18 @@ runCohortDiagnostics <- function(packageName,
       revData <- swapColumnContents(revData, "targetCohortId", "comparatorCohortId")
       revData <- swapColumnContents(revData, "tOnlySubjects", "cOnlySubjects")
       revData <- swapColumnContents(revData, "tBeforeCSubjects", "cBeforeTSubjects")
+      revData <- swapColumnContents(revData, "tInCSubjects", "cInTSubjects")
       data <- rbind(data, revData)
       data$databaseId <- databaseId
+      data <- enforceMinCellValue(data, "eitherSubjects", minCellCount)
+      data <- enforceMinCellValue(data, "bothSubjects", minCellCount)
+      data <- enforceMinCellValue(data, "tOnlySubjects", minCellCount)
+      data <- enforceMinCellValue(data, "cOnlySubjects", minCellCount)
+      data <- enforceMinCellValue(data, "tBeforeCSubjects", minCellCount)
+      data <- enforceMinCellValue(data, "cBeforeTSubjects", minCellCount)
+      data <- enforceMinCellValue(data, "sameDaySubjects", minCellCount)
+      data <- enforceMinCellValue(data, "tInCSubjects", minCellCount)
+      data <- enforceMinCellValue(data, "cInTSubjects", minCellCount)
     }
     writeToCsv(data, file.path(exportFolder, "cohort_overlap.csv"))
   }
@@ -320,6 +344,8 @@ runCohortDiagnostics <- function(packageName,
     }
     data <- lapply(split(cohorts, cohorts$cohortId), runCohortCharacterization)
     data <- do.call(rbind, data)
+    # Drop covariates with mean = 0 after rounding to 3 digits:
+    data <- data[round(data$mean, 3) != 0, ]
     covariates <- unique(data[, c("covariateId", "covariateName", "analysisId")])
     colnames(covariates)[[3]] <- "covariateAnalysisId"
     writeToCsv(covariates, file.path(exportFolder, "covariate.csv"))
@@ -327,6 +353,11 @@ runCohortDiagnostics <- function(packageName,
     data$analysisId <- NULL
     if (nrow(data) > 0) {
       data$databaseId <- databaseId
+      data <- merge(data, counts[, c("cohortId", "cohortEntries")])
+      data <- enforceMinCellValue(data, "mean", minCellCount/data$cohortEntries)
+      data$sd[data$mean < 0] <- NA
+      data$cohortEntries <- NULL
+      data$mean <- round(data$mean, 3)
     }
     writeToCsv(data, file.path(exportFolder, "covariate_value.csv"))
   }
@@ -356,4 +387,24 @@ swapColumnContents <- function(df, column1 = "targetId", column2 = "comparatorId
   df[, column1] <- df[, column2]
   df[, column2] <- temp
   return(df)
+}
+
+enforceMinCellValue <- function(data, fieldName, minValues, silent = FALSE) {
+  toCensor <- !is.na(data[, fieldName]) & data[, fieldName] < minValues & data[, fieldName] != 0
+  if (!silent) {
+    percent <- round(100 * sum(toCensor)/nrow(data), 1)
+    ParallelLogger::logInfo("   censoring ",
+                            sum(toCensor),
+                            " values (",
+                            percent,
+                            "%) from ",
+                            fieldName,
+                            " because value below minimum")
+  }
+  if (length(minValues) == 1) {
+    data[toCensor, fieldName] <- -minValues
+  } else {
+    data[toCensor, fieldName] <- -minValues[toCensor]
+  }
+  return(data)
 }

@@ -150,7 +150,7 @@ launchCohortExplorer(connectionDetails = connectionDetails,
                      cdmDatabaseSchema = cdmDatabaseSchema,
                      cohortDatabaseSchema = cohortDatabaseSchema,
                      cohortTable = cohortTable,
-                     cohortId = cohortId)
+                     cohortId = 1770710)
 
 
 
