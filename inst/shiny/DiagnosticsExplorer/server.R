@@ -487,9 +487,9 @@ shinyServer(function(input, output, session) {
     if (nrow(data) == 0) {
       return(NULL)
     }
-    plot <- VennDiagram::draw.pairwise.venn(area1 = data$tOnlySubjects + data$bothSubjects,
-                                    area2 = data$cOnlySubjects + data$bothSubjects,
-                                    cross.area = data$bothSubjects,
+    plot <- VennDiagram::draw.pairwise.venn(area1 = abs(data$eitherSubjects) - abs(data$cOnlySubjects),
+                                    area2 = abs(data$eitherSubjects) - abs(data$tOnlySubjects),
+                                    cross.area = abs(data$bothSubjects),
                                     category = c("Target", "Comparator"), 
                                     col = c(rgb(0.8, 0, 0), rgb(0, 0, 0.8)),
                                     fill = c(rgb(0.8, 0, 0), rgb(0, 0, 0.8)),
