@@ -450,7 +450,7 @@ runConceptSetDiagnostics <- function(connection,
       counts$databaseId <- databaseId
       counts <- enforceMinCellValue(counts, "conceptSubjects", minCellCount)
     }
-    writeToCsv(data, file.path(exportFolder, "included_source_concept.csv"))
+    writeToCsv(counts, file.path(exportFolder, "included_source_concept.csv"))
     
     
     sql <- "TRUNCATE TABLE #Codesets; DROP TABLE #Codesets;"
@@ -489,7 +489,7 @@ runConceptSetDiagnostics <- function(connection,
                                            conceptIds = conceptIds,
                                            conceptCountsDatabaseSchema = cohortDatabaseSchema)
       if (nrow(orphanConcepts) > 0) {
-        orphanConcepts$conceptSetId <- conceptSet$uniqueConceptSetId
+        orphanConcepts$uniqueConceptSetId <- conceptSet$uniqueConceptSetId
       }
       return(orphanConcepts)
     }
