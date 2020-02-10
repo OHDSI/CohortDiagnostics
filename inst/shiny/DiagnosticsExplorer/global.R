@@ -17,6 +17,14 @@ if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {
     
     if (!overwrite && exists(camelCaseName, envir = .GlobalEnv)) {
       existingData <- get(camelCaseName, envir = .GlobalEnv)
+      if (!all.equal(colnames(data), colnames(existingData), check.attributes = FALSE)) {
+        stop("Table columns do no match previously seen columns. Columns in ", 
+             file, 
+             ":\n", 
+             paste(colnames(data), collapse = ", "), 
+             "\nPrevious columns:\n",
+             paste(colnames(existingData), collapse = ", "))
+      }
       data <- rbind(existingData, data)
     }
     assign(camelCaseName, data, envir = .GlobalEnv)
@@ -25,6 +33,7 @@ if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {
   }
   
   for (i in 1:length(zipFiles)) {
+    writeLines(paste("Processing", zipFiles[i]))
     tempFolder <- tempfile()
     dir.create(tempFolder)
     unzip(zipFiles[i], exdir = tempFolder)

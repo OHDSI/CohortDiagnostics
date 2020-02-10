@@ -139,10 +139,9 @@ comparison <- compareCohortCharacteristics(chars1, chars2)
 
 
 # Launch Diagnostics Explorer app ----------------------------------------------
-launchDiagnosticsExplorer("C:/temp/exampleStudy")
-
-
 preMergeDiagnosticsFiles("C:/temp/exampleStudy")
+
+launchDiagnosticsExplorer("C:/temp/exampleStudy")
 
 
 # Launch Cohort Explorer app ---------------------------------------------------
