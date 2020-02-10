@@ -16,7 +16,6 @@ runFeasibility(
   databaseDescription = "Unknown",
   createCohorts = TRUE,
   runDiagnostics = TRUE,
-  exportDiagnostics = TRUE,
   minCellCount = 5
 )
 }
@@ -56,10 +55,10 @@ Synthetic Public Use Files (SynPUFs)').}
 
 \item{runDiagnostics}{Run the cohort diagnostics?}
 
-\item{exportDiagnostics}{Export the cohort diagnostics to the zip file?}
-
 \item{minCellCount}{The minimum number of subjects contributing to a count before it can be included 
 in packaged results.}
+
+\item{exportDiagnostics}{Export the cohort diagnostics to the zip file?}
 }
 \description{
 Execute the feasibility study

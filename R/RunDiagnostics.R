@@ -358,6 +358,7 @@ runCohortDiagnostics <- function(packageName,
       data$sd[data$mean < 0] <- NA
       data$cohortEntries <- NULL
       data$mean <- round(data$mean, 3)
+      data$sd <- round(data$sd, 3)
     }
     writeToCsv(data, file.path(exportFolder, "covariate_value.csv"))
   }

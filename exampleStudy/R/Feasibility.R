@@ -59,8 +59,7 @@ runFeasibility <- function(connectionDetails,
                            databaseDescription = "Unknown",
                            createCohorts = TRUE,
                            runDiagnostics = TRUE,
-                           exportDiagnostics = TRUE,
-                           minCellCount= 5) {
+                           minCellCount = 5) {
   if (!file.exists(outputFolder))
     dir.create(outputFolder, recursive = TRUE)
   if (!is.null(getOption("fftempdir")) && !file.exists(getOption("fftempdir"))) {
@@ -95,6 +94,7 @@ runFeasibility <- function(connectionDetails,
                                             exportFolder = file.path(outputFolder, "feasibilityExport"),
                                             databaseId = databaseId,
                                             databaseName = databaseName,
-                                            databaseDescription = databaseDescription)
+                                            databaseDescription = databaseDescription,
+                                            minCellCount = minCellCount)
   }
 }
