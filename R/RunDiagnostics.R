@@ -153,56 +153,16 @@ runCohortDiagnostics <- function(packageName,
     writeToCsv(stats, file.path(exportFolder, "inclusion_rule_stats.csv"))
   }
   
-  if (runIncludedSourceConcepts) {
-    ParallelLogger::logInfo("Fetching included source concepts")
-    runIncludedSourceConcepts <- function(row) {
-      ParallelLogger::logInfo("- Fetching included source concepts for cohort ", row$cohortName)
-      data <- findCohortIncludedSourceConcepts(connection = connection,
-                                               cdmDatabaseSchema = cdmDatabaseSchema,
-                                               oracleTempSchema = oracleTempSchema,
-                                               cohortJson = row$json,
-                                               cohortSql = row$sql,
-                                               byMonth = FALSE,
-                                               useSourceValues = FALSE)
-      if (nrow(data) > 0) {
-        data$cohortId <- row$cohortId
-      }
-      return(data)
-    }
-    data <- lapply(split(cohorts, cohorts$cohortId), runIncludedSourceConcepts)
-    data <- do.call(rbind, data)
-    if (nrow(data) > 0) {
-      data$databaseId <- databaseId
-      data <- enforceMinCellValue(data, "conceptSubjects", minCellCount)
-    }
-    writeToCsv(data, file.path(exportFolder, "included_source_concept.csv"))
-  }
-  
-  if (runOrphanConcepts) {
-    ParallelLogger::logInfo("Finding orphan concepts")
-    createConceptCountsTable(connection = connection,
+  if (runIncludedSourceConcepts || runOrphanConcepts) {
+    runConceptSetDiagnostics(connection = connection,
+                             oracleTempSchema = oracleTempSchema,
                              cdmDatabaseSchema = cdmDatabaseSchema,
-                             conceptCountsDatabaseSchema = cohortDatabaseSchema)
-    
-    runOrphanConcepts <- function(row) {
-      ParallelLogger::logInfo("- Finding orphan concepts for cohort ", row$cohortName)
-      data <- findCohortOrphanConcepts(connection = connection,
-                                       cdmDatabaseSchema = cdmDatabaseSchema,
-                                       oracleTempSchema = oracleTempSchema,
-                                       conceptCountsDatabaseSchema = cohortDatabaseSchema,
-                                       cohortJson = row$json)
-      if (nrow(data) > 0) {
-        data$cohortId <- row$cohortId
-      }
-      return(data)
-    }
-    data <- lapply(split(cohorts, cohorts$cohortId), runOrphanConcepts)
-    data <- do.call(rbind, data)
-    if (nrow(data) > 0) {
-      data$databaseId <- databaseId
-      data <- enforceMinCellValue(data, "conceptCount", minCellCount)
-    }
-    writeToCsv(data, file.path(exportFolder, "orphan_concept.csv"))
+                             cohortDatabaseSchema = cohortDatabaseSchema,
+                             cohorts = cohorts,
+                             runIncludedSourceConcepts = runIncludedSourceConcepts,
+                             runOrphanConcepts = runOrphanConcepts,
+                             exportFolder = exportFolder,
+                             minCellCount = minCellCount)
   }
   
   if (runTimeDistributions) {
@@ -408,4 +368,144 @@ enforceMinCellValue <- function(data, fieldName, minValues, silent = FALSE) {
     data[toCensor, fieldName] <- -minValues[toCensor]
   }
   return(data)
+}
+
+runConceptSetDiagnostics <- function(connection, 
+                                     oracleTempSchema, 
+                                     cdmDatabaseSchema,
+                                     cohortDatabaseSchema,
+                                     cohorts, 
+                                     runIncludedSourceConcepts, 
+                                     runOrphanConcepts,
+                                     exportFolder,
+                                     minCellCount) {
+  # Find all unique concept sets:
+  getConceptSetDetails <- function(conceptSet) {
+    return(tibble::tibble(conceptSetId = conceptSet$id,
+                          conceptSetName = conceptSet$name,
+                          expression = RJSONIO::toJSON(conceptSet$expression[[1]])))
+  }
+  
+  
+  getConceptSetsFromCohortDef <- function(cohort) {
+    cohortDefinition <- RJSONIO::fromJSON(cohort$json)
+    conceptSets <- lapply(cohortDefinition$ConceptSets, getConceptSetDetails)
+    conceptSets <- do.call(rbind, conceptSets)
+    sqlParts <- SqlRender::splitSql( gsub("with primary_events.*", "", cohort$sql))
+    sqlParts <- sqlParts[-1]
+    conceptSetIds <- as.numeric(gsub("^.*SELECT ([0-9]+) as codeset_id.*$", "\\1", sqlParts, ignore.case = TRUE))
+    if (any(!(conceptSetIds %in% conceptSets$conceptSetId)) ||
+        any(!(conceptSets$conceptSetId %in% conceptSetIds))) {
+      stop("Mismatch in concept set IDs between SQL and JSON for cohort ", cohort$cohortFullName)
+    }
+    conceptSets <- merge(conceptSets, 
+                         tibble::tibble(conceptSetId = conceptSetIds,
+                                        sql = sqlParts))
+    conceptSets$cohortId <- cohort$cohortId
+    return(conceptSets)
+  }
+  conceptSets <- lapply(split(cohorts, 1:nrow(cohorts)), getConceptSetsFromCohortDef)
+  conceptSets <- do.call(rbind, conceptSets)
+  uniqueConceptSets <- unique(conceptSets$expression)
+  uniqueConceptSets <- tibble::tibble(expression = uniqueConceptSets,
+                                  uniqueConceptSetId = 1:length(uniqueConceptSets))
+  conceptSets <- merge(conceptSets, uniqueConceptSets)
+  uniqueConceptSets <- conceptSets[!duplicated(conceptSets$uniqueConceptSetId), ]
+  
+  if (runIncludedSourceConcepts) {
+    ParallelLogger::logInfo("Fetching included source concepts")
+    start <- Sys.time()
+    ParallelLogger::logInfo("Instantiating concept sets")
+    sql <- gsub("with primary_events.*", "", cohorts$sql[1])
+    createTempTableSql <- SqlRender::splitSql(sql)[1]
+    sql <- sapply(split(uniqueConceptSets, 1:nrow(uniqueConceptSets)), 
+                  function(x) {
+                    sub("SELECT [0-9]+ as codeset_id", sprintf("SELECT %s as codeset_id", x$uniqueConceptSetId), x$sql)
+                  })
+    sql <- paste(c(createTempTableSql, sql), collapse = ";\n")
+    sql <- SqlRender::render(sql, vocabulary_database_schema = cdmDatabaseSchema)
+    sql <- SqlRender::translate(sql,
+                                targetDialect = connection@dbms,
+                                oracleTempSchema = oracleTempSchema)
+    DatabaseConnector::executeSql(connection, sql)
+    
+    ParallelLogger::logInfo("Counting codes in concept sets")
+    sql <- SqlRender::loadRenderTranslateSql("CohortSourceCodes.sql",
+                                             packageName = "CohortDiagnostics",
+                                             dbms = connection@dbms,
+                                             oracleTempSchema = oracleTempSchema,
+                                             cdm_database_schema = cdmDatabaseSchema,
+                                             by_month = FALSE,
+                                             use_source_values = FALSE)
+    counts <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
+    colnames(counts)[colnames(counts) == "conceptSetId"] <- "uniqueConceptSetId"
+    counts <- merge(conceptSets[, c("cohortId", "conceptSetId", "conceptSetName", "uniqueConceptSetId")], counts)
+    counts$uniqueConceptSetId <- NULL
+    counts <- counts[order(counts$cohortId,
+                           counts$conceptSetId,
+                           counts$conceptId,
+                           counts$sourceConceptName,
+                           counts$sourceVocabularyId), ]
+    if (nrow(counts) > 0) {
+      counts$databaseId <- databaseId
+      counts <- enforceMinCellValue(counts, "conceptSubjects", minCellCount)
+    }
+    writeToCsv(data, file.path(exportFolder, "included_source_concept.csv"))
+    
+    
+    sql <- "TRUNCATE TABLE #Codesets; DROP TABLE #Codesets;"
+    DatabaseConnector::renderTranslateExecuteSql(connection,
+                                                 sql,
+                                                 progressBar = FALSE,
+                                                 reportOverallTime = FALSE)
+    delta <- Sys.time() - start
+    ParallelLogger::logInfo(paste("Finding source codes took",
+                                  signif(delta, 3),
+                                  attr(delta, "units")))
+  }
+  
+  if (runOrphanConcepts) {
+    ParallelLogger::logInfo("Finding orphan concepts")
+    start <- Sys.time()
+    createConceptCountsTable(connection = connection,
+                             cdmDatabaseSchema = cdmDatabaseSchema,
+                             conceptCountsDatabaseSchema = cohortDatabaseSchema)
+    
+    getConceptIdFromItem <- function(item) {
+      if (item$isExcluded) {
+        return(NULL)
+      } else {
+        return(item$concept$CONCEPT_ID)
+      }
+    }
+    
+    runOrphanConcepts <- function(conceptSet) {
+      ParallelLogger::logInfo("- Finding orphan concepts for concept set ", conceptSet$conceptSetName)
+      conceptIds <- lapply(RJSONIO::fromJSON(conceptSet$expression), getConceptIdFromItem)
+      conceptIds <- do.call(c, conceptIds)
+      orphanConcepts <- findOrphanConcepts(connection = connection,
+                                           cdmDatabaseSchema = cdmDatabaseSchema,
+                                           oracleTempSchema = oracleTempSchema,
+                                           conceptIds = conceptIds,
+                                           conceptCountsDatabaseSchema = cohortDatabaseSchema)
+      if (nrow(orphanConcepts) > 0) {
+        orphanConcepts$conceptSetId <- conceptSet$uniqueConceptSetId
+      }
+      return(orphanConcepts)
+    }
+    
+    data <- lapply(split(uniqueConceptSets, uniqueConceptSets$uniqueConceptSetId), runOrphanConcepts)
+    data <- do.call(rbind, data)
+    if (nrow(data) > 0) {
+      data <- merge(conceptSets[, c("cohortId", "conceptSetId", "conceptSetName", "uniqueConceptSetId")], data)
+      data$uniqueConceptSetId <- NULL
+      data$databaseId <- databaseId
+      data <- enforceMinCellValue(data, "conceptCount", minCellCount)
+    }
+    writeToCsv(data, file.path(exportFolder, "orphan_concept.csv"))
+    delta <- Sys.time() - start
+    ParallelLogger::logInfo(paste("Finding orphan concepts took",
+                                  signif(delta, 3),
+                                  attr(delta, "units")))
+  }
 }

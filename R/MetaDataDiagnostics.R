@@ -79,7 +79,7 @@ findOrphanConcepts <- function(connectionDetails = NULL,
                                                                snakeCaseToCamelCase = TRUE,
                                                                cdm_database_schema = cdmDatabaseSchema)
 
-  ParallelLogger::logTrace("- Dropping orhpan temp tables")
+  ParallelLogger::logTrace("- Dropping orphan temp tables")
   sql <- SqlRender::loadRenderTranslateSql("DropOrphanConceptTempTables.sql",
                                            packageName = "CohortDiagnostics",
                                            dbms = connection@dbms,
@@ -157,7 +157,6 @@ findCohortOrphanConcepts <- function(connectionDetails = NULL,
     } else {
       return(item$concept$CONCEPT_ID)
     }
-
   }
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
