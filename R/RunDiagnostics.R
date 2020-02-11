@@ -218,14 +218,21 @@ runCohortDiagnostics <- function(packageName,
   
   if (runIncidenceProportion) {
     ParallelLogger::logInfo("Computing incidence proportion")
-    
     runIncidenceProportion <- function(row) {
       ParallelLogger::logInfo("- Computing incidence proportion for cohort ", row$cohortName)
+      cohortExpression <- RJSONIO::fromJSON(row$json)
+      minObservationTime <- tryCatch({
+        cohortExpression$PrimaryCriteria$ObservationWindow$PriorDays
+      }, error = function(e) {
+        0
+      })
       data <- getIncidenceProportion(connection = connection,
                                      cdmDatabaseSchema = cdmDatabaseSchema,
                                      cohortDatabaseSchema = cohortDatabaseSchema,
                                      cohortTable = cohortTable,
-                                     cohortId = row$cohortId)
+                                     cohortId = row$cohortId,
+                                     firstOccurrenceOnly = TRUE,
+                                     minObservationTime = minObservationTime)
       if (nrow(data) > 0) {
         data$cohortId <- row$cohortId
       }

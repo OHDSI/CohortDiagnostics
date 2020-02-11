@@ -2,20 +2,30 @@ library(shiny)
 library(shinydashboard)
 library(DT)
 
+addInfo <- function(item, infoId) {
+  infoTag <- tags$small(class = "badge pull-right action-button",
+                        style = "padding: 1px 6px 2px 6px; background-color: steelblue;",
+                        type = "button", 
+                        id = infoId,
+                        "i")
+  item$children[[1]]$children <- append(item$children[[1]]$children, list(infoTag))
+  return(item)
+}
+
 dashboardPage(
-  dashboardHeader(title = "Cohort Diagnostics Explorer"),
+  dashboardHeader(title = "Cohort Diagnostics"),
   dashboardSidebar(
     sidebarMenu(id = "tabs",
-      if (exists("cohortCount")) menuItem("Cohort Counts", tabName = "cohortCounts"),
-      if (exists("incidenceProportion")) menuItem("Incidence Proportion", tabName = "incidenceProportion"),
-      if (exists("timeDistribution")) menuItem("Time Distributions", tabName = "timeDistribution"),
-      if (exists("includedSourceConcept")) menuItem("Included (Source) Concepts", tabName = "includedConcepts"),
-      if (exists("orphanConcept")) menuItem("Orphan (Source) Concepts", tabName = "orphanConcepts"),
-      if (exists("inclusionRuleStats")) menuItem("Inclusion Rule Statistics", tabName = "inclusionRuleStats"),
-      if (exists("indexEventBreakdown")) menuItem("Index Event Breakdown", tabName = "indexEventBreakdown"),
-      if (exists("covariateValue")) menuItem("Cohort Characterization", tabName = "cohortCharacterization"),
-      if (exists("cohortOverlap")) menuItem("Cohort Overlap", tabName = "cohortOverlap"),
-      if (exists("covariateValue")) menuItem("Compare Cohort Characterization", tabName = "compareCohortCharacterization"),
+      if (exists("cohortCount")) addInfo(menuItem("Cohort Counts", tabName = "cohortCounts"), "cohortCountsInfo"),
+      if (exists("incidenceProportion")) addInfo(menuItem("Incidence Proportion", tabName = "incidenceProportion"), "incidenceProportionInfo"),
+      if (exists("timeDistribution")) addInfo(menuItem("Time Distributions", tabName = "timeDistribution"), "timeDistributionInfo"),
+      if (exists("includedSourceConcept")) addInfo(menuItem("Included (Source) Concepts", tabName = "includedConcepts"), "includedConceptsInfo"),
+      if (exists("orphanConcept")) addInfo(menuItem("Orphan (Source) Concepts", tabName = "orphanConcepts"), "orphanConceptsInfo"),
+      if (exists("inclusionRuleStats")) addInfo(menuItem("Inclusion Rule Statistics", tabName = "inclusionRuleStats"), "inclusionRuleStatsInfo"),
+      if (exists("indexEventBreakdown")) addInfo(menuItem("Index Event Breakdown", tabName = "indexEventBreakdown"), "indexEventBreakdownInfo"),
+      if (exists("covariateValue")) addInfo(menuItem("Cohort Characterization", tabName = "cohortCharacterization"), "cohortCharacterizationInfo"),
+      if (exists("cohortOverlap")) addInfo(menuItem("Cohort Overlap", tabName = "cohortOverlap"), "cohortOverlapInfo"),
+      if (exists("covariateValue")) addInfo(menuItem("Compare Cohort Char.", tabName = "compareCohortCharacterization"), "compareCohortCharacterizationInfo"),
       conditionalPanel(condition = "input.tabs!='incidenceProportion' & input.tabs!='timeDistribution' & input.tabs!='cohortCharacterization' & input.tabs!='cohortCounts'",
                        selectInput("database", "Database", database$databaseId, selectize = FALSE)
       ),
