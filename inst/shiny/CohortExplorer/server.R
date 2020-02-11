@@ -241,7 +241,7 @@ shinyServer(function(input, output, session) {
                                 l = 1,
                                 r = 1,
                                 b = 1,
-                                t = 1,
+                                t = 25,
                                 pad = 1
                               ))
       plot
