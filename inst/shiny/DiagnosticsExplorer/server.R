@@ -139,7 +139,7 @@ shinyServer(function(input, output, session) {
     if (nrow(data) == 0) {
       return(NULL)
     }
-    plot <- CohortDiagnostics::plotIncidenceProportion(data)
+    plot <- plotIncidenceProportion(data)
     return(plot)
   }, res = 100)
   
@@ -504,7 +504,7 @@ shinyServer(function(input, output, session) {
     covs2 <- covariateValue[covariateValue$cohortId == comparatorCohortId() & covariateValue$databaseId == input$database, ]
     covs1 <- merge(covs1, covariate)
     covs2 <- merge(covs2, covariate)
-    balance <- CohortDiagnostics::compareCohortCharacteristics(covs1, covs2)
+    balance <- compareCohortCharacteristics(covs1, covs2)
     
     if (input$charCompareType == "Pretty") {
       balance <- merge(balance, covariate[, c("covariateId", "covariateAnalysisId")])

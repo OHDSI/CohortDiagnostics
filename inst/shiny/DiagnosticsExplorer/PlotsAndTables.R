@@ -32,7 +32,7 @@ prepareTable1 <- function(covariates,
             covariatesSubset <- covariatesSubset[order(covariatesSubset$covariateId), ]
           } else {
             covariatesSubset <- merge(covariatesSubset, data.frame(covariateId = covariateIds,
-                                                             rn = 1:length(covariateIds)))
+                                                                   rn = 1:length(covariateIds)))
             covariatesSubset <- covariatesSubset[order(covariatesSubset$rn, covariatesSubset$covariateId), ]
           }
           covariatesSubset$covariateName <- fixCase(gsub("^.*: ", "", covariatesSubset$covariateName))
@@ -74,7 +74,7 @@ prepareTable1Comp <- function(balance,
     }
     return(label)
   }
-
+  
   resultsTable <- data.frame()
   for (i in 1:nrow(specifications)) {
     if (specifications$analysisId[i] == "") {
@@ -127,4 +127,63 @@ prepareTable1Comp <- function(balance,
   }
   colnames(resultsTable) <- c("Characteristic", "Proportion T", "Proportion C", "StdDiff")
   return(resultsTable)
+}
+
+compareCohortCharacteristics <- function(characteristics1, characteristics2) {
+  
+  m <- merge(data.frame(covariateId = characteristics1$covariateId,
+                        mean1 = characteristics1$mean,
+                        sd1 = characteristics1$sd),
+             data.frame(covariateId = characteristics2$covariateId,
+                        mean2 = characteristics2$mean,
+                        sd2 = characteristics2$sd),
+             all = TRUE)
+  m$sd <- sqrt(m$sd1^2 + m$sd2^2)
+  m$stdDiff <- (m$mean2 - m$mean1)/m$sd
+  
+  ref <- unique(rbind(characteristics1[,
+                                       c("covariateId", "covariateName")],
+                      characteristics2[,
+                                       c("covariateId", "covariateName")]))
+  m <- merge(ref, m)
+  m <- m[order(-abs(m$stdDiff)), ]
+  return(m)
+}
+
+plotIncidenceProportion <- function(incidenceProportion,
+                                    restrictToFullAgeData = FALSE,
+                                    minBackgroundSubjects = 1000, 
+                                    fileName = NULL) {
+  data <- incidenceProportion[!is.na(incidenceProportion$gender) & !is.na(incidenceProportion$ageGroup) &
+                                !is.na(incidenceProportion$indexYear), ]
+  data <- data[data$backgroundSubjects > minBackgroundSubjects, ]
+  data$gender <- as.factor(data$gender)
+  data$indexYear <- as.numeric(as.character(data$indexYear))
+  if (restrictToFullAgeData) {
+    data <- useFullData(data)
+  }
+  
+  # Sort ageGroup numerically, so 100-109 > 20-29:
+  ageGroups <- unique(data$ageGroup)
+  ageGroups <- ageGroups[order(as.numeric(gsub("-.*", "", ageGroups)))]
+  data$ageGroup <- factor(data$ageGroup, levels = ageGroups)
+  
+  plot <- ggplot2::ggplot(data = data, ggplot2::aes(x = indexYear,
+                                                    y = incidenceProportion,
+                                                    group = gender,
+                                                    color = gender)) +
+    ggplot2::geom_line(size = 1.25, alpha = 0.6) +
+    ggplot2::xlab("Year") +
+    ggplot2::ylab("Incidence proportion (/1000 persons)") +
+    ggplot2::theme(legend.position = "top",
+                   legend.title = ggplot2::element_blank(),
+                   axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5))
+  if (!is.null(incidenceProportion$databaseId) && length(unique(incidenceProportion$databaseId)) > 1) {
+    plot <- plot + ggplot2::facet_grid(databaseId~ageGroup, scales = "free_y") 
+  } else {
+    plot <- plot + ggplot2::facet_grid(~ageGroup) 
+  }
+  if (!is.null(fileName))
+    ggplot2::ggsave(fileName, plot, width = 5, height = 3.5, dpi = 400)
+  return(plot)
 }
