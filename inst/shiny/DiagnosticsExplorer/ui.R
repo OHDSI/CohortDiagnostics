@@ -51,6 +51,7 @@ dashboardPage(
       tabItem(tabName = "incidenceProportion",
               box(
                 title = "Incidence Proportion", width = NULL, status = "primary",
+                checkboxInput("completePanelsOnly", "Complete panels only", value = TRUE),
                 plotOutput("incidenceProportionPlot", height = 800)
               )
       ),

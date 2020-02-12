@@ -139,7 +139,7 @@ shinyServer(function(input, output, session) {
     if (nrow(data) == 0) {
       return(NULL)
     }
-    plot <- plotIncidenceProportion(data)
+    plot <- plotIncidenceProportion(data, restrictToFullAgeData = input$completePanelsOnly)
     return(plot)
   }, res = 100)
   

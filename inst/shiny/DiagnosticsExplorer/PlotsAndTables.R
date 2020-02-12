@@ -173,6 +173,7 @@ plotIncidenceProportion <- function(incidenceProportion,
                                                     group = gender,
                                                     color = gender)) +
     ggplot2::geom_line(size = 1.25, alpha = 0.6) +
+    ggplot2::geom_point(size = 1.25, alpha = 0.6) +
     ggplot2::xlab("Year") +
     ggplot2::ylab("Incidence proportion (/1000 persons)") +
     ggplot2::theme(legend.position = "top",
@@ -186,4 +187,25 @@ plotIncidenceProportion <- function(incidenceProportion,
   if (!is.null(fileName))
     ggplot2::ggsave(fileName, plot, width = 5, height = 3.5, dpi = 400)
   return(plot)
+}
+
+useFullData <- function(df) {
+  
+  restrictDataforDb <- function(df) {
+    yearList <- list()
+    for (year in unique(df$indexYear)) {
+      yearList[[length(yearList) + 1]] <- unique(df$ageGroup[df$indexYear == year])
+    }
+    ageGroups <- Reduce(intersect, yearList)
+    df <- df[df$ageGroup %in% ageGroups, ]
+    return(df)
+  }
+  
+  if (is.null(df$databaseId)) {
+      return(restrictDataforDb(df))
+  } else {
+      result <- lapply(split(df, df$databaseId), restrictDataforDb)
+      result <- do.call(rbind, result)
+      return(result)
+  }
 }
