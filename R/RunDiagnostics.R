@@ -44,7 +44,7 @@
 #' @param runOrphanConcepts           Generate and export potential orphan concepts?
 #' @param runTimeDistributions        Generate and export cohort time distributions?
 #' @param runBreakdownIndexEvents     Generate and export the breakdown of index events?
-#' @param runIncidenceProportion      Generate and export the cohort incidence proportions?
+#' @param runIncidenceRate            Generate and export the cohort incidence  rates?
 #' @param runCohortOverlap            Generate and export the cohort overlap?
 #' @param runCohortCharacterization   Generate and export the cohort characterization?
 #' @param minCellCount                The minimum cell count for fields contains person counts or fractions.
@@ -69,7 +69,7 @@ runCohortDiagnostics <- function(packageName,
                                  runOrphanConcepts = TRUE,
                                  runTimeDistributions = TRUE,
                                  runBreakdownIndexEvents = TRUE,
-                                 runIncidenceProportion = TRUE,
+                                 runIncidenceRate = TRUE,
                                  runCohortOverlap = TRUE,
                                  runCohortCharacterization = TRUE,
                                  minCellCount = 5) {
@@ -216,38 +216,36 @@ runCohortDiagnostics <- function(packageName,
     writeToCsv(data, file.path(exportFolder, "index_event_breakdown.csv"))
   }
   
-  if (runIncidenceProportion) {
-    ParallelLogger::logInfo("Computing incidence proportion")
-    runIncidenceProportion <- function(row) {
-      ParallelLogger::logInfo("- Computing incidence proportion for cohort ", row$cohortName)
+  if (runIncidenceRate) {
+    ParallelLogger::logInfo("Computing incidence rate")
+    runIncidenceRate <- function(row) {
+      ParallelLogger::logInfo("- Computing incidence rate for cohort ", row$cohortName)
       cohortExpression <- RJSONIO::fromJSON(row$json)
-      minObservationTime <- tryCatch({
+      washoutPeriod <- tryCatch({
         cohortExpression$PrimaryCriteria$ObservationWindow$PriorDays
       }, error = function(e) {
         0
       })
-      data <- getIncidenceProportion(connection = connection,
-                                     cdmDatabaseSchema = cdmDatabaseSchema,
-                                     cohortDatabaseSchema = cohortDatabaseSchema,
-                                     cohortTable = cohortTable,
-                                     cohortId = row$cohortId,
-                                     firstOccurrenceOnly = TRUE,
-                                     minObservationTime = minObservationTime)
+      data <- getIncidenceRate(connection = connection,
+                               cdmDatabaseSchema = cdmDatabaseSchema,
+                               cohortDatabaseSchema = cohortDatabaseSchema,
+                               cohortTable = cohortTable,
+                               cohortId = row$cohortId,
+                               firstOccurrenceOnly = TRUE,
+                               washoutPeriod = washoutPeriod)
       if (nrow(data) > 0) {
         data$cohortId <- row$cohortId
       }
       return(data)
     }
-    data <- lapply(split(cohorts, cohorts$cohortId), runIncidenceProportion)
+    data <- lapply(split(cohorts, cohorts$cohortId), runIncidenceRate)
     data <- do.call(rbind, data)
     if (nrow(data) > 0) {
       data$databaseId <- databaseId
-      data <- enforceMinCellValue(data, "cohortSubjects", minCellCount)
-      data <- enforceMinCellValue(data, "backgroundSubjects", minCellCount)
-      data <- enforceMinCellValue(data, "incidenceProportion", 1000*minCellCount/data$backgroundSubjects)
-      
+      data <- enforceMinCellValue(data, "cohortCount", minCellCount)
+      data <- enforceMinCellValue(data, "incidenceRate", 1000*minCellCount/data$personYears)
     }
-    writeToCsv(data, file.path(exportFolder, "incidence_proportion.csv"))
+    writeToCsv(data, file.path(exportFolder, "incidence_rate.csv"))
   }
   
   if (runCohortOverlap) {

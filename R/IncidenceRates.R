@@ -66,7 +66,7 @@ getIncidenceRate <- function(connectionDetails = NULL,
                                  cohortId = cohortId)) {
     warning("Cohort with ID ", cohortId, " appears to be empty. Was it instantiated?")
     delta <- Sys.time() - start
-    ParallelLogger::logInfo(paste("Getting incidence proportion data took",
+    ParallelLogger::logInfo(paste("Computing incidence rates took",
                                   signif(delta, 3),
                                   attr(delta, "units")))
     return(data.frame())
@@ -135,7 +135,7 @@ getIncidenceRate <- function(connectionDetails = NULL,
                              irYearAgeGender)
   result$incidenceRate <- 1000 * result$cohortCount/result$personYears
   delta <- Sys.time() - start
-  ParallelLogger::logInfo(paste("Computing incidence rates data took",
+  ParallelLogger::logInfo(paste("Computing incidence rates took",
                                 signif(delta, 3),
                                 attr(delta, "units")))
   return(result)
@@ -186,9 +186,9 @@ plotincidenceRate <- function(incidenceRate,
                               stratifyByGender = TRUE,
                               stratifyByCalendarYear = TRUE,
                               fileName = NULL) {
-  stratifyByAge = TRUE
-  stratifyByGender = FALSE
-  stratifyByCalendarYear = TRUE
+  # stratifyByAge = TRUE
+  # stratifyByGender = FALSE
+  # stratifyByCalendarYear = TRUE
   
   idx <- rep(TRUE, nrow(incidenceRate))
   if (stratifyByAge) {
@@ -225,6 +225,7 @@ plotincidenceRate <- function(incidenceRate,
   if (stratifyByCalendarYear) {
     aesthetics$x <- "calendarYear"
     xLabel <- "Calender year"
+    showX <- TRUE
     if (stratifyByGender) {
       aesthetics$group <- "gender"
       aesthetics$color <- "gender"
@@ -236,19 +237,21 @@ plotincidenceRate <- function(incidenceRate,
       aesthetics$x <- "gender"
       aesthetics$color <- "gender"
       aesthetics$fill <- "gender"
+      showX <- TRUE
     } else {
       aesthetics$x <- 0
+      showX <- FALSE
     }
     plotType <- "bar"
     
   }
-
+  
   plot <- ggplot2::ggplot(data = data, do.call(ggplot2::aes_string, aesthetics)) +
-    ggplot2::xlab("Year") +
+    ggplot2::xlab(xLabel) +
     ggplot2::ylab("Incidence Rate (/1000 person years)") +
     ggplot2::theme(legend.position = "top",
                    legend.title = ggplot2::element_blank(),
-                   axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5))
+                   axis.text.x = if (showX) ggplot2::element_text(angle = 90, vjust = 0.5) else ggplot2::element_blank() )
   
   if (plotType == "line") {
     plot <- plot + ggplot2::geom_line(size = 1.25, alpha = 0.6) +
@@ -272,25 +275,3 @@ plotincidenceRate <- function(incidenceRate,
     ggplot2::ggsave(fileName, plot, width = 5, height = 3.5, dpi = 400)
   return(plot)
 }
-
-useFullData <- function(df) {
-  
-  restrictDataforDb <- function(df) {
-    yearList <- list()
-    for (year in unique(df$indexYear)) {
-      yearList[[length(yearList) + 1]] <- unique(df$ageGroup[df$indexYear == year])
-    }
-    ageGroups <- Reduce(intersect, yearList)
-    df <- df[df$ageGroup %in% ageGroups, ]
-    return(df)
-  }
-  
-  if (is.null(df$databaseId)) {
-    return(restrictDataforDb(df))
-  } else {
-    result <- lapply(split(df, df$databaseId), restrictDataforDb)
-    result <- do.call(rbind, result)
-    return(result)
-  }
-}
-

@@ -24,7 +24,7 @@ runCohortDiagnostics(
   runOrphanConcepts = TRUE,
   runTimeDistributions = TRUE,
   runBreakdownIndexEvents = TRUE,
-  runIncidenceProportion = TRUE,
+  runIncidenceRate = TRUE,
   runCohortOverlap = TRUE,
   runCohortCharacterization = TRUE,
   minCellCount = 5
@@ -84,7 +84,7 @@ does not exist it will be created.}
 
 \item{runBreakdownIndexEvents}{Generate and export the breakdown of index events?}
 
-\item{runIncidenceProportion}{Generate and export the cohort incidence proportions?}
+\item{runIncidenceRate}{Generate and export the cohort incidence  rates?}
 
 \item{runCohortOverlap}{Generate and export the cohort overlap?}
 
