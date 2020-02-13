@@ -90,9 +90,10 @@ breakdown <- breakDownIndexEvents(connectionDetails = connectionDetails,
                                   cohortTable = cohortTable,
                                   cohortId = cohortId)
 
-incidenceProportion <- getIncidenceProportion(connectionDetails = connectionDetails,
+incidenceProportion <- getIncidenceRate(connectionDetails = connectionDetails,
                                               cohortDatabaseSchema = cohortDatabaseSchema,
                                               cohortTable = cohortTable,
+                                              oracleTempSchema = oracleTempSchema,
                                               cdmDatabaseSchema = cdmDatabaseSchema,
                                               firstOccurrenceOnly = TRUE,
                                               minObservationTime = 365,
