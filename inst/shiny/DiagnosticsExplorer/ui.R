@@ -17,7 +17,7 @@ dashboardPage(
   dashboardSidebar(
     sidebarMenu(id = "tabs",
       if (exists("cohortCount")) addInfo(menuItem("Cohort Counts", tabName = "cohortCounts"), "cohortCountsInfo"),
-      if (exists("incidenceProportion")) addInfo(menuItem("Incidence Proportion", tabName = "incidenceProportion"), "incidenceProportionInfo"),
+      if (exists("incidenceRate")) addInfo(menuItem("Incidence Rate", tabName = "incidenceRate"), "incidenceRateInfo"),
       if (exists("timeDistribution")) addInfo(menuItem("Time Distributions", tabName = "timeDistribution"), "timeDistributionInfo"),
       if (exists("includedSourceConcept")) addInfo(menuItem("Included (Source) Concepts", tabName = "includedConcepts"), "includedConceptsInfo"),
       if (exists("orphanConcept")) addInfo(menuItem("Orphan (Source) Concepts", tabName = "orphanConcepts"), "orphanConceptsInfo"),
@@ -26,10 +26,10 @@ dashboardPage(
       if (exists("covariateValue")) addInfo(menuItem("Cohort Characterization", tabName = "cohortCharacterization"), "cohortCharacterizationInfo"),
       if (exists("cohortOverlap")) addInfo(menuItem("Cohort Overlap", tabName = "cohortOverlap"), "cohortOverlapInfo"),
       if (exists("covariateValue")) addInfo(menuItem("Compare Cohort Char.", tabName = "compareCohortCharacterization"), "compareCohortCharacterizationInfo"),
-      conditionalPanel(condition = "input.tabs!='incidenceProportion' & input.tabs!='timeDistribution' & input.tabs!='cohortCharacterization' & input.tabs!='cohortCounts'",
+      conditionalPanel(condition = "input.tabs!='incidenceRate' & input.tabs!='timeDistribution' & input.tabs!='cohortCharacterization' & input.tabs!='cohortCounts'",
                        selectInput("database", "Database", database$databaseId, selectize = FALSE)
       ),
-      conditionalPanel(condition = "input.tabs=='incidenceProportion' | input.tabs=='timeDistribution' | input.tabs=='cohortCharacterization' | input.tabs=='cohortCounts'",
+      conditionalPanel(condition = "input.tabs=='incidenceRate' | input.tabs=='timeDistribution' | input.tabs=='cohortCharacterization' | input.tabs=='cohortCounts'",
                        checkboxGroupInput("databases", "Database", database$databaseId, selected = database$databaseId[1])
       ),
       conditionalPanel(condition = "input.tabs!='cohortCounts'",
@@ -48,11 +48,16 @@ dashboardPage(
       tabItem(tabName = "cohortCounts",
               dataTableOutput("cohortCountsTable")
       ),
-      tabItem(tabName = "incidenceProportion",
+      tabItem(tabName = "incidenceRate",
               box(
-                title = "Incidence Proportion", width = NULL, status = "primary",
-                checkboxInput("completePanelsOnly", "Complete panels only", value = TRUE),
-                plotOutput("incidenceProportionPlot", height = 800)
+                title = "Incidence Rate", width = NULL, status = "primary",
+                checkboxGroupInput(inputId = "irStratification", 
+                                   label = "Stratify by", 
+                                   choices = c("Age", "Gender", "Calendar Year"), 
+                                   selected = c("Age", "Gender", "Calendar Year"),
+                                   inline = TRUE),
+                # checkboxInput("completePanelsOnly", "Complete panels only", value = TRUE),
+                plotOutput("incidenceRatePlot", height = 800)
               )
       ),
       tabItem(tabName = "timeDistribution",

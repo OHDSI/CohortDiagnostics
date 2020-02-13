@@ -264,7 +264,7 @@ plotincidenceRate <- function(incidenceRate,
     if (stratifyByAge) {
       plot <- plot + ggplot2::facet_grid(databaseId~ageGroup, scales = "free_y")
     } else {
-      plot <- plot + ggplot2::facet_grid(databaseId~ageGroup, scales = "free_y") 
+      plot <- plot + ggplot2::facet_grid(databaseId~., scales = "free_y") 
     }
   } else {
     if (stratifyByAge) {

@@ -131,15 +131,19 @@ shinyServer(function(input, output, session) {
     return(dataTable)
   })
   
-  output$incidenceProportionPlot <- renderPlot({
-    data <- incidenceProportion[incidenceProportion$cohortId == cohortId() & 
-                                  incidenceProportion$databaseId %in% input$databases, ]
+  output$incidenceRatePlot <- renderPlot({
+    data <- incidenceRate[incidenceRate$cohortId == cohortId() & 
+                            incidenceRate$databaseId %in% input$databases, ]
     
-    data <- data[data$incidenceProportion > 0, ]
+    data <- data[data$incidenceRate > 0, ]
     if (nrow(data) == 0) {
       return(NULL)
     }
-    plot <- plotIncidenceProportion(data, restrictToFullAgeData = input$completePanelsOnly)
+    plot <- plotincidenceRate(incidenceRate = data,
+                              minPersonYears = 1000, 
+                              stratifyByAge = "Age" %in% input$irStratification,
+                              stratifyByGender = "Gender" %in% input$irStratification,
+                              stratifyByCalendarYear = "Calendar Year" %in% input$irStratification)
     return(plot)
   }, res = 100)
   
@@ -586,8 +590,8 @@ shinyServer(function(input, output, session) {
     showInfoBox("Cohort Counts", "html/cohortCounts.html")
   })
   
-  observeEvent(input$incidenceProportionInfo, {
-    showInfoBox("Incidence Proportion", "html/incidenceProportion.html")
+  observeEvent(input$incidenceRateInfo, {
+    showInfoBox("Incidence Rate", "html/incidenceRate.html")
   })
 
   observeEvent(input$timeDistributionInfo, {

@@ -150,62 +150,98 @@ compareCohortCharacteristics <- function(characteristics1, characteristics2) {
   return(m)
 }
 
-plotIncidenceProportion <- function(incidenceProportion,
-                                    restrictToFullAgeData = FALSE,
-                                    minBackgroundSubjects = 1000, 
-                                    fileName = NULL) {
-  data <- incidenceProportion[!is.na(incidenceProportion$gender) & !is.na(incidenceProportion$ageGroup) &
-                                !is.na(incidenceProportion$indexYear), ]
-  data <- data[data$backgroundSubjects > minBackgroundSubjects, ]
-  data$gender <- as.factor(data$gender)
-  data$indexYear <- as.numeric(as.character(data$indexYear))
-  if (restrictToFullAgeData) {
-    data <- useFullData(data)
+plotincidenceRate <- function(incidenceRate,
+                              minPersonYears = 1000, 
+                              stratifyByAge = TRUE,
+                              stratifyByGender = TRUE,
+                              stratifyByCalendarYear = TRUE,
+                              fileName = NULL) {
+  # stratifyByAge = TRUE
+  # stratifyByGender = FALSE
+  # stratifyByCalendarYear = TRUE
+  
+  idx <- rep(TRUE, nrow(incidenceRate))
+  if (stratifyByAge) {
+    idx <- idx & !is.na(incidenceRate$ageGroup)
+  } else {
+    idx <- idx & is.na(incidenceRate$ageGroup)
   }
+  if (stratifyByGender) {
+    idx <- idx & !is.na(incidenceRate$gender)
+  } else {
+    idx <- idx & is.na(incidenceRate$gender)
+  }
+  if (stratifyByCalendarYear) {
+    idx <- idx & !is.na(incidenceRate$calendarYear)
+  } else {
+    idx <- idx & is.na(incidenceRate$calendarYear)
+  }
+  data <- incidenceRate[idx, ]
+  data <- data[data$cohortCount > 0, ]
+  data <- data[data$personYears > minPersonYears, ]
+  data$gender <- as.factor(data$gender)
+  data$calendarYear <- as.numeric(as.character(data$calendarYear))
+  # if (restrictToFullAgeData) {
+  #   data <- useFullData(data)
+  # }
   
   # Sort ageGroup numerically, so 100-109 > 20-29:
   ageGroups <- unique(data$ageGroup)
   ageGroups <- ageGroups[order(as.numeric(gsub("-.*", "", ageGroups)))]
   data$ageGroup <- factor(data$ageGroup, levels = ageGroups)
   
-  plot <- ggplot2::ggplot(data = data, ggplot2::aes(x = indexYear,
-                                                    y = incidenceProportion,
-                                                    group = gender,
-                                                    color = gender)) +
-    ggplot2::geom_line(size = 1.25, alpha = 0.6) +
-    ggplot2::geom_point(size = 1.25, alpha = 0.6) +
-    ggplot2::xlab("Year") +
-    ggplot2::ylab("Incidence proportion (/1000 persons)") +
+  
+  aesthetics <- list(y = "incidenceRate")
+  if (stratifyByCalendarYear) {
+    aesthetics$x <- "calendarYear"
+    xLabel <- "Calender year"
+    showX <- TRUE
+    if (stratifyByGender) {
+      aesthetics$group <- "gender"
+      aesthetics$color <- "gender"
+    }
+    plotType <- "line"
+  } else {
+    xLabel <- ""
+    if (stratifyByGender) {
+      aesthetics$x <- "gender"
+      aesthetics$color <- "gender"
+      aesthetics$fill <- "gender"
+      showX <- TRUE
+    } else {
+      aesthetics$x <- 0
+      showX <- FALSE
+    }
+    plotType <- "bar"
+    
+  }
+  
+  plot <- ggplot2::ggplot(data = data, do.call(ggplot2::aes_string, aesthetics)) +
+    ggplot2::xlab(xLabel) +
+    ggplot2::ylab("Incidence Rate (/1000 person years)") +
     ggplot2::theme(legend.position = "top",
                    legend.title = ggplot2::element_blank(),
-                   axis.text.x = ggplot2::element_text(angle = 90, vjust = 0.5))
-  if (!is.null(incidenceProportion$databaseId) && length(unique(incidenceProportion$databaseId)) > 1) {
-    plot <- plot + ggplot2::facet_grid(databaseId~ageGroup, scales = "free_y") 
+                   axis.text.x = if (showX) ggplot2::element_text(angle = 90, vjust = 0.5) else ggplot2::element_blank() )
+  
+  if (plotType == "line") {
+    plot <- plot + ggplot2::geom_line(size = 1.25, alpha = 0.6) +
+      ggplot2::geom_point(size = 1.25, alpha = 0.6)
   } else {
-    plot <- plot + ggplot2::facet_grid(~ageGroup) 
+    plot <- plot + ggplot2::geom_bar(stat = "identity", alpha = 0.6)
+  }
+  
+  if (!is.null(incidenceRate$databaseId) && length(unique(incidenceRate$databaseId)) > 1) {
+    if (stratifyByAge) {
+      plot <- plot + ggplot2::facet_grid(databaseId~ageGroup, scales = "free_y")
+    } else {
+      plot <- plot + ggplot2::facet_grid(databaseId~., scales = "free_y") 
+    }
+  } else {
+    if (stratifyByAge) {
+      plot <- plot + ggplot2::facet_grid(~ageGroup) 
+    }
   }
   if (!is.null(fileName))
     ggplot2::ggsave(fileName, plot, width = 5, height = 3.5, dpi = 400)
   return(plot)
-}
-
-useFullData <- function(df) {
-  
-  restrictDataforDb <- function(df) {
-    yearList <- list()
-    for (year in unique(df$indexYear)) {
-      yearList[[length(yearList) + 1]] <- unique(df$ageGroup[df$indexYear == year])
-    }
-    ageGroups <- Reduce(intersect, yearList)
-    df <- df[df$ageGroup %in% ageGroups, ]
-    return(df)
-  }
-  
-  if (is.null(df$databaseId)) {
-      return(restrictDataforDb(df))
-  } else {
-      result <- lapply(split(df, df$databaseId), restrictDataforDb)
-      result <- do.call(rbind, result)
-      return(result)
-  }
 }
