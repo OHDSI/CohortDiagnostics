@@ -298,30 +298,47 @@ shinyServer(function(input, output, session) {
   })
   
   output$breakdownTable <- renderDataTable({
-    table <- indexEventBreakdown[indexEventBreakdown$cohortId == cohortId() & 
-                                   indexEventBreakdown$databaseId == input$database, ]
-    table <- table[order(-table$conceptCount), ]
-    table <- table[, c("conceptCount", "conceptId", "conceptName")]
-    colnames(table) <- c("Count", "Concept ID", "Name")
-    lims <- c(0, max(table$Count))
+    data <- indexEventBreakdown[indexEventBreakdown$cohortId == cohortId() & 
+                                   indexEventBreakdown$databaseId %in% input$databases, ]
+    if (nrow(data) == 0) {
+      return(NULL)
+    }
+    data$cohortId <- NULL
+    databaseIds <- unique(data$databaseId)
+    conceptCountCol <- which(colnames(data) == "conceptCount")
+    table <- data[data$databaseId == databaseIds[1], ]
+    table$databaseId <- NULL
+    colnames(table)[conceptCountCol] <- paste(databaseIds[1], "Count")
+    if (length(databaseIds) > 1) {
+      for (i in 2:length(databaseIds)) {
+        temp <- data[data$databaseId == databaseIds[i],]
+        temp$databaseId <- NULL        
+        colnames(temp)[conceptCountCol] <- paste(databaseIds[i], "Count")
+        table <- merge(table, temp, all = TRUE)
+      }
+    }
+    table <- table[order(-table[,conceptCountCol]), ]
+    colnames(table)[1:2] <- c("Concept ID", "Name")
     options = list(pageLength = 25,
                    searching = TRUE,
                    lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
-                   columnDefs = list(minCellCountDef(0)))
-    table <- datatable(table,
-                       options = options,
-                       rownames = FALSE,
-                       escape = FALSE,
-                       class = "stripe nowrap compact")
-    table <- formatStyle(table = table,
-                         columns = 1,
-                         background = styleColorBar(lims, "lightblue"),
-                         backgroundSize = "98% 88%",
-                         backgroundRepeat = "no-repeat",
-                         backgroundPosition = "center")
-    return(table)
+                   columnDefs = list(minCellCountDef(3:ncol(table) - 1)))
+    dataTable <- datatable(table,
+                           options = options,
+                           rownames = FALSE,
+                           escape = FALSE,
+                           class = "stripe nowrap compact")
+    for (col in 3:ncol(table)) {
+      dataTable <- formatStyle(table = dataTable,
+                               columns = col,
+                               background = styleColorBar(c(0, max(table[, col], na.rm = TRUE)), "lightblue"),
+                               backgroundSize = "98% 88%",
+                               backgroundRepeat = "no-repeat",
+                               backgroundPosition = "center")
+    }
+    return(dataTable)
   })
   
   output$characterizationTable <- renderDataTable({
