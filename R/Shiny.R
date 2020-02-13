@@ -58,6 +58,7 @@ preMergeDiagnosticsFiles <- function(dataFolder) {
   zipFiles <- list.files(dataFolder, pattern = ".zip", full.names = TRUE)
   
   loadFile <- function(file, folder, overwrite) {
+    # print(file)
     tableName <- gsub(".csv$", "", file)
     camelCaseName <- SqlRender::snakeCaseToCamelCase(tableName)
     data <- readr::read_csv(file.path(folder, file), col_types = readr::cols(), guess_max = 1e7, locale = readr::locale(encoding = "UTF-8"))
@@ -65,18 +66,21 @@ preMergeDiagnosticsFiles <- function(dataFolder) {
     
     if (!overwrite && exists(camelCaseName, envir = .GlobalEnv)) {
       existingData <- get(camelCaseName, envir = .GlobalEnv)
-      if (all(colnames(existingData) %in% colnames(data)) &&
-          all(colnames(data) %in% colnames(existingData))) {
-            data <- data[, colnames(existingData)]
-          }
-      
-      if (!isTRUE(all.equal(colnames(data), colnames(existingData), check.attributes = FALSE))) {
-        stop("Table columns do no match previously seen columns. Columns in ", 
-             file, 
-             ":\n", 
-             paste(colnames(data), collapse = ", "), 
-             "\nPrevious columns:\n",
-             paste(colnames(existingData), collapse = ", "))
+      if (nrow(existingData) > 0) {
+        if (nrow(data) > 0 &&
+            all(colnames(existingData) %in% colnames(data)) &&
+            all(colnames(data) %in% colnames(existingData))) {
+          data <- data[, colnames(existingData)]
+        }
+        
+        if (!isTRUE(all.equal(colnames(data), colnames(existingData), check.attributes = FALSE))) {
+          stop("Table columns do no match previously seen columns. Columns in ", 
+               file, 
+               ":\n", 
+               paste(colnames(data), collapse = ", "), 
+               "\nPrevious columns:\n",
+               paste(colnames(existingData), collapse = ", "))
+        }
       }
       data <- rbind(existingData, data)
     }

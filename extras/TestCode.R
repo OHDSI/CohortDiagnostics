@@ -96,12 +96,11 @@ incidenceProportion <- getIncidenceRate(connectionDetails = connectionDetails,
                                               oracleTempSchema = oracleTempSchema,
                                               cdmDatabaseSchema = cdmDatabaseSchema,
                                               firstOccurrenceOnly = TRUE,
-                                              minObservationTime = 365,
+                                              washoutPeriod = 365,
                                               cohortId = cohortId)
 
-plotIncidenceProportionByYear(incidenceProportion)
+plotincidenceRate(incidenceProportion)
 
-plotIncidenceProportion(incidenceProportion, restrictToFullAgeData = F)
 
 overlap <- computeCohortOverlap(connectionDetails = connectionDetails,
                                 cohortDatabaseSchema = cohortDatabaseSchema,
