@@ -131,21 +131,105 @@ shinyServer(function(input, output, session) {
     return(dataTable)
   })
   
-  output$incidenceRatePlot <- renderPlot({
+  filteredIncidenceRates <- reactive({
     data <- incidenceRate[incidenceRate$cohortId == cohortId() & 
                             incidenceRate$databaseId %in% input$databases, ]
-    
     data <- data[data$incidenceRate > 0, ]
     if (nrow(data) == 0) {
       return(NULL)
     }
-    plot <- plotincidenceRate(incidenceRate = data,
-                              minPersonYears = 1000, 
+    stratifyByAge <- "Age" %in% input$irStratification
+    stratifyByGender <- "Gender" %in% input$irStratification
+    stratifyByCalendarYear <- "Calendar Year" %in% input$irStratification
+    minPersonYears = 1000
+    
+    idx <- rep(TRUE, nrow(data))
+    if (stratifyByAge) {
+      idx <- idx & !is.na(data$ageGroup)
+    } else {
+      idx <- idx & is.na(data$ageGroup)
+    }
+    if (stratifyByGender) {
+      idx <- idx & !is.na(data$gender)
+    } else {
+      idx <- idx & is.na(data$gender)
+    }
+    if (stratifyByCalendarYear) {
+      idx <- idx & !is.na(data$calendarYear)
+    } else {
+      idx <- idx & is.na(data$calendarYear)
+    }
+    data <- data[idx, ]
+    data <- data[data$cohortCount > 0, ]
+    data <- data[data$personYears > minPersonYears, ]
+    data$gender <- as.factor(data$gender)
+    data$calendarYear <- as.numeric(as.character(data$calendarYear))
+    ageGroups <- unique(data$ageGroup)
+    ageGroups <- ageGroups[order(as.numeric(gsub("-.*", "", ageGroups)))]
+    data$ageGroup <- factor(data$ageGroup, levels = ageGroups)
+    data <- data[data$incidenceRate > 0, ]
+    data$dummy <- 0
+    if (nrow(data) == 0) {
+      return(NULL)
+    } else {
+      return(data)
+    }
+  })
+  
+  output$incidenceRatePlot <- renderPlot({
+    data <- filteredIncidenceRates()
+    if (is.null(data)) {
+      return(NULL)
+    }
+    plot <- plotincidenceRate(data = data,
                               stratifyByAge = "Age" %in% input$irStratification,
                               stratifyByGender = "Gender" %in% input$irStratification,
                               stratifyByCalendarYear = "Calendar Year" %in% input$irStratification)
     return(plot)
   }, res = 100)
+  
+  output$hoverInfoIr <- renderUI({
+    data <- filteredIncidenceRates()
+    if (is.null(data)) {
+      return(NULL)
+    }else {
+      hover <- input$plotHoverIr
+      point <- nearPoints(data, hover, threshold = 5, maxpoints = 1, addDist = TRUE)
+      if (nrow(point) == 0) {
+        return(NULL)
+      }
+      left_px <- hover$coords_css$x
+      top_px <- hover$coords_css$y
+      
+      text <- gsub("-", "<", sprintf("<b>Incidence rate: </b> %0.3f per 1,000 patient years", point$incidenceRate))
+      if (!is.na(point$ageGroup)) {
+        text <- paste(text, sprintf("<b>Age group: </b> %s years", point$ageGroup), sep = "<br/>")
+        top_px <- top_px - 15
+      }
+      if (!is.na(point$gender)) {
+        text <- paste(text, sprintf("<b>Gender: </b> %s", point$gender), sep = "<br/>")
+        top_px <- top_px - 15
+      }
+      if (!is.na(point$calendarYear)) {
+        text <- paste(text, sprintf("<b>Calendar year: </b> %s", point$calendarYear), sep = "<br/>")
+        top_px <- top_px - 15
+      }
+      text <- paste(text, sprintf("<b>Database: </b> %s", point$databaseId), sep = "<br/>")
+      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
+                      "left:",
+                      left_px - 200,
+                      "px; top:",
+                      top_px - 130,
+                      "px; width:400px;")
+      div(
+        style = "position: relative; width: 0; height: 0",
+        wellPanel(
+          style = style,
+          p(HTML(text))
+        )
+      )
+    }
+  }) 
   
   output$timeDisPlot <- renderPlot({
     data <- timeDistribution[timeDistribution$cohortId == cohortId() & 

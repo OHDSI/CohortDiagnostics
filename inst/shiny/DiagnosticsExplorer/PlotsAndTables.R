@@ -150,47 +150,11 @@ compareCohortCharacteristics <- function(characteristics1, characteristics2) {
   return(m)
 }
 
-plotincidenceRate <- function(incidenceRate,
-                              minPersonYears = 1000, 
+plotincidenceRate <- function(data,
                               stratifyByAge = TRUE,
                               stratifyByGender = TRUE,
                               stratifyByCalendarYear = TRUE,
                               fileName = NULL) {
-  # stratifyByAge = TRUE
-  # stratifyByGender = FALSE
-  # stratifyByCalendarYear = TRUE
-  
-  idx <- rep(TRUE, nrow(incidenceRate))
-  if (stratifyByAge) {
-    idx <- idx & !is.na(incidenceRate$ageGroup)
-  } else {
-    idx <- idx & is.na(incidenceRate$ageGroup)
-  }
-  if (stratifyByGender) {
-    idx <- idx & !is.na(incidenceRate$gender)
-  } else {
-    idx <- idx & is.na(incidenceRate$gender)
-  }
-  if (stratifyByCalendarYear) {
-    idx <- idx & !is.na(incidenceRate$calendarYear)
-  } else {
-    idx <- idx & is.na(incidenceRate$calendarYear)
-  }
-  data <- incidenceRate[idx, ]
-  data <- data[data$cohortCount > 0, ]
-  data <- data[data$personYears > minPersonYears, ]
-  data$gender <- as.factor(data$gender)
-  data$calendarYear <- as.numeric(as.character(data$calendarYear))
-  # if (restrictToFullAgeData) {
-  #   data <- useFullData(data)
-  # }
-  
-  # Sort ageGroup numerically, so 100-109 > 20-29:
-  ageGroups <- unique(data$ageGroup)
-  ageGroups <- ageGroups[order(as.numeric(gsub("-.*", "", ageGroups)))]
-  data$ageGroup <- factor(data$ageGroup, levels = ageGroups)
-  
-  
   aesthetics <- list(y = "incidenceRate")
   if (stratifyByCalendarYear) {
     aesthetics$x <- "calendarYear"
@@ -209,7 +173,7 @@ plotincidenceRate <- function(incidenceRate,
       aesthetics$fill <- "gender"
       showX <- TRUE
     } else {
-      aesthetics$x <- 0
+      aesthetics$x <- "dummy"
       showX <- FALSE
     }
     plotType <- "bar"
@@ -218,7 +182,7 @@ plotincidenceRate <- function(incidenceRate,
   
   plot <- ggplot2::ggplot(data = data, do.call(ggplot2::aes_string, aesthetics)) +
     ggplot2::xlab(xLabel) +
-    ggplot2::ylab("Incidence Rate (/1000 person years)") +
+    ggplot2::ylab("Incidence Rate (/1,000 person years)") +
     ggplot2::theme(legend.position = "top",
                    legend.title = ggplot2::element_blank(),
                    axis.text.x = if (showX) ggplot2::element_text(angle = 90, vjust = 0.5) else ggplot2::element_blank() )

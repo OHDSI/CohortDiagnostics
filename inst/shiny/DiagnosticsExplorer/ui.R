@@ -56,8 +56,8 @@ dashboardPage(
                                    choices = c("Age", "Gender", "Calendar Year"), 
                                    selected = c("Age", "Gender", "Calendar Year"),
                                    inline = TRUE),
-                # checkboxInput("completePanelsOnly", "Complete panels only", value = TRUE),
-                plotOutput("incidenceRatePlot", height = 800)
+                uiOutput("hoverInfoIr"),
+                plotOutput("incidenceRatePlot", height = 800, hover = hoverOpts("plotHoverIr", delay = 100, delayType = "debounce"))
               )
       ),
       tabItem(tabName = "timeDistribution",
