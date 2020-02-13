@@ -69,12 +69,9 @@ orphanConcepts <- findCohortOrphanConcepts(connectionDetails = connectionDetails
 
 # Cohort-level ------------------------------------------------------------------
 counts <- getCohortCounts(connectionDetails = connectionDetails,
-                          oracleTempSchema = oracleTempSchema,
-                          cdmDatabaseSchema = cdmDatabaseSchema,
                           cohortDatabaseSchema = cohortDatabaseSchema,
                           cohortTable = cohortTable,
                           cohortIds = cohortId) 
-
 
 timeDist <- getTimeDistributions(connectionDetails = connectionDetails,
                                  oracleTempSchema = oracleTempSchema,
