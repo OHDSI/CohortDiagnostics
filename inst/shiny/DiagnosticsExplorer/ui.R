@@ -56,8 +56,8 @@ dashboardPage(
                                    choices = c("Age", "Gender", "Calendar Year"), 
                                    selected = c("Age", "Gender", "Calendar Year"),
                                    inline = TRUE),
-                uiOutput("hoverInfoIr"),
-                plotOutput("incidenceRatePlot", height = 800, hover = hoverOpts("plotHoverIr", delay = 100, delayType = "debounce"))
+                htmlOutput("hoverInfoIr"),
+                plotOutput("incidenceRatePlot", height = 700, hover = hoverOpts("plotHoverIr", delay = 100, delayType = "debounce"))
               )
       ),
       tabItem(tabName = "timeDistribution",
@@ -98,8 +98,17 @@ dashboardPage(
               )
       ),
       tabItem(tabName = "compareCohortCharacterization",
-              radioButtons("charCompareType", "", c("Pretty", "Raw"), selected = "Pretty", inline = TRUE),
-              dataTableOutput("charCompareTable")
+              radioButtons("charCompareType", "", c("Pretty table", "Raw table", "Plot"), selected = "Pretty table", inline = TRUE),
+              conditionalPanel(condition = "input.charCompareType=='Pretty table' | input.charCompareType=='Raw table'",
+                               dataTableOutput("charCompareTable")
+              ),
+              conditionalPanel(condition = "input.charCompareType=='Plot'",
+                               box(
+                                 title = "Compare Cohort Characterization", width = NULL, status = "primary",
+                                 htmlOutput("hoverInfoCharComparePlot"),
+                                 plotOutput("charComparePlot", height = 700, hover = hoverOpts("plotHoverCharCompare", delay = 100, delayType = "debounce"))
+                               )
+              )
       )
     )
   )

@@ -604,14 +604,26 @@ shinyServer(function(input, output, session) {
     return(plot)
   }, res = 100)
   
-  output$charCompareTable <- renderDataTable({
+  computeBalance <- reactive({
+    if (cohortId() == comparatorCohortId()) {
+      return(data.frame())
+    }
     covs1 <- covariateValue[covariateValue$cohortId == cohortId() & covariateValue$databaseId == input$database, ]
     covs2 <- covariateValue[covariateValue$cohortId == comparatorCohortId() & covariateValue$databaseId == input$database, ]
     covs1 <- merge(covs1, covariate)
     covs2 <- merge(covs2, covariate)
     balance <- compareCohortCharacteristics(covs1, covs2)
-    
-    if (input$charCompareType == "Pretty") {
+    balance$absStdDiff <- abs(balance$stdDiff)
+    return(balance)
+  })
+  
+  output$charCompareTable <- renderDataTable({
+    balance <- computeBalance()
+    if (nrow(balance) == 0) {
+      return(NULL)
+    }
+
+    if (input$charCompareType == "Pretty table") {
       balance <- merge(balance, covariate[, c("covariateId", "covariateAnalysisId")])
       table <- prepareTable1Comp(balance)
       options = list(pageLength = 999,
@@ -676,6 +688,65 @@ shinyServer(function(input, output, session) {
     }
     return(table)
   })
+  
+  output$charComparePlot <- renderPlot({
+    balance <- computeBalance()
+    if (nrow(balance) == 0) {
+      return(NULL)
+    }
+    balance$mean1[is.na(balance$mean1)] <- 0
+    balance$mean2[is.na(balance$mean2)] <- 0
+    plot <- ggplot2::ggplot(balance, ggplot2::aes(x = mean1, y = mean2, color = absStdDiff)) +
+      ggplot2::geom_point(alpha = 0.3, shape = 16, size = 2) +
+      ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+      ggplot2::geom_hline(yintercept = 0) +
+      ggplot2::geom_vline(xintercept = 0) +             
+      ggplot2::scale_x_continuous("Mean Target", limits = c(0, 1)) +
+      ggplot2::scale_y_continuous("Mean Comparator", limits = c(0, 1)) +
+      ggplot2::scale_color_gradient("Absolute\nStd. Diff.", low = "blue", high = "red", space = "Lab", na.value = "red")
+    return(plot)
+  }, res = 100)
+  
+  output$hoverInfoCharComparePlot <- renderUI({
+    balance <- computeBalance()
+    balance$mean1[is.na(balance$mean1)] <- 0
+    balance$mean2[is.na(balance$mean2)] <- 0
+    if (nrow(balance) == 0) {
+      return(NULL)
+    } else {
+      hover <- input$plotHoverCharCompare
+      point <- nearPoints(balance, hover, threshold = 5, maxpoints = 1, addDist = TRUE)
+      if (nrow(point) == 0) {
+        return(NULL)
+      }
+      text <- paste(point$covariateName, 
+                    "",
+                    sprintf("<b>Mean Target: </b> %0.2f", point$mean1),
+                    sprintf("<b>Mean Comparator: </b> %0.2f", point$mean2), 
+                    sprintf("<b>Std diff.: </b> %0.2f", point$stdDiff), 
+                    sep = "<br/>")
+      left_px <- hover$coords_css$x
+      top_px <- hover$coords_css$y
+      if (hover$x > 0.5) {
+        xOffset <- -505
+      } else {
+        xOffset <- 5
+      }
+      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
+                      "left:",
+                      left_px + xOffset,
+                      "px; top:",
+                      top_px - 150,
+                      "px; width:500px;")
+      div(
+        style = "position: relative; width: 0; height: 0",
+        wellPanel(
+          style = style,
+          p(HTML(text))
+        )
+      )
+    }
+  }) 
   
   showInfoBox <- function(title, htmlFileName) {
     showModal(modalDialog(
