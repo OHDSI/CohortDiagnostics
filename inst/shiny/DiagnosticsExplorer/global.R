@@ -1,5 +1,10 @@
 if (!exists("shinySettings")) {
-  shinySettings <- list(dataFolder = "C:/temp/exampleStudy")
+  if (file.exists("data")) {
+    shinySettings <- list(dataFolder = "data")
+  } else {
+    shinySettings <- list(dataFolder = "C:/temp/exampleStudy")
+  }
+  
 }
 dataFolder <- shinySettings$dataFolder
 

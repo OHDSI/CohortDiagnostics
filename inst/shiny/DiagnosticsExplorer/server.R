@@ -360,6 +360,7 @@ shinyServer(function(input, output, session) {
     table$cohortId <- NULL
     table$databaseId <- NULL
     lims <- c(0, max(table$remainSubjects))
+    table <- table[, c("ruleSequenceId", "ruleName", "meetSubjects", "gainSubjects", "totalSubjects", "remainSubjects")]
     colnames(table) <- c("Sequence", "Name", "Meet", "Gain", "Total", "Remain")
     options = list(pageLength = 25,
                    searching = TRUE,
@@ -387,21 +388,20 @@ shinyServer(function(input, output, session) {
     if (nrow(data) == 0) {
       return(NULL)
     }
-    data$cohortId <- NULL
+    data <- data[, c("conceptId", "conceptName", "conceptCount", "databaseId" )]
     databaseIds <- unique(data$databaseId)
-    conceptCountCol <- which(colnames(data) == "conceptCount")
     table <- data[data$databaseId == databaseIds[1], ]
     table$databaseId <- NULL
-    colnames(table)[conceptCountCol] <- paste(databaseIds[1], "Count")
+    colnames(table)[3] <- paste(databaseIds[1], "Count")
     if (length(databaseIds) > 1) {
       for (i in 2:length(databaseIds)) {
         temp <- data[data$databaseId == databaseIds[i],]
         temp$databaseId <- NULL        
-        colnames(temp)[conceptCountCol] <- paste(databaseIds[i], "Count")
+        colnames(temp)[3] <- paste(databaseIds[i], "Count")
         table <- merge(table, temp, all = TRUE)
       }
     }
-    table <- table[order(-table[,conceptCountCol]), ]
+    table <- table[order(-table[,3]), ]
     colnames(table)[1:2] <- c("Concept ID", "Name")
     options = list(pageLength = 25,
                    searching = TRUE,
@@ -643,7 +643,7 @@ shinyServer(function(input, output, session) {
       table <- balance
       table <- table[order(table$covariateName), ]
       table <- table[, c("covariateName", "mean1", "sd1", "mean2", "sd2", "stdDiff")]
-      colnames(table) <- c("Covariate name", "Mean T", "SD T", "Mean C", "SD C", "StdDiff")
+      colnames(table) <- c("Covariate name", "Mean Target", "SD Target", "Mean Comparator", "SD Comparator", "StdDiff")
       
       options = list(pageLength = 25,
                      searching = TRUE,

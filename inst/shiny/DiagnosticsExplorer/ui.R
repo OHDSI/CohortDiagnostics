@@ -33,7 +33,7 @@ dashboardPage(
                        checkboxGroupInput("databases", "Database", database$databaseId, selected = database$databaseId[1])
       ),
       conditionalPanel(condition = "input.tabs!='cohortCounts'",
-                       selectInput("cohort", "Cohort", choices = cohort$cohortFullName, selectize = FALSE)
+                       selectInput("cohort", "Cohort (Target)", choices = cohort$cohortFullName, selectize = FALSE)
       ),
       conditionalPanel(condition = "input.tabs=='includedConcepts' | input.tabs=='orphanConcepts'",
                        selectInput("conceptSet", "Concept Set", c(""), selectize = FALSE)

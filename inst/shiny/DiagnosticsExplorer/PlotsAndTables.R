@@ -125,7 +125,7 @@ prepareTable1Comp <- function(balance,
       }
     }
   }
-  colnames(resultsTable) <- c("Characteristic", "Proportion T", "Proportion C", "StdDiff")
+  colnames(resultsTable) <- c("Characteristic", "Proportion Target", "Proportion Comparator", "StdDiff")
   return(resultsTable)
 }
 
