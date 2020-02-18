@@ -165,7 +165,7 @@ aggregateIr <- function(ratesSummary, aggregateList) {
 #' year, age, and gender.
 #'
 #' @param incidenceRate     Incidence proportion time series data for plotting generated using
-#'                                \code{\link{getincidenceRate}} function.
+#'                                \code{\link{getIncidenceRate}} function.
 #' @param minPersonYears          Estimates get very unstable with low background counts, so removing them
 #'                                makes for cleaner plots.
 #' @param stratifyByAge           Should the plot be stratified by age?

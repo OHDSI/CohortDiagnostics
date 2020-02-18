@@ -15,7 +15,7 @@ plotincidenceRate(
 }
 \arguments{
 \item{incidenceRate}{Incidence proportion time series data for plotting generated using
-\code{\link{getincidenceRate}} function.}
+\code{\link{getIncidenceRate}} function.}
 
 \item{minPersonYears}{Estimates get very unstable with low background counts, so removing them
 makes for cleaner plots.}
