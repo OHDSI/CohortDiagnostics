@@ -155,6 +155,7 @@ plotincidenceRate <- function(data,
                               stratifyByGender = TRUE,
                               stratifyByCalendarYear = TRUE,
                               fileName = NULL) {
+  
   aesthetics <- list(y = "incidenceRate")
   if (stratifyByCalendarYear) {
     aesthetics$x <- "calendarYear"
@@ -177,7 +178,6 @@ plotincidenceRate <- function(data,
       showX <- FALSE
     }
     plotType <- "bar"
-    
   }
   
   plot <- ggplot2::ggplot(data = data, do.call(ggplot2::aes_string, aesthetics)) +
@@ -194,7 +194,8 @@ plotincidenceRate <- function(data,
     plot <- plot + ggplot2::geom_bar(stat = "identity", alpha = 0.6)
   }
   
-  if (!is.null(incidenceRate$databaseId) && length(unique(incidenceRate$databaseId)) > 1) {
+  # databaseId field only present when called in Shiny app:
+  if (!is.null(data$databaseId) && length(data$databaseId) > 1) {
     if (stratifyByAge) {
       plot <- plot + ggplot2::facet_grid(databaseId~ageGroup, scales = "free_y")
     } else {

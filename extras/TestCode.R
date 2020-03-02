@@ -90,7 +90,7 @@ breakdown <- breakDownIndexEvents(connectionDetails = connectionDetails,
                                   cohortTable = cohortTable,
                                   cohortId = cohortId)
 
-incidenceProportion <- getIncidenceRate(connectionDetails = connectionDetails,
+incidenceRate <- getIncidenceRate(connectionDetails = connectionDetails,
                                               cohortDatabaseSchema = cohortDatabaseSchema,
                                               cohortTable = cohortTable,
                                               oracleTempSchema = oracleTempSchema,
@@ -99,7 +99,7 @@ incidenceProportion <- getIncidenceRate(connectionDetails = connectionDetails,
                                               washoutPeriod = 365,
                                               cohortId = cohortId)
 
-plotincidenceRate(incidenceProportion)
+plotincidenceRate(incidenceRate)
 
 
 overlap <- computeCohortOverlap(connectionDetails = connectionDetails,

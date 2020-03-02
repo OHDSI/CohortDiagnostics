@@ -155,41 +155,7 @@ aggregateIr <- function(ratesSummary, aggregateList) {
                    FUN = sum))
 }
 
-#' Plot incidence rate by year, age, and gender
-#'
-#' @description
-#' Characterizes the incidence proportion of a phenotype as a time series visualization
-#'
-#' @details
-#' Generates time series plots of the incidence proportion per 1000 persons of phenotype entry by
-#' year, age, and gender.
-#'
-#' @param incidenceRate     Incidence proportion time series data for plotting generated using
-#'                                \code{\link{getIncidenceRate}} function.
-#' @param minPersonYears          Estimates get very unstable with low background counts, so removing them
-#'                                makes for cleaner plots.
-#' @param stratifyByAge           Should the plot be stratified by age?
-#' @param stratifyByGender        Should the plot be stratified by gender?
-#' @param stratifyByCalendarYear  Should the plot be stratified by calendar year?
-#' @param fileName                Optional: name of the file where the plot should be saved, for
-#'                                example 'plot.png'. See the function \code{ggsave} in the ggplot2
-#'                                package for supported file formats.
-#'
-#' @return
-#' A ggplot object. Use the \code{\link[ggplot2]{ggsave}} function to save to file in a different
-#' format.
-#'
-#' @export
-plotincidenceRate <- function(incidenceRate,
-                              minPersonYears = 1000, 
-                              stratifyByAge = TRUE,
-                              stratifyByGender = TRUE,
-                              stratifyByCalendarYear = TRUE,
-                              fileName = NULL) {
-  # stratifyByAge = TRUE
-  # stratifyByGender = FALSE
-  # stratifyByCalendarYear = TRUE
-  
+filterIncidenceRateData <- function(incidenceRate, stratifyByAge, stratifyByGender, stratifyByCalendarYear, minPersonYears) {
   idx <- rep(TRUE, nrow(incidenceRate))
   if (stratifyByAge) {
     idx <- idx & !is.na(incidenceRate$ageGroup)
@@ -211,15 +177,69 @@ plotincidenceRate <- function(incidenceRate,
   data <- data[data$personYears > minPersonYears, ]
   data$gender <- as.factor(data$gender)
   data$calendarYear <- as.numeric(as.character(data$calendarYear))
-  # if (restrictToFullAgeData) {
-  #   data <- useFullData(data)
-  # }
   
   # Sort ageGroup numerically, so 100-109 > 20-29:
   ageGroups <- unique(data$ageGroup)
   ageGroups <- ageGroups[order(as.numeric(gsub("-.*", "", ageGroups)))]
   data$ageGroup <- factor(data$ageGroup, levels = ageGroups)
+  return(data)
+}
   
+#' Plot incidence rate by year, age, and/or gender
+#'
+#' @description
+#' Characterizes the incidence rate of a cohort definition.
+#'
+#' @details
+#' Generates time series plots of the incidence rate per 1000 person years of cohort entry by
+#' year, age, and/or gender.
+#'
+#' @param data                    Incidence rate time series data for plotting generated using
+#'                                \code{\link{getIncidenceRate}} function.
+#' @param minPersonYears          Estimates get very unstable with low background counts, so removing them
+#'                                makes for cleaner plots.
+#' @param stratifyByAge           Should the plot be stratified by age?
+#' @param stratifyByGender        Should the plot be stratified by gender?
+#' @param stratifyByCalendarYear  Should the plot be stratified by calendar year?
+#' @param fileName                Optional: name of the file where the plot should be saved, for
+#'                                example 'plot.png'. See the function \code{ggsave} in the ggplot2
+#'                                package for supported file formats.
+#'
+#' @return
+#' A ggplot object. Use the \code{\link[ggplot2]{ggsave}} function to save to file in a different
+#' format.
+#'
+#' @export
+plotincidenceRate <- function(incidenceRate,
+                              minPersonYears = 1000,
+                              stratifyByAge = TRUE,
+                              stratifyByGender = TRUE,
+                              stratifyByCalendarYear = TRUE,
+                              fileName = NULL) {
+  
+  data <- filterIncidenceRateData(incidenceRate = incidenceRate,
+                                  stratifyByAge = stratifyByAge,
+                                  stratifyByGender = stratifyByGender,
+                                  stratifyByCalendarYear = stratifyByCalendarYear,
+                                  minPersonYears = minPersonYears)
+  
+  idx <- rep(TRUE, nrow(incidenceRate))
+  if (stratifyByAge) {
+    idx <- idx & !is.na(incidenceRate$ageGroup)
+  } else {
+    idx <- idx & is.na(incidenceRate$ageGroup)
+  }
+  if (stratifyByGender) {
+    idx <- idx & !is.na(incidenceRate$gender)
+  } else {
+    idx <- idx & is.na(incidenceRate$gender)
+  }
+  if (stratifyByCalendarYear) {
+    idx <- idx & !is.na(incidenceRate$calendarYear)
+  } else {
+    idx <- idx & is.na(incidenceRate$calendarYear)
+  }
+  data <- incidenceRate[idx, ]
   
   aesthetics <- list(y = "incidenceRate")
   if (stratifyByCalendarYear) {
@@ -239,16 +259,15 @@ plotincidenceRate <- function(incidenceRate,
       aesthetics$fill <- "gender"
       showX <- TRUE
     } else {
-      aesthetics$x <- 0
+      aesthetics$x <- "dummy"
       showX <- FALSE
     }
     plotType <- "bar"
-    
   }
   
   plot <- ggplot2::ggplot(data = data, do.call(ggplot2::aes_string, aesthetics)) +
     ggplot2::xlab(xLabel) +
-    ggplot2::ylab("Incidence Rate (/1000 person years)") +
+    ggplot2::ylab("Incidence Rate (/1,000 person years)") +
     ggplot2::theme(legend.position = "top",
                    legend.title = ggplot2::element_blank(),
                    axis.text.x = if (showX) ggplot2::element_text(angle = 90, vjust = 0.5) else ggplot2::element_blank() )
@@ -260,7 +279,8 @@ plotincidenceRate <- function(incidenceRate,
     plot <- plot + ggplot2::geom_bar(stat = "identity", alpha = 0.6)
   }
   
-  if (!is.null(incidenceRate$databaseId) && length(unique(incidenceRate$databaseId)) > 1) {
+  # databaseId field only present when called in Shiny app:
+  if (!is.null(data$databaseId) && length(data$databaseId) > 1) {
     if (stratifyByAge) {
       plot <- plot + ggplot2::facet_grid(databaseId~ageGroup, scales = "free_y")
     } else {

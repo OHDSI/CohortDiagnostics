@@ -2,7 +2,7 @@
 % Please edit documentation in R/IncidenceRates.R
 \name{plotincidenceRate}
 \alias{plotincidenceRate}
-\title{Plot incidence rate by year, age, and gender}
+\title{Plot incidence rate by year, age, and/or gender}
 \usage{
 plotincidenceRate(
   incidenceRate,
@@ -14,9 +14,6 @@ plotincidenceRate(
 )
 }
 \arguments{
-\item{incidenceRate}{Incidence proportion time series data for plotting generated using
-\code{\link{getIncidenceRate}} function.}
-
 \item{minPersonYears}{Estimates get very unstable with low background counts, so removing them
 makes for cleaner plots.}
 
@@ -29,15 +26,18 @@ makes for cleaner plots.}
 \item{fileName}{Optional: name of the file where the plot should be saved, for
 example 'plot.png'. See the function \code{ggsave} in the ggplot2
 package for supported file formats.}
+
+\item{data}{Incidence rate time series data for plotting generated using
+\code{\link{getIncidenceRate}} function.}
 }
 \value{
 A ggplot object. Use the \code{\link[ggplot2]{ggsave}} function to save to file in a different
 format.
 }
 \description{
-Characterizes the incidence proportion of a phenotype as a time series visualization
+Characterizes the incidence rate of a cohort definition.
 }
 \details{
-Generates time series plots of the incidence proportion per 1000 persons of phenotype entry by
-year, age, and gender.
+Generates time series plots of the incidence rate per 1000 person years of cohort entry by
+year, age, and/or gender.
 }
