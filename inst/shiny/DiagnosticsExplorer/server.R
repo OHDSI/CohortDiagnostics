@@ -83,7 +83,7 @@ shinyServer(function(input, output, session) {
         table <- merge(table, temp, all = TRUE)
       }
     }
-    table <- merge(cohort, table)
+    table <- merge(cohort, table, all.x = TRUE)
     table$cohortId <- NULL
     table$cohortName <- NULL
     
