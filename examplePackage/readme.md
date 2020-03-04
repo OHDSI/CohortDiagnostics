@@ -5,22 +5,24 @@ This study package demonstrates how to currently use CohortDiagnostics in a pack
 
 To modify the package to include the cohorts of interest, take these steps:
 
-1. Copy/download the *examplePackage* folder, and change the package name as needed. Most importantly:
+1. Copy/download the *examplePackage* folder. For example, download the Zip file [here](https://github.com/OHDSI/CohortDiagnostics/archive/master.zip), open it, and locate the *examplePackage* folder and extract it.
+
+2. Change the package name as needed. Most importantly:
     - Change the `Package:` field in the *DESCRIPTION* file, 
     - The `packageName` argument in the *R/CohortDiagnostics* file, and
     - The `library()` call at the top of *extras/CodeToRun.R*
     - The name of the *.Rproj* file.
     
-2. Open the R project in R studio (e.g. by double-clicking on the *.Rproj* file).
+3. Open the R project in R studio (e.g. by double-clicking on the *.Rproj* file).
 
-3. Modify *inst/settings/CohortsToCreate.csv* to include only those cohorts you are interested in. Fill in each of the four columns:
+4. Modify *inst/settings/CohortsToCreate.csv* to include only those cohorts you are interested in. Fill in each of the four columns:
 
     - **atlasId**: The cohort ID in ATLAS.
     - **atlasName**: The full name of the cohort. This will be shown in the Shiny app.
     - **cohortId**: The cohort ID to use in the package. USually the same as the cohort ID in ATLAS.
     - **name**: A short name for the cohort, to use to create file names. do not use special characters.
 
-4. Run this code (note, this can also be found in *extras/PackageMaintenance.R*):
+5. Run this code (note, this can also be found in *extras/PackageMaintenance.R*):
 
     ```r
     # If ROhdsiWebApi is not yet installed:
