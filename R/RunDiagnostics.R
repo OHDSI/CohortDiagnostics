@@ -269,8 +269,12 @@ runCohortDiagnostics <- function(packageName,
       }
       return(data)
     }
-    data <- lapply(split(combis, 1:nrow(combis)), runCohortOverlap)
-    data <- do.call(rbind, data)
+    if (nrow(combis) == 0) {
+      data <- data.frame()
+    } else {
+      data <- lapply(split(combis, 1:nrow(combis)), runCohortOverlap)
+      data <- do.call(rbind, data)
+    }
     if (nrow(data) > 0) {
       revData <- data
       revData <- swapColumnContents(revData, "targetCohortId", "comparatorCohortId")
