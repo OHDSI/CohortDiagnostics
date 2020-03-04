@@ -47,7 +47,7 @@
 #' @param runOrphanConcepts           Generate and export potential orphan concepts?
 #' @param runTimeDistributions        Generate and export cohort time distributions?
 #' @param runBreakdownIndexEvents     Generate and export the breakdown of index events?
-#' @param runIncidenceProportion      Generate and export the cohort incidence proportions?
+#' @param runIncidenceRates      Generate and export the cohort incidence rates?
 #' @param runCohortOverlap            Generate and export the cohort overlap?
 #' @param runCohortCharacterization   Generate and export the cohort characterization?
 #' @param minCellCount         The minimum number of subjects contributing to a count before it can be included 
@@ -69,7 +69,7 @@ runCohortDiagnostics <- function(connectionDetails,
                                  runOrphanConcepts = TRUE,
                                  runTimeDistributions = TRUE,
                                  runBreakdownIndexEvents = TRUE,
-                                 runIncidenceProportion = TRUE,
+                                 runIncidenceRates = TRUE,
                                  runCohortOverlap = TRUE,
                                  runCohortCharacterization = TRUE,
                                  minCellCount = 5) {
@@ -112,7 +112,7 @@ runCohortDiagnostics <- function(connectionDetails,
                                           runOrphanConcepts = runOrphanConcepts,
                                           runTimeDistributions = runTimeDistributions,
                                           runBreakdownIndexEvents = runBreakdownIndexEvents,
-                                          runIncidenceProportion = runIncidenceProportion,
+                                          runIncidenceRate = runIncidenceRates,
                                           runCohortOverlap = runCohortOverlap,
                                           runCohortCharacterization = runCohortCharacterization,
                                           minCellCount = minCellCount)
