@@ -184,7 +184,8 @@ shinyServer(function(input, output, session) {
     plot <- plotincidenceRate(data = data,
                               stratifyByAge = "Age" %in% input$irStratification,
                               stratifyByGender = "Gender" %in% input$irStratification,
-                              stratifyByCalendarYear = "Calendar Year" %in% input$irStratification)
+                              stratifyByCalendarYear = "Calendar Year" %in% input$irStratification,
+                              yscaleFixed = input$irYscaleFixed)
     return(plot)
   }, res = 100)
   
@@ -202,6 +203,10 @@ shinyServer(function(input, output, session) {
       top_px <- hover$coords_css$y
       
       text <- gsub("-", "<", sprintf("<b>Incidence rate: </b> %0.3f per 1,000 patient years", point$incidenceRate))
+      text <- paste(text, sprintf("<b>Cohort count (numerator): </b> %s",  format(point$cohortCount, scientific = FALSE, big.mark = ",")), sep = "<br/>")
+      text <- paste(text, sprintf("<b>Person time (denominator): </b> %s years", format(round(point$personYears), scientific = FALSE, big.mark = ",")), sep = "<br/>")
+      text <- paste(text, "", sep = "<br/>")
+      
       if (!is.na(point$ageGroup)) {
         text <- paste(text, sprintf("<b>Age group: </b> %s years", point$ageGroup), sep = "<br/>")
         top_px <- top_px - 15
@@ -219,7 +224,7 @@ shinyServer(function(input, output, session) {
                       "left:",
                       left_px - 200,
                       "px; top:",
-                      top_px - 130,
+                      top_px - 170,
                       "px; width:400px;")
       div(
         style = "position: relative; width: 0; height: 0",

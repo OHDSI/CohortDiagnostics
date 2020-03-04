@@ -16,31 +16,31 @@ dashboardPage(
   dashboardHeader(title = "Cohort Diagnostics"),
   dashboardSidebar(
     sidebarMenu(id = "tabs",
-      if (exists("cohortCount")) addInfo(menuItem("Cohort Counts", tabName = "cohortCounts"), "cohortCountsInfo"),
-      if (exists("incidenceRate")) addInfo(menuItem("Incidence Rate", tabName = "incidenceRate"), "incidenceRateInfo"),
-      if (exists("timeDistribution")) addInfo(menuItem("Time Distributions", tabName = "timeDistribution"), "timeDistributionInfo"),
-      if (exists("includedSourceConcept")) addInfo(menuItem("Included (Source) Concepts", tabName = "includedConcepts"), "includedConceptsInfo"),
-      if (exists("orphanConcept")) addInfo(menuItem("Orphan (Source) Concepts", tabName = "orphanConcepts"), "orphanConceptsInfo"),
-      if (exists("inclusionRuleStats")) addInfo(menuItem("Inclusion Rule Statistics", tabName = "inclusionRuleStats"), "inclusionRuleStatsInfo"),
-      if (exists("indexEventBreakdown")) addInfo(menuItem("Index Event Breakdown", tabName = "indexEventBreakdown"), "indexEventBreakdownInfo"),
-      if (exists("covariateValue")) addInfo(menuItem("Cohort Characterization", tabName = "cohortCharacterization"), "cohortCharacterizationInfo"),
-      if (exists("cohortOverlap")) addInfo(menuItem("Cohort Overlap", tabName = "cohortOverlap"), "cohortOverlapInfo"),
-      if (exists("covariateValue")) addInfo(menuItem("Compare Cohort Char.", tabName = "compareCohortCharacterization"), "compareCohortCharacterizationInfo"),
-      conditionalPanel(condition = "input.tabs!='incidenceRate' & input.tabs!='timeDistribution' & input.tabs!='cohortCharacterization' & input.tabs!='cohortCounts' & input.tabs!='indexEventBreakdown'",
-                       selectInput("database", "Database", database$databaseId, selectize = FALSE)
-      ),
-      conditionalPanel(condition = "input.tabs=='incidenceRate' | input.tabs=='timeDistribution' | input.tabs=='cohortCharacterization' | input.tabs=='cohortCounts' | input.tabs=='indexEventBreakdown'",
-                       checkboxGroupInput("databases", "Database", database$databaseId, selected = database$databaseId[1])
-      ),
-      conditionalPanel(condition = "input.tabs!='cohortCounts'",
-                       selectInput("cohort", "Cohort (Target)", choices = cohort$cohortFullName, selectize = FALSE)
-      ),
-      conditionalPanel(condition = "input.tabs=='includedConcepts' | input.tabs=='orphanConcepts'",
-                       selectInput("conceptSet", "Concept Set", c(""), selectize = FALSE)
-      ),
-      conditionalPanel(condition = "input.tabs=='cohortOverlap' | input.tabs=='compareCohortCharacterization'",
-                       selectInput("comparator", "Comparator", cohort$cohortFullName, selectize = FALSE, selected = cohort$cohortFullName[min(2, nrow(cohort))])
-      )
+                if (exists("cohortCount")) addInfo(menuItem("Cohort Counts", tabName = "cohortCounts"), "cohortCountsInfo"),
+                if (exists("incidenceRate")) addInfo(menuItem("Incidence Rate", tabName = "incidenceRate"), "incidenceRateInfo"),
+                if (exists("timeDistribution")) addInfo(menuItem("Time Distributions", tabName = "timeDistribution"), "timeDistributionInfo"),
+                if (exists("includedSourceConcept")) addInfo(menuItem("Included (Source) Concepts", tabName = "includedConcepts"), "includedConceptsInfo"),
+                if (exists("orphanConcept")) addInfo(menuItem("Orphan (Source) Concepts", tabName = "orphanConcepts"), "orphanConceptsInfo"),
+                if (exists("inclusionRuleStats")) addInfo(menuItem("Inclusion Rule Statistics", tabName = "inclusionRuleStats"), "inclusionRuleStatsInfo"),
+                if (exists("indexEventBreakdown")) addInfo(menuItem("Index Event Breakdown", tabName = "indexEventBreakdown"), "indexEventBreakdownInfo"),
+                if (exists("covariateValue")) addInfo(menuItem("Cohort Characterization", tabName = "cohortCharacterization"), "cohortCharacterizationInfo"),
+                if (exists("cohortOverlap")) addInfo(menuItem("Cohort Overlap", tabName = "cohortOverlap"), "cohortOverlapInfo"),
+                if (exists("covariateValue")) addInfo(menuItem("Compare Cohort Char.", tabName = "compareCohortCharacterization"), "compareCohortCharacterizationInfo"),
+                conditionalPanel(condition = "input.tabs!='incidenceRate' & input.tabs!='timeDistribution' & input.tabs!='cohortCharacterization' & input.tabs!='cohortCounts' & input.tabs!='indexEventBreakdown'",
+                                 selectInput("database", "Database", database$databaseId, selectize = FALSE)
+                ),
+                conditionalPanel(condition = "input.tabs=='incidenceRate' | input.tabs=='timeDistribution' | input.tabs=='cohortCharacterization' | input.tabs=='cohortCounts' | input.tabs=='indexEventBreakdown'",
+                                 checkboxGroupInput("databases", "Database", database$databaseId, selected = database$databaseId[1])
+                ),
+                conditionalPanel(condition = "input.tabs!='cohortCounts'",
+                                 selectInput("cohort", "Cohort (Target)", choices = cohort$cohortFullName, selectize = FALSE)
+                ),
+                conditionalPanel(condition = "input.tabs=='includedConcepts' | input.tabs=='orphanConcepts'",
+                                 selectInput("conceptSet", "Concept Set", c(""), selectize = FALSE)
+                ),
+                conditionalPanel(condition = "input.tabs=='cohortOverlap' | input.tabs=='compareCohortCharacterization'",
+                                 selectInput("comparator", "Comparator", cohort$cohortFullName, selectize = FALSE, selected = cohort$cohortFullName[min(2, nrow(cohort))])
+                )
     )
   ),
   dashboardBody(
@@ -51,11 +51,20 @@ dashboardPage(
       tabItem(tabName = "incidenceRate",
               box(
                 title = "Incidence Rate", width = NULL, status = "primary",
-                checkboxGroupInput(inputId = "irStratification", 
-                                   label = "Stratify by", 
-                                   choices = c("Age", "Gender", "Calendar Year"), 
-                                   selected = c("Age", "Gender", "Calendar Year"),
-                                   inline = TRUE),
+                tags$table(style = "width: 100%",
+                           tags$tr(
+                  tags$td(valign = "bottom",
+                          checkboxGroupInput(inputId = "irStratification", 
+                                             label = "Stratify by",
+                                             choices = c("Age", "Gender", "Calendar Year"),
+                                             selected = c("Age", "Gender", "Calendar Year"),
+                                             inline = TRUE)
+                  ),
+                  tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;")),
+                  tags$td(valign = "bottom", style = "text-align: right",
+                          checkboxInput("irYscaleFixed", "Use same y-scale across databases")
+                  )
+                )),
                 htmlOutput("hoverInfoIr"),
                 plotOutput("incidenceRatePlot", height = 700, hover = hoverOpts("plotHoverIr", delay = 100, delayType = "debounce"))
               )

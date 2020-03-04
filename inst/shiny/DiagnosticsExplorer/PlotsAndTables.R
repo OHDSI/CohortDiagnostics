@@ -154,6 +154,7 @@ plotincidenceRate <- function(data,
                               stratifyByAge = TRUE,
                               stratifyByGender = TRUE,
                               stratifyByCalendarYear = TRUE,
+                              yscaleFixed = FALSE,
                               fileName = NULL) {
   
   aesthetics <- list(y = "incidenceRate")
@@ -196,10 +197,15 @@ plotincidenceRate <- function(data,
   
   # databaseId field only present when called in Shiny app:
   if (!is.null(data$databaseId) && length(data$databaseId) > 1) {
-    if (stratifyByAge) {
-      plot <- plot + ggplot2::facet_grid(databaseId~ageGroup, scales = "free_y")
+    if (yscaleFixed) {
+      scales <- "fixed"
     } else {
-      plot <- plot + ggplot2::facet_grid(databaseId~., scales = "free_y") 
+      scales <- "free_y"
+    }
+    if (stratifyByAge) {
+      plot <- plot + ggplot2::facet_grid(databaseId~ageGroup, scales = scales)
+    } else {
+      plot <- plot + ggplot2::facet_grid(databaseId~., scales = scales) 
     }
   } else {
     if (stratifyByAge) {
