@@ -7,7 +7,7 @@
 getCohortCounts(
   connectionDetails = NULL,
   connection = NULL,
-  cohortDatabaseSchema = cdmDatabaseSchema,
+  cohortDatabaseSchema,
   cohortTable = "cohort",
   cohortIds = c()
 )

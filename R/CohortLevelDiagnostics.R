@@ -32,7 +32,7 @@
 #' @export
 getCohortCounts <- function(connectionDetails = NULL,
                             connection = NULL,
-                            cohortDatabaseSchema = cdmDatabaseSchema,
+                            cohortDatabaseSchema,
                             cohortTable = "cohort",
                             cohortIds = c()) {
   start <- Sys.time()

@@ -20,4 +20,5 @@ target/
 docs
 compare_versions
 _pkgdown.yml
-exampleStudy
+exampleComparativeCohortStudy
+examplePackage

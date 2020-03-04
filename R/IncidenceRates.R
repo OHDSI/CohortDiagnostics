@@ -194,7 +194,7 @@ filterIncidenceRateData <- function(incidenceRate, stratifyByAge, stratifyByGend
 #' Generates time series plots of the incidence rate per 1000 person years of cohort entry by
 #' year, age, and/or gender.
 #'
-#' @param data                    Incidence rate time series data for plotting generated using
+#' @param incidenceRate           Incidence rate time series data for plotting generated using
 #'                                \code{\link{getIncidenceRate}} function.
 #' @param minPersonYears          Estimates get very unstable with low background counts, so removing them
 #'                                makes for cleaner plots.
