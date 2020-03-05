@@ -2,11 +2,12 @@ if (!exists("shinySettings")) {
   if (file.exists("data")) {
     shinySettings <- list(dataFolder = "data")
   } else {
-    shinySettings <- list(dataFolder = "C:/temp/exampleStudy")
+    shinySettings <- list(dataFolder = "s:/examplePackage/panther/diagnosticsExport")
   }
-  
 }
 dataFolder <- shinySettings$dataFolder
+
+suppressWarnings(rm("cohort", "cohortCount", "cohortOverlap", "conceptSets", "database", "incidenceRate", "includedSourceConcept", "inclusionRuleStats", "indexEventBreakdown", "orphanConcept", "timeDistribution"))
 
 if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {
   writeLines("Using merged data detected in data folder")
@@ -60,6 +61,14 @@ if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {
 }
 
 cohort <- unique(cohort)
-covariate <- unique(covariate)
-conceptSets <- unique(includedSourceConcept[, c("cohortId", "conceptSetId", "conceptSetName")])
+if (exists("covariate")) {
+  covariate <- unique(covariate)
+}
+if (exists("includedSourceConcept")) {
+  conceptSets <- unique(includedSourceConcept[, c("cohortId", "conceptSetId", "conceptSetName")])
+} else if (exists("orphanConcept")) {
+  conceptSets <- unique(orphanConcept[, c("cohortId", "conceptSetId", "conceptSetName")])
+} else {
+  conceptSets <- NULL 
+}
 
