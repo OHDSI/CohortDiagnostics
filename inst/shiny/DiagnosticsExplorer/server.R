@@ -332,6 +332,9 @@ shinyServer(function(input, output, session) {
     table <- orphanConcept[orphanConcept$cohortId == cohortId() &
                              orphanConcept$conceptSetName == input$conceptSet & 
                              orphanConcept$databaseId == input$database, ]
+    if (nrow(table) == 0) {
+      return(NULL)
+    }
     table <- table[, c("conceptCount", "standardConcept", "vocabularyId", "conceptCode", "conceptName")]
     table <- table[order(-table$conceptCount), ]
     colnames(table) <- c("Count", "Standard", "Vocabulary", "Code", "Name")
