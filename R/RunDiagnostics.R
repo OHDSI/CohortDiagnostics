@@ -417,27 +417,27 @@ runConceptSetDiagnostics <- function(connection,
   conceptSets <- do.call(rbind, conceptSets)
   uniqueConceptSets <- unique(conceptSets$expression)
   uniqueConceptSets <- tibble::tibble(expression = uniqueConceptSets,
-                                  uniqueConceptSetId = 1:length(uniqueConceptSets))
+                                      uniqueConceptSetId = 1:length(uniqueConceptSets))
   conceptSets <- merge(conceptSets, uniqueConceptSets)
   uniqueConceptSets <- conceptSets[!duplicated(conceptSets$uniqueConceptSetId), ]
+  
+  ParallelLogger::logInfo("Instantiating concept sets")
+  sql <- gsub("with primary_events.*", "", cohorts$sql[1])
+  createTempTableSql <- SqlRender::splitSql(sql)[1]
+  sql <- sapply(split(uniqueConceptSets, 1:nrow(uniqueConceptSets)), 
+                function(x) {
+                  sub("SELECT [0-9]+ as codeset_id", sprintf("SELECT %s as codeset_id", x$uniqueConceptSetId), x$sql)
+                })
+  sql <- paste(c(createTempTableSql, sql), collapse = ";\n")
+  sql <- SqlRender::render(sql, vocabulary_database_schema = cdmDatabaseSchema)
+  sql <- SqlRender::translate(sql,
+                              targetDialect = connection@dbms,
+                              oracleTempSchema = oracleTempSchema)
+  DatabaseConnector::executeSql(connection, sql)
   
   if (runIncludedSourceConcepts) {
     ParallelLogger::logInfo("Fetching included source concepts")
     start <- Sys.time()
-    ParallelLogger::logInfo("Instantiating concept sets")
-    sql <- gsub("with primary_events.*", "", cohorts$sql[1])
-    createTempTableSql <- SqlRender::splitSql(sql)[1]
-    sql <- sapply(split(uniqueConceptSets, 1:nrow(uniqueConceptSets)), 
-                  function(x) {
-                    sub("SELECT [0-9]+ as codeset_id", sprintf("SELECT %s as codeset_id", x$uniqueConceptSetId), x$sql)
-                  })
-    sql <- paste(c(createTempTableSql, sql), collapse = ";\n")
-    sql <- SqlRender::render(sql, vocabulary_database_schema = cdmDatabaseSchema)
-    sql <- SqlRender::translate(sql,
-                                targetDialect = connection@dbms,
-                                oracleTempSchema = oracleTempSchema)
-    DatabaseConnector::executeSql(connection, sql)
-    
     ParallelLogger::logInfo("Counting codes in concept sets")
     sql <- SqlRender::loadRenderTranslateSql("CohortSourceCodes.sql",
                                              packageName = "CohortDiagnostics",
@@ -460,13 +460,6 @@ runConceptSetDiagnostics <- function(connection,
       counts <- enforceMinCellValue(counts, "conceptSubjects", minCellCount)
     }
     writeToCsv(counts, file.path(exportFolder, "included_source_concept.csv"))
-    
-    
-    sql <- "TRUNCATE TABLE #Codesets; DROP TABLE #Codesets;"
-    DatabaseConnector::renderTranslateExecuteSql(connection,
-                                                 sql,
-                                                 progressBar = FALSE,
-                                                 reportOverallTime = FALSE)
     delta <- Sys.time() - start
     ParallelLogger::logInfo(paste("Finding source codes took",
                                   signif(delta, 3),
@@ -479,23 +472,14 @@ runConceptSetDiagnostics <- function(connection,
     createConceptCountsTable(connection = connection,
                              cdmDatabaseSchema = cdmDatabaseSchema,
                              conceptCountsDatabaseSchema = cohortDatabaseSchema)
-    
-    getConceptIdFromItem <- function(item) {
-      if (item$isExcluded) {
-        return(NULL)
-      } else {
-        return(item$concept$CONCEPT_ID)
-      }
-    }
-    
+
     runOrphanConcepts <- function(conceptSet) {
       ParallelLogger::logInfo("- Finding orphan concepts for concept set ", conceptSet$conceptSetName)
-      conceptIds <- lapply(RJSONIO::fromJSON(conceptSet$expression), getConceptIdFromItem)
-      conceptIds <- do.call(c, conceptIds)
-      orphanConcepts <- findOrphanConcepts(connection = connection,
+      orphanConcepts <- .findOrphanConcepts(connection = connection,
                                            cdmDatabaseSchema = cdmDatabaseSchema,
                                            oracleTempSchema = oracleTempSchema,
-                                           conceptIds = conceptIds,
+                                           useCodesetTable = TRUE,
+                                           codesetId = conceptSet$uniqueConceptSetId,
                                            conceptCountsDatabaseSchema = cohortDatabaseSchema)
       if (nrow(orphanConcepts) > 0) {
         orphanConcepts$uniqueConceptSetId <- conceptSet$uniqueConceptSetId
@@ -517,4 +501,10 @@ runConceptSetDiagnostics <- function(connection,
                                   signif(delta, 3),
                                   attr(delta, "units")))
   }
+  ParallelLogger::logTrace("Dropping temp concept set tables")
+  sql <- "TRUNCATE TABLE #Codesets; DROP TABLE #Codesets;"
+  DatabaseConnector::renderTranslateExecuteSql(connection,
+                                               sql,
+                                               progressBar = FALSE,
+                                               reportOverallTime = FALSE)
 }

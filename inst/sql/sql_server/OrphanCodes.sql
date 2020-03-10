@@ -2,6 +2,8 @@
 {DEFAULT @work_database_schema = scratch.dbo}
 {DEFAULT @concept_counts_table = concept_counts}
 {DEFAULT @concept_ids = 72714,72984,74125,74130}
+{DEFAULT @use_codesets_table = FALSE}
+{DEFAULT @codeset_id = 1}
 
 IF OBJECT_ID('tempdb..#starting_concepts', 'U') IS NOT NULL
   DROP TABLE #starting_concepts;
@@ -22,6 +24,31 @@ IF OBJECT_ID('tempdb..#recommended_concepts', 'U') IS NOT NULL
   DROP TABLE #recommended_concepts;
 
 -- Find directly included concept and source concepts that map to those
+{@use_codesets_table} ? {
+
+SELECT concept.concept_id,
+	concept_name
+INTO #starting_concepts
+FROM (
+	SELECT concept_id
+	FROM #Codesets
+	WHERE codeset_id = @codeset_id
+	
+	UNION
+	
+	SELECT concept_id_1
+	FROM #Codesets codesets
+	INNER JOIN cdm_ibm_ccae_v1103.dbo.concept_relationship
+		ON codesets.concept_id = concept_id_2
+			AND concept_relationship.relationship_id = 'Maps to'
+			AND concept_relationship.invalid_reasON IS NULL
+	WHERE codeset_id = @codeset_id
+	) all_concepts
+INNER JOIN @cdm_database_schema.concept
+	ON all_concepts.concept_id = concept.concept_id;
+	
+} : {
+
 SELECT concept_id,
 	concept_name
 INTO #starting_concepts
@@ -44,6 +71,8 @@ FROM (
 		ON cr1.concept_id_1 = c1.concept_id
 	WHERE ca1.ancestor_concept_id IN (@concept_ids)
 	) tmp;
+	
+}
 
 -- Find synonyms
 SELECT cs1.concept_id,

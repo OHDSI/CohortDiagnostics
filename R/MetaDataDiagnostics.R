@@ -53,6 +53,24 @@ findOrphanConcepts <- function(connectionDetails = NULL,
                                conceptIds,
                                conceptCountsDatabaseSchema = cdmDatabaseSchema,
                                conceptCountsTable = "concept_counts") {
+  return(.findOrphanConcepts(connectionDetails = connectionDetails,
+                             connection = connection,
+                             cdmDatabaseSchema = cdmDatabaseSchema,
+                             oracleTempSchema = oracleTempSchema,
+                             conceptIds = conceptIds,
+                             conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
+                             conceptCountsTable = conceptCountsTable))
+}
+
+.findOrphanConcepts <- function(connectionDetails = NULL,
+                                connection = NULL,
+                                cdmDatabaseSchema,
+                                oracleTempSchema = NULL,
+                                conceptIds = c(),
+                                useCodesetTable = FALSE,
+                                codesetId = 1,
+                                conceptCountsDatabaseSchema = cdmDatabaseSchema,
+                                conceptCountsTable = "concept_counts") {
   ParallelLogger::logInfo("Finding orphan concepts")
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
@@ -65,7 +83,9 @@ findOrphanConcepts <- function(connectionDetails = NULL,
                                            cdm_database_schema = cdmDatabaseSchema,
                                            work_database_schema = conceptCountsDatabaseSchema,
                                            concept_counts_table = conceptCountsTable,
-                                           concept_ids = conceptIds)
+                                           concept_ids = conceptIds,
+                                           use_codesets_table = useCodesetTable,
+                                           codeset_id = codesetId)
   DatabaseConnector::executeSql(connection, sql)
   ParallelLogger::logTrace("- Fetching orphan concepts from server")
   sql <- "SELECT rc1.concept_count, c1.*
@@ -78,7 +98,7 @@ findOrphanConcepts <- function(connectionDetails = NULL,
                                                                oracleTempSchema = oracleTempSchema,
                                                                snakeCaseToCamelCase = TRUE,
                                                                cdm_database_schema = cdmDatabaseSchema)
-
+  
   ParallelLogger::logTrace("- Dropping orphan temp tables")
   sql <- SqlRender::loadRenderTranslateSql("DropOrphanConceptTempTables.sql",
                                            packageName = "CohortDiagnostics",
