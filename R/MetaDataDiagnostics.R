@@ -52,14 +52,16 @@ findOrphanConcepts <- function(connectionDetails = NULL,
                                oracleTempSchema = NULL,
                                conceptIds,
                                conceptCountsDatabaseSchema = cdmDatabaseSchema,
-                               conceptCountsTable = "concept_counts") {
+                               conceptCountsTable = "concept_counts",
+                               conceptCountsTableIsTemp = FALSE) {
   return(.findOrphanConcepts(connectionDetails = connectionDetails,
                              connection = connection,
                              cdmDatabaseSchema = cdmDatabaseSchema,
                              oracleTempSchema = oracleTempSchema,
                              conceptIds = conceptIds,
                              conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
-                             conceptCountsTable = conceptCountsTable))
+                             conceptCountsTable = conceptCountsTable,
+                             conceptCountsTableIsTemp = conceptCountsTableIsTemp))
 }
 
 .findOrphanConcepts <- function(connectionDetails = NULL,
@@ -70,7 +72,8 @@ findOrphanConcepts <- function(connectionDetails = NULL,
                                 useCodesetTable = FALSE,
                                 codesetId = 1,
                                 conceptCountsDatabaseSchema = cdmDatabaseSchema,
-                                conceptCountsTable = "concept_counts") {
+                                conceptCountsTable = "concept_counts",
+                                conceptCountsTableIsTemp = FALSE) {
   ParallelLogger::logInfo("Finding orphan concepts")
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
@@ -83,6 +86,7 @@ findOrphanConcepts <- function(connectionDetails = NULL,
                                            cdm_database_schema = cdmDatabaseSchema,
                                            work_database_schema = conceptCountsDatabaseSchema,
                                            concept_counts_table = conceptCountsTable,
+                                           concept_counts_table_is_temp = conceptCountsTableIsTemp,
                                            concept_ids = conceptIds,
                                            use_codesets_table = useCodesetTable,
                                            codeset_id = codesetId)
@@ -224,7 +228,8 @@ createConceptCountsTable <- function(connectionDetails = NULL,
                                      connection = NULL,
                                      cdmDatabaseSchema,
                                      conceptCountsDatabaseSchema = cdmDatabaseSchema,
-                                     conceptCountsTable = "concept_counts") {
+                                     conceptCountsTable = "concept_counts",
+                                     conceptCountsTableIsTemp = FALSE) {
   ParallelLogger::logInfo("Creating concept counts table")
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
@@ -235,7 +240,8 @@ createConceptCountsTable <- function(connectionDetails = NULL,
                                            dbms = connection@dbms,
                                            cdm_database_schema = cdmDatabaseSchema,
                                            work_database_schema = conceptCountsDatabaseSchema,
-                                           concept_counts_table = conceptCountsTable)
+                                           concept_counts_table = conceptCountsTable,
+                                           table_is_temp = conceptCountsTableIsTemp)
   DatabaseConnector::executeSql(connection, sql)
 }
 

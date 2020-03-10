@@ -1,6 +1,7 @@
 {DEFAULT @cdm_database_schema = cdm_optum_extended_dod_v1027.dbo}
 {DEFAULT @work_database_schema = scratch.dbo}
 {DEFAULT @concept_counts_table = concept_counts}
+{DEFAULT @concept_counts_table_is_temp = FALSE}
 {DEFAULT @concept_ids = 72714,72984,74125,74130}
 {DEFAULT @use_codesets_table = FALSE}
 {DEFAULT @codeset_id = 1}
@@ -149,7 +150,11 @@ FROM (
 	FROM @cdm_database_schema.concept c1
 	LEFT JOIN #starting_concepts sc1
 		ON c1.concept_id = sc1.concept_id
+{@concept_counts_table_is_temp} ? {		
+	INNER JOIN @concept_counts_table a1
+} : {
 	INNER JOIN @work_database_schema.@concept_counts_table a1
+}
 		ON c1.concept_id = a1.concept_id
 	WHERE sc1.concept_id IS NULL
 	) c1

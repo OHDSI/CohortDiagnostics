@@ -471,7 +471,8 @@ runConceptSetDiagnostics <- function(connection,
     start <- Sys.time()
     createConceptCountsTable(connection = connection,
                              cdmDatabaseSchema = cdmDatabaseSchema,
-                             conceptCountsDatabaseSchema = cohortDatabaseSchema)
+                             conceptCountsTable = "#concept_counts",
+                             conceptCountsTableIsTemp = TRUE)
 
     runOrphanConcepts <- function(conceptSet) {
       ParallelLogger::logInfo("- Finding orphan concepts for concept set ", conceptSet$conceptSetName)
@@ -480,7 +481,8 @@ runConceptSetDiagnostics <- function(connection,
                                            oracleTempSchema = oracleTempSchema,
                                            useCodesetTable = TRUE,
                                            codesetId = conceptSet$uniqueConceptSetId,
-                                           conceptCountsDatabaseSchema = cohortDatabaseSchema)
+                                           conceptCountsTable = "#concept_counts",
+                                           conceptCountsTableIsTemp = TRUE)
       if (nrow(orphanConcepts) > 0) {
         orphanConcepts$uniqueConceptSetId <- conceptSet$uniqueConceptSetId
       }
@@ -496,6 +498,13 @@ runConceptSetDiagnostics <- function(connection,
       data <- enforceMinCellValue(data, "conceptCount", minCellCount)
     }
     writeToCsv(data, file.path(exportFolder, "orphan_concept.csv"))
+    
+    ParallelLogger::logTrace("Dropping temp concept counts")
+    sql <- "TRUNCATE TABLE #concept_counts; DROP TABLE #concept_counts;"
+    DatabaseConnector::renderTranslateExecuteSql(connection,
+                                                 sql,
+                                                 progressBar = FALSE,
+                                                 reportOverallTime = FALSE)
     delta <- Sys.time() - start
     ParallelLogger::logInfo(paste("Finding orphan concepts took",
                                   signif(delta, 3),

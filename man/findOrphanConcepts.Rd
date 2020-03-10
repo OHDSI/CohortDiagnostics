@@ -11,7 +11,8 @@ findOrphanConcepts(
   oracleTempSchema = NULL,
   conceptIds,
   conceptCountsDatabaseSchema = cdmDatabaseSchema,
-  conceptCountsTable = "concept_counts"
+  conceptCountsTable = "concept_counts",
+  conceptCountsTableIsTemp = FALSE
 )
 }
 \arguments{
@@ -37,10 +38,13 @@ privileges for storing temporary tables.}
 
 \item{conceptCountsDatabaseSchema}{Schema name where your concept counts table resides. Note that
 for SQL Server, this should include both the database and
-schema name, for example 'scratch.dbo'.}
+schema name, for example 'scratch.dbo'. Ignored if
+\code{conceptCountsTableIsTemp = TRUE}.}
 
 \item{conceptCountsTable}{Name of the concept counts table. This table can be created
 using the \code{\link{createConceptCountsTable}}.}
+
+\item{conceptCountsTableIsTemp}{Is the concept counts table a temp table?}
 }
 \value{
 A data frame with orphan concepts, with counts how often the code was encountered in the CDM.
