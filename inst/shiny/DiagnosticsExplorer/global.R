@@ -2,7 +2,7 @@ if (!exists("shinySettings")) {
   if (file.exists("data")) {
     shinySettings <- list(dataFolder = "data")
   } else {
-    shinySettings <- list(dataFolder = "s:/examplePackage/panther/diagnosticsExport")
+    shinySettings <- list(dataFolder = "s:/noPackage/export")
   }
 }
 dataFolder <- shinySettings$dataFolder
@@ -61,6 +61,7 @@ if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {
 }
 
 cohort <- unique(cohort)
+cohort <- cohort[, c("cohortFullName", "cohortId", "cohortName")]
 if (exists("covariate")) {
   covariate <- unique(covariate)
 }

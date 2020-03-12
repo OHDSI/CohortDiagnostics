@@ -203,6 +203,7 @@ runStudyDiagnostics(packageName = "BarcelonaStudyAThon",
 # Using cohort set with WebAPI ---------------------------------------------------
 baseUrl <- Sys.getenv("ohdsiBaseUrl")
 inclusionStatisticsFolder <- "c:/temp/incStats"
+exportFolder <- "s:/noPackage/export"
 cohortSetReference <- data.frame(atlasId = c(1770710, 1770713),
                                  atlasName = c("New users of ACE inhibitors as first-line monotherapy for hypertension", "Acute myocardial infarction outcome"),
                                  cohortId = c(1770710, 1770713),
@@ -221,3 +222,27 @@ instantiateCohortSet(connectionDetails = connectionDetails,
                      cohortSetReference = cohortSetReference,
                      generateInclusionStats = TRUE,
                      inclusionStatisticsFolder = inclusionStatisticsFolder)
+
+runCohortDiagnostics(baseUrl = baseUrl,
+                     cohortSetReference = cohortSetReference,
+                     connectionDetails = connectionDetails,
+                     cdmDatabaseSchema = cdmDatabaseSchema,
+                     oracleTempSchema = oracleTempSchema,
+                     cohortDatabaseSchema = cohortDatabaseSchema,
+                     cohortTable = cohortTable,
+                     inclusionStatisticsFolder = inclusionStatisticsFolder,
+                     exportFolder = exportFolder,
+                     databaseId = databaseId,
+                     databaseName = databaseName,
+                     databaseDescription = databaseDescription,
+                     runInclusionStatistics = TRUE,
+                     runIncludedSourceConcepts = TRUE,
+                     runOrphanConcepts = FALSE,
+                     runTimeDistributions = FALSE,
+                     runBreakdownIndexEvents = TRUE,
+                     runIncidenceRate = TRUE,
+                     runCohortOverlap = TRUE,
+                     runCohortCharacterization = FALSE,
+                     minCellCount = 5)
+
+launchDiagnosticsExplorer(exportFolder)

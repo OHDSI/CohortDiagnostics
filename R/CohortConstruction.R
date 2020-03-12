@@ -445,17 +445,47 @@ instantiateCohortSet <- function(connectionDetails = NULL,
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
+
+  cohorts <- loadCohortsFromWebApi(baseUrl = baseUrl,
+                                   cohortSetReference = cohortSetReference,
+                                   generateStats = generateInclusionStats)
+  
   if (generateInclusionStats) {
     ParallelLogger::logInfo("Creating temporary inclusion statistics tables")
     pathToSql <- system.file( "inclusionStatsTables.sql", package = "ROhdsiWebApi")
     sql <- SqlRender::readSql(pathToSql)
     sql <- SqlRender::translate(sql, targetDialect = connection@dbms, oracleTempSchema = oracleTempSchema)
     DatabaseConnector::executeSql(connection, sql)
+    
+    inclusionRules <- data.frame()
+    for (i in 1:nrow(cohorts)) {
+      cohortDefinition <- RJSONIO::fromJSON(cohorts$json[i])
+      if (!is.null(cohortDefinition$InclusionRules)) {
+        nrOfRules <- length(cohortDefinition$InclusionRules)
+        if (nrOfRules > 0) {
+          for (j in 1:nrOfRules) {
+            inclusionRules <- rbind(inclusionRules, data.frame(cohortId = cohorts$cohortId[i],
+                                                               ruleSequence = i - 1,
+                                                               ruleName = cohortDefinition$InclusionRules[[j]]$name))
+          }
+        }
+      }
+    }
+    inclusionRules <- merge(inclusionRules, data.frame(cohortId = cohorts$cohortId,
+                                                       cohortName = cohorts$cohortFullName))
+    write.csv(inclusionRules, file.path(inclusionStatisticsFolder, "InclusionRules.csv"), row.names = FALSE)
+    
+    inclusionRules <- data.frame(cohort_definition_id = inclusionRules$cohortId,
+                                 rule_sequence = inclusionRules$ruleSequence,
+                                 name = inclusionRules$ruleName)
+    DatabaseConnector::insertTable(connection = connection,
+                                   tableName = "#cohort_inclusion",
+                                   data = inclusionRules,
+                                   dropTableIfExists = FALSE,
+                                   createTable = FALSE,
+                                   tempTable = TRUE,
+                                   oracleTempSchema = oracleTempSchema)
   }
-  
-  cohorts <- loadCohortsFromWebApi(baseUrl = baseUrl,
-                                   cohortSetReference = cohortSetReference,
-                                   generateStats = generateInclusionStats)
   
   for (i in 1:nrow(cohorts)) {
     ParallelLogger::logInfo("Instantiation cohort ", cohorts$atlasName[i])
@@ -486,23 +516,6 @@ instantiateCohortSet <- function(connectionDetails = NULL,
   }
   
   if (generateInclusionStats) {
-    inclusionRules <- data.frame()
-    for (i in 1:nrow(cohorts)) {
-      cohortDefinition <- RJSONIO::fromJSON(cohorts$json[i])
-      if (!is.null(cohortDefinition$InclusionRules)) {
-        nrOfRules <- length(cohortDefinition$InclusionRules)
-        if (nrOfRules > 0) {
-          for (j in 1:nrOfRules) {
-            inclusionRules <- rbind(inclusionRules, data.frame(cohortId = cohorts$cohortId[i],
-                                                               ruleSequence = i - 1,
-                                                               ruleName = cohortDefinition$InclusionRules[[j]]$name))
-          }
-        }
-      }
-    }
-    inclusionRules <- merge(inclusionRules, data.frame(cohortId = cohorts$cohortId,
-                                                       cohortName = cohorts$name))
-    write.csv(inclusionRules, file.path(inclusionStatisticsFolder, "InclusionRules.csv"), row.names = FALSE)
     fetchStats <- function(table, fileName) {
       ParallelLogger::logDebug("- Fetching data from ", table)
       sql <- "SELECT * FROM @table"

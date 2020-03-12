@@ -66,8 +66,8 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  inclusionStatisticsFolder = NULL,
                                  exportFolder,
                                  databaseId,
-                                 databaseName,
-                                 databaseDescription,
+                                 databaseName = databaseId,
+                                 databaseDescription = "",
                                  runInclusionStatistics = TRUE,
                                  runIncludedSourceConcepts = TRUE,
                                  runOrphanConcepts = TRUE,
@@ -574,9 +574,10 @@ loadCohortsFromWebApi <- function(baseUrl,
   if (!is.null(cohortIds)) {
     cohorts <- cohorts[cohorts$cohortId %in% cohortIds, ]
   }
+  cohorts <- dplyr::rename(cohorts, cohortName = "name", cohortFullName = "atlasName")
   ParallelLogger::logInfo("Retrieving cohort definitions from WebAPI")
   for (i in 1:nrow(cohorts)) {
-    ParallelLogger::logInfo("- Retrieving definitions for cohort ", cohorts$atlasName[i])
+    ParallelLogger::logInfo("- Retrieving definitions for cohort ", cohorts$cohortFullName[i])
     cohortExpression <-  ROhdsiWebApi::getCohortDefinitionExpression(definitionId = cohorts$atlasId[i],
                                                                      baseUrl = baseUrl)
     cohorts$json[i] <- cohortExpression$expression
