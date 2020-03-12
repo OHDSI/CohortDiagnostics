@@ -26,12 +26,12 @@
 #'
 #' @template OracleTempSchema
 #'
-#' @template CohortTable
-#' 
 #' @template ConceptCounts
 #'
-#' @param packageName                 The name of the package containing the cohort definitions
-#' @param cohortToCreateFile          The location of the cohortToCreate file within the package.
+#' @template CohortSetSpecs
+#' 
+#' @template CohortSetReference
+#' 
 #' @param exportFolder                The folder where the output will be exported to. If this folder
 #'                                    does not exist it will be created.
 #' @param cohortIds                   Optionally, provide a subset of cohort IDs to restrict the
@@ -44,25 +44,39 @@
 #' @param minCellCount                The minimum cell count for fields contains person counts or fractions.
 #'
 #' @export
-runCohortDiagnosticsExternalCounts <- function(packageName,
-                                               cohortToCreateFile = "settings/CohortsToCreate.csv",
-                                               connectionDetails = NULL,
-                                               connection = NULL,
-                                               cdmDatabaseSchema,
-                                               oracleTempSchema = NULL,
-                                               cohortDatabaseSchema,
-                                               cohortTable = "cohort",
-                                               cohortIds = NULL,
-                                               conceptCountsDatabaseSchema = cdmDatabaseSchema,
-                                               conceptCountsTable = "concept_counts",
-                                               conceptCountsTableIsTemp = FALSE,
-                                               exportFolder,
-                                               databaseId,
-                                               databaseName,
-                                               databaseDescription,
-                                               runIncludedSourceConcepts = TRUE,
-                                               runOrphanConcepts = TRUE,
-                                               minCellCount = 5) {
+runCohortDiagnosticsUsingExternalCounts <- function(packageName = NULL,
+                                                    cohortToCreateFile = "settings/CohortsToCreate.csv",
+                                                    baseUrl = NULL,
+                                                    cohortSetReference = NULL,
+                                                    connectionDetails = NULL,
+                                                    connection = NULL,
+                                                    cdmDatabaseSchema,
+                                                    oracleTempSchema = NULL,
+                                                    cohortIds = NULL,
+                                                    conceptCountsDatabaseSchema = cdmDatabaseSchema,
+                                                    conceptCountsTable = "concept_counts",
+                                                    conceptCountsTableIsTemp = FALSE,
+                                                    exportFolder,
+                                                    databaseId,
+                                                    databaseName,
+                                                    databaseDescription,
+                                                    runIncludedSourceConcepts = TRUE,
+                                                    runOrphanConcepts = TRUE,
+                                                    minCellCount = 5) {
+  if (is.null(packageName) && is.null(baseUrl)) {
+    stop("Must provide either packageName and cohortToCreateFile, or baseUrl and cohortSetReference")
+  }
+  if (!is.null(cohortSetReference)) {
+    if (is.null(cohortSetReference$atlasId))
+      stop("cohortSetReference must contain atlasId field")
+    if (is.null(cohortSetReference$atlasName))
+      stop("cohortSetReference must contain atlasName field")
+    if (is.null(cohortSetReference$cohortId))
+      stop("cohortSetReference must contain cohortId field")
+    if (is.null(cohortSetReference$name))
+      stop("cohortSetReference must contain name field")
+  }
+  
   start <- Sys.time()
   if (!file.exists(exportFolder)) {
     dir.create(exportFolder)
@@ -73,9 +87,17 @@ runCohortDiagnosticsExternalCounts <- function(packageName,
     on.exit(DatabaseConnector::disconnect(connection))
   }
   
-  cohorts <- loadCohortsFromPackage(packageName = packageName,
-                                    cohortToCreateFile = cohortToCreateFile,
-                                    cohortIds = cohortIds)
+  if (is.null(packageName)) {
+    cohorts <- loadCohortsFromWebApi(baseUrl = baseUrl,
+                                     cohortSetReference = cohortSetReference,
+                                     cohortIds = cohortIds)
+  } else {
+    cohorts <- loadCohortsFromPackage(packageName = packageName,
+                                      cohortToCreateFile = cohortToCreateFile,
+                                      cohortIds = cohortIds)
+  }
+  
+  writeToCsv(cohorts, file.path(exportFolder, "cohort.csv"))
   
   ParallelLogger::logInfo("Saving database metadata")
   database <- data.frame(databaseId = databaseId,
@@ -87,7 +109,6 @@ runCohortDiagnosticsExternalCounts <- function(packageName,
     runConceptSetDiagnostics(connection = connection,
                              oracleTempSchema = oracleTempSchema,
                              cdmDatabaseSchema = cdmDatabaseSchema,
-                             cohortDatabaseSchema = cohortDatabaseSchema,
                              cohorts = cohorts,
                              runIncludedSourceConcepts = runIncludedSourceConcepts,
                              runOrphanConcepts = runOrphanConcepts,

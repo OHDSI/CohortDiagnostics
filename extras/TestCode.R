@@ -198,3 +198,26 @@ runStudyDiagnostics(packageName = "BarcelonaStudyAThon",
                     runIncidenceProportion = TRUE,
                     runCohortOverlap = TRUE,
                     runCohortCharacterization = TRUE)
+
+
+# Using cohort set with WebAPI ---------------------------------------------------
+baseUrl <- Sys.getenv("ohdsiBaseUrl")
+inclusionStatisticsFolder <- "c:/temp/incStats"
+cohortSetReference <- data.frame(atlasId = c(1770710, 1770713),
+                                 atlasName = c("New users of ACE inhibitors as first-line monotherapy for hypertension", "Acute myocardial infarction outcome"),
+                                 cohortId = c(1770710, 1770713),
+                                 name = c("New_users_of_ACE_inhibitors_as_firstline_monotherapy_for_hypertension_2", "Acute_myocardial_infarction_outcome"))
+
+createCohortTable(connectionDetails = connectionDetails,
+                  cohortDatabaseSchema = cohortDatabaseSchema,
+                  cohortTable = cohortTable)
+
+instantiateCohortSet(connectionDetails = connectionDetails,
+                     cdmDatabaseSchema = cdmDatabaseSchema,
+                     oracleTempSchema = oracleTempSchema,
+                     cohortDatabaseSchema = cohortDatabaseSchema,
+                     cohortTable = cohortTable,
+                     baseUrl = baseUrl,
+                     cohortSetReference = cohortSetReference,
+                     generateInclusionStats = TRUE,
+                     inclusionStatisticsFolder = inclusionStatisticsFolder)

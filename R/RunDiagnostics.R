@@ -18,7 +18,7 @@
 #'
 #' @description
 #' Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the
-#' \code{ROhdsiWebApi::insertCohortDefinitionSetInPackage} function.
+#' \code{ROhdsiWebApi::insertCohortDefinitionSetInPackage} function. Assumes the cohorts have already been instantiated.
 #'
 #' @template Connection
 #'
@@ -28,8 +28,10 @@
 #'
 #' @template CohortTable
 #'
-#' @param packageName                 The name of the package containing the cohort definitions
-#' @param cohortToCreateFile          The location of the cohortToCreate file within the package.
+#' @template CohortSetSpecs
+#' 
+#' @template CohortSetReference
+#' 
 #' @param inclusionStatisticsFolder   The folder where the inclusion rule statistics are stored. Can be
 #'                                    left NULL if \code{runInclusionStatistics = FALSE}.
 #' @param exportFolder                The folder where the output will be exported to. If this folder
@@ -50,8 +52,10 @@
 #' @param minCellCount                The minimum cell count for fields contains person counts or fractions.
 #'
 #' @export
-runCohortDiagnostics <- function(packageName,
+runCohortDiagnostics <- function(packageName = NULL,
                                  cohortToCreateFile = "settings/CohortsToCreate.csv",
+                                 baseUrl = NULL,
+                                 cohortSetReference = NULL,
                                  connectionDetails = NULL,
                                  connection = NULL,
                                  cdmDatabaseSchema,
@@ -83,9 +87,17 @@ runCohortDiagnostics <- function(packageName,
     on.exit(DatabaseConnector::disconnect(connection))
   }
   
-  cohorts <- loadCohortsFromPackage(packageName = packageName,
-                                    cohortToCreateFile = cohortToCreateFile,
-                                    cohortIds = cohortIds)
+  if (is.null(packageName)) {
+    cohorts <- loadCohortsFromWebApi(baseUrl = baseUrl,
+                                     cohortSetReference = cohortSetReference,
+                                     cohortIds = cohortIds)
+  } else {
+    cohorts <- loadCohortsFromPackage(packageName = packageName,
+                                      cohortToCreateFile = cohortToCreateFile,
+                                      cohortIds = cohortIds)
+  }
+  
+  writeToCsv(cohorts, file.path(exportFolder, "cohort.csv"))
   
   ParallelLogger::logInfo("Saving database metadata")
   database <- data.frame(databaseId = databaseId,
@@ -134,7 +146,6 @@ runCohortDiagnostics <- function(packageName,
     runConceptSetDiagnostics(connection = connection,
                              oracleTempSchema = oracleTempSchema,
                              cdmDatabaseSchema = cdmDatabaseSchema,
-                             cohortDatabaseSchema = cohortDatabaseSchema,
                              cohorts = cohorts,
                              runIncludedSourceConcepts = runIncludedSourceConcepts,
                              runOrphanConcepts = runOrphanConcepts,
@@ -413,7 +424,6 @@ instantiateUniqueConceptSets <- function(cohorts, uniqueConceptSets, connection,
 runConceptSetDiagnostics <- function(connection, 
                                      oracleTempSchema, 
                                      cdmDatabaseSchema,
-                                     cohortDatabaseSchema,
                                      cohorts, 
                                      runIncludedSourceConcepts, 
                                      runOrphanConcepts,
@@ -502,7 +512,7 @@ runConceptSetDiagnostics <- function(connection,
     data <- lapply(split(uniqueConceptSets, uniqueConceptSets$uniqueConceptSetId), runOrphanConcepts)
     data <- do.call(rbind, data)
     if (nrow(data) > 0) {
-      data <- merge(conceptSets[, c("cohortId", "conceptSetId", "conceptSetName", "uniqueConceptSetId")], data)
+      data <- merge(uniqueConceptSets[, c("cohortId", "conceptSetId", "conceptSetName", "uniqueConceptSetId")], data)
       data$uniqueConceptSetId <- NULL
       data$databaseId <- databaseId
       data <- enforceMinCellValue(data, "conceptCount", minCellCount)
@@ -540,7 +550,6 @@ loadCohortsFromPackage <- function(packageName, cohortToCreateFile, cohortIds) {
   } else {
     cohorts <- dplyr::rename(cohorts, cohortName = "name", cohortFullName = "fullName")
   }
-  writeToCsv(cohorts, file.path(exportFolder, "cohort.csv"))
   
   getSql <- function(name) {
     pathToSql <- system.file("sql", "sql_server", paste0(name, ".sql"), package = packageName)
@@ -554,5 +563,27 @@ loadCohortsFromPackage <- function(packageName, cohortToCreateFile, cohortIds) {
     return(json)
   }
   cohorts$json <- sapply(cohorts$cohortName, getJson)
+  return(cohorts)
+}
+
+loadCohortsFromWebApi <- function(baseUrl,
+                                  cohortSetReference,
+                                  cohortIds = NULL,
+                                  generateStats = TRUE) {
+  cohorts <- cohortSetReference
+  if (!is.null(cohortIds)) {
+    cohorts <- cohorts[cohorts$cohortId %in% cohortIds, ]
+  }
+  ParallelLogger::logInfo("Retrieving cohort definitions from WebAPI")
+  for (i in 1:nrow(cohorts)) {
+    ParallelLogger::logInfo("- Retrieving definitions for cohort ", cohorts$atlasName[i])
+    cohortExpression <-  ROhdsiWebApi::getCohortDefinitionExpression(definitionId = cohorts$atlasId[i],
+                                                                     baseUrl = baseUrl)
+    cohorts$json[i] <- cohortExpression$expression
+    cohorts$sql[i] <- ROhdsiWebApi::getCohortDefinitionSql(definitionId = cohorts$atlasId[i],
+                                                           baseUrl = baseUrl,
+                                                           generateStats = generateStats)
+  }
+  cohorts$atlasId <- NULL
   return(cohorts)
 }

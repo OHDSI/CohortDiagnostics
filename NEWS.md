@@ -1,4 +1,28 @@
+CohortDiagnostics 0.1.0
+=======================
+
+Changes
+
+1. Orphan code check now resolves concept sets instead of using verbatim concepts. Should include specificity.
+
+2. Added option to use the same y-axis for all databases in incidence rate plot.
+
+3. Added runCohortDiagnosticsUsingExternalCounts function.
+
+4. Added option to use cohort definitions in WebAPI instead of those stored in study package.
+
+
+Bugfixes:
+
+1. Fixed bug causing weird false positives in orphan codes (caused by transforming concept IDs to scientific notation).
+
+2. Better handling in viewer when some analyses are not executed.
+
+3. Now also showing cohorts that had zero entries.
+
+4. Fixed error when there was only 1 cohort.
+
 CohortDiagnostics 0.0.1
-======================
+=======================
 
 Initial version

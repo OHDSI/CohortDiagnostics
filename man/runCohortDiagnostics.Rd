@@ -5,8 +5,10 @@
 \title{Run cohort diagnostics}
 \usage{
 runCohortDiagnostics(
-  packageName,
+  packageName = NULL,
   cohortToCreateFile = "settings/CohortsToCreate.csv",
+  baseUrl = NULL,
+  cohortSetReference = NULL,
   connectionDetails = NULL,
   connection = NULL,
   cdmDatabaseSchema,
@@ -31,9 +33,18 @@ runCohortDiagnostics(
 )
 }
 \arguments{
-\item{packageName}{The name of the package containing the cohort definitions}
+\item{packageName}{The name of the package containing the cohort definitions. Can be left NULL if 
+\code{baseUrl} and \code{cohortSetReference} have been specified.}
 
-\item{cohortToCreateFile}{The location of the cohortToCreate file within the package.}
+\item{cohortToCreateFile}{The location of the cohortToCreate file within the package. Is ignored if 
+\code{baseUrl} and \code{cohortSetReference} have been specified.}
+
+\item{baseUrl}{The base URL for the WebApi instance, for example:
+"http://server.org:80/WebAPI". Can be left NULL if 
+\code{packageName} and \code{cohortToCreateFile} have been specified.}
+
+\item{cohortSetReference}{A data frame with four columns, as described in the details. Can be left NULL if 
+\code{packageName} and \code{cohortToCreateFile} have been specified.}
 
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
@@ -94,5 +105,24 @@ does not exist it will be created.}
 }
 \description{
 Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the
-\code{ROhdsiWebApi::insertCohortDefinitionSetInPackage} function.
+\code{ROhdsiWebApi::insertCohortDefinitionSetInPackage} function. Assumes the cohorts have already been instantiated.
+}
+\details{
+Currently two ways of executing this function are supported, either (1) embedded in a study package, assuming 
+the cohort definitions are stored in that package using the \code{ROhdsiWebApi::insertCohortDefinitionSetInPackage},
+or (2) by using a WebApi interface to retrieve the cohort definitions.
+
+When using this function from within a study package, use the \code{packageName} and \code{cohortToCreateFile} to specify
+the name of the study package, and the name of the cohortToCreate file within that package, respectivly
+
+When using this function using a WebApi interface, use the \code{baseUrl} and \code{cohortSetReference} to specify how to 
+connect to the WebApi, and which cohorts to fetch, respectively.
+
+The \code{cohortSetReference} argument must be a data frame with  the following columns:
+\describe{
+\item{atlasId}{The cohort ID in ATLAS.}
+\item{atlasName}{The full name of the cohort. This will be shown in the Shiny app.}
+\item{cohortId}{The cohort ID to use in the package. USually the same as the cohort ID in ATLAS.}
+\item{name}{A short name for the cohort, to use to create file names. do not use special characters.}
+}
 }

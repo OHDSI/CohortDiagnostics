@@ -57,12 +57,12 @@ createCohortTable <- function(connectionDetails = NULL,
   }
   sql <- SqlRender::loadRenderTranslateSql("CreateCohortTable.sql",
                                            packageName = "CohortDiagnostics",
-                                           dbms = connectionDetails$dbms,
+                                           dbms = connection@dbms,
                                            cohort_database_schema = cohortDatabaseSchema,
                                            cohort_table = cohortTable)
   DatabaseConnector::executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
   ParallelLogger::logDebug("- Created table ", cohortDatabaseSchema, ".", cohortTable)
-
+  
   if (createInclusionStatsTables) {
     ParallelLogger::logInfo("Creating inclusion rule statistics tables")
     sql <- SqlRender::loadRenderTranslateSql("CreateInclusionStatsTables.sql",
@@ -172,12 +172,12 @@ instantiateCohort <- function(connectionDetails = NULL,
       }
     }
   }
-
+  
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-
+  
   ParallelLogger::logInfo("Instantiation cohort with cohort_definition_id = ", cohortId)
   sql <- cohortSql
   if (generateInclusionStats) {
@@ -211,7 +211,7 @@ instantiateCohort <- function(connectionDetails = NULL,
                               targetDialect = connectionDetails$dbms,
                               oracleTempSchema = oracleTempSchema)
   DatabaseConnector::executeSql(connection, sql)
-
+  
   if (generateInclusionStats && nrow(inclusionRules) > 0) {
     DatabaseConnector::insertTable(connection = connection,
                                    tableName = paste(resultsDatabaseSchema,
@@ -225,7 +225,7 @@ instantiateCohort <- function(connectionDetails = NULL,
   }
   delta <- Sys.time() - start
   writeLines(paste("Instantiating cohort took", signif(delta, 3), attr(delta, "units")))
-
+  
 }
 
 #' Get statistics on cohort inclusion criteria
@@ -336,7 +336,7 @@ getInclusionStatisticsFromFiles <- function(cohortId,
   start <- Sys.time()
   ParallelLogger::logInfo("Fetching inclusion statistics for cohort with cohort_definition_id = ",
                           cohortId)
-
+  
   fetchStats <- function(file) {
     ParallelLogger::logDebug("- Fetching data from ", file)
     stats <- readr::read_csv(file, col_types = readr::cols())
@@ -368,8 +368,8 @@ processInclusionStats <- function(inclusion,
     }
     result <- merge(unique(inclusion[, c("ruleSequence", "name")]),
                     inclusionStats[inclusionStats$modeId ==
-      0, c("ruleSequence", "personCount", "gainCount", "personTotal")], )
-
+                                     0, c("ruleSequence", "personCount", "gainCount", "personTotal")], )
+    
     result$remain <- rep(0, nrow(result))
     inclusionResults <- inclusionResults[inclusionResults$modeId == 0, ]
     mask <- 0
@@ -394,4 +394,146 @@ processInclusionStats <- function(inclusion,
                    summaryStats = summaryStats)
   }
   return(result)
+}
+
+#' Instantiate a set of cohort
+#'
+#' @description
+#' This function instantiates a set of cohort in the cohort table, using definitions that are fetched from a WebApi interface.
+#' Optionally, the inclusion rule statistics are computed and stored in the \code{inclusionStatisticsFolder}.
+#'
+#' @template Connection
+#'
+#' @template CohortTable
+#'
+#' @template OracleTempSchema
+#'
+#' @template CdmDatabaseSchema
+#' 
+#' @param baseUrl                     The base URL for the WebApi instance, for example:
+#'                                    "http://server.org:80/WebAPI".      
+#' @param cohortSetReference          A data frame with four columns, as described in the details.  
+#'                            
+#' @template CohortSetReference
+#'
+#' @param generateInclusionStats      Compute and store inclusion rule statistics?
+#' @param inclusionStatisticsFolder   The folder where the inclusion rule statistics are stored. Can be
+#'                                    left NULL if \code{generateInclusionStats = FALSE}.
+#'
+#' @export
+instantiateCohortSet <- function(connectionDetails = NULL,
+                                 connection = NULL,
+                                 cdmDatabaseSchema,
+                                 oracleTempSchema = NULL,
+                                 cohortDatabaseSchema = cdmDatabaseSchema,
+                                 cohortTable = "cohort",
+                                 baseUrl,
+                                 cohortSetReference,
+                                 generateInclusionStats = FALSE,
+                                 inclusionStatisticsFolder = NULL) {
+  if (generateInclusionStats) {
+    if (is.null(inclusionStatisticsFolder)) {
+      stop("Must specify inclusionStatisticsFolder when generateInclusionStats = TRUE")
+    }
+    if (!file.exists(inclusionStatisticsFolder)) {
+      dir.create(inclusionStatisticsFolder, recursive = TRUE)
+    }
+  }
+  
+  start <- Sys.time()
+  if (is.null(connection)) {
+    connection <- DatabaseConnector::connect(connectionDetails)
+    on.exit(DatabaseConnector::disconnect(connection))
+  }
+  if (generateInclusionStats) {
+    ParallelLogger::logInfo("Creating temporary inclusion statistics tables")
+    pathToSql <- system.file( "inclusionStatsTables.sql", package = "ROhdsiWebApi")
+    sql <- SqlRender::readSql(pathToSql)
+    sql <- SqlRender::translate(sql, targetDialect = connection@dbms, oracleTempSchema = oracleTempSchema)
+    DatabaseConnector::executeSql(connection, sql)
+  }
+  
+  cohorts <- loadCohortsFromWebApi(baseUrl = baseUrl,
+                                   cohortSetReference = cohortSetReference,
+                                   generateStats = generateInclusionStats)
+  
+  for (i in 1:nrow(cohorts)) {
+    ParallelLogger::logInfo("Instantiation cohort ", cohorts$atlasName[i])
+    sql <- cohorts$sql[i]
+    if (generateInclusionStats) {
+      sql <- SqlRender::render(sql,
+                               cdm_database_schema = cdmDatabaseSchema,
+                               vocabulary_database_schema = cdmDatabaseSchema,
+                               target_database_schema = cohortDatabaseSchema,
+                               target_cohort_table = cohortTable,
+                               target_cohort_id = cohorts$cohortId[1],
+                               results_database_schema.cohort_inclusion = "#cohort_inclusion",
+                               results_database_schema.cohort_inclusion_result = "#cohort_inc_result",
+                               results_database_schema.cohort_inclusion_stats = "#cohort_inc_stats",
+                               results_database_schema.cohort_summary_stats = "#cohort_summary_stats")
+    } else {
+      sql <- SqlRender::render(sql,
+                               cdm_database_schema = cdmDatabaseSchema,
+                               vocabulary_database_schema = cdmDatabaseSchema,
+                               target_database_schema = cohortDatabaseSchema,
+                               target_cohort_table = cohortTable,
+                               target_cohort_id = cohorts$cohortId[1])
+    }
+    sql <- SqlRender::translate(sql,
+                                targetDialect = connectionDetails$dbms,
+                                oracleTempSchema = oracleTempSchema)
+    DatabaseConnector::executeSql(connection, sql)
+  }
+  
+  if (generateInclusionStats) {
+    inclusionRules <- data.frame()
+    for (i in 1:nrow(cohorts)) {
+      cohortDefinition <- RJSONIO::fromJSON(cohorts$json[i])
+      if (!is.null(cohortDefinition$InclusionRules)) {
+        nrOfRules <- length(cohortDefinition$InclusionRules)
+        if (nrOfRules > 0) {
+          for (j in 1:nrOfRules) {
+            inclusionRules <- rbind(inclusionRules, data.frame(cohortId = cohorts$cohortId[i],
+                                                               ruleSequence = i - 1,
+                                                               ruleName = cohortDefinition$InclusionRules[[j]]$name))
+          }
+        }
+      }
+    }
+    inclusionRules <- merge(inclusionRules, data.frame(cohortId = cohorts$cohortId,
+                                                       cohortName = cohorts$name))
+    write.csv(inclusionRules, file.path(inclusionStatisticsFolder, "InclusionRules.csv"), row.names = FALSE)
+    fetchStats <- function(table, fileName) {
+      ParallelLogger::logDebug("- Fetching data from ", table)
+      sql <- "SELECT * FROM @table"
+      data <- DatabaseConnector::renderTranslateQuerySql(sql = sql,
+                                                         connection = connection,
+                                                         snakeCaseToCamelCase = TRUE,
+                                                         table = table)
+      write.csv(data, file.path(inclusionStatisticsFolder, fileName), row.names = FALSE)
+    }
+    fetchStats("#cohort_inclusion", "cohortInclusion.csv")
+    fetchStats("#cohort_inc_result", "cohortIncResult.csv")
+    fetchStats("#cohort_inc_stats", "cohortIncStats.csv")
+    fetchStats("#cohort_summary_stats", "cohortSummaryStats.csv")
+    
+    sql <- "TRUNCATE TABLE #cohort_inclusion; 
+    DROP TABLE #cohort_inclusion;
+    
+    TRUNCATE TABLE #cohort_inc_result; 
+    DROP TABLE #cohort_inc_result;
+    
+    TRUNCATE TABLE #cohort_inc_stats; 
+    DROP TABLE #cohort_inc_stats;
+    
+    TRUNCATE TABLE #cohort_summary_stats; 
+    DROP TABLE #cohort_summary_stats;"
+    DatabaseConnector::renderTranslateExecuteSql(connection = connection,
+                                                 sql = sql,
+                                                 progressBar = FALSE,
+                                                 reportOverallTime = FALSE,
+                                                 oracleTempSchema = oracleTempSchema)
+  }
+  delta <- Sys.time() - start
+  writeLines(paste("Instantiating cohort set took", signif(delta, 3), attr(delta, "units")))
 }
