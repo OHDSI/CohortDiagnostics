@@ -13,7 +13,8 @@ findCohortOrphanConcepts(
   webApiCohortId = NULL,
   cohortJson = NULL,
   conceptCountsDatabaseSchema = cdmDatabaseSchema,
-  conceptCountsTable = "concept_counts"
+  conceptCountsTable = "concept_counts",
+  conceptCountsTableIsTemp = FALSE
 )
 }
 \arguments{

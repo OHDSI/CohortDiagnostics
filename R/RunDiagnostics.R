@@ -83,32 +83,9 @@ runCohortDiagnostics <- function(packageName,
     on.exit(DatabaseConnector::disconnect(connection))
   }
   
-  # Load created cohorts
-  pathToCsv <- system.file(cohortToCreateFile, package = packageName)
-  cohorts <- readr::read_csv(pathToCsv, col_types = readr::cols())
-  cohorts$atlasId <- NULL
-  if (!is.null(cohortIds)) {
-    cohorts <- cohorts[cohorts$cohortId %in% cohortIds, ]
-  }
-  if ("atlasName" %in% colnames(cohorts)) {
-    cohorts <- dplyr::rename(cohorts, cohortName = "name", cohortFullName = "atlasName")
-  } else {
-    cohorts <- dplyr::rename(cohorts, cohortName = "name", cohortFullName = "fullName")
-  }
-  writeToCsv(cohorts, file.path(exportFolder, "cohort.csv"))
-  
-  getSql <- function(name) {
-    pathToSql <- system.file("sql", "sql_server", paste0(name, ".sql"), package = packageName)
-    sql <- readChar(pathToSql, file.info(pathToSql)$size)
-    return(sql)
-  }
-  cohorts$sql <- sapply(cohorts$cohortName, getSql)
-  getJson <- function(name) {
-    pathToJson <- system.file("cohorts", paste0(name, ".json"), package = packageName)
-    json <- readChar(pathToJson, file.info(pathToJson)$size)
-    return(json)
-  }
-  cohorts$json <- sapply(cohorts$cohortName, getJson)
+  cohorts <- loadCohortsFromPackage(packageName = packageName,
+                                    cohortToCreateFile = cohortToCreateFile,
+                                    cohortIds = cohortIds)
   
   ParallelLogger::logInfo("Saving database metadata")
   database <- data.frame(databaseId = databaseId,
@@ -162,7 +139,11 @@ runCohortDiagnostics <- function(packageName,
                              runIncludedSourceConcepts = runIncludedSourceConcepts,
                              runOrphanConcepts = runOrphanConcepts,
                              exportFolder = exportFolder,
-                             minCellCount = minCellCount)
+                             minCellCount = minCellCount,
+                             conceptCountsDatabaseSchema = NULL,
+                             conceptCountsTable = "#concept_counts",
+                             conceptCountsTableIsTemp = TRUE,
+                             useExternalConceptCountsTable = FALSE)
   }
   
   if (runTimeDistributions) {
@@ -379,23 +360,13 @@ enforceMinCellValue <- function(data, fieldName, minValues, silent = FALSE) {
   return(data)
 }
 
-runConceptSetDiagnostics <- function(connection, 
-                                     oracleTempSchema, 
-                                     cdmDatabaseSchema,
-                                     cohortDatabaseSchema,
-                                     cohorts, 
-                                     runIncludedSourceConcepts, 
-                                     runOrphanConcepts,
-                                     exportFolder,
-                                     minCellCount) {
-  # Find all unique concept sets:
+getUniqueConceptSets <- function(cohorts) {
   getConceptSetDetails <- function(conceptSet) {
     return(tibble::tibble(conceptSetId = conceptSet$id,
                           conceptSetName = conceptSet$name,
                           expression = RJSONIO::toJSON(conceptSet$expression[[1]])))
   }
-  
-  
+
   getConceptSetsFromCohortDef <- function(cohort) {
     cohortDefinition <- RJSONIO::fromJSON(cohort$json)
     conceptSets <- lapply(cohortDefinition$ConceptSets, getConceptSetDetails)
@@ -420,7 +391,10 @@ runConceptSetDiagnostics <- function(connection,
                                       uniqueConceptSetId = 1:length(uniqueConceptSets))
   conceptSets <- merge(conceptSets, uniqueConceptSets)
   uniqueConceptSets <- conceptSets[!duplicated(conceptSets$uniqueConceptSetId), ]
-  
+  return(uniqueConceptSets)
+}
+
+instantiateUniqueConceptSets <- function(cohorts, uniqueConceptSets, connection, cdmDatabaseSchema, oracleTempSchema) {
   ParallelLogger::logInfo("Instantiating concept sets")
   sql <- gsub("with primary_events.*", "", cohorts$sql[1])
   createTempTableSql <- SqlRender::splitSql(sql)[1]
@@ -434,21 +408,54 @@ runConceptSetDiagnostics <- function(connection,
                               targetDialect = connection@dbms,
                               oracleTempSchema = oracleTempSchema)
   DatabaseConnector::executeSql(connection, sql)
+}
+
+runConceptSetDiagnostics <- function(connection, 
+                                     oracleTempSchema, 
+                                     cdmDatabaseSchema,
+                                     cohortDatabaseSchema,
+                                     cohorts, 
+                                     runIncludedSourceConcepts, 
+                                     runOrphanConcepts,
+                                     exportFolder,
+                                     minCellCount,
+                                     conceptCountsDatabaseSchema = cdmDatabaseSchema,
+                                     conceptCountsTable = "concept_counts",
+                                     conceptCountsTableIsTemp = FALSE,
+                                     useExternalConceptCountsTable = FALSE) {
+  uniqueConceptSets <- getUniqueConceptSets(cohorts)
+  instantiateUniqueConceptSets(cohorts = cohorts,
+                               uniqueConceptSets = uniqueConceptSets,
+                               connection = connection,
+                               cdmDatabaseSchema = cdmDatabaseSchema,
+                               oracleTempSchema = oracleTempSchema)
   
   if (runIncludedSourceConcepts) {
     ParallelLogger::logInfo("Fetching included source concepts")
     start <- Sys.time()
+    
     ParallelLogger::logInfo("Counting codes in concept sets")
-    sql <- SqlRender::loadRenderTranslateSql("CohortSourceCodes.sql",
-                                             packageName = "CohortDiagnostics",
-                                             dbms = connection@dbms,
-                                             oracleTempSchema = oracleTempSchema,
-                                             cdm_database_schema = cdmDatabaseSchema,
-                                             by_month = FALSE,
-                                             use_source_values = FALSE)
+    if (useExternalConceptCountsTable) {
+      sql <- SqlRender::loadRenderTranslateSql("CohortSourceConceptsFromCcTable.sql",
+                                               packageName = "CohortDiagnostics",
+                                               dbms = connection@dbms,
+                                               oracleTempSchema = oracleTempSchema,
+                                               cdm_database_schema = cdmDatabaseSchema,
+                                               concept_counts_database_schema = conceptCountsDatabaseSchema,
+                                               concept_counts_table = conceptCountsTable,
+                                               concept_counts_table_is_temp = conceptCountsTableIsTemp)
+    } else {
+      sql <- SqlRender::loadRenderTranslateSql("CohortSourceCodes.sql",
+                                               packageName = "CohortDiagnostics",
+                                               dbms = connection@dbms,
+                                               oracleTempSchema = oracleTempSchema,
+                                               cdm_database_schema = cdmDatabaseSchema,
+                                               by_month = FALSE,
+                                               use_source_values = FALSE)
+    }
     counts <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
     colnames(counts)[colnames(counts) == "conceptSetId"] <- "uniqueConceptSetId"
-    counts <- merge(conceptSets[, c("cohortId", "conceptSetId", "conceptSetName", "uniqueConceptSetId")], counts)
+    counts <- merge(uniqueConceptSets[, c("cohortId", "conceptSetId", "conceptSetName", "uniqueConceptSetId")], counts)
     counts$uniqueConceptSetId <- NULL
     counts <- counts[order(counts$cohortId,
                            counts$conceptSetId,
@@ -469,11 +476,13 @@ runConceptSetDiagnostics <- function(connection,
   if (runOrphanConcepts) {
     ParallelLogger::logInfo("Finding orphan concepts")
     start <- Sys.time()
-    createConceptCountsTable(connection = connection,
-                             cdmDatabaseSchema = cdmDatabaseSchema,
-                             conceptCountsTable = "#concept_counts",
-                             conceptCountsTableIsTemp = TRUE)
-
+    if (!useExternalConceptCountsTable) {
+      createConceptCountsTable(connection = connection,
+                               cdmDatabaseSchema = cdmDatabaseSchema,
+                               conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
+                               conceptCountsTable = conceptCountsTable,
+                               conceptCountsTableIsTemp = conceptCountsTableIsTemp)
+    }
     runOrphanConcepts <- function(conceptSet) {
       ParallelLogger::logInfo("- Finding orphan concepts for concept set ", conceptSet$conceptSetName)
       orphanConcepts <- .findOrphanConcepts(connection = connection,
@@ -481,8 +490,9 @@ runConceptSetDiagnostics <- function(connection,
                                            oracleTempSchema = oracleTempSchema,
                                            useCodesetTable = TRUE,
                                            codesetId = conceptSet$uniqueConceptSetId,
-                                           conceptCountsTable = "#concept_counts",
-                                           conceptCountsTableIsTemp = TRUE)
+                                           conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
+                                           conceptCountsTable = conceptCountsTable,
+                                           conceptCountsTableIsTemp = conceptCountsTableIsTemp)
       if (nrow(orphanConcepts) > 0) {
         orphanConcepts$uniqueConceptSetId <- conceptSet$uniqueConceptSetId
       }
@@ -516,4 +526,33 @@ runConceptSetDiagnostics <- function(connection,
                                                sql,
                                                progressBar = FALSE,
                                                reportOverallTime = FALSE)
+}
+
+loadCohortsFromPackage <- function(packageName, cohortToCreateFile, cohortIds) {
+  pathToCsv <- system.file(cohortToCreateFile, package = packageName)
+  cohorts <- readr::read_csv(pathToCsv, col_types = readr::cols())
+  cohorts$atlasId <- NULL
+  if (!is.null(cohortIds)) {
+    cohorts <- cohorts[cohorts$cohortId %in% cohortIds, ]
+  }
+  if ("atlasName" %in% colnames(cohorts)) {
+    cohorts <- dplyr::rename(cohorts, cohortName = "name", cohortFullName = "atlasName")
+  } else {
+    cohorts <- dplyr::rename(cohorts, cohortName = "name", cohortFullName = "fullName")
+  }
+  writeToCsv(cohorts, file.path(exportFolder, "cohort.csv"))
+  
+  getSql <- function(name) {
+    pathToSql <- system.file("sql", "sql_server", paste0(name, ".sql"), package = packageName)
+    sql <- readChar(pathToSql, file.info(pathToSql)$size)
+    return(sql)
+  }
+  cohorts$sql <- sapply(cohorts$cohortName, getSql)
+  getJson <- function(name) {
+    pathToJson <- system.file("cohorts", paste0(name, ".json"), package = packageName)
+    json <- readChar(pathToJson, file.info(pathToJson)$size)
+    return(json)
+  }
+  cohorts$json <- sapply(cohorts$cohortName, getJson)
+  return(cohorts)
 }

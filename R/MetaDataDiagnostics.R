@@ -161,7 +161,8 @@ findCohortOrphanConcepts <- function(connectionDetails = NULL,
                                      webApiCohortId = NULL,
                                      cohortJson = NULL,
                                      conceptCountsDatabaseSchema = cdmDatabaseSchema,
-                                     conceptCountsTable = "concept_counts") {
+                                     conceptCountsTable = "concept_counts",
+                                     conceptCountsTableIsTemp = FALSE) {
 
   if (is.null(baseUrl) && is.null(cohortJson)) {
     stop("Must provide either baseUrl and webApiCohortId, or cohortJson and cohortSql")
@@ -198,7 +199,8 @@ findCohortOrphanConcepts <- function(connectionDetails = NULL,
                                          oracleTempSchema = oracleTempSchema,
                                          conceptIds = conceptIds,
                                          conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
-                                         conceptCountsTable = conceptCountsTable)
+                                         conceptCountsTable = conceptCountsTable,
+                                         conceptCountsTableIsTemp = conceptCountsTableIsTemp)
     if (nrow(orphanConcepts) > 0) {
       orphanConcepts$conceptSetId <- conceptSet$id
       orphanConcepts$conceptSetName <- conceptSet$name
