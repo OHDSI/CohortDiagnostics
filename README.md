@@ -38,10 +38,9 @@ Installation
 To install the latest development version, install from GitHub:
 
 ```r
-install.packages("devtools")
-devtools::install_github("ohdsi/ROhdsiWebApi")
-devtools::install_github("ohdsi/FeatureExtraction")
-devtools::install_github("ohdsi/CohortDiagnostics")
+install.packages("drat")
+drat::addRepo("OHDSI")
+install.packages("CohortDiagnostics")
 ```
 
 User Documentation
