@@ -19,8 +19,8 @@ runCohortDiagnosticsUsingExternalCounts(
   conceptCountsTableIsTemp = FALSE,
   exportFolder,
   databaseId,
-  databaseName,
-  databaseDescription,
+  databaseName = databaseId,
+  databaseDescription = "",
   runIncludedSourceConcepts = TRUE,
   runOrphanConcepts = TRUE,
   minCellCount = 5
@@ -87,8 +87,14 @@ does not exist it will be created.}
 \item{minCellCount}{The minimum cell count for fields contains person counts or fractions.}
 }
 \description{
-Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the
-\code{ROhdsiWebApi::insertCohortDefinitionSetInPackage} function, but using external concept counts.
+Runs  cohort diagnostics on all (or a subset of) the cohorts, but using external concept counts. The external counts 
+must have the following columns:
+
+\describe{
+\item{concept_id}{The source or target concept ID.}
+\item{concept_count}{The number of records having the concept.}
+\item{concept_subjects}{The number of unique persons having the concept.}
+}
 }
 \details{
 Currently two ways of executing this function are supported, either (1) embedded in a study package, assuming 

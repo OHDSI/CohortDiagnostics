@@ -465,7 +465,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
         if (nrOfRules > 0) {
           for (j in 1:nrOfRules) {
             inclusionRules <- rbind(inclusionRules, data.frame(cohortId = cohorts$cohortId[i],
-                                                               ruleSequence = i - 1,
+                                                               ruleSequence = j - 1,
                                                                ruleName = cohortDefinition$InclusionRules[[j]]$name))
           }
         }
@@ -488,7 +488,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
   }
   
   for (i in 1:nrow(cohorts)) {
-    ParallelLogger::logInfo("Instantiation cohort ", cohorts$atlasName[i])
+    ParallelLogger::logInfo("Instantiation cohort ", cohorts$cohortFullName[i])
     sql <- cohorts$sql[i]
     if (generateInclusionStats) {
       sql <- SqlRender::render(sql,
@@ -496,7 +496,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
                                vocabulary_database_schema = cdmDatabaseSchema,
                                target_database_schema = cohortDatabaseSchema,
                                target_cohort_table = cohortTable,
-                               target_cohort_id = cohorts$cohortId[1],
+                               target_cohort_id = cohorts$cohortId[i],
                                results_database_schema.cohort_inclusion = "#cohort_inclusion",
                                results_database_schema.cohort_inclusion_result = "#cohort_inc_result",
                                results_database_schema.cohort_inclusion_stats = "#cohort_inc_stats",
@@ -507,7 +507,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
                                vocabulary_database_schema = cdmDatabaseSchema,
                                target_database_schema = cohortDatabaseSchema,
                                target_cohort_table = cohortTable,
-                               target_cohort_id = cohorts$cohortId[1])
+                               target_cohort_id = cohorts$cohortId[i])
     }
     sql <- SqlRender::translate(sql,
                                 targetDialect = connectionDetails$dbms,

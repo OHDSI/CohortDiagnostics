@@ -82,6 +82,11 @@ runCohortDiagnostics <- function(packageName = NULL,
     dir.create(exportFolder)
   }
   
+  if ((runTimeDistributions || runCohortCharacterization) && !is.null(getOption("fftempdir")) && !file.exists(getOption("fftempdir"))) {
+    warning("fftempdir '", getOption("fftempdir"), "' not found. Attempting to create folder")
+    dir.create(getOption("fftempdir"), recursive = TRUE)
+  }
+  
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
@@ -146,6 +151,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     runConceptSetDiagnostics(connection = connection,
                              oracleTempSchema = oracleTempSchema,
                              cdmDatabaseSchema = cdmDatabaseSchema,
+                             databaseId = databaseId,
                              cohorts = cohorts,
                              runIncludedSourceConcepts = runIncludedSourceConcepts,
                              runOrphanConcepts = runOrphanConcepts,
@@ -424,6 +430,7 @@ instantiateUniqueConceptSets <- function(cohorts, uniqueConceptSets, connection,
 runConceptSetDiagnostics <- function(connection, 
                                      oracleTempSchema, 
                                      cdmDatabaseSchema,
+                                     databaseId,
                                      cohorts, 
                                      runIncludedSourceConcepts, 
                                      runOrphanConcepts,
@@ -475,6 +482,7 @@ runConceptSetDiagnostics <- function(connection,
     if (nrow(counts) > 0) {
       counts$databaseId <- databaseId
       counts <- enforceMinCellValue(counts, "conceptSubjects", minCellCount)
+      counts <- enforceMinCellValue(counts, "conceptCount", minCellCount)
     }
     writeToCsv(counts, file.path(exportFolder, "included_source_concept.csv"))
     delta <- Sys.time() - start
@@ -519,12 +527,14 @@ runConceptSetDiagnostics <- function(connection,
     }
     writeToCsv(data, file.path(exportFolder, "orphan_concept.csv"))
     
-    ParallelLogger::logTrace("Dropping temp concept counts")
-    sql <- "TRUNCATE TABLE #concept_counts; DROP TABLE #concept_counts;"
-    DatabaseConnector::renderTranslateExecuteSql(connection,
-                                                 sql,
-                                                 progressBar = FALSE,
-                                                 reportOverallTime = FALSE)
+    if (!useExternalConceptCountsTable) {
+      ParallelLogger::logTrace("Dropping temp concept counts")
+      sql <- "TRUNCATE TABLE #concept_counts; DROP TABLE #concept_counts;"
+      DatabaseConnector::renderTranslateExecuteSql(connection,
+                                                   sql,
+                                                   progressBar = FALSE,
+                                                   reportOverallTime = FALSE)
+    }
     delta <- Sys.time() - start
     ParallelLogger::logInfo(paste("Finding orphan concepts took",
                                   signif(delta, 3),

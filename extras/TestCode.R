@@ -13,6 +13,7 @@ cdmDatabaseSchema <- "CDM_jmdc_v1063.dbo"
 cohortDatabaseSchema <- workDatabaseSchema
 resultsDatabaseSchema <- workDatabaseSchema
 cohortTable <- "mschuemi_temp"
+databaseId <- "JMDC"
 
 # Using ATLAS cohort table:
 cohortDatabaseSchema <- "CDM_IBM_MDCR_V1062.dbo"
@@ -233,8 +234,6 @@ runCohortDiagnostics(baseUrl = baseUrl,
                      inclusionStatisticsFolder = inclusionStatisticsFolder,
                      exportFolder = exportFolder,
                      databaseId = databaseId,
-                     databaseName = databaseName,
-                     databaseDescription = databaseDescription,
                      runInclusionStatistics = TRUE,
                      runIncludedSourceConcepts = TRUE,
                      runOrphanConcepts = FALSE,
@@ -246,3 +245,53 @@ runCohortDiagnostics(baseUrl = baseUrl,
                      minCellCount = 5)
 
 launchDiagnosticsExplorer(exportFolder)
+
+# Using 'external' concept counts -------------------------------------------------
+cdmDatabaseSchema <- 'CDM_IBM_MDCR_V1062.dbo'
+conceptCountsDatabaseSchema <- "scratch.dbo"
+conceptCountsTable <- "mschuemi_concept_counts"
+databaseId <- "MDCR"
+exportFolder <- "s:/noPackage/export/mdcr"
+
+createConceptCountsTable(connectionDetails = connectionDetails,
+                         cdmDatabaseSchema = cdmDatabaseSchema,
+                         conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
+                         conceptCountsTable = conceptCountsTable)
+
+runCohortDiagnosticsUsingExternalCounts(baseUrl = baseUrl,
+                                        cohortSetReference = cohortSetReference,
+                                        connectionDetails = connectionDetails,
+                                        cdmDatabaseSchema = cdmDatabaseSchema,
+                                        oracleTempSchema = oracleTempSchema,
+                                        conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
+                                        conceptCountsTable = conceptCountsTable,
+                                        exportFolder = exportFolder,
+                                        databaseId = databaseId,
+                                        runIncludedSourceConcepts = TRUE,
+                                        runOrphanConcepts = TRUE,
+                                        minCellCount = 5)
+# connection <- DatabaseConnector::connect(connectionDetails)
+# DatabaseConnector::querySql(connection, "SELECT * FROM scratch.dbo.mschuemi_concept_counts WHERE concept_id = 35207668;")
+
+
+# As verification: same DB, but not using 'external' concept counts:
+runCohortDiagnostics(baseUrl = baseUrl,
+                     cohortSetReference = cohortSetReference,
+                     connectionDetails = connectionDetails,
+                     cdmDatabaseSchema = cdmDatabaseSchema,
+                     oracleTempSchema = oracleTempSchema,
+                     cohortDatabaseSchema = cohortDatabaseSchema,
+                     cohortTable = cohortTable,
+                     exportFolder = paste0(exportFolder, "_check"),
+                     databaseId = paste0(databaseId, "_check"),
+                     runBreakdownIndexEvents = FALSE,
+                     runCohortCharacterization = FALSE,
+                     runCohortOverlap = FALSE,
+                     runIncidenceRate = FALSE,
+                     runInclusionStatistics = FALSE,
+                     runTimeDistributions = FALSE,
+                     runIncludedSourceConcepts = TRUE,
+                     runOrphanConcepts = TRUE,
+                     minCellCount = 5)
+
+

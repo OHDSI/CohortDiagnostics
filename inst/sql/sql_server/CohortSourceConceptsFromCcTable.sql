@@ -8,10 +8,20 @@ SELECT codeset_id AS concept_set_id,
 	standard_concept.concept_name,
 	source_concept.concept_code,
 	source_concept.vocabulary_id AS source_vocabulary_id,
-	source_concept.concept_id,
+	source_concept.concept_id AS source_concept_id,
 	source_concept.concept_name AS source_concept_name,
-	concept_count AS concept_subjects
+	CASE 
+		WHEN source_concept.concept_count IS NULL
+			THEN concept_counts.concept_count
+		ELSE source_concept.concept_count
+		END AS concept_count,
+	CASE 
+		WHEN source_concept.concept_subjects IS NULL
+			THEN concept_counts.concept_subjects
+		ELSE source_concept.concept_subjects
+		END AS concept_subjects
 FROM #Codesets codesets
+
 {@concept_counts_table_is_temp} ? {		
 INNER JOIN @concept_counts_table concept_counts
 } : {
@@ -25,7 +35,9 @@ LEFT JOIN (
     concept.concept_id,
     concept.concept_name,
     concept.concept_code,
-    concept.vocabulary_id
+    concept.vocabulary_id,
+	concept_count,
+	concept_subjects
   FROM @cdm_database_schema.concept_relationship
   INNER JOIN @cdm_database_schema.concept
   	ON concept.concept_id = concept_id_1
