@@ -67,7 +67,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
       </span>
     </div>
 
@@ -90,7 +90,7 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/GeneratingStudyDiagnostics.html">Generating Study Diagnostics</a>
+      <a href="../articles/CohortDiagnosticsUsingWebApi.html">Running cohort diagnostics using WebAPI</a>
     </li>
   </ul>
 </li>
@@ -122,6 +122,24 @@
       <small>Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
+    <div id="cohortdiagnostics-010" class="section level1">
+<h1 class="page-header">
+<a href="#cohortdiagnostics-010" class="anchor"></a>CohortDiagnostics 0.1.0</h1>
+<p>Changes</p>
+<ol>
+<li><p>Orphan code check now resolves concept sets instead of using verbatim concepts. Should include specificity.</p></li>
+<li><p>Added option to use the same y-axis for all databases in incidence rate plot.</p></li>
+<li><p>Added runCohortDiagnosticsUsingExternalCounts function.</p></li>
+<li><p>Added option to use cohort definitions in WebAPI instead of those stored in study package.</p></li>
+</ol>
+<p>Bugfixes:</p>
+<ol>
+<li><p>Fixed bug causing weird false positives in orphan codes (caused by transforming concept IDs to scientific notation).</p></li>
+<li><p>Better handling in viewer when some analyses are not executed.</p></li>
+<li><p>Now also showing cohorts that had zero entries.</p></li>
+<li><p>Fixed error when there was only 1 cohort.</p></li>
+</ol>
+</div>
     <div id="cohortdiagnostics-001" class="section level1">
 <h1 class="page-header">
 <a href="#cohortdiagnostics-001" class="anchor"></a>CohortDiagnostics 0.0.1</h1>
@@ -133,6 +151,7 @@
     <div id="tocnav">
       <h2>Contents</h2>
       <ul class="nav nav-pills nav-stacked">
+        <li><a href="#cohortdiagnostics-010">0.1.0</a></li>
         <li><a href="#cohortdiagnostics-001">0.0.1</a></li>
       </ul>
     </div>

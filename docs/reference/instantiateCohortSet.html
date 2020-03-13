@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Create cohort table(s) — createCohortTable • CohortDiagnostics</title>
+<title>Instantiate a set of cohort — instantiateCohortSet • CohortDiagnostics</title>
 
 
 <!-- jquery -->
@@ -35,9 +35,9 @@
 
 
 
-<meta property="og:title" content="Create cohort table(s) — createCohortTable" />
-<meta property="og:description" content="This function creates an empty cohort table. Optionally, additional empty tables are created to
-store statistics on the various inclusion criteria." />
+<meta property="og:title" content="Instantiate a set of cohort — instantiateCohortSet" />
+<meta property="og:description" content="This function instantiates a set of cohort in the cohort table, using definitions that are fetched from a WebApi interface.
+Optionally, the inclusion rule statistics are computed and stored in the inclusionStatisticsFolder." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -121,27 +121,27 @@ store statistics on the various inclusion criteria." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Create cohort table(s)</h1>
+    <h1>Instantiate a set of cohort</h1>
     <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/CohortConstruction.R'><code>R/CohortConstruction.R</code></a></small>
-    <div class="hidden name"><code>createCohortTable.Rd</code></div>
+    <div class="hidden name"><code>instantiateCohortSet.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>This function creates an empty cohort table. Optionally, additional empty tables are created to
-store statistics on the various inclusion criteria.</p>
+    <p>This function instantiates a set of cohort in the cohort table, using definitions that are fetched from a WebApi interface.
+Optionally, the inclusion rule statistics are computed and stored in the <code>inclusionStatisticsFolder</code>.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>createCohortTable</span>(
+    <pre class="usage"><span class='fu'>instantiateCohortSet</span>(
   <span class='kw'>connectionDetails</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>connection</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='no'>cohortDatabaseSchema</span>,
+  <span class='no'>cdmDatabaseSchema</span>,
+  <span class='kw'>oracleTempSchema</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>cohortDatabaseSchema</span> <span class='kw'>=</span> <span class='no'>cdmDatabaseSchema</span>,
   <span class='kw'>cohortTable</span> <span class='kw'>=</span> <span class='st'>"cohort"</span>,
-  <span class='kw'>createInclusionStatsTables</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>resultsDatabaseSchema</span> <span class='kw'>=</span> <span class='no'>cohortDatabaseSchema</span>,
-  <span class='kw'>cohortInclusionTable</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span>(<span class='no'>cohortTable</span>, <span class='st'>"_inclusion"</span>),
-  <span class='kw'>cohortInclusionResultTable</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span>(<span class='no'>cohortTable</span>, <span class='st'>"_inclusion_result"</span>),
-  <span class='kw'>cohortInclusionStatsTable</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span>(<span class='no'>cohortTable</span>, <span class='st'>"_inclusion_stats"</span>),
-  <span class='kw'>cohortSummaryStatsTable</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span>(<span class='no'>cohortTable</span>, <span class='st'>"_summary_stats"</span>)
+  <span class='no'>baseUrl</span>,
+  <span class='no'>cohortSetReference</span>,
+  <span class='kw'>generateInclusionStats</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>inclusionStatisticsFolder</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -163,6 +163,17 @@ is provided, in which case a new connection will be opened at the start
 of the function, and closed when the function finishes.</p></td>
     </tr>
     <tr>
+      <th>cdmDatabaseSchema</th>
+      <td><p>Schema name where your patient-level data in OMOP CDM format resides.
+Note that for SQL Server, this should include both the database and
+schema name, for example 'cdm_data.dbo'.</p></td>
+    </tr>
+    <tr>
+      <th>oracleTempSchema</th>
+      <td><p>Should be used in Oracle to specify a schema where the user has write
+privileges for storing temporary tables.</p></td>
+    </tr>
+    <tr>
       <th>cohortDatabaseSchema</th>
       <td><p>Schema name where your cohort table resides. Note that for SQL Server,
 this should include both the database and schema name, for example
@@ -173,37 +184,34 @@ this should include both the database and schema name, for example
       <td><p>Name of the cohort table.</p></td>
     </tr>
     <tr>
-      <th>createInclusionStatsTables</th>
-      <td><p>Create the four additional tables for storing inclusion rule
-statistics?</p></td>
+      <th>baseUrl</th>
+      <td><p>The base URL for the WebApi instance, for example:
+"http://server.org:80/WebAPI".</p></td>
     </tr>
     <tr>
-      <th>resultsDatabaseSchema</th>
-      <td><p>Schema name where the statistics tables reside. Note that for
-SQL Server, this should include both the database and schema
-name, for example 'scratch.dbo'.</p></td>
+      <th>cohortSetReference</th>
+      <td><p>A data frame with four columns, as described in the details.</p></td>
     </tr>
     <tr>
-      <th>cohortInclusionTable</th>
-      <td><p>Name of the inclusion table, one of the tables for storing
-inclusion rule statistics.</p></td>
+      <th>generateInclusionStats</th>
+      <td><p>Compute and store inclusion rule statistics?</p></td>
     </tr>
     <tr>
-      <th>cohortInclusionResultTable</th>
-      <td><p>Name of the inclusion result table, one of the tables for
-storing inclusion rule statistics.</p></td>
-    </tr>
-    <tr>
-      <th>cohortInclusionStatsTable</th>
-      <td><p>Name of the inclusion stats table, one of the tables for storing
-inclusion rule statistics.</p></td>
-    </tr>
-    <tr>
-      <th>cohortSummaryStatsTable</th>
-      <td><p>Name of the summary stats table, one of the tables for storing
-inclusion rule statistics.</p></td>
+      <th>inclusionStatisticsFolder</th>
+      <td><p>The folder where the inclusion rule statistics are stored. Can be
+left NULL if <code>generateInclusionStats = FALSE</code>.</p></td>
     </tr>
     </table>
+
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>The <code>cohortSetReference</code> argument must be a data frame with  the following columns:</p><dl class='dl-horizontal'>
+<dt>atlasId</dt><dd><p>The cohort ID in ATLAS.</p></dd>
+<dt>atlasName</dt><dd><p>The full name of the cohort. This will be shown in the Shiny app.</p></dd>
+<dt>cohortId</dt><dd><p>The cohort ID to use in the package. USually the same as the cohort ID in ATLAS.</p></dd>
+<dt>name</dt><dd><p>A short name for the cohort, to use to create file names. do not use special characters.</p></dd>
+
+</dl>
 
 
   </div>
@@ -211,6 +219,7 @@ inclusion rule statistics.</p></td>
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
+      <li><a href="#details">Details</a></li>
     </ul>
 
   </div>

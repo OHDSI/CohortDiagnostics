@@ -71,7 +71,7 @@ relationships." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.0.2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
       </span>
     </div>
 
@@ -94,7 +94,7 @@ relationships." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/GeneratingStudyDiagnostics.html">Generating Study Diagnostics</a>
+      <a href="../articles/CohortDiagnosticsUsingWebApi.html">Running cohort diagnostics using WebAPI</a>
     </li>
   </ul>
 </li>
@@ -142,7 +142,8 @@ relationships.</p>
   <span class='kw'>webApiCohortId</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>cohortJson</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>conceptCountsDatabaseSchema</span> <span class='kw'>=</span> <span class='no'>cdmDatabaseSchema</span>,
-  <span class='kw'>conceptCountsTable</span> <span class='kw'>=</span> <span class='st'>"concept_counts"</span>
+  <span class='kw'>conceptCountsTable</span> <span class='kw'>=</span> <span class='st'>"concept_counts"</span>,
+  <span class='kw'>conceptCountsTableIsTemp</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -194,12 +195,17 @@ provided if <code>baseUrl</code> and <code>webApiCohortId</code> are provided.</
       <th>conceptCountsDatabaseSchema</th>
       <td><p>Schema name where your concept counts table resides. Note that
 for SQL Server, this should include both the database and
-schema name, for example 'scratch.dbo'.</p></td>
+schema name, for example 'scratch.dbo'. Ignored if
+<code>conceptCountsTableIsTemp = TRUE</code>.</p></td>
     </tr>
     <tr>
       <th>conceptCountsTable</th>
       <td><p>Name of the concept counts table. This table can be created
 using the <code><a href='createConceptCountsTable.html'>createConceptCountsTable</a></code>.</p></td>
+    </tr>
+    <tr>
+      <th>conceptCountsTableIsTemp</th>
+      <td><p>Is the concept counts table a temp table?</p></td>
     </tr>
     </table>
 

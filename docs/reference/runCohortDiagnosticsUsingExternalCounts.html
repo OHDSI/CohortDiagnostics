@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Instantiate a cohort — instantiateCohort • CohortDiagnostics</title>
+<title>Run cohort diagnostics using external concept counts — runCohortDiagnosticsUsingExternalCounts • CohortDiagnostics</title>
 
 
 <!-- jquery -->
@@ -35,10 +35,16 @@
 
 
 
-<meta property="og:title" content="Instantiate a cohort — instantiateCohort" />
-<meta property="og:description" content="This function instantiates the cohort in the cohort table. Optionally, the inclusion rule
-statistics are computed and stored in the inclusion rule statistics tables described in
-createCohortTable)." />
+<meta property="og:title" content="Run cohort diagnostics using external concept counts — runCohortDiagnosticsUsingExternalCounts" />
+<meta property="og:description" content="Runs  cohort diagnostics on all (or a subset of) the cohorts, but using external concept counts. The external counts 
+must have the following columns:
+
+concept_idThe source or target concept ID.
+concept_countThe number of records having the concept.
+concept_subjectsThe number of unique persons having the concept.
+
+
+" />
 <meta name="twitter:card" content="summary" />
 
 
@@ -122,40 +128,69 @@ createCohortTable)." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Instantiate a cohort</h1>
-    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/CohortConstruction.R'><code>R/CohortConstruction.R</code></a></small>
-    <div class="hidden name"><code>instantiateCohort.Rd</code></div>
+    <h1>Run cohort diagnostics using external concept counts</h1>
+    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/RunDiagnosticsExternalCounts.R'><code>R/RunDiagnosticsExternalCounts.R</code></a></small>
+    <div class="hidden name"><code>runCohortDiagnosticsUsingExternalCounts.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>This function instantiates the cohort in the cohort table. Optionally, the inclusion rule
-statistics are computed and stored in the inclusion rule statistics tables described in
-<code><a href='createCohortTable.html'>createCohortTable</a></code>).</p>
+    <p>Runs  cohort diagnostics on all (or a subset of) the cohorts, but using external concept counts. The external counts 
+must have the following columns:</p>
+<dl class='dl-horizontal'>
+<dt>concept_id</dt><dd><p>The source or target concept ID.</p></dd>
+<dt>concept_count</dt><dd><p>The number of records having the concept.</p></dd>
+<dt>concept_subjects</dt><dd><p>The number of unique persons having the concept.</p></dd>
+
+</dl>
+
     </div>
 
-    <pre class="usage"><span class='fu'>instantiateCohort</span>(
+    <pre class="usage"><span class='fu'>runCohortDiagnosticsUsingExternalCounts</span>(
+  <span class='kw'>packageName</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>cohortToCreateFile</span> <span class='kw'>=</span> <span class='st'>"settings/CohortsToCreate.csv"</span>,
+  <span class='kw'>baseUrl</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>cohortSetReference</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>connectionDetails</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>connection</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='no'>cdmDatabaseSchema</span>,
   <span class='kw'>oracleTempSchema</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cohortDatabaseSchema</span> <span class='kw'>=</span> <span class='no'>cdmDatabaseSchema</span>,
-  <span class='kw'>cohortTable</span> <span class='kw'>=</span> <span class='st'>"cohort"</span>,
-  <span class='kw'>baseUrl</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>webApiCohortId</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cohortJson</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cohortSql</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cohortId</span> <span class='kw'>=</span> <span class='no'>webApiCohortId</span>,
-  <span class='kw'>generateInclusionStats</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>resultsDatabaseSchema</span> <span class='kw'>=</span> <span class='no'>cohortDatabaseSchema</span>,
-  <span class='kw'>cohortInclusionTable</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span>(<span class='no'>cohortTable</span>, <span class='st'>"_inclusion"</span>),
-  <span class='kw'>cohortInclusionResultTable</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span>(<span class='no'>cohortTable</span>, <span class='st'>"_inclusion_result"</span>),
-  <span class='kw'>cohortInclusionStatsTable</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span>(<span class='no'>cohortTable</span>, <span class='st'>"_inclusion_stats"</span>),
-  <span class='kw'>cohortSummaryStatsTable</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span>(<span class='no'>cohortTable</span>, <span class='st'>"_summary_stats"</span>)
+  <span class='kw'>cohortIds</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>conceptCountsDatabaseSchema</span> <span class='kw'>=</span> <span class='no'>cdmDatabaseSchema</span>,
+  <span class='kw'>conceptCountsTable</span> <span class='kw'>=</span> <span class='st'>"concept_counts"</span>,
+  <span class='kw'>conceptCountsTableIsTemp</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='no'>exportFolder</span>,
+  <span class='no'>databaseId</span>,
+  <span class='kw'>databaseName</span> <span class='kw'>=</span> <span class='no'>databaseId</span>,
+  <span class='kw'>databaseDescription</span> <span class='kw'>=</span> <span class='st'>""</span>,
+  <span class='kw'>runIncludedSourceConcepts</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>runOrphanConcepts</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>minCellCount</span> <span class='kw'>=</span> <span class='fl'>5</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>packageName</th>
+      <td><p>The name of the package containing the cohort definitions. Can be left NULL if 
+<code>baseUrl</code> and <code>cohortSetReference</code> have been specified.</p></td>
+    </tr>
+    <tr>
+      <th>cohortToCreateFile</th>
+      <td><p>The location of the cohortToCreate file within the package. Is ignored if 
+<code>baseUrl</code> and <code>cohortSetReference</code> have been specified.</p></td>
+    </tr>
+    <tr>
+      <th>baseUrl</th>
+      <td><p>The base URL for the WebApi instance, for example:
+"http://server.org:80/WebAPI". Can be left NULL if 
+<code>packageName</code> and <code>cohortToCreateFile</code> have been specified.</p></td>
+    </tr>
+    <tr>
+      <th>cohortSetReference</th>
+      <td><p>A data frame with four columns, as described in the details. Can be left NULL if 
+<code>packageName</code> and <code>cohortToCreateFile</code> have been specified.</p></td>
+    </tr>
     <tr>
       <th>connectionDetails</th>
       <td><p>An object of type <code>connectionDetails</code> as created using the
@@ -183,72 +218,73 @@ schema name, for example 'cdm_data.dbo'.</p></td>
 privileges for storing temporary tables.</p></td>
     </tr>
     <tr>
-      <th>cohortDatabaseSchema</th>
-      <td><p>Schema name where your cohort table resides. Note that for SQL Server,
-this should include both the database and schema name, for example
-'scratch.dbo'.</p></td>
+      <th>cohortIds</th>
+      <td><p>Optionally, provide a subset of cohort IDs to restrict the
+diagnostics to.</p></td>
     </tr>
     <tr>
-      <th>cohortTable</th>
-      <td><p>Name of the cohort table.</p></td>
+      <th>conceptCountsDatabaseSchema</th>
+      <td><p>Schema name where your concept counts table resides. Note that
+for SQL Server, this should include both the database and
+schema name, for example 'scratch.dbo'. Ignored if
+<code>conceptCountsTableIsTemp = TRUE</code>.</p></td>
     </tr>
     <tr>
-      <th>baseUrl</th>
-      <td><p>The base URL for the WebApi instance, for example:
-"http://server.org:80/WebAPI". Needn't be provided if <code>cohortJson</code> and
-<code>cohortSql</code> are provided.</p></td>
+      <th>conceptCountsTable</th>
+      <td><p>Name of the concept counts table. This table can be created
+using the <code><a href='createConceptCountsTable.html'>createConceptCountsTable</a></code>.</p></td>
     </tr>
     <tr>
-      <th>webApiCohortId</th>
-      <td><p>The ID of the cohort in the WebAPI instance. Needn't be provided if
-<code>cohortJson</code> and <code>cohortSql</code> are provided.</p></td>
+      <th>conceptCountsTableIsTemp</th>
+      <td><p>Is the concept counts table a temp table?</p></td>
     </tr>
     <tr>
-      <th>cohortJson</th>
-      <td><p>A character string containing the JSON of a cohort definition. Needn't be
-provided if <code>baseUrl</code> and <code>cohortId</code> are provided.</p></td>
+      <th>exportFolder</th>
+      <td><p>The folder where the output will be exported to. If this folder
+does not exist it will be created.</p></td>
     </tr>
     <tr>
-      <th>cohortSql</th>
-      <td><p>The OHDSI SQL representation of the same cohort definition. Needn't be
-provided if <code>baseUrl</code> and <code>cohortId</code> are provided.</p></td>
+      <th>databaseId</th>
+      <td><p>A short string for identifying the database (e.g. 'Synpuf').</p></td>
     </tr>
     <tr>
-      <th>cohortId</th>
-      <td><p>The cohort definition ID used to reference the cohort in the
-cohort table.</p></td>
+      <th>databaseName</th>
+      <td><p>The full name of the database.</p></td>
     </tr>
     <tr>
-      <th>generateInclusionStats</th>
-      <td><p>Compute and store inclusion rule statistics?</p></td>
+      <th>databaseDescription</th>
+      <td><p>A short description (several sentences) of the database.</p></td>
     </tr>
     <tr>
-      <th>resultsDatabaseSchema</th>
-      <td><p>Schema name where the statistics tables reside. Note that for
-SQL Server, this should include both the database and schema
-name, for example 'scratch.dbo'.</p></td>
+      <th>runIncludedSourceConcepts</th>
+      <td><p>Generate and export the source concepts included in the cohorts?</p></td>
     </tr>
     <tr>
-      <th>cohortInclusionTable</th>
-      <td><p>Name of the inclusion table, one of the tables for storing
-inclusion rule statistics.</p></td>
+      <th>runOrphanConcepts</th>
+      <td><p>Generate and export potential orphan concepts?</p></td>
     </tr>
     <tr>
-      <th>cohortInclusionResultTable</th>
-      <td><p>Name of the inclusion result table, one of the tables for
-storing inclusion rule statistics.</p></td>
-    </tr>
-    <tr>
-      <th>cohortInclusionStatsTable</th>
-      <td><p>Name of the inclusion stats table, one of the tables for storing
-inclusion rule statistics.</p></td>
-    </tr>
-    <tr>
-      <th>cohortSummaryStatsTable</th>
-      <td><p>Name of the summary stats table, one of the tables for storing
-inclusion rule statistics.</p></td>
+      <th>minCellCount</th>
+      <td><p>The minimum cell count for fields contains person counts or fractions.</p></td>
     </tr>
     </table>
+
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>Currently two ways of executing this function are supported, either (1) embedded in a study package, assuming 
+the cohort definitions are stored in that package using the <code><a href='https://rdrr.io/pkg/ROhdsiWebApi/man/insertCohortDefinitionSetInPackage.html'>ROhdsiWebApi::insertCohortDefinitionSetInPackage</a></code>,
+or (2) by using a WebApi interface to retrieve the cohort definitions.</p>
+<p>When using this function from within a study package, use the <code>packageName</code> and <code>cohortToCreateFile</code> to specify
+the name of the study package, and the name of the cohortToCreate file within that package, respectivly</p>
+<p>When using this function using a WebApi interface, use the <code>baseUrl</code> and <code>cohortSetReference</code> to specify how to 
+connect to the WebApi, and which cohorts to fetch, respectively.</p>
+<p>The <code>cohortSetReference</code> argument must be a data frame with  the following columns:</p><dl class='dl-horizontal'>
+<dt>atlasId</dt><dd><p>The cohort ID in ATLAS.</p></dd>
+<dt>atlasName</dt><dd><p>The full name of the cohort. This will be shown in the Shiny app.</p></dd>
+<dt>cohortId</dt><dd><p>The cohort ID to use in the package. USually the same as the cohort ID in ATLAS.</p></dd>
+<dt>name</dt><dd><p>A short name for the cohort, to use to create file names. do not use special characters.</p></dd>
+
+</dl>
 
 
   </div>
@@ -256,6 +292,7 @@ inclusion rule statistics.</p></td>
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
+      <li><a href="#details">Details</a></li>
     </ul>
 
   </div>
