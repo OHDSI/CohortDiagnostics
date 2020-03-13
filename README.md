@@ -19,9 +19,9 @@ Features
 - Characterize cohorts, and compare these characterizations.
 - Explore patient profiles of a random sample of subjects in a cohort.
 
-Examples
-========
-TODO
+Screenshot
+==========
+![The Diagnostics Explorer Shiny app](vignettes/shiny.png)
 
 Technology
 ==========
@@ -46,6 +46,7 @@ devtools::install_github("ohdsi/CohortDiagnostics")
 
 User Documentation
 ==================
+* Vignette: [Running cohort diagnostics using WebAPI](https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/CohortDiagnosticsUsingWebApi.pdf)
 * Package manual: [CohortDiagnostics manual](https://ohdsi.github.io/CohortDiagnostics/reference/index.html) 
 
 Support
@@ -63,4 +64,4 @@ CohortDiagnostics is being developed in R Studio.
 
 ### Development status
 
-Under development. Do not use.
+Beta testing

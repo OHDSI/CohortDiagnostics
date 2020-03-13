@@ -26,5 +26,11 @@ devtools::spell_check()
 unlink("extras/CohortDiagnostics.pdf")
 shell("R CMD Rd2pdf ./ --output=extras/CohortDiagnostics.pdf")
 
+rmarkdown::render("vignettes/CohortDiagnosticsUsingWebApi.Rmd",
+                  output_file = "../inst/doc/CohortDiagnosticsUsingWebApi.pdf",
+                  rmarkdown::pdf_document(latex_engine = "pdflatex",
+                                          toc = TRUE,
+                                          number_sections = TRUE))
+
 pkgdown::build_site()
 
