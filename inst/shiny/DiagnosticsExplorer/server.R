@@ -297,9 +297,10 @@ shinyServer(function(input, output, session) {
                                      includedSourceConcept$conceptSetName == input$conceptSet & 
                                      includedSourceConcept$databaseId == input$database, ]
     if (input$includedType == "Source Concepts") {
-      table <- table[, c("conceptSubjects", "sourceVocabularyId", "conceptCode", "sourceConceptName")]
+      table <- table[, c("conceptSubjects", "sourceConceptId", "sourceVocabularyId", "conceptCode", "sourceConceptName")]
+      table <- table[is.na(table$sourceConceptName), ]
       table <- table[order(-table$conceptSubjects), ]
-      colnames(table) <- c("Subjects", "Vocabulary", "Code", "Name")
+      colnames(table) <- c("Subjects", "Concept ID", "Vocabulary", "Code", "Name")
     } else {
       table$absConceptSubjects <- abs(table$conceptSubjects)
       table <- aggregate(absConceptSubjects ~ conceptId + conceptName, data = table, sum)
@@ -335,9 +336,9 @@ shinyServer(function(input, output, session) {
     if (nrow(table) == 0) {
       return(NULL)
     }
-    table <- table[, c("conceptCount", "standardConcept", "vocabularyId", "conceptCode", "conceptName")]
+    table <- table[, c("conceptCount", "conceptId", "standardConcept", "vocabularyId", "conceptCode", "conceptName")]
     table <- table[order(-table$conceptCount), ]
-    colnames(table) <- c("Count", "Standard", "Vocabulary", "Code", "Name")
+    colnames(table) <- c("Count", "Concept ID", "Standard", "Vocabulary", "Code", "Name")
     lims <- c(0, max(table$Count))
     options = list(pageLength = 25,
                    searching = TRUE,

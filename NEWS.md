@@ -1,3 +1,17 @@
+CohortDiagnostics 0.1.1
+=======================
+
+Changes
+
+1. Orphan and included concepts tables now show concept ID.
+
+Bugfixes: 
+
+1. Fixed error in orphan code SQL (hard-coded database schema).
+
+2. Fixed bug when concept counts become too big for a regular INT.
+
+
 CohortDiagnostics 0.1.0
 =======================
 
