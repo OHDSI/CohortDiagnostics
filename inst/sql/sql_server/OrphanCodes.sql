@@ -39,7 +39,7 @@ FROM (
 	
 	SELECT concept_id_1
 	FROM #Codesets codesets
-	INNER JOIN cdm_ibm_ccae_v1103.dbo.concept_relationship
+	INNER JOIN @cdm_database_schema.concept_relationship
 		ON codesets.concept_id = concept_id_2
 			AND concept_relationship.relationship_id = 'Maps to'
 			AND concept_relationship.invalid_reasON IS NULL
