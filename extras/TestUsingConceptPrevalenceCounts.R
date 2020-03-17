@@ -10,9 +10,10 @@ conceptCountsTable <- "concept_prevalence_counts"
 
 # Upload concept prevalence data to database -------------------------------------
 
-conceptCounts <- read.table("c:/temp/conceptPrevalence/counts_for_22db.tsv", header = TRUE, sep = "\t")
-colnames(conceptCounts) <- c("concept_count", "concept_id")
+conceptCounts <- read.table("c:/temp/conceptPrevalence/cnt_all.tsv", header = TRUE, sep = "\t")
+colnames(conceptCounts) <- c("concept_id", "concept_count")
 conceptCounts$concept_subjects <- conceptCounts$concept_count
+conceptCounts <- conceptCounts[!is.na(conceptCounts$concept_id), ]
 
 connection <- DatabaseConnector::connect(connectionDetails)
 DatabaseConnector::insertTable(connection = connection, 
@@ -22,7 +23,8 @@ DatabaseConnector::insertTable(connection = connection,
                                createTable = TRUE,
                                tempTable = FALSE,
                                oracleTempSchema = oracleTempSchema,
-                               progressBar = TRUE)
+                               progressBar = TRUE,
+                               useMppBulkLoad = FALSE)
 DatabaseConnector::disconnect(connection)
 
 
@@ -42,7 +44,7 @@ runCohortDiagnosticsUsingExternalCounts(baseUrl = baseUrl,
                                         exportFolder = "c:/exampleStudy/OhdsiConceptPrevalence",
                                         databaseId = "OHDSI Concept Prevalence",
                                         runIncludedSourceConcepts = TRUE,
-                                        runOrphanConcepts = FALSE,
+                                        runOrphanConcepts = TRUE,
                                         minCellCount = 1) 
 
 preMergeDiagnosticsFiles("c:/temp/exampleStudy")
