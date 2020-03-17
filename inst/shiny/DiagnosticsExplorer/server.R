@@ -298,7 +298,7 @@ shinyServer(function(input, output, session) {
                                      includedSourceConcept$databaseId == input$database, ]
     if (input$includedType == "Source Concepts") {
       table <- table[, c("conceptSubjects", "sourceConceptId", "sourceVocabularyId", "conceptCode", "sourceConceptName")]
-      table <- table[is.na(table$sourceConceptName), ]
+      table <- table[!is.na(table$sourceConceptName), ]
       table <- table[order(-table$conceptSubjects), ]
       colnames(table) <- c("Subjects", "Concept ID", "Vocabulary", "Code", "Name")
     } else {

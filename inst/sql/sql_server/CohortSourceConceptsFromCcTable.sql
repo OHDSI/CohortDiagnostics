@@ -10,27 +10,12 @@ SELECT codeset_id AS concept_set_id,
 	source_concept.vocabulary_id AS source_vocabulary_id,
 	source_concept.concept_id AS source_concept_id,
 	source_concept.concept_name AS source_concept_name,
-	CASE 
-		WHEN source_concept.concept_count IS NULL
-			THEN concept_counts.concept_count
-		ELSE source_concept.concept_count
-		END AS concept_count,
-	CASE 
-		WHEN source_concept.concept_subjects IS NULL
-			THEN concept_counts.concept_subjects
-		ELSE source_concept.concept_subjects
-		END AS concept_subjects
+	source_concept.concept_count,
+	source_concept.concept_subjects
 FROM #Codesets codesets
-
-{@concept_counts_table_is_temp} ? {		
-INNER JOIN @concept_counts_table concept_counts
-} : {
-INNER JOIN @concept_counts_database_schema.@concept_counts_table concept_counts
-}
-	ON concept_counts.concept_id = codesets.concept_id
 INNER JOIN @cdm_database_schema.concept standard_concept
 	ON standard_concept.concept_id = codesets.concept_id
-LEFT JOIN (
+INNER JOIN (
   SELECT concept_id_2 AS standard_concept_id,
     concept.concept_id,
     concept.concept_name,

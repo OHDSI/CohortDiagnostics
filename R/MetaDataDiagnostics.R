@@ -103,6 +103,25 @@ findOrphanConcepts <- function(connectionDetails = NULL,
                                                                snakeCaseToCamelCase = TRUE,
                                                                cdm_database_schema = cdmDatabaseSchema)
   
+  # For debugging:
+  # x <- querySql(connection, "SELECT * FROM #starting_concepts;")
+  # View(x)
+  # 
+  # x <- querySql(connection, "SELECT * FROM #concept_synonyms;")
+  # View(x)
+  # 
+  # x <- querySql(connection, "SELECT * FROM #search_strings;")
+  # View(x)
+  # 
+  # x <- querySql(connection, "SELECT * FROM #search_str_top1000;")
+  # View(x)
+  # 
+  # x <- querySql(connection, "SELECT * FROM #search_string_subset;")
+  # View(x)
+  # 
+  # x <- querySql(connection, "SELECT * FROM #recommended_concepts;")
+  # View(x)
+  
   ParallelLogger::logTrace("- Dropping orphan temp tables")
   sql <- SqlRender::loadRenderTranslateSql("DropOrphanConceptTempTables.sql",
                                            packageName = "CohortDiagnostics",

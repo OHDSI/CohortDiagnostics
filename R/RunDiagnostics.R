@@ -461,6 +461,36 @@ runConceptSetDiagnostics <- function(connection,
                                                concept_counts_database_schema = conceptCountsDatabaseSchema,
                                                concept_counts_table = conceptCountsTable,
                                                concept_counts_table_is_temp = conceptCountsTableIsTemp)
+      sourceCounts <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
+      
+      sql <- SqlRender::loadRenderTranslateSql("CohortStandardConceptsFromCcTable.sql",
+                                               packageName = "CohortDiagnostics",
+                                               dbms = connection@dbms,
+                                               oracleTempSchema = oracleTempSchema,
+                                               cdm_database_schema = cdmDatabaseSchema,
+                                               concept_counts_database_schema = conceptCountsDatabaseSchema,
+                                               concept_counts_table = conceptCountsTable,
+                                               concept_counts_table_is_temp = conceptCountsTableIsTemp)
+      standardCounts <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
+      
+      # To avoid double counting, subtract standard concept counts included in source counts.
+      # Note: this can create negative counts, because a source concept can be double counted itself
+      # if it maps to more than one standard concept, but it will show correctly in the viewer app, 
+      # where the counts will be added back in.
+      dupCounts <- aggregate(conceptCount ~ conceptId, sourceCounts, sum)
+      colnames(dupCounts)[2] <- "dupCount"
+      dupSubjects <- aggregate(conceptSubjects ~ conceptId, sourceCounts, sum)
+      colnames(dupSubjects)[2] <- "dupSubjects"
+      standardCounts <- merge(standardCounts, dupCounts, all.x = TRUE)
+      standardCounts <- merge(standardCounts, dupSubjects, all.x = TRUE)
+      standardCounts$dupCount[is.na(standardCounts$dupCount)] <- 0
+      standardCounts$dupSubjects[is.na(standardCounts$dupSubjects)] <- 0
+      standardCounts$conceptCount <- standardCounts$conceptCount - standardCounts$dupCount
+      standardCounts$conceptSubjects <- standardCounts$conceptSubjects - standardCounts$dupSubjects
+      standardCounts$dupCount <- NULL
+      standardCounts$dupSubjects <- NULL
+      
+      counts <- dplyr::bind_rows(sourceCounts, standardCounts)
     } else {
       sql <- SqlRender::loadRenderTranslateSql("CohortSourceCodes.sql",
                                                packageName = "CohortDiagnostics",
@@ -469,8 +499,9 @@ runConceptSetDiagnostics <- function(connection,
                                                cdm_database_schema = cdmDatabaseSchema,
                                                by_month = FALSE,
                                                use_source_values = FALSE)
+      counts <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
     }
-    counts <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
+    
     colnames(counts)[colnames(counts) == "conceptSetId"] <- "uniqueConceptSetId"
     counts <- merge(uniqueConceptSets[, c("cohortId", "conceptSetId", "conceptSetName", "uniqueConceptSetId")], counts)
     counts$uniqueConceptSetId <- NULL
