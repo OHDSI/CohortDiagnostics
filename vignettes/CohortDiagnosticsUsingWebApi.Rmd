@@ -59,6 +59,7 @@ A convenient way to create such a data frame is to create a CSV file, and load i
 We can read the table using 
 
 ```{r tidy=FALSE,eval=FALSE}
+library(CohortDiagnostics)
 cohortSetReference <- read.csv("cohortsToDiagnose.csv")
 
 ```
