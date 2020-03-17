@@ -41,7 +41,7 @@
 #' @param databaseId                  A short string for identifying the database (e.g. 'Synpuf').
 #' @param databaseName                The full name of the database.
 #' @param databaseDescription         A short description (several sentences) of the database.
-#' @param runInclusionStatistics      Generate and export statistic on the cohort incusion rules?
+#' @param runInclusionStatistics      Generate and export statistic on the cohort inclusion rules?
 #' @param runIncludedSourceConcepts   Generate and export the source concepts included in the cohorts?
 #' @param runOrphanConcepts           Generate and export potential orphan concepts?
 #' @param runTimeDistributions        Generate and export cohort time distributions?

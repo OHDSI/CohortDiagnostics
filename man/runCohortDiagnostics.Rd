@@ -85,7 +85,7 @@ does not exist it will be created.}
 
 \item{databaseDescription}{A short description (several sentences) of the database.}
 
-\item{runInclusionStatistics}{Generate and export statistic on the cohort incusion rules?}
+\item{runInclusionStatistics}{Generate and export statistic on the cohort inclusion rules?}
 
 \item{runIncludedSourceConcepts}{Generate and export the source concepts included in the cohorts?}
 
@@ -113,7 +113,7 @@ the cohort definitions are stored in that package using the \code{ROhdsiWebApi::
 or (2) by using a WebApi interface to retrieve the cohort definitions.
 
 When using this function from within a study package, use the \code{packageName} and \code{cohortToCreateFile} to specify
-the name of the study package, and the name of the cohortToCreate file within that package, respectivly
+the name of the study package, and the name of the cohortToCreate file within that package, respectively
 
 When using this function using a WebApi interface, use the \code{baseUrl} and \code{cohortSetReference} to specify how to 
 connect to the WebApi, and which cohorts to fetch, respectively.
@@ -122,7 +122,7 @@ The \code{cohortSetReference} argument must be a data frame with  the following 
 \describe{
 \item{atlasId}{The cohort ID in ATLAS.}
 \item{atlasName}{The full name of the cohort. This will be shown in the Shiny app.}
-\item{cohortId}{The cohort ID to use in the package. USually the same as the cohort ID in ATLAS.}
+\item{cohortId}{The cohort ID to use in the package. Usually the same as the cohort ID in ATLAS.}
 \item{name}{A short name for the cohort, to use to create file names. do not use special characters.}
 }
 }

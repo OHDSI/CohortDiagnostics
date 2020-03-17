@@ -14,7 +14,7 @@
 #' or (2) by using a WebApi interface to retrieve the cohort definitions.
 #' 
 #' When using this function from within a study package, use the \code{packageName} and \code{cohortToCreateFile} to specify
-#' the name of the study package, and the name of the cohortToCreate file within that package, respectivly
+#' the name of the study package, and the name of the cohortToCreate file within that package, respectively
 #' 
 #' When using this function using a WebApi interface, use the \code{baseUrl} and \code{cohortSetReference} to specify how to 
 #' connect to the WebApi, and which cohorts to fetch, respectively. 

@@ -27,14 +27,14 @@ knitr::opts_chunk$set(
 
 This vignette describes how one could use the CohortDiagnostics R package, using the OHDSI WebAPI to access cohort definitions. 
 
-The CohortDiagnostics package allows one to generate a wide set of diagnostics to evaluate cohort definitions against a database in the Common Data Model (CDM). These diagnostics include incidence rates (optionally stratified by age, gender, and calendar year), cohort characteristisc (comorbidities, drug use, etc.), and the codes found in the data triggering the various rules in the cohort definitions.
+The CohortDiagnostics package allows one to generate a wide set of diagnostics to evaluate cohort definitions against a database in the Common Data Model (CDM). These diagnostics include incidence rates (optionally stratified by age, gender, and calendar year), cohort characteristics (comorbidities, drug use, etc.), and the codes found in the data triggering the various rules in the cohort definitions.
 
 The CohortDiagnostics package in general works in two steps:
 
 1. Generate the diagnostics against a database in the CDM.
 2. Explore the generated diagnostics in a Shiny app included in the CohortDiagnostics package.
 
-There are currently two aproaches one can take to step 1: The cohort diagnostics can be embedded in an OHDSI study package, where all the cohort definitions are stored as part of that study package, or the cohort diagnostics can be used as a stand-alone solution, relying on a WebAPI instance to provide the cohort definitions. WebAPI is the backend of the OHDSI ATLAS application, allowing programmatic access to the cohort definitions created in ATLAS. This vignette describes the latter approach: how to run CohortDiagnostics using the WebAPI.
+There are currently two approaches one can take to step 1: The cohort diagnostics can be embedded in an OHDSI study package, where all the cohort definitions are stored as part of that study package, or the cohort diagnostics can be used as a stand-alone solution, relying on a WebAPI instance to provide the cohort definitions. WebAPI is the backend of the OHDSI ATLAS application, allowing programmatic access to the cohort definitions created in ATLAS. This vignette describes the latter approach: how to run CohortDiagnostics using the WebAPI.
 
 # Running the cohort diagnostics
 
@@ -181,7 +181,7 @@ To share the results with others, it may make sense to make the Shiny app availa
 
 - The Shiny app itself. This can be found [here](https://github.com/OHDSI/CohortDiagnostics/tree/master/inst/shiny/DiagnosticsExplorer). Make sure to copy all files in the `DiagnosticsExplorer` folder.
 
-- The diagnostics data should be placed in a subfolder that should be called `data`. In this data folder, either place all the indivual zip files generated for each database, or (recommended) place the premerged .RDA file here.
+- The diagnostics data should be placed in a subfolder that should be called `data`. In this data folder, either place all the individual zip files generated for each database, or (recommended) place the premerged .RDA file here.
 
 
 Once the app and data are in place, the Shiny Server should automatically detect them and launch the app. You may need to install additional packages required by the app, including 'shinydashboard', 'VennDiagram', 'htmltools', and 'DT'.

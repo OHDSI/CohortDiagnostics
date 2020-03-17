@@ -70,7 +70,7 @@ ROhdsiWebApi::insertCohortDefinitionSetInPackage function. Assumes the cohorts h
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.1</span>
       </span>
     </div>
 
@@ -248,7 +248,7 @@ does not exist it will be created.</p></td>
     </tr>
     <tr>
       <th>runInclusionStatistics</th>
-      <td><p>Generate and export statistic on the cohort incusion rules?</p></td>
+      <td><p>Generate and export statistic on the cohort inclusion rules?</p></td>
     </tr>
     <tr>
       <th>runIncludedSourceConcepts</th>
@@ -290,13 +290,13 @@ does not exist it will be created.</p></td>
 the cohort definitions are stored in that package using the <code><a href='https://rdrr.io/pkg/ROhdsiWebApi/man/insertCohortDefinitionSetInPackage.html'>ROhdsiWebApi::insertCohortDefinitionSetInPackage</a></code>,
 or (2) by using a WebApi interface to retrieve the cohort definitions.</p>
 <p>When using this function from within a study package, use the <code>packageName</code> and <code>cohortToCreateFile</code> to specify
-the name of the study package, and the name of the cohortToCreate file within that package, respectivly</p>
+the name of the study package, and the name of the cohortToCreate file within that package, respectively</p>
 <p>When using this function using a WebApi interface, use the <code>baseUrl</code> and <code>cohortSetReference</code> to specify how to 
 connect to the WebApi, and which cohorts to fetch, respectively.</p>
 <p>The <code>cohortSetReference</code> argument must be a data frame with  the following columns:</p><dl class='dl-horizontal'>
 <dt>atlasId</dt><dd><p>The cohort ID in ATLAS.</p></dd>
 <dt>atlasName</dt><dd><p>The full name of the cohort. This will be shown in the Shiny app.</p></dd>
-<dt>cohortId</dt><dd><p>The cohort ID to use in the package. USually the same as the cohort ID in ATLAS.</p></dd>
+<dt>cohortId</dt><dd><p>The cohort ID to use in the package. Usually the same as the cohort ID in ATLAS.</p></dd>
 <dt>name</dt><dd><p>A short name for the cohort, to use to create file names. do not use special characters.</p></dd>
 
 </dl>

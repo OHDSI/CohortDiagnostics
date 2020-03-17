@@ -11,6 +11,8 @@ Bugfixes:
 
 2. Fixed bug when concept counts become too big for a regular INT.
 
+3. Fixed counts of standard concepts shown when using external concept count table.
+
 
 CohortDiagnostics 0.1.0
 =======================

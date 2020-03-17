@@ -111,7 +111,7 @@
 
 \title{Running cohort diagnostics using WebAPI}
 \author{Martijn J. Schuemie}
-\date{2020-03-13}
+\date{2020-03-17}
 
 \begin{document}
 \maketitle
@@ -130,7 +130,7 @@ The CohortDiagnostics package allows one to generate a wide set of
 diagnostics to evaluate cohort definitions against a database in the
 Common Data Model (CDM). These diagnostics include incidence rates
 (optionally stratified by age, gender, and calendar year), cohort
-characteristisc (comorbidities, drug use, etc.), and the codes found in
+characteristics (comorbidities, drug use, etc.), and the codes found in
 the data triggering the various rules in the cohort definitions.
 
 The CohortDiagnostics package in general works in two steps:
@@ -145,7 +145,7 @@ The CohortDiagnostics package in general works in two steps:
   CohortDiagnostics package.
 \end{enumerate}
 
-There are currently two aproaches one can take to step 1: The cohort
+There are currently two approaches one can take to step 1: The cohort
 diagnostics can be embedded in an OHDSI study package, where all the
 cohort definitions are stored as part of that study package, or the
 cohort diagnostics can be used as a stand-alone solution, relying on a
@@ -439,8 +439,8 @@ folder:
 \item
   The diagnostics data should be placed in a subfolder that should be
   called \texttt{data}. In this data folder, either place all the
-  indivual zip files generated for each database, or (recommended) place
-  the premerged .RDA file here.
+  individual zip files generated for each database, or (recommended)
+  place the premerged .RDA file here.
 \end{itemize}
 
 Once the app and data are in place, the Shiny Server should

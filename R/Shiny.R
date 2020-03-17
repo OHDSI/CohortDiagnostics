@@ -44,7 +44,7 @@ launchDiagnosticsExplorer <- function(dataFolder, launch.browser = FALSE) {
 #' 
 #' @description 
 #' If there are many diagnostics files, starting the Shiny app may take a very long time. This function 
-#' already does most of the preprocessing, increasing loadding speed.
+#' already does most of the preprocessing, increasing loading speed.
 #' 
 #' The merged data will be stored in the same folder, and will automatically be recognized by the Shiny app.
 #'
