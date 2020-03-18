@@ -542,18 +542,18 @@ runConceptSetDiagnostics <- function(connection,
                                            conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
                                            conceptCountsTable = conceptCountsTable,
                                            conceptCountsTableIsTemp = conceptCountsTableIsTemp)
-      if (nrow(orphanConcepts) > 0) {
-        orphanConcepts$uniqueConceptSetId <- conceptSet$uniqueConceptSetId
-      }
+      # if (nrow(orphanConcepts) > 0) {
+      orphanConcepts$uniqueConceptSetId <- conceptSet$uniqueConceptSetId
+      # }
       return(orphanConcepts)
     }
     
     data <- lapply(split(uniqueConceptSets, uniqueConceptSets$uniqueConceptSetId), runOrphanConcepts)
     data <- do.call(rbind, data)
+    data <- merge(uniqueConceptSets[, c("cohortId", "conceptSetId", "conceptSetName", "uniqueConceptSetId")], data)
+    data$uniqueConceptSetId <- NULL
+    data$databaseId <- rep(databaseId, nrow(data))
     if (nrow(data) > 0) {
-      data <- merge(uniqueConceptSets[, c("cohortId", "conceptSetId", "conceptSetName", "uniqueConceptSetId")], data)
-      data$uniqueConceptSetId <- NULL
-      data$databaseId <- databaseId
       data <- enforceMinCellValue(data, "conceptCount", minCellCount)
     }
     writeToCsv(data, file.path(exportFolder, "orphan_concept.csv"))
