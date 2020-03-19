@@ -542,9 +542,7 @@ runConceptSetDiagnostics <- function(connection,
                                            conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
                                            conceptCountsTable = conceptCountsTable,
                                            conceptCountsTableIsTemp = conceptCountsTableIsTemp)
-      # if (nrow(orphanConcepts) > 0) {
-      orphanConcepts$uniqueConceptSetId <- conceptSet$uniqueConceptSetId
-      # }
+      orphanConcepts$uniqueConceptSetId <- rep(conceptSet$uniqueConceptSetId, nrow(orphanConcepts))
       return(orphanConcepts)
     }
     
