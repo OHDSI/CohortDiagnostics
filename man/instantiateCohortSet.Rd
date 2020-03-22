@@ -11,10 +11,16 @@ instantiateCohortSet(
   oracleTempSchema = NULL,
   cohortDatabaseSchema = cdmDatabaseSchema,
   cohortTable = "cohort",
-  baseUrl,
-  cohortSetReference,
+  cohortIds = NULL,
+  packageName = NULL,
+  cohortToCreateFile = "settings/CohortsToCreate.csv",
+  baseUrl = NULL,
+  cohortSetReference = NULL,
   generateInclusionStats = FALSE,
-  inclusionStatisticsFolder = NULL
+  inclusionStatisticsFolder = NULL,
+  createCohortTable = FALSE,
+  incremental = FALSE,
+  incrementalFolder = NULL
 )
 }
 \arguments{
@@ -42,21 +48,50 @@ this should include both the database and schema name, for example
 
 \item{cohortTable}{Name of the cohort table.}
 
-\item{baseUrl}{The base URL for the WebApi instance, for example:
-"http://server.org:80/WebAPI".}
+\item{cohortIds}{Optionally, provide a subset of cohort IDs to restrict the
+construction to.}
 
-\item{cohortSetReference}{A data frame with four columns, as described in the details.}
+\item{packageName}{The name of the package containing the cohort definitions. Can be left NULL if 
+\code{baseUrl} and \code{cohortSetReference} have been specified.}
+
+\item{cohortToCreateFile}{The location of the cohortToCreate file within the package. Is ignored if 
+\code{baseUrl} and \code{cohortSetReference} have been specified.}
+
+\item{baseUrl}{The base URL for the WebApi instance, for example:
+"http://server.org:80/WebAPI". Can be left NULL if 
+\code{packageName} and \code{cohortToCreateFile} have been specified.}
+
+\item{cohortSetReference}{A data frame with four columns, as described in the details. Can be left NULL if 
+\code{packageName} and \code{cohortToCreateFile} have been specified.}
 
 \item{generateInclusionStats}{Compute and store inclusion rule statistics?}
 
 \item{inclusionStatisticsFolder}{The folder where the inclusion rule statistics are stored. Can be
 left NULL if \code{generateInclusionStats = FALSE}.}
+
+\item{createCohortTable}{Create the cohort table? If \code{incremental = TRUE} and the table
+already exists this will be skipped.}
+
+\item{incremental}{Create only cohorts that haven't been created before?}
+
+\item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
+of which definition has been executed.}
 }
 \description{
 This function instantiates a set of cohort in the cohort table, using definitions that are fetched from a WebApi interface.
 Optionally, the inclusion rule statistics are computed and stored in the \code{inclusionStatisticsFolder}.
 }
 \details{
+Currently two ways of executing this function are supported, either (1) embedded in a study package, assuming 
+the cohort definitions are stored in that package using the \code{ROhdsiWebApi::insertCohortDefinitionSetInPackage},
+or (2) by using a WebApi interface to retrieve the cohort definitions.
+
+When using this function from within a study package, use the \code{packageName} and \code{cohortToCreateFile} to specify
+the name of the study package, and the name of the cohortToCreate file within that package, respectively
+
+When using this function using a WebApi interface, use the \code{baseUrl} and \code{cohortSetReference} to specify how to 
+connect to the WebApi, and which cohorts to fetch, respectively.
+
 The \code{cohortSetReference} argument must be a data frame with  the following columns:
 \describe{
 \item{atlasId}{The cohort ID in ATLAS.}

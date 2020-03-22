@@ -2,8 +2,7 @@ library(CohortDiagnostics)
 options(fftempdir = "c:/FFtemp")
 connectionDetails <- createConnectionDetails(dbms = "pdw",
                                              server = Sys.getenv("PDW_SERVER"),
-                                             port = Sys.getenv("PDW_PORT"),
-                                             schema = "CDM_Truven_MDCR_V415")
+                                             port = Sys.getenv("PDW_PORT"))
 oracleTempSchema <- NULL
 workDatabaseSchema <- "scratch.dbo"
 baseUrl <- Sys.getenv("baseUrl")
@@ -294,4 +293,39 @@ runCohortDiagnostics(baseUrl = baseUrl,
                      runOrphanConcepts = TRUE,
                      minCellCount = 5)
 
+# Test incremental mode ------------------------------------------------------------------------------
+
+baseUrl <- Sys.getenv("ohdsiBaseUrl")
+cohortSetReferenceFile <- file.path("exampleComparativeCohortStudy", "inst", "settings", "CohortsToCreate.csv")
+cohortSetReference <- read.csv(cohortSetReferenceFile)
+inclusionStatisticsFolder <- "c:/temp/incStats"
+
+# First run subset:
+subset <- cohortSetReference[c(1,3), ]
+instantiateCohortSet(connectionDetails = connectionDetails,
+                     cdmDatabaseSchema = cdmDatabaseSchema,
+                     oracleTempSchema = oracleTempSchema,
+                     cohortDatabaseSchema = cohortDatabaseSchema,
+                     cohortTable = cohortTable,
+                     createCohortTable = TRUE,
+                     baseUrl = baseUrl,
+                     cohortSetReference = subset,
+                     generateInclusionStats = TRUE,
+                     inclusionStatisticsFolder = inclusionStatisticsFolder,
+                     incremental = TRUE,
+                     incrementalFolder = inclusionStatisticsFolder)
+
+# Then run all:
+instantiateCohortSet(connectionDetails = connectionDetails,
+                     cdmDatabaseSchema = cdmDatabaseSchema,
+                     oracleTempSchema = oracleTempSchema,
+                     cohortDatabaseSchema = cohortDatabaseSchema,
+                     cohortTable = cohortTable,
+                     createCohortTable = TRUE,
+                     baseUrl = baseUrl,
+                     cohortSetReference = cohortSetReference,
+                     generateInclusionStats = TRUE,
+                     inclusionStatisticsFolder = inclusionStatisticsFolder,
+                     incremental = TRUE,
+                     incrementalFolder = inclusionStatisticsFolder)
 
