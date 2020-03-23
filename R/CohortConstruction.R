@@ -493,61 +493,57 @@ instantiateCohortSet <- function(connectionDetails = NULL,
   }
   
   if (incremental) {
-    recordKeepingFile <- file.path(incrementalFolder, "createdCohorts.csv")
-    if (file.exists(recordKeepingFile)) {
-      recordKeeping <-  readr::read_csv(recordKeepingFile, col_types = readr::cols())
-    } else {
-      recordKeeping <- data.frame()
-    }
-    cohorts$md5 <- sapply(cohorts$sql, digest::digest, algo = "md5", serialize = FALSE)
-    alreadyDone <- cohorts$md5 %in% recordKeeping$md5
-    ParallelLogger::logInfo(sprintf("Skipping %s cohorts that have already been created. Creating %s new cohorts.", 
-                                    sum(alreadyDone),
-                                    sum(!alreadyDone)))
-    recordKeeping <- cohorts[, c("cohortId", "cohortName", "cohortFullName", "md5")]
-    cohorts <- cohorts[!alreadyDone, ]
-    if (nrow(cohorts) == 0) {
-      return()
-    }
+    cohorts$checksum <- computeChecksum(cohorts$sql)
+    recordKeepingFile <- file.path(incrementalFolder, "InstantiatedCohorts.csv")
   }
   
   if (generateInclusionStats) {
     createTempInclusionStatsTables(connection, oracleTempSchema, cohorts) 
   }
-  
+ 
+  instantiatedCohortIds <- c() 
   for (i in 1:nrow(cohorts)) {
-    ParallelLogger::logInfo("Instantiation cohort ", cohorts$cohortFullName[i])
-    sql <- cohorts$sql[i]
-    if (generateInclusionStats) {
-      sql <- SqlRender::render(sql,
-                               cdm_database_schema = cdmDatabaseSchema,
-                               vocabulary_database_schema = cdmDatabaseSchema,
-                               target_database_schema = cohortDatabaseSchema,
-                               target_cohort_table = cohortTable,
-                               target_cohort_id = cohorts$cohortId[i],
-                               results_database_schema.cohort_inclusion = "#cohort_inclusion",
-                               results_database_schema.cohort_inclusion_result = "#cohort_inc_result",
-                               results_database_schema.cohort_inclusion_stats = "#cohort_inc_stats",
-                               results_database_schema.cohort_summary_stats = "#cohort_summary_stats")
-    } else {
-      sql <- SqlRender::render(sql,
-                               cdm_database_schema = cdmDatabaseSchema,
-                               vocabulary_database_schema = cdmDatabaseSchema,
-                               target_database_schema = cohortDatabaseSchema,
-                               target_cohort_table = cohortTable,
-                               target_cohort_id = cohorts$cohortId[i])
+    if (!incremental || isTaskRequired(cohortId = cohorts$cohortId[i],
+                                       checksum = cohorts$checksum[i],
+                                       recordKeepingFile = recordKeepingFile)) {
+      ParallelLogger::logInfo("Instantiation cohort ", cohorts$cohortFullName[i])
+      sql <- cohorts$sql[i]
+      if (generateInclusionStats) {
+        sql <- SqlRender::render(sql,
+                                 cdm_database_schema = cdmDatabaseSchema,
+                                 vocabulary_database_schema = cdmDatabaseSchema,
+                                 target_database_schema = cohortDatabaseSchema,
+                                 target_cohort_table = cohortTable,
+                                 target_cohort_id = cohorts$cohortId[i],
+                                 results_database_schema.cohort_inclusion = "#cohort_inclusion",
+                                 results_database_schema.cohort_inclusion_result = "#cohort_inc_result",
+                                 results_database_schema.cohort_inclusion_stats = "#cohort_inc_stats",
+                                 results_database_schema.cohort_summary_stats = "#cohort_summary_stats")
+      } else {
+        sql <- SqlRender::render(sql,
+                                 cdm_database_schema = cdmDatabaseSchema,
+                                 vocabulary_database_schema = cdmDatabaseSchema,
+                                 target_database_schema = cohortDatabaseSchema,
+                                 target_cohort_table = cohortTable,
+                                 target_cohort_id = cohorts$cohortId[i])
+      }
+      sql <- SqlRender::translate(sql,
+                                  targetDialect = connectionDetails$dbms,
+                                  oracleTempSchema = oracleTempSchema)
+      DatabaseConnector::executeSql(connection, sql)
+      instantiatedCohortIds <- c(instantiatedCohortIds, cohorts$cohortId[i])
     }
-    sql <- SqlRender::translate(sql,
-                                targetDialect = connectionDetails$dbms,
-                                oracleTempSchema = oracleTempSchema)
-    DatabaseConnector::executeSql(connection, sql)
   }
   
   if (generateInclusionStats) {
-    saveAndDropTempInclusionStatsTables(connection, oracleTempSchema, inclusionStatisticsFolder, incremental)
+    saveAndDropTempInclusionStatsTables(connection = connection, 
+                                        oracleTempSchema = oracleTempSchema, 
+                                        inclusionStatisticsFolder = inclusionStatisticsFolder, 
+                                        incremental = incremental, 
+                                        cohortIds = instantiatedCohortIds)
   }
   if (incremental) {
-    readr::write_csv(recordKeeping, recordKeepingFile)
+    recordTasksDone(cohortId = cohorts$cohortId, checksum = cohorts$checksum, recordKeepingFile = recordKeepingFile)
   }
   
   delta <- Sys.time() - start
@@ -577,7 +573,6 @@ createTempInclusionStatsTables <- function(connection, oracleTempSchema, cohorts
   }
   inclusionRules <- merge(inclusionRules, data.frame(cohortId = cohorts$cohortId,
                                                      cohortName = cohorts$cohortFullName))
-  # write.csv(inclusionRules, file.path(inclusionStatisticsFolder, "InclusionRules.csv"), row.names = FALSE)
   inclusionRules <- data.frame(cohort_definition_id = inclusionRules$cohortId,
                                rule_sequence = inclusionRules$ruleSequence,
                                name = inclusionRules$ruleName)
@@ -591,7 +586,11 @@ createTempInclusionStatsTables <- function(connection, oracleTempSchema, cohorts
   
 }
 
-saveAndDropTempInclusionStatsTables <- function(connection, oracleTempSchema, inclusionStatisticsFolder, incremental) {
+saveAndDropTempInclusionStatsTables <- function(connection, 
+                                                oracleTempSchema, 
+                                                inclusionStatisticsFolder, 
+                                                incremental,
+                                                cohortIds) {
   fetchStats <- function(table, fileName) {
     ParallelLogger::logDebug("- Fetching data from ", table)
     sql <- "SELECT * FROM @table"
@@ -600,12 +599,11 @@ saveAndDropTempInclusionStatsTables <- function(connection, oracleTempSchema, in
                                                        snakeCaseToCamelCase = TRUE,
                                                        table = table)
     fullFileName <- file.path(inclusionStatisticsFolder, fileName)
-    if (incremental && file.exists(fullFileName)) {
-       previousData <-  readr::read_csv(fullFileName, col_types = readr::cols())
-       previousData <- previousData[!(previousData$cohortDefinitionId %in% data$cohortDefinitionId), ]
-       data <- rbind(previousData, data)
+    if (incremental) {
+      saveIncremental(data, fullFileName, cohortDefinitionId = cohortIds)
+    } else {
+      readr::write_csv(data, fullFileName)
     }
-    readr::write_csv(data, fullFileName)
   }
   fetchStats("#cohort_inclusion", "cohortInclusion.csv")
   fetchStats("#cohort_inc_result", "cohortIncResult.csv")

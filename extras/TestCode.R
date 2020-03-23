@@ -300,6 +300,12 @@ cohortSetReferenceFile <- file.path("exampleComparativeCohortStudy", "inst", "se
 cohortSetReference <- read.csv(cohortSetReferenceFile)
 inclusionStatisticsFolder <- "c:/temp/incStats"
 
+# Drop old cohort table:
+connection <- DatabaseConnector::connect(connectionDetails)
+sql <- "DROP TABLE @cohort_database_schema.@cohort_table;"
+DatabaseConnector::renderTranslateExecuteSql(connection, sql, cohort_database_schema = cohortDatabaseSchema, cohort_table = cohortTable)
+DatabaseConnector::disconnect(connection)
+
 # First run subset:
 subset <- cohortSetReference[c(1,3), ]
 instantiateCohortSet(connectionDetails = connectionDetails,
