@@ -593,7 +593,7 @@ runConceptSetDiagnostics <- function(connection,
   if (runIncludedSourceConcepts) {
     # Included concepts ------------------------------------------------------------------
     ParallelLogger::logInfo("Fetching included source concepts")
-    if (nrow(subsetIncluded > 0)) {
+    if (nrow(subsetIncluded) > 0) {
       start <- Sys.time()
       ParallelLogger::logInfo("Counting codes in concept sets")
       if (useExternalConceptCountsTable) {
@@ -710,7 +710,7 @@ runConceptSetDiagnostics <- function(connection,
       }
       writeToCsv(data, file.path(exportFolder, "orphan_concept.csv"), incremental = incremental, cohortId = subsetOrphans$cohortId)
       recordTasksDone(cohortId = subsetOrphans$cohortId,
-                      task = "runIncludedSourceConcepts",
+                      task = "runOrphanConcepts",
                       checksum = subsetOrphans$checksum,
                       recordKeepingFile = recordKeepingFile,
                       incremental = incremental)

@@ -298,7 +298,11 @@ runCohortDiagnostics(baseUrl = baseUrl,
 baseUrl <- Sys.getenv("ohdsiBaseUrl")
 cohortSetReferenceFile <- file.path("exampleComparativeCohortStudy", "inst", "settings", "CohortsToCreate.csv")
 cohortSetReference <- read.csv(cohortSetReferenceFile)
-inclusionStatisticsFolder <- "c:/temp/incStats"
+folder <- "c:/temp/cdTest"
+inclusionStatisticsFolder <- file.path(folder, "incStats")
+incrementalFolder <- file.path(folder, "incremental")
+exportFolder <- file.path(folder, "export")
+unlink(folder, recursive = TRUE)
 
 # Drop old cohort table:
 connection <- DatabaseConnector::connect(connectionDetails)
@@ -319,7 +323,28 @@ instantiateCohortSet(connectionDetails = connectionDetails,
                      generateInclusionStats = TRUE,
                      inclusionStatisticsFolder = inclusionStatisticsFolder,
                      incremental = TRUE,
-                     incrementalFolder = inclusionStatisticsFolder)
+                     incrementalFolder = incrementalFolder)
+
+runCohortDiagnostics(connectionDetails = connectionDetails,
+                     cdmDatabaseSchema = cdmDatabaseSchema,
+                     oracleTempSchema = oracleTempSchema,
+                     cohortDatabaseSchema = cohortDatabaseSchema,
+                     cohortTable = cohortTable,
+                     baseUrl = baseUrl,
+                     cohortSetReference = subset,
+                     exportFolder = exportFolder,
+                     databaseId = databaseId,
+                     runInclusionStatistics = TRUE,
+                     runIncludedSourceConcepts = TRUE,
+                     runOrphanConcepts = TRUE,
+                     runTimeDistributions = TRUE,
+                     runBreakdownIndexEvents = TRUE,
+                     runIncidenceRate = TRUE,
+                     runCohortOverlap = TRUE,
+                     runCohortCharacterization = TRUE,
+                     inclusionStatisticsFolder = inclusionStatisticsFolder,
+                     incremental = TRUE,
+                     incrementalFolder = incrementalFolder)
 
 # Then run all:
 instantiateCohortSet(connectionDetails = connectionDetails,
@@ -333,33 +358,26 @@ instantiateCohortSet(connectionDetails = connectionDetails,
                      generateInclusionStats = TRUE,
                      inclusionStatisticsFolder = inclusionStatisticsFolder,
                      incremental = TRUE,
-                     incrementalFolder = inclusionStatisticsFolder)
+                     incrementalFolder = incrementalFolder)
 
-
-
-cohortSetReference <- data.frame(atlasId = 5665,
-                                 atlasName = "Zoledronic acid new users with prostate cancer (many inclusion rules)",
-                                 cohortId = 5665,
-                                 name = "Zoledronic acid")
-
-exportFolder <- "C:/temp/incTest"
 runCohortDiagnostics(connectionDetails = connectionDetails,
                      cdmDatabaseSchema = cdmDatabaseSchema,
                      oracleTempSchema = oracleTempSchema,
                      cohortDatabaseSchema = cohortDatabaseSchema,
                      cohortTable = cohortTable,
-                     databaseId = cdmDatabaseSchema,
                      baseUrl = baseUrl,
                      cohortSetReference = cohortSetReference,
                      exportFolder = exportFolder,
-                     runInclusionStatistics = FALSE,
-                     runIncludedSourceConcepts = FALSE,
-                     runOrphanConcepts = FALSE,
-                     runTimeDistributions = FALSE,
-                     runBreakdownIndexEvents = FALSE,
-                     runIncidenceRate = FALSE,
-                     runCohortOverlap = FALSE,
-                     runCohortCharacterization = FALSE,
+                     databaseId = databaseId,
+                     runInclusionStatistics = TRUE,
+                     runIncludedSourceConcepts = TRUE,
+                     runOrphanConcepts = TRUE,
+                     runTimeDistributions = TRUE,
+                     runBreakdownIndexEvents = TRUE,
+                     runIncidenceRate = TRUE,
+                     runCohortOverlap = TRUE,
+                     runCohortCharacterization = TRUE,
+                     inclusionStatisticsFolder = inclusionStatisticsFolder,
                      incremental = TRUE,
-                     incrementalFolder = exportFolder)
+                     incrementalFolder = incrementalFolder)
 
