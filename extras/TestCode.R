@@ -302,7 +302,7 @@ folder <- "c:/temp/cdTest"
 inclusionStatisticsFolder <- file.path(folder, "incStats")
 incrementalFolder <- file.path(folder, "incremental")
 exportFolder <- file.path(folder, "export")
-unlink(folder, recursive = TRUE)
+# unlink(folder, recursive = TRUE)
 
 # Drop old cohort table:
 connection <- DatabaseConnector::connect(connectionDetails)
@@ -380,4 +380,9 @@ runCohortDiagnostics(connectionDetails = connectionDetails,
                      inclusionStatisticsFolder = inclusionStatisticsFolder,
                      incremental = TRUE,
                      incrementalFolder = incrementalFolder)
+
+preMergeDiagnosticsFiles(exportFolder)
+
+
+launchDiagnosticsExplorer(exportFolder)
 

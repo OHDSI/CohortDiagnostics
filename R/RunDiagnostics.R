@@ -341,57 +341,56 @@ runCohortDiagnostics <- function(packageName = NULL,
                                      task = "runCohortOverlap", 
                                      incremental = incremental, 
                                      recordKeepingFile = recordKeepingFile)
-    runCohortOverlap <- function(row) {
-      ParallelLogger::logInfo("- Computing overlap for cohorts ",
-                              row$targetCohortId,
-                              " and ",
-                              row$comparatorCohortId)
-      data <- computeCohortOverlap(connection = connection,
-                                   cohortDatabaseSchema = cohortDatabaseSchema,
-                                   cohortTable = cohortTable,
-                                   targetCohortId = row$targetCohortId,
-                                   comparatorCohortId = row$comparatorCohortId)
-      if (nrow(data) > 0) {
-        data$targetCohortId <- row$targetCohortId
-        data$comparatorCohortId <- row$comparatorCohortId
+    if (nrow(subset) > 0) {
+      runCohortOverlap <- function(row) {
+        ParallelLogger::logInfo("- Computing overlap for cohorts ",
+                                row$targetCohortId,
+                                " and ",
+                                row$comparatorCohortId)
+        data <- computeCohortOverlap(connection = connection,
+                                     cohortDatabaseSchema = cohortDatabaseSchema,
+                                     cohortTable = cohortTable,
+                                     targetCohortId = row$targetCohortId,
+                                     comparatorCohortId = row$comparatorCohortId)
+        if (nrow(data) > 0) {
+          data$targetCohortId <- row$targetCohortId
+          data$comparatorCohortId <- row$comparatorCohortId
+        }
+        return(data)
       }
-      return(data)
-    }
-    if (nrow(subset) == 0) {
-      data <- data.frame()
-    } else {
+      
       data <- lapply(split(subset, 1:nrow(subset)), runCohortOverlap)
       data <- do.call(rbind, data)
+      if (nrow(data) > 0) {
+        revData <- data
+        revData <- swapColumnContents(revData, "targetCohortId", "comparatorCohortId")
+        revData <- swapColumnContents(revData, "tOnlySubjects", "cOnlySubjects")
+        revData <- swapColumnContents(revData, "tBeforeCSubjects", "cBeforeTSubjects")
+        revData <- swapColumnContents(revData, "tInCSubjects", "cInTSubjects")
+        data <- rbind(data, revData)
+        data$databaseId <- databaseId
+        data <- enforceMinCellValue(data, "eitherSubjects", minCellCount)
+        data <- enforceMinCellValue(data, "bothSubjects", minCellCount)
+        data <- enforceMinCellValue(data, "tOnlySubjects", minCellCount)
+        data <- enforceMinCellValue(data, "cOnlySubjects", minCellCount)
+        data <- enforceMinCellValue(data, "tBeforeCSubjects", minCellCount)
+        data <- enforceMinCellValue(data, "cBeforeTSubjects", minCellCount)
+        data <- enforceMinCellValue(data, "sameDaySubjects", minCellCount)
+        data <- enforceMinCellValue(data, "tInCSubjects", minCellCount)
+        data <- enforceMinCellValue(data, "cInTSubjects", minCellCount)
+      }
+      writeToCsv(data = data, 
+                 fileName = file.path(exportFolder, "cohort_overlap.csv"), 
+                 incremental = incremental, 
+                 targetCohortId = subset$targetCohortId, 
+                 comparatorCohortId = subset$comparatorCohortId)
+      recordTasksDone(cohortId = subset$targetCohortId,
+                      comparatorId = subset$comparatorCohortId,
+                      task = "runCohortOverlap",
+                      checksum = subset$checksum,
+                      recordKeepingFile = recordKeepingFile,
+                      incremental = incremental)
     }
-    if (nrow(data) > 0) {
-      revData <- data
-      revData <- swapColumnContents(revData, "targetCohortId", "comparatorCohortId")
-      revData <- swapColumnContents(revData, "tOnlySubjects", "cOnlySubjects")
-      revData <- swapColumnContents(revData, "tBeforeCSubjects", "cBeforeTSubjects")
-      revData <- swapColumnContents(revData, "tInCSubjects", "cInTSubjects")
-      data <- rbind(data, revData)
-      data$databaseId <- databaseId
-      data <- enforceMinCellValue(data, "eitherSubjects", minCellCount)
-      data <- enforceMinCellValue(data, "bothSubjects", minCellCount)
-      data <- enforceMinCellValue(data, "tOnlySubjects", minCellCount)
-      data <- enforceMinCellValue(data, "cOnlySubjects", minCellCount)
-      data <- enforceMinCellValue(data, "tBeforeCSubjects", minCellCount)
-      data <- enforceMinCellValue(data, "cBeforeTSubjects", minCellCount)
-      data <- enforceMinCellValue(data, "sameDaySubjects", minCellCount)
-      data <- enforceMinCellValue(data, "tInCSubjects", minCellCount)
-      data <- enforceMinCellValue(data, "cInTSubjects", minCellCount)
-    }
-    writeToCsv(data = data, 
-               fileName = file.path(exportFolder, "cohort_overlap.csv"), 
-               incremental = incremental, 
-               targetCohortId = subset$targetCohortId, 
-               comparatorCohortId = subset$comparatorCohortId)
-    recordTasksDone(cohortId = subset$targetCohortId,
-                    comparatorId = subset$comparatorCohortId,
-                    task = "runCohortOverlap",
-                    checksum = subset$checksum,
-                    recordKeepingFile = recordKeepingFile,
-                    incremental = incremental)
   }
   
   if (runCohortCharacterization) {
@@ -756,7 +755,7 @@ subsetToRequiredCombis <- function(combis, task, incremental, recordKeepingFile)
                               task = task,
                               checksum = combis$checksum,
                               recordKeepingFile = recordKeepingFile)
-    return(merge(combis, tasks))
+    return(merge(combis, tibble::tibble(targetCohortId = tasks$cohortId, comparatorCohortId = tasks$comparatorId)))
   } else {
     return(combis)
   }
