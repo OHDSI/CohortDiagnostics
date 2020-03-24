@@ -335,3 +335,31 @@ instantiateCohortSet(connectionDetails = connectionDetails,
                      incremental = TRUE,
                      incrementalFolder = inclusionStatisticsFolder)
 
+
+
+cohortSetReference <- data.frame(atlasId = 5665,
+                                 atlasName = "Zoledronic acid new users with prostate cancer (many inclusion rules)",
+                                 cohortId = 5665,
+                                 name = "Zoledronic acid")
+
+exportFolder <- "C:/temp/incTest"
+runCohortDiagnostics(connectionDetails = connectionDetails,
+                     cdmDatabaseSchema = cdmDatabaseSchema,
+                     oracleTempSchema = oracleTempSchema,
+                     cohortDatabaseSchema = cohortDatabaseSchema,
+                     cohortTable = cohortTable,
+                     databaseId = cdmDatabaseSchema,
+                     baseUrl = baseUrl,
+                     cohortSetReference = cohortSetReference,
+                     exportFolder = exportFolder,
+                     runInclusionStatistics = FALSE,
+                     runIncludedSourceConcepts = FALSE,
+                     runOrphanConcepts = FALSE,
+                     runTimeDistributions = FALSE,
+                     runBreakdownIndexEvents = FALSE,
+                     runIncidenceRate = FALSE,
+                     runCohortOverlap = FALSE,
+                     runCohortCharacterization = FALSE,
+                     incremental = TRUE,
+                     incrementalFolder = exportFolder)
+

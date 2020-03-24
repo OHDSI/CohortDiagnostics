@@ -14,6 +14,7 @@ r_packages:
 r_github_packages:
   - OHDSI/ROhdsiWebApi
   - OHDSI/FeatureExtraction
+  - OHDSI/Eunomia
 
 before_script:
   - export PKG_NAME=$(Rscript -e 'cat(paste0(devtools::as.package(".")$package))')

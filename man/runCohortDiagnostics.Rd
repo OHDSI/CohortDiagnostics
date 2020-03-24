@@ -29,7 +29,9 @@ runCohortDiagnostics(
   runIncidenceRate = TRUE,
   runCohortOverlap = TRUE,
   runCohortCharacterization = TRUE,
-  minCellCount = 5
+  minCellCount = 5,
+  incremental = FALSE,
+  incrementalFolder = exportFolder
 )
 }
 \arguments{
@@ -102,6 +104,11 @@ does not exist it will be created.}
 \item{runCohortCharacterization}{Generate and export the cohort characterization?}
 
 \item{minCellCount}{The minimum cell count for fields contains person counts or fractions.}
+
+\item{incremental}{Create only cohort diagnostics that haven't been created before?}
+
+\item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
+of which cohort diagnostics has been executed.}
 }
 \description{
 Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the

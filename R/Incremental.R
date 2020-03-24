@@ -43,6 +43,27 @@ isTaskRequired <- function(..., checksum, recordKeepingFile, verbose = TRUE) {
   }
 }
 
+getRequiredTasks <- function(..., checksum, recordKeepingFile, verbose = TRUE) {
+  tasks <- list(...)
+  if (file.exists(recordKeepingFile) && length(tasks[[1]]) > 0) {
+    recordKeeping <-  readr::read_csv(recordKeepingFile, col_types = readr::cols())
+    tasks$checksum <- checksum
+    tasks <- tibble::as_tibble(tasks)
+    if (all(names(tasks) %in% names(recordKeeping))) {
+      idx <- getKeyIndex(recordKeeping[, names(tasks)], tasks)
+    } else {
+      idx = c()
+    }
+    tasks$checksum <- NULL
+    if (length(idx) > 0) {
+      text <- paste(sprintf("%s = %s", names(tasks), tasks[idx,]), collapse = ", ")
+      ParallelLogger::logInfo("Skipping ", text, " because unchanged from earlier run")
+      tasks <- tasks[-idx, ]
+    }
+  }
+  return(tasks)
+}
+
 getKeyIndex <- function(key, recordKeeping) {
   if (nrow(recordKeeping) == 0 || length(key[[1]]) == 0 || !all(names(key) %in% names(recordKeeping))) {
     return(c())
@@ -54,7 +75,13 @@ getKeyIndex <- function(key, recordKeeping) {
   }
 }
 
-recordTasksDone <- function(..., checksum, recordKeepingFile) {
+recordTasksDone <- function(..., checksum, recordKeepingFile, incremental = TRUE) {
+  if (!incremental) {
+    return()
+  }
+  if (length(list(...)[[1]]) == 0) {
+    return()
+  }
   if (file.exists(recordKeepingFile)) {
     recordKeeping <-  readr::read_csv(recordKeepingFile, col_types = readr::cols())
     idx <- getKeyIndex(list(...), recordKeeping)
@@ -72,6 +99,9 @@ recordTasksDone <- function(..., checksum, recordKeepingFile) {
 }
 
 saveIncremental <- function(data, fileName, ...) {
+  if (length(list(...)[[1]]) == 0) {
+    return()
+  }
   if (file.exists(fileName)) {
     previousData <- readr::read_csv(fileName, col_types = readr::cols())
     idx <- getKeyIndex(list(...), previousData)

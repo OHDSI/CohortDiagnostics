@@ -1,3 +1,10 @@
+CohortDiagnostics 0.1.2
+=======================
+
+Changes
+
+1. Adding option to run cohort instantiation and diagnostics incrementally, so only running those tasks that have changed since the last ru.
+
 CohortDiagnostics 0.1.1
 =======================
 

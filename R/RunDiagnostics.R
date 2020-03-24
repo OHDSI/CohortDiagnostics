@@ -50,6 +50,9 @@
 #' @param runCohortOverlap            Generate and export the cohort overlap?
 #' @param runCohortCharacterization   Generate and export the cohort characterization?
 #' @param minCellCount                The minimum cell count for fields contains person counts or fractions.
+#' @param incremental                 Create only cohort diagnostics that haven't been created before?
+#' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
+#'                                    of which cohort diagnostics has been executed.
 #'
 #' @export
 runCohortDiagnostics <- function(packageName = NULL,
@@ -76,10 +79,21 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  runIncidenceRate = TRUE,
                                  runCohortOverlap = TRUE,
                                  runCohortCharacterization = TRUE,
-                                 minCellCount = 5) {
+                                 minCellCount = 5,
+                                 incremental = FALSE,
+                                 incrementalFolder = exportFolder) {
   start <- Sys.time()
   if (!file.exists(exportFolder)) {
-    dir.create(exportFolder)
+    dir.create(exportFolder, recursive = TRUE)
+  }
+  
+  if (incremental) {
+    if (is.null(incrementalFolder)) {
+      stop("Must specify incrementalFolder when incremental = TRUE")
+    }
+    if (!file.exists(incrementalFolder)) {
+      dir.create(incrementalFolder, recursive = TRUE)
+    }
   }
   
   if ((runTimeDistributions || runCohortCharacterization) && !is.null(getOption("fftempdir")) && !file.exists(getOption("fftempdir"))) {
@@ -104,6 +118,11 @@ runCohortDiagnostics <- function(packageName = NULL,
   
   writeToCsv(cohorts, file.path(exportFolder, "cohort.csv"))
   
+  if (incremental) {
+    cohorts$checksum <- computeChecksum(cohorts$sql)
+    recordKeepingFile <- file.path(incrementalFolder, "CreatedDiagnostics.csv")
+  }
+  
   ParallelLogger::logInfo("Saving database metadata")
   database <- data.frame(databaseId = databaseId,
                          databaseName = databaseName,
@@ -111,43 +130,69 @@ runCohortDiagnostics <- function(packageName = NULL,
                          isMetaAnalysis = 0)
   writeToCsv(database, file.path(exportFolder, "database.csv"))
   
+  # Counting cohorts -----------------------------------------------------------------------
   ParallelLogger::logInfo("Counting cohorts")
-  counts <- getCohortCounts(connection = connection,
-                            cohortDatabaseSchema = cohortDatabaseSchema,
-                            cohortTable = cohortTable,
-                            cohortIds = cohorts$cohortId)
-  if (nrow(counts) > 0) {
-    counts$databaseId <- databaseId
-    counts <- enforceMinCellValue(counts, "cohortEntries", minCellCount)
-    counts <- enforceMinCellValue(counts, "cohortSubjects", minCellCount)
+  subset <- subsetToRequiredCohorts(cohorts = cohorts, 
+                                    task = "getCohortCounts", 
+                                    incremental = incremental, 
+                                    recordKeepingFile = recordKeepingFile)
+  if (nrow(subset) > 0) {
+    counts <- getCohortCounts(connection = connection,
+                              cohortDatabaseSchema = cohortDatabaseSchema,
+                              cohortTable = cohortTable,
+                              cohortIds = subset$cohortId)
+    if (nrow(counts) > 0) {
+      counts$databaseId <- databaseId
+      counts <- enforceMinCellValue(counts, "cohortEntries", minCellCount)
+      counts <- enforceMinCellValue(counts, "cohortSubjects", minCellCount)
+    }
+    writeToCsv(counts, file.path(exportFolder, "cohort_count.csv"), incremental = incremental, cohortId = subset$cohortId)
+    recordTasksDone(cohortId = subset$cohortId,
+                    task = "getCohortCounts",
+                    checksum = subset$checksum,
+                    recordKeepingFile = recordKeepingFile,
+                    incremental = incremental)
   }
-  writeToCsv(counts, file.path(exportFolder, "cohort_count.csv"))
+  
   
   if (runInclusionStatistics) {
+    # Inclusion statistics -----------------------------------------------------------------------
     ParallelLogger::logInfo("Fetching inclusion rule statistics")
-    runInclusionStatistics <- function(row) {
-      ParallelLogger::logInfo("- Fetching inclusion rule statistics for cohort ", row$cohortName)
-      stats <- getInclusionStatisticsFromFiles(cohortId = row$cohortId,
-                                               folder = inclusionStatisticsFolder,
-                                               simplify = TRUE)
-      if (nrow(stats) > 0) {
-        stats$cohortId <- row$cohortId
+    subset <- subsetToRequiredCohorts(cohorts = cohorts, 
+                                      task = "runInclusionStatistics", 
+                                      incremental = incremental, 
+                                      recordKeepingFile = recordKeepingFile)
+    if (nrow(subset) > 0) {
+      runInclusionStatistics <- function(row) {
+        ParallelLogger::logInfo("- Fetching inclusion rule statistics for cohort ", row$cohortName)
+        stats <- getInclusionStatisticsFromFiles(cohortId = row$cohortId,
+                                                 folder = inclusionStatisticsFolder,
+                                                 simplify = TRUE)
+        if (nrow(stats) > 0) {
+          stats$cohortId <- row$cohortId
+        }
+        return(stats)
       }
-      return(stats)
+      stats <- lapply(split(subset, subset$cohortId), runInclusionStatistics)
+      stats <- do.call(rbind, stats)
+      if (nrow(stats) > 0) {
+        stats$databaseId <- databaseId
+        stats <- enforceMinCellValue(stats, "meetSubjects", minCellCount)
+        stats <- enforceMinCellValue(stats, "gainSubjects", minCellCount)
+        stats <- enforceMinCellValue(stats, "totalSubjects", minCellCount)
+        stats <- enforceMinCellValue(stats, "remainSubjects", minCellCount)
+      }
+      writeToCsv(stats, file.path(exportFolder, "inclusion_rule_stats.csv"), incremental = incremental, cohortId = subset$cohortId)
+      recordTasksDone(cohortId = subset$cohortId,
+                      task = "runInclusionStatistics",
+                      checksum = subset$checksum,
+                      recordKeepingFile = recordKeepingFile,
+                      incremental = incremental)
     }
-    stats <- lapply(split(cohorts, cohorts$cohortId), runInclusionStatistics)
-    stats <- do.call(rbind, stats)
-    if (nrow(stats) > 0) {
-      stats$databaseId <- databaseId
-      stats <- enforceMinCellValue(stats, "meetSubjects", minCellCount)
-      stats <- enforceMinCellValue(stats, "gainSubjects", minCellCount)
-      stats <- enforceMinCellValue(stats, "totalSubjects", minCellCount)
-      stats <- enforceMinCellValue(stats, "remainSubjects", minCellCount)
-    }
-    writeToCsv(stats, file.path(exportFolder, "inclusion_rule_stats.csv"))
   }
   
   if (runIncludedSourceConcepts || runOrphanConcepts) {
+    # Concept set diagnostics -----------------------------------------------
     runConceptSetDiagnostics(connection = connection,
                              oracleTempSchema = oracleTempSchema,
                              cdmDatabaseSchema = cdmDatabaseSchema,
@@ -160,97 +205,142 @@ runCohortDiagnostics <- function(packageName = NULL,
                              conceptCountsDatabaseSchema = NULL,
                              conceptCountsTable = "#concept_counts",
                              conceptCountsTableIsTemp = TRUE,
-                             useExternalConceptCountsTable = FALSE)
+                             useExternalConceptCountsTable = FALSE,
+                             incremental = incremental,
+                             recordKeepingFile = recordKeepingFile)
   }
   
   if (runTimeDistributions) {
+    # Time distributions ----------------------------------------------------------------------
     ParallelLogger::logInfo("Creating time distributions")
-
-    runTimeDist <- function(row) {
-      ParallelLogger::logInfo("- Creating time distributions for cohort ", row$cohortName)
-      data <- getTimeDistributions(connection = connection,
-                                   oracleTempSchema = oracleTempSchema,
-                                   cdmDatabaseSchema = cdmDatabaseSchema,
-                                   cohortDatabaseSchema = cohortDatabaseSchema,
-                                   cohortTable = cohortTable,
-                                   cohortId = row$cohortId)
-      if (nrow(data) > 0) {
-        data$cohortId <- row$cohortId
+    subset <- subsetToRequiredCohorts(cohorts = cohorts, 
+                                      task = "runTimeDistributions", 
+                                      incremental = incremental, 
+                                      recordKeepingFile = recordKeepingFile)
+    if (nrow(subset) > 0) {
+      runTimeDist <- function(row) {
+        ParallelLogger::logInfo("- Creating time distributions for cohort ", row$cohortName)
+        data <- getTimeDistributions(connection = connection,
+                                     oracleTempSchema = oracleTempSchema,
+                                     cdmDatabaseSchema = cdmDatabaseSchema,
+                                     cohortDatabaseSchema = cohortDatabaseSchema,
+                                     cohortTable = cohortTable,
+                                     cohortId = row$cohortId)
+        if (nrow(data) > 0) {
+          data$cohortId <- row$cohortId
+        }
+        return(data)
       }
-      return(data)
+      data <- lapply(split(subset, subset$cohortId), runTimeDist)
+      data <- do.call(rbind, data)
+      if (nrow(data) > 0) {
+        data$databaseId <- databaseId
+      }
+      writeToCsv(data, file.path(exportFolder, "time_distribution.csv"), incremental = incremental, cohortId = subset$cohortId)
+      recordTasksDone(cohortId = subset$cohortId,
+                      task = "runTimeDistributions",
+                      checksum = subset$checksum,
+                      recordKeepingFile = recordKeepingFile,
+                      incremental = incremental)
     }
-    data <- lapply(split(cohorts, cohorts$cohortId), runTimeDist)
-    data <- do.call(rbind, data)
-    if (nrow(data) > 0) {
-      data$databaseId <- databaseId
-    }
-    writeToCsv(data, file.path(exportFolder, "time_distribution.csv"))
   }
   
   if (runBreakdownIndexEvents) {
+    # Index event breakdown ---------------------------------------------------------------------
     ParallelLogger::logInfo("Breaking down index events")
-    
-    runBreakdownIndexEvents <- function(row) {
-      ParallelLogger::logInfo("- Breaking down index events for cohort ", row$cohortName)
-      data <- breakDownIndexEvents(connection = connection,
-                                   cdmDatabaseSchema = cdmDatabaseSchema,
-                                   oracleTempSchema = oracleTempSchema,
-                                   cohortDatabaseSchema = cohortDatabaseSchema,
-                                   cohortTable = cohortTable,
-                                   cohortId = row$cohortId,
-                                   cohortJson = row$json,
-                                   cohortSql = row$sql)
-      if (nrow(data) > 0) {
-        data$cohortId <- row$cohortId
+    subset <- subsetToRequiredCohorts(cohorts = cohorts, 
+                                      task = "runBreakdownIndexEvents", 
+                                      incremental = incremental, 
+                                      recordKeepingFile = recordKeepingFile)
+    if (nrow(subset) > 0) {
+      runBreakdownIndexEvents <- function(row) {
+        ParallelLogger::logInfo("- Breaking down index events for cohort ", row$cohortName)
+        data <- breakDownIndexEvents(connection = connection,
+                                     cdmDatabaseSchema = cdmDatabaseSchema,
+                                     oracleTempSchema = oracleTempSchema,
+                                     cohortDatabaseSchema = cohortDatabaseSchema,
+                                     cohortTable = cohortTable,
+                                     cohortId = row$cohortId,
+                                     cohortJson = row$json,
+                                     cohortSql = row$sql)
+        if (nrow(data) > 0) {
+          data$cohortId <- row$cohortId
+        }
+        return(data)
       }
-      return(data)
+      data <- lapply(split(subset, subset$cohortId), runBreakdownIndexEvents)
+      data <- do.call(rbind, data)
+      if (nrow(data) > 0) {
+        data$databaseId <- databaseId
+        data <- enforceMinCellValue(data, "conceptCount", minCellCount)
+      }
+      writeToCsv(data, file.path(exportFolder, "index_event_breakdown.csv"), incremental = incremental, cohortId = subset$cohortId)
+      recordTasksDone(cohortId = subset$cohortId,
+                      task = "runBreakdownIndexEvents",
+                      checksum = subset$checksum,
+                      recordKeepingFile = recordKeepingFile,
+                      incremental = incremental)
     }
-    data <- lapply(split(cohorts, cohorts$cohortId), runBreakdownIndexEvents)
-    data <- do.call(rbind, data)
-    if (nrow(data) > 0) {
-      data$databaseId <- databaseId
-      data <- enforceMinCellValue(data, "conceptCount", minCellCount)
-    }
-    writeToCsv(data, file.path(exportFolder, "index_event_breakdown.csv"))
   }
   
   if (runIncidenceRate) {
+    # Incidence rates --------------------------------------------------------------------------------------
     ParallelLogger::logInfo("Computing incidence rate")
-    runIncidenceRate <- function(row) {
-      ParallelLogger::logInfo("- Computing incidence rate for cohort ", row$cohortName)
-      cohortExpression <- RJSONIO::fromJSON(row$json)
-      washoutPeriod <- tryCatch({
-        cohortExpression$PrimaryCriteria$ObservationWindow$PriorDays
-      }, error = function(e) {
-        0
-      })
-      data <- getIncidenceRate(connection = connection,
-                               cdmDatabaseSchema = cdmDatabaseSchema,
-                               cohortDatabaseSchema = cohortDatabaseSchema,
-                               cohortTable = cohortTable,
-                               cohortId = row$cohortId,
-                               firstOccurrenceOnly = TRUE,
-                               washoutPeriod = washoutPeriod)
-      if (nrow(data) > 0) {
-        data$cohortId <- row$cohortId
+    subset <- subsetToRequiredCohorts(cohorts = cohorts, 
+                                      task = "runIncidenceRate", 
+                                      incremental = incremental, 
+                                      recordKeepingFile = recordKeepingFile)
+    if (nrow(subset) > 0) {
+      runIncidenceRate <- function(row) {
+        ParallelLogger::logInfo("- Computing incidence rate for cohort ", row$cohortName)
+        cohortExpression <- RJSONIO::fromJSON(row$json)
+        washoutPeriod <- tryCatch({
+          cohortExpression$PrimaryCriteria$ObservationWindow$PriorDays
+        }, error = function(e) {
+          0
+        })
+        data <- getIncidenceRate(connection = connection,
+                                 cdmDatabaseSchema = cdmDatabaseSchema,
+                                 cohortDatabaseSchema = cohortDatabaseSchema,
+                                 cohortTable = cohortTable,
+                                 cohortId = row$cohortId,
+                                 firstOccurrenceOnly = TRUE,
+                                 washoutPeriod = washoutPeriod)
+        if (nrow(data) > 0) {
+          data$cohortId <- row$cohortId
+        }
+        return(data)
       }
-      return(data)
+      data <- lapply(split(subset, subset$cohortId), runIncidenceRate)
+      data <- do.call(rbind, data)
+      if (nrow(data) > 0) {
+        data$databaseId <- databaseId
+        data <- enforceMinCellValue(data, "cohortCount", minCellCount)
+        data <- enforceMinCellValue(data, "incidenceRate", 1000*minCellCount/data$personYears)
+      }
+      writeToCsv(data, file.path(exportFolder, "incidence_rate.csv"), incremental = incremental, cohortId = subset$cohortId)
+      recordTasksDone(cohortId = subset$cohortId,
+                      task = "runIncidenceRate",
+                      checksum = subset$checksum,
+                      recordKeepingFile = recordKeepingFile,
+                      incremental = incremental)
     }
-    data <- lapply(split(cohorts, cohorts$cohortId), runIncidenceRate)
-    data <- do.call(rbind, data)
-    if (nrow(data) > 0) {
-      data$databaseId <- databaseId
-      data <- enforceMinCellValue(data, "cohortCount", minCellCount)
-      data <- enforceMinCellValue(data, "incidenceRate", 1000*minCellCount/data$personYears)
-    }
-    writeToCsv(data, file.path(exportFolder, "incidence_rate.csv"))
   }
   
   if (runCohortOverlap) {
+    # Cohort overlap ---------------------------------------------------------------------------------
     ParallelLogger::logInfo("Computing cohort overlap")
     combis <- expand.grid(targetCohortId = cohorts$cohortId, comparatorCohortId = cohorts$cohortId)
     combis <- combis[combis$targetCohortId < combis$comparatorCohortId, ]
-    
+    if (incremental) {
+      combis <- merge(combis, data.frame(targetCohortId = cohorts$cohortId, targetChecksum = cohorts$checksum))
+      combis <- merge(combis, data.frame(comparatorCohortId = cohorts$cohortId, comparatorChecksum = cohorts$checksum))
+      combis$checksum <- paste(combis$targetChecksum, combis$comparatorChecksum)
+    }
+    subset <- subsetToRequiredCombis(combis = combis, 
+                                     task = "runCohortOverlap", 
+                                     incremental = incremental, 
+                                     recordKeepingFile = recordKeepingFile)
     runCohortOverlap <- function(row) {
       ParallelLogger::logInfo("- Computing overlap for cohorts ",
                               row$targetCohortId,
@@ -267,10 +357,10 @@ runCohortDiagnostics <- function(packageName = NULL,
       }
       return(data)
     }
-    if (nrow(combis) == 0) {
+    if (nrow(subset) == 0) {
       data <- data.frame()
     } else {
-      data <- lapply(split(combis, 1:nrow(combis)), runCohortOverlap)
+      data <- lapply(split(subset, 1:nrow(subset)), runCohortOverlap)
       data <- do.call(rbind, data)
     }
     if (nrow(data) > 0) {
@@ -291,43 +381,65 @@ runCohortDiagnostics <- function(packageName = NULL,
       data <- enforceMinCellValue(data, "tInCSubjects", minCellCount)
       data <- enforceMinCellValue(data, "cInTSubjects", minCellCount)
     }
-    writeToCsv(data, file.path(exportFolder, "cohort_overlap.csv"))
+    writeToCsv(data = data, 
+               fileName = file.path(exportFolder, "cohort_overlap.csv"), 
+               incremental = incremental, 
+               targetCohortId = subset$targetCohortId, 
+               comparatorCohortId = subset$comparatorCohortId)
+    recordTasksDone(cohortId = subset$targetCohortId,
+                    comparatorId = subset$comparatorCohortId,
+                    task = "runCohortOverlap",
+                    checksum = subset$checksum,
+                    recordKeepingFile = recordKeepingFile,
+                    incremental = incremental)
   }
   
   if (runCohortCharacterization) {
+    # Cohort characterization ---------------------------------------------------------------
     ParallelLogger::logInfo("Creating cohort characterizations")
-    
-    runCohortCharacterization <- function(row) {
-      ParallelLogger::logInfo("- Creating characterization for cohort ", row$cohortName)
-      data <- getCohortCharacteristics(connection = connection,
-                                       cdmDatabaseSchema = cdmDatabaseSchema,
-                                       cohortDatabaseSchema = cohortDatabaseSchema,
-                                       cohortTable = cohortTable,
-                                       cohortId = row$cohortId)
-      if (nrow(data) > 0) {
-        data$cohortId <- row$cohortId
+    subset <- subsetToRequiredCohorts(cohorts = cohorts, 
+                                      task = "runCohortCharacterization", 
+                                      incremental = incremental, 
+                                      recordKeepingFile = recordKeepingFile)
+    if (nrow(subset) > 0) {
+      runCohortCharacterization <- function(row) {
+        ParallelLogger::logInfo("- Creating characterization for cohort ", row$cohortName)
+        data <- getCohortCharacteristics(connection = connection,
+                                         cdmDatabaseSchema = cdmDatabaseSchema,
+                                         cohortDatabaseSchema = cohortDatabaseSchema,
+                                         cohortTable = cohortTable,
+                                         cohortId = row$cohortId)
+        if (nrow(data) > 0) {
+          data$cohortId <- row$cohortId
+        }
+        return(data)
       }
-      return(data)
+      data <- lapply(split(subset, subset$cohortId), runCohortCharacterization)
+      data <- do.call(rbind, data)
+      # Drop covariates with mean = 0 after rounding to 3 digits:
+      data <- data[round(data$mean, 3) != 0, ]
+      covariates <- unique(data[, c("covariateId", "covariateName", "analysisId")])
+      colnames(covariates)[[3]] <- "covariateAnalysisId"
+      writeToCsv(covariates, file.path(exportFolder, "covariate.csv"), incremental = incremental, covariateId = covariates$covariateId)
+      
+      data$covariateName <- NULL
+      data$analysisId <- NULL
+      if (nrow(data) > 0) {
+        data$databaseId <- databaseId
+        data <- merge(data, counts[, c("cohortId", "cohortEntries")])
+        data <- enforceMinCellValue(data, "mean", minCellCount/data$cohortEntries)
+        data$sd[data$mean < 0] <- NA
+        data$cohortEntries <- NULL
+        data$mean <- round(data$mean, 3)
+        data$sd <- round(data$sd, 3)
+      }
+      writeToCsv(data, file.path(exportFolder, "covariate_value.csv"), incremental = incremental, cohortId = subset$cohortId)
+      recordTasksDone(cohortId = subset$cohortId,
+                      task = "runCohortCharacterization",
+                      checksum = subset$checksum,
+                      recordKeepingFile = recordKeepingFile,
+                      incremental = incremental)
     }
-    data <- lapply(split(cohorts, cohorts$cohortId), runCohortCharacterization)
-    data <- do.call(rbind, data)
-    # Drop covariates with mean = 0 after rounding to 3 digits:
-    data <- data[round(data$mean, 3) != 0, ]
-    covariates <- unique(data[, c("covariateId", "covariateName", "analysisId")])
-    colnames(covariates)[[3]] <- "covariateAnalysisId"
-    writeToCsv(covariates, file.path(exportFolder, "covariate.csv"))
-    data$covariateName <- NULL
-    data$analysisId <- NULL
-    if (nrow(data) > 0) {
-      data$databaseId <- databaseId
-      data <- merge(data, counts[, c("cohortId", "cohortEntries")])
-      data <- enforceMinCellValue(data, "mean", minCellCount/data$cohortEntries)
-      data$sd[data$mean < 0] <- NA
-      data$cohortEntries <- NULL
-      data$mean <- round(data$mean, 3)
-      data$sd <- round(data$sd, 3)
-    }
-    writeToCsv(data, file.path(exportFolder, "covariate_value.csv"))
   }
   
   # Add all to zip file -------------------------------------------------------------------------------
@@ -345,9 +457,17 @@ runCohortDiagnostics <- function(packageName = NULL,
                                 attr(delta, "units")))
 }
 
-writeToCsv <- function(data, fileName) {
+writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
   colnames(data) <- SqlRender::camelCaseToSnakeCase(colnames(data))
-  readr::write_csv(data, fileName)
+  if (incremental) {
+    params <- list(...)
+    names(params) <- SqlRender::camelCaseToSnakeCase(names(params))
+    params$data = data
+    params$fileName = fileName
+    do.call(saveIncremental, params)
+  } else {
+    readr::write_csv(data, fileName)
+  }
 }
 
 swapColumnContents <- function(df, column1 = "targetId", column2 = "comparatorId") {
@@ -383,7 +503,7 @@ getUniqueConceptSets <- function(cohorts) {
                           conceptSetName = conceptSet$name,
                           expression = RJSONIO::toJSON(conceptSet$expression[[1]])))
   }
-
+  
   getConceptSetsFromCohortDef <- function(cohort) {
     cohortDefinition <- RJSONIO::fromJSON(cohort$json)
     conceptSets <- lapply(cohortDefinition$ConceptSets, getConceptSetDetails)
@@ -439,7 +559,30 @@ runConceptSetDiagnostics <- function(connection,
                                      conceptCountsDatabaseSchema = cdmDatabaseSchema,
                                      conceptCountsTable = "concept_counts",
                                      conceptCountsTableIsTemp = FALSE,
-                                     useExternalConceptCountsTable = FALSE) {
+                                     useExternalConceptCountsTable = FALSE,
+                                     incremental = FALSE,
+                                     recordKeepingFile) {
+  subset <- tibble::tibble()
+  if (runIncludedSourceConcepts) {
+    subsetIncluded <- subsetToRequiredCohorts(cohorts = cohorts, 
+                                              task = "runIncludedSourceConcepts", 
+                                              incremental = incremental, 
+                                              recordKeepingFile = recordKeepingFile)
+    subset <- dplyr::bind_rows(subset, subsetIncluded)
+  }
+  if (runOrphanConcepts) {
+    subsetOrphans <- subsetToRequiredCohorts(cohorts = cohorts, 
+                                             task = "runOrphanConcepts", 
+                                             incremental = incremental, 
+                                             recordKeepingFile = recordKeepingFile)
+    subset <- dplyr::bind_rows(subset, subsetOrphans)
+  }
+  subset <- unique(subset)
+  
+  if (nrow(subset) == 0) {
+    return()
+  }
+  
   uniqueConceptSets <- getUniqueConceptSets(cohorts)
   instantiateUniqueConceptSets(cohorts = cohorts,
                                uniqueConceptSets = uniqueConceptSets,
@@ -448,126 +591,143 @@ runConceptSetDiagnostics <- function(connection,
                                oracleTempSchema = oracleTempSchema)
   
   if (runIncludedSourceConcepts) {
+    # Included concepts ------------------------------------------------------------------
     ParallelLogger::logInfo("Fetching included source concepts")
-    start <- Sys.time()
-    
-    ParallelLogger::logInfo("Counting codes in concept sets")
-    if (useExternalConceptCountsTable) {
-      sql <- SqlRender::loadRenderTranslateSql("CohortSourceConceptsFromCcTable.sql",
-                                               packageName = "CohortDiagnostics",
-                                               dbms = connection@dbms,
-                                               oracleTempSchema = oracleTempSchema,
-                                               cdm_database_schema = cdmDatabaseSchema,
-                                               concept_counts_database_schema = conceptCountsDatabaseSchema,
-                                               concept_counts_table = conceptCountsTable,
-                                               concept_counts_table_is_temp = conceptCountsTableIsTemp)
-      sourceCounts <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
+    if (nrow(subsetIncluded > 0)) {
+      start <- Sys.time()
+      ParallelLogger::logInfo("Counting codes in concept sets")
+      if (useExternalConceptCountsTable) {
+        sql <- SqlRender::loadRenderTranslateSql("CohortSourceConceptsFromCcTable.sql",
+                                                 packageName = "CohortDiagnostics",
+                                                 dbms = connection@dbms,
+                                                 oracleTempSchema = oracleTempSchema,
+                                                 cdm_database_schema = cdmDatabaseSchema,
+                                                 concept_counts_database_schema = conceptCountsDatabaseSchema,
+                                                 concept_counts_table = conceptCountsTable,
+                                                 concept_counts_table_is_temp = conceptCountsTableIsTemp)
+        sourceCounts <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
+        
+        sql <- SqlRender::loadRenderTranslateSql("CohortStandardConceptsFromCcTable.sql",
+                                                 packageName = "CohortDiagnostics",
+                                                 dbms = connection@dbms,
+                                                 oracleTempSchema = oracleTempSchema,
+                                                 cdm_database_schema = cdmDatabaseSchema,
+                                                 concept_counts_database_schema = conceptCountsDatabaseSchema,
+                                                 concept_counts_table = conceptCountsTable,
+                                                 concept_counts_table_is_temp = conceptCountsTableIsTemp)
+        standardCounts <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
+        
+        # To avoid double counting, subtract standard concept counts included in source counts.
+        # Note: this can create negative counts, because a source concept can be double counted itself
+        # if it maps to more than one standard concept, but it will show correctly in the viewer app, 
+        # where the counts will be added back in.
+        dupCounts <- aggregate(conceptCount ~ conceptId, sourceCounts, sum)
+        colnames(dupCounts)[2] <- "dupCount"
+        dupSubjects <- aggregate(conceptSubjects ~ conceptId, sourceCounts, sum)
+        colnames(dupSubjects)[2] <- "dupSubjects"
+        standardCounts <- merge(standardCounts, dupCounts, all.x = TRUE)
+        standardCounts <- merge(standardCounts, dupSubjects, all.x = TRUE)
+        standardCounts$dupCount[is.na(standardCounts$dupCount)] <- 0
+        standardCounts$dupSubjects[is.na(standardCounts$dupSubjects)] <- 0
+        standardCounts$conceptCount <- standardCounts$conceptCount - standardCounts$dupCount
+        standardCounts$conceptSubjects <- standardCounts$conceptSubjects - standardCounts$dupSubjects
+        standardCounts$dupCount <- NULL
+        standardCounts$dupSubjects <- NULL
+        
+        counts <- dplyr::bind_rows(sourceCounts, standardCounts)
+      } else {
+        sql <- SqlRender::loadRenderTranslateSql("CohortSourceCodes.sql",
+                                                 packageName = "CohortDiagnostics",
+                                                 dbms = connection@dbms,
+                                                 oracleTempSchema = oracleTempSchema,
+                                                 cdm_database_schema = cdmDatabaseSchema,
+                                                 by_month = FALSE,
+                                                 use_source_values = FALSE)
+        counts <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
+      }
       
-      sql <- SqlRender::loadRenderTranslateSql("CohortStandardConceptsFromCcTable.sql",
-                                               packageName = "CohortDiagnostics",
-                                               dbms = connection@dbms,
-                                               oracleTempSchema = oracleTempSchema,
-                                               cdm_database_schema = cdmDatabaseSchema,
-                                               concept_counts_database_schema = conceptCountsDatabaseSchema,
-                                               concept_counts_table = conceptCountsTable,
-                                               concept_counts_table_is_temp = conceptCountsTableIsTemp)
-      standardCounts <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
-      
-      # To avoid double counting, subtract standard concept counts included in source counts.
-      # Note: this can create negative counts, because a source concept can be double counted itself
-      # if it maps to more than one standard concept, but it will show correctly in the viewer app, 
-      # where the counts will be added back in.
-      dupCounts <- aggregate(conceptCount ~ conceptId, sourceCounts, sum)
-      colnames(dupCounts)[2] <- "dupCount"
-      dupSubjects <- aggregate(conceptSubjects ~ conceptId, sourceCounts, sum)
-      colnames(dupSubjects)[2] <- "dupSubjects"
-      standardCounts <- merge(standardCounts, dupCounts, all.x = TRUE)
-      standardCounts <- merge(standardCounts, dupSubjects, all.x = TRUE)
-      standardCounts$dupCount[is.na(standardCounts$dupCount)] <- 0
-      standardCounts$dupSubjects[is.na(standardCounts$dupSubjects)] <- 0
-      standardCounts$conceptCount <- standardCounts$conceptCount - standardCounts$dupCount
-      standardCounts$conceptSubjects <- standardCounts$conceptSubjects - standardCounts$dupSubjects
-      standardCounts$dupCount <- NULL
-      standardCounts$dupSubjects <- NULL
-      
-      counts <- dplyr::bind_rows(sourceCounts, standardCounts)
-    } else {
-      sql <- SqlRender::loadRenderTranslateSql("CohortSourceCodes.sql",
-                                               packageName = "CohortDiagnostics",
-                                               dbms = connection@dbms,
-                                               oracleTempSchema = oracleTempSchema,
-                                               cdm_database_schema = cdmDatabaseSchema,
-                                               by_month = FALSE,
-                                               use_source_values = FALSE)
-      counts <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
+      colnames(counts)[colnames(counts) == "conceptSetId"] <- "uniqueConceptSetId"
+      counts <- merge(uniqueConceptSets[, c("cohortId", "conceptSetId", "conceptSetName", "uniqueConceptSetId")], counts)
+      counts$uniqueConceptSetId <- NULL
+      counts <- counts[order(counts$cohortId,
+                             counts$conceptSetId,
+                             counts$conceptId,
+                             counts$sourceConceptName,
+                             counts$sourceVocabularyId), ]
+      counts <- counts[counts$cohortId %in% subsetIncluded$cohortId, ]
+      if (nrow(counts) > 0) {
+        counts$databaseId <- databaseId
+        counts <- enforceMinCellValue(counts, "conceptSubjects", minCellCount)
+        counts <- enforceMinCellValue(counts, "conceptCount", minCellCount)
+      }
+      writeToCsv(counts, file.path(exportFolder, "included_source_concept.csv"), incremental = incremental, cohortId = subsetIncluded$cohortId)
+      recordTasksDone(cohortId = subsetIncluded$cohortId,
+                      task = "runIncludedSourceConcepts",
+                      checksum = subsetIncluded$checksum,
+                      recordKeepingFile = recordKeepingFile,
+                      incremental = incremental)
+      delta <- Sys.time() - start
+      ParallelLogger::logInfo(paste("Finding source codes took",
+                                    signif(delta, 3),
+                                    attr(delta, "units")))
     }
-    
-    colnames(counts)[colnames(counts) == "conceptSetId"] <- "uniqueConceptSetId"
-    counts <- merge(uniqueConceptSets[, c("cohortId", "conceptSetId", "conceptSetName", "uniqueConceptSetId")], counts)
-    counts$uniqueConceptSetId <- NULL
-    counts <- counts[order(counts$cohortId,
-                           counts$conceptSetId,
-                           counts$conceptId,
-                           counts$sourceConceptName,
-                           counts$sourceVocabularyId), ]
-    if (nrow(counts) > 0) {
-      counts$databaseId <- databaseId
-      counts <- enforceMinCellValue(counts, "conceptSubjects", minCellCount)
-      counts <- enforceMinCellValue(counts, "conceptCount", minCellCount)
-    }
-    writeToCsv(counts, file.path(exportFolder, "included_source_concept.csv"))
-    delta <- Sys.time() - start
-    ParallelLogger::logInfo(paste("Finding source codes took",
-                                  signif(delta, 3),
-                                  attr(delta, "units")))
   }
   
   if (runOrphanConcepts) {
+    # Orphan concepts ---------------------------------------------------------
     ParallelLogger::logInfo("Finding orphan concepts")
-    start <- Sys.time()
-    if (!useExternalConceptCountsTable) {
-      createConceptCountsTable(connection = connection,
-                               cdmDatabaseSchema = cdmDatabaseSchema,
-                               conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
-                               conceptCountsTable = conceptCountsTable,
-                               conceptCountsTableIsTemp = conceptCountsTableIsTemp)
+    if (nrow(subsetOrphans > 0)) {
+      start <- Sys.time()
+      if (!useExternalConceptCountsTable) {
+        createConceptCountsTable(connection = connection,
+                                 cdmDatabaseSchema = cdmDatabaseSchema,
+                                 conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
+                                 conceptCountsTable = conceptCountsTable,
+                                 conceptCountsTableIsTemp = conceptCountsTableIsTemp)
+      }
+      runOrphanConcepts <- function(conceptSet) {
+        ParallelLogger::logInfo("- Finding orphan concepts for concept set ", conceptSet$conceptSetName)
+        orphanConcepts <- .findOrphanConcepts(connection = connection,
+                                              cdmDatabaseSchema = cdmDatabaseSchema,
+                                              oracleTempSchema = oracleTempSchema,
+                                              useCodesetTable = TRUE,
+                                              codesetId = conceptSet$uniqueConceptSetId,
+                                              conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
+                                              conceptCountsTable = conceptCountsTable,
+                                              conceptCountsTableIsTemp = conceptCountsTableIsTemp)
+        orphanConcepts$uniqueConceptSetId <- rep(conceptSet$uniqueConceptSetId, nrow(orphanConcepts))
+        return(orphanConcepts)
+      }
+      
+      data <- lapply(split(uniqueConceptSets, uniqueConceptSets$uniqueConceptSetId), runOrphanConcepts)
+      data <- do.call(rbind, data)
+      data <- merge(uniqueConceptSets[, c("cohortId", "conceptSetId", "conceptSetName", "uniqueConceptSetId")], data)
+      data$uniqueConceptSetId <- NULL
+      data$databaseId <- rep(databaseId, nrow(data))
+      data <- data[data$cohortId %in% subsetOrphans$cohortId, ]
+      if (nrow(data) > 0) {
+        data <- enforceMinCellValue(data, "conceptCount", minCellCount)
+      }
+      writeToCsv(data, file.path(exportFolder, "orphan_concept.csv"), incremental = incremental, cohortId = subsetOrphans$cohortId)
+      recordTasksDone(cohortId = subsetOrphans$cohortId,
+                      task = "runIncludedSourceConcepts",
+                      checksum = subsetOrphans$checksum,
+                      recordKeepingFile = recordKeepingFile,
+                      incremental = incremental)
+      
+      if (!useExternalConceptCountsTable) {
+        ParallelLogger::logTrace("Dropping temp concept counts")
+        sql <- "TRUNCATE TABLE #concept_counts; DROP TABLE #concept_counts;"
+        DatabaseConnector::renderTranslateExecuteSql(connection,
+                                                     sql,
+                                                     progressBar = FALSE,
+                                                     reportOverallTime = FALSE)
+      }
+      delta <- Sys.time() - start
+      ParallelLogger::logInfo(paste("Finding orphan concepts took",
+                                    signif(delta, 3),
+                                    attr(delta, "units")))
     }
-    runOrphanConcepts <- function(conceptSet) {
-      ParallelLogger::logInfo("- Finding orphan concepts for concept set ", conceptSet$conceptSetName)
-      orphanConcepts <- .findOrphanConcepts(connection = connection,
-                                           cdmDatabaseSchema = cdmDatabaseSchema,
-                                           oracleTempSchema = oracleTempSchema,
-                                           useCodesetTable = TRUE,
-                                           codesetId = conceptSet$uniqueConceptSetId,
-                                           conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
-                                           conceptCountsTable = conceptCountsTable,
-                                           conceptCountsTableIsTemp = conceptCountsTableIsTemp)
-      orphanConcepts$uniqueConceptSetId <- rep(conceptSet$uniqueConceptSetId, nrow(orphanConcepts))
-      return(orphanConcepts)
-    }
-    
-    data <- lapply(split(uniqueConceptSets, uniqueConceptSets$uniqueConceptSetId), runOrphanConcepts)
-    data <- do.call(rbind, data)
-    data <- merge(uniqueConceptSets[, c("cohortId", "conceptSetId", "conceptSetName", "uniqueConceptSetId")], data)
-    data$uniqueConceptSetId <- NULL
-    data$databaseId <- rep(databaseId, nrow(data))
-    if (nrow(data) > 0) {
-      data <- enforceMinCellValue(data, "conceptCount", minCellCount)
-    }
-    writeToCsv(data, file.path(exportFolder, "orphan_concept.csv"))
-    
-    if (!useExternalConceptCountsTable) {
-      ParallelLogger::logTrace("Dropping temp concept counts")
-      sql <- "TRUNCATE TABLE #concept_counts; DROP TABLE #concept_counts;"
-      DatabaseConnector::renderTranslateExecuteSql(connection,
-                                                   sql,
-                                                   progressBar = FALSE,
-                                                   reportOverallTime = FALSE)
-    }
-    delta <- Sys.time() - start
-    ParallelLogger::logInfo(paste("Finding orphan concepts took",
-                                  signif(delta, 3),
-                                  attr(delta, "units")))
   }
   ParallelLogger::logTrace("Dropping temp concept set tables")
   sql <- "TRUNCATE TABLE #Codesets; DROP TABLE #Codesets;"
@@ -575,6 +735,31 @@ runConceptSetDiagnostics <- function(connection,
                                                sql,
                                                progressBar = FALSE,
                                                reportOverallTime = FALSE)
+}
+
+subsetToRequiredCohorts <- function(cohorts, task, incremental, recordKeepingFile) {
+  if (incremental) {
+    tasks <- getRequiredTasks(cohortId = cohorts$cohortId,
+                              task = task,
+                              checksum = cohorts$checksum,
+                              recordKeepingFile = recordKeepingFile)
+    return(cohorts[cohorts$cohortId %in% tasks$cohortId, ])
+  } else {
+    return(cohorts)
+  }
+}
+
+subsetToRequiredCombis <- function(combis, task, incremental, recordKeepingFile) {
+  if (incremental) {
+    tasks <- getRequiredTasks(cohortId = combis$targetCohortId,
+                              comparatorId = combis$comparatorCohortId,
+                              task = task,
+                              checksum = combis$checksum,
+                              recordKeepingFile = recordKeepingFile)
+    return(merge(combis, tasks))
+  } else {
+    return(combis)
+  }
 }
 
 loadCohortsFromPackage <- function(packageName, cohortToCreateFile, cohortIds) {
