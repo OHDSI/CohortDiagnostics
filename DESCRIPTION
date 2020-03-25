@@ -36,6 +36,10 @@ Suggests:
   VennDiagram,
   htmltools,
   Eunomia
+Remotes:
+  ohdsi/ROhdsiWebApi,
+  ohdsi/FeatureExtraction,
+  ohdsi/Eunomia
 License: Apache License
 VignetteBuilder: knitr
 URL: https://ohdsi.github.io/CohortDiagnostics, https://github.com/OHDSI/CohortDiagnostics
