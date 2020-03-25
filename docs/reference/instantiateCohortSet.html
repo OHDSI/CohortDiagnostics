@@ -70,7 +70,7 @@ Optionally, the inclusion rule statistics are computed and stored in the inclusi
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.2</span>
       </span>
     </div>
 
@@ -138,10 +138,16 @@ Optionally, the inclusion rule statistics are computed and stored in the <code>i
   <span class='kw'>oracleTempSchema</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>cohortDatabaseSchema</span> <span class='kw'>=</span> <span class='no'>cdmDatabaseSchema</span>,
   <span class='kw'>cohortTable</span> <span class='kw'>=</span> <span class='st'>"cohort"</span>,
-  <span class='no'>baseUrl</span>,
-  <span class='no'>cohortSetReference</span>,
+  <span class='kw'>cohortIds</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>packageName</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>cohortToCreateFile</span> <span class='kw'>=</span> <span class='st'>"settings/CohortsToCreate.csv"</span>,
+  <span class='kw'>baseUrl</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>cohortSetReference</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>generateInclusionStats</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>inclusionStatisticsFolder</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
+  <span class='kw'>inclusionStatisticsFolder</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>createCohortTable</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>incremental</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>incrementalFolder</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -184,13 +190,30 @@ this should include both the database and schema name, for example
       <td><p>Name of the cohort table.</p></td>
     </tr>
     <tr>
+      <th>cohortIds</th>
+      <td><p>Optionally, provide a subset of cohort IDs to restrict the
+construction to.</p></td>
+    </tr>
+    <tr>
+      <th>packageName</th>
+      <td><p>The name of the package containing the cohort definitions. Can be left NULL if 
+<code>baseUrl</code> and <code>cohortSetReference</code> have been specified.</p></td>
+    </tr>
+    <tr>
+      <th>cohortToCreateFile</th>
+      <td><p>The location of the cohortToCreate file within the package. Is ignored if 
+<code>baseUrl</code> and <code>cohortSetReference</code> have been specified.</p></td>
+    </tr>
+    <tr>
       <th>baseUrl</th>
       <td><p>The base URL for the WebApi instance, for example:
-"http://server.org:80/WebAPI".</p></td>
+"http://server.org:80/WebAPI". Can be left NULL if 
+<code>packageName</code> and <code>cohortToCreateFile</code> have been specified.</p></td>
     </tr>
     <tr>
       <th>cohortSetReference</th>
-      <td><p>A data frame with four columns, as described in the details.</p></td>
+      <td><p>A data frame with four columns, as described in the details. Can be left NULL if 
+<code>packageName</code> and <code>cohortToCreateFile</code> have been specified.</p></td>
     </tr>
     <tr>
       <th>generateInclusionStats</th>
@@ -201,11 +224,32 @@ this should include both the database and schema name, for example
       <td><p>The folder where the inclusion rule statistics are stored. Can be
 left NULL if <code>generateInclusionStats = FALSE</code>.</p></td>
     </tr>
+    <tr>
+      <th>createCohortTable</th>
+      <td><p>Create the cohort table? If <code>incremental = TRUE</code> and the table
+already exists this will be skipped.</p></td>
+    </tr>
+    <tr>
+      <th>incremental</th>
+      <td><p>Create only cohorts that haven't been created before?</p></td>
+    </tr>
+    <tr>
+      <th>incrementalFolder</th>
+      <td><p>If <code>incremental = TRUE</code>, specify a folder where records are kept
+of which definition has been executed.</p></td>
+    </tr>
     </table>
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>The <code>cohortSetReference</code> argument must be a data frame with  the following columns:</p><dl class='dl-horizontal'>
+    <p>Currently two ways of executing this function are supported, either (1) embedded in a study package, assuming 
+the cohort definitions are stored in that package using the <code><a href='https://rdrr.io/pkg/ROhdsiWebApi/man/insertCohortDefinitionSetInPackage.html'>ROhdsiWebApi::insertCohortDefinitionSetInPackage</a></code>,
+or (2) by using a WebApi interface to retrieve the cohort definitions.</p>
+<p>When using this function from within a study package, use the <code>packageName</code> and <code>cohortToCreateFile</code> to specify
+the name of the study package, and the name of the cohortToCreate file within that package, respectively</p>
+<p>When using this function using a WebApi interface, use the <code>baseUrl</code> and <code>cohortSetReference</code> to specify how to 
+connect to the WebApi, and which cohorts to fetch, respectively.</p>
+<p>The <code>cohortSetReference</code> argument must be a data frame with  the following columns:</p><dl class='dl-horizontal'>
 <dt>atlasId</dt><dd><p>The cohort ID in ATLAS.</p></dd>
 <dt>atlasName</dt><dd><p>The full name of the cohort. This will be shown in the Shiny app.</p></dd>
 <dt>cohortId</dt><dd><p>The cohort ID to use in the package. Usually the same as the cohort ID in ATLAS.</p></dd>

@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.2</span>
       </span>
     </div>
 
@@ -85,7 +85,7 @@
       <h1>Running cohort diagnostics using WebAPI</h1>
                         <h4 class="author">Martijn J. Schuemie</h4>
             
-            <h4 class="date">2020-03-17</h4>
+            <h4 class="date">2020-03-25</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/master/vignettes/CohortDiagnosticsUsingWebApi.Rmd"><code>vignettes/CohortDiagnosticsUsingWebApi.Rmd</code></a></small>
       <div class="hidden name"><code>CohortDiagnosticsUsingWebApi.Rmd</code></div>
@@ -165,7 +165,8 @@
 </tbody>
 </table>
 <p>We can read the table using</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a>cohortSetReference &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span>(<span class="st">"cohortsToDiagnose.csv"</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(CohortDiagnostics)</span>
+<span id="cb1-2"><a href="#cb1-2"></a>cohortSetReference &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span>(<span class="st">"cohortsToDiagnose.csv"</span>)</span></code></pre></div>
 </div>
 <div id="configuring-the-connection-to-the-server" class="section level2">
 <h2 class="hasAnchor">

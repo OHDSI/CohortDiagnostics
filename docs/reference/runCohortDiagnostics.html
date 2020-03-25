@@ -70,7 +70,7 @@ ROhdsiWebApi::insertCohortDefinitionSetInPackage function. Assumes the cohorts h
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.2</span>
       </span>
     </div>
 
@@ -156,7 +156,9 @@ ROhdsiWebApi::insertCohortDefinitionSetInPackage function. Assumes the cohorts h
   <span class='kw'>runIncidenceRate</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>runCohortOverlap</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>runCohortCharacterization</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>minCellCount</span> <span class='kw'>=</span> <span class='fl'>5</span>
+  <span class='kw'>minCellCount</span> <span class='kw'>=</span> <span class='fl'>5</span>,
+  <span class='kw'>incremental</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>incrementalFolder</span> <span class='kw'>=</span> <span class='no'>exportFolder</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -281,6 +283,15 @@ does not exist it will be created.</p></td>
     <tr>
       <th>minCellCount</th>
       <td><p>The minimum cell count for fields contains person counts or fractions.</p></td>
+    </tr>
+    <tr>
+      <th>incremental</th>
+      <td><p>Create only cohort diagnostics that haven't been created before?</p></td>
+    </tr>
+    <tr>
+      <th>incrementalFolder</th>
+      <td><p>If <code>incremental = TRUE</code>, specify a folder where records are kept
+of which cohort diagnostics has been executed.</p></td>
     </tr>
     </table>
 
