@@ -1,9 +1,15 @@
 CohortDiagnostics 0.1.3
 =======================
 
+Changes:
+
+1. Added database information tab to Diagnostics Explorer Shiny app.
+
 Bugfixes: 
 
-1.Fixed error when cohort definition has no concept sets.
+1. Fixed error when cohort definition has no concept sets.
+
+2. Fixed error in index event breakdown when entry event contained multiple criteria for the same domain.
 
 CohortDiagnostics 0.1.2
 =======================

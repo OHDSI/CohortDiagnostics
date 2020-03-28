@@ -133,7 +133,13 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
     warning("No primary event criteria concept sets found")
     return(data.frame())
   }
-  primaryCodesetIds <- aggregate(codeSetIds ~ domain, primaryCodesetIds, c)
+  pasteIds <- function(row) {
+    return(tibble::tibble(domain = row$domain[1],
+                          codeSetIds = paste(row$codeSetIds, collapse = ", ")))
+  }
+  primaryCodesetIds <- lapply(split(primaryCodesetIds, primaryCodesetIds$domain), pasteIds)
+  primaryCodesetIds <- dplyr::bind_rows(primaryCodesetIds)
+  # primaryCodesetIds <- aggregate(codeSetIds ~ domain, primaryCodesetIds, c)
 
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
