@@ -26,13 +26,14 @@ dashboardPage(
                 if (exists("covariateValue")) addInfo(menuItem("Cohort Characterization", tabName = "cohortCharacterization"), "cohortCharacterizationInfo"),
                 if (exists("cohortOverlap")) addInfo(menuItem("Cohort Overlap", tabName = "cohortOverlap"), "cohortOverlapInfo"),
                 if (exists("covariateValue")) addInfo(menuItem("Compare Cohort Char.", tabName = "compareCohortCharacterization"), "compareCohortCharacterizationInfo"),
-                conditionalPanel(condition = "input.tabs!='incidenceRate' & input.tabs!='timeDistribution' & input.tabs!='cohortCharacterization' & input.tabs!='cohortCounts' & input.tabs!='indexEventBreakdown'",
+                menuItem("Database information", tabName = "databaseInformation"), 
+                conditionalPanel(condition = "input.tabs!='incidenceRate' & input.tabs!='timeDistribution' & input.tabs!='cohortCharacterization' & input.tabs!='cohortCounts' & input.tabs!='indexEventBreakdown' & input.tabs!='databaseInformation'",
                                  selectInput("database", "Database", database$databaseId, selectize = FALSE)
                 ),
                 conditionalPanel(condition = "input.tabs=='incidenceRate' | input.tabs=='timeDistribution' | input.tabs=='cohortCharacterization' | input.tabs=='cohortCounts' | input.tabs=='indexEventBreakdown'",
                                  checkboxGroupInput("databases", "Database", database$databaseId, selected = database$databaseId[1])
                 ),
-                conditionalPanel(condition = "input.tabs!='cohortCounts'",
+                conditionalPanel(condition = "input.tabs!='cohortCounts' & input.tabs!='databaseInformation'",
                                  selectInput("cohort", "Cohort (Target)", choices = cohort$cohortFullName, selectize = FALSE)
                 ),
                 conditionalPanel(condition = "input.tabs=='includedConcepts' | input.tabs=='orphanConcepts'",
@@ -118,6 +119,10 @@ dashboardPage(
                                  plotOutput("charComparePlot", height = 700, hover = hoverOpts("plotHoverCharCompare", delay = 100, delayType = "debounce"))
                                )
               )
+      ),
+      tabItem(tabName = "databaseInformation",
+              # uiOutput("databaseInformationPanel")
+              dataTableOutput("databaseInformationTable")
       )
     )
   )

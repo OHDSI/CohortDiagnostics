@@ -505,8 +505,12 @@ getUniqueConceptSets <- function(cohorts) {
   
   getConceptSetsFromCohortDef <- function(cohort) {
     cohortDefinition <- RJSONIO::fromJSON(cohort$json)
+    if (length(cohortDefinition$ConceptSets) == 0) {
+      return(NULL)
+    }
     conceptSets <- lapply(cohortDefinition$ConceptSets, getConceptSetDetails)
     conceptSets <- do.call(rbind, conceptSets)
+
     sqlParts <- SqlRender::splitSql( gsub("with primary_events.*", "", cohort$sql))
     sqlParts <- sqlParts[-1]
     conceptSetIds <- as.numeric(gsub("^.*SELECT ([0-9]+) as codeset_id.*$", "\\1", sqlParts, ignore.case = TRUE))
@@ -582,8 +586,8 @@ runConceptSetDiagnostics <- function(connection,
     return()
   }
   
-  uniqueConceptSets <- getUniqueConceptSets(cohorts)
-  instantiateUniqueConceptSets(cohorts = cohorts,
+  uniqueConceptSets <- getUniqueConceptSets(subset)
+  instantiateUniqueConceptSets(cohorts = subset,
                                uniqueConceptSets = uniqueConceptSets,
                                connection = connection,
                                cdmDatabaseSchema = cdmDatabaseSchema,

@@ -757,6 +757,33 @@ shinyServer(function(input, output, session) {
     }
   }) 
   
+  # output$databaseInformationPanel <- renderUI({
+  #   row <- database[database$databaseId == input$database, ]
+  #   text <- div(tags$p(tags$h3("ID"), wellPanel(row$databaseId)),
+  #               tags$p(tags$h3("Name"), wellPanel(row$databaseName)),
+  #               tags$p(tags$h3("Description"), wellPanel(row$description)))
+  #   return(text)
+  # })
+  
+  output$databaseInformationTable <- renderDataTable({
+
+    table <- database[, c("databaseId", "databaseName", "description")]
+    options = list(pageLength = 25,
+                   searching = TRUE,
+                   lengthChange = FALSE,
+                   ordering = TRUE,
+                   paging = FALSE,
+                   columnDefs = list(list(width = '30%', targets = 1),
+                                     list(width = '60%', targets = 2))
+    )
+    table <- datatable(table,
+                       options = options,
+                       colnames = c("ID", "Name", "Description"),
+                       rownames = FALSE,
+                       class = "stripe compact")
+    return(table)
+  })
+
   showInfoBox <- function(title, htmlFileName) {
     showModal(modalDialog(
       title = title,

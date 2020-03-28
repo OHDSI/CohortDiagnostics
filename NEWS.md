@@ -1,3 +1,10 @@
+CohortDiagnostics 0.1.3
+=======================
+
+Bugfixes: 
+
+1.Fixed error when cohort definition has no concept sets.
+
 CohortDiagnostics 0.1.2
 =======================
 
