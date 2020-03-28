@@ -14,10 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#' CohortDiagnostics
-#'
-#' @docType package
-#' @name CohortDiagnostics
+#' @keywords internal
+"_PACKAGE"
+
 #' @import DatabaseConnector
 #' @importFrom grDevices rgb
 #' @importFrom stats aggregate
