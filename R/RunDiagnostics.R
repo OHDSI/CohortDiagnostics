@@ -684,6 +684,7 @@ runConceptSetDiagnostics <- function(connection,
       if (!useExternalConceptCountsTable) {
         createConceptCountsTable(connection = connection,
                                  cdmDatabaseSchema = cdmDatabaseSchema,
+                                 oracleTempSchema = oracleTempSchema,
                                  conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
                                  conceptCountsTable = conceptCountsTable,
                                  conceptCountsTableIsTemp = conceptCountsTableIsTemp)

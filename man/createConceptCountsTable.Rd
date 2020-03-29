@@ -8,6 +8,7 @@ createConceptCountsTable(
   connectionDetails = NULL,
   connection = NULL,
   cdmDatabaseSchema,
+  oracleTempSchema = NULL,
   conceptCountsDatabaseSchema = cdmDatabaseSchema,
   conceptCountsTable = "concept_counts",
   conceptCountsTableIsTemp = FALSE
@@ -28,6 +29,9 @@ of the function, and closed when the function finishes.}
 \item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
 Note that for SQL Server, this should include both the database and
 schema name, for example 'cdm_data.dbo'.}
+
+\item{oracleTempSchema}{Should be used in Oracle to specify a schema where the user has write
+privileges for storing temporary tables.}
 
 \item{conceptCountsDatabaseSchema}{Schema name where your concept counts table resides. Note that
 for SQL Server, this should include both the database and

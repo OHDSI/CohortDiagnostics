@@ -243,11 +243,14 @@ findCohortOrphanConcepts <- function(connectionDetails = NULL,
 #' @template CdmDatabaseSchema
 #'
 #' @template ConceptCounts
+#' 
+#' @template OracleTempSchema
 #'
 #' @export
 createConceptCountsTable <- function(connectionDetails = NULL,
                                      connection = NULL,
                                      cdmDatabaseSchema,
+                                     oracleTempSchema = NULL,
                                      conceptCountsDatabaseSchema = cdmDatabaseSchema,
                                      conceptCountsTable = "concept_counts",
                                      conceptCountsTableIsTemp = FALSE) {
@@ -259,6 +262,7 @@ createConceptCountsTable <- function(connectionDetails = NULL,
   sql <- SqlRender::loadRenderTranslateSql("CreateConceptCountTable.sql",
                                            packageName = "CohortDiagnostics",
                                            dbms = connection@dbms,
+                                           oracleTempSchema = oracleTempSchema,
                                            cdm_database_schema = cdmDatabaseSchema,
                                            work_database_schema = conceptCountsDatabaseSchema,
                                            concept_counts_table = conceptCountsTable,

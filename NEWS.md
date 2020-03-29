@@ -11,6 +11,8 @@ Bugfixes:
 
 2. Fixed error in index event breakdown when entry event contained multiple criteria for the same domain.
 
+3. Fixed error related to oracleTempSchema argument (needed on Oracle and BigQuery).
+
 CohortDiagnostics 0.1.2
 =======================
 
