@@ -91,7 +91,7 @@ recordTasksDone <- function(..., checksum, recordKeepingFile, incremental = TRUE
   } else {
     recordKeeping <- tibble::tibble()
   }
-  newRow <- tibble::as.tibble(list(...))
+  newRow <- tibble::as_tibble(list(...))
   newRow$checksum <- checksum
   newRow$timeStamp <-  Sys.time()
   recordKeeping <- dplyr::bind_rows(recordKeeping, newRow)
