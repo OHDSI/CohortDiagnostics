@@ -182,7 +182,7 @@ findCohortOrphanConcepts <- function(connectionDetails = NULL,
                                      conceptCountsDatabaseSchema = cdmDatabaseSchema,
                                      conceptCountsTable = "concept_counts",
                                      conceptCountsTableIsTemp = FALSE) {
-
+  
   if (is.null(baseUrl) && is.null(cohortJson)) {
     stop("Must provide either baseUrl and webApiCohortId, or cohortJson and cohortSql")
   }
@@ -322,15 +322,15 @@ findCohortIncludedSourceConcepts <- function(connectionDetails = NULL,
                                                       generateStats = FALSE)
   }
   cohortDefinition <- RJSONIO::fromJSON(cohortJson)
-
+  
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-
+  
   ParallelLogger::logInfo("Instantiating concept sets")
   instantiateConceptSets(connection, cdmDatabaseSchema, oracleTempSchema, cohortSql)
-
+  
   ParallelLogger::logInfo("Counting codes in concept sets")
   sql <- SqlRender::loadRenderTranslateSql("CohortSourceCodes.sql",
                                            packageName = "CohortDiagnostics",
@@ -340,14 +340,14 @@ findCohortIncludedSourceConcepts <- function(connectionDetails = NULL,
                                            by_month = byMonth,
                                            use_source_values = useSourceValues)
   counts <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
-
+  
   getConceptSetName <- function(conceptSet) {
     return(data.frame(conceptSetId = conceptSet$id, conceptSetName = conceptSet$name))
   }
   conceptSetNames <- lapply(cohortDefinition$ConceptSets, getConceptSetName)
   conceptSetNames <- do.call(rbind, conceptSetNames)
   counts <- merge(conceptSetNames, counts)
-
+  
   if (byMonth) {
     sql <- SqlRender::loadRenderTranslateSql("ObservedPerCalendarMonth.sql",
                                              packageName = "CohortDiagnostics",
@@ -362,15 +362,15 @@ findCohortIncludedSourceConcepts <- function(connectionDetails = NULL,
     backgroundCounts <- backgroundCounts[order(backgroundCounts$time), ]
     backgroundCounts$backgroundSubjects <- cumsum(backgroundCounts$net)
     backgroundCounts$backgroundSubjects <- backgroundCounts$backgroundSubjects +
-                                           backgroundCounts$endCount
+      backgroundCounts$endCount
     counts <- merge(counts, backgroundCounts[, c("eventYear",
                                                  "eventMonth",
                                                  "backgroundSubjects")], all.x = TRUE)
-
+    
     if (any(is.na(counts$backgroundCount))) {
       stop("code counts in calendar months without observation period starts or ends. Need to do some lookup here")
     }
-
+    
     counts$proportion <- counts$personCount/counts$backgroundCount
     counts <- counts[order(counts$conceptSetId,
                            counts$conceptId,
@@ -387,9 +387,10 @@ findCohortIncludedSourceConcepts <- function(connectionDetails = NULL,
   sql <- "TRUNCATE TABLE #Codesets; DROP TABLE #Codesets;"
   DatabaseConnector::renderTranslateExecuteSql(connection,
                                                sql,
+                                               oracleTempSchema = oracleTempSchema,
                                                progressBar = FALSE,
                                                reportOverallTime = FALSE)
-
+  
   delta <- Sys.time() - start
   ParallelLogger::logInfo(paste("Finding source codes took",
                                 signif(delta, 3),

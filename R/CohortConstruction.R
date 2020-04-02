@@ -596,6 +596,7 @@ saveAndDropTempInclusionStatsTables <- function(connection,
     sql <- "SELECT * FROM @table"
     data <- DatabaseConnector::renderTranslateQuerySql(sql = sql,
                                                        connection = connection,
+                                                       oracleTempSchema = oracleTempSchema,
                                                        snakeCaseToCamelCase = TRUE,
                                                        table = table)
     fullFileName <- file.path(inclusionStatisticsFolder, fileName)

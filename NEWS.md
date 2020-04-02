@@ -13,6 +13,9 @@ Bugfixes:
 
 3. Fixed error related to oracleTempSchema argument (needed on Oracle and BigQuery).
 
+4. Fixed use of deprecated function, causing warnings and causing older versions of ParallelLogger to error.
+
+
 CohortDiagnostics 0.1.2
 =======================
 

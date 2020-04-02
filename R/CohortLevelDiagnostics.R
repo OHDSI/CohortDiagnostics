@@ -107,7 +107,7 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
                                                       generateStats = FALSE)
   }
   cohortDefinition <- RJSONIO::fromJSON(cohortJson)
-
+  
   getCodeSetId <- function(criterion) {
     if (is.list(criterion)) {
       criterion$CodesetId
@@ -140,12 +140,12 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
   primaryCodesetIds <- lapply(split(primaryCodesetIds, primaryCodesetIds$domain), pasteIds)
   primaryCodesetIds <- dplyr::bind_rows(primaryCodesetIds)
   # primaryCodesetIds <- aggregate(codeSetIds ~ domain, primaryCodesetIds, c)
-
+  
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-
+  
   if (!checkIfCohortInstantiated(connection = connection,
                                  cohortDatabaseSchema = cohortDatabaseSchema,
                                  cohortTable = cohortTable,
@@ -159,7 +159,7 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
   }
   ParallelLogger::logInfo("Instantiating concept sets")
   instantiateConceptSets(connection, cdmDatabaseSchema, oracleTempSchema, cohortSql)
-
+  
   ParallelLogger::logInfo("Computing counts")
   domains <- readr::read_csv(system.file("csv", "domains.csv", package = "CohortDiagnostics"),
                              col_types = readr::cols())
@@ -184,14 +184,15 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
   counts <- do.call(rbind, counts)
   rownames(counts) <- NULL
   counts <- counts[order(-counts$conceptCount), ]
-
+  
   ParallelLogger::logInfo("Cleaning up concept sets")
   sql <- "TRUNCATE TABLE #Codesets; DROP TABLE #Codesets;"
   DatabaseConnector::renderTranslateExecuteSql(connection,
                                                sql,
+                                               oracleTempSchema = oracleTempSchema,
                                                progressBar = FALSE,
                                                reportOverallTime = FALSE)
-
+  
   delta <- Sys.time() - start
   ParallelLogger::logInfo(paste("Breaking down index events took",
                                 signif(delta, 3),

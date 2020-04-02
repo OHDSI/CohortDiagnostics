@@ -510,7 +510,7 @@ getUniqueConceptSets <- function(cohorts) {
     }
     conceptSets <- lapply(cohortDefinition$ConceptSets, getConceptSetDetails)
     conceptSets <- do.call(rbind, conceptSets)
-
+    
     sqlParts <- SqlRender::splitSql( gsub("with primary_events.*", "", cohort$sql))
     sqlParts <- sqlParts[-1]
     conceptSetIds <- as.numeric(gsub("^.*SELECT ([0-9]+) as codeset_id.*$", "\\1", sqlParts, ignore.case = TRUE))
@@ -737,6 +737,7 @@ runConceptSetDiagnostics <- function(connection,
   sql <- "TRUNCATE TABLE #Codesets; DROP TABLE #Codesets;"
   DatabaseConnector::renderTranslateExecuteSql(connection,
                                                sql,
+                                               oracleTempSchema = oracleTempSchema,
                                                progressBar = FALSE,
                                                reportOverallTime = FALSE)
 }
