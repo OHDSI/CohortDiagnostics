@@ -129,14 +129,13 @@ WHERE rn1 < 1000;
 SELECT ss1.*
 INTO #search_string_subset
 FROM #search_str_top1000 ss1
-LEFT JOIN #search_str_top1000 ss2
-	ON ss2.concept_name_length < ss1.concept_name_length
-		AND ss1.concept_name LIKE CONCAT (
-			'%',
-			ss2.concept_name,
-			'%'
-			)
-WHERE ss2.concept_name IS NULL;
+WHERE ss1.concept_name NOT IN (
+    SELECT ss1.concept_name
+    FROM #search_str_top1000 ss1
+        INNER JOIN #search_str_top1000 ss2
+            ON ss2.concept_name_length < ss1.concept_name_length
+                   AND ss1.concept_name LIKE CONCAT ('%', ss2.concept_name, '%')
+    );
 
 -- Create recommended list: concepts containing search string but not mapping to start set
 SELECT DISTINCT c1.concept_id,
