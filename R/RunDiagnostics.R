@@ -301,6 +301,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         })
         data <- getIncidenceRate(connection = connection,
                                  cdmDatabaseSchema = cdmDatabaseSchema,
+                                 oracleTempSchema = oracleTempSchema,
                                  cohortDatabaseSchema = cohortDatabaseSchema,
                                  cohortTable = cohortTable,
                                  cohortId = row$cohortId,
@@ -405,6 +406,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         ParallelLogger::logInfo("- Creating characterization for cohort ", row$cohortName)
         data <- getCohortCharacteristics(connection = connection,
                                          cdmDatabaseSchema = cdmDatabaseSchema,
+                                         oracleTempSchema = oracleTempSchema,
                                          cohortDatabaseSchema = cohortDatabaseSchema,
                                          cohortTable = cohortTable,
                                          cohortId = row$cohortId)
