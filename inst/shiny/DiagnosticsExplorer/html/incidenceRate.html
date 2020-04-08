@@ -1,10 +1,10 @@
 <h3>Description</h3>
 <p>A graph showing the incidence rate, optionally stratified by age (in 10-year bins), gender, and calendar year.</p>
 
-<p>The incidence rate is computed as 1000 * the number of people <em>first</em> entering the cohort / the number of years people were eligible to enter the cohort for the first time. The eligble person time is defined as the time when
+<p>The incidence rate is computed as 1000 * the number of people <em>first</em> entering the cohort / the number of years people were eligible to enter the cohort for the first time. The eligible person time is defined as the time when
 <ul>
   <li>A person was observed in the database (based on the observation_period table).</li>
-  <li>Had the required amount of prior observation time as specified in the cohort entry event criteria. For example, if the cohort definition requires 365 days of observation prior to cohort entry, patients are not eligble to enter the cohort in the first 365 days of their observation period, and this time is not counted in the eligible time.</li>
+  <li>Had the required amount of prior observation time as specified in the cohort entry event criteria. For example, if the cohort definition requires 365 days of observation prior to cohort entry, patients are not eligible to enter the cohort in the first 365 days of their observation period, and this time is not counted in the eligible time.</li>
   <li>If the person enters the cohort, then only the time up to cohort entry. Because we only consider the first cohort entry, persons are no longer eligible to enter to cohort after their first entry.</li>
 </ul>
 
