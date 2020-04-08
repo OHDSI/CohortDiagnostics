@@ -1,11 +1,16 @@
 library(CohortDiagnostics)
 options(fftempdir = "c:/FFtemp")
+
+#Testing new logger
+ParallelLogger::addDefaultErrorReportLogger()
+
+# PDW --------------------------------------------------------
 connectionDetails <- createConnectionDetails(dbms = "pdw",
                                              server = Sys.getenv("PDW_SERVER"),
                                              port = Sys.getenv("PDW_PORT"))
 oracleTempSchema <- NULL
 workDatabaseSchema <- "scratch.dbo"
-baseUrl <- Sys.getenv("baseUrl")
+
 
 # Using private cohort table: cdmDatabaseSchema <- 'CDM_IBM_MDCR_V1062.dbo'
 cdmDatabaseSchema <- "CDM_jmdc_v1063.dbo"
@@ -17,6 +22,25 @@ databaseId <- "JMDC"
 # Using ATLAS cohort table:
 cohortDatabaseSchema <- "CDM_IBM_MDCR_V1062.dbo"
 resultsDatabaseSchema <- "CDM_IBM_MDCR_V1062.ohdsi_results"
+
+# RedShift --------------------------------------------------------
+connectionDetails <- createConnectionDetails(dbms = "redshift",
+                                             connectionString = Sys.getenv("jmdcRedShiftConnectionString"),
+                                             user = Sys.getenv("redShiftUser"),
+                                             password = Sys.getenv("redShiftPassword"))
+oracleTempSchema <- NULL
+workDatabaseSchema <- "scratch_mschuemi"
+cdmDatabaseSchema <- "cdm"
+cohortDatabaseSchema <- workDatabaseSchema
+resultsDatabaseSchema <- workDatabaseSchema
+cohortTable <- "mschuemi_temp"
+databaseId <- "JMDC"
+
+connection <- connect(connectionDetails)
+DatabaseConnector::getTableNames(connection, "scratch_mschuemI")
+disconnect(connection)
+
+baseUrl <- Sys.getenv("baseUrl")
 
 cohortId <- 7399  # LEGEND Cardiac Arrhythmia
 
@@ -59,13 +83,18 @@ includedSourceConcepts <- findCohortIncludedSourceConcepts(connectionDetails = c
                                                            webApiCohortId = cohortId,
                                                            byMonth = FALSE,
                                                            useSourceValues = FALSE)
-
+system.time(
 orphanConcepts <- findCohortOrphanConcepts(connectionDetails = connectionDetails,
                                            cdmDatabaseSchema = cdmDatabaseSchema,
                                            oracleTempSchema = oracleTempSchema,
                                            conceptCountsDatabaseSchema = workDatabaseSchema,
                                            baseUrl = baseUrl,
                                            webApiCohortId = cohortId)
+)
+
+# saveRDS(orphanConcepts, "c:/temp/orphanConcepts.rds")
+oldOcs <- readRDS("c:/temp/orphanConcepts.rds")
+
 
 # Cohort-level ------------------------------------------------------------------
 counts <- getCohortCounts(connectionDetails = connectionDetails,
