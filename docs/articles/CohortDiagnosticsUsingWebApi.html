@@ -6,19 +6,19 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Running cohort diagnostics using WebAPI • CohortDiagnostics</title>
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.3.7/cosmo/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous">
-<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
+<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://cdnjs.cloudflare.com/ajax/libs/bootswatch/3.4.0/cosmo/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="../bootstrap-toc.css">
+<script src="../bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
+<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
 <script src="../pkgdown.js"></script><meta property="og:title" content="Running cohort diagnostics using WebAPI">
-<meta property="og:description" content="">
-<meta name="twitter:card" content="summary">
+<meta property="og:description" content="CohortDiagnostics">
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]-->
 </head>
-<body>
+<body data-spy="scroll" data-target="#toc">
     <div class="container template-article">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">0.1.3</span>
       </span>
     </div>
 
@@ -64,7 +64,7 @@
       </ul>
 <ul class="nav navbar-nav navbar-right">
 <li>
-  <a href="https://github.com/OHDSI/CohortDiagnostics">
+  <a href="https://github.com/OHDSI/CohortDiagnostics/">
     <span class="fab fa fab fa-github fa-lg"></span>
      
   </a>
@@ -82,10 +82,10 @@
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
-      <h1>Running cohort diagnostics using WebAPI</h1>
+      <h1 data-toc-skip>Running cohort diagnostics using WebAPI</h1>
                         <h4 class="author">Martijn J. Schuemie</h4>
             
-            <h4 class="date">2020-03-25</h4>
+            <h4 class="date">2020-04-10</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/master/vignettes/CohortDiagnosticsUsingWebApi.Rmd"><code>vignettes/CohortDiagnosticsUsingWebApi.Rmd</code></a></small>
       <div class="hidden name"><code>CohortDiagnosticsUsingWebApi.Rmd</code></div>
@@ -165,31 +165,31 @@
 </tbody>
 </table>
 <p>We can read the table using</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span>(CohortDiagnostics)</span>
-<span id="cb1-2"><a href="#cb1-2"></a>cohortSetReference &lt;-<span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span>(<span class="st">"cohortsToDiagnose.csv"</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">CohortDiagnostics</span>)
+<span class="no">cohortSetReference</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span>(<span class="st">"cohortsToDiagnose.csv"</span>)</pre></body></html></div>
 </div>
 <div id="configuring-the-connection-to-the-server" class="section level2">
 <h2 class="hasAnchor">
 <a href="#configuring-the-connection-to-the-server" class="anchor"></a>Configuring the connection to the server</h2>
 <p>We need to tell R how to connect to the server where the data are. <code>CohortDiagnostics</code> uses the <code>DatabaseConnector</code> package, which provides the <code>createConnectionDetails</code> function. Type <code>?createConnectionDetails</code> for the specific settings required for the various database management systems (DBMS). For example, one might connect to a PostgreSQL database using this code:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a>connectionDetails &lt;-<span class="st"> </span><span class="kw">createConnectionDetails</span>(<span class="dt">dbms =</span> <span class="st">"postgresql"</span>,</span>
-<span id="cb2-2"><a href="#cb2-2"></a>                                             <span class="dt">server =</span> <span class="st">"localhost/ohdsi"</span>,</span>
-<span id="cb2-3"><a href="#cb2-3"></a>                                             <span class="dt">user =</span> <span class="st">"joe"</span>,</span>
-<span id="cb2-4"><a href="#cb2-4"></a>                                             <span class="dt">password =</span> <span class="st">"supersecret"</span>)</span>
-<span id="cb2-5"><a href="#cb2-5"></a></span>
-<span id="cb2-6"><a href="#cb2-6"></a>cdmDatabaseSchema &lt;-<span class="st"> "my_cdm_data"</span></span>
-<span id="cb2-7"><a href="#cb2-7"></a>oracleTempSchema &lt;-<span class="st"> </span><span class="ot">NULL</span></span>
-<span id="cb2-8"><a href="#cb2-8"></a>cohortDatabaseSchema &lt;-<span class="st"> "my_schema"</span></span>
-<span id="cb2-9"><a href="#cb2-9"></a>cohortTable &lt;-<span class="st"> "my_cohort_table"</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="no">connectionDetails</span> <span class="kw">&lt;-</span> <span class="fu">createConnectionDetails</span>(<span class="kw">dbms</span> <span class="kw">=</span> <span class="st">"postgresql"</span>,
+                                             <span class="kw">server</span> <span class="kw">=</span> <span class="st">"localhost/ohdsi"</span>,
+                                             <span class="kw">user</span> <span class="kw">=</span> <span class="st">"joe"</span>,
+                                             <span class="kw">password</span> <span class="kw">=</span> <span class="st">"supersecret"</span>)
+
+<span class="no">cdmDatabaseSchema</span> <span class="kw">&lt;-</span> <span class="st">"my_cdm_data"</span>
+<span class="no">oracleTempSchema</span> <span class="kw">&lt;-</span> <span class="kw">NULL</span>
+<span class="no">cohortDatabaseSchema</span> <span class="kw">&lt;-</span> <span class="st">"my_schema"</span>
+<span class="no">cohortTable</span> <span class="kw">&lt;-</span> <span class="st">"my_cohort_table"</span></pre></body></html></div>
 <p>The last four lines define the <code>cdmDatabaseSchema</code>, <code>oracleTempSchema</code>, <code>cohortDatabaseSchema</code>, and <code>cohortTable</code> variables. We’ll use the <code>cdmDatabaseSchema</code> later to tell R where the data in CDM format live. The <code>oracleTempSchema</code> is needed only for Oracle users, since Oracle does not support temporary tables. The <code>cohortDatabaseSchema</code>, and <code>cohortTable</code> specify where we want to instantiate our cohorts. Note that for Microsoft SQL Server, databaseschemas need to specify both the database and the schema, so for example <code>cdmDatabaseSchema &lt;- "my_cdm_data.dbo"</code>.</p>
 </div>
 <div id="creating-a-new-cohort-table" class="section level2">
 <h2 class="hasAnchor">
 <a href="#creating-a-new-cohort-table" class="anchor"></a>Creating a new cohort table</h2>
 <p>In order to run most of the cohort diagnostics, we need to instantiate the cohorts. The best way is to instantiate the cohorts in a new cohort table. We can use the <code>createCohortTable</code> to create an empty cohort table:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="kw"><a href="../reference/createCohortTable.html">createCohortTable</a></span>(<span class="dt">connectionDetails =</span> connectionDetails,</span>
-<span id="cb3-2"><a href="#cb3-2"></a>                  <span class="dt">cohortDatabaseSchema =</span> cohortDatabaseSchema,</span>
-<span id="cb3-3"><a href="#cb3-3"></a>                  <span class="dt">cohortTable =</span> cohortTable)</span></code></pre></div>
+<div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="fu"><a href="../reference/createCohortTable.html">createCohortTable</a></span>(<span class="kw">connectionDetails</span> <span class="kw">=</span> <span class="no">connectionDetails</span>,
+                  <span class="kw">cohortDatabaseSchema</span> <span class="kw">=</span> <span class="no">cohortDatabaseSchema</span>,
+                  <span class="kw">cohortTable</span> <span class="kw">=</span> <span class="no">cohortTable</span>)</pre></body></html></div>
 <p>Note this this function will <strong>delete the table if it already exists</strong> before creating it.</p>
 </div>
 <div id="instantiating-the-cohorts" class="section level2">
@@ -199,46 +199,46 @@
 <p>To connect to the WebAPI, we need to provide the base URL. This is a URL that looks something like “<a href="http://server.org:80/WebAPI" class="uri">http://server.org:80/WebAPI</a>”. If you do not know the WebAPI’s base URL, contact the ATLAS administrator.</p>
 <p>We have the option to also generate inclusion rule statistics while the cohorts are instantiated (recommended). If we want to do this, we need to provide a folder where the inclusion rule statistics will be stored for later use.</p>
 <p>To instantiate the cohorts:</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a>baseUrl &lt;-<span class="st"> "http://server.org:80/WebAPI"</span></span>
-<span id="cb4-2"><a href="#cb4-2"></a>inclusionStatisticsFolder &lt;-<span class="st"> "c:/temp/incStats/"</span></span>
-<span id="cb4-3"><a href="#cb4-3"></a></span>
-<span id="cb4-4"><a href="#cb4-4"></a><span class="kw"><a href="../reference/instantiateCohortSet.html">instantiateCohortSet</a></span>(<span class="dt">connectionDetails =</span> connectionDetails,</span>
-<span id="cb4-5"><a href="#cb4-5"></a>                     <span class="dt">cdmDatabaseSchema =</span> cdmDatabaseSchema,</span>
-<span id="cb4-6"><a href="#cb4-6"></a>                     <span class="dt">oracleTempSchema =</span> oracleTempSchema,</span>
-<span id="cb4-7"><a href="#cb4-7"></a>                     <span class="dt">cohortDatabaseSchema =</span> cohortDatabaseSchema,</span>
-<span id="cb4-8"><a href="#cb4-8"></a>                     <span class="dt">cohortTable =</span> cohortTable,</span>
-<span id="cb4-9"><a href="#cb4-9"></a>                     <span class="dt">baseUrl =</span> baseUrl,</span>
-<span id="cb4-10"><a href="#cb4-10"></a>                     <span class="dt">cohortSetReference =</span> cohortSetReference,</span>
-<span id="cb4-11"><a href="#cb4-11"></a>                     <span class="dt">generateInclusionStats =</span> <span class="ot">TRUE</span>,</span>
-<span id="cb4-12"><a href="#cb4-12"></a>                     <span class="dt">inclusionStatisticsFolder =</span> inclusionStatisticsFolder)</span></code></pre></div>
+<div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="no">baseUrl</span> <span class="kw">&lt;-</span> <span class="st">"http://server.org:80/WebAPI"</span>
+<span class="no">inclusionStatisticsFolder</span> <span class="kw">&lt;-</span> <span class="st">"c:/temp/incStats/"</span>
+
+<span class="fu"><a href="../reference/instantiateCohortSet.html">instantiateCohortSet</a></span>(<span class="kw">connectionDetails</span> <span class="kw">=</span> <span class="no">connectionDetails</span>,
+                     <span class="kw">cdmDatabaseSchema</span> <span class="kw">=</span> <span class="no">cdmDatabaseSchema</span>,
+                     <span class="kw">oracleTempSchema</span> <span class="kw">=</span> <span class="no">oracleTempSchema</span>,
+                     <span class="kw">cohortDatabaseSchema</span> <span class="kw">=</span> <span class="no">cohortDatabaseSchema</span>,
+                     <span class="kw">cohortTable</span> <span class="kw">=</span> <span class="no">cohortTable</span>,
+                     <span class="kw">baseUrl</span> <span class="kw">=</span> <span class="no">baseUrl</span>,
+                     <span class="kw">cohortSetReference</span> <span class="kw">=</span> <span class="no">cohortSetReference</span>,
+                     <span class="kw">generateInclusionStats</span> <span class="kw">=</span> <span class="fl">TRUE</span>,
+                     <span class="kw">inclusionStatisticsFolder</span> <span class="kw">=</span> <span class="no">inclusionStatisticsFolder</span>)</pre></body></html></div>
 <p>This command will contact the WebApi to obtain the cohort definitions, instantiate them in the cohort table, and write the inclusion rule statistics to the specified folder.</p>
 </div>
 <div id="generating-the-diagnostics" class="section level2">
 <h2 class="hasAnchor">
 <a href="#generating-the-diagnostics" class="anchor"></a>Generating the diagnostics</h2>
 <p>Next we generate the cohort diagnostics:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>databaseId &lt;-<span class="st"> "MyData"</span></span>
-<span id="cb5-2"><a href="#cb5-2"></a>exportFolder &lt;-<span class="st"> "c:/temp/export"</span></span>
-<span id="cb5-3"><a href="#cb5-3"></a></span>
-<span id="cb5-4"><a href="#cb5-4"></a><span class="kw"><a href="../reference/runCohortDiagnostics.html">runCohortDiagnostics</a></span>(<span class="dt">baseUrl =</span> baseUrl,</span>
-<span id="cb5-5"><a href="#cb5-5"></a>                     <span class="dt">cohortSetReference =</span> cohortSetReference,</span>
-<span id="cb5-6"><a href="#cb5-6"></a>                     <span class="dt">connectionDetails =</span> connectionDetails,</span>
-<span id="cb5-7"><a href="#cb5-7"></a>                     <span class="dt">cdmDatabaseSchema =</span> cdmDatabaseSchema,</span>
-<span id="cb5-8"><a href="#cb5-8"></a>                     <span class="dt">oracleTempSchema =</span> oracleTempSchema,</span>
-<span id="cb5-9"><a href="#cb5-9"></a>                     <span class="dt">cohortDatabaseSchema =</span> cohortDatabaseSchema,</span>
-<span id="cb5-10"><a href="#cb5-10"></a>                     <span class="dt">cohortTable =</span> cohortTable,</span>
-<span id="cb5-11"><a href="#cb5-11"></a>                     <span class="dt">inclusionStatisticsFolder =</span> inclusionStatisticsFolder,</span>
-<span id="cb5-12"><a href="#cb5-12"></a>                     <span class="dt">exportFolder =</span> exportFolder,</span>
-<span id="cb5-13"><a href="#cb5-13"></a>                     <span class="dt">databaseId =</span> databaseId,</span>
-<span id="cb5-14"><a href="#cb5-14"></a>                     <span class="dt">runInclusionStatistics =</span> <span class="ot">TRUE</span>,</span>
-<span id="cb5-15"><a href="#cb5-15"></a>                     <span class="dt">runIncludedSourceConcepts =</span> <span class="ot">TRUE</span>,</span>
-<span id="cb5-16"><a href="#cb5-16"></a>                     <span class="dt">runOrphanConcepts =</span> <span class="ot">TRUE</span>,</span>
-<span id="cb5-17"><a href="#cb5-17"></a>                     <span class="dt">runTimeDistributions =</span> <span class="ot">TRUE</span>,</span>
-<span id="cb5-18"><a href="#cb5-18"></a>                     <span class="dt">runBreakdownIndexEvents =</span> <span class="ot">TRUE</span>,</span>
-<span id="cb5-19"><a href="#cb5-19"></a>                     <span class="dt">runIncidenceRate =</span> <span class="ot">TRUE</span>,</span>
-<span id="cb5-20"><a href="#cb5-20"></a>                     <span class="dt">runCohortOverlap =</span> <span class="ot">TRUE</span>,</span>
-<span id="cb5-21"><a href="#cb5-21"></a>                     <span class="dt">runCohortCharacterization =</span> <span class="ot">TRUE</span>,</span>
-<span id="cb5-22"><a href="#cb5-22"></a>                     <span class="dt">minCellCount =</span> <span class="dv">5</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb5"><html><body><pre class="r"><span class="no">databaseId</span> <span class="kw">&lt;-</span> <span class="st">"MyData"</span>
+<span class="no">exportFolder</span> <span class="kw">&lt;-</span> <span class="st">"c:/temp/export"</span>
+
+<span class="fu"><a href="../reference/runCohortDiagnostics.html">runCohortDiagnostics</a></span>(<span class="kw">baseUrl</span> <span class="kw">=</span> <span class="no">baseUrl</span>,
+                     <span class="kw">cohortSetReference</span> <span class="kw">=</span> <span class="no">cohortSetReference</span>,
+                     <span class="kw">connectionDetails</span> <span class="kw">=</span> <span class="no">connectionDetails</span>,
+                     <span class="kw">cdmDatabaseSchema</span> <span class="kw">=</span> <span class="no">cdmDatabaseSchema</span>,
+                     <span class="kw">oracleTempSchema</span> <span class="kw">=</span> <span class="no">oracleTempSchema</span>,
+                     <span class="kw">cohortDatabaseSchema</span> <span class="kw">=</span> <span class="no">cohortDatabaseSchema</span>,
+                     <span class="kw">cohortTable</span> <span class="kw">=</span> <span class="no">cohortTable</span>,
+                     <span class="kw">inclusionStatisticsFolder</span> <span class="kw">=</span> <span class="no">inclusionStatisticsFolder</span>,
+                     <span class="kw">exportFolder</span> <span class="kw">=</span> <span class="no">exportFolder</span>,
+                     <span class="kw">databaseId</span> <span class="kw">=</span> <span class="no">databaseId</span>,
+                     <span class="kw">runInclusionStatistics</span> <span class="kw">=</span> <span class="fl">TRUE</span>,
+                     <span class="kw">runIncludedSourceConcepts</span> <span class="kw">=</span> <span class="fl">TRUE</span>,
+                     <span class="kw">runOrphanConcepts</span> <span class="kw">=</span> <span class="fl">TRUE</span>,
+                     <span class="kw">runTimeDistributions</span> <span class="kw">=</span> <span class="fl">TRUE</span>,
+                     <span class="kw">runBreakdownIndexEvents</span> <span class="kw">=</span> <span class="fl">TRUE</span>,
+                     <span class="kw">runIncidenceRate</span> <span class="kw">=</span> <span class="fl">TRUE</span>,
+                     <span class="kw">runCohortOverlap</span> <span class="kw">=</span> <span class="fl">TRUE</span>,
+                     <span class="kw">runCohortCharacterization</span> <span class="kw">=</span> <span class="fl">TRUE</span>,
+                     <span class="kw">minCellCount</span> <span class="kw">=</span> <span class="fl">5</span>)</pre></body></html></div>
 <p>The databaseId is a short string that will be used to identify the data from this database in the Shiny app. Make sure to give it a name you can easily recognize.</p>
 <p>Once completed, a zip file will have been created in the specified export folder. This zip file can be shared between sites, as it does not contain patient-identifiable information. Note that cell counts smaller than 5 have been removed, as specified using the <code>minCellCount</code> argument, to ensure non-identifiability.</p>
 </div>
@@ -248,9 +248,9 @@
 <a href="#viewing-the-diagnostics" class="anchor"></a>Viewing the diagnostics</h1>
 <p>Assuming you completed the steps described above for one or more databases, you should now have a set of zip files, one per database. Make sure to place all zip files in a single folder, for example <code>c:/temp/allZipFiles</code>.</p>
 <p>Optionally, we can pre-merge the zip files. Merging the files can take a while, and doing it beforehand will speed up starting the Shiny app:</p>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a><span class="kw"><a href="../reference/preMergeDiagnosticsFiles.html">preMergeDiagnosticsFiles</a></span>(<span class="st">"C:/temp/allZipFiles"</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb6"><html><body><pre class="r"><span class="fu"><a href="../reference/preMergeDiagnosticsFiles.html">preMergeDiagnosticsFiles</a></span>(<span class="st">"C:/temp/allZipFiles"</span>)</pre></body></html></div>
 <p>To view the diagnostics, use</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a><span class="kw"><a href="../reference/launchDiagnosticsExplorer.html">launchDiagnosticsExplorer</a></span>(<span class="st">"C:/temp/allZipFiles"</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="fu"><a href="../reference/launchDiagnosticsExplorer.html">launchDiagnosticsExplorer</a></span>(<span class="st">"C:/temp/allZipFiles"</span>)</pre></body></html></div>
 <p>This will launch the Shiny app shown below:</p>
 <div class="figure">
 <img src="shiny.png" alt=""><p class="caption">The Diagnostics Explorer Shiny app</p>
@@ -269,30 +269,11 @@
 </div>
   </div>
 
-  <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
+  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
 
-        <div id="tocnav">
-      <h2 class="hasAnchor">
-<a href="#tocnav" class="anchor"></a>Contents</h2>
-      <ul class="nav nav-pills nav-stacked">
-<li><a href="#introduction">Introduction</a></li>
-      <li>
-<a href="#running-the-cohort-diagnostics">Running the cohort diagnostics</a><ul class="nav nav-pills nav-stacked">
-<li><a href="#defining-the-set-of-cohorts-to-diagnose">Defining the set of cohorts to diagnose</a></li>
-      <li><a href="#configuring-the-connection-to-the-server">Configuring the connection to the server</a></li>
-      <li><a href="#creating-a-new-cohort-table">Creating a new cohort table</a></li>
-      <li><a href="#instantiating-the-cohorts">Instantiating the cohorts</a></li>
-      <li><a href="#generating-the-diagnostics">Generating the diagnostics</a></li>
-      </ul>
-</li>
-      <li>
-<a href="#viewing-the-diagnostics">Viewing the diagnostics</a><ul class="nav nav-pills nav-stacked">
-<li><a href="#deploying-the-shiny-app-on-a-shiny-server">Deploying the Shiny app on a Shiny Server</a></li>
-      </ul>
-</li>
-      </ul>
+        <nav id="toc" data-toggle="toc"><h2 data-toc-skip>Contents</h2>
+    </nav>
 </div>
-      </div>
 
 </div>
 
@@ -303,7 +284,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.0.9000.</p>
 </div>
 
       </footer>

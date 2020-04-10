@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Plot incidence rate by year, age, and/or gender — plotincidenceRate • CohortDiagnostics</title>
+<title>CohortDiagnostics: Diagnostics for OHDSI studies — CohortDiagnostics-package • CohortDiagnostics</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Plot incidence rate by year, age, and/or gender — plotincidenceRate" />
-<meta property="og:description" content="Characterizes the incidence rate of a cohort definition." />
+<meta property="og:title" content="CohortDiagnostics: Diagnostics for OHDSI studies — CohortDiagnostics-package" />
+<meta property="og:description" content="Diagnostics for studies that use the OMOP Common Data Model and the OHDSI tools." />
 
 
 
@@ -123,65 +123,26 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Plot incidence rate by year, age, and/or gender</h1>
-    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/IncidenceRates.R'><code>R/IncidenceRates.R</code></a></small>
-    <div class="hidden name"><code>plotincidenceRate.Rd</code></div>
+    <h1>CohortDiagnostics: Diagnostics for OHDSI studies</h1>
+    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/CohortDiagnostics.R'><code>R/CohortDiagnostics.R</code></a></small>
+    <div class="hidden name"><code>CohortDiagnostics-package.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Characterizes the incidence rate of a cohort definition.</p>
+    <p>Diagnostics for studies that use the OMOP Common Data Model and the OHDSI tools.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>plotincidenceRate</span>(
-  <span class='no'>incidenceRate</span>,
-  <span class='kw'>minPersonYears</span> <span class='kw'>=</span> <span class='fl'>1000</span>,
-  <span class='kw'>stratifyByAge</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>stratifyByGender</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>stratifyByCalendarYear</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>fileName</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
-)</pre>
 
-    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-    <table class="ref-arguments">
-    <colgroup><col class="name" /><col class="desc" /></colgroup>
-    <tr>
-      <th>incidenceRate</th>
-      <td><p>Incidence rate time series data for plotting generated using
-<code><a href='getIncidenceRate.html'>getIncidenceRate</a></code> function.</p></td>
-    </tr>
-    <tr>
-      <th>minPersonYears</th>
-      <td><p>Estimates get very unstable with low background counts, so removing them
-makes for cleaner plots.</p></td>
-    </tr>
-    <tr>
-      <th>stratifyByAge</th>
-      <td><p>Should the plot be stratified by age?</p></td>
-    </tr>
-    <tr>
-      <th>stratifyByGender</th>
-      <td><p>Should the plot be stratified by gender?</p></td>
-    </tr>
-    <tr>
-      <th>stratifyByCalendarYear</th>
-      <td><p>Should the plot be stratified by calendar year?</p></td>
-    </tr>
-    <tr>
-      <th>fileName</th>
-      <td><p>Optional: name of the file where the plot should be saved, for
-example 'plot.png'. See the function <code>ggsave</code> in the ggplot2
-package for supported file formats.</p></td>
-    </tr>
-    </table>
 
-    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
 
-    <p>A ggplot object. Use the <code><a href='https://rdrr.io/pkg/ggplot2/man/ggsave.html'>ggsave</a></code> function to save to file in a different
-format.</p>
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+    <div class='dont-index'><p>Useful links:</p><ul>
+<li><p><a href='https://ohdsi.github.io/CohortDiagnostics'>https://ohdsi.github.io/CohortDiagnostics</a></p></li>
+<li><p><a href='https://github.com/OHDSI/CohortDiagnostics'>https://github.com/OHDSI/CohortDiagnostics</a></p></li>
+<li><p>Report bugs at <a href='https://github.com/OHDSI/CohortDiagnostics/issues'>https://github.com/OHDSI/CohortDiagnostics/issues</a></p></li>
+</ul>
 
-    <p>Generates time series plots of the incidence rate per 1000 person years of cohort entry by
-year, age, and/or gender.</p>
+</div>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
