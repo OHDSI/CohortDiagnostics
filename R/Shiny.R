@@ -61,7 +61,7 @@ preMergeDiagnosticsFiles <- function(dataFolder) {
     # print(file)
     tableName <- gsub(".csv$", "", file)
     camelCaseName <- SqlRender::snakeCaseToCamelCase(tableName)
-    data <- readr::read_csv(file.path(folder, file), col_types = readr::cols(), guess_max = 1e7, locale = readr::locale(encoding = "UTF-8"))
+    data <- readr::read_csv(file.path(folder, file), col_types = readr::cols(), guess_max = 1e7, locale = readr::locale(encoding = "UTF-8"), trim_ws = FALSE)
     colnames(data) <- SqlRender::snakeCaseToCamelCase(colnames(data))
     
     if (!overwrite && exists(camelCaseName, envir = .GlobalEnv)) {

@@ -20,7 +20,7 @@ computeChecksum <- function(column) {
 
 isTaskRequired <- function(..., checksum, recordKeepingFile, verbose = TRUE) {
   if (file.exists(recordKeepingFile)) {
-    recordKeeping <-  readr::read_csv(recordKeepingFile, col_types = readr::cols())
+    recordKeeping <-  readr::read_csv(recordKeepingFile, col_types = readr::cols(), trim_ws = FALSE)
     task <- recordKeeping[getKeyIndex(list(...), recordKeeping), ]
     if (nrow(task) == 0) {
       return(TRUE)

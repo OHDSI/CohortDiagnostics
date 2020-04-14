@@ -199,7 +199,7 @@ test_that("Incremental save", {
                                  count = c(500, 600, 700, 800)) 
   
   
-  expect_equal(readr::read_csv(tmpFile, col_types = readr::cols()),
+  expect_equal(readr::read_csv(tmpFile, col_types = readr::cols()), trim_ws = FALSE,
                goldStandard)
   unlink(tmpFile)
 })
@@ -214,7 +214,7 @@ test_that("Incremental save with empty key", {
   
   CohortDiagnostics:::saveIncremental(newData, tmpFile, cohortId = c())
   
-  expect_equal(readr::read_csv(tmpFile, col_types = readr::cols()),
+  expect_equal(readr::read_csv(tmpFile, col_types = readr::cols()), trim_ws = FALSE,
                data)
   unlink(tmpFile)
 })

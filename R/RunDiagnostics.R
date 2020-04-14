@@ -771,7 +771,7 @@ subsetToRequiredCombis <- function(combis, task, incremental, recordKeepingFile)
 
 loadCohortsFromPackage <- function(packageName, cohortToCreateFile, cohortIds) {
   pathToCsv <- system.file(cohortToCreateFile, package = packageName)
-  cohorts <- readr::read_csv(pathToCsv, col_types = readr::cols())
+  cohorts <- readr::read_csv(pathToCsv, col_types = readr::cols(), trim_ws = FALSE)
   cohorts$atlasId <- NULL
   if (!is.null(cohortIds)) {
     cohorts <- cohorts[cohorts$cohortId %in% cohortIds, ]
