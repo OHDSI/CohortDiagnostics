@@ -21,7 +21,7 @@ OhdsiRTools::formatRFolder()
 OhdsiRTools::checkUsagePackage("CohortDiagnostics")
 OhdsiRTools::updateCopyrightYearFolder()
 devtools::spell_check()
-spelling::spell_check_files(path = "inst/shiny", list.files(pattern = "*.html", recursive = TRUE))
+spelling::spell_check_files(list.files(path = "inst/shiny", pattern = "*.html", recursive = TRUE, full.names = TRUE))
 
 
 # Create manual and vignettes:

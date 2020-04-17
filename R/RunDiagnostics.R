@@ -124,10 +124,10 @@ runCohortDiagnostics <- function(packageName = NULL,
   }
   
   ParallelLogger::logInfo("Saving database metadata")
-  database <- data.frame(databaseId = databaseId,
-                         databaseName = databaseName,
-                         description = databaseDescription,
-                         isMetaAnalysis = 0)
+  database <- tibble::tibble(databaseId = databaseId,
+                             databaseName = databaseName,
+                             description = databaseDescription,
+                             isMetaAnalysis = 0)
   writeToCsv(database, file.path(exportFolder, "database.csv"))
   
   # Counting cohorts -----------------------------------------------------------------------
@@ -334,8 +334,8 @@ runCohortDiagnostics <- function(packageName = NULL,
     combis <- expand.grid(targetCohortId = cohorts$cohortId, comparatorCohortId = cohorts$cohortId)
     combis <- combis[combis$targetCohortId < combis$comparatorCohortId, ]
     if (incremental) {
-      combis <- merge(combis, data.frame(targetCohortId = cohorts$cohortId, targetChecksum = cohorts$checksum))
-      combis <- merge(combis, data.frame(comparatorCohortId = cohorts$cohortId, comparatorChecksum = cohorts$checksum))
+      combis <- merge(combis, tibble::tibble(targetCohortId = cohorts$cohortId, targetChecksum = cohorts$checksum))
+      combis <- merge(combis, tibble::tibble(comparatorCohortId = cohorts$cohortId, comparatorChecksum = cohorts$checksum))
       combis$checksum <- paste(combis$targetChecksum, combis$comparatorChecksum)
     }
     subset <- subsetToRequiredCombis(combis = combis, 
@@ -450,7 +450,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   oldWd <- setwd(exportFolder)
   on.exit(setwd(oldWd), add = TRUE)
   DatabaseConnector::createZipFile(zipFile = zipName, files = files)
-  ParallelLogger::logInfo("Results are ready for sharing at:", zipName)
+  ParallelLogger::logInfo("Results are ready for sharing at: ", zipName)
   
   delta <- Sys.time() - start
   ParallelLogger::logInfo(paste("Computing all diagnostics took",
