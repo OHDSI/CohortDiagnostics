@@ -29,6 +29,7 @@ runCohortDiagnostics(
   runIncidenceRate = TRUE,
   runCohortOverlap = TRUE,
   runCohortCharacterization = TRUE,
+  covariateSettings = FeatureExtraction::createDefaultCovariateSettings(),
   minCellCount = 5,
   incremental = FALSE,
   incrementalFolder = exportFolder
@@ -102,6 +103,11 @@ does not exist it will be created.}
 \item{runCohortOverlap}{Generate and export the cohort overlap?}
 
 \item{runCohortCharacterization}{Generate and export the cohort characterization?}
+
+\item{covariateSettings}{(OPTIONAL) Either an object of type \code{covariateSettings} as created using one of
+the createCovariate functions in the FeatureExtraction package, or a list
+of such objects. If not specified, default settings of FeatureExtraction package
+will be used.}
 
 \item{minCellCount}{The minimum cell count for fields contains person counts or fractions.}
 
