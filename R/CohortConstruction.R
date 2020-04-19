@@ -180,6 +180,7 @@ instantiateCohort <- function(connectionDetails = NULL,
   
   ParallelLogger::logInfo("Instantiation cohort with cohort_definition_id = ", cohortId)
   sql <- cohortSql
+  .warnMismatchSqlInclusionStats(sql)
   if (generateInclusionStats) {
     sql <- SqlRender::render(sql,
                              cdm_database_schema = cdmDatabaseSchema,
@@ -508,6 +509,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
                                        recordKeepingFile = recordKeepingFile)) {
       ParallelLogger::logInfo("Instantiation cohort ", cohorts$cohortFullName[i])
       sql <- cohorts$sql[i]
+      .warnMismatchSqlInclusionStats(sql)
       if (generateInclusionStats) {
         sql <- SqlRender::render(sql,
                                  cdm_database_schema = cdmDatabaseSchema,
@@ -627,4 +629,25 @@ saveAndDropTempInclusionStatsTables <- function(connection,
                                                progressBar = FALSE,
                                                reportOverallTime = FALSE,
                                                oracleTempSchema = oracleTempSchema)
+}
+
+
+.warnMismatchSqlInclusionStats <- function(sql) {
+  if (any(stringr::str_detect(string = sql, pattern = "_inclusion_result"), 
+          stringr::str_detect(string = sql, pattern = "_inclusion_stats"), 
+          stringr::str_detect(string = sql, pattern = "_summary_stats")
+          )
+  ) {
+    if (isFALSE(generateInclusionStats)) {
+      warning("The SQL template used to instantiate cohort was designed to output cohort inclusion statistics. 
+              But, generateInclusionStats is set to False while instantiating cohort. 
+              This may cause error and terminate cohort diagnositcs.")
+    }
+  } else {
+    if (isTRUE(generateInclusionStats)) {
+      warning("The SQL template used to instantiate cohort was designed to NOT output cohort inclusion statistics. 
+              But, generateInclusionStats is set to TRUE while instantiating cohort. 
+              This may cause error and terminate cohort diagnositcs.")
+    }
+  }
 }
