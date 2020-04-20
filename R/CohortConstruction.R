@@ -180,7 +180,7 @@ instantiateCohort <- function(connectionDetails = NULL,
   
   ParallelLogger::logInfo("Instantiation cohort with cohort_definition_id = ", cohortId)
   sql <- cohortSql
-  .warnMismatchSqlInclusionStats(sql)
+  .warnMismatchSqlInclusionStats(sql, generateInclusionStats = generateInclusionStats)
   if (generateInclusionStats) {
     sql <- SqlRender::render(sql,
                              cdm_database_schema = cdmDatabaseSchema,
@@ -509,7 +509,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
                                        recordKeepingFile = recordKeepingFile)) {
       ParallelLogger::logInfo("Instantiation cohort ", cohorts$cohortFullName[i])
       sql <- cohorts$sql[i]
-      .warnMismatchSqlInclusionStats(sql)
+      .warnMismatchSqlInclusionStats(sql, generateInclusionStats = generateInclusionStats)
       if (generateInclusionStats) {
         sql <- SqlRender::render(sql,
                                  cdm_database_schema = cdmDatabaseSchema,
@@ -632,7 +632,7 @@ saveAndDropTempInclusionStatsTables <- function(connection,
 }
 
 
-.warnMismatchSqlInclusionStats <- function(sql) {
+.warnMismatchSqlInclusionStats <- function(sql, generateInclusionStats) {
   if (any(stringr::str_detect(string = sql, pattern = "_inclusion_result"), 
           stringr::str_detect(string = sql, pattern = "_inclusion_stats"), 
           stringr::str_detect(string = sql, pattern = "_summary_stats")

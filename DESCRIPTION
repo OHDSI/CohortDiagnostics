@@ -23,7 +23,8 @@ Imports:
 	RJSONIO,
 	FeatureExtraction,
 	ff,
-	digest
+	digest,
+	stringr
 Suggests:
   testthat,
   knitr,
