@@ -49,10 +49,9 @@
 #' @param runIncidenceRate            Generate and export the cohort incidence  rates?
 #' @param runCohortOverlap            Generate and export the cohort overlap?
 #' @param runCohortCharacterization   Generate and export the cohort characterization?
-#' @param covariateSettings           (OPTIONAL) Either an object of type \code{covariateSettings} as created using one of
+#' @param covariateSettings           Either an object of type \code{covariateSettings} as created using one of
 #'                                    the createCovariate functions in the FeatureExtraction package, or a list
-#'                                    of such objects. If not specified, default settings of FeatureExtraction package
-#'                                    will be used.
+#'                                    of such objects.
 #' @param minCellCount                The minimum cell count for fields contains person counts or fractions.
 #' @param incremental                 Create only cohort diagnostics that haven't been created before?
 #' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept

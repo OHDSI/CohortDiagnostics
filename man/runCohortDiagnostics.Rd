@@ -104,10 +104,9 @@ does not exist it will be created.}
 
 \item{runCohortCharacterization}{Generate and export the cohort characterization?}
 
-\item{covariateSettings}{(OPTIONAL) Either an object of type \code{covariateSettings} as created using one of
+\item{covariateSettings}{Either an object of type \code{covariateSettings} as created using one of
 the createCovariate functions in the FeatureExtraction package, or a list
-of such objects. If not specified, default settings of FeatureExtraction package
-will be used.}
+of such objects.}
 
 \item{minCellCount}{The minimum cell count for fields contains person counts or fractions.}
 
