@@ -49,6 +49,9 @@
 #' @param runIncidenceRate            Generate and export the cohort incidence  rates?
 #' @param runCohortOverlap            Generate and export the cohort overlap?
 #' @param runCohortCharacterization   Generate and export the cohort characterization?
+#' @param covariateSettings           Either an object of type \code{covariateSettings} as created using one of
+#'                                    the createCovariate functions in the FeatureExtraction package, or a list
+#'                                    of such objects.
 #' @param minCellCount                The minimum cell count for fields contains person counts or fractions.
 #' @param incremental                 Create only cohort diagnostics that haven't been created before?
 #' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
@@ -79,6 +82,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  runIncidenceRate = TRUE,
                                  runCohortOverlap = TRUE,
                                  runCohortCharacterization = TRUE,
+                                 covariateSettings = FeatureExtraction::createDefaultCovariateSettings(),
                                  minCellCount = 5,
                                  incremental = FALSE,
                                  incrementalFolder = exportFolder) {
@@ -409,7 +413,8 @@ runCohortDiagnostics <- function(packageName = NULL,
                                          oracleTempSchema = oracleTempSchema,
                                          cohortDatabaseSchema = cohortDatabaseSchema,
                                          cohortTable = cohortTable,
-                                         cohortId = row$cohortId)
+                                         cohortId = row$cohortId,
+                                         covariateSettings = covariateSettings)
         if (nrow(data) > 0) {
           data$cohortId <- row$cohortId
         }
