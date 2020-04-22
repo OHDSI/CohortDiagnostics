@@ -67,19 +67,19 @@ preMergeDiagnosticsFiles <- function(dataFolder) {
     if (!overwrite && exists(camelCaseName, envir = .GlobalEnv)) {
       existingData <- get(camelCaseName, envir = .GlobalEnv)
       if (nrow(existingData) > 0) {
-        if (nrow(data) > 0 &&
-            all(colnames(existingData) %in% colnames(data)) &&
-            all(colnames(data) %in% colnames(existingData))) {
-          data <- data[, colnames(existingData)]
-        }
-        
-        if (!isTRUE(all.equal(colnames(data), colnames(existingData), check.attributes = FALSE))) {
-          stop("Table columns do no match previously seen columns. Columns in ", 
-               file, 
-               ":\n", 
-               paste(colnames(data), collapse = ", "), 
-               "\nPrevious columns:\n",
-               paste(colnames(existingData), collapse = ", "))
+        if (nrow(data) > 0) {
+          if (all(colnames(existingData) %in% colnames(data)) &&
+              all(colnames(data) %in% colnames(existingData))) {
+            data <- data[, colnames(existingData)]
+          } else {
+            stop("Table columns do no match previously seen columns. Columns in ", 
+                 file, 
+                 ":\n", 
+                 paste(colnames(data), collapse = ", "), 
+                 "\nPrevious columns:\n",
+                 paste(colnames(existingData), collapse = ", "))
+            
+          }
         }
       }
       data <- rbind(existingData, data)
