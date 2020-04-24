@@ -22,9 +22,10 @@ Imports:
 	dplyr,
 	RJSONIO,
 	FeatureExtraction,
-	ff,
 	digest,
-	stringr
+	stringr,
+	Andromeda,
+	magrittr
 Suggests:
   testthat,
   knitr,
