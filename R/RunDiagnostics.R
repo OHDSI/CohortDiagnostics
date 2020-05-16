@@ -428,6 +428,10 @@ runCohortDiagnostics <- function(packageName = NULL,
       colnames(covariates)[[3]] <- "covariateAnalysisId"
       writeToCsv(covariates, file.path(exportFolder, "covariate.csv"), incremental = incremental, covariateId = covariates$covariateId)
       
+      if (!exists(counts)) {
+        counts <- readr::read_csv(file = file.path(exportFolder, "cohort_count.csv"), col_types = readr::cols())
+      }
+      
       data$covariateName <- NULL
       data$analysisId <- NULL
       if (nrow(data) > 0) {
