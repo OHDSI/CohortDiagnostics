@@ -60,8 +60,8 @@ if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {
   }
 }
 
-cohort <- unique(cohort)
 cohort <- cohort[, c("cohortFullName", "cohortId", "cohortName")]
+cohort <- cohort %>% dplyr::distinct()
 if (exists("covariate")) {
   covariate <- unique(covariate)
 }
