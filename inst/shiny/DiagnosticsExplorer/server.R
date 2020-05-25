@@ -106,7 +106,7 @@ shinyServer(function(input, output, session) {
                    ordering = TRUE,
                    paging = TRUE,
                    info = TRUE,
-                   columnDefs = list(minCellCountDef(2:(2*length(databaseIds) - 1))))
+                   columnDefs = list(minCellCountDef(1:(2*length(databaseIds)))))
     
     dataTable <- datatable(table,
                            options = options,
