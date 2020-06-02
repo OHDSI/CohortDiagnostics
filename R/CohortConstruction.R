@@ -509,7 +509,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
                                        recordKeepingFile = recordKeepingFile)) {
       ParallelLogger::logInfo("Instantiation cohort ", cohorts$cohortFullName[i])
       sql <- cohorts$sql[i]
-      .warnMismatchSqlInclusionStats(sql, generateInclusionStats = generateInclusionStats)
+      generateInclusionStats <- .warnMismatchSqlInclusionStats(sql, generateInclusionStats = generateInclusionStats)
       if (generateInclusionStats) {
         sql <- SqlRender::render(sql,
                                  cdm_database_schema = cdmDatabaseSchema,
@@ -641,13 +641,16 @@ saveAndDropTempInclusionStatsTables <- function(connection,
     if (isFALSE(generateInclusionStats)) {
       warning("The SQL template used to instantiate cohort was designed to output cohort inclusion statistics. 
               But, generateInclusionStats is set to False while instantiating cohort. 
-              This may cause error and terminate cohort diagnositcs.")
+              Overiding user option generateInclusionStats = FALSE, to generateInclusionStats = TRUE")
+      generateInclusionStats <- TRUE
     }
   } else {
     if (isTRUE(generateInclusionStats)) {
       warning("The SQL template used to instantiate cohort was designed to NOT output cohort inclusion statistics. 
               But, generateInclusionStats is set to TRUE while instantiating cohort. 
-              This may cause error and terminate cohort diagnositcs.")
+              Overiding user option generateInclusionStats = TRUE, to generateInclusionStats = FALSE ")
+      generateInclusionStats <- FALSE
     }
   }
+  return(generateInclusionStats)
 }
