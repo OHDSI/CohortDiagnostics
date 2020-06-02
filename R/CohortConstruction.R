@@ -443,7 +443,6 @@ instantiateCohortSet <- function(connectionDetails = NULL,
                                  createCohortTable = FALSE,
                                  incremental = FALSE,
                                  incrementalFolder = NULL) {
-  
   if (generateInclusionStats) {
     if (is.null(inclusionStatisticsFolder)) {
       stop("Must specify inclusionStatisticsFolder when generateInclusionStats = TRUE")
@@ -499,9 +498,9 @@ instantiateCohortSet <- function(connectionDetails = NULL,
     recordKeepingFile <- file.path(incrementalFolder, "InstantiatedCohorts.csv")
   }
   
-  # if (generateInclusionStats) {
+  if (generateInclusionStats) {
     createTempInclusionStatsTables(connection, oracleTempSchema, cohorts) 
-  # }
+  }
  
   instantiatedCohortIds <- c() 
   for (i in 1:nrow(cohorts)) {
@@ -510,18 +509,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
                                        recordKeepingFile = recordKeepingFile)) {
       ParallelLogger::logInfo("Instantiation cohort ", cohorts$cohortFullName[i])
       sql <- cohorts$sql[i]
-      generateInclusionStats2 <- generateInclusionStats
       generateInclusionStats <- .warnMismatchSqlInclusionStats(sql, generateInclusionStats = generateInclusionStats)
-      
-      if (generateInclusionStats) {
-        if (is.null(inclusionStatisticsFolder)) {
-          stop("Must specify inclusionStatisticsFolder when generateInclusionStats = TRUE")
-        }
-        if (!file.exists(inclusionStatisticsFolder)) {
-          dir.create(inclusionStatisticsFolder, recursive = TRUE)
-        }
-      }
-      
       if (generateInclusionStats) {
         sql <- SqlRender::render(sql,
                                  cdm_database_schema = cdmDatabaseSchema,
@@ -546,7 +534,6 @@ instantiateCohortSet <- function(connectionDetails = NULL,
                                   oracleTempSchema = oracleTempSchema)
       DatabaseConnector::executeSql(connection, sql)
       instantiatedCohortIds <- c(instantiatedCohortIds, cohorts$cohortId[i])
-      generateInclusionStats <- generateInclusionStats2
     }
   }
   
@@ -557,7 +544,6 @@ instantiateCohortSet <- function(connectionDetails = NULL,
                                         incremental = incremental, 
                                         cohortIds = instantiatedCohortIds)
   }
-  
   if (incremental) {
     recordTasksDone(cohortId = cohorts$cohortId, checksum = cohorts$checksum, recordKeepingFile = recordKeepingFile)
   }
