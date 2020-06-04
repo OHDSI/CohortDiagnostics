@@ -43,7 +43,7 @@ Suggests:
 Remotes:
   ohdsi/DatabaseConnector@develop,
   ohdsi/FeatureExtraction@develop,
-  ohdsi/ParallelLogger@develop
+  ohdsi/ParallelLogger@develop,
   ohdsi/ROhdsiWebApi,
   ohdsi/Eunomia
 License: Apache License
