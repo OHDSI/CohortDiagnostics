@@ -35,6 +35,7 @@ rmarkdown::render("vignettes/CohortDiagnosticsUsingWebApi.Rmd",
                                           number_sections = TRUE))
 
 pkgdown::build_site()
+OhdsiRTools::fixHadesLogo()
 
 # Install cohorts for testing
 # Figure out why Circe cohort definitions don't run in Eunomia

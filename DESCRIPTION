@@ -1,27 +1,29 @@
 Package: CohortDiagnostics
 Type: Package
-Title: Diagnostics for OHDSI studies
-Version: 0.1.3
-Date: 2020-03-26
+Title: Diagnostics for OHDSI Studies
+Version: 1.0.0
+Date: 2020-06-04
 Authors@R: c(
-    person("Martijn", "Schuemie", email = "schuemie@ohdsi.org", role = c("aut", "cre")),
+    person("Martijn", "Schuemie", email = "schuemie@ohdsi.org", role = c("aut")),
     person("Patrick", "Ryan", role = c("aut")),
     person("James", "Weaver", role = c("aut")),
+    person("Gowtham", "Rao", email = "gowthamrao@gmail.com", role = c("aut", "cre")),
     person("Observational Health Data Science and Informatics", role = c("cph"))
   )
+Maintainer: Gowtham Rao <gowthamrao@gmail.com>
 Description: Diagnostics for studies that use the OMOP Common Data Model and the OHDSI tools.
 Depends:
-	DatabaseConnector
+	DatabaseConnector (>= 3.0.0)
 Imports:
 	SqlRender,
 	ggplot2,
 	ROhdsiWebApi,
-	ParallelLogger,
+	ParallelLogger (>= 2.0.0),
 	readr,
 	tibble,
 	dplyr,
 	RJSONIO,
-	FeatureExtraction,
+	FeatureExtraction (>= 3.0.0),
 	digest,
 	stringr,
 	Andromeda,
@@ -39,8 +41,10 @@ Suggests:
   htmltools,
   Eunomia
 Remotes:
+  ohdsi/DatabaseConnector@develop,
+  ohdsi/FeatureExtraction@develop,
+  ohdsi/ParallelLogger@develop
   ohdsi/ROhdsiWebApi,
-  ohdsi/FeatureExtraction,
   ohdsi/Eunomia
 License: Apache License
 VignetteBuilder: knitr

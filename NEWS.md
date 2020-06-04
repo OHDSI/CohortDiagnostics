@@ -5,6 +5,8 @@ Changes:
 
 1. Added database information tab to Diagnostics Explorer Shiny app.
 
+2. Using Andromeda instead of ff to store large data objects (used for characterization).
+
 Bugfixes: 
 
 1. Fixed error when cohort definition has no concept sets.

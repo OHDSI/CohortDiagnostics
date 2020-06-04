@@ -4,7 +4,7 @@
 \name{CohortDiagnostics-package}
 \alias{CohortDiagnostics}
 \alias{CohortDiagnostics-package}
-\title{CohortDiagnostics: Diagnostics for OHDSI studies}
+\title{CohortDiagnostics: Diagnostics for OHDSI Studies}
 \description{
 Diagnostics for studies that use the OMOP Common Data Model and the OHDSI tools.
 }
@@ -18,10 +18,11 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Martijn Schuemie \email{schuemie@ohdsi.org}
+\strong{Maintainer}: Gowtham Rao \email{gowthamrao@gmail.com}
 
 Authors:
 \itemize{
+  \item Martijn Schuemie \email{schuemie@ohdsi.org}
   \item Patrick Ryan
   \item James Weaver
 }

@@ -1,8 +1,10 @@
 CohortDiagnostics
-================
+=================
 
 [![Build Status](https://travis-ci.org/OHDSI/CohortDiagnostics.svg?branch=master)](https://travis-ci.org/OHDSI/CohortDiagnostics)
 [![codecov.io](https://codecov.io/github/OHDSI/CohortDiagnostics/coverage.svg?branch=master)](https://codecov.io/github/OHDSI/CohortDiagnostics?branch=master)
+
+CohortDiagnostics is part of [HADES](https://ohdsi.github.io/Hades).
 
 Introduction
 ============
@@ -29,29 +31,37 @@ The CohortDiagnostics package is an R package.
 
 System Requirements
 ===================
-Running the package requires R with the package rJava installed. Also requires Java 1.7 or higher.
+Requires R. Some of the packages used by CohortDiagnostics require Java.
 
 Installation
 =============
-## R package
 
-To install the latest development version, install from GitHub:
+1. See the instructions [here](https://ohdsi.github.io/Hades/rSetup.html) for configuring your R environment, including Java.
 
-```r
-install.packages("drat")
-drat::addRepo("OHDSI")
-install.packages("CohortDiagnostics")
+2. In R, use the following commands to download and install CohortDiagnostics:
+
+  ```r
+  install.packages("drat")
+  drat::addRepo("OHDSI")
+  install.packages("CohortDiagnostics")
 ```
 
 User Documentation
 ==================
+Documentation can be found on the [package website](https://ohdsi.github.io/CohortDiagnostics).
+
+PDF versions of the documentation are also available:
+* Package manual: [CohortDiagnostics manual]((https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/extras/CohortDiagnostics.pdf) 
 * Vignette: [Running cohort diagnostics using WebAPI](https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/CohortDiagnosticsUsingWebApi.pdf)
-* Package manual: [CohortDiagnostics manual](https://ohdsi.github.io/CohortDiagnostics/reference/index.html) 
 
 Support
 =======
 * Developer questions/comments/feedback: <a href="http://forums.ohdsi.org/c/developers">OHDSI Forum</a>
 * We use the <a href="https://github.com/OHDSI/CohortDiagnostics/issues">GitHub issue tracker</a> for all bugs/issues/enhancements
+
+Contributing
+============
+Read [here](https://ohdsi.github.io/Hades/contribute.html) how you can contribute to this package.
 
 License
 =======

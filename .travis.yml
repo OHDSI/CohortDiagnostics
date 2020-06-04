@@ -10,11 +10,6 @@ r_packages:
   - covr
   - drat
   - devtools
-  
-r_github_packages:
-  - OHDSI/ROhdsiWebApi
-  - OHDSI/FeatureExtraction
-  - OHDSI/Eunomia
 
 before_script:
   - export PKG_NAME=$(Rscript -e 'cat(paste0(devtools::as.package(".")$package))')
@@ -22,7 +17,7 @@ before_script:
 
 notifications:
   recipients:
-  - msuchard@gmail.com
+  - gowthamrao@gmail.com
   - schuemie@ohdsi.org
   email:
     on_success: change
