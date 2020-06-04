@@ -21,4 +21,5 @@
 #' @importFrom grDevices rgb
 #' @importFrom stats aggregate
 #' @importFrom utils write.csv install.packages menu unzip
+#' @import magrittr
 NULL
