@@ -41,11 +41,6 @@ getTimeDistributions <- function(connectionDetails = NULL,
                                  cohortDatabaseSchema = cdmDatabaseSchema,
                                  cohortTable = "cohort",
                                  cohortId) {
-  if (!file.exists(getOption("fftempdir"))) {
-    stop("This function uses ff, but the fftempdir '",
-         getOption("fftempdir"),
-         "' does not exist. Either create it, or set fftempdir to another location using options(fftempdir = \"<path>\")")
-  }
 
   start <- Sys.time()
 
@@ -82,7 +77,6 @@ getTimeDistributions <- function(connectionDetails = NULL,
   if (is.null(data$covariatesContinuous)) {
     result <- data.frame()
   } else {
-    result <- merge(ff::as.ram(data$covariatesContinuous), ff::as.ram(data$covariateRef))
     result$conceptId <- NULL
     result$analysisId <- NULL
     result$covariateId <- NULL

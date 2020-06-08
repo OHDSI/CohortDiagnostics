@@ -77,19 +77,19 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
 
   result <- data.frame()
   if (!is.null(data$covariates)) {
-    counts <- data$covariates %>% dplyr::select(sumValue) %>% dplyr::pull()
+    counts <- data$covariates %>% dplyr::select(.data$sumValue) %>% dplyr::pull()
     n <- attr(data, "metaData")$populationSize
     binaryCovs <- data$covariates %>% 
-                  dplyr::select(covariateId, averageValue) %>% 
-                  dplyr::rename(mean = averageValue) %>% 
+                  dplyr::select(.data$covariateId, .data$averageValue) %>% 
+                  dplyr::rename(mean = .data$averageValue) %>% 
                   dplyr::collect()
     binaryCovs$sd <- sqrt((n * counts + counts)/(n^2))
     result <- rbind(result, binaryCovs)
   }
   if (!is.null(data$covariatesContinuous)) {
     continuousCovs <- data$covariatesContinuous %>% 
-                      dplyr::select(covariateId, averageValue, standardDeviation) %>% 
-                      dplyr::rename(mean = averageValue, sd = standardDeviation) %>% 
+                      dplyr::select(.data$covariateId, .data$averageValue, .data$standardDeviation) %>% 
+                      dplyr::rename(mean = .data$averageValue, sd = .data$standardDeviation) %>% 
                       dplyr::collect()
     result <- rbind(result, continuousCovs)
   }
