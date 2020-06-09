@@ -18,62 +18,112 @@ createTitle <- function(tcoDbs) {
 }
 
 createAuthors <- function() {
-  authors <- paste0(
-    "Martijn J. Schuemie", ", ",
-    "Patrick B. Ryan", ", ",
-    "Seng Chan You", ", ",
-    "Nicole Pratt", ", ",
-    "David Madigan", ", ",
-    "George Hripcsak", " and ",
-    "Marc A. Suchard"
-  )
+  authors <- paste0("Martijn J. Schuemie",
+                    ", ",
+                    "Patrick B. Ryan",
+                    ", ",
+                    "Seng Chan You",
+                    ", ",
+                    "Nicole Pratt",
+                    ", ",
+                    "David Madigan",
+                    ", ",
+                    "George Hripcsak",
+                    " and ",
+                    "Marc A. Suchard")
 }
 
 
 
 
 createAbstract <- function(tcoDb) {
-  
+
   targetName <- uncapitalize(exposures$exposureName[match(tcoDb$targetId, exposures$exposureId)])
-  comparatorName <- uncapitalize(exposures$exposureName[match(tcoDb$comparatorId, exposures$exposureId)])
+  comparatorName <- uncapitalize(exposures$exposureName[match(tcoDb$comparatorId,
+                                                              exposures$exposureId)])
   outcomeName <- uncapitalize(outcomes$outcomeName[match(tcoDb$outcomeId, outcomes$outcomeId)])
   indicationId <- uncapitalize(exposures$indicationId[match(tcoDb$targetId, exposures$exposureId)])
-  
+
   results <- getMainResults(connection,
                             targetIds = tcoDb$targetId,
                             comparatorIds = tcoDb$comparatorId,
                             outcomeIds = tcoDb$outcomeId,
                             databaseIds = tcoDb$databaseId)
-  
+
   studyPeriod <- getStudyPeriod(connection = connection,
                                 targetId = tcoDb$targetId,
                                 comparatorId = tcoDb$comparatorId,
-                                databaseId = tcoDb$databaseId)  
-  
+                                databaseId = tcoDb$databaseId)
+
   writeAbstract(outcomeName, targetName, comparatorName, tcoDb$databaseId, studyPeriod, results)
 }
 
 writeAbstract <- function(outcomeName,
-                           targetName,
-                           comparatorName,
-                           databaseId,
-                           studyPeriod,
-                           mainResults) {
-  
+                          targetName,
+                          comparatorName,
+                          databaseId,
+                          studyPeriod,
+                          mainResults) {
+
   minYear <- substr(studyPeriod$minDate, 1, 4)
   maxYear <- substr(studyPeriod$maxDate, 1, 4)
-  
-  abstract <- paste0(
-    "We conduct a large-scale study on the incidence of ", outcomeName, " among new users of ", targetName, " and ", comparatorName, " from ", minYear, " to ", maxYear, " in the ", databaseId, " database.  ",
-    "Outcomes of interest are estimates of the hazard ratio (HR) for incident events between comparable new users under on-treatment and intent-to-treat risk window assumptions.  ",
-    "Secondary analyses entertain possible clinically relevant subgroup interaction with the HR.  ",
-    "We identify ", mainResults[1, "targetSubjects"], " ", targetName, " and ", mainResults[1, "comparatorSubjects"], " ", comparatorName, " patients for the on-treatment design, totaling ", round(mainResults[1, "targetDays"] / 365.24), " and ", round(mainResults[1, "comparatorDays"] / 365.24), " patient-years of observation, and ", mainResults[1, "targetOutcomes"], " and ", mainResults[1, "comparatorOutcomes"], " events respectively.  ",
-    "We control for measured confounding using propensity score trimming and stratification or matching based on an expansive propensity score model that includes all measured patient features before treatment initiation.  ",
-    "We account for unmeasured confounding using negative and positive controls to estimate and adjust for residual systematic bias in the study design and data source, providing calibrated confidence intervals and p-values.  ",
-    "In terms of ", outcomeName, ", ", targetName, " has a ", judgeHazardRatio(mainResults[1, "calibratedCi95Lb"], mainResults[1, "calibratedCi95Ub"]), 
-    " risk as compared to ", comparatorName, " [HR: ", prettyHr(mainResults[1, "calibratedRr"]), ", 95% confidence interval (CI) ", 
-    prettyHr(mainResults[1, "calibratedCi95Lb"]), " - ", prettyHr(mainResults[1, "calibratedCi95Ub"]), "]."
-  )
+
+  abstract <- paste0("We conduct a large-scale study on the incidence of ",
+                     outcomeName,
+                     " among new users of ",
+                     targetName,
+                     " and ",
+                     comparatorName,
+                     " from ",
+                     minYear,
+                     " to ",
+                     maxYear,
+                     " in the ",
+                     databaseId,
+                     " database.  ",
+                     "Outcomes of interest are estimates of the hazard ratio (HR) for incident events between comparable new users under on-treatment and intent-to-treat risk window assumptions.  ",
+                     "Secondary analyses entertain possible clinically relevant subgroup interaction with the HR.  ",
+                     "We identify ",
+                     mainResults[1,
+                     "targetSubjects"],
+                     " ",
+                     targetName,
+                     " and ",
+                     mainResults[1,
+                     "comparatorSubjects"],
+                     " ",
+                     comparatorName,
+                     " patients for the on-treatment design, totaling ",
+                     round(mainResults[1, "targetDays"]/365.24),
+                     " and ",
+                     round(mainResults[1, "comparatorDays"]/365.24),
+                     " patient-years of observation, and ",
+                     mainResults[1,
+                     "targetOutcomes"],
+                     " and ",
+                     mainResults[1,
+                     "comparatorOutcomes"],
+                     " events respectively.  ",
+                     "We control for measured confounding using propensity score trimming and stratification or matching based on an expansive propensity score model that includes all measured patient features before treatment initiation.  ",
+                     "We account for unmeasured confounding using negative and positive controls to estimate and adjust for residual systematic bias in the study design and data source, providing calibrated confidence intervals and p-values.  ",
+                     "In terms of ",
+                     outcomeName,
+                     ", ",
+                     targetName,
+                     " has a ",
+                     judgeHazardRatio(mainResults[1,
+                                      "calibratedCi95Lb"],
+                                      mainResults[1,
+                                      "calibratedCi95Ub"]),
+                     " risk as compared to ",
+                     comparatorName,
+                     " [HR: ",
+                     prettyHr(mainResults[1, "calibratedRr"]),
+                     ", 95% confidence interval (CI) ",
+                     prettyHr(mainResults[1, "calibratedCi95Lb"]),
+                     " - ",
+                     prettyHr(mainResults[1, "calibratedCi95Ub"]),
+                     "].")
 
   abstract
 }
@@ -169,7 +219,7 @@ prepareSubgroupTable <- function(subgroupResults, output = "latex") {
   rnd <- function(x) {
     ifelse(x > 10, sprintf("%.1f", x), sprintf("%.2f", x))
   }
-  
+
   subgroupResults$hrr <- paste0(rnd(subgroupResults$rrr),
                                 " (",
                                 rnd(subgroupResults$ci95Lb),
@@ -182,9 +232,10 @@ prepareSubgroupTable <- function(subgroupResults, output = "latex") {
   subgroupResults$p[subgroupResults$p == "NA"] <- ""
   subgroupResults$calibratedP <- sprintf("%.2f", subgroupResults$calibratedP)
   subgroupResults$calibratedP[subgroupResults$calibratedP == "NA"] <- ""
-  
-  if (any(grepl("on-treatment", subgroupResults$analysisDescription)) && 
-      any(grepl("intent-to-treat", subgroupResults$analysisDescription))) {
+
+  if (any(grepl("on-treatment",
+                subgroupResults$analysisDescription)) && any(grepl("intent-to-treat",
+                                                                   subgroupResults$analysisDescription))) {
     idx <- grepl("on-treatment", subgroupResults$analysisDescription)
     onTreatment <- subgroupResults[idx, c("interactionCovariateName",
                                           "targetSubjects",
@@ -203,7 +254,7 @@ prepareSubgroupTable <- function(subgroupResults, output = "latex") {
                                  "hrr",
                                  "p",
                                  "calibratedP")]
-  } 
+  }
   table$interactionCovariateName <- gsub("Subgroup: ", "", table$interactionCovariateName)
   if (output == "latex") {
     table$interactionCovariateName <- gsub(">=", "$\\\\ge$ ", table$interactionCovariateName)
@@ -351,7 +402,9 @@ plotPs <- function(ps, targetName, comparatorName) {
   ps <- rbind(data.frame(x = ps$preferenceScore, y = ps$targetDensity, group = targetName),
               data.frame(x = ps$preferenceScore, y = ps$comparatorDensity, group = comparatorName))
   ps$group <- factor(ps$group, levels = c(as.character(targetName), as.character(comparatorName)))
-  theme <- ggplot2::element_text(colour = "#000000", size = 12, margin = ggplot2::margin(0, 0.5, 0, 0.1, "cm"))
+  theme <- ggplot2::element_text(colour = "#000000",
+                                 size = 12,
+                                 margin = ggplot2::margin(0, 0.5, 0, 0.1, "cm"))
   plot <- ggplot2::ggplot(ps,
                           ggplot2::aes(x = x, y = y, color = group, group = group, fill = group)) +
           ggplot2::geom_density(stat = "identity") +
@@ -374,54 +427,64 @@ plotPs <- function(ps, targetName, comparatorName) {
 plotAllPs <- function(ps) {
   ps <- rbind(data.frame(targetName = ps$targetName,
                          comparatorName = ps$comparatorName,
-                         x = ps$preferenceScore, 
-                         y = ps$targetDensity, 
+                         x = ps$preferenceScore,
+                         y = ps$targetDensity,
                          group = "Target"),
               data.frame(targetName = ps$targetName,
                          comparatorName = ps$comparatorName,
-                         x = ps$preferenceScore, 
-                         y = ps$comparatorDensity, 
+                         x = ps$preferenceScore,
+                         y = ps$comparatorDensity,
                          group = "Comparator"))
   ps$group <- factor(ps$group, levels = c("Target", "Comparator"))
-  plot <- ggplot2::ggplot(ps, ggplot2::aes(x = x, y = y, color = group, group = group, fill = group)) +
-    ggplot2::geom_density(stat = "identity") +
-    ggplot2::scale_fill_manual(values = c(rgb(0.8, 0, 0, alpha = 0.5), rgb(0, 0, 0.8, alpha = 0.5))) +
-    ggplot2::scale_color_manual(values = c(rgb(0.8, 0, 0, alpha = 0.5), rgb(0, 0, 0.8, alpha = 0.5))) +
-    ggplot2::scale_x_continuous("Preference score", limits = c(0, 1)) +
-    ggplot2::scale_y_continuous("Density") +
-    ggplot2::facet_grid(targetName ~ comparatorName) +
-    ggplot2::theme(legend.title = ggplot2::element_blank(),
-          axis.title.x = ggplot2::element_blank(),
-          axis.text.x = ggplot2::element_blank(),
-          axis.ticks.x = ggplot2::element_blank(),
-          axis.title.y = ggplot2::element_blank(),
-          axis.text.y = ggplot2::element_blank(),
-          axis.ticks.y = ggplot2::element_blank(),
-          panel.grid.major = ggplot2::element_blank(),
-          panel.grid.minor = ggplot2::element_blank(),
-          strip.text.x = ggplot2::element_text(size = 12, angle = 90, vjust = 0),
-          strip.text.y = ggplot2::element_text(size = 12, angle = 0, hjust = 0),
-          panel.spacing = ggplot2::unit(0.1, "lines"),
-          legend.position = "none")
+  plot <- ggplot2::ggplot(ps,
+                          ggplot2::aes(x = x, y = y, color = group, group = group, fill = group)) +
+          ggplot2::geom_density(stat = "identity") +
+          ggplot2::scale_fill_manual(values = c(rgb(0.8, 0, 0, alpha = 0.5),
+                                                rgb(0, 0, 0.8, alpha = 0.5))) +
+          ggplot2::scale_color_manual(values = c(rgb(0.8, 0, 0, alpha = 0.5),
+                                                 rgb(0, 0, 0.8, alpha = 0.5))) +
+          ggplot2::scale_x_continuous("Preference score", limits = c(0, 1)) +
+          ggplot2::scale_y_continuous("Density") +
+          ggplot2::facet_grid(targetName ~
+    comparatorName) + ggplot2::theme(legend.title = ggplot2::element_blank(),
+                                     axis.title.x = ggplot2::element_blank(),
+                                     axis.text.x = ggplot2::element_blank(),
+                                     axis.ticks.x = ggplot2::element_blank(),
+                                     axis.title.y = ggplot2::element_blank(),
+                                     axis.text.y = ggplot2::element_blank(),
+                                     axis.ticks.y = ggplot2::element_blank(),
+                                     panel.grid.major = ggplot2::element_blank(),
+                                     panel.grid.minor = ggplot2::element_blank(),
+                                     strip.text.x = ggplot2::element_text(size = 12,
+                                                                          angle = 90,
+                                                                          vjust = 0),
+                                     strip.text.y = ggplot2::element_text(size = 12,
+                                                                          angle = 0,
+                                                                          hjust = 0),
+                                     panel.spacing = ggplot2::unit(0.1, "lines"),
+                                     legend.position = "none")
   return(plot)
 }
 
 
-plotCovariateBalanceScatterPlot <- function(balance, beforeLabel = "Before stratification", afterLabel = "After stratification") {
+plotCovariateBalanceScatterPlot <- function(balance,
+                                            beforeLabel = "Before stratification",
+                                            afterLabel = "After stratification") {
   limits <- c(min(c(balance$absBeforeMatchingStdDiff, balance$absAfterMatchingStdDiff),
                   na.rm = TRUE),
               max(c(balance$absBeforeMatchingStdDiff, balance$absAfterMatchingStdDiff),
                   na.rm = TRUE))
   theme <- ggplot2::element_text(colour = "#000000", size = 12)
-  plot <- ggplot2::ggplot(balance, ggplot2::aes(x = absBeforeMatchingStdDiff, y = absAfterMatchingStdDiff)) +
-    ggplot2::geom_point(color = rgb(0, 0, 0.8, alpha = 0.3), shape = 16, size = 2) +
-    ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
-    ggplot2::geom_hline(yintercept = 0) +
-    ggplot2::geom_vline(xintercept = 0) +
-    ggplot2::scale_x_continuous(beforeLabel, limits = limits) +
-    ggplot2::scale_y_continuous(afterLabel, limits = limits) +
-    ggplot2::theme(text = theme)
-  
+  plot <- ggplot2::ggplot(balance,
+                          ggplot2::aes(x = absBeforeMatchingStdDiff, y = absAfterMatchingStdDiff)) +
+          ggplot2::geom_point(color = rgb(0, 0, 0.8, alpha = 0.3), shape = 16, size = 2) +
+          ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+          ggplot2::geom_hline(yintercept = 0) +
+          ggplot2::geom_vline(xintercept = 0) +
+          ggplot2::scale_x_continuous(beforeLabel, limits = limits) +
+          ggplot2::scale_y_continuous(afterLabel, limits = limits) +
+          ggplot2::theme(text = theme)
+
   return(plot)
 }
 
@@ -630,59 +693,64 @@ plotScatter <- function(controlResults) {
 
 plotLargeScatter <- function(d, xLabel) {
   d$Significant <- d$ci95Lb > 1 | d$ci95Ub < 1
-  
+
   oneRow <- data.frame(nLabel = paste0(formatC(nrow(d), big.mark = ","), " estimates"),
                        meanLabel = paste0(formatC(100 *
-                                                    mean(!d$Significant, na.rm = TRUE), digits = 1, format = "f"), "% of CIs includes 1"))
-  
+    mean(!d$Significant, na.rm = TRUE), digits = 1, format = "f"), "% of CIs includes 1"))
+
   breaks <- c(0.1, 0.25, 0.5, 1, 2, 4, 6, 8, 10)
   theme <- ggplot2::element_text(colour = "#000000", size = 12)
   themeRA <- ggplot2::element_text(colour = "#000000", size = 12, hjust = 1)
   themeLA <- ggplot2::element_text(colour = "#000000", size = 12, hjust = 0)
-  
+
   alpha <- 1 - min(0.95 * (nrow(d)/50000)^0.1, 0.95)
   plot <- ggplot2::ggplot(d, ggplot2::aes(x = logRr, y = seLogRr)) +
-    ggplot2::geom_vline(xintercept = log(breaks), colour = "#AAAAAA", lty = 1, size = 0.5) +
-    ggplot2::geom_abline(ggplot2::aes(intercept = 0, slope = 1/qnorm(0.025)),
-                         colour = rgb(0.8, 0, 0),
-                         linetype = "dashed",
-                         size = 1,
-                         alpha = 0.5) +
-    ggplot2::geom_abline(ggplot2::aes(intercept = 0, slope = 1/qnorm(0.975)),
-                         colour = rgb(0.8, 0, 0),
-                         linetype = "dashed",
-                         size = 1,
-                         alpha = 0.5) +
-    ggplot2::geom_point(size = 2, color = rgb(0, 0, 0, alpha = 0.05), alpha = alpha, shape = 16) +
-    ggplot2::geom_hline(yintercept = 0) +
-    ggplot2::geom_label(x = log(0.11),
-                        y = 1,
-                        alpha = 1,
-                        hjust = "left",
-                        ggplot2::aes(label = nLabel),
-                        size = 5,
-                        data = oneRow) +
-    ggplot2::geom_label(x = log(0.11),
-                        y = 0.935,
-                        alpha = 1,
-                        hjust = "left",
-                        ggplot2::aes(label = meanLabel),
-                        size = 5,
-                        data = oneRow) +
-    ggplot2::scale_x_continuous(xLabel, limits = log(c(0.1,
-                                                       10)), breaks = log(breaks), labels = breaks) +
-    ggplot2::scale_y_continuous("Standard Error", limits = c(0, 1)) +
-    ggplot2::theme(panel.grid.minor = ggplot2::element_blank(),
-                   panel.background = ggplot2::element_blank(),
-                   panel.grid.major = ggplot2::element_blank(),
-                   axis.ticks = ggplot2::element_blank(),
-                   axis.text.y = themeRA,
-                   axis.text.x = theme,
-                   axis.title = theme,
-                   legend.key = ggplot2::element_blank(),
-                   strip.text.x = theme,
-                   strip.background = ggplot2::element_blank(),
-                   legend.position = "none")
+          ggplot2::geom_vline(xintercept = log(breaks), colour = "#AAAAAA", lty = 1, size = 0.5) +
+          ggplot2::geom_abline(ggplot2::aes(intercept = 0, slope = 1/qnorm(0.025)),
+                               colour = rgb(0.8, 0, 0),
+                               linetype = "dashed",
+                               size = 1,
+                               alpha = 0.5) +
+          ggplot2::geom_abline(ggplot2::aes(intercept = 0, slope = 1/qnorm(0.975)),
+                               colour = rgb(0.8, 0, 0),
+                               linetype = "dashed",
+                               size = 1,
+                               alpha = 0.5) +
+          ggplot2::geom_point(size = 2,
+                              color = rgb(0, 0, 0, alpha = 0.05),
+                              alpha = alpha,
+                              shape = 16) +
+          ggplot2::geom_hline(yintercept = 0) +
+          ggplot2::geom_label(x = log(0.11),
+                              y = 1,
+                              alpha = 1,
+                              hjust = "left",
+                              ggplot2::aes(label = nLabel),
+                              size = 5,
+                              data = oneRow) +
+          ggplot2::geom_label(x = log(0.11),
+                              y = 0.935,
+                              alpha = 1,
+                              hjust = "left",
+                              ggplot2::aes(label = meanLabel),
+                              size = 5,
+                              data = oneRow) +
+          ggplot2::scale_x_continuous(xLabel,
+                                      limits = log(c(0.1, 10)),
+                                      breaks = log(breaks),
+                                      labels = breaks) +
+          ggplot2::scale_y_continuous("Standard Error", limits = c(0, 1)) +
+          ggplot2::theme(panel.grid.minor = ggplot2::element_blank(),
+                         panel.background = ggplot2::element_blank(),
+                         panel.grid.major = ggplot2::element_blank(),
+                         axis.ticks = ggplot2::element_blank(),
+                         axis.text.y = themeRA,
+                         axis.text.x = theme,
+                         axis.title = theme,
+                         legend.key = ggplot2::element_blank(),
+                         strip.text.x = theme,
+                         strip.background = ggplot2::element_blank(),
+                         legend.position = "none")
   return(plot)
 }
 
@@ -890,40 +958,40 @@ createDocument <- function(targetId,
                            template = "template.Rnw",
                            workingDirectory = "temp",
                            emptyWorkingDirectory = TRUE) {
-  
+
   if (missing(outputFile)) {
     stop("Must provide an output file name")
   }
-  
+
   currentDirectory <- getwd()
   on.exit(setwd(currentDirectory))
-  
+
   input <- file(template, "r")
-  
+
   name <- paste0("paper_", targetId, "_", comparatorId, "_", outcomeId, "_", databaseId)
-  
+
   if (!dir.exists(workingDirectory)) {
     dir.create(workingDirectory)
   }
-  
+
   workingDirectory <- file.path(workingDirectory, name)
-  
+
   if (!dir.exists(workingDirectory)) {
     dir.create(workingDirectory)
   }
-  
+
   if (is.null(setwd(workingDirectory))) {
     stop(paste0("Unable to change directory into: ", workingDirectory))
   }
-  
+
   system(paste0("cp ", file.path(currentDirectory, "pnas-new.cls"), " ."))
   system(paste0("cp ", file.path(currentDirectory, "widetext.sty"), " ."))
   system(paste0("cp ", file.path(currentDirectory, "pnasresearcharticle.sty"), " ."))
   system(paste0("cp ", file.path(currentDirectory, "Sweave.sty"), " ."))
-  
+
   texName <- paste0(name, ".Rnw")
   output <- file(texName, "w")
-  
+
   while (TRUE) {
     line <- readLines(input, n = 1)
     if (length(line) == 0) {
@@ -939,25 +1007,24 @@ createDocument <- function(targetId,
   }
   close(input)
   close(output)
-  
+
   Sweave(texName)
   system(paste0("pdflatex ", name))
   system(paste0("pdflatex ", name))
-  
+
   # Save result
   workingName <- file.path(workingDirectory, name)
   workingName <- paste0(workingName, ".pdf")
-  
+
   setwd(currentDirectory)
-  
+
   system(paste0("cp ", workingName, " ", outputFile))
-  
+
   if (emptyWorkingDirectory) {
-    # deleteName = file.path(workingDirectory, "*")
-    # system(paste0("rm ", deleteName))
+    # deleteName = file.path(workingDirectory, '*') system(paste0('rm ', deleteName))
     unlink(workingDirectory, recursive = TRUE)
   }
-  
+
   invisible(outputFile)
 }
 

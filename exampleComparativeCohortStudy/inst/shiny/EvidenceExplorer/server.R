@@ -1,41 +1,39 @@
 library(shiny)
 library(DT)
 
-mainColumns <- c("description", 
-                 "databaseId", 
-                 "rr", 
+mainColumns <- c("description",
+                 "databaseId",
+                 "rr",
                  "ci95Lb",
                  "ci95Ub",
                  "p",
-                 "calibratedRr", 
+                 "calibratedRr",
                  "calibratedCi95Lb",
                  "calibratedCi95Ub",
                  "calibratedP")
 
-mainColumnNames <- c("<span title=\"Analysis\">Analysis</span>", 
-                     "<span title=\"Data source\">Data source</span>", 
+mainColumnNames <- c("<span title=\"Analysis\">Analysis</span>",
+                     "<span title=\"Data source\">Data source</span>",
                      "<span title=\"Hazard ratio (uncalibrated)\">HR</span>",
                      "<span title=\"Lower bound of the 95 percent confidence interval (uncalibrated)\">LB</span>",
-                     "<span title=\"Upper bound of the 95 percent confidence interval (uncalibrated)\">UB</span>", 
-                     "<span title=\"Two-sided p-value (uncalibrated)\">P</span>", 
+                     "<span title=\"Upper bound of the 95 percent confidence interval (uncalibrated)\">UB</span>",
+                     "<span title=\"Two-sided p-value (uncalibrated)\">P</span>",
                      "<span title=\"Hazard ratio (calibrated)\">Cal.HR</span>",
                      "<span title=\"Lower bound of the 95 percent confidence interval (calibrated)\">Cal.LB</span>",
-                     "<span title=\"Upper bound of the 95 percent confidence interval (calibrated)\">Cal.UB</span>", 
+                     "<span title=\"Upper bound of the 95 percent confidence interval (calibrated)\">Cal.UB</span>",
                      "<span title=\"Two-sided p-value (calibrated)\">Cal.P</span>")
 
 shinyServer(function(input, output, session) {
-  
+
 
   observe({
     targetId <- exposureOfInterest$exposureId[exposureOfInterest$exposureName == input$target]
     comparatorId <- exposureOfInterest$exposureId[exposureOfInterest$exposureName == input$comparator]
     tcoSubset <- tcos[tcos$targetId == targetId & tcos$comparatorId == comparatorId, ]
     outcomes <- outcomeOfInterest$outcomeName[outcomeOfInterest$outcomeId %in% tcoSubset$outcomeId]
-    updateSelectInput(session = session,
-                      inputId = "outcome",
-                      choices = outcomes)
+    updateSelectInput(session = session, inputId = "outcome", choices = outcomes)
   })
-  
+
   resultSubset <- reactive({
     targetId <- exposureOfInterest$exposureId[exposureOfInterest$exposureName == input$target]
     comparatorId <- exposureOfInterest$exposureId[exposureOfInterest$exposureName == input$comparator]
@@ -69,7 +67,7 @@ shinyServer(function(input, output, session) {
       results$calibratedSeLogRr <- rep(NA, nrow(results))
       results$calibratedP <- rep(NA, nrow(results))
     }
-   return(results)
+    return(results)
   })
 
   selectedRow <- reactive({
@@ -90,7 +88,7 @@ shinyServer(function(input, output, session) {
     return(!is.null(selectedRow()))
   })
   outputOptions(output, "rowIsSelected", suspendWhenHidden = FALSE)
-  
+
   output$hasSubgroups <- reactive({
     return(exists("cmInteractionResult"))
   })
@@ -100,24 +98,24 @@ shinyServer(function(input, output, session) {
     return(blind)
   })
   outputOptions(output, "blind", suspendWhenHidden = FALSE)
-  
-    
+
+
   balance <- reactive({
-     row <- selectedRow()
-     if (is.null(row)) {
-       return(NULL)
-     } else {
-       targetId <- exposureOfInterest$exposureId[exposureOfInterest$exposureName == input$target]
-       comparatorId <- exposureOfInterest$exposureId[exposureOfInterest$exposureName == input$comparator]
-       outcomeId <- outcomeOfInterest$outcomeId[outcomeOfInterest$outcomeName == input$outcome]
-       balance <- getCovariateBalance(connection = connection,
-                                      targetId = targetId,
-                                      comparatorId = comparatorId,
-                                      databaseId = row$databaseId,
-                                      analysisId = row$analysisId,
-                                      outcomeId = outcomeId)
-       return(balance)
-     }
+    row <- selectedRow()
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+      targetId <- exposureOfInterest$exposureId[exposureOfInterest$exposureName == input$target]
+      comparatorId <- exposureOfInterest$exposureId[exposureOfInterest$exposureName == input$comparator]
+      outcomeId <- outcomeOfInterest$outcomeId[outcomeOfInterest$outcomeName == input$outcome]
+      balance <- getCovariateBalance(connection = connection,
+                                     targetId = targetId,
+                                     comparatorId = comparatorId,
+                                     databaseId = row$databaseId,
+                                     analysisId = row$analysisId,
+                                     outcomeId = outcomeId)
+      return(balance)
+    }
   })
 
   output$mainTable <- renderDataTable({
@@ -125,7 +123,8 @@ shinyServer(function(input, output, session) {
     if (is.null(table) || nrow(table) == 0) {
       return(NULL)
     }
-    table$description <- cohortMethodAnalysis$description[match(table$analysisId, cohortMethodAnalysis$analysisId)]
+    table$description <- cohortMethodAnalysis$description[match(table$analysisId,
+                                                                cohortMethodAnalysis$analysisId)]
     table <- table[, mainColumns]
     table$rr <- prettyHr(table$rr)
     table$ci95Lb <- prettyHr(table$ci95Lb)
@@ -136,12 +135,12 @@ shinyServer(function(input, output, session) {
     table$calibratedCi95Ub <- prettyHr(table$calibratedCi95Ub)
     table$calibratedP <- prettyHr(table$calibratedP)
     colnames(table) <- mainColumnNames
-    options = list(pageLength = 15,
-                   searching = FALSE,
-                   lengthChange = TRUE,
-                   ordering = TRUE,
-                   paging = TRUE)
-    selection = list(mode = "single", target = "row")
+    options <- list(pageLength = 15,
+                    searching = FALSE,
+                    lengthChange = TRUE,
+                    ordering = TRUE,
+                    paging = TRUE)
+    selection <- list(mode = "single", target = "row")
     table <- datatable(table,
                        options = options,
                        selection = selection,
@@ -150,14 +149,14 @@ shinyServer(function(input, output, session) {
                        class = "stripe nowrap compact")
     return(table)
   })
-  
+
   output$powerTableCaption <- renderUI({
     row <- selectedRow()
     if (!is.null(row)) {
       text <- "<strong>Table 1a.</strong> Number of subjects, follow-up time (in years), number of outcome
-      events, and event incidence rate (IR) per 1,000 patient years (PY) in the target (<em>%s</em>) and
-      comparator (<em>%s</em>) group after propensity score adjustment, as  well as the minimum detectable  relative risk (MDRR).
-      Note that the IR does not account for any stratification."
+    events, and event incidence rate (IR) per 1,000 patient years (PY) in the target (<em>%s</em>) and
+    comparator (<em>%s</em>) group after propensity score adjustment, as  well as the minimum detectable  relative risk (MDRR).
+    Note that the IR does not account for any stratification."
       return(HTML(sprintf(text, input$target, input$comparator)))
     } else {
       return(NULL)
@@ -188,8 +187,8 @@ shinyServer(function(input, output, session) {
     row <- selectedRow()
     if (!is.null(row)) {
       text <- "<strong>Table 1b.</strong> Time (days) at risk distribution expressed as
-      minimum (min), 25th percentile (P25), median, 75th percentile (P75), and maximum (max) in the target
-     (<em>%s</em>) and comparator (<em>%s</em>) cohort after propensity score adjustment."
+    minimum (min), 25th percentile (P25), median, 75th percentile (P75), and maximum (max) in the target
+   (<em>%s</em>) and comparator (<em>%s</em>) cohort after propensity score adjustment."
       return(HTML(sprintf(text, input$target, input$comparator)))
     } else {
       return(NULL)
@@ -233,30 +232,30 @@ shinyServer(function(input, output, session) {
       return(plot)
     }
   })
-  
+
   output$attritionPlot <- renderPlot({
     return(attritionPlot())
   })
-  
-  output$downloadAttritionPlotPng <- downloadHandler(filename = "Attrition.png", 
-                                                     contentType = "image/png", 
-                                                     content = function(file) {
-    ggplot2::ggsave(file, plot = attritionPlot(), width = 6, height = 7, dpi = 400)
-  })
 
-  output$downloadAttritionPlotPdf <- downloadHandler(filename = "Attrition.pdf", 
-                                                     contentType = "application/pdf", 
+  output$downloadAttritionPlotPng <- downloadHandler(filename = "Attrition.png",
+                                                     contentType = "image/png",
                                                      content = function(file) {
-    ggplot2::ggsave(file = file, plot = attritionPlot(), width = 6, height = 7)
-  })
-  
+      ggplot2::ggsave(file, plot = attritionPlot(), width = 6, height = 7, dpi = 400)
+    })
+
+  output$downloadAttritionPlotPdf <- downloadHandler(filename = "Attrition.pdf",
+                                                     contentType = "application/pdf",
+                                                     content = function(file) {
+      ggplot2::ggsave(file = file, plot = attritionPlot(), width = 6, height = 7)
+    })
+
   output$attritionPlotCaption <- renderUI({
     row <- selectedRow()
     if (is.null(row)) {
       return(NULL)
     } else {
       text <- "<strong>Figure 1.</strong> Attrition diagram, showing the Number of subjectsin the target (<em>%s</em>) and
-      comparator (<em>%s</em>) group after various stages in the analysis."
+    comparator (<em>%s</em>) group after various stages in the analysis."
       return(HTML(sprintf(text, input$target, input$comparator)))
     }
   })
@@ -267,8 +266,8 @@ shinyServer(function(input, output, session) {
       return(NULL)
     } else {
       text <- "<strong>Table 2.</strong> Select characteristics before and after propensity score adjustment, showing the (weighted)
-      percentage of subjects  with the characteristics in the target (<em>%s</em>) and comparator (<em>%s</em>) group, as
-      well as the standardized difference of the means."
+    percentage of subjects  with the characteristics in the target (<em>%s</em>) and comparator (<em>%s</em>) group, as
+    well as the standardized difference of the means."
       return(HTML(sprintf(text, input$target, input$comparator)))
     }
   })
@@ -286,28 +285,17 @@ shinyServer(function(input, output, session) {
                               beforeLabel = paste("Before PS adjustment"),
                               afterLabel = paste("After PS adjustment"))
 
-      container <- htmltools::withTags(table(
-        class = 'display',
-        thead(
-          tr(
-            th(rowspan = 3, "Characteristic"),
-            th(colspan = 3, class = "dt-center", paste("Before PS adjustment")),
-            th(colspan = 3, class = "dt-center", paste("After PS adjustment"))
-          ),
-          tr(
-            lapply(table1[1, 2:ncol(table1)], th)
-          ),
-          tr(
-            lapply(table1[2, 2:ncol(table1)], th)
-          )
-        )
-      ))
-      options <- list(columnDefs = list(list(className = 'dt-right',  targets = 1:6)),
+      container <- htmltools::withTags(table(class = "display",
+                                             thead(tr(th(rowspan = 3, "Characteristic"),
+                                                      th(colspan = 3, class = "dt-center", paste("Before PS adjustment")),
+                                                      th(colspan = 3, class = "dt-center", paste("After PS adjustment"))), tr(lapply(table1[1, 2:ncol(table1)], th)), tr(lapply(table1[2, 2:ncol(table1)], th)))))
+      options <- list(columnDefs = list(list(className = "dt-right", targets = 1:6)),
                       searching = FALSE,
                       ordering = FALSE,
                       paging = FALSE,
                       bInfo = FALSE)
-      table1 <- datatable(table1[3:nrow(table1), ],
+      table1 <- datatable(table1[3:nrow(table1),
+                          ],
                           options = options,
                           rownames = FALSE,
                           escape = FALSE,
@@ -316,7 +304,7 @@ shinyServer(function(input, output, session) {
       return(table1)
     }
   })
-  
+
   output$propensityModelTable <- renderDataTable({
     row <- selectedRow()
     if (is.null(row)) {
@@ -329,16 +317,16 @@ shinyServer(function(input, output, session) {
                                   comparatorId = comparatorId,
                                   databaseId = row$databaseId,
                                   analysisId = row$analysisId)
-      
+
       table <- preparePropensityModelTable(model)
       print(nrow(table))
-      options = list(columnDefs = list(list(className = 'dt-right',  targets = 0)),
-                     pageLength = 15,
-                     searching = FALSE,
-                     lengthChange = TRUE,
-                     ordering = TRUE,
-                     paging = TRUE)
-      selection = list(mode = "single", target = "row")
+      options <- list(columnDefs = list(list(className = "dt-right", targets = 0)),
+                      pageLength = 15,
+                      searching = FALSE,
+                      lengthChange = TRUE,
+                      ordering = TRUE,
+                      paging = TRUE)
+      selection <- list(mode = "single", target = "row")
       table <- datatable(table,
                          options = options,
                          selection = selection,
@@ -366,22 +354,22 @@ shinyServer(function(input, output, session) {
       return(plot)
     }
   })
-  
+
   output$psDistPlot <- renderPlot({
     return(psDistPlot())
   })
-  
-  output$downloadPsDistPlotPng <- downloadHandler(filename = "Ps.png", 
-                                                  contentType = "image/png", 
+
+  output$downloadPsDistPlotPng <- downloadHandler(filename = "Ps.png",
+                                                  contentType = "image/png",
                                                   content = function(file) {
-                                                    ggplot2::ggsave(file, plot = psDistPlot(), width = 5, height = 3.5, dpi = 400)
-                                                  })
-  
-  output$downloadPsDistPlotPdf <- downloadHandler(filename = "Ps.pdf", 
-                                                  contentType = "application/pdf", 
+    ggplot2::ggsave(file, plot = psDistPlot(), width = 5, height = 3.5, dpi = 400)
+  })
+
+  output$downloadPsDistPlotPdf <- downloadHandler(filename = "Ps.pdf",
+                                                  contentType = "application/pdf",
                                                   content = function(file) {
-                                                    ggplot2::ggsave(file = file, plot = psDistPlot(), width = 5, height = 3.5)
-                                                  })
+      ggplot2::ggsave(file = file, plot = psDistPlot(), width = 5, height = 3.5)
+    })
 
   balancePlot <- reactive({
     bal <- balance()
@@ -396,23 +384,23 @@ shinyServer(function(input, output, session) {
       return(plot)
     }
   })
-  
+
   output$balancePlot <- renderPlot({
     return(balancePlot())
   })
-  
-  output$downloadBalancePlotPng <- downloadHandler(filename = "Balance.png", 
-                                                  contentType = "image/png", 
-                                                  content = function(file) {
-                                                    ggplot2::ggsave(file, plot = balancePlot(), width = 4, height = 4, dpi = 400)
-                                                  })
-  
-  output$downloadBalancePlotPdf <- downloadHandler(filename = "Balance.pdf", 
-                                                  contentType = "application/pdf", 
-                                                  content = function(file) {
-                                                    ggplot2::ggsave(file = file, plot = balancePlot(), width = 4, height = 4)
-                                                  })
-  
+
+  output$downloadBalancePlotPng <- downloadHandler(filename = "Balance.png",
+                                                   contentType = "image/png",
+                                                   content = function(file) {
+      ggplot2::ggsave(file, plot = balancePlot(), width = 4, height = 4, dpi = 400)
+    })
+
+  output$downloadBalancePlotPdf <- downloadHandler(filename = "Balance.pdf",
+                                                   contentType = "application/pdf",
+                                                   content = function(file) {
+      ggplot2::ggsave(file = file, plot = balancePlot(), width = 4, height = 4)
+    })
+
   output$balancePlotCaption <- renderUI({
     bal <- balance()
     if (is.null(bal) || nrow(bal) == 0) {
@@ -420,8 +408,8 @@ shinyServer(function(input, output, session) {
     } else {
       row <- selectedRow()
       text <- "<strong>Figure 3.</strong> Covariate balance before and after propensity score adjustment. Each dot represents
-      the standardizes difference of means for a single covariate before and after propensity score adjustment on the propensity
-      score. Move the mouse arrow over a dot for more details."
+    the standardizes difference of means for a single covariate before and after propensity score adjustment on the propensity
+    score. Move the mouse arrow over a dot for more details."
       return(HTML(sprintf(text)))
     }
   })
@@ -437,8 +425,8 @@ shinyServer(function(input, output, session) {
       if (nrow(point) == 0) {
         return(NULL)
       }
-      left_pct <- (hover$x - hover$domain$left) / (hover$domain$right - hover$domain$left)
-      top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
+      left_pct <- (hover$x - hover$domain$left)/(hover$domain$right - hover$domain$left)
+      top_pct <- (hover$domain$top - hover$y)/(hover$domain$top - hover$domain$bottom)
       left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)
       top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
       style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
@@ -449,15 +437,19 @@ shinyServer(function(input, output, session) {
                       "px; width:500px;")
       beforeMatchingStdDiff <- formatC(point$beforeMatchingStdDiff, digits = 2, format = "f")
       afterMatchingStdDiff <- formatC(point$afterMatchingStdDiff, digits = 2, format = "f")
-      div(
-        style = "position: relative; width: 0; height: 0",
-        wellPanel(
-          style = style,
-          p(HTML(paste0("<b> Covariate: </b>", point$covariateName, "<br/>",
-                        "<b> Std. diff before ",tolower(row$psStrategy),": </b>", beforeMatchingStdDiff, "<br/>",
-                        "<b> Std. diff after ",tolower(row$psStrategy),": </b>", afterMatchingStdDiff)))
-        )
-      )
+      div(style = "position: relative; width: 0; height: 0",
+          wellPanel(style = style, p(HTML(paste0("<b> Covariate: </b>",
+                                                 point$covariateName,
+                                                 "<br/>",
+                                                 "<b> Std. diff before ",
+                                                 tolower(row$psStrategy),
+                                                 ": </b>",
+                                                 beforeMatchingStdDiff,
+                                                 "<br/>",
+                                                 "<b> Std. diff after ",
+                                                 tolower(row$psStrategy),
+                                                 ": </b>",
+                                                 afterMatchingStdDiff)))))
     }
   })
 
@@ -478,22 +470,22 @@ shinyServer(function(input, output, session) {
       return(plot)
     }
   })
-  
+
   output$systematicErrorPlot <- renderPlot({
     return(systematicErrorPlot())
   })
-  
-  output$downloadSystematicErrorPlotPng <- downloadHandler(filename = "SystematicError.png", 
-                                                   contentType = "image/png", 
-                                                   content = function(file) {
-                                                     ggplot2::ggsave(file, plot = systematicErrorPlot(), width = 12, height = 5.5, dpi = 400)
-                                                   })
-  
-  output$downloadSystematicErrorPlotPdf <- downloadHandler(filename = "SystematicError.pdf", 
-                                                   contentType = "application/pdf", 
-                                                   content = function(file) {
-                                                     ggplot2::ggsave(file = file, plot = systematicErrorPlot(), width = 12, height = 5.5)
-                                                   })
+
+  output$downloadSystematicErrorPlotPng <- downloadHandler(filename = "SystematicError.png",
+                                                           contentType = "image/png",
+                                                           content = function(file) {
+      ggplot2::ggsave(file, plot = systematicErrorPlot(), width = 12, height = 5.5, dpi = 400)
+    })
+
+  output$downloadSystematicErrorPlotPdf <- downloadHandler(filename = "SystematicError.pdf",
+                                                           contentType = "application/pdf",
+                                                           content = function(file) {
+      ggplot2::ggsave(file = file, plot = systematicErrorPlot(), width = 12, height = 5.5)
+    })
 
   kaplanMeierPlot <- reactive({
     row <- selectedRow()
@@ -504,44 +496,44 @@ shinyServer(function(input, output, session) {
       comparatorId <- exposureOfInterest$exposureId[exposureOfInterest$exposureName == input$comparator]
       outcomeId <- outcomeOfInterest$outcomeId[outcomeOfInterest$outcomeName == input$outcome]
       km <- getKaplanMeier(connection = connection,
-                                   targetId = targetId,
-                                   comparatorId = comparatorId,
-                                   outcomeId = outcomeId,
-                                   databaseId = row$databaseId,
-                                   analysisId = row$analysisId)
+                           targetId = targetId,
+                           comparatorId = comparatorId,
+                           outcomeId = outcomeId,
+                           databaseId = row$databaseId,
+                           analysisId = row$analysisId)
       plot <- plotKaplanMeier(kaplanMeier = km,
                               targetName = input$target,
                               comparatorName = input$comparator)
       return(plot)
     }
   })
-  
+
   output$kaplanMeierPlot <- renderPlot({
     return(kaplanMeierPlot())
   }, res = 100)
-  
-  output$downloadKaplanMeierPlotPng <- downloadHandler(filename = "KaplanMeier.png", 
-                                                   contentType = "image/png", 
-                                                   content = function(file) {
-                                                     ggplot2::ggsave(file, plot = kaplanMeierPlot(), width = 7, height = 5, dpi = 400)
-                                                   })
-  
-  output$downloadKaplanMeierPlotPdf <- downloadHandler(filename = "KaplanMeier.pdf", 
-                                                   contentType = "application/pdf", 
-                                                   content = function(file) {
-                                                     ggplot2::ggsave(file = file, plot = kaplanMeierPlot(), width = 7, height = 5)
-                                                   })
-  
+
+  output$downloadKaplanMeierPlotPng <- downloadHandler(filename = "KaplanMeier.png",
+                                                       contentType = "image/png",
+                                                       content = function(file) {
+      ggplot2::ggsave(file, plot = kaplanMeierPlot(), width = 7, height = 5, dpi = 400)
+    })
+
+  output$downloadKaplanMeierPlotPdf <- downloadHandler(filename = "KaplanMeier.pdf",
+                                                       contentType = "application/pdf",
+                                                       content = function(file) {
+      ggplot2::ggsave(file = file, plot = kaplanMeierPlot(), width = 7, height = 5)
+    })
+
   output$kaplanMeierPlotPlotCaption <- renderUI({
     row <- selectedRow()
     if (is.null(row)) {
       return(NULL)
     } else {
       text <- "<strong>Figure 5.</strong> Kaplan Meier plot, showing survival as a function of time. This plot
-      is adjusted using the propensity score: The target curve (<em>%s</em>) shows the actual observed survival. The
-      comparator curve (<em>%s</em>) applies reweighting to approximate the counterfactual of what the target survival
-      would look like had the target cohort been exposed to the comparator instead. The shaded area denotes
-      the 95 percent confidence interval."
+    is adjusted using the propensity score: The target curve (<em>%s</em>) shows the actual observed survival. The
+    comparator curve (<em>%s</em>) applies reweighting to approximate the counterfactual of what the target survival
+    would look like had the target cohort been exposed to the comparator instead. The shaded area denotes
+    the 95 percent confidence interval."
       return(HTML(sprintf(text, input$target, input$comparator)))
     }
   })
@@ -583,9 +575,9 @@ shinyServer(function(input, output, session) {
       return(NULL)
     } else {
       text <- "<strong>Table 4.</strong> Subgroup interactions. For each subgroup, the number of subject within the subroup
-      in the target (<em>%s</em>) and comparator (<em>%s</em>) cohorts are provided, as well as the hazard ratio ratio (HRR)
-      with 95 percent confidence interval and p-value (uncalibrated and calibrated) for interaction of the main effect with
-      the subgroup."
+    in the target (<em>%s</em>) and comparator (<em>%s</em>) cohorts are provided, as well as the hazard ratio ratio (HRR)
+    with 95 percent confidence interval and p-value (uncalibrated and calibrated) for interaction of the main effect with
+    the subgroup."
       return(HTML(sprintf(text, input$target, input$comparator)))
     }
   })
@@ -606,10 +598,7 @@ shinyServer(function(input, output, session) {
                                    "HRR",
                                    "P",
                                    "Cal.P")
-      options <- list(searching = FALSE,
-                      ordering = FALSE,
-                      paging = FALSE,
-                      bInfo = FALSE)
+      options <- list(searching = FALSE, ordering = FALSE, paging = FALSE, bInfo = FALSE)
       subgroupTable <- datatable(subgroupTable,
                                  options = options,
                                  rownames = FALSE,

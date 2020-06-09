@@ -22,4 +22,5 @@
 #' @importFrom stats aggregate
 #' @importFrom utils write.csv install.packages menu unzip
 #' @import magrittr
+#' @importFrom rlang .data
 NULL

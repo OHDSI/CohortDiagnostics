@@ -1,7 +1,7 @@
 source("DataPulls.R")
 source("PlotsAndTables.R")
 
-# shinySettings <- list(dataFolder = "c:/temp/sena/shinyData", blind = TRUE)
+# shinySettings <- list(dataFolder = 'c:/temp/sena/shinyData', blind = TRUE)
 dataFolder <- shinySettings$dataFolder
 blind <- shinySettings$blind
 connection <- NULL
@@ -16,16 +16,14 @@ databaseFileName <- files[grepl("^database", files)]
 removePart <- paste0(gsub("database", "", databaseFileName), "$")
 
 # Remove data already in global environment:
-tableNames <- gsub("_t[0-9]+_c[0-9]+$", "", gsub(removePart, "", files)) 
+tableNames <- gsub("_t[0-9]+_c[0-9]+$", "", gsub(removePart, "", files))
 camelCaseNames <- SqlRender::snakeCaseToCamelCase(tableNames)
 camelCaseNames <- unique(camelCaseNames)
 camelCaseNames <- camelCaseNames[!(camelCaseNames %in% SqlRender::snakeCaseToCamelCase(splittableTables))]
-suppressWarnings(
-  rm(list = camelCaseNames)
-)
+suppressWarnings(rm(list = camelCaseNames))
 # Load data from data folder. R data objects will get names derived from the filename:
 loadFile <- function(file) {
-  tableName <- gsub("_t[0-9]+_c[0-9]+$", "", gsub(removePart, "", file)) 
+  tableName <- gsub("_t[0-9]+_c[0-9]+$", "", gsub(removePart, "", file))
   camelCaseName <- SqlRender::snakeCaseToCamelCase(tableName)
   if (!(tableName %in% splittableTables)) {
     newData <- readRDS(file.path(dataFolder, file))
@@ -42,4 +40,3 @@ lapply(files, loadFile)
 
 tcos <- unique(cohortMethodResult[, c("targetId", "comparatorId", "outcomeId")])
 tcos <- tcos[tcos$outcomeId %in% outcomeOfInterest$outcomeId, ]
-               

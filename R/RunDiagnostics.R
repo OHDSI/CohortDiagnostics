@@ -100,10 +100,6 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
   }
   
-  if ((runTimeDistributions || runCohortCharacterization) && !is.null(getOption("fftempdir")) && !file.exists(getOption("fftempdir"))) {
-    warning("fftempdir '", getOption("fftempdir"), "' not found. Attempting to create folder")
-    dir.create(getOption("fftempdir"), recursive = TRUE)
-  }
   
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)

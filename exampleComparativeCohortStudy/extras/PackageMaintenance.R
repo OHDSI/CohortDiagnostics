@@ -1,4 +1,4 @@
-# Copyright 2019 Observational Health Data Sciences and Informatics
+# Copyright 2020 Observational Health Data Sciences and Informatics
 #
 # This file is part of exampleStudy
 #
@@ -36,8 +36,8 @@ rmarkdown::render("vignettes/DataModel.Rmd",
                                           toc = TRUE,
                                           number_sections = TRUE))
 
-# Insert cohort definitions from ATLAS into package -----------------------
-### Modified from standard template to use ROhdsiWebApi, and to generate stats ###
+# Insert cohort definitions from ATLAS into package ----------------------- Modified from standard
+# template to use ROhdsiWebApi, and to generate stats ###
 ROhdsiWebApi::insertCohortDefinitionSetInPackage(fileName = "inst/settings/CohortsToCreate.csv",
                                                  baseUrl = Sys.getenv("ohdsiBaseUrl"),
                                                  insertTableSql = TRUE,
