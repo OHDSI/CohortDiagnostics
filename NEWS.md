@@ -1,4 +1,4 @@
-CohortDiagnostics 0.1.3
+CohortDiagnostics 1.0.0
 =======================
 
 Changes:
