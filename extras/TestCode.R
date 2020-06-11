@@ -1,7 +1,5 @@
 library(CohortDiagnostics)
-options(fftempdir = "c:/FFtemp")
 
-#Testing new logger
 ParallelLogger::addDefaultErrorReportLogger()
 
 # PDW --------------------------------------------------------
@@ -63,7 +61,7 @@ instantiateCohort(connectionDetails = connectionDetails,
                   cohortDatabaseSchema = cohortDatabaseSchema,
                   cohortTable = cohortTable,
                   baseUrl = baseUrl,
-                  webApiCohortId = cohortId,
+                  cohortId = cohortId,
                   generateInclusionStats = TRUE)
 
 inclusionStatistics <- getInclusionStatistics(connectionDetails = connectionDetails,
@@ -83,18 +81,13 @@ includedSourceConcepts <- findCohortIncludedSourceConcepts(connectionDetails = c
                                                            webApiCohortId = cohortId,
                                                            byMonth = FALSE,
                                                            useSourceValues = FALSE)
-system.time(
+
 orphanConcepts <- findCohortOrphanConcepts(connectionDetails = connectionDetails,
                                            cdmDatabaseSchema = cdmDatabaseSchema,
                                            oracleTempSchema = oracleTempSchema,
                                            conceptCountsDatabaseSchema = workDatabaseSchema,
                                            baseUrl = baseUrl,
                                            webApiCohortId = cohortId)
-)
-
-# saveRDS(orphanConcepts, "c:/temp/orphanConcepts.rds")
-oldOcs <- readRDS("c:/temp/orphanConcepts.rds")
-
 
 # Cohort-level ------------------------------------------------------------------
 counts <- getCohortCounts(connectionDetails = connectionDetails,
@@ -109,7 +102,6 @@ timeDist <- getTimeDistributions(connectionDetails = connectionDetails,
                                  cohortTable = cohortTable,
                                  cohortId = cohortId)
 
-
 breakdown <- breakDownIndexEvents(connectionDetails = connectionDetails,
                                   cdmDatabaseSchema = cdmDatabaseSchema,
                                   oracleTempSchema = oracleTempSchema,
@@ -120,13 +112,13 @@ breakdown <- breakDownIndexEvents(connectionDetails = connectionDetails,
                                   cohortId = cohortId)
 
 incidenceRate <- getIncidenceRate(connectionDetails = connectionDetails,
-                                              cohortDatabaseSchema = cohortDatabaseSchema,
-                                              cohortTable = cohortTable,
-                                              oracleTempSchema = oracleTempSchema,
-                                              cdmDatabaseSchema = cdmDatabaseSchema,
-                                              firstOccurrenceOnly = TRUE,
-                                              washoutPeriod = 365,
-                                              cohortId = cohortId)
+                                  cohortDatabaseSchema = cohortDatabaseSchema,
+                                  cohortTable = cohortTable,
+                                  oracleTempSchema = oracleTempSchema,
+                                  cdmDatabaseSchema = cdmDatabaseSchema,
+                                  firstOccurrenceOnly = TRUE,
+                                  washoutPeriod = 365,
+                                  cohortId = cohortId)
 
 plotincidenceRate(incidenceRate)
 

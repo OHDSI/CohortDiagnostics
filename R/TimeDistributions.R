@@ -77,11 +77,11 @@ getTimeDistributions <- function(connectionDetails = NULL,
   if (is.null(data$covariatesContinuous)) {
     result <- data.frame()
   } else {
-    result$conceptId <- NULL
-    result$analysisId <- NULL
-    result$covariateId <- NULL
-    result$countValue <- NULL
-    colnames(result)[colnames(result) == "covariateName"] <- "timeMetric"
+    result <- data$covariatesContinuous %>%
+      inner_join(data$covariateRef) %>%
+      select(-.data$conceptId, -.data$analysisId, -.data$covariateId, -.data$result$countValue) %>%
+      rename(timeMetric = .data$covariateName) %>%
+      collect()
   }
   attr(result, "cohortSize") <- data$metaData$populationSize
   delta <- Sys.time() - start

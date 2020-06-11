@@ -3,6 +3,20 @@ CohortDiagnostics 1.0.0
 
 Changes:
 
+1. Adapting to new ROhdsiWebApi (>= 1.0.0) interface.
+
+Bugfixes:
+
+1. Fixing broken getTimeDistributions function.
+
+2. Fixing broken instantiateCohort function.
+
+
+CohortDiagnostics 1.0.0
+=======================
+
+Changes:
+
 1. Added database information tab to Diagnostics Explorer Shiny app.
 
 2. Using Andromeda instead of ff to store large data objects (used for characterization).

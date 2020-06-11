@@ -191,9 +191,11 @@ findCohortOrphanConcepts <- function(connectionDetails = NULL,
   }
   start <- Sys.time()
   if (is.null(cohortJson)) {
-    cohortExpression <- ROhdsiWebApi::getCohortDefinitionExpression(definitionId = webApiCohortId,
-                                                                    baseUrl = baseUrl)
-    cohortJson <- cohortExpression$expression
+    cohortDefinition <- ROhdsiWebApi::getCohortDefinition(cohortId = webApiCohortId,
+                                                          baseUrl = baseUrl)
+    cohortDefinition <- cohortDefinition$expression
+  } else {
+    cohortDefinition <- RJSONIO::fromJSON(cohortJson)
   }
   getConceptIdFromItem <- function(item) {
     if (item$isExcluded) {
@@ -206,7 +208,7 @@ findCohortOrphanConcepts <- function(connectionDetails = NULL,
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-  cohortDefinition <- RJSONIO::fromJSON(cohortJson)
+  
   conceptSets <- cohortDefinition$ConceptSets
   allOrphanConcepts <- data.frame()
   for (conceptSet in conceptSets) {
@@ -314,15 +316,15 @@ findCohortIncludedSourceConcepts <- function(connectionDetails = NULL,
   }
   start <- Sys.time()
   if (is.null(cohortJson)) {
-    cohortExpression <- ROhdsiWebApi::getCohortDefinitionExpression(definitionId = webApiCohortId,
-                                                                    baseUrl = baseUrl)
-    cohortJson <- cohortExpression$expression
-    cohortSql <- ROhdsiWebApi::getCohortDefinitionSql(definitionId = webApiCohortId,
-                                                      baseUrl = baseUrl,
-                                                      generateStats = FALSE)
+    cohortDefinition <- ROhdsiWebApi::getCohortDefinition(cohortId = webApiCohortId,
+                                                          baseUrl = baseUrl)
+    cohortDefinition <- cohortDefinition$expression
+    cohortSql <- ROhdsiWebApi::getCohortSql(cohortDefinition = cohortDefinition,
+                                            baseUrl = baseUrl,
+                                            generateStats = FALSE)
+  } else {
+    cohortDefinition <- RJSONIO::fromJSON(cohortJson)
   }
-  cohortDefinition <- RJSONIO::fromJSON(cohortJson)
-  
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))

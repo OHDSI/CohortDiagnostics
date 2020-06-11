@@ -815,12 +815,12 @@ loadCohortsFromWebApi <- function(baseUrl,
   ParallelLogger::logInfo("Retrieving cohort definitions from WebAPI")
   for (i in 1:nrow(cohorts)) {
     ParallelLogger::logInfo("- Retrieving definitions for cohort ", cohorts$cohortFullName[i])
-    cohortExpression <-  ROhdsiWebApi::getCohortDefinitionExpression(definitionId = cohorts$atlasId[i],
-                                                                     baseUrl = baseUrl)
-    cohorts$json[i] <- cohortExpression$expression
-    cohorts$sql[i] <- ROhdsiWebApi::getCohortDefinitionSql(definitionId = cohorts$atlasId[i],
-                                                           baseUrl = baseUrl,
-                                                           generateStats = generateStats)
+    cohortDefinition <-  ROhdsiWebApi::getCohortDefinition(cohortId = cohorts$atlasId[i],
+                                                           baseUrl = baseUrl)
+    cohorts$json[i] <- RJSONIO::toJSON(cohortDefinition$expression)
+    cohorts$sql[i] <- ROhdsiWebApi::getCohortSql(cohortDefinition = cohortDefinition,
+                                                 baseUrl = baseUrl,
+                                                 generateStats = generateStats)
   }
   cohorts$atlasId <- NULL
   return(cohorts)

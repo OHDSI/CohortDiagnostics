@@ -98,15 +98,19 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
   }
   start <- Sys.time()
   if (is.null(cohortJson)) {
-    ParallelLogger::logInfo("Retrieving cohort definition from WebAPI")
-    cohortExpression <- ROhdsiWebApi::getCohortDefinitionExpression(definitionId = webApiCohortId,
-                                                                    baseUrl = baseUrl)
-    cohortJson <- cohortExpression$expression
-    cohortSql <- ROhdsiWebApi::getCohortDefinitionSql(definitionId = webApiCohortId,
-                                                      baseUrl = baseUrl,
-                                                      generateStats = FALSE)
+    cohortDefinition <- ROhdsiWebApi::getCohortDefinition(cohortId = webApiCohortId,
+                                                          baseUrl = baseUrl)
+    
+    cohortSql <- ROhdsiWebApi::getCohortSql(cohortDefinition = cohortDefinition,
+                                            baseUrl = baseUrl,
+                                            generateStats = FALSE)
+    
+    cohortDefinition <- cohortDefinition$expression
+    
+    
+  } else {
+    cohortDefinition <- RJSONIO::fromJSON(cohortJson)
   }
-  cohortDefinition <- RJSONIO::fromJSON(cohortJson)
   
   getCodeSetId <- function(criterion) {
     if (is.list(criterion)) {

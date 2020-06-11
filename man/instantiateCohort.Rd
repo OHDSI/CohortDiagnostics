@@ -15,7 +15,7 @@ instantiateCohort(
   webApiCohortId = NULL,
   cohortJson = NULL,
   cohortSql = NULL,
-  cohortId = webApiCohortId,
+  cohortId = NULL,
   generateInclusionStats = FALSE,
   resultsDatabaseSchema = cohortDatabaseSchema,
   cohortInclusionTable = paste0(cohortTable, "_inclusion"),

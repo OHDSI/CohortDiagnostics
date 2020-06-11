@@ -135,7 +135,7 @@ instantiateCohort <- function(connectionDetails = NULL,
                               webApiCohortId = NULL,
                               cohortJson = NULL,
                               cohortSql = NULL,
-                              cohortId = webApiCohortId,
+                              cohortId = NULL,
                               generateInclusionStats = FALSE,
                               resultsDatabaseSchema = cohortDatabaseSchema,
                               cohortInclusionTable = paste0(cohortTable, "_inclusion"),
@@ -143,7 +143,7 @@ instantiateCohort <- function(connectionDetails = NULL,
                               cohortInclusionStatsTable = paste0(cohortTable, "_inclusion_stats"),
                               cohortSummaryStatsTable = paste0(cohortTable, "_summary_stats")) {
   if (is.null(baseUrl) && is.null(cohortJson)) {
-    stop("Must provide either baseUrl and webApiCohortId, or cohortJson and cohortSql")
+    stop("Must provide either baseUrl and cohortId, or cohortJson and cohortSql")
   }
   if (!is.null(cohortJson) && !is.character(cohortJson)) {
     stop("cohortJson should be character (a JSON string).")
@@ -151,14 +151,15 @@ instantiateCohort <- function(connectionDetails = NULL,
   start <- Sys.time()
   if (is.null(cohortJson)) {
     ParallelLogger::logInfo("Retrieving cohort definition from WebAPI")
-    cohortExpression <- ROhdsiWebApi::getCohortDefinitionExpression(definitionId = webApiCohortId,
+    cohortDefinition <- ROhdsiWebApi::getCohortDefinition(cohortId = cohortId,
                                                                     baseUrl = baseUrl)
-    cohortJson <- cohortExpression$expression
-    cohortSql <- ROhdsiWebApi::getCohortDefinitionSql(definitionId = webApiCohortId,
-                                                      baseUrl = baseUrl,
-                                                      generateStats = generateInclusionStats)
+    cohortDefinition <- cohortDefinition$expression
+    cohortSql <- ROhdsiWebApi::getCohortSql(cohortDefinition = cohortDefinition,
+                                            baseUrl = baseUrl,
+                                            generateStats = generateInclusionStats)
+  } else {
+    cohortDefinition <- RJSONIO::fromJSON(cohortJson)
   }
-  cohortDefinition <- RJSONIO::fromJSON(cohortJson)
   if (generateInclusionStats) {
     inclusionRules <- data.frame()
     if (!is.null(cohortDefinition$InclusionRules)) {
@@ -467,18 +468,18 @@ instantiateCohortSet <- function(connectionDetails = NULL,
   }
   if (createCohortTable) {
     needToCreate <- TRUE
-     if (incremental) {
-        tables <- DatabaseConnector::getTableNames(connection, cohortDatabaseSchema)
-        if (toupper(cohortTable) %in% toupper(tables)) {
-          ParallelLogger::logInfo("Cohort table already exists and in incremental mode, so not recreating table.")
-          needToCreate <- FALSE
-        }
-     }
+    if (incremental) {
+      tables <- DatabaseConnector::getTableNames(connection, cohortDatabaseSchema)
+      if (toupper(cohortTable) %in% toupper(tables)) {
+        ParallelLogger::logInfo("Cohort table already exists and in incremental mode, so not recreating table.")
+        needToCreate <- FALSE
+      }
+    }
     if (needToCreate) {
-       createCohortTable(connection = connection,
-                         cohortDatabaseSchema = cohortDatabaseSchema,
-                         cohortTable = cohortTable,
-                         createInclusionStatsTables = FALSE)
+      createCohortTable(connection = connection,
+                        cohortDatabaseSchema = cohortDatabaseSchema,
+                        cohortTable = cohortTable,
+                        createInclusionStatsTables = FALSE)
     }
   }
   
@@ -501,7 +502,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
   if (generateInclusionStats) {
     createTempInclusionStatsTables(connection, oracleTempSchema, cohorts) 
   }
- 
+  
   instantiatedCohortIds <- c() 
   for (i in 1:nrow(cohorts)) {
     if (!incremental || isTaskRequired(cohortId = cohorts$cohortId[i],
@@ -636,7 +637,7 @@ saveAndDropTempInclusionStatsTables <- function(connection,
   if (any(stringr::str_detect(string = sql, pattern = "_inclusion_result"), 
           stringr::str_detect(string = sql, pattern = "_inclusion_stats"), 
           stringr::str_detect(string = sql, pattern = "_summary_stats")
-          )
+  )
   ) {
     if (isFALSE(generateInclusionStats)) {
       warning("The SQL template used to instantiate cohort was designed to output cohort inclusion statistics. 
