@@ -603,7 +603,7 @@ runConceptSetDiagnostics <- function(connection,
                                      incremental = FALSE,
                                      recordKeepingFile) {
   startConceptSetDiagnostics <- Sys.time()
-  ParallelLogger::logInfo("Starting concept set diagnostics at", Sys.time())
+  ParallelLogger::logInfo("Starting concept set diagnostics at ", Sys.time())
   
   
   subset <- tibble::tibble()
