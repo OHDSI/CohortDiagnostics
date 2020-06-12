@@ -16,8 +16,8 @@ devtools::install_github("CohortDiagnostics")
 # Load the package
 library(examplePackage)
 
-# Optional: specify where the temporary files (used by the ff package) will be created:
-options(fftempdir = "s:/FFtemp")
+# Optional: specify where the temporary files will be created:
+options(andromedaTempFolder = "s:/andromedaTemp")
 
 # Maximum number of cores to be used:
 maxCores <- parallel::detectCores()
