@@ -154,9 +154,9 @@ shinyServer(function(input, output, session) {
     row <- selectedRow()
     if (!is.null(row)) {
       text <- "<strong>Table 1a.</strong> Number of subjects, follow-up time (in years), number of outcome
-    events, and event incidence rate (IR) per 1,000 patient years (PY) in the target (<em>%s</em>) and
-    comparator (<em>%s</em>) group after propensity score adjustment, as  well as the minimum detectable  relative risk (MDRR).
-    Note that the IR does not account for any stratification."
+  events, and event incidence rate (IR) per 1,000 patient years (PY) in the target (<em>%s</em>) and
+  comparator (<em>%s</em>) group after propensity score adjustment, as  well as the minimum detectable  relative risk (MDRR).
+  Note that the IR does not account for any stratification."
       return(HTML(sprintf(text, input$target, input$comparator)))
     } else {
       return(NULL)
@@ -187,7 +187,7 @@ shinyServer(function(input, output, session) {
     row <- selectedRow()
     if (!is.null(row)) {
       text <- "<strong>Table 1b.</strong> Time (days) at risk distribution expressed as
-    minimum (min), 25th percentile (P25), median, 75th percentile (P75), and maximum (max) in the target
+  minimum (min), 25th percentile (P25), median, 75th percentile (P75), and maximum (max) in the target
    (<em>%s</em>) and comparator (<em>%s</em>) cohort after propensity score adjustment."
       return(HTML(sprintf(text, input$target, input$comparator)))
     } else {
@@ -255,7 +255,7 @@ shinyServer(function(input, output, session) {
       return(NULL)
     } else {
       text <- "<strong>Figure 1.</strong> Attrition diagram, showing the Number of subjectsin the target (<em>%s</em>) and
-    comparator (<em>%s</em>) group after various stages in the analysis."
+  comparator (<em>%s</em>) group after various stages in the analysis."
       return(HTML(sprintf(text, input$target, input$comparator)))
     }
   })
@@ -266,8 +266,8 @@ shinyServer(function(input, output, session) {
       return(NULL)
     } else {
       text <- "<strong>Table 2.</strong> Select characteristics before and after propensity score adjustment, showing the (weighted)
-    percentage of subjects  with the characteristics in the target (<em>%s</em>) and comparator (<em>%s</em>) group, as
-    well as the standardized difference of the means."
+  percentage of subjects  with the characteristics in the target (<em>%s</em>) and comparator (<em>%s</em>) group, as
+  well as the standardized difference of the means."
       return(HTML(sprintf(text, input$target, input$comparator)))
     }
   })
@@ -408,8 +408,8 @@ shinyServer(function(input, output, session) {
     } else {
       row <- selectedRow()
       text <- "<strong>Figure 3.</strong> Covariate balance before and after propensity score adjustment. Each dot represents
-    the standardizes difference of means for a single covariate before and after propensity score adjustment on the propensity
-    score. Move the mouse arrow over a dot for more details."
+  the standardizes difference of means for a single covariate before and after propensity score adjustment on the propensity
+  score. Move the mouse arrow over a dot for more details."
       return(HTML(sprintf(text)))
     }
   })
@@ -530,10 +530,10 @@ shinyServer(function(input, output, session) {
       return(NULL)
     } else {
       text <- "<strong>Figure 5.</strong> Kaplan Meier plot, showing survival as a function of time. This plot
-    is adjusted using the propensity score: The target curve (<em>%s</em>) shows the actual observed survival. The
-    comparator curve (<em>%s</em>) applies reweighting to approximate the counterfactual of what the target survival
-    would look like had the target cohort been exposed to the comparator instead. The shaded area denotes
-    the 95 percent confidence interval."
+  is adjusted using the propensity score: The target curve (<em>%s</em>) shows the actual observed survival. The
+  comparator curve (<em>%s</em>) applies reweighting to approximate the counterfactual of what the target survival
+  would look like had the target cohort been exposed to the comparator instead. The shaded area denotes
+  the 95 percent confidence interval."
       return(HTML(sprintf(text, input$target, input$comparator)))
     }
   })
@@ -575,9 +575,9 @@ shinyServer(function(input, output, session) {
       return(NULL)
     } else {
       text <- "<strong>Table 4.</strong> Subgroup interactions. For each subgroup, the number of subject within the subroup
-    in the target (<em>%s</em>) and comparator (<em>%s</em>) cohorts are provided, as well as the hazard ratio ratio (HRR)
-    with 95 percent confidence interval and p-value (uncalibrated and calibrated) for interaction of the main effect with
-    the subgroup."
+  in the target (<em>%s</em>) and comparator (<em>%s</em>) cohorts are provided, as well as the hazard ratio ratio (HRR)
+  with 95 percent confidence interval and p-value (uncalibrated and calibrated) for interaction of the main effect with
+  the subgroup."
       return(HTML(sprintf(text, input$target, input$comparator)))
     }
   })
