@@ -5,6 +5,8 @@ Changes:
 
 1. Adapting to new ROhdsiWebApi (>= 1.0.0) interface.
 
+2. Added log info that provides addition run time details #72
+
 Bugfixes:
 
 1. Fixing broken getTimeDistributions function.

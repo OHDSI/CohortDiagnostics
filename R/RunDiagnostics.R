@@ -157,7 +157,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   
   if (runInclusionStatistics) {
     # Inclusion statistics -----------------------------------------------------------------------
-    ParallelLogger::logInfo("Fetching inclusion rule statistics")
+    ParallelLogger::logInfo("Fetching inclusion rule statistics. Started at ", Sys.time())
     subset <- subsetToRequiredCohorts(cohorts = cohorts, 
                                       task = "runInclusionStatistics", 
                                       incremental = incremental, 
@@ -192,6 +192,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   }
   
   if (runIncludedSourceConcepts || runOrphanConcepts) {
+    
     # Concept set diagnostics -----------------------------------------------
     runConceptSetDiagnostics(connection = connection,
                              oracleTempSchema = oracleTempSchema,
@@ -211,6 +212,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   }
   
   if (runTimeDistributions) {
+    startTimeDistribution <- Sys.time()
     # Time distributions ----------------------------------------------------------------------
     ParallelLogger::logInfo("Creating time distributions")
     subset <- subsetToRequiredCohorts(cohorts = cohorts, 
@@ -243,9 +245,14 @@ runCohortDiagnostics <- function(packageName = NULL,
                       recordKeepingFile = recordKeepingFile,
                       incremental = incremental)
     }
+    delta <- Sys.time() - startTimeDistribution
+    ParallelLogger::logInfo(paste("Running time distribution took",
+                                  signif(delta, 3),
+                                  attr(delta, "units")))
   }
   
   if (runBreakdownIndexEvents) {
+    startRunBreakdownIndexEvents <- Sys.time()
     # Index event breakdown ---------------------------------------------------------------------
     ParallelLogger::logInfo("Breaking down index events")
     subset <- subsetToRequiredCohorts(cohorts = cohorts, 
@@ -281,9 +288,15 @@ runCohortDiagnostics <- function(packageName = NULL,
                       recordKeepingFile = recordKeepingFile,
                       incremental = incremental)
     }
+    
+    delta <- Sys.time() - startRunBreakdownIndexEvents
+    ParallelLogger::logInfo(paste("Running index event breakdown took",
+                                  signif(delta, 3),
+                                  attr(delta, "units")))
   }
   
   if (runIncidenceRate) {
+    startIncidenceRate <- Sys.time()
     # Incidence rates --------------------------------------------------------------------------------------
     ParallelLogger::logInfo("Computing incidence rate")
     subset <- subsetToRequiredCohorts(cohorts = cohorts, 
@@ -326,9 +339,14 @@ runCohortDiagnostics <- function(packageName = NULL,
                       recordKeepingFile = recordKeepingFile,
                       incremental = incremental)
     }
+    delta <- Sys.time() - startIncidenceRate
+    ParallelLogger::logInfo(paste("Running Incidence Rate took",
+                                  signif(delta, 3),
+                                  attr(delta, "units")))
   }
   
   if (runCohortOverlap) {
+    startCohortOverlap <- Sys.time()
     # Cohort overlap ---------------------------------------------------------------------------------
     ParallelLogger::logInfo("Computing cohort overlap")
     combis <- expand.grid(targetCohortId = cohorts$cohortId, comparatorCohortId = cohorts$cohortId)
@@ -392,11 +410,17 @@ runCohortDiagnostics <- function(packageName = NULL,
                       recordKeepingFile = recordKeepingFile,
                       incremental = incremental)
     }
+    
+    delta <- Sys.time() - startCohortOverlap
+    ParallelLogger::logInfo(paste("Running Cohort Overlap took",
+                                  signif(delta, 3),
+                                  attr(delta, "units")))
   }
   
   if (runCohortCharacterization) {
+    startCohortCharacterization <- Sys.time()
     # Cohort characterization ---------------------------------------------------------------
-    ParallelLogger::logInfo("Creating cohort characterizations")
+    ParallelLogger::logInfo("Creating cohort characterizations - started at ", Sys.time())
     subset <- subsetToRequiredCohorts(cohorts = cohorts, 
                                       task = "runCohortCharacterization", 
                                       incremental = incremental, 
@@ -447,6 +471,11 @@ runCohortDiagnostics <- function(packageName = NULL,
                       recordKeepingFile = recordKeepingFile,
                       incremental = incremental)
     }
+    
+    delta <- Sys.time() - startCohortCharacterization
+    ParallelLogger::logInfo(paste("Running Characterization took",
+                                  signif(delta, 3),
+                                  attr(delta, "units")))
   }
   
   # Add all to zip file -------------------------------------------------------------------------------
@@ -573,6 +602,10 @@ runConceptSetDiagnostics <- function(connection,
                                      useExternalConceptCountsTable = FALSE,
                                      incremental = FALSE,
                                      recordKeepingFile) {
+  startConceptSetDiagnostics <- Sys.time()
+  ParallelLogger::logInfo("Starting concept set diagnostics at ", Sys.time())
+  
+  
   subset <- tibble::tibble()
   if (runIncludedSourceConcepts) {
     subsetIncluded <- subsetToRequiredCohorts(cohorts = cohorts, 
@@ -603,7 +636,7 @@ runConceptSetDiagnostics <- function(connection,
   
   if (runIncludedSourceConcepts) {
     # Included concepts ------------------------------------------------------------------
-    ParallelLogger::logInfo("Fetching included source concepts")
+    ParallelLogger::logInfo("Fetching included source concepts - Started at ",Sys.time() )
     if (nrow(subsetIncluded) > 0) {
       start <- Sys.time()
       ParallelLogger::logInfo("Counting codes in concept sets")
@@ -686,7 +719,7 @@ runConceptSetDiagnostics <- function(connection,
   
   if (runOrphanConcepts) {
     # Orphan concepts ---------------------------------------------------------
-    ParallelLogger::logInfo("Finding orphan concepts")
+    ParallelLogger::logInfo("Finding orphan concepts - started at ", Sys.time())
     if (nrow(subsetOrphans > 0)) {
       start <- Sys.time()
       if (!useExternalConceptCountsTable) {
@@ -748,6 +781,11 @@ runConceptSetDiagnostics <- function(connection,
                                                oracleTempSchema = oracleTempSchema,
                                                progressBar = FALSE,
                                                reportOverallTime = FALSE)
+  
+  delta <- Sys.time() - startConceptSetDiagnostics
+  ParallelLogger::logInfo(paste("Running concept set diagnostics",
+                                signif(delta, 3),
+                                attr(delta, "units")))
 }
 
 subsetToRequiredCohorts <- function(cohorts, task, incremental, recordKeepingFile) {
