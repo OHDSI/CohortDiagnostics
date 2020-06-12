@@ -43,7 +43,7 @@ Suggests:
 Remotes:
   ohdsi/Eunomia,
   ohdsi/FeatureExtraction,
-  ohdsi/ROhdsiWebApi@develop
+  ohdsi/ROhdsiWebApi
 License: Apache License
 VignetteBuilder: knitr
 URL: https://ohdsi.github.io/CohortDiagnostics, https://github.com/OHDSI/CohortDiagnostics
