@@ -38,11 +38,10 @@ pkgdown::build_site()
 OhdsiRTools::fixHadesLogo()
 
 # Install cohorts for testing
-# Figure out why Circe cohort definitions don't run in Eunomia
-# ROhdsiWebApi::insertCohortDefinitionSetInPackage(fileName = "inst/settings/CohortsToCreateForTesting.csv",
-#                                                  baseUrl = Sys.getenv("baseUrl"),
-#                                                  insertTableSql = FALSE,
-#                                                  generateStats = TRUE,
-#                                                  insertCohortCreationR = FALSE,
-#                                                  packageName = "CohortDiagnostics")
+ROhdsiWebApi::insertCohortDefinitionSetInPackage(fileName = "inst/settings/CohortsToCreateForTesting.csv",
+                                                 baseUrl = Sys.getenv("baseUrl"),
+                                                 insertTableSql = FALSE,
+                                                 generateStats = TRUE,
+                                                 insertCohortCreationR = FALSE,
+                                                 packageName = "CohortDiagnostics")
 

@@ -25,12 +25,13 @@ Imports:
   rlang,
   RJSONIO,
   ROhdsiWebApi (>= 1.0.0),
-  SqlRender,
+  SqlRender (>= 1.6.7),
   stringr,
   tibble
 Suggests:
   DT,
   Eunomia,
+  RSqlite (> 2.2.0),
   htmltools,
   knitr,
   plotly,
@@ -43,7 +44,9 @@ Suggests:
 Remotes:
   ohdsi/Eunomia,
   ohdsi/FeatureExtraction,
-  ohdsi/ROhdsiWebApi
+  ohdsi/ROhdsiWebApi,
+  ohdsi/SqlRender@develop,
+  r-dbi/RSQLite
 License: Apache License
 VignetteBuilder: knitr
 URL: https://ohdsi.github.io/CohortDiagnostics, https://github.com/OHDSI/CohortDiagnostics
