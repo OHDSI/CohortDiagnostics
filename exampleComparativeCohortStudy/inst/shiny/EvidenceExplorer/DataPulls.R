@@ -35,8 +35,8 @@ getIndications <- function(connection) {
 getSubgroups <- function(connection) {
   sql <- "SELECT DISTINCT interaction_covariate_id AS subgroup_id, covariate_name AS subgroup_name
   FROM (
-    SELECT DISTINCT interaction_covariate_id
-    FROM cm_interaction_result
+  SELECT DISTINCT interaction_covariate_id
+  FROM cm_interaction_result
   ) ids
   INNER JOIN covariate
   ON interaction_covariate_id = covariate_id"
