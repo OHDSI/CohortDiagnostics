@@ -98,6 +98,19 @@ recordTasksDone <- function(..., checksum, recordKeepingFile, incremental = TRUE
   readr::write_csv(recordKeeping, recordKeepingFile)
 }
 
+writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
+  colnames(data) <- SqlRender::camelCaseToSnakeCase(colnames(data))
+  if (incremental) {
+    params <- list(...)
+    names(params) <- SqlRender::camelCaseToSnakeCase(names(params))
+    params$data = data
+    params$fileName = fileName
+    do.call(saveIncremental, params)
+  } else {
+    readr::write_csv(x = data, path = fileName)
+  }
+}
+
 saveIncremental <- function(data, fileName, ...) {
   if (length(list(...)[[1]]) == 0) {
     return()
@@ -112,8 +125,6 @@ saveIncremental <- function(data, fileName, ...) {
   } 
   readr::write_csv(data, fileName)
 }
-
-
 
 subsetToRequiredCohorts <- function(cohorts, task, incremental, recordKeepingFile) {
   if (incremental) {
