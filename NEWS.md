@@ -1,3 +1,11 @@
+CohortDiagnostics (Develop)
+=======================
+
+Changes:
+
+1. Error handling: Use [checkmate](https://CRAN.R-project.org/package=checkmate) R-package to provide more informative error messages.
+2. Refactor runCohortDiagnostics, to seperate the management of cohorts that need execution into an independent function \code{manageCohortsForExecution} 
+
 CohortDiagnostics 1.0.0
 =======================
 

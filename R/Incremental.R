@@ -112,3 +112,30 @@ saveIncremental <- function(data, fileName, ...) {
   } 
   readr::write_csv(data, fileName)
 }
+
+
+
+subsetToRequiredCohorts <- function(cohorts, task, incremental, recordKeepingFile) {
+  if (incremental) {
+    tasks <- getRequiredTasks(cohortId = cohorts$cohortId,
+                              task = task,
+                              checksum = cohorts$checksum,
+                              recordKeepingFile = recordKeepingFile)
+    return(cohorts[cohorts$cohortId %in% tasks$cohortId, ])
+  } else {
+    return(cohorts)
+  }
+}
+
+subsetToRequiredCombis <- function(combis, task, incremental, recordKeepingFile) {
+  if (incremental) {
+    tasks <- getRequiredTasks(cohortId = combis$targetCohortId,
+                              comparatorId = combis$comparatorCohortId,
+                              task = task,
+                              checksum = combis$checksum,
+                              recordKeepingFile = recordKeepingFile)
+    return(merge(combis, tibble::tibble(targetCohortId = tasks$cohortId, comparatorCohortId = tasks$comparatorId)))
+  } else {
+    return(combis)
+  }
+}
