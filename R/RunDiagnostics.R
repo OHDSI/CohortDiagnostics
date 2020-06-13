@@ -116,11 +116,12 @@ runCohortDiagnostics <- function(packageName = NULL,
   checkmate::reportAssertions(collection = errorMessage)
   
   # checking folders
-  createIfNotExist(type = 'folder', name = c(exportFolder, incrementalFolder))
+  createIfNotExist(type = 'folder', name = exportFolder)
   checkmate::assertDirectory(x = exportFolder, access = 'x')
+  createIfNotExist(type = 'folder', name = incrementalFolder)
   checkmate::assertDirectory(x = incrementalFolder, access = 'x')
   if (isTRUE(runInclusionStatistics)) {
-    createIfNotExist(type = 'folder', name = c(inclusionStatisticsFolder))
+    createIfNotExist(type = 'folder', name = inclusionStatisticsFolder)
     checkmate::assertDirectory(x = inclusionStatisticsFolder, access = 'x')
   }
   checkmate::reportAssertions(collection = errorMessage)

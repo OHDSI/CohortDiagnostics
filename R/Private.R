@@ -15,20 +15,17 @@
 # limitations under the License.
 
 
-createIfNotExist <- function(type, name = c(), recursive = TRUE) {
+createIfNotExist <- function(type, name , recursive = TRUE) {
   if (!is.null(type)) {
     if (length(name) == 0) {
       stop(ParallelLogger::logError("Must specify ", name))
     }
-    
     if (type %in% c('folder')) {
-      for (i in (1:length(name))) {
-        if (!file.exists(name)) {
-          dir.create(name, recursive = recursive)
-          ParallelLogger::logInfo("Created ", type, " at ", name)
-        } else {
-          ParallelLogger::logInfo(type, " already exists at ", name)
-        }
+      if (!file.exists(name)) {
+        dir.create(name, recursive = recursive)
+        ParallelLogger::logInfo("Created ", type, " at ", name)
+      } else {
+        ParallelLogger::logInfo(type, " already exists at ", name)
       }
     }
   }
