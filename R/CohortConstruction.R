@@ -14,10 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-manageCohortsForExecutionFromPackage <- function(packageName = packageName,
-                                                 cohortToCreateFile = cohortToCreateFile,
-                                                 cohortIds = cohortIds,
-                                                 errorMessage = NULL) {
+getCohortsJsonAndSqlFromPackage <- function(packageName = packageName,
+                                            cohortToCreateFile = cohortToCreateFile,
+                                            cohortIds = cohortIds,
+                                            errorMessage = NULL) {
   ParallelLogger::logInfo("Executing on cohorts specified in package - ", packageName)
   
   if (is.null(errorMessage) | !class(errorMessage) == 'AssertColection') {
@@ -67,10 +67,10 @@ manageCohortsForExecutionFromPackage <- function(packageName = packageName,
 
 
 
-manageCohortsForExecutionFromWebApi <- function(baseUrl = baseUrl,
-                                                cohortSetReference = cohortSetReference,
-                                                cohortIds = cohortIds,
-                                                 errorMessage = NULL) {
+getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
+                                           cohortSetReference = cohortSetReference,
+                                           cohortIds = cohortIds,
+                                           errorMessage = NULL) {
   ParallelLogger::logInfo("[WebApi mode] Running Cohort Diagnostics on cohort specified in WebApi - ", baseUrl)
   
   if (is.null(errorMessage) | !class(errorMessage) == 'AssertColection') {
@@ -108,12 +108,12 @@ manageCohortsForExecutionFromWebApi <- function(baseUrl = baseUrl,
   return(cohorts)
 }
 
-#' Manage cohorts that need to be executed
+#' Get cohorts JSON and parameterized OHDSI SQL
 #'
 #' @description
-#' This function may be used to read cohorts that need to be executed from either the
-#' WebApi or a Package. The function will return an object with cohort information 
-#' including specifications such as JSON and SQL.
+#' This function may be used to collect a cohorts JSON and OHDSI SQL. Based on whether a
+#' baseUrl is available, the function will collect the specifications from either from
+#' WebApi or a Package. 
 #'
 #' @template CohortSetSpecs
 #' 
@@ -121,13 +121,22 @@ manageCohortsForExecutionFromWebApi <- function(baseUrl = baseUrl,
 #' 
 #' @param cohortIds                   Optionally, provide a subset of cohort IDs to restrict the
 #'                                    diagnostics to.
+#' @return 
+#' The function will return a R list object with cohort information including specifications 
+#' such as JSON and SQL.
 #'
+#' @examples
+#' \dontrun{
+#' cohorts <- getCohortsJsonAndSql(packageName = 'cohortDiagnostics',
+#'                                 baseUrl = "http://server.org:80/WebAPI")
+#' }
+#' 
 #' @export
-manageCohortsForExecution <- function(packageName = NULL,
-                                   cohortToCreateFile = "settings/CohortsToCreate.csv",
-                                   baseUrl = NULL,
-                                   cohortSetReference = NULL,
-                                   cohortIds = NULL) {
+getCohortsJsonAndSql <- function(packageName = NULL,
+                                 cohortToCreateFile = "settings/CohortsToCreate.csv",
+                                 baseUrl = NULL,
+                                 cohortSetReference = NULL,
+                                 cohortIds = NULL) {
   # Input parameters check
   ParallelLogger::logInfo("Beginning cohort input parameter checks")
   errorMessage <- checkmate::makeAssertCollection()
@@ -138,9 +147,9 @@ manageCohortsForExecution <- function(packageName = NULL,
   }
   
   if (!is.null(packageName)) {
-    cohorts <- manageCohortsForExecutionFromPackage(packageName = packageName, 
-                                                    cohortToCreateFile = cohortToCreateFile,
-                                                    cohortIds = cohortIds)
+    cohorts <- getCohortsJsonAndSqlFromPackage(packageName = packageName, 
+                                               cohortToCreateFile = cohortToCreateFile,
+                                               cohortIds = cohortIds)
     if (!is.null(baseUrl)) {
       baseUrl <- NULL
       ParallelLogger::logInfo("[Package mode] Ignoring parameter baseUrl because packageName is provided.\n",
@@ -152,10 +161,10 @@ manageCohortsForExecution <- function(packageName = NULL,
                               "Overiding user parameter cohortSetReference - setting to NULL")
     }
   } else {
-    cohorts <- manageCohortsForExecutionFromWebApi(baseUrl = baseUrl,
-                                                   cohortSetReference = cohortSetReference,
-                                                   cohortIds = cohortIds
-                                                   )
+    cohorts <- getCohortsJsonAndSqlFromWebApi(baseUrl = baseUrl,
+                                              cohortSetReference = cohortSetReference,
+                                              cohortIds = cohortIds
+    )
   }
   checkmate::reportAssertions(collection = errorMessage)
   return(cohorts)
@@ -301,7 +310,7 @@ instantiateCohort <- function(connectionDetails = NULL,
   if (is.null(cohortJson)) {
     ParallelLogger::logInfo("Retrieving cohort definition from WebAPI")
     cohortDefinition <- ROhdsiWebApi::getCohortDefinition(cohortId = cohortId,
-                                                                    baseUrl = baseUrl)
+                                                          baseUrl = baseUrl)
     cohortDefinition <- cohortDefinition$expression
     cohortSql <- ROhdsiWebApi::getCohortSql(cohortDefinition = cohortDefinition,
                                             baseUrl = baseUrl,
@@ -575,6 +584,8 @@ processInclusionStats <- function(inclusion,
 #' @param incremental                 Create only cohorts that haven't been created before?
 #' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
 #'                                    of which definition has been executed.
+#' @return
+#' A data frame with cohort counts                                    
 #'
 #' @export
 instantiateCohortSet <- function(connectionDetails = NULL,
@@ -632,11 +643,11 @@ instantiateCohortSet <- function(connectionDetails = NULL,
     }
   }
   
-  cohorts <- manageCohortsForExecution(packageName = packageName,
-                                       cohortToCreateFile = cohortToCreateFile,
-                                       baseUrl = baseUrl,
-                                       cohortSetReference = cohortSetReference, 
-                                       cohortIds = cohortIds)
+  cohorts <- getCohortsJsonAndSql(packageName = packageName,
+                                  cohortToCreateFile = cohortToCreateFile,
+                                  baseUrl = baseUrl,
+                                  cohortSetReference = cohortSetReference, 
+                                  cohortIds = cohortIds)
   
   if (incremental) {
     cohorts$checksum <- computeChecksum(cohorts$sql)

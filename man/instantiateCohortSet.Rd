@@ -79,6 +79,9 @@ already exists this will be skipped.}
 \item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
 of which definition has been executed.}
 }
+\value{
+A data frame with cohort counts
+}
 \description{
 This function instantiates a set of cohort in the cohort table, using definitions that are fetched from a WebApi interface.
 Optionally, the inclusion rule statistics are computed and stored in the \code{inclusionStatisticsFolder}.
