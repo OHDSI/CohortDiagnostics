@@ -101,8 +101,8 @@ runCohortDiagnostics <- function(packageName = NULL,
   checkmate::assertLogical(runCohortCharacterization, add = errorMessage)
   
   if (any(runInclusionStatistics, runIncludedSourceConcepts, runOrphanConcepts, 
-         runTimeDistributions, runBreakdownIndexEvents, runIncidenceRate,
-         runCohortOverlap, runCohortCharacterization)) {
+          runTimeDistributions, runBreakdownIndexEvents, runIncidenceRate,
+          runCohortOverlap, runCohortCharacterization)) {
     checkmate::assertCharacter(x = cdmDatabaseSchema, min.len = 1, add = errorMessage)
     checkmate::assertCharacter(x = cohortDatabaseSchema, min.len = 1, add = errorMessage)
     checkmate::assertCharacter(x = cohortTable, min.len = 1, add = errorMessage)
@@ -125,13 +125,13 @@ runCohortDiagnostics <- function(packageName = NULL,
     checkmate::assertDirectory(x = inclusionStatisticsFolder, access = 'x')
   }
   checkmate::reportAssertions(collection = errorMessage)
-
-  cohorts <- manageCohortsForExecution(packageName = packageName,
-                                       cohortToCreateFile = cohortToCreateFile,
-                                       baseUrl = baseUrl,
-                                       cohortSetReference = cohortSetReference,
-                                       cohortIds = cohortIds)
-
+  
+  cohorts <- getCohortsJsonAndSql(packageName = packageName,
+                                  cohortToCreateFile = cohortToCreateFile,
+                                  baseUrl = baseUrl,
+                                  cohortSetReference = cohortSetReference,
+                                  cohortIds = cohortIds)
+  
   # # set up connection to server
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
