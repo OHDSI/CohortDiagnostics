@@ -86,35 +86,59 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  minCellCount = 5,
                                  incremental = FALSE,
                                  incrementalFolder = exportFolder) {
+  
   start <- Sys.time()
-  if (!file.exists(exportFolder)) {
-    dir.create(exportFolder, recursive = TRUE)
+  ParallelLogger::logInfo("Run Cohort Diagnostics started at ", start)
+  
+  errorMessage <- checkmate::makeAssertCollection()
+  checkmate::assertLogical(runInclusionStatistics, add = errorMessage)
+  checkmate::assertLogical(runIncludedSourceConcepts, add = errorMessage)
+  checkmate::assertLogical(runOrphanConcepts, add = errorMessage)
+  checkmate::assertLogical(runTimeDistributions, add = errorMessage)
+  checkmate::assertLogical(runBreakdownIndexEvents, add = errorMessage)
+  checkmate::assertLogical(runIncidenceRate, add = errorMessage)
+  checkmate::assertLogical(runCohortOverlap, add = errorMessage)
+  checkmate::assertLogical(runCohortCharacterization, add = errorMessage)
+  
+  if (any(runInclusionStatistics, runIncludedSourceConcepts, runOrphanConcepts, 
+          runTimeDistributions, runBreakdownIndexEvents, runIncidenceRate,
+          runCohortOverlap, runCohortCharacterization)) {
+    checkmate::assertCharacter(x = cdmDatabaseSchema, min.len = 1, add = errorMessage)
+    checkmate::assertCharacter(x = cohortDatabaseSchema, min.len = 1, add = errorMessage)
+    checkmate::assertCharacter(x = cohortTable, min.len = 1, add = errorMessage)
+    checkmate::assertCharacter(x = databaseId, min.len = 1, add = errorMessage)
+    checkmate::assertCharacter(x = databaseDescription, min.len = 1, add = errorMessage)
   }
   
-  if (incremental) {
-    if (is.null(incrementalFolder)) {
-      stop("Must specify incrementalFolder when incremental = TRUE")
-    }
-    if (!file.exists(incrementalFolder)) {
-      dir.create(incrementalFolder, recursive = TRUE)
-    }
+  minCellCount <- utils::type.convert(minCellCount)
+  checkmate::assertInteger(x = minCellCount, lower = 0, add = errorMessage)
+  checkmate::assertLogical(incremental, add = errorMessage)
+  checkmate::reportAssertions(collection = errorMessage)
+  
+  # checking folders
+  createIfNotExist(type = 'folder', name = exportFolder)
+  checkmate::assertDirectory(x = exportFolder, access = 'x')
+  createIfNotExist(type = 'folder', name = incrementalFolder)
+  checkmate::assertDirectory(x = incrementalFolder, access = 'x')
+  if (isTRUE(runInclusionStatistics)) {
+    createIfNotExist(type = 'folder', name = inclusionStatisticsFolder)
+    checkmate::assertDirectory(x = inclusionStatisticsFolder, access = 'x')
   }
+  checkmate::reportAssertions(collection = errorMessage)
   
+  cohorts <- getCohortsJsonAndSql(packageName = packageName,
+                                  cohortToCreateFile = cohortToCreateFile,
+                                  baseUrl = baseUrl,
+                                  cohortSetReference = cohortSetReference,
+                                  cohortIds = cohortIds)
   
+  # # set up connection to server
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
   
-  if (is.null(packageName)) {
-    cohorts <- loadCohortsFromWebApi(baseUrl = baseUrl,
-                                     cohortSetReference = cohortSetReference,
-                                     cohortIds = cohortIds)
-  } else {
-    cohorts <- loadCohortsFromPackage(packageName = packageName,
-                                      cohortToCreateFile = cohortToCreateFile,
-                                      cohortIds = cohortIds)
-  }
+  ##############################
   
   writeToCsv(cohorts, file.path(exportFolder, "cohort.csv"))
   
@@ -122,6 +146,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     cohorts$checksum <- computeChecksum(cohorts$sql)
     recordKeepingFile <- file.path(incrementalFolder, "CreatedDiagnostics.csv")
   }
+  
   
   ParallelLogger::logInfo("Saving database metadata")
   database <- tibble::tibble(databaseId = databaseId,
@@ -136,6 +161,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                     task = "getCohortCounts", 
                                     incremental = incremental, 
                                     recordKeepingFile = recordKeepingFile)
+  
   if (nrow(subset) > 0) {
     counts <- getCohortCounts(connection = connection,
                               cohortDatabaseSchema = cohortDatabaseSchema,
@@ -493,18 +519,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                 attr(delta, "units")))
 }
 
-writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
-  colnames(data) <- SqlRender::camelCaseToSnakeCase(colnames(data))
-  if (incremental) {
-    params <- list(...)
-    names(params) <- SqlRender::camelCaseToSnakeCase(names(params))
-    params$data = data
-    params$fileName = fileName
-    do.call(saveIncremental, params)
-  } else {
-    readr::write_csv(data, fileName)
-  }
-}
+
 
 swapColumnContents <- function(df, column1 = "targetId", column2 = "comparatorId") {
   temp <- df[, column1]
@@ -512,6 +527,7 @@ swapColumnContents <- function(df, column1 = "targetId", column2 = "comparatorId
   df[, column2] <- temp
   return(df)
 }
+
 
 enforceMinCellValue <- function(data, fieldName, minValues, silent = FALSE) {
   toCensor <- !is.na(data[, fieldName]) & data[, fieldName] < minValues & data[, fieldName] != 0
@@ -788,78 +804,4 @@ runConceptSetDiagnostics <- function(connection,
                                 attr(delta, "units")))
 }
 
-subsetToRequiredCohorts <- function(cohorts, task, incremental, recordKeepingFile) {
-  if (incremental) {
-    tasks <- getRequiredTasks(cohortId = cohorts$cohortId,
-                              task = task,
-                              checksum = cohorts$checksum,
-                              recordKeepingFile = recordKeepingFile)
-    return(cohorts[cohorts$cohortId %in% tasks$cohortId, ])
-  } else {
-    return(cohorts)
-  }
-}
 
-subsetToRequiredCombis <- function(combis, task, incremental, recordKeepingFile) {
-  if (incremental) {
-    tasks <- getRequiredTasks(cohortId = combis$targetCohortId,
-                              comparatorId = combis$comparatorCohortId,
-                              task = task,
-                              checksum = combis$checksum,
-                              recordKeepingFile = recordKeepingFile)
-    return(merge(combis, tibble::tibble(targetCohortId = tasks$cohortId, comparatorCohortId = tasks$comparatorId)))
-  } else {
-    return(combis)
-  }
-}
-
-loadCohortsFromPackage <- function(packageName, cohortToCreateFile, cohortIds) {
-  pathToCsv <- system.file(cohortToCreateFile, package = packageName)
-  cohorts <- readr::read_csv(pathToCsv, col_types = readr::cols())
-  cohorts$atlasId <- NULL
-  if (!is.null(cohortIds)) {
-    cohorts <- cohorts[cohorts$cohortId %in% cohortIds, ]
-  }
-  if ("atlasName" %in% colnames(cohorts)) {
-    cohorts <- dplyr::rename(cohorts, cohortName = "name", cohortFullName = "atlasName")
-  } else {
-    cohorts <- dplyr::rename(cohorts, cohortName = "name", cohortFullName = "fullName")
-  }
-  
-  getSql <- function(name) {
-    pathToSql <- system.file("sql", "sql_server", paste0(name, ".sql"), package = packageName)
-    sql <- readChar(pathToSql, file.info(pathToSql)$size)
-    return(sql)
-  }
-  cohorts$sql <- sapply(cohorts$cohortName, getSql)
-  getJson <- function(name) {
-    pathToJson <- system.file("cohorts", paste0(name, ".json"), package = packageName)
-    json <- readChar(pathToJson, file.info(pathToJson)$size)
-    return(json)
-  }
-  cohorts$json <- sapply(cohorts$cohortName, getJson)
-  return(cohorts)
-}
-
-loadCohortsFromWebApi <- function(baseUrl,
-                                  cohortSetReference,
-                                  cohortIds = NULL,
-                                  generateStats = TRUE) {
-  cohorts <- cohortSetReference
-  if (!is.null(cohortIds)) {
-    cohorts <- cohorts[cohorts$cohortId %in% cohortIds, ]
-  }
-  cohorts <- dplyr::rename(cohorts, cohortName = "name", cohortFullName = "atlasName")
-  ParallelLogger::logInfo("Retrieving cohort definitions from WebAPI")
-  for (i in 1:nrow(cohorts)) {
-    ParallelLogger::logInfo("- Retrieving definitions for cohort ", cohorts$cohortFullName[i])
-    cohortDefinition <-  ROhdsiWebApi::getCohortDefinition(cohortId = cohorts$atlasId[i],
-                                                           baseUrl = baseUrl)
-    cohorts$json[i] <- RJSONIO::toJSON(cohortDefinition$expression)
-    cohorts$sql[i] <- ROhdsiWebApi::getCohortSql(cohortDefinition = cohortDefinition,
-                                                 baseUrl = baseUrl,
-                                                 generateStats = generateStats)
-  }
-  cohorts$atlasId <- NULL
-  return(cohorts)
-}
