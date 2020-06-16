@@ -16,6 +16,7 @@ Depends:
 	DatabaseConnector (>= 3.0.0)
 Imports:
   Andromeda,
+  checkmate,
   digest,
   dplyr,
   FeatureExtraction (>= 3.0.0),

@@ -14,6 +14,164 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+getCohortsJsonAndSqlFromPackage <- function(packageName = packageName,
+                                            cohortToCreateFile = cohortToCreateFile,
+                                            cohortIds = cohortIds,
+                                            errorMessage = NULL) {
+  ParallelLogger::logInfo("Executing on cohorts specified in package - ", packageName)
+  
+  if (is.null(errorMessage) | !class(errorMessage) == 'AssertColection') {
+    errorMessage <- checkmate::makeAssertCollection()
+  }
+  checkmate::assertCharacter(x = packageName, min.len = 1, max.len = 1, add = errorMessage)
+  pathToCsv <- system.file(cohortToCreateFile, package = packageName)
+  checkmate::assertFileExists(x = system.file(cohortToCreateFile, package = packageName), 
+                              access = "r", 
+                              extension = "csv", 
+                              add = errorMessage)
+  
+  cohorts <- readr::read_csv(pathToCsv, col_types = readr::cols()) %>%
+    dplyr::filter(!.data$cohortId %in% cohortIds)
+  
+  checkmate::assertDataFrame(x = cohorts, 
+                             types = c("integer", "character","numeric"),
+                             any.missing = FALSE,
+                             min.rows = 1,
+                             min.cols = 4,
+                             null.ok = FALSE,
+                             col.names = "named",
+                             add = errorMessage)
+  checkmate::assertNames(x = names(cohorts),subset.of =  c("atlasName", "atlasId", "cohortId", "name"))
+  checkmate::reportAssertions(collection = errorMessage)
+  
+  cohorts = cohorts %>% 
+    dplyr::select(-.data$atlasId) %>% 
+    dplyr::rename(cohortFullName = .data$atlasName, cohortName = .data$name)
+  
+  getSql <- function(name) {
+    pathToSql <- system.file("sql", "sql_server", paste0(name, ".sql"), package = packageName)
+    checkmate::assertFile(x = pathToSql, access = "r", extension = ".sql", add = errorMessage)
+    sql <- readChar(pathToSql, file.info(pathToSql)$size)
+    return(sql)
+  }
+  cohorts$sql <- sapply(cohorts$cohortName, getSql)
+  getJson <- function(name) {
+    pathToJson <- system.file("cohorts", paste0(name, ".json"), package = packageName)
+    checkmate::assertFile(x = pathToJson, access = "r", extension = ".sql", add = errorMessage)
+    json <- readChar(pathToJson, file.info(pathToJson)$size)
+    return(json)
+  }
+  cohorts$json <- sapply(cohorts$cohortName, getJson)
+  return(cohorts)
+}
+
+
+
+getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
+                                           cohortSetReference = cohortSetReference,
+                                           cohortIds = cohortIds,
+                                           errorMessage = NULL) {
+  ParallelLogger::logInfo("[WebApi mode] Running Cohort Diagnostics on cohort specified in WebApi - ", baseUrl)
+  
+  if (is.null(errorMessage) | !class(errorMessage) == 'AssertColection') {
+    errorMessage <- checkmate::makeAssertCollection()
+  }
+  checkmate::assertCharacter(x = baseUrl, min.chars = "1", add = errorMessage)
+  webApiVersion <- ROhdsiWebApi::getWebApiVersion(baseUrl)
+  ParallelLogger::logInfo("WebApi of version ", webApiVersion, " found at ", baseUrl)
+  checkmate::assertCharacter(x = webApiVersion, min.chars = 1, add = errorMessage)
+  checkmate::assertDataFrame(x = cohortSetReference, 
+                             types = c("character","numeric"),
+                             any.missing = FALSE,
+                             min.rows = 1,
+                             ncols = 4,
+                             null.ok = FALSE,
+                             col.names = "named",
+                             add = errorMessage)
+  checkmate::assertNames(x = names(cohortSetReference),subset.of =  c("atlasName", "atlasId", "cohortId", "name"))
+  checkmate::reportAssertions(collection = errorMessage)
+  cohorts <- cohortSetReference %>%
+    dplyr::filter(!.data$cohortId %in% cohortIds)
+  
+  ParallelLogger::logInfo("Retrieving cohort definitions from WebAPI")
+  for (i in 1:nrow(cohorts)) {
+    cohort <- cohorts %>% dplyr::slice(i)
+    ParallelLogger::logInfo("- Retrieving definitions for cohort ", cohort$cohortFullName)
+    cohortDefinition <-  ROhdsiWebApi::getCohortDefinition(cohortId = cohort$atlasId,
+                                                           baseUrl = baseUrl)
+    cohorts$json[i] <- RJSONIO::toJSON(cohortDefinition$expression)
+    cohorts$sql[i] <- ROhdsiWebApi::getCohortSql(cohortDefinition = cohortDefinition,
+                                                 baseUrl = baseUrl,
+                                                 generateStats = TRUE)
+  }
+  checkmate::reportAssertions(collection = errorMessage)
+  return(cohorts)
+}
+
+#' Get cohorts JSON and parameterized OHDSI SQL
+#'
+#' @description
+#' This function may be used to collect a cohorts JSON and OHDSI SQL. Based on whether a
+#' baseUrl is available, the function will collect the specifications from either from
+#' WebApi or a Package. 
+#'
+#' @template CohortSetSpecs
+#' 
+#' @template CohortSetReference
+#' 
+#' @param cohortIds                   Optionally, provide a subset of cohort IDs to restrict the
+#'                                    diagnostics to.
+#' @return 
+#' The function will return a R list object with cohort information including specifications 
+#' such as JSON and SQL.
+#'
+#' @examples
+#' \dontrun{
+#' cohorts <- getCohortsJsonAndSql(packageName = 'cohortDiagnostics',
+#'                                 baseUrl = "http://server.org:80/WebAPI")
+#' }
+#' 
+#' @export
+getCohortsJsonAndSql <- function(packageName = NULL,
+                                 cohortToCreateFile = "settings/CohortsToCreate.csv",
+                                 baseUrl = NULL,
+                                 cohortSetReference = NULL,
+                                 cohortIds = NULL) {
+  # Input parameters check
+  ParallelLogger::logInfo("Beginning cohort input parameter checks")
+  errorMessage <- checkmate::makeAssertCollection()
+  
+  if (!is.null(cohortIds)) {
+    checkmate::assertInteger(x = cohortIds, any.missing = FALSE, min.len = 1, unique = TRUE, add = errorMessage)
+    
+  }
+  
+  if (!is.null(packageName)) {
+    cohorts <- getCohortsJsonAndSqlFromPackage(packageName = packageName, 
+                                               cohortToCreateFile = cohortToCreateFile,
+                                               cohortIds = cohortIds)
+    if (!is.null(baseUrl)) {
+      baseUrl <- NULL
+      ParallelLogger::logInfo("[Package mode] Ignoring parameter baseUrl because packageName is provided.\n",
+                              "Overiding user parameter baseUrl - setting to NULL")
+    }
+    if (!is.null(cohortSetReference)) {
+      cohortSetReference <- NULL
+      ParallelLogger::logInfo("Ignoring parameter cohortSetReference because packageName is provided.\n",
+                              "Overiding user parameter cohortSetReference - setting to NULL")
+    }
+  } else {
+    cohorts <- getCohortsJsonAndSqlFromWebApi(baseUrl = baseUrl,
+                                              cohortSetReference = cohortSetReference,
+                                              cohortIds = cohortIds
+    )
+  }
+  checkmate::reportAssertions(collection = errorMessage)
+  return(cohorts)
+}
+
+
+
 #' Create cohort table(s)
 #'
 #' @description
@@ -152,7 +310,7 @@ instantiateCohort <- function(connectionDetails = NULL,
   if (is.null(cohortJson)) {
     ParallelLogger::logInfo("Retrieving cohort definition from WebAPI")
     cohortDefinition <- ROhdsiWebApi::getCohortDefinition(cohortId = cohortId,
-                                                                    baseUrl = baseUrl)
+                                                          baseUrl = baseUrl)
     cohortDefinition <- cohortDefinition$expression
     cohortSql <- ROhdsiWebApi::getCohortSql(cohortDefinition = cohortDefinition,
                                             baseUrl = baseUrl,
@@ -426,6 +584,8 @@ processInclusionStats <- function(inclusion,
 #' @param incremental                 Create only cohorts that haven't been created before?
 #' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
 #'                                    of which definition has been executed.
+#' @return
+#' A data frame with cohort counts                                    
 #'
 #' @export
 instantiateCohortSet <- function(connectionDetails = NULL,
@@ -483,16 +643,11 @@ instantiateCohortSet <- function(connectionDetails = NULL,
     }
   }
   
-  if (is.null(packageName)) {
-    cohorts <- loadCohortsFromWebApi(baseUrl = baseUrl,
-                                     cohortSetReference = cohortSetReference,
-                                     cohortIds = cohortIds,
-                                     generateStats = generateInclusionStats)
-  } else {
-    cohorts <- loadCohortsFromPackage(packageName = packageName,
-                                      cohortToCreateFile = cohortToCreateFile,
-                                      cohortIds = cohortIds)
-  }
+  cohorts <- getCohortsJsonAndSql(packageName = packageName,
+                                  cohortToCreateFile = cohortToCreateFile,
+                                  baseUrl = baseUrl,
+                                  cohortSetReference = cohortSetReference, 
+                                  cohortIds = cohortIds)
   
   if (incremental) {
     cohorts$checksum <- computeChecksum(cohorts$sql)
