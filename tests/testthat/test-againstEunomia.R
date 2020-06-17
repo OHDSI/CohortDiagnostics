@@ -3,7 +3,7 @@ library(testthat)
 library(CohortDiagnostics)
 library(Eunomia)
 
-connectionDetails <- getEunomiaConnectionDetails()
+connectionDetails <- Eunomia::getEunomiaConnectionDetails()
 cdmDatabaseSchema <- "main"
 cohortDatabaseSchema <- "main"
 cohortTable <- "cohort"
@@ -12,7 +12,7 @@ folder <- tempfile()
 dir.create(folder, recursive = TRUE)
 
 test_that("Cohort instantiation", {
-  instantiateCohortSet(connectionDetails = connectionDetails,
+  CohortDiagnostics::instantiateCohortSet(connectionDetails = connectionDetails,
                        cdmDatabaseSchema = cdmDatabaseSchema,
                        oracleTempSchema = oracleTempSchema,
                        cohortDatabaseSchema = cohortDatabaseSchema,
@@ -24,17 +24,16 @@ test_that("Cohort instantiation", {
                        inclusionStatisticsFolder = file.path(folder, "incStats"))
 
 
-  connection <- connect(connectionDetails)
+  connection <- DatabaseConnector::connect(connectionDetails)
   sql <- "SELECT COUNT(*) AS cohort_count, cohort_definition_id FROM @cohort_database_schema.@cohort_table GROUP BY cohort_definition_id;"
-  counts <- renderTranslateQuerySql(connection, sql, cohort_database_schema = cohortDatabaseSchema, cohort_table = cohortTable, snakeCaseToCamelCase = TRUE)
-  expect_gt(nrow(counts), 2)
-  disconnect(connection)
+  counts <- DatabaseConnector::renderTranslateQuerySql(connection, sql, cohort_database_schema = cohortDatabaseSchema, cohort_table = cohortTable, snakeCaseToCamelCase = TRUE)
+  testthat::expect_gt(nrow(counts), 2)
+  DatabaseConnector::disconnect(connection)
 })
 
 test_that("Cohort diagnostics in incremental mode", {
-  # Note: incidence rates disabled because curently failing (probably due to 0 count):
   firstTime <- system.time(
-    runCohortDiagnostics(connectionDetails = connectionDetails,
+    CohortDiagnostics::runCohortDiagnostics(connectionDetails = connectionDetails,
                          cdmDatabaseSchema = cdmDatabaseSchema,
                          oracleTempSchema = oracleTempSchema,
                          cohortDatabaseSchema = cohortDatabaseSchema,
@@ -56,10 +55,10 @@ test_that("Cohort diagnostics in incremental mode", {
                          incrementalFolder = file.path(folder, "incremental"))
   )
 
-  expect_true(file.exists(file.path(folder, "export", "Results_Eunomia.zip")))
+  testthat::expect_true(file.exists(file.path(folder, "export", "Results_Eunomia.zip")))
 
   secondTime <- system.time(
-    runCohortDiagnostics(connectionDetails = connectionDetails,
+    CohortDiagnostics::runCohortDiagnostics(connectionDetails = connectionDetails,
                          cdmDatabaseSchema = cdmDatabaseSchema,
                          oracleTempSchema = oracleTempSchema,
                          cohortDatabaseSchema = cohortDatabaseSchema,
@@ -73,15 +72,14 @@ test_that("Cohort diagnostics in incremental mode", {
                          runBreakdownIndexEvents = TRUE,
                          runCohortCharacterization = TRUE,
                          runCohortOverlap = TRUE,
-                         runIncidenceRate = FALSE,
+                         runIncidenceRate = TRUE,
                          runIncludedSourceConcepts = TRUE,
                          runOrphanConcepts = TRUE,
                          runTimeDistributions = TRUE,
                          incremental = TRUE,
                          incrementalFolder = file.path(folder, "incremental"))
   )
-
-  expect_lt(secondTime[1], firstTime[1])
+  testthat::expect_lt(secondTime[1], firstTime[1])
 })
 
 unlink(folder, recursive = TRUE)

@@ -78,7 +78,7 @@ getIncidenceRate <- function(connectionDetails = NULL,
                                            dbms = connection@dbms,
                                            cdm_database_schema = cdmDatabaseSchema)
   yearRange <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
-  calendarYears <- data.frame(calendarYear = seq(yearRange$startYear, yearRange$endYear, by = 1))
+  calendarYears <- tidyr::tibble(calendarYear = seq(yearRange$startYear, yearRange$endYear, by = 1))
   DatabaseConnector::insertTable(connection = connection,
                                  tableName = "#calendar_years",
                                  data = calendarYears,
@@ -114,8 +114,8 @@ getIncidenceRate <- function(connectionDetails = NULL,
                                                oracleTempSchema = oracleTempSchema)
   
   irYearAgeGender <- recode(ratesSummary)
-  irOverall <- data.frame(cohortCount = sum(irYearAgeGender$cohortCount),
-                          personYears = sum(irYearAgeGender$personYears))
+  irOverall <- tidyr::tibble(cohortCount = sum(irYearAgeGender$cohortCount),
+                             personYears = sum(irYearAgeGender$personYears))
   irGender <- aggregateIr(irYearAgeGender, list(gender = irYearAgeGender$gender))
   irAge <- aggregateIr(irYearAgeGender, list(ageGroup = irYearAgeGender$ageGroup))
   irAgeGender <- aggregateIr(irYearAgeGender, list(ageGroup = irYearAgeGender$ageGroup,
@@ -145,14 +145,19 @@ recode <- function(ratesSummary) {
   ratesSummary$ageGroup <- paste(10 * ratesSummary$ageGroup, 10 * ratesSummary$ageGroup + 9, sep = "-")
   ratesSummary$gender <- tolower(ratesSummary$gender)
   substr(ratesSummary$gender, 1, 1) <- toupper(substr(ratesSummary$gender, 1, 1) ) 
-  return(ratesSummary)
+  return(tidyr::tibble(ratesSummary))
 }
 
 aggregateIr <- function(ratesSummary, aggregateList) {
-  return(aggregate(cbind(cohortCount = ratesSummary$cohortCount,
-                         personYears = ratesSummary$personYears), 
-                   by = aggregateList, 
-                   FUN = sum))
+  if (nrow(ratesSummary) > 0) {
+    return(aggregate(cbind(cohortCount = ratesSummary$cohortCount,
+                           personYears = ratesSummary$personYears), 
+                     by = aggregateList, 
+                     FUN = sum)) 
+  } else {
+    return(tidyr::tibble())
+  }
+
 }
 
 filterIncidenceRateData <- function(incidenceRate, stratifyByAge, stratifyByGender, stratifyByCalendarYear, minPersonYears) {
