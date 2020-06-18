@@ -28,7 +28,8 @@ Imports:
   ROhdsiWebApi (>= 1.0.0),
   SqlRender (>= 1.6.7),
   stringr,
-  tibble
+  tibble,
+  tidyr
 Suggests:
   DT,
   Eunomia,
