@@ -1,6 +1,6 @@
-library(shiny)
-library(shinydashboard)
-library(DT)
+#library(shiny)
+#library(shinydashboard)
+#library(DT)
 
 addInfo <- function(item, infoId) {
   infoTag <- tags$small(
@@ -15,98 +15,107 @@ addInfo <- function(item, infoId) {
   return(item)
 }
 
-
 #header name
 header <-
-  dashboardHeader(title = "Cohort Diagnostics", titleWidth = NULL)
+  shinydashboard::dashboardHeader(title = "Cohort Diagnostics", titleWidth = NULL)
 
 #sidebarMenu
 sidebarMenu <-
-  sidebarMenu(
+  shinydashboard::sidebarMenu(
     id = "tabs",
     if (exists("cohortCount"))
       addInfo(
-        menuItem("Cohort Counts", tabName = "cohortCounts"),
-        "cohortCountsInfo"
+        item = shinydashboard::menuItem(text = "Cohort Counts", tabName = "cohortCounts"),
+        infoId = "cohortCountsInfo"
       ),
     if (exists("incidenceRate"))
       addInfo(
-        menuItem("Incidence Rate", tabName = "incidenceRate"),
-        "incidenceRateInfo"
+        item = shinydashboard::menuItem(text = "Incidence Rate", tabName = "incidenceRate"),
+        infoId = "incidenceRateInfo"
       ),
     if (exists("timeDistribution"))
       addInfo(
-        menuItem("Time Distributions", tabName = "timeDistribution"),
-        "timeDistributionInfo"
+        item = shinydashboard::menuItem(text = "Time Distributions", tabName = "timeDistribution"),
+        infoId = "timeDistributionInfo"
       ),
     if (exists("includedSourceConcept"))
       addInfo(
-        menuItem("Included (Source) Concepts", tabName = "includedConcepts"),
-        "includedConceptsInfo"
+        item = shinydashboard::menuItem(text = "Included (Source) Concepts", tabName = "includedConcepts"),
+        infoId = "includedConceptsInfo"
       ),
     if (exists("orphanConcept"))
       addInfo(
-        menuItem("Orphan (Source) Concepts", tabName = "orphanConcepts"),
-        "orphanConceptsInfo"
+        item = shinydashboard::menuItem(text = "Orphan (Source) Concepts", tabName = "orphanConcepts"),
+        infoId = "orphanConceptsInfo"
       ),
     if (exists("inclusionRuleStats"))
       addInfo(
-        menuItem("Inclusion Rule Statistics", tabName = "inclusionRuleStats"),
-        "inclusionRuleStatsInfo"
+        item = shinydashboard::menuItem(text = "Inclusion Rule Statistics", tabName = "inclusionRuleStats"),
+        infoId = "inclusionRuleStatsInfo"
       ),
     if (exists("indexEventBreakdown"))
       addInfo(
-        menuItem("Index Event Breakdown", tabName = "indexEventBreakdown"),
-        "indexEventBreakdownInfo"
+        item = shinydashboard::menuItem(text = "Index Event Breakdown", tabName = "indexEventBreakdown"),
+        infoId = "indexEventBreakdownInfo"
       ),
     if (exists("covariateValue"))
       addInfo(
-        menuItem("Cohort Characterization", tabName = "cohortCharacterization"),
-        "cohortCharacterizationInfo"
+        shinydashboard::menuItem(text = "Cohort Characterization", tabName = "cohortCharacterization"),
+        infoId = "cohortCharacterizationInfo"
       ),
     if (exists("cohortOverlap"))
       addInfo(
-        menuItem("Cohort Overlap", tabName = "cohortOverlap"),
-        "cohortOverlapInfo"
+        shinydashboard::menuItem(text = "Cohort Overlap", tabName = "cohortOverlap"),
+        infoId = "cohortOverlapInfo"
       ),
     if (exists("covariateValue"))
       addInfo(
-        menuItem("Compare Cohort Char.", tabName = "compareCohortCharacterization"),
-        "compareCohortCharacterizationInfo"
+        item = shinydashboard::menuItem(text = "Compare Cohort Char.", tabName = "compareCohortCharacterization"),
+        infoId = "compareCohortCharacterizationInfo"
       ),
-    menuItem("Database information", tabName = "databaseInformation"),
-    conditionalPanel(
+    shinydashboard::menuItem(text = "Database information", tabName = "databaseInformation"),
+    shiny::conditionalPanel(
       condition = "input.tabs!='incidenceRate' & input.tabs!='timeDistribution' & input.tabs!='cohortCharacterization' & input.tabs!='cohortCounts' & input.tabs!='indexEventBreakdown' & input.tabs!='databaseInformation'",
-      selectInput("database", "Database", database$databaseId, selectize = FALSE)
+      shiny::selectInput(
+        inputId = "database",
+        label = "Database",
+        choices = database$databaseId,
+        selectize = FALSE
+      )
     ),
-    conditionalPanel(
+    shiny::conditionalPanel(
       condition = "input.tabs=='incidenceRate' | input.tabs=='timeDistribution' | input.tabs=='cohortCharacterization' | input.tabs=='cohortCounts' | input.tabs=='indexEventBreakdown'",
-      checkboxGroupInput(
-        "databases",
-        "Database",
-        database$databaseId,
+      shiny::checkboxGroupInput(
+        inputId = "databases",
+        label = "Database",
+        choices = database$databaseId,
         selected = database$databaseId[1]
       )
     ),
-    conditionalPanel(
+    shiny::conditionalPanel(
       condition = "input.tabs!='cohortCounts' & input.tabs!='databaseInformation'",
-      selectInput(
-        "cohort",
-        "Cohort (Target)",
+      shiny::selectInput(
+        inputId = "cohort",
+        label = "Cohort (Target)",
         choices = cohort$cohortFullName,
         selectize = FALSE
       )
     ),
-    conditionalPanel(
+    shiny::conditionalPanel(
       condition = "input.tabs=='includedConcepts' | input.tabs=='orphanConcepts'",
-      selectInput("conceptSet", "Concept Set", c(""), selectize = FALSE)
+      shiny::selectInput(
+        inputId = "conceptSet",
+        label = "Concept Set",
+        choices = c(""),
+        selectize = FALSE
+      )
     ),
-    conditionalPanel(
+    shiny::conditionalPanel(
       condition = "input.tabs=='cohortOverlap' | input.tabs=='compareCohortCharacterization'",
-      selectInput(
-        "comparator",
-        "Comparator",
-        cohort$cohortFullName,
+      shiny::selectInput(
+        inputId = "comparator",
+        label = "Comparator",
+        choices = cohort$cohortFullName,
         selectize = FALSE,
         selected = cohort$cohortFullName[min(2, nrow(cohort))]
       )
@@ -116,16 +125,16 @@ sidebarMenu <-
 
 #Side bar code
 sidebar <-
-  dashboardSidebar(sidebarMenu, width = NULL, collapsed = TRUE)
+  shinydashboard::dashboardSidebar(sidebarMenu, width = NULL, collapsed = TRUE)
 
 
 #body - items in tab
-bodyTabItems <- tabItems(
-  tabItem(tabName = "cohortCounts",
-          dataTableOutput("cohortCountsTable")),
-  tabItem(
+bodyTabItems <- shinydashboard::tabItems(
+  shinydashboard::tabItem(tabName = "cohortCounts",
+                          DT::dataTableOutput("cohortCountsTable")),
+  shinydashboard::tabItem(
     tabName = "incidenceRate",
-    box(
+    shinydashboard::box(
       title = "Incidence Rate",
       width = NULL,
       status = "primary",
@@ -133,7 +142,7 @@ bodyTabItems <- tabItems(
                  tags$tr(
                    tags$td(
                      valign = "bottom",
-                     checkboxGroupInput(
+                     shiny::checkboxGroupInput(
                        inputId = "irStratification",
                        label = "Stratify by",
                        choices = c("Age", "Gender", "Calendar Year"),
@@ -145,98 +154,102 @@ bodyTabItems <- tabItems(
                    tags$td(
                      valign = "bottom",
                      style = "text-align: right",
-                     checkboxInput("irYscaleFixed", "Use same y-scale across databases")
+                     shiny::checkboxInput("irYscaleFixed", "Use same y-scale across databases")
                    )
                  )),
-      htmlOutput("hoverInfoIr"),
-      plotOutput(
-        "incidenceRatePlot",
+      shiny::htmlOutput(outputId = "hoverInfoIr"),
+      shiny::plotOutput(
+        outputId = "incidenceRatePlot",
         height = 700,
-        hover = hoverOpts("plotHoverIr", delay = 100, delayType = "debounce")
+        hover = shiny::hoverOpts(
+          id = "plotHoverIr",
+          delay = 100,
+          delayType = "debounce"
+        )
       )
     )
   ),
-  tabItem(
+  shinydashboard::tabItem(
     tabName = "timeDistribution",
-    box(
+    shinydashboard::box(
       title = "Time Distributions",
       width = NULL,
       status = "primary",
-      plotOutput("timeDisPlot")
+      shiny::plotOutput("timeDisPlot")
     ),
-    box(
+    shinydashboard::box(
       title = "Time Distributions Table",
       width = NULL,
       status = "primary",
-      dataTableOutput("timeDistTable")
+      DT::dataTableOutput("timeDistTable")
     )
   ),
-  tabItem(
+  shinydashboard::tabItem(
     tabName = "includedConcepts",
-    radioButtons(
-      "includedType",
-      "",
-      c("Source Concepts", "Standard Concepts"),
+    shiny::radioButtons(
+      inputId = "includedType",
+      label = "",
+      choices = c("Source Concepts", "Standard Concepts"),
       selected = "Source Concepts",
       inline = TRUE
     ),
-    dataTableOutput("includedConceptsTable")
+    DT::dataTableOutput("includedConceptsTable")
   ),
-  tabItem(tabName = "orphanConcepts",
-          dataTableOutput("orphanConceptsTable")),
-  tabItem(tabName = "inclusionRuleStats",
-          dataTableOutput("inclusionRuleTable")),
-  tabItem(tabName = "indexEventBreakdown",
-          dataTableOutput("breakdownTable")),
-  tabItem(
+  shinydashboard::tabItem(tabName = "orphanConcepts",
+                          DT::dataTableOutput("orphanConceptsTable")),
+  shinydashboard::tabItem(tabName = "inclusionRuleStats",
+                          DT::dataTableOutput("inclusionRuleTable")),
+  shinydashboard::tabItem(tabName = "indexEventBreakdown",
+                          DT::dataTableOutput("breakdownTable")),
+  shinydashboard::tabItem(
     tabName = "cohortCharacterization",
-    radioButtons(
-      "charType",
-      "",
-      c("Pretty", "Raw"),
+    shiny::radioButtons(
+      inputId = "charType",
+      label = "",
+      choices = c("Pretty", "Raw"),
       selected = "Pretty",
       inline = TRUE
     ),
-    dataTableOutput("characterizationTable")
+    DT::dataTableOutput("characterizationTable")
   ),
-  tabItem(
+  shinydashboard::tabItem(
     tabName = "cohortOverlap",
-    box(
+    shinydashboard::box(
       title = "Cohort Overlap (Subjects)",
       width = NULL,
       status = "primary",
-      plotOutput("overlapPlot")
+      shiny::plotOutput("overlapPlot")
     ),
-    box(
+    shinydashboard::box(
       title = "Cohort Overlap Statistics",
       width = NULL,
       status = "primary",
-      dataTableOutput("overlapTable")
+      DT::dataTableOutput("overlapTable")
     )
   ),
-  tabItem(
+  shinydashboard::tabItem(
     tabName = "compareCohortCharacterization",
-    radioButtons(
-      "charCompareType",
-      "",
-      c("Pretty table", "Raw table", "Plot"),
+    shiny::radioButtons(
+      inputId = "charCompareType",
+      label = "",
+      choices = c("Pretty table", "Raw table", "Plot"),
       selected = "Pretty table",
       inline = TRUE
     ),
-    conditionalPanel(condition = "input.charCompareType=='Pretty table' | input.charCompareType=='Raw table'",
-                     dataTableOutput("charCompareTable")),
-    conditionalPanel(
+    shiny::conditionalPanel(condition = "input.charCompareType=='Pretty table' | input.charCompareType=='Raw table'",
+                            DT::dataTableOutput("charCompareTable")),
+    shiny::conditionalPanel(
       condition = "input.charCompareType=='Plot'",
-      box(
+      shinydashboard::box(
         title = "Compare Cohort Characterization",
         width = NULL,
         status = "primary",
-        htmlOutput("hoverInfoCharComparePlot"),
-        plotOutput(
-          "charComparePlot",
+        shiny::htmlOutput(outputId = "hoverInfoCharComparePlot"),
+        shiny::plotOutput(
+          outputId = "charComparePlot",
           height = 700,
-          hover = hoverOpts(
-            "plotHoverCharCompare",
+          hover = shiny::hoverOpts(
+            id = "plotHoverCharCompare",
             delay = 100,
             delayType = "debounce"
           )
@@ -244,15 +257,17 @@ bodyTabItems <- tabItems(
       )
     )
   ),
-  tabItem(tabName = "databaseInformation",
-          # uiOutput("databaseInformationPanel")
-          dataTableOutput("databaseInformationTable"))
+  shinydashboard::tabItem(tabName = "databaseInformation",
+                          # uiOutput("databaseInformationPanel")
+                          DT::dataTableOutput("databaseInformationTable"))
 )
+
+
 #body
-body <- dashboardBody(bodyTabItems)
+body <- shinydashboard::dashboardBody(bodyTabItems)
 
 
 #main
-dashboardPage(header = header,
-              sidebar = sidebar,
-              body = body)
+shinydashboard::dashboardPage(header = header,
+                              sidebar = sidebar,
+                              body = body)
