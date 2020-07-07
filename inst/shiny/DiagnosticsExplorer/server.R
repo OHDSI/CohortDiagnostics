@@ -1,12 +1,13 @@
-library(shiny)
-library(shinydashboard)
-library(DT)
+#library(shiny)
+#library(shinydashboard)
+#library(DT)
 source("PlotsAndTables.R")
+
 
 truncateStringDef <- function(columns, maxChars) {
   list(
     targets = columns,
-    render = JS(sprintf("function(data, type, row, meta) {\n
+    render = DT::JS(sprintf("function(data, type, row, meta) {\n
       return type === 'display' && data != null && data.length > %s ?\n
         '<span title=\"' + data + '\">' + data.substr(0, %s) + '...</span>' : data;\n
      }", maxChars, maxChars))
@@ -16,7 +17,7 @@ truncateStringDef <- function(columns, maxChars) {
 minCellCountDef <- function(columns) {
   list(
     targets = columns,
-    render = JS("function(data, type) {
+    render = DT::JS("function(data, type) {
     if (type !== 'display' || isNaN(parseFloat(data))) return data;
     if (data >= 0) return data.toString().replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,');
     return '<' + Math.abs(data).toString().replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,');
@@ -27,7 +28,7 @@ minCellCountDef <- function(columns) {
 minCellPercentDef <- function(columns) {
   list(
     targets = columns,
-    render = JS("function(data, type) {
+    render = DT::JS("function(data, type) {
     if (type !== 'display' || isNaN(parseFloat(data))) return data;
     if (data >= 0) return (100 * data).toFixed(1).replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,') + '%';
     return '<' + Math.abs(100 * data).toFixed(1).replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,') + '%';
@@ -38,7 +39,7 @@ minCellPercentDef <- function(columns) {
 minCellRealDef <- function(columns, digits = 1) {
   list(
     targets = columns,
-    render = JS(sprintf("function(data, type) {
+    render = DT::JS(sprintf("function(data, type) {
     if (type !== 'display' || isNaN(parseFloat(data))) return data;
     if (data >= 0) return data.toFixed(%s).replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,');
     return '<' + Math.abs(data).toFixed(%s).replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,');
@@ -47,28 +48,28 @@ minCellRealDef <- function(columns, digits = 1) {
 }
 
 styleAbsColorBar <- function(maxValue, colorPositive, colorNegative, angle = 90) {
-  JS(sprintf("isNaN(parseFloat(value))? '' : 'linear-gradient(%fdeg, transparent ' + (%f - Math.abs(value))/%f * 100 + '%%, ' + (value > 0 ? '%s ' : '%s ') + (%f - Math.abs(value))/%f * 100 + '%%)'", 
-             angle, maxValue, maxValue, colorPositive, colorNegative, maxValue, maxValue))
+  DT::JS(sprintf("isNaN(parseFloat(value))? '' : 'linear-gradient(%fdeg, transparent ' + (%f - Math.abs(value))/%f * 100 + '%%, ' + (value > 0 ? '%s ' : '%s ') + (%f - Math.abs(value))/%f * 100 + '%%)'", 
+                 angle, maxValue, maxValue, colorPositive, colorNegative, maxValue, maxValue))
 }
 
-shinyServer(function(input, output, session) {
+shiny::shinyServer(function(input, output, session) {
   
-  cohortId <- reactive({
+  cohortId <- shiny::reactive({
     return(cohort$cohortId[cohort$cohortFullName == input$cohort])
   })
   
-  comparatorCohortId <- reactive({
+  comparatorCohortId <- shiny::reactive({
     return(cohort$cohortId[cohort$cohortFullName == input$comparator])
   })
   
-  observe({
+  shiny::observe({
     subset <- unique(conceptSets$conceptSetName[conceptSets$cohortId == cohortId()])
-    updateSelectInput(session = session,
-                      inputId = "conceptSet",
-                      choices = subset)
+    shiny::updateSelectInput(session = session,
+                             inputId = "conceptSet",
+                             choices = subset)
   })
   
-  output$cohortCountsTable <- renderDataTable({
+  output$cohortCountsTable <- DT::renderDataTable({
     data <- cohortCount[cohortCount$databaseId %in% input$databases, ]
     if (nrow(data) == 0) {
       return(NULL)
@@ -108,30 +109,30 @@ shinyServer(function(input, output, session) {
                    info = TRUE,
                    columnDefs = list(minCellCountDef(1:(2*length(databaseIds)))))
     
-    dataTable <- datatable(table,
-                           options = options,
-                           rownames = FALSE,
-                           container = sketch, 
-                           escape = FALSE,
-                           class = "stripe nowrap compact")
+    dataTable <- DT::datatable(table,
+                               options = options,
+                               rownames = FALSE,
+                               container = sketch, 
+                               escape = FALSE,
+                               class = "stripe nowrap compact")
     for (i in 1:length(databaseIds)) {
-      dataTable <- formatStyle(table = dataTable,
-                               columns = i*2,
-                               background = styleColorBar(c(0, max(table[, i*2], na.rm = TRUE)), "lightblue"),
-                               backgroundSize = "98% 88%",
-                               backgroundRepeat = "no-repeat",
-                               backgroundPosition = "center")
-      dataTable <- formatStyle(table = dataTable,
-                               columns = i*2 + 1,
-                               background = styleColorBar(c(0, max(table[, i*2 + 1], na.rm = TRUE)), "#ffd699"),
-                               backgroundSize = "98% 88%",
-                               backgroundRepeat = "no-repeat",
-                               backgroundPosition = "center")
+      dataTable <- DT::formatStyle(table = dataTable,
+                                   columns = i*2,
+                                   background = DT::styleColorBar(c(0, max(table[, i*2], na.rm = TRUE)), "lightblue"),
+                                   backgroundSize = "98% 88%",
+                                   backgroundRepeat = "no-repeat",
+                                   backgroundPosition = "center")
+      dataTable <- DT::formatStyle(table = dataTable,
+                                   columns = i*2 + 1,
+                                   background = DT::styleColorBar(c(0, max(table[, i*2 + 1], na.rm = TRUE)), "#ffd699"),
+                                   backgroundSize = "98% 88%",
+                                   backgroundRepeat = "no-repeat",
+                                   backgroundPosition = "center")
     }
     return(dataTable)
   })
   
-  filteredIncidenceRates <- reactive({
+  filteredIncidenceRates <- shiny::reactive({
     data <- incidenceRate[incidenceRate$cohortId == cohortId() & 
                             incidenceRate$databaseId %in% input$databases, ]
     data <- data[data$incidenceRate > 0, ]
@@ -176,7 +177,7 @@ shinyServer(function(input, output, session) {
     }
   })
   
-  output$incidenceRatePlot <- renderPlot({
+  output$incidenceRatePlot <- shiny::renderPlot({
     data <- filteredIncidenceRates()
     if (is.null(data)) {
       return(NULL)
@@ -189,7 +190,7 @@ shinyServer(function(input, output, session) {
     return(plot)
   }, res = 100)
   
-  output$hoverInfoIr <- renderUI({
+  output$hoverInfoIr <- shiny::renderUI({
     data <- filteredIncidenceRates()
     if (is.null(data)) {
       return(NULL)
@@ -236,7 +237,7 @@ shinyServer(function(input, output, session) {
     }
   }) 
   
-  output$timeDisPlot <- renderPlot({
+  output$timeDisPlot <- shiny::renderPlot({
     data <- timeDistribution[timeDistribution$cohortId == cohortId() & 
                                timeDistribution$databaseId %in% input$databases, ]
     if (nrow(data) == 0) {
@@ -263,7 +264,7 @@ shinyServer(function(input, output, session) {
     return(plot)
   }, res = 100)
   
-  output$timeDistTable <- renderDataTable({
+  output$timeDistTable <- DT::renderDataTable({
     data <- timeDistribution[timeDistribution$cohortId == cohortId() & 
                                timeDistribution$databaseId %in% input$databases, ]
     if (nrow(data) == 0) {
@@ -282,17 +283,17 @@ shinyServer(function(input, output, session) {
                    ordering = TRUE,
                    paging = TRUE,
                    info = TRUE)
-    table <- datatable(table,
-                       options = options,
-                       rownames = FALSE,
-                       colnames = headers,
-                       class = "stripe nowrap compact")
-    table <- formatRound(table, c("averageValue", "standardDeviation"), digits = 2)
-    table <- formatRound(table, c("minValue", "p10Value", "p25Value", "medianValue", "p75Value", "p90Value", "maxValue"), digits = 0)
+    table <- DT::datatable(table,
+                           options = options,
+                           rownames = FALSE,
+                           colnames = headers,
+                           class = "stripe nowrap compact")
+    table <- DT::formatRound(table, c("averageValue", "standardDeviation"), digits = 2)
+    table <- DT::formatRound(table, c("minValue", "p10Value", "p25Value", "medianValue", "p75Value", "p90Value", "maxValue"), digits = 0)
     return(table)
   })
   
-  output$includedConceptsTable <- renderDataTable({
+  output$includedConceptsTable <- DT::renderDataTable({
     table <- includedSourceConcept[includedSourceConcept$cohortId == cohortId() &
                                      includedSourceConcept$conceptSetName == input$conceptSet & 
                                      includedSourceConcept$databaseId == input$database, ]
@@ -315,21 +316,21 @@ shinyServer(function(input, output, session) {
                    ordering = TRUE,
                    paging = TRUE,
                    columnDefs = list(minCellCountDef(0)))
-    table <- datatable(table,
-                       options = options,
-                       rownames = FALSE,
-                       escape = FALSE,
-                       class = "stripe nowrap compact")
-    table <- formatStyle(table = table,
-                         columns = 1,
-                         background = styleColorBar(lims, "lightblue"),
-                         backgroundSize = "98% 88%",
-                         backgroundRepeat = "no-repeat",
-                         backgroundPosition = "center")
+    table <- DT::datatable(table,
+                           options = options,
+                           rownames = FALSE,
+                           escape = FALSE,
+                           class = "stripe nowrap compact")
+    table <- DT::formatStyle(table = table,
+                             columns = 1,
+                             background = DT::styleColorBar(lims, "lightblue"),
+                             backgroundSize = "98% 88%",
+                             backgroundRepeat = "no-repeat",
+                             backgroundPosition = "center")
     return(table)
   })
   
-  output$orphanConceptsTable <- renderDataTable({
+  output$orphanConceptsTable <- DT::renderDataTable({
     table <- orphanConcept[orphanConcept$cohortId == cohortId() &
                              orphanConcept$conceptSetName == input$conceptSet & 
                              orphanConcept$databaseId == input$database, ]
@@ -346,21 +347,21 @@ shinyServer(function(input, output, session) {
                    ordering = TRUE,
                    paging = TRUE,
                    columnDefs = list(minCellCountDef(0)))
-    table <- datatable(table,
-                       options = options,
-                       rownames = FALSE,
-                       escape = FALSE,
-                       class = "stripe nowrap compact")
-    table <- formatStyle(table = table,
-                         columns = 1,
-                         background = styleColorBar(lims, "lightblue"),
-                         backgroundSize = "98% 88%",
-                         backgroundRepeat = "no-repeat",
-                         backgroundPosition = "center")
+    table <- DT::datatable(table,
+                           options = options,
+                           rownames = FALSE,
+                           escape = FALSE,
+                           class = "stripe nowrap compact")
+    table <- DT::formatStyle(table = table,
+                             columns = 1,
+                             background = DT::styleColorBar(lims, "lightblue"),
+                             backgroundSize = "98% 88%",
+                             backgroundRepeat = "no-repeat",
+                             backgroundPosition = "center")
     return(table)
   })
   
-  output$inclusionRuleTable <- renderDataTable({
+  output$inclusionRuleTable <- DT::renderDataTable({
     table <- inclusionRuleStats[inclusionRuleStats$cohortId == cohortId() & inclusionRuleStats$databaseId == input$database, ]
     if (nrow(table) == 0) {
       return(NULL)
@@ -377,23 +378,23 @@ shinyServer(function(input, output, session) {
                    ordering = TRUE,
                    paging = TRUE,
                    columnDefs = list(minCellCountDef(2:5)))
-    table <- datatable(table,
-                       options = options,
-                       rownames = FALSE,
-                       escape = FALSE,
-                       class = "stripe nowrap compact")
-    table <- formatStyle(table = table,
-                         columns = 6,
-                         background = styleColorBar(lims, "lightblue"),
-                         backgroundSize = "98% 88%",
-                         backgroundRepeat = "no-repeat",
-                         backgroundPosition = "center")
+    table <- DT::datatable(table,
+                           options = options,
+                           rownames = FALSE,
+                           escape = FALSE,
+                           class = "stripe nowrap compact")
+    table <- DT::formatStyle(table = table,
+                             columns = 6,
+                             background = DT::styleColorBar(lims, "lightblue"),
+                             backgroundSize = "98% 88%",
+                             backgroundRepeat = "no-repeat",
+                             backgroundPosition = "center")
     return(table)
   })
   
-  output$breakdownTable <- renderDataTable({
+  output$breakdownTable <- DT::renderDataTable({
     data <- indexEventBreakdown[indexEventBreakdown$cohortId == cohortId() & 
-                                   indexEventBreakdown$databaseId %in% input$databases, ]
+                                  indexEventBreakdown$databaseId %in% input$databases, ]
     if (nrow(data) == 0) {
       return(NULL)
     }
@@ -418,23 +419,23 @@ shinyServer(function(input, output, session) {
                    ordering = TRUE,
                    paging = TRUE,
                    columnDefs = list(minCellCountDef(3:ncol(table) - 1)))
-    dataTable <- datatable(table,
-                           options = options,
-                           rownames = FALSE,
-                           escape = FALSE,
-                           class = "stripe nowrap compact")
+    dataTable <- DT::datatable(table,
+                               options = options,
+                               rownames = FALSE,
+                               escape = FALSE,
+                               class = "stripe nowrap compact")
     for (col in 3:ncol(table)) {
-      dataTable <- formatStyle(table = dataTable,
-                               columns = col,
-                               background = styleColorBar(c(0, max(table[, col], na.rm = TRUE)), "lightblue"),
-                               backgroundSize = "98% 88%",
-                               backgroundRepeat = "no-repeat",
-                               backgroundPosition = "center")
+      dataTable <- DT::formatStyle(table = dataTable,
+                                   columns = col,
+                                   background = DT::styleColorBar(c(0, max(table[, col], na.rm = TRUE)), "lightblue"),
+                                   backgroundSize = "98% 88%",
+                                   backgroundRepeat = "no-repeat",
+                                   backgroundPosition = "center")
     }
     return(dataTable)
   })
   
-  output$characterizationTable <- renderDataTable({
+  output$characterizationTable <- DT::renderDataTable({
     data <- covariateValue[covariateValue$cohortId == cohortId() & covariateValue$databaseId %in% input$databases, ]
     data$cohortId <- NULL
     databaseIds <- unique(data$databaseId)
@@ -476,19 +477,19 @@ shinyServer(function(input, output, session) {
           )
         )
       ))
-      table <- datatable(table,
-                         options = options,
-                         rownames = FALSE,
-                         container = sketch, 
-                         escape = FALSE,
-                         class = "stripe nowrap compact")
+      table <- DT::datatable(table,
+                             options = options,
+                             rownames = FALSE,
+                             container = sketch, 
+                             escape = FALSE,
+                             class = "stripe nowrap compact")
       
-      table <- formatStyle(table = table,
-                           columns = 1 + (1:length(databaseIds)),
-                           background = styleColorBar(c(0,1), "lightblue"),
-                           backgroundSize = "98% 88%",
-                           backgroundRepeat = "no-repeat",
-                           backgroundPosition = "center")
+      table <- DT::formatStyle(table = table,
+                               columns = 1 + (1:length(databaseIds)),
+                               background = DT::styleColorBar(c(0,1), "lightblue"),
+                               backgroundSize = "98% 88%",
+                               backgroundRepeat = "no-repeat",
+                               backgroundPosition = "center")
     } else {
       table <- data[data$databaseId == databaseIds[1], c("covariateId", "mean", "sd")]
       colnames(table)[2:3] <- paste(colnames(table)[2:3], databaseIds[1], sep = "_")
@@ -525,23 +526,23 @@ shinyServer(function(input, output, session) {
           )
         )
       ))
-      table <- datatable(table,
-                         options = options,
-                         rownames = FALSE,
-                         container = sketch, 
-                         escape = FALSE,
-                         class = "stripe nowrap compact")
-      table <- formatStyle(table = table,
-                           columns = 2*(1:length(databaseIds)),
-                           background = styleColorBar(c(0,1), "lightblue"),
-                           backgroundSize = "98% 88%",
-                           backgroundRepeat = "no-repeat",
-                           backgroundPosition = "center")
+      table <- DT::datatable(table,
+                             options = options,
+                             rownames = FALSE,
+                             container = sketch, 
+                             escape = FALSE,
+                             class = "stripe nowrap compact")
+      table <- DT::formatStyle(table = table,
+                               columns = 2*(1:length(databaseIds)),
+                               background = DT::styleColorBar(c(0,1), "lightblue"),
+                               backgroundSize = "98% 88%",
+                               backgroundRepeat = "no-repeat",
+                               backgroundPosition = "center")
     }
     return(table)
   })
   
-  output$overlapTable <- renderDataTable({
+  output$overlapTable <- DT::renderDataTable({
     data <- cohortOverlap[cohortOverlap$targetCohortId == cohortId() & 
                             cohortOverlap$comparatorCohortId == comparatorCohortId() &
                             cohortOverlap$databaseId == input$database, ]
@@ -578,14 +579,14 @@ shinyServer(function(input, output, session) {
                    paging = FALSE,
                    info = FALSE,
                    columnDefs = list(minCellCountDef(1)))
-    table <- datatable(table,
-                       options = options,
-                       rownames = TRUE,
-                       class = "stripe nowrap compact")
+    table <- DT::datatable(table,
+                           options = options,
+                           rownames = TRUE,
+                           class = "stripe nowrap compact")
     return(table)
   })
   
-  output$overlapPlot <- renderPlot({
+  output$overlapPlot <- shiny::renderPlot({
     data <- cohortOverlap[cohortOverlap$targetCohortId == cohortId() & 
                             cohortOverlap$comparatorCohortId == comparatorCohortId() &
                             cohortOverlap$databaseId == input$database, ]
@@ -613,7 +614,7 @@ shinyServer(function(input, output, session) {
     return(plot)
   }, res = 100)
   
-  computeBalance <- reactive({
+  computeBalance <- shiny::reactive({
     if (cohortId() == comparatorCohortId()) {
       return(data.frame())
     }
@@ -626,12 +627,12 @@ shinyServer(function(input, output, session) {
     return(balance)
   })
   
-  output$charCompareTable <- renderDataTable({
+  output$charCompareTable <- DT::renderDataTable({
     balance <- computeBalance()
     if (nrow(balance) == 0) {
       return(NULL)
     }
-
+    
     if (input$charCompareType == "Pretty table") {
       balance <- merge(balance, covariate[, c("covariateId", "covariateAnalysisId")])
       table <- prepareTable1Comp(balance)
@@ -642,24 +643,24 @@ shinyServer(function(input, output, session) {
                      paging = FALSE,
                      columnDefs = list(minCellPercentDef(1:2))
       )
-      table <- datatable(table,
-                         options = options,
-                         rownames = FALSE,
-                         escape = FALSE,
-                         class = "stripe nowrap compact")
-      table <- formatStyle(table = table,
-                           columns = 2:3,
-                           background = styleColorBar(c(0,1), "lightblue"),
-                           backgroundSize = "98% 88%",
-                           backgroundRepeat = "no-repeat",
-                           backgroundPosition = "center")
-      table <- formatStyle(table = table,
-                           columns = 4,
-                           background = styleAbsColorBar(1, "lightblue", "pink"),
-                           backgroundSize = "98% 88%",
-                           backgroundRepeat = "no-repeat",
-                           backgroundPosition = "center")
-      table <- formatRound(table, 4, digits = 2)
+      table <- DT::datatable(table,
+                             options = options,
+                             rownames = FALSE,
+                             escape = FALSE,
+                             class = "stripe nowrap compact")
+      table <- DT::formatStyle(table = table,
+                               columns = 2:3,
+                               background = DT::styleColorBar(c(0,1), "lightblue"),
+                               backgroundSize = "98% 88%",
+                               backgroundRepeat = "no-repeat",
+                               backgroundPosition = "center")
+      table <- DT::formatStyle(table = table,
+                               columns = 4,
+                               background = styleAbsColorBar(1, "lightblue", "pink"),
+                               backgroundSize = "98% 88%",
+                               backgroundRepeat = "no-repeat",
+                               backgroundPosition = "center")
+      table <- DT::formatRound(table, 4, digits = 2)
     } else {
       table <- balance
       table <- table[order(table$covariateName), ]
@@ -676,29 +677,29 @@ shinyServer(function(input, output, session) {
                        minCellRealDef(c(1,3), 2)
                      )
       )
-      table <- datatable(table,
-                         options = options,
-                         rownames = FALSE,
-                         escape = FALSE,
-                         class = "stripe nowrap compact")
-      table <- formatStyle(table = table,
-                           columns = c(2,4),
-                           background = styleColorBar(c(0,1), "lightblue"),
-                           backgroundSize = "98% 88%",
-                           backgroundRepeat = "no-repeat",
-                           backgroundPosition = "center")
-      table <- formatStyle(table = table,
-                           columns = 6,
-                           background = styleAbsColorBar(1, "lightblue", "pink"),
-                           backgroundSize = "98% 88%",
-                           backgroundRepeat = "no-repeat",
-                           backgroundPosition = "center")
-      table <- formatRound(table, c(3, 5, 6), digits = 2)
+      table <- DT::datatable(table,
+                             options = options,
+                             rownames = FALSE,
+                             escape = FALSE,
+                             class = "stripe nowrap compact")
+      table <- DT::formatStyle(table = table,
+                               columns = c(2,4),
+                               background = DT::styleColorBar(c(0,1), "lightblue"),
+                               backgroundSize = "98% 88%",
+                               backgroundRepeat = "no-repeat",
+                               backgroundPosition = "center")
+      table <- DT::formatStyle(table = table,
+                               columns = 6,
+                               background = styleAbsColorBar(1, "lightblue", "pink"),
+                               backgroundSize = "98% 88%",
+                               backgroundRepeat = "no-repeat",
+                               backgroundPosition = "center")
+      table <- DT::formatRound(table, c(3, 5, 6), digits = 2)
     }
     return(table)
   })
   
-  output$charComparePlot <- renderPlot({
+  output$charComparePlot <- shiny::renderPlot({
     balance <- computeBalance()
     if (nrow(balance) == 0) {
       return(NULL)
@@ -716,7 +717,7 @@ shinyServer(function(input, output, session) {
     return(plot)
   }, res = 100)
   
-  output$hoverInfoCharComparePlot <- renderUI({
+  output$hoverInfoCharComparePlot <- shiny::renderUI({
     balance <- computeBalance()
     balance$mean1[is.na(balance$mean1)] <- 0
     balance$mean2[is.na(balance$mean2)] <- 0
@@ -765,8 +766,8 @@ shinyServer(function(input, output, session) {
   #   return(text)
   # })
   
-  output$databaseInformationTable <- renderDataTable({
-
+  output$databaseInformationTable <- DT::renderDataTable({
+    
     table <- database[, c("databaseId", "databaseName", "description")]
     options = list(pageLength = 25,
                    searching = TRUE,
@@ -776,16 +777,16 @@ shinyServer(function(input, output, session) {
                    columnDefs = list(list(width = '30%', targets = 1),
                                      list(width = '60%', targets = 2))
     )
-    table <- datatable(table,
-                       options = options,
-                       colnames = c("ID", "Name", "Description"),
-                       rownames = FALSE,
-                       class = "stripe compact")
+    table <- DT::datatable(table,
+                           options = options,
+                           colnames = c("ID", "Name", "Description"),
+                           rownames = FALSE,
+                           class = "stripe compact")
     return(table)
   })
-
+  
   showInfoBox <- function(title, htmlFileName) {
-    showModal(modalDialog(
+    shiny::showModal(shiny::modalDialog(
       title = title,
       easyClose = TRUE,
       footer = NULL,
@@ -794,43 +795,43 @@ shinyServer(function(input, output, session) {
     ))
   }
   
-  observeEvent(input$cohortCountsInfo, {
+  shiny::observeEvent(input$cohortCountsInfo, {
     showInfoBox("Cohort Counts", "html/cohortCounts.html")
   })
   
-  observeEvent(input$incidenceRateInfo, {
+  shiny::observeEvent(input$incidenceRateInfo, {
     showInfoBox("Incidence Rate", "html/incidenceRate.html")
   })
-
-  observeEvent(input$timeDistributionInfo, {
+  
+  shiny::observeEvent(input$timeDistributionInfo, {
     showInfoBox("Time Distributions", "html/timeDistribution.html")
   })
   
-  observeEvent(input$includedConceptsInfo, {
+  shiny::observeEvent(input$includedConceptsInfo, {
     showInfoBox("Included (Source) Concepts", "html/includedConcepts.html")
   })
   
-  observeEvent(input$orphanConceptsInfo, {
+  shiny::observeEvent(input$orphanConceptsInfo, {
     showInfoBox("Orphan (Source) Concepts", "html/orphanConcepts.html")
   })
   
-  observeEvent(input$inclusionRuleStatsInfo, {
+  shiny::observeEvent(input$inclusionRuleStatsInfo, {
     showInfoBox("Inclusion Rule Statistics", "html/inclusionRuleStats.html")
   })
   
-  observeEvent(input$indexEventBreakdownInfo, {
+  shiny::observeEvent(input$indexEventBreakdownInfo, {
     showInfoBox("Index Event Breakdown", "html/indexEventBreakdown.html")
   })
   
-  observeEvent(input$cohortCharacterizationInfo, {
+  shiny::observeEvent(input$cohortCharacterizationInfo, {
     showInfoBox("Cohort Characterization", "html/cohortCharacterization.html")
   })
   
-  observeEvent(input$cohortOverlapInfo, {
+  shiny::observeEvent(input$cohortOverlapInfo, {
     showInfoBox("Cohort Overlap", "html/cohortOverlap.html")
   })
   
-  observeEvent(input$compareCohortCharacterizationInfo, {
+  shiny::observeEvent(input$compareCohortCharacterizationInfo, {
     showInfoBox("Compare Cohort Characteristics", "html/compareCohortCharacterization.html")
   })
 })
