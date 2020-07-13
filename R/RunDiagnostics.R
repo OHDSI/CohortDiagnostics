@@ -19,6 +19,19 @@
 #' @description
 #' Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the
 #' \code{ROhdsiWebApi::insertCohortDefinitionSetInPackage} function. Assumes the cohorts have already been instantiated.
+#' 
+#' Characterization:
+#' If runTemporalCohortCharacterization argument is TRUE, then the following default covariateSettings object will be created
+#' using \code{RFeatureExtraction::createTemporalCovariateSettings} function as follows:
+#' temporalCovariateSettings <- FeatureExtraction::createTemporalCovariateSettings(useConditionOccurrence = TRUE,
+#'                                                                                 useConditionEraStart = TRUE,
+#'                                                                                 useDrugEraStart = TRUE,
+#'                                                                                 useProcedureOccurrence = TRUE,
+#'                                                                                 useMeasurement = TRUE,
+#'                                                                                 useObservation = TRUE,
+#'                                                                                 temporalStartDays = c(-365,-30,0,1,31),
+#'                                                                                 temporalEndDays = c(-31,-1,0,30,365))
+#' Alternatively, a covariate setting object may be created using the above as an example.
 #'
 #' @template Connection
 #'
@@ -50,13 +63,16 @@
 #' @param runCohortOverlap            Generate and export the cohort overlap?
 #' @param runCohortCharacterization   Generate and export the cohort characterization?
 #' @param covariateSettings           Either an object of type \code{covariateSettings} as created using one of
-#'                                    the createCovariate functions in the FeatureExtraction package, or a list
+#'                                    the createCovariateSettings function in the FeatureExtraction package, or a list
+#'                                    of such objects.
+#' @param runTemporalCohortCharacterization   Generate and export the temporal cohort characterization?
+#' @param temporalCovariateSettings   Either an object of type \code{covariateSettings} as created using one of
+#'                                    the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
 #'                                    of such objects.
 #' @param minCellCount                The minimum cell count for fields contains person counts or fractions.
 #' @param incremental                 Create only cohort diagnostics that haven't been created before?
 #' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
 #'                                    of which cohort diagnostics has been executed.
-#'
 #' @export
 runCohortDiagnostics <- function(packageName = NULL,
                                  cohortToCreateFile = "settings/CohortsToCreate.csv",
@@ -475,8 +491,8 @@ runCohortDiagnostics <- function(packageName = NULL,
         dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 3 digits
       
       covariates <- data %>% 
-        dplyr::select(covariateId, covariateName, analysisId) %>% 
-        dplyr::rename(covariateAnalysisId = analysisId)
+        dplyr::select(.data$covariateId, .data$covariateName, .data$analysisId) %>% 
+        dplyr::rename(covariateAnalysisId = .data$analysisId)
       writeToCsv(
         data = covariates,
         fileName = file.path(exportFolder, "covariate.csv"),
@@ -490,7 +506,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       }
       
       data <- data %>% 
-        dplyr::select(-covariateName, - analysisId)
+        dplyr::select(-.data$covariateName, -.data$analysisId)
       
       if (nrow(data) > 0) {
         data <- data  %>% 
@@ -501,7 +517,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           dplyr::mutate(sd = dplyr::case_when(mean >= 0 ~ sd)) %>% 
           dplyr::mutate(mean = round(.data$mean, digits = 3),
                         sd = round(.data$sd, digits = 3)) %>% 
-          dplyr::select(- cohortEntries, - cohortSubjects)
+          dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
       }
       writeToCsv(data, file.path(exportFolder, "covariate_value.csv"), incremental = incremental, cohortId = subset$cohortId)
       recordTasksDone(cohortId = subset$cohortId,
@@ -560,9 +576,9 @@ runCohortDiagnostics <- function(packageName = NULL,
         dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 3 digits
       
       temporalCovariates <- data %>% 
-        dplyr::select(covariateId, covariateName, analysisId, timeId, 
-                      startDayTemporalCharacterization, endDayTemporalCharacterization) %>% 
-        dplyr::rename(covariateAnalysisId = analysisId)
+        dplyr::select(.data$covariateId, .data$covariateName, .data$analysisId, .data$timeId, 
+                      .data$startDayTemporalCharacterization, .data$endDayTemporalCharacterization) %>% 
+        dplyr::rename(covariateAnalysisId = .data$analysisId)
       writeToCsv(
         data = temporalCovariates,
         fileName = file.path(exportFolder, "temporal_covariate.csv"),
@@ -576,7 +592,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       }
       
       data <- data %>% 
-        dplyr::select(-covariateName, - analysisId, - startDayTemporalCharacterization, - endDayTemporalCharacterization)
+        dplyr::select(-.data$covariateName, -.data$analysisId, -.data$startDayTemporalCharacterization, -.data$endDayTemporalCharacterization)
       
       if (nrow(data) > 0) {
         data <- data  %>% 
@@ -587,7 +603,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           dplyr::mutate(sd = dplyr::case_when(mean >= 0 ~ sd)) %>% 
           dplyr::mutate(mean = round(.data$mean, digits = 3),
                         sd = round(.data$sd, digits = 3)) %>% 
-          dplyr::select(- cohortEntries, - cohortSubjects)
+          dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
       }
       writeToCsv(data, file.path(exportFolder, "temporal_covariate_value.csv"), incremental = incremental, cohortId = subset$cohortId)
       recordTasksDone(cohortId = subset$cohortId,
