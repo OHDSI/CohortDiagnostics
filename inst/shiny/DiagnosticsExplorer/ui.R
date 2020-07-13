@@ -15,6 +15,8 @@ addInfo <- function(item, infoId) {
   return(item)
 }
 
+
+
 #header name
 header <-
   shinydashboard::dashboardHeader(title = "Cohort Diagnostics", titleWidth = NULL)
@@ -63,6 +65,11 @@ sidebarMenu <-
         shinydashboard::menuItem(text = "Cohort Characterization", tabName = "cohortCharacterization"),
         infoId = "cohortCharacterizationInfo"
       ),
+    if (exists("temporalCovariateValue"))
+      addInfo(
+        shinydashboard::menuItem(text = "Temporal Characterization", tabName = "temporalCharacterization"),
+        infoId = "temporalCharacterizationInfo"
+      ),
     if (exists("cohortOverlap"))
       addInfo(
         shinydashboard::menuItem(text = "Cohort Overlap", tabName = "cohortOverlap"),
@@ -75,7 +82,7 @@ sidebarMenu <-
       ),
     shinydashboard::menuItem(text = "Database information", tabName = "databaseInformation"),
     shiny::conditionalPanel(
-      condition = "input.tabs!='incidenceRate' & input.tabs!='timeDistribution' & input.tabs!='cohortCharacterization' & input.tabs!='cohortCounts' & input.tabs!='indexEventBreakdown' & input.tabs!='databaseInformation'",
+      condition = "input.tabs!='incidenceRate' & input.tabs!='timeDistribution' & input.tabs!='cohortCharacterization' & input.tabs!='temporalCharacterization' & input.tabs!='cohortCounts' & input.tabs!='indexEventBreakdown' & input.tabs!='databaseInformation'",
       shiny::selectInput(
         inputId = "database",
         label = "Database",
@@ -84,12 +91,21 @@ sidebarMenu <-
       )
     ),
     shiny::conditionalPanel(
-      condition = "input.tabs=='incidenceRate' | input.tabs=='timeDistribution' | input.tabs=='cohortCharacterization' | input.tabs=='cohortCounts' | input.tabs=='indexEventBreakdown'",
+      condition = "input.tabs=='incidenceRate' | input.tabs=='timeDistribution' | input.tabs=='cohortCharacterization' | input.tabs=='temporalCharacterization' | input.tabs=='cohortCounts' | input.tabs=='indexEventBreakdown'",
       shiny::checkboxGroupInput(
         inputId = "databases",
         label = "Database",
         choices = database$databaseId,
         selected = database$databaseId[1]
+      )
+    ),
+    shiny::conditionalPanel(
+      condition = "input.tabs=='temporalCharacterization'",
+      shiny::selectInput(
+        inputId = "timeIdChoices",
+        label = "Temporal Choice",
+        choices = temporalCovariateChoices$choices,
+        selectize = FALSE
       )
     ),
     shiny::conditionalPanel(
@@ -211,6 +227,17 @@ bodyTabItems <- shinydashboard::tabItems(
       inline = TRUE
     ),
     DT::dataTableOutput("characterizationTable")
+  ),
+  shinydashboard::tabItem(
+    tabName = "temporalCharacterization",
+    shiny::radioButtons(
+      inputId = "charTypeTemporal",
+      label = "",
+      choices = c("Pretty", "Raw"),
+      selected = "Pretty",
+      inline = TRUE
+    ),
+    DT::dataTableOutput("temporalCharacterizationTable")
   ),
   shinydashboard::tabItem(
     tabName = "cohortOverlap",

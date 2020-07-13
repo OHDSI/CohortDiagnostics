@@ -45,7 +45,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
                                      cohortDatabaseSchema = cdmDatabaseSchema,
                                      cohortTable = "cohort",
                                      cohortId,
-                                     covariateSettings = FeatureExtraction::createDefaultCovariateSettings()) {
+                                     covariateSettings) {
 
   start <- Sys.time()
 
@@ -75,33 +75,85 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
                                                 covariateSettings = covariateSettings,
                                                 aggregated = TRUE)
 
-  result <- data.frame()
+  result <- tidyr::tibble()
   if (!is.null(data$covariates)) {
-    counts <- data$covariates %>% dplyr::select(.data$sumValue) %>% dplyr::pull()
-    n <- attr(data, "metaData")$populationSize
-    binaryCovs <- data$covariates %>% 
-                  dplyr::select(.data$covariateId, .data$averageValue) %>% 
-                  dplyr::rename(mean = .data$averageValue) %>% 
-                  dplyr::collect()
-    binaryCovs$sd <- sqrt((n * counts + counts)/(n^2))
-    result <- rbind(result, binaryCovs)
+    n <- attr(x = data, which = "metaData")$populationSize
+    if (FeatureExtraction::isTemporalCovariateData(data)) {
+      counts <- data$covariates %>% 
+        dplyr::group_by(timeId) %>% 
+        dplyr::summarise(sumValue = sum(sumValue)) %>% 
+        dplyr::ungroup() %>% 
+        dplyr::collect() %>% 
+        tidyr::replace_na(replace = list(timeId = 0))  %>% 
+        dplyr::mutate(sd = sqrt(((n * sumValue) + sumValue)/(n^2)))
+      
+      binaryCovs <- data$covariates %>% 
+        dplyr::group_by(timeId) %>% 
+        dplyr::select(.data$covariateId, .data$averageValue) %>% 
+        dplyr::rename(mean = .data$averageValue) %>% 
+        dplyr::ungroup() %>% 
+        dplyr::collect() %>% 
+        tidyr::replace_na(replace = list(timeId = 0)) %>% 
+        dplyr::left_join(counts, by = c("timeId" = "timeId")) %>% 
+        dplyr::select(-sumValue)
+    } else {
+      counts <- data$covariates %>% 
+        dplyr::summarise(sumValue = sum(sumValue)) %>% 
+        dplyr::collect() %>% 
+        dplyr::mutate(sd = sqrt(((n * sumValue) + sumValue)/(n^2)))
+      
+      binaryCovs <- data$covariates %>% 
+                    dplyr::select(.data$covariateId, .data$averageValue) %>% 
+                    dplyr::rename(mean = .data$averageValue) %>% 
+                    dplyr::collect()%>% 
+        dplyr::left_join(counts, by = character()) %>% 
+        dplyr::select(-sumValue)
+    }
+    result <- dplyr::bind_rows(result, binaryCovs)
   }
+  
   if (!is.null(data$covariatesContinuous)) {
-    continuousCovs <- data$covariatesContinuous %>% 
-                      dplyr::select(.data$covariateId, .data$averageValue, .data$standardDeviation) %>% 
-                      dplyr::rename(mean = .data$averageValue, sd = .data$standardDeviation) %>% 
-                      dplyr::collect()
-    result <- rbind(result, continuousCovs)
+    if (FeatureExtraction::isTemporalCovariateData(data)) {
+      continuousCovs <- data$covariatesContinuous %>% 
+        dplyr::select(.data$timeId, .data$covariateId, .data$averageValue, .data$standardDeviation) %>% 
+        dplyr::rename(mean = .data$averageValue, sd = .data$standardDeviation) %>% 
+        dplyr::collect()
+    } else {
+      continuousCovs <- data$covariatesContinuous %>% 
+                        dplyr::select(.data$covariateId, .data$averageValue, .data$standardDeviation) %>% 
+                        dplyr::rename(mean = .data$averageValue, sd = .data$standardDeviation) %>% 
+                        dplyr::collect()
+    }
+    result <- dplyr::bind_rows(result, continuousCovs)
   }
   if (nrow(result) > 0) {
-    result <- merge(result, data$covariateRef %>% dplyr::collect())
-    result$conceptId <- NULL
+    result <- result %>% dplyr::left_join(y = data$covariateRef %>% dplyr::collect(), by = ("covariateId"))
+    if (FeatureExtraction::isTemporalCovariateData(data)) {
+      result <- result %>% 
+        dplyr::left_join(y = data$timeRef %>% dplyr::collect(), by = ("timeId")) %>% 
+        dplyr::rename(startDayTemporalCharacterization = startDay,
+                      endDayTemporalCharacterization = endDay)
+    } else
+    {
+      result <- result %>% 
+                dplyr::mutate(timeId = 0,
+                              startDay = NA, 
+                              endDay = NA)
+    }
+    result <- result %>% 
+              dplyr::select(-conceptId)
   }
   attr(result, "cohortSize") <- attr(data, "metaData")$populationSize
   delta <- Sys.time() - start
-  ParallelLogger::logInfo(paste("Cohort characterization took",
-                                signif(delta, 3),
-                                attr(delta, "units")))
+  if (FeatureExtraction::isTemporalCovariateData(data)) {
+    ParallelLogger::logInfo(paste("Temporal Cohort characterization took",
+                                  signif(delta, 3),
+                                  attr(delta, "units")))
+  } else {
+    ParallelLogger::logInfo(paste("Cohort characterization took",
+                                  signif(delta, 3),
+                                  attr(delta, "units")))
+  }
   return(result)
 }
 
@@ -120,22 +172,34 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
 #'
 #' @export
 compareCohortCharacteristics <- function(characteristics1, characteristics2) {
+  
+  characteristics1 = tidyr::tibble(
+    covariateId = characteristics2$covariateId,
+    mean1 = characteristics2$mean,
+    sd1 = characteristics2$sd,
+    timeId = characteristics2$timeId
+  )
+  
+  characteristics2 = tidyr::tibble(
+    covariateId = characteristics2$covariateId,
+    mean1 = characteristics2$mean,
+    sd1 = characteristics2$sd,
+    timeId = characteristics2$timeId
+  )
+  
+  m <- characteristics1 %>% 
+      dplyr::full_join(y = characteristics2,
+                       by = c("covariateId", "timeId")) %>% 
+      dplyr::mutate(sd = sqrt(.data$sd1^2 + .data$sd2^2),
+                    stdDiff <- (.data$mean2 - .data$mean1)/.data$sd
+                    )
 
-  m <- merge(data.frame(covariateId = characteristics1$covariateId,
-                        mean1 = characteristics1$mean,
-                        sd1 = characteristics1$sd),
-             data.frame(covariateId = characteristics2$covariateId,
-                        mean2 = characteristics2$mean,
-                        sd2 = characteristics2$sd),
-             all = TRUE)
-  m$sd <- sqrt(m$sd1^2 + m$sd2^2)
-  m$stdDiff <- (m$mean2 - m$mean1)/m$sd
-
-  ref <- unique(rbind(characteristics1[,
-                      c("covariateId", "covariateName")],
-                      characteristics2[,
-                      c("covariateId", "covariateName")]))
-  m <- merge(ref, m)
-  m <- m[order(-abs(m$stdDiff)), ]
+  ref <- dplyr::union(x = characteristics1 %>% dplyr::select(.data$covariateId, .data$covariateName),
+                      y = characteristics2 %>% dplyr::select(.data$covariateId, .data$covariateName))
+                      
+    
+  m <- m %>% 
+    dplyr::left_join(y = ref, by = ("covariateId")) %>% 
+    dplyr::arrange(-abs(.data$stdDiff))
   return(m)
 }

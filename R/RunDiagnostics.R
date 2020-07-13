@@ -83,6 +83,8 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  runCohortOverlap = TRUE,
                                  runCohortCharacterization = TRUE,
                                  covariateSettings = FeatureExtraction::createDefaultCovariateSettings(),
+                                 runTemporalCohortCharacterization = FALSE,
+                                 temporalCovariateSettings = NULL,
                                  minCellCount = 5,
                                  incremental = FALSE,
                                  incrementalFolder = exportFolder) {
@@ -461,34 +463,45 @@ runCohortDiagnostics <- function(packageName = NULL,
                                          cohortTable = cohortTable,
                                          cohortId = row$cohortId,
                                          covariateSettings = covariateSettings)
+        
         if (nrow(data) > 0) {
           data$cohortId <- row$cohortId
         }
         return(data)
       }
       data <- lapply(split(subset, subset$cohortId), runCohortCharacterization)
-      data <- do.call(rbind, data)
-      # Drop covariates with mean = 0 after rounding to 3 digits:
-      data <- data[round(data$mean, 3) != 0, ]
-      covariates <- unique(data[, c("covariateId", "covariateName", "analysisId")])
-      colnames(covariates)[[3]] <- "covariateAnalysisId"
-      writeToCsv(covariates, file.path(exportFolder, "covariate.csv"), incremental = incremental, covariateId = covariates$covariateId)
+      data <- dplyr::bind_rows(data) %>% 
+        dplyr::mutate(mean = round(x = mean, digits = 3)) %>% 
+        dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 3 digits
+      
+      covariates <- data %>% 
+        dplyr::select(covariateId, covariateName, analysisId) %>% 
+        dplyr::rename(covariateAnalysisId = analysisId)
+      writeToCsv(
+        data = covariates,
+        fileName = file.path(exportFolder, "covariate.csv"),
+        incremental = incremental,
+        covariateId = covariates$covariateId
+      )
       
       if (!exists("counts")) {
         counts <- readr::read_csv(file = file.path(exportFolder, "cohort_count.csv"), col_types = readr::cols())
         names(counts) <- SqlRender::snakeCaseToCamelCase(names(counts))
       }
       
-      data$covariateName <- NULL
-      data$analysisId <- NULL
+      data <- data %>% 
+        dplyr::select(-covariateName, - analysisId)
+      
       if (nrow(data) > 0) {
-        data$databaseId <- databaseId
-        data <- merge(data, counts[, c("cohortId", "cohortEntries")])
+        data <- data  %>% 
+          dplyr::mutate(databaseId = databaseId) %>% 
+          dplyr::left_join(y = counts, by = c("cohortId", "databaseId"))
         data <- enforceMinCellValue(data, "mean", minCellCount/data$cohortEntries)
-        data$sd[data$mean < 0] <- NA
-        data$cohortEntries <- NULL
-        data$mean <- round(data$mean, 3)
-        data$sd <- round(data$sd, 3)
+        data <- data %>% 
+          dplyr::mutate(sd = dplyr::case_when(mean >= 0 ~ sd)) %>% 
+          dplyr::mutate(mean = round(.data$mean, digits = 3),
+                        sd = round(.data$sd, digits = 3)) %>% 
+          dplyr::select(- cohortEntries, - cohortSubjects)
       }
       writeToCsv(data, file.path(exportFolder, "covariate_value.csv"), incremental = incremental, cohortId = subset$cohortId)
       recordTasksDone(cohortId = subset$cohortId,
@@ -500,6 +513,92 @@ runCohortDiagnostics <- function(packageName = NULL,
     
     delta <- Sys.time() - startCohortCharacterization
     ParallelLogger::logInfo(paste("Running Characterization took",
+                                  signif(delta, 3),
+                                  attr(delta, "units")))
+  }
+  
+  
+  if (runTemporalCohortCharacterization) {
+    startTemporalCohortCharacterization <- Sys.time()
+    # Temporal Cohort characterization ---------------------------------------------------------------
+    ParallelLogger::logInfo("Creating Temporal cohort characterizations - started at ", Sys.time())
+    subset <- subsetToRequiredCohorts(cohorts = cohorts, 
+                                      task = "runTemporalCohortCharacterization", 
+                                      incremental = incremental, 
+                                      recordKeepingFile = recordKeepingFile)
+    if (nrow(subset) > 0) {
+      runTemporalCohortCharacterization <- function(row) {
+        ParallelLogger::logInfo("- Creating temporal characterization for cohort ", row$cohortName)
+        
+        if (is.null(temporalCovariateSettings)) {
+          temporalCovariateSettings <- FeatureExtraction::createTemporalCovariateSettings(useConditionOccurrence = TRUE,
+                                                                                          useConditionEraStart = TRUE,
+                                                                                          useDrugEraStart = TRUE,
+                                                                                          useProcedureOccurrence = TRUE,
+                                                                                          useMeasurement = TRUE,
+                                                                                          useObservation = TRUE,
+                                                                                          temporalStartDays = c(-365,-30,0,1,31),
+                                                                                          temporalEndDays = c(-31,-1,0,30,365))
+        }
+        
+        data <- getCohortCharacteristics(connection = connection,
+                                         cdmDatabaseSchema = cdmDatabaseSchema,
+                                         oracleTempSchema = oracleTempSchema,
+                                         cohortDatabaseSchema = cohortDatabaseSchema,
+                                         cohortTable = cohortTable,
+                                         cohortId = row$cohortId,
+                                         covariateSettings = temporalCovariateSettings)
+        
+        if (nrow(data) > 0) {
+          data$cohortId <- row$cohortId
+        }
+        return(data)
+      }
+      data <- lapply(split(subset, subset$cohortId), runTemporalCohortCharacterization)
+      data <- dplyr::bind_rows(data) %>% 
+        dplyr::mutate(mean = round(x = mean, digits = 3)) %>% 
+        dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 3 digits
+      
+      temporalCovariates <- data %>% 
+        dplyr::select(covariateId, covariateName, analysisId, timeId, 
+                      startDayTemporalCharacterization, endDayTemporalCharacterization) %>% 
+        dplyr::rename(covariateAnalysisId = analysisId)
+      writeToCsv(
+        data = temporalCovariates,
+        fileName = file.path(exportFolder, "temporal_covariate.csv"),
+        incremental = incremental,
+        covariateId = temporalCovariates$covariateId
+      )
+      
+      if (!exists("counts")) {
+        counts <- readr::read_csv(file = file.path(exportFolder, "cohort_count.csv"), col_types = readr::cols())
+        names(counts) <- SqlRender::snakeCaseToCamelCase(names(counts))
+      }
+      
+      data <- data %>% 
+        dplyr::select(-covariateName, - analysisId, - startDayTemporalCharacterization, - endDayTemporalCharacterization)
+      
+      if (nrow(data) > 0) {
+        data <- data  %>% 
+          dplyr::mutate(databaseId = databaseId) %>% 
+          dplyr::left_join(y = counts, by = c("cohortId", "databaseId"))
+        data <- enforceMinCellValue(data, "mean", minCellCount/data$cohortEntries)
+        data <- data %>% 
+          dplyr::mutate(sd = dplyr::case_when(mean >= 0 ~ sd)) %>% 
+          dplyr::mutate(mean = round(.data$mean, digits = 3),
+                        sd = round(.data$sd, digits = 3)) %>% 
+          dplyr::select(- cohortEntries, - cohortSubjects)
+      }
+      writeToCsv(data, file.path(exportFolder, "temporal_covariate_value.csv"), incremental = incremental, cohortId = subset$cohortId)
+      recordTasksDone(cohortId = subset$cohortId,
+                      task = "runTemporalCohortCharacterization",
+                      checksum = subset$checksum,
+                      recordKeepingFile = recordKeepingFile,
+                      incremental = incremental)
+    }
+    
+    delta <- Sys.time() - startTemporalCohortCharacterization
+    ParallelLogger::logInfo(paste("Running Temporal Characterization took",
                                   signif(delta, 3),
                                   attr(delta, "units")))
   }

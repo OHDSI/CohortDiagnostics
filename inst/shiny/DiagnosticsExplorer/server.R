@@ -3,6 +3,13 @@
 #library(DT)
 source("PlotsAndTables.R")
 
+if (exists('temporalCovariate')) {
+temporalCovariateChoices <- temporalCovariate %>%
+    dplyr::select(timeId, startDayTemporalCharacterization, endDayTemporalCharacterization) %>%
+    dplyr::distinct() %>%
+    dplyr::mutate(choices = paste0("Start ", startDayTemporalCharacterization, " to end ", endDayTemporalCharacterization)) %>%
+    dplyr::select(timeId, choices)
+}
 
 truncateStringDef <- function(columns, maxChars) {
   list(
@@ -60,6 +67,12 @@ shiny::shinyServer(function(input, output, session) {
   
   comparatorCohortId <- shiny::reactive({
     return(cohort$cohortId[cohort$cohortFullName == input$comparator])
+  })
+  
+  timeId <- shiny::reactive({
+    return(temporalCovariateChoices %>% 
+             dplyr::filter(choices == input$timeIdChoices) %>% 
+             dplyr::pull(timeId))
   })
   
   shiny::observe({
@@ -542,6 +555,116 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   })
   
+  output$temporalCharacterizationTable <- DT::renderDataTable({
+    data <- temporalCovariateValue %>% 
+            dplyr::filter(.data$cohortId == cohortId(),
+                          .data$databaseId == input$databases,
+                          .data$timeId == timeId())
+    data$cohortId <- NULL
+    databaseIds <- unique(data$databaseId)
+    
+    if (input$charTypeTemporal == "Pretty") {
+      data <- merge(data, temporalCovariate)
+      table <- data[data$databaseId == databaseIds[1], ]
+      table <- prepareTable1(covariates = table, pathToCsv = "Table1SpecsTemporal.csv")
+      colnames(table)[2] <- paste(colnames(table)[2], databaseIds[1], sep = "_")
+      table$order <- 1:nrow(table)
+      if (length(databaseIds) > 1) {
+        for (i in 2:length(databaseIds)) {
+          temp <- data[data$databaseId == databaseIds[i],]
+          temp <- prepareTable1(temp)
+          colnames(temp)[2] <- paste(colnames(temp)[2], databaseIds[i], sep = "_")
+          table <- merge(table, temp, all.x = TRUE)
+        }
+      }
+      table <- table[order(table$order), ]
+      table$order <- NULL
+      options = list(pageLength = 999,
+                     searching = FALSE,
+                     lengthChange = FALSE,
+                     ordering = FALSE,
+                     paging = FALSE,
+                     columnDefs = list(
+                       truncateStringDef(0, 150),
+                       minCellPercentDef(1:length(databaseIds))
+                     ))
+      sketch <- htmltools::withTags(table(
+        class = 'display',
+        thead(
+          tr(
+            th(rowspan = 2, 'Covariate Name'),
+            lapply(databaseIds, th, colspan = 1, class = "dt-center")
+          ),
+          tr(
+            lapply(rep(c("Proportion"), length(databaseIds)), th)
+          )
+        )
+      ))
+      table <- DT::datatable(table,
+                             options = options,
+                             rownames = FALSE,
+                             container = sketch, 
+                             escape = FALSE,
+                             class = "stripe nowrap compact")
+      
+      table <- DT::formatStyle(table = table,
+                               columns = 1 + (1:length(databaseIds)),
+                               background = DT::styleColorBar(c(0,1), "lightblue"),
+                               backgroundSize = "98% 88%",
+                               backgroundRepeat = "no-repeat",
+                               backgroundPosition = "center")
+    } else {
+      table <- data[data$databaseId == databaseIds[1], c("covariateId", "mean", "sd")]
+      colnames(table)[2:3] <- paste(colnames(table)[2:3], databaseIds[1], sep = "_")
+      if (length(databaseIds) > 1) {
+        for (i in 2:length(databaseIds)) {
+          temp <- data[data$databaseId == databaseIds[i], c("covariateId", "mean", "sd")]
+          colnames(temp)[2:3] <- paste(colnames(temp)[2:3], databaseIds[i], sep = "_")
+          table <- merge(table, temp, all = TRUE)
+        }
+      }
+      table <- merge(covariate, table)    
+      table$covariateAnalysisId <- NULL
+      table$covariateId <- NULL
+      table <- table[order(table$covariateName), ]
+      options = list(pageLength = 25,
+                     searching = TRUE,
+                     lengthChange = TRUE,
+                     ordering = TRUE,
+                     paging = TRUE,
+                     columnDefs = list(
+                       truncateStringDef(0, 150),
+                       minCellRealDef(1:(2*length(databaseIds)))
+                     )
+      )
+      sketch <- htmltools::withTags(table(
+        class = 'display',
+        thead(
+          tr(
+            th(rowspan = 2, 'Covariate Name'),
+            lapply(databaseIds, th, colspan = 2, class = "dt-center")
+          ),
+          tr(
+            lapply(rep(c("Mean", "SD"), length(databaseIds)), th)
+          )
+        )
+      ))
+      table <- DT::datatable(table,
+                             options = options,
+                             rownames = FALSE,
+                             container = sketch, 
+                             escape = FALSE,
+                             class = "stripe nowrap compact")
+      table <- DT::formatStyle(table = table,
+                               columns = 2*(1:length(databaseIds)),
+                               background = DT::styleColorBar(c(0,1), "lightblue"),
+                               backgroundSize = "98% 88%",
+                               backgroundRepeat = "no-repeat",
+                               backgroundPosition = "center")
+    }
+    return(table)
+  })
+  
   output$overlapTable <- DT::renderDataTable({
     data <- cohortOverlap[cohortOverlap$targetCohortId == cohortId() & 
                             cohortOverlap$comparatorCohortId == comparatorCohortId() &
@@ -825,6 +948,10 @@ shiny::shinyServer(function(input, output, session) {
   
   shiny::observeEvent(input$cohortCharacterizationInfo, {
     showInfoBox("Cohort Characterization", "html/cohortCharacterization.html")
+  })
+  
+  shiny::observeEvent(input$temporalCharacterizationInfo, {
+    showInfoBox("Temporal Characterization", "html/temporalCharacterization.html")
   })
   
   shiny::observeEvent(input$cohortOverlapInfo, {
