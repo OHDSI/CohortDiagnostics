@@ -56,7 +56,7 @@ createCohorts <- function(connectionDetails,
                  oracleTempSchema = oracleTempSchema,
                  outputFolder = outputFolder)
   
-  pathToCsv <- system.file("settings", "NegativeControls.csv", package = "exampleStudy")
+  pathToCsv <- system.file("settings", "NegativeControls.csv", package = "exampleStudy", mustWork = TRUE)
   negativeControls <- read.csv(pathToCsv)
   
   ParallelLogger::logInfo("Creating negative control outcome cohorts")
@@ -90,9 +90,9 @@ createCohorts <- function(connectionDetails,
 }
 
 addCohortNames <- function(data, IdColumnName = "cohortDefinitionId", nameColumnName = "cohortName") {
-  pathToCsv <- system.file("settings", "CohortsToCreate.csv", package = "exampleStudy")
+  pathToCsv <- system.file("settings", "CohortsToCreate.csv", package = "exampleStudy", mustWork = TRUE)
   cohortsToCreate <- read.csv(pathToCsv)
-  pathToCsv <- system.file("settings", "NegativeControls.csv", package = "exampleStudy")
+  pathToCsv <- system.file("settings", "NegativeControls.csv", package = "exampleStudy", mustWork = TRUE)
   negativeControls <- read.csv(pathToCsv)
   
   idToName <- data.frame(cohortId = c(cohortsToCreate$cohortId,

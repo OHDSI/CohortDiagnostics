@@ -55,12 +55,12 @@ synthesizePositiveControls <- function(connectionDetails,
   
   synthesisSummaryFile <- file.path(outputFolder, "SynthesisSummary.csv")
   if (!file.exists(synthesisSummaryFile)) {
-    pathToCsv <- system.file("settings", "NegativeControls.csv", package = "exampleStudy")
+    pathToCsv <- system.file("settings", "NegativeControls.csv", package = "exampleStudy", mustWork = TRUE)
     negativeControls <- read.csv(pathToCsv)
     exposureOutcomePairs <- data.frame(exposureId = negativeControls$targetId,
                                        outcomeId = negativeControls$outcomeId)
     exposureOutcomePairs <- unique(exposureOutcomePairs)
-    pathToJson <- system.file("settings", "positiveControlSynthArgs.json", package = "exampleStudy")
+    pathToJson <- system.file("settings", "positiveControlSynthArgs.json", package = "exampleStudy", mustWork = TRUE)
     args <- ParallelLogger::loadSettingsFromJson(pathToJson)
     args$control$threads <- min(c(10, maxCores))
     
@@ -103,7 +103,7 @@ synthesizePositiveControls <- function(connectionDetails,
     result <- read.csv(synthesisSummaryFile)
   }
   ParallelLogger::logTrace("Merging positive with negative controls ")
-  pathToCsv <- system.file("settings", "NegativeControls.csv", package = "exampleStudy")
+  pathToCsv <- system.file("settings", "NegativeControls.csv", package = "exampleStudy", mustWork = TRUE)
   negativeControls <- read.csv(pathToCsv)
   
   synthesisSummary <- read.csv(synthesisSummaryFile)
@@ -114,7 +114,7 @@ synthesizePositiveControls <- function(connectionDetails,
   synthesisSummary$oldOutcomeId <- synthesisSummary$outcomeId
   synthesisSummary$outcomeId <- synthesisSummary$newOutcomeId
   
-  pathToCsv <- system.file("settings", "NegativeControls.csv", package = "exampleStudy")
+  pathToCsv <- system.file("settings", "NegativeControls.csv", package = "exampleStudy", mustWork = TRUE)
   negativeControls <- read.csv(pathToCsv)
   negativeControls$targetEffectSize <- 1
   negativeControls$trueEffectSize <- 1

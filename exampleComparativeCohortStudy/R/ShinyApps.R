@@ -85,7 +85,7 @@ prepareForEvidenceExplorer <- function(resultsZipFile, dataFolder) {
 #' @export
 launchEvidenceExplorer <- function(dataFolder, blind = TRUE, launch.browser = TRUE) {
   ensure_installed("DT")
-  appDir <- system.file("shiny", "EvidenceExplorer", package = "exampleStudy")
+  appDir <- system.file("shiny", "EvidenceExplorer", package = "exampleStudy", mustWork = TRUE)
   .GlobalEnv$shinySettings <- list(dataFolder = dataFolder, blind = blind)
   on.exit(rm(shinySettings, envir=.GlobalEnv))
   shiny::runApp(appDir) 

@@ -33,7 +33,7 @@ launchDiagnosticsExplorer <- function(dataFolder, launch.browser = FALSE) {
   ensure_installed("DT")
   ensure_installed("VennDiagram")
   ensure_installed("htmltools")
-  appDir <- system.file("shiny", "DiagnosticsExplorer", package = "CohortDiagnostics")
+  appDir <- system.file("shiny", "DiagnosticsExplorer", package = "CohortDiagnostics", mustWork = TRUE)
   shinySettings <- list(dataFolder = dataFolder)
   .GlobalEnv$shinySettings <- shinySettings
   on.exit(rm(shinySettings, envir = .GlobalEnv))
@@ -145,7 +145,7 @@ launchCohortExplorer <- function(connectionDetails,
                                    sampleSize = sampleSize,
                                    subjectIds = subjectIds)
   on.exit(rm(shinySettings, envir = .GlobalEnv))
-  appDir <- system.file("shiny", "CohortExplorer", package = "CohortDiagnostics")
+  appDir <- system.file("shiny", "CohortExplorer", package = "CohortDiagnostics", mustWork = TRUE)
   shiny::runApp(appDir)
 }
 

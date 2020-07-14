@@ -24,8 +24,8 @@ getCohortsJsonAndSqlFromPackage <- function(packageName = packageName,
     errorMessage <- checkmate::makeAssertCollection()
   }
   checkmate::assertCharacter(x = packageName, min.len = 1, max.len = 1, add = errorMessage)
-  pathToCsv <- system.file(cohortToCreateFile, package = packageName)
-  checkmate::assertFileExists(x = system.file(cohortToCreateFile, package = packageName), 
+  pathToCsv <- system.file(cohortToCreateFile, package = packageName, mustWork = TRUE)
+  checkmate::assertFileExists(x = system.file(cohortToCreateFile, package = packageName, mustWork = TRUE), 
                               access = "r", 
                               extension = "csv", 
                               add = errorMessage)
@@ -49,14 +49,14 @@ getCohortsJsonAndSqlFromPackage <- function(packageName = packageName,
     dplyr::rename(cohortFullName = .data$atlasName, cohortName = .data$name)
   
   getSql <- function(name) {
-    pathToSql <- system.file("sql", "sql_server", paste0(name, ".sql"), package = packageName)
+    pathToSql <- system.file("sql", "sql_server", paste0(name, ".sql"), package = packageName, mustWork = TRUE)
     checkmate::assertFile(x = pathToSql, access = "r", extension = ".sql", add = errorMessage)
     sql <- readChar(pathToSql, file.info(pathToSql)$size)
     return(sql)
   }
   cohorts$sql <- sapply(cohorts$cohortName, getSql)
   getJson <- function(name) {
-    pathToJson <- system.file("cohorts", paste0(name, ".json"), package = packageName)
+    pathToJson <- system.file("cohorts", paste0(name, ".json"), package = packageName, mustWork = TRUE)
     checkmate::assertFile(x = pathToJson, access = "r", extension = ".sql", add = errorMessage)
     json <- readChar(pathToJson, file.info(pathToJson)$size)
     return(json)
@@ -710,7 +710,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
 
 createTempInclusionStatsTables <- function(connection, oracleTempSchema, cohorts) {
   ParallelLogger::logInfo("Creating temporary inclusion statistics tables")
-  pathToSql <- system.file( "inclusionStatsTables.sql", package = "ROhdsiWebApi")
+  pathToSql <- system.file( "inclusionStatsTables.sql", package = "ROhdsiWebApi", mustWork = TRUE)
   sql <- SqlRender::readSql(pathToSql)
   sql <- SqlRender::translate(sql, targetDialect = connection@dbms, oracleTempSchema = oracleTempSchema)
   DatabaseConnector::executeSql(connection, sql)
