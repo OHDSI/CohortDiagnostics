@@ -3,13 +3,6 @@
 #library(DT)
 source("PlotsAndTables.R")
 
-if (exists('temporalCovariate')) {
-temporalCovariateChoices <- temporalCovariate %>%
-    dplyr::select(timeId, startDayTemporalCharacterization, endDayTemporalCharacterization) %>%
-    dplyr::distinct() %>%
-    dplyr::mutate(choices = paste0("Start ", startDayTemporalCharacterization, " to end ", endDayTemporalCharacterization)) %>%
-    dplyr::select(timeId, choices)
-}
 
 truncateStringDef <- function(columns, maxChars) {
   list(
@@ -454,7 +447,9 @@ shiny::shinyServer(function(input, output, session) {
     databaseIds <- unique(data$databaseId)
     
     if (input$charType == "Pretty") {
-      data <- merge(data, covariate)
+      data <- data %>% 
+        dplyr::left_join(y = covariate, by = c('covariateId')) %>% 
+        dplyr::distinct()
       table <- data[data$databaseId == databaseIds[1], ]
       table <- prepareTable1(table)
       colnames(table)[2] <- paste(colnames(table)[2], databaseIds[1], sep = "_")
@@ -564,7 +559,9 @@ shiny::shinyServer(function(input, output, session) {
     databaseIds <- unique(data$databaseId)
     
     if (input$charTypeTemporal == "Pretty") {
-      data <- merge(data, temporalCovariate)
+      data <- data %>% 
+              dplyr::left_join(y = temporalCovariate, by = c('covariateId', 'timeId')) %>% 
+              dplyr::distinct()
       table <- data[data$databaseId == databaseIds[1], ]
       table <- prepareTable1(covariates = table, pathToCsv = "Table1SpecsTemporal.csv")
       colnames(table)[2] <- paste(colnames(table)[2], databaseIds[1], sep = "_")

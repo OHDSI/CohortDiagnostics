@@ -1,3 +1,5 @@
+library(magrittr)
+
 if (!exists("shinySettings")) {
   if (file.exists("data")) {
     shinySettings <- list(dataFolder = "data")
@@ -59,6 +61,15 @@ if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {
     unlink(tempFolder, recursive = TRUE)
   }
 }
+
+if (exists('temporalCovariate')) {
+  temporalCovariateChoices <- temporalCovariate %>%
+    dplyr::select(.data$timeId, .data$startDayTemporalCharacterization, .data$endDayTemporalCharacterization) %>%
+    dplyr::distinct() %>%
+    dplyr::mutate(choices = paste0("Start ", .data$startDayTemporalCharacterization, " to end ", .data$endDayTemporalCharacterization)) %>%
+    dplyr::select(.data$timeId, .data$choices)
+}
+
 
 cohort <- unique(cohort)
 cohort <- cohort[, c("cohortFullName", "cohortId", "cohortName")]
