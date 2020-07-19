@@ -442,24 +442,27 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$characterizationTable <- DT::renderDataTable({
-    data <- covariateValue[covariateValue$cohortId == cohortId() & covariateValue$databaseId %in% input$databases, ]
-    data$cohortId <- NULL
+    data <- covariateValue %>% 
+            dplyr::filter(.data$cohortId == cohortId() & 
+                            .data$databaseId %in% input$databases) %>% 
+            dplyr::select(-cohortId)
     databaseIds <- unique(data$databaseId)
     
     if (input$charType == "Pretty") {
       data <- data %>% 
         dplyr::left_join(y = covariate, by = c('covariateId')) %>% 
         dplyr::distinct()
-      table <- data[data$databaseId == databaseIds[1], ]
+      table <- data %>% 
+                dplyr::filter(.data$databaseId == databaseIds[1])
       table <- prepareTable1(table)
       colnames(table)[2] <- paste(colnames(table)[2], databaseIds[1], sep = "_")
       table$order <- 1:nrow(table)
       if (length(databaseIds) > 1) {
         for (i in 2:length(databaseIds)) {
-          temp <- data[data$databaseId == databaseIds[i],]
+          temp <- data %>% dplyr::filter(.data$databaseId == databaseIds[i])
           temp <- prepareTable1(temp)
           colnames(temp)[2] <- paste(colnames(temp)[2], databaseIds[i], sep = "_")
-          table <- merge(table, temp, all.x = TRUE)
+          table <- table %>% dplyr::full_join(y = temp, by = c('covariateName'))
         }
       }
       table <- table[order(table$order), ]
@@ -553,25 +556,25 @@ shiny::shinyServer(function(input, output, session) {
   output$temporalCharacterizationTable <- DT::renderDataTable({
     data <- temporalCovariateValue %>% 
             dplyr::filter(.data$cohortId == cohortId(),
-                          .data$databaseId == input$databases,
+                          .data$databaseId %in% input$databases,
                           .data$timeId == timeId())
     data$cohortId <- NULL
-    databaseIds <- unique(data$databaseId)
+    databaseIds <- data %>% dplyr::select(databaseId) %>% dplyr::distinct() %>% dplyr::pull(databaseId)
     
     if (input$charTypeTemporal == "Pretty") {
       data <- data %>% 
               dplyr::left_join(y = temporalCovariate, by = c('covariateId', 'timeId')) %>% 
               dplyr::distinct()
-      table <- data[data$databaseId == databaseIds[1], ]
+      table <- data %>% dplyr::filter(.data$databaseId == databaseIds[1])
       table <- prepareTable1(covariates = table, pathToCsv = "Table1SpecsTemporal.csv")
       colnames(table)[2] <- paste(colnames(table)[2], databaseIds[1], sep = "_")
       table$order <- 1:nrow(table)
       if (length(databaseIds) > 1) {
         for (i in 2:length(databaseIds)) {
-          temp <- data[data$databaseId == databaseIds[i],]
+          temp <- data %>% dplyr::filter(.data$databaseId == databaseIds[i])
           temp <- prepareTable1(temp)
           colnames(temp)[2] <- paste(colnames(temp)[2], databaseIds[i], sep = "_")
-          table <- merge(table, temp, all.x = TRUE)
+          table <- table %>% dplyr::full_join(y = temp, by = c(covariateName))
         }
       }
       table <- table[order(table$order), ]
@@ -620,7 +623,7 @@ shiny::shinyServer(function(input, output, session) {
           table <- merge(table, temp, all = TRUE)
         }
       }
-      table <- merge(covariate, table)    
+      table <- merge(temporalCovariate, table)    
       table$covariateAnalysisId <- NULL
       table$covariateId <- NULL
       table <- table[order(table$covariateName), ]
