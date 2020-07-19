@@ -62,15 +62,15 @@ shiny::shinyServer(function(input, output, session) {
     return(cohort$cohortId[cohort$cohortFullName == input$comparator])
   })
   
-  timeId <- shiny::reactive({
-    return(temporalCovariateChoices %>% 
-             dplyr::filter(choices == input$timeIdChoices) %>% 
-             dplyr::pull(timeId))
-  })
+  # timeId <- shiny::reactive({
+  #   return(temporalCovariateChoices %>% 
+  #            dplyr::filter(choices == input$timeIdChoices) %>% 
+  #            dplyr::pull(timeId))
+  # })
   
   shiny::observe({
     subset <- unique(conceptSets$conceptSetName[conceptSets$cohortId == cohortId()])
-    shiny::updateSelectInput(session = session,
+    shinyWidgets::updatePickerInput(session = session,
                              inputId = "conceptSet",
                              choices = subset)
   })
@@ -947,9 +947,9 @@ shiny::shinyServer(function(input, output, session) {
     showInfoBox("Cohort Characterization", "html/cohortCharacterization.html")
   })
   
-  shiny::observeEvent(input$temporalCharacterizationInfo, {
-    showInfoBox("Temporal Characterization", "html/temporalCharacterization.html")
-  })
+  # shiny::observeEvent(input$temporalCharacterizationInfo, {
+  #   showInfoBox("Temporal Characterization", "html/temporalCharacterization.html")
+  # })
   
   shiny::observeEvent(input$cohortOverlapInfo, {
     showInfoBox("Cohort Overlap", "html/cohortOverlap.html")
@@ -958,4 +958,21 @@ shiny::shinyServer(function(input, output, session) {
   shiny::observeEvent(input$compareCohortCharacterizationInfo, {
     showInfoBox("Compare Cohort Characteristics", "html/compareCohortCharacterization.html")
   })
+  
+  output$incidenceRateSelectedCohort <- shiny::renderText(input$cohort)
+  output$timeDistributionSelectedCohort <- shiny::renderText(input$cohort)
+  output$sourceConceptsSelectedCohort <- shiny::renderText(input$cohort)
+  output$orphanConceptsSelectedCohort <- shiny::renderText(input$cohort)
+  output$inclusionRuleStatsSelectedCohort <- shiny::renderText(input$cohort)
+  output$indexEventBreakdownSelectedCohort <- shiny::renderText(input$cohort)
+  output$cohortCharacterizationSelectedCohort <- shiny::renderText(input$cohort)
+  output$temporalCharacterizationSelectedCohort <- shiny::renderText(input$cohort)
+  output$cohortOverlapSelectedCohort <- shiny::renderText(input$cohort)
+  output$cohortOverlapComparatorCohort <- shiny::renderText(input$comparator)
+  output$compareCohortCharacterizationSelectedCohort <- shiny::renderText(input$cohort)
+  output$compareCohortCharacterizationSelectedComparator <- shiny::renderText(input$comparator)
+  
+  
+  
+  
 })
