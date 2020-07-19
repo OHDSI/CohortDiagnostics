@@ -62,11 +62,11 @@ shiny::shinyServer(function(input, output, session) {
     return(cohort$cohortId[cohort$cohortFullName == input$comparator])
   })
   
-  # timeId <- shiny::reactive({
-  #   return(temporalCovariateChoices %>% 
-  #            dplyr::filter(choices == input$timeIdChoices) %>% 
-  #            dplyr::pull(timeId))
-  # })
+  timeId <- shiny::reactive({
+    return(temporalCovariateChoices %>%
+             dplyr::filter(choices == input$timeIdChoices) %>%
+             dplyr::pull(timeId))
+  })
   
   shiny::observe({
     subset <- unique(conceptSets$conceptSetName[conceptSets$cohortId == cohortId()])
@@ -947,9 +947,9 @@ shiny::shinyServer(function(input, output, session) {
     showInfoBox("Cohort Characterization", "html/cohortCharacterization.html")
   })
   
-  # shiny::observeEvent(input$temporalCharacterizationInfo, {
-  #   showInfoBox("Temporal Characterization", "html/temporalCharacterization.html")
-  # })
+  shiny::observeEvent(input$temporalCharacterizationInfo, {
+    showInfoBox("Temporal Characterization", "html/temporalCharacterization.html")
+  })
   
   shiny::observeEvent(input$cohortOverlapInfo, {
     showInfoBox("Cohort Overlap", "html/cohortOverlap.html")
