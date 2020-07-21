@@ -549,7 +549,7 @@ enforceMinCellValue <- function(data, fieldName, minValues, silent = FALSE) {
   return(data)
 }
 
-getUniqueConceptSets <- function(cohorts) {
+getConceptSets <- function(cohorts) {
   getConceptSetDetails <- function(conceptSet) {
     return(tibble::tibble(conceptSetId = conceptSet$id,
                           conceptSetName = conceptSet$name,
@@ -583,8 +583,7 @@ getUniqueConceptSets <- function(cohorts) {
   uniqueConceptSets <- tibble::tibble(expression = uniqueConceptSets,
                                       uniqueConceptSetId = 1:length(uniqueConceptSets))
   conceptSets <- merge(conceptSets, uniqueConceptSets)
-  uniqueConceptSets <- conceptSets[!duplicated(conceptSets$uniqueConceptSetId), ]
-  return(uniqueConceptSets)
+  return(conceptSets)
 }
 
 instantiateUniqueConceptSets <- function(cohorts, uniqueConceptSets, connection, cdmDatabaseSchema, oracleTempSchema) {
@@ -643,7 +642,8 @@ runConceptSetDiagnostics <- function(connection,
     return()
   }
   
-  uniqueConceptSets <- getUniqueConceptSets(subset)
+  conceptSets <- getConceptSets(subset)
+  uniqueConceptSets <- conceptSets[!duplicated(conceptSets$uniqueConceptSetId), ]
   instantiateUniqueConceptSets(cohorts = subset,
                                uniqueConceptSets = uniqueConceptSets,
                                connection = connection,
@@ -707,7 +707,7 @@ runConceptSetDiagnostics <- function(connection,
       }
       
       colnames(counts)[colnames(counts) == "conceptSetId"] <- "uniqueConceptSetId"
-      counts <- merge(uniqueConceptSets[, c("cohortId", "conceptSetId", "conceptSetName", "uniqueConceptSetId")], counts)
+      counts <- merge(conceptSets[, c("cohortId", "conceptSetId", "conceptSetName", "uniqueConceptSetId")], counts)
       counts$uniqueConceptSetId <- NULL
       counts <- counts[order(counts$cohortId,
                              counts$conceptSetId,
@@ -762,7 +762,7 @@ runConceptSetDiagnostics <- function(connection,
       
       data <- lapply(split(uniqueConceptSets, uniqueConceptSets$uniqueConceptSetId), runOrphanConcepts)
       data <- do.call(rbind, data)
-      data <- merge(uniqueConceptSets[, c("cohortId", "conceptSetId", "conceptSetName", "uniqueConceptSetId")], data)
+      data <- merge(conceptSets[, c("cohortId", "conceptSetId", "conceptSetName", "uniqueConceptSetId")], data)
       data$uniqueConceptSetId <- NULL
       data$databaseId <- rep(databaseId, nrow(data))
       data <- data[data$cohortId %in% subsetOrphans$cohortId, ]
