@@ -566,7 +566,13 @@ getConceptSets <- function(cohorts) {
     
     sqlParts <- SqlRender::splitSql( gsub("with primary_events.*", "", cohort$sql))
     sqlParts <- sqlParts[-1]
-    conceptSetIds <- as.numeric(gsub("^.*SELECT ([0-9]+) as codeset_id.*$", "\\1", sqlParts, ignore.case = TRUE))
+    conceptSetIds <- stringr::str_extract_all(string = sqlParts, 
+                                              pattern = "SELECT ([0-9]+) as ") %>% 
+                     stringr::str_replace_all(string = ., pattern = "SELECT ", replacement = "") %>% 
+                     stringr::str_replace_all(string = ., pattern = " as ", replacement = "") %>% 
+                     stringr::str_squish(string = .) %>% 
+                     stringr::str_trim(string = .) %>% 
+                     utils::type.convert()
     if (any(!(conceptSetIds %in% conceptSets$conceptSetId)) ||
         any(!(conceptSets$conceptSetId %in% conceptSetIds))) {
       stop("Mismatch in concept set IDs between SQL and JSON for cohort ", cohort$cohortFullName)
