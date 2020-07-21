@@ -1,84 +1,84 @@
 library(magrittr)
 
-
-fixCase <- function(label) {
-  idx <- (toupper(label) == label)
-  if (any(idx)) {
-    label[idx] <- paste0(substr(label[idx], 1, 1),
-                         tolower(substr(label[idx], 2, nchar(label[idx]))))
-  }
-  return(label)
-}
-
 prepareTable1 <- function(covariates,
                           pathToCsv = "Table1Specs.csv") {
+  covariates <- covariates %>%
+    dplyr::mutate(conceptId = (.data$covariateId  - .data$covariateAnalysisId)/1000,
+                  covariateName = stringr::str_to_sentence(stringr::str_replace_all(string = .data$covariateName, 
+                                                                                    pattern = "^.*: ",
+                                                                                    replacement = "")))
   space <- "&nbsp;"
-  specifications <- readr::read_csv(file = pathToCsv, col_types = readr::cols())
-  
+  specifications <- readr::read_csv(file = pathToCsv, col_types = readr::cols()) %>% 
+    dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = '')))
   resultsTable <- tidyr::tibble()
-  
   for (i in 1:nrow(specifications)) {
     specification <- specifications %>% dplyr::slice(i)
     if (specification %>% dplyr::pull(.data$analysisId) == "") {
-      resultsTable <- dplyr::bind_rows(resultsTable,
-                                      tidyr::tibble(Characteristic = specification %>% dplyr::pull(.data$label), 
-                                                    value = "")
-                                      )
+      resultsTable <- dplyr::bind_rows(resultsTable, 
+                                       tidyr::tibble(label = (specification %>% dplyr::pull(.data$label)),
+                                                     characteristic = (specification %>% dplyr::pull(.data$label)), 
+                                                     value = "",
+                                                     header = 1,
+                                                     position = i))
+      covariatesSubset <- tidyr::tibble()
+    } else if (specification %>% dplyr::pull(.data$covariateIds) == "") {
+      covariatesSubset <- covariates %>%
+        dplyr::filter(.data$covariateAnalysisId %in% specification$analysisId) %>% 
+        dplyr::arrange(.data$covariateName)
     } else {
-      idx <- covariates$covariateAnalysisId == specification$analysisId
-      if (any(idx)) {
-        if (specification$covariateIds != "" & !is.na(specification$covariateIds)) {
-          covariateIds <- as.numeric(strsplit(x = specification$covariateIds, split = ";")[[1]])
-          idx <- covariates$covariateId %in% covariateIds
-        } else {
-          covariateIds <- NULL
-        }
-        if (any(idx)) {
-          covariatesSubset <- covariates[idx, ]
-          if (is.null(covariateIds)) {
-            covariatesSubset <- covariatesSubset[order(covariatesSubset$covariateId), ]
-          } else {
-            covariatesSubset <- merge(covariatesSubset, data.frame(covariateId = covariateIds,
-                                                                   rn = 1:length(covariateIds)))
-            covariatesSubset <- covariatesSubset[order(covariatesSubset$rn, covariatesSubset$covariateId), ]
-          }
-          covariatesSubset$covariateName <- fixCase(gsub("^.*: ", "", covariatesSubset$covariateName))
-          if (is.na(specification$covariateIds) || length(covariateIds) > 1) {
-            resultsTable <- dplyr::bind_rows(resultsTable, 
-                                            tidyr::tibble(Characteristic = specification$label,
-                                                           mean = NA))
-            resultsTable <- dplyr::bind_rows(resultsTable, 
-                                             tidyr::tibble(Characteristic = paste0(space,
-                                                                                   space,
-                                                                                   space,
-                                                                                   space,
-                                                                                   covariatesSubset$covariateName),
-                                                           mean = covariatesSubset$mean))
-          } else {
-            resultsTable <- dplyr::bind_rows(resultsTable, 
-                                             tidyr::tibble(Characteristic = specification$label,
-                                                           mean = covariatesSubset$mean))
-          }
-        }
-      }
+      covariatesSubset <- covariates %>%
+        dplyr::filter(.data$covariateAnalysisId %in% specification$analysisId,
+                      .data$covariateId %in% (stringr::str_split(string = (specification %>% 
+                                                                             dplyr::pull(.data$covariateIds)), 
+                                                                 pattern = ";")[[1]] %>% 
+                                                utils::type.convert())) %>% 
+        dplyr::arrange(.data$covariateId)
+    }
+    if (nrow(covariatesSubset) > 1) {
+      resultsTable <- dplyr::bind_rows(resultsTable, 
+                                       tidyr::tibble(label = (specification %>% dplyr::pull(.data$label)),
+                                                     characteristic = specification$label,
+                                                     value = NA,
+                                                     header = 1,
+                                                     position = i))
+      resultsTable <- dplyr::bind_rows(resultsTable, 
+                                       tidyr::tibble(label = (specification %>% dplyr::pull(.data$label)),
+                                                     characteristic = paste0(space,
+                                                                             space,
+                                                                             space,
+                                                                             space,
+                                                                             covariatesSubset$covariateName),
+                                                     value = covariatesSubset$mean,
+                                                     header = 0,
+                                                     position = i))
+    } else if (nrow(covariatesSubset) == 1) {
+      resultsTable <- dplyr::bind_rows(resultsTable, 
+                                       tidyr::tibble(characteristic = specification$label,
+                                                     value = covariatesSubset$mean,
+                                                     position = i))
     }
   }
-  colnames(resultsTable) <- c("Characteristic", "Mean (%)")
-  return(resultsTable)
+return(resultsTable)
 }
 
 
 prepareTable1Comp <- function(balance,
                               pathToCsv = "Table1Specs.csv") {
   space <- "&nbsp;"
-  specifications <- readr::read_csv(file = pathToCsv, col_types = readr::cols())
+  specifications <- readr::read_csv(file = pathToCsv, col_types = readr::cols()) %>% 
+    dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = '')))
   
   resultsTable <- tidyr::tibble()
   
   for (i in 1:nrow(specifications)) {
-    if (specifications$analysisId[i] == "") {
-      resultsTable <- rbind(resultsTable,
-                            data.frame(Characteristic = specifications$label[i], value = ""))
+    specification <- specifications %>% dplyr::slice(i)
+    if (specification %>% dplyr::pull(.data$analysisId) == "") {
+      resultsTable <- dplyr::bind_rows(resultsTable, 
+                                       tidyr::tibble(label = (specification %>% dplyr::pull(.data$label)),
+                                                     characteristic = (specification %>% dplyr::pull(.data$label)), 
+                                                     value = "",
+                                                     header = 1,
+                                                     position = i))
     } else {
       idx <- balance$covariateAnalysisId == specifications$analysisId[i]
       if (any(idx)) {
@@ -97,14 +97,14 @@ prepareTable1Comp <- function(balance,
                                                              rn = 1:length(covariateIds)))
             balanceSubset <- balanceSubset[order(balanceSubset$rn, balanceSubset$covariateId), ]
           }
-          balanceSubset$covariateName <- fixCase(gsub("^.*: ", "", balanceSubset$covariateName))
+          balanceSubset$covariateName <- stringr::str_to_sentence(gsub("^.*: ", "", balanceSubset$covariateName))
           if (specifications$covariateIds[i] == "" || length(covariateIds) > 1) {
-            resultsTable <- rbind(resultsTable, data.frame(Characteristic = specifications$label[i],
+            resultsTable <- rbind(resultsTable, data.frame(characteristic = specifications$label[i],
                                                            MeanT = NA,
                                                            MeanC = NA,
                                                            StdDiff = NA,
                                                            stringsAsFactors = FALSE))
-            resultsTable <- rbind(resultsTable, data.frame(Characteristic = paste0(space,
+            resultsTable <- rbind(resultsTable, data.frame(characteristic = paste0(space,
                                                                                    space,
                                                                                    space,
                                                                                    space,
@@ -114,7 +114,7 @@ prepareTable1Comp <- function(balance,
                                                            StdDiff = balanceSubset$stdDiff,
                                                            stringsAsFactors = FALSE))
           } else {
-            resultsTable <- rbind(resultsTable, data.frame(Characteristic = specifications$label[i],
+            resultsTable <- rbind(resultsTable, data.frame(characteristic = specifications$label[i],
                                                            MeanT = balanceSubset$mean1,
                                                            MeanC = balanceSubset$mean2,
                                                            StdDiff = balanceSubset$stdDiff,
@@ -124,7 +124,7 @@ prepareTable1Comp <- function(balance,
       }
     }
   }
-  colnames(resultsTable) <- c("Characteristic", "Proportion Target", "Proportion Comparator", "StdDiff")
+  colnames(resultsTable) <- c("characteristic", "Proportion Target", "Proportion Comparator", "StdDiff")
   return(resultsTable)
 }
 

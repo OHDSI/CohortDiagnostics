@@ -446,27 +446,33 @@ shiny::shinyServer(function(input, output, session) {
             dplyr::filter(.data$cohortId == cohortId() & 
                             .data$databaseId %in% input$databases) %>% 
             dplyr::select(-cohortId)
-    databaseIds <- unique(data$databaseId)
+    databaseIds <- data %>% 
+      dplyr::select(databaseId) %>% 
+      dplyr::distinct() %>% 
+      dplyr::pull(databaseId)
     
     if (input$charType == "Pretty") {
       data <- data %>% 
         dplyr::left_join(y = covariate, by = c('covariateId')) %>% 
         dplyr::distinct()
-      table <- data %>% 
-                dplyr::filter(.data$databaseId == databaseIds[1])
-      table <- prepareTable1(table)
-      colnames(table)[2] <- paste(colnames(table)[2], databaseIds[1], sep = "_")
-      table$order <- 1:nrow(table)
-      if (length(databaseIds) > 1) {
-        for (i in 2:length(databaseIds)) {
-          temp <- data %>% dplyr::filter(.data$databaseId == databaseIds[i])
-          temp <- prepareTable1(temp)
-          colnames(temp)[2] <- paste(colnames(temp)[2], databaseIds[i], sep = "_")
-          table <- table %>% dplyr::full_join(y = temp, by = c('covariateName'))
-        }
+      table <- list()
+      for (j in (1:length(databaseIds))) {
+       temp <- data %>% 
+          dplyr::filter(.data$databaseId == databaseIds[[j]]) %>% 
+          prepareTable1() %>% 
+          dplyr::mutate(databaseId = databaseIds[[j]])
+       table[[j]] <- temp
       }
-      table <- table[order(table$order), ]
-      table$order <- NULL
+      table <- dplyr::bind_rows(table) %>% 
+                dplyr::arrange(.data$label, dplyr::desc(.data$header), .data$position, .data$characteristic) %>% 
+                dplyr::select(-.data$label, -.data$header, -.data$position) %>% 
+                tidyr::pivot_wider(id_cols = 'characteristic', 
+                                   names_from = "databaseId",
+                                   values_from = "value" ,
+                                   names_sep = "_",
+                                   values_fill = 0,
+                                   names_prefix = "Value_"
+                                   )
       options = list(pageLength = 999,
                      searching = FALSE,
                      lengthChange = FALSE,
@@ -502,19 +508,21 @@ shiny::shinyServer(function(input, output, session) {
                                backgroundRepeat = "no-repeat",
                                backgroundPosition = "center")
     } else {
-      table <- data[data$databaseId == databaseIds[1], c("covariateId", "mean", "sd")]
-      colnames(table)[2:3] <- paste(colnames(table)[2:3], databaseIds[1], sep = "_")
-      if (length(databaseIds) > 1) {
-        for (i in 2:length(databaseIds)) {
-          temp <- data[data$databaseId == databaseIds[i], c("covariateId", "mean", "sd")]
-          colnames(temp)[2:3] <- paste(colnames(temp)[2:3], databaseIds[i], sep = "_")
-          table <- merge(table, temp, all = TRUE)
-        }
-      }
-      table <- merge(covariate, table)    
-      table$covariateAnalysisId <- NULL
-      table$covariateId <- NULL
-      table <- table[order(table$covariateName), ]
+      table <- data %>% 
+        tidyr::pivot_wider(id_cols = c(.data$covariateId),
+                           names_from = .data$databaseId,
+                           values_from = c(.data$mean, .data$sd),
+                           names_sep = "_") %>% 
+        dplyr::relocate(.data$covariateId)
+      
+      table <- covariate %>% 
+        dplyr::mutate(conceptId = (.data$covariateId - .data$covariateAnalysisId)/1000) %>% 
+        dplyr::left_join(y = table, by = c("covariateId")) %>%
+        dplyr::select(-.data$covariateAnalysisId, 
+                      -.data$covariateId) %>% 
+        dplyr::arrange(.data$covariateName) %>% 
+        dplyr::distinct()
+      
       options = list(pageLength = 25,
                      searching = TRUE,
                      lengthChange = TRUE,
@@ -557,111 +565,62 @@ shiny::shinyServer(function(input, output, session) {
     data <- temporalCovariateValue %>% 
             dplyr::filter(.data$cohortId == cohortId(),
                           .data$databaseId %in% input$databases,
-                          .data$timeId == timeId())
-    data$cohortId <- NULL
-    databaseIds <- data %>% dplyr::select(databaseId) %>% dplyr::distinct() %>% dplyr::pull(databaseId)
+                          .data$timeId == timeId()) %>% 
+            dplyr::select(-cohortId)
     
-    if (input$charTypeTemporal == "Pretty") {
-      data <- data %>% 
-              dplyr::left_join(y = temporalCovariate, by = c('covariateId', 'timeId')) %>% 
+    databaseIds <- data %>% 
+      dplyr::select(databaseId) %>% 
+      dplyr::distinct() %>% 
+      dplyr::pull(databaseId)
+    
+    table <- data %>% 
+              tidyr::pivot_wider(id_cols = c("timeId","covariateId" ),
+                                 names_from = "databaseId",
+                                 values_from = c("mean", "sd"),
+                                 names_sep = "_") %>% 
+              dplyr::left_join(y = temporalCovariate, by = c("covariateId", "timeId")) %>%
+              dplyr::mutate(conceptId = (.data$covariateId - .data$covariateAnalysisId)/1000) %>% 
+              dplyr::select(-.data$covariateAnalysisId, 
+                            -.data$covariateId, 
+                            -.data$startDayTemporalCharacterization, 
+                            -.data$endDayTemporalCharacterization) %>% 
+              dplyr::arrange(.data$covariateName) %>% 
               dplyr::distinct()
-      table <- data %>% dplyr::filter(.data$databaseId == databaseIds[1])
-      table <- prepareTable1(covariates = table, pathToCsv = "Table1SpecsTemporal.csv")
-      colnames(table)[2] <- paste(colnames(table)[2], databaseIds[1], sep = "_")
-      table$order <- 1:nrow(table)
-      if (length(databaseIds) > 1) {
-        for (i in 2:length(databaseIds)) {
-          temp <- data %>% dplyr::filter(.data$databaseId == databaseIds[i])
-          temp <- prepareTable1(temp)
-          colnames(temp)[2] <- paste(colnames(temp)[2], databaseIds[i], sep = "_")
-          table <- table %>% dplyr::full_join(y = temp, by = c(covariateName))
-        }
-      }
-      table <- table[order(table$order), ]
-      table$order <- NULL
-      options = list(pageLength = 999,
-                     searching = FALSE,
-                     lengthChange = FALSE,
-                     ordering = FALSE,
-                     paging = FALSE,
-                     columnDefs = list(
-                       truncateStringDef(0, 150),
-                       minCellPercentDef(1:length(databaseIds))
-                     ))
-      sketch <- htmltools::withTags(table(
-        class = 'display',
-        thead(
-          tr(
-            th(rowspan = 2, 'Covariate Name'),
-            lapply(databaseIds, th, colspan = 1, class = "dt-center")
-          ),
-          tr(
-            lapply(rep(c("Proportion"), length(databaseIds)), th)
-          )
+    
+    options = list(pageLength = 25,
+                   searching = TRUE,
+                   lengthChange = TRUE,
+                   ordering = TRUE,
+                   paging = TRUE,
+                   columnDefs = list(
+                     truncateStringDef(0, 150),
+                     minCellRealDef(1:(2*length(databaseIds)))
+                   )
+    )
+    sketch <- htmltools::withTags(table(
+      class = 'display',
+      thead(
+        tr(
+          th(rowspan = 2, 'Covariate Name'),
+          lapply(databaseIds, th, colspan = 2, class = "dt-center")
+        ),
+        tr(
+          lapply(rep(c("Mean", "SD"), length(databaseIds)), th)
         )
-      ))
-      table <- DT::datatable(table,
-                             options = options,
-                             rownames = FALSE,
-                             container = sketch, 
-                             escape = FALSE,
-                             class = "stripe nowrap compact")
-      
-      table <- DT::formatStyle(table = table,
-                               columns = 1 + (1:length(databaseIds)),
-                               background = DT::styleColorBar(c(0,1), "lightblue"),
-                               backgroundSize = "98% 88%",
-                               backgroundRepeat = "no-repeat",
-                               backgroundPosition = "center")
-    } else {
-      table <- data[data$databaseId == databaseIds[1], c("covariateId", "mean", "sd")]
-      colnames(table)[2:3] <- paste(colnames(table)[2:3], databaseIds[1], sep = "_")
-      if (length(databaseIds) > 1) {
-        for (i in 2:length(databaseIds)) {
-          temp <- data[data$databaseId == databaseIds[i], c("covariateId", "mean", "sd")]
-          colnames(temp)[2:3] <- paste(colnames(temp)[2:3], databaseIds[i], sep = "_")
-          table <- merge(table, temp, all = TRUE)
-        }
-      }
-      table <- merge(temporalCovariate, table)    
-      table$covariateAnalysisId <- NULL
-      table$covariateId <- NULL
-      table <- table[order(table$covariateName), ]
-      options = list(pageLength = 25,
-                     searching = TRUE,
-                     lengthChange = TRUE,
-                     ordering = TRUE,
-                     paging = TRUE,
-                     columnDefs = list(
-                       truncateStringDef(0, 150),
-                       minCellRealDef(1:(2*length(databaseIds)))
-                     )
       )
-      sketch <- htmltools::withTags(table(
-        class = 'display',
-        thead(
-          tr(
-            th(rowspan = 2, 'Covariate Name'),
-            lapply(databaseIds, th, colspan = 2, class = "dt-center")
-          ),
-          tr(
-            lapply(rep(c("Mean", "SD"), length(databaseIds)), th)
-          )
-        )
-      ))
-      table <- DT::datatable(table,
-                             options = options,
-                             rownames = FALSE,
-                             container = sketch, 
-                             escape = FALSE,
-                             class = "stripe nowrap compact")
-      table <- DT::formatStyle(table = table,
-                               columns = 2*(1:length(databaseIds)),
-                               background = DT::styleColorBar(c(0,1), "lightblue"),
-                               backgroundSize = "98% 88%",
-                               backgroundRepeat = "no-repeat",
-                               backgroundPosition = "center")
-    }
+    ))
+    table <- DT::datatable(table,
+                           options = options,
+                           rownames = FALSE,
+                           #container = sketch, 
+                           escape = FALSE,
+                           class = "stripe nowrap compact")
+    table <- DT::formatStyle(table = table,
+                             columns = 2*(1:length(databaseIds)),
+                             background = DT::styleColorBar(c(0,1), "lightblue"),
+                             backgroundSize = "98% 88%",
+                             backgroundRepeat = "no-repeat",
+                             backgroundPosition = "center")
     return(table)
   })
   

@@ -92,7 +92,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
         dplyr::rename(mean = .data$averageValue) %>% 
         dplyr::ungroup() %>% 
         dplyr::collect() %>% 
-        dplyr::left_join(counts, by = c("timeId" = "timeId")) %>% 
+        dplyr::left_join(counts, by = "timeId") %>% 
         dplyr::select(-.data$sumValue)
     } else {
       counts <- data$covariates %>% 
@@ -128,15 +128,9 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
     result <- result %>% dplyr::left_join(y = data$covariateRef %>% dplyr::collect(), by = ("covariateId"))
     if (FeatureExtraction::isTemporalCovariateData(data)) {
       result <- result %>% 
-        dplyr::left_join(y = data$timeRef %>% dplyr::collect(), by = ("timeId")) %>% 
+        dplyr::left_join(y = data$timeRef %>% dplyr::collect(), by = "timeId") %>% 
         dplyr::rename(startDayTemporalCharacterization = .data$startDay,
                       endDayTemporalCharacterization = .data$endDay)
-    } else
-    {
-      result <- result %>% 
-                dplyr::mutate(timeId = 0,
-                              startDay = NA, 
-                              endDay = NA)
     }
     result <- result %>% 
               dplyr::select(-.data$conceptId)
@@ -174,20 +168,18 @@ compareCohortCharacteristics <- function(characteristics1, characteristics2) {
   characteristics1 = tidyr::tibble(
     covariateId = characteristics2$covariateId,
     mean1 = characteristics2$mean,
-    sd1 = characteristics2$sd,
-    timeId = characteristics2$timeId
+    sd1 = characteristics2$sd
   )
   
   characteristics2 = tidyr::tibble(
     covariateId = characteristics2$covariateId,
     mean1 = characteristics2$mean,
-    sd1 = characteristics2$sd,
-    timeId = characteristics2$timeId
+    sd1 = characteristics2$sd
   )
   
   m <- characteristics1 %>% 
       dplyr::full_join(y = characteristics2,
-                       by = c("covariateId", "timeId")) %>% 
+                       by = "covariateId") %>% 
       dplyr::mutate(sd = sqrt(.data$sd1^2 + .data$sd2^2),
                     stdDiff = (.data$mean2 - .data$mean1)/.data$sd
                     )
@@ -195,7 +187,6 @@ compareCohortCharacteristics <- function(characteristics1, characteristics2) {
   ref <- dplyr::union(x = characteristics1 %>% dplyr::select(.data$covariateId, .data$covariateName),
                       y = characteristics2 %>% dplyr::select(.data$covariateId, .data$covariateName))
                       
-    
   m <- m %>% 
     dplyr::left_join(y = ref, by = ("covariateId")) %>% 
     dplyr::arrange(-abs(.data$stdDiff))

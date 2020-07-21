@@ -63,11 +63,11 @@ sidebarMenu <-
         shinydashboard::menuItem(text = "Cohort Characterization", tabName = "cohortCharacterization"),
         infoId = "cohortCharacterizationInfo"
       ),
-    if (exists("temporalCovariateValue"))
-      addInfo(
-        shinydashboard::menuItem(text = "Temporal Characterization", tabName = "temporalCharacterization"),
-        infoId = "temporalCharacterizationInfo"
-      ),
+    # if (exists("temporalCovariateValue"))
+    #   addInfo(
+    #     shinydashboard::menuItem(text = "Temporal Characterization", tabName = "temporalCharacterization"),
+    #     infoId = "temporalCharacterizationInfo"
+    #   ),
     if (exists("cohortOverlap"))
       addInfo(
         shinydashboard::menuItem(text = "Cohort Overlap", tabName = "cohortOverlap"),
@@ -107,19 +107,19 @@ sidebarMenu <-
                                 liveSearchPlaceholder = "Type here to search")
       )
     ),
-    shiny::conditionalPanel(
-      condition = "input.tabs=='temporalCharacterization'",
-          shinyWidgets::pickerInput(
-                          inputId = "timeIdChoices",
-                          label = "Temporal Choice",
-                          choices = temporalCovariateChoices$choices,
-                          multiple = FALSE,
-                          options = shinyWidgets::pickerOptions(
-                                          actionsBox = TRUE,
-                                          liveSearch = TRUE,
-                                          liveSearchPlaceholder = "Type here to search")
-    )
-    ),
+    # shiny::conditionalPanel(
+    #   condition = "input.tabs=='temporalCharacterization'",
+    #       shinyWidgets::pickerInput(
+    #                       inputId = "timeIdChoices",
+    #                       label = "Temporal Choice",
+    #                       choices = temporalCovariateChoices$choices,
+    #                       multiple = FALSE,
+    #                       options = shinyWidgets::pickerOptions(
+    #                                       actionsBox = TRUE,
+    #                                       liveSearch = TRUE,
+    #                                       liveSearchPlaceholder = "Type here to search")
+    # )
+    # ),
     shiny::conditionalPanel(
       condition = "input.tabs!='cohortCounts' & input.tabs!='databaseInformation'",
       shinyWidgets::pickerInput(
@@ -276,20 +276,13 @@ bodyTabItems <- shinydashboard::tabItems(
     tags$br(),
     DT::dataTableOutput("characterizationTable")
   ),
-  shinydashboard::tabItem(
-    tabName = "temporalCharacterization",
-    shiny::radioButtons(
-      inputId = "charTypeTemporal",
-      label = "",
-      choices = c("Pretty", "Raw"),
-      selected = "Pretty",
-      inline = TRUE
-    ),
-    div(style = "font-size:15px;font-weight: bold", "Selected cohort:"),
-    shiny::textOutput(outputId = "temporalCharacterizationSelectedCohort"),
-    tags$br(),
-    DT::dataTableOutput("temporalCharacterizationTable")
-  ),
+  # shinydashboard::tabItem(
+  #   tabName = "temporalCharacterization",
+  #   div(style = "font-size:15px;font-weight: bold", "Selected cohort:"),
+  #   shiny::textOutput(outputId = "cohortCharacterizationSelectedCohort"),
+  #   tags$br(),
+  #   DT::dataTableOutput("temporalCharacterizationTable")
+  # ),
   shinydashboard::tabItem(
     tabName = "cohortOverlap",
     tags$table(
