@@ -1,3 +1,4 @@
+library(magrittr)
 if (!exists("shinySettings")) {
   if (file.exists("data")) {
     shinySettings <- list(dataFolder = "data")
