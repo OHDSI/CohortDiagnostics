@@ -567,11 +567,12 @@ getConceptSets <- function(cohorts) {
     sqlParts <- SqlRender::splitSql( gsub("with primary_events.*", "", cohort$sql))
     sqlParts <- sqlParts[-1]
     conceptSetIds <- stringr::str_extract_all(string = sqlParts, 
-                                              pattern = "SELECT ([0-9]+) as ") %>% 
-                     stringr::str_replace_all(string = ., pattern = "SELECT ", replacement = "") %>% 
-                     stringr::str_replace_all(string = ., pattern = " as ", replacement = "") %>% 
-                     stringr::str_squish(string = .) %>% 
-                     stringr::str_trim(string = .) %>% 
+                                              pattern = stringr::regex(pattern = "SELECT [0-9]+ as codeset_id", 
+                                                                       ignore_case = T), 
+                                              simplify = TRUE) %>%
+                    stringr::str_replace_all(string = .,
+                                             pattern = stringr::regex(pattern = "SELECT ([0-9]+) as codeset_id", ignore_case = T), 
+                                             replacement = "\\1") %>%
                      utils::type.convert()
     if (any(!(conceptSetIds %in% conceptSets$conceptSetId)) ||
         any(!(conceptSets$conceptSetId %in% conceptSetIds))) {
