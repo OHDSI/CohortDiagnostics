@@ -36,7 +36,6 @@ if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {
                  paste(colnames(data), collapse = ", "), 
                  "\nPrevious columns:\n",
                  paste(colnames(existingData), collapse = ", "))
-            
           }
         }
       }
@@ -60,15 +59,44 @@ if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {
   }
 }
 
-cohort <- unique(cohort)
-cohort <- cohort[, c("cohortFullName", "cohortId", "cohortName")]
+cohort <- cohort %>% 
+          dplyr::distinct() %>% 
+          dplyr::select(.data$cohortFullName, .data$cohortId, .data$cohortName)
+
 if (exists("covariate")) {
-  covariate <- unique(covariate)
+  covariate <- covariate %>% 
+    dplyr::distinct()
+  if (!"conceptId" %in% colnames(covariate)) {
+    warning("conceptId not found in covariate file. Calculating conceptId from covariateId. This may rarely caused errors.")
+  covariate <- covariate %>% 
+    dplyr::mutate(conceptId = (.data$covariateId - .data$covariateAnalysisId)/1000)
+  }
 }
+
+if (exists("temporalCovariate")) {
+  temporalCovariate <- temporalCovariate %>% 
+    dplyr::distinct()
+  if (!"conceptId" %in% colnames(temporalCovariate)) {
+    warning("conceptId not found in temporalCovariate file. Calculating conceptId from covariateId. This may rarely caused errors.")
+    temporalCovariate <- temporalCovariate %>% 
+      dplyr::mutate(conceptId = (.data$covariateId - .data$covariateAnalysisId)/1000)
+  }
+  temporalCovariateChoices <- temporalCovariate %>%
+    dplyr::select(.data$timeId, .data$startDayTemporalCharacterization, .data$endDayTemporalCharacterization) %>%
+    dplyr::distinct() %>%
+    dplyr::mutate(choices = paste0("Start ", .data$startDayTemporalCharacterization, " to end ", .data$endDayTemporalCharacterization)) %>%
+    dplyr::select(.data$timeId, .data$choices) %>% 
+    dplyr::arrange(.data$timeId)
+}
+
 if (exists("includedSourceConcept")) {
-  conceptSets <- unique(includedSourceConcept[, c("cohortId", "conceptSetId", "conceptSetName")])
+  conceptSets <- includedSourceConcept %>% 
+                  dplyr::select(.data$cohortId, .data$conceptSetId, .data$conceptSetName) %>% 
+                  dplyr::distinct()
 } else if (exists("orphanConcept")) {
-  conceptSets <- unique(orphanConcept[, c("cohortId", "conceptSetId", "conceptSetName")])
+  conceptSets <- orphanConcept %>% 
+                  dplyr::select(.data$cohortId, .data$conceptSetId, .data$conceptSetName) %>% 
+                  dplyr::distinct()
 } else {
   conceptSets <- NULL 
 }

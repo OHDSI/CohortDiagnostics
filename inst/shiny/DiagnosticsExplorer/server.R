@@ -62,11 +62,17 @@ shiny::shinyServer(function(input, output, session) {
     return(cohort$cohortId[cohort$cohortFullName == input$comparator])
   })
   
+  timeId <- shiny::reactive({
+    return(temporalCovariateChoices %>%
+             dplyr::filter(choices %in% input$timeIdChoices) %>%
+             dplyr::pull(timeId))
+  })
+  
   shiny::observe({
     subset <- unique(conceptSets$conceptSetName[conceptSets$cohortId == cohortId()])
-    shiny::updateSelectInput(session = session,
-                             inputId = "conceptSet",
-                             choices = subset)
+    shinyWidgets::updatePickerInput(session = session,
+                                    inputId = "conceptSet",
+                                    choices = subset)
   })
   
   output$cohortCountsTable <- DT::renderDataTable({
@@ -436,26 +442,38 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$characterizationTable <- DT::renderDataTable({
-    data <- covariateValue[covariateValue$cohortId == cohortId() & covariateValue$databaseId %in% input$databases, ]
-    data$cohortId <- NULL
-    databaseIds <- unique(data$databaseId)
+    data <- covariateValue %>% 
+      dplyr::filter(.data$cohortId == cohortId() & 
+                      .data$databaseId %in% input$databases) %>% 
+      dplyr::select(-cohortId)
+    databaseIds <- data %>% 
+      dplyr::select(databaseId) %>% 
+      dplyr::distinct() %>% 
+      dplyr::arrange(databaseId) %>% 
+      dplyr::pull(databaseId)
     
     if (input$charType == "Pretty") {
-      data <- merge(data, covariate)
-      table <- data[data$databaseId == databaseIds[1], ]
-      table <- prepareTable1(table)
-      colnames(table)[2] <- paste(colnames(table)[2], databaseIds[1], sep = "_")
-      table$order <- 1:nrow(table)
-      if (length(databaseIds) > 1) {
-        for (i in 2:length(databaseIds)) {
-          temp <- data[data$databaseId == databaseIds[i],]
-          temp <- prepareTable1(temp)
-          colnames(temp)[2] <- paste(colnames(temp)[2], databaseIds[i], sep = "_")
-          table <- merge(table, temp, all.x = TRUE)
-        }
+      data <- data %>% 
+        dplyr::left_join(y = covariate, by = c('covariateId')) %>% 
+        dplyr::distinct()
+      table <- list()
+      for (j in (1:length(databaseIds))) {
+        temp <- data %>% 
+          dplyr::filter(.data$databaseId == databaseIds[[j]]) %>% 
+          prepareTable1() %>% 
+          dplyr::mutate(databaseId = databaseIds[[j]])
+        table[[j]] <- temp
       }
-      table <- table[order(table$order), ]
-      table$order <- NULL
+      table <- dplyr::bind_rows(table) %>% 
+        dplyr::arrange(.data$databaseId, .data$label, dplyr::desc(.data$header), .data$position, .data$characteristic) %>% 
+        dplyr::select(-.data$label, -.data$header, -.data$position) %>% 
+        tidyr::pivot_wider(id_cols = 'characteristic', 
+                           names_from = "databaseId",
+                           values_from = "value" ,
+                           names_sep = "_",
+                           values_fill = 0,
+                           names_prefix = "Value_"
+        )
       options = list(pageLength = 999,
                      searching = FALSE,
                      lengthChange = FALSE,
@@ -491,19 +509,25 @@ shiny::shinyServer(function(input, output, session) {
                                backgroundRepeat = "no-repeat",
                                backgroundPosition = "center")
     } else {
-      table <- data[data$databaseId == databaseIds[1], c("covariateId", "mean", "sd")]
-      colnames(table)[2:3] <- paste(colnames(table)[2:3], databaseIds[1], sep = "_")
-      if (length(databaseIds) > 1) {
-        for (i in 2:length(databaseIds)) {
-          temp <- data[data$databaseId == databaseIds[i], c("covariateId", "mean", "sd")]
-          colnames(temp)[2:3] <- paste(colnames(temp)[2:3], databaseIds[i], sep = "_")
-          table <- merge(table, temp, all = TRUE)
-        }
+      table <- data %>% 
+        dplyr::select(.data$covariateId) %>% 
+        dplyr::distinct()
+      for (i in (1:length(databaseIds))) {
+        temp <- data %>% 
+          dplyr::filter(databaseId == databaseIds[[i]]) %>% 
+          dplyr::select(.data$covariateId, .data$mean, .data$sd)
+        table <- table %>%
+          dplyr::left_join(temp, by = "covariateId") %>% 
+          dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = 0)))
       }
-      table <- merge(covariate, table)    
-      table$covariateAnalysisId <- NULL
-      table$covariateId <- NULL
-      table <- table[order(table$covariateName), ]
+      table <- covariate %>% 
+        dplyr::distinct() %>% 
+        dplyr::left_join(y = table, by = c("covariateId")) %>%
+        dplyr::select(-.data$covariateAnalysisId, 
+                      -.data$covariateId) %>% 
+        dplyr::arrange(.data$covariateName) %>% 
+        dplyr::distinct()
+      
       options = list(pageLength = 25,
                      searching = TRUE,
                      lengthChange = TRUE,
@@ -511,7 +535,7 @@ shiny::shinyServer(function(input, output, session) {
                      paging = TRUE,
                      columnDefs = list(
                        truncateStringDef(0, 150),
-                       minCellRealDef(1:(2*length(databaseIds)))
+                       minCellRealDef((1:(2*length(databaseIds))) + 1)
                      )
       )
       sketch <- htmltools::withTags(table(
@@ -519,6 +543,7 @@ shiny::shinyServer(function(input, output, session) {
         thead(
           tr(
             th(rowspan = 2, 'Covariate Name'),
+            th(rowspan = 2, 'Concept Id'),
             lapply(databaseIds, th, colspan = 2, class = "dt-center")
           ),
           tr(
@@ -533,12 +558,82 @@ shiny::shinyServer(function(input, output, session) {
                              escape = FALSE,
                              class = "stripe nowrap compact")
       table <- DT::formatStyle(table = table,
-                               columns = 2*(1:length(databaseIds)),
+                               columns = (2*(1:length(databaseIds))) + 1,
                                background = DT::styleColorBar(c(0,1), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
                                backgroundPosition = "center")
     }
+    return(table)
+  })
+  
+  output$temporalCharacterizationTable <- DT::renderDataTable({
+    data <- temporalCovariateValue %>% 
+      dplyr::filter(.data$cohortId == cohortId(),
+                    .data$databaseId == input$database,
+                    .data$timeId %in% c(timeId())) %>% 
+      dplyr::select(-cohortId)
+    
+    temporalCovariateChoicesSelected <- temporalCovariateChoices %>% 
+                                        dplyr::filter(.data$timeId %in% c(timeId()))
+    
+    data <- data %>% 
+      dplyr::left_join(y = temporalCovariate %>% dplyr::distinct(), by = c("covariateId", "timeId")) %>% 
+      dplyr::mutate(conceptId = (.data$covariateId - .data$covariateAnalysisId)/1000) %>% 
+      dplyr::select(.data$covariateId, .data$covariateName,.data$conceptId, .data$timeId, .data$mean, .data$sd) %>% 
+      dplyr::distinct()
+    
+    table <- data %>% 
+              dplyr::select(.data$covariateName,.data$conceptId, .data$covariateId) %>% 
+              dplyr::distinct()
+    
+    for (timeId in temporalCovariateChoicesSelected$timeId) {
+      temp <- data %>% 
+              dplyr::filter(timeId == !!timeId) %>% 
+              dplyr::select(.data$covariateId, .data$mean, .data$sd)
+      table <- table %>% 
+                dplyr::left_join(temp, by = c("covariateId")) %>% 
+                dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = 0)))
+    }
+    table <- table %>% 
+            dplyr::select(-.data$covariateId) %>% 
+            dplyr::arrange(.data$covariateName)
+    
+    options = list(pageLength = 25,
+                   searching = TRUE,
+                   lengthChange = TRUE,
+                   ordering = TRUE,
+                   paging = TRUE,
+                   columnDefs = list(
+                     truncateStringDef(0, 150),
+                     minCellRealDef((1:(2*length(temporalCovariateChoicesSelected$choices))) + 1)
+                   )
+    )
+    sketch <- htmltools::withTags(table(
+      class = 'display',
+      thead(
+        tr(
+          th(rowspan = 2, 'Covariate Name'),
+          th(rowspan = 2, 'Concept Id'),
+          lapply(temporalCovariateChoicesSelected$choices, th, colspan = 2, class = "dt-center")
+        ),
+        tr(
+          lapply(rep(c("Mean", "SD"), length(temporalCovariateChoicesSelected$choices)), th)
+        )
+      )
+    ))
+    table <- DT::datatable(table,
+                           options = options,
+                           rownames = FALSE,
+                           container = sketch,
+                           escape = FALSE,
+                           class = "stripe nowrap compact")
+    table <- DT::formatStyle(table = table,
+                             columns = (2*(1:length(temporalCovariateChoicesSelected$choices)) + 1), #0 index
+                             background = DT::styleColorBar(c(0,1), "lightblue"),
+                             backgroundSize = "98% 88%",
+                             backgroundRepeat = "no-repeat",
+                             backgroundPosition = "center")
     return(table)
   })
   
@@ -616,14 +711,18 @@ shiny::shinyServer(function(input, output, session) {
   
   computeBalance <- shiny::reactive({
     if (cohortId() == comparatorCohortId()) {
-      return(data.frame())
+      return(tidyr::tibble())
     }
-    covs1 <- covariateValue[covariateValue$cohortId == cohortId() & covariateValue$databaseId == input$database, ]
-    covs2 <- covariateValue[covariateValue$cohortId == comparatorCohortId() & covariateValue$databaseId == input$database, ]
-    covs1 <- merge(covs1, covariate)
-    covs2 <- merge(covs2, covariate)
-    balance <- compareCohortCharacteristics(covs1, covs2)
-    balance$absStdDiff <- abs(balance$stdDiff)
+    covs1 <- covariateValue %>% 
+      dplyr::filter(.data$cohortId == cohortId(),
+                    .data$databaseId == input$database)
+    covs2 <- covariateValue %>% 
+      dplyr::filter(.data$cohortId == comparatorCohortId(),
+                    .data$databaseId == input$database)
+    covs1 <- dplyr::left_join(x = covs1, y = covariate, by = "covariateId")
+    covs2 <- dplyr::left_join(x = covs2, y = covariate, by = "covariateId")
+    balance <- CohortDiagnostics::compareCohortCharacteristics(covs1, covs2) %>%
+      dplyr::mutate(absStdDiff = abs(.data$stdDiff))
     return(balance)
   })
   
@@ -634,8 +733,10 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     if (input$charCompareType == "Pretty table") {
-      balance <- merge(balance, covariate[, c("covariateId", "covariateAnalysisId")])
-      table <- prepareTable1Comp(balance)
+      table <- prepareTable1Comp(balance) %>% 
+        dplyr::arrange(sortOrder) %>% 
+        dplyr::select(-.data$sortOrder)
+      
       options = list(pageLength = 999,
                      searching = FALSE,
                      lengthChange = FALSE,
@@ -662,10 +763,14 @@ shiny::shinyServer(function(input, output, session) {
                                backgroundPosition = "center")
       table <- DT::formatRound(table, 4, digits = 2)
     } else {
-      table <- balance
-      table <- table[order(table$covariateName), ]
-      table <- table[, c("covariateName", "mean1", "sd1", "mean2", "sd2", "stdDiff")]
-      colnames(table) <- c("Covariate name", "Mean Target", "SD Target", "Mean Comparator", "SD Comparator", "StdDiff")
+      table <- balance %>% 
+        dplyr::arrange(.data$covariateName) %>% 
+        dplyr::select(.data$covariateName, .data$conceptId, .data$mean1, .data$sd1, .data$mean2, .data$sd2, .data$stdDiff) %>% 
+        dplyr::mutate(stdDiff = round(x = .data$stdDiff, digits = 3)) %>% 
+        dplyr::rename_with(.fn = ~ stringr::str_replace(string = ., pattern = '1', replacement = 'Target')) %>% 
+        dplyr::rename_with(.fn = ~ stringr::str_replace(string = ., pattern = '2', replacement = 'Comparator')) %>% 
+        dplyr::rename_with(.fn = SqlRender::camelCaseToTitleCase)
+      #colnames(table) <- c("Covariate name", "Mean Target", "SD Target", "Mean Comparator", "SD Comparator", "StdDiff")
       
       options = list(pageLength = 25,
                      searching = TRUE,
@@ -827,6 +932,10 @@ shiny::shinyServer(function(input, output, session) {
     showInfoBox("Cohort Characterization", "html/cohortCharacterization.html")
   })
   
+  shiny::observeEvent(input$temporalCharacterizationInfo, {
+    showInfoBox("Temporal Characterization", "html/temporalCharacterization.html")
+  })
+  
   shiny::observeEvent(input$cohortOverlapInfo, {
     showInfoBox("Cohort Overlap", "html/cohortOverlap.html")
   })
@@ -834,4 +943,18 @@ shiny::shinyServer(function(input, output, session) {
   shiny::observeEvent(input$compareCohortCharacterizationInfo, {
     showInfoBox("Compare Cohort Characteristics", "html/compareCohortCharacterization.html")
   })
+  
+  output$incidenceRateSelectedCohort <- shiny::renderText(input$cohort)
+  output$timeDistributionSelectedCohort <- shiny::renderText(input$cohort)
+  output$sourceConceptsSelectedCohort <- shiny::renderText(input$cohort)
+  output$orphanConceptsSelectedCohort <- shiny::renderText(input$cohort)
+  output$inclusionRuleStatsSelectedCohort <- shiny::renderText(input$cohort)
+  output$indexEventBreakdownSelectedCohort <- shiny::renderText(input$cohort)
+  output$cohortCharacterizationSelectedCohort <- shiny::renderText(input$cohort)
+  output$temporalCharacterizationSelectedCohort <- shiny::renderText(input$cohort)
+  output$cohortOverlapSelectedCohort <- shiny::renderText(input$cohort)
+  output$cohortOverlapComparatorCohort <- shiny::renderText(input$comparator)
+  output$compareCohortCharacterizationSelectedCohort <- shiny::renderText(input$cohort)
+  output$compareCohortCharacterizationSelectedComparator <- shiny::renderText(input$comparator)
+  
 })

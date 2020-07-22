@@ -142,7 +142,7 @@ getCohortsJsonAndSql <- function(packageName = NULL,
   errorMessage <- checkmate::makeAssertCollection()
   
   if (!is.null(cohortIds)) {
-    checkmate::assertInteger(x = cohortIds, any.missing = FALSE, min.len = 1, unique = TRUE, add = errorMessage)
+    checkmate::assertIntegerish(x = cohortIds, any.missing = FALSE, min.len = 1, unique = TRUE, add = errorMessage)
     
   }
   
