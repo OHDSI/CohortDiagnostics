@@ -1,8 +1,6 @@
-#library(shiny)
-#library(shinydashboard)
-#library(DT)
-source("PlotsAndTables.R")
+library(magrittr)
 
+source("PlotsAndTables.R")
 
 truncateStringDef <- function(columns, maxChars) {
   list(

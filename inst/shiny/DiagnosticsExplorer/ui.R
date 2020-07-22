@@ -1,3 +1,5 @@
+library(magrittr)
+
 addInfo <- function(item, infoId) {
   infoTag <- tags$small(
     class = "badge pull-right action-button",
@@ -81,10 +83,12 @@ sidebarMenu <-
         inputId = "database",
         label = "Database",
         choices = database$databaseId,
+        selected = database$databaseId[1],
         multiple = FALSE,
         options = shinyWidgets::pickerOptions(
                                   actionsBox = TRUE, 
                                   liveSearch = TRUE, 
+                                  liveSearchStyle = 'contains',
                                   liveSearchPlaceholder = "Type here to search")
         
       )
@@ -100,6 +104,7 @@ sidebarMenu <-
         options = shinyWidgets::pickerOptions(
                                 actionsBox = TRUE, 
                                 liveSearch = TRUE, 
+                                liveSearchStyle = 'contains',
                                 liveSearchPlaceholder = "Type here to search")
       )
     ),
@@ -116,6 +121,7 @@ sidebarMenu <-
                           options = shinyWidgets::pickerOptions(
                                           actionsBox = TRUE,
                                           liveSearch = TRUE,
+                                          liveSearchStyle = 'contains',
                                           liveSearchPlaceholder = "Type here to search")
     )
     ),
@@ -129,6 +135,7 @@ sidebarMenu <-
         options = shinyWidgets::pickerOptions(
                                     actionsBox = TRUE, 
                                     liveSearch = TRUE, 
+                                    liveSearchStyle = 'contains',
                                     liveSearchPlaceholder = "Type here to search")
       )
     ),
@@ -142,6 +149,7 @@ sidebarMenu <-
         options = shinyWidgets::pickerOptions(
                                   actionsBox = TRUE,
                                   liveSearch = TRUE,
+                                  liveSearchStyle = 'contains',
                                   liveSearchPlaceholder = "Type here to search")
       )
     ),
@@ -156,6 +164,7 @@ sidebarMenu <-
         options = shinyWidgets::pickerOptions(
                                   actionsBox = TRUE, 
                                   liveSearch = TRUE, 
+                                  liveSearchStyle = 'contains',
                                   liveSearchPlaceholder = "Type here to search")
         
       )
