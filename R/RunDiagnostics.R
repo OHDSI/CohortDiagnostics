@@ -491,7 +491,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 3 digits
       
       covariates <- data %>% 
-        dplyr::select(.data$covariateId, .data$covariateName, .data$analysisId) %>% 
+        dplyr::select(.data$covariateId, .data$covariateName, .data$analysisId, .data$conceptId) %>% 
         dplyr::rename(covariateAnalysisId = .data$analysisId)
       writeToCsv(
         data = covariates,
@@ -576,7 +576,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 3 digits
       
       temporalCovariates <- data %>% 
-        dplyr::select(.data$covariateId, .data$covariateName, .data$analysisId, .data$timeId, 
+        dplyr::select(.data$covariateId, .data$covariateName, .data$analysisId, .data$conceptId, .data$timeId, 
                       .data$startDayTemporalCharacterization, .data$endDayTemporalCharacterization) %>% 
         dplyr::rename(covariateAnalysisId = .data$analysisId) %>% 
         dplyr::distinct()
