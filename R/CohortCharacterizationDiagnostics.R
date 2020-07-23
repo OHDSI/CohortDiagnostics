@@ -126,8 +126,6 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
         dplyr::rename(startDayTemporalCharacterization = .data$startDay,
                       endDayTemporalCharacterization = .data$endDay)
     }
-    result <- result %>% 
-              dplyr::select(-.data$conceptId)
   }
   attr(result, "cohortSize") <- attr(data, "metaData")$populationSize
   delta <- Sys.time() - start
@@ -164,8 +162,7 @@ compareCohortCharacteristics <- function(characteristics1, characteristics2) {
                         suffix = c("1", "2")) %>%
     dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = 0)),
                   sd = sqrt(.data$sd1^2 + .data$sd2^2),
-                  stdDiff = (.data$mean2 - .data$mean1)/.data$sd,
-                  conceptId = (.data$covariateId - .data$covariateAnalysisId)/1000) %>% 
+                  stdDiff = (.data$mean2 - .data$mean1)/.data$sd) %>% 
     dplyr::arrange(-abs(.data$stdDiff))
   return(m)
 }
