@@ -533,7 +533,6 @@ runCohortDiagnostics <- function(packageName = NULL,
                                   attr(delta, "units")))
   }
   
-  
   if (runTemporalCohortCharacterization) {
     startTemporalCohortCharacterization <- Sys.time()
     # Temporal Cohort characterization ---------------------------------------------------------------
@@ -636,7 +635,6 @@ runCohortDiagnostics <- function(packageName = NULL,
 }
 
 
-
 swapColumnContents <- function(df, column1 = "targetId", column2 = "comparatorId") {
   temp <- df[, column1]
   df[, column1] <- df[, column2]
@@ -664,6 +662,7 @@ enforceMinCellValue <- function(data, fieldName, minValues, silent = FALSE) {
   }
   return(data)
 }
+
 
 getConceptSets <- function(cohorts) {
   getConceptSetDetails <- function(conceptSet) {
@@ -709,6 +708,7 @@ getConceptSets <- function(cohorts) {
   return(conceptSets)
 }
 
+
 instantiateUniqueConceptSets <- function(cohorts, uniqueConceptSets, connection, cdmDatabaseSchema, oracleTempSchema) {
   ParallelLogger::logInfo("Instantiating concept sets")
   sql <- gsub("with primary_events.*", "", cohorts$sql[1])
@@ -724,6 +724,7 @@ instantiateUniqueConceptSets <- function(cohorts, uniqueConceptSets, connection,
                               oracleTempSchema = oracleTempSchema)
   DatabaseConnector::executeSql(connection, sql)
 }
+
 
 runConceptSetDiagnostics <- function(connection, 
                                      oracleTempSchema, 
@@ -926,5 +927,3 @@ runConceptSetDiagnostics <- function(connection,
                                 signif(delta, 3),
                                 attr(delta, "units")))
 }
-
-
