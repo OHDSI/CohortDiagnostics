@@ -31,7 +31,11 @@ runCohortDiagnostics(
   runCohortCharacterization = TRUE,
   covariateSettings = FeatureExtraction::createDefaultCovariateSettings(),
   runTemporalCohortCharacterization = FALSE,
-  temporalCovariateSettings = NULL,
+ 
+    temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(useConditionOccurrence
+    = TRUE, useConditionEraStart = TRUE, useDrugEraStart = TRUE, useProcedureOccurrence =
+    TRUE, useMeasurement = TRUE, useObservation = TRUE, temporalStartDays = c(-365, -30,
+    0, 1, 31), temporalEndDays = c(-31, -1, 0, 30, 365)),
   minCellCount = 5,
   incremental = FALSE,
   incrementalFolder = exportFolder
@@ -131,15 +135,7 @@ Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated usi
 
 Characterization:
 If runTemporalCohortCharacterization argument is TRUE, then the following default covariateSettings object will be created
-using \code{RFeatureExtraction::createTemporalCovariateSettings} function as follows:
-temporalCovariateSettings <- FeatureExtraction::createTemporalCovariateSettings(useConditionOccurrence = TRUE,
-                                                                                useConditionEraStart = TRUE,
-                                                                                useDrugEraStart = TRUE,
-                                                                                useProcedureOccurrence = TRUE,
-                                                                                useMeasurement = TRUE,
-                                                                                useObservation = TRUE,
-                                                                                temporalStartDays = c(-365,-30,0,1,31),
-                                                                                temporalEndDays = c(-31,-1,0,30,365))
+using \code{RFeatureExtraction::createTemporalCovariateSettings}
 Alternatively, a covariate setting object may be created using the above as an example.
 }
 \details{
