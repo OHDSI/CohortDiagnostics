@@ -39,12 +39,12 @@ computeCohortOverlap <- function(connectionDetails = NULL,
                                  targetCohortId,
                                  comparatorCohortId) {
   start <- Sys.time()
-
+  
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-
+  
   if (!checkIfCohortInstantiated(connection = connection,
                                  cohortDatabaseSchema = cohortDatabaseSchema,
                                  cohortTable = cohortTable,
@@ -54,6 +54,7 @@ computeCohortOverlap <- function(connectionDetails = NULL,
     ParallelLogger::logInfo(paste("Computing overlap took", signif(delta, 3), attr(delta, "units")))
     return(data.frame())
   }
+  
   if (!checkIfCohortInstantiated(connection = connection,
                                  cohortDatabaseSchema = cohortDatabaseSchema,
                                  cohortTable = cohortTable,
@@ -65,6 +66,7 @@ computeCohortOverlap <- function(connectionDetails = NULL,
     ParallelLogger::logInfo(paste("Computing overlap took", signif(delta, 3), attr(delta, "units")))
     return(data.frame())
   }
+  
   sql <- SqlRender::loadRenderTranslateSql("CohortOverlap.sql",
                                            packageName = "CohortDiagnostics",
                                            dbms = connection@dbms,

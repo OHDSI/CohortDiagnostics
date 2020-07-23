@@ -46,14 +46,14 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
                                      cohortTable = "cohort",
                                      cohortId,
                                      covariateSettings) {
-
+  
   start <- Sys.time()
-
+  
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-
+  
   if (!checkIfCohortInstantiated(connection = connection,
                                  cohortDatabaseSchema = cohortDatabaseSchema,
                                  cohortTable = cohortTable,
@@ -65,7 +65,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
                                   attr(delta, "units")))
     return(data.frame())
   }
-
+  
   data <- FeatureExtraction::getDbCovariateData(connection = connection,
                                                 oracleTempSchema = oracleTempSchema,
                                                 cdmDatabaseSchema = cdmDatabaseSchema,
@@ -74,7 +74,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
                                                 cohortId = cohortId,
                                                 covariateSettings = covariateSettings,
                                                 aggregated = TRUE)
-
+  
   result <- tidyr::tibble()
   if (!is.null(data$covariates)) {
     n <- attr(x = data, which = "metaData")$populationSize
@@ -95,9 +95,9 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
         dplyr::mutate(sd = sqrt(((n * .data$sumValue) + .data$sumValue)/(n^2)))
       
       binaryCovs <- data$covariates %>% 
-                    dplyr::select(.data$covariateId, .data$averageValue) %>% 
-                    dplyr::rename(mean = .data$averageValue) %>% 
-                    dplyr::collect() %>% 
+        dplyr::select(.data$covariateId, .data$averageValue) %>% 
+        dplyr::rename(mean = .data$averageValue) %>% 
+        dplyr::collect() %>% 
         dplyr::left_join(counts, by = "covariateId") %>% 
         dplyr::select(-.data$sumValue)
     }
@@ -112,9 +112,9 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
         dplyr::collect()
     } else {
       continuousCovs <- data$covariatesContinuous %>% 
-                        dplyr::select(.data$covariateId, .data$averageValue, .data$standardDeviation) %>% 
-                        dplyr::rename(mean = .data$averageValue, sd = .data$standardDeviation) %>% 
-                        dplyr::collect()
+        dplyr::select(.data$covariateId, .data$averageValue, .data$standardDeviation) %>% 
+        dplyr::rename(mean = .data$averageValue, sd = .data$standardDeviation) %>% 
+        dplyr::collect()
     }
     result <- dplyr::bind_rows(result, continuousCovs)
   }

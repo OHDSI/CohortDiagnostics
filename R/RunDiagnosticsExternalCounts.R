@@ -122,7 +122,7 @@ runCohortDiagnosticsUsingExternalCounts <- function(packageName = NULL,
                              conceptCountsTableIsTemp = conceptCountsTableIsTemp,
                              useExternalConceptCountsTable = TRUE)
   }
-
+  
   # Add all to zip file -------------------------------------------------------------------------------
   ParallelLogger::logInfo("Adding results to zip file")
   zipName <- file.path(exportFolder, paste0("Results_", databaseId, ".zip"))

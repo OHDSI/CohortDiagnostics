@@ -83,7 +83,7 @@ preMergeDiagnosticsFiles <- function(dataFolder) {
         }
       }
       data <- dplyr::bind_rows(existingData, data) %>% 
-              dplyr::distinct()
+        dplyr::distinct()
     }
     assign(camelCaseName, data, envir = .GlobalEnv)
     

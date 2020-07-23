@@ -685,10 +685,10 @@ getConceptSets <- function(cohorts) {
                                               pattern = stringr::regex(pattern = "SELECT [0-9]+ as codeset_id", 
                                                                        ignore_case = T), 
                                               simplify = TRUE) %>%
-                    stringr::str_replace_all(string = .,
-                                             pattern = stringr::regex(pattern = "SELECT ([0-9]+) as codeset_id", ignore_case = T), 
-                                             replacement = "\\1") %>%
-                     utils::type.convert()
+      stringr::str_replace_all(string = .,
+                               pattern = stringr::regex(pattern = "SELECT ([0-9]+) as codeset_id", ignore_case = T), 
+                               replacement = "\\1") %>%
+      utils::type.convert()
     if (any(!(conceptSetIds %in% conceptSets$conceptSetId)) ||
         any(!(conceptSets$conceptSetId %in% conceptSetIds))) {
       stop("Mismatch in concept set IDs between SQL and JSON for cohort ", cohort$cohortFullName)
