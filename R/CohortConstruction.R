@@ -76,7 +76,7 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
   if (is.null(errorMessage) | !class(errorMessage) == 'AssertColection') {
     errorMessage <- checkmate::makeAssertCollection()
   }
-  checkmate::assertCharacter(x = baseUrl, min.chars = "1", add = errorMessage)
+  checkmate::assertCharacter(x = baseUrl, min.chars = 1, add = errorMessage)
   webApiVersion <- ROhdsiWebApi::getWebApiVersion(baseUrl)
   ParallelLogger::logInfo("WebApi of version ", webApiVersion, " found at ", baseUrl)
   checkmate::assertCharacter(x = webApiVersion, min.chars = 1, add = errorMessage)
@@ -88,11 +88,15 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
                              null.ok = FALSE,
                              col.names = "named",
                              add = errorMessage)
-  checkmate::assertNames(x = names(cohortSetReference),subset.of =  c("atlasName", "atlasId", "cohortId", "name"))
+  checkmate::assertNames(x = names(cohortSetReference),subset.of =  c("atlasName", "atlasId", "cohortId", "name", "cohortName"))
   checkmate::reportAssertions(collection = errorMessage)
   cohorts <- cohortSetReference %>%
     dplyr::filter(!.data$cohortId %in% cohortIds)
   
+  if ("name" %in% names(cohorts)) {
+    cohorts <- dplyr::rename(cohorts, cohortName = "name")
+  }
+  cohorts <- dplyr::rename(cohorts, cohortFullName = "atlasName")
   ParallelLogger::logInfo("Retrieving cohort definitions from WebAPI")
   for (i in 1:nrow(cohorts)) {
     cohort <- cohorts %>% dplyr::slice(i)
