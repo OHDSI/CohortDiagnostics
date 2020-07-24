@@ -1,6 +1,7 @@
 library(magrittr)
 
-source("PlotsAndTables.R")
+source("R/Plots.R")
+source("R/Tables.R")
 
 truncateStringDef <- function(columns, maxChars) {
   list(
