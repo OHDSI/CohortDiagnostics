@@ -106,12 +106,14 @@ shiny::shinyServer(function(input, output, session) {
       )
     ))
     
-    options = list(pageLength = 25,
+    options = list(pageLength = 20,
                    searching = TRUE,
                    lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
                    info = TRUE,
+                   searchHighlight = TRUE,
+                   scrollX = TRUE,
                    columnDefs = list(minCellCountDef(1:(2*length(databaseIds)))))
     
     dataTable <- DT::datatable(table,
@@ -119,6 +121,7 @@ shiny::shinyServer(function(input, output, session) {
                                rownames = FALSE,
                                container = sketch, 
                                escape = FALSE,
+                               filter = c("bottom"),
                                class = "stripe nowrap compact")
     for (i in 1:length(databaseIds)) {
       dataTable <- DT::formatStyle(table = dataTable,
@@ -182,7 +185,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  output$incidenceRatePlot <- shiny::renderPlot({
+  incidentRatePlotDownload <- shiny::reactive({
     data <- filteredIncidenceRates()
     if (is.null(data)) {
       return(NULL)
@@ -193,6 +196,11 @@ shiny::shinyServer(function(input, output, session) {
                               stratifyByCalendarYear = "Calendar Year" %in% input$irStratification,
                               yscaleFixed = input$irYscaleFixed)
     return(plot)
+  })
+  
+  output$incidenceRatePlot <- shiny::renderPlot({
+    
+    return(incidentRatePlotDownload())
   }, res = 100)
   
   output$hoverInfoIr <- shiny::renderUI({
@@ -242,7 +250,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   }) 
   
-  output$timeDisPlot <- shiny::renderPlot({
+  timeDisPlotDownload <- shiny::reactive({
     data <- timeDistribution[timeDistribution$cohortId == cohortId() & 
                                timeDistribution$databaseId %in% input$databases, ]
     if (nrow(data) == 0) {
@@ -265,8 +273,13 @@ shiny::shinyServer(function(input, output, session) {
                      axis.title.y = ggplot2::element_blank(),
                      axis.ticks.y = ggplot2::element_blank(),
                      axis.text.y = ggplot2::element_blank())
-    
     return(plot)
+    
+  })
+  
+  output$timeDisPlot <- shiny::renderPlot({
+    return(timeDisPlotDownload())
+    
   }, res = 100)
   
   output$timeDistTable <- DT::renderDataTable({
@@ -282,8 +295,10 @@ shiny::shinyServer(function(input, output, session) {
       headers <- c("Database", headers)
     }
     table <- data[, columns]
-    options = list(pageLength = 25,
+    options = list(pageLength = 20,
                    searching = TRUE,
+                   searchHighlight = TRUE,
+                   scrollX = TRUE,
                    lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
@@ -292,6 +307,7 @@ shiny::shinyServer(function(input, output, session) {
                            options = options,
                            rownames = FALSE,
                            colnames = headers,
+                           filter = c('bottom'),
                            class = "stripe nowrap compact")
     table <- DT::formatRound(table, c("averageValue", "standardDeviation"), digits = 2)
     table <- DT::formatRound(table, c("minValue", "p10Value", "p25Value", "medianValue", "p75Value", "p90Value", "maxValue"), digits = 0)
@@ -315,8 +331,10 @@ shiny::shinyServer(function(input, output, session) {
       colnames(table) <- c("Subjects", "Concept ID", "Concept Name")
     }
     lims <- c(0, max(table$Subjects))
-    options = list(pageLength = 25,
+    options = list(pageLength = 20,
                    searching = TRUE,
+                   searchHighlight = TRUE,
+                   scrollX = TRUE,
                    lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
@@ -325,6 +343,7 @@ shiny::shinyServer(function(input, output, session) {
                            options = options,
                            rownames = FALSE,
                            escape = FALSE,
+                           filter = c('bottom'),
                            class = "stripe nowrap compact")
     table <- DT::formatStyle(table = table,
                              columns = 1,
@@ -346,8 +365,10 @@ shiny::shinyServer(function(input, output, session) {
     table <- table[order(-table$conceptCount), ]
     colnames(table) <- c("Count", "Concept ID", "Standard", "Vocabulary", "Code", "Name")
     lims <- c(0, max(table$Count))
-    options = list(pageLength = 25,
+    options = list(pageLength = 20,
                    searching = TRUE,
+                   searchHighlight = TRUE,
+                   scrollX = TRUE,
                    lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
@@ -356,6 +377,7 @@ shiny::shinyServer(function(input, output, session) {
                            options = options,
                            rownames = FALSE,
                            escape = FALSE,
+                           filter = c('bottom'),
                            class = "stripe nowrap compact")
     table <- DT::formatStyle(table = table,
                              columns = 1,
@@ -377,8 +399,10 @@ shiny::shinyServer(function(input, output, session) {
     lims <- c(0, max(table$remainSubjects))
     table <- table[, c("ruleSequenceId", "ruleName", "meetSubjects", "gainSubjects", "totalSubjects", "remainSubjects")]
     colnames(table) <- c("Sequence", "Name", "Meet", "Gain", "Total", "Remain")
-    options = list(pageLength = 25,
+    options = list(pageLength = 20,
                    searching = TRUE,
+                   searchHighlight = TRUE,
+                   scrollX = TRUE,
                    lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
@@ -387,6 +411,7 @@ shiny::shinyServer(function(input, output, session) {
                            options = options,
                            rownames = FALSE,
                            escape = FALSE,
+                           filter = c('bottom'),
                            class = "stripe nowrap compact")
     table <- DT::formatStyle(table = table,
                              columns = 6,
@@ -418,8 +443,10 @@ shiny::shinyServer(function(input, output, session) {
     }
     table <- table[order(-table[,3]), ]
     colnames(table)[1:2] <- c("Concept ID", "Name")
-    options = list(pageLength = 25,
+    options = list(pageLength = 20,
                    searching = TRUE,
+                   searchHighlight = TRUE,
+                   scrollX = TRUE,
                    lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
@@ -428,6 +455,7 @@ shiny::shinyServer(function(input, output, session) {
                                options = options,
                                rownames = FALSE,
                                escape = FALSE,
+                               filter = c('bottom'),
                                class = "stripe nowrap compact")
     for (col in 3:ncol(table)) {
       dataTable <- DT::formatStyle(table = dataTable,
@@ -464,8 +492,6 @@ shiny::shinyServer(function(input, output, session) {
         table[[j]] <- temp
       }
       table <- dplyr::bind_rows(table) %>% 
-        dplyr::arrange(.data$databaseId, .data$label, dplyr::desc(.data$header), .data$position, .data$characteristic) %>% 
-        dplyr::select(-.data$label, -.data$header, -.data$position) %>% 
         tidyr::pivot_wider(id_cols = 'characteristic', 
                            names_from = "databaseId",
                            values_from = "value" ,
@@ -475,6 +501,7 @@ shiny::shinyServer(function(input, output, session) {
         )
       options = list(pageLength = 999,
                      searching = FALSE,
+                     scrollX = TRUE,
                      lengthChange = FALSE,
                      ordering = FALSE,
                      paging = FALSE,
@@ -499,6 +526,7 @@ shiny::shinyServer(function(input, output, session) {
                              rownames = FALSE,
                              container = sketch, 
                              escape = FALSE,
+                             filter = c('bottom'),
                              class = "stripe nowrap compact")
       
       table <- DT::formatStyle(table = table,
@@ -527,8 +555,10 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::arrange(.data$covariateName) %>% 
         dplyr::distinct()
       
-      options = list(pageLength = 25,
+      options = list(pageLength = 20,
                      searching = TRUE,
+                     searchHighlight = TRUE,
+                     scrollX = TRUE,
                      lengthChange = TRUE,
                      ordering = TRUE,
                      paging = TRUE,
@@ -555,6 +585,7 @@ shiny::shinyServer(function(input, output, session) {
                              rownames = FALSE,
                              container = sketch, 
                              escape = FALSE,
+                             filter = c('bottom'),
                              class = "stripe nowrap compact")
       table <- DT::formatStyle(table = table,
                                columns = (2*(1:length(databaseIds))) + 1,
@@ -598,8 +629,10 @@ shiny::shinyServer(function(input, output, session) {
             dplyr::select(-.data$covariateId) %>% 
             dplyr::arrange(.data$covariateName)
     
-    options = list(pageLength = 25,
+    options = list(pageLength = 20,
                    searching = TRUE,
+                   searchHighlight = TRUE,
+                   scrollX = TRUE,
                    lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
@@ -626,6 +659,7 @@ shiny::shinyServer(function(input, output, session) {
                            rownames = FALSE,
                            container = sketch,
                            escape = FALSE,
+                           filter = c('bottom'),
                            class = "stripe nowrap compact")
     table <- DT::formatStyle(table = table,
                              columns = (2*(1:length(temporalCovariateChoicesSelected$choices)) + 1), #0 index
@@ -668,6 +702,7 @@ shiny::shinyServer(function(input, output, session) {
     table$Value[is.na(table$Value)] <- 0
     options = list(pageLength = 7,
                    searching = FALSE,
+                   scrollX = TRUE,
                    lengthChange = FALSE,
                    ordering = FALSE,
                    paging = FALSE,
@@ -676,11 +711,12 @@ shiny::shinyServer(function(input, output, session) {
     table <- DT::datatable(table,
                            options = options,
                            rownames = TRUE,
+                           filter = c('bottom'),
                            class = "stripe nowrap compact")
     return(table)
   })
   
-  output$overlapPlot <- shiny::renderPlot({
+  overLapPlot <- shiny::reactive({
     data <- cohortOverlap[cohortOverlap$targetCohortId == cohortId() & 
                             cohortOverlap$comparatorCohortId == comparatorCohortId() &
                             cohortOverlap$databaseId == input$database, ]
@@ -706,6 +742,10 @@ shiny::shinyServer(function(input, output, session) {
     grid::grid.draw(plot)
     
     return(plot)
+  })
+  
+  output$overlapPlot <- shiny::renderPlot({
+    return(overLapPlot())
   }, res = 100)
   
   computeBalance <- shiny::reactive({
@@ -720,7 +760,7 @@ shiny::shinyServer(function(input, output, session) {
                     .data$databaseId == input$database)
     covs1 <- dplyr::left_join(x = covs1, y = covariate, by = "covariateId")
     covs2 <- dplyr::left_join(x = covs2, y = covariate, by = "covariateId")
-    balance <- CohortDiagnostics::compareCohortCharacteristics(covs1, covs2) %>%
+    balance <- compareCohortCharacteristics(covs1, covs2) %>%
       dplyr::mutate(absStdDiff = abs(.data$stdDiff))
     return(balance)
   })
@@ -738,6 +778,7 @@ shiny::shinyServer(function(input, output, session) {
       
       options = list(pageLength = 999,
                      searching = FALSE,
+                     scrollX = TRUE,
                      lengthChange = FALSE,
                      ordering = FALSE,
                      paging = FALSE,
@@ -747,6 +788,7 @@ shiny::shinyServer(function(input, output, session) {
                              options = options,
                              rownames = FALSE,
                              escape = FALSE,
+                             filter = c('bottom'),
                              class = "stripe nowrap compact")
       table <- DT::formatStyle(table = table,
                                columns = 2:3,
@@ -769,10 +811,11 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::rename_with(.fn = ~ stringr::str_replace(string = ., pattern = '1', replacement = 'Target')) %>% 
         dplyr::rename_with(.fn = ~ stringr::str_replace(string = ., pattern = '2', replacement = 'Comparator')) %>% 
         dplyr::rename_with(.fn = SqlRender::camelCaseToTitleCase)
-      #colnames(table) <- c("Covariate name", "Mean Target", "SD Target", "Mean Comparator", "SD Comparator", "StdDiff")
       
-      options = list(pageLength = 25,
+      options = list(pageLength = 20,
                      searching = TRUE,
+                     searchHighlight = TRUE,
+                     scrollX = TRUE,
                      lengthChange = TRUE,
                      ordering = TRUE,
                      paging = TRUE,
@@ -785,6 +828,7 @@ shiny::shinyServer(function(input, output, session) {
                              options = options,
                              rownames = FALSE,
                              escape = FALSE,
+                             filter = c('bottom'),
                              class = "stripe nowrap compact")
       table <- DT::formatStyle(table = table,
                                columns = c(2,4),
@@ -803,7 +847,7 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   })
   
-  output$charComparePlot <- shiny::renderPlot({
+  downloadCohortComparePlot <- shiny::reactive({
     balance <- computeBalance()
     if (nrow(balance) == 0) {
       return(NULL)
@@ -819,6 +863,10 @@ shiny::shinyServer(function(input, output, session) {
       ggplot2::scale_y_continuous("Mean Comparator", limits = c(0, 1)) +
       ggplot2::scale_color_gradient("Absolute\nStd. Diff.", low = "blue", high = "red", space = "Lab", na.value = "red")
     return(plot)
+  })
+  
+  output$charComparePlot <- shiny::renderPlot({
+    return(downloadCohortComparePlot())
   }, res = 100)
   
   output$hoverInfoCharComparePlot <- shiny::renderUI({
@@ -873,7 +921,7 @@ shiny::shinyServer(function(input, output, session) {
   output$databaseInformationTable <- DT::renderDataTable({
     
     table <- database[, c("databaseId", "databaseName", "description")]
-    options = list(pageLength = 25,
+    options = list(pageLength = 20,
                    searching = TRUE,
                    lengthChange = FALSE,
                    ordering = TRUE,
@@ -955,5 +1003,24 @@ shiny::shinyServer(function(input, output, session) {
   output$cohortOverlapComparatorCohort <- shiny::renderText(input$comparator)
   output$compareCohortCharacterizationSelectedCohort <- shiny::renderText(input$cohort)
   output$compareCohortCharacterizationSelectedComparator <- shiny::renderText(input$comparator)
+  output$temporalCharacterizationSelectedDataBase <- shiny::renderText(input$database)
+  
+  
+  #Download
+  download_box <- function(exportname, plot){
+    downloadHandler(
+      filename = function() {
+        paste(exportname, Sys.Date(), ".png", sep = "")
+      },
+      content = function(file) {
+        ggplot2::ggsave(file, plot = plot, device = "png", width = 9, height = 7, dpi = 400)
+      }
+    )
+  }
+  
+  output$downloadIncidentRatePlot <- download_box("IncidentRate", incidentRatePlotDownload())
+  output$timeDistributionPlot <- download_box("TimeDistribution", timeDisPlotDownload())
+  output$downloadCompareCohortPlot <- download_box("CompareCohort", downloadCohortComparePlot())
+  output$downloadOverlapPlot <- download_box("OverlapPlot", overLapPlot())
   
 })

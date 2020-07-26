@@ -86,10 +86,10 @@ sidebarMenu <-
         selected = database$databaseId[1],
         multiple = FALSE,
         options = shinyWidgets::pickerOptions(
-                                  actionsBox = TRUE, 
-                                  liveSearch = TRUE, 
-                                  liveSearchStyle = 'contains',
-                                  liveSearchPlaceholder = "Type here to search")
+          actionsBox = TRUE, 
+          liveSearch = TRUE, 
+          liveSearchStyle = 'contains',
+          liveSearchPlaceholder = "Type here to search")
         
       )
     ),
@@ -102,10 +102,10 @@ sidebarMenu <-
         selected = database$databaseId[1],
         multiple = TRUE,
         options = shinyWidgets::pickerOptions(
-                                actionsBox = TRUE, 
-                                liveSearch = TRUE, 
-                                liveSearchStyle = 'contains',
-                                liveSearchPlaceholder = "Type here to search")
+          actionsBox = TRUE, 
+          liveSearch = TRUE, 
+          liveSearchStyle = 'contains',
+          liveSearchPlaceholder = "Type here to search")
       )
     ),
     if (exists("temporalCovariate")){
@@ -135,10 +135,10 @@ sidebarMenu <-
         choices = cohort$cohortFullName,
         multiple = FALSE,
         options = shinyWidgets::pickerOptions(
-                                    actionsBox = TRUE, 
-                                    liveSearch = TRUE, 
-                                    liveSearchStyle = 'contains',
-                                    liveSearchPlaceholder = "Type here to search")
+          actionsBox = TRUE, 
+          liveSearch = TRUE, 
+          liveSearchStyle = 'contains',
+          liveSearchPlaceholder = "Type here to search")
       )
     ),
     shiny::conditionalPanel(
@@ -149,10 +149,10 @@ sidebarMenu <-
         choices = c(""),
         multiple = FALSE,
         options = shinyWidgets::pickerOptions(
-                                  actionsBox = TRUE,
-                                  liveSearch = TRUE,
-                                  liveSearchStyle = 'contains',
-                                  liveSearchPlaceholder = "Type here to search")
+          actionsBox = TRUE,
+          liveSearch = TRUE,
+          liveSearchStyle = 'contains',
+          liveSearchPlaceholder = "Type here to search")
       )
     ),
     shiny::conditionalPanel(
@@ -164,10 +164,10 @@ sidebarMenu <-
         selected = cohort$cohortFullName[min(2, nrow(cohort))],
         multiple = FALSE,
         options = shinyWidgets::pickerOptions(
-                                  actionsBox = TRUE, 
-                                  liveSearch = TRUE, 
-                                  liveSearchStyle = 'contains',
-                                  liveSearchPlaceholder = "Type here to search")
+          actionsBox = TRUE, 
+          liveSearch = TRUE, 
+          liveSearchStyle = 'contains',
+          liveSearchPlaceholder = "Type here to search")
         
       )
     )
@@ -222,7 +222,8 @@ bodyTabItems <- shinydashboard::tabItems(
           delay = 100,
           delayType = "debounce"
         )
-      )
+      ),
+      shiny::downloadButton(outputId = "downloadIncidentRatePlot", label = "Download")
     )
   ),
   shinydashboard::tabItem(
@@ -234,7 +235,8 @@ bodyTabItems <- shinydashboard::tabItems(
       div(style = "font-size:15px;font-weight: bold", "Selected cohort:"),
       shiny::textOutput(outputId = "timeDistributionSelectedCohort"),
       tags$br(),
-      shiny::plotOutput("timeDisPlot")
+      shiny::plotOutput("timeDisPlot"),
+      shiny::downloadButton(outputId = "timeDistributionPlot", label = "Download")
     ),
     shinydashboard::box(
       title = "Time Distributions Table",
@@ -288,8 +290,22 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "temporalCharacterization",
-    div(style = "font-size:15px;font-weight: bold", "Selected cohort:"),
-    shiny::textOutput(outputId = "temporalCharacterizationSelectedCohort"),
+    tags$table(style = "width: 100%",
+               tags$tr(
+                 tags$td(
+                   div(style = "font-size:15px;font-weight: bold", "Selected cohort:"),
+                   shiny::textOutput(outputId = "temporalCharacterizationSelectedCohort")
+                 ),
+                 
+                 tags$td(
+                   style = "text-align: right",
+                   div(style = "font-size:15px;font-weight: bold", "Selected database:"),
+                   shiny::textOutput(outputId = "temporalCharacterizationSelectedDataBase")
+                 ),
+                 tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;"))
+               )
+    ),
+    
     tags$br(),
     DT::dataTableOutput("temporalCharacterizationTable")
   ),
@@ -313,7 +329,8 @@ bodyTabItems <- shinydashboard::tabItems(
       title = "Cohort Overlap (Subjects)",
       width = NULL,
       status = "primary",
-      shiny::plotOutput("overlapPlot")
+      shiny::plotOutput("overlapPlot"),
+      shiny::downloadButton(outputId = "downloadOverlapPlot", label = "Download")
     ),
     shinydashboard::box(
       title = "Cohort Overlap Statistics",
@@ -362,7 +379,8 @@ bodyTabItems <- shinydashboard::tabItems(
             delay = 100,
             delayType = "debounce"
           )
-        )
+        ),
+        shiny::downloadButton(outputId = "downloadCompareCohortPlot")
       )
     )
   ),
