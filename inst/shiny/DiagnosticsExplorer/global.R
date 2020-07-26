@@ -69,7 +69,7 @@ if (exists("covariate")) {
   covariate <- covariate %>% 
     dplyr::distinct()
   if (!"conceptId" %in% colnames(covariate)) {
-    warning("conceptId not found in covariate file. Calculating conceptId from covariateId. This may rarely caused errors.")
+    warning("conceptId not found in covariate file. Calculating conceptId from covariateId. This may rarely cause errors.")
   covariate <- covariate %>% 
     dplyr::mutate(conceptId = (.data$covariateId - .data$covariateAnalysisId)/1000)
   }
@@ -79,7 +79,7 @@ if (exists("temporalCovariate")) {
   temporalCovariate <- temporalCovariate %>% 
     dplyr::distinct()
   if (!"conceptId" %in% colnames(temporalCovariate)) {
-    warning("conceptId not found in temporalCovariate file. Calculating conceptId from covariateId. This may rarely caused errors.")
+    warning("conceptId not found in temporalCovariate file. Calculating conceptId from covariateId. This may rarely cause errors.")
     temporalCovariate <- temporalCovariate %>% 
       dplyr::mutate(conceptId = (.data$covariateId - .data$covariateAnalysisId)/1000)
   }
