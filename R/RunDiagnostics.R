@@ -678,45 +678,68 @@ getConceptSets <- function(cohorts) {
     conceptSets <- lapply(cohortDefinition$ConceptSets, getConceptSetDetails)
     conceptSets <- do.call(rbind, conceptSets)
     
-    sqlParts <- SqlRender::splitSql( gsub("with primary_events.*", "", cohort$sql))
-    sqlParts <- sqlParts[-1]
-    conceptSetIds <- stringr::str_extract_all(string = sqlParts, 
-                                              pattern = stringr::regex(pattern = "SELECT [0-9]+ as codeset_id", 
-                                                                       ignore_case = T), 
-                                              simplify = TRUE) %>%
-      stringr::str_replace_all(string = .,
-                               pattern = stringr::regex(pattern = "SELECT ([0-9]+) as codeset_id", ignore_case = T), 
-                               replacement = "\\1") %>%
-      utils::type.convert()
+    sql <- gsub("with primary_events.*", "", cohort$sql)
+    
+    # Find opening and closing parentheses:
+    starts <- stringr::str_locate_all(sql, "\\(")[[1]][, 1]
+    ends <- stringr::str_locate_all(sql, "\\)")[[1]][, 1]
+    x <- rep(0, nchar(sql))
+    x[starts] <- 1
+    x[ends] <- -1
+    level <- cumsum(x)
+    level0 <- which(level == 0) 
+    
+    subQueryLocations <- stringr::str_locate_all(sql, "SELECT [0-9]+ as codeset_id")[[1]]
+    subQueryCount <- nrow(subQueryLocations)
+    conceptsetSqls <- vector("character", subQueryCount)
+    conceptSetIds <- vector("integer", subQueryCount)
+    for (i in 1:subQueryCount) {
+      startForSubQuery <- min(starts[starts > subQueryLocations[i, 2]])
+      endForSubQuery <- min(level0[level0 > startForSubQuery])
+      subQuery <- paste(stringr::str_sub(sql, subQueryLocations[i, 1], endForSubQuery), "C")
+      conceptsetSqls[i] <- subQuery
+      conceptSetIds[i] <- stringr::str_replace(subQuery,
+                                               pattern = stringr::regex(pattern = "SELECT ([0-9]+) as codeset_id.*", 
+                                                                        ignore_case = TRUE,
+                                                                        multiline = TRUE, 
+                                                                        dotall = TRUE), 
+                                               replacement = "\\1") %>%
+        utils::type.convert()
+    }
+
     if (any(!(conceptSetIds %in% conceptSets$conceptSetId)) ||
         any(!(conceptSets$conceptSetId %in% conceptSetIds))) {
       stop("Mismatch in concept set IDs between SQL and JSON for cohort ", cohort$cohortFullName)
     }
-    conceptSets <- merge(conceptSets, 
-                         tibble::tibble(conceptSetId = conceptSetIds,
-                                        sql = sqlParts))
-    conceptSets$cohortId <- cohort$cohortId
+    conceptSets <- conceptSets %>%
+      dplyr::inner_join(tibble::tibble(conceptSetId = conceptSetIds,
+                                       sql = conceptsetSqls),
+                        by = "conceptSetId") %>%
+      dplyr::mutate(cohortId = cohort$cohortId)
     return(conceptSets)
   }
   conceptSets <- lapply(split(cohorts, 1:nrow(cohorts)), getConceptSetsFromCohortDef)
-  conceptSets <- do.call(rbind, conceptSets)
-  uniqueConceptSets <- unique(conceptSets$expression)
-  uniqueConceptSets <- tibble::tibble(expression = uniqueConceptSets,
-                                      uniqueConceptSetId = 1:length(uniqueConceptSets))
-  conceptSets <- merge(conceptSets, uniqueConceptSets)
+  conceptSets <- dplyr::bind_rows(conceptSets)
+  
+  uniqueConceptSets <- conceptSets %>%
+    dplyr::select(.data$expression) %>%
+    dplyr::distinct() %>%
+    dplyr::mutate(uniqueConceptSetId = dplyr::row_number())
+  
+  conceptSets <- conceptSets %>%
+    dplyr::inner_join(uniqueConceptSets, by = "expression")
   return(conceptSets)
 }
 
 
 instantiateUniqueConceptSets <- function(cohorts, uniqueConceptSets, connection, cdmDatabaseSchema, oracleTempSchema) {
   ParallelLogger::logInfo("Instantiating concept sets")
-  sql <- gsub("with primary_events.*", "", cohorts$sql[1])
-  createTempTableSql <- SqlRender::splitSql(sql)[1]
   sql <- sapply(split(uniqueConceptSets, 1:nrow(uniqueConceptSets)), 
                 function(x) {
                   sub("SELECT [0-9]+ as codeset_id", sprintf("SELECT %s as codeset_id", x$uniqueConceptSetId), x$sql)
                 })
-  sql <- paste(c(createTempTableSql, sql), collapse = ";\n")
+  sql <- paste(sql, collapse = "\n\nUNION ALL\n\n")
+  sql <- paste0("SELECT * INTO #Codesets FROM (\n", sql, "\n) tmp;")
   sql <- SqlRender::render(sql, vocabulary_database_schema = cdmDatabaseSchema)
   sql <- SqlRender::translate(sql,
                               targetDialect = connection@dbms,
