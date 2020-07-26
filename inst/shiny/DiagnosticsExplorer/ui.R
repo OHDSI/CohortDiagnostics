@@ -108,23 +108,25 @@ sidebarMenu <-
                                 liveSearchPlaceholder = "Type here to search")
       )
     ),
-    shiny::conditionalPanel(
-      condition = "input.tabs=='temporalCharacterization'",
-          shinyWidgets::pickerInput(
-                          inputId = "timeIdChoices",
-                          label = "Temporal Choice",
-                          choices = temporalCovariateChoices$choices,
-                          multiple = TRUE,
-                          selected = temporalCovariateChoices %>% 
-                            dplyr::filter(.data$timeId == min(temporalCovariateChoices$timeId)) %>% 
-                            dplyr::pull('choices'),
-                          options = shinyWidgets::pickerOptions(
-                                          actionsBox = TRUE,
-                                          liveSearch = TRUE,
-                                          liveSearchStyle = 'contains',
-                                          liveSearchPlaceholder = "Type here to search")
-    )
-    ),
+    if (exists("temporalCovariate")){
+      shiny::conditionalPanel(
+        condition = "input.tabs=='temporalCharacterization'",
+        shinyWidgets::pickerInput(
+          inputId = "timeIdChoices",
+          label = "Temporal Choice",
+          choices = temporalCovariateChoices$choices,
+          multiple = TRUE,
+          selected = temporalCovariateChoices %>% 
+            dplyr::filter(.data$timeId == min(temporalCovariateChoices$timeId)) %>% 
+            dplyr::pull('choices'),
+          options = shinyWidgets::pickerOptions(
+            actionsBox = TRUE,
+            liveSearch = TRUE,
+            liveSearchStyle = 'contains',
+            liveSearchPlaceholder = "Type here to search")
+        )
+      )
+    },
     shiny::conditionalPanel(
       condition = "input.tabs!='cohortCounts' & input.tabs!='databaseInformation'",
       shinyWidgets::pickerInput(
