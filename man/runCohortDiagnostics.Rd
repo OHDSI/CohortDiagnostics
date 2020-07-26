@@ -30,7 +30,7 @@ runCohortDiagnostics(
   runCohortOverlap = TRUE,
   runCohortCharacterization = TRUE,
   covariateSettings = FeatureExtraction::createDefaultCovariateSettings(),
-  runTemporalCohortCharacterization = FALSE,
+  runTemporalCohortCharacterization = TRUE,
  
     temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(useConditionOccurrence
     = TRUE, useConditionEraStart = TRUE, useDrugEraStart = TRUE, useProcedureOccurrence =
