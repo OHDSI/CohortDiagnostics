@@ -758,8 +758,8 @@ shiny::shinyServer(function(input, output, session) {
     covs2 <- covariateValue %>% 
       dplyr::filter(.data$cohortId == comparatorCohortId(),
                     .data$databaseId == input$database)
-    covs1 <- dplyr::left_join(x = covs1, y = covariate, by = "covariateId")
-    covs2 <- dplyr::left_join(x = covs2, y = covariate, by = "covariateId")
+    covs1 <- dplyr::left_join(x = covs1, y = covariate)
+    covs2 <- dplyr::left_join(x = covs2, y = covariate)
     balance <- compareCohortCharacteristics(covs1, covs2) %>%
       dplyr::mutate(absStdDiff = abs(.data$stdDiff))
     return(balance)
