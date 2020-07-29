@@ -541,9 +541,11 @@ processInclusionStats <- function(inclusion,
     inclusionResults <- inclusionResults[inclusionResults$modeId == 0, ]
     mask <- 0
     for (ruleId in 0:(nrow(result) - 1)) {
-      mask <- bitwOr(mask, 2^ruleId)
-      idx <- bitwAnd(inclusionResults$inclusionRuleMask, mask) == mask
-      result$remain[result$ruleSequence == ruleId] <- sum(inclusionResults$personCount[idx])
+      if (nrow(inclusionResults) > 0) {
+        mask <- bitwOr(mask, 2^ruleId)
+        idx <- bitwAnd(inclusionResults$inclusionRuleMask, mask) == mask
+        result$remain[result$ruleSequence == ruleId] <- sum(inclusionResults$personCount[idx])
+      }
     }
     colnames(result) <- c("ruleSequenceId",
                           "ruleName",
