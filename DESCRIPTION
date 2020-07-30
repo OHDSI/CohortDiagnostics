@@ -19,7 +19,7 @@ Imports:
   Andromeda,
   checkmate,
   digest,
-  dplyr,
+  dplyr (>= 1.0.0),
   FeatureExtraction (>= 3.0.0),
   ggplot2,
   ParallelLogger (>= 2.0.0),
@@ -29,8 +29,8 @@ Imports:
   ROhdsiWebApi (>= 1.0.0),
   SqlRender (>= 1.6.7),
   stringr,
-  tibble,
-  tidyr
+  tibble (>= 3.0.0),
+  tidyr (>= 1.0.0)
 Suggests:
   DT,
   Eunomia,

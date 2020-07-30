@@ -1,11 +1,24 @@
 CohortDiagnostics (Develop)
 =======================
 
+CohortDiagnostics 1.1.0
+=======================
+
+New features: 
+1. Added temporal characterization
+2. UI changes to Shiny app diagnostic explorer
+
+Bug fixes:
+1. Circe-be update introduced bug in parsing concept sets in cohort definition. 
+2. Handling of empty cohorts
+
 Changes:
 
 1. Error handling: Use [checkmate](https://CRAN.R-project.org/package=checkmate) R-package to provide more informative error messages.
 2. Refactor runCohortDiagnostics: added new function by refactoring exisitng private functions. This new function
 get the JSON and parameterized OHDSI SQL for the cohorts for which diagnostics has been requested \code{getCohortsJsonAndSql} 
+
+Note: The code has been partially refactored to depend on tidyverse. 
 
 CohortDiagnostics 1.0.0
 =======================
