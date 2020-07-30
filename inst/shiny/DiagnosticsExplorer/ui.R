@@ -87,7 +87,8 @@ sidebarMenu <-
         multiple = FALSE,
         options = shinyWidgets::pickerOptions(
           actionsBox = TRUE, 
-          liveSearch = TRUE, 
+          liveSearch = TRUE,
+          size = 10,
           liveSearchStyle = 'contains',
           liveSearchPlaceholder = "Type here to search")
         
@@ -104,6 +105,7 @@ sidebarMenu <-
         options = shinyWidgets::pickerOptions(
           actionsBox = TRUE, 
           liveSearch = TRUE, 
+          size = 10,
           liveSearchStyle = 'contains',
           liveSearchPlaceholder = "Type here to search")
       )
@@ -122,6 +124,7 @@ sidebarMenu <-
           options = shinyWidgets::pickerOptions(
             actionsBox = TRUE,
             liveSearch = TRUE,
+            size = 10,
             liveSearchStyle = 'contains',
             liveSearchPlaceholder = "Type here to search")
         )
@@ -138,6 +141,7 @@ sidebarMenu <-
           actionsBox = TRUE, 
           liveSearch = TRUE, 
           liveSearchStyle = 'contains',
+          size = 10,
           liveSearchPlaceholder = "Type here to search")
       )
     ),
@@ -151,6 +155,7 @@ sidebarMenu <-
         options = shinyWidgets::pickerOptions(
           actionsBox = TRUE,
           liveSearch = TRUE,
+          size = 10,
           liveSearchStyle = 'contains',
           liveSearchPlaceholder = "Type here to search")
       )
@@ -166,6 +171,7 @@ sidebarMenu <-
         options = shinyWidgets::pickerOptions(
           actionsBox = TRUE, 
           liveSearch = TRUE, 
+          size = 10,
           liveSearchStyle = 'contains',
           liveSearchPlaceholder = "Type here to search")
         
