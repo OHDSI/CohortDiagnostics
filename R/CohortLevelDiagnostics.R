@@ -41,6 +41,7 @@ getCohortCounts <- function(connectionDetails = NULL,
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
+  
   sql <- SqlRender::loadRenderTranslateSql(sqlFilename = "CohortCounts.sql",
                                            packageName = "CohortDiagnostics",
                                            dbms = connection@dbms,
@@ -100,14 +101,10 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
   if (is.null(cohortJson)) {
     cohortDefinition <- ROhdsiWebApi::getCohortDefinition(cohortId = webApiCohortId,
                                                           baseUrl = baseUrl)
-    
     cohortSql <- ROhdsiWebApi::getCohortSql(cohortDefinition = cohortDefinition,
                                             baseUrl = baseUrl,
                                             generateStats = FALSE)
-    
     cohortDefinition <- cohortDefinition$expression
-    
-    
   } else {
     cohortDefinition <- RJSONIO::fromJSON(cohortJson)
   }
@@ -121,6 +118,7 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
       return(NULL)
     }
   }
+  
   getCodeSetIds <- function(criterionList) {
     codeSetIds <- lapply(criterionList, getCodeSetId)
     codeSetIds <- do.call(c, codeSetIds)

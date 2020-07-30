@@ -157,7 +157,6 @@ aggregateIr <- function(ratesSummary, aggregateList) {
   } else {
     return(tidyr::tibble())
   }
-
 }
 
 filterIncidenceRateData <- function(incidenceRate, stratifyByAge, stratifyByGender, stratifyByCalendarYear, minPersonYears) {
@@ -189,7 +188,7 @@ filterIncidenceRateData <- function(incidenceRate, stratifyByAge, stratifyByGend
   data$ageGroup <- factor(data$ageGroup, levels = ageGroups)
   return(data)
 }
-  
+
 #' Plot incidence rate by year, age, and/or gender
 #'
 #' @description

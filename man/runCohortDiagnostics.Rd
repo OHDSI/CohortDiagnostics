@@ -30,6 +30,12 @@ runCohortDiagnostics(
   runCohortOverlap = TRUE,
   runCohortCharacterization = TRUE,
   covariateSettings = FeatureExtraction::createDefaultCovariateSettings(),
+  runTemporalCohortCharacterization = TRUE,
+ 
+    temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(useConditionOccurrence
+    = TRUE, useConditionEraStart = TRUE, useDrugEraStart = TRUE, useProcedureOccurrence =
+    TRUE, useMeasurement = TRUE, useObservation = TRUE, temporalStartDays = c(-365, -30,
+    0, 1, 31), temporalEndDays = c(-31, -1, 0, 30, 365)),
   minCellCount = 5,
   incremental = FALSE,
   incrementalFolder = exportFolder
@@ -107,7 +113,13 @@ does not exist it will be created.}
 \item{runCohortCharacterization}{Generate and export the cohort characterization?}
 
 \item{covariateSettings}{Either an object of type \code{covariateSettings} as created using one of
-the createCovariate functions in the FeatureExtraction package, or a list
+the createCovariateSettings function in the FeatureExtraction package, or a list
+of such objects.}
+
+\item{runTemporalCohortCharacterization}{Generate and export the temporal cohort characterization?}
+
+\item{temporalCovariateSettings}{Either an object of type \code{covariateSettings} as created using one of
+the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
 of such objects.}
 
 \item{minCellCount}{The minimum cell count for fields contains person counts or fractions.}
@@ -120,6 +132,11 @@ of which cohort diagnostics has been executed.}
 \description{
 Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the
 \code{ROhdsiWebApi::insertCohortDefinitionSetInPackage} function. Assumes the cohorts have already been instantiated.
+
+Characterization:
+If runTemporalCohortCharacterization argument is TRUE, then the following default covariateSettings object will be created
+using \code{RFeatureExtraction::createTemporalCovariateSettings}
+Alternatively, a covariate setting object may be created using the above as an example.
 }
 \details{
 Currently two ways of executing this function are supported, either 
