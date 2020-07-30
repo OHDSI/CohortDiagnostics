@@ -46,7 +46,6 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
                                      cohortTable = "cohort",
                                      cohortId,
                                      covariateSettings) {
-  
   start <- Sys.time()
   
   if (is.null(connection)) {
@@ -58,12 +57,12 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
                                  cohortDatabaseSchema = cohortDatabaseSchema,
                                  cohortTable = cohortTable,
                                  cohortId = cohortId)) {
-    warning("Cohort with ID ", cohortId, " appears to be empty. Was it instantiated?")
+    warning("Cohort with ID ", cohortId, " appears to be empty. Was it instantiated? Skipping Characterization.")
     delta <- Sys.time() - start
     ParallelLogger::logInfo(paste("Cohort characterization took",
                                   signif(delta, 3),
                                   attr(delta, "units")))
-    return(data.frame())
+    return(tidyr::tibble())
   }
   
   data <- FeatureExtraction::getDbCovariateData(connection = connection,

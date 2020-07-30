@@ -88,7 +88,9 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
                              null.ok = FALSE,
                              col.names = "named",
                              add = errorMessage)
-  checkmate::assertNames(x = names(cohortSetReference),subset.of =  c("atlasName", "atlasId", "cohortId", "name", "cohortName"))
+  checkmate::assertNames(x = names(cohortSetReference),
+                         subset.of =  c("atlasName", "atlasId", "cohortId", "name", "cohortName"),
+                         add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
   cohorts <- cohortSetReference %>%
     dplyr::filter(!.data$cohortId %in% cohortIds)
@@ -98,18 +100,19 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
   }
   cohorts <- dplyr::rename(cohorts, cohortFullName = "atlasName")
   ParallelLogger::logInfo("Retrieving cohort definitions from WebAPI")
+  cohort <- list()
   for (i in 1:nrow(cohorts)) {
-    cohort <- cohorts %>% dplyr::slice(i)
-    ParallelLogger::logInfo("- Retrieving definitions for cohort ", cohort$cohortFullName)
-    cohortDefinition <-  ROhdsiWebApi::getCohortDefinition(cohortId = cohort$atlasId,
+    cohort[[i]] <- cohorts %>% dplyr::slice(i)
+    ParallelLogger::logInfo("- Retrieving definitions for cohort ", cohort[[i]]$cohortFullName)
+    cohortDefinition <-  ROhdsiWebApi::getCohortDefinition(cohortId = cohort[[i]]$atlasId,
                                                            baseUrl = baseUrl)
-    cohorts$json[i] <- RJSONIO::toJSON(cohortDefinition$expression)
-    cohorts$sql[i] <- ROhdsiWebApi::getCohortSql(cohortDefinition = cohortDefinition,
+    cohort[[i]]$json <- RJSONIO::toJSON(cohortDefinition$expression)
+    cohort[[i]]$sql <- ROhdsiWebApi::getCohortSql(cohortDefinition = cohortDefinition,
                                                  baseUrl = baseUrl,
                                                  generateStats = TRUE)
   }
   checkmate::reportAssertions(collection = errorMessage)
-  return(cohorts)
+  return(dplyr::bind_rows(cohort))
 }
 
 #' Get cohorts JSON and parameterized OHDSI SQL
@@ -538,9 +541,11 @@ processInclusionStats <- function(inclusion,
     inclusionResults <- inclusionResults[inclusionResults$modeId == 0, ]
     mask <- 0
     for (ruleId in 0:(nrow(result) - 1)) {
-      mask <- bitwOr(mask, 2^ruleId)
-      idx <- bitwAnd(inclusionResults$inclusionRuleMask, mask) == mask
-      result$remain[result$ruleSequence == ruleId] <- sum(inclusionResults$personCount[idx])
+      if (nrow(inclusionResults) > 0) {
+        mask <- bitwOr(mask, 2^ruleId)
+        idx <- bitwAnd(inclusionResults$inclusionRuleMask, mask) == mask
+        result$remain[result$ruleSequence == ruleId] <- sum(inclusionResults$personCount[idx])
+      }
     }
     colnames(result) <- c("ruleSequenceId",
                           "ruleName",

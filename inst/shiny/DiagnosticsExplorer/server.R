@@ -67,6 +67,10 @@ shiny::shinyServer(function(input, output, session) {
              dplyr::pull(timeId))
   })
   
+  atlasBaseUrl <- shiny::reactive({
+    return(input$atlasBaseUrl)
+  })
+  
   shiny::observe({
     subset <- unique(conceptSets$conceptSetName[conceptSets$cohortId == cohortId()])
     shinyWidgets::updatePickerInput(session = session,
@@ -90,8 +94,11 @@ shiny::shinyServer(function(input, output, session) {
       }
     }
     table <- merge(cohort, table, all.x = TRUE)
+    table$url <- paste0(atlasBaseUrl(), table$cohortId)
+    table$cohortFullName <- paste0("<a href='", table$url, "' target='_blank'>", table$cohortFullName, "</a>")
     table$cohortId <- NULL
     table$cohortName <- NULL
+    table$url <- NULL
     
     sketch <- htmltools::withTags(table(
       class = 'display',

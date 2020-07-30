@@ -180,7 +180,18 @@ sidebar <-
 #body - items in tab
 bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(tabName = "cohortCounts",
-                          DT::dataTableOutput("cohortCountsTable")),
+                          DT::dataTableOutput("cohortCountsTable"),
+                          tags$table(
+                            tags$tr(
+                              tags$td(
+                                div("Base url:")
+                              ),
+                              tags$td(HTML("&nbsp&nbsp")),
+                              tags$td(
+                                shiny::textInput(inputId = "atlasBaseUrl",label = "", value = "https://atlas.ohdsi.org/#/cohortdefinition/"),
+                              )
+                            )
+                          )),
   shinydashboard::tabItem(
     tabName = "incidenceRate",
     shinydashboard::box(
