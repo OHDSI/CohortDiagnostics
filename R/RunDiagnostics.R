@@ -280,8 +280,8 @@ runCohortDiagnostics <- function(packageName = NULL,
       data <- do.call(rbind, data)
       if (nrow(data) > 0) {
         data$databaseId <- databaseId
+        writeToCsv(data, file.path(exportFolder, "time_distribution.csv"), incremental = incremental, cohortId = subset$cohortId)
       }
-      writeToCsv(data, file.path(exportFolder, "time_distribution.csv"), incremental = incremental, cohortId = subset$cohortId)
       recordTasksDone(cohortId = subset$cohortId,
                       task = "runTimeDistributions",
                       checksum = subset$checksum,
@@ -376,12 +376,12 @@ runCohortDiagnostics <- function(packageName = NULL,
         data <- enforceMinCellValue(data, "incidenceRate", 1000*minCellCount/data$personYears)
       }
       writeToCsv(data, file.path(exportFolder, "incidence_rate.csv"), incremental = incremental, cohortId = subset$cohortId)
-      recordTasksDone(cohortId = subset$cohortId,
-                      task = "runIncidenceRate",
-                      checksum = subset$checksum,
-                      recordKeepingFile = recordKeepingFile,
-                      incremental = incremental)
     }
+    recordTasksDone(cohortId = subset$cohortId,
+                    task = "runIncidenceRate",
+                    checksum = subset$checksum,
+                    recordKeepingFile = recordKeepingFile,
+                    incremental = incremental)
     delta <- Sys.time() - startIncidenceRate
     ParallelLogger::logInfo(paste("Running Incidence Rate took",
                                   signif(delta, 3),
@@ -440,12 +440,12 @@ runCohortDiagnostics <- function(packageName = NULL,
         data <- enforceMinCellValue(data, "sameDaySubjects", minCellCount)
         data <- enforceMinCellValue(data, "tInCSubjects", minCellCount)
         data <- enforceMinCellValue(data, "cInTSubjects", minCellCount)
+        writeToCsv(data = data, 
+                   fileName = file.path(exportFolder, "cohort_overlap.csv"), 
+                   incremental = incremental, 
+                   targetCohortId = subset$targetCohortId, 
+                   comparatorCohortId = subset$comparatorCohortId)
       }
-      writeToCsv(data = data, 
-                 fileName = file.path(exportFolder, "cohort_overlap.csv"), 
-                 incremental = incremental, 
-                 targetCohortId = subset$targetCohortId, 
-                 comparatorCohortId = subset$comparatorCohortId)
       recordTasksDone(cohortId = subset$targetCohortId,
                       comparatorId = subset$comparatorCohortId,
                       task = "runCohortOverlap",
@@ -485,40 +485,42 @@ runCohortDiagnostics <- function(packageName = NULL,
         return(data)
       }
       data <- lapply(split(subset, subset$cohortId), runCohortCharacterization)
-      data <- dplyr::bind_rows(data) %>% 
-        dplyr::mutate(mean = round(x = mean, digits = 3)) %>% 
-        dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 3 digits
-      
-      covariates <- data %>% 
-        dplyr::select(.data$covariateId, .data$covariateName, .data$analysisId, .data$conceptId) %>% 
-        dplyr::rename(covariateAnalysisId = .data$analysisId)
-      writeToCsv(
-        data = covariates,
-        fileName = file.path(exportFolder, "covariate.csv"),
-        incremental = incremental,
-        covariateId = covariates$covariateId
-      )
-      
-      if (!exists("counts")) {
-        counts <- readr::read_csv(file = file.path(exportFolder, "cohort_count.csv"), col_types = readr::cols())
-        names(counts) <- SqlRender::snakeCaseToCamelCase(names(counts))
-      }
-      
-      data <- data %>% 
-        dplyr::select(-.data$covariateName, -.data$analysisId)
-      
+      data <- dplyr::bind_rows(data)
       if (nrow(data) > 0) {
-        data <- data  %>% 
-          dplyr::mutate(databaseId = databaseId) %>% 
-          dplyr::left_join(y = counts, by = c("cohortId", "databaseId"))
-        data <- enforceMinCellValue(data, "mean", minCellCount/data$cohortEntries)
         data <- data %>% 
-          dplyr::mutate(sd = dplyr::case_when(mean >= 0 ~ sd)) %>% 
-          dplyr::mutate(mean = round(.data$mean, digits = 3),
-                        sd = round(.data$sd, digits = 3)) %>% 
-          dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
+          dplyr::mutate(mean = round(x = mean, digits = 3)) %>% 
+          dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 3 digits
+        covariates <- data %>% 
+          dplyr::select(.data$covariateId, .data$covariateName, .data$analysisId, .data$conceptId) %>% 
+          dplyr::rename(covariateAnalysisId = .data$analysisId)
+        writeToCsv(
+          data = covariates,
+          fileName = file.path(exportFolder, "covariate.csv"),
+          incremental = incremental,
+          covariateId = covariates$covariateId
+        )
+        
+        if (!exists("counts")) {
+          counts <- readr::read_csv(file = file.path(exportFolder, "cohort_count.csv"), col_types = readr::cols())
+          names(counts) <- SqlRender::snakeCaseToCamelCase(names(counts))
+        }
+        
+        data <- data %>% 
+          dplyr::select(-.data$covariateName, -.data$analysisId)
+        
+        if (nrow(data) > 0) {
+          data <- data  %>% 
+            dplyr::mutate(databaseId = databaseId) %>% 
+            dplyr::left_join(y = counts, by = c("cohortId", "databaseId"))
+          data <- enforceMinCellValue(data, "mean", minCellCount/data$cohortEntries)
+          data <- data %>% 
+            dplyr::mutate(sd = dplyr::case_when(mean >= 0 ~ sd)) %>% 
+            dplyr::mutate(mean = round(.data$mean, digits = 3),
+                          sd = round(.data$sd, digits = 3)) %>% 
+            dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
+        }
+        writeToCsv(data, file.path(exportFolder, "covariate_value.csv"), incremental = incremental, cohortId = subset$cohortId)
       }
-      writeToCsv(data, file.path(exportFolder, "covariate_value.csv"), incremental = incremental, cohortId = subset$cohortId)
       recordTasksDone(cohortId = subset$cohortId,
                       task = "runCohortCharacterization",
                       checksum = subset$checksum,
@@ -569,32 +571,33 @@ runCohortDiagnostics <- function(packageName = NULL,
         return(data)
       }
       data <- lapply(split(subset, subset$cohortId), runTemporalCohortCharacterization)
-      data <- dplyr::bind_rows(data) %>% 
-        dplyr::mutate(mean = round(x = mean, digits = 3)) %>% 
-        dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 3 digits
-      
-      temporalCovariates <- data %>% 
-        dplyr::select(.data$covariateId, .data$covariateName, .data$analysisId, .data$conceptId, .data$timeId, 
-                      .data$startDayTemporalCharacterization, .data$endDayTemporalCharacterization) %>% 
-        dplyr::rename(covariateAnalysisId = .data$analysisId) %>% 
-        dplyr::distinct()
-      writeToCsv(
-        data = temporalCovariates,
-        fileName = file.path(exportFolder, "temporal_covariate.csv"),
-        incremental = incremental,
-        covariateId = temporalCovariates$covariateId
-      )
-      
-      if (!exists("counts")) {
-        counts <- readr::read_csv(file = file.path(exportFolder, "cohort_count.csv"), col_types = readr::cols())
-        names(counts) <- SqlRender::snakeCaseToCamelCase(names(counts))
-      }
-      
-      data <- data %>% 
-        dplyr::select(-.data$covariateName, -.data$analysisId, -.data$startDayTemporalCharacterization, -.data$endDayTemporalCharacterization)
-      
+      data <- dplyr::bind_rows(data)
       if (nrow(data) > 0) {
-        data <- data  %>% 
+        dplyr::mutate(mean = round(x = mean, digits = 3)) %>% 
+          dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 3 digits
+        
+        temporalCovariates <- data %>% 
+          dplyr::select(.data$covariateId, .data$covariateName, .data$analysisId, .data$conceptId, .data$timeId, 
+                        .data$startDayTemporalCharacterization, .data$endDayTemporalCharacterization) %>% 
+          dplyr::rename(covariateAnalysisId = .data$analysisId) %>% 
+          dplyr::distinct()
+        writeToCsv(
+          data = temporalCovariates,
+          fileName = file.path(exportFolder, "temporal_covariate.csv"),
+          incremental = incremental,
+          covariateId = temporalCovariates$covariateId
+        )
+        
+        if (!exists("counts")) {
+          counts <- readr::read_csv(file = file.path(exportFolder, "cohort_count.csv"), col_types = readr::cols())
+          names(counts) <- SqlRender::snakeCaseToCamelCase(names(counts))
+        }
+        
+        data <- data %>% 
+          dplyr::select(-.data$covariateName, 
+                        -.data$analysisId, 
+                        -.data$startDayTemporalCharacterization, 
+                        -.data$endDayTemporalCharacterization) %>% 
           dplyr::mutate(databaseId = databaseId) %>% 
           dplyr::left_join(y = counts, by = c("cohortId", "databaseId"))
         data <- enforceMinCellValue(data, "mean", minCellCount/data$cohortEntries)
@@ -603,15 +606,14 @@ runCohortDiagnostics <- function(packageName = NULL,
           dplyr::mutate(mean = round(.data$mean, digits = 3),
                         sd = round(.data$sd, digits = 3)) %>% 
           dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
+        writeToCsv(data, file.path(exportFolder, "temporal_covariate_value.csv"), incremental = incremental, cohortId = subset$cohortId)
       }
-      writeToCsv(data, file.path(exportFolder, "temporal_covariate_value.csv"), incremental = incremental, cohortId = subset$cohortId)
       recordTasksDone(cohortId = subset$cohortId,
                       task = "runTemporalCohortCharacterization",
                       checksum = subset$checksum,
                       recordKeepingFile = recordKeepingFile,
                       incremental = incremental)
     }
-    
     delta <- Sys.time() - startTemporalCohortCharacterization
     ParallelLogger::logInfo(paste("Running Temporal Characterization took",
                                   signif(delta, 3),
@@ -706,7 +708,7 @@ getConceptSets <- function(cohorts) {
                                                replacement = "\\1") %>%
         utils::type.convert()
     }
-
+    
     if (any(!(conceptSetIds %in% conceptSets$conceptSetId)) ||
         any(!(conceptSets$conceptSetId %in% conceptSetIds))) {
       stop("Mismatch in concept set IDs between SQL and JSON for cohort ", cohort$cohortFullName)

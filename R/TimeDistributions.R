@@ -53,12 +53,12 @@ getTimeDistributions <- function(connectionDetails = NULL,
                                  cohortDatabaseSchema = cohortDatabaseSchema,
                                  cohortTable = cohortTable,
                                  cohortId = cohortId)) {
-    warning("Cohort with ID ", cohortId, " appears to be empty. Was it instantiated?")
+    warning("Cohort with ID ", cohortId, " appears to be empty. Was it instantiated? Skipping time distribution computation.")
     delta <- Sys.time() - start
     ParallelLogger::logInfo(paste("Cohort characterization took",
                                   signif(delta, 3),
                                   attr(delta, "units")))
-    return(data.frame())
+    return(tidyr::tibble())
   }
   
   covariateSettings <- FeatureExtraction::createCovariateSettings(useDemographicsPriorObservationTime = TRUE,
