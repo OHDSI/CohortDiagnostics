@@ -232,7 +232,7 @@ createCohortTable <- function(connectionDetails = NULL,
     ParallelLogger::logInfo("Creating inclusion rule statistics tables")
     sql <- SqlRender::loadRenderTranslateSql("CreateInclusionStatsTables.sql",
                                              packageName = "CohortDiagnostics",
-                                             dbms = connectionDetails$dbms,
+                                             dbms = connection@dbms,
                                              cohort_database_schema = resultsDatabaseSchema,
                                              cohort_inclusion_table = cohortInclusionTable,
                                              cohort_inclusion_result_table = cohortInclusionResultTable,
@@ -375,7 +375,7 @@ instantiateCohort <- function(connectionDetails = NULL,
                              target_cohort_id = cohortId)
   }
   sql <- SqlRender::translate(sql,
-                              targetDialect = connectionDetails$dbms,
+                              targetDialect = connection@dbms,
                               oracleTempSchema = oracleTempSchema)
   DatabaseConnector::executeSql(connection, sql)
   
