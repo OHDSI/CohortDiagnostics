@@ -573,7 +573,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       data <- lapply(split(subset, subset$cohortId), runTemporalCohortCharacterization)
       data <- dplyr::bind_rows(data)
       if (nrow(data) > 0) {
-        dplyr::mutate(mean = round(x = mean, digits = 3)) %>% 
+        data <- data %>% dplyr::mutate(mean = round(x = mean, digits = 3)) %>% 
           dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 3 digits
         
         temporalCovariates <- data %>% 
