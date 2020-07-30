@@ -12,7 +12,7 @@ getCohortCharacteristics(
   cohortDatabaseSchema = cdmDatabaseSchema,
   cohortTable = "cohort",
   cohortId,
-  covariateSettings = FeatureExtraction::createDefaultCovariateSettings()
+  covariateSettings
 )
 }
 \arguments{

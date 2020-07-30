@@ -30,6 +30,12 @@ runCohortDiagnostics(
   runCohortOverlap = TRUE,
   runCohortCharacterization = TRUE,
   covariateSettings = FeatureExtraction::createDefaultCovariateSettings(),
+  runTemporalCohortCharacterization = TRUE,
+ 
+    temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(useConditionOccurrence
+    = TRUE, useConditionEraStart = TRUE, useDrugEraStart = TRUE, useProcedureOccurrence =
+    TRUE, useMeasurement = TRUE, useObservation = TRUE, temporalStartDays = c(-365, -30,
+    0, 1, 31), temporalEndDays = c(-31, -1, 0, 30, 365)),
   minCellCount = 5,
   incremental = FALSE,
   incrementalFolder = exportFolder
@@ -40,7 +46,9 @@ runCohortDiagnostics(
 \code{baseUrl} and \code{cohortSetReference} have been specified.}
 
 \item{cohortToCreateFile}{The location of the cohortToCreate file within the package. Is ignored if 
-\code{baseUrl} and \code{cohortSetReference} have been specified.}
+\code{baseUrl} and \code{cohortSetReference} have been specified. The cohortToCreateFile
+must be .csv file that is expected to be read into a dataframe object identical to requirements
+for \code{cohortSetReference} argument.}
 
 \item{baseUrl}{The base URL for the WebApi instance, for example:
 "http://server.org:80/WebAPI". Can be left NULL if 
@@ -105,7 +113,13 @@ does not exist it will be created.}
 \item{runCohortCharacterization}{Generate and export the cohort characterization?}
 
 \item{covariateSettings}{Either an object of type \code{covariateSettings} as created using one of
-the createCovariate functions in the FeatureExtraction package, or a list
+the createCovariateSettings function in the FeatureExtraction package, or a list
+of such objects.}
+
+\item{runTemporalCohortCharacterization}{Generate and export the temporal cohort characterization?}
+
+\item{temporalCovariateSettings}{Either an object of type \code{covariateSettings} as created using one of
+the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
 of such objects.}
 
 \item{minCellCount}{The minimum cell count for fields contains person counts or fractions.}
@@ -118,17 +132,25 @@ of which cohort diagnostics has been executed.}
 \description{
 Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the
 \code{ROhdsiWebApi::insertCohortDefinitionSetInPackage} function. Assumes the cohorts have already been instantiated.
+
+Characterization:
+If runTemporalCohortCharacterization argument is TRUE, then the following default covariateSettings object will be created
+using \code{RFeatureExtraction::createTemporalCovariateSettings}
+Alternatively, a covariate setting object may be created using the above as an example.
 }
 \details{
-Currently two ways of executing this function are supported, either (1) embedded in a study package, assuming 
-the cohort definitions are stored in that package using the \code{ROhdsiWebApi::insertCohortDefinitionSetInPackage},
-or (2) by using a WebApi interface to retrieve the cohort definitions.
+Currently two ways of executing this function are supported, either 
+(1) [Package Mode] embedded in a study package, assuming the cohort definitions are stored in that package using the 
+    \code{ROhdsiWebApi::insertCohortDefinitionSetInPackage}, or 
+(2) [WebApi Mode] By using a WebApi interface to retrieve the cohort definitions.
 
-When using this function from within a study package, use the \code{packageName} and \code{cohortToCreateFile} to specify
+When using this function in Package Mode: Use the \code{packageName} and \code{cohortToCreateFile} to specify
 the name of the study package, and the name of the cohortToCreate file within that package, respectively
 
-When using this function using a WebApi interface, use the \code{baseUrl} and \code{cohortSetReference} to specify how to 
+When using this function in WebApi Mode: use the \code{baseUrl} and \code{cohortSetReference} to specify how to 
 connect to the WebApi, and which cohorts to fetch, respectively.
+
+Note: if the parameters for both Package Mode and WebApi Mode are provided, then Package mode is preferred.
 
 The \code{cohortSetReference} argument must be a data frame with  the following columns:
 \describe{

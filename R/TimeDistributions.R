@@ -41,30 +41,30 @@ getTimeDistributions <- function(connectionDetails = NULL,
                                  cohortDatabaseSchema = cdmDatabaseSchema,
                                  cohortTable = "cohort",
                                  cohortId) {
-
+  
   start <- Sys.time()
-
+  
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-
+  
   if (!checkIfCohortInstantiated(connection = connection,
                                  cohortDatabaseSchema = cohortDatabaseSchema,
                                  cohortTable = cohortTable,
                                  cohortId = cohortId)) {
-    warning("Cohort with ID ", cohortId, " appears to be empty. Was it instantiated?")
+    warning("Cohort with ID ", cohortId, " appears to be empty. Was it instantiated? Skipping time distribution computation.")
     delta <- Sys.time() - start
     ParallelLogger::logInfo(paste("Cohort characterization took",
                                   signif(delta, 3),
                                   attr(delta, "units")))
-    return(data.frame())
+    return(tidyr::tibble())
   }
   
   covariateSettings <- FeatureExtraction::createCovariateSettings(useDemographicsPriorObservationTime = TRUE,
                                                                   useDemographicsPostObservationTime = TRUE,
                                                                   useDemographicsTimeInCohort = TRUE)
-
+  
   data <- FeatureExtraction::getDbCovariateData(connection = connection,
                                                 oracleTempSchema = oracleTempSchema,
                                                 cdmDatabaseSchema = cdmDatabaseSchema,
@@ -75,13 +75,13 @@ getTimeDistributions <- function(connectionDetails = NULL,
                                                 aggregated = TRUE)
   
   if (is.null(data$covariatesContinuous)) {
-    result <- data.frame()
+    result <- tidyr::tibble()
   } else {
     result <- data$covariatesContinuous %>%
-      inner_join(data$covariateRef) %>%
-      select(-.data$conceptId, -.data$analysisId, -.data$covariateId, -.data$result$countValue) %>%
-      rename(timeMetric = .data$covariateName) %>%
-      collect()
+      dplyr::inner_join(data$covariateRef) %>%
+      dplyr::select(-.data$conceptId, -.data$analysisId, -.data$covariateId, -.data$result$countValue) %>%
+      dplyr::rename(timeMetric = .data$covariateName) %>%
+      dplyr::collect()
   }
   attr(result, "cohortSize") <- data$metaData$populationSize
   delta <- Sys.time() - start

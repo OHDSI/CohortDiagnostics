@@ -93,15 +93,11 @@ runCohortDiagnosticsUsingExternalCounts <- function(packageName = NULL,
     on.exit(DatabaseConnector::disconnect(connection))
   }
   
-  if (is.null(packageName)) {
-    cohorts <- loadCohortsFromWebApi(baseUrl = baseUrl,
-                                     cohortSetReference = cohortSetReference,
-                                     cohortIds = cohortIds)
-  } else {
-    cohorts <- loadCohortsFromPackage(packageName = packageName,
-                                      cohortToCreateFile = cohortToCreateFile,
-                                      cohortIds = cohortIds)
-  }
+  cohorts <- manageCohortsForExecution(packageName = packageName,
+                                       cohortToCreateFile = cohortToCreateFile,
+                                       baseUrl = baseUrl,
+                                       cohortSetReference = cohortSetReference,
+                                       cohortIds = cohortIds)
   
   writeToCsv(cohorts, file.path(exportFolder, "cohort.csv"))
   
@@ -126,7 +122,7 @@ runCohortDiagnosticsUsingExternalCounts <- function(packageName = NULL,
                              conceptCountsTableIsTemp = conceptCountsTableIsTemp,
                              useExternalConceptCountsTable = TRUE)
   }
-
+  
   # Add all to zip file -------------------------------------------------------------------------------
   ParallelLogger::logInfo("Adding results to zip file")
   zipName <- file.path(exportFolder, paste0("Results_", databaseId, ".zip"))

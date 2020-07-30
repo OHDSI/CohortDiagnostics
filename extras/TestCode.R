@@ -135,21 +135,24 @@ chars <- getCohortCharacteristics(connectionDetails = connectionDetails,
                                   cdmDatabaseSchema = cdmDatabaseSchema,
                                   cohortDatabaseSchema = cohortDatabaseSchema,
                                   cohortTable = cohortTable,
-                                  cohortId = cohortId)
+                                  cohortId = cohortId, 
+                                  covariateSettings = FeatureExtraction::createDefaultCovariateSettings())
 
 chars1 <- getCohortCharacteristics(connectionDetails = connectionDetails,
                                    oracleTempSchema = oracleTempSchema,
                                    cdmDatabaseSchema = cdmDatabaseSchema,
                                    cohortDatabaseSchema = cohortDatabaseSchema,
                                    cohortTable = cohortTable,
-                                   cohortId = 7362)
+                                   cohortId = 7362, 
+                                   covariateSettings = FeatureExtraction::createDefaultCovariateSettings())
 
 chars2 <- getCohortCharacteristics(connectionDetails = connectionDetails,
                                    oracleTempSchema = oracleTempSchema,
                                    cdmDatabaseSchema = cdmDatabaseSchema,
                                    cohortDatabaseSchema = cohortDatabaseSchema,
                                    cohortTable = cohortTable,
-                                   cohortId = 5665)
+                                   cohortId = 5665, 
+                                   covariateSettings = FeatureExtraction::createDefaultCovariateSettings())
 
 # saveRDS(chars1, 'c:/temp/chars1.rds') saveRDS(chars2, 'c:/temp/chars2.rds')
 
