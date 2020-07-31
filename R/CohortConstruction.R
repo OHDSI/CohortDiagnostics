@@ -695,7 +695,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
                                  target_cohort_id = cohorts$cohortId[i])
       }
       sql <- SqlRender::translate(sql,
-                                  targetDialect = connectionDetails$dbms,
+                                  targetDialect = connection@dbms,
                                   oracleTempSchema = oracleTempSchema)
       DatabaseConnector::executeSql(connection, sql)
       instantiatedCohortIds <- c(instantiatedCohortIds, cohorts$cohortId[i])
