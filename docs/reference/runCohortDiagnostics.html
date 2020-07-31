@@ -41,7 +41,11 @@
 
 <meta property="og:title" content="Run cohort diagnostics — runCohortDiagnostics" />
 <meta property="og:description" content="Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the
-ROhdsiWebApi::insertCohortDefinitionSetInPackage function. Assumes the cohorts have already been instantiated." />
+ROhdsiWebApi::insertCohortDefinitionSetInPackage function. Assumes the cohorts have already been instantiated.
+Characterization:
+If runTemporalCohortCharacterization argument is TRUE, then the following default covariateSettings object will be created
+using RFeatureExtraction::createTemporalCovariateSettings
+Alternatively, a covariate setting object may be created using the above as an example." />
 
 
 
@@ -73,7 +77,7 @@ ROhdsiWebApi::insertCohortDefinitionSetInPackage function. Assumes the cohorts h
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.1.0</span>
       </span>
     </div>
 
@@ -135,6 +139,10 @@ ROhdsiWebApi::insertCohortDefinitionSetInPackage function. Assumes the cohorts h
     <div class="ref-description">
     <p>Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the
 <code><a href='https://rdrr.io/pkg/ROhdsiWebApi/man/insertCohortDefinitionSetInPackage.html'>ROhdsiWebApi::insertCohortDefinitionSetInPackage</a></code> function. Assumes the cohorts have already been instantiated.</p>
+<p>Characterization:
+If runTemporalCohortCharacterization argument is TRUE, then the following default covariateSettings object will be created
+using <code>RFeatureExtraction::createTemporalCovariateSettings</code>
+Alternatively, a covariate setting object may be created using the above as an example.</p>
     </div>
 
     <pre class="usage"><span class='fu'>runCohortDiagnostics</span>(
@@ -163,6 +171,12 @@ ROhdsiWebApi::insertCohortDefinitionSetInPackage function. Assumes the cohorts h
   <span class='kw'>runCohortOverlap</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>runCohortCharacterization</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>covariateSettings</span> <span class='kw'>=</span> <span class='kw pkg'>FeatureExtraction</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/FeatureExtraction/man/createDefaultCovariateSettings.html'>createDefaultCovariateSettings</a></span>(),
+  <span class='kw'>runTemporalCohortCharacterization</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+
+    <span class='kw'>temporalCovariateSettings</span> <span class='kw'>=</span> <span class='kw pkg'>FeatureExtraction</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/FeatureExtraction/man/createTemporalCovariateSettings.html'>createTemporalCovariateSettings</a></span>(<span class='kw'>useConditionOccurrence</span>
+    <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>useConditionEraStart</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>useDrugEraStart</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>useProcedureOccurrence</span> <span class='kw'>=</span>
+    <span class='fl'>TRUE</span>, <span class='kw'>useMeasurement</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>useObservation</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>temporalStartDays</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(-<span class='fl'>365</span>, -<span class='fl'>30</span>,
+    <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>31</span>), <span class='kw'>temporalEndDays</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(-<span class='fl'>31</span>, -<span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>30</span>, <span class='fl'>365</span>)),
   <span class='kw'>minCellCount</span> <span class='kw'>=</span> <span class='fl'>5</span>,
   <span class='kw'>incremental</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
   <span class='kw'>incrementalFolder</span> <span class='kw'>=</span> <span class='no'>exportFolder</span>
@@ -179,7 +193,9 @@ ROhdsiWebApi::insertCohortDefinitionSetInPackage function. Assumes the cohorts h
     <tr>
       <th>cohortToCreateFile</th>
       <td><p>The location of the cohortToCreate file within the package. Is ignored if 
-<code>baseUrl</code> and <code>cohortSetReference</code> have been specified.</p></td>
+<code>baseUrl</code> and <code>cohortSetReference</code> have been specified. The cohortToCreateFile
+must be .csv file that is expected to be read into a dataframe object identical to requirements
+for <code>cohortSetReference</code> argument.</p></td>
     </tr>
     <tr>
       <th>baseUrl</th>
@@ -290,7 +306,17 @@ does not exist it will be created.</p></td>
     <tr>
       <th>covariateSettings</th>
       <td><p>Either an object of type <code>covariateSettings</code> as created using one of
-the createCovariate functions in the FeatureExtraction package, or a list
+the createCovariateSettings function in the FeatureExtraction package, or a list
+of such objects.</p></td>
+    </tr>
+    <tr>
+      <th>runTemporalCohortCharacterization</th>
+      <td><p>Generate and export the temporal cohort characterization?</p></td>
+    </tr>
+    <tr>
+      <th>temporalCovariateSettings</th>
+      <td><p>Either an object of type <code>covariateSettings</code> as created using one of
+the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
 of such objects.</p></td>
     </tr>
     <tr>
@@ -310,13 +336,15 @@ of which cohort diagnostics has been executed.</p></td>
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>Currently two ways of executing this function are supported, either (1) embedded in a study package, assuming 
-the cohort definitions are stored in that package using the <code><a href='https://rdrr.io/pkg/ROhdsiWebApi/man/insertCohortDefinitionSetInPackage.html'>ROhdsiWebApi::insertCohortDefinitionSetInPackage</a></code>,
-or (2) by using a WebApi interface to retrieve the cohort definitions.</p>
-<p>When using this function from within a study package, use the <code>packageName</code> and <code>cohortToCreateFile</code> to specify
+    <p>Currently two ways of executing this function are supported, either 
+(1) [Package Mode] embedded in a study package, assuming the cohort definitions are stored in that package using the 
+    <code><a href='https://rdrr.io/pkg/ROhdsiWebApi/man/insertCohortDefinitionSetInPackage.html'>ROhdsiWebApi::insertCohortDefinitionSetInPackage</a></code>, or 
+(2) [WebApi Mode] By using a WebApi interface to retrieve the cohort definitions.</p>
+<p>When using this function in Package Mode: Use the <code>packageName</code> and <code>cohortToCreateFile</code> to specify
 the name of the study package, and the name of the cohortToCreate file within that package, respectively</p>
-<p>When using this function using a WebApi interface, use the <code>baseUrl</code> and <code>cohortSetReference</code> to specify how to 
+<p>When using this function in WebApi Mode: use the <code>baseUrl</code> and <code>cohortSetReference</code> to specify how to 
 connect to the WebApi, and which cohorts to fetch, respectively.</p>
+<p>Note: if the parameters for both Package Mode and WebApi Mode are provided, then Package mode is preferred.</p>
 <p>The <code>cohortSetReference</code> argument must be a data frame with  the following columns:</p><dl'>
 <dt>atlasId</dt><dd><p>The cohort ID in ATLAS.</p></dd>
 <dt>atlasName</dt><dd><p>The full name of the cohort. This will be shown in the Shiny app.</p></dd>

@@ -80,7 +80,7 @@ concept_subjectsThe number of unique persons having the concept.
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.1.0</span>
       </span>
     </div>
 
@@ -184,7 +184,9 @@ must have the following columns:</p>
     <tr>
       <th>cohortToCreateFile</th>
       <td><p>The location of the cohortToCreate file within the package. Is ignored if 
-<code>baseUrl</code> and <code>cohortSetReference</code> have been specified.</p></td>
+<code>baseUrl</code> and <code>cohortSetReference</code> have been specified. The cohortToCreateFile
+must be .csv file that is expected to be read into a dataframe object identical to requirements
+for <code>cohortSetReference</code> argument.</p></td>
     </tr>
     <tr>
       <th>baseUrl</th>
@@ -277,13 +279,15 @@ does not exist it will be created.</p></td>
 
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
-    <p>Currently two ways of executing this function are supported, either (1) embedded in a study package, assuming 
-the cohort definitions are stored in that package using the <code><a href='https://rdrr.io/pkg/ROhdsiWebApi/man/insertCohortDefinitionSetInPackage.html'>ROhdsiWebApi::insertCohortDefinitionSetInPackage</a></code>,
-or (2) by using a WebApi interface to retrieve the cohort definitions.</p>
-<p>When using this function from within a study package, use the <code>packageName</code> and <code>cohortToCreateFile</code> to specify
+    <p>Currently two ways of executing this function are supported, either 
+(1) [Package Mode] embedded in a study package, assuming the cohort definitions are stored in that package using the 
+    <code><a href='https://rdrr.io/pkg/ROhdsiWebApi/man/insertCohortDefinitionSetInPackage.html'>ROhdsiWebApi::insertCohortDefinitionSetInPackage</a></code>, or 
+(2) [WebApi Mode] By using a WebApi interface to retrieve the cohort definitions.</p>
+<p>When using this function in Package Mode: Use the <code>packageName</code> and <code>cohortToCreateFile</code> to specify
 the name of the study package, and the name of the cohortToCreate file within that package, respectively</p>
-<p>When using this function using a WebApi interface, use the <code>baseUrl</code> and <code>cohortSetReference</code> to specify how to 
+<p>When using this function in WebApi Mode: use the <code>baseUrl</code> and <code>cohortSetReference</code> to specify how to 
 connect to the WebApi, and which cohorts to fetch, respectively.</p>
+<p>Note: if the parameters for both Package Mode and WebApi Mode are provided, then Package mode is preferred.</p>
 <p>The <code>cohortSetReference</code> argument must be a data frame with  the following columns:</p><dl'>
 <dt>atlasId</dt><dd><p>The cohort ID in ATLAS.</p></dd>
 <dt>atlasName</dt><dd><p>The full name of the cohort. This will be shown in the Shiny app.</p></dd>

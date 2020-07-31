@@ -71,7 +71,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.0.2</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.1.0</span>
       </span>
     </div>
 
@@ -129,6 +129,26 @@
       <small>Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
+    <div id="cohortdiagnostics-110" class="section level1">
+<h1 class="page-header" data-toc-text="1.1.0">
+<a href="#cohortdiagnostics-110" class="anchor"></a>CohortDiagnostics 1.1.0</h1>
+<p>New features:</p>
+<ol>
+<li>Added temporal characterization</li>
+<li>UI changes to Shiny app diagnostic explorer</li>
+</ol>
+<p>Bug fixes:</p>
+<ol>
+<li>Circe-be update introduced bug in parsing concept sets in cohort definition.</li>
+<li>Handling of empty cohorts</li>
+</ol>
+<p>Changes:</p>
+<ol>
+<li>Error handling: Use <a href="https://CRAN.R-project.org/package=checkmate">checkmate</a> R-package to provide more informative error messages.</li>
+<li>Refactor runCohortDiagnostics: added new function by refactoring existing private functions. This new function get the JSON and parameterized OHDSI SQL for the cohorts for which diagnostics has been requested \code{getCohortsJsonAndSql}</li>
+</ol>
+<p>Note: The code has been partially refactored to depend on tidyverse.</p>
+</div>
     <div id="cohortdiagnostics-100" class="section level1">
 <h1 class="page-header" data-toc-text="1.0.0">
 <a href="#cohortdiagnostics-100" class="anchor"></a>CohortDiagnostics 1.0.0</h1>

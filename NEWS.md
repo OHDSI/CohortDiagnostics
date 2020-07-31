@@ -15,7 +15,7 @@ Bug fixes:
 Changes:
 
 1. Error handling: Use [checkmate](https://CRAN.R-project.org/package=checkmate) R-package to provide more informative error messages.
-2. Refactor runCohortDiagnostics: added new function by refactoring exisitng private functions. This new function
+2. Refactor runCohortDiagnostics: added new function by refactoring existing private functions. This new function
 get the JSON and parameterized OHDSI SQL for the cohorts for which diagnostics has been requested \code{getCohortsJsonAndSql} 
 
 Note: The code has been partially refactored to depend on tidyverse. 
