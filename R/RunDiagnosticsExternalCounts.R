@@ -93,11 +93,11 @@ runCohortDiagnosticsUsingExternalCounts <- function(packageName = NULL,
     on.exit(DatabaseConnector::disconnect(connection))
   }
   
-  cohorts <- manageCohortsForExecution(packageName = packageName,
-                                       cohortToCreateFile = cohortToCreateFile,
-                                       baseUrl = baseUrl,
-                                       cohortSetReference = cohortSetReference,
-                                       cohortIds = cohortIds)
+  cohorts <- getCohortsJsonAndSql(packageName = packageName,
+                                  cohortToCreateFile = cohortToCreateFile,
+                                  baseUrl = baseUrl,
+                                  cohortSetReference = cohortSetReference,
+                                  cohortIds = cohortIds)
   
   writeToCsv(cohorts, file.path(exportFolder, "cohort.csv"))
   
