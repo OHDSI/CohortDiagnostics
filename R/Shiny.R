@@ -30,6 +30,7 @@
 launchDiagnosticsExplorer <- function(dataFolder, launch.browser = FALSE) {
   ensure_installed("shiny")
   ensure_installed("shinydashboard")
+  ensure_installed("shinyWidgets")
   ensure_installed("DT")
   ensure_installed("VennDiagram")
   ensure_installed("htmltools")
