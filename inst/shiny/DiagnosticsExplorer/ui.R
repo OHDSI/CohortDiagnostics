@@ -21,6 +21,12 @@ header <-
 sidebarMenu <-
   shinydashboard::sidebarMenu(
     id = "tabs",
+    if (exists("cohortDescription") && exists("phenotypeDescription"))
+      addInfo(
+         shinydashboard::menuItem(text = "Description", tabName = "description"),
+         infoId = "descriptionInfo"
+      ),
+      
     if (exists("cohortCount"))
       addInfo(
         item = shinydashboard::menuItem(text = "Cohort Counts", tabName = "cohortCounts"),
@@ -78,7 +84,7 @@ sidebarMenu <-
       ),
     shinydashboard::menuItem(text = "Database information", tabName = "databaseInformation"),
     shiny::conditionalPanel(
-      condition = "input.tabs!='incidenceRate' & input.tabs!='timeDistribution' & input.tabs!='cohortCharacterization' & input.tabs!='cohortCounts' & input.tabs!='indexEventBreakdown' & input.tabs!='databaseInformation'",
+      condition = "input.tabs!='incidenceRate' & input.tabs!='timeDistribution' & input.tabs!='cohortCharacterization' & input.tabs!='cohortCounts' & input.tabs!='indexEventBreakdown' & input.tabs!='databaseInformation' & input.tabs != 'description'",
       shinyWidgets::pickerInput(
         inputId = "database",
         label = "Database",
@@ -131,7 +137,7 @@ sidebarMenu <-
       )
     },
     shiny::conditionalPanel(
-      condition = "input.tabs!='cohortCounts' & input.tabs!='databaseInformation'",
+      condition = "input.tabs!='cohortCounts' & input.tabs!='databaseInformation' & input.tabs != 'description'",
       shinyWidgets::pickerInput(
         inputId = "cohort",
         label = "Cohort (Target)",
@@ -185,6 +191,24 @@ sidebar <-
 
 #body - items in tab
 bodyTabItems <- shinydashboard::tabItems(
+  shinydashboard::tabItem(
+    tabName = "description",
+    shinydashboard::box(
+      title = "Description",
+      width = NULL,
+      status = "primary",
+      shiny::tabsetPanel(type = "tab",
+                         shiny::tabPanel(
+                           tags$br(),
+                           title = "Phenotype",
+                           DT::dataTableOutput("phenoTypeDescriptionTable")),
+                         shiny::tabPanel(
+                           tags$br(),
+                           title = "Cohort", 
+                           DT::dataTableOutput("cohortDescriptionTable"))
+      )
+    )
+  ),
   shinydashboard::tabItem(tabName = "cohortCounts",
                           DT::dataTableOutput("cohortCountsTable"),
                           tags$table(

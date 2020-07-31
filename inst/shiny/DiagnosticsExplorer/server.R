@@ -78,6 +78,46 @@ shiny::shinyServer(function(input, output, session) {
                                     choices = subset)
   })
   
+  output$phenoTypeDescriptionTable <- DT::renderDataTable({
+    data <- phenotypeDescription
+    options = list(pageLength = 20,
+                   searching = TRUE,
+                   lengthChange = TRUE,
+                   ordering = TRUE,
+                   paging = TRUE,
+                   info = TRUE,
+                   searchHighlight = TRUE,
+                   scrollX = TRUE)
+    
+    dataTable <- DT::datatable(data,
+                               options = options,
+                               rownames = FALSE,
+                               escape = FALSE,
+                               filter = c("bottom"),
+                               class = "stripe nowrap compact")
+    return(dataTable)
+  })
+  
+  output$cohortDescriptionTable <- DT::renderDataTable({
+    data <- cohortDescription
+    options = list(pageLength = 20,
+                   searching = TRUE,
+                   lengthChange = TRUE,
+                   ordering = TRUE,
+                   paging = TRUE,
+                   info = TRUE,
+                   searchHighlight = TRUE,
+                   scrollX = TRUE)
+    
+    dataTable <- DT::datatable(data,
+                               options = options,
+                               rownames = FALSE, 
+                               escape = FALSE,
+                               filter = c("bottom"),
+                               class = "stripe nowrap compact")
+    return(dataTable)
+  })
+  
   output$cohortCountsTable <- DT::renderDataTable({
     data <- cohortCount[cohortCount$databaseId %in% input$databases, ]
     if (nrow(data) == 0) {
