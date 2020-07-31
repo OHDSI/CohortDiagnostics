@@ -480,22 +480,27 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$cohortId == cohortId() & 
                       .data$databaseId %in% input$databases) %>% 
       dplyr::select(-cohortId)
-    databaseIds <- data %>% 
+    
+    dataCounts <- data %>% 
       dplyr::select(databaseId) %>% 
       dplyr::distinct() %>% 
-      dplyr::arrange(databaseId) %>% 
-      dplyr::pull(databaseId)
+      dplyr::left_join(y = (cohortCount %>% 
+                              dplyr::filter(.data$cohortId == cohortId()) %>% 
+                              dplyr::select(-cohortId))) %>% 
+      dplyr::arrange(.data$databaseId)
     
     if (input$charType == "Pretty") {
       data <- data %>% 
         dplyr::left_join(y = covariate, by = c('covariateId')) %>% 
         dplyr::distinct()
       table <- list()
-      for (j in (1:length(databaseIds))) {
+      for (j in (1:nrow(dataCounts))) {
+        dataCount <- dataCounts %>% 
+          dplyr::slice(j)
         temp <- data %>% 
-          dplyr::filter(.data$databaseId == databaseIds[[j]]) %>% 
+          dplyr::filter(.data$databaseId == dataCount$databaseId) %>% 
           prepareTable1() %>% 
-          dplyr::mutate(databaseId = databaseIds[[j]])
+          dplyr::mutate(databaseId = dataCount$databaseId)
         table[[j]] <- temp
       }
       table <- dplyr::bind_rows(table) %>% 
@@ -514,17 +519,20 @@ shiny::shinyServer(function(input, output, session) {
                      paging = FALSE,
                      columnDefs = list(
                        truncateStringDef(0, 150),
-                       minCellPercentDef(1:length(databaseIds))
+                       minCellPercentDef(1:nrow(dataCounts))
                      ))
       sketch <- htmltools::withTags(table(
         class = 'display',
         thead(
           tr(
-            th(rowspan = 2, 'Covariate Name'),
-            lapply(databaseIds, th, colspan = 1, class = "dt-center")
+            th(rowspan = 3, 'Covariate Name'),
+            lapply(dataCounts$databaseId, th, colspan = 1, class = "dt-center")
           ),
           tr(
-            lapply(rep(c("Proportion"), length(databaseIds)), th)
+            lapply(paste0("(n = ", format(dataCounts$cohortSubjects, big.mark = ","), ")"), th, colspan = 1, class = "dt-center no-padding")
+          ),
+          tr(
+            lapply(rep(c("Proportion"), length(dataCounts$databaseId)), th)
           )
         )
       ))
@@ -537,7 +545,7 @@ shiny::shinyServer(function(input, output, session) {
                              class = "stripe nowrap compact")
       
       table <- DT::formatStyle(table = table,
-                               columns = 1 + (1:length(databaseIds)),
+                               columns = 1 + (1:nrow(dataCounts)),
                                background = DT::styleColorBar(c(0,1), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
@@ -612,7 +620,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(-cohortId)
     
     temporalCovariateChoicesSelected <- temporalCovariateChoices %>% 
-                                        dplyr::filter(.data$timeId %in% c(timeId()))
+      dplyr::filter(.data$timeId %in% c(timeId()))
     
     data <- data %>% 
       dplyr::left_join(y = temporalCovariate %>% dplyr::distinct(), by = c("covariateId", "timeId")) %>% 
@@ -621,20 +629,20 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::distinct()
     
     table <- data %>% 
-              dplyr::select(.data$covariateName,.data$conceptId, .data$covariateId) %>% 
-              dplyr::distinct()
+      dplyr::select(.data$covariateName,.data$conceptId, .data$covariateId) %>% 
+      dplyr::distinct()
     
     for (timeId in temporalCovariateChoicesSelected$timeId) {
       temp <- data %>% 
-              dplyr::filter(timeId == !!timeId) %>% 
-              dplyr::select(.data$covariateId, .data$mean, .data$sd)
+        dplyr::filter(timeId == !!timeId) %>% 
+        dplyr::select(.data$covariateId, .data$mean, .data$sd)
       table <- table %>% 
-                dplyr::left_join(temp, by = c("covariateId")) %>% 
-                dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = 0)))
+        dplyr::left_join(temp, by = c("covariateId")) %>% 
+        dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = 0)))
     }
     table <- table %>% 
-            dplyr::select(-.data$covariateId) %>% 
-            dplyr::arrange(.data$covariateName)
+      dplyr::select(-.data$covariateId) %>% 
+      dplyr::arrange(.data$covariateName)
     
     options = list(pageLength = 20,
                    searching = TRUE,
