@@ -20,7 +20,7 @@ Imports:
   checkmate,
   digest,
   dplyr (>= 1.0.0),
-  FeatureExtraction (>= 3.0.0),
+  FeatureExtraction (>= 3.0.1),
   ggplot2,
   ParallelLogger (>= 2.0.0),
   readr,
