@@ -1,2 +1,2 @@
 library(testthat)
-test_check("DatabaseConnector")
+test_check("CohortDiagnostics")
