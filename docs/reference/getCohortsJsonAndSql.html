@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Create concept counts table — createConceptCountsTable • CohortDiagnostics</title>
+<title>Get cohorts JSON and parameterized OHDSI SQL — getCohortsJsonAndSql • CohortDiagnostics</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,10 @@
 
 
 
-<meta property="og:title" content="Create concept counts table — createConceptCountsTable" />
-<meta property="og:description" content="Create a table with counts of how often each concept ID occurs in the CDM." />
+<meta property="og:title" content="Get cohorts JSON and parameterized OHDSI SQL — getCohortsJsonAndSql" />
+<meta property="og:description" content="This function may be used to collect a cohorts JSON and OHDSI SQL. Based on whether a
+baseUrl is available, the function will collect the specifications from either from
+WebApi or a Package." />
 
 
 
@@ -126,73 +128,87 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Create concept counts table</h1>
-    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/MetaDataDiagnostics.R'><code>R/MetaDataDiagnostics.R</code></a></small>
-    <div class="hidden name"><code>createConceptCountsTable.Rd</code></div>
+    <h1>Get cohorts JSON and parameterized OHDSI SQL</h1>
+    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/CohortConstruction.R'><code>R/CohortConstruction.R</code></a></small>
+    <div class="hidden name"><code>getCohortsJsonAndSql.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Create a table with counts of how often each concept ID occurs in the CDM.</p>
+    <p>This function may be used to collect a cohorts JSON and OHDSI SQL. Based on whether a
+baseUrl is available, the function will collect the specifications from either from
+WebApi or a Package.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>createConceptCountsTable</span>(
-  <span class='kw'>connectionDetails</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>connection</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='no'>cdmDatabaseSchema</span>,
-  <span class='kw'>oracleTempSchema</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>conceptCountsDatabaseSchema</span> <span class='kw'>=</span> <span class='no'>cdmDatabaseSchema</span>,
-  <span class='kw'>conceptCountsTable</span> <span class='kw'>=</span> <span class='st'>"concept_counts"</span>,
-  <span class='kw'>conceptCountsTableIsTemp</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
+    <pre class="usage"><span class='fu'>getCohortsJsonAndSql</span>(
+  <span class='kw'>packageName</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>cohortToCreateFile</span> <span class='kw'>=</span> <span class='st'>"settings/CohortsToCreate.csv"</span>,
+  <span class='kw'>baseUrl</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>cohortSetReference</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>cohortIds</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>connectionDetails</th>
-      <td><p>An object of type <code>connectionDetails</code> as created using the
-<code><a href='https://rdrr.io/pkg/DatabaseConnector/man/createConnectionDetails.html'>createConnectionDetails</a></code> function in the
-DatabaseConnector package. Can be left NULL if <code>connection</code> is
-provided.</p></td>
+      <th>packageName</th>
+      <td><p>The name of the package containing the cohort definitions. Can be left NULL if 
+<code>baseUrl</code> and <code>cohortSetReference</code> have been specified.</p></td>
     </tr>
     <tr>
-      <th>connection</th>
-      <td><p>An object of type <code>connection</code> as created using the
-<code><a href='https://rdrr.io/pkg/DatabaseConnector/man/connect.html'>connect</a></code> function in the
-DatabaseConnector package. Can be left NULL if <code>connectionDetails</code>
-is provided, in which case a new connection will be opened at the start
-of the function, and closed when the function finishes.</p></td>
+      <th>cohortToCreateFile</th>
+      <td><p>The location of the cohortToCreate file within the package. Is ignored if 
+<code>baseUrl</code> and <code>cohortSetReference</code> have been specified. The cohortToCreateFile
+must be .csv file that is expected to be read into a dataframe object identical to requirements
+for <code>cohortSetReference</code> argument.</p></td>
     </tr>
     <tr>
-      <th>cdmDatabaseSchema</th>
-      <td><p>Schema name where your patient-level data in OMOP CDM format resides.
-Note that for SQL Server, this should include both the database and
-schema name, for example 'cdm_data.dbo'.</p></td>
+      <th>baseUrl</th>
+      <td><p>The base URL for the WebApi instance, for example:
+"http://server.org:80/WebAPI". Can be left NULL if 
+<code>packageName</code> and <code>cohortToCreateFile</code> have been specified.</p></td>
     </tr>
     <tr>
-      <th>oracleTempSchema</th>
-      <td><p>Should be used in Oracle to specify a schema where the user has write
-privileges for storing temporary tables.</p></td>
+      <th>cohortSetReference</th>
+      <td><p>A data frame with four columns, as described in the details. Can be left NULL if 
+<code>packageName</code> and <code>cohortToCreateFile</code> have been specified.</p></td>
     </tr>
     <tr>
-      <th>conceptCountsDatabaseSchema</th>
-      <td><p>Schema name where your concept counts table resides. Note that
-for SQL Server, this should include both the database and
-schema name, for example 'scratch.dbo'. Ignored if
-<code>conceptCountsTableIsTemp = TRUE</code>.</p></td>
-    </tr>
-    <tr>
-      <th>conceptCountsTable</th>
-      <td><p>Name of the concept counts table. This table can be created
-using the <code>createConceptCountsTable</code>.</p></td>
-    </tr>
-    <tr>
-      <th>conceptCountsTableIsTemp</th>
-      <td><p>Is the concept counts table a temp table?</p></td>
+      <th>cohortIds</th>
+      <td><p>Optionally, provide a subset of cohort IDs to restrict the
+diagnostics to.</p></td>
     </tr>
     </table>
 
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
+    <p>The function will return a R list object with cohort information including specifications 
+such as JSON and SQL.</p>
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>Currently two ways of executing this function are supported, either 
+(1) [Package Mode] embedded in a study package, assuming the cohort definitions are stored in that package using the 
+    <code><a href='https://rdrr.io/pkg/ROhdsiWebApi/man/insertCohortDefinitionSetInPackage.html'>ROhdsiWebApi::insertCohortDefinitionSetInPackage</a></code>, or 
+(2) [WebApi Mode] By using a WebApi interface to retrieve the cohort definitions.</p>
+<p>When using this function in Package Mode: Use the <code>packageName</code> and <code>cohortToCreateFile</code> to specify
+the name of the study package, and the name of the cohortToCreate file within that package, respectively</p>
+<p>When using this function in WebApi Mode: use the <code>baseUrl</code> and <code>cohortSetReference</code> to specify how to 
+connect to the WebApi, and which cohorts to fetch, respectively.</p>
+<p>Note: if the parameters for both Package Mode and WebApi Mode are provided, then Package mode is preferred.</p>
+<p>The <code>cohortSetReference</code> argument must be a data frame with  the following columns:</p><dl'>
+<dt>atlasId</dt><dd><p>The cohort ID in ATLAS.</p></dd>
+<dt>atlasName</dt><dd><p>The full name of the cohort. This will be shown in the Shiny app.</p></dd>
+<dt>cohortId</dt><dd><p>The cohort ID to use in the package. Usually the same as the cohort ID in ATLAS.</p></dd>
+<dt>name</dt><dd><p>A short name for the cohort, to use to create file names. do not use special characters.</p></dd>
+
+</dl>
+
+
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
+<span class='no'>cohorts</span> <span class='kw'>&lt;-</span> <span class='fu'>getCohortsJsonAndSql</span>(<span class='kw'>packageName</span> <span class='kw'>=</span> <span class='st'>'cohortDiagnostics'</span>,
+                                <span class='kw'>baseUrl</span> <span class='kw'>=</span> <span class='st'>"http://server.org:80/WebAPI"</span>)
+}</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
