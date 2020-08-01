@@ -201,11 +201,11 @@ bodyTabItems <- shinydashboard::tabItems(
                          shiny::tabPanel(
                            tags$br(),
                            title = "Phenotype",
-                           DT::dataTableOutput("phenoTypeDescriptionTable")),
+                           DT::dataTableOutput(outputId = "phenoTypeDescriptionTable")),
                          shiny::tabPanel(
                            tags$br(),
                            title = "Cohort", 
-                           DT::dataTableOutput("cohortDescriptionTable"))
+                           DT::dataTableOutput(outputId = "cohortDescriptionTable"))
       )
     )
   ),
