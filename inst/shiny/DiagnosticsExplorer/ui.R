@@ -15,7 +15,7 @@ addInfo <- function(item, infoId) {
 
 #header name
 header <-
-  shinydashboard::dashboardHeader(title = "Cohort Diagnostics", titleWidth = NULL)
+  shinydashboard::dashboardHeader(title = "Phenotype Library", titleWidth = NULL)
 
 #sidebarMenu
 sidebarMenu <-
