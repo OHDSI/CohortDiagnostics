@@ -79,42 +79,50 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$phenoTypeDescriptionTable <- DT::renderDataTable({
-    data <- phenotypeDescription
+    data <- phenotypeDescription %>% 
+      dplyr::mutate(phenotypeName = paste0(.data$phenotypeName, " (", .data$phenotypeId, ") ")) %>%
+      dplyr::select(-phenotypeId)
+    
     options = list(pageLength = 20,
                    searching = TRUE,
-                   lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
                    info = TRUE,
                    searchHighlight = TRUE,
-                   scrollX = TRUE)
+                   columnDefs = list(list(width = '50%', targets = 2)))
     
     dataTable <- DT::datatable(data,
                                options = options,
                                rownames = FALSE,
                                escape = FALSE,
                                filter = c("bottom"),
-                               class = "stripe nowrap compact")
+                               class = "stripe compact")
     return(dataTable)
   })
   
   output$cohortDescriptionTable <- DT::renderDataTable({
-    data <- cohortDescription
+    data <- cohortDescription %>% 
+      dplyr::left_join(y = phenotypeDescription, by = "phenotypeId") %>% 
+      dplyr::mutate(phenotypeName = paste0(.data$phenotypeName, " (", .data$phenotypeId, ")")) %>% 
+      dplyr::left_join(y = cohort, by = "cohortId") %>% 
+      dplyr::mutate(cohortFullName = paste0(.data$cohortFullName, " (", .data$cohortId, ")")) %>% 
+      dplyr::select(phenotypeName,cohortFullName, humanReadableDescription)
+    
+    
     options = list(pageLength = 20,
                    searching = TRUE,
-                   lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
                    info = TRUE,
                    searchHighlight = TRUE,
-                   scrollX = TRUE)
+                   columnDefs = list(list(width = '50%', targets = 2)))
     
     dataTable <- DT::datatable(data,
                                options = options,
                                rownames = FALSE, 
                                escape = FALSE,
                                filter = c("bottom"),
-                               class = "stripe nowrap compact")
+                               class = "stripe compact")
     return(dataTable)
   })
   
@@ -135,7 +143,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     table <- merge(cohort, table, all.x = TRUE)
     table$url <- paste0(atlasBaseUrl(), table$cohortId)
-    table$cohortFullName <- paste0("<a href='", table$url, "' target='_blank'>", table$cohortFullName, "</a>")
+    table$cohortFullName <- paste0("<a href='", table$url, "' target='_blank'>", table$cohortFullName, " (", table$cohortId, ")", "</a>")
     table$cohortId <- NULL
     table$cohortName <- NULL
     table$url <- NULL
