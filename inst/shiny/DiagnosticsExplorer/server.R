@@ -81,6 +81,7 @@ shiny::shinyServer(function(input, output, session) {
   output$phenoTypeDescriptionTable <- DT::renderDataTable({
     data <- phenotypeDescription %>% 
       dplyr::mutate(phenotypeName = paste0(.data$phenotypeName, " (", .data$phenotypeId, ") ")) %>%
+      dplyr::mutate(literatureReview = paste0("<a href='", .data$literatureReview, "' target='_blank'>", "Link", "</a>")) %>% 
       dplyr::select(-phenotypeId)
     
     options = list(pageLength = 20,
@@ -107,7 +108,6 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::left_join(y = cohort, by = "cohortId") %>% 
       dplyr::mutate(cohortFullName = paste0(.data$cohortFullName, " (", .data$cohortId, ")")) %>% 
       dplyr::select(phenotypeName,cohortFullName, humanReadableDescription)
-    
     
     options = list(pageLength = 20,
                    searching = TRUE,
