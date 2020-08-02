@@ -67,8 +67,16 @@ shiny::shinyServer(function(input, output, session) {
              dplyr::pull(timeId))
   })
   
-  atlasBaseUrl <- shiny::reactive({
-    return(input$atlasBaseUrl)
+  cohortBaseUrl2 <- shiny::reactive({
+    return(input$cohortBaseUrl2)
+  })
+  
+  cohortBaseUrl <- shiny::reactive({
+    return(input$cohortBaseUrl)
+  })
+  
+  conceptIdBaseUrl <- shiny::reactive({
+    return(input$conceptIdBaseUrl)
   })
   
   shiny::observe({
@@ -81,7 +89,8 @@ shiny::shinyServer(function(input, output, session) {
   output$phenoTypeDescriptionTable <- DT::renderDataTable({
     data <- phenotypeDescription %>% 
       dplyr::mutate(phenotypeName = paste0(.data$phenotypeName, " (", .data$phenotypeId, ") ")) %>%
-      dplyr::mutate(literatureReview = paste0("<a href='", .data$literatureReview, "' target='_blank'>", "Link", "</a>")) %>% 
+      dplyr::mutate(literatureReview = paste0("<a href='", .data$literatureReview, "' target='_blank'>", "Link", "</a>")) %>%
+      dplyr::mutate(referrantConceptId = paste0("<a href='", paste0(conceptIdBaseUrl(), .data$referrantConceptId), "' target='_blank'>", .data$referrantConceptId, "</a>")) %>% 
       dplyr::select(-phenotypeId)
     
     options = list(pageLength = 20,
@@ -105,8 +114,8 @@ shiny::shinyServer(function(input, output, session) {
     data <- cohortDescription %>% 
       dplyr::left_join(y = phenotypeDescription, by = "phenotypeId") %>% 
       dplyr::mutate(phenotypeName = paste0(.data$phenotypeName, " (", .data$phenotypeId, ")")) %>% 
-      dplyr::left_join(y = cohort, by = "cohortId") %>% 
-      dplyr::mutate(cohortFullName = paste0(.data$cohortFullName, " (", .data$cohortId, ")")) %>% 
+      dplyr::left_join(y = cohort, by = "cohortId") %>%
+      dplyr::mutate(cohortFullName = paste0("<a href='", paste0(cohortBaseUrl(), .data$cohortId),"' target='_blank'>", paste0(.data$cohortFullName, " (", .data$cohortId, ")"), "</a>")) %>% 
       dplyr::select(phenotypeName,cohortFullName, humanReadableDescription)
     
     options = list(pageLength = 20,
@@ -142,7 +151,7 @@ shiny::shinyServer(function(input, output, session) {
       }
     }
     table <- merge(cohort, table, all.x = TRUE)
-    table$url <- paste0(atlasBaseUrl(), table$cohortId)
+    table$url <- paste0(cohortBaseUrl2(), table$cohortId)
     table$cohortFullName <- paste0("<a href='", table$url, "' target='_blank'>", table$cohortFullName, " (", table$cohortId, ")", "</a>")
     table$cohortId <- NULL
     table$cohortName <- NULL
