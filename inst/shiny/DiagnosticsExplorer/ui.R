@@ -201,11 +201,33 @@ bodyTabItems <- shinydashboard::tabItems(
                          shiny::tabPanel(
                            tags$br(),
                            title = "Phenotype",
-                           DT::dataTableOutput(outputId = "phenoTypeDescriptionTable")),
+                           DT::dataTableOutput(outputId = "phenoTypeDescriptionTable"),
+                           tags$table(
+                             tags$tr(
+                               tags$td(
+                                 div("Base url:")
+                               ),
+                               tags$td(HTML("&nbsp&nbsp")),
+                               tags$td(
+                                 shiny::textInput(inputId = "conceptIdBaseUrl",label = "", width = "300px", value = conceptBaseUrl),
+                               )
+                             )
+                           )),
                          shiny::tabPanel(
                            tags$br(),
                            title = "Cohort", 
-                           DT::dataTableOutput(outputId = "cohortDescriptionTable"))
+                           DT::dataTableOutput(outputId = "cohortDescriptionTable"),
+                           tags$table(
+                             tags$tr(
+                               tags$td(
+                                 div("Base url:")
+                               ),
+                               tags$td(HTML("&nbsp&nbsp")),
+                               tags$td(
+                                 shiny::textInput(inputId = "cohortBaseUrl",label = "", width = "300px", value = cohortBaseUrl),
+                               )
+                             )
+                           ))
       )
     )
   ),
@@ -218,7 +240,7 @@ bodyTabItems <- shinydashboard::tabItems(
                               ),
                               tags$td(HTML("&nbsp&nbsp")),
                               tags$td(
-                                shiny::textInput(inputId = "atlasBaseUrl",label = "", value = "https://atlas.ohdsi.org/#/cohortdefinition/"),
+                                shiny::textInput(inputId = "cohortBaseUrl2",label = "", value = cohortBaseUrl),
                               )
                             )
                           )),
