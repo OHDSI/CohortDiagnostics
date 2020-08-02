@@ -104,6 +104,7 @@ shiny::shinyServer(function(input, output, session) {
     dataTable <- DT::datatable(data,
                                options = options,
                                rownames = FALSE,
+                               colnames = colnames(data) %>% SqlRender::camelCaseToTitleCase(),
                                escape = FALSE,
                                filter = c("bottom"),
                                class = "stripe compact")
@@ -128,7 +129,8 @@ shiny::shinyServer(function(input, output, session) {
     
     dataTable <- DT::datatable(data,
                                options = options,
-                               rownames = FALSE, 
+                               rownames = FALSE,
+                               colnames = colnames(data) %>% SqlRender::camelCaseToTitleCase(),
                                escape = FALSE,
                                filter = c("bottom"),
                                class = "stripe compact")
