@@ -614,8 +614,10 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::select(.data$covariateId) %>% 
         dplyr::distinct()
       for (i in (1:length(databaseIds))) {
+        dataCount <- dataCounts %>% 
+          dplyr::slice(j)
         temp <- data %>% 
-          dplyr::filter(databaseId == databaseIds[[i]]) %>% 
+          dplyr::filter(databaseId == dataCounts$databaseId) %>% 
           dplyr::select(.data$covariateId, .data$mean, .data$sd)
         table <- table %>%
           dplyr::left_join(temp, by = "covariateId") %>% 
