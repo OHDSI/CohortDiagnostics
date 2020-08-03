@@ -116,7 +116,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::left_join(y = phenotypeDescription) %>% 
       dplyr::left_join(y = cohort, by = c('atlasId' = 'cohortId')) %>% #this is temporary - we need to standardize this 
       dplyr::mutate(cohortFullName = paste0("<a href='", paste0(cohortBaseUrl(), .data$atlasId),"' target='_blank'>", paste0(.data$cohortDefinitionName), "</a>")) %>% 
-      dplyr::select(phenotypeId, phenotypeName, cohortDefinitionId, cohortFullName, logicDescription)
+      dplyr::select(phenotypeId, phenotypeName, cohortDefinitionId, cohortFullName, logicDescription, cohortDefinitionNotes)
     
     options = list(pageLength = 20,
                    searching = TRUE,
@@ -610,6 +610,7 @@ shiny::shinyServer(function(input, output, session) {
     } else {
       table <- data %>% 
         dplyr::mutate(databaseId = stringr::str_replace_all(string = .data$databaseId, pattern = "_", replacement = " ")) %>% 
+        dplyr::mutate(mean = .data$mean*100) %>% 
         tidyr::pivot_wider(id_cols = 'covariateId', 
                            names_from = "databaseId",
                            values_from = "mean" ,
@@ -672,6 +673,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::mutate(databaseId = stringr::str_replace_all(string = .data$databaseId, pattern = "_", replacement = " ")) %>% 
       dplyr::left_join(y = temporalCovariateChoices) %>% 
       dplyr::arrange(timeId) %>% 
+      dplyr::mutate(mean = .data$mean*100) %>% 
       tidyr::pivot_wider(id_cols = 'covariateId', 
                          names_from = "choices",
                          values_from = "mean" ,
