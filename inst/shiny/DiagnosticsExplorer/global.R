@@ -3,7 +3,34 @@ library(magrittr)
 cohortBaseUrl <- "https://atlas.ohdsi.org/#/cohortdefinition/"
 conceptBaseUrl <- "https://athena.ohdsi.org/search-terms/terms/"
 
-if (system.file('phenotypeLibrary', 'phenotypeDescription.csv', package = 'phenotypeLibrary') != '') {
+
+if (!exists("shinySettings")) {
+  if (file.exists("data")) {
+    shinySettings <- list(dataFolder = "data")
+  } else {
+    shinySettings <- list(dataFolder = "c:/temp/exampleStudy")
+  }
+}
+dataFolder <- shinySettings$dataFolder
+
+if ("phenotypeDescription.csv" %in% list.files(path = dataFolder)) {
+  print("loading phenotypeDescription and cohortDescription from local folder")
+  phenotypeDescription <- readr::read_csv(file.path(dataFolder, "phenotypeDescription.csv"), 
+                                          col_types = readr::cols(), 
+                                          guess_max = 1e7, 
+                                          locale = readr::locale(encoding = "UTF-8"),
+                                          trim_ws = TRUE) %>% 
+    dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = '')))
+  
+  cohortDescription <- readr::read_csv(file.path(dataFolder, 'cohortDescription.csv'), 
+                                       col_types = readr::cols(), 
+                                       guess_max = 1e7, 
+                                       locale = readr::locale(encoding = "UTF-8"),
+                                       trim_ws = TRUE) %>% 
+    dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = '')))
+  
+} else if (system.file('phenotypeLibrary', 'phenotypeDescription.csv', package = 'phenotypeLibrary') != '') {
+  print("loading phenotypeDescription and cohortDescription from phenotype library package")
   phenotypeDescription <- readr::read_csv(file.path(system.file('phenotypeLibrary', 'phenotypeDescription.csv', package = 'phenotypeLibrary')), 
                                           col_types = readr::cols(), 
                                           guess_max = 1e7, 
@@ -20,16 +47,6 @@ if (system.file('phenotypeLibrary', 'phenotypeDescription.csv', package = 'pheno
   ) %>% 
     dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = '')))
 }
-
-
-if (!exists("shinySettings")) {
-  if (file.exists("data")) {
-    shinySettings <- list(dataFolder = "data")
-  } else {
-    shinySettings <- list(dataFolder = "c:/temp/exampleStudy")
-  }
-}
-dataFolder <- shinySettings$dataFolder
 
 suppressWarnings(rm("cohort", "cohortCount", "cohortOverlap", "conceptSets", "database", "incidenceRate", "includedSourceConcept", "inclusionRuleStats", "indexEventBreakdown", "orphanConcept", "timeDistribution"))
 
