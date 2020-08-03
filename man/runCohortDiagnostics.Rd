@@ -33,9 +33,8 @@ runCohortDiagnostics(
   runTemporalCohortCharacterization = TRUE,
  
     temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(useConditionOccurrence
-    = TRUE, useConditionEraStart = TRUE, useDrugEraStart = TRUE, useProcedureOccurrence =
-    TRUE, useMeasurement = TRUE, useObservation = TRUE, temporalStartDays = c(-365, -30,
-    0, 1, 31), temporalEndDays = c(-31, -1, 0, 30, 365)),
+    = TRUE, useDrugEraStart = TRUE, useProcedureOccurrence = TRUE, useMeasurement = TRUE,
+    temporalStartDays = c(-365, -30, 0, 1, 31), temporalEndDays = c(-31, -1, 0, 30, 365)),
   minCellCount = 5,
   incremental = FALSE,
   incrementalFolder = exportFolder
