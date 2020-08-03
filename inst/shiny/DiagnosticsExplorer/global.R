@@ -13,41 +13,6 @@ if (!exists("shinySettings")) {
 }
 dataFolder <- shinySettings$dataFolder
 
-if ("phenotypeDescription.csv" %in% list.files(path = dataFolder)) {
-  print("loading phenotypeDescription and cohortDescription from local folder")
-  phenotypeDescription <- readr::read_csv(file.path(dataFolder, "phenotypeDescription.csv"), 
-                                          col_types = readr::cols(), 
-                                          guess_max = 1e7, 
-                                          locale = readr::locale(encoding = "UTF-8"),
-                                          trim_ws = TRUE) %>% 
-    dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = '')))
-  
-  cohortDescription <- readr::read_csv(file.path(dataFolder, 'cohortDescription.csv'), 
-                                       col_types = readr::cols(), 
-                                       guess_max = 1e7, 
-                                       locale = readr::locale(encoding = "UTF-8"),
-                                       trim_ws = TRUE) %>% 
-    dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = '')))
-  
-} else if (system.file('phenotypeLibrary', 'phenotypeDescription.csv', package = 'phenotypeLibrary') != '') {
-  print("loading phenotypeDescription and cohortDescription from phenotype library package")
-  phenotypeDescription <- readr::read_csv(file.path(system.file('phenotypeLibrary', 'phenotypeDescription.csv', package = 'phenotypeLibrary')), 
-                                          col_types = readr::cols(), 
-                                          guess_max = 1e7, 
-                                          locale = readr::locale(encoding = "UTF-8"),
-                                          trim_ws = TRUE
-  ) %>% 
-    dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = '')))
-  
-  cohortDescription <- readr::read_csv(file.path(system.file('phenotypeLibrary', 'cohortDescription.csv', package = 'phenotypeLibrary')), 
-                                       col_types = readr::cols(), 
-                                       guess_max = 1e7, 
-                                       locale = readr::locale(encoding = "UTF-8"),
-                                       trim_ws = TRUE
-  ) %>% 
-    dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = '')))
-}
-
 suppressWarnings(rm("cohort", "cohortCount", "cohortOverlap", "conceptSets", "database", "incidenceRate", "includedSourceConcept", "inclusionRuleStats", "indexEventBreakdown", "orphanConcept", "timeDistribution"))
 
 if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {
@@ -142,3 +107,41 @@ if (exists("includedSourceConcept")) {
   conceptSets <- NULL 
 }
 
+
+if ("phenotypeDescription.csv" %in% list.files(path = dataFolder)) {
+  print("loading phenotypeDescription and cohortDescription from local folder")
+  cohortDescription <- readr::read_csv(file.path(dataFolder, 'cohortDescription.csv'), 
+                                       col_types = readr::cols(), 
+                                       guess_max = 1e7, 
+                                       locale = readr::locale(encoding = "UTF-8"),
+                                       trim_ws = TRUE) %>% 
+    dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = '')))
+  
+  phenotypeDescription <- readr::read_csv(file.path(dataFolder, "phenotypeDescription.csv"), 
+                                          col_types = readr::cols(), 
+                                          guess_max = 1e7, 
+                                          locale = readr::locale(encoding = "UTF-8"),
+                                          trim_ws = TRUE) %>% 
+    dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = '')))
+  
+
+  
+} else if (system.file('phenotypeLibrary', 'phenotypeDescription.csv', package = 'phenotypeLibrary') != '') {
+  print("loading phenotypeDescription and cohortDescription from phenotype library package")
+  
+  cohortDescription <- readr::read_csv(file.path(system.file('phenotypeLibrary', 'cohortDescription.csv', package = 'phenotypeLibrary')), 
+                                       col_types = readr::cols(), 
+                                       guess_max = 1e7, 
+                                       locale = readr::locale(encoding = "UTF-8"),
+                                       trim_ws = TRUE) %>% 
+    dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = ''))) 
+    
+  
+  phenotypeDescription <- readr::read_csv(file.path(system.file('phenotypeLibrary', 'phenotypeDescription.csv', 
+                                                                package = 'phenotypeLibrary')), 
+                                          col_types = readr::cols(), 
+                                          guess_max = 1e7, 
+                                          locale = readr::locale(encoding = "UTF-8"),
+                                          trim_ws = TRUE) %>% 
+    dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = '')))
+}
