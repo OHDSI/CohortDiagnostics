@@ -3,6 +3,23 @@ library(magrittr)
 cohortBaseUrl <- "https://atlas.ohdsi.org/#/cohortdefinition/"
 conceptBaseUrl <- "https://athena.ohdsi.org/search-terms/terms/"
 
+phenotypeDescription <- readr::read_csv(file.path(system.file('phenotypeLibrary', 'phenotypeDescription.csv', package = 'phenotypeLibrary')), 
+                                        col_types = readr::cols(), 
+                                        guess_max = 1e7, 
+                                        locale = readr::locale(encoding = "UTF-8"),
+                                        trim_ws = TRUE
+                                          ) %>% 
+  dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = '')))
+
+cohortDescription <- readr::read_csv(file.path(system.file('phenotypeLibrary', 'cohortDescription.csv', package = 'phenotypeLibrary')), 
+                                        col_types = readr::cols(), 
+                                        guess_max = 1e7, 
+                                        locale = readr::locale(encoding = "UTF-8"),
+                                        trim_ws = TRUE
+) %>% 
+  dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = '')))
+
+
 if (!exists("shinySettings")) {
   if (file.exists("data")) {
     shinySettings <- list(dataFolder = "data")

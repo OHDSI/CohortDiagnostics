@@ -88,18 +88,17 @@ shiny::shinyServer(function(input, output, session) {
   
   output$phenoTypeDescriptionTable <- DT::renderDataTable({
     data <- phenotypeDescription %>% 
-      dplyr::mutate(phenotypeName = paste0(.data$phenotypeName, " (", .data$phenotypeId, ") ")) %>%
-      dplyr::mutate(literatureReview = paste0("<a href='", .data$literatureReview, "' target='_blank'>", "Link", "</a>")) %>%
-      dplyr::mutate(referrantConceptId = paste0("<a href='", paste0(conceptIdBaseUrl(), .data$referrantConceptId), "' target='_blank'>", .data$referrantConceptId, "</a>")) %>% 
-      dplyr::select(-phenotypeId)
+      dplyr::mutate(literatureReview = dplyr::case_when(.data$literatureReview != '' ~ 
+                                                          paste0("<a href='", .data$literatureReview, "' target='_blank'>", "Link", "</a>"),
+                                                        TRUE ~ '')) %>%
+      dplyr::mutate(referentConceptId = paste0("<a href='", paste0(conceptIdBaseUrl(), .data$referentConceptId), "' target='_blank'>", .data$referentConceptId, "</a>")) 
     
     options = list(pageLength = 20,
                    searching = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
                    info = TRUE,
-                   searchHighlight = TRUE,
-                   columnDefs = list(list(width = '50%', targets = 2)))
+                   searchHighlight = TRUE)
     
     dataTable <- DT::datatable(data,
                                options = options,
@@ -113,19 +112,18 @@ shiny::shinyServer(function(input, output, session) {
   
   output$cohortDescriptionTable <- DT::renderDataTable({
     data <- cohortDescription %>% 
+      dplyr::mutate(atlasId = as.integer(.data$atlasId)) %>% #this is temporary - we need to standardize this 
       dplyr::left_join(y = phenotypeDescription) %>% 
-      dplyr::mutate(phenotypeName = paste0(.data$phenotypeName, " (", .data$phenotypeId, ")")) %>% 
-      dplyr::left_join(y = cohort) %>%
-      dplyr::mutate(cohortFullName = paste0("<a href='", paste0(cohortBaseUrl(), .data$cohortId),"' target='_blank'>", paste0(.data$cohortFullName, " (", .data$cohortId, ")"), "</a>")) %>% 
-      dplyr::select(phenotypeName,cohortFullName, humanReadableDescription)
+      dplyr::left_join(y = cohort, by = c('atlasId' = 'cohortId')) %>% #this is temporary - we need to standardize this 
+      dplyr::mutate(cohortFullName = paste0("<a href='", paste0(cohortBaseUrl(), .data$atlasId),"' target='_blank'>", paste0(.data$cohortDefinitionName), "</a>")) %>% 
+      dplyr::select(phenotypeId, phenotypeName, cohortDefinitionId, cohortFullName, logicDescription)
     
     options = list(pageLength = 20,
                    searching = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
                    info = TRUE,
-                   searchHighlight = TRUE,
-                   columnDefs = list(list(width = '50%', targets = 2)))
+                   searchHighlight = TRUE)
     
     dataTable <- DT::datatable(data,
                                options = options,
