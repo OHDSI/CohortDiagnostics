@@ -113,9 +113,9 @@ shiny::shinyServer(function(input, output, session) {
   
   output$cohortDescriptionTable <- DT::renderDataTable({
     data <- cohortDescription %>% 
-      dplyr::left_join(y = phenotypeDescription, by = "phenotypeId") %>% 
+      dplyr::left_join(y = phenotypeDescription) %>% 
       dplyr::mutate(phenotypeName = paste0(.data$phenotypeName, " (", .data$phenotypeId, ")")) %>% 
-      dplyr::left_join(y = cohort, by = "cohortId") %>%
+      dplyr::left_join(y = cohort) %>%
       dplyr::mutate(cohortFullName = paste0("<a href='", paste0(cohortBaseUrl(), .data$cohortId),"' target='_blank'>", paste0(.data$cohortFullName, " (", .data$cohortId, ")"), "</a>")) %>% 
       dplyr::select(phenotypeName,cohortFullName, humanReadableDescription)
     
@@ -550,7 +550,7 @@ shiny::shinyServer(function(input, output, session) {
     
     if (input$charType == "Pretty") {
       data <- data %>% 
-        dplyr::left_join(y = covariate, by = c('covariateId')) %>% 
+        dplyr::left_join(y = covariate) %>% 
         dplyr::distinct()
       table <- list()
       for (j in (1:nrow(dataCounts))) {
@@ -611,25 +611,17 @@ shiny::shinyServer(function(input, output, session) {
                                backgroundPosition = "center")
     } else {
       table <- data %>% 
-        dplyr::select(.data$covariateId) %>% 
-        dplyr::distinct()
-      for (i in (1:length(databaseIds))) {
-        dataCount <- dataCounts %>% 
-          dplyr::slice(j)
-        temp <- data %>% 
-          dplyr::filter(databaseId == dataCounts$databaseId) %>% 
-          dplyr::select(.data$covariateId, .data$mean, .data$sd)
-        table <- table %>%
-          dplyr::left_join(temp, by = "covariateId") %>% 
-          dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = 0)))
-      }
-      table <- covariate %>% 
-        dplyr::distinct() %>% 
-        dplyr::left_join(y = table, by = c("covariateId")) %>%
-        dplyr::select(-.data$covariateAnalysisId, 
-                      -.data$covariateId) %>% 
-        dplyr::arrange(.data$covariateName) %>% 
-        dplyr::distinct()
+        dplyr::mutate(databaseId = stringr::str_replace_all(string = .data$databaseId, pattern = "_", replacement = " ")) %>% 
+        tidyr::pivot_wider(id_cols = 'covariateId', 
+                           names_from = "databaseId",
+                           values_from = "mean" ,
+                           names_sep = "_",
+                           values_fill = 0
+        ) %>%  
+        dplyr::left_join(y = covariate %>% dplyr::select(.data$covariateId, .data$covariateName, .data$conceptId)) %>%
+        dplyr::select(-covariateId) %>% 
+        dplyr::relocate("covariateName", "conceptId") %>% 
+        dplyr::arrange(.data$covariateName) 
       
       options = list(pageLength = 20,
                      searching = TRUE,
@@ -640,31 +632,31 @@ shiny::shinyServer(function(input, output, session) {
                      paging = TRUE,
                      columnDefs = list(
                        truncateStringDef(0, 150),
-                       minCellRealDef((1:(2*length(databaseIds))) + 1)
+                       minCellRealDef((1:(1*length(dataCounts$databaseId))) + 1)
                      )
       )
-      sketch <- htmltools::withTags(table(
-        class = 'display',
-        thead(
-          tr(
-            th(rowspan = 2, 'Covariate Name'),
-            th(rowspan = 2, 'Concept Id'),
-            lapply(databaseIds, th, colspan = 2, class = "dt-center")
-          ),
-          tr(
-            lapply(rep(c("Mean", "SD"), length(databaseIds)), th)
-          )
-        )
-      ))
+      # sketch <- htmltools::withTags(table(
+      #  class = 'display',
+      #  thead(
+      #    tr(
+      #      th(rowspan = 2, 'Covariate Name'),
+      #      th(rowspan = 2, 'Concept Id'),
+      #      lapply(dataCounts$databaseId, th, colspan = 2, class = "dt-center")
+      #    ),
+      #    tr(
+      #      lapply(rep(c("Proportion"), nrow(dataCounts)), th)
+      #    )
+      #  )
+      # ))
       table <- DT::datatable(table,
                              options = options,
                              rownames = FALSE,
-                             container = sketch, 
+                             # container = sketch, 
                              escape = FALSE,
                              filter = c('bottom'),
                              class = "stripe nowrap compact")
       table <- DT::formatStyle(table = table,
-                               columns = (2*(1:length(databaseIds))) + 1,
+                               columns = (2*(1:length(dataCounts$databaseId))) + 1,
                                background = DT::styleColorBar(c(0,1), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
@@ -674,36 +666,27 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$temporalCharacterizationTable <- DT::renderDataTable({
-    data <- temporalCovariateValue %>% 
+    table <- temporalCovariateValue %>% 
       dplyr::filter(.data$cohortId == cohortId(),
                     .data$databaseId == input$database,
                     .data$timeId %in% c(timeId())) %>% 
-      dplyr::select(-cohortId)
+      dplyr::select(-cohortId) %>% 
+      dplyr::mutate(databaseId = stringr::str_replace_all(string = .data$databaseId, pattern = "_", replacement = " ")) %>% 
+      dplyr::left_join(y = temporalCovariateChoices) %>% 
+      dplyr::arrange(timeId) %>% 
+      tidyr::pivot_wider(id_cols = 'covariateId', 
+                         names_from = "choices",
+                         values_from = "mean" ,
+                         names_sep = "_",
+                         values_fill = 0
+      ) %>% 
+      dplyr::left_join(y = temporalCovariate %>% dplyr::select(.data$covariateId, .data$conceptId, .data$covariateName) %>% dplyr::distinct()) %>% 
+      dplyr::select(-.data$covariateId) %>% 
+      dplyr::relocate(.data$covariateName, .data$conceptId) %>% 
+      dplyr::arrange(.data$covariateName)
     
     temporalCovariateChoicesSelected <- temporalCovariateChoices %>% 
-      dplyr::filter(.data$timeId %in% c(timeId()))
-    
-    data <- data %>% 
-      dplyr::left_join(y = temporalCovariate %>% dplyr::distinct(), by = c("covariateId", "timeId")) %>% 
-      dplyr::mutate(conceptId = (.data$covariateId - .data$covariateAnalysisId)/1000) %>% 
-      dplyr::select(.data$covariateId, .data$covariateName,.data$conceptId, .data$timeId, .data$mean, .data$sd) %>% 
-      dplyr::distinct()
-    
-    table <- data %>% 
-      dplyr::select(.data$covariateName,.data$conceptId, .data$covariateId) %>% 
-      dplyr::distinct()
-    
-    for (timeId in temporalCovariateChoicesSelected$timeId) {
-      temp <- data %>% 
-        dplyr::filter(timeId == !!timeId) %>% 
-        dplyr::select(.data$covariateId, .data$mean, .data$sd)
-      table <- table %>% 
-        dplyr::left_join(temp, by = c("covariateId")) %>% 
-        dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = 0)))
-    }
-    table <- table %>% 
-      dplyr::select(-.data$covariateId) %>% 
-      dplyr::arrange(.data$covariateName)
+                                dplyr::filter(.data$timeId %in% c(timeId())) 
     
     options = list(pageLength = 20,
                    searching = TRUE,
@@ -714,26 +697,26 @@ shiny::shinyServer(function(input, output, session) {
                    paging = TRUE,
                    columnDefs = list(
                      truncateStringDef(0, 150),
-                     minCellRealDef((1:(2*length(temporalCovariateChoicesSelected$choices))) + 1)
+                     minCellRealDef((1:(1*length(temporalCovariateChoicesSelected$choices))) + 1)
                    )
     )
-    sketch <- htmltools::withTags(table(
-      class = 'display',
-      thead(
-        tr(
-          th(rowspan = 2, 'Covariate Name'),
-          th(rowspan = 2, 'Concept Id'),
-          lapply(temporalCovariateChoicesSelected$choices, th, colspan = 2, class = "dt-center")
-        ),
-        tr(
-          lapply(rep(c("Mean", "SD"), length(temporalCovariateChoicesSelected$choices)), th)
-        )
-      )
-    ))
+    # sketch <- htmltools::withTags(table(
+    #   class = 'display',
+    #   thead(
+    #     tr(
+    #       th(rowspan = 2, 'Covariate Name'),
+    #       th(rowspan = 2, 'Concept Id'),
+    #       lapply(temporalCovariateChoicesSelected$choices, th, colspan = 2, class = "dt-center")
+    #     ),
+    #     tr(
+    #       lapply(rep(c("Proportion"), length(temporalCovariateChoicesSelected$choices)), th)
+    #     )
+    #   )
+    # ))
     table <- DT::datatable(table,
                            options = options,
                            rownames = FALSE,
-                           container = sketch,
+                           # container = sketch,
                            escape = FALSE,
                            filter = c('bottom'),
                            class = "stripe nowrap compact")

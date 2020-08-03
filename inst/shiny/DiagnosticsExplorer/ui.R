@@ -272,7 +272,7 @@ bodyTabItems <- shinydashboard::tabItems(
                  tags$tr(
                    tags$td(
                      valign = "bottom",
-                     div(style = "font-size:15px;font-weight: bold", "Selected cohort:"),
+                     div(style = "font-size:15px;font-weight: bold", "Target cohort:"),
                      shiny::textOutput(outputId = "incidenceRateSelectedCohort") 
                    )
                  )),
@@ -295,7 +295,7 @@ bodyTabItems <- shinydashboard::tabItems(
       title = "Time Distributions",
       width = NULL,
       status = "primary",
-      div(style = "font-size:15px;font-weight: bold", "Selected cohort:"),
+      div(style = "font-size:15px;font-weight: bold", "Target cohort:"),
       shiny::textOutput(outputId = "timeDistributionSelectedCohort"),
       tags$br(),
       shiny::plotOutput("timeDisPlot"),
@@ -317,23 +317,23 @@ bodyTabItems <- shinydashboard::tabItems(
       selected = "Source Concepts",
       inline = TRUE
     ),
-    div(style = "font-size:15px;font-weight: bold", "Selected cohort:"),
+    div(style = "font-size:15px;font-weight: bold", "Target cohort:"),
     shiny::textOutput(outputId = "sourceConceptsSelectedCohort"),
     tags$br(),
     DT::dataTableOutput("includedConceptsTable")
   ),
   shinydashboard::tabItem(tabName = "orphanConcepts",
-                          div(style = "font-size:15px;font-weight: bold", "Selected cohort:"),
+                          div(style = "font-size:15px;font-weight: bold", "Target cohort:"),
                           shiny::textOutput(outputId = "orphanConceptsSelectedCohort"),
                           tags$br(),
                           DT::dataTableOutput("orphanConceptsTable")),
   shinydashboard::tabItem(tabName = "inclusionRuleStats",
-                          div(style = "font-size:15px;font-weight: bold", "Selected cohort:"),
+                          div(style = "font-size:15px;font-weight: bold", "Target cohort:"),
                           shiny::textOutput(outputId = "inclusionRuleStatsSelectedCohort"),
                           tags$br(),
                           DT::dataTableOutput("inclusionRuleTable")),
   shinydashboard::tabItem(tabName = "indexEventBreakdown",
-                          div(style = "font-size:15px;font-weight: bold", "Selected cohort:"),
+                          div(style = "font-size:15px;font-weight: bold", "Target cohort:"),
                           shiny::textOutput(outputId = "indexEventBreakdownSelectedCohort"),
                           tags$br(),
                           DT::dataTableOutput("breakdownTable")),
@@ -346,7 +346,7 @@ bodyTabItems <- shinydashboard::tabItems(
       selected = "Pretty",
       inline = TRUE
     ),
-    div(style = "font-size:15px;font-weight: bold", "Selected cohort:"),
+    div(style = "font-size:15px;font-weight: bold", "Target cohort:"),
     shiny::textOutput(outputId = "cohortCharacterizationSelectedCohort"),
     tags$br(),
     DT::dataTableOutput("characterizationTable")
@@ -356,7 +356,7 @@ bodyTabItems <- shinydashboard::tabItems(
     tags$table(style = "width: 100%",
                tags$tr(
                  tags$td(
-                   div(style = "font-size:15px;font-weight: bold", "Selected cohort:"),
+                   div(style = "font-size:15px;font-weight: bold", "Target cohort:"),
                    shiny::textOutput(outputId = "temporalCharacterizationSelectedCohort")
                  ),
                  
@@ -377,7 +377,7 @@ bodyTabItems <- shinydashboard::tabItems(
     tags$table(
       tags$tr(
         tags$td(
-          div(style = "font-size:15px;font-weight: bold", "Selected cohort:"),
+          div(style = "font-size:15px;font-weight: bold", "Target cohort:"),
           shiny::textOutput(outputId = "cohortOverlapSelectedCohort")
         ),
         tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;")),
@@ -414,7 +414,7 @@ bodyTabItems <- shinydashboard::tabItems(
     tags$table(
       tags$tr(
         tags$td(
-          div(style = "font-size:15px;font-weight: bold", "Selected cohort:"),
+          div(style = "font-size:15px;font-weight: bold", "Target cohort:"),
           shiny::textOutput(outputId = "compareCohortCharacterizationSelectedCohort")
         ),
         tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;")),
