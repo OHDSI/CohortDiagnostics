@@ -1,5 +1,8 @@
 library(magrittr)
 
+cohortBaseUrl <- "https://atlas.ohdsi.org/#/cohortdefinition/"
+conceptBaseUrl <- "https://athena.ohdsi.org/search-terms/terms/"
+
 if (!exists("shinySettings")) {
   if (file.exists("data")) {
     shinySettings <- list(dataFolder = "data")
