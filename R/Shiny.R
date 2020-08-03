@@ -186,4 +186,3 @@ ensure_installed <- function(pkg) {
     }
   }
 }
-
