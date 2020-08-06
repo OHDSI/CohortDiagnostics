@@ -2,14 +2,17 @@ library(magrittr)
 
 prepareTable1 <- function(covariates,
                           pathToCsv = "Table1Specs.csv") {
+  if (!'conceptId' %in% colnames(covariates)) {
+    covariates$conceptId <- (covariates$covariateId  - covariates$covariateAnalysisId)/1000
+  }
   covariates <- covariates %>%
-    dplyr::mutate(conceptId = (.data$covariateId  - .data$covariateAnalysisId)/1000,
-                  covariateName = stringr::str_to_sentence(stringr::str_replace_all(string = .data$covariateName, 
+    dplyr::mutate(covariateName = stringr::str_to_sentence(stringr::str_replace_all(string = .data$covariateName, 
                                                                                     pattern = "^.*: ",
                                                                                     replacement = "")))
   space <- "&nbsp;"
   specifications <- readr::read_csv(file = pathToCsv, col_types = readr::cols()) %>% 
     dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = '')))
+  
   resultsTable <- tidyr::tibble()
   for (i in 1:nrow(specifications)) {
     specification <- specifications %>% dplyr::slice(i)
@@ -55,12 +58,13 @@ prepareTable1 <- function(covariates,
       resultsTable <- dplyr::bind_rows(resultsTable, 
                                        tidyr::tibble(characteristic = specification$label,
                                                      value = covariatesSubset$mean,
-                                                     position = i)) %>% 
-        dplyr::arrange(.data$label, dplyr::desc(.data$header), .data$position) %>% 
-        dplyr::mutate(sortOrder = dplyr::row_number()) %>% 
-        dplyr::select(-.data$label, -.data$header, -.data$position)
+                                                     position = i)) 
     }
   }
+  resultsTable <- resultsTable %>% 
+    dplyr::arrange(.data$label, dplyr::desc(.data$header), .data$position) %>% 
+    dplyr::mutate(sortOrder = dplyr::row_number()) %>% 
+    dplyr::select(-.data$label, -.data$header, -.data$position)
 return(resultsTable)
 }
 

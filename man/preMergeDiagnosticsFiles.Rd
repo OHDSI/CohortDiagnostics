@@ -4,13 +4,16 @@
 \alias{preMergeDiagnosticsFiles}
 \title{Premerge Shiny diagnostics files}
 \usage{
-preMergeDiagnosticsFiles(dataFolder)
+preMergeDiagnosticsFiles(dataFolder, minCovariateProportion = 0)
 }
 \arguments{
 \item{dataFolder}{folder where the exported zip files for the diagnostics are stored. Use
 the \code{\link{runCohortDiagnostics}} function to generate these zip files. 
 Zip files containing results from multiple databases can be placed in the same
 folder.}
+
+\item{minCovariateProportion}{minimum value threshold for covariates to be included 
+in premerged file (valid number (maybe decimal) between 0 to 1)}
 }
 \description{
 If there are many diagnostics files, starting the Shiny app may take a very long time. This function 

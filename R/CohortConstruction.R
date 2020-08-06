@@ -766,6 +766,7 @@ saveAndDropTempInclusionStatsTables <- function(connection,
                                                        oracleTempSchema = oracleTempSchema,
                                                        snakeCaseToCamelCase = TRUE,
                                                        table = table)
+    data <- tidyr::as_tibble(data)
     fullFileName <- file.path(inclusionStatisticsFolder, fileName)
     if (incremental) {
       saveIncremental(data, fullFileName, cohortDefinitionId = cohortIds)
