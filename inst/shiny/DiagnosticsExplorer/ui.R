@@ -356,13 +356,11 @@ bodyTabItems <- shinydashboard::tabItems(
     tags$table(style = "width: 100%",
                tags$tr(
                  tags$td(
-                   div(style = "font-size:15px;font-weight: bold", "Target cohort:"),
-                   shiny::textOutput(outputId = "temporalCharacterizationSelectedCohort")
+                   htmlOutput(outputId = "temporalCharacterizationSelectedCohort")
                  ),
-                 
                  tags$td(
                    style = "text-align: right",
-                   div(style = "font-size:15px;font-weight: bold", "Selected database:"),
+                   div("Selected database:"),
                    shiny::textOutput(outputId = "temporalCharacterizationSelectedDataBase")
                  ),
                  tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;"))
@@ -374,20 +372,7 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "cohortOverlap",
-    tags$table(
-      tags$tr(
-        tags$td(
-          div(style = "font-size:15px;font-weight: bold", "Target cohort:"),
-          shiny::textOutput(outputId = "cohortOverlapSelectedCohort")
-        ),
-        tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;")),
-        tags$td(
-          div(style = "font-size:15px;font-weight: bold", "Comparator cohort:"),
-          shiny::textOutput(outputId = "cohortOverlapComparatorCohort")
-        )
-      )
-    ),
-    tags$br(),
+    htmlOutput(outputId = "cohortOverlapSelectedCohort"),
     shinydashboard::box(
       title = "Cohort Overlap (Subjects)",
       width = NULL,
@@ -411,20 +396,7 @@ bodyTabItems <- shinydashboard::tabItems(
       selected = "Pretty table",
       inline = TRUE
     ),
-    tags$table(
-      tags$tr(
-        tags$td(
-          div(style = "font-size:15px;font-weight: bold", "Target cohort:"),
-          shiny::textOutput(outputId = "compareCohortCharacterizationSelectedCohort")
-        ),
-        tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;")),
-        tags$td(
-          div(style = "font-size:15px;font-weight: bold", "Comparator cohort:"),
-          shiny::textOutput(outputId = "compareCohortCharacterizationSelectedComparator")
-        )
-      )
-    ),
-    tags$br(),
+    htmlOutput("compareCohortCharacterizationSelectedCohort"),
     shiny::conditionalPanel(condition = "input.charCompareType=='Pretty table' | input.charCompareType=='Raw table'",
                             DT::dataTableOutput("charCompareTable")),
     shiny::conditionalPanel(

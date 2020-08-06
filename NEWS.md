@@ -1,6 +1,19 @@
 CohortDiagnostics (Develop)
 =======================
 
+
+CohortDiagnostics 1.1.1
+=======================
+New features:
+1. Shiny app UI improvements
+2. Link out to Atlas and Athena from cohortId. Supports baseUrl.
+3. (beta - unreleased) support for Phenotype library. Shiny app will look for two additional csv files phenotypeDescription and cohortDescription that put the DiagnosticExplorer in Phenotype Library Mode. Plan to release in future version >= 1.2
+4. Changed default selections for temporal characterization
+5. Added minimum threshold value to covariate_value and temporal_covariate_value with default value = 0 (future release, we plan to make this 0.005 i.e. 0.5%)
+
+Bug fixes:
+1. Minor bug fixes.
+
 CohortDiagnostics 1.1.0
 =======================
 
