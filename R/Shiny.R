@@ -53,12 +53,11 @@ launchDiagnosticsExplorer <- function(dataFolder, launch.browser = FALSE) {
 #'                         the \code{\link{runCohortDiagnostics}} function to generate these zip files. 
 #'                         Zip files containing results from multiple databases can be placed in the same
 #'                         folder. 
-#' @param minCovariateProportion  minimum value threshold for covariates to be included in premerged file (valid number between 0 to 1)
-#'                         
+#' @param minCovariateProportion  minimum value threshold for covariates to be included 
+#'                                in premerged file (valid number (maybe decimal) between 0 to 1)                         
 #' @export
-preMergeDiagnosticsFiles <- function(dataFolder, minCovariateProportion = 0.01) {
+preMergeDiagnosticsFiles <- function(dataFolder, minCovariateProportion = 0) {
   zipFiles <- list.files(dataFolder, pattern = ".zip", full.names = TRUE)
-  
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertNumber(x = minCovariateProportion, lower = 0, upper = 1, add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
@@ -69,11 +68,10 @@ preMergeDiagnosticsFiles <- function(dataFolder, minCovariateProportion = 0.01) 
     camelCaseName <- SqlRender::snakeCaseToCamelCase(tableName)
     data <- readr::read_csv(file.path(folder, file), col_types = readr::cols(), guess_max = 1e7, locale = readr::locale(encoding = "UTF-8"))
     colnames(data) <- SqlRender::snakeCaseToCamelCase(colnames(data))
-    data <- utils::type.convert(x = data)
     
-    if (tableName %in% c('covariateValue', 'temporalCovariateValue')) {
+    if (tableName %in% c('covariate_value', 'temporal_covariate_value')) {
       data <- data %>% 
-              dplyr::filter(mean >= minCovariateProportion)
+        dplyr::filter(mean >= minCovariateProportion)
     }
     
     if (!overwrite && exists(camelCaseName, envir = .GlobalEnv)) {
