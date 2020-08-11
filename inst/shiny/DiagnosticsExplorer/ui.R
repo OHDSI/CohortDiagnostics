@@ -209,7 +209,7 @@ bodyTabItems <- shinydashboard::tabItems(
                                ),
                                tags$td(HTML("&nbsp&nbsp")),
                                tags$td(
-                                 shiny::textInput(inputId = "conceptIdBaseUrl",label = "", width = "300px", value = conceptBaseUrl),
+                                 shiny::textInput(inputId = "conceptIdBaseUrl",label = "", width = "300px", value = conceptBaseUrl)
                                )
                              )
                            )),
@@ -224,7 +224,7 @@ bodyTabItems <- shinydashboard::tabItems(
                                ),
                                tags$td(HTML("&nbsp&nbsp")),
                                tags$td(
-                                 shiny::textInput(inputId = "cohortBaseUrl",label = "", width = "300px", value = cohortBaseUrl),
+                                 shiny::textInput(inputId = "cohortBaseUrl",label = "", width = "300px", value = cohortBaseUrl)
                                )
                              )
                            ))
@@ -240,7 +240,7 @@ bodyTabItems <- shinydashboard::tabItems(
                               ),
                               tags$td(HTML("&nbsp&nbsp")),
                               tags$td(
-                                shiny::textInput(inputId = "cohortBaseUrl2",label = "", value = cohortBaseUrl),
+                                shiny::textInput(inputId = "cohortBaseUrl2",label = "", value = cohortBaseUrl)
                               )
                             )
                           )),
