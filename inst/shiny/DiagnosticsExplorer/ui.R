@@ -13,6 +13,10 @@ addInfo <- function(item, infoId) {
   return(item)
 }
 
+if (!exists("cohortDescription")) {
+  appTitle <- appTitleDefault
+}
+
 #header name
 header <-
   shinydashboard::dashboardHeader(title = appTitle, titleWidth = NULL)
@@ -84,7 +88,7 @@ sidebarMenu <-
       ),
     shinydashboard::menuItem(text = "Database information", tabName = "databaseInformation"),
     shiny::conditionalPanel(
-      condition = "input.tabs!='incidenceRate' & input.tabs!='timeDistribution' & input.tabs!='cohortCharacterization' & input.tabs!='cohortCounts' & input.tabs!='indexEventBreakdown' & input.tabs!='databaseInformation' & input.tabs != 'description'",
+      condition = "input.tabs!='incidenceRate' & input.tabs!='timeDistribution' & input.tabs!='cohortCharacterization' & input.tabs!='cohortCounts' & input.tabs!='indexEventBreakdown' & input.tabs!='databaseInformation' & input.tabs != 'description' & input.tabs != 'includedConcepts'",
       shinyWidgets::pickerInput(
         inputId = "database",
         label = "Database",
@@ -103,7 +107,7 @@ sidebarMenu <-
       )
     ),
     shiny::conditionalPanel(
-      condition = "input.tabs=='incidenceRate' | input.tabs=='timeDistribution' | input.tabs=='cohortCharacterization' | input.tabs=='cohortCounts' | input.tabs=='indexEventBreakdown'",
+      condition = "input.tabs=='incidenceRate' | input.tabs=='timeDistribution' | input.tabs=='cohortCharacterization' | input.tabs=='cohortCounts' | input.tabs=='indexEventBreakdown' | input.tabs == 'includedConcepts'",
       shinyWidgets::pickerInput(
         inputId = "databases",
         label = "Database",
@@ -119,7 +123,7 @@ sidebarMenu <-
           virtualScroll = 50)
       )
     ),
-    if (exists("temporalCovariate")){
+    if (exists("temporalCovariate")) {
       shiny::conditionalPanel(
         condition = "input.tabs=='temporalCharacterization'",
         shinyWidgets::pickerInput(

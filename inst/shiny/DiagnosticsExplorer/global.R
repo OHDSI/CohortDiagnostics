@@ -69,6 +69,10 @@ cohort <- cohort %>%
           dplyr::select(.data$cohortFullName, .data$cohortId, .data$cohortName) %>% 
           dplyr::arrange(.data$cohortFullName, .data$cohortId)
 
+database <- database %>% 
+            dplyr::distinct() %>% 
+            dplyr::arrange(.data$databaseId)
+
 if (exists("covariate")) {
   covariate <- covariate %>% 
     dplyr::distinct()
@@ -111,7 +115,7 @@ if (exists("includedSourceConcept")) {
 
 
 if ("phenotypeDescription.csv" %in% list.files(path = dataFolder)) {
-  print("loading phenotypeDescription and cohortDescription from local folder. App set in Phenotype library mode.")
+  print("loading phenotypeDescription and cohortDescription from local folder. App set to work in Phenotype library mode.")
   appTitle <- "Phenotype Library"
   cohortDescription <- readr::read_csv(file.path(dataFolder, 'cohortDescription.csv'), 
                                        col_types = readr::cols(), 
@@ -142,5 +146,5 @@ if ("phenotypeDescription.csv" %in% list.files(path = dataFolder)) {
     dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = ''))) %>% 
     dplyr::arrange(.data$phenotypeName, .data$phenotypeId)
 } else {
-  print("phenotypeDescription not found. App will run in Cohort Diagnostics mode.")
+  print("phenotypeDescription not found. App set to work in Cohort Diagnostics mode.")
 }
