@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Get cohorts JSON and parameterized OHDSI SQL — getCohortsJsonAndSql • CohortDiagnostics</title>
+<title>Extract concept set sql from cohort generation SQL — extractConceptSetsSqlFromCohortSql • CohortDiagnostics</title>
 
 
 <!-- jquery -->
@@ -39,10 +39,8 @@
 
 
 
-<meta property="og:title" content="Get cohorts JSON and parameterized OHDSI SQL — getCohortsJsonAndSql" />
-<meta property="og:description" content="This function may be used to collect a cohorts JSON and OHDSI SQL. Based on whether a
-baseUrl is available, the function will collect the specifications from either from
-WebApi or a Package." />
+<meta property="og:title" content="Extract concept set sql from cohort generation SQL — extractConceptSetsSqlFromCohortSql" />
+<meta property="og:description" content="Extracts SQL that corresponds to the conceptset (codeset) part from cohort generation SQL used to instantiated conceptSets during cohort construction." />
 
 
 
@@ -128,86 +126,37 @@ WebApi or a Package." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Get cohorts JSON and parameterized OHDSI SQL</h1>
-    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/CohortConstruction.R'><code>R/CohortConstruction.R</code></a></small>
-    <div class="hidden name"><code>getCohortsJsonAndSql.Rd</code></div>
+    <h1>Extract concept set sql from cohort generation SQL</h1>
+    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/ConceptSets.R'><code>R/ConceptSets.R</code></a></small>
+    <div class="hidden name"><code>extractConceptSetsSqlFromCohortSql.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>This function may be used to collect a cohorts JSON and OHDSI SQL. Based on whether a
-baseUrl is available, the function will collect the specifications from either from
-WebApi or a Package.</p>
+    <p>Extracts SQL that corresponds to the conceptset (codeset) part from cohort generation SQL used to instantiated conceptSets during cohort construction.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>getCohortsJsonAndSql</span>(
-  <span class='kw'>packageName</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cohortToCreateFile</span> <span class='kw'>=</span> <span class='st'>"settings/CohortsToCreate.csv"</span>,
-  <span class='kw'>baseUrl</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cohortSetReference</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cohortIds</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
-)</pre>
+    <pre class="usage"><span class='fu'>extractConceptSetsSqlFromCohortSql</span>(<span class='no'>cohortSql</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>packageName</th>
-      <td><p>The name of the package containing the cohort definitions. Can be left NULL if 
-<code>baseUrl</code> and <code>cohortSetReference</code> have been specified.</p></td>
-    </tr>
-    <tr>
-      <th>cohortToCreateFile</th>
-      <td><p>The location of the cohortToCreate file within the package. Is ignored if 
-<code>baseUrl</code> and <code>cohortSetReference</code> have been specified. The cohortToCreateFile
-must be .csv file that is expected to be read into a dataframe object identical to requirements
-for <code>cohortSetReference</code> argument.</p></td>
-    </tr>
-    <tr>
-      <th>baseUrl</th>
-      <td><p>The base URL for the WebApi instance, for example:
-"http://server.org:80/WebAPI". Can be left NULL if 
-<code>packageName</code> and <code>cohortToCreateFile</code> have been specified.</p></td>
-    </tr>
-    <tr>
-      <th>cohortSetReference</th>
-      <td><p>A data frame with four columns, as described in the details. Can be left NULL if 
-<code>packageName</code> and <code>cohortToCreateFile</code> have been specified.</p></td>
-    </tr>
-    <tr>
-      <th>cohortIds</th>
-      <td><p>Optionally, provide a subset of cohort IDs to restrict the
-diagnostics to.</p></td>
+      <th>cohortSql</th>
+      <td><p>Complete SQL specification of cohort definition in OHDSI SQL dialect. May
+contain parameters designed to be replaced by <code>SqlRender</code>. 
+The standard form SQL is generated using <code>circe-be</code> by 
+<code>WebApi</code> and <code>Atlas</code></p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>The function will return a R list object with cohort information including specifications 
-such as JSON and SQL.</p>
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
-
-    <p>Currently two ways of executing this function are supported, either 
-(1) [Package Mode] embedded in a study package, assuming the cohort definitions are stored in that package using the 
-    <code><a href='https://rdrr.io/pkg/ROhdsiWebApi/man/insertCohortDefinitionSetInPackage.html'>ROhdsiWebApi::insertCohortDefinitionSetInPackage</a></code>, or 
-(2) [WebApi Mode] By using a WebApi interface to retrieve the cohort definitions.</p>
-<p>When using this function in Package Mode: Use the <code>packageName</code> and <code>cohortToCreateFile</code> to specify
-the name of the study package, and the name of the cohortToCreate file within that package, respectively</p>
-<p>When using this function in WebApi Mode: use the <code>baseUrl</code> and <code>cohortSetReference</code> to specify how to 
-connect to the WebApi, and which cohorts to fetch, respectively.</p>
-<p>Note: if the parameters for both Package Mode and WebApi Mode are provided, then Package mode is preferred.</p>
-<p>The <code>cohortSetReference</code> argument must be a data frame with  the following columns:</p><dl'>
-<dt>atlasId</dt><dd><p>The cohort ID in ATLAS.</p></dd>
-<dt>atlasName</dt><dd><p>The full name of the cohort. This will be shown in the Shiny app.</p></dd>
-<dt>cohortId</dt><dd><p>The cohort ID to use in the package. Usually the same as the cohort ID in ATLAS.</p></dd>
-<dt>name</dt><dd><p>A short name for the cohort, to use to create file names. do not use special characters.</p></dd>
-
-</dl>
-
+    <p>The function will return a tibble data frame object with one row per concept id and 
+                    concept set combination in cohort definition.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
     <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='no'>cohorts</span> <span class='kw'>&lt;-</span> <span class='fu'>getCohortsJsonAndSql</span>(<span class='kw'>packageName</span> <span class='kw'>=</span> <span class='st'>'cohortDiagnostics'</span>,
-                                <span class='kw'>baseUrl</span> <span class='kw'>=</span> <span class='st'>"http://server.org:80/WebAPI"</span>)
+<span class='no'>conceptSetSql</span> <span class='kw'>&lt;-</span> <span class='fu'>extractConceptSetsSqlFromCohortSql</span>(<span class='kw'>cohortSql</span> <span class='kw'>=</span> <span class='no'>sql</span>)
 }</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
