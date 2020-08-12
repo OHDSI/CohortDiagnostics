@@ -1,19 +1,6 @@
 CohortDiagnostics (Develop)
 =======================
 
-CohortDiagnostics 1.2.0
-=======================
-New features:
-1. New function to retrieve concept set json from cohort json \code{extractConceptSetsJsonFromCohortJson}
-2. New function to retrieve concept set sql from cohort sql \code{extractConceptSetsSqlFromCohortSql}
-3. DiagnosticsExplorer shiny app - DataTable now rendered using server side processing. Bug fixes and UI improvements.
-4. DiagnosticsExplorer shiny app - Phenotype library mode (released)
-5. DiagnosticsExplorer shiny app - Combine included source concepts and orphan concepts into one submenu https://github.com/OHDSI/CohortDiagnostics/issues/129
-
-Bug fixes:
-1. https://github.com/OHDSI/CohortDiagnostics/issues/167
-2. https://github.com/OHDSI/CohortDiagnostics/issues/165
-
 
 CohortDiagnostics 1.1.1
 =======================

@@ -34,7 +34,6 @@ launchDiagnosticsExplorer <- function(dataFolder, launch.browser = FALSE) {
   ensure_installed("DT")
   ensure_installed("VennDiagram")
   ensure_installed("htmltools")
-  ensure_installed("scales")
   appDir <- system.file("shiny", "DiagnosticsExplorer", package = "CohortDiagnostics")
   shinySettings <- list(dataFolder = dataFolder)
   .GlobalEnv$shinySettings <- shinySettings
@@ -73,36 +72,6 @@ preMergeDiagnosticsFiles <- function(dataFolder, minCovariateProportion = 0) {
     if (tableName %in% c('covariate_value', 'temporal_covariate_value')) {
       data <- data %>% 
         dplyr::filter(mean >= minCovariateProportion)
-    }
-    
-    if (tableName %in% c('covariate')) {# this is a temporary solution as detailed here https://github.com/OHDSI/CohortDiagnostics/issues/162
-      data2 <- data %>% 
-        dplyr::group_by(.data$covariateId, .data$conceptId) %>% 
-        dplyr::filter(.data$covariateName == max(.data$covariateName)) %>% 
-        dplyr::slice(1) %>% 
-        dplyr::ungroup()
-      if (!nrow(data2) == nrow(data)) {
-        ParallelLogger::logInfo('Warning: covariate found to have more than one record per 
-                                covariateId, conceptId combination. The row record corresponding 
-                                to maximum value of covariateName has been chosen. This led to reduction 
-                                in number of rows from ', nrow(data), ' to ', nrow(data2))
-        data <- data
-      } else {data2 <- NULL}
-    }
-    
-    if (tableName %in% c('temporal_covariate')) {# this is a temporary solution as detailed here https://github.com/OHDSI/CohortDiagnostics/issues/162
-      data2 <- data %>% 
-        dplyr::group_by(.data$covariateId, .data$conceptId, .data$timeId) %>% 
-        dplyr::filter(.data$covariateName == max(.data$covariateName)) %>% 
-        dplyr::slice(1) %>% 
-        dplyr::ungroup()
-      if (!nrow(data2) == nrow(data)) {
-        ParallelLogger::logInfo('Warning: temporal_covariate found to have more than one record 
-                                per covariateId, conceptId, timeId combination. The row record 
-                                corresponding to maximum value of covariateName has been chosen. 
-                                This led to reduction in number of rows from ', nrow(data), ' to ', nrow(data2))
-        data <- data
-      } else {data2 <- NULL}
     }
     
     if (!overwrite && exists(camelCaseName, envir = .GlobalEnv)) {

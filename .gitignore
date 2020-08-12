@@ -3,7 +3,3 @@
 .RData
 .Ruserdata
 *.RData
-inst/shiny/DiagnosticsExplorer/data/phenotypeDescription.csv
-inst/shiny/DiagnosticsExplorer/data/cohortDescription.csv
-inst/shiny/DiagnosticsExplorer/data/cohortDescription.csv
-inst/shiny/DiagnosticsExplorer/data/phenotypeDescription.csv
