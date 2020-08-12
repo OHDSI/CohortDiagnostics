@@ -1,6 +1,13 @@
 CohortDiagnostics (Develop)
 =======================
 
+CohortDiagnostics 1.2.0
+=======================
+New features:
+1. New function to retrieve concept set json from cohort json \code{extractConceptSetsJsonFromCohortJson}
+2. New function to retrieve concept set sql from cohort sql \code{extractConceptSetsSqlFromCohortSql}
+
+Bug fixes:
 
 CohortDiagnostics 1.1.1
 =======================

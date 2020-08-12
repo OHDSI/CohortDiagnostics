@@ -15,7 +15,7 @@ addInfo <- function(item, infoId) {
 
 #header name
 header <-
-  shinydashboard::dashboardHeader(title = "Phenotype Library", titleWidth = NULL)
+  shinydashboard::dashboardHeader(title = appTitle, titleWidth = NULL)
 
 #sidebarMenu
 sidebarMenu <-
@@ -96,7 +96,9 @@ sidebarMenu <-
           liveSearch = TRUE,
           size = 10,
           liveSearchStyle = 'contains',
-          liveSearchPlaceholder = "Type here to search")
+          liveSearchPlaceholder = "Type here to search",
+          virtualScroll = 50
+          )
         
       )
     ),
@@ -113,7 +115,8 @@ sidebarMenu <-
           liveSearch = TRUE, 
           size = 10,
           liveSearchStyle = 'contains',
-          liveSearchPlaceholder = "Type here to search")
+          liveSearchPlaceholder = "Type here to search",
+          virtualScroll = 50)
       )
     ),
     if (exists("temporalCovariate")){
@@ -132,7 +135,8 @@ sidebarMenu <-
             liveSearch = TRUE,
             size = 10,
             liveSearchStyle = 'contains',
-            liveSearchPlaceholder = "Type here to search")
+            liveSearchPlaceholder = "Type here to search",
+            virtualScroll = 50)
         )
       )
     },
@@ -148,7 +152,8 @@ sidebarMenu <-
           liveSearch = TRUE, 
           liveSearchStyle = 'contains',
           size = 10,
-          liveSearchPlaceholder = "Type here to search")
+          liveSearchPlaceholder = "Type here to search",
+          virtualScroll = 50)
       )
     ),
     shiny::conditionalPanel(
@@ -163,7 +168,8 @@ sidebarMenu <-
           liveSearch = TRUE,
           size = 10,
           liveSearchStyle = 'contains',
-          liveSearchPlaceholder = "Type here to search")
+          liveSearchPlaceholder = "Type here to search",
+          virtualScroll = 50)
       )
     ),
     shiny::conditionalPanel(
@@ -179,7 +185,8 @@ sidebarMenu <-
           liveSearch = TRUE, 
           size = 10,
           liveSearchStyle = 'contains',
-          liveSearchPlaceholder = "Type here to search")
+          liveSearchPlaceholder = "Type here to search",
+          virtualScroll = 50)
         
       )
     )
@@ -209,7 +216,7 @@ bodyTabItems <- shinydashboard::tabItems(
                                ),
                                tags$td(HTML("&nbsp&nbsp")),
                                tags$td(
-                                 shiny::textInput(inputId = "conceptIdBaseUrl",label = "", width = "300px", value = conceptBaseUrl),
+                                 shiny::textInput(inputId = "conceptIdBaseUrl",label = "", width = "300px", value = conceptBaseUrl)
                                )
                              )
                            )),
@@ -224,7 +231,7 @@ bodyTabItems <- shinydashboard::tabItems(
                                ),
                                tags$td(HTML("&nbsp&nbsp")),
                                tags$td(
-                                 shiny::textInput(inputId = "cohortBaseUrl",label = "", width = "300px", value = cohortBaseUrl),
+                                 shiny::textInput(inputId = "cohortBaseUrl",label = "", width = "300px", value = cohortBaseUrl)
                                )
                              )
                            ))
@@ -240,7 +247,7 @@ bodyTabItems <- shinydashboard::tabItems(
                               ),
                               tags$td(HTML("&nbsp&nbsp")),
                               tags$td(
-                                shiny::textInput(inputId = "cohortBaseUrl2",label = "", value = cohortBaseUrl),
+                                shiny::textInput(inputId = "cohortBaseUrl2",label = "", value = cohortBaseUrl)
                               )
                             )
                           )),

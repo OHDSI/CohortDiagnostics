@@ -66,7 +66,6 @@ getCohortsJsonAndSqlFromPackage <- function(packageName = packageName,
 }
 
 
-
 getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
                                            cohortSetReference = cohortSetReference,
                                            cohortIds = cohortIds,
