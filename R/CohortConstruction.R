@@ -16,7 +16,7 @@
 
 getCohortsJsonAndSqlFromPackage <- function(packageName = packageName,
                                             cohortToCreateFile = cohortToCreateFile,
-                                            cohortIds = cohortIds,
+                                            cohortIds = NULL,
                                             errorMessage = NULL) {
   ParallelLogger::logInfo("Executing on cohorts specified in package - ", packageName)
   
@@ -30,8 +30,10 @@ getCohortsJsonAndSqlFromPackage <- function(packageName = packageName,
                               extension = "csv", 
                               add = errorMessage)
   
-  cohorts <- readr::read_csv(pathToCsv, col_types = readr::cols()) %>%
-    dplyr::filter(!.data$cohortId %in% cohortIds)
+  cohorts <- readr::read_csv(pathToCsv, col_types = readr::cols())
+  if (!is.null(cohortIds)) {
+    cohorts <- cohorts %>% dplyr::filter(.data$cohortId %in% cohortIds)
+  }
   
   checkmate::assertDataFrame(x = cohorts, 
                              types = c("integer", "character","numeric"),
@@ -69,7 +71,7 @@ getCohortsJsonAndSqlFromPackage <- function(packageName = packageName,
 
 getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
                                            cohortSetReference = cohortSetReference,
-                                           cohortIds = cohortIds,
+                                           cohortIds = NULL,
                                            errorMessage = NULL) {
   ParallelLogger::logInfo("[WebApi mode] Running Cohort Diagnostics on cohort specified in WebApi - ", baseUrl)
   
@@ -92,9 +94,11 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
                          subset.of =  c("atlasName", "atlasId", "cohortId", "name", "cohortName"),
                          add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
-  cohorts <- cohortSetReference %>%
-    dplyr::filter(!.data$cohortId %in% cohortIds)
-  
+  cohorts <- cohortSetReference
+  if (!is.null(cohortIds)) {
+    cohorts <- cohorts %>% dplyr::filter(.data$cohortId %in% cohortIds)
+  }
+
   if ("name" %in% names(cohorts)) {
     cohorts <- dplyr::rename(cohorts, cohortName = "name")
   }
