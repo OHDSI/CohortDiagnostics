@@ -13,9 +13,13 @@ addInfo <- function(item, infoId) {
   return(item)
 }
 
+if (!exists("cohortDescription")) {
+  appTitle <- appTitleDefault
+}
+
 #header name
 header <-
-  shinydashboard::dashboardHeader(title = "Phenotype Library", titleWidth = NULL)
+  shinydashboard::dashboardHeader(title = appTitle, titleWidth = NULL)
 
 #sidebarMenu
 sidebarMenu <-
@@ -84,7 +88,7 @@ sidebarMenu <-
       ),
     shinydashboard::menuItem(text = "Database information", tabName = "databaseInformation"),
     shiny::conditionalPanel(
-      condition = "input.tabs!='incidenceRate' & input.tabs!='timeDistribution' & input.tabs!='cohortCharacterization' & input.tabs!='cohortCounts' & input.tabs!='indexEventBreakdown' & input.tabs!='databaseInformation' & input.tabs != 'description'",
+      condition = "input.tabs!='incidenceRate' & input.tabs!='timeDistribution' & input.tabs!='cohortCharacterization' & input.tabs!='cohortCounts' & input.tabs!='indexEventBreakdown' & input.tabs!='databaseInformation' & input.tabs != 'description' & input.tabs != 'includedConcepts'",
       shinyWidgets::pickerInput(
         inputId = "database",
         label = "Database",
@@ -96,12 +100,14 @@ sidebarMenu <-
           liveSearch = TRUE,
           size = 10,
           liveSearchStyle = 'contains',
-          liveSearchPlaceholder = "Type here to search")
+          liveSearchPlaceholder = "Type here to search",
+          virtualScroll = 50
+          )
         
       )
     ),
     shiny::conditionalPanel(
-      condition = "input.tabs=='incidenceRate' | input.tabs=='timeDistribution' | input.tabs=='cohortCharacterization' | input.tabs=='cohortCounts' | input.tabs=='indexEventBreakdown'",
+      condition = "input.tabs=='incidenceRate' | input.tabs=='timeDistribution' | input.tabs=='cohortCharacterization' | input.tabs=='cohortCounts' | input.tabs=='indexEventBreakdown' | input.tabs == 'includedConcepts'",
       shinyWidgets::pickerInput(
         inputId = "databases",
         label = "Database",
@@ -113,10 +119,11 @@ sidebarMenu <-
           liveSearch = TRUE, 
           size = 10,
           liveSearchStyle = 'contains',
-          liveSearchPlaceholder = "Type here to search")
+          liveSearchPlaceholder = "Type here to search",
+          virtualScroll = 50)
       )
     ),
-    if (exists("temporalCovariate")){
+    if (exists("temporalCovariate")) {
       shiny::conditionalPanel(
         condition = "input.tabs=='temporalCharacterization'",
         shinyWidgets::pickerInput(
@@ -132,7 +139,8 @@ sidebarMenu <-
             liveSearch = TRUE,
             size = 10,
             liveSearchStyle = 'contains',
-            liveSearchPlaceholder = "Type here to search")
+            liveSearchPlaceholder = "Type here to search",
+            virtualScroll = 50)
         )
       )
     },
@@ -148,7 +156,8 @@ sidebarMenu <-
           liveSearch = TRUE, 
           liveSearchStyle = 'contains',
           size = 10,
-          liveSearchPlaceholder = "Type here to search")
+          liveSearchPlaceholder = "Type here to search",
+          virtualScroll = 50)
       )
     ),
     shiny::conditionalPanel(
@@ -163,7 +172,8 @@ sidebarMenu <-
           liveSearch = TRUE,
           size = 10,
           liveSearchStyle = 'contains',
-          liveSearchPlaceholder = "Type here to search")
+          liveSearchPlaceholder = "Type here to search",
+          virtualScroll = 50)
       )
     ),
     shiny::conditionalPanel(
@@ -179,7 +189,8 @@ sidebarMenu <-
           liveSearch = TRUE, 
           size = 10,
           liveSearchStyle = 'contains',
-          liveSearchPlaceholder = "Type here to search")
+          liveSearchPlaceholder = "Type here to search",
+          virtualScroll = 50)
         
       )
     )
