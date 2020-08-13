@@ -4,6 +4,14 @@ CohortDiagnostics (Develop)
 CohortDiagnostics 1.2.0
 =======================
 New features:
+1. All objects in DiagnosticsExplorer are sorted by default #173
+
+Bug fixes:
+
+
+CohortDiagnostics 1.2.0
+=======================
+New features:
 1. New function to retrieve concept set json from cohort json \code{extractConceptSetsJsonFromCohortJson}
 2. New function to retrieve concept set sql from cohort sql \code{extractConceptSetsSqlFromCohortSql}
 3. DiagnosticsExplorer shiny app - DataTable now rendered using server side processing. Bug fixes and UI improvements.
