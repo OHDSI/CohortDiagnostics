@@ -156,7 +156,7 @@ compareAndCombineConceptSetsDefinitionForCohorts <-
     }
     conceptSets <- dplyr::bind_rows(conceptSets) %>%
       dplyr::arrange("cohortId", "conceptSetId")
-    
+
     uniqueConceptSets <- conceptSets %>%
       dplyr::select(.data$conceptSetExpression) %>%
       dplyr::distinct() %>%
@@ -237,10 +237,10 @@ runConceptSetDiagnostics <- function(connection,
   
   conceptSets <- compareAndCombineConceptSetsDefinitionForCohorts(subset)
   uniqueConceptSets <- conceptSets %>% 
-                        dplyr::select(.data$uniqueConceptSetId, .data$conceptSetName, .data$conceptSetSql) %>% 
-                        dplyr::distinct()
-  instantiateUniqueConceptSets(cohorts = subset,
-                               uniqueConceptSets = uniqueConceptSets,
+    dplyr::group_by(.data$uniqueConceptSetId) %>% 
+    dplyr::slice(1)
+  
+  instantiateUniqueConceptSets(uniqueConceptSets = uniqueConceptSets,
                                connection = connection,
                                cdmDatabaseSchema = cdmDatabaseSchema,
                                oracleTempSchema = oracleTempSchema)
