@@ -390,10 +390,10 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     databaseIds <- data %>% 
-      dplyr::select(databaseId) %>% 
+      dplyr::select(.data$databaseId) %>% 
       dplyr::distinct() %>% 
-      dplyr::arrange(databaseId) %>% 
-      dplyr::pull(databaseId)
+      dplyr::arrange(.data$databaseId) %>% 
+      dplyr::pull(.data$databaseId)
     
     if (input$includedType == "Source Concepts") {
       table <- data %>% 
@@ -474,16 +474,31 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$orphanConceptsTable <- DT::renderDataTable(expr = {
-    table <- orphanConcept[orphanConcept$cohortId == cohortId() &
-                             orphanConcept$conceptSetName == input$conceptSet & 
-                             orphanConcept$databaseId == input$database, ]
+    table <- orphanConcept %>% 
+      dplyr::filter(.data$cohortId == cohortId() &
+                      .data$conceptSetName == input$conceptSet &
+                      .data$databaseId %in% input$databases)
+    
     if (nrow(table) == 0) {
       return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
     }
-    table <- table[, c("conceptCount", "conceptId", "standardConcept", "vocabularyId", "conceptCode", "conceptName")]
-    table <- table[order(-table$conceptCount), ]
-    colnames(table) <- c("Count", "Concept ID", "Standard", "Vocabulary", "Code", "Name")
-    lims <- c(0, max(table$Count))
+    
+    databaseIds <- table %>% 
+      dplyr::select(.data$databaseId) %>% 
+      dplyr::distinct() %>% 
+      dplyr::arrange(.data$databaseId) %>% 
+      dplyr::pull(.data$databaseId)
+    
+    table <- table %>% 
+      dplyr::select(.data$conceptId, .data$standardConcept, .data$vocabularyId, .data$conceptCode, .data$conceptName, .data$conceptCount, .data$databaseId) %>% 
+      dplyr::arrange(conceptCount) %>% 
+      dplyr::rename(conceptId = "conceptId", standard = "standardConcept", Vocabulary = "vocabularyId", code = "conceptCode", Name = "conceptName") %>% 
+      tidyr::pivot_wider(id_cols = c("conceptId", "standard", "Vocabulary", "code", "Name"),
+                         names_from = "databaseId",
+                         values_from = "conceptCount",
+                         names_sep = "_",
+                         values_fill = 0)
+    
     options = list(pageLength = 20,
                    searching = TRUE,
                    searchHighlight = TRUE,
@@ -494,13 +509,14 @@ shiny::shinyServer(function(input, output, session) {
                    columnDefs = list(minCellCountDef(0)))
     table <- DT::datatable(table,
                            options = options,
+                           colnames = colnames(table) %>% SqlRender::camelCaseToTitleCase(),
                            rownames = FALSE,
                            escape = FALSE,
                            filter = c('bottom'),
                            class = "stripe nowrap compact")
     table <- DT::formatStyle(table = table,
-                             columns = 1,
-                             background = DT::styleColorBar(lims, "lightblue"),
+                             columns = 5 + (1:length(databaseIds)),
+                             background = DT::styleColorBar(c(0,1), "lightblue"),
                              backgroundSize = "98% 88%",
                              backgroundRepeat = "no-repeat",
                              backgroundPosition = "center")

@@ -14,9 +14,9 @@ addInfo <- function(item, infoId) {
 }
 
 if (!exists("cohortDescription")) {
-  appTitle <- appTitleDefault
+  appTitle <- cohortDiagnosticModeDefaultTitle
 }else{
-  appTitle <- phenoTypeDescriptionAppTitle
+  appTitle <- phenotypeLibraryModeDefaultTitle
 }
 
 #header name
@@ -90,7 +90,7 @@ sidebarMenu <-
       ),
     shinydashboard::menuItem(text = "Database information", tabName = "databaseInformation"),
     shiny::conditionalPanel(
-      condition = "input.tabs!='incidenceRate' & input.tabs!='timeDistribution' & input.tabs!='cohortCharacterization' & input.tabs!='cohortCounts' & input.tabs!='indexEventBreakdown' & input.tabs!='databaseInformation' & input.tabs != 'description' & input.tabs != 'includedConcepts'",
+      condition = "input.tabs!='incidenceRate' & input.tabs!='timeDistribution' & input.tabs!='cohortCharacterization' & input.tabs!='cohortCounts' & input.tabs!='indexEventBreakdown' & input.tabs!='databaseInformation' & input.tabs != 'description' & input.tabs != 'includedConcepts' & input.tabs != 'orphanConcepts'",
       shinyWidgets::pickerInput(
         inputId = "database",
         label = "Database",
@@ -109,7 +109,7 @@ sidebarMenu <-
       )
     ),
     shiny::conditionalPanel(
-      condition = "input.tabs=='incidenceRate' | input.tabs=='timeDistribution' | input.tabs=='cohortCharacterization' | input.tabs=='cohortCounts' | input.tabs=='indexEventBreakdown' | input.tabs == 'includedConcepts'",
+      condition = "input.tabs=='incidenceRate' | input.tabs=='timeDistribution' | input.tabs=='cohortCharacterization' | input.tabs=='cohortCounts' | input.tabs=='indexEventBreakdown' | input.tabs == 'includedConcepts' | input.tabs == 'orphanConcepts'",
       shinyWidgets::pickerInput(
         inputId = "databases",
         label = "Database",
