@@ -5,9 +5,10 @@ CohortDiagnostics 1.2.0
 =======================
 New features:
 1. All objects in DiagnosticsExplorer are sorted by default #173
+2. Multi select for concepts #199
 
 Bug fixes:
-
+1. Ensure concept sets across cohort definitions are unique #174
 
 CohortDiagnostics 1.2.0
 =======================
