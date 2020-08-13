@@ -8,12 +8,12 @@ extractConceptSetsSqlFromCohortSql(cohortSql)
 }
 \arguments{
 \item{cohortSql}{Complete SQL specification of cohort definition in OHDSI SQL dialect. May
-contain parameters designed to be replaced by \code{SqlRender}. 
-The standard form SQL is generated using \code{circe-be} by 
+contain parameters designed to be replaced by \code{SqlRender}.
+The standard form SQL is generated using \code{circe-be} by
 \code{WebApi} and \code{Atlas}}
 }
 \value{
-The function will return a tibble data frame object with one row per concept id and 
+The function will return a tibble data frame object with one row per concept id and
                     concept set combination in cohort definition.
 }
 \description{

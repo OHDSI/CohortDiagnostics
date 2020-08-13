@@ -77,7 +77,8 @@ database <- database %>%
 
 if (exists("covariate")) {
   covariate <- covariate %>% 
-    dplyr::distinct()
+    dplyr::distinct() %>% 
+    dplyr::arrange(.data$covariateName)
   if (!"conceptId" %in% colnames(covariate)) {
     warning("conceptId not found in covariate file. Calculating conceptId from covariateId. This may rarely cause errors.")
   covariate <- covariate %>% 
@@ -87,7 +88,8 @@ if (exists("covariate")) {
 
 if (exists("temporalCovariate")) {
   temporalCovariate <- temporalCovariate %>% 
-    dplyr::distinct()
+    dplyr::distinct() %>% 
+    dplyr::arrange(.data$covariateName, .data$timeId)
   if (!"conceptId" %in% colnames(temporalCovariate)) {
     warning("conceptId not found in temporalCovariate file. Calculating conceptId from covariateId. This may rarely cause errors.")
     temporalCovariate <- temporalCovariate %>% 
@@ -130,13 +132,16 @@ if ("phenotypeDescription.csv" %in% list.files(path = dataFolder)) {
     dplyr::arrange(.data$phenotypeId, .data$cohortDefinitionName)
   
   cohort <- cohort %>%
-    dplyr::select(-.data$cohortFullName) %>% 
+    dplyr::rename(cohortFullNameOld = .data$cohortFullName) %>% 
         dplyr::left_join(y = cohortDescription %>% 
                            dplyr::mutate(cohortId = utils::type.convert(.data$atlasId),
                                          cohortFullName = .data$cohortDefinitionName) %>% 
                            dplyr::select(.data$cohortId, .data$cohortFullName)) %>% 
                            dplyr::relocate(.data$cohortFullName) %>% 
-                          dplyr::arrange(.data$cohortFullName, .data$cohortId)
+        dplyr::mutate(cohortFullName = dplyr::case_when(is.na(.data$cohortFullName) ~ .data$cohortFullNameOld,
+                                                        TRUE ~ .data$cohortFullName)) %>% 
+        dplyr::select(-.data$cohortFullNameOld) %>% 
+        dplyr::arrange(.data$cohortFullName)
   
   phenotypeDescription <- readr::read_csv(file.path(dataFolder, "phenotypeDescription.csv"), 
                                           col_types = readr::cols(), 
