@@ -161,7 +161,7 @@ combineConceptSetsFromCohorts <-
     }
     conceptSets <- dplyr::bind_rows(conceptSets) %>%
       dplyr::arrange("cohortId", "conceptSetId")
-
+    
     uniqueConceptSets <- conceptSets %>%
       dplyr::select(.data$conceptSetExpression) %>%
       dplyr::distinct() %>%
