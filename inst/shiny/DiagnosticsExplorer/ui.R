@@ -15,6 +15,8 @@ addInfo <- function(item, infoId) {
 
 if (!exists("cohortDescription")) {
   appTitle <- appTitleDefault
+}else{
+  appTitle <- phenoTypeDescriptionAppTitle
 }
 
 #header name
