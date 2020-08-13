@@ -247,7 +247,7 @@ runConceptSetDiagnostics <- function(connection,
   conceptSets <- combineConceptSetsFromCohorts(subset)
   uniqueConceptSets <- conceptSets %>%
     dplyr::group_by(.data$uniqueConceptSetId) %>%
-    dpyr::slice(1)
+    dplyr::slice(1)
   
   instantiateUniqueConceptSets(
     uniqueConceptSets = uniqueConceptSets,
