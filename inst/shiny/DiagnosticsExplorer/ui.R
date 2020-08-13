@@ -1,5 +1,9 @@
 library(magrittr)
 
+source("R/Plots.R")
+source("R/Tables.R")
+source("R/Other.R")
+
 addInfo <- function(item, infoId) {
   infoTag <- tags$small(
     class = "badge pull-right action-button",
