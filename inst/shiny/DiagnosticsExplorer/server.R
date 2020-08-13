@@ -1131,7 +1131,8 @@ shiny::shinyServer(function(input, output, session) {
     targetCohortWithCount <- cohortCount %>% 
       dplyr::filter(.data$cohortId == cohortId(),
                     .data$databaseId == input$database) %>% 
-      dplyr::left_join(y = cohort)
+      dplyr::left_join(y = cohort) %>% 
+      dplyr::arrange(.data$cohortFullName)
     
     return(htmltools::withTags(
       div(
