@@ -171,8 +171,7 @@ compareAndCombineConceptSetsDefinitionForCohorts <-
 
 #private function of cohort diagnostics to instantiate concept sets for a cohort
 instantiateUniqueConceptSets <-
-  function(cohorts,
-           uniqueConceptSets,
+  function(uniqueConceptSets,
            connection,
            cdmDatabaseSchema,
            oracleTempSchema) {
