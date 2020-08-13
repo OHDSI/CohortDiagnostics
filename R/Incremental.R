@@ -117,11 +117,13 @@ saveIncremental <- function(data, fileName, ...) {
   }
   if (file.exists(fileName)) {
     previousData <- readr::read_csv(fileName, col_types = readr::cols())
-    idx <- getKeyIndex(list(...), previousData)
-    if (length(idx) > 0) {
-      previousData <- previousData[-idx, ] 
+    if ((nrow(previousData)) > 0) {
+      idx <- getKeyIndex(list(...), previousData)
+      if (length(idx) > 0) {
+        previousData <- previousData[-idx, ] 
+      }
+      data <- dplyr::bind_rows(previousData, data)
     }
-    data <- dplyr::bind_rows(previousData, data)
   } 
   readr::write_csv(data, fileName)
 }

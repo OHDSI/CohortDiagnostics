@@ -1,6 +1,41 @@
 CohortDiagnostics (Develop)
 =======================
 
+CohortDiagnostics 1.2.0
+=======================
+New features:
+1. All objects in DiagnosticsExplorer are sorted by default #173
+2. Multi select for concepts #199
+
+Bug fixes:
+1. Ensure concept sets across cohort definitions are unique #174
+
+CohortDiagnostics 1.2.0
+=======================
+New features:
+1. New function to retrieve concept set json from cohort json \code{extractConceptSetsJsonFromCohortJson}
+2. New function to retrieve concept set sql from cohort sql \code{extractConceptSetsSqlFromCohortSql}
+3. DiagnosticsExplorer shiny app - DataTable now rendered using server side processing. Bug fixes and UI improvements.
+4. DiagnosticsExplorer shiny app - Phenotype library mode (released)
+5. DiagnosticsExplorer shiny app - Combine included source concepts and orphan concepts into one submenu https://github.com/OHDSI/CohortDiagnostics/issues/129
+
+Bug fixes:
+1. https://github.com/OHDSI/CohortDiagnostics/issues/167
+2. https://github.com/OHDSI/CohortDiagnostics/issues/165
+
+
+CohortDiagnostics 1.1.1
+=======================
+New features:
+1. Shiny app UI improvements
+2. Link out to Atlas and Athena from cohortId. Supports baseUrl.
+3. (beta - unreleased) support for Phenotype library. Shiny app will look for two additional csv files phenotypeDescription and cohortDescription that put the DiagnosticExplorer in Phenotype Library Mode. Plan to release in future version >= 1.2
+4. Changed default selections for temporal characterization
+5. Added minimum threshold value to covariate_value and temporal_covariate_value with default value = 0 (future release, we plan to make this 0.005 i.e. 0.5%)
+
+Bug fixes:
+1. Minor bug fixes.
+
 CohortDiagnostics 1.1.0
 =======================
 

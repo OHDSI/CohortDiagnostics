@@ -71,7 +71,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.1</span>
       </span>
     </div>
 
@@ -129,6 +129,53 @@
       <small>Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
+    <div id="cohortdiagnostics-120" class="section level1">
+<h1 class="page-header" data-toc-text="1.2.0">
+<a href="#cohortdiagnostics-120" class="anchor"></a>CohortDiagnostics 1.2.0</h1>
+<p>New features:</p>
+<ol>
+<li>All objects in DiagnosticsExplorer are sorted by default <a href='https://github.com/OHDSI/CohortDiagnostics/issues/173'>#173</a></li>
+<li>Multi select for concepts <a href='https://github.com/OHDSI/CohortDiagnostics/issues/199'>#199</a></li>
+</ol>
+<p>Bug fixes:</p>
+<ol>
+<li>Ensure concept sets across cohort definitions are unique <a href='https://github.com/OHDSI/CohortDiagnostics/issues/174'>#174</a></li>
+</ol>
+</div>
+    <div id="cohortdiagnostics-120-1" class="section level1">
+<h1 class="page-header" data-toc-text="1.2.0">
+<a href="#cohortdiagnostics-120-1" class="anchor"></a>CohortDiagnostics 1.2.0</h1>
+<p>New features:</p>
+<ol>
+<li>New function to retrieve concept set json from cohort json \code{extractConceptSetsJsonFromCohortJson}</li>
+<li>New function to retrieve concept set sql from cohort sql \code{extractConceptSetsSqlFromCohortSql}</li>
+<li>DiagnosticsExplorer shiny app - DataTable now rendered using server side processing. Bug fixes and UI improvements.</li>
+<li>DiagnosticsExplorer shiny app - Phenotype library mode (released)</li>
+<li>DiagnosticsExplorer shiny app - Combine included source concepts and orphan concepts into one submenu <a href="https://github.com/OHDSI/CohortDiagnostics/issues/129" class="uri">https://github.com/OHDSI/CohortDiagnostics/issues/129</a>
+</li>
+</ol>
+<p>Bug fixes:</p>
+<ol>
+<li><a href="https://github.com/OHDSI/CohortDiagnostics/issues/167" class="uri">https://github.com/OHDSI/CohortDiagnostics/issues/167</a></li>
+<li><a href="https://github.com/OHDSI/CohortDiagnostics/issues/165" class="uri">https://github.com/OHDSI/CohortDiagnostics/issues/165</a></li>
+</ol>
+</div>
+    <div id="cohortdiagnostics-111" class="section level1">
+<h1 class="page-header" data-toc-text="1.1.1">
+<a href="#cohortdiagnostics-111" class="anchor"></a>CohortDiagnostics 1.1.1</h1>
+<p>New features:</p>
+<ol>
+<li>Shiny app UI improvements</li>
+<li>Link out to Atlas and Athena from cohortId. Supports baseUrl.</li>
+<li>(beta - unreleased) support for Phenotype library. Shiny app will look for two additional csv files phenotypeDescription and cohortDescription that put the DiagnosticExplorer in Phenotype Library Mode. Plan to release in future version &gt;= 1.2</li>
+<li>Changed default selections for temporal characterization</li>
+<li>Added minimum threshold value to covariate_value and temporal_covariate_value with default value = 0 (future release, we plan to make this 0.005 i.e. 0.5%)</li>
+</ol>
+<p>Bug fixes:</p>
+<ol>
+<li>Minor bug fixes.</li>
+</ol>
+</div>
     <div id="cohortdiagnostics-110" class="section level1">
 <h1 class="page-header" data-toc-text="1.1.0">
 <a href="#cohortdiagnostics-110" class="anchor"></a>CohortDiagnostics 1.1.0</h1>
@@ -237,7 +284,7 @@
 
       <footer>
       <div class="copyright">
-  <p>Developed by Martijn Schuemie, Patrick Ryan, James Weaver, Gowtham Rao.</p>
+  <p>Developed by Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver.</p>
 </div>
 
 <div class="pkgdown">

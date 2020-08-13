@@ -1,7 +1,8 @@
 library(magrittr)
 
-cohortBaseUrl <- "https://atlas.ohdsi.org/#/cohortdefinition/"
-conceptBaseUrl <- "https://athena.ohdsi.org/search-terms/terms/"
+source("R/Plots.R")
+source("R/Tables.R")
+source("R/Other.R")
 
 
 if (!exists("shinySettings")) {
@@ -67,11 +68,17 @@ if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {
 
 cohort <- cohort %>% 
           dplyr::distinct() %>% 
-          dplyr::select(.data$cohortFullName, .data$cohortId, .data$cohortName)
+          dplyr::select(.data$cohortFullName, .data$cohortId, .data$cohortName) %>% 
+          dplyr::arrange(.data$cohortFullName, .data$cohortId)
+
+database <- database %>% 
+            dplyr::distinct() %>% 
+            dplyr::arrange(.data$databaseId)
 
 if (exists("covariate")) {
   covariate <- covariate %>% 
-    dplyr::distinct()
+    dplyr::distinct() %>% 
+    dplyr::arrange(.data$covariateName)
   if (!"conceptId" %in% colnames(covariate)) {
     warning("conceptId not found in covariate file. Calculating conceptId from covariateId. This may rarely cause errors.")
   covariate <- covariate %>% 
@@ -81,7 +88,8 @@ if (exists("covariate")) {
 
 if (exists("temporalCovariate")) {
   temporalCovariate <- temporalCovariate %>% 
-    dplyr::distinct()
+    dplyr::distinct() %>% 
+    dplyr::arrange(.data$covariateName, .data$timeId)
   if (!"conceptId" %in% colnames(temporalCovariate)) {
     warning("conceptId not found in temporalCovariate file. Calculating conceptId from covariateId. This may rarely cause errors.")
     temporalCovariate <- temporalCovariate %>% 
@@ -98,50 +106,52 @@ if (exists("temporalCovariate")) {
 if (exists("includedSourceConcept")) {
   conceptSets <- includedSourceConcept %>% 
                   dplyr::select(.data$cohortId, .data$conceptSetId, .data$conceptSetName) %>% 
-                  dplyr::distinct()
+                  dplyr::distinct() %>% 
+                  dplyr::arrange(.data$cohortId, .data$conceptSetName)
 } else if (exists("orphanConcept")) {
   conceptSets <- orphanConcept %>% 
                   dplyr::select(.data$cohortId, .data$conceptSetId, .data$conceptSetName) %>% 
-                  dplyr::distinct()
+                  dplyr::distinct() %>% 
+                  dplyr::arrange(.data$cohortId, .data$conceptSetName)
 } else {
   conceptSets <- NULL 
 }
 
 
 if ("phenotypeDescription.csv" %in% list.files(path = dataFolder)) {
-  print("loading phenotypeDescription and cohortDescription from local folder")
+  print("loading phenotypeDescription and cohortDescription from local folder. App set to work in Phenotype library mode.")
+  appTitle <- "Phenotype Library"
   cohortDescription <- readr::read_csv(file.path(dataFolder, 'cohortDescription.csv'), 
                                        col_types = readr::cols(), 
                                        guess_max = 1e7, 
                                        locale = readr::locale(encoding = "UTF-8"),
-                                       trim_ws = TRUE) %>% 
-    dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = '')))
+                                       trim_ws = TRUE, 
+                                       na = '0', 
+                                       skip_empty_rows = TRUE) %>% 
+    dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = ''))) %>% 
+    dplyr::arrange(.data$phenotypeId, .data$cohortDefinitionName)
+  
+  cohort <- cohort %>%
+    dplyr::rename(cohortFullNameOld = .data$cohortFullName) %>% 
+        dplyr::left_join(y = cohortDescription %>% 
+                           dplyr::mutate(cohortId = utils::type.convert(.data$atlasId),
+                                         cohortFullName = .data$cohortDefinitionName) %>% 
+                           dplyr::select(.data$cohortId, .data$cohortFullName)) %>% 
+                           dplyr::relocate(.data$cohortFullName) %>% 
+        dplyr::mutate(cohortFullName = dplyr::case_when(is.na(.data$cohortFullName) ~ .data$cohortFullNameOld,
+                                                        TRUE ~ .data$cohortFullName)) %>% 
+        dplyr::select(-.data$cohortFullNameOld) %>% 
+        dplyr::arrange(.data$cohortFullName)
   
   phenotypeDescription <- readr::read_csv(file.path(dataFolder, "phenotypeDescription.csv"), 
                                           col_types = readr::cols(), 
                                           guess_max = 1e7, 
                                           locale = readr::locale(encoding = "UTF-8"),
-                                          trim_ws = TRUE) %>% 
-    dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = '')))
-  
-
-  
-} else if (system.file('phenotypeLibrary', 'phenotypeDescription.csv', package = 'phenotypeLibrary') != '') {
-  print("loading phenotypeDescription and cohortDescription from phenotype library package")
-  
-  cohortDescription <- readr::read_csv(file.path(system.file('phenotypeLibrary', 'cohortDescription.csv', package = 'phenotypeLibrary')), 
-                                       col_types = readr::cols(), 
-                                       guess_max = 1e7, 
-                                       locale = readr::locale(encoding = "UTF-8"),
-                                       trim_ws = TRUE) %>% 
-    dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = ''))) 
-    
-  
-  phenotypeDescription <- readr::read_csv(file.path(system.file('phenotypeLibrary', 'phenotypeDescription.csv', 
-                                                                package = 'phenotypeLibrary')), 
-                                          col_types = readr::cols(), 
-                                          guess_max = 1e7, 
-                                          locale = readr::locale(encoding = "UTF-8"),
-                                          trim_ws = TRUE) %>% 
-    dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = '')))
+                                          trim_ws = TRUE, 
+                                          na = '0', 
+                                          skip_empty_rows = TRUE) %>% 
+    dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = ''))) %>% 
+    dplyr::arrange(.data$phenotypeName, .data$phenotypeId)
+} else {
+  print("phenotypeDescription not found. App set to work in Cohort Diagnostics mode.")
 }
