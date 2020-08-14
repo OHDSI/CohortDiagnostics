@@ -794,12 +794,12 @@ shiny::shinyServer(function(input, output, session) {
     #     ),
     #     tr(
     #       lapply(rep(c("Proportion"), length(temporalCovariateChoicesSelected$choices)), th)
-    #     )
     #   )
     # ))
     table <- DT::datatable(table,
                            options = options,
                            rownames = FALSE,
+                           colnames = colnames(data) %>% SqlRender::camelCaseToTitleCase(),
                            # container = sketch,
                            escape = FALSE,
                            filter = c('bottom'),
