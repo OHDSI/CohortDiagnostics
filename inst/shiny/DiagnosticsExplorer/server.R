@@ -784,23 +784,11 @@ shiny::shinyServer(function(input, output, session) {
                      minCellPercentDef(1:(length(temporalCovariateChoicesSelected$choices)) + 1)
                    )
     )
-    # sketch <- htmltools::withTags(table(
-    #   class = 'display',
-    #   thead(
-    #     tr(
-    #       th(rowspan = 2, 'Covariate Name'),
-    #       th(rowspan = 2, 'Concept Id'),
-    #       lapply(temporalCovariateChoicesSelected$choices, th, colspan = 2, class = "dt-center")
-    #     ),
-    #     tr(
-    #       lapply(rep(c("Proportion"), length(temporalCovariateChoicesSelected$choices)), th)
-    #   )
-    # ))
+
     table <- DT::datatable(table,
                            options = options,
                            rownames = FALSE,
-                           colnames = colnames(data) %>% SqlRender::camelCaseToTitleCase(),
-                           # container = sketch,
+                           colnames = colnames(table) %>% SqlRender::camelCaseToTitleCase(),
                            escape = FALSE,
                            filter = c('bottom'),
                            class = "stripe nowrap compact")
