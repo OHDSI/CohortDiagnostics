@@ -390,15 +390,10 @@ shiny::shinyServer(function(input, output, session) {
       return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
     }
     
-    databaseIds <- data %>% 
-      dplyr::select(.data$databaseId) %>% 
-      dplyr::distinct() %>% 
-      dplyr::arrange(.data$databaseId) %>% 
-      dplyr::pull(.data$databaseId)
+    maxConceptSubjects <- max(data$conceptSubjects)
     
     if (input$includedType == "Source Concepts") {
-      table <- data %>% 
-        dplyr::filter(.data$databaseId %in% !!databaseIds) %>% 
+      table <- data %>%
         dplyr::select(.data$sourceConceptId, .data$sourceVocabularyId, .data$conceptCode, .data$sourceConceptName, .data$conceptSubjects, .data$databaseId) %>% 
         dplyr::rename(conceptId = "sourceConceptId", vocabularyId = "sourceVocabularyId", conceptName = "sourceConceptName" ) %>% 
         dplyr::arrange(databaseId) %>% 
@@ -428,8 +423,8 @@ shiny::shinyServer(function(input, output, session) {
                              class = "stripe nowrap compact")
       
       table <- DT::formatStyle(table = table,
-                               columns =  4 + (1:length(databaseIds)),
-                               background = DT::styleColorBar(c(0,1), "lightblue"),
+                               columns =  4 + (1:length(input$databases)),
+                               background = DT::styleColorBar(c(0,maxConceptSubjects), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
                                backgroundPosition = "center")
@@ -465,8 +460,8 @@ shiny::shinyServer(function(input, output, session) {
                              class = "stripe nowrap compact")
       
       table <- DT::formatStyle(table = table,
-                               columns =  2 + (1:length(databaseIds)),
-                               background = DT::styleColorBar(c(0,1), "lightblue"),
+                               columns =  2 + (1:length(input$databases)),
+                               background = DT::styleColorBar(c(0, maxConceptSubjects), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
                                backgroundPosition = "center")
@@ -729,7 +724,7 @@ shiny::shinyServer(function(input, output, session) {
                              filter = c('bottom'),
                              class = "stripe nowrap compact")
       table <- DT::formatStyle(table = table,
-                               columns = (2*(1:length(dataCounts$databaseId))) + 1,
+                               columns = (2 + (1:length(dataCounts$databaseId))),
                                background = DT::styleColorBar(c(0,1), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
@@ -1132,26 +1127,29 @@ shiny::shinyServer(function(input, output, session) {
   output$cohortCharacterizationSelectedCohort <- shiny::renderText(input$cohort)
   output$temporalCharacterizationSelectedDataBase <- shiny::renderText(input$database)
   
-  output$temporalCharacterizationSelectedCohort <- shiny::renderUI({
+  
+  targetCohortCount <- shiny::reactive({
     targetCohortWithCount <- cohortCount %>% 
       dplyr::filter(.data$cohortId == cohortId(),
                     .data$databaseId == input$database) %>% 
       dplyr::left_join(y = cohort) %>% 
       dplyr::arrange(.data$cohortFullName)
+    return(targetCohortWithCount)
+  }) 
+  
+  output$temporalCharacterizationSelectedCohort <- shiny::renderUI({
+    targetCohortCount <- targetCohortCount()
     
     return(htmltools::withTags(
       div(
-        h5("Target: ", targetCohortWithCount$cohortFullName, " ( n = ", scales::comma(x = targetCohortWithCount$cohortSubjects), " )")
+        h5("Target: ", targetCohortCount$cohortFullName, " ( n = ", scales::comma(x = targetCohortCount$cohortSubjects), " )")
       )
     )
     )
   })
   
-  output$compareCohortCharacterizationSelectedCohort <- shiny::renderUI({
-    targetCohortWithCount <- cohortCount %>% 
-      dplyr::filter(.data$cohortId == cohortId(),
-                    .data$databaseId == input$database) %>% 
-      dplyr::left_join(y = cohort)
+  selectedCohortCounts <- shiny::reactive({
+    targetCohortWithCount <- targetCohortCount()
     
     comparatorCohortWithCount <- cohortCount %>% 
       dplyr::filter(.data$cohortId == comparatorCohortId(),
@@ -1173,35 +1171,13 @@ shiny::shinyServer(function(input, output, session) {
       )))
   })
   
-  output$cohortOverlapSelectedCohort <- shiny::renderUI({
-    targetCohortWithCount <- cohortCount %>% 
-      dplyr::filter(.data$cohortId == cohortId(),
-                    .data$databaseId == input$database) %>% 
-      dplyr::left_join(y = cohort)
-    
-    comparatorCohortWithCount <- cohortCount %>% 
-      dplyr::filter(.data$cohortId == comparatorCohortId(),
-                    .data$databaseId == input$database) %>%
-      dplyr::left_join(y = cohort)
-    
-    return(htmltools::withTags(
-      div(table(
-        tr(
-          td(
-            h5("Target: ", targetCohortWithCount$cohortFullName, " ( n = ", targetCohortWithCount$cohortSubjects, " )"),
-          ),
-          td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;")),
-          td(
-            h5("Comparator : ", comparatorCohortWithCount$cohortFullName, " ( n = ", comparatorCohortWithCount$cohortSubjects, " )")
-          )
-        )
-      ) 
-      )
-    )
-    )
+  output$compareCohortCharacterizationSelectedCohort <- shiny::renderUI({
+    return(selectedCohortCounts())
   })
   
-  
+  output$cohortOverlapSelectedCohort <- shiny::renderUI({
+    return(selectedCohortCounts())
+  })
   
   #Download
   download_box <- function(exportname, plot){
