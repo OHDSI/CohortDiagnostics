@@ -5,6 +5,7 @@ CohortDiagnostics 1.2.2
 =======================
 Bug fixes:
 1. Changes dependency to ROhdsiWebApi (>= 1.1.0)
+2. DiagnosticsExplorer display bug fixes
 
 CohortDiagnostics 1.2.1
 =======================
