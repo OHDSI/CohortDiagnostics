@@ -479,11 +479,7 @@ shiny::shinyServer(function(input, output, session) {
       return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
     }
     
-    databaseIds <- table %>% 
-      dplyr::select(.data$databaseId) %>% 
-      dplyr::distinct() %>% 
-      dplyr::arrange(.data$databaseId) %>% 
-      dplyr::pull(.data$databaseId)
+    maxConceptCount <- max(table$conceptCount)
     
     table <- table %>% 
       dplyr::select(.data$conceptId, .data$standardConcept, .data$vocabularyId, .data$conceptCode, .data$conceptName, .data$conceptCount, .data$databaseId) %>% 
@@ -511,8 +507,8 @@ shiny::shinyServer(function(input, output, session) {
                            filter = c('bottom'),
                            class = "stripe nowrap compact")
     table <- DT::formatStyle(table = table,
-                             columns = 5 + (1:length(databaseIds)),
-                             background = DT::styleColorBar(c(0,1), "lightblue"),
+                             columns = 5 + (1:length(input$databases)),
+                             background = DT::styleColorBar(c(0,maxConceptCount), "lightblue"),
                              backgroundSize = "98% 88%",
                              backgroundRepeat = "no-repeat",
                              backgroundPosition = "center")
