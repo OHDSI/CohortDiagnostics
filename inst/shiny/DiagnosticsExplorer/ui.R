@@ -289,8 +289,7 @@ bodyTabItems <- shinydashboard::tabItems(
                  tags$tr(
                    tags$td(
                      valign = "bottom",
-                     div(style = "font-size:15px;font-weight: bold", "Target cohort:"),
-                     shiny::textOutput(outputId = "incidenceRateSelectedCohort") 
+                     shiny::htmlOutput(outputId = "incidentRateSelectedCohort") 
                    )
                  )),
       shiny::htmlOutput(outputId = "hoverInfoIr"),
@@ -312,8 +311,7 @@ bodyTabItems <- shinydashboard::tabItems(
       title = "Time Distributions",
       width = NULL,
       status = "primary",
-      div(style = "font-size:15px;font-weight: bold", "Target cohort:"),
-      shiny::textOutput(outputId = "timeDistributionSelectedCohort"),
+      shiny::htmlOutput(outputId = "timeDistributionSelectedCohort"),
       tags$br(),
       shiny::plotOutput("timeDisPlot"),
       shiny::downloadButton(outputId = "timeDistributionPlot", label = "Download")
@@ -334,24 +332,21 @@ bodyTabItems <- shinydashboard::tabItems(
       selected = "Source Concepts",
       inline = TRUE
     ),
-    div(style = "font-size:15px;font-weight: bold", "Target cohort:"),
-    shiny::textOutput(outputId = "sourceConceptsSelectedCohort"),
+    shiny::htmlOutput(outputId = "includeConceptsSelectedCohort"),
     tags$br(),
     DT::dataTableOutput("includedConceptsTable")
   ),
   shinydashboard::tabItem(tabName = "orphanConcepts",
-                          div(style = "font-size:15px;font-weight: bold", "Target cohort:"),
-                          shiny::textOutput(outputId = "orphanConceptsSelectedCohort"),
+                          shiny::htmlOutput(outputId = "orphanConceptSelectedCohort"),
                           tags$br(),
                           DT::dataTableOutput("orphanConceptsTable")),
   shinydashboard::tabItem(tabName = "inclusionRuleStats",
                           div(style = "font-size:15px;font-weight: bold", "Target cohort:"),
-                          shiny::textOutput(outputId = "inclusionRuleStatsSelectedCohort"),
+                          shiny::htmlOutput(outputId = "inclusionRuleStatSelectedCohort"),
                           tags$br(),
                           DT::dataTableOutput("inclusionRuleTable")),
   shinydashboard::tabItem(tabName = "indexEventBreakdown",
-                          div(style = "font-size:15px;font-weight: bold", "Target cohort:"),
-                          shiny::textOutput(outputId = "indexEventBreakdownSelectedCohort"),
+                          shiny::htmlOutput(outputId = "indexEventBreakdownSelectedCohort"),
                           tags$br(),
                           DT::dataTableOutput("breakdownTable")),
   shinydashboard::tabItem(

@@ -784,7 +784,7 @@ shiny::shinyServer(function(input, output, session) {
                            filter = c('bottom'),
                            class = "stripe nowrap compact")
     table <- DT::formatStyle(table = table,
-                             columns = (2*(1:length(temporalCovariateChoicesSelected$choices)) + 1), #0 index
+                             columns = (2 + (1:length(temporalCovariateChoicesSelected$choices))), #0 index
                              background = DT::styleColorBar(c(0,1), "lightblue"),
                              backgroundSize = "98% 88%",
                              backgroundRepeat = "no-repeat",
@@ -1114,15 +1114,7 @@ shiny::shinyServer(function(input, output, session) {
     showInfoBox("Compare Cohort Characteristics", "html/compareCohortCharacterization.html")
   })
   
-  output$incidenceRateSelectedCohort <- shiny::renderText(input$cohort)
-  output$timeDistributionSelectedCohort <- shiny::renderText(input$cohort)
-  output$sourceConceptsSelectedCohort <- shiny::renderText(input$cohort)
-  output$orphanConceptsSelectedCohort <- shiny::renderText(input$cohort)
-  output$inclusionRuleStatsSelectedCohort <- shiny::renderText(input$cohort)
-  output$indexEventBreakdownSelectedCohort <- shiny::renderText(input$cohort)
-  output$cohortCharacterizationSelectedCohort <- shiny::renderText(input$cohort)
   output$temporalCharacterizationSelectedDataBase <- shiny::renderText(input$database)
-  
   
   targetCohortCount <- shiny::reactive({
     targetCohortWithCount <- cohortCount %>% 
@@ -1133,7 +1125,7 @@ shiny::shinyServer(function(input, output, session) {
     return(targetCohortWithCount)
   }) 
   
-  output$temporalCharacterizationSelectedCohort <- shiny::renderUI({
+  targetCohortCountHtml <- shiny::reactive({
     targetCohortCount <- targetCohortCount()
     
     return(htmltools::withTags(
@@ -1165,6 +1157,34 @@ shiny::shinyServer(function(input, output, session) {
         )
       ) 
       )))
+  })
+  
+  output$temporalCharacterizationSelectedCohort <- shiny::renderUI({
+    return(targetCohortCountHtml())
+  })
+  
+  output$incidentRateSelectedCohort <- shiny::renderUI({
+    return(targetCohortCountHtml())
+  })
+  
+  output$timeDistributionSelectedCohort <- shiny::renderUI({
+    return(targetCohortCountHtml())
+  })
+  
+  output$includeConceptsSelectedCohort <- shiny::renderUI({
+    return(targetCohortCountHtml())
+  })
+  
+  output$orphanConceptSelectedCohort <- shiny::renderUI({
+    return(targetCohortCountHtml())
+  })
+  
+  output$inclusionRuleStatSelectedCohort <- shiny::renderUI({
+    return(targetCohortCountHtml())
+  })
+  
+  output$indexEventBreakdownSelectedCohort <- shiny::renderUI({
+    return(targetCohortCountHtml())
   })
   
   output$compareCohortCharacterizationSelectedCohort <- shiny::renderUI({
