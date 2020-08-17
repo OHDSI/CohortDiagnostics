@@ -390,11 +390,11 @@ shiny::shinyServer(function(input, output, session) {
       return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
     }
     
+    
     maxConceptSubjects <- max(data$conceptSubjects)
     
     if (input$includedType == "Source Concepts") {
       table <- data %>% 
-        dplyr::filter(.data$databaseId %in% !!databaseIds) %>% 
         dplyr::select(.data$sourceConceptId, .data$sourceVocabularyId, .data$conceptCode, .data$sourceConceptName, .data$conceptSubjects, .data$databaseId) %>% 
         dplyr::group_by(.data$sourceConceptId, .data$sourceVocabularyId, .data$conceptCode, .data$sourceConceptName, .data$databaseId) %>%
         dplyr::summarise(conceptSubjects = sum(.data$conceptSubjects)) %>% #this logic needs to be confirmed
