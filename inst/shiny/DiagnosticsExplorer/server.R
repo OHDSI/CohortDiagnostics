@@ -393,10 +393,14 @@ shiny::shinyServer(function(input, output, session) {
     maxConceptSubjects <- max(data$conceptSubjects)
     
     if (input$includedType == "Source Concepts") {
-      table <- data %>%
+      table <- data %>% 
+        dplyr::filter(.data$databaseId %in% !!databaseIds) %>% 
         dplyr::select(.data$sourceConceptId, .data$sourceVocabularyId, .data$conceptCode, .data$sourceConceptName, .data$conceptSubjects, .data$databaseId) %>% 
+        dplyr::group_by(.data$sourceConceptId, .data$sourceVocabularyId, .data$conceptCode, .data$sourceConceptName, .data$databaseId) %>%
+        dplyr::summarise(conceptSubjects = sum(.data$conceptSubjects)) %>% #this logic needs to be confirmed
+        dplyr::ungroup() %>%
         dplyr::rename(conceptId = "sourceConceptId", vocabularyId = "sourceVocabularyId", conceptName = "sourceConceptName" ) %>% 
-        dplyr::arrange(databaseId) %>% 
+        dplyr::arrange(.data$databaseId) %>% 
         tidyr::pivot_wider(id_cols = c("conceptId", "vocabularyId", "conceptCode", "conceptName" ),
                            names_from = "databaseId",
                            values_from = "conceptSubjects",
