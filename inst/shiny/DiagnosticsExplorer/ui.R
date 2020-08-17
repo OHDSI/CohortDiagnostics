@@ -380,7 +380,27 @@ bodyTabItems <- shinydashboard::tabItems(
     ),
     
     tags$br(),
-    DT::dataTableOutput("temporalCharacterizationTable")
+    DT::dataTableOutput("temporalCharacterizationTable"),
+    tags$br(),
+    shiny::conditionalPanel(
+      condition = "input.timeIdChoices.length == 2",
+      shinydashboard::box(
+        title = "Temporal characterization plot",
+        width = NULL,
+        status = "primary",
+        shiny::htmlOutput(outputId = "temporalCharacterizationPlotHover"),
+        shiny::plotOutput(
+          outputId = "temporalCharacterizationPlot",
+          height = 700,
+          hover = shiny::hoverOpts(
+            id = "temporalCharacterizationPlotHoverInfo",
+            delay = 100,
+            delayType = "debounce"
+          )
+        ),
+        shiny::downloadButton(outputId = "downloadTemporalCharacterizationPlot", label = "Download")
+      )
+    )
   ),
   shinydashboard::tabItem(
     tabName = "cohortOverlap",
