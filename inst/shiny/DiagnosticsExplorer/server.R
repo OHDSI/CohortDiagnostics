@@ -408,11 +408,11 @@ shiny::shinyServer(function(input, output, session) {
                            values_fill = 0)
       
       options = list(pageLength = 999,
-                     searching = FALSE,
+                     searching = TRUE,
                      scrollX = TRUE,
                      lengthChange = FALSE,
-                     ordering = FALSE,
-                     paging = FALSE,
+                     ordering = TRUE,
+                     paging = TRUE,
                      columnDefs = list(
                        truncateStringDef(0, 150),
                        list(minCellCountDef(0))
@@ -448,8 +448,8 @@ shiny::shinyServer(function(input, output, session) {
                      searching = FALSE,
                      scrollX = TRUE,
                      lengthChange = FALSE,
-                     ordering = FALSE,
-                     paging = FALSE,
+                     ordering = TRUE,
+                     paging = TRUE,
                      columnDefs = list(
                        truncateStringDef(0, 150),
                        list(minCellCountDef(0))
