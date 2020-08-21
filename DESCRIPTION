@@ -1,8 +1,8 @@
 Package: CohortDiagnostics
 Type: Package
 Title: Diagnostics for OHDSI Studies
-Version: 1.2.1
-Date: 2020-08-13
+Version: 1.2.2
+Date: 2020-08-21
 Authors@R: c(
     person("Gowtham", "Rao", email = "gowthamrao@gmail.com", role = c("aut", "cre")),
     person("Martijn", "Schuemie", email = "schuemie@ohdsi.org", role = c("aut")),
@@ -26,7 +26,7 @@ Imports:
   readr,
   rlang,
   RJSONIO,
-  ROhdsiWebApi (>= 1.0.0),
+  ROhdsiWebApi (>= 1.1.0),
   SqlRender (>= 1.6.7),
   stringr,
   tibble (>= 3.0.0),

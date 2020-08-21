@@ -28,6 +28,7 @@ spelling::spell_check_files(list.files(path = "inst/shiny", pattern = "*.html", 
 unlink("extras/CohortDiagnostics.pdf")
 shell("R CMD Rd2pdf ./ --output=extras/CohortDiagnostics.pdf")
 
+dir.create(path = "./inst/doc/", showWarnings = FALSE)
 rmarkdown::render("vignettes/CohortDiagnosticsUsingWebApi.Rmd",
                   output_file = "../inst/doc/CohortDiagnosticsUsingWebApi.pdf",
                   rmarkdown::pdf_document(latex_engine = "pdflatex",
