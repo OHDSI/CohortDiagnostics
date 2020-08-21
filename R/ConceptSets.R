@@ -19,7 +19,8 @@
 #' Extract concept set sql from cohort generation SQL
 #'
 #' @description
-#' Extracts SQL that corresponds to the conceptset (codeset) part from cohort generation SQL used to instantiated conceptSets during cohort construction.
+#' Extracts SQL that corresponds to the conceptset (codeset) part from cohort generation SQL used 
+#' to instantiated conceptSets during cohort construction.
 #'
 #' @param cohortSql    Complete SQL specification of cohort definition in OHDSI SQL dialect. May
 #'                     contain parameters designed to be replaced by \code{SqlRender}.
@@ -58,26 +59,30 @@ extractConceptSetsSqlFromCohortSql <- function(cohortSql) {
   conceptSetIds <- vector("integer", subQueryCount)
   
   temp <- list()
-  for (i in 1:subQueryCount) {
-    startForSubQuery <- min(starts[starts > subQueryLocations[i, 2]])
-    endForSubQuery <- min(level0[level0 > startForSubQuery])
-    subQuery <-
-      paste(stringr::str_sub(sql, subQueryLocations[i, 1], endForSubQuery),
-            "C")
-    conceptsetSqls[i] <- subQuery
-    conceptSetIds[i] <- stringr::str_replace(
-      subQuery,
-      pattern = stringr::regex(
-        pattern = "SELECT ([0-9]+) as codeset_id.*",
-        ignore_case = TRUE,
-        multiline = TRUE,
-        dotall = TRUE
-      ),
-      replacement = "\\1"
-    ) %>%
-      utils::type.convert()
-    temp[[i]] <- tidyr::tibble(conceptSetId = conceptSetIds[i],
-                               conceptSetSql = conceptsetSqls[i])
+  if (subQueryCount > 0) {
+    for (i in 1:subQueryCount) {
+      startForSubQuery <- min(starts[starts > subQueryLocations[i, 2]])
+      endForSubQuery <- min(level0[level0 > startForSubQuery])
+      subQuery <-
+        paste(stringr::str_sub(sql, subQueryLocations[i, 1], endForSubQuery),
+              "C")
+      conceptsetSqls[i] <- subQuery
+      conceptSetIds[i] <- stringr::str_replace(
+        subQuery,
+        pattern = stringr::regex(
+          pattern = "SELECT ([0-9]+) as codeset_id.*",
+          ignore_case = TRUE,
+          multiline = TRUE,
+          dotall = TRUE
+        ),
+        replacement = "\\1"
+      ) %>%
+        utils::type.convert()
+      temp[[i]] <- tidyr::tibble(conceptSetId = conceptSetIds[i],
+                                 conceptSetSql = conceptsetSqls[i])
+    }
+  } else {
+    temp <- tidyr::tibble()
   }
   return(dplyr::bind_rows(temp))
 }
@@ -108,13 +113,17 @@ extractConceptSetsJsonFromCohortJson <- function(cohortJson) {
     expression <- cohortDefinition
   }
   conceptSetExpression <- list()
-  for (i in (1:length(expression$ConceptSets))) {
-    conceptSetExpression[[i]] <-
-      tidyr::tibble(
-        conceptSetId = expression$ConceptSets[[i]]$id,
-        conceptSetName = expression$ConceptSets[[i]]$name,
-        conceptSetExpression = expression$ConceptSets[[i]]$expression$items %>% RJSONIO::toJSON()
-      )
+  if (length(expression$ConceptSets) > 0) {
+    for (i in (1:length(expression$ConceptSets))) {
+      conceptSetExpression[[i]] <-
+        tidyr::tibble(
+          conceptSetId = expression$ConceptSets[[i]]$id,
+          conceptSetName = expression$ConceptSets[[i]]$name,
+          conceptSetExpression = expression$ConceptSets[[i]]$expression$items %>% RJSONIO::toJSON()
+        )
+    }
+  } else {
+    conceptSetExpression <- tidyr::tibble()
   }
   return(dplyr::bind_rows(conceptSetExpression))
 }
@@ -140,6 +149,7 @@ combineConceptSetsFromCohorts <-
     checkmate::reportAssertions(errorMessage)
     
     conceptSets <- list()
+    conceptSetCounter <- 0
     
     for (i in (1:nrow(cohorts))) {
       cohort <- cohorts %>%
@@ -155,9 +165,12 @@ combineConceptSetsFromCohorts <-
           cohort$cohortFullName
         )
       }
-      conceptSets[[i]] <-
-        tidyr::tibble(cohortId = cohort$cohortId,
-                      dplyr::inner_join(x = sql, y = json))
+      if (length(sql) > 0 && length(json) > 0) {
+        conceptSetCounter <- conceptSetCounter + 1
+        conceptSets[[conceptSetCounter]] <-
+          tidyr::tibble(cohortId = cohort$cohortId,
+                        dplyr::inner_join(x = sql, y = json))
+      }
     }
     conceptSets <- dplyr::bind_rows(conceptSets) %>%
       dplyr::arrange("cohortId", "conceptSetId")

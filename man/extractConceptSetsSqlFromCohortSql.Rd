@@ -17,7 +17,8 @@ The function will return a tibble data frame object with one row per concept id 
                     concept set combination in cohort definition.
 }
 \description{
-Extracts SQL that corresponds to the conceptset (codeset) part from cohort generation SQL used to instantiated conceptSets during cohort construction.
+Extracts SQL that corresponds to the conceptset (codeset) part from cohort generation SQL used 
+to instantiated conceptSets during cohort construction.
 }
 \examples{
 \dontrun{
