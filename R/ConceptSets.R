@@ -19,7 +19,8 @@
 #' Extract concept set sql from cohort generation SQL
 #'
 #' @description
-#' Extracts SQL that corresponds to the conceptset (codeset) part from cohort generation SQL used to instantiated conceptSets during cohort construction.
+#' Extracts SQL that corresponds to the conceptset (codeset) part from cohort generation SQL used 
+#' to instantiated conceptSets during cohort construction.
 #'
 #' @param cohortSql    Complete SQL specification of cohort definition in OHDSI SQL dialect. May
 #'                     contain parameters designed to be replaced by \code{SqlRender}.
@@ -80,6 +81,8 @@ extractConceptSetsSqlFromCohortSql <- function(cohortSql) {
       temp[[i]] <- tidyr::tibble(conceptSetId = conceptSetIds[i],
                                  conceptSetSql = conceptsetSqls[i])
     }
+  } else {
+    temp <- tidyr::tibble()
   }
   return(dplyr::bind_rows(temp))
 }
@@ -119,6 +122,8 @@ extractConceptSetsJsonFromCohortJson <- function(cohortJson) {
           conceptSetExpression = expression$ConceptSets[[i]]$expression$items %>% RJSONIO::toJSON()
         )
     }
+  } else {
+    conceptSetExpression <- tidyr::tibble()
   }
   return(dplyr::bind_rows(conceptSetExpression))
 }
@@ -160,7 +165,7 @@ combineConceptSetsFromCohorts <-
           cohort$cohortFullName
         )
       }
-      if (length(sql)> 0 && length(json) > 0) {
+      if (length(sql) > 0 && length(json) > 0) {
         conceptSetCounter <- conceptSetCounter + 1
         conceptSets[[conceptSetCounter]] <-
           tidyr::tibble(cohortId = cohort$cohortId,
