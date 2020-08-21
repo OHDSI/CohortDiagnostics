@@ -148,7 +148,18 @@ prepareTable1Comp <- function(balance,
 
 compareCohortCharacteristics <- function(characteristics1, characteristics2) {
   m <- dplyr::full_join(x = characteristics1 %>% dplyr::distinct(), 
-                        y = characteristics2 %>% dplyr::distinct(), 
+                        y = characteristics2 %>% dplyr::distinct(),
+                        suffix = c("1", "2")) %>%
+    dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = 0)),
+                  sd = sqrt(.data$sd1^2 + .data$sd2^2),
+                  stdDiff = (.data$mean2 - .data$mean1)/.data$sd) %>% 
+    dplyr::arrange(-abs(.data$stdDiff))
+  return(m)
+}
+
+compareTemporalCharacterization <- function(temporalCharacteristics1, temporalCharacteristics2){
+  m <- dplyr::full_join(x = temporalCharacteristics1 %>% dplyr::distinct(), 
+                        y = temporalCharacteristics2 %>% dplyr::distinct(), 
                         by = c("covariateId", "conceptId", "databaseId", "covariateName", "covariateAnalysisId"),
                         suffix = c("1", "2")) %>%
     dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = 0)),
@@ -157,3 +168,5 @@ compareCohortCharacteristics <- function(characteristics1, characteristics2) {
     dplyr::arrange(-abs(.data$stdDiff))
   return(m)
 }
+  
+

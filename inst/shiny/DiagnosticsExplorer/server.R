@@ -390,18 +390,17 @@ shiny::shinyServer(function(input, output, session) {
       return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
     }
     
-    databaseIds <- data %>% 
-      dplyr::select(.data$databaseId) %>% 
-      dplyr::distinct() %>% 
-      dplyr::arrange(.data$databaseId) %>% 
-      dplyr::pull(.data$databaseId)
+    
+    maxConceptSubjects <- max(data$conceptSubjects)
     
     if (input$includedType == "Source Concepts") {
       table <- data %>% 
-        dplyr::filter(.data$databaseId %in% !!databaseIds) %>% 
         dplyr::select(.data$sourceConceptId, .data$sourceVocabularyId, .data$conceptCode, .data$sourceConceptName, .data$conceptSubjects, .data$databaseId) %>% 
+        dplyr::group_by(.data$sourceConceptId, .data$sourceVocabularyId, .data$conceptCode, .data$sourceConceptName, .data$databaseId) %>%
+        dplyr::summarise(conceptSubjects = sum(.data$conceptSubjects)) %>% #this logic needs to be confirmed
+        dplyr::ungroup() %>%
         dplyr::rename(conceptId = "sourceConceptId", vocabularyId = "sourceVocabularyId", conceptName = "sourceConceptName" ) %>% 
-        dplyr::arrange(databaseId) %>% 
+        dplyr::arrange(.data$databaseId) %>% 
         tidyr::pivot_wider(id_cols = c("conceptId", "vocabularyId", "conceptCode", "conceptName" ),
                            names_from = "databaseId",
                            values_from = "conceptSubjects",
@@ -409,11 +408,11 @@ shiny::shinyServer(function(input, output, session) {
                            values_fill = 0)
       
       options = list(pageLength = 999,
-                     searching = FALSE,
+                     searching = TRUE,
                      scrollX = TRUE,
                      lengthChange = FALSE,
-                     ordering = FALSE,
-                     paging = FALSE,
+                     ordering = TRUE,
+                     paging = TRUE,
                      columnDefs = list(
                        truncateStringDef(0, 150),
                        list(minCellCountDef(0))
@@ -428,8 +427,8 @@ shiny::shinyServer(function(input, output, session) {
                              class = "stripe nowrap compact")
       
       table <- DT::formatStyle(table = table,
-                               columns =  4 + (1:length(databaseIds)),
-                               background = DT::styleColorBar(c(0,1), "lightblue"),
+                               columns =  4 + (1:length(input$databases)),
+                               background = DT::styleColorBar(c(0,maxConceptSubjects), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
                                backgroundPosition = "center")
@@ -449,8 +448,8 @@ shiny::shinyServer(function(input, output, session) {
                      searching = FALSE,
                      scrollX = TRUE,
                      lengthChange = FALSE,
-                     ordering = FALSE,
-                     paging = FALSE,
+                     ordering = TRUE,
+                     paging = TRUE,
                      columnDefs = list(
                        truncateStringDef(0, 150),
                        list(minCellCountDef(0))
@@ -465,8 +464,8 @@ shiny::shinyServer(function(input, output, session) {
                              class = "stripe nowrap compact")
       
       table <- DT::formatStyle(table = table,
-                               columns =  2 + (1:length(databaseIds)),
-                               background = DT::styleColorBar(c(0,1), "lightblue"),
+                               columns =  2 + (1:length(input$databases)),
+                               background = DT::styleColorBar(c(0, maxConceptSubjects), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
                                backgroundPosition = "center")
@@ -484,11 +483,7 @@ shiny::shinyServer(function(input, output, session) {
       return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
     }
     
-    databaseIds <- table %>% 
-      dplyr::select(.data$databaseId) %>% 
-      dplyr::distinct() %>% 
-      dplyr::arrange(.data$databaseId) %>% 
-      dplyr::pull(.data$databaseId)
+    maxConceptCount <- max(table$conceptCount)
     
     table <- table %>% 
       dplyr::select(.data$conceptId, .data$standardConcept, .data$vocabularyId, .data$conceptCode, .data$conceptName, .data$conceptCount, .data$databaseId) %>% 
@@ -516,8 +511,8 @@ shiny::shinyServer(function(input, output, session) {
                            filter = c('bottom'),
                            class = "stripe nowrap compact")
     table <- DT::formatStyle(table = table,
-                             columns = 5 + (1:length(databaseIds)),
-                             background = DT::styleColorBar(c(0,1), "lightblue"),
+                             columns = 5 + (1:length(input$databases)),
+                             background = DT::styleColorBar(c(0,maxConceptCount), "lightblue"),
                              backgroundSize = "98% 88%",
                              backgroundRepeat = "no-repeat",
                              backgroundPosition = "center")
@@ -729,7 +724,7 @@ shiny::shinyServer(function(input, output, session) {
                              filter = c('bottom'),
                              class = "stripe nowrap compact")
       table <- DT::formatStyle(table = table,
-                               columns = (2*(1:length(dataCounts$databaseId))) + 1,
+                               columns = (2 + (1:length(dataCounts$databaseId))),
                                background = DT::styleColorBar(c(0,1), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
@@ -784,34 +779,102 @@ shiny::shinyServer(function(input, output, session) {
                      minCellPercentDef(1:(length(temporalCovariateChoicesSelected$choices)) + 1)
                    )
     )
-    # sketch <- htmltools::withTags(table(
-    #   class = 'display',
-    #   thead(
-    #     tr(
-    #       th(rowspan = 2, 'Covariate Name'),
-    #       th(rowspan = 2, 'Concept Id'),
-    #       lapply(temporalCovariateChoicesSelected$choices, th, colspan = 2, class = "dt-center")
-    #     ),
-    #     tr(
-    #       lapply(rep(c("Proportion"), length(temporalCovariateChoicesSelected$choices)), th)
-    #     )
-    #   )
-    # ))
+
     table <- DT::datatable(table,
                            options = options,
                            rownames = FALSE,
-                           # container = sketch,
+                           colnames = colnames(table) %>% SqlRender::camelCaseToTitleCase(),
                            escape = FALSE,
                            filter = c('bottom'),
                            class = "stripe nowrap compact")
     table <- DT::formatStyle(table = table,
-                             columns = (2*(1:length(temporalCovariateChoicesSelected$choices)) + 1), #0 index
+                             columns = (2 + (1:length(temporalCovariateChoicesSelected$choices))), #0 index
                              background = DT::styleColorBar(c(0,1), "lightblue"),
                              backgroundSize = "98% 88%",
                              backgroundRepeat = "no-repeat",
                              backgroundPosition = "center")
     return(table)
   }, server = TRUE)
+  
+  computeTemporalCharacterizationBalance <- shiny::reactive({
+    if (length(input$timeIdChoices) != 2 ) {
+      return(tidyr::tibble())
+    }
+    covs1 <- temporalCovariateValue %>% 
+      dplyr::filter(.data$timeId == timeId()[1],
+                    .data$databaseId == input$database)
+    covs2 <- temporalCovariateValue %>% 
+      dplyr::filter(.data$timeId == timeId()[2],
+                    .data$databaseId == input$database)
+    covs1 <- dplyr::left_join(x = covs1, y = temporalCovariate)
+    covs2 <- dplyr::left_join(x = covs2, y = temporalCovariate)
+    balance <- compareTemporalCharacterization(covs1, covs2) %>%
+      dplyr::mutate(absStdDiff = abs(.data$stdDiff))
+    return(balance)
+  })
+  
+  temporalCharacterizationPlot <- shiny::reactive({
+    balance <- computeTemporalCharacterizationBalance()
+    if (nrow(balance) == 0) {
+      return(NULL)
+    }
+    balance$mean1[is.na(balance$mean1)] <- 0
+    balance$mean2[is.na(balance$mean2)] <- 0
+    plot <- ggplot2::ggplot(balance, ggplot2::aes(x = mean1, y = mean2, color = absStdDiff)) +
+      ggplot2::geom_point(alpha = 0.3, shape = 16, size = 2) +
+      ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+      ggplot2::geom_hline(yintercept = 0) +
+      ggplot2::geom_vline(xintercept = 0) +             
+      ggplot2::scale_x_continuous(input$timeIdChoices[[2]], limits = c(0, 1)) +
+      ggplot2::scale_y_continuous(input$timeIdChoices[[1]], limits = c(0, 1)) +
+      ggplot2::scale_color_gradient("Absolute\nStd. Diff.", low = "blue", high = "red", space = "Lab", na.value = "red")
+    return(plot)
+  })
+  
+  output$temporalCharacterizationPlot <- shiny::renderPlot(expr = {
+    return(temporalCharacterizationPlot())
+  }, res = 100)
+  
+  output$temporalCharacterizationPlotHover <- shiny::renderUI({
+    balance <- computeTemporalCharacterizationBalance()
+    balance$mean1[is.na(balance$mean1)] <- 0
+    balance$mean2[is.na(balance$mean2)] <- 0
+    if (nrow(balance) == 0) {
+      return(NULL)
+    } else {
+      hover <- input$temporalCharacterizationPlotHoverInfo
+      point <- nearPoints(balance, hover, threshold = 5, maxpoints = 1, addDist = TRUE)
+      if (nrow(point) == 0) {
+        return(NULL)
+      }
+      text <- paste(point$covariateName, 
+                    "",
+                    sprintf("<b>Mean Target: </b> %0.2f", point$mean1),
+                    sprintf("<b>Mean Comparator: </b> %0.2f", point$mean2), 
+                    sprintf("<b>Std diff.: </b> %0.2f", point$stdDiff), 
+                    sep = "<br/>")
+      left_px <- hover$coords_css$x
+      top_px <- hover$coords_css$y
+      if (hover$x > 0.5) {
+        xOffset <- -505
+      } else {
+        xOffset <- 5
+      }
+      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
+                      "left:",
+                      left_px + xOffset,
+                      "px; top:",
+                      top_px - 150,
+                      "px; width:500px;")
+      div(
+        style = "position: relative; width: 0; height: 0",
+        wellPanel(
+          style = style,
+          p(HTML(text))
+        )
+      )
+    }
+  })
   
   output$overlapTable <- DT::renderDataTable(expr = {
     data <- cohortOverlap[cohortOverlap$targetCohortId == cohortId() & 
@@ -1003,8 +1066,8 @@ shiny::shinyServer(function(input, output, session) {
       ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
       ggplot2::geom_hline(yintercept = 0) +
       ggplot2::geom_vline(xintercept = 0) +             
-      ggplot2::scale_x_continuous("Mean Target", limits = c(0, 1)) +
-      ggplot2::scale_y_continuous("Mean Comparator", limits = c(0, 1)) +
+      ggplot2::scale_x_continuous(input$cohort, limits = c(0, 1)) +
+      ggplot2::scale_y_continuous(input$comparator, limits = c(0, 1)) +
       ggplot2::scale_color_gradient("Absolute\nStd. Diff.", low = "blue", high = "red", space = "Lab", na.value = "red")
     return(plot)
   })
@@ -1135,35 +1198,30 @@ shiny::shinyServer(function(input, output, session) {
     showInfoBox("Compare Cohort Characteristics", "html/compareCohortCharacterization.html")
   })
   
-  output$incidenceRateSelectedCohort <- shiny::renderText(input$cohort)
-  output$timeDistributionSelectedCohort <- shiny::renderText(input$cohort)
-  output$sourceConceptsSelectedCohort <- shiny::renderText(input$cohort)
-  output$orphanConceptsSelectedCohort <- shiny::renderText(input$cohort)
-  output$inclusionRuleStatsSelectedCohort <- shiny::renderText(input$cohort)
-  output$indexEventBreakdownSelectedCohort <- shiny::renderText(input$cohort)
-  output$cohortCharacterizationSelectedCohort <- shiny::renderText(input$cohort)
   output$temporalCharacterizationSelectedDataBase <- shiny::renderText(input$database)
   
-  output$temporalCharacterizationSelectedCohort <- shiny::renderUI({
+  targetCohortCount <- shiny::reactive({
     targetCohortWithCount <- cohortCount %>% 
       dplyr::filter(.data$cohortId == cohortId(),
                     .data$databaseId == input$database) %>% 
       dplyr::left_join(y = cohort) %>% 
       dplyr::arrange(.data$cohortFullName)
+    return(targetCohortWithCount)
+  }) 
+  
+  targetCohortCountHtml <- shiny::reactive({
+    targetCohortCount <- targetCohortCount()
     
     return(htmltools::withTags(
       div(
-        h5("Target: ", targetCohortWithCount$cohortFullName, " ( n = ", scales::comma(x = targetCohortWithCount$cohortSubjects), " )")
+        h5("Target: ", targetCohortCount$cohortFullName, " ( n = ", scales::comma(x = targetCohortCount$cohortSubjects), " )")
       )
     )
     )
   })
   
-  output$compareCohortCharacterizationSelectedCohort <- shiny::renderUI({
-    targetCohortWithCount <- cohortCount %>% 
-      dplyr::filter(.data$cohortId == cohortId(),
-                    .data$databaseId == input$database) %>% 
-      dplyr::left_join(y = cohort)
+  selectedCohortCounts <- shiny::reactive({
+    targetCohortWithCount <- targetCohortCount()
     
     comparatorCohortWithCount <- cohortCount %>% 
       dplyr::filter(.data$cohortId == comparatorCohortId(),
@@ -1185,35 +1243,41 @@ shiny::shinyServer(function(input, output, session) {
       )))
   })
   
-  output$cohortOverlapSelectedCohort <- shiny::renderUI({
-    targetCohortWithCount <- cohortCount %>% 
-      dplyr::filter(.data$cohortId == cohortId(),
-                    .data$databaseId == input$database) %>% 
-      dplyr::left_join(y = cohort)
-    
-    comparatorCohortWithCount <- cohortCount %>% 
-      dplyr::filter(.data$cohortId == comparatorCohortId(),
-                    .data$databaseId == input$database) %>%
-      dplyr::left_join(y = cohort)
-    
-    return(htmltools::withTags(
-      div(table(
-        tr(
-          td(
-            h5("Target: ", targetCohortWithCount$cohortFullName, " ( n = ", targetCohortWithCount$cohortSubjects, " )"),
-          ),
-          td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;")),
-          td(
-            h5("Comparator : ", comparatorCohortWithCount$cohortFullName, " ( n = ", comparatorCohortWithCount$cohortSubjects, " )")
-          )
-        )
-      ) 
-      )
-    )
-    )
+  output$temporalCharacterizationSelectedCohort <- shiny::renderUI({
+    return(targetCohortCountHtml())
   })
   
+  output$incidentRateSelectedCohort <- shiny::renderUI({
+    return(targetCohortCountHtml())
+  })
   
+  output$timeDistributionSelectedCohort <- shiny::renderUI({
+    return(targetCohortCountHtml())
+  })
+  
+  output$includeConceptsSelectedCohort <- shiny::renderUI({
+    return(targetCohortCountHtml())
+  })
+  
+  output$orphanConceptSelectedCohort <- shiny::renderUI({
+    return(targetCohortCountHtml())
+  })
+  
+  output$inclusionRuleStatSelectedCohort <- shiny::renderUI({
+    return(targetCohortCountHtml())
+  })
+  
+  output$indexEventBreakdownSelectedCohort <- shiny::renderUI({
+    return(targetCohortCountHtml())
+  })
+  
+  output$compareCohortCharacterizationSelectedCohort <- shiny::renderUI({
+    return(selectedCohortCounts())
+  })
+  
+  output$cohortOverlapSelectedCohort <- shiny::renderUI({
+    return(selectedCohortCounts())
+  })
   
   #Download
   download_box <- function(exportname, plot){
@@ -1231,5 +1295,5 @@ shiny::shinyServer(function(input, output, session) {
   output$timeDistributionPlot <- download_box("TimeDistribution", timeDisPlotDownload())
   output$downloadCompareCohortPlot <- download_box("CompareCohort", downloadCohortComparePlot())
   output$downloadOverlapPlot <- download_box("OverlapPlot", overLapPlot())
-  
+  output$downloadTemporalCharacterizationPlot <- download_box("Temporal characterization plot", temporalCharacterizationPlot())
 })
