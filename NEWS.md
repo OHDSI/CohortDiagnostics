@@ -1,15 +1,13 @@
-CohortDiagnostics (Develop)
+CohortDiagnostics 1.2.3
 =======================
 
-Note: 1.2.x are the last planned release in v1.x.x series. No new functionalities will 
-be added to 1.2.x moving forward. All future releases in 1.2.x series will be bug fixes.
+Bug fixes:
 
-Version 2.x is planned for release by October 2020, and will be a breaking change. Output of 
-Versions 2.x will use a different data model and will not be backward compatible with 1.x.
+1. Fixed error when many concept sets have to be instantiated.
 
 CohortDiagnostics 1.2.2
 =======================
-New features:
+Changes:
 1. Minor UI changes to Diagnostics explorer. Added missing sort.
 2. Added better labels for plots.
 3. Download plots.
@@ -20,7 +18,7 @@ Bug fixes:
 
 CohortDiagnostics 1.2.1
 =======================
-New features:
+Changes:
 1. All objects in DiagnosticsExplorer are sorted by default #173
 2. Multi select for concepts #199
 
@@ -29,7 +27,7 @@ Bug fixes:
 
 CohortDiagnostics 1.2.0
 =======================
-New features:
+Changes:
 1. All objects in DiagnosticsExplorer are sorted by default #173
 2. Multi select for concepts #199
 
@@ -38,7 +36,7 @@ Bug fixes:
 
 CohortDiagnostics 1.2.0
 =======================
-New features:
+Changes:
 1. New function to retrieve concept set json from cohort json \code{extractConceptSetsJsonFromCohortJson}
 2. New function to retrieve concept set sql from cohort sql \code{extractConceptSetsSqlFromCohortSql}
 3. DiagnosticsExplorer shiny app - DataTable now rendered using server side processing. Bug fixes and UI improvements.
@@ -52,7 +50,7 @@ Bug fixes:
 
 CohortDiagnostics 1.1.1
 =======================
-New features:
+Changes:
 1. Shiny app UI improvements
 2. Link out to Atlas and Athena from cohortId. Supports baseUrl.
 3. (beta - unreleased) support for Phenotype library. Shiny app will look for two additional csv files phenotypeDescription and cohortDescription that put the DiagnosticExplorer in Phenotype Library Mode. Plan to release in future version >= 1.2
@@ -65,7 +63,7 @@ Bug fixes:
 CohortDiagnostics 1.1.0
 =======================
 
-New features: 
+Changes: 
 1. Added temporal characterization
 2. UI changes to Shiny app diagnostic explorer
 

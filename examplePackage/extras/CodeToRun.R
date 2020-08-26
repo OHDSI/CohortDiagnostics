@@ -43,7 +43,7 @@ databaseName <- "Truven Health MarketScan® Multi-State Medicaid Database"
 databaseDescription <- "Truven Health MarketScan® Multi-State Medicaid Database (MDCD) adjudicated US health insurance claims for Medicaid enrollees from multiple states and includes hospital discharge diagnoses, outpatient diagnoses and procedures, and outpatient pharmacy claims as well as ethnicity and Medicare eligibility. Members maintain their same identifier even if they leave the system for a brief period however the dataset lacks lab data. [For further information link to RWE site for Truven MDCD."
 
 # Use this to run the cohorttDiagnostics. The results will be stored in the diagnosticsExport subfolder of the outputFolder. This can be shared between sites.
-runCohortDiagnostics(connectionDetails = connectionDetails,
+examplePackage::runCohortDiagnostics(connectionDetails = connectionDetails,
                      cdmDatabaseSchema = cdmDatabaseSchema,
                      cohortDatabaseSchema = cohortDatabaseSchema,
                      cohortTable = cohortTable,
@@ -52,15 +52,15 @@ runCohortDiagnostics(connectionDetails = connectionDetails,
                      databaseId = databaseId,
                      databaseName = databaseName,
                      databaseDescription = databaseDescription,
-                     createCohorts = TRUE,
-                     runInclusionStatistics = TRUE,
+                     createCohorts = FALSE,
+                     runInclusionStatistics = FALSE,
                      runIncludedSourceConcepts = TRUE,
                      runOrphanConcepts = TRUE,
-                     runTimeDistributions = TRUE,
-                     runBreakdownIndexEvents = TRUE,
-                     runIncidenceRates = TRUE,
-                     runCohortOverlap = TRUE,
-                     runCohortCharacterization = TRUE,
+                     runTimeDistributions = FALSE,
+                     runBreakdownIndexEvents = FALSE,
+                     runIncidenceRates = FALSE,
+                     runCohortOverlap = FALSE,
+                     runCohortCharacterization = FALSE,
                      minCellCount = 5)
 
 # To view the results:

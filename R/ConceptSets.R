@@ -131,8 +131,7 @@ extractConceptSetsJsonFromCohortJson <- function(cohortJson) {
 
 
 # private function of cohort diagnostics package
-combineConceptSetsFromCohorts <-
-  function(cohorts) {
+combineConceptSetsFromCohorts <- function(cohorts) {
     #cohorts should be a dataframe with atleast cohortId, sql and json
     
     errorMessage <- checkmate::makeAssertCollection()
@@ -169,7 +168,7 @@ combineConceptSetsFromCohorts <-
         conceptSetCounter <- conceptSetCounter + 1
         conceptSets[[conceptSetCounter]] <-
           tidyr::tibble(cohortId = cohort$cohortId,
-                        dplyr::inner_join(x = sql, y = json))
+                        dplyr::inner_join(x = sql, y = json, by = "conceptSetId"))
       }
     }
     conceptSets <- dplyr::bind_rows(conceptSets) %>%
@@ -181,21 +180,34 @@ combineConceptSetsFromCohorts <-
       dplyr::mutate(uniqueConceptSetId = dplyr::row_number())
     
     conceptSets <- conceptSets %>%
-      dplyr::inner_join(uniqueConceptSets)
+      dplyr::inner_join(uniqueConceptSets, by = "conceptSetExpression")
     
     return(conceptSets)
   }
 
 
+mergeTempTables <- function(connection, tableName, tempTables, oracleTempSchema) {
+  valueString <- paste(tempTables, collapse = "\n\n  UNION ALL\n\n  SELECT *\n  FROM ")
+  sql <- sprintf("SELECT *\nINTO %s\nFROM (\n  SELECT *\n  FROM %s\n) tmp;", tableName, valueString)
+  sql <- SqlRender::translate(sql, targetDialect = connection@dbms, oracleTempSchema = oracleTempSchema)
+  executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
+  
+  # Drop temp tables:
+  for (tempTable in tempTables) {
+    sql <- sprintf("TRUNCATE TABLE %s;\nDROP TABLE %s;", tempTable, tempTable)
+    sql <- SqlRender::translate(sql, targetDialect = connection@dbms, oracleTempSchema = oracleTempSchema)
+    executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
+  }
+}
+
+
 #private function of cohort diagnostics to instantiate concept sets for a cohort
-instantiateUniqueConceptSets <-
-  function(uniqueConceptSets,
-           connection,
-           cdmDatabaseSchema,
-           oracleTempSchema) {
+instantiateUniqueConceptSets <- function(uniqueConceptSets,
+                                         connection,
+                                         cdmDatabaseSchema,
+                                         oracleTempSchema) {
     ParallelLogger::logInfo("Instantiating concept sets")
-    sql <-
-      sapply(split(uniqueConceptSets, 1:nrow(uniqueConceptSets)),
+    sql <- sapply(split(uniqueConceptSets, 1:nrow(uniqueConceptSets)),
              function(x) {
                sub(
                  "SELECT [0-9]+ as codeset_id",
@@ -203,15 +215,31 @@ instantiateUniqueConceptSets <-
                  x$conceptSetSql
                )
              })
-    sql <- paste(sql, collapse = "\n\nUNION ALL\n\n")
-    sql <-
-      paste0("SELECT * INTO #Codesets FROM (\n", sql, "\n) tmp;")
-    sql <-
-      SqlRender::render(sql, vocabulary_database_schema = cdmDatabaseSchema)
-    sql <- SqlRender::translate(sql,
-                                targetDialect = connection@dbms,
-                                oracleTempSchema = oracleTempSchema)
-    DatabaseConnector::executeSql(connection, sql)
+    
+    batchSize <- 100
+    tempTables <- c()
+    pb <- txtProgressBar(style = 3)
+    for (start in seq(1, length(sql), by = batchSize)) {
+      setTxtProgressBar(pb, start/length(sql))
+      tempTable <- paste("#", paste(sample(letters, 20, replace = TRUE), collapse = ""), sep = "")
+      tempTables <- c(tempTables, tempTable)
+      end <- min(start + batchSize - 1, length(sql))
+      sqlSubset <- sql[start:end]
+      sqlSubset <- paste(sqlSubset, collapse = "\n\n  UNION ALL\n\n")
+      sqlSubset <- sprintf("SELECT *\nINTO %s\nFROM (\n %s\n) tmp;", tempTable, sqlSubset)
+      sqlSubset <- SqlRender::render(sqlSubset, vocabulary_database_schema = cdmDatabaseSchema)
+      sqlSubset <- SqlRender::translate(sqlSubset,
+                                  targetDialect = connection@dbms,
+                                  oracleTempSchema = oracleTempSchema)
+      DatabaseConnector::executeSql(connection, sqlSubset, progressBar = FALSE, reportOverallTime = FALSE)
+    }
+    setTxtProgressBar(pb, 1)
+    close(pb)
+    
+    mergeTempTables(connection = connection,
+                    tableName = "#Codesets",
+                    tempTables = tempTables, 
+                    oracleTempSchema = oracleTempSchema)
   }
 
 runConceptSetDiagnostics <- function(connection,
