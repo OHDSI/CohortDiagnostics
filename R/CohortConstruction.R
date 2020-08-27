@@ -449,7 +449,7 @@ getInclusionStatistics <- function(connectionDetails = NULL,
     sql <- "SELECT * FROM @database_schema.@table WHERE cohort_definition_id = @cohort_id"
     DatabaseConnector::renderTranslateQuerySql(sql = sql,
                                                connection = connection,
-                                               snakeCaseToCamelCase = TRUE,
+                                               snakeCaseToCamelCase = FALSE,
                                                database_schema = resultsDatabaseSchema,
                                                table = table,
                                                cohort_id = cohortId)
@@ -495,13 +495,13 @@ getInclusionStatistics <- function(connectionDetails = NULL,
 getInclusionStatisticsFromFiles <- function(cohortId,
                                             folder,
                                             cohortInclusionFile = file.path(folder,
-                                                                            "cohortInclusion.csv"),
+                                                                            "cohort_inclusion.csv"),
                                             cohortInclusionResultFile = file.path(folder,
-                                                                                  "cohortIncResult.csv"),
+                                                                                  "cohort_inc_result.csv"),
                                             cohortInclusionStatsFile = file.path(folder,
-                                                                                 "cohortIncStats.csv"),
+                                                                                 "cohort_inc_stats.csv"),
                                             cohortSummaryStatsFile = file.path(folder,
-                                                                               "cohortSummaryStats.csv"),
+                                                                               "cohort_summary_stats.csv"),
                                             simplify = TRUE) {
   start <- Sys.time()
   ParallelLogger::logInfo("Fetching inclusion statistics for cohort with cohort_definition_id = ",
@@ -510,6 +510,9 @@ getInclusionStatisticsFromFiles <- function(cohortId,
   fetchStats <- function(file) {
     ParallelLogger::logDebug("- Fetching data from ", file)
     stats <- readr::read_csv(file, col_types = readr::cols())
+    if (any(stringr::str_detect(string = colnames(stats), pattern = "_"))) {
+      colnames(stats) <- colnames(stats) %>% SqlRender::snakeCaseToCamelCase()
+    }
     stats <- stats[stats$cohortDefinitionId == cohortId, ]
     return(stats)
   }
@@ -767,9 +770,10 @@ saveAndDropTempInclusionStatsTables <- function(connection,
     data <- DatabaseConnector::renderTranslateQuerySql(sql = sql,
                                                        connection = connection,
                                                        oracleTempSchema = oracleTempSchema,
-                                                       snakeCaseToCamelCase = TRUE,
+                                                       snakeCaseToCamelCase = FALSE,
                                                        table = table)
     data <- tidyr::as_tibble(data)
+    colnames(data) <- colnames(data) %>% tolower()
     fullFileName <- file.path(inclusionStatisticsFolder, fileName)
     if (incremental) {
       saveIncremental(data, fullFileName, cohortDefinitionId = cohortIds)
@@ -777,10 +781,10 @@ saveAndDropTempInclusionStatsTables <- function(connection,
       readr::write_csv(data, fullFileName)
     }
   }
-  fetchStats("#cohort_inclusion", "cohortInclusion.csv")
-  fetchStats("#cohort_inc_result", "cohortIncResult.csv")
-  fetchStats("#cohort_inc_stats", "cohortIncStats.csv")
-  fetchStats("#cohort_summary_stats", "cohortSummaryStats.csv")
+  fetchStats("#cohort_inclusion", "cohort_inclusion.csv")
+  fetchStats("#cohort_inc_result", "cohort_inc_result.csv")
+  fetchStats("#cohort_inc_stats", "cohort_inc_stats.csv")
+  fetchStats("#cohort_summary_stats", "cohort_summary_stats.csv")
   
   sql <- "TRUNCATE TABLE #cohort_inclusion; 
     DROP TABLE #cohort_inclusion;

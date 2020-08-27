@@ -107,25 +107,29 @@ writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
     params$fileName = fileName
     do.call(saveIncremental, params)
   } else {
-    readr::write_csv(x = data, path = fileName)
+    readr::write_csv(x = data, path = fileName, na = '')
   }
 }
 
 saveIncremental <- function(data, fileName, ...) {
-  if (length(list(...)[[1]]) == 0) {
-    return()
+  if (!length(list(...)) == 0) {
+    if (length(list(...)[[1]]) == 0) {
+      return()
+    }
   }
   if (file.exists(fileName)) {
     previousData <- readr::read_csv(fileName, col_types = readr::cols())
-    if ((nrow(previousData)) > 0) {
-      idx <- getKeyIndex(list(...), previousData)
-      if (length(idx) > 0) {
-        previousData <- previousData[-idx, ] 
+    if (nrow(previousData) > 0) {
+      if (!length(list(...)) == 0) {
+        idx <- getKeyIndex(list(...), previousData)
+        if (length(idx) > 0) {
+          previousData <- previousData[-idx, ] 
+        }
       }
       data <- dplyr::bind_rows(previousData, data)
     }
   } 
-  readr::write_csv(data, fileName)
+  readr::write_csv(x = data, path = fileName, na = '')
 }
 
 subsetToRequiredCohorts <- function(cohorts, task, incremental, recordKeepingFile) {

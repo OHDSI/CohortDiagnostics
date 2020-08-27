@@ -7,10 +7,10 @@
 getInclusionStatisticsFromFiles(
   cohortId,
   folder,
-  cohortInclusionFile = file.path(folder, "cohortInclusion.csv"),
-  cohortInclusionResultFile = file.path(folder, "cohortIncResult.csv"),
-  cohortInclusionStatsFile = file.path(folder, "cohortIncStats.csv"),
-  cohortSummaryStatsFile = file.path(folder, "cohortSummaryStats.csv"),
+  cohortInclusionFile = file.path(folder, "cohort_inclusion.csv"),
+  cohortInclusionResultFile = file.path(folder, "cohort_inc_result.csv"),
+  cohortInclusionStatsFile = file.path(folder, "cohort_inc_stats.csv"),
+  cohortSummaryStatsFile = file.path(folder, "cohort_summary_stats.csv"),
   simplify = TRUE
 )
 }

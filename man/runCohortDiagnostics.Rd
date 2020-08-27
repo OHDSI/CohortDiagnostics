@@ -14,6 +14,7 @@ runCohortDiagnostics(
   cdmDatabaseSchema,
   oracleTempSchema = NULL,
   cohortDatabaseSchema,
+  vocabularyDatabaseSchema = cdmDatabaseSchema,
   cohortTable = "cohort",
   cohortIds = NULL,
   inclusionStatisticsFolder = NULL,
@@ -29,12 +30,15 @@ runCohortDiagnostics(
   runIncidenceRate = TRUE,
   runCohortOverlap = TRUE,
   runCohortCharacterization = TRUE,
+  refreshVocabulary = TRUE,
   covariateSettings = FeatureExtraction::createDefaultCovariateSettings(),
   runTemporalCohortCharacterization = TRUE,
  
     temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(useConditionOccurrence
     = TRUE, useDrugEraStart = TRUE, useProcedureOccurrence = TRUE, useMeasurement = TRUE,
-    temporalStartDays = c(-365, -30, 0, 1, 31), temporalEndDays = c(-31, -1, 0, 30, 365)),
+    temporalStartDays = c(-365, -30, 0, 1, 31, seq(from = -30, to = -420, by = -30),
+    seq(from = 1, to = 390, by = 30)), temporalEndDays = c(-31, -1, 0, 30, 365, seq(from
+    = 0, to = -390, by = -30), seq(from = 31, to = 420, by = 30))),
   minCellCount = 5,
   incremental = FALSE,
   incrementalFolder = exportFolder
@@ -78,6 +82,11 @@ privileges for storing temporary tables.}
 this should include both the database and schema name, for example
 'scratch.dbo'.}
 
+\item{vocabularyDatabaseSchema}{Schema name where your OMOP vocabulary resides. It is common for this
+to be the same as cdm database schema. Note that for SQL Server, 
+this should include both the database and schema name, for example
+'cdm_data.dbo'.}
+
 \item{cohortTable}{Name of the cohort table.}
 
 \item{cohortIds}{Optionally, provide a subset of cohort IDs to restrict the
@@ -110,6 +119,8 @@ does not exist it will be created.}
 \item{runCohortOverlap}{Generate and export the cohort overlap?}
 
 \item{runCohortCharacterization}{Generate and export the cohort characterization?}
+
+\item{refreshVocabulary}{Do you want to refresh the copy of vocabulary?}
 
 \item{covariateSettings}{Either an object of type \code{covariateSettings} as created using one of
 the createCovariateSettings function in the FeatureExtraction package, or a list

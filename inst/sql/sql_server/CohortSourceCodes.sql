@@ -2,15 +2,8 @@
 {DEFAULT @use_source_values = false}
 
 SELECT codeset_id AS concept_set_id,
-	concept.concept_id,
-	concept.concept_name,
-{@use_source_values} ? {
-	source_value,
-}	
-	source_concept.concept_code,
-	source_concept.vocabulary_id AS source_vocabulary_id,
+	concept_id,
 	source_concept_id,
-	source_concept.concept_name AS source_concept_name,
 {@by_month} ? {
 	event_year,
 	event_month,
@@ -214,8 +207,4 @@ FROM (
 		MONTH(visit_start_date),
 }
 		concept_id
-	) person_counts
-INNER JOIN @cdm_database_schema.concept
-	ON person_counts.concept_id = concept.concept_id
-LEFT JOIN @cdm_database_schema.concept source_concept
-	ON source_concept_id = source_concept.concept_id;
+	) person_counts;
