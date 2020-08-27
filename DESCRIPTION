@@ -49,7 +49,6 @@ Remotes:
   ohdsi/Eunomia,
   ohdsi/FeatureExtraction,
   ohdsi/ROhdsiWebApi,
-  ohdsi/SqlRender,
   r-dbi/RSQLite
 License: Apache License
 VignetteBuilder: knitr
