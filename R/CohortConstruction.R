@@ -109,7 +109,7 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
     ParallelLogger::logInfo("- Retrieving definitions for cohort ", cohort[[i]]$cohortFullName)
     cohortDefinition <-  ROhdsiWebApi::getCohortDefinition(cohortId = cohort[[i]]$atlasId,
                                                            baseUrl = baseUrl)
-    cohort[[i]]$json <- RJSONIO::toJSON(cohortDefinition$expression)
+    cohort[[i]]$json <- RJSONIO::toJSON(x = cohortDefinition$expression, digits = 23)
     cohort[[i]]$sql <- ROhdsiWebApi::getCohortSql(cohortDefinition = cohortDefinition,
                                                  baseUrl = baseUrl,
                                                  generateStats = TRUE)
@@ -326,7 +326,7 @@ instantiateCohort <- function(connectionDetails = NULL,
                                             baseUrl = baseUrl,
                                             generateStats = generateInclusionStats)
   } else {
-    cohortDefinition <- RJSONIO::fromJSON(cohortJson)
+    cohortDefinition <- RJSONIO::fromJSON(content = cohortJson, digits = 23)
   }
   if (generateInclusionStats) {
     inclusionRules <- data.frame()
@@ -729,7 +729,7 @@ createTempInclusionStatsTables <- function(connection, oracleTempSchema, cohorts
   
   inclusionRules <- data.frame()
   for (i in 1:nrow(cohorts)) {
-    cohortDefinition <- RJSONIO::fromJSON(cohorts$json[i])
+    cohortDefinition <- RJSONIO::fromJSON(content = cohorts$json[i], digits = 23)
     if (!is.null(cohortDefinition$InclusionRules)) {
       nrOfRules <- length(cohortDefinition$InclusionRules)
       if (nrOfRules > 0) {
