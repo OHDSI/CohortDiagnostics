@@ -106,7 +106,7 @@ extractConceptSetsSqlFromCohortSql <- function(cohortSql) {
 #'
 #' @export
 extractConceptSetsJsonFromCohortJson <- function(cohortJson) {
-  cohortDefinition <- RJSONIO::fromJSON(cohortJson)
+  cohortDefinition <- RJSONIO::fromJSON(content = cohortJson, digits = 23)
   if ("expression" %in% names(cohortDefinition)) {
     expression <- cohortDefinition$expression
   } else {
@@ -119,7 +119,7 @@ extractConceptSetsJsonFromCohortJson <- function(cohortJson) {
         tidyr::tibble(
           conceptSetId = expression$ConceptSets[[i]]$id,
           conceptSetName = expression$ConceptSets[[i]]$name,
-          conceptSetExpression = expression$ConceptSets[[i]]$expression$items %>% RJSONIO::toJSON()
+          conceptSetExpression = expression$ConceptSets[[i]]$expression$items %>% RJSONIO::toJSON(digits = 23)
         )
     }
   } else {
@@ -131,88 +131,116 @@ extractConceptSetsJsonFromCohortJson <- function(cohortJson) {
 
 
 # private function of cohort diagnostics package
-combineConceptSetsFromCohorts <-
-  function(cohorts) {
-    #cohorts should be a dataframe with atleast cohortId, sql and json
+combineConceptSetsFromCohorts <- function(cohorts) {
+  #cohorts should be a dataframe with atleast cohortId, sql and json
+  
+  errorMessage <- checkmate::makeAssertCollection()
+  checkmate::assertDataFrame(
+    x = cohorts,
+    any.missing = FALSE,
+    min.cols = 3,
+    add = errorMessage
+  )
+  checkmate::assertNames(
+    x = colnames(cohorts),
+    must.include = c('cohortId', 'sql', 'json', 'cohortFullName')
+  )
+  checkmate::reportAssertions(errorMessage)
+  
+  conceptSets <- list()
+  conceptSetCounter <- 0
+  
+  for (i in (1:nrow(cohorts))) {
+    cohort <- cohorts %>%
+      dplyr::slice(i)
+    sql <-
+      extractConceptSetsSqlFromCohortSql(cohortSql = cohort$sql)
+    json <-
+      extractConceptSetsJsonFromCohortJson(cohortJson = cohort$json)
     
-    errorMessage <- checkmate::makeAssertCollection()
-    checkmate::assertDataFrame(
-      x = cohorts,
-      any.missing = FALSE,
-      min.cols = 3,
-      add = errorMessage
-    )
-    checkmate::assertNames(
-      x = colnames(cohorts),
-      must.include = c('cohortId', 'sql', 'json', 'cohortFullName')
-    )
-    checkmate::reportAssertions(errorMessage)
-    
-    conceptSets <- list()
-    conceptSetCounter <- 0
-    
-    for (i in (1:nrow(cohorts))) {
-      cohort <- cohorts %>%
-        dplyr::slice(i)
-      sql <-
-        extractConceptSetsSqlFromCohortSql(cohortSql = cohort$sql)
-      json <-
-        extractConceptSetsJsonFromCohortJson(cohortJson = cohort$json)
-      
-      if (!length(sql$conceptSetId %>% unique()) == length(json$conceptSetId %>% unique())) {
-        stop(
-          "Mismatch in concept set IDs between SQL and JSON for cohort ",
-          cohort$cohortFullName
-        )
-      }
-      if (length(sql) > 0 && length(json) > 0) {
-        conceptSetCounter <- conceptSetCounter + 1
-        conceptSets[[conceptSetCounter]] <-
-          tidyr::tibble(cohortId = cohort$cohortId,
-                        dplyr::inner_join(x = sql, y = json))
-      }
+    if (!length(sql$conceptSetId %>% unique()) == length(json$conceptSetId %>% unique())) {
+      stop(
+        "Mismatch in concept set IDs between SQL and JSON for cohort ",
+        cohort$cohortFullName
+      )
     }
-    conceptSets <- dplyr::bind_rows(conceptSets) %>%
-      dplyr::arrange("cohortId", "conceptSetId")
-    
-    uniqueConceptSets <- conceptSets %>%
-      dplyr::select(.data$conceptSetExpression) %>%
-      dplyr::distinct() %>%
-      dplyr::mutate(uniqueConceptSetId = dplyr::row_number())
-    
-    conceptSets <- conceptSets %>%
-      dplyr::inner_join(uniqueConceptSets)
-    
-    return(conceptSets)
+    if (length(sql) > 0 && length(json) > 0) {
+      conceptSetCounter <- conceptSetCounter + 1
+      conceptSets[[conceptSetCounter]] <-
+        tidyr::tibble(cohortId = cohort$cohortId,
+                      dplyr::inner_join(x = sql, y = json, by = "conceptSetId"))
+    }
   }
+  conceptSets <- dplyr::bind_rows(conceptSets) %>%
+    dplyr::arrange("cohortId", "conceptSetId")
+  
+  uniqueConceptSets <- conceptSets %>%
+    dplyr::select(.data$conceptSetExpression) %>%
+    dplyr::distinct() %>%
+    dplyr::mutate(uniqueConceptSetId = dplyr::row_number())
+  
+  conceptSets <- conceptSets %>%
+    dplyr::inner_join(uniqueConceptSets, by = "conceptSetExpression")
+  
+  return(conceptSets)
+}
+
+
+mergeTempTables <- function(connection, tableName, tempTables, oracleTempSchema) {
+  valueString <- paste(tempTables, collapse = "\n\n  UNION ALL\n\n  SELECT *\n  FROM ")
+  sql <- sprintf("SELECT *\nINTO %s\nFROM (\n  SELECT *\n  FROM %s\n) tmp;", tableName, valueString)
+  sql <- SqlRender::translate(sql, targetDialect = connection@dbms, oracleTempSchema = oracleTempSchema)
+  DatabaseConnector::executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
+  
+  # Drop temp tables:
+  for (tempTable in tempTables) {
+    sql <- sprintf("TRUNCATE TABLE %s;\nDROP TABLE %s;", tempTable, tempTable)
+    sql <- SqlRender::translate(sql, targetDialect = connection@dbms, oracleTempSchema = oracleTempSchema)
+    DatabaseConnector::executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
+  }
+}
 
 
 #private function of cohort diagnostics to instantiate concept sets for a cohort
-instantiateUniqueConceptSets <-
-  function(uniqueConceptSets,
-           connection,
-           cdmDatabaseSchema,
-           oracleTempSchema) {
-    ParallelLogger::logInfo("Instantiating concept sets")
-    sql <-
-      sapply(split(uniqueConceptSets, 1:nrow(uniqueConceptSets)),
-             function(x) {
-               sub(
-                 "SELECT [0-9]+ as codeset_id",
-                 sprintf("SELECT %s as codeset_id", x$uniqueConceptSetId),
-                 x$conceptSetSql
-               )
-             })
-    sql <- paste(sql, collapse = "\n\nUNION ALL\n\n")
-    sql <-
-      paste0("SELECT * INTO #Codesets FROM (\n", sql, "\n) tmp;")
-    sql <-
-      SqlRender::render(sql, vocabulary_database_schema = cdmDatabaseSchema)
-    sql <- SqlRender::translate(sql,
-                                targetDialect = connection@dbms,
-                                oracleTempSchema = oracleTempSchema)
-    DatabaseConnector::executeSql(connection, sql)
+instantiateUniqueConceptSets <- function(uniqueConceptSets,
+                                         connection,
+                                         cdmDatabaseSchema,
+                                         oracleTempSchema) {
+  ParallelLogger::logInfo("Instantiating concept sets")
+  sql <- sapply(split(uniqueConceptSets, 1:nrow(uniqueConceptSets)),
+                function(x) {
+                  sub(
+                    "SELECT [0-9]+ as codeset_id",
+                    sprintf("SELECT %s as codeset_id", x$uniqueConceptSetId),
+                    x$conceptSetSql
+                  )
+                })
+  
+  batchSize <- 100
+  tempTables <- c()
+  pb <- utils::txtProgressBar(style = 3)
+  for (start in seq(1, length(sql), by = batchSize)) {
+    utils::setTxtProgressBar(pb, start/length(sql))
+    tempTable <- paste("#", paste(sample(letters, 20, replace = TRUE), collapse = ""), sep = "")
+    tempTables <- c(tempTables, tempTable)
+    end <- min(start + batchSize - 1, length(sql))
+    sqlSubset <- sql[start:end]
+    sqlSubset <- paste(sqlSubset, collapse = "\n\n  UNION ALL\n\n")
+    sqlSubset <- sprintf("SELECT *\nINTO %s\nFROM (\n %s\n) tmp;", tempTable, sqlSubset)
+    sqlSubset <- SqlRender::render(sqlSubset, vocabulary_database_schema = cdmDatabaseSchema)
+    sqlSubset <- SqlRender::translate(sqlSubset,
+                                      targetDialect = connection@dbms,
+                                      oracleTempSchema = oracleTempSchema)
+    DatabaseConnector::executeSql(connection, sqlSubset, progressBar = FALSE, reportOverallTime = FALSE)
   }
+  utils::setTxtProgressBar(pb, 1)
+  close(pb)
+  
+  mergeTempTables(connection = connection,
+                  tableName = "#Codesets",
+                  tempTables = tempTables, 
+                  oracleTempSchema = oracleTempSchema)
+}
 
 runConceptSetDiagnostics <- function(connection,
                                      oracleTempSchema,
