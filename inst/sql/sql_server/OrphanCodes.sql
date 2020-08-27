@@ -50,8 +50,7 @@ INNER JOIN @cdm_database_schema.concept
 	
 } : {
 
-SELECT concept_id,
-	concept_name
+SELECT concept_id
 INTO #starting_concepts
 FROM (
 	SELECT c1.concept_id,
@@ -139,7 +138,6 @@ WHERE ss1.concept_name NOT IN (
 
 -- Create recommended list: concepts containing search string but not mapping to start set
 SELECT DISTINCT c1.concept_id,
-	c1.concept_name,
 	c1.concept_count
 INTO #recommended_concepts
 FROM (

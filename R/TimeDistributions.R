@@ -79,7 +79,6 @@ getTimeDistributions <- function(connectionDetails = NULL,
   } else {
     result <- data$covariatesContinuous %>%
       dplyr::inner_join(data$covariateRef) %>%
-      dplyr::select(-.data$conceptId, -.data$analysisId, -.data$covariateId, -.data$result$countValue) %>%
       dplyr::rename(timeMetric = .data$covariateName) %>%
       dplyr::collect()
   }

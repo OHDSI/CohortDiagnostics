@@ -1,7 +1,7 @@
 Package: CohortDiagnostics
 Type: Package
 Title: Diagnostics for OHDSI Studies
-Version: 1.2.3
+Version: 2.0.0
 Date: 2020-08-27
 Authors@R: c(
     person("Gowtham", "Rao", email = "gowthamrao@gmail.com", role = c("aut", "cre")),
@@ -32,6 +32,7 @@ Imports:
   tibble (>= 3.0.0),
   tidyr (>= 1.0.0)
 Suggests:
+  CdmDdlBase,
   DT,
   Eunomia,
   RSQLite (> 2.2.0),

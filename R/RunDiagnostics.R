@@ -37,6 +37,10 @@
 #' 
 #' @template CohortSetReference
 #' 
+#' @param vocabularyDatabaseSchema    Schema name where your OMOP vocabulary resides. It is common for this
+#'                                    to be the same as cdm database schema. Note that for SQL Server, 
+#'                                    this should include both the database and schema name, for example
+#'                                    'cdm_data.dbo'.
 #' @param inclusionStatisticsFolder   The folder where the inclusion rule statistics are stored. Can be
 #'                                    left NULL if \code{runInclusionStatistics = FALSE}.
 #' @param exportFolder                The folder where the output will be exported to. If this folder
@@ -54,6 +58,7 @@
 #' @param runIncidenceRate            Generate and export the cohort incidence  rates?
 #' @param runCohortOverlap            Generate and export the cohort overlap?
 #' @param runCohortCharacterization   Generate and export the cohort characterization?
+#' @param refreshVocabulary           Do you want to refresh the copy of vocabulary?
 #' @param covariateSettings           Either an object of type \code{covariateSettings} as created using one of
 #'                                    the createCovariateSettings function in the FeatureExtraction package, or a list
 #'                                    of such objects.
@@ -65,6 +70,7 @@
 #' @param incremental                 Create only cohort diagnostics that haven't been created before?
 #' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
 #'                                    of which cohort diagnostics has been executed.
+#'
 #' @export
 runCohortDiagnostics <- function(packageName = NULL,
                                  cohortToCreateFile = "settings/CohortsToCreate.csv",
@@ -75,6 +81,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  cdmDatabaseSchema,
                                  oracleTempSchema = NULL,
                                  cohortDatabaseSchema,
+                                 vocabularyDatabaseSchema = cdmDatabaseSchema,
                                  cohortTable = "cohort",
                                  cohortIds = NULL,
                                  inclusionStatisticsFolder = NULL,
@@ -90,14 +97,19 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  runIncidenceRate = TRUE,
                                  runCohortOverlap = TRUE,
                                  runCohortCharacterization = TRUE,
+                                 refreshVocabulary = TRUE,
                                  covariateSettings = FeatureExtraction::createDefaultCovariateSettings(),
                                  runTemporalCohortCharacterization = TRUE,
                                  temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(useConditionOccurrence = TRUE,
                                                                                                                 useDrugEraStart = TRUE,
                                                                                                                 useProcedureOccurrence = TRUE,
                                                                                                                 useMeasurement = TRUE,
-                                                                                                                temporalStartDays = c(-365,-30,0,1,31),
-                                                                                                                temporalEndDays = c(-31,-1,0,30,365)),
+                                                                                                                temporalStartDays = c(-365,-30,0,1,31, 
+                                                                                                                                      seq(from = -30, to = -420, by = -30), 
+                                                                                                                                      seq(from = 1, to = 390, by = 30)),
+                                                                                                                temporalEndDays = c(-31,-1,0,30,365,
+                                                                                                                                    seq(from = 0, to = -390, by = -30),
+                                                                                                                                    seq(from = 31, to = 420, by = 30))),
                                  minCellCount = 5,
                                  incremental = FALSE,
                                  incrementalFolder = exportFolder) {
@@ -120,6 +132,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           runCohortOverlap, runCohortCharacterization)) {
     checkmate::assertCharacter(x = cdmDatabaseSchema, min.len = 1, add = errorMessage)
     checkmate::assertCharacter(x = cohortDatabaseSchema, min.len = 1, add = errorMessage)
+    checkmate::assertCharacter(x = vocabularyDatabaseSchema, min.len = 1, add = errorMessage)
     checkmate::assertCharacter(x = cohortTable, min.len = 1, add = errorMessage)
     checkmate::assertCharacter(x = databaseId, min.len = 1, add = errorMessage)
     checkmate::assertCharacter(x = databaseDescription, min.len = 1, add = errorMessage)
@@ -476,49 +489,51 @@ runCohortDiagnostics <- function(packageName = NULL,
                                          cohortTable = cohortTable,
                                          cohortId = row$cohortId,
                                          covariateSettings = covariateSettings)
-        
-        if (nrow(data) > 0) {
-          data$cohortId <- row$cohortId
-        }
         return(data)
       }
       data <- lapply(split(subset, subset$cohortId), runCohortCharacterization)
-      data <- dplyr::bind_rows(data)
-      if (nrow(data) > 0) {
-        data <- data %>% 
-          dplyr::mutate(mean = round(x = mean, digits = 3)) %>% 
-          dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 3 digits
-        covariates <- data %>% 
-          dplyr::select(.data$covariateId, .data$covariateName, .data$analysisId, .data$conceptId) %>% 
-          dplyr::rename(covariateAnalysisId = .data$analysisId)
+      
+      result <- list()
+      analysisRef <- list()
+      covariateRef <- list()
+      
+      for (i in (1:length(data))) {
+        result[[i]] <- data[[i]]$result %>% dplyr::collect()
+        analysisRef[[i]] <- data[[i]]$analysisRef %>% dplyr::collect()
+        covariateRef[[i]] <- data[[i]]$covariateRef %>% dplyr::collect()
+      }
+      result <- dplyr::bind_rows(result) %>% dplyr::distinct()
+      analysisRef <- dplyr::bind_rows(analysisRef) %>% dplyr::distinct()
+      covariateRef <- dplyr::bind_rows(covariateRef)  %>% dplyr::distinct()
+      
+      if (nrow(result) > 0) {
         writeToCsv(
-          data = covariates,
-          fileName = file.path(exportFolder, "covariate.csv"),
-          incremental = incremental,
-          covariateId = covariates$covariateId
+          data = analysisRef,
+          fileName = file.path(exportFolder, "analysis_ref.csv"),
+          incremental = incremental
+        )
+        writeToCsv(
+          data = covariateRef,
+          fileName = file.path(exportFolder, "covariate_ref.csv"),
+          incremental = incremental
         )
         
         if (!exists("counts")) {
           counts <- readr::read_csv(file = file.path(exportFolder, "cohort_count.csv"), col_types = readr::cols())
           names(counts) <- SqlRender::snakeCaseToCamelCase(names(counts))
         }
-        
-        data <- data %>% 
-          dplyr::select(-.data$covariateName, -.data$analysisId)
-        
-        if (nrow(data) > 0) {
-          data <- data  %>% 
-            dplyr::mutate(databaseId = databaseId) %>% 
-            dplyr::left_join(y = counts, by = c("cohortId", "databaseId"))
-          data <- enforceMinCellValue(data, "mean", minCellCount/data$cohortEntries)
-          data <- data %>% 
-            dplyr::mutate(sd = dplyr::case_when(mean >= 0 ~ sd)) %>% 
-            dplyr::mutate(mean = round(.data$mean, digits = 3),
-                          sd = round(.data$sd, digits = 3)) %>% 
-            dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
-        }
-        writeToCsv(data, file.path(exportFolder, "covariate_value.csv"), incremental = incremental, cohortId = subset$cohortId)
+        result <- result  %>% 
+          dplyr::mutate(databaseId = !!databaseId) %>% 
+          dplyr::left_join(y = counts, by = c("cohortId", "databaseId"))
+        result <- enforceMinCellValue(result, "mean", minCellCount/result$cohortEntries)
+        result <- result %>% 
+          dplyr::mutate(sd = dplyr::case_when(mean >= 0 ~ sd)) %>% 
+          dplyr::mutate(mean = round(.data$mean, digits = 3),
+                        sd = round(.data$sd, digits = 3)) %>% 
+          dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
       }
+      writeToCsv(result, file.path(exportFolder, "covariate_value.csv"), incremental = incremental, cohortId = subset$cohortId)
+      
       recordTasksDone(cohortId = subset$cohortId,
                       task = "runCohortCharacterization",
                       checksum = subset$checksum,
@@ -545,14 +560,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         ParallelLogger::logInfo("- Creating temporal characterization for cohort ", row$cohortName)
         
         if (is.null(temporalCovariateSettings)) {
-          temporalCovariateSettings <- FeatureExtraction::createTemporalCovariateSettings(useConditionOccurrence = TRUE,
-                                                                                          useConditionEraStart = TRUE,
-                                                                                          useDrugEraStart = TRUE,
-                                                                                          useProcedureOccurrence = TRUE,
-                                                                                          useMeasurement = TRUE,
-                                                                                          useObservation = TRUE,
-                                                                                          temporalStartDays = c(-365,-30,0,1,31),
-                                                                                          temporalEndDays = c(-31,-1,0,30,365))
+          ParallelLogger::logWarn("Temporal covariates not specified. skipping.")
         }
         
         data <- getCohortCharacteristics(connection = connection,
@@ -562,49 +570,57 @@ runCohortDiagnostics <- function(packageName = NULL,
                                          cohortTable = cohortTable,
                                          cohortId = row$cohortId,
                                          covariateSettings = temporalCovariateSettings)
-        
-        if (nrow(data) > 0) {
-          data$cohortId <- row$cohortId
-        }
         return(data)
       }
       data <- lapply(split(subset, subset$cohortId), runTemporalCohortCharacterization)
-      data <- dplyr::bind_rows(data)
-      if (nrow(data) > 0) {
-        data <- data %>% dplyr::mutate(mean = round(x = mean, digits = 3)) %>% 
-          dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 3 digits
-        
-        temporalCovariates <- data %>% 
-          dplyr::select(.data$covariateId, .data$covariateName, .data$analysisId, .data$conceptId, .data$timeId, 
-                        .data$startDayTemporalCharacterization, .data$endDayTemporalCharacterization) %>% 
-          dplyr::rename(covariateAnalysisId = .data$analysisId) %>% 
-          dplyr::distinct()
+      result <- list()
+      analysisRef <- list()
+      covariateRef <- list()
+      timeRef <- list()
+      
+      for (i in (1:length(data))) {
+        result[[i]] <- data[[i]]$result %>% dplyr::collect()
+        analysisRef[[i]] <- data[[i]]$analysisRef %>% dplyr::collect()
+        covariateRef[[i]] <- data[[i]]$covariateRef %>% dplyr::collect()
+        timeRef[[i]] <- data[[i]]$timeRef %>% dplyr::collect()
+      }
+      result <- dplyr::bind_rows(result) %>% dplyr::distinct()
+      temporalAnalysisRef <- dplyr::bind_rows(analysisRef) %>% dplyr::distinct()
+      temporalCovariateRef <- dplyr::bind_rows(covariateRef)  %>% dplyr::distinct()
+      timeRef <- dplyr::bind_rows(timeRef) %>% dplyr::distinct()
+      
+      if (nrow(result) > 0) {
+        result <- result %>% dplyr::mutate(mean = round(x = mean, digits = 3))
         writeToCsv(
-          data = temporalCovariates,
-          fileName = file.path(exportFolder, "temporal_covariate.csv"),
-          incremental = incremental,
-          covariateId = temporalCovariates$covariateId
+          data = temporalAnalysisRef,
+          fileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
+          incremental = incremental
         )
-        
+        writeToCsv(
+          data = temporalCovariateRef,
+          fileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
+          incremental = incremental
+        )
+        writeToCsv(
+          data = timeRef,
+          fileName = file.path(exportFolder, "time_ref.csv"),
+          incremental = incremental
+        )
         if (!exists("counts")) {
           counts <- readr::read_csv(file = file.path(exportFolder, "cohort_count.csv"), col_types = readr::cols())
           names(counts) <- SqlRender::snakeCaseToCamelCase(names(counts))
         }
         
-        data <- data %>% 
-          dplyr::select(-.data$covariateName, 
-                        -.data$analysisId, 
-                        -.data$startDayTemporalCharacterization, 
-                        -.data$endDayTemporalCharacterization) %>% 
-          dplyr::mutate(databaseId = databaseId) %>% 
+        result <- result %>% 
+          dplyr::mutate(databaseId = !!databaseId) %>% 
           dplyr::left_join(y = counts, by = c("cohortId", "databaseId"))
-        data <- enforceMinCellValue(data, "mean", minCellCount/data$cohortEntries)
-        data <- data %>% 
+        result <- enforceMinCellValue(result, "mean", minCellCount/result$cohortEntries)
+        result <- result %>% 
           dplyr::mutate(sd = dplyr::case_when(mean >= 0 ~ sd)) %>% 
           dplyr::mutate(mean = round(.data$mean, digits = 3),
                         sd = round(.data$sd, digits = 3)) %>% 
           dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
-        writeToCsv(data, file.path(exportFolder, "temporal_covariate_value.csv"), incremental = incremental, cohortId = subset$cohortId)
+        writeToCsv(result, file.path(exportFolder, "temporal_covariate_value.csv"), incremental = incremental, cohortId = subset$cohortId)
       }
       recordTasksDone(cohortId = subset$cohortId,
                       task = "runTemporalCohortCharacterization",
@@ -616,6 +632,28 @@ runCohortDiagnostics <- function(packageName = NULL,
     ParallelLogger::logInfo(paste("Running Temporal Characterization took",
                                   signif(delta, 3),
                                   attr(delta, "units")))
+  }
+  
+  ParallelLogger::logInfo("Getting concept sets from all cohort definitions.")
+  conceptSetsFromCohorts <-
+    combineConceptSetsFromCohorts(cohorts = readr::read_csv(file.path(exportFolder, "cohort.csv"), 
+                                                            col_types = readr::cols()) %>% 
+                                    dplyr::rename_with(SqlRender::snakeCaseToCamelCase)) %>% 
+    dplyr::select(-"uniqueConceptSetId")
+  writeToCsv(data = conceptSetsFromCohorts, 
+             fileName = file.path(exportFolder, "concept_sets.csv"), 
+             incremental = incremental)
+  
+  if (refreshVocabulary) {
+    ParallelLogger::logInfo("Refreshing vocabulary copy.")
+    unqiueConceptIds <- CohortDiagnostics::getUniqueConceptIds(exportFolder = exportFolder)
+    
+    if (length(unqiueConceptIds) > 0) {
+      writeOmopvocabularyTables(connectionDetails =  connectionDetails, 
+                                vocabularyDatabaseSchema = vocabularyDatabaseSchema, 
+                                conceptIds = unqiueConceptIds, 
+                                exportFolder = exportFolder)
+    }
   }
   
   # Add all to zip file -------------------------------------------------------------------------------
