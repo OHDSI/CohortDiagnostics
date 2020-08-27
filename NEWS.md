@@ -30,6 +30,32 @@ Changes:
 Bug fixes:
 1. Ensure concept sets across cohort definitions are unique #174 (changes dependency to ROhdsiWebApi (>= 1.1.0))
 
+Note: 1.2.x are the last planned release in v1.x.x series. No new functionalities will 
+be added to 1.2.x moving forward. All future releases in 1.2.x series will be bug fixes.
+
+Version 2.x is planned for release by October 2020, and will be a breaking change. Output of 
+Versions 2.x will use a different data model and will not be backward compatible with 1.x.
+
+CohortDiagnostics 1.2.2
+=======================
+New features:
+1. Minor UI changes to Diagnostics explorer. Added missing sort.
+2. Added better labels for plots.
+3. Download plots.
+
+Bug fixes:
+1. Changes dependency to ROhdsiWebApi (>= 1.1.0)
+2. DiagnosticsExplorer display bug fixes
+
+CohortDiagnostics 1.2.1
+=======================
+New features:
+1. All objects in DiagnosticsExplorer are sorted by default #173
+2. Multi select for concepts #199
+
+Bug fixes:
+1. Ensure concept sets across cohort definitions are unique #174 (changes dependency to ROhdsiWebApi (>= 1.1.0))
+
 CohortDiagnostics 1.2.0
 =======================
 Changes:
