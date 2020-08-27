@@ -5,7 +5,11 @@
 
 SELECT codeset_id AS concept_set_id,
 	standard_concept.concept_id,
+	standard_concept.concept_name,
+	source_concept.concept_code,
+	source_concept.vocabulary_id AS source_vocabulary_id,
 	source_concept.concept_id AS source_concept_id,
+	source_concept.concept_name AS source_concept_name,
 	source_concept.concept_count,
 	source_concept.concept_subjects
 FROM #Codesets codesets

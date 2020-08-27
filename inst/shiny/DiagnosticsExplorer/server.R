@@ -81,7 +81,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   shiny::observe({
-    subset <- unique(conceptSet$conceptSetName[conceptSet$cohortId == cohortId()]) %>% sort()
+    subset <- unique(conceptSets$conceptSetName[conceptSets$cohortId == cohortId()]) %>% sort()
     shinyWidgets::updatePickerInput(session = session,
                                     inputId = "conceptSet",
                                     choices = subset)
@@ -381,9 +381,7 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$includedConceptsTable <- DT::renderDataTable(expr = {
-    data <- includedSourceConcept %>%
-      dplyr::left_join(conceptSets) %>% 
-      dplyr::left_join(concept) %>% 
+    data <- includedSourceConcept %>% 
       dplyr::filter(.data$cohortId == cohortId() &
                       .data$conceptSetName == input$conceptSet &
                       .data$databaseId %in% input$databases)
@@ -392,21 +390,16 @@ shiny::shinyServer(function(input, output, session) {
       return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
     }
     
+    
     maxConceptSubjects <- max(data$conceptSubjects)
     
     if (input$includedType == "Source Concepts") {
-      table <- data %>%
-        dplyr::select(.data$sourceConceptId, .data$vocabularyId, 
-                      .data$conceptCode, .data$conceptName, 
-                      .data$conceptSubjects, .data$databaseId) %>% 
-        dplyr::group_by(.data$sourceConceptId, .data$vocabularyId, 
-                        .data$conceptCode, .data$conceptName, 
-                        .data$databaseId) %>%
+      table <- data %>% 
+        dplyr::select(.data$sourceConceptId, .data$sourceVocabularyId, .data$conceptCode, .data$sourceConceptName, .data$conceptSubjects, .data$databaseId) %>% 
+        dplyr::group_by(.data$sourceConceptId, .data$sourceVocabularyId, .data$conceptCode, .data$sourceConceptName, .data$databaseId) %>%
         dplyr::summarise(conceptSubjects = sum(.data$conceptSubjects)) %>% #this logic needs to be confirmed
         dplyr::ungroup() %>%
-        dplyr::rename(conceptId = "sourceConceptId", 
-                      vocabularyId = "vocabularyId", 
-                      conceptName = "conceptName" ) %>% 
+        dplyr::rename(conceptId = "sourceConceptId", vocabularyId = "sourceVocabularyId", conceptName = "sourceConceptName" ) %>% 
         dplyr::arrange(.data$databaseId) %>% 
         tidyr::pivot_wider(id_cols = c("conceptId", "vocabularyId", "conceptCode", "conceptName" ),
                            names_from = "databaseId",
@@ -481,9 +474,7 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$orphanConceptsTable <- DT::renderDataTable(expr = {
-    table <- orphanConcept %>%
-      dplyr::left_join(conceptSets) %>% 
-      dplyr::left_join(concept) %>% 
+    table <- orphanConcept %>% 
       dplyr::filter(.data$cohortId == cohortId() &
                       .data$conceptSetName == input$conceptSet &
                       .data$databaseId %in% input$databases)
@@ -495,22 +486,14 @@ shiny::shinyServer(function(input, output, session) {
     maxConceptCount <- max(table$conceptCount)
     
     table <- table %>% 
-      dplyr::select(.data$conceptId, .data$standardConcept, 
-                    .data$vocabularyId, .data$conceptCode, 
-                    .data$conceptName, .data$conceptCount, 
-                    .data$databaseId) %>% 
-      dplyr::filter(conceptId == 78799) %>% 
+      dplyr::select(.data$conceptId, .data$standardConcept, .data$vocabularyId, .data$conceptCode, .data$conceptName, .data$conceptCount, .data$databaseId) %>% 
       dplyr::arrange(conceptCount) %>% 
-      dplyr::rename(conceptId = "conceptId", 
-                    standard = "standardConcept", 
-                    Vocabulary = "vocabularyId", 
-                    code = "conceptCode", 
-                    Name = "conceptName") %>% 
+      dplyr::rename(conceptId = "conceptId", standard = "standardConcept", Vocabulary = "vocabularyId", code = "conceptCode", Name = "conceptName") %>% 
       tidyr::pivot_wider(id_cols = c("conceptId", "standard", "Vocabulary", "code", "Name"),
                          names_from = "databaseId",
                          values_from = "conceptCount",
                          names_sep = "_",
-                         values_fill = -10)
+                         values_fill = 0)
     
     options = list(pageLength = 20,
                    searching = TRUE,
@@ -571,15 +554,11 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$breakdownTable <- DT::renderDataTable(expr = {
-    data <- indexEventBreakdown %>%
-      dplyr::filter(.data$cohortId == cohortId() & 
-                      .data$databaseId %in% input$databases) %>%
-      dplyr::left_join(concept)
-    
+    data <- indexEventBreakdown[indexEventBreakdown$cohortId == cohortId() & 
+                                  indexEventBreakdown$databaseId %in% input$databases, ]
     if (nrow(data) == 0) {
       return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
     }
-    
     data <- data[, c("conceptId", "conceptName", "conceptCount", "databaseId" )]
     databaseIds <- unique(data$databaseId)
     table <- data[data$databaseId == databaseIds[1], ]
@@ -638,7 +617,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     if (input$charType == "Pretty") {
       data <- data %>% 
-        dplyr::left_join(y = covariateRef) %>% 
+        dplyr::left_join(y = covariate) %>% 
         dplyr::distinct()
       table <- list()
       for (j in (1:nrow(dataCounts))) {
@@ -706,7 +685,7 @@ shiny::shinyServer(function(input, output, session) {
                            names_sep = "_",
                            values_fill = 0
         ) %>%  
-        dplyr::left_join(y = covariateRef %>% dplyr::select(.data$covariateId, .data$covariateName, .data$conceptId) %>% dplyr::distinct()) %>%
+        dplyr::left_join(y = covariate %>% dplyr::select(.data$covariateId, .data$covariateName, .data$conceptId) %>% dplyr::distinct()) %>%
         dplyr::select(-covariateId) %>% 
         dplyr::relocate("covariateName", "conceptId") %>% 
         dplyr::arrange(.data$covariateName) %>% 
@@ -755,7 +734,7 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$temporalCharacterizationTable <- DT::renderDataTable(expr = {
-    temporalCovariateRef <- temporalCovariateRef %>% 
+    temporalCovariateRef <- temporalCovariate %>% 
       #temporary solution as described here https://github.com/OHDSI/CohortDiagnostics/issues/162
       dplyr::select(.data$covariateId, .data$conceptId, .data$covariateName) %>% 
       dplyr::group_by(.data$covariateId) %>% 
@@ -800,7 +779,7 @@ shiny::shinyServer(function(input, output, session) {
                      minCellPercentDef(1:(length(temporalCovariateChoicesSelected$choices)) + 1)
                    )
     )
-    
+
     table <- DT::datatable(table,
                            options = options,
                            rownames = FALSE,
@@ -827,8 +806,8 @@ shiny::shinyServer(function(input, output, session) {
     covs2 <- temporalCovariateValue %>% 
       dplyr::filter(.data$timeId == timeId()[2],
                     .data$databaseId == input$database)
-    covs1 <- dplyr::left_join(x = covs1, y = temporalCovariateRef)
-    covs2 <- dplyr::left_join(x = covs2, y = temporalCovariateRef)
+    covs1 <- dplyr::left_join(x = covs1, y = temporalCovariate)
+    covs2 <- dplyr::left_join(x = covs2, y = temporalCovariate)
     balance <- compareTemporalCharacterization(covs1, covs2) %>%
       dplyr::mutate(absStdDiff = abs(.data$stdDiff))
     return(balance)

@@ -92,7 +92,11 @@ findOrphanConcepts <- function(connectionDetails = NULL,
                                            codeset_id = codesetId)
   DatabaseConnector::executeSql(connection, sql)
   ParallelLogger::logTrace("- Fetching orphan concepts from server")
-  sql <- "SELECT * FROM #recommended_concepts;"
+  sql <- "SELECT rc1.concept_count, c1.*
+  FROM #recommended_concepts rc1
+  INNER JOIN @cdm_database_schema.concept c1
+  ON rc1.concept_id = c1.concept_id
+  ORDER BY domain_id, standard_concept DESC, concept_count DESC;"
   orphanConcepts <- DatabaseConnector::renderTranslateQuerySql(sql = sql,
                                                                connection = connection,
                                                                oracleTempSchema = oracleTempSchema,
@@ -372,11 +376,15 @@ findCohortIncludedSourceConcepts <- function(connectionDetails = NULL,
     counts$proportion <- counts$personCount/counts$backgroundCount
     counts <- counts[order(counts$conceptSetId,
                            counts$conceptId,
+                           counts$sourceConceptName,
+                           counts$sourceVocabularyId,
                            counts$eventYear,
                            counts$eventMonth), ]
   } else {
     counts <- counts[order(counts$conceptSetId,
-                           counts$conceptId), ]
+                           counts$conceptId,
+                           counts$sourceConceptName,
+                           counts$sourceVocabularyId), ]
   }
   sql <- "TRUNCATE TABLE #Codesets; DROP TABLE #Codesets;"
   DatabaseConnector::renderTranslateExecuteSql(connection,

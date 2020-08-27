@@ -5,6 +5,7 @@
 
 SELECT codeset_id AS concept_set_id,
 	standard_concept.concept_id,
+	standard_concept.concept_name,
 	concept_counts.concept_count,
 	concept_counts.concept_subjects
 FROM #Codesets codesets

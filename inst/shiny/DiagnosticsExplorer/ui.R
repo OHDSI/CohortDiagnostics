@@ -129,7 +129,7 @@ sidebarMenu <-
           virtualScroll = 50)
       )
     ),
-    if (exists("temporalCovariateValue")) {
+    if (exists("temporalCovariate")) {
       shiny::conditionalPanel(
         condition = "input.tabs=='temporalCharacterization'",
         shinyWidgets::pickerInput(

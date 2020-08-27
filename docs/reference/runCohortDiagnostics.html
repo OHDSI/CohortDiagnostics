@@ -77,7 +77,7 @@ Alternatively, a covariate setting object may be created using the above as an e
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.3</span>
       </span>
     </div>
 
@@ -155,7 +155,6 @@ Alternatively, a covariate setting object may be created using the above as an e
   <span class='no'>cdmDatabaseSchema</span>,
   <span class='kw'>oracleTempSchema</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='no'>cohortDatabaseSchema</span>,
-  <span class='kw'>vocabularyDatabaseSchema</span> <span class='kw'>=</span> <span class='no'>cdmDatabaseSchema</span>,
   <span class='kw'>cohortTable</span> <span class='kw'>=</span> <span class='st'>"cohort"</span>,
   <span class='kw'>cohortIds</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>inclusionStatisticsFolder</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
@@ -171,15 +170,12 @@ Alternatively, a covariate setting object may be created using the above as an e
   <span class='kw'>runIncidenceRate</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>runCohortOverlap</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>runCohortCharacterization</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>refreshVocabulary</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>covariateSettings</span> <span class='kw'>=</span> <span class='kw pkg'>FeatureExtraction</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/FeatureExtraction/man/createDefaultCovariateSettings.html'>createDefaultCovariateSettings</a></span>(),
   <span class='kw'>runTemporalCohortCharacterization</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
 
     <span class='kw'>temporalCovariateSettings</span> <span class='kw'>=</span> <span class='kw pkg'>FeatureExtraction</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/FeatureExtraction/man/createTemporalCovariateSettings.html'>createTemporalCovariateSettings</a></span>(<span class='kw'>useConditionOccurrence</span>
     <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>useDrugEraStart</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>useProcedureOccurrence</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>useMeasurement</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-    <span class='kw'>temporalStartDays</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(-<span class='fl'>365</span>, -<span class='fl'>30</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>31</span>, <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span>(<span class='kw'>from</span> <span class='kw'>=</span> -<span class='fl'>30</span>, <span class='kw'>to</span> <span class='kw'>=</span> -<span class='fl'>420</span>, <span class='kw'>by</span> <span class='kw'>=</span> -<span class='fl'>30</span>),
-    <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span>(<span class='kw'>from</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>to</span> <span class='kw'>=</span> <span class='fl'>390</span>, <span class='kw'>by</span> <span class='kw'>=</span> <span class='fl'>30</span>)), <span class='kw'>temporalEndDays</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(-<span class='fl'>31</span>, -<span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>30</span>, <span class='fl'>365</span>, <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span>(<span class='kw'>from</span>
-    <span class='kw'>=</span> <span class='fl'>0</span>, <span class='kw'>to</span> <span class='kw'>=</span> -<span class='fl'>390</span>, <span class='kw'>by</span> <span class='kw'>=</span> -<span class='fl'>30</span>), <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span>(<span class='kw'>from</span> <span class='kw'>=</span> <span class='fl'>31</span>, <span class='kw'>to</span> <span class='kw'>=</span> <span class='fl'>420</span>, <span class='kw'>by</span> <span class='kw'>=</span> <span class='fl'>30</span>))),
+    <span class='kw'>temporalStartDays</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(-<span class='fl'>365</span>, -<span class='fl'>30</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>31</span>), <span class='kw'>temporalEndDays</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(-<span class='fl'>31</span>, -<span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>30</span>, <span class='fl'>365</span>)),
   <span class='kw'>minCellCount</span> <span class='kw'>=</span> <span class='fl'>5</span>,
   <span class='kw'>incremental</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
   <span class='kw'>incrementalFolder</span> <span class='kw'>=</span> <span class='no'>exportFolder</span>
@@ -244,13 +240,6 @@ this should include both the database and schema name, for example
 'scratch.dbo'.</p></td>
     </tr>
     <tr>
-      <th>vocabularyDatabaseSchema</th>
-      <td><p>Schema name where your OMOP vocabulary resides. It is common for this
-to be the same as cdm database schema. Note that for SQL Server, 
-this should include both the database and schema name, for example
-'cdm_data.dbo'.</p></td>
-    </tr>
-    <tr>
       <th>cohortTable</th>
       <td><p>Name of the cohort table.</p></td>
     </tr>
@@ -312,10 +301,6 @@ does not exist it will be created.</p></td>
     <tr>
       <th>runCohortCharacterization</th>
       <td><p>Generate and export the cohort characterization?</p></td>
-    </tr>
-    <tr>
-      <th>refreshVocabulary</th>
-      <td><p>Do you want to refresh the copy of vocabulary?</p></td>
     </tr>
     <tr>
       <th>covariateSettings</th>
