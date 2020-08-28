@@ -1,8 +1,16 @@
-CohortDiagnostics 1.2.3
+CohortDiagnostics 1.2.4
 =======================
 Note: 
 
 1.2.x is last release of v 1.x.x series. Future releases with new functionality are expected to have breaking changes with no backward compatability and will be 2.x.x series.
+
+Bug fixes:
+
+1. Added details log when characterization/temporal characterization does not return results or returns result below threshold value. By default we filter out results in from Characterization and Temporal Characterization where the value is less than 0.001. This was leading to empty results for some cohorts - causing errors. 
+
+CohortDiagnostics 1.2.3
+=======================
+
 
 Bug fixes:
 

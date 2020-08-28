@@ -53,11 +53,13 @@
 #' @param runBreakdownIndexEvents     Generate and export the breakdown of index events?
 #' @param runIncidenceRate            Generate and export the cohort incidence  rates?
 #' @param runCohortOverlap            Generate and export the cohort overlap?
-#' @param runCohortCharacterization   Generate and export the cohort characterization?
+#' @param runCohortCharacterization   Generate and export the cohort characterization? 
+#'                                    Only records with values greater than 0.001 are returned.
 #' @param covariateSettings           Either an object of type \code{covariateSettings} as created using one of
 #'                                    the createCovariateSettings function in the FeatureExtraction package, or a list
 #'                                    of such objects.
 #' @param runTemporalCohortCharacterization   Generate and export the temporal cohort characterization?
+#'                                    Only records with values greater than 0.001 are returned.
 #' @param temporalCovariateSettings   Either an object of type \code{covariateSettings} as created using one of
 #'                                    the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
 #'                                    of such objects.
@@ -484,10 +486,41 @@ runCohortDiagnostics <- function(packageName = NULL,
       }
       data <- lapply(split(subset, subset$cohortId), runCohortCharacterization)
       data <- dplyr::bind_rows(data)
-      if (nrow(data) > 0) {
-        data <- data %>% 
-          dplyr::mutate(mean = round(x = mean, digits = 3)) %>% 
-          dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 3 digits
+      
+      dataFiltered <- data %>% 
+        dplyr::mutate(mean = round(x = mean, digits = 3)) %>% 
+        dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 3 digits
+      
+      rowCountByCohortId <- data %>% 
+        dplyr::group_by(.data$cohortId) %>% 
+        dplyr::summarise(n = dplyr::n())
+      
+      rowCountByCohortIdFiltered <- dataFiltered %>% 
+        dplyr::group_by(.data$cohortId) %>% 
+        dplyr::summarise(n = dplyr::n())
+      
+      ParallelLogger::logInfo(paste0("Characterization was run for cohort ids ", 
+                                     paste0(subset$cohortId, collapse = ","),
+                                     ". Of these ",
+                                     nrow(x = rowCountByCohortId),
+                                     " returned characterization results, with ",
+                                     nrow(x = rowCountByCohortIdFiltered),
+                                     " cohorts having atleast one covariate with mean > 0.001"))
+                              
+      if (nrow(x = rowCountByCohortIdFiltered) == 0 || sort(dataFiltered$cohortId) %>% unique() != sort(subset$cohortId) %>% unique()) {
+        message <- cohorts %>% 
+          dplyr::filter(cohortId %in% 
+                          setdiff(x = subset$cohortId, y = rowCountByCohortIdFiltered$cohortId)) %>% 
+          dplyr::mutate(cohorts = paste0(.data$cohortFullName, " (", .data$cohortId, ")")) %>% 
+          dplyr::pull(.data$cohorts) %>% 
+          paste0(collapse = ",\n")
+        ParallelLogger::logWarn(paste0("Characterization results not captured for \n", 
+                                       message,
+                                       " cohorts."))
+      }
+                              
+      if (nrow(dataFiltered) > 0) {
+        data <- dataFiltered
         covariates <- data %>% 
           dplyr::select(.data$covariateId, .data$covariateName, .data$analysisId, .data$conceptId) %>% 
           dplyr::rename(covariateAnalysisId = .data$analysisId)
@@ -508,8 +541,8 @@ runCohortDiagnostics <- function(packageName = NULL,
         
         if (nrow(data) > 0) {
           data <- data  %>% 
-            dplyr::mutate(databaseId = databaseId) %>% 
-            dplyr::left_join(y = counts, by = c("cohortId", "databaseId"))
+            dplyr::mutate(databaseId = !!databaseId) %>% 
+            dplyr::left_join(y = counts)
           data <- enforceMinCellValue(data, "mean", minCellCount/data$cohortEntries)
           data <- data %>% 
             dplyr::mutate(sd = dplyr::case_when(mean >= 0 ~ sd)) %>% 
@@ -570,9 +603,41 @@ runCohortDiagnostics <- function(packageName = NULL,
       }
       data <- lapply(split(subset, subset$cohortId), runTemporalCohortCharacterization)
       data <- dplyr::bind_rows(data)
-      if (nrow(data) > 0) {
-        data <- data %>% dplyr::mutate(mean = round(x = mean, digits = 3)) %>% 
-          dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 3 digits
+      
+      dataFiltered <- data %>% 
+        dplyr::mutate(mean = round(x = mean, digits = 3)) %>% 
+        dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 3 digits
+      
+      rowCountByCohortId <- data %>% 
+        dplyr::group_by(.data$cohortId) %>% 
+        dplyr::summarise(n = dplyr::n())
+      
+      rowCountByCohortIdFiltered <- dataFiltered %>% 
+        dplyr::group_by(.data$cohortId) %>% 
+        dplyr::summarise(n = dplyr::n())
+      
+      ParallelLogger::logInfo(paste0("Temporal characterization was run for cohort ids ", 
+                                     paste0(subset$cohortId, collapse = ","),
+                                     ". Of these ",
+                                     nrow(x = rowCountByCohortId),
+                                     " returned temporal characterization results, with ",
+                                     nrow(x = rowCountByCohortIdFiltered),
+                                     " cohorts having atleast one covariate with mean > 0.001"))
+      
+      if (nrow(x = rowCountByCohortIdFiltered) == 0 || sort(dataFiltered$cohortId) != sort(subset$cohortId)) {
+        message <- cohorts %>% 
+          dplyr::filter(cohortId %in% 
+                          setdiff(x = subset$cohortId, y = rowCountByCohortIdFiltered$cohortId)) %>% 
+          dplyr::mutate(cohorts = paste0(.data$cohortFullName, " (", .data$cohortId, ")")) %>% 
+          dplyr::pull(.data$cohorts) %>% 
+          paste0(collapse = ",\n")
+        ParallelLogger::logWarn(paste0("Temporal characterization results not captured for \n", 
+                                       message,
+                                       " cohorts."))
+      }
+
+      if (nrow(dataFiltered) > 0) {
+        data <- dataFiltered
         
         temporalCovariates <- data %>% 
           dplyr::select(.data$covariateId, .data$covariateName, .data$analysisId, .data$conceptId, .data$timeId, 
@@ -597,7 +662,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                         -.data$startDayTemporalCharacterization, 
                         -.data$endDayTemporalCharacterization) %>% 
           dplyr::mutate(databaseId = databaseId) %>% 
-          dplyr::left_join(y = counts, by = c("cohortId", "databaseId"))
+          dplyr::left_join(y = counts)
         data <- enforceMinCellValue(data, "mean", minCellCount/data$cohortEntries)
         data <- data %>% 
           dplyr::mutate(sd = dplyr::case_when(mean >= 0 ~ sd)) %>% 
