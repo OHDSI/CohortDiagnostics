@@ -491,26 +491,26 @@ runCohortDiagnostics <- function(packageName = NULL,
         dplyr::mutate(mean = round(x = mean, digits = 3)) %>% 
         dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 3 digits
       
-      counts <- data %>% 
+      rowCountByCohortId <- data %>% 
         dplyr::group_by(.data$cohortId) %>% 
         dplyr::summarise(n = dplyr::n())
       
-      countsFiltered <- dataFiltered %>% 
+      rowCountByCohortIdFiltered <- dataFiltered %>% 
         dplyr::group_by(.data$cohortId) %>% 
         dplyr::summarise(n = dplyr::n())
       
       ParallelLogger::logInfo(paste0("Characterization was run for cohort ids ", 
                                      paste0(subset$cohortId, collapse = ","),
                                      ". Of these ",
-                                     nrow(x = counts),
+                                     nrow(x = rowCountByCohortId),
                                      " returned characterization results, with ",
-                                     nrow(x = countsFiltered),
+                                     nrow(x = rowCountByCohortIdFiltered),
                                      " cohorts having atleast one covariate with mean > 0.001"))
                               
-      if (nrow(x = countsFiltered) == 0 || sort(dataFiltered$cohortId) != sort(subset$cohortId)) {
+      if (nrow(x = rowCountByCohortIdFiltered) == 0 || sort(dataFiltered$cohortId) %>% unique() != sort(subset$cohortId) %>% unique()) {
         message <- cohorts %>% 
           dplyr::filter(cohortId %in% 
-                          setdiff(x = subset$cohortId, y = countsFiltered$cohortId)) %>% 
+                          setdiff(x = subset$cohortId, y = rowCountByCohortIdFiltered$cohortId)) %>% 
           dplyr::mutate(cohorts = paste0(.data$cohortFullName, " (", .data$cohortId, ")")) %>% 
           dplyr::pull(.data$cohorts) %>% 
           paste0(collapse = ",\n")
@@ -608,26 +608,26 @@ runCohortDiagnostics <- function(packageName = NULL,
         dplyr::mutate(mean = round(x = mean, digits = 3)) %>% 
         dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 3 digits
       
-      counts <- data %>% 
+      rowCountByCohortId <- data %>% 
         dplyr::group_by(.data$cohortId) %>% 
         dplyr::summarise(n = dplyr::n())
       
-      countsFiltered <- dataFiltered %>% 
+      rowCountByCohortIdFiltered <- dataFiltered %>% 
         dplyr::group_by(.data$cohortId) %>% 
         dplyr::summarise(n = dplyr::n())
       
       ParallelLogger::logInfo(paste0("Temporal characterization was run for cohort ids ", 
                                      paste0(subset$cohortId, collapse = ","),
                                      ". Of these ",
-                                     nrow(x = counts),
+                                     nrow(x = rowCountByCohortId),
                                      " returned temporal characterization results, with ",
-                                     nrow(x = countsFiltered),
+                                     nrow(x = rowCountByCohortIdFiltered),
                                      " cohorts having atleast one covariate with mean > 0.001"))
       
-      if (nrow(x = countsFiltered) == 0 || sort(dataFiltered$cohortId) != sort(subset$cohortId)) {
+      if (nrow(x = rowCountByCohortIdFiltered) == 0 || sort(dataFiltered$cohortId) != sort(subset$cohortId)) {
         message <- cohorts %>% 
           dplyr::filter(cohortId %in% 
-                          setdiff(x = subset$cohortId, y = countsFiltered$cohortId)) %>% 
+                          setdiff(x = subset$cohortId, y = rowCountByCohortIdFiltered$cohortId)) %>% 
           dplyr::mutate(cohorts = paste0(.data$cohortFullName, " (", .data$cohortId, ")")) %>% 
           dplyr::pull(.data$cohorts) %>% 
           paste0(collapse = ",\n")
@@ -635,7 +635,6 @@ runCohortDiagnostics <- function(packageName = NULL,
                                        message,
                                        " cohorts."))
       }
-      
 
       if (nrow(dataFiltered) > 0) {
         data <- dataFiltered
@@ -663,7 +662,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                         -.data$startDayTemporalCharacterization, 
                         -.data$endDayTemporalCharacterization) %>% 
           dplyr::mutate(databaseId = databaseId) %>% 
-          dplyr::left_join(y = counts, by = c("cohortId", "databaseId"))
+          dplyr::left_join(y = counts)
         data <- enforceMinCellValue(data, "mean", minCellCount/data$cohortEntries)
         data <- data %>% 
           dplyr::mutate(sd = dplyr::case_when(mean >= 0 ~ sd)) %>% 
