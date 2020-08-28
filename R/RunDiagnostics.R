@@ -53,11 +53,13 @@
 #' @param runBreakdownIndexEvents     Generate and export the breakdown of index events?
 #' @param runIncidenceRate            Generate and export the cohort incidence  rates?
 #' @param runCohortOverlap            Generate and export the cohort overlap?
-#' @param runCohortCharacterization   Generate and export the cohort characterization?
+#' @param runCohortCharacterization   Generate and export the cohort characterization? 
+#'                                    Only records with values greater than 0.001 are returned.
 #' @param covariateSettings           Either an object of type \code{covariateSettings} as created using one of
 #'                                    the createCovariateSettings function in the FeatureExtraction package, or a list
 #'                                    of such objects.
 #' @param runTemporalCohortCharacterization   Generate and export the temporal cohort characterization?
+#'                                    Only records with values greater than 0.001 are returned.
 #' @param temporalCovariateSettings   Either an object of type \code{covariateSettings} as created using one of
 #'                                    the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
 #'                                    of such objects.
