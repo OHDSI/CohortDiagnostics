@@ -484,41 +484,10 @@ runCohortDiagnostics <- function(packageName = NULL,
       }
       data <- lapply(split(subset, subset$cohortId), runCohortCharacterization)
       data <- dplyr::bind_rows(data)
-      
-      dataFiltered <- data %>% 
-        dplyr::mutate(mean = round(x = mean, digits = 3)) %>% 
-        dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 3 digits
-      
-      counts <- data %>% 
-        dplyr::group_by(.data$cohortId) %>% 
-        dplyr::summarise(n = dplyr::n())
-      
-      countsFiltered <- dataFiltered %>% 
-        dplyr::group_by(.data$cohortId) %>% 
-        dplyr::summarise(n = dplyr::n())
-      
-      ParallelLogger::logInfo(paste0("Characterization was run for cohort ids ", 
-                                     paste0(subset$cohortId, collapse = ","),
-                                     ". Of these ",
-                                     nrow(x = counts),
-                                     " returned characterization results, with ",
-                                     nrow(x = countsFiltered),
-                                     " cohorts having atleast one covariate with mean > 0.001"))
-                              
-      if (nrow(x = countsFiltered) == 0 || sort(dataFiltered$cohortId) != sort(subset$cohortId)) {
-        message <- cohorts %>% 
-          dplyr::filter(cohortId %in% 
-                          setdiff(x = subset$cohortId, y = countsFiltered$cohortId)) %>% 
-          dplyr::mutate(cohorts = paste0(.data$cohortFullName, " (", .data$cohortId, ")")) %>% 
-          dplyr::pull(.data$cohorts) %>% 
-          paste0(collapse = ",\n")
-        ParallelLogger::logWarn(paste0("Characterization results not captured for \n", 
-                                       message,
-                                       " cohorts."))
-      }
-                              
-      if (nrow(dataFiltered) > 0) {
-        data <- dataFiltered
+      if (nrow(data) > 0) {
+        data <- data %>% 
+          dplyr::mutate(mean = round(x = mean, digits = 3)) %>% 
+          dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 3 digits
         covariates <- data %>% 
           dplyr::select(.data$covariateId, .data$covariateName, .data$analysisId, .data$conceptId) %>% 
           dplyr::rename(covariateAnalysisId = .data$analysisId)
@@ -601,42 +570,9 @@ runCohortDiagnostics <- function(packageName = NULL,
       }
       data <- lapply(split(subset, subset$cohortId), runTemporalCohortCharacterization)
       data <- dplyr::bind_rows(data)
-      
-      dataFiltered <- data %>% 
-        dplyr::mutate(mean = round(x = mean, digits = 3)) %>% 
-        dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 3 digits
-      
-      counts <- data %>% 
-        dplyr::group_by(.data$cohortId) %>% 
-        dplyr::summarise(n = dplyr::n())
-      
-      countsFiltered <- dataFiltered %>% 
-        dplyr::group_by(.data$cohortId) %>% 
-        dplyr::summarise(n = dplyr::n())
-      
-      ParallelLogger::logInfo(paste0("Temporal characterization was run for cohort ids ", 
-                                     paste0(subset$cohortId, collapse = ","),
-                                     ". Of these ",
-                                     nrow(x = counts),
-                                     " returned temporal characterization results, with ",
-                                     nrow(x = countsFiltered),
-                                     " cohorts having atleast one covariate with mean > 0.001"))
-      
-      if (nrow(x = countsFiltered) == 0 || sort(dataFiltered$cohortId) != sort(subset$cohortId)) {
-        message <- cohorts %>% 
-          dplyr::filter(cohortId %in% 
-                          setdiff(x = subset$cohortId, y = countsFiltered$cohortId)) %>% 
-          dplyr::mutate(cohorts = paste0(.data$cohortFullName, " (", .data$cohortId, ")")) %>% 
-          dplyr::pull(.data$cohorts) %>% 
-          paste0(collapse = ",\n")
-        ParallelLogger::logWarn(paste0("Temporal characterization results not captured for \n", 
-                                       message,
-                                       " cohorts."))
-      }
-      
-
-      if (nrow(dataFiltered) > 0) {
-        data <- dataFiltered
+      if (nrow(data) > 0) {
+        data <- data %>% dplyr::mutate(mean = round(x = mean, digits = 3)) %>% 
+          dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 3 digits
         
         temporalCovariates <- data %>% 
           dplyr::select(.data$covariateId, .data$covariateName, .data$analysisId, .data$conceptId, .data$timeId, 
