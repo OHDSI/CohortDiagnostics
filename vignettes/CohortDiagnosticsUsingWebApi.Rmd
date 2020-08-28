@@ -176,15 +176,51 @@ This will launch the Shiny app shown below:
 
 Note that each of the tabs on the left has an information icon. Clicking on these icons will show additional information on each diagnostic, how they were computed, and how they should be interpreted.
 
-## Deploying the Shiny app on a Shiny Server
+# Deploying An application to a SharedShiny server
 
-To share the results with others, it may make sense to make the Shiny app available through a Shiny Server. On the Shiny Server, a folder should be created for the app. The following should be placed in this folder:
+To share the results with others, it may make sense to make the Shiny app available through a Shiny Server.
+This section describes how to deploy the CohortDiagnostics R shiny application in a shared environment, such as a linux SharedShiny server where global system packages may be out of date.
+This guide relies on the use of renv,  a utility of managing R environments with different versions of packages.
 
-- The Shiny app itself. This can be found [here](https://github.com/OHDSI/CohortDiagnostics/tree/master/inst/shiny/DiagnosticsExplorer). Make sure to copy all files in the `DiagnosticsExplorer` folder.
+# Installing and creating an R env with required packages
+make sure renv is installed and create a new environment for cohort diagnostics in your system folder:
+```{r}
+install.packages("renv")
+
+renv::init("~/cohortDiagnosticsEnv") # This will create a new folder in your rhome directory
+```
+
+Assuming you are using R studio, once this is completed your environment will now reset to a fresh project.
+If this does not happen, run the command:
+```{r}
+renv::load("~/cohortDiagnosticsEnv")
+```
+
+Once the renv is loaded you will now want to install the required packages for Cohort Diagnostics
+
+```{r}
+install.packages(c('CohortDiagnostics', 'tidyr', 'shinydashboard', 'shinywidgets', 'VennDiagram', 'htmltools', 'DT'))
+```
+
+This has now created a new environment for your packages that is isolated from the system or user packages.
+The next step is to allow the shiny app to load it.
+
+## Creating the shiny application
+
+Copy your Shiny application to the folder from which shiny will launch:
+
+- e.g. `~/ShinyApps/NameOfProject` contact your system administrator if you are not sure where this is.
+
+- Get Shiny app itself. This can be found [here](https://github.com/OHDSI/CohortDiagnostics/tree/master/inst/shiny/DiagnosticsExplorer). Make sure to copy all files in the `DiagnosticsExplorer` folder.
 
 - The diagnostics data should be placed in a subfolder that should be called `data`. In this data folder, either place all the individual zip files generated for each database, or (recommended) place the premerged .RDA file here.
 
+Next, open the file `~/ShinyApps/NameOfProject/global.R` and add the line at the top to load the renv:
 
-Once the app and data are in place, the Shiny Server should automatically detect them and launch the app. You may need to install additional packages required by the app, including 'shinydashboard', 'VennDiagram', 'htmltools', and 'DT'.
+```{r}
+renv::load("~/cohortDiagnosticsEnv")
+```
 
-
+The cohort diagnostics package should now load if you visit the the shared shiny url.
+For example `https:://my-shared-shiny-server.com/user/MyUserName/NameOfProject/`.
+Remember, you only need to create a single renv for cohort diagnostics projects, so using reusing this environment will save time.
