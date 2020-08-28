@@ -46,6 +46,9 @@ Suggests:
   VennDiagram,
   testthat
 Remotes:
+  ohdsi/Eunomia,
+  ohdsi/FeatureExtraction,
+  ohdsi/ROhdsiWebApi,
   r-dbi/RSQLite
 License: Apache License
 VignetteBuilder: knitr
