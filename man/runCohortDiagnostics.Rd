@@ -109,13 +109,15 @@ does not exist it will be created.}
 
 \item{runCohortOverlap}{Generate and export the cohort overlap?}
 
-\item{runCohortCharacterization}{Generate and export the cohort characterization?}
+\item{runCohortCharacterization}{Generate and export the cohort characterization? 
+Only records with values greater than 0.001 are returned.}
 
 \item{covariateSettings}{Either an object of type \code{covariateSettings} as created using one of
 the createCovariateSettings function in the FeatureExtraction package, or a list
 of such objects.}
 
-\item{runTemporalCohortCharacterization}{Generate and export the temporal cohort characterization?}
+\item{runTemporalCohortCharacterization}{Generate and export the temporal cohort characterization?
+Only records with values greater than 0.001 are returned.}
 
 \item{temporalCovariateSettings}{Either an object of type \code{covariateSettings} as created using one of
 the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
