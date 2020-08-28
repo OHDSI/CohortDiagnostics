@@ -541,8 +541,8 @@ runCohortDiagnostics <- function(packageName = NULL,
         
         if (nrow(data) > 0) {
           data <- data  %>% 
-            dplyr::mutate(databaseId = databaseId) %>% 
-            dplyr::left_join(y = counts, by = c("cohortId", "databaseId"))
+            dplyr::mutate(databaseId = !!databaseId) %>% 
+            dplyr::left_join(y = counts)
           data <- enforceMinCellValue(data, "mean", minCellCount/data$cohortEntries)
           data <- data %>% 
             dplyr::mutate(sd = dplyr::case_when(mean >= 0 ~ sd)) %>% 
