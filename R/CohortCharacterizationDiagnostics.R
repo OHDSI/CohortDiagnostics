@@ -62,7 +62,9 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
     ParallelLogger::logInfo(paste("Cohort characterization took",
                                   signif(delta, 3),
                                   attr(delta, "units")))
-    return(tidyr::tibble())
+    data <- list()
+    data$result <- tidyr::tibble()
+    return(data)
   }
   
   data <- FeatureExtraction::getDbCovariateData(connection = connection,
@@ -86,7 +88,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
         dplyr::select(.data$timeId, .data$covariateId, .data$averageValue) %>% 
         dplyr::rename(mean = .data$averageValue) %>% 
         dplyr::collect() %>% 
-        dplyr::left_join(counts, by = c("covariateId", "timeId")) %>% 
+        dplyr::left_join(counts) %>% 
         dplyr::select(-.data$sumValue)
     } else {
       counts <- data$covariates %>% 
@@ -121,7 +123,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
     result <- result %>% dplyr::left_join(y = data$covariateRef %>% dplyr::collect(), by = ("covariateId"))
     if (FeatureExtraction::isTemporalCovariateData(data)) {
       result <- result %>% 
-        dplyr::left_join(y = data$timeRef %>% dplyr::collect(), by = "timeId") %>% 
+        dplyr::left_join(y = data$timeRef %>% dplyr::collect()) %>% 
         dplyr::rename(startDayTemporalCharacterization = .data$startDay,
                       endDayTemporalCharacterization = .data$endDay)
     }
@@ -137,7 +139,8 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
                                   signif(delta, 3),
                                   attr(delta, "units")))
   }
-  return(result)
+  data$result <- result
+  return(data)
 }
 
 #' Compare cohort characteristics
