@@ -62,14 +62,11 @@ shiny::shinyServer(function(input, output, session) {
     return(cohort$cohortId[cohort$cohortFullName == input$comparator])
   })
   
-  
-  if (exists("temporalCovariateChoices")) {
-    timeId <- shiny::reactive({
-      return(temporalCovariateChoices %>%
-               dplyr::filter(choices %in% input$timeIdChoices) %>%
-               dplyr::pull(timeId))
-    })
-  }
+  timeId <- shiny::reactive({
+    return(temporalCovariateChoices %>%
+             dplyr::filter(choices %in% input$timeIdChoices) %>%
+             dplyr::pull(timeId))
+  })
   
   cohortBaseUrl2 <- shiny::reactive({
     return(input$cohortBaseUrl2)
@@ -490,13 +487,6 @@ shiny::shinyServer(function(input, output, session) {
     
     table <- table %>% 
       dplyr::select(.data$conceptId, .data$standardConcept, .data$vocabularyId, .data$conceptCode, .data$conceptName, .data$conceptCount, .data$databaseId) %>% 
-      dplyr::group_by(  .data$conceptId,
-                        .data$standardConcept,
-                        .data$vocabularyId,
-                        .data$conceptCode,
-                        .data$conceptName,
-                        .data$databaseId) %>% 
-      dplyr::slice(1) %>% 
       dplyr::arrange(conceptCount) %>% 
       dplyr::rename(conceptId = "conceptId", standard = "standardConcept", Vocabulary = "vocabularyId", code = "conceptCode", Name = "conceptName") %>% 
       tidyr::pivot_wider(id_cols = c("conceptId", "standard", "Vocabulary", "code", "Name"),

@@ -203,12 +203,14 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
 }
 
 checkIfCohortInstantiated <- function(connection, cohortDatabaseSchema, cohortTable, cohortId) {
-  sql <- "SELECT COUNT(*) FROM @cohort_database_schema.@cohort_table WHERE cohort_definition_id = @cohort_id;"
+  sql <- "SELECT COUNT(*) COUNT FROM @cohort_database_schema.@cohort_table WHERE cohort_definition_id = @cohort_id;"
   count <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                       sql,
                                                       cohort_database_schema = cohortDatabaseSchema,
                                                       cohort_table = cohortTable,
                                                       cohort_id = cohortId)
-  count <- count %>% dplyr::pull()
+  count <- count %>% dplyr::pull(1) # DatabaseConnector::renderTranslateQuerySql returns a data frame.
+  #in sql if select count(*) vs select count(*) count"
+  # the difference is named columns vs no name for column in data frame.
   return(count > 0)
 }

@@ -6,7 +6,7 @@ Note:
 
 Bug fixes:
 
-1. Temporal characterization and cohort characterization bug fixes. Cohorts with zero counts, or low proportions were causing errors. 
+1. Additional bug fixes for charcterization/temporal characterization
 
 CohortDiagnostics 1.2.4
 =======================
