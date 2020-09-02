@@ -63,7 +63,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   
-  if (exists("temporalCovariateValue")) {
+  if (exists("temporalCovariateChoices")) {
     timeId <- shiny::reactive({
       return(temporalCovariateChoices %>%
                dplyr::filter(choices %in% input$timeIdChoices) %>%
