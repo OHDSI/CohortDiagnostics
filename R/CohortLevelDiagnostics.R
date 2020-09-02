@@ -209,6 +209,5 @@ checkIfCohortInstantiated <- function(connection, cohortDatabaseSchema, cohortTa
                                                       cohort_database_schema = cohortDatabaseSchema,
                                                       cohort_table = cohortTable,
                                                       cohort_id = cohortId)
-  count <- count %>% dplyr::pull()
   return(count > 0)
 }
