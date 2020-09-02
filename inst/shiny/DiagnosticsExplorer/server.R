@@ -62,11 +62,14 @@ shiny::shinyServer(function(input, output, session) {
     return(cohort$cohortId[cohort$cohortFullName == input$comparator])
   })
   
-  timeId <- shiny::reactive({
-    return(temporalCovariateChoices %>%
-             dplyr::filter(choices %in% input$timeIdChoices) %>%
-             dplyr::pull(timeId))
-  })
+  
+  if (exists("temporalCovariateValue")) {
+    timeId <- shiny::reactive({
+      return(temporalCovariateChoices %>%
+               dplyr::filter(choices %in% input$timeIdChoices) %>%
+               dplyr::pull(timeId))
+    })
+  }
   
   cohortBaseUrl2 <- shiny::reactive({
     return(input$cohortBaseUrl2)

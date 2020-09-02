@@ -71,7 +71,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.4</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.5</span>
       </span>
     </div>
 
@@ -129,11 +129,19 @@
       <small>Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
+    <div id="cohortdiagnostics-125" class="section level1">
+<h1 class="page-header" data-toc-text="1.2.5">
+<a href="#cohortdiagnostics-125" class="anchor"></a>CohortDiagnostics 1.2.5</h1>
+<p>Note:</p>
+<p>1.2.x is last release of v 1.x.x series. Future releases with new functionality are expected to have breaking changes with no backward compatability and will be 2.x.x series.</p>
+<p>Bug fixes:</p>
+<ol>
+<li>Temporal characterization and cohort characterization bug fixes. Cohorts with zero counts, or low proportions were causing errors.</li>
+</ol>
+</div>
     <div id="cohortdiagnostics-124" class="section level1">
 <h1 class="page-header" data-toc-text="1.2.4">
 <a href="#cohortdiagnostics-124" class="anchor"></a>CohortDiagnostics 1.2.4</h1>
-<p>Note:</p>
-<p>1.2.x is last release of v 1.x.x series. Future releases with new functionality are expected to have breaking changes with no backward compatability and will be 2.x.x series.</p>
 <p>Bug fixes:</p>
 <ol>
 <li>Added details log when characterization/temporal characterization does not return results or returns result below threshold value. By default we filter out results in from Characterization and Temporal Characterization where the value is less than 0.001. This was leading to empty results for some cohorts - causing errors.</li>

@@ -1,4 +1,3 @@
-# Disabling until new version of DatabaseConnector is released:
 library(testthat)
 library(CohortDiagnostics)
 library(Eunomia)
