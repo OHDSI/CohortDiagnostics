@@ -469,38 +469,44 @@ runCohortDiagnostics <- function(packageName = NULL,
                                       incremental = incremental, 
                                       recordKeepingFile = recordKeepingFile)
     if (nrow(subset) > 0) {
-      runCohortCharacterization <- function(row) {
-        ParallelLogger::logInfo("- Creating characterization for cohort ", row$cohortName)
+      result <- tidyr::tibble()
+      analysisRef <- tidyr::tibble()
+      covariateRef <- tidyr::tibble()
+      
+      for (i in (1:length(subset$cohortId))) {
+        ParallelLogger::logInfo("- Creating characterization for cohort ", subset[i,]$cohortFullName)
         data <- getCohortCharacteristics(connection = connection,
                                          cdmDatabaseSchema = cdmDatabaseSchema,
                                          oracleTempSchema = oracleTempSchema,
                                          cohortDatabaseSchema = cohortDatabaseSchema,
                                          cohortTable = cohortTable,
-                                         cohortId = row$cohortId,
+                                         cohortId = subset[i,]$cohortId,
                                          covariateSettings = covariateSettings)
-        
-        if (nrow(data) > 0) {
-          data$cohortId <- row$cohortId
+        if (dplyr::count(data$result) %>% dplyr::pull('n') == 0) {
+          data$result <- tidyr::tibble()
+          data$analysisRef <- tidyr::tibble()
+          data$covariateRef <- tidyr::tibble()
+          ParallelLogger::logWarn("No characterization results returned for cohort")
         }
-        return(data)
+        result <- dplyr::bind_rows(result, data$result %>% 
+                                     dplyr::collect() %>% 
+                                     dplyr::mutate(cohortId = subset[i,]$cohortId)) %>% dplyr::distinct()
+        analysisRef <- dplyr::bind_rows(analysisRef, data$analysisRef %>% dplyr::collect()) %>% dplyr::distinct()
+        covariateRef <- dplyr::bind_rows(covariateRef, data$covariateRef %>% dplyr::collect()) %>% dplyr::distinct()
       }
-      data <- lapply(split(subset, subset$cohortId), runCohortCharacterization)
-      data <- dplyr::bind_rows(data)
       
-      if (nrow(data) == 0) {
-        ParallelLogger::logWarn(paste0("Characterization results not captured for \n", 
-                                       message,
-                                       " cohorts."))
+      if (nrow(result) == 0) {
+        ParallelLogger::logWarn(paste0("Characterization results not captured any of the cohorts"))
       } else {
-        dataFiltered <- data %>% 
-          dplyr::mutate(mean = round(x = mean, digits = 3)) %>% 
-          dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 3 digits
+        resultFiltered <- result %>% 
+          dplyr::mutate(mean = round(x = mean, digits = 4)) %>% 
+          dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 4 digits
         
-        rowCountByCohortId <- data %>% 
+        rowCountByCohortId <- result %>% 
           dplyr::group_by(.data$cohortId) %>% 
           dplyr::summarise(n = dplyr::n())
         
-        rowCountByCohortIdFiltered <- dataFiltered %>% 
+        rowCountByCohortIdFiltered <- resultFiltered %>% 
           dplyr::group_by(.data$cohortId) %>% 
           dplyr::summarise(n = dplyr::n())
         
@@ -510,9 +516,10 @@ runCohortDiagnostics <- function(packageName = NULL,
                                        nrow(x = rowCountByCohortId),
                                        " returned characterization results, with ",
                                        nrow(x = rowCountByCohortIdFiltered),
-                                       " cohorts having atleast one covariate with mean > 0.001"))
+                                       " cohorts having atleast one covariate with mean > 0.0001"))
                                 
-        if (nrow(x = rowCountByCohortIdFiltered) == 0 || sort(dataFiltered$cohortId) %>% unique() != sort(subset$cohortId) %>% unique()) {
+        if (nrow(x = rowCountByCohortIdFiltered) == 0 || 
+            sort(resultFiltered$cohortId) %>% unique() != sort(subset$cohortId) %>% unique()) {
           message <- cohorts %>% 
             dplyr::filter(cohortId %in% 
                             setdiff(x = subset$cohortId, y = rowCountByCohortIdFiltered$cohortId)) %>% 
@@ -524,16 +531,15 @@ runCohortDiagnostics <- function(packageName = NULL,
                                          " cohorts."))
         }
                                 
-        if (nrow(dataFiltered) > 0) {
-          data <- dataFiltered
-          covariates <- data %>% 
-            dplyr::select(.data$covariateId, .data$covariateName, .data$analysisId, .data$conceptId) %>% 
+        if (nrow(resultFiltered) > 0) {
+          result <- resultFiltered
+          covariateRef <- covariateRef %>% 
             dplyr::rename(covariateAnalysisId = .data$analysisId)
           writeToCsv(
-            data = covariates,
+            data = covariateRef,
             fileName = file.path(exportFolder, "covariate.csv"),
             incremental = incremental,
-            covariateId = covariates$covariateId
+            covariateId = covariateRef$covariateId
           )
           
           if (!exists("counts")) {
@@ -541,21 +547,26 @@ runCohortDiagnostics <- function(packageName = NULL,
             names(counts) <- SqlRender::snakeCaseToCamelCase(names(counts))
           }
           
-          data <- data %>% 
+          result <- result %>% 
             dplyr::select(-.data$covariateName, -.data$analysisId)
           
-          if (nrow(data) > 0) {
-            data <- data  %>% 
+          if (nrow(result) > 0) {
+            result <- result  %>% 
               dplyr::mutate(databaseId = !!databaseId) %>% 
               dplyr::left_join(y = counts)
-            data <- enforceMinCellValue(data, "mean", minCellCount/data$cohortEntries)
-            data <- data %>% 
+            result <- enforceMinCellValue(data = result, 
+                                          fieldName = "mean", 
+                                          minValues = minCellCount/result$cohortEntries)
+            result <- result %>% 
               dplyr::mutate(sd = dplyr::case_when(mean >= 0 ~ sd)) %>% 
-              dplyr::mutate(mean = round(.data$mean, digits = 3),
-                            sd = round(.data$sd, digits = 3)) %>% 
+              dplyr::mutate(mean = round(.data$mean, digits = 4),
+                            sd = round(.data$sd, digits = 4)) %>% 
               dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
           }
-          writeToCsv(data, file.path(exportFolder, "covariate_value.csv"), incremental = incremental, cohortId = subset$cohortId)
+          writeToCsv(result, 
+                     file.path(exportFolder, "covariate_value.csv"), 
+                     incremental = incremental, 
+                     cohortId = subset$cohortId)
         }
       }
       recordTasksDone(cohortId = subset$cohortId,
@@ -564,7 +575,6 @@ runCohortDiagnostics <- function(packageName = NULL,
                       recordKeepingFile = recordKeepingFile,
                       incremental = incremental)
     }
-    
     delta <- Sys.time() - startCohortCharacterization
     ParallelLogger::logInfo(paste("Running Characterization took",
                                   signif(delta, 3),
@@ -579,51 +589,49 @@ runCohortDiagnostics <- function(packageName = NULL,
                                       task = "runTemporalCohortCharacterization", 
                                       incremental = incremental, 
                                       recordKeepingFile = recordKeepingFile)
+    
     if (nrow(subset) > 0) {
-      runTemporalCohortCharacterization <- function(row) {
-        ParallelLogger::logInfo("- Creating temporal characterization for cohort ", row$cohortName)
-        
-        if (is.null(temporalCovariateSettings)) {
-          temporalCovariateSettings <- FeatureExtraction::createTemporalCovariateSettings(useConditionOccurrence = TRUE,
-                                                                                          useConditionEraStart = TRUE,
-                                                                                          useDrugEraStart = TRUE,
-                                                                                          useProcedureOccurrence = TRUE,
-                                                                                          useMeasurement = TRUE,
-                                                                                          useObservation = TRUE,
-                                                                                          temporalStartDays = c(-365,-30,0,1,31),
-                                                                                          temporalEndDays = c(-31,-1,0,30,365))
-        }
-        
+      result <- tidyr::tibble()
+      analysisRef <- tidyr::tibble()
+      covariateRef <- tidyr::tibble()
+      timeRef <- tidyr::tibble()
+      
+      for (i in (1:length(subset$cohortId))) {
+        ParallelLogger::logInfo("- Creating Temporal characterization for cohort ", subset[i,]$cohortFullName)
         data <- getCohortCharacteristics(connection = connection,
                                          cdmDatabaseSchema = cdmDatabaseSchema,
                                          oracleTempSchema = oracleTempSchema,
                                          cohortDatabaseSchema = cohortDatabaseSchema,
                                          cohortTable = cohortTable,
-                                         cohortId = row$cohortId,
+                                         cohortId = subset[i,]$cohortId,
                                          covariateSettings = temporalCovariateSettings)
-        
-        if (nrow(data) > 0) {
-          data$cohortId <- row$cohortId
+        if (dplyr::count(data$result) %>% dplyr::pull('n') == 0) {
+          data$result <- tidyr::tibble()
+          data$analysisRef <- tidyr::tibble()
+          data$covariateRef <- tidyr::tibble()
+          data$timeRef <- tidyr::tibble()
+          ParallelLogger::logWarn("No temporal characterization results returned for cohort")
         }
-        return(data)
+        result <- dplyr::bind_rows(result, data$result %>% 
+                                     dplyr::collect() %>% 
+                                     dplyr::mutate(cohortId = subset[i,]$cohortId)) %>% dplyr::distinct()
+        analysisRef <- dplyr::bind_rows(analysisRef, data$analysisRef %>% dplyr::collect()) %>% dplyr::distinct()
+        covariateRef <- dplyr::bind_rows(covariateRef, data$covariateRef %>% dplyr::collect()) %>% dplyr::distinct()
+        timeRef <- dplyr::bind_rows(timeRef, data$timeRef %>% dplyr::collect()) %>% dplyr::distinct()
       }
-      data <- lapply(split(subset, subset$cohortId), runTemporalCohortCharacterization)
-      data <- dplyr::bind_rows(data)
       
-      if (nrow(data) == 0) {
-        ParallelLogger::logWarn(paste0("Temporal characterization results not captured for \n", 
-                                       message,
-                                       " cohorts."))
+      if (nrow(result) == 0) {
+        ParallelLogger::logWarn(paste0("Temporal characterization results not captured any of the cohorts"))
       } else {
-        dataFiltered <- data %>% 
+        resultFiltered <- result %>% 
           dplyr::mutate(mean = round(x = mean, digits = 4)) %>% 
           dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 4 digits
         
-        rowCountByCohortId <- data %>% 
+        rowCountByCohortId <- result %>% 
           dplyr::group_by(.data$cohortId) %>% 
           dplyr::summarise(n = dplyr::n())
         
-        rowCountByCohortIdFiltered <- dataFiltered %>% 
+        rowCountByCohortIdFiltered <- resultFiltered %>% 
           dplyr::group_by(.data$cohortId) %>% 
           dplyr::summarise(n = dplyr::n())
       
@@ -635,7 +643,8 @@ runCohortDiagnostics <- function(packageName = NULL,
                                        nrow(x = rowCountByCohortIdFiltered),
                                        " cohorts having atleast one covariate with mean > 0.0001"))
       
-        if (nrow(x = rowCountByCohortIdFiltered) == 0 || sort(dataFiltered$cohortId) != sort(subset$cohortId)) {
+        if (nrow(x = rowCountByCohortIdFiltered) == 0 || 
+            sort(resultFiltered$cohortId) %>% unique() != sort(subset$cohortId) %>% unique()) {
           message <- cohorts %>% 
             dplyr::filter(cohortId %in% 
                             setdiff(x = subset$cohortId, y = rowCountByCohortIdFiltered$cohortId)) %>% 
@@ -647,19 +656,16 @@ runCohortDiagnostics <- function(packageName = NULL,
                                          " cohorts."))
         }
 
-        if (nrow(dataFiltered) > 0) {
-          data <- dataFiltered
-          
-          temporalCovariates <- data %>% 
-            dplyr::select(.data$covariateId, .data$covariateName, .data$analysisId, .data$conceptId, .data$timeId, 
-                          .data$startDayTemporalCharacterization, .data$endDayTemporalCharacterization) %>% 
+        if (nrow(resultFiltered) > 0) {
+          result <- resultFiltered
+          covariateRef <- covariateRef %>%
             dplyr::rename(covariateAnalysisId = .data$analysisId) %>% 
             dplyr::distinct()
           writeToCsv(
-            data = temporalCovariates,
+            data = covariateRef,
             fileName = file.path(exportFolder, "temporal_covariate.csv"),
             incremental = incremental,
-            covariateId = temporalCovariates$covariateId
+            covariateId = covariateRef$covariateId
           )
           
           if (!exists("counts")) {
@@ -667,20 +673,18 @@ runCohortDiagnostics <- function(packageName = NULL,
             names(counts) <- SqlRender::snakeCaseToCamelCase(names(counts))
           }
           
-          data <- data %>% 
+          result <- result %>% 
             dplyr::select(-.data$covariateName, 
-                          -.data$analysisId, 
-                          -.data$startDayTemporalCharacterization, 
-                          -.data$endDayTemporalCharacterization) %>% 
-            dplyr::mutate(databaseId = databaseId) %>% 
+                          -.data$analysisId) %>% 
+            dplyr::mutate(databaseId = !!databaseId) %>% 
             dplyr::left_join(y = counts)
-          data <- enforceMinCellValue(data, "mean", minCellCount/data$cohortEntries)
-          data <- data %>% 
+          result <- enforceMinCellValue(result, "mean", minCellCount/result$cohortEntries)
+          result <- result %>% 
             dplyr::mutate(sd = dplyr::case_when(mean >= 0 ~ sd)) %>% 
-            dplyr::mutate(mean = round(.data$mean, digits = 3),
-                          sd = round(.data$sd, digits = 3)) %>% 
+            dplyr::mutate(mean = round(.data$mean, digits = 4),
+                          sd = round(.data$sd, digits = 4)) %>% 
             dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
-          writeToCsv(data, 
+          writeToCsv(result, 
                      file.path(exportFolder, "temporal_covariate_value.csv"), 
                      incremental = incremental, 
                      cohortId = subset$cohortId)
@@ -723,6 +727,10 @@ swapColumnContents <- function(df, column1 = "targetId", column2 = "comparatorId
 
 
 enforceMinCellValue <- function(data, fieldName, minValues, silent = FALSE) {
+  if (length(minValues) == 0) {
+    ParallelLogger::logWarn("MinValues not found while enforcing minimum cell value. /n
+                            Did you forget to specify minCellCount?")
+  }
   toCensor <- !is.na(data[, fieldName]) & data[, fieldName] < minValues & data[, fieldName] != 0
   if (!silent) {
     percent <- round(100 * sum(toCensor)/nrow(data), 1)

@@ -89,18 +89,45 @@ if (exists("covariate")) {
 if (exists("temporalCovariate")) {
   temporalCovariate <- temporalCovariate %>% 
     dplyr::distinct() %>% 
-    dplyr::arrange(.data$covariateName, .data$timeId)
+    dplyr::arrange(.data$covariateName)
   if (!"conceptId" %in% colnames(temporalCovariate)) {
     warning("conceptId not found in temporalCovariate file. Calculating conceptId from covariateId. This may rarely cause errors.")
     temporalCovariate <- temporalCovariate %>% 
       dplyr::mutate(conceptId = (.data$covariateId - .data$covariateAnalysisId)/1000)
   }
+  if ("timeId" %in% colnames(temporalCovariate)) {
   temporalCovariateChoices <- temporalCovariate %>%
     dplyr::select(.data$timeId, .data$startDayTemporalCharacterization, .data$endDayTemporalCharacterization) %>%
     dplyr::distinct() %>%
     dplyr::mutate(choices = paste0("Start ", .data$startDayTemporalCharacterization, " to end ", .data$endDayTemporalCharacterization)) %>%
     dplyr::select(.data$timeId, .data$choices) %>% 
     dplyr::arrange(.data$timeId)
+  } else {
+    if ("timeId" %in% colnames(temporalCovariateValue)) {
+      if ("startDayTemporalCharacterization" %in% colnames(temporalCovariateValue)) {
+        temporalCovariateChoices <- temporalCovariateValue %>%
+          dplyr::mutate(choices = paste0("Start ", .data$startDayTemporalCharacterization, " to end ", .data$endDayTemporalCharacterization)) %>% 
+          dplyr::select(.data$timeId, .data$choices) %>%
+          dplyr::distinct()
+      } else {
+        temporalCovariateChoices <- temporalCovariateValue %>%
+          dplyr::select(.data$timeId) %>% 
+          dplyr::distinct()
+        if (exists("timeRef")) {
+          temporalCovariateChoices <- temporalCovariateChoices %>% 
+            dplyr::left_join(timeRef) %>%
+            dplyr::mutate(choices = paste0("Start ", .data$startDayTemporalCharacterization, " to end ", .data$endDayTemporalCharacterization)) %>%
+            dplyr::select(.data$timeId, .data$choices) %>% 
+            dplyr::arrange(.data$timeId)
+        } else {
+          ParallelLogger::logWarn("Please check the data model of the temporal characterization output. Incompatible.")
+          rm(temporalCovariateChoices)
+          rm(temporalCovariateValue)
+          rm(temporalCovariate)
+        }
+      }
+    }
+  }
 }
 
 if (exists("includedSourceConcept")) {
