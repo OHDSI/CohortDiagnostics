@@ -376,12 +376,15 @@ runConceptSetDiagnostics <- function(connection,
       counts <-
         merge(conceptSets[, c("cohortId",
                               "conceptSetId",
+                              "conceptSetName",
                               "uniqueConceptSetId")], counts)
       counts$uniqueConceptSetId <- NULL
       counts <- counts[order(
         counts$cohortId,
         counts$conceptSetId,
-        counts$conceptId
+        counts$conceptId,
+        counts$sourceConceptName,	
+        counts$sourceVocabularyId
       ),]
       counts <-
         counts[counts$cohortId %in% subsetIncluded$cohortId,]
@@ -460,6 +463,7 @@ runConceptSetDiagnostics <- function(connection,
       data <-
         merge(conceptSets[, c("cohortId",
                               "conceptSetId",
+                              "conceptSetName",
                               "uniqueConceptSetId")], data)
       data$uniqueConceptSetId <- NULL
       data$conceptName <- NULL
