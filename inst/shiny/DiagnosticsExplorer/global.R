@@ -89,18 +89,41 @@ if (exists("covariate")) {
 if (exists("temporalCovariate")) {
   temporalCovariate <- temporalCovariate %>% 
     dplyr::distinct() %>% 
-    dplyr::arrange(.data$covariateName, .data$timeId)
+    dplyr::arrange(.data$covariateName)
   if (!"conceptId" %in% colnames(temporalCovariate)) {
     warning("conceptId not found in temporalCovariate file. Calculating conceptId from covariateId. This may rarely cause errors.")
     temporalCovariate <- temporalCovariate %>% 
       dplyr::mutate(conceptId = (.data$covariateId - .data$covariateAnalysisId)/1000)
   }
-  temporalCovariateChoices <- temporalCovariate %>%
-    dplyr::select(.data$timeId, .data$startDayTemporalCharacterization, .data$endDayTemporalCharacterization) %>%
-    dplyr::distinct() %>%
-    dplyr::mutate(choices = paste0("Start ", .data$startDayTemporalCharacterization, " to end ", .data$endDayTemporalCharacterization)) %>%
-    dplyr::select(.data$timeId, .data$choices) %>% 
-    dplyr::arrange(.data$timeId)
+  if ('timeId' %in% colnames(temporalCovariate) && 
+      'startDayTemporalCharacterization' %in% colnames(temporalCovariate) && 
+      'endDayTemporalCharacterization' %in% colnames(temporalCovariate)) {
+    temporalCovariateChoices <- temporalCovariate %>%
+      dplyr::select(.data$timeId, 
+                    .data$startDayTemporalCharacterization, 
+                    .data$endDayTemporalCharacterization) %>%
+      dplyr::distinct() %>%
+      dplyr::mutate(choices = paste0("Start ", 
+                                     .data$startDayTemporalCharacterization, 
+                                     " to end ", 
+                                     .data$endDayTemporalCharacterization)) %>%
+      dplyr::select(.data$timeId, .data$choices) %>% 
+      dplyr::arrange(.data$timeId)
+  } else if ('timeId' %in% colnames(temporalCovariateValue)) {
+    temporalCovariateChoices <- temporalCovariateValue %>% 
+      dplyr::select(.data$timeId) %>% 
+      dplyr::distinct()
+    if (exists("timeRef")) {
+      temporalCovariateChoices <- temporalCovariateChoices %>% 
+        dplyr::left_join(timeRef) %>%
+        dplyr::distinct() %>%
+        dplyr::mutate(choices = paste0("Start ", 
+                                       .data$startDay, 
+                                       " to end ", 
+                                       .data$endDay)) %>% 
+        dplyr::select(-.data$startDay, -.data$endDay)
+    }
+  }
 }
 
 if (exists("includedSourceConcept")) {
