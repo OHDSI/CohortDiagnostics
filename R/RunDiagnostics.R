@@ -745,6 +745,16 @@ runCohortDiagnostics <- function(packageName = NULL,
                                   attr(delta, "units")))
   }
   
+  ParallelLogger::logInfo("Getting concept sets from all cohort definitions.")
+  conceptSetsFromCohorts <-
+    combineConceptSetsFromCohorts(cohorts = readr::read_csv(file.path(exportFolder, "cohort.csv"), 
+                                                            col_types = readr::cols()) %>% 
+                                    dplyr::rename_with(SqlRender::snakeCaseToCamelCase)) %>% 
+    dplyr::select(-"uniqueConceptSetId")
+  writeToCsv(data = conceptSetsFromCohorts, 
+             fileName = file.path(exportFolder, "concept_sets.csv"), 
+             incremental = incremental)
+  
   # Add all to zip file -------------------------------------------------------------------------------
   ParallelLogger::logInfo("Adding results to zip file")
   zipName <- file.path(exportFolder, paste0("Results_", databaseId, ".zip"))

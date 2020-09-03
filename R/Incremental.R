@@ -112,8 +112,10 @@ writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
 }
 
 saveIncremental <- function(data, fileName, ...) {
-  if (length(list(...)[[1]]) == 0) {
-    return()
+  if (!length(list(...)) == 0) {
+    if (length(list(...)[[1]]) == 0) {
+      return()
+    }
   }
   if (file.exists(fileName)) {
     previousData <- readr::read_csv(fileName, col_types = readr::cols())

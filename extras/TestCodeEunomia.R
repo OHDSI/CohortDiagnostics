@@ -47,3 +47,6 @@ CohortDiagnostics::runCohortDiagnostics(connectionDetails = connectionDetails,
                                         runTimeDistributions = TRUE,
                                         incremental = TRUE,
                                         incrementalFolder = file.path(folder, "incremental"))
+
+CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = file.path(folder, "export"))
+
