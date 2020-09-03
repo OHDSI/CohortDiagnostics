@@ -54,7 +54,7 @@
 #' @param runIncidenceRate            Generate and export the cohort incidence  rates?
 #' @param runCohortOverlap            Generate and export the cohort overlap?
 #' @param runCohortCharacterization   Generate and export the cohort characterization? 
-#'                                    Only records with values greater than 0.001 are returned.
+#'                                    Only records with values greater than 0.0001 are returned.
 #' @param covariateSettings           Either an object of type \code{covariateSettings} as created using one of
 #'                                    the createCovariateSettings function in the FeatureExtraction package, or a list
 #'                                    of such objects.
@@ -475,8 +475,10 @@ runCohortDiagnostics <- function(packageName = NULL,
     characteristicsCovariatesContinuous <- list()
     
     for (i in (1:nrow(subset))) {
-      ParallelLogger::logInfo("- Creating characterization for cohort: '", subset[i,]$cohortFullName, "'\n",
-                              "  Cohort id: ", subset[1,]$cohortId, "\n")
+      messageCohortBeingCharacterized <- paste0(subset[i,]$cohortFullName, 
+                                                "' (Cohort Id: ", 
+                                                subset[i,]$cohortId, ')')
+      ParallelLogger::logInfo("- Creating characterization for cohort: '", messageCohortBeingCharacterized)
       cohortCharacteristicsOutput <- getCohortCharacteristics(connection = connection,
                                                               cdmDatabaseSchema = cdmDatabaseSchema,
                                                               oracleTempSchema = oracleTempSchema,
@@ -485,10 +487,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                                               cohortId = subset[i,]$cohortId,
                                                               covariateSettings = covariateSettings)
       if (length(cohortCharacteristicsOutput) == 0) {
-        ParallelLogger::logWarn("- No characterization output for cohort: ", 
-                                subset[i,]$cohortFullName, 
-                                '. Cohort id: ', 
-                                subset[i,]$cohortId)
+        ParallelLogger::logWarn("- No characterization output for cohort: ", messageCohortBeingCharacterized)
       } else {
         characteristicsResult[[i]] <- cohortCharacteristicsOutput$result
         characteristicsAnalysisRef[[i]] <- cohortCharacteristicsOutput$analysisRef
@@ -500,159 +499,58 @@ runCohortDiagnostics <- function(packageName = NULL,
     characteristicsAnalysisRef <- dplyr::bind_rows(characteristicsAnalysisRef) %>% dplyr::distinct()
     characteristicsCovariateRef <- dplyr::bind_rows(characteristicsCovariateRef) %>% dplyr::distinct()
     characteristicsCovariates <- dplyr::bind_rows(characteristicsCovariates) %>% dplyr::distinct()
-
-    characteristicsResultFiltered <- characteristicsResult %>% 
-      dplyr::mutate(mean = round(x = mean, digits = 3)) %>% 
-      dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 3 digits
+    
+    message <- "\nCharacterization results summary:\n"
+    message <- c(message, paste0("- Number of cohorts submitted for characterization = ", length(subset$cohortId), '\n'))
+    message <- c(message, "- Following cohorts were submitted: \n")
+    message <- c(message, paste0(subset %>% 
+                                   dplyr::mutate(message = paste0("   ", subset$cohortFullName, 
+                                                                  " (Cohort Id: ", 
+                                                                  subset$cohortId, 
+                                                                  ')\n')) %>% 
+                                   dplyr::pull(.data$message), collapse = ""))
+    message <- c(message, paste0("- Total number of records returned for all cohorts characterized = ", nrow(characteristicsResult) %>% scales::comma(), '\n'))
+    
+    if (nrow(characteristicsResult) > 0) {
+      message <- c(message, paste0("     ", 
+                                   subset %>% 
+                                     dplyr::select(.data$cohortId) %>% 
+                                     dplyr::left_join(characteristicsResult %>% 
+                                                        dplyr::group_by(.data$cohortId) %>% 
+                                                        dplyr::summarise(n = dplyr::n()) %>% 
+                                                        dplyr::select(.data$cohortId, .data$n)
+                                     ) %>% 
+                                     dplyr::mutate(n = tidyr::replace_na(data = .data$n, replace = 0)) %>% 
+                                     dplyr::mutate(message = paste0('Cohort Id:', 
+                                                                    .data$cohortId, 
+                                                                    " -> ", 
+                                                                    scales::comma(.data$n), "\n")) %>% 
+                                     dplyr::pull(message)))
       
-    rowCountByCohortId <- characteristicsResultFiltered %>% 
-      dplyr::group_by(.data$cohortId) %>% 
-      dplyr::summarise(n = dplyr::n())
+      characteristicsResultFiltered <- characteristicsResult %>% 
+        dplyr::mutate(mean = round(x = mean, digits = 4)) %>% 
+        dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 4 digits
       
-    rowCountByCohortIdFiltered <- characteristicsResultFiltered %>% 
-      dplyr::group_by(.data$cohortId) %>% 
-      dplyr::summarise(n = dplyr::n())
-      
-    ParallelLogger::logInfo(paste0("Characterization was run for cohort ids ", 
-                                   paste0(subset$cohortId, collapse = ","),
-                                   ". Of these ",
-                                   nrow(x = rowCountByCohortId),
-                                   " returned characterization results, with ",
-                                   nrow(x = rowCountByCohortIdFiltered),
-                                   " cohorts having atleast one covariate with mean > 0.001"))
-                              
-      if (nrow(x = rowCountByCohortIdFiltered) == 0 || 
-          sort(characteristicsResultFiltered$cohortId) %>% unique() != sort(subset$cohortId) %>% unique()) {
-        message <- cohorts %>% 
-          dplyr::filter(cohortId %in% 
-                          setdiff(x = subset$cohortId, 
-                                  y = rowCountByCohortIdFiltered$cohortId)) %>% 
-          dplyr::mutate(cohorts = paste0(.data$cohortFullName, " (", .data$cohortId, ")")) %>% 
-          dplyr::pull(.data$cohorts) %>% 
-          paste0(collapse = ",\n")
-        ParallelLogger::logWarn(paste0("Characterization results not captured for \n", 
-                                       message,
-                                       " cohorts."))
-      }
-                              
-      if (nrow(characteristicsResultFiltered) > 0) {
-        covariates <- characteristicsCovariateRef %>% 
-          dplyr::rename(covariateAnalysisId = .data$analysisId)
-        writeToCsv(
-          data = covariates,
-          fileName = file.path(exportFolder, "covariate.csv"),
-          incremental = incremental,
-          covariateId = covariates$covariateId
-        )
-        
-        if (!exists("counts")) {
-          counts <- readr::read_csv(file = file.path(exportFolder, "cohort_count.csv"), col_types = readr::cols())
-          names(counts) <- SqlRender::snakeCaseToCamelCase(names(counts))
-        }
-        
-        characteristicsResultFiltered <- characteristicsResultFiltered %>% 
-            dplyr::mutate(databaseId = !!databaseId) %>% 
-            dplyr::left_join(y = counts)
-        characteristicsResultFiltered <- enforceMinCellValue(data = characteristicsResultFiltered, 
-                                                     fieldName = "mean", 
-                                                     minValues = minCellCount/characteristicsResultFiltered$cohortEntries)
-        characteristicsResultFiltered <- characteristicsResultFiltered %>% 
-            dplyr::mutate(sd = dplyr::case_when(mean >= 0 ~ sd)) %>% 
-            dplyr::mutate(mean = round(.data$mean, digits = 4),
-                          sd = round(.data$sd, digits = 4)) %>% 
-            dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
-        }
-        writeToCsv(characteristicsResultFiltered, 
-                   file.path(exportFolder, "covariate_value.csv"), 
-                   incremental = incremental, 
-                   cohortId = subset$cohortId)
-      recordTasksDone(cohortId = subset$cohortId,
-                      task = "runCohortCharacterization",
-                      checksum = subset$checksum,
-                      recordKeepingFile = recordKeepingFile,
-                      incremental = incremental)
-    delta <- Sys.time() - startCohortCharacterization
-    ParallelLogger::logInfo(paste("Running Characterization took",
-                                  signif(delta, 3),
-                                  attr(delta, "units")))
-  }
-  
-  if (runTemporalCohortCharacterization) {
-    startTemporalCohortCharacterization <- Sys.time()
-    # Temporal Cohort characterization ---------------------------------------------------------------
-    ParallelLogger::logInfo("\nCreating temporal cohort characterizations - started at ", Sys.time())
-    subset <- subsetToRequiredCohorts(cohorts = cohorts, 
-                                      task = "runTemporalCohortCharacterization", 
-                                      incremental = incremental, 
-                                      recordKeepingFile = recordKeepingFile)
-    characteristicsResult <- list()
-    characteristicsAnalysisRef <- list()
-    characteristicsCovariateRef <- list()
-    characteristicsCovariates <- list()
-    characteristicsCovariatesContinuous <- list()
-    characteristicsTimeRef <- list()
-    
-    for (i in (1:nrow(subset))) {
-      ParallelLogger::logInfo("- Creating temporal characterization for cohort: '", subset[i,]$cohortFullName, "'\n",
-                              "  Cohort id: ", subset[1,]$cohortId, "\n")
-      cohortCharacteristicsOutput <- getCohortCharacteristics(connection = connection,
-                                                              cdmDatabaseSchema = cdmDatabaseSchema,
-                                                              oracleTempSchema = oracleTempSchema,
-                                                              cohortDatabaseSchema = cohortDatabaseSchema,
-                                                              cohortTable = cohortTable,
-                                                              cohortId = subset[i,]$cohortId,
-                                                              covariateSettings = temporalCovariateSettings)
-      if (length(cohortCharacteristicsOutput) == 0) {
-        ParallelLogger::logWarn("- No temporal characterization output for cohort: ", 
-                                subset[i,]$cohortFullName, 
-                                '. Cohort id: ', 
-                                subset[i,]$cohortId)
-      } else {
-        characteristicsResult[[i]] <- cohortCharacteristicsOutput$result
-        characteristicsAnalysisRef[[i]] <- cohortCharacteristicsOutput$analysisRef
-        characteristicsCovariateRef[[i]] <- cohortCharacteristicsOutput$covariateRef
-        characteristicsCovariates[[i]] <- cohortCharacteristicsOutput$covariates
-        characteristicsTimeRef[[i]] <- cohortCharacteristicsOutput$timeRef
-      }
-    }
-    characteristicsResult <- dplyr::bind_rows(characteristicsResult) %>% dplyr::distinct()
-    characteristicsAnalysisRef <- dplyr::bind_rows(characteristicsAnalysisRef) %>% dplyr::distinct()
-    characteristicsCovariateRef <- dplyr::bind_rows(characteristicsCovariateRef) %>% dplyr::distinct()
-    characteristicsCovariates <- dplyr::bind_rows(characteristicsCovariates) %>% dplyr::distinct()
-    characteristicsTimeRef <- dplyr::bind_rows(characteristicsTimeRef) %>% dplyr::distinct()
-    
-    characteristicsResultFiltered <- characteristicsResult %>% 
-      dplyr::mutate(mean = round(x = mean, digits = 3)) %>% 
-      dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 3 digits
-    
-    rowCountByCohortId <- characteristicsResultFiltered %>% 
-      dplyr::group_by(.data$cohortId) %>% 
-      dplyr::summarise(n = dplyr::n())
-    
-    rowCountByCohortIdFiltered <- characteristicsResultFiltered %>% 
-      dplyr::group_by(.data$cohortId) %>% 
-      dplyr::summarise(n = dplyr::n())
-    
-    ParallelLogger::logInfo(paste0("Temporal characterization was run for cohort ids ", 
-                                   paste0(subset$cohortId, collapse = ","),
-                                   ". Of these ",
-                                   nrow(x = rowCountByCohortId),
-                                   " returned temporal characterization results, with ",
-                                   nrow(x = rowCountByCohortIdFiltered),
-                                   " cohorts having atleast one covariate with mean > 0.001"))
-    
-    if (nrow(x = rowCountByCohortIdFiltered) == 0 || 
-        sort(characteristicsResultFiltered$cohortId) %>% unique() != sort(subset$cohortId) %>% unique()) {
-      message <- cohorts %>% 
-        dplyr::filter(cohortId %in% 
-                        setdiff(x = subset$cohortId, 
-                                y = rowCountByCohortIdFiltered$cohortId)) %>% 
-        dplyr::mutate(cohorts = paste0(.data$cohortFullName, " (", .data$cohortId, ")")) %>% 
-        dplyr::pull(.data$cohorts) %>% 
-        paste0(collapse = ",\n")
-      ParallelLogger::logWarn(paste0("Temporal characterization results not captured for \n", 
-                                     message,
-                                     " cohorts."))
+      message <- c(message, paste0("- The number of cohorts with atleast one covariate with mean > 0.0001 is ",
+                                   length(characteristicsResultFiltered$cohortId %>% unique() %>% scales::comma()), 
+                                   "\n"))
+      message <- c(message, paste0(" --", 
+                                   subset %>% 
+                                     dplyr::select(.data$cohortId) %>% 
+                                     dplyr::left_join(characteristicsResultFiltered %>% 
+                                                        dplyr::group_by(.data$cohortId) %>% 
+                                                        dplyr::summarise(n = dplyr::n()) %>% 
+                                                        dplyr::select(.data$cohortId, .data$n)
+                                     ) %>% 
+                                     dplyr::mutate(n = tidyr::replace_na(data = .data$n, replace = 0)) %>% 
+                                     dplyr::mutate(message = paste0('Cohort Id: ', 
+                                                                    .data$cohortId, 
+                                                                    " -> ", 
+                                                                    scales::comma(.data$n), "\n")) %>% 
+                                     dplyr::pull(message)))
+    } else {
+      message <- c(message, "- WARNING: No characterization output received for any of the submitted cohorts.\n")
+      message <- c(message, "           No characterization data for any of the submitted cohorts.\n")
     }
     
     if (nrow(characteristicsResultFiltered) > 0) {
@@ -660,13 +558,9 @@ runCohortDiagnostics <- function(packageName = NULL,
         dplyr::rename(covariateAnalysisId = .data$analysisId)
       writeToCsv(
         data = covariates,
-        fileName = file.path(exportFolder, "temporal_covariate.csv"),
+        fileName = file.path(exportFolder, "covariate.csv"),
         incremental = incremental,
         covariateId = covariates$covariateId
-      )
-      writeToCsv(
-        data = characteristicsTimeRef,
-        fileName = file.path(exportFolder, "time_ref.csv")
       )
       
       if (!exists("counts")) {
@@ -685,11 +579,148 @@ runCohortDiagnostics <- function(packageName = NULL,
         dplyr::mutate(mean = round(.data$mean, digits = 4),
                       sd = round(.data$sd, digits = 4)) %>% 
         dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
+      writeToCsv(characteristicsResultFiltered, 
+                 file.path(exportFolder, "covariate_value.csv"), 
+                 incremental = incremental, 
+                 cohortId = subset$cohortId)
     }
-    writeToCsv(characteristicsResultFiltered, 
-               file.path(exportFolder, "temporal_covariate_value.csv"), 
-               incremental = incremental, 
-               cohortId = subset$cohortId)
+    ParallelLogger::logInfo(message)
+    recordTasksDone(cohortId = subset$cohortId,
+                    task = "runCohortCharacterization",
+                    checksum = subset$checksum,
+                    recordKeepingFile = recordKeepingFile,
+                    incremental = incremental)
+    delta <- Sys.time() - startCohortCharacterization
+    ParallelLogger::logInfo(paste("Running Characterization took",
+                                  signif(delta, 3),
+                                  attr(delta, "units")))
+  }
+  
+  if (runTemporalCohortCharacterization) {
+    startTemporalCohortCharacterization <- Sys.time()
+    # Cohort characterization ---------------------------------------------------------------
+    ParallelLogger::logInfo("\nCreating temporal cohort characterizations - started at ", Sys.time())
+    subset <- subsetToRequiredCohorts(cohorts = cohorts, 
+                                      task = "runTemporalCohortCharacterization", 
+                                      incremental = incremental, 
+                                      recordKeepingFile = recordKeepingFile)
+    characteristicsResult <- list()
+    characteristicsAnalysisRef <- list()
+    characteristicsCovariateRef <- list()
+    characteristicsCovariates <- list()
+    characteristicsCovariatesContinuous <- list()
+    
+    for (i in (1:nrow(subset))) {
+      messageCohortBeingCharacterized <- paste0(subset[i,]$cohortFullName, 
+                                                "' (Cohort Id: ", 
+                                                subset[i,]$cohortId, ')')
+      ParallelLogger::logInfo("- Creating temporal characterization for cohort: '", messageCohortBeingCharacterized)
+      cohortCharacteristicsOutput <- getCohortCharacteristics(connection = connection,
+                                                              cdmDatabaseSchema = cdmDatabaseSchema,
+                                                              oracleTempSchema = oracleTempSchema,
+                                                              cohortDatabaseSchema = cohortDatabaseSchema,
+                                                              cohortTable = cohortTable,
+                                                              cohortId = subset[i,]$cohortId,
+                                                              covariateSettings = temporalCovariateSettings)
+      if (length(cohortCharacteristicsOutput) == 0) {
+        ParallelLogger::logWarn("- No temporal characterization output for cohort: ", messageCohortBeingCharacterized)
+      } else {
+        characteristicsResult[[i]] <- cohortCharacteristicsOutput$result
+        characteristicsAnalysisRef[[i]] <- cohortCharacteristicsOutput$analysisRef
+        characteristicsCovariateRef[[i]] <- cohortCharacteristicsOutput$covariateRef
+        characteristicsCovariates[[i]] <- cohortCharacteristicsOutput$covariates
+      }
+    }
+    characteristicsResult <- dplyr::bind_rows(characteristicsResult) %>% dplyr::distinct()
+    characteristicsAnalysisRef <- dplyr::bind_rows(characteristicsAnalysisRef) %>% dplyr::distinct()
+    characteristicsCovariateRef <- dplyr::bind_rows(characteristicsCovariateRef) %>% dplyr::distinct()
+    characteristicsCovariates <- dplyr::bind_rows(characteristicsCovariates) %>% dplyr::distinct()
+    
+    message <- "\nTemporal characterization results summary:\n"
+    message <- c(message, paste0("- Number of cohorts submitted for temporal characterization = ", length(subset$cohortId), '\n'))
+    message <- c(message, "- Following cohorts were submitted: \n")
+    message <- c(message, paste0(subset %>% 
+                                   dplyr::mutate(message = paste0("   ", subset$cohortFullName, 
+                                                                  " (Cohort Id: ", 
+                                                                  subset$cohortId, 
+                                                                  ')\n')) %>% 
+                                   dplyr::pull(.data$message), collapse = ""))
+    message <- c(message, paste0("- Total number of records returned for all cohorts characterized = ", nrow(characteristicsResult) %>% scales::comma(), '\n'))
+    
+    if (nrow(characteristicsResult) > 0) {
+      message <- c(message, paste0("     ", 
+                                   subset %>% 
+                                     dplyr::select(.data$cohortId) %>% 
+                                     dplyr::left_join(characteristicsResult %>% 
+                                                        dplyr::group_by(.data$cohortId) %>% 
+                                                        dplyr::summarise(n = dplyr::n()) %>% 
+                                                        dplyr::select(.data$cohortId, .data$n)
+                                     ) %>% 
+                                     dplyr::mutate(n = tidyr::replace_na(data = .data$n, replace = 0)) %>% 
+                                     dplyr::mutate(message = paste0('Cohort Id:', 
+                                                                    .data$cohortId, 
+                                                                    " -> ", 
+                                                                    scales::comma(.data$n), "\n")) %>% 
+                                     dplyr::pull(message)))
+      
+      characteristicsResultFiltered <- characteristicsResult %>% 
+        dplyr::mutate(mean = round(x = mean, digits = 4)) %>% 
+        dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 4 digits
+      
+      message <- c(message, paste0("- The number of cohorts with atleast one covariate with mean > 0.0001 is ",
+                                   length(characteristicsResultFiltered$cohortId %>% unique() %>% scales::comma()), 
+                                   "\n"))
+      message <- c(message, paste0(" --", 
+                                   subset %>% 
+                                     dplyr::select(.data$cohortId) %>% 
+                                     dplyr::left_join(characteristicsResultFiltered %>% 
+                                                        dplyr::group_by(.data$cohortId) %>% 
+                                                        dplyr::summarise(n = dplyr::n()) %>% 
+                                                        dplyr::select(.data$cohortId, .data$n)
+                                     ) %>% 
+                                     dplyr::mutate(n = tidyr::replace_na(data = .data$n, replace = 0)) %>% 
+                                     dplyr::mutate(message = paste0('Cohort Id: ', 
+                                                                    .data$cohortId, 
+                                                                    " -> ", 
+                                                                    scales::comma(.data$n), "\n")) %>% 
+                                     dplyr::pull(message)))
+    } else {
+      message <- c(message, "- WARNING: No temporal characterization output received for any of the submitted cohorts.\n")
+      message <- c(message, "           No temporal characterization data for any of the submitted cohorts.\n")
+    }
+    
+    if (nrow(characteristicsResultFiltered) > 0) {
+      covariates <- characteristicsCovariateRef %>% 
+        dplyr::rename(covariateAnalysisId = .data$analysisId)
+      writeToCsv(
+        data = covariates,
+        fileName = file.path(exportFolder, "temporal_covariate.csv"),
+        incremental = incremental,
+        covariateId = covariates$covariateId
+      )
+      
+      if (!exists("counts")) {
+        counts <- readr::read_csv(file = file.path(exportFolder, "cohort_count.csv"), col_types = readr::cols())
+        names(counts) <- SqlRender::snakeCaseToCamelCase(names(counts))
+      }
+      
+      characteristicsResultFiltered <- characteristicsResultFiltered %>% 
+        dplyr::mutate(databaseId = !!databaseId) %>% 
+        dplyr::left_join(y = counts)
+      characteristicsResultFiltered <- enforceMinCellValue(data = characteristicsResultFiltered, 
+                                                           fieldName = "mean", 
+                                                           minValues = minCellCount/characteristicsResultFiltered$cohortEntries)
+      characteristicsResultFiltered <- characteristicsResultFiltered %>% 
+        dplyr::mutate(sd = dplyr::case_when(mean >= 0 ~ sd)) %>% 
+        dplyr::mutate(mean = round(.data$mean, digits = 4),
+                      sd = round(.data$sd, digits = 4)) %>% 
+        dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
+      writeToCsv(characteristicsResultFiltered, 
+                 file.path(exportFolder, "temporal_covariate_value.csv"), 
+                 incremental = incremental, 
+                 cohortId = subset$cohortId)
+    }
+    ParallelLogger::logInfo(message)
     recordTasksDone(cohortId = subset$cohortId,
                     task = "runTemporalCohortCharacterization",
                     checksum = subset$checksum,
