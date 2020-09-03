@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Compute incidence rate for a cohort — getIncidenceRate • CohortDiagnostics</title>
+<title>Get all unique concept id's referenced in the cohort diagnostics — getUniqueConceptIds • CohortDiagnostics</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Compute incidence rate for a cohort — getIncidenceRate" />
-<meta property="og:description" content="Returns yearly incidence rate stratified by age and gender" />
+<meta property="og:title" content="Get all unique concept id's referenced in the cohort diagnostics — getUniqueConceptIds" />
+<meta property="og:description" content="Get all unique concept id's referenced in the cohort diagnostics" />
 
 
 
@@ -126,90 +126,31 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Compute incidence rate for a cohort</h1>
-    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/IncidenceRates.R'><code>R/IncidenceRates.R</code></a></small>
-    <div class="hidden name"><code>getIncidenceRate.Rd</code></div>
+    <h1>Get all unique concept id's referenced in the cohort diagnostics</h1>
+    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/ConceptIds.R'><code>R/ConceptIds.R</code></a></small>
+    <div class="hidden name"><code>getUniqueConceptIds.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Returns yearly incidence rate stratified by age and gender</p>
+    <p>Get all unique concept id's referenced in the cohort diagnostics</p>
     </div>
 
-    <pre class="usage"><span class='fu'>getIncidenceRate</span>(
-  <span class='kw'>connectionDetails</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>connection</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='no'>cohortDatabaseSchema</span>,
-  <span class='no'>cohortTable</span>,
-  <span class='no'>cdmDatabaseSchema</span>,
-  <span class='kw'>oracleTempSchema</span> <span class='kw'>=</span> <span class='no'>oracleTempSchema</span>,
-  <span class='kw'>firstOccurrenceOnly</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>washoutPeriod</span> <span class='kw'>=</span> <span class='fl'>365</span>,
-  <span class='no'>cohortId</span>
-)</pre>
+    <pre class="usage"><span class='fu'>getUniqueConceptIds</span>(<span class='no'>exportFolder</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>connectionDetails</th>
-      <td><p>An object of type <code>connectionDetails</code> as created using the
-<code><a href='https://rdrr.io/pkg/DatabaseConnector/man/createConnectionDetails.html'>createConnectionDetails</a></code> function in the
-DatabaseConnector package. Can be left NULL if <code>connection</code> is
-provided.</p></td>
-    </tr>
-    <tr>
-      <th>connection</th>
-      <td><p>An object of type <code>connection</code> as created using the
-<code><a href='https://rdrr.io/pkg/DatabaseConnector/man/connect.html'>connect</a></code> function in the
-DatabaseConnector package. Can be left NULL if <code>connectionDetails</code>
-is provided, in which case a new connection will be opened at the start
-of the function, and closed when the function finishes.</p></td>
-    </tr>
-    <tr>
-      <th>cohortDatabaseSchema</th>
-      <td><p>Schema name where your cohort table resides. Note that for SQL Server,
-this should include both the database and schema name, for example
-'scratch.dbo'.</p></td>
-    </tr>
-    <tr>
-      <th>cohortTable</th>
-      <td><p>Name of the cohort table.</p></td>
-    </tr>
-    <tr>
-      <th>cdmDatabaseSchema</th>
-      <td><p>Schema name where your patient-level data in OMOP CDM format resides.
-Note that for SQL Server, this should include both the database and
-schema name, for example 'cdm_data.dbo'.</p></td>
-    </tr>
-    <tr>
-      <th>oracleTempSchema</th>
-      <td><p>Should be used in Oracle to specify a schema where the user has write
-privileges for storing temporary tables.</p></td>
-    </tr>
-    <tr>
-      <th>firstOccurrenceOnly</th>
-      <td><p>Use only the first occurrence of the cohort per person?</p></td>
-    </tr>
-    <tr>
-      <th>washoutPeriod</th>
-      <td><p>The minimum amount of observation time required before the occurrence
-of a cohort entry. This is also used to eliminate immortal time from
-the denominator.</p></td>
-    </tr>
-    <tr>
-      <th>cohortId</th>
-      <td><p>The cohort definition ID used to reference the cohort in the cohort
-table.</p></td>
+      <th>exportFolder</th>
+      <td><p>The folder where the output is exported by Cohort Diagnostics.
+If this folder does not exist, or does not have the searched file
+the function will return an error.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Returns a data frame of cohort count, person year count, and incidence rate per 1000 persons
-years with the following stratifications: 1) no stratification, 2) gender stratification,
-3) age (10-year) stratification, 4) calendar year and age (10-year) stratification, 5) calendar
-year and gender stratification, 6) calendar year, age (10-year), and gender stratification with
-option to save dataframes.</p>
+    <p>Returns a vector unique conceptId's from various objects in the export folder.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
