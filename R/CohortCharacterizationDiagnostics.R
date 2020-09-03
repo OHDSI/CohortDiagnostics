@@ -123,13 +123,12 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
 
   if (FeatureExtraction::isTemporalCovariateData(featureExtractionOutput)) {
     output$result <- result %>% 
-      dplyr::select(.data$timeId, .data$covariateId, .data$mean, .data$sd)
+      dplyr::select(.data$cohortId, .data$timeId, .data$covariateId, .data$mean, .data$sd)
   } else {
     output$result <- result %>% 
-      dplyr::select(.data$covariateId, .data$mean, .data$sd)
+      dplyr::select(.data$cohortId, .data$covariateId, .data$mean, .data$sd)
   }
-    
-  output$result <- result
+  
   delta <- Sys.time() - start
   ParallelLogger::logInfo(paste("Cohort characterization took",
                                 signif(delta, 3),

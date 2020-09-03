@@ -124,7 +124,6 @@ if (exists("temporalCovariate")) {
         dplyr::select(-.data$startDay, -.data$endDay)
     }
   }
-
 }
 
 if (exists("includedSourceConcept")) {
