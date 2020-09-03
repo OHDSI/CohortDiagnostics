@@ -110,7 +110,7 @@ does not exist it will be created.}
 \item{runCohortOverlap}{Generate and export the cohort overlap?}
 
 \item{runCohortCharacterization}{Generate and export the cohort characterization? 
-Only records with values greater than 0.001 are returned.}
+Only records with values greater than 0.0001 are returned.}
 
 \item{covariateSettings}{Either an object of type \code{covariateSettings} as created using one of
 the createCovariateSettings function in the FeatureExtraction package, or a list

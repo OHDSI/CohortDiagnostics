@@ -383,7 +383,7 @@ runConceptSetDiagnostics <- function(connection,
         counts$cohortId,
         counts$conceptSetId,
         counts$conceptId,
-        counts$sourceConceptName,
+        counts$sourceConceptName,	
         counts$sourceVocabularyId
       ),]
       counts <-
@@ -466,6 +466,7 @@ runConceptSetDiagnostics <- function(connection,
                               "conceptSetName",
                               "uniqueConceptSetId")], data)
       data$uniqueConceptSetId <- NULL
+      data$conceptName <- NULL
       data$databaseId <- rep(databaseId, nrow(data))
       data <- data[data$cohortId %in% subsetOrphans$cohortId,]
       if (nrow(data) > 0) {

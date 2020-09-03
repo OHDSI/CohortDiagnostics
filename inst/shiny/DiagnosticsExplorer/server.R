@@ -488,6 +488,8 @@ shiny::shinyServer(function(input, output, session) {
     table <- table %>% 
       dplyr::select(.data$conceptId, .data$standardConcept, .data$vocabularyId, .data$conceptCode, .data$conceptName, .data$conceptCount, .data$databaseId) %>% 
       dplyr::arrange(conceptCount) %>% 
+      dplyr::group_by(.data$conceptId, .data$databaseId) %>% 
+      dplyr::slice(1) %>%  #temporary work around till vocabulary issue is resolved
       dplyr::rename(conceptId = "conceptId", standard = "standardConcept", Vocabulary = "vocabularyId", code = "conceptCode", Name = "conceptName") %>% 
       tidyr::pivot_wider(id_cols = c("conceptId", "standard", "Vocabulary", "code", "Name"),
                          names_from = "databaseId",

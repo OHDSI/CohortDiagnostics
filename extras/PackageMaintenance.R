@@ -16,7 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Format and check codeP
+# Format and check code
 # OhdsiRTools::formatRFolder() (note: this function has been impacted by change in formatR)
 OhdsiRTools::checkUsagePackage("CohortDiagnostics")
 OhdsiRTools::updateCopyrightYearFolder()

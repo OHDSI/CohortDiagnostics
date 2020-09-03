@@ -1,8 +1,16 @@
-CohortDiagnostics 1.2.5
+CohortDiagnostics 1.2.6
 =======================
 Note: 
 
 1.2.x is last release of v 1.x.x series. Future releases with new functionality are expected to have breaking changes with no backward compatability and will be 2.x.x series.
+
+Bug fixes:
+
+1. Additional bug fixes for characterization/temporal characterization.
+
+
+CohortDiagnostics 1.2.5
+=======================
 
 Bug fixes:
 
