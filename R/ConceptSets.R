@@ -137,13 +137,20 @@ combineConceptSetsFromCohorts <- function(cohorts) {
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertDataFrame(
     x = cohorts,
-    any.missing = FALSE,
-    min.cols = 3,
+    min.cols = 4,
     add = errorMessage
   )
   checkmate::assertNames(
     x = colnames(cohorts),
-    must.include = c('cohortId', 'sql', 'json', 'cohortFullName')
+    must.include = c('cohortId', 'sql', 'json', 'cohortName')
+  )
+  checkmate::reportAssertions(errorMessage)
+  
+  checkmate::assertDataFrame(
+    x = cohorts %>% dplyr::select(.data$cohortId, .data$sql, .data$json, .data$cohortName),
+    any.missing = FALSE,
+    min.cols = 4,
+    add = errorMessage
   )
   checkmate::reportAssertions(errorMessage)
   
@@ -153,26 +160,32 @@ combineConceptSetsFromCohorts <- function(cohorts) {
   for (i in (1:nrow(cohorts))) {
     cohort <- cohorts %>%
       dplyr::slice(i)
-    sql <-
-      extractConceptSetsSqlFromCohortSql(cohortSql = cohort$sql)
-    json <-
-      extractConceptSetsJsonFromCohortJson(cohortJson = cohort$json)
+    sql <- extractConceptSetsSqlFromCohortSql(cohortSql = cohort$sql)
+    json <- extractConceptSetsJsonFromCohortJson(cohortJson = cohort$json)
     
-    if (!length(sql$conceptSetId %>% unique()) == length(json$conceptSetId %>% unique())) {
-      stop(
-        "Mismatch in concept set IDs between SQL and JSON for cohort ",
-        cohort$cohortFullName
+    if (nrow(sql) == 0 || nrow(json) == 0) {
+      ParallelLogger::logInfo(
+        "Cohort Definition expression does not have a concept set expression\n",
+        "    Skipping Cohort: ", 
+        cohort$cohortName
       )
-    }
-    if (length(sql) > 0 && length(json) > 0) {
-      conceptSetCounter <- conceptSetCounter + 1
-      conceptSets[[conceptSetCounter]] <-
-        tidyr::tibble(cohortId = cohort$cohortId,
-                      dplyr::inner_join(x = sql, y = json, by = "conceptSetId"))
+    } else {
+      if (!length(sql$conceptSetId %>% unique()) == length(json$conceptSetId %>% unique())) {
+        stop(
+          "Mismatch in concept set IDs between SQL and JSON for cohort ",
+          cohort$cohortFullName
+        )
+      }
+      if (length(sql) > 0 && length(json) > 0) {
+        conceptSetCounter <- conceptSetCounter + 1
+        conceptSets[[conceptSetCounter]] <-
+          tidyr::tibble(cohortId = cohort$cohortId,
+                        dplyr::inner_join(x = sql, y = json, by = "conceptSetId"))
+      }
     }
   }
   conceptSets <- dplyr::bind_rows(conceptSets) %>%
-    dplyr::arrange("cohortId", "conceptSetId")
+    dplyr::arrange(.data$cohortId, .data$conceptSetId)
   
   uniqueConceptSets <- conceptSets %>%
     dplyr::select(.data$conceptSetExpression) %>%
@@ -180,7 +193,10 @@ combineConceptSetsFromCohorts <- function(cohorts) {
     dplyr::mutate(uniqueConceptSetId = dplyr::row_number())
   
   conceptSets <- conceptSets %>%
-    dplyr::inner_join(uniqueConceptSets, by = "conceptSetExpression")
+    dplyr::inner_join(uniqueConceptSets) %>% 
+    dplyr::distinct() %>% 
+    dplyr::relocate(.data$uniqueConceptSetId, .data$cohortId, .data$conceptSetId) %>% 
+    dplyr::arrange(.data$uniqueConceptSetId, .data$cohortId, .data$conceptSetId)
   
   return(conceptSets)
 }
@@ -367,33 +383,22 @@ runConceptSetDiagnostics <- function(connection,
           by_month = FALSE,
           use_source_values = FALSE
         )
-        counts <-
-          DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
+        counts <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE) %>% 
+          tidyr::tibble()
       }
+      counts <- counts %>% 
+        dplyr::rename(uniqueConceptSetId = .data$conceptSetId) %>% 
+        dplyr::inner_join(conceptSets) %>% 
+        dplyr::select(-.data$uniqueConceptSetId) %>% 
+        dplyr::arrange(.data$cohortId, .data$conceptSetId, 
+                       .data$conceptId, .data$sourceConceptName,
+                       .data$sourceVocabularyId) %>% 
+        dplyr::filter(cohortId %in% subsetIncluded$cohortId)
       
-      colnames(counts)[colnames(counts) == "conceptSetId"] <-
-        "uniqueConceptSetId"
-      counts <-
-        merge(conceptSets[, c("cohortId",
-                              "conceptSetId",
-                              "conceptSetName",
-                              "uniqueConceptSetId")], counts)
-      counts$uniqueConceptSetId <- NULL
-      counts <- counts[order(
-        counts$cohortId,
-        counts$conceptSetId,
-        counts$conceptId,
-        counts$sourceConceptName,	
-        counts$sourceVocabularyId
-      ),]
-      counts <-
-        counts[counts$cohortId %in% subsetIncluded$cohortId,]
       if (nrow(counts) > 0) {
         counts$databaseId <- databaseId
-        counts <-
-          enforceMinCellValue(counts, "conceptSubjects", minCellCount)
-        counts <-
-          enforceMinCellValue(counts, "conceptCount", minCellCount)
+        counts <- enforceMinCellValue(counts, "conceptSubjects", minCellCount)
+        counts <- enforceMinCellValue(counts, "conceptCount", minCellCount)
       }
       writeToCsv(
         counts,
@@ -448,7 +453,11 @@ runConceptSetDiagnostics <- function(connection,
           )
         orphanConcepts$uniqueConceptSetId <-
           rep(conceptSet$uniqueConceptSetId, nrow(orphanConcepts))
-        return(orphanConcepts)
+        return(orphanConcepts %>% 
+                 dplyr::select(.data$concept_id, 
+                               .data$cohortId,
+                               .data$databaseId,
+                               .data$conceptCount))
       }
       
       data <-
@@ -459,16 +468,12 @@ runConceptSetDiagnostics <- function(connection,
           ),
           runOrphanConcepts
         )
-      data <- do.call(rbind, data)
-      data <-
-        merge(conceptSets[, c("cohortId",
-                              "conceptSetId",
-                              "conceptSetName",
-                              "uniqueConceptSetId")], data)
-      data$uniqueConceptSetId <- NULL
-      data$conceptName <- NULL
-      data$databaseId <- rep(databaseId, nrow(data))
-      data <- data[data$cohortId %in% subsetOrphans$cohortId,]
+      data <- dplyr::bind_rows(data) %>% 
+        dplyr::inner_join(conceptSets %>% dplyr::select(.data$uniqueConceptSetId, .data$cohortId, .data$conceptSetId)) %>% 
+        dplyr::select(-.data$uniqueConceptSetId, .data$conceptName) %>% 
+        dplyr::mutate(databaseId = !!databaseId) %>% 
+        dplyr::filter(cohortId %in% subsetOrphans$cohortId)
+      
       if (nrow(data) > 0) {
         data <- enforceMinCellValue(data, "conceptCount", minCellCount)
       }

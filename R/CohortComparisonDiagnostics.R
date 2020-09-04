@@ -80,7 +80,8 @@ computeCohortOverlap <- function(connectionDetails = NULL,
                                            comparator_cohort_id = comparatorCohortId)
   overlap <- DatabaseConnector::querySql(connection = connection, 
                                          sql = sql, 
-                                         snakeCaseToCamelCase = TRUE)
+                                         snakeCaseToCamelCase = TRUE) %>% 
+    tidyr::tibble()
   delta <- Sys.time() - start
   ParallelLogger::logInfo(paste("Computing overlap took", signif(delta, 3), attr(delta, "units")))
   return(overlap)

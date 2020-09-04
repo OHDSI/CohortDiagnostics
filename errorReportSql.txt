@@ -1,0 +1,39 @@
+DBMS:
+sqlite
+
+Error:
+table Codesets already exists
+
+SQL:
+CREATE TEMP TABLE Codesets
+
+AS
+SELECT
+*
+
+FROM
+(
+  SELECT *
+  FROM temp.kfpimubjlfbhekvisrqo
+) tmp
+
+R version:
+R version 3.6.3 (2020-02-29)
+
+Platform:
+x86_64-w64-mingw32
+
+Attached base packages:
+- stats
+- graphics
+- grDevices
+- utils
+- datasets
+- methods
+- base
+
+Other attached packages:
+- Eunomia (1.0.0)
+- CohortDiagnostics (1.2.6)
+- DatabaseConnector (3.0.0)
+- testthat (2.3.2)

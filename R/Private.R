@@ -14,7 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-createIfNotExist <- function(type, name, recursive = TRUE) {
+createIfNotExist <- function(type, name, recursive = TRUE, errorMessage = NULL) {
+  if (is.null(errorMessage) | !class(errorMessage) == 'AssertColection') {
+    errorMessage <- checkmate::makeAssertCollection()
+  }
   if (!is.null(type)) {
     if (length(name) == 0) {
       stop(ParallelLogger::logError("Must specify ", name))
@@ -27,7 +30,9 @@ createIfNotExist <- function(type, name, recursive = TRUE) {
         ParallelLogger::logInfo(type, " already exists at ", name)
       }
     }
+    checkmate::assertDirectory(x = name, access = 'x', add = errorMessage)
   }
+  invisible(errorMessage)
 }
 
 swapColumnContents <- function(df, column1 = "targetId", column2 = "comparatorId") {

@@ -10,8 +10,9 @@ cdmDatabaseSchema <- "main"
 cohortDatabaseSchema <- "main"
 cohortTable <- "cohort"
 oracleTempSchema <- NULL
-folder <- tempfile()
-dir.create(folder, recursive = TRUE)
+folder <- "d:\\eunomia" #tempfile()
+unlink(x = folder, recursive = TRUE, force = TRUE)
+dir.create(folder, recursive = TRUE, showWarnings = FALSE)
 
 
 CohortDiagnostics::instantiateCohortSet(connectionDetails = connectionDetails,
@@ -23,8 +24,12 @@ CohortDiagnostics::instantiateCohortSet(connectionDetails = connectionDetails,
                                         cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
                                         generateInclusionStats = TRUE,
                                         createCohortTable = TRUE,
-                                        inclusionStatisticsFolder = file.path(folder, "incStats"))
+                                       # incremental = TRUE, 
+                                       # incrementalFolder = file.path(folder, "incremental"),
+                                        inclusionStatisticsFolder = file.path(folder, "inclusionStatistics"))
 
+# debug(CohortDiagnostics::runCohortDiagnostics)
+# debug(CohortDiagnostics::breakDownIndexEvents)
 
 CohortDiagnostics::runCohortDiagnostics(connectionDetails = connectionDetails,
                                         cdmDatabaseSchema = cdmDatabaseSchema,
@@ -33,7 +38,7 @@ CohortDiagnostics::runCohortDiagnostics(connectionDetails = connectionDetails,
                                         cohortTable = cohortTable,
                                         packageName = "CohortDiagnostics",
                                         cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
-                                        inclusionStatisticsFolder = file.path(folder, "incStats"),
+                                        inclusionStatisticsFolder = file.path(folder, "inclusionStatistics"),
                                         exportFolder =  file.path(folder, "export"),
                                         databaseId = "Eunomia",
                                         runInclusionStatistics = TRUE,
@@ -45,7 +50,7 @@ CohortDiagnostics::runCohortDiagnostics(connectionDetails = connectionDetails,
                                         runIncludedSourceConcepts = TRUE,
                                         runOrphanConcepts = TRUE,
                                         runTimeDistributions = TRUE,
-                                        incremental = TRUE,
+                                        incremental = TRUE, 
                                         incrementalFolder = file.path(folder, "incremental"))
 
 CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = file.path(folder, "export"))

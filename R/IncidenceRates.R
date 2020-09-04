@@ -104,7 +104,8 @@ getIncidenceRate <- function(connectionDetails = NULL,
   ratesSummary <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                              sql = sql,
                                                              oracleTempSchema = oracleTempSchema,
-                                                             snakeCaseToCamelCase = TRUE)
+                                                             snakeCaseToCamelCase = TRUE) %>% 
+    tidyr::tibble()
   
   sql <- "TRUNCATE TABLE #rates_summary; DROP TABLE #rates_summary;"
   DatabaseConnector::renderTranslateExecuteSql(connection = connection,

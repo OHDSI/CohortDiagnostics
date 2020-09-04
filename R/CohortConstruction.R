@@ -551,6 +551,14 @@ processInclusionStats <- function(inclusion,
     if (nrow(inclusion) == 0 || nrow(inclusionStats) == 0) {
       return(data.frame())
     }
+    # result <- inclusion %>% 
+    #   dplyr::inner_join(inclusionStats) %>% 
+    #   dplyr::inner_join(inclusionResults %>% dplyr::select(-.data$personCount)) %>% 
+    #   dplyr::mutate(description = tidyr::replace_na(data = .data$description, replace = ''),
+    #                 modeName = dplyr::case_when(modeId == 0 ~ 'persons',
+    #                                             TRUE ~ 'events')) %>% 
+    #   dplyr::rename_all(stringr::str_replace, replacement = "", pattern = "Count")
+    
     result <- merge(unique(inclusion[, c("ruleSequence", "name")]),
                     inclusionStats[inclusionStats$modeId ==
                                      0, c("ruleSequence", "personCount", "gainCount", "personTotal")], )

@@ -101,7 +101,8 @@ findOrphanConcepts <- function(connectionDetails = NULL,
                                                                connection = connection,
                                                                oracleTempSchema = oracleTempSchema,
                                                                snakeCaseToCamelCase = TRUE,
-                                                               cdm_database_schema = cdmDatabaseSchema)
+                                                               cdm_database_schema = cdmDatabaseSchema) %>% 
+    tidyr::tibble()
   
   # For debugging:
   # x <- querySql(connection, "SELECT * FROM #starting_concepts;")

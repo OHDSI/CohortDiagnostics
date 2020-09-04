@@ -128,12 +128,13 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
       return(tibble::tibble(domain = names(criterionList), codeSetIds = codeSetIds))
     }
   }
-  primaryCodesetIds <- lapply(cohortDefinition$PrimaryCriteria$CriteriaList, getCodeSetIds)
-  primaryCodesetIds <- do.call(rbind, primaryCodesetIds)
-  primaryCodesetIds <- primaryCodesetIds[!is.na(primaryCodesetIds$codeSetIds), ]
+  primaryCodesetIds <- lapply(cohortDefinition$PrimaryCriteria$CriteriaList, getCodeSetIds) %>% 
+    dplyr::bind_rows() %>% 
+    dplyr::filter(!is.na(.data$codeSetIds))
+  
   if (is.null(primaryCodesetIds) || nrow(primaryCodesetIds) == 0) {
-    warning("No primary event criteria concept sets found")
-    return(data.frame())
+    ParallelLogger::logWarn("No primary event criteria concept sets found for cohort id: ", cohortId)
+    return(tidyr::tibble())
   }
   pasteIds <- function(row) {
     return(tibble::tibble(domain = row$domain[1],
@@ -152,17 +153,17 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
                                  cohortDatabaseSchema = cohortDatabaseSchema,
                                  cohortTable = cohortTable,
                                  cohortId = cohortId)) {
-    warning("Cohort with ID ", cohortId, " appears to be empty. Was it instantiated?")
+    ParallelLogger::logWarn("Cohort with ID ", cohortId, " appears to be empty. Was it instantiated?")
     delta <- Sys.time() - start
-    ParallelLogger::logInfo(paste("Breaking down index events took",
+    ParallelLogger::logInfo(paste("- Breaking down index events took",
                                   signif(delta, 3),
                                   attr(delta, "units")))
     return(data.frame())
   }
-  ParallelLogger::logInfo("Instantiating concept sets")
+  ParallelLogger::logInfo("- Instantiating concept sets")
   instantiateConceptSets(connection, cdmDatabaseSchema, oracleTempSchema, cohortSql)
   
-  ParallelLogger::logInfo("Computing counts")
+  ParallelLogger::logInfo("- Computing counts")
   domains <- readr::read_csv(system.file("csv", "domains.csv", package = "CohortDiagnostics"),
                              col_types = readr::cols())
   getCounts <- function(row) {
@@ -179,13 +180,13 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
                                              domain_start_date = domain$domainStartDate,
                                              domain_concept_id = domain$domainConceptId,
                                              primary_codeset_ids = row$codeSetIds)
-    counts <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
+    counts <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
     return(counts)
   }
-  counts <- lapply(split(primaryCodesetIds, 1:nrow(primaryCodesetIds)), getCounts)
-  counts <- do.call(rbind, counts)
-  rownames(counts) <- NULL
-  counts <- counts[order(-counts$conceptCount), ]
+  counts <- lapply(split(primaryCodesetIds, 1:nrow(primaryCodesetIds)), getCounts) %>% 
+    dplyr::bind_rows() %>% 
+    dplyr::arrange(.data$conceptCount)
   
   ParallelLogger::logInfo("Cleaning up concept sets")
   sql <- "TRUNCATE TABLE #Codesets; DROP TABLE #Codesets;"

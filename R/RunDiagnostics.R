@@ -133,13 +133,10 @@ runCohortDiagnostics <- function(packageName = NULL,
   checkmate::reportAssertions(collection = errorMessage)
   
   # checking folders
-  createIfNotExist(type = 'folder', name = exportFolder)
-  checkmate::assertDirectory(x = exportFolder, access = 'x')
-  createIfNotExist(type = 'folder', name = incrementalFolder)
-  checkmate::assertDirectory(x = incrementalFolder, access = 'x')
+  errorMessage <- createIfNotExist(type = 'folder', name = exportFolder, errorMessage = errorMessage)
+  errorMessage <- createIfNotExist(type = 'folder', name = incrementalFolder, errorMessage = errorMessage)
   if (isTRUE(runInclusionStatistics)) {
-    createIfNotExist(type = 'folder', name = inclusionStatisticsFolder)
-    checkmate::assertDirectory(x = inclusionStatisticsFolder, access = 'x')
+    errorMessage <- createIfNotExist(type = 'folder', name = inclusionStatisticsFolder, errorMessage = errorMessage)
   }
   checkmate::reportAssertions(collection = errorMessage)
   
@@ -149,7 +146,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                   cohortSetReference = cohortSetReference,
                                   cohortIds = cohortIds)
   
-  # # set up connection to server
+  ## set up connection to server
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
@@ -216,7 +213,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         return(stats)
       }
       stats <- lapply(split(subset, subset$cohortId), runInclusionStatistics)
-      stats <- do.call(rbind, stats)
+      stats <- dplyr::bind_rows(stats)
       if (nrow(stats) > 0) {
         stats$databaseId <- databaseId
         stats <- enforceMinCellValue(stats, "meetSubjects", minCellCount)
@@ -224,7 +221,10 @@ runCohortDiagnostics <- function(packageName = NULL,
         stats <- enforceMinCellValue(stats, "totalSubjects", minCellCount)
         stats <- enforceMinCellValue(stats, "remainSubjects", minCellCount)
       }
-      writeToCsv(stats, file.path(exportFolder, "inclusion_rule_stats.csv"), incremental = incremental, cohortId = subset$cohortId)
+      writeToCsv(stats, 
+                 file.path(exportFolder, "inclusion_rule_stats.csv"), 
+                 incremental = incremental, 
+                 cohortId = subset$cohortId)
       recordTasksDone(cohortId = subset$cohortId,
                       task = "runInclusionStatistics",
                       checksum = subset$checksum,
@@ -234,7 +234,6 @@ runCohortDiagnostics <- function(packageName = NULL,
   }
   
   if (runIncludedSourceConcepts || runOrphanConcepts) {
-    
     # Concept set diagnostics -----------------------------------------------
     runConceptSetDiagnostics(connection = connection,
                              oracleTempSchema = oracleTempSchema,
@@ -276,10 +275,14 @@ runCohortDiagnostics <- function(packageName = NULL,
         return(data)
       }
       data <- lapply(split(subset, subset$cohortId), runTimeDist)
-      data <- do.call(rbind, data)
+      data <- dplyr::bind_rows(data)
       if (nrow(data) > 0) {
-        data$databaseId <- databaseId
-        writeToCsv(data, file.path(exportFolder, "time_distribution.csv"), incremental = incremental, cohortId = subset$cohortId)
+        data <- data %>% 
+          dplyr::mutate(databaseId = !!databaseId)
+        writeToCsv(data, 
+                   file.path(exportFolder, "time_distribution.csv"), 
+                   incremental = incremental, 
+                   cohortId = subset$cohortId)
       }
       recordTasksDone(cohortId = subset$cohortId,
                       task = "runTimeDistributions",
@@ -318,9 +321,10 @@ runCohortDiagnostics <- function(packageName = NULL,
         return(data)
       }
       data <- lapply(split(subset, subset$cohortId), runBreakdownIndexEvents)
-      data <- do.call(rbind, data)
+      data <- dplyr::bind_rows(data)
       if (nrow(data) > 0) {
-        data$databaseId <- databaseId
+        data <- data %>% 
+          dplyr::mutate(databaseId = !!databaseId)
         data <- enforceMinCellValue(data, "conceptCount", minCellCount)
       }
       writeToCsv(data, file.path(exportFolder, "index_event_breakdown.csv"), incremental = incremental, cohortId = subset$cohortId)
@@ -363,18 +367,21 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  firstOccurrenceOnly = TRUE,
                                  washoutPeriod = washoutPeriod)
         if (nrow(data) > 0) {
-          data$cohortId <- row$cohortId
+          data <- data %>% dplyr::mutate(cohortId = row$cohortId)
         }
         return(data)
       }
       data <- lapply(split(subset, subset$cohortId), runIncidenceRate)
-      data <- do.call(rbind, data)
+      data <- dplyr::bind_rows(data)
       if (nrow(data) > 0) {
-        data$databaseId <- databaseId
+        data <- data %>% dplyr::mutate(databaseId = !!databaseId)
         data <- enforceMinCellValue(data, "cohortCount", minCellCount)
         data <- enforceMinCellValue(data, "incidenceRate", 1000*minCellCount/data$personYears)
       }
-      writeToCsv(data, file.path(exportFolder, "incidence_rate.csv"), incremental = incremental, cohortId = subset$cohortId)
+      writeToCsv(data = data,
+                 fileName =  file.path(exportFolder, "incidence_rate.csv"), 
+                 incremental = incremental, 
+                 cohortId = subset$cohortId)
     }
     recordTasksDone(cohortId = subset$cohortId,
                     task = "runIncidenceRate",
@@ -391,12 +398,16 @@ runCohortDiagnostics <- function(packageName = NULL,
     startCohortOverlap <- Sys.time()
     # Cohort overlap ---------------------------------------------------------------------------------
     ParallelLogger::logInfo("\nComputing cohort overlap")
-    combis <- expand.grid(targetCohortId = cohorts$cohortId, comparatorCohortId = cohorts$cohortId)
-    combis <- combis[combis$targetCohortId < combis$comparatorCohortId, ]
+    combis <- tidyr::crossing(tidyr::tibble(targetCohortId = cohorts$cohortId), 
+                              tidyr::tibble(comparatorCohortId = cohorts$cohortId)) %>% 
+      dplyr::filter(.data$targetCohortId < .data$comparatorCohortId)
     if (incremental) {
-      combis <- merge(combis, tibble::tibble(targetCohortId = cohorts$cohortId, targetChecksum = cohorts$checksum))
-      combis <- merge(combis, tibble::tibble(comparatorCohortId = cohorts$cohortId, comparatorChecksum = cohorts$checksum))
-      combis$checksum <- paste(combis$targetChecksum, combis$comparatorChecksum)
+      combis <- combis %>% 
+        dplyr::inner_join(tibble::tibble(targetCohortId = cohorts$cohortId, 
+                                         targetChecksum = cohorts$checksum)) %>% 
+        dplyr::inner_join(tibble::tibble(comparatorCohortId = cohorts$cohortId, 
+                                         comparatorChecksum = cohorts$checksum)) %>% 
+        dplyr::mutate(checksum = paste(.data$targetChecksum, .data$comparatorChecksum))
     }
     subset <- subsetToRequiredCombis(combis = combis, 
                                      task = "runCohortOverlap", 
@@ -414,22 +425,22 @@ runCohortDiagnostics <- function(packageName = NULL,
                                      targetCohortId = row$targetCohortId,
                                      comparatorCohortId = row$comparatorCohortId)
         if (nrow(data) > 0) {
-          data$targetCohortId <- row$targetCohortId
-          data$comparatorCohortId <- row$comparatorCohortId
+          data <- data %>% 
+            dplyr::mutate(targetCohortId = row$targetCohortId,
+                          comparatorCohortId = row$comparatorCohortId)
         }
         return(data)
       }
-      
       data <- lapply(split(subset, 1:nrow(subset)), runCohortOverlap)
-      data <- do.call(rbind, data)
+      data <- dplyr::bind_rows(data)
       if (nrow(data) > 0) {
         revData <- data
         revData <- swapColumnContents(revData, "targetCohortId", "comparatorCohortId")
         revData <- swapColumnContents(revData, "tOnlySubjects", "cOnlySubjects")
         revData <- swapColumnContents(revData, "tBeforeCSubjects", "cBeforeTSubjects")
         revData <- swapColumnContents(revData, "tInCSubjects", "cInTSubjects")
-        data <- rbind(data, revData)
-        data$databaseId <- databaseId
+        data <- dplyr::bind_rows(data, revData) %>% 
+          dplyr::mutate(databaseId = !!databaseId)
         data <- enforceMinCellValue(data, "eitherSubjects", minCellCount)
         data <- enforceMinCellValue(data, "bothSubjects", minCellCount)
         data <- enforceMinCellValue(data, "tOnlySubjects", minCellCount)
@@ -439,6 +450,9 @@ runCohortDiagnostics <- function(packageName = NULL,
         data <- enforceMinCellValue(data, "sameDaySubjects", minCellCount)
         data <- enforceMinCellValue(data, "tInCSubjects", minCellCount)
         data <- enforceMinCellValue(data, "cInTSubjects", minCellCount)
+        data <- data %>% 
+          dplyr::mutate(dplyr::across(.cols = everything(), ~tidyr::replace_na(data = ., replace = 0)))
+        
         writeToCsv(data = data, 
                    fileName = file.path(exportFolder, "cohort_overlap.csv"), 
                    incremental = incremental, 
@@ -475,7 +489,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       characteristicsCovariatesContinuous <- list()
       
       for (i in (1:nrow(subset))) {
-        messageCohortBeingCharacterized <- paste0(subset[i,]$cohortFullName, 
+        messageCohortBeingCharacterized <- paste0(subset[i,]$cohortName, 
                                                   "' (Cohort Id: ", 
                                                   subset[i,]$cohortId, ')')
         ParallelLogger::logInfo("- Creating characterization for cohort: '", messageCohortBeingCharacterized)
@@ -504,7 +518,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       message <- c(message, paste0("- Number of cohorts submitted for characterization = ", length(subset$cohortId), '\n'))
       message <- c(message, "- Following cohorts were submitted: \n")
       message <- c(message, paste0(subset %>% 
-                                     dplyr::mutate(message = paste0("   ", subset$cohortFullName, 
+                                     dplyr::mutate(message = paste0("   ", subset$cohortName, 
                                                                     " (Cohort Id: ", 
                                                                     subset$cohortId, 
                                                                     ')\n')) %>% 
@@ -617,7 +631,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       characteristicsCovariatesContinuous <- list()
       
       for (i in (1:nrow(subset))) {
-        messageCohortBeingCharacterized <- paste0(subset[i,]$cohortFullName, 
+        messageCohortBeingCharacterized <- paste0(subset[i,]$cohortName, 
                                                   "' (Cohort Id: ", 
                                                   subset[i,]$cohortId, ')')
         ParallelLogger::logInfo("- Creating temporal characterization for cohort: '", 
@@ -647,7 +661,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       message <- c(message, paste0("- Number of cohorts submitted for temporal characterization = ", length(subset$cohortId), '\n'))
       message <- c(message, "- Following cohorts were submitted: \n")
       message <- c(message, paste0(subset %>% 
-                                     dplyr::mutate(message = paste0("   ", subset$cohortFullName, 
+                                     dplyr::mutate(message = paste0("   ", subset$cohortName, 
                                                                     " (Cohort Id: ", 
                                                                     subset$cohortId, 
                                                                     ')\n')) %>% 
