@@ -455,7 +455,8 @@ runConceptSetDiagnostics <- function(connection,
           rep(conceptSet$uniqueConceptSetId, nrow(orphanConcepts))
         return(orphanConcepts %>% 
                  dplyr::select(.data$conceptId,
-                               .data$conceptCount))
+                               .data$conceptCount,
+                               .data$uniqueConceptSetId))
       }
       
       data <-
@@ -468,7 +469,7 @@ runConceptSetDiagnostics <- function(connection,
         )
       data <- dplyr::bind_rows(data) %>% 
         dplyr::inner_join(conceptSets %>% dplyr::select(.data$uniqueConceptSetId, .data$cohortId, .data$conceptSetId)) %>% 
-        dplyr::select(-.data$uniqueConceptSetId, .data$conceptName) %>% 
+        dplyr::select(-.data$uniqueConceptSetId) %>% 
         dplyr::mutate(databaseId = !!databaseId) %>% 
         dplyr::filter(cohortId %in% subsetOrphans$cohortId)
       
