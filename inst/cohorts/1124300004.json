@@ -5,13 +5,12 @@
 			{
 				"DrugExposure" : {
 					"CodesetId" : 0,
-					"First" : true,
 					"DrugTypeExclude" : false
 				}
 			}
 		],
 		"ObservationWindow" : {
-			"PriorDays" : 180,
+			"PriorDays" : 365,
 			"PostDays" : 0
 		},
 		"PrimaryCriteriaLimit" : {
@@ -27,7 +26,7 @@
 					{
 						"concept" : {
 							"CONCEPT_ID" : 1124300,
-							"CONCEPT_NAME" : "Diclofenac",
+							"CONCEPT_NAME" : "diclofenac",
 							"STANDARD_CONCEPT" : "S",
 							"STANDARD_CONCEPT_CAPTION" : "Standard",
 							"INVALID_REASON" : "V",
@@ -38,7 +37,7 @@
 							"CONCEPT_CLASS_ID" : "Ingredient"
 						},
 						"isExcluded" : false,
-						"includeDescendants" : true,
+						"includeDescendants" : false,
 						"includeMapped" : false
 					}
 				]
@@ -51,7 +50,41 @@
 	"ExpressionLimit" : {
 		"Type" : "First"
 	},
-	"InclusionRules" : [],
+	"InclusionRules" : [
+		{
+			"name" : "Gender is male",
+			"expression" : {
+				"Type" : "ALL",
+				"CriteriaList" : [],
+				"DemographicCriteriaList" : [
+					{
+						"Gender" : [
+							{
+								"CONCEPT_ID" : 8507,
+								"CONCEPT_NAME" : "MALE",
+								"STANDARD_CONCEPT" : null,
+								"STANDARD_CONCEPT_CAPTION" : "Unknown",
+								"INVALID_REASON" : null,
+								"INVALID_REASON_CAPTION" : "Unknown",
+								"CONCEPT_CODE" : "M",
+								"DOMAIN_ID" : "Gender",
+								"VOCABULARY_ID" : "Gender",
+								"CONCEPT_CLASS_ID" : null
+							}
+						]
+					}
+				],
+				"Groups" : []
+			}
+		}
+	],
+	"EndStrategy" : {
+		"CustomEra" : {
+			"DrugCodesetId" : 0,
+			"GapDays" : 0,
+			"Offset" : 0
+		}
+	},
 	"CensoringCriteria" : [],
 	"CollapseSettings" : {
 		"CollapseType" : "ERA",
