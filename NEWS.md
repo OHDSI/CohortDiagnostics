@@ -1,3 +1,10 @@
+CohortDiagnostics 2.0.0
+=======================
+Unreleased version
+
+- working on eunomia
+- use of tidy r
+
 CohortDiagnostics 1.2.6
 =======================
 Note: 
