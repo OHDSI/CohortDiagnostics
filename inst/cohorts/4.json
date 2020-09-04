@@ -1,0 +1,52 @@
+{
+	"cdmVersionRange" : ">=5.0.0",
+	"PrimaryCriteria" : {
+		"CriteriaList" : [
+			{
+				"VisitOccurrence" : {
+					"First" : true,
+					"VisitTypeExclude" : false
+				}
+			},
+			{
+				"DrugExposure" : {
+					"First" : true,
+					"DrugTypeExclude" : false
+				}
+			},
+			{
+				"ProcedureOccurrence" : {
+					"First" : true,
+					"ProcedureTypeExclude" : false
+				}
+			},
+			{
+				"ConditionOccurrence" : {
+					"First" : true,
+					"ConditionTypeExclude" : false
+				}
+			}
+		],
+		"ObservationWindow" : {
+			"PriorDays" : 0,
+			"PostDays" : 0
+		},
+		"PrimaryCriteriaLimit" : {
+			"Type" : "First"
+		}
+	},
+	"ConceptSets" : [],
+	"QualifiedLimit" : {
+		"Type" : "First"
+	},
+	"ExpressionLimit" : {
+		"Type" : "All"
+	},
+	"InclusionRules" : [],
+	"CensoringCriteria" : [],
+	"CollapseSettings" : {
+		"CollapseType" : "ERA",
+		"EraPad" : 0
+	},
+	"CensorWindow" : {}
+}

@@ -3,12 +3,8 @@
 	"PrimaryCriteria" : {
 		"CriteriaList" : [
 			{
-				"VisitOccurrence" : {
-					"VisitTypeExclude" : false
-				}
-			},
-			{
 				"DrugExposure" : {
+					"CodesetId" : 0,
 					"DrugTypeExclude" : false
 				}
 			}
@@ -24,21 +20,46 @@
 	"ConceptSets" : [
 		{
 			"id" : 0,
-			"name" : "Procedure",
+			"name" : "diclofenac",
 			"expression" : {
 				"items" : [
 					{
 						"concept" : {
-							"CONCEPT_ID" : 4322976,
-							"CONCEPT_NAME" : "Procedure",
+							"CONCEPT_ID" : 1124300,
+							"CONCEPT_NAME" : "diclofenac",
 							"STANDARD_CONCEPT" : "S",
 							"STANDARD_CONCEPT_CAPTION" : "Standard",
 							"INVALID_REASON" : "V",
 							"INVALID_REASON_CAPTION" : "Valid",
-							"CONCEPT_CODE" : "71388002",
-							"DOMAIN_ID" : "Procedure",
+							"CONCEPT_CODE" : "3355",
+							"DOMAIN_ID" : "Drug",
+							"VOCABULARY_ID" : "RxNorm",
+							"CONCEPT_CLASS_ID" : "Ingredient"
+						},
+						"isExcluded" : false,
+						"includeDescendants" : true,
+						"includeMapped" : false
+					}
+				]
+			}
+		},
+		{
+			"id" : 1,
+			"name" : "Gastrointestinal hemorrhage",
+			"expression" : {
+				"items" : [
+					{
+						"concept" : {
+							"CONCEPT_ID" : 192671,
+							"CONCEPT_NAME" : "Gastrointestinal hemorrhage",
+							"STANDARD_CONCEPT" : "S",
+							"STANDARD_CONCEPT_CAPTION" : "Standard",
+							"INVALID_REASON" : "V",
+							"INVALID_REASON_CAPTION" : "Valid",
+							"CONCEPT_CODE" : "74474003",
+							"DOMAIN_ID" : "Condition",
 							"VOCABULARY_ID" : "SNOMED",
-							"CONCEPT_CLASS_ID" : "Procedure"
+							"CONCEPT_CLASS_ID" : "Clinical Finding"
 						},
 						"isExcluded" : false,
 						"includeDescendants" : true,
@@ -56,85 +77,24 @@
 	},
 	"InclusionRules" : [
 		{
-			"name" : "Has some condition",
+			"name" : "With gastrointestinal hemorrhage at some point",
 			"expression" : {
 				"Type" : "ALL",
 				"CriteriaList" : [
 					{
 						"Criteria" : {
 							"ConditionOccurrence" : {
+								"CodesetId" : 1,
 								"ConditionTypeExclude" : false
 							}
 						},
 						"StartWindow" : {
 							"Start" : {
-								"Days" : 0,
 								"Coeff" : -1
 							},
 							"End" : {
 								"Days" : 0,
-								"Coeff" : 1
-							},
-							"UseIndexEnd" : false,
-							"UseEventEnd" : false
-						},
-						"RestrictVisit" : false,
-						"IgnoreObservationPeriod" : false,
-						"Occurrence" : {
-							"Type" : 2,
-							"Count" : 1,
-							"IsDistinct" : false
-						}
-					}
-				],
-				"DemographicCriteriaList" : [],
-				"Groups" : []
-			}
-		},
-		{
-			"name" : "Has some procedure",
-			"expression" : {
-				"Type" : "ANY",
-				"CriteriaList" : [
-					{
-						"Criteria" : {
-							"ProcedureOccurrence" : {
-								"ProcedureTypeExclude" : false
-							}
-						},
-						"StartWindow" : {
-							"Start" : {
-								"Days" : 0,
 								"Coeff" : -1
-							},
-							"End" : {
-								"Days" : 0,
-								"Coeff" : 1
-							},
-							"UseIndexEnd" : false,
-							"UseEventEnd" : false
-						},
-						"RestrictVisit" : false,
-						"IgnoreObservationPeriod" : false,
-						"Occurrence" : {
-							"Type" : 2,
-							"Count" : 1,
-							"IsDistinct" : false
-						}
-					},
-					{
-						"Criteria" : {
-							"ProcedureOccurrence" : {
-								"CodesetId" : 0,
-								"ProcedureTypeExclude" : false
-							}
-						},
-						"StartWindow" : {
-							"Start" : {
-								"Coeff" : -1
-							},
-							"End" : {
-								"Coeff" : 1
 							},
 							"UseIndexEnd" : false,
 							"UseEventEnd" : false
@@ -153,6 +113,13 @@
 			}
 		}
 	],
+	"EndStrategy" : {
+		"CustomEra" : {
+			"DrugCodesetId" : 0,
+			"GapDays" : 30,
+			"Offset" : 0
+		}
+	},
 	"CensoringCriteria" : [],
 	"CollapseSettings" : {
 		"CollapseType" : "ERA",

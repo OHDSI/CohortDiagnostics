@@ -30,5 +30,30 @@ createIfNotExist <- function(type, name, recursive = TRUE) {
   }
 }
 
+swapColumnContents <- function(df, column1 = "targetId", column2 = "comparatorId") {
+  temp <- df[, column1]
+  df[, column1] <- df[, column2]
+  df[, column2] <- temp
+  return(df)
+}
 
+enforceMinCellValue <- function(data, fieldName, minValues, silent = FALSE) {
+  toCensor <- !is.na(data[, fieldName]) & data[, fieldName] < minValues & data[, fieldName] != 0
+  if (!silent) {
+    percent <- round(100 * sum(toCensor)/nrow(data), 1)
+    ParallelLogger::logInfo("   censoring ",
+                            sum(toCensor),
+                            " values (",
+                            percent,
+                            "%) from ",
+                            fieldName,
+                            " because value below minimum")
+  }
+  if (length(minValues) == 1) {
+    data[toCensor, fieldName] <- -minValues
+  } else {
+    data[toCensor, fieldName] <- -minValues[toCensor]
+  }
+  return(data)
+}
 
