@@ -3,7 +3,7 @@ library(testthat)
 library(CohortDiagnostics)
 library(Eunomia)
 
-baseUrl <- Sys.getenv("OHDSIbaseUrl")
+#baseUrl <- Sys.getenv("OHDSIbaseUrl")
 
 connectionDetails <- Eunomia::getEunomiaConnectionDetails()
 cdmDatabaseSchema <- "main"
