@@ -454,9 +454,7 @@ runConceptSetDiagnostics <- function(connection,
         orphanConcepts$uniqueConceptSetId <-
           rep(conceptSet$uniqueConceptSetId, nrow(orphanConcepts))
         return(orphanConcepts %>% 
-                 dplyr::select(.data$concept_id, 
-                               .data$cohortId,
-                               .data$databaseId,
+                 dplyr::select(.data$conceptId,
                                .data$conceptCount))
       }
       
