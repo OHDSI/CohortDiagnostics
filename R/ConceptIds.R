@@ -310,8 +310,6 @@ writeOmopvocabularyTables2 <-
     
     for (i in (1:nrow(vocabularyTablesInCohortDatabaseSchema))) {
       sql <- "select * from @vocabulary_database_schema.@vocabulary_table_name"
-      vocabulary <- 
-
       assign(
         x = vocabularyTablesInCohortDatabaseSchema %>% dplyr::slice(i) %>% dplyr::pull(.data$serverTableNames),
         value = DatabaseConnector::renderTranslateQuerySql(sql = sql, 
@@ -320,24 +318,25 @@ writeOmopvocabularyTables2 <-
                                                            vocabulary_table_name = vocabularyTablesInCohortDatabaseSchema %>% 
                                                              dplyr::slice(i) %>% 
                                                              dplyr::pull(.data$serverTableNames),
-                                                           snakeCaseToCamelCase = TRUE) %>% 
-          tidyr::tibble()
+                                                           snakeCaseToCamelCase = FALSE) %>% 
+          tidyr::tibble() %>% 
+          dplyr::rename_all(.tbl = ., .funs = tolower)
       )
+     
       
-      if (nrow(
-        get(
-          vocabularyTablesInCohortDatabaseSchema %>% dplyr::slice(i) %>% dplyr::pull(.data$serverTableNames)
-        )
-      ) > 0) {
+      if (nrow(get(vocabularyTablesInCohortDatabaseSchema %>% 
+            dplyr::slice(i) %>% 
+            dplyr::pull(.data$serverTableNames))) > 0) {
         readr::write_csv(
-          x = get(
-            vocabularyTablesInCohortDatabaseSchema %>% dplyr::slice(i) %>% dplyr::pull(.data$serverTableNames)
-          ),
+          x = get(vocabularyTablesInCohortDatabaseSchema %>% 
+                    dplyr::slice(i) %>% 
+                    dplyr::pull(.data$serverTableNames)),
           path = file.path(
             exportFolder,
-            paste0(
-              vocabularyTablesInCohortDatabaseSchema %>% dplyr::slice(i) %>% dplyr::pull(.data$serverTableNames),
-              ".csv"
+            paste0(vocabularyTablesInCohortDatabaseSchema %>% 
+                     dplyr::slice(i) %>% 
+                     dplyr::pull(.data$serverTableNames),
+                   ".csv"
             ) %>% tolower()
           )
         )
