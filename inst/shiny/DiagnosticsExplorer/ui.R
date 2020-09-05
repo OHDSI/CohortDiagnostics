@@ -33,10 +33,10 @@ sidebarMenu <-
     id = "tabs",
     if (exists("cohortDescription") && exists("phenotypeDescription"))
       addInfo(
-         shinydashboard::menuItem(text = "Description", tabName = "description"),
-         infoId = "descriptionInfo"
+        shinydashboard::menuItem(text = "Description", tabName = "description"),
+        infoId = "descriptionInfo"
       ),
-      
+    
     if (exists("cohortCount"))
       addInfo(
         item = shinydashboard::menuItem(text = "Cohort Counts", tabName = "cohortCounts"),
@@ -108,7 +108,7 @@ sidebarMenu <-
           liveSearchStyle = 'contains',
           liveSearchPlaceholder = "Type here to search",
           virtualScroll = 50
-          )
+        )
         
       )
     ),
@@ -129,7 +129,7 @@ sidebarMenu <-
           virtualScroll = 50)
       )
     ),
-    if (exists("temporalCovariate")) {
+    if (exists("temporalCovariateValue")) {
       shiny::conditionalPanel(
         condition = "input.tabs=='temporalCharacterization'",
         shinyWidgets::pickerInput(
