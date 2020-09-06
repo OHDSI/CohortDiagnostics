@@ -9,8 +9,8 @@ writeOmopvocabularyTables(
   connection = NULL,
   vocabularyDatabaseSchema = NULL,
   conceptIds = NULL,
-  vocabularyTableNames = c("concept", "domain", "vocabulary", "relationship",
-    "conceptClass", "conceptAncestor", "conceptRelationship"),
+  vocabularyTableNames = c("concept", "conceptAncestor", "conceptClass",
+    "conceptRelationship", "conceptSynonym", "domain", "relationship", "vocabulary"),
   exportFolder
 )
 }
@@ -29,7 +29,8 @@ of the function, and closed when the function finishes.}
 \item{vocabularyDatabaseSchema}{databaseSchema where the omop vocabulary files are located.
 These are most commonly the same as cdmDatabaseSchema.}
 
-\item{conceptIds}{A vector of conceptIds to extract omop vocabulary files.}
+\item{conceptIds}{(optional) A vector of conceptIds to filter the extract of omop 
+vocabulary files. If NULL, all conceptIds are extracted.}
 
 \item{vocabularyTableNames}{(optional) A vector of omop vocabulary table names to download.}
 
