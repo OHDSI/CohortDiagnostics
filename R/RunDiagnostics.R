@@ -94,12 +94,13 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  runCohortCharacterization = TRUE,
                                  covariateSettings = FeatureExtraction::createDefaultCovariateSettings(),
                                  runTemporalCohortCharacterization = TRUE,
-                                 temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(useConditionOccurrence = TRUE,
-                                                                                                                useDrugEraStart = TRUE,
-                                                                                                                useProcedureOccurrence = TRUE,
-                                                                                                                useMeasurement = TRUE,
-                                                                                                                temporalStartDays = c(-365,-30,0,1,31),
-                                                                                                                temporalEndDays = c(-31,-1,0,30,365)),
+                                 temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(
+                                          useConditionOccurrence = TRUE, 
+                                          useDrugEraStart = TRUE, 
+                                          useProcedureOccurrence = TRUE, 
+                                          useMeasurement = TRUE,                                          
+                                          temporalStartDays = c(-365,-30,0,1,31, seq(from = -30, to = -420, by = -30), seq(from = 1, to = 390, by = 30)), 
+                                          temporalEndDays = c(-31,-1,0,30,365,seq(from = 0, to = -390, by = -30),seq(from = 31, to = 420, by = 30))),
                                  minCellCount = 5,
                                  incremental = FALSE,
                                  incrementalFolder = exportFolder) {
@@ -570,7 +571,7 @@ runCohortDiagnostics <- function(packageName = NULL,
             dplyr::rename(covariateAnalysisId = .data$analysisId)
           writeToCsv(
             data = covariates,
-            fileName = file.path(exportFolder, "covariate.csv"),
+            fileName = file.path(exportFolder, "covariate_ref.csv"),
             incremental = incremental,
             covariateId = covariates$covariateId
           )
@@ -629,6 +630,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       characteristicsCovariateRef <- list()
       characteristicsCovariates <- list()
       characteristicsCovariatesContinuous <- list()
+      characteristicsTimeRef <- list()
       
       for (i in (1:nrow(subset))) {
         messageCohortBeingCharacterized <- paste0(subset[i,]$cohortName, 
@@ -649,13 +651,14 @@ runCohortDiagnostics <- function(packageName = NULL,
           characteristicsResult[[i]] <- cohortCharacteristicsOutput$result
           characteristicsAnalysisRef[[i]] <- cohortCharacteristicsOutput$analysisRef
           characteristicsCovariateRef[[i]] <- cohortCharacteristicsOutput$covariateRef
-          characteristicsCovariates[[i]] <- cohortCharacteristicsOutput$covariates
+          characteristicsTimeRef[[i]] <- cohortCharacteristicsOutput$timeRef
         }
       }
       characteristicsResult <- dplyr::bind_rows(characteristicsResult) %>% dplyr::distinct()
       characteristicsAnalysisRef <- dplyr::bind_rows(characteristicsAnalysisRef) %>% dplyr::distinct()
       characteristicsCovariateRef <- dplyr::bind_rows(characteristicsCovariateRef) %>% dplyr::distinct()
       characteristicsCovariates <- dplyr::bind_rows(characteristicsCovariates) %>% dplyr::distinct()
+      characteristicsTimeRef <- dplyr::bind_rows(characteristicsTimeRef) %>% dplyr::distinct()
       
       message <- "\nTemporal characterization results summary:\n"
       message <- c(message, paste0("- Number of cohorts submitted for temporal characterization = ", length(subset$cohortId), '\n'))
@@ -713,9 +716,14 @@ runCohortDiagnostics <- function(packageName = NULL,
             dplyr::rename(covariateAnalysisId = .data$analysisId)
           writeToCsv(
             data = covariates,
-            fileName = file.path(exportFolder, "temporal_covariate.csv"),
+            fileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
             incremental = incremental,
             covariateId = covariates$covariateId
+          )
+          writeToCsv(
+            data = characteristicsTimeRef,
+            fileName = file.path(exportFolder, "time_ref.csv"),
+            incremental = incremental
           )
           
           if (!exists("counts")) {
