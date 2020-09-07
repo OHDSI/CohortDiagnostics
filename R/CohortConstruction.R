@@ -767,20 +767,22 @@ createTempInclusionStatsTables <- function(connection, oracleTempSchema, cohorts
     }
   }
   
-  inclusionRules <- inclusionRules %>% 
-    dplyr::inner_join(cohorts %>% dplyr::select(.data$cohortId, .data$cohortName)) %>% 
-    dplyr::rename(cohort_definition_id = .data$cohortId, 
-                  rule_sequence = .data$ruleSequence, 
-                  name = .data$ruleName) %>% 
-    dplyr::select(.data$cohort_definition_id, .data$rule_sequence, .data$name)
-  
-  DatabaseConnector::insertTable(connection = connection,
-                                 tableName = "#cohort_inclusion",
-                                 data = inclusionRules,
-                                 dropTableIfExists = FALSE,
-                                 createTable = FALSE,
-                                 tempTable = TRUE,
-                                 oracleTempSchema = oracleTempSchema)
+  if (nrow(inclusionRules) > 0) {
+    inclusionRules <- inclusionRules %>% 
+      dplyr::inner_join(cohorts %>% dplyr::select(.data$cohortId, .data$cohortName)) %>% 
+      dplyr::rename(cohort_definition_id = .data$cohortId, 
+                    rule_sequence = .data$ruleSequence, 
+                    name = .data$ruleName) %>% 
+      dplyr::select(.data$cohort_definition_id, .data$rule_sequence, .data$name)
+    
+    DatabaseConnector::insertTable(connection = connection,
+                                   tableName = "#cohort_inclusion",
+                                   data = inclusionRules,
+                                   dropTableIfExists = FALSE,
+                                   createTable = FALSE,
+                                   tempTable = TRUE,
+                                   oracleTempSchema = oracleTempSchema)
+  }
 }
 
 saveAndDropTempInclusionStatsTables <- function(connection, 
