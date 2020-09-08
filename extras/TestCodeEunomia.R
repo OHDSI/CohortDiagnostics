@@ -10,7 +10,7 @@ cdmDatabaseSchema <- "main"
 cohortDatabaseSchema <- "main"
 cohortTable <- "cohort"
 oracleTempSchema <- NULL
-folder <- "d:\\eunomia" #tempfile()
+folder <- "D:\\git\\bitbucket\\cohortDiagnosticsTest\\results\\firstRun\\eunomia" #tempfile()
 unlink(x = folder, recursive = TRUE, force = TRUE)
 dir.create(folder, recursive = TRUE, showWarnings = FALSE)
 
