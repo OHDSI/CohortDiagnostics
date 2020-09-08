@@ -26,6 +26,14 @@ Bug fixes:
 1. Additional bug fixes for characterization/temporal characterization.
 
 
+CohortDiagnostics 1.2.5
+=======================
+
+Bug fixes:
+
+1. Additional bug fixes for characterization/temporal characterization.
+
+
 CohortDiagnostics 1.2.4
 =======================
 
