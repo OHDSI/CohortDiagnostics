@@ -68,8 +68,8 @@ if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {
 
 cohort <- cohort %>% 
   dplyr::distinct() %>% 
-  dplyr::select(.data$cohortFullName, .data$cohortId, .data$cohortName) %>% 
-  dplyr::arrange(.data$cohortFullName, .data$cohortId)
+  dplyr::select(.data$cohortName, .data$cohortId) %>% 
+  dplyr::arrange(.data$cohortName, .data$cohortId)
 
 database <- database %>% 
   dplyr::distinct() %>% 
@@ -88,6 +88,7 @@ if (exists("temporalCovariateValue")) {
     dplyr::arrange(.data$covariateName, .data$timeId)
   
   temporalCovariateChoices <- temporalCovariateValue %>%
+    dplyr::left_join(timeRef) %>% 
     dplyr::select(.data$timeId, .data$startDay, .data$endDay) %>%
     dplyr::distinct() %>%
     dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%

@@ -155,7 +155,7 @@ sidebarMenu <-
       shinyWidgets::pickerInput(
         inputId = "cohort",
         label = "Cohort (Target)",
-        choices = cohort$cohortFullName,
+        choices = cohort$cohortName,
         multiple = FALSE,
         options = shinyWidgets::pickerOptions(
           actionsBox = TRUE, 
@@ -187,8 +187,8 @@ sidebarMenu <-
       shinyWidgets::pickerInput(
         inputId = "comparator",
         label = "Comparator",
-        choices = cohort$cohortFullName,
-        selected = cohort$cohortFullName[min(2, nrow(cohort))],
+        choices = cohort$cohortName,
+        selected = cohort$cohortName[min(2, nrow(cohort))],
         multiple = FALSE,
         options = shinyWidgets::pickerOptions(
           actionsBox = TRUE, 

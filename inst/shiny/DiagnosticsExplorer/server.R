@@ -55,11 +55,11 @@ styleAbsColorBar <- function(maxValue, colorPositive, colorNegative, angle = 90)
 shiny::shinyServer(function(input, output, session) {
   
   cohortId <- shiny::reactive({
-    return(cohort$cohortId[cohort$cohortFullName == input$cohort])
+    return(cohort$cohortId[cohort$cohortName == input$cohort])
   })
   
   comparatorCohortId <- shiny::reactive({
-    return(cohort$cohortId[cohort$cohortFullName == input$comparator])
+    return(cohort$cohortId[cohort$cohortName == input$comparator])
   })
   
   timeId <- shiny::reactive({
@@ -116,9 +116,9 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::mutate(atlasId = as.integer(.data$atlasId)) %>% #this is temporary - we need to standardize this 
       dplyr::left_join(y = phenotypeDescription) %>% 
       dplyr::left_join(y = cohort, by = c('atlasId' = 'cohortId')) %>% #this is temporary - we need to standardize this 
-      dplyr::mutate(cohortFullName = paste0("<a href='", paste0(cohortBaseUrl(), .data$atlasId),"' target='_blank'>", paste0(.data$cohortDefinitionName), "</a>")) %>% 
-      dplyr::select(phenotypeId, phenotypeName, cohortDefinitionId, cohortFullName, logicDescription, cohortDefinitionNotes) %>% 
-      dplyr::arrange(phenotypeId, phenotypeName, cohortDefinitionId, cohortFullName)
+      dplyr::mutate(cohortName = paste0("<a href='", paste0(cohortBaseUrl(), .data$atlasId),"' target='_blank'>", paste0(.data$cohortDefinitionName), "</a>")) %>% 
+      dplyr::select(phenotypeId, phenotypeName, cohortDefinitionId, cohortName, logicDescription, cohortDefinitionNotes) %>% 
+      dplyr::arrange(phenotypeId, phenotypeName, cohortDefinitionId, cohortName)
     
     options = list(pageLength = 20,
                    searching = TRUE,
@@ -154,12 +154,11 @@ shiny::shinyServer(function(input, output, session) {
     }
     table <- merge(cohort, table, all.x = TRUE)
     table$url <- paste0(cohortBaseUrl2(), table$cohortId)
-    table$cohortFullName <- paste0("<a href='", table$url, "' target='_blank'>", table$cohortFullName, "</a>")
+    table$cohortName <- paste0("<a href='", table$url, "' target='_blank'>", table$cohortName, "</a>")
     table$cohortId <- NULL
-    table$cohortName <- NULL
     table$url <- NULL
     table <- table %>% 
-      dplyr::arrange(.data$cohortFullName)
+      dplyr::arrange(.data$cohortName)
     
     sketch <- htmltools::withTags(table(
       class = 'display',
@@ -211,6 +210,7 @@ shiny::shinyServer(function(input, output, session) {
   filteredIncidenceRates <- shiny::reactive({
     data <- incidenceRate[incidenceRate$cohortId == cohortId() & 
                             incidenceRate$databaseId %in% input$databases, ]
+    
     data <- data[data$incidenceRate > 0, ]
     if (nrow(data) == 0) {
       return(NULL)
@@ -349,18 +349,23 @@ shiny::shinyServer(function(input, output, session) {
   }, res = 100)
   
   output$timeDistTable <- DT::renderDataTable(expr = {
-    data <- timeDistribution[timeDistribution$cohortId == cohortId() & 
-                               timeDistribution$databaseId %in% input$databases, ]
+    data <- timeDistribution %>% 
+      dplyr::filter(.data$cohortId == cohortId() &
+                      .data$databaseId %in% input$databases)
+    
     if (nrow(data) == 0) {
       return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
     }
-    columns <- c("timeMetric", "averageValue", "standardDeviation", "minValue", "p10Value", "p25Value", "medianValue", "p75Value", "p90Value", "maxValue")
-    headers <- c("Time Measure", "Average", "SD", "Min", "P10", "P25", "Median", "P75", "P90", "Max")
+    table <- data %>% 
+      dplyr::select(.data$timeMetric, .data$averageValue, .data$standardDeviation, .data$minValue, .data$p10Value, .data$p25Value, .data$medianValue, .data$p75Value, .data$p90Value, .data$maxValue) %>% 
+      dplyr::rename(TimeMeasure = "timeMetric", Average = "averageValue", SD = "standardDeviation", Min = "minValue", P10 = "p10Value", P25 = "p25Value", Median = "medianValue", P75 = "p75Value", P90 = "p90Value", Max = "maxValue")
+    
     if (length(unique(data$databaseId)) > 1) {
-      columns <- c("databaseId", columns)
-      headers <- c("Database", headers)
+      table <- data %>% 
+        dplyr::select(.data$databaseId, .data$timeMetric, .data$averageValue, .data$standardDeviation, .data$minValue, .data$p10Value, .data$p25Value, .data$medianValue, .data$p75Value, .data$p90Value, .data$maxValue) %>% 
+        dplyr::rename(Database = "databaseId", TimeMeasure = "timeMetric", Average = "averageValue", SD = "standardDeviation", Min = "minValue", P10 = "p10Value", P25 = "p25Value", Median = "medianValue", P75 = "p75Value", P90 = "p90Value", Max = "maxValue")
     }
-    table <- data[, columns]
+    
     options = list(pageLength = 20,
                    searching = TRUE,
                    searchHighlight = TRUE,
@@ -372,11 +377,12 @@ shiny::shinyServer(function(input, output, session) {
     table <- DT::datatable(table,
                            options = options,
                            rownames = FALSE,
-                           colnames = headers,
+                           colnames = colnames(table) %>% SqlRender::camelCaseToTitleCase(),
                            filter = c('bottom'),
                            class = "stripe nowrap compact")
-    table <- DT::formatRound(table, c("averageValue", "standardDeviation"), digits = 2)
-    table <- DT::formatRound(table, c("minValue", "p10Value", "p25Value", "medianValue", "p75Value", "p90Value", "maxValue"), digits = 0)
+    table <- DT::formatRound(table, c("Average", "SD"), digits = 2)
+    table <- DT::formatRound(table, c("Min", "P10", "P25", "Median", "P75", "P90", "Max"), digits = 0)
+    
     return(table)
   }, server = TRUE)
   
@@ -537,16 +543,21 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$inclusionRuleTable <- DT::renderDataTable(expr = {
-    table <- inclusionRuleStats[inclusionRuleStats$cohortId == cohortId() & inclusionRuleStats$databaseId == input$database, ]
-    table <- table[order(table$ruleSequenceId), ]
-    table$cohortId <- NULL
-    table$databaseId <- NULL
+    table <- inclusionRuleStats %>% 
+      dplyr::filter(.data$cohortId == cohortId() &
+                      .data$databaseId == input$database) %>% 
+      dplyr::arrange(.data$ruleSequenceId)
+    
     if (nrow(table) == 0) {
       return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
     }
+    
     lims <- c(0, max(table$remainSubjects))
-    table <- table[, c("ruleSequenceId", "ruleName", "meetSubjects", "gainSubjects", "totalSubjects", "remainSubjects")]
-    colnames(table) <- c("Sequence", "Name", "Meet", "Gain", "Total", "Remain")
+    
+    table <- table %>% 
+      dplyr::select(.data$ruleSequenceId, .data$ruleName, .data$meetSubjects, .data$gainSubjects, .data$totalSubjects, .data$remainSubjects) %>% 
+      dplyr::rename(Sequence = "ruleSequenceId", Name = "ruleName", Meet = "meetSubjects", Gain = "gainSubjects", Total = "totalSubjects", Remain = "remainSubjects")
+    
     options = list(pageLength = 20,
                    searching = TRUE,
                    searchHighlight = TRUE,
@@ -557,6 +568,7 @@ shiny::shinyServer(function(input, output, session) {
                    columnDefs = list(minCellCountDef(2:5)))
     table <- DT::datatable(table,
                            options = options,
+                           colnames = colnames(table) %>% SqlRender::camelCaseToTitleCase(),
                            rownames = FALSE,
                            escape = FALSE,
                            filter = c('bottom'),
@@ -1226,7 +1238,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$cohortId == cohortId(),
                     .data$databaseId == input$database) %>% 
       dplyr::left_join(y = cohort) %>% 
-      dplyr::arrange(.data$cohortFullName)
+      dplyr::arrange(.data$cohortName)
     return(targetCohortWithCount)
   }) 
   
@@ -1235,7 +1247,7 @@ shiny::shinyServer(function(input, output, session) {
     
     return(htmltools::withTags(
       div(
-        h5("Target: ", targetCohortCount$cohortFullName, " ( n = ", scales::comma(x = targetCohortCount$cohortSubjects), " )")
+        h5("Target: ", targetCohortCount$cohortName, " ( n = ", scales::comma(x = targetCohortCount$cohortSubjects), " )")
       )
     )
     )
@@ -1253,11 +1265,11 @@ shiny::shinyServer(function(input, output, session) {
       div(table(
         tr(
           td(
-            h5("Target: ", targetCohortWithCount$cohortFullName, " ( n = ", scales::comma(targetCohortWithCount$cohortSubjects), " )"),
+            h5("Target: ", targetCohortWithCount$cohortName, " ( n = ", scales::comma(targetCohortWithCount$cohortSubjects), " )"),
           ),
           td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;")),
           td(
-            h5("Comparator : ", comparatorCohortWithCount$cohortFullName, " ( n = ",scales::comma(comparatorCohortWithCount$cohortSubjects), " )")
+            h5("Comparator : ", comparatorCohortWithCount$cohortName, " ( n = ",scales::comma(comparatorCohortWithCount$cohortSubjects), " )")
           )
         )
       ) 
