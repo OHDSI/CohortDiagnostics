@@ -120,7 +120,11 @@ saveIncremental <- function(data, fileName, ...) {
   if (file.exists(fileName)) {
     previousData <- readr::read_csv(fileName, col_types = readr::cols())
     if ((nrow(previousData)) > 0) {
-      idx <- getKeyIndex(list(...), previousData)
+      if (!length(list(...)) == 0) {
+        idx <- getKeyIndex(list(...), previousData)
+      } else {
+        idx <- getKeyIndex(previousData)
+      }
       if (length(idx) > 0) {
         previousData <- previousData[-idx, ] 
       }

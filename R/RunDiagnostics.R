@@ -399,9 +399,17 @@ runCohortDiagnostics <- function(packageName = NULL,
     startCohortOverlap <- Sys.time()
     # Cohort overlap ---------------------------------------------------------------------------------
     ParallelLogger::logInfo("\nComputing cohort overlap")
-    combis <- tidyr::crossing(tidyr::tibble(targetCohortId = cohorts$cohortId), 
-                              tidyr::tibble(comparatorCohortId = cohorts$cohortId)) %>% 
-      dplyr::filter(.data$targetCohortId < .data$comparatorCohortId)
+    combis <- cohorts %>% 
+      dplyr::select(.data$referentConceptId, .data$cohortId) %>% 
+      dplyr::rename(targetCohortId = .data$cohortId) %>% 
+      dplyr::inner_join(cohorts %>% 
+                          dplyr::select(.data$referentConceptId, .data$cohortId) %>% 
+                          dplyr::rename(comparatorCohortId = .data$cohortId)) %>% 
+      dplyr::filter(.data$targetCohortId < .data$comparatorCohortId,
+                    .data$referentConceptId > 0) %>% 
+      dplyr::select(.data$targetCohortId, .data$comparatorCohortId) %>% 
+      dplyr::distinct()
+    
     if (incremental) {
       combis <- combis %>% 
         dplyr::inner_join(tibble::tibble(targetCohortId = cohorts$cohortId, 
