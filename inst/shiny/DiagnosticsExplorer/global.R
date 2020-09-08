@@ -122,6 +122,9 @@ if (exists("temporalCovariate")) {
                                        " to end ", 
                                        .data$endDay)) %>% 
         dplyr::select(-.data$startDay, -.data$endDay)
+    } else {
+      rm(temporalCovariateValue)
+      rm(temporalCovariate)
     }
   }
 }
