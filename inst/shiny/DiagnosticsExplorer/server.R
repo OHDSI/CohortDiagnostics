@@ -317,7 +317,7 @@ shiny::shinyServer(function(input, output, session) {
   }) 
   
   timeDisPlotDownload <- shiny::reactive({
-    data <- timeDistribution[timeDistribution$cohortId == cohortId() & 
+    data <- timeDistribution[timeDistribution$cohortDefinitionId == cohortId() & 
                                timeDistribution$databaseId %in% input$databases, ]
     if (nrow(data) == 0) {
       return(NULL)
@@ -349,7 +349,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$timeDistTable <- DT::renderDataTable(expr = {
     data <- timeDistribution %>% 
-      dplyr::filter(.data$cohortId == cohortId() &
+      dplyr::filter(.data$cohortDefinitionId == cohortId() &
                       .data$databaseId %in% input$databases)
     
     if (nrow(data) == 0) {

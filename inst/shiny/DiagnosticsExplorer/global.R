@@ -92,7 +92,7 @@ if (exists("temporalCovariateValue")) {
     dplyr::group_by(.data$covariateId) %>% 
     dplyr::slice(1) %>% 
     dplyr::distinct() %>% 
-    tidyr::crossing(timeRef) %>% 
+    tidyr::crossing(temporalTimeRef) %>% 
     dplyr::arrange(.data$covariateName, .data$timeId)
   
   temporalCovariateChoices <- temporalCovariate %>%
