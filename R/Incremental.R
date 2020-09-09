@@ -68,7 +68,7 @@ getKeyIndex <- function(key, recordKeeping) {
   if (nrow(recordKeeping) == 0 || length(key[[1]]) == 0 || !all(names(key) %in% names(recordKeeping))) {
     return(c())
   } else {
-    key <- unique(tibble::as_tibble(key))
+    key <- tibble::as_tibble(key) %>% dplyr::distinct()
     recordKeeping$idxCol <- 1:nrow(recordKeeping)
     idx <- merge(recordKeeping, key)$idx
     return(idx)
@@ -130,7 +130,14 @@ saveIncremental <- function(data, fileName, ...) {
       if (length(idx) > 0) {
         previousData <- previousData[-idx, ] 
       }
-      data <- dplyr::bind_rows(previousData, data) %>% dplyr::distinct()
+      if (nrow(previousData) > 0) {
+        data <- dplyr::bind_rows(previousData, data) %>% 
+          dplyr::distinct() %>% 
+          tidyr::tibble()
+      } else {
+        data <- data %>% tidyr::tibble()
+      }
+      
     }
   } 
   readr::write_csv(data, fileName)
