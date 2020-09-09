@@ -400,6 +400,10 @@ runConceptSetDiagnostics <- function(connection,
         counts <- enforceMinCellValue(counts, "conceptSubjects", minCellCount)
         counts <- enforceMinCellValue(counts, "conceptCount", minCellCount)
       }
+      counts <-  counts %>% 
+        dplyr::select(.data$databaseId, .data$cohortId, .data$conceptSetId, .data$conceptId,
+                      .data$sourceConceptId, .data$conceptSubjects, .data$conceptCount) %>% 
+        dplyr::distinct()
       writeToCsv(
         counts,
         file.path(exportFolder, "included_source_concept.csv"),
@@ -476,6 +480,10 @@ runConceptSetDiagnostics <- function(connection,
       if (nrow(data) > 0) {
         data <- enforceMinCellValue(data, "conceptCount", minCellCount)
       }
+      data <- data %>% 
+        dplyr::select(.data$databaseId, .data$cohortId, .data$conceptSetId, .data$conceptId,
+                      .data$conceptCount) %>% 
+        dplyr::distinct()
       writeToCsv(
         data,
         file.path(exportFolder, "orphan_concept.csv"),

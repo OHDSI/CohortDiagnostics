@@ -72,23 +72,30 @@ cohort <- cohort %>%
   dplyr::arrange(.data$cohortName, .data$cohortId)
 
 database <- database %>% 
-  dplyr::distinct() %>% 
+  dplyr::distinct() %>%
+  dplyr::mutate(databaseName = dplyr::case_when(is.na(.data$databaseName) ~ .data$databaseId, 
+                                                TRUE ~ as.character(.data$databaseId)),
+                description = dplyr::case_when(is.na(.data$description) ~ .data$databaseName,
+                                               TRUE ~ as.character(.data$description))) %>% 
   dplyr::arrange(.data$databaseId)
 
 if (exists("covariateRef")) {
   covariate <- covariateRef %>% 
+    dplyr::group_by(.data$covariateId) %>% 
+    dplyr::slice(1) %>% 
     dplyr::distinct() %>% 
     dplyr::arrange(.data$covariateName)
 }
 
 if (exists("temporalCovariateValue")) {
-  temporalCovariate <- temporalCovariateValue %>% 
+  temporalCovariate <- temporalCovariateRef %>% 
+    dplyr::group_by(.data$covariateId) %>% 
+    dplyr::slice(1) %>% 
     dplyr::distinct() %>% 
-    dplyr::left_join(temporalCovariateRef) %>% 
+    tidyr::crossing(timeRef) %>% 
     dplyr::arrange(.data$covariateName, .data$timeId)
   
-  temporalCovariateChoices <- temporalCovariateValue %>%
-    dplyr::left_join(timeRef) %>% 
+  temporalCovariateChoices <- temporalCovariate %>%
     dplyr::select(.data$timeId, .data$startDay, .data$endDay) %>%
     dplyr::distinct() %>%
     dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
@@ -98,15 +105,17 @@ if (exists("temporalCovariateValue")) {
 
 if (exists("includedSourceConcept")) {
   conceptSet <- includedSourceConcept %>%
-    dplyr::left_join(conceptSets) %>%
-    dplyr::select(.data$cohortId, .data$conceptSetId, .data$conceptSetName) %>% 
+    dplyr::select(.data$cohortId, 
+                  .data$conceptSetId) %>% 
     dplyr::distinct() %>% 
+    dplyr::left_join(conceptSets) %>%
     dplyr::arrange(.data$cohortId, .data$conceptSetName)
 } else if (exists("orphanConcept")) {
-  conceptSet <- orphanConcept %>% 
-    dplyr::left_join(conceptSets) %>%
-    dplyr::select(.data$cohortId, .data$conceptSetId, .data$conceptSetName) %>% 
+  conceptSet <- orphanConcept %>%
+    dplyr::select(.data$cohortId, 
+                  .data$conceptSetId) %>%  
     dplyr::distinct() %>% 
+    dplyr::left_join(conceptSets) %>%
     dplyr::arrange(.data$cohortId, .data$conceptSetName)
 } else {
   conceptSet <- NULL 

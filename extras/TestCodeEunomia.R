@@ -1,5 +1,3 @@
-# Disabling until new version of DatabaseConnector is released:
-library(testthat)
 library(CohortDiagnostics)
 library(Eunomia)
 
@@ -10,7 +8,7 @@ cdmDatabaseSchema <- "main"
 cohortDatabaseSchema <- "main"
 cohortTable <- "cohort"
 oracleTempSchema <- NULL
-folder <- "d:\\eunomia" #tempfile()
+folder <- "D:\\git\\bitbucket\\cohortDiagnosticsTest\\results\\firstRun\\eunomia" #tempfile()
 unlink(x = folder, recursive = TRUE, force = TRUE)
 dir.create(folder, recursive = TRUE, showWarnings = FALSE)
 
@@ -50,16 +48,8 @@ CohortDiagnostics::runCohortDiagnostics(connectionDetails = connectionDetails,
                                         runIncludedSourceConcepts = TRUE,
                                         runOrphanConcepts = TRUE,
                                         runTimeDistributions = TRUE,
-                                        incremental = TRUE, 
-                                        temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(
-                                          useConditionOccurrence = TRUE, 
-                                          useDrugEraStart = TRUE, 
-                                          useProcedureOccurrence = TRUE, 
-                                          useMeasurement = TRUE,
-                                          
-                                          temporalStartDays = c(-365,-30,0,1,31, seq(from = -30, to = -420, by = -30), seq(from = 1, to = 390, by = 30)), 
-                                          temporalEndDays = c(-31,-1,0,30,365,seq(from = 0, to = -390, by = -30),seq(from = 31, to = 420, by = 30))),
-                                          minCellCount = 10,
+                                        incremental = TRUE,
+                                        minCellCount = 10,
                                         incrementalFolder = file.path(folder, "incremental"))
 
 CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = file.path(folder, "export"))

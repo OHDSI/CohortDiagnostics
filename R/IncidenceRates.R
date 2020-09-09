@@ -26,6 +26,8 @@
 #'
 #' @template CdmDatabaseSchema
 #' 
+#' @template cdmVersion
+#' 
 #' @template OracleTempSchema
 #'
 #' @param firstOccurrenceOnly   Use only the first occurrence of the cohort per person?
@@ -49,11 +51,16 @@ getIncidenceRate <- function(connectionDetails = NULL,
                              cohortDatabaseSchema,
                              cohortTable,
                              cdmDatabaseSchema,
+                             cdmVersion = 5,
                              oracleTempSchema = oracleTempSchema,
                              firstOccurrenceOnly = TRUE,
                              washoutPeriod = 365,
                              cohortId) {
   start <- Sys.time()
+  if (!cdmVersion == 5) {
+    ParallelLogger::logWarn("Only CDM version 5 is supported. Terminating.")
+    return(NULL)
+  }
   
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)

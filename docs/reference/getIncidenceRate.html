@@ -141,6 +141,7 @@
   <span class='no'>cohortDatabaseSchema</span>,
   <span class='no'>cohortTable</span>,
   <span class='no'>cdmDatabaseSchema</span>,
+  <span class='kw'>cdmVersion</span> <span class='kw'>=</span> <span class='fl'>5</span>,
   <span class='kw'>oracleTempSchema</span> <span class='kw'>=</span> <span class='no'>oracleTempSchema</span>,
   <span class='kw'>firstOccurrenceOnly</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>washoutPeriod</span> <span class='kw'>=</span> <span class='fl'>365</span>,
@@ -180,6 +181,10 @@ this should include both the database and schema name, for example
       <td><p>Schema name where your patient-level data in OMOP CDM format resides.
 Note that for SQL Server, this should include both the database and
 schema name, for example 'cdm_data.dbo'.</p></td>
+    </tr>
+    <tr>
+      <th>cdmVersion</th>
+      <td><p>The version of the OMOP CDM. Default 5. (Note: only 5 is supported.)</p></td>
     </tr>
     <tr>
       <th>oracleTempSchema</th>

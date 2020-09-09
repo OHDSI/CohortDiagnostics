@@ -68,7 +68,7 @@ getKeyIndex <- function(key, recordKeeping) {
   if (nrow(recordKeeping) == 0 || length(key[[1]]) == 0 || !all(names(key) %in% names(recordKeeping))) {
     return(c())
   } else {
-    key <- unique(tibble::as_tibble(key))
+    key <- tibble::as_tibble(key) %>% dplyr::distinct()
     recordKeeping$idxCol <- 1:nrow(recordKeeping)
     idx <- merge(recordKeeping, key)$idx
     return(idx)
@@ -106,7 +106,9 @@ writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
     params$data = data
     params$fileName = fileName
     do.call(saveIncremental, params)
+    ParallelLogger::logInfo(" appending records to ", fileName)
   } else {
+    ParallelLogger::logInfo(" creating ",fileName)
     readr::write_csv(x = data, path = fileName)
   }
 }
@@ -120,11 +122,22 @@ saveIncremental <- function(data, fileName, ...) {
   if (file.exists(fileName)) {
     previousData <- readr::read_csv(fileName, col_types = readr::cols())
     if ((nrow(previousData)) > 0) {
-      idx <- getKeyIndex(list(...), previousData)
+      if (!length(list(...)) == 0) {
+        idx <- getKeyIndex(list(...), previousData)
+      } else {
+        idx <- NULL
+      }
       if (length(idx) > 0) {
         previousData <- previousData[-idx, ] 
       }
-      data <- dplyr::bind_rows(previousData, data)
+      if (nrow(previousData) > 0) {
+        data <- dplyr::bind_rows(previousData, data) %>% 
+          dplyr::distinct() %>% 
+          tidyr::tibble()
+      } else {
+        data <- data %>% tidyr::tibble()
+      }
+      
     }
   } 
   readr::write_csv(data, fileName)

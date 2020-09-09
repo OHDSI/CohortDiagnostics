@@ -51,7 +51,7 @@ createDdl <- function(packageName,
     end <- length(fields)
     
     a <- c()
-    for (f in fields) {
+    for (f in fields) { #from https://github.com/OHDSI/CdmDdlBase/blob/f256bd2a3350762e4a37108986711516dd5cd5dc/R/createDdlFromFile.R#L50
       if (subset(table, fieldName == f, isRequired) == "Yes") {
         r <- (" NOT NULL")
       } else {
@@ -87,7 +87,8 @@ createDdlPkConstraints <- function(packageName,
                                    specification){
   
   script <- c()
-  script <- c(script, paste0("--DDL Primary Key Constraints Specification for package ", packageName, " package version: ", packageVersion, '\n'))
+  script <- c(script, paste0("--DDL Primary Key Constraints Specification for package ", 
+                             packageName, " package version: ", packageVersion, '\n'))
   script <- c(script, paste0("--Data Model Version ", modelVersion, '\n'))
   script <- c(script, paste0("--Last update ", Sys.Date(), '\n'))
   
@@ -132,7 +133,8 @@ dropDdl <- function(packageName,
                     specification){
   
   script <- c()
-  script <- c(script, paste0("--DDL Drop table Specification for package ", packageName, " package version: ", packageVersion, '\n'))
+  script <- c(script, paste0("--DDL Drop table Specification for package ", 
+                             packageName, " package version: ", packageVersion, '\n'))
   script <- c(script, paste0("--Data Model Version ", modelVersion, '\n'))
   script <- c(script, paste0("--Last update ", Sys.Date(), '\n'))
   
