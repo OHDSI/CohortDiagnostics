@@ -293,16 +293,10 @@ bodyTabItems <- shinydashboard::tabItems(
                    )
                  )),
       shiny::htmlOutput(outputId = "hoverInfoIr"),
-      shiny::plotOutput(
+      plotly::plotlyOutput(
         outputId = "incidenceRatePlot",
         height = 700,
-        hover = shiny::hoverOpts(
-          id = "plotHoverIr",
-          delay = 100,
-          delayType = "debounce"
-        )
-      ),
-      shiny::downloadButton(outputId = "downloadIncidentRatePlot", label = "Download")
+      )
     )
   ),
   shinydashboard::tabItem(
@@ -438,16 +432,10 @@ bodyTabItems <- shinydashboard::tabItems(
         width = NULL,
         status = "primary",
         shiny::htmlOutput(outputId = "hoverInfoCharComparePlot"),
-        shiny::plotOutput(
+        plotly::plotlyOutput(
           outputId = "charComparePlot",
           height = 700,
-          hover = shiny::hoverOpts(
-            id = "plotHoverCharCompare",
-            delay = 100,
-            delayType = "debounce"
-          )
-        ),
-        shiny::downloadButton(outputId = "downloadCompareCohortPlot")
+        )
       )
     )
   ),

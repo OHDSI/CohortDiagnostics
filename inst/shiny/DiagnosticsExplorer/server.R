@@ -253,22 +253,21 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  incidentRatePlotDownload <- shiny::reactive({
+  output$incidenceRatePlot <- plotly::renderPlotly(expr = {
     data <- filteredIncidenceRates()
+    
     if (is.null(data)) {
       return(NULL)
     }
-    plot <- plotincidenceRate(data = data,
-                              stratifyByAge = "Age" %in% input$irStratification,
-                              stratifyByGender = "Gender" %in% input$irStratification,
-                              stratifyByCalendarYear = "Calendar Year" %in% input$irStratification,
-                              yscaleFixed = input$irYscaleFixed)
+    p <- plotincidenceRate(data = data,
+                           stratifyByAge = "Age" %in% input$irStratification,
+                           stratifyByGender = "Gender" %in% input$irStratification,
+                           stratifyByCalendarYear = "Calendar Year" %in% input$irStratification,
+                           yscaleFixed = input$irYscaleFixed)
+    
+    plot <- plotly::ggplotly(p)
     return(plot)
   })
-  
-  output$incidenceRatePlot <- shiny::renderPlot(expr = {
-    return(incidentRatePlotDownload())
-  }, res = 100)
   
   output$hoverInfoIr <- shiny::renderUI({
     data <- filteredIncidenceRates()
@@ -1087,27 +1086,46 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
-  downloadCohortComparePlot <- shiny::reactive({
+  output$charComparePlot <- plotly::renderPlotly(expr = {
     balance <- computeBalance()
     if (nrow(balance) == 0) {
       return(NULL)
     }
     balance$mean1[is.na(balance$mean1)] <- 0
     balance$mean2[is.na(balance$mean2)] <- 0
-    plot <- ggplot2::ggplot(balance, ggplot2::aes(x = mean1, y = mean2, color = absStdDiff)) +
-      ggplot2::geom_point(alpha = 0.3, shape = 16, size = 2) +
-      ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
-      ggplot2::geom_hline(yintercept = 0) +
-      ggplot2::geom_vline(xintercept = 0) +             
-      ggplot2::scale_x_continuous(input$cohort, limits = c(0, 1)) +
-      ggplot2::scale_y_continuous(input$comparator, limits = c(0, 1)) +
-      ggplot2::scale_color_gradient("Absolute\nStd. Diff.", low = "blue", high = "red", space = "Lab", na.value = "red")
-    return(plot)
+    data <- balance[sample(nrow(balance), 1000), ]
+    
+    xAxisVar <- list(
+      title = input$cohort,
+      range = c(0, 1)
+    )
+    
+    yAxisVar <- list(
+      title = input$comparator,
+      range = c(0, 1)
+    )
+    fig <- plotly::plot_ly(
+      data, x = balance$mean1, y = balance$mean2,
+      # Hover text:
+      text = ~paste("Mean Target: ", balance$mean1, '<br>Mean Comparator:', balance$mean2,'<br>Std diff.:', balance$stdDiff),
+      color = ~balance$absStdDiff,
+      type   = 'scatter', 
+      mode   = 'markers',
+      marker = list(size = 10, 
+                    opacity = "0.5"))
+    fig <- fig %>% plotly::layout(shapes = list(type = "line",
+                                                y0 = 0, 
+                                                y1 = 1, 
+                                                yref = "paper",
+                                                x0 = 0,  
+                                                x1 = 1, 
+                                                line = list(color = "red", 
+                                                            dash = "dash")))
+    fig <- fig %>% plotly::layout(xaxis = xAxisVar, yaxis = yAxisVar, showlegend = FALSE)
+    fig <- fig %>% plotly::colorbar(title = "Absolute\nStd. Diff.")
+    
+    return(fig)
   })
-  
-  output$charComparePlot <- shiny::renderPlot(expr = {
-    return(downloadCohortComparePlot())
-  }, res = 100)
   
   output$hoverInfoCharComparePlot <- shiny::renderUI({
     balance <- computeBalance()
@@ -1324,7 +1342,6 @@ shiny::shinyServer(function(input, output, session) {
     )
   }
   
-  output$downloadIncidentRatePlot <- download_box("IncidentRate", incidentRatePlotDownload())
   output$timeDistributionPlot <- download_box("TimeDistribution", timeDisPlotDownload())
   output$downloadCompareCohortPlot <- download_box("CompareCohort", downloadCohortComparePlot())
   output$downloadOverlapPlot <- download_box("OverlapPlot", overLapPlot())
