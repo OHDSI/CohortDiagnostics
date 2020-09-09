@@ -510,13 +510,13 @@ getInclusionStatistics <- function(connectionDetails = NULL,
 getInclusionStatisticsFromFiles <- function(cohortId,
                                             folder,
                                             cohortInclusionFile = file.path(folder,
-                                                                            "cohortInclusion.csv"),
+                                                                            "cohort_inclusion.csv"),
                                             cohortInclusionResultFile = file.path(folder,
-                                                                                  "cohortIncResult.csv"),
+                                                                                  "cohort_inclusion_result.csv"),
                                             cohortInclusionStatsFile = file.path(folder,
-                                                                                 "cohortIncStats.csv"),
+                                                                                 "cohort_inclusion_stats.csv"),
                                             cohortSummaryStatsFile = file.path(folder,
-                                                                               "cohortSummaryStats.csv"),
+                                                                               "cohort_summary_stats.csv"),
                                             simplify = TRUE) {
   start <- Sys.time()
   ParallelLogger::logInfo("Fetching inclusion statistics for cohort with cohort_definition_id = ",
@@ -525,6 +525,9 @@ getInclusionStatisticsFromFiles <- function(cohortId,
   fetchStats <- function(file) {
     ParallelLogger::logDebug("- Fetching data from ", file)
     stats <- readr::read_csv(file, col_types = readr::cols())
+    if ('COHORT_DEFINITION_ID' %in% colnames(stats)) {
+      colnames(stats) <- colnames(stats) %>% SqlRender::snakeCaseToCamelCase(.)
+    }
     stats <- stats[stats$cohortDefinitionId == cohortId, ]
     return(stats)
   }
@@ -798,9 +801,9 @@ saveAndDropTempInclusionStatsTables <- function(connection,
     data <- DatabaseConnector::renderTranslateQuerySql(sql = sql,
                                                        connection = connection,
                                                        oracleTempSchema = oracleTempSchema,
-                                                       snakeCaseToCamelCase = TRUE,
-                                                       table = table)
-    data <- tidyr::as_tibble(data)
+                                                       snakeCaseToCamelCase = FALSE,
+                                                       table = table) %>% 
+      tidyr::tibble()
     fullFileName <- file.path(inclusionStatisticsFolder, fileName)
     if (incremental) {
       saveIncremental(data, fullFileName, cohortDefinitionId = cohortIds)
@@ -808,10 +811,10 @@ saveAndDropTempInclusionStatsTables <- function(connection,
       readr::write_csv(data, fullFileName)
     }
   }
-  fetchStats("#cohort_inclusion", "cohortInclusion.csv")
-  fetchStats("#cohort_inc_result", "cohortIncResult.csv")
-  fetchStats("#cohort_inc_stats", "cohortIncStats.csv")
-  fetchStats("#cohort_summary_stats", "cohortSummaryStats.csv")
+  fetchStats("#cohort_inclusion", "cohort_inclusion.csv")
+  fetchStats("#cohort_inc_result", "cohort_inclusion_result.csv")
+  fetchStats("#cohort_inc_stats", "cohort_inclusion_stats.csv")
+  fetchStats("#cohort_summary_stats", "cohort_summary_stats.csv")
   
   sql <- "TRUNCATE TABLE #cohort_inclusion; 
     DROP TABLE #cohort_inclusion;
