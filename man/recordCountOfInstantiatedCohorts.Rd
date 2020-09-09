@@ -6,6 +6,8 @@
 \usage{
 recordCountOfInstantiatedCohorts(
   connection,
+  connectionDetails,
+  oracleTempSchema,
   cdmDatabaseSchema,
   cohortDatabaseSchema,
   cohortTable,
@@ -24,6 +26,14 @@ DatabaseConnector package. Can be left NULL if \code{connectionDetails}
 is provided, in which case a new connection will be opened at the start
 of the function, and closed when the function finishes.}
 
+\item{connectionDetails}{An object of type \code{connectionDetails} as created using the
+\code{\link[DatabaseConnector]{createConnectionDetails}} function in the
+DatabaseConnector package. Can be left NULL if \code{connection} is
+provided.}
+
+\item{oracleTempSchema}{Should be used in Oracle to specify a schema where the user has write
+privileges for storing temporary tables.}
+
 \item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
 Note that for SQL Server, this should include both the database and
 schema name, for example 'cdm_data.dbo'.}
@@ -38,28 +48,17 @@ this should include both the database and schema name, for example
 
 \item{includeInclusionStatsTables}{Should record count from inclusion stats table results be returned.}
 
-\item{connectionDetails}{An object of type \code{connectionDetails} as created using the
-\code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-DatabaseConnector package. Can be left NULL if \code{connection} is
-provided.}
+\item{cohortInclusionTable}{Name of the inclusion table, one of the tables for storing
+inclusion rule statistics.}
 
-\item{oracleTempSchema}{Should be used in Oracle to specify a schema where the user has write
-privileges for storing temporary tables.}
+\item{cohortInclusionResultTable}{Name of the inclusion result table, one of the tables for
+storing inclusion rule statistics.}
 
-\item{packageName}{The name of the package containing the cohort definitions. Can be left NULL if 
-\code{baseUrl} and \code{cohortSetReference} have been specified.}
+\item{cohortInclusionStatsTable}{Name of the inclusion stats table, one of the tables for storing
+inclusion rule statistics.}
 
-\item{cohortToCreateFile}{The location of the cohortToCreate file within the package. Is ignored if 
-\code{baseUrl} and \code{cohortSetReference} have been specified. The cohortToCreateFile
-must be .csv file that is expected to be read into a dataframe object identical to requirements
-for \code{cohortSetReference} argument.}
-
-\item{baseUrl}{The base URL for the WebApi instance, for example:
-"http://server.org:80/WebAPI". Can be left NULL if 
-\code{packageName} and \code{cohortToCreateFile} have been specified.}
-
-\item{cohortSetReference}{A data frame with four columns, as described in the details. Can be left NULL if 
-\code{packageName} and \code{cohortToCreateFile} have been specified.}
+\item{cohortSummaryStatsTable}{Name of the summary stats table, one of the tables for storing
+inclusion rule statistics.}
 }
 \value{
 A list with four tibble objects (cohort, inclusionTable, inclusionResult, inclusionStats, inclusionSummaryStats)
@@ -67,29 +66,4 @@ A list with four tibble objects (cohort, inclusionTable, inclusionResult, inclus
 \description{
 This function get record count for a set of cohorts in the cohort table. Optionally, the inclusion rule statistics
 are also counted.
-}
-\details{
-Currently two ways of executing this function are supported, either 
-(1) [Package Mode] embedded in a study package, assuming the cohort definitions are stored in that package using the 
-    \code{ROhdsiWebApi::insertCohortDefinitionSetInPackage}, or 
-(2) [WebApi Mode] By using a WebApi interface to retrieve the cohort definitions.
-
-When using this function in Package Mode: Use the \code{packageName} and \code{cohortToCreateFile} to specify
-the name of the study package, and the name of the cohortToCreate file within that package, respectively
-
-When using this function in WebApi Mode: use the \code{baseUrl} and \code{cohortSetReference} to specify how to 
-connect to the WebApi, and which cohorts to fetch, respectively.
-
-Note: if the parameters for both Package Mode and WebApi Mode are provided, then Package mode is preferred.
-
-The \code{cohortSetReference} argument must be a data frame with  the following columns:
-\describe{
-\item{referentConceptId}{A standard omop concept id that serves as the referant phenotype definition for the cohort Id.}
-\item{cohortId}{The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names. It is recommended to be (referrentConceptId * 1000) + a number between 3 to 999}
-\item{webApiCohortId}{Cohort Id in the webApi/atlas instance. It is a required field to run Cohort Diagnostics in WebApi mode. It is discarded in package mode.}
-\item{cohortName}{The full name of the cohort. This will be shown in the Shiny app.}
-\item{logicDescription}{A human understandable brief description of the cohort definition. This logic does not have to a 
-fully specified description of the cohort definition, but should provide enough context to help user understand the
-meaning of the cohort definition}
-}
 }

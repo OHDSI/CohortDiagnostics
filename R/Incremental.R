@@ -125,12 +125,12 @@ saveIncremental <- function(data, fileName, ...) {
       if (!length(list(...)) == 0) {
         idx <- getKeyIndex(list(...), previousData)
       } else {
-        idx <- getKeyIndex(previousData)
+        idx <- NULL
       }
       if (length(idx) > 0) {
         previousData <- previousData[-idx, ] 
       }
-      data <- dplyr::bind_rows(previousData, data)
+      data <- dplyr::bind_rows(previousData, data) %>% dplyr::distinct()
     }
   } 
   readr::write_csv(data, fileName)

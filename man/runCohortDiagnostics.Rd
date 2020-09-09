@@ -112,7 +112,9 @@ does not exist it will be created.}
 
 \item{runIncidenceRate}{Generate and export the cohort incidence  rates?}
 
-\item{runCohortOverlap}{Generate and export the cohort overlap?}
+\item{runCohortOverlap}{Generate and export the cohort overlap? Overlaps are checked within cohortIds
+that have the same referrent conceptId sourced from the CohortSetReference or 
+cohortToCreateFile.}
 
 \item{runCohortCharacterization}{Generate and export the cohort characterization? 
 Only records with values greater than 0.0001 are returned.}

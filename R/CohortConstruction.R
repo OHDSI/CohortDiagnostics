@@ -868,18 +868,24 @@ saveAndDropTempInclusionStatsTables <- function(connection,
 #' @template OracleTempSchema
 #'
 #' @template CdmDatabaseSchema
-#' 
-#' @template CohortSetSpecs
-#' 
-#' @template CohortSetReference
 #'
 #' @param cohortIds                   Provide a list of cohort IDs to get records for
 #' @param includeInclusionStatsTables Should record count from inclusion stats table results be returned.
+#' @param cohortInclusionTable         Name of the inclusion table, one of the tables for storing
+#'                                     inclusion rule statistics.
+#' @param cohortInclusionResultTable   Name of the inclusion result table, one of the tables for
+#'                                     storing inclusion rule statistics.
+#' @param cohortInclusionStatsTable    Name of the inclusion stats table, one of the tables for storing
+#'                                     inclusion rule statistics.
+#' @param cohortSummaryStatsTable      Name of the summary stats table, one of the tables for storing
+#'                                     inclusion rule statistics.
 #' @return
 #' A list with four tibble objects (cohort, inclusionTable, inclusionResult, inclusionStats, inclusionSummaryStats)                                 
 #'
 #' @export
 recordCountOfInstantiatedCohorts <- function(connection,
+                                             connectionDetails,
+                                             oracleTempSchema,
                                              cdmDatabaseSchema,
                                              cohortDatabaseSchema,
                                              cohortTable,
@@ -893,9 +899,14 @@ recordCountOfInstantiatedCohorts <- function(connection,
   if (is.vector(x = cohortIds) && length(cohortIds) > 1) {
     cohortIds <- paste0(cohortIds, collapse = ",")
   }
+  ## set up connection to server
+  if (is.null(connection)) {
+    connection <- DatabaseConnector::connect(connectionDetails)
+    on.exit(DatabaseConnector::disconnect(connection))
+  }
   
   tables <- DatabaseConnector::getTableNames(connection = connection,
-                                             databaseSchema = cdmDatabaseSchema
+                                             databaseSchema = cohortDatabaseSchema
   )
   
   sql <- "SELECT cohort_definition_id, COUNT(*) COUNT 
