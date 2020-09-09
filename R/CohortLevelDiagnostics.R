@@ -27,7 +27,7 @@
 #'                             table. If left empty, all cohorts in the table will be included.
 #'
 #' @return
-#' A data frame with cohort counts
+#' A tibble with cohort counts
 #'
 #' @export
 getCohortCounts <- function(connectionDetails = NULL,
@@ -48,7 +48,8 @@ getCohortCounts <- function(connectionDetails = NULL,
                                            cohort_database_schema = cohortDatabaseSchema,
                                            cohort_table = cohortTable,
                                            cohort_ids = cohortIds)
-  counts <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
+  counts <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE) %>% 
+    tidyr::tibble()
   delta <- Sys.time() - start
   ParallelLogger::logInfo(paste("Counting cohorts took",
                                 signif(delta, 3),
@@ -215,3 +216,5 @@ checkIfCohortInstantiated <- function(connection, cohortDatabaseSchema, cohortTa
   # the difference is named columns vs no name for column in data frame.
   return(count > 0)
 }
+
+

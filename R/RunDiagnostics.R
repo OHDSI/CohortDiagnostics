@@ -46,6 +46,7 @@
 #' @param databaseId                  A short string for identifying the database (e.g. 'Synpuf').
 #' @param databaseName                The full name of the database.
 #' @param databaseDescription         A short description (several sentences) of the database.
+#' @template cdmVersion
 #' @param runInclusionStatistics      Generate and export statistic on the cohort inclusion rules?
 #' @param runIncludedSourceConcepts   Generate and export the source concepts included in the cohorts?
 #' @param runOrphanConcepts           Generate and export potential orphan concepts?
@@ -84,6 +85,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  databaseId,
                                  databaseName = databaseId,
                                  databaseDescription = "",
+                                 cdmVersion = 5,
                                  runInclusionStatistics = TRUE,
                                  runIncludedSourceConcepts = TRUE,
                                  runOrphanConcepts = TRUE,
@@ -99,14 +101,23 @@ runCohortDiagnostics <- function(packageName = NULL,
                                           useDrugEraStart = TRUE, 
                                           useProcedureOccurrence = TRUE, 
                                           useMeasurement = TRUE,                                          
-                                          temporalStartDays = c(-365,-30,0,1,31, seq(from = -30, to = -420, by = -30), seq(from = 1, to = 390, by = 30)), 
-                                          temporalEndDays = c(-31,-1,0,30,365,seq(from = 0, to = -390, by = -30),seq(from = 31, to = 420, by = 30))),
+                                          temporalStartDays = c(-365,-30,0,1,31, 
+                                                                seq(from = -30, to = -420, by = -30), 
+                                                                seq(from = 1, to = 390, by = 30)), 
+                                          temporalEndDays = c(-31,-1,0,30,365,
+                                                              seq(from = 0, to = -390, by = -30),
+                                                              seq(from = 31, to = 420, by = 30))),
                                  minCellCount = 5,
                                  incremental = FALSE,
                                  incrementalFolder = exportFolder) {
   
+  if (!cdmVersion == 5) {
+    ParallelLogger::logWarn("Only CDM version 5 is supported. Terminating.")
+    return(NULL)
+  }
+  
   start <- Sys.time()
-  ParallelLogger::logInfo("\nRun Cohort Diagnostics started at ", start)
+  ParallelLogger::logInfo("\n- Run Cohort Diagnostics started at ", start)
   
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertLogical(runInclusionStatistics, add = errorMessage)
@@ -117,6 +128,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   checkmate::assertLogical(runIncidenceRate, add = errorMessage)
   checkmate::assertLogical(runCohortOverlap, add = errorMessage)
   checkmate::assertLogical(runCohortCharacterization, add = errorMessage)
+  checkmate::assertInt(x = cdmVersion, na.ok = FALSE, lower = 5, upper = 5, null.ok = FALSE, add = errorMessage)
   
   if (any(runInclusionStatistics, runIncludedSourceConcepts, runOrphanConcepts, 
           runTimeDistributions, runBreakdownIndexEvents, runIncidenceRate,
@@ -157,12 +169,38 @@ runCohortDiagnostics <- function(packageName = NULL,
   
   writeToCsv(cohorts, file.path(exportFolder, "cohort.csv"))
   
+  recordCountOfInstantiatedCohorts <- recordCountOfInstantiatedCohorts(connection = connection, 
+                                                                       cohortDatabaseSchema = cohortDatabaseSchema, 
+                                                                       cohortTable = cohortTable, 
+                                                                       cohortIds = cohorts$cohortId, 
+                                                                       includeInclusionStatsTables = runInclusionStatistics
+                                                                       )
+  if (nrow(recordCountOfInstantiatedCohorts$cohort %>% 
+           dplyr::filter(.data$count > 0)) > 0) {
+    instantiatedCohorts <- recordCountOfInstantiatedCohorts$cohort %>% 
+      dplyr::filter(.data$count > 0) %>% 
+      dplyr::pull(.data$cohortDefinitionId)
+    ParallelLogger::logInfo("\n- Found ", 
+                            scales::comma(length(instantiatedCohorts)), 
+                            " of the ",
+                            scales::comma(nrow(cohorts)),
+                            " (", 
+                            scales::percent(length(instantiatedCohorts)/nrow(cohorts)),
+                            ") submitted cohorts instantiated. \n",
+                            "  Beginning Cohort Data Diagnostics for instantiated cohorts.")
+  } else {
+    ParallelLogger::logWarn("\n- All cohorts were either not instantiated or all have 0 records.\n",
+                            "  Exiting Cohort Data Diagnostics.")
+    return(NULL)
+  }
+  
   if (incremental) {
+    ParallelLogger::logInfo("\n- Working in incremental mode.")
     cohorts$checksum <- computeChecksum(cohorts$sql)
     recordKeepingFile <- file.path(incrementalFolder, "CreatedDiagnostics.csv")
   }
   
-  ParallelLogger::logInfo("Saving database metadata")
+  ParallelLogger::logInfo("\n- Saving database metadata")
   database <- tibble::tibble(databaseId = databaseId,
                              databaseName = databaseName,
                              description = databaseDescription,
@@ -170,41 +208,59 @@ runCohortDiagnostics <- function(packageName = NULL,
   writeToCsv(database, file.path(exportFolder, "database.csv"))
   
   # Counting cohorts -----------------------------------------------------------------------
-  ParallelLogger::logInfo("Counting cohorts")
-  subset <- subsetToRequiredCohorts(cohorts = cohorts, 
+  ParallelLogger::logInfo("------------------------------------")
+  ParallelLogger::logInfo("\n- Getting record and subject counts for instantiated cohorts")
+  subset <- subsetToRequiredCohorts(cohorts = cohorts %>% 
+                                      dplyr::filter(cohortId %in% instantiatedCohorts), 
                                     task = "getCohortCounts", 
                                     incremental = incremental, 
                                     recordKeepingFile = recordKeepingFile)
-  
+
   if (nrow(subset) > 0) {
+    if (incremental && (length(instantiatedCohorts) - nrow(subset)) > 0) {
+      ParallelLogger::logInfo("  Skipping ", 
+                              scales::comma(length(instantiatedCohorts) - length(subset)), 
+                              " cohorts in incremental mode.")
+    }
     counts <- getCohortCounts(connection = connection,
                               cohortDatabaseSchema = cohortDatabaseSchema,
                               cohortTable = cohortTable,
                               cohortIds = subset$cohortId)
+      
     if (nrow(counts) > 0) {
-      counts$databaseId <- databaseId
-      counts <- enforceMinCellValue(counts, "cohortEntries", minCellCount)
-      counts <- enforceMinCellValue(counts, "cohortSubjects", minCellCount)
+      counts <- counts %>% dplyr::mutate(databaseId = !!databaseId)
+      counts <- enforceMinCellValue(data = counts, fieldName = "cohortEntries", minValues = minCellCount)
+      counts <- enforceMinCellValue(data = counts, fieldName = "cohortSubjects", minValues = minCellCount)
     }
-    writeToCsv(counts, file.path(exportFolder, "cohort_count.csv"), incremental = incremental, cohortId = subset$cohortId)
+    writeToCsv(counts, file.path(exportFolder, "cohort_count.csv"), 
+               incremental = incremental, 
+               cohortId = subset$cohortId)
     recordTasksDone(cohortId = subset$cohortId,
                     task = "getCohortCounts",
                     checksum = subset$checksum,
                     recordKeepingFile = recordKeepingFile,
                     incremental = incremental)
+    ParallelLogger::logInfo("\n")
   }
   
+  # Inclusion statistics -----------------------------------------------------------------------
   if (runInclusionStatistics) {
-    # Inclusion statistics -----------------------------------------------------------------------
     ParallelLogger::logInfo("------------------------------------")
-    ParallelLogger::logInfo("\nFetching inclusion rule statistics. Started at ", Sys.time())
-    subset <- subsetToRequiredCohorts(cohorts = cohorts, 
+    ParallelLogger::logInfo("- Fetching inclusion rule statistics. Started at ", Sys.time())
+    subset <- subsetToRequiredCohorts(cohorts = cohorts %>%
+                                        dplyr::filter(cohortId %in% instantiatedCohorts), 
                                       task = "runInclusionStatistics", 
                                       incremental = incremental, 
                                       recordKeepingFile = recordKeepingFile)
     if (nrow(subset) > 0) {
+      if (incremental && (length(instantiatedCohorts) - nrow(subset)) > 0) {
+        ParallelLogger::logInfo("  Skipping ", 
+                                scales::comma(length(instantiatedCohorts) - length(subset)), 
+                                " cohorts in incremental mode.")
+      }
       runInclusionStatistics <- function(row) {
-        ParallelLogger::logInfo("- Fetching inclusion rule statistics for cohort ", row$cohortName)
+        # convert to bulk mode
+        ParallelLogger::logInfo("  Fetching inclusion rule statistics for cohort \n     ", row$cohortName)
         stats <- getInclusionStatisticsFromFiles(cohortId = row$cohortId,
                                                  folder = inclusionStatisticsFolder,
                                                  simplify = TRUE)
@@ -216,7 +272,8 @@ runCohortDiagnostics <- function(packageName = NULL,
       stats <- lapply(split(subset, subset$cohortId), runInclusionStatistics)
       stats <- dplyr::bind_rows(stats)
       if (nrow(stats) > 0) {
-        stats$databaseId <- databaseId
+        stats <- stats %>% 
+          dplyr::mutate(databaseId = !!databaseId)
         stats <- enforceMinCellValue(stats, "meetSubjects", minCellCount)
         stats <- enforceMinCellValue(stats, "gainSubjects", minCellCount)
         stats <- enforceMinCellValue(stats, "totalSubjects", minCellCount)
@@ -232,9 +289,14 @@ runCohortDiagnostics <- function(packageName = NULL,
                       recordKeepingFile = recordKeepingFile,
                       incremental = incremental)
     }
+    ParallelLogger::logInfo("\n")
   }
   
+  
+  ##############DESIGN DIAGNOSTICS###########################################
   if (runIncludedSourceConcepts || runOrphanConcepts) {
+    ParallelLogger::logInfo("------------------------------------")
+    ParallelLogger::logInfo("- Design diagnostics included source concepts/orphan concepts. Started at ", Sys.time())
     # Concept set diagnostics -----------------------------------------------
     runConceptSetDiagnostics(connection = connection,
                              oracleTempSchema = oracleTempSchema,
@@ -251,38 +313,37 @@ runCohortDiagnostics <- function(packageName = NULL,
                              useExternalConceptCountsTable = FALSE,
                              incremental = incremental,
                              recordKeepingFile = recordKeepingFile)
+    ParallelLogger::logInfo("\n")
   }
   
   if (runTimeDistributions) {
     startTimeDistribution <- Sys.time()
     # Time distributions ----------------------------------------------------------------------
-    ParallelLogger::logInfo("\nCreating time distributions")
-    subset <- subsetToRequiredCohorts(cohorts = cohorts, 
-                                      task = "runTimeDistributions", 
-                                      incremental = incremental, 
+    ParallelLogger::logInfo("\n- Creating time distributions")
+    subset <- subsetToRequiredCohorts(cohorts = cohorts %>%
+                                            dplyr::filter(cohortId %in% instantiatedCohorts),
+                                      task = "runTimeDistributions",
+                                      incremental = incremental,
                                       recordKeepingFile = recordKeepingFile)
     if (nrow(subset) > 0) {
-      runTimeDist <- function(row) {
-        ParallelLogger::logInfo("- Creating time distributions for cohort ", row$cohortName)
-        data <- getTimeDistributions(connection = connection,
-                                     oracleTempSchema = oracleTempSchema,
-                                     cdmDatabaseSchema = cdmDatabaseSchema,
-                                     cohortDatabaseSchema = cohortDatabaseSchema,
-                                     cohortTable = cohortTable,
-                                     cohortId = row$cohortId)
-        if (nrow(data) > 0) {
-          data$cohortId <- row$cohortId
-        }
-        return(data)
+      if (incremental && (length(instantiatedCohorts) - nrow(subset)) > 0) {
+        ParallelLogger::logInfo("  Skipping ",
+                                scales::comma(length(instantiatedCohorts) - length(subset)),
+                                " cohorts in incremental mode.")
       }
-      data <- lapply(split(subset, subset$cohortId), runTimeDist)
-      data <- dplyr::bind_rows(data)
+      data <- getTimeDistributions(connection = connection,
+                                   oracleTempSchema = oracleTempSchema,
+                                   cdmDatabaseSchema = cdmDatabaseSchema,
+                                   cohortDatabaseSchema = cohortDatabaseSchema,
+                                   cohortTable = cohortTable,
+                                   cdmVersion = cdmVersion,
+                                   cohortIds = subset$cohortId)
       if (nrow(data) > 0) {
-        data <- data %>% 
+        data <- data %>%
           dplyr::mutate(databaseId = !!databaseId)
-        writeToCsv(data, 
-                   file.path(exportFolder, "time_distribution.csv"), 
-                   incremental = incremental, 
+        writeToCsv(data,
+                   file.path(exportFolder, "time_distribution.csv"),
+                   incremental = incremental,
                    cohortId = subset$cohortId)
       }
       recordTasksDone(cohortId = subset$cohortId,
@@ -295,19 +356,28 @@ runCohortDiagnostics <- function(packageName = NULL,
     ParallelLogger::logInfo(paste("Running time distribution took",
                                   signif(delta, 3),
                                   attr(delta, "units")))
+    ParallelLogger::logInfo("\n")
   }
   
+  # Index event breakdown ---------------------------------------------------------------------
   if (runBreakdownIndexEvents) {
+    ParallelLogger::logInfo("------------------------------------")
     startRunBreakdownIndexEvents <- Sys.time()
-    # Index event breakdown ---------------------------------------------------------------------
-    ParallelLogger::logInfo("\nBreaking down index events")
-    subset <- subsetToRequiredCohorts(cohorts = cohorts, 
+    ParallelLogger::logInfo("- Breaking down index events")
+    subset <- subsetToRequiredCohorts(cohorts = cohorts %>%
+                                        dplyr::filter(cohortId %in% instantiatedCohorts), 
                                       task = "runBreakdownIndexEvents", 
                                       incremental = incremental, 
                                       recordKeepingFile = recordKeepingFile)
     if (nrow(subset) > 0) {
+      if (incremental && (length(instantiatedCohorts) - nrow(subset)) > 0) {
+        ParallelLogger::logInfo("  Skipping ", 
+                                scales::comma(length(instantiatedCohorts) - length(subset)), 
+                                " cohorts in incremental mode.")
+      }
       runBreakdownIndexEvents <- function(row) {
-        ParallelLogger::logInfo("- Breaking down index events for cohort ", row$cohortName)
+        ParallelLogger::logInfo("  Breaking down index events for cohort ", row$cohortName)
+        # convert to bulk mode
         data <- breakDownIndexEvents(connection = connection,
                                      cdmDatabaseSchema = cdmDatabaseSchema,
                                      oracleTempSchema = oracleTempSchema,
@@ -337,22 +407,30 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
     
     delta <- Sys.time() - startRunBreakdownIndexEvents
-    ParallelLogger::logInfo(paste("Running index event breakdown took",
+    ParallelLogger::logInfo(paste("  Running index event breakdown took",
                                   signif(delta, 3),
                                   attr(delta, "units")))
+    ParallelLogger::logInfo("\n")
   }
   
+  # Incidence rates --------------------------------------------------------------------------------------
   if (runIncidenceRate) {
+    ParallelLogger::logInfo("------------------------------------")
     startIncidenceRate <- Sys.time()
-    # Incidence rates --------------------------------------------------------------------------------------
-    ParallelLogger::logInfo("\nComputing incidence rate")
-    subset <- subsetToRequiredCohorts(cohorts = cohorts, 
+    ParallelLogger::logInfo("- Computing incidence rate")
+    subset <- subsetToRequiredCohorts(cohorts = cohorts %>%
+                                        dplyr::filter(cohortId %in% instantiatedCohorts), 
                                       task = "runIncidenceRate", 
                                       incremental = incremental, 
                                       recordKeepingFile = recordKeepingFile)
     if (nrow(subset) > 0) {
+      if (incremental && (length(instantiatedCohorts) - nrow(subset)) > 0) {
+        ParallelLogger::logInfo("  Skipping ", 
+                                scales::comma(length(instantiatedCohorts) - length(subset)), 
+                                " cohorts in incremental mode.")
+      }
       runIncidenceRate <- function(row) {
-        ParallelLogger::logInfo("- Computing incidence rate for cohort ", row$cohortName)
+        ParallelLogger::logInfo("  Computing incidence rate for cohort \n    ", row$cohortName)
         cohortExpression <- RJSONIO::fromJSON(row$json)
         washoutPeriod <- tryCatch({
           cohortExpression$PrimaryCriteria$ObservationWindow$PriorDays
@@ -393,12 +471,14 @@ runCohortDiagnostics <- function(packageName = NULL,
     ParallelLogger::logInfo(paste("Running Incidence Rate took",
                                   signif(delta, 3),
                                   attr(delta, "units")))
+    ParallelLogger::logInfo("\n")
   }
   
+  # Cohort overlap ---------------------------------------------------------------------------------
   if (runCohortOverlap) {
+    ParallelLogger::logInfo("------------------------------------")
     startCohortOverlap <- Sys.time()
-    # Cohort overlap ---------------------------------------------------------------------------------
-    ParallelLogger::logInfo("\nComputing cohort overlap")
+    ParallelLogger::logInfo("- Computing cohort overlap at ", startCohortOverlap)
     combis <- cohorts %>% 
       dplyr::select(.data$referentConceptId, .data$cohortId) %>% 
       dplyr::rename(targetCohortId = .data$cohortId) %>% 
@@ -423,6 +503,11 @@ runCohortDiagnostics <- function(packageName = NULL,
                                      incremental = incremental, 
                                      recordKeepingFile = recordKeepingFile)
     if (nrow(subset) > 0) {
+      if (incremental && (length(instantiatedCohorts) - nrow(subset)) > 0) {
+        ParallelLogger::logInfo("  Skipping ", 
+                                scales::comma(length(instantiatedCohorts) - length(subset)), 
+                                " cohorts in incremental mode.")
+      }
       runCohortOverlap <- function(row) {
         ParallelLogger::logInfo("- Computing overlap for cohorts ",
                                 row$targetCohortId,
@@ -480,68 +565,61 @@ runCohortDiagnostics <- function(packageName = NULL,
     ParallelLogger::logInfo(paste("Running Cohort Overlap took",
                                   signif(delta, 3),
                                   attr(delta, "units")))
+    ParallelLogger::logInfo("\n")
   }
   
+  # Cohort characterization ---------------------------------------------------------------
   if (runCohortCharacterization) {
+    ParallelLogger::logInfo("------------------------------------")
     startCohortCharacterization <- Sys.time()
-    # Cohort characterization ---------------------------------------------------------------
-    ParallelLogger::logInfo("\nCreating cohort characterizations - started at ", Sys.time())
-    subset <- subsetToRequiredCohorts(cohorts = cohorts, 
+    ParallelLogger::logInfo("- Cohort characterizations - started at ", Sys.time())
+    subset <- subsetToRequiredCohorts(cohorts = cohorts %>%
+                                        dplyr::filter(cohortId %in% instantiatedCohorts), 
                                       task = "runCohortCharacterization", 
                                       incremental = incremental, 
                                       recordKeepingFile = recordKeepingFile)
     if (nrow(subset) > 0) {
-      characteristicsResult <- list()
-      characteristicsAnalysisRef <- list()
-      characteristicsCovariateRef <- list()
-      characteristicsCovariates <- list()
-      characteristicsCovariatesContinuous <- list()
-      
-      for (i in (1:nrow(subset))) {
-        messageCohortBeingCharacterized <- paste0(subset[i,]$cohortName, 
-                                                  "' (Cohort Id: ", 
-                                                  subset[i,]$cohortId, ')')
-        ParallelLogger::logInfo("- Creating characterization for cohort: '", messageCohortBeingCharacterized)
-        cohortCharacteristicsOutput <- getCohortCharacteristics(connection = connection,
-                                                                cdmDatabaseSchema = cdmDatabaseSchema,
-                                                                oracleTempSchema = oracleTempSchema,
-                                                                cohortDatabaseSchema = cohortDatabaseSchema,
-                                                                cohortTable = cohortTable,
-                                                                cohortId = subset[i,]$cohortId,
-                                                                covariateSettings = covariateSettings)
-        if (length(cohortCharacteristicsOutput) == 0) {
-          ParallelLogger::logWarn("- No characterization output for cohort: ", messageCohortBeingCharacterized)
-        } else {
-          characteristicsResult[[i]] <- cohortCharacteristicsOutput$result
-          characteristicsAnalysisRef[[i]] <- cohortCharacteristicsOutput$analysisRef
-          characteristicsCovariateRef[[i]] <- cohortCharacteristicsOutput$covariateRef
-          characteristicsCovariates[[i]] <- cohortCharacteristicsOutput$covariates
-        }
+      if (incremental && (length(instantiatedCohorts) - nrow(subset)) > 0) {
+        ParallelLogger::logInfo("  Skipping ", 
+                                scales::comma(length(instantiatedCohorts) - length(subset)), 
+                                " cohorts in incremental mode.")
       }
-      characteristicsResult <- dplyr::bind_rows(characteristicsResult) %>% dplyr::distinct()
-      characteristicsAnalysisRef <- dplyr::bind_rows(characteristicsAnalysisRef) %>% dplyr::distinct()
-      characteristicsCovariateRef <- dplyr::bind_rows(characteristicsCovariateRef) %>% dplyr::distinct()
-      characteristicsCovariates <- dplyr::bind_rows(characteristicsCovariates) %>% dplyr::distinct()
       
-      message <- "\nCharacterization results summary:\n"
-      message <- c(message, paste0("- Number of cohorts submitted for characterization = ", length(subset$cohortId), '\n'))
-      message <- c(message, "- Following cohorts were submitted: \n")
+      messageCohortBeingCharacterized <- paste0('Starting large scale characterization of', 
+                                                scales::comma(nrow(subset)), 
+                                                " cohorts")
+      cohortCharacteristicsOutput <- getCohortCharacteristics(connection = connection,
+                                                              cdmDatabaseSchema = cdmDatabaseSchema,
+                                                              oracleTempSchema = oracleTempSchema,
+                                                              cohortDatabaseSchema = cohortDatabaseSchema,
+                                                              cohortTable = cohortTable,
+                                                              cohortIds = subset$cohortId,
+                                                              covariateSettings = covariateSettings,
+                                                              cdmVersion = cdmVersion)
+      
+      if (length(cohortCharacteristicsOutput) == 0) {
+        ParallelLogger::logWarn("\n   No characterization output for submitted cohorts")
+      }
+      
+      message <- "\n  Characterization results summary:\n"
+      message <- c(message, paste0("    Number of cohorts submitted for characterization = ", length(subset$cohortId), '\n'))
+      message <- c(message, "    Following cohorts were submitted: \n")
       message <- c(message, paste0(subset %>% 
-                                     dplyr::mutate(message = paste0("   ", subset$cohortName, 
+                                     dplyr::mutate(message = paste0("      ", subset$cohortName, 
                                                                     " (Cohort Id: ", 
                                                                     subset$cohortId, 
                                                                     ')\n')) %>% 
                                      dplyr::pull(.data$message), collapse = ""))
-      message <- c(message, paste0("- Total number of records returned for all cohorts characterized = ", 
-                                   nrow(characteristicsResult) %>% 
+      message <- c(message, paste0("    Total number of records returned for all cohorts characterized = ", 
+                                   nrow(cohortCharacteristicsOutput$result) %>% 
                                      scales::comma(), 
                                    '\n'))
     
-      if (nrow(characteristicsResult) > 0) {
+      if (nrow(cohortCharacteristicsOutput$result) > 0) {
         message <- c(message, paste0("     ", 
                                      subset %>% 
                                        dplyr::select(.data$cohortId) %>% 
-                                       dplyr::left_join(characteristicsResult %>% 
+                                       dplyr::left_join(cohortCharacteristicsOutput$result %>% 
                                                           dplyr::group_by(.data$cohortId) %>% 
                                                           dplyr::summarise(n = dplyr::n()) %>% 
                                                           dplyr::select(.data$cohortId, .data$n)
@@ -549,18 +627,19 @@ runCohortDiagnostics <- function(packageName = NULL,
                                        dplyr::mutate(n = tidyr::replace_na(data = .data$n, replace = 0)) %>% 
                                        dplyr::mutate(message = paste0('Cohort Id:', 
                                                                       .data$cohortId, 
-                                                                      " -> ", 
+                                                                      " Feature Count -> ", 
                                                                       scales::comma(.data$n), "\n")) %>% 
                                        dplyr::pull(message)))
         
-        characteristicsResultFiltered <- characteristicsResult %>% 
+        characteristicsResultFiltered <- cohortCharacteristicsOutput$result %>% 
           dplyr::mutate(mean = round(x = mean, digits = 4)) %>% 
           dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 4 digits
         
-        message <- c(message, paste0("- The number of cohorts with atleast one covariate with mean > 0.0001 is ",
-                                     length(characteristicsResultFiltered$cohortId %>% unique() %>% scales::comma()), 
-                                     "\n"))
-        message <- c(message, paste0(" --", 
+        message <- c(message, paste0("    The number of cohorts with atleast one covariate with mean > 0.0001 is ",
+                                     length(characteristicsResultFiltered$cohortId %>% unique()) %>% scales::comma()))
+        message <- c(message, paste0("    Total number of records returned for all cohorts characterized with mean > 0.0001 = ",
+                                     nrow(characteristicsResultFiltered) %>% scales::comma()))
+        message <- c(message, paste0("      ", 
                                      subset %>% 
                                        dplyr::select(.data$cohortId) %>% 
                                        dplyr::left_join(characteristicsResultFiltered %>% 
@@ -571,24 +650,27 @@ runCohortDiagnostics <- function(packageName = NULL,
                                        dplyr::mutate(n = tidyr::replace_na(data = .data$n, replace = 0)) %>% 
                                        dplyr::mutate(message = paste0('Cohort Id: ', 
                                                                       .data$cohortId, 
-                                                                      " -> ", 
+                                                                      " Feature Count -> ", 
                                                                       scales::comma(.data$n), "\n")) %>% 
                                        dplyr::pull(message)))
         if (nrow(characteristicsResultFiltered) > 0) {
-          covariates <- characteristicsCovariateRef %>% 
-            dplyr::rename(covariateAnalysisId = .data$analysisId)
           writeToCsv(
-            data = covariates,
+            data = cohortCharacteristicsOutput$covariateRef %>% 
+              dplyr::rename(covariateAnalysisId = .data$analysisId),
             fileName = file.path(exportFolder, "covariate_ref.csv"),
             incremental = incremental,
-            covariateId = covariates$covariateId
+            covariateId = cohortCharacteristicsOutput$covariateRef$covariateId
           )
-          
+          writeToCsv(
+            data = cohortCharacteristicsOutput$analysisRef,
+            fileName = file.path(exportFolder, "analysis_ref.csv"),
+            incremental = incremental,
+            analysisId = cohortCharacteristicsOutput$analysisRef$analysisId
+          )
           if (!exists("counts")) {
             counts <- readr::read_csv(file = file.path(exportFolder, "cohort_count.csv"), col_types = readr::cols())
             names(counts) <- SqlRender::snakeCaseToCamelCase(names(counts))
           }
-          
           characteristicsResultFiltered <- characteristicsResultFiltered %>% 
             dplyr::mutate(databaseId = !!databaseId) %>% 
             dplyr::left_join(y = counts)
@@ -603,7 +685,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           writeToCsv(characteristicsResultFiltered, 
                      file.path(exportFolder, "covariate_value.csv"), 
                      incremental = incremental, 
-                     cohortId = subset$cohortId)
+                     cohortId = characteristicsResultFiltered$cohortId %>% unique())
         }
       } else {
         message <- c(message, "- WARNING: No characterization output received for any of the submitted cohorts.\n")
@@ -622,71 +704,61 @@ runCohortDiagnostics <- function(packageName = NULL,
     ParallelLogger::logInfo(paste("Running Characterization took",
                                   signif(delta, 3),
                                   attr(delta, "units")))
+    ParallelLogger::logInfo("\n")
   }
   
+  # Temporal Cohort characterization ---------------------------------------------------------------
   if (runTemporalCohortCharacterization) {
+    ParallelLogger::logInfo("------------------------------------")
     startTemporalCohortCharacterization <- Sys.time()
-    # Cohort characterization ---------------------------------------------------------------
-    ParallelLogger::logInfo("\nCreating temporal cohort characterizations - started at ", Sys.time())
-    subset <- subsetToRequiredCohorts(cohorts = cohorts, 
+    ParallelLogger::logInfo("- Temporal Cohort characterizations - started at ", Sys.time())
+    subset <- subsetToRequiredCohorts(cohorts = cohorts %>%
+                                        dplyr::filter(cohortId %in% instantiatedCohorts), 
                                       task = "runTemporalCohortCharacterization", 
                                       incremental = incremental, 
                                       recordKeepingFile = recordKeepingFile)
     if (nrow(subset) > 0) {
-      characteristicsResult <- list()
-      characteristicsAnalysisRef <- list()
-      characteristicsCovariateRef <- list()
-      characteristicsCovariates <- list()
-      characteristicsCovariatesContinuous <- list()
-      characteristicsTimeRef <- list()
-      
-      for (i in (1:nrow(subset))) {
-        messageCohortBeingCharacterized <- paste0(subset[i,]$cohortName, 
-                                                  "' (Cohort Id: ", 
-                                                  subset[i,]$cohortId, ')')
-        ParallelLogger::logInfo("- Creating temporal characterization for cohort: '", 
-                                messageCohortBeingCharacterized)
-        cohortCharacteristicsOutput <- getCohortCharacteristics(connection = connection,
-                                                                cdmDatabaseSchema = cdmDatabaseSchema,
-                                                                oracleTempSchema = oracleTempSchema,
-                                                                cohortDatabaseSchema = cohortDatabaseSchema,
-                                                                cohortTable = cohortTable,
-                                                                cohortId = subset[i,]$cohortId,
-                                                                covariateSettings = temporalCovariateSettings)
-        if (length(cohortCharacteristicsOutput) == 0) {
-          ParallelLogger::logWarn("- No temporal characterization output for cohort: ", messageCohortBeingCharacterized)
-        } else {
-          characteristicsResult[[i]] <- cohortCharacteristicsOutput$result
-          characteristicsAnalysisRef[[i]] <- cohortCharacteristicsOutput$analysisRef
-          characteristicsCovariateRef[[i]] <- cohortCharacteristicsOutput$covariateRef
-          characteristicsTimeRef[[i]] <- cohortCharacteristicsOutput$timeRef
-        }
+      if (incremental && (length(instantiatedCohorts) - nrow(subset)) > 0) {
+        ParallelLogger::logInfo("  Skipping ", 
+                                scales::comma(length(instantiatedCohorts) - length(subset)), 
+                                " cohorts in incremental mode.")
       }
-      characteristicsResult <- dplyr::bind_rows(characteristicsResult) %>% dplyr::distinct()
-      characteristicsAnalysisRef <- dplyr::bind_rows(characteristicsAnalysisRef) %>% dplyr::distinct()
-      characteristicsCovariateRef <- dplyr::bind_rows(characteristicsCovariateRef) %>% dplyr::distinct()
-      characteristicsCovariates <- dplyr::bind_rows(characteristicsCovariates) %>% dplyr::distinct()
-      characteristicsTimeRef <- dplyr::bind_rows(characteristicsTimeRef) %>% dplyr::distinct()
       
-      message <- "\nTemporal characterization results summary:\n"
-      message <- c(message, paste0("- Number of cohorts submitted for temporal characterization = ", length(subset$cohortId), '\n'))
-      message <- c(message, "- Following cohorts were submitted: \n")
+      messageCohortBeingCharacterized <- paste0('Starting large scale temporal characterization of', 
+                                                scales::comma(nrow(subset)), 
+                                                " cohorts")
+      cohortCharacteristicsOutput <- getCohortCharacteristics(connection = connection,
+                                                              cdmDatabaseSchema = cdmDatabaseSchema,
+                                                              oracleTempSchema = oracleTempSchema,
+                                                              cohortDatabaseSchema = cohortDatabaseSchema,
+                                                              cohortTable = cohortTable,
+                                                              cohortIds = subset$cohortId,
+                                                              covariateSettings = temporalCovariateSettings,
+                                                              cdmVersion = cdmVersion)
+      
+      if (length(cohortCharacteristicsOutput) == 0) {
+        ParallelLogger::logWarn("\n   No temporal characterization output for submitted cohorts")
+      }
+      
+      message <- "\n  Characterization results summary:\n"
+      message <- c(message, paste0("    Number of cohorts submitted for characterization = ", length(subset$cohortId), '\n'))
+      message <- c(message, "    Following cohorts were submitted: \n")
       message <- c(message, paste0(subset %>% 
-                                     dplyr::mutate(message = paste0("   ", subset$cohortName, 
+                                     dplyr::mutate(message = paste0("      ", subset$cohortName, 
                                                                     " (Cohort Id: ", 
                                                                     subset$cohortId, 
                                                                     ')\n')) %>% 
                                      dplyr::pull(.data$message), collapse = ""))
-      message <- c(message, paste0("- Total number of records returned for all cohorts characterized = ", 
-                                   nrow(characteristicsResult) %>% 
+      message <- c(message, paste0("    Total number of records returned for all cohorts characterized = ", 
+                                   nrow(cohortCharacteristicsOutput$result) %>% 
                                      scales::comma(), 
                                    '\n'))
       
-      if (nrow(characteristicsResult) > 0) {
+      if (nrow(cohortCharacteristicsOutput$result) > 0) {
         message <- c(message, paste0("     ", 
                                      subset %>% 
                                        dplyr::select(.data$cohortId) %>% 
-                                       dplyr::left_join(characteristicsResult %>% 
+                                       dplyr::left_join(cohortCharacteristicsOutput$result %>% 
                                                           dplyr::group_by(.data$cohortId) %>% 
                                                           dplyr::summarise(n = dplyr::n()) %>% 
                                                           dplyr::select(.data$cohortId, .data$n)
@@ -694,18 +766,19 @@ runCohortDiagnostics <- function(packageName = NULL,
                                        dplyr::mutate(n = tidyr::replace_na(data = .data$n, replace = 0)) %>% 
                                        dplyr::mutate(message = paste0('Cohort Id:', 
                                                                       .data$cohortId, 
-                                                                      " -> ", 
+                                                                      " Feature Count -> ", 
                                                                       scales::comma(.data$n), "\n")) %>% 
                                        dplyr::pull(message)))
         
-        characteristicsResultFiltered <- characteristicsResult %>% 
+        characteristicsResultFiltered <- cohortCharacteristicsOutput$result %>% 
           dplyr::mutate(mean = round(x = mean, digits = 4)) %>% 
           dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 4 digits
         
-        message <- c(message, paste0("- The number of cohorts with atleast one covariate with mean > 0.0001 is ",
-                                     length(characteristicsResultFiltered$cohortId %>% unique() %>% scales::comma()), 
-                                     "\n"))
-        message <- c(message, paste0(" --", 
+        message <- c(message, paste0("    The number of cohorts with atleast one covariate with mean > 0.0001 is ",
+                                     length(characteristicsResultFiltered$cohortId %>% unique()) %>% scales::comma()))
+        message <- c(message, paste0("    Total number of records returned for all cohorts characterized with mean > 0.0001 = ",
+                                     nrow(characteristicsResultFiltered) %>% scales::comma()))
+        message <- c(message, paste0("      ", 
                                      subset %>% 
                                        dplyr::select(.data$cohortId) %>% 
                                        dplyr::left_join(characteristicsResultFiltered %>% 
@@ -716,29 +789,33 @@ runCohortDiagnostics <- function(packageName = NULL,
                                        dplyr::mutate(n = tidyr::replace_na(data = .data$n, replace = 0)) %>% 
                                        dplyr::mutate(message = paste0('Cohort Id: ', 
                                                                       .data$cohortId, 
-                                                                      " -> ", 
+                                                                      " Feature Count -> ", 
                                                                       scales::comma(.data$n), "\n")) %>% 
                                        dplyr::pull(message)))
         if (nrow(characteristicsResultFiltered) > 0) {
-          covariates <- characteristicsCovariateRef %>% 
-            dplyr::rename(covariateAnalysisId = .data$analysisId)
           writeToCsv(
-            data = covariates,
+            data = cohortCharacteristicsOutput$covariateRef %>% 
+              dplyr::rename(covariateAnalysisId = .data$analysisId),
             fileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
             incremental = incremental,
-            covariateId = covariates$covariateId
+            covariateId = cohortCharacteristicsOutput$covariateRef$covariateId
           )
           writeToCsv(
-            data = characteristicsTimeRef,
-            fileName = file.path(exportFolder, "time_ref.csv"),
-            incremental = incremental
+            data = cohortCharacteristicsOutput$analysisRef,
+            fileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
+            incremental = incremental,
+            analysisId = cohortCharacteristicsOutput$analysisRef$analysisId
           )
-          
+          writeToCsv(
+            data = cohortCharacteristicsOutput$timeRef,
+            fileName = file.path(exportFolder, "temporal_time_ref.csv"),
+            incremental = incremental,
+            timeId = cohortCharacteristicsOutput$timeRef$timeId
+          )
           if (!exists("counts")) {
             counts <- readr::read_csv(file = file.path(exportFolder, "cohort_count.csv"), col_types = readr::cols())
             names(counts) <- SqlRender::snakeCaseToCamelCase(names(counts))
           }
-          
           characteristicsResultFiltered <- characteristicsResultFiltered %>% 
             dplyr::mutate(databaseId = !!databaseId) %>% 
             dplyr::left_join(y = counts)
@@ -751,16 +828,16 @@ runCohortDiagnostics <- function(packageName = NULL,
                           sd = round(.data$sd, digits = 4)) %>% 
             dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
           writeToCsv(characteristicsResultFiltered, 
-                     file.path(exportFolder, "temporal_covariate_value.csv"), 
+                     file.path(exportFolder, "covariate_value.csv"), 
                      incremental = incremental, 
-                     cohortId = subset$cohortId)
+                     cohortId = characteristicsResultFiltered$cohortId %>% unique())
         }
       } else {
         message <- c(message, "- WARNING: No temporal characterization output received for any of the submitted cohorts.\n")
         message <- c(message, "           No temporal characterization data for any of the submitted cohorts.\n")
       }
     } else {
-      message <- "Skipping Temporal Cohort Characterization. All submitted cohorts were previously characterized."
+      message <- "Skipping Cohort Characterization. All submitted cohorts were previously characterized."
     }
     ParallelLogger::logInfo(message)
     recordTasksDone(cohortId = subset$cohortId,
@@ -769,9 +846,10 @@ runCohortDiagnostics <- function(packageName = NULL,
                     recordKeepingFile = recordKeepingFile,
                     incremental = incremental)
     delta <- Sys.time() - startTemporalCohortCharacterization
-    ParallelLogger::logInfo(paste("Running Characterization took",
+    ParallelLogger::logInfo(paste("Running Temporal Characterization took",
                                   signif(delta, 3),
                                   attr(delta, "units")))
+    ParallelLogger::logInfo("\n")
   }
   
   ParallelLogger::logInfo("Getting concept sets from all cohort definitions.")

@@ -34,7 +34,7 @@ this should include both the database and schema name, for example
 table. If left empty, all cohorts in the table will be included.}
 }
 \value{
-A data frame with cohort counts
+A tibble with cohort counts
 }
 \description{
 Computes the subject and entry count per cohort

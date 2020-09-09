@@ -10,6 +10,7 @@ getIncidenceRate(
   cohortDatabaseSchema,
   cohortTable,
   cdmDatabaseSchema,
+  cdmVersion = 5,
   oracleTempSchema = oracleTempSchema,
   firstOccurrenceOnly = TRUE,
   washoutPeriod = 365,
@@ -37,6 +38,8 @@ this should include both the database and schema name, for example
 \item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
 Note that for SQL Server, this should include both the database and
 schema name, for example 'cdm_data.dbo'.}
+
+\item{cdmVersion}{The version of the OMOP CDM. Default 5. (Note: only 5 is supported.)}
 
 \item{oracleTempSchema}{Should be used in Oracle to specify a schema where the user has write
 privileges for storing temporary tables.}

@@ -106,7 +106,9 @@ writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
     params$data = data
     params$fileName = fileName
     do.call(saveIncremental, params)
+    ParallelLogger::logInfo(" appending records to ", fileName)
   } else {
+    ParallelLogger::logInfo(" creating ",fileName)
     readr::write_csv(x = data, path = fileName)
   }
 }

@@ -851,3 +851,129 @@ saveAndDropTempInclusionStatsTables <- function(connection,
     }
   }
 }
+
+
+
+
+#' Get record counts for a set of cohort
+#'
+#' @description
+#' This function get record count for a set of cohorts in the cohort table. Optionally, the inclusion rule statistics
+#' are also counted.
+#'
+#' @template Connection
+#'
+#' @template CohortTable
+#'
+#' @template OracleTempSchema
+#'
+#' @template CdmDatabaseSchema
+#' 
+#' @template CohortSetSpecs
+#' 
+#' @template CohortSetReference
+#'
+#' @param cohortIds                   Provide a list of cohort IDs to get records for
+#' @param includeInclusionStatsTables Should record count from inclusion stats table results be returned.
+#' @return
+#' A list with four tibble objects (cohort, inclusionTable, inclusionResult, inclusionStats, inclusionSummaryStats)                                 
+#'
+#' @export
+recordCountOfInstantiatedCohorts <- function(connection,
+                                             cdmDatabaseSchema,
+                                             cohortDatabaseSchema,
+                                             cohortTable,
+                                             cohortIds,
+                                             includeInclusionStatsTables = FALSE,
+                                             cohortInclusionTable = paste0(cohortTable, "_inclusion"),
+                                             cohortInclusionResultTable = paste0(cohortTable, "_inclusion_result"),
+                                             cohortInclusionStatsTable = paste0(cohortTable, "_inclusion_stats"),
+                                             cohortSummaryStatsTable = paste0(cohortTable, "_summary_stats")) {
+  
+  if (is.vector(x = cohortIds) && length(cohortIds) > 1) {
+    cohortIds <- paste0(cohortIds, collapse = ",")
+  }
+  
+  tables <- DatabaseConnector::getTableNames(connection = connection,
+                                             databaseSchema = cdmDatabaseSchema
+  )
+  
+  sql <- "SELECT cohort_definition_id, COUNT(*) COUNT 
+    FROM @cohort_database_schema.@cohort_table 
+    WHERE cohort_definition_id in (@cohort_id)
+    group by cohort_definition_id ;"
+  
+  if (tolower(cohortTable) %in% tolower(tables)) {
+  cohortTableRecords <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                                   sql = sql,
+                                                                   cohort_database_schema = cohortDatabaseSchema,
+                                                                   cohort_table = cohortTable,
+                                                                   cohort_id = cohortIds,
+                                                                   snakeCaseToCamelCase = TRUE) %>% 
+    tidyr::tibble()
+  } else {
+    ParallelLogger::logWarn(cohortTable, ' not found while retrieving record counts.')
+  }
+  if (includeInclusionStatsTables) {
+    
+    if (tolower(cohortInclusionTable) %in% tolower(tables)) {
+      cohortInclusionTableRecords <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                                                sql = sql,
+                                                                                cohort_database_schema = cohortDatabaseSchema,
+                                                                                cohort_table = cohortInclusionTable,
+                                                                                cohort_id = cohortIds) %>% 
+        tidyr::tibble()
+    } else {
+      ParallelLogger::logWarn(cohortInclusionTable, ' not found while retrieving record counts.')
+      cohortInclusionTableRecords <- tidyr::tibble()
+    }
+    
+    if (tolower(cohortInclusionResultTable) %in% tolower(tables)) {
+      cohortInclusionResultTableRecords <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                                                      sql = sql,
+                                                                                      cohort_database_schema = cohortDatabaseSchema,
+                                                                                      cohort_table = cohortInclusionResultTable,
+                                                                                      cohort_id = cohortIds) %>% 
+        tidyr::tibble()
+    } else {
+      ParallelLogger::logWarn(cohortInclusionResultTable, ' not found while retrieving record counts.')
+      cohortInclusionResultTableRecords <- tidyr::tibble()
+    }
+    
+    if (tolower(cohortInclusionStatsTable) %in% tolower(tables)) {
+      cohortInclusionStatsTableRecords <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                                                     sql = sql,
+                                                                                     cohort_database_schema = cohortDatabaseSchema,
+                                                                                     cohort_table = cohortInclusionStatsTable,
+                                                                                     cohort_id = cohortIds) %>% 
+        tidyr::tibble()
+    } else {
+      ParallelLogger::logWarn(cohortInclusionStatsTable, ' not found while retrieving record counts.')
+      cohortInclusionStatsTableRecords <- tidyr::tibble()
+    }
+    
+    if (tolower(cohortSummaryStatsTable) %in% tolower(tables)) {
+      cohortSummaryStatsTableRecords <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                                                   sql = sql,
+                                                                                   cohort_database_schema = cohortDatabaseSchema,
+                                                                                   cohort_table = cohortSummaryStatsTable,
+                                                                                   cohort_id = cohortIds) %>% 
+        tidyr::tibble()
+    } else {
+      ParallelLogger::logWarn(cohortSummaryStatsTable, ' not found while retrieving record counts.')
+      cohortSummaryStatsTableRecords <- tidyr::tibble()
+    }
+  } else {
+    cohortInclusionTableRecords <- tidyr::tibble()
+    cohortInclusionResultTableRecords <- tidyr::tibble()
+    cohortInclusionStatsTableRecords <- tidyr::tibble()
+    cohortSummaryStatsTableRecords <- tidyr::tibble()
+  }
+  
+  count <- list(cohort = cohortTableRecords,
+             inclusionTable = cohortInclusionTableRecords,
+             inclusionResult = cohortInclusionResultTableRecords,
+             inclusionStats = cohortInclusionStatsTableRecords,
+             inclusionSummaryStats = cohortSummaryStatsTableRecords)
+  return(count)
+}

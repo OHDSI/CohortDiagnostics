@@ -21,6 +21,7 @@ runCohortDiagnostics(
   databaseId,
   databaseName = databaseId,
   databaseDescription = "",
+  cdmVersion = 5,
   runInclusionStatistics = TRUE,
   runIncludedSourceConcepts = TRUE,
   runOrphanConcepts = TRUE,
@@ -96,6 +97,8 @@ does not exist it will be created.}
 \item{databaseName}{The full name of the database.}
 
 \item{databaseDescription}{A short description (several sentences) of the database.}
+
+\item{cdmVersion}{The version of the OMOP CDM. Default 5. (Note: only 5 is supported.)}
 
 \item{runInclusionStatistics}{Generate and export statistic on the cohort inclusion rules?}
 

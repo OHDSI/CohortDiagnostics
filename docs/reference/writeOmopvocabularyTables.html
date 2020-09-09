@@ -142,8 +142,8 @@ of these conceptIds. These are written as csv in the export folder</p>
   <span class='kw'>connection</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>vocabularyDatabaseSchema</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>conceptIds</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>vocabularyTableNames</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"concept"</span>, <span class='st'>"domain"</span>, <span class='st'>"vocabulary"</span>, <span class='st'>"relationship"</span>,
-    <span class='st'>"conceptClass"</span>, <span class='st'>"conceptAncestor"</span>, <span class='st'>"conceptRelationship"</span>),
+  <span class='kw'>vocabularyTableNames</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"concept"</span>, <span class='st'>"conceptAncestor"</span>, <span class='st'>"conceptClass"</span>,
+    <span class='st'>"conceptRelationship"</span>, <span class='st'>"conceptSynonym"</span>, <span class='st'>"domain"</span>, <span class='st'>"relationship"</span>, <span class='st'>"vocabulary"</span>),
   <span class='no'>exportFolder</span>
 )</pre>
 
@@ -172,7 +172,8 @@ These are most commonly the same as cdmDatabaseSchema.</p></td>
     </tr>
     <tr>
       <th>conceptIds</th>
-      <td><p>A vector of conceptIds to extract omop vocabulary files.</p></td>
+      <td><p>(optional) A vector of conceptIds to filter the extract of omop 
+vocabulary files. If NULL, all conceptIds are extracted.</p></td>
     </tr>
     <tr>
       <th>vocabularyTableNames</th>

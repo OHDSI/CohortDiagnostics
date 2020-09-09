@@ -162,6 +162,7 @@ Alternatively, a covariate setting object may be created using the above as an e
   <span class='no'>databaseId</span>,
   <span class='kw'>databaseName</span> <span class='kw'>=</span> <span class='no'>databaseId</span>,
   <span class='kw'>databaseDescription</span> <span class='kw'>=</span> <span class='st'>""</span>,
+  <span class='kw'>cdmVersion</span> <span class='kw'>=</span> <span class='fl'>5</span>,
   <span class='kw'>runInclusionStatistics</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>runIncludedSourceConcepts</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>runOrphanConcepts</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
@@ -175,7 +176,9 @@ Alternatively, a covariate setting object may be created using the above as an e
 
     <span class='kw'>temporalCovariateSettings</span> <span class='kw'>=</span> <span class='kw pkg'>FeatureExtraction</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/FeatureExtraction/man/createTemporalCovariateSettings.html'>createTemporalCovariateSettings</a></span>(<span class='kw'>useConditionOccurrence</span>
     <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>useDrugEraStart</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>useProcedureOccurrence</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>useMeasurement</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-    <span class='kw'>temporalStartDays</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(-<span class='fl'>365</span>, -<span class='fl'>30</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>31</span>), <span class='kw'>temporalEndDays</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(-<span class='fl'>31</span>, -<span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>30</span>, <span class='fl'>365</span>)),
+    <span class='kw'>temporalStartDays</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(-<span class='fl'>365</span>, -<span class='fl'>30</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>31</span>, <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span>(<span class='kw'>from</span> <span class='kw'>=</span> -<span class='fl'>30</span>, <span class='kw'>to</span> <span class='kw'>=</span> -<span class='fl'>420</span>, <span class='kw'>by</span> <span class='kw'>=</span> -<span class='fl'>30</span>),
+    <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span>(<span class='kw'>from</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>to</span> <span class='kw'>=</span> <span class='fl'>390</span>, <span class='kw'>by</span> <span class='kw'>=</span> <span class='fl'>30</span>)), <span class='kw'>temporalEndDays</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(-<span class='fl'>31</span>, -<span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>30</span>, <span class='fl'>365</span>, <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span>(<span class='kw'>from</span>
+    <span class='kw'>=</span> <span class='fl'>0</span>, <span class='kw'>to</span> <span class='kw'>=</span> -<span class='fl'>390</span>, <span class='kw'>by</span> <span class='kw'>=</span> -<span class='fl'>30</span>), <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span>(<span class='kw'>from</span> <span class='kw'>=</span> <span class='fl'>31</span>, <span class='kw'>to</span> <span class='kw'>=</span> <span class='fl'>420</span>, <span class='kw'>by</span> <span class='kw'>=</span> <span class='fl'>30</span>))),
   <span class='kw'>minCellCount</span> <span class='kw'>=</span> <span class='fl'>5</span>,
   <span class='kw'>incremental</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
   <span class='kw'>incrementalFolder</span> <span class='kw'>=</span> <span class='no'>exportFolder</span>
@@ -269,6 +272,10 @@ does not exist it will be created.</p></td>
     <tr>
       <th>databaseDescription</th>
       <td><p>A short description (several sentences) of the database.</p></td>
+    </tr>
+    <tr>
+      <th>cdmVersion</th>
+      <td><p>The version of the OMOP CDM. Default 5. (Note: only 5 is supported.)</p></td>
     </tr>
     <tr>
       <th>runInclusionStatistics</th>
