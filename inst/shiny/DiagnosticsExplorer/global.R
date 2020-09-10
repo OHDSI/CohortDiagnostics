@@ -14,7 +14,31 @@ if (!exists("shinySettings")) {
 }
 dataFolder <- shinySettings$dataFolder
 
-suppressWarnings(rm("cohort", "cohortCount", "cohortOverlap", "conceptSets", "database", "incidenceRate", "includedSourceConcept", "inclusionRuleStats", "indexEventBreakdown", "orphanConcept", "timeDistribution"))
+suppressWarnings(
+  rm(
+    "analysisRef",
+    "temporalAnalysisRef",
+    "temporalTimeRef",
+    "covariateRef",
+    "temporarlCovariateRef",
+    "concept",
+    "vocabulary",
+    "domain",
+    "conceptAncestor",
+    "conceptRelationship",
+    "cohort",
+    "cohortCount",
+    "cohortOverlap",
+    "conceptSets",
+    "database",
+    "incidenceRate",
+    "includedSourceConcept",
+    "inclusionRuleStats",
+    "indexEventBreakdown",
+    "orphanConcept",
+    "timeDistribution"
+  )
+)
 
 if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {
   writeLines("Using merged data detected in data folder")
@@ -26,7 +50,10 @@ if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {
     # print(file)
     tableName <- gsub(".csv$", "", file)
     camelCaseName <- SqlRender::snakeCaseToCamelCase(tableName)
-    data <- readr::read_csv(file.path(folder, file), col_types = readr::cols(), guess_max = 1e7, locale = readr::locale(encoding = "UTF-8"))
+    data <- readr::read_csv(file.path(folder, file), 
+                            col_types = readr::cols(), 
+                            guess_max = 1e7, 
+                            locale = readr::locale(encoding = "UTF-8"))
     colnames(data) <- SqlRender::snakeCaseToCamelCase(colnames(data))
     
     if (!overwrite && exists(camelCaseName, envir = .GlobalEnv)) {

@@ -255,17 +255,15 @@ shiny::shinyServer(function(input, output, session) {
   
   output$incidenceRatePlot <- plotly::renderPlotly(expr = {
     data <- filteredIncidenceRates()
-    
     if (is.null(data)) {
       return(NULL)
     }
-    p <- plotincidenceRate(data = data,
-                           stratifyByAge = "Age" %in% input$irStratification,
-                           stratifyByGender = "Gender" %in% input$irStratification,
-                           stratifyByCalendarYear = "Calendar Year" %in% input$irStratification,
-                           yscaleFixed = input$irYscaleFixed)
-    
-    plot <- plotly::ggplotly(p)
+    plot <- plotincidenceRate(data = data,
+                              stratifyByAge = "Age" %in% input$irStratification,
+                              stratifyByGender = "Gender" %in% input$irStratification,
+                              stratifyByCalendarYear = "Calendar Year" %in% input$irStratification,
+                              yscaleFixed = input$irYscaleFixed) %>% 
+      plotly::ggplotly(dynamicTicks = TRUE)
     return(plot)
   })
   
@@ -1086,56 +1084,59 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
-  output$charComparePlot <- plotly::renderPlotly(expr = {
-    balance <- computeBalance()
+  output$cohortComparePlot <- plotly::renderPlotly(expr = {
+    balance <- computeBalance() %>% 
+      tidyr::replace_na(mean1 = 0, mean2 = 0)
     if (nrow(balance) == 0) {
       return(NULL)
     }
-    balance$mean1[is.na(balance$mean1)] <- 0
-    balance$mean2[is.na(balance$mean2)] <- 0
-    data <- balance[sample(nrow(balance), 1000), ]
-    
-    xAxisVar <- list(
-      title = input$cohort,
-      range = c(0, 1)
-    )
-    
-    yAxisVar <- list(
-      title = input$comparator,
-      range = c(0, 1)
-    )
+
     fig <- plotly::plot_ly(
-      data, x = balance$mean1, y = balance$mean2,
+      data = balance, 
+      x = balance$mean1, 
+      y = balance$mean2,
       # Hover text:
-      text = ~paste("Mean Target: ", balance$mean1, '<br>Mean Comparator:', balance$mean2,'<br>Std diff.:', balance$stdDiff),
+      text = ~paste("Mean Target: ", 
+                    balance$mean1, 
+                    '<br>Mean Comparator:', 
+                    balance$mean2,
+                    '<br>Std diff.:', 
+                    balance$stdDiff),
       color = ~balance$absStdDiff,
       type   = 'scatter', 
       mode   = 'markers',
       marker = list(size = 10, 
-                    opacity = "0.5"))
-    fig <- fig %>% plotly::layout(shapes = list(type = "line",
-                                                y0 = 0, 
-                                                y1 = 1, 
-                                                yref = "paper",
-                                                x0 = 0,  
-                                                x1 = 1, 
-                                                line = list(color = "red", 
-                                                            dash = "dash")))
-    fig <- fig %>% plotly::layout(xaxis = xAxisVar, yaxis = yAxisVar, showlegend = FALSE)
-    fig <- fig %>% plotly::colorbar(title = "Absolute\nStd. Diff.")
+                    opacity = "0.5")) %>% 
+      plotly::layout(shapes = list(type = "line",
+                                   y0 = 0, 
+                                   y1 = 1, 
+                                   yref = "paper",
+                                   x0 = 0,  
+                                   x1 = 1, 
+                                   line = list(color = "red", 
+                                               dash = "dash"))) %>% 
+      plotly::layout(xaxis = list(title = input$cohort,
+                                  range = c(0, 1)), 
+                     yaxis = list(title = input$comparator,
+                                  range = c(0, 1)), 
+                     showlegend = FALSE) %>% 
+      plotly::colorbar(title = "Absolute\nStd. Diff.")
     
     return(fig)
   })
   
-  output$hoverInfoCharComparePlot <- shiny::renderUI({
-    balance <- computeBalance()
-    balance$mean1[is.na(balance$mean1)] <- 0
-    balance$mean2[is.na(balance$mean2)] <- 0
+  output$hoverInfocohortComparePlot <- shiny::renderUI({
+    balance <- computeBalance() %>% 
+      tidyr::replace_na(mean1 = 0, mean2 = 0)
     if (nrow(balance) == 0) {
       return(NULL)
     } else {
       hover <- input$plotHoverCharCompare
-      point <- nearPoints(balance, hover, threshold = 5, maxpoints = 1, addDist = TRUE)
+      point <- shiny::nearPoints(df = balance, 
+                                 coordinfo = hover, 
+                                 threshold = 5, 
+                                 maxpoints = 1, 
+                                 addDist = TRUE)
       if (nrow(point) == 0) {
         return(NULL)
       }
