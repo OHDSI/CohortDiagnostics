@@ -7,7 +7,9 @@ prepareTable1 <- function(covariates,
                                                                                     pattern = "^.*: ",
                                                                                     replacement = "")))
   space <- "&nbsp;"
-  specifications <- readr::read_csv(file = pathToCsv, col_types = readr::cols()) %>% 
+  specifications <- readr::read_csv(file = pathToCsv, 
+                                    col_types = readr::cols(),
+                                    guess_max = min(1e7)) %>% 
     dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = '')))
   
   resultsTable <- tidyr::tibble()
@@ -73,7 +75,9 @@ prepareTable1Comp <- function(balance,
                                                                                     pattern = "^.*: ",
                                                                                     replacement = "")))
   space <- "&nbsp;"
-  specifications <- readr::read_csv(file = pathToCsv, col_types = readr::cols()) %>% 
+  specifications <- readr::read_csv(file = pathToCsv, 
+                                    col_types = readr::cols(),
+                                    guess_max = min(1e7)) %>% 
     dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = '')))
   
   resultsTable <- tidyr::tibble()

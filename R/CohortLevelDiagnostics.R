@@ -165,8 +165,10 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
   instantiateConceptSets(connection, cdmDatabaseSchema, oracleTempSchema, cohortSql)
   
   ParallelLogger::logInfo("- Computing counts")
-  domains <- readr::read_csv(system.file("csv", "domains.csv", package = "CohortDiagnostics"),
-                             col_types = readr::cols())
+  domains <- readr::read_csv(system.file("csv", "domains.csv", 
+                                         package = "CohortDiagnostics"),
+                             col_types = readr::cols(),
+                             guess_max = min(1e7))
   getCounts <- function(row) {
     domain <- domains[domains$domain == row$domain, ]
     sql <- SqlRender::loadRenderTranslateSql("CohortEntryBreakdown.sql",

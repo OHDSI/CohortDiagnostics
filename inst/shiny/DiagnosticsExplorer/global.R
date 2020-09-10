@@ -52,7 +52,7 @@ if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {
     camelCaseName <- SqlRender::snakeCaseToCamelCase(tableName)
     data <- readr::read_csv(file.path(folder, file), 
                             col_types = readr::cols(), 
-                            guess_max = 1e7, 
+                            guess_max = min(1e7), 
                             locale = readr::locale(encoding = "UTF-8"))
     colnames(data) <- SqlRender::snakeCaseToCamelCase(colnames(data))
     
@@ -154,7 +154,7 @@ if ("phenotypeDescription.csv" %in% list.files(path = dataFolder)) {
   appTitle <- "Phenotype Library"
   cohortDescription <- readr::read_csv(file.path(dataFolder, 'cohortDescription.csv'), 
                                        col_types = readr::cols(), 
-                                       guess_max = 1e7, 
+                                       guess_max = min(1e7), 
                                        locale = readr::locale(encoding = "UTF-8"),
                                        trim_ws = TRUE, 
                                        na = '0', 
@@ -176,7 +176,7 @@ if ("phenotypeDescription.csv" %in% list.files(path = dataFolder)) {
   
   phenotypeDescription <- readr::read_csv(file.path(dataFolder, "phenotypeDescription.csv"), 
                                           col_types = readr::cols(), 
-                                          guess_max = 1e7, 
+                                          guess_max = min(1e7), 
                                           locale = readr::locale(encoding = "UTF-8"),
                                           trim_ws = TRUE, 
                                           na = '0', 

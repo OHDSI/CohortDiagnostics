@@ -68,7 +68,10 @@ preMergeDiagnosticsFiles <- function(dataFolder, minCovariateProportion = 0) {
     # print(file)
     tableName <- gsub(".csv$", "", file)
     camelCaseName <- SqlRender::snakeCaseToCamelCase(tableName)
-    data <- readr::read_csv(file.path(folder, file), col_types = readr::cols(), guess_max = 1e7, locale = readr::locale(encoding = "UTF-8"))
+    data <- readr::read_csv(file.path(folder, file), 
+                            col_types = readr::cols(), 
+                            guess_max = min(1e7), 
+                            locale = readr::locale(encoding = "UTF-8"))
     colnames(data) <- SqlRender::snakeCaseToCamelCase(colnames(data))
     
     if (tableName %in% c('covariate_value', 'temporal_covariate_value')) {

@@ -44,7 +44,8 @@ getUniqueConceptIds <-
         path <- file.path(exportFolder, paste0(databaseTables[[i]], ".csv"))
         assign(x = databaseTables[[i]],
                value = readr::read_csv(file = path,
-                                       col_types = readr::cols())
+                                       col_types = readr::cols(),
+                                       guess_max = min(1e7))
         )
       } else {
         assign(x = databaseTables[[i]],

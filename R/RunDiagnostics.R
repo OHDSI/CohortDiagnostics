@@ -671,7 +671,9 @@ runCohortDiagnostics <- function(packageName = NULL,
             analysisId = cohortCharacteristicsOutput$analysisRef$analysisId
           )
           if (!exists("counts")) {
-            counts <- readr::read_csv(file = file.path(exportFolder, "cohort_count.csv"), col_types = readr::cols())
+            counts <- readr::read_csv(file = file.path(exportFolder, "cohort_count.csv"), 
+                                      col_types = readr::cols(),
+                                      guess_max = min(1e7))
             names(counts) <- SqlRender::snakeCaseToCamelCase(names(counts))
           }
           characteristicsResultFiltered <- characteristicsResultFiltered %>% 
@@ -816,7 +818,9 @@ runCohortDiagnostics <- function(packageName = NULL,
             timeId = cohortCharacteristicsOutput$timeRef$timeId
           )
           if (!exists("counts")) {
-            counts <- readr::read_csv(file = file.path(exportFolder, "cohort_count.csv"), col_types = readr::cols())
+            counts <- readr::read_csv(file = file.path(exportFolder, "cohort_count.csv"), 
+                                      col_types = readr::cols(),
+                                      guess_max = min(1e7))
             names(counts) <- SqlRender::snakeCaseToCamelCase(names(counts))
           }
           characteristicsResultFiltered <- characteristicsResultFiltered %>% 
@@ -858,7 +862,8 @@ runCohortDiagnostics <- function(packageName = NULL,
   ParallelLogger::logInfo("Getting concept sets from all cohort definitions.")
   conceptSetsFromCohorts <-
     combineConceptSetsFromCohorts(cohorts = readr::read_csv(file.path(exportFolder, "cohort.csv"), 
-                                                            col_types = readr::cols()) %>% 
+                                                            col_types = readr::cols(),
+                                                            guess_max = min(1e7)) %>% 
                                     dplyr::rename_with(SqlRender::snakeCaseToCamelCase)) %>% 
     dplyr::select(-"uniqueConceptSetId")
   writeToCsv(data = conceptSetsFromCohorts, 

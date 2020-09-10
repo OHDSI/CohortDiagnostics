@@ -67,7 +67,9 @@ getCohortsJsonAndSqlFromPackage <- function(packageName = packageName,
                               extension = "csv", 
                               add = errorMessage)
   
-  cohorts <- readr::read_csv(pathToCsv, col_types = readr::cols())
+  cohorts <- readr::read_csv(pathToCsv, 
+                             col_types = readr::cols(),
+                             guess_max = min(1e7))
   if (!is.null(cohortIds)) {
     cohorts <- cohorts %>% dplyr::filter(.data$cohortId %in% cohortIds)
   }
@@ -524,7 +526,9 @@ getInclusionStatisticsFromFiles <- function(cohortId,
   
   fetchStats <- function(file) {
     ParallelLogger::logDebug("- Fetching data from ", file)
-    stats <- readr::read_csv(file, col_types = readr::cols())
+    stats <- readr::read_csv(file, 
+                             col_types = readr::cols(),
+                             guess_max = min(1e7))
     if ('COHORT_DEFINITION_ID' %in% colnames(stats)) {
       colnames(stats) <- colnames(stats) %>% SqlRender::snakeCaseToCamelCase(.)
     }
@@ -808,7 +812,7 @@ saveAndDropTempInclusionStatsTables <- function(connection,
     if (incremental) {
       saveIncremental(data, fullFileName, cohortDefinitionId = cohortIds)
     } else {
-      readr::write_csv(data, fullFileName)
+      readr::write_csv(x = data, path = fullFileName)
     }
   }
   fetchStats("#cohort_inclusion", "cohort_inclusion.csv")
