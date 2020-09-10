@@ -90,6 +90,14 @@ recordTasksDone <- function(..., checksum, recordKeepingFile, incremental = TRUE
     recordKeeping <-  readr::read_csv(recordKeepingFile, 
                                       col_types = readr::cols(),
                                       guess_max = min(1e7))
+    if ('cohortId' %in% colnames(recordKeeping)) {
+      recordKeeping <- recordKeeping %>% 
+        dplyr::mutate(cohortId = as.double(.data$cohortId))
+    }
+    if ('comparatorId' %in% colnames(recordKeeping)) {
+      recordKeeping <- recordKeeping %>% 
+        dplyr::mutate(comparatorId = as.double(.data$comparatorId))
+    }
     idx <- getKeyIndex(list(...), recordKeeping)
     if (length(idx) > 0) {
       recordKeeping <- recordKeeping[-idx, ]
