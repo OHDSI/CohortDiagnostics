@@ -33,10 +33,10 @@ sidebarMenu <-
     id = "tabs",
     if (exists("cohortDescription") && exists("phenotypeDescription"))
       addInfo(
-         shinydashboard::menuItem(text = "Description", tabName = "description"),
-         infoId = "descriptionInfo"
+        shinydashboard::menuItem(text = "Description", tabName = "description"),
+        infoId = "descriptionInfo"
       ),
-      
+    
     if (exists("cohortCount"))
       addInfo(
         item = shinydashboard::menuItem(text = "Cohort Counts", tabName = "cohortCounts"),
@@ -108,7 +108,7 @@ sidebarMenu <-
           liveSearchStyle = 'contains',
           liveSearchPlaceholder = "Type here to search",
           virtualScroll = 50
-          )
+        )
         
       )
     ),
@@ -129,7 +129,7 @@ sidebarMenu <-
           virtualScroll = 50)
       )
     ),
-    if (exists("temporalCovariate")) {
+    if (exists("temporalCovariateValue")) {
       shiny::conditionalPanel(
         condition = "input.tabs=='temporalCharacterization'",
         shinyWidgets::pickerInput(
@@ -155,7 +155,7 @@ sidebarMenu <-
       shinyWidgets::pickerInput(
         inputId = "cohort",
         label = "Cohort (Target)",
-        choices = cohort$cohortFullName,
+        choices = cohort$cohortName,
         multiple = FALSE,
         options = shinyWidgets::pickerOptions(
           actionsBox = TRUE, 
@@ -187,8 +187,8 @@ sidebarMenu <-
       shinyWidgets::pickerInput(
         inputId = "comparator",
         label = "Comparator",
-        choices = cohort$cohortFullName,
-        selected = cohort$cohortFullName[min(2, nrow(cohort))],
+        choices = cohort$cohortName,
+        selected = cohort$cohortName[min(2, nrow(cohort))],
         multiple = FALSE,
         options = shinyWidgets::pickerOptions(
           actionsBox = TRUE, 
@@ -293,16 +293,10 @@ bodyTabItems <- shinydashboard::tabItems(
                    )
                  )),
       shiny::htmlOutput(outputId = "hoverInfoIr"),
-      shiny::plotOutput(
+      plotly::plotlyOutput(
         outputId = "incidenceRatePlot",
         height = 700,
-        hover = shiny::hoverOpts(
-          id = "plotHoverIr",
-          delay = 100,
-          delayType = "debounce"
-        )
-      ),
-      shiny::downloadButton(outputId = "downloadIncidentRatePlot", label = "Download")
+      )
     )
   ),
   shinydashboard::tabItem(
@@ -438,16 +432,10 @@ bodyTabItems <- shinydashboard::tabItems(
         width = NULL,
         status = "primary",
         shiny::htmlOutput(outputId = "hoverInfoCharComparePlot"),
-        shiny::plotOutput(
+        plotly::plotlyOutput(
           outputId = "charComparePlot",
           height = 700,
-          hover = shiny::hoverOpts(
-            id = "plotHoverCharCompare",
-            delay = 100,
-            delayType = "debounce"
-          )
-        ),
-        shiny::downloadButton(outputId = "downloadCompareCohortPlot")
+        )
       )
     )
   ),

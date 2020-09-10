@@ -14,7 +14,31 @@ if (!exists("shinySettings")) {
 }
 dataFolder <- shinySettings$dataFolder
 
-suppressWarnings(rm("cohort", "cohortCount", "cohortOverlap", "conceptSets", "database", "incidenceRate", "includedSourceConcept", "inclusionRuleStats", "indexEventBreakdown", "orphanConcept", "timeDistribution"))
+suppressWarnings(
+  rm(
+    "analysisRef",
+    "temporalAnalysisRef",
+    "temporalTimeRef",
+    "covariateRef",
+    "temporarlCovariateRef",
+    "concept",
+    "vocabulary",
+    "domain",
+    "conceptAncestor",
+    "conceptRelationship",
+    "cohort",
+    "cohortCount",
+    "cohortOverlap",
+    "conceptSets",
+    "database",
+    "incidenceRate",
+    "includedSourceConcept",
+    "inclusionRuleStats",
+    "indexEventBreakdown",
+    "orphanConcept",
+    "timeDistribution"
+  )
+)
 
 if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {
   writeLines("Using merged data detected in data folder")
@@ -26,7 +50,10 @@ if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {
     # print(file)
     tableName <- gsub(".csv$", "", file)
     camelCaseName <- SqlRender::snakeCaseToCamelCase(tableName)
-    data <- readr::read_csv(file.path(folder, file), col_types = readr::cols(), guess_max = 1e7, locale = readr::locale(encoding = "UTF-8"))
+    data <- readr::read_csv(file.path(folder, file), 
+                            col_types = readr::cols(), 
+                            guess_max = 1e7, 
+                            locale = readr::locale(encoding = "UTF-8"))
     colnames(data) <- SqlRender::snakeCaseToCamelCase(colnames(data))
     
     if (!overwrite && exists(camelCaseName, envir = .GlobalEnv)) {
@@ -67,9 +94,9 @@ if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {
 }
 
 cohort <- cohort %>% 
-          dplyr::distinct() %>% 
-          dplyr::select(.data$cohortFullName, .data$cohortId, .data$cohortName) %>% 
-          dplyr::arrange(.data$cohortFullName, .data$cohortId)
+  dplyr::distinct() %>% 
+  dplyr::select(.data$cohortName, .data$cohortId) %>% 
+  dplyr::arrange(.data$cohortName, .data$cohortId)
 
 database <- database %>% 
   dplyr::distinct() %>%
@@ -85,11 +112,6 @@ if (exists("covariateRef")) {
     dplyr::slice(1) %>% 
     dplyr::distinct() %>% 
     dplyr::arrange(.data$covariateName)
-  if (!"conceptId" %in% colnames(covariate)) {
-    warning("conceptId not found in covariate file. Calculating conceptId from covariateId. This may rarely cause errors.")
-  covariate <- covariate %>% 
-    dplyr::mutate(conceptId = (.data$covariateId - .data$covariateAnalysisId)/1000)
-  }
 }
 
 if (exists("temporalCovariateValue")) {
@@ -97,7 +119,7 @@ if (exists("temporalCovariateValue")) {
     dplyr::group_by(.data$covariateId) %>% 
     dplyr::slice(1) %>% 
     dplyr::distinct() %>% 
-    tidyr::crossing(timeRef) %>% 
+    tidyr::crossing(temporalTimeRef) %>% 
     dplyr::arrange(.data$covariateName, .data$timeId)
   
   temporalCovariateChoices <- temporalCovariate %>%
@@ -123,7 +145,7 @@ if (exists("includedSourceConcept")) {
     dplyr::left_join(conceptSets) %>%
     dplyr::arrange(.data$cohortId, .data$conceptSetName)
 } else {
-  conceptSets <- NULL 
+  conceptSet <- NULL 
 }
 
 
@@ -142,15 +164,15 @@ if ("phenotypeDescription.csv" %in% list.files(path = dataFolder)) {
   
   cohort <- cohort %>%
     dplyr::rename(cohortFullNameOld = .data$cohortFullName) %>% 
-        dplyr::left_join(y = cohortDescription %>% 
-                           dplyr::mutate(cohortId = utils::type.convert(.data$atlasId),
-                                         cohortFullName = .data$cohortDefinitionName) %>% 
-                           dplyr::select(.data$cohortId, .data$cohortFullName)) %>% 
-                           dplyr::relocate(.data$cohortFullName) %>% 
-        dplyr::mutate(cohortFullName = dplyr::case_when(is.na(.data$cohortFullName) ~ .data$cohortFullNameOld,
-                                                        TRUE ~ .data$cohortFullName)) %>% 
-        dplyr::select(-.data$cohortFullNameOld) %>% 
-        dplyr::arrange(.data$cohortFullName)
+    dplyr::left_join(y = cohortDescription %>% 
+                       dplyr::mutate(cohortId = utils::type.convert(.data$atlasId),
+                                     cohortFullName = .data$cohortDefinitionName) %>% 
+                       dplyr::select(.data$cohortId, .data$cohortFullName)) %>% 
+    dplyr::relocate(.data$cohortFullName) %>% 
+    dplyr::mutate(cohortFullName = dplyr::case_when(is.na(.data$cohortFullName) ~ .data$cohortFullNameOld,
+                                                    TRUE ~ .data$cohortFullName)) %>% 
+    dplyr::select(-.data$cohortFullNameOld) %>% 
+    dplyr::arrange(.data$cohortFullName)
   
   phenotypeDescription <- readr::read_csv(file.path(dataFolder, "phenotypeDescription.csv"), 
                                           col_types = readr::cols(), 

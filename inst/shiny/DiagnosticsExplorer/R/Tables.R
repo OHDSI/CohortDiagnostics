@@ -2,9 +2,6 @@ library(magrittr)
 
 prepareTable1 <- function(covariates,
                           pathToCsv = "Table1Specs.csv") {
-  if (!'conceptId' %in% colnames(covariates)) {
-    covariates$conceptId <- (covariates$covariateId  - covariates$covariateAnalysisId)/1000
-  }
   covariates <- covariates %>%
     dplyr::mutate(covariateName = stringr::str_to_sentence(stringr::str_replace_all(string = .data$covariateName, 
                                                                                     pattern = "^.*: ",
@@ -65,7 +62,7 @@ prepareTable1 <- function(covariates,
     dplyr::arrange(.data$label, dplyr::desc(.data$header), .data$position) %>% 
     dplyr::mutate(sortOrder = dplyr::row_number()) %>% 
     dplyr::select(-.data$label, -.data$header, -.data$position)
-return(resultsTable)
+  return(resultsTable)
 }
 
 
@@ -148,7 +145,7 @@ prepareTable1Comp <- function(balance,
 
 compareCohortCharacteristics <- function(characteristics1, characteristics2) {
   m <- dplyr::full_join(x = characteristics1 %>% dplyr::distinct(), 
-                        y = characteristics2 %>% dplyr::distinct(),
+                        y = characteristics2 %>% dplyr::distinct(), 
                         by = c("covariateId", "conceptId", "databaseId", "covariateName", "covariateAnalysisId"),
                         suffix = c("1", "2")) %>%
     dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = 0)),
@@ -161,7 +158,7 @@ compareCohortCharacteristics <- function(characteristics1, characteristics2) {
 compareTemporalCharacterization <- function(temporalCharacteristics1, temporalCharacteristics2){
   m <- dplyr::full_join(x = temporalCharacteristics1 %>% dplyr::distinct(), 
                         y = temporalCharacteristics2 %>% dplyr::distinct(), 
-                        by = c("timeId", "covariateId", "conceptId", "databaseId", "covariateName", "covariateAnalysisId"),
+                        by = c("covariateId", "conceptId", "databaseId", "covariateName", "covariateAnalysisId"),
                         suffix = c("1", "2")) %>%
     dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = 0)),
                   sd = sqrt(.data$sd1^2 + .data$sd2^2),
@@ -169,5 +166,3 @@ compareTemporalCharacterization <- function(temporalCharacteristics1, temporalCh
     dplyr::arrange(-abs(.data$stdDiff))
   return(m)
 }
-  
-
