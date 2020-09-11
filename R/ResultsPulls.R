@@ -24,12 +24,18 @@
 #' related to time distribution diagnostics. This function will look for time_distribution table
 #' in results data model.
 #' 
-#' Note: the use of \code{connectionDetails} or \code{\link[DatabaseConnector]{connect}} is optional.
-#' In the absence of both \code{connectionDetails} and \code{\link[DatabaseConnector]{connect}}, R will
-#' check if there is an object in R's memory, i.e. a data frame. Objects in R's memory are expected to
+#' Note: this function relies on data available in Cohort Diagnostics results data model. There are
+#' two methods to connect to the resutls data model, database mode and in-memory mode.
+#' 
+#' Database mode: If either \code{connectionDetails} or \code{\link[DatabaseConnector]{connect}} is 
+#' provided in the function call, the query is set to database mode. In the absence of both 
+#' \code{connectionDetails} and \code{\link[DatabaseConnector]{connect}}, the query will be in-memory 
+#' mode. In in-memory mode, R will expect the data in results data model to be available in R's memory.
+#' In database mode, R will perform a database query. Objects in R's memory are expected to
 #' follow camelCase naming conventions, while objects in dbms are expected to follow snake-case naming
-#' conventions. If both \code{connectionDetails} and \code{\link[DatabaseConnector]{connect}} are not 
-#' provided then vocabulary tables are assumed to be present in R memory.
+#' conventions. In database mode, vocabulary tables (if needed) are used from vocabularySchema (which
+#' defaults to resultsDatabaseSchema.). In in-memory mode, vocabulary tables are assumed to in R's 
+#' memory.
 #'
 #' @param cohortId       Cohort Id to retrieve the data. This is one of the integer (bigint) value from
 #'                       cohortId field in cohort table of the results data model.
@@ -37,9 +43,8 @@
 #'                       the databaseId field in the database table of the results data model.
 #' @template Connection
 #' @param resultsDatabaseSchema (optional) The databaseSchema where the results data model of cohort diagnostics
-#'                              is stored. This is only required when 
-#' @param vocabularyDatabaseSchema ()
-#'                       
+#'                              is stored. This is only required when \code{connectionDetails} or 
+#'                              \code{\link[DatabaseConnector]{connect}} is provided.                       
 #' 
 #' @return
 #' The function will return a tibble data frame object.
@@ -56,9 +61,8 @@ getTimeDistribution <- function(connection = NULL,
                                 connect = NULL,
                                 cohortId,
                                 databaseId,
-                                resultsDatabaseSchema = NULL,
-                                vocabularyDatabaseSchema = resultsDatabaseSchema) {
-  # Do error checks for input variables
+                                resultsDatabaseSchema = NULL) {
+  # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertInt(x = cohortId, 
                        na.ok = FALSE, 
@@ -89,15 +93,16 @@ getTimeDistribution <- function(connection = NULL,
     } else {
       ParallelLogger::logInfo(" \n - No connection or connectionDetails provided.")
       ParallelLogger::logInfo("  Checking if required objects existsin R memory.")
-      if (exists('timeDistribution')) {
-        ParallelLogger::logInfo("  timeDistribution object found in R memory. Continuing.")
-      } else {
-        ParallelLogger::logWarn("  timeDistribution object not found in R memory. Exiting.")
-        return(NULL)
-      }
+    }
+  } else {
+    if (exists('timeDistribution')) {
+      ParallelLogger::logInfo("  timeDistribution object found in R memory. Continuing.")
+    } else {
+      ParallelLogger::logWarn("  timeDistribution object not found in R memory. Exiting.")
+      return(NULL)
     }
   }
-
+  
   if (!is.null(connection)) {
     sql <-   "SELECT *
               FROM  @resultsDatabaseSchema.time_distribution
@@ -124,24 +129,3 @@ getTimeDistribution <- function(connection = NULL,
   }
   return(data)
 }
-
-
-# 
-# data$x <- 1
-# plot <- ggplot2::ggplot(data, ggplot2::aes(x = x,
-#                                            ymin = minValue,
-#                                            lower = p25Value,
-#                                            middle = medianValue,
-#                                            upper = p75Value,
-#                                            ymax = maxValue)) +
-#   ggplot2::geom_errorbar(ggplot2::aes(ymin = minValue, ymax = minValue), size = 1) +
-#   ggplot2::geom_errorbar(ggplot2::aes(ymin = maxValue, ymax = maxValue), size = 1) +
-#   ggplot2::geom_boxplot(stat = "identity", fill = rgb(0, 0, 0.8, alpha = 0.25), size = 1) +
-#   ggplot2::facet_grid(databaseId~timeMetric, scale = "free") +
-#   ggplot2::coord_flip() +
-#   ggplot2::theme(panel.grid.major.y = ggplot2::element_blank(),
-#                  panel.grid.minor.y = ggplot2::element_blank(),
-#                  axis.title.y = ggplot2::element_blank(),
-#                  axis.ticks.y = ggplot2::element_blank(),
-#                  axis.text.y = ggplot2::element_blank())
-# return(plot)
