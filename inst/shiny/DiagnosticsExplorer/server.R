@@ -138,27 +138,27 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$cohortCountsTable <- DT::renderDataTable(expr = {
-    data <- cohortCount[cohortCount$databaseId %in% input$databases, ]
-    if (nrow(data) == 0) {
-      return(NULL)
-    }
-    databaseIds <- unique(data$databaseId) %>% sort()
-    table <- data[data$databaseId == databaseIds[1], c("cohortId", "cohortEntries", "cohortSubjects")]
-    colnames(table)[2:3] <- paste(colnames(table)[2:3], databaseIds[1], sep = "_")
-    if (length(databaseIds) > 1) {
-      for (i in 2:length(databaseIds)) {
-        temp <- data[data$databaseId == databaseIds[i], c("cohortId", "cohortEntries", "cohortSubjects")]
-        colnames(temp)[2:3] <- paste(colnames(temp)[2:3], databaseIds[i], sep = "_")
-        table <- merge(table, temp, all = TRUE)
-      }
-    }
-    table <- merge(cohort, table, all.x = TRUE)
-    table$url <- paste0(cohortBaseUrl2(), table$cohortId)
-    table$cohortName <- paste0("<a href='", table$url, "' target='_blank'>", table$cohortName, "</a>")
-    table$cohortId <- NULL
-    table$url <- NULL
-    table <- table %>% 
-      dplyr::arrange(.data$cohortName)
+    # data <- cohortCount[cohortCount$databaseId %in% input$databases, ]
+    # if (nrow(data) == 0) {
+    #   return(NULL)
+    # }
+    # databaseIds <- unique(data$databaseId) %>% sort()
+    # table <- data[data$databaseId == databaseIds[1], c("cohortId", "cohortEntries", "cohortSubjects")]
+    # colnames(table)[2:3] <- paste(colnames(table)[2:3], databaseIds[1], sep = "_")
+    # if (length(databaseIds) > 1) {
+    #   for (i in 2:length(databaseIds)) {
+    #     temp <- data[data$databaseId == databaseIds[i], c("cohortId", "cohortEntries", "cohortSubjects")]
+    #     colnames(temp)[2:3] <- paste(colnames(temp)[2:3], databaseIds[i], sep = "_")
+    #     table <- merge(table, temp, all = TRUE)
+    #   }
+    # }
+    # table <- merge(cohort, table, all.x = TRUE)
+    # table$url <- paste0(cohortBaseUrl2(), table$cohortId)
+    # table$cohortName <- paste0("<a href='", table$url, "' target='_blank'>", table$cohortName, "</a>")
+    # table$cohortId <- NULL
+    # table$url <- NULL
+    # table <- table %>% 
+    #   dplyr::arrange(.data$cohortName)
     
     sketch <- htmltools::withTags(table(
       class = 'display',
@@ -207,144 +207,144 @@ shiny::shinyServer(function(input, output, session) {
     return(dataTable)
   }, server = TRUE)
   
-  filteredIncidenceRates <- shiny::reactive({
-    data <- incidenceRate[incidenceRate$cohortId == cohortId() & 
-                            incidenceRate$databaseId %in% input$databases, ]
+  # filteredIncidenceRates <- shiny::reactive({
+    # data <- incidenceRate[incidenceRate$cohortId == cohortId() & 
+    #                         incidenceRate$databaseId %in% input$databases, ]
+    # 
+    # data <- data[data$incidenceRate > 0, ]
+    # if (nrow(data) == 0) {
+    #   return(NULL)
+    # }
+    # stratifyByAge <- "Age" %in% input$irStratification
+    # stratifyByGender <- "Gender" %in% input$irStratification
+    # stratifyByCalendarYear <- "Calendar Year" %in% input$irStratification
+    # minPersonYears = 1000
+    # 
+    # idx <- rep(TRUE, nrow(data))
+    # if (stratifyByAge) {
+    #   idx <- idx & !is.na(data$ageGroup)
+    # } else {
+    #   idx <- idx & is.na(data$ageGroup)
+    # }
+    # if (stratifyByGender) {
+    #   idx <- idx & !is.na(data$gender)
+    # } else {
+    #   idx <- idx & is.na(data$gender)
+    # }
+    # if (stratifyByCalendarYear) {
+    #   idx <- idx & !is.na(data$calendarYear)
+    # } else {
+    #   idx <- idx & is.na(data$calendarYear)
+    # }
+    # data <- data[idx, ]
+    # data <- data[data$cohortCount > 0, ]
+    # data <- data[data$personYears > minPersonYears, ]
+    # data$gender <- as.factor(data$gender)
+    # data$calendarYear <- as.numeric(as.character(data$calendarYear))
+    # ageGroups <- unique(data$ageGroup)
+    # ageGroups <- ageGroups[order(as.numeric(gsub("-.*", "", ageGroups)))]
+    # data$ageGroup <- factor(data$ageGroup, levels = ageGroups)
+    # data <- data[data$incidenceRate > 0, ]
+    # data$dummy <- 0
+    # if (nrow(data) == 0) {
+    #   return(NULL)
+    # } else {
+    #   return(data)
+    # }
+  # })
+  
+  # output$incidenceRatePlot <- plotly::renderPlotly(expr = {
+    # data <- filteredIncidenceRates()
+    # if (is.null(data)) {
+    #   return(NULL)
+    # }
+    # plot <- plotincidenceRate(data = data,
+    #                           stratifyByAge = "Age" %in% input$irStratification,
+    #                           stratifyByGender = "Gender" %in% input$irStratification,
+    #                           stratifyByCalendarYear = "Calendar Year" %in% input$irStratification,
+    #                           yscaleFixed = input$irYscaleFixed) %>% 
+    #   plotly::ggplotly(dynamicTicks = TRUE)
+    # return(plot)
+  # })
+  
+  # output$hoverInfoIr <- shiny::renderUI({
+    # data <- filteredIncidenceRates()
+    # if (is.null(data)) {
+    #   return(NULL)
+    # }else {
+    #   hover <- input$plotHoverIr
+    #   point <- nearPoints(data, hover, threshold = 5, maxpoints = 1, addDist = TRUE)
+    #   if (nrow(point) == 0) {
+    #     return(NULL)
+    #   }
+    #   left_px <- hover$coords_css$x
+    #   top_px <- hover$coords_css$y
+    #   
+    #   text <- gsub("-", "<", sprintf("<b>Incidence rate: </b> %0.3f per 1,000 patient years", point$incidenceRate))
+    #   text <- paste(text, sprintf("<b>Cohort count (numerator): </b> %s",  format(point$cohortCount, scientific = FALSE, big.mark = ",")), sep = "<br/>")
+    #   text <- paste(text, sprintf("<b>Person time (denominator): </b> %s years", format(round(point$personYears), scientific = FALSE, big.mark = ",")), sep = "<br/>")
+    #   text <- paste(text, "", sep = "<br/>")
+    #   
+    #   if (!is.na(point$ageGroup)) {
+    #     text <- paste(text, sprintf("<b>Age group: </b> %s years", point$ageGroup), sep = "<br/>")
+    #     top_px <- top_px - 15
+    #   }
+    #   if (!is.na(point$gender)) {
+    #     text <- paste(text, sprintf("<b>Gender: </b> %s", point$gender), sep = "<br/>")
+    #     top_px <- top_px - 15
+    #   }
+    #   if (!is.na(point$calendarYear)) {
+    #     text <- paste(text, sprintf("<b>Calendar year: </b> %s", point$calendarYear), sep = "<br/>")
+    #     top_px <- top_px - 15
+    #   }
+    #   text <- paste(text, sprintf("<b>Database: </b> %s", point$databaseId), sep = "<br/>")
+    #   style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
+    #                   "left:",
+    #                   left_px - 200,
+    #                   "px; top:",
+    #                   top_px - 170,
+    #                   "px; width:400px;")
+    #   div(
+    #     style = "position: relative; width: 0; height: 0",
+    #     wellPanel(
+    #       style = style,
+    #       p(HTML(text))
+    #     )
+    #   )
+    # }
+  # }) 
+  
+  # timeDisPlotDownload <- shiny::reactive({
+    # plot <- CohortDiagnostics::dataForTimeDistributionPlot(connection = NULL,
+    #                                                       selectedCohort = cohortId(),
+    #                                                       selectedDatabaseIds = input$databases,
+    #                                                       specifications = timeDistribution)
+    # return(plot)
     
-    data <- data[data$incidenceRate > 0, ]
-    if (nrow(data) == 0) {
-      return(NULL)
-    }
-    stratifyByAge <- "Age" %in% input$irStratification
-    stratifyByGender <- "Gender" %in% input$irStratification
-    stratifyByCalendarYear <- "Calendar Year" %in% input$irStratification
-    minPersonYears = 1000
-    
-    idx <- rep(TRUE, nrow(data))
-    if (stratifyByAge) {
-      idx <- idx & !is.na(data$ageGroup)
-    } else {
-      idx <- idx & is.na(data$ageGroup)
-    }
-    if (stratifyByGender) {
-      idx <- idx & !is.na(data$gender)
-    } else {
-      idx <- idx & is.na(data$gender)
-    }
-    if (stratifyByCalendarYear) {
-      idx <- idx & !is.na(data$calendarYear)
-    } else {
-      idx <- idx & is.na(data$calendarYear)
-    }
-    data <- data[idx, ]
-    data <- data[data$cohortCount > 0, ]
-    data <- data[data$personYears > minPersonYears, ]
-    data$gender <- as.factor(data$gender)
-    data$calendarYear <- as.numeric(as.character(data$calendarYear))
-    ageGroups <- unique(data$ageGroup)
-    ageGroups <- ageGroups[order(as.numeric(gsub("-.*", "", ageGroups)))]
-    data$ageGroup <- factor(data$ageGroup, levels = ageGroups)
-    data <- data[data$incidenceRate > 0, ]
-    data$dummy <- 0
-    if (nrow(data) == 0) {
-      return(NULL)
-    } else {
-      return(data)
-    }
-  })
-  
-  output$incidenceRatePlot <- plotly::renderPlotly(expr = {
-    data <- filteredIncidenceRates()
-    if (is.null(data)) {
-      return(NULL)
-    }
-    plot <- plotincidenceRate(data = data,
-                              stratifyByAge = "Age" %in% input$irStratification,
-                              stratifyByGender = "Gender" %in% input$irStratification,
-                              stratifyByCalendarYear = "Calendar Year" %in% input$irStratification,
-                              yscaleFixed = input$irYscaleFixed) %>% 
-      plotly::ggplotly(dynamicTicks = TRUE)
-    return(plot)
-  })
-  
-  output$hoverInfoIr <- shiny::renderUI({
-    data <- filteredIncidenceRates()
-    if (is.null(data)) {
-      return(NULL)
-    }else {
-      hover <- input$plotHoverIr
-      point <- nearPoints(data, hover, threshold = 5, maxpoints = 1, addDist = TRUE)
-      if (nrow(point) == 0) {
-        return(NULL)
-      }
-      left_px <- hover$coords_css$x
-      top_px <- hover$coords_css$y
-      
-      text <- gsub("-", "<", sprintf("<b>Incidence rate: </b> %0.3f per 1,000 patient years", point$incidenceRate))
-      text <- paste(text, sprintf("<b>Cohort count (numerator): </b> %s",  format(point$cohortCount, scientific = FALSE, big.mark = ",")), sep = "<br/>")
-      text <- paste(text, sprintf("<b>Person time (denominator): </b> %s years", format(round(point$personYears), scientific = FALSE, big.mark = ",")), sep = "<br/>")
-      text <- paste(text, "", sep = "<br/>")
-      
-      if (!is.na(point$ageGroup)) {
-        text <- paste(text, sprintf("<b>Age group: </b> %s years", point$ageGroup), sep = "<br/>")
-        top_px <- top_px - 15
-      }
-      if (!is.na(point$gender)) {
-        text <- paste(text, sprintf("<b>Gender: </b> %s", point$gender), sep = "<br/>")
-        top_px <- top_px - 15
-      }
-      if (!is.na(point$calendarYear)) {
-        text <- paste(text, sprintf("<b>Calendar year: </b> %s", point$calendarYear), sep = "<br/>")
-        top_px <- top_px - 15
-      }
-      text <- paste(text, sprintf("<b>Database: </b> %s", point$databaseId), sep = "<br/>")
-      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
-                      "left:",
-                      left_px - 200,
-                      "px; top:",
-                      top_px - 170,
-                      "px; width:400px;")
-      div(
-        style = "position: relative; width: 0; height: 0",
-        wellPanel(
-          style = style,
-          p(HTML(text))
-        )
-      )
-    }
-  }) 
-  
-  timeDisPlotDownload <- shiny::reactive({
-    plot <- CohortDiagnostics::dataForTimeDistributionPlot(connection = NULL,
-                                                          selectedCohort = cohortId(),
-                                                          selectedDatabaseIds = input$databases,
-                                                          specifications = timeDistribution)
-    return(plot)
-    
-  })
-  
-  output$timeDisPlot <- shiny::renderPlot(expr = {
-    return(timeDisPlotDownload())
-  }, res = 100)
+  # })
+  # 
+  # output$timeDisPlot <- shiny::renderPlot(expr = {
+  #   return(timeDisPlotDownload())
+  # }, res = 100)
   
   output$timeDistTable <- DT::renderDataTable(expr = {
-    data <- timeDistribution %>% 
-      dplyr::filter(.data$cohortDefinitionId == cohortId() &
-                      .data$databaseId %in% input$databases)
-    
-    if (nrow(data) == 0) {
-      return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
-    }
-    table <- data %>% 
-      dplyr::select(.data$timeMetric, .data$averageValue, .data$standardDeviation, .data$minValue, .data$p10Value, .data$p25Value, .data$medianValue, .data$p75Value, .data$p90Value, .data$maxValue) %>% 
-      dplyr::rename(TimeMeasure = "timeMetric", Average = "averageValue", SD = "standardDeviation", Min = "minValue", P10 = "p10Value", P25 = "p25Value", Median = "medianValue", P75 = "p75Value", P90 = "p90Value", Max = "maxValue")
-    
-    if (length(unique(data$databaseId)) > 1) {
-      table <- data %>% 
-        dplyr::select(.data$databaseId, .data$timeMetric, .data$averageValue, .data$standardDeviation, .data$minValue, .data$p10Value, .data$p25Value, .data$medianValue, .data$p75Value, .data$p90Value, .data$maxValue) %>% 
-        dplyr::rename(Database = "databaseId", TimeMeasure = "timeMetric", Average = "averageValue", SD = "standardDeviation", Min = "minValue", P10 = "p10Value", P25 = "p25Value", Median = "medianValue", P75 = "p75Value", P90 = "p90Value", Max = "maxValue")
-    }
-    
+    # data <- timeDistribution %>% 
+    #   dplyr::filter(.data$cohortDefinitionId == cohortId() &
+    #                   .data$databaseId %in% input$databases)
+    # 
+    # if (nrow(data) == 0) {
+    #   return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
+    # }
+    # table <- data %>% 
+    #   dplyr::select(.data$timeMetric, .data$averageValue, .data$standardDeviation, .data$minValue, .data$p10Value, .data$p25Value, .data$medianValue, .data$p75Value, .data$p90Value, .data$maxValue) %>% 
+    #   dplyr::rename(TimeMeasure = "timeMetric", Average = "averageValue", SD = "standardDeviation", Min = "minValue", P10 = "p10Value", P25 = "p25Value", Median = "medianValue", P75 = "p75Value", P90 = "p90Value", Max = "maxValue")
+    # 
+    # if (length(unique(data$databaseId)) > 1) {
+    #   table <- data %>% 
+    #     dplyr::select(.data$databaseId, .data$timeMetric, .data$averageValue, .data$standardDeviation, .data$minValue, .data$p10Value, .data$p25Value, .data$medianValue, .data$p75Value, .data$p90Value, .data$maxValue) %>% 
+    #     dplyr::rename(Database = "databaseId", TimeMeasure = "timeMetric", Average = "averageValue", SD = "standardDeviation", Min = "minValue", P10 = "p10Value", P25 = "p25Value", Median = "medianValue", P75 = "p75Value", P90 = "p90Value", Max = "maxValue")
+    # }
+    # 
     options = list(pageLength = 20,
                    searching = TRUE,
                    searchHighlight = TRUE,

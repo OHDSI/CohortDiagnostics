@@ -31,7 +31,7 @@
 #'
 #' @export
 
-getTimeDistributionPlot <- function(data) {
+plotTimeDistribution <- function(data) {
   
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
@@ -45,20 +45,109 @@ getTimeDistributionPlot <- function(data) {
   checkmate::reportAssertions(collection = errorMessage)
   
   plot <- ggplot2::ggplot(data, ggplot2::aes(x = x,
-                                             ymin = minValue,
-                                             lower = p25Value,
-                                             middle = medianValue,
-                                             upper = p75Value,
-                                             ymax = maxValue)) +
-    ggplot2::geom_errorbar(ggplot2::aes(ymin = minValue, ymax = minValue), size = 1) +
-    ggplot2::geom_errorbar(ggplot2::aes(ymin = maxValue, ymax = maxValue), size = 1) +
+                                             ymin = Min,
+                                             lower = P25,
+                                             middle = Median,
+                                             upper = P75,
+                                             ymax = Max)) +
+    ggplot2::geom_errorbar(ggplot2::aes(ymin = Min, ymax = Min), size = 1) +
+    ggplot2::geom_errorbar(ggplot2::aes(ymin = Max, ymax = Max), size = 1) +
     ggplot2::geom_boxplot(stat = "identity", fill = rgb(0, 0, 0.8, alpha = 0.25), size = 1) +
-    ggplot2::facet_grid(databaseId~timeMetric, scale = "free") +
+    ggplot2::facet_grid(Database~TimeMeasure, scale = "free") +
     ggplot2::coord_flip() +
     ggplot2::theme(panel.grid.major.y = ggplot2::element_blank(),
                    panel.grid.minor.y = ggplot2::element_blank(),
                    axis.title.y = ggplot2::element_blank(),
                    axis.ticks.y = ggplot2::element_blank(),
                    axis.text.y = ggplot2::element_blank())
+  return(plot)
+}
+
+
+#' Get ggplot object with incidence rate plot.
+#'
+#' @description
+#' Get ggplot object with incidence rate plot.
+#'
+#' @param data   A tibble data frame object that is the output of \code{\link{getIncidenceRate}} function. 
+#' @param stratifyByAge Do you want to stratify by age?  
+#' @param stratifyByGender Do you want to stratify by gender?
+#' @param stratifyByCalendarYear Do you want to stratify by calendar year?
+#' @param yscaleFixed Do you want to rescale y-axis?
+#' 
+#' @return
+#' A ggplot object.
+#'
+#' @examples
+#' \dontrun{
+#' timeDistributionPlot <- getTimeDistributionPlot(data = data)
+#' }
+#'
+#' @export
+plotIncidenceRate <- function(data,
+                              stratifyByAge = TRUE,
+                              stratifyByGender = TRUE,
+                              stratifyByCalendarYear = TRUE,
+                              yscaleFixed = FALSE) {
+  
+  aesthetics <- list(y = "incidenceRate")
+  if (stratifyByCalendarYear) {
+    aesthetics$x <- "calendarYear"
+    xLabel <- "Calender year"
+    showX <- TRUE
+    if (stratifyByGender) {
+      aesthetics$group <- "gender"
+      aesthetics$color <- "gender"
+    }
+    plotType <- "line"
+  } else {
+    xLabel <- ""
+    if (stratifyByGender) {
+      aesthetics$x <- "gender"
+      aesthetics$color <- "gender"
+      aesthetics$fill <- "gender"
+      showX <- TRUE
+    } else {
+      aesthetics$x <- "dummy"
+      showX <- FALSE
+    }
+    plotType <- "bar"
+  }
+  
+  plot <- ggplot2::ggplot(data = data, do.call(what = ggplot2::aes_string, args = aesthetics)) +
+    ggplot2::xlab(label = xLabel) +
+    ggplot2::ylab(label = "Incidence Rate (/1,000 person years)") +
+    ggplot2::theme(legend.position = "top",
+                   legend.title = ggplot2::element_blank(),
+                   axis.text.x = if (showX) {ggplot2::element_text(angle = 90, vjust = 0.5)
+                   } else {ggplot2::element_blank()})
+  
+  if (plotType == "line") {
+    plot <- plot + ggplot2::geom_line(size = 1.25, alpha = 0.6) +
+      ggplot2::geom_point(size = 1.25, alpha = 0.6)
+  } else {
+    plot <- plot + ggplot2::geom_bar(stat = "identity", alpha = 0.6)
+  }
+  
+  # databaseId field only present when called in Shiny app:
+  if (!is.null(data$Database) && length(data$Database) > 1) {
+    if (yscaleFixed) {
+      scales <- "fixed"
+    } else {
+      scales <- "free_y"
+    }
+    if (stratifyByAge) {
+      plot <- plot + ggplot2::facet_grid(Database~ageGroup, scales = scales)
+    } else {
+      plot <- plot + ggplot2::facet_grid(Database~., scales = scales) 
+    }
+  } else {
+    if (stratifyByAge) {
+      plot <- plot + ggplot2::facet_grid(~ageGroup) 
+    }
+  }
+  if (!is.null(fileName)) {
+    ggplot2::ggsave(filename = fileName, plot = plot, width = 5, height = 3.5, dpi = 400)
+  }
   return(plot)
 }
