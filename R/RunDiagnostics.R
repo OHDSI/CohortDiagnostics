@@ -163,8 +163,13 @@ runCohortDiagnostics <- function(packageName = NULL,
   
   ## set up connection to server
   if (is.null(connection)) {
-    connection <- DatabaseConnector::connect(connectionDetails)
-    on.exit(DatabaseConnector::disconnect(connection))
+    if (!is.null(connectionDetails)) {
+      connection <- DatabaseConnector::connect(connectionDetails)
+      on.exit(DatabaseConnector::disconnect(connection))
+    } else {
+      ParallelLogger::logWarn("No connection or connectionDetails provided. Diagnostics not run.")
+      return(NULL)
+    }
   }
   
   ##############################

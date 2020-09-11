@@ -1,34 +1,147 @@
+# Copyright 2020 Observational Health Data Sciences and Informatics
+#
+# This file is part of CohortDiagnostics
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
+
+
+#' Get time distribution data for plotting
+#'
+#' @description
+#' Get time distribution data for plotting from data stored in cohort diagnostics results data
+#' model. The output of this function may be used to create plots or tables
+#' related to time distribution diagnostics. This function will look for time_distribution table
+#' in results data model.
+#' 
+#' Note: the use of \code{connectionDetails} or \code{\link[DatabaseConnector]{connect}} is optional.
+#' In the absence of both \code{connectionDetails} and \code{\link[DatabaseConnector]{connect}}, R will
+#' check if there is an object in R's memory, i.e. a data frame. Objects in R's memory are expected to
+#' follow camelCase naming conventions, while objects in dbms are expected to follow snake-case naming
+#' conventions. If both \code{connectionDetails} and \code{\link[DatabaseConnector]{connect}} are not 
+#' provided then vocabulary tables are assumed to be present in R memory.
+#'
+#' @param cohortId       Cohort Id to retrieve the data. This is one of the integer (bigint) value from
+#'                       cohortId field in cohort table of the results data model.
+#' @param databaseId     The database to retrieve the results for. This is the character field value from
+#'                       the databaseId field in the database table of the results data model.
+#' @template Connection
+#' @param resultsDatabaseSchema (optional) The databaseSchema where the results data model of cohort diagnostics
+#'                              is stored. This is only required when 
+#' @param vocabularyDatabaseSchema ()
+#'                       
+#' 
+#' @return
+#' The function will return a tibble data frame object.
+#'
+#' @examples
+#' \dontrun{
+#' timeDistribution <- getTimeDistribution(cohortId = 343242,
+#'                                         databaseId = 'eunomia')
+#' }
+#'
 #' @export
 
-dataForTimeDistributionPlot <- function(connection = NULL,
-                                       selectedCohort = NULL,
-                                       selectedDatabaseIds = NULL,
-                                       specifications = NULL){
+getTimeDistribution <- function(connection = NULL,
+                                connect = NULL,
+                                cohortId,
+                                databaseId,
+                                resultsDatabaseSchema = NULL,
+                                vocabularyDatabaseSchema = resultsDatabaseSchema) {
+  # Do error checks for input variables
+  errorMessage <- checkmate::makeAssertCollection()
+  checkmate::assertInt(x = cohortId, 
+                       na.ok = FALSE, 
+                       null.ok = FALSE,
+                       lower = 0,
+                       upper = 2^53,
+                       add = errorMessage)
+  checkmate::assertCharacter(x = databaseId,
+                             min.len = 1,
+                             max.len = 1,
+                             any.missing = FALSE,
+                             add = errorMessage)
   
-  data <- specifications %>% 
-    dplyr::filter(.data$cohortDefinitionId == selectedCohort &
-                    .data$databaseId %in% selectedDatabaseIds)
+  if (!NULL(connect) || !NULL(connection)) {
+    checkmate::assertCharacter(x = resultsDatabaseSchema,
+                               min.len = 1,
+                               max.len = 1,
+                               any.missing = FALSE,
+                               add = errorMessage)
+  }
+  checkmate::reportAssertions(collection = errorMessage)
+  
+  ## set up connection to server
+  if (is.null(connection)) {
+    if (!is.null(connectionDetails)) {
+      connection <- DatabaseConnector::connect(connectionDetails)
+      on.exit(DatabaseConnector::disconnect(connection))
+    } else {
+      ParallelLogger::logInfo(" \n - No connection or connectionDetails provided.")
+      ParallelLogger::logInfo("  Checking if required objects existsin R memory.")
+      if (exists('timeDistribution')) {
+        ParallelLogger::logInfo("  timeDistribution object found in R memory. Continuing.")
+      } else {
+        ParallelLogger::logWarn("  timeDistribution object not found in R memory. Exiting.")
+        return(NULL)
+      }
+    }
+  }
+
+  if (!is.null(connection)) {
+    sql <-   "SELECT *
+              FROM  @resultsDatabaseSchema.time_distribution
+              WHERE cohort_definition_id = @cohortId
+            	AND database_id = '@databaseId';"
+    data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                       sql = sql,
+                                                       resultsDatabaseSchema = resultsDatabaseSchema,
+                                                       cohortId = cohortId,
+                                                       database_id = databaseId, 
+                                                       snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
+  } else {
+    data <- timeDistribution %>% 
+      dplyr::filter(.data$cohortDefinitionId == selectedCohort &
+                      .data$databaseId %in% selectedDatabaseIds) %>% 
+      dplyr::select(-.data$cohortDefinitionId, .data$databaseid) %>% 
+      tidyr::tibble()
+  }
   
   if (nrow(data) == 0) {
+    ParallelLogger::logWarn("No records retrieved from time distribution.")
     return(NULL)
   }
-  data$x <- 1
-  plot <- ggplot2::ggplot(data, ggplot2::aes(x = x,
-                                             ymin = minValue,
-                                             lower = p25Value,
-                                             middle = medianValue,
-                                             upper = p75Value,
-                                             ymax = maxValue)) +
-    ggplot2::geom_errorbar(ggplot2::aes(ymin = minValue, ymax = minValue), size = 1) +
-    ggplot2::geom_errorbar(ggplot2::aes(ymin = maxValue, ymax = maxValue), size = 1) +
-    ggplot2::geom_boxplot(stat = "identity", fill = rgb(0, 0, 0.8, alpha = 0.25), size = 1) +
-    ggplot2::facet_grid(databaseId~timeMetric, scale = "free") +
-    ggplot2::coord_flip() +
-    ggplot2::theme(panel.grid.major.y = ggplot2::element_blank(),
-                   panel.grid.minor.y = ggplot2::element_blank(),
-                   axis.title.y = ggplot2::element_blank(),
-                   axis.ticks.y = ggplot2::element_blank(),
-                   axis.text.y = ggplot2::element_blank())
-  return(plot)
+  return(data)
 }
+
+
+# 
+# data$x <- 1
+# plot <- ggplot2::ggplot(data, ggplot2::aes(x = x,
+#                                            ymin = minValue,
+#                                            lower = p25Value,
+#                                            middle = medianValue,
+#                                            upper = p75Value,
+#                                            ymax = maxValue)) +
+#   ggplot2::geom_errorbar(ggplot2::aes(ymin = minValue, ymax = minValue), size = 1) +
+#   ggplot2::geom_errorbar(ggplot2::aes(ymin = maxValue, ymax = maxValue), size = 1) +
+#   ggplot2::geom_boxplot(stat = "identity", fill = rgb(0, 0, 0.8, alpha = 0.25), size = 1) +
+#   ggplot2::facet_grid(databaseId~timeMetric, scale = "free") +
+#   ggplot2::coord_flip() +
+#   ggplot2::theme(panel.grid.major.y = ggplot2::element_blank(),
+#                  panel.grid.minor.y = ggplot2::element_blank(),
+#                  axis.title.y = ggplot2::element_blank(),
+#                  axis.ticks.y = ggplot2::element_blank(),
+#                  axis.text.y = ggplot2::element_blank())
+# return(plot)
