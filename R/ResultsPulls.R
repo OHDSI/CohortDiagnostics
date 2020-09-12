@@ -420,3 +420,110 @@ table <- table %>%
   dplyr::arrange(.data$cohortName)
 return(table)
 }
+
+#' @export
+getCompareCohortCharacterization <- function(connection = NULL,
+                                             connect = NULL,
+                                             cohortId,
+                                             comparatorCohortId,
+                                             databaseIds,
+                                             resultsDatabaseSchema = NULL){
+  # Perform error checks for input variables
+  errorMessage <- checkmate::makeAssertCollection()
+  checkmate::assertInt(x = cohortId, 
+                       na.ok = FALSE, 
+                       null.ok = FALSE,
+                       lower = 0,
+                       upper = 2^53,
+                       add = errorMessage)
+  checkmate::assertInt(x = comparatorCohortId, 
+                       na.ok = FALSE, 
+                       null.ok = FALSE,
+                       lower = 0,
+                       upper = 2^53,
+                       add = errorMessage)
+  checkmate::assertCharacter(x = databaseIds,
+                             min.len = 1,
+                             any.missing = FALSE,
+                             unique = TRUE,
+                             add = errorMessage)
+  
+  if (!NULL(connect) || !NULL(connection)) {
+    checkmate::assertCharacter(x = resultsDatabaseSchema,
+                               min.len = 1,
+                               max.len = 1,
+                               any.missing = FALSE,
+                               add = errorMessage)
+  }
+  checkmate::reportAssertions(collection = errorMessage)
+  
+  ## set up connection to server
+  if (is.null(connection)) {
+    if (!is.null(connectionDetails)) {
+      connection <- DatabaseConnector::connect(connectionDetails)
+      on.exit(DatabaseConnector::disconnect(connection))
+    } else {
+      ParallelLogger::logInfo(" \n - No connection or connectionDetails provided.")
+      ParallelLogger::logInfo("  Checking if required objects existsin R memory.")
+    }
+  } else {
+    if (exists('covariateRef')) {
+      ParallelLogger::logInfo("  'Covariate ref' data object found in R memory. Continuing.")
+    } else {
+      ParallelLogger::logWarn("  'covariate ref' data object not found in R memory. Exiting.")
+      return(NULL)
+    }
+  }
+  
+  if (!is.null(connection)) {
+    sql <-   "SELECT *
+              FROM  @resultsDatabaseSchema.covariate_value
+              WHERE cohort_id = @cohortId
+              AND cohort_id = @comparatorCohortId
+            	AND database_id in '@databaseIds';"
+    data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                       sql = sql,
+                                                       resultsDatabaseSchema = resultsDatabaseSchema,
+                                                       cohortId = cohortId,
+                                                       databaseIds = databaseIds, 
+                                                       snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
+  } else {
+    covariate <- covariateRef %>% 
+      dplyr::group_by(.data$covariateId) %>% 
+      dplyr::slice(1) %>% 
+      dplyr::distinct() %>% 
+      dplyr::arrange(.data$covariateName) %>% 
+      tidyr::tibble()
+    
+    covs1 <- covariateValue %>% 
+      dplyr::filter(.data$cohortId == cohortId,
+                    .data$databaseId == databaseIds)
+    covs2 <- covariateValue %>% 
+      dplyr::filter(.data$cohortId == comparatorCohortId,
+                    .data$databaseId == databaseIds)
+  }
+  
+  
+  if (cohortId == comparatorCohortId) {
+    return(tidyr::tibble())
+  }
+  
+  covs1 <- dplyr::left_join(x = covs1, y = covariate)
+  covs2 <- dplyr::left_join(x = covs2, y = covariate)
+  
+  m <- dplyr::full_join(x = covs1 %>% dplyr::distinct(), 
+                        y = covs2 %>% dplyr::distinct(), 
+                        by = c("covariateId", "conceptId", "databaseId", "covariateName", "covariateAnalysisId"),
+                        suffix = c("1", "2")) %>%
+    dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = 0)),
+                  sd = sqrt(.data$sd1^2 + .data$sd2^2),
+                  stdDiff = (.data$mean2 - .data$mean1)/.data$sd) %>% 
+    dplyr::arrange(-abs(.data$stdDiff))
+  
+  data <- m %>%
+    dplyr::mutate(absStdDiff = abs(.data$stdDiff))
+  
+  return(data)
+  
+}

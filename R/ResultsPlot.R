@@ -151,3 +151,72 @@ plotIncidenceRate <- function(data,
   }
   return(plot)
 }
+
+#' Get Plotly object with cohort comparison plot.
+#'
+#' @description
+#' Get Plotly object with cohort comparison plot.
+#'
+#' @param 
+#' balance   A tibble data frame object that is the output of \code{\link{getCohortCompare}} function.  
+#' cohortId   A input value given, when the user select the cohort in the shiny app.
+#' comparatorId   A input value given, when the user select the comparator in the shiny app.               
+#' 
+#' @return
+#' A Plotly object.
+#'
+#' @examples
+#' \dontrun{
+#' plotCohortCompare <- getCohortCompare(data = data)
+#' }
+#'
+#' @export
+
+plotCohortCompare <- function(balance, cohortId, comparatorId) {
+  
+  # Perform error checks for input variables
+  errorMessage <- checkmate::makeAssertCollection()
+  checkmate::assertTibble(x = data, 
+                          any.missing = FALSE,
+                          min.rows = 1,
+                          min.cols = 5,
+                          null.ok = FALSE,
+                          add = errorMessage)
+  checkmate::reportAssertions(collection = errorMessage)
+  
+  if (nrow(balance) == 0) {
+    return(NULL)
+  }
+  balance$mean1[is.na(balance$mean1)] <- 0
+  balance$mean2[is.na(balance$mean2)] <- 0
+  data <- balance[sample(nrow(balance), 1000), ]
+  
+  xAxisLabel <- list(
+    title = cohortId,
+    range = c(0, 1)
+  )
+  yAxisLabel <- list(
+    title = comparatorId,
+    range = c(0, 1)
+  )
+  plot <- plotly::plot_ly(
+    balance, x = balance$mean1, y = balance$mean2,
+    # Hover text:
+    text = ~paste("Mean Target: ", balance$mean1, '<br>Mean Comparator:', balance$mean2,'<br>Std diff.:', balance$stdDiff),
+    color = ~balance$absStdDiff,
+    type   = 'scatter', 
+    mode   = 'markers',
+    marker = list(size = 10, 
+                  opacity = "0.5"))
+  plot <- plot %>% plotly::layout(shapes = list(type = "line",
+                                                y0 = 0, 
+                                                y1 = 1, 
+                                                yref = "paper",
+                                                x0 = 0,  
+                                                x1 = 1, 
+                                                line = list(color = "red", 
+                                                            dash = "dash")))
+  plot <- plot %>% plotly::layout(xaxis = xAxisLabel, yaxis = yAxisLabel, showlegend = FALSE)
+  plot <- plot %>% plotly::colorbar(title = "Absolute\nStd. Diff.")
+  return(plot)
+}
