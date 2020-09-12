@@ -6,7 +6,7 @@
 \usage{
 getTimeDistribution(
   connection = NULL,
-  connect = NULL,
+  connectionDetails = NULL,
   cohortId,
   databaseId,
   resultsDatabaseSchema = NULL
@@ -19,6 +19,11 @@ DatabaseConnector package. Can be left NULL if \code{connectionDetails}
 is provided, in which case a new connection will be opened at the start
 of the function, and closed when the function finishes.}
 
+\item{connectionDetails}{An object of type \code{connectionDetails} as created using the
+\code{\link[DatabaseConnector]{createConnectionDetails}} function in the
+DatabaseConnector package. Can be left NULL if \code{connection} is
+provided.}
+
 \item{cohortId}{Cohort Id to retrieve the data. This is one of the integer (bigint) value from
 cohortId field in cohort table of the results data model.}
 
@@ -28,11 +33,6 @@ the databaseId field in the database table of the results data model.}
 \item{resultsDatabaseSchema}{(optional) The databaseSchema where the results data model of cohort diagnostics
 is stored. This is only required when \code{connectionDetails} or 
 \code{\link[DatabaseConnector]{connect}} is provided.}
-
-\item{connectionDetails}{An object of type \code{connectionDetails} as created using the
-\code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-DatabaseConnector package. Can be left NULL if \code{connection} is
-provided.}
 }
 \value{
 The function will return a tibble data frame object.
@@ -44,7 +44,7 @@ related to time distribution diagnostics. This function will look for time_distr
 in results data model.
 
 Note: this function relies on data available in Cohort Diagnostics results data model. There are
-two methods to connect to the resutls data model, database mode and in-memory mode.
+two methods to connect to the results data model, database mode and in-memory mode.
 
 Database mode: If either \code{connectionDetails} or \code{\link[DatabaseConnector]{connect}} is 
 provided in the function call, the query is set to database mode. In the absence of both 

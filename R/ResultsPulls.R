@@ -25,7 +25,7 @@
 #' in results data model.
 #' 
 #' Note: this function relies on data available in Cohort Diagnostics results data model. There are
-#' two methods to connect to the resutls data model, database mode and in-memory mode.
+#' two methods to connect to the results data model, database mode and in-memory mode.
 #' 
 #' Database mode: If either \code{connectionDetails} or \code{\link[DatabaseConnector]{connect}} is 
 #' provided in the function call, the query is set to database mode. In the absence of both 
@@ -57,7 +57,7 @@
 #'
 #' @export
 getTimeDistribution <- function(connection = NULL,
-                                connect = NULL,
+                                connectionDetails = NULL,
                                 cohortId,
                                 databaseId,
                                 resultsDatabaseSchema = NULL) {
@@ -76,7 +76,7 @@ getTimeDistribution <- function(connection = NULL,
                              unique = TRUE,
                              add = errorMessage)
   
-  if (!NULL(connect) || !NULL(connection)) {
+  if (!is.null(connectionDetails) || !is.null(connection)) {
     checkmate::assertCharacter(x = resultsDatabaseSchema,
                                min.len = 1,
                                max.len = 1,
@@ -93,13 +93,12 @@ getTimeDistribution <- function(connection = NULL,
     } else {
       ParallelLogger::logInfo(" \n - No connection or connectionDetails provided.")
       ParallelLogger::logInfo("  Checking if required objects existsin R memory.")
-    }
-  } else {
-    if (exists('timeDistribution')) {
-      ParallelLogger::logInfo("  timeDistribution data object found in R memory. Continuing.")
-    } else {
-      ParallelLogger::logWarn("  timeDistribution data object not found in R memory. Exiting.")
-      return(NULL)
+      if (exists('timeDistribution')) {
+        ParallelLogger::logInfo("  'time distribution' data object found in R memory. Continuing.")
+      } else {
+        ParallelLogger::logWarn("  'time distribution' data object not found in R memory. Exiting.")
+        return(NULL)
+      }
     }
   }
   
@@ -164,7 +163,7 @@ getTimeDistribution <- function(connection = NULL,
 #' in results data model.
 #' 
 #' Note: this function relies on data available in Cohort Diagnostics results data model. There are
-#' two methods to connect to the resutls data model, database mode and in-memory mode.
+#' two methods to connect to the results data model, database mode and in-memory mode.
 #' 
 #' Database mode: If either \code{connectionDetails} or \code{\link[DatabaseConnector]{connect}} is 
 #' provided in the function call, the query is set to database mode. In the absence of both 
@@ -197,7 +196,7 @@ getTimeDistribution <- function(connection = NULL,
 #'
 #' @export
 getIncidenceRate <- function(connection = NULL,
-                             connect = NULL,
+                             connectionDetails = NULL,
                              cohortId,
                              databaseIds,
                              stratification,
@@ -217,7 +216,7 @@ getIncidenceRate <- function(connection = NULL,
                              unique = TRUE,
                              add = errorMessage)
   
-  if (!NULL(connect) || !NULL(connection)) {
+  if (!is.null(connectionDetails) || !is.null(connection)) {
     checkmate::assertCharacter(x = resultsDatabaseSchema,
                                min.len = 1,
                                max.len = 1,
@@ -234,13 +233,12 @@ getIncidenceRate <- function(connection = NULL,
     } else {
       ParallelLogger::logInfo(" \n - No connection or connectionDetails provided.")
       ParallelLogger::logInfo("  Checking if required objects existsin R memory.")
-    }
-  } else {
-    if (exists('incidenceRate')) {
-      ParallelLogger::logInfo("  'incidence rate' data object found in R memory. Continuing.")
-    } else {
-      ParallelLogger::logWarn("  'incidence rate' data object not found in R memory. Exiting.")
-      return(NULL)
+      if (exists('incidenceRate')) {
+        ParallelLogger::logInfo("  'incidence rate' data object found in R memory. Continuing.")
+      } else {
+        ParallelLogger::logWarn("  'incidence rate' data object not found in R memory. Exiting.")
+        return(NULL)
+      }
     }
   }
   
@@ -318,7 +316,7 @@ getIncidenceRate <- function(connection = NULL,
 #' in results data model.
 #' 
 #' Note: this function relies on data available in Cohort Diagnostics results data model. There are
-#' two methods to connect to the resutls data model, database mode and in-memory mode.
+#' two methods to connect to the results data model, database mode and in-memory mode.
 #' 
 #' Database mode: If either \code{connectionDetails} or \code{\link[DatabaseConnector]{connect}} is 
 #' provided in the function call, the query is set to database mode. In the absence of both 
@@ -348,12 +346,12 @@ getIncidenceRate <- function(connection = NULL,
 #'
 #' @export
 getCohortCounts <- function(connection = NULL,
-                            connect = NULL,
+                            connectionDetails = NULL,
                             databaseIds,
                             resultsDatabaseSchema = NULL) {
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
-  if (!NULL(connect) || !NULL(connection)) {
+  if (!is.null(connectionDetails) || !is.null(connection)) {
     checkmate::assertCharacter(x = resultsDatabaseSchema,
                                min.len = 1,
                                max.len = 1,
@@ -370,13 +368,12 @@ getCohortCounts <- function(connection = NULL,
     } else {
       ParallelLogger::logInfo(" \n - No connection or connectionDetails provided.")
       ParallelLogger::logInfo("  Checking if required objects existsin R memory.")
-    }
-  } else {
-    if (exists('cohortCount')) {
-      ParallelLogger::logInfo("  'cohort count' data object found in R memory. Continuing.")
-    } else {
-      ParallelLogger::logWarn("  'cohort count' data object not found in R memory. Exiting.")
-      return(NULL)
+      if (exists('cohortCount')) {
+        ParallelLogger::logInfo("  'cohort count' data object found in R memory. Continuing.")
+      } else {
+        ParallelLogger::logWarn("  'cohort count' data object not found in R memory. Exiting.")
+        return(NULL)
+      }
     }
   }
   
@@ -401,24 +398,24 @@ getCohortCounts <- function(connection = NULL,
     return(NULL)
   }
   
-databaseIds <- unique(data$databaseId) %>% sort()
-table <- data[data$databaseId == databaseIds[1], c("cohortId", "cohortEntries", "cohortSubjects")]
-colnames(table)[2:3] <- paste(colnames(table)[2:3], databaseIds[1], sep = "_")
-if (length(databaseIds) > 1) {
-  for (i in 2:length(databaseIds)) {
-    temp <- data[data$databaseId == databaseIds[i], c("cohortId", "cohortEntries", "cohortSubjects")]
-    colnames(temp)[2:3] <- paste(colnames(temp)[2:3], databaseIds[i], sep = "_")
-    table <- merge(table, temp, all = TRUE)
+  databaseIds <- unique(data$databaseId) %>% sort()
+  table <- data[data$databaseId == databaseIds[1], c("cohortId", "cohortEntries", "cohortSubjects")]
+  colnames(table)[2:3] <- paste(colnames(table)[2:3], databaseIds[1], sep = "_")
+  if (length(databaseIds) > 1) {
+    for (i in 2:length(databaseIds)) {
+      temp <- data[data$databaseId == databaseIds[i], c("cohortId", "cohortEntries", "cohortSubjects")]
+      colnames(temp)[2:3] <- paste(colnames(temp)[2:3], databaseIds[i], sep = "_")
+      table <- merge(table, temp, all = TRUE)
+    }
   }
-}
-table <- merge(cohort, table, all.x = TRUE)
-table$url <- paste0(cohortBaseUrl2(), table$cohortId)
-table$cohortName <- paste0("<a href='", table$url, "' target='_blank'>", table$cohortName, "</a>")
-table$cohortId <- NULL
-table$url <- NULL
-table <- table %>% 
-  dplyr::arrange(.data$cohortName)
-return(table)
+  table <- merge(cohort, table, all.x = TRUE)
+  table$url <- paste0(cohortBaseUrl2(), table$cohortId)
+  table$cohortName <- paste0("<a href='", table$url, "' target='_blank'>", table$cohortName, "</a>")
+  table$cohortId <- NULL
+  table$url <- NULL
+  table <- table %>% 
+    dplyr::arrange(.data$cohortName)
+  return(table)
 }
 
 
@@ -431,7 +428,7 @@ return(table)
 #' in results data model.
 #' 
 #' Note: this function relies on data available in Cohort Diagnostics results data model. There are
-#' two methods to connect to the resutls data model, database mode and in-memory mode.
+#' two methods to connect to the results data model, database mode and in-memory mode.
 #' 
 #' Database mode: If either \code{connectionDetails} or \code{\link[DatabaseConnector]{connect}} is 
 #' provided in the function call, the query is set to database mode. In the absence of both 
@@ -468,7 +465,7 @@ return(table)
 #'
 #' @export
 getCompareCohortCharacterization <- function(connection = NULL,
-                                             connect = NULL,
+                                             connectionDetails = NULL,
                                              targetCohortId,
                                              comparatorCohortId,
                                              databaseIds,
@@ -493,7 +490,7 @@ getCompareCohortCharacterization <- function(connection = NULL,
                              unique = TRUE,
                              add = errorMessage)
   
-  if (!NULL(connect) || !NULL(connection)) {
+  if (!is.null(connectionDetails) || !is.null(connection)) {
     checkmate::assertCharacter(x = resultsDatabaseSchema,
                                min.len = 1,
                                max.len = 1,
@@ -510,13 +507,12 @@ getCompareCohortCharacterization <- function(connection = NULL,
     } else {
       ParallelLogger::logInfo(" \n - No connection or connectionDetails provided.")
       ParallelLogger::logInfo("  Checking if required objects existsin R memory.")
-    }
-  } else {
-    if (exists('covariateRef')) {
-      ParallelLogger::logInfo("  'Covariate ref' data object found in R memory. Continuing.")
-    } else {
-      ParallelLogger::logWarn("  'covariate ref' data object not found in R memory. Exiting.")
-      return(NULL)
+      if (exists('covariateRed')) {
+        ParallelLogger::logInfo("  'covariate ref' data object found in R memory. Continuing.")
+      } else {
+        ParallelLogger::logWarn("  'covariate ref' data object not found in R memory. Exiting.")
+        return(NULL)
+      }
     }
   }
   
@@ -577,7 +573,7 @@ getCompareCohortCharacterization <- function(connection = NULL,
 #' @export
 
 getCohortOverLap <- function(connection = NULL,
-                             connect,
+                             connectionDetails = NULL,
                              cohortId,
                              comparatorCohortId,
                              databaseIds,
@@ -602,7 +598,7 @@ getCohortOverLap <- function(connection = NULL,
                              unique = TRUE,
                              add = errorMessage)
   
-  if (!NULL(connect) || !NULL(connection)) {
+  if (!is.null(connectionDetails) || !is.null(connection)) {
     checkmate::assertCharacter(x = resultsDatabaseSchema,
                                min.len = 1,
                                max.len = 1,
@@ -619,13 +615,12 @@ getCohortOverLap <- function(connection = NULL,
     } else {
       ParallelLogger::logInfo(" \n - No connection or connectionDetails provided.")
       ParallelLogger::logInfo("  Checking if required objects existsin R memory.")
-    }
-  } else {
-    if (exists('cohortOverlap')) {
-      ParallelLogger::logInfo("  'Cohort overlap' data object found in R memory. Continuing.")
-    } else {
-      ParallelLogger::logWarn("  'Cohort overlap' data object not found in R memory. Exiting.")
-      return(NULL)
+      if (exists('cohortOverlap')) {
+        ParallelLogger::logInfo("  'cohort overlap' data object found in R memory. Continuing.")
+      } else {
+        ParallelLogger::logWarn("  'cohort overlap' data object not found in R memory. Exiting.")
+        return(NULL)
+      }
     }
   }
   
@@ -658,4 +653,3 @@ getCohortOverLap <- function(connection = NULL,
     return(data)
   }
 }
-  

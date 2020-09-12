@@ -6,14 +6,14 @@
 \usage{
 getCohortCounts(
   connection = NULL,
-  connect = NULL,
+  connectionDetails = NULL,
   databaseIds,
   resultsDatabaseSchema = NULL
 )
 
 getCohortCounts(
   connection = NULL,
-  connect = NULL,
+  connectionDetails = NULL,
   databaseIds,
   resultsDatabaseSchema = NULL
 )
@@ -24,6 +24,11 @@ getCohortCounts(
 DatabaseConnector package. Can be left NULL if \code{connectionDetails}
 is provided, in which case a new connection will be opened at the start
 of the function, and closed when the function finishes.}
+
+\item{connectionDetails}{An object of type \code{connectionDetails} as created using the
+\code{\link[DatabaseConnector]{createConnectionDetails}} function in the
+DatabaseConnector package. Can be left NULL if \code{connection} is
+provided.}
 
 \item{databaseIds}{A vector one or more databaseIds to retrieve the results for. This is a character 
 field value from the databaseId field in the database table of the results data model.}
@@ -40,11 +45,6 @@ this should include both the database and schema name, for example
 
 \item{cohortIds}{The cohort definition ID(s0 used to reference the cohort in the cohort
 table. If left empty, all cohorts in the table will be included.}
-
-\item{connectionDetails}{An object of type \code{connectionDetails} as created using the
-\code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-DatabaseConnector package. Can be left NULL if \code{connection} is
-provided.}
 }
 \value{
 A tibble with cohort counts
@@ -60,7 +60,7 @@ related to cohort counts diagnostics. This function will look for cohort_count t
 in results data model.
 
 Note: this function relies on data available in Cohort Diagnostics results data model. There are
-two methods to connect to the resutls data model, database mode and in-memory mode.
+two methods to connect to the results data model, database mode and in-memory mode.
 
 Database mode: If either \code{connectionDetails} or \code{\link[DatabaseConnector]{connect}} is 
 provided in the function call, the query is set to database mode. In the absence of both 

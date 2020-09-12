@@ -6,7 +6,7 @@
 \usage{
 getIncidenceRate(
   connection = NULL,
-  connect = NULL,
+  connectionDetails = NULL,
   cohortId,
   databaseIds,
   stratification,
@@ -16,7 +16,7 @@ getIncidenceRate(
 
 getIncidenceRate(
   connection = NULL,
-  connect = NULL,
+  connectionDetails = NULL,
   cohortId,
   databaseIds,
   stratification,
@@ -30,6 +30,11 @@ getIncidenceRate(
 DatabaseConnector package. Can be left NULL if \code{connectionDetails}
 is provided, in which case a new connection will be opened at the start
 of the function, and closed when the function finishes.}
+
+\item{connectionDetails}{An object of type \code{connectionDetails} as created using the
+\code{\link[DatabaseConnector]{createConnectionDetails}} function in the
+DatabaseConnector package. Can be left NULL if \code{connection} is
+provided.}
 
 \item{cohortId}{Cohort Id to retrieve the data. This is one of the integer (bigint) value from
 cohortId field in cohort table of the results data model.}
@@ -63,11 +68,6 @@ privileges for storing temporary tables.}
 \item{washoutPeriod}{The minimum amount of observation time required before the occurrence
 of a cohort entry. This is also used to eliminate immortal time from
 the denominator.}
-
-\item{connectionDetails}{An object of type \code{connectionDetails} as created using the
-\code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-DatabaseConnector package. Can be left NULL if \code{connection} is
-provided.}
 }
 \value{
 Returns a data frame of cohort count, person year count, and incidence rate per 1000 persons
@@ -87,7 +87,7 @@ related to incidence rate diagnostics. This function will look for incidence_rat
 in results data model.
 
 Note: this function relies on data available in Cohort Diagnostics results data model. There are
-two methods to connect to the resutls data model, database mode and in-memory mode.
+two methods to connect to the results data model, database mode and in-memory mode.
 
 Database mode: If either \code{connectionDetails} or \code{\link[DatabaseConnector]{connect}} is 
 provided in the function call, the query is set to database mode. In the absence of both 
