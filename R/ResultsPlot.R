@@ -39,9 +39,11 @@ plotTimeDistribution <- function(data) {
                           any.missing = FALSE,
                           min.rows = 1,
                           min.cols = 5,
-                          max.cols = 5,
                           null.ok = FALSE,
                           add = errorMessage)
+  checkmate::assertNames(x = colnames(data), 
+                         must.include = c('Min', 'P25', 'Median', 'P75', 'Max'),
+                         add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
   
   plot <- ggplot2::ggplot(data, ggplot2::aes(x = x,
