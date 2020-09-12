@@ -62,7 +62,7 @@ createDdl <- function(packageName,
       } else {
         e <- (",")
       }
-      a <- c(a, paste0("\n\t\t\t",f," ",subset(table, fieldName == f, dataClass),r,e))
+      a <- c(a, paste0("\n\t\t\t",f," ",subset(table, fieldName == f, type),r,e))
     }
     script <- c(script, a, "")
     script <- c(script, paste0('\n'))
@@ -209,14 +209,12 @@ guessCsvFileSpecification <- function(pathToCsvFile) {
     }
     if (stringr::str_detect(string = tolower(fieldName), 
                             pattern = stringr::fixed('description')) &&
-        stringr::str_detect(string = type, 
-                            pattern = 'varchar')) {
-      type = 'varchar(max)'
-    }
-    if (stringr::str_detect(string = tolower(fieldName), 
-                            pattern = stringr::fixed('description')) &&
-        stringr::str_detect(string = type, 
-                            pattern = 'logical')) {
+        (stringr::str_detect(string = type, 
+                            pattern = 'varchar') ||
+         stringr::str_detect(string = type, 
+                             pattern = 'logical')
+         )
+        ) {
       type = 'varchar(max)'
     }
     isRequired <- 'Yes'
@@ -311,11 +309,15 @@ guessDbmsDataTypeFromVector <- function(value) {
   class <- value %>% class() %>% max()
   type <- value %>% typeof() %>% max()
   mode <- value %>% mode() %>% max()
-  if (type == 'double' || class == 'numeric' || mode == 'numeric') { #in R double and numeric are same
+  if (type == 'double' && class == 'Date' && mode == 'numeric') {
+    type = 'Date'
+  } else if (type == 'double' && (any(class %in% c("POSIXct", "POSIXt")))  && mode == 'numeric') {
+    type = 'DATETIME2'
+  } else if (type == 'double' && class == 'numeric' && mode == 'numeric') { #in R double and numeric are same
     type = 'float'
-  } else if (class == 'integer' || type == 'integer' || mode == 'integer') {
+  } else if (class == 'integer' && type == 'integer' && mode == 'integer') {
     type = 'integer'
-  } else if (type == 'character' || class == 'character' || mode == 'character') {
+  } else if (type == 'character' && class == 'character' && mode == 'character') {
     fieldCharLength <- tidyr::tibble(character = stringi::stri_enc_toutf8(value) %>% 
       stringr::str_replace_na(string = ., replacement = '') %>% 
       trimws()) %>% 
@@ -336,8 +338,8 @@ guessDbmsDataTypeFromVector <- function(value) {
       fieldChar = 'max'
     }
     type = paste0('varchar(', fieldChar, ')')
-  } else if (any(class %in% c("POSIXct", "POSIXt"))) {
-    type <- 'Date'
+  } else if (class == "logical") {
+    type <- 'varchar(1)'
   } else {
     type <- 'Unknown'
   }

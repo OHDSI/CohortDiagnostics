@@ -14,57 +14,57 @@ for (i in (1:nrow(pathToCsvFiles))) {
 }
 specification <- dplyr::bind_rows(specification)
 
-readr::write_csv(x = specification, 
-                 path = "inst/sql/resultsDataModel/specification.csv")
+resultsDataModelDirectory <- file.path(rstudioapi::getActiveProject(), 
+                                       "inst", 
+                                       "settings")
+readr::write_excel_csv(x = specification, 
+                       path = file.path(resultsDataModelDirectory, "resultsDataModelSpecification.csv"), 
+                       na = '')
 
 #################
-# Please inspect the specification csv file and confirm if the guessed data model is accurate. Especially the keys
+# Please inspect the resultsDataModelSpecification.csv file and confirm if the guessed data model is accurate. 
+# Especially the keys.
 # The only keys that are valid are concept tables
 #################
 script <- CohortDiagnostics::createDdl(packageName = 'CohortDiagnostics', 
                                        packageVersion = '2.0',
                                        modelVersion = '2.0',
-                                       specification = readr::read_csv(file = "inst/sql/resultsDataModel/specification.csv",
-                                                                       col_types = readr::cols()))
+                                       specification = readr::read_csv(file = file.path(resultsDataModelDirectory,
+                                                                                        "resultsDataModelSpecification.csv"),
+                                                                       col_types = readr::cols(), 
+                                                                       guess_max = min(1e7)))
 
-pathToDdl <- "inst/sql/resultsDataModel/"
+pathToDdl <- file.path(rstudioapi::getActiveProject(), "inst", "sql", "sql_server")
 dir.create(pathToDdl, showWarnings = FALSE, recursive = TRUE)
 
 SqlRender::writeSql(sql = script, 
-                    targetFile = file.path(pathToDdl, "sql_server_ddl.sql"))
+                    targetFile = file.path(pathToDdl, "sql_server_ddl_results_data_model.sql"))
 
 
-SqlRender::translateSqlFile(sourceFile = file.path(pathToDdl, "sql_server_ddl.sql"), 
-                            targetFile = file.path(pathToDdl, "postgresql_ddl.sql"),
-                            targetDialect = "postgresql")
+
 
 ################
 scriptConstraints <- CohortDiagnostics::createDdlPkConstraints(packageName = 'CohortDiagnostics', 
                                                                packageVersion = '2.0',
                                                                modelVersion = '2.0',
-                                                               specification = readr::read_csv(file = "inst/sql/resultsDataModel/specification.csv",
+                                                               specification = readr::read_csv(file = file.path(resultsDataModelDirectory,
+                                                                                                                "resultsDataModelSpecification.csv"),
+                                                                                               guess_max = min(1e7),
                                                                                                col_types = readr::cols()))
 
 SqlRender::writeSql(sql = scriptConstraints, 
-                    targetFile = file.path(pathToDdl, "sql_server_ddl_constraints.sql"))
-
-
-SqlRender::translateSqlFile(sourceFile = file.path(pathToDdl, "sql_server_ddl_constraints.sql"), 
-                            targetFile = file.path(pathToDdl, "postgresql_ddl_constraints.sql"),
-                            targetDialect = "postgresql")
+                    targetFile = file.path(pathToDdl, "sql_server_ddl_results_data_model_constraints.sql"))
 
 ################
 
 scriptDropTable <- CohortDiagnostics::dropDdl(packageName = 'CohortDiagnostics', 
-                                                               packageVersion = '2.0',
-                                                               modelVersion = '2.0',
-                                                               specification = readr::read_csv(file = "inst/sql/resultsDataModel/specification.csv",
-                                                                                               col_types = readr::cols()))
+                                              packageVersion = '2.0',
+                                              modelVersion = '2.0',
+                                              specification =  readr::read_csv(file = file.path(resultsDataModelDirectory,
+                                                                                                "resultsDataModelSpecification.csv"),
+                                                                               guess_max = min(1e7),
+                                                                               col_types = readr::cols()))
 
 SqlRender::writeSql(sql = scriptDropTable, 
-                    targetFile = file.path(pathToDdl, "sql_server_ddl_drop.sql"))
-
-SqlRender::translateSqlFile(sourceFile = file.path(pathToDdl, "sql_server_ddl_drop.sql"), 
-                            targetFile = file.path(pathToDdl, "postgresql_ddl_drop.sql"),
-                            targetDialect = "postgresql")
+                    targetFile = file.path(pathToDdl, "sql_server_ddl_results_data_model_drop.sql"))
 

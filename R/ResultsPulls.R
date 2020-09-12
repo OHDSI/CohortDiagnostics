@@ -421,10 +421,55 @@ table <- table %>%
 return(table)
 }
 
+
+#' Get cohort counts
+#'
+#' @description
+#' Get cohort counts data from data stored in cohort diagnostics results data
+#' model. The output of this function may be used to create tables
+#' related to cohort counts diagnostics. This function will look for cohort_count table
+#' in results data model.
+#' 
+#' Note: this function relies on data available in Cohort Diagnostics results data model. There are
+#' two methods to connect to the resutls data model, database mode and in-memory mode.
+#' 
+#' Database mode: If either \code{connectionDetails} or \code{\link[DatabaseConnector]{connect}} is 
+#' provided in the function call, the query is set to database mode. In the absence of both 
+#' \code{connectionDetails} and \code{\link[DatabaseConnector]{connect}}, the query will be in-memory 
+#' mode. In in-memory mode, R will expect the data in results data model to be available in R's memory.
+#' In database mode, R will perform a database query. Objects in R's memory are expected to
+#' follow camelCase naming conventions, while objects in dbms are expected to follow snake-case naming
+#' conventions. In database mode, vocabulary tables (if needed) are used from vocabularySchema (which
+#' defaults to resultsDatabaseSchema.). In in-memory mode, vocabulary tables are assumed to in R's 
+#' memory.
+#'
+#' @template Connection
+#' @param targetCohortId        Cohort Id of the target cohort to retrieve the data. This is one of the 
+#'                              integer (bigint) value from cohortId field in cohort table of the 
+#'                              results data model. 
+#' @param comparatorCohortId    Cohort Id of the target cohort to retrieve the data. This is one of the 
+#'                              integer (bigint) value from cohortId field in cohort table of the 
+#'                              results data model. 
+#' @param databaseIds           A vector one or more databaseIds to retrieve the results for. 
+#'                              This is a character field value from the databaseId field in 
+#'                              the database table of the results data model.
+#' @param resultsDatabaseSchema (optional) The databaseSchema where the results data model of cohort diagnostics
+#'                              is stored. This is only required when \code{connectionDetails} or 
+#'                              \code{\link[DatabaseConnector]{connect}} is provided.
+#' 
+#' @return
+#' The function will return a tibble data frame object.
+#'
+#' @examples
+#' \dontrun{
+#' cohortComparison <- getCohortCounts(resultsDatabaseSchema = resultsDatabaseSchema,
+#'                                 databaseIds = c('eunomia', 'hcup'))
+#' }
+#'
 #' @export
 getCompareCohortCharacterization <- function(connection = NULL,
                                              connect = NULL,
-                                             cohortId,
+                                             targetCohortId,
                                              comparatorCohortId,
                                              databaseIds,
                                              resultsDatabaseSchema = NULL){
