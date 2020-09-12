@@ -1,6 +1,5 @@
 library(magrittr)
 
-source("R/Plots.R")
 source("R/Tables.R")
 source("R/Other.R")
 
@@ -138,27 +137,28 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$cohortCountsTable <- DT::renderDataTable(expr = {
-    # data <- cohortCount[cohortCount$databaseId %in% input$databases, ]
-    # if (nrow(data) == 0) {
-    #   return(NULL)
-    # }
-    # databaseIds <- unique(data$databaseId) %>% sort()
-    # table <- data[data$databaseId == databaseIds[1], c("cohortId", "cohortEntries", "cohortSubjects")]
-    # colnames(table)[2:3] <- paste(colnames(table)[2:3], databaseIds[1], sep = "_")
-    # if (length(databaseIds) > 1) {
-    #   for (i in 2:length(databaseIds)) {
-    #     temp <- data[data$databaseId == databaseIds[i], c("cohortId", "cohortEntries", "cohortSubjects")]
-    #     colnames(temp)[2:3] <- paste(colnames(temp)[2:3], databaseIds[i], sep = "_")
-    #     table <- merge(table, temp, all = TRUE)
-    #   }
-    # }
-    # table <- merge(cohort, table, all.x = TRUE)
-    # table$url <- paste0(cohortBaseUrl2(), table$cohortId)
-    # table$cohortName <- paste0("<a href='", table$url, "' target='_blank'>", table$cohortName, "</a>")
-    # table$cohortId <- NULL
-    # table$url <- NULL
-    # table <- table %>% 
-    #   dplyr::arrange(.data$cohortName)
+    data <- CohortDiagnostics::getCohortCounts(databaseIds = input$databases)
+    
+    if (nrow(data) == 0) {
+      return(NULL)
+    }
+    databaseIds <- unique(data$databaseId) %>% sort()
+    table <- data[data$databaseId == databaseIds[1], c("cohortId", "cohortEntries", "cohortSubjects")]
+    colnames(table)[2:3] <- paste(colnames(table)[2:3], databaseIds[1], sep = "_")
+    if (length(databaseIds) > 1) {
+      for (i in 2:length(databaseIds)) {
+        temp <- data[data$databaseId == databaseIds[i], c("cohortId", "cohortEntries", "cohortSubjects")]
+        colnames(temp)[2:3] <- paste(colnames(temp)[2:3], databaseIds[i], sep = "_")
+        table <- merge(table, temp, all = TRUE)
+      }
+    }
+    table <- merge(cohort, table, all.x = TRUE)
+    table$url <- paste0(cohortBaseUrl2(), table$cohortId)
+    table$cohortName <- paste0("<a href='", table$url, "' target='_blank'>", table$cohortName, "</a>")
+    table$cohortId <- NULL
+    table$url <- NULL
+    table <- table %>%
+      dplyr::arrange(.data$cohortName)
     
     sketch <- htmltools::withTags(table(
       class = 'display',
@@ -327,43 +327,43 @@ shiny::shinyServer(function(input, output, session) {
   #   return(timeDisPlotDownload())
   # }, res = 100)
   
-  output$timeDistTable <- DT::renderDataTable(expr = {
-    # data <- timeDistribution %>% 
-    #   dplyr::filter(.data$cohortDefinitionId == cohortId() &
-    #                   .data$databaseId %in% input$databases)
-    # 
-    # if (nrow(data) == 0) {
-    #   return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
-    # }
-    # table <- data %>% 
-    #   dplyr::select(.data$timeMetric, .data$averageValue, .data$standardDeviation, .data$minValue, .data$p10Value, .data$p25Value, .data$medianValue, .data$p75Value, .data$p90Value, .data$maxValue) %>% 
-    #   dplyr::rename(TimeMeasure = "timeMetric", Average = "averageValue", SD = "standardDeviation", Min = "minValue", P10 = "p10Value", P25 = "p25Value", Median = "medianValue", P75 = "p75Value", P90 = "p90Value", Max = "maxValue")
-    # 
-    # if (length(unique(data$databaseId)) > 1) {
-    #   table <- data %>% 
-    #     dplyr::select(.data$databaseId, .data$timeMetric, .data$averageValue, .data$standardDeviation, .data$minValue, .data$p10Value, .data$p25Value, .data$medianValue, .data$p75Value, .data$p90Value, .data$maxValue) %>% 
-    #     dplyr::rename(Database = "databaseId", TimeMeasure = "timeMetric", Average = "averageValue", SD = "standardDeviation", Min = "minValue", P10 = "p10Value", P25 = "p25Value", Median = "medianValue", P75 = "p75Value", P90 = "p90Value", Max = "maxValue")
-    # }
-    # 
-    options = list(pageLength = 20,
-                   searching = TRUE,
-                   searchHighlight = TRUE,
-                   scrollX = TRUE,
-                   lengthChange = TRUE,
-                   ordering = TRUE,
-                   paging = TRUE,
-                   info = TRUE)
-    table <- DT::datatable(table,
-                           options = options,
-                           rownames = FALSE,
-                           colnames = colnames(table) %>% SqlRender::camelCaseToTitleCase(),
-                           filter = c('bottom'),
-                           class = "stripe nowrap compact")
-    table <- DT::formatRound(table, c("Average", "SD"), digits = 2)
-    table <- DT::formatRound(table, c("Min", "P10", "P25", "Median", "P75", "P90", "Max"), digits = 0)
-    
-    return(table)
-  }, server = TRUE)
+  # output$timeDistTable <- DT::renderDataTable(expr = {
+  #   # data <- timeDistribution %>% 
+  #   #   dplyr::filter(.data$cohortDefinitionId == cohortId() &
+  #   #                   .data$databaseId %in% input$databases)
+  #   # 
+  #   # if (nrow(data) == 0) {
+  #   #   return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
+  #   # }
+  #   # table <- data %>% 
+  #   #   dplyr::select(.data$timeMetric, .data$averageValue, .data$standardDeviation, .data$minValue, .data$p10Value, .data$p25Value, .data$medianValue, .data$p75Value, .data$p90Value, .data$maxValue) %>% 
+  #   #   dplyr::rename(TimeMeasure = "timeMetric", Average = "averageValue", SD = "standardDeviation", Min = "minValue", P10 = "p10Value", P25 = "p25Value", Median = "medianValue", P75 = "p75Value", P90 = "p90Value", Max = "maxValue")
+  #   # 
+  #   # if (length(unique(data$databaseId)) > 1) {
+  #   #   table <- data %>% 
+  #   #     dplyr::select(.data$databaseId, .data$timeMetric, .data$averageValue, .data$standardDeviation, .data$minValue, .data$p10Value, .data$p25Value, .data$medianValue, .data$p75Value, .data$p90Value, .data$maxValue) %>% 
+  #   #     dplyr::rename(Database = "databaseId", TimeMeasure = "timeMetric", Average = "averageValue", SD = "standardDeviation", Min = "minValue", P10 = "p10Value", P25 = "p25Value", Median = "medianValue", P75 = "p75Value", P90 = "p90Value", Max = "maxValue")
+  #   # }
+  #   # 
+  #   options = list(pageLength = 20,
+  #                  searching = TRUE,
+  #                  searchHighlight = TRUE,
+  #                  scrollX = TRUE,
+  #                  lengthChange = TRUE,
+  #                  ordering = TRUE,
+  #                  paging = TRUE,
+  #                  info = TRUE)
+  #   table <- DT::datatable(table,
+  #                          options = options,
+  #                          rownames = FALSE,
+  #                          colnames = colnames(table) %>% SqlRender::camelCaseToTitleCase(),
+  #                          filter = c('bottom'),
+  #                          class = "stripe nowrap compact")
+  #   table <- DT::formatRound(table, c("Average", "SD"), digits = 2)
+  #   table <- DT::formatRound(table, c("Min", "P10", "P25", "Median", "P75", "P90", "Max"), digits = 0)
+  #   
+  #   return(table)
+  # }, server = TRUE)
   
   output$includedConceptsTable <- DT::renderDataTable(expr = {
     data <- includedSourceConcept %>%
