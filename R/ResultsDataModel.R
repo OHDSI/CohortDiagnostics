@@ -158,26 +158,36 @@ dropDdl <- function(packageName,
 
 
 
-#' Guesses data model specification for a csv file and makes its available for inspection.
+#' Guesses data model specification from multiple csv files.
 #'
-#' @param pathToCsvFile file path to csv file
+#' @param pathToCsvFile file system path to csv file
+#' 
+#' @return 
+#' A tibble data frame object with specifications
+#' 
+#' #' @examples
+#' \dontrun{
+#' csvFileSpecification <- guessCsvFileSpecification(path)
+#' }
 #' 
 #' @export
 #' 
-guessModelSpecificationForCsv <- function(pathToCsvFile) {
-  tableToWorkOn <- basename(pathToCsvFile) %>% stringr::str_remove(string = ., pattern = ".csv")
-  print(paste0("Reading csv file '", tableToWorkOn, "' and guessing data types."))
+guessCsvFileSpecification <- function(pathToCsvFile) {
+  tableToWorkOn <- basename(pathToCsvFile) %>% 
+    stringr::str_remove(string = ., pattern = ".csv")
+  
+  print(paste0("Reading csv files '", tableToWorkOn, "' and guessing data types."))
   
   csvFile <- readr::read_csv(file = pathToCsvFile,
                              col_types = readr::cols(),
-                             guess_max = 1e7,
+                             guess_max = min(1e7),
                              locale = readr::locale(encoding = "UTF-8"))
   if (any(stringr::str_detect(string = colnames(csvFile), pattern = "_"))) {
     colnames(csvFile) <- tolower(colnames(csvFile))
   }
   
-  patternThatIsNotPrimaryKey = c("subjects", "entries", "name", "sql", "json", "description", "atlas_id")
-  patternThatIsPrimaryKey = c('cohort_id', 'database_id', 'cohort_definition_id', 'mode_id', 'rule_sequence', 'phenotype_id')
+  patternThatIsNotPrimaryKey = c("subjects", "entries", "name", "sql", "json", "description", "atlas_id", "day")
+  patternThatIsPrimaryKey = c('_id', 'rule_sequence')
   describe <- list()
   primaryKeyIfOmopVocabularyTable <-  getPrimaryKeyForOmopVocabularyTable() %>% 
     dplyr::filter(.data$vocabularyTableName == tableToWorkOn %>% tolower()) %>% 
@@ -190,35 +200,24 @@ guessModelSpecificationForCsv <- function(pathToCsvFile) {
     tableName <- tableToWorkOn
     fieldName <- colnames(csvFile)[[i]]
     fieldData <- csvFile %>% dplyr::select(fieldName)
-    dataClass <- fieldData %>% dplyr::pull(1) %>% class() %>% max()
-    if (dataClass == 'numeric') {
-      if (stringr::str_detect(string = fieldName, pattern = '_id')) {
-        dataClass = utils::type.convert(fieldData %>% dplyr::pull(1)) %>% class()
-      }
-      if (dataClass == 'numeric') {
-        dataClass = 'float'
-      }
+    dataVector <- fieldData %>% dplyr::pull(1)
+    type <- suppressWarnings(guessDbmsDataTypeFromVector(value = dataVector))
+    if (stringr::str_detect(string = fieldName, 
+                            pattern = stringr::fixed('_id')) &&
+        type == 'float') {
+      type = 'bigint'
     }
-    if (dataClass == 'character') {
-      fieldCharLength <- fieldData %>% 
-        dplyr::pull(1) %>% 
-        stringr::str_replace_na(string = ., replacement = '') %>% 
-        stringr::str_length(string = .) %>% max()
-      if (fieldCharLength <= 1) {
-        fieldChar = '1'
-      } else if (fieldCharLength <= 20) {
-        fieldChar = '20'
-      } else if (fieldCharLength <= 50) {
-        fieldChar = '50'
-      } else if (fieldCharLength <= 255) {
-        fieldChar = '255'
-      } else {
-        fieldChar = 'max'
-      }
-      dataClass = paste0('varchar(', fieldChar, ')')
+    if (stringr::str_detect(string = tolower(fieldName), 
+                            pattern = stringr::fixed('description')) &&
+        stringr::str_detect(string = type, 
+                            pattern = 'varchar')) {
+      type = 'varchar(max)'
     }
-    if (any(dataClass %in% c("POSIXct", "POSIXt"))) {
-      dataClass <- 'Date'
+    if (stringr::str_detect(string = tolower(fieldName), 
+                            pattern = stringr::fixed('description')) &&
+        stringr::str_detect(string = type, 
+                            pattern = 'logical')) {
+      type = 'varchar(max)'
     }
     isRequired <- 'Yes'
     if (anyNA(csvFile %>% dplyr::pull(fieldName))) {
@@ -241,17 +240,17 @@ guessModelSpecificationForCsv <- function(pathToCsvFile) {
     }
     describe[[i]] <- tidyr::tibble(tableName = tableName, 
                                    fieldName = fieldName,
-                                   dataClass = dataClass,
+                                   type = type,
                                    isRequired = isRequired,
                                    primaryKey = primaryKey)
     
-    if (describe[[i]]$dataClass == 'logical') {
-      describe[[i]]$dataClass == 'varchar(1)'
+    if (describe[[i]]$type == 'logical') {
+      describe[[i]]$type == 'varchar(1)'
     }
     if (describe[[i]]$tableName == 'cohort' && 
         describe[[i]]$fieldName == 'cohort_name' &&
-        describe[[i]]$dataClass == 'float') {
-      describe[[i]]$dataClass = 'varchar(255)'
+        describe[[i]]$type == 'float') {
+      describe[[i]]$type = 'varchar(255)'
     }
     if (describe[[i]]$tableName == 'incidence_rate' && describe[[i]]$fieldName == 'calendar_year') {
       describe[[i]]$primaryKey = 'Yes'
@@ -271,7 +270,6 @@ guessModelSpecificationForCsv <- function(pathToCsvFile) {
 }
 
 
-
 getPrimaryKeyForOmopVocabularyTable <- function() {
   vocabularyTableKeys <- dplyr::bind_rows(
     tidyr::tibble(vocabularyTableName = 'concept', primaryKey = 'concept_id'),
@@ -285,4 +283,63 @@ getPrimaryKeyForOmopVocabularyTable <- function() {
     tidyr::tibble(vocabularyTableName = 'drug_strength', primaryKey = 'drug_concept_id, ingredient_concept_id'))
   
   return(vocabularyTableKeys)
+}
+
+
+#' Get specification for Cohort Diagnostics results data model
+#' 
+#' @return 
+#' A tibble data frame object with specifications
+#' 
+#' #' @examples
+#' \dontrun{
+#' resultsDataModelSpecification <- getResultsDataModelSpecification()
+#' }
+#' 
+#' @export
+getCohortDiagnosticsResultsDataModelSpecification <- function() {
+  path <- System.file('sql','resultsDataModel','specification.csv', package = 'CohortDiagnostics')
+  specification <- readr::read_csv(file = pathToCsvFile,
+                                   col_types = readr::cols(),
+                                   guess_max = min(1e7),
+                                   locale = readr::locale(encoding = "UTF-8"))
+  return(specification)
+}
+
+
+guessDbmsDataTypeFromVector <- function(value) {
+  class <- value %>% class() %>% max()
+  type <- value %>% typeof() %>% max()
+  mode <- value %>% mode() %>% max()
+  if (type == 'double' || class == 'numeric' || mode == 'numeric') { #in R double and numeric are same
+    type = 'float'
+  } else if (class == 'integer' || type == 'integer' || mode == 'integer') {
+    type = 'integer'
+  } else if (type == 'character' || class == 'character' || mode == 'character') {
+    fieldCharLength <- tidyr::tibble(character = stringi::stri_enc_toutf8(value) %>% 
+      stringr::str_replace_na(string = ., replacement = '') %>% 
+      trimws()) %>% 
+      dplyr::mutate(length = stringr::str_length(.data$character) %>% 
+                      stringr::str_replace_na(string = ., replacement = 0)) %>% 
+      dplyr::pull(.data$length) %>% #ignore the UTF warning, they will be converted to 0
+      max() %>% 
+      as.integer()
+    if (fieldCharLength <= 1) {
+      fieldChar = '1'
+    } else if (fieldCharLength <= 20) {
+      fieldChar = '20'
+    } else if (fieldCharLength <= 50) {
+      fieldChar = '50'
+    } else if (fieldCharLength <= 255) {
+      fieldChar = '255'
+    } else {
+      fieldChar = 'max'
+    }
+    type = paste0('varchar(', fieldChar, ')')
+  } else if (any(class %in% c("POSIXct", "POSIXt"))) {
+    type <- 'Date'
+  } else {
+    type <- 'Unknown'
+  }
+  return(type)
 }

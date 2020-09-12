@@ -9,7 +9,7 @@ pathToCsvFiles <- tidyr::tibble(fullPath = list.files(path = path, pattern = ".c
 specification <- list()
 for (i in (1:nrow(pathToCsvFiles))) {
   if (!pathToCsvFiles[i,]$dontUse) {
-    specification[[i]] <- CohortDiagnostics::guessModelSpecificationForCsv(pathToCsvFile = pathToCsvFiles[i,]$fullPath)
+    specification[[i]] <- CohortDiagnostics::guessCsvFileSpecification(pathToCsvFile = pathToCsvFiles[i,]$fullPath)
   }
 }
 specification <- dplyr::bind_rows(specification)
