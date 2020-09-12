@@ -220,3 +220,91 @@ plotCohortCompare <- function(balance, cohortId, comparatorId) {
   plot <- plot %>% plotly::colorbar(title = "Absolute\nStd. Diff.")
   return(plot)
 }
+
+
+#' Get Vendiagram object with cohort Overlap plot.
+#'
+#' @description
+#' Get Vendiagram  object with cohort Overlap plot.
+#'
+#' @param 
+#' data   A tibble data frame object that is the output of \code{\link{getCohortOverlap}} function.  
+#' 
+#' @return
+#' A Vendiagram object.
+#'
+#' @examples
+#' \dontrun{
+#' plotCohortOverlap <- getCohortOverlap(data = data)
+#' }
+#' 
+#' @export
+plotCohortOverlap <- function(data) {
+  
+  # Perform error checks for input variables
+  errorMessage <- checkmate::makeAssertCollection()
+  checkmate::assertTibble(x = data, 
+                          any.missing = FALSE,
+                          min.rows = 1,
+                          min.cols = 5,
+                          null.ok = FALSE,
+                          add = errorMessage)
+  checkmate::reportAssertions(collection = errorMessage)
+  
+  if (nrow(data) == 0) {
+    return(NULL)
+  }
+  plot <- VennDiagram::draw.pairwise.venn(area1 = abs(data$eitherSubjects) - abs(data$cOnlySubjects),
+                                          area2 = abs(data$eitherSubjects) - abs(data$tOnlySubjects),
+                                          cross.area = abs(data$bothSubjects),
+                                          category = c("Target", "Comparator"), 
+                                          col = c(rgb(0.8, 0, 0), rgb(0, 0, 0.8)),
+                                          fill = c(rgb(0.8, 0, 0), rgb(0, 0, 0.8)),
+                                          alpha = 0.2,
+                                          fontfamily = rep("sans", 3),
+                                          cat.fontfamily = rep("sans", 2),
+                                          margin = 0.01,
+                                          ind = FALSE)
+  # Borrowed from https://stackoverflow.com/questions/37239128/how-to-put-comma-in-large-number-of-venndiagram
+  idx <- sapply(plot, function(i) grepl("text", i$name))
+  for (i in 1:3) {
+    plot[idx][[i]]$label <- format(as.numeric(plot[idx][[i]]$label), big.mark = ",", scientific = FALSE)
+  }
+  grid::grid.draw(plot)
+  
+  return(plot)
+  
+  # BELOW SCRIPT REPLACES THE VENDIAGRAM WITH STACKED HISTOGRAM. BUT TAKES LONG TIME TO DISPLAY THE PLOT.
+  # CHECK GENERATE HISTOGRAM FUNCTION TO GENERATE THE DATA FOR HISTOGRAM PLOTS
+  # REFERENCE USED :
+  # 1. https://stackoverflow.com/questions/20184096/how-to-plot-multiple-stacked-histograms-together-in-r
+  # 2. https://stackoverflow.com/questions/43415709/how-to-use-facet-grid-with-geom-histogram
+  # 3. https://www.datacamp.com/community/tutorials/facets-ggplot-r?utm_source=adwords_ppc&utm_campaignid=1455363063&utm_adgroupid=65083631748&utm_device=c&utm_keyword=&utm_matchtype=b&utm_network=g&utm_adpostion=&utm_creative=332602034361&utm_targetid=dsa-429603003980&utm_loc_interest_ms=&utm_loc_physical_ms=1007768&gclid=CjwKCAjw19z6BRAYEiwAmo64LQMUJwf1i0V-Zgc5hYhpDOFQeZU05reAJmQvo2-mClFWWM4_sJiSmBoC-YkQAvD_BwE
+  # 4. https://stackoverflow.com/questions/24123499/frequency-histograms-with-facets-calculating-percent-by-groups-used-in-facet-i
+  # 5. https://stackoverflow.com/questions/62821480/add-a-trace-to-every-facet-of-a-plotly-figure
+  
+  # ComparatorOnlySubjs <- generateHistogramValues(len = seq(1:nrow(data)), val = data$cOnlySubjects)
+  # bothSubjs <- generateHistogramValues(seq(1:nrow(data)), data$bothSubjects)
+  # cohortOnlySubjs <- generateHistogramValues(seq(1:nrow(data)), data$tOnlySubjects)
+  # bucket <- list(ComparatorOnlySubjs = ComparatorOnlySubjs, bothSubjs = bothSubjs, cohortOnlySubjs = cohortOnlySubjs)
+  # 
+  # 
+  # p <- ggplot2::ggplot(reshape::melt(bucket), ggplot2::aes(value, fill = L1)) +
+  #   ggplot2::xlab(label = "Comparators") +
+  #   ggplot2::geom_histogram(position = "stack", binwidth = 1) +
+  #   ggplot2::xlim(c(0,max(length(comparatorCohortIds()),10))) +
+  #   ggplot2::facet_grid(rows = ggplot2::vars(data$targetCohortId), cols = ggplot2::vars(data$databaseId), scales = "free_y")
+  # plot <- plotly::ggplotly(p)
+  # GENERATE HISTOGRAM FUNCTION
+  # generateHistogramValues <- function(len,val)
+  # {
+  #   fillVal <- c()
+  #   
+  #   inc <- 1
+  #   for (i in len)
+  #   {
+  #     fillVal <- c(fillVal,rep(i,val[[i]]))
+  #   }
+  #   return(fillVal);
+  # }
+}

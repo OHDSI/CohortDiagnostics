@@ -480,7 +480,7 @@ getCompareCohortCharacterization <- function(connection = NULL,
               FROM  @resultsDatabaseSchema.covariate_value
               WHERE cohort_id = @cohortId
               AND cohort_id = @comparatorCohortId
-            	AND database_id in '@databaseIds';"
+            	AND database_id = '@databaseIds';"
     data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                        sql = sql,
                                                        resultsDatabaseSchema = resultsDatabaseSchema,
@@ -527,3 +527,90 @@ getCompareCohortCharacterization <- function(connection = NULL,
   return(data)
   
 }
+
+
+#' @export
+
+getCohortOverLap <- function(connection = NULL,
+                             connect,
+                             cohortId,
+                             comparatorCohortId,
+                             databaseIds,
+                             resultsDatabaseSchema = NULL){
+  # Perform error checks for input variables
+  errorMessage <- checkmate::makeAssertCollection()
+  checkmate::assertInt(x = cohortId, 
+                       na.ok = FALSE, 
+                       null.ok = FALSE,
+                       lower = 0,
+                       upper = 2^53,
+                       add = errorMessage)
+  checkmate::assertInt(x = comparatorCohortId, 
+                       na.ok = FALSE, 
+                       null.ok = FALSE,
+                       lower = 0,
+                       upper = 2^53,
+                       add = errorMessage)
+  checkmate::assertCharacter(x = databaseIds,
+                             min.len = 1,
+                             any.missing = FALSE,
+                             unique = TRUE,
+                             add = errorMessage)
+  
+  if (!NULL(connect) || !NULL(connection)) {
+    checkmate::assertCharacter(x = resultsDatabaseSchema,
+                               min.len = 1,
+                               max.len = 1,
+                               any.missing = FALSE,
+                               add = errorMessage)
+  }
+  checkmate::reportAssertions(collection = errorMessage)
+  
+  ## set up connection to server
+  if (is.null(connection)) {
+    if (!is.null(connectionDetails)) {
+      connection <- DatabaseConnector::connect(connectionDetails)
+      on.exit(DatabaseConnector::disconnect(connection))
+    } else {
+      ParallelLogger::logInfo(" \n - No connection or connectionDetails provided.")
+      ParallelLogger::logInfo("  Checking if required objects existsin R memory.")
+    }
+  } else {
+    if (exists('cohortOverlap')) {
+      ParallelLogger::logInfo("  'Cohort overlap' data object found in R memory. Continuing.")
+    } else {
+      ParallelLogger::logWarn("  'Cohort overlap' data object not found in R memory. Exiting.")
+      return(NULL)
+    }
+  }
+  
+  if (!is.null(connection)) {
+    sql <-   "SELECT *
+              FROM  @resultsDatabaseSchema.cohort_overlap
+              WHERE target_cohort_id = @cohortId
+              AND comparator_cohort_id = @comparatorCohortId
+            	AND database_id = '@databaseIds';"
+    data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                       sql = sql,
+                                                       resultsDatabaseSchema = resultsDatabaseSchema,
+                                                       targetCohortId = cohortId,
+                                                       comparatorCohortId = comparatorCohortId,
+                                                       databaseIds = databaseIds, 
+                                                       snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
+  } else {
+    
+    data <- cohortOverlap %>% 
+      dplyr::filter(.data$targetCohortId == cohortId &
+                      .data$comparatorCohortId == comparatorCohortId &
+                      .data$databaseId == databaseIds) %>% 
+      tidyr::tibble()
+  }
+  
+  if (nrow(data) == 0) {
+    return(NULL)
+  }else{
+    return(data)
+  }
+}
+  
