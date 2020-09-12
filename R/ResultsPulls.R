@@ -215,6 +215,11 @@ getIncidenceRate <- function(connection = NULL,
                        lower = 0,
                        upper = 2^53,
                        add = errorMessage)
+  checkmate::assertVector(x = databaseIds,
+                          min.len = 1,
+                          any.missing = FALSE,
+                          unique = TRUE,
+                          add = errorMessage)
   checkmate::assertCharacter(x = databaseIds,
                              min.len = 1,
                              any.missing = FALSE,
@@ -393,13 +398,15 @@ getCohortCounts <- function(connection = NULL,
 }
 
 
-#' Get cohort counts
+
+
+#' Get cohort overlap
 #'
 #' @description
-#' Get cohort counts data from data stored in cohort diagnostics results data
-#' model. The output of this function may be used to create tables
-#' related to cohort counts diagnostics. This function will look for cohort_count table
-#' in results data model.
+#' Get cohort overlap data from data stored in cohort diagnostics results data
+#' model. The output of this function may be used to create tables/plots to compare
+#' two cohorts (target and comparator) related to cohort overlap diagnostics. 
+#' This function will look for cohort_overlap table in results data model.
 #' 
 #' Note: this function relies on data available in Cohort Diagnostics results data model. There are
 #' two methods to connect to the results data model, database mode and in-memory mode.
@@ -415,15 +422,12 @@ getCohortCounts <- function(connection = NULL,
 #' memory.
 #'
 #' @template Connection
-#' @param targetCohortId        Cohort Id of the target cohort to retrieve the data. This is one of the 
-#'                              integer (bigint) value from cohortId field in cohort table of the 
-#'                              results data model. 
-#' @param comparatorCohortId    Cohort Id of the target cohort to retrieve the data. This is one of the 
-#'                              integer (bigint) value from cohortId field in cohort table of the 
-#'                              results data model. 
-#' @param databaseIds           A vector one or more databaseIds to retrieve the results for. 
-#'                              This is a character field value from the databaseId field in 
-#'                              the database table of the results data model.
+#' @param databaseIds    A vector one or more databaseIds to retrieve the results for. This is a character 
+#'                       field value from the databaseId field in the database table of the results data model.
+#' @param targetCohortId        Cohort Id to retrieve the data. This is one of the integer (bigint) value from
+#'                              cohortId field in cohort table of the results data model.
+#' @param comparatorCohortId    Cohort Id to retrieve the data. This is one of the integer (bigint) value from
+#'                              cohortId field in cohort table of the results data model.
 #' @param resultsDatabaseSchema (optional) The databaseSchema where the results data model of cohort diagnostics
 #'                              is stored. This is only required when \code{connectionDetails} or 
 #'                              \code{\link[DatabaseConnector]{connect}} is provided.
@@ -433,12 +437,104 @@ getCohortCounts <- function(connection = NULL,
 #'
 #' @examples
 #' \dontrun{
-#' compareCohortCharacterization <- getCompareCohortCharacterization(
-#'                                        targetCohortId = 12334,
-#'                                        comparatorCohortId = 34232,
-#'                                        databaseIds = c('eunomia', 'hcup'))
+#' cohortOverlap <- getCohortOverLap(targetCohortId = 342432,
+#'                                   comparatorCohortId = 432423,
+#'                                   databaseIds = c('eunomia', 'hcup'))
 #' }
 #'
+#' @export
+#' @export
+getCohortOverLap <- function(connection = NULL,
+                             connectionDetails = NULL,
+                             targetCohortId,
+                             comparatorCohortId,
+                             databaseIds,
+                             resultsDatabaseSchema = NULL){
+  # Perform error checks for input variables
+  errorMessage <- checkmate::makeAssertCollection()
+  checkmate::assertInt(x = targetCohortId, 
+                       na.ok = FALSE, 
+                       null.ok = FALSE,
+                       lower = 0,
+                       upper = 2^53,
+                       add = errorMessage)
+  checkmate::assertInt(x = comparatorCohortId, 
+                       na.ok = FALSE, 
+                       null.ok = FALSE,
+                       lower = 0,
+                       upper = 2^53,
+                       add = errorMessage)
+  checkmate::assertVector(x = databaseIds,
+                          min.len = 1,
+                          any.missing = FALSE,
+                          unique = TRUE,
+                          add = errorMessage)
+  checkmate::assertCharacter(x = databaseIds,
+                             min.len = 1,
+                             any.missing = FALSE,
+                             unique = TRUE,
+                             add = errorMessage)
+  
+  if (!is.null(connectionDetails) || !is.null(connection)) {
+    checkmate::assertCharacter(x = resultsDatabaseSchema,
+                               min.len = 1,
+                               max.len = 1,
+                               any.missing = FALSE,
+                               add = errorMessage)
+  }
+  checkmate::reportAssertions(collection = errorMessage)
+  
+  ## set up connection to server
+  if (is.null(connection)) {
+    if (!is.null(connectionDetails)) {
+      connection <- DatabaseConnector::connect(connectionDetails)
+      on.exit(DatabaseConnector::disconnect(connection))
+    } else {
+      ParallelLogger::logInfo(" \n - No connection or connectionDetails provided.")
+      ParallelLogger::logInfo("  Checking if required objects existsin R memory.")
+      if (exists('cohortOverlap')) {
+        ParallelLogger::logInfo("  'cohort overlap' data object found in R memory. Continuing.")
+      } else {
+        ParallelLogger::logWarn("  'cohort overlap' data object not found in R memory. Exiting.")
+        return(NULL)
+      }
+    }
+  }
+  
+  if (!is.null(connection)) {
+    sql <-   "SELECT *
+              FROM  @resultsDatabaseSchema.cohort_overlap
+              WHERE target_cohort_id = @targetCohortId
+              AND comparator_cohort_id = @comparatorCohortId
+            	AND database_id in c('@databaseIds');"
+    data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                       sql = sql,
+                                                       resultsDatabaseSchema = resultsDatabaseSchema,
+                                                       targetCohortId = targetCohortId,
+                                                       comparatorCohortId = comparatorCohortId,
+                                                       databaseIds = databaseIds, 
+                                                       snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
+  } else {
+    data <- cohortOverlap %>% 
+      dplyr::filter(.data$targetCohortId == targetCohortId &
+                      .data$comparatorCohortId == comparatorCohortId &
+                      .data$databaseId %in% databaseIds) %>% 
+      tidyr::tibble()
+  }
+  
+  if (nrow(data) == 0) {
+    return(NULL)
+  }
+  data <- data %>% 
+    dplyr::relocate(.data$databaseId, .data$targetCohortId, .data$comparatorCohortId)
+  
+  return(data)
+}
+
+
+
+
 #' @export
 getCompareCohortCharacterization <- function(connection = NULL,
                                              connectionDetails = NULL,
@@ -545,87 +641,3 @@ getCompareCohortCharacterization <- function(connection = NULL,
   
 }
 
-
-#' @export
-
-getCohortOverLap <- function(connection = NULL,
-                             connectionDetails = NULL,
-                             cohortId,
-                             comparatorCohortId,
-                             databaseIds,
-                             resultsDatabaseSchema = NULL){
-  # Perform error checks for input variables
-  errorMessage <- checkmate::makeAssertCollection()
-  checkmate::assertInt(x = cohortId, 
-                       na.ok = FALSE, 
-                       null.ok = FALSE,
-                       lower = 0,
-                       upper = 2^53,
-                       add = errorMessage)
-  checkmate::assertInt(x = comparatorCohortId, 
-                       na.ok = FALSE, 
-                       null.ok = FALSE,
-                       lower = 0,
-                       upper = 2^53,
-                       add = errorMessage)
-  checkmate::assertCharacter(x = databaseIds,
-                             min.len = 1,
-                             any.missing = FALSE,
-                             unique = TRUE,
-                             add = errorMessage)
-  
-  if (!is.null(connectionDetails) || !is.null(connection)) {
-    checkmate::assertCharacter(x = resultsDatabaseSchema,
-                               min.len = 1,
-                               max.len = 1,
-                               any.missing = FALSE,
-                               add = errorMessage)
-  }
-  checkmate::reportAssertions(collection = errorMessage)
-  
-  ## set up connection to server
-  if (is.null(connection)) {
-    if (!is.null(connectionDetails)) {
-      connection <- DatabaseConnector::connect(connectionDetails)
-      on.exit(DatabaseConnector::disconnect(connection))
-    } else {
-      ParallelLogger::logInfo(" \n - No connection or connectionDetails provided.")
-      ParallelLogger::logInfo("  Checking if required objects existsin R memory.")
-      if (exists('cohortOverlap')) {
-        ParallelLogger::logInfo("  'cohort overlap' data object found in R memory. Continuing.")
-      } else {
-        ParallelLogger::logWarn("  'cohort overlap' data object not found in R memory. Exiting.")
-        return(NULL)
-      }
-    }
-  }
-  
-  if (!is.null(connection)) {
-    sql <-   "SELECT *
-              FROM  @resultsDatabaseSchema.cohort_overlap
-              WHERE target_cohort_id = @cohortId
-              AND comparator_cohort_id = @comparatorCohortId
-            	AND database_id = '@databaseIds';"
-    data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                                       sql = sql,
-                                                       resultsDatabaseSchema = resultsDatabaseSchema,
-                                                       targetCohortId = cohortId,
-                                                       comparatorCohortId = comparatorCohortId,
-                                                       databaseIds = databaseIds, 
-                                                       snakeCaseToCamelCase = TRUE) %>% 
-      tidyr::tibble()
-  } else {
-    
-    data <- cohortOverlap %>% 
-      dplyr::filter(.data$targetCohortId == cohortId &
-                      .data$comparatorCohortId == comparatorCohortId &
-                      .data$databaseId == databaseIds) %>% 
-      tidyr::tibble()
-  }
-  
-  if (nrow(data) == 0) {
-    return(NULL)
-  }else{
-    return(data)
-  }
-}

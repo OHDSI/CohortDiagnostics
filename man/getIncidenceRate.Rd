@@ -44,7 +44,7 @@ provided.}
 cohortId field in cohort table of the results data model.}
 
 \item{databaseIds}{A vector one or more databaseIds to retrieve the results for. This is a character 
-field value from the databaseId field in the database table of the results data model.}
+field values from the databaseId field in the database table of the results data model.}
 
 \item{stratifyByGender}{(optional) Do you want to stratify by gender.}
 
