@@ -118,7 +118,7 @@ getTimeDistribution <- function(connection = NULL,
     data <- timeDistribution %>% 
       dplyr::filter(.data$cohortDefinitionId == cohortId &
                       .data$databaseId %in% databaseId) %>% 
-      dplyr::select(-.data$cohortDefinitionId, .data$databaseid) %>% 
+      dplyr::select(-.data$cohortDefinitionId, .data$databaseId) %>% 
       tidyr::tibble()
   }
   
@@ -180,6 +180,9 @@ getTimeDistribution <- function(connection = NULL,
 #'                       cohortId field in cohort table of the results data model.
 #' @param databaseIds    A vector one or more databaseIds to retrieve the results for. This is a character 
 #'                       field value from the databaseId field in the database table of the results data model.
+#' @param stratifyByGender (optional) Do you want to stratify by gender.
+#' @param stratifyByAgeGroup (optional) Do you want to stratify by age group.
+#' @param stratifyByCalendarYear (optional) Do you want to stratify by calendar year.
 #' @param resultsDatabaseSchema (optional) The databaseSchema where the results data model of cohort diagnostics
 #'                              is stored. This is only required when \code{connectionDetails} or 
 #'                              \code{\link[DatabaseConnector]{connect}} is provided.
@@ -199,7 +202,9 @@ getIncidenceRate <- function(connection = NULL,
                              connectionDetails = NULL,
                              cohortId,
                              databaseIds,
-                             stratification,
+                             stratifyByGender = FALSE,
+                             stratifyByAgeGroup = FALSE,
+                             stratifyByCalendarYear = FALSE,
                              minPersonYears = 1000,
                              resultsDatabaseSchema = NULL) {
   # Perform error checks for input variables
@@ -223,6 +228,12 @@ getIncidenceRate <- function(connection = NULL,
                                any.missing = FALSE,
                                add = errorMessage)
   }
+  checkmate::assertLogical(x = stratifyByGender,
+                           add = errorMessage)
+  checkmate::assertLogical(x = stratifyByAgeGroup,
+                          add = errorMessage)
+  checkmate::assertLogical(x = stratifyByCalendarYear,
+                           add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
   
   ## set up connection to server
@@ -245,20 +256,31 @@ getIncidenceRate <- function(connection = NULL,
   if (!is.null(connection)) {
     sql <-   "SELECT *
               FROM  @resultsDatabaseSchema.incidence_rate
-              WHERE cohort_definition_id = @cohortId
-            	AND database_id in c('@databaseIds');"
+              WHERE cohort_id = @cohortId
+            	AND database_id in c('@databaseIds')
+              {@gender == TRUE} ? {AND gender ISNULL} : {AND gender NOT ISNULL}
+              {@age_group == TRUE} ? {AND age_group ISNULL} : {AND age_group NOT ISNULL}
+            	{@calendar_year == TRUE} ? {AND calendar_year ISNULL} : {AND calendar_year NOT ISNULL}
+              AND person_years > @personYears;"
     data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                        sql = sql,
                                                        resultsDatabaseSchema = resultsDatabaseSchema,
                                                        cohortId = cohortId,
-                                                       databaseIds = databaseIds, 
+                                                       databaseIds = databaseIds,
+                                                       gender = stratifyByGender,
+                                                       age_group = stratifyByAgeGroup,
+                                                       calendar_year = stratifyByCalendarYear,
+                                                       personYears = minPersonYears,
                                                        snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {
     data <- incidenceRate %>% 
-      dplyr::filter(.data$cohortDefinitionId == cohortId &
-                      .data$databaseId %in% databaseIds) %>% 
-      dplyr::select(-.data$cohortDefinitionId) %>% 
+      dplyr::filter(.data$cohortId == cohortId &
+                      .data$databaseId %in% databaseIds &
+                      is.na(.data$gender) == stratifyByGender &
+                      is.na(.data$ageGroup) == stratifyByAgeGroup &
+                      is.na(.data$calendarYear) == stratifyByCalendarYear) %>% 
+      dplyr::select(-.data$cohortId) %>% 
       tidyr::tibble()
   }
   
@@ -266,43 +288,7 @@ getIncidenceRate <- function(connection = NULL,
     ParallelLogger::logWarn("No records retrieved for 'incidence rate'.")
     return(NULL)
   }
-  
-  stratifyByAge <- "Age" %in% input$irStratification
-  stratifyByGender <- "Gender" %in% input$irStratification
-  stratifyByCalendarYear <- "Calendar Year" %in% input$irStratification
-  
-  
-  idx <- rep(TRUE, nrow(data))
-  if (stratifyByAge) {
-    idx <- idx & !is.na(data$ageGroup)
-  } else {
-    idx <- idx & is.na(data$ageGroup)
-  }
-  if (stratifyByGender) {
-    idx <- idx & !is.na(data$gender)
-  } else {
-    idx <- idx & is.na(data$gender)
-  }
-  if (stratifyByCalendarYear) {
-    idx <- idx & !is.na(data$calendarYear)
-  } else {
-    idx <- idx & is.na(data$calendarYear)
-  }
-  data <- data[idx, ]
-  data <- data[data$cohortCount > 0, ]
-  data <- data[data$personYears > minPersonYears, ]
-  data$gender <- as.factor(data$gender)
-  data$calendarYear <- as.numeric(as.character(data$calendarYear))
-  ageGroups <- unique(data$ageGroup)
-  ageGroups <- ageGroups[order(as.numeric(gsub("-.*", "", ageGroups)))]
-  data$ageGroup <- factor(data$ageGroup, levels = ageGroups)
-  data <- data[data$incidenceRate > 0, ]
-  data$dummy <- 0
-  if (nrow(data) == 0) {
-    return(NULL)
-  } else {
-    return(data)
-  }
+  return(data)
 }
 
 

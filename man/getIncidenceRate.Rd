@@ -9,7 +9,9 @@ getIncidenceRate(
   connectionDetails = NULL,
   cohortId,
   databaseIds,
-  stratification,
+  stratifyByGender = FALSE,
+  stratifyByAgeGroup = FALSE,
+  stratifyByCalendarYear = FALSE,
   minPersonYears = 1000,
   resultsDatabaseSchema = NULL
 )
@@ -19,7 +21,9 @@ getIncidenceRate(
   connectionDetails = NULL,
   cohortId,
   databaseIds,
-  stratification,
+  stratifyByGender = FALSE,
+  stratifyByAgeGroup = FALSE,
+  stratifyByCalendarYear = FALSE,
   minPersonYears = 1000,
   resultsDatabaseSchema = NULL
 )
@@ -41,6 +45,12 @@ cohortId field in cohort table of the results data model.}
 
 \item{databaseIds}{A vector one or more databaseIds to retrieve the results for. This is a character 
 field value from the databaseId field in the database table of the results data model.}
+
+\item{stratifyByGender}{(optional) Do you want to stratify by gender.}
+
+\item{stratifyByAgeGroup}{(optional) Do you want to stratify by age group.}
+
+\item{stratifyByCalendarYear}{(optional) Do you want to stratify by calendar year.}
 
 \item{minPersonYears}{(optional) Default value = 1000. Minimum person years needed to create plot.}
 
