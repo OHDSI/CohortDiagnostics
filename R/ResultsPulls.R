@@ -66,7 +66,7 @@ getTimeDistribution <- function(connection = NULL,
   checkmate::assertInt(x = cohortId, 
                        na.ok = FALSE, 
                        null.ok = FALSE,
-                       lower = 0,
+                       lower = 1,
                        upper = 2^53,
                        add = errorMessage)
   checkmate::assertCharacter(x = databaseId,
@@ -154,6 +154,7 @@ getTimeDistribution <- function(connection = NULL,
   return(data)
 }
 
+
 #' Get incidence rate data for plotting
 #'
 #' @description
@@ -202,9 +203,9 @@ getIncidenceRate <- function(connection = NULL,
                              connectionDetails = NULL,
                              cohortId,
                              databaseIds,
-                             stratifyByGender = FALSE,
-                             stratifyByAgeGroup = FALSE,
-                             stratifyByCalendarYear = FALSE,
+                             stratifyByGender = TRUE,
+                             stratifyByAgeGroup = TRUE,
+                             stratifyByCalendarYear = TRUE,
                              minPersonYears = 1000,
                              resultsDatabaseSchema = NULL) {
   # Perform error checks for input variables
@@ -212,7 +213,7 @@ getIncidenceRate <- function(connection = NULL,
   checkmate::assertInt(x = cohortId, 
                        na.ok = FALSE, 
                        null.ok = FALSE,
-                       lower = 0,
+                       lower = 1,
                        upper = 2^53,
                        add = errorMessage)
   checkmate::assertVector(x = databaseIds,
@@ -259,7 +260,7 @@ getIncidenceRate <- function(connection = NULL,
   }
   
   if (!is.null(connection)) {
-    sql <-   "SELECT *
+    sql <-   "SELECT database_id, incidence_rate, person_years, cohort_count
               FROM  @resultsDatabaseSchema.incidence_rate
               WHERE cohort_id = @cohortId
             	AND database_id in c('@databaseIds')
@@ -285,7 +286,7 @@ getIncidenceRate <- function(connection = NULL,
                       is.na(.data$gender) == stratifyByGender &
                       is.na(.data$ageGroup) == stratifyByAgeGroup &
                       is.na(.data$calendarYear) == stratifyByCalendarYear) %>% 
-      dplyr::select(-.data$cohortId) %>% 
+      dplyr::select(.data$databaseId, .data$incidenceRate, .data$personYears, .data$cohortCount) %>% 
       tidyr::tibble()
   }
   
@@ -398,8 +399,6 @@ getCohortCounts <- function(connection = NULL,
 }
 
 
-
-
 #' Get cohort overlap
 #'
 #' @description
@@ -443,25 +442,24 @@ getCohortCounts <- function(connection = NULL,
 #' }
 #'
 #' @export
-#' @export
 getCohortOverLap <- function(connection = NULL,
                              connectionDetails = NULL,
                              targetCohortId,
                              comparatorCohortId,
                              databaseIds,
-                             resultsDatabaseSchema = NULL){
+                             resultsDatabaseSchema = NULL) {
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertInt(x = targetCohortId, 
                        na.ok = FALSE, 
                        null.ok = FALSE,
-                       lower = 0,
+                       lower = 1,
                        upper = 2^53,
                        add = errorMessage)
   checkmate::assertInt(x = comparatorCohortId, 
                        na.ok = FALSE, 
                        null.ok = FALSE,
-                       lower = 0,
+                       lower = 1,
                        upper = 2^53,
                        add = errorMessage)
   checkmate::assertVector(x = databaseIds,
@@ -535,32 +533,85 @@ getCohortOverLap <- function(connection = NULL,
 
 
 
+#' Get cohort covariate
+#'
+#' @description
+#' Get cohort covariate value data from data stored in cohort diagnostics results data
+#' model. The output of this function may be used, together with covariate ref
+#' to create tables/plots regarding a cohorts characteristics diagnostics. 
+#' Because of the large volume of covariates, this function allows to filter range of 
+#' covariate_value by providing the minimum and maximum proportion. Its important to note 
+#' that all covariates are expected to output proportions that are between the values 0.0 to 1.0
+#' 
+#' Note: this function relies on data available in Cohort Diagnostics results data model. There are
+#' two methods to connect to the results data model, database mode and in-memory mode.
+#' 
+#' Database mode: If either \code{connectionDetails} or \code{\link[DatabaseConnector]{connect}} is 
+#' provided in the function call, the query is set to database mode. In the absence of both 
+#' \code{connectionDetails} and \code{\link[DatabaseConnector]{connect}}, the query will be in-memory 
+#' mode. In in-memory mode, R will expect the data in results data model to be available in R's memory.
+#' In database mode, R will perform a database query. Objects in R's memory are expected to
+#' follow camelCase naming conventions, while objects in dbms are expected to follow snake-case naming
+#' conventions. In database mode, vocabulary tables (if needed) are used from vocabularySchema (which
+#' defaults to resultsDatabaseSchema.). In in-memory mode, vocabulary tables are assumed to in R's 
+#' memory.
+#'
+#' @template Connection
+#' @param databaseIds    A vector one or more databaseIds to retrieve the results for. This is a character 
+#'                       field value from the databaseId field in the database table of the results data model.
+#' @param cohortIds      Cohort Ids to retrieve the characterization data. 
+#' @param isTemporal     Get temporal covariate values?
+#' @param resultsDatabaseSchema (optional) The databaseSchema where the results data model of cohort diagnostics
+#'                              is stored. This is only required when \code{connectionDetails} or 
+#'                              \code{\link[DatabaseConnector]{connect}} is provided.
+#' 
+#' @return
+#' The function will return a tibble data frame object.
+#'
+#' @examples
+#' \dontrun{
+#' covariateValue <- getCohortCovariateValue(cohortId = c(342432,432423),
+#'                                           databaseIds = c('eunomia', 'hcup'))
+#' }
+#'
 #' @export
-getCompareCohortCharacterization <- function(connection = NULL,
-                                             connectionDetails = NULL,
-                                             targetCohortId,
-                                             comparatorCohortId,
-                                             databaseIds,
-                                             resultsDatabaseSchema = NULL){
+getCohortCovariateValue <- function(connection = NULL,
+                                    connectionDetails = NULL,
+                                    cohortIds,
+                                    databaseIds,
+                                    minProportion = 0.01,
+                                    maxProportion = 1,
+                                    isTemporal = FALSE,
+                                    resultsDatabaseSchema = NULL){
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
-  checkmate::assertInt(x = targetCohortId, 
-                       na.ok = FALSE, 
-                       null.ok = FALSE,
-                       lower = 0,
-                       upper = 2^53,
-                       add = errorMessage)
-  checkmate::assertInt(x = comparatorCohortId, 
-                       na.ok = FALSE, 
-                       null.ok = FALSE,
-                       lower = 0,
-                       upper = 2^53,
-                       add = errorMessage)
+  checkmate::assertIntegerish(x = cohortIds, 
+                              lower = 1,
+                              upper = 2^53,
+                              any.missing = FALSE,
+                              min.len = 1,
+                              unique = TRUE,
+                              null.ok = FALSE,
+                              add = errorMessage)
+  checkmate::assertVector(x = cohortIds,
+                          min.len = 1,
+                          any.missing = FALSE,
+                          unique = TRUE,
+                          add = errorMessage)
+  checkmate::assertVector(x = databaseIds,
+                          min.len = 1,
+                          any.missing = FALSE,
+                          unique = TRUE,
+                          add = errorMessage)
   checkmate::assertCharacter(x = databaseIds,
                              min.len = 1,
                              any.missing = FALSE,
                              unique = TRUE,
                              add = errorMessage)
+  checkmate::assertLogical(x = isTemporal, 
+                           any.missing = FALSE, 
+                           min.len = 1, 
+                           max.len = 1)
   
   if (!is.null(connectionDetails) || !is.null(connection)) {
     checkmate::assertCharacter(x = resultsDatabaseSchema,
@@ -571,6 +622,12 @@ getCompareCohortCharacterization <- function(connection = NULL,
   }
   checkmate::reportAssertions(collection = errorMessage)
   
+  if (isTemporal) {
+    value <- 'temporalCovariateValue'
+  } else {
+    value <- 'covariateValue'
+  }
+  
   ## set up connection to server
   if (is.null(connection)) {
     if (!is.null(connectionDetails)) {
@@ -579,65 +636,95 @@ getCompareCohortCharacterization <- function(connection = NULL,
     } else {
       ParallelLogger::logInfo(" \n - No connection or connectionDetails provided.")
       ParallelLogger::logInfo("  Checking if required objects existsin R memory.")
-      if (exists('covariateRed')) {
-        ParallelLogger::logInfo("  'covariate ref' data object found in R memory. Continuing.")
+      if (exists(value)) {
+        ParallelLogger::logInfo("  '", SqlRender::camelCaseToTitleCase(value), "' data object found in R memory. Continuing.")
       } else {
-        ParallelLogger::logWarn("  'covariate ref' data object not found in R memory. Exiting.")
+        ParallelLogger::logWarn("  '", SqlRender::camelCaseToTitleCase(value), "' data object found in R memory. Exiting.")
         return(NULL)
       }
     }
   }
   
   if (!is.null(connection)) {
-    sql <-   "SELECT *
-              FROM  @resultsDatabaseSchema.covariate_value
-              WHERE cohort_id = @cohortId
-              AND cohort_id = @comparatorCohortId
-            	AND database_id = '@databaseIds';"
+    sql <-   "SELECT cohort_id, database_id, covariate_id, mean, sd
+              FROM  @resultsDatabaseSchema.@value
+              WHERE cohort_id in (@cohortId)
+            	AND database_id in ('@databaseIds')
+              AND mean >= @minProportion
+              AND mean <= @maxProportion;"
     data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                        sql = sql,
                                                        resultsDatabaseSchema = resultsDatabaseSchema,
                                                        cohortId = cohortId,
                                                        databaseIds = databaseIds, 
+                                                       value = SqlRender::camelCaseToSnakeCase(value),
+                                                       minProportion = minProportion,
+                                                       maxProportion = maxProportion,
                                                        snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {
-    covariate <- covariateRef %>% 
-      dplyr::group_by(.data$covariateId) %>% 
-      dplyr::slice(1) %>% 
-      dplyr::distinct() %>% 
-      dplyr::arrange(.data$covariateName) %>% 
-      tidyr::tibble()
-    
-    covs1 <- covariateValue %>% 
-      dplyr::filter(.data$cohortId == cohortId,
-                    .data$databaseId == databaseIds)
-    covs2 <- covariateValue %>% 
-      dplyr::filter(.data$cohortId == comparatorCohortId,
-                    .data$databaseId == databaseIds)
+    data <- get(value) %>% 
+      dplyr::filter(.data$cohortId %in% cohortId,
+                    .data$databaseId %in% databaseIds,
+                    .data$mean >= minProportion,
+                    .data$mean <= maxProportion) %>%
+      dplyr::select(.data$cohortId,
+                    .data$databaseId, 
+                    .data$covariateId, 
+                    .data$mean, .data$sd)
   }
+  return(data)
+}
+
+
   
   
-  if (cohortId == comparatorCohortId) {
-    return(tidyr::tibble())
-  }
   
-  covs1 <- dplyr::left_join(x = covs1, y = covariate)
-  covs2 <- dplyr::left_join(x = covs2, y = covariate)
+  covariate <- covariateRef %>% #occassionally we may have more than one covariateName per covariateId
+    # because of change in concept_name. See https://github.com/OHDSI/CohortDiagnostics/issues/162
+    dplyr::group_by(.data$covariateId) %>% 
+    dplyr::slice(1)
   
-  m <- dplyr::full_join(x = covs1 %>% dplyr::distinct(), 
-                        y = covs2 %>% dplyr::distinct(), 
-                        by = c("covariateId", "conceptId", "databaseId", "covariateName", "covariateAnalysisId"),
-                        suffix = c("1", "2")) %>%
-    dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = 0)),
-                  sd = sqrt(.data$sd1^2 + .data$sd2^2),
-                  stdDiff = (.data$mean2 - .data$mean1)/.data$sd) %>% 
-    dplyr::arrange(-abs(.data$stdDiff))
-  
-  data <- m %>%
-    dplyr::mutate(absStdDiff = abs(.data$stdDiff))
+  data <- data %>% 
+    dplyr::inner_join(covariate) %>% 
+    dplyr::select(.data$databaseId, .data$covariateId, .data$conceptId, .data$covariateName,
+                  .data$mean, .data$sd) %>% 
+    dplyr::arrange(.data$conceptId, .data$covariateId, .data$covariateName)
   
   return(data)
-  
+}
+
+
+
+covs1 <- covariateValue %>% 
+  dplyr::filter(.data$cohortId == cohortId,
+                .data$databaseId == databaseIds)
+covs2 <- covariateValue %>% 
+  dplyr::filter(.data$cohortId == comparatorCohortId,
+                .data$databaseId == databaseIds)
+}
+
+
+if (cohortId == comparatorCohortId) {
+  return(tidyr::tibble())
+}
+
+covs1 <- dplyr::left_join(x = covs1, y = covariate)
+covs2 <- dplyr::left_join(x = covs2, y = covariate)
+
+m <- dplyr::full_join(x = covs1 %>% dplyr::distinct(), 
+                      y = covs2 %>% dplyr::distinct(), 
+                      by = c("covariateId", "conceptId", "databaseId", "covariateName", "covariateAnalysisId"),
+                      suffix = c("1", "2")) %>%
+  dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = 0)),
+                sd = sqrt(.data$sd1^2 + .data$sd2^2),
+                stdDiff = (.data$mean2 - .data$mean1)/.data$sd) %>% 
+  dplyr::arrange(-abs(.data$stdDiff))
+
+data <- m %>%
+  dplyr::mutate(absStdDiff = abs(.data$stdDiff))
+
+return(data)
+
 }
 
