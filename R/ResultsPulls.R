@@ -179,13 +179,13 @@ getTimeDistribution <- function(connection = NULL,
 #' @param cohortId       Cohort Id to retrieve the data. This is one of the integer (bigint) value from
 #'                       cohortId field in cohort table of the results data model.
 #' @param databaseIds    A vector one or more databaseIds to retrieve the results for. This is a character 
-#'                       field value from the databaseId field in the database table of the results data model.
-#' @param stratifyByGender (optional) Do you want to stratify by gender.
-#' @param stratifyByAgeGroup (optional) Do you want to stratify by age group.
+#'                       field values from the databaseId field in the database table of the results data model.
+#' @param stratifyByGender       (optional) Do you want to stratify by gender.
+#' @param stratifyByAgeGroup     (optional) Do you want to stratify by age group.
 #' @param stratifyByCalendarYear (optional) Do you want to stratify by calendar year.
-#' @param resultsDatabaseSchema (optional) The databaseSchema where the results data model of cohort diagnostics
-#'                              is stored. This is only required when \code{connectionDetails} or 
-#'                              \code{\link[DatabaseConnector]{connect}} is provided.
+#' @param resultsDatabaseSchema  (optional) The databaseSchema where the results data model of cohort diagnostics
+#'                               is stored. This is only required when \code{connectionDetails} or 
+#'                               \code{\link[DatabaseConnector]{connect}} is provided.
 #' @param minPersonYears (optional) Default value = 1000. Minimum person years needed to create plot.
 #' 
 #' @return
@@ -231,7 +231,7 @@ getIncidenceRate <- function(connection = NULL,
   checkmate::assertLogical(x = stratifyByGender,
                            add = errorMessage)
   checkmate::assertLogical(x = stratifyByAgeGroup,
-                          add = errorMessage)
+                           add = errorMessage)
   checkmate::assertLogical(x = stratifyByCalendarYear,
                            add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
@@ -354,18 +354,20 @@ getCohortCounts <- function(connection = NULL,
     } else {
       ParallelLogger::logInfo(" \n - No connection or connectionDetails provided.")
       ParallelLogger::logInfo("  Checking if required objects existsin R memory.")
-      if (exists('cohortCount')) {
-        ParallelLogger::logInfo("  'cohort count' data object found in R memory. Continuing.")
+      if (exists('cohortCount') && exists('cohort')) {
+        ParallelLogger::logInfo("  'cohort count' & 'cohort' data object found in R memory. Continuing.")
       } else {
-        ParallelLogger::logWarn("  'cohort count' data object not found in R memory. Exiting.")
+        ParallelLogger::logWarn("  'cohort count' or 'cohort' data object not found in R memory. Exiting.")
         return(NULL)
       }
     }
   }
   
   if (!is.null(connection)) {
-    sql <-   "SELECT *
-              FROM  @resultsDatabaseSchema.cohort_count
+    sql <-   "SELECT cc.*, c.cohort_name
+              FROM  @resultsDatabaseSchema.cohort_count cc
+              INNER JOIN @resulsDatabaseSchema.cohort c
+              ON cc.cohort_id = c.cohort_id
             	WHERE database_id in c('@databaseIds');;"
     data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                        sql = sql,
@@ -376,6 +378,7 @@ getCohortCounts <- function(connection = NULL,
   } else {
     data <- cohortCount %>% 
       dplyr::filter(.data$databaseId %in% databaseIds) %>% 
+      dplyr::inner_join(cohort %>% dplyr::select(.data$cohortId, .data$cohortName)) %>% 
       tidyr::tibble()
   }
   
@@ -384,24 +387,9 @@ getCohortCounts <- function(connection = NULL,
     return(NULL)
   }
   
-  databaseIds <- unique(data$databaseId) %>% sort()
-  table <- data[data$databaseId == databaseIds[1], c("cohortId", "cohortEntries", "cohortSubjects")]
-  colnames(table)[2:3] <- paste(colnames(table)[2:3], databaseIds[1], sep = "_")
-  if (length(databaseIds) > 1) {
-    for (i in 2:length(databaseIds)) {
-      temp <- data[data$databaseId == databaseIds[i], c("cohortId", "cohortEntries", "cohortSubjects")]
-      colnames(temp)[2:3] <- paste(colnames(temp)[2:3], databaseIds[i], sep = "_")
-      table <- merge(table, temp, all = TRUE)
-    }
-  }
-  table <- merge(cohort, table, all.x = TRUE)
-  table$url <- paste0(cohortBaseUrl2(), table$cohortId)
-  table$cohortName <- paste0("<a href='", table$url, "' target='_blank'>", table$cohortName, "</a>")
-  table$cohortId <- NULL
-  table$url <- NULL
-  table <- table %>% 
-    dplyr::arrange(.data$cohortName)
-  return(table)
+  data <- data %>% 
+    dplyr::relocate(.data$cohortId, .data$cohortName)
+  return(data)
 }
 
 
@@ -445,8 +433,10 @@ getCohortCounts <- function(connection = NULL,
 #'
 #' @examples
 #' \dontrun{
-#' cohortComparison <- getCohortCounts(resultsDatabaseSchema = resultsDatabaseSchema,
-#'                                 databaseIds = c('eunomia', 'hcup'))
+#' compareCohortCharacterization <- getCompareCohortCharacterization(
+#'                                        targetCohortId = 12334,
+#'                                        comparatorCohortId = 34232,
+#'                                        databaseIds = c('eunomia', 'hcup'))
 #' }
 #'
 #' @export
@@ -458,7 +448,7 @@ getCompareCohortCharacterization <- function(connection = NULL,
                                              resultsDatabaseSchema = NULL){
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
-  checkmate::assertInt(x = cohortId, 
+  checkmate::assertInt(x = targetCohortId, 
                        na.ok = FALSE, 
                        null.ok = FALSE,
                        lower = 0,
