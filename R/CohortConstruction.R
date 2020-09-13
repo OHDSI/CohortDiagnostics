@@ -473,9 +473,9 @@ getInclusionStatistics <- function(connectionDetails = NULL,
   inclusion <- fetchStats(cohortInclusionTable)
   summaryStats <- fetchStats(cohortSummaryStatsTable)
   inclusionStats <- fetchStats(cohortInclusionStatsTable)
-  inclusionResults <- fetchStats(cohortInclusionResultTable)
+  inclusion_results <- fetchStats(cohortInclusionResultTable)
   result <- processInclusionStats(inclusion = inclusion,
-                                  inclusionResults = inclusionResults,
+                                  inclusion_results = inclusion_results,
                                   inclusionStats = inclusionStats,
                                   summaryStats = summaryStats,
                                   simplify = simplify)
@@ -529,21 +529,21 @@ getInclusionStatisticsFromFiles <- function(cohortId,
                              col_types = readr::cols(),
                              guess_max = min(1e7))
     if ('COHORT_DEFINITION_ID' %in% colnames(stats)) {
-      colnames(stats) <- colnames(stats) %>% SqlRender::snakeCaseToCamelCase(.)
+      stats <- stats %>% 
+        dplyr::rename(cohort_id = .data$cohort_definition_id)
     }
-    stats <- stats %>% 
-      dplyr::rename(cohortId = .data$cohortDefinitionId) %>% 
+    stats <- stats %>%  
       dplyr::filter(cohortId == !!cohortId)
     return(stats)
   }
   inclusion <- fetchStats(cohortInclusionFile)
-  summaryStats <- fetchStats(cohortSummaryStatsFile)
-  inclusionStats <- fetchStats(cohortInclusionStatsFile)
-  inclusionResults <- fetchStats(cohortInclusionResultFile)
+  summary_stats <- fetchStats(cohortSummaryStatsFile)
+  inclusion_stats <- fetchStats(cohortInclusionStatsFile)
+  inclusion_results <- fetchStats(cohortInclusionResultFile)
   result <- processInclusionStats(inclusion = inclusion,
-                                  inclusionResults = inclusionResults,
-                                  inclusionStats = inclusionStats,
-                                  summaryStats = summaryStats,
+                                  inclusion_results = inclusion_results,
+                                  inclusion_stats = inclusion_stats,
+                                  summary_stats = summary_stats,
                                   simplify = simplify)
   delta <- Sys.time() - start
   writeLines(paste("Fetching inclusion statistics took", signif(delta, 3), attr(delta, "units")))
@@ -551,50 +551,45 @@ getInclusionStatisticsFromFiles <- function(cohortId,
 }
 
 processInclusionStats <- function(inclusion,
-                                  inclusionResults,
-                                  inclusionStats,
-                                  summaryStats,
+                                  inclusion_results,
+                                  inclusion_stats,
+                                  summary_stats,
                                   simplify) {
   if (simplify) {
-    if (nrow(inclusion) == 0 || nrow(inclusionStats) == 0) {
+    if (nrow(inclusion) == 0 || nrow(inclusion_stats) == 0) {
       return(tidyr::tibble())
     }
-    # result <- inclusion %>% 
-    #   dplyr::inner_join(inclusionStats) %>% 
-    #   dplyr::inner_join(inclusionResults %>% dplyr::select(-.data$personCount)) %>% 
-    #   dplyr::mutate(description = tidyr::replace_na(data = .data$description, replace = ''),
-    #                 modeName = dplyr::case_when(modeId == 0 ~ 'persons',
-    #                                             TRUE ~ 'events')) %>% 
-    #   dplyr::rename_all(stringr::str_replace, replacement = "", pattern = "Count")
     
-    result <- merge(unique(inclusion[, c("ruleSequence", "name")]),
-                    inclusionStats[inclusionStats$modeId ==
-                                     0, c("ruleSequence", "personCount", "gainCount", "personTotal")], )
+    result <- inclusion %>% 
+      dplyr::select(.data$rule_sequence, .data$name) %>% 
+      dplyr::distinct() %>% 
+      dplyr::inner_join(inclusion_stats %>% 
+                          dplyr::filter(.data$mode_id == 0) %>% 
+                          dplyr::select(.data$rule_sequence, .data$person_count, .data$gain_count, .data$person_total)) %>% 
+      dplyr::mutate(remain = 0)
     
-    result$remain <- rep(0, nrow(result))
-    inclusionResults <- inclusionResults[inclusionResults$modeId == 0, ]
-    mask <- 0
+    mask = 0
     for (ruleId in 0:(nrow(result) - 1)) {
-      if (nrow(inclusionResults) > 0) {
+      if (nrow(inclusion_results) > 0) {
         mask <- bitwOr(mask, 2^ruleId)
-        idx <- bitwAnd(inclusionResults$inclusionRuleMask, mask) == mask
-        result$remain[result$ruleSequence == ruleId] <- sum(inclusionResults$personCount[idx])
+        idx <- bitwAnd(inclusion_results$inclusion_rule_mask, mask) == mask
+        result$remain[result$rule_sequence == ruleId] <- sum(inclusion_results$person_count[idx])
       }
     }
-    colnames(result) <- c("ruleSequenceId",
-                          "ruleName",
-                          "meetSubjects",
-                          "gainSubjects",
-                          "totalSubjects",
-                          "remainSubjects")
+    colnames(result) <- c("rule_sequence_id",
+                          "rule_name",
+                          "meet_subjects",
+                          "gain_subjects",
+                          "total_subjects",
+                          "remain_subjects")
   } else {
     if (nrow(inclusion) == 0) {
       return(list())
     }
     result <- list(inclusion = inclusion,
-                   inclusionResults = inclusionResults,
-                   inclusionStats = inclusionStats,
-                   summaryStats = summaryStats)
+                   inclusion_results = inclusion_results,
+                   inclusion_stats = inclusion_stats,
+                   summary_stats = summary_stats)
   }
   return(result)
 }
@@ -808,7 +803,9 @@ saveAndDropTempInclusionStatsTables <- function(connection,
                                                        oracleTempSchema = oracleTempSchema,
                                                        snakeCaseToCamelCase = FALSE,
                                                        table = table) %>% 
-      tidyr::tibble()
+      tidyr::tibble() %>% 
+      dplyr::rename(COHORT_ID = .data$COHORT_DEFINITION_ID)
+    colnames(data) <- tolower(colnames(data))
     fullFileName <- file.path(inclusionStatisticsFolder, fileName)
     if (incremental) {
       saveIncremental(data, fullFileName, cohortId = cohortIds)
@@ -838,7 +835,6 @@ saveAndDropTempInclusionStatsTables <- function(connection,
                                                reportOverallTime = FALSE,
                                                oracleTempSchema = oracleTempSchema)
 }
-
 
 .warnMismatchSqlInclusionStats <- function(sql, generateInclusionStats) {
   if (any(stringr::str_detect(string = sql, pattern = "_inclusion_result"), 
