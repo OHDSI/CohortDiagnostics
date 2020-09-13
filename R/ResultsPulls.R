@@ -435,7 +435,7 @@ getCohortOverLap <- function(connection = NULL,
                              connectionDetails = NULL,
                              targetCohortId,
                              comparatorCohortId,
-                             databaseIds,
+                             databaseId,
                              resultsDatabaseSchema = NULL) {
   table = "cohortOverlap"
   # Perform error checks for input variables
@@ -452,12 +452,12 @@ getCohortOverLap <- function(connection = NULL,
                        lower = 1,
                        upper = 2^53,
                        add = errorMessage)
-  checkmate::assertVector(x = databaseIds,
+  checkmate::assertVector(x = databaseId,
                           min.len = 1,
                           any.missing = FALSE,
                           unique = TRUE,
                           add = errorMessage)
-  checkmate::assertCharacter(x = databaseIds,
+  checkmate::assertCharacter(x = databaseId,
                              min.len = 1,
                              any.missing = FALSE,
                              unique = TRUE,
@@ -490,21 +490,21 @@ getCohortOverLap <- function(connection = NULL,
               FROM  @resultsDatabaseSchema.@table
               WHERE target_cohort_id = @targetCohortId
               AND comparator_cohort_id = @comparatorCohortId
-            	AND database_id in c('@databaseIds');"
+            	AND database_id in c('@databaseId');"
     data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                        sql = sql,
                                                        resultsDatabaseSchema = resultsDatabaseSchema,
                                                        table = SqlRender::camelCaseToSnakeCase(table),
                                                        targetCohortId = targetCohortId,
                                                        comparatorCohortId = comparatorCohortId,
-                                                       databaseIds = databaseIds, 
+                                                       databaseId = databaseId, 
                                                        snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {
     data <- get(table) %>% 
-      dplyr::filter(.data$targetCohortId == targetCohortId &
-                      .data$comparatorCohortId == comparatorCohortId &
-                      .data$databaseId %in% databaseIds) %>% 
+      dplyr::filter(.data$targetCohortId == !!targetCohortId &
+                      .data$comparatorCohortId == !!comparatorCohortId &
+                      .data$databaseId == !!databaseId) %>% 
       tidyr::tibble()
   }
   if (nrow(data) == 0) {

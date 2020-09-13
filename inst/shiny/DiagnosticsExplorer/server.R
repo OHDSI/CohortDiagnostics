@@ -882,13 +882,11 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$overlapTable <- DT::renderDataTable(expr = {
-    data <- cohortOverlap[cohortOverlap$targetCohortId == cohortId() & 
-                            cohortOverlap$comparatorCohortId == comparatorCohortId() &
-                            cohortOverlap$databaseId == input$database, ]
-    if (nrow(data) == 0) {
-      return(NULL)
-    }
+    data <- CohortDiagnostics::getCohortOverLap(targetCohortId = cohortId(), databaseId = input$database, comparatorCohortId = comparatorCohortId())
     
+    if (is.null(data)) {
+      return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts and comaprator')))
+    }
     table <- data.frame(row.names = c("Subject in either cohort",
                                       "Subject in both cohort",
                                       "Subject in target not in comparator",
@@ -928,29 +926,13 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   overLapPlot <- shiny::reactive({
-    data <- cohortOverlap[cohortOverlap$targetCohortId == cohortId() & 
-                            cohortOverlap$comparatorCohortId == comparatorCohortId() &
-                            cohortOverlap$databaseId == input$database, ]
-    if (nrow(data) == 0) {
-      return(NULL)
+    data <- CohortDiagnostics::getCohortOverLap(targetCohortId = cohortId(), databaseId = input$database, comparatorCohortId = comparatorCohortId())
+    
+    if (is.null(data)) {
+      return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts and comaprator')))
     }
-    plot <- VennDiagram::draw.pairwise.venn(area1 = abs(data$eitherSubjects) - abs(data$cOnlySubjects),
-                                            area2 = abs(data$eitherSubjects) - abs(data$tOnlySubjects),
-                                            cross.area = abs(data$bothSubjects),
-                                            category = c("Target", "Comparator"), 
-                                            col = c(rgb(0.8, 0, 0), rgb(0, 0, 0.8)),
-                                            fill = c(rgb(0.8, 0, 0), rgb(0, 0, 0.8)),
-                                            alpha = 0.2,
-                                            fontfamily = rep("sans", 3),
-                                            cat.fontfamily = rep("sans", 2),
-                                            margin = 0.01,
-                                            ind = FALSE)
-    # Borrowed from https://stackoverflow.com/questions/37239128/how-to-put-comma-in-large-number-of-venndiagram
-    idx <- sapply(plot, function(i) grepl("text", i$name))
-    for (i in 1:3) {
-      plot[idx][[i]]$label <- format(as.numeric(plot[idx][[i]]$label), big.mark = ",", scientific = FALSE)
-    }
-    grid::grid.draw(plot)
+    
+    plot <- CohortDiagnostics::plotCohortOverlap(data = data)
     
     return(plot)
   })
