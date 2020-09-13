@@ -48,9 +48,9 @@ runCohortDiagnostics(
 \code{baseUrl} and \code{cohortSetReference} have been specified.}
 
 \item{cohortToCreateFile}{The location of the cohortToCreate file within the package. Is ignored if 
-\code{baseUrl} and \code{cohortSetReference} have been specified. The cohortToCreateFile
-must be .csv file that is expected to be read into a dataframe object identical to requirements
-for \code{cohortSetReference} argument.}
+\code{baseUrl} and \code{cohortSetReference} have been specified. The
+cohortToCreateFile must be .csv file that is expected to be read into 
+a dataframe object identical to requirements for \code{cohortSetReference} argument.}
 
 \item{baseUrl}{The base URL for the WebApi instance, for example:
 "http://server.org:80/WebAPI". Can be left NULL if 
@@ -148,8 +148,7 @@ Alternatively, a covariate setting object may be created using the above as an e
 }
 \details{
 Currently two ways of executing this function are supported, either 
-(1) [Package Mode] embedded in a study package, assuming the cohort definitions are stored in that package using the 
-    \code{ROhdsiWebApi::insertCohortDefinitionSetInPackage}, or 
+(1) [Package Mode] embedded in a study package, assuming the cohort definitions are stored in that package using the \code{ROhdsiWebApi::insertCohortDefinitionSetInPackage}, or 
 (2) [WebApi Mode] By using a WebApi interface to retrieve the cohort definitions.
 
 When using this function in Package Mode: Use the \code{packageName} and \code{cohortToCreateFile} to specify

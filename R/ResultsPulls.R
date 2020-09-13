@@ -16,76 +16,40 @@
 
 
 
-#' Get time distribution data for plotting
+#' Get time distribution results
 #'
 #' @description
-#' Get time distribution data for plotting from data stored in cohort diagnostics results data
-#' model. The output of this function may be used to create plots or tables
-#' related to time distribution diagnostics. This function will look for time_distribution table
-#' in results data model.
-#' 
-#' Note: this function relies on data available in Cohort Diagnostics results data model. There are
-#' two methods to connect to the results data model, database mode and in-memory mode.
-#' 
-#' Database mode: If either \code{connectionDetails} or \code{\link[DatabaseConnector]{connect}} is 
-#' provided in the function call, the query is set to database mode. In the absence of both 
-#' \code{connectionDetails} and \code{\link[DatabaseConnector]{connect}}, the query will be in-memory 
-#' mode. In in-memory mode, R will expect the data in results data model to be available in R's memory.
-#' In database mode, R will perform a database query. Objects in R's memory are expected to
-#' follow camelCase naming conventions, while objects in dbms are expected to follow snake-case naming
-#' conventions. In database mode, vocabulary tables (if needed) are used from vocabularySchema (which
-#' defaults to resultsDatabaseSchema.). In in-memory mode, vocabulary tables are assumed to in R's 
-#' memory.
+#' Get time distribution results
 #'
-#' @template Connection
-#' @param cohortId       Cohort Id to retrieve the data. This is one of the integer (bigint) value from
-#'                       cohortId field in cohort table of the results data model.
-#' @param databaseId     The database to retrieve the results for. This is the character field value from
-#'                       the databaseId field in the database table of the results data model.
-#' @param resultsDatabaseSchema (optional) The databaseSchema where the results data model of cohort diagnostics
-#'                              is stored. This is only required when \code{connectionDetails} or 
-#'                              \code{\link[DatabaseConnector]{connect}} is provided.                       
+#' @template ModeAndDetails
+#' @template CohortIds
+#' @template DatabaseIds
 #' 
 #' @return
 #' The function will return a tibble data frame object.
 #'
 #' @examples
 #' \dontrun{
-#' timeDistribution <- getTimeDistribution(cohortId = 343242,
-#'                                         databaseId = 'eunomia')
+#' timeDistribution <- getTimeDistributionResult(cohortId = 343242,
+#'                                               databaseId = 'eunomia')
 #' }
 #'
 #' @export
-getTimeDistribution <- function(connection = NULL,
-                                connectionDetails = NULL,
-                                cohortId,
-                                databaseId,
-                                resultsDatabaseSchema = NULL) {
+getTimeDistributionResult <- function(connection = NULL,
+                                      connectionDetails = NULL,
+                                      cohortIds,
+                                      databaseIds,
+                                      resultsDatabaseSchema = NULL) {
   table = "timeDistribution"
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
-  checkmate::assertInt(x = cohortId, 
-                       na.ok = FALSE, 
-                       null.ok = FALSE,
-                       lower = 1,
-                       upper = 2^53,
-                       add = errorMessage)
-  checkmate::assertCharacter(x = databaseId,
-                             min.len = 1,
-                             max.len = 5,
-                             any.missing = FALSE,
-                             unique = TRUE,
-                             add = errorMessage)
-  
-  if (!is.null(connectionDetails) || !is.null(connection)) {
-    checkmate::assertCharacter(x = resultsDatabaseSchema,
-                               min.len = 1,
-                               max.len = 1,
-                               any.missing = FALSE,
-                               add = errorMessage)
-  }
-  checkmate::reportAssertions(collection = errorMessage)
-  
+  errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
+                                                  connectionDetails = connectionDetails,
+                                                  resultsDatabaseSchema = resultsDatabaseSchema,
+                                                  errorMessage = errorMessage)
+  errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = cohortIds,
+                                                 databaseIds = databaseIds,
+                                                  errorMessage = errorMessage)
   # route query
   route <- routeDataQuery(connection = connection,
                           connectionDetails = connectionDetails,
@@ -103,21 +67,20 @@ getTimeDistribution <- function(connection = NULL,
   if (!is.null(connection)) {
     sql <-   "SELECT *
               FROM  @resultsDatabaseSchema.@table
-              WHERE cohort_definition_id = @cohortId
-            	AND database_id = '@databaseId';"
+              WHERE cohort_definition_id in (@cohortId)
+            	AND database_id in (@databaseIds);"
     data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                        sql = sql,
                                                        resultsDatabaseSchema = resultsDatabaseSchema,
                                                        table = SqlRender::camelCaseToSnakeCase(table),
-                                                       cohortId = cohortId,
-                                                       database_id = databaseId, 
+                                                       cohortId = cohortIds,
+                                                       database_id = databaseIds, 
                                                        snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {
     data <- get(table) %>% 
-      dplyr::filter(.data$cohortDefinitionId == cohortId &
-                      .data$databaseId %in% !!databaseId) %>% 
-      dplyr::select(-.data$cohortDefinitionId, .data$databaseId) %>% 
+      dplyr::filter(.data$cohortDefinitionId %in% !!cohortIds &
+                      .data$databaseId %in% !!databaseIds) %>% 
       tidyr::tibble()
   }
   
@@ -127,17 +90,6 @@ getTimeDistribution <- function(connection = NULL,
   }
   
   data <- data %>% 
-    dplyr::select(.data$databaseId,
-                  .data$timeMetric, 
-                  .data$averageValue, 
-                  .data$standardDeviation, 
-                  .data$minValue, 
-                  .data$p10Value, 
-                  .data$p25Value, 
-                  .data$medianValue, 
-                  .data$p75Value, 
-                  .data$p90Value, 
-                  .data$maxValue) %>% 
     dplyr::rename(Database = "databaseId",
                   TimeMeasure = "timeMetric", 
                   Average = "averageValue", 
@@ -153,38 +105,17 @@ getTimeDistribution <- function(connection = NULL,
 }
 
 
-#' Get incidence rate data for plotting
+#' Get incidence rate results
 #'
 #' @description
-#' Get incidence rate data for plotting from data stored in cohort diagnostics results data
-#' model. The output of this function may be used to create plots or tables
-#' related to incidence rate diagnostics. This function will look for incidence_rate table
-#' in results data model.
+#' Get incidence rate results.
 #' 
-#' Note: this function relies on data available in Cohort Diagnostics results data model. There are
-#' two methods to connect to the results data model, database mode and in-memory mode.
-#' 
-#' Database mode: If either \code{connectionDetails} or \code{\link[DatabaseConnector]{connect}} is 
-#' provided in the function call, the query is set to database mode. In the absence of both 
-#' \code{connectionDetails} and \code{\link[DatabaseConnector]{connect}}, the query will be in-memory 
-#' mode. In in-memory mode, R will expect the data in results data model to be available in R's memory.
-#' In database mode, R will perform a database query. Objects in R's memory are expected to
-#' follow camelCase naming conventions, while objects in dbms are expected to follow snake-case naming
-#' conventions. In database mode, vocabulary tables (if needed) are used from vocabularySchema (which
-#' defaults to resultsDatabaseSchema.). In in-memory mode, vocabulary tables are assumed to in R's 
-#' memory.
-#'
-#' @template Connection
-#' @param cohortId       Cohort Id to retrieve the data. This is one of the integer (bigint) value from
-#'                       cohortId field in cohort table of the results data model.
-#' @param databaseIds    A vector one or more databaseIds to retrieve the results for. This is a character 
-#'                       field values from the databaseId field in the database table of the results data model.
+#' @template ModeAndDetails
+#' @template CohortIds
+#' @template DatabaseIds
 #' @param stratifyByGender       (optional) Do you want to stratify by gender.
 #' @param stratifyByAgeGroup     (optional) Do you want to stratify by age group.
 #' @param stratifyByCalendarYear (optional) Do you want to stratify by calendar year.
-#' @param resultsDatabaseSchema  (optional) The databaseSchema where the results data model of cohort diagnostics
-#'                               is stored. This is only required when \code{connectionDetails} or 
-#'                               \code{\link[DatabaseConnector]{connect}} is provided.
 #' @param minPersonYears (optional) Default value = 1000. Minimum person years needed to create plot.
 #' 
 #' @return
@@ -192,47 +123,30 @@ getTimeDistribution <- function(connection = NULL,
 #'
 #' @examples
 #' \dontrun{
-#' incidenceRate <- getIncidenceRate(cohortId = 343242,
+#' incidenceRate <- getIncidenceRateResult(cohortId = 343242,
 #'                                   databaseIds = c('eunomia', 'hcup'))
 #' }
 #'
 #' @export
-getIncidenceRate <- function(connection = NULL,
-                             connectionDetails = NULL,
-                             cohortId,
-                             databaseIds,
-                             stratifyByGender = TRUE,
-                             stratifyByAgeGroup = TRUE,
-                             stratifyByCalendarYear = TRUE,
-                             minPersonYears = 1000,
-                             resultsDatabaseSchema = NULL) {
+getIncidenceRateResult <- function(connection = NULL,
+                                   connectionDetails = NULL,
+                                   cohortIds,
+                                   databaseIds,
+                                   stratifyByGender = TRUE,
+                                   stratifyByAgeGroup = TRUE,
+                                   stratifyByCalendarYear = TRUE,
+                                   minPersonYears = 1000,
+                                   resultsDatabaseSchema = NULL) {
   table = "incidenceRate"
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
-  checkmate::assertInt(x = cohortId, 
-                       na.ok = FALSE, 
-                       null.ok = FALSE,
-                       lower = 1,
-                       upper = 2^53,
-                       add = errorMessage)
-  checkmate::assertVector(x = databaseIds,
-                          min.len = 1,
-                          any.missing = FALSE,
-                          unique = TRUE,
-                          add = errorMessage)
-  checkmate::assertCharacter(x = databaseIds,
-                             min.len = 1,
-                             any.missing = FALSE,
-                             unique = TRUE,
-                             add = errorMessage)
-  
-  if (!is.null(connectionDetails) || !is.null(connection)) {
-    checkmate::assertCharacter(x = resultsDatabaseSchema,
-                               min.len = 1,
-                               max.len = 1,
-                               any.missing = FALSE,
-                               add = errorMessage)
-  }
+  errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
+                                                  connectionDetails = connectionDetails,
+                                                  resultsDatabaseSchema = resultsDatabaseSchema,
+                                                  errorMessage = errorMessage)
+  errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = cohortIds,
+                                                 databaseIds = databaseIds,
+                                                 errorMessage = errorMessage)
   checkmate::assertLogical(x = stratifyByGender,
                            add = errorMessage)
   checkmate::assertLogical(x = stratifyByAgeGroup,
@@ -257,7 +171,7 @@ getIncidenceRate <- function(connection = NULL,
   if (!is.null(connection)) {
     sql <-   "SELECT *
               FROM  @resultsDatabaseSchema.@table
-              WHERE cohort_id = @cohortId
+              WHERE cohort_id in (@cohortIds)
             	AND database_id in c('@databaseIds')
               {@gender == TRUE} ? {AND gender ISNULL} : {AND gender NOT ISNULL}
               {@age_group == TRUE} ? {AND age_group ISNULL} : {AND age_group NOT ISNULL}
@@ -267,7 +181,7 @@ getIncidenceRate <- function(connection = NULL,
                                                        sql = sql,
                                                        resultsDatabaseSchema = resultsDatabaseSchema,
                                                        table = SqlRender::camelCaseToSnakeCase(table),
-                                                       cohortId = cohortId,
+                                                       cohortId = cohortIds,
                                                        databaseIds = databaseIds,
                                                        gender = stratifyByGender,
                                                        age_group = stratifyByAgeGroup,
@@ -277,11 +191,11 @@ getIncidenceRate <- function(connection = NULL,
       tidyr::tibble()
   } else {
     data <- get(table) %>% 
-      dplyr::filter(.data$cohortId == cohortId &
-                      .data$databaseId %in% databaseIds &
-                      is.na(.data$gender) == stratifyByGender &
-                      is.na(.data$ageGroup) == stratifyByAgeGroup &
-                      is.na(.data$calendarYear) == stratifyByCalendarYear) %>% 
+      dplyr::filter(.data$cohortId %in% !!cohortIds &
+                      .data$databaseId %in% !!databaseIds &
+                      is.na(.data$gender) %in% !!stratifyByGender &
+                      is.na(.data$ageGroup) %in% !!stratifyByAgeGroup &
+                      is.na(.data$calendarYear) %in% !!stratifyByCalendarYear) %>% 
       tidyr::tibble()
   }
   
@@ -293,60 +207,34 @@ getIncidenceRate <- function(connection = NULL,
 }
 
 
-
 #' Get cohort counts
 #'
 #' @description
-#' Get cohort counts data from data stored in cohort diagnostics results data
-#' model. The output of this function may be used to create tables
-#' related to cohort counts diagnostics. This function will look for cohort_count table
-#' in results data model.
+#' Get cohort counts
 #' 
-#' Note: this function relies on data available in Cohort Diagnostics results data model. There are
-#' two methods to connect to the results data model, database mode and in-memory mode.
-#' 
-#' Database mode: If either \code{connectionDetails} or \code{\link[DatabaseConnector]{connect}} is 
-#' provided in the function call, the query is set to database mode. In the absence of both 
-#' \code{connectionDetails} and \code{\link[DatabaseConnector]{connect}}, the query will be in-memory 
-#' mode. In in-memory mode, R will expect the data in results data model to be available in R's memory.
-#' In database mode, R will perform a database query. Objects in R's memory are expected to
-#' follow camelCase naming conventions, while objects in dbms are expected to follow snake-case naming
-#' conventions. In database mode, vocabulary tables (if needed) are used from vocabularySchema (which
-#' defaults to resultsDatabaseSchema.). In in-memory mode, vocabulary tables are assumed to in R's 
-#' memory.
-#'
-#' @template Connection
-#' @param databaseIds    A vector one or more databaseIds to retrieve the results for. This is a character 
-#'                       field value from the databaseId field in the database table of the results data model.
-#' @param resultsDatabaseSchema (optional) The databaseSchema where the results data model of cohort diagnostics
-#'                              is stored. This is only required when \code{connectionDetails} or 
-#'                              \code{\link[DatabaseConnector]{connect}} is provided.
-#' 
+#' @template ModeAndDetails
+#' @template DatabaseIds
 #' @return
 #' The function will return a tibble data frame object.
 #'
 #' @examples
 #' \dontrun{
-#' cohortCounts <- getCohortCounts(resultsDatabaseSchema = resultsDatabaseSchema,
-#'                                 databaseIds = c('eunomia', 'hcup'))
+#' cohortCounts <- getCohortCountResult(resultsDatabaseSchema = resultsDatabaseSchema,
+#'                                      databaseIds = c('eunomia', 'hcup'))
 #' }
 #'
 #' @export
-getCohortCounts <- function(connection = NULL,
-                            connectionDetails = NULL,
-                            databaseIds,
-                            resultsDatabaseSchema = NULL) {
+getCohortCountResult <- function(connection = NULL,
+                                 connectionDetails = NULL,
+                                 databaseIds,
+                                 resultsDatabaseSchema = NULL) {
   table = "cohortCount"
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
-  if (!is.null(connectionDetails) || !is.null(connection)) {
-    checkmate::assertCharacter(x = resultsDatabaseSchema,
-                               min.len = 1,
-                               max.len = 1,
-                               any.missing = FALSE,
-                               add = errorMessage)
-  }
-  checkmate::reportAssertions(collection = errorMessage)
+  errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
+                                                  connectionDetails = connectionDetails,
+                                                  resultsDatabaseSchema = resultsDatabaseSchema,
+                                                  errorMessage = errorMessage)
   
   # route query
   route <- routeDataQuery(connection = connection,
@@ -391,87 +279,43 @@ getCohortCounts <- function(connection = NULL,
 #' Get cohort overlap
 #'
 #' @description
-#' Get cohort overlap data from data stored in cohort diagnostics results data
-#' model. The output of this function may be used to create tables/plots to compare
-#' two cohorts (target and comparator) related to cohort overlap diagnostics. 
-#' This function will look for cohort_overlap table in results data model.
+#' Get cohort overlap data
 #' 
-#' Note: this function relies on data available in Cohort Diagnostics results data model. There are
-#' two methods to connect to the results data model, database mode and in-memory mode.
-#' 
-#' Database mode: If either \code{connectionDetails} or \code{\link[DatabaseConnector]{connect}} is 
-#' provided in the function call, the query is set to database mode. In the absence of both 
-#' \code{connectionDetails} and \code{\link[DatabaseConnector]{connect}}, the query will be in-memory 
-#' mode. In in-memory mode, R will expect the data in results data model to be available in R's memory.
-#' In database mode, R will perform a database query. Objects in R's memory are expected to
-#' follow camelCase naming conventions, while objects in dbms are expected to follow snake-case naming
-#' conventions. In database mode, vocabulary tables (if needed) are used from vocabularySchema (which
-#' defaults to resultsDatabaseSchema.). In in-memory mode, vocabulary tables are assumed to in R's 
-#' memory.
-#'
-#' @template Connection
-#' @param databaseIds    A vector one or more databaseIds to retrieve the results for. This is a character 
-#'                       field value from the databaseId field in the database table of the results data model.
-#' @param targetCohortId        Cohort Id to retrieve the data. This is one of the integer (bigint) value from
-#'                              cohortId field in cohort table of the results data model.
-#' @param comparatorCohortId    Cohort Id to retrieve the data. This is one of the integer (bigint) value from
-#'                              cohortId field in cohort table of the results data model.
-#' @param resultsDatabaseSchema (optional) The databaseSchema where the results data model of cohort diagnostics
-#'                              is stored. This is only required when \code{connectionDetails} or 
-#'                              \code{\link[DatabaseConnector]{connect}} is provided.
+#' @template ModeAndDetails
+#' @template DatabaseIds
+#' @param targetCohortIds        A vector of one or more Cohort Ids.
+#' @param comparatorCohortIds    A vector of one or more Cohort Ids.
 #' 
 #' @return
 #' The function will return a tibble data frame object.
 #'
 #' @examples
 #' \dontrun{
-#' cohortOverlap <- getCohortOverLap(targetCohortId = 342432,
-#'                                   comparatorCohortId = 432423,
-#'                                   databaseIds = c('eunomia', 'hcup'))
+#' cohortOverlap <- getCohortOverLapResult(targetCohortIds = 342432,
+#'                                         comparatorCohortIds = c(432423,34234),
+#'                                         databaseIds = c('eunomia', 'hcup'))
 #' }
 #'
 #' @export
-getCohortOverLap <- function(connection = NULL,
-                             connectionDetails = NULL,
-                             targetCohortId,
-                             comparatorCohortId,
-                             databaseId,
-                             resultsDatabaseSchema = NULL) {
+getCohortOverLapResult <- function(connection = NULL,
+                                   connectionDetails = NULL,
+                                   targetCohortIds,
+                                   comparatorCohortIds,
+                                   databaseIds,
+                                   resultsDatabaseSchema = NULL) {
   table = "cohortOverlap"
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
-  checkmate::assertInt(x = targetCohortId, 
-                       na.ok = FALSE, 
-                       null.ok = FALSE,
-                       lower = 1,
-                       upper = 2^53,
-                       add = errorMessage)
-  checkmate::assertInt(x = comparatorCohortId, 
-                       na.ok = FALSE, 
-                       null.ok = FALSE,
-                       lower = 1,
-                       upper = 2^53,
-                       add = errorMessage)
-  checkmate::assertVector(x = databaseId,
-                          min.len = 1,
-                          any.missing = FALSE,
-                          unique = TRUE,
-                          add = errorMessage)
-  checkmate::assertCharacter(x = databaseId,
-                             min.len = 1,
-                             any.missing = FALSE,
-                             unique = TRUE,
-                             add = errorMessage)
-  
-  if (!is.null(connectionDetails) || !is.null(connection)) {
-    checkmate::assertCharacter(x = resultsDatabaseSchema,
-                               min.len = 1,
-                               max.len = 1,
-                               any.missing = FALSE,
-                               add = errorMessage)
-  }
-  checkmate::reportAssertions(collection = errorMessage)
-  
+  errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
+                                                  connectionDetails = connectionDetails,
+                                                  resultsDatabaseSchema = resultsDatabaseSchema,
+                                                  errorMessage = errorMessage)
+  errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = targetCohortIds,
+                                                 databaseIds = databaseIds,
+                                                 errorMessage = errorMessage)
+  errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = comparatorCohortIds,
+                                                 databaseIds = databaseIds,
+                                                 errorMessage = errorMessage)
   # route query
   route <- routeDataQuery(connection = connection,
                           connectionDetails = connectionDetails,
@@ -488,23 +332,23 @@ getCohortOverLap <- function(connection = NULL,
   if (!is.null(connection)) {
     sql <-   "SELECT *
               FROM  @resultsDatabaseSchema.@table
-              WHERE target_cohort_id = @targetCohortId
-              AND comparator_cohort_id = @comparatorCohortId
-            	AND database_id in c('@databaseId');"
+              WHERE target_cohort_id in (@targetCohortIds)
+              AND comparator_cohort_id in (@comparatorCohortIds)
+            	AND database_id in c('@databaseIds');"
     data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                        sql = sql,
                                                        resultsDatabaseSchema = resultsDatabaseSchema,
                                                        table = SqlRender::camelCaseToSnakeCase(table),
-                                                       targetCohortId = targetCohortId,
-                                                       comparatorCohortId = comparatorCohortId,
-                                                       databaseId = databaseId, 
+                                                       targetCohortId = targetCohortIds,
+                                                       comparatorCohortId = comparatorCohortIds,
+                                                       databaseId = databaseIds, 
                                                        snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {
     data <- get(table) %>% 
-      dplyr::filter(.data$targetCohortId == !!targetCohortId &
-                      .data$comparatorCohortId == !!comparatorCohortId &
-                      .data$databaseId == !!databaseId) %>% 
+      dplyr::filter(.data$targetCohortId %in% !!targetCohortIds &
+                      .data$comparatorCohortId %in% !!comparatorCohortIds &
+                      .data$databaseId %in% !!databaseIds) %>% 
       tidyr::tibble()
   }
   if (nrow(data) == 0) {
@@ -519,28 +363,10 @@ getCohortOverLap <- function(connection = NULL,
 #' Get cohort covariate reference (including temporal)
 #'
 #' @description
-#' Get covariate reference data from data stored in cohort diagnostics results data
-#' model. The output of this function may be used, together with covariate value
-#' to create tables/plots regarding a cohorts characteristics diagnostics. 
-#' 
-#' Note: this function relies on data available in Cohort Diagnostics results data model. There are
-#' two methods to connect to the results data model, database mode and in-memory mode.
-#' 
-#' Database mode: If either \code{connectionDetails} or \code{\link[DatabaseConnector]{connect}} is 
-#' provided in the function call, the query is set to database mode. In the absence of both 
-#' \code{connectionDetails} and \code{\link[DatabaseConnector]{connect}}, the query will be in-memory 
-#' mode. In in-memory mode, R will expect the data in results data model to be available in R's memory.
-#' In database mode, R will perform a database query. Objects in R's memory are expected to
-#' follow camelCase naming conventions, while objects in dbms are expected to follow snake-case naming
-#' conventions. In database mode, vocabulary tables (if needed) are used from vocabularySchema (which
-#' defaults to resultsDatabaseSchema.). In in-memory mode, vocabulary tables are assumed to in R's 
-#' memory.
+#' Get cohort covariate reference (including temporal). 
 #'
-#' @template Connection
+#' @template ModeAndDetails
 #' @param isTemporal     Get temporal covariate references?
-#' @param resultsDatabaseSchema (optional) The databaseSchema where the results data model of cohort diagnostics
-#'                              is stored. This is only required when \code{connectionDetails} or 
-#'                              \code{\link[DatabaseConnector]{connect}} is provided.
 #' 
 #' @return
 #' The function will return a tibble data frame object.
@@ -562,16 +388,10 @@ getCovariateReference <- function(connection = NULL,
                            any.missing = FALSE, 
                            min.len = 1, 
                            max.len = 1)
-  
-  if (!is.null(connectionDetails) || !is.null(connection)) {
-    checkmate::assertCharacter(x = resultsDatabaseSchema,
-                               min.len = 1,
-                               max.len = 1,
-                               any.missing = FALSE,
-                               add = errorMessage)
-  }
-  checkmate::reportAssertions(collection = errorMessage)
-  
+  errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
+                                                  connectionDetails = connectionDetails,
+                                                  resultsDatabaseSchema = resultsDatabaseSchema,
+                                                  errorMessage = errorMessage)
   # route query
   route <- routeDataQuery(connection = connection,
                           connectionDetails = connectionDetails,
@@ -606,31 +426,12 @@ getCovariateReference <- function(connection = NULL,
 }
 
 
-
 #' Get time reference for temporal covariates
 #'
 #' @description
-#' Get time reference data from data stored in cohort diagnostics results data
-#' model. The output of this function may be used, together with temporal covariate value
-#' to create tables/plots related to temporal cohorts characteristics diagnostics. 
-#' 
-#' Note: this function relies on data available in Cohort Diagnostics results data model. There are
-#' two methods to connect to the results data model, database mode and in-memory mode.
-#' 
-#' Database mode: If either \code{connectionDetails} or \code{\link[DatabaseConnector]{connect}} is 
-#' provided in the function call, the query is set to database mode. In the absence of both 
-#' \code{connectionDetails} and \code{\link[DatabaseConnector]{connect}}, the query will be in-memory 
-#' mode. In in-memory mode, R will expect the data in results data model to be available in R's memory.
-#' In database mode, R will perform a database query. Objects in R's memory are expected to
-#' follow camelCase naming conventions, while objects in dbms are expected to follow snake-case naming
-#' conventions. In database mode, vocabulary tables (if needed) are used from vocabularySchema (which
-#' defaults to resultsDatabaseSchema.). In in-memory mode, vocabulary tables are assumed to in R's 
-#' memory.
+#' Get time reference for temporal covariates
 #'
-#' @template Connection
-#' @param resultsDatabaseSchema (optional) The databaseSchema where the results data model of cohort diagnostics
-#'                              is stored. This is only required when \code{connectionDetails} or 
-#'                              \code{\link[DatabaseConnector]{connect}} is provided.
+#' @template ModeAndDetails
 #' 
 #' @return
 #' The function will return a tibble data frame object.
@@ -647,16 +448,10 @@ getTimeReference <- function(connection = NULL,
   table <- 'timeRef'
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
-  
-  if (!is.null(connectionDetails) || !is.null(connection)) {
-    checkmate::assertCharacter(x = resultsDatabaseSchema,
-                               min.len = 1,
-                               max.len = 1,
-                               any.missing = FALSE,
-                               add = errorMessage)
-  }
-  checkmate::reportAssertions(collection = errorMessage)
-  
+  errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
+                                                  connectionDetails = connectionDetails,
+                                                  resultsDatabaseSchema = resultsDatabaseSchema,
+                                                  errorMessage = errorMessage)
   # route query
   route <- routeDataQuery(connection = connection,
                           connectionDetails = connectionDetails,
@@ -689,55 +484,38 @@ getTimeReference <- function(connection = NULL,
 #'
 #' @description
 #' Get cohort covariate value data from data stored in cohort diagnostics results data
-#' model. The output of this function may be used, together with covariate ref
-#' to create tables/plots regarding a cohorts characteristics diagnostics. 
+#' model. The output of this function may be used, together with covariate ref (temporal
+#' covariate ref and time ref if temporal) for cohorts characteristization diagnostics. 
 #' Because of the large volume of covariates, this function allows to filter range of 
 #' covariate_value by providing the minimum and maximum proportion. Its important to note 
 #' that all covariates are expected to output proportions that are between the values 0.0 to 1.0
-#' 
-#' Note: this function relies on data available in Cohort Diagnostics results data model. There are
-#' two methods to connect to the results data model, database mode and in-memory mode.
-#' 
-#' Database mode: If either \code{connectionDetails} or \code{\link[DatabaseConnector]{connect}} is 
-#' provided in the function call, the query is set to database mode. In the absence of both 
-#' \code{connectionDetails} and \code{\link[DatabaseConnector]{connect}}, the query will be in-memory 
-#' mode. In in-memory mode, R will expect the data in results data model to be available in R's memory.
-#' In database mode, R will perform a database query. Objects in R's memory are expected to
-#' follow camelCase naming conventions, while objects in dbms are expected to follow snake-case naming
-#' conventions. In database mode, vocabulary tables (if needed) are used from vocabularySchema (which
-#' defaults to resultsDatabaseSchema.). In in-memory mode, vocabulary tables are assumed to in R's 
-#' memory.
 #'
-#' @template Connection
-#' @param databaseIds    A vector one or more databaseIds to retrieve the results for. This is a character 
-#'                       field value from the databaseId field in the database table of the results data model.
-#' @param cohortIds      Cohort Ids to retrieve the characterization data. 
+#' @template ModeAndDetails
+#' @template CohortIds
+#' @template DatabaseIds
 #' @param isTemporal     (optional) Get temporal covariate values?
 #' @param timeIds        (optional) Used only if isTemporal = TRUE. Do you want to limit to certain
 #'                        'time ids'. By default all time ids are returned. 
-#' @param resultsDatabaseSchema (optional) The databaseSchema where the results data model of cohort diagnostics
-#'                              is stored. This is only required when \code{connectionDetails} or 
-#'                              \code{\link[DatabaseConnector]{connect}} is provided.
 #' 
 #' @return
 #' The function will return a tibble data frame object.
 #'
 #' @examples
 #' \dontrun{
-#' covariateValue <- getPreComputedCovariateValues(cohortId = c(342432,432423),
+#' covariateValue <- getCovariateValueResult(cohortId = c(342432,432423),
 #'                                           databaseIds = c('eunomia', 'hcup'))
 #' }
 #'
 #' @export
-getPreComputedCovariateValues <- function(connection = NULL,
-                                          connectionDetails = NULL,
-                                          cohortIds,
-                                          databaseIds,
-                                          minProportion = 0.01,
-                                          maxProportion = 1,
-                                          isTemporal = TRUE,
-                                          timeIds = NULL,
-                                          resultsDatabaseSchema = NULL) {
+getCovariateValueResult <- function(connection = NULL,
+                                    connectionDetails = NULL,
+                                    cohortIds,
+                                    databaseIds,
+                                    minProportion = 0.01,
+                                    maxProportion = 1,
+                                    isTemporal = TRUE,
+                                    timeIds = NULL,
+                                    resultsDatabaseSchema = NULL) {
   if (isTemporal) {
     table <- 'temporalCovariateValue'
   } else {
@@ -745,35 +523,14 @@ getPreComputedCovariateValues <- function(connection = NULL,
   }
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
-  checkmate::assertIntegerish(x = cohortIds, 
-                              lower = 1,
-                              upper = 2^53,
-                              any.missing = FALSE,
-                              min.len = 1,
-                              unique = TRUE,
-                              null.ok = FALSE,
-                              add = errorMessage)
-  checkmate::assertVector(x = cohortIds,
-                          min.len = 1,
-                          any.missing = FALSE,
-                          unique = TRUE,
-                          add = errorMessage)
-  checkmate::assertVector(x = databaseIds,
-                          min.len = 1,
-                          any.missing = FALSE,
-                          unique = TRUE,
-                          add = errorMessage)
-  checkmate::assertCharacter(x = databaseIds,
-                             min.len = 1,
-                             any.missing = FALSE,
-                             unique = TRUE,
-                             add = errorMessage)
   checkmate::assertLogical(x = isTemporal, 
                            any.missing = FALSE, 
                            min.len = 1, 
                            max.len = 1)
-  checkmate::reportAssertions(collection = errorMessage)
-  
+  errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
+                                                  connectionDetails = connectionDetails,
+                                                  resultsDatabaseSchema = resultsDatabaseSchema,
+                                                  errorMessage = errorMessage)
   if (isTemporal) {
     checkmate::assertInteger(x = timeIds, 
                              lower = 0, 
@@ -782,16 +539,7 @@ getPreComputedCovariateValues <- function(connection = NULL,
                              null.ok = FALSE, 
                              add = errorMessage)
   }
-  
-  if (!is.null(connectionDetails) || !is.null(connection)) {
-    checkmate::assertCharacter(x = resultsDatabaseSchema,
-                               min.len = 1,
-                               max.len = 1,
-                               any.missing = FALSE,
-                               add = errorMessage)
-  }
   checkmate::reportAssertions(collection = errorMessage)
-  
   # route query
   route <- routeDataQuery(connection = connection,
                           connectionDetails = connectionDetails,
@@ -840,7 +588,6 @@ getPreComputedCovariateValues <- function(connection = NULL,
 }
 
 
-
 #' Get cohort covariate comparison (including temporal)
 #'
 #' @description
@@ -851,52 +598,35 @@ getPreComputedCovariateValues <- function(connection = NULL,
 #' covariate_value by providing the minimum and maximum proportion. Its important to note 
 #' that all covariates are expected to output proportions that are between the values 0.0 to 1.0
 #' 
-#' Note: this function relies on data available in Cohort Diagnostics results data model. There are
-#' two methods to connect to the results data model, database mode and in-memory mode.
-#' 
-#' Database mode: If either \code{connectionDetails} or \code{\link[DatabaseConnector]{connect}} is 
-#' provided in the function call, the query is set to database mode. In the absence of both 
-#' \code{connectionDetails} and \code{\link[DatabaseConnector]{connect}}, the query will be in-memory 
-#' mode. In in-memory mode, R will expect the data in results data model to be available in R's memory.
-#' In database mode, R will perform a database query. Objects in R's memory are expected to
-#' follow camelCase naming conventions, while objects in dbms are expected to follow snake-case naming
-#' conventions. In database mode, vocabulary tables (if needed) are used from vocabularySchema (which
-#' defaults to resultsDatabaseSchema.). In in-memory mode, vocabulary tables are assumed to in R's 
-#' memory.
-#'
-#' @template Connection
-#' @param databaseIds    A vector one or more databaseIds to retrieve the results for. This is a character 
-#'                       field value from the databaseId field in the database table of the results data model.
-#' @param targetCohortIds      Cohort Ids to retrieve and serve as target cohorts for comparison.
-#' @param comparatorCohortIds  Cohort Ids to retrieve the serve as comparator cohorts for comparison.
-#' @param isTemporal     (optional) Get temporal covariate values?
-#' @param timeIds        (optional) Used only if isTemporal = TRUE. Do you want to limit to certain
-#'                        'time ids'. By default all time ids are returned. 
-#' @param resultsDatabaseSchema (optional) The databaseSchema where the results data model of cohort diagnostics
-#'                              is stored. This is only required when \code{connectionDetails} or 
-#'                              \code{\link[DatabaseConnector]{connect}} is provided.
+#' @template ModeAndDetails
+#' @template DatabaseIds
+#' @param targetCohortIds        A vector of one or more Cohort Ids.
+#' @param comparatorCohortIds    A vector of one or more Cohort Ids.
+#' @param isTemporal             (optional) Get temporal covariate values?
+#' @param timeIds                (optional) Used only if isTemporal = TRUE. Do you want to limit to certain
+#'                               'time ids'. By default all time ids are returned. 
 #' 
 #' @return
 #' The function will return a tibble data frame object.
 #'
 #' @examples
 #' \dontrun{
-#' covariateValue <- compareCovariateValue(targetCohortId = c(342432,432423),
+#' covariateValue <- compareCovariateValueResult(targetCohortId = c(342432,432423),
 #'                                         comparatorCohortId = c(34243, 342432),
 #'                                         databaseIds = c('eunomia', 'hcup'))
 #' }
 #'
 #' @export
-compareCovariateValue <- function(connection = NULL,
-                                  connectionDetails = NULL,
-                                  targetCohortIds,
-                                  comparatorCohortIds,
-                                  databaseIds,
-                                  minProportion = 0.01,
-                                  maxProportion = 1,
-                                  isTemporal = TRUE,
-                                  timeIds = NULL,
-                                  resultsDatabaseSchema = NULL) {
+compareCovariateValueResult <- function(connection = NULL,
+                                        connectionDetails = NULL,
+                                        targetCohortIds,
+                                        comparatorCohortIds,
+                                        databaseIds,
+                                        minProportion = 0.01,
+                                        maxProportion = 1,
+                                        isTemporal = TRUE,
+                                        timeIds = NULL,
+                                        resultsDatabaseSchema = NULL) {
   if (isTemporal) {
     table <- 'temporalCovariateValue'
   } else {
@@ -904,47 +634,20 @@ compareCovariateValue <- function(connection = NULL,
   }
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
-  checkmate::assertIntegerish(x = targetCohortIds, 
-                              lower = 1,
-                              upper = 2^53,
-                              any.missing = FALSE,
-                              min.len = 1,
-                              unique = TRUE,
-                              null.ok = FALSE,
-                              add = errorMessage)
-  checkmate::assertIntegerish(x = comparatorCohortIds, 
-                              lower = 1,
-                              upper = 2^53,
-                              any.missing = FALSE,
-                              min.len = 1,
-                              unique = TRUE,
-                              null.ok = FALSE,
-                              add = errorMessage)
-  checkmate::assertVector(x = targetCohortIds,
-                          min.len = 1,
-                          any.missing = FALSE,
-                          unique = TRUE,
-                          add = errorMessage)
-  checkmate::assertVector(x = comparatorCohortIds,
-                          min.len = 1,
-                          any.missing = FALSE,
-                          unique = TRUE,
-                          add = errorMessage)
-  checkmate::assertVector(x = databaseIds,
-                          min.len = 1,
-                          any.missing = FALSE,
-                          unique = TRUE,
-                          add = errorMessage)
-  checkmate::assertCharacter(x = databaseIds,
-                             min.len = 1,
-                             any.missing = FALSE,
-                             unique = TRUE,
-                             add = errorMessage)
   checkmate::assertLogical(x = isTemporal, 
                            any.missing = FALSE, 
                            min.len = 1, 
                            max.len = 1)
-  checkmate::reportAssertions(collection = errorMessage)
+  errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
+                                                  connectionDetails = connectionDetails,
+                                                  resultsDatabaseSchema = resultsDatabaseSchema,
+                                                  errorMessage = errorMessage)
+  errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = targetCohortIds,
+                                                 databaseIds = databaseIds,
+                                                 errorMessage = errorMessage)
+  errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = comparatorCohortIds,
+                                                 databaseIds = databaseIds,
+                                                 errorMessage = errorMessage)
   
   if (isTemporal) {
     checkmate::assertInteger(x = timeIds, 
@@ -954,38 +657,30 @@ compareCovariateValue <- function(connection = NULL,
                              null.ok = FALSE, 
                              add = errorMessage)
   }
-  
-  if (!is.null(connectionDetails) || !is.null(connection)) {
-    checkmate::assertCharacter(x = resultsDatabaseSchema,
-                               min.len = 1,
-                               max.len = 1,
-                               any.missing = FALSE,
-                               add = errorMessage)
-  }
   checkmate::reportAssertions(collection = errorMessage)
   
-  cohortsIds <- c(targetCohortIds, comparatorCohortIds) %>% unique() %>% sort()
+  cohortIds <- c(targetCohortIds, comparatorCohortIds) %>% unique() %>% sort()
   
-  covariateValue <- getPreComputedCovariateValues(connection = connection, 
-                                                  connectionDetails = connectionDetails, 
-                                                  cohortIds = cohortIds, 
-                                                  databaseIds = databaseIds, 
-                                                  minProportion = minProportion, 
-                                                  maxProportion = maxProportion, 
-                                                  isTemporal = isTemporal, 
-                                                  timeIds = timeIds, 
-                                                  resultsDatabaseSchema = resultsDatabaseSchema)
+  covariateValue <- getCovariateValueResult(connection = connection, 
+                                            connectionDetails = connectionDetails, 
+                                            cohortIds = cohortIds, 
+                                            databaseIds = databaseIds, 
+                                            minProportion = minProportion, 
+                                            maxProportion = maxProportion, 
+                                            isTemporal = isTemporal, 
+                                            timeIds = timeIds, 
+                                            resultsDatabaseSchema = resultsDatabaseSchema)
   
   targetCovariateValue = covariateValue %>% 
     dplyr::filter(.data$cohortIds %in% targetCohortIds) %>% 
     dplyr::rename(targetCohortId = cohortId)
   comparatorCovariateValue = covariateValue %>% 
-    dplyr::filter(.data$cohortIds %in% comparatorCovariateValue) %>% 
+    dplyr::filter(.data$cohortIds %in% comparatorCohortIds) %>% 
     dplyr::rename(comparatorCohortId = cohortId)
   
   data <- dplyr::full_join(x = targetCovariateValue,
-                        y = comparatorCovariateValue,
-                        suffix = c("1", "2")) %>%
+                           y = comparatorCovariateValue,
+                           suffix = c("1", "2")) %>%
     dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = 0)),
                   sd = sqrt(.data$sd1^2 + .data$sd2^2),
                   stdDiff = (.data$mean2 - .data$mean1)/.data$sd) %>%
@@ -1063,4 +758,39 @@ routeDataQuery <- function(connection = NULL,
     ParallelLogger::logWarn(SqlRender::camelCaseToTitleCase(table), " not found.")
     return("quit")
   }
+}
+
+
+checkErrorResultsDatabaseSchema <- function(errorMessage,
+                                            resultsDatabaseSchema,
+                                            connectionDetails,
+                                            connection) {
+  if (!is.null(connectionDetails) || !is.null(connection)) {
+    checkmate::assertCharacter(x = resultsDatabaseSchema,
+                               min.len = 1,
+                               max.len = 1,
+                               any.missing = FALSE,
+                               add = errorMessage)
+  }
+  checkmate::reportAssertions(collection = errorMessage)
+  return(errorMessage)
+}
+
+
+checkErrorCohortIdsDatabaseIds <- function(errorMessage,
+                                           cohortIds,
+                                           databaseIds) {
+  checkmate::assertIntegerish(x = cohortIds,
+                              null.ok = FALSE,
+                              lower = 1,
+                              upper = 2^53,
+                              any.missing = FALSE,
+                              add = errorMessage)
+  checkmate::assertCharacter(x = databaseIds,
+                             min.len = 1,
+                             any.missing = FALSE,
+                             unique = TRUE,
+                             add = errorMessage)
+  checkmate::reportAssertions(collection = errorMessage)
+  return(errorMessage)
 }

@@ -12,43 +12,47 @@ getCovariateReference(
 )
 }
 \arguments{
-\item{connection}{An object of type \code{connection} as created using the
+\item{connection}{(optional) An object of type \code{connection} as created using the
 \code{\link[DatabaseConnector]{connect}} function in the
 DatabaseConnector package. Can be left NULL if \code{connectionDetails}
 is provided, in which case a new connection will be opened at the start
 of the function, and closed when the function finishes.}
 
-\item{connectionDetails}{An object of type \code{connectionDetails} as created using the
+\item{connectionDetails}{(optional) An object of type \code{connectionDetails} as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
 DatabaseConnector package. Can be left NULL if \code{connection} is
 provided.}
 
 \item{isTemporal}{Get temporal covariate references?}
 
-\item{resultsDatabaseSchema}{(optional) The databaseSchema where the results data model of cohort diagnostics
-is stored. This is only required when \code{connectionDetails} or 
-\code{\link[DatabaseConnector]{connect}} is provided.}
+\item{resultsDatabaseSchema}{(optional) The databaseSchema where the results data model 
+of cohort diagnostics is stored. This is only required when 
+\code{connectionDetails} or \code{\link[DatabaseConnector]{connect}} 
+is provided.}
 }
 \value{
 The function will return a tibble data frame object.
 }
 \description{
-Get covariate reference data from data stored in cohort diagnostics results data
-model. The output of this function may be used, together with covariate value
-to create tables/plots regarding a cohorts characteristics diagnostics. 
+Get cohort covariate reference (including temporal).
+}
+\details{
+Note: The output of this function may be used to create plots or tables. This function relies 
+on data available in Cohort Diagnostics results data model. The function will use one of the two
+methods to connect to the results data model, 1) database mode, and 2) in-memory mode.
 
-Note: this function relies on data available in Cohort Diagnostics results data model. There are
-two methods to connect to the results data model, database mode and in-memory mode.
+Database mode: In this mode, R will look for the results data model in a remote relational dbms. The 
+database system should be one of the databases supported by DatabaseConnector package. If 
+either \code{connectionDetails} or \code{\link[DatabaseConnector]{connect}} parameters are
+populated with an argument during a function call, the connection gets set to database mode. 
 
-Database mode: If either \code{connectionDetails} or \code{\link[DatabaseConnector]{connect}} is 
-provided in the function call, the query is set to database mode. In the absence of both 
-\code{connectionDetails} and \code{\link[DatabaseConnector]{connect}}, the query will be in-memory 
-mode. In in-memory mode, R will expect the data in results data model to be available in R's memory.
-In database mode, R will perform a database query. Objects in R's memory are expected to
-follow camelCase naming conventions, while objects in dbms are expected to follow snake-case naming
-conventions. In database mode, vocabulary tables (if needed) are used from vocabularySchema (which
-defaults to resultsDatabaseSchema.). In in-memory mode, vocabulary tables are assumed to in R's 
-memory.
+In-memory mode: If both \code{connectionDetails} and \code{\link[DatabaseConnector]{connect}} are 
+parameters have a NULL argument then query will be in-memory mode. R will now expect and check
+for a data frame object available in R's memory, as required for the function. The object should be
+an object specificed in Cohort Diagnostics results data model.
+
+Objects in R's memory are expected to follow camelCase naming conventions (see HADES), while objects 
+in a relational database system are expected to follow snake-case naming conventions.
 }
 \examples{
 \dontrun{
