@@ -23,7 +23,7 @@
 #'
 #' @template CohortTable
 #'
-#' @param cohortIds            The cohort definition ID(s0 used to reference the cohort in the cohort
+#' @param cohortIds            The cohort Id(s) used to reference the cohort in the cohort
 #'                             table. If left empty, all cohorts in the table will be included.
 #'
 #' @return
@@ -74,7 +74,7 @@ getCohortCounts <- function(connectionDetails = NULL,
 #'
 #' @template CohortDef
 #'
-#' @param cohortId   The cohort definition ID used to reference the cohort in the cohort table.
+#' @param cohortId   The cohort ID used to reference the cohort in the cohort table.
 #'
 #' @return
 #' A data frame with concepts, and per concept the count of how often the concept was encountered at

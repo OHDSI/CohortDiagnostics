@@ -35,7 +35,7 @@
 #' @param washoutPeriod         The minimum amount of observation time required before the occurrence
 #'                              of a cohort entry. This is also used to eliminate immortal time from
 #'                              the denominator.
-#' @param cohortId              The cohort definition ID used to reference the cohort in the cohort
+#' @param cohortId              The cohort Id used to reference the cohort in the cohort
 #'                              table.
 #'
 #' @return

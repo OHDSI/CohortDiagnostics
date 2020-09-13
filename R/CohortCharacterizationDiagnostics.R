@@ -81,8 +81,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
   }
   
   populationSize <- attr(x = featureExtractionOutput, which = "metaData") %>% 
-    tidyr::as_tibble() %>% 
-    dplyr::rename(cohortDefinitionId = cohortId)
+    tidyr::as_tibble()
   output$analysisRef <- featureExtractionOutput$analysisRef %>% 
     dplyr::collect()
   output$covariateRef <- featureExtractionOutput$covariateRef %>% 
@@ -96,10 +95,10 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
       dplyr::count(featureExtractionOutput$covariates) %>% dplyr::pull() > 0) {
     output$covariates <- featureExtractionOutput$covariates %>% 
       dplyr::collect() %>% 
+      dplyr::rename(cohortId = .data$cohortDefinitionId) %>% 
       dplyr::left_join(populationSize) %>% 
       dplyr::mutate(sd = sqrt(((populationSize * .data$sumValue) + .data$sumValue)/(populationSize^2))) %>% 
-      dplyr::rename(mean = .data$averageValue,
-                    cohortId = .data$cohortDefinitionId) %>% 
+      dplyr::rename(mean = .data$averageValue) %>% 
       dplyr::select(-.data$sumValue, -.data$populationSize)
     result <- dplyr::bind_rows(result, output$covariates) %>% 
       dplyr::distinct()

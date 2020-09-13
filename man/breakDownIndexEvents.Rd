@@ -56,7 +56,7 @@ provided if \code{baseUrl} and \code{cohortId} are provided.}
 \item{cohortSql}{The OHDSI SQL representation of the same cohort definition. Needn't be
 provided if \code{baseUrl} and \code{cohortId} are provided.}
 
-\item{cohortId}{The cohort definition ID used to reference the cohort in the cohort table.}
+\item{cohortId}{The cohort ID used to reference the cohort in the cohort table.}
 }
 \value{
 A data frame with concepts, and per concept the count of how often the concept was encountered at

@@ -67,7 +67,7 @@ getTimeDistributionResult <- function(connection = NULL,
   if (!is.null(connection)) {
     sql <-   "SELECT *
               FROM  @resultsDatabaseSchema.@table
-              WHERE cohort_definition_id in (@cohortId)
+              WHERE cohort_id in (@cohortId)
             	AND database_id in (@databaseIds);"
     data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                        sql = sql,
@@ -79,7 +79,7 @@ getTimeDistributionResult <- function(connection = NULL,
       tidyr::tibble()
   } else {
     data <- get(table) %>% 
-      dplyr::filter(.data$cohortDefinitionId %in% !!cohortIds &
+      dplyr::filter(.data$cohortId %in% !!cohortIds &
                       .data$databaseId %in% !!databaseIds) %>% 
       tidyr::tibble()
   }
@@ -101,6 +101,7 @@ getTimeDistributionResult <- function(connection = NULL,
                   P75 = "p75Value", 
                   P90 = "p90Value", 
                   Max = "maxValue") %>% 
+    dplyr::relocate(.data$cohortId, .data$Database, .data$timeMetric) %>% 
     dplyr::arrange(.data$cohortId, .data$Database, .data$timeMetric)
   return(data)
 }

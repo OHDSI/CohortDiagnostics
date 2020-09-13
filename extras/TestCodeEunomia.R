@@ -26,8 +26,8 @@ CohortDiagnostics::instantiateCohortSet(connectionDetails = connectionDetails,
                                        # incrementalFolder = file.path(folder, "incremental"),
                                         inclusionStatisticsFolder = file.path(folder, "inclusionStatistics"))
 
-# debug(CohortDiagnostics::runCohortDiagnostics)
-# debug(CohortDiagnostics::breakDownIndexEvents)
+debug(CohortDiagnostics::runCohortDiagnostics)
+debug(CohortDiagnostics::breakDownIndexEvents)
 
 CohortDiagnostics::runCohortDiagnostics(connectionDetails = connectionDetails,
                                         cdmDatabaseSchema = cdmDatabaseSchema,

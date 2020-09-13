@@ -31,10 +31,10 @@ this should include both the database and schema name, for example
 
 \item{cohortTable}{Name of the cohort table.}
 
-\item{targetCohortId}{The cohort definition ID used to reference the target cohort in the
+\item{targetCohortId}{The cohort ID used to reference the target cohort in the
 cohort table.}
 
-\item{comparatorCohortId}{The cohort definition ID used to reference the comparator cohort in the
+\item{comparatorCohortId}{The cohort ID used to reference the comparator cohort in the
 cohort table.}
 }
 \value{

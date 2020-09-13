@@ -50,7 +50,7 @@ privileges for storing temporary tables.}
 of a cohort entry. This is also used to eliminate immortal time from
 the denominator.}
 
-\item{cohortId}{The cohort definition ID used to reference the cohort in the cohort
+\item{cohortId}{The cohort Id used to reference the cohort in the cohort
 table.}
 }
 \value{

@@ -187,7 +187,7 @@ runCohortDiagnostics <- function(packageName = NULL,
            dplyr::filter(.data$count > 0)) > 0) {
     instantiatedCohorts <- recordCountOfInstantiatedCohorts$cohort %>% 
       dplyr::filter(.data$count > 0) %>% 
-      dplyr::pull(.data$cohortDefinitionId)
+      dplyr::pull(.data$cohortId)
     ParallelLogger::logInfo("\n- Found ", 
                             scales::comma(length(instantiatedCohorts)), 
                             " of the ",
@@ -301,7 +301,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   }
   
   
-  ##############DESIGN DIAGNOSTICS###########################################
+  ############## DESIGN DIAGNOSTICS ####### TO BE SEPERATED OUT ##############
   if (runIncludedSourceConcepts || runOrphanConcepts) {
     ParallelLogger::logInfo("------------------------------------")
     ParallelLogger::logInfo("- Design diagnostics included source concepts/orphan concepts. Started at ", Sys.time())

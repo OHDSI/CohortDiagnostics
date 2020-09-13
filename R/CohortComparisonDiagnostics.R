@@ -23,9 +23,9 @@
 #'
 #' @template CohortTable
 #'
-#' @param targetCohortId       The cohort definition ID used to reference the target cohort in the
+#' @param targetCohortId       The cohort ID used to reference the target cohort in the
 #'                             cohort table.
-#' @param comparatorCohortId   The cohort definition ID used to reference the comparator cohort in the
+#' @param comparatorCohortId   The cohort ID used to reference the comparator cohort in the
 #'                             cohort table.
 #'
 #' @return
