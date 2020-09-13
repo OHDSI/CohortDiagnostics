@@ -565,23 +565,22 @@ processInclusionStats <- function(inclusion,
       dplyr::distinct() %>% 
       dplyr::inner_join(inclusion_stats %>% 
                           dplyr::filter(.data$mode_id == 0) %>% 
-                          dplyr::select(.data$rule_sequence, .data$person_count, .data$gain_count, .data$person_total)) %>% 
-      dplyr::mutate(remain = 0)
+                          dplyr::select(.data$rule_sequence, .data$person_count, .data$gain_count, .data$person_total))
     
-    mask = 0
-    for (ruleId in 0:(nrow(result) - 1)) {
-      if (nrow(inclusion_results) > 0) {
-        mask <- bitwOr(mask, 2^ruleId)
-        idx <- bitwAnd(inclusion_results$inclusion_rule_mask, mask) == mask
-        result$remain[result$rule_sequence == ruleId] <- sum(inclusion_results$person_count[idx])
-      }
-    }
-    colnames(result) <- c("rule_sequence_id",
-                          "rule_name",
-                          "meet_subjects",
-                          "gain_subjects",
-                          "total_subjects",
-                          "remain_subjects")
+    # mask = 0
+    # for (ruleId in 0:(nrow(result) - 1)) {
+    #   if (nrow(inclusion_results) > 0) {
+    #     mask <- bitwOr(mask, 2^ruleId)
+    #     idx <- bitwAnd(inclusion_results$inclusion_rule_mask, mask) == mask
+    #     result$remain[result$rule_sequence == ruleId] <- sum(inclusion_results$person_count[idx])
+    #   }
+    # }
+    # colnames(result) <- c("rule_sequence_id",
+    #                       "rule_name",
+    #                       "meet_subjects",
+    #                       "gain_subjects",
+    #                       "total_subjects",
+    #                       "remain_subjects")
   } else {
     if (nrow(inclusion) == 0) {
       return(list())

@@ -282,10 +282,10 @@ runCohortDiagnostics <- function(packageName = NULL,
       if (nrow(stats) > 0) {
         stats <- stats %>% 
           dplyr::mutate(databaseId = !!databaseId)
-        stats <- enforceMinCellValue(data = stats, fieldName = "meet_subjects", minValues = minCellCount)
-        stats <- enforceMinCellValue(data = stats, fieldName = "gain_subjects", minValues = minCellCount)
-        stats <- enforceMinCellValue(data = stats, fieldName = "total_subjects", minValues = minCellCount)
-        stats <- enforceMinCellValue(data = stats, fieldName = "remain_subjects", minValues = minCellCount)
+        stats <- enforceMinCellValue(data = stats, fieldName = "person_count", minValues = minCellCount)
+        stats <- enforceMinCellValue(data = stats, fieldName = "gain_count", minValues = minCellCount)
+        stats <- enforceMinCellValue(data = stats, fieldName = "person_total", minValues = minCellCount)
+        # stats <- enforceMinCellValue(data = stats, fieldName = "remain_subjects", minValues = minCellCount)
       }
       writeToCsv(stats, 
                  file.path(exportFolder, "inclusion_rule_stats.csv"), 
