@@ -105,6 +105,7 @@ getTimeDistributionResult <- function(connection = NULL,
 }
 
 
+
 #' Get incidence rate results
 #'
 #' @description
@@ -207,6 +208,7 @@ getIncidenceRateResult <- function(connection = NULL,
 }
 
 
+
 #' Get cohort counts
 #'
 #' @description
@@ -274,6 +276,7 @@ getCohortCountResult <- function(connection = NULL,
     dplyr::relocate(.data$cohortId, .data$cohortName)
   return(data)
 }
+
 
 
 #' Get cohort overlap
@@ -360,6 +363,7 @@ getCohortOverLapResult <- function(connection = NULL,
 }
 
 
+
 #' Get cohort covariate reference (including temporal)
 #'
 #' @description
@@ -431,6 +435,7 @@ getCovariateReference <- function(connection = NULL,
 }
 
 
+
 #' Get time reference for temporal covariates
 #'
 #' @description
@@ -485,6 +490,8 @@ getTimeReference <- function(connection = NULL,
   return(data)
 }
 
+
+
 #' Get cohort covariate (including temporal)
 #'
 #' @description
@@ -507,7 +514,7 @@ getTimeReference <- function(connection = NULL,
 #'
 #' @examples
 #' \dontrun{
-#' covariateValue <- getCovariateValueResult(cohortId = c(342432,432423),
+#' covariateValue <- getCovariateValueResult(cohortIds = c(342432,432423),
 #'                                           databaseIds = c('eunomia', 'hcup'))
 #' }
 #'
@@ -561,7 +568,7 @@ getCovariateValueResult <- function(connection = NULL,
   if (!is.null(connection)) {
     sql <-   "SELECT *
               FROM  @resultsDatabaseSchema.@table
-              WHERE cohort_id in (@cohortId)
+              WHERE cohort_id in (@cohortIds)
             	AND database_id in ('@databaseIds')
               {@isTemporal == TRUE} ? {AND time_id in ('@timeIds')}
               AND mean >= @minProportion
@@ -569,7 +576,7 @@ getCovariateValueResult <- function(connection = NULL,
     data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                        sql = sql,
                                                        resultsDatabaseSchema = resultsDatabaseSchema,
-                                                       cohortId = cohortId,
+                                                       cohortId = cohortIds,
                                                        databaseIds = databaseIds, 
                                                        table = SqlRender::camelCaseToSnakeCase(table),
                                                        isTemporal = isTemporal,
@@ -580,7 +587,7 @@ getCovariateValueResult <- function(connection = NULL,
       tidyr::tibble()
   } else {
     data <- get(table) %>% 
-      dplyr::filter(.data$cohortId %in% cohortId,
+      dplyr::filter(.data$cohortId %in% cohortIds,
                     .data$databaseId %in% databaseIds,
                     .data$mean >= minProportion,
                     .data$mean <= maxProportion)
@@ -591,6 +598,7 @@ getCovariateValueResult <- function(connection = NULL,
   }
   return(data)
 }
+
 
 
 #' Get cohort covariate comparison (including temporal)
@@ -694,6 +702,8 @@ compareCovariateValueResult <- function(connection = NULL,
   
   return(data)
 }
+
+
 
 routeDataQuery <- function(connection = NULL,
                            connectionDetails = NULL,

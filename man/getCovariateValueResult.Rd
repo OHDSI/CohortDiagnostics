@@ -75,7 +75,7 @@ in a relational database system are expected to follow snake-case naming convent
 }
 \examples{
 \dontrun{
-covariateValue <- getCovariateValueResult(cohortId = c(342432,432423),
+covariateValue <- getCovariateValueResult(cohortIds = c(342432,432423),
                                           databaseIds = c('eunomia', 'hcup'))
 }
 
