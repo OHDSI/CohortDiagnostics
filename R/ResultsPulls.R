@@ -255,7 +255,7 @@ getIncidenceRate <- function(connection = NULL,
   
   # perform query
   if (!is.null(connection)) {
-    sql <-   "SELECT database_id, incidence_rate, person_years, cohort_count
+    sql <-   "SELECT *
               FROM  @resultsDatabaseSchema.@table
               WHERE cohort_id = @cohortId
             	AND database_id in c('@databaseIds')
@@ -282,7 +282,6 @@ getIncidenceRate <- function(connection = NULL,
                       is.na(.data$gender) == stratifyByGender &
                       is.na(.data$ageGroup) == stratifyByAgeGroup &
                       is.na(.data$calendarYear) == stratifyByCalendarYear) %>% 
-      dplyr::select(.data$databaseId, .data$incidenceRate, .data$personYears, .data$cohortCount) %>% 
       tidyr::tibble()
   }
   
