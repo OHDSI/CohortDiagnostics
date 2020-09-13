@@ -30,8 +30,8 @@
 #'
 #' @examples
 #' \dontrun{
-#' timeDistribution <- getTimeDistributionResult(cohortId = 343242,
-#'                                               databaseId = 'eunomia')
+#' timeDistribution <- getTimeDistributionResult(cohortIds = 343242,
+#'                                               databaseIds = 'eunomia')
 #' }
 #'
 #' @export
@@ -49,7 +49,7 @@ getTimeDistributionResult <- function(connection = NULL,
                                                   errorMessage = errorMessage)
   errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = cohortIds,
                                                  databaseIds = databaseIds,
-                                                  errorMessage = errorMessage)
+                                                 errorMessage = errorMessage)
   # route query
   route <- routeDataQuery(connection = connection,
                           connectionDetails = connectionDetails,
@@ -100,7 +100,8 @@ getTimeDistributionResult <- function(connection = NULL,
                   Median = "medianValue", 
                   P75 = "p75Value", 
                   P90 = "p90Value", 
-                  Max = "maxValue")
+                  Max = "maxValue") %>% 
+    dplyr::arrange(.data$cohortId, .data$Database, .data$timeMetric)
   return(data)
 }
 
@@ -124,8 +125,8 @@ getTimeDistributionResult <- function(connection = NULL,
 #'
 #' @examples
 #' \dontrun{
-#' incidenceRate <- getIncidenceRateResult(cohortId = 343242,
-#'                                   databaseIds = c('eunomia', 'hcup'))
+#' incidenceRate <- getIncidenceRateResult(cohortIds = 343242,
+#'                                         databaseIds = c('eunomia', 'hcup'))
 #' }
 #'
 #' @export
@@ -204,7 +205,7 @@ getIncidenceRateResult <- function(connection = NULL,
     ParallelLogger::logWarn("No records retrieved for 'incidence rate'.")
     return(NULL)
   }
-  return(data)
+  return(data %>% dplyr::arrange(.data$cohortId, .data$databaseId))
 }
 
 
@@ -221,8 +222,7 @@ getIncidenceRateResult <- function(connection = NULL,
 #'
 #' @examples
 #' \dontrun{
-#' cohortCounts <- getCohortCountResult(resultsDatabaseSchema = resultsDatabaseSchema,
-#'                                      databaseIds = c('eunomia', 'hcup'))
+#' cohortCounts <- getCohortCountResult(databaseIds = c('eunomia', 'hcup'))
 #' }
 #'
 #' @export
@@ -273,7 +273,8 @@ getCohortCountResult <- function(connection = NULL,
     return(NULL)
   }
   data <- data %>% 
-    dplyr::relocate(.data$cohortId, .data$cohortName)
+    dplyr::relocate(.data$databaseId, .data$cohortId, .data$cohortName) %>% 
+    dplyr::arrange(.data$cohortId, .data$databaseId)
   return(data)
 }
 
@@ -358,7 +359,8 @@ getCohortOverLapResult <- function(connection = NULL,
     return(NULL)
   }
   data <- data %>% 
-    dplyr::relocate(.data$databaseId, .data$targetCohortId, .data$comparatorCohortId)
+    dplyr::relocate(.data$databaseId, .data$targetCohortId, .data$comparatorCohortId) %>% 
+    dplyr::arrange(.data$databaseId, .data$targetCohortId, .data$comparatorCohortId)
   return(data)
 }
 
@@ -377,7 +379,7 @@ getCohortOverLapResult <- function(connection = NULL,
 #'
 #' @examples
 #' \dontrun{
-#' covariateReference <- getCovariateReference()
+#' covariateReference <- getCovariateReference(isTemporal = FALSE)
 #' }
 #'
 #' @export
@@ -431,7 +433,7 @@ getCovariateReference <- function(connection = NULL,
     # because of change in concept_name. See https://github.com/OHDSI/CohortDiagnostics/issues/162
     dplyr::group_by(.data$covariateId) %>% 
     dplyr::slice(1)
-  return(data)
+  return(data %>% dplyr::arrange(.data$covariateId))
 }
 
 
@@ -455,7 +457,7 @@ getCovariateReference <- function(connection = NULL,
 getTimeReference <- function(connection = NULL,
                              connectionDetails = NULL,
                              resultsDatabaseSchema = NULL){
-  table <- 'timeRef'
+  table <- 'temporalTimeRef'
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
   errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
@@ -487,7 +489,7 @@ getTimeReference <- function(connection = NULL,
   } else {
     data <- get(table)
   }
-  return(data)
+  return(data %>% dplyr::arrange(x = .data$timeId))
 }
 
 
@@ -543,20 +545,17 @@ getCovariateValueResult <- function(connection = NULL,
                                                   connectionDetails = connectionDetails,
                                                   resultsDatabaseSchema = resultsDatabaseSchema,
                                                   errorMessage = errorMessage)
-  if (isTemporal) {
-    checkmate::assertInteger(x = timeIds, 
-                             lower = 0, 
-                             any.missing = FALSE, 
-                             unique = TRUE, 
-                             null.ok = FALSE, 
-                             add = errorMessage)
-  }
+  checkmate::assertIntegerish(x = timeIds, 
+                              lower = 0, 
+                              any.missing = FALSE, 
+                              unique = TRUE, 
+                              null.ok = TRUE,
+                              add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
   # route query
   route <- routeDataQuery(connection = connection,
                           connectionDetails = connectionDetails,
                           table = table)
-  
   if (route == 'quit') {
     ParallelLogger::logWarn("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
     return(NULL)
@@ -596,7 +595,7 @@ getCovariateValueResult <- function(connection = NULL,
         dplyr::filter(.data$timeId %in% timeIds)
     }
   }
-  return(data)
+  return(data %>% dplyr::arrange(.data$cohortId, .data$databaseId, .data$covariateId))
 }
 
 
@@ -624,9 +623,9 @@ getCovariateValueResult <- function(connection = NULL,
 #'
 #' @examples
 #' \dontrun{
-#' covariateValue <- compareCovariateValueResult(targetCohortId = c(342432,432423),
-#'                                         comparatorCohortId = c(34243, 342432),
-#'                                         databaseIds = c('eunomia', 'hcup'))
+#' covariateValue <- compareCovariateValueResult(targetCohortIds = c(342432,432423),
+#'                                               comparatorCohortIds = c(34243, 342432),
+#'                                               databaseIds = c('eunomia', 'hcup'))
 #' }
 #'
 #' @export
@@ -661,15 +660,12 @@ compareCovariateValueResult <- function(connection = NULL,
   errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = comparatorCohortIds,
                                                  databaseIds = databaseIds,
                                                  errorMessage = errorMessage)
-  
-  if (isTemporal) {
-    checkmate::assertInteger(x = timeIds, 
-                             lower = 0, 
-                             any.missing = FALSE, 
-                             unique = TRUE, 
-                             null.ok = FALSE, 
-                             add = errorMessage)
-  }
+  checkmate::assertInteger(x = timeIds, 
+                           lower = 0, 
+                           any.missing = FALSE, 
+                           unique = TRUE, 
+                           null.ok = FALSE, 
+                           add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
   
   cohortIds <- c(targetCohortIds, comparatorCohortIds) %>% unique() %>% sort()
@@ -698,7 +694,8 @@ compareCovariateValueResult <- function(connection = NULL,
                   sd = sqrt(.data$sd1^2 + .data$sd2^2),
                   stdDiff = (.data$mean2 - .data$mean1)/.data$sd) %>%
     dplyr::arrange(-abs(.data$stdDiff)) %>%
-    dplyr::mutate(absStdDiff = abs(.data$stdDiff))
+    dplyr::mutate(absStdDiff = abs(.data$stdDiff)) %>% 
+    dplyr::arrange(.data$databaseId, .data$covariateId)
   
   return(data)
 }

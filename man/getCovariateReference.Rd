@@ -56,7 +56,7 @@ in a relational database system are expected to follow snake-case naming convent
 }
 \examples{
 \dontrun{
-covariateReference <- getCovariateReference()
+covariateReference <- getCovariateReference(isTemporal = FALSE)
 }
 
 }

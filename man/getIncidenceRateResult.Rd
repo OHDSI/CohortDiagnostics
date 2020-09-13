@@ -73,8 +73,8 @@ in a relational database system are expected to follow snake-case naming convent
 }
 \examples{
 \dontrun{
-incidenceRate <- getIncidenceRateResult(cohortId = 343242,
-                                  databaseIds = c('eunomia', 'hcup'))
+incidenceRate <- getIncidenceRateResult(cohortIds = 343242,
+                                        databaseIds = c('eunomia', 'hcup'))
 }
 
 }

@@ -58,8 +58,7 @@ in a relational database system are expected to follow snake-case naming convent
 }
 \examples{
 \dontrun{
-cohortCounts <- getCohortCountResult(resultsDatabaseSchema = resultsDatabaseSchema,
-                                     databaseIds = c('eunomia', 'hcup'))
+cohortCounts <- getCohortCountResult(databaseIds = c('eunomia', 'hcup'))
 }
 
 }

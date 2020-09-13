@@ -61,8 +61,8 @@ in a relational database system are expected to follow snake-case naming convent
 }
 \examples{
 \dontrun{
-timeDistribution <- getTimeDistributionResult(cohortId = 343242,
-                                              databaseId = 'eunomia')
+timeDistribution <- getTimeDistributionResult(cohortIds = 343242,
+                                              databaseIds = 'eunomia')
 }
 
 }
