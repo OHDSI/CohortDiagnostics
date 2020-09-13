@@ -364,7 +364,7 @@ getCohortCounts <- function(connection = NULL,
   if (!is.null(connection)) {
     sql <-   "SELECT *
               FROM  @resultsDatabaseSchema.@table
-            	WHERE database_id in c('@databaseIds');;"
+            	WHERE database_id in c('@databaseIds');"
     data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                        sql = sql,
                                                        resultsDatabaseSchema = resultsDatabaseSchema, 
@@ -373,7 +373,8 @@ getCohortCounts <- function(connection = NULL,
                                                        snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {
-    data <- get(table) %>% 
+    data <- get(table) %>%
+      dplyr::left_join(cohort) %>% 
       dplyr::filter(.data$databaseId %in% databaseIds) %>% 
       tidyr::tibble()
   }
