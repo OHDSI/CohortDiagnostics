@@ -9,9 +9,9 @@ getIncidenceRate(
   connectionDetails = NULL,
   cohortId,
   databaseIds,
-  stratifyByGender = FALSE,
-  stratifyByAgeGroup = FALSE,
-  stratifyByCalendarYear = FALSE,
+  stratifyByGender = TRUE,
+  stratifyByAgeGroup = TRUE,
+  stratifyByCalendarYear = TRUE,
   minPersonYears = 1000,
   resultsDatabaseSchema = NULL
 )
@@ -21,9 +21,9 @@ getIncidenceRate(
   connectionDetails = NULL,
   cohortId,
   databaseIds,
-  stratifyByGender = FALSE,
-  stratifyByAgeGroup = FALSE,
-  stratifyByCalendarYear = FALSE,
+  stratifyByGender = TRUE,
+  stratifyByAgeGroup = TRUE,
+  stratifyByCalendarYear = TRUE,
   minPersonYears = 1000,
   resultsDatabaseSchema = NULL
 )

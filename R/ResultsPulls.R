@@ -61,6 +61,7 @@ getTimeDistribution <- function(connection = NULL,
                                 cohortId,
                                 databaseId,
                                 resultsDatabaseSchema = NULL) {
+  table = "timeDistribution"
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertInt(x = cohortId, 
@@ -85,37 +86,35 @@ getTimeDistribution <- function(connection = NULL,
   }
   checkmate::reportAssertions(collection = errorMessage)
   
-  ## set up connection to server
-  if (is.null(connection)) {
-    if (!is.null(connectionDetails)) {
-      connection <- DatabaseConnector::connect(connectionDetails)
-      on.exit(DatabaseConnector::disconnect(connection))
-    } else {
-      ParallelLogger::logInfo(" \n - No connection or connectionDetails provided.")
-      ParallelLogger::logInfo("  Checking if required objects existsin R memory.")
-      if (exists('timeDistribution')) {
-        ParallelLogger::logInfo("  'time distribution' data object found in R memory. Continuing.")
-      } else {
-        ParallelLogger::logWarn("  'time distribution' data object not found in R memory. Exiting.")
-        return(NULL)
-      }
-    }
+  # route query
+  route <- routeDataQuery(connection = connection,
+                          connectionDetails = connectionDetails,
+                          table = table, 
+                          databaseSchema = resultsDatabaseSchema)
+  
+  if (route == 'quit') {
+    ParallelLogger::logWarn("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    return(NULL)
+  } else if (route == 'memory') {
+    connection <- NULL
   }
   
+  # perform query
   if (!is.null(connection)) {
     sql <-   "SELECT *
-              FROM  @resultsDatabaseSchema.time_distribution
+              FROM  @resultsDatabaseSchema.@table
               WHERE cohort_definition_id = @cohortId
             	AND database_id = '@databaseId';"
     data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                        sql = sql,
                                                        resultsDatabaseSchema = resultsDatabaseSchema,
+                                                       table = SqlRender::camelCaseToSnakeCase(table),
                                                        cohortId = cohortId,
                                                        database_id = databaseId, 
                                                        snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {
-    data <- timeDistribution %>% 
+    data <- get(table) %>% 
       dplyr::filter(.data$cohortDefinitionId == cohortId &
                       .data$databaseId %in% databaseId) %>% 
       dplyr::select(-.data$cohortDefinitionId, .data$databaseId) %>% 
@@ -123,7 +122,7 @@ getTimeDistribution <- function(connection = NULL,
   }
   
   if (nrow(data) == 0) {
-    ParallelLogger::logWarn("No records retrieved for 'time distribution'.")
+    ParallelLogger::logWarn("No records retrieved for ", SqlRender::camelCaseToTitleCase(table), ".")
     return(NULL)
   }
   
@@ -150,7 +149,6 @@ getTimeDistribution <- function(connection = NULL,
                   P75 = "p75Value", 
                   P90 = "p90Value", 
                   Max = "maxValue")
-  
   return(data)
 }
 
@@ -208,6 +206,7 @@ getIncidenceRate <- function(connection = NULL,
                              stratifyByCalendarYear = TRUE,
                              minPersonYears = 1000,
                              resultsDatabaseSchema = NULL) {
+  table = "incidenceRate"
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertInt(x = cohortId, 
@@ -242,26 +241,22 @@ getIncidenceRate <- function(connection = NULL,
                            add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
   
-  ## set up connection to server
-  if (is.null(connection)) {
-    if (!is.null(connectionDetails)) {
-      connection <- DatabaseConnector::connect(connectionDetails)
-      on.exit(DatabaseConnector::disconnect(connection))
-    } else {
-      ParallelLogger::logInfo(" \n - No connection or connectionDetails provided.")
-      ParallelLogger::logInfo("  Checking if required objects existsin R memory.")
-      if (exists('incidenceRate')) {
-        ParallelLogger::logInfo("  'incidence rate' data object found in R memory. Continuing.")
-      } else {
-        ParallelLogger::logWarn("  'incidence rate' data object not found in R memory. Exiting.")
-        return(NULL)
-      }
-    }
+  # route query
+  route <- routeDataQuery(connection = connection,
+                          connectionDetails = connectionDetails,
+                          table = table)
+  
+  if (route == 'quit') {
+    ParallelLogger::logWarn("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    return(NULL)
+  } else if (route == 'memory') {
+    connection <- NULL
   }
   
+  # perform query
   if (!is.null(connection)) {
     sql <-   "SELECT database_id, incidence_rate, person_years, cohort_count
-              FROM  @resultsDatabaseSchema.incidence_rate
+              FROM  @resultsDatabaseSchema.@table
               WHERE cohort_id = @cohortId
             	AND database_id in c('@databaseIds')
               {@gender == TRUE} ? {AND gender ISNULL} : {AND gender NOT ISNULL}
@@ -271,6 +266,7 @@ getIncidenceRate <- function(connection = NULL,
     data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                        sql = sql,
                                                        resultsDatabaseSchema = resultsDatabaseSchema,
+                                                       table = SqlRender::camelCaseToSnakeCase(table),
                                                        cohortId = cohortId,
                                                        databaseIds = databaseIds,
                                                        gender = stratifyByGender,
@@ -280,7 +276,7 @@ getIncidenceRate <- function(connection = NULL,
                                                        snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {
-    data <- incidenceRate %>% 
+    data <- get(table) %>% 
       dplyr::filter(.data$cohortId == cohortId &
                       .data$databaseId %in% databaseIds &
                       is.na(.data$gender) == stratifyByGender &
@@ -341,6 +337,7 @@ getCohortCounts <- function(connection = NULL,
                             connectionDetails = NULL,
                             databaseIds,
                             resultsDatabaseSchema = NULL) {
+  table = "cohortCount"
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
   if (!is.null(connectionDetails) || !is.null(connection)) {
@@ -352,47 +349,39 @@ getCohortCounts <- function(connection = NULL,
   }
   checkmate::reportAssertions(collection = errorMessage)
   
-  ## set up connection to server
-  if (is.null(connection)) {
-    if (!is.null(connectionDetails)) {
-      connection <- DatabaseConnector::connect(connectionDetails)
-      on.exit(DatabaseConnector::disconnect(connection))
-    } else {
-      ParallelLogger::logInfo(" \n - No connection or connectionDetails provided.")
-      ParallelLogger::logInfo("  Checking if required objects existsin R memory.")
-      if (exists('cohortCount') && exists('cohort')) {
-        ParallelLogger::logInfo("  'cohort count' & 'cohort' data object found in R memory. Continuing.")
-      } else {
-        ParallelLogger::logWarn("  'cohort count' or 'cohort' data object not found in R memory. Exiting.")
-        return(NULL)
-      }
-    }
+  # route query
+  route <- routeDataQuery(connection = connection,
+                          connectionDetails = connectionDetails,
+                          table = table)
+  
+  if (route == 'quit') {
+    ParallelLogger::logWarn("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    return(NULL)
+  } else if (route == 'memory') {
+    connection <- NULL
   }
   
+  # perform query
   if (!is.null(connection)) {
-    sql <-   "SELECT cc.*, c.cohort_name
-              FROM  @resultsDatabaseSchema.cohort_count cc
-              INNER JOIN @resulsDatabaseSchema.cohort c
-              ON cc.cohort_id = c.cohort_id
+    sql <-   "SELECT *
+              FROM  @resultsDatabaseSchema.@table
             	WHERE database_id in c('@databaseIds');;"
     data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                        sql = sql,
                                                        resultsDatabaseSchema = resultsDatabaseSchema, 
                                                        databaseIds = databaseIds,
+                                                       table = SqlRender::camelCaseToSnakeCase(table),
                                                        snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {
-    data <- cohortCount %>% 
+    data <- get(table) %>% 
       dplyr::filter(.data$databaseId %in% databaseIds) %>% 
-      dplyr::inner_join(cohort %>% dplyr::select(.data$cohortId, .data$cohortName)) %>% 
       tidyr::tibble()
   }
-  
   if (nrow(data) == 0) {
-    ParallelLogger::logWarn("No records retrieved for 'cohort count'.")
+    ParallelLogger::logWarn("No records retrieved for '", SqlRender::camelCaseToTitleCase(table), "'")
     return(NULL)
   }
-  
   data <- data %>% 
     dplyr::relocate(.data$cohortId, .data$cohortName)
   return(data)
@@ -448,6 +437,7 @@ getCohortOverLap <- function(connection = NULL,
                              comparatorCohortId,
                              databaseIds,
                              resultsDatabaseSchema = NULL) {
+  table = "cohortOverlap"
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertInt(x = targetCohortId, 
@@ -482,58 +472,51 @@ getCohortOverLap <- function(connection = NULL,
   }
   checkmate::reportAssertions(collection = errorMessage)
   
-  ## set up connection to server
-  if (is.null(connection)) {
-    if (!is.null(connectionDetails)) {
-      connection <- DatabaseConnector::connect(connectionDetails)
-      on.exit(DatabaseConnector::disconnect(connection))
-    } else {
-      ParallelLogger::logInfo(" \n - No connection or connectionDetails provided.")
-      ParallelLogger::logInfo("  Checking if required objects existsin R memory.")
-      if (exists('cohortOverlap')) {
-        ParallelLogger::logInfo("  'cohort overlap' data object found in R memory. Continuing.")
-      } else {
-        ParallelLogger::logWarn("  'cohort overlap' data object not found in R memory. Exiting.")
-        return(NULL)
-      }
-    }
+  # route query
+  route <- routeDataQuery(connection = connection,
+                          connectionDetails = connectionDetails,
+                          table = table)
+  
+  if (route == 'quit') {
+    ParallelLogger::logWarn("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    return(NULL)
+  } else if (route == 'memory') {
+    connection <- NULL
   }
   
+  # perform query
   if (!is.null(connection)) {
     sql <-   "SELECT *
-              FROM  @resultsDatabaseSchema.cohort_overlap
+              FROM  @resultsDatabaseSchema.@table
               WHERE target_cohort_id = @targetCohortId
               AND comparator_cohort_id = @comparatorCohortId
             	AND database_id in c('@databaseIds');"
     data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                        sql = sql,
                                                        resultsDatabaseSchema = resultsDatabaseSchema,
+                                                       table = SqlRender::camelCaseToSnakeCase(table),
                                                        targetCohortId = targetCohortId,
                                                        comparatorCohortId = comparatorCohortId,
                                                        databaseIds = databaseIds, 
                                                        snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {
-    data <- cohortOverlap %>% 
+    data <- get(table) %>% 
       dplyr::filter(.data$targetCohortId == targetCohortId &
                       .data$comparatorCohortId == comparatorCohortId &
                       .data$databaseId %in% databaseIds) %>% 
       tidyr::tibble()
   }
-  
   if (nrow(data) == 0) {
     return(NULL)
   }
   data <- data %>% 
     dplyr::relocate(.data$databaseId, .data$targetCohortId, .data$comparatorCohortId)
-  
   return(data)
 }
 
 
-
-
-#' Get cohort covariate
+#' Get cohort covariate (including temporal)
 #'
 #' @description
 #' Get cohort covariate value data from data stored in cohort diagnostics results data
@@ -560,7 +543,9 @@ getCohortOverLap <- function(connection = NULL,
 #' @param databaseIds    A vector one or more databaseIds to retrieve the results for. This is a character 
 #'                       field value from the databaseId field in the database table of the results data model.
 #' @param cohortIds      Cohort Ids to retrieve the characterization data. 
-#' @param isTemporal     Get temporal covariate values?
+#' @param isTemporal     (optional) Get temporal covariate values?
+#' @param timeIds        (optional) Used only if isTemporal = TRUE. Do you want to limit to certain
+#'                        'time ids'. By default all time ids are returned. 
 #' @param resultsDatabaseSchema (optional) The databaseSchema where the results data model of cohort diagnostics
 #'                              is stored. This is only required when \code{connectionDetails} or 
 #'                              \code{\link[DatabaseConnector]{connect}} is provided.
@@ -570,19 +555,25 @@ getCohortOverLap <- function(connection = NULL,
 #'
 #' @examples
 #' \dontrun{
-#' covariateValue <- getCohortCovariateValue(cohortId = c(342432,432423),
+#' covariateValue <- getCovariateValue(cohortId = c(342432,432423),
 #'                                           databaseIds = c('eunomia', 'hcup'))
 #' }
 #'
 #' @export
-getCohortCovariateValue <- function(connection = NULL,
-                                    connectionDetails = NULL,
-                                    cohortIds,
-                                    databaseIds,
-                                    minProportion = 0.01,
-                                    maxProportion = 1,
-                                    isTemporal = FALSE,
-                                    resultsDatabaseSchema = NULL){
+getCovariateValue <- function(connection = NULL,
+                              connectionDetails = NULL,
+                              cohortIds,
+                              databaseIds,
+                              minProportion = 0.01,
+                              maxProportion = 1,
+                              isTemporal = FALSE,
+                              timeIds = NULL,
+                              resultsDatabaseSchema = NULL) {
+  if (isTemporal) {
+    table <- 'temporalCovariateValue'
+  } else {
+    table <- 'covariateValue'
+  }
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertIntegerish(x = cohortIds, 
@@ -612,6 +603,119 @@ getCohortCovariateValue <- function(connection = NULL,
                            any.missing = FALSE, 
                            min.len = 1, 
                            max.len = 1)
+  checkmate::reportAssertions(collection = errorMessage)
+  
+  if (isTemporal) {
+    checkmate::assertInteger(x = timeIds, 
+                             lower = 0, 
+                             any.missing = FALSE, 
+                             unique = TRUE, 
+                             null.ok = FALSE, 
+                             add = errorMessage)
+  }
+  
+  if (!is.null(connectionDetails) || !is.null(connection)) {
+    checkmate::assertCharacter(x = resultsDatabaseSchema,
+                               min.len = 1,
+                               max.len = 1,
+                               any.missing = FALSE,
+                               add = errorMessage)
+  }
+  checkmate::reportAssertions(collection = errorMessage)
+  
+  # route query
+  route <- routeDataQuery(connection = connection,
+                               connectionDetails = connectionDetails,
+                               table = table)
+  
+  if (route == 'quit') {
+    ParallelLogger::logWarn("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    return(NULL)
+  } else if (route == 'memory') {
+    connection <- NULL
+  }
+  
+  if (!is.null(connection)) {
+    sql <-   "SELECT *
+              FROM  @resultsDatabaseSchema.@table
+              WHERE cohort_id in (@cohortId)
+            	AND database_id in ('@databaseIds')
+              {@isTemporal == TRUE} ? {AND time_id in ('@timeIds')}
+              AND mean >= @minProportion
+              AND mean <= @maxProportion;"
+    data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                       sql = sql,
+                                                       resultsDatabaseSchema = resultsDatabaseSchema,
+                                                       cohortId = cohortId,
+                                                       databaseIds = databaseIds, 
+                                                       table = SqlRender::camelCaseToSnakeCase(table),
+                                                       isTemporal = isTemporal,
+                                                       timeIds = timeIds,
+                                                       minProportion = minProportion,
+                                                       maxProportion = maxProportion,
+                                                       snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
+  } else {
+    data <- get(table) %>% 
+      dplyr::filter(.data$cohortId %in% cohortId,
+                    .data$databaseId %in% databaseIds,
+                    .data$mean >= minProportion,
+                    .data$mean <= maxProportion)
+    if (isTemporal && !is.null(timeIds)) {
+      data <- data %>% 
+        dplyr::filter(.data$timeId %in% timeIds)
+    }
+  }
+  return(data)
+}
+
+
+#' Get cohort covariate reference (including temporal)
+#'
+#' @description
+#' Get covariate reference data from data stored in cohort diagnostics results data
+#' model. The output of this function may be used, together with covariate value
+#' to create tables/plots regarding a cohorts characteristics diagnostics. 
+#' 
+#' Note: this function relies on data available in Cohort Diagnostics results data model. There are
+#' two methods to connect to the results data model, database mode and in-memory mode.
+#' 
+#' Database mode: If either \code{connectionDetails} or \code{\link[DatabaseConnector]{connect}} is 
+#' provided in the function call, the query is set to database mode. In the absence of both 
+#' \code{connectionDetails} and \code{\link[DatabaseConnector]{connect}}, the query will be in-memory 
+#' mode. In in-memory mode, R will expect the data in results data model to be available in R's memory.
+#' In database mode, R will perform a database query. Objects in R's memory are expected to
+#' follow camelCase naming conventions, while objects in dbms are expected to follow snake-case naming
+#' conventions. In database mode, vocabulary tables (if needed) are used from vocabularySchema (which
+#' defaults to resultsDatabaseSchema.). In in-memory mode, vocabulary tables are assumed to in R's 
+#' memory.
+#'
+#' @template Connection
+#' @param isTemporal     Get temporal covariate references?
+#' @param resultsDatabaseSchema (optional) The databaseSchema where the results data model of cohort diagnostics
+#'                              is stored. This is only required when \code{connectionDetails} or 
+#'                              \code{\link[DatabaseConnector]{connect}} is provided.
+#' 
+#' @return
+#' The function will return a tibble data frame object.
+#'
+#' @examples
+#' \dontrun{
+#' covariateReference <- getCovariateReference()
+#' }
+#'
+#' @export
+getCovariateReference <- function(connection = NULL,
+                                  connectionDetails = NULL,
+                                  isTemporal = FALSE,
+                                  resultsDatabaseSchema = NULL) {
+  table <- 'covariateReference'
+  # Perform error checks for input variables
+  errorMessage <- checkmate::makeAssertCollection()
+  checkmate::assertLogical(x = isTemporal, 
+                           any.missing = FALSE, 
+                           min.len = 1, 
+                           max.len = 1)
   
   if (!is.null(connectionDetails) || !is.null(connection)) {
     checkmate::assertCharacter(x = resultsDatabaseSchema,
@@ -623,108 +727,235 @@ getCohortCovariateValue <- function(connection = NULL,
   checkmate::reportAssertions(collection = errorMessage)
   
   if (isTemporal) {
-    value <- 'temporalCovariateValue'
+    value <- 'temporalCovariateRef'
   } else {
-    value <- 'covariateValue'
+    value <- 'covariateRef'
   }
   
-  ## set up connection to server
+  # route query
+  route <- routeDataQuery(connection = connection,
+                               connectionDetails = connectionDetails,
+                               table = table)
+  
+  if (route == 'quit') {
+    ParallelLogger::logWarn("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    return(NULL)
+  } else if (route == 'memory') {
+    connection <- NULL
+  }
+  
+  if (!is.null(connection)) {
+    sql <-   "SELECT *
+              FROM  @resultsDatabaseSchema.@table;"
+    data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                       sql = sql,
+                                                       resultsDatabaseSchema = resultsDatabaseSchema,
+                                                       table = SqlRender::camelCaseToSnakeCase(table),
+                                                       snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
+  } else {
+    data <- get(table)
+  }
+  
+  data <- data %>% #occassionally we may have more than one covariateName per covariateId
+    # because of change in concept_name. See https://github.com/OHDSI/CohortDiagnostics/issues/162
+    dplyr::group_by(.data$covariateId) %>% 
+    dplyr::slice(1)
+  return(data)
+}
+
+
+
+#' Get time reference for temporal covariates
+#'
+#' @description
+#' Get time reference data from data stored in cohort diagnostics results data
+#' model. The output of this function may be used, together with temporal covariate value
+#' to create tables/plots related to temporal cohorts characteristics diagnostics. 
+#' 
+#' Note: this function relies on data available in Cohort Diagnostics results data model. There are
+#' two methods to connect to the results data model, database mode and in-memory mode.
+#' 
+#' Database mode: If either \code{connectionDetails} or \code{\link[DatabaseConnector]{connect}} is 
+#' provided in the function call, the query is set to database mode. In the absence of both 
+#' \code{connectionDetails} and \code{\link[DatabaseConnector]{connect}}, the query will be in-memory 
+#' mode. In in-memory mode, R will expect the data in results data model to be available in R's memory.
+#' In database mode, R will perform a database query. Objects in R's memory are expected to
+#' follow camelCase naming conventions, while objects in dbms are expected to follow snake-case naming
+#' conventions. In database mode, vocabulary tables (if needed) are used from vocabularySchema (which
+#' defaults to resultsDatabaseSchema.). In in-memory mode, vocabulary tables are assumed to in R's 
+#' memory.
+#'
+#' @template Connection
+#' @param resultsDatabaseSchema (optional) The databaseSchema where the results data model of cohort diagnostics
+#'                              is stored. This is only required when \code{connectionDetails} or 
+#'                              \code{\link[DatabaseConnector]{connect}} is provided.
+#' 
+#' @return
+#' The function will return a tibble data frame object.
+#'
+#' @examples
+#' \dontrun{
+#' timeReference <- getTimeReference()
+#' }
+#'
+#' @export
+getTimeReference <- function(connection = NULL,
+                             connectionDetails = NULL,
+                             resultsDatabaseSchema = NULL){
+  table <- 'timeRef'
+  # Perform error checks for input variables
+  errorMessage <- checkmate::makeAssertCollection()
+  
+  if (!is.null(connectionDetails) || !is.null(connection)) {
+    checkmate::assertCharacter(x = resultsDatabaseSchema,
+                               min.len = 1,
+                               max.len = 1,
+                               any.missing = FALSE,
+                               add = errorMessage)
+  }
+  checkmate::reportAssertions(collection = errorMessage)
+  
+  # route query
+  route <- routeDataQuery(connection = connection,
+                               connectionDetails = connectionDetails,
+                               table = table)
+  
+  if (route == 'quit') {
+    ParallelLogger::logWarn("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    return(NULL)
+  } else if (route == 'memory') {
+    connection <- NULL
+  }
+  
+  if (!is.null(connection)) {
+    sql <-   "SELECT *
+              FROM  @resultsDatabaseSchema.@table;"
+    data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                       sql = sql,
+                                                       resultsDatabaseSchema = resultsDatabaseSchema,
+                                                       table = SqlRender::camelCaseToSnakeCase(table),
+                                                       snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
+  } else {
+    data <- get(table)
+  }
+  return(data)
+}
+
+
+
+
+# 
+# data <- data %>% 
+#   dplyr::inner_join(covariate) %>% 
+#   dplyr::select(.data$databaseId, .data$covariateId, .data$conceptId, .data$covariateName,
+#                 .data$mean, .data$sd) %>% 
+#   dplyr::arrange(.data$conceptId, .data$covariateId, .data$covariateName)
+# 
+# return(data)
+# }
+# 
+# 
+# 
+# covs1 <- covariateValue %>% 
+#   dplyr::filter(.data$cohortId == cohortId,
+#                 .data$databaseId == databaseIds)
+# covs2 <- covariateValue %>% 
+#   dplyr::filter(.data$cohortId == comparatorCohortId,
+#                 .data$databaseId == databaseIds)
+# }
+# 
+# 
+# if (cohortId == comparatorCohortId) {
+#   return(tidyr::tibble())
+# }
+# 
+# covs1 <- dplyr::left_join(x = covs1, y = covariate)
+# covs2 <- dplyr::left_join(x = covs2, y = covariate)
+# 
+# m <- dplyr::full_join(x = covs1 %>% dplyr::distinct(), 
+#                       y = covs2 %>% dplyr::distinct(), 
+#                       by = c("covariateId", "conceptId", "databaseId", "covariateName", "covariateAnalysisId"),
+#                       suffix = c("1", "2")) %>%
+#   dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = 0)),
+#                 sd = sqrt(.data$sd1^2 + .data$sd2^2),
+#                 stdDiff = (.data$mean2 - .data$mean1)/.data$sd) %>% 
+#   dplyr::arrange(-abs(.data$stdDiff))
+# 
+# data <- m %>%
+#   dplyr::mutate(absStdDiff = abs(.data$stdDiff))
+# 
+# return(data)
+# 
+# }
+# 
+routeDataQuery <- function(connection = NULL,
+                           connectionDetails = NULL,
+                           table,
+                           checkInDbms = FALSE,
+                           checkInRMemory = TRUE,
+                           databaseSchema = NULL,
+                           silent = TRUE
+) {
   if (is.null(connection)) {
-    if (!is.null(connectionDetails)) {
-      connection <- DatabaseConnector::connect(connectionDetails)
-      on.exit(DatabaseConnector::disconnect(connection))
+    if (is.null(connectionDetails)) {
+      if (!silent) {
+        ParallelLogger::logInfo("\n- No connection or connectionDetails provided.")
+        ParallelLogger::logInfo("  Checking if required objects exists in R memory.")
+      }
     } else {
-      ParallelLogger::logInfo(" \n - No connection or connectionDetails provided.")
-      ParallelLogger::logInfo("  Checking if required objects existsin R memory.")
-      if (exists(value)) {
-        ParallelLogger::logInfo("  '", SqlRender::camelCaseToTitleCase(value), "' data object found in R memory. Continuing.")
-      } else {
-        ParallelLogger::logWarn("  '", SqlRender::camelCaseToTitleCase(value), "' data object found in R memory. Exiting.")
-        return(NULL)
+      if (!silent) {
+        ParallelLogger::logInfo("\n- No existing connection to dbms provided. But connection details found.")
+        ParallelLogger::logInfo("  Attempting to establish connection to dbms using connection details.")
+      }
+      connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
+    }
+  }
+  
+  if (!checkInDbms) {
+    tableExistsInDbms <- TRUE
+  }
+  
+  if (!is.null(connection) && isTRUE(checkInDbms)) {
+    tableExistsInDbms <- DatabaseConnector::dbExistsTable(conn = connection,
+                                                          name = paste0(databaseSchema, ".", table)
+    )
+    if (!tableExistsInDbms) {
+      if (!silent) {
+        ParallelLogger::logWarn("  '", table, "' not found in ", databaseSchema)
       }
     }
   }
   
-  if (!is.null(connection)) {
-    sql <-   "SELECT cohort_id, database_id, covariate_id, mean, sd
-              FROM  @resultsDatabaseSchema.@value
-              WHERE cohort_id in (@cohortId)
-            	AND database_id in ('@databaseIds')
-              AND mean >= @minProportion
-              AND mean <= @maxProportion;"
-    data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                                       sql = sql,
-                                                       resultsDatabaseSchema = resultsDatabaseSchema,
-                                                       cohortId = cohortId,
-                                                       databaseIds = databaseIds, 
-                                                       value = SqlRender::camelCaseToSnakeCase(value),
-                                                       minProportion = minProportion,
-                                                       maxProportion = maxProportion,
-                                                       snakeCaseToCamelCase = TRUE) %>% 
-      tidyr::tibble()
-  } else {
-    data <- get(value) %>% 
-      dplyr::filter(.data$cohortId %in% cohortId,
-                    .data$databaseId %in% databaseIds,
-                    .data$mean >= minProportion,
-                    .data$mean <= maxProportion) %>%
-      dplyr::select(.data$cohortId,
-                    .data$databaseId, 
-                    .data$covariateId, 
-                    .data$mean, .data$sd)
+  if (checkInRMemory) {
+    if (exists(table)) {
+      tableExistsInRMemory <- TRUE
+      if (!silent) {
+        ParallelLogger::logInfo("  '", SqlRender::camelCaseToTitleCase(table), "' data object found in R memory.")
+      }
+    } else {
+      tableExistsInRMemory <- FALSE
+      if (is.null(connection)) {
+        if (!silent) {
+          ParallelLogger::logWarn("  '", SqlRender::camelCaseToTitleCase(table), "' data object not found in R memory.")
+        }
+      } else {
+        if (!silent) {
+          ParallelLogger::logInfo("  '", SqlRender::camelCaseToTitleCase(table), "' data object not found in R memory.")
+        }
+      }
+    }
   }
-  return(data)
+  if (!is.null(connection) & isTRUE(tableExistsInDbms)) {
+    return(connection)
+  } else if (!is.null(connection) & !isTRUE(tableExistsInDbms) & isTRUE(tableExistsInRMemory)) {
+    ParallelLogger::logWarn(SqlRender::camelCaseToTitleCase(table), " was not found in dbms but was found in R memory. Using the data loaded in R memory.")
+    return("memory")
+  } else if (is.null(connection) & isTRUE(tableExistsInRMemory)) {
+    return("memory")
+  } else if (is.null(connection) & !isTRUE(tableExistsInRMemory)) {
+    ParallelLogger::logWarn(SqlRender::camelCaseToTitleCase(table), " not found.")
+    return("quit")
+  }
 }
-
-
-  
-  
-  
-  covariate <- covariateRef %>% #occassionally we may have more than one covariateName per covariateId
-    # because of change in concept_name. See https://github.com/OHDSI/CohortDiagnostics/issues/162
-    dplyr::group_by(.data$covariateId) %>% 
-    dplyr::slice(1)
-  
-  data <- data %>% 
-    dplyr::inner_join(covariate) %>% 
-    dplyr::select(.data$databaseId, .data$covariateId, .data$conceptId, .data$covariateName,
-                  .data$mean, .data$sd) %>% 
-    dplyr::arrange(.data$conceptId, .data$covariateId, .data$covariateName)
-  
-  return(data)
-}
-
-
-
-covs1 <- covariateValue %>% 
-  dplyr::filter(.data$cohortId == cohortId,
-                .data$databaseId == databaseIds)
-covs2 <- covariateValue %>% 
-  dplyr::filter(.data$cohortId == comparatorCohortId,
-                .data$databaseId == databaseIds)
-}
-
-
-if (cohortId == comparatorCohortId) {
-  return(tidyr::tibble())
-}
-
-covs1 <- dplyr::left_join(x = covs1, y = covariate)
-covs2 <- dplyr::left_join(x = covs2, y = covariate)
-
-m <- dplyr::full_join(x = covs1 %>% dplyr::distinct(), 
-                      y = covs2 %>% dplyr::distinct(), 
-                      by = c("covariateId", "conceptId", "databaseId", "covariateName", "covariateAnalysisId"),
-                      suffix = c("1", "2")) %>%
-  dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = 0)),
-                sd = sqrt(.data$sd1^2 + .data$sd2^2),
-                stdDiff = (.data$mean2 - .data$mean1)/.data$sd) %>% 
-  dplyr::arrange(-abs(.data$stdDiff))
-
-data <- m %>%
-  dplyr::mutate(absStdDiff = abs(.data$stdDiff))
-
-return(data)
-
-}
-
