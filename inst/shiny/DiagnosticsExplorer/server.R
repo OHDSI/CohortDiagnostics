@@ -314,56 +314,49 @@ shiny::shinyServer(function(input, output, session) {
     # }
   # }) 
   
-  # timeDisPlotDownload <- shiny::reactive({
-    # plot <- CohortDiagnostics::dataForTimeDistributionPlot(connection = NULL,
-    #                                                       selectedCohort = cohortId(),
-    #                                                       selectedDatabaseIds = input$databases,
-    #                                                       specifications = timeDistribution)
-    # return(plot)
+  timeDisPlotDownload <- shiny::reactive({
+    data <- CohortDiagnostics::getTimeDistribution(cohortId = cohortId(), databaseId = input$databases)
     
-  # })
-  # 
-  # output$timeDisPlot <- shiny::renderPlot(expr = {
-  #   return(timeDisPlotDownload())
-  # }, res = 100)
+    if (is.null(data)) {
+      return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
+    }
+    
+    plot <- CohortDiagnostics::plotTimeDistribution(data = data)
+    
+    return(plot)
+  })
+
+  output$timeDisPlot <- shiny::renderPlot(expr = {
+    return(timeDisPlotDownload())
+  }, res = 100)
   
-  # output$timeDistTable <- DT::renderDataTable(expr = {
-  #   # data <- timeDistribution %>% 
-  #   #   dplyr::filter(.data$cohortDefinitionId == cohortId() &
-  #   #                   .data$databaseId %in% input$databases)
-  #   # 
-  #   # if (nrow(data) == 0) {
-  #   #   return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
-  #   # }
-  #   # table <- data %>% 
-  #   #   dplyr::select(.data$timeMetric, .data$averageValue, .data$standardDeviation, .data$minValue, .data$p10Value, .data$p25Value, .data$medianValue, .data$p75Value, .data$p90Value, .data$maxValue) %>% 
-  #   #   dplyr::rename(TimeMeasure = "timeMetric", Average = "averageValue", SD = "standardDeviation", Min = "minValue", P10 = "p10Value", P25 = "p25Value", Median = "medianValue", P75 = "p75Value", P90 = "p90Value", Max = "maxValue")
-  #   # 
-  #   # if (length(unique(data$databaseId)) > 1) {
-  #   #   table <- data %>% 
-  #   #     dplyr::select(.data$databaseId, .data$timeMetric, .data$averageValue, .data$standardDeviation, .data$minValue, .data$p10Value, .data$p25Value, .data$medianValue, .data$p75Value, .data$p90Value, .data$maxValue) %>% 
-  #   #     dplyr::rename(Database = "databaseId", TimeMeasure = "timeMetric", Average = "averageValue", SD = "standardDeviation", Min = "minValue", P10 = "p10Value", P25 = "p25Value", Median = "medianValue", P75 = "p75Value", P90 = "p90Value", Max = "maxValue")
-  #   # }
-  #   # 
-  #   options = list(pageLength = 20,
-  #                  searching = TRUE,
-  #                  searchHighlight = TRUE,
-  #                  scrollX = TRUE,
-  #                  lengthChange = TRUE,
-  #                  ordering = TRUE,
-  #                  paging = TRUE,
-  #                  info = TRUE)
-  #   table <- DT::datatable(table,
-  #                          options = options,
-  #                          rownames = FALSE,
-  #                          colnames = colnames(table) %>% SqlRender::camelCaseToTitleCase(),
-  #                          filter = c('bottom'),
-  #                          class = "stripe nowrap compact")
-  #   table <- DT::formatRound(table, c("Average", "SD"), digits = 2)
-  #   table <- DT::formatRound(table, c("Min", "P10", "P25", "Median", "P75", "P90", "Max"), digits = 0)
-  #   
-  #   return(table)
-  # }, server = TRUE)
+  output$timeDistTable <- DT::renderDataTable(expr = {
+
+    table <- CohortDiagnostics::getTimeDistribution(cohortId = cohortId(), databaseId = input$databases)
+
+    if (is.null(table)) {
+      return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
+    }
+    
+    options = list(pageLength = 20,
+                   searching = TRUE,
+                   searchHighlight = TRUE,
+                   scrollX = TRUE,
+                   lengthChange = TRUE,
+                   ordering = TRUE,
+                   paging = TRUE,
+                   info = TRUE)
+    table <- DT::datatable(table,
+                           options = options,
+                           rownames = FALSE,
+                           colnames = colnames(table) %>% SqlRender::camelCaseToTitleCase(),
+                           filter = c('bottom'),
+                           class = "stripe nowrap compact")
+    table <- DT::formatRound(table, c("Average", "SD"), digits = 2)
+    table <- DT::formatRound(table, c("Min", "P10", "P25", "Median", "P75", "P90", "Max"), digits = 0)
+
+    return(table)
+  }, server = TRUE)
   
   output$includedConceptsTable <- DT::renderDataTable(expr = {
     data <- includedSourceConcept %>%
@@ -889,13 +882,11 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$overlapTable <- DT::renderDataTable(expr = {
-    data <- cohortOverlap[cohortOverlap$targetCohortId == cohortId() & 
-                            cohortOverlap$comparatorCohortId == comparatorCohortId() &
-                            cohortOverlap$databaseId == input$database, ]
-    if (nrow(data) == 0) {
-      return(NULL)
-    }
+    data <- CohortDiagnostics::getCohortOverLap(targetCohortId = cohortId(), databaseId = input$database, comparatorCohortId = comparatorCohortId())
     
+    if (is.null(data)) {
+      return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts and comaprator')))
+    }
     table <- data.frame(row.names = c("Subject in either cohort",
                                       "Subject in both cohort",
                                       "Subject in target not in comparator",
@@ -935,29 +926,13 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   overLapPlot <- shiny::reactive({
-    data <- cohortOverlap[cohortOverlap$targetCohortId == cohortId() & 
-                            cohortOverlap$comparatorCohortId == comparatorCohortId() &
-                            cohortOverlap$databaseId == input$database, ]
-    if (nrow(data) == 0) {
-      return(NULL)
+    data <- CohortDiagnostics::getCohortOverLap(targetCohortId = cohortId(), databaseId = input$database, comparatorCohortId = comparatorCohortId())
+    
+    if (is.null(data)) {
+      return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts and comaprator')))
     }
-    plot <- VennDiagram::draw.pairwise.venn(area1 = abs(data$eitherSubjects) - abs(data$cOnlySubjects),
-                                            area2 = abs(data$eitherSubjects) - abs(data$tOnlySubjects),
-                                            cross.area = abs(data$bothSubjects),
-                                            category = c("Target", "Comparator"), 
-                                            col = c(rgb(0.8, 0, 0), rgb(0, 0, 0.8)),
-                                            fill = c(rgb(0.8, 0, 0), rgb(0, 0, 0.8)),
-                                            alpha = 0.2,
-                                            fontfamily = rep("sans", 3),
-                                            cat.fontfamily = rep("sans", 2),
-                                            margin = 0.01,
-                                            ind = FALSE)
-    # Borrowed from https://stackoverflow.com/questions/37239128/how-to-put-comma-in-large-number-of-venndiagram
-    idx <- sapply(plot, function(i) grepl("text", i$name))
-    for (i in 1:3) {
-      plot[idx][[i]]$label <- format(as.numeric(plot[idx][[i]]$label), big.mark = ",", scientific = FALSE)
-    }
-    grid::grid.draw(plot)
+    
+    plot <- CohortDiagnostics::plotCohortOverlap(data = data)
     
     return(plot)
   })
