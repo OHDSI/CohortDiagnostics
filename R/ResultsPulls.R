@@ -193,9 +193,9 @@ getIncidenceRateResult <- function(connection = NULL,
     data <- get(table) %>% 
       dplyr::filter(.data$cohortId %in% !!cohortIds &
                       .data$databaseId %in% !!databaseIds &
-                      is.na(.data$gender) %in% !!stratifyByGender &
-                      is.na(.data$ageGroup) %in% !!stratifyByAgeGroup &
-                      is.na(.data$calendarYear) %in% !!stratifyByCalendarYear) %>% 
+                      !is.na(.data$gender) %in% !!stratifyByGender &
+                      !is.na(.data$ageGroup) %in% !!stratifyByAgeGroup &
+                      !is.na(.data$calendarYear) %in% !!stratifyByCalendarYear) %>% 
       tidyr::tibble()
   }
   
