@@ -72,7 +72,7 @@ getTimeDistribution <- function(connection = NULL,
                        add = errorMessage)
   checkmate::assertCharacter(x = databaseId,
                              min.len = 1,
-                             max.len = 1,
+                             max.len = 5,
                              any.missing = FALSE,
                              unique = TRUE,
                              add = errorMessage)
@@ -116,7 +116,7 @@ getTimeDistribution <- function(connection = NULL,
   } else {
     data <- get(table) %>% 
       dplyr::filter(.data$cohortDefinitionId == cohortId &
-                      .data$databaseId %in% databaseId) %>% 
+                      .data$databaseId %in% !!databaseId) %>% 
       dplyr::select(-.data$cohortDefinitionId, .data$databaseId) %>% 
       tidyr::tibble()
   }
