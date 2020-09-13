@@ -381,7 +381,12 @@ getCovariateReference <- function(connection = NULL,
                                   connectionDetails = NULL,
                                   isTemporal = TRUE,
                                   resultsDatabaseSchema = NULL) {
-  table <- 'covariateReference'
+  if (isTemporal) {
+    table <- 'temporalCovariateRef'
+  } else {
+    table <- 'covariateRef'
+  }
+  
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertLogical(x = isTemporal, 
