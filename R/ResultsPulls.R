@@ -243,7 +243,7 @@ getIncidenceRateResult <- function(connection = NULL,
 #' @export
 getCohortCountResult <- function(connection = NULL,
                                  connectionDetails = NULL,
-                                 databaseIds,
+                                 databaseIds = NULL,
                                  resultsDatabaseSchema = NULL) {
   table = "cohortCount"
   # Perform error checks for input variables
@@ -252,6 +252,11 @@ getCohortCountResult <- function(connection = NULL,
                                                   connectionDetails = connectionDetails,
                                                   resultsDatabaseSchema = resultsDatabaseSchema,
                                                   errorMessage = errorMessage)
+  checkmate::assertCharacter(x = databaseIds,
+                             any.missing = FALSE, 
+                             min.len = 1,
+                             null.ok = TRUE,
+                             add = errorMessage)
   
   # route query
   route <- routeDataQuery(connection = connection,
@@ -278,17 +283,18 @@ getCohortCountResult <- function(connection = NULL,
                                                        snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {
-    data <- get(table) %>%
-      dplyr::left_join(cohort) %>% 
-      dplyr::filter(.data$databaseId %in% databaseIds) %>% 
-      tidyr::tibble()
+    data <- get(table) 
+    if (!is.null(databaseIds)) { 
+      databaseIds <- databaseIds %>% 
+        dplyr::filter(.data$databaseId %in% databaseIds)
+    }
   }
   if (nrow(data) == 0) {
     ParallelLogger::logWarn("No records retrieved for '", SqlRender::camelCaseToTitleCase(table), "'")
     return(NULL)
   }
   data <- data %>% 
-    dplyr::relocate(.data$databaseId, .data$cohortId, .data$cohortName) %>% 
+    dplyr::relocate(.data$cohortId, .data$databaseId) %>% 
     dplyr::arrange(.data$cohortId, .data$databaseId)
   return(data)
 }
@@ -821,6 +827,12 @@ getCohortReference <- function(connection = NULL,
     data <- data %>% 
       dplyr::select(-.data$json)
   }
+  data <- data %>% 
+    dplyr::mutate(phenotypeId == .data$referentConceptId * 1000) %>% 
+    dplyr::relocate(.data$phenotypeId, 
+                    .data$cohortId,
+                    .data$cohortName,
+                    .data$logicDescription)
   return(data %>% dplyr::arrange(.data$cohortId))
 }
 

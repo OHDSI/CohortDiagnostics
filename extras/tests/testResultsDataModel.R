@@ -18,6 +18,8 @@ CohortDiagnostics::plotTimeDistribution(data = data,
                                         databaseIds = databaseIds)
 
 
+
+########################
 data <- CohortDiagnostics::getIncidenceRateResult(cohortIds = cohortIds,
                                                   stratifyByAgeGroup = TRUE,
                                                   stratifyByGender = TRUE,
@@ -32,6 +34,8 @@ data <- CohortDiagnostics::getIncidenceRateResult(cohortIds = cohortIds,
                                                   databaseIds = databaseIds,
                                                   stratifyByGender = FALSE)
 
+
+#################
 data <- CohortDiagnostics::getCohortCountResult(databaseIds = databaseIds)
 
 data <- CohortDiagnostics::getCohortOverLapResult(targetCohortIds = targetCohortIds,

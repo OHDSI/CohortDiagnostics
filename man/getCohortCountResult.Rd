@@ -7,7 +7,7 @@
 getCohortCountResult(
   connection = NULL,
   connectionDetails = NULL,
-  databaseIds,
+  databaseIds = NULL,
   resultsDatabaseSchema = NULL
 )
 }
