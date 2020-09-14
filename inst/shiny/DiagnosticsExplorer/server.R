@@ -262,9 +262,9 @@ shiny::shinyServer(function(input, output, session) {
                                                       connectionDetails = NULL,
                                                       cohortIds = cohortId(), 
                                                       databaseIds = input$databases, 
-                                                      stratifyByAge,
-                                                      stratifyByGender,
-                                                      stratifyByCalendarYear,
+                                                      stratifyByGender =  stratifyByGender,
+                                                      stratifyByAgeGroup =  stratifyByAge,
+                                                      stratifyByCalendarYear =  stratifyByCalendarYear,
                                                       minPersonYears = 1000,
                                                       resultsDatabaseSchema = NULL)
     
@@ -272,11 +272,13 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     
-    plot <- CohortDiagnostics::plotIncidenceRate(data = data, 
-                                                 stratifyByAge,
-                                                 stratifyByGender,
-                                                 stratifyByCalendarYear,
-                                                 input$irYscaleFixed)
+    plot <- CohortDiagnostics::plotIncidenceRate(data = data,
+                                                 cohortIds = NULL,
+                                                 databaseIds = NULL,
+                                                 stratifyByAgeGroup = stratifyByAge,
+                                                 stratifyByGender = stratifyByGender,
+                                                 stratifyByCalendarYear  = stratifyByCalendarYear,
+                                                 yscaleFixed =   input$irYscaleFixed)
     return(plot)
   })
   
@@ -334,7 +336,9 @@ shiny::shinyServer(function(input, output, session) {
       return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
     }
     
-    plot <- CohortDiagnostics::plotTimeDistribution(data = data)
+    plot <- CohortDiagnostics::plotTimeDistribution(data = data,
+                                                    cohortIds = NULL,
+                                                    databaseIds = NULL)
     
     return(plot)
   })
@@ -1054,12 +1058,18 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
-  output$cohortComparePlot <- plotly::renderPlotly(expr = {
+  output$charComparePlot <- plotly::renderPlotly(expr = {
     
-    data <- CohortDiagnostics::compareCovariateValueResult(targetCohortIds = cohortId(), 
-                                                   comparatorCohortIds = comparatorCohortId(),
-                                                   databaseIds = input$databases,
-                                                   isTemporal = FALSE)
+    data <- CohortDiagnostics::compareCovariateValueResult(connection = NULL, 
+                                                           connectionDetails = NULL,
+                                                           targetCohortIds = cohortId(), 
+                                                           comparatorCohortIds = comparatorCohortId(),
+                                                           databaseIds = input$databases,
+                                                           minProportion = 0.01,
+                                                           maxProportion = 1,
+                                                           isTemporal = FALSE,
+                                                           timeIds = NULL,
+                                                           resultsDatabaseSchema = NULL)
     
     data <- data %>% 
       tidyr::replace_na(mean1 = 0, mean2 = 0)
@@ -1068,38 +1078,9 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
 
-    fig <- plotly::plot_ly(
-      data = balance, 
-      x = balance$mean1, 
-      y = balance$mean2,
-      # Hover text:
-      text = ~paste("Mean Target: ", 
-                    balance$mean1, 
-                    '<br>Mean Comparator:', 
-                    balance$mean2,
-                    '<br>Std diff.:', 
-                    balance$stdDiff),
-      color = ~balance$absStdDiff,
-      type   = 'scatter', 
-      mode   = 'markers',
-      marker = list(size = 10, 
-                    opacity = "0.5")) %>% 
-      plotly::layout(shapes = list(type = "line",
-                                   y0 = 0, 
-                                   y1 = 1, 
-                                   yref = "paper",
-                                   x0 = 0,  
-                                   x1 = 1, 
-                                   line = list(color = "red", 
-                                               dash = "dash"))) %>% 
-      plotly::layout(xaxis = list(title = input$cohort,
-                                  range = c(0, 1)), 
-                     yaxis = list(title = input$comparator,
-                                  range = c(0, 1)), 
-                     showlegend = FALSE) %>% 
-      plotly::colorbar(title = "Absolute\nStd. Diff.")
+    plot <- CohortDiagnostics::plotCohortCompare(balance = data, cohortId = cohortId(), comparatorId = comparatorCohortId())
     
-    return(fig)
+    return(plot)
   })
   
   output$hoverInfocohortComparePlot <- shiny::renderUI({
