@@ -4,10 +4,21 @@
 \alias{plotTimeDistribution}
 \title{Get ggplot object with time distribution plot.}
 \usage{
-plotTimeDistribution(data)
+plotTimeDistribution(
+  data,
+  cohortIds = NULL,
+  databaseIds = NULL,
+  xAxis = "database"
+)
 }
 \arguments{
 \item{data}{A tibble data frame object that is the output of \code{\link{getTimeDistribution}} function.}
+
+\item{cohortIds}{A vector of one or more integer (bigint) to plot.}
+
+\item{databaseIds}{A vector of one or more databaseIds to plot.}
+
+\item{xAxis}{(optional) By default 'database' will be plotted on x-axis. Alternative is 'cohortId'.}
 }
 \value{
 A ggplot object.

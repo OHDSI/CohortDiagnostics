@@ -19,7 +19,10 @@
 #' @description
 #' Get ggplot object with time distribution plot.
 #'
-#' @param data   A tibble data frame object that is the output of \code{\link{getTimeDistribution}} function.               
+#' @param data   A tibble data frame object that is the output of \code{\link{getTimeDistribution}} function.
+#' @param cohortIds A vector of one or more integer (bigint) to plot.
+#' @param databaseIds A vector of one or more databaseIds to plot.
+#' @param xAxis       (optional) By default 'database' will be plotted on x-axis. Alternative is 'cohortId'.
 #' 
 #' @return
 #' A ggplot object.
@@ -31,7 +34,15 @@
 #'
 #' @export
 
-plotTimeDistribution <- function(data) {
+plotTimeDistribution <- function(data, 
+                                 cohortIds = NULL,
+                                 databaseIds = NULL,
+                                 xAxis = 'database') {
+  
+  if (is.null(cohortIds) || length(cohortIds) > 1 || xAxis != 'database' || length(cohortIds) != 1) {
+    ParallelLogger::logWarn("Not yet supported. Upcoming feature.")
+    return(NULL)
+  }
   
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
@@ -41,18 +52,44 @@ plotTimeDistribution <- function(data) {
                           min.cols = 5,
                           null.ok = FALSE,
                           add = errorMessage)
+  checkmate::assertIntegerish(x = cohortIds,
+                              lower = 1,
+                              upper = 2^53,
+                              any.missing = FALSE,
+                              null.ok = TRUE, 
+                              min.len = 1,
+                              add = errorMessage)
+  checkmate::assertCharacter(x = databaseIds,
+                             any.missing = FALSE,
+                             null.ok = TRUE, 
+                             min.len = 1, 
+                             unique = TRUE,
+                             add = errorMessage)
+  checkmate::assertChoice(x = xAxis,
+                         choices = c('database', 'cohortId'),
+                         add = errorMessage)
   checkmate::assertNames(x = colnames(data), 
                          must.include = c('Min', 'P25', 'Median', 'P75', 'Max'),
                          add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
-  data$x <- 1
-  plot <- ggplot2::ggplot(data, ggplot2::aes(x = x,
-                                             ymin = Min,
-                                             lower = P25,
-                                             middle = Median,
-                                             upper = P75,
-                                             ymax = Max)) +
-    ggplot2::geom_errorbar(ggplot2::aes(ymin = Min, ymax = Min), size = 1) +
+  
+  plotData <- data 
+  if (!is.null(cohortIds)) {
+    plotData <- plotData %>% 
+    dplyr::filter(.data$cohortId %in% !!cohortIds)
+  }
+  if (!is.null(databaseId)) {
+    plotData <- plotData %>% 
+      dplyr::filter(.data$databaseId %in% !!databaseId)
+  }
+  
+  plot <- ggplot2::ggplot(data = plotData) +
+    ggplot2::aes(x = .data$Database,
+                 ymin = .data$Min,
+                 lower = .data$P25,
+                 middle = .data$Median,
+                 upper = .data$P75,
+                 ymax = .data$Max) +
     ggplot2::geom_errorbar(ggplot2::aes(ymin = Max, ymax = Max), size = 1) +
     ggplot2::geom_boxplot(stat = "identity", fill = rgb(0, 0, 0.8, alpha = 0.25), size = 1) +
     ggplot2::facet_grid(Database~TimeMeasure, scale = "free") +
@@ -62,64 +99,21 @@ plotTimeDistribution <- function(data) {
                    axis.title.y = ggplot2::element_blank(),
                    axis.ticks.y = ggplot2::element_blank(),
                    axis.text.y = ggplot2::element_blank())
+  # plot <- plotly::ggplotly(plot)
+  # This does not work as described here https://github.com/ropensci/plotly/issues/565 
   return(plot)
-  # BELOW SCRIPT EMBED THE GGPLOT OBJECT INSIDE PLOTLY, BUT IF THE GGPLOT CONTAINS THE BOX PLOTS, THIS RAISES A ISSUE. 
-  # PLEASE FIND THE ISSUE IN  https://github.com/ropensci/plotly/issues/565
-  # p <- data %>% 
-  #   ggplot2::ggplot(ggplot2::aes(x)) +
-  #   ggplot2::geom_errorbar(ggplot2::aes(ymin = minValue, ymax = minValue), size = 1) +
-  #   ggplot2::geom_errorbar(ggplot2::aes(ymin = maxValue, ymax = maxValue), size = 1) +
-  #   ggplot2::geom_boxplot(stat = "identity",
-  #                         ggplot2::aes(ymin = minValue, 
-  #                                      lower = p25Value, 
-  #                                      middle = medianValue, 
-  #                                      upper = p75Value, 
-  #                                      ymax = maxValue), fill = rgb(0, 0, 0.8, alpha = 0.25), size = 1) +
-  #   ggplot2::facet_grid(databaseId~timeMetric) +
-  #   ggplot2::coord_flip() +
-  #   ggplot2::theme(panel.grid.major.y = ggplot2::element_blank(),
-  #                  panel.grid.minor.y = ggplot2::element_blank(),
-  #                  axis.title.y = ggplot2::element_blank(),
-  #                  axis.ticks.y = ggplot2::element_blank(),
-  #                  axis.text.y = ggplot2::element_blank())
-  # 
-  # plot <- plotly::ggplotly(p)
   
-  
-  # BELOW SCRIPT GENERATES THE TIME DISTRIBUTION PLOT PURELY USING PLOTLY (NO GGPLOT), BUT IT ASSIGN MULTIPLE COLOR FOR EACH PLOTS
-  # plots <- list()
-  # inc <- 0
-  # for(i in input$databases) {
-  #   filterData <- data[data$databaseId == i,] %>%
-  #     dplyr::pull(timeMetric)
-  #   # filterData$x <- 1
-  #   for(j in filterData)
-  #     {
-  #     inc <- inc + 1
-  #     plot <- plotly::plot_ly(data.frame(data),
-  #                             y=1,
-  #                             type = "box",
-  #                             q1 = data[data$databaseId == i & data$timeMetric == j, ]$p25Value,
-  #                             median = data[data$databaseId == i & data$timeMetric == j, ]$medianValue,
-  #                             q3 = data[data$databaseId == i & data$timeMetric == j, ]$p75Value,
-  #                             lowerfence = data[data$databaseId == i & data$timeMetric == j, ]$minValue,
-  #                             upperfence = data[data$databaseId == i & data$timeMetric == j, ]$maxValue,
-  #                             name=j)
-  #     plot <- plot %>% plotly::add_annotations(
-  #       text = i,
-  #       x = 0.5,
-  #       y = 1,
-  #       yref = "paper",
-  #       xref = "paper",
-  #       xanchor = "middle",
-  #       yanchor = "top",
-  #       showarrow = FALSE,
-  #       font = list(size = 10)
-  #     )
-  #     plots[inc] <- plot
-  #   }
-  # 
-  # }
+  # how to render using pure plot ly. Plotly does not prefer precomputed data.
+  # TO DO: color and plot positions are not consistent yet.
+  # plot <- plotly::plot_ly(data = plotData,
+  #                         type = 'box',
+  #                         median = plotData$P25,
+  #                         #Mean = plotData$Average,
+  #                         upperfence = plotData$Max,
+  #                         lowerfence = plotData$Min,
+  #                         split = plotData$TimeMeasure)
+  # loop thru database or cohorts as needed
+  # then subplot
   # plot <- plotly::subplot(plots,nrows = length(input$databases),margin = 0.05)
 }
 
@@ -206,7 +200,6 @@ plotIncidenceRate <- function(data,
       plot <- plot + ggplot2::facet_grid(~ageGroup) 
     }
   }
-  
   return(plot)
 }
 
