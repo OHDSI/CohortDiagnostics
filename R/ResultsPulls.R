@@ -315,13 +315,13 @@ getCohortCountResult <- function(connection = NULL,
 #'
 #' @examples
 #' \dontrun{
-#' cohortOverlap <- getCohortOverLapResult(targetCohortIds = 342432,
+#' cohortOverlap <- getCohortOverlapResult(targetCohortIds = 342432,
 #'                                         comparatorCohortIds = c(432423,34234),
 #'                                         databaseIds = c('eunomia', 'hcup'))
 #' }
 #'
 #' @export
-getCohortOverLapResult <- function(connection = NULL,
+getCohortOverlapResult <- function(connection = NULL,
                                    connectionDetails = NULL,
                                    targetCohortIds,
                                    comparatorCohortIds,

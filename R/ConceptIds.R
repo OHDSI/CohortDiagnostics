@@ -148,20 +148,15 @@ writeOmopvocabularyTables <-
         ParallelLogger::logInfo('Found ',
                                 length(conceptIds %>% unique()),
                                 ' unique concept ids.')
+        sqlFileName <- paste0("VocabularyQuery",
+                              SqlRender::camelCaseToTitleCase(string = 
+                                                                vocabularyTablesInCohortDatabaseSchema %>%
+                                                                dplyr::slice(i) %>%
+                                                                dplyr::pull(.data$vocabularyTableNames)),
+                              ".sql")
         sql <-
           SqlRender::loadRenderTranslateSql(
-            sqlFilename = paste0("VocabularyQuery",
-                                 vocabularyTablesInCohortDatabaseSchema %>%
-                                   dplyr::slice(i) %>%
-                                   dplyr::pull(.data$vocabularyTableNames) %>%
-                                   SqlRender::camelCaseToTitleCase(string = .) %>%
-                                   stringr::str_replace_all(
-                                     string = .,
-                                     pattern = " ",
-                                     replacement = ""
-                                   ),
-                                 ".sql"
-            ),
+            sqlFilename = stringr::str_squish(sqlFileName),
             packageName = "CohortDiagnostics",
             dbms = connection@dbms,
             vocabulary_database_schema = vocabularyDatabaseSchema,
@@ -187,7 +182,7 @@ writeOmopvocabularyTables <-
           dplyr::pull(.data$serverTableNames),
         value = DatabaseConnector::QuerySql(sql = sql) %>% 
           tidyr::tibble() %>% 
-          dplyr::rename_all(.tbl = ., .funs = tolower)
+          dplyr::rename_all(.tbl = .data, .funs = tolower)
       )
       
       if (nrow(get(vocabularyTablesInCohortDatabaseSchema %>% 

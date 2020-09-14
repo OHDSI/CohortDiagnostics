@@ -475,7 +475,7 @@ runConceptSetDiagnostics <- function(connection,
         dplyr::inner_join(conceptSets %>% dplyr::select(.data$uniqueConceptSetId, .data$cohortId, .data$conceptSetId)) %>% 
         dplyr::select(-.data$uniqueConceptSetId) %>% 
         dplyr::mutate(databaseId = !!databaseId) %>% 
-        dplyr::filter(cohortId %in% subsetOrphans$cohortId)
+        dplyr::filter(.data$cohortId %in% subsetOrphans$cohortId)
       
       if (nrow(data) > 0) {
         data <- enforceMinCellValue(data, "conceptCount", minCellCount)

@@ -6,14 +6,14 @@
 \usage{
 plotCohortOverlapVennDiagram(
   data,
-  targetCohortIds = NULL,
-  comparatorCohortIds = NULL,
-  databaseIds = NULL
+  targetCohortIds,
+  comparatorCohortIds,
+  databaseIds
 )
 }
 \arguments{
 \item{data}{A tibble data frame object that is the output of 
-\code{\link{getCohortOverlap}} function.}
+\code{\link{getCohortOverlapResult}} function.}
 
 \item{targetCohortIds}{(optional) A vector of one or more Cohort Ids.}
 

@@ -441,7 +441,7 @@ plotCohortComparisonStandardizedDifference <- function(data,
 #' Get Vendiagram  object with cohort Overlap plot.
 #'
 #' @param  data                  A tibble data frame object that is the output of 
-#'                               \code{\link{getCohortOverlap}} function.
+#'                               \code{\link{getCohortOverlapResult}} function.
 #' @template DatabaseIds
 #' @param targetCohortIds        (optional) A vector of one or more Cohort Ids.
 #' @param comparatorCohortIds    (optional) A vector of one or more Cohort Ids.

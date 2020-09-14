@@ -96,9 +96,11 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  runIncidenceRate = TRUE,
                                  runCohortOverlap = TRUE,
                                  runCohortCharacterization = TRUE,
-                                 covariateSettings = FeatureExtraction::createDefaultCovariateSettings(),
+                                 covariateSettings = 
+                                   FeatureExtraction::createDefaultCovariateSettings(),
                                  runTemporalCohortCharacterization = TRUE,
-                                 temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(
+                                 temporalCovariateSettings = 
+                                   FeatureExtraction::createTemporalCovariateSettings(
                                    useConditionOccurrence = TRUE, 
                                    useDrugEraStart = TRUE, 
                                    useProcedureOccurrence = TRUE, 
@@ -256,7 +258,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     ParallelLogger::logInfo("------------------------------------")
     ParallelLogger::logInfo("- Fetching inclusion rule statistics. Started at ", Sys.time())
     subset <- subsetToRequiredCohorts(cohorts = cohorts %>%
-                                        dplyr::filter(cohortId %in% instantiatedCohorts), 
+                                        dplyr::filter(.data$cohortId %in% instantiatedCohorts), 
                                       task = "runInclusionStatistics", 
                                       incremental = incremental, 
                                       recordKeepingFile = recordKeepingFile)
@@ -329,7 +331,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     # Time distributions ----------------------------------------------------------------------
     ParallelLogger::logInfo("\n- Creating time distributions")
     subset <- subsetToRequiredCohorts(cohorts = cohorts %>%
-                                        dplyr::filter(cohortId %in% instantiatedCohorts),
+                                        dplyr::filter(.data$cohortId %in% instantiatedCohorts),
                                       task = "runTimeDistributions",
                                       incremental = incremental,
                                       recordKeepingFile = recordKeepingFile)
@@ -373,7 +375,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     startRunBreakdownIndexEvents <- Sys.time()
     ParallelLogger::logInfo("- Breaking down index events")
     subset <- subsetToRequiredCohorts(cohorts = cohorts %>%
-                                        dplyr::filter(cohortId %in% instantiatedCohorts), 
+                                        dplyr::filter(.data$cohortId %in% instantiatedCohorts), 
                                       task = "runBreakdownIndexEvents", 
                                       incremental = incremental, 
                                       recordKeepingFile = recordKeepingFile)
@@ -406,7 +408,10 @@ runCohortDiagnostics <- function(packageName = NULL,
           dplyr::mutate(databaseId = !!databaseId)
         data <- enforceMinCellValue(data, "conceptCount", minCellCount)
       }
-      writeToCsv(data, file.path(exportFolder, "index_event_breakdown.csv"), incremental = incremental, cohortId = subset$cohortId)
+      writeToCsv(data, 
+                 file.path(exportFolder, "index_event_breakdown.csv"), 
+                 incremental = incremental, 
+                 cohortId = subset$cohortId)
       recordTasksDone(cohortId = subset$cohortId,
                       task = "runBreakdownIndexEvents",
                       checksum = subset$checksum,
@@ -427,7 +432,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     startIncidenceRate <- Sys.time()
     ParallelLogger::logInfo("- Computing incidence rate")
     subset <- subsetToRequiredCohorts(cohorts = cohorts %>%
-                                        dplyr::filter(cohortId %in% instantiatedCohorts), 
+                                        dplyr::filter(.data$cohortId %in% instantiatedCohorts), 
                                       task = "runIncidenceRate", 
                                       incremental = incremental, 
                                       recordKeepingFile = recordKeepingFile)
@@ -582,7 +587,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     startCohortCharacterization <- Sys.time()
     ParallelLogger::logInfo("- Cohort characterizations - started at ", Sys.time())
     subset <- subsetToRequiredCohorts(cohorts = cohorts %>%
-                                        dplyr::filter(cohortId %in% instantiatedCohorts), 
+                                        dplyr::filter(.data$cohortId %in% instantiatedCohorts), 
                                       task = "runCohortCharacterization", 
                                       incremental = incremental, 
                                       recordKeepingFile = recordKeepingFile)
@@ -723,7 +728,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     startTemporalCohortCharacterization <- Sys.time()
     ParallelLogger::logInfo("- Temporal Cohort characterizations - started at ", Sys.time())
     subset <- subsetToRequiredCohorts(cohorts = cohorts %>%
-                                        dplyr::filter(cohortId %in% instantiatedCohorts), 
+                                        dplyr::filter(.data$cohortId %in% instantiatedCohorts), 
                                       task = "runTemporalCohortCharacterization", 
                                       incremental = incremental, 
                                       recordKeepingFile = recordKeepingFile)
