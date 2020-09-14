@@ -254,21 +254,30 @@ shiny::shinyServer(function(input, output, session) {
   # })
   
   output$incidenceRatePlot <- plotly::renderPlotly(expr = {
-  data <- CohortDiagnostics::getIncidenceRateResult(cohortIds = cohortId(), 
-                                                    databaseIds = input$databases, 
-                                                    input$irStratification,
-                                                    input$irStratification,
-                                                    input$irStratification)
-  if (is.null(data)) {
-    return(NULL)
-  }
-  plot <- CohortDiagnostics::plotIncidenceRate(data = data, 
-                                               input$irStratification,
-                                               input$irStratification,
-                                               input$irStratification,
-                                               input$irYscaleFixed)
+    stratifyByAge <- "Age" %in% input$irStratification
+    stratifyByGender <- "Gender" %in% input$irStratification
+    stratifyByCalendarYear <- "Calendar Year" %in% input$irStratification
     
-  return(plot)
+    data <- CohortDiagnostics::getIncidenceRateResult(connection = NULL,
+                                                      connectionDetails = NULL,
+                                                      cohortIds = cohortId(), 
+                                                      databaseIds = input$databases, 
+                                                      stratifyByAge,
+                                                      stratifyByGender,
+                                                      stratifyByCalendarYear,
+                                                      minPersonYears = 1000,
+                                                      resultsDatabaseSchema = NULL)
+    
+    if (is.null(data)) {
+      return(NULL)
+    }
+    
+    plot <- CohortDiagnostics::plotIncidenceRate(data = data, 
+                                                 stratifyByAge,
+                                                 stratifyByGender,
+                                                 stratifyByCalendarYear,
+                                                 input$irYscaleFixed)
+    return(plot)
   })
   
   # output$hoverInfoIr <- shiny::renderUI({

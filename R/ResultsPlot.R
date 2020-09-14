@@ -190,25 +190,23 @@ plotIncidenceRate <- function(data,
   }
   
   # databaseId field only present when called in Shiny app:
-  if (!is.null(data$Database) && length(data$Database) > 1) {
+  if (!is.null(data$databaseId) && length(data$databaseId) > 1) {
     if (yscaleFixed) {
       scales <- "fixed"
     } else {
       scales <- "free_y"
     }
     if (stratifyByAge) {
-      plot <- plot + ggplot2::facet_grid(Database~ageGroup, scales = scales)
+      plot <- plot + ggplot2::facet_grid(databaseId~ageGroup, scales = scales)
     } else {
-      plot <- plot + ggplot2::facet_grid(Database~., scales = scales) 
+      plot <- plot + ggplot2::facet_grid(databaseId~., scales = scales) 
     }
   } else {
     if (stratifyByAge) {
       plot <- plot + ggplot2::facet_grid(~ageGroup) 
     }
   }
-  if (!is.null(fileName)) {
-    ggplot2::ggsave(filename = fileName, plot = plot, width = 5, height = 3.5, dpi = 400)
-  }
+  
   return(plot)
 }
 
