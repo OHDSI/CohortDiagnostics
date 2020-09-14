@@ -123,11 +123,14 @@ plotTimeDistribution <- function(data,
 #' @description
 #' Get ggplot object with incidence rate plot.
 #'
-#' @param data   A tibble data frame object that is the output of \code{\link{getIncidenceRate}} function. 
-#' @param stratifyByAge Do you want to stratify by age?  
-#' @param stratifyByGender Do you want to stratify by gender?
+#' @param data                   A tibble data frame object that is the output 
+#'                               of \code{\link{getIncidenceRate}} function.
+#' @param cohortIds              A vector of one or more integer (bigint) to plot.
+#' @param databaseIds            A vector of one or more databaseIds to plot. 
+#' @param stratifyByAgeGroup     Do you want to stratify by age?  
+#' @param stratifyByGender       Do you want to stratify by gender?
 #' @param stratifyByCalendarYear Do you want to stratify by calendar year?
-#' @param yscaleFixed Do you want to rescale y-axis?
+#' @param yscaleFixed            Do you want to rescale y-axis?
 #' 
 #' @return
 #' A ggplot object.
@@ -145,6 +148,47 @@ plotIncidenceRate <- function(data,
                               stratifyByGender = TRUE,
                               stratifyByCalendarYear = TRUE,
                               yscaleFixed = FALSE) {
+  errorMessage <- checkmate::makeAssertCollection()
+  checkmate::assertTibble(x = data, 
+                          any.missing = FALSE,
+                          min.rows = 1,
+                          min.cols = 5,
+                          null.ok = FALSE,
+                          add = errorMessage)
+  checkmate::assertIntegerish(x = cohortIds,
+                              lower = 1,
+                              upper = 2^53,
+                              any.missing = FALSE,
+                              null.ok = TRUE, 
+                              min.len = 1,
+                              add = errorMessage)
+  checkmate::assertCharacter(x = databaseIds,
+                             any.missing = FALSE,
+                             null.ok = TRUE, 
+                             min.len = 1, 
+                             unique = TRUE,
+                             add = errorMessage)
+  checkmate::assertLogical(x = stratifyByAgeGroup, 
+                           any.missing = FALSE, 
+                           min.len = 1, 
+                           null.ok = FALSE,
+                           add = errorMessage)
+  checkmate::assertLogical(x = stratifyByGender, 
+                           any.missing = FALSE, 
+                           min.len = 1, 
+                           null.ok = FALSE,
+                           add = errorMessage)
+  checkmate::assertLogical(x = stratifyByCalendarYear, 
+                           any.missing = FALSE, 
+                           min.len = 1, 
+                           null.ok = FALSE,
+                           add = errorMessage)
+  checkmate::assertLogical(x = yscaleFixed, 
+                           any.missing = FALSE, 
+                           min.len = 1, 
+                           null.ok = FALSE,
+                           add = errorMessage)
+  checkmate::reportAssertions(collection = errorMessage)
   plotData <- data
   if (!is.null(cohortIds)) {
     plotData <- plotData %>% 
@@ -232,14 +276,16 @@ plotIncidenceRate <- function(data,
 #' @description
 #' Get Plotly object with cohort comparison plot.
 #'
-#' @param  data                  A tibble data frame object that is the output of 
-#'                               \code{\link{compareCovariateValueResult}} function.
+#' @param  data                  A tibble data frame object that is the output 
+#'                               of \code{\link{compareCovariateValueResult}} function.
 #' @template DatabaseIds
 #' @param targetCohortIds        (optional) A vector of one or more Cohort Ids.
 #' @param comparatorCohortIds    (optional) A vector of one or more Cohort Ids.
-#' @param cohortReference        (optional) A tibble data frame object returned from \code{\link{getCohortReference}} function.
+#' @param cohortReference        (optional) A tibble data frame object returned 
+#'                               from \code{\link{getCohortReference}} function.
 #' @param covariateReference     (optional) A tibble data frame object returned from \code{\link{getCovariateReference}} function.
-#' @param concept                (optional) A tibble data frame object returned from \code{\link{getConceptReference}} function.
+#' @param concept                (optional) A tibble data frame object returned 
+#'                               from \code{\link{getConceptReference}} function.
 #' 
 #' @return
 #' A Plotly object.

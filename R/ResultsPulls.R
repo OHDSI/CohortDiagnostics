@@ -546,7 +546,11 @@ getTimeReference <- function(connection = NULL,
 #'                        'time ids'. By default timeId = c(1,2,3,4,5) are returned. These correspond to
 #'                        -365 to -31, -30 to -1, 0 to 0, 1 to 30, 31 to 365.
 #'                        If any of timeId value = 0, all timeIds are returned.
-#'                        If any of timeId value = -1, will return all timeIds > 5 (for time series analysis) 
+#'                        If any of timeId value = -1, will return all timeIds > 5 (for time series analysis)
+#' @param minProportion   Do you want to limit the data returned by a lower threshold. Enter a number
+#'                        between 0.00 to 1.00. Be default the value is 0.01.
+#' @param maxProportion   Do you want to limit the data returned by a upper threshold. Enter a number
+#'                        between 0.00 to 1.00. Be default the value is 1. 
 #' @return
 #' The function will return a tibble data frame object.
 #'
@@ -669,6 +673,10 @@ getCovariateValueResult <- function(connection = NULL,
 #' @param isTemporal             (optional) Get temporal covariate values?
 #' @param timeIds                (optional) Used only if isTemporal = TRUE. Do you want to limit to certain
 #'                               'time ids'. By default all time ids are returned. 
+#' @param minProportion          Do you want to limit the data returned by a lower threshold. Enter a number
+#'                               between 0.00 to 1.00. Be default the value is 0.01.
+#' @param maxProportion          Do you want to limit the data returned by a upper threshold. Enter a number
+#'                               between 0.00 to 1.00. Be default the value is 1.
 #' 
 #' @return
 #' The function will return a tibble data frame object.

@@ -15,15 +15,20 @@ plotIncidenceRate(
 )
 }
 \arguments{
-\item{data}{A tibble data frame object that is the output of \code{\link{getIncidenceRate}} function.}
+\item{data}{A tibble data frame object that is the output 
+of \code{\link{getIncidenceRate}} function.}
+
+\item{cohortIds}{A vector of one or more integer (bigint) to plot.}
+
+\item{databaseIds}{A vector of one or more databaseIds to plot.}
+
+\item{stratifyByAgeGroup}{Do you want to stratify by age?}
 
 \item{stratifyByGender}{Do you want to stratify by gender?}
 
 \item{stratifyByCalendarYear}{Do you want to stratify by calendar year?}
 
 \item{yscaleFixed}{Do you want to rescale y-axis?}
-
-\item{stratifyByAge}{Do you want to stratify by age?}
 }
 \value{
 A ggplot object.

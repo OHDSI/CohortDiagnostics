@@ -34,6 +34,12 @@ provided.}
 character field values from the `databaseId` field of the `database` table 
 of the results data model.}
 
+\item{minProportion}{Do you want to limit the data returned by a lower threshold. Enter a number
+between 0.00 to 1.00. Be default the value is 0.01.}
+
+\item{maxProportion}{Do you want to limit the data returned by a upper threshold. Enter a number
+between 0.00 to 1.00. Be default the value is 1.}
+
 \item{isTemporal}{(optional) Get temporal covariate values?}
 
 \item{timeIds}{(optional) Will only be used if isTemporal = TRUE. Do you want to limit to certain
