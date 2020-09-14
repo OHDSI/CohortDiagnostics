@@ -165,7 +165,7 @@ dropDdl <- function(packageName,
 #' @return 
 #' A tibble data frame object with specifications
 #' 
-#' #' @examples
+#' @examples
 #' \dontrun{
 #' csvFileSpecification <- guessCsvFileSpecification(path)
 #' }
@@ -289,7 +289,7 @@ getPrimaryKeyForOmopVocabularyTable <- function() {
 #' @return 
 #' A tibble data frame object with specifications
 #' 
-#' #' @examples
+#' @examples
 #' \dontrun{
 #' resultsDataModelSpecification <- getResultsDataModelSpecification()
 #' }

@@ -19,7 +19,7 @@
 #' @description
 #' Get ggplot object with time distribution plot.
 #'
-#' @param data   A tibble data frame object that is the output of \code{\link{getTimeDistribution}} function.
+#' @param data   A tibble data frame object that is the output of \code{\link{getTimeDistributionResult}} function.
 #' @param cohortIds A vector of one or more integer (bigint) to plot.
 #' @param databaseIds A vector of one or more databaseIds to plot.
 #' @param xAxis       (optional) By default 'database' will be plotted on x-axis. Alternative is 'cohortId'.

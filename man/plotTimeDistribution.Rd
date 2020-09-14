@@ -12,7 +12,7 @@ plotTimeDistribution(
 )
 }
 \arguments{
-\item{data}{A tibble data frame object that is the output of \code{\link{getTimeDistribution}} function.}
+\item{data}{A tibble data frame object that is the output of \code{\link{getTimeDistributionResult}} function.}
 
 \item{cohortIds}{A vector of one or more integer (bigint) to plot.}
 

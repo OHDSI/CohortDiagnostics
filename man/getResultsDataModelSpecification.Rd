@@ -8,12 +8,13 @@ getResultsDataModelSpecification()
 }
 \value{
 A tibble data frame object with specifications
-
-#' @examples
-\dontrun{
-resultsDataModelSpecification <- getResultsDataModelSpecification()
-}
 }
 \description{
 Get specification for Cohort Diagnostics results data model
+}
+\examples{
+\dontrun{
+resultsDataModelSpecification <- getResultsDataModelSpecification()
+}
+
 }

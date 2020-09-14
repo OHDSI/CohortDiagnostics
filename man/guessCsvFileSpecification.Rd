@@ -11,12 +11,13 @@ guessCsvFileSpecification(pathToCsvFile)
 }
 \value{
 A tibble data frame object with specifications
-
-#' @examples
-\dontrun{
-csvFileSpecification <- guessCsvFileSpecification(path)
-}
 }
 \description{
 Guesses data model specification from multiple csv files.
+}
+\examples{
+\dontrun{
+csvFileSpecification <- guessCsvFileSpecification(path)
+}
+
 }
