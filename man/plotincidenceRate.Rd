@@ -6,7 +6,9 @@
 \usage{
 plotIncidenceRate(
   data,
-  stratifyByAge = TRUE,
+  cohortIds = NULL,
+  databaseIds = NULL,
+  stratifyByAgeGroup = TRUE,
   stratifyByGender = TRUE,
   stratifyByCalendarYear = TRUE,
   yscaleFixed = FALSE
@@ -15,13 +17,13 @@ plotIncidenceRate(
 \arguments{
 \item{data}{A tibble data frame object that is the output of \code{\link{getIncidenceRate}} function.}
 
-\item{stratifyByAge}{Do you want to stratify by age?}
-
 \item{stratifyByGender}{Do you want to stratify by gender?}
 
 \item{stratifyByCalendarYear}{Do you want to stratify by calendar year?}
 
 \item{yscaleFixed}{Do you want to rescale y-axis?}
+
+\item{stratifyByAge}{Do you want to stratify by age?}
 }
 \value{
 A ggplot object.

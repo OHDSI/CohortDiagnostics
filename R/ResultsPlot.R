@@ -78,9 +78,9 @@ plotTimeDistribution <- function(data,
     plotData <- plotData %>% 
     dplyr::filter(.data$cohortId %in% !!cohortIds)
   }
-  if (!is.null(databaseId)) {
+  if (!is.null(databaseIds)) {
     plotData <- plotData %>% 
-      dplyr::filter(.data$databaseId %in% !!databaseId)
+      dplyr::filter(.data$databaseId %in% !!databaseIds)
   }
   
   plot <- ggplot2::ggplot(data = plotData) +
@@ -139,10 +139,30 @@ plotTimeDistribution <- function(data,
 #'
 #' @export
 plotIncidenceRate <- function(data,
-                              stratifyByAge = TRUE,
+                              cohortIds = NULL,
+                              databaseIds = NULL,
+                              stratifyByAgeGroup = TRUE,
                               stratifyByGender = TRUE,
                               stratifyByCalendarYear = TRUE,
                               yscaleFixed = FALSE) {
+  plotData <- data
+  if (!is.null(cohortIds)) {
+    plotData <- plotData %>% 
+      dplyr::filter(.data$cohortId %in% !!cohortIds)
+  }
+  if (!is.null(databaseIds)) {
+    plotData <- plotData %>% 
+      dplyr::filter(.data$databaseId %in% !!databaseIds)
+  }
+  plotData <- plotData %>% 
+    dplyr::mutate(strataGender = !is.na(.data$gender),
+                  strataAgeGroup = !is.na(.data$ageGroup),
+                  strataCalendarYear = !is.na(.data$calendarYear)) %>% 
+    dplyr::filter(.data$strataGender %in% !!stratifyByGender &
+                    .data$strataAgeGroup %in% !!stratifyByAgeGroup &
+                    .data$strataCalendarYear %in% !!stratifyByCalendarYear) %>% 
+    dplyr::select(-tidyselect::starts_with('strata')) %>% 
+    tidyr::tibble()
   
   aesthetics <- list(y = "incidenceRate")
   if (stratifyByCalendarYear) {
@@ -168,13 +188,17 @@ plotIncidenceRate <- function(data,
     plotType <- "bar"
   }
   
-  plot <- ggplot2::ggplot(data = data, do.call(what = ggplot2::aes_string, args = aesthetics)) +
+  plot <- ggplot2::ggplot(data = plotData, 
+                          do.call(what = ggplot2::aes_string, args = aesthetics)) +
     ggplot2::xlab(label = xLabel) +
     ggplot2::ylab(label = "Incidence Rate (/1,000 person years)") +
     ggplot2::theme(legend.position = "top",
                    legend.title = ggplot2::element_blank(),
-                   axis.text.x = if (showX) {ggplot2::element_text(angle = 90, vjust = 0.5)
-                   } else {ggplot2::element_blank()})
+                   axis.text.x = if (showX) {
+                     ggplot2::element_text(angle = 90, vjust = 0.5)
+                   } else {
+                     ggplot2::element_blank()}
+                   )
   
   if (plotType == "line") {
     plot <- plot + ggplot2::geom_line(size = 1.25, alpha = 0.6) +

@@ -9,9 +9,9 @@ getIncidenceRateResult(
   connectionDetails = NULL,
   cohortIds,
   databaseIds,
-  stratifyByGender = TRUE,
-  stratifyByAgeGroup = TRUE,
-  stratifyByCalendarYear = TRUE,
+  stratifyByGender = c(TRUE, FALSE),
+  stratifyByAgeGroup = c(TRUE, FALSE),
+  stratifyByCalendarYear = c(TRUE, FALSE),
   minPersonYears = 1000,
   resultsDatabaseSchema = NULL
 )

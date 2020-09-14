@@ -143,9 +143,9 @@ getIncidenceRateResult <- function(connection = NULL,
                                    connectionDetails = NULL,
                                    cohortIds,
                                    databaseIds,
-                                   stratifyByGender = TRUE,
-                                   stratifyByAgeGroup = TRUE,
-                                   stratifyByCalendarYear = TRUE,
+                                   stratifyByGender = c(TRUE,FALSE),
+                                   stratifyByAgeGroup = c(TRUE,FALSE),
+                                   stratifyByCalendarYear = c(TRUE,FALSE),
                                    minPersonYears = 1000,
                                    resultsDatabaseSchema = NULL) {
   table = "incidenceRate"
@@ -159,11 +159,14 @@ getIncidenceRateResult <- function(connection = NULL,
                                                  databaseIds = databaseIds,
                                                  errorMessage = errorMessage)
   checkmate::assertLogical(x = stratifyByGender,
-                           add = errorMessage)
+                           add = errorMessage,
+                           unique = TRUE)
   checkmate::assertLogical(x = stratifyByAgeGroup,
-                           add = errorMessage)
+                           add = errorMessage,
+                           unique = TRUE)
   checkmate::assertLogical(x = stratifyByCalendarYear,
-                           add = errorMessage)
+                           add = errorMessage,
+                           unique = TRUE)
   checkmate::reportAssertions(collection = errorMessage)
   
   # route query
@@ -202,14 +205,17 @@ getIncidenceRateResult <- function(connection = NULL,
       tidyr::tibble()
   } else {
     data <- get(table) %>% 
+      dplyr::mutate(strataGender = !is.na(.data$gender),
+                    strataAgeGroup = !is.na(.data$ageGroup),
+                    strataCalendarYear = !is.na(.data$calendarYear)) %>% 
       dplyr::filter(.data$cohortId %in% !!cohortIds &
                       .data$databaseId %in% !!databaseIds &
-                      !is.na(.data$gender) %in% !!stratifyByGender &
-                      !is.na(.data$ageGroup) %in% !!stratifyByAgeGroup &
-                      !is.na(.data$calendarYear) %in% !!stratifyByCalendarYear) %>% 
+                      .data$strataGender %in% !!stratifyByGender &
+                      .data$strataAgeGroup %in% !!stratifyByAgeGroup &
+                      .data$strataCalendarYear %in% !!stratifyByCalendarYear) %>% 
+      dplyr::select(-tidyselect::starts_with('strata')) %>% 
       tidyr::tibble()
   }
-  
   if (nrow(data) == 0) {
     ParallelLogger::logWarn("No records retrieved for 'incidence rate'.")
     return(NULL)
