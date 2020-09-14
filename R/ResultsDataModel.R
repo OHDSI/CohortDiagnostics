@@ -324,8 +324,8 @@ guessDbmsDataTypeFromVector <- function(value) {
     fieldCharLength <- tidyr::tibble(character = stringr::str_replace_na(string = stringi::stri_enc_toutf8(value), 
                                                                          replacement = '') %>%
                                        trimws()) %>% 
-      dplyr::mutate(length = stringr::str_length(.data$character) %>% 
-                      stringr::str_replace_na(string = ., replacement = 0)) %>% 
+      dplyr::mutate(length = stringr::str_replace_na(string = stringr::str_length(.data$character), 
+                                                     replacement = 0)) %>% 
       dplyr::pull(.data$length) %>% #ignore the UTF warning, they will be converted to 0
       max() %>% 
       as.integer()

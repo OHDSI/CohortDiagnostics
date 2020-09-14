@@ -253,7 +253,7 @@ plotIncidenceRate <- function(data,
 plotCohortComparisonStandardizedDifference <- function(data,
                                                        targetCohortIds = NULL, 
                                                        comparatorCohortIds = NULL,
-                                                       cohort = NULL,
+                                                       cohorts = NULL,
                                                        covariateReference = NULL,
                                                        concept = NULL, # to subset based on domain, or vocabulary
                                                        databaseIds = NULL) {
