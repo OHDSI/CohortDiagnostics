@@ -236,8 +236,9 @@ plotIncidenceRate <- function(data,
 #' @template DatabaseIds
 #' @param targetCohortIds        A vector of one or more Cohort Ids.
 #' @param comparatorCohortIds    A vector of one or more Cohort Ids.
-#' @param cohorts    A vector of one or more Cohort Ids.
-#' @param covariates    A vector of one or more Cohort Ids.
+#' @param cohorts                A tibble data frame object returned from \code{\link{getCohortReference}} function.
+#' @param covariateReference                A tibble data frame object returned from \code{\link{getCovariateReference}} function.
+#' @param covariates             A vector of one or more Cohort Ids.
 #' 
 #' @return
 #' A Plotly object.
@@ -253,7 +254,7 @@ plotCohortStandardizedDifferenceComparison <- function(data,
                                                        targetCohortIds = NULL, 
                                                        comparatorCohortIds = NULL,
                                                        cohorts,
-                                                       covariates,
+                                                       covariateReference,
                                                        databaseIds = NULL) {
   plotData <- data
   if (!is.null(targetCohortIds)) {
@@ -269,7 +270,8 @@ plotCohortStandardizedDifferenceComparison <- function(data,
       dplyr::filter(.data$databaseId %in% !!databaseIds)
   }
   
-  if (is.null(targetCohortIds) || is.null(comparatorCohortIds) || is.null(databaseIds)) {
+  # for now we will support only one combination of targetCohortId, comparatorCohortId and databaseId
+  if (length(targetCohortIds) > 1 || length(comparatorCohortIds) > 1 || length(databaseIds) > 1) {
     ParallelLogger::logWarn("Not yet supported. Upcoming feature.")
     return(NULL)
   }
@@ -283,6 +285,21 @@ plotCohortStandardizedDifferenceComparison <- function(data,
                           null.ok = FALSE,
                           types = c('character', 'double'),
                           add = errorMessage)
+  checkmate::assertIntegerish(x = targetCohortIds,
+                              lower = 1,
+                              upper = 2^53, 
+                              any.missing = FALSE,
+                              null.ok = FALSE)
+  checkmate::assertIntegerish(x = comparatorCohortIds,
+                              lower = 1,
+                              upper = 2^53, 
+                              any.missing = FALSE,
+                              null.ok = FALSE)
+  checkmate::assertCharacter(x = databaseIds,
+                             any.missing = FALSE,
+                             min.len = 1,
+                             null.ok = TRUE
+                             )
   checkmate::assertNames(x = colnames(plotData),
                          subset.of = c("databaseId","targetCohortId","comparatorCohortId","covariateId",
                                        "mean1","sd1","mean2","sd2","sd","stdDiff", "absStdDiff"),

@@ -388,7 +388,8 @@ getCohortOverLapResult <- function(connection = NULL,
 #'
 #' @template ModeAndDetails
 #' @param isTemporal     Get temporal covariate references?
-#' 
+#' @param covariateIds   (optional) A vector of covariateIds to subset the results
+#'  
 #' @return
 #' The function will return a tibble data frame object.
 #'
@@ -400,6 +401,7 @@ getCohortOverLapResult <- function(connection = NULL,
 #' @export
 getCovariateReference <- function(connection = NULL,
                                   connectionDetails = NULL,
+                                  covariateIds = NULL,
                                   isTemporal = TRUE,
                                   resultsDatabaseSchema = NULL) {
   if (isTemporal) {
@@ -414,10 +416,17 @@ getCovariateReference <- function(connection = NULL,
                            any.missing = FALSE, 
                            min.len = 1, 
                            max.len = 1)
+  checkmate::assertIntegerish(x = covariateIds, 
+                              lower = 0,
+                              upper = 2^53, 
+                              any.missing = FALSE,
+                              unique = TRUE,
+                              null.ok = TRUE)
   errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
                                                   connectionDetails = connectionDetails,
                                                   resultsDatabaseSchema = resultsDatabaseSchema,
                                                   errorMessage = errorMessage)
+  checkmate::reportAssertions(collection = errorMessage)
   # route query
   route <- routeDataQuery(connection = connection,
                           connectionDetails = connectionDetails,
@@ -433,17 +442,22 @@ getCovariateReference <- function(connection = NULL,
   # perform query
   if (!is.null(connection)) {
     sql <-   "SELECT *
-              FROM  @resultsDatabaseSchema.@table;"
+              FROM  @resultsDatabaseSchema.@table
+              {covariateIds == }? {WHERE covariate_id in c(@covariateIds)};"
     data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                        sql = sql,
                                                        resultsDatabaseSchema = resultsDatabaseSchema,
                                                        table = SqlRender::camelCaseToSnakeCase(table),
+                                                       covariateIds = covariateIds,
                                                        snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {
     data <- get(table)
+    if (!is.null(covariateIds)) {
+      data <- data %>% 
+        dplyr::filter(.data$covariateId %in% covariateIds)
+    }
   }
-  
   data <- data %>% #occassionally we may have more than one covariateName per covariateId
     # because of change in concept_name. See https://github.com/OHDSI/CohortDiagnostics/issues/162
     dplyr::group_by(.data$covariateId) %>% 
@@ -762,7 +776,7 @@ getCohortReference <- function(connection = NULL,
                                                   connectionDetails = connectionDetails,
                                                   resultsDatabaseSchema = resultsDatabaseSchema,
                                                   errorMessage = errorMessage)
-  checkmate::assertIntegerish(x = databaseIds,
+  checkmate::assertIntegerish(x = cohortIds,
                               min.len = 1, 
                               null.ok = TRUE,
                               add = errorMessage)
@@ -784,11 +798,12 @@ getCohortReference <- function(connection = NULL,
   if (!is.null(connection)) {
     sql <-   "SELECT *
               FROM  @resultsDatabaseSchema.@table
-              {@cohortIds == } ? {}:{where cohortId in ('@cohortIds')};"
+              {@cohortIds == } ? {}:{where cohort_id in ('@cohortIds')};"
     data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                        sql = sql,
                                                        resultsDatabaseSchema = resultsDatabaseSchema,
                                                        table = SqlRender::camelCaseToSnakeCase(table),
+                                                       cohortIds = cohortIds,
                                                        snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {

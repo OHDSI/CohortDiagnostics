@@ -7,6 +7,7 @@
 getCovariateReference(
   connection = NULL,
   connectionDetails = NULL,
+  covariateIds = NULL,
   isTemporal = TRUE,
   resultsDatabaseSchema = NULL
 )
@@ -22,6 +23,8 @@ of the function, and closed when the function finishes.}
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
 DatabaseConnector package. Can be left NULL if \code{connection} is
 provided.}
+
+\item{covariateIds}{(optional) A vector of covariateIds to subset the results}
 
 \item{isTemporal}{Get temporal covariate references?}
 

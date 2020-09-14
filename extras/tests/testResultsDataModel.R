@@ -38,6 +38,7 @@ data <- CohortDiagnostics::getCohortOverLapResult(targetCohortIds = targetCohort
                                                   databaseIds = databaseIds)
 
 covariateReference <- CohortDiagnostics::getCovariateReference(isTemporal = FALSE)
+cohorts <- CohortDiagnostics::getCohortReference()
 temporalCovariateReference <- CohortDiagnostics::getCovariateReference(isTemporal = TRUE)
 timeReference <- CohortDiagnostics::getTimeReference()
 

@@ -9,7 +9,7 @@ plotCohortStandardizedDifferenceComparison(
   targetCohortIds = NULL,
   comparatorCohortIds = NULL,
   cohorts,
-  covariates,
+  covariateReference,
   databaseIds = NULL
 )
 }
@@ -18,15 +18,17 @@ plotCohortStandardizedDifferenceComparison(
 
 \item{comparatorCohortIds}{A vector of one or more Cohort Ids.}
 
-\item{cohorts}{A vector of one or more Cohort Ids.}
+\item{cohorts}{A tibble data frame object returned from \code{\link{getCohortReference}} function.}
 
-\item{covariates}{A vector of one or more Cohort Ids.}
+\item{covariateReference}{A tibble data frame object returned from \code{\link{getCovariateReference}} function.}
 
 \item{databaseIds}{A vector one or more databaseIds to retrieve the results for. This is a 
 character field values from the `databaseId` field of the `database` table 
 of the results data model.}
 
 \item{A}{tibble data frame object that is the output of \code{\link{compareCovariateValueResult}} function.}
+
+\item{covariates}{A vector of one or more Cohort Ids.}
 }
 \value{
 A Plotly object.
