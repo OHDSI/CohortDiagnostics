@@ -262,7 +262,6 @@ getCohortCountResult <- function(connection = NULL,
   route <- routeDataQuery(connection = connection,
                           connectionDetails = connectionDetails,
                           table = table)
-  
   if (route == 'quit') {
     ParallelLogger::logWarn("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
     return(NULL)
@@ -285,7 +284,7 @@ getCohortCountResult <- function(connection = NULL,
   } else {
     data <- get(table) 
     if (!is.null(databaseIds)) { 
-      databaseIds <- databaseIds %>% 
+      data <- data %>% 
         dplyr::filter(.data$databaseId %in% databaseIds)
     }
   }
