@@ -53,6 +53,14 @@ data <- CohortDiagnostics::compareCovariateValueResult(targetCohortIds = targetC
                                                        isTemporal = FALSE,
                                                        minProportion = 0)
 
+plot <- CohortDiagnostics::plotCohortComparisonStandardizedDifference(data = data,
+                                                                      targetCohortIds = targetCohortIds, 
+                                                                      comparatorCohortIds = comparatorCohortIds,
+                                                                      cohort = cohorts,
+                                                                      covariateReference = covariateReference,
+                                                                      concept = NULL, # to subset based on domain, or vocabulary
+                                                                      databaseIds = 'OPTUM_EXTENDED_DOD')
+
 data <- CohortDiagnostics::getCovariateValueResult(cohortIds = cohortIds, 
                                                    databaseIds = databaseIds, 
                                                    minProportion = 0.03,

@@ -245,12 +245,11 @@ plotIncidenceRate <- function(data,
 #'
 #' @examples
 #' \dontrun{
-#' plotCohortCompare <- getCohortCompare(data = data)
+#' plotCohortCompare <- plotCohortComparisonStandardizedDifference(data = data)
 #' }
 #'
 #' @export
-
-plotCohortStandardizedDifferenceComparison <- function(data,
+plotCohortComparisonStandardizedDifference <- function(data,
                                                        targetCohortIds = NULL, 
                                                        comparatorCohortIds = NULL,
                                                        cohort = NULL,
@@ -305,7 +304,7 @@ plotCohortStandardizedDifferenceComparison <- function(data,
                              null.ok = TRUE
                              )
   checkmate::assertNames(x = colnames(plotData),
-                         subset.of = c("databaseId","targetCohortId","comparatorCohortId","covariateId",
+                         must.include = c("databaseId","targetCohortId","comparatorCohortId","covariateId",
                                        "mean1","sd1","mean2","sd2","sd","stdDiff", "absStdDiff"),
                          add = errorMessage
   )
@@ -320,7 +319,7 @@ plotCohortStandardizedDifferenceComparison <- function(data,
                                       'double'),
                             add = errorMessage)
     checkmate::assertNames(x = colnames(cohorts),
-                           subset.of = c("cohortId",
+                           must.include = c("cohortId",
                                          "cohortName"),
                            add = errorMessage
     )
@@ -333,28 +332,29 @@ plotCohortStandardizedDifferenceComparison <- function(data,
                             null.ok = FALSE,
                             types = c('character', 'double'),
                             add = errorMessage)
-    checkmate::assertNames(x = colnames(cohorts),
-                           subset.of = c("covariateId",
+    checkmate::assertNames(x = colnames(covariateReference),
+                           must.include = c("covariateId",
                                          "covariateName",
                                          "conceptId"),
                            add = errorMessage
     )
   }
   checkmate::reportAssertions(collection = errorMessage)
-  if (!is.null(covariateReference)) {
-    checkmate::assertTibble(x = covariateReference, 
-                            any.missing = FALSE,
+  if (!is.null(concept)) {
+    checkmate::assertTibble(x = concept, 
+                            any.missing = TRUE,
                             min.rows = 1,
-                            min.cols = 4,
+                            min.cols = 5,
                             null.ok = FALSE,
                             types = c('character',
                                       'double'),
                             add = errorMessage)
-    checkmate::assertNames(x = colnames(cohorts),
-                           subset.of = c("covariateId",
-                                         "covariateName",
-                                         "covariateAnalysisId",
-                                         "conceptId"),
+    checkmate::assertNames(x = colnames(concept),
+                           must.include = c("conceptId",
+                                         "conceptName",
+                                         "domainId",
+                                         "vocabularyId",
+                                         "conceptClassId"),
                            add = errorMessage
     )
   }
@@ -379,13 +379,15 @@ plotCohortStandardizedDifferenceComparison <- function(data,
     xAxisLabel <- list(
       title = cohorts %>% 
         dplyr::filter(.data$cohortId %in% targetCohortIds) %>% 
-        dplyr::select(.data$cohortName),
+        dplyr::select(.data$cohortName) %>% 
+        dplyr::pull(),
       range = c(0, 1)
     )
     yAxisLabel <- list(
       title = cohorts %>% 
         dplyr::filter(.data$cohortId %in% comparatorCohortIds) %>% 
-        dplyr::select(.data$cohortName),
+        dplyr::select(.data$cohortName) %>% 
+        dplyr::pull(),
       range = c(0, 1)
     )
   } else {
