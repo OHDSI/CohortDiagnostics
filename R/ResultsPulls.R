@@ -723,9 +723,219 @@ compareCovariateValueResult <- function(connection = NULL,
     dplyr::arrange(.data$databaseId,
                    .data$targetCohortId,
                    .data$comparatorCohortId, 
-                   .data$covariateId) %>% 
-    dplyr::select(-.data$stdDiff)
+                   .data$covariateId)
   return(data)
+}
+
+
+
+
+#' Get cohort information
+#'
+#' @description
+#' Get cohort information 
+#'
+#' @template ModeAndDetails
+#' @template CohortIds
+#' 
+#' @return
+#' The function will return a tibble data frame object.
+#'
+#' @examples
+#' \dontrun{
+#' cohortReference <- getCohortReference()
+#' }
+#'
+#' @export
+getCohortReference <- function(connection = NULL,
+                               connectionDetails = NULL,
+                               cohortIds = NULL,
+                               resultsDatabaseSchema = NULL) {
+  table <- 'cohort'
+  # Perform error checks for input variables
+  errorMessage <- checkmate::makeAssertCollection()
+  errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
+                                                  connectionDetails = connectionDetails,
+                                                  resultsDatabaseSchema = resultsDatabaseSchema,
+                                                  errorMessage = errorMessage)
+  errorMessage <- checkmate::assertIntegerish(x = databaseIds,
+                                              min.len = 1, 
+                                              null.ok = TRUE,
+                                              add = errorMessage)
+  checkmate::reportAssertions(collection = errorMessage)
+  
+  # route query
+  route <- routeDataQuery(connection = connection,
+                          connectionDetails = connectionDetails,
+                          table = table)
+  
+  if (route == 'quit') {
+    ParallelLogger::logWarn("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    return(NULL)
+  } else if (route == 'memory') {
+    connection <- NULL
+  }
+  
+  # perform query
+  if (!is.null(connection)) {
+    sql <-   "SELECT *
+              FROM  @resultsDatabaseSchema.@table
+              {@cohortIds == } ? {}:{where cohortId in ('@cohortIds')};"
+    data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                       sql = sql,
+                                                       resultsDatabaseSchema = resultsDatabaseSchema,
+                                                       table = SqlRender::camelCaseToSnakeCase(table),
+                                                       snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
+  } else {
+    data <- get(table)
+    if (!is.null(cohortIds)) {
+      data <- data %>% 
+        dplyr::filter(.data$cohortIds %in% cohortIds)
+    }
+  }
+  return(data %>% dplyr::arrange(.data$cohortId))
+}
+
+
+
+
+
+#' Get database information
+#'
+#' @description
+#' Get database information 
+#'
+#' @template ModeAndDetails
+#' @param databaseIds      (optional) A vector of character string to identify database.
+#' 
+#' @return
+#' The function will return a tibble data frame object.
+#'
+#' @examples
+#' \dontrun{
+#' databaseReference <- getDatabaseReference()
+#' }
+#'
+#' @export
+getDatabaseReference <- function(connection = NULL,
+                                 connectionDetails = NULL,
+                                 databaseIds = NULL,
+                                 resultsDatabaseSchema = NULL) {
+  table <- 'database'
+  # Perform error checks for input variables
+  errorMessage <- checkmate::makeAssertCollection()
+  errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
+                                                  connectionDetails = connectionDetails,
+                                                  resultsDatabaseSchema = resultsDatabaseSchema,
+                                                  errorMessage = errorMessage)
+  errorMessage <- checkmate::assertCharacter(x = databaseIds,
+                                             min.len = 1, 
+                                             null.ok = TRUE,
+                                             add = errorMessage)
+  checkmate::reportAssertions(collection = errorMessage)
+  
+  # route query
+  route <- routeDataQuery(connection = connection,
+                          connectionDetails = connectionDetails,
+                          table = table)
+  
+  if (route == 'quit') {
+    ParallelLogger::logWarn("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    return(NULL)
+  } else if (route == 'memory') {
+    connection <- NULL
+  }
+  
+  # perform query
+  if (!is.null(connection)) {
+    sql <-   "SELECT *
+              FROM  @resultsDatabaseSchema.@table
+              {@databaseIds == } ? {}:{where databaseId in ('@databaseIds')};"
+    data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                       sql = sql,
+                                                       resultsDatabaseSchema = resultsDatabaseSchema,
+                                                       table = SqlRender::camelCaseToSnakeCase(table),
+                                                       snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
+  } else {
+    data <- get(table)
+    if (!is.null(databaseIds)) {
+      data <- data %>% 
+        dplyr::filter(.data$databaseId %in% databaseIds)
+    }
+  }
+  return(data %>% dplyr::arrange(.data$cohortId))
+}
+
+
+
+
+#' Get concept information
+#'
+#' @description
+#' Get concept information 
+#'
+#' @template ModeAndDetails
+#' @param conceptIds      (optional) A vector of integers corresponding to conceptids of interest.
+#' 
+#' @return
+#' The function will return a tibble data frame object.
+#'
+#' @examples
+#' \dontrun{
+#' conceptReference <- getConceptReference()
+#' }
+#'
+#' @export
+getConceptReference <- function(connection = NULL,
+                                 connectionDetails = NULL,
+                                conceptIds = NULL,
+                                 resultsDatabaseSchema = NULL) {
+  table <- 'concept'
+  # Perform error checks for input variables
+  errorMessage <- checkmate::makeAssertCollection()
+  errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
+                                                  connectionDetails = connectionDetails,
+                                                  resultsDatabaseSchema = resultsDatabaseSchema,
+                                                  errorMessage = errorMessage)
+  errorMessage <- checkmate::assertIntegerish(x = databaseIds,
+                                             min.len = 1, 
+                                             null.ok = TRUE,
+                                             add = errorMessage)
+  checkmate::reportAssertions(collection = errorMessage)
+  
+  # route query
+  route <- routeDataQuery(connection = connection,
+                          connectionDetails = connectionDetails,
+                          table = table)
+  
+  if (route == 'quit') {
+    ParallelLogger::logWarn("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    return(NULL)
+  } else if (route == 'memory') {
+    connection <- NULL
+  }
+  
+  # perform query
+  if (!is.null(connection)) {
+    sql <-   "SELECT *
+              FROM  @resultsDatabaseSchema.@table
+              {@databaseIds == } ? {}:{where databaseId in ('@databaseIds')};"
+    data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                       sql = sql,
+                                                       resultsDatabaseSchema = resultsDatabaseSchema,
+                                                       table = SqlRender::camelCaseToSnakeCase(table),
+                                                       snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
+  } else {
+    data <- get(table)
+    if (!is.null(databaseIds)) {
+      data <- data %>% 
+        dplyr::filter(.data$databaseId %in% databaseIds)
+    }
+  }
+  return(data %>% dplyr::arrange(.data$cohortId))
 }
 
 

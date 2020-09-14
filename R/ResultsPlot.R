@@ -66,8 +66,8 @@ plotTimeDistribution <- function(data,
                              unique = TRUE,
                              add = errorMessage)
   checkmate::assertChoice(x = xAxis,
-                         choices = c('database', 'cohortId'),
-                         add = errorMessage)
+                          choices = c('database', 'cohortId'),
+                          add = errorMessage)
   checkmate::assertNames(x = colnames(data), 
                          must.include = c('Min', 'P25', 'Median', 'P75', 'Max'),
                          add = errorMessage)
@@ -76,7 +76,7 @@ plotTimeDistribution <- function(data,
   plotData <- data 
   if (!is.null(cohortIds)) {
     plotData <- plotData %>% 
-    dplyr::filter(.data$cohortId %in% !!cohortIds)
+      dplyr::filter(.data$cohortId %in% !!cohortIds)
   }
   if (!is.null(databaseIds)) {
     plotData <- plotData %>% 
@@ -198,7 +198,7 @@ plotIncidenceRate <- function(data,
                      ggplot2::element_text(angle = 90, vjust = 0.5)
                    } else {
                      ggplot2::element_blank()}
-                   )
+    )
   
   if (plotType == "line") {
     plot <- plot + ggplot2::geom_line(size = 1.25, alpha = 0.6) +
@@ -232,10 +232,12 @@ plotIncidenceRate <- function(data,
 #' @description
 #' Get Plotly object with cohort comparison plot.
 #'
-#' @param 
-#' balance   A tibble data frame object that is the output of \code{\link{getCohortCompare}} function.  
-#' cohortId   A input value given, when the user select the cohort in the shiny app.
-#' comparatorId   A input value given, when the user select the comparator in the shiny app.               
+#' @param  A tibble data frame object that is the output of \code{\link{compareCovariateValueResult}} function.
+#' @template DatabaseIds
+#' @param targetCohortIds        A vector of one or more Cohort Ids.
+#' @param comparatorCohortIds    A vector of one or more Cohort Ids.
+#' @param cohorts    A vector of one or more Cohort Ids.
+#' @param covariates    A vector of one or more Cohort Ids.
 #' 
 #' @return
 #' A Plotly object.
@@ -247,52 +249,86 @@ plotIncidenceRate <- function(data,
 #'
 #' @export
 
-plotCohortCompare <- function(balance, cohortId, comparatorId) {
+plotCohortStandardizedDifferenceComparison <- function(data,
+                                                       targetCohortIds = NULL, 
+                                                       comparatorCohortIds = NULL,
+                                                       cohorts,
+                                                       covariates,
+                                                       databaseIds = NULL) {
+  plotData <- data
+  if (!is.null(targetCohortIds)) {
+    plotData <- plotData %>% 
+      dplyr::filter(.data$targetCohortId %in% !!targetCohortIds)
+  }
+  if (!is.null(comparatorCohortIds)) {
+    plotData <- plotData %>% 
+      dplyr::filter(.data$comparatorCohortId %in% !!comparatorCohortIds)
+  }
+  if (!is.null(databaseIds)) {
+    plotData <- plotData %>% 
+      dplyr::filter(.data$databaseId %in% !!databaseIds)
+  }
+  
+  if (is.null(targetCohortIds) || is.null(comparatorCohortIds) || is.null(databaseIds)) {
+    ParallelLogger::logWarn("Not yet supported. Upcoming feature.")
+    return(NULL)
+  }
   
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
-  checkmate::assertTibble(x = data, 
+  checkmate::assertTibble(x = plotData, 
                           any.missing = FALSE,
                           min.rows = 1,
-                          min.cols = 5,
+                          min.cols = 11,
                           null.ok = FALSE,
+                          types = c('character', 'double'),
                           add = errorMessage)
+  checkmate::assertNames(x = colnames(plotData),
+                         subset.of = c("databaseId","targetCohortId","comparatorCohortId","covariateId",
+                                       "mean1","sd1","mean2","sd2","sd","stdDiff", "absStdDiff"),
+                         add = errorMessage
+  )
   checkmate::reportAssertions(collection = errorMessage)
   
-  if (nrow(balance) == 0) {
-    return(NULL)
-  }
-  balance$mean1[is.na(balance$mean1)] <- 0
-  balance$mean2[is.na(balance$mean2)] <- 0
-  data <- balance[sample(nrow(balance), 1000), ]
+  # when we support more than 1 targetCohortIds, comparatorCohortIds and DatabaseIds -- this 
+  # will be the begining of the iteration. 
+  # For now we are only support one unique combination of databaseId, targetCohortId, comparatorCohortId
   
   xAxisLabel <- list(
-    title = cohortId,
+    title = targetCohortIds,
     range = c(0, 1)
   )
   yAxisLabel <- list(
-    title = comparatorId,
+    title = comparatorCohortIds,
     range = c(0, 1)
   )
-  plot <- plotly::plot_ly(
-    balance, x = balance$mean1, y = balance$mean2,
-    # Hover text:
-    text = ~paste("Mean Target: ", balance$mean1, '<br>Mean Comparator:', balance$mean2,'<br>Std diff.:', balance$stdDiff),
-    color = ~balance$absStdDiff,
-    type   = 'scatter', 
-    mode   = 'markers',
-    marker = list(size = 10, 
-                  opacity = "0.5"))
-  plot <- plot %>% plotly::layout(shapes = list(type = "line",
-                                                y0 = 0, 
-                                                y1 = 1, 
-                                                yref = "paper",
-                                                x0 = 0,  
-                                                x1 = 1, 
-                                                line = list(color = "red", 
-                                                            dash = "dash")))
-  plot <- plot %>% plotly::layout(xaxis = xAxisLabel, yaxis = yAxisLabel, showlegend = FALSE)
-  plot <- plot %>% plotly::colorbar(title = "Absolute\nStd. Diff.")
+  plot <- plotly::plot_ly(data = plotData, 
+                          x = plotData$mean1, 
+                          y = plotData$mean2,
+                          # Hover text:
+                          text = ~paste("Mean Target: ", 
+                                        plotData$mean1, 
+                                        '<br>Mean Comparator:', 
+                                        plotData$mean2,
+                                        '<br>Std diff.:', 
+                                        plotData$stdDiff),
+                          color = ~plotData$absStdDiff,
+                          type   = 'scatter',
+                          mode   = 'markers',
+                          marker = list(size = 10,
+                                        opacity = "0.5")) %>% 
+    plotly::layout(shapes = list(type = "line",
+                                 y0 = 0, 
+                                 y1 = 1, 
+                                 yref = "paper",
+                                 x0 = 0,  
+                                 x1 = 1, 
+                                 line = list(color = "red", 
+                                             dash = "dash"))) %>% 
+    plotly::layout(xaxis = xAxisLabel, 
+                   yaxis = yAxisLabel, 
+                   showlegend = FALSE) %>% 
+    plotly::colorbar(title = "Absolute\nStd. Diff.")
   return(plot)
 }
 
@@ -303,7 +339,7 @@ plotCohortCompare <- function(balance, cohortId, comparatorId) {
 #' Get Vendiagram  object with cohort Overlap plot.
 #'
 #' @param 
-#' data   A tibble data frame object that is the output of \code{\link{getCohortOverlap}} function.  
+#' data   A tibble data frame object that is the output of \code{\link{getCohortOverlap}} function. 
 #' 
 #' @return
 #' A Vendiagram object.
