@@ -1071,14 +1071,17 @@ shiny::shinyServer(function(input, output, session) {
                                                            timeIds = NULL,
                                                            resultsDatabaseSchema = NULL)
     
-    data <- data %>% 
-      tidyr::replace_na(mean1 = 0, mean2 = 0)
     
     if (is.null(data)) {
       return(NULL)
     }
 
-    plot <- CohortDiagnostics::plotCohortCompare(balance = data, cohortId = cohortId(), comparatorId = comparatorCohortId())
+    plot <- CohortDiagnostics::plotCohortStandardizedDifferenceComparison(data = data, 
+                                                                          targetCohortIds = cohortId(), 
+                                                                          comparatorCohortIds = comparatorCohortId(),
+                                                                          cohorts = NULL,
+                                                                          covariates = NULL,
+                                                                          databaseIds = input$databases)
     
     return(plot)
   })
