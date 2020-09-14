@@ -99,16 +99,16 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  covariateSettings = FeatureExtraction::createDefaultCovariateSettings(),
                                  runTemporalCohortCharacterization = TRUE,
                                  temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(
-                                          useConditionOccurrence = TRUE, 
-                                          useDrugEraStart = TRUE, 
-                                          useProcedureOccurrence = TRUE, 
-                                          useMeasurement = TRUE,                                          
-                                          temporalStartDays = c(-365,-30,0,1,31, 
-                                                                seq(from = -30, to = -420, by = -30), 
-                                                                seq(from = 1, to = 390, by = 30)), 
-                                          temporalEndDays = c(-31,-1,0,30,365,
-                                                              seq(from = 0, to = -390, by = -30),
-                                                              seq(from = 31, to = 420, by = 30))),
+                                   useConditionOccurrence = TRUE, 
+                                   useDrugEraStart = TRUE, 
+                                   useProcedureOccurrence = TRUE, 
+                                   useMeasurement = TRUE,                                          
+                                   temporalStartDays = c(-365,-30,0,1,31, 
+                                                         seq(from = -30, to = -420, by = -30), 
+                                                         seq(from = 1, to = 390, by = 30)), 
+                                   temporalEndDays = c(-31,-1,0,30,365,
+                                                       seq(from = 0, to = -390, by = -30),
+                                                       seq(from = 31, to = 420, by = 30))),
                                  minCellCount = 5,
                                  incremental = FALSE,
                                  incrementalFolder = exportFolder) {
@@ -182,7 +182,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                                                        cohortTable = cohortTable, 
                                                                        cohortIds = cohorts$cohortId, 
                                                                        includeInclusionStatsTables = runInclusionStatistics
-                                                                       )
+  )
   if (nrow(recordCountOfInstantiatedCohorts$cohort %>% 
            dplyr::filter(.data$count > 0)) > 0) {
     instantiatedCohorts <- recordCountOfInstantiatedCohorts$cohort %>% 
@@ -219,11 +219,11 @@ runCohortDiagnostics <- function(packageName = NULL,
   ParallelLogger::logInfo("------------------------------------")
   ParallelLogger::logInfo("\n- Getting record and subject counts for instantiated cohorts")
   subset <- subsetToRequiredCohorts(cohorts = cohorts %>% 
-                                      dplyr::filter(cohortId %in% instantiatedCohorts), 
+                                      dplyr::filter(.data$cohortId %in% instantiatedCohorts), 
                                     task = "getCohortCounts", 
                                     incremental = incremental, 
                                     recordKeepingFile = recordKeepingFile)
-
+  
   if (nrow(subset) > 0) {
     if (incremental && (length(instantiatedCohorts) - nrow(subset)) > 0) {
       ParallelLogger::logInfo("  Skipping ", 
@@ -234,7 +234,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                               cohortDatabaseSchema = cohortDatabaseSchema,
                               cohortTable = cohortTable,
                               cohortIds = subset$cohortId)
-      
+    
     if (nrow(counts) > 0) {
       counts <- counts %>% dplyr::mutate(databaseId = !!databaseId)
       counts <- enforceMinCellValue(data = counts, fieldName = "cohortEntries", minValues = minCellCount)
@@ -329,7 +329,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     # Time distributions ----------------------------------------------------------------------
     ParallelLogger::logInfo("\n- Creating time distributions")
     subset <- subsetToRequiredCohorts(cohorts = cohorts %>%
-                                            dplyr::filter(cohortId %in% instantiatedCohorts),
+                                        dplyr::filter(cohortId %in% instantiatedCohorts),
                                       task = "runTimeDistributions",
                                       incremental = incremental,
                                       recordKeepingFile = recordKeepingFile)
@@ -622,7 +622,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                    nrow(cohortCharacteristicsOutput$result) %>% 
                                      scales::comma(accuracy = 1), 
                                    '\n'))
-    
+      
       if (nrow(cohortCharacteristicsOutput$result) > 0) {
         message <- c(message, paste0("     ", 
                                      subset %>% 

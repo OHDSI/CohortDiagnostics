@@ -131,8 +131,8 @@ writeOmopvocabularyTables <-
       tidyr::tibble(serverTableNames = DatabaseConnector::getTableNames(connection, 
                                                                         vocabularyDatabaseSchema) %>% 
                       tolower()) %>%
-      dplyr::filter(.data$serverTableNames %in% (vocabularyTableNames$serverTableNames %>% 
-                                                   SqlRender::camelCaseToSnakeCase(string = .))) %>%
+      dplyr::filter(.data$serverTableNames %in% (SqlRender::camelCaseToSnakeCase(string =
+                                                                                   vocabularyTableNames$serverTableNames))) %>%
       dplyr::left_join(vocabularyTableNames)
     
     if (nrow(vocabularyTablesInCohortDatabaseSchema) == 0) {
