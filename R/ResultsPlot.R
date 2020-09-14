@@ -269,7 +269,7 @@ plotCohortStandardizedDifferenceComparison <- function(data,
     plotData <- plotData %>% 
       dplyr::filter(.data$databaseId %in% !!databaseIds)
   }
-  
+
   # for now we will support only one combination of targetCohortId, comparatorCohortId and databaseId
   if (length(targetCohortIds) > 1 || length(comparatorCohortIds) > 1 || length(databaseIds) > 1) {
     ParallelLogger::logWarn("Not yet supported. Upcoming feature.")
@@ -305,6 +305,37 @@ plotCohortStandardizedDifferenceComparison <- function(data,
                                        "mean1","sd1","mean2","sd2","sd","stdDiff", "absStdDiff"),
                          add = errorMessage
   )
+  checkmate::reportAssertions(collection = errorMessage)
+  if (!is.null(cohorts)) {
+    checkmate::assertTibble(x = cohorts, 
+                            any.missing = FALSE,
+                            min.rows = 1,
+                            min.cols = 2,
+                            null.ok = FALSE,
+                            types = c('character', 'double'),
+                            add = errorMessage)
+    checkmate::assertNames(x = colnames(cohorts),
+                           subset.of = c("cohortId","cohortName"),
+                           add = errorMessage
+    )
+  } else {
+    data <- data %>% 
+      dplyr::mutate(targetCohortName == as.character(.data$))
+  }
+  checkmate::reportAssertions(collection = errorMessage)
+  if (!is.null(covariateReference)) {
+    checkmate::assertTibble(x = covariateReference, 
+                            any.missing = FALSE,
+                            min.rows = 1,
+                            min.cols = 4,
+                            null.ok = FALSE,
+                            types = c('character', 'double'),
+                            add = errorMessage)
+    checkmate::assertNames(x = colnames(cohorts),
+                           subset.of = c("covariateId","covariateName", "covariateAnalysisId", "conceptId"),
+                           add = errorMessage
+    )
+  }
   checkmate::reportAssertions(collection = errorMessage)
   
   # when we support more than 1 targetCohortIds, comparatorCohortIds and DatabaseIds -- this 
