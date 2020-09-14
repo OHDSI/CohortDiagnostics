@@ -44,7 +44,7 @@ CohortDiagnostics::plotIncidenceRate(data = data,
 data <- CohortDiagnostics::getCohortCountResult(databaseIds = databaseIds)
 
 ########################
-data <- CohortDiagnostics::getCohortOverLapResult(targetCohortIds = targetCohortIds,
+data <- CohortDiagnostics::getCohortOverlapResult(targetCohortIds = targetCohortIds,
                                                   comparatorCohortIds = comparatorCohortIds,
                                                   databaseIds = databaseIds)
 CohortDiagnostics::plotCohortOverlapVennDiagram(data = data, 
@@ -76,6 +76,7 @@ plot <- CohortDiagnostics::plotCohortComparisonStandardizedDifference(data = dat
                                                                       covariateReference = covariateReference,
                                                                       concept = NULL, # to subset based on domain, or vocabulary
                                                                       databaseIds = 'OPTUM_EXTENDED_DOD')
+plot
 
 data <- CohortDiagnostics::getCovariateValueResult(cohortIds = cohortIds, 
                                                    databaseIds = databaseIds, 

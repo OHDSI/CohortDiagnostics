@@ -90,8 +90,10 @@ plotTimeDistribution <- function(data,
                  middle = .data$Median,
                  upper = .data$P75,
                  ymax = .data$Max) +
-    ggplot2::geom_errorbar(ggplot2::aes(ymin = .data$Max, ymax = .data$Max), size = 1) +
-    ggplot2::geom_boxplot(stat = "identity", fill = rgb(0, 0, 0.8, alpha = 0.25), size = 1) +
+    ggplot2::geom_errorbar(mapping = ggplot2::aes(ymin = .data$Min, ymax = .data$Max), size = 1) +
+    ggplot2::geom_boxplot(stat = "identity", 
+                          fill = rgb(0, 0, 0.8, alpha = 0.25), 
+                          size = 1) +
     ggplot2::facet_grid(Database~TimeMeasure, scale = "free") +
     ggplot2::coord_flip() +
     ggplot2::theme(panel.grid.major.y = ggplot2::element_blank(),
@@ -150,7 +152,7 @@ plotIncidenceRate <- function(data,
                               yscaleFixed = FALSE) {
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertTibble(x = data, 
-                          any.missing = FALSE,
+                          any.missing = TRUE,
                           min.rows = 1,
                           min.cols = 5,
                           null.ok = FALSE,
@@ -570,7 +572,8 @@ plotCohortOverlapVennDiagram <- function(data,
 #   ggplot2::xlab(label = "Comparators") +
 #   ggplot2::geom_histogram(position = "stack", binwidth = 1) +
 #   ggplot2::xlim(c(0,max(length(comparatorCohortIds()),10))) +
-#   ggplot2::facet_grid(rows = ggplot2::vars(data$targetCohortId), cols = ggplot2::vars(data$databaseId), scales = "free_y")
+#   ggplot2::facet_grid(rows = ggplot2::vars(data$targetCohortId), 
+#   cols = ggplot2::vars(data$databaseId), scales = "free_y")
 # plot <- plotly::ggplotly(p)
 # GENERATE HISTOGRAM FUNCTION
 # generateHistogramValues <- function(len,val)
