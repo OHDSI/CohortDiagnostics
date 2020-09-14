@@ -137,7 +137,7 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$cohortCountsTable <- DT::renderDataTable(expr = {
-    data <- CohortDiagnostics::getCohortCounts(databaseIds = input$databases)
+    data <- CohortDiagnostics::getCohortCountResult(databaseIds = input$databases)
     
     if (nrow(data) == 0) {
       return(NULL)
@@ -253,19 +253,23 @@ shiny::shinyServer(function(input, output, session) {
     # }
   # })
   
-  # output$incidenceRatePlot <- plotly::renderPlotly(expr = {
-    # data <- filteredIncidenceRates()
-    # if (is.null(data)) {
-    #   return(NULL)
-    # }
-    # plot <- plotincidenceRate(data = data,
-    #                           stratifyByAge = "Age" %in% input$irStratification,
-    #                           stratifyByGender = "Gender" %in% input$irStratification,
-    #                           stratifyByCalendarYear = "Calendar Year" %in% input$irStratification,
-    #                           yscaleFixed = input$irYscaleFixed) %>% 
-    #   plotly::ggplotly(dynamicTicks = TRUE)
-    # return(plot)
-  # })
+  output$incidenceRatePlot <- plotly::renderPlotly(expr = {
+  data <- CohortDiagnostics::getIncidenceRateResult(cohortIds = cohortId(), 
+                                                    databaseIds = input$databases, 
+                                                    input$irStratification,
+                                                    input$irStratification,
+                                                    input$irStratification)
+  if (is.null(data)) {
+    return(NULL)
+  }
+  plot <- CohortDiagnostics::plotIncidenceRate(data = data, 
+                                               input$irStratification,
+                                               input$irStratification,
+                                               input$irStratification,
+                                               input$irYscaleFixed)
+    
+  return(plot)
+  })
   
   # output$hoverInfoIr <- shiny::renderUI({
     # data <- filteredIncidenceRates()
@@ -315,7 +319,7 @@ shiny::shinyServer(function(input, output, session) {
   # }) 
   
   timeDisPlotDownload <- shiny::reactive({
-    data <- CohortDiagnostics::getTimeDistribution(cohortId = cohortId(), databaseId = input$databases)
+    data <- CohortDiagnostics::getTimeDistributionResult(cohortIds = cohortId(), databaseIds = input$databases)
     
     if (is.null(data)) {
       return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
@@ -332,7 +336,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$timeDistTable <- DT::renderDataTable(expr = {
 
-    table <- CohortDiagnostics::getTimeDistribution(cohortId = cohortId(), databaseId = input$databases)
+    table <- CohortDiagnostics::getTimeDistributionResult(cohortIds = cohortId(), databaseIds = input$databases)
 
     if (is.null(table)) {
       return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
@@ -882,7 +886,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$overlapTable <- DT::renderDataTable(expr = {
-    data <- CohortDiagnostics::getCohortOverLap(targetCohortId = cohortId(), databaseId = input$database, comparatorCohortId = comparatorCohortId())
+    data <- CohortDiagnostics::getCohortOverLapResult(targetCohortIds = cohortId(), comparatorCohortIds = comparatorCohortId(), databaseIds = input$database)
     
     if (is.null(data)) {
       return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts and comaprator')))
@@ -926,7 +930,7 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   overLapPlot <- shiny::reactive({
-    data <- CohortDiagnostics::getCohortOverLap(targetCohortId = cohortId(), databaseId = input$database, comparatorCohortId = comparatorCohortId())
+    data <- CohortDiagnostics::getCohortOverLapResult(targetCohortIds = cohortId(), comparatorCohortIds = comparatorCohortId(), databaseIds = input$database)
     
     if (is.null(data)) {
       return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts and comaprator')))
@@ -1042,9 +1046,16 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$cohortComparePlot <- plotly::renderPlotly(expr = {
-    balance <- computeBalance() %>% 
+    
+    data <- CohortDiagnostics::compareCovariateValueResult(targetCohortIds = cohortId(), 
+                                                   comparatorCohortIds = comparatorCohortId(),
+                                                   databaseIds = input$databases,
+                                                   isTemporal = FALSE)
+    
+    data <- data %>% 
       tidyr::replace_na(mean1 = 0, mean2 = 0)
-    if (nrow(balance) == 0) {
+    
+    if (is.null(data)) {
       return(NULL)
     }
 
