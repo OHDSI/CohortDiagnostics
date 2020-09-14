@@ -542,9 +542,11 @@ getTimeReference <- function(connection = NULL,
 #' @template CohortIds
 #' @template DatabaseIds
 #' @param isTemporal     (optional) Get temporal covariate values?
-#' @param timeIds        (optional) Used only if isTemporal = TRUE. Do you want to limit to certain
-#'                        'time ids'. By default all time ids are returned. 
-#' 
+#' @param timeIds        (optional) Will only be used if isTemporal = TRUE. Do you want to limit to certain
+#'                        'time ids'. By default timeId = c(1,2,3,4,5) are returned. These correspond to
+#'                        -365 to -31, -30 to -1, 0 to 0, 1 to 30, 31 to 365.
+#'                        If any of timeId value = 0, all timeIds are returned.
+#'                        If any of timeId value = -1, will return all timeIds > 5 (for time series analysis) 
 #' @return
 #' The function will return a tibble data frame object.
 #'
@@ -562,7 +564,7 @@ getCovariateValueResult <- function(connection = NULL,
                                     minProportion = 0.01,
                                     maxProportion = 1,
                                     isTemporal = TRUE,
-                                    timeIds = NULL,
+                                    timeIds = c(1,2,3,4,5),
                                     resultsDatabaseSchema = NULL) {
   if (isTemporal) {
     table <- 'temporalCovariateValue'
@@ -579,12 +581,14 @@ getCovariateValueResult <- function(connection = NULL,
                                                   connectionDetails = connectionDetails,
                                                   resultsDatabaseSchema = resultsDatabaseSchema,
                                                   errorMessage = errorMessage)
-  checkmate::assertIntegerish(x = timeIds, 
-                              lower = 0, 
-                              any.missing = FALSE, 
-                              unique = TRUE, 
-                              null.ok = TRUE,
-                              add = errorMessage)
+  if (isTemporal) {
+    checkmate::assertIntegerish(x = timeIds, 
+                                lower = -1, 
+                                any.missing = FALSE, 
+                                unique = TRUE, 
+                                null.ok = TRUE,
+                                add = errorMessage)
+  }
   checkmate::reportAssertions(collection = errorMessage)
   # route query
   route <- routeDataQuery(connection = connection,
@@ -624,12 +628,20 @@ getCovariateValueResult <- function(connection = NULL,
                     .data$databaseId %in% databaseIds,
                     .data$mean >= minProportion,
                     .data$mean <= maxProportion)
-    if (isTemporal && !is.null(timeIds)) {
-      data <- data %>% 
-        dplyr::filter(.data$timeId %in% timeIds)
+    if (isTemporal && (any(timeIds != 0))) {
+      if (any(timeIds == -1)) {
+        data <- data %>% 
+          dplyr::filter(.data$timeId > 5)
+      } else {
+        data <- data %>% 
+          dplyr::filter(.data$timeId %in% timeIds)
+      }
     }
   }
-  return(data %>% dplyr::arrange(.data$cohortId, .data$databaseId, .data$covariateId))
+  data <- data %>% 
+    dplyr::relocate(.data$cohortId, .data$databaseId, .data$timeId, .data$covariateId)
+    dplyr::arrange(.data$cohortId, .data$databaseId, .data$timeId, .data$covariateId)
+  return(data)
 }
 
 
@@ -835,7 +847,6 @@ getCohortReference <- function(connection = NULL,
     dplyr::arrange(.data$phenotypeId, .data$cohortId)
   return(data )
 }
-
 
 
 

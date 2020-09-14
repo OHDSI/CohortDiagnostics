@@ -12,7 +12,7 @@ getCovariateValueResult(
   minProportion = 0.01,
   maxProportion = 1,
   isTemporal = TRUE,
-  timeIds = NULL,
+  timeIds = c(1, 2, 3, 4, 5),
   resultsDatabaseSchema = NULL
 )
 }
@@ -36,8 +36,11 @@ of the results data model.}
 
 \item{isTemporal}{(optional) Get temporal covariate values?}
 
-\item{timeIds}{(optional) Used only if isTemporal = TRUE. Do you want to limit to certain
-'time ids'. By default all time ids are returned.}
+\item{timeIds}{(optional) Will only be used if isTemporal = TRUE. Do you want to limit to certain
+'time ids'. By default timeId = c(1,2,3,4,5) are returned. These correspond to
+-365 to -31, -30 to -1, 0 to 0, 1 to 30, 31 to 365.
+If any of timeId value = 0, all timeIds are returned.
+If any of timeId value = -1, will return all timeIds > 5 (for time series analysis)}
 
 \item{resultsDatabaseSchema}{(optional) The databaseSchema where the results data model 
 of cohort diagnostics is stored. This is only required when 

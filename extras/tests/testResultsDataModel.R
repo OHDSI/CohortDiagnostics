@@ -86,3 +86,5 @@ data <- CohortDiagnostics::getCovariateValueResult(cohortIds = cohortIds,
                                                    minProportion = 0.03,
                                                    isTemporal = TRUE, 
                                                    timeIds = c(1,2,3))
+
+
