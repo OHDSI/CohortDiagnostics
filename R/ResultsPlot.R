@@ -90,7 +90,7 @@ plotTimeDistribution <- function(data,
                  middle = .data$Median,
                  upper = .data$P75,
                  ymax = .data$Max) +
-    ggplot2::geom_errorbar(ggplot2::aes(ymin = Max, ymax = Max), size = 1) +
+    ggplot2::geom_errorbar(ggplot2::aes(ymin = .data$Max, ymax = .data$Max), size = 1) +
     ggplot2::geom_boxplot(stat = "identity", fill = rgb(0, 0, 0.8, alpha = 0.25), size = 1) +
     ggplot2::facet_grid(Database~TimeMeasure, scale = "free") +
     ggplot2::coord_flip() +
@@ -376,16 +376,16 @@ plotCohortComparisonStandardizedDifference <- function(data,
       dplyr::mutate(covariateName = .data$covariateId %>% as.character())
   }
   
-  if (!is.null(cohorts)) {
+  if (!is.null(cohortReference)) {
     xAxisLabel <- list(
-      title = cohorts %>% 
+      title = cohortReference %>% 
         dplyr::filter(.data$cohortId %in% targetCohortIds) %>% 
         dplyr::select(.data$cohortName) %>% 
         dplyr::pull(),
       range = c(0, 1)
     )
     yAxisLabel <- list(
-      title = cohorts %>% 
+      title = cohortReference %>% 
         dplyr::filter(.data$cohortId %in% comparatorCohortIds) %>% 
         dplyr::select(.data$cohortName) %>% 
         dplyr::pull(),

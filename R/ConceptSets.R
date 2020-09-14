@@ -393,7 +393,7 @@ runConceptSetDiagnostics <- function(connection,
         dplyr::arrange(.data$cohortId, .data$conceptSetId, 
                        .data$conceptId, .data$sourceConceptName,
                        .data$sourceVocabularyId) %>% 
-        dplyr::filter(cohortId %in% subsetIncluded$cohortId)
+        dplyr::filter(.data$cohortId %in% subsetIncluded$cohortId)
       
       if (nrow(counts) > 0) {
         counts$databaseId <- databaseId
