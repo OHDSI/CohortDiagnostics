@@ -737,6 +737,8 @@ compareCovariateValueResult <- function(connection = NULL,
 #'
 #' @template ModeAndDetails
 #' @template CohortIds
+#' @param getJson  Do you want the JSON expression of cohort?
+#' @param getSql  Do you want the Sql expression of cohort?
 #' 
 #' @return
 #' The function will return a tibble data frame object.
@@ -750,7 +752,9 @@ compareCovariateValueResult <- function(connection = NULL,
 getCohortReference <- function(connection = NULL,
                                connectionDetails = NULL,
                                cohortIds = NULL,
-                               resultsDatabaseSchema = NULL) {
+                               resultsDatabaseSchema = NULL,
+                               getJson = FALSE,
+                               getSql = FALSE) {
   table <- 'cohort'
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
@@ -758,10 +762,10 @@ getCohortReference <- function(connection = NULL,
                                                   connectionDetails = connectionDetails,
                                                   resultsDatabaseSchema = resultsDatabaseSchema,
                                                   errorMessage = errorMessage)
-  errorMessage <- checkmate::assertIntegerish(x = databaseIds,
-                                              min.len = 1, 
-                                              null.ok = TRUE,
-                                              add = errorMessage)
+  checkmate::assertIntegerish(x = databaseIds,
+                              min.len = 1, 
+                              null.ok = TRUE,
+                              add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
   
   # route query
@@ -793,6 +797,14 @@ getCohortReference <- function(connection = NULL,
       data <- data %>% 
         dplyr::filter(.data$cohortIds %in% cohortIds)
     }
+  }
+  if (!getSql) {
+    data <- data %>% 
+      dplyr::select(-.data$sql)
+  }
+  if (!getJson) {
+    data <- data %>% 
+      dplyr::select(-.data$json)
   }
   return(data %>% dplyr::arrange(.data$cohortId))
 }
@@ -829,10 +841,10 @@ getDatabaseReference <- function(connection = NULL,
                                                   connectionDetails = connectionDetails,
                                                   resultsDatabaseSchema = resultsDatabaseSchema,
                                                   errorMessage = errorMessage)
-  errorMessage <- checkmate::assertCharacter(x = databaseIds,
-                                             min.len = 1, 
-                                             null.ok = TRUE,
-                                             add = errorMessage)
+  checkmate::assertCharacter(x = databaseIds,
+                             min.len = 1, 
+                             null.ok = TRUE,
+                             add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
   
   # route query
@@ -865,7 +877,7 @@ getDatabaseReference <- function(connection = NULL,
         dplyr::filter(.data$databaseId %in% databaseIds)
     }
   }
-  return(data %>% dplyr::arrange(.data$cohortId))
+  return(data %>% dplyr::arrange(.data$databaseId))
 }
 
 
@@ -889,9 +901,9 @@ getDatabaseReference <- function(connection = NULL,
 #'
 #' @export
 getConceptReference <- function(connection = NULL,
-                                 connectionDetails = NULL,
+                                connectionDetails = NULL,
                                 conceptIds = NULL,
-                                 resultsDatabaseSchema = NULL) {
+                                resultsDatabaseSchema = NULL) {
   table <- 'concept'
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
@@ -899,10 +911,10 @@ getConceptReference <- function(connection = NULL,
                                                   connectionDetails = connectionDetails,
                                                   resultsDatabaseSchema = resultsDatabaseSchema,
                                                   errorMessage = errorMessage)
-  errorMessage <- checkmate::assertIntegerish(x = databaseIds,
-                                             min.len = 1, 
-                                             null.ok = TRUE,
-                                             add = errorMessage)
+  checkmate::assertIntegerish(x = conceptIds,
+                              min.len = 1, 
+                              null.ok = TRUE,
+                              add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
   
   # route query
@@ -921,7 +933,8 @@ getConceptReference <- function(connection = NULL,
   if (!is.null(connection)) {
     sql <-   "SELECT *
               FROM  @resultsDatabaseSchema.@table
-              {@databaseIds == } ? {}:{where databaseId in ('@databaseIds')};"
+              WHERE invalid_reason IS NULL 
+              {@conceptIds == } ? {}:{AND concept_id IN ('@conceptIds')};"
     data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                        sql = sql,
                                                        resultsDatabaseSchema = resultsDatabaseSchema,
@@ -930,12 +943,14 @@ getConceptReference <- function(connection = NULL,
       tidyr::tibble()
   } else {
     data <- get(table)
-    if (!is.null(databaseIds)) {
+    if (!is.null(conceptIds)) {
       data <- data %>% 
-        dplyr::filter(.data$databaseId %in% databaseIds)
+        dplyr::filter(.data$conceptId %in% conceptIds,
+                      is.na(.data$invalidReason)) %>% 
+        dplyr::select(-.data$invalidReason)
     }
   }
-  return(data %>% dplyr::arrange(.data$cohortId))
+  return(data %>% dplyr::arrange(.data$conceptId))
 }
 
 
@@ -973,7 +988,10 @@ routeDataQuery <- function(connection = NULL,
     )
     if (!tableExistsInDbms) {
       if (!silent) {
-        ParallelLogger::logWarn("  '", table, "' not found in ", databaseSchema)
+        ParallelLogger::logWarn("  '", 
+                                table, 
+                                "' not found in ", 
+                                databaseSchema)
       }
     }
   }
@@ -982,30 +1000,40 @@ routeDataQuery <- function(connection = NULL,
     if (exists(table)) {
       tableExistsInRMemory <- TRUE
       if (!silent) {
-        ParallelLogger::logInfo("  '", SqlRender::camelCaseToTitleCase(table), "' data object found in R memory.")
+        ParallelLogger::logInfo("  '", 
+                                SqlRender::camelCaseToTitleCase(table), 
+                                "' data object found in R memory.")
       }
     } else {
       tableExistsInRMemory <- FALSE
       if (is.null(connection)) {
         if (!silent) {
-          ParallelLogger::logWarn("  '", SqlRender::camelCaseToTitleCase(table), "' data object not found in R memory.")
+          ParallelLogger::logWarn("  '", 
+                                  SqlRender::camelCaseToTitleCase(table), 
+                                  "' data object not found in R memory.")
         }
       } else {
         if (!silent) {
-          ParallelLogger::logInfo("  '", SqlRender::camelCaseToTitleCase(table), "' data object not found in R memory.")
+          ParallelLogger::logInfo("  '", 
+                                  SqlRender::camelCaseToTitleCase(table), 
+                                  "' data object not found in R memory.")
         }
       }
     }
   }
   if (!is.null(connection) & isTRUE(tableExistsInDbms)) {
     return(connection)
-  } else if (!is.null(connection) & !isTRUE(tableExistsInDbms) & isTRUE(tableExistsInRMemory)) {
-    ParallelLogger::logWarn(SqlRender::camelCaseToTitleCase(table), " was not found in dbms but was found in R memory. Using the data loaded in R memory.")
+  } else if (!is.null(connection) & !isTRUE(tableExistsInDbms) & 
+             isTRUE(tableExistsInRMemory)) {
+    ParallelLogger::logWarn(SqlRender::camelCaseToTitleCase(table), 
+                            " was not found in dbms but was found in R memory. 
+                            Using the data loaded in R memory.")
     return("memory")
   } else if (is.null(connection) & isTRUE(tableExistsInRMemory)) {
     return("memory")
   } else if (is.null(connection) & !isTRUE(tableExistsInRMemory)) {
-    ParallelLogger::logWarn(SqlRender::camelCaseToTitleCase(table), " not found.")
+    ParallelLogger::logWarn(SqlRender::camelCaseToTitleCase(table), 
+                            " not found.")
     return("quit")
   }
 }
