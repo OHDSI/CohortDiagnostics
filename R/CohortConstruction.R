@@ -471,13 +471,13 @@ getInclusionStatistics <- function(connectionDetails = NULL,
                                                cohort_id = cohortId)
   }
   inclusion <- fetchStats(cohortInclusionTable)
-  summaryStats <- fetchStats(cohortSummaryStatsTable)
-  inclusionStats <- fetchStats(cohortInclusionStatsTable)
+  summary_stats <- fetchStats(cohortSummaryStatsTable)
+  inclusion_stats <- fetchStats(cohortInclusionStatsTable)
   inclusion_results <- fetchStats(cohortInclusionResultTable)
   result <- processInclusionStats(inclusion = inclusion,
                                   inclusion_results = inclusion_results,
-                                  inclusionStats = inclusionStats,
-                                  summaryStats = summaryStats,
+                                  inclusion_stats = inclusion_stats,
+                                  summary_stats = summary_stats,
                                   simplify = simplify)
   delta <- Sys.time() - start
   writeLines(paste("Fetching inclusion statistics took", signif(delta, 3), attr(delta, "units")))
@@ -552,9 +552,9 @@ getInclusionStatisticsFromFiles <- function(cohortId,
 
 processInclusionStats <- function(inclusion,
                                   inclusion_results,
+                                  simplify,
                                   inclusion_stats,
-                                  summary_stats,
-                                  simplify) {
+                                  summary_stats) {
   if (simplify) {
     if (nrow(inclusion) == 0 || nrow(inclusion_stats) == 0) {
       return(tidyr::tibble())

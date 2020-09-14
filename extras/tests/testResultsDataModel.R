@@ -60,7 +60,8 @@ timeReference <- CohortDiagnostics::getTimeReference()
 
 data <- CohortDiagnostics::getCovariateValueResult(cohortIds = cohortIds, 
                                                    databaseIds = databaseIds, 
-                                                   minProportion = 0.03)
+                                                   minProportion = 0.03,
+                                                   isTemporal = FALSE)
 
 data <- CohortDiagnostics::compareCovariateValueResult(targetCohortIds = targetCohortIds,
                                                        comparatorCohortIds = comparatorCohortIds,

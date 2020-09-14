@@ -44,7 +44,7 @@ createDdl <- function(packageName,
     table <- specification %>% 
       dplyr::filter(.data$tableName == tableList[[i]])
     
-    fields <- table$fieldName
+    fields <- table %>% dplyr::select(.data$fieldName) %>% dplyr::pull()
     script <- c(script, paste0("--Number of fields in table ", length(fields), '\n'))
     hint <- "--HINT DISTRIBUTE ON RANDOM\n"
     script <- c(script, hint, paste0("CREATE TABLE @resultsDatabaseSchema.", tableList[[i]], " (\n"))
@@ -173,8 +173,8 @@ dropDdl <- function(packageName,
 #' @export
 #' 
 guessCsvFileSpecification <- function(pathToCsvFile) {
-  tableToWorkOn <- basename(pathToCsvFile) %>% 
-    stringr::str_remove(string = ., pattern = ".csv")
+  tableToWorkOn <-  stringr::str_remove(string = basename(pathToCsvFile), 
+                                        pattern = ".csv")
   
   print(paste0("Reading csv files '", tableToWorkOn, "' and guessing data types."))
   
@@ -210,11 +210,11 @@ guessCsvFileSpecification <- function(pathToCsvFile) {
     if (stringr::str_detect(string = tolower(fieldName), 
                             pattern = stringr::fixed('description')) &&
         (stringr::str_detect(string = type, 
-                            pattern = 'varchar') ||
+                             pattern = 'varchar') ||
          stringr::str_detect(string = type, 
                              pattern = 'logical')
-         )
-        ) {
+        )
+    ) {
       type = 'varchar(max)'
     }
     isRequired <- 'Yes'
@@ -295,8 +295,11 @@ getPrimaryKeyForOmopVocabularyTable <- function() {
 #' }
 #' 
 #' @export
-getCohortDiagnosticsResultsDataModelSpecification <- function() {
-  path <- System.file('sql','resultsDataModel','specification.csv', package = 'CohortDiagnostics')
+getResultsDataModelSpecification <- function() {
+  pathToCsvFile <- system.file('sql',
+                               'resultsDataModel',
+                               'specification.csv', 
+                               package = 'CohortDiagnostics')
   specification <- readr::read_csv(file = pathToCsvFile,
                                    col_types = readr::cols(),
                                    guess_max = min(1e7),
@@ -318,9 +321,9 @@ guessDbmsDataTypeFromVector <- function(value) {
   } else if (class == 'integer' && type == 'integer' && mode == 'integer') {
     type = 'integer'
   } else if (type == 'character' && class == 'character' && mode == 'character') {
-    fieldCharLength <- tidyr::tibble(character = stringi::stri_enc_toutf8(value) %>% 
-      stringr::str_replace_na(string = ., replacement = '') %>% 
-      trimws()) %>% 
+    fieldCharLength <- tidyr::tibble(character = stringr::str_replace_na(string = stringi::stri_enc_toutf8(value), 
+                                                                         replacement = '') %>%
+                                       trimws()) %>% 
       dplyr::mutate(length = stringr::str_length(.data$character) %>% 
                       stringr::str_replace_na(string = ., replacement = 0)) %>% 
       dplyr::pull(.data$length) %>% #ignore the UTF warning, they will be converted to 0

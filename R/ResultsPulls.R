@@ -638,9 +638,15 @@ getCovariateValueResult <- function(connection = NULL,
       }
     }
   }
-  data <- data %>% 
-    dplyr::relocate(.data$cohortId, .data$databaseId, .data$timeId, .data$covariateId)
-    dplyr::arrange(.data$cohortId, .data$databaseId, .data$timeId, .data$covariateId)
+  if (isTemporal) {
+    data <- data %>% 
+      dplyr::relocate(.data$cohortId, .data$databaseId, .data$timeId, .data$covariateId) %>% 
+      dplyr::arrange(.data$cohortId, .data$databaseId, .data$timeId, .data$covariateId)
+  } else {
+    data <- data %>% 
+      dplyr::relocate(.data$cohortId, .data$databaseId, .data$covariateId) %>% 
+      dplyr::arrange(.data$cohortId, .data$databaseId, .data$covariateId)
+  }
   return(data)
 }
 
@@ -732,12 +738,12 @@ compareCovariateValueResult <- function(connection = NULL,
   
   targetCovariateValue = covariateValue %>% 
     dplyr::filter(.data$cohortId %in% targetCohortIds) %>% 
-    dplyr::rename(targetCohortId = cohortId,
+    dplyr::rename(targetCohortId = .data$cohortId,
                   mean1 = .data$mean,
                   sd1 = .data$sd)
   comparatorCovariateValue = covariateValue %>% 
     dplyr::filter(.data$cohortId %in% comparatorCohortIds) %>% 
-    dplyr::rename(comparatorCohortId = cohortId,
+    dplyr::rename(comparatorCohortId = .data$cohortId,
                   mean2 = .data$mean,
                   sd2 = .data$sd)
   
@@ -797,6 +803,14 @@ getCohortReference <- function(connection = NULL,
                               min.len = 1, 
                               null.ok = TRUE,
                               add = errorMessage)
+  checkmate::assertLogical(x = getJson, 
+                           any.missing = FALSE, 
+                           min.len = 1, 
+                           max.len = 1)
+  checkmate::assertLogical(x = getSql, 
+                           any.missing = FALSE, 
+                           min.len = 1, 
+                           max.len = 1)
   checkmate::reportAssertions(collection = errorMessage)
   
   # route query
