@@ -1,7 +1,7 @@
 --DDL Specification for package CohortDiagnostics package version: 2.0
  --Data Model Version 2.0
  --Last update 2020-09-13
- --Number of tables 8
+ --Number of tables 9
  
  ----------------------------------------------------------------------- 
  --Table name analysis_ref
@@ -48,7 +48,7 @@
  --HINT DISTRIBUTE ON RANDOM
  CREATE TABLE @resultsDatabaseSchema.cohort_inclusion (
  
-			cohort_definition_id bigint NOT NULL, 
+			cohort_id bigint NOT NULL, 
 			rule_sequence float NOT NULL, 
 			name varchar(255) NOT NULL, 
 			description varchar(max) NULL );  
@@ -59,7 +59,7 @@
  --HINT DISTRIBUTE ON RANDOM
  CREATE TABLE @resultsDatabaseSchema.cohort_inclusion_result (
  
-			cohort_definition_id bigint NOT NULL, 
+			cohort_id bigint NOT NULL, 
 			inclusion_rule_mask float NOT NULL, 
 			person_count float NOT NULL, 
 			mode_id bigint NOT NULL );  
@@ -70,7 +70,7 @@
  --HINT DISTRIBUTE ON RANDOM
  CREATE TABLE @resultsDatabaseSchema.cohort_inclusion_stats (
  
-			cohort_definition_id bigint NOT NULL, 
+			cohort_id bigint NOT NULL, 
 			rule_sequence float NOT NULL, 
 			person_count float NOT NULL, 
 			gain_count float NOT NULL, 
@@ -102,7 +102,24 @@
  --HINT DISTRIBUTE ON RANDOM
  CREATE TABLE @resultsDatabaseSchema.cohort_summary_stats (
  
-			cohort_definition_id bigint NOT NULL, 
+			cohort_id bigint NOT NULL, 
 			base_count float NOT NULL, 
 			final_count float NOT NULL, 
 			mode_id bigint NOT NULL );  
+ 
+ ----------------------------------------------------------------------- 
+ --Table name concept
+ --Number of fields in table 10
+ --HINT DISTRIBUTE ON RANDOM
+ CREATE TABLE @resultsDatabaseSchema.concept (
+ 
+			concept_id bigint NOT NULL, 
+			concept_name varchar(255) NULL, 
+			domain_id varchar(20) NOT NULL, 
+			vocabulary_id varchar(20) NOT NULL, 
+			concept_class_id varchar(20) NOT NULL, 
+			standard_concept varchar(1) NULL, 
+			concept_code varchar(20) NULL, 
+			valid_start_date Date NOT NULL, 
+			valid_end_date Date NOT NULL, 
+			invalid_reason varchar(1) NULL );  

@@ -72,7 +72,8 @@ getTimeDistributions <- function(connectionDetails = NULL,
     result <- data$covariatesContinuous %>%
       dplyr::inner_join(data$covariateRef) %>%
       dplyr::select(-.data$conceptId, -.data$analysisId, -.data$covariateId, -.data$result$countValue) %>%
-      dplyr::rename(timeMetric = .data$covariateName) %>%
+      dplyr::rename(timeMetric = .data$covariateName,
+                    cohortId = .data$cohortDefinitionId) %>%
       dplyr::collect()
   }
   attr(result, "cohortSize") <- data$metaData$populationSize
