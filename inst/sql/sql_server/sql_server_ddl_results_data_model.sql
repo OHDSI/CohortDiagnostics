@@ -1,7 +1,7 @@
 --DDL Specification for package CohortDiagnostics package version: 2.0
  --Data Model Version 2.0
- --Last update 2020-09-13
- --Number of tables 31
+ --Last update 2020-09-14
+ --Number of tables 30
  
  ----------------------------------------------------------------------- 
  --Table name analysis_ref
@@ -292,22 +292,6 @@
 			concept_count float NOT NULL );  
  
  ----------------------------------------------------------------------- 
- --Table name phenotype_description
- --Number of fields in table 9
- --HINT DISTRIBUTE ON RANDOM
- CREATE TABLE @resultsDatabaseSchema.phenotype_description (
- 
-			phenotype_id bigint NOT NULL, 
-			phenotype_name varchar(20) NOT NULL, 
-			referent_concept_id bigint NOT NULL, 
-			clinical_description varchar(max) NOT NULL, 
-			literature_review varchar(255) NULL, 
-			phenotype_notes varchar(1) NULL, 
-			synonyms varchar(255) NULL, 
-			parent_synonyms varchar(255) NULL, 
-			child_names varchar(255) NULL );  
- 
- ----------------------------------------------------------------------- 
  --Table name relationship
  --Number of fields in table 6
  --HINT DISTRIBUTE ON RANDOM
@@ -368,11 +352,11 @@
  
  ----------------------------------------------------------------------- 
  --Table name time_distribution
- --Number of fields in table 14
+ --Number of fields in table 13
  --HINT DISTRIBUTE ON RANDOM
  CREATE TABLE @resultsDatabaseSchema.time_distribution (
  
-			cohort_id bigint NULL, 
+			cohort_id bigint NOT NULL, 
 			count_value float NOT NULL, 
 			min_value float NOT NULL, 
 			max_value float NOT NULL, 
@@ -384,8 +368,7 @@
 			p_75_value float NOT NULL, 
 			p_90_value float NOT NULL, 
 			time_metric varchar(50) NOT NULL, 
-			database_id varchar(20) NOT NULL, 
-			cohort_definition_id bigint NULL );  
+			database_id varchar(20) NOT NULL );  
  
  ----------------------------------------------------------------------- 
  --Table name vocabulary

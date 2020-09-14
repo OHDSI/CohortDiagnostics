@@ -126,15 +126,6 @@ orphan_concept,cohort_id,bigint,Yes,Yes
 orphan_concept,concept_set_id,bigint,Yes,Yes
 orphan_concept,concept_id,bigint,Yes,Yes
 orphan_concept,concept_count,float,Yes,No
-phenotype_description,phenotype_id,bigint,Yes,Yes
-phenotype_description,phenotype_name,varchar(20),Yes,No
-phenotype_description,referent_concept_id,bigint,Yes,Yes
-phenotype_description,clinical_description,varchar(max),Yes,No
-phenotype_description,literature_review,varchar(255),No,No
-phenotype_description,phenotype_notes,varchar(1),No,No
-phenotype_description,synonyms,varchar(255),No,No
-phenotype_description,parent_synonyms,varchar(255),No,No
-phenotype_description,child_names,varchar(255),No,No
 relationship,relationship_id,varchar(20),Yes,Yes
 relationship,relationship_name,varchar(20),Yes,No
 relationship,is_hierarchical,float,Yes,No
@@ -159,7 +150,7 @@ temporal_covariate_value,database_id,varchar(20),Yes,Yes
 temporal_time_ref,time_id,bigint,Yes,Yes
 temporal_time_ref,start_day,float,Yes,No
 temporal_time_ref,end_day,float,Yes,No
-time_distribution,cohort_id,bigint,No,No
+time_distribution,cohort_id,bigint,Yes,Yes
 time_distribution,count_value,float,Yes,No
 time_distribution,min_value,float,Yes,No
 time_distribution,max_value,float,Yes,No
@@ -172,7 +163,6 @@ time_distribution,p_75_value,float,Yes,No
 time_distribution,p_90_value,float,Yes,No
 time_distribution,time_metric,varchar(50),Yes,No
 time_distribution,database_id,varchar(20),Yes,Yes
-time_distribution,cohort_definition_id,bigint,No,No
 vocabulary,vocabulary_id,varchar(20),Yes,Yes
 vocabulary,vocabulary_name,varchar(255),Yes,No
 vocabulary,vocabulary_reference,varchar(255),No,No

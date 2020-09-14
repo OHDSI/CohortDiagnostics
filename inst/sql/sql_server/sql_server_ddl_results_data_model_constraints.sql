@@ -1,7 +1,7 @@
 --DDL Primary Key Constraints Specification for package CohortDiagnostics package version: 2.0
  --Data Model Version 2.0
- --Last update 2020-09-13
- --Number of tables 31
+ --Last update 2020-09-14
+ --Number of tables 30
  
  ALTER TABLE @resultsDatabaseSchema.analysis_ref ADD CONSTRAINT xpk_analysis_ref PRIMARY KEY NONCLUSTERED (analysis_id);  
  ALTER TABLE @resultsDatabaseSchema.cohort ADD CONSTRAINT xpk_cohort PRIMARY KEY NONCLUSTERED (referent_concept_id,cohort_id,web_api_cohort_id);  
@@ -26,11 +26,10 @@
  ALTER TABLE @resultsDatabaseSchema.inclusion_rule_stats ADD CONSTRAINT xpk_inclusion_rule_stats PRIMARY KEY NONCLUSTERED (rule_sequence,cohort_id,database_id);  
  ALTER TABLE @resultsDatabaseSchema.index_event_breakdown ADD CONSTRAINT xpk_index_event_breakdown PRIMARY KEY NONCLUSTERED (concept_id,cohort_id,database_id);  
  ALTER TABLE @resultsDatabaseSchema.orphan_concept ADD CONSTRAINT xpk_orphan_concept PRIMARY KEY NONCLUSTERED (database_id,cohort_id,concept_set_id,concept_id);  
- ALTER TABLE @resultsDatabaseSchema.phenotype_description ADD CONSTRAINT xpk_phenotype_description PRIMARY KEY NONCLUSTERED (phenotype_id,referent_concept_id);  
  ALTER TABLE @resultsDatabaseSchema.relationship ADD CONSTRAINT xpk_relationship PRIMARY KEY NONCLUSTERED (relationship_id,reverse_relationship_id,relationship_concept_id);  
  ALTER TABLE @resultsDatabaseSchema.temporal_analysis_ref ADD CONSTRAINT xpk_temporal_analysis_ref PRIMARY KEY NONCLUSTERED (analysis_id,domain_id);  
  ALTER TABLE @resultsDatabaseSchema.temporal_covariate_ref ADD CONSTRAINT xpk_temporal_covariate_ref PRIMARY KEY NONCLUSTERED (covariate_id,covariate_analysis_id,concept_id);  
  ALTER TABLE @resultsDatabaseSchema.temporal_covariate_value ADD CONSTRAINT xpk_temporal_covariate_value PRIMARY KEY NONCLUSTERED (cohort_id,time_id,covariate_id,database_id);  
  ALTER TABLE @resultsDatabaseSchema.temporal_time_ref ADD CONSTRAINT xpk_temporal_time_ref PRIMARY KEY NONCLUSTERED (time_id);  
- ALTER TABLE @resultsDatabaseSchema.time_distribution ADD CONSTRAINT xpk_time_distribution PRIMARY KEY NONCLUSTERED (database_id);  
+ ALTER TABLE @resultsDatabaseSchema.time_distribution ADD CONSTRAINT xpk_time_distribution PRIMARY KEY NONCLUSTERED (cohort_id,database_id);  
  ALTER TABLE @resultsDatabaseSchema.vocabulary ADD CONSTRAINT xpk_vocabulary PRIMARY KEY NONCLUSTERED (vocabulary_id,vocabulary_concept_id); 
