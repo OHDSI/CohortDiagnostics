@@ -45,7 +45,7 @@ isTaskRequired <- function(..., checksum, recordKeepingFile, verbose = TRUE) {
   }
 }
 
-getRequiredTasks <- function(..., checksum, recordKeepingFile, verbose = TRUE) {
+getRequiredTasks <- function(..., checksum, recordKeepingFile) {
   tasks <- list(...)
   if (file.exists(recordKeepingFile) && length(tasks[[1]]) > 0) {
     recordKeeping <-  readr::read_csv(recordKeepingFile, 

@@ -106,7 +106,7 @@ Optionally, the inclusion rule statistics are computed and stored in the inclusi
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="https://ohdsi.github.io/Hades"><img src='https://ohdsi.github.io/Hades/images/hadesMini.png' width=80 height=17 style='vertical-align: top;'></a>
+  <a href="https://ohdsi.github.io/Hades">hadesLogo</a>
 </li>
 <li>
   <a href="https://github.com/OHDSI/CohortDiagnostics/">
@@ -208,9 +208,9 @@ construction to.</p></td>
     <tr>
       <th>cohortToCreateFile</th>
       <td><p>The location of the cohortToCreate file within the package. Is ignored if 
-<code>baseUrl</code> and <code>cohortSetReference</code> have been specified. The cohortToCreateFile
-must be .csv file that is expected to be read into a dataframe object identical to requirements
-for <code>cohortSetReference</code> argument.</p></td>
+<code>baseUrl</code> and <code>cohortSetReference</code> have been specified. The
+cohortToCreateFile must be .csv file that is expected to be read into 
+a dataframe object identical to requirements for <code>cohortSetReference</code> argument.</p></td>
     </tr>
     <tr>
       <th>baseUrl</th>
@@ -254,8 +254,7 @@ of which definition has been executed.</p></td>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>Currently two ways of executing this function are supported, either 
-(1) [Package Mode] embedded in a study package, assuming the cohort definitions are stored in that package using the 
-    <code><a href='https://rdrr.io/pkg/ROhdsiWebApi/man/insertCohortDefinitionSetInPackage.html'>ROhdsiWebApi::insertCohortDefinitionSetInPackage</a></code>, or 
+(1) [Package Mode] embedded in a study package, assuming the cohort definitions are stored in that package using the <code><a href='https://rdrr.io/pkg/ROhdsiWebApi/man/insertCohortDefinitionSetInPackage.html'>ROhdsiWebApi::insertCohortDefinitionSetInPackage</a></code>, or 
 (2) [WebApi Mode] By using a WebApi interface to retrieve the cohort definitions.</p>
 <p>When using this function in Package Mode: Use the <code>packageName</code> and <code>cohortToCreateFile</code> to specify
 the name of the study package, and the name of the cohortToCreate file within that package, respectively</p>

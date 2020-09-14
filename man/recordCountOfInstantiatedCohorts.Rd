@@ -7,8 +7,6 @@
 recordCountOfInstantiatedCohorts(
   connection,
   connectionDetails,
-  oracleTempSchema,
-  cdmDatabaseSchema,
   cohortDatabaseSchema,
   cohortTable,
   cohortIds,
@@ -31,20 +29,13 @@ of the function, and closed when the function finishes.}
 DatabaseConnector package. Can be left NULL if \code{connection} is
 provided.}
 
-\item{oracleTempSchema}{Should be used in Oracle to specify a schema where the user has write
-privileges for storing temporary tables.}
-
-\item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
-Note that for SQL Server, this should include both the database and
-schema name, for example 'cdm_data.dbo'.}
-
 \item{cohortDatabaseSchema}{Schema name where your cohort table resides. Note that for SQL Server,
 this should include both the database and schema name, for example
 'scratch.dbo'.}
 
 \item{cohortTable}{Name of the cohort table.}
 
-\item{cohortIds}{Provide a list of cohort IDs to get records for}
+\item{cohortIds}{Provide a list of cohort IDs to get records.}
 
 \item{includeInclusionStatsTables}{Should record count from inclusion stats table results be returned.}
 

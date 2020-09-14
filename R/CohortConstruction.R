@@ -315,7 +315,6 @@ instantiateCohort <- function(connectionDetails = NULL,
                               cohortDatabaseSchema = cdmDatabaseSchema,
                               cohortTable = "cohort",
                               baseUrl = NULL,
-                              webApiCohortId = NULL,
                               cohortJson = NULL,
                               cohortSql = NULL,
                               cohortId = NULL,
@@ -865,14 +864,8 @@ saveAndDropTempInclusionStatsTables <- function(connection,
 #' are also counted.
 #'
 #' @template Connection
-#'
 #' @template CohortTable
-#'
-#' @template OracleTempSchema
-#'
-#' @template CdmDatabaseSchema
-#'
-#' @param cohortIds                   Provide a list of cohort IDs to get records for
+#' @param cohortIds                   Provide a list of cohort IDs to get records.
 #' @param includeInclusionStatsTables Should record count from inclusion stats table results be returned.
 #' @param cohortInclusionTable         Name of the inclusion table, one of the tables for storing
 #'                                     inclusion rule statistics.
@@ -888,8 +881,6 @@ saveAndDropTempInclusionStatsTables <- function(connection,
 #' @export
 recordCountOfInstantiatedCohorts <- function(connection,
                                              connectionDetails,
-                                             oracleTempSchema,
-                                             cdmDatabaseSchema,
                                              cohortDatabaseSchema,
                                              cohortTable,
                                              cohortIds,

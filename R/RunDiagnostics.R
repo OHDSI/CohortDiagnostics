@@ -598,9 +598,9 @@ runCohortDiagnostics <- function(packageName = NULL,
                                 " cohorts in incremental mode.")
       }
       
-      messageCohortBeingCharacterized <- paste0('Starting large scale characterization of', 
+      ParallelLogger::logInfo(paste0('Starting large scale characterization of', 
                                                 scales::comma(nrow(subset)), 
-                                                " cohorts")
+                                                " cohorts"))
       cohortCharacteristicsOutput <- getCohortCharacteristics(connection = connection,
                                                               cdmDatabaseSchema = cdmDatabaseSchema,
                                                               oracleTempSchema = oracleTempSchema,
@@ -739,9 +739,9 @@ runCohortDiagnostics <- function(packageName = NULL,
                                 " cohorts in incremental mode.")
       }
       
-      messageCohortBeingCharacterized <- paste0('Starting large scale temporal characterization of', 
+      ParallelLogger::logInfo(paste0('Starting large scale temporal characterization of', 
                                                 scales::comma(nrow(subset), accuracy = 1), 
-                                                " cohorts")
+                                                " cohorts"))
       cohortCharacteristicsOutput <- getCohortCharacteristics(connection = connection,
                                                               cdmDatabaseSchema = cdmDatabaseSchema,
                                                               oracleTempSchema = oracleTempSchema,

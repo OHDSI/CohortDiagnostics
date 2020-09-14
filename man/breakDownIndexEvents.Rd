@@ -47,8 +47,7 @@ this should include both the database and schema name, for example
 "http://server.org:80/WebAPI". Needn't be provided if \code{cohortJson} and
 \code{cohortSql} are provided.}
 
-\item{webApiCohortId}{The ID of the cohort in the WebAPI instance. Needn't be provided if
-\code{cohortJson} and \code{cohortSql} are provided.}
+\item{webApiCohortId}{A vector of one Cohort Ids as in the source webApi/Atlas.}
 
 \item{cohortJson}{A character string containing the JSON of a cohort definition. Needn't be
 provided if \code{baseUrl} and \code{cohortId} are provided.}

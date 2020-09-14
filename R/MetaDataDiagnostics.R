@@ -280,13 +280,10 @@ createConceptCountsTable <- function(connectionDetails = NULL,
 #' set the concept found in the CDM database the contributing source codes are identified.
 #'
 #' @template Connection
-#'
 #' @template CdmDatabaseSchema
-#'
 #' @template OracleTempSchema
-#'
 #' @template CohortDef
-#'
+#' @template WebApiCohortId
 #' @param byMonth           Compute counts by month? If FALSE, only overall counts are computed.
 #' @param useSourceValues   Use the source_value fields to find the codes used in the data? If not,
 #'                          this analysis will rely entirely on the source_concept_id fields instead.

@@ -699,11 +699,6 @@ compareCovariateValueResult <- function(connection = NULL,
                                         isTemporal = TRUE,
                                         timeIds = NULL,
                                         resultsDatabaseSchema = NULL) {
-  if (isTemporal) {
-    table <- 'temporalCovariateValue'
-  } else {
-    table <- 'covariateValue'
-  }
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertLogical(x = isTemporal, 

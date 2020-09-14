@@ -65,15 +65,11 @@ getCohortCounts <- function(connectionDetails = NULL,
 #' the cohort index date.
 #'
 #' @template Connection
-#'
 #' @template CdmDatabaseSchema
-#'
 #' @template OracleTempSchema
-#'
 #' @template CohortTable
-#'
+#' @template WebApiCohortId
 #' @template CohortDef
-#'
 #' @param cohortId   The cohort ID used to reference the cohort in the cohort table.
 #'
 #' @return

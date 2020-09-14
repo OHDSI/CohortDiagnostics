@@ -104,7 +104,7 @@
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="https://ohdsi.github.io/Hades"><img src='https://ohdsi.github.io/Hades/images/hadesMini.png' width=80 height=17 style='vertical-align: top;'></a>
+  <a href="https://ohdsi.github.io/Hades">hadesLogo</a>
 </li>
 <li>
   <a href="https://github.com/OHDSI/CohortDiagnostics/">
@@ -160,6 +160,12 @@
           <p><code><a href="compareCohortCharacteristics.html">compareCohortCharacteristics()</a></code> </p>
         </td>
         <td><p>Compare cohort characteristics</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="compareCovariateValueResult.html">compareCovariateValueResult()</a></code> </p>
+        </td>
+        <td><p>Get cohort covariate comparison (including temporal)</p></td>
       </tr><tr>
         
         <td>
@@ -235,9 +241,27 @@
       </tr><tr>
         
         <td>
+          <p><code><a href="getCohortCountResult.html">getCohortCountResult()</a></code> </p>
+        </td>
+        <td><p>Get cohort counts</p></td>
+      </tr><tr>
+        
+        <td>
           <p><code><a href="getCohortCounts.html">getCohortCounts()</a></code> </p>
         </td>
         <td><p>Count the cohort(s)</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="getCohortOverlapResult.html">getCohortOverlapResult()</a></code> </p>
+        </td>
+        <td><p>Get cohort overlap</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="getCohortReference.html">getCohortReference()</a></code> </p>
+        </td>
+        <td><p>Get cohort information</p></td>
       </tr><tr>
         
         <td>
@@ -247,9 +271,39 @@
       </tr><tr>
         
         <td>
+          <p><code><a href="getConceptReference.html">getConceptReference()</a></code> </p>
+        </td>
+        <td><p>Get concept information</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="getCovariateReference.html">getCovariateReference()</a></code> </p>
+        </td>
+        <td><p>Get cohort covariate reference (including temporal)</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="getCovariateValueResult.html">getCovariateValueResult()</a></code> </p>
+        </td>
+        <td><p>Get cohort covariate (including temporal)</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="getDatabaseReference.html">getDatabaseReference()</a></code> </p>
+        </td>
+        <td><p>Get database information</p></td>
+      </tr><tr>
+        
+        <td>
           <p><code><a href="getIncidenceRate.html">getIncidenceRate()</a></code> </p>
         </td>
         <td><p>Compute incidence rate for a cohort</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="getIncidenceRateResult.html">getIncidenceRateResult()</a></code> </p>
+        </td>
+        <td><p>Get incidence rate results</p></td>
       </tr><tr>
         
         <td>
@@ -265,9 +319,27 @@
       </tr><tr>
         
         <td>
+          <p><code><a href="getResultsDataModelSpecification.html">getResultsDataModelSpecification()</a></code> </p>
+        </td>
+        <td><p>Get specification for Cohort Diagnostics results data model</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="getTimeDistributionResult.html">getTimeDistributionResult()</a></code> </p>
+        </td>
+        <td><p>Get time distribution results</p></td>
+      </tr><tr>
+        
+        <td>
           <p><code><a href="getTimeDistributions.html">getTimeDistributions()</a></code> </p>
         </td>
         <td><p>Get time distributions for a set of cohorts</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="getTimeReference.html">getTimeReference()</a></code> </p>
+        </td>
+        <td><p>Get time reference for temporal covariates</p></td>
       </tr><tr>
         
         <td>
@@ -277,9 +349,9 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="guessModelSpecificationForCsv.html">guessModelSpecificationForCsv()</a></code> </p>
+          <p><code><a href="guessCsvFileSpecification.html">guessCsvFileSpecification()</a></code> </p>
         </td>
-        <td><p>Guesses data model specification for a csv file and makes its available for inspection.</p></td>
+        <td><p>Guesses data model specification from multiple csv files.</p></td>
       </tr><tr>
         
         <td>
@@ -307,9 +379,27 @@
       </tr><tr>
         
         <td>
-          <p><code><a href="plotincidenceRate.html">plotincidenceRate()</a></code> </p>
+          <p><code><a href="plotCohortComparisonStandardizedDifference.html">plotCohortComparisonStandardizedDifference()</a></code> </p>
         </td>
-        <td><p>Plot incidence rate by year, age, and/or gender</p></td>
+        <td><p>Get Plotly object with cohort comparison plot.</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="plotCohortOverlapVennDiagram.html">plotCohortOverlapVennDiagram()</a></code> </p>
+        </td>
+        <td><p>Get Vendiagram object with cohort Overlap plot.</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="plotIncidenceRate.html">plotIncidenceRate()</a></code> </p>
+        </td>
+        <td><p>Get ggplot object with incidence rate plot.</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="plotTimeDistribution.html">plotTimeDistribution()</a></code> </p>
+        </td>
+        <td><p>Get ggplot object with time distribution plot.</p></td>
       </tr><tr>
         
         <td>

@@ -106,7 +106,7 @@ are also counted." />
       </ul>
       <ul class="nav navbar-nav navbar-right">
         <li>
-  <a href="https://ohdsi.github.io/Hades"><img src='https://ohdsi.github.io/Hades/images/hadesMini.png' width=80 height=17 style='vertical-align: top;'></a>
+  <a href="https://ohdsi.github.io/Hades">hadesLogo</a>
 </li>
 <li>
   <a href="https://github.com/OHDSI/CohortDiagnostics/">
@@ -140,8 +140,6 @@ are also counted.</p>
     <pre class="usage"><span class='fu'>recordCountOfInstantiatedCohorts</span>(
   <span class='no'>connection</span>,
   <span class='no'>connectionDetails</span>,
-  <span class='no'>oracleTempSchema</span>,
-  <span class='no'>cdmDatabaseSchema</span>,
   <span class='no'>cohortDatabaseSchema</span>,
   <span class='no'>cohortTable</span>,
   <span class='no'>cohortIds</span>,
@@ -171,17 +169,6 @@ DatabaseConnector package. Can be left NULL if <code>connection</code> is
 provided.</p></td>
     </tr>
     <tr>
-      <th>oracleTempSchema</th>
-      <td><p>Should be used in Oracle to specify a schema where the user has write
-privileges for storing temporary tables.</p></td>
-    </tr>
-    <tr>
-      <th>cdmDatabaseSchema</th>
-      <td><p>Schema name where your patient-level data in OMOP CDM format resides.
-Note that for SQL Server, this should include both the database and
-schema name, for example 'cdm_data.dbo'.</p></td>
-    </tr>
-    <tr>
       <th>cohortDatabaseSchema</th>
       <td><p>Schema name where your cohort table resides. Note that for SQL Server,
 this should include both the database and schema name, for example
@@ -193,7 +180,7 @@ this should include both the database and schema name, for example
     </tr>
     <tr>
       <th>cohortIds</th>
-      <td><p>Provide a list of cohort IDs to get records for</p></td>
+      <td><p>Provide a list of cohort IDs to get records.</p></td>
     </tr>
     <tr>
       <th>includeInclusionStatsTables</th>
