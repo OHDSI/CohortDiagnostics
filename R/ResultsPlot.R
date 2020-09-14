@@ -39,7 +39,7 @@ plotTimeDistribution <- function(data,
                                  databaseIds = NULL,
                                  xAxis = 'database') {
   
-  if (is.null(cohortIds) || length(cohortIds) > 1 || xAxis != 'database' || length(cohortIds) != 1) {
+  if (!is.null(cohortIds) || length(cohortIds) > 1 || xAxis != 'database' || length(cohortIds) >= 2) {
     ParallelLogger::logWarn("Not yet supported. Upcoming feature.")
     return(NULL)
   }
@@ -214,13 +214,13 @@ plotIncidenceRate <- function(data,
     } else {
       scales <- "free_y"
     }
-    if (stratifyByAge) {
+    if (stratifyByAgeGroup) {
       plot <- plot + ggplot2::facet_grid(databaseId~ageGroup, scales = scales)
     } else {
       plot <- plot + ggplot2::facet_grid(databaseId~., scales = scales) 
     }
   } else {
-    if (stratifyByAge) {
+    if (stratifyByAgeGroup) {
       plot <- plot + ggplot2::facet_grid(~ageGroup) 
     }
   }
