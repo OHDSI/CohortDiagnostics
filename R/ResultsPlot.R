@@ -456,9 +456,9 @@ plotCohortComparisonStandardizedDifference <- function(data,
 #' 
 #' @export
 plotCohortOverlapVennDiagram <- function(data,
-                                         targetCohortIds = NULL, 
-                                         comparatorCohortIds = NULL,
-                                         databaseIds = NULL) {
+                                         targetCohortIds, 
+                                         comparatorCohortIds,
+                                         databaseIds) {
   
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()

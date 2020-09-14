@@ -92,7 +92,7 @@ if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {
   }
 }
 
-cohort <- cohort %>% 
+cohorts <- cohort %>% 
   dplyr::distinct() %>% 
   dplyr::select(.data$cohortName, .data$cohortId) %>% 
   dplyr::arrange(.data$cohortName, .data$cohortId)

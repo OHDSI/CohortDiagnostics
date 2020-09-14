@@ -54,11 +54,11 @@ styleAbsColorBar <- function(maxValue, colorPositive, colorNegative, angle = 90)
 shiny::shinyServer(function(input, output, session) {
   
   cohortId <- shiny::reactive({
-    return(cohort$cohortId[cohort$cohortName == input$cohort])
+    return(cohorts$cohortId[cohorts$cohortName == input$cohort])
   })
   
   comparatorCohortId <- shiny::reactive({
-    return(cohort$cohortId[cohort$cohortName == input$comparator])
+    return(cohorts$cohortId[cohorts$cohortName == input$comparator])
   })
   
   timeId <- shiny::reactive({
@@ -337,8 +337,8 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     plot <- CohortDiagnostics::plotTimeDistribution(data = data,
-                                                    cohortIds = NULL,
-                                                    databaseIds = NULL)
+                                                    cohortIds = cohortId(),
+                                                    databaseIds = input$databases)
     
     return(plot)
   })
@@ -949,7 +949,10 @@ shiny::shinyServer(function(input, output, session) {
       return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts and comaprator')))
     }
     
-    plot <- CohortDiagnostics::plotCohortOverlap(data = data)
+    plot <- CohortDiagnostics::plotCohortOverlapVennDiagram(data = data,
+                                                            targetCohortIds = cohortId(),
+                                                            comparatorCohortIds = comparatorCohortId(),
+                                                            databaseIds = input$database)
     
     return(plot)
   })
@@ -1076,11 +1079,16 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
 
-    plot <- CohortDiagnostics::plotCohortStandardizedDifferenceComparison(data = data, 
+    cohortReference <- CohortDiagnostics::getCohortReference()
+    
+    covariateReference <- CohortDiagnostics::getCovariateReference(isTemporal = FALSE)
+      
+    plot <- CohortDiagnostics::plotCohortComparisonStandardizedDifference(data = data, 
                                                                           targetCohortIds = cohortId(), 
                                                                           comparatorCohortIds = comparatorCohortId(),
-                                                                          cohorts = NULL,
-                                                                          covariates = NULL,
+                                                                          cohortReference = cohortReference,
+                                                                          covariateReference = covariateReference,
+                                                                          concept = NULL,
                                                                           databaseIds = input$databases)
     
     return(plot)

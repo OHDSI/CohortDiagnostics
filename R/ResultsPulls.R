@@ -841,7 +841,7 @@ getCohortReference <- function(connection = NULL,
     data <- get(table)
     if (!is.null(cohortIds)) {
       data <- data %>% 
-        dplyr::filter(.data$cohortIds %in% cohortIds)
+        dplyr::filter(.data$cohortId %in% cohortIds)
     }
   }
   if (!getSql) {
