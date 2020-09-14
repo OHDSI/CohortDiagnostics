@@ -236,9 +236,9 @@ plotIncidenceRate <- function(data,
 #' @template DatabaseIds
 #' @param targetCohortIds        A vector of one or more Cohort Ids.
 #' @param comparatorCohortIds    A vector of one or more Cohort Ids.
-#' @param cohorts                A tibble data frame object returned from \code{\link{getCohortReference}} function.
-#' @param covariateReference                A tibble data frame object returned from \code{\link{getCovariateReference}} function.
-#' @param covariates             A vector of one or more Cohort Ids.
+#' @param cohorts                (optional) A tibble data frame object returned from \code{\link{getCohortReference}} function.
+#' @param covariateReference     (optional) A tibble data frame object returned from \code{\link{getCovariateReference}} function.
+#' @param concept                (optional) A tibble data frame object returned from \code{\link{getConceptReference}} function.
 #' 
 #' @return
 #' A Plotly object.
@@ -253,9 +253,13 @@ plotIncidenceRate <- function(data,
 plotCohortStandardizedDifferenceComparison <- function(data,
                                                        targetCohortIds = NULL, 
                                                        comparatorCohortIds = NULL,
-                                                       cohorts,
-                                                       covariateReference,
+                                                       cohort = NULL,
+                                                       covariateReference = NULL,
+                                                       concept = NULL, # to subset based on domain, or vocabulary
                                                        databaseIds = NULL) {
+  if (!is.null(concept)) {
+    ParallelLogger::logWarn("Not yet supported. Upcoming feature. Ignorning for now. Continuing.")
+  }
   plotData <- data
   if (!is.null(targetCohortIds)) {
     plotData <- plotData %>% 
@@ -312,15 +316,29 @@ plotCohortStandardizedDifferenceComparison <- function(data,
                             min.rows = 1,
                             min.cols = 2,
                             null.ok = FALSE,
+                            types = c('character',
+                                      'double'),
+                            add = errorMessage)
+    checkmate::assertNames(x = colnames(cohorts),
+                           subset.of = c("cohortId",
+                                         "cohortName"),
+                           add = errorMessage
+    )
+  }
+  if (!is.null(covariateReference)) {
+    checkmate::assertTibble(x = covariateReference, 
+                            any.missing = FALSE,
+                            min.rows = 1,
+                            min.cols = 3,
+                            null.ok = FALSE,
                             types = c('character', 'double'),
                             add = errorMessage)
     checkmate::assertNames(x = colnames(cohorts),
-                           subset.of = c("cohortId","cohortName"),
+                           subset.of = c("covariateId",
+                                         "covariateName",
+                                         "conceptId"),
                            add = errorMessage
     )
-  } else {
-    data <- data %>% 
-      dplyr::mutate(targetCohortName == as.character(.data$))
   }
   checkmate::reportAssertions(collection = errorMessage)
   if (!is.null(covariateReference)) {
@@ -329,10 +347,14 @@ plotCohortStandardizedDifferenceComparison <- function(data,
                             min.rows = 1,
                             min.cols = 4,
                             null.ok = FALSE,
-                            types = c('character', 'double'),
+                            types = c('character',
+                                      'double'),
                             add = errorMessage)
     checkmate::assertNames(x = colnames(cohorts),
-                           subset.of = c("covariateId","covariateName", "covariateAnalysisId", "conceptId"),
+                           subset.of = c("covariateId",
+                                         "covariateName",
+                                         "covariateAnalysisId",
+                                         "conceptId"),
                            add = errorMessage
     )
   }
@@ -340,21 +362,50 @@ plotCohortStandardizedDifferenceComparison <- function(data,
   
   # when we support more than 1 targetCohortIds, comparatorCohortIds and DatabaseIds -- this 
   # will be the begining of the iteration. 
-  # For now we are only support one unique combination of databaseId, targetCohortId, comparatorCohortId
+  # For now we are only support one unique combination of 
+  # databaseId, targetCohortId, comparatorCohortId
+  # 
   
-  xAxisLabel <- list(
-    title = targetCohortIds,
-    range = c(0, 1)
-  )
-  yAxisLabel <- list(
-    title = comparatorCohortIds,
-    range = c(0, 1)
-  )
+  if (!is.null(covariateReference)) {
+    plotData <- plotData %>% 
+      dplyr::left_join(y = covariateReference %>% 
+                         dplyr::select(.data$covariateId, .data$covariateName))
+  } else {
+    plotData <- plotData %>% 
+      dplyr::mutate(covariateName = .data$covariateId %>% as.character())
+  }
+  
+  if (!is.null(cohorts)) {
+    xAxisLabel <- list(
+      title = cohorts %>% 
+        dplyr::filter(.data$cohortId %in% targetCohortIds) %>% 
+        dplyr::select(.data$cohortName),
+      range = c(0, 1)
+    )
+    yAxisLabel <- list(
+      title = cohorts %>% 
+        dplyr::filter(.data$cohortId %in% comparatorCohortIds) %>% 
+        dplyr::select(.data$cohortName),
+      range = c(0, 1)
+    )
+  } else {
+    xAxisLabel <- list(
+      title = targetCohortIds,
+      range = c(0, 1)
+    )
+    yAxisLabel <- list(
+      title = comparatorCohortIds,
+      range = c(0, 1)
+    )
+  }
+
   plot <- plotly::plot_ly(data = plotData, 
                           x = plotData$mean1, 
                           y = plotData$mean2,
                           # Hover text:
-                          text = ~paste("Mean Target: ", 
+                          text = ~paste("Covariate Name:",
+                                        plotData$covariateName, 
+                                        "Mean Target: ", 
                                         plotData$mean1, 
                                         '<br>Mean Comparator:', 
                                         plotData$mean2,
