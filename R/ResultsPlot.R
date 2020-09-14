@@ -39,7 +39,7 @@ plotTimeDistribution <- function(data,
                                  databaseIds = NULL,
                                  xAxis = 'database') {
   
-  if (!is.null(cohortIds) || length(cohortIds) > 1 || xAxis != 'database' || length(cohortIds) >= 2) {
+  if (is.null(cohortIds) || length(cohortIds) > 1 || xAxis != 'database' || is.null(databaseIds)) {
     ParallelLogger::logWarn("Not yet supported. Upcoming feature.")
     return(NULL)
   }
@@ -80,7 +80,7 @@ plotTimeDistribution <- function(data,
   }
   if (!is.null(databaseIds)) {
     plotData <- plotData %>% 
-      dplyr::filter(.data$databaseId %in% !!databaseIds)
+      dplyr::filter(.data$Database %in% !!databaseIds)
   }
   
   plot <- ggplot2::ggplot(data = plotData) +
@@ -134,7 +134,7 @@ plotTimeDistribution <- function(data,
 #'
 #' @examples
 #' \dontrun{
-#' timeDistributionPlot <- getTimeDistributionPlot(data = data)
+#' incidenceRatePlot <- plotIncidenceRate(data = data)
 #' }
 #'
 #' @export

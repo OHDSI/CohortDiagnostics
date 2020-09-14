@@ -14,7 +14,8 @@ library(magrittr)
 data <- CohortDiagnostics::getTimeDistributionResult(cohortIds = cohortIds, 
                                                      databaseIds = databaseIds)
 CohortDiagnostics::plotTimeDistribution(data = data, 
-                                        cohortIds = c(141933001))
+                                        cohortIds = c(141933001),
+                                        databaseIds = databaseIds)
 
 
 data <- CohortDiagnostics::getIncidenceRateResult(cohortIds = cohortIds,

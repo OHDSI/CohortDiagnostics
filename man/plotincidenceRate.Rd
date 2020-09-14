@@ -33,7 +33,7 @@ Get ggplot object with incidence rate plot.
 }
 \examples{
 \dontrun{
-timeDistributionPlot <- getTimeDistributionPlot(data = data)
+incidenceRatePlot <- plotIncidenceRate(data = data)
 }
 
 }
