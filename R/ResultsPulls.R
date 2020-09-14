@@ -79,7 +79,7 @@ getTimeDistributionResult <- function(connection = NULL,
       tidyr::tibble()
   } else {
     data <- get(table) %>% 
-      dplyr::filter(.data$cohortDefinitionId %in% !!cohortIds &
+      dplyr::filter(.data$cohortId %in% !!cohortIds &
                       .data$databaseId %in% !!databaseIds) %>% 
       tidyr::tibble()
   }
@@ -101,8 +101,16 @@ getTimeDistributionResult <- function(connection = NULL,
                   P75 = "p75Value", 
                   P90 = "p90Value", 
                   Max = "maxValue") %>% 
-    dplyr::relocate(.data$cohortDefinitionId, .data$Database, .data$TimeMeasure) %>% 
-    dplyr::arrange(.data$cohortDefinitionId, .data$Database, .data$TimeMeasure)
+    dplyr::relocate(.data$cohortId, .data$Database, .data$TimeMeasure) %>% 
+    dplyr::arrange(.data$cohortId, .data$Database, .data$TimeMeasure)
+  
+  # data <- data %>% 
+  #   dplyr::mutate(dplyr::across(.cols = c(.data$Database, 
+  #                                         .data$TimeMeasure), 
+  #                               .fns = dplyr::case_when(stringr::str_detect(string = .,
+  #                                                                           pattern = "_") ~ 
+  #                                                         SqlRender::snakeCaseToCamelCase()
+  #                                                       )))
   return(data)
 }
 
