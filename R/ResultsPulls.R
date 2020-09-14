@@ -664,7 +664,8 @@ compareCovariateValueResult <- function(connection = NULL,
   checkmate::assertLogical(x = isTemporal, 
                            any.missing = FALSE, 
                            min.len = 1, 
-                           max.len = 1)
+                           max.len = 1,
+                           add = errorMessage)
   errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
                                                   connectionDetails = connectionDetails,
                                                   resultsDatabaseSchema = resultsDatabaseSchema,
@@ -675,16 +676,19 @@ compareCovariateValueResult <- function(connection = NULL,
   errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = comparatorCohortIds,
                                                  databaseIds = databaseIds,
                                                  errorMessage = errorMessage)
-  checkmate::assertInteger(x = timeIds, 
-                           lower = 0, 
-                           any.missing = FALSE, 
-                           unique = TRUE, 
-                           null.ok = FALSE, 
-                           add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
-  
+  if (isTemporal) {
+    if (!is.null(timeIds)) {
+      checkmate::assertInteger(x = timeIds, 
+                               lower = 0, 
+                               any.missing = FALSE, 
+                               unique = TRUE, 
+                               null.ok = FALSE,
+                               add = errorMessage)
+    }
+  }
+  checkmate::reportAssertions(collection = errorMessage)
   cohortIds <- c(targetCohortIds, comparatorCohortIds) %>% unique() %>% sort()
-  
   covariateValue <- getCovariateValueResult(connection = connection, 
                                             connectionDetails = connectionDetails, 
                                             cohortIds = cohortIds, 
@@ -696,22 +700,31 @@ compareCovariateValueResult <- function(connection = NULL,
                                             resultsDatabaseSchema = resultsDatabaseSchema)
   
   targetCovariateValue = covariateValue %>% 
-    dplyr::filter(.data$cohortIds %in% targetCohortIds) %>% 
-    dplyr::rename(targetCohortId = cohortId)
+    dplyr::filter(.data$cohortId %in% targetCohortIds) %>% 
+    dplyr::rename(targetCohortId = cohortId,
+                  mean1 = .data$mean,
+                  sd1 = .data$sd)
   comparatorCovariateValue = covariateValue %>% 
-    dplyr::filter(.data$cohortIds %in% comparatorCohortIds) %>% 
-    dplyr::rename(comparatorCohortId = cohortId)
+    dplyr::filter(.data$cohortId %in% comparatorCohortIds) %>% 
+    dplyr::rename(comparatorCohortId = cohortId,
+                  mean2 = .data$mean,
+                  sd2 = .data$sd)
   
   data <- dplyr::full_join(x = targetCovariateValue,
-                           y = comparatorCovariateValue,
-                           suffix = c("1", "2")) %>%
+                           y = comparatorCovariateValue) %>%
+    dplyr::relocate(.data$databaseId,
+                    .data$targetCohortId,
+                    .data$comparatorCohortId) %>% 
     dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = 0)),
                   sd = sqrt(.data$sd1^2 + .data$sd2^2),
                   stdDiff = (.data$mean2 - .data$mean1)/.data$sd) %>%
     dplyr::arrange(-abs(.data$stdDiff)) %>%
     dplyr::mutate(absStdDiff = abs(.data$stdDiff)) %>% 
-    dplyr::arrange(.data$databaseId, .data$covariateId)
-  
+    dplyr::arrange(.data$databaseId,
+                   .data$targetCohortId,
+                   .data$comparatorCohortId, 
+                   .data$covariateId) %>% 
+    dplyr::select(-.data$stdDiff)
   return(data)
 }
 
