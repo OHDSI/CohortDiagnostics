@@ -827,12 +827,13 @@ getCohortReference <- function(connection = NULL,
       dplyr::select(-.data$json)
   }
   data <- data %>% 
-    dplyr::mutate(phenotypeId == .data$referentConceptId * 1000) %>% 
+    dplyr::mutate(phenotypeId = .data$referentConceptId * 1000) %>% 
     dplyr::relocate(.data$phenotypeId, 
                     .data$cohortId,
                     .data$cohortName,
-                    .data$logicDescription)
-  return(data %>% dplyr::arrange(.data$cohortId))
+                    .data$logicDescription) %>% 
+    dplyr::arrange(.data$phenotypeId, .data$cohortId)
+  return(data )
 }
 
 

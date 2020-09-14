@@ -31,17 +31,27 @@ CohortDiagnostics::plotIncidenceRate(data = data,
                                      stratifyByCalendarYear = TRUE)
 
 data <- CohortDiagnostics::getIncidenceRateResult(cohortIds = cohortIds,
-                                                  databaseIds = databaseIds,
-                                                  stratifyByGender = FALSE)
-
+                                                  stratifyByAgeGroup = TRUE,
+                                                  stratifyByGender = FALSE,
+                                                  stratifyByCalendarYear = TRUE,
+                                                  databaseIds = databaseIds)
+CohortDiagnostics::plotIncidenceRate(data = data,
+                                     stratifyByAgeGroup = TRUE,
+                                     stratifyByGender = FALSE,
+                                     stratifyByCalendarYear = TRUE)
 
 #################
 data <- CohortDiagnostics::getCohortCountResult(databaseIds = databaseIds)
 
+########################
 data <- CohortDiagnostics::getCohortOverLapResult(targetCohortIds = targetCohortIds,
                                                   comparatorCohortIds = comparatorCohortIds,
                                                   databaseIds = databaseIds)
-
+CohortDiagnostics::plotCohortOverlapVennDiagram(data = data, 
+                                                targetCohortIds = targetCohortIds,
+                                                comparatorCohortIds = comparatorCohortIds,
+                                                databaseIds = databaseId)
+######################
 covariateReference <- CohortDiagnostics::getCovariateReference(isTemporal = FALSE)
 cohorts <- CohortDiagnostics::getCohortReference()
 temporalCovariateReference <- CohortDiagnostics::getCovariateReference(isTemporal = TRUE)

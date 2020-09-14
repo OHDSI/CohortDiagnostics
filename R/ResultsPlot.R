@@ -102,20 +102,20 @@ plotTimeDistribution <- function(data,
   # plot <- plotly::ggplotly(plot)
   # This does not work as described here https://github.com/ropensci/plotly/issues/565 
   return(plot)
-  
-  # how to render using pure plot ly. Plotly does not prefer precomputed data.
-  # TO DO: color and plot positions are not consistent yet.
-  # plot <- plotly::plot_ly(data = plotData,
-  #                         type = 'box',
-  #                         median = plotData$P25,
-  #                         #Mean = plotData$Average,
-  #                         upperfence = plotData$Max,
-  #                         lowerfence = plotData$Min,
-  #                         split = plotData$TimeMeasure)
-  # loop thru database or cohorts as needed
-  # then subplot
-  # plot <- plotly::subplot(plots,nrows = length(input$databases),margin = 0.05)
-}
+}  
+# how to render using pure plot ly. Plotly does not prefer precomputed data.
+# TO DO: color and plot positions are not consistent yet.
+# plot <- plotly::plot_ly(data = plotData,
+#                         type = 'box',
+#                         median = plotData$P25,
+#                         #Mean = plotData$Average,
+#                         upperfence = plotData$Max,
+#                         lowerfence = plotData$Min,
+#                         split = plotData$TimeMeasure)
+# loop thru database or cohorts as needed
+# then subplot
+# plot <- plotly::subplot(plots,nrows = length(input$databases),margin = 0.05)
+
 
 
 #' Get ggplot object with incidence rate plot.
@@ -232,10 +232,11 @@ plotIncidenceRate <- function(data,
 #' @description
 #' Get Plotly object with cohort comparison plot.
 #'
-#' @param  A tibble data frame object that is the output of \code{\link{compareCovariateValueResult}} function.
+#' @param  data                  A tibble data frame object that is the output of 
+#'                               \code{\link{compareCovariateValueResult}} function.
 #' @template DatabaseIds
-#' @param targetCohortIds        A vector of one or more Cohort Ids.
-#' @param comparatorCohortIds    A vector of one or more Cohort Ids.
+#' @param targetCohortIds        (optional) A vector of one or more Cohort Ids.
+#' @param comparatorCohortIds    (optional) A vector of one or more Cohort Ids.
 #' @param cohorts                (optional) A tibble data frame object returned from \code{\link{getCohortReference}} function.
 #' @param covariateReference     (optional) A tibble data frame object returned from \code{\link{getCovariateReference}} function.
 #' @param concept                (optional) A tibble data frame object returned from \code{\link{getConceptReference}} function.
@@ -272,7 +273,7 @@ plotCohortComparisonStandardizedDifference <- function(data,
     plotData <- plotData %>% 
       dplyr::filter(.data$databaseId %in% !!databaseIds)
   }
-
+  
   # for now we will support only one combination of targetCohortId, comparatorCohortId and databaseId
   if (length(targetCohortIds) > 1 || length(comparatorCohortIds) > 1 || length(databaseIds) > 1) {
     ParallelLogger::logWarn("Not yet supported. Upcoming feature.")
@@ -302,10 +303,10 @@ plotCohortComparisonStandardizedDifference <- function(data,
                              any.missing = FALSE,
                              min.len = 1,
                              null.ok = TRUE
-                             )
+  )
   checkmate::assertNames(x = colnames(plotData),
                          must.include = c("databaseId","targetCohortId","comparatorCohortId","covariateId",
-                                       "mean1","sd1","mean2","sd2","sd","stdDiff", "absStdDiff"),
+                                          "mean1","sd1","mean2","sd2","sd","stdDiff", "absStdDiff"),
                          add = errorMessage
   )
   checkmate::reportAssertions(collection = errorMessage)
@@ -320,7 +321,7 @@ plotCohortComparisonStandardizedDifference <- function(data,
                             add = errorMessage)
     checkmate::assertNames(x = colnames(cohorts),
                            must.include = c("cohortId",
-                                         "cohortName"),
+                                            "cohortName"),
                            add = errorMessage
     )
   }
@@ -334,8 +335,8 @@ plotCohortComparisonStandardizedDifference <- function(data,
                             add = errorMessage)
     checkmate::assertNames(x = colnames(covariateReference),
                            must.include = c("covariateId",
-                                         "covariateName",
-                                         "conceptId"),
+                                            "covariateName",
+                                            "conceptId"),
                            add = errorMessage
     )
   }
@@ -351,10 +352,10 @@ plotCohortComparisonStandardizedDifference <- function(data,
                             add = errorMessage)
     checkmate::assertNames(x = colnames(concept),
                            must.include = c("conceptId",
-                                         "conceptName",
-                                         "domainId",
-                                         "vocabularyId",
-                                         "conceptClassId"),
+                                            "conceptName",
+                                            "domainId",
+                                            "vocabularyId",
+                                            "conceptClassId"),
                            add = errorMessage
     )
   }
@@ -400,7 +401,7 @@ plotCohortComparisonStandardizedDifference <- function(data,
       range = c(0, 1)
     )
   }
-
+  
   plot <- plotly::plot_ly(data = plotData, 
                           x = plotData$mean1, 
                           y = plotData$mean2,
@@ -439,19 +440,25 @@ plotCohortComparisonStandardizedDifference <- function(data,
 #' @description
 #' Get Vendiagram  object with cohort Overlap plot.
 #'
-#' @param 
-#' data   A tibble data frame object that is the output of \code{\link{getCohortOverlap}} function. 
+#' @param  data                  A tibble data frame object that is the output of 
+#'                               \code{\link{getCohortOverlap}} function.
+#' @template DatabaseIds
+#' @param targetCohortIds        (optional) A vector of one or more Cohort Ids.
+#' @param comparatorCohortIds    (optional) A vector of one or more Cohort Ids.
 #' 
 #' @return
 #' A Vendiagram object.
 #'
 #' @examples
 #' \dontrun{
-#' plotCohortOverlap <- getCohortOverlap(data = data)
+#' plotCohortOverlapVennDiagram <- plotCohortOverlapVennDiagram(data = data)
 #' }
 #' 
 #' @export
-plotCohortOverlap <- function(data) {
+plotCohortOverlapVennDiagram <- function(data,
+                                         targetCohortIds = NULL, 
+                                         comparatorCohortIds = NULL,
+                                         databaseIds = NULL) {
   
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
@@ -461,11 +468,23 @@ plotCohortOverlap <- function(data) {
                           min.cols = 5,
                           null.ok = FALSE,
                           add = errorMessage)
+  checkmate::assertIntegerish(x = targetCohortIds,
+                              lower = 1,
+                              upper = 2^53, 
+                              any.missing = FALSE,
+                              null.ok = FALSE)
+  checkmate::assertIntegerish(x = comparatorCohortIds,
+                              lower = 1,
+                              upper = 2^53, 
+                              any.missing = FALSE,
+                              null.ok = FALSE)
+  checkmate::assertCharacter(x = databaseIds,
+                             any.missing = FALSE,
+                             min.len = 1,
+                             null.ok = TRUE
+  )
   checkmate::reportAssertions(collection = errorMessage)
   
-  if (nrow(data) == 0) {
-    return(NULL)
-  }
   plot <- VennDiagram::draw.pairwise.venn(area1 = abs(data$eitherSubjects) - abs(data$cOnlySubjects),
                                           area2 = abs(data$eitherSubjects) - abs(data$tOnlySubjects),
                                           cross.area = abs(data$bothSubjects),
@@ -480,43 +499,43 @@ plotCohortOverlap <- function(data) {
   # Borrowed from https://stackoverflow.com/questions/37239128/how-to-put-comma-in-large-number-of-venndiagram
   idx <- sapply(plot, function(i) grepl("text", i$name))
   for (i in 1:3) {
-    plot[idx][[i]]$label <- format(as.numeric(plot[idx][[i]]$label), big.mark = ",", scientific = FALSE)
+    plot[idx][[i]]$label <- format(as.numeric(plot[idx][[i]]$label), 
+                                   big.mark = ",", 
+                                   scientific = FALSE)
   }
   grid::grid.draw(plot)
   
   return(plot)
-  
-  # BELOW SCRIPT REPLACES THE VENDIAGRAM WITH STACKED HISTOGRAM. BUT TAKES LONG TIME TO DISPLAY THE PLOT.
-  # CHECK GENERATE HISTOGRAM FUNCTION TO GENERATE THE DATA FOR HISTOGRAM PLOTS
-  # REFERENCE USED :
-  # 1. https://stackoverflow.com/questions/20184096/how-to-plot-multiple-stacked-histograms-together-in-r
-  # 2. https://stackoverflow.com/questions/43415709/how-to-use-facet-grid-with-geom-histogram
-  # 3. https://www.datacamp.com/community/tutorials/facets-ggplot-r?utm_source=adwords_ppc&utm_campaignid=1455363063&utm_adgroupid=65083631748&utm_device=c&utm_keyword=&utm_matchtype=b&utm_network=g&utm_adpostion=&utm_creative=332602034361&utm_targetid=dsa-429603003980&utm_loc_interest_ms=&utm_loc_physical_ms=1007768&gclid=CjwKCAjw19z6BRAYEiwAmo64LQMUJwf1i0V-Zgc5hYhpDOFQeZU05reAJmQvo2-mClFWWM4_sJiSmBoC-YkQAvD_BwE
-  # 4. https://stackoverflow.com/questions/24123499/frequency-histograms-with-facets-calculating-percent-by-groups-used-in-facet-i
-  # 5. https://stackoverflow.com/questions/62821480/add-a-trace-to-every-facet-of-a-plotly-figure
-  
-  # ComparatorOnlySubjs <- generateHistogramValues(len = seq(1:nrow(data)), val = data$cOnlySubjects)
-  # bothSubjs <- generateHistogramValues(seq(1:nrow(data)), data$bothSubjects)
-  # cohortOnlySubjs <- generateHistogramValues(seq(1:nrow(data)), data$tOnlySubjects)
-  # bucket <- list(ComparatorOnlySubjs = ComparatorOnlySubjs, bothSubjs = bothSubjs, cohortOnlySubjs = cohortOnlySubjs)
-  # 
-  # 
-  # p <- ggplot2::ggplot(reshape::melt(bucket), ggplot2::aes(value, fill = L1)) +
-  #   ggplot2::xlab(label = "Comparators") +
-  #   ggplot2::geom_histogram(position = "stack", binwidth = 1) +
-  #   ggplot2::xlim(c(0,max(length(comparatorCohortIds()),10))) +
-  #   ggplot2::facet_grid(rows = ggplot2::vars(data$targetCohortId), cols = ggplot2::vars(data$databaseId), scales = "free_y")
-  # plot <- plotly::ggplotly(p)
-  # GENERATE HISTOGRAM FUNCTION
-  # generateHistogramValues <- function(len,val)
-  # {
-  #   fillVal <- c()
-  #   
-  #   inc <- 1
-  #   for (i in len)
-  #   {
-  #     fillVal <- c(fillVal,rep(i,val[[i]]))
-  #   }
-  #   return(fillVal);
-  # }
-}
+}  
+# Future function getCohortOverlapHistogram:
+# 1. https://stackoverflow.com/questions/20184096/how-to-plot-multiple-stacked-histograms-together-in-r
+# 2. https://stackoverflow.com/questions/43415709/how-to-use-facet-grid-with-geom-histogram
+# 3. https://www.datacamp.com/community/tutorials/facets-ggplot-r?utm_source=adwords_ppc&utm_campaignid=1455363063&utm_adgroupid=65083631748&utm_device=c&utm_keyword=&utm_matchtype=b&utm_network=g&utm_adpostion=&utm_creative=332602034361&utm_targetid=dsa-429603003980&utm_loc_interest_ms=&utm_loc_physical_ms=1007768&gclid=CjwKCAjw19z6BRAYEiwAmo64LQMUJwf1i0V-Zgc5hYhpDOFQeZU05reAJmQvo2-mClFWWM4_sJiSmBoC-YkQAvD_BwE
+# 4. https://stackoverflow.com/questions/24123499/frequency-histograms-with-facets-calculating-percent-by-groups-used-in-facet-i
+# 5. https://stackoverflow.com/questions/62821480/add-a-trace-to-every-facet-of-a-plotly-figure
+
+# ComparatorOnlySubjs <- generateHistogramValues(len = seq(1:nrow(data)), val = data$cOnlySubjects)
+# bothSubjs <- generateHistogramValues(seq(1:nrow(data)), data$bothSubjects)
+# cohortOnlySubjs <- generateHistogramValues(seq(1:nrow(data)), data$tOnlySubjects)
+# bucket <- list(ComparatorOnlySubjs = ComparatorOnlySubjs, bothSubjs = bothSubjs, cohortOnlySubjs = cohortOnlySubjs)
+# 
+# 
+# p <- ggplot2::ggplot(reshape::melt(bucket), ggplot2::aes(value, fill = L1)) +
+#   ggplot2::xlab(label = "Comparators") +
+#   ggplot2::geom_histogram(position = "stack", binwidth = 1) +
+#   ggplot2::xlim(c(0,max(length(comparatorCohortIds()),10))) +
+#   ggplot2::facet_grid(rows = ggplot2::vars(data$targetCohortId), cols = ggplot2::vars(data$databaseId), scales = "free_y")
+# plot <- plotly::ggplotly(p)
+# GENERATE HISTOGRAM FUNCTION
+# generateHistogramValues <- function(len,val)
+# {
+#   fillVal <- c()
+#   
+#   inc <- 1
+#   for (i in len)
+#   {
+#     fillVal <- c(fillVal,rep(i,val[[i]]))
+#   }
+#   return(fillVal);
+# }
+

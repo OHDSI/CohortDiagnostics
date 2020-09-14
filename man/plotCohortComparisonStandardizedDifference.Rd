@@ -15,9 +15,12 @@ plotCohortComparisonStandardizedDifference(
 )
 }
 \arguments{
-\item{targetCohortIds}{A vector of one or more Cohort Ids.}
+\item{data}{A tibble data frame object that is the output of 
+\code{\link{compareCovariateValueResult}} function.}
 
-\item{comparatorCohortIds}{A vector of one or more Cohort Ids.}
+\item{targetCohortIds}{(optional) A vector of one or more Cohort Ids.}
+
+\item{comparatorCohortIds}{(optional) A vector of one or more Cohort Ids.}
 
 \item{covariateReference}{(optional) A tibble data frame object returned from \code{\link{getCovariateReference}} function.}
 
@@ -26,8 +29,6 @@ plotCohortComparisonStandardizedDifference(
 \item{databaseIds}{A vector one or more databaseIds to retrieve the results for. This is a 
 character field values from the `databaseId` field of the `database` table 
 of the results data model.}
-
-\item{A}{tibble data frame object that is the output of \code{\link{compareCovariateValueResult}} function.}
 
 \item{cohorts}{(optional) A tibble data frame object returned from \code{\link{getCohortReference}} function.}
 }
