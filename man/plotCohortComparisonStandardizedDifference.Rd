@@ -8,7 +8,7 @@ plotCohortComparisonStandardizedDifference(
   data,
   targetCohortIds = NULL,
   comparatorCohortIds = NULL,
-  cohort = NULL,
+  cohortReference = NULL,
   covariateReference = NULL,
   concept = NULL,
   databaseIds = NULL
@@ -22,6 +22,8 @@ plotCohortComparisonStandardizedDifference(
 
 \item{comparatorCohortIds}{(optional) A vector of one or more Cohort Ids.}
 
+\item{cohortReference}{(optional) A tibble data frame object returned from \code{\link{getCohortReference}} function.}
+
 \item{covariateReference}{(optional) A tibble data frame object returned from \code{\link{getCovariateReference}} function.}
 
 \item{concept}{(optional) A tibble data frame object returned from \code{\link{getConceptReference}} function.}
@@ -29,8 +31,6 @@ plotCohortComparisonStandardizedDifference(
 \item{databaseIds}{A vector one or more databaseIds to retrieve the results for. This is a 
 character field values from the `databaseId` field of the `database` table 
 of the results data model.}
-
-\item{cohorts}{(optional) A tibble data frame object returned from \code{\link{getCohortReference}} function.}
 }
 \value{
 A Plotly object.

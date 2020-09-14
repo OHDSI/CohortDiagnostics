@@ -237,7 +237,7 @@ plotIncidenceRate <- function(data,
 #' @template DatabaseIds
 #' @param targetCohortIds        (optional) A vector of one or more Cohort Ids.
 #' @param comparatorCohortIds    (optional) A vector of one or more Cohort Ids.
-#' @param cohorts                (optional) A tibble data frame object returned from \code{\link{getCohortReference}} function.
+#' @param cohortReference        (optional) A tibble data frame object returned from \code{\link{getCohortReference}} function.
 #' @param covariateReference     (optional) A tibble data frame object returned from \code{\link{getCovariateReference}} function.
 #' @param concept                (optional) A tibble data frame object returned from \code{\link{getConceptReference}} function.
 #' 
@@ -253,7 +253,7 @@ plotIncidenceRate <- function(data,
 plotCohortComparisonStandardizedDifference <- function(data,
                                                        targetCohortIds = NULL, 
                                                        comparatorCohortIds = NULL,
-                                                       cohorts = NULL,
+                                                       cohortReference = NULL,
                                                        covariateReference = NULL,
                                                        concept = NULL, # to subset based on domain, or vocabulary
                                                        databaseIds = NULL) {
@@ -310,8 +310,8 @@ plotCohortComparisonStandardizedDifference <- function(data,
                          add = errorMessage
   )
   checkmate::reportAssertions(collection = errorMessage)
-  if (!is.null(cohorts)) {
-    checkmate::assertTibble(x = cohorts, 
+  if (!is.null(cohortReference)) {
+    checkmate::assertTibble(x = cohortReference, 
                             any.missing = FALSE,
                             min.rows = 1,
                             min.cols = 2,
@@ -319,7 +319,7 @@ plotCohortComparisonStandardizedDifference <- function(data,
                             types = c('character',
                                       'double'),
                             add = errorMessage)
-    checkmate::assertNames(x = colnames(cohorts),
+    checkmate::assertNames(x = colnames(cohortReference),
                            must.include = c("cohortId",
                                             "cohortName"),
                            add = errorMessage
