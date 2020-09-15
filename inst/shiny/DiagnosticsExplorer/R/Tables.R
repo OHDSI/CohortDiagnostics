@@ -3,13 +3,15 @@ library(magrittr)
 prepareTable1 <- function(covariates,
                           pathToCsv = "Table1Specs.csv") {
   covariates <- covariates %>%
-    dplyr::mutate(conceptId = (.data$covariateId  - .data$covariateAnalysisId)/1000,
-                  covariateName = stringr::str_to_sentence(stringr::str_replace_all(string = .data$covariateName, 
+    dplyr::mutate(covariateName = stringr::str_to_sentence(stringr::str_replace_all(string = .data$covariateName, 
                                                                                     pattern = "^.*: ",
                                                                                     replacement = "")))
   space <- "&nbsp;"
-  specifications <- readr::read_csv(file = pathToCsv, col_types = readr::cols()) %>% 
+  specifications <- readr::read_csv(file = pathToCsv, 
+                                    col_types = readr::cols(),
+                                    guess_max = min(1e7)) %>% 
     dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = '')))
+  
   resultsTable <- tidyr::tibble()
   for (i in 1:nrow(specifications)) {
     specification <- specifications %>% dplyr::slice(i)
@@ -55,13 +57,14 @@ prepareTable1 <- function(covariates,
       resultsTable <- dplyr::bind_rows(resultsTable, 
                                        tidyr::tibble(characteristic = specification$label,
                                                      value = covariatesSubset$mean,
-                                                     position = i)) %>% 
-        dplyr::arrange(.data$label, dplyr::desc(.data$header), .data$position) %>% 
-        dplyr::mutate(sortOrder = dplyr::row_number()) %>% 
-        dplyr::select(-.data$label, -.data$header, -.data$position)
+                                                     position = i)) 
     }
   }
-return(resultsTable)
+  resultsTable <- resultsTable %>% 
+    dplyr::arrange(.data$label, dplyr::desc(.data$header), .data$position) %>% 
+    dplyr::mutate(sortOrder = dplyr::row_number()) %>% 
+    dplyr::select(-.data$label, -.data$header, -.data$position)
+  return(resultsTable)
 }
 
 
@@ -72,7 +75,9 @@ prepareTable1Comp <- function(balance,
                                                                                     pattern = "^.*: ",
                                                                                     replacement = "")))
   space <- "&nbsp;"
-  specifications <- readr::read_csv(file = pathToCsv, col_types = readr::cols()) %>% 
+  specifications <- readr::read_csv(file = pathToCsv, 
+                                    col_types = readr::cols(),
+                                    guess_max = min(1e7)) %>% 
     dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = '')))
   
   resultsTable <- tidyr::tibble()
@@ -145,6 +150,18 @@ prepareTable1Comp <- function(balance,
 compareCohortCharacteristics <- function(characteristics1, characteristics2) {
   m <- dplyr::full_join(x = characteristics1 %>% dplyr::distinct(), 
                         y = characteristics2 %>% dplyr::distinct(), 
+                        by = c("covariateId", "conceptId", "databaseId", "covariateName", "covariateAnalysisId"),
+                        suffix = c("1", "2")) %>%
+    dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = 0)),
+                  sd = sqrt(.data$sd1^2 + .data$sd2^2),
+                  stdDiff = (.data$mean2 - .data$mean1)/.data$sd) %>% 
+    dplyr::arrange(-abs(.data$stdDiff))
+  return(m)
+}
+
+compareTemporalCharacterization <- function(temporalCharacteristics1, temporalCharacteristics2){
+  m <- dplyr::full_join(x = temporalCharacteristics1 %>% dplyr::distinct(), 
+                        y = temporalCharacteristics2 %>% dplyr::distinct(), 
                         by = c("covariateId", "conceptId", "databaseId", "covariateName", "covariateAnalysisId"),
                         suffix = c("1", "2")) %>%
     dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = 0)),

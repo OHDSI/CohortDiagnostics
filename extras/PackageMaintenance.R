@@ -16,7 +16,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Format and check codeP
+# Format and check code
 # OhdsiRTools::formatRFolder() (note: this function has been impacted by change in formatR)
 OhdsiRTools::checkUsagePackage("CohortDiagnostics")
 OhdsiRTools::updateCopyrightYearFolder()
@@ -28,6 +28,7 @@ spelling::spell_check_files(list.files(path = "inst/shiny", pattern = "*.html", 
 unlink("extras/CohortDiagnostics.pdf")
 shell("R CMD Rd2pdf ./ --output=extras/CohortDiagnostics.pdf")
 
+dir.create(path = "./inst/doc/", showWarnings = FALSE)
 rmarkdown::render("vignettes/CohortDiagnosticsUsingWebApi.Rmd",
                   output_file = "../inst/doc/CohortDiagnosticsUsingWebApi.pdf",
                   rmarkdown::pdf_document(latex_engine = "pdflatex",
@@ -38,7 +39,18 @@ pkgdown::build_site()
 OhdsiRTools::fixHadesLogo()
 
 # Install cohorts for testing
-ROhdsiWebApi::insertCohortDefinitionSetInPackage(fileName = "inst/settings/CohortsToCreateForTesting.csv",
+
+cohortsToInsertIntoPackage <- readr::read_csv("inst/settings/CohortsToCreateForTesting.csv", 
+                                              col_types = readr::cols(), trim_ws = TRUE) %>% 
+  dplyr::mutate(atlasId = .data$webApiCohortId,
+                cohortId = .data$cohortId,
+                name  = .data$cohortId) %>% 
+  dplyr::select(.data$atlasId, .data$cohortId, .data$name)
+
+readr::write_csv(x = cohortsToInsertIntoPackage,
+                 "inst/settings/CohortsToInstantiate.csv")
+
+ROhdsiWebApi::insertCohortDefinitionSetInPackage(fileName = "inst/settings/CohortsToInstantiate.csv",
                                                  baseUrl = Sys.getenv("baseUrl"),
                                                  insertTableSql = FALSE,
                                                  generateStats = TRUE,

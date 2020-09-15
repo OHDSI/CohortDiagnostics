@@ -34,7 +34,9 @@
   
   # Insert rule names in cohort_inclusion table:
   pathToCsv <- system.file("cohorts", "InclusionRules.csv", package = "examplePackage")
-  inclusionRules <- read.csv(pathToCsv)  
+  inclusionRules <- readr::read_csv(pathToCsv, 
+                                    col_types = readr::cols(),
+                                    guess_max = min(1e7)) 
   inclusionRules <- data.frame(cohort_definition_id = inclusionRules$cohortId,
                                rule_sequence = inclusionRules$ruleSequence,
                                name = inclusionRules$ruleName)
@@ -49,7 +51,7 @@
   
   # Instantiate cohorts:
   pathToCsv <- system.file("settings", "CohortsToCreate.csv", package = "examplePackage")
-  cohortsToCreate <- read.csv(pathToCsv)
+  cohortsToCreate <- readr::read_csv(pathToCsv, col_types = readr::cols())
   for (i in 1:nrow(cohortsToCreate)) {
     writeLines(paste("Creating cohort:", cohortsToCreate$name[i]))
     sql <- SqlRender::loadRenderTranslateSql(sqlFilename = paste0(cohortsToCreate$name[i], ".sql"),

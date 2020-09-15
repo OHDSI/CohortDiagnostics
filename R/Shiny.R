@@ -34,6 +34,8 @@ launchDiagnosticsExplorer <- function(dataFolder, launch.browser = FALSE) {
   ensure_installed("DT")
   ensure_installed("VennDiagram")
   ensure_installed("htmltools")
+  ensure_installed("scales")
+  ensure_installed("plotly")
   appDir <- system.file("shiny", "DiagnosticsExplorer", package = "CohortDiagnostics")
   shinySettings <- list(dataFolder = dataFolder)
   .GlobalEnv$shinySettings <- shinySettings
@@ -52,18 +54,45 @@ launchDiagnosticsExplorer <- function(dataFolder, launch.browser = FALSE) {
 #' @param dataFolder  folder where the exported zip files for the diagnostics are stored. Use
 #'                         the \code{\link{runCohortDiagnostics}} function to generate these zip files. 
 #'                         Zip files containing results from multiple databases can be placed in the same
-#'                         folder.
-#'                         
+#'                         folder. 
+#' @param minCovariateProportion  minimum value threshold for covariates to be included 
+#'                                in premerged file (valid number (maybe decimal) between 0 to 1)                         
 #' @export
-preMergeDiagnosticsFiles <- function(dataFolder) {
+preMergeDiagnosticsFiles <- function(dataFolder, minCovariateProportion = 0) {
   zipFiles <- list.files(dataFolder, pattern = ".zip", full.names = TRUE)
+  errorMessage <- checkmate::makeAssertCollection()
+  checkmate::assertNumber(x = minCovariateProportion, lower = 0, upper = 1, add = errorMessage)
+  checkmate::reportAssertions(collection = errorMessage)
   
-  loadFile <- function(file, folder, overwrite) {
+  loadFile <- function(file, folder, overwrite, minProportion = minProportion) {
     # print(file)
     tableName <- gsub(".csv$", "", file)
     camelCaseName <- SqlRender::snakeCaseToCamelCase(tableName)
-    data <- readr::read_csv(file.path(folder, file), col_types = readr::cols(), guess_max = 1e7, locale = readr::locale(encoding = "UTF-8"))
+    data <- readr::read_csv(file.path(folder, file), 
+                            col_types = readr::cols(), 
+                            guess_max = min(1e7), 
+                            locale = readr::locale(encoding = "UTF-8"))
     colnames(data) <- SqlRender::snakeCaseToCamelCase(colnames(data))
+    
+    if (tableName %in% c('covariate_value', 'temporal_covariate_value')) {
+      data <- data %>% 
+        dplyr::filter(mean >= minCovariateProportion)
+    }
+    
+    if (tableName %in% c('covariate','temporal_covariate')) {# this is a temporary solution as detailed here https://github.com/OHDSI/CohortDiagnostics/issues/162
+      data2 <- data %>% 
+        dplyr::group_by(.data$covariateId, .data$conceptId) %>% 
+        dplyr::filter(.data$covariateName == max(.data$covariateName)) %>% 
+        dplyr::slice(1) %>% 
+        dplyr::ungroup()
+      if (!nrow(data2) == nrow(data)) {
+        ParallelLogger::logInfo('Warning: covariate found to have more than one record per 
+                                covariateId, conceptId combination. The row record corresponding 
+                                to maximum value of covariateName has been chosen. This led to reduction 
+                                in number of rows from ', nrow(data), ' to ', nrow(data2))
+        data <- data2
+      } else {data2 <- NULL}
+    }
     
     if (!overwrite && exists(camelCaseName, envir = .GlobalEnv)) {
       existingData <- get(camelCaseName, envir = .GlobalEnv)
@@ -90,6 +119,7 @@ preMergeDiagnosticsFiles <- function(dataFolder) {
     
     invisible(NULL)
   }
+  
   tableNames <- c()
   for (i in 1:length(zipFiles)) {
     writeLines(paste("Processing", zipFiles[i]))
@@ -143,7 +173,7 @@ launchCohortExplorer <- function(connectionDetails,
                                    cdmDatabaseSchema = cdmDatabaseSchema,
                                    cohortDatabaseSchema = cohortDatabaseSchema,
                                    cohortTable = cohortTable,
-                                   cohortDefinitionId = cohortId,
+                                   cohortId = cohortId,
                                    sampleSize = sampleSize,
                                    subjectIds = subjectIds)
   on.exit(rm(shinySettings, envir = .GlobalEnv))
@@ -175,4 +205,3 @@ ensure_installed <- function(pkg) {
     }
   }
 }
-

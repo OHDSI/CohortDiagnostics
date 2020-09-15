@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Plot incidence rate by year, age, and/or gender — plotincidenceRate • CohortDiagnostics</title>
+<title>Get ggplot object with incidence rate plot. — plotIncidenceRate • CohortDiagnostics</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Plot incidence rate by year, age, and/or gender — plotincidenceRate" />
-<meta property="og:description" content="Characterizes the incidence rate of a cohort definition." />
+<meta property="og:title" content="Get ggplot object with incidence rate plot. — plotIncidenceRate" />
+<meta property="og:description" content="Get ggplot object with incidence rate plot." />
 
 
 
@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.0</span>
       </span>
     </div>
 
@@ -126,66 +126,67 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Plot incidence rate by year, age, and/or gender</h1>
-    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/IncidenceRates.R'><code>R/IncidenceRates.R</code></a></small>
-    <div class="hidden name"><code>plotincidenceRate.Rd</code></div>
+    <h1>Get ggplot object with incidence rate plot.</h1>
+    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/ResultsPlot.R'><code>R/ResultsPlot.R</code></a></small>
+    <div class="hidden name"><code>plotIncidenceRate.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Characterizes the incidence rate of a cohort definition.</p>
+    <p>Get ggplot object with incidence rate plot.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>plotincidenceRate</span>(
-  <span class='no'>incidenceRate</span>,
-  <span class='kw'>minPersonYears</span> <span class='kw'>=</span> <span class='fl'>1000</span>,
-  <span class='kw'>stratifyByAge</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+    <pre class="usage"><span class='fu'>plotIncidenceRate</span>(
+  <span class='no'>data</span>,
+  <span class='kw'>cohortIds</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>databaseIds</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>stratifyByAgeGroup</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>stratifyByGender</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>stratifyByCalendarYear</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>fileName</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
+  <span class='kw'>yscaleFixed</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>incidenceRate</th>
-      <td><p>Incidence rate time series data for plotting generated using
-<code><a href='getIncidenceRate.html'>getIncidenceRate</a></code> function.</p></td>
+      <th>data</th>
+      <td><p>A tibble data frame object that is the output 
+of <code><a href='getIncidenceRate.html'>getIncidenceRate</a></code> function.</p></td>
     </tr>
     <tr>
-      <th>minPersonYears</th>
-      <td><p>Estimates get very unstable with low background counts, so removing them
-makes for cleaner plots.</p></td>
+      <th>cohortIds</th>
+      <td><p>A vector of one or more integer (bigint) to plot.</p></td>
     </tr>
     <tr>
-      <th>stratifyByAge</th>
-      <td><p>Should the plot be stratified by age?</p></td>
+      <th>databaseIds</th>
+      <td><p>A vector of one or more databaseIds to plot.</p></td>
+    </tr>
+    <tr>
+      <th>stratifyByAgeGroup</th>
+      <td><p>Do you want to stratify by age?</p></td>
     </tr>
     <tr>
       <th>stratifyByGender</th>
-      <td><p>Should the plot be stratified by gender?</p></td>
+      <td><p>Do you want to stratify by gender?</p></td>
     </tr>
     <tr>
       <th>stratifyByCalendarYear</th>
-      <td><p>Should the plot be stratified by calendar year?</p></td>
+      <td><p>Do you want to stratify by calendar year?</p></td>
     </tr>
     <tr>
-      <th>fileName</th>
-      <td><p>Optional: name of the file where the plot should be saved, for
-example 'plot.png'. See the function <code>ggsave</code> in the ggplot2
-package for supported file formats.</p></td>
+      <th>yscaleFixed</th>
+      <td><p>Do you want to rescale y-axis?</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A ggplot object. Use the <code><a href='https://ggplot2.tidyverse.org/reference/ggsave.html'>ggsave</a></code> function to save to file in a different
-format.</p>
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+    <p>A ggplot object.</p>
 
-    <p>Generates time series plots of the incidence rate per 1000 person years of cohort entry by
-year, age, and/or gender.</p>
-
+    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
+    <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
+<span class='no'>incidenceRatePlot</span> <span class='kw'>&lt;-</span> <span class='fu'>plotIncidenceRate</span>(<span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>data</span>)
+}</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -197,7 +198,7 @@ year, age, and/or gender.</p>
 
       <footer>
       <div class="copyright">
-  <p>Developed by Martijn Schuemie, Patrick Ryan, James Weaver, Gowtham Rao.</p>
+  <p>Developed by Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver.</p>
 </div>
 
 <div class="pkgdown">

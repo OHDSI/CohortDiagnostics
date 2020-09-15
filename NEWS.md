@@ -1,10 +1,131 @@
-CohortDiagnostics (Develop)
+CohortDiagnostics 2.0.0
 =======================
+Unreleased version
+
+- working on eunomia
+- use of tidy r
+
+CohortDiagnostics 1.2.6
+=======================
+Note: 
+
+1.2.x is last release of v 1.x.x series. Future releases with new functionality are expected to have breaking changes with no backward compatability and will be 2.x.x series.
+
+Bug fixes:
+
+1. Additional bug fixes for characterization/temporal characterization.
+
+
+CohortDiagnostics 1.2.5
+=======================
+
+Bug fixes:
+
+1. Additional bug fixes for characterization/temporal characterization.
+
+
+CohortDiagnostics 1.2.4
+=======================
+
+Bug fixes:
+
+1. Added details log when characterization/temporal characterization does not return results or returns result below threshold value. By default we filter out results in from Characterization and Temporal Characterization where the value is less than 0.001. This was leading to empty results for some cohorts - causing errors. 
+
+
+CohortDiagnostics 1.2.3
+=======================
+
+Bug fixes:
+
+1. Fixed error when many concept sets have to be instantiated.
+2. Removed ohdsi/SqlRender from Remotes https://github.com/OHDSI/CohortDiagnostics/issues/189
+3. Fixed Digit precision for RJSONIO::toJson and fromJSON https://github.com/OHDSI/CohortDiagnostics/issues/161 This is an important fix. If digit precision is not explicitly specified in RJSONIO, then scientific notation is used. This issue seems to only happen when an integer id (conceptId, conceptSetId, cohortId etc) >= 10,000,000 (which is rare). Please use this update if you have id's > 10,000,000.
+
+CohortDiagnostics 1.2.2
+=======================
+Changes:
+1. Minor UI changes to Diagnostics explorer. Added missing sort.
+2. Added better labels for plots.
+3. Download plots.
+
+Bug fixes:
+1. Changes dependency to ROhdsiWebApi (>= 1.1.0)
+2. DiagnosticsExplorer display bug fixes
+
+CohortDiagnostics 1.2.1
+=======================
+Changes:
+1. All objects in DiagnosticsExplorer are sorted by default #173
+2. Multi select for concepts #199
+
+Bug fixes:
+1. Ensure concept sets across cohort definitions are unique #174 (changes dependency to ROhdsiWebApi (>= 1.1.0))
+
+Note: 1.2.x are the last planned release in v1.x.x series. No new functionalities will 
+be added to 1.2.x moving forward. All future releases in 1.2.x series will be bug fixes.
+
+Version 2.x is planned for release by October 2020, and will be a breaking change. Output of 
+Versions 2.x will use a different data model and will not be backward compatible with 1.x.
+
+CohortDiagnostics 1.2.2
+=======================
+New features:
+1. Minor UI changes to Diagnostics explorer. Added missing sort.
+2. Added better labels for plots.
+3. Download plots.
+
+Bug fixes:
+1. Changes dependency to ROhdsiWebApi (>= 1.1.0)
+2. DiagnosticsExplorer display bug fixes
+
+CohortDiagnostics 1.2.1
+=======================
+New features:
+1. All objects in DiagnosticsExplorer are sorted by default #173
+2. Multi select for concepts #199
+
+Bug fixes:
+1. Ensure concept sets across cohort definitions are unique #174 (changes dependency to ROhdsiWebApi (>= 1.1.0))
+
+CohortDiagnostics 1.2.0
+=======================
+Changes:
+1. All objects in DiagnosticsExplorer are sorted by default #173
+2. Multi select for concepts #199
+
+Bug fixes:
+1. Ensure concept sets across cohort definitions are unique #174
+
+CohortDiagnostics 1.2.0
+=======================
+Changes:
+1. New function to retrieve concept set json from cohort json \code{extractConceptSetsJsonFromCohortJson}
+2. New function to retrieve concept set sql from cohort sql \code{extractConceptSetsSqlFromCohortSql}
+3. DiagnosticsExplorer shiny app - DataTable now rendered using server side processing. Bug fixes and UI improvements.
+4. DiagnosticsExplorer shiny app - Phenotype library mode (released)
+5. DiagnosticsExplorer shiny app - Combine included source concepts and orphan concepts into one submenu https://github.com/OHDSI/CohortDiagnostics/issues/129
+
+Bug fixes:
+1. https://github.com/OHDSI/CohortDiagnostics/issues/167
+2. https://github.com/OHDSI/CohortDiagnostics/issues/165
+
+
+CohortDiagnostics 1.1.1
+=======================
+Changes:
+1. Shiny app UI improvements
+2. Link out to Atlas and Athena from cohortId. Supports baseUrl.
+3. (beta - unreleased) support for Phenotype library. Shiny app will look for two additional csv files phenotypeDescription and cohortDescription that put the DiagnosticExplorer in Phenotype Library Mode. Plan to release in future version >= 1.2
+4. Changed default selections for temporal characterization
+5. Added minimum threshold value to covariate_value and temporal_covariate_value with default value = 0 (future release, we plan to make this 0.005 i.e. 0.5%)
+
+Bug fixes:
+1. Minor bug fixes.
 
 CohortDiagnostics 1.1.0
 =======================
 
-New features: 
+Changes: 
 1. Added temporal characterization
 2. UI changes to Shiny app diagnostic explorer
 

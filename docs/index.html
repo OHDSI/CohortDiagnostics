@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.1.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.0</span>
       </span>
     </div>
 
@@ -132,9 +132,7 @@
 <li><p>See the instructions <a href="https://ohdsi.github.io/Hades/rSetup.html">here</a> for configuring your R environment, including Java.</p></li>
 <li><p>In R, use the following commands to download and install CohortDiagnostics:</p></li>
 </ol>
-<div class="sourceCode" id="cb1"><pre class="r"><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">"drat"</span>)
-<span class="kw pkg">drat</span><span class="kw ns">::</span><span class="fu"><a href="https://rdrr.io/pkg/drat/man/addRepo.html">addRepo</a></span>(<span class="st">"OHDSI"</span>)
-<span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">"CohortDiagnostics"</span>)</pre></div>
+<div class="sourceCode" id="cb1"><pre class="r"><span class="kw pkg">remotes</span><span class="kw ns">::</span><span class="fu">install.github</span>(<span class="st">"OHDSI/CohortDiagnostics"</span>)</pre></div>
 </div>
 <div id="user-documentation" class="section level1">
 <h1 class="hasAnchor">
@@ -200,10 +198,10 @@
 <div class="developers">
 <h2>Developers</h2>
 <ul class="list-unstyled">
+<li>Gowtham Rao <br><small class="roles"> Author, maintainer </small>  </li>
 <li>Martijn Schuemie <br><small class="roles"> Author </small>  </li>
 <li>Patrick Ryan <br><small class="roles"> Author </small>  </li>
 <li>James Weaver <br><small class="roles"> Author </small>  </li>
-<li>Gowtham Rao <br><small class="roles"> Author, maintainer </small>  </li>
 <li><a href="authors.html">All authors...</a></li>
 </ul>
 </div>
@@ -220,7 +218,7 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Martijn Schuemie, Patrick Ryan, James Weaver, Gowtham Rao.</p>
+  <p>Developed by Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver.</p>
 </div>
 
 <div class="pkgdown">

@@ -28,14 +28,17 @@
 #'
 #' @template CohortTable
 #'
-#' @param cohortId            The cohort definition ID used to reference the cohort in the cohort
-#'                            table.
+#' @param cohortIds           A vector of cohortIds (1 or more) used to reference the cohort in the cohort
+#'                            table. 
+#'
+#' @template  cdmVersion
+#' 
 #' @param covariateSettings   Either an object of type \code{covariateSettings} as created using one of
 #'                            the createCovariate functions in the FeatureExtraction package, or a list
 #'                            of such objects.
 #'
 #' @return
-#' A data frame with cohort characteristics.
+#' A list object with tibbles returned from Feature Extraction
 #'
 #' @export
 getCohortCharacteristics <- function(connectionDetails = NULL,
@@ -44,100 +47,87 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
                                      oracleTempSchema = NULL,
                                      cohortDatabaseSchema = cdmDatabaseSchema,
                                      cohortTable = "cohort",
-                                     cohortId,
+                                     cohortIds,
+                                     cdmVersion = 5,
                                      covariateSettings) {
   start <- Sys.time()
+  result <- tidyr::tibble()
+  output <- list()
   
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
   
-  if (!checkIfCohortInstantiated(connection = connection,
-                                 cohortDatabaseSchema = cohortDatabaseSchema,
-                                 cohortTable = cohortTable,
-                                 cohortId = cohortId)) {
-    warning("Cohort with ID ", cohortId, " appears to be empty. Was it instantiated? Skipping Characterization.")
+  featureExtractionOutput <- FeatureExtraction::getDbCovariateData(connection = connection,
+                                                                   oracleTempSchema = oracleTempSchema,
+                                                                   cdmDatabaseSchema = cdmDatabaseSchema,
+                                                                   cohortDatabaseSchema = cohortDatabaseSchema,
+                                                                   cdmVersion = cdmVersion,
+                                                                   cohortTable = cohortTable,
+                                                                   cohortId = cohortIds,
+                                                                   covariateSettings = covariateSettings,
+                                                                   aggregated = TRUE)
+  
+  if (!(exists("featureExtractionOutput") && 
+        (FeatureExtraction::isCovariateData(featureExtractionOutput) ||
+         FeatureExtraction::isTemporalCovariateData(featureExtractionOutput)))) {
+    ParallelLogger::logWarn("No characterization results returned")
     delta <- Sys.time() - start
     ParallelLogger::logInfo(paste("Cohort characterization took",
                                   signif(delta, 3),
                                   attr(delta, "units")))
-    return(tidyr::tibble())
+    return(output)
   }
   
-  data <- FeatureExtraction::getDbCovariateData(connection = connection,
-                                                oracleTempSchema = oracleTempSchema,
-                                                cdmDatabaseSchema = cdmDatabaseSchema,
-                                                cohortDatabaseSchema = cohortDatabaseSchema,
-                                                cohortTable = cohortTable,
-                                                cohortId = cohortId,
-                                                covariateSettings = covariateSettings,
-                                                aggregated = TRUE)
-  
-  result <- tidyr::tibble()
-  if (!is.null(data$covariates)) {
-    n <- attr(x = data, which = "metaData")$populationSize
-    if (FeatureExtraction::isTemporalCovariateData(data)) {
-      counts <- data$covariates %>% 
-        dplyr::collect() %>% 
-        dplyr::mutate(sd = sqrt(((n * .data$sumValue) + .data$sumValue)/(n^2)))
-      
-      binaryCovs <- data$covariates %>% 
-        dplyr::select(.data$timeId, .data$covariateId, .data$averageValue) %>% 
-        dplyr::rename(mean = .data$averageValue) %>% 
-        dplyr::collect() %>% 
-        dplyr::left_join(counts, by = c("covariateId", "timeId")) %>% 
-        dplyr::select(-.data$sumValue)
-    } else {
-      counts <- data$covariates %>% 
-        dplyr::collect() %>% 
-        dplyr::mutate(sd = sqrt(((n * .data$sumValue) + .data$sumValue)/(n^2)))
-      
-      binaryCovs <- data$covariates %>% 
-        dplyr::select(.data$covariateId, .data$averageValue) %>% 
-        dplyr::rename(mean = .data$averageValue) %>% 
-        dplyr::collect() %>% 
-        dplyr::left_join(counts, by = "covariateId") %>% 
-        dplyr::select(-.data$sumValue)
-    }
-    result <- dplyr::bind_rows(result, binaryCovs)
+  populationSize <- attr(x = featureExtractionOutput, which = "metaData") %>% 
+    tidyr::as_tibble()
+  output$analysisRef <- featureExtractionOutput$analysisRef %>% 
+    dplyr::collect()
+  output$covariateRef <- featureExtractionOutput$covariateRef %>% 
+    dplyr::collect()
+  if ("timeRef" %in% names(featureExtractionOutput)) {
+    output$timeRef <- featureExtractionOutput$timeRef %>% 
+      dplyr::collect()
   }
   
-  if (!is.null(data$covariatesContinuous)) {
-    if (FeatureExtraction::isTemporalCovariateData(data)) {
-      continuousCovs <- data$covariatesContinuous %>% 
-        dplyr::select(.data$timeId, .data$covariateId, .data$averageValue, .data$standardDeviation) %>% 
-        dplyr::rename(mean = .data$averageValue, sd = .data$standardDeviation) %>% 
-        dplyr::collect()
-    } else {
-      continuousCovs <- data$covariatesContinuous %>% 
-        dplyr::select(.data$covariateId, .data$averageValue, .data$standardDeviation) %>% 
-        dplyr::rename(mean = .data$averageValue, sd = .data$standardDeviation) %>% 
-        dplyr::collect()
-    }
-    result <- dplyr::bind_rows(result, continuousCovs)
+  if (!is.null(featureExtractionOutput$covariates) && 
+      dplyr::count(featureExtractionOutput$covariates) %>% dplyr::pull() > 0) {
+    output$covariates <- featureExtractionOutput$covariates %>% 
+      dplyr::collect() %>% 
+      dplyr::rename(cohortId = .data$cohortDefinitionId) %>% 
+      dplyr::left_join(populationSize) %>% 
+      dplyr::mutate(sd = sqrt(((populationSize * .data$sumValue) + .data$sumValue)/(populationSize^2))) %>% 
+      dplyr::rename(mean = .data$averageValue) %>% 
+      dplyr::select(-.data$sumValue, -.data$populationSize)
+    result <- dplyr::bind_rows(result, output$covariates) %>% 
+      dplyr::distinct()
   }
-  if (nrow(result) > 0) {
-    result <- result %>% dplyr::left_join(y = data$covariateRef %>% dplyr::collect(), by = ("covariateId"))
-    if (FeatureExtraction::isTemporalCovariateData(data)) {
-      result <- result %>% 
-        dplyr::left_join(y = data$timeRef %>% dplyr::collect(), by = "timeId") %>% 
-        dplyr::rename(startDayTemporalCharacterization = .data$startDay,
-                      endDayTemporalCharacterization = .data$endDay)
-    }
+  
+  if (!is.null(featureExtractionOutput$covariatesContinuous) && 
+      dplyr::count(featureExtractionOutput$covariatesContinuous) %>% dplyr::pull() > 0) {
+    output$covariatesContinuous <- featureExtractionOutput$covariatesContinuous %>% 
+      dplyr::collect() %>% 
+      dplyr::rename(mean = .data$averageValue, 
+                    sd = .data$standardDeviation, 
+                    cohortId = .data$cohortDefinitionId)
+    result <- dplyr::bind_rows(result, output$covariatesContinuous) %>% 
+      dplyr::distinct()
   }
-  attr(result, "cohortSize") <- attr(data, "metaData")$populationSize
-  delta <- Sys.time() - start
-  if (FeatureExtraction::isTemporalCovariateData(data)) {
-    ParallelLogger::logInfo(paste("Temporal Cohort characterization took",
-                                  signif(delta, 3),
-                                  attr(delta, "units")))
+
+  if (FeatureExtraction::isTemporalCovariateData(featureExtractionOutput)) {
+    output$result <- result %>% 
+      dplyr::select(.data$cohortId, .data$timeId, .data$covariateId, .data$mean, .data$sd)
   } else {
-    ParallelLogger::logInfo(paste("Cohort characterization took",
-                                  signif(delta, 3),
-                                  attr(delta, "units")))
+    output$result <- result %>% 
+      dplyr::select(.data$cohortId, .data$covariateId, .data$mean, .data$sd)
   }
-  return(result)
+  
+  delta <- Sys.time() - start
+  ParallelLogger::logInfo(paste("Cohort characterization took",
+                                signif(delta, 3),
+                                attr(delta, "units")))
+  return(output)
 }
 
 #' Compare cohort characteristics
@@ -156,8 +146,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
 #' @export
 compareCohortCharacteristics <- function(characteristics1, characteristics2) {
   m <- dplyr::full_join(x = characteristics1 %>% dplyr::distinct(), 
-                        y = characteristics2 %>% dplyr::distinct(), 
-                        by = c("covariateId", "databaseId", "covariateName", "covariateAnalysisId"),
+                        y = characteristics2 %>% dplyr::distinct(),
                         suffix = c("1", "2")) %>%
     dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = 0)),
                   sd = sqrt(.data$sd1^2 + .data$sd2^2),
