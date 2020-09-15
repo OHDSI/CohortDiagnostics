@@ -1010,6 +1010,152 @@ getConceptReference <- function(connection = NULL,
 
 
 
+
+#' Get concept set data diagnostics
+#'
+#' @description
+#' Get concept set data diagnostics data
+#'
+#' @template ModeAndDetails
+#' @template CohortIds
+#' @template DatabaseIds
+#' 
+#' @return
+#' The function will return a tibble data frame object.
+#'
+#' @examples
+#' \dontrun{
+#' conceptSetDataDiagnostics <- getConceptSetDataDiagnostics()
+#' }
+#'
+#' @export
+getConceptSetDataDiagnostics <- function(connection = NULL,
+                                         connectionDetails = NULL,
+                                         cohortIds = NULL,
+                                         databaseIds = NULL,
+                                         resultsDatabaseSchema = NULL) {
+  # Perform error checks for input variables
+  errorMessage <- checkmate::makeAssertCollection()
+  errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
+                                                  connectionDetails = connectionDetails,
+                                                  resultsDatabaseSchema = resultsDatabaseSchema,
+                                                  errorMessage = errorMessage)
+  checkmate::assertDouble(x = cohortIds,
+                          min.len = 1, 
+                          null.ok = TRUE,
+                          add = errorMessage)
+  checkmate::assertCharacter(x = databaseIds,
+                             min.len = 1, 
+                             null.ok = TRUE,
+                             add = errorMessage)
+  checkmate::reportAssertions(collection = errorMessage)
+  
+  # route query
+  route <- routeDataQuery(connection = connection,
+                          connectionDetails = connectionDetails,
+                          table = table)
+  
+  if (route == 'quit') {
+    ParallelLogger::logWarn("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    return(NULL)
+  } else if (route == 'memory') {
+    connection <- NULL
+  }
+  
+  
+  # included source concepts
+  table <- 'includedSourceConcept'
+  # perform query
+  if (!is.null(connection)) {
+    sql <-   "SELECT *
+              FROM  @resultsDatabaseSchema.@table
+              WHERE conceptId > 0
+              {@cohortIds == } ? {}:{AND cohort_id IN ('@cohortIds')}
+              {@databaseIds == } ? {}:{AND database_id IN ('@databaseIds')};"
+    dataIncludedSourceConcept <- 
+      DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                 sql = sql,
+                                                 resultsDatabaseSchema = resultsDatabaseSchema,
+                                                 table = SqlRender::camelCaseToSnakeCase(table),
+                                                 snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
+  } else {
+    dataIncludedSourceConcept <- get(table)
+    if (!is.null(cohortIds)) {
+      dataIncludedSourceConcept <- dataIncludedSourceConcept %>% 
+        dplyr::filter(.data$conceptId %in% !!cohortIds)
+    }
+    if (!is.null(databaseIds)) {
+      dataIncludedSourceConcept <- dataIncludedSourceConcept %>% 
+        dplyr::filter(.data$databaseId %in% !!databaseIds)
+    }
+  }
+  
+  # orphan concept
+  table <-  'orphanConcept'
+  # perform query
+  if (!is.null(connection)) {
+    sql <-   "SELECT *
+              FROM  @resultsDatabaseSchema.@table
+              WHERE conceptId > 0
+              {@cohortIds == } ? {}:{AND cohort_id IN ('@cohortIds')}
+              {@databaseIds == } ? {}:{AND database_id IN ('@databaseIds')};"
+    dataOrphanConcept <- 
+      DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                 sql = sql,
+                                                 resultsDatabaseSchema = resultsDatabaseSchema,
+                                                 table = SqlRender::camelCaseToSnakeCase(table),
+                                                 snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
+  } else {
+    dataOrphanConcept <- get(table)
+    if (!is.null(cohortIds)) {
+      dataOrphanConcept <- dataOrphanConcept %>% 
+        dplyr::filter(.data$conceptId %in% !!cohortIds)
+    }
+    if (!is.null(databaseIds)) {
+      dataOrphanConcept <- dataOrphanConcept %>% 
+        dplyr::filter(.data$databaseId %in% !!databaseIds)
+    }
+  }
+
+  data <- dplyr::bind_rows(
+    dataIncludedSourceConcept %>% 
+      dplyr::select(.data$databaseId, 
+                    .data$cohortId, 
+                    .data$conceptSetId, 
+                    .data$conceptId, 
+                    .data$conceptSubjects,
+                    .data$conceptCount
+                    ) %>% 
+      dplyr::mutate(type = 'included',
+                    query = 'S'),
+    dataIncludedSourceConcept %>% 
+      dplyr::select(.data$databaseId, 
+                    .data$cohortId, 
+                    .data$sourceConceptId,
+                    .data$conceptSubjects,
+                    .data$conceptCount
+      ) %>% 
+      dplyr::rename(conceptId = .data$sourceConceptId) %>% 
+      dplyr::mutate(type = 'included',
+                    query = 'N'),
+    dataOrphanConcept %>% 
+      dplyr::select(.data$databaseId,
+                    .data$cohortId,
+                    .data$conceptSetId, 
+                    .data$conceptId,
+                    .data$conceptCount) %>% 
+      dplyr::mutate(conceptSubjects = 0) %>% 
+      dplyr::mutate(type = 'orphan',
+                    query = 'U')
+  )
+  
+  return(data)
+}
+
+
+
 routeDataQuery <- function(connection = NULL,
                            connectionDetails = NULL,
                            table,
