@@ -1050,6 +1050,9 @@ getConceptSetDataDiagnostics <- function(connection = NULL,
                              add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
   
+  
+  # included source concepts
+  table <- 'includedSourceConcept'
   # route query
   route <- routeDataQuery(connection = connection,
                           connectionDetails = connectionDetails,
@@ -1061,10 +1064,7 @@ getConceptSetDataDiagnostics <- function(connection = NULL,
   } else if (route == 'memory') {
     connection <- NULL
   }
-  
-  
-  # included source concepts
-  table <- 'includedSourceConcept'
+
   # perform query
   if (!is.null(connection)) {
     sql <-   "SELECT *
@@ -1083,7 +1083,7 @@ getConceptSetDataDiagnostics <- function(connection = NULL,
     dataIncludedSourceConcept <- get(table)
     if (!is.null(cohortIds)) {
       dataIncludedSourceConcept <- dataIncludedSourceConcept %>% 
-        dplyr::filter(.data$conceptId %in% !!cohortIds)
+        dplyr::filter(.data$cohortId %in% !!cohortIds)
     }
     if (!is.null(databaseIds)) {
       dataIncludedSourceConcept <- dataIncludedSourceConcept %>% 
@@ -1093,6 +1093,17 @@ getConceptSetDataDiagnostics <- function(connection = NULL,
   
   # orphan concept
   table <-  'orphanConcept'
+  # route query
+  route <- routeDataQuery(connection = connection,
+                          connectionDetails = connectionDetails,
+                          table = table)
+  
+  if (route == 'quit') {
+    ParallelLogger::logWarn("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    return(NULL)
+  } else if (route == 'memory') {
+    connection <- NULL
+  }
   # perform query
   if (!is.null(connection)) {
     sql <-   "SELECT *
@@ -1111,7 +1122,7 @@ getConceptSetDataDiagnostics <- function(connection = NULL,
     dataOrphanConcept <- get(table)
     if (!is.null(cohortIds)) {
       dataOrphanConcept <- dataOrphanConcept %>% 
-        dplyr::filter(.data$conceptId %in% !!cohortIds)
+        dplyr::filter(.data$cohortId %in% !!cohortIds)
     }
     if (!is.null(databaseIds)) {
       dataOrphanConcept <- dataOrphanConcept %>% 
