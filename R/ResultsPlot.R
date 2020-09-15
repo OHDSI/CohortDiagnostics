@@ -308,6 +308,17 @@ plotCohortComparisonStandardizedDifference <- function(data,
   if (!is.null(concept)) {
     ParallelLogger::logWarn("Not yet supported. Upcoming feature. Ignorning for now. Continuing.")
   }
+  
+  # for now we will support only one combination of targetCohortId, comparatorCohortId and databaseId
+  if (length(targetCohortIds) > 1 || length(comparatorCohortIds) > 1 || length(databaseIds) > 1) {
+    ParallelLogger::logWarn("Not yet supported. Upcoming feature. Executing with first choices only")
+    targetCohortIds <- targetCohortIds[[1]]
+    comparatorCohortIds <- comparatorCohortIds[[1]]
+    databaseIds <- databaseIds[[1]]
+    return(NULL)
+  }
+  
+  
   plotData <- data
   if (!is.null(targetCohortIds)) {
     plotData <- plotData %>% 
@@ -322,11 +333,7 @@ plotCohortComparisonStandardizedDifference <- function(data,
       dplyr::filter(.data$databaseId %in% !!databaseIds)
   }
   
-  # for now we will support only one combination of targetCohortId, comparatorCohortId and databaseId
-  if (length(targetCohortIds) > 1 || length(comparatorCohortIds) > 1 || length(databaseIds) > 1) {
-    ParallelLogger::logWarn("Not yet supported. Upcoming feature.")
-    return(NULL)
-  }
+
   
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()

@@ -137,7 +137,12 @@ sidebarMenu <-
           choices = temporalCovariateChoices$choices,
           multiple = TRUE,
           selected = temporalCovariateChoices %>% 
-            dplyr::filter(.data$timeId == min(temporalCovariateChoices$timeId)) %>% 
+            dplyr::filter(.data$timeId %in% (c(min(temporalCovariateChoices$timeId),
+                                              temporalCovariateChoices %>% 
+                                                dplyr::filter(timeId %in% c(1,2,3,4,5)) %>% 
+                                                dplyr::pull(.data$timeId)) %>% 
+                                               unique() %>% 
+                                               sort())) %>%
             dplyr::pull('choices'),
           options = shinyWidgets::pickerOptions(
             actionsBox = TRUE,
@@ -150,7 +155,9 @@ sidebarMenu <-
       )
     },
     shiny::conditionalPanel(
-      condition = "input.tabs!='cohortCounts' & input.tabs!='databaseInformation' & input.tabs != 'description'",
+      condition = "input.tabs!='cohortCounts' & 
+      input.tabs!='databaseInformation' & 
+      input.tabs != 'description'",
       shinyWidgets::pickerInput(
         inputId = "cohort",
         label = "Cohort (Target)",
