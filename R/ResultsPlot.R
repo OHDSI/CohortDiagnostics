@@ -463,7 +463,7 @@ plotCohortComparisonStandardizedDifference <- function(data,
                           # Hover text:
                           text = ~paste("Covariate Name:",
                                         plotData$covariateName, 
-                                        "Mean Target: ", 
+                                        "<br>Mean Target: ", 
                                         plotData$mean1, 
                                         '<br>Mean Comparator:', 
                                         plotData$mean2,
