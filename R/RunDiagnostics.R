@@ -178,12 +178,12 @@ runCohortDiagnostics <- function(packageName = NULL,
   
   writeToCsv(cohorts, file.path(exportFolder, "cohort.csv"))
   
-  recordCountOfInstantiatedCohorts <- recordCountOfInstantiatedCohorts(connection = connection, 
-                                                                       cohortDatabaseSchema = cohortDatabaseSchema, 
-                                                                       cdmDatabaseSchema = cdmDatabaseSchema,
-                                                                       cohortTable = cohortTable, 
-                                                                       cohortIds = cohorts$cohortId, 
-                                                                       includeInclusionStatsTables = runInclusionStatistics
+  recordCountOfInstantiatedCohorts <- 
+    recordCountOfInstantiatedCohorts(connection = connection, 
+                                     cohortDatabaseSchema = cohortDatabaseSchema,
+                                     cohortTable = cohortTable, 
+                                     cohortIds = cohorts$cohortId, 
+                                     includeInclusionStatsTables = runInclusionStatistics
   )
   if (nrow(recordCountOfInstantiatedCohorts$cohort %>% 
            dplyr::filter(.data$count > 0)) > 0) {
