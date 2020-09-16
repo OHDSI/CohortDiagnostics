@@ -16,7 +16,7 @@ addInfo <- function(item, infoId) {
   return(item)
 }
 
-if (!exists("cohortDescription")) {
+if (!exists("phenotypeDescription")) {
   appTitle <- cohortDiagnosticModeDefaultTitle
 }else{
   appTitle <- phenotypeLibraryModeDefaultTitle
