@@ -91,7 +91,16 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::mutate(literatureReview = dplyr::case_when(!.data$literatureReview %in% c('','0') ~ 
                                                           paste0("<a href='", .data$literatureReview, "' target='_blank'>", "Link", "</a>"),
                                                         TRUE ~ 'Ongoing')) %>%
-      dplyr::mutate(referentConceptId = paste0("<a href='", paste0(conceptIdBaseUrl(), .data$referentConceptId), "' target='_blank'>", .data$referentConceptId, "</a>")) 
+      dplyr::mutate(referentConceptId = paste0("<a href='", paste0(conceptIdBaseUrl(), .data$referentConceptId), "' target='_blank'>", .data$referentConceptId, "</a>")) %>% 
+      dplyr::mutate(clinicalDescription = stringr::str_replace_all(string = .data$clinicalDescription, 
+                                                                   pattern = "Overview:", 
+                                                                   replacement = "<strong>Overview:</strong>")) %>% 
+      dplyr::mutate(clinicalDescription = stringr::str_replace_all(string = .data$clinicalDescription, 
+                                                                   pattern = "Presentation:", 
+                                                                   replacement = "<br/> <strong>Presentation: </strong>")) %>% 
+      dplyr::mutate(clinicalDescription = stringr::str_replace_all(string = .data$clinicalDescription,
+                                                                   pattern = "Plan:",
+                                                                   replacement = "<br/> <strong>Plan: </strong>"))
     
     options = list(pageLength = 20,
                    searching = TRUE,
