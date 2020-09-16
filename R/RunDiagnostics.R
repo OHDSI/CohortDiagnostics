@@ -28,6 +28,9 @@
 #' @template Connection
 #'
 #' @template CdmDatabaseSchema
+#' @param vocabularyDatabaseSchema  (optional) Schema name where your vocabulary resides. Most commonly it is the same
+#'                                   as CDM databaseSchema. Note that for SQL Server, 
+#'                                   this should include both the database and schema name, for example 'cdm_data.dbo'.
 #'
 #' @template OracleTempSchema
 #'
@@ -66,6 +69,8 @@
 #' @param temporalCovariateSettings   Either an object of type \code{covariateSettings} as created using one of
 #'                                    the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
 #'                                    of such objects.
+#' @param runResolveCohortSqlToConceptIds Resolve and export all the concept ids in all the concept set expressions in cohorts?
+#' @param runCombineConceptSetsFromCohorts Generate and export all the concept set expressions from cohorts?
 #' @param minCellCount                The minimum cell count for fields contains person counts or fractions.
 #' @param incremental                 Create only cohort diagnostics that haven't been created before?
 #' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
@@ -111,6 +116,8 @@ runCohortDiagnostics <- function(packageName = NULL,
                                      temporalEndDays = c(-31,-1,0,30,365,
                                                          seq(from = 0, to = -390, by = -30),
                                                          seq(from = 31, to = 420, by = 30))),
+                                 runResolveCohortSqlToConceptIds = TRUE,
+                                 runCombineConceptSetsFromCohorts = TRUE,
                                  minCellCount = 5,
                                  incremental = FALSE,
                                  incrementalFolder = exportFolder) {
@@ -869,16 +876,107 @@ runCohortDiagnostics <- function(packageName = NULL,
     ParallelLogger::logInfo("\n")
   }
   
-  ParallelLogger::logInfo("Getting concept sets from all cohort definitions.")
-  conceptSetsFromCohorts <-
-    combineConceptSetsFromCohorts(cohorts = readr::read_csv(file.path(exportFolder, "cohort.csv"), 
-                                                            col_types = readr::cols(),
-                                                            guess_max = min(1e7)) %>% 
-                                    dplyr::rename_with(SqlRender::snakeCaseToCamelCase)) %>% 
-    dplyr::select(-"uniqueConceptSetId")
-  writeToCsv(data = conceptSetsFromCohorts, 
-             fileName = file.path(exportFolder, "concept_sets.csv"), 
-             incremental = incremental)
+  # Resolve cohorts concept set expression to conceptIds-------------------------
+  if (runResolveCohortSqlToConceptIds) {
+    ParallelLogger::logInfo("------------------------------------")
+    startResolveCohortSqlToConceptIds <- Sys.time()
+    ParallelLogger::logInfo("- Resolving cohort sql to concept ids - started at ", Sys.time())
+    subset <- subsetToRequiredCohorts(cohorts = cohorts %>%
+                                        dplyr::filter(.data$cohortId %in% instantiatedCohorts), 
+                                      task = "runResolveCohortSqlToConceptIds", 
+                                      incremental = incremental, 
+                                      recordKeepingFile = recordKeepingFile)
+    if (nrow(subset) > 0) {
+      if (incremental && (length(instantiatedCohorts) - nrow(subset)) > 0) {
+        ParallelLogger::logInfo("  Skipping ", 
+                                scales::comma(length(instantiatedCohorts) - length(subset), accuracy = 1), 
+                                " cohorts in incremental mode.")
+      }
+      
+      ParallelLogger::logInfo(paste0('Starting extraction of conceptIds for all concept set expressions in ', 
+                                     scales::comma(nrow(subset), accuracy = 1), 
+                                     " cohorts"))
+      conceptSetConceptIds <- 
+        resolveCohortSqlToConceptIds(connection = connection,
+                                     connectionDetails = connectionDetails, 
+                                     cdmDatabaseSchema = cdmDatabaseSchema,
+                                     oracleTempSchema = oracleTempSchema,
+                                     databaseId = databaseId,
+                                     cohort = cohorts)
+      writeToCsv(data = conceptSetConceptIds, 
+                 fileName = file.path(exportFolder, "concept_sets_concept_id.csv"), 
+                 incremental = incremental)
+      message <- "Concept id extraction for concept sets in cohorts complete. \n"
+    } else {
+      message <- "Skipping concept id extraction for concept sets in cohorts. \n"
+      message <- c(message, "All submitted cohorts were previously characterized.")
+    }
+    ParallelLogger::logInfo(message)
+    recordTasksDone(cohortId = subset$cohortId,
+                    task = "runResolveCohortSqlToConceptIds",
+                    checksum = subset$checksum,
+                    recordKeepingFile = recordKeepingFile,
+                    incremental = incremental)
+    delta <- Sys.time() - startResolveCohortSqlToConceptIds
+    ParallelLogger::logInfo(paste("Running concept id extraction took",
+                                  signif(delta, 3),
+                                  attr(delta, "units")))
+    ParallelLogger::logInfo("\n")
+  }
+  
+  # Get concept set expression from cohort -------------------------
+  if (runCombineConceptSetsFromCohorts) {
+    ParallelLogger::logInfo("------------------------------------")
+    startCombineConceptSetsFromCohorts <- Sys.time()
+    ParallelLogger::logInfo("- Resolving cohort sql to concept set expression - started at ", Sys.time())
+    subset <- subsetToRequiredCohorts(cohorts = cohorts %>%
+                                        dplyr::filter(.data$cohortId %in% instantiatedCohorts), 
+                                      task = "runCombineConceptSetsFromCohorts", 
+                                      incremental = incremental, 
+                                      recordKeepingFile = recordKeepingFile)
+    if (nrow(subset) > 0) {
+      if (incremental && (length(instantiatedCohorts) - nrow(subset)) > 0) {
+        ParallelLogger::logInfo("  Skipping ", 
+                                scales::comma(length(instantiatedCohorts) - length(subset), accuracy = 1), 
+                                " cohorts in incremental mode.")
+      }
+      
+      ParallelLogger::logInfo(paste0('Starting extraction of concept set id expressions in ', 
+                                     scales::comma(nrow(subset), accuracy = 1), 
+                                     " cohorts"))
+      conceptSetExpressions <- 
+        combineConceptSetsFromCohorts(connection = connection,
+                                      connectionDetails = connectionDetails, 
+                                      cdmDatabaseSchema = cdmDatabaseSchema,
+                                      oracleTempSchema = oracleTempSchema,
+                                      databaseId = databaseId,
+                                      cohort = cohort)
+      writeToCsv(data = conceptSetExpressions, 
+                 fileName = file.path(exportFolder, "concept_sets.csv"), 
+                 incremental = incremental)
+    } else {
+      message <- "Skipping concept set extraction from cohorts. \n"
+      message <- c(message, "All submitted cohorts were previously extracted")
+    }
+    ParallelLogger::logInfo(message)
+    recordTasksDone(cohortId = subset$cohortId,
+                    task = "runCombineConceptSetsFromCohorts",
+                    checksum = subset$checksum,
+                    recordKeepingFile = recordKeepingFile,
+                    incremental = incremental)
+    delta <- Sys.time() - startCombineConceptSetsFromCohorts
+    ParallelLogger::logInfo(paste("Running concept set extraction took",
+                                  signif(delta, 3),
+                                  attr(delta, "units")))
+    ParallelLogger::logInfo("\n")
+  }
+  
+  # ParallelLogger::logInfo("Getting concept sets from all cohort definitions (including previously run).")
+  # conceptSetsFromCohorts <-
+  #   combineConceptSetsFromCohorts(cohorts = cohorts)
+  # writeToCsv(data = conceptSetsFromCohorts, 
+  #            fileName = file.path(exportFolder, "concept_sets.csv"), 
+  #            incremental = incremental)
   
   # Add all to zip file -------------------------------------------------------------------------------
   ParallelLogger::logInfo("Adding results to zip file")

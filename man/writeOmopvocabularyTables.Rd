@@ -7,7 +7,7 @@
 writeOmopvocabularyTables(
   connectionDetails = NULL,
   connection = NULL,
-  vocabularyDatabaseSchema = NULL,
+  cdmDatabaseSchema,
   conceptIds = NULL,
   vocabularyTableNames = c("concept", "conceptAncestor", "conceptClass",
     "conceptRelationship", "conceptSynonym", "domain", "relationship", "vocabulary"),
@@ -26,7 +26,7 @@ DatabaseConnector package. Can be left NULL if \code{connectionDetails}
 is provided, in which case a new connection will be opened at the start
 of the function, and closed when the function finishes.}
 
-\item{vocabularyDatabaseSchema}{databaseSchema where the omop vocabulary files are located.
+\item{cdmDatabaseSchema}{databaseSchema where the omop vocabulary files are located.
 These are most commonly the same as cdmDatabaseSchema.}
 
 \item{conceptIds}{(optional) A vector of conceptIds to filter the extract of omop 
