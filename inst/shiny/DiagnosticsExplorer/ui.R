@@ -30,7 +30,7 @@ header <-
 sidebarMenu <-
   shinydashboard::sidebarMenu(
     id = "tabs",
-    if (exists("cohortDescription") && exists("phenotypeDescription"))
+    if (exists("phenotypeDescription") && exists("cohort"))
       addInfo(
         shinydashboard::menuItem(text = "Description", tabName = "description"),
         infoId = "descriptionInfo"

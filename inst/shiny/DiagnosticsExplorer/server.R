@@ -111,13 +111,12 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$cohortDescriptionTable <- DT::renderDataTable(expr = {
-    data <- cohortDescription %>% 
-      dplyr::mutate(atlasId = as.integer(.data$atlasId)) %>% #this is temporary - we need to standardize this 
+    data <- cohort %>% 
+      dplyr::mutate(webApiCohortId = as.integer(.data$webApiCohortId)) %>% #this is temporary - we need to standardize this 
       dplyr::left_join(y = phenotypeDescription) %>% 
-      dplyr::left_join(y = cohort, by = c('atlasId' = 'cohortId')) %>% #this is temporary - we need to standardize this 
-      dplyr::mutate(cohortName = paste0("<a href='", paste0(cohortBaseUrl(), .data$atlasId),"' target='_blank'>", paste0(.data$cohortDefinitionName), "</a>")) %>% 
-      dplyr::select(phenotypeId, phenotypeName, cohortDefinitionId, cohortName, logicDescription, cohortDefinitionNotes) %>% 
-      dplyr::arrange(phenotypeId, phenotypeName, cohortDefinitionId, cohortName)
+      dplyr::mutate(cohortName = paste0("<a href='", paste0(cohortBaseUrl(), .data$webApiCohortId),"' target='_blank'>", paste0(.data$cohortName), "</a>")) %>% 
+      dplyr::select(.data$phenotypeId, .data$cohortId, .data$cohortName, .data$logicDescription) %>% 
+      dplyr::arrange(.data$phenotypeId, .data$cohortId, .data$cohortName)
     
     options = list(pageLength = 20,
                    searching = TRUE,
