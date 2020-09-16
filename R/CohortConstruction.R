@@ -25,24 +25,24 @@ checkCohortReference <- function(cohortReference, errorMessage = NULL) {
                              null.ok = FALSE,
                              col.names = "named",
                              add = errorMessage)
-  checkmate::assertIntegerish(x = cohortReference$referentConceptId, 
-                              lower = 0, 
-                              any.missing = FALSE, 
-                              unique = FALSE, 
-                              null.ok = FALSE, 
-                              add = errorMessage)
-  checkmate::assertIntegerish(x = cohortReference$cohortId, 
-                              lower = 0, 
-                              any.missing = FALSE, 
-                              unique = TRUE, 
-                              null.ok = FALSE, 
-                              add = errorMessage)
-  checkmate::assertIntegerish(x = cohortReference$webApiCohortId, 
-                              lower = 0, 
-                              any.missing = FALSE, 
-                              unique = TRUE, 
-                              null.ok = FALSE, 
-                              add = errorMessage)
+  checkmate::assertDouble(x = cohortReference$referentConceptId, 
+                          lower = 0, 
+                          any.missing = FALSE, 
+                          unique = FALSE, 
+                          null.ok = FALSE, 
+                          add = errorMessage)
+  checkmate::assertDouble(x = cohortReference$cohortId, 
+                          lower = 0, 
+                          any.missing = FALSE, 
+                          unique = TRUE, 
+                          null.ok = FALSE, 
+                          add = errorMessage)
+  checkmate::assertDouble(x = cohortReference$webApiCohortId, 
+                          lower = 0, 
+                          any.missing = FALSE, 
+                          unique = TRUE, 
+                          null.ok = FALSE, 
+                          add = errorMessage)
   checkmate::assertNames(x = names(cohortReference),subset.of =  c("referentConceptId","cohortId",
                                                                    "webApiCohortId","cohortName",
                                                                    "logicDescription","clinicalRationale" ),
@@ -184,13 +184,13 @@ getCohortsJsonAndSql <- function(packageName = NULL,
   errorMessage <- checkmate::makeAssertCollection()
   
   if (!is.null(cohortIds)) {
-    checkmate::assertIntegerish(x = cohortIds, 
-                                any.missing = FALSE, 
-                                min.len = 1, 
-                                unique = TRUE, 
-                                add = errorMessage)
+    checkmate::assertDouble(x = cohortIds, 
+                            any.missing = FALSE, 
+                            min.len = 1, 
+                            unique = TRUE, 
+                            add = errorMessage)
   }
-
+  
   if (!is.null(packageName)) {
     cohorts <- getCohortsJsonAndSqlFromPackage(packageName = packageName, 
                                                cohortToCreateFile = cohortToCreateFile,
@@ -549,7 +549,8 @@ getInclusionStatisticsFromFiles <- function(cohortId,
       dplyr::filter(cohortId == !!cohortId)
     return(stats)
   }
-  inclusion <- fetchStats(cohortInclusionFile)
+  inclusion <- fetchStats(cohortInclusionFile) %>% 
+    tidyr::replace_na(replace = list(description = ''))
   summaryStats <- fetchStats(cohortSummaryStatsFile)
   inclusionStats <- fetchStats(cohortInclusionStatsFile)
   inclusionResults <- fetchStats(cohortInclusionResultFile)
@@ -785,9 +786,8 @@ createTempInclusionStatsTables <- function(connection, oracleTempSchema, cohorts
   if (nrow(inclusionRules) > 0) {
     inclusionRules <- inclusionRules %>% 
       dplyr::inner_join(cohorts %>% dplyr::select(.data$cohortId, .data$cohortName)) %>% 
-      dplyr::rename(cohortDefinitionId = .data$cohortId, 
-                    rulesequence = .data$ruleSequence, 
-                    name = .data$ruleName) %>% 
+      dplyr::rename(name = .data$ruleName,
+                    cohortDefinitionId = .data$cohortId) %>% 
       dplyr::select(.data$cohortDefinitionId, .data$ruleSequence, .data$name)
     
     inclusionRules <- data.frame(inclusionRules) # temporary solution till DatabaseConnector supports tibble
@@ -818,7 +818,6 @@ saveAndDropTempInclusionStatsTables <- function(connection,
                                                        table = table) %>% 
       tidyr::tibble() %>% 
       dplyr::rename(cohortId = .data$cohortDefinitionId)
-    colnames(data) <- tolower(colnames(data))
     fullFileName <- file.path(inclusionStatisticsFolder, fileName)
     if (incremental) {
       saveIncremental(data, fullFileName, cohortId = cohortIds)
@@ -871,39 +870,23 @@ saveAndDropTempInclusionStatsTables <- function(connection,
 
 
 
-
 #' Get record counts for a set of cohort
 #'
 #' @description
-#' This function get record count for a set of cohorts in the cohort table. Optionally, the inclusion rule statistics
-#' are also counted.
+#' This function get record count for a set of cohorts in the cohort table.
 #'
 #' @template Connection
 #' @template CohortTable
-#' @param cohortIds                   Provide a list of cohort IDs to get records.
-#' @param includeInclusionStatsTables Should record count from inclusion stats table results be returned.
-#' @param cohortInclusionTable         Name of the inclusion table, one of the tables for storing
-#'                                     inclusion rule statistics.
-#' @param cohortInclusionResultTable   Name of the inclusion result table, one of the tables for
-#'                                     storing inclusion rule statistics.
-#' @param cohortInclusionStatsTable    Name of the inclusion stats table, one of the tables for storing
-#'                                     inclusion rule statistics.
-#' @param cohortSummaryStatsTable      Name of the summary stats table, one of the tables for storing
-#'                                     inclusion rule statistics.
+#' @param cohortIds       A vecotr of cohortIds to get counts for.
 #' @return
-#' A list with four tibble objects (cohort, inclusionTable, inclusionResult, inclusionStats, inclusionSummaryStats)                                 
+#' A tibble data frame object                               
 #'
 #' @export
-recordCountOfInstantiatedCohorts <- function(connection,
-                                             connectionDetails,
-                                             cohortDatabaseSchema,
-                                             cohortTable,
-                                             cohortIds,
-                                             includeInclusionStatsTables = FALSE,
-                                             cohortInclusionTable = paste0(cohortTable, "_inclusion"),
-                                             cohortInclusionResultTable = paste0(cohortTable, "_inclusion_result"),
-                                             cohortInclusionStatsTable = paste0(cohortTable, "_inclusion_stats"),
-                                             cohortSummaryStatsTable = paste0(cohortTable, "_summary_stats")) {
+getRecordCountOfInstantiatedCohorts <- function(connection,
+                                                connectionDetails,
+                                                cohortDatabaseSchema,
+                                                cohortTable,
+                                                cohortIds) {
   
   if (is.vector(x = cohortIds) && length(cohortIds) > 1) {
     cohortIds <- paste0(cohortIds, collapse = ",")
@@ -933,71 +916,7 @@ recordCountOfInstantiatedCohorts <- function(connection,
       tidyr::tibble()
   } else {
     ParallelLogger::logWarn(cohortTable, ' not found while retrieving record counts.')
+    return(NULL)
   }
-  if (includeInclusionStatsTables) {
-    
-    if (tolower(cohortInclusionTable) %in% tolower(tables)) {
-      cohortInclusionTableRecords <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                                                                sql = sql,
-                                                                                cohort_database_schema = cohortDatabaseSchema,
-                                                                                cohort_table = cohortInclusionTable,
-                                                                                cohort_id = cohortIds,
-                                                                                snakeCaseToCamelCase = TRUE
-      ) %>% 
-        tidyr::tibble()
-    } else {
-      ParallelLogger::logWarn(cohortInclusionTable, ' not found while retrieving record counts.')
-      cohortInclusionTableRecords <- tidyr::tibble()
-    }
-    
-    if (tolower(cohortInclusionResultTable) %in% tolower(tables)) {
-      cohortInclusionResultTableRecords <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                                                                      sql = sql,
-                                                                                      cohort_database_schema = cohortDatabaseSchema,
-                                                                                      cohort_table = cohortInclusionResultTable,
-                                                                                      cohort_id = cohortIds, 
-                                                                                      snakeCaseToCamelCase = TRUE) %>% 
-        tidyr::tibble()
-    } else {
-      ParallelLogger::logWarn(cohortInclusionResultTable, ' not found while retrieving record counts.')
-      cohortInclusionResultTableRecords <- tidyr::tibble()
-    }
-    
-    if (tolower(cohortInclusionStatsTable) %in% tolower(tables)) {
-      cohortInclusionStatsTableRecords <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                                                                     sql = sql,
-                                                                                     cohort_database_schema = cohortDatabaseSchema,
-                                                                                     cohort_table = cohortInclusionStatsTable,
-                                                                                     cohort_id = cohortIds, 
-                                                                                     snakeCaseToCamelCase = TRUE) %>% 
-        tidyr::tibble()
-    } else {
-      ParallelLogger::logWarn(cohortInclusionStatsTable, ' not found while retrieving record counts.')
-      cohortInclusionStatsTableRecords <- tidyr::tibble()
-    }
-    
-    if (tolower(cohortSummaryStatsTable) %in% tolower(tables)) {
-      cohortSummaryStatsTableRecords <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                                                                   sql = sql,
-                                                                                   cohort_database_schema = cohortDatabaseSchema,
-                                                                                   cohort_table = cohortSummaryStatsTable,
-                                                                                   cohort_id = cohortIds, 
-                                                                                   snakeCaseToCamelCase = TRUE) %>% 
-        tidyr::tibble()
-    } else {
-      ParallelLogger::logWarn(cohortSummaryStatsTable, ' not found while retrieving record counts.')
-      cohortSummaryStatsTableRecords <- tidyr::tibble()
-    }
-  } else {
-    cohortInclusionTableRecords <- tidyr::tibble()
-    cohortInclusionResultTableRecords <- tidyr::tibble()
-    cohortInclusionStatsTableRecords <- tidyr::tibble()
-    cohortSummaryStatsTableRecords <- tidyr::tibble()
-  }
-  count <- list(cohort = cohortTableRecords,
-                inclusionTable = cohortInclusionTableRecords,
-                inclusionResult = cohortInclusionResultTableRecords,
-                inclusionStats = cohortInclusionStatsTableRecords,
-                inclusionSummaryStats = cohortSummaryStatsTableRecords)
-  return(count)
+  return(cohortTableRecords)
 }

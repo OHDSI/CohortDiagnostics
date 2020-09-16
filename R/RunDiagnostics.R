@@ -97,20 +97,20 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  runCohortOverlap = TRUE,
                                  runCohortCharacterization = TRUE,
                                  covariateSettings = 
-                                 FeatureExtraction::createDefaultCovariateSettings(),
+                                   FeatureExtraction::createDefaultCovariateSettings(),
                                  runTemporalCohortCharacterization = TRUE,
                                  temporalCovariateSettings = 
-                                 FeatureExtraction::createTemporalCovariateSettings(
-                                   useConditionOccurrence = TRUE, 
-                                   useDrugEraStart = TRUE, 
-                                   useProcedureOccurrence = TRUE, 
-                                   useMeasurement = TRUE,                                          
-                               temporalStartDays = c(-365,-30,0,1,31, 
-                                                     seq(from = -30, to = -420, by = -30), 
-                                                     seq(from = 1, to = 390, by = 30)), 
-                               temporalEndDays = c(-31,-1,0,30,365,
-                                                   seq(from = 0, to = -390, by = -30),
-                                                   seq(from = 31, to = 420, by = 30))),
+                                   FeatureExtraction::createTemporalCovariateSettings(
+                                     useConditionOccurrence = TRUE, 
+                                     useDrugEraStart = TRUE, 
+                                     useProcedureOccurrence = TRUE, 
+                                     useMeasurement = TRUE,                                          
+                                     temporalStartDays = c(-365,-30,0,1,31, 
+                                                           seq(from = -30, to = -420, by = -30), 
+                                                           seq(from = 1, to = 390, by = 30)), 
+                                     temporalEndDays = c(-31,-1,0,30,365,
+                                                         seq(from = 0, to = -390, by = -30),
+                                                         seq(from = 31, to = 420, by = 30))),
                                  minCellCount = 5,
                                  incremental = FALSE,
                                  incrementalFolder = exportFolder) {
@@ -179,15 +179,15 @@ runCohortDiagnostics <- function(packageName = NULL,
   writeToCsv(cohorts, file.path(exportFolder, "cohort.csv"))
   
   recordCountOfInstantiatedCohorts <- 
-    recordCountOfInstantiatedCohorts(connection = connection, 
-                                     cohortDatabaseSchema = cohortDatabaseSchema,
-                                     cohortTable = cohortTable, 
-                                     cohortIds = cohorts$cohortId, 
-                                     includeInclusionStatsTables = runInclusionStatistics
-  )
-  if (nrow(recordCountOfInstantiatedCohorts$cohort %>% 
+    getRecordCountOfInstantiatedCohorts(connection = connection,
+                                        connectionDetails = connectionDetails,
+                                        cohortDatabaseSchema = cohortDatabaseSchema,
+                                        cohortTable = cohortTable, 
+                                        cohortIds = cohorts$cohortId
+    )
+  if (nrow(recordCountOfInstantiatedCohorts %>% 
            dplyr::filter(.data$count > 0)) > 0) {
-    instantiatedCohorts <- recordCountOfInstantiatedCohorts$cohort %>% 
+    instantiatedCohorts <- recordCountOfInstantiatedCohorts %>% 
       dplyr::filter(.data$count > 0) %>% 
       dplyr::pull(.data$cohortId)
     ParallelLogger::logInfo("\n- Found ", 
@@ -599,8 +599,8 @@ runCohortDiagnostics <- function(packageName = NULL,
       }
       
       ParallelLogger::logInfo(paste0('Starting large scale characterization of', 
-                                                scales::comma(nrow(subset)), 
-                                                " cohorts"))
+                                     scales::comma(nrow(subset)), 
+                                     " cohorts"))
       cohortCharacteristicsOutput <- getCohortCharacteristics(connection = connection,
                                                               cdmDatabaseSchema = cdmDatabaseSchema,
                                                               oracleTempSchema = oracleTempSchema,
@@ -740,8 +740,8 @@ runCohortDiagnostics <- function(packageName = NULL,
       }
       
       ParallelLogger::logInfo(paste0('Starting large scale temporal characterization of', 
-                                                scales::comma(nrow(subset), accuracy = 1), 
-                                                " cohorts"))
+                                     scales::comma(nrow(subset), accuracy = 1), 
+                                     " cohorts"))
       cohortCharacteristicsOutput <- getCohortCharacteristics(connection = connection,
                                                               cdmDatabaseSchema = cdmDatabaseSchema,
                                                               oracleTempSchema = oracleTempSchema,
