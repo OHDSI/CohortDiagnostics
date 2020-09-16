@@ -945,15 +945,12 @@ runCohortDiagnostics <- function(packageName = NULL,
                                      scales::comma(nrow(subset), accuracy = 1), 
                                      " cohorts"))
       conceptSetExpressions <- 
-        combineConceptSetsFromCohorts(connection = connection,
-                                      connectionDetails = connectionDetails, 
-                                      cdmDatabaseSchema = cdmDatabaseSchema,
-                                      oracleTempSchema = oracleTempSchema,
-                                      databaseId = databaseId,
-                                      cohort = cohort)
+        combineConceptSetsFromCohorts(cohorts = cohorts) %>% 
+        dplyr::select(-.data$uniqueConceptSetId)
       writeToCsv(data = conceptSetExpressions, 
                  fileName = file.path(exportFolder, "concept_sets.csv"), 
                  incremental = incremental)
+      message <- "Completed extracting concept set expressions from cohort"
     } else {
       message <- "Skipping concept set extraction from cohorts. \n"
       message <- c(message, "All submitted cohorts were previously extracted")
