@@ -70,9 +70,24 @@ getCohortsJsonAndSqlFromPackage <- function(packageName = packageName,
   cohorts <- readr::read_csv(pathToCsv, 
                              col_types = readr::cols(),
                              guess_max = min(1e7))
+  
+  # Adding some backwards compatiblity with v1:
+  if (!"name" %in% colnames(cohorts)) {
+    cohorts$name <- cohorts$cohortId 
+  }
+  if (!"webApiCohortId" %in% colnames(cohorts) && "atlasId" %in% colnames(cohorts)) {
+    cohorts$webApiCohortId <- cohorts$atlasId 
+  }
+  if (!"referentConceptId" %in% colnames(cohorts)) {
+    cohorts$referentConceptId <- NA
+  }
+  if (!"cohortName" %in% colnames(cohorts) && "atlasName" %in% colnames(cohorts)) {
+    cohorts$cohortName <- cohorts$atlasName 
+  }
   if (!is.null(cohortIds)) {
     cohorts <- cohorts %>% dplyr::filter(.data$cohortId %in% cohortIds)
   }
+  
   checkCohortReference(cohortReference = cohorts, errorMessage = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
   
@@ -82,14 +97,14 @@ getCohortsJsonAndSqlFromPackage <- function(packageName = packageName,
     sql <- readChar(pathToSql, file.info(pathToSql)$size)
     return(sql)
   }
-  cohorts$sql <- sapply(cohorts$cohortId, getSql)
+  cohorts$sql <- sapply(cohorts$name, getSql)
   getJson <- function(name) {
     pathToJson <- system.file("cohorts", paste0(name, ".json"), package = packageName)
     checkmate::assertFile(x = pathToJson, access = "r", extension = ".sql", add = errorMessage)
     json <- readChar(pathToJson, file.info(pathToJson)$size)
     return(json)
   }
-  cohorts$json <- sapply(cohorts$cohortId, getJson)
+  cohorts$json <- sapply(cohorts$name, getJson)
   return(cohorts)
 }
 
@@ -175,7 +190,7 @@ getCohortsJsonAndSql <- function(packageName = NULL,
                                 unique = TRUE, 
                                 add = errorMessage)
   }
-  
+
   if (!is.null(packageName)) {
     cohorts <- getCohortsJsonAndSqlFromPackage(packageName = packageName, 
                                                cohortToCreateFile = cohortToCreateFile,
@@ -198,7 +213,6 @@ getCohortsJsonAndSql <- function(packageName = NULL,
   checkmate::reportAssertions(collection = errorMessage)
   return(cohorts)
 }
-
 
 #' Create cohort table(s)
 #'
@@ -510,13 +524,13 @@ getInclusionStatistics <- function(connectionDetails = NULL,
 getInclusionStatisticsFromFiles <- function(cohortId,
                                             folder,
                                             cohortInclusionFile = file.path(folder,
-                                                                            "cohort_inclusion.csv"),
+                                                                            "cohortInclusion.csv"),
                                             cohortInclusionResultFile = file.path(folder,
-                                                                                  "cohort_inclusion_result.csv"),
+                                                                                  "cohortIncResult.csv"),
                                             cohortInclusionStatsFile = file.path(folder,
-                                                                                 "cohort_inclusion_stats.csv"),
+                                                                                 "cohortIncStats.csv"),
                                             cohortSummaryStatsFile = file.path(folder,
-                                                                               "cohort_summary_stats.csv"),
+                                                                               "cohortSummaryStats.csv"),
                                             simplify = TRUE) {
   start <- Sys.time()
   ParallelLogger::logInfo("Fetching inclusion statistics for cohort with cohort_definition_id = ",
@@ -536,13 +550,13 @@ getInclusionStatisticsFromFiles <- function(cohortId,
     return(stats)
   }
   inclusion <- fetchStats(cohortInclusionFile)
-  summary_stats <- fetchStats(cohortSummaryStatsFile)
-  inclusion_stats <- fetchStats(cohortInclusionStatsFile)
-  inclusion_results <- fetchStats(cohortInclusionResultFile)
+  summaryStats <- fetchStats(cohortSummaryStatsFile)
+  inclusionStats <- fetchStats(cohortInclusionStatsFile)
+  inclusionResults <- fetchStats(cohortInclusionResultFile)
   result <- processInclusionStats(inclusion = inclusion,
-                                  inclusion_results = inclusion_results,
-                                  inclusion_stats = inclusion_stats,
-                                  summary_stats = summary_stats,
+                                  inclusionResults = inclusionResults,
+                                  inclusionStats = inclusionStats,
+                                  summaryStats = summaryStats,
                                   simplify = simplify)
   delta <- Sys.time() - start
   writeLines(paste("Fetching inclusion statistics took", signif(delta, 3), attr(delta, "units")))
@@ -550,21 +564,21 @@ getInclusionStatisticsFromFiles <- function(cohortId,
 }
 
 processInclusionStats <- function(inclusion,
-                                  inclusion_results,
+                                  inclusionResults,
                                   simplify,
-                                  inclusion_stats,
-                                  summary_stats) {
+                                  inclusionStats,
+                                  summaryStats) {
   if (simplify) {
-    if (nrow(inclusion) == 0 || nrow(inclusion_stats) == 0) {
+    if (nrow(inclusion) == 0 || nrow(inclusionStats) == 0) {
       return(tidyr::tibble())
     }
     
     result <- inclusion %>% 
-      dplyr::select(.data$rule_sequence, .data$name) %>% 
+      dplyr::select(.data$ruleSequence, .data$name) %>% 
       dplyr::distinct() %>% 
-      dplyr::inner_join(inclusion_stats %>% 
-                          dplyr::filter(.data$mode_id == 0) %>% 
-                          dplyr::select(.data$rule_sequence, .data$person_count, .data$gain_count, .data$person_total))
+      dplyr::inner_join(inclusionStats %>% 
+                          dplyr::filter(.data$modeId == 0) %>% 
+                          dplyr::select(.data$ruleSequence, .data$personCount, .data$gainCount, .data$personTotal))
     
     # mask = 0
     # for (ruleId in 0:(nrow(result) - 1)) {
@@ -585,9 +599,9 @@ processInclusionStats <- function(inclusion,
       return(list())
     }
     result <- list(inclusion = inclusion,
-                   inclusion_results = inclusion_results,
-                   inclusion_stats = inclusion_stats,
-                   summary_stats = summary_stats)
+                   inclusionResults = inclusionResults,
+                   inclusionStats = inclusionStats,
+                   summaryStats = summaryStats)
   }
   return(result)
 }
@@ -771,10 +785,10 @@ createTempInclusionStatsTables <- function(connection, oracleTempSchema, cohorts
   if (nrow(inclusionRules) > 0) {
     inclusionRules <- inclusionRules %>% 
       dplyr::inner_join(cohorts %>% dplyr::select(.data$cohortId, .data$cohortName)) %>% 
-      dplyr::rename(cohort_definition_id = .data$cohortId, 
-                    rule_sequence = .data$ruleSequence, 
+      dplyr::rename(cohortDefinitionId = .data$cohortId, 
+                    rulesequence = .data$ruleSequence, 
                     name = .data$ruleName) %>% 
-      dplyr::select(.data$cohort_definition_id, .data$rule_sequence, .data$name)
+      dplyr::select(.data$cohortDefinitionId, .data$ruleSequence, .data$name)
     
     inclusionRules <- data.frame(inclusionRules) # temporary solution till DatabaseConnector supports tibble
     
@@ -784,7 +798,8 @@ createTempInclusionStatsTables <- function(connection, oracleTempSchema, cohorts
                                    dropTableIfExists = FALSE,
                                    createTable = FALSE,
                                    tempTable = TRUE,
-                                   oracleTempSchema = oracleTempSchema)
+                                   oracleTempSchema = oracleTempSchema,
+                                   camelCaseToSnakeCase = TRUE)
   }
 }
 
@@ -799,10 +814,10 @@ saveAndDropTempInclusionStatsTables <- function(connection,
     data <- DatabaseConnector::renderTranslateQuerySql(sql = sql,
                                                        connection = connection,
                                                        oracleTempSchema = oracleTempSchema,
-                                                       snakeCaseToCamelCase = FALSE,
+                                                       snakeCaseToCamelCase = TRUE,
                                                        table = table) %>% 
       tidyr::tibble() %>% 
-      dplyr::rename(COHORT_ID = .data$COHORT_DEFINITION_ID)
+      dplyr::rename(cohortId = .data$cohortDefinitionId)
     colnames(data) <- tolower(colnames(data))
     fullFileName <- file.path(inclusionStatisticsFolder, fileName)
     if (incremental) {
@@ -811,10 +826,10 @@ saveAndDropTempInclusionStatsTables <- function(connection,
       readr::write_csv(x = data, path = fullFileName)
     }
   }
-  fetchStats("#cohort_inclusion", "cohort_inclusion.csv")
-  fetchStats("#cohort_inc_result", "cohort_inclusion_result.csv")
-  fetchStats("#cohort_inc_stats", "cohort_inclusion_stats.csv")
-  fetchStats("#cohort_summary_stats", "cohort_summary_stats.csv")
+  fetchStats("#cohort_inclusion", "cohortInclusion.csv")
+  fetchStats("#cohort_inc_result", "cohortIncResult.csv")
+  fetchStats("#cohort_inc_stats", "cohortIncStats.csv")
+  fetchStats("#cohort_summary_stats", "cohortSummaryStats.csv")
   
   sql <- "TRUNCATE TABLE #cohort_inclusion; 
     DROP TABLE #cohort_inclusion;

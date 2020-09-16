@@ -284,9 +284,9 @@ runCohortDiagnostics <- function(packageName = NULL,
       if (nrow(stats) > 0) {
         stats <- stats %>% 
           dplyr::mutate(databaseId = !!databaseId)
-        stats <- enforceMinCellValue(data = stats, fieldName = "person_count", minValues = minCellCount)
-        stats <- enforceMinCellValue(data = stats, fieldName = "gain_count", minValues = minCellCount)
-        stats <- enforceMinCellValue(data = stats, fieldName = "person_total", minValues = minCellCount)
+        stats <- enforceMinCellValue(data = stats, fieldName = "personCount", minValues = minCellCount)
+        stats <- enforceMinCellValue(data = stats, fieldName = "gainCount", minValues = minCellCount)
+        stats <- enforceMinCellValue(data = stats, fieldName = "personTotal", minValues = minCellCount)
         # stats <- enforceMinCellValue(data = stats, fieldName = "remain_subjects", minValues = minCellCount)
       }
       writeToCsv(stats, 
