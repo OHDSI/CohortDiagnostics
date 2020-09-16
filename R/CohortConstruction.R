@@ -70,9 +70,24 @@ getCohortsJsonAndSqlFromPackage <- function(packageName = packageName,
   cohorts <- readr::read_csv(pathToCsv, 
                              col_types = readr::cols(),
                              guess_max = min(1e7))
+  
+  # Adding some backwards compatiblity with v1:
+  if (!"name" %in% colnames(cohorts)) {
+    cohorts$name <- cohorts$cohortId 
+  }
+  if (!"webApiCohortId" %in% colnames(cohorts) && "atlasId" %in% colnames(cohorts)) {
+    cohorts$webApiCohortId <- cohorts$atlasId 
+  }
+  if (!"referentConceptId" %in% colnames(cohorts)) {
+    cohorts$referentConceptId <- NA
+  }
+  if (!"cohortName" %in% colnames(cohorts) && "atlasName" %in% colnames(cohorts)) {
+    cohorts$cohortName <- cohorts$atlasName 
+  }
   if (!is.null(cohortIds)) {
     cohorts <- cohorts %>% dplyr::filter(.data$cohortId %in% cohortIds)
   }
+  
   checkCohortReference(cohortReference = cohorts, errorMessage = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
   
@@ -82,14 +97,14 @@ getCohortsJsonAndSqlFromPackage <- function(packageName = packageName,
     sql <- readChar(pathToSql, file.info(pathToSql)$size)
     return(sql)
   }
-  cohorts$sql <- sapply(cohorts$cohortId, getSql)
+  cohorts$sql <- sapply(cohorts$name, getSql)
   getJson <- function(name) {
     pathToJson <- system.file("cohorts", paste0(name, ".json"), package = packageName)
     checkmate::assertFile(x = pathToJson, access = "r", extension = ".sql", add = errorMessage)
     json <- readChar(pathToJson, file.info(pathToJson)$size)
     return(json)
   }
-  cohorts$json <- sapply(cohorts$cohortId, getJson)
+  cohorts$json <- sapply(cohorts$name, getJson)
   return(cohorts)
 }
 
@@ -175,7 +190,7 @@ getCohortsJsonAndSql <- function(packageName = NULL,
                                 unique = TRUE, 
                                 add = errorMessage)
   }
-  
+
   if (!is.null(packageName)) {
     cohorts <- getCohortsJsonAndSqlFromPackage(packageName = packageName, 
                                                cohortToCreateFile = cohortToCreateFile,
@@ -198,7 +213,6 @@ getCohortsJsonAndSql <- function(packageName = NULL,
   checkmate::reportAssertions(collection = errorMessage)
   return(cohorts)
 }
-
 
 #' Create cohort table(s)
 #'
