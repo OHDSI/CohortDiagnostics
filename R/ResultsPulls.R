@@ -421,12 +421,12 @@ getCovariateReference <- function(connection = NULL,
                            any.missing = FALSE, 
                            min.len = 1, 
                            max.len = 1)
-  checkmate::assertIntegerish(x = covariateIds, 
-                              lower = 0,
-                              upper = 2^53, 
-                              any.missing = FALSE,
-                              unique = TRUE,
-                              null.ok = TRUE)
+  checkmate::assertDouble(x = covariateIds, 
+                          lower = 0,
+                          upper = 2^53, 
+                          any.missing = FALSE,
+                          unique = TRUE,
+                          null.ok = TRUE)
   errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
                                                   connectionDetails = connectionDetails,
                                                   resultsDatabaseSchema = resultsDatabaseSchema,
@@ -719,12 +719,12 @@ compareCovariateValueResult <- function(connection = NULL,
   checkmate::reportAssertions(collection = errorMessage)
   if (isTemporal) {
     if (!is.null(timeIds)) {
-      checkmate::assertInteger(x = timeIds, 
-                               lower = 0, 
-                               any.missing = FALSE, 
-                               unique = TRUE, 
-                               null.ok = FALSE,
-                               add = errorMessage)
+      checkmate::assertIntegerish(x = timeIds, 
+                                  lower = 0, 
+                                  any.missing = FALSE, 
+                                  unique = TRUE, 
+                                  null.ok = FALSE,
+                                  add = errorMessage)
     }
   }
   checkmate::reportAssertions(collection = errorMessage)
@@ -802,10 +802,10 @@ getCohortReference <- function(connection = NULL,
                                                   connectionDetails = connectionDetails,
                                                   resultsDatabaseSchema = resultsDatabaseSchema,
                                                   errorMessage = errorMessage)
-  checkmate::assertIntegerish(x = cohortIds,
-                              min.len = 1, 
-                              null.ok = TRUE,
-                              add = errorMessage)
+  checkmate::assertDouble(x = cohortIds,
+                          min.len = 1, 
+                          null.ok = TRUE,
+                          add = errorMessage)
   checkmate::assertLogical(x = getJson, 
                            any.missing = FALSE, 
                            min.len = 1, 
@@ -1113,12 +1113,12 @@ checkErrorResultsDatabaseSchema <- function(errorMessage,
 checkErrorCohortIdsDatabaseIds <- function(errorMessage,
                                            cohortIds,
                                            databaseIds) {
-  checkmate::assertIntegerish(x = cohortIds,
-                              null.ok = FALSE,
-                              lower = 1,
-                              upper = 2^53,
-                              any.missing = FALSE,
-                              add = errorMessage)
+  checkmate::assertDouble(x = cohortIds,
+                          null.ok = FALSE,
+                          lower = 1,
+                          upper = 2^53,
+                          any.missing = FALSE,
+                          add = errorMessage)
   checkmate::assertCharacter(x = databaseIds,
                              min.len = 1,
                              any.missing = FALSE,
