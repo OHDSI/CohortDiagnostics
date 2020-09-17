@@ -88,6 +88,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$phenoTypeDescriptionTable <- DT::renderDataTable(expr = {
     data <- phenotypeDescription %>% 
+      dplyr::mutate(dplyr::across(.cols = dplyr::everything(), tidyr::replace_na, '')) %>% 
       dplyr::mutate(literatureReview = dplyr::case_when(!.data$literatureReview %in% c('','0') ~ 
                                                           paste0("<a href='", .data$literatureReview, "' target='_blank'>", "Link", "</a>"),
                                                         TRUE ~ 'Ongoing')) %>%
