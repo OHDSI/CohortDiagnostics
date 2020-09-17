@@ -183,7 +183,8 @@ runCohortDiagnostics <- function(packageName = NULL,
   
   ##############################
   
-  writeToCsv(cohorts, file.path(exportFolder, "cohort.csv"))
+  writeToCsv(data = cohorts, 
+             fileName = file.path(exportFolder, "cohort.csv"))
   
   recordCountOfInstantiatedCohorts <- 
     getRecordCountOfInstantiatedCohorts(connection = connection,
@@ -222,7 +223,8 @@ runCohortDiagnostics <- function(packageName = NULL,
                              databaseName = databaseName,
                              description = databaseDescription,
                              isMetaAnalysis = 0)
-  writeToCsv(database, file.path(exportFolder, "database.csv"))
+  writeToCsv(data = database, 
+             fileName = file.path(exportFolder, "database.csv"))
   
   # Counting cohorts -----------------------------------------------------------------------
   ParallelLogger::logInfo("------------------------------------")
@@ -249,7 +251,8 @@ runCohortDiagnostics <- function(packageName = NULL,
       counts <- enforceMinCellValue(data = counts, fieldName = "cohortEntries", minValues = minCellCount)
       counts <- enforceMinCellValue(data = counts, fieldName = "cohortSubjects", minValues = minCellCount)
     }
-    writeToCsv(counts, file.path(exportFolder, "cohort_count.csv"), 
+    writeToCsv(data = counts, 
+               fileName = file.path(exportFolder, "cohort_count.csv"), 
                incremental = incremental, 
                cohortId = subset$cohortId)
     recordTasksDone(cohortId = subset$cohortId,
@@ -282,7 +285,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                                  folder = inclusionStatisticsFolder,
                                                  simplify = TRUE)
         if (nrow(stats) > 0) {
-          stats$cohortId <- row$cohortId
+          stats$cohortDefinitionId <- row$cohortId
         }
         return(stats)
       }
@@ -296,8 +299,13 @@ runCohortDiagnostics <- function(packageName = NULL,
         stats <- enforceMinCellValue(data = stats, fieldName = "personTotal", minValues = minCellCount)
         # stats <- enforceMinCellValue(data = stats, fieldName = "remain_subjects", minValues = minCellCount)
       }
-      writeToCsv(stats, 
-                 file.path(exportFolder, "inclusion_rule_stats.csv"), 
+      if ('cohortDefinitionId' %in% tolower(colnames(stats))) {
+        stats <- stats %>% 
+          dplyr::rename(cohortId = .data$cohortDefinitionId)
+      }
+      colnames(stats) <- SqlRender::camelCaseToSnakeCase(colnames(stats))
+      writeToCsv(data = stats, 
+                 fileName = file.path(exportFolder, "inclusion_rule_stats.csv"), 
                  incremental = incremental, 
                  cohortId = subset$cohortId)
       recordTasksDone(cohortId = subset$cohortId,
@@ -356,8 +364,8 @@ runCohortDiagnostics <- function(packageName = NULL,
       if (nrow(data) > 0) {
         data <- data %>%
           dplyr::mutate(databaseId = !!databaseId)
-        writeToCsv(data,
-                   file.path(exportFolder, "time_distribution.csv"),
+        writeToCsv(data = data,
+                   fileName = file.path(exportFolder, "time_distribution.csv"),
                    incremental = incremental,
                    cohortId = subset$cohortId)
       }
@@ -413,8 +421,8 @@ runCohortDiagnostics <- function(packageName = NULL,
           dplyr::mutate(databaseId = !!databaseId)
         data <- enforceMinCellValue(data, "conceptCount", minCellCount)
       }
-      writeToCsv(data, 
-                 file.path(exportFolder, "index_event_breakdown.csv"), 
+      writeToCsv(data = data, 
+                 fileName = file.path(exportFolder, "index_event_breakdown.csv"), 
                  incremental = incremental, 
                  cohortId = subset$cohortId)
       recordTasksDone(cohortId = subset$cohortId,
@@ -476,7 +484,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         data <- enforceMinCellValue(data, "incidenceRate", 1000*minCellCount/data$personYears)
       }
       writeToCsv(data = data,
-                 fileName =  file.path(exportFolder, "incidence_rate.csv"), 
+                 fileName = file.path(exportFolder, "incidence_rate.csv"), 
                  incremental = incremental, 
                  cohortId = subset$cohortId)
     }
@@ -603,7 +611,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                 " cohorts in incremental mode.")
       }
       
-      ParallelLogger::logInfo(paste0('Starting large scale characterization of', 
+      ParallelLogger::logInfo(paste0('Starting large scale characterization of ', 
                                      scales::comma(nrow(subset)), 
                                      " cohorts"))
       cohortCharacteristicsOutput <- getCohortCharacteristics(connection = connection,
@@ -702,8 +710,8 @@ runCohortDiagnostics <- function(packageName = NULL,
             dplyr::mutate(mean = round(.data$mean, digits = 4),
                           sd = round(.data$sd, digits = 4)) %>% 
             dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
-          writeToCsv(characteristicsResultFiltered, 
-                     file.path(exportFolder, "covariate_value.csv"), 
+          writeToCsv(data = characteristicsResultFiltered, 
+                     fileName = file.path(exportFolder, "covariate_value.csv"), 
                      incremental = incremental, 
                      cohortId = characteristicsResultFiltered$cohortId %>% unique())
         }
@@ -744,7 +752,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                 " cohorts in incremental mode.")
       }
       
-      ParallelLogger::logInfo(paste0('Starting large scale temporal characterization of', 
+      ParallelLogger::logInfo(paste0('Starting large scale temporal characterization of ', 
                                      scales::comma(nrow(subset), accuracy = 1), 
                                      " cohorts"))
       cohortCharacteristicsOutput <- getCohortCharacteristics(connection = connection,
@@ -849,8 +857,8 @@ runCohortDiagnostics <- function(packageName = NULL,
             dplyr::mutate(mean = round(.data$mean, digits = 4),
                           sd = round(.data$sd, digits = 4)) %>% 
             dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
-          writeToCsv(characteristicsResultFiltered, 
-                     file.path(exportFolder, "temporal_covariate_value.csv"), 
+          writeToCsv(data = characteristicsResultFiltered, 
+                     fileName = file.path(exportFolder, "temporal_covariate_value.csv"), 
                      incremental = incremental, 
                      cohortId = characteristicsResultFiltered$cohortId %>% unique())
         }
