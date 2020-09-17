@@ -43,6 +43,7 @@ getUniqueConceptIds <-
     
     for (i in (1:length(databaseTables))) {
       if (file.exists(file.path(exportFolder, paste0(databaseTables[[i]], ".csv")))) {
+        ParallelLogger::logInfo("working on ", databaseTables[[i]])
         path <- file.path(exportFolder, paste0(databaseTables[[i]], ".csv"))
         assign(x = databaseTables[[i]],
                value = readr::read_csv(file = path,
@@ -54,13 +55,21 @@ getUniqueConceptIds <-
                value = tidyr::tibble())
       }
       if ('concept_id' %in% colnames(get(databaseTables[[i]]))) {
+        ParallelLogger::logInfo("    Found concept_id")
         tablesWithConceptIds[[i]] <- get(databaseTables[[i]]) %>%
           dplyr::select(.data$concept_id) %>%
           dplyr::distinct()
       }
-      if ('concept_id' %in% colnames(get(databaseTables[[i]]))) {
+      if ('referent_concept_id' %in% colnames(get(databaseTables[[i]]))) {
+        ParallelLogger::logInfo("    Found referent_concept_id")
         tablesWithConceptIds[[i]] <- get(databaseTables[[i]]) %>%
-          dplyr::select(.data$concept_id) %>%
+          dplyr::select(.data$referent_concept_id) %>%
+          dplyr::distinct()
+      }
+      if ('source_concept_id' %in% colnames(get(databaseTables[[i]]))) {
+        ParallelLogger::logInfo("    Found source_concept_id")
+        tablesWithConceptIds[[i]] <- get(databaseTables[[i]]) %>%
+          dplyr::select(.data$source_concept_id) %>%
           dplyr::distinct()
       }
     }
@@ -144,46 +153,62 @@ writeOmopvocabularyTables <-
       return()
     }
     
+    if (!is.null(conceptIds)) {
+      concept <- tidyr::tibble(concept_id = conceptIds) %>% 
+        dplyr::filter(.data$concept_id > 0) %>% 
+        dplyr::distinct()
+      ParallelLogger::logInfo('Found conceptIds count = ', length(conceptIds))
+      ParallelLogger::logInfo('    Uploading temp table')
+      DatabaseConnector::insertTable(connection = connection,
+                                     data = concept,
+                                     dropTableIfExists = TRUE,
+                                     tableName = '#conceptsToExtract', 
+                                     progressBar = TRUE,
+                                     tempTable = TRUE)
+    } else {
+      ParallelLogger::logInfo('No conceptIds found, downloading for all conceptIds')
+      ParallelLogger::logInfo('    Might take a very long time....')
+      sql <- "select distinct concept_id
+              into #conceptsToExtract
+              from @cdm_database_schema.concept"
+      DatabaseConnector::renderTranslateExecuteSql(connection = connection,
+                                                   sql = sql, 
+                                                   cdm_database_schema = cdmDatabaseSchema
+      )
+    }
+    
     for (i in (1:nrow(vocabularyTablesInCdmDatabaseSchema))) {
-      if (!is.null(conceptIds) & is.vector(conceptIds)) {
-        conceptIdsToQuery <-
-          conceptIds %>% unique() %>% paste(collapse = ",")
-        ParallelLogger::logInfo('Found ',
-                                length(conceptIds %>% unique()),
-                                ' unique concept ids.')
-        sqlFileName <- paste0("VocabularyQuery",
-                              SqlRender::camelCaseToTitleCase(string = 
-                                                                vocabularyTablesInCdmDatabaseSchema[i,]$vocabularyTableNames),
-                              ".sql")
-        sql <-
-          SqlRender::loadRenderTranslateSql(
-            sqlFilename = stringr::str_squish(sqlFileName),
-            packageName = "CohortDiagnostics",
-            dbms = connection@dbms,
-            vocabulary_database_schema = cdmDatabaseSchema,
-            conceptIds = conceptIdsToQuery,
-            warnOnMissingParameters = FALSE
-          )
-      } else {
-        sql <-
-          SqlRender::render(
-            sql = "select * from @cdm_database_schema.@vocabulary_table_name",
-            cdm_database_schema = cdmDatabaseSchema,
-            vocabulary_table_name = vocabularyTablesInCdmDatabaseSchema[i,]$vocabularyTableNames,
-            warnOnMissingParameters = FALSE
-          )
-        sql <- SqlRender::translate(sql = sql, targetDialect = connection@dbms)
+      if (vocabularyTablesInCdmDatabaseSchema[[i]] %in% c('domain',
+                                                          'relationship',
+                                                          'vocabulary',
+                                                          'concept_class')) {
+        sql <- "select * from @cdm_database_schema.@table"
+
+      } else if (vocabularyTablesInCdmDatabaseSchema[[i]] %in% c('concept', 'conceptSynonym')) {
+        sql <- "select * from @cdm_database_schema.@table a
+        inner join #conceptsToExtract b
+        on a.concept_id = b.concept_id"
+      } else if (vocabularyTablesInCdmDatabaseSchema[[i]] %in% c('conceptAncestor')) {
+        sql <- "select * from @cdm_database_schema.@table a
+        left join #conceptsToExtract b
+        on a.ancestor_concept_id = b.concept_id or
+        a.descendant_concept_id = b.concept_id"
+      } else if (vocabularyTablesInCdmDatabaseSchema[[i]] %in% c('conceptRelationship')) {
+        sql <- "select * from @cdm_database_schema.@table a
+        left join #conceptsToExtract b
+        on a.concept_id_1 = b.concept_id or
+        a.a.concept_id_2 = b.concept_id"
       }
-      
       assign(
         x = vocabularyTablesInCdmDatabaseSchema[i,]$serverTableNames,
-        value = DatabaseConnector::QuerySql(sql = sql) %>% 
-          tidyr::tibble() %>% 
-          dplyr::rename_all(.tbl = .data, .funs = tolower)
-      )
+        DatabaseConnector::renderTranslateQuerySql(connection = connection, 
+                                                   sql = sql, 
+                                                   cdm_database_schema = cdmDatabaseSchema,
+                                                   table = vocabularyTablesInCdmDatabaseSchema[[i]]) %>% 
+          tidyr::tibble())
       
       if (nrow(get(vocabularyTablesInCdmDatabaseSchema[i,]$serverTableNames)) > 0) {
-        readr::write_csv(
+        readr::write_excel_csv(
           x = get(vocabularyTablesInCdmDatabaseSchema[i,]$serverTableNames),
           path = file.path(
             exportFolder,
