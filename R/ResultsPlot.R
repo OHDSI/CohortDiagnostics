@@ -191,6 +191,7 @@ plotIncidenceRate <- function(data,
                            null.ok = FALSE,
                            add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
+  data$incidenceRate <- round(data$incidenceRate, digits = 3)
   plotData <- data
   if (!is.null(cohortIds)) {
     plotData <- plotData %>% 
