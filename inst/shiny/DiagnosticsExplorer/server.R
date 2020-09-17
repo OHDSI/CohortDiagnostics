@@ -429,7 +429,7 @@ shiny::shinyServer(function(input, output, session) {
                       .data$conceptSetName == input$conceptSet &
                       .data$databaseId %in% input$databases)
     
-    maxConceptSubjects <- max(data$conceptSubjects)
+    maxConceptSubjects <- max(data$conceptSubjects, na.rm = TRUE)
     
     if (input$includedType == "Source Concepts") {
       table <- data %>%
@@ -550,7 +550,7 @@ shiny::shinyServer(function(input, output, session) {
                          values_from = .data$conceptCount,
                          values_fill = -10)
     
-    maxConceptCount <- max(table$conceptCount)
+    maxConceptCount <- max(table$conceptCount, na.rm = TRUE)
     table[table < 0] <- 0
     
     options = list(pageLength = 20,
