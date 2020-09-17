@@ -50,7 +50,7 @@ Suggests:
 Remotes:
   ohdsi/Eunomia,
   ohdsi/FeatureExtraction,
-  ohdsi/ROhdsiWebApi@develop,
+  ohdsi/ROhdsiWebApi,
   ohdsi/DatabaseConnector,
   r-dbi/RSQLite
 License: Apache License
