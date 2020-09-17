@@ -449,6 +449,8 @@ shiny::shinyServer(function(input, output, session) {
                            values_from = .data$conceptSubjects,
                            values_fill = 0)
       
+      table[table < 0] <- 0
+      
       options = list(pageLength = 999,
                      searching = TRUE,
                      scrollX = TRUE,
@@ -484,6 +486,7 @@ shiny::shinyServer(function(input, output, session) {
                            names_from = .data$databaseId,
                            values_from = .data$absConceptSubjects,
                            values_fill = 0)
+      table[table < 0] <- 0
       
       options = list(pageLength = 999,
                      searching = FALSE,
@@ -543,6 +546,7 @@ shiny::shinyServer(function(input, output, session) {
                          values_fill = -10)
     
     maxConceptCount <- max(table$conceptCount)
+    table[table < 0] <- 0
     
     options = list(pageLength = 20,
                    searching = TRUE,
