@@ -178,7 +178,8 @@ shiny::shinyServer(function(input, output, session) {
                            values_from = .data$cohortEntries,
                            values_fill = 0
         )
-    ) %>% 
+    )
+    table <- table %>% 
       dplyr::select(order(colnames(table))) %>% 
       dplyr::relocate(.data$cohortId)
     
