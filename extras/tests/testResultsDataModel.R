@@ -90,3 +90,13 @@ data <- CohortDiagnostics::getCovariateValueResult(cohortIds = cohortIds,
                                                    timeIds = c(1,2,3))
 
 
+data <- CohortDiagnostics::getConceptSetDataDiagnostics(cohortIds = cohortId,
+                                                        databaseIds = databaseId) %>% 
+  dplyr::filter(type == 'included')  %>% 
+  dplyr::inner_join(conceptSets) %>% 
+  dplyr::inner_join(concept) %>% 
+  dplyr::inner_join(database) %>% 
+  dplyr::inner_join(cohort)
+
+View(data)
+  

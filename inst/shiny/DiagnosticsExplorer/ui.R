@@ -16,7 +16,7 @@ addInfo <- function(item, infoId) {
   return(item)
 }
 
-if (!exists("cohortDescription")) {
+if (!exists("phenotypeDescription")) {
   appTitle <- cohortDiagnosticModeDefaultTitle
 }else{
   appTitle <- phenotypeLibraryModeDefaultTitle
@@ -30,7 +30,7 @@ header <-
 sidebarMenu <-
   shinydashboard::sidebarMenu(
     id = "tabs",
-    if (exists("cohortDescription") && exists("phenotypeDescription"))
+    if (exists("phenotypeDescription") && exists("cohort"))
       addInfo(
         shinydashboard::menuItem(text = "Description", tabName = "description"),
         infoId = "descriptionInfo"
@@ -380,27 +380,7 @@ bodyTabItems <- shinydashboard::tabItems(
     ),
     
     tags$br(),
-    DT::dataTableOutput("temporalCharacterizationTable"),
-    tags$br(),
-    shiny::conditionalPanel(
-      condition = "input.timeIdChoices.length == 2",
-      shinydashboard::box(
-        title = "Temporal characterization plot",
-        width = NULL,
-        status = "primary",
-        shiny::htmlOutput(outputId = "temporalCharacterizationPlotHover"),
-        shiny::plotOutput(
-          outputId = "temporalCharacterizationPlot",
-          height = 700,
-          hover = shiny::hoverOpts(
-            id = "temporalCharacterizationPlotHoverInfo",
-            delay = 100,
-            delayType = "debounce"
-          )
-        ),
-        shiny::downloadButton(outputId = "downloadTemporalCharacterizationPlot", label = "Download")
-      )
-    )
+    DT::dataTableOutput("temporalCharacterizationTable")
   ),
   shinydashboard::tabItem(
     tabName = "cohortOverlap",

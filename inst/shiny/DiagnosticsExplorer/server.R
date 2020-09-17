@@ -54,11 +54,11 @@ styleAbsColorBar <- function(maxValue, colorPositive, colorNegative, angle = 90)
 shiny::shinyServer(function(input, output, session) {
   
   cohortId <- shiny::reactive({
-    return(cohorts$cohortId[cohorts$cohortName == input$cohort])
+    return(cohort$cohortId[cohort$cohortName == input$cohort])
   })
   
   comparatorCohortId <- shiny::reactive({
-    return(cohorts$cohortId[cohorts$cohortName == input$comparator])
+    return(cohort$cohortId[cohort$cohortName == input$comparator])
   })
   
   timeId <- shiny::reactive({
@@ -80,7 +80,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   shiny::observe({
-    subset <- unique(conceptSet$conceptSetName[conceptSet$cohortId == cohortId()]) %>% sort()
+    subset <- unique(conceptSets$conceptSetName[conceptSets$cohortId == cohortId()]) %>% sort()
     shinyWidgets::updatePickerInput(session = session,
                                     inputId = "conceptSet",
                                     choices = subset)
@@ -91,7 +91,19 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::mutate(literatureReview = dplyr::case_when(!.data$literatureReview %in% c('','0') ~ 
                                                           paste0("<a href='", .data$literatureReview, "' target='_blank'>", "Link", "</a>"),
                                                         TRUE ~ 'Ongoing')) %>%
-      dplyr::mutate(referentConceptId = paste0("<a href='", paste0(conceptIdBaseUrl(), .data$referentConceptId), "' target='_blank'>", .data$referentConceptId, "</a>")) 
+      dplyr::mutate(referentConceptId = paste0("<a href='", paste0(conceptIdBaseUrl(), .data$referentConceptId), "' target='_blank'>", .data$referentConceptId, "</a>")) %>% 
+      dplyr::mutate(clinicalDescription = stringr::str_replace_all(string = .data$clinicalDescription, 
+                                                                   pattern = "Overview:", 
+                                                                   replacement = "<strong>Overview:</strong>"))  %>% 
+      dplyr::mutate(clinicalDescription = stringr::str_replace_all(string = .data$clinicalDescription, 
+                                                                   pattern = "Assessment:", 
+                                                                   replacement = "<strong>Assessment:</strong>")) %>% 
+      dplyr::mutate(clinicalDescription = stringr::str_replace_all(string = .data$clinicalDescription, 
+                                                                   pattern = "Presentation:", 
+                                                                   replacement = "<br/> <strong>Presentation: </strong>")) %>% 
+      dplyr::mutate(clinicalDescription = stringr::str_replace_all(string = .data$clinicalDescription,
+                                                                   pattern = "Plan:",
+                                                                   replacement = "<br/> <strong>Plan: </strong>"))
     
     options = list(pageLength = 20,
                    searching = TRUE,
@@ -103,7 +115,8 @@ shiny::shinyServer(function(input, output, session) {
     dataTable <- DT::datatable(data,
                                options = options,
                                rownames = FALSE,
-                               colnames = colnames(data) %>% SqlRender::camelCaseToTitleCase(),
+                               colnames = colnames(data) %>% 
+                                 SqlRender::camelCaseToTitleCase(),
                                escape = FALSE,
                                filter = c("bottom"),
                                class = "stripe compact")
@@ -111,13 +124,12 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$cohortDescriptionTable <- DT::renderDataTable(expr = {
-    data <- cohortDescription %>% 
-      dplyr::mutate(atlasId = as.integer(.data$atlasId)) %>% #this is temporary - we need to standardize this 
+    data <- cohort %>% 
+      dplyr::mutate(webApiCohortId = as.integer(.data$webApiCohortId)) %>% #this is temporary - we need to standardize this 
       dplyr::left_join(y = phenotypeDescription) %>% 
-      dplyr::left_join(y = cohort, by = c('atlasId' = 'cohortId')) %>% #this is temporary - we need to standardize this 
-      dplyr::mutate(cohortName = paste0("<a href='", paste0(cohortBaseUrl(), .data$atlasId),"' target='_blank'>", paste0(.data$cohortDefinitionName), "</a>")) %>% 
-      dplyr::select(phenotypeId, phenotypeName, cohortDefinitionId, cohortName, logicDescription, cohortDefinitionNotes) %>% 
-      dplyr::arrange(phenotypeId, phenotypeName, cohortDefinitionId, cohortName)
+      dplyr::mutate(cohortName = paste0("<a href='", paste0(cohortBaseUrl(), .data$webApiCohortId),"' target='_blank'>", paste0(.data$cohortName), "</a>")) %>% 
+      dplyr::select(.data$phenotypeId, .data$cohortId, .data$cohortName, .data$logicDescription) %>% 
+      dplyr::arrange(.data$phenotypeId, .data$cohortId, .data$cohortName)
     
     options = list(pageLength = 20,
                    searching = TRUE,
@@ -149,27 +161,22 @@ shiny::shinyServer(function(input, output, session) {
     if (nrow(data) == 0) {
       return(NULL)
     }
-    databaseIds <- data %>% 
-      dplyr::select(.data$databaseId) %>% 
-      dplyr::distinct() %>% 
-      dplyr::arrange() %>% 
-      dplyr::pull(.data$databaseId)
     
     table <- dplyr::full_join(
       data %>% 
         dplyr::select(.data$cohortId, .data$databaseId, 
-                      .data$cohortSubjects) %>% 
+                      .data$cohortSubjects, .data$cohortName) %>% 
         dplyr::mutate(columnName = paste0(.data$databaseId, "_subjects")) %>% 
-        tidyr::pivot_wider(id_cols = c(.data$cohortId),
+        tidyr::pivot_wider(id_cols = c(.data$cohortId, .data$cohortName),
                            names_from = columnName,
                            values_from = .data$cohortSubjects,
                            values_fill = 0
         ),
       data %>% 
         dplyr::select(.data$cohortId, .data$databaseId, 
-                      .data$cohortEntries) %>% 
+                      .data$cohortEntries, .data$cohortName) %>% 
         dplyr::mutate(columnName = paste0(.data$databaseId, "_entries")) %>% 
-        tidyr::pivot_wider(id_cols = c(.data$cohortId),
+        tidyr::pivot_wider(id_cols = c(.data$cohortId, .data$cohortName),
                            names_from = columnName,
                            values_from = .data$cohortEntries,
                            values_fill = 0
@@ -192,6 +199,14 @@ shiny::shinyServer(function(input, output, session) {
       ) %>% 
       dplyr::select(-.data$cohortId, -.data$url) %>%
       dplyr::arrange(.data$cohortName)
+    
+    
+    databaseIds <- cohortCount %>%
+      dplyr::filter(.data$databaseId %in% input$databases) %>% 
+      dplyr::select(.data$databaseId) %>% 
+      dplyr::distinct() %>% 
+      dplyr::arrange() %>% 
+      dplyr::pull(.data$databaseId)
     
     sketch <- htmltools::withTags(table(
       class = 'display',
@@ -382,7 +397,8 @@ shiny::shinyServer(function(input, output, session) {
   
   output$timeDistTable <- DT::renderDataTable(expr = {
 
-    table <- CohortDiagnostics::getTimeDistributionResult(cohortIds = cohortId(), databaseIds = input$databases)
+    table <- CohortDiagnostics::getTimeDistributionResult(cohortIds = cohortId(), 
+                                                          databaseIds = input$databases)
 
     if (is.null(table)) {
       return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
@@ -399,12 +415,12 @@ shiny::shinyServer(function(input, output, session) {
     table <- DT::datatable(table,
                            options = options,
                            rownames = FALSE,
-                           colnames = colnames(table) %>% SqlRender::camelCaseToTitleCase(),
+                           colnames = colnames(table) %>% 
+                             SqlRender::camelCaseToTitleCase(),
                            filter = c('bottom'),
                            class = "stripe nowrap compact")
     table <- DT::formatRound(table, c("Average", "SD"), digits = 2)
     table <- DT::formatRound(table, c("Min", "P10", "P25", "Median", "P75", "P90", "Max"), digits = 0)
-
     return(table)
   }, server = TRUE)
   
@@ -416,7 +432,7 @@ shiny::shinyServer(function(input, output, session) {
                       .data$conceptSetName == input$conceptSet &
                       .data$databaseId %in% input$databases)
     
-    maxConceptSubjects <- max(data$conceptSubjects)
+    maxConceptSubjects <- max(data$conceptSubjects, na.rm = TRUE)
     
     if (input$includedType == "Source Concepts") {
       table <- data %>%
@@ -440,6 +456,8 @@ shiny::shinyServer(function(input, output, session) {
                            names_from = .data$databaseId,
                            values_from = .data$conceptSubjects,
                            values_fill = 0)
+      
+      table[table < 0] <- 0
       
       options = list(pageLength = 999,
                      searching = TRUE,
@@ -476,6 +494,7 @@ shiny::shinyServer(function(input, output, session) {
                            names_from = .data$databaseId,
                            values_from = .data$absConceptSubjects,
                            values_fill = 0)
+      table[table < 0] <- 0
       
       options = list(pageLength = 999,
                      searching = FALSE,
@@ -534,7 +553,8 @@ shiny::shinyServer(function(input, output, session) {
                          values_from = .data$conceptCount,
                          values_fill = -10)
     
-    maxConceptCount <- max(table$conceptCount)
+    maxConceptCount <- max(table$conceptCount, na.rm = TRUE)
+    table[table < 0] <- 0
     
     options = list(pageLength = 20,
                    searching = TRUE,
@@ -849,86 +869,6 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
-  computeTemporalCharacterizationBalance <- shiny::reactive({
-    if (length(input$timeIdChoices) != 2 ) {
-      return(tidyr::tibble())
-    }
-    covs1 <- temporalCovariateValue %>% 
-      dplyr::filter(.data$timeId == timeId()[1],
-                    .data$databaseId == input$database)
-    covs2 <- temporalCovariateValue %>% 
-      dplyr::filter(.data$timeId == timeId()[2],
-                    .data$databaseId == input$database)
-    covs1 <- dplyr::left_join(x = covs1, y = temporalCovariateRef)
-    covs2 <- dplyr::left_join(x = covs2, y = temporalCovariateRef)
-    balance <- compareTemporalCharacterization(covs1, covs2) %>%
-      dplyr::mutate(absStdDiff = abs(.data$stdDiff))
-    return(balance)
-  })
-  
-  temporalCharacterizationPlot <- shiny::reactive({
-    balance <- computeTemporalCharacterizationBalance()
-    if (nrow(balance) == 0) {
-      return(NULL)
-    }
-    balance$mean1[is.na(balance$mean1)] <- 0
-    balance$mean2[is.na(balance$mean2)] <- 0
-    plot <- ggplot2::ggplot(balance, ggplot2::aes(x = mean1, y = mean2, color = absStdDiff)) +
-      ggplot2::geom_point(alpha = 0.3, shape = 16, size = 2) +
-      ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
-      ggplot2::geom_hline(yintercept = 0) +
-      ggplot2::geom_vline(xintercept = 0) +             
-      ggplot2::scale_x_continuous(input$timeIdChoices[[2]], limits = c(0, 1)) +
-      ggplot2::scale_y_continuous(input$timeIdChoices[[1]], limits = c(0, 1)) +
-      ggplot2::scale_color_gradient("Absolute\nStd. Diff.", low = "blue", high = "red", space = "Lab", na.value = "red")
-    return(plot)
-  })
-  
-  output$temporalCharacterizationPlot <- shiny::renderPlot(expr = {
-    return(temporalCharacterizationPlot())
-  }, res = 100)
-  
-  output$temporalCharacterizationPlotHover <- shiny::renderUI({
-    balance <- computeTemporalCharacterizationBalance()
-    balance$mean1[is.na(balance$mean1)] <- 0
-    balance$mean2[is.na(balance$mean2)] <- 0
-    if (nrow(balance) == 0) {
-      return(NULL)
-    } else {
-      hover <- input$temporalCharacterizationPlotHoverInfo
-      point <- nearPoints(balance, hover, threshold = 5, maxpoints = 1, addDist = TRUE)
-      if (nrow(point) == 0) {
-        return(NULL)
-      }
-      text <- paste(point$covariateName, 
-                    "",
-                    sprintf("<b>Mean Target: </b> %0.2f", point$mean1),
-                    sprintf("<b>Mean Comparator: </b> %0.2f", point$mean2), 
-                    sprintf("<b>Std diff.: </b> %0.2f", point$stdDiff), 
-                    sep = "<br/>")
-      left_px <- hover$coords_css$x
-      top_px <- hover$coords_css$y
-      if (hover$x > 0.5) {
-        xOffset <- -505
-      } else {
-        xOffset <- 5
-      }
-      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
-                      "left:",
-                      left_px + xOffset,
-                      "px; top:",
-                      top_px - 150,
-                      "px; width:500px;")
-      div(
-        style = "position: relative; width: 0; height: 0",
-        wellPanel(
-          style = style,
-          p(HTML(text))
-        )
-      )
-    }
-  })
-  
   output$overlapTable <- DT::renderDataTable(expr = {
     data <- CohortDiagnostics::getCohortOverlapResult(targetCohortIds = cohortId(), 
                                                       comparatorCohortIds = comparatorCohortId(), 
@@ -1004,8 +944,8 @@ shiny::shinyServer(function(input, output, session) {
     covs2 <- covariateValue %>% 
       dplyr::filter(.data$cohortId == comparatorCohortId(),
                     .data$databaseId == input$database)
-    covs1 <- dplyr::left_join(x = covs1, y = covariate)
-    covs2 <- dplyr::left_join(x = covs2, y = covariate)
+    covs1 <- dplyr::left_join(x = covs1, y = covariateValue)
+    covs2 <- dplyr::left_join(x = covs2, y = covariateValue)
     balance <- compareCohortCharacteristics(covs1, covs2) %>%
       dplyr::mutate(absStdDiff = abs(.data$stdDiff))
     return(balance)
@@ -1346,7 +1286,5 @@ shiny::shinyServer(function(input, output, session) {
   }
   
   output$timeDistributionPlot <- download_box("TimeDistribution", timeDisPlotDownload())
-  output$downloadCompareCohortPlot <- download_box("CompareCohort", downloadCohortComparePlot())
   output$downloadOverlapPlot <- download_box("OverlapPlot", overLapPlot())
-  output$downloadTemporalCharacterizationPlot <- download_box("Temporal characterization plot", temporalCharacterizationPlot())
 })

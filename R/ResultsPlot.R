@@ -191,6 +191,7 @@ plotIncidenceRate <- function(data,
                            null.ok = FALSE,
                            add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
+  data$incidenceRate <- round(data$incidenceRate, digits = 3)
   plotData <- data
   if (!is.null(cohortIds)) {
     plotData <- plotData %>% 
@@ -216,7 +217,6 @@ plotIncidenceRate <- function(data,
     xLabel <- "Calender year"
     showX <- TRUE
     if (stratifyByGender) {
-      aesthetics$group <- "gender"
       aesthetics$color <- "gender"
     }
     plotType <- "line"
@@ -224,7 +224,6 @@ plotIncidenceRate <- function(data,
     xLabel <- ""
     if (stratifyByGender) {
       aesthetics$x <- "gender"
-      aesthetics$color <- "gender"
       aesthetics$fill <- "gender"
       showX <- TRUE
     } else {
@@ -463,7 +462,7 @@ plotCohortComparisonStandardizedDifference <- function(data,
                           # Hover text:
                           text = ~paste("Covariate Name:",
                                         plotData$covariateName, 
-                                        "Mean Target: ", 
+                                        "<br>Mean Target: ", 
                                         plotData$mean1, 
                                         '<br>Mean Comparator:', 
                                         plotData$mean2,

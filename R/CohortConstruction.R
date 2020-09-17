@@ -137,7 +137,7 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
   ParallelLogger::logInfo("Retrieving cohort definitions from WebAPI")
   cohort <- list()
   for (i in 1:nrow(cohorts)) {
-    cohort[[i]] <- cohorts %>% dplyr::slice(i)
+    cohort[[i]] <- cohorts[i,]
     ParallelLogger::logInfo("- Retrieving definitions for cohort ", cohort[[i]]$cohortFullName)
     cohortDefinition <-  ROhdsiWebApi::getCohortDefinition(cohortId = cohort[[i]]$atlasId,
                                                            baseUrl = baseUrl)
@@ -541,10 +541,6 @@ getInclusionStatisticsFromFiles <- function(cohortId,
     stats <- readr::read_csv(file, 
                              col_types = readr::cols(),
                              guess_max = min(1e7))
-    if ('COHORT_DEFINITION_ID' %in% colnames(stats)) {
-      stats <- stats %>% 
-        dplyr::rename(cohort_id = .data$cohort_definition_id)
-    }
     stats <- stats %>%  
       dplyr::filter(cohortId == !!cohortId)
     return(stats)
@@ -581,6 +577,7 @@ processInclusionStats <- function(inclusion,
                           dplyr::filter(.data$modeId == 0) %>% 
                           dplyr::select(.data$ruleSequence, .data$personCount, .data$gainCount, .data$personTotal))
     
+    inclusionResults <- inclusionResults
     # mask = 0
     # for (ruleId in 0:(nrow(result) - 1)) {
     #   if (nrow(inclusion_results) > 0) {
