@@ -97,7 +97,7 @@ shiny::shinyServer(function(input, output, session) {
                                                                    replacement = "<strong>Overview:</strong>"))  %>% 
       dplyr::mutate(clinicalDescription = stringr::str_replace_all(string = .data$clinicalDescription, 
                                                                    pattern = "Assessment:", 
-                                                                   replacement = "<strong>Assessment:</strong>")) %>% 
+                                                                   replacement = "<br/> <strong>Assessment:</strong>")) %>% 
       dplyr::mutate(clinicalDescription = stringr::str_replace_all(string = .data$clinicalDescription, 
                                                                    pattern = "Presentation:", 
                                                                    replacement = "<br/> <strong>Presentation: </strong>")) %>% 

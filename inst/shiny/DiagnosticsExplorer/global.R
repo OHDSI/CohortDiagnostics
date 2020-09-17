@@ -46,10 +46,6 @@ if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {
   writeLines("No premerged file found")
 }
 
-#####################################################
-phenotypeDescription <- phenotypedescription
-#####################################################
-
 database <- database %>% 
   dplyr::distinct() %>%
   dplyr::mutate(databaseName = dplyr::case_when(is.na(.data$databaseName) ~ .data$databaseId, 
