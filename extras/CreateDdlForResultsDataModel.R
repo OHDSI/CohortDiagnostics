@@ -1,4 +1,5 @@
 library(magrittr)
+path = "D:\\git\\bitbucket\\cohortDiagnosticsTest\\results\\all"
 pathToCsvFiles <- tidyr::tibble(fullPath = list.files(path = path, pattern = ".csv", full.names = TRUE)) %>% 
   dplyr::mutate(baseName = basename(.data$fullPath) %>% stringr::str_remove_all(string = ., pattern = ".csv")) %>% 
   dplyr::mutate(dontUse = dplyr::case_when(stringr::str_detect(string = baseName, pattern = "_", negate = TRUE) &

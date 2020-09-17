@@ -35,7 +35,9 @@ getUniqueConceptIds <-
                         'included_source_concept',
                         'index_event_breakdown',
                         'orphan_concept',
-                        'temporal_covariate'
+                        'temporal_covariate_ref',
+                        'concept_sets_concept_id',
+                        'phenotype_description'
     )
     tablesWithConceptIds <- list()
     
