@@ -35,12 +35,15 @@ getUniqueConceptIds <-
                         'included_source_concept',
                         'index_event_breakdown',
                         'orphan_concept',
-                        'temporal_covariate'
+                        'temporal_covariate_ref',
+                        'concept_sets_concept_id',
+                        'phenotype_description'
     )
     tablesWithConceptIds <- list()
     
     for (i in (1:length(databaseTables))) {
       if (file.exists(file.path(exportFolder, paste0(databaseTables[[i]], ".csv")))) {
+        ParallelLogger::logInfo("working on ", databaseTables[[i]])
         path <- file.path(exportFolder, paste0(databaseTables[[i]], ".csv"))
         assign(x = databaseTables[[i]],
                value = readr::read_csv(file = path,
@@ -52,13 +55,21 @@ getUniqueConceptIds <-
                value = tidyr::tibble())
       }
       if ('concept_id' %in% colnames(get(databaseTables[[i]]))) {
+        ParallelLogger::logInfo("    Found concept_id")
         tablesWithConceptIds[[i]] <- get(databaseTables[[i]]) %>%
           dplyr::select(.data$concept_id) %>%
           dplyr::distinct()
       }
-      if ('concept_id' %in% colnames(get(databaseTables[[i]]))) {
+      if ('referent_concept_id' %in% colnames(get(databaseTables[[i]]))) {
+        ParallelLogger::logInfo("    Found referent_concept_id")
         tablesWithConceptIds[[i]] <- get(databaseTables[[i]]) %>%
-          dplyr::select(.data$concept_id) %>%
+          dplyr::select(.data$referent_concept_id) %>%
+          dplyr::distinct()
+      }
+      if ('source_concept_id' %in% colnames(get(databaseTables[[i]]))) {
+        ParallelLogger::logInfo("    Found source_concept_id")
+        tablesWithConceptIds[[i]] <- get(databaseTables[[i]]) %>%
+          dplyr::select(.data$source_concept_id) %>%
           dplyr::distinct()
       }
     }
@@ -88,9 +99,15 @@ getUniqueConceptIds <-
 #' @param exportFolder 	            The folder where the output is exported by Cohort Diagnostics.
 #'                                  If this folder does not exist, or does not have the searched file
 #'                                  the function will return an error.
-#' @param conceptIds                (optional) A vector of conceptIds to filter the extract of omop 
-#'                                  vocabulary files. If NULL, all conceptIds are extracted.                      
-#' @param vocabularyDatabaseSchema  databaseSchema where the omop vocabulary files are located.
+#' @param conceptIdTable            (optional) A table with one column called concept_id (integer) that
+#'                                  contains all the concept_ids to limit the data pull. In the absence 
+#'                                  of this table, the entire vocabulary is pulled down (slow)
+#'                                  vocabulary files. If NULL, all conceptIds are extracted. Please
+#'                                  provide the full name of the vocabulary table e.g.
+#'                                  databaseSchema.conceptIdTable. If it is a temporary table
+#'                                  please use '#conceptIdTable'. Remember, for temporary table
+#'                                  the connection object has to be active.                     
+#' @param cdmDatabaseSchema         databaseSchema where the omop vocabulary files are located.
 #'                                  These are most commonly the same as cdmDatabaseSchema.
 #' @param vocabularyTableNames      (optional) A vector of omop vocabulary table names to download.
 #' @return
@@ -98,11 +115,11 @@ getUniqueConceptIds <-
 #'
 #' @export
 #'
-writeOmopvocabularyTables <-
+getOmopVocabularyTables <-
   function(connectionDetails = NULL,
            connection = NULL,
-           vocabularyDatabaseSchema = NULL,
-           conceptIds = NULL,
+           cdmDatabaseSchema,
+           conceptIdTable = NULL,
            vocabularyTableNames = c('concept',
                                     'conceptAncestor',
                                     'conceptClass',
@@ -112,6 +129,10 @@ writeOmopvocabularyTables <-
                                     'relationship',
                                     'vocabulary'),
            exportFolder) {
+    if (!is.null(connection)) {
+      connectionDetails <- NULL
+      ParallelLogger::logInfo('Connection provided')
+    }
     if (!is.null(connectionDetails)) {
       if (is.null(connection)) {
         connection <- DatabaseConnector::connect(connectionDetails)
@@ -122,81 +143,90 @@ writeOmopvocabularyTables <-
       ParallelLogger::logWarn('no connection provided')
     }
     
+    if (!is.null(conceptIdTable)) {
+      DatabaseConnector::dbExistsTable(conn = connection, )
+    }
+    
     vocabularyTableNames <-
       tidyr::tibble(vocabularyTableNames = vocabularyTableNames) %>%
-      dplyr::mutate(serverTableNames = SqlRender::camelCaseToSnakeCase(vocabularyTableNames) %>%
+      dplyr::mutate(serverTableNames = 
+                      SqlRender::camelCaseToSnakeCase(vocabularyTableNames) %>%
                       tolower())
     
-    vocabularyTablesInCohortDatabaseSchema <-
+    vocabularyTablesInCdmDatabaseSchema <-
       tidyr::tibble(serverTableNames = DatabaseConnector::getTableNames(connection, 
-                                                                        vocabularyDatabaseSchema) %>% 
+                                                                        cdmDatabaseSchema) %>% 
                       tolower()) %>%
-      dplyr::filter(.data$serverTableNames %in% (SqlRender::camelCaseToSnakeCase(string =
-                                                                                   vocabularyTableNames$serverTableNames))) %>%
+      dplyr::filter(.data$serverTableNames %in% 
+                      (SqlRender::camelCaseToSnakeCase(string =                                                                                   vocabularyTableNames$serverTableNames))) %>%
       dplyr::left_join(vocabularyTableNames)
     
-    if (nrow(vocabularyTablesInCohortDatabaseSchema) == 0) {
-      ParallelLogger::logWarn("Vocabulary tables not found in ", vocabularyDatabaseSchema)
+    if (nrow(vocabularyTablesInCdmDatabaseSchema) == 0) {
+      ParallelLogger::logWarn("Vocabulary tables not found in ", cdmDatabaseSchema)
       stop("No vocabulary retrieved")
       return()
     }
     
-    for (i in (1:nrow(vocabularyTablesInCohortDatabaseSchema))) {
-      if (!is.null(conceptIds) & is.vector(conceptIds)) {
-        conceptIdsToQuery <-
-          conceptIds %>% unique() %>% paste(collapse = ",")
-        ParallelLogger::logInfo('Found ',
-                                length(conceptIds %>% unique()),
-                                ' unique concept ids.')
-        sqlFileName <- paste0("VocabularyQuery",
-                              SqlRender::camelCaseToTitleCase(string = 
-                                                                vocabularyTablesInCohortDatabaseSchema %>%
-                                                                dplyr::slice(i) %>%
-                                                                dplyr::pull(.data$vocabularyTableNames)),
-                              ".sql")
-        sql <-
-          SqlRender::loadRenderTranslateSql(
-            sqlFilename = stringr::str_squish(sqlFileName),
-            packageName = "CohortDiagnostics",
-            dbms = connection@dbms,
-            vocabulary_database_schema = vocabularyDatabaseSchema,
-            conceptIds = conceptIdsToQuery,
-            warnOnMissingParameters = FALSE
-          )
-      } else {
-        sql <-
-          SqlRender::render(
-            sql = "select * from @vocabulary_database_schema.@vocabulary_table_name",
-            vocabulary_database_schema = vocabularyDatabaseSchema,
-            vocabulary_table_name = vocabularyTablesInCohortDatabaseSchema %>%
-              dplyr::slice(i) %>%
-              dplyr::pull(.data$vocabularyTableNames),
-            warnOnMissingParameters = FALSE
-          )
-        sql <- SqlRender::translate(sql = sql, targetDialect = connection@dbms)
-      }
-      
-      assign(
-        x = vocabularyTablesInCohortDatabaseSchema %>% 
-          dplyr::slice(i) %>% 
-          dplyr::pull(.data$serverTableNames),
-        value = DatabaseConnector::QuerySql(sql = sql) %>% 
-          tidyr::tibble() %>% 
-          dplyr::rename_all(.tbl = .data, .funs = tolower)
+    if (!is.null(conceptIds)) {
+      concept <- tidyr::tibble(concept_id = conceptIds) %>% 
+        dplyr::filter(.data$concept_id > 0) %>% 
+        dplyr::distinct()
+      ParallelLogger::logInfo('Found conceptIds count = ', length(conceptIds))
+      ParallelLogger::logInfo('    Uploading temp table')
+      DatabaseConnector::insertTable(connection = connection,
+                                     data = concept,
+                                     dropTableIfExists = TRUE,
+                                     tableName = '#conceptsToExtract', 
+                                     progressBar = TRUE,
+                                     tempTable = TRUE)
+    } else {
+      ParallelLogger::logInfo('No conceptIds found, downloading for all conceptIds')
+      ParallelLogger::logInfo('    Might take a very long time....')
+      sql <- "select distinct concept_id
+              into #conceptsToExtract
+              from @cdm_database_schema.concept"
+      DatabaseConnector::renderTranslateExecuteSql(connection = connection,
+                                                   sql = sql, 
+                                                   cdm_database_schema = cdmDatabaseSchema
       )
+    }
+    
+    for (i in (1:nrow(vocabularyTablesInCdmDatabaseSchema))) {
+      if (vocabularyTablesInCdmDatabaseSchema[[i]] %in% c('domain',
+                                                          'relationship',
+                                                          'vocabulary',
+                                                          'concept_class')) {
+        sql <- "select * from @cdm_database_schema.@table"
+
+      } else if (vocabularyTablesInCdmDatabaseSchema[[i]] %in% c('concept', 'conceptSynonym')) {
+        sql <- "select * from @cdm_database_schema.@table a
+        inner join #conceptsToExtract b
+        on a.concept_id = b.concept_id"
+      } else if (vocabularyTablesInCdmDatabaseSchema[[i]] %in% c('conceptAncestor')) {
+        sql <- "select * from @cdm_database_schema.@table a
+        left join #conceptsToExtract b
+        on a.ancestor_concept_id = b.concept_id or
+        a.descendant_concept_id = b.concept_id"
+      } else if (vocabularyTablesInCdmDatabaseSchema[[i]] %in% c('conceptRelationship')) {
+        sql <- "select * from @cdm_database_schema.@table a
+        left join #conceptsToExtract b
+        on a.concept_id_1 = b.concept_id or
+        a.a.concept_id_2 = b.concept_id"
+      }
+      assign(
+        x = vocabularyTablesInCdmDatabaseSchema[i,]$serverTableNames,
+        DatabaseConnector::renderTranslateQuerySql(connection = connection, 
+                                                   sql = sql, 
+                                                   cdm_database_schema = cdmDatabaseSchema,
+                                                   table = vocabularyTablesInCdmDatabaseSchema[[i]]) %>% 
+          tidyr::tibble())
       
-      if (nrow(get(vocabularyTablesInCohortDatabaseSchema %>% 
-                   dplyr::slice(i) %>% 
-                   dplyr::pull(.data$serverTableNames))) > 0) {
-        readr::write_csv(
-          x = get(vocabularyTablesInCohortDatabaseSchema %>% 
-                    dplyr::slice(i) %>% 
-                    dplyr::pull(.data$serverTableNames)),
+      if (nrow(get(vocabularyTablesInCdmDatabaseSchema[i,]$serverTableNames)) > 0) {
+        readr::write_excel_csv(
+          x = get(vocabularyTablesInCdmDatabaseSchema[i,]$serverTableNames),
           path = file.path(
             exportFolder,
-            paste0(vocabularyTablesInCohortDatabaseSchema %>% 
-                     dplyr::slice(i) %>% 
-                     dplyr::pull(.data$serverTableNames),
+            paste0(vocabularyTablesInCdmDatabaseSchema[i,]$serverTableNames,
                    ".csv"
             ) %>% tolower()
           )
@@ -207,20 +237,138 @@ writeOmopvocabularyTables <-
                               basename(file.path(
                                 exportFolder,
                                 paste0(
-                                  vocabularyTablesInCohortDatabaseSchema %>% 
-                                    dplyr::slice(i) %>% 
-                                    dplyr::pull(.data$serverTableNames),
+                                  vocabularyTablesInCdmDatabaseSchema[i,]$serverTableNames,
                                   ".csv"
                                 ) %>% tolower()
                               )),
                               ' with ',
                               nrow(
                                 get(
-                                  vocabularyTablesInCohortDatabaseSchema %>% 
-                                    dplyr::slice(i) %>% 
-                                    dplyr::pull(.data$serverTableNames)
+                                  vocabularyTablesInCdmDatabaseSchema[i,]$serverTableNames
                                 )
                               ),
                               " records.")
     }
   }
+
+
+
+#' @title Resolves cohort sql to concept_ids
+#' 
+#' @description
+#' Resolves cohort sql to concept_ids
+#'
+#' @template Connection                  
+#' @param cdmDatabaseSchema         DatabaseSchema where the omop vocabulary files are located.
+#' @param cohort                    A tibble data frame object with atleast two columns. cohortId refering to the integer
+#'                                  id that identifies a cohort definition. And sql, which is the cohort definition
+#'                                  in OHDSI SQL dialect. It may contain parameters designed to be replaced 
+#'                                  by SqlRender. The standard form the cohort definition SQL is generated is using 
+#'                                  circe-be by WebApi and Atlas. The 'cohort' table in Cohort Diagnostics results
+#'                                  data model satisfies this requirement.
+#' @param databaseId                A text string corresponding to the id of the database.
+#' @template oracleTempSchema
+#' @return
+#' Tibble Data Frame object
+#'
+#' @export
+#'
+resolveCohortSqlToConceptIds <- function(connection = NULL,
+                                         connectionDetails = NULL,
+                                         cdmDatabaseSchema,
+                                         databaseId,
+                                         oracleTempSchema = NULL,
+                                         cohort) {
+  if (!is.null(connectionDetails)) {
+    if (is.null(connection)) {
+      connection <- DatabaseConnector::connect(connectionDetails)
+      on.exit(DatabaseConnector::disconnect(connection))
+    }
+  }
+  if (is.null(connection)) {
+    ParallelLogger::logWarn('no connection provided')
+  }
+  # Perform error checks for input variables
+  errorMessage <- checkmate::makeAssertCollection()
+  checkmate::assertNames(x = colnames(cohort), 
+                         must.include = c('cohortId', 'sql'),
+                         add = errorMessage)
+  checkmate::reportAssertions(collection = errorMessage)
+  checkmate::assertTibble(x = cohort %>% 
+                            dplyr::select(.data$cohortId, .data$sql), 
+                          types = c('double', 'character'), 
+                          any.missing = FALSE, 
+                          min.rows = 1, 
+                          min.cols = 2,
+                          add = errorMessage)
+  checkmate::assertCharacter(x = databaseId, 
+                             any.missing = FALSE, 
+                             min.len = 1,  
+                             max.len = 1,
+                             null.ok = FALSE,
+                             add = errorMessage)
+  checkmate::reportAssertions(collection = errorMessage)
+  
+  conceptSetSql <- list()
+  for (i in (1:nrow(cohort))) {
+    conceptSetSql[[i]] <- CohortDiagnostics::extractConceptSetsSqlFromCohortSql(cohortSql = cohort$sql[[i]]) %>% 
+      dplyr::select(.data$conceptSetSql)
+  }
+  conceptSetSql <- dplyr::bind_rows(conceptSetSql) %>% dplyr::distinct()
+  
+  uniqueConceptSetSql <- conceptSetSql %>%
+    dplyr::select(.data$conceptSetSql) %>%
+    dplyr::distinct() %>%
+    dplyr::mutate(uniqueConceptSetId = dplyr::row_number())
+  
+  
+  CohortDiagnostics:::instantiateUniqueConceptSets(uniqueConceptSets = uniqueConceptSetSql, 
+                                                   connection = connection,
+                                                   cdmDatabaseSchema = cdmDatabaseSchema, 
+                                                   oracleTempSchema = oracleTempSchema)
+  
+  cohortCodeSets <- list()
+  for (i in (1:nrow(cohort))) {
+    codeSetSql <- 
+      CohortDiagnostics::extractConceptSetsSqlFromCohortSql(cohortSql = 
+                                                              cohort$sql[[i]])
+    codesets <- list()
+    for (j in (1:nrow(codeSetSql))) {
+      if (i == 1 && j == 1) {
+        DatabaseConnector::insertTable(connection = connection,
+                                       tableName = '#CdResolvedCodeSet',
+                                       data = DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                                                         sql = codeSetSql$conceptSetSql[[j]],
+                                                                                         vocabulary_database_schema = cdmDatabaseSchema, 
+                                                                                         snakeCaseToCamelCase = TRUE) %>% 
+                                         dplyr::mutate(cohortId = cohort$cohortId[[i]],
+                                                       databaseId = !!databaseId) %>% 
+                                         dplyr::select(.data$databaseId, .data$cohortId, .data$codesetId, .data$conceptId),
+                                       dropTableIfExists = TRUE,
+                                       createTable = TRUE,
+                                       tempTable = TRUE,
+                                       oracleTempSchema = oracleTempSchema,
+                                       camelCaseToSnakeCase = TRUE)
+      } else {
+        sql <- paste0("insert into #CdResolvedCodeSet (database_id, cohort_id, codeset_id, concept_id) 
+                       SELECT '@databaseId' as database_id, 
+                               @cohortId as cohort_id, 
+                               codeset_id, concept_id FROM (",
+                      codeSetSql$conceptSetSql[[j]],
+                      ") fin;"
+        )
+        DatabaseConnector::renderTranslateExecuteSql(connection = connection,
+                                                     sql = sql,
+                                                     vocabulary_database_schema = cdmDatabaseSchema,
+                                                     databaseId = databaseId,
+                                                     cohortId = cohort$cohortId[[i]])
+      }
+    }
+  }
+  cohortCodeSets <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                               sql = "select * from #CdResolvedCodeSet",
+                                                               snakeCaseToCamelCase = TRUE
+  ) %>% 
+    tidyr::tibble()
+  return(cohortCodeSets)
+}

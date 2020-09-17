@@ -136,11 +136,11 @@
     </div>
 
     <pre class="usage"><span class='fu'>getCovariateReference</span>(
-  <span class='kw'>connection</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>connectionDetails</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>covariateIds</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>isTemporal</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>resultsDatabaseSchema</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
+  connection = <span class='kw'>NULL</span>,
+  connectionDetails = <span class='kw'>NULL</span>,
+  covariateIds = <span class='kw'>NULL</span>,
+  isTemporal = <span class='fl'>TRUE</span>,
+  resultsDatabaseSchema = <span class='kw'>NULL</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -198,9 +198,11 @@ an object specificed in Cohort Diagnostics results data model.</p>
 in a relational database system are expected to follow snake-case naming conventions.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='no'>covariateReference</span> <span class='kw'>&lt;-</span> <span class='fu'>getCovariateReference</span>(<span class='kw'>isTemporal</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
-}</div></pre>
+    <pre class="examples"><div class='input'><span class='co'>if</span> (<span class='fl'>FALSE</span>) {
+<span class='kw'>covariateReference</span> <span class='op'>&lt;-</span> <span class='fu'>getCovariateReference</span>(isTemporal = <span class='fl'>FALSE</span>)
+}
+
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -216,7 +218,7 @@ in a relational database system are expected to follow snake-case naming convent
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

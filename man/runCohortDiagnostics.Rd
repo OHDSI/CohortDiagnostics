@@ -38,6 +38,8 @@ runCohortDiagnostics(
     temporalStartDays = c(-365, -30, 0, 1, 31, seq(from = -30, to = -420, by = -30),
     seq(from = 1, to = 390, by = 30)), temporalEndDays = c(-31, -1, 0, 30, 365, seq(from
     = 0, to = -390, by = -30), seq(from = 31, to = 420, by = 30))),
+  runResolveCohortSqlToConceptIds = TRUE,
+  runCombineConceptSetsFromCohorts = TRUE,
   minCellCount = 5,
   incremental = FALSE,
   incrementalFolder = exportFolder
@@ -130,12 +132,20 @@ Only records with values greater than 0.001 are returned.}
 the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
 of such objects.}
 
+\item{runResolveCohortSqlToConceptIds}{Resolve and export all the concept ids in all the concept set expressions in cohorts?}
+
+\item{runCombineConceptSetsFromCohorts}{Generate and export all the concept set expressions from cohorts?}
+
 \item{minCellCount}{The minimum cell count for fields contains person counts or fractions.}
 
 \item{incremental}{Create only cohort diagnostics that haven't been created before?}
 
 \item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
 of which cohort diagnostics has been executed.}
+
+\item{vocabularyDatabaseSchema}{(optional) Schema name where your vocabulary resides. Most commonly it is the same
+as CDM databaseSchema. Note that for SQL Server, 
+this should include both the database and schema name, for example 'cdm_data.dbo'.}
 }
 \description{
 Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the

@@ -421,12 +421,12 @@ getCovariateReference <- function(connection = NULL,
                            any.missing = FALSE, 
                            min.len = 1, 
                            max.len = 1)
-  checkmate::assertIntegerish(x = covariateIds, 
-                              lower = 0,
-                              upper = 2^53, 
-                              any.missing = FALSE,
-                              unique = TRUE,
-                              null.ok = TRUE)
+  checkmate::assertDouble(x = covariateIds, 
+                          lower = 0,
+                          upper = 2^53, 
+                          any.missing = FALSE,
+                          unique = TRUE,
+                          null.ok = TRUE)
   errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
                                                   connectionDetails = connectionDetails,
                                                   resultsDatabaseSchema = resultsDatabaseSchema,
@@ -719,12 +719,12 @@ compareCovariateValueResult <- function(connection = NULL,
   checkmate::reportAssertions(collection = errorMessage)
   if (isTemporal) {
     if (!is.null(timeIds)) {
-      checkmate::assertInteger(x = timeIds, 
-                               lower = 0, 
-                               any.missing = FALSE, 
-                               unique = TRUE, 
-                               null.ok = FALSE,
-                               add = errorMessage)
+      checkmate::assertIntegerish(x = timeIds, 
+                                  lower = 0, 
+                                  any.missing = FALSE, 
+                                  unique = TRUE, 
+                                  null.ok = FALSE,
+                                  add = errorMessage)
     }
   }
   checkmate::reportAssertions(collection = errorMessage)
@@ -802,10 +802,10 @@ getCohortReference <- function(connection = NULL,
                                                   connectionDetails = connectionDetails,
                                                   resultsDatabaseSchema = resultsDatabaseSchema,
                                                   errorMessage = errorMessage)
-  checkmate::assertIntegerish(x = cohortIds,
-                              min.len = 1, 
-                              null.ok = TRUE,
-                              add = errorMessage)
+  checkmate::assertDouble(x = cohortIds,
+                          min.len = 1, 
+                          null.ok = TRUE,
+                          add = errorMessage)
   checkmate::assertLogical(x = getJson, 
                            any.missing = FALSE, 
                            min.len = 1, 
@@ -1010,6 +1010,163 @@ getConceptReference <- function(connection = NULL,
 
 
 
+
+#' Get concept set data diagnostics
+#'
+#' @description
+#' Get concept set data diagnostics data
+#'
+#' @template ModeAndDetails
+#' @template CohortIds
+#' @template DatabaseIds
+#' 
+#' @return
+#' The function will return a tibble data frame object.
+#'
+#' @examples
+#' \dontrun{
+#' conceptSetDataDiagnostics <- getConceptSetDataDiagnostics()
+#' }
+#'
+#' @export
+getConceptSetDataDiagnostics <- function(connection = NULL,
+                                         connectionDetails = NULL,
+                                         cohortIds = NULL,
+                                         databaseIds = NULL,
+                                         resultsDatabaseSchema = NULL) {
+  # Perform error checks for input variables
+  errorMessage <- checkmate::makeAssertCollection()
+  errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
+                                                  connectionDetails = connectionDetails,
+                                                  resultsDatabaseSchema = resultsDatabaseSchema,
+                                                  errorMessage = errorMessage)
+  checkmate::assertDouble(x = cohortIds,
+                          min.len = 1, 
+                          null.ok = TRUE,
+                          add = errorMessage)
+  checkmate::assertCharacter(x = databaseIds,
+                             min.len = 1, 
+                             null.ok = TRUE,
+                             add = errorMessage)
+  checkmate::reportAssertions(collection = errorMessage)
+  
+  
+  # included source concepts
+  table <- 'includedSourceConcept'
+  # route query
+  route <- routeDataQuery(connection = connection,
+                          connectionDetails = connectionDetails,
+                          table = table)
+  
+  if (route == 'quit') {
+    ParallelLogger::logWarn("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    return(NULL)
+  } else if (route == 'memory') {
+    connection <- NULL
+  }
+
+  # perform query
+  if (!is.null(connection)) {
+    sql <-   "SELECT *
+              FROM  @resultsDatabaseSchema.@table
+              WHERE conceptId > 0
+              {@cohortIds == } ? {}:{AND cohort_id IN ('@cohortIds')}
+              {@databaseIds == } ? {}:{AND database_id IN ('@databaseIds')};"
+    dataIncludedSourceConcept <- 
+      DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                 sql = sql,
+                                                 resultsDatabaseSchema = resultsDatabaseSchema,
+                                                 table = SqlRender::camelCaseToSnakeCase(table),
+                                                 snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
+  } else {
+    dataIncludedSourceConcept <- get(table)
+    if (!is.null(cohortIds)) {
+      dataIncludedSourceConcept <- dataIncludedSourceConcept %>% 
+        dplyr::filter(.data$cohortId %in% !!cohortIds)
+    }
+    if (!is.null(databaseIds)) {
+      dataIncludedSourceConcept <- dataIncludedSourceConcept %>% 
+        dplyr::filter(.data$databaseId %in% !!databaseIds)
+    }
+  }
+  
+  # orphan concept
+  table <-  'orphanConcept'
+  # route query
+  route <- routeDataQuery(connection = connection,
+                          connectionDetails = connectionDetails,
+                          table = table)
+  
+  if (route == 'quit') {
+    ParallelLogger::logWarn("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    return(NULL)
+  } else if (route == 'memory') {
+    connection <- NULL
+  }
+  # perform query
+  if (!is.null(connection)) {
+    sql <-   "SELECT *
+              FROM  @resultsDatabaseSchema.@table
+              WHERE conceptId > 0
+              {@cohortIds == } ? {}:{AND cohort_id IN ('@cohortIds')}
+              {@databaseIds == } ? {}:{AND database_id IN ('@databaseIds')};"
+    dataOrphanConcept <- 
+      DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                 sql = sql,
+                                                 resultsDatabaseSchema = resultsDatabaseSchema,
+                                                 table = SqlRender::camelCaseToSnakeCase(table),
+                                                 snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
+  } else {
+    dataOrphanConcept <- get(table)
+    if (!is.null(cohortIds)) {
+      dataOrphanConcept <- dataOrphanConcept %>% 
+        dplyr::filter(.data$cohortId %in% !!cohortIds)
+    }
+    if (!is.null(databaseIds)) {
+      dataOrphanConcept <- dataOrphanConcept %>% 
+        dplyr::filter(.data$databaseId %in% !!databaseIds)
+    }
+  }
+
+  data <- dplyr::bind_rows(
+    dataIncludedSourceConcept %>% 
+      dplyr::select(.data$databaseId, 
+                    .data$cohortId, 
+                    .data$conceptSetId, 
+                    .data$conceptId, 
+                    .data$conceptSubjects,
+                    .data$conceptCount
+                    ) %>% 
+      dplyr::mutate(type = 'included',
+                    query = 'S'),
+    dataIncludedSourceConcept %>% 
+      dplyr::select(.data$databaseId, 
+                    .data$cohortId, 
+                    .data$sourceConceptId,
+                    .data$conceptSubjects,
+                    .data$conceptCount
+      ) %>% 
+      dplyr::rename(conceptId = .data$sourceConceptId) %>% 
+      dplyr::mutate(type = 'included',
+                    query = 'N'),
+    dataOrphanConcept %>% 
+      dplyr::select(.data$databaseId,
+                    .data$cohortId,
+                    .data$conceptSetId, 
+                    .data$conceptId,
+                    .data$conceptCount) %>% 
+      dplyr::mutate(conceptSubjects = 0) %>% 
+      dplyr::mutate(type = 'orphan',
+                    query = 'U')
+  )
+  
+  return(data)
+}
+
+
+
 routeDataQuery <- function(connection = NULL,
                            connectionDetails = NULL,
                            table,
@@ -1113,12 +1270,12 @@ checkErrorResultsDatabaseSchema <- function(errorMessage,
 checkErrorCohortIdsDatabaseIds <- function(errorMessage,
                                            cohortIds,
                                            databaseIds) {
-  checkmate::assertIntegerish(x = cohortIds,
-                              null.ok = FALSE,
-                              lower = 1,
-                              upper = 2^53,
-                              any.missing = FALSE,
-                              add = errorMessage)
+  checkmate::assertDouble(x = cohortIds,
+                          null.ok = FALSE,
+                          lower = 1,
+                          upper = 2^53,
+                          any.missing = FALSE,
+                          add = errorMessage)
   checkmate::assertCharacter(x = databaseIds,
                              min.len = 1,
                              any.missing = FALSE,

@@ -158,8 +158,7 @@ combineConceptSetsFromCohorts <- function(cohorts) {
   conceptSetCounter <- 0
   
   for (i in (1:nrow(cohorts))) {
-    cohort <- cohorts %>%
-      dplyr::slice(i)
+    cohort <- cohorts[i,]
     sql <- extractConceptSetsSqlFromCohortSql(cohortSql = cohort$sql)
     json <- extractConceptSetsJsonFromCohortJson(cohortJson = cohort$json)
     

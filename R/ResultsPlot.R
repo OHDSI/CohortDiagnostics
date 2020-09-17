@@ -52,13 +52,13 @@ plotTimeDistribution <- function(data,
                           min.cols = 5,
                           null.ok = FALSE,
                           add = errorMessage)
-  checkmate::assertIntegerish(x = cohortIds,
-                              lower = 1,
-                              upper = 2^53,
-                              any.missing = FALSE,
-                              null.ok = TRUE, 
-                              min.len = 1,
-                              add = errorMessage)
+  checkmate::assertDouble(x = cohortIds,
+                          lower = 1,
+                          upper = 2^53,
+                          any.missing = FALSE,
+                          null.ok = TRUE, 
+                          min.len = 1,
+                          add = errorMessage)
   checkmate::assertCharacter(x = databaseIds,
                              any.missing = FALSE,
                              null.ok = TRUE, 
@@ -157,13 +157,13 @@ plotIncidenceRate <- function(data,
                           min.cols = 5,
                           null.ok = FALSE,
                           add = errorMessage)
-  checkmate::assertIntegerish(x = cohortIds,
-                              lower = 1,
-                              upper = 2^53,
-                              any.missing = FALSE,
-                              null.ok = TRUE, 
-                              min.len = 1,
-                              add = errorMessage)
+  checkmate::assertDouble(x = cohortIds,
+                          lower = 1,
+                          upper = 2^53,
+                          any.missing = FALSE,
+                          null.ok = TRUE, 
+                          min.len = 1,
+                          add = errorMessage)
   checkmate::assertCharacter(x = databaseIds,
                              any.missing = FALSE,
                              null.ok = TRUE, 
@@ -191,6 +191,7 @@ plotIncidenceRate <- function(data,
                            null.ok = FALSE,
                            add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
+  data$incidenceRate <- round(data$incidenceRate, digits = 3)
   plotData <- data
   if (!is.null(cohortIds)) {
     plotData <- plotData %>% 
@@ -216,7 +217,6 @@ plotIncidenceRate <- function(data,
     xLabel <- "Calender year"
     showX <- TRUE
     if (stratifyByGender) {
-      aesthetics$group <- "gender"
       aesthetics$color <- "gender"
     }
     plotType <- "line"
@@ -224,7 +224,6 @@ plotIncidenceRate <- function(data,
     xLabel <- ""
     if (stratifyByGender) {
       aesthetics$x <- "gender"
-      aesthetics$color <- "gender"
       aesthetics$fill <- "gender"
       showX <- TRUE
     } else {
@@ -333,7 +332,7 @@ plotCohortComparisonStandardizedDifference <- function(data,
       dplyr::filter(.data$databaseId %in% !!databaseIds)
   }
   
-
+  
   
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
@@ -344,16 +343,16 @@ plotCohortComparisonStandardizedDifference <- function(data,
                           null.ok = FALSE,
                           types = c('character', 'double'),
                           add = errorMessage)
-  checkmate::assertIntegerish(x = targetCohortIds,
-                              lower = 1,
-                              upper = 2^53, 
-                              any.missing = FALSE,
-                              null.ok = FALSE)
-  checkmate::assertIntegerish(x = comparatorCohortIds,
-                              lower = 1,
-                              upper = 2^53, 
-                              any.missing = FALSE,
-                              null.ok = FALSE)
+  checkmate::assertDouble(x = targetCohortIds,
+                          lower = 1,
+                          upper = 2^53, 
+                          any.missing = FALSE,
+                          null.ok = FALSE)
+  checkmate::assertDouble(x = comparatorCohortIds,
+                          lower = 1,
+                          upper = 2^53, 
+                          any.missing = FALSE,
+                          null.ok = FALSE)
   checkmate::assertCharacter(x = databaseIds,
                              any.missing = FALSE,
                              min.len = 1,
@@ -463,7 +462,7 @@ plotCohortComparisonStandardizedDifference <- function(data,
                           # Hover text:
                           text = ~paste("Covariate Name:",
                                         plotData$covariateName, 
-                                        "Mean Target: ", 
+                                        "<br>Mean Target: ", 
                                         plotData$mean1, 
                                         '<br>Mean Comparator:', 
                                         plotData$mean2,
@@ -523,16 +522,16 @@ plotCohortOverlapVennDiagram <- function(data,
                           min.cols = 5,
                           null.ok = FALSE,
                           add = errorMessage)
-  checkmate::assertIntegerish(x = targetCohortIds,
-                              lower = 1,
-                              upper = 2^53, 
-                              any.missing = FALSE,
-                              null.ok = FALSE)
-  checkmate::assertIntegerish(x = comparatorCohortIds,
-                              lower = 1,
-                              upper = 2^53, 
-                              any.missing = FALSE,
-                              null.ok = FALSE)
+  checkmate::assertDouble(x = targetCohortIds,
+                          lower = 1,
+                          upper = 2^53, 
+                          any.missing = FALSE,
+                          null.ok = FALSE)
+  checkmate::assertDouble(x = comparatorCohortIds,
+                          lower = 1,
+                          upper = 2^53, 
+                          any.missing = FALSE,
+                          null.ok = FALSE)
   checkmate::assertCharacter(x = databaseIds,
                              any.missing = FALSE,
                              min.len = 1,

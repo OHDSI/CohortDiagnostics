@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Guesses data model specification from multiple csv files. — guessCsvFileSpecification • CohortDiagnostics</title>
+<title>Get record counts for a set of cohort — getRecordCountOfInstantiatedCohorts • CohortDiagnostics</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Guesses data model specification from multiple csv files. — guessCsvFileSpecification" />
-<meta property="og:description" content="Guesses data model specification from multiple csv files." />
+<meta property="og:title" content="Get record counts for a set of cohort — getRecordCountOfInstantiatedCohorts" />
+<meta property="og:description" content="This function get record count for a set of cohorts in the cohort table." />
 
 
 
@@ -126,36 +126,61 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Guesses data model specification from multiple csv files.</h1>
-    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/ResultsDataModel.R'><code>R/ResultsDataModel.R</code></a></small>
-    <div class="hidden name"><code>guessCsvFileSpecification.Rd</code></div>
+    <h1>Get record counts for a set of cohort</h1>
+    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/CohortConstruction.R'><code>R/CohortConstruction.R</code></a></small>
+    <div class="hidden name"><code>getRecordCountOfInstantiatedCohorts.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Guesses data model specification from multiple csv files.</p>
+    <p>This function get record count for a set of cohorts in the cohort table.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>guessCsvFileSpecification</span>(<span class='kw'>pathToCsvFile</span>)</pre>
+    <pre class="usage"><span class='fu'>getRecordCountOfInstantiatedCohorts</span>(
+  <span class='kw'>connection</span>,
+  <span class='kw'>connectionDetails</span>,
+  <span class='kw'>cohortDatabaseSchema</span>,
+  <span class='kw'>cohortTable</span>,
+  <span class='kw'>cohortIds</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>pathToCsvFile</th>
-      <td><p>file system path to csv file</p></td>
+      <th>connection</th>
+      <td><p>An object of type <code>connection</code> as created using the
+<code><a href='https://rdrr.io/pkg/DatabaseConnector/man/connect.html'>connect</a></code> function in the
+DatabaseConnector package. Can be left NULL if <code>connectionDetails</code>
+is provided, in which case a new connection will be opened at the start
+of the function, and closed when the function finishes.</p></td>
+    </tr>
+    <tr>
+      <th>connectionDetails</th>
+      <td><p>An object of type <code>connectionDetails</code> as created using the
+<code><a href='https://rdrr.io/pkg/DatabaseConnector/man/createConnectionDetails.html'>createConnectionDetails</a></code> function in the
+DatabaseConnector package. Can be left NULL if <code>connection</code> is
+provided.</p></td>
+    </tr>
+    <tr>
+      <th>cohortDatabaseSchema</th>
+      <td><p>Schema name where your cohort table resides. Note that for SQL Server,
+this should include both the database and schema name, for example
+'scratch.dbo'.</p></td>
+    </tr>
+    <tr>
+      <th>cohortTable</th>
+      <td><p>Name of the cohort table.</p></td>
+    </tr>
+    <tr>
+      <th>cohortIds</th>
+      <td><p>A vecotr of cohortIds to get counts for.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A tibble data frame object with specifications</p>
+    <p>A tibble data frame object</p>
 
-    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='co'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='kw'>csvFileSpecification</span> <span class='op'>&lt;-</span> <span class='fu'>guessCsvFileSpecification</span>(<span class='kw'>path</span>)
-}
-
-</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">

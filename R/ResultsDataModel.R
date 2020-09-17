@@ -321,14 +321,11 @@ guessDbmsDataTypeFromVector <- function(value) {
   } else if (class == 'integer' && type == 'integer' && mode == 'integer') {
     type = 'integer'
   } else if (type == 'character' && class == 'character' && mode == 'character') {
-    fieldCharLength <- tidyr::tibble(character = stringr::str_replace_na(string = stringi::stri_enc_toutf8(value), 
-                                                                         replacement = '') %>%
-                                       trimws()) %>% 
-      dplyr::mutate(length = stringr::str_replace_na(string = stringr::str_length(.data$character), 
-                                                     replacement = 0)) %>% 
-      dplyr::pull(.data$length) %>% #ignore the UTF warning, they will be converted to 0
-      max() %>% 
-      as.integer()
+    fieldCharLength <- try(max(stringr::str_length(value)) %>% 
+                    as.integer())
+    if (is.na(fieldCharLength)) {
+      fieldCharLength = 9999
+    }
     if (fieldCharLength <= 1) {
       fieldChar = '1'
     } else if (fieldCharLength <= 20) {

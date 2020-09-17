@@ -138,13 +138,13 @@ ROhdsiWebApi::insertCohortDefinitionSetInPackage function with generateStats = T
     </div>
 
     <pre class="usage"><span class='fu'>getInclusionStatisticsFromFiles</span>(
-  <span class='no'>cohortId</span>,
-  <span class='no'>folder</span>,
-  <span class='kw'>cohortInclusionFile</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='no'>folder</span>, <span class='st'>"cohort_inclusion.csv"</span>),
-  <span class='kw'>cohortInclusionResultFile</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='no'>folder</span>, <span class='st'>"cohort_inclusion_result.csv"</span>),
-  <span class='kw'>cohortInclusionStatsFile</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='no'>folder</span>, <span class='st'>"cohort_inclusion_stats.csv"</span>),
-  <span class='kw'>cohortSummaryStatsFile</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='no'>folder</span>, <span class='st'>"cohort_summary_stats.csv"</span>),
-  <span class='kw'>simplify</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>
+  <span class='kw'>cohortId</span>,
+  <span class='kw'>folder</span>,
+  cohortInclusionFile = <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='kw'>folder</span>, <span class='st'>"cohortInclusion.csv"</span>),
+  cohortInclusionResultFile = <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='kw'>folder</span>, <span class='st'>"cohortIncResult.csv"</span>),
+  cohortInclusionStatsFile = <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='kw'>folder</span>, <span class='st'>"cohortIncStats.csv"</span>),
+  cohortSummaryStatsFile = <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='kw'>folder</span>, <span class='st'>"cohortSummaryStats.csv"</span>),
+  simplify = <span class='fl'>TRUE</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -205,7 +205,7 @@ returned.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

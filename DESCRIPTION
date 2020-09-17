@@ -14,7 +14,7 @@ Maintainer: Gowtham Rao <gowthamrao@gmail.com>
 Description: Diagnostics for studies that use the OMOP Common Data Model and the OHDSI tools.
 Depends:
 	DatabaseConnector (>= 3.0.0),
-	R (>= 4.0.2)
+	R (>= 3.5.0)
 Imports:
   Andromeda,
   checkmate,
@@ -49,8 +49,8 @@ Suggests:
   testthat
 Remotes:
   ohdsi/Eunomia,
-  ohdsi/FeatureExtraction@develop,
-  ohdsi/ROhdsiWebApi@develop,
+  ohdsi/FeatureExtraction,
+  ohdsi/ROhdsiWebApi,
   ohdsi/DatabaseConnector,
   r-dbi/RSQLite
 License: Apache License
