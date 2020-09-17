@@ -94,7 +94,10 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::mutate(referentConceptId = paste0("<a href='", paste0(conceptIdBaseUrl(), .data$referentConceptId), "' target='_blank'>", .data$referentConceptId, "</a>")) %>% 
       dplyr::mutate(clinicalDescription = stringr::str_replace_all(string = .data$clinicalDescription, 
                                                                    pattern = "Overview:", 
-                                                                   replacement = "<strong>Overview:</strong>")) %>% 
+                                                                   replacement = "<strong>Overview:</strong>"))  %>% 
+      dplyr::mutate(clinicalDescription = stringr::str_replace_all(string = .data$clinicalDescription, 
+                                                                   pattern = "Assessment:", 
+                                                                   replacement = "<strong>Assessment:</strong>")) %>% 
       dplyr::mutate(clinicalDescription = stringr::str_replace_all(string = .data$clinicalDescription, 
                                                                    pattern = "Presentation:", 
                                                                    replacement = "<br/> <strong>Presentation: </strong>")) %>% 

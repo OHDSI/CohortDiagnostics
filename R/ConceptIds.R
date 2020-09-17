@@ -99,9 +99,15 @@ getUniqueConceptIds <-
 #' @param exportFolder 	            The folder where the output is exported by Cohort Diagnostics.
 #'                                  If this folder does not exist, or does not have the searched file
 #'                                  the function will return an error.
-#' @param conceptIds                (optional) A vector of conceptIds to filter the extract of omop 
-#'                                  vocabulary files. If NULL, all conceptIds are extracted.                      
-#' @param cdmDatabaseSchema  databaseSchema where the omop vocabulary files are located.
+#' @param conceptIdTable            (optional) A table with one column called concept_id (integer) that
+#'                                  contains all the concept_ids to limit the data pull. In the absence 
+#'                                  of this table, the entire vocabulary is pulled down (slow)
+#'                                  vocabulary files. If NULL, all conceptIds are extracted. Please
+#'                                  provide the full name of the vocabulary table e.g.
+#'                                  databaseSchema.conceptIdTable. If it is a temporary table
+#'                                  please use '#conceptIdTable'. Remember, for temporary table
+#'                                  the connection object has to be active.                     
+#' @param cdmDatabaseSchema         databaseSchema where the omop vocabulary files are located.
 #'                                  These are most commonly the same as cdmDatabaseSchema.
 #' @param vocabularyTableNames      (optional) A vector of omop vocabulary table names to download.
 #' @return
@@ -109,11 +115,11 @@ getUniqueConceptIds <-
 #'
 #' @export
 #'
-writeOmopvocabularyTables <-
+getOmopVocabularyTables <-
   function(connectionDetails = NULL,
            connection = NULL,
            cdmDatabaseSchema,
-           conceptIds = NULL,
+           conceptIdTable = NULL,
            vocabularyTableNames = c('concept',
                                     'conceptAncestor',
                                     'conceptClass',
@@ -123,6 +129,10 @@ writeOmopvocabularyTables <-
                                     'relationship',
                                     'vocabulary'),
            exportFolder) {
+    if (!is.null(connection)) {
+      connectionDetails <- NULL
+      ParallelLogger::logInfo('Connection provided')
+    }
     if (!is.null(connectionDetails)) {
       if (is.null(connection)) {
         connection <- DatabaseConnector::connect(connectionDetails)
@@ -131,6 +141,10 @@ writeOmopvocabularyTables <-
     }
     if (is.null(connection)) {
       ParallelLogger::logWarn('no connection provided')
+    }
+    
+    if (!is.null(conceptIdTable)) {
+      DatabaseConnector::dbExistsTable(conn = connection, )
     }
     
     vocabularyTableNames <-
