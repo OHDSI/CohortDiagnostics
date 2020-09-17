@@ -137,7 +137,7 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
   ParallelLogger::logInfo("Retrieving cohort definitions from WebAPI")
   cohort <- list()
   for (i in 1:nrow(cohorts)) {
-    cohort[[i]] <- cohorts %>% dplyr::slice(i)
+    cohort[[i]] <- cohorts[i,]
     ParallelLogger::logInfo("- Retrieving definitions for cohort ", cohort[[i]]$cohortFullName)
     cohortDefinition <-  ROhdsiWebApi::getCohortDefinition(cohortId = cohort[[i]]$atlasId,
                                                            baseUrl = baseUrl)

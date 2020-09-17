@@ -124,24 +124,25 @@ writeOmopvocabularyTables <-
     
     vocabularyTableNames <-
       tidyr::tibble(vocabularyTableNames = vocabularyTableNames) %>%
-      dplyr::mutate(serverTableNames = SqlRender::camelCaseToSnakeCase(vocabularyTableNames) %>%
+      dplyr::mutate(serverTableNames = 
+                      SqlRender::camelCaseToSnakeCase(vocabularyTableNames) %>%
                       tolower())
     
-    vocabularyTablesInCohortDatabaseSchema <-
+    vocabularyTablesInCdmDatabaseSchema <-
       tidyr::tibble(serverTableNames = DatabaseConnector::getTableNames(connection, 
                                                                         cdmDatabaseSchema) %>% 
                       tolower()) %>%
-      dplyr::filter(.data$serverTableNames %in% (SqlRender::camelCaseToSnakeCase(string =
-                                                                                   vocabularyTableNames$serverTableNames))) %>%
+      dplyr::filter(.data$serverTableNames %in% 
+                      (SqlRender::camelCaseToSnakeCase(string =                                                                                   vocabularyTableNames$serverTableNames))) %>%
       dplyr::left_join(vocabularyTableNames)
     
-    if (nrow(vocabularyTablesInCohortDatabaseSchema) == 0) {
+    if (nrow(vocabularyTablesInCdmDatabaseSchema) == 0) {
       ParallelLogger::logWarn("Vocabulary tables not found in ", cdmDatabaseSchema)
       stop("No vocabulary retrieved")
       return()
     }
     
-    for (i in (1:nrow(vocabularyTablesInCohortDatabaseSchema))) {
+    for (i in (1:nrow(vocabularyTablesInCdmDatabaseSchema))) {
       if (!is.null(conceptIds) & is.vector(conceptIds)) {
         conceptIdsToQuery <-
           conceptIds %>% unique() %>% paste(collapse = ",")
@@ -150,9 +151,7 @@ writeOmopvocabularyTables <-
                                 ' unique concept ids.')
         sqlFileName <- paste0("VocabularyQuery",
                               SqlRender::camelCaseToTitleCase(string = 
-                                                                vocabularyTablesInCohortDatabaseSchema %>%
-                                                                dplyr::slice(i) %>%
-                                                                dplyr::pull(.data$vocabularyTableNames)),
+                                                                vocabularyTablesInCdmDatabaseSchema[i,]$vocabularyTableNames),
                               ".sql")
         sql <-
           SqlRender::loadRenderTranslateSql(
@@ -168,35 +167,25 @@ writeOmopvocabularyTables <-
           SqlRender::render(
             sql = "select * from @cdm_database_schema.@vocabulary_table_name",
             cdm_database_schema = cdmDatabaseSchema,
-            vocabulary_table_name = vocabularyTablesInCdmDatabaseSchema %>%
-              dplyr::slice(i) %>%
-              dplyr::pull(.data$vocabularyTableNames),
+            vocabulary_table_name = vocabularyTablesInCdmDatabaseSchema[i,]$vocabularyTableNames,
             warnOnMissingParameters = FALSE
           )
         sql <- SqlRender::translate(sql = sql, targetDialect = connection@dbms)
       }
       
       assign(
-        x = vocabularyTablesInCdmDatabaseSchema %>% 
-          dplyr::slice(i) %>% 
-          dplyr::pull(.data$serverTableNames),
+        x = vocabularyTablesInCdmDatabaseSchema[i,]$serverTableNames,
         value = DatabaseConnector::QuerySql(sql = sql) %>% 
           tidyr::tibble() %>% 
           dplyr::rename_all(.tbl = .data, .funs = tolower)
       )
       
-      if (nrow(get(vocabularyTablesInCdmDatabaseSchema %>% 
-                   dplyr::slice(i) %>% 
-                   dplyr::pull(.data$serverTableNames))) > 0) {
+      if (nrow(get(vocabularyTablesInCdmDatabaseSchema[i,]$serverTableNames)) > 0) {
         readr::write_csv(
-          x = get(vocabularyTablesInCdmDatabaseSchema %>% 
-                    dplyr::slice(i) %>% 
-                    dplyr::pull(.data$serverTableNames)),
+          x = get(vocabularyTablesInCdmDatabaseSchema[i,]$serverTableNames),
           path = file.path(
             exportFolder,
-            paste0(vocabularyTablesInCdmDatabaseSchema %>% 
-                     dplyr::slice(i) %>% 
-                     dplyr::pull(.data$serverTableNames),
+            paste0(vocabularyTablesInCdmDatabaseSchema[i,]$serverTableNames,
                    ".csv"
             ) %>% tolower()
           )
@@ -207,18 +196,14 @@ writeOmopvocabularyTables <-
                               basename(file.path(
                                 exportFolder,
                                 paste0(
-                                  vocabularyTablesInCdmDatabaseSchema %>% 
-                                    dplyr::slice(i) %>% 
-                                    dplyr::pull(.data$serverTableNames),
+                                  vocabularyTablesInCdmDatabaseSchema[i,]$serverTableNames,
                                   ".csv"
                                 ) %>% tolower()
                               )),
                               ' with ',
                               nrow(
                                 get(
-                                  vocabularyTablesInCdmDatabaseSchema %>% 
-                                    dplyr::slice(i) %>% 
-                                    dplyr::pull(.data$serverTableNames)
+                                  vocabularyTablesInCdmDatabaseSchema[i,]$serverTableNames
                                 )
                               ),
                               " records.")
@@ -276,11 +261,11 @@ resolveCohortSqlToConceptIds <- function(connection = NULL,
                           min.cols = 2,
                           add = errorMessage)
   checkmate::assertCharacter(x = databaseId, 
-                          any.missing = FALSE, 
-                          min.len = 1,  
-                          max.len = 1,
-                          null.ok = FALSE,
-                          add = errorMessage)
+                             any.missing = FALSE, 
+                             min.len = 1,  
+                             max.len = 1,
+                             null.ok = FALSE,
+                             add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
   
   conceptSetSql <- list()
@@ -340,9 +325,9 @@ resolveCohortSqlToConceptIds <- function(connection = NULL,
     }
   }
   cohortCodeSets <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                             sql = "select * from #CdResolvedCodeSet",
-                                             snakeCaseToCamelCase = TRUE
-                                            ) %>% 
+                                                               sql = "select * from #CdResolvedCodeSet",
+                                                               snakeCaseToCamelCase = TRUE
+  ) %>% 
     tidyr::tibble()
   return(cohortCodeSets)
 }

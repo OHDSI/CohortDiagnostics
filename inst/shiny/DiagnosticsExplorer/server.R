@@ -54,11 +54,11 @@ styleAbsColorBar <- function(maxValue, colorPositive, colorNegative, angle = 90)
 shiny::shinyServer(function(input, output, session) {
   
   cohortId <- shiny::reactive({
-    return(cohorts$cohortId[cohorts$cohortName == input$cohort])
+    return(cohort$cohortId[cohort$cohortName == input$cohort])
   })
   
   comparatorCohortId <- shiny::reactive({
-    return(cohorts$cohortId[cohorts$cohortName == input$comparator])
+    return(cohort$cohortId[cohort$cohortName == input$comparator])
   })
   
   timeId <- shiny::reactive({
@@ -80,7 +80,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   shiny::observe({
-    subset <- unique(conceptSet$conceptSetName[conceptSet$cohortId == cohortId()]) %>% sort()
+    subset <- unique(conceptSets$conceptSetName[conceptSets$cohortId == cohortId()]) %>% sort()
     shinyWidgets::updatePickerInput(session = session,
                                     inputId = "conceptSet",
                                     choices = subset)
@@ -112,7 +112,8 @@ shiny::shinyServer(function(input, output, session) {
     dataTable <- DT::datatable(data,
                                options = options,
                                rownames = FALSE,
-                               colnames = colnames(data) %>% SqlRender::camelCaseToTitleCase(),
+                               colnames = colnames(data) %>% 
+                                 SqlRender::camelCaseToTitleCase(),
                                escape = FALSE,
                                filter = c("bottom"),
                                class = "stripe compact")
@@ -157,11 +158,6 @@ shiny::shinyServer(function(input, output, session) {
     if (nrow(data) == 0) {
       return(NULL)
     }
-    databaseIds <- data %>% 
-      dplyr::select(.data$databaseId) %>% 
-      dplyr::distinct() %>% 
-      dplyr::arrange() %>% 
-      dplyr::pull(.data$databaseId)
     
     table <- dplyr::full_join(
       data %>% 
@@ -182,8 +178,7 @@ shiny::shinyServer(function(input, output, session) {
                            values_from = .data$cohortEntries,
                            values_fill = 0
         )
-    )
-    table <- table %>% 
+    ) %>% 
       dplyr::select(order(colnames(table))) %>% 
       dplyr::relocate(.data$cohortId)
     
@@ -200,6 +195,13 @@ shiny::shinyServer(function(input, output, session) {
       ) %>% 
       dplyr::select(-.data$cohortId, -.data$url) %>%
       dplyr::arrange(.data$cohortName)
+    
+    
+    databaseIds <- cohortCount %>% 
+      dplyr::select(.data$databaseId) %>% 
+      dplyr::distinct() %>% 
+      dplyr::arrange() %>% 
+      dplyr::pull(.data$databaseId)
     
     sketch <- htmltools::withTags(table(
       class = 'display',
@@ -390,7 +392,8 @@ shiny::shinyServer(function(input, output, session) {
   
   output$timeDistTable <- DT::renderDataTable(expr = {
 
-    table <- CohortDiagnostics::getTimeDistributionResult(cohortIds = cohortId(), databaseIds = input$databases)
+    table <- CohortDiagnostics::getTimeDistributionResult(cohortIds = cohortId(), 
+                                                          databaseIds = input$databases)
 
     if (is.null(table)) {
       return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
@@ -407,12 +410,12 @@ shiny::shinyServer(function(input, output, session) {
     table <- DT::datatable(table,
                            options = options,
                            rownames = FALSE,
-                           colnames = colnames(table) %>% SqlRender::camelCaseToTitleCase(),
+                           colnames = colnames(table) %>% 
+                             SqlRender::camelCaseToTitleCase(),
                            filter = c('bottom'),
                            class = "stripe nowrap compact")
     table <- DT::formatRound(table, c("Average", "SD"), digits = 2)
     table <- DT::formatRound(table, c("Min", "P10", "P25", "Median", "P75", "P90", "Max"), digits = 0)
-
     return(table)
   }, server = TRUE)
   
