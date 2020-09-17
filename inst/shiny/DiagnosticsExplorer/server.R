@@ -861,86 +861,6 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
-  computeTemporalCharacterizationBalance <- shiny::reactive({
-    if (length(input$timeIdChoices) != 2 ) {
-      return(tidyr::tibble())
-    }
-    covs1 <- temporalCovariateValue %>% 
-      dplyr::filter(.data$timeId == timeId()[1],
-                    .data$databaseId == input$database)
-    covs2 <- temporalCovariateValue %>% 
-      dplyr::filter(.data$timeId == timeId()[2],
-                    .data$databaseId == input$database)
-    covs1 <- dplyr::left_join(x = covs1, y = temporalCovariateRef)
-    covs2 <- dplyr::left_join(x = covs2, y = temporalCovariateRef)
-    balance <- compareTemporalCharacterization(covs1, covs2) %>%
-      dplyr::mutate(absStdDiff = abs(.data$stdDiff))
-    return(balance)
-  })
-  
-  temporalCharacterizationPlot <- shiny::reactive({
-    balance <- computeTemporalCharacterizationBalance()
-    if (nrow(balance) == 0) {
-      return(NULL)
-    }
-    balance$mean1[is.na(balance$mean1)] <- 0
-    balance$mean2[is.na(balance$mean2)] <- 0
-    plot <- ggplot2::ggplot(balance, ggplot2::aes(x = mean1, y = mean2, color = absStdDiff)) +
-      ggplot2::geom_point(alpha = 0.3, shape = 16, size = 2) +
-      ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
-      ggplot2::geom_hline(yintercept = 0) +
-      ggplot2::geom_vline(xintercept = 0) +             
-      ggplot2::scale_x_continuous(input$timeIdChoices[[2]], limits = c(0, 1)) +
-      ggplot2::scale_y_continuous(input$timeIdChoices[[1]], limits = c(0, 1)) +
-      ggplot2::scale_color_gradient("Absolute\nStd. Diff.", low = "blue", high = "red", space = "Lab", na.value = "red")
-    return(plot)
-  })
-  
-  output$temporalCharacterizationPlot <- shiny::renderPlot(expr = {
-    return(temporalCharacterizationPlot())
-  }, res = 100)
-  
-  output$temporalCharacterizationPlotHover <- shiny::renderUI({
-    balance <- computeTemporalCharacterizationBalance()
-    balance$mean1[is.na(balance$mean1)] <- 0
-    balance$mean2[is.na(balance$mean2)] <- 0
-    if (nrow(balance) == 0) {
-      return(NULL)
-    } else {
-      hover <- input$temporalCharacterizationPlotHoverInfo
-      point <- nearPoints(balance, hover, threshold = 5, maxpoints = 1, addDist = TRUE)
-      if (nrow(point) == 0) {
-        return(NULL)
-      }
-      text <- paste(point$covariateName, 
-                    "",
-                    sprintf("<b>Mean Target: </b> %0.2f", point$mean1),
-                    sprintf("<b>Mean Comparator: </b> %0.2f", point$mean2), 
-                    sprintf("<b>Std diff.: </b> %0.2f", point$stdDiff), 
-                    sep = "<br/>")
-      left_px <- hover$coords_css$x
-      top_px <- hover$coords_css$y
-      if (hover$x > 0.5) {
-        xOffset <- -505
-      } else {
-        xOffset <- 5
-      }
-      style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
-                      "left:",
-                      left_px + xOffset,
-                      "px; top:",
-                      top_px - 150,
-                      "px; width:500px;")
-      div(
-        style = "position: relative; width: 0; height: 0",
-        wellPanel(
-          style = style,
-          p(HTML(text))
-        )
-      )
-    }
-  })
-  
   output$overlapTable <- DT::renderDataTable(expr = {
     data <- CohortDiagnostics::getCohortOverlapResult(targetCohortIds = cohortId(), 
                                                       comparatorCohortIds = comparatorCohortId(), 
@@ -1358,7 +1278,5 @@ shiny::shinyServer(function(input, output, session) {
   }
   
   output$timeDistributionPlot <- download_box("TimeDistribution", timeDisPlotDownload())
-  output$downloadCompareCohortPlot <- download_box("CompareCohort", downloadCohortComparePlot())
   output$downloadOverlapPlot <- download_box("OverlapPlot", overLapPlot())
-  output$downloadTemporalCharacterizationPlot <- download_box("Temporal characterization plot", temporalCharacterizationPlot())
 })
