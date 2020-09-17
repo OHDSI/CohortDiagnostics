@@ -162,18 +162,18 @@ shiny::shinyServer(function(input, output, session) {
     table <- dplyr::full_join(
       data %>% 
         dplyr::select(.data$cohortId, .data$databaseId, 
-                      .data$cohortSubjects) %>% 
+                      .data$cohortSubjects, .data$cohortName) %>% 
         dplyr::mutate(columnName = paste0(.data$databaseId, "_subjects")) %>% 
-        tidyr::pivot_wider(id_cols = c(.data$cohortId),
+        tidyr::pivot_wider(id_cols = c(.data$cohortId, .data$cohortName),
                            names_from = columnName,
                            values_from = .data$cohortSubjects,
                            values_fill = 0
         ),
       data %>% 
         dplyr::select(.data$cohortId, .data$databaseId, 
-                      .data$cohortEntries) %>% 
+                      .data$cohortEntries, .data$cohortName) %>% 
         dplyr::mutate(columnName = paste0(.data$databaseId, "_entries")) %>% 
-        tidyr::pivot_wider(id_cols = c(.data$cohortId),
+        tidyr::pivot_wider(id_cols = c(.data$cohortId, .data$cohortName),
                            names_from = columnName,
                            values_from = .data$cohortEntries,
                            values_fill = 0
@@ -198,7 +198,8 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::arrange(.data$cohortName)
     
     
-    databaseIds <- cohortCount %>% 
+    databaseIds <- cohortCount %>%
+      dplyr::filter(.data$databaseId %in% input$databases) %>% 
       dplyr::select(.data$databaseId) %>% 
       dplyr::distinct() %>% 
       dplyr::arrange() %>% 
