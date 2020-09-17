@@ -45,6 +45,12 @@ if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {
 } else {
   writeLines("No premerged file found")
 }
+
+#####################################################
+phenotypeDescription <- phenotypedescription
+#####################################################
+
+
 # else {
 #   zipFiles <- list.files(dataFolder, pattern = ".zip", full.names = TRUE)
 #   
@@ -147,3 +153,5 @@ if (exists("temporalTimeRef")) {
 # } else {
 #   conceptSet <- NULL 
 # }
+
+
