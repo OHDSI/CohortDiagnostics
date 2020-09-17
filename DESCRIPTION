@@ -1,8 +1,8 @@
 Package: CohortDiagnostics
 Type: Package
 Title: Diagnostics for OHDSI Studies
-Version: 1.2.7
-Date: 2020-09-08
+Version: 2.0.0
+Date: 2020-09-15
 Authors@R: c(
     person("Gowtham", "Rao", email = "gowthamrao@gmail.com", role = c("aut", "cre")),
     person("Martijn", "Schuemie", email = "schuemie@ohdsi.org", role = c("aut")),
@@ -20,13 +20,13 @@ Imports:
   checkmate,
   digest,
   dplyr (>= 1.0.0),
-  FeatureExtraction (>= 3.0.1),
+  FeatureExtraction (>= 3.1.0),
   ggplot2,
   ParallelLogger (>= 2.0.0),
   readr,
   rlang,
   RJSONIO,
-  ROhdsiWebApi (>= 1.1.0),
+  ROhdsiWebApi (>= 1.1.2),
   SqlRender (>= 1.6.7),
   stringr,
   tibble (>= 3.0.0),
@@ -43,12 +43,15 @@ Suggests:
   scales,
   shiny,
   shinydashboard,
+  stringi,
+  tidyselect,
   VennDiagram,
   testthat
 Remotes:
   ohdsi/Eunomia,
   ohdsi/FeatureExtraction,
   ohdsi/ROhdsiWebApi,
+  ohdsi/DatabaseConnector,
   r-dbi/RSQLite
 License: Apache License
 VignetteBuilder: knitr

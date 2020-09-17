@@ -20,7 +20,9 @@ computeChecksum <- function(column) {
 
 isTaskRequired <- function(..., checksum, recordKeepingFile, verbose = TRUE) {
   if (file.exists(recordKeepingFile)) {
-    recordKeeping <-  readr::read_csv(recordKeepingFile, col_types = readr::cols())
+    recordKeeping <-  readr::read_csv(recordKeepingFile, 
+                                      col_types = readr::cols(),
+                                      guess_max = min(1e7))
     task <- recordKeeping[getKeyIndex(list(...), recordKeeping), ]
     if (nrow(task) == 0) {
       return(TRUE)
@@ -43,10 +45,12 @@ isTaskRequired <- function(..., checksum, recordKeepingFile, verbose = TRUE) {
   }
 }
 
-getRequiredTasks <- function(..., checksum, recordKeepingFile, verbose = TRUE) {
+getRequiredTasks <- function(..., checksum, recordKeepingFile) {
   tasks <- list(...)
   if (file.exists(recordKeepingFile) && length(tasks[[1]]) > 0) {
-    recordKeeping <-  readr::read_csv(recordKeepingFile, col_types = readr::cols())
+    recordKeeping <-  readr::read_csv(recordKeepingFile, 
+                                      col_types = readr::cols(), 
+                                      guess_max = min(1e7))
     tasks$checksum <- checksum
     tasks <- tibble::as_tibble(tasks)
     if (all(names(tasks) %in% names(recordKeeping))) {
@@ -68,7 +72,7 @@ getKeyIndex <- function(key, recordKeeping) {
   if (nrow(recordKeeping) == 0 || length(key[[1]]) == 0 || !all(names(key) %in% names(recordKeeping))) {
     return(c())
   } else {
-    key <- unique(tibble::as_tibble(key))
+    key <- tibble::as_tibble(key) %>% dplyr::distinct()
     recordKeeping$idxCol <- 1:nrow(recordKeeping)
     idx <- merge(recordKeeping, key)$idx
     return(idx)
@@ -83,7 +87,17 @@ recordTasksDone <- function(..., checksum, recordKeepingFile, incremental = TRUE
     return()
   }
   if (file.exists(recordKeepingFile)) {
-    recordKeeping <-  readr::read_csv(recordKeepingFile, col_types = readr::cols())
+    recordKeeping <-  readr::read_csv(recordKeepingFile, 
+                                      col_types = readr::cols(),
+                                      guess_max = min(1e7))
+    if ('cohortId' %in% colnames(recordKeeping)) {
+      recordKeeping <- recordKeeping %>% 
+        dplyr::mutate(cohortId = as.double(.data$cohortId))
+    }
+    if ('comparatorId' %in% colnames(recordKeeping)) {
+      recordKeeping <- recordKeeping %>% 
+        dplyr::mutate(comparatorId = as.double(.data$comparatorId))
+    }
     idx <- getKeyIndex(list(...), recordKeeping)
     if (length(idx) > 0) {
       recordKeeping <- recordKeeping[-idx, ]
@@ -106,23 +120,40 @@ writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
     params$data = data
     params$fileName = fileName
     do.call(saveIncremental, params)
+    ParallelLogger::logInfo(" appending records to ", fileName)
   } else {
+    ParallelLogger::logInfo(" creating ",fileName)
     readr::write_csv(x = data, path = fileName)
   }
 }
 
 saveIncremental <- function(data, fileName, ...) {
-  if (length(list(...)[[1]]) == 0) {
-    return()
+  if (!length(list(...)) == 0) {
+    if (length(list(...)[[1]]) == 0) {
+      return()
+    }
   }
   if (file.exists(fileName)) {
-    previousData <- readr::read_csv(fileName, col_types = readr::cols())
+    previousData <- readr::read_csv(fileName, 
+                                    col_types = readr::cols(),
+                                    guess_max = min(1e7))
     if ((nrow(previousData)) > 0) {
-      idx <- getKeyIndex(list(...), previousData)
+      if (!length(list(...)) == 0) {
+        idx <- getKeyIndex(list(...), previousData)
+      } else {
+        idx <- NULL
+      }
       if (length(idx) > 0) {
         previousData <- previousData[-idx, ] 
       }
-      data <- dplyr::bind_rows(previousData, data)
+      if (nrow(previousData) > 0) {
+        data <- dplyr::bind_rows(previousData, data) %>% 
+          dplyr::distinct() %>% 
+          tidyr::tibble()
+      } else {
+        data <- data %>% tidyr::tibble()
+      }
+      
     }
   } 
   readr::write_csv(data, fileName)

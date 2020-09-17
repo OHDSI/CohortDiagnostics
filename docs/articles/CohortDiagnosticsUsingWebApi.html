@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.0</span>
       </span>
     </div>
 
@@ -88,7 +88,7 @@
       <h1 data-toc-skip>Running cohort diagnostics using WebAPI</h1>
                         <h4 class="author">Martijn J. Schuemie</h4>
             
-            <h4 class="date">2020-09-08</h4>
+            <h4 class="date">2020-09-17</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/master/vignettes/CohortDiagnosticsUsingWebApi.Rmd"><code>vignettes/CohortDiagnosticsUsingWebApi.Rmd</code></a></small>
       <div class="hidden name"><code>CohortDiagnosticsUsingWebApi.Rmd</code></div>
@@ -168,31 +168,37 @@
 </tbody>
 </table>
 <p>We can read the table using</p>
-<div class="sourceCode" id="cb1"><html><body><pre class="r"><span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="no">CohortDiagnostics</span>)
-<span class="no">cohortSetReference</span> <span class="kw">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span>(<span class="st">"cohortsToDiagnose.csv"</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb1"><pre class="downlit">
+<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="kw"><a href="https://ohdsi.github.io/CohortDiagnostics">CohortDiagnostics</a></span>)
+<span class="kw">cohortSetReference</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span>(<span class="st">"cohortsToDiagnose.csv"</span>)
+</pre></div>
 </div>
 <div id="configuring-the-connection-to-the-server" class="section level2">
 <h2 class="hasAnchor">
 <a href="#configuring-the-connection-to-the-server" class="anchor"></a>Configuring the connection to the server</h2>
 <p>We need to tell R how to connect to the server where the data are. <code>CohortDiagnostics</code> uses the <code>DatabaseConnector</code> package, which provides the <code>createConnectionDetails</code> function. Type <code>?createConnectionDetails</code> for the specific settings required for the various database management systems (DBMS). For example, one might connect to a PostgreSQL database using this code:</p>
-<div class="sourceCode" id="cb2"><html><body><pre class="r"><span class="no">connectionDetails</span> <span class="kw">&lt;-</span> <span class="fu">createConnectionDetails</span>(<span class="kw">dbms</span> <span class="kw">=</span> <span class="st">"postgresql"</span>,
-                                             <span class="kw">server</span> <span class="kw">=</span> <span class="st">"localhost/ohdsi"</span>,
-                                             <span class="kw">user</span> <span class="kw">=</span> <span class="st">"joe"</span>,
-                                             <span class="kw">password</span> <span class="kw">=</span> <span class="st">"supersecret"</span>)
+<div class="sourceCode" id="cb2"><pre class="downlit">
+<span class="kw">connectionDetails</span> <span class="op">&lt;-</span> <span class="fu">createConnectionDetails</span>(dbms = <span class="st">"postgresql"</span>,
+                                             server = <span class="st">"localhost/ohdsi"</span>,
+                                             user = <span class="st">"joe"</span>,
+                                             password = <span class="st">"supersecret"</span>)
 
-<span class="no">cdmDatabaseSchema</span> <span class="kw">&lt;-</span> <span class="st">"my_cdm_data"</span>
-<span class="no">oracleTempSchema</span> <span class="kw">&lt;-</span> <span class="kw">NULL</span>
-<span class="no">cohortDatabaseSchema</span> <span class="kw">&lt;-</span> <span class="st">"my_schema"</span>
-<span class="no">cohortTable</span> <span class="kw">&lt;-</span> <span class="st">"my_cohort_table"</span></pre></body></html></div>
+<span class="kw">cdmDatabaseSchema</span> <span class="op">&lt;-</span> <span class="st">"my_cdm_data"</span>
+<span class="kw">oracleTempSchema</span> <span class="op">&lt;-</span> <span class="kw">NULL</span>
+<span class="kw">cohortDatabaseSchema</span> <span class="op">&lt;-</span> <span class="st">"my_schema"</span>
+<span class="kw">cohortTable</span> <span class="op">&lt;-</span> <span class="st">"my_cohort_table"</span>
+</pre></div>
 <p>The last four lines define the <code>cdmDatabaseSchema</code>, <code>oracleTempSchema</code>, <code>cohortDatabaseSchema</code>, and <code>cohortTable</code> variables. We’ll use the <code>cdmDatabaseSchema</code> later to tell R where the data in CDM format live. The <code>oracleTempSchema</code> is needed only for Oracle users, since Oracle does not support temporary tables. The <code>cohortDatabaseSchema</code>, and <code>cohortTable</code> specify where we want to instantiate our cohorts. Note that for Microsoft SQL Server, databaseschemas need to specify both the database and the schema, so for example <code>cdmDatabaseSchema &lt;- "my_cdm_data.dbo"</code>.</p>
 </div>
 <div id="creating-a-new-cohort-table" class="section level2">
 <h2 class="hasAnchor">
 <a href="#creating-a-new-cohort-table" class="anchor"></a>Creating a new cohort table</h2>
 <p>In order to run most of the cohort diagnostics, we need to instantiate the cohorts. The best way is to instantiate the cohorts in a new cohort table. We can use the <code>createCohortTable</code> to create an empty cohort table:</p>
-<div class="sourceCode" id="cb3"><html><body><pre class="r"><span class="fu"><a href="../reference/createCohortTable.html">createCohortTable</a></span>(<span class="kw">connectionDetails</span> <span class="kw">=</span> <span class="no">connectionDetails</span>,
-                  <span class="kw">cohortDatabaseSchema</span> <span class="kw">=</span> <span class="no">cohortDatabaseSchema</span>,
-                  <span class="kw">cohortTable</span> <span class="kw">=</span> <span class="no">cohortTable</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb3"><pre class="downlit">
+<span class="fu"><a href="../reference/createCohortTable.html">createCohortTable</a></span>(connectionDetails = <span class="kw">connectionDetails</span>,
+                  cohortDatabaseSchema = <span class="kw">cohortDatabaseSchema</span>,
+                  cohortTable = <span class="kw">cohortTable</span>)
+</pre></div>
 <p>Note this this function will <strong>delete the table if it already exists</strong> before creating it.</p>
 </div>
 <div id="instantiating-the-cohorts" class="section level2">
@@ -202,46 +208,50 @@
 <p>To connect to the WebAPI, we need to provide the base URL. This is a URL that looks something like “<a href="http://server.org:80/WebAPI" class="uri">http://server.org:80/WebAPI</a>”. If you do not know the WebAPI’s base URL, contact the ATLAS administrator.</p>
 <p>We have the option to also generate inclusion rule statistics while the cohorts are instantiated (recommended). If we want to do this, we need to provide a folder where the inclusion rule statistics will be stored for later use.</p>
 <p>To instantiate the cohorts:</p>
-<div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="no">baseUrl</span> <span class="kw">&lt;-</span> <span class="st">"http://server.org:80/WebAPI"</span>
-<span class="no">inclusionStatisticsFolder</span> <span class="kw">&lt;-</span> <span class="st">"c:/temp/incStats/"</span>
+<div class="sourceCode" id="cb4"><pre class="downlit">
+<span class="kw">baseUrl</span> <span class="op">&lt;-</span> <span class="st">"http://server.org:80/WebAPI"</span>
+<span class="kw">inclusionStatisticsFolder</span> <span class="op">&lt;-</span> <span class="st">"c:/temp/incStats/"</span>
 
-<span class="fu"><a href="../reference/instantiateCohortSet.html">instantiateCohortSet</a></span>(<span class="kw">connectionDetails</span> <span class="kw">=</span> <span class="no">connectionDetails</span>,
-                     <span class="kw">cdmDatabaseSchema</span> <span class="kw">=</span> <span class="no">cdmDatabaseSchema</span>,
-                     <span class="kw">oracleTempSchema</span> <span class="kw">=</span> <span class="no">oracleTempSchema</span>,
-                     <span class="kw">cohortDatabaseSchema</span> <span class="kw">=</span> <span class="no">cohortDatabaseSchema</span>,
-                     <span class="kw">cohortTable</span> <span class="kw">=</span> <span class="no">cohortTable</span>,
-                     <span class="kw">baseUrl</span> <span class="kw">=</span> <span class="no">baseUrl</span>,
-                     <span class="kw">cohortSetReference</span> <span class="kw">=</span> <span class="no">cohortSetReference</span>,
-                     <span class="kw">generateInclusionStats</span> <span class="kw">=</span> <span class="fl">TRUE</span>,
-                     <span class="kw">inclusionStatisticsFolder</span> <span class="kw">=</span> <span class="no">inclusionStatisticsFolder</span>)</pre></body></html></div>
+<span class="fu"><a href="../reference/instantiateCohortSet.html">instantiateCohortSet</a></span>(connectionDetails = <span class="kw">connectionDetails</span>,
+                     cdmDatabaseSchema = <span class="kw">cdmDatabaseSchema</span>,
+                     oracleTempSchema = <span class="kw">oracleTempSchema</span>,
+                     cohortDatabaseSchema = <span class="kw">cohortDatabaseSchema</span>,
+                     cohortTable = <span class="kw">cohortTable</span>,
+                     baseUrl = <span class="kw">baseUrl</span>,
+                     cohortSetReference = <span class="kw">cohortSetReference</span>,
+                     generateInclusionStats = <span class="fl">TRUE</span>,
+                     inclusionStatisticsFolder = <span class="kw">inclusionStatisticsFolder</span>)
+</pre></div>
 <p>This command will contact the WebApi to obtain the cohort definitions, instantiate them in the cohort table, and write the inclusion rule statistics to the specified folder.</p>
 </div>
 <div id="generating-the-diagnostics" class="section level2">
 <h2 class="hasAnchor">
 <a href="#generating-the-diagnostics" class="anchor"></a>Generating the diagnostics</h2>
 <p>Next we generate the cohort diagnostics:</p>
-<div class="sourceCode" id="cb5"><html><body><pre class="r"><span class="no">databaseId</span> <span class="kw">&lt;-</span> <span class="st">"MyData"</span>
-<span class="no">exportFolder</span> <span class="kw">&lt;-</span> <span class="st">"c:/temp/export"</span>
+<div class="sourceCode" id="cb5"><pre class="downlit">
+<span class="kw">databaseId</span> <span class="op">&lt;-</span> <span class="st">"MyData"</span>
+<span class="kw">exportFolder</span> <span class="op">&lt;-</span> <span class="st">"c:/temp/export"</span>
 
-<span class="fu"><a href="../reference/runCohortDiagnostics.html">runCohortDiagnostics</a></span>(<span class="kw">baseUrl</span> <span class="kw">=</span> <span class="no">baseUrl</span>,
-                     <span class="kw">cohortSetReference</span> <span class="kw">=</span> <span class="no">cohortSetReference</span>,
-                     <span class="kw">connectionDetails</span> <span class="kw">=</span> <span class="no">connectionDetails</span>,
-                     <span class="kw">cdmDatabaseSchema</span> <span class="kw">=</span> <span class="no">cdmDatabaseSchema</span>,
-                     <span class="kw">oracleTempSchema</span> <span class="kw">=</span> <span class="no">oracleTempSchema</span>,
-                     <span class="kw">cohortDatabaseSchema</span> <span class="kw">=</span> <span class="no">cohortDatabaseSchema</span>,
-                     <span class="kw">cohortTable</span> <span class="kw">=</span> <span class="no">cohortTable</span>,
-                     <span class="kw">inclusionStatisticsFolder</span> <span class="kw">=</span> <span class="no">inclusionStatisticsFolder</span>,
-                     <span class="kw">exportFolder</span> <span class="kw">=</span> <span class="no">exportFolder</span>,
-                     <span class="kw">databaseId</span> <span class="kw">=</span> <span class="no">databaseId</span>,
-                     <span class="kw">runInclusionStatistics</span> <span class="kw">=</span> <span class="fl">TRUE</span>,
-                     <span class="kw">runIncludedSourceConcepts</span> <span class="kw">=</span> <span class="fl">TRUE</span>,
-                     <span class="kw">runOrphanConcepts</span> <span class="kw">=</span> <span class="fl">TRUE</span>,
-                     <span class="kw">runTimeDistributions</span> <span class="kw">=</span> <span class="fl">TRUE</span>,
-                     <span class="kw">runBreakdownIndexEvents</span> <span class="kw">=</span> <span class="fl">TRUE</span>,
-                     <span class="kw">runIncidenceRate</span> <span class="kw">=</span> <span class="fl">TRUE</span>,
-                     <span class="kw">runCohortOverlap</span> <span class="kw">=</span> <span class="fl">TRUE</span>,
-                     <span class="kw">runCohortCharacterization</span> <span class="kw">=</span> <span class="fl">TRUE</span>,
-                     <span class="kw">minCellCount</span> <span class="kw">=</span> <span class="fl">5</span>)</pre></body></html></div>
+<span class="fu"><a href="../reference/runCohortDiagnostics.html">runCohortDiagnostics</a></span>(baseUrl = <span class="kw">baseUrl</span>,
+                     cohortSetReference = <span class="kw">cohortSetReference</span>,
+                     connectionDetails = <span class="kw">connectionDetails</span>,
+                     cdmDatabaseSchema = <span class="kw">cdmDatabaseSchema</span>,
+                     oracleTempSchema = <span class="kw">oracleTempSchema</span>,
+                     cohortDatabaseSchema = <span class="kw">cohortDatabaseSchema</span>,
+                     cohortTable = <span class="kw">cohortTable</span>,
+                     inclusionStatisticsFolder = <span class="kw">inclusionStatisticsFolder</span>,
+                     exportFolder = <span class="kw">exportFolder</span>,
+                     databaseId = <span class="kw">databaseId</span>,
+                     runInclusionStatistics = <span class="fl">TRUE</span>,
+                     runIncludedSourceConcepts = <span class="fl">TRUE</span>,
+                     runOrphanConcepts = <span class="fl">TRUE</span>,
+                     runTimeDistributions = <span class="fl">TRUE</span>,
+                     runBreakdownIndexEvents = <span class="fl">TRUE</span>,
+                     runIncidenceRate = <span class="fl">TRUE</span>,
+                     runCohortOverlap = <span class="fl">TRUE</span>,
+                     runCohortCharacterization = <span class="fl">TRUE</span>,
+                     minCellCount = <span class="fl">5</span>)
+</pre></div>
 <p>The databaseId is a short string that will be used to identify the data from this database in the Shiny app. Make sure to give it a name you can easily recognize.</p>
 <p>Once completed, a zip file will have been created in the specified export folder. This zip file can be shared between sites, as it does not contain patient-identifiable information. Note that cell counts smaller than 5 have been removed, as specified using the <code>minCellCount</code> argument, to ensure non-identifiability.</p>
 </div>
@@ -251,9 +261,13 @@
 <a href="#viewing-the-diagnostics" class="anchor"></a>Viewing the diagnostics</h1>
 <p>Assuming you completed the steps described above for one or more databases, you should now have a set of zip files, one per database. Make sure to place all zip files in a single folder, for example <code>c:/temp/allZipFiles</code>.</p>
 <p>Optionally, we can pre-merge the zip files. Merging the files can take a while, and doing it beforehand will speed up starting the Shiny app:</p>
-<div class="sourceCode" id="cb6"><html><body><pre class="r"><span class="fu"><a href="../reference/preMergeDiagnosticsFiles.html">preMergeDiagnosticsFiles</a></span>(<span class="st">"C:/temp/allZipFiles"</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb6"><pre class="downlit">
+<span class="fu"><a href="../reference/preMergeDiagnosticsFiles.html">preMergeDiagnosticsFiles</a></span>(<span class="st">"C:/temp/allZipFiles"</span>)
+</pre></div>
 <p>To view the diagnostics, use</p>
-<div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="fu"><a href="../reference/launchDiagnosticsExplorer.html">launchDiagnosticsExplorer</a></span>(<span class="st">"C:/temp/allZipFiles"</span>)</pre></body></html></div>
+<div class="sourceCode" id="cb7"><pre class="downlit">
+<span class="fu"><a href="../reference/launchDiagnosticsExplorer.html">launchDiagnosticsExplorer</a></span>(<span class="st">"C:/temp/allZipFiles"</span>)
+</pre></div>
 <p>This will launch the Shiny app shown below:</p>
 <div class="figure">
 <img src="shiny.png" alt=""><p class="caption">The Diagnostics Explorer Shiny app</p>
@@ -287,7 +301,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

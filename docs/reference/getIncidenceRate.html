@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.0</span>
       </span>
     </div>
 
@@ -136,15 +136,16 @@
     </div>
 
     <pre class="usage"><span class='fu'>getIncidenceRate</span>(
-  <span class='kw'>connectionDetails</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>connection</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='no'>cohortDatabaseSchema</span>,
-  <span class='no'>cohortTable</span>,
-  <span class='no'>cdmDatabaseSchema</span>,
-  <span class='kw'>oracleTempSchema</span> <span class='kw'>=</span> <span class='no'>oracleTempSchema</span>,
-  <span class='kw'>firstOccurrenceOnly</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>washoutPeriod</span> <span class='kw'>=</span> <span class='fl'>365</span>,
-  <span class='no'>cohortId</span>
+  connectionDetails = <span class='kw'>NULL</span>,
+  connection = <span class='kw'>NULL</span>,
+  <span class='kw'>cohortDatabaseSchema</span>,
+  <span class='kw'>cohortTable</span>,
+  <span class='kw'>cdmDatabaseSchema</span>,
+  cdmVersion = <span class='fl'>5</span>,
+  oracleTempSchema = <span class='kw'>oracleTempSchema</span>,
+  firstOccurrenceOnly = <span class='fl'>TRUE</span>,
+  washoutPeriod = <span class='fl'>365</span>,
+  <span class='kw'>cohortId</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -182,6 +183,10 @@ Note that for SQL Server, this should include both the database and
 schema name, for example 'cdm_data.dbo'.</p></td>
     </tr>
     <tr>
+      <th>cdmVersion</th>
+      <td><p>The version of the OMOP CDM. Default 5. (Note: only 5 is supported.)</p></td>
+    </tr>
+    <tr>
       <th>oracleTempSchema</th>
       <td><p>Should be used in Oracle to specify a schema where the user has write
 privileges for storing temporary tables.</p></td>
@@ -198,7 +203,7 @@ the denominator.</p></td>
     </tr>
     <tr>
       <th>cohortId</th>
-      <td><p>The cohort definition ID used to reference the cohort in the cohort
+      <td><p>The cohort Id used to reference the cohort in the cohort
 table.</p></td>
     </tr>
     </table>
@@ -226,7 +231,7 @@ option to save dataframes.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

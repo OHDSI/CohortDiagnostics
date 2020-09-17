@@ -21,6 +21,7 @@ runCohortDiagnostics(
   databaseId,
   databaseName = databaseId,
   databaseDescription = "",
+  cdmVersion = 5,
   runInclusionStatistics = TRUE,
   runIncludedSourceConcepts = TRUE,
   runOrphanConcepts = TRUE,
@@ -34,7 +35,11 @@ runCohortDiagnostics(
  
     temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(useConditionOccurrence
     = TRUE, useDrugEraStart = TRUE, useProcedureOccurrence = TRUE, useMeasurement = TRUE,
-    temporalStartDays = c(-365, -30, 0, 1, 31), temporalEndDays = c(-31, -1, 0, 30, 365)),
+    temporalStartDays = c(-365, -30, 0, 1, 31, seq(from = -30, to = -420, by = -30),
+    seq(from = 1, to = 390, by = 30)), temporalEndDays = c(-31, -1, 0, 30, 365, seq(from
+    = 0, to = -390, by = -30), seq(from = 31, to = 420, by = 30))),
+  runResolveCohortSqlToConceptIds = TRUE,
+  runCombineConceptSetsFromCohorts = TRUE,
   minCellCount = 5,
   incremental = FALSE,
   incrementalFolder = exportFolder
@@ -45,9 +50,9 @@ runCohortDiagnostics(
 \code{baseUrl} and \code{cohortSetReference} have been specified.}
 
 \item{cohortToCreateFile}{The location of the cohortToCreate file within the package. Is ignored if 
-\code{baseUrl} and \code{cohortSetReference} have been specified. The cohortToCreateFile
-must be .csv file that is expected to be read into a dataframe object identical to requirements
-for \code{cohortSetReference} argument.}
+\code{baseUrl} and \code{cohortSetReference} have been specified. The
+cohortToCreateFile must be .csv file that is expected to be read into 
+a dataframe object identical to requirements for \code{cohortSetReference} argument.}
 
 \item{baseUrl}{The base URL for the WebApi instance, for example:
 "http://server.org:80/WebAPI". Can be left NULL if 
@@ -95,6 +100,8 @@ does not exist it will be created.}
 
 \item{databaseDescription}{A short description (several sentences) of the database.}
 
+\item{cdmVersion}{The version of the OMOP CDM. Default 5. (Note: only 5 is supported.)}
+
 \item{runInclusionStatistics}{Generate and export statistic on the cohort inclusion rules?}
 
 \item{runIncludedSourceConcepts}{Generate and export the source concepts included in the cohorts?}
@@ -107,7 +114,9 @@ does not exist it will be created.}
 
 \item{runIncidenceRate}{Generate and export the cohort incidence  rates?}
 
-\item{runCohortOverlap}{Generate and export the cohort overlap?}
+\item{runCohortOverlap}{Generate and export the cohort overlap? Overlaps are checked within cohortIds
+that have the same referrent conceptId sourced from the CohortSetReference or 
+cohortToCreateFile.}
 
 \item{runCohortCharacterization}{Generate and export the cohort characterization? 
 Only records with values greater than 0.0001 are returned.}
@@ -123,12 +132,20 @@ Only records with values greater than 0.001 are returned.}
 the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
 of such objects.}
 
+\item{runResolveCohortSqlToConceptIds}{Resolve and export all the concept ids in all the concept set expressions in cohorts?}
+
+\item{runCombineConceptSetsFromCohorts}{Generate and export all the concept set expressions from cohorts?}
+
 \item{minCellCount}{The minimum cell count for fields contains person counts or fractions.}
 
 \item{incremental}{Create only cohort diagnostics that haven't been created before?}
 
 \item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
 of which cohort diagnostics has been executed.}
+
+\item{vocabularyDatabaseSchema}{(optional) Schema name where your vocabulary resides. Most commonly it is the same
+as CDM databaseSchema. Note that for SQL Server, 
+this should include both the database and schema name, for example 'cdm_data.dbo'.}
 }
 \description{
 Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the
@@ -141,8 +158,7 @@ Alternatively, a covariate setting object may be created using the above as an e
 }
 \details{
 Currently two ways of executing this function are supported, either 
-(1) [Package Mode] embedded in a study package, assuming the cohort definitions are stored in that package using the 
-    \code{ROhdsiWebApi::insertCohortDefinitionSetInPackage}, or 
+(1) [Package Mode] embedded in a study package, assuming the cohort definitions are stored in that package using the \code{ROhdsiWebApi::insertCohortDefinitionSetInPackage}, or 
 (2) [WebApi Mode] By using a WebApi interface to retrieve the cohort definitions.
 
 When using this function in Package Mode: Use the \code{packageName} and \code{cohortToCreateFile} to specify
@@ -155,9 +171,12 @@ Note: if the parameters for both Package Mode and WebApi Mode are provided, then
 
 The \code{cohortSetReference} argument must be a data frame with  the following columns:
 \describe{
-\item{atlasId}{The cohort ID in ATLAS.}
-\item{atlasName}{The full name of the cohort. This will be shown in the Shiny app.}
-\item{cohortId}{The cohort ID to use in the package. Usually the same as the cohort ID in ATLAS.}
-\item{name}{A short name for the cohort, to use to create file names. do not use special characters.}
+\item{referentConceptId}{A standard omop concept id that serves as the referant phenotype definition for the cohort Id.}
+\item{cohortId}{The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names. It is recommended to be (referrentConceptId * 1000) + a number between 3 to 999}
+\item{webApiCohortId}{Cohort Id in the webApi/atlas instance. It is a required field to run Cohort Diagnostics in WebApi mode. It is discarded in package mode.}
+\item{cohortName}{The full name of the cohort. This will be shown in the Shiny app.}
+\item{logicDescription}{A human understandable brief description of the cohort definition. This logic does not have to a 
+fully specified description of the cohort definition, but should provide enough context to help user understand the
+meaning of the cohort definition}
 }
 }

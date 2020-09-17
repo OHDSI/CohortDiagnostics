@@ -12,7 +12,6 @@ instantiateCohort(
   cohortDatabaseSchema = cdmDatabaseSchema,
   cohortTable = "cohort",
   baseUrl = NULL,
-  webApiCohortId = NULL,
   cohortJson = NULL,
   cohortSql = NULL,
   cohortId = NULL,
@@ -53,17 +52,13 @@ this should include both the database and schema name, for example
 "http://server.org:80/WebAPI". Needn't be provided if \code{cohortJson} and
 \code{cohortSql} are provided.}
 
-\item{webApiCohortId}{The ID of the cohort in the WebAPI instance. Needn't be provided if
-\code{cohortJson} and \code{cohortSql} are provided.}
-
 \item{cohortJson}{A character string containing the JSON of a cohort definition. Needn't be
 provided if \code{baseUrl} and \code{cohortId} are provided.}
 
 \item{cohortSql}{The OHDSI SQL representation of the same cohort definition. Needn't be
 provided if \code{baseUrl} and \code{cohortId} are provided.}
 
-\item{cohortId}{The cohort definition ID used to reference the cohort in the
-cohort table.}
+\item{cohortId}{The cohort ID used to reference the cohort in the cohort table.}
 
 \item{generateInclusionStats}{Compute and store inclusion rule statistics?}
 

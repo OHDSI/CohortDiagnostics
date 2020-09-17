@@ -35,6 +35,7 @@ launchDiagnosticsExplorer <- function(dataFolder, launch.browser = FALSE) {
   ensure_installed("VennDiagram")
   ensure_installed("htmltools")
   ensure_installed("scales")
+  ensure_installed("plotly")
   appDir <- system.file("shiny", "DiagnosticsExplorer", package = "CohortDiagnostics")
   shinySettings <- list(dataFolder = dataFolder)
   .GlobalEnv$shinySettings <- shinySettings
@@ -67,7 +68,10 @@ preMergeDiagnosticsFiles <- function(dataFolder, minCovariateProportion = 0) {
     # print(file)
     tableName <- gsub(".csv$", "", file)
     camelCaseName <- SqlRender::snakeCaseToCamelCase(tableName)
-    data <- readr::read_csv(file.path(folder, file), col_types = readr::cols(), guess_max = 1e7, locale = readr::locale(encoding = "UTF-8"))
+    data <- readr::read_csv(file.path(folder, file), 
+                            col_types = readr::cols(), 
+                            guess_max = min(1e7), 
+                            locale = readr::locale(encoding = "UTF-8"))
     colnames(data) <- SqlRender::snakeCaseToCamelCase(colnames(data))
     
     if (tableName %in% c('covariate_value', 'temporal_covariate_value')) {
@@ -169,7 +173,7 @@ launchCohortExplorer <- function(connectionDetails,
                                    cdmDatabaseSchema = cdmDatabaseSchema,
                                    cohortDatabaseSchema = cohortDatabaseSchema,
                                    cohortTable = cohortTable,
-                                   cohortDefinitionId = cohortId,
+                                   cohortId = cohortId,
                                    sampleSize = sampleSize,
                                    subjectIds = subjectIds)
   on.exit(rm(shinySettings, envir = .GlobalEnv))
