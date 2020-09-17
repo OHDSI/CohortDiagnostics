@@ -143,7 +143,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::mutate(phenotypeId = .data$referentConceptId * 1000) %>% 
       dplyr::select(.data$phenotypeId, .data$cohortId, 
                     .data$cohortName, .data$databaseId, 
-                    .data$logicDescription, .data$webApiCohortId,
+                    .data$webApiCohortId,
                     .data$cohortSubjects, .data$cohortEntries)
     
     if (nrow(data) == 0) {
