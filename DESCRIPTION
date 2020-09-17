@@ -49,7 +49,7 @@ Suggests:
   testthat
 Remotes:
   ohdsi/Eunomia,
-  ohdsi/FeatureExtraction@develop,
+  ohdsi/FeatureExtraction,
   ohdsi/ROhdsiWebApi@develop,
   ohdsi/DatabaseConnector,
   r-dbi/RSQLite
