@@ -270,13 +270,8 @@ shiny::shinyServer(function(input, output, session) {
                                                       stratifyByCalendarYear =  stratifyByCalendarYear,
                                                       minPersonYears = 1000,
                                                       resultsDatabaseSchema = NULL) %>% 
-      dplyr::mutate(incidenceRate = dplyr::case_when(.data$incidenceRate < 0 ~ 0, 
+      dplyr::mutate(incidenceRate = data <- dplyr::case_when(.data$incidenceRate < 0 ~ 0, 
                                                      TRUE ~ .data$incidenceRate))
-    
-    if (is.null(data)) {
-      return(NULL)
-    }
-    
     plot <- CohortDiagnostics::plotIncidenceRate(data = data,
                                                  cohortIds = NULL,
                                                  databaseIds = NULL,

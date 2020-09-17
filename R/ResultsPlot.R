@@ -150,6 +150,9 @@ plotIncidenceRate <- function(data,
                               stratifyByGender = TRUE,
                               stratifyByCalendarYear = TRUE,
                               yscaleFixed = FALSE) {
+  if (nrow(data) == 0) {
+    ParallelLogger::logWarn("Record counts are too low to plot.")
+  }
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertTibble(x = data, 
                           any.missing = TRUE,

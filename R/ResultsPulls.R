@@ -212,13 +212,13 @@ getIncidenceRateResult <- function(connection = NULL,
                       .data$databaseId %in% !!databaseIds &
                       .data$strataGender %in% !!stratifyByGender &
                       .data$strataAgeGroup %in% !!stratifyByAgeGroup &
-                      .data$strataCalendarYear %in% !!stratifyByCalendarYear) %>% 
+                      .data$strataCalendarYear %in% !!stratifyByCalendarYear &
+                      .data$personYears > !!minPersonYears) %>% 
       dplyr::select(-tidyselect::starts_with('strata')) %>% 
       tidyr::tibble()
   }
   if (nrow(data) == 0) {
     ParallelLogger::logWarn("No records retrieved for 'incidence rate'.")
-    return(NULL)
   }
   return(data %>% dplyr::arrange(.data$cohortId, .data$databaseId))
 }
