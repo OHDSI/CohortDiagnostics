@@ -187,10 +187,10 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::relocate(.data$cohortId)
     
     table <- data %>% 
-      dplyr::select(.data$cohortId, .data$cohortName) %>% 
+      dplyr::select(.data$cohortId, .data$cohortName, .data$webApiCohortId) %>% 
       dplyr::distinct() %>% 
       dplyr::inner_join(table) %>% 
-      dplyr::mutate(url = paste0(cohortBaseUrl2(), table$cohortId),
+      dplyr::mutate(url = paste0(cohortBaseUrl2(), .data$webApiCohortId),
                     cohortName = paste0("<a href='", 
                                         .data$url, 
                                         "' target='_blank'>", 
@@ -319,6 +319,8 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(data)) {
       return(NULL)
     }
+    
+    data[data < 0] <- 0
     
     plot <- CohortDiagnostics::plotIncidenceRate(data = data,
                                                  cohortIds = NULL,
