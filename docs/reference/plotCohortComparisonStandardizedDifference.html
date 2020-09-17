@@ -136,13 +136,13 @@
     </div>
 
     <pre class="usage"><span class='fu'>plotCohortComparisonStandardizedDifference</span>(
-  <span class='no'>data</span>,
-  <span class='kw'>targetCohortIds</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>comparatorCohortIds</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cohortReference</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>covariateReference</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>concept</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>databaseIds</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
+  <span class='kw'>data</span>,
+  targetCohortIds = <span class='kw'>NULL</span>,
+  comparatorCohortIds = <span class='kw'>NULL</span>,
+  cohortReference = <span class='kw'>NULL</span>,
+  covariateReference = <span class='kw'>NULL</span>,
+  concept = <span class='kw'>NULL</span>,
+  databaseIds = <span class='kw'>NULL</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -188,9 +188,11 @@ of the results data model.</p></td>
     <p>A Plotly object.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='no'>plotCohortCompare</span> <span class='kw'>&lt;-</span> <span class='fu'>plotCohortComparisonStandardizedDifference</span>(<span class='kw'>data</span> <span class='kw'>=</span> <span class='no'>data</span>)
-}</div></pre>
+    <pre class="examples"><div class='input'><span class='co'>if</span> (<span class='fl'>FALSE</span>) {
+<span class='kw'>plotCohortCompare</span> <span class='op'>&lt;-</span> <span class='fu'>plotCohortComparisonStandardizedDifference</span>(data = <span class='kw'>data</span>)
+}
+
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -206,7 +208,7 @@ of the results data model.</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

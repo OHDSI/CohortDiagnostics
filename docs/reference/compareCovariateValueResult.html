@@ -146,16 +146,16 @@ that all covariates are expected to output proportions that are between the valu
     </div>
 
     <pre class="usage"><span class='fu'>compareCovariateValueResult</span>(
-  <span class='kw'>connection</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>connectionDetails</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='no'>targetCohortIds</span>,
-  <span class='no'>comparatorCohortIds</span>,
-  <span class='no'>databaseIds</span>,
-  <span class='kw'>minProportion</span> <span class='kw'>=</span> <span class='fl'>0.01</span>,
-  <span class='kw'>maxProportion</span> <span class='kw'>=</span> <span class='fl'>1</span>,
-  <span class='kw'>isTemporal</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>timeIds</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>resultsDatabaseSchema</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
+  connection = <span class='kw'>NULL</span>,
+  connectionDetails = <span class='kw'>NULL</span>,
+  <span class='kw'>targetCohortIds</span>,
+  <span class='kw'>comparatorCohortIds</span>,
+  <span class='kw'>databaseIds</span>,
+  minProportion = <span class='fl'>0.01</span>,
+  maxProportion = <span class='fl'>1</span>,
+  isTemporal = <span class='fl'>TRUE</span>,
+  timeIds = <span class='kw'>NULL</span>,
+  resultsDatabaseSchema = <span class='kw'>NULL</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -238,11 +238,13 @@ an object specificed in Cohort Diagnostics results data model.</p>
 in a relational database system are expected to follow snake-case naming conventions.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='no'>covariateValue</span> <span class='kw'>&lt;-</span> <span class='fu'>compareCovariateValueResult</span>(<span class='kw'>targetCohortIds</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>342432</span>,<span class='fl'>432423</span>),
-                                              <span class='kw'>comparatorCohortIds</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>34243</span>, <span class='fl'>342432</span>),
-                                              <span class='kw'>databaseIds</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>'eunomia'</span>, <span class='st'>'hcup'</span>))
-}</div></pre>
+    <pre class="examples"><div class='input'><span class='co'>if</span> (<span class='fl'>FALSE</span>) {
+<span class='kw'>covariateValue</span> <span class='op'>&lt;-</span> <span class='fu'>compareCovariateValueResult</span>(targetCohortIds = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>342432</span>,<span class='fl'>432423</span>),
+                                              comparatorCohortIds = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='fl'>34243</span>, <span class='fl'>342432</span>),
+                                              databaseIds = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>'eunomia'</span>, <span class='st'>'hcup'</span>))
+}
+
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -258,7 +260,7 @@ in a relational database system are expected to follow snake-case naming convent
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>
