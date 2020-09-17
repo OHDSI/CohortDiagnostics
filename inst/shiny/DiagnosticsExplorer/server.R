@@ -494,6 +494,7 @@ shiny::shinyServer(function(input, output, session) {
     table <- inclusionRuleStats %>% 
       dplyr::filter(.data$cohortId == cohortId() &
                       .data$databaseId == input$database) %>% 
+      dplyr::select(.data$ruleSequence, .data$name, .data$personCount, .data$gainCount, .data$personTotal) %>% 
       dplyr::arrange(.data$ruleSequence)
     
     if (nrow(table) == 0) {
