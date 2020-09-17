@@ -216,7 +216,6 @@ plotIncidenceRate <- function(data,
     xLabel <- "Calender year"
     showX <- TRUE
     if (stratifyByGender) {
-      aesthetics$group <- "gender"
       aesthetics$color <- "gender"
     }
     plotType <- "line"
@@ -224,7 +223,6 @@ plotIncidenceRate <- function(data,
     xLabel <- ""
     if (stratifyByGender) {
       aesthetics$x <- "gender"
-      aesthetics$color <- "gender"
       aesthetics$fill <- "gender"
       showX <- TRUE
     } else {
