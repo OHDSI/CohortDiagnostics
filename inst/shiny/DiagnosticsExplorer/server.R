@@ -105,7 +105,7 @@ shiny::shinyServer(function(input, output, session) {
                                                                    pattern = "Plan:",
                                                                    replacement = "<br/> <strong>Plan: </strong>"))
     
-    options = list(pageLength = 20,
+    options = list(pageLength = 10,
                    searching = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
@@ -131,7 +131,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(.data$phenotypeId, .data$cohortId, .data$cohortName, .data$logicDescription) %>% 
       dplyr::arrange(.data$phenotypeId, .data$cohortId, .data$cohortName)
     
-    options = list(pageLength = 20,
+    options = list(pageLength = 10,
                    searching = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
@@ -221,7 +221,7 @@ shiny::shinyServer(function(input, output, session) {
       )
     ))
     
-    options = list(pageLength = 20,
+    options = list(pageLength = 10,
                    searching = TRUE,
                    lengthChange = TRUE,
                    ordering = TRUE,
@@ -406,7 +406,7 @@ shiny::shinyServer(function(input, output, session) {
       return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
     }
     
-    options = list(pageLength = 20,
+    options = list(pageLength = 10,
                    searching = TRUE,
                    searchHighlight = TRUE,
                    scrollX = TRUE,
@@ -461,10 +461,11 @@ shiny::shinyServer(function(input, output, session) {
       
       table[table < 0] <- 0
       
-      options = list(pageLength = 999,
+      options = list(pageLength = 10,
                      searching = TRUE,
                      scrollX = TRUE,
                      lengthChange = FALSE,
+                     searchHighlight = TRUE,
                      ordering = TRUE,
                      paging = TRUE,
                      columnDefs = list(
@@ -498,7 +499,7 @@ shiny::shinyServer(function(input, output, session) {
                            values_fill = 0)
       table[table < 0] <- 0
       
-      options = list(pageLength = 999,
+      options = list(pageLength = 10,
                      searching = FALSE,
                      scrollX = TRUE,
                      lengthChange = FALSE,
@@ -558,7 +559,7 @@ shiny::shinyServer(function(input, output, session) {
     maxConceptCount <- max(table$conceptCount, na.rm = TRUE)
     table[table < 0] <- 0
     
-    options = list(pageLength = 20,
+    options = list(pageLength = 10,
                    searching = TRUE,
                    searchHighlight = TRUE,
                    scrollX = TRUE,
@@ -592,7 +593,7 @@ shiny::shinyServer(function(input, output, session) {
       return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
     }
     
-    options = list(pageLength = 20,
+    options = list(pageLength = 10,
                    searching = TRUE,
                    searchHighlight = TRUE,
                    scrollX = TRUE,
@@ -642,7 +643,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     table <- table[order(-table[,3]), ]
     colnames(table)[1:2] <- c("Concept ID", "Name")
-    options = list(pageLength = 20,
+    options = list(pageLength = 10,
                    searching = TRUE,
                    searchHighlight = TRUE,
                    scrollX = TRUE,
@@ -705,12 +706,12 @@ shiny::shinyServer(function(input, output, session) {
                            values_fill = 0,
                            names_prefix = "Value_"
         )
-      options = list(pageLength = 999,
+      options = list(pageLength = 10,
                      searching = FALSE,
                      scrollX = TRUE,
                      lengthChange = FALSE,
                      ordering = FALSE,
-                     paging = FALSE,
+                     paging = TRUE,
                      columnDefs = list(
                        truncateStringDef(0, 150),
                        minCellPercentDef(1:nrow(dataCounts))
@@ -764,7 +765,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::arrange(.data$covariateName) %>% 
         dplyr::distinct()
       
-      options = list(pageLength = 20,
+      options = list(pageLength = 10,
                      searching = TRUE,
                      searchHighlight = TRUE,
                      scrollX = TRUE,
@@ -842,7 +843,7 @@ shiny::shinyServer(function(input, output, session) {
     temporalCovariateChoicesSelected <- temporalCovariateChoices %>% 
       dplyr::filter(.data$timeId %in% c(timeId())) 
     
-    options = list(pageLength = 20,
+    options = list(pageLength = 10,
                    searching = TRUE,
                    searchHighlight = TRUE,
                    scrollX = TRUE,
@@ -964,12 +965,13 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::arrange(.data$sortOrder) %>% 
         dplyr::select(-.data$sortOrder)
       
-      options = list(pageLength = 999,
-                     searching = FALSE,
+      options = list(pageLength = 10,
+                     searching = TRUE,
                      scrollX = TRUE,
+                     searchHighlight = TRUE,
                      lengthChange = FALSE,
                      ordering = FALSE,
-                     paging = FALSE,
+                     paging = TRUE,
                      columnDefs = list(minCellPercentDef(1:2))
       )
       table <- DT::datatable(table,
@@ -1001,7 +1003,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::rename_with(.fn = ~ stringr::str_replace(string = ., pattern = 'mean2', replacement = 'Comparator')) %>% 
         dplyr::rename_with(.fn = SqlRender::camelCaseToTitleCase)
       
-      options = list(pageLength = 20,
+      options = list(pageLength = 10,
                      searching = TRUE,
                      searchHighlight = TRUE,
                      scrollX = TRUE,
