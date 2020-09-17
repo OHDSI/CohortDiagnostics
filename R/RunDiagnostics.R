@@ -309,8 +309,6 @@ runCohortDiagnostics <- function(packageName = NULL,
     ParallelLogger::logInfo("\n")
   }
   
-  
-  ############## DESIGN DIAGNOSTICS ####### TO BE SEPERATED OUT ##############
   if (runIncludedSourceConcepts || runOrphanConcepts) {
     ParallelLogger::logInfo("------------------------------------")
     ParallelLogger::logInfo("- Design diagnostics included source concepts/orphan concepts. Started at ", Sys.time())
@@ -968,12 +966,6 @@ runCohortDiagnostics <- function(packageName = NULL,
     ParallelLogger::logInfo("\n")
   }
   
-  # ParallelLogger::logInfo("Getting concept sets from all cohort definitions (including previously run).")
-  # conceptSetsFromCohorts <-
-  #   combineConceptSetsFromCohorts(cohorts = cohorts)
-  # writeToCsv(data = conceptSetsFromCohorts, 
-  #            fileName = file.path(exportFolder, "concept_sets.csv"), 
-  #            incremental = incremental)
   
   # Add all to zip file -------------------------------------------------------------------------------
   ParallelLogger::logInfo("Adding results to zip file")
@@ -989,4 +981,3 @@ runCohortDiagnostics <- function(packageName = NULL,
                                 signif(delta, 3),
                                 attr(delta, "units")))
 }
-

@@ -310,7 +310,7 @@ resolveCohortSqlToConceptIds <- function(connection = NULL,
     for (j in (1:nrow(codeSetSql))) {
       if (i == 1 && j == 1) {
         DatabaseConnector::insertTable(connection = connection,
-                                       tableName = 'CdResolvedCodeSet',
+                                       tableName = '#CdResolvedCodeSet',
                                        data = DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                                                          sql = codeSetSql$conceptSetSql[[j]],
                                                                                          vocabulary_database_schema = cdmDatabaseSchema, 
