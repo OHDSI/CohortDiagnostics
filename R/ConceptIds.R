@@ -31,6 +31,7 @@
 #'
 getUniqueConceptIds <-
   function(exportFolder) {
+<<<<<<< HEAD
     databaseTables <- c('covariate_ref',
                         'included_source_concept',
                         'index_event_breakdown',
@@ -39,27 +40,49 @@ getUniqueConceptIds <-
                         'concept_sets_concept_id',
                         'phenotype_description'
     )
+=======
+    databaseTables <-
+      c(
+        'covariate_ref',
+        'included_source_concept',
+        'index_event_breakdown',
+        'orphan_concept',
+        'temporal_covariate'
+      )
+>>>>>>> master
     tablesWithConceptIds <- list()
     
     for (i in (1:length(databaseTables))) {
       if (file.exists(file.path(exportFolder, paste0(databaseTables[[i]], ".csv")))) {
+<<<<<<< HEAD
         ParallelLogger::logInfo("working on ", databaseTables[[i]])
         path <- file.path(exportFolder, paste0(databaseTables[[i]], ".csv"))
         assign(x = databaseTables[[i]],
                value = readr::read_csv(file = path,
                                        col_types = readr::cols(),
                                        guess_max = min(1e7))
+=======
+        path <- file.path(exportFolder, paste0(databaseTables[[i]], ".csv"))
+        assign(
+          x = databaseTables[[i]],
+          value = readr::read_csv(file = path,
+                                  col_types = readr::cols())
+>>>>>>> master
         )
       } else {
         assign(x = databaseTables[[i]],
                value = tidyr::tibble())
       }
       if ('concept_id' %in% colnames(get(databaseTables[[i]]))) {
+<<<<<<< HEAD
         ParallelLogger::logInfo("    Found concept_id")
+=======
+>>>>>>> master
         tablesWithConceptIds[[i]] <- get(databaseTables[[i]]) %>%
           dplyr::select(.data$concept_id) %>%
           dplyr::distinct()
       }
+<<<<<<< HEAD
       if ('referent_concept_id' %in% colnames(get(databaseTables[[i]]))) {
         ParallelLogger::logInfo("    Found referent_concept_id")
         tablesWithConceptIds[[i]] <- get(databaseTables[[i]]) %>%
@@ -70,6 +93,11 @@ getUniqueConceptIds <-
         ParallelLogger::logInfo("    Found source_concept_id")
         tablesWithConceptIds[[i]] <- get(databaseTables[[i]]) %>%
           dplyr::select(.data$source_concept_id) %>%
+=======
+      if ('concept_id' %in% colnames(get(databaseTables[[i]]))) {
+        tablesWithConceptIds[[i]] <- get(databaseTables[[i]]) %>%
+          dplyr::select(.data$concept_id) %>%
+>>>>>>> master
           dplyr::distinct()
       }
     }
@@ -99,6 +127,7 @@ getUniqueConceptIds <-
 #' @param exportFolder 	            The folder where the output is exported by Cohort Diagnostics.
 #'                                  If this folder does not exist, or does not have the searched file
 #'                                  the function will return an error.
+<<<<<<< HEAD
 #' @param conceptIdTable            (optional) A table with one column called concept_id (integer) that
 #'                                  contains all the concept_ids to limit the data pull. In the absence 
 #'                                  of this table, the entire vocabulary is pulled down (slow)
@@ -108,6 +137,10 @@ getUniqueConceptIds <-
 #'                                  please use '#conceptIdTable'. Remember, for temporary table
 #'                                  the connection object has to be active.                     
 #' @param cdmDatabaseSchema         databaseSchema where the omop vocabulary files are located.
+=======
+#' @param conceptIds                A vector of conceptIds to extract omop vocabulary files.
+#' @param vocabularyDatabaseSchema  databaseSchema where the omop vocabulary files are located.
+>>>>>>> master
 #'                                  These are most commonly the same as cdmDatabaseSchema.
 #' @param vocabularyTableNames      (optional) A vector of omop vocabulary table names to download.
 #' @return
@@ -115,6 +148,7 @@ getUniqueConceptIds <-
 #'
 #' @export
 #'
+<<<<<<< HEAD
 getOmopVocabularyTables <-
   function(connectionDetails = NULL,
            connection = NULL,
@@ -133,6 +167,21 @@ getOmopVocabularyTables <-
       connectionDetails <- NULL
       ParallelLogger::logInfo('Connection provided')
     }
+=======
+writeOmopvocabularyTables <-
+  function(connectionDetails = NULL,
+           connection = NULL,
+           vocabularyDatabaseSchema = NULL,
+           conceptIds = NULL,
+           vocabularyTableNames = c('concept',
+                                    'domain',
+                                    'vocabulary',
+                                    'relationship',
+                                    'conceptClass',
+                                    'conceptAncestor',
+                                    'conceptRelationship'),
+           exportFolder) {
+>>>>>>> master
     if (!is.null(connectionDetails)) {
       if (is.null(connection)) {
         connection <- DatabaseConnector::connect(connectionDetails)
@@ -143,12 +192,28 @@ getOmopVocabularyTables <-
       ParallelLogger::logWarn('no connection provided')
     }
     
+<<<<<<< HEAD
     if (!is.null(conceptIdTable)) {
       DatabaseConnector::dbExistsTable(conn = connection, )
+=======
+    if (is.null(vocabularyTableNames) ||
+        length(vocabularyTableNames) == 0) {
+      vocabularyTableNames = c('concept',
+                               'domain',
+                               'vocabulary',
+                               'relationship',
+                               'conceptClass')
+      ParallelLogger::logWarn(
+        'no vocabulary tables selected using default set (',
+        paste(vocabularyTableNames, collapse = ","),
+        ")"
+      )
+>>>>>>> master
     }
     
     vocabularyTableNames <-
       tidyr::tibble(vocabularyTableNames = vocabularyTableNames) %>%
+<<<<<<< HEAD
       dplyr::mutate(serverTableNames = 
                       SqlRender::camelCaseToSnakeCase(vocabularyTableNames) %>%
                       tolower())
@@ -372,3 +437,95 @@ resolveCohortSqlToConceptIds <- function(connection = NULL,
     tidyr::tibble()
   return(cohortCodeSets)
 }
+=======
+      dplyr::mutate(serverTableNames = SqlRender::camelCaseToSnakeCase(vocabularyTableNames) %>%
+                      tolower())
+    
+    vocabularyTablesInCohortDatabaseSchema <-
+      tidyr::tibble(serverTableNames = DatabaseConnector::getTableNames(connection, vocabularyDatabaseSchema) %>% 
+                      tolower()) %>%
+      dplyr::filter(.data$serverTableNames %in% (vocabularyTableNames$serverTableNames %>% 
+                                                   SqlRender::camelCaseToSnakeCase())) %>%
+      dplyr::left_join(vocabularyTableNames)
+    
+    if (nrow(vocabularyTablesInCohortDatabaseSchema) == 0) {
+      ParallelLogger::logWarn("Vocabulary tables not found in ", vocabularyDatabaseSchema)
+    }
+    
+    if (!is.null(conceptIds) & is.vector(conceptIds)) {
+      conceptIdsToQuery <-
+        conceptIds %>% unique() %>% paste(collapse = ",")
+      ParallelLogger::logInfo('Found ',
+                              length(conceptIds %>% unique()),
+                              ' unique concept ids.')
+      for (i in (1:nrow(vocabularyTablesInCohortDatabaseSchema))) {
+        sql <-
+          SqlRender::loadRenderTranslateSql(
+            sqlFilename = paste0(
+              vocabularyTablesInCohortDatabaseSchema %>%
+                dplyr::slice(i) %>%
+                dplyr::pull(.data$vocabularyTableNames) %>%
+                SqlRender::camelCaseToTitleCase(string = .) %>%
+                stringr::str_replace_all(
+                  string = .,
+                  pattern = " ",
+                  replacement = ""
+                ),
+              ".sql"
+            ),
+            packageName = "CohortDiagnostics",
+            dbms = connection@dbms,
+            vocabulary_database_schema = vocabularyDatabaseSchema,
+            conceptIds = conceptIdsToQuery,
+            warnOnMissingParameters = FALSE
+          )
+        
+        ParallelLogger::logInfo(
+          'Querying ',
+          vocabularyTablesInCohortDatabaseSchema %>% dplyr::slice(i) %>% dplyr::pull(.data$serverTableNames)
+        )
+        assign(
+          x = vocabularyTablesInCohortDatabaseSchema %>% dplyr::slice(i) %>% dplyr::pull(.data$serverTableNames),
+          value = DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = FALSE)
+        )
+        if (nrow(
+          get(
+            vocabularyTablesInCohortDatabaseSchema %>% dplyr::slice(i) %>% dplyr::pull(.data$serverTableNames)
+          )
+        ) > 0) {
+          readr::write_csv(
+            x = get(
+              vocabularyTablesInCohortDatabaseSchema %>% dplyr::slice(i) %>% dplyr::pull(.data$serverTableNames)
+            ),
+            path = file.path(
+              exportFolder,
+              paste0(
+                vocabularyTablesInCohortDatabaseSchema %>% dplyr::slice(i) %>% dplyr::pull(.data$serverTableNames),
+                ".csv"
+              ) %>% tolower()
+            )
+          )
+        }
+        
+        ParallelLogger::logInfo('  Wrote ',
+                                basename(file.path(
+                                  exportFolder,
+                                  paste0(
+                                    vocabularyTablesInCohortDatabaseSchema %>% dplyr::slice(i) %>% dplyr::pull(.data$serverTableNames),
+                                    ".csv"
+                                  ) %>% tolower()
+                                )),
+                                ' with ',
+                                nrow(
+                                  get(
+                                    vocabularyTablesInCohortDatabaseSchema %>% dplyr::slice(i) %>% dplyr::pull(.data$serverTableNames)
+                                  )
+                                ),
+                                " records.")
+      }
+    } else {
+      ParallelLogger::logWarn("conceptIds is not a list or is null")
+    }
+    return(NULL)
+  }
+>>>>>>> master

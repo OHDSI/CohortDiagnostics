@@ -137,11 +137,17 @@ combineConceptSetsFromCohorts <- function(cohorts) {
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertDataFrame(
     x = cohorts,
+<<<<<<< HEAD
     min.cols = 4,
+=======
+    any.missing = FALSE,
+    min.cols = 3,
+>>>>>>> master
     add = errorMessage
   )
   checkmate::assertNames(
     x = colnames(cohorts),
+<<<<<<< HEAD
     must.include = c('cohortId', 'sql', 'json', 'cohortName')
   )
   checkmate::reportAssertions(errorMessage)
@@ -151,6 +157,9 @@ combineConceptSetsFromCohorts <- function(cohorts) {
     any.missing = FALSE,
     min.cols = 4,
     add = errorMessage
+=======
+    must.include = c('cohortId', 'sql', 'json', 'cohortFullName')
+>>>>>>> master
   )
   checkmate::reportAssertions(errorMessage)
   
@@ -158,6 +167,7 @@ combineConceptSetsFromCohorts <- function(cohorts) {
   conceptSetCounter <- 0
   
   for (i in (1:nrow(cohorts))) {
+<<<<<<< HEAD
     cohort <- cohorts[i,]
     sql <- extractConceptSetsSqlFromCohortSql(cohortSql = cohort$sql)
     json <- extractConceptSetsJsonFromCohortJson(cohortJson = cohort$json)
@@ -185,6 +195,30 @@ combineConceptSetsFromCohorts <- function(cohorts) {
   }
   conceptSets <- dplyr::bind_rows(conceptSets) %>%
     dplyr::arrange(.data$cohortId, .data$conceptSetId)
+=======
+    cohort <- cohorts %>%
+      dplyr::slice(i)
+    sql <-
+      extractConceptSetsSqlFromCohortSql(cohortSql = cohort$sql)
+    json <-
+      extractConceptSetsJsonFromCohortJson(cohortJson = cohort$json)
+    
+    if (!length(sql$conceptSetId %>% unique()) == length(json$conceptSetId %>% unique())) {
+      stop(
+        "Mismatch in concept set IDs between SQL and JSON for cohort ",
+        cohort$cohortFullName
+      )
+    }
+    if (length(sql) > 0 && length(json) > 0) {
+      conceptSetCounter <- conceptSetCounter + 1
+      conceptSets[[conceptSetCounter]] <-
+        tidyr::tibble(cohortId = cohort$cohortId,
+                      dplyr::inner_join(x = sql, y = json, by = "conceptSetId"))
+    }
+  }
+  conceptSets <- dplyr::bind_rows(conceptSets) %>%
+    dplyr::arrange("cohortId", "conceptSetId")
+>>>>>>> master
   
   uniqueConceptSets <- conceptSets %>%
     dplyr::select(.data$conceptSetExpression) %>%
@@ -192,10 +226,14 @@ combineConceptSetsFromCohorts <- function(cohorts) {
     dplyr::mutate(uniqueConceptSetId = dplyr::row_number())
   
   conceptSets <- conceptSets %>%
+<<<<<<< HEAD
     dplyr::inner_join(uniqueConceptSets) %>% 
     dplyr::distinct() %>% 
     dplyr::relocate(.data$uniqueConceptSetId, .data$cohortId, .data$conceptSetId) %>% 
     dplyr::arrange(.data$uniqueConceptSetId, .data$cohortId, .data$conceptSetId)
+=======
+    dplyr::inner_join(uniqueConceptSets, by = "conceptSetExpression")
+>>>>>>> master
   
   return(conceptSets)
 }
@@ -382,6 +420,7 @@ runConceptSetDiagnostics <- function(connection,
           by_month = FALSE,
           use_source_values = FALSE
         )
+<<<<<<< HEAD
         counts <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE) %>% 
           tidyr::tibble()
       }
@@ -403,6 +442,36 @@ runConceptSetDiagnostics <- function(connection,
         dplyr::select(.data$databaseId, .data$cohortId, .data$conceptSetId, .data$conceptId,
                       .data$sourceConceptId, .data$conceptSubjects, .data$conceptCount) %>% 
         dplyr::distinct()
+=======
+        counts <-
+          DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
+      }
+      
+      colnames(counts)[colnames(counts) == "conceptSetId"] <-
+        "uniqueConceptSetId"
+      counts <-
+        merge(conceptSets[, c("cohortId",
+                              "conceptSetId",
+                              "conceptSetName",
+                              "uniqueConceptSetId")], counts)
+      counts$uniqueConceptSetId <- NULL
+      counts <- counts[order(
+        counts$cohortId,
+        counts$conceptSetId,
+        counts$conceptId,
+        counts$sourceConceptName,	
+        counts$sourceVocabularyId
+      ),]
+      counts <-
+        counts[counts$cohortId %in% subsetIncluded$cohortId,]
+      if (nrow(counts) > 0) {
+        counts$databaseId <- databaseId
+        counts <-
+          enforceMinCellValue(counts, "conceptSubjects", minCellCount)
+        counts <-
+          enforceMinCellValue(counts, "conceptCount", minCellCount)
+      }
+>>>>>>> master
       writeToCsv(
         counts,
         file.path(exportFolder, "included_source_concept.csv"),
@@ -456,10 +525,14 @@ runConceptSetDiagnostics <- function(connection,
           )
         orphanConcepts$uniqueConceptSetId <-
           rep(conceptSet$uniqueConceptSetId, nrow(orphanConcepts))
+<<<<<<< HEAD
         return(orphanConcepts %>% 
                  dplyr::select(.data$conceptId,
                                .data$conceptCount,
                                .data$uniqueConceptSetId))
+=======
+        return(orphanConcepts)
+>>>>>>> master
       }
       
       data <-
@@ -470,6 +543,7 @@ runConceptSetDiagnostics <- function(connection,
           ),
           runOrphanConcepts
         )
+<<<<<<< HEAD
       data <- dplyr::bind_rows(data) %>% 
         dplyr::inner_join(conceptSets %>% dplyr::select(.data$uniqueConceptSetId, .data$cohortId, .data$conceptSetId)) %>% 
         dplyr::select(-.data$uniqueConceptSetId) %>% 
@@ -483,6 +557,21 @@ runConceptSetDiagnostics <- function(connection,
         dplyr::select(.data$databaseId, .data$cohortId, .data$conceptSetId, .data$conceptId,
                       .data$conceptCount) %>% 
         dplyr::distinct()
+=======
+      data <- do.call(rbind, data)
+      data <-
+        merge(conceptSets[, c("cohortId",
+                              "conceptSetId",
+                              "conceptSetName",
+                              "uniqueConceptSetId")], data)
+      data$uniqueConceptSetId <- NULL
+      data$conceptName <- NULL
+      data$databaseId <- rep(databaseId, nrow(data))
+      data <- data[data$cohortId %in% subsetOrphans$cohortId,]
+      if (nrow(data) > 0) {
+        data <- enforceMinCellValue(data, "conceptCount", minCellCount)
+      }
+>>>>>>> master
       writeToCsv(
         data,
         file.path(exportFolder, "orphan_concept.csv"),
