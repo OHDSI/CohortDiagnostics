@@ -176,26 +176,31 @@ plotIncidenceRate <- function(data,
   checkmate::assertLogical(x = stratifyByAgeGroup, 
                            any.missing = FALSE, 
                            min.len = 1, 
+                           max.len = 1,
                            null.ok = FALSE,
                            add = errorMessage)
   checkmate::assertLogical(x = stratifyByGender, 
                            any.missing = FALSE, 
-                           min.len = 1, 
+                           min.len = 1,  
+                           max.len = 1,
                            null.ok = FALSE,
                            add = errorMessage)
   checkmate::assertLogical(x = stratifyByCalendarYear, 
                            any.missing = FALSE, 
-                           min.len = 1, 
+                           min.len = 1,  
+                           max.len = 1,
                            null.ok = FALSE,
                            add = errorMessage)
   checkmate::assertLogical(x = yscaleFixed, 
                            any.missing = FALSE, 
-                           min.len = 1, 
+                           min.len = 1,  
+                           max.len = 1,
                            null.ok = FALSE,
                            add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
-  data$incidenceRate <- round(data$incidenceRate, digits = 3)
-  plotData <- data
+  
+  plotData <- data %>% 
+    dplyr::mutate(incidenceRate = round(.data$incidenceRate, digits = 3))
   if (!is.null(cohortIds)) {
     plotData <- plotData %>% 
       dplyr::filter(.data$cohortId %in% !!cohortIds)
