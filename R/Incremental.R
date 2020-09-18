@@ -122,8 +122,16 @@ writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
     do.call(saveIncremental, params)
     ParallelLogger::logInfo(" appending records to ", fileName)
   } else {
-    ParallelLogger::logInfo(" creating ",fileName)
-    readr::write_csv(x = data, path = fileName)
+    if (file.exists(fileName)) {
+      ParallelLogger::logInfo(" Overwriting and replacing previous ",fileName, " with new.")
+    } else {
+      ParallelLogger::logInfo(" creating ",fileName)
+    }
+    readr::write_excel_csv(x = data, 
+                           path = fileName, 
+                           na = '', 
+                           append = FALSE,
+                           delim = ",")
   }
 }
 

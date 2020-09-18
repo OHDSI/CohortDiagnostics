@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Resolves cohort sql to concept_ids — resolveCohortSqlToConceptIds • CohortDiagnostics</title>
+<title>Get a copy of omop vocabulary as csv — resolveCohortSqlToConceptIds • CohortDiagnostics</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,10 @@
 
 
 
-<meta property="og:title" content="Resolves cohort sql to concept_ids — resolveCohortSqlToConceptIds" />
-<meta property="og:description" content="Resolves cohort sql to concept_ids" />
+<meta property="og:title" content="Get a copy of omop vocabulary as csv — resolveCohortSqlToConceptIds" />
+<meta property="og:description" content="For a given list of conceptId's get a subset of omop vocabulary
+of these conceptIds. These are written as csv in the export folder
+Resolves cohort sql to concept_ids" />
 
 
 
@@ -126,13 +128,15 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Resolves cohort sql to concept_ids</h1>
+    <h1>Get a copy of omop vocabulary as csv</h1>
     <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/ConceptIds.R'><code>R/ConceptIds.R</code></a></small>
     <div class="hidden name"><code>resolveCohortSqlToConceptIds.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Resolves cohort sql to concept_ids</p>
+    <p>For a given list of conceptId's get a subset of omop vocabulary
+of these conceptIds. These are written as csv in the export folder</p>
+<p>Resolves cohort sql to concept_ids</p>
     </div>
 
     <pre class="usage"><span class='fu'>resolveCohortSqlToConceptIds</span>(
@@ -184,11 +188,33 @@ by SqlRender. The standard form the cohort definition SQL is generated is using
 circe-be by WebApi and Atlas. The 'cohort' table in Cohort Diagnostics results
 data model satisfies this requirement.</p></td>
     </tr>
+    <tr>
+      <th>exportFolder</th>
+      <td><p>The folder where the output is exported by Cohort Diagnostics.
+If this folder does not exist, or does not have the searched file
+the function will return an error.</p></td>
+    </tr>
+    <tr>
+      <th>conceptIdTable</th>
+      <td><p>(optional) A table with one column called concept_id (integer) that
+contains all the concept_ids to limit the data pull. In the absence 
+of this table, the entire vocabulary is pulled down (slow)
+vocabulary files. If NULL, all conceptIds are extracted. Please
+provide the full name of the vocabulary table e.g.
+databaseSchema.conceptIdTable. If it is a temporary table
+please use '#conceptIdTable'. Remember, for temporary table
+the connection object has to be active.</p></td>
+    </tr>
+    <tr>
+      <th>vocabularyTableNames</th>
+      <td><p>(optional) A vector of omop vocabulary table names to download.</p></td>
+    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Tibble Data Frame object</p>
+    <p>NULL. The function writes the vocabulary tables into the export folder as csv.</p>
+<p>Tibble Data Frame object</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

@@ -222,7 +222,7 @@ shiny::shinyServer(function(input, output, session) {
       )
     ))
     
-    options = list(pageLength = 10,
+    options = list(pageLength = 20,
                    searching = TRUE,
                    lengthChange = TRUE,
                    ordering = TRUE,
@@ -369,7 +369,6 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::relocate(.data$conceptId, .data$conceptName, 
                         .data$conceptCode, .data$conceptClassId, 
                         .data$domainId)
-      
         if (nrow(data) == 0) {
           return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
         }
@@ -465,9 +464,17 @@ shiny::shinyServer(function(input, output, session) {
                                                dplyr::pull(conceptSetId)) &
                       .data$databaseId %in% input$databases) %>% 
       dplyr::select(-.data$cohortId) %>% 
+      dplyr::group_by(.data$databaseId) %>% 
       # Solution as described here https://github.com/OHDSI/CohortDiagnostics/issues/162
       dplyr::slice(1) %>% 
-      dplyr::ungroup() %>% 
+      dplyr::ungroup() 
+    
+    maxConceptCount <- max(data$conceptCount, na.rm = TRUE)
+    if (nrow(data) == 0) {
+      return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
+    }
+    
+    table <- data %>% 
       tidyr::pivot_wider(id_cols = c(.data$conceptId),
                          names_from = .data$databaseId,
                          values_from = .data$conceptCount,
@@ -475,17 +482,13 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::inner_join(concept %>% 
                           dplyr::select(-.data$invalidReason, 
                                         -.data$validStartDate, 
-                                        -.data$validEndDate)) %>% 
+                                        -.data$validEndDate,
+                                        -.data$standardConcept
+                                        )) %>% 
       dplyr::select(order(colnames(.))) %>% 
       dplyr::relocate(.data$conceptId, .data$conceptName, 
                       .data$conceptCode, .data$conceptClassId, 
-                      .data$domainId)
-      
-    if (nrow(table) == 0) {
-      return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
-    }
-    
-    maxConceptCount <- max(table$conceptCount, na.rm = TRUE)
+                      .data$domainId, .data$vocabularyId)
     
     options = list(pageLength = 10,
                    searching = TRUE,
@@ -639,9 +642,10 @@ shiny::shinyServer(function(input, output, session) {
                            values_fill = 0,
                            names_prefix = "Value_"
         )
-      options = list(pageLength = 10,
+      options = list(pageLength = 100,
                      searching = FALSE,
                      scrollX = TRUE,
+                     scrollY = TRUE,
                      lengthChange = FALSE,
                      ordering = FALSE,
                      paging = TRUE,
@@ -698,10 +702,11 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::arrange(.data$covariateName) %>% 
         dplyr::distinct()
       
-      options = list(pageLength = 10,
+      options = list(pageLength = 100,
                      searching = TRUE,
                      searchHighlight = TRUE,
                      scrollX = TRUE,
+                     scrollY = TRUE,
                      lengthChange = TRUE,
                      ordering = TRUE,
                      paging = TRUE,
@@ -792,7 +797,8 @@ shiny::shinyServer(function(input, output, session) {
     table <- DT::datatable(table,
                            options = options,
                            rownames = FALSE,
-                           colnames = colnames(table) %>% SqlRender::camelCaseToTitleCase(),
+                           colnames = colnames(table) %>% 
+                             SqlRender::camelCaseToTitleCase(),
                            escape = FALSE,
                            filter = c('bottom'),
                            class = "stripe nowrap compact")
@@ -972,7 +978,6 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$charComparePlot <- plotly::renderPlotly(expr = {
-    
     data <- CohortDiagnostics::compareCovariateValueResult(connection = NULL, 
                                                            connectionDetails = NULL,
                                                            targetCohortIds = cohortId(), 
@@ -984,15 +989,12 @@ shiny::shinyServer(function(input, output, session) {
                                                            timeIds = NULL,
                                                            resultsDatabaseSchema = NULL)
     
-    
     if (is.null(data)) {
       return(NULL)
     }
 
     cohortReference <- CohortDiagnostics::getCohortReference()
-    
     covariateReference <- CohortDiagnostics::getCovariateReference(isTemporal = FALSE)
-      
     plot <- CohortDiagnostics::plotCohortComparisonStandardizedDifference(data = data, 
                                                                           targetCohortIds = cohortId(), 
                                                                           comparatorCohortIds = comparatorCohortId(),

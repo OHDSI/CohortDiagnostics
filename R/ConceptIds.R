@@ -115,141 +115,128 @@ getUniqueConceptIds <-
 #'
 #' @export
 #'
-getOmopVocabularyTables <-
-  function(connectionDetails = NULL,
-           connection = NULL,
-           cdmDatabaseSchema,
-           conceptIdTable = NULL,
-           vocabularyTableNames = c('concept',
-                                    'conceptAncestor',
-                                    'conceptClass',
-                                    'conceptRelationship',
-                                    'conceptSynonym',
-                                    'domain',
-                                    'relationship',
-                                    'vocabulary'),
-           exportFolder) {
-    if (!is.null(connection)) {
-      connectionDetails <- NULL
-      ParallelLogger::logInfo('Connection provided')
-    }
-    if (!is.null(connectionDetails)) {
-      if (is.null(connection)) {
-        connection <- DatabaseConnector::connect(connectionDetails)
-        on.exit(DatabaseConnector::disconnect(connection))
-      }
-    }
-    if (is.null(connection)) {
-      ParallelLogger::logWarn('no connection provided')
-    }
-    
-    if (!is.null(conceptIdTable)) {
-      DatabaseConnector::dbExistsTable(conn = connection, )
-    }
-    
-    vocabularyTableNames <-
-      tidyr::tibble(vocabularyTableNames = vocabularyTableNames) %>%
-      dplyr::mutate(serverTableNames = 
-                      SqlRender::camelCaseToSnakeCase(vocabularyTableNames) %>%
-                      tolower())
-    
-    vocabularyTablesInCdmDatabaseSchema <-
-      tidyr::tibble(serverTableNames = DatabaseConnector::getTableNames(connection, 
-                                                                        cdmDatabaseSchema) %>% 
-                      tolower()) %>%
-      dplyr::filter(.data$serverTableNames %in% 
-                      (SqlRender::camelCaseToSnakeCase(string = vocabularyTableNames$serverTableNames))) %>%
-      dplyr::left_join(vocabularyTableNames)
-    
-    if (nrow(vocabularyTablesInCdmDatabaseSchema) == 0) {
-      ParallelLogger::logWarn("Vocabulary tables not found in ", cdmDatabaseSchema)
-      stop("No vocabulary retrieved")
-      return()
-    }
-    
-    if (!is.null(conceptIds)) {
-      concept <- tidyr::tibble(concept_id = conceptIds) %>% 
-        dplyr::filter(.data$concept_id > 0) %>% 
-        dplyr::distinct()
-      ParallelLogger::logInfo('Found conceptIds count = ', length(conceptIds))
-      ParallelLogger::logInfo('    Uploading temp table')
-      DatabaseConnector::insertTable(connection = connection,
-                                     data = concept,
-                                     dropTableIfExists = TRUE,
-                                     tableName = '#conceptsToExtract', 
-                                     progressBar = TRUE,
-                                     tempTable = TRUE)
-    } else {
-      ParallelLogger::logInfo('No conceptIds found, downloading for all conceptIds')
-      ParallelLogger::logInfo('    Might take a very long time....')
-      sql <- "select distinct concept_id
-              into #conceptsToExtract
-              from @cdm_database_schema.concept"
-      DatabaseConnector::renderTranslateExecuteSql(connection = connection,
-                                                   sql = sql, 
-                                                   cdm_database_schema = cdmDatabaseSchema
-      )
-    }
-    
-    for (i in (1:nrow(vocabularyTablesInCdmDatabaseSchema))) {
-      if (vocabularyTablesInCdmDatabaseSchema[[i]] %in% c('domain',
-                                                          'relationship',
-                                                          'vocabulary',
-                                                          'concept_class')) {
-        sql <- "select * from @cdm_database_schema.@table"
-
-      } else if (vocabularyTablesInCdmDatabaseSchema[[i]] %in% c('concept', 'conceptSynonym')) {
-        sql <- "select * from @cdm_database_schema.@table a
-        inner join #conceptsToExtract b
-        on a.concept_id = b.concept_id"
-      } else if (vocabularyTablesInCdmDatabaseSchema[[i]] %in% c('conceptAncestor')) {
-        sql <- "select * from @cdm_database_schema.@table a
-        left join #conceptsToExtract b
-        on a.ancestor_concept_id = b.concept_id or
-        a.descendant_concept_id = b.concept_id"
-      } else if (vocabularyTablesInCdmDatabaseSchema[[i]] %in% c('conceptRelationship')) {
-        sql <- "select * from @cdm_database_schema.@table a
-        left join #conceptsToExtract b
-        on a.concept_id_1 = b.concept_id or
-        a.a.concept_id_2 = b.concept_id"
-      }
-      assign(
-        x = vocabularyTablesInCdmDatabaseSchema[i,]$serverTableNames,
-        DatabaseConnector::renderTranslateQuerySql(connection = connection, 
-                                                   sql = sql, 
-                                                   cdm_database_schema = cdmDatabaseSchema,
-                                                   table = vocabularyTablesInCdmDatabaseSchema[[i]]) %>% 
-          tidyr::tibble())
-      
-      if (nrow(get(vocabularyTablesInCdmDatabaseSchema[i,]$serverTableNames)) > 0) {
-        readr::write_excel_csv(
-          x = get(vocabularyTablesInCdmDatabaseSchema[i,]$serverTableNames),
-          path = file.path(
-            exportFolder,
-            paste0(vocabularyTablesInCdmDatabaseSchema[i,]$serverTableNames,
-                   ".csv"
-            ) %>% tolower()
-          )
-        )
-      }
-      
-      ParallelLogger::logInfo('  Wrote ',
-                              basename(file.path(
-                                exportFolder,
-                                paste0(
-                                  vocabularyTablesInCdmDatabaseSchema[i,]$serverTableNames,
-                                  ".csv"
-                                ) %>% tolower()
-                              )),
-                              ' with ',
-                              nrow(
-                                get(
-                                  vocabularyTablesInCdmDatabaseSchema[i,]$serverTableNames
-                                )
-                              ),
-                              " records.")
-    }
-  }
+# getOmopVocabularyTables <-
+#   function(connectionDetails = NULL,
+#            connection = NULL,
+#            cdmDatabaseSchema,
+#            conceptIdTable = 'concept_id_table',
+#            vocabularyTableNames = c('concept',
+#                                     'conceptAncestor',
+#                                     'conceptClass',
+#                                     'conceptRelationship',
+#                                     'conceptSynonym',
+#                                     'domain',
+#                                     'relationship',
+#                                     'vocabulary'),
+#            exportFolder) {
+#     if (!is.null(connection)) {
+#       connectionDetails <- NULL
+#       ParallelLogger::logInfo('Connection provided')
+#     }
+#     if (!is.null(connectionDetails)) {
+#       if (is.null(connection)) {
+#         connection <- DatabaseConnector::connect(connectionDetails)
+#         on.exit(DatabaseConnector::disconnect(connection))
+#       }
+#     }
+#     if (is.null(connection)) {
+#       ParallelLogger::logWarn('no connection provided')
+#     }
+#     
+#     if (!is.null(conceptIdTable)) {
+#       DatabaseConnector::dbExistsTable(conn = connection, )
+#     }
+#     
+#     vocabularyTableNames <-
+#       tidyr::tibble(vocabularyTableNames = vocabularyTableNames) %>%
+#       dplyr::mutate(serverTableNames = 
+#                       SqlRender::camelCaseToSnakeCase(vocabularyTableNames) %>%
+#                       tolower())
+#     
+#     vocabularyTablesInCdmDatabaseSchema <-
+#       tidyr::tibble(serverTableNames = DatabaseConnector::getTableNames(connection, 
+#                                                                         cdmDatabaseSchema) %>% 
+#                       tolower()) %>%
+#       dplyr::filter(.data$serverTableNames %in% 
+#                       (SqlRender::camelCaseToSnakeCase(string = vocabularyTableNames$serverTableNames))) %>%
+#       dplyr::left_join(vocabularyTableNames)
+#     
+#     if (nrow(vocabularyTablesInCdmDatabaseSchema) == 0) {
+#       ParallelLogger::logWarn("Vocabulary tables not found in ", cdmDatabaseSchema)
+#       stop("No vocabulary retrieved")
+#       return()
+#     }
+#     
+# 
+#       ParallelLogger::logInfo('No conceptIds found, downloading for all conceptIds')
+#       ParallelLogger::logInfo('    Might take a very long time....')
+#       sql <- "select distinct concept_id
+#               into #conceptsToExtract
+#               from @cdm_database_schema.concept"
+#       DatabaseConnector::renderTranslateExecuteSql(connection = connection,
+#                                                    sql = sql, 
+#                                                    cdm_database_schema = cdmDatabaseSchema
+#       )
+#     
+#     for (i in (1:nrow(vocabularyTablesInCdmDatabaseSchema))) {
+#       if (vocabularyTablesInCdmDatabaseSchema[[i]] %in% c('domain',
+#                                                           'relationship',
+#                                                           'vocabulary',
+#                                                           'concept_class')) {
+#         sql <- "select * from @cdm_database_schema.@table"
+# 
+#       } else if (vocabularyTablesInCdmDatabaseSchema[[i]] %in% c('concept', 'conceptSynonym')) {
+#         sql <- "select * from @cdm_database_schema.@table a
+#         inner join #conceptsToExtract b
+#         on a.concept_id = b.concept_id"
+#       } else if (vocabularyTablesInCdmDatabaseSchema[[i]] %in% c('conceptAncestor')) {
+#         sql <- "select * from @cdm_database_schema.@table a
+#         left join #conceptsToExtract b
+#         on a.ancestor_concept_id = b.concept_id or
+#         a.descendant_concept_id = b.concept_id"
+#       } else if (vocabularyTablesInCdmDatabaseSchema[[i]] %in% c('conceptRelationship')) {
+#         sql <- "select * from @cdm_database_schema.@table a
+#         left join #conceptsToExtract b
+#         on a.concept_id_1 = b.concept_id or
+#         a.a.concept_id_2 = b.concept_id"
+#       }
+#       assign(
+#         x = vocabularyTablesInCdmDatabaseSchema[i,]$serverTableNames,
+#         DatabaseConnector::renderTranslateQuerySql(connection = connection, 
+#                                                    sql = sql, 
+#                                                    cdm_database_schema = cdmDatabaseSchema,
+#                                                    table = vocabularyTablesInCdmDatabaseSchema[[i]]) %>% 
+#           tidyr::tibble())
+#       
+#       if (nrow(get(vocabularyTablesInCdmDatabaseSchema[i,]$serverTableNames)) > 0) {
+#         readr::write_excel_csv(
+#           x = get(vocabularyTablesInCdmDatabaseSchema[i,]$serverTableNames),
+#           path = file.path(
+#             exportFolder,
+#             paste0(vocabularyTablesInCdmDatabaseSchema[i,]$serverTableNames,
+#                    ".csv"
+#             ) %>% tolower()
+#           )
+#         )
+#       }
+#       
+#       ParallelLogger::logInfo('  Wrote ',
+#                               basename(file.path(
+#                                 exportFolder,
+#                                 paste0(
+#                                   vocabularyTablesInCdmDatabaseSchema[i,]$serverTableNames,
+#                                   ".csv"
+#                                 ) %>% tolower()
+#                               )),
+#                               ' with ',
+#                               nrow(
+#                                 get(
+#                                   vocabularyTablesInCdmDatabaseSchema[i,]$serverTableNames
+#                                 )
+#                               ),
+#                               " records.")
+#     }
+#   }
 
 
 

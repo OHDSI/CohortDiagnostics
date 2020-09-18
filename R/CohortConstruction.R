@@ -180,7 +180,7 @@ getCohortsJsonAndSql <- function(packageName = NULL,
                                  cohortSetReference = NULL,
                                  cohortIds = NULL) {
   # Input parameters check
-  ParallelLogger::logInfo("Beginning cohort input parameter checks")
+  ParallelLogger::logInfo("  Beginning cohort input parameter checks")
   errorMessage <- checkmate::makeAssertCollection()
   
   if (!is.null(cohortIds)) {
@@ -197,18 +197,27 @@ getCohortsJsonAndSql <- function(packageName = NULL,
                                                cohortIds = cohortIds)
     if (!is.null(baseUrl)) {
       baseUrl <- NULL
-      ParallelLogger::logInfo("[Package mode] Ignoring parameter baseUrl because packageName is provided.\n",
-                              "Overiding user parameter baseUrl - setting to NULL")
+      ParallelLogger::logInfo("  [Package mode] Ignoring parameter baseUrl because packageName is provided.\n",
+                              "  Overiding user parameter baseUrl - setting to NULL")
     }
     if (!is.null(cohortSetReference)) {
       cohortSetReference <- NULL
-      ParallelLogger::logInfo("Ignoring parameter cohortSetReference because packageName is provided.\n",
-                              "Overiding user parameter cohortSetReference - setting to NULL")
+      ParallelLogger::logInfo("  Ignoring parameter cohortSetReference because packageName is provided.\n",
+                              "  Overiding user parameter cohortSetReference - setting to NULL")
     }
   } else {
     cohorts <- getCohortsJsonAndSqlFromWebApi(baseUrl = baseUrl,
                                               cohortSetReference = cohortSetReference,
                                               cohortIds = cohortIds)
+  }
+  ParallelLogger::logInfo("  Number of cohorts ", nrow(cohorts),)
+  if (nrow(cohorts) == 0) {
+    ParallelLogger::logWarn(" No cohorts founds")
+  }
+  if (nrow(cohorts) != length(cohorts$cohortId %>% unique())) {
+    ParallelLogger::logWarn(" Please check input cohort specification. Is there duplication of cohortId?")
+    ParallelLogger::logWarn(" Returning empty cohort table")
+    return(cohorts[0,])
   }
   checkmate::reportAssertions(collection = errorMessage)
   return(cohorts)
@@ -533,7 +542,7 @@ getInclusionStatisticsFromFiles <- function(cohortId,
                                                                                "cohortSummaryStats.csv"),
                                             simplify = TRUE) {
   start <- Sys.time()
-  ParallelLogger::logInfo("Fetching inclusion statistics for cohort with cohort_definition_id = ",
+  ParallelLogger::logInfo("  Fetching inclusion statistics for cohort with cohort_definition_id = ",
                           cohortId)
   
   fetchStats <- function(file) {
@@ -879,8 +888,8 @@ saveAndDropTempInclusionStatsTables <- function(connection,
 #' A tibble data frame object                               
 #'
 #' @export
-getRecordCountOfInstantiatedCohorts <- function(connection,
-                                                connectionDetails,
+getRecordCountOfInstantiatedCohorts <- function(connection = NULL,
+                                                connectionDetails = NULL,
                                                 cohortDatabaseSchema,
                                                 cohortTable,
                                                 cohortIds) {

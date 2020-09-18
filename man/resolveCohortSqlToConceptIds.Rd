@@ -2,7 +2,7 @@
 % Please edit documentation in R/ConceptIds.R
 \name{resolveCohortSqlToConceptIds}
 \alias{resolveCohortSqlToConceptIds}
-\title{Resolves cohort sql to concept_ids}
+\title{Get a copy of omop vocabulary as csv}
 \usage{
 resolveCohortSqlToConceptIds(
   connection = NULL,
@@ -38,10 +38,30 @@ in OHDSI SQL dialect. It may contain parameters designed to be replaced
 by SqlRender. The standard form the cohort definition SQL is generated is using 
 circe-be by WebApi and Atlas. The 'cohort' table in Cohort Diagnostics results
 data model satisfies this requirement.}
+
+\item{exportFolder}{The folder where the output is exported by Cohort Diagnostics.
+If this folder does not exist, or does not have the searched file
+the function will return an error.}
+
+\item{conceptIdTable}{(optional) A table with one column called concept_id (integer) that
+contains all the concept_ids to limit the data pull. In the absence 
+of this table, the entire vocabulary is pulled down (slow)
+vocabulary files. If NULL, all conceptIds are extracted. Please
+provide the full name of the vocabulary table e.g.
+databaseSchema.conceptIdTable. If it is a temporary table
+please use '#conceptIdTable'. Remember, for temporary table
+the connection object has to be active.}
+
+\item{vocabularyTableNames}{(optional) A vector of omop vocabulary table names to download.}
 }
 \value{
+NULL. The function writes the vocabulary tables into the export folder as csv.
+
 Tibble Data Frame object
 }
 \description{
+For a given list of conceptId's get a subset of omop vocabulary
+of these conceptIds. These are written as csv in the export folder
+
 Resolves cohort sql to concept_ids
 }
