@@ -5,8 +5,8 @@
 \title{Get record counts for a set of cohort}
 \usage{
 getRecordCountOfInstantiatedCohorts(
-  connection,
-  connectionDetails,
+  connection = NULL,
+  connectionDetails = NULL,
   cohortDatabaseSchema,
   cohortTable,
   cohortIds

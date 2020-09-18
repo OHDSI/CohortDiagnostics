@@ -11,6 +11,8 @@ plotCohortComparisonStandardizedDifference(
   cohortReference = NULL,
   covariateReference = NULL,
   concept = NULL,
+  absoluteStandardizedDifferenceLowerThreshold = 0.001,
+  absoluteStandardizedDifferenceUpperThreshold = 1,
   databaseIds = NULL
 )
 }
@@ -29,6 +31,12 @@ from \code{\link{getCohortReference}} function.}
 
 \item{concept}{(optional) A tibble data frame object returned 
 from \code{\link{getConceptReference}} function.}
+
+\item{absoluteStandardizedDifferenceLowerThreshold}{(optional) Do you want to keep a lower threshold of absolute standardized difference
+for plotting}
+
+\item{absoluteStandardizedDifferenceUpperThreshold}{(optional) Do you want to keep a lower threshold of absolute standardized difference
+for plotting}
 
 \item{databaseIds}{A vector one or more databaseIds to retrieve the results for. This is a 
 character field values from the `databaseId` field of the `database` table 

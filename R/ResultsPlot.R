@@ -288,6 +288,10 @@ plotIncidenceRate <- function(data,
 #' @param cohortReference        (optional) A tibble data frame object returned 
 #'                               from \code{\link{getCohortReference}} function.
 #' @param covariateReference     (optional) A tibble data frame object returned from \code{\link{getCovariateReference}} function.
+#' @param absoluteStandardizedDifferenceLowerThreshold (optional) Do you want to keep a lower threshold of absolute standardized difference
+#'                               for plotting
+#' @param absoluteStandardizedDifferenceUpperThreshold (optional) Do you want to keep a lower threshold of absolute standardized difference
+#'                               for plotting
 #' @param concept                (optional) A tibble data frame object returned 
 #'                               from \code{\link{getConceptReference}} function.
 #' 
@@ -306,6 +310,8 @@ plotCohortComparisonStandardizedDifference <- function(data,
                                                        cohortReference = NULL,
                                                        covariateReference = NULL,
                                                        concept = NULL, # to subset based on domain, or vocabulary
+                                                       absoluteStandardizedDifferenceLowerThreshold = 0.001,
+                                                       absoluteStandardizedDifferenceUpperThreshold = 1,
                                                        databaseIds = NULL) {
   if (!is.null(concept)) {
     ParallelLogger::logWarn("Not yet supported. Upcoming feature. Ignorning for now. Continuing.")
@@ -320,8 +326,15 @@ plotCohortComparisonStandardizedDifference <- function(data,
     return(NULL)
   }
   
-  
   plotData <- data
+  if (absoluteStandardizedDifferenceLowerThreshold > 0) {
+    plotData <- plotData %>% 
+      dplyr::filter(.data$absStdDiff >= absoluteStandardizedDifferenceLowerThreshold)
+  }
+  if (absoluteStandardizedDifferenceUpperThreshold > 0) {
+    plotData <- plotData %>% 
+      dplyr::filter(.data$absStdDiff <= absoluteStandardizedDifferenceUpperThreshold)
+  }
   if (!is.null(targetCohortIds)) {
     plotData <- plotData %>% 
       dplyr::filter(.data$targetCohortId %in% !!targetCohortIds)
@@ -334,8 +347,6 @@ plotCohortComparisonStandardizedDifference <- function(data,
     plotData <- plotData %>% 
       dplyr::filter(.data$databaseId %in% !!databaseIds)
   }
-  
-  
   
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()

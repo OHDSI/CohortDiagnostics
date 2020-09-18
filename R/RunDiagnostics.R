@@ -121,12 +121,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  minCellCount = 5,
                                  incremental = FALSE,
                                  incrementalFolder = exportFolder) {
-  
-  if (!cdmVersion == 5) {
-    ParallelLogger::logWarn("Only CDM version 5 is supported. Terminating.")
-    return(NULL)
-  }
-  
+
   start <- Sys.time()
   ParallelLogger::logInfo("\n- Run Cohort Diagnostics started at ", start)
   
@@ -170,6 +165,11 @@ runCohortDiagnostics <- function(packageName = NULL,
                                   cohortSetReference = cohortSetReference,
                                   cohortIds = cohortIds)
   
+  if (nrow(cohorts)) {
+    ParallelLogger::logWarn("Terminating cohort diagnostics. No cohorts specified")
+    return(NULL)
+  }
+  
   ## set up connection to server
   if (is.null(connection)) {
     if (!is.null(connectionDetails)) {
@@ -188,7 +188,6 @@ runCohortDiagnostics <- function(packageName = NULL,
   
   recordCountOfInstantiatedCohorts <- 
     getRecordCountOfInstantiatedCohorts(connection = connection,
-                                        connectionDetails = connectionDetails,
                                         cohortDatabaseSchema = cohortDatabaseSchema,
                                         cohortTable = cohortTable, 
                                         cohortIds = cohorts$cohortId
@@ -212,12 +211,6 @@ runCohortDiagnostics <- function(packageName = NULL,
     return(NULL)
   }
   
-  if (incremental) {
-    ParallelLogger::logInfo("\n- Working in incremental mode.")
-    cohorts$checksum <- computeChecksum(cohorts$sql)
-    recordKeepingFile <- file.path(incrementalFolder, "CreatedDiagnostics.csv")
-  }
-  
   ParallelLogger::logInfo("\n- Saving database metadata")
   database <- tibble::tibble(databaseId = databaseId,
                              databaseName = databaseName,
@@ -225,6 +218,14 @@ runCohortDiagnostics <- function(packageName = NULL,
                              isMetaAnalysis = 0)
   writeToCsv(data = database, 
              fileName = file.path(exportFolder, "database.csv"))
+  
+  if (incremental) {
+    ParallelLogger::logInfo("\n- Working in incremental mode.")
+    cohorts$checksum <- computeChecksum(cohorts$sql)
+    recordKeepingFile <- file.path(incrementalFolder, "CreatedDiagnostics.csv")
+  }
+  
+
   
   # Counting cohorts -----------------------------------------------------------------------
   ParallelLogger::logInfo("------------------------------------")
@@ -280,7 +281,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       }
       runInclusionStatistics <- function(row) {
         # convert to bulk mode
-        ParallelLogger::logInfo("  Fetching inclusion rule statistics for cohort \n     ", row$cohortName)
+        ParallelLogger::logInfo("  Fetching inclusion rule statistics for cohort \n     '", row$cohortName, "'")
         stats <- getInclusionStatisticsFromFiles(cohortId = row$cohortId,
                                                  folder = inclusionStatisticsFolder,
                                                  simplify = TRUE)
@@ -319,7 +320,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   
   if (runIncludedSourceConcepts || runOrphanConcepts) {
     ParallelLogger::logInfo("------------------------------------")
-    ParallelLogger::logInfo("- Design diagnostics included source concepts/orphan concepts. Started at ", Sys.time())
+    ParallelLogger::logInfo("- Data diagnostics included source concepts/orphan concepts. Started at ", Sys.time())
     # Concept set diagnostics -----------------------------------------------
     runConceptSetDiagnostics(connection = connection,
                              oracleTempSchema = oracleTempSchema,
@@ -628,15 +629,15 @@ runCohortDiagnostics <- function(packageName = NULL,
       }
       
       message <- "\n  Characterization results summary:\n"
-      message <- c(message, paste0("    Number of cohorts submitted for characterization = ", length(subset$cohortId), '\n'))
-      message <- c(message, "    Following cohorts were submitted: \n")
+      message <- c(message, paste0("Number of cohorts submitted for characterization = ", length(subset$cohortId), '\n'))
+      message <- c(message, "Following cohorts were submitted: \n")
       message <- c(message, paste0(subset %>% 
                                      dplyr::mutate(message = paste0("      ", subset$cohortName, 
                                                                     " (Cohort Id: ", 
                                                                     subset$cohortId, 
                                                                     ')\n')) %>% 
                                      dplyr::pull(.data$message), collapse = ""))
-      message <- c(message, paste0("    Total number of records returned for all cohorts characterized = ", 
+      message <- c(message, paste0("Total number of records returned for all cohorts characterized = ", 
                                    nrow(cohortCharacteristicsOutput$result) %>% 
                                      scales::comma(accuracy = 1), 
                                    '\n'))
@@ -661,7 +662,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           dplyr::mutate(mean = round(x = mean, digits = 4)) %>% 
           dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 4 digits
         
-        message <- c(message, paste0("    The number of cohorts with atleast one covariate with mean > 0.0001 is ",
+        message <- c(message, paste0("The number of cohorts with atleast one covariate with mean > 0.0001 is ",
                                      length(characteristicsResultFiltered$cohortId %>% unique()) %>% scales::comma(accuracy = 1)))
         message <- c(message, paste0("\n    Total number of records returned for all cohorts characterized with mean > 0.0001 = ",
                                      nrow(characteristicsResultFiltered) %>% scales::comma(accuracy = 1)))
@@ -899,23 +900,22 @@ runCohortDiagnostics <- function(packageName = NULL,
                                 " cohorts in incremental mode.")
       }
       
-      ParallelLogger::logInfo(paste0('Starting extraction of conceptIds for all concept set expressions in ', 
+      ParallelLogger::logInfo(paste0('  Starting extraction of conceptIds for all concept set expressions in ', 
                                      scales::comma(nrow(subset), accuracy = 1), 
                                      " cohorts"))
       conceptSetConceptIds <- 
         resolveCohortSqlToConceptIds(connection = connection,
-                                     connectionDetails = connectionDetails, 
                                      cdmDatabaseSchema = cdmDatabaseSchema,
                                      oracleTempSchema = oracleTempSchema,
                                      databaseId = databaseId,
-                                     cohort = cohorts)
+                                     cohort = subset)
       writeToCsv(data = conceptSetConceptIds, 
                  fileName = file.path(exportFolder, "concept_sets_concept_id.csv"), 
                  incremental = incremental)
-      message <- "Concept id extraction for concept sets in cohorts complete. \n"
+      message <- "  Concept id extraction for concept sets in cohorts complete. \n"
     } else {
-      message <- "Skipping concept id extraction for concept sets in cohorts. \n"
-      message <- c(message, "All submitted cohorts were previously characterized.")
+      message <- "  Skipping concept id extraction for concept sets in cohorts. \n"
+      message <- c(message, "  All submitted cohorts were previously characterized.")
     }
     ParallelLogger::logInfo(message)
     recordTasksDone(cohortId = subset$cohortId,
@@ -946,8 +946,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                 scales::comma(length(instantiatedCohorts) - length(subset), accuracy = 1), 
                                 " cohorts in incremental mode.")
       }
-      
-      ParallelLogger::logInfo(paste0('Starting extraction of concept set id expressions in ', 
+      ParallelLogger::logInfo(paste0('  Starting extraction of concept set id expressions in ', 
                                      scales::comma(nrow(subset), accuracy = 1), 
                                      " cohorts"))
       conceptSetExpressions <- 
@@ -956,9 +955,9 @@ runCohortDiagnostics <- function(packageName = NULL,
       writeToCsv(data = conceptSetExpressions, 
                  fileName = file.path(exportFolder, "concept_sets.csv"), 
                  incremental = incremental)
-      message <- "Completed extracting concept set expressions from cohort"
+      message <- "  Completed extracting concept set expressions from cohort"
     } else {
-      message <- "Skipping concept set extraction from cohorts. \n"
+      message <- "  Skipping concept set extraction from cohorts. \n"
       message <- c(message, "All submitted cohorts were previously extracted")
     }
     ParallelLogger::logInfo(message)
