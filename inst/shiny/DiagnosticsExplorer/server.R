@@ -625,15 +625,18 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::left_join(y = covariateRef) %>% 
         dplyr::distinct()
       table <- list()
+      characteristics <- list()
       for (j in (1:nrow(dataCounts))) {
-        dataCount <- dataCounts %>% 
-          dplyr::slice(j)
+        dataCount <- dataCounts[j,]
         temp <- data %>% 
           dplyr::filter(.data$databaseId == dataCount$databaseId) %>% 
           prepareTable1() %>% 
           dplyr::mutate(databaseId = dataCount$databaseId)
         table[[j]] <- temp
+        characteristics[[j]] <- temp %>% dplyr::select(characteristic)
       }
+      characteristics <- characteristics %>% 
+        purrr::reduce(.f = dplyr::full_join)
       table <- dplyr::bind_rows(table) %>% 
         tidyr::pivot_wider(id_cols = 'characteristic', 
                            names_from = "databaseId",
@@ -642,6 +645,9 @@ shiny::shinyServer(function(input, output, session) {
                            values_fill = 0,
                            names_prefix = "Value_"
         )
+      table <- characteristics %>% 
+        dplyr::left_join(table)
+      
       options = list(pageLength = 100,
                      searching = FALSE,
                      scrollX = TRUE,
@@ -988,7 +994,6 @@ shiny::shinyServer(function(input, output, session) {
                                                            isTemporal = FALSE,
                                                            timeIds = NULL,
                                                            resultsDatabaseSchema = NULL)
-    
     if (is.null(data)) {
       return(NULL)
     }

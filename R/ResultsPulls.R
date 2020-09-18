@@ -127,7 +127,7 @@ getTimeDistributionResult <- function(connection = NULL,
 #' @param stratifyByGender       (optional) Do you want to stratify by gender.
 #' @param stratifyByAgeGroup     (optional) Do you want to stratify by age group.
 #' @param stratifyByCalendarYear (optional) Do you want to stratify by calendar year.
-#' @param minPersonYears (optional) Default value = 1000. Minimum person years needed to create plot.
+#' @param minPersonYears         (optional) Default value = 1000. Minimum person years needed to create plot.
 #' 
 #' @return
 #' The function will return a tibble data frame object.
@@ -160,12 +160,18 @@ getIncidenceRateResult <- function(connection = NULL,
                                                  errorMessage = errorMessage)
   checkmate::assertLogical(x = stratifyByGender,
                            add = errorMessage,
+                           min.len = 1,
+                           max.len = 2,
                            unique = TRUE)
   checkmate::assertLogical(x = stratifyByAgeGroup,
                            add = errorMessage,
+                           min.len = 1,
+                           max.len = 2,
                            unique = TRUE)
   checkmate::assertLogical(x = stratifyByCalendarYear,
                            add = errorMessage,
+                           min.len = 1,
+                           max.len = 2,
                            unique = TRUE)
   checkmate::reportAssertions(collection = errorMessage)
   
@@ -220,7 +226,8 @@ getIncidenceRateResult <- function(connection = NULL,
   if (nrow(data) == 0) {
     ParallelLogger::logWarn("No records retrieved for 'incidence rate'.")
   }
-  return(data %>% dplyr::arrange(.data$cohortId, .data$databaseId))
+  return(data %>% 
+           dplyr::arrange(.data$cohortId, .data$databaseId))
 }
 
 
