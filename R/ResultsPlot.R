@@ -225,6 +225,7 @@ plotIncidenceRate <- function(data,
     xLabel <- "Calender year"
     showX <- TRUE
     if (stratifyByGender) {
+      aesthetics$group <- "gender"
       aesthetics$color <- "gender"
     }
     plotType <- "line"
@@ -232,6 +233,7 @@ plotIncidenceRate <- function(data,
     xLabel <- ""
     if (stratifyByGender) {
       aesthetics$x <- "gender"
+      aesthetics$color <- "gender"
       aesthetics$fill <- "gender"
       showX <- TRUE
     } else {
@@ -242,16 +244,12 @@ plotIncidenceRate <- function(data,
   }
   
   plot <- ggplot2::ggplot(data = plotData, 
-                          do.call(what = ggplot2::aes_string, args = aesthetics)) +
-    ggplot2::xlab(label = xLabel) +
-    ggplot2::ylab(label = "Incidence Rate (/1,000 person years)") +
+                          do.call(ggplot2::aes_string, aesthetics)) +
+    ggplot2::xlab(xLabel) +
+    ggplot2::ylab("Incidence Rate (/1,000 person years)") +
     ggplot2::theme(legend.position = "top",
                    legend.title = ggplot2::element_blank(),
-                   axis.text.x = if (showX) {
-                     ggplot2::element_text(angle = 90, vjust = 0.5)
-                   } else {
-                     ggplot2::element_blank()}
-    )
+                   axis.text.x = if (showX) ggplot2::element_text(angle = 90, vjust = 0.5) else ggplot2::element_blank() )
   
   if (plotType == "line") {
     plot <- plot + ggplot2::geom_line(size = 1.25, alpha = 0.6) +
