@@ -17,9 +17,10 @@
 #' Create postgres database schema for cohort diagnostics results storage
 #'
 #' @description
-#' Builds full schema for cohort
-#' @param connectionDetails
-#'
+#' Builds full schema for Diagnostics Explorer
+#' @param connectionDetails DatabaseConnector connection details compatible object. Must be dbms="postgres"
+#' @param schemaName schema to install to
+#' @param overwrite bool optionally delete and create entire schema again if it exists
 #' @export
 buildPostgresDatabaseSchema <- function(connectionDetails, schemaName, overwrite = FALSE) {
   checkmate::assert(connectionDetails$dbms == "postgresql")
@@ -43,26 +44,35 @@ buildPostgresDatabaseSchema <- function(connectionDetails, schemaName, overwrite
   DatabaseConnector::disconnect(connection)
 }
 
-.checkPsqlExists <- function(testCmd = "psql --version") {
-  res <- base::system(testCmd)
-  if (res != 0) {
-    stop("Error psql command not found in system path. Copy util will not function")
-  }
-}
-
 #' Import csv files in to postgres database instance
 #'
 #' @description
 #'
-#' @param connectionDetails
+#' This utility is a wrapper around the psql command to allow uploading large datasets to a postgres database
+#'
+#' @param connectionDetails DatabaseConnector connection details compatible object. Must be dbms="postgres"
+#' @param schemaName name where schema stores results
+#' @param schemaName path to cohort diagnostics csv files to import
+#' @param winPsqlPath path to folder containing postgres executables e.g. C:\Program Files\PostgresSQL\12\bin
 #'
 #' @export
-importCsvFilesToPostgres <- function(connectionDetails, schemaName, pathToCsvFiles) {
+importCsvFilesToPostgres <- function(connectionDetails, schemaName, pathToCsvFiles, winPsqlPath="") {
   checkmate::assert(connectionDetails$dbms == "postgresql")
   checkmate::assertDirectoryExists(pathToCsvFiles)
 
   hostServerDb <- strsplit(connectionDetails$server, "/")[[1]]
+
   pgPassword <- paste0("PGPASSWORD=", connectionDetails$password)
+  if (.Platform$OS.type == "windows") {
+    pgPassword <- paste0("$env:", pgPassword, ";")
+    command <- file.path(winPsqlPath, "psql.exe")
+
+    if (!file.exists(command)) {
+      stop("Error, could not find psql")
+    }
+  } else {
+    command <- "psql"
+  }
 
   # Test connection actually works
   connection <- DatabaseConnector::connect(connectionDetails)
@@ -87,7 +97,7 @@ importCsvFilesToPostgres <- function(connectionDetails, schemaName, pathToCsvFil
 
     copyCommand <- paste(
       pgPassword,
-      "psql",
+      command,
       "-h", hostServerDb[[1]], # Host
       "-d", hostServerDb[[2]], # Database
       "-p", connectionDetails$port,
