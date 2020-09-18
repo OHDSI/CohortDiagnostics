@@ -331,8 +331,6 @@ shiny::shinyServer(function(input, output, session) {
   
   output$includedConceptsTable <- DT::renderDataTable(expr = {
     data <- includedSourceConcept %>% 
-      dplyr::left_join(concept) %>% 
-      dplyr::left_join(conceptSets) %>%
       dplyr::filter(.data$cohortId == cohortId() &
                       .data$conceptSetName == input$conceptSet &
                       .data$databaseId %in% input$databases)
@@ -341,9 +339,14 @@ shiny::shinyServer(function(input, output, session) {
     
     if (input$includedType == "Source Concepts") {
       table <- data %>%
-        dplyr::select(.data$sourceConceptId, .data$vocabularyId, 
-                      .data$conceptCode, .data$conceptName, 
-                      .data$conceptSubjects, .data$databaseId) %>% 
+        dplyr::select(-.data$conceptId) %>% 
+        dplyr::rename(conceptId = .data$sourceConceptId) %>% 
+        dplyr::left_join(concept) %>% 
+        dplyr::left_join(conceptSets) %>%
+        dplyr::select(.data$databaseId, .data$conceptId, 
+                      .data$conceptName,
+                      .data$vocabularyId, .data$conceptCode,  
+                      .data$conceptSubjects, ) %>% 
         dplyr::group_by(.data$sourceConceptId, .data$vocabularyId, 
                         .data$conceptCode, .data$conceptName, 
                         .data$databaseId) %>%
