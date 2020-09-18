@@ -56,7 +56,7 @@ buildPostgresDatabaseSchema <- function(connectionDetails, schemaName, overwrite
 #' @param winPsqlPath path to folder containing postgres executables e.g. C:\Program Files\PostgresSQL\12\bin
 #'
 #' @export
-importCsvFilesToPostgres <- function(connectionDetails, schemaName, pathToCsvFiles, winPsqlPath="") {
+importCsvFilesToPostgres <- function(connectionDetails, schemaName, pathToCsvFiles, winPsqlPath = "") {
   checkmate::assert(connectionDetails$dbms == "postgresql")
   checkmate::assertDirectoryExists(pathToCsvFiles)
 
@@ -89,11 +89,11 @@ importCsvFilesToPostgres <- function(connectionDetails, schemaName, pathToCsvFil
       next
     }
     # Read first line to get header column order, we assume these are large files
-    head <- read.csv(file=csvFile, nrows=1)
+    head <- read.csv(file = csvFile, nrows = 1)
     headers <- stringi::stri_join(names(head), collapse = ", ")
     headers <- paste0("(", headers, ")")
-    tablePath <-  paste0(schemaName, ".", tableName)
-    filePathStr <-  paste0("'", csvFile, "'")
+    tablePath <- paste0(schemaName, ".", tableName)
+    filePathStr <- paste0("'", csvFile, "'")
 
     copyCommand <- paste(
       pgPassword,
