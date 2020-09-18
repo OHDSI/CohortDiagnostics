@@ -994,6 +994,7 @@ shiny::shinyServer(function(input, output, session) {
                                                            isTemporal = FALSE,
                                                            timeIds = NULL,
                                                            resultsDatabaseSchema = NULL)
+    
     if (is.null(data)) {
       return(NULL)
     }
