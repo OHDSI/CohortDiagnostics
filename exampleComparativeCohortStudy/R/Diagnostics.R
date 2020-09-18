@@ -138,7 +138,7 @@ createDiagnosticsForSubset <- function(subset, allControls, outputFolder, cmOutp
   mdrrs$comparatorId <- comparatorId
   mdrrs$comparatorName <- subset$comparatorName[1]
   fileName <-  file.path(diagnosticsFolder, paste0("mdrr_a", analysisId, "_t", targetId, "_c", comparatorId, ".csv"))
-  write.csv(mdrrs, fileName, row.names = FALSE)
+  write.csv(mdrrs, fileName, row.names = FALSE, na="")
   
   # Covariate balance --------------------------------------------------------------------------------------
   outcomeIdsOfInterest <- subset$outcomeId[!(subset$outcomeId %in% controlSubset$outcomeId)]
@@ -151,7 +151,7 @@ createDiagnosticsForSubset <- function(subset, allControls, outputFolder, cmOutp
       balance <- readRDS(balanceFileName)
       fileName = file.path(diagnosticsFolder, 
                            sprintf("bal_t%s_c%s_o%s_a%s.csv", targetId, comparatorId, outcomeId, analysisId))
-      write.csv(balance, fileName, row.names = FALSE)
+      write.csv(balance, fileName, row.names = FALSE, na="")
       
       outcomeTitle <- paste(paste(subset$targetName[1], subset$comparatorName[1], sep = " - "), 
                             subset$outcomeName[subset$outcomeId == outcomeId], 

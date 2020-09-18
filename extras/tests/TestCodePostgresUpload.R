@@ -1,14 +1,24 @@
-library(CohortDiagnostics)
-library(Eunomia)
 
-#baseUrl <- Sys.getenv("OHDSIbaseUrl")
 
-connectionDetails <- Eunomia::getEunomiaConnectionDetails()
-cdmDatabaseSchema <- "main"
-cohortDatabaseSchema <- "main"
+connectionDetails <- DatabaseConnector::createConnectionDetails(
+  dbms = "postgresql",
+  user = "postgres",
+  password = "postgres",
+  server = "localhost/eunomia",
+  port = 54321
+)
+
+connection <- DatabaseConnector::connect(connectionDetails)
+schemaName <- paste0("test_schema_", stringi::stri_rand_strings(1, 5))
+
+
+CohortDiagnostics::buildPostgresDatabaseSchema(connectionDetails, schemaName, overwrite = TRUE)
+
+cdmDatabaseSchema <- "eunomia"
+cohortDatabaseSchema <- schemaName
 cohortTable <- "cohort"
 oracleTempSchema <- NULL
-folder <- tempfile()
+folder <- stringi::stri_rand_strings(1, 5)
 unlink(x = folder, recursive = TRUE, force = TRUE)
 dir.create(folder, recursive = TRUE, showWarnings = FALSE)
 
@@ -22,12 +32,9 @@ CohortDiagnostics::instantiateCohortSet(connectionDetails = connectionDetails,
                                         cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
                                         generateInclusionStats = TRUE,
                                         createCohortTable = TRUE,
-                                       # incremental = TRUE, 
-                                       # incrementalFolder = file.path(folder, "incremental"),
+                                        # incremental = TRUE, 
+                                        # incrementalFolder = file.path(folder, "incremental"),
                                         inclusionStatisticsFolder = file.path(folder, "inclusionStatistics"))
-
-# debug(CohortDiagnostics::runCohortDiagnostics)
-# debug(CohortDiagnostics::breakDownIndexEvents)
 
 CohortDiagnostics::runCohortDiagnostics(connectionDetails = connectionDetails,
                                         cdmDatabaseSchema = cdmDatabaseSchema,
@@ -52,5 +59,7 @@ CohortDiagnostics::runCohortDiagnostics(connectionDetails = connectionDetails,
                                         minCellCount = 10,
                                         incrementalFolder = file.path(folder, "incremental"))
 
-CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = file.path(folder, "export"))
+CohortDiagnostics::importCsvFilesToPostgres(connectionDetails, schemaName, file.path(folder, "export"))
 
+DatabaseConnector::disconnect(connection)
+unlink(folder, recursive=TRUE)

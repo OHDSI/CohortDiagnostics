@@ -102,7 +102,7 @@ exportAnalyses <- function(outputFolder, exportFolder) {
   unlink(tempFileName)
   colnames(cohortMethodAnalysis) <- SqlRender::camelCaseToSnakeCase(colnames(cohortMethodAnalysis))
   fileName <- file.path(exportFolder, "cohort_method_analysis.csv")
-  write.csv(cohortMethodAnalysis, fileName, row.names = FALSE)
+  write.csv(cohortMethodAnalysis, fileName, row.names = FALSE, na = "")
   
   
   ParallelLogger::logInfo("- covariate_analysis table")
@@ -119,7 +119,7 @@ exportAnalyses <- function(outputFolder, exportFolder) {
   covariateAnalysis <- lapply(cmAnalysisList, getCovariateAnalyses)
   covariateAnalysis <- do.call("rbind", covariateAnalysis)
   fileName <- file.path(exportFolder, "covariate_analysis.csv")
-  write.csv(covariateAnalysis, fileName, row.names = FALSE)
+  write.csv(covariateAnalysis, fileName, row.names = FALSE, na = "")
 }
 
 exportExposures <- function(outputFolder, exportFolder) {
@@ -143,7 +143,7 @@ exportExposures <- function(outputFolder, exportFolder) {
   exposureOfInterest <- do.call("rbind", exposureOfInterest)
   colnames(exposureOfInterest) <- SqlRender::camelCaseToSnakeCase(colnames(exposureOfInterest))
   fileName <- file.path(exportFolder, "exposure_of_interest.csv")
-  write.csv(exposureOfInterest, fileName, row.names = FALSE)
+  write.csv(exposureOfInterest, fileName, row.names = FALSE, na = "")
 }
 
 exportOutcomes <- function(outputFolder, exportFolder) {
@@ -165,7 +165,7 @@ exportOutcomes <- function(outputFolder, exportFolder) {
   outcomeOfInterest <- do.call("rbind", outcomeOfInterest)
   colnames(outcomeOfInterest) <- SqlRender::camelCaseToSnakeCase(colnames(outcomeOfInterest))
   fileName <- file.path(exportFolder, "outcome_of_interest.csv")
-  write.csv(outcomeOfInterest, fileName, row.names = FALSE) 
+  write.csv(outcomeOfInterest, fileName, row.names = FALSE, na = "")
   
   
   ParallelLogger::logInfo("- negative_control_outcome table")
@@ -175,7 +175,7 @@ exportOutcomes <- function(outputFolder, exportFolder) {
   negativeControls <- negativeControls[, c("outcomeId", "outcomeName")]
   colnames(negativeControls) <- SqlRender::camelCaseToSnakeCase(colnames(negativeControls))
   fileName <- file.path(exportFolder, "negative_control_outcome.csv")
-  write.csv(negativeControls, fileName, row.names = FALSE)
+  write.csv(negativeControls, fileName, row.names = FALSE, na = "")
   
   
   synthesisSummaryFile <- file.path(outputFolder, "SynthesisSummary.csv")
@@ -200,7 +200,7 @@ exportOutcomes <- function(outputFolder, exportFolder) {
                                     "effectSize")
     colnames(positiveControls) <- SqlRender::camelCaseToSnakeCase(colnames(positiveControls))
     fileName <- file.path(exportFolder, "positive_control_outcome.csv")
-    write.csv(positiveControls, fileName, row.names = FALSE)
+    write.csv(positiveControls, fileName, row.names = FALSE, na = "")
   }
 }
 
@@ -237,7 +237,7 @@ exportMetadata <- function(outputFolder,
                          description = databaseDescription,
                          is_meta_analysis = 0)
   fileName <- file.path(exportFolder, "database.csv")
-  write.csv(database, fileName, row.names = FALSE)
+  write.csv(database, fileName, row.names = FALSE, na = "")
   
   
   ParallelLogger::logInfo("- exposure_summary table")
@@ -255,7 +255,7 @@ exportMetadata <- function(outputFolder,
   exposureSummary$databaseId <- databaseId
   colnames(exposureSummary) <- SqlRender::camelCaseToSnakeCase(colnames(exposureSummary))
   fileName <- file.path(exportFolder, "exposure_summary.csv")
-  write.csv(exposureSummary, fileName, row.names = FALSE)
+  write.csv(exposureSummary, fileName, row.names = FALSE, na = "")
   
   ParallelLogger::logInfo("- comparison_summary table")
   minDates <- aggregate(comparisonMinDate ~ targetId + comparatorId, info, min)
@@ -266,7 +266,7 @@ exportMetadata <- function(outputFolder,
   colnames(comparisonSummary)[colnames(comparisonSummary) == "comparisonMaxDate"] <- "maxDate"
   colnames(comparisonSummary) <- SqlRender::camelCaseToSnakeCase(colnames(comparisonSummary))
   fileName <- file.path(exportFolder, "comparison_summary.csv")
-  write.csv(comparisonSummary, fileName, row.names = FALSE)
+  write.csv(comparisonSummary, fileName, row.names = FALSE, na = "")
   
   
   ParallelLogger::logInfo("- attrition table")
@@ -312,6 +312,7 @@ exportMetadata <- function(outputFolder,
     write.table(x = attrition,
                 file = fileName,
                 row.names = FALSE,
+                na = "",
                 col.names = first,
                 sep = ",",
                 dec = ".",
@@ -342,7 +343,7 @@ exportMetadata <- function(outputFolder,
   covariates$databaseId <- databaseId
   colnames(covariates) <- SqlRender::camelCaseToSnakeCase(colnames(covariates))
   fileName <- file.path(exportFolder, "covariate.csv")
-  write.csv(covariates, fileName, row.names = FALSE)
+  write.csv(covariates, fileName, row.names = FALSE, na = "")
   rm(covariates)  # Free up memory
   
   
@@ -389,7 +390,7 @@ exportMetadata <- function(outputFolder,
   results <- do.call("rbind", results)
   results$database_id <- databaseId
   fileName <- file.path(exportFolder, "cm_follow_up_dist.csv")
-  write.csv(results, fileName, row.names = FALSE)
+  write.csv(results, fileName, row.names = FALSE, na = "")
   rm(results)  # Free up memory
 }
 
@@ -444,7 +445,7 @@ exportMainResults <- function(outputFolder,
   results <- enforceMinCellValue(results, "comparatorOutcomes", minCellCount)
   colnames(results) <- SqlRender::camelCaseToSnakeCase(colnames(results))
   fileName <- file.path(exportFolder, "cohort_method_result.csv")
-  write.csv(results, fileName, row.names = FALSE)
+  write.csv(results, fileName, row.names = FALSE, na = "")
   rm(results)  # Free up memory
   
   ParallelLogger::logInfo("- cm_interaction_result table")
@@ -515,7 +516,7 @@ exportMainResults <- function(outputFolder,
     interactions <- enforceMinCellValue(interactions, "comparatorOutcomes", minCellCount)
     colnames(interactions) <- SqlRender::camelCaseToSnakeCase(colnames(interactions))
     fileName <- file.path(exportFolder, "cm_interaction_result.csv")
-    write.csv(interactions, fileName, row.names = FALSE)
+    write.csv(interactions, fileName, row.names = FALSE, na = "")
     rm(interactions)  # Free up memory
   }
 }
@@ -729,6 +730,7 @@ exportDiagnostics <- function(outputFolder,
     write.table(x = balance,
                 file = fileName,
                 row.names = FALSE,
+                na = "",
                 col.names = first,
                 sep = ",",
                 dec = ".",
@@ -777,7 +779,7 @@ exportDiagnostics <- function(outputFolder,
   data <- do.call("rbind", data)
   fileName <- file.path(exportFolder, "preference_score_dist.csv")
   colnames(data) <- SqlRender::camelCaseToSnakeCase(colnames(data))
-  write.csv(data, fileName, row.names = FALSE)
+  write.csv(data, fileName, row.names = FALSE, na = "")
   
   
   ParallelLogger::logInfo("- propensity_model table")
@@ -820,7 +822,7 @@ exportDiagnostics <- function(outputFolder,
   data <- do.call("rbind", data)
   fileName <- file.path(exportFolder, "propensity_model.csv")
   colnames(data) <- SqlRender::camelCaseToSnakeCase(colnames(data))
-  write.csv(data, fileName, row.names = FALSE)
+  write.csv(data, fileName, row.names = FALSE, na = "")
   
   
   ParallelLogger::logInfo("- kaplan_meier_dist table")
@@ -855,6 +857,7 @@ exportDiagnostics <- function(outputFolder,
     write.table(x = data,
                 file = outputFile,
                 row.names = FALSE,
+                na = "",
                 col.names = first,
                 sep = ",",
                 dec = ".",
