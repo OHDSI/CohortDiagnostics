@@ -1274,14 +1274,6 @@ shiny::shinyServer(function(input, output, session) {
     return(targetCohortCountHtml())
   })
   
-  output$includeConceptsSelectedCohort <- shiny::renderUI({
-    return(targetCohortCountHtml())
-  })
-  
-  output$orphanConceptSelectedCohort <- shiny::renderUI({
-    return(targetCohortCountHtml())
-  })
-  
   output$inclusionRuleStatSelectedCohort <- shiny::renderUI({
     return(targetCohortCountHtml())
   })
