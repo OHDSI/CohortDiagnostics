@@ -19,7 +19,7 @@ getOmopVocabularyTables <-
   function(connection = NULL,
            cdmDatabaseSchema,
            cohortDatabaseSchema,
-           uniqueConceptIdsTable = '#unique_concept_ids',
+           uniqueConceptIdTable = '#unique_concept_ids',
            vocabularyTableNames = c('concept',
                                     'conceptAncestor',
                                     'conceptClass',
@@ -63,16 +63,16 @@ getOmopVocabularyTables <-
       print(vocabularyTablesInCdmDatabaseSchema$vocabularyTableNames[[i]] )
       if (vocabularyTablesInCdmDatabaseSchema$vocabularyTableNames[[i]] %in% c('concept', 'conceptSynonym')) {
         sql <- "select a.* from @cdm_database_schema.@table a
-        inner join (select distinct concept_id from @cohortDatabaseSchema.@uniqueConceptIdsTable) b
+        inner join (select distinct concept_id from @cohort_database_schema.@unique_concept_ids_table) b
         on a.concept_id = b.concept_id"
       } else if (vocabularyTablesInCdmDatabaseSchema$vocabularyTableNames[[i]] %in% c('conceptAncestor')) {
         sql <- "select a.* from @cdm_database_schema.@table a
-        left join (select distinct concept_id from @cohortDatabaseSchema.@uniqueConceptIdsTable) b
+        left join (select distinct concept_id from @cohort_database_schema.@unique_concept_ids_table) b
         on a.ancestor_concept_id = b.concept_id or
         a.descendant_concept_id = b.concept_id"
       } else if (vocabularyTablesInCdmDatabaseSchema$vocabularyTableNames[[i]] %in% c('conceptRelationship')) {
         sql <- "select a.* from @cdm_database_schema.@table a
-        left join (select distinct concept_id from @cohortDatabaseSchema.@uniqueConceptIdsTable) b
+        left join (select distinct concept_id from @cohort_database_schema.@unique_concept_ids_table) b
         on a.concept_id_1 = b.concept_id or
         a.concept_id_2 = b.concept_id"
       } 
@@ -85,7 +85,8 @@ getOmopVocabularyTables <-
           DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                      sql = sql,
                                                      cdm_database_schema = cdmDatabaseSchema,
-                                                     uniqueConceptIdsTable = uniqueConceptIdsTable,
+                                                     cohort_database_schema. = cohortDatabaseSchema,
+                                                     unique_concept_ids_table = uniqueConceptIdTable,
                                                      table = vocabularyTablesInCdmDatabaseSchema$serverTableNames[[i]]) %>%
             tidyr::tibble())
       } else if (vocabularyTablesInCdmDatabaseSchema$vocabularyTableNames[[i]] %in% c('domain',
@@ -98,6 +99,7 @@ getOmopVocabularyTables <-
           DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                      sql = sql,
                                                      cdm_database_schema = cdmDatabaseSchema,
+                                                     cohortDatabaseSchema = cohortDatabaseSchema,
                                                      table = vocabularyTablesInCdmDatabaseSchema$serverTableNames[[i]]) %>%
             tidyr::tibble())
       }

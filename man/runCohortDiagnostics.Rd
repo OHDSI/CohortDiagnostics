@@ -40,7 +40,7 @@ runCohortDiagnostics(
     seq(from = 1, to = 390, by = 30)), temporalEndDays = c(-31, -1, 0, 30, 365, seq(from
     = 0, to = -390, by = -30), seq(from = 31, to = 420, by = 30))),
   runSubsetOmopVocabularyTables = TRUE,
-  uniqueConceptIdTable = "unq_conceptid_tbl",
+  uniqueConceptIdTable = "unique_concept_id_table",
   minCellCount = 5,
   incremental = FALSE,
   incrementalFolder = file.path(exportFolder, "incremental")
