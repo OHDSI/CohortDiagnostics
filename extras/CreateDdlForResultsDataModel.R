@@ -1,5 +1,8 @@
 library(magrittr)
-path = "D:\\git\\bitbucket\\cohortDiagnosticsTest\\results\\all"
+path = file.path("extras", "CSVFiles")
+packageName <- "CohortDiagnostics"
+packageVersion <- "2.0"
+modelVersion <- "2.0"
 pathToCsvFiles <- tidyr::tibble(fullPath = list.files(path = path, pattern = ".csv", full.names = TRUE)) %>% 
   dplyr::mutate(baseName = basename(.data$fullPath) %>% stringr::str_remove_all(string = ., pattern = ".csv")) %>% 
   dplyr::mutate(dontUse = dplyr::case_when(stringr::str_detect(string = baseName, pattern = "_", negate = TRUE) &
@@ -27,9 +30,9 @@ readr::write_excel_csv(x = specification,
 # Especially the keys.
 # The only keys that are valid are concept tables
 #################
-script <- CohortDiagnostics::createDdl(packageName = 'CohortDiagnostics', 
-                                       packageVersion = '2.0',
-                                       modelVersion = '2.0',
+script <- CohortDiagnostics::createDdl(packageName = packageName, 
+                                       packageVersion = packageVersion,
+                                       modelVersion = modelVersion,
                                        specification = readr::read_csv(file = file.path(resultsDataModelDirectory,
                                                                                         "resultsDataModelSpecification.csv"),
                                                                        col_types = readr::cols(), 
@@ -39,33 +42,33 @@ pathToDdl <- file.path(rstudioapi::getActiveProject(), "inst", "sql", "sql_serve
 dir.create(pathToDdl, showWarnings = FALSE, recursive = TRUE)
 
 SqlRender::writeSql(sql = script, 
-                    targetFile = file.path(pathToDdl, "sql_server_ddl_results_data_model.sql"))
+                    targetFile = file.path(pathToDdl, "postgressql_ddl_results_data_model.sql"))
 
 
 
 
 ################
-scriptConstraints <- CohortDiagnostics::createDdlPkConstraints(packageName = 'CohortDiagnostics', 
-                                                               packageVersion = '2.0',
-                                                               modelVersion = '2.0',
+scriptConstraints <- CohortDiagnostics::createDdlPkConstraints(packageName = packageName, 
+                                                               packageVersion = packageVersion,
+                                                               modelVersion = modelVersion,
                                                                specification = readr::read_csv(file = file.path(resultsDataModelDirectory,
                                                                                                                 "resultsDataModelSpecification.csv"),
                                                                                                guess_max = min(1e7),
                                                                                                col_types = readr::cols()))
 
 SqlRender::writeSql(sql = scriptConstraints, 
-                    targetFile = file.path(pathToDdl, "sql_server_ddl_results_data_model_constraints.sql"))
+                    targetFile = file.path(pathToDdl, "postgressql_ddl_results_data_model_constraints.sql"))
 
 ################
 
-scriptDropTable <- CohortDiagnostics::dropDdl(packageName = 'CohortDiagnostics', 
-                                              packageVersion = '2.0',
-                                              modelVersion = '2.0',
+scriptDropTable <- CohortDiagnostics::dropDdl(packageName = packageName, 
+                                              packageVersion = packageVersion,
+                                              modelVersion = modelVersion,
                                               specification =  readr::read_csv(file = file.path(resultsDataModelDirectory,
                                                                                                 "resultsDataModelSpecification.csv"),
                                                                                guess_max = min(1e7),
                                                                                col_types = readr::cols()))
 
 SqlRender::writeSql(sql = scriptDropTable, 
-                    targetFile = file.path(pathToDdl, "sql_server_ddl_results_data_model_drop.sql"))
+                    targetFile = file.path(pathToDdl, "postgressql_ddl_results_data_model_drop.sql"))
 
