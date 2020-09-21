@@ -103,7 +103,6 @@ importCsvFilesToPostgres <- function(connectionDetails,
     ParallelLogger::logInfo(paste("Uploading file", csvFile))
     tableName <- stringr::str_to_upper(stringr::str_split(basename(csvFile), 
                                                           ".csv")[[1]][[1]])
-    
     # Read first line to get header column order, we assume these are large files
     head <- read.csv(file = csvFile, nrows = 1)
     headers <- stringi::stri_join(names(head), collapse = ", ")
@@ -122,7 +121,7 @@ importCsvFilesToPostgres <- function(connectionDetails,
       "FROM", filePathStr,
       "DELIMITER ',' CSV HEADER;\""
     )
-    print(copyCommand)
+    ParallelLogger::logDebug(copyCommand)
     result <- base::system(copyCommand)
     if (result != 0) {
       stop("Copy failure, psql returned a non zero status")
