@@ -401,10 +401,9 @@ runCohortDiagnostics <- function(packageName = NULL,
                              databaseId = databaseId,
                              cohorts = cohorts,
                              runIncludedSourceConcepts = runIncludedSourceConcepts,
-                             runResolveCohortConceptSetsToConceptIds = runResolveCohortConceptSetsToConceptIds,
                              runOrphanConcepts = runOrphanConcepts,
                              includeSourceConceptTable = '#inc_src_con',
-                             orphan_concept = '#orphan_concept',
+                             orphanConceptTable = '#orphan_concept',
                              exportConceptCountTableForDatabase = exportConceptCountTableForDatabase,
                              exportFolder = exportFolder,
                              minCellCount = minCellCount,
@@ -765,24 +764,24 @@ runCohortDiagnostics <- function(packageName = NULL,
             incremental = incremental,
             covariateId = cohortCharacteristicsOutput$covariateRef$covariateId
           )
-          sql <- "DELETE FROM @cohort_database_schema.@unique_concept_id_table
-                  WHERE database_id = '@database_id'
-                  AND cohort_id in (0)
-                  AND task = '@task';
-      
-                  INSERT INTO @cohort_database_schema.@unique_concept_id_table
-                  (database_id, cohort_id, task, concept_id)
-                  SELECT DISTINCT '@database_id' as database_id,
-                         0 as cohort_id,
-                         '@task' as task,
-                         covariate.concept_id
-                  FROM #covariate_ref covariate;"
-          DatabaseConnector::renderTranslateExecuteSql(connection = connection,
-                                                       sql = sql,
-                                                       cohort_database_schema = cohortDatabaseSchema,
-                                                       unique_concept_id_table = uniqueConceptIdTable,
-                                                       database_id = databaseId,
-                                                       task = 'runCohortCharacterization')
+          # sql <- "DELETE FROM @cohort_database_schema.@unique_concept_id_table
+          #         WHERE database_id = '@database_id'
+          #         AND cohort_id in (0)
+          #         AND task = '@task';
+          # 
+          #         INSERT INTO @cohort_database_schema.@unique_concept_id_table
+          #         (database_id, cohort_id, task, concept_id)
+          #         SELECT DISTINCT '@database_id' as database_id,
+          #                0 as cohort_id,
+          #                '@task' as task,
+          #                covariate.concept_id
+          #         FROM #covariate_ref covariate;"
+          # DatabaseConnector::renderTranslateExecuteSql(connection = connection,
+          #                                              sql = sql,
+          #                                              cohort_database_schema = cohortDatabaseSchema,
+          #                                              unique_concept_id_table = uniqueConceptIdTable,
+          #                                              database_id = databaseId,
+          #                                              task = 'runCohortCharacterization')
           writeToCsv(
             data = cohortCharacteristicsOutput$analysisRef,
             fileName = file.path(exportFolder, "analysis_ref.csv"),
@@ -924,24 +923,24 @@ runCohortDiagnostics <- function(packageName = NULL,
             incremental = incremental,
             covariateId = cohortCharacteristicsOutput$covariateRef$covariateId
           )
-          sql <- "DELETE FROM @cohort_database_schema.@unique_concept_id_table
-                  WHERE database_id = '@database_id'
-                  AND cohort_id in (0)
-                  AND task = '@task';
-      
-                  INSERT INTO @cohort_database_schema.@unique_concept_id_table
-                  (database_id, cohort_id, task, concept_id)
-                  SELECT DISTINCT '@database_id' as database_id,
-                         0 as cohort_id,
-                         '@task' as task,
-                         covariate.concept_id
-                  FROM #covariate_ref covariate;"
-          DatabaseConnector::renderTranslateExecuteSql(connection = connection,
-                                                       sql = sql,
-                                                       cohort_database_schema = cohortDatabaseSchema,
-                                                       unique_concept_id_table = uniqueConceptIdTable,
-                                                       database_id = databaseId,
-                                                       task = 'runTemporalCohortCharacterization')
+          # sql <- "DELETE FROM @cohort_database_schema.@unique_concept_id_table
+          #         WHERE database_id = '@database_id'
+          #         AND cohort_id in (0)
+          #         AND task = '@task';
+          # 
+          #         INSERT INTO @cohort_database_schema.@unique_concept_id_table
+          #         (database_id, cohort_id, task, concept_id)
+          #         SELECT DISTINCT '@database_id' as database_id,
+          #                0 as cohort_id,
+          #                '@task' as task,
+          #                covariate.concept_id
+          #         FROM #covariate_ref covariate;"
+          # DatabaseConnector::renderTranslateExecuteSql(connection = connection,
+          #                                              sql = sql,
+          #                                              cohort_database_schema = cohortDatabaseSchema,
+          #                                              unique_concept_id_table = uniqueConceptIdTable,
+          #                                              database_id = databaseId,
+          #                                              task = 'runTemporalCohortCharacterization')
           writeToCsv(
             data = cohortCharacteristicsOutput$analysisRef,
             fileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
@@ -1003,7 +1002,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     getOmopVocabularyTables(connection = connection,
                             cdmDatabaseSchema = cdmDatabaseSchema,
                             cohortDatabaseSchema = cohortDatabaseSchema,
-                            uniqueConceptIdsTable = 'uniqueConceptIdTable',
+                            uniqueConceptIdTable = uniqueConceptIdTable,
                             exportFolder = exportFolder)
     recordTasksDone(cohortId = subset$cohortId,
                     task = "runSubsetOmopVocabularyTables",

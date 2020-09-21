@@ -264,12 +264,11 @@ runConceptSetDiagnostics <- function(connection,
                                      databaseId,
                                      cohorts,
                                      runIncludedSourceConcepts,
-                                     runResolveCohortConceptSetsToConceptIds = TRUE,
                                      runOrphanConcepts,
                                      exportFolder,
                                      minCellCount,
                                      includeSourceConceptTable = '#inc_src_con',
-                                     orphan_concept = '#orphan_concept',
+                                     orphanConceptTable = '#recommended_concepts',
                                      conceptCountsDatabaseSchema = cdmDatabaseSchema,
                                      conceptCountsTable = "concept_counts",
                                      exportConceptCountTableForDatabase = FALSE,
@@ -540,10 +539,10 @@ runConceptSetDiagnostics <- function(connection,
                               dplyr::distinct())
         ParallelLogger::logInfo("  Finding orphan concepts for concept set ",
                                 conceptSet$conceptSetName, 
-                                "found in cohorts :\n    ",
+                                ". This was found in cohorts :\n    ",
                                 paste0(cohort %>% 
                                          dplyr::pull(.data$cohortName) %>% 
-                                         paste0(collapse = "/n    ")))
+                                         paste0(collapse = "\n    ")))
         data[[i]] <-
           .findOrphanConcepts(
             connection = connection,
@@ -555,7 +554,7 @@ runConceptSetDiagnostics <- function(connection,
             conceptCountsTable = conceptCountsTable,
             conceptCountsTableIsTemp = conceptCountsTableIsTemp,
             instantiatedCodeSets = '#inst_concept_sets',
-            orphanConceptTable = '#recommended_concepts'
+            orphanConceptTable = orphanConceptTable
           )
         
         if (!is.null(databaseId) && !is.null(uniqueConceptIdTable)) {
@@ -581,7 +580,7 @@ runConceptSetDiagnostics <- function(connection,
                                                          unique_concept_id_table = uniqueConceptIdTable,
                                                          database_id = databaseId,
                                                          cohort_ids = paste0(cohort$cohortId %>% unique(), collapse = ","),
-                                                         orphan_concept_table = '#recommended_concepts',
+                                                         orphan_concept_table = orphanConceptTable,
                                                          task = 'runOrphanConcepts')
         }
       }
