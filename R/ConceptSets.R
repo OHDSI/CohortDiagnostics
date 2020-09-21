@@ -221,7 +221,7 @@ instantiateUniqueConceptSets <- function(uniqueConceptSets,
                                          connection,
                                          cdmDatabaseSchema,
                                          oracleTempSchema,
-                                         instantiatedCodeSets = '#InstConceptSets') {
+                                         instantiatedCodeSets = '#inst_concept_sets') {
   ParallelLogger::logInfo("  Instantiating concept sets")
   sql <- sapply(split(uniqueConceptSets, 1:nrow(uniqueConceptSets)),
                 function(x) {
@@ -345,9 +345,9 @@ runConceptSetDiagnostics <- function(connection,
     connection = connection,
     cdmDatabaseSchema = cdmDatabaseSchema,
     oracleTempSchema = oracleTempSchema,
-    instantiatedCodeSets = '#InstConceptSets'
+    instantiatedCodeSets = '#inst_concept_sets'
   )
-  # there is now a temp table called #InstConceptSets
+  # there is now a temp table called #inst_concept_sets
   sql <- "SELECT DISTINCT concept_sets.cohort_id,
               concept_sets.concept_set_id,
               inst.concept_id
@@ -356,7 +356,8 @@ runConceptSetDiagnostics <- function(connection,
           ON concept_sets.unique_concept_set_id = inst.codeset_id"
   conceptSetConceptIds <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                                      sql = sql,
-                                                                     instantiated_code_sets = '#InstConceptSets') %>% 
+                                                                     instantiated_code_sets = '#inst_concept_sets',
+                                                                     snakeCaseToCamelCase = TRUE) %>% 
     tidyr::tibble()
   writeToCsv(data = conceptSetConceptIds, 
              fileName = file.path(exportFolder, "concept_sets_concept_id.csv"), 
@@ -469,7 +470,7 @@ runConceptSetDiagnostics <- function(connection,
           dbms = connection@dbms,
           oracleTempSchema = oracleTempSchema,
           cdm_database_schema = cdmDatabaseSchema,
-          instantiated_concept_sets = '#InstConceptSets',
+          instantiated_concept_sets = '#inst_concept_sets',
           include_source_concept_table = includeSourceConceptTable,
           by_month = FALSE
         )
@@ -553,7 +554,7 @@ runConceptSetDiagnostics <- function(connection,
             conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
             conceptCountsTable = conceptCountsTable,
             conceptCountsTableIsTemp = conceptCountsTableIsTemp,
-            instantiatedCodeSets = '#InstConceptSets',
+            instantiatedCodeSets = '#inst_concept_sets',
             orphanConceptTable = '#recommended_concepts'
           )
         
@@ -643,7 +644,7 @@ runConceptSetDiagnostics <- function(connection,
     }
   }
   ParallelLogger::logTrace("Dropping temp concept set tables")
-  sql <- "TRUNCATE TABLE #InstConceptSets; DROP TABLE #InstConceptSets;"
+  sql <- "TRUNCATE TABLE #inst_concept_sets; DROP TABLE #inst_concept_sets;"
   DatabaseConnector::renderTranslateExecuteSql(
     connection,
     sql,
