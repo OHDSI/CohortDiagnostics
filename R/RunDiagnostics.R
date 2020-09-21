@@ -701,7 +701,6 @@ runCohortDiagnostics <- function(packageName = NULL,
                                                               cohortIds = subset$cohortId,
                                                               covariateSettings = covariateSettings,
                                                               cdmVersion = cdmVersion)
-      debug(getCohortCharacteristics)
       if (length(cohortCharacteristicsOutput) == 0) {
         ParallelLogger::logWarn("\n   No characterization output for submitted cohorts")
       }
