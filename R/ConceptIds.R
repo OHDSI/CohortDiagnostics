@@ -60,21 +60,30 @@ getOmopVocabularyTables <-
     }
     
     for (i in (1:nrow(vocabularyTablesInCdmDatabaseSchema))) {
-      print(vocabularyTablesInCdmDatabaseSchema$vocabularyTableNames[[i]] )
       if (vocabularyTablesInCdmDatabaseSchema$vocabularyTableNames[[i]] %in% c('concept', 'conceptSynonym')) {
         sql <- "select a.* from @cdm_database_schema.@table a
-        inner join (select distinct concept_id from @cohort_database_schema.@unique_concept_ids_table) b
+        inner join (select distinct concept_id from @cohort_database_schema.@unique_concept_id_table) b
         on a.concept_id = b.concept_id"
       } else if (vocabularyTablesInCdmDatabaseSchema$vocabularyTableNames[[i]] %in% c('conceptAncestor')) {
         sql <- "select a.* from @cdm_database_schema.@table a
-        left join (select distinct concept_id from @cohort_database_schema.@unique_concept_ids_table) b
-        on a.ancestor_concept_id = b.concept_id or
-        a.descendant_concept_id = b.concept_id"
+        inner join (select distinct concept_id from @cohort_database_schema.@unique_concept_id_table) b1
+        on a.ancestor_concept_id = b1.concept_id
+        
+        union
+        
+        select a.* from @cdm_database_schema.@table a
+        inner join (select distinct concept_id from @cohort_database_schema.@unique_concept_id_table) b2
+        on a.descendant_concept_id = b2.concept_id"
       } else if (vocabularyTablesInCdmDatabaseSchema$vocabularyTableNames[[i]] %in% c('conceptRelationship')) {
         sql <- "select a.* from @cdm_database_schema.@table a
-        left join (select distinct concept_id from @cohort_database_schema.@unique_concept_ids_table) b
-        on a.concept_id_1 = b.concept_id or
-        a.concept_id_2 = b.concept_id"
+        inner join (select distinct concept_id from @cohort_database_schema.@unique_concept_id_table) b1
+        on a.concept_id_1 = b1.concept_id
+        
+        union
+        
+        select a.* from @cdm_database_schema.@table a
+        inner join (select distinct concept_id from @cohort_database_schema.@unique_concept_id_table) b2
+        on a.concept_id_2 = b2.concept_id"
       } 
       if (vocabularyTablesInCdmDatabaseSchema$vocabularyTableNames[[i]] %in% c('concept'
                                                                                , 'conceptSynonym'
@@ -85,9 +94,10 @@ getOmopVocabularyTables <-
           DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                      sql = sql,
                                                      cdm_database_schema = cdmDatabaseSchema,
-                                                     cohort_database_schema. = cohortDatabaseSchema,
-                                                     unique_concept_ids_table = uniqueConceptIdTable,
-                                                     table = vocabularyTablesInCdmDatabaseSchema$serverTableNames[[i]]) %>%
+                                                     cohort_database_schema = cohortDatabaseSchema,
+                                                     unique_concept_id_table = uniqueConceptIdTable,
+                                                     table = vocabularyTablesInCdmDatabaseSchema$serverTableNames[[i]],
+                                                     snakeCaseToCamelCase = TRUE) %>%
             tidyr::tibble())
       } else if (vocabularyTablesInCdmDatabaseSchema$vocabularyTableNames[[i]] %in% c('domain',
                                                                                       'relationship',
@@ -99,8 +109,8 @@ getOmopVocabularyTables <-
           DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                      sql = sql,
                                                      cdm_database_schema = cdmDatabaseSchema,
-                                                     cohortDatabaseSchema = cohortDatabaseSchema,
-                                                     table = vocabularyTablesInCdmDatabaseSchema$serverTableNames[[i]]) %>%
+                                                     table = vocabularyTablesInCdmDatabaseSchema$serverTableNames[[i]],
+                                                     snakeCaseToCamelCase = TRUE) %>%
             tidyr::tibble())
       }
       
