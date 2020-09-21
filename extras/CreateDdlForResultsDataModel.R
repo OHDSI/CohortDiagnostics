@@ -1,9 +1,9 @@
 library(magrittr)
-path = file.path("extras", "CSVFiles")
+csvFilePath = file.path("extras", "CSVFiles")
 packageName <- "CohortDiagnostics"
 packageVersion <- "2.0"
 modelVersion <- "2.0"
-pathToCsvFiles <- tidyr::tibble(fullPath = list.files(path = path, pattern = ".csv", full.names = TRUE)) %>% 
+pathToCsvFiles <- tidyr::tibble(fullPath = list.files(path = csvFilePath, pattern = ".csv", full.names = TRUE)) %>% 
   dplyr::mutate(baseName = basename(.data$fullPath) %>% stringr::str_remove_all(string = ., pattern = ".csv")) %>% 
   dplyr::mutate(dontUse = dplyr::case_when(stringr::str_detect(string = baseName, pattern = "_", negate = TRUE) &
                                              baseName != SqlRender::snakeCaseToCamelCase(baseName)
