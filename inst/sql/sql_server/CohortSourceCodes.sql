@@ -1,30 +1,24 @@
 {DEFAULT @by_month = false}
 {DEFAULT @use_source_values = false}
 
+IF OBJECT_ID('tempdb..@include_source_concept_table', 'U') IS NOT NULL
+  DROP TABLE @include_source_concept_table;
+
 SELECT codeset_id AS concept_set_id,
 	concept.concept_id,
-	concept.concept_name,
-{@use_source_values} ? {
-	source_value,
-}	
-	source_concept.concept_code,
-	source_concept.vocabulary_id AS source_vocabulary_id,
 	source_concept_id,
-	source_concept.concept_name AS source_concept_name,
 {@by_month} ? {
 	event_year,
 	event_month,
 }
 	concept_subjects,
 	concept_count
+INTO @include_source_concept_table
 FROM (
 
 -- condition_occurrence
 	SELECT codeset_id,
 		concept_id,
-{@use_source_values} ? {		
-		condition_source_value AS source_value,
-}
 		condition_source_concept_id AS source_concept_id,
 {@by_month} ? {		
 		YEAR(condition_start_date) AS event_year,
@@ -32,7 +26,7 @@ FROM (
 }
 		COUNT_BIG(DISTINCT observation_period.person_id) AS concept_subjects,
 		COUNT_BIG(*) AS concept_count
-	FROM #Codesets
+	FROM @instantiated_concept_sets
 	INNER JOIN @cdm_database_schema.condition_occurrence
 		ON condition_concept_id = concept_id
 	INNER JOIN @cdm_database_schema.observation_period
@@ -40,9 +34,6 @@ FROM (
 			AND condition_start_date >= observation_period_start_date
 			AND condition_start_date <= observation_period_end_date
 	GROUP BY codeset_id,
-{@use_source_values} ? {	
-		condition_source_value,
-}
 		condition_source_concept_id,
 {@by_month} ? {		
 		YEAR(condition_start_date),
@@ -55,9 +46,6 @@ FROM (
 -- drug_exposure
 	SELECT codeset_id,
 		concept_id,
-{@use_source_values} ? {		
-		drug_source_value AS source_value,
-}
 		drug_source_concept_id AS source_concept_id,
 {@by_month} ? {		
 		YEAR(drug_exposure_start_date) AS event_year,
@@ -65,7 +53,7 @@ FROM (
 }
 		COUNT_BIG(DISTINCT observation_period.person_id) AS concept_subjects,
 		COUNT_BIG(*) AS concept_count
-	FROM #Codesets
+	FROM @instantiated_concept_sets
 	INNER JOIN @cdm_database_schema.drug_exposure
 		ON drug_concept_id = concept_id
 	INNER JOIN @cdm_database_schema.observation_period
@@ -73,9 +61,6 @@ FROM (
 			AND drug_exposure_start_date >= observation_period_start_date
 			AND drug_exposure_start_date <= observation_period_end_date
 	GROUP BY codeset_id,
-{@use_source_values} ? {	
-		drug_source_value,
-}
 		drug_source_concept_id,
 {@by_month} ? {		
 		YEAR(drug_exposure_start_date),
@@ -88,9 +73,6 @@ FROM (
 -- procedure_occurrence
 	SELECT codeset_id,
 		concept_id,
-{@use_source_values} ? {
-		procedure_source_value AS source_value,
-}
 		procedure_source_concept_id AS source_concept_id,
 {@by_month} ? {	
 		YEAR(procedure_date) AS event_year,
@@ -98,7 +80,7 @@ FROM (
 }
 		COUNT_BIG(DISTINCT observation_period.person_id) AS concept_subjects,
 		COUNT_BIG(*) AS concept_count
-	FROM #Codesets
+	FROM @instantiated_concept_sets
 	INNER JOIN @cdm_database_schema.procedure_occurrence
 		ON procedure_concept_id = concept_id
 	INNER JOIN @cdm_database_schema.observation_period
@@ -106,9 +88,6 @@ FROM (
 			AND procedure_date >= observation_period_start_date
 			AND procedure_date <= observation_period_end_date
 	GROUP BY codeset_id,
-{@use_source_values} ? {	
-		procedure_source_value,
-}
 		procedure_source_concept_id,
 {@by_month} ? {	
 		YEAR(procedure_date),
@@ -121,9 +100,6 @@ FROM (
 -- measurement
 	SELECT codeset_id,
 		concept_id,
-{@use_source_values} ? {		
-		measurement_source_value AS source_value,
-}		
 		measurement_source_concept_id AS source_concept_id,
 {@by_month} ? {	
 		YEAR(measurement_date) AS event_year,
@@ -131,7 +107,7 @@ FROM (
 }
 		COUNT_BIG(DISTINCT observation_period.person_id) AS concept_subjects,
 		COUNT_BIG(*) AS concept_count
-	FROM #Codesets
+	FROM @instantiated_concept_sets
 	INNER JOIN @cdm_database_schema.measurement
 		ON measurement_concept_id = concept_id
 	INNER JOIN @cdm_database_schema.observation_period
@@ -139,9 +115,6 @@ FROM (
 			AND measurement_date >= observation_period_start_date
 			AND measurement_date <= observation_period_end_date
 	GROUP BY codeset_id,
-{@use_source_values} ? {
-		measurement_source_value,
-}
 		measurement_source_concept_id,
 {@by_month} ? {	
 		YEAR(measurement_date),
@@ -154,9 +127,6 @@ FROM (
 -- observation
 	SELECT codeset_id,
 		concept_id,
-{@use_source_values} ? {
-		observation_source_value AS source_value,
-}
 		observation_source_concept_id AS source_concept_id,
 {@by_month} ? {	
 		YEAR(observation_date) AS event_year,
@@ -164,7 +134,7 @@ FROM (
 }
 		COUNT_BIG(DISTINCT observation_period.person_id) AS concept_subjects,
 		COUNT_BIG(*) AS concept_count
-	FROM #Codesets
+	FROM @instantiated_concept_sets
 	INNER JOIN @cdm_database_schema.observation
 		ON observation_concept_id = concept_id
 	INNER JOIN @cdm_database_schema.observation_period
@@ -172,9 +142,6 @@ FROM (
 			AND observation_date >= observation_period_start_date
 			AND observation_date <= observation_period_end_date
 	GROUP BY codeset_id,
-{@use_source_values} ? {
-		observation_source_value,
-}
 		observation_source_concept_id,
 {@by_month} ? {			
 		YEAR(observation_date),
@@ -187,9 +154,6 @@ FROM (
 -- visit_occurrence
 	SELECT codeset_id,
 		concept_id,
-{@use_source_values} ? {
-		visit_source_value AS source_value,
-}
 		visit_source_concept_id AS source_concept_id,
 {@by_month} ? {			
 		YEAR(visit_start_date) AS event_year,
@@ -197,7 +161,7 @@ FROM (
 }
 		COUNT_BIG(DISTINCT observation_period.person_id) AS concept_subjects,
 		COUNT_BIG(*) AS concept_count
-	FROM #Codesets
+	FROM @instantiated_concept_sets
 	INNER JOIN @cdm_database_schema.visit_occurrence
 		ON visit_concept_id = concept_id
 	INNER JOIN @cdm_database_schema.observation_period
@@ -205,9 +169,6 @@ FROM (
 			AND visit_start_date >= observation_period_start_date
 			AND visit_start_date <= observation_period_end_date
 	GROUP BY codeset_id,
-{@use_source_values} ? {
-		visit_source_value,
-}
 		visit_source_concept_id,
 {@by_month} ? {			
 		YEAR(visit_start_date),

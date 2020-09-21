@@ -28,10 +28,8 @@
 #' @template Connection
 #'
 #' @template CdmDatabaseSchema
-#' @param vocabularyDatabaseSchema  (optional) Schema name where your vocabulary resides. Most commonly it is the same
-#'                                   as CDM databaseSchema. Note that for SQL Server, 
-#'                                   this should include both the database and schema name, for example 'cdm_data.dbo'.
-#'
+#' @template VocabularyDatabaseSchema
+#' @template CohortDatabaseSchema
 #' @template OracleTempSchema
 #'
 #' @template CohortTable
@@ -53,6 +51,7 @@
 #' @param runInclusionStatistics      Generate and export statistic on the cohort inclusion rules?
 #' @param runIncludedSourceConcepts   Generate and export the source concepts included in the cohorts?
 #' @param runOrphanConcepts           Generate and export potential orphan concepts?
+#' @param exportConceptCountTableForDatabase Do you want to export concept count table for the database?
 #' @param runTimeDistributions        Generate and export cohort time distributions?
 #' @param runBreakdownIndexEvents     Generate and export the breakdown of index events?
 #' @param runIncidenceRate            Generate and export the cohort incidence  rates?
@@ -69,8 +68,9 @@
 #' @param temporalCovariateSettings   Either an object of type \code{covariateSettings} as created using one of
 #'                                    the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
 #'                                    of such objects.
-#' @param runResolveCohortSqlToConceptIds Resolve and export all the concept ids in all the concept set expressions in cohorts?
-#' @param runCombineConceptSetsFromCohorts Generate and export all the concept set expressions from cohorts?
+#' @param runSubsetOmopVocabularyTables Do you want to retrieve a copy of the OMOP vocabulary, but subset to the unique conceptId
+#'                                    used in the diagnosis?
+#' @param uniqueConceptIdTable        Table to store unique concept_ids.
 #' @param minCellCount                The minimum cell count for fields contains person counts or fractions.
 #' @param incremental                 Create only cohort diagnostics that haven't been created before?
 #' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
@@ -87,7 +87,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  cohortDatabaseSchema,
                                  cohortTable = "cohort",
                                  cohortIds = NULL,
-                                 inclusionStatisticsFolder = NULL,
+                                 inclusionStatisticsFolder = file.path(exportFolder, 'inclusionStatistics'),
                                  exportFolder,
                                  databaseId,
                                  databaseName = databaseId,
@@ -96,6 +96,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  runInclusionStatistics = TRUE,
                                  runIncludedSourceConcepts = TRUE,
                                  runOrphanConcepts = TRUE,
+                                 exportConceptCountTableForDatabase = TRUE,
                                  runTimeDistributions = TRUE,
                                  runBreakdownIndexEvents = TRUE,
                                  runIncidenceRate = TRUE,
@@ -116,12 +117,12 @@ runCohortDiagnostics <- function(packageName = NULL,
                                      temporalEndDays = c(-31,-1,0,30,365,
                                                          seq(from = 0, to = -390, by = -30),
                                                          seq(from = 31, to = 420, by = 30))),
-                                 runResolveCohortSqlToConceptIds = TRUE,
-                                 runCombineConceptSetsFromCohorts = TRUE,
+                                 runSubsetOmopVocabularyTables = TRUE,
+                                 uniqueConceptIdTable = "unique_concept_id_table",
                                  minCellCount = 5,
                                  incremental = FALSE,
-                                 incrementalFolder = exportFolder) {
-
+                                 incrementalFolder = file.path(exportFolder, 'incremental')) {
+  
   start <- Sys.time()
   ParallelLogger::logInfo("\n- Run Cohort Diagnostics started at ", start)
   
@@ -134,7 +135,11 @@ runCohortDiagnostics <- function(packageName = NULL,
   checkmate::assertLogical(runIncidenceRate, add = errorMessage)
   checkmate::assertLogical(runCohortOverlap, add = errorMessage)
   checkmate::assertLogical(runCohortCharacterization, add = errorMessage)
+  checkmate::assertLogical(runSubsetOmopVocabularyTables, add = errorMessage)
   checkmate::assertInt(x = cdmVersion, na.ok = FALSE, lower = 5, upper = 5, null.ok = FALSE, add = errorMessage)
+  minCellCount <- utils::type.convert(minCellCount)
+  checkmate::assertInteger(x = minCellCount, lower = 0, add = errorMessage)
+  checkmate::assertLogical(incremental, add = errorMessage)
   
   if (any(runInclusionStatistics, runIncludedSourceConcepts, runOrphanConcepts, 
           runTimeDistributions, runBreakdownIndexEvents, runIncidenceRate,
@@ -145,13 +150,13 @@ runCohortDiagnostics <- function(packageName = NULL,
     checkmate::assertCharacter(x = databaseId, min.len = 1, add = errorMessage)
     checkmate::assertCharacter(x = databaseDescription, min.len = 1, add = errorMessage)
   }
-  
-  minCellCount <- utils::type.convert(minCellCount)
-  checkmate::assertInteger(x = minCellCount, lower = 0, add = errorMessage)
-  checkmate::assertLogical(incremental, add = errorMessage)
+  if (runSubsetOmopVocabularyTables) {
+    checkmate::assertCharacter(x = uniqueConceptIdTable, min.len = 1, add = errorMessage)
+  } else {
+    uniqueConceptIdTable <- NULL
+  }
   checkmate::reportAssertions(collection = errorMessage)
   
-  # checking folders
   errorMessage <- createIfNotExist(type = 'folder', name = exportFolder, errorMessage = errorMessage)
   errorMessage <- createIfNotExist(type = 'folder', name = incrementalFolder, errorMessage = errorMessage)
   if (isTRUE(runInclusionStatistics)) {
@@ -165,11 +170,14 @@ runCohortDiagnostics <- function(packageName = NULL,
                                   cohortSetReference = cohortSetReference,
                                   cohortIds = cohortIds)
   
-  if (nrow(cohorts)) {
+  if (nrow(cohorts) == 0) {
     ParallelLogger::logWarn("Terminating cohort diagnostics. No cohorts specified")
     return(NULL)
   }
+  writeToCsv(data = cohorts, 
+             fileName = file.path(exportFolder, "cohort.csv"))
   
+  ##############################
   ## set up connection to server
   if (is.null(connection)) {
     if (!is.null(connectionDetails)) {
@@ -182,10 +190,81 @@ runCohortDiagnostics <- function(packageName = NULL,
   }
   
   ##############################
+  ParallelLogger::logInfo("\n- Saving database metadata to results data model")
+  database <- tibble::tibble(databaseId = databaseId,
+                             databaseName = databaseName,
+                             description = databaseDescription,
+                             isMetaAnalysis = 0)
+  writeToCsv(data = database, 
+             fileName = file.path(exportFolder, "database.csv"))
   
-  writeToCsv(data = cohorts, 
-             fileName = file.path(exportFolder, "cohort.csv"))
+  ##############################
+  if (runSubsetOmopVocabularyTables) {
+    ParallelLogger::logInfo("  Export of OMOP vocabulary tables has been requested. Collecting all unique concept ids in diagnosis.")
+    uniqueConceptIdTableExists <- DatabaseConnector::dbExistsTable(conn = connection, 
+                                                                   name = uniqueConceptIdTable)
+    if (uniqueConceptIdTableExists) {
+      ParallelLogger::logInfo("  Unique concept id table: ", uniqueConceptIdTable, " already exists. Table will not be recreated.")
+    } else {
+      ParallelLogger::logInfo("  Creating unique concept id table: '", uniqueConceptIdTable, "'")
+      sql <- SqlRender::loadRenderTranslateSql(
+        "CreateUniqueConceptIdTable.sql",
+        packageName = "CohortDiagnostics",
+        dbms = connection@dbms,
+        oracleTempSchema = oracleTempSchema,
+        cohort_database_schema = cohortDatabaseSchema,
+        unique_concept_id_table = uniqueConceptIdTable
+      )
+      DatabaseConnector::executeSql(connection = connection, 
+                                    sql = sql)
+    }
+  }
+  ##############################
+  if (runSubsetOmopVocabularyTables) {
+    ParallelLogger::logInfo("  Storing referent_concept_id as concept_id in ", uniqueConceptIdTable)
+    data <- cohorts %>% 
+      dplyr::select(.data$cohortId, .data$referentConceptId) %>% 
+      dplyr::mutate(concept_id = .data$referentConceptId) %>% 
+      dplyr::distinct()
+    ParallelLogger::logInfo("  Inserting into ", 
+                            uniqueConceptIdTable, " ",
+                            scales::comma(nrow(data)), 
+                            " records. This may take time.")
+    DatabaseConnector::insertTable(connection = connection, 
+                                   tableName = '#cohort_ref_conc_id',
+                                   data = data,
+                                   dropTableIfExists = TRUE,
+                                   createTable = TRUE, 
+                                   progressBar = TRUE,
+                                   tempTable = TRUE,
+                                   camelCaseToSnakeCase = TRUE)
+    ParallelLogger::logInfo("  Done.")
+    sql <- "DELETE FROM @cohort_database_schema.@unique_concept_id_table
+            WHERE database_id = '@database_id'
+            AND cohort_id in (@cohort_ids)
+            AND task = '@task';
+    
+            INSERT INTO @cohort_database_schema.@unique_concept_id_table 
+            (database_id, cohort_id, task, concept_id)
+            SELECT DISTINCT '@database_id' as database_id,
+                   cohort_id,
+                   '@task' as task,
+                   concept_id
+            FROM #cohort_ref_conc_id;
+    
+            DROP TABLE #cohort_ref_conc_id;"
+    DatabaseConnector::renderTranslateExecuteSql(connection = connection,
+                                                 sql = sql,
+                                                 cohort_database_schema = cohortDatabaseSchema,
+                                                 unique_concept_id_table = uniqueConceptIdTable,
+                                                 database_id = databaseId,
+                                                 cohort_ids = paste0(data$cohortId %>% unique(), collapse = ","),
+                                                 task = 'referentCohortConcpetId'
+    )
+  }
   
+  
+  ##############################
   recordCountOfInstantiatedCohorts <- 
     getRecordCountOfInstantiatedCohorts(connection = connection,
                                         cohortDatabaseSchema = cohortDatabaseSchema,
@@ -211,22 +290,16 @@ runCohortDiagnostics <- function(packageName = NULL,
     return(NULL)
   }
   
-  ParallelLogger::logInfo("\n- Saving database metadata")
-  database <- tibble::tibble(databaseId = databaseId,
-                             databaseName = databaseName,
-                             description = databaseDescription,
-                             isMetaAnalysis = 0)
-  writeToCsv(data = database, 
-             fileName = file.path(exportFolder, "database.csv"))
-  
+  ##############################
   if (incremental) {
     ParallelLogger::logInfo("\n- Working in incremental mode.")
     cohorts$checksum <- computeChecksum(cohorts$sql)
     recordKeepingFile <- file.path(incrementalFolder, "CreatedDiagnostics.csv")
+    if (file.exists(path = recordKeepingFile)) {
+      ParallelLogger::logInfo("  Found existing record keeping file in incremental folder - CreatedDiagnostics.csv")
+    }
   }
-  
-
-  
+  ##############################
   # Counting cohorts -----------------------------------------------------------------------
   ParallelLogger::logInfo("------------------------------------")
   ParallelLogger::logInfo("\n- Getting record and subject counts for instantiated cohorts")
@@ -280,7 +353,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                 " cohorts in incremental mode.")
       }
       runInclusionStatistics <- function(row) {
-        # convert to bulk mode
+        #  [OPTIMIZATION idea]  convert to bulk mode, why is reading from file so slow? we can read all cohorts in one read
         ParallelLogger::logInfo("  Fetching inclusion rule statistics for cohort \n     '", row$cohortName, "'")
         stats <- getInclusionStatisticsFromFiles(cohortId = row$cohortId,
                                                  folder = inclusionStatisticsFolder,
@@ -328,7 +401,11 @@ runCohortDiagnostics <- function(packageName = NULL,
                              databaseId = databaseId,
                              cohorts = cohorts,
                              runIncludedSourceConcepts = runIncludedSourceConcepts,
+                             runResolveCohortConceptSetsToConceptIds = runResolveCohortConceptSetsToConceptIds,
                              runOrphanConcepts = runOrphanConcepts,
+                             includeSourceConceptTable = '#inc_src_con',
+                             orphan_concept = '#orphan_concept',
+                             exportConceptCountTableForDatabase = exportConceptCountTableForDatabase,
                              exportFolder = exportFolder,
                              minCellCount = minCellCount,
                              conceptCountsDatabaseSchema = NULL,
@@ -336,6 +413,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                              conceptCountsTableIsTemp = TRUE,
                              useExternalConceptCountsTable = FALSE,
                              incremental = incremental,
+                             uniqueConceptIdTable = uniqueConceptIdTable,
                              recordKeepingFile = recordKeepingFile)
     ParallelLogger::logInfo("\n")
   }
@@ -623,7 +701,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                                               cohortIds = subset$cohortId,
                                                               covariateSettings = covariateSettings,
                                                               cdmVersion = cdmVersion)
-      
+      debug(getCohortCharacteristics)
       if (length(cohortCharacteristicsOutput) == 0) {
         ParallelLogger::logWarn("\n   No characterization output for submitted cohorts")
       }
@@ -688,6 +766,24 @@ runCohortDiagnostics <- function(packageName = NULL,
             incremental = incremental,
             covariateId = cohortCharacteristicsOutput$covariateRef$covariateId
           )
+          sql <- "DELETE FROM @cohort_database_schema.@unique_concept_id_table
+                  WHERE database_id = '@database_id'
+                  AND cohort_id in (0)
+                  AND task = '@task';
+      
+                  INSERT INTO @cohort_database_schema.@unique_concept_id_table
+                  (database_id, cohort_id, task, concept_id)
+                  SELECT DISTINCT '@database_id' as database_id,
+                         0 as cohort_id,
+                         '@task' as task,
+                         covariate.concept_id
+                  FROM #covariate_ref covariate;"
+          DatabaseConnector::renderTranslateExecuteSql(connection = connection,
+                                                       sql = sql,
+                                                       cohort_database_schema = cohortDatabaseSchema,
+                                                       unique_concept_id_table = uniqueConceptIdTable,
+                                                       database_id = databaseId,
+                                                       task = 'runCohortCharacterization')
           writeToCsv(
             data = cohortCharacteristicsOutput$analysisRef,
             fileName = file.path(exportFolder, "analysis_ref.csv"),
@@ -829,6 +925,24 @@ runCohortDiagnostics <- function(packageName = NULL,
             incremental = incremental,
             covariateId = cohortCharacteristicsOutput$covariateRef$covariateId
           )
+          sql <- "DELETE FROM @cohort_database_schema.@unique_concept_id_table
+                  WHERE database_id = '@database_id'
+                  AND cohort_id in (0)
+                  AND task = '@task';
+      
+                  INSERT INTO @cohort_database_schema.@unique_concept_id_table
+                  (database_id, cohort_id, task, concept_id)
+                  SELECT DISTINCT '@database_id' as database_id,
+                         0 as cohort_id,
+                         '@task' as task,
+                         covariate.concept_id
+                  FROM #covariate_ref covariate;"
+          DatabaseConnector::renderTranslateExecuteSql(connection = connection,
+                                                       sql = sql,
+                                                       cohort_database_schema = cohortDatabaseSchema,
+                                                       unique_concept_id_table = uniqueConceptIdTable,
+                                                       database_id = databaseId,
+                                                       task = 'runTemporalCohortCharacterization')
           writeToCsv(
             data = cohortCharacteristicsOutput$analysisRef,
             fileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
@@ -883,96 +997,36 @@ runCohortDiagnostics <- function(packageName = NULL,
     ParallelLogger::logInfo("\n")
   }
   
-  # Resolve cohorts concept set expression to conceptIds-------------------------
-  if (runResolveCohortSqlToConceptIds) {
+  # get a copy of the omop vocabulary but subset to the concept id of cohorts diagnosed -------------------------
+  if (runSubsetOmopVocabularyTables) {
     ParallelLogger::logInfo("------------------------------------")
-    startResolveCohortSqlToConceptIds <- Sys.time()
-    ParallelLogger::logInfo("- Resolving cohort sql to concept ids - started at ", Sys.time())
-    subset <- subsetToRequiredCohorts(cohorts = cohorts %>%
-                                        dplyr::filter(.data$cohortId %in% instantiatedCohorts), 
-                                      task = "runResolveCohortSqlToConceptIds", 
-                                      incremental = incremental, 
-                                      recordKeepingFile = recordKeepingFile)
-    if (nrow(subset) > 0) {
-      if (incremental && (length(instantiatedCohorts) - nrow(subset)) > 0) {
-        ParallelLogger::logInfo("  Skipping ", 
-                                scales::comma(length(instantiatedCohorts) - length(subset), accuracy = 1), 
-                                " cohorts in incremental mode.")
-      }
+    startSubsetOmopVocabularyTables <- Sys.time()
+      resolveUniqueConceptIds(connection = connection,
+                              cohorts = '#cohorts',
+                              includedSourceConcept = '#inc_src_con',
+                              orphanConcept = '#orphan_concept',
+                              conceptSetsConceptId = "#resolved_concept_set",
+                              covariateRef = '#covariate_ref',
+                              temporalCovariateRef = '#temporal_cov_ref',
+                              uniqueConceptIdsTable = '#unique_concept_ids'
+      )
       
-      ParallelLogger::logInfo(paste0('  Starting extraction of conceptIds for all concept set expressions in ', 
-                                     scales::comma(nrow(subset), accuracy = 1), 
-                                     " cohorts"))
-      conceptSetConceptIds <- 
-        resolveCohortSqlToConceptIds(connection = connection,
-                                     cdmDatabaseSchema = cdmDatabaseSchema,
-                                     oracleTempSchema = oracleTempSchema,
-                                     databaseId = databaseId,
-                                     cohort = subset)
-      writeToCsv(data = conceptSetConceptIds, 
-                 fileName = file.path(exportFolder, "concept_sets_concept_id.csv"), 
-                 incremental = incremental)
-      message <- "  Concept id extraction for concept sets in cohorts complete. \n"
-    } else {
-      message <- "  Skipping concept id extraction for concept sets in cohorts. \n"
-      message <- c(message, "  All submitted cohorts were previously characterized.")
-    }
-    ParallelLogger::logInfo(message)
-    recordTasksDone(cohortId = subset$cohortId,
-                    task = "runResolveCohortSqlToConceptIds",
-                    checksum = subset$checksum,
-                    recordKeepingFile = recordKeepingFile,
-                    incremental = incremental)
-    delta <- Sys.time() - startResolveCohortSqlToConceptIds
-    ParallelLogger::logInfo(paste("Running concept id extraction took",
-                                  signif(delta, 3),
-                                  attr(delta, "units")))
-    ParallelLogger::logInfo("\n")
-  }
-  
-  # Get concept set expression from cohort -------------------------
-  if (runCombineConceptSetsFromCohorts) {
-    ParallelLogger::logInfo("------------------------------------")
-    startCombineConceptSetsFromCohorts <- Sys.time()
-    ParallelLogger::logInfo("- Resolving cohort sql to concept set expression - started at ", Sys.time())
-    subset <- subsetToRequiredCohorts(cohorts = cohorts %>%
-                                        dplyr::filter(.data$cohortId %in% instantiatedCohorts), 
-                                      task = "runCombineConceptSetsFromCohorts", 
-                                      incremental = incremental, 
-                                      recordKeepingFile = recordKeepingFile)
-    if (nrow(subset) > 0) {
-      if (incremental && (length(instantiatedCohorts) - nrow(subset)) > 0) {
-        ParallelLogger::logInfo("  Skipping ", 
-                                scales::comma(length(instantiatedCohorts) - length(subset), accuracy = 1), 
-                                " cohorts in incremental mode.")
-      }
-      ParallelLogger::logInfo(paste0('  Starting extraction of concept set id expressions in ', 
-                                     scales::comma(nrow(subset), accuracy = 1), 
-                                     " cohorts"))
       conceptSetExpressions <- 
-        combineConceptSetsFromCohorts(cohorts = cohorts) %>% 
-        dplyr::select(-.data$uniqueConceptSetId)
-      writeToCsv(data = conceptSetExpressions, 
-                 fileName = file.path(exportFolder, "concept_sets.csv"), 
-                 incremental = incremental)
-      message <- "  Completed extracting concept set expressions from cohort"
-    } else {
-      message <- "  Skipping concept set extraction from cohorts. \n"
-      message <- c(message, "All submitted cohorts were previously extracted")
-    }
-    ParallelLogger::logInfo(message)
-    recordTasksDone(cohortId = subset$cohortId,
-                    task = "runCombineConceptSetsFromCohorts",
-                    checksum = subset$checksum,
-                    recordKeepingFile = recordKeepingFile,
-                    incremental = incremental)
-    delta <- Sys.time() - startCombineConceptSetsFromCohorts
-    ParallelLogger::logInfo(paste("Running concept set extraction took",
-                                  signif(delta, 3),
-                                  attr(delta, "units")))
-    ParallelLogger::logInfo("\n")
+        getOmopVocabularyTables(connection = connection,
+                                cdmDatabaseSchema = cdmDatabaseSchema,
+                                uniqueConceptIdsTable = '#unique_concept_ids',
+                                exportFolder = exportFolder)
+      recordTasksDone(cohortId = subset$cohortId,
+                      task = "runSubsetOmopVocabularyTables",
+                      checksum = subset$checksum,
+                      recordKeepingFile = recordKeepingFile,
+                      incremental = incremental)
+      delta <- Sys.time() - startSubsetOmopVocabularyTables
+      ParallelLogger::logInfo(paste("Subsetting and extracting OMOP vocabulary tables took ",
+                                    signif(delta, 3),
+                                    attr(delta, "units")))
+      ParallelLogger::logInfo("\n")
   }
-  
   
   # Add all to zip file -------------------------------------------------------------------------------
   ParallelLogger::logInfo("Adding results to zip file")

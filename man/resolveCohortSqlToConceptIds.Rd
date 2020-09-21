@@ -2,13 +2,14 @@
 % Please edit documentation in R/ConceptIds.R
 \name{resolveCohortSqlToConceptIds}
 \alias{resolveCohortSqlToConceptIds}
-\title{Get a copy of omop vocabulary as csv}
+\title{Resolves cohort sql to concept_ids}
 \usage{
 resolveCohortSqlToConceptIds(
   connection = NULL,
   connectionDetails = NULL,
   cdmDatabaseSchema,
   databaseId,
+  conceptSetsConceptId = "#resolved_concept_set",
   oracleTempSchema = NULL,
   cohort
 )
@@ -29,6 +30,8 @@ provided.}
 
 \item{databaseId}{A text string corresponding to the id of the database.}
 
+\item{conceptSetsConceptId}{Table to store the output on the database system. This is a temporary table.}
+
 \item{oracleTempSchema}{Should be used in Oracle to specify a schema where the user has write
 privileges for storing temporary tables.}
 
@@ -38,30 +41,10 @@ in OHDSI SQL dialect. It may contain parameters designed to be replaced
 by SqlRender. The standard form the cohort definition SQL is generated is using 
 circe-be by WebApi and Atlas. The 'cohort' table in Cohort Diagnostics results
 data model satisfies this requirement.}
-
-\item{exportFolder}{The folder where the output is exported by Cohort Diagnostics.
-If this folder does not exist, or does not have the searched file
-the function will return an error.}
-
-\item{conceptIdTable}{(optional) A table with one column called concept_id (integer) that
-contains all the concept_ids to limit the data pull. In the absence 
-of this table, the entire vocabulary is pulled down (slow)
-vocabulary files. If NULL, all conceptIds are extracted. Please
-provide the full name of the vocabulary table e.g.
-databaseSchema.conceptIdTable. If it is a temporary table
-please use '#conceptIdTable'. Remember, for temporary table
-the connection object has to be active.}
-
-\item{vocabularyTableNames}{(optional) A vector of omop vocabulary table names to download.}
 }
 \value{
-NULL. The function writes the vocabulary tables into the export folder as csv.
-
 Tibble Data Frame object
 }
 \description{
-For a given list of conceptId's get a subset of omop vocabulary
-of these conceptIds. These are written as csv in the export folder
-
 Resolves cohort sql to concept_ids
 }

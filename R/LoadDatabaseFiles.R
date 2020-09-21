@@ -18,28 +18,40 @@
 #'
 #' @description
 #' Builds full schema for Diagnostics Explorer
-#' @param connectionDetails DatabaseConnector connection details compatible object. Must be dbms="postgres"
-#' @param schemaName schema to install to
-#' @param overwrite bool optionally delete and create entire schema again if it exists
+#' @param connectionDetails DatabaseConnector connection details compatible object. 
+#'                          Must be dbms="postgres"
+#' @param schemaName        Schema to install to
+#' @param overwrite         Bool optionally delete and create entire schema again if it exists
 #' @export
-buildPostgresDatabaseSchema <- function(connectionDetails, schemaName, overwrite = FALSE) {
+buildPostgresDatabaseSchema <- function(connectionDetails, 
+                                        schemaName, 
+                                        overwrite = FALSE) {
+
+  
   checkmate::assert(connectionDetails$dbms == "postgresql")
   connection <- DatabaseConnector::connect(connectionDetails)
+  
   if (overwrite) {
     ParallelLogger::logInfo("Dropping schema")
-    DatabaseConnector::renderTranslateExecuteSql(connection, "DROP SCHEMA IF EXISTS @schema CASCADE;", schema = schemaName)
+    DatabaseConnector::renderTranslateExecuteSql(connection = connection, 
+                                                 sql = "DROP SCHEMA IF EXISTS @schema CASCADE;", 
+                                                 schema = schemaName)
   }
-  DatabaseConnector::renderTranslateExecuteSql(connection, "CREATE SCHEMA IF NOT EXISTS @schema;", schema = schemaName)
+  
+  DatabaseConnector::renderTranslateExecuteSql(connection = connection, 
+                                               sql = "CREATE SCHEMA IF NOT EXISTS @schema;", 
+                                               schema = schemaName)
 
   ParallelLogger::logInfo("Creating tables")
-
-  sql <- SqlRender::readSql(system.file("sql/sql_server", "sql_server_ddl_results_data_model.sql", package = "CohortDiagnostics"))
+  sql <- SqlRender::readSql(system.file("sql/sql_server", 
+                                        "sql_server_ddl_results_data_model.sql", 
+                                        package = "CohortDiagnostics"))
+  
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = sql,
     resultsDatabaseSchema = schemaName
   )
-
   ParallelLogger::logInfo("Disconnecting from database")
   DatabaseConnector::disconnect(connection)
 }
@@ -48,21 +60,30 @@ buildPostgresDatabaseSchema <- function(connectionDetails, schemaName, overwrite
 #'
 #' @description
 #'
-#' This utility is a wrapper around the psql command to allow uploading large datasets to a postgres database
+#' This utility is a wrapper around the psql command to 
+#' allow uploading large datasets to a postgres database
 #'
-#' @param connectionDetails DatabaseConnector connection details compatible object. Must be dbms="postgres"
-#' @param schemaName name where schema stores results
-#' @param schemaName path to cohort diagnostics csv files to import
-#' @param winPsqlPath path to folder containing postgres executables e.g. C:\Program Files\PostgresSQL\12\bin
+#' @param connectionDetails   DatabaseConnector connection details compatible object. 
+#'                            Must be dbms="postgres"
+#' @param schemaName          Name where schema stores results
+#' @param schemaName          Path to cohort diagnostics csv files to import
+#' @param winPsqlPath         Path to folder containing postgres executables 
+#'                            e.g. "C:/Program Files/PostgresSQL/12/bin"
 #'
 #' @export
-importCsvFilesToPostgres <- function(connectionDetails, schemaName, pathToCsvFiles, winPsqlPath = "") {
+importCsvFilesToPostgres <- function(connectionDetails, 
+                                     schemaName, 
+                                     pathToCsvFiles, 
+                                     winPsqlPath = "") {
+  
   checkmate::assert(connectionDetails$dbms == "postgresql")
   checkmate::assertDirectoryExists(pathToCsvFiles)
 
   hostServerDb <- strsplit(connectionDetails$server, "/")[[1]]
 
-  pgPassword <- paste0("PGPASSWORD=", connectionDetails$password)
+  pgPassword <- paste0("PGPASSWORD=", 
+                       connectionDetails$password)
+  
   if (.Platform$OS.type == "windows") {
     pgPassword <- paste0("$env:", pgPassword, ";")
     command <- file.path(winPsqlPath, "psql.exe")
@@ -80,14 +101,19 @@ importCsvFilesToPostgres <- function(connectionDetails, schemaName, pathToCsvFil
   DatabaseConnector::disconnect(connection)
 
   files <- Sys.glob(file.path(pathToCsvFiles, "*.csv"))
+  
   for (csvFile in files) {
     ParallelLogger::logInfo(paste("Uploading file", csvFile))
-    tableName <- stringr::str_to_upper(stringr::str_split(basename(csvFile), ".csv")[[1]][[1]])
+    tableName <- stringr::str_to_upper(stringr::str_split(basename(csvFile), 
+                                                          ".csv")[[1]][[1]])
 
     if (!(tableName %in% tables)) {
-      ParallelLogger::logWarn(paste("Skipping table", tableName, "not found in schema with tables", stringi::stri_join(tables, collapse = ", ")))
+      ParallelLogger::logWarn(paste("Skipping table", 
+                                    , "not found in schema with tables", 
+                                    stringi::stri_join(tables, collapse = ", ")))
       next
     }
+    
     # Read first line to get header column order, we assume these are large files
     head <- read.csv(file = csvFile, nrows = 1)
     headers <- stringi::stri_join(names(head), collapse = ", ")

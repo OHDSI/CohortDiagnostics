@@ -236,8 +236,12 @@ plotIncidenceRate <- function(data,
       aesthetics$color <- "gender"
       aesthetics$fill <- "gender"
       showX <- TRUE
-    } else {
-      aesthetics$x <- "dummy"
+    } else if (stratifyByAgeGroup) {
+      aesthetics$x <- "ageGroup"
+      showX <- TRUE
+    }
+    else{
+      aesthetics$x <- "cohortId"
       showX <- FALSE
     }
     plotType <- "bar"
@@ -265,9 +269,15 @@ plotIncidenceRate <- function(data,
     } else {
       scales <- "free_y"
     }
-    if (stratifyByAgeGroup) {
-      plot <- plot + ggplot2::facet_grid(databaseId~ageGroup, scales = scales)
-    } else {
+    if (stratifyByGender | stratifyByCalendarYear) {
+      if (stratifyByAgeGroup) {
+        plot <- plot + ggplot2::facet_grid(databaseId~ageGroup, scales = scales)
+      } else {
+        plot <- plot + ggplot2::facet_grid(databaseId~., scales = scales) 
+      }
+    }
+    else
+    {
       plot <- plot + ggplot2::facet_grid(databaseId~., scales = scales) 
     }
   } else {

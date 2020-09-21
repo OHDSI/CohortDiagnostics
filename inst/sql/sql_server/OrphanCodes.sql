@@ -1,11 +1,3 @@
-{DEFAULT @cdm_database_schema = cdm_optum_extended_dod_v1027.dbo}
-{DEFAULT @work_database_schema = scratch.dbo}
-{DEFAULT @concept_counts_table = concept_counts}
-{DEFAULT @concept_counts_table_is_temp = FALSE}
-{DEFAULT @concept_ids = 72714,72984,74125,74130}
-{DEFAULT @use_codesets_table = FALSE}
-{DEFAULT @codeset_id = 1}
-
 IF OBJECT_ID('tempdb..#starting_concepts', 'U') IS NOT NULL
   DROP TABLE #starting_concepts;
   
@@ -21,8 +13,8 @@ IF OBJECT_ID('tempdb..#search_str_top1000', 'U') IS NOT NULL
 IF OBJECT_ID('tempdb..#search_string_subset', 'U') IS NOT NULL
   DROP TABLE #search_string_subset;
 
-IF OBJECT_ID('tempdb..#recommended_concepts', 'U') IS NOT NULL
-  DROP TABLE #recommended_concepts;
+IF OBJECT_ID('tempdb..@orphan_concept_table', 'U') IS NOT NULL
+  DROP TABLE @orphan_concept_table;
 
 -- Find directly included concept and source concepts that map to those
 {@use_codesets_table} ? {
@@ -32,13 +24,13 @@ SELECT concept.concept_id,
 INTO #starting_concepts
 FROM (
 	SELECT concept_id
-	FROM #Codesets
+	FROM @instantiated_code_sets
 	WHERE codeset_id = @codeset_id
 	
 	UNION
 	
 	SELECT concept_id_1
-	FROM #Codesets codesets
+	FROM @instantiated_code_sets codesets
 	INNER JOIN @cdm_database_schema.concept_relationship
 		ON codesets.concept_id = concept_id_2
 			AND concept_relationship.relationship_id = 'Maps to'
@@ -138,14 +130,16 @@ WHERE ss1.concept_name NOT IN (
     );
 
 -- Create recommended list: concepts containing search string but not mapping to start set
-SELECT DISTINCT c1.concept_id,
-	c1.concept_name,
-	c1.concept_count
-INTO #recommended_concepts
+SELECT DISTINCT @codeset_id as codeset_id,
+  c1.concept_id,
+	c1.concept_count,
+	c1.concept_subjects
+INTO @orphan_concept_table
 FROM (
 	SELECT c1.concept_id,
 		c1.concept_name,
-		a1.concept_count
+		a1.concept_count,
+		a1.concept_subjects
 	FROM @cdm_database_schema.concept c1
 	LEFT JOIN #starting_concepts sc1
 		ON c1.concept_id = sc1.concept_id

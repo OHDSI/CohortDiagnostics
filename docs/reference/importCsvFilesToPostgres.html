@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Create concept counts table — createConceptCountsTable • CohortDiagnostics</title>
+<title>Import csv files in to postgres database instance — importCsvFilesToPostgres • CohortDiagnostics</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,9 @@
 
 
 
-<meta property="og:title" content="Create concept counts table — createConceptCountsTable" />
-<meta property="og:description" content="Create a table with counts of how often each concept ID occurs in the CDM." />
+<meta property="og:title" content="Import csv files in to postgres database instance — importCsvFilesToPostgres" />
+<meta property="og:description" content="This utility is a wrapper around the psql command to 
+allow uploading large datasets to a postgres database" />
 
 
 
@@ -126,24 +127,21 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Create concept counts table</h1>
-    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/MetaDataDiagnostics.R'><code>R/MetaDataDiagnostics.R</code></a></small>
-    <div class="hidden name"><code>createConceptCountsTable.Rd</code></div>
+    <h1>Import csv files in to postgres database instance</h1>
+    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/LoadDatabaseFiles.R'><code>R/LoadDatabaseFiles.R</code></a></small>
+    <div class="hidden name"><code>importCsvFilesToPostgres.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Create a table with counts of how often each concept ID occurs in the CDM.</p>
+    <p>This utility is a wrapper around the psql command to 
+allow uploading large datasets to a postgres database</p>
     </div>
 
-    <pre class="usage"><span class='fu'>createConceptCountsTable</span>(
-  connectionDetails = <span class='kw'>NULL</span>,
-  connection = <span class='kw'>NULL</span>,
-  <span class='kw'>cdmDatabaseSchema</span>,
-  oracleTempSchema = <span class='kw'>NULL</span>,
-  conceptCountsDatabaseSchema = <span class='kw'>cdmDatabaseSchema</span>,
-  conceptCountsTable = <span class='st'>"concept_counts"</span>,
-  conceptCountsTableIsTemp = <span class='fl'>FALSE</span>,
-  getConceptCountsTableAsDataFrame = <span class='fl'>FALSE</span>
+    <pre class="usage"><span class='fu'>importCsvFilesToPostgres</span>(
+  <span class='kw'>connectionDetails</span>,
+  <span class='kw'>schemaName</span>,
+  <span class='kw'>pathToCsvFiles</span>,
+  winPsqlPath = <span class='st'>""</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -151,58 +149,20 @@
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>connectionDetails</th>
-      <td><p>An object of type <code>connectionDetails</code> as created using the
-<code><a href='https://rdrr.io/pkg/DatabaseConnector/man/createConnectionDetails.html'>createConnectionDetails</a></code> function in the
-DatabaseConnector package. Can be left NULL if <code>connection</code> is
-provided.</p></td>
+      <td><p>DatabaseConnector connection details compatible object. 
+Must be dbms="postgres"</p></td>
     </tr>
     <tr>
-      <th>connection</th>
-      <td><p>An object of type <code>connection</code> as created using the
-<code><a href='https://rdrr.io/pkg/DatabaseConnector/man/connect.html'>connect</a></code> function in the
-DatabaseConnector package. Can be left NULL if <code>connectionDetails</code>
-is provided, in which case a new connection will be opened at the start
-of the function, and closed when the function finishes.</p></td>
+      <th>schemaName</th>
+      <td><p>Path to cohort diagnostics csv files to import</p></td>
     </tr>
     <tr>
-      <th>cdmDatabaseSchema</th>
-      <td><p>Schema name where your patient-level data in OMOP CDM format resides.
-Note that for SQL Server, this should include both the database and
-schema name, for example 'cdm_data.dbo'.</p></td>
-    </tr>
-    <tr>
-      <th>oracleTempSchema</th>
-      <td><p>Should be used in Oracle to specify a schema where the user has write
-privileges for storing temporary tables.</p></td>
-    </tr>
-    <tr>
-      <th>conceptCountsDatabaseSchema</th>
-      <td><p>Schema name where your concept counts table resides. Note that
-for SQL Server, this should include both the database and
-schema name, for example 'scratch.dbo'. Ignored if
-<code>conceptCountsTableIsTemp = TRUE</code>.</p></td>
-    </tr>
-    <tr>
-      <th>conceptCountsTable</th>
-      <td><p>Name of the concept counts table. This table can be created
-using the <code>createConceptCountsTable</code>.</p></td>
-    </tr>
-    <tr>
-      <th>conceptCountsTableIsTemp</th>
-      <td><p>Is the concept counts table a temp table?</p></td>
-    </tr>
-    <tr>
-      <th>getConceptCountsTable</th>
-      <td><p>Do you want to return a copy of the concept count 
-from dbms into Rs memory? If not NULL is returned</p></td>
+      <th>winPsqlPath</th>
+      <td><p>Path to folder containing postgres executables 
+e.g. "C:/Program Files/PostgresSQL/12/bin"</p></td>
     </tr>
     </table>
 
-    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
-
-    <p>The function will by default return <code><a href='https://rdrr.io/pkg/DatabaseConnector/man/executeSql.html'>DatabaseConnector::executeSql</a></code> output, by 
-attempting to create a table on dbms. In addition, if <code>getConceptCountsTable = TRUE</code>
-then a tibble data frame copy of the created table will be retuned back to R.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

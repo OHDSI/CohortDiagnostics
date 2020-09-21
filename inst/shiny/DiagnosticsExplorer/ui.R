@@ -291,12 +291,6 @@ bodyTabItems <- shinydashboard::tabItems(
                      style = "text-align: right",
                      shiny::checkboxInput("irYscaleFixed", "Use same y-scale across databases")
                    )
-                 ),
-                 tags$tr(
-                   tags$td(
-                     valign = "bottom",
-                     shiny::htmlOutput(outputId = "incidentRateSelectedCohort") 
-                   )
                  )),
       shiny::htmlOutput(outputId = "hoverInfoIr"),
       plotly::plotlyOutput(
@@ -311,7 +305,6 @@ bodyTabItems <- shinydashboard::tabItems(
       title = "Time Distributions",
       width = NULL,
       status = "primary",
-      shiny::htmlOutput(outputId = "timeDistributionSelectedCohort"),
       tags$br(),
       shiny::plotOutput("timeDisPlot"),
       shiny::downloadButton(outputId = "timeDistributionPlot", label = "Download")

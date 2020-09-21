@@ -16,7 +16,7 @@ runCohortDiagnostics(
   cohortDatabaseSchema,
   cohortTable = "cohort",
   cohortIds = NULL,
-  inclusionStatisticsFolder = NULL,
+  inclusionStatisticsFolder = file.path(exportFolder, "inclusionStatistics"),
   exportFolder,
   databaseId,
   databaseName = databaseId,
@@ -25,6 +25,7 @@ runCohortDiagnostics(
   runInclusionStatistics = TRUE,
   runIncludedSourceConcepts = TRUE,
   runOrphanConcepts = TRUE,
+  exportConceptCountTableForDatabase = TRUE,
   runTimeDistributions = TRUE,
   runBreakdownIndexEvents = TRUE,
   runIncidenceRate = TRUE,
@@ -38,11 +39,11 @@ runCohortDiagnostics(
     temporalStartDays = c(-365, -30, 0, 1, 31, seq(from = -30, to = -420, by = -30),
     seq(from = 1, to = 390, by = 30)), temporalEndDays = c(-31, -1, 0, 30, 365, seq(from
     = 0, to = -390, by = -30), seq(from = 31, to = 420, by = 30))),
-  runResolveCohortSqlToConceptIds = TRUE,
-  runCombineConceptSetsFromCohorts = TRUE,
+  runSubsetOmopVocabularyTables = TRUE,
+  uniqueConceptIdTable = "unique_concept_id_table",
   minCellCount = 5,
   incremental = FALSE,
-  incrementalFolder = exportFolder
+  incrementalFolder = file.path(exportFolder, "incremental")
 )
 }
 \arguments{
@@ -108,6 +109,8 @@ does not exist it will be created.}
 
 \item{runOrphanConcepts}{Generate and export potential orphan concepts?}
 
+\item{exportConceptCountTableForDatabase}{Do you want to export concept count table for the database?}
+
 \item{runTimeDistributions}{Generate and export cohort time distributions?}
 
 \item{runBreakdownIndexEvents}{Generate and export the breakdown of index events?}
@@ -132,9 +135,10 @@ Only records with values greater than 0.001 are returned.}
 the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
 of such objects.}
 
-\item{runResolveCohortSqlToConceptIds}{Resolve and export all the concept ids in all the concept set expressions in cohorts?}
+\item{runSubsetOmopVocabularyTables}{Do you want to retrieve a copy of the OMOP vocabulary, but subset to the unique conceptId
+used in the diagnosis?}
 
-\item{runCombineConceptSetsFromCohorts}{Generate and export all the concept set expressions from cohorts?}
+\item{uniqueConceptIdTable}{Table to store unique concept_ids.}
 
 \item{minCellCount}{The minimum cell count for fields contains person counts or fractions.}
 
