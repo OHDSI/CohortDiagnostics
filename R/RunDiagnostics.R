@@ -1000,31 +1000,20 @@ runCohortDiagnostics <- function(packageName = NULL,
   if (runSubsetOmopVocabularyTables) {
     ParallelLogger::logInfo("------------------------------------")
     startSubsetOmopVocabularyTables <- Sys.time()
-      resolveUniqueConceptIds(connection = connection,
-                              cohorts = '#cohorts',
-                              includedSourceConcept = '#inc_src_con',
-                              orphanConcept = '#orphan_concept',
-                              conceptSetsConceptId = "#resolved_concept_set",
-                              covariateRef = '#covariate_ref',
-                              temporalCovariateRef = '#temporal_cov_ref',
-                              uniqueConceptIdsTable = '#unique_concept_ids'
-      )
-      
-      conceptSetExpressions <- 
-        getOmopVocabularyTables(connection = connection,
-                                cdmDatabaseSchema = cdmDatabaseSchema,
-                                uniqueConceptIdsTable = '#unique_concept_ids',
-                                exportFolder = exportFolder)
-      recordTasksDone(cohortId = subset$cohortId,
-                      task = "runSubsetOmopVocabularyTables",
-                      checksum = subset$checksum,
-                      recordKeepingFile = recordKeepingFile,
-                      incremental = incremental)
-      delta <- Sys.time() - startSubsetOmopVocabularyTables
-      ParallelLogger::logInfo(paste("Subsetting and extracting OMOP vocabulary tables took ",
-                                    signif(delta, 3),
-                                    attr(delta, "units")))
-      ParallelLogger::logInfo("\n")
+    getOmopVocabularyTables(connection = connection,
+                            cdmDatabaseSchema = cdmDatabaseSchema,
+                            uniqueConceptIdsTable = '#unique_concept_ids',
+                            exportFolder = exportFolder)
+    recordTasksDone(cohortId = subset$cohortId,
+                    task = "runSubsetOmopVocabularyTables",
+                    checksum = subset$checksum,
+                    recordKeepingFile = recordKeepingFile,
+                    incremental = incremental)
+    delta <- Sys.time() - startSubsetOmopVocabularyTables
+    ParallelLogger::logInfo(paste("Subsetting and extracting OMOP vocabulary tables took ",
+                                  signif(delta, 3),
+                                  attr(delta, "units")))
+    ParallelLogger::logInfo("\n")
   }
   
   # Add all to zip file -------------------------------------------------------------------------------
