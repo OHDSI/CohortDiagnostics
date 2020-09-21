@@ -210,7 +210,7 @@ getCohortsJsonAndSql <- function(packageName = NULL,
                                               cohortSetReference = cohortSetReference,
                                               cohortIds = cohortIds)
   }
-  ParallelLogger::logInfo("  Number of cohorts ", nrow(cohorts),)
+  ParallelLogger::logInfo("  Number of cohorts ", nrow(cohorts))
   if (nrow(cohorts) == 0) {
     ParallelLogger::logWarn(" No cohorts founds")
   }

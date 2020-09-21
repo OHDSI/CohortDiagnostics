@@ -7,11 +7,12 @@
 buildPostgresDatabaseSchema(connectionDetails, schemaName, overwrite = FALSE)
 }
 \arguments{
-\item{connectionDetails}{DatabaseConnector connection details compatible object. Must be dbms="postgres"}
+\item{connectionDetails}{DatabaseConnector connection details compatible object. 
+Must be dbms="postgres"}
 
-\item{schemaName}{schema to install to}
+\item{schemaName}{Schema to install to}
 
-\item{overwrite}{bool optionally delete and create entire schema again if it exists}
+\item{overwrite}{Bool optionally delete and create entire schema again if it exists}
 }
 \description{
 Builds full schema for Diagnostics Explorer

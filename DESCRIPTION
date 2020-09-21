@@ -29,25 +29,23 @@ Imports:
   rlang,
   RJSONIO,
   ROhdsiWebApi (>= 1.1.2),
+  RSQLite (> 2.2.0),
+  shiny,
+  shinydashboard,
   SqlRender (>= 1.6.7),
   stringr,
+  tidyselect,
   tibble (>= 3.0.0),
-  tidyr (>= 1.0.0)
+  tidyr (>= 1.0.0),
+  VennDiagram
 Suggests:
-  DT,
   Eunomia,
-  RSQLite (> 2.2.0),
   htmltools,
   knitr,
-  plotly,
   RColorBrewer,
   rmarkdown,
   scales,
-  shiny,
-  shinydashboard,
   stringi,
-  tidyselect,
-  VennDiagram,
   testthat
 Remotes:
   ohdsi/Eunomia,

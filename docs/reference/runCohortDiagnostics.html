@@ -157,7 +157,7 @@ Alternatively, a covariate setting object may be created using the above as an e
   <span class='kw'>cohortDatabaseSchema</span>,
   cohortTable = <span class='st'>"cohort"</span>,
   cohortIds = <span class='kw'>NULL</span>,
-  inclusionStatisticsFolder = <span class='kw'>NULL</span>,
+  inclusionStatisticsFolder = <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='kw'>exportFolder</span>, <span class='st'>"inclusionStatistics"</span>),
   <span class='kw'>exportFolder</span>,
   <span class='kw'>databaseId</span>,
   databaseName = <span class='kw'>databaseId</span>,
@@ -166,6 +166,7 @@ Alternatively, a covariate setting object may be created using the above as an e
   runInclusionStatistics = <span class='fl'>TRUE</span>,
   runIncludedSourceConcepts = <span class='fl'>TRUE</span>,
   runOrphanConcepts = <span class='fl'>TRUE</span>,
+  exportConceptCountTableForDatabase = <span class='fl'>TRUE</span>,
   runTimeDistributions = <span class='fl'>TRUE</span>,
   runBreakdownIndexEvents = <span class='fl'>TRUE</span>,
   runIncidenceRate = <span class='fl'>TRUE</span>,
@@ -179,11 +180,11 @@ Alternatively, a covariate setting object may be created using the above as an e
     temporalStartDays = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='op'>-</span><span class='fl'>365</span>, <span class='op'>-</span><span class='fl'>30</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>31</span>, <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span>(from = <span class='op'>-</span><span class='fl'>30</span>, to = <span class='op'>-</span><span class='fl'>420</span>, by = <span class='op'>-</span><span class='fl'>30</span>),
     <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span>(from = <span class='fl'>1</span>, to = <span class='fl'>390</span>, by = <span class='fl'>30</span>)), temporalEndDays = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='op'>-</span><span class='fl'>31</span>, <span class='op'>-</span><span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>30</span>, <span class='fl'>365</span>, <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span>(from
     = <span class='fl'>0</span>, to = <span class='op'>-</span><span class='fl'>390</span>, by = <span class='op'>-</span><span class='fl'>30</span>), <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span>(from = <span class='fl'>31</span>, to = <span class='fl'>420</span>, by = <span class='fl'>30</span>))),
-  runResolveCohortSqlToConceptIds = <span class='fl'>TRUE</span>,
-  runCombineConceptSetsFromCohorts = <span class='fl'>TRUE</span>,
+  runSubsetOmopVocabularyTables = <span class='fl'>TRUE</span>,
+  uniqueConceptIdTable = <span class='st'>"unique_concept_id_table"</span>,
   minCellCount = <span class='fl'>5</span>,
   incremental = <span class='fl'>FALSE</span>,
-  incrementalFolder = <span class='kw'>exportFolder</span>
+  incrementalFolder = <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='kw'>exportFolder</span>, <span class='st'>"incremental"</span>)
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -292,6 +293,10 @@ does not exist it will be created.</p></td>
       <td><p>Generate and export potential orphan concepts?</p></td>
     </tr>
     <tr>
+      <th>exportConceptCountTableForDatabase</th>
+      <td><p>Do you want to export concept count table for the database?</p></td>
+    </tr>
+    <tr>
       <th>runTimeDistributions</th>
       <td><p>Generate and export cohort time distributions?</p></td>
     </tr>
@@ -332,12 +337,13 @@ the createTemporalCovariateSettings function in the FeatureExtraction package, o
 of such objects.</p></td>
     </tr>
     <tr>
-      <th>runResolveCohortSqlToConceptIds</th>
-      <td><p>Resolve and export all the concept ids in all the concept set expressions in cohorts?</p></td>
+      <th>runSubsetOmopVocabularyTables</th>
+      <td><p>Do you want to retrieve a copy of the OMOP vocabulary, but subset to the unique conceptId
+used in the diagnosis?</p></td>
     </tr>
     <tr>
-      <th>runCombineConceptSetsFromCohorts</th>
-      <td><p>Generate and export all the concept set expressions from cohorts?</p></td>
+      <th>uniqueConceptIdTable</th>
+      <td><p>Table to store unique concept_ids.</p></td>
     </tr>
     <tr>
       <th>minCellCount</th>

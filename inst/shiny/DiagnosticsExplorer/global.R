@@ -57,5 +57,6 @@ if (exists("temporalTimeRef")) {
   temporalCovariateChoices <- temporalTimeRef %>%
     dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
     dplyr::select(.data$timeId, .data$choices) %>% 
-    dplyr::arrange(.data$timeId)
+    dplyr::arrange(.data$timeId) %>% 
+    dplyr::slice_head(n = 5)
 }

@@ -86,6 +86,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
     dplyr::collect()
   output$covariateRef <- featureExtractionOutput$covariateRef %>% 
     dplyr::collect()
+  
   if ("timeRef" %in% names(featureExtractionOutput)) {
     output$timeRef <- featureExtractionOutput$timeRef %>% 
       dplyr::collect()
@@ -114,21 +115,46 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
     result <- dplyr::bind_rows(result, output$covariatesContinuous) %>% 
       dplyr::distinct()
   }
-
+  
   if (FeatureExtraction::isTemporalCovariateData(featureExtractionOutput)) {
     output$result <- result %>% 
       dplyr::select(.data$cohortId, .data$timeId, .data$covariateId, .data$mean, .data$sd)
+    DatabaseConnector::insertTable(connection = connection,
+                                   tableName = '#temporal_cov_ref',
+                                   dropTableIfExists = TRUE, 
+                                   createTable = TRUE,
+                                   tempTable = TRUE,
+                                   data = output$covariateRef %>% 
+                                     dplyr::select(.data$conceptId) %>% 
+                                     dplyr::distinct(), 
+                                   camelCaseToSnakeCase = TRUE)
   } else {
     output$result <- result %>% 
       dplyr::select(.data$cohortId, .data$covariateId, .data$mean, .data$sd)
+    ParallelLogger::logInfo("  Uploading cohort characterization conceptId into covariateRef. ConcpetIds = ", 
+                            scales::comma(output$covariateRef %>% 
+                                            dplyr::select(.data$conceptId) %>% 
+                                            dplyr::distinct() %>% 
+                                            nrow()))
+    DatabaseConnector::insertTable(connection = connection,
+                                   tableName = '#covariate_ref',
+                                   dropTableIfExists = TRUE, 
+                                   createTable = TRUE,
+                                   tempTable = TRUE,
+                                   data = output$covariateRef %>% 
+                                     dplyr::select(.data$conceptId) %>% 
+                                     dplyr::distinct(), 
+                                   camelCaseToSnakeCase = TRUE,
+                                   progressBar = TRUE)
   }
-  
   delta <- Sys.time() - start
   ParallelLogger::logInfo(paste("Cohort characterization took",
                                 signif(delta, 3),
                                 attr(delta, "units")))
   return(output)
 }
+
+
 
 #' Compare cohort characteristics
 #'

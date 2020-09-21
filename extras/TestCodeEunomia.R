@@ -1,4 +1,3 @@
-# Disabling until new version of DatabaseConnector is released:
 library(testthat)
 library(CohortDiagnostics)
 library(Eunomia)
@@ -10,8 +9,8 @@ cdmDatabaseSchema <- "main"
 cohortDatabaseSchema <- "main"
 cohortTable <- "cohort"
 oracleTempSchema <- NULL
-folder <- tempfile()
-dir.create(folder, recursive = TRUE)
+folder <- "D:\\git\\data"
+dir.create(folder, recursive = TRUE, showWarnings = FALSE)
 
 
 CohortDiagnostics::instantiateCohortSet(connectionDetails = connectionDetails,
@@ -25,7 +24,10 @@ CohortDiagnostics::instantiateCohortSet(connectionDetails = connectionDetails,
                                         createCohortTable = TRUE,
                                         inclusionStatisticsFolder = file.path(folder, "incStats"))
 
-
+undebug(CohortDiagnostics::runCohortDiagnostics)
+debug(CohortDiagnostics:::resolveUniqueConceptIds)
+debug(CohortDiagnostics:::getOmopVocabularyTables)
+debug(CohortDiagnostics::runConceptSetDiagnostics)
 CohortDiagnostics::runCohortDiagnostics(connectionDetails = connectionDetails,
                                         cdmDatabaseSchema = cdmDatabaseSchema,
                                         oracleTempSchema = oracleTempSchema,
@@ -36,14 +38,14 @@ CohortDiagnostics::runCohortDiagnostics(connectionDetails = connectionDetails,
                                         inclusionStatisticsFolder = file.path(folder, "incStats"),
                                         exportFolder =  file.path(folder, "export"),
                                         databaseId = "Eunomia",
-                                        runInclusionStatistics = TRUE,
+                                        runInclusionStatistics = FALSE,
                                         runBreakdownIndexEvents = TRUE,
                                         runCohortCharacterization = TRUE,
                                         runTemporalCohortCharacterization = TRUE,
-                                        runCohortOverlap = TRUE,
-                                        runIncidenceRate = TRUE,
+                                        runCohortOverlap = FALSE,
+                                        runIncidenceRate = FALSE,
                                         runIncludedSourceConcepts = TRUE,
                                         runOrphanConcepts = TRUE,
-                                        runTimeDistributions = TRUE,
+                                        runTimeDistributions = FALSE,
                                         incremental = TRUE,
                                         incrementalFolder = file.path(folder, "incremental"))

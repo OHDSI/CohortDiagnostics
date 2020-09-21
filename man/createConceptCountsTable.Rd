@@ -11,7 +11,8 @@ createConceptCountsTable(
   oracleTempSchema = NULL,
   conceptCountsDatabaseSchema = cdmDatabaseSchema,
   conceptCountsTable = "concept_counts",
-  conceptCountsTableIsTemp = FALSE
+  conceptCountsTableIsTemp = FALSE,
+  getConceptCountsTableAsDataFrame = FALSE
 )
 }
 \arguments{
@@ -42,6 +43,14 @@ schema name, for example 'scratch.dbo'. Ignored if
 using the \code{\link{createConceptCountsTable}}.}
 
 \item{conceptCountsTableIsTemp}{Is the concept counts table a temp table?}
+
+\item{getConceptCountsTable}{Do you want to return a copy of the concept count 
+from dbms into Rs memory? If not NULL is returned}
+}
+\value{
+The function will by default return \code{DatabaseConnector::executeSql} output, by 
+attempting to create a table on dbms. In addition, if \code{getConceptCountsTable = TRUE}
+then a tibble data frame copy of the created table will be retuned back to R.
 }
 \description{
 Create a table with counts of how often each concept ID occurs in the CDM.

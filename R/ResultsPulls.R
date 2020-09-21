@@ -1032,11 +1032,11 @@ getConceptReference <- function(connection = NULL,
 #'
 #' @examples
 #' \dontrun{
-#' conceptSetDataDiagnostics <- getConceptSetDataDiagnostics()
+#' conceptSetDataDiagnostics <- getConceptSetDiagnosticsResults()
 #' }
 #'
 #' @export
-getConceptSetDataDiagnostics <- function(connection = NULL,
+getConceptSetDiagnosticsResults <- function(connection = NULL,
                                          connectionDetails = NULL,
                                          cohortIds = NULL,
                                          databaseIds = NULL,

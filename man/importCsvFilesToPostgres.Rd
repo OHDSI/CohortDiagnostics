@@ -12,12 +12,15 @@ importCsvFilesToPostgres(
 )
 }
 \arguments{
-\item{connectionDetails}{DatabaseConnector connection details compatible object. Must be dbms="postgres"}
+\item{connectionDetails}{DatabaseConnector connection details compatible object. 
+Must be dbms="postgres"}
 
-\item{schemaName}{path to cohort diagnostics csv files to import}
+\item{schemaName}{Path to cohort diagnostics csv files to import}
 
-\item{winPsqlPath}{path to folder containing postgres executables e.g. C:\Program Files\PostgresSQL\12\bin}
+\item{winPsqlPath}{Path to folder containing postgres executables 
+e.g. "C:/Program Files/PostgresSQL/12/bin"}
 }
 \description{
-This utility is a wrapper around the psql command to allow uploading large datasets to a postgres database
+This utility is a wrapper around the psql command to 
+allow uploading large datasets to a postgres database
 }
