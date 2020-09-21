@@ -1002,7 +1002,8 @@ runCohortDiagnostics <- function(packageName = NULL,
     startSubsetOmopVocabularyTables <- Sys.time()
     getOmopVocabularyTables(connection = connection,
                             cdmDatabaseSchema = cdmDatabaseSchema,
-                            uniqueConceptIdsTable = '#unique_concept_ids',
+                            cohortDatabaseSchema = cohortDatabaseSchema,
+                            uniqueConceptIdsTable = 'uniqueConceptIdTable',
                             exportFolder = exportFolder)
     recordTasksDone(cohortId = subset$cohortId,
                     task = "runSubsetOmopVocabularyTables",

@@ -77,7 +77,6 @@ findOrphanConcepts <- function(connectionDetails = NULL,
                                 conceptCountsTableIsTemp = FALSE,
                                 instantiatedCodeSets = "#InstConceptSets",
                                 orphanConceptTable = '#recommended_concepts') {
-  ParallelLogger::logInfo("Finding orphan concepts")
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
