@@ -44,7 +44,7 @@ buildPostgresDatabaseSchema <- function(connectionDetails,
 
   ParallelLogger::logInfo("Creating tables")
   sql <- SqlRender::readSql(system.file("sql/sql_server", 
-                                        "sql_server_ddl_results_data_model.sql", 
+                                        "sql_server_ddl_results_data_model.sql",
                                         package = "CohortDiagnostics"))
   
   DatabaseConnector::renderTranslateExecuteSql(
@@ -81,11 +81,9 @@ importCsvFilesToPostgres <- function(connectionDetails,
 
   hostServerDb <- strsplit(connectionDetails$server, "/")[[1]]
 
-  pgPassword <- paste0("PGPASSWORD=", 
-                       connectionDetails$password)
-  
+
+  Sys.setenv("PGPASSWORD"=connectionDetails$password)
   if (.Platform$OS.type == "windows") {
-    pgPassword <- paste0("$env:", pgPassword, ";")
     command <- file.path(winPsqlPath, "psql.exe")
 
     if (!file.exists(command)) {
@@ -97,7 +95,6 @@ importCsvFilesToPostgres <- function(connectionDetails,
 
   # Test connection actually works
   connection <- DatabaseConnector::connect(connectionDetails)
-  tables <- DatabaseConnector::getTableNames(connection, schemaName)
   DatabaseConnector::disconnect(connection)
 
   files <- Sys.glob(file.path(pathToCsvFiles, "*.csv"))
@@ -106,13 +103,6 @@ importCsvFilesToPostgres <- function(connectionDetails,
     ParallelLogger::logInfo(paste("Uploading file", csvFile))
     tableName <- stringr::str_to_upper(stringr::str_split(basename(csvFile), 
                                                           ".csv")[[1]][[1]])
-
-    if (!(tableName %in% tables)) {
-      ParallelLogger::logWarn(paste("Skipping table", 
-                                    , "not found in schema with tables", 
-                                    stringi::stri_join(tables, collapse = ", ")))
-      next
-    }
     
     # Read first line to get header column order, we assume these are large files
     head <- read.csv(file = csvFile, nrows = 1)
@@ -122,7 +112,6 @@ importCsvFilesToPostgres <- function(connectionDetails,
     filePathStr <- paste0("'", csvFile, "'")
 
     copyCommand <- paste(
-      pgPassword,
       command,
       "-h", hostServerDb[[1]], # Host
       "-d", hostServerDb[[2]], # Database
@@ -133,7 +122,7 @@ importCsvFilesToPostgres <- function(connectionDetails,
       "FROM", filePathStr,
       "DELIMITER ',' CSV HEADER;\""
     )
-
+    print(copyCommand)
     result <- base::system(copyCommand)
     if (result != 0) {
       stop("Copy failure, psql returned a non zero status")

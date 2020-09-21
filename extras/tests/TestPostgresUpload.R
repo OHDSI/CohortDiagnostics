@@ -1,21 +1,6 @@
-# Use Eunomia docker https://githib.com/azimov/EunomiaDocker
-
-connectionDetails <- DatabaseConnector::createConnectionDetails(
-  dbms = "postgresql",
-  user = "postgres",
-  password = "postgres",
-  server = "localhost/eunomia",
-  port = 54321
-)
-
-connection <- DatabaseConnector::connect(connectionDetails)
-schemaName <- paste0("test_schema_", stringi::stri_rand_strings(1, 5))
-
-
-CohortDiagnostics::buildPostgresDatabaseSchema(connectionDetails, schemaName, overwrite = TRUE)
-
-cdmDatabaseSchema <- "eunomia"
-cohortDatabaseSchema <- schemaName
+connectionDetails <- Eunomia::getEunomiaConnectionDetails()
+cdmDatabaseSchema <- "main"
+cohortDatabaseSchema <- "main"
 cohortTable <- "cohort"
 oracleTempSchema <- NULL
 folder <- stringi::stri_rand_strings(1, 5)
@@ -59,7 +44,21 @@ CohortDiagnostics::runCohortDiagnostics(connectionDetails = connectionDetails,
                                         minCellCount = 10,
                                         incrementalFolder = file.path(folder, "incremental"))
 
-CohortDiagnostics::importCsvFilesToPostgres(connectionDetails, schemaName, file.path(folder, "export"))
+# Enter postgres conneciton details here
+connectionDetails <- DatabaseConnector::createConnectionDetails(
+  dbms = "postgresql",
+  user = "postgres",
+  password = "postgres",
+  server = "localhost/testdb",
+  port = 5432
+)
+
+connection <- DatabaseConnector::connect(connectionDetails)
+schemaName <- paste0("test_schema_", stringi::stri_rand_strings(1, 5))
+
+
+CohortDiagnostics::buildPostgresDatabaseSchema(connectionDetails, schemaName, overwrite = TRUE)
+CohortDiagnostics::importCsvFilesToPostgres(connectionDetails, schemaName, file.path(folder, "export"), winPsqlPath = "bin/")
 
 DatabaseConnector::disconnect(connection)
 unlink(folder, recursive=TRUE)
