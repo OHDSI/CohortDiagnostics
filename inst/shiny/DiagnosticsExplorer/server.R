@@ -345,6 +345,13 @@ shiny::shinyServer(function(input, output, session) {
                       .data$databaseId %in% input$databases) %>% 
       dplyr::select(-.data$cohortId)
     
+    databaseIds <- includedSourceConcept %>%
+      dplyr::filter(.data$databaseId %in% input$databases) %>% 
+      dplyr::select(.data$databaseId) %>% 
+      dplyr::distinct() %>% 
+      dplyr::arrange() %>% 
+      dplyr::pull(.data$databaseId)
+    
     maxConceptSubjects <- max(data$conceptSubjects, na.rm = TRUE)
     
     if (input$includedType == "Source Concepts") {
@@ -367,17 +374,33 @@ shiny::shinyServer(function(input, output, session) {
                            names_from = .data$name,
                            values_from = .data$value,
                            values_fill = 0) %>% 
+        
         dplyr::inner_join(concept %>% 
-                            dplyr::select(-.data$invalidReason, 
-                                          -.data$validStartDate, 
-                                          -.data$validEndDate)) %>% 
+                            dplyr::select(.data$conceptId, 
+                                          .data$conceptName, 
+                                          .data$vocabularyId)) %>% 
         dplyr::select(order(colnames(.))) %>% 
-        dplyr::relocate(.data$conceptId, .data$conceptName, 
-                        .data$conceptCode, .data$conceptClassId, 
-                        .data$domainId)
+        dplyr::relocate(.data$conceptId, .data$conceptName, .data$vocabularyId)
+      
         if (nrow(data) == 0) {
           return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
         }
+      
+      sketch <- htmltools::withTags(table(
+        class = 'display',
+        thead(
+          tr(
+            th(rowspan = 2, 'Concept Id'),
+            th(rowspan = 2, 'Concept Name'),
+            th(rowspan = 2, 'Vocabulary Id'),
+            lapply(databaseIds, th, colspan = 2, class = "dt-center")
+          ),
+          tr(
+            lapply(rep(c("Counts", "Subjects"), length(databaseIds)), th)
+          )
+        )
+      ))
+      
       options = list(pageLength = 10,
                      searching = TRUE,
                      scrollX = TRUE,
@@ -394,12 +417,13 @@ shiny::shinyServer(function(input, output, session) {
                              colnames = colnames(table),
                              options = options,
                              rownames = FALSE, 
+                             container = sketch,
                              escape = FALSE,
                              filter = c('bottom'),
                              class = "stripe nowrap compact")
       
       table <- DT::formatStyle(table = table,
-                               columns =  4 + (1:length(input$databases)),
+                               columns =  3 + (1:length(databaseIds)),
                                background = DT::styleColorBar(c(0,maxConceptSubjects), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
