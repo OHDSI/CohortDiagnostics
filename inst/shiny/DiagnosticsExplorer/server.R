@@ -448,13 +448,28 @@ shiny::shinyServer(function(input, output, session) {
                            values_from = .data$value,
                            values_fill = 0) %>% 
         dplyr::inner_join(concept %>% 
-                            dplyr::select(-.data$invalidReason, 
-                                          -.data$validStartDate, 
-                                          -.data$validEndDate)) %>% 
+                            dplyr::select(.data$conceptId, 
+                                          .data$conceptName, 
+                                          .data$vocabularyId)) %>% 
         dplyr::select(order(colnames(.))) %>% 
-        dplyr::relocate(.data$conceptId, .data$conceptName, 
-                        .data$conceptCode, .data$conceptClassId, 
-                        .data$domainId)
+        dplyr::relocate(.data$conceptId, 
+                        .data$conceptName, 
+                        .data$vocabularyId)
+      
+      sketch <- htmltools::withTags(table(
+        class = 'display',
+        thead(
+          tr(
+            th(rowspan = 2, 'Concept Id'),
+            th(rowspan = 2, 'Concept Name'),
+            th(rowspan = 2, 'Vocabulary Id'),
+            lapply(databaseIds, th, colspan = 2, class = "dt-center")
+          ),
+          tr(
+            lapply(rep(c("Counts", "Subjects"), length(databaseIds)), th)
+          )
+        )
+      ))
       
       options = list(pageLength = 10,
                      searching = TRUE,
@@ -471,12 +486,13 @@ shiny::shinyServer(function(input, output, session) {
                              options = options,
                              colnames = colnames(table),
                              rownames = FALSE,
+                             container = sketch,
                              escape = FALSE,
                              filter = c('bottom'),
                              class = "stripe nowrap compact")
       
       table <- DT::formatStyle(table = table,
-                               columns =  2 + (1:length(input$databases)),
+                               columns =  3 + (1:length(input$databases)),
                                background = DT::styleColorBar(c(0, maxConceptSubjects), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
