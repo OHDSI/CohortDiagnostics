@@ -97,7 +97,7 @@ getOmopVocabularyTables <-
                                                      cohort_database_schema = cohortDatabaseSchema,
                                                      unique_concept_id_table = uniqueConceptIdTable,
                                                      table = vocabularyTablesInCdmDatabaseSchema$serverTableNames[[i]],
-                                                     snakeCaseToCamelCase = TRUE) %>%
+                                                     snakeCaseToCamelCase = FALSE) %>%
             tidyr::tibble())
       } else if (vocabularyTablesInCdmDatabaseSchema$vocabularyTableNames[[i]] %in% c('domain',
                                                                                       'relationship',
@@ -110,7 +110,7 @@ getOmopVocabularyTables <-
                                                      sql = sql,
                                                      cdm_database_schema = cdmDatabaseSchema,
                                                      table = vocabularyTablesInCdmDatabaseSchema$serverTableNames[[i]],
-                                                     snakeCaseToCamelCase = TRUE) %>%
+                                                     snakeCaseToCamelCase = FALSE) %>%
             tidyr::tibble())
       }
       
