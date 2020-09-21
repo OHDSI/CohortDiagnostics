@@ -371,9 +371,19 @@ bodyTabItems <- shinydashboard::tabItems(
                  tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;"))
                )
     ),
-    
-    tags$br(),
-    DT::dataTableOutput("temporalCharacterizationTable")
+    shinydashboard::box(
+      title = "Temporal Characterization Table",
+      width = NULL,
+      status = "primary",
+      DT::dataTableOutput("temporalCharacterizationTable")
+    ),
+    shinydashboard::box(
+      title = "Temporal Characterization Plot",
+      width = NULL,
+      status = "primary",
+      ggiraph::ggiraphOutput(
+        outputId = "temporalCharacterizationPlot")
+    )
   ),
   shinydashboard::tabItem(
     tabName = "cohortOverlap",

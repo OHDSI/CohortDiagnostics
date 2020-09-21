@@ -1,4 +1,5 @@
 library(magrittr)
+library(feasts)
 
 source("R/Tables.R")
 source("R/Other.R")
@@ -756,6 +757,42 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
+  covIdArr <- reactiveVal();
+  covIdArr(c());
+  observeEvent(input$rows, {
+    if(input$rows[[2]] %in% covIdArr())
+      covIdArr(covIdArr()[covIdArr() %in% input$rows[[2]] == FALSE])
+    else
+      covIdArr(c(covIdArr(),input$rows[[2]]))
+  })
+  
+  tempCharPlot <- shiny::reactive({
+    data <- temporalCovariateValue %>% 
+      dplyr::filter(.data$cohortId == cohortId() & .data$databaseId == input$database & .data$timeId > 5 & .data$covariateId %in% covIdArr()) %>% 
+      dplyr::inner_join(temporalTimeRef) %>% 
+      dplyr::inner_join(temporalCovariateRef)
+    dataTS <- tsibble::as_tsibble(data, key = c(cohortId, covariateId, databaseId), index = startDay)   %>%
+      dplyr::group_by(.data$covariateId,.data$covariateName) %>%
+      dplyr::summarise(Mean = mean(.data$mean))
+    
+    plot <- dataTS %>%
+      ggplot2::autoplot(.data$Mean) + 
+      ggplot2::xlab("Start Day") +
+      ggiraph::geom_point_interactive(
+        ggplot2::aes(tooltip = .data$covariateName), size = 2) +
+      ggplot2::theme(legend.position = "none")
+    plot <- ggiraph::girafe(ggobj = plot,width_svg = 10, height_svg = 4, options = list(
+      ggiraph::opts_sizing(width = .7),
+      ggiraph::opts_zoom(max = 5))
+    )
+    
+    return(plot)
+  })
+  
+  output$temporalCharacterizationPlot <- ggiraph::renderggiraph(expr = {
+    return(tempCharPlot())
+  })
+  
   output$temporalCharacterizationTable <- DT::renderDataTable(expr = {
     temporalCovariateRef <- temporalCovariateRef %>% 
       #temporary solution as described here https://github.com/OHDSI/CohortDiagnostics/issues/162
@@ -812,7 +849,12 @@ shiny::shinyServer(function(input, output, session) {
                              SqlRender::camelCaseToTitleCase(),
                            escape = FALSE,
                            filter = c('bottom'),
-                           class = "stripe nowrap compact")
+                           class = "stripe nowrap compact",
+                           callback =  DT::JS("table.on('click.dt', 'td', function() {
+                                            var row_=table.row(this).data();
+                                            var data = [row_];
+                                            Shiny.onInputChange('rows',data );
+                            });"))
     table <- DT::formatStyle(table = table,
                              columns = (2 + (1:length(temporalCovariateChoicesSelected$choices))), #0 index
                              background = DT::styleColorBar(c(0,1), "lightblue"),
