@@ -373,7 +373,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         stats <- enforceMinCellValue(data = stats, fieldName = "personTotal", minValues = minCellCount)
         # stats <- enforceMinCellValue(data = stats, fieldName = "remain_subjects", minValues = minCellCount)
       }
-      if ('cohortDefinitionId' %in% tolower(colnames(stats))) {
+      if ('cohortDefinitionId' %in% (colnames(stats))) {
         stats <- stats %>% 
           dplyr::rename(cohortId = .data$cohortDefinitionId)
       }

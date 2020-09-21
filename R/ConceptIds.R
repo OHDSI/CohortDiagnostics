@@ -113,7 +113,6 @@ getOmopVocabularyTables <-
                                                      snakeCaseToCamelCase = FALSE) %>%
             tidyr::tibble())
       }
-      
       if (nrow(get(vocabularyTablesInCdmDatabaseSchema[i,]$serverTableNames)) > 0) {
         readr::write_excel_csv(
           x = get(vocabularyTablesInCdmDatabaseSchema[i,]$serverTableNames),
