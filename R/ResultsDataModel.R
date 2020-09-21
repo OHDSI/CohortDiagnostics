@@ -52,7 +52,7 @@ createDdl <- function(packageName,
     
     a <- c()
     for (f in fields) { #from https://github.com/OHDSI/CdmDdlBase/blob/f256bd2a3350762e4a37108986711516dd5cd5dc/R/createDdlFromFile.R#L50
-      if (subset(table, .data$fieldName == f, .data$isRequired) == "Yes") {
+      if (subset(table, fieldName == f, isRequired) == "Yes") {
         r <- (" NOT NULL")
       } else {
         r <- (" NULL")
@@ -62,7 +62,7 @@ createDdl <- function(packageName,
       } else {
         e <- (",")
       }
-      a <- c(a, paste0("\n\t\t\t",f," ",subset(table, .data$fieldName == f, .data$type),r,e))
+      a <- c(a, paste0("\n\t\t\t",f," ",subset(table, fieldName == f, type), r, e))
     }
     script <- c(script, a, "")
     script <- c(script, paste0('\n'))
