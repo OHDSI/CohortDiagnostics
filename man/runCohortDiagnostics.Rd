@@ -9,6 +9,7 @@ runCohortDiagnostics(
   cohortToCreateFile = "settings/CohortsToCreate.csv",
   baseUrl = NULL,
   cohortSetReference = NULL,
+  phenotypeDescriptions = NULL,
   connectionDetails = NULL,
   connection = NULL,
   cdmDatabaseSchema,
@@ -150,6 +151,14 @@ of which cohort diagnostics has been executed.}
 \item{vocabularyDatabaseSchema}{(optional) Schema name where your vocabulary resides. Most commonly it is the same
 as CDM databaseSchema. Note that for SQL Server, 
 this should include both the database and schema name, for example 'cdm_data.dbo'.}
+
+\item{phenotypeDescriptionCsv}{(Optional) Path for the location of the phenotype_description.csv file.
+This file should have the following minimum columns 
+phenotype_id (double), phenotype_name (character),
+referent_concept_id (double), clinical_description (character),
+literature_review (character), phenotype_notes (character). The 
+literature_review field is expected to a html link to page that contains
+resources related to literature review for the phenotype.}
 }
 \description{
 Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the

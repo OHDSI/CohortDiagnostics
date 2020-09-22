@@ -37,7 +37,13 @@
 #' @template CohortSetSpecs
 #' 
 #' @template CohortSetReference
-#' 
+#' @param    phenotypeDescriptionCsv  (Optional) Path for the location of the phenotype_description.csv file.
+#'                                    This file should have the following minimum columns 
+#'                                    phenotype_id (double), phenotype_name (character),
+#'                                    referent_concept_id (double), clinical_description (character),
+#'                                    literature_review (character), phenotype_notes (character). The 
+#'                                    literature_review field is expected to a html link to page that contains
+#'                                    resources related to literature review for the phenotype.
 #' @param inclusionStatisticsFolder   The folder where the inclusion rule statistics are stored. Can be
 #'                                    left NULL if \code{runInclusionStatistics = FALSE}.
 #' @param exportFolder                The folder where the output will be exported to. If this folder
@@ -80,6 +86,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  cohortToCreateFile = "settings/CohortsToCreate.csv",
                                  baseUrl = NULL,
                                  cohortSetReference = NULL,
+                                 phenotypeDescriptions = NULL,
                                  connectionDetails = NULL,
                                  connection = NULL,
                                  cdmDatabaseSchema,
@@ -163,6 +170,29 @@ runCohortDiagnostics <- function(packageName = NULL,
     errorMessage <- createIfNotExist(type = 'folder', name = inclusionStatisticsFolder, errorMessage = errorMessage)
   }
   checkmate::reportAssertions(collection = errorMessage)
+  
+  if (!is.null(phenotypeDescriptionCsv)) {
+    if (file.exists(phenotypeDescriptionCsv)) {
+      ParallelLogger::logInfo('  Found phenotype description csv file. Loading.')
+      phenotypeDescription <- readr::read_csv(file = phenotypeDescriptionCsv, 
+                                              col_types = readr::cols(),
+                                              guess_max = min(1e7))
+      checkmate::assertTibble(x = phenotypeDescription, 
+                              any.missing = TRUE, 
+                              min.rows = 1, 
+                              min.cols = 6, 
+                              add = errorMessage)
+      checkmate::assertNames(x= colnames(phenotypeDescription),
+                             must.include = c('phenotype_id', 'phenotype_name',
+                              'referent_concept_id', 'clinical_description',
+                              'literature_review', 'phenotype_notes'),
+                             add = errorMessage)
+      checkmate::reportAssertions(collection = errorMessage)
+      checkmate::assertTibble(x = phenotypeDescription,
+                              types = c('double', 'character'))
+      checkmate::reportAssertions(collection = errorMessage)
+    }
+  }
   
   cohorts <- getCohortsJsonAndSql(packageName = packageName,
                                   cohortToCreateFile = cohortToCreateFile,

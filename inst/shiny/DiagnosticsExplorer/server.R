@@ -668,7 +668,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     if (input$charType == "Pretty") {
       data <- data %>% 
-        dplyr::left_join(y = covariateRef) %>% 
+        dplyr::left_join(y = covariateRef[!duplicated(covariateRef$covariateId),]) %>% 
         dplyr::distinct()
       table <- list()
       characteristics <- list()
@@ -748,7 +748,11 @@ shiny::shinyServer(function(input, output, session) {
                            names_sep = "_",
                            values_fill = 0
         ) %>%  
-        dplyr::left_join(y = covariateRef %>% dplyr::select(.data$covariateId, .data$covariateName, .data$conceptId) %>% dplyr::distinct()) %>%
+        dplyr::left_join(y = covariateRef[!duplicated(covariateRef$covariateId),] %>% 
+                                            dplyr::select(.data$covariateId, 
+                                                          .data$covariateName, 
+                                                          .data$conceptId) %>% 
+                                            dplyr::distinct()) %>%
         dplyr::select(-covariateId) %>% 
         dplyr::relocate("covariateName", "conceptId") %>% 
         dplyr::arrange(.data$covariateName) %>% 
@@ -806,61 +810,55 @@ shiny::shinyServer(function(input, output, session) {
       covariateIdArray(c(covariateIdArray(),input$rows[[2]]))
   })
   
-  covariateTimeSeriesPlot <- shiny::reactive({
-    data <- temporalCovariateValue %>% 
-      dplyr::filter(.data$cohortId == cohortId() & 
-                      .data$databaseId == input$database & 
-                      .data$timeId > 5 & 
-                      .data$covariateId %in% covariateIdArray()) %>% 
-      dplyr::inner_join(temporalTimeRef) %>% 
-      dplyr::inner_join(temporalCovariateRef)
-    
-    dataTS <- tsibble::as_tsibble(x = data %>% 
-                                    dplyr::select(.data$startDay,
-                                                  .data$endDay,
-                                                  .data$timeId,
-                                                  .data$covariateId,
-                                                  .data$covariateName,
-                                                  .data$mean) %>% 
-                                    dplyr::arrange(.data$timeId),
-                                  key = c(.data$covariateName), 
-                                  index = .data$timeId,
-                                  regular = TRUE,
-                                  validate = TRUE)
-    
-    # dcmp <- dataTS %>%
-    #   fabletools::model(.data = feasts::STL(.data$mea ~ season(window = Inf)))
-    # 
-    # plot <- feasts::gg_season(data = dataTS)
-    
-    
-    
-    
-    plot <- dataTS %>%
-      ggplot2::autoplot(.data$mean) +
-      ggplot2::xlab("Start Day") +
-      ggiraph::geom_point_interactive(
-        ggplot2::aes(tooltip = .data$covariateName), size = 2) +
-      ggplot2::theme(legend.position = "none")
-
-    plot <- ggiraph::girafe(ggobj = plot,width_svg = 10, height_svg = 4, options = list(
-      ggiraph::opts_sizing(width = .7),
-      ggiraph::opts_zoom(max = 5))
-    )
-    return(plot)
-  })
+  # covariateTimeSeriesPlot <- shiny::reactive({
+  #   data <- temporalCovariateValue %>% 
+  #     dplyr::filter(.data$cohortId == cohortId() & 
+  #                     .data$databaseId == input$database & 
+  #                     .data$timeId > 5 & 
+  #                     .data$covariateId %in% covariateIdArray()) %>% 
+  #     dplyr::inner_join(temporalTimeRef) %>% 
+  #     dplyr::inner_join(temporalCovariateRef)
+  #   
+  #   dataTS <- tsibble::as_tsibble(x = data %>% 
+  #                                   dplyr::select(.data$startDay,
+  #                                                 .data$endDay,
+  #                                                 .data$timeId,
+  #                                                 .data$covariateId,
+  #                                                 .data$covariateName,
+  #                                                 .data$mean) %>% 
+  #                                   dplyr::arrange(.data$timeId),
+  #                                 key = c(.data$covariateName), 
+  #                                 index = .data$timeId,
+  #                                 regular = TRUE,
+  #                                 validate = TRUE)
+  #   
+  #   # dcmp <- dataTS %>%
+  #   #   fabletools::model(.data = feasts::STL(.data$mea ~ season(window = Inf)))
+  #   # 
+  #   # plot <- feasts::gg_season(data = dataTS)
+  #   
+  #   
+  #   
+  #   
+  #   plot <- dataTS %>%
+  #     ggplot2::autoplot(.data$mean) +
+  #     ggplot2::xlab("Start Day") +
+  #     ggiraph::geom_point_interactive(
+  #       ggplot2::aes(tooltip = .data$covariateName), size = 2) +
+  #     ggplot2::theme(legend.position = "none")
+  # 
+  #   plot <- ggiraph::girafe(ggobj = plot,width_svg = 10, height_svg = 4, options = list(
+  #     ggiraph::opts_sizing(width = .7),
+  #     ggiraph::opts_zoom(max = 5))
+  #   )
+  #   return(plot)
+  # })
   
-  output$covariateTimeSeriesPlot <- ggiraph::renderggiraph(expr = {
-    return(covariateTimeSeriesPlot())
-  })
+  # output$covariateTimeSeriesPlot <- ggiraph::renderggiraph(expr = {
+  #   return(covariateTimeSeriesPlot())
+  # })
   
   output$temporalCharacterizationTable <- DT::renderDataTable(expr = {
-    temporalCovariateRef <- temporalCovariateRef %>%
-      #temporary solution as described here https://github.com/OHDSI/CohortDiagnostics/issues/162
-      dplyr::select(.data$covariateId, .data$conceptId, .data$covariateName) %>%
-      dplyr::group_by(.data$covariateId) %>%
-      dplyr::slice(1) %>%
-      dplyr::distinct()
     
     table <- temporalCovariateValue %>% 
       dplyr::filter(.data$cohortId == cohortId(),
@@ -871,7 +869,7 @@ shiny::shinyServer(function(input, output, session) {
                                                           pattern = "_", 
                                                           replacement = " ")) %>% 
       dplyr::left_join(y = temporalCovariateChoices) %>% 
-      dplyr::left_join(y = temporalCovariateRef)  %>%
+      dplyr::left_join(y = temporalCovariateRef[!duplicated(temporalCovariateRef$covariateId),])  %>%
       dplyr::arrange(.data$timeId)  %>% 
       tidyr::pivot_wider(id_cols = c('covariateId', 'covariateName', 'conceptId'), 
                          names_from = "choices",
