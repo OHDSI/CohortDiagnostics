@@ -2,6 +2,7 @@
 
 export(breakDownIndexEvents)
 export(buildPostgresDatabaseSchema)
+export(combineResultsDataModelCsvFiles)
 export(compareCohortCharacteristics)
 export(compareCovariateValueResult)
 export(computeCohortOverlap)
