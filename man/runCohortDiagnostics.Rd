@@ -9,6 +9,7 @@ runCohortDiagnostics(
   cohortToCreateFile = "settings/CohortsToCreate.csv",
   baseUrl = NULL,
   cohortSetReference = NULL,
+  phenotypeDescriptionCsv = NULL,
   connectionDetails = NULL,
   connection = NULL,
   cdmDatabaseSchema,
@@ -61,6 +62,18 @@ a dataframe object identical to requirements for \code{cohortSetReference} argum
 
 \item{cohortSetReference}{A data frame with four columns, as described in the details. Can be left NULL if 
 \code{packageName} and \code{cohortToCreateFile} have been specified.}
+
+\item{phenotypeDescriptionCsv}{(Optional) Path for the location of the phenotype_description.csv file.
+This file should have the following columns that may be read into following
+data types: phenotype_id (double), phenotype_name (character),
+referent_concept_id (double), clinical_description (character),
+literature_review (character), phenotype_notes (character). Note: the field
+names are in snake_case. Also, character fields should not have 'NA' in it.
+'NA's are commonly added by R when R functions exports data from dataframe 
+into CSV. Instead please use '' (empty string) to represent absence of data. 
+The literature_review field is expected to be a html link to page that contains
+resources related to literature review for the phenotype, and will be used
+to create link-out object.}
 
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
