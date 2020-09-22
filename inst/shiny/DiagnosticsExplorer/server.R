@@ -290,15 +290,12 @@ shiny::shinyServer(function(input, output, session) {
   
   timeDisPlotDownload <- shiny::reactive({
     data <- CohortDiagnostics::getTimeDistributionResult(cohortIds = cohortId(), databaseIds = input$databases)
-    
     validate(
       need(!is.null(data), paste0('No time distribution data for this combination'))
     )
-    
     plot <- CohortDiagnostics::plotTimeDistribution(data = data,
                                                     cohortIds = cohortId(),
                                                     databaseIds = input$databases)
-    
     return(plot)
   })
   
@@ -657,18 +654,19 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(-cohortId)
     
     dataCounts <- data %>% 
-      dplyr::select(databaseId) %>% 
+      dplyr::select(.data$databaseId) %>% 
       dplyr::distinct() %>% 
       dplyr::left_join(y = (cohortCount %>% 
                               dplyr::filter(.data$cohortId == cohortId()) %>% 
                               dplyr::select(-cohortId))) %>% 
       dplyr::arrange(.data$databaseId)
+    
     if (nrow(dataCounts) == 0) {
       return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
     }
     if (input$charType == "Pretty") {
       data <- data %>% 
-        dplyr::left_join(y = covariateRef[!duplicated(covariateRef$covariateId),]) %>% 
+        dplyr::inner_join(y = covariateRef[!duplicated(covariateRef$covariateId),]) %>% 
         dplyr::distinct()
       table <- list()
       characteristics <- list()
@@ -678,21 +676,39 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::filter(.data$databaseId == dataCount$databaseId) %>% 
           prepareTable1() %>% 
           dplyr::mutate(databaseId = dataCount$databaseId)
-        table[[j]] <- temp
-        characteristics[[j]] <- temp %>% dplyr::select(characteristic)
+        table[[j]] <- temp %>% 
+          dplyr::select(-.data$label, -.data$header, -.data$position)
+        characteristics[[j]] <- temp %>% 
+          dplyr::select(.data$characteristic, .data$position, 
+                        .data$header, .data$sortOrder)
       }
-      characteristics <- characteristics %>% 
-        purrr::reduce(.f = dplyr::full_join)
-      table <- dplyr::bind_rows(table) %>% 
+      characteristics <- dplyr::bind_rows(characteristics[[j]]) %>% 
+        dplyr::arrange(.data$position, .data$header, .data$sortOrder) %>% 
+        dplyr::select(-.data$sortOrder) %>% 
+        dplyr::distinct()
+      
+      table2 <- list()
+      for (i in (1:length(table))) {
+        tempDatabaseIdToFillMissing <- table[[i]] %>% 
+          dplyr::pull(.data$databaseId) %>% 
+          unique()
+        table2[[i]] <- characteristics %>% 
+          dplyr::left_join(table[[i]]) %>% 
+          dplyr::mutate(databaseId = tempDatabaseIdToFillMissing)
+      }
+      
+      table <- dplyr::bind_rows(table2) %>% 
         tidyr::pivot_wider(id_cols = 'characteristic', 
                            names_from = "databaseId",
                            values_from = "value" ,
                            names_sep = "_",
-                           values_fill = 0,
                            names_prefix = "Value_"
         )
+      
       table <- characteristics %>% 
-        dplyr::left_join(table)
+        dplyr::inner_join(table) %>% 
+        dplyr::arrange(.data$position, .data$header) %>% 
+        dplyr::select(-.data$position, -.data$header) 
       
       options = list(pageLength = 100,
                      searching = TRUE,
@@ -859,7 +875,6 @@ shiny::shinyServer(function(input, output, session) {
   # })
   
   output$temporalCharacterizationTable <- DT::renderDataTable(expr = {
-    
     table <- temporalCovariateValue %>% 
       dplyr::filter(.data$cohortId == cohortId(),
                     .data$databaseId == input$database,
@@ -971,12 +986,15 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   overLapPlot <- shiny::reactive({
-    data <- CohortDiagnostics::getCohortOverlapResult(targetCohortIds = cohortId(), comparatorCohortIds = comparatorCohortId(), databaseIds = input$database)
-    
+    data <- CohortDiagnostics::getCohortOverlapResult(targetCohortIds = cohortId(), 
+                                                      comparatorCohortIds = comparatorCohortId(), 
+                                                      databaseIds = input$database)
+    validate(
+      need(!(cohortId() == comparatorCohortId()), paste0('Target cohort and comparator cannot be the same'))
+    )
     validate(
       need(!is.null(data), paste0('No cohort overlap data for this combination'))
     )
-    
     plot <- CohortDiagnostics::plotCohortOverlapVennDiagram(data = data,
                                                             targetCohortIds = cohortId(),
                                                             comparatorCohortIds = comparatorCohortId(),
@@ -1095,7 +1113,7 @@ shiny::shinyServer(function(input, output, session) {
                                                            connectionDetails = NULL,
                                                            targetCohortIds = cohortId(), 
                                                            comparatorCohortIds = comparatorCohortId(),
-                                                           databaseIds = input$databases,
+                                                           databaseIds = input$database,
                                                            minProportion = 0.01,
                                                            maxProportion = 1,
                                                            isTemporal = FALSE,
@@ -1104,7 +1122,9 @@ shiny::shinyServer(function(input, output, session) {
     validate(
       need(!is.null(data), paste0('No cohort compare data for this combination'))
     )
-    
+    validate(
+      need(!(cohortId() == comparatorCohortId()), paste0('Target cohort and comparator cannot be the same'))
+    )
     cohortReference <- CohortDiagnostics::getCohortReference()
     covariateReference <- CohortDiagnostics::getCovariateReference(isTemporal = FALSE)
     plot <- CohortDiagnostics::plotCohortComparisonStandardizedDifference(data = data, 
@@ -1113,7 +1133,7 @@ shiny::shinyServer(function(input, output, session) {
                                                                           cohortReference = cohortReference,
                                                                           covariateReference = covariateReference,
                                                                           concept = NULL,
-                                                                          databaseIds = input$databases)
+                                                                          databaseIds = input$database)
     
     return(plot)
   })

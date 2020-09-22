@@ -470,10 +470,7 @@ getCovariateReference <- function(connection = NULL,
         dplyr::filter(.data$covariateId %in% covariateIds)
     }
   }
-  data <- data %>% #occassionally we may have more than one covariateName per covariateId
-    # because of change in concept_name. See https://github.com/OHDSI/CohortDiagnostics/issues/162
-    dplyr::group_by(.data$covariateId) %>% 
-    dplyr::slice(1)
+  data <- data[!duplicated(data$covariateId),]
   return(data %>% dplyr::arrange(.data$covariateId))
 }
 
