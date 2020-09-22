@@ -1103,7 +1103,7 @@ writePhenotypeDescriptionCsvToResults <- function(phenotypeDescriptionCsvPath,
     
     if (nrow(phenotypeDescription) > 0) {
       phenotypeDescription %>% 
-        readr::write_excel_csv(path = file.path(exportFolder, "phenotype_descripton.csv"), 
+        readr::write_excel_csv(path = file.path(exportFolder, "phenotype_description.csv"), 
                                na = '')
     } else {
       ParallelLogger::logWarn(" phentoype description csv file found, but records dont match the referent concept ids of the cohorts being diagnosed.")
