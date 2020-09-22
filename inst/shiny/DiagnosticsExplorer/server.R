@@ -1113,7 +1113,7 @@ shiny::shinyServer(function(input, output, session) {
                                                            connectionDetails = NULL,
                                                            targetCohortIds = cohortId(), 
                                                            comparatorCohortIds = comparatorCohortId(),
-                                                           databaseIds = input$databases,
+                                                           databaseIds = input$database,
                                                            minProportion = 0.01,
                                                            maxProportion = 1,
                                                            isTemporal = FALSE,
@@ -1131,7 +1131,7 @@ shiny::shinyServer(function(input, output, session) {
                                                                           cohortReference = cohortReference,
                                                                           covariateReference = covariateReference,
                                                                           concept = NULL,
-                                                                          databaseIds = input$databases)
+                                                                          databaseIds = input$database)
     
     return(plot)
   })
