@@ -1,5 +1,4 @@
 library(magrittr)
-library(feasts)
 
 source("R/Tables.R")
 source("R/Other.R")
