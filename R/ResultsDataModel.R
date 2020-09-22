@@ -399,10 +399,9 @@ combineResultsDataModelCsvFiles <- function(inputLocation,
                                                   recursive = recursive, 
                                                   full.names = TRUE, 
                                                   ignore.case = FALSE)) %>% 
-    dplyr::mutate(tableName = basename(.data$fullName) %>% 
-                    stringr::str_replace(string = .,
-                                         pattern = ".csv",
-                                         replacement = "")) %>% 
+    dplyr::mutate(tableName = stringr::str_replace(string = basename(.data$fullName),
+                                                   pattern = ".csv",
+                                                   replacement = "")) %>% 
     dplyr::inner_join(resultsDataModelSpecification %>% 
                         dplyr::select(.data$tableName) %>% 
                         dplyr::distinct()
@@ -481,7 +480,7 @@ combineResultsDataModelCsvFiles <- function(inputLocation,
         filesRead[[j]] <- tidyr::tibble()
       }
       if (('valid_start_date' %in% colnames(filesRead[[j]]) ||
-          'valid_end_date' %in% colnames(filesRead[[j]])) &&
+           'valid_end_date' %in% colnames(filesRead[[j]])) &&
           typeof(filesRead[[j]]$valid_start_date) == 'character') {
         filesRead[[j]]$valid_end_date <- as.Date(filesRead[[j]]$valid_end_date)
         filesRead[[j]]$valid_start_date <- as.Date(filesRead[[j]]$valid_start_date)
