@@ -378,7 +378,7 @@ bodyTabItems <- shinydashboard::tabItems(
       width = NULL,
       status = "primary",
       ggiraph::ggiraphOutput(
-        outputId = "temporalCharacterizationPlot")
+        outputId = "covariateTimeSeriesPlot")
     )
   ),
   shinydashboard::tabItem(

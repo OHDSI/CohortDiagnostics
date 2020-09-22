@@ -272,7 +272,7 @@ shiny::shinyServer(function(input, output, session) {
                                                       minPersonYears = 1000,
                                                       resultsDatabaseSchema = NULL) %>% 
       dplyr::mutate(incidenceRate = data <- dplyr::case_when(.data$incidenceRate < 0 ~ 0, 
-                                                     TRUE ~ .data$incidenceRate))
+                                                             TRUE ~ .data$incidenceRate))
     
     validate(
       need(!is.null(data), paste0('No incident rate data for this combination'))
@@ -301,16 +301,16 @@ shiny::shinyServer(function(input, output, session) {
     
     return(plot)
   })
-
+  
   output$timeDisPlot <- shiny::renderPlot(expr = {
     return(timeDisPlotDownload())
   }, res = 100)
   
   output$timeDistTable <- DT::renderDataTable(expr = {
-
+    
     table <- CohortDiagnostics::getTimeDistributionResult(cohortIds = cohortId(), 
                                                           databaseIds = input$databases)
-
+    
     if (is.null(table)) {
       return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
     }
@@ -382,9 +382,9 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::select(order(colnames(.))) %>% 
         dplyr::relocate(.data$conceptId, .data$conceptName, .data$vocabularyId)
       
-        if (nrow(data) == 0) {
-          return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
-        }
+      if (nrow(data) == 0) {
+        return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
+      }
       
       sketch <- htmltools::withTags(table(
         class = 'display',
@@ -530,7 +530,7 @@ shiny::shinyServer(function(input, output, session) {
                                         -.data$validStartDate, 
                                         -.data$validEndDate,
                                         -.data$standardConcept
-                                        )) %>% 
+                          )) %>% 
       dplyr::select(order(colnames(.))) %>% 
       dplyr::relocate(.data$conceptId, .data$conceptName, 
                       .data$conceptCode, .data$conceptClassId, 
@@ -797,48 +797,69 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
-  covIdArr <- reactiveVal();
-  covIdArr(c());
+  covariateIdArray <- reactiveVal()
+  covariateIdArray(c())
   observeEvent(input$rows, {
-    if(input$rows[[2]] %in% covIdArr())
-      covIdArr(covIdArr()[covIdArr() %in% input$rows[[2]] == FALSE])
+    if (input$rows[[2]] %in% covariateIdArray())
+      covariateIdArray(covariateIdArray()[covariateIdArray() %in% input$rows[[2]] == FALSE])
     else
-      covIdArr(c(covIdArr(),input$rows[[2]]))
+      covariateIdArray(c(covariateIdArray(),input$rows[[2]]))
   })
   
-  tempCharPlot <- shiny::reactive({
+  covariateTimeSeriesPlot <- shiny::reactive({
     data <- temporalCovariateValue %>% 
-      dplyr::filter(.data$cohortId == cohortId() & .data$databaseId == input$database & .data$timeId > 5 & .data$covariateId %in% covIdArr()) %>% 
+      dplyr::filter(.data$cohortId == cohortId() & 
+                      .data$databaseId == input$database & 
+                      .data$timeId > 5 & 
+                      .data$covariateId %in% covariateIdArray()) %>% 
       dplyr::inner_join(temporalTimeRef) %>% 
       dplyr::inner_join(temporalCovariateRef)
-    dataTS <- tsibble::as_tsibble(data, key = c(cohortId, covariateId, databaseId), index = startDay)   %>%
-      dplyr::group_by(.data$covariateId,.data$covariateName) %>%
-      dplyr::summarise(Mean = mean(.data$mean))
+    
+    dataTS <- tsibble::as_tsibble(x = data %>% 
+                                    dplyr::select(.data$startDay,
+                                                  .data$endDay,
+                                                  .data$timeId,
+                                                  .data$covariateId,
+                                                  .data$covariateName,
+                                                  .data$mean) %>% 
+                                    dplyr::arrange(.data$timeId),
+                                  key = c(.data$covariateName), 
+                                  index = .data$timeId,
+                                  regular = TRUE,
+                                  validate = TRUE)
+    
+    # dcmp <- dataTS %>%
+    #   fabletools::model(.data = feasts::STL(.data$mea ~ season(window = Inf)))
+    # 
+    # plot <- feasts::gg_season(data = dataTS)
+    
+    
+    
     
     plot <- dataTS %>%
-      ggplot2::autoplot(.data$Mean) + 
+      ggplot2::autoplot(.data$mean) +
       ggplot2::xlab("Start Day") +
       ggiraph::geom_point_interactive(
         ggplot2::aes(tooltip = .data$covariateName), size = 2) +
       ggplot2::theme(legend.position = "none")
+
     plot <- ggiraph::girafe(ggobj = plot,width_svg = 10, height_svg = 4, options = list(
       ggiraph::opts_sizing(width = .7),
       ggiraph::opts_zoom(max = 5))
     )
-    
     return(plot)
   })
   
-  output$temporalCharacterizationPlot <- ggiraph::renderggiraph(expr = {
-    return(tempCharPlot())
+  output$covariateTimeSeriesPlot <- ggiraph::renderggiraph(expr = {
+    return(covariateTimeSeriesPlot())
   })
   
   output$temporalCharacterizationTable <- DT::renderDataTable(expr = {
-    temporalCovariateRef <- temporalCovariateRef %>% 
+    temporalCovariateRef <- temporalCovariateRef %>%
       #temporary solution as described here https://github.com/OHDSI/CohortDiagnostics/issues/162
-      dplyr::select(.data$covariateId, .data$conceptId, .data$covariateName) %>% 
-      dplyr::group_by(.data$covariateId) %>% 
-      dplyr::slice(1) %>% 
+      dplyr::select(.data$covariateId, .data$conceptId, .data$covariateName) %>%
+      dplyr::group_by(.data$covariateId) %>%
+      dplyr::slice(1) %>%
       dplyr::distinct()
     
     table <- temporalCovariateValue %>% 
@@ -1085,7 +1106,7 @@ shiny::shinyServer(function(input, output, session) {
     validate(
       need(!is.null(data), paste0('No cohort compare data for this combination'))
     )
-
+    
     cohortReference <- CohortDiagnostics::getCohortReference()
     covariateReference <- CohortDiagnostics::getCovariateReference(isTemporal = FALSE)
     plot <- CohortDiagnostics::plotCohortComparisonStandardizedDifference(data = data, 
