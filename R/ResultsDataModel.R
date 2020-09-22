@@ -21,14 +21,14 @@
 #' @param packageVersion The version number of cohort diagnostics
 #' @param modelVersion   The version of the results data model
 #' @param packageName    The name of the R package whose output model we are documenting.
-#' @param schemaBindingVariable     The name of the schema binding parameter
+#' @param databaseSchema     The name of the schema binding parameter
 #' 
 #' @export
 createDdl <- function(packageName,
                       packageVersion,
                       modelVersion,
                       specification,
-                      schemaBindingParam = "databaseSchema"){
+                      databaseSchema = "databaseSchema"){
   
   tableList <- specification$tableName %>% unique()
   
@@ -49,7 +49,7 @@ createDdl <- function(packageName,
     fields <- table %>% dplyr::select(.data$fieldName) %>% dplyr::pull()
     script <- c(script, paste0("--Number of fields in table ", length(fields), '\n'))
     hint <- "--HINT DISTRIBUTE ON RANDOM\n"
-    script <- c(script, hint, paste0("CREATE TABLE @", schemaBindingParam, ".", tableList[[i]], " (\n"))
+    script <- c(script, hint, paste0("CREATE TABLE @", databaseSchema, ".", tableList[[i]], " (\n"))
     end <- length(fields)
     
     a <- c()
@@ -80,7 +80,7 @@ createDdl <- function(packageName,
 #' @param packageVersion The version number of cohort diagnostics
 #' @param modelVersion   The version of the results data model
 #' @param packageName    The name of the R package whose output model we are documenting.
-#' @param schemaBindingVariable     The name of the schema binding parameter
+#' @param databaseSchema     The name of the schema binding parameter
 #' 
 #' @export
 #' 
@@ -88,7 +88,7 @@ createDdlPkConstraints <- function(packageName,
                                    packageVersion,
                                    modelVersion,
                                    specification,
-                                   schemaBindingParam = "databaseSchema"){
+                                   databaseSchema = "databaseSchema"){
   
   script <- c()
   script <- c(script, paste0("--DDL Primary Key Constraints Specification for package ", 
@@ -106,7 +106,7 @@ createDdlPkConstraints <- function(packageName,
     
     if (nrow(table) > 0) {
       primaryKey <- paste0(table$fieldName, collapse = ",")
-      pk <- paste0("ALTER TABLE @", schemaBindingParam, ".",
+      pk <- paste0("ALTER TABLE @", databaseSchema, ".",
                    tableList[[i]],
                    " ADD CONSTRAINT xpk_",
                    tableList[[i]],
@@ -128,7 +128,7 @@ createDdlPkConstraints <- function(packageName,
 #' @param packageVersion The version number of cohort diagnostics
 #' @param modelVersion   The version of the results data model
 #' @param packageName    The name of the R package whose output model we are documenting.
-#' @param schemaBindingVariable     The name of the schema binding parameter
+#' @param databaseSchema     The name of the schema binding parameter
 #' 
 #' @export
 #' 
@@ -136,7 +136,7 @@ dropDdl <- function(packageName,
                     packageVersion,
                     modelVersion,
                     specification,
-                    schemaBindingParam = "databaseSchema"){
+                    databaseSchema = "databaseSchema"){
   
   script <- c()
   script <- c(script, paste0("--DDL Drop table Specification for package ", 
@@ -152,7 +152,7 @@ dropDdl <- function(packageName,
       dplyr::filter(.data$tableName == tableList[[i]]) 
     
     if (nrow(table) > 0) {
-      pk <- paste0("DROP TABLE IF EXISTS @", schemaBindingParam, ".",
+      pk <- paste0("DROP TABLE IF EXISTS @", databaseSchema, ".",
                    tableList[[i]],
                    ";")
       script <- c(script, paste0('\n'))
