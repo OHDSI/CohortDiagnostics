@@ -20,7 +20,7 @@ prepareTable1 <- function(covariates,
                                        tidyr::tibble(label = (specification %>% dplyr::pull(.data$label)),
                                                      characteristic = (specification %>% dplyr::pull(.data$label)), 
                                                      value = "",
-                                                     header = 1,
+                                                     header = 0,
                                                      position = i))
       covariatesSubset <- tidyr::tibble()
     } else if (specification %>% dplyr::pull(.data$covariateIds) == "") {
@@ -41,7 +41,7 @@ prepareTable1 <- function(covariates,
                                        tidyr::tibble(label = (specification %>% dplyr::pull(.data$label)),
                                                      characteristic = specification$label,
                                                      value = NA,
-                                                     header = 1,
+                                                     header = 0,
                                                      position = i))
       resultsTable <- dplyr::bind_rows(resultsTable, 
                                        tidyr::tibble(label = (specification %>% dplyr::pull(.data$label)),
@@ -51,7 +51,7 @@ prepareTable1 <- function(covariates,
                                                                              space,
                                                                              covariatesSubset$covariateName),
                                                      value = covariatesSubset$mean,
-                                                     header = 0,
+                                                     header = 1,
                                                      position = i))
     } else if (nrow(covariatesSubset) == 1) {
       resultsTable <- dplyr::bind_rows(resultsTable, 

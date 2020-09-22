@@ -663,6 +663,7 @@ shiny::shinyServer(function(input, output, session) {
                               dplyr::filter(.data$cohortId == cohortId()) %>% 
                               dplyr::select(-cohortId))) %>% 
       dplyr::arrange(.data$databaseId)
+    
     if (nrow(dataCounts) == 0) {
       return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
     }
@@ -684,24 +685,33 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::select(.data$characteristic, .data$position, 
                         .data$header, .data$sortOrder)
       }
-      table <- dplyr::bind_rows(table) %>% 
+      characteristics <- dplyr::bind_rows(characteristics[[j]]) %>% 
+        dplyr::arrange(.data$position, .data$header, .data$sortOrder) %>% 
+        dplyr::select(-.data$sortOrder) %>% 
+        dplyr::distinct()
+      
+      table2 <- list()
+      for (i in (1:length(table))) {
+        tempDatabaseIdToFillMissing <- table[[i]] %>% 
+          dplyr::pull(.data$databaseId) %>% 
+          unique()
+        table2[[i]] <- characteristics %>% 
+          dplyr::left_join(table[[i]]) %>% 
+          dplyr::mutate(databaseId = tempDatabaseIdToFillMissing)
+      }
+      
+      table <- dplyr::bind_rows(table2) %>% 
         tidyr::pivot_wider(id_cols = 'characteristic', 
                            names_from = "databaseId",
                            values_from = "value" ,
                            names_sep = "_",
-                           values_fill = 0,
                            names_prefix = "Value_"
         )
       
-      characteristics <- dplyr::bind_rows(characteristics[[j]]) %>% 
-        dplyr::bind_rows() %>% 
-        dplyr::arrange(.data$header, .data$position, .data$sortOrder) %>% 
-        dplyr::select(-.data$sortOrder) %>% 
-        dplyr::distinct() %>% 
-        dplyr::select(-.data$position, -.data$header)
-      
       table <- characteristics %>% 
-        dplyr::inner_join(table)
+        dplyr::inner_join(table) %>% 
+        dplyr::arrange(.data$position, .data$header) %>% 
+        dplyr::select(-.data$position, -.data$header) 
       
       options = list(pageLength = 100,
                      searching = TRUE,
@@ -868,7 +878,6 @@ shiny::shinyServer(function(input, output, session) {
   # })
   
   output$temporalCharacterizationTable <- DT::renderDataTable(expr = {
-    
     table <- temporalCovariateValue %>% 
       dplyr::filter(.data$cohortId == cohortId(),
                     .data$databaseId == input$database,
