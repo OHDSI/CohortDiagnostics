@@ -38,12 +38,16 @@
 #' 
 #' @template CohortSetReference
 #' @param    phenotypeDescriptionCsv  (Optional) Path for the location of the phenotype_description.csv file.
-#'                                    This file should have the following minimum columns 
-#'                                    phenotype_id (double), phenotype_name (character),
+#'                                    This file should have the following columns that may be read into following
+#'                                    data types: phenotype_id (double), phenotype_name (character),
 #'                                    referent_concept_id (double), clinical_description (character),
-#'                                    literature_review (character), phenotype_notes (character). The 
-#'                                    literature_review field is expected to a html link to page that contains
-#'                                    resources related to literature review for the phenotype.
+#'                                    literature_review (character), phenotype_notes (character). Note: the field
+#'                                    names are in snake_case. Also, character fields should not have 'NA' in it.
+#'                                    'NA's are commonly added by R when R functions exports data from dataframe 
+#'                                    into CSV. Instead please use '' (empty string) to represent absence of data. 
+#'                                    The literature_review field is expected to be a html link to page that contains
+#'                                    resources related to literature review for the phenotype, and will be used
+#'                                    to create link-out object.
 #' @param inclusionStatisticsFolder   The folder where the inclusion rule statistics are stored. Can be
 #'                                    left NULL if \code{runInclusionStatistics = FALSE}.
 #' @param exportFolder                The folder where the output will be exported to. If this folder
@@ -86,7 +90,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  cohortToCreateFile = "settings/CohortsToCreate.csv",
                                  baseUrl = NULL,
                                  cohortSetReference = NULL,
-                                 phenotypeDescriptions = NULL,
+                                 phenotypeDescriptionCsv = NULL,
                                  connectionDetails = NULL,
                                  connection = NULL,
                                  cdmDatabaseSchema,
@@ -171,34 +175,19 @@ runCohortDiagnostics <- function(packageName = NULL,
   }
   checkmate::reportAssertions(collection = errorMessage)
   
-  if (!is.null(phenotypeDescriptionCsv)) {
-    if (file.exists(phenotypeDescriptionCsv)) {
-      ParallelLogger::logInfo('  Found phenotype description csv file. Loading.')
-      phenotypeDescription <- readr::read_csv(file = phenotypeDescriptionCsv, 
-                                              col_types = readr::cols(),
-                                              guess_max = min(1e7))
-      checkmate::assertTibble(x = phenotypeDescription, 
-                              any.missing = TRUE, 
-                              min.rows = 1, 
-                              min.cols = 6, 
-                              add = errorMessage)
-      checkmate::assertNames(x= colnames(phenotypeDescription),
-                             must.include = c('phenotype_id', 'phenotype_name',
-                              'referent_concept_id', 'clinical_description',
-                              'literature_review', 'phenotype_notes'),
-                             add = errorMessage)
-      checkmate::reportAssertions(collection = errorMessage)
-      checkmate::assertTibble(x = phenotypeDescription,
-                              types = c('double', 'character'))
-      checkmate::reportAssertions(collection = errorMessage)
-    }
-  }
-  
   cohorts <- getCohortsJsonAndSql(packageName = packageName,
                                   cohortToCreateFile = cohortToCreateFile,
                                   baseUrl = baseUrl,
                                   cohortSetReference = cohortSetReference,
                                   cohortIds = cohortIds)
+  
+  if (!is.null(phenotypeDescriptionCsv)) {
+    writePhenotypeDescriptionCsvToResults(phenotypeDescriptionCsvPath = phenotypeDescriptionCsv,
+                                          exportFolder = exportFolder,
+                                          cohorts = cohorts,
+                                          errorMessage)
+  }
+  
   
   if (nrow(cohorts) == 0) {
     ParallelLogger::logWarn("Terminating cohort diagnostics. No cohorts specified")
@@ -1059,4 +1048,67 @@ runCohortDiagnostics <- function(packageName = NULL,
   ParallelLogger::logInfo(paste("Computing all diagnostics took",
                                 signif(delta, 3),
                                 attr(delta, "units")))
+}
+
+
+writePhenotypeDescriptionCsvToResults <- function(phenotypeDescriptionCsvPath,
+                                                  exportFolder,
+                                                  cohorts, 
+                                                  errorMessage = NULL) {
+  if (is.null(errorMessage)) {
+    errorMessage <- checkmate::makeAssertCollection(errorMessage)
+  }
+  
+  if (file.exists(phenotypeDescriptionCsvPath)) {
+    ParallelLogger::logInfo('  Found phenotype description csv file. Loading.')
+    phenotypeDescription <- readr::read_csv(file = phenotypeDescriptionCsvPath, 
+                                            col_types = readr::cols(),
+                                            na = 'NA',
+                                            guess_max = min(1e7)) %>% 
+      dplyr::arrange(.data$phenotype_name, .data$phenotype_id)
+    
+    checkmate::assertTibble(x = phenotypeDescription, 
+                            any.missing = TRUE, 
+                            min.rows = 1, 
+                            min.cols = 6, 
+                            add = errorMessage)
+    checkmate::assertNames(x = colnames(phenotypeDescription),
+                           must.include = c('phenotype_id', 'phenotype_name',
+                                            'referent_concept_id', 'clinical_description',
+                                            'literature_review', 'phenotype_notes'),
+                           add = errorMessage)
+    checkmate::reportAssertions(collection = errorMessage)
+    
+    phenotypeDescription <- phenotypeDescription %>% 
+      dplyr::mutate(phenotype_name = dplyr::coalesce(as.character(.data$phenotype_name),''),
+                    clinical_description = dplyr::coalesce(as.character(.data$clinical_description),''),
+                    literature_review = dplyr::coalesce(as.character(.data$literature_review),''),
+                    phenotype_notes = dplyr::coalesce(as.character(.data$phenotype_notes),'')
+      )  
+    checkmate::assertTibble(x = phenotypeDescription,
+                            types = c('double', 'character'))
+    checkmate::reportAssertions(collection = errorMessage)
+    
+    ParallelLogger::logInfo(' Phenotype description file has ', 
+                            scales::comma(nrow(phenotypeDescription)), 
+                            ' rows. Matching with submitted cohorts')
+    
+    phenotypeDescription <- phenotypeDescription %>% 
+      dplyr::inner_join(cohorts %>% 
+                          dplyr::select(.data$referentConceptId) %>% 
+                          dplyr::mutate(referent_concept_id = .data$referentConceptId))
+    
+    ParallelLogger::logInfo(scales::comma(nrow(phenotypeDescription)), 
+                            ' rows matched')
+    
+    if (nrow(phenotypeDescription) > 0) {
+      phenotypeDescription %>% 
+        readr::write_excel_csv(path = file.path(exportFolder, "phenotype_descripton.csv"), 
+                               na = '')
+    } else {
+      ParallelLogger::logWarn(" phentoype description csv file found, but records dont match the referent concept ids of the cohorts being diagnosed.")
+    }
+  } else {
+    ParallelLogger::logWarn(" phentoype description csv file not found")
+  }
 }
