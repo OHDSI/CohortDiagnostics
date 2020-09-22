@@ -57,13 +57,13 @@ prepareTable1 <- function(covariates,
       resultsTable <- dplyr::bind_rows(resultsTable, 
                                        tidyr::tibble(characteristic = specification$label,
                                                      value = covariatesSubset$mean,
+                                                     header = 0,
                                                      position = i)) 
     }
   }
   resultsTable <- resultsTable %>% 
     dplyr::arrange(.data$label, dplyr::desc(.data$header), .data$position) %>% 
-    dplyr::mutate(sortOrder = dplyr::row_number()) %>% 
-    dplyr::select(-.data$label, -.data$header, -.data$position)
+    dplyr::mutate(sortOrder = dplyr::row_number()) 
   return(resultsTable)
 }
 

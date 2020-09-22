@@ -657,7 +657,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(-cohortId)
     
     dataCounts <- data %>% 
-      dplyr::select(databaseId) %>% 
+      dplyr::select(.data$databaseId) %>% 
       dplyr::distinct() %>% 
       dplyr::left_join(y = (cohortCount %>% 
                               dplyr::filter(.data$cohortId == cohortId()) %>% 
@@ -668,7 +668,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     if (input$charType == "Pretty") {
       data <- data %>% 
-        dplyr::left_join(y = covariateRef[!duplicated(covariateRef$covariateId),]) %>% 
+        dplyr::inner_join(y = covariateRef[!duplicated(covariateRef$covariateId),]) %>% 
         dplyr::distinct()
       table <- list()
       characteristics <- list()
@@ -678,11 +678,12 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::filter(.data$databaseId == dataCount$databaseId) %>% 
           prepareTable1() %>% 
           dplyr::mutate(databaseId = dataCount$databaseId)
-        table[[j]] <- temp
-        characteristics[[j]] <- temp %>% dplyr::select(characteristic)
+        table[[j]] <- temp %>% 
+          dplyr::select(-.data$label, -.data$header, -.data$position)
+        characteristics[[j]] <- temp %>% 
+          dplyr::select(.data$characteristic, .data$position, 
+                        .data$header, .data$sortOrder)
       }
-      characteristics <- characteristics %>% 
-        purrr::reduce(.f = dplyr::full_join)
       table <- dplyr::bind_rows(table) %>% 
         tidyr::pivot_wider(id_cols = 'characteristic', 
                            names_from = "databaseId",
@@ -691,8 +692,16 @@ shiny::shinyServer(function(input, output, session) {
                            values_fill = 0,
                            names_prefix = "Value_"
         )
+      
+      characteristics <- dplyr::bind_rows(characteristics[[j]]) %>% 
+        dplyr::bind_rows() %>% 
+        dplyr::arrange(.data$header, .data$position, .data$sortOrder) %>% 
+        dplyr::select(-.data$sortOrder) %>% 
+        dplyr::distinct() %>% 
+        dplyr::select(-.data$position, -.data$header)
+      
       table <- characteristics %>% 
-        dplyr::left_join(table)
+        dplyr::inner_join(table)
       
       options = list(pageLength = 100,
                      searching = TRUE,
