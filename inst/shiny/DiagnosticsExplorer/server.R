@@ -290,15 +290,12 @@ shiny::shinyServer(function(input, output, session) {
   
   timeDisPlotDownload <- shiny::reactive({
     data <- CohortDiagnostics::getTimeDistributionResult(cohortIds = cohortId(), databaseIds = input$databases)
-    
     validate(
       need(!is.null(data), paste0('No time distribution data for this combination'))
     )
-    
     plot <- CohortDiagnostics::plotTimeDistribution(data = data,
                                                     cohortIds = cohortId(),
                                                     databaseIds = input$databases)
-    
     return(plot)
   })
   
