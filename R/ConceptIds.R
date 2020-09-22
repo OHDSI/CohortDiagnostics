@@ -29,16 +29,9 @@ getOmopVocabularyTables <-
                                     'relationship',
                                     'vocabulary'),
            exportFolder) {
-    if (!is.null(connectionDetails)) {
-      if (is.null(connection)) {
-        connection <- DatabaseConnector::connect(connectionDetails)
-        on.exit(DatabaseConnector::disconnect(connection))
-      }
-    }
     if (is.null(connection)) {
       ParallelLogger::logWarn('no connection provided')
     }
-    
     vocabularyTableNames <-
       tidyr::tibble(vocabularyTableNames = vocabularyTableNames) %>%
       dplyr::mutate(serverTableNames =
