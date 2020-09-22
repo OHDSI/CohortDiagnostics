@@ -3,12 +3,12 @@ source("extras/PostgresConfigurationVariables.R")
 
 dbms <- "postgresql"
 databaseSchema <- "diagnostics"
-pathToSql <- system.file('inst', 'sql', package = 'CohortDiagnostics')
-sqlDropTableFile <- "postgresql_ddl_drop.sql"
-sqlCreateTableFile <- "postgresql_ddl.sql"
-sqlTableConstraintsfile <- "postgresql_ddl_constraints.sql"
+pathToSql <- system.file('sql', 'sql_server', package = 'CohortDiagnostics')
+sqlDropTableFile <- "postgressql_ddl_results_data_model_drop.sql"
+sqlCreateTableFile <- "postgressql_ddl_results_data_model.sql"
+sqlTableConstraintsfile <- "postgressql_ddl_results_data_model_constraints.sql"
 
-csvLocation = "extras/CSVFiles"
+csvLocation = "C:\\tmp\\CSVFiles"
 
 uploadCsvToDatabase <- function(file, folder, schema) {
   tableName <- stringr::str_replace(string = file, 
@@ -52,15 +52,14 @@ if (file.exists(pathToSql)) {
   sql <- SqlRender::render(sql = sql, 
                            databaseSchema = databaseSchema, 
                            user = Sys.getenv("user"))
-  DatabaseConnector::renderTranslateExecuteSql(connection = connection, 
-                                               databaseSchema = databaseSchema,
-                                               sql = sql)
+  DatabaseConnector::renderTranslateExecuteSql(connection = connection, sql = sql)
   
   # 4. Executes Drop Table from ddl
   if (file.exists(file.path(pathToSql, sqlDropTableFile))) {
     ParallelLogger::logInfo("Dropping Old Tables")
     sql <- SqlRender::readSql(sourceFile = file.path(pathToSql, sqlDropTableFile))
     DatabaseConnector::renderTranslateExecuteSql(connection = connection,
+                                                 databaseSchema = databaseSchema,
                                                  sql = sql)
     flag <- "dropped"
   }
@@ -70,6 +69,7 @@ if (file.exists(pathToSql)) {
     ParallelLogger::logInfo("Creating the New Tables")
     sql <- SqlRender::readSql(sourceFile = file.path(pathToSql, sqlCreateTableFile))
     DatabaseConnector::renderTranslateExecuteSql(connection = connection,
+                                                 databaseSchema = databaseSchema,
                                                  sql = sql)
     flag <- "created"
   }
@@ -89,6 +89,7 @@ if (file.exists(pathToSql)) {
     ParallelLogger::logInfo("Adding constraints Tables")
     sql <- SqlRender::readSql(sourceFile = file.path(pathToSql, sqlTableConstraintsfile))
     DatabaseConnector::renderTranslateExecuteSql(connection = connection,
+                                                 databaseSchema = databaseSchema,
                                                  sql = sql)
     flag <- "finished"
   }

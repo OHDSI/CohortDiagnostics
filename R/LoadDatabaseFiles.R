@@ -44,13 +44,13 @@ buildPostgresDatabaseSchema <- function(connectionDetails,
 
   ParallelLogger::logInfo("Creating tables")
   sql <- SqlRender::readSql(system.file("sql/sql_server", 
-                                        "sql_server_ddl_results_data_model.sql",
+                                        "postgressql_ddl_results_data_model.sql",
                                         package = "CohortDiagnostics"))
   
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = sql,
-    resultsDatabaseSchema = schemaName
+    databaseSchema = schemaName
   )
   ParallelLogger::logInfo("Disconnecting from database")
   DatabaseConnector::disconnect(connection)
