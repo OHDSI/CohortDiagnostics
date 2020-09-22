@@ -22,10 +22,7 @@ Imports:
   dplyr (>= 1.0.0),
   DT, 
   FeatureExtraction (>= 3.1.0),
-  feasts,
   ggplot2,
-  ggiraph,
-  lubridate,
   ParallelLogger (>= 2.0.0),
   plotly,
   readr,
@@ -40,8 +37,6 @@ Imports:
   tidyselect,
   tibble (>= 3.0.0),
   tidyr (>= 1.0.0),
-  tsibble,
-  tsibbledata,
   VennDiagram
 Suggests:
   Eunomia,
