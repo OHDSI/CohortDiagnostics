@@ -989,12 +989,15 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   overLapPlot <- shiny::reactive({
-    data <- CohortDiagnostics::getCohortOverlapResult(targetCohortIds = cohortId(), comparatorCohortIds = comparatorCohortId(), databaseIds = input$database)
-    
+    data <- CohortDiagnostics::getCohortOverlapResult(targetCohortIds = cohortId(), 
+                                                      comparatorCohortIds = comparatorCohortId(), 
+                                                      databaseIds = input$database)
+    validate(
+      need(!(cohortId() == comparatorCohortId()), paste0('Target cohort and comparator cannot be the same'))
+    )
     validate(
       need(!is.null(data), paste0('No cohort overlap data for this combination'))
     )
-    
     plot <- CohortDiagnostics::plotCohortOverlapVennDiagram(data = data,
                                                             targetCohortIds = cohortId(),
                                                             comparatorCohortIds = comparatorCohortId(),
@@ -1122,7 +1125,9 @@ shiny::shinyServer(function(input, output, session) {
     validate(
       need(!is.null(data), paste0('No cohort compare data for this combination'))
     )
-    
+    validate(
+      need(!(cohortId() == comparatorCohortId()), paste0('Target cohort and comparator cannot be the same'))
+    )
     cohortReference <- CohortDiagnostics::getCohortReference()
     covariateReference <- CohortDiagnostics::getCovariateReference(isTemporal = FALSE)
     plot <- CohortDiagnostics::plotCohortComparisonStandardizedDifference(data = data, 
