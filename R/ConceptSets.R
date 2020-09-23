@@ -308,10 +308,8 @@ runConceptSetDiagnostics <- function(connection,
   
   conceptSets <- combineConceptSetsFromCohorts(subset)
   
-  uniqueConceptSets <- conceptSets %>%
-    dplyr::select(-.data$cohortId, -.data$conceptSetId) %>% 
-    dplyr::group_by(.data$uniqueConceptSetId) %>%
-    dplyr::slice(1)
+  uniqueConceptSets <- uniqueConceptSets[!duplicated(data$uniqueConceptSetId),] %>% 
+    dplyr::select(-.data$cohortId, -.data$conceptSetId)
   
   ParallelLogger::logInfo("  Uploading unique concept sets to server. Number of records: ",
                           scales::comma(nrow(uniqueConceptSets)), 

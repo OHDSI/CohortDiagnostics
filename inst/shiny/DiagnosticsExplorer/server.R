@@ -356,10 +356,6 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::mutate(conceptSubjects = abs(.data$conceptSubjects)) %>%  
         dplyr::rename(conceptId = .data$sourceConceptId) %>% 
         dplyr::filter(.data$conceptId > 0) %>% 
-        dplyr::group_by(.data$databaseId, .data$conceptId) %>% 
-        # Solution as described here https://github.com/OHDSI/CohortDiagnostics/issues/162
-        dplyr::slice(1) %>% 
-        dplyr::ungroup() %>% 
         dplyr::arrange(.data$databaseId) %>% 
         tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>% 
         dplyr::mutate(name = paste0(databaseId, "_",
@@ -429,10 +425,6 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::select(-.data$sourceConceptId) %>%
         dplyr::mutate(conceptSubjects = abs(.data$conceptSubjects)) %>% 
         dplyr::filter(.data$conceptId > 0) %>% 
-        dplyr::group_by(.data$databaseId, .data$conceptId) %>% 
-        # Solution as described here https://github.com/OHDSI/CohortDiagnostics/issues/162
-        dplyr::slice(1) %>% 
-        dplyr::ungroup() %>% 
         dplyr::arrange(.data$databaseId) %>% 
         tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>% 
         dplyr::mutate(name = paste0(databaseId, "_",
@@ -506,9 +498,6 @@ shiny::shinyServer(function(input, output, session) {
                                                dplyr::pull(conceptSetId)) &
                       .data$databaseId %in% input$databases) %>% 
       dplyr::select(-.data$cohortId) %>% 
-      dplyr::group_by(.data$databaseId) %>% 
-      # Solution as described here https://github.com/OHDSI/CohortDiagnostics/issues/162
-      dplyr::slice(1) %>% 
       dplyr::ungroup() 
     
     maxConceptCount <- max(data$conceptCount, na.rm = TRUE)
