@@ -1,1 +1,0 @@
-The study protocol and other relevant documents go here.

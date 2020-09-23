@@ -66,7 +66,8 @@ buildPostgresDatabaseSchema <- function(connectionDetails,
 #' @param connectionDetails   DatabaseConnector connection details compatible object. 
 #'                            Must be dbms="postgres"
 #' @param schemaName          Name where schema stores results
-#' @param schemaName          Path to cohort diagnostics csv files to import
+#' @param schemaName          Path to cohort diagnostics csv files to export to
+#' @param pathToCsvFiles      Path to cohort diagnostics (results) csv files to import from
 #' @param winPsqlPath         Path to folder containing postgres executables 
 #'                            e.g. "C:/Program Files/PostgresSQL/12/bin"
 #'

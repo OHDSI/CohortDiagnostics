@@ -30,8 +30,7 @@ exportConceptInformation <- function(connection = NULL,
                                      exportFolder) {
   start <- Sys.time()
   if (is.null(connection)) {
-    connection <- DatabaseConnector::connect(connectionDetails)
-    on.exit(DatabaseConnector::disconnect(connection))
+    warning('No connection provided')
   }
   
   vocabularyTableNames <- tolower(SqlRender::camelCaseToSnakeCase(vocabularyTableNames))
