@@ -62,7 +62,7 @@ findOrphanConcepts <- function(connectionDetails = NULL,
                              conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
                              conceptCountsTable = conceptCountsTable,
                              conceptCountsTableIsTemp = conceptCountsTableIsTemp,
-                             orphanConceptTable = orphanConceptTable))
+                             orphanConceptTable = '#recommended_concepts'))
 }
 
 .findOrphanConcepts <- function(connectionDetails = NULL,

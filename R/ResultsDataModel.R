@@ -496,24 +496,20 @@ combineResultsDataModelCsvFiles <- function(inputLocation,
     
     if (files[[i]] == 'concept') {
       n <- nrow(filesRead)
-      filesRead <- filesRead %>% 
-        dplyr::group_by(.data$concept_id) %>% 
-        dplyr::slice(1)
+      filesRead <- filesRead[!duplicated(filesRead$concept_id),]
       difference <- (nrow(filesRead)  - n)
       if (difference > 0) {
-        ParallelLogger::logwarn(" Table has duplicate rows, only first occurrence is retained. 
+        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. 
                                 \n    Please check data quality. Removed records = ", 
                                 scales::comma(difference, accuracy = 0))
       }
     }
     if (files[[i]] == 'analysis_ref') {
       n <- nrow(filesRead)
-      filesRead <- filesRead %>% 
-        dplyr::group_by(.data$analysis_id) %>% 
-        dplyr::slice(1)
+      filesRead <- filesRead[!duplicated(filesRead$analysis_id),]
       difference <- (nrow(filesRead)  - n)
       if (difference > 0) {
-        ParallelLogger::logwarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", scales::comma(difference, accuracy = 0))
+        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", scales::comma(difference, accuracy = 0))
       }
     }
     if (files[[i]] == 'cohort') {
@@ -524,47 +520,39 @@ combineResultsDataModelCsvFiles <- function(inputLocation,
         dplyr::slice(1)
       difference <- (nrow(filesRead)  - n)
       if (difference > 0) {
-        ParallelLogger::logwarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", scales::comma(difference, accuracy = 0))
+        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", scales::comma(difference, accuracy = 0))
       }
     }
     if (files[[i]] == 'covariate_ref') {
       n <- nrow(filesRead)
-      filesRead <- filesRead %>% 
-        dplyr::group_by(.data$covariate_id) %>% 
-        dplyr::slice(1)
+      filesRead <- filesRead[!duplicated(filesRead$covariate_id),]
       difference <- (nrow(filesRead)  - n)
       if (difference > 0) {
-        ParallelLogger::logwarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", scales::comma(difference, accuracy = 0))
+        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", scales::comma(difference, accuracy = 0))
       }
     }
     if (files[[i]] == 'temporal_analysis_ref') {
       n <- nrow(filesRead)
-      filesRead <- filesRead %>% 
-        dplyr::group_by(.data$analysis_id) %>% 
-        dplyr::slice(1)
+      filesRead <- filesRead[!duplicated(filesRead$analysis_id),]
       difference <- (nrow(filesRead)  - n)
       if (difference > 0) {
-        ParallelLogger::logwarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", scales::comma(difference, accuracy = 0))
+        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", scales::comma(difference, accuracy = 0))
       }
     }
     if (files[[i]] == 'temporal_covariate_ref') {
       n <- nrow(filesRead)
-      filesRead <- filesRead %>% 
-        dplyr::group_by(.data$covariate_id) %>% 
-        dplyr::slice(1)
+      filesRead <- filesRead[!duplicated(filesRead$covariate_id),]
       difference <- (nrow(filesRead)  - n)
       if (difference > 0) {
-        ParallelLogger::logwarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", scales::comma(difference, accuracy = 0))
+        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", scales::comma(difference, accuracy = 0))
       }
     }
     if (files[[i]] == 'temporal_time_ref') {
       n <- nrow(filesRead)
-      filesRead <- filesRead %>% 
-        dplyr::group_by(.data$time_id) %>% 
-        dplyr::slice(1)
+      filesRead <- filesRead[!duplicated(filesRead$time_id),]
       difference <- (nrow(filesRead)  - n)
       if (difference > 0) {
-        ParallelLogger::logwarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", scales::comma(difference, accuracy = 0))
+        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", scales::comma(difference, accuracy = 0))
       }
     }
     

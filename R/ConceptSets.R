@@ -317,10 +317,8 @@ runConceptSetDiagnostics <- function(connection,
   
   conceptSets <- combineConceptSetsFromCohorts(subset)
   
-  uniqueConceptSets <- conceptSets %>%
-    dplyr::select(-.data$cohortId, -.data$conceptSetId) %>% 
-    dplyr::group_by(.data$uniqueConceptSetId) %>%
-    dplyr::slice(1)
+  uniqueConceptSets <- conceptSets[!duplicated(conceptSets$uniqueConceptSetId),] %>% 
+    dplyr::select(-.data$cohortId, -.data$conceptSetId)
   
   instantiateUniqueConceptSets(uniqueConceptSets = uniqueConceptSets,
                                connection = connection,
@@ -336,9 +334,10 @@ runConceptSetDiagnostics <- function(connection,
                                                                      concept_sets_table = "#inst_concept_sets",
                                                                      snakeCaseToCamelCase = TRUE) %>% 
     tidyr::tibble()
+  
   conceptSetConceptIds <- conceptSetConceptIds %>%
-    inner_join(select(conceptSets, .data$uniqueConceptSetId, .data$conceptSetId, .data$cohortId), by = "uniqueConceptSetId") %>%
-    select(.data$cohortId, .data$conceptSetId, .data$conceptId)
+    dplyr::inner_join(conceptSets, by = "uniqueConceptSetId") %>%
+    dplyr::select(.data$cohortId, .data$conceptSetId, .data$conceptId)
   
   writeToCsv(data = conceptSetConceptIds, 
              fileName = file.path(exportFolder, "concept_sets_concept_id.csv"), 
@@ -518,7 +517,7 @@ runConceptSetDiagnostics <- function(connection,
           dplyr::bind_rows() %>% 
           dplyr::filter(!is.na(.data$codeSetIds))
         if (is.null(primaryCodesetIds) || nrow(primaryCodesetIds) == 0) {
-          warning("No primary event criteria concept sets found for cohort id: ", cohortId)
+          warning("No primary event criteria concept sets found for cohort id: ", cohort$cohortId)
           return(tidyr::tibble())
         }
         primaryCodesetIds <- conceptSets %>%

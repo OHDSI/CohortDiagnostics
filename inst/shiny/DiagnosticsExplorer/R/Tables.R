@@ -14,7 +14,7 @@ prepareTable1 <- function(covariates,
   
   resultsTable <- tidyr::tibble()
   for (i in 1:nrow(specifications)) {
-    specification <- specifications %>% dplyr::slice(i)
+    specification <- specifications[i,]
     if (specification %>% dplyr::pull(.data$analysisId) == "") {
       resultsTable <- dplyr::bind_rows(resultsTable, 
                                        tidyr::tibble(label = (specification %>% dplyr::pull(.data$label)),
@@ -83,7 +83,7 @@ prepareTable1Comp <- function(balance,
   resultsTable <- tidyr::tibble()
   
   for (i in 1:nrow(specifications)) {
-    specification <- specifications %>% dplyr::slice(i)
+    specification <- specifications[i,]
     if (specification %>% dplyr::pull(.data$analysisId) == "") {
       resultsTable <- dplyr::bind_rows(resultsTable, 
                                        tidyr::tibble(label = (specification %>% dplyr::pull(.data$label)),

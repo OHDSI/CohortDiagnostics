@@ -20,11 +20,12 @@
                            cohortDatabaseSchema,
                            cohortTable,
                            oracleTempSchema,
+                           packageName = "examplePackage",
                            outputFolder) {
   
   # Create study cohort table structure:
   sql <- SqlRender::loadRenderTranslateSql(sqlFilename = "CreateCohortTable.sql",
-                                           packageName = "examplePackage",
+                                           packageName = packageName,
                                            dbms = attr(connection, "dbms"),
                                            oracleTempSchema = oracleTempSchema,
                                            cohort_database_schema = cohortDatabaseSchema,
@@ -33,7 +34,7 @@
   
   
   # Insert rule names in cohort_inclusion table:
-  pathToCsv <- system.file("cohorts", "InclusionRules.csv", package = "examplePackage")
+  pathToCsv <- system.file("cohorts", "InclusionRules.csv", package = packageName)
   inclusionRules <- readr::read_csv(pathToCsv, 
                                     col_types = readr::cols(),
                                     guess_max = min(1e7)) 
@@ -50,12 +51,12 @@
   
   
   # Instantiate cohorts:
-  pathToCsv <- system.file("settings", "CohortsToCreate.csv", package = "examplePackage")
+  pathToCsv <- system.file("settings", "CohortsToCreate.csv", package = packageName)
   cohortsToCreate <- readr::read_csv(pathToCsv, col_types = readr::cols())
   for (i in 1:nrow(cohortsToCreate)) {
     writeLines(paste("Creating cohort:", cohortsToCreate$name[i]))
     sql <- SqlRender::loadRenderTranslateSql(sqlFilename = paste0(cohortsToCreate$name[i], ".sql"),
-                                             packageName = "examplePackage",
+                                             packageName = packageName,
                                              dbms = attr(connection, "dbms"),
                                              oracleTempSchema = oracleTempSchema,
                                              cdm_database_schema = cdmDatabaseSchema,

@@ -16,7 +16,7 @@
 # Load the package
 library(examplePackage)
 
-path <- 'D:/yourStudyFolder'
+path <- 'D:/yourStudyFolderRs'
 
 # Optional: specify where the temporary files will be created:
 options(andromedaTempFolder = file.path(path, "andromedaTemp"))
@@ -26,19 +26,19 @@ maxCores <- parallel::detectCores()
 
 
 # Details for connecting to the server:
-connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "pdw",
-                                                                server = Sys.getenv("PDW_SERVER"),
-                                                                user = NULL,
-                                                                password = NULL,
-                                                                port = Sys.getenv("PDW_PORT"))
+connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "redshift",
+                                                                server = Sys.getenv("REDSHIFT_MDCD_SERVER"),
+                                                                user = Sys.getenv("userSecureAWS"),
+                                                                password = Sys.getenv("passwordSecureAWS"),
+                                                                port = Sys.getenv("REDSHIFT_MDCD_PORT"))
 
 # For Oracle: define a schema that can be used to emulate temp tables:
 oracleTempSchema <- NULL
 
 # Details specific to the database:
 outputFolder <- file.path(path, "output")
-cdmDatabaseSchema <- "cdm_ibm_mdcd_v1023.dbo"
-cohortDatabaseSchema <- "scratch.dbo"
+cdmDatabaseSchema <- Sys.getenv("REDSHIFT_MDCD_CDM")
+cohortDatabaseSchema <- Sys.getenv("REDSHIFT_MDCD_SCRATCH")
 cohortTable <- "yourCohortTable"
 databaseId <- "MDCD"
 databaseName <- "IBM Medicaid database"

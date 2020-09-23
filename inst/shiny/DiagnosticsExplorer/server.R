@@ -92,7 +92,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::mutate(literatureReview = dplyr::case_when(!.data$literatureReview %in% c('','0') ~ 
                                                           paste0("<a href='", .data$literatureReview, "' target='_blank'>", "Link", "</a>"),
                                                         TRUE ~ 'Ongoing')) %>%
-      dplyr::mutate(referentConceptId = paste0("<a href='", paste0(conceptIdBaseUrl(), .data$referentConceptId), "' target='_blank'>", .data$referentConceptId, "</a>")) %>% 
+      dplyr::mutate(phenotypeId = paste0("<a href='", paste0(conceptIdBaseUrl(), .data$referentConceptId), "' target='_blank'>", .data$phenotypeId, "</a>")) %>% 
       dplyr::mutate(clinicalDescription = stringr::str_replace_all(string = .data$clinicalDescription, 
                                                                    pattern = "Overview:", 
                                                                    replacement = "<strong>Overview:</strong>"))  %>% 
@@ -104,7 +104,8 @@ shiny::shinyServer(function(input, output, session) {
                                                                    replacement = "<br/> <strong>Presentation: </strong>")) %>% 
       dplyr::mutate(clinicalDescription = stringr::str_replace_all(string = .data$clinicalDescription,
                                                                    pattern = "Plan:",
-                                                                   replacement = "<br/> <strong>Plan: </strong>"))
+                                                                   replacement = "<br/> <strong>Plan: </strong>")) %>% 
+      dplyr::select(-.data$referentConceptId)
     
     options = list(pageLength = 10,
                    searching = TRUE,
@@ -356,10 +357,6 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::mutate(conceptSubjects = abs(.data$conceptSubjects)) %>%  
         dplyr::rename(conceptId = .data$sourceConceptId) %>% 
         dplyr::filter(.data$conceptId > 0) %>% 
-        dplyr::group_by(.data$databaseId, .data$conceptId) %>% 
-        # Solution as described here https://github.com/OHDSI/CohortDiagnostics/issues/162
-        dplyr::slice(1) %>% 
-        dplyr::ungroup() %>% 
         dplyr::arrange(.data$databaseId) %>% 
         tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>% 
         dplyr::mutate(name = paste0(databaseId, "_",
@@ -429,10 +426,6 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::select(-.data$sourceConceptId) %>%
         dplyr::mutate(conceptSubjects = abs(.data$conceptSubjects)) %>% 
         dplyr::filter(.data$conceptId > 0) %>% 
-        dplyr::group_by(.data$databaseId, .data$conceptId) %>% 
-        # Solution as described here https://github.com/OHDSI/CohortDiagnostics/issues/162
-        dplyr::slice(1) %>% 
-        dplyr::ungroup() %>% 
         dplyr::arrange(.data$databaseId) %>% 
         tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>% 
         dplyr::mutate(name = paste0(databaseId, "_",
@@ -505,12 +498,14 @@ shiny::shinyServer(function(input, output, session) {
                                                                .data$conceptSetName == input$conceptSet) %>% 
                                                dplyr::pull(conceptSetId)) &
                       .data$databaseId %in% input$databases) %>% 
-      dplyr::select(-.data$cohortId) %>% 
-      dplyr::group_by(.data$databaseId) %>% 
-      # Solution as described here https://github.com/OHDSI/CohortDiagnostics/issues/162
-      # Martijn: removing slice because else only 1 row is shown
-      # dplyr::slice(1) %>% 
-      dplyr::ungroup() 
+      dplyr::select(-.data$cohortId)
+    
+    databaseIds <- orphanConcept %>%
+      dplyr::filter(.data$databaseId %in% input$databases) %>% 
+      dplyr::select(.data$databaseId) %>% 
+      dplyr::distinct() %>% 
+      dplyr::arrange() %>% 
+      dplyr::pull(.data$databaseId)
     
     maxConceptCount <- max(data$conceptCount, na.rm = TRUE)
     if (nrow(data) == 0) {
@@ -518,20 +513,37 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     table <- data %>% 
+      tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>% 
+      dplyr::mutate(name = paste0(databaseId, "_",
+                                  stringr::str_replace(string = .data$name, 
+                                                       pattern = 'concept', 
+                                                       replacement = ''))) %>% 
       tidyr::pivot_wider(id_cols = c(.data$conceptId),
-                         names_from = .data$databaseId,
-                         values_from = .data$conceptCount,
+                         names_from = .data$name,
+                         values_from = .data$value,
                          values_fill = 0) %>% 
       dplyr::inner_join(concept %>% 
-                          dplyr::select(-.data$invalidReason, 
-                                        -.data$validStartDate, 
-                                        -.data$validEndDate,
-                                        -.data$standardConcept
+                          dplyr::select(.data$conceptId, 
+                                        .data$conceptName, 
+                                        .data$vocabularyId
                           )) %>% 
       dplyr::select(order(colnames(.))) %>% 
-      dplyr::relocate(.data$conceptId, .data$conceptName, 
-                      .data$conceptCode, .data$conceptClassId, 
-                      .data$domainId, .data$vocabularyId)
+      dplyr::relocate(.data$conceptId, .data$conceptName, .data$vocabularyId)
+    
+    sketch <- htmltools::withTags(table(
+      class = 'display',
+      thead(
+        tr(
+          th(rowspan = 2, 'Concept Id'),
+          th(rowspan = 2, 'Concept Name'),
+          th(rowspan = 2, 'Vocabulary Id'),
+          lapply(databaseIds, th, colspan = 2, class = "dt-center")
+        ),
+        tr(
+          lapply(rep(c("Counts", "Subjects"), length(databaseIds)), th)
+        )
+      )
+    ))
     
     options = list(pageLength = 10,
                    searching = TRUE,
@@ -545,6 +557,7 @@ shiny::shinyServer(function(input, output, session) {
                            options = options,
                            colnames = colnames(table),
                            rownames = FALSE,
+                           container = sketch,
                            escape = FALSE,
                            filter = c('bottom'),
                            class = "stripe nowrap compact")
