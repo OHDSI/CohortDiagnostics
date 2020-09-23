@@ -43,26 +43,26 @@ databaseName <- "Truven Health MarketScan® Multi-State Medicaid Database"
 databaseDescription <- "Truven Health MarketScan® Multi-State Medicaid Database (MDCD) adjudicated US health insurance claims for Medicaid enrollees from multiple states and includes hospital discharge diagnoses, outpatient diagnoses and procedures, and outpatient pharmacy claims as well as ethnicity and Medicare eligibility. Members maintain their same identifier even if they leave the system for a brief period however the dataset lacks lab data. [For further information link to RWE site for Truven MDCD."
 
 # Use this to run the cohorttDiagnostics. The results will be stored in the diagnosticsExport subfolder of the outputFolder. This can be shared between sites.
-runCohortDiagnostics(connectionDetails = connectionDetails,
-                     cdmDatabaseSchema = cdmDatabaseSchema,
-                     cohortDatabaseSchema = cohortDatabaseSchema,
-                     cohortTable = cohortTable,
-                     oracleTempSchema = oracleTempSchema,
-                     outputFolder = outputFolder,
-                     databaseId = databaseId,
-                     databaseName = databaseName,
-                     databaseDescription = databaseDescription,
-                     createCohorts = TRUE,
-                     runInclusionStatistics = TRUE,
-                     runIncludedSourceConcepts = TRUE,
-                     runOrphanConcepts = TRUE,
-                     runTimeDistributions = TRUE,
-                     runBreakdownIndexEvents = TRUE,
-                     runIncidenceRates = TRUE,
-                     runCohortOverlap = TRUE,
-                     runCohortCharacterization = TRUE,
-                     runTemporalCohortCharacterization = TRUE,
-                     minCellCount = 5)
+examplePackage::runCohortDiagnostics(connectionDetails = connectionDetails,
+                                     cdmDatabaseSchema = cdmDatabaseSchema,
+                                     cohortDatabaseSchema = cohortDatabaseSchema,
+                                     cohortTable = cohortTable,
+                                     oracleTempSchema = oracleTempSchema,
+                                     outputFolder = outputFolder,
+                                     databaseId = databaseId,
+                                     databaseName = databaseName,
+                                     databaseDescription = databaseDescription,
+                                     createCohorts = F,
+                                     runInclusionStatistics = TRUE,
+                                     runIncludedSourceConcepts = TRUE,
+                                     runOrphanConcepts = TRUE,
+                                     runTimeDistributions = TRUE,
+                                     runBreakdownIndexEvents = TRUE,
+                                     runIncidenceRates = TRUE,
+                                     runCohortOverlap = TRUE,
+                                     runCohortCharacterization = TRUE,
+                                     runTemporalCohortCharacterization = TRUE,
+                                     minCellCount = 5)
 
 # To view the results:
 # Optional: if there are results zip files from multiple sites in a folder, this merges them, which will speed up starting the viewer:

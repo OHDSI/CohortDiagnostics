@@ -62,6 +62,7 @@
 #' @param runIncludedSourceConcepts   Generate and export the source concepts included in the cohorts?
 #' @param runOrphanConcepts           Generate and export potential orphan concepts?
 #' @param runTimeDistributions        Generate and export cohort time distributions?
+#' @param runVisitContext             Generate and export index-date visit context?
 #' @param runBreakdownIndexEvents     Generate and export the breakdown of index events?
 #' @param runIncidenceRate            Generate and export the cohort incidence  rates?
 #' @param runCohortOverlap            Generate and export the cohort overlap? Overlaps are checked within cohortIds
@@ -105,6 +106,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  runIncludedSourceConcepts = TRUE,
                                  runOrphanConcepts = TRUE,
                                  runTimeDistributions = TRUE,
+                                 runVisitContext = TRUE,
                                  runBreakdownIndexEvents = TRUE,
                                  runIncidenceRate = TRUE,
                                  runCohortOverlap = TRUE,
@@ -343,8 +345,8 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
   }
   
+  # Concept set diagnostics -----------------------------------------------
   if (runIncludedSourceConcepts || runOrphanConcepts || runBreakdownIndexEvents) {
-    # Concept set diagnostics -----------------------------------------------
     runConceptSetDiagnostics(connection = connection,
                              oracleTempSchema = oracleTempSchema,
                              cdmDatabaseSchema = cdmDatabaseSchema,
@@ -364,9 +366,9 @@ runCohortDiagnostics <- function(packageName = NULL,
                              recordKeepingFile = recordKeepingFile)
   }
   
+  # Time distributions ----------------------------------------------------------------------
   if (runTimeDistributions) {
-    # Time distributions ----------------------------------------------------------------------
-	ParallelLogger::logInfo("Creating time distributions")
+    ParallelLogger::logInfo("Creating time distributions")
     subset <- subsetToRequiredCohorts(cohorts = cohorts %>%
                                         dplyr::filter(.data$cohortId %in% instantiatedCohorts),
                                       task = "runTimeDistributions",
@@ -374,7 +376,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                       recordKeepingFile = recordKeepingFile)
     if (nrow(subset) > 0) {
       if (incremental && (length(instantiatedCohorts) - nrow(subset)) > 0) {
-        ParallelLogger::logInfo("  Skipping ",
+        ParallelLogger::logInfo("Skipping ",
                                 scales::comma(length(instantiatedCohorts) - length(subset), accuracy = 1),
                                 " cohorts in incremental mode.")
       }
@@ -395,6 +397,45 @@ runCohortDiagnostics <- function(packageName = NULL,
       }
       recordTasksDone(cohortId = subset$cohortId,
                       task = "runTimeDistributions",
+                      checksum = subset$checksum,
+                      recordKeepingFile = recordKeepingFile,
+                      incremental = incremental)
+    }
+  }
+  
+  # Visit context ----------------------------------------------------------------------------
+  if (runVisitContext) {
+    ParallelLogger::logInfo("Retrieving visit context for index dates")
+    subset <- subsetToRequiredCohorts(cohorts = cohorts %>%
+                                        dplyr::filter(.data$cohortId %in% instantiatedCohorts),
+                                      task = "runVisitContext",
+                                      incremental = incremental,
+                                      recordKeepingFile = recordKeepingFile)
+    if (nrow(subset) > 0) {
+      if (incremental && (length(instantiatedCohorts) - nrow(subset)) > 0) {
+        ParallelLogger::logInfo("Skipping ",
+                                scales::comma(length(instantiatedCohorts) - length(subset), accuracy = 1),
+                                " cohorts in incremental mode.")
+      }
+      data <- getVisitContext(connection = connection,
+                              oracleTempSchema = oracleTempSchema,
+                              cdmDatabaseSchema = cdmDatabaseSchema,
+                              cohortDatabaseSchema = cohortDatabaseSchema,
+                              cohortTable = cohortTable,
+                              cdmVersion = cdmVersion,
+                              cohortIds = subset$cohortId,
+                              uniqueConceptIdTable = "#unique_concept_ids")
+      if (nrow(data) > 0) {
+        data <- data %>%
+          dplyr::mutate(databaseId = !!databaseId)
+        data <- enforceMinCellValue(data, "subjects", minCellCount)
+        writeToCsv(data = data,
+                   fileName = file.path(exportFolder, "visit_context.csv"),
+                   incremental = incremental,
+                   cohortId = subset$cohortId)
+      }
+      recordTasksDone(cohortId = subset$cohortId,
+                      task = "runVisitContext",
                       checksum = subset$checksum,
                       recordKeepingFile = recordKeepingFile,
                       incremental = incremental)
@@ -455,17 +496,14 @@ runCohortDiagnostics <- function(packageName = NULL,
                     recordKeepingFile = recordKeepingFile,
                     incremental = incremental)
     delta <- Sys.time() - startIncidenceRate
-    ParallelLogger::logInfo(paste("Running Incidence Rate took",
-                                  signif(delta, 3),
-                                  attr(delta, "units")))
-    ParallelLogger::logInfo("\n")
+    ParallelLogger::logInfo("Running Incidence Rate took ", signif(delta, 3), " ", attr(delta, "units"))
   }
   
   # Cohort overlap ---------------------------------------------------------------------------------
   if (runCohortOverlap) {
     ParallelLogger::logInfo("Computing cohort overlap")
     startCohortOverlap <- Sys.time()
-
+    
     combis <- cohorts %>% 
       dplyr::select(.data$referentConceptId, .data$cohortId) %>% 
       dplyr::rename(targetCohortId = .data$cohortId) %>% 
@@ -549,9 +587,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
     
     delta <- Sys.time() - startCohortOverlap
-    ParallelLogger::logInfo(paste("Running Cohort Overlap took",
-                                  signif(delta, 3),
-                                  attr(delta, "units")))
+    ParallelLogger::logInfo("Running Cohort Overlap took ", signif(delta, 3), " ", attr(delta, "units"))
   }
   
   # Cohort characterization ---------------------------------------------------------------
@@ -614,7 +650,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         #                                                               " Feature Count -> ", 
         #                                                               scales::comma(.data$n, accuracy = 1), "\n")) %>% 
         #                                dplyr::pull(message)))
-
+        
         characteristicsResultFiltered <- cohortCharacteristicsOutput$result %>% 
           dplyr::mutate(mean = round(x = mean, digits = 4)) %>% 
           dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 4 digits
