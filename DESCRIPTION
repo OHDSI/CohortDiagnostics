@@ -21,8 +21,11 @@ Imports:
   digest,
   dplyr (>= 1.0.0),
   DT, 
+  fable,
+  feasts,
   FeatureExtraction (>= 3.1.0),
   ggplot2,
+  ggiraph,
   lubridate,
   ParallelLogger (>= 2.0.0),
   plotly,
@@ -38,6 +41,8 @@ Imports:
   tidyselect,
   tibble (>= 3.0.0),
   tidyr (>= 1.0.0),
+  tsibble,
+
   VennDiagram
 Suggests:
   Eunomia,
