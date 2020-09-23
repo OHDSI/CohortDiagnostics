@@ -5,7 +5,7 @@ IF OBJECT_ID('tempdb..@include_source_concept_table', 'U') IS NOT NULL
   DROP TABLE @include_source_concept_table;
 
 SELECT codeset_id AS concept_set_id,
-	concept.concept_id,
+	concept_id,
 	source_concept_id,
 {@by_month} ? {
 	event_year,
@@ -175,8 +175,4 @@ FROM (
 		MONTH(visit_start_date),
 }
 		concept_id
-	) person_counts
-INNER JOIN @cdm_database_schema.concept
-	ON person_counts.concept_id = concept.concept_id
-LEFT JOIN @cdm_database_schema.concept source_concept
-	ON source_concept_id = source_concept.concept_id;
+	) person_counts;

@@ -130,7 +130,7 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
     dplyr::filter(!is.na(.data$codeSetIds))
   
   if (is.null(primaryCodesetIds) || nrow(primaryCodesetIds) == 0) {
-    ParallelLogger::logWarn("No primary event criteria concept sets found for cohort id: ", cohortId)
+    warning("No primary event criteria concept sets found for cohort id: ", cohortId)
     return(tidyr::tibble())
   }
   pasteIds <- function(row) {
@@ -139,8 +139,7 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
   }
   primaryCodesetIds <- lapply(split(primaryCodesetIds, primaryCodesetIds$domain), pasteIds)
   primaryCodesetIds <- dplyr::bind_rows(primaryCodesetIds)
-  # primaryCodesetIds <- aggregate(codeSetIds ~ domain, primaryCodesetIds, c)
-  
+
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
@@ -150,7 +149,7 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
                                  cohortDatabaseSchema = cohortDatabaseSchema,
                                  cohortTable = cohortTable,
                                  cohortId = cohortId)) {
-    ParallelLogger::logWarn("Cohort with ID ", cohortId, " appears to be empty. Was it instantiated?")
+    warning("Cohort with ID ", cohortId, " appears to be empty. Was it instantiated?")
     delta <- Sys.time() - start
     ParallelLogger::logInfo(paste("- Breaking down index events took",
                                   signif(delta, 3),
@@ -178,7 +177,8 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
                                              domain_table = domain$domainTable,
                                              domain_start_date = domain$domainStartDate,
                                              domain_concept_id = domain$domainConceptId,
-                                             primary_codeset_ids = row$codeSetIds)
+                                             primary_codeset_ids = row$codeSetIds,
+                                             concept_set_table = "#Codesets")
     counts <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
     return(counts)

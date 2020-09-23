@@ -46,7 +46,7 @@ enforceMinCellValue <- function(data, fieldName, minValues, silent = FALSE) {
   toCensor <- !is.na(data[, fieldName]) & data[, fieldName] < minValues & data[, fieldName] != 0
   if (!silent) {
     percent <- round(100 * sum(toCensor)/nrow(data), 1)
-    ParallelLogger::logInfo("   censoring ",
+    ParallelLogger::logInfo("- Censoring ",
                             sum(toCensor),
                             " values (",
                             percent,
