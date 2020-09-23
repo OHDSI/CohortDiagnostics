@@ -508,7 +508,8 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(-.data$cohortId) %>% 
       dplyr::group_by(.data$databaseId) %>% 
       # Solution as described here https://github.com/OHDSI/CohortDiagnostics/issues/162
-      dplyr::slice(1) %>% 
+      # Martijn: removing slice because else only 1 row is shown
+      # dplyr::slice(1) %>% 
       dplyr::ungroup() 
     
     maxConceptCount <- max(data$conceptCount, na.rm = TRUE)
@@ -539,7 +540,7 @@ shiny::shinyServer(function(input, output, session) {
                    lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
-                   columnDefs = list(minCellCountDef(0)))
+                   columnDefs = list(minCellCountDef(5 + (1:length(input$databases)))))
     table <- DT::datatable(table,
                            options = options,
                            colnames = colnames(table),
@@ -548,8 +549,8 @@ shiny::shinyServer(function(input, output, session) {
                            filter = c('bottom'),
                            class = "stripe nowrap compact")
     table <- DT::formatStyle(table = table,
-                             columns = 5 + (1:length(input$databases)),
-                             background = DT::styleColorBar(c(0,maxConceptCount), "lightblue"),
+                             columns = 6 + (1:length(input$databases)),
+                             background = DT::styleColorBar(c(0, maxConceptCount), "lightblue"),
                              backgroundSize = "98% 88%",
                              backgroundRepeat = "no-repeat",
                              backgroundPosition = "center")
