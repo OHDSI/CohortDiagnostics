@@ -21,7 +21,7 @@ getVisitContext <- function(connectionDetails = NULL,
                             cohortDatabaseSchema = cdmDatabaseSchema,
                             cohortTable = "cohort",
                             cohortIds,
-                            uniqueConceptIdTable = NULL,
+                            conceptIdTable = NULL,
                             cdmVersion = 5) {
   
   start <- Sys.time()
@@ -48,14 +48,14 @@ getVisitContext <- function(connectionDetails = NULL,
                                                              visit_context_table = "#visit_context",
                                                              snakeCaseToCamelCase = TRUE)
   
-  if (!is.null(uniqueConceptIdTable)) {
+  if (!is.null(conceptIdTable)) {
     sql <- "INSERT INTO @unique_concept_id_table (concept_id)
             SELECT DISTINCT visit_concept_id
             FROM @visit_context_table;"
     DatabaseConnector::renderTranslateExecuteSql(connection = connection,
                                                  sql = sql,
                                                  oracleTempSchema = oracleTempSchema,
-                                                 unique_concept_id_table = uniqueConceptIdTable,
+                                                 unique_concept_id_table = conceptIdTable,
                                                  visit_context_table = "#visit_context",
                                                  progressBar = FALSE,
                                                  reportOverallTime = FALSE)

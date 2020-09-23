@@ -78,7 +78,6 @@
 #' @param temporalCovariateSettings   Either an object of type \code{covariateSettings} as created using one of
 #'                                    the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
 #'                                    of such objects.
-#' @param uniqueConceptIdTable        Table to store unique concept_ids.
 #' @param minCellCount                The minimum cell count for fields contains person counts or fractions.
 #' @param incremental                 Create only cohort diagnostics that haven't been created before?
 #' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
@@ -211,10 +210,11 @@ runCohortDiagnostics <- function(packageName = NULL,
   
   ##############################
   ParallelLogger::logTrace("Creating unique concept ID table")
-  sql <- SqlRender::loadRenderTranslateSql("CreateUniqueConceptIdTable.sql",
+  sql <- SqlRender::loadRenderTranslateSql("CreateConceptIdTable.sql",
                                            packageName = "CohortDiagnostics",
                                            dbms = connection@dbms,
-                                           oracleTempSchema = oracleTempSchema)
+                                           oracleTempSchema = oracleTempSchema,
+                                           table_name = "#concept_ids")
   DatabaseConnector::executeSql(connection = connection, sql = sql, progressBar = FALSE, reportOverallTime = FALSE)
   data <- cohorts %>% 
     dplyr::filter(!is.na(.data$referentConceptId)) %>%
@@ -225,7 +225,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                             scales::comma(nrow(data)),
                             " cohort referent concept IDs into the unique concept ID table. This may take a while.")
     DatabaseConnector::insertTable(connection = connection, 
-                                   tableName = "#unique_concept_ids",
+                                   tableName = "#concept_ids",
                                    data = data,
                                    dropTableIfExists = FALSE,
                                    createTable = FALSE, 
@@ -362,7 +362,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                              conceptCountsTableIsTemp = TRUE,
                              useExternalConceptCountsTable = FALSE,
                              incremental = incremental,
-                             uniqueConceptIdTable = "#unique_concept_ids",
+                             conceptIdTable = "#concept_ids",
                              recordKeepingFile = recordKeepingFile)
   }
   
@@ -424,7 +424,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                               cohortTable = cohortTable,
                               cdmVersion = cdmVersion,
                               cohortIds = subset$cohortId,
-                              uniqueConceptIdTable = "#unique_concept_ids")
+                              conceptIdTable = "#concept_ids")
       if (nrow(data) > 0) {
         data <- data %>%
           dplyr::mutate(databaseId = !!databaseId)
@@ -693,7 +693,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           # DatabaseConnector::renderTranslateExecuteSql(connection = connection,
           #                                              sql = sql,
           #                                              cohort_database_schema = cohortDatabaseSchema,
-          #                                              unique_concept_id_table = uniqueConceptIdTable,
+          #                                              unique_concept_id_table = conceptIdTable,
           #                                              database_id = databaseId,
           #                                              task = 'runCohortCharacterization')
           writeToCsv(data = cohortCharacteristicsOutput$analysisRef,
@@ -843,7 +843,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           # DatabaseConnector::renderTranslateExecuteSql(connection = connection,
           #                                              sql = sql,
           #                                              cohort_database_schema = cohortDatabaseSchema,
-          #                                              unique_concept_id_table = uniqueConceptIdTable,
+          #                                              unique_concept_id_table = conceptIdTable,
           #                                              database_id = databaseId,
           #                                              task = 'runTemporalCohortCharacterization')
           writeToCsv(data = cohortCharacteristicsOutput$analysisRef,
@@ -898,17 +898,17 @@ runCohortDiagnostics <- function(packageName = NULL,
   exportConceptInformation(connection = connection,
                            cdmDatabaseSchema = cdmDatabaseSchema,
                            oracleTempSchema = oracleTempSchema,
-                           uniqueConceptIdTable = "#unique_concept_ids",
+                           conceptIdTable = "#concept_ids",
                            incremental = incremental,
                            exportFolder = exportFolder)
   
   # Delete unique concept ID table ---------------------------------
-  ParallelLogger::logTrace("Deleting unique concept ID table")
+  ParallelLogger::logTrace("Deleting concept ID table")
   sql <- "TRUNCATE TABLE @table;\nDROP TABLE @table;"
   DatabaseConnector::renderTranslateExecuteSql(connection = connection,
                                                sql = sql,
                                                oracleTempSchema = oracleTempSchema,
-                                               table = "#unique_concept_ids",
+                                               table = "#concept_ids",
                                                progressBar = FALSE,
                                                reportOverallTime = FALSE)
   
@@ -981,9 +981,9 @@ writePhenotypeDescriptionCsvToResults <- function(phenotypeDescriptionCsvPath,
         readr::write_excel_csv(path = file.path(exportFolder, "phenotype_description.csv"), 
                                na = '')
     } else {
-      ParallelLogger::logWarn(" phentoype description csv file found, but records dont match the referent concept ids of the cohorts being diagnosed.")
+      ParallelLogger::logWarn("Phentoype description csv file found, but records dont match the referent concept ids of the cohorts being diagnosed.")
     }
   } else {
-    ParallelLogger::logWarn(" phentoype description csv file not found")
+    ParallelLogger::logWarn("Phentoype description csv file not found")
   }
 }
