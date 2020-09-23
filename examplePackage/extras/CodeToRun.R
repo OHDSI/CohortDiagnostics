@@ -61,6 +61,7 @@ runCohortDiagnostics(connectionDetails = connectionDetails,
                      runIncidenceRates = TRUE,
                      runCohortOverlap = TRUE,
                      runCohortCharacterization = TRUE,
+                     runTemporalCohortCharacterization = TRUE,
                      minCellCount = 5)
 
 # To view the results:

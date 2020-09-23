@@ -128,30 +128,23 @@ extractConceptSetsJsonFromCohortJson <- function(cohortJson) {
   return(dplyr::bind_rows(conceptSetExpression))
 }
 
-
-
-# private function of cohort diagnostics package
 combineConceptSetsFromCohorts <- function(cohorts) {
-  #cohorts should be a dataframe with atleast cohortId, sql and json
+  #cohorts should be a dataframe with at least cohortId, sql and json
   
   errorMessage <- checkmate::makeAssertCollection()
-  checkmate::assertDataFrame(
-    x = cohorts,
-    min.cols = 4,
-    add = errorMessage
-  )
-  checkmate::assertNames(
-    x = colnames(cohorts),
-    must.include = c('cohortId', 'sql', 'json', 'cohortName')
-  )
+  checkmate::assertDataFrame(x = cohorts,
+                             min.cols = 4,
+                             add = errorMessage)
+  checkmate::assertNames(x = colnames(cohorts),
+                         must.include = c('cohortId', 'sql', 'json', 'cohortName'))
   checkmate::reportAssertions(errorMessage)
-  
-  checkmate::assertDataFrame(
-    x = cohorts %>% dplyr::select(.data$cohortId, .data$sql, .data$json, .data$cohortName),
-    any.missing = FALSE,
-    min.cols = 4,
-    add = errorMessage
-  )
+  checkmate::assertDataFrame(x = cohorts %>% dplyr::select(.data$cohortId, 
+                                                           .data$sql,
+                                                           .data$json, 
+                                                           .data$cohortName),
+                             any.missing = FALSE,
+                             min.cols = 4,
+                             add = errorMessage)
   checkmate::reportAssertions(errorMessage)
   
   conceptSets <- list()
@@ -163,17 +156,13 @@ combineConceptSetsFromCohorts <- function(cohorts) {
     json <- extractConceptSetsJsonFromCohortJson(cohortJson = cohort$json)
     
     if (nrow(sql) == 0 || nrow(json) == 0) {
-      ParallelLogger::logInfo(
-        "Cohort Definition expression does not have a concept set expression\n",
-        "    Skipping Cohort: ", 
-        cohort$cohortName
-      )
+      ParallelLogger::logInfo("Cohort Definition expression does not have a concept set expression. ",
+                              "Skipping Cohort: ", 
+                              cohort$cohortName )
     } else {
       if (!length(sql$conceptSetId %>% unique()) == length(json$conceptSetId %>% unique())) {
-        stop(
-          "Mismatch in concept set IDs between SQL and JSON for cohort ",
-          cohort$cohortFullName
-        )
+        stop("Mismatch in concept set IDs between SQL and JSON for cohort ",
+             cohort$cohortFullName)
       }
       if (length(sql) > 0 && length(json) > 0) {
         conceptSetCounter <- conceptSetCounter + 1
@@ -192,7 +181,7 @@ combineConceptSetsFromCohorts <- function(cohorts) {
     dplyr::mutate(uniqueConceptSetId = dplyr::row_number())
   
   conceptSets <- conceptSets %>%
-    dplyr::inner_join(uniqueConceptSets) %>% 
+    dplyr::inner_join(uniqueConceptSets, by = "conceptSetExpression") %>% 
     dplyr::distinct() %>% 
     dplyr::relocate(.data$uniqueConceptSetId, .data$cohortId, .data$conceptSetId) %>% 
     dplyr::arrange(.data$uniqueConceptSetId, .data$cohortId, .data$conceptSetId)
@@ -215,14 +204,12 @@ mergeTempTables <- function(connection, tableName, tempTables, oracleTempSchema)
   }
 }
 
-
-#private function of cohort diagnostics to instantiate concept sets for a cohort
 instantiateUniqueConceptSets <- function(uniqueConceptSets,
                                          connection,
                                          cdmDatabaseSchema,
                                          oracleTempSchema,
-                                         instantiatedCodeSets = '#inst_concept_sets') {
-  ParallelLogger::logInfo("  Instantiating concept sets")
+                                         conceptSetsTable = '#inst_concept_sets') {
+  ParallelLogger::logInfo("Instantiating concept sets")
   sql <- sapply(split(uniqueConceptSets, 1:nrow(uniqueConceptSets)),
                 function(x) {
                   sub(
@@ -253,10 +240,31 @@ instantiateUniqueConceptSets <- function(uniqueConceptSets,
   close(pb)
   
   mergeTempTables(connection = connection,
-                  tableName = instantiatedCodeSets,
+                  tableName = conceptSetsTable,
                   tempTables = tempTables, 
                   oracleTempSchema = oracleTempSchema)
 }
+
+getCodeSetId <- function(criterion) {
+  if (is.list(criterion)) {
+    criterion$CodesetId
+  } else if (is.vector(criterion)) {
+    return(criterion["CodesetId"])
+  } else {
+    return(NULL)
+  }
+}
+
+getCodeSetIds <- function(criterionList) {
+  codeSetIds <- lapply(criterionList, getCodeSetId)
+  codeSetIds <- do.call(c, codeSetIds)
+  if (is.null(codeSetIds)) {
+    return(NULL)
+  } else {
+    return(tibble::tibble(domain = names(criterionList), codeSetIds = codeSetIds))
+  }
+}
+
 
 runConceptSetDiagnostics <- function(connection,
                                      oracleTempSchema,
@@ -265,39 +273,40 @@ runConceptSetDiagnostics <- function(connection,
                                      cohorts,
                                      runIncludedSourceConcepts,
                                      runOrphanConcepts,
+                                     runBreakdownIndexEvents,
                                      exportFolder,
                                      minCellCount,
-                                     includeSourceConceptTable = '#inc_src_con',
-                                     orphanConceptTable = '#recommended_concepts',
                                      conceptCountsDatabaseSchema = cdmDatabaseSchema,
                                      conceptCountsTable = "concept_counts",
-                                     exportConceptCountTableForDatabase = FALSE,
                                      conceptCountsTableIsTemp = FALSE,
                                      useExternalConceptCountsTable = FALSE,
                                      incremental = FALSE,
                                      uniqueConceptIdTable = NULL,
                                      recordKeepingFile) {
-  
+  ParallelLogger::logInfo("Starting concept set diagnostics")
   startConceptSetDiagnostics <- Sys.time()
-  ParallelLogger::logInfo("Starting concept set diagnostics at ", Sys.time())
   
   subset <- tibble::tibble()
   if (runIncludedSourceConcepts) {
-    subsetIncluded <- subsetToRequiredCohorts(
-      cohorts = cohorts,
-      task = "runIncludedSourceConcepts",
-      incremental = incremental,
-      recordKeepingFile = recordKeepingFile
-    )
+    subsetIncluded <- subsetToRequiredCohorts(cohorts = cohorts,
+                                              task = "runIncludedSourceConcepts",
+                                              incremental = incremental,
+                                              recordKeepingFile = recordKeepingFile)
     subset <- dplyr::bind_rows(subset, subsetIncluded)
   }
+  if (runBreakdownIndexEvents) {
+    subsetBreakdown <- subsetToRequiredCohorts(cohorts = cohorts,
+                                               task = "runBreakdownIndexEvents",
+                                               incremental = incremental,
+                                               recordKeepingFile = recordKeepingFile)
+    subset <- dplyr::bind_rows(subset, subsetBreakdown)
+  }
+  
   if (runOrphanConcepts) {
-    subsetOrphans <- subsetToRequiredCohorts(
-      cohorts = cohorts,
-      task = "runOrphanConcepts",
-      incremental = incremental,
-      recordKeepingFile = recordKeepingFile
-    )
+    subsetOrphans <- subsetToRequiredCohorts(cohorts = cohorts,
+                                             task = "runOrphanConcepts",
+                                             incremental = incremental,
+                                             recordKeepingFile = recordKeepingFile)
     subset <- dplyr::bind_rows(subset, subsetOrphans)
   }
   subset <- dplyr::distinct(subset)
@@ -313,101 +322,51 @@ runConceptSetDiagnostics <- function(connection,
     dplyr::group_by(.data$uniqueConceptSetId) %>%
     dplyr::slice(1)
   
-  ParallelLogger::logInfo("  Uploading unique concept sets to server. Number of records: ",
-                          scales::comma(nrow(uniqueConceptSets)), 
-                          ". This may take some time depending on size.")
-  DatabaseConnector::insertTable(connection = connection,
-                                 tableName = '#unique_concept_sets',
-                                 data = uniqueConceptSets, 
-                                 dropTableIfExists = TRUE,
-                                 createTable = TRUE,
-                                 tempTable = TRUE,
-                                 progressBar = TRUE,
-                                 camelCaseToSnakeCase = TRUE)
-  DatabaseConnector::insertTable(connection = connection,
-                                 tableName = '#concept_sets',
-                                 data = conceptSets %>% 
-                                   dplyr::select(.data$uniqueConceptSetId, 
-                                                 .data$cohortId, 
-                                                 .data$conceptSetId) %>% 
-                                   dplyr::distinct(), 
-                                 dropTableIfExists = TRUE,
-                                 createTable = TRUE,
-                                 tempTable = TRUE,
-                                 progressBar = TRUE,
-                                 camelCaseToSnakeCase = TRUE)
-  ParallelLogger::logInfo("    Done.")
-  # there is now a temp table called #unique_concept_sets
+  instantiateUniqueConceptSets(uniqueConceptSets = uniqueConceptSets,
+                               connection = connection,
+                               cdmDatabaseSchema = cdmDatabaseSchema,
+                               oracleTempSchema = oracleTempSchema,
+                               conceptSetsTable = "#inst_concept_sets")
   
-  instantiateUniqueConceptSets(
-    uniqueConceptSets = uniqueConceptSets,
-    connection = connection,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    oracleTempSchema = oracleTempSchema,
-    instantiatedCodeSets = '#inst_concept_sets'
-  )
-  # there is now a temp table called #inst_concept_sets
-  sql <- "SELECT DISTINCT concept_sets.cohort_id,
-              concept_sets.concept_set_id,
-              inst.concept_id
-          FROM #concept_sets concept_sets
-          INNER JOIN @instantiated_code_sets inst
-          ON concept_sets.unique_concept_set_id = inst.codeset_id"
+  sql <- "SELECT DISTINCT codeset_id AS unique_concept_set_id,
+              concept_id
+          FROM @concept_sets_table;"
   conceptSetConceptIds <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                                      sql = sql,
-                                                                     instantiated_code_sets = '#inst_concept_sets',
+                                                                     concept_sets_table = "#inst_concept_sets",
                                                                      snakeCaseToCamelCase = TRUE) %>% 
     tidyr::tibble()
+  conceptSetConceptIds <- conceptSetConceptIds %>%
+    inner_join(select(conceptSets, .data$uniqueConceptSetId, .data$conceptSetId, .data$cohortId), by = "uniqueConceptSetId") %>%
+    select(.data$cohortId, .data$conceptSetId, .data$conceptId)
+  
   writeToCsv(data = conceptSetConceptIds, 
              fileName = file.path(exportFolder, "concept_sets_concept_id.csv"), 
-             incremental = incremental)
+             incremental = incremental,
+             cohortId = conceptSetConceptIds$cohortId)
   
   writeToCsv(data = conceptSets %>% 
                dplyr::select(-.data$uniqueConceptSetId), 
              fileName = file.path(exportFolder, "concept_sets.csv"), 
-             incremental = incremental)
+             incremental = incremental,
+             cohortId = conceptSets$cohortId)
   
-  data <- createConceptCountsTable(
-    connection = connection,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    oracleTempSchema = oracleTempSchema,
-    conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
-    conceptCountsTable = conceptCountsTable,
-    conceptCountsTableIsTemp = conceptCountsTableIsTemp,
-    getConceptCountsTableAsDataFrame = TRUE
-  )
-  if (exportConceptCountTableForDatabase) {
-    conceptCountTableForDatabase <- data %>% 
-      dplyr::mutate(databaseId = !!databaseId) %>% 
-      dplyr::relocate(.data$databaseId)
-    if (nrow(conceptCountTableForDatabase) > 0) {
-      conceptCountTableForDatabase <- enforceMinCellValue(conceptCountTableForDatabase, "conceptCount", minCellCount)
-      conceptCountTableForDatabase <- enforceMinCellValue(conceptCountTableForDatabase, "conceptSubjects", minCellCount)
-    }
-    writeToCsv(data = conceptCountTableForDatabase, 
-               fileName = file.path(exportFolder, "database_concept_count.csv")
-    )
+  if (runIncludedSourceConcepts || runOrphanConcepts) {
+    createConceptCountsTable(connection = connection,
+                             cdmDatabaseSchema = cdmDatabaseSchema,
+                             oracleTempSchema = oracleTempSchema,
+                             conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
+                             conceptCountsTable = conceptCountsTable,
+                             conceptCountsTableIsTemp = conceptCountsTableIsTemp)
   }
-  
-  # if (!is.null(uniqueConceptIdTable)) {
-  #   if (is.null(conceptCountsDatabaseSchema) &&
-  #       isTRUE(conceptCountsTableIsTemp)
-  #   ) {
-  #     conceptCountsTableFullName <- conceptCountsTable
-  #   } else {
-  #     conceptCountsTableFullName <- paste0(conceptCountsDatabaseSchema, '.', conceptCountsTable)
-  #   }
-  # }
-  
   if (runIncludedSourceConcepts) {
     # Included concepts ------------------------------------------------------------------
-    ParallelLogger::logInfo("  Fetching included source concepts - Started at ", Sys.time())
     if (nrow(subsetIncluded) > 0) {
       start <- Sys.time()
-      ParallelLogger::logInfo("  Counting codes in concept sets")
+      ParallelLogger::logInfo("Fetching included source concepts")
       if (useExternalConceptCountsTable) {
-        ParallelLogger::logWarn("  Use of external concept count table is not supported")
-        stop()
+        stop("Use of external concept count table is not supported")
+        
         # sql <-
         #   SqlRender::loadRenderTranslateSql(
         #     "CohortSourceConceptsFromCcTable.sql",
@@ -463,29 +422,33 @@ runConceptSetDiagnostics <- function(connection,
         # 
         # counts <- dplyr::bind_rows(sourceCounts, standardCounts)
       } else {
-        sql <- SqlRender::loadRenderTranslateSql(
-          "CohortSourceCodes.sql",
-          packageName = "CohortDiagnostics",
-          dbms = connection@dbms,
-          oracleTempSchema = oracleTempSchema,
-          cdm_database_schema = cdmDatabaseSchema,
-          instantiated_concept_sets = '#inst_concept_sets',
-          include_source_concept_table = includeSourceConceptTable,
-          by_month = FALSE
-        )
-        DatabaseConnector::executeSql(connection = connection,
-                                      sql = sql)
+        sql <- SqlRender::loadRenderTranslateSql( "CohortSourceCodes.sql",
+                                                  packageName = "CohortDiagnostics",
+                                                  dbms = connection@dbms,
+                                                  oracleTempSchema = oracleTempSchema,
+                                                  cdm_database_schema = cdmDatabaseSchema,
+                                                  instantiated_concept_sets = "#inst_concept_sets",
+                                                  include_source_concept_table = "#inc_src_concepts",
+                                                  by_month = FALSE )
+        DatabaseConnector::executeSql(connection = connection, sql = sql)
         counts <- DatabaseConnector::renderTranslateQuerySql(connection = connection, 
-                                                             sql = "select * from @include_source_concept_table",
-                                                             include_source_concept_table = includeSourceConceptTable,
+                                                             sql = "SELECT * FROM @include_source_concept_table;",
+                                                             include_source_concept_table = "#inc_src_concepts",
                                                              snakeCaseToCamelCase = TRUE) %>% 
-          tidyr::tibble() %>% 
+          tidyr::tibble()
+        
+        counts <- counts  %>% 
           dplyr::rename(uniqueConceptSetId = .data$conceptSetId) %>% 
-          dplyr::inner_join(conceptSets %>% dplyr::select(.data$uniqueConceptSetId, .data$cohortId, .data$conceptSetId)) %>% 
+          dplyr::inner_join(conceptSets %>% dplyr::select(.data$uniqueConceptSetId, 
+                                                          .data$cohortId, 
+                                                          .data$conceptSetId),
+                            by = "uniqueConceptSetId") %>% 
           dplyr::select(-.data$uniqueConceptSetId) %>% 
           dplyr::mutate(databaseId = !!databaseId) %>% 
-          dplyr::relocate(.data$databaseId, .data$cohortId, 
-                          .data$conceptSetId, .data$conceptId) %>% 
+          dplyr::relocate(.data$databaseId, 
+                          .data$cohortId, 
+                          .data$conceptSetId, 
+                          .data$conceptId) %>% 
           dplyr::distinct()
         
         if (nrow(counts) > 0) {
@@ -493,96 +456,204 @@ runConceptSetDiagnostics <- function(connection,
           counts <- enforceMinCellValue(counts, "conceptSubjects", minCellCount)
           counts <- enforceMinCellValue(counts, "conceptCount", minCellCount)
         }
-        writeToCsv(
-          counts,
-          file.path(exportFolder, "included_source_concept.csv"),
-          incremental = incremental,
-          cohortId = subsetIncluded$cohortId
-        )
-        recordTasksDone(
-          cohortId = subsetIncluded$cohortId,
-          task = "runIncludedSourceConcepts",
-          checksum = subsetIncluded$checksum,
-          recordKeepingFile = recordKeepingFile,
-          incremental = incremental
-        )
+        writeToCsv(counts,
+                   file.path(exportFolder, "included_source_concept.csv"),
+                   incremental = incremental,
+                   cohortId = subsetIncluded$cohortId)
+        recordTasksDone(cohortId = subsetIncluded$cohortId,
+                        task = "runIncludedSourceConcepts",
+                        checksum = subsetIncluded$checksum,
+                        recordKeepingFile = recordKeepingFile,
+                        incremental = incremental)
+        
+        if (!is.null(uniqueConceptIdTable)) {
+          sql <- "INSERT INTO @unique_concept_id_table (concept_id)
+                  SELECT DISTINCT concept_id
+                  FROM @include_source_concept_table;"
+          DatabaseConnector::renderTranslateExecuteSql(connection = connection,
+                                                       sql = sql,
+                                                       oracleTempSchema = oracleTempSchema,
+                                                       unique_concept_id_table = uniqueConceptIdTable,
+                                                       include_source_concept_table = "#inc_src_concepts",
+                                                       progressBar = FALSE,
+                                                       reportOverallTime = FALSE)
+        }
+        sql <- "TRUNCATE TABLE @include_source_concept_table;\nDROP TABLE @include_source_concept_table;"
+        DatabaseConnector::renderTranslateExecuteSql(connection = connection,
+                                                     sql = sql,
+                                                     oracleTempSchema = oracleTempSchema,
+                                                     include_source_concept_table = "#inc_src_concepts",
+                                                     progressBar = FALSE,
+                                                     reportOverallTime = FALSE)
+        
         delta <- Sys.time() - start
-        ParallelLogger::logInfo(paste(
-          "  Finding source codes took",
-          signif(delta, 3),
-          attr(delta, "units")
-        ))
+        ParallelLogger::logInfo(paste("Finding source codes took", signif(delta, 3), attr(delta, "units")))
       }
     }
   }
   
+  if (runBreakdownIndexEvents) {
+    # Index event breakdown --------------------------------------------------------------------------
+    ParallelLogger::logInfo("Breaking down index events")
+    start <- Sys.time()
+    if (nrow(subsetBreakdown) > 0) {
+      if (incremental && (nrow(cohorts) - nrow(subsetBreakdown)) > 0) {
+        ParallelLogger::logInfo("Skipping ",
+                                scales::comma(nrow(cohorts) - nrow(subsetBreakdown), accuracy = 1),
+                                " cohorts in incremental mode.")
+      }
+      domains <- readr::read_csv(system.file("csv", "domains.csv", package = "CohortDiagnostics"),
+                                 col_types = readr::cols(),
+                                 guess_max = min(1e7))
+      
+      runBreakdownIndexEvents <- function(cohort) {
+        ParallelLogger::logInfo("- Breaking down index events for cohort '", cohort$cohortName, "'")
+        
+        cohortDefinition <- RJSONIO::fromJSON(cohort$json)
+        primaryCodesetIds <- lapply(cohortDefinition$PrimaryCriteria$CriteriaList, getCodeSetIds) %>% 
+          dplyr::bind_rows() %>% 
+          dplyr::filter(!is.na(.data$codeSetIds))
+        if (is.null(primaryCodesetIds) || nrow(primaryCodesetIds) == 0) {
+          warning("No primary event criteria concept sets found for cohort id: ", cohortId)
+          return(tidyr::tibble())
+        }
+        primaryCodesetIds <- conceptSets %>%
+          dplyr::filter(.data$cohortId == cohort$cohortId) %>%
+          dplyr::select(codeSetIds = .data$conceptSetId, .data$uniqueConceptSetId) %>%
+          dplyr::inner_join(primaryCodesetIds, by = "codeSetIds")
+        
+        pasteIds <- function(row) {
+          return(tibble::tibble(domain = row$domain[1],
+                                codeSetIds = paste(row$codeSetIds, collapse = ", ")))
+        }
+        primaryCodesetIds <- lapply(split(primaryCodesetIds, primaryCodesetIds$domain), pasteIds)
+        primaryCodesetIds <- dplyr::bind_rows(primaryCodesetIds)
+        
+        getCounts <- function(row) {
+          domain <- domains[domains$domain == row$domain, ]
+          sql <- SqlRender::loadRenderTranslateSql("CohortEntryBreakdown.sql",
+                                                   packageName = "CohortDiagnostics",
+                                                   dbms = connection@dbms,
+                                                   oracleTempSchema = oracleTempSchema,
+                                                   cdm_database_schema = cdmDatabaseSchema,
+                                                   cohort_database_schema = cohortDatabaseSchema,
+                                                   cohort_table = cohortTable,
+                                                   cohort_id = cohort$cohortId,
+                                                   domain_table = domain$domainTable,
+                                                   domain_start_date = domain$domainStartDate,
+                                                   domain_concept_id = domain$domainConceptId,
+                                                   primary_codeset_ids = row$codeSetIds,
+                                                   concept_set_table = "#inst_concept_sets",
+                                                   store = TRUE,
+                                                   store_table = "#breakdown")
+          DatabaseConnector::executeSql(connection = connection, 
+                                        sql = sql, 
+                                        progressBar = FALSE, 
+                                        reportOverallTime = FALSE)
+          sql <- "SELECT * FROM @store_table;"
+          counts <- DatabaseConnector::renderTranslateQuerySql(connection = connection, 
+                                                               sql = sql,
+                                                               oracleTempSchema = oracleTempSchema,
+                                                               store_table = "#breakdown",
+                                                               snakeCaseToCamelCase = TRUE) %>% 
+            tidyr::tibble()
+          if (!is.null(uniqueConceptIdTable)) {
+            sql <- "INSERT INTO @unique_concept_id_table (concept_id)
+                  SELECT DISTINCT concept_id
+                  FROM @store_table;"
+            DatabaseConnector::renderTranslateExecuteSql(connection = connection,
+                                                         sql = sql,
+                                                         oracleTempSchema = oracleTempSchema,
+                                                         unique_concept_id_table = uniqueConceptIdTable,
+                                                         store_table = "#breakdown",
+                                                         progressBar = FALSE,
+                                                         reportOverallTime = FALSE)
+          }
+          sql <- "TRUNCATE TABLE @store_table;\nDROP TABLE @store_table;"
+          DatabaseConnector::renderTranslateExecuteSql(connection = connection,
+                                                       sql = sql,
+                                                       oracleTempSchema = oracleTempSchema,
+                                                       store_table = "#breakdown",
+                                                       progressBar = FALSE,
+                                                       reportOverallTime = FALSE)
+          return(counts)
+        }
+        counts <- lapply(split(primaryCodesetIds, 1:nrow(primaryCodesetIds)), getCounts) %>% 
+          dplyr::bind_rows() %>% 
+          dplyr::arrange(.data$conceptCount)
+        
+        if (nrow(counts) > 0) {
+          counts$cohortId <- cohort$cohortId
+        }
+        return(counts)
+      }
+      data <- lapply(split(subsetBreakdown, subsetBreakdown$cohortId), runBreakdownIndexEvents)
+      data <- dplyr::bind_rows(data)
+      if (nrow(data) > 0) {
+        data <- data %>%
+          dplyr::mutate(databaseId = !!databaseId)
+        data <- enforceMinCellValue(data, "conceptCount", minCellCount)
+      }
+      writeToCsv(data = data,
+                 fileName = file.path(exportFolder, "index_event_breakdown.csv"),
+                 incremental = incremental,
+                 cohortId = subset$cohortId)
+      recordTasksDone(cohortId = subset$cohortId,
+                      task = "runBreakdownIndexEvents",
+                      checksum = subset$checksum,
+                      recordKeepingFile = recordKeepingFile,
+                      incremental = incremental)
+    }
+  }
+  
+  
+  
   if (runOrphanConcepts) {
     # Orphan concepts ---------------------------------------------------------
-    ParallelLogger::logInfo("  Finding orphan concepts - started at ", Sys.time())
+    ParallelLogger::logInfo("Finding orphan concepts")
     if (nrow(subsetOrphans > 0)) {
       start <- Sys.time()
       if (!useExternalConceptCountsTable) {
-        ParallelLogger::logInfo("  Using internal concept count table.")
+        ParallelLogger::logTrace("Using internal concept count table.")
       } else {
-        ParallelLogger::logWarn("  Use of external concept count table is not supported")
-        stop()
+        stop("Use of external concept count table is not supported")
       }
       
       # [OPTIMIZATION idea] can we modify the sql to do this for all uniqueConceptSetId in one query using group by?
       data <- list()
       for (i in (1:nrow(uniqueConceptSets))) {
         conceptSet <- uniqueConceptSets[i,]
-        cohort <- cohorts %>% 
-          dplyr::inner_join(conceptSets %>% 
-                              dplyr::inner_join(conceptSet) %>% 
-                              dplyr::select(.data$cohortId) %>% 
-                              dplyr::distinct())
-        ParallelLogger::logInfo("  Finding orphan concepts for concept set ",
-                                conceptSet$conceptSetName, 
-                                ". This was found in cohorts :\n    ",
-                                paste0(cohort %>% 
-                                         dplyr::pull(.data$cohortName) %>% 
-                                         paste0(collapse = "\n    ")))
-        data[[i]] <-
-          .findOrphanConcepts(
-            connection = connection,
-            cdmDatabaseSchema = cdmDatabaseSchema,
-            oracleTempSchema = oracleTempSchema,
-            useCodesetTable = TRUE,
-            codesetId = conceptSet$uniqueConceptSetId,
-            conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
-            conceptCountsTable = conceptCountsTable,
-            conceptCountsTableIsTemp = conceptCountsTableIsTemp,
-            instantiatedCodeSets = '#inst_concept_sets',
-            orphanConceptTable = orphanConceptTable
-          )
+        ParallelLogger::logInfo("- Finding orphan concepts for concept set '", conceptSet$conceptSetName, "'")
+        data[[i]] <- .findOrphanConcepts(connection = connection,
+                                         cdmDatabaseSchema = cdmDatabaseSchema,
+                                         oracleTempSchema = oracleTempSchema,
+                                         useCodesetTable = TRUE,
+                                         codesetId = conceptSet$uniqueConceptSetId,
+                                         conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
+                                         conceptCountsTable = conceptCountsTable,
+                                         conceptCountsTableIsTemp = conceptCountsTableIsTemp,
+                                         instantiatedCodeSets = "#inst_concept_sets",
+                                         orphanConceptTable = "#orphan_concepts")
         
-        if (!is.null(databaseId) && !is.null(uniqueConceptIdTable)) {
-          sql <- "DELETE FROM @cohort_database_schema.@unique_concept_id_table
-                  WHERE database_id = '@database_id'
-                  AND cohort_id in (@cohort_ids)
-                  AND task = '@task';
-      
-                  INSERT INTO @cohort_database_schema.@unique_concept_id_table
-                  (database_id, cohort_id, task, concept_id)
-                  SELECT DISTINCT '@database_id' as database_id,
-                         conc.cohort_id,
-                         '@task' as task,
-                         orphan.concept_id
-                  FROM @orphan_concept_table orphan
-                  INNER JOIN #unique_concept_sets unq
-                  ON orphan.codeset_id = unq.unique_concept_set_id
-                  INNER JOIN #concept_sets conc
-                  ON orphan.codeset_id = conc.unique_concept_set_id;"
-            DatabaseConnector::renderTranslateExecuteSql(connection = connection,
-                                                         sql = sql,
-                                                         cohort_database_schema = cohortDatabaseSchema,
-                                                         unique_concept_id_table = uniqueConceptIdTable,
-                                                         database_id = databaseId,
-                                                         cohort_ids = paste0(cohort$cohortId %>% unique(), collapse = ","),
-                                                         orphan_concept_table = orphanConceptTable,
-                                                         task = 'runOrphanConcepts')
+        if (!is.null(uniqueConceptIdTable)) {
+          sql <- "INSERT INTO @unique_concept_id_table (concept_id)
+                  SELECT DISTINCT concept_id
+                  FROM @orphan_concept_table;"
+          DatabaseConnector::renderTranslateExecuteSql(connection = connection,
+                                                       sql = sql,
+                                                       oracleTempSchema = oracleTempSchema,
+                                                       unique_concept_id_table = uniqueConceptIdTable,
+                                                       orphan_concept_table = "#orphan_concepts",
+                                                       progressBar = FALSE,
+                                                       reportOverallTime = FALSE)
         }
+        sql <- "TRUNCATE TABLE @orphan_concept_table;\nDROP TABLE @orphan_concept_table;"
+        DatabaseConnector::renderTranslateExecuteSql(connection = connection,
+                                                     sql = sql,
+                                                     oracleTempSchema = oracleTempSchema,
+                                                     orphan_concept_table = "#orphan_concepts",
+                                                     progressBar = FALSE,
+                                                     reportOverallTime = FALSE)
       }
       data <- dplyr::bind_rows(data) %>% 
         dplyr::distinct() %>% 
@@ -594,17 +665,6 @@ runConceptSetDiagnostics <- function(connection,
         dplyr::select(-.data$uniqueConceptSetId) %>% 
         dplyr::mutate(databaseId = !!databaseId) %>% 
         dplyr::relocate(.data$cohortId, .data$conceptSetId, .data$databaseId)
-      
-      # ParallelLogger::logInfo("  Uploading to orphan_concept concept_id temporary table. This may take some time. Number of rows: ", 
-      #                         scales::comma(data %>% dplyr::select(.data$conceptId) %>% dplyr::distinct() %>% nrow()))
-      # DatabaseConnector::insertTable(connection = connection, 
-      #                                tableName = '#orphan_concept',
-      #                                data = data %>% dplyr::select(.data$conceptId) %>% dplyr::distinct(),
-      #                                dropTableIfExists = TRUE,
-      #                                createTable = TRUE,
-      #                                tempTable = TRUE,
-      #                                progressBar = TRUE,
-      #                                camelCaseToSnakeCase = TRUE)
       
       if (nrow(data) > 0) {
         data <- enforceMinCellValue(data, "conceptCount", minCellCount)
@@ -626,14 +686,6 @@ runConceptSetDiagnostics <- function(connection,
         incremental = incremental
       )
       
-      # if (!useExternalConceptCountsTable) {
-      #   ParallelLogger::logTrace("Dropping temp concept counts")
-      #   sql <- "TRUNCATE TABLE #concept_counts; DROP TABLE #concept_counts;"
-      #   DatabaseConnector::renderTranslateExecuteSql(connection,
-      #                                                sql,
-      #                                                progressBar = FALSE,
-      #                                                reportOverallTime = FALSE)
-      # }
       delta <- Sys.time() - start
       ParallelLogger::logInfo(paste(
         "Finding orphan concepts took",
@@ -642,20 +694,31 @@ runConceptSetDiagnostics <- function(connection,
       ))
     }
   }
-  ParallelLogger::logTrace("Dropping temp concept set tables")
+  ParallelLogger::logTrace("Dropping temp concept set table")
   sql <- "TRUNCATE TABLE #inst_concept_sets; DROP TABLE #inst_concept_sets;"
-  DatabaseConnector::renderTranslateExecuteSql(
-    connection,
-    sql,
-    oracleTempSchema = oracleTempSchema,
-    progressBar = FALSE,
-    reportOverallTime = FALSE
-  )
+  DatabaseConnector::renderTranslateExecuteSql(connection,
+                                               sql,
+                                               oracleTempSchema = oracleTempSchema,
+                                               progressBar = FALSE,
+                                               reportOverallTime = FALSE)
+  
+  if ((runIncludedSourceConcepts || runOrphanConcepts) && !useExternalConceptCountsTable) {
+    ParallelLogger::logTrace("Dropping temp concept count table")
+    if (conceptCountsTableIsTemp) {
+      countTable <- conceptCountsTable
+    } else {
+      countTable <- paste(conceptCountsDatabaseSchema, conceptCountsTable, sep = ".")
+    }
+    
+    sql <- "TRUNCATE TABLE @count_table; DROP TABLE @count_table;"
+    DatabaseConnector::renderTranslateExecuteSql(connection,
+                                                 sql,
+                                                 oracleTempSchema = oracleTempSchema,
+                                                 count_table = countTable,
+                                                 progressBar = FALSE,
+                                                 reportOverallTime = FALSE)
+  }
   
   delta <- Sys.time() - startConceptSetDiagnostics
-  ParallelLogger::logInfo(paste(
-    "Running concept set diagnostics",
-    signif(delta, 3),
-    attr(delta, "units")
-  ))
+  ParallelLogger::logInfo("Running concept set diagnostics took ", signif(delta, 3), attr(delta, "units"))
 }
