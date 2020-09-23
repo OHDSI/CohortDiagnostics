@@ -467,6 +467,10 @@ runConceptSetDiagnostics <- function(connection,
         if (!is.null(uniqueConceptIdTable)) {
           sql <- "INSERT INTO @unique_concept_id_table (concept_id)
                   SELECT DISTINCT concept_id
+                  FROM @include_source_concept_table;
+                  
+                  INSERT INTO @unique_concept_id_table (concept_id)
+                  SELECT DISTINCT source_concept_id
                   FROM @include_source_concept_table;"
           DatabaseConnector::renderTranslateExecuteSql(connection = connection,
                                                        sql = sql,
@@ -659,7 +663,8 @@ runConceptSetDiagnostics <- function(connection,
         dplyr::inner_join(conceptSets %>% 
                             dplyr::select(.data$uniqueConceptSetId, 
                                           .data$cohortId, 
-                                          .data$conceptSetId)) %>% 
+                                          .data$conceptSetId),
+                          by = "uniqueConceptSetId") %>% 
         dplyr::select(-.data$uniqueConceptSetId) %>% 
         dplyr::mutate(databaseId = !!databaseId) %>% 
         dplyr::relocate(.data$cohortId, .data$conceptSetId, .data$databaseId)
@@ -669,20 +674,16 @@ runConceptSetDiagnostics <- function(connection,
         data <- enforceMinCellValue(data, "conceptSubjects", minCellCount)
       }
       
-      writeToCsv(
-        data,
+      writeToCsv(data,
         file.path(exportFolder, "orphan_concept.csv"),
         incremental = incremental,
-        cohortId = subsetOrphans$cohortId
-      )
+        cohortId = subsetOrphans$cohortId)
       
-      recordTasksDone(
-        cohortId = subsetOrphans$cohortId,
+      recordTasksDone(cohortId = subsetOrphans$cohortId,
         task = "runOrphanConcepts",
         checksum = subsetOrphans$checksum,
         recordKeepingFile = recordKeepingFile,
-        incremental = incremental
-      )
+        incremental = incremental)
       
       delta <- Sys.time() - start
       ParallelLogger::logInfo(paste(
