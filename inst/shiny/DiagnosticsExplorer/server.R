@@ -498,8 +498,7 @@ shiny::shinyServer(function(input, output, session) {
                                                                .data$conceptSetName == input$conceptSet) %>% 
                                                dplyr::pull(conceptSetId)) &
                       .data$databaseId %in% input$databases) %>% 
-      dplyr::select(-.data$cohortId) %>% 
-      dplyr::ungroup() 
+      dplyr::select(-.data$cohortId)
     
     databaseIds <- orphanConcept %>%
       dplyr::filter(.data$databaseId %in% input$databases) %>% 
@@ -553,7 +552,7 @@ shiny::shinyServer(function(input, output, session) {
                    lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
-                   columnDefs = list(minCellCountDef(0)))
+                   columnDefs = list(minCellCountDef(5 + (1:length(input$databases)))))
     table <- DT::datatable(table,
                            options = options,
                            colnames = colnames(table),
@@ -563,8 +562,8 @@ shiny::shinyServer(function(input, output, session) {
                            filter = c('bottom'),
                            class = "stripe nowrap compact")
     table <- DT::formatStyle(table = table,
-                             columns = 5 + (1:length(input$databases)),
-                             background = DT::styleColorBar(c(0,maxConceptCount), "lightblue"),
+                             columns = 6 + (1:length(input$databases)),
+                             background = DT::styleColorBar(c(0, maxConceptCount), "lightblue"),
                              backgroundSize = "98% 88%",
                              backgroundRepeat = "no-repeat",
                              backgroundPosition = "center")

@@ -17,7 +17,7 @@
 exportConceptInformation <- function(connection = NULL,
                                      cdmDatabaseSchema,
                                      oracleTempSchema,
-                                     uniqueConceptIdTable = "#unique_concept_ids",
+                                     conceptIdTable,
                                      vocabularyTableNames = c("concept",
                                                               "conceptAncestor",
                                                               "conceptClass",
@@ -43,7 +43,7 @@ exportConceptInformation <- function(connection = NULL,
   sql <- "SELECT DISTINCT concept_id FROM @unique_concept_id_table;"
   uniqueConceptIds <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                                  sql = sql,
-                                                                 unique_concept_id_table = uniqueConceptIdTable,
+                                                                 unique_concept_id_table = conceptIdTable,
                                                                  snakeCaseToCamelCase = TRUE,
                                                                  oracleTempSchema = oracleTempSchema)[, 1]
   if (length(uniqueConceptIds) == 0) {
@@ -78,7 +78,7 @@ exportConceptInformation <- function(connection = NULL,
                                                          sql = sql,
                                                          oracleTempSchema = oracleTempSchema,
                                                          cdm_database_schema = cdmDatabaseSchema,
-                                                         unique_concept_id_table = uniqueConceptIdTable,
+                                                         unique_concept_id_table = conceptIdTable,
                                                          table = vocabularyTable,
                                                          snakeCaseToCamelCase = TRUE)
       if (nrow(data) > 0) {

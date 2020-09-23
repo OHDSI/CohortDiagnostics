@@ -281,7 +281,7 @@ runConceptSetDiagnostics <- function(connection,
                                      conceptCountsTableIsTemp = FALSE,
                                      useExternalConceptCountsTable = FALSE,
                                      incremental = FALSE,
-                                     uniqueConceptIdTable = NULL,
+                                     conceptIdTable = NULL,
                                      recordKeepingFile) {
   ParallelLogger::logInfo("Starting concept set diagnostics")
   startConceptSetDiagnostics <- Sys.time()
@@ -465,7 +465,7 @@ runConceptSetDiagnostics <- function(connection,
                         recordKeepingFile = recordKeepingFile,
                         incremental = incremental)
         
-        if (!is.null(uniqueConceptIdTable)) {
+        if (!is.null(conceptIdTable)) {
           sql <- "INSERT INTO @unique_concept_id_table (concept_id)
                   SELECT DISTINCT concept_id
                   FROM @include_source_concept_table;
@@ -476,7 +476,7 @@ runConceptSetDiagnostics <- function(connection,
           DatabaseConnector::renderTranslateExecuteSql(connection = connection,
                                                        sql = sql,
                                                        oracleTempSchema = oracleTempSchema,
-                                                       unique_concept_id_table = uniqueConceptIdTable,
+                                                       unique_concept_id_table = conceptIdTable,
                                                        include_source_concept_table = "#inc_src_concepts",
                                                        progressBar = FALSE,
                                                        reportOverallTime = FALSE)
@@ -560,14 +560,14 @@ runConceptSetDiagnostics <- function(connection,
                                                                store_table = "#breakdown",
                                                                snakeCaseToCamelCase = TRUE) %>% 
             tidyr::tibble()
-          if (!is.null(uniqueConceptIdTable)) {
+          if (!is.null(conceptIdTable)) {
             sql <- "INSERT INTO @unique_concept_id_table (concept_id)
                   SELECT DISTINCT concept_id
                   FROM @store_table;"
             DatabaseConnector::renderTranslateExecuteSql(connection = connection,
                                                          sql = sql,
                                                          oracleTempSchema = oracleTempSchema,
-                                                         unique_concept_id_table = uniqueConceptIdTable,
+                                                         unique_concept_id_table = conceptIdTable,
                                                          store_table = "#breakdown",
                                                          progressBar = FALSE,
                                                          reportOverallTime = FALSE)
@@ -638,14 +638,14 @@ runConceptSetDiagnostics <- function(connection,
                                          instantiatedCodeSets = "#inst_concept_sets",
                                          orphanConceptTable = "#orphan_concepts")
         
-        if (!is.null(uniqueConceptIdTable)) {
+        if (!is.null(conceptIdTable)) {
           sql <- "INSERT INTO @unique_concept_id_table (concept_id)
                   SELECT DISTINCT concept_id
                   FROM @orphan_concept_table;"
           DatabaseConnector::renderTranslateExecuteSql(connection = connection,
                                                        sql = sql,
                                                        oracleTempSchema = oracleTempSchema,
-                                                       unique_concept_id_table = uniqueConceptIdTable,
+                                                       unique_concept_id_table = conceptIdTable,
                                                        orphan_concept_table = "#orphan_concepts",
                                                        progressBar = FALSE,
                                                        reportOverallTime = FALSE)
