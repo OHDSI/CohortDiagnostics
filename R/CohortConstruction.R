@@ -558,12 +558,13 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
   inclusionResults <- fetchStats(cohortInclusionResultFile)
   result <- tibble::tibble()
   for (cohortId in unique(inclusion$cohortDefinitionId)) {
-    cohortResultresult <- processInclusionStats(inclusion = filter(inclusion, .data$cohortDefinitionId == cohortId),
-                                                inclusionResults = filter(inclusionResults, .data$cohortDefinitionId == cohortId),
-                                                inclusionStats = filter(inclusionStats, .data$cohortDefinitionId == cohortId),
-                                                summaryStats = filter(summaryStats, .data$cohortDefinitionId == cohortId),
-                                                simplify = simplify)
-    cohortResultresult$cohortDefinitionId <- cohortId
+    cohortResult <- processInclusionStats(inclusion = filter(inclusion, .data$cohortDefinitionId == cohortId),
+                                          inclusionResults = filter(inclusionResults, .data$cohortDefinitionId == cohortId),
+                                          inclusionStats = filter(inclusionStats, .data$cohortDefinitionId == cohortId),
+                                          summaryStats = filter(summaryStats, .data$cohortDefinitionId == cohortId),
+                                          simplify = simplify)
+    cohortResult$cohortDefinitionId <- cohortId
+    result <- dplyr::bind_rows(result, cohortResult)
   }
   delta <- Sys.time() - start
   writeLines(paste("Fetching inclusion statistics took", signif(delta, 3), attr(delta, "units")))
