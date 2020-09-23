@@ -23,6 +23,7 @@ Imports:
   DT, 
   FeatureExtraction (>= 3.1.0),
   ggplot2,
+  lubridate,
   ParallelLogger (>= 2.0.0),
   plotly,
   readr,

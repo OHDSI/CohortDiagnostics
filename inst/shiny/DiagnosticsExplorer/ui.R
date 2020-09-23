@@ -325,13 +325,9 @@ bodyTabItems <- shinydashboard::tabItems(
       selected = "Source Concepts",
       inline = TRUE
     ),
-    shiny::htmlOutput(outputId = "includeConceptsSelectedCohort"),
-    tags$br(),
     DT::dataTableOutput("includedConceptsTable")
   ),
   shinydashboard::tabItem(tabName = "orphanConcepts",
-                          shiny::htmlOutput(outputId = "orphanConceptSelectedCohort"),
-                          tags$br(),
                           DT::dataTableOutput("orphanConceptsTable")),
   shinydashboard::tabItem(tabName = "inclusionRuleStats",
                           div(style = "font-size:15px;font-weight: bold", "Target cohort:"),
@@ -371,9 +367,20 @@ bodyTabItems <- shinydashboard::tabItems(
                  tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;"))
                )
     ),
-    
-    tags$br(),
-    DT::dataTableOutput("temporalCharacterizationTable")
+    shinydashboard::box(
+      title = "Temporal Characterization Table",
+      width = NULL,
+      status = "primary",
+      DT::dataTableOutput("temporalCharacterizationTable")
+    )
+    # ,
+    # shinydashboard::box(
+    #   title = "Temporal Characterization Plot",
+    #   width = NULL,
+    #   status = "primary",
+    #   ggiraph::ggiraphOutput(
+    #     outputId = "covariateTimeSeriesPlot")
+    # )
   ),
   shinydashboard::tabItem(
     tabName = "cohortOverlap",
