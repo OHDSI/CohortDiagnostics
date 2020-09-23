@@ -469,6 +469,10 @@ runConceptSetDiagnostics <- function(connection,
         if (!is.null(uniqueConceptIdTable)) {
           sql <- "INSERT INTO @unique_concept_id_table (concept_id)
                   SELECT DISTINCT concept_id
+                  FROM @include_source_concept_table;
+                  
+                  INSERT INTO @unique_concept_id_table (concept_id)
+                  SELECT DISTINCT source_concept_id
                   FROM @include_source_concept_table;"
           DatabaseConnector::renderTranslateExecuteSql(connection = connection,
                                                        sql = sql,
