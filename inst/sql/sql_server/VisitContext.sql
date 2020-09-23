@@ -1,7 +1,7 @@
 IF OBJECT_ID('tempdb..@visit_context_table', 'U') IS NOT NULL
 	DROP TABLE @visit_context_table;
 
-SELECT c1.cohort_definition_id,
+SELECT c1.cohort_definition_id AS cohort_id,
 	vo1.visit_concept_id,
 	CASE 
 		WHEN vo1.visit_end_date < c1.cohort_start_date
