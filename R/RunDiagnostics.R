@@ -28,7 +28,6 @@
 #' @template Connection
 #'
 #' @template CdmDatabaseSchema
-#' @template VocabularyDatabaseSchema
 #' @template CohortDatabaseSchema
 #' @template OracleTempSchema
 #'
@@ -199,7 +198,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   ##############################
   ParallelLogger::logInfo("Saving database metadata")
   startMetaData <- Sys.time()
-  database <- tibble::tibble(databaseId = databaseId,
+  database <- dplyr::tibble(databaseId = databaseId,
                              databaseName = databaseName,
                              description = databaseDescription,
                              isMetaAnalysis = 0)
@@ -354,6 +353,8 @@ runCohortDiagnostics <- function(packageName = NULL,
                              conceptCountsDatabaseSchema = NULL,
                              conceptCountsTable = "#concept_counts",
                              conceptCountsTableIsTemp = TRUE,
+                             cohortDatabaseSchema = cohortDatabaseSchema,
+                             cohortTable = cohortTable,
                              useExternalConceptCountsTable = FALSE,
                              incremental = incremental,
                              conceptIdTable = "#concept_ids",
@@ -511,10 +512,10 @@ runCohortDiagnostics <- function(packageName = NULL,
     
     if (incremental) {
       combis <- combis %>% 
-        dplyr::inner_join(tibble::tibble(targetCohortId = cohorts$cohortId, 
+        dplyr::inner_join(dplyr::tibble(targetCohortId = cohorts$cohortId, 
                                          targetChecksum = cohorts$checksum),
                           by = "targetCohortId") %>% 
-        dplyr::inner_join(tibble::tibble(comparatorCohortId = cohorts$cohortId, 
+        dplyr::inner_join(dplyr::tibble(comparatorCohortId = cohorts$cohortId, 
                                          comparatorChecksum = cohorts$checksum),
                           by = "comparatorCohortId") %>% 
         dplyr::mutate(checksum = paste(.data$targetChecksum, .data$comparatorChecksum))

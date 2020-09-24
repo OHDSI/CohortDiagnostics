@@ -216,7 +216,7 @@ plotIncidenceRate <- function(data,
     dplyr::filter(.data$strataGender %in% !!stratifyByGender &
                     .data$strataAgeGroup %in% !!stratifyByAgeGroup &
                     .data$strataCalendarYear %in% !!stratifyByCalendarYear) %>% 
-    dplyr::select(-tidyselect::starts_with('strata')) %>% 
+    dplyr::select(-dplyr::starts_with('strata')) %>% 
     tidyr::tibble()
   
   aesthetics <- list(y = "incidenceRate")

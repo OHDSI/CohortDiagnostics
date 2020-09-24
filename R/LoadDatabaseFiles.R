@@ -106,7 +106,7 @@ importCsvFilesToPostgres <- function(connectionDetails,
                                                           ".csv")[[1]][[1]])
     # Read first line to get header column order, we assume these are large files
     head <- utils::read.csv(file = csvFile, nrows = 1)
-    headers <- stringi::stri_join(names(head), collapse = ", ")
+    headers <- paste(names(head), collapse = ", ")
     headers <- paste0("(", headers, ")")
     tablePath <- paste0(schemaName, ".", tableName)
     filePathStr <- paste0("'", csvFile, "'")

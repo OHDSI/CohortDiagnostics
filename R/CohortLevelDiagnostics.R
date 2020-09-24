@@ -122,7 +122,7 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
     if (is.null(codeSetIds)) {
       return(NULL)
     } else {
-      return(tibble::tibble(domain = names(criterionList), codeSetIds = codeSetIds))
+      return(dplyr::tibble(domain = names(criterionList), codeSetIds = codeSetIds))
     }
   }
   primaryCodesetIds <- lapply(cohortDefinition$PrimaryCriteria$CriteriaList, getCodeSetIds) %>% 
@@ -134,7 +134,7 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
     return(tidyr::tibble())
   }
   pasteIds <- function(row) {
-    return(tibble::tibble(domain = row$domain[1],
+    return(dplyr::tibble(domain = row$domain[1],
                           codeSetIds = paste(row$codeSetIds, collapse = ", ")))
   }
   primaryCodesetIds <- lapply(split(primaryCodesetIds, primaryCodesetIds$domain), pasteIds)

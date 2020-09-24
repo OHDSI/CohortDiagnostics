@@ -220,7 +220,7 @@ getIncidenceRateResult <- function(connection = NULL,
                       .data$strataAgeGroup %in% !!stratifyByAgeGroup &
                       .data$strataCalendarYear %in% !!stratifyByCalendarYear &
                       .data$personYears > !!minPersonYears) %>% 
-      dplyr::select(-tidyselect::starts_with('strata')) %>% 
+      dplyr::select(-dplyr::starts_with('strata')) %>% 
       tidyr::tibble()
   }
   if (nrow(data) == 0) {

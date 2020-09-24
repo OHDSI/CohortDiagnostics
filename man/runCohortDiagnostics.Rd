@@ -152,10 +152,6 @@ of such objects.}
 
 \item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
 of which cohort diagnostics has been executed.}
-
-\item{vocabularyDatabaseSchema}{(optional) Schema name where your vocabulary resides. Most commonly it is the same
-as CDM databaseSchema. Note that for SQL Server, 
-this should include both the database and schema name, for example 'cdm_data.dbo'.}
 }
 \description{
 Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the

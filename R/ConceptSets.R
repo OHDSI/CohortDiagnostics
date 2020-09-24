@@ -261,7 +261,7 @@ getCodeSetIds <- function(criterionList) {
   if (is.null(codeSetIds)) {
     return(NULL)
   } else {
-    return(tibble::tibble(domain = names(criterionList), codeSetIds = codeSetIds))
+    return(dplyr::tibble(domain = names(criterionList), codeSetIds = codeSetIds))
   }
 }
 
@@ -279,6 +279,8 @@ runConceptSetDiagnostics <- function(connection,
                                      conceptCountsDatabaseSchema = cdmDatabaseSchema,
                                      conceptCountsTable = "concept_counts",
                                      conceptCountsTableIsTemp = FALSE,
+                                     cohortDatabaseSchema,
+                                     cohortTable,
                                      useExternalConceptCountsTable = FALSE,
                                      incremental = FALSE,
                                      conceptIdTable = NULL,
@@ -286,7 +288,7 @@ runConceptSetDiagnostics <- function(connection,
   ParallelLogger::logInfo("Starting concept set diagnostics")
   startConceptSetDiagnostics <- Sys.time()
   
-  subset <- tibble::tibble()
+  subset <- dplyr::tibble()
   if (runIncludedSourceConcepts) {
     subsetIncluded <- subsetToRequiredCohorts(cohorts = cohorts,
                                               task = "runIncludedSourceConcepts",
@@ -548,7 +550,7 @@ runConceptSetDiagnostics <- function(connection,
           dplyr::inner_join(primaryCodesetIds, by = "codeSetIds")
         
         pasteIds <- function(row) {
-          return(tibble::tibble(domain = row$domain[1],
+          return(dplyr::tibble(domain = row$domain[1],
                                 codeSetIds = paste(row$codeSetIds, collapse = ", ")))
         }
         primaryCodesetIds <- lapply(split(primaryCodesetIds, primaryCodesetIds$domain), pasteIds)

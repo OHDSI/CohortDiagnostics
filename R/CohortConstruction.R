@@ -556,7 +556,7 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
   summaryStats <- fetchStats(cohortSummaryStatsFile)
   inclusionStats <- fetchStats(cohortInclusionStatsFile)
   inclusionResults <- fetchStats(cohortInclusionResultFile)
-  result <- tibble::tibble()
+  result <- dplyr::tibble()
   for (cohortId in unique(inclusion$cohortDefinitionId)) {
     cohortResult <- processInclusionStats(inclusion = filter(inclusion, .data$cohortDefinitionId == cohortId),
                                           inclusionResults = filter(inclusionResults, .data$cohortDefinitionId == cohortId),
