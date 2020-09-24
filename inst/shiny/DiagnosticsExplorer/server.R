@@ -179,8 +179,7 @@ shiny::shinyServer(function(input, output, session) {
         tidyr::pivot_wider(id_cols = c(.data$cohortId, .data$cohortName),
                            names_from = columnName,
                            values_from = .data$cohortSubjects,
-                           values_fill = 0
-        ),
+                           values_fill = 0),
       data %>% 
         dplyr::select(.data$cohortId, .data$databaseId, 
                       .data$cohortEntries, .data$cohortName) %>% 
@@ -188,9 +187,7 @@ shiny::shinyServer(function(input, output, session) {
         tidyr::pivot_wider(id_cols = c(.data$cohortId, .data$cohortName),
                            names_from = columnName,
                            values_from = .data$cohortEntries,
-                           values_fill = 0
-        )
-    )
+                           values_fill = 0))
     table <- table %>% 
       dplyr::select(order(colnames(table))) %>% 
       dplyr::relocate(.data$cohortId)
@@ -474,10 +471,8 @@ shiny::shinyServer(function(input, output, session) {
                      lengthChange = TRUE,
                      ordering = TRUE,
                      paging = TRUE,
-                     columnDefs = list(
-                       truncateStringDef(0, 150),
-                       list(minCellCountDef(0))
-                     ))
+                     columnDefs = list(truncateStringDef(1, 100),
+                                       minCellCountDef(2 + (1:(length(input$databases) * 2)))))
       
       table <- DT::datatable(table,
                              options = options,
@@ -489,7 +484,7 @@ shiny::shinyServer(function(input, output, session) {
                              class = "stripe nowrap compact")
       
       table <- DT::formatStyle(table = table,
-                               columns =  3 + (1:length(input$databases)),
+                               columns =  3 + (1:(length(input$databases)*2)),
                                background = DT::styleColorBar(c(0, maxConceptSubjects), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
@@ -533,8 +528,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::inner_join(concept %>% 
                           dplyr::select(.data$conceptId, 
                                         .data$conceptName, 
-                                        .data$vocabularyId
-                          )) %>% 
+                                        .data$vocabularyId)) %>% 
       dplyr::select(order(colnames(.))) %>% 
       dplyr::relocate(.data$conceptId, .data$conceptName, .data$vocabularyId)
     
@@ -725,8 +719,7 @@ shiny::shinyServer(function(input, output, session) {
                            names_from = "databaseId",
                            values_from = "value" ,
                            names_sep = "_",
-                           names_prefix = "Value_"
-        )
+                           names_prefix = "Value_")
       
       table <- characteristics %>% 
         dplyr::inner_join(table) %>% 
@@ -807,9 +800,7 @@ shiny::shinyServer(function(input, output, session) {
                      paging = TRUE,
                      columnDefs = list(
                        truncateStringDef(0, 150),
-                       minCellPercentDef(1:(length(dataCounts$databaseId)) + 1)
-                     )
-      )
+                       minCellPercentDef(1:(length(dataCounts$databaseId)) + 1)))
       # sketch <- htmltools::withTags(table(
       #  class = 'display',
       #  thead(
@@ -935,9 +926,7 @@ shiny::shinyServer(function(input, output, session) {
                    paging = TRUE,
                    columnDefs = list(
                      truncateStringDef(0, 150),
-                     minCellPercentDef(1:(length(temporalCovariateChoicesSelected$choices)) + 1)
-                   )
-    )
+                     minCellPercentDef(1:(length(temporalCovariateChoicesSelected$choices)) + 1)))
     
     table <- DT::datatable(table,
                            options = options,
@@ -950,8 +939,7 @@ shiny::shinyServer(function(input, output, session) {
                            callback =  DT::JS("table.on('click.dt', 'td', function() {
                                             var row_=table.row(this).data();
                                             var data = [row_];
-                                            Shiny.onInputChange('rows',data );
-                            });"))
+                                            Shiny.onInputChange('rows',data );});"))
     table <- DT::formatStyle(table = table,
                              columns = (2 + (1:length(temporalCovariateChoicesSelected$choices))), #0 index
                              background = DT::styleColorBar(c(0,1), "lightblue"),
@@ -1013,11 +1001,10 @@ shiny::shinyServer(function(input, output, session) {
                                                       comparatorCohortIds = comparatorCohortId(), 
                                                       databaseIds = input$database)
     validate(
-      need(!(cohortId() == comparatorCohortId()), paste0('Target cohort and comparator cannot be the same'))
-    )
+      need(!(cohortId() == comparatorCohortId()), paste0('Target cohort and comparator cannot be the same')))
+    
     validate(
-      need(!is.null(data), paste0('No cohort overlap data for this combination'))
-    )
+      need(!is.null(data), paste0('No cohort overlap data for this combination')))
     plot <- CohortDiagnostics::plotCohortOverlapVennDiagram(data = data,
                                                             targetCohortIds = cohortId(),
                                                             comparatorCohortIds = comparatorCohortId(),
@@ -1065,8 +1052,8 @@ shiny::shinyServer(function(input, output, session) {
                      lengthChange = TRUE,
                      ordering = FALSE,
                      paging = TRUE,
-                     columnDefs = list(minCellPercentDef(1:2))
-      )
+                     columnDefs = list(minCellPercentDef(1:2)))
+      
       table <- DT::datatable(table,
                              options = options,
                              rownames = FALSE,
@@ -1105,9 +1092,8 @@ shiny::shinyServer(function(input, output, session) {
                      paging = TRUE,
                      columnDefs = list(
                        truncateStringDef(0, 150),
-                       minCellPercentDef(1:2)
-                     )
-      )
+                       minCellPercentDef(1:2)))
+      
       table <- DT::datatable(table,
                              options = options,
                              rownames = FALSE,
@@ -1143,11 +1129,11 @@ shiny::shinyServer(function(input, output, session) {
                                                            timeIds = NULL,
                                                            resultsDatabaseSchema = NULL)
     validate(
-      need(!is.null(data), paste0('No cohort compare data for this combination'))
-    )
+      need(!is.null(data), paste0('No cohort compare data for this combination')))
+    
     validate(
-      need(!(cohortId() == comparatorCohortId()), paste0('Target cohort and comparator cannot be the same'))
-    )
+      need(!(cohortId() == comparatorCohortId()), paste0('Target cohort and comparator cannot be the same')))
+    
     cohortReference <- CohortDiagnostics::getCohortReference()
     covariateReference <- CohortDiagnostics::getCovariateReference(isTemporal = FALSE)
     plot <- CohortDiagnostics::plotCohortComparisonStandardizedDifference(data = data, 
@@ -1337,10 +1323,6 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$inclusionRuleStatSelectedCohort <- shiny::renderUI({
-    return(targetCohortCountHtml())
-  })
-  
-  output$indexEventBreakdownSelectedCohort <- shiny::renderUI({
     return(targetCohortCountHtml())
   })
   

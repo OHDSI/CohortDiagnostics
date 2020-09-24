@@ -335,8 +335,6 @@ bodyTabItems <- shinydashboard::tabItems(
                           tags$br(),
                           DT::dataTableOutput("inclusionRuleTable")),
   shinydashboard::tabItem(tabName = "indexEventBreakdown",
-                          shiny::htmlOutput(outputId = "indexEventBreakdownSelectedCohort"),
-                          tags$br(),
                           DT::dataTableOutput("breakdownTable")),
   shinydashboard::tabItem(
     tabName = "cohortCharacterization",
