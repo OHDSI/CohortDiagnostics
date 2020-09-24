@@ -51,6 +51,13 @@ styleAbsColorBar <- function(maxValue, colorPositive, colorNegative, angle = 90)
                  angle, maxValue, maxValue, colorPositive, colorNegative, maxValue, maxValue))
 }
 
+camelCaseToTitleCase <- function(string) {
+  string <- gsub("([A-Z])", " \\1", string)
+  string <- gsub("([a-z])([0-9])", "\\1 \\2", string)
+  substr(string, 1, 1) <- toupper(substr(string, 1, 1))
+  return(string)
+}
+
 shiny::shinyServer(function(input, output, session) {
   
   cohortId <- shiny::reactive({
@@ -118,7 +125,7 @@ shiny::shinyServer(function(input, output, session) {
                                options = options,
                                rownames = FALSE,
                                colnames = colnames(data) %>% 
-                                 SqlRender::camelCaseToTitleCase(),
+                                 camelCaseToTitleCase(),
                                escape = FALSE,
                                filter = c("bottom"),
                                class = "stripe compact")
@@ -143,7 +150,7 @@ shiny::shinyServer(function(input, output, session) {
     dataTable <- DT::datatable(data,
                                options = options,
                                rownames = FALSE,
-                               colnames = colnames(data) %>% SqlRender::camelCaseToTitleCase(),
+                               colnames = colnames(data) %>% camelCaseToTitleCase(),
                                escape = FALSE,
                                filter = c("bottom"),
                                class = "stripe compact")
@@ -319,12 +326,13 @@ shiny::shinyServer(function(input, output, session) {
                    lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
-                   info = TRUE)
+                   info = TRUE,
+                   columnDefs = list(minCellCountDef(3)))
     table <- DT::datatable(table,
                            options = options,
                            rownames = FALSE,
                            colnames = colnames(table) %>% 
-                             SqlRender::camelCaseToTitleCase(),
+                             camelCaseToTitleCase(),
                            filter = c('bottom'),
                            class = "stripe nowrap compact")
     table <- DT::formatRound(table, c("Average", "SD"), digits = 2)
@@ -379,6 +387,8 @@ shiny::shinyServer(function(input, output, session) {
         return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
       }
       
+      table <- table[order(-table[, 4]), ]
+      
       sketch <- htmltools::withTags(table(
         class = 'display',
         thead(
@@ -401,11 +411,9 @@ shiny::shinyServer(function(input, output, session) {
                      searchHighlight = TRUE,
                      ordering = TRUE,
                      paging = TRUE,
-                     columnDefs = list(
-                       truncateStringDef(0, 150),
-                       list(minCellCountDef(0))
-                     ))
-      
+                     columnDefs = list(truncateStringDef(1, 100),
+                                       minCellCountDef(2 + (1:(length(input$databases) * 2)))))
+
       table <- DT::datatable(table,
                              colnames = colnames(table),
                              options = options,
@@ -416,7 +424,7 @@ shiny::shinyServer(function(input, output, session) {
                              class = "stripe nowrap compact")
       
       table <- DT::formatStyle(table = table,
-                               columns =  3 + (1:length(databaseIds)),
+                               columns =  3 + (1:(length(input$databases)*2)),
                                background = DT::styleColorBar(c(0,maxConceptSubjects), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
@@ -530,6 +538,8 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(order(colnames(.))) %>% 
       dplyr::relocate(.data$conceptId, .data$conceptName, .data$vocabularyId)
     
+    table <- table[order(-table[, 4]),]
+    
     sketch <- htmltools::withTags(table(
       class = 'display',
       thead(
@@ -552,7 +562,7 @@ shiny::shinyServer(function(input, output, session) {
                    lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
-                   columnDefs = list(minCellCountDef(5 + (1:length(input$databases)))))
+                   columnDefs = list(minCellCountDef(2 + (1:(length(input$databases) * 2)))))
     table <- DT::datatable(table,
                            options = options,
                            colnames = colnames(table),
@@ -562,7 +572,7 @@ shiny::shinyServer(function(input, output, session) {
                            filter = c('bottom'),
                            class = "stripe nowrap compact")
     table <- DT::formatStyle(table = table,
-                             columns = 6 + (1:length(input$databases)),
+                             columns = 3 + (1:(length(input$databases) * 2)),
                              background = DT::styleColorBar(c(0, maxConceptCount), "lightblue"),
                              backgroundSize = "98% 88%",
                              backgroundRepeat = "no-repeat",
@@ -574,10 +584,10 @@ shiny::shinyServer(function(input, output, session) {
     table <- inclusionRuleStats %>% 
       dplyr::filter(.data$cohortId == cohortId() &
                       .data$databaseId == input$database) %>% 
-      dplyr::select(.data$ruleSequence, .data$name, 
-                    .data$personCount, .data$gainCount, 
-                    .data$personTotal) %>% 
-      dplyr::arrange(.data$ruleSequence)
+      dplyr::select(.data$ruleSequenceId, .data$ruleName, 
+                    .data$meetSubjects, .data$gainSubjects, 
+                    .data$remainSubjects, .data$totalSubjects) %>% 
+      dplyr::arrange(.data$ruleSequenceId)
     
     if (nrow(table) == 0) {
       return(tidyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
@@ -590,11 +600,11 @@ shiny::shinyServer(function(input, output, session) {
                    lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
-                   columnDefs = list(minCellCountDef(2:4)))
+                   columnDefs = list(minCellCountDef(2:5)))
     table <- DT::datatable(table,
                            options = options,
                            colnames = colnames(table) %>% 
-                             SqlRender::camelCaseToTitleCase(),
+                             camelCaseToTitleCase(),
                            rownames = FALSE,
                            escape = FALSE,
                            filter = c('bottom'),
@@ -633,7 +643,7 @@ shiny::shinyServer(function(input, output, session) {
         table <- merge(table, temp, all = TRUE)
       }
     }
-    table <- table[order(-table[,3]), ]
+    table <- table[order(-table[, 3]), ]
     colnames(table)[1:2] <- c("Concept ID", "Name")
     options = list(pageLength = 10,
                    searching = TRUE,
@@ -933,7 +943,7 @@ shiny::shinyServer(function(input, output, session) {
                            options = options,
                            rownames = FALSE,
                            colnames = colnames(table) %>% 
-                             SqlRender::camelCaseToTitleCase(),
+                             camelCaseToTitleCase(),
                            escape = FALSE,
                            filter = c('bottom'),
                            class = "stripe nowrap compact",
@@ -1084,7 +1094,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::mutate(stdDiff = round(x = .data$stdDiff, digits = 3)) %>% 
         dplyr::rename_with(.fn = ~ stringr::str_replace(string = ., pattern = 'mean1', replacement = 'Target')) %>% 
         dplyr::rename_with(.fn = ~ stringr::str_replace(string = ., pattern = 'mean2', replacement = 'Comparator')) %>% 
-        dplyr::rename_with(.fn = SqlRender::camelCaseToTitleCase)
+        dplyr::rename_with(.fn = camelCaseToTitleCase)
       
       options = list(pageLength = 100,
                      searching = TRUE,
