@@ -9,7 +9,7 @@ runCohortDiagnostics(
   cohortToCreateFile = "settings/CohortsToCreate.csv",
   baseUrl = NULL,
   cohortSetReference = NULL,
-  phenotypeDescriptionCsv = NULL,
+  phenotypeDescriptionFile = NULL,
   connectionDetails = NULL,
   connection = NULL,
   cdmDatabaseSchema,
@@ -61,8 +61,8 @@ a dataframe object identical to requirements for \code{cohortSetReference} argum
 \item{cohortSetReference}{A data frame with four columns, as described in the details. Can be left NULL if 
 \code{packageName} and \code{cohortToCreateFile} have been specified.}
 
-\item{phenotypeDescriptionCsv}{(Optional) Path for the location of the phenotype_description.csv file.
-This file should have the following columns that may be read into following
+\item{phenotypeDescriptionFile}{(Optional) The location of the phenotype descriptioon file within the package. 
+The file must be .csv file and have the following columns that may be read into following
 data types: phenotype_id (double), phenotype_name (character),
 referent_concept_id (double), clinical_description (character),
 literature_review (character), phenotype_notes (character). Note: the field

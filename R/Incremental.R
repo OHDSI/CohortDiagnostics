@@ -129,7 +129,7 @@ writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
     }
     readr::write_excel_csv(x = data, 
                            path = fileName, 
-                           na = '', 
+                           na = "", 
                            append = FALSE,
                            delim = ",")
   }
