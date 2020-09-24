@@ -417,7 +417,7 @@ combineResultsDataModelCsvFiles <- function(inputLocation,
                         dplyr::mutate(report = paste0("\n     - " ,
                                                       .data$tableName, 
                                                       " (n = ", 
-                                                      scales::comma(.data$count, accuracy = 1),
+                                                      format(big.mark = ",", scientific = FALSE, x = .data$count),
                                                       ")"
                         )) %>% 
                         dplyr::pull(.data$report) %>% 
@@ -501,7 +501,7 @@ combineResultsDataModelCsvFiles <- function(inputLocation,
       if (difference > 0) {
         ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. 
                                 \n    Please check data quality. Removed records = ", 
-                                scales::comma(difference, accuracy = 0))
+                                format(big.mark = ",", scientific = FALSE, x = difference, accuracy = 0))
       }
     }
     if (files[[i]] == 'analysis_ref') {
@@ -509,7 +509,7 @@ combineResultsDataModelCsvFiles <- function(inputLocation,
       filesRead <- filesRead[!duplicated(filesRead$analysis_id),]
       difference <- (nrow(filesRead)  - n)
       if (difference > 0) {
-        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", scales::comma(difference, accuracy = 0))
+        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
       }
     }
     if (files[[i]] == 'cohort') {
@@ -520,7 +520,7 @@ combineResultsDataModelCsvFiles <- function(inputLocation,
         dplyr::slice(1)
       difference <- (nrow(filesRead)  - n)
       if (difference > 0) {
-        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", scales::comma(difference, accuracy = 0))
+        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
       }
     }
     if (files[[i]] == 'covariate_ref') {
@@ -528,7 +528,7 @@ combineResultsDataModelCsvFiles <- function(inputLocation,
       filesRead <- filesRead[!duplicated(filesRead$covariate_id),]
       difference <- (nrow(filesRead)  - n)
       if (difference > 0) {
-        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", scales::comma(difference, accuracy = 0))
+        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
       }
     }
     if (files[[i]] == 'temporal_analysis_ref') {
@@ -536,7 +536,7 @@ combineResultsDataModelCsvFiles <- function(inputLocation,
       filesRead <- filesRead[!duplicated(filesRead$analysis_id),]
       difference <- (nrow(filesRead)  - n)
       if (difference > 0) {
-        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", scales::comma(difference, accuracy = 0))
+        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
       }
     }
     if (files[[i]] == 'temporal_covariate_ref') {
@@ -544,7 +544,7 @@ combineResultsDataModelCsvFiles <- function(inputLocation,
       filesRead <- filesRead[!duplicated(filesRead$covariate_id),]
       difference <- (nrow(filesRead)  - n)
       if (difference > 0) {
-        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", scales::comma(difference, accuracy = 0))
+        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
       }
     }
     if (files[[i]] == 'temporal_time_ref') {
@@ -552,7 +552,7 @@ combineResultsDataModelCsvFiles <- function(inputLocation,
       filesRead <- filesRead[!duplicated(filesRead$time_id),]
       difference <- (nrow(filesRead)  - n)
       if (difference > 0) {
-        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", scales::comma(difference, accuracy = 0))
+        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
       }
     }
     

@@ -132,7 +132,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
     output$result <- result %>% 
       dplyr::select(.data$cohortId, .data$covariateId, .data$mean, .data$sd)
     # ParallelLogger::logInfo("  Uploading cohort characterization conceptId into covariateRef. ConcpetIds = ", 
-    #                         scales::comma(output$covariateRef %>% 
+    #                         format(big.mark = ",", scientific = FALSE, x = output$covariateRef %>% 
     #                                         dplyr::select(.data$conceptId) %>% 
     #                                         dplyr::distinct() %>% 
     #                                         nrow()))

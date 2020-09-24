@@ -770,10 +770,9 @@ instantiateCohortSet <- function(connectionDetails = NULL,
 
 createTempInclusionStatsTables <- function(connection, oracleTempSchema, cohorts) {
   ParallelLogger::logInfo("Creating temporary inclusion statistics tables")
-  sql <- SqlRender::loadRenderTranslateSql("inclusionStatsTables.sql",
-                                           packageName = "ROhdsiWebApi",
-                                           dbms = connection@dbms,
-                                           oracleTempSchema = oracleTempSchema)
+  pathToSql <- system.file( "inclusionStatsTables.sql", package = "ROhdsiWebApi")
+  sql <- SqlRender::readSql(pathToSql)
+  sql <- SqlRender::translate(sql, targetDialect = connection@dbms, oracleTempSchema = oracleTempSchema)
   DatabaseConnector::executeSql(connection, sql)
   
   inclusionRules <- tidyr::tibble()
@@ -795,7 +794,7 @@ createTempInclusionStatsTables <- function(connection, oracleTempSchema, cohorts
   
   if (nrow(inclusionRules) > 0) {
     inclusionRules <- inclusionRules %>% 
-      dplyr::inner_join(cohorts %>% dplyr::select(.data$cohortId, .data$cohortName)) %>% 
+      dplyr::inner_join(cohorts %>% dplyr::select(.data$cohortId, .data$cohortName), by = "cohortId") %>% 
       dplyr::rename(name = .data$ruleName,
                     cohortDefinitionId = .data$cohortId) %>% 
       dplyr::select(.data$cohortDefinitionId, .data$ruleSequence, .data$name)
@@ -826,8 +825,7 @@ saveAndDropTempInclusionStatsTables <- function(connection,
                                                        oracleTempSchema = oracleTempSchema,
                                                        snakeCaseToCamelCase = TRUE,
                                                        table = table) %>% 
-      tidyr::tibble() %>% 
-      dplyr::rename(cohortId = .data$cohortDefinitionId)
+      tidyr::tibble()
     fullFileName <- file.path(inclusionStatisticsFolder, fileName)
     if (incremental) {
       saveIncremental(data, fullFileName, cohortId = cohortIds)

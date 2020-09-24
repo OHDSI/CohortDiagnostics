@@ -61,7 +61,7 @@ computeCohortOverlap <- function(connectionDetails = NULL,
                                  cohortDatabaseSchema = cohortDatabaseSchema,
                                  cohortTable = cohortTable,
                                  cohortId = comparatorCohortId)) {
-    warning("- Comparato cohort with ID ", 
+    warning("- Comparator cohort with ID ", 
                             comparatorCohortId, 
                             " appears to be empty. Was it instantiated? Skipping overlap computation.")
     delta <- Sys.time() - start

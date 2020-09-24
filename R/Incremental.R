@@ -60,8 +60,8 @@ getRequiredTasks <- function(..., checksum, recordKeepingFile) {
     }
     tasks$checksum <- NULL
     if (length(idx) > 0) {
-      text <- paste(sprintf("%s = %s", names(tasks), tasks[idx,]), collapse = ", ")
-      ParallelLogger::logInfo("Skipping ", text, " because unchanged from earlier run")
+      # text <- paste(sprintf("%s = %s", names(tasks), tasks[idx,]), collapse = ", ")
+      # ParallelLogger::logInfo("Skipping ", text, " because unchanged from earlier run")
       tasks <- tasks[-idx, ]
     }
   }

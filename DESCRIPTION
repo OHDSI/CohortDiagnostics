@@ -45,7 +45,6 @@ Suggests:
   knitr,
   RColorBrewer,
   rmarkdown,
-  scales,
   stringi,
   testthat
 Remotes:

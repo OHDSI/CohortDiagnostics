@@ -326,29 +326,46 @@ runConceptSetDiagnostics <- function(connection,
                                oracleTempSchema = oracleTempSchema,
                                conceptSetsTable = "#inst_concept_sets")
   
-  sql <- "SELECT DISTINCT codeset_id AS unique_concept_set_id,
-              concept_id
-          FROM @concept_sets_table;"
-  conceptSetConceptIds <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                                                     sql = sql,
-                                                                     concept_sets_table = "#inst_concept_sets",
-                                                                     snakeCaseToCamelCase = TRUE) %>% 
-    tidyr::tibble()
-  
-  conceptSetConceptIds <- conceptSetConceptIds %>%
-    dplyr::inner_join(conceptSets, by = "uniqueConceptSetId") %>%
-    dplyr::select(.data$cohortId, .data$conceptSetId, .data$conceptId)
-  
-  writeToCsv(data = conceptSetConceptIds, 
-             fileName = file.path(exportFolder, "concept_sets_concept_id.csv"), 
-             incremental = incremental,
-             cohortId = conceptSetConceptIds$cohortId)
-  
-  writeToCsv(data = conceptSets %>% 
-               dplyr::select(-.data$uniqueConceptSetId), 
-             fileName = file.path(exportFolder, "concept_sets.csv"), 
-             incremental = incremental,
-             cohortId = conceptSets$cohortId)
+  # Export concept IDs per concept set ------------------------------------------
+  # Disabling for now, since we don't have a diagnostic for it. 
+  # If we do enable this, it should be a separate option (e.g. runConceptSetExpansion),
+  # and it should be tracked for incremental mode.
+  # sql <- "SELECT DISTINCT codeset_id AS unique_concept_set_id,
+  #             concept_id
+  #         FROM @concept_sets_table;"
+  # conceptSetConceptIds <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
+  #                                                                    sql = sql,
+  #                                                                    concept_sets_table = "#inst_concept_sets",
+  #                                                                    snakeCaseToCamelCase = TRUE) %>% 
+  #   tidyr::tibble()
+  # 
+  # conceptSetConceptIds <- conceptSetConceptIds %>%
+  #   dplyr::inner_join(conceptSets, by = "uniqueConceptSetId") %>%
+  #   dplyr::select(.data$cohortId, .data$conceptSetId, .data$conceptId)
+  # 
+  # writeToCsv(data = conceptSetConceptIds, 
+  #            fileName = file.path(exportFolder, "concept_sets_concept_id.csv"), 
+  #            incremental = incremental,
+  #            cohortId = conceptSetConceptIds$cohortId)
+  # 
+  # writeToCsv(data = conceptSets %>% 
+  #              dplyr::select(-.data$uniqueConceptSetId), 
+  #            fileName = file.path(exportFolder, "concept_sets.csv"), 
+  #            incremental = incremental,
+  #            cohortId = conceptSets$cohortId)
+  # 
+  # if (!is.null(conceptIdTable)) {
+  #   sql <- "INSERT INTO @concept_id_table (concept_id)
+  #           SELECT DISTINCT concept_id
+  #           FROM @concept_sets_table;"
+  #   DatabaseConnector::renderTranslateExecuteSql(connection = connection,
+  #                                                sql = sql,
+  #                                                oracleTempSchema = oracleTempSchema,
+  #                                                concept_id_table = conceptIdTable,
+  #                                                concept_sets_table = "#inst_concept_sets",
+  #                                                progressBar = FALSE,
+  #                                                reportOverallTime = FALSE)
+  # }
   
   if (runIncludedSourceConcepts || runOrphanConcepts) {
     createConceptCountsTable(connection = connection,
@@ -360,9 +377,15 @@ runConceptSetDiagnostics <- function(connection,
   }
   if (runIncludedSourceConcepts) {
     # Included concepts ------------------------------------------------------------------
+    ParallelLogger::logInfo("Fetching included source concepts")
+    #TODO: Disregard empty cohorts in tally:
+    if (incremental && (nrow(cohorts) - nrow(subsetIncluded)) > 0) {
+      ParallelLogger::logInfo(sprintf("Skipping %s cohorts in incremental mode.",
+                                      nrow(cohorts) - nrow(subsetIncluded)))
+    }
     if (nrow(subsetIncluded) > 0) {
       start <- Sys.time()
-      ParallelLogger::logInfo("Fetching included source concepts")
+      
       if (useExternalConceptCountsTable) {
         stop("Use of external concept count table is not supported")
         
@@ -466,17 +489,17 @@ runConceptSetDiagnostics <- function(connection,
                         incremental = incremental)
         
         if (!is.null(conceptIdTable)) {
-          sql <- "INSERT INTO @unique_concept_id_table (concept_id)
+          sql <- "INSERT INTO @concept_id_table (concept_id)
                   SELECT DISTINCT concept_id
                   FROM @include_source_concept_table;
                   
-                  INSERT INTO @unique_concept_id_table (concept_id)
+                  INSERT INTO @concept_id_table (concept_id)
                   SELECT DISTINCT source_concept_id
                   FROM @include_source_concept_table;"
           DatabaseConnector::renderTranslateExecuteSql(connection = connection,
                                                        sql = sql,
                                                        oracleTempSchema = oracleTempSchema,
-                                                       unique_concept_id_table = conceptIdTable,
+                                                       concept_id_table = conceptIdTable,
                                                        include_source_concept_table = "#inc_src_concepts",
                                                        progressBar = FALSE,
                                                        reportOverallTime = FALSE)
@@ -498,13 +521,12 @@ runConceptSetDiagnostics <- function(connection,
   if (runBreakdownIndexEvents) {
     # Index event breakdown --------------------------------------------------------------------------
     ParallelLogger::logInfo("Breaking down index events")
-    start <- Sys.time()
+    if (incremental && (nrow(cohorts) - nrow(subsetBreakdown)) > 0) {
+      ParallelLogger::logInfo(sprintf("Skipping %s cohorts in incremental mode.",
+                                      nrow(cohorts) - nrow(subsetBreakdown)))
+    }
     if (nrow(subsetBreakdown) > 0) {
-      if (incremental && (nrow(cohorts) - nrow(subsetBreakdown)) > 0) {
-        ParallelLogger::logInfo("Skipping ",
-                                scales::comma(nrow(cohorts) - nrow(subsetBreakdown), accuracy = 1),
-                                " cohorts in incremental mode.")
-      }
+      start <- Sys.time()
       domains <- readr::read_csv(system.file("csv", "domains.csv", package = "CohortDiagnostics"),
                                  col_types = readr::cols(),
                                  guess_max = min(1e7))
@@ -561,13 +583,13 @@ runConceptSetDiagnostics <- function(connection,
                                                                snakeCaseToCamelCase = TRUE) %>% 
             tidyr::tibble()
           if (!is.null(conceptIdTable)) {
-            sql <- "INSERT INTO @unique_concept_id_table (concept_id)
+            sql <- "INSERT INTO @concept_id_table (concept_id)
                   SELECT DISTINCT concept_id
                   FROM @store_table;"
             DatabaseConnector::renderTranslateExecuteSql(connection = connection,
                                                          sql = sql,
                                                          oracleTempSchema = oracleTempSchema,
-                                                         unique_concept_id_table = conceptIdTable,
+                                                         concept_id_table = conceptIdTable,
                                                          store_table = "#breakdown",
                                                          progressBar = FALSE,
                                                          reportOverallTime = FALSE)
@@ -606,14 +628,18 @@ runConceptSetDiagnostics <- function(connection,
                       checksum = subset$checksum,
                       recordKeepingFile = recordKeepingFile,
                       incremental = incremental)
+      delta <- Sys.time() - start
+      ParallelLogger::logInfo(paste("Breaking down index event took", signif(delta, 3), attr(delta, "units")))
     }
   }
-  
-  
   
   if (runOrphanConcepts) {
     # Orphan concepts ---------------------------------------------------------
     ParallelLogger::logInfo("Finding orphan concepts")
+    if (incremental && (nrow(cohorts) - nrow(subsetOrphans)) > 0) {
+      ParallelLogger::logInfo(sprintf("Skipping %s cohorts in incremental mode.",
+                                      nrow(cohorts) - nrow(subsetOrphans)))
+    }
     if (nrow(subsetOrphans > 0)) {
       start <- Sys.time()
       if (!useExternalConceptCountsTable) {
@@ -639,13 +665,13 @@ runConceptSetDiagnostics <- function(connection,
                                          orphanConceptTable = "#orphan_concepts")
         
         if (!is.null(conceptIdTable)) {
-          sql <- "INSERT INTO @unique_concept_id_table (concept_id)
+          sql <- "INSERT INTO @concept_id_table (concept_id)
                   SELECT DISTINCT concept_id
                   FROM @orphan_concept_table;"
           DatabaseConnector::renderTranslateExecuteSql(connection = connection,
                                                        sql = sql,
                                                        oracleTempSchema = oracleTempSchema,
-                                                       unique_concept_id_table = conceptIdTable,
+                                                       concept_id_table = conceptIdTable,
                                                        orphan_concept_table = "#orphan_concepts",
                                                        progressBar = FALSE,
                                                        reportOverallTime = FALSE)
@@ -687,11 +713,7 @@ runConceptSetDiagnostics <- function(connection,
         incremental = incremental)
       
       delta <- Sys.time() - start
-      ParallelLogger::logInfo(paste(
-        "Finding orphan concepts took",
-        signif(delta, 3),
-        attr(delta, "units")
-      ))
+      ParallelLogger::logInfo("Finding orphan concepts took ", signif(delta, 3), " ", attr(delta, "units"))
     }
   }
   ParallelLogger::logTrace("Dropping temp concept set table")
