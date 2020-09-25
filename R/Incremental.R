@@ -52,7 +52,7 @@ getRequiredTasks <- function(..., checksum, recordKeepingFile) {
                                       col_types = readr::cols(), 
                                       guess_max = min(1e7))
     tasks$checksum <- checksum
-    tasks <- tibble::as_tibble(tasks)
+    tasks <- dplyr::as_tibble(tasks)
     if (all(names(tasks) %in% names(recordKeeping))) {
       idx <- getKeyIndex(recordKeeping[, names(tasks)], tasks)
     } else {
@@ -60,8 +60,8 @@ getRequiredTasks <- function(..., checksum, recordKeepingFile) {
     }
     tasks$checksum <- NULL
     if (length(idx) > 0) {
-      text <- paste(sprintf("%s = %s", names(tasks), tasks[idx,]), collapse = ", ")
-      ParallelLogger::logInfo("Skipping ", text, " because unchanged from earlier run")
+      # text <- paste(sprintf("%s = %s", names(tasks), tasks[idx,]), collapse = ", ")
+      # ParallelLogger::logInfo("Skipping ", text, " because unchanged from earlier run")
       tasks <- tasks[-idx, ]
     }
   }
@@ -72,7 +72,7 @@ getKeyIndex <- function(key, recordKeeping) {
   if (nrow(recordKeeping) == 0 || length(key[[1]]) == 0 || !all(names(key) %in% names(recordKeeping))) {
     return(c())
   } else {
-    key <- tibble::as_tibble(key) %>% dplyr::distinct()
+    key <- dplyr::as_tibble(key) %>% dplyr::distinct()
     recordKeeping$idxCol <- 1:nrow(recordKeeping)
     idx <- merge(recordKeeping, key)$idx
     return(idx)
@@ -103,9 +103,9 @@ recordTasksDone <- function(..., checksum, recordKeepingFile, incremental = TRUE
       recordKeeping <- recordKeeping[-idx, ]
     }
   } else {
-    recordKeeping <- tibble::tibble()
+    recordKeeping <- dplyr::tibble()
   }
-  newRow <- tibble::as_tibble(list(...))
+  newRow <- dplyr::as_tibble(list(...))
   newRow$checksum <- checksum
   newRow$timeStamp <-  Sys.time()
   recordKeeping <- dplyr::bind_rows(recordKeeping, newRow)
@@ -120,16 +120,16 @@ writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
     params$data = data
     params$fileName = fileName
     do.call(saveIncremental, params)
-    ParallelLogger::logInfo(" appending records to ", fileName)
+    ParallelLogger::logDebug("appending records to ", fileName)
   } else {
     if (file.exists(fileName)) {
-      ParallelLogger::logInfo(" Overwriting and replacing previous ",fileName, " with new.")
+      ParallelLogger::logDebug("Overwriting and replacing previous ",fileName, " with new.")
     } else {
-      ParallelLogger::logInfo(" creating ",fileName)
+      ParallelLogger::logDebug("creating ",fileName)
     }
     readr::write_excel_csv(x = data, 
                            path = fileName, 
-                           na = '', 
+                           na = "", 
                            append = FALSE,
                            delim = ",")
   }
@@ -186,7 +186,7 @@ subsetToRequiredCombis <- function(combis, task, incremental, recordKeepingFile)
                               task = task,
                               checksum = combis$checksum,
                               recordKeepingFile = recordKeepingFile)
-    return(merge(combis, tibble::tibble(targetCohortId = tasks$cohortId, comparatorCohortId = tasks$comparatorId)))
+    return(merge(combis, dplyr::tibble(targetCohortId = tasks$cohortId, comparatorCohortId = tasks$comparatorId)))
   } else {
     return(combis)
   }

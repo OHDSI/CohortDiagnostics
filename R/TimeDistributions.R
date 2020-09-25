@@ -78,9 +78,6 @@ getTimeDistributions <- function(connectionDetails = NULL,
   }
   attr(result, "cohortSize") <- data$metaData$populationSize
   delta <- Sys.time() - start
-  ParallelLogger::logInfo(paste("Computing time distributions took",
-                                signif(delta, 3),
-                                attr(delta, "units")))
+  ParallelLogger::logInfo("Computing time distributions took ", signif(delta, 3), " ", attr(delta, "units"))
   return(result)
 }
-

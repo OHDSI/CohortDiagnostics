@@ -123,7 +123,7 @@ test_that("Record keeping of multiple tasks at once", {
   
   rkf <- tempfile()  
   
-  task <- tibble::tibble(cohortId = c(1, 2),
+  task <- dplyr::tibble(cohortId = c(1, 2),
                          sql = c("SELECT * FROM my_table WHERE x = 1;", "SELECT * FROM my_table WHERE x = 2;"))
   task$checksum <- CohortDiagnostics:::computeChecksum(task$sql)
   expect_true(CohortDiagnostics:::isTaskRequired(cohortId = task$cohortId[1], 
@@ -144,7 +144,7 @@ test_that("Record keeping of multiple tasks at once", {
                                                   recordKeepingFile = rkf))
   
   
-  task <- tibble::tibble(cohortId = c(1, 2, 3),
+  task <- dplyr::tibble(cohortId = c(1, 2, 3),
                          sql = c("SELECT * FROM my_table WHERE x = 3;", "SELECT * FROM my_table WHERE x = 4;", "SELECT * FROM my_table WHERE x = 5;"))
   task$checksum <- CohortDiagnostics:::computeChecksum(task$sql)
   
@@ -184,18 +184,18 @@ test_that("Record keeping of multiple tasks at once", {
 
 test_that("Incremental save", {
   tmpFile <- tempfile()
-  data <- tibble::tibble(cohortId = c(1, 1, 2, 2, 3), 
+  data <- dplyr::tibble(cohortId = c(1, 1, 2, 2, 3), 
                          count = c(100, 200, 300, 400, 500)) 
   CohortDiagnostics:::saveIncremental(data, tmpFile, cohortId = c(1, 2, 3))
   
-  newData <- tibble::tibble(cohortId = c(1, 2, 2), 
+  newData <- dplyr::tibble(cohortId = c(1, 2, 2), 
                             count = c(600, 700, 800)) 
   
   CohortDiagnostics:::saveIncremental(newData, tmpFile, cohortId = c(1, 2))
   
   
   
-  goldStandard <- tibble::tibble(cohortId = c(3, 1, 2, 2), 
+  goldStandard <- dplyr::tibble(cohortId = c(3, 1, 2, 2), 
                                  count = c(500, 600, 700, 800)) 
   
   
@@ -208,11 +208,11 @@ test_that("Incremental save", {
 
 test_that("Incremental save with empty key", {
   tmpFile <- tempfile()
-  data <- tibble::tibble(cohortId = c(1, 1, 2, 2, 3), 
+  data <- dplyr::tibble(cohortId = c(1, 1, 2, 2, 3), 
                          count = c(100, 200, 300, 400, 500)) 
   CohortDiagnostics:::saveIncremental(data, tmpFile, cohortId = c(1, 2, 3))
   
-  newData <- tibble::tibble() 
+  newData <- dplyr::tibble() 
   
   CohortDiagnostics:::saveIncremental(newData, tmpFile, cohortId = c())
   

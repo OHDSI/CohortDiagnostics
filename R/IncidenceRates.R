@@ -58,8 +58,7 @@ getIncidenceRate <- function(connectionDetails = NULL,
                              cohortId) {
   start <- Sys.time()
   if (!cdmVersion == 5) {
-    ParallelLogger::logWarn("Only CDM version 5 is supported. Terminating.")
-    return(NULL)
+    stop("Only CDM version 5 is supported. Terminating.")
   }
   
   if (is.null(connection)) {
@@ -85,7 +84,8 @@ getIncidenceRate <- function(connectionDetails = NULL,
                                            dbms = connection@dbms,
                                            cdm_database_schema = cdmDatabaseSchema)
   yearRange <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
-  calendarYears <- tidyr::tibble(calendarYear = seq(yearRange$startYear, yearRange$endYear, by = 1))
+  # Temporarily using data.frame instead of tibble, until DatabaseConnector is fixed (see https://github.com/OHDSI/DatabaseConnector/issues/127)
+  calendarYears <- data.frame(calendarYear = seq(yearRange$startYear, yearRange$endYear, by = 1))
   DatabaseConnector::insertTable(connection = connection,
                                  tableName = "#calendar_years",
                                  data = calendarYears,

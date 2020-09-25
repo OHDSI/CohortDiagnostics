@@ -62,7 +62,7 @@ findOrphanConcepts <- function(connectionDetails = NULL,
                              conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
                              conceptCountsTable = conceptCountsTable,
                              conceptCountsTableIsTemp = conceptCountsTableIsTemp,
-                             orphanConceptTable = orphanConceptTable))
+                             orphanConceptTable = '#recommended_concepts'))
 }
 
 .findOrphanConcepts <- function(connectionDetails = NULL,
@@ -251,8 +251,6 @@ findCohortOrphanConcepts <- function(connectionDetails = NULL,
 #' @template ConceptCounts
 #' 
 #' @template OracleTempSchema
-#' @param getConceptCountsTable     Do you want to return a copy of the concept count 
-#'                                  from dbms into Rs memory? If not NULL is returned
 #' 
 #' @return
 #' The function will by default return \code{DatabaseConnector::executeSql} output, by 
@@ -265,9 +263,8 @@ createConceptCountsTable <- function(connectionDetails = NULL,
                                      oracleTempSchema = NULL,
                                      conceptCountsDatabaseSchema = cdmDatabaseSchema,
                                      conceptCountsTable = "concept_counts",
-                                     conceptCountsTableIsTemp = FALSE,
-                                     getConceptCountsTableAsDataFrame = FALSE) {
-  ParallelLogger::logInfo("  Creating internal concept counts table")
+                                     conceptCountsTableIsTemp = FALSE) {
+  ParallelLogger::logInfo("Creating internal concept counts table")
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
@@ -281,23 +278,6 @@ createConceptCountsTable <- function(connectionDetails = NULL,
                                            concept_counts_table = conceptCountsTable,
                                            table_is_temp = conceptCountsTableIsTemp)
   DatabaseConnector::executeSql(connection, sql)
-  
-  if (getConceptCountsTableAsDataFrame) {
-    if (is.null(conceptCountsDatabaseSchema) &&
-        isTRUE(conceptCountsTableIsTemp)
-    ) {
-      conceptCountsTableFullName <- conceptCountsTable
-    } else {
-      conceptCountsTableFullName <- paste0(conceptCountsDatabaseSchema, '.', conceptCountsTable)
-    }
-    sql <- "select * from @concept_counts_table"
-    data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                                       sql = sql,
-                                                       concept_counts_table = conceptCountsTableFullName, 
-                                                       snakeCaseToCamelCase = TRUE) %>% 
-      tidyr::tibble()
-    return(data)
-  }
 }
 
 #' Check source codes used in a cohort definition

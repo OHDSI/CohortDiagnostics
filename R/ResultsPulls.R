@@ -57,7 +57,7 @@ getTimeDistributionResult <- function(connection = NULL,
                           databaseSchema = resultsDatabaseSchema)
   
   if (route == 'quit') {
-    ParallelLogger::logWarn("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    warning("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
     return(NULL)
   } else if (route == 'memory') {
     connection <- NULL
@@ -85,7 +85,7 @@ getTimeDistributionResult <- function(connection = NULL,
   }
   
   if (nrow(data) == 0) {
-    ParallelLogger::logWarn("No records retrieved for ", SqlRender::camelCaseToTitleCase(table), ".")
+    warning("No records retrieved for ", SqlRender::camelCaseToTitleCase(table), ".")
     return(NULL)
   }
   
@@ -181,7 +181,7 @@ getIncidenceRateResult <- function(connection = NULL,
                           table = table)
   
   if (route == 'quit') {
-    ParallelLogger::logWarn("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    warning("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
     return(NULL)
   } else if (route == 'memory') {
     connection <- NULL
@@ -220,11 +220,11 @@ getIncidenceRateResult <- function(connection = NULL,
                       .data$strataAgeGroup %in% !!stratifyByAgeGroup &
                       .data$strataCalendarYear %in% !!stratifyByCalendarYear &
                       .data$personYears > !!minPersonYears) %>% 
-      dplyr::select(-tidyselect::starts_with('strata')) %>% 
+      dplyr::select(-dplyr::starts_with('strata')) %>% 
       tidyr::tibble()
   }
   if (nrow(data) == 0) {
-    ParallelLogger::logWarn("No records retrieved for 'incidence rate'.")
+    warning("No records retrieved for 'incidence rate'.")
   }
   return(data %>% 
            dplyr::arrange(.data$cohortId, .data$databaseId))
@@ -270,7 +270,7 @@ getCohortCountResult <- function(connection = NULL,
                           connectionDetails = connectionDetails,
                           table = table)
   if (route == 'quit') {
-    ParallelLogger::logWarn("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    warning("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
     return(NULL)
   } else if (route == 'memory') {
     connection <- NULL
@@ -296,7 +296,7 @@ getCohortCountResult <- function(connection = NULL,
     }
   }
   if (nrow(data) == 0) {
-    ParallelLogger::logWarn("No records retrieved for '", SqlRender::camelCaseToTitleCase(table), "'")
+    warning("No records retrieved for '", SqlRender::camelCaseToTitleCase(table), "'")
     return(NULL)
   }
   data <- data %>% 
@@ -353,7 +353,7 @@ getCohortOverlapResult <- function(connection = NULL,
                           table = table)
   
   if (route == 'quit') {
-    ParallelLogger::logWarn("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    warning("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
     return(NULL)
   } else if (route == 'memory') {
     connection <- NULL
@@ -445,7 +445,7 @@ getCovariateReference <- function(connection = NULL,
                           table = table)
   
   if (route == 'quit') {
-    ParallelLogger::logWarn("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    warning("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
     return(NULL)
   } else if (route == 'memory') {
     connection <- NULL
@@ -470,10 +470,7 @@ getCovariateReference <- function(connection = NULL,
         dplyr::filter(.data$covariateId %in% covariateIds)
     }
   }
-  data <- data %>% #occassionally we may have more than one covariateName per covariateId
-    # because of change in concept_name. See https://github.com/OHDSI/CohortDiagnostics/issues/162
-    dplyr::group_by(.data$covariateId) %>% 
-    dplyr::slice(1)
+  data <- data[!duplicated(data$covariateId),]
   return(data %>% dplyr::arrange(.data$covariateId))
 }
 
@@ -511,7 +508,7 @@ getTimeReference <- function(connection = NULL,
                           table = table)
   
   if (route == 'quit') {
-    ParallelLogger::logWarn("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    warning("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
     return(NULL)
   } else if (route == 'memory') {
     connection <- NULL
@@ -606,7 +603,7 @@ getCovariateValueResult <- function(connection = NULL,
                           connectionDetails = connectionDetails,
                           table = table)
   if (route == 'quit') {
-    ParallelLogger::logWarn("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    warning("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
     return(NULL)
   } else if (route == 'memory') {
     connection <- NULL
@@ -829,7 +826,7 @@ getCohortReference <- function(connection = NULL,
                           table = table)
   
   if (route == 'quit') {
-    ParallelLogger::logWarn("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    warning("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
     return(NULL)
   } else if (route == 'memory') {
     connection <- NULL
@@ -915,7 +912,7 @@ getDatabaseReference <- function(connection = NULL,
                           table = table)
   
   if (route == 'quit') {
-    ParallelLogger::logWarn("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    warning("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
     return(NULL)
   } else if (route == 'memory') {
     connection <- NULL
@@ -985,7 +982,7 @@ getConceptReference <- function(connection = NULL,
                           table = table)
   
   if (route == 'quit') {
-    ParallelLogger::logWarn("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    warning("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
     return(NULL)
   } else if (route == 'memory') {
     connection <- NULL
@@ -1066,7 +1063,7 @@ getConceptSetDiagnosticsResults <- function(connection = NULL,
                           table = table)
   
   if (route == 'quit') {
-    ParallelLogger::logWarn("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    warning("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
     return(NULL)
   } else if (route == 'memory') {
     connection <- NULL
@@ -1106,7 +1103,7 @@ getConceptSetDiagnosticsResults <- function(connection = NULL,
                           table = table)
   
   if (route == 'quit') {
-    ParallelLogger::logWarn("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    warning("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
     return(NULL)
   } else if (route == 'memory') {
     connection <- NULL
@@ -1207,7 +1204,7 @@ routeDataQuery <- function(connection = NULL,
     )
     if (!tableExistsInDbms) {
       if (!silent) {
-        ParallelLogger::logWarn("  '", 
+        warning("  '", 
                                 table, 
                                 "' not found in ", 
                                 databaseSchema)
@@ -1227,7 +1224,7 @@ routeDataQuery <- function(connection = NULL,
       tableExistsInRMemory <- FALSE
       if (is.null(connection)) {
         if (!silent) {
-          ParallelLogger::logWarn("  '", 
+          warning("  '", 
                                   SqlRender::camelCaseToTitleCase(table), 
                                   "' data object not found in R memory.")
         }
@@ -1244,14 +1241,14 @@ routeDataQuery <- function(connection = NULL,
     return(connection)
   } else if (!is.null(connection) & !isTRUE(tableExistsInDbms) & 
              isTRUE(tableExistsInRMemory)) {
-    ParallelLogger::logWarn(SqlRender::camelCaseToTitleCase(table), 
+    warning(SqlRender::camelCaseToTitleCase(table), 
                             " was not found in dbms but was found in R memory. 
                             Using the data loaded in R memory.")
     return("memory")
   } else if (is.null(connection) & isTRUE(tableExistsInRMemory)) {
     return("memory")
   } else if (is.null(connection) & !isTRUE(tableExistsInRMemory)) {
-    ParallelLogger::logWarn(SqlRender::camelCaseToTitleCase(table), 
+    warning(SqlRender::camelCaseToTitleCase(table), 
                             " not found.")
     return("quit")
   }

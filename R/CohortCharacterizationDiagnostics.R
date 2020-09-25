@@ -72,7 +72,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
   if (!(exists("featureExtractionOutput") && 
         (FeatureExtraction::isCovariateData(featureExtractionOutput) ||
          FeatureExtraction::isTemporalCovariateData(featureExtractionOutput)))) {
-    ParallelLogger::logWarn("No characterization results returned")
+    warning("No characterization results returned")
     delta <- Sys.time() - start
     ParallelLogger::logInfo(paste("Cohort characterization took",
                                   signif(delta, 3),
@@ -97,7 +97,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
     output$covariates <- featureExtractionOutput$covariates %>% 
       dplyr::collect() %>% 
       dplyr::rename(cohortId = .data$cohortDefinitionId) %>% 
-      dplyr::left_join(populationSize) %>% 
+      dplyr::left_join(populationSize, by = "cohortId") %>% 
       dplyr::mutate(sd = sqrt(((populationSize * .data$sumValue) + .data$sumValue)/(populationSize^2))) %>% 
       dplyr::rename(mean = .data$averageValue) %>% 
       dplyr::select(-.data$sumValue, -.data$populationSize)
@@ -132,7 +132,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
     output$result <- result %>% 
       dplyr::select(.data$cohortId, .data$covariateId, .data$mean, .data$sd)
     # ParallelLogger::logInfo("  Uploading cohort characterization conceptId into covariateRef. ConcpetIds = ", 
-    #                         scales::comma(output$covariateRef %>% 
+    #                         format(big.mark = ",", scientific = FALSE, x = output$covariateRef %>% 
     #                                         dplyr::select(.data$conceptId) %>% 
     #                                         dplyr::distinct() %>% 
     #                                         nrow()))
@@ -148,9 +148,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
     #                                progressBar = TRUE)
   }
   delta <- Sys.time() - start
-  ParallelLogger::logInfo(paste("Cohort characterization took",
-                                signif(delta, 3),
-                                attr(delta, "units")))
+  ParallelLogger::logInfo("Cohort characterization took ", signif(delta, 3), " ", attr(delta, "units"))
   return(output)
 }
 

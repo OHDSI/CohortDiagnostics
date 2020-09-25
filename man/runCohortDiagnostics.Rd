@@ -9,6 +9,7 @@ runCohortDiagnostics(
   cohortToCreateFile = "settings/CohortsToCreate.csv",
   baseUrl = NULL,
   cohortSetReference = NULL,
+  phenotypeDescriptionFile = NULL,
   connectionDetails = NULL,
   connection = NULL,
   cdmDatabaseSchema,
@@ -25,8 +26,8 @@ runCohortDiagnostics(
   runInclusionStatistics = TRUE,
   runIncludedSourceConcepts = TRUE,
   runOrphanConcepts = TRUE,
-  exportConceptCountTableForDatabase = TRUE,
   runTimeDistributions = TRUE,
+  runVisitContext = TRUE,
   runBreakdownIndexEvents = TRUE,
   runIncidenceRate = TRUE,
   runCohortOverlap = TRUE,
@@ -39,8 +40,6 @@ runCohortDiagnostics(
     temporalStartDays = c(-365, -30, 0, 1, 31, seq(from = -30, to = -420, by = -30),
     seq(from = 1, to = 390, by = 30)), temporalEndDays = c(-31, -1, 0, 30, 365, seq(from
     = 0, to = -390, by = -30), seq(from = 31, to = 420, by = 30))),
-  runSubsetOmopVocabularyTables = TRUE,
-  uniqueConceptIdTable = "unique_concept_id_table",
   minCellCount = 5,
   incremental = FALSE,
   incrementalFolder = file.path(exportFolder, "incremental")
@@ -61,6 +60,18 @@ a dataframe object identical to requirements for \code{cohortSetReference} argum
 
 \item{cohortSetReference}{A data frame with four columns, as described in the details. Can be left NULL if 
 \code{packageName} and \code{cohortToCreateFile} have been specified.}
+
+\item{phenotypeDescriptionFile}{(Optional) The location of the phenotype descriptioon file within the package. 
+The file must be .csv file and have the following columns that may be read into following
+data types: phenotype_id (double), phenotype_name (character),
+referent_concept_id (double), clinical_description (character),
+literature_review (character), phenotype_notes (character). Note: the field
+names are in snake_case. Also, character fields should not have 'NA' in it.
+'NA's are commonly added by R when R functions exports data from dataframe 
+into CSV. Instead please use '' (empty string) to represent absence of data. 
+The literature_review field is expected to be a html link to page that contains
+resources related to literature review for the phenotype, and will be used
+to create link-out object.}
 
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
@@ -109,9 +120,9 @@ does not exist it will be created.}
 
 \item{runOrphanConcepts}{Generate and export potential orphan concepts?}
 
-\item{exportConceptCountTableForDatabase}{Do you want to export concept count table for the database?}
-
 \item{runTimeDistributions}{Generate and export cohort time distributions?}
+
+\item{runVisitContext}{Generate and export index-date visit context?}
 
 \item{runBreakdownIndexEvents}{Generate and export the breakdown of index events?}
 
@@ -135,21 +146,12 @@ Only records with values greater than 0.001 are returned.}
 the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
 of such objects.}
 
-\item{runSubsetOmopVocabularyTables}{Do you want to retrieve a copy of the OMOP vocabulary, but subset to the unique conceptId
-used in the diagnosis?}
-
-\item{uniqueConceptIdTable}{Table to store unique concept_ids.}
-
 \item{minCellCount}{The minimum cell count for fields contains person counts or fractions.}
 
 \item{incremental}{Create only cohort diagnostics that haven't been created before?}
 
 \item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
 of which cohort diagnostics has been executed.}
-
-\item{vocabularyDatabaseSchema}{(optional) Schema name where your vocabulary resides. Most commonly it is the same
-as CDM databaseSchema. Note that for SQL Server, 
-this should include both the database and schema name, for example 'cdm_data.dbo'.}
 }
 \description{
 Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the

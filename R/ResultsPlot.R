@@ -40,7 +40,7 @@ plotTimeDistribution <- function(data,
                                  xAxis = 'database') {
   
   if (is.null(cohortIds) || length(cohortIds) > 1 || xAxis != 'database' || is.null(databaseIds)) {
-    ParallelLogger::logWarn("Not yet supported. Upcoming feature.")
+    warning("Not yet supported. Upcoming feature.")
     return(NULL)
   }
   
@@ -151,7 +151,7 @@ plotIncidenceRate <- function(data,
                               stratifyByCalendarYear = TRUE,
                               yscaleFixed = FALSE) {
   if (nrow(data) == 0) {
-    ParallelLogger::logWarn("Record counts are too low to plot.")
+    warning("Record counts are too low to plot.")
   }
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertTibble(x = data, 
@@ -216,7 +216,7 @@ plotIncidenceRate <- function(data,
     dplyr::filter(.data$strataGender %in% !!stratifyByGender &
                     .data$strataAgeGroup %in% !!stratifyByAgeGroup &
                     .data$strataCalendarYear %in% !!stratifyByCalendarYear) %>% 
-    dplyr::select(-tidyselect::starts_with('strata')) %>% 
+    dplyr::select(-dplyr::starts_with('strata')) %>% 
     tidyr::tibble()
   
   aesthetics <- list(y = "incidenceRate")
@@ -327,12 +327,12 @@ plotCohortComparisonStandardizedDifference <- function(data,
                                                        absoluteStandardizedDifferenceUpperThreshold = 1,
                                                        databaseIds = NULL) {
   if (!is.null(concept)) {
-    ParallelLogger::logWarn("Not yet supported. Upcoming feature. Ignorning for now. Continuing.")
+    warning("Not yet supported. Upcoming feature. Ignorning for now. Continuing.")
   }
   
   # for now we will support only one combination of targetCohortId, comparatorCohortId and databaseId
   if (length(targetCohortIds) > 1 || length(comparatorCohortIds) > 1 || length(databaseIds) > 1) {
-    ParallelLogger::logWarn("Not yet supported. Upcoming feature. Executing with first choices only")
+    warning("Not yet supported. Upcoming feature. Executing with first choices only")
     targetCohortIds <- targetCohortIds[[1]]
     comparatorCohortIds <- comparatorCohortIds[[1]]
     databaseIds <- databaseIds[[1]]

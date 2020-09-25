@@ -54,7 +54,7 @@ createDdl <- function(packageName,
     
     a <- c()
     for (f in fields) { #from https://github.com/OHDSI/CdmDdlBase/blob/f256bd2a3350762e4a37108986711516dd5cd5dc/R/createDdlFromFile.R#L50
-      if (subset(table, fieldName == f, isRequired) == "Yes") {
+      if (subset(table, .data$fieldName == f, .data$isRequired) == "Yes") {
         r <- (" NOT NULL")
       } else {
         r <- (" NULL")
@@ -64,7 +64,7 @@ createDdl <- function(packageName,
       } else {
         e <- (",")
       }
-      a <- c(a, paste0("\n\t\t\t",f," ",subset(table, fieldName == f, type), r, e))
+      a <- c(a, paste0("\n\t\t\t",f," ",subset(table, .data$fieldName == f, .data$type), r, e))
     }
     script <- c(script, a, "")
     script <- c(script, paste0('\n'))
@@ -328,7 +328,7 @@ guessDbmsDataTypeFromVector <- function(value) {
     type = 'integer'
   } else if (type == 'character' && class == 'character' && mode == 'character') {
     fieldCharLength <- try(max(stringr::str_length(value)) %>% 
-                    as.integer())
+                             as.integer())
     if (is.na(fieldCharLength)) {
       fieldCharLength = 9999
     }
@@ -350,4 +350,222 @@ guessDbmsDataTypeFromVector <- function(value) {
     type <- 'Unknown'
   }
   return(type)
+}
+
+
+
+#' Combine CSVs that are part of Cohort Diagnostics results data model
+#' 
+#' @return 
+#' This function searches for csv files that conforms to the Cohort 
+#' Diagnostics results data model, parses them, does quality checks,
+#' appends files and makes them ready for upload into a dbms. Note:
+#' the files are expected to be in snake_case format.
+#' 
+#' @param inputLocation   Input location for files
+#' @param outputLocation  Output location for files
+#' @param recursive       Search for files recursively
+#' @param reportLocation  (Optional) Output data quality report to this location.
+#' 
+#' @return 
+#' NULL
+#' 
+#' @examples
+#' \dontrun{
+#' combineResultsDataModelCsvFiles()
+#' }
+#' 
+#' @export
+combineResultsDataModelCsvFiles <- function(inputLocation,
+                                            outputLocation = file.path(inputLocation, 'combined'),
+                                            recursive = TRUE,
+                                            # lookForCsvWithinZipFiles = TRUE, TO DO
+                                            reportLocation = NULL) {
+  unlink(x = outputLocation, recursive = TRUE, force = TRUE)
+  dir.create(path = outputLocation, showWarnings = FALSE, recursive = TRUE)
+  
+  if (!is.null(reportLocation)) {
+    reportLocation <- NULL
+    ParallelLogger::logInfo("TO DO - report generation.")
+  }
+  
+  resultsDataModelSpecification <- 
+    readr::read_csv(file = system.file('settings',
+                                       'resultsDataModelSpecification.csv',
+                                       package = 'CohortDiagnostics'),
+                    col_types = readr::cols(), 
+                    guess_max = min(1e7), 
+                    locale = readr::locale(encoding = "UTF-8"))
+  
+  ParallelLogger::logInfo("  Searching for the following files:",
+                          paste0("\n    - ", resultsDataModelSpecification$tableName %>% unique() %>% sort(), ".csv"))
+  
+  csvFiles <- tidyr::tibble(fullName = list.files(path = inputLocation, 
+                                                  pattern = ".csv", 
+                                                  recursive = recursive, 
+                                                  full.names = TRUE, 
+                                                  ignore.case = FALSE)) %>% 
+    dplyr::mutate(tableName = stringr::str_replace(string = basename(.data$fullName),
+                                                   pattern = ".csv",
+                                                   replacement = "")) %>% 
+    dplyr::inner_join(resultsDataModelSpecification %>% 
+                        dplyr::select(.data$tableName) %>% 
+                        dplyr::distinct()
+    ) %>% 
+    dplyr::filter(stringr::str_detect(string = basename(.data$fullName), 
+                                      pattern = basename(outputLocation), 
+                                      negate = TRUE))
+  
+  message1 <- paste0("  Found the following csv files:",
+                     (csvFiles %>% 
+                        dplyr::group_by(.data$tableName) %>% 
+                        dplyr::summarise(count = dplyr::n()) %>% 
+                        dplyr::mutate(report = paste0("\n     - " ,
+                                                      .data$tableName, 
+                                                      " (n = ", 
+                                                      format(big.mark = ",", scientific = FALSE, x = .data$count),
+                                                      ")"
+                        )) %>% 
+                        dplyr::pull(.data$report) %>% 
+                        sort() %>% 
+                        paste0(collapse = ",")))
+  ParallelLogger::logInfo(message1)
+  
+  # zipFiles <- tidyr::tibble(fullName = list.files(path = inputLocation, 
+  #                                                 pattern = ".zip", 
+  #                                                 recursive = TRUE, 
+  #                                                 full.names = TRUE, 
+  #                                                 ignore.case = FALSE)) %>% 
+  #   dplyr::mutate(name = basename(.data$fullName) %>% 
+  #                   stringr::str_replace(string = .,
+  #                                        pattern = ".zip",
+  #                                        replacement = ""))
+  
+  files <- csvFiles$tableName %>% unique() %>% sort()
+  for (i in (1:length(files))) {
+    csvFile <- csvFiles %>% 
+      dplyr::filter(.data$tableName %in% files[[i]])
+    ParallelLogger::logInfo("  Reading csv file(s) ", files[[i]], ".csv")
+    
+    filesRead <- list()
+    for (j in (1:nrow(csvFile))) {
+      ParallelLogger::logInfo("    reading ", csvFile$fullName[[j]])
+      data <- readr::read_csv(file = csvFile$fullName[[j]],
+                              col_types = readr::cols(),
+                              guess_max = min(1e7),
+                              locale = readr::locale(encoding = "UTF-8")) %>%
+        dplyr::distinct()
+      
+      if (nrow(data) > 0) {
+        expectedColNames <- resultsDataModelSpecification %>% 
+          dplyr::filter(.data$tableName == files[[i]]) %>% 
+          dplyr::pull(.data$fieldName) %>% 
+          tolower()
+        observeredColNames <- colnames(data) %>% 
+          tolower()
+        
+        if (length(intersect(x = expectedColNames, y = observeredColNames)) != 
+            length(expectedColNames)) {
+          ParallelLogger::logWarn("Problem with file ", csvFile$fullName[[j]])
+          ParallelLogger::logInfo("  - Agree with expected columns:", 
+                                  intersect(x = expectedColNames, y = observeredColNames) %>% 
+                                    paste0(collapse = ","))
+          ParallelLogger::logInfo("  - Do not agree with expected columns:", 
+                                  setdiff(y = expectedColNames, x = observeredColNames) %>% 
+                                    paste0(collapse = ","))
+          if (!setequal(x = expectedColNames,
+                        y = observeredColNames)) {
+            ParallelLogger::logWarn("Mismatch between expected and observered. ")
+            stop()
+          }
+        }
+        colnames(data) <- tolower(colnames(data))
+        filesRead[[j]] <- data
+      } else {
+        ParallelLogger::logWarn(files[[i]], " has 0 records.")
+        filesRead[[j]] <- tidyr::tibble()
+      }
+      if (('valid_start_date' %in% colnames(filesRead[[j]]) ||
+           'valid_end_date' %in% colnames(filesRead[[j]])) &&
+          typeof(filesRead[[j]]$valid_start_date) == 'character') {
+        filesRead[[j]]$valid_end_date <- as.Date(filesRead[[j]]$valid_end_date)
+        filesRead[[j]]$valid_start_date <- as.Date(filesRead[[j]]$valid_start_date)
+      }
+    }
+    filesRead <- dplyr::bind_rows(filesRead) %>%
+      dplyr::distinct()
+    
+    if (length(colnames(filesRead)) == 0) {
+      ParallelLogger::logWarn("None of files read have any column names, are those files corrupted?")
+      stop()
+    }
+    
+    if (files[[i]] == 'concept') {
+      n <- nrow(filesRead)
+      filesRead <- filesRead[!duplicated(filesRead$concept_id),]
+      difference <- (nrow(filesRead)  - n)
+      if (difference > 0) {
+        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. 
+                                \n    Please check data quality. Removed records = ", 
+                                format(big.mark = ",", scientific = FALSE, x = difference, accuracy = 0))
+      }
+    }
+    if (files[[i]] == 'analysis_ref') {
+      n <- nrow(filesRead)
+      filesRead <- filesRead[!duplicated(filesRead$analysis_id),]
+      difference <- (nrow(filesRead)  - n)
+      if (difference > 0) {
+        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
+      }
+    }
+    if (files[[i]] == 'cohort') {
+      n <- nrow(filesRead)
+      filesRead <- filesRead %>% 
+        dplyr::group_by(.data$referent_concept_id, .data$cohort_id,
+                        .data$web_api_cohort_id) %>% 
+        dplyr::slice(1)
+      difference <- (nrow(filesRead)  - n)
+      if (difference > 0) {
+        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
+      }
+    }
+    if (files[[i]] == 'covariate_ref') {
+      n <- nrow(filesRead)
+      filesRead <- filesRead[!duplicated(filesRead$covariate_id),]
+      difference <- (nrow(filesRead)  - n)
+      if (difference > 0) {
+        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
+      }
+    }
+    if (files[[i]] == 'temporal_analysis_ref') {
+      n <- nrow(filesRead)
+      filesRead <- filesRead[!duplicated(filesRead$analysis_id),]
+      difference <- (nrow(filesRead)  - n)
+      if (difference > 0) {
+        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
+      }
+    }
+    if (files[[i]] == 'temporal_covariate_ref') {
+      n <- nrow(filesRead)
+      filesRead <- filesRead[!duplicated(filesRead$covariate_id),]
+      difference <- (nrow(filesRead)  - n)
+      if (difference > 0) {
+        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
+      }
+    }
+    if (files[[i]] == 'temporal_time_ref') {
+      n <- nrow(filesRead)
+      filesRead <- filesRead[!duplicated(filesRead$time_id),]
+      difference <- (nrow(filesRead)  - n)
+      if (difference > 0) {
+        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
+      }
+    }
+    
+    outputCsv <- file.path(outputLocation, paste0(files[[i]], ".csv"))
+    readr::write_excel_csv(x = filesRead, 
+                           path = outputCsv, 
+                           na = '')
+  }
+  return(NULL)
 }

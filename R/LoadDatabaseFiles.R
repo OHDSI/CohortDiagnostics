@@ -66,7 +66,8 @@ buildPostgresDatabaseSchema <- function(connectionDetails,
 #' @param connectionDetails   DatabaseConnector connection details compatible object. 
 #'                            Must be dbms="postgres"
 #' @param schemaName          Name where schema stores results
-#' @param schemaName          Path to cohort diagnostics csv files to import
+#' @param schemaName          Path to cohort diagnostics csv files to export to
+#' @param pathToCsvFiles      Path to cohort diagnostics (results) csv files to import from
 #' @param winPsqlPath         Path to folder containing postgres executables 
 #'                            e.g. "C:/Program Files/PostgresSQL/12/bin"
 #'
@@ -82,7 +83,7 @@ importCsvFilesToPostgres <- function(connectionDetails,
   hostServerDb <- strsplit(connectionDetails$server, "/")[[1]]
 
 
-  Sys.setenv("PGPASSWORD"=connectionDetails$password)
+  Sys.setenv("PGPASSWORD" = connectionDetails$password)
   if (.Platform$OS.type == "windows") {
     command <- file.path(winPsqlPath, "psql.exe")
 
@@ -104,8 +105,8 @@ importCsvFilesToPostgres <- function(connectionDetails,
     tableName <- stringr::str_to_upper(stringr::str_split(basename(csvFile), 
                                                           ".csv")[[1]][[1]])
     # Read first line to get header column order, we assume these are large files
-    head <- read.csv(file = csvFile, nrows = 1)
-    headers <- stringi::stri_join(names(head), collapse = ", ")
+    head <- utils::read.csv(file = csvFile, nrows = 1)
+    headers <- paste(names(head), collapse = ", ")
     headers <- paste0("(", headers, ")")
     tablePath <- paste0(schemaName, ".", tableName)
     filePathStr <- paste0("'", csvFile, "'")

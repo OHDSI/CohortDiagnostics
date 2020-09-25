@@ -5,7 +5,7 @@
 \title{Get inclusion criteria statistics from files}
 \usage{
 getInclusionStatisticsFromFiles(
-  cohortId,
+  cohortIds = NULL,
   folder,
   cohortInclusionFile = file.path(folder, "cohortInclusion.csv"),
   cohortInclusionResultFile = file.path(folder, "cohortIncResult.csv"),
@@ -15,8 +15,8 @@ getInclusionStatisticsFromFiles(
 )
 }
 \arguments{
-\item{cohortId}{The cohort definition ID used to reference the cohort in the
-cohort table.}
+\item{cohortIds}{The cohort definition ID(s) used to reference the cohort in the
+cohort table. If none are specified, all cohorts are included.}
 
 \item{folder}{The path to the folder where the inclusion statistics are stored.}
 

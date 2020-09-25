@@ -50,6 +50,7 @@
 #' @param runIncidenceRates      Generate and export the cohort incidence rates?
 #' @param runCohortOverlap            Generate and export the cohort overlap?
 #' @param runCohortCharacterization   Generate and export the cohort characterization?
+#' @param runTemporalCohortCharacterization Generate and export the temporal cohort characterization? 
 #' @param minCellCount         The minimum number of subjects contributing to a count before it can be included 
 #'                             in packaged results.
 #'
@@ -72,6 +73,7 @@ runCohortDiagnostics <- function(connectionDetails,
                                  runIncidenceRates = TRUE,
                                  runCohortOverlap = TRUE,
                                  runCohortCharacterization = TRUE,
+                                 runTemporalCohortCharacterization = TRUE,
                                  minCellCount = 5) {
   if (!file.exists(outputFolder))
     dir.create(outputFolder, recursive = TRUE)
@@ -113,5 +115,6 @@ runCohortDiagnostics <- function(connectionDetails,
                                           runIncidenceRate = runIncidenceRates,
                                           runCohortOverlap = runCohortOverlap,
                                           runCohortCharacterization = runCohortCharacterization,
+                                          runTemporalCohortCharacterization = runTemporalCohortCharacterization,
                                           minCellCount = minCellCount)
 }

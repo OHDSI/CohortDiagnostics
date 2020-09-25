@@ -15,7 +15,9 @@ importCsvFilesToPostgres(
 \item{connectionDetails}{DatabaseConnector connection details compatible object. 
 Must be dbms="postgres"}
 
-\item{schemaName}{Path to cohort diagnostics csv files to import}
+\item{schemaName}{Path to cohort diagnostics csv files to export to}
+
+\item{pathToCsvFiles}{Path to cohort diagnostics (results) csv files to import from}
 
 \item{winPsqlPath}{Path to folder containing postgres executables 
 e.g. "C:/Program Files/PostgresSQL/12/bin"}

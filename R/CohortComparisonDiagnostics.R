@@ -49,10 +49,9 @@ computeCohortOverlap <- function(connectionDetails = NULL,
                                  cohortDatabaseSchema = cohortDatabaseSchema,
                                  cohortTable = cohortTable,
                                  cohortId = targetCohortId)) {
-    ParallelLogger::logWarn("- Target cohort with ID ", 
+    warning("- Target cohort with ID ", 
                             targetCohortId, 
-                            " appears to be empty. \n",
-                            "    Was it instantiated? Skipping overlap computation.")
+                            " appears to be empty. Was it instantiated? Skipping overlap computation.")
     delta <- Sys.time() - start
     ParallelLogger::logInfo(paste("Computing overlap took", signif(delta, 3), attr(delta, "units")))
     return(tidyr::tibble())
@@ -62,10 +61,9 @@ computeCohortOverlap <- function(connectionDetails = NULL,
                                  cohortDatabaseSchema = cohortDatabaseSchema,
                                  cohortTable = cohortTable,
                                  cohortId = comparatorCohortId)) {
-    ParallelLogger::logWarn("- Comparato cohort with ID ", 
+    warning("- Comparator cohort with ID ", 
                             comparatorCohortId, 
-                            " appears to be empty. \n",
-                            "    Was it instantiated? Skipping overlap computation.")
+                            " appears to be empty. Was it instantiated? Skipping overlap computation.")
     delta <- Sys.time() - start
     ParallelLogger::logInfo(paste("Computing overlap took", signif(delta, 3), attr(delta, "units")))
     return(tidyr::tibble())

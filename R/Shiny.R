@@ -80,11 +80,7 @@ preMergeDiagnosticsFiles <- function(dataFolder, minCovariateProportion = 0) {
     }
     
     if (tableName %in% c('covariate','temporal_covariate')) {# this is a temporary solution as detailed here https://github.com/OHDSI/CohortDiagnostics/issues/162
-      data2 <- data %>% 
-        dplyr::group_by(.data$covariateId, .data$conceptId) %>% 
-        dplyr::filter(.data$covariateName == max(.data$covariateName)) %>% 
-        dplyr::slice(1) %>% 
-        dplyr::ungroup()
+      data2 <- data[!duplicated(data$covariateId),]
       if (!nrow(data2) == nrow(data)) {
         ParallelLogger::logInfo('Warning: covariate found to have more than one record per 
                                 covariateId, conceptId combination. The row record corresponding 
@@ -166,9 +162,13 @@ launchCohortExplorer <- function(connectionDetails,
                                  sampleSize = 100,
                                  subjectIds = NULL) {
   ensure_installed("shiny")
+  ensure_installed("shinydashboard")
+  ensure_installed("shinyWidgets")
   ensure_installed("DT")
   ensure_installed("plotly")
   ensure_installed("RColorBrewer")
+  ensure_installed("VennDiagram")
+  ensure_installed("htmltools")
   .GlobalEnv$shinySettings <- list(connectionDetails = connectionDetails,
                                    cdmDatabaseSchema = cdmDatabaseSchema,
                                    cohortDatabaseSchema = cohortDatabaseSchema,
