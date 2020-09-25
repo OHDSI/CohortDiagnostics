@@ -820,8 +820,8 @@ writePhenotypeDescriptionCsvToResults <- function(packageName,
     
     phenotypeDescription <- phenotypeDescription %>% 
       dplyr::inner_join(cohorts %>% 
-                          dplyr::select(.data$referentConceptId) %>% 
-                          dplyr::mutate(referent_concept_id = .data$referentConceptId))
+                          dplyr::select(.data$referentConceptId),
+                        by = "referentConceptId")
     
     ParallelLogger::logInfo(sprintf("%s rows matched", nrow(phenotypeDescription)))
     

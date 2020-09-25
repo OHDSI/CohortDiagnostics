@@ -319,6 +319,13 @@ runConceptSetDiagnostics <- function(connection,
   
   conceptSets <- combineConceptSetsFromCohorts(subset)
   
+  # Save concept set metadata ---------------------------------------
+  writeToCsv(data = conceptSets %>%
+               dplyr::select(-.data$uniqueConceptSetId),
+             fileName = file.path(exportFolder, "concept_sets.csv"),
+             incremental = incremental,
+             cohortId = conceptSets$cohortId)
+  
   uniqueConceptSets <- conceptSets[!duplicated(conceptSets$uniqueConceptSetId),] %>% 
     dplyr::select(-.data$cohortId, -.data$conceptSetId)
   
@@ -350,11 +357,6 @@ runConceptSetDiagnostics <- function(connection,
   #            incremental = incremental,
   #            cohortId = conceptSetConceptIds$cohortId)
   # 
-  # writeToCsv(data = conceptSets %>% 
-  #              dplyr::select(-.data$uniqueConceptSetId), 
-  #            fileName = file.path(exportFolder, "concept_sets.csv"), 
-  #            incremental = incremental,
-  #            cohortId = conceptSets$cohortId)
   # 
   # if (!is.null(conceptIdTable)) {
   #   sql <- "INSERT INTO @concept_id_table (concept_id)
@@ -369,7 +371,8 @@ runConceptSetDiagnostics <- function(connection,
   #                                                reportOverallTime = FALSE)
   # }
   
-  if (runIncludedSourceConcepts || runOrphanConcepts) {
+  if ((runIncludedSourceConcepts && nrow(subsetIncluded) > 0) || 
+      (runOrphanConcepts && nrow(subsetOrphans) > 0)) {
     createConceptCountsTable(connection = connection,
                              cdmDatabaseSchema = cdmDatabaseSchema,
                              oracleTempSchema = oracleTempSchema,
@@ -551,7 +554,7 @@ runConceptSetDiagnostics <- function(connection,
         
         pasteIds <- function(row) {
           return(dplyr::tibble(domain = row$domain[1],
-                                codeSetIds = paste(row$codeSetIds, collapse = ", ")))
+                               uniqueConceptSetId = paste(row$uniqueConceptSetId, collapse = ", ")))
         }
         primaryCodesetIds <- lapply(split(primaryCodesetIds, primaryCodesetIds$domain), pasteIds)
         primaryCodesetIds <- dplyr::bind_rows(primaryCodesetIds)
@@ -569,7 +572,7 @@ runConceptSetDiagnostics <- function(connection,
                                                    domain_table = domain$domainTable,
                                                    domain_start_date = domain$domainStartDate,
                                                    domain_concept_id = domain$domainConceptId,
-                                                   primary_codeset_ids = row$codeSetIds,
+                                                   primary_codeset_ids = row$uniqueConceptSetId,
                                                    concept_set_table = "#inst_concept_sets",
                                                    store = TRUE,
                                                    store_table = "#breakdown")
@@ -726,7 +729,8 @@ runConceptSetDiagnostics <- function(connection,
                                                progressBar = FALSE,
                                                reportOverallTime = FALSE)
   
-  if ((runIncludedSourceConcepts || runOrphanConcepts) && !useExternalConceptCountsTable) {
+  if ((runIncludedSourceConcepts && nrow(subsetIncluded) > 0) || 
+      (runOrphanConcepts && nrow(subsetOrphans) > 0)) {
     ParallelLogger::logTrace("Dropping temp concept count table")
     if (conceptCountsTableIsTemp) {
       countTable <- conceptCountsTable
