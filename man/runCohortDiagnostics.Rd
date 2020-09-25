@@ -32,11 +32,10 @@ runCohortDiagnostics(
   runIncidenceRate = TRUE,
   runCohortOverlap = TRUE,
   runCohortCharacterization = TRUE,
-  covariateSettings = FeatureExtraction::createDefaultCovariateSettings(),
+  covariateSettings = createDefaultCovariateSettings(),
   runTemporalCohortCharacterization = TRUE,
- 
-    temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(useConditionOccurrence
-    = TRUE, useDrugEraStart = TRUE, useProcedureOccurrence = TRUE, useMeasurement = TRUE,
+  temporalCovariateSettings = createTemporalCovariateSettings(useConditionOccurrence =
+    TRUE, useDrugEraStart = TRUE, useProcedureOccurrence = TRUE, useMeasurement = TRUE,
     temporalStartDays = c(-365, -30, 0, 1, 31, seq(from = -30, to = -420, by = -30),
     seq(from = 1, to = 390, by = 30)), temporalEndDays = c(-31, -1, 0, 30, 365, seq(from
     = 0, to = -390, by = -30), seq(from = 31, to = 420, by = 30))),

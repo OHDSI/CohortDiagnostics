@@ -109,11 +109,9 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  runIncidenceRate = TRUE,
                                  runCohortOverlap = TRUE,
                                  runCohortCharacterization = TRUE,
-                                 covariateSettings = 
-                                   FeatureExtraction::createDefaultCovariateSettings(),
+                                 covariateSettings = createDefaultCovariateSettings(),
                                  runTemporalCohortCharacterization = TRUE,
-                                 temporalCovariateSettings = 
-                                   FeatureExtraction::createTemporalCovariateSettings(
+                                 temporalCovariateSettings = createTemporalCovariateSettings(
                                      useConditionOccurrence = TRUE, 
                                      useDrugEraStart = TRUE, 
                                      useProcedureOccurrence = TRUE, 
