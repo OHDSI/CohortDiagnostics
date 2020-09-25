@@ -36,10 +36,11 @@ launchDiagnosticsExplorer <- function(dataFolder, launch.browser = FALSE) {
   ensure_installed("htmltools")
   ensure_installed("scales")
   ensure_installed("plotly")
+
   appDir <- system.file("shiny", "DiagnosticsExplorer", package = "CohortDiagnostics")
   shinySettings <- list(dataFolder = dataFolder)
   .GlobalEnv$shinySettings <- shinySettings
-  on.exit(rm(shinySettings, envir = .GlobalEnv))
+  on.exit(rm("shinySettings", envir = .GlobalEnv))
   shiny::runApp(appDir)
 }
 
@@ -64,7 +65,7 @@ preMergeDiagnosticsFiles <- function(dataFolder, minCovariateProportion = 0) {
   checkmate::assertNumber(x = minCovariateProportion, lower = 0, upper = 1, add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
   
-  loadFile <- function(file, folder, overwrite, minProportion = minProportion) {
+  loadFile <- function(file, folder, overwrite, minProportion = minProportion, dataEnv) {
     # print(file)
     tableName <- gsub(".csv$", "", file)
     camelCaseName <- SqlRender::snakeCaseToCamelCase(tableName)
@@ -90,8 +91,8 @@ preMergeDiagnosticsFiles <- function(dataFolder, minCovariateProportion = 0) {
       } else {data2 <- NULL}
     }
     
-    if (!overwrite && exists(camelCaseName, envir = .GlobalEnv)) {
-      existingData <- get(camelCaseName, envir = .GlobalEnv)
+    if (!overwrite && exists(camelCaseName, envir = dataEnv)) {
+      existingData <- get(camelCaseName, envir = dataEnv)
       if (nrow(existingData) > 0) {
         if (nrow(data) > 0) {
           if (all(colnames(existingData) %in% colnames(data)) &&
@@ -111,11 +112,10 @@ preMergeDiagnosticsFiles <- function(dataFolder, minCovariateProportion = 0) {
       data <- dplyr::bind_rows(existingData, data) %>% 
         dplyr::distinct()
     }
-    assign(camelCaseName, data, envir = .GlobalEnv)
-    
+    assign(camelCaseName, data, envir = dataEnv)
     invisible(NULL)
   }
-  
+  dataEnv <- new.env()
   tableNames <- c()
   for (i in 1:length(zipFiles)) {
     writeLines(paste("Processing", zipFiles[i]))
@@ -125,7 +125,7 @@ preMergeDiagnosticsFiles <- function(dataFolder, minCovariateProportion = 0) {
     
     csvFiles <- list.files(tempFolder, pattern = ".csv")
     tableNames <- c(tableNames, csvFiles)
-    lapply(csvFiles, loadFile, folder = tempFolder, overwrite = (i == 1))
+    lapply(csvFiles, loadFile, folder = tempFolder, overwrite = (i == 1), dataEnv = dataEnv)
     
     unlink(tempFolder, recursive = TRUE)
   }
@@ -133,7 +133,7 @@ preMergeDiagnosticsFiles <- function(dataFolder, minCovariateProportion = 0) {
   tableNames <- unique(tableNames)
   tableNames <- gsub(".csv$", "", tableNames)
   tableNames <- SqlRender::snakeCaseToCamelCase(tableNames)
-  save(list = tableNames, file = file.path(dataFolder, "PreMerged.RData"), compress = TRUE)
+  save(list = tableNames, file = file.path(dataFolder, "PreMerged.RData"), compress = TRUE, envir = dataEnv)
   ParallelLogger::logInfo("Merged data saved in ", file.path(dataFolder, "PreMerged.RData"))
 }
 
@@ -162,13 +162,9 @@ launchCohortExplorer <- function(connectionDetails,
                                  sampleSize = 100,
                                  subjectIds = NULL) {
   ensure_installed("shiny")
-  ensure_installed("shinydashboard")
-  ensure_installed("shinyWidgets")
   ensure_installed("DT")
   ensure_installed("plotly")
   ensure_installed("RColorBrewer")
-  ensure_installed("VennDiagram")
-  ensure_installed("htmltools")
   .GlobalEnv$shinySettings <- list(connectionDetails = connectionDetails,
                                    cdmDatabaseSchema = cdmDatabaseSchema,
                                    cohortDatabaseSchema = cohortDatabaseSchema,
@@ -176,7 +172,7 @@ launchCohortExplorer <- function(connectionDetails,
                                    cohortId = cohortId,
                                    sampleSize = sampleSize,
                                    subjectIds = subjectIds)
-  on.exit(rm(shinySettings, envir = .GlobalEnv))
+  on.exit(rm("shinySettings", envir = .GlobalEnv))
   appDir <- system.file("shiny", "CohortExplorer", package = "CohortDiagnostics")
   shiny::runApp(appDir)
 }

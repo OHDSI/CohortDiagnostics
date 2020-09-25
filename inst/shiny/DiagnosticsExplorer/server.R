@@ -90,6 +90,7 @@ shiny::shinyServer(function(input, output, session) {
     subset <- unique(conceptSets$conceptSetName[conceptSets$cohortId == cohortId()]) %>% sort()
     shinyWidgets::updatePickerInput(session = session,
                                     inputId = "conceptSet",
+                                    choicesOpt = list(style = rep_len("color: black;", 999)),
                                     choices = subset)
   })
   

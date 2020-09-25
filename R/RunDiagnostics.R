@@ -109,11 +109,9 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  runIncidenceRate = TRUE,
                                  runCohortOverlap = TRUE,
                                  runCohortCharacterization = TRUE,
-                                 covariateSettings = 
-                                   FeatureExtraction::createDefaultCovariateSettings(),
+                                 covariateSettings = createDefaultCovariateSettings(),
                                  runTemporalCohortCharacterization = TRUE,
-                                 temporalCovariateSettings = 
-                                   FeatureExtraction::createTemporalCovariateSettings(
+                                 temporalCovariateSettings = createTemporalCovariateSettings(
                                      useConditionOccurrence = TRUE, 
                                      useDrugEraStart = TRUE, 
                                      useProcedureOccurrence = TRUE, 
@@ -820,8 +818,8 @@ writePhenotypeDescriptionCsvToResults <- function(packageName,
     
     phenotypeDescription <- phenotypeDescription %>% 
       dplyr::inner_join(cohorts %>% 
-                          dplyr::select(.data$referentConceptId) %>% 
-                          dplyr::mutate(referent_concept_id = .data$referentConceptId))
+                          dplyr::select(.data$referentConceptId),
+                        by = "referentConceptId")
     
     ParallelLogger::logInfo(sprintf("%s rows matched", nrow(phenotypeDescription)))
     

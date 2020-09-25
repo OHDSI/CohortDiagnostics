@@ -100,6 +100,7 @@ sidebarMenu <-
         choices = database$databaseId,
         selected = database$databaseId[1],
         multiple = FALSE,
+        choicesOpt = list(style = rep_len("color: black;", 999)),
         options = shinyWidgets::pickerOptions(
           actionsBox = TRUE, 
           liveSearch = TRUE,
@@ -119,6 +120,7 @@ sidebarMenu <-
         choices = database$databaseId,
         selected = database$databaseId[1],
         multiple = TRUE,
+        choicesOpt = list(style = rep_len("color: black;", 999)),
         options = shinyWidgets::pickerOptions(
           actionsBox = TRUE, 
           liveSearch = TRUE, 
@@ -136,6 +138,7 @@ sidebarMenu <-
           label = "Temporal Choice",
           choices = temporalCovariateChoices$choices,
           multiple = TRUE,
+          choicesOpt = list(style = rep_len("color: black;", 999)),
           selected = temporalCovariateChoices %>% 
             dplyr::filter(.data$timeId %in% (c(min(temporalCovariateChoices$timeId),
                                               temporalCovariateChoices %>% 
@@ -163,6 +166,7 @@ sidebarMenu <-
         label = "Cohort (Target)",
         choices = cohort$cohortName,
         multiple = FALSE,
+        choicesOpt = list(style = rep_len("color: black;", 999)),
         options = shinyWidgets::pickerOptions(
           actionsBox = TRUE, 
           liveSearch = TRUE, 
@@ -179,6 +183,7 @@ sidebarMenu <-
         label = "Concept Set",
         choices = c(""),
         multiple = FALSE,
+        choicesOpt = list(style = rep_len("color: black;", 999)),
         options = shinyWidgets::pickerOptions(
           actionsBox = TRUE,
           liveSearch = TRUE,
@@ -196,6 +201,7 @@ sidebarMenu <-
         choices = cohort$cohortName,
         selected = cohort$cohortName[min(2, nrow(cohort))],
         multiple = FALSE,
+        choicesOpt = list(style = rep_len("color: black;", 999)),
         options = shinyWidgets::pickerOptions(
           actionsBox = TRUE, 
           liveSearch = TRUE, 
