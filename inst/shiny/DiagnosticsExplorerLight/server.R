@@ -583,12 +583,42 @@ shiny::shinyServer(function(input, output, session) {
                       .data$databaseId == input$database) %>% 
       dplyr::select(.data$ruleSequenceId, .data$ruleName, 
                     .data$meetSubjects, .data$gainSubjects, 
-                    .data$remainSubjects, .data$totalSubjects) %>% 
+                    .data$remainSubjects, .data$totalSubjects, .data$databaseId) %>% 
       dplyr::arrange(.data$ruleSequenceId)
     
     if (nrow(table) == 0) {
       return(dplyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
     }
+    
+    databaseIds <- inclusionRuleStats %>%
+      dplyr::filter(.data$databaseId %in% input$databases) %>% 
+      dplyr::select(.data$databaseId) %>% 
+      dplyr::distinct() %>% 
+      dplyr::arrange() %>% 
+      dplyr::pull(.data$databaseId)
+    
+    table <- table %>% 
+      tidyr::pivot_longer(cols = c(.data$meetSubjects, .data$gainSubjects, .data$totalSubjects, .data$remainSubjects)) %>% 
+      dplyr::group_by(.data$ruleSequenceId, .data$databaseId, .data$name, .data$ruleName) %>% 
+      dplyr::summarise(value = sum(.data$value)) %>% 
+      dplyr::mutate(name = paste0(databaseId, "_", .data$name)) %>% 
+      tidyr::pivot_wider(id_cols = c(.data$ruleSequenceId, .data$ruleName),
+                         names_from = .data$name,
+                         values_from = .data$value)
+    
+    sketch <- htmltools::withTags(table(
+      class = 'display',
+      thead(
+        tr(
+          th(rowspan = 2, 'Rule Sequence Id'),
+          th(rowspan = 2, 'Rule Name'),
+          lapply(databaseIds, th, colspan = 4, class = "dt-center")
+        ),
+        tr(
+          lapply(rep(c("Meet", "Gain", "Remain", "Total"), length(databaseIds)), th)
+        )
+      )
+    ))
     
     options = list(pageLength = 10,
                    searching = TRUE,
@@ -597,17 +627,18 @@ shiny::shinyServer(function(input, output, session) {
                    lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
-                   columnDefs = list(minCellCountDef(2:5)))
+                   columnDefs = list(minCellCountDef(1 + (1:(length(input$databases) * 4)))))
+    
     table <- DT::datatable(table,
                            options = options,
-                           colnames = colnames(table) %>% 
-                             camelCaseToTitleCase(),
+                           colnames = colnames(table) %>% camelCaseToTitleCase(),
                            rownames = FALSE,
+                           container = sketch,
                            escape = FALSE,
                            filter = c('bottom'),
                            class = "stripe nowrap compact")
     table <- DT::formatStyle(table = table,
-                             columns = 5,
+                             columns = 2 + (1:(length(input$databases) * 4)),
                              #background = DT::styleColorBar(lims, "lightblue"),
                              backgroundSize = "98% 88%",
                              backgroundRepeat = "no-repeat",
