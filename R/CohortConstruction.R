@@ -770,9 +770,10 @@ instantiateCohortSet <- function(connectionDetails = NULL,
 
 createTempInclusionStatsTables <- function(connection, oracleTempSchema, cohorts) {
   ParallelLogger::logInfo("Creating temporary inclusion statistics tables")
-  pathToSql <- system.file( "inclusionStatsTables.sql", package = "ROhdsiWebApi")
-  sql <- SqlRender::readSql(pathToSql)
-  sql <- SqlRender::translate(sql, targetDialect = connection@dbms, oracleTempSchema = oracleTempSchema)
+  sql <- SqlRender::loadRenderTranslateSql("inclusionStatsTables.sql",
+                                           packageName = "CohortDiagnostics",
+                                           dbms = connection@dbms,
+                                           oracleTempSchema = oracleTempSchema)
   DatabaseConnector::executeSql(connection, sql)
   
   inclusionRules <- tidyr::tibble()
@@ -804,8 +805,8 @@ createTempInclusionStatsTables <- function(connection, oracleTempSchema, cohorts
     DatabaseConnector::insertTable(connection = connection,
                                    tableName = "#cohort_inclusion",
                                    data = inclusionRules,
-                                   dropTableIfExists = FALSE,
-                                   createTable = FALSE,
+                                   dropTableIfExists = TRUE,
+                                   createTable = TRUE,
                                    tempTable = TRUE,
                                    oracleTempSchema = oracleTempSchema,
                                    camelCaseToSnakeCase = TRUE)

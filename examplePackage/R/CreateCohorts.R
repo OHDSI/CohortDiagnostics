@@ -41,8 +41,8 @@
   DatabaseConnector::insertTable(connection = connection,
                                  tableName = "#cohort_inclusion",
                                  data = inclusionRules,
-                                 dropTableIfExists = FALSE,
-                                 createTable = FALSE,
+                                 dropTableIfExists = TRUE,
+                                 createTable = TRUE,
                                  tempTable = TRUE,
                                  oracleTempSchema = oracleTempSchema)
   

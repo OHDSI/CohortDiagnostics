@@ -461,6 +461,7 @@ runConceptSetDiagnostics <- function(connection,
         counts <- DatabaseConnector::renderTranslateQuerySql(connection = connection, 
                                                              sql = "SELECT * FROM @include_source_concept_table;",
                                                              include_source_concept_table = "#inc_src_concepts",
+                                                             oracleTempSchema = oracleTempSchema,
                                                              snakeCaseToCamelCase = TRUE) %>% 
           tidyr::tibble()
         
@@ -748,5 +749,5 @@ runConceptSetDiagnostics <- function(connection,
   }
   
   delta <- Sys.time() - startConceptSetDiagnostics
-  ParallelLogger::logInfo("Running concept set diagnostics took ", signif(delta, 3), attr(delta, "units"))
+  ParallelLogger::logInfo("Running concept set diagnostics took ", signif(delta, 3), " ", attr(delta, "units"))
 }

@@ -182,7 +182,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     stop("No cohorts specified")
   }
   if ('name' %in% colnames(cohorts)) {
-    cohorts <- cohort %>% 
+    cohorts <- cohorts %>% 
       dplyr::select(-.data$name)
   }
   writeToCsv(data = cohorts, fileName = file.path(exportFolder, "cohort.csv"))
@@ -220,7 +220,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   DatabaseConnector::executeSql(connection = connection, sql = sql, progressBar = FALSE, reportOverallTime = FALSE)
   data <- cohorts %>% 
     dplyr::filter(!is.na(.data$referentConceptId)) %>%
-    dplyr::select(conceptId = .data$referentConceptId) %>% 
+    dplyr::transmute(conceptId = as.integer(.data$referentConceptId)) %>% 
     dplyr::distinct() %>%
     as.data.frame() #DatabaseConnector currently does not support tibble
   if (nrow(data) > 0) {
