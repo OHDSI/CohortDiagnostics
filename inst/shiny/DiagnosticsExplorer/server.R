@@ -303,9 +303,9 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
   })
   
-  output$timeDisPlot <- shiny::renderPlot(expr = {
+  output$timeDisPlot <- ggiraph::renderggiraph(expr = {
     return(timeDistributionPlot())
-  }, res = 100)
+  })
   
   output$timeDistTable <- DT::renderDataTable(expr = {
     
@@ -316,7 +316,7 @@ shiny::shinyServer(function(input, output, session) {
       return(dplyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
     }
     
-    options = list(pageLength = 10,
+    options = list(pageLength = 9,
                    searching = TRUE,
                    searchHighlight = TRUE,
                    scrollX = TRUE,

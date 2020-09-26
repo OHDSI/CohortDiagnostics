@@ -65,6 +65,12 @@ plotTimeDistribution <- function(data,
                    axis.title.y = ggplot2::element_blank(),
                    axis.ticks.y = ggplot2::element_blank(),
                    axis.text.y = ggplot2::element_blank())
+  
+  plot <- ggiraph::girafe(ggobj = plot,
+                          options = list(
+                            ggiraph::opts_sizing(width = .7),
+                            ggiraph::opts_zoom(max = 5)),width_svg = 15,
+                          height_svg = 5)
   # plot <- plotly::ggplotly(plot)
   # This does not work as described here https://github.com/ropensci/plotly/issues/565 
   return(plot)

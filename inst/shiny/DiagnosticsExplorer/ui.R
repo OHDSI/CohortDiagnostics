@@ -314,7 +314,7 @@ bodyTabItems <- shinydashboard::tabItems(
       width = NULL,
       status = "primary",
       tags$br(),
-      shiny::plotOutput("timeDisPlot"),
+      ggiraph::ggiraphOutput("timeDisPlot"),
       shiny::downloadButton(outputId = "timeDistributionPlot", label = "Download")
     ),
     shinydashboard::box(
