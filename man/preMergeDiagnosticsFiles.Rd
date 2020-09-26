@@ -4,13 +4,23 @@
 \alias{preMergeDiagnosticsFiles}
 \title{Premerge Shiny diagnostics files}
 \usage{
-preMergeDiagnosticsFiles(dataFolder, minCovariateProportion = 0)
+preMergeDiagnosticsFiles(
+  dataFolder,
+  outputFolderForCsvAndZip = NULL,
+  minCovariateProportion = 0
+)
 }
 \arguments{
 \item{dataFolder}{folder where the exported zip files for the diagnostics are stored. Use
 the \code{\link{runCohortDiagnostics}} function to generate these zip files. 
-Zip files containing results from multiple databases can be placed in the same
+Zip files containing results from multiple databases may be placed in the same
 folder.}
+
+\item{outputFolderForCsvAndZip}{(optional) folder where the post processed files for the diagnostics are to be stored. 
+These files may be used with the results viewer or may be uploaded into RDMS.
+Note this has to be different from dataFolder. If not provided, then only
+premerged file is generated in the dataFolder. If provided, and different
+from dataFolder the output will include csv, zip.}
 
 \item{minCovariateProportion}{minimum value threshold for covariates to be included 
 in premerged file (valid number (maybe decimal) between 0 to 1)}

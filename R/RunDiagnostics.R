@@ -181,6 +181,10 @@ runCohortDiagnostics <- function(packageName = NULL,
   if (nrow(cohorts) == 0) {
     stop("No cohorts specified")
   }
+  if ('name' %in% colnames(cohorts)) {
+    cohorts <- cohort %>% 
+      dplyr::select(-.data$name)
+  }
   writeToCsv(data = cohorts, fileName = file.path(exportFolder, "cohort.csv"))
   
   ##############################

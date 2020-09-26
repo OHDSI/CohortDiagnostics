@@ -2,6 +2,8 @@ library(magrittr)
 
 source("R/Tables.R")
 source("R/Other.R")
+source("R/Plots.R")
+source("R/Results.R")
 
 if (!exists("shinySettings")) {
   if (file.exists("data")) {
