@@ -262,7 +262,7 @@ shiny::shinyServer(function(input, output, session) {
     return(dataTable)
   }, server = TRUE)
   
-  output$incidenceRatePlot <- ggiraph::renderggiraph(expr = {
+  output$incidenceRatePlot <- shiny::renderPlot(expr = {
     stratifyByAge <- "Age" %in% input$irStratification
     stratifyByGender <- "Gender" %in% input$irStratification
     stratifyByCalendarYear <- "Calendar Year" %in% input$irStratification

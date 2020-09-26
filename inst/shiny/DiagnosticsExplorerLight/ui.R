@@ -301,9 +301,9 @@ bodyTabItems <- shinydashboard::tabItems(
                    )
                  )),
       shiny::htmlOutput(outputId = "hoverInfoIr"),
-      ggiraph::ggiraphOutput(
+      shiny::plotOutput(
         outputId = "incidenceRatePlot",
-        height = 1000
+        height = 700
       )
     )
   ),
