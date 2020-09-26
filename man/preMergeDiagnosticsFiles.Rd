@@ -6,7 +6,7 @@
 \usage{
 preMergeDiagnosticsFiles(
   dataFolder,
-  outputFolderForCsvAndZip = NULL,
+  outputFolder = NULL,
   minCovariateProportion = 0
 )
 }
@@ -16,7 +16,7 @@ the \code{\link{runCohortDiagnostics}} function to generate these zip files.
 Zip files containing results from multiple databases may be placed in the same
 folder.}
 
-\item{outputFolderForCsvAndZip}{(optional) folder where the post processed files for the diagnostics are to be stored. 
+\item{outputFolder}{(optional) folder where the post processed files for the diagnostics are to be stored. 
 These files may be used with the results viewer or may be uploaded into RDMS.
 Note this has to be different from dataFolder. If not provided, then only
 premerged file is generated in the dataFolder. If provided, and different

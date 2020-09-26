@@ -56,7 +56,7 @@ launchDiagnosticsExplorer <- function(dataFolder, launch.browser = FALSE) {
 #'                         the \code{\link{runCohortDiagnostics}} function to generate these zip files. 
 #'                         Zip files containing results from multiple databases may be placed in the same
 #'                         folder. 
-#' @param outputFolderForCsvAndZip     (optional) folder where the post processed files for the diagnostics are to be stored. 
+#' @param outputFolder     (optional) folder where the post processed files for the diagnostics are to be stored. 
 #'                         These files may be used with the results viewer or may be uploaded into RDMS.
 #'                         Note this has to be different from dataFolder. If not provided, then only
 #'                         premerged file is generated in the dataFolder. If provided, and different
@@ -65,7 +65,7 @@ launchDiagnosticsExplorer <- function(dataFolder, launch.browser = FALSE) {
 #'                                in premerged file (valid number (maybe decimal) between 0 to 1)                         
 #' @export
 preMergeDiagnosticsFiles <- function(dataFolder, 
-                                     outputFolderForCsvAndZip = NULL,
+                                     outputFolder = NULL,
                                      minCovariateProportion = 0) {
   
   output <- file.path(tempdir(), 'output')
@@ -74,9 +74,13 @@ preMergeDiagnosticsFiles <- function(dataFolder,
   postProcessDiagnosticsResultsFiles(dataFolder = dataFolder, 
                                      outputFolder = output)
   
-  if (!is.null(outputFolderForCsvAndZip)) {
-    dir.create(path = outputFolderForCsvAndZip, showWarnings = FALSE, recursive = TRUE)
-    file.copy(from = output, to = outputFolderForCsvAndZip, overwrite = TRUE, recursive = TRUE)
+  if (!is.null(outputFolder)) {
+    if (dataFolder == outputFolder) {
+      warning('dataFolder and outputFolder may not be the same')
+      stop()
+    }
+    dir.create(path = outputFolder, showWarnings = FALSE, recursive = TRUE)
+    file.copy(from = output, to = outputFolder, overwrite = TRUE, recursive = TRUE)
   } 
   
   csvFiles <- dplyr::tibble(fullName = list.files(path = output, 
@@ -114,6 +118,7 @@ preMergeDiagnosticsFiles <- function(dataFolder,
        compression_level = 9,
        file = file.path(outputFolder, "PreMerged.RData"))
   ParallelLogger::logInfo("Merged data saved in ", file.path(dataFolder, "PreMerged.RData"))
+  rm(ls(newEnvironment), envir = newEnvironment)
   unlink(x = output, recursive = TRUE, force = TRUE)
 }
 
