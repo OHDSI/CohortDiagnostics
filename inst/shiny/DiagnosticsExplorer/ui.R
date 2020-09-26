@@ -2,6 +2,8 @@ library(magrittr)
 
 source("R/Tables.R")
 source("R/Other.R")
+source("R/Plots.R")
+source("R/Results.R")
 
 addInfo <- function(item, infoId) {
   infoTag <- tags$small(
@@ -299,9 +301,9 @@ bodyTabItems <- shinydashboard::tabItems(
                    )
                  )),
       shiny::htmlOutput(outputId = "hoverInfoIr"),
-      plotly::plotlyOutput(
+      ggiraph::ggiraphOutput(
         outputId = "incidenceRatePlot",
-        height = 700,
+        height = 1000
       )
     )
   ),
@@ -341,8 +343,6 @@ bodyTabItems <- shinydashboard::tabItems(
                           tags$br(),
                           DT::dataTableOutput("inclusionRuleTable")),
   shinydashboard::tabItem(tabName = "indexEventBreakdown",
-                          shiny::htmlOutput(outputId = "indexEventBreakdownSelectedCohort"),
-                          tags$br(),
                           DT::dataTableOutput("breakdownTable")),
   shinydashboard::tabItem(
     tabName = "cohortCharacterization",

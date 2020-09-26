@@ -62,9 +62,9 @@ a dataframe object identical to requirements for \code{cohortSetReference} argum
 
 \item{phenotypeDescriptionFile}{(Optional) The location of the phenotype descriptioon file within the package. 
 The file must be .csv file and have the following columns that may be read into following
-data types: phenotype_id (double), phenotype_name (character),
-referent_concept_id (double), clinical_description (character),
-literature_review (character), phenotype_notes (character). Note: the field
+data types: phenotypeId (double), phenotypeName (character),
+referentConceptId (double), clinicalDescription (character),
+literatureReview (character), phenotypeNotes (character). Note: the field
 names are in snake_case. Also, character fields should not have 'NA' in it.
 'NA's are commonly added by R when R functions exports data from dataframe 
 into CSV. Instead please use '' (empty string) to represent absence of data. 

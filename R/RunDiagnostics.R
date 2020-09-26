@@ -38,9 +38,9 @@
 #' @template CohortSetReference
 #' @param phenotypeDescriptionFile    (Optional) The location of the phenotype descriptioon file within the package. 
 #'                                    The file must be .csv file and have the following columns that may be read into following
-#'                                    data types: phenotype_id (double), phenotype_name (character),
-#'                                    referent_concept_id (double), clinical_description (character),
-#'                                    literature_review (character), phenotype_notes (character). Note: the field
+#'                                    data types: phenotypeId (double), phenotypeName (character),
+#'                                    referentConceptId (double), clinicalDescription (character),
+#'                                    literatureReview (character), phenotypeNotes (character). Note: the field
 #'                                    names are in snake_case. Also, character fields should not have 'NA' in it.
 #'                                    'NA's are commonly added by R when R functions exports data from dataframe 
 #'                                    into CSV. Instead please use '' (empty string) to represent absence of data. 
@@ -181,6 +181,10 @@ runCohortDiagnostics <- function(packageName = NULL,
   if (nrow(cohorts) == 0) {
     stop("No cohorts specified")
   }
+  if ('name' %in% colnames(cohorts)) {
+    cohorts <- cohort %>% 
+      dplyr::select(-.data$name)
+  }
   writeToCsv(data = cohorts, fileName = file.path(exportFolder, "cohort.csv"))
   
   ##############################
@@ -218,7 +222,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     dplyr::filter(!is.na(.data$referentConceptId)) %>%
     dplyr::select(conceptId = .data$referentConceptId) %>% 
     dplyr::distinct() %>%
-    as.data.frame()
+    as.data.frame() #DatabaseConnector currently does not support tibble
   if (nrow(data) > 0) {
     ParallelLogger::logInfo(sprintf("Inserting %s cohort referent concept IDs into the unique concept ID table. This may take a while.",
                                     nrow(data)))

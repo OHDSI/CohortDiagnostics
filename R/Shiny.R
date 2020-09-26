@@ -36,7 +36,7 @@ launchDiagnosticsExplorer <- function(dataFolder, launch.browser = FALSE) {
   ensure_installed("htmltools")
   ensure_installed("scales")
   ensure_installed("plotly")
-
+  
   appDir <- system.file("shiny", "DiagnosticsExplorer", package = "CohortDiagnostics")
   shinySettings <- list(dataFolder = dataFolder)
   .GlobalEnv$shinySettings <- shinySettings
@@ -52,89 +52,74 @@ launchDiagnosticsExplorer <- function(dataFolder, launch.browser = FALSE) {
 #' 
 #' The merged data will be stored in the same folder, and will automatically be recognized by the Shiny app.
 #'
-#' @param dataFolder  folder where the exported zip files for the diagnostics are stored. Use
+#' @param dataFolder       folder where the exported zip files for the diagnostics are stored. Use
 #'                         the \code{\link{runCohortDiagnostics}} function to generate these zip files. 
-#'                         Zip files containing results from multiple databases can be placed in the same
+#'                         Zip files containing results from multiple databases may be placed in the same
 #'                         folder. 
+#' @param outputFolder     (optional) folder where the post processed files for the diagnostics are to be stored. 
+#'                         These files may be used with the results viewer or may be uploaded into RDMS.
+#'                         Note this has to be different from dataFolder. If not provided, then only
+#'                         premerged file is generated in the dataFolder. If provided, and different
+#'                         from dataFolder the output will include csv, zip.
 #' @param minCovariateProportion  minimum value threshold for covariates to be included 
 #'                                in premerged file (valid number (maybe decimal) between 0 to 1)                         
 #' @export
-preMergeDiagnosticsFiles <- function(dataFolder, minCovariateProportion = 0) {
-  zipFiles <- list.files(dataFolder, pattern = ".zip", full.names = TRUE)
-  errorMessage <- checkmate::makeAssertCollection()
-  checkmate::assertNumber(x = minCovariateProportion, lower = 0, upper = 1, add = errorMessage)
-  checkmate::reportAssertions(collection = errorMessage)
+preMergeDiagnosticsFiles <- function(dataFolder, 
+                                     outputFolder = NULL,
+                                     minCovariateProportion = 0) {
   
-  loadFile <- function(file, folder, overwrite, minProportion = minProportion, dataEnv) {
-    # print(file)
-    tableName <- gsub(".csv$", "", file)
-    camelCaseName <- SqlRender::snakeCaseToCamelCase(tableName)
-    data <- readr::read_csv(file.path(folder, file), 
+  output <- file.path(tempdir(), 'output')
+  dir.create(path = output, showWarnings = FALSE, recursive = TRUE)
+  
+  postProcessDiagnosticsResultsFiles(dataFolder = dataFolder, 
+                                     outputFolder = output)
+  
+  if (!is.null(outputFolder)) {
+    if (dataFolder == outputFolder) {
+      warning('dataFolder and outputFolder may not be the same')
+      stop()
+    }
+    dir.create(path = outputFolder, showWarnings = FALSE, recursive = TRUE)
+    file.copy(from = output, to = outputFolder, overwrite = TRUE, recursive = TRUE)
+  } 
+  
+  csvFiles <- dplyr::tibble(fullName = list.files(path = output, 
+                                                  pattern = ".csv", 
+                                                  recursive = TRUE, 
+                                                  full.names = TRUE, 
+                                                  ignore.case = FALSE)) %>% 
+    dplyr::mutate(tableName = stringr::str_replace(string = basename(.data$fullName),
+                                                   pattern = ".csv",
+                                                   replacement = "")) 
+  
+  newEnvironment <- new.env()
+  for (i in 1:nrow(csvFiles)) {
+    data <- readr::read_csv(file = csvFiles$fullName[[i]],
                             col_types = readr::cols(), 
                             guess_max = min(1e7), 
                             locale = readr::locale(encoding = "UTF-8"))
-    colnames(data) <- SqlRender::snakeCaseToCamelCase(colnames(data))
-    
-    if (tableName %in% c('covariate_value', 'temporal_covariate_value')) {
+    if (csvFiles$tableName[[i]] %in% c('covariate_value', 'temporal_covariate_value')) {
       data <- data %>% 
         dplyr::filter(mean >= minCovariateProportion)
     }
-    
-    if (tableName %in% c('covariate','temporal_covariate')) {# this is a temporary solution as detailed here https://github.com/OHDSI/CohortDiagnostics/issues/162
-      data2 <- data[!duplicated(data$covariateId),]
-      if (!nrow(data2) == nrow(data)) {
-        ParallelLogger::logInfo('Warning: covariate found to have more than one record per 
-                                covariateId, conceptId combination. The row record corresponding 
-                                to maximum value of covariateName has been chosen. This led to reduction 
-                                in number of rows from ', nrow(data), ' to ', nrow(data2))
-        data <- data2
-      } else {data2 <- NULL}
+    colnames(data) <- SqlRender::snakeCaseToCamelCase(colnames(data))
+    if (length(data > 0)) {
+      assign(x = SqlRender::snakeCaseToCamelCase(csvFiles$tableName[[i]]), 
+             value = data, 
+             envir = newEnvironment)
+    } else {
+      warning(paste0(csvFiles$tableName[[i]], " had 0 rows"))
     }
-    
-    if (!overwrite && exists(camelCaseName, envir = dataEnv)) {
-      existingData <- get(camelCaseName, envir = dataEnv)
-      if (nrow(existingData) > 0) {
-        if (nrow(data) > 0) {
-          if (all(colnames(existingData) %in% colnames(data)) &&
-              all(colnames(data) %in% colnames(existingData))) {
-            data <- data[, colnames(existingData)]
-          } else {
-            stop("Table columns do no match previously seen columns. Columns in ", 
-                 file, 
-                 ":\n", 
-                 paste(colnames(data), collapse = ", "), 
-                 "\nPrevious columns:\n",
-                 paste(colnames(existingData), collapse = ", "))
-            
-          }
-        }
-      }
-      data <- dplyr::bind_rows(existingData, data) %>% 
-        dplyr::distinct()
-    }
-    assign(camelCaseName, data, envir = dataEnv)
-    invisible(NULL)
   }
-  dataEnv <- new.env()
-  tableNames <- c()
-  for (i in 1:length(zipFiles)) {
-    writeLines(paste("Processing", zipFiles[i]))
-    tempFolder <- tempfile()
-    dir.create(tempFolder)
-    unzip(zipFiles[i], exdir = tempFolder)
-    
-    csvFiles <- list.files(tempFolder, pattern = ".csv")
-    tableNames <- c(tableNames, csvFiles)
-    lapply(csvFiles, loadFile, folder = tempFolder, overwrite = (i == 1), dataEnv = dataEnv)
-    
-    unlink(tempFolder, recursive = TRUE)
-  }
-  
-  tableNames <- unique(tableNames)
-  tableNames <- gsub(".csv$", "", tableNames)
-  tableNames <- SqlRender::snakeCaseToCamelCase(tableNames)
-  save(list = tableNames, file = file.path(dataFolder, "PreMerged.RData"), compress = TRUE, envir = dataEnv)
+  ParallelLogger::logInfo("Creating PreMerged.Rdata file. This might take some time.")
+  save(list = ls(newEnvironment),
+       envir = newEnvironment,
+       compress = TRUE,
+       compression_level = 9,
+       file = file.path(outputFolder, "PreMerged.RData"))
   ParallelLogger::logInfo("Merged data saved in ", file.path(dataFolder, "PreMerged.RData"))
+  rm(ls(newEnvironment), envir = newEnvironment)
+  unlink(x = output, recursive = TRUE, force = TRUE)
 }
 
 #' Launch the CohortExplorer Shiny app

@@ -1,39 +1,3 @@
-# Copyright 2020 Observational Health Data Sciences and Informatics
-#
-# This file is part of CohortDiagnostics
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-#' Get ggplot object with time distribution plot.
-#'
-#' @description
-#' Get ggplot object with time distribution plot.
-#'
-#' @param data   A tibble data frame object that is the output of \code{\link{getTimeDistributionResult}} function.
-#' @param cohortIds A vector of one or more integer (bigint) to plot.
-#' @param databaseIds A vector of one or more databaseIds to plot.
-#' @param xAxis       (optional) By default 'database' will be plotted on x-axis. Alternative is 'cohortId'.
-#' 
-#' @return
-#' A ggplot object.
-#'
-#' @examples
-#' \dontrun{
-#' timeDistributionPlot <- getTimeDistributionPlot(data = data)
-#' }
-#'
-#' @export
-
 plotTimeDistribution <- function(data, 
                                  cohortIds = NULL,
                                  databaseIds = NULL,
@@ -119,30 +83,6 @@ plotTimeDistribution <- function(data,
 # plot <- plotly::subplot(plots,nrows = length(input$databases),margin = 0.05)
 
 
-
-#' Get ggplot object with incidence rate plot.
-#'
-#' @description
-#' Get ggplot object with incidence rate plot.
-#'
-#' @param data                   A tibble data frame object that is the output 
-#'                               of \code{\link{getIncidenceRate}} function.
-#' @param cohortIds              A vector of one or more integer (bigint) to plot.
-#' @param databaseIds            A vector of one or more databaseIds to plot. 
-#' @param stratifyByAgeGroup     Do you want to stratify by age?  
-#' @param stratifyByGender       Do you want to stratify by gender?
-#' @param stratifyByCalendarYear Do you want to stratify by calendar year?
-#' @param yscaleFixed            Do you want to rescale y-axis?
-#' 
-#' @return
-#' A ggplot object.
-#'
-#' @examples
-#' \dontrun{
-#' incidenceRatePlot <- plotIncidenceRate(data = data)
-#' }
-#'
-#' @export
 plotIncidenceRate <- function(data,
                               cohortIds = NULL,
                               databaseIds = NULL,
@@ -151,7 +91,7 @@ plotIncidenceRate <- function(data,
                               stratifyByCalendarYear = TRUE,
                               yscaleFixed = FALSE) {
   if (nrow(data) == 0) {
-    warning("Record counts are too low to plot.")
+    ParallelLogger::logWarn("Record counts are too low to plot.")
   }
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertTibble(x = data, 
@@ -197,6 +137,12 @@ plotIncidenceRate <- function(data,
                            max.len = 1,
                            null.ok = FALSE,
                            add = errorMessage)
+  checkmate::assertDouble(x = data$incidenceRate,
+                          lower = 0,
+                          any.missing = FALSE,
+                          null.ok = FALSE, 
+                          min.len = 1,
+                          add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
   checkmate::assertDouble(x = data$incidenceRate,
                           lower = 0,
@@ -253,6 +199,32 @@ plotIncidenceRate <- function(data,
     plotType <- "bar"
   }
   
+  newSort <- plotData %>% 
+    dplyr::select(.data$ageGroup) %>% 
+    dplyr::distinct() %>% 
+    dplyr::arrange(as.integer(sub(pattern = '-.+$','',x = .data$ageGroup)))
+  
+  plotData <- plotData %>% 
+    dplyr::arrange(ageGroup = factor(.data$ageGroup, levels = newSort$ageGroup), .data$ageGroup)
+  
+  plotData$ageGroup <- factor(plotData$ageGroup,
+                              levels = newSort$ageGroup)
+  plotData$tooltip <- c(paste0("Incidence Rate = ", plotData$incidenceRate, "\n Database = ", plotData$databaseId))
+  
+  if (stratifyByAgeGroup)
+  {
+    plotData$tooltip <- c(paste0(plotData$tooltip, "\nAge Group = ", plotData$ageGroup))
+  }
+  if (stratifyByGender)
+  {
+    plotData$tooltip <- c(paste0(plotData$tooltip, "\nGender = ", plotData$gender))
+  }
+  if (stratifyByCalendarYear)
+  {
+    plotData$tooltip <- c(paste0(plotData$tooltip, "\nYear = ", plotData$calendarYear))
+  }
+  
+  
   plot <- ggplot2::ggplot(data = plotData, 
                           do.call(ggplot2::aes_string, aesthetics)) +
     ggplot2::xlab(xLabel) +
@@ -262,10 +234,12 @@ plotIncidenceRate <- function(data,
                    axis.text.x = if (showX) ggplot2::element_text(angle = 90, vjust = 0.5) else ggplot2::element_blank() )
   
   if (plotType == "line") {
-    plot <- plot + ggplot2::geom_line(size = 1.25, alpha = 0.6) +
-      ggplot2::geom_point(size = 1.25, alpha = 0.6)
+    plot <- plot + 
+      ggiraph::geom_line_interactive(ggplot2::aes(), size = 3, alpha = 0.6) +
+      ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 3, alpha = 0.6)
   } else {
-    plot <- plot + ggplot2::geom_bar(stat = "identity", alpha = 0.6)
+    plot <- plot + ggplot2::geom_bar(stat = "identity") +
+      ggiraph::geom_col_interactive( ggplot2::aes(tooltip = tooltip), size = 2)
   }
   
   # databaseId field only present when called in Shiny app:
@@ -277,7 +251,7 @@ plotIncidenceRate <- function(data,
     }
     if (stratifyByGender | stratifyByCalendarYear) {
       if (stratifyByAgeGroup) {
-        plot <- plot + ggplot2::facet_grid(databaseId~ageGroup, scales = scales)
+        plot <- plot + ggplot2::facet_grid(databaseId~plotData$ageGroup, scales = scales)
       } else {
         plot <- plot + ggplot2::facet_grid(databaseId~., scales = scales) 
       }
@@ -291,38 +265,14 @@ plotIncidenceRate <- function(data,
       plot <- plot + ggplot2::facet_grid(~ageGroup) 
     }
   }
+  plot <- ggiraph::girafe(ggobj = plot,
+                          options = list(
+                            ggiraph::opts_sizing(width = .7),
+                            ggiraph::opts_zoom(max = 5)),width_svg = 15,
+                          height_svg = 10)
   return(plot)
 }
 
-#' Get Plotly object with cohort comparison plot.
-#'
-#' @description
-#' Get Plotly object with cohort comparison plot.
-#'
-#' @param  data                  A tibble data frame object that is the output 
-#'                               of \code{\link{compareCovariateValueResult}} function.
-#' @template DatabaseIds
-#' @param targetCohortIds        (optional) A vector of one or more Cohort Ids.
-#' @param comparatorCohortIds    (optional) A vector of one or more Cohort Ids.
-#' @param cohortReference        (optional) A tibble data frame object returned 
-#'                               from \code{\link{getCohortReference}} function.
-#' @param covariateReference     (optional) A tibble data frame object returned from \code{\link{getCovariateReference}} function.
-#' @param absoluteStandardizedDifferenceLowerThreshold (optional) Do you want to keep a lower threshold of absolute standardized difference
-#'                               for plotting
-#' @param absoluteStandardizedDifferenceUpperThreshold (optional) Do you want to keep a lower threshold of absolute standardized difference
-#'                               for plotting
-#' @param concept                (optional) A tibble data frame object returned 
-#'                               from \code{\link{getConceptReference}} function.
-#' 
-#' @return
-#' A Plotly object.
-#'
-#' @examples
-#' \dontrun{
-#' plotCohortCompare <- plotCohortComparisonStandardizedDifference(data = data)
-#' }
-#'
-#' @export
 plotCohortComparisonStandardizedDifference <- function(data,
                                                        targetCohortIds = NULL, 
                                                        comparatorCohortIds = NULL,
@@ -521,27 +471,6 @@ plotCohortComparisonStandardizedDifference <- function(data,
   return(plot)
 }
 
-
-#' Get Vendiagram object with cohort Overlap plot.
-#'
-#' @description
-#' Get Vendiagram  object with cohort Overlap plot.
-#'
-#' @param  data                  A tibble data frame object that is the output of 
-#'                               \code{\link{getCohortOverlapResult}} function.
-#' @template DatabaseIds
-#' @param targetCohortIds        (optional) A vector of one or more Cohort Ids.
-#' @param comparatorCohortIds    (optional) A vector of one or more Cohort Ids.
-#' 
-#' @return
-#' A Vendiagram object.
-#'
-#' @examples
-#' \dontrun{
-#' plotCohortOverlapVennDiagram <- plotCohortOverlapVennDiagram(data = data)
-#' }
-#' 
-#' @export
 plotCohortOverlapVennDiagram <- function(data,
                                          targetCohortIds, 
                                          comparatorCohortIds,

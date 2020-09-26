@@ -51,18 +51,22 @@ createDdl <- function(packageName,
     end <- length(fields)
     
     a <- c()
-    for (f in fields) { #from https://github.com/OHDSI/CdmDdlBase/blob/f256bd2a3350762e4a37108986711516dd5cd5dc/R/createDdlFromFile.R#L50
-      if (subset(table, .data$fieldName == f, .data$isRequired) == "Yes") {
+    for (f in (1:length(fields))) { 
+      #from https://github.com/OHDSI/CdmDdlBase/blob/f256bd2a3350762e4a37108986711516dd5cd5dc/R/createDdlFromFile.R#L50
+      field <- fields[[f]]
+      if (table %>% dplyr::filter(.data$fieldName == !!field) %>% dplyr::pull(.data$isRequired) == "Yes") {
         r <- (" NOT NULL")
       } else {
         r <- (" NULL")
       }
-      if (f == fields[[end]]) {
+      if (field == fields[[length(fields)]]) {
         e <- (" );")
       } else {
         e <- (",")
       }
-      a <- c(a, paste0("\n\t\t\t",f," ",subset(table, .data$fieldName == f, .data$type), r, e))
+      a <- c(a, paste0("\n\t\t\t",field," ",
+                       table %>% dplyr::filter(.data$fieldName == !!field) %>% dplyr::pull(.data$type), 
+                       r, e))
     }
     script <- c(script, a, "")
     script <- c(script, paste0('\n'))
@@ -348,39 +352,57 @@ guessDbmsDataTypeFromVector <- function(value) {
 
 
 
-#' Combine CSVs that are part of Cohort Diagnostics results data model
+#' Prepare diagnostics results for use
 #' 
-#' @return 
-#' This function searches for csv files that conforms to the Cohort 
-#' Diagnostics results data model, parses them, does quality checks,
-#' appends files and makes them ready for upload into a dbms. Note:
-#' the files are expected to be in snake_case format.
+#' @description 
+#' This function takes as input one or more .zip files that are the output of
+#' \code{\link{runCohortDiagnostics}} function, performs a set of data management and 
+#' data quality checks. Data Management steps involve appending and depulicating data
+#' sourced from different data sources (each should be a seperate zip file). Data
+#' Quality checks involves checks for conformance to name/data type/data constraints
+#' requirements for the Cohort Diagnostics Results data model. The function will 
+#' output two files a 
+#' - zip file: a compressed zip file with csv that is ready for upload into a rdms 
+#' system with the schema/table/constraints compatible with the Cohort Diagnostics
+#' results data model (see '/settings/resultsDataModelSpecification.csv')
+#' - rds file: called preMerged.RData that may used in the data folder of a Shiny 
+#' app. This rds data when placed in the 'data' folder of the shiny app will 
+#' be automatically recognized by the Shiny app.
 #' 
-#' @param inputLocation   Input location for files
-#' @param outputLocation  Output location for files
-#' @param recursive       Search for files recursively
-#' @param reportLocation  (Optional) Output data quality report to this location.
-#' 
-#' @return 
-#' NULL
-#' 
-#' @examples
-#' \dontrun{
-#' combineResultsDataModelCsvFiles()
-#' }
-#' 
+#' Note: the csv files in the .zip files are expected to have a snake case file
+#' naming convention and snake case column names.
+#'
+#' @param dataFolder       folder where the exported zip files for the diagnostics are stored. Use
+#'                         the \code{\link{runCohortDiagnostics}} function to generate these zip files. 
+#'                         Zip files containing results from multiple databases may be placed in the same
+#'                         folder. 
+#' @param outputFolder     folder where the post processed files for the diagnostics are to be stored. 
+#'                         These files may be used with the results viewer or may be uploaded into RDMS.
 #' @export
-combineResultsDataModelCsvFiles <- function(inputLocation,
-                                            outputLocation = file.path(inputLocation, 'combined'),
-                                            recursive = TRUE,
-                                            # lookForCsvWithinZipFiles = TRUE, TO DO
-                                            reportLocation = NULL) {
-  unlink(x = outputLocation, recursive = TRUE, force = TRUE)
-  dir.create(path = outputLocation, showWarnings = FALSE, recursive = TRUE)
+postProcessDiagnosticsResultsFiles <- function(dataFolder,
+                                               outputFolder) {
+  zipFiles <- list.files(dataFolder, pattern = ".zip", full.names = TRUE, recursive = TRUE)
+  ParallelLogger::logInfo("Found ", length(zipFiles), " zip files.")
+  errorMessage <- checkmate::makeAssertCollection()
+  checkmate::assertVector(x = zipFiles, any.missing = FALSE, min.len = 1, add = errorMessage)
+  checkmate::assertFileExists(x = system.file('settings',
+                                              'resultsDataModelSpecification.csv',
+                                              package = 'CohortDiagnostics'), 
+                              add = errorMessage)
+  checkmate::reportAssertions(collection = errorMessage)
   
-  if (!is.null(reportLocation)) {
-    reportLocation <- NULL
-    ParallelLogger::logInfo("TO DO - report generation.")
+  
+  # find and unzip files to temporary location
+  temporayFileLocation <- file.path(tempdir(), "1")
+  temporayFileLocationList <- list()
+  for (i in (1:length(zipFiles))) {
+    temporayFileLocationList[[i]] <- file.path(temporayFileLocation, i)
+    unlink(x = temporayFileLocationList[[i]],
+           recursive = TRUE, 
+           force = TRUE)
+    dir.create(path = temporayFileLocationList[[i]],showWarnings = FALSE, recursive = TRUE)
+    ParallelLogger::logInfo("Unzipping ", zipFiles[i])
+    unzip(zipfile = zipFiles[i], exdir = temporayFileLocationList[[i]], overwrite = TRUE)
   }
   
   resultsDataModelSpecification <- 
@@ -391,12 +413,9 @@ combineResultsDataModelCsvFiles <- function(inputLocation,
                     guess_max = min(1e7), 
                     locale = readr::locale(encoding = "UTF-8"))
   
-  ParallelLogger::logInfo("  Searching for the following files:",
-                          paste0("\n    - ", resultsDataModelSpecification$tableName %>% unique() %>% sort(), ".csv"))
-  
-  csvFiles <- tidyr::tibble(fullName = list.files(path = inputLocation, 
+  csvFiles <- dplyr::tibble(fullName = list.files(path = temporayFileLocation, 
                                                   pattern = ".csv", 
-                                                  recursive = recursive, 
+                                                  recursive = TRUE, 
                                                   full.names = TRUE, 
                                                   ignore.case = FALSE)) %>% 
     dplyr::mutate(tableName = stringr::str_replace(string = basename(.data$fullName),
@@ -405,47 +424,20 @@ combineResultsDataModelCsvFiles <- function(inputLocation,
     dplyr::inner_join(resultsDataModelSpecification %>% 
                         dplyr::select(.data$tableName) %>% 
                         dplyr::distinct()
-    ) %>% 
-    dplyr::filter(stringr::str_detect(string = basename(.data$fullName), 
-                                      pattern = basename(outputLocation), 
-                                      negate = TRUE))
-  
-  message1 <- paste0("  Found the following csv files:",
-                     (csvFiles %>% 
-                        dplyr::group_by(.data$tableName) %>% 
-                        dplyr::summarise(count = dplyr::n()) %>% 
-                        dplyr::mutate(report = paste0("\n     - " ,
-                                                      .data$tableName, 
-                                                      " (n = ", 
-                                                      format(big.mark = ",", scientific = FALSE, x = .data$count),
-                                                      ")"
-                        )) %>% 
-                        dplyr::pull(.data$report) %>% 
-                        sort() %>% 
-                        paste0(collapse = ",")))
-  ParallelLogger::logInfo(message1)
-  
-  # zipFiles <- tidyr::tibble(fullName = list.files(path = inputLocation, 
-  #                                                 pattern = ".zip", 
-  #                                                 recursive = TRUE, 
-  #                                                 full.names = TRUE, 
-  #                                                 ignore.case = FALSE)) %>% 
-  #   dplyr::mutate(name = basename(.data$fullName) %>% 
-  #                   stringr::str_replace(string = .,
-  #                                        pattern = ".zip",
-  #                                        replacement = ""))
+    )
   
   files <- csvFiles$tableName %>% unique() %>% sort()
+  unlink(file.path(outputFolder, 'csv'))
   for (i in (1:length(files))) {
+    file <- files[[i]]
     csvFile <- csvFiles %>% 
       dplyr::filter(.data$tableName %in% files[[i]])
-    ParallelLogger::logInfo("  Reading csv file(s) ", files[[i]], ".csv")
+    ParallelLogger::logInfo("Combining ", nrow(csvFile), " of ", file, ".csv files into one.")
     
     filesRead <- list()
     for (j in (1:nrow(csvFile))) {
-      ParallelLogger::logInfo("    reading ", csvFile$fullName[[j]])
       data <- readr::read_csv(file = csvFile$fullName[[j]],
-                              col_types = readr::cols(),
+                              col_types = readr::cols(.default = "c"),
                               guess_max = min(1e7),
                               locale = readr::locale(encoding = "UTF-8")) %>%
         dplyr::distinct()
@@ -458,9 +450,10 @@ combineResultsDataModelCsvFiles <- function(inputLocation,
         observeredColNames <- colnames(data) %>% 
           tolower()
         
-        if (length(intersect(x = expectedColNames, y = observeredColNames)) != 
+        if (length(intersect(x = expectedColNames, 
+                             y = observeredColNames)) != 
             length(expectedColNames)) {
-          ParallelLogger::logWarn("Problem with file ", csvFile$fullName[[j]])
+          warning("Problem with file ", csvFile$fullName[[j]])
           ParallelLogger::logInfo("  - Agree with expected columns:", 
                                   intersect(x = expectedColNames, y = observeredColNames) %>% 
                                     paste0(collapse = ","))
@@ -469,39 +462,33 @@ combineResultsDataModelCsvFiles <- function(inputLocation,
                                     paste0(collapse = ","))
           if (!setequal(x = expectedColNames,
                         y = observeredColNames)) {
-            ParallelLogger::logWarn("Mismatch between expected and observered. ")
+            warning("Mismatch between expected and observered. ")
             stop()
           }
         }
-        colnames(data) <- tolower(colnames(data))
         filesRead[[j]] <- data
       } else {
-        ParallelLogger::logWarn(files[[i]], " has 0 records.")
-        filesRead[[j]] <- tidyr::tibble()
-      }
-      if (('valid_start_date' %in% colnames(filesRead[[j]]) ||
-           'valid_end_date' %in% colnames(filesRead[[j]])) &&
-          typeof(filesRead[[j]]$valid_start_date) == 'character') {
-        filesRead[[j]]$valid_end_date <- as.Date(filesRead[[j]]$valid_end_date)
-        filesRead[[j]]$valid_start_date <- as.Date(filesRead[[j]]$valid_start_date)
+        warning(files[[i]], " has 0 records.")
+        filesRead[[j]] <- dplyr::tibble()
       }
     }
     filesRead <- dplyr::bind_rows(filesRead) %>%
       dplyr::distinct()
     
     if (length(colnames(filesRead)) == 0) {
-      ParallelLogger::logWarn("None of files read have any column names, are those files corrupted?")
+      warning("None of files read have any column names, are those files corrupted?")
       stop()
     }
-    
+    #TODO change the code below to check for duplicates by primary key(s) in results data model
+    #TODO if its violated for any reasons other than vocabulary - then reject the data.
     if (files[[i]] == 'concept') {
       n <- nrow(filesRead)
       filesRead <- filesRead[!duplicated(filesRead$concept_id),]
       difference <- (nrow(filesRead)  - n)
       if (difference > 0) {
-        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. 
+        warning(" Table has duplicate rows, only first occurrence is retained. 
                                 \n    Please check data quality. Removed records = ", 
-                                format(big.mark = ",", scientific = FALSE, x = difference, accuracy = 0))
+                format(big.mark = ",", scientific = FALSE, x = difference, accuracy = 0))
       }
     }
     if (files[[i]] == 'analysis_ref') {
@@ -509,7 +496,7 @@ combineResultsDataModelCsvFiles <- function(inputLocation,
       filesRead <- filesRead[!duplicated(filesRead$analysis_id),]
       difference <- (nrow(filesRead)  - n)
       if (difference > 0) {
-        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
+        warning(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
       }
     }
     if (files[[i]] == 'cohort') {
@@ -520,7 +507,7 @@ combineResultsDataModelCsvFiles <- function(inputLocation,
         dplyr::slice(1)
       difference <- (nrow(filesRead)  - n)
       if (difference > 0) {
-        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
+        warning(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
       }
     }
     if (files[[i]] == 'covariate_ref') {
@@ -528,7 +515,7 @@ combineResultsDataModelCsvFiles <- function(inputLocation,
       filesRead <- filesRead[!duplicated(filesRead$covariate_id),]
       difference <- (nrow(filesRead)  - n)
       if (difference > 0) {
-        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
+        warning(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
       }
     }
     if (files[[i]] == 'temporal_analysis_ref') {
@@ -536,7 +523,7 @@ combineResultsDataModelCsvFiles <- function(inputLocation,
       filesRead <- filesRead[!duplicated(filesRead$analysis_id),]
       difference <- (nrow(filesRead)  - n)
       if (difference > 0) {
-        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
+        warning(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
       }
     }
     if (files[[i]] == 'temporal_covariate_ref') {
@@ -544,7 +531,7 @@ combineResultsDataModelCsvFiles <- function(inputLocation,
       filesRead <- filesRead[!duplicated(filesRead$covariate_id),]
       difference <- (nrow(filesRead)  - n)
       if (difference > 0) {
-        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
+        warning(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
       }
     }
     if (files[[i]] == 'temporal_time_ref') {
@@ -552,14 +539,87 @@ combineResultsDataModelCsvFiles <- function(inputLocation,
       filesRead <- filesRead[!duplicated(filesRead$time_id),]
       difference <- (nrow(filesRead)  - n)
       if (difference > 0) {
-        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
+        warning(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
       }
     }
-    
-    outputCsv <- file.path(outputLocation, paste0(files[[i]], ".csv"))
+    dir.create(path = file.path(outputFolder, 'csv'), showWarnings = FALSE, recursive = TRUE)
+    outputCsv <- file.path(outputFolder, 'csv', paste0(files[[i]], ".csv"))
     readr::write_excel_csv(x = filesRead, 
                            path = outputCsv, 
                            na = '')
   }
+  ParallelLogger::logInfo("Creating zip file, this may take some time....")
+  DatabaseConnector::createZipFile(zipFile = file.path(outputFolder, 'combined.zip'), 
+                                   files = file.path(outputFolder, 'csv'),
+                                   rootFolder = file.path(outputFolder, 'csv')
+  )
+  
+  unlink(x = temporayFileLocationList, recursive = TRUE, force = TRUE)
+  
   return(NULL)
+}
+
+#' Launch the CohortExplorer Shiny app
+#' 
+#' @template CohortTable
+#' 
+#' @template CdmDatabaseSchema
+#' 
+#' @param connectionDetails    An object of type \code{connectionDetails} as created using the
+#'                             \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
+#'                             DatabaseConnector package.
+#' @param cohortId             The ID of the cohort.
+#' @param sampleSize           Number of subjects to sample from the cohort. Ignored if subjectIds is specified.
+#' @param subjectIds           A vector of subject IDs to view.
+#' 
+#' @details 
+#' Launches a Shiny app that allows the user to explore a cohort of interest.
+#' 
+#' @export
+launchCohortExplorer <- function(connectionDetails,
+                                 cdmDatabaseSchema,
+                                 cohortDatabaseSchema,
+                                 cohortTable,
+                                 cohortId,
+                                 sampleSize = 100,
+                                 subjectIds = NULL) {
+  ensure_installed("shiny")
+  ensure_installed("DT")
+  ensure_installed("plotly")
+  ensure_installed("RColorBrewer")
+  .GlobalEnv$shinySettings <- list(connectionDetails = connectionDetails,
+                                   cdmDatabaseSchema = cdmDatabaseSchema,
+                                   cohortDatabaseSchema = cohortDatabaseSchema,
+                                   cohortTable = cohortTable,
+                                   cohortId = cohortId,
+                                   sampleSize = sampleSize,
+                                   subjectIds = subjectIds)
+  on.exit(rm("shinySettings", envir = .GlobalEnv))
+  appDir <- system.file("shiny", "CohortExplorer", package = "CohortDiagnostics")
+  shiny::runApp(appDir)
+}
+
+# Borrowed from devtools:
+# https://github.com/hadley/devtools/blob/ba7a5a4abd8258c52cb156e7b26bb4bf47a79f0b/R/utils.r#L44
+is_installed <- function(pkg, version = 0) {
+  installed_version <- tryCatch(utils::packageVersion(pkg), error = function(e) NA)
+  !is.na(installed_version) && installed_version >= version
+}
+
+# Borrowed and adapted from devtools:
+# https://github.com/hadley/devtools/blob/ba7a5a4abd8258c52cb156e7b26bb4bf47a79f0b/R/utils.r#L74
+ensure_installed <- function(pkg) {
+  if (!is_installed(pkg)) {
+    msg <- paste0(sQuote(pkg), " must be installed for this functionality.")
+    if (interactive()) {
+      message(msg, "\nWould you like to install it?")
+      if (menu(c("Yes", "No")) == 1) {
+        install.packages(pkg)
+      } else {
+        stop(msg, call. = FALSE)
+      }
+    } else {
+      stop(msg, call. = FALSE)
+    }
+  }
 }
