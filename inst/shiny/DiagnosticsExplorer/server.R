@@ -292,19 +292,16 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
   })
   
-  timeDistributionPlot <- shiny::reactive({
+  
+  output$timeDisPlot <- ggiraph::renderggiraph(expr = {
     data <- getTimeDistributionResult(cohortIds = cohortId(), databaseIds = input$databases)
     validate(
-      need(!is.null(data), paste0('No time distribution data for this combination'))
-    )
+      need(!is.null(data), paste0('No time distribution data for this combination')))
+    
     plot <- plotTimeDistribution(data = data,
                                  cohortIds = cohortId(),
                                  databaseIds = input$databases)
     return(plot)
-  })
-  
-  output$timeDisPlot <- ggiraph::renderggiraph(expr = {
-    return(timeDistributionPlot())
   })
   
   output$timeDistTable <- DT::renderDataTable(expr = {
@@ -1346,7 +1343,6 @@ shiny::shinyServer(function(input, output, session) {
       }
     )
   }
-  
-  output$timeDistributionPlot <- download_box("TimeDistribution", timeDistributionPlot())
+
   output$downloadOverlapPlot <- download_box("OverlapPlot", overLapPlot())
 })

@@ -314,8 +314,7 @@ bodyTabItems <- shinydashboard::tabItems(
       width = NULL,
       status = "primary",
       tags$br(),
-      ggiraph::ggiraphOutput("timeDisPlot"),
-      shiny::downloadButton(outputId = "timeDistributionPlot", label = "Download")
+      ggiraph::ggiraphOutput("timeDisPlot")
     ),
     shinydashboard::box(
       title = "Time Distributions Table",
