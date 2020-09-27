@@ -704,12 +704,36 @@ shiny::shinyServer(function(input, output, session) {
       return(dplyr::tibble(Note = paste0('No data available for selected databases and cohort')))
     }
     
+    databaseIds <- visitContext %>%
+      dplyr::filter(.data$databaseId %in% input$databases) %>% 
+      dplyr::select(.data$databaseId) %>% 
+      dplyr::distinct() %>% 
+      dplyr::arrange() %>% 
+      dplyr::pull(.data$databaseId)
+    
     table <- data %>% 
       dplyr::left_join(concept, by = c( c("visitConceptId" = "conceptId"))) %>% 
       dplyr::select(.data$conceptName, .data$visitConceptId, .data$visitContext, .data$subjects, .data$databaseId) %>% 
-      tidyr::pivot_wider(id_cols = c(.data$conceptName, .data$visitConceptId, .data$visitContext),
-                         names_from = .data$databaseId,
+      dplyr::group_by(.data$conceptName, .data$visitConceptId, .data$databaseId, .data$visitContext, .data$subjects) %>% 
+      dplyr::summarise(value = sum(.data$subjects)) %>%
+      dplyr::mutate(visitContext = paste0(databaseId, "_", .data$visitContext)) %>% 
+      tidyr::pivot_wider(id_cols = c(.data$conceptName, .data$visitConceptId),
+                         names_from = .data$visitContext,
                          values_from = .data$subjects)
+    
+    sketch <- htmltools::withTags(table(
+      class = 'display',
+      thead(
+        tr(
+          th(rowspan = 2, 'Visit Concept Name'),
+          th(rowspan = 2, 'Visit Concept Id'),
+          lapply(databaseIds, th, colspan = 3, class = "dt-center")
+        ),
+        tr(
+          lapply(rep(c("Before", "On Visit Start", "After"), length(databaseIds)), th)
+        )
+      )
+    ))
     
     options = list(pageLength = 10,
                    searching = TRUE,
@@ -719,12 +743,13 @@ shiny::shinyServer(function(input, output, session) {
                    ordering = TRUE,
                    paging = TRUE,
                    columnDefs = list(truncateStringDef(1, 100),
-                                     minCellCountDef(2 + (1:(length(input$databases))))))
+                                     minCellCountDef(1 + (1:(length(input$databases) * 3)))))
     
     table <- DT::datatable(table,
                            options = options,
                            colnames = colnames(table) %>% camelCaseToTitleCase(),
                            rownames = FALSE,
+                           container = sketch,
                            escape = FALSE,
                            filter = c('bottom'))
     
