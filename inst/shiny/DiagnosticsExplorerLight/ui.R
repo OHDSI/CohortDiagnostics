@@ -306,9 +306,9 @@ bodyTabItems <- shinydashboard::tabItems(
                    )
                  )),
       shiny::htmlOutput(outputId = "hoverInfoIr"),
-      shiny::plotOutput(
+      ggiraph::ggiraphOutput(
         outputId = "incidenceRatePlot",
-        height = 700
+        height = 1000
       )
     )
   ),
@@ -319,8 +319,7 @@ bodyTabItems <- shinydashboard::tabItems(
       width = NULL,
       status = "primary",
       tags$br(),
-      shiny::plotOutput("timeDisPlot"),
-      shiny::downloadButton(outputId = "timeDistributionPlot", label = "Download")
+      ggiraph::ggiraphOutput("timeDisPlot")
     ),
     shinydashboard::box(
       title = "Time Distributions Table",
