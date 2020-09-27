@@ -336,13 +336,15 @@ shiny::shinyServer(function(input, output, session) {
   
   output$includedConceptsTable <- DT::renderDataTable(expr = {
     data <- includedSourceConcept %>% 
+      dplyr::inner_join(conceptSets) %>% 
       dplyr::filter(.data$cohortId == cohortId() &
-                      .data$conceptSetId == (conceptSets %>% 
-                                               dplyr::filter(.data$cohortId == cohortId() &
-                                                               .data$conceptSetName == input$conceptSet) %>% 
-                                               dplyr::pull(conceptSetId)) &
+                      .data$conceptSetName == input$conceptSet &
                       .data$databaseId %in% input$databases) %>% 
       dplyr::select(-.data$cohortId)
+    
+    if (nrow(data) == 0) {
+      return(dplyr::tibble('No data available for selected databases and cohorts'))
+    }
     
     databaseIds <- includedSourceConcept %>%
       dplyr::filter(.data$databaseId %in% input$databases) %>% 
@@ -377,7 +379,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::select(order(colnames(.))) %>% 
         dplyr::relocate(.data$conceptId, .data$conceptName, .data$vocabularyId)
       
-      if (nrow(data) == 0) {
+      if (nrow(table) == 0) {
         return(dplyr::tibble(Note = paste0('No data available for selected databases and cohorts')))
       }
       
@@ -404,21 +406,22 @@ shiny::shinyServer(function(input, output, session) {
                      lengthChange = TRUE,
                      searchHighlight = TRUE,
                      ordering = TRUE,
-                     paging = TRUE,
-                     columnDefs = list(truncateStringDef(1, 100),
-                                       minCellCountDef(2 + (1:(length(input$databases) * 2)))))
+                     paging = TRUE)
+      #                ,
+      #                columnDefs = list(truncateStringDef(1, 100),
+      #                                  minCellCountDef(2 + (1:(length(databaseIds) * 2)))))
       
       table <- DT::datatable(table,
                              colnames = colnames(table),
                              options = options,
                              rownames = FALSE, 
-                             container = sketch,
+                             # container = sketch,
                              escape = FALSE,
                              filter = c('bottom'),
                              class = "stripe nowrap compact")
       
       table <- DT::formatStyle(table = table,
-                               columns =  3 + (1:(length(input$databases)*2)),
+                               columns =  3 + (1:(length(databaseIds)*2)),
                                background = DT::styleColorBar(c(0,maxConceptSubjects), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
@@ -468,21 +471,22 @@ shiny::shinyServer(function(input, output, session) {
                      scrollX = TRUE,
                      lengthChange = TRUE,
                      ordering = TRUE,
-                     paging = TRUE,
-                     columnDefs = list(truncateStringDef(1, 100),
-                                       minCellCountDef(2 + (1:(length(input$databases) * 2)))))
+                     paging = TRUE)
+                     # ,
+                     # columnDefs = list(truncateStringDef(1, 100),
+                     #                   minCellCountDef(2 + (1:(length(input$databases) * 2)))))
       
       table <- DT::datatable(table,
                              options = options,
                              colnames = colnames(table),
                              rownames = FALSE,
-                             container = sketch,
+                             # container = sketch,
                              escape = FALSE,
                              filter = c('bottom'),
                              class = "stripe nowrap compact")
       
       table <- DT::formatStyle(table = table,
-                               columns =  3 + (1:(length(input$databases)*2)),
+                               columns =  3 + (1:(length(databaseIds)*2)),
                                background = DT::styleColorBar(c(0, maxConceptSubjects), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
@@ -493,11 +497,9 @@ shiny::shinyServer(function(input, output, session) {
   
   output$orphanConceptsTable <- DT::renderDataTable(expr = {
     data <- orphanConcept %>% 
+      dplyr::inner_join(conceptSets) %>% 
       dplyr::filter(.data$cohortId == cohortId() &
-                      .data$conceptSetId == (conceptSets %>% 
-                                               dplyr::filter(.data$cohortId == cohortId() &
-                                                               .data$conceptSetName == input$conceptSet) %>% 
-                                               dplyr::pull(conceptSetId)) &
+                      .data$conceptSetName == input$conceptSet &
                       .data$databaseId %in% input$databases) %>% 
       dplyr::select(-.data$cohortId)
     
@@ -509,6 +511,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::pull(.data$databaseId)
     
     maxConceptCount <- max(data$conceptCount, na.rm = TRUE)
+    
     if (nrow(data) == 0) {
       return(dplyr::tibble(Note = paste0('No data available for selected databases and cohorts')))
     }
@@ -555,18 +558,19 @@ shiny::shinyServer(function(input, output, session) {
                    scrollX = TRUE,
                    lengthChange = TRUE,
                    ordering = TRUE,
-                   paging = TRUE,
-                   columnDefs = list(minCellCountDef(2 + (1:(length(input$databases) * 2)))))
+                   paging = TRUE)
+                   # ,
+                   # columnDefs = list(minCellCountDef(2 + (1:(length(databaseIds) * 2)))))
     table <- DT::datatable(table,
                            options = options,
                            colnames = colnames(table),
                            rownames = FALSE,
-                           container = sketch,
+                           # container = sketch,
                            escape = FALSE,
                            filter = c('bottom'),
                            class = "stripe nowrap compact")
     table <- DT::formatStyle(table = table,
-                             columns = 3 + (1:(length(input$databases) * 2)),
+                             columns = 3 + (1:(length(databaseIds) * 2)),
                              background = DT::styleColorBar(c(0, maxConceptCount), "lightblue"),
                              backgroundSize = "98% 88%",
                              backgroundRepeat = "no-repeat",
@@ -595,7 +599,8 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::pull(.data$databaseId)
     
     table <- table %>% 
-      tidyr::pivot_longer(cols = c(.data$meetSubjects, .data$gainSubjects, .data$totalSubjects, .data$remainSubjects)) %>% 
+      tidyr::pivot_longer(cols = c(.data$meetSubjects, .data$gainSubjects, 
+                                   .data$totalSubjects, .data$remainSubjects)) %>% 
       dplyr::group_by(.data$ruleSequenceId, .data$databaseId, .data$name, .data$ruleName) %>% 
       dplyr::summarise(value = sum(.data$value)) %>% 
       dplyr::mutate(name = paste0(databaseId, "_", .data$name)) %>% 
@@ -623,14 +628,15 @@ shiny::shinyServer(function(input, output, session) {
                    scrollX = TRUE,
                    lengthChange = TRUE,
                    ordering = TRUE,
-                   paging = TRUE,
-                   columnDefs = list(minCellCountDef(1 + (1:(length(input$databases) * 4)))))
+                   paging = TRUE)
+                   # ,
+                   # columnDefs = list(minCellCountDef(1 + (1:(length(input$databases) * 4)))))
     
     table <- DT::datatable(table,
                            options = options,
                            colnames = colnames(table) %>% camelCaseToTitleCase(),
                            rownames = FALSE,
-                           container = sketch,
+                           # container = sketch,
                            escape = FALSE,
                            filter = c('bottom'),
                            class = "stripe nowrap compact")
