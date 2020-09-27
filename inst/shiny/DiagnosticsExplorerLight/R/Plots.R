@@ -65,6 +65,15 @@ plotTimeDistribution <- function(data,
                    axis.title.y = ggplot2::element_blank(),
                    axis.ticks.y = ggplot2::element_blank(),
                    axis.text.y = ggplot2::element_blank())
+<<<<<<< HEAD
+=======
+  
+  plot <- ggiraph::girafe(ggobj = plot,
+                          options = list(
+                            ggiraph::opts_sizing(width = .7),
+                            ggiraph::opts_zoom(max = 5)),width_svg = 15,
+                          height_svg = 5)
+>>>>>>> version2
   # plot <- plotly::ggplotly(plot)
   # This does not work as described here https://github.com/ropensci/plotly/issues/565 
   return(plot)
@@ -234,6 +243,7 @@ plotIncidenceRate <- function(data,
                    axis.text.x = if (showX) ggplot2::element_text(angle = 90, vjust = 0.5) else ggplot2::element_blank() )
   
   if (plotType == "line") {
+<<<<<<< HEAD
     plot <- plot + ggplot2::geom_line(size = 1.25, alpha = 0.6) +
       ggplot2::geom_point(size = 1.25, alpha = 0.6)
     # ggiraph::geom_line_interactive(ggplot2::aes(), size = 3, alpha = 0.6) +
@@ -242,6 +252,16 @@ plotIncidenceRate <- function(data,
     plot <- plot + ggplot2::geom_bar(stat = "identity") +
       # ggiraph::geom_col_interactive( ggplot2::aes(tooltip = tooltip), size = 2)
       ggplot2::geom_bar( stat = "identity", alpha = 0.6)
+=======
+    plot <- plot + 
+      ggplot2::geom_point(size = 1.25, alpha = 0.6)
+      # ggiraph::geom_line_interactive(ggplot2::aes(), size = 3, alpha = 0.6) +
+      # ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 3, alpha = 0.6)
+  } else {
+    plot <- plot + ggplot2::geom_bar(stat = "identity") +
+      ggplot2::geom_bar( stat = "identity", alpha = 0.6)
+      # ggiraph::geom_col_interactive( ggplot2::aes(tooltip = tooltip), size = 2)
+>>>>>>> version2
   }
   
   # databaseId field only present when called in Shiny app:
