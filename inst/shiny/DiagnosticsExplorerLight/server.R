@@ -922,62 +922,167 @@ shiny::shinyServer(function(input, output, session) {
   # })
   
   output$temporalCharacterizationTable <- DT::renderDataTable(expr = {
-    table <- temporalCovariateValue %>% 
-      dplyr::filter(.data$cohortId == cohortId(),
-                    .data$databaseId == input$database,
-                    .data$timeId %in% c(timeId())) %>% 
-      dplyr::select(-cohortId) %>% 
-      dplyr::mutate(databaseId = stringr::str_replace_all(string = .data$databaseId, 
-                                                          pattern = "_", 
-                                                          replacement = " ")) %>% 
-      dplyr::left_join(y = temporalCovariateChoices) %>% 
-      dplyr::left_join(y = temporalCovariateRef[!duplicated(temporalCovariateRef$covariateId),])  %>%
-      dplyr::arrange(.data$timeId)  %>% 
-      tidyr::pivot_wider(id_cols = c('covariateId', 'covariateName', 'conceptId'), 
-                         names_from = "choices",
-                         values_from = "mean" ,
-                         names_sep = "_"
-      ) %>% 
-      dplyr::select(-.data$conceptId) %>% 
-      dplyr::relocate(.data$covariateName, .data$covariateId) %>% 
-      dplyr::arrange(.data$covariateName)
+    data <- covariateValue %>% 
+      dplyr::filter(.data$cohortId == cohortId() & 
+                      .data$databaseId %in% input$databases) %>% 
+      dplyr::select(-cohortId)
     
-    if (nrow(table) == 0) {
+    dataCounts <- data %>% 
+      dplyr::select(.data$databaseId) %>% 
+      dplyr::distinct() %>% 
+      dplyr::left_join(y = (cohortCount %>% 
+                              dplyr::filter(.data$cohortId == cohortId()) %>% 
+                              dplyr::select(-cohortId))) %>% 
+      dplyr::arrange(.data$databaseId)
+    
+    if (nrow(dataCounts) == 0) {
       return(dplyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
     }
     
-    temporalCovariateChoicesSelected <- temporalCovariateChoices %>% 
-      dplyr::filter(.data$timeId %in% c(timeId())) 
+    dataCountsWithSubjectCountBelowThreshold <- dataCounts %>% 
+      dplyr::filter(.data$cohortSubjects < thresholdCohortSubjects)
     
-    options = list(pageLength = 10,
-                   searching = TRUE,
-                   searchHighlight = TRUE,
-                   scrollX = TRUE,
-                   lengthChange = TRUE,
-                   ordering = TRUE,
-                   paging = TRUE,
-                   columnDefs = list(
-                     truncateStringDef(0, 150),
-                     minCellPercentDef(1:(length(temporalCovariateChoicesSelected$choices)) + 1)))
+    if (nrow(dataCountsWithSubjectCountBelowThreshold) > 0) {
+      return(dataCountsWithSubjectCountBelowThreshold %>% 
+               dplyr::mutate(threshold = thresholdCohortSubjects) %>% 
+               dplyr::rename('These datasource(s) have less than threshold value. Please unselect the following in the Database selection option:'  = 
+                               .data$databaseId))
+    }
     
-    table <- DT::datatable(table,
-                           options = options,
-                           rownames = FALSE,
-                           colnames = colnames(table) %>% 
-                             camelCaseToTitleCase(),
-                           escape = FALSE,
-                           filter = c('bottom'),
-                           class = "stripe nowrap compact",
-                           callback =  DT::JS("table.on('click.dt', 'td', function() {
-                                            var row_=table.row(this).data();
-                                            var data = [row_];
-                                            Shiny.onInputChange('rows',data );});"))
-    table <- DT::formatStyle(table = table,
-                             columns = (2 + (1:length(temporalCovariateChoicesSelected$choices))), #0 index
-                             background = DT::styleColorBar(c(0,1), "lightblue"),
-                             backgroundSize = "98% 88%",
-                             backgroundRepeat = "no-repeat",
-                             backgroundPosition = "center")
+    if (input$charType == "Pretty") {
+      data <- data %>% 
+        dplyr::inner_join(y = covariateRef) %>% 
+        dplyr::distinct()
+      table <- list()
+      characteristics <- list()
+      for (j in (1:nrow(dataCounts))) {
+        dataCount <- dataCounts[j,]
+        temp <- data %>% 
+          dplyr::filter(.data$databaseId == dataCount$databaseId) %>% 
+          prepareTable1() %>% 
+          dplyr::mutate(databaseId = dataCount$databaseId)
+        table[[j]] <- temp
+        characteristics[[j]] <- temp %>% 
+          dplyr::select(.data$characteristic, .data$position, 
+                        .data$header, .data$sortOrder)
+      }
+      characteristics <- dplyr::bind_rows(characteristics[[j]]) %>% 
+        tidyr::crossing(dplyr::tibble(databaseId = input$databases)) %>% 
+        dplyr::arrange(.data$databaseId, .data$position, desc(.data$header), .data$sortOrder) %>% 
+        dplyr::mutate(sortOrder = dplyr::row_number()) %>% 
+        dplyr::distinct()
+      
+      table <- characteristics %>% 
+        dplyr::left_join(dplyr::bind_rows(table) %>% 
+                           dplyr::select(-.data$sortOrder))  %>% 
+        dplyr::arrange(.data$sortOrder) %>% 
+        tidyr::pivot_wider(id_cols = 'characteristic', 
+                           names_from = "databaseId",
+                           values_from = "value" ,
+                           names_sep = "_",
+                           names_prefix = "Value_")
+      
+      options = list(pageLength = 100,
+                     searching = TRUE,
+                     scrollX = TRUE,
+                     scrollY = TRUE,
+                     lengthChange = TRUE,
+                     ordering = FALSE,
+                     paging = TRUE,
+                     columnDefs = list(
+                       truncateStringDef(0, 150),
+                       minCellPercentDef(1:nrow(dataCounts))
+                     ))
+      sketch <- htmltools::withTags(table(
+        class = 'display',
+        thead(
+          tr(
+            th(rowspan = 3, 'Covariate Name'),
+            lapply(dataCounts$databaseId, th, colspan = 1, class = "dt-center")
+          ),
+          tr(
+            lapply(paste0("(n = ", 
+                          format(dataCounts$cohortSubjects, big.mark = ","), ")"), 
+                   th, 
+                   colspan = 1, 
+                   class = "dt-center no-padding")
+          ),
+          tr(
+            lapply(rep(c("Proportion"), 
+                       length(dataCounts$databaseId)), th)
+          )
+        )
+      ))
+      table <- DT::datatable(table,
+                             options = options,
+                             rownames = FALSE,
+                             container = sketch, 
+                             escape = FALSE,
+                             filter = c('bottom'),
+                             class = "stripe nowrap compact")
+      
+      table <- DT::formatStyle(table = table,
+                               columns = 1 + (1:nrow(dataCounts)),
+                               background = DT::styleColorBar(c(0,1), "lightblue"),
+                               backgroundSize = "98% 88%",
+                               backgroundRepeat = "no-repeat",
+                               backgroundPosition = "center")
+    } else {
+      data <- data %>% 
+        dplyr::mutate(databaseId = stringr::str_replace_all(string = .data$databaseId, pattern = "_", replacement = " ")) %>% 
+        tidyr::pivot_wider(id_cols = 'covariateId', 
+                           names_from = "databaseId",
+                           values_from = "mean" ,
+                           names_sep = "_"
+        ) %>%  
+        dplyr::left_join(y = covariateRef %>% 
+                           dplyr::select(.data$covariateId, 
+                                         .data$covariateName, 
+                                         .data$conceptId) %>% 
+                           dplyr::distinct()) %>%
+        dplyr::select(-covariateId) %>% 
+        dplyr::relocate("covariateName", "conceptId") %>% 
+        dplyr::arrange(.data$covariateName) %>% 
+        dplyr::distinct()
+      
+      options = list(pageLength = 100,
+                     searching = TRUE,
+                     searchHighlight = TRUE,
+                     scrollX = TRUE,
+                     scrollY = TRUE,
+                     lengthChange = TRUE,
+                     ordering = TRUE,
+                     paging = TRUE,
+                     columnDefs = list(
+                       truncateStringDef(0, 150),
+                       minCellPercentDef(1:(length(dataCounts$databaseId)) + 1)))
+      # sketch <- htmltools::withTags(table(
+      #  class = 'display',
+      #  thead(
+      #    tr(
+      #      th(rowspan = 2, 'Covariate Name'),
+      #      th(rowspan = 2, 'Concept Id'),
+      #      lapply(dataCounts$databaseId, th, colspan = 2, class = "dt-center")
+      #    ),
+      #    tr(
+      #      lapply(rep(c("Proportion"), nrow(dataCounts)), th)
+      #    )
+      #  )
+      # ))
+      table <- DT::datatable(data,
+                             options = options,
+                             rownames = FALSE,
+                             #   container = sketch, 
+                             escape = FALSE,
+                             filter = c('bottom'),
+                             class = "stripe nowrap compact")
+      table <- DT::formatStyle(table = table,
+                               columns = (2 + (1:length(dataCounts$databaseId))),
+                               background = DT::styleColorBar(c(0,1), "lightblue"),
+                               backgroundSize = "98% 88%",
+                               backgroundRepeat = "no-repeat",
+                               backgroundPosition = "center")
+    }
     return(table)
   }, server = TRUE)
   

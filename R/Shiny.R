@@ -45,6 +45,8 @@ launchDiagnosticsExplorer <- function(dataFolder,
   ensure_installed("htmltools")
   ensure_installed("scales")
   ensure_installed("plotly")
+  ensure_installed("dplyr")
+  ensure_installed("tidyr")
   
   if (!all(is_installed('ggiraph'))) {
     lightVersion <- TRUE

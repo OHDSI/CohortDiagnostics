@@ -602,7 +602,7 @@ shiny::shinyServer(function(input, output, session) {
       tidyr::pivot_wider(id_cols = c(.data$ruleSequenceId, .data$ruleName),
                          names_from = .data$name,
                          values_from = .data$value)
-      
+    
     sketch <- htmltools::withTags(table(
       class = 'display',
       thead(
@@ -748,9 +748,20 @@ shiny::shinyServer(function(input, output, session) {
     if (nrow(dataCounts) == 0) {
       return(dplyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
     }
+    
+    dataCountsWithSubjectCountBelowThreshold <- dataCounts %>% 
+      dplyr::filter(.data$cohortSubjects < thresholdCohortSubjects)
+    
+    if (nrow(dataCountsWithSubjectCountBelowThreshold) > 0) {
+      return(dataCountsWithSubjectCountBelowThreshold %>% 
+               dplyr::mutate(threshold = thresholdCohortSubjects) %>% 
+               dplyr::rename('These datasource(s) have less than threshold value. Please unselect the following in the Database selection option:'  = 
+                               .data$databaseId))
+    }
+    
     if (input$charType == "Pretty") {
       data <- data %>% 
-        dplyr::inner_join(y = covariateRef[!duplicated(covariateRef$covariateId),]) %>% 
+        dplyr::inner_join(y = covariateRef) %>% 
         dplyr::distinct()
       table <- list()
       characteristics <- list()
@@ -760,38 +771,26 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::filter(.data$databaseId == dataCount$databaseId) %>% 
           prepareTable1() %>% 
           dplyr::mutate(databaseId = dataCount$databaseId)
-        table[[j]] <- temp %>% 
-          dplyr::select(-.data$label, -.data$header, -.data$position)
+        table[[j]] <- temp
         characteristics[[j]] <- temp %>% 
           dplyr::select(.data$characteristic, .data$position, 
                         .data$header, .data$sortOrder)
       }
       characteristics <- dplyr::bind_rows(characteristics[[j]]) %>% 
-        dplyr::arrange(.data$position, .data$header, .data$sortOrder) %>% 
-        dplyr::select(-.data$sortOrder) %>% 
+        tidyr::crossing(dplyr::tibble(databaseId = input$databases)) %>% 
+        dplyr::arrange(.data$databaseId, .data$position, desc(.data$header), .data$sortOrder) %>% 
+        dplyr::mutate(sortOrder = dplyr::row_number()) %>% 
         dplyr::distinct()
       
-      table2 <- list()
-      for (i in (1:length(table))) {
-        tempDatabaseIdToFillMissing <- table[[i]] %>% 
-          dplyr::pull(.data$databaseId) %>% 
-          unique()
-        table2[[i]] <- characteristics %>% 
-          dplyr::left_join(table[[i]]) %>% 
-          dplyr::mutate(databaseId = tempDatabaseIdToFillMissing)
-      }
-      
-      table <- dplyr::bind_rows(table2) %>% 
+      table <- characteristics %>% 
+        dplyr::left_join(dplyr::bind_rows(table) %>% 
+                            dplyr::select(-.data$sortOrder))  %>% 
+        dplyr::arrange(.data$sortOrder) %>% 
         tidyr::pivot_wider(id_cols = 'characteristic', 
                            names_from = "databaseId",
                            values_from = "value" ,
                            names_sep = "_",
                            names_prefix = "Value_")
-      
-      table <- characteristics %>% 
-        dplyr::inner_join(table) %>% 
-        dplyr::arrange(.data$position, .data$header) %>% 
-        dplyr::select(-.data$position, -.data$header) 
       
       options = list(pageLength = 100,
                      searching = TRUE,
@@ -846,7 +845,7 @@ shiny::shinyServer(function(input, output, session) {
                            values_from = "mean" ,
                            names_sep = "_"
         ) %>%  
-        dplyr::left_join(y = covariateRef[!duplicated(covariateRef$covariateId),] %>% 
+        dplyr::left_join(y = covariateRef %>% 
                            dplyr::select(.data$covariateId, 
                                          .data$covariateName, 
                                          .data$conceptId) %>% 
@@ -964,7 +963,7 @@ shiny::shinyServer(function(input, output, session) {
                                                           pattern = "_", 
                                                           replacement = " ")) %>% 
       dplyr::left_join(y = temporalCovariateChoices) %>% 
-      dplyr::left_join(y = temporalCovariateRef[!duplicated(temporalCovariateRef$covariateId),])  %>%
+      dplyr::left_join(y = temporalCovariateRef)  %>%
       dplyr::arrange(.data$timeId)  %>% 
       tidyr::pivot_wider(id_cols = c('covariateId', 'covariateName', 'conceptId'), 
                          names_from = "choices",
@@ -1410,6 +1409,6 @@ shiny::shinyServer(function(input, output, session) {
       }
     )
   }
-
+  
   output$downloadOverlapPlot <- download_box("OverlapPlot", overLapPlot())
 })
