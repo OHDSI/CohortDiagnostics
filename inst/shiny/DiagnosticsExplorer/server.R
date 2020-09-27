@@ -695,6 +695,42 @@ shiny::shinyServer(function(input, output, session) {
     return(dataTable)
   }, server = TRUE)
   
+  output$visitContextTable <- DT::renderDataTable(expr = {
+    data <- visitContext %>% 
+      dplyr::filter(.data$cohortId == cohortId() & 
+                      .data$databaseId %in% input$databases)
+    
+    if (nrow(data) == 0) {
+      return(dplyr::tibble(' ' = paste0('No data available for selected databases and cohort')))
+    }
+    
+    table <- data %>% 
+      dplyr::left_join(concept, by = c( c("visitConceptId" = "conceptId"))) %>% 
+      dplyr::select(.data$conceptName, .data$visitConceptId, .data$visitContext, .data$subjects, .data$databaseId) %>% 
+      tidyr::pivot_wider(id_cols = c(.data$conceptName, .data$visitConceptId, .data$visitContext),
+                         names_from = .data$databaseId,
+                         values_from = .data$subjects)
+    
+    options = list(pageLength = 10,
+                   searching = TRUE,
+                   searchHighlight = TRUE,
+                   scrollX = TRUE,
+                   lengthChange = TRUE,
+                   ordering = TRUE,
+                   paging = TRUE,
+                   columnDefs = list(truncateStringDef(1, 100),
+                                     minCellCountDef(2 + (1:(length(input$databases))))))
+    
+    table <- DT::datatable(table,
+                           options = options,
+                           colnames = colnames(table) %>% camelCaseToTitleCase(),
+                           rownames = FALSE,
+                           escape = FALSE,
+                           filter = c('bottom'))
+    
+    
+  }, server = TRUE)
+  
   output$characterizationTable <- DT::renderDataTable(expr = {
     data <- covariateValue %>% 
       dplyr::filter(.data$cohortId == cohortId() & 
