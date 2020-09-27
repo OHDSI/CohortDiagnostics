@@ -20,6 +20,11 @@
 #'                         the \code{\link{runCohortDiagnostics}} function to generate these zip files. 
 #'                         Zip files containing results from multiple databases can be placed in the same
 #'                         folder.
+#' @param runOverNetwork   (optional) Do you want the app to run over your network?
+#' @param port             (optional) Only used if \code{runOverNetwork} = TRUE. 
+#' @param lightMode        (optional) Do you want to run the light version of the app? This is a stripped
+#'                         down version of the app without the 'bells and whistles'. It is designed to 
+#'                         work on most instances of shiny (shiny server) and to avoid package conflicts.
 #' @param launch.browser   Should the app be launched in your default browser, or in a Shiny window.
 #'                         Note: copying to clipboard will not work in a Shiny window.
 #'
@@ -27,7 +32,11 @@
 #' Launches a Shiny app that allows the user to explore the diagnostics
 #'
 #' @export
-launchDiagnosticsExplorer <- function(dataFolder, launch.browser = FALSE) {
+launchDiagnosticsExplorer <- function(dataFolder, 
+                                      runOverNetwork = FALSE,
+                                      port = 80,
+                                      lightVersion = FALSE,
+                                      launch.browser = FALSE) {
   ensure_installed("shiny")
   ensure_installed("shinydashboard")
   ensure_installed("shinyWidgets")
@@ -36,12 +45,36 @@ launchDiagnosticsExplorer <- function(dataFolder, launch.browser = FALSE) {
   ensure_installed("htmltools")
   ensure_installed("scales")
   ensure_installed("plotly")
+  ensure_installed("dplyr")
+  ensure_installed("tidyr")
   
-  appDir <- system.file("shiny", "DiagnosticsExplorer", package = "CohortDiagnostics")
+  if (!all(is_installed('ggiraph'))) {
+    lightVersion <- TRUE
+    warning("Not all required packages found. Attempting to run apps light version.")
+  }
+  
+  if (lightVersion) {
+    appDir <- system.file("shiny", "DiagnosticsExplorerLight", package = "CohortDiagnostics")
+  } else {
+    appDir <- system.file("shiny", "DiagnosticsExplorer", package = "CohortDiagnostics")  
+  }
+  
+  if (launch.browser) {
+    options(shiny.launch.browser = TRUE)
+  }
+  
+  if (runOverNetwork) {
+    myIpAddress <- system("ipconfig", intern = TRUE)
+    myIpAddress <- myIpAddress[grep("IPv4", myIpAddress)]
+    myIpAddress <- gsub(".*? ([[:digit:]])", "\\1", myIpAddress)
+    options(shiny.port = port)
+    options(shiny.host = myIpAddress)
+  }
   shinySettings <- list(dataFolder = dataFolder)
   .GlobalEnv$shinySettings <- shinySettings
   on.exit(rm("shinySettings", envir = .GlobalEnv))
-  shiny::runApp(appDir)
+  shiny::runApp(appDir = appDir, 
+                quiet = TRUE)
 }
 
 #' Premerge Shiny diagnostics files
@@ -81,7 +114,9 @@ preMergeDiagnosticsFiles <- function(dataFolder,
     }
     dir.create(path = outputFolder, showWarnings = FALSE, recursive = TRUE)
     file.copy(from = output, to = outputFolder, overwrite = TRUE, recursive = TRUE)
-  } 
+  } else {
+    outputFolder <- dataFolder
+  }
   
   csvFiles <- dplyr::tibble(fullName = list.files(path = output, 
                                                   pattern = ".csv", 
