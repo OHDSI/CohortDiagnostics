@@ -73,14 +73,11 @@ sidebarMenu <-
         item = shinydashboard::menuItem(text = "Index Event Breakdown", tabName = "indexEventBreakdown"),
         infoId = "indexEventBreakdownInfo"
       ),
-<<<<<<< HEAD
-=======
     if (exists("visitContext"))
       addInfo(
         item = shinydashboard::menuItem(text = "Visit Context", tabName = "visitContext"),
         infoId = "visitContextInfo"
       ),
->>>>>>> version2
     if (exists("covariateValue"))
       addInfo(
         shinydashboard::menuItem(text = "Cohort Characterization", tabName = "cohortCharacterization"),
@@ -103,11 +100,7 @@ sidebarMenu <-
       ),
     shinydashboard::menuItem(text = "Database information", tabName = "databaseInformation"),
     shiny::conditionalPanel(
-<<<<<<< HEAD
-      condition = "input.tabs!='incidenceRate' & input.tabs!='timeDistribution' & input.tabs!='cohortCharacterization' & input.tabs!='cohortCounts' & input.tabs!='indexEventBreakdown' & input.tabs!='databaseInformation' & input.tabs != 'description' & input.tabs != 'includedConcepts' & input.tabs != 'orphanConcepts' & input.tabs != 'inclusionRuleStats'",
-=======
       condition = "input.tabs!='incidenceRate' & input.tabs!='timeDistribution' & input.tabs!='cohortCharacterization' & input.tabs!='cohortCounts' & input.tabs!='indexEventBreakdown' & input.tabs!='databaseInformation' & input.tabs != 'description' & input.tabs != 'includedConcepts' & input.tabs != 'orphanConcepts' & input.tabs != 'inclusionRuleStats' & input.tabs != 'visitContext'",
->>>>>>> version2
       shinyWidgets::pickerInput(
         inputId = "database",
         label = "Database",
@@ -127,11 +120,7 @@ sidebarMenu <-
       )
     ),
     shiny::conditionalPanel(
-<<<<<<< HEAD
-      condition = "input.tabs=='incidenceRate' | input.tabs=='timeDistribution' | input.tabs=='cohortCharacterization' | input.tabs=='cohortCounts' | input.tabs=='indexEventBreakdown' | input.tabs == 'includedConcepts' | input.tabs == 'orphanConcepts' | input.tabs == 'inclusionRuleStats'",
-=======
       condition = "input.tabs=='incidenceRate' | input.tabs=='timeDistribution' | input.tabs=='cohortCharacterization' | input.tabs=='cohortCounts' | input.tabs=='indexEventBreakdown' | input.tabs == 'includedConcepts' | input.tabs == 'orphanConcepts' | input.tabs == 'inclusionRuleStats' | input.tabs == 'visitContext'",
->>>>>>> version2
       shinyWidgets::pickerInput(
         inputId = "databases",
         label = "Database",
@@ -317,15 +306,9 @@ bodyTabItems <- shinydashboard::tabItems(
                    )
                  )),
       shiny::htmlOutput(outputId = "hoverInfoIr"),
-<<<<<<< HEAD
       shiny::plotOutput(
         outputId = "incidenceRatePlot",
         height = 700
-=======
-      ggiraph::ggiraphOutput(
-        outputId = "incidenceRatePlot",
-        height = 1000
->>>>>>> version2
       )
     )
   ),
@@ -336,12 +319,8 @@ bodyTabItems <- shinydashboard::tabItems(
       width = NULL,
       status = "primary",
       tags$br(),
-<<<<<<< HEAD
       shiny::plotOutput("timeDisPlot"),
       shiny::downloadButton(outputId = "timeDistributionPlot", label = "Download")
-=======
-      ggiraph::ggiraphOutput("timeDisPlot")
->>>>>>> version2
     ),
     shinydashboard::box(
       title = "Time Distributions Table",
@@ -370,11 +349,8 @@ bodyTabItems <- shinydashboard::tabItems(
                           DT::dataTableOutput("inclusionRuleTable")),
   shinydashboard::tabItem(tabName = "indexEventBreakdown",
                           DT::dataTableOutput("breakdownTable")),
-<<<<<<< HEAD
-=======
   shinydashboard::tabItem(tabName = "visitContext",
                           DT::dataTableOutput("visitContextTable")),
->>>>>>> version2
   shinydashboard::tabItem(
     tabName = "cohortCharacterization",
     shiny::radioButtons(
