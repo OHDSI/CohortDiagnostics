@@ -975,7 +975,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::arrange(.data$covariateName)
     
     if (nrow(table) == 0) {
-      return(dplyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
+      return(dplyr::tibble(Note = paste0('No data available for selected databases and cohorts')))
     }
     
     temporalCovariateChoicesSelected <- temporalCovariateChoices %>% 
