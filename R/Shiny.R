@@ -81,7 +81,9 @@ preMergeDiagnosticsFiles <- function(dataFolder,
     }
     dir.create(path = outputFolder, showWarnings = FALSE, recursive = TRUE)
     file.copy(from = output, to = outputFolder, overwrite = TRUE, recursive = TRUE)
-  } 
+  } else {
+    outputFolder <- dataFolder
+  }
   
   csvFiles <- dplyr::tibble(fullName = list.files(path = output, 
                                                   pattern = ".csv", 
