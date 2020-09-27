@@ -262,7 +262,8 @@ shiny::shinyServer(function(input, output, session) {
     return(dataTable)
   }, server = TRUE)
   
-  output$incidenceRatePlot <- ggiraph::renderggiraph(expr = {
+  output$incidenceRatePlot <- shiny::renderPlot(expr = {
+  # output$incidenceRatePlot <- ggiraph::renderggiraph(expr = {
     stratifyByAge <- "Age" %in% input$irStratification
     stratifyByGender <- "Gender" %in% input$irStratification
     stratifyByCalendarYear <- "Calendar Year" %in% input$irStratification
@@ -292,8 +293,8 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
   })
   
-  
-  output$timeDisPlot <- ggiraph::renderggiraph(expr = {
+  output$timeDisPlot <- shiny::renderPlot(expr = {
+  # output$timeDisPlot <- ggiraph::renderggiraph(expr = {
     data <- getTimeDistributionResult(cohortIds = cohortId(), databaseIds = input$databases)
     validate(
       need(!is.null(data), paste0('No time distribution data for this combination')))

@@ -241,7 +241,7 @@ plotIncidenceRate <- function(data,
   
   if (plotType == "line") {
     plot <- plot +
-      ggplot2::geom_point(size = 1.25, alpha = 0.6)
+      ggplot2::geom_line(size = 1.25, alpha = 0.6)
     # ggiraph::geom_line_interactive(ggplot2::aes(), size = 3, alpha = 0.6) +
     # ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 3, alpha = 0.6)
   } else {
