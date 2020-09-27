@@ -262,7 +262,7 @@ shiny::shinyServer(function(input, output, session) {
     return(dataTable)
   }, server = TRUE)
   
-  output$incidenceRatePlot <- ggiraph::renderggiraph(expr = {
+  output$incidenceRatePlot <- shiny::renderPlot(expr = {
     stratifyByAge <- "Age" %in% input$irStratification
     stratifyByGender <- "Gender" %in% input$irStratification
     stratifyByCalendarYear <- "Calendar Year" %in% input$irStratification
@@ -292,17 +292,20 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
   })
   
-  
-  output$timeDisPlot <- ggiraph::renderggiraph(expr = {
+  timeDistributionPlot <- shiny::reactive({
     data <- getTimeDistributionResult(cohortIds = cohortId(), databaseIds = input$databases)
     validate(
-      need(!is.null(data), paste0('No time distribution data for this combination')))
-    
+      need(!is.null(data), paste0('No time distribution data for this combination'))
+    )
     plot <- plotTimeDistribution(data = data,
                                  cohortIds = cohortId(),
                                  databaseIds = input$databases)
     return(plot)
   })
+  
+  output$timeDisPlot <- shiny::renderPlot(expr = {
+    return(timeDistributionPlot())
+  }, res = 100)
   
   output$timeDistTable <- DT::renderDataTable(expr = {
     
@@ -313,7 +316,7 @@ shiny::shinyServer(function(input, output, session) {
       return(dplyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
     }
     
-    options = list(pageLength = 9,
+    options = list(pageLength = 10,
                    searching = TRUE,
                    searchHighlight = TRUE,
                    scrollX = TRUE,
@@ -602,7 +605,7 @@ shiny::shinyServer(function(input, output, session) {
       tidyr::pivot_wider(id_cols = c(.data$ruleSequenceId, .data$ruleName),
                          names_from = .data$name,
                          values_from = .data$value)
-      
+    
     sketch <- htmltools::withTags(table(
       class = 'display',
       thead(
@@ -1374,6 +1377,7 @@ shiny::shinyServer(function(input, output, session) {
       }
     )
   }
-
+  
+  output$timeDistributionPlot <- download_box("TimeDistribution", timeDistributionPlot())
   output$downloadOverlapPlot <- download_box("OverlapPlot", overLapPlot())
 })

@@ -177,7 +177,6 @@ runCohortDiagnostics <- function(packageName = NULL,
                                           errorMessage)
   }
   
-  
   if (nrow(cohorts) == 0) {
     stop("No cohorts specified")
   }
