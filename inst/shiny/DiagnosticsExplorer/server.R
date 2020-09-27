@@ -310,7 +310,7 @@ shiny::shinyServer(function(input, output, session) {
                                        databaseIds = input$databases)
     
     if (is.null(table)) {
-      return(dplyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
+      return(dplyr::tibble(Note = paste0('No data available for selected databases and cohorts')))
     }
     
     options = list(pageLength = 9,
@@ -378,7 +378,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::relocate(.data$conceptId, .data$conceptName, .data$vocabularyId)
       
       if (nrow(data) == 0) {
-        return(dplyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
+        return(dplyr::tibble(Note = paste0('No data available for selected databases and cohorts')))
       }
       
       table <- table[order(-table[, 4]), ]
@@ -510,7 +510,7 @@ shiny::shinyServer(function(input, output, session) {
     
     maxConceptCount <- max(data$conceptCount, na.rm = TRUE)
     if (nrow(data) == 0) {
-      return(dplyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
+      return(dplyr::tibble(Note = paste0('No data available for selected databases and cohorts')))
     }
     
     table <- data %>% 
@@ -584,7 +584,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::arrange(.data$ruleSequenceId)
     
     if (nrow(table) == 0) {
-      return(dplyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
+      return(dplyr::tibble(Note = paste0('No data available for selected databases and cohorts')))
     }
     
     databaseIds <- inclusionRuleStats %>%
@@ -653,7 +653,7 @@ shiny::shinyServer(function(input, output, session) {
                     .data$databaseId, .data$conceptCount)
     
     if (nrow(data) == 0) {
-      return(dplyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
+      return(dplyr::tibble(Note = paste0('No data available for selected databases and cohorts')))
     }
     
     databaseIds <- unique(data$databaseId) %>% sort()
@@ -701,7 +701,7 @@ shiny::shinyServer(function(input, output, session) {
                       .data$databaseId %in% input$databases)
     
     if (nrow(data) == 0) {
-      return(dplyr::tibble(' ' = paste0('No data available for selected databases and cohort')))
+      return(dplyr::tibble(Note = paste0('No data available for selected databases and cohort')))
     }
     
     table <- data %>% 
@@ -746,7 +746,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::arrange(.data$databaseId)
     
     if (nrow(dataCounts) == 0) {
-      return(dplyr::tibble(' ' = paste0('No data available for selected databases and cohorts')))
+      return(dplyr::tibble(Note = paste0('No data available for selected databases and cohorts')))
     }
     
     dataCountsWithSubjectCountBelowThreshold <- dataCounts %>% 
@@ -1101,7 +1101,11 @@ shiny::shinyServer(function(input, output, session) {
   output$charCompareTable <- DT::renderDataTable(expr = {
     balance <- computeBalance()
     if (nrow(balance) == 0) {
-      return(NULL)
+      if (cohortId() == comparatorCohortId()) {
+        return(dplyr::tibble(Note = "Cohort and Target are the same. Nothing to compare"))
+      } else {
+      return(tidyr::tibble(Note = "No data for the selected combination."))
+      }
     }
     
     if (input$charCompareType == "Pretty table") {
