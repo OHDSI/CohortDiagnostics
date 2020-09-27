@@ -22,7 +22,6 @@ Imports:
   digest,
   dplyr (>= 1.0.0),
   ggplot2,
-  ggiraph,
   ParallelLogger (>= 2.0.0),
   readr,
   rlang,
