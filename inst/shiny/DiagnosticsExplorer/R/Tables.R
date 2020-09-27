@@ -13,12 +13,17 @@ prepareTable1 <- function(covariates,
     dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = '')))
   
   resultsTable <- tidyr::tibble()
+  
+  if (nrow(specifications) == 0) {
+    return(resultsTable)
+  }
+  
   for (i in 1:nrow(specifications)) {
     specification <- specifications[i,]
     if (specification %>% dplyr::pull(.data$covariateIds) == "") {
       covariatesSubset <- covariates %>%
         dplyr::filter(.data$analysisId %in% specification$analysisId) %>% 
-        dplyr::arrange(.data$covariateName)
+        dplyr::arrange(.data$covariateId)
     } else {
       covariatesSubset <- covariates %>%
         dplyr::filter(.data$analysisId %in% specification$analysisId,
@@ -68,21 +73,16 @@ prepareTable1Comp <- function(balance,
   
   resultsTable <- tidyr::tibble()
   
+  if (nrow(specifications) == 0) {
+    return(resultsTable)
+  }
+  
   for (i in 1:nrow(specifications)) {
     specification <- specifications[i,]
-    if (specification %>% dplyr::pull(.data$analysisId) == "") {
-      resultsTable <- dplyr::bind_rows(resultsTable, 
-                                       tidyr::tibble(label = (specification %>% dplyr::pull(.data$label)),
-                                                     characteristic = (specification %>% dplyr::pull(.data$label)), 
-                                                     MeanT = NA,
-                                                     MeanC = NA,
-                                                     StdDiff = NA,
-                                                     header = 1,
-                                                     position = i))
-    } else if (specification %>% dplyr::pull(.data$covariateIds) == "") {
+    if (specification %>% dplyr::pull(.data$covariateIds) == "") {
       balanceSubset <- balance %>%
         dplyr::filter(.data$analysisId %in% specification$analysisId) %>% 
-        dplyr::arrange(.data$covariateName)
+        dplyr::arrange(.data$covariateId)
     } else {
       balanceSubset <- balance %>%
         dplyr::filter(.data$analysisId %in% specification$analysisId,
@@ -93,18 +93,17 @@ prepareTable1Comp <- function(balance,
         dplyr::arrange(.data$covariateId)
     }
     
-    if (nrow(balanceSubset) > 1) {
+    if (nrow(balanceSubset) > 0) {
       resultsTable <- dplyr::bind_rows(resultsTable, 
-                                       tidyr::tibble(label = (specification %>% dplyr::pull(.data$label)),
-                                                     characteristic = specification$label,
+                                       tidyr::tibble(characteristic = paste0('<strong>',
+                                                                             specification %>% dplyr::pull(.data$label),
+                                                                             '</strong>'),
                                                      MeanT = NA,
                                                      MeanC = NA,
                                                      StdDiff = NA,
                                                      header = 1,
-                                                     position = i))
-      resultsTable <- dplyr::bind_rows(resultsTable, 
-                                       tidyr::tibble(label = (specification %>% dplyr::pull(.data$label)),
-                                                     characteristic = paste0(space,
+                                                     position = i), 
+                                       tidyr::tibble(characteristic = paste0(space,
                                                                              space,
                                                                              space,
                                                                              space,
@@ -113,22 +112,15 @@ prepareTable1Comp <- function(balance,
                                                      MeanC = balanceSubset$mean2,
                                                      StdDiff = balanceSubset$stdDiff,
                                                      header = 0,
-                                                     position = i))
-    } else if (nrow(balanceSubset) == 1) {
-      resultsTable <- dplyr::bind_rows(resultsTable, 
-                                       tidyr::tibble(label = (specification %>% dplyr::pull(.data$label)),
-                                                     characteristic = specification$label,
-                                                     MeanT = balanceSubset$mean1,
-                                                     MeanC = balanceSubset$mean2,
-                                                     StdDiff = balanceSubset$stdDiff,
-                                                     header = 1,
-                                                     position = i))
+                                                     position = i)) %>% 
+        dplyr::distinct() %>%
+        dplyr::mutate(sortOrder = dplyr::row_number())
     }
   }
   resultsTable <- resultsTable %>% 
-    dplyr::arrange(.data$label, dplyr::desc(.data$header), .data$position) %>% 
+    dplyr::arrange(.data$position, dplyr::desc(.data$header), .data$sortOrder) %>% 
     dplyr::mutate(sortOrder = dplyr::row_number()) %>% 
-    dplyr::select(-.data$label, -.data$header, -.data$position)
+    dplyr::select(-.data$header, -.data$position)
   return(resultsTable)
 }
 
@@ -138,8 +130,7 @@ compareCohortCharacteristics <- function(characteristics1, characteristics2) {
                         y = characteristics2 %>% dplyr::distinct(), 
                         by = c("covariateId", "conceptId", "databaseId", "covariateName", "analysisId"),
                         suffix = c("1", "2")) %>%
-    dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = 0)),
-                  sd = sqrt(.data$sd1^2 + .data$sd2^2),
+    dplyr::mutate(sd = sqrt(.data$sd1^2 + .data$sd2^2),
                   stdDiff = (.data$mean2 - .data$mean1)/.data$sd) %>% 
     dplyr::arrange(-abs(.data$stdDiff))
   return(m)
