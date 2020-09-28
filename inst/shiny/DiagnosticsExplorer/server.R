@@ -1289,6 +1289,7 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$charComparePlot <- ggiraph::renderggiraph(expr = {
+    validate(length(input$database) == 0, message = paste0('No data sources chosen'))
     data <- compareCovariateValueResult(connection = NULL, 
                                         connectionDetails = NULL,
                                         targetCohortIds = cohortId(), 
