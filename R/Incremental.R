@@ -135,6 +135,64 @@ writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
   }
 }
 
+writeCovariateDataToAndromedaToCsv <- function(data, fileName, incremental = FALSE) {
+  if (incremental && file.exists(fileName)) {
+    ParallelLogger::logDebug("Appending records to ", fileName)
+    batchSize <- 1e5
+    
+    cohortIds <- data %>%
+      distinct(.data$cohortId) %>%
+      pull()
+    
+    tempName <- paste0(fileName, "2")
+    
+    processChunk <- function(chunk, pos) {
+      chunk <- chunk %>%
+        filter(!.data$cohort_id %in% cohortIds)
+      readr::write_csv(x = chunk,
+                       path = tempName,
+                       append = (pos != 1))
+      
+    }
+    
+    readr::read_csv_chunked(file = fileName, 
+                            callback = processChunk,
+                            chunk_size = batchSize,
+                            col_types = readr::cols(),
+                            guess_max = batchSize)
+    
+    addChunk <- function(chunk) {
+      colnames(chunk) <- SqlRender::camelCaseToSnakeCase(colnames(chunk))
+      readr::write_csv(x = chunk,
+                       path = tempName,
+                       append = TRUE)
+      
+    }
+    Andromeda::batchApply(data, addChunk)
+    unlink(fileName)                       
+    file.rename(tempName, fileName)  
+  } else {
+    if (file.exists(fileName)) {
+      ParallelLogger::logDebug("Overwriting and replacing previous ",fileName, " with new.")
+      unlink(fileName)
+    } else {
+      ParallelLogger::logDebug("Creating ",fileName)
+    }
+    writeToFile <- function(batch) {
+      first <- !file.exists(fileName)
+      if (first) {
+        colnames(batch) <- SqlRender::camelCaseToSnakeCase(colnames(batch))
+      }
+      readr::write_excel_csv(x = batch, 
+                             path = fileName, 
+                             na = "", 
+                             append = !first,
+                             delim = ",")
+    }
+    Andromeda::batchApply(data, writeToFile)
+  }
+}
+
 saveIncremental <- function(data, fileName, ...) {
   if (!length(list(...)) == 0) {
     if (length(list(...)[[1]]) == 0) {
