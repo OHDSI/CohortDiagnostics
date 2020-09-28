@@ -715,11 +715,8 @@ shiny::shinyServer(function(input, output, session) {
     visitContextReferene <-  tidyr::crossing(dplyr::tibble(visitContext = visitContext$visitContext %>% 
                                                              unique()),
                                              dplyr::tibble(databaseId = databaseIds))
-    visitContextReferene <- visitContextReferene %>%
-      dplyr::mutate(visitContext = stringr::str_replace_all(string = .data$visitContext,
-                                                                   pattern = " ",
-                                                                   replacement = "_")) %>% 
-      dplyr::arrange(desc(.data$visitContext))
+    visitContextReferene <- visitContextReferene %>% 
+      dplyr::mutate(visitContext = replace(visitContext, 1:4, c("Before", "During visit", "On visit start", "After")))
     
     table <- visitContextReferene %>% 
       dplyr::left_join(data) %>% 
@@ -738,7 +735,7 @@ shiny::shinyServer(function(input, output, session) {
           lapply(databaseIds, th, colspan = 4, class = "dt-center")
         ),
         tr(
-          lapply(rep(c("On Visit Start ", "During Visit","Before", "After"), length(databaseIds)), th)
+          lapply(rep(c("Before ", "During Visit","On Visit Start", "After"), length(databaseIds)), th)
         )
       )
     ))
