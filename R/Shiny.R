@@ -22,9 +22,6 @@
 #'                         folder.
 #' @param runOverNetwork   (optional) Do you want the app to run over your network?
 #' @param port             (optional) Only used if \code{runOverNetwork} = TRUE. 
-#' @param lightMode        (optional) Do you want to run the light version of the app? This is a stripped
-#'                         down version of the app without the 'bells and whistles'. It is designed to 
-#'                         work on most instances of shiny (shiny server) and to avoid package conflicts.
 #' @param launch.browser   Should the app be launched in your default browser, or in a Shiny window.
 #'                         Note: copying to clipboard will not work in a Shiny window.
 #'
@@ -35,7 +32,6 @@
 launchDiagnosticsExplorer <- function(dataFolder, 
                                       runOverNetwork = FALSE,
                                       port = 80,
-                                      lightVersion = FALSE,
                                       launch.browser = FALSE) {
   ensure_installed("shiny")
   ensure_installed("shinydashboard")
@@ -47,17 +43,9 @@ launchDiagnosticsExplorer <- function(dataFolder,
   ensure_installed("plotly")
   ensure_installed("dplyr")
   ensure_installed("tidyr")
-  
-  if (!all(is_installed('ggiraph'))) {
-    lightVersion <- TRUE
-    warning("Not all required packages found. Attempting to run apps light version.")
-  }
-  
-  if (lightVersion) {
-    appDir <- system.file("shiny", "DiagnosticsExplorerLight", package = "CohortDiagnostics")
-  } else {
-    appDir <- system.file("shiny", "DiagnosticsExplorer", package = "CohortDiagnostics")  
-  }
+  ensure_installed("ggiraph")
+
+  appDir <- system.file("shiny", "DiagnosticsExplorer", package = "CohortDiagnostics")  
   
   if (launch.browser) {
     options(shiny.launch.browser = TRUE)

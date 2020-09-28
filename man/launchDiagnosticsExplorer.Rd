@@ -8,7 +8,6 @@ launchDiagnosticsExplorer(
   dataFolder,
   runOverNetwork = FALSE,
   port = 80,
-  lightVersion = FALSE,
   launch.browser = FALSE
 )
 }
@@ -24,10 +23,6 @@ folder.}
 
 \item{launch.browser}{Should the app be launched in your default browser, or in a Shiny window.
 Note: copying to clipboard will not work in a Shiny window.}
-
-\item{lightMode}{(optional) Do you want to run the light version of the app? This is a stripped
-down version of the app without the 'bells and whistles'. It is designed to 
-work on most instances of shiny (shiny server) and to avoid package conflicts.}
 }
 \description{
 Launch the Diagnostics Explorer Shiny app

@@ -462,8 +462,7 @@ postProcessDiagnosticsResultsFiles <- function(dataFolder,
                                     paste0(collapse = ","))
           if (!setequal(x = expectedColNames,
                         y = observeredColNames)) {
-            warning("Mismatch between expected and observered. ")
-            stop()
+            stop("Mismatch between expected and observered. ")
           }
         }
         filesRead[[j]] <- data
