@@ -367,8 +367,8 @@ shiny::shinyServer(function(input, output, session) {
                                     stringr::str_replace(string = .data$name, 
                                                          pattern = 'concept', 
                                                          replacement = ''))) %>% 
-        dplyr::group_by(.data$conceptId, .data$databaseId, .data$name, .data$conceptSetId) %>% 
-        dplyr::summarise(value = sum(.data$value)) %>% 
+        # dplyr::group_by(.data$conceptId, .data$databaseId, .data$name, .data$conceptSetId) %>% 
+        # dplyr::summarise(value = sum(.data$value)) %>% 
         tidyr::pivot_wider(id_cols = c(.data$conceptId),
                            names_from = .data$name,
                            values_from = .data$value) %>% 
@@ -723,9 +723,7 @@ shiny::shinyServer(function(input, output, session) {
     table <- data %>% 
       dplyr::left_join(concept, by = c("visitConceptId" = "conceptId")) %>% 
       dplyr::select(.data$conceptName, .data$visitConceptId, .data$visitContext, .data$subjects, .data$databaseId) %>% 
-      dplyr::group_by(.data$conceptName, .data$visitConceptId, .data$databaseId, .data$visitContext, .data$subjects) %>% 
-      dplyr::summarise(value = sum(.data$subjects)) %>%
-      dplyr::mutate(visitContext = paste0(databaseId, "_", .data$visitContext)) %>% 
+      dplyr::mutate(visitContext = paste0(.data$databaseId, "_", .data$visitContext)) %>% 
       tidyr::pivot_wider(id_cols = c(.data$conceptName, .data$visitConceptId),
                          names_from = .data$visitContext,
                          values_from = .data$subjects)
@@ -752,7 +750,7 @@ shiny::shinyServer(function(input, output, session) {
                    ordering = TRUE,
                    paging = TRUE,
                    columnDefs = list(truncateStringDef(1, 100),
-                                     minCellCountDef(1 + (1:(length(input$databases) * 3)))))
+                                     minCellCountDef(1 + (1:(length(databaseIds) * 3)))))
     
     table <- DT::datatable(table,
                            options = options,
