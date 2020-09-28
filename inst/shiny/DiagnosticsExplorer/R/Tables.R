@@ -76,7 +76,7 @@ prepareTable1Comp <- function(balance,
   resultsTable <- tidyr::tibble()
   
   if (nrow(specifications) == 0) {
-    return(resultsTable)
+    return(dplyr::tibble(Note = 'There are no covariate records for the cohorts being compared.'))
   }
   
   for (i in 1:nrow(specifications)) {
@@ -119,10 +119,12 @@ prepareTable1Comp <- function(balance,
         dplyr::mutate(sortOrder = dplyr::row_number())
     }
   }
-  resultsTable <- resultsTable %>% 
-    dplyr::arrange(.data$position, dplyr::desc(.data$header), .data$sortOrder) %>% 
-    dplyr::mutate(sortOrder = dplyr::row_number()) %>% 
-    dplyr::select(-.data$header, -.data$position)
+  if (nrow(resultsTable) > 0 ) {
+    resultsTable <- resultsTable %>% 
+      dplyr::arrange(.data$position, dplyr::desc(.data$header), .data$sortOrder) %>% 
+      dplyr::mutate(sortOrder = dplyr::row_number()) %>% 
+      dplyr::select(-.data$header, -.data$position)
+  }
   return(resultsTable)
 }
 

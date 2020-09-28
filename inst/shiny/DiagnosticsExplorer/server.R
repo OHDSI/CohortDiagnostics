@@ -1142,14 +1142,19 @@ shiny::shinyServer(function(input, output, session) {
       if (cohortId() == comparatorCohortId()) {
         return(dplyr::tibble(Note = "Cohort and Target are the same. Nothing to compare"))
       } else {
-        return(tidyr::tibble(Note = "No data for the selected combination."))
+        return(dplyr::tibble(Note = "No data for the selected combination."))
       }
     }
     
     if (input$charCompareType == "Pretty table") {
-      table <- prepareTable1Comp(balance) %>% 
-        dplyr::arrange(.data$sortOrder) %>% 
-        dplyr::select(-.data$sortOrder)
+      table <- prepareTable1Comp(balance)
+      if (nrow(table) > 0) {
+        table <- table %>% 
+          dplyr::arrange(.data$sortOrder) %>% 
+          dplyr::select(-.data$sortOrder)
+      } else {
+        return(dplyr::tibble(Note = "No data for the selected combination."))
+      }
       
       options = list(pageLength = 100,
                      searching = TRUE,
