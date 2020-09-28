@@ -61,8 +61,7 @@ findOrphanConcepts <- function(connectionDetails = NULL,
                              conceptIds = conceptIds,
                              conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
                              conceptCountsTable = conceptCountsTable,
-                             conceptCountsTableIsTemp = conceptCountsTableIsTemp,
-                             orphanConceptTable = '#recommended_concepts'))
+                             conceptCountsTableIsTemp = conceptCountsTableIsTemp))
 }
 
 .findOrphanConcepts <- function(connectionDetails = NULL,
@@ -74,9 +73,8 @@ findOrphanConcepts <- function(connectionDetails = NULL,
                                 codesetId = 1,
                                 conceptCountsDatabaseSchema = cdmDatabaseSchema,
                                 conceptCountsTable = "concept_counts",
-                                conceptCountsTableIsTemp = FALSE,
-                                instantiatedCodeSets = "#InstConceptSets",
-                                orphanConceptTable = '#recommended_concepts') {
+                                conceptCountsTableIsTemp = FALSE) {
+  ParallelLogger::logInfo("Finding orphan concepts")
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
@@ -91,18 +89,19 @@ findOrphanConcepts <- function(connectionDetails = NULL,
                                            concept_counts_table_is_temp = conceptCountsTableIsTemp,
                                            concept_ids = conceptIds,
                                            use_codesets_table = useCodesetTable,
-                                           orphan_concept_table = orphanConceptTable,
-                                           instantiated_code_sets = instantiatedCodeSets,
                                            codeset_id = codesetId)
   DatabaseConnector::executeSql(connection, sql)
   ParallelLogger::logTrace("- Fetching orphan concepts from server")
-  sql <- "SELECT * FROM @orphan_concept_table;"
+  sql <- "SELECT rc1.concept_count, c1.*
+  FROM #recommended_concepts rc1
+  INNER JOIN @cdm_database_schema.concept c1
+  ON rc1.concept_id = c1.concept_id
+  ORDER BY domain_id, standard_concept DESC, concept_count DESC;"
   orphanConcepts <- DatabaseConnector::renderTranslateQuerySql(sql = sql,
                                                                connection = connection,
                                                                oracleTempSchema = oracleTempSchema,
-                                                               orphan_concept_table = orphanConceptTable,
-                                                               snakeCaseToCamelCase = TRUE) %>% 
-    tidyr::tibble()
+                                                               snakeCaseToCamelCase = TRUE,
+                                                               cdm_database_schema = cdmDatabaseSchema)
   
   # For debugging:
   # x <- querySql(connection, "SELECT * FROM #starting_concepts;")
@@ -128,10 +127,7 @@ findOrphanConcepts <- function(connectionDetails = NULL,
                                            packageName = "CohortDiagnostics",
                                            dbms = connection@dbms,
                                            oracleTempSchema = oracleTempSchema)
-  DatabaseConnector::executeSql(connection = connection, 
-                                sql = sql, 
-                                progressBar = FALSE, 
-                                reportOverallTime = FALSE)
+  DatabaseConnector::executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
   return(orphanConcepts)
 }
 
@@ -251,11 +247,7 @@ findCohortOrphanConcepts <- function(connectionDetails = NULL,
 #' @template ConceptCounts
 #' 
 #' @template OracleTempSchema
-#' 
-#' @return
-#' The function will by default return \code{DatabaseConnector::executeSql} output, by 
-#' attempting to create a table on dbms. In addition, if \code{getConceptCountsTable = TRUE}
-#' then a tibble data frame copy of the created table will be retuned back to R.
+#'
 #' @export
 createConceptCountsTable <- function(connectionDetails = NULL,
                                      connection = NULL,
@@ -264,7 +256,7 @@ createConceptCountsTable <- function(connectionDetails = NULL,
                                      conceptCountsDatabaseSchema = cdmDatabaseSchema,
                                      conceptCountsTable = "concept_counts",
                                      conceptCountsTableIsTemp = FALSE) {
-  ParallelLogger::logInfo("Creating internal concept counts table")
+  ParallelLogger::logInfo("Creating concept counts table")
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
@@ -287,10 +279,13 @@ createConceptCountsTable <- function(connectionDetails = NULL,
 #' set the concept found in the CDM database the contributing source codes are identified.
 #'
 #' @template Connection
+#'
 #' @template CdmDatabaseSchema
+#'
 #' @template OracleTempSchema
+#'
 #' @template CohortDef
-#' @template WebApiCohortId
+#'
 #' @param byMonth           Compute counts by month? If FALSE, only overall counts are computed.
 #' @param useSourceValues   Use the source_value fields to find the codes used in the data? If not,
 #'                          this analysis will rely entirely on the source_concept_id fields instead.

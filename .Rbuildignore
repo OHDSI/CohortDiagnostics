@@ -20,5 +20,5 @@ target/
 docs
 compare_versions
 _pkgdown.yml
-examplePhenotypeLibraryPackage
+exampleComparativeCohortStudy
 examplePackage

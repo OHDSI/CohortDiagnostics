@@ -43,11 +43,6 @@ using the \code{\link{createConceptCountsTable}}.}
 
 \item{conceptCountsTableIsTemp}{Is the concept counts table a temp table?}
 }
-\value{
-The function will by default return \code{DatabaseConnector::executeSql} output, by 
-attempting to create a table on dbms. In addition, if \code{getConceptCountsTable = TRUE}
-then a tibble data frame copy of the created table will be retuned back to R.
-}
 \description{
 Create a table with counts of how often each concept ID occurs in the CDM.
 }

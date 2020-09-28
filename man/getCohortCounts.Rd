@@ -30,11 +30,11 @@ this should include both the database and schema name, for example
 
 \item{cohortTable}{Name of the cohort table.}
 
-\item{cohortIds}{The cohort Id(s) used to reference the cohort in the cohort
+\item{cohortIds}{The cohort definition ID(s0 used to reference the cohort in the cohort
 table. If left empty, all cohorts in the table will be included.}
 }
 \value{
-A tibble with cohort counts
+A data frame with cohort counts
 }
 \description{
 Computes the subject and entry count per cohort

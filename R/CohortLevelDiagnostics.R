@@ -23,11 +23,11 @@
 #'
 #' @template CohortTable
 #'
-#' @param cohortIds            The cohort Id(s) used to reference the cohort in the cohort
+#' @param cohortIds            The cohort definition ID(s0 used to reference the cohort in the cohort
 #'                             table. If left empty, all cohorts in the table will be included.
 #'
 #' @return
-#' A tibble with cohort counts
+#' A data frame with cohort counts
 #'
 #' @export
 getCohortCounts <- function(connectionDetails = NULL,
@@ -48,8 +48,7 @@ getCohortCounts <- function(connectionDetails = NULL,
                                            cohort_database_schema = cohortDatabaseSchema,
                                            cohort_table = cohortTable,
                                            cohort_ids = cohortIds)
-  counts <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE) %>% 
-    tidyr::tibble()
+  counts <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
   delta <- Sys.time() - start
   ParallelLogger::logInfo(paste("Counting cohorts took",
                                 signif(delta, 3),
@@ -65,12 +64,16 @@ getCohortCounts <- function(connectionDetails = NULL,
 #' the cohort index date.
 #'
 #' @template Connection
+#'
 #' @template CdmDatabaseSchema
+#'
 #' @template OracleTempSchema
+#'
 #' @template CohortTable
-#' @template WebApiCohortId
+#'
 #' @template CohortDef
-#' @param cohortId   The cohort ID used to reference the cohort in the cohort table.
+#'
+#' @param cohortId   The cohort definition ID used to reference the cohort in the cohort table.
 #'
 #' @return
 #' A data frame with concepts, and per concept the count of how often the concept was encountered at
@@ -122,24 +125,24 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
     if (is.null(codeSetIds)) {
       return(NULL)
     } else {
-      return(dplyr::tibble(domain = names(criterionList), codeSetIds = codeSetIds))
+      return(tibble::tibble(domain = names(criterionList), codeSetIds = codeSetIds))
     }
   }
-  primaryCodesetIds <- lapply(cohortDefinition$PrimaryCriteria$CriteriaList, getCodeSetIds) %>% 
-    dplyr::bind_rows() %>% 
-    dplyr::filter(!is.na(.data$codeSetIds))
-  
+  primaryCodesetIds <- lapply(cohortDefinition$PrimaryCriteria$CriteriaList, getCodeSetIds)
+  primaryCodesetIds <- do.call(rbind, primaryCodesetIds)
+  primaryCodesetIds <- primaryCodesetIds[!is.na(primaryCodesetIds$codeSetIds), ]
   if (is.null(primaryCodesetIds) || nrow(primaryCodesetIds) == 0) {
-    warning("No primary event criteria concept sets found for cohort id: ", cohortId)
-    return(tidyr::tibble())
+    warning("No primary event criteria concept sets found")
+    return(data.frame())
   }
   pasteIds <- function(row) {
-    return(dplyr::tibble(domain = row$domain[1],
+    return(tibble::tibble(domain = row$domain[1],
                           codeSetIds = paste(row$codeSetIds, collapse = ", ")))
   }
   primaryCodesetIds <- lapply(split(primaryCodesetIds, primaryCodesetIds$domain), pasteIds)
   primaryCodesetIds <- dplyr::bind_rows(primaryCodesetIds)
-
+  # primaryCodesetIds <- aggregate(codeSetIds ~ domain, primaryCodesetIds, c)
+  
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
@@ -151,19 +154,17 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
                                  cohortId = cohortId)) {
     warning("Cohort with ID ", cohortId, " appears to be empty. Was it instantiated?")
     delta <- Sys.time() - start
-    ParallelLogger::logInfo(paste("- Breaking down index events took",
+    ParallelLogger::logInfo(paste("Breaking down index events took",
                                   signif(delta, 3),
                                   attr(delta, "units")))
     return(data.frame())
   }
-  ParallelLogger::logInfo("- Instantiating concept sets")
+  ParallelLogger::logInfo("Instantiating concept sets")
   instantiateConceptSets(connection, cdmDatabaseSchema, oracleTempSchema, cohortSql)
   
-  ParallelLogger::logInfo("- Computing counts")
-  domains <- readr::read_csv(system.file("csv", "domains.csv", 
-                                         package = "CohortDiagnostics"),
-                             col_types = readr::cols(),
-                             guess_max = min(1e7))
+  ParallelLogger::logInfo("Computing counts")
+  domains <- readr::read_csv(system.file("csv", "domains.csv", package = "CohortDiagnostics"),
+                             col_types = readr::cols())
   getCounts <- function(row) {
     domain <- domains[domains$domain == row$domain, ]
     sql <- SqlRender::loadRenderTranslateSql("CohortEntryBreakdown.sql",
@@ -177,15 +178,14 @@ breakDownIndexEvents <- function(connectionDetails = NULL,
                                              domain_table = domain$domainTable,
                                              domain_start_date = domain$domainStartDate,
                                              domain_concept_id = domain$domainConceptId,
-                                             primary_codeset_ids = row$codeSetIds,
-                                             concept_set_table = "#Codesets")
-    counts <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE) %>% 
-      tidyr::tibble()
+                                             primary_codeset_ids = row$codeSetIds)
+    counts <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
     return(counts)
   }
-  counts <- lapply(split(primaryCodesetIds, 1:nrow(primaryCodesetIds)), getCounts) %>% 
-    dplyr::bind_rows() %>% 
-    dplyr::arrange(.data$conceptCount)
+  counts <- lapply(split(primaryCodesetIds, 1:nrow(primaryCodesetIds)), getCounts)
+  counts <- do.call(rbind, counts)
+  rownames(counts) <- NULL
+  counts <- counts[order(-counts$conceptCount), ]
   
   ParallelLogger::logInfo("Cleaning up concept sets")
   sql <- "TRUNCATE TABLE #Codesets; DROP TABLE #Codesets;"
@@ -214,5 +214,3 @@ checkIfCohortInstantiated <- function(connection, cohortDatabaseSchema, cohortTa
   # the difference is named columns vs no name for column in data frame.
   return(count > 0)
 }
-
-

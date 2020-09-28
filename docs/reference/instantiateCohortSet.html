@@ -73,7 +73,7 @@ Optionally, the inclusion rule statistics are computed and stored in the inclusi
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.7</span>
       </span>
     </div>
 
@@ -138,22 +138,22 @@ Optionally, the inclusion rule statistics are computed and stored in the <code>i
     </div>
 
     <pre class="usage"><span class='fu'>instantiateCohortSet</span>(
-  connectionDetails = <span class='kw'>NULL</span>,
-  connection = <span class='kw'>NULL</span>,
-  <span class='kw'>cdmDatabaseSchema</span>,
-  oracleTempSchema = <span class='kw'>NULL</span>,
-  cohortDatabaseSchema = <span class='kw'>cdmDatabaseSchema</span>,
-  cohortTable = <span class='st'>"cohort"</span>,
-  cohortIds = <span class='kw'>NULL</span>,
-  packageName = <span class='kw'>NULL</span>,
-  cohortToCreateFile = <span class='st'>"settings/CohortsToCreate.csv"</span>,
-  baseUrl = <span class='kw'>NULL</span>,
-  cohortSetReference = <span class='kw'>NULL</span>,
-  generateInclusionStats = <span class='fl'>FALSE</span>,
-  inclusionStatisticsFolder = <span class='kw'>NULL</span>,
-  createCohortTable = <span class='fl'>FALSE</span>,
-  incremental = <span class='fl'>FALSE</span>,
-  incrementalFolder = <span class='kw'>NULL</span>
+  <span class='kw'>connectionDetails</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>connection</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='no'>cdmDatabaseSchema</span>,
+  <span class='kw'>oracleTempSchema</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>cohortDatabaseSchema</span> <span class='kw'>=</span> <span class='no'>cdmDatabaseSchema</span>,
+  <span class='kw'>cohortTable</span> <span class='kw'>=</span> <span class='st'>"cohort"</span>,
+  <span class='kw'>cohortIds</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>packageName</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>cohortToCreateFile</span> <span class='kw'>=</span> <span class='st'>"settings/CohortsToCreate.csv"</span>,
+  <span class='kw'>baseUrl</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>cohortSetReference</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>generateInclusionStats</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>inclusionStatisticsFolder</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>createCohortTable</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>incremental</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>incrementalFolder</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -208,9 +208,9 @@ construction to.</p></td>
     <tr>
       <th>cohortToCreateFile</th>
       <td><p>The location of the cohortToCreate file within the package. Is ignored if 
-<code>baseUrl</code> and <code>cohortSetReference</code> have been specified. The
-cohortToCreateFile must be .csv file that is expected to be read into 
-a dataframe object identical to requirements for <code>cohortSetReference</code> argument.</p></td>
+<code>baseUrl</code> and <code>cohortSetReference</code> have been specified. The cohortToCreateFile
+must be .csv file that is expected to be read into a dataframe object identical to requirements
+for <code>cohortSetReference</code> argument.</p></td>
     </tr>
     <tr>
       <th>baseUrl</th>
@@ -254,21 +254,19 @@ of which definition has been executed.</p></td>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>Currently two ways of executing this function are supported, either 
-(1) [Package Mode] embedded in a study package, assuming the cohort definitions are stored in that package using the <code><a href='https://rdrr.io/pkg/ROhdsiWebApi/man/insertCohortDefinitionSetInPackage.html'>ROhdsiWebApi::insertCohortDefinitionSetInPackage</a></code>, or 
+(1) [Package Mode] embedded in a study package, assuming the cohort definitions are stored in that package using the 
+    <code><a href='https://rdrr.io/pkg/ROhdsiWebApi/man/insertCohortDefinitionSetInPackage.html'>ROhdsiWebApi::insertCohortDefinitionSetInPackage</a></code>, or 
 (2) [WebApi Mode] By using a WebApi interface to retrieve the cohort definitions.</p>
 <p>When using this function in Package Mode: Use the <code>packageName</code> and <code>cohortToCreateFile</code> to specify
 the name of the study package, and the name of the cohortToCreate file within that package, respectively</p>
 <p>When using this function in WebApi Mode: use the <code>baseUrl</code> and <code>cohortSetReference</code> to specify how to 
 connect to the WebApi, and which cohorts to fetch, respectively.</p>
 <p>Note: if the parameters for both Package Mode and WebApi Mode are provided, then Package mode is preferred.</p>
-<p>The <code>cohortSetReference</code> argument must be a data frame with  the following columns:</p><dl>
-<dt>referentConceptId</dt><dd><p>A standard omop concept id that serves as the referant phenotype definition for the cohort Id.</p></dd>
-<dt>cohortId</dt><dd><p>The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names. It is recommended to be (referrentConceptId * 1000) + a number between 3 to 999</p></dd>
-<dt>webApiCohortId</dt><dd><p>Cohort Id in the webApi/atlas instance. It is a required field to run Cohort Diagnostics in WebApi mode. It is discarded in package mode.</p></dd>
-<dt>cohortName</dt><dd><p>The full name of the cohort. This will be shown in the Shiny app.</p></dd>
-<dt>logicDescription</dt><dd><p>A human understandable brief description of the cohort definition. This logic does not have to a 
-fully specified description of the cohort definition, but should provide enough context to help user understand the
-meaning of the cohort definition</p></dd>
+<p>The <code>cohortSetReference</code> argument must be a data frame with  the following columns:</p><dl'>
+<dt>atlasId</dt><dd><p>The cohort ID in ATLAS.</p></dd>
+<dt>atlasName</dt><dd><p>The full name of the cohort. This will be shown in the Shiny app.</p></dd>
+<dt>cohortId</dt><dd><p>The cohort ID to use in the package. Usually the same as the cohort ID in ATLAS.</p></dd>
+<dt>name</dt><dd><p>A short name for the cohort, to use to create file names. do not use special characters.</p></dd>
 
 </dl>
 
@@ -288,7 +286,7 @@ meaning of the cohort definition</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
 </div>
 
       </footer>

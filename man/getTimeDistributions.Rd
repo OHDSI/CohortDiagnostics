@@ -2,7 +2,7 @@
 % Please edit documentation in R/TimeDistributions.R
 \name{getTimeDistributions}
 \alias{getTimeDistributions}
-\title{Get time distributions for a set of cohorts}
+\title{Get time distributions of a cohort}
 \usage{
 getTimeDistributions(
   connectionDetails = NULL,
@@ -11,8 +11,7 @@ getTimeDistributions(
   oracleTempSchema = NULL,
   cohortDatabaseSchema = cdmDatabaseSchema,
   cohortTable = "cohort",
-  cohortIds,
-  cdmVersion = 5
+  cohortId
 )
 }
 \arguments{
@@ -40,13 +39,11 @@ this should include both the database and schema name, for example
 
 \item{cohortTable}{Name of the cohort table.}
 
-\item{cohortIds}{A vector of cohortIds (1 or more) used to reference the cohort in the cohort
+\item{cohortId}{The cohort definition ID used to reference the cohort in the cohort
 table.}
-
-\item{cdmVersion}{The version of the OMOP CDM. Default 5. (Note: only 5 is supported.)}
 }
 \value{
-A list object with tibbles returned from Feature Extraction
+A data frame with time distributions
 }
 \description{
 Computes the distribution of the observation time before and after index, and time within a cohort.

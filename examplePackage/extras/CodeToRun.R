@@ -1,25 +1,23 @@
 # Make sure to install all dependencies (not needed if already done):
-# install.packages("SqlRender")
-# install.packages("DatabaseConnector")
-# install.packages("ggplot2")
-# install.packages("ParallelLogger")
-# install.packages("readr")
-# install.packages("tibble")
-# install.packages("dplyr")
-# install.packages("RJSONIO")
-# install.packages("devtools")
-# devtools::install_github("FeatureExtraction")
-# devtools::install_github("ROhdsiWebApi")
-# devtools::install_github("CohortDiagnostics")
+install.packages("SqlRender")
+install.packages("DatabaseConnector")
+install.packages("ggplot2")
+install.packages("ParallelLogger")
+install.packages("readr")
+install.packages("tibble")
+install.packages("dplyr")
+install.packages("RJSONIO")
+install.packages("devtools")
+devtools::install_github("FeatureExtraction")
+devtools::install_github("ROhdsiWebApi")
+devtools::install_github("CohortDiagnostics")
 
 
 # Load the package
 library(examplePackage)
 
-path <- 's:/examplePackage'
-
 # Optional: specify where the temporary files will be created:
-options(andromedaTempFolder = file.path(path, "andromedaTemp"))
+options(andromedaTempFolder = "s:/andromedaTemp")
 
 # Maximum number of cores to be used:
 maxCores <- parallel::detectCores()
@@ -36,35 +34,34 @@ connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "pdw",
 oracleTempSchema <- NULL
 
 # Details specific to the database:
-outputFolder <- "s:/examplePackage/ccae"
-cdmDatabaseSchema <- "CDM_IBM_CCAE_V1247.dbo"
+outputFolder <- "s:/examplePackage/mdcd"
+cdmDatabaseSchema <- "cdm_ibm_mdcd_v1023.dbo"
 cohortDatabaseSchema <- "scratch.dbo"
-cohortTable <- "mschuemi_skeleton_ccae"
-databaseId <- "CCAE"
-databaseName <- "IBM MarketScan Commercial Claims and Encounters Database"
-databaseDescription <- "IBM MarketScan® Commercial Claims and Encounters Database (CCAE) represent data from individuals enrolled in United States employer-sponsored insurance health plans. The data includes adjudicated health insurance claims (e.g. inpatient, outpatient, and outpatient pharmacy) as well as enrollment data from large employers and health plans who provide private healthcare coverage to employees, their spouses, and dependents. Additionally, it captures laboratory tests for a subset of the covered lives. This administrative claims database includes a variety of fee-for-service, preferred provider organizations, and capitated health plans." 
+cohortTable <- "mschuemi_skeleton_mdcd"
+databaseId <- "MDCD"
+databaseName <- "Truven Health MarketScan® Multi-State Medicaid Database"
+databaseDescription <- "Truven Health MarketScan® Multi-State Medicaid Database (MDCD) adjudicated US health insurance claims for Medicaid enrollees from multiple states and includes hospital discharge diagnoses, outpatient diagnoses and procedures, and outpatient pharmacy claims as well as ethnicity and Medicare eligibility. Members maintain their same identifier even if they leave the system for a brief period however the dataset lacks lab data. [For further information link to RWE site for Truven MDCD."
 
 # Use this to run the cohorttDiagnostics. The results will be stored in the diagnosticsExport subfolder of the outputFolder. This can be shared between sites.
-examplePackage::runCohortDiagnostics(connectionDetails = connectionDetails,
-                                     cdmDatabaseSchema = cdmDatabaseSchema,
-                                     cohortDatabaseSchema = cohortDatabaseSchema,
-                                     cohortTable = cohortTable,
-                                     oracleTempSchema = oracleTempSchema,
-                                     outputFolder = outputFolder,
-                                     databaseId = databaseId,
-                                     databaseName = databaseName,
-                                     databaseDescription = databaseDescription,
-                                     createCohorts = TRUE,
-                                     runInclusionStatistics = TRUE,
-                                     runIncludedSourceConcepts = TRUE,
-                                     runOrphanConcepts = TRUE,
-                                     runTimeDistributions = TRUE,
-                                     runBreakdownIndexEvents = TRUE,
-                                     runIncidenceRates = TRUE,
-                                     runCohortOverlap = TRUE,
-                                     runCohortCharacterization = TRUE,
-                                     runTemporalCohortCharacterization = TRUE,
-                                     minCellCount = 5)
+runCohortDiagnostics(connectionDetails = connectionDetails,
+                     cdmDatabaseSchema = cdmDatabaseSchema,
+                     cohortDatabaseSchema = cohortDatabaseSchema,
+                     cohortTable = cohortTable,
+                     oracleTempSchema = oracleTempSchema,
+                     outputFolder = outputFolder,
+                     databaseId = databaseId,
+                     databaseName = databaseName,
+                     databaseDescription = databaseDescription,
+                     createCohorts = TRUE,
+                     runInclusionStatistics = TRUE,
+                     runIncludedSourceConcepts = TRUE,
+                     runOrphanConcepts = TRUE,
+                     runTimeDistributions = TRUE,
+                     runBreakdownIndexEvents = TRUE,
+                     runIncidenceRates = TRUE,
+                     runCohortOverlap = TRUE,
+                     runCohortCharacterization = TRUE,
+                     minCellCount = 5)
 
 # To view the results:
 # Optional: if there are results zip files from multiple sites in a folder, this merges them, which will speed up starting the viewer:

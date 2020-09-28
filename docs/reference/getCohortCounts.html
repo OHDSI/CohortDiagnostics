@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.7</span>
       </span>
     </div>
 
@@ -136,11 +136,11 @@
     </div>
 
     <pre class="usage"><span class='fu'>getCohortCounts</span>(
-  connectionDetails = <span class='kw'>NULL</span>,
-  connection = <span class='kw'>NULL</span>,
-  <span class='kw'>cohortDatabaseSchema</span>,
-  cohortTable = <span class='st'>"cohort"</span>,
-  cohortIds = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>()
+  <span class='kw'>connectionDetails</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>connection</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='no'>cohortDatabaseSchema</span>,
+  <span class='kw'>cohortTable</span> <span class='kw'>=</span> <span class='st'>"cohort"</span>,
+  <span class='kw'>cohortIds</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>()
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -173,14 +173,14 @@ this should include both the database and schema name, for example
     </tr>
     <tr>
       <th>cohortIds</th>
-      <td><p>The cohort Id(s) used to reference the cohort in the cohort
+      <td><p>The cohort definition ID(s0 used to reference the cohort in the cohort
 table. If left empty, all cohorts in the table will be included.</p></td>
     </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A tibble with cohort counts</p>
+    <p>A data frame with cohort counts</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -197,7 +197,7 @@ table. If left empty, all cohorts in the table will be included.</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
 </div>
 
       </footer>

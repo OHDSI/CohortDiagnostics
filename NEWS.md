@@ -1,15 +1,25 @@
-CohortDiagnostics 2.0.0
-=======================
-Unreleased version
-
-- working on eunomia
-- use of tidy r
-
-CohortDiagnostics 1.2.6
+CohortDiagnostics 1.2.7
 =======================
 Note: 
 
 1.2.x is last release of v 1.x.x series. Future releases with new functionality are expected to have breaking changes with no backward compatability and will be 2.x.x series.
+
+Bug fixes:
+
+1. Temporal choice error message during mismatch with temporal characterization output not having timeId
+
+
+CohortDiagnostics 1.2.6
+=======================
+
+
+Bug fixes:
+
+1. Additional bug fixes for characterization/temporal characterization.
+
+
+CohortDiagnostics 1.2.5
+=======================
 
 Bug fixes:
 

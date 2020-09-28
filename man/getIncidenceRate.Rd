@@ -10,7 +10,6 @@ getIncidenceRate(
   cohortDatabaseSchema,
   cohortTable,
   cdmDatabaseSchema,
-  cdmVersion = 5,
   oracleTempSchema = oracleTempSchema,
   firstOccurrenceOnly = TRUE,
   washoutPeriod = 365,
@@ -39,8 +38,6 @@ this should include both the database and schema name, for example
 Note that for SQL Server, this should include both the database and
 schema name, for example 'cdm_data.dbo'.}
 
-\item{cdmVersion}{The version of the OMOP CDM. Default 5. (Note: only 5 is supported.)}
-
 \item{oracleTempSchema}{Should be used in Oracle to specify a schema where the user has write
 privileges for storing temporary tables.}
 
@@ -50,7 +47,7 @@ privileges for storing temporary tables.}
 of a cohort entry. This is also used to eliminate immortal time from
 the denominator.}
 
-\item{cohortId}{The cohort Id used to reference the cohort in the cohort
+\item{cohortId}{The cohort definition ID used to reference the cohort in the cohort
 table.}
 }
 \value{
