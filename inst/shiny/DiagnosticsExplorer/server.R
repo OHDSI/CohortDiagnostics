@@ -1153,7 +1153,7 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::arrange(.data$sortOrder) %>% 
           dplyr::select(-.data$sortOrder)
       } else {
-        return(dplyr::tibble(Note = "No data for the selected combination."))
+        return(dplyr::tibble(Note = "No data for covariates that are part of pretty table."))
       }
       
       options = list(pageLength = 100,
