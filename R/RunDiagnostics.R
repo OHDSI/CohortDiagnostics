@@ -187,6 +187,9 @@ runCohortDiagnostics <- function(packageName = NULL,
       dplyr::select(-.data$name)
   }
   writeToCsv(data = cohorts, fileName = file.path(exportFolder, "cohort.csv"))
+  if (!"phenotypeId" %in% colnames(cohorts)) {
+    cohorts$phenotypeId <- NA
+  }
   
   ##############################
   ## set up connection to server
@@ -507,12 +510,12 @@ runCohortDiagnostics <- function(packageName = NULL,
     startCohortOverlap <- Sys.time()
     
     combis <- cohorts %>% 
-      dplyr::select(.data$referentConceptId, .data$cohortId) %>% 
+      dplyr::select(.data$phenotypeId, .data$cohortId) %>% 
       dplyr::rename(targetCohortId = .data$cohortId) %>% 
       dplyr::inner_join(cohorts %>% 
-                          dplyr::select(.data$referentConceptId, .data$cohortId) %>% 
+                          dplyr::select(.data$phenotypeId, .data$cohortId) %>% 
                           dplyr::rename(comparatorCohortId = .data$cohortId),
-                        by = "referentConceptId") %>% 
+                        by = "phenotypeId") %>% 
       dplyr::filter(.data$targetCohortId < .data$comparatorCohortId) %>% 
       dplyr::select(.data$targetCohortId, .data$comparatorCohortId) %>% 
       dplyr::distinct()
