@@ -53,8 +53,10 @@ prepareTable1 <- function(covariates,
         dplyr::mutate(sortOrder = dplyr::row_number())
     }
   }
-  resultsTable <- resultsTable %>% 
-    dplyr::arrange(.data$position, dplyr::desc(.data$header), .data$sortOrder)
+  if (nrow(resultsTable) > 0) {
+    resultsTable <- resultsTable %>% 
+      dplyr::arrange(.data$position, dplyr::desc(.data$header), .data$sortOrder)
+  }
   return(resultsTable)
 }
 

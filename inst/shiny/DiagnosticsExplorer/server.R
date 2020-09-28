@@ -466,9 +466,9 @@ shiny::shinyServer(function(input, output, session) {
                      lengthChange = TRUE,
                      ordering = TRUE,
                      paging = TRUE)
-                     # ,
-                     # columnDefs = list(truncateStringDef(1, 100),
-                     #                   minCellCountDef(2 + (1:(length(input$databases) * 2)))))
+      # ,
+      # columnDefs = list(truncateStringDef(1, 100),
+      #                   minCellCountDef(2 + (1:(length(input$databases) * 2)))))
       
       table <- DT::datatable(table,
                              options = options,
@@ -554,8 +554,8 @@ shiny::shinyServer(function(input, output, session) {
                    lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE)
-                   # ,
-                   # columnDefs = list(minCellCountDef(2 + (1:(length(databaseIds) * 2)))))
+    # ,
+    # columnDefs = list(minCellCountDef(2 + (1:(length(databaseIds) * 2)))))
     table <- DT::datatable(table,
                            options = options,
                            colnames = colnames(table),
@@ -624,8 +624,8 @@ shiny::shinyServer(function(input, output, session) {
                    lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE)
-                   # ,
-                   # columnDefs = list(minCellCountDef(1 + (1:(length(input$databases) * 4)))))
+    # ,
+    # columnDefs = list(minCellCountDef(1 + (1:(length(input$databases) * 4)))))
     
     table <- DT::datatable(table,
                            options = options,
@@ -793,12 +793,21 @@ shiny::shinyServer(function(input, output, session) {
         dataCount <- dataCounts[j,]
         temp <- data %>% 
           dplyr::filter(.data$databaseId == dataCount$databaseId) %>% 
-          prepareTable1() %>% 
-          dplyr::mutate(databaseId = dataCount$databaseId)
+          prepareTable1()
+        if (nrow(temp) > 0) {
+          temp <- temp %>% 
+            dplyr::mutate(databaseId = dataCount$databaseId)
+        } else {
+          return(dplyr::tibble(Note = paste0(dataCount$databaseId, ' does not have covariates that are part of pretty table. Please unselect.')))
+        }
         table[[j]] <- temp
-        characteristics[[j]] <- temp %>% 
-          dplyr::select(.data$characteristic, .data$position, 
-                        .data$header, .data$sortOrder)
+        if (nrow(temp) > 0) {
+          characteristics[[j]] <- temp %>% 
+            dplyr::select(.data$characteristic, .data$position, 
+                          .data$header, .data$sortOrder)
+        } else {
+          characteristics[[j]] <- dplyr::tibble()
+        }
       }
       characteristics <- dplyr::bind_rows(characteristics) %>% 
         dplyr::distinct() %>% 
@@ -813,7 +822,7 @@ shiny::shinyServer(function(input, output, session) {
       
       table <- characteristics %>% 
         dplyr::left_join(dplyr::bind_rows(table) %>% 
-                            dplyr::select(-.data$sortOrder))  %>% 
+                           dplyr::select(-.data$sortOrder))  %>% 
         dplyr::arrange(.data$sortOrder) %>% 
         tidyr::pivot_wider(id_cols = 'characteristic', 
                            names_from = "databaseId",
@@ -1133,7 +1142,7 @@ shiny::shinyServer(function(input, output, session) {
       if (cohortId() == comparatorCohortId()) {
         return(dplyr::tibble(Note = "Cohort and Target are the same. Nothing to compare"))
       } else {
-      return(tidyr::tibble(Note = "No data for the selected combination."))
+        return(tidyr::tibble(Note = "No data for the selected combination."))
       }
     }
     
