@@ -16,10 +16,8 @@
 
 #' Launch the Diagnostics Explorer Shiny app
 #'
-#' @param dataFolder       A folder where the exported zip files for the diagnostics are stored. Use
-#'                         the \code{\link{runCohortDiagnostics}} function to generate these zip files. 
-#'                         Zip files containing results from multiple databases can be placed in the same
-#'                         folder.
+#' @param dataFolder       A folder where the premerged file is stored. Use
+#'                         the \code{\link{preMergeDiagnosticsFiles}} function to generate this file.
 #' @param runOverNetwork   (optional) Do you want the app to run over your network?
 #' @param port             (optional) Only used if \code{runOverNetwork} = TRUE. 
 #' @param launch.browser   Should the app be launched in your default browser, or in a Shiny window.
@@ -67,81 +65,83 @@ launchDiagnosticsExplorer <- function(dataFolder,
 #' Premerge Shiny diagnostics files
 #' 
 #' @description 
-#' If there are many diagnostics files, starting the Shiny app may take a very long time. This function 
-#' already does most of the preprocessing, increasing loading speed.
+#' This function combines diagnostics results from one or more databases into a single file. The result is a
+#' single file that can be used as input for the Diagnostics Explorer Shiny app.
 #' 
-#' The merged data will be stored in the same folder, and will automatically be recognized by the Shiny app.
+#' It also checks whether the results conform to the results data model specifications.
 #'
 #' @param dataFolder       folder where the exported zip files for the diagnostics are stored. Use
 #'                         the \code{\link{runCohortDiagnostics}} function to generate these zip files. 
 #'                         Zip files containing results from multiple databases may be placed in the same
 #'                         folder. 
-#' @param outputFolder     (optional) folder where the post processed files for the diagnostics are to be stored. 
-#'                         These files may be used with the results viewer or may be uploaded into RDMS.
-#'                         Note this has to be different from dataFolder. If not provided, then only
-#'                         premerged file is generated in the dataFolder. If provided, and different
-#'                         from dataFolder the output will include csv, zip.
-#' @param minCovariateProportion  minimum value threshold for covariates to be included 
-#'                                in premerged file (valid number (maybe decimal) between 0 to 1)                         
+#' @param tempFolder       A folder on the local file system where the zip files are extracted to. Will be cleaned
+#'                         up when the function is finished. Can be used to specify a temp folder on a drive that
+#'                         has sufficent space if the default system temp space is too limited.
+#'                      
 #' @export
-preMergeDiagnosticsFiles <- function(dataFolder, 
-                                     outputFolder = NULL,
-                                     minCovariateProportion = 0) {
+preMergeDiagnosticsFiles <- function(dataFolder, tempFolder = tempdir()) {
   
-  output <- file.path(tempdir(), 'output')
-  dir.create(path = output, showWarnings = FALSE, recursive = TRUE)
+  zipFiles <- dplyr::tibble(zipFile = list.files(dataFolder, pattern = ".zip", full.names = TRUE, recursive = TRUE),
+                            unzipFolder = "")
+  ParallelLogger::logInfo("Merging ", nrow(zipFiles), " zip files.")
+
+  unzipMainFolder <- tempfile("unzipTempFolder", tmpdir = tempFolder)
+  dir.create(path = unzipMainFolder, recursive = TRUE)
+  on.exit(unlink(unzipMainFolder, recursive = TRUE))
   
-  postProcessDiagnosticsResultsFiles(dataFolder = dataFolder, 
-                                     outputFolder = output)
-  
-  if (!is.null(outputFolder)) {
-    if (dataFolder == outputFolder) {
-      warning('dataFolder and outputFolder may not be the same')
-      stop()
-    }
-    dir.create(path = outputFolder, showWarnings = FALSE, recursive = TRUE)
-    file.copy(from = output, to = outputFolder, overwrite = TRUE, recursive = TRUE)
-  } else {
-    outputFolder <- dataFolder
+  for (i in 1:nrow(zipFiles)) {
+    ParallelLogger::logInfo("- Unzipping ", basename(zipFiles$zipFile[i]))
+    unzipFolder <- file.path(unzipMainFolder, sub(".zip", "", basename(zipFiles$zipFile[i])))
+    dir.create(unzipFolder)
+    zip::unzip(zipFiles$zipFile[i], exdir = unzipFolder)
+    zipFiles$unzipFolder[i] <- unzipFolder
   }
+    
+  specifications = getResultsDataModelSpecifications()
   
-  csvFiles <- dplyr::tibble(fullName = list.files(path = output, 
-                                                  pattern = ".csv", 
-                                                  recursive = TRUE, 
-                                                  full.names = TRUE, 
-                                                  ignore.case = FALSE)) %>% 
-    dplyr::mutate(tableName = stringr::str_replace(string = basename(.data$fullName),
-                                                   pattern = ".csv",
-                                                   replacement = "")) 
-  
+  # Storing output in an environment for now. If things get too big, we may want to write 
+  # directly to CSV files for insertion into database:
   newEnvironment <- new.env()
-  for (i in 1:nrow(csvFiles)) {
-    data <- readr::read_csv(file = csvFiles$fullName[[i]],
-                            col_types = readr::cols(), 
-                            guess_max = min(1e7), 
-                            locale = readr::locale(encoding = "UTF-8"))
-    if (csvFiles$tableName[[i]] %in% c('covariate_value', 'temporal_covariate_value')) {
-      data <- data %>% 
-        dplyr::filter(mean >= minCovariateProportion)
+  
+  processTable <- function(tableName, env) {
+    ParallelLogger::logInfo("Processing table ", tableName)
+    csvFileName <- paste0(tableName, ".csv")
+    data <- dplyr::tibble()
+    for (i in 1:nrow(zipFiles)) {
+      if (csvFileName %in% list.files(zipFiles$unzipFolder[i])) {
+         newData <- readr::read_csv(file.path(zipFiles$unzipFolder[i], csvFileName),
+                                    col_types = readr::cols(),
+                                    guess_max = 1e6)
+         checkColumns(table = newData, 
+                      tableName = tableName, 
+                      zipFileName = zipFiles$zipFile[i],
+                      specifications = specifications)
+         newData <- checkAndFixDuplicateRows(table = newData, 
+                                             tableName = tableName, 
+                                             zipFileName = zipFiles$zipFile[i],
+                                             specifications = specifications) 
+         data <- appendNewRows(data = data, 
+                               newData = newData, 
+                               tableName = tableName, 
+                               specifications = specifications)
+      }
     }
-    colnames(data) <- SqlRender::snakeCaseToCamelCase(colnames(data))
-    if (length(data > 0)) {
-      assign(x = SqlRender::snakeCaseToCamelCase(csvFiles$tableName[[i]]), 
-             value = data, 
-             envir = newEnvironment)
+    if (nrow(data) == 0) {
+      ParallelLogger::logInfo("- No data found for table ", tableName)
     } else {
-      warning(paste0(csvFiles$tableName[[i]], " had 0 rows"))
+      colnames(data) <- SqlRender::snakeCaseToCamelCase(colnames(data))
+      assign(SqlRender::snakeCaseToCamelCase(tableName), data, envir = env)
     }
   }
+  invisible(lapply(unique(specifications$tableName), processTable, env = newEnvironment))
   ParallelLogger::logInfo("Creating PreMerged.Rdata file. This might take some time.")
   save(list = ls(newEnvironment),
        envir = newEnvironment,
        compress = TRUE,
        compression_level = 9,
-       file = file.path(outputFolder, "PreMerged.RData"))
+       file = file.path(dataFolder, "PreMerged.RData"))
+  rm(list = ls(newEnvironment), envir = newEnvironment)
   ParallelLogger::logInfo("Merged data saved in ", file.path(dataFolder, "PreMerged.RData"))
-  rm(ls(newEnvironment), envir = newEnvironment)
-  unlink(x = output, recursive = TRUE, force = TRUE)
 }
 
 #' Launch the CohortExplorer Shiny app

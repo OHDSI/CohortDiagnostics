@@ -12,10 +12,8 @@ launchDiagnosticsExplorer(
 )
 }
 \arguments{
-\item{dataFolder}{A folder where the exported zip files for the diagnostics are stored. Use
-the \code{\link{runCohortDiagnostics}} function to generate these zip files. 
-Zip files containing results from multiple databases can be placed in the same
-folder.}
+\item{dataFolder}{A folder where the premerged file is stored. Use
+the \code{\link{preMergeDiagnosticsFiles}} function to generate this file.}
 
 \item{runOverNetwork}{(optional) Do you want the app to run over your network?}
 

@@ -76,7 +76,7 @@ getCohortsJsonAndSqlFromPackage <- function(packageName = packageName,
   # Adding some backwards compatiblity with v1:
   if (!"name" %in% colnames(cohorts)) {
     cohorts <- cohorts %>%
-      rename(name = .data$cohortId)
+      mutate(name = .data$cohortId)
   }
   if (!"webApiCohortId" %in% colnames(cohorts) && "atlasId" %in% colnames(cohorts)) {
     cohorts <- cohorts %>%
