@@ -1295,9 +1295,8 @@ shiny::shinyServer(function(input, output, session) {
                                         resultsDatabaseSchema = NULL,
                                         domain = input$domain)
     validate(
-      need(!is.null(data), paste0('No cohort compare data for this combination')))
-    validate(
-      need(nrow(data) > 0, paste0('No cohort compare data for this combination')))
+      need(!is.null(data) || nrow(data) > 0, paste0('No cohort compare data for this combination')))
+    
     validate(
       need(!(cohortId() == comparatorCohortId()), paste0('Target cohort and comparator cannot be the same')))
     
