@@ -146,7 +146,8 @@ index date.</p>
   cohortTable = <span class='st'>"cohort"</span>,
   <span class='kw'>cohortIds</span>,
   cdmVersion = <span class='fl'>5</span>,
-  <span class='kw'>covariateSettings</span>
+  <span class='kw'>covariateSettings</span>,
+  batchSize = <span class='fl'>100</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -203,11 +204,16 @@ table.</p></td>
 the createCovariate functions in the FeatureExtraction package, or a list
 of such objects.</p></td>
     </tr>
+    <tr>
+      <th>batchSize</th>
+      <td><p>Maximum number of cohorts to characterize at once. A larger batch size will
+be quicker, but may run out of resources on the server.</p></td>
+    </tr>
     </table>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>A list object with tibbles returned from Feature Extraction</p>
+    <p>An Andromeda object with information on the covariates.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

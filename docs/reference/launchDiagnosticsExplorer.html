@@ -135,17 +135,28 @@
     <p>Launch the Diagnostics Explorer Shiny app</p>
     </div>
 
-    <pre class="usage"><span class='fu'>launchDiagnosticsExplorer</span>(<span class='kw'>dataFolder</span>, launch.browser = <span class='fl'>FALSE</span>)</pre>
+    <pre class="usage"><span class='fu'>launchDiagnosticsExplorer</span>(
+  <span class='kw'>dataFolder</span>,
+  runOverNetwork = <span class='fl'>FALSE</span>,
+  port = <span class='fl'>80</span>,
+  launch.browser = <span class='fl'>FALSE</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>dataFolder</th>
-      <td><p>A folder where the exported zip files for the diagnostics are stored. Use
-the <code><a href='runCohortDiagnostics.html'>runCohortDiagnostics</a></code> function to generate these zip files. 
-Zip files containing results from multiple databases can be placed in the same
-folder.</p></td>
+      <td><p>A folder where the premerged file is stored. Use
+the <code><a href='preMergeDiagnosticsFiles.html'>preMergeDiagnosticsFiles</a></code> function to generate this file.</p></td>
+    </tr>
+    <tr>
+      <th>runOverNetwork</th>
+      <td><p>(optional) Do you want the app to run over your network?</p></td>
+    </tr>
+    <tr>
+      <th>port</th>
+      <td><p>(optional) Only used if <code>runOverNetwork</code> = TRUE.</p></td>
     </tr>
     <tr>
       <th>launch.browser</th>
