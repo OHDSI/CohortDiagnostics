@@ -115,12 +115,7 @@ checkAndFixDuplicateRows <- function(table, tableName, zipFileName, specificatio
     warning(sprintf("Table %s in zip file %s has duplicate rows. Removing %s records.",
                     tableName,
                     zipFileName,
-<<<<<<< HEAD
                     sum(duplicated)))
-=======
-                    sum(duplicated)
-    ))
->>>>>>> 31d936f122b1b1d3b9c63a6fbdd474d71ef1c0ce
     return(table[!duplicated, ])
   } else {
     return(table)
