@@ -712,11 +712,21 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::arrange() %>% 
       dplyr::pull(.data$databaseId)
     
-    table <- data %>% 
+    visitContextReferene <-  tidyr::crossing(dplyr::tibble(visitContext = visitContext$visitContext %>% 
+                                                             unique()),
+                                             dplyr::tibble(databaseId = databaseIds))
+    visitContextReferene <- visitContextReferene %>%
+      dplyr::mutate(visitContext = stringr::str_replace_all(string = .data$visitContext,
+                                                                   pattern = " ",
+                                                                   replacement = "_")) %>% 
+      dplyr::arrange(desc(.data$visitContext))
+    
+    table <- visitContextReferene %>% 
+      dplyr::left_join(data) %>% 
       dplyr::left_join(concept, by = c("visitConceptId" = "conceptId")) %>% 
-      dplyr::select(.data$conceptName, .data$visitConceptId, .data$visitContext, .data$subjects, .data$databaseId) %>% 
+      dplyr::select(.data$conceptName, .data$visitContext, .data$subjects, .data$databaseId) %>% 
       dplyr::mutate(visitContext = paste0(.data$databaseId, "_", .data$visitContext)) %>% 
-      tidyr::pivot_wider(id_cols = c(.data$conceptName, .data$visitConceptId),
+      tidyr::pivot_wider(id_cols = c(.data$conceptName),
                          names_from = .data$visitContext,
                          values_from = .data$subjects)
     
@@ -724,12 +734,11 @@ shiny::shinyServer(function(input, output, session) {
       class = 'display',
       thead(
         tr(
-          th(rowspan = 2, 'Visit Concept Name'),
-          th(rowspan = 2, 'Visit Concept Id'),
-          lapply(databaseIds, th, colspan = 3, class = "dt-center")
+          th(rowspan = 2, 'Visit'),
+          lapply(databaseIds, th, colspan = 4, class = "dt-center")
         ),
         tr(
-          lapply(rep(c("Before", "On Visit Start", "After"), length(databaseIds)), th)
+          lapply(rep(c("On Visit Start ", "During Visit","Before", "After"), length(databaseIds)), th)
         )
       )
     ))
@@ -742,14 +751,14 @@ shiny::shinyServer(function(input, output, session) {
                    ordering = TRUE,
                    paging = TRUE,
                    columnDefs = list(truncateStringDef(1, 100),
-                                     minCellCountDef(1 + (1:(length(databaseIds) * 3)))))
+                                     minCellCountDef(1:(length(databaseIds) * 4))))
     
     table <- DT::datatable(table,
                            options = options,
                            colnames = colnames(table) %>% camelCaseToTitleCase(),
                            rownames = FALSE,
                            container = sketch,
-                           escape = FALSE,
+                           escape = TRUE,
                            filter = c('bottom'))
     
     
