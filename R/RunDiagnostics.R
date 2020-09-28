@@ -627,6 +627,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                                   covariateSettings = covariateSettings,
                                                   cdmVersion = cdmVersion)
       exportCharacterization(characteristics = characteristics,
+                             databaseId = databaseId,
                              incremental = incremental,
                              covariateValueFileName = file.path(exportFolder, "covariate_value.csv"),
                              covariateRefFileName = file.path(exportFolder, "covariate_ref.csv"),
@@ -776,6 +777,7 @@ loadAndExportPhenotypeDescription <- function(packageName,
 }
 
 exportCharacterization <- function(characteristics,
+                                   databaseId,
                                    incremental,
                                    covariateValueFileName,
                                    covariateRefFileName,
