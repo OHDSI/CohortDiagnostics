@@ -27,7 +27,7 @@ getResultsDataModelSpecifications <- function() {
   return(resultsDataModelSpecifications)
 }
 
-checkColumns <- function(table, tableName, zipFileName, specifications = getResultsDataModelSpecifications()) {
+checkColumnNames <- function(table, tableName, zipFileName, specifications = getResultsDataModelSpecifications()) {
   observeredNames <- colnames(table)[order(colnames(table))]
   
   tableSpecs <- specifications %>%
@@ -43,7 +43,6 @@ checkColumns <- function(table, tableName, zipFileName, specifications = getResu
     dplyr::arrange(.data$fieldName) %>%
     dplyr::pull()
   
-  
   if (!isTRUE(all.equal(expectedNames, observeredNames))) {
     stop(sprintf("Column names of table %s in zip file %s do not match specifications.\n- Observed columns: %s\n- Expected columns: %s",
                  tableName,
@@ -51,6 +50,59 @@ checkColumns <- function(table, tableName, zipFileName, specifications = getResu
                  paste(observeredNames, collapse = ", "),
                  paste(expectedNames, collapse = ", ")))
   }
+}
+
+checkAndFixDataTypes <- function(table, tableName, zipFileName, specifications = getResultsDataModelSpecifications()) {
+  tableSpecs <- specifications %>%
+    filter(.data$tableName == !!tableName)
+  
+  observedTypes <- sapply(table, class)
+  for (i in 1:length(observedTypes)) {
+    fieldName <- names(observedTypes)[i]
+    expectedType <- gsub("\\(.*\\)", "", tolower(tableSpecs$type[tableSpecs$fieldName == fieldName]))
+    if (expectedType == "bigint" || expectedType == "float") {
+      if (observedTypes[i] != "numeric" && observedTypes[i] != "double") {
+        ParallelLogger::logDebug(sprintf("Field %s in table %s in zip file %s is of type %s, but was expecting %s. Attempting to convert.",
+                                         fieldName,
+                                         tableName,
+                                         zipFileName,
+                                         observedTypes[i], 
+                                         expectedType))
+        table <- mutate_at(table, i, as.numeric)
+      }
+    } else if (expectedType == "int") {
+      if (observedTypes[i] != "integer") {
+        ParallelLogger::logDebug(sprintf("Field %s in table %s in zip file %s is of type %s, but was expecting %s. Attempting to convert.",
+                                         fieldName,
+                                         tableName,
+                                         zipFileName,
+                                         observedTypes[i], 
+                                         expectedType))
+        table <- mutate_at(table, i, as.integer)
+      }
+    } else if (expectedType == "varchar") {
+      if (observedTypes[i] != "character") {
+        ParallelLogger::logDebug(sprintf("Field %s in table %s in zip file %s is of type %s, but was expecting %s. Attempting to convert.",
+                                         fieldName,
+                                         tableName,
+                                         zipFileName,
+                                         observedTypes[i], 
+                                         expectedType))
+        table <- mutate_at(table, i, as.character)
+      }
+    } else if (expectedType == "date") {
+      if (observedTypes[i] != "Date") {
+        ParallelLogger::logDebug(sprintf("Field %s in table %s in zip file %s is of type %s, but was expecting %s. Attempting to convert.",
+                                         fieldName,
+                                         tableName,
+                                         zipFileName,
+                                         observedTypes[i], 
+                                         expectedType))
+        table <- mutate_at(table, i, as.Date)
+      }
+    }
+  } 
+  return(table)
 }
 
 checkAndFixDuplicateRows <- function(table, tableName, zipFileName, specifications = getResultsDataModelSpecifications()) {
@@ -63,15 +115,19 @@ checkAndFixDuplicateRows <- function(table, tableName, zipFileName, specificatio
     warning(sprintf("Table %s in zip file %s has duplicate rows. Removing %s records.",
                     tableName,
                     zipFileName,
+<<<<<<< HEAD
+                    sum(duplicated)))
+=======
                     sum(duplicated)
     ))
+>>>>>>> 31d936f122b1b1d3b9c63a6fbdd474d71ef1c0ce
     return(table[!duplicated, ])
   } else {
     return(table)
   }
 }
 
-appendNewRows <- function(data, newData, tableName,  specifications = getResultsDataModelSpecifications()) {
+appendNewRows <- function(data, newData, tableName, specifications = getResultsDataModelSpecifications()) {
   if (nrow(data) > 0) {
     primaryKeys <- specifications %>%
       dplyr::filter(.data$tableName == !!tableName & .data$primaryKey == "Yes") %>%
