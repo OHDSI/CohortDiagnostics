@@ -237,49 +237,16 @@ bodyTabItems <- shinydashboard::tabItems(
                          shiny::tabPanel(
                            tags$br(),
                            title = "Phenotype",
-                           DT::dataTableOutput(outputId = "phenoTypeDescriptionTable"),
-                           tags$table(
-                             tags$tr(
-                               tags$td(
-                                 div("Base url:")
-                               ),
-                               tags$td(HTML("&nbsp&nbsp")),
-                               tags$td(
-                                 shiny::textInput(inputId = "conceptIdBaseUrl",label = "", width = "300px", value = conceptBaseUrl)
-                               )
-                             )
-                           )),
+                           DT::dataTableOutput(outputId = "phenoTypeDescriptionTable")),
                          shiny::tabPanel(
                            tags$br(),
                            title = "Cohort", 
-                           DT::dataTableOutput(outputId = "cohortDescriptionTable"),
-                           tags$table(
-                             tags$tr(
-                               tags$td(
-                                 div("Base url:")
-                               ),
-                               tags$td(HTML("&nbsp&nbsp")),
-                               tags$td(
-                                 shiny::textInput(inputId = "cohortBaseUrl",label = "", width = "300px", value = cohortBaseUrl)
-                               )
-                             )
-                           ))
+                           DT::dataTableOutput(outputId = "cohortDescriptionTable"))
       )
     )
   ),
   shinydashboard::tabItem(tabName = "cohortCounts",
-                          DT::dataTableOutput("cohortCountsTable"),
-                          tags$table(
-                            tags$tr(
-                              tags$td(
-                                div("Base url:")
-                              ),
-                              tags$td(HTML("&nbsp&nbsp")),
-                              tags$td(
-                                shiny::textInput(inputId = "cohortBaseUrl2",label = "", value = cohortBaseUrl)
-                              )
-                            )
-                          )),
+                          DT::dataTableOutput("cohortCountsTable")),
   shinydashboard::tabItem(
     tabName = "incidenceRate",
     shinydashboard::box(

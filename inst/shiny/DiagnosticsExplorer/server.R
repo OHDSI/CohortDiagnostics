@@ -76,18 +76,6 @@ shiny::shinyServer(function(input, output, session) {
              dplyr::pull(timeId))
   })
   
-  cohortBaseUrl2 <- shiny::reactive({
-    return(input$cohortBaseUrl2)
-  })
-  
-  cohortBaseUrl <- shiny::reactive({
-    return(input$cohortBaseUrl)
-  })
-  
-  conceptIdBaseUrl <- shiny::reactive({
-    return(input$conceptIdBaseUrl)
-  })
-  
   shiny::observe({
     subset <- unique(conceptSets$conceptSetName[conceptSets$cohortId == cohortId()]) %>% sort()
     shinyWidgets::updatePickerInput(session = session,
@@ -102,7 +90,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::mutate(literatureReview = dplyr::case_when(!.data$literatureReview %in% c('','0') ~ 
                                                           paste0("<a href='", .data$literatureReview, "' target='_blank'>", "Link", "</a>"),
                                                         TRUE ~ 'Ongoing')) %>%
-      dplyr::mutate(phenotypeId = paste0("<a href='", paste0(conceptIdBaseUrl(), .data$referentConceptId), "' target='_blank'>", .data$phenotypeId, "</a>")) %>% 
+      dplyr::mutate(phenotypeId = paste0("<a href='", paste0(conceptBaseUrl, .data$referentConceptId), "' target='_blank'>", .data$phenotypeId, "</a>")) %>% 
       dplyr::mutate(clinicalDescription = stringr::str_replace_all(string = .data$clinicalDescription, 
                                                                    pattern = "Overview:", 
                                                                    replacement = "<strong>Overview:</strong>"))  %>% 
@@ -139,7 +127,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- cohort %>% 
       dplyr::mutate(webApiCohortId = as.integer(.data$webApiCohortId)) %>% #this is temporary - we need to standardize this 
       dplyr::left_join(y = phenotypeDescription) %>% 
-      dplyr::mutate(cohortName = paste0("<a href='", paste0(cohortBaseUrl(), .data$webApiCohortId),"' target='_blank'>", paste0(.data$cohortName), "</a>")) %>% 
+      dplyr::mutate(cohortName = paste0("<a href='", paste0(cohortBaseUrl, .data$webApiCohortId),"' target='_blank'>", paste0(.data$cohortName), "</a>")) %>% 
       dplyr::select(.data$phenotypeId, .data$cohortId, .data$cohortName, .data$logicDescription) %>% 
       dplyr::arrange(.data$phenotypeId, .data$cohortId, .data$cohortName)
     
@@ -197,7 +185,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(.data$cohortId, .data$cohortName, .data$webApiCohortId) %>% 
       dplyr::distinct() %>% 
       dplyr::inner_join(table, by = c("cohortId", "cohortName")) %>% 
-      dplyr::mutate(url = paste0(cohortBaseUrl2(), .data$webApiCohortId),
+      dplyr::mutate(url = paste0(cohortBaseUrl, .data$webApiCohortId),
                     cohortName = paste0("<a href='", 
                                         .data$url, 
                                         "' target='_blank'>", 
@@ -357,18 +345,20 @@ shiny::shinyServer(function(input, output, session) {
     
     if (input$includedType == "Source Concepts") {
       table <- data %>%
-        dplyr::select(-.data$conceptId) %>%
-        dplyr::mutate(conceptSubjects = abs(.data$conceptSubjects)) %>%  
+        dplyr::group_by(.data$databaseId, .data$conceptSetId, 
+                        .data$sourceConceptId) %>%
+        dplyr::summarise(conceptSubjects = sum(abs(.data$conceptSubjects )) * 
+                           min(.data$conceptSubjects)/abs(min(.data$conceptSubjects)),
+                         conceptCount = sum(abs(.data$conceptCount)) *
+                           min(.data$conceptCount)/abs(min(.data$conceptCount))) %>%
+        dplyr::ungroup() %>% 
         dplyr::rename(conceptId = .data$sourceConceptId) %>% 
-        dplyr::filter(.data$conceptId > 0) %>% 
-        dplyr::arrange(.data$databaseId) %>% 
+        dplyr::arrange(.data$databaseId, .data$conceptId) %>% 
         tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>% 
         dplyr::mutate(name = paste0(databaseId, "_",
                                     stringr::str_replace(string = .data$name, 
                                                          pattern = 'concept', 
                                                          replacement = ''))) %>% 
-        # dplyr::group_by(.data$conceptId, .data$databaseId, .data$name, .data$conceptSetId) %>% 
-        # dplyr::summarise(value = sum(.data$value)) %>% 
         tidyr::pivot_wider(id_cols = c(.data$conceptId),
                            names_from = .data$name,
                            values_from = .data$value) %>% 
@@ -429,17 +419,19 @@ shiny::shinyServer(function(input, output, session) {
                                backgroundPosition = "center")
     } else {
       table <- data %>%
-        dplyr::select(-.data$sourceConceptId) %>%
-        dplyr::mutate(conceptSubjects = abs(.data$conceptSubjects)) %>% 
-        dplyr::filter(.data$conceptId > 0) %>% 
+        dplyr::group_by(.data$databaseId, .data$conceptSetId, 
+                        .data$conceptId) %>%
+        dplyr::summarise(conceptSubjects = sum(abs(.data$conceptSubjects )) * 
+                           min(.data$conceptSubjects)/abs(min(.data$conceptSubjects)),
+                         conceptCount = sum(abs(.data$conceptCount)) *
+                           min(.data$conceptCount)/abs(min(.data$conceptCount))) %>%
+        dplyr::ungroup() %>% 
         dplyr::arrange(.data$databaseId) %>% 
         tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>% 
         dplyr::mutate(name = paste0(databaseId, "_",
                                     stringr::str_replace(string = .data$name, 
                                                          pattern = 'concept', 
                                                          replacement = ''))) %>% 
-        dplyr::group_by(.data$conceptId, .data$databaseId, .data$name, .data$conceptSetId) %>% 
-        dplyr::summarise(value = sum(.data$value)) %>% 
         tidyr::pivot_wider(id_cols = c(.data$conceptId),
                            names_from = .data$name,
                            values_from = .data$value) %>% 
@@ -474,9 +466,9 @@ shiny::shinyServer(function(input, output, session) {
                      lengthChange = TRUE,
                      ordering = TRUE,
                      paging = TRUE)
-                     # ,
-                     # columnDefs = list(truncateStringDef(1, 100),
-                     #                   minCellCountDef(2 + (1:(length(input$databases) * 2)))))
+      # ,
+      # columnDefs = list(truncateStringDef(1, 100),
+      #                   minCellCountDef(2 + (1:(length(input$databases) * 2)))))
       
       table <- DT::datatable(table,
                              options = options,
@@ -562,8 +554,8 @@ shiny::shinyServer(function(input, output, session) {
                    lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE)
-                   # ,
-                   # columnDefs = list(minCellCountDef(2 + (1:(length(databaseIds) * 2)))))
+    # ,
+    # columnDefs = list(minCellCountDef(2 + (1:(length(databaseIds) * 2)))))
     table <- DT::datatable(table,
                            options = options,
                            colnames = colnames(table),
@@ -632,8 +624,8 @@ shiny::shinyServer(function(input, output, session) {
                    lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE)
-                   # ,
-                   # columnDefs = list(minCellCountDef(1 + (1:(length(input$databases) * 4)))))
+    # ,
+    # columnDefs = list(minCellCountDef(1 + (1:(length(input$databases) * 4)))))
     
     table <- DT::datatable(table,
                            options = options,
@@ -801,12 +793,21 @@ shiny::shinyServer(function(input, output, session) {
         dataCount <- dataCounts[j,]
         temp <- data %>% 
           dplyr::filter(.data$databaseId == dataCount$databaseId) %>% 
-          prepareTable1() %>% 
-          dplyr::mutate(databaseId = dataCount$databaseId)
+          prepareTable1()
+        if (nrow(temp) > 0) {
+          temp <- temp %>% 
+            dplyr::mutate(databaseId = dataCount$databaseId)
+        } else {
+          return(dplyr::tibble(Note = paste0(dataCount$databaseId, ' does not have covariates that are part of pretty table. Please unselect.')))
+        }
         table[[j]] <- temp
-        characteristics[[j]] <- temp %>% 
-          dplyr::select(.data$characteristic, .data$position, 
-                        .data$header, .data$sortOrder)
+        if (nrow(temp) > 0) {
+          characteristics[[j]] <- temp %>% 
+            dplyr::select(.data$characteristic, .data$position, 
+                          .data$header, .data$sortOrder)
+        } else {
+          characteristics[[j]] <- dplyr::tibble()
+        }
       }
       characteristics <- dplyr::bind_rows(characteristics) %>% 
         dplyr::distinct() %>% 
@@ -821,7 +822,7 @@ shiny::shinyServer(function(input, output, session) {
       
       table <- characteristics %>% 
         dplyr::left_join(dplyr::bind_rows(table) %>% 
-                            dplyr::select(-.data$sortOrder))  %>% 
+                           dplyr::select(-.data$sortOrder))  %>% 
         dplyr::arrange(.data$sortOrder) %>% 
         tidyr::pivot_wider(id_cols = 'characteristic', 
                            names_from = "databaseId",
@@ -1141,14 +1142,19 @@ shiny::shinyServer(function(input, output, session) {
       if (cohortId() == comparatorCohortId()) {
         return(dplyr::tibble(Note = "Cohort and Target are the same. Nothing to compare"))
       } else {
-      return(tidyr::tibble(Note = "No data for the selected combination."))
+        return(dplyr::tibble(Note = "No data for the selected combination."))
       }
     }
     
     if (input$charCompareType == "Pretty table") {
-      table <- prepareTable1Comp(balance) %>% 
-        dplyr::arrange(.data$sortOrder) %>% 
-        dplyr::select(-.data$sortOrder)
+      table <- prepareTable1Comp(balance)
+      if (nrow(table) > 0) {
+        table <- table %>% 
+          dplyr::arrange(.data$sortOrder) %>% 
+          dplyr::select(-.data$sortOrder)
+      } else {
+        return(dplyr::tibble(Note = "No data for covariates that are part of pretty table."))
+      }
       
       options = list(pageLength = 100,
                      searching = TRUE,
