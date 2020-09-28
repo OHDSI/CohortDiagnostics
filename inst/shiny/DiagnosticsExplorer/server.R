@@ -163,9 +163,8 @@ shiny::shinyServer(function(input, output, session) {
   output$cohortCountsTable <- DT::renderDataTable(expr = {
     data <- cohortCount %>%
       dplyr::filter(.data$databaseId %in% input$databases) %>% 
-      dplyr::left_join(cohort) %>% 
-      dplyr::mutate(phenotypeId = .data$referentConceptId * 1000) %>% 
-      dplyr::select(.data$phenotypeId, .data$cohortId, 
+      dplyr::left_join(cohort, by = "cohortId") %>% 
+      dplyr::select(.data$cohortId, 
                     .data$cohortName, .data$databaseId, 
                     .data$webApiCohortId,
                     .data$cohortSubjects, .data$cohortEntries)
@@ -188,7 +187,8 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::mutate(columnName = paste0(.data$databaseId, "_entries")) %>% 
         tidyr::pivot_wider(id_cols = c(.data$cohortId, .data$cohortName),
                            names_from = columnName,
-                           values_from = .data$cohortEntries))
+                           values_from = .data$cohortEntries),
+      by = c("cohortId", "cohortName"))
     table <- table %>% 
       dplyr::select(order(colnames(table))) %>% 
       dplyr::relocate(.data$cohortId)
@@ -196,7 +196,7 @@ shiny::shinyServer(function(input, output, session) {
     table <- data %>% 
       dplyr::select(.data$cohortId, .data$cohortName, .data$webApiCohortId) %>% 
       dplyr::distinct() %>% 
-      dplyr::inner_join(table) %>% 
+      dplyr::inner_join(table, by = c("cohortId", "cohortName")) %>% 
       dplyr::mutate(url = paste0(cohortBaseUrl2(), .data$webApiCohortId),
                     cohortName = paste0("<a href='", 
                                         .data$url, 
@@ -336,7 +336,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$includedConceptsTable <- DT::renderDataTable(expr = {
     data <- includedSourceConcept %>% 
-      dplyr::inner_join(conceptSets) %>% 
+      dplyr::inner_join(conceptSets, by = c("cohortId", "conceptSetId")) %>% 
       dplyr::filter(.data$cohortId == cohortId() &
                       .data$conceptSetName == input$conceptSet &
                       .data$databaseId %in% input$databases) %>% 
@@ -375,7 +375,8 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::inner_join(concept %>% 
                             dplyr::select(.data$conceptId, 
                                           .data$conceptName, 
-                                          .data$vocabularyId)) %>% 
+                                          .data$vocabularyId),
+                          by = "conceptId") %>% 
         dplyr::select(order(colnames(.))) %>% 
         dplyr::relocate(.data$conceptId, .data$conceptName, .data$vocabularyId)
       
@@ -445,7 +446,8 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::inner_join(concept %>% 
                             dplyr::select(.data$conceptId, 
                                           .data$conceptName, 
-                                          .data$vocabularyId)) %>% 
+                                          .data$vocabularyId),
+                          by = "conceptId") %>% 
         dplyr::select(order(colnames(.))) %>% 
         dplyr::relocate(.data$conceptId, 
                         .data$conceptName, 
@@ -531,7 +533,8 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::inner_join(concept %>% 
                           dplyr::select(.data$conceptId, 
                                         .data$conceptName, 
-                                        .data$vocabularyId)) %>% 
+                                        .data$vocabularyId),
+                        by = "conceptId") %>% 
       dplyr::select(order(colnames(.))) %>% 
       dplyr::relocate(.data$conceptId, .data$conceptName, .data$vocabularyId)
     
@@ -654,7 +657,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$cohortId == cohortId() & 
                       .data$databaseId %in% input$databases) %>%
       dplyr::select(-.data$cohortId) %>% 
-      dplyr::inner_join(concept) %>% 
+      dplyr::inner_join(concept, by = "conceptId") %>% 
       dplyr::select(.data$conceptId, .data$conceptName,
                     .data$databaseId, .data$conceptCount)
     
@@ -718,7 +721,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::pull(.data$databaseId)
     
     table <- data %>% 
-      dplyr::left_join(concept, by = c( c("visitConceptId" = "conceptId"))) %>% 
+      dplyr::left_join(concept, by = c("visitConceptId" = "conceptId")) %>% 
       dplyr::select(.data$conceptName, .data$visitConceptId, .data$visitContext, .data$subjects, .data$databaseId) %>% 
       dplyr::group_by(.data$conceptName, .data$visitConceptId, .data$databaseId, .data$visitContext, .data$subjects) %>% 
       dplyr::summarise(value = sum(.data$subjects)) %>%
