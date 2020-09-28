@@ -357,18 +357,20 @@ shiny::shinyServer(function(input, output, session) {
     
     if (input$includedType == "Source Concepts") {
       table <- data %>%
-        dplyr::select(-.data$conceptId) %>%
-        dplyr::mutate(conceptSubjects = abs(.data$conceptSubjects)) %>%  
+        dplyr::group_by(.data$databaseId, .data$conceptSetId, 
+                        .data$sourceConceptId) %>%
+        dplyr::summarise(conceptSubjects = sum(abs(.data$conceptSubjects )) * 
+                           min(.data$conceptSubjects)/abs(min(.data$conceptSubjects)),
+                         conceptCount = sum(abs(.data$conceptCount)) *
+                           min(.data$conceptCount)/abs(min(.data$conceptCount))) %>%
+        dplyr::ungroup() %>% 
         dplyr::rename(conceptId = .data$sourceConceptId) %>% 
-        dplyr::filter(.data$conceptId > 0) %>% 
-        dplyr::arrange(.data$databaseId) %>% 
+        dplyr::arrange(.data$databaseId, .data$conceptId) %>% 
         tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>% 
         dplyr::mutate(name = paste0(databaseId, "_",
                                     stringr::str_replace(string = .data$name, 
                                                          pattern = 'concept', 
                                                          replacement = ''))) %>% 
-        # dplyr::group_by(.data$conceptId, .data$databaseId, .data$name, .data$conceptSetId) %>% 
-        # dplyr::summarise(value = sum(.data$value)) %>% 
         tidyr::pivot_wider(id_cols = c(.data$conceptId),
                            names_from = .data$name,
                            values_from = .data$value) %>% 
@@ -429,17 +431,19 @@ shiny::shinyServer(function(input, output, session) {
                                backgroundPosition = "center")
     } else {
       table <- data %>%
-        dplyr::select(-.data$sourceConceptId) %>%
-        dplyr::mutate(conceptSubjects = abs(.data$conceptSubjects)) %>% 
-        dplyr::filter(.data$conceptId > 0) %>% 
+        dplyr::group_by(.data$databaseId, .data$conceptSetId, 
+                        .data$conceptId) %>%
+        dplyr::summarise(conceptSubjects = sum(abs(.data$conceptSubjects )) * 
+                           min(.data$conceptSubjects)/abs(min(.data$conceptSubjects)),
+                         conceptCount = sum(abs(.data$conceptCount)) *
+                           min(.data$conceptCount)/abs(min(.data$conceptCount))) %>%
+        dplyr::ungroup() %>% 
         dplyr::arrange(.data$databaseId) %>% 
         tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>% 
         dplyr::mutate(name = paste0(databaseId, "_",
                                     stringr::str_replace(string = .data$name, 
                                                          pattern = 'concept', 
                                                          replacement = ''))) %>% 
-        dplyr::group_by(.data$conceptId, .data$databaseId, .data$name, .data$conceptSetId) %>% 
-        dplyr::summarise(value = sum(.data$value)) %>% 
         tidyr::pivot_wider(id_cols = c(.data$conceptId),
                            names_from = .data$name,
                            values_from = .data$value) %>% 
