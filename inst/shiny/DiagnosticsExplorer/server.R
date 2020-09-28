@@ -158,7 +158,16 @@ shiny::shinyServer(function(input, output, session) {
                     .data$cohortSubjects, .data$cohortEntries)
     
     if (nrow(data) == 0) {
-      return(NULL)
+      return(tidyr::tibble("There is no data on any cohort"))
+    }
+    
+    if (!isTRUE(all.equal(data$databaseId %>% unique %>% sort(),
+                          input$databases %>% unique() %>% sort()))) {
+      return(dplyr::tibble(Note = paste0("There is no data for the databases:\n",
+                                         paste0(setdiff(input$databases, 
+                                                        data$databaseId %>% unique()), 
+                                                collapse = ",\n "), 
+                                         ".\n Please unselect them.")))
     }
     
     table <- dplyr::full_join(
@@ -194,7 +203,6 @@ shiny::shinyServer(function(input, output, session) {
       ) %>% 
       dplyr::select(-.data$cohortId, -.data$url, -.data$webApiCohortId) %>%
       dplyr::arrange(.data$cohortName)
-    
     
     databaseIds <- cohortCount %>%
       dplyr::filter(.data$databaseId %in% input$databases) %>% 
@@ -280,7 +288,6 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
   })
   
-  
   output$timeDisPlot <- ggiraph::renderggiraph(expr = {
     data <- getTimeDistributionResult(cohortIds = cohortId(), databaseIds = input$databases)
     validate(
@@ -340,6 +347,15 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::distinct() %>% 
       dplyr::arrange() %>% 
       dplyr::pull(.data$databaseId)
+    
+    if (!isTRUE(all.equal(databaseIds %>% sort(),
+                          input$databases %>% unique() %>% sort()))) {
+      return(dplyr::tibble(Note = paste0("There is no data for the databases:\n",
+                                         paste0(setdiff(input$databases %>% sort(), 
+                                                        databaseIds %>% sort()), 
+                                                collapse = ",\n "), 
+                                         ".\n Please unselect them.")))
+    }
     
     maxConceptSubjects <- max(data$conceptSubjects, na.rm = TRUE)
     
@@ -468,7 +484,7 @@ shiny::shinyServer(function(input, output, session) {
                      paging = TRUE)
       # ,
       # columnDefs = list(truncateStringDef(1, 100),
-      #                   minCellCountDef(2 + (1:(length(input$databases) * 2)))))
+      #                   minCellCountDef(2 + (1:(databaseIds * 2)))))
       
       table <- DT::datatable(table,
                              options = options,
@@ -503,6 +519,15 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::distinct() %>% 
       dplyr::arrange() %>% 
       dplyr::pull(.data$databaseId)
+    
+    if (!isTRUE(all.equal(databaseIds %>% sort(),
+                          input$databases %>% unique() %>% sort()))) {
+      return(dplyr::tibble(Note = paste0("There is no data for the databases:\n",
+                                         paste0(setdiff(input$databases %>% sort(), 
+                                                        databaseIds %>% sort()), 
+                                                collapse = ",\n "), 
+                                         ".\n Please unselect them.")))
+    }
     
     maxConceptCount <- max(data$conceptCount, na.rm = TRUE)
     
@@ -593,6 +618,15 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::arrange() %>% 
       dplyr::pull(.data$databaseId)
     
+    if (!isTRUE(all.equal(databaseIds %>% sort(),
+                          input$databases %>% unique() %>% sort()))) {
+      return(dplyr::tibble(Note = paste0("There is no data for the databases:\n",
+                                         paste0(setdiff(input$databases %>% sort(), 
+                                                        databaseIds %>% sort()), 
+                                                collapse = ",\n "), 
+                                         ".\n Please unselect them.")))
+    }
+    
     table <- table %>% 
       tidyr::pivot_longer(cols = c(.data$meetSubjects, .data$gainSubjects, 
                                    .data$totalSubjects, .data$remainSubjects)) %>% 
@@ -625,7 +659,7 @@ shiny::shinyServer(function(input, output, session) {
                    ordering = TRUE,
                    paging = TRUE)
     # ,
-    # columnDefs = list(minCellCountDef(1 + (1:(length(input$databases) * 4)))))
+    # columnDefs = list(minCellCountDef(1 + (1:(databaseIds * 4)))))
     
     table <- DT::datatable(table,
                            options = options,
@@ -636,7 +670,7 @@ shiny::shinyServer(function(input, output, session) {
                            filter = c('bottom'),
                            class = "stripe nowrap compact")
     table <- DT::formatStyle(table = table,
-                             columns = 2 + (1:(length(input$databases) * 4)),
+                             columns = 2 + (1:(databaseIds * 4)),
                              #background = DT::styleColorBar(lims, "lightblue"),
                              backgroundSize = "98% 88%",
                              backgroundRepeat = "no-repeat",
@@ -712,6 +746,15 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::arrange() %>% 
       dplyr::pull(.data$databaseId)
     
+    if (!isTRUE(all.equal(databaseIds %>% sort(),
+                          input$databases %>% unique() %>% sort()))) {
+      return(dplyr::tibble(Note = paste0("There is no data for the databases:\n",
+                                         paste0(setdiff(input$databases, 
+                                                        databaseIds), 
+                                                collapse = ", \n"), 
+                                         ".\n Please unselect them.")))
+    }
+    
     visitContextReferene <-  tidyr::crossing(dplyr::tibble(visitContext = visitContext$visitContext %>% 
                                                              unique()),
                                              dplyr::tibble(databaseId = databaseIds))
@@ -779,6 +822,15 @@ shiny::shinyServer(function(input, output, session) {
       return(dplyr::tibble(Note = paste0('No data available for selected databases and cohorts')))
     }
     
+    if (!isTRUE(all.equal(dataCounts$databaseId %>% unique %>% sort(),
+                  input$databases %>% unique() %>% sort()))) {
+      return(dplyr::tibble(Note = paste0("There is no data for the databases:\n",
+                                         paste0(setdiff(input$databases, 
+                                                        dataCounts$databaseId), 
+                                                collapse = ",\n "), 
+                                         ".\n Please unselect them.")))
+    }
+    
     dataCountsWithSubjectCountBelowThreshold <- dataCounts %>% 
       dplyr::filter(.data$cohortSubjects < thresholdCohortSubjects)
     
@@ -800,19 +852,15 @@ shiny::shinyServer(function(input, output, session) {
         temp <- data %>% 
           dplyr::filter(.data$databaseId == dataCount$databaseId) %>% 
           prepareTable1()
-        if (nrow(temp) > 0) {
-          temp <- temp %>% 
-            dplyr::mutate(databaseId = dataCount$databaseId)
-        } else {
-          return(dplyr::tibble(Note = paste0(dataCount$databaseId, ' does not have covariates that are part of pretty table. Please unselect.')))
-        }
         table[[j]] <- temp
-        if (nrow(temp) > 0) {
-          characteristics[[j]] <- temp %>% 
+        if (nrow(table[[j]]) > 0) {
+          table[[j]] <- table[[j]] %>% 
+            dplyr::mutate(databaseId = dataCount$databaseId)
+          characteristics[[j]] <- table[[j]] %>% 
             dplyr::select(.data$characteristic, .data$position, 
                           .data$header, .data$sortOrder)
         } else {
-          characteristics[[j]] <- dplyr::tibble()
+          return(dplyr::tibble(Note = paste0(dataCount$databaseId, ' does not have covariates that are part of pretty table. Please unselect.')))
         }
       }
       characteristics <- dplyr::bind_rows(characteristics) %>% 
