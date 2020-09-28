@@ -550,9 +550,9 @@ compareCovariateValueResult <- function(connection = NULL,
                   mean2 = .data$mean,
                   sd2 = .data$sd)
   
-  
-  data <- dplyr::full_join(x = targetCovariateValue,
-                           y = comparatorCovariateValue) %>%
+  data <- dplyr::inner_join(x = targetCovariateValue,
+                            y = comparatorCovariateValue,
+                            by = c('covariateId', 'databaseId')) %>%
     dplyr::relocate(.data$databaseId,
                     .data$targetCohortId,
                     .data$comparatorCohortId) %>% 

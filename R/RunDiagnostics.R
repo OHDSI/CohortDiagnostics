@@ -97,8 +97,8 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  inclusionStatisticsFolder = file.path(exportFolder, "inclusionStatistics"),
                                  exportFolder,
                                  databaseId,
-                                 databaseName = databaseId,
-                                 databaseDescription = "",
+                                 databaseName = NULL,
+                                 databaseDescription = NULL,
                                  cdmVersion = 5,
                                  runInclusionStatistics = TRUE,
                                  runIncludedSourceConcepts = TRUE,
@@ -206,8 +206,8 @@ runCohortDiagnostics <- function(packageName = NULL,
   ParallelLogger::logInfo("Saving database metadata")
   startMetaData <- Sys.time()
   database <- dplyr::tibble(databaseId = databaseId,
-                            databaseName = databaseName,
-                            description = databaseDescription,
+                            databaseName = dplyr::coalesce(databaseName,databaseId),
+                            description = dplyr::coalesce(databaseDescription,databaseId),
                             isMetaAnalysis = 0)
   writeToCsv(data = database, 
              fileName = file.path(exportFolder, "database.csv"))
@@ -627,6 +627,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                                   covariateSettings = covariateSettings,
                                                   cdmVersion = cdmVersion)
       exportCharacterization(characteristics = characteristics,
+                             databaseId = databaseId,
                              incremental = incremental,
                              covariateValueFileName = file.path(exportFolder, "covariate_value.csv"),
                              covariateRefFileName = file.path(exportFolder, "covariate_ref.csv"),
@@ -776,6 +777,7 @@ loadAndExportPhenotypeDescription <- function(packageName,
 }
 
 exportCharacterization <- function(characteristics,
+                                   databaseId,
                                    incremental,
                                    covariateValueFileName,
                                    covariateRefFileName,

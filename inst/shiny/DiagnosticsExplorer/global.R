@@ -36,7 +36,8 @@ suppressWarnings(
     "inclusionRuleStats",
     "indexEventBreakdown",
     "orphanConcept",
-    "timeDistribution"
+    "timeDistribution",
+    "visitContext"
   )
 )
 
@@ -46,6 +47,8 @@ if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {
 } else {
   writeLines("No premerged file found")
 }
+
+rm("visitContext")
 
 database <- database %>% 
   dplyr::distinct() %>%

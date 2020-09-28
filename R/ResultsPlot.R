@@ -302,10 +302,10 @@ plotIncidenceRate <- function(data,
   if (plotType == "line") {
     plot <- plot + 
       ggiraph::geom_line_interactive(ggplot2::aes(), size = 3, alpha = 0.6) +
-      ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 3, alpha = 0.6)
+      ggiraph::geom_point_interactive(ggplot2::aes(tooltip = plot$tooltip), size = 3, alpha = 0.6)
   } else {
     plot <- plot + ggplot2::geom_bar(stat = "identity") +
-      ggiraph::geom_col_interactive( ggplot2::aes(tooltip = tooltip), size = 2)
+      ggiraph::geom_col_interactive( ggplot2::aes(tooltip = plot$tooltip), size = 2)
   }
   
   # databaseId field only present when called in Shiny app:
