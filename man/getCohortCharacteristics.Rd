@@ -13,7 +13,8 @@ getCohortCharacteristics(
   cohortTable = "cohort",
   cohortIds,
   cdmVersion = 5,
-  covariateSettings
+  covariateSettings,
+  batchSize = 100
 )
 }
 \arguments{
@@ -49,9 +50,12 @@ table.}
 \item{covariateSettings}{Either an object of type \code{covariateSettings} as created using one of
 the createCovariate functions in the FeatureExtraction package, or a list
 of such objects.}
+
+\item{batchSize}{Maximum number of cohorts to characterize at once. A larger batch size will
+be quicker, but may run out of resources on the server.}
 }
 \value{
-A list object with tibbles returned from Feature Extraction
+An Andromeda object with information on the covariates.
 }
 \description{
 Computes features using all drugs, conditions, procedures, etc. observed on or prior to the cohort
