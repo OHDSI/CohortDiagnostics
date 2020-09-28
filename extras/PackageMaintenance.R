@@ -39,7 +39,18 @@ pkgdown::build_site()
 OhdsiRTools::fixHadesLogo()
 
 # Install cohorts for testing
-ROhdsiWebApi::insertCohortDefinitionSetInPackage(fileName = "inst/settings/CohortsToCreateForTesting.csv",
+
+cohortsToInsertIntoPackage <- readr::read_csv("inst/settings/CohortsToCreateForTesting.csv", 
+                                              col_types = readr::cols(), trim_ws = TRUE) %>% 
+  dplyr::mutate(atlasId = .data$webApiCohortId,
+                cohortId = .data$cohortId,
+                name  = .data$cohortId) %>% 
+  dplyr::select(.data$atlasId, .data$cohortId, .data$name)
+
+readr::write_csv(x = cohortsToInsertIntoPackage,
+                 "inst/settings/CohortsToInstantiate.csv")
+
+ROhdsiWebApi::insertCohortDefinitionSetInPackage(fileName = "inst/settings/CohortsToInstantiate.csv",
                                                  baseUrl = Sys.getenv("baseUrl"),
                                                  insertTableSql = FALSE,
                                                  generateStats = TRUE,

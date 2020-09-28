@@ -74,7 +74,7 @@ WebApi or a Package." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.0</span>
       </span>
     </div>
 
@@ -140,11 +140,11 @@ WebApi or a Package.</p>
     </div>
 
     <pre class="usage"><span class='fu'>getCohortsJsonAndSql</span>(
-  <span class='kw'>packageName</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cohortToCreateFile</span> <span class='kw'>=</span> <span class='st'>"settings/CohortsToCreate.csv"</span>,
-  <span class='kw'>baseUrl</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cohortSetReference</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cohortIds</span> <span class='kw'>=</span> <span class='kw'>NULL</span>
+  packageName = <span class='kw'>NULL</span>,
+  cohortToCreateFile = <span class='st'>"settings/CohortsToCreate.csv"</span>,
+  baseUrl = <span class='kw'>NULL</span>,
+  cohortSetReference = <span class='kw'>NULL</span>,
+  cohortIds = <span class='kw'>NULL</span>
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -158,9 +158,9 @@ WebApi or a Package.</p>
     <tr>
       <th>cohortToCreateFile</th>
       <td><p>The location of the cohortToCreate file within the package. Is ignored if 
-<code>baseUrl</code> and <code>cohortSetReference</code> have been specified. The cohortToCreateFile
-must be .csv file that is expected to be read into a dataframe object identical to requirements
-for <code>cohortSetReference</code> argument.</p></td>
+<code>baseUrl</code> and <code>cohortSetReference</code> have been specified. The
+cohortToCreateFile must be .csv file that is expected to be read into 
+a dataframe object identical to requirements for <code>cohortSetReference</code> argument.</p></td>
     </tr>
     <tr>
       <th>baseUrl</th>
@@ -187,28 +187,32 @@ such as JSON and SQL.</p>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>Currently two ways of executing this function are supported, either 
-(1) [Package Mode] embedded in a study package, assuming the cohort definitions are stored in that package using the 
-    <code><a href='https://rdrr.io/pkg/ROhdsiWebApi/man/insertCohortDefinitionSetInPackage.html'>ROhdsiWebApi::insertCohortDefinitionSetInPackage</a></code>, or 
+(1) [Package Mode] embedded in a study package, assuming the cohort definitions are stored in that package using the <code><a href='https://rdrr.io/pkg/ROhdsiWebApi/man/insertCohortDefinitionSetInPackage.html'>ROhdsiWebApi::insertCohortDefinitionSetInPackage</a></code>, or 
 (2) [WebApi Mode] By using a WebApi interface to retrieve the cohort definitions.</p>
 <p>When using this function in Package Mode: Use the <code>packageName</code> and <code>cohortToCreateFile</code> to specify
 the name of the study package, and the name of the cohortToCreate file within that package, respectively</p>
 <p>When using this function in WebApi Mode: use the <code>baseUrl</code> and <code>cohortSetReference</code> to specify how to 
 connect to the WebApi, and which cohorts to fetch, respectively.</p>
 <p>Note: if the parameters for both Package Mode and WebApi Mode are provided, then Package mode is preferred.</p>
-<p>The <code>cohortSetReference</code> argument must be a data frame with  the following columns:</p><dl'>
-<dt>atlasId</dt><dd><p>The cohort ID in ATLAS.</p></dd>
-<dt>atlasName</dt><dd><p>The full name of the cohort. This will be shown in the Shiny app.</p></dd>
-<dt>cohortId</dt><dd><p>The cohort ID to use in the package. Usually the same as the cohort ID in ATLAS.</p></dd>
-<dt>name</dt><dd><p>A short name for the cohort, to use to create file names. do not use special characters.</p></dd>
+<p>The <code>cohortSetReference</code> argument must be a data frame with  the following columns:</p><dl>
+<dt>referentConceptId</dt><dd><p>A standard omop concept id that serves as the referant phenotype definition for the cohort Id.</p></dd>
+<dt>cohortId</dt><dd><p>The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names. It is recommended to be (referrentConceptId * 1000) + a number between 3 to 999</p></dd>
+<dt>webApiCohortId</dt><dd><p>Cohort Id in the webApi/atlas instance. It is a required field to run Cohort Diagnostics in WebApi mode. It is discarded in package mode.</p></dd>
+<dt>cohortName</dt><dd><p>The full name of the cohort. This will be shown in the Shiny app.</p></dd>
+<dt>logicDescription</dt><dd><p>A human understandable brief description of the cohort definition. This logic does not have to a 
+fully specified description of the cohort definition, but should provide enough context to help user understand the
+meaning of the cohort definition</p></dd>
 
 </dl>
 
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='no'>cohorts</span> <span class='kw'>&lt;-</span> <span class='fu'>getCohortsJsonAndSql</span>(<span class='kw'>packageName</span> <span class='kw'>=</span> <span class='st'>'cohortDiagnostics'</span>,
-                                <span class='kw'>baseUrl</span> <span class='kw'>=</span> <span class='st'>"http://server.org:80/WebAPI"</span>)
-}</div></pre>
+    <pre class="examples"><div class='input'><span class='co'>if</span> (<span class='fl'>FALSE</span>) {
+<span class='kw'>cohorts</span> <span class='op'>&lt;-</span> <span class='fu'>getCohortsJsonAndSql</span>(packageName = <span class='st'>'cohortDiagnostics'</span>,
+                                baseUrl = <span class='st'>"http://server.org:80/WebAPI"</span>)
+}
+
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -224,7 +228,7 @@ connect to the WebApi, and which cohorts to fetch, respectively.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

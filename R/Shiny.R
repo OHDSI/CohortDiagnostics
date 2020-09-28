@@ -16,10 +16,10 @@
 
 #' Launch the Diagnostics Explorer Shiny app
 #'
-#' @param dataFolder       A folder where the exported zip files for the diagnostics are stored. Use
-#'                         the \code{\link{runCohortDiagnostics}} function to generate these zip files. 
-#'                         Zip files containing results from multiple databases can be placed in the same
-#'                         folder.
+#' @param dataFolder       A folder where the premerged file is stored. Use
+#'                         the \code{\link{preMergeDiagnosticsFiles}} function to generate this file.
+#' @param runOverNetwork   (optional) Do you want the app to run over your network?
+#' @param port             (optional) Only used if \code{runOverNetwork} = TRUE. 
 #' @param launch.browser   Should the app be launched in your default browser, or in a Shiny window.
 #'                         Note: copying to clipboard will not work in a Shiny window.
 #'
@@ -27,7 +27,10 @@
 #' Launches a Shiny app that allows the user to explore the diagnostics
 #'
 #' @export
-launchDiagnosticsExplorer <- function(dataFolder, launch.browser = FALSE) {
+launchDiagnosticsExplorer <- function(dataFolder, 
+                                      runOverNetwork = FALSE,
+                                      port = 80,
+                                      launch.browser = FALSE) {
   ensure_installed("shiny")
   ensure_installed("shinydashboard")
   ensure_installed("shinyWidgets")
@@ -35,105 +38,117 @@ launchDiagnosticsExplorer <- function(dataFolder, launch.browser = FALSE) {
   ensure_installed("VennDiagram")
   ensure_installed("htmltools")
   ensure_installed("scales")
-  appDir <- system.file("shiny", "DiagnosticsExplorer", package = "CohortDiagnostics")
+  ensure_installed("plotly")
+  ensure_installed("dplyr")
+  ensure_installed("tidyr")
+  ensure_installed("ggiraph")
+
+  appDir <- system.file("shiny", "DiagnosticsExplorer", package = "CohortDiagnostics")  
+  
+  if (launch.browser) {
+    options(shiny.launch.browser = TRUE)
+  }
+  
+  if (runOverNetwork) {
+    myIpAddress <- system("ipconfig", intern = TRUE)
+    myIpAddress <- myIpAddress[grep("IPv4", myIpAddress)]
+    myIpAddress <- gsub(".*? ([[:digit:]])", "\\1", myIpAddress)
+    options(shiny.port = port)
+    options(shiny.host = myIpAddress)
+  }
   shinySettings <- list(dataFolder = dataFolder)
   .GlobalEnv$shinySettings <- shinySettings
-  on.exit(rm(shinySettings, envir = .GlobalEnv))
-  shiny::runApp(appDir)
+  on.exit(rm("shinySettings", envir = .GlobalEnv))
+  shiny::runApp(appDir = appDir)
 }
 
 #' Premerge Shiny diagnostics files
 #' 
 #' @description 
-#' If there are many diagnostics files, starting the Shiny app may take a very long time. This function 
-#' already does most of the preprocessing, increasing loading speed.
+#' This function combines diagnostics results from one or more databases into a single file. The result is a
+#' single file that can be used as input for the Diagnostics Explorer Shiny app.
 #' 
-#' The merged data will be stored in the same folder, and will automatically be recognized by the Shiny app.
+#' It also checks whether the results conform to the results data model specifications.
 #'
-#' @param dataFolder  folder where the exported zip files for the diagnostics are stored. Use
+#' @param dataFolder       folder where the exported zip files for the diagnostics are stored. Use
 #'                         the \code{\link{runCohortDiagnostics}} function to generate these zip files. 
-#'                         Zip files containing results from multiple databases can be placed in the same
+#'                         Zip files containing results from multiple databases may be placed in the same
 #'                         folder. 
-#' @param minCovariateProportion  minimum value threshold for covariates to be included 
-#'                                in premerged file (valid number (maybe decimal) between 0 to 1)                         
+#' @param tempFolder       A folder on the local file system where the zip files are extracted to. Will be cleaned
+#'                         up when the function is finished. Can be used to specify a temp folder on a drive that
+#'                         has sufficent space if the default system temp space is too limited.
+#'                      
 #' @export
-preMergeDiagnosticsFiles <- function(dataFolder, minCovariateProportion = 0) {
-  zipFiles <- list.files(dataFolder, pattern = ".zip", full.names = TRUE)
-  errorMessage <- checkmate::makeAssertCollection()
-  checkmate::assertNumber(x = minCovariateProportion, lower = 0, upper = 1, add = errorMessage)
-  checkmate::reportAssertions(collection = errorMessage)
+preMergeDiagnosticsFiles <- function(dataFolder, tempFolder = tempdir()) {
   
-  loadFile <- function(file, folder, overwrite, minProportion = minProportion) {
-    # print(file)
-    tableName <- gsub(".csv$", "", file)
-    camelCaseName <- SqlRender::snakeCaseToCamelCase(tableName)
-    data <- readr::read_csv(file.path(folder, file), col_types = readr::cols(), guess_max = 1e7, locale = readr::locale(encoding = "UTF-8"))
-    colnames(data) <- SqlRender::snakeCaseToCamelCase(colnames(data))
+  zipFiles <- dplyr::tibble(zipFile = list.files(dataFolder, pattern = ".zip", full.names = TRUE, recursive = TRUE),
+                            unzipFolder = "")
+  ParallelLogger::logInfo("Merging ", nrow(zipFiles), " zip files.")
+
+  unzipMainFolder <- tempfile("unzipTempFolder", tmpdir = tempFolder)
+  dir.create(path = unzipMainFolder, recursive = TRUE)
+  on.exit(unlink(unzipMainFolder, recursive = TRUE))
+  
+  for (i in 1:nrow(zipFiles)) {
+    ParallelLogger::logInfo("- Unzipping ", basename(zipFiles$zipFile[i]))
+    unzipFolder <- file.path(unzipMainFolder, sub(".zip", "", basename(zipFiles$zipFile[i])))
+    dir.create(unzipFolder)
+    zip::unzip(zipFiles$zipFile[i], exdir = unzipFolder)
+    zipFiles$unzipFolder[i] <- unzipFolder
+  }
     
-    if (tableName %in% c('covariate_value', 'temporal_covariate_value')) {
-      data <- data %>% 
-        dplyr::filter(mean >= minCovariateProportion)
-    }
-    
-    if (tableName %in% c('covariate','temporal_covariate')) {# this is a temporary solution as detailed here https://github.com/OHDSI/CohortDiagnostics/issues/162
-      data2 <- data %>% 
-        dplyr::group_by(.data$covariateId, .data$conceptId) %>% 
-        dplyr::filter(.data$covariateName == max(.data$covariateName)) %>% 
-        dplyr::slice(1) %>% 
-        dplyr::ungroup()
-      if (!nrow(data2) == nrow(data)) {
-        ParallelLogger::logInfo('Warning: covariate found to have more than one record per 
-                                covariateId, conceptId combination. The row record corresponding 
-                                to maximum value of covariateName has been chosen. This led to reduction 
-                                in number of rows from ', nrow(data), ' to ', nrow(data2))
-        data <- data2
-      } else {data2 <- NULL}
-    }
-    
-    if (!overwrite && exists(camelCaseName, envir = .GlobalEnv)) {
-      existingData <- get(camelCaseName, envir = .GlobalEnv)
-      if (nrow(existingData) > 0) {
-        if (nrow(data) > 0) {
-          if (all(colnames(existingData) %in% colnames(data)) &&
-              all(colnames(data) %in% colnames(existingData))) {
-            data <- data[, colnames(existingData)]
-          } else {
-            stop("Table columns do no match previously seen columns. Columns in ", 
-                 file, 
-                 ":\n", 
-                 paste(colnames(data), collapse = ", "), 
-                 "\nPrevious columns:\n",
-                 paste(colnames(existingData), collapse = ", "))
-            
-          }
-        }
+  specifications = getResultsDataModelSpecifications()
+  
+  # Storing output in an environment for now. If things get too big, we may want to write 
+  # directly to CSV files for insertion into database:
+  newEnvironment <- new.env()
+  
+  processTable <- function(tableName, env) {
+    ParallelLogger::logInfo("Processing table ", tableName)
+    csvFileName <- paste0(tableName, ".csv")
+    data <- dplyr::tibble()
+    for (i in 1:nrow(zipFiles)) {
+      if (csvFileName %in% list.files(zipFiles$unzipFolder[i])) {
+         newData <- readr::read_csv(file.path(zipFiles$unzipFolder[i], csvFileName),
+                                    col_types = readr::cols(),
+                                    guess_max = 1e6)
+         checkColumnNames(table = newData, 
+                          tableName = tableName, 
+                          zipFileName = zipFiles$zipFile[i],
+                          specifications = specifications)
+         newData <- checkAndFixDataTypes(table = newData, 
+                                         tableName = tableName, 
+                                         zipFileName = zipFiles$zipFile[i],
+                                         specifications = specifications)
+         newData <- checkAndFixDataTypes(table = newData, 
+                                         tableName = tableName, 
+                                         zipFileName = zipFiles$zipFile[i],
+                                         specifications = specifications)
+         newData <- checkAndFixDuplicateRows(table = newData, 
+                                             tableName = tableName, 
+                                             zipFileName = zipFiles$zipFile[i],
+                                             specifications = specifications) 
+         data <- appendNewRows(data = data, 
+                               newData = newData, 
+                               tableName = tableName, 
+                               specifications = specifications)
       }
-      data <- dplyr::bind_rows(existingData, data) %>% 
-        dplyr::distinct()
     }
-    assign(camelCaseName, data, envir = .GlobalEnv)
-    
-    invisible(NULL)
+    if (nrow(data) == 0) {
+      ParallelLogger::logInfo("- No data found for table ", tableName)
+    } else {
+      colnames(data) <- SqlRender::snakeCaseToCamelCase(colnames(data))
+      assign(SqlRender::snakeCaseToCamelCase(tableName), data, envir = env)
+    }
   }
-  
-  tableNames <- c()
-  for (i in 1:length(zipFiles)) {
-    writeLines(paste("Processing", zipFiles[i]))
-    tempFolder <- tempfile()
-    dir.create(tempFolder)
-    unzip(zipFiles[i], exdir = tempFolder)
-    
-    csvFiles <- list.files(tempFolder, pattern = ".csv")
-    tableNames <- c(tableNames, csvFiles)
-    lapply(csvFiles, loadFile, folder = tempFolder, overwrite = (i == 1))
-    
-    unlink(tempFolder, recursive = TRUE)
-  }
-  
-  tableNames <- unique(tableNames)
-  tableNames <- gsub(".csv$", "", tableNames)
-  tableNames <- SqlRender::snakeCaseToCamelCase(tableNames)
-  save(list = tableNames, file = file.path(dataFolder, "PreMerged.RData"), compress = TRUE)
+  invisible(lapply(unique(specifications$tableName), processTable, env = newEnvironment))
+  ParallelLogger::logInfo("Creating PreMerged.Rdata file. This might take some time.")
+  save(list = ls(newEnvironment),
+       envir = newEnvironment,
+       compress = TRUE,
+       compression_level = 9,
+       file = file.path(dataFolder, "PreMerged.RData"))
+  rm(list = ls(newEnvironment), envir = newEnvironment)
   ParallelLogger::logInfo("Merged data saved in ", file.path(dataFolder, "PreMerged.RData"))
 }
 
@@ -169,10 +184,10 @@ launchCohortExplorer <- function(connectionDetails,
                                    cdmDatabaseSchema = cdmDatabaseSchema,
                                    cohortDatabaseSchema = cohortDatabaseSchema,
                                    cohortTable = cohortTable,
-                                   cohortDefinitionId = cohortId,
+                                   cohortId = cohortId,
                                    sampleSize = sampleSize,
                                    subjectIds = subjectIds)
-  on.exit(rm(shinySettings, envir = .GlobalEnv))
+  on.exit(rm("shinySettings", envir = .GlobalEnv))
   appDir <- system.file("shiny", "CohortExplorer", package = "CohortDiagnostics")
   shiny::runApp(appDir)
 }

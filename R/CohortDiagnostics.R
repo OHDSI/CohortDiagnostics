@@ -23,4 +23,5 @@
 #' @importFrom utils write.csv install.packages menu unzip
 #' @import dplyr
 #' @importFrom rlang .data
+#' @importFrom FeatureExtraction createDefaultCovariateSettings createTemporalCovariateSettings
 NULL

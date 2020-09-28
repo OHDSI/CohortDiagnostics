@@ -73,7 +73,7 @@ to instantiated conceptSets during cohort construction." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.0</span>
       </span>
     </div>
 
@@ -137,7 +137,7 @@ to instantiated conceptSets during cohort construction." />
 to instantiated conceptSets during cohort construction.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>extractConceptSetsSqlFromCohortSql</span>(<span class='no'>cohortSql</span>)</pre>
+    <pre class="usage"><span class='fu'>extractConceptSetsSqlFromCohortSql</span>(<span class='kw'>cohortSql</span>)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -157,9 +157,11 @@ The standard form SQL is generated using <code>circe-be</code> by
                     concept set combination in cohort definition.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='kw'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='no'>conceptSetSql</span> <span class='kw'>&lt;-</span> <span class='fu'>extractConceptSetsSqlFromCohortSql</span>(<span class='kw'>cohortSql</span> <span class='kw'>=</span> <span class='no'>sql</span>)
-}</div></pre>
+    <pre class="examples"><div class='input'><span class='co'>if</span> (<span class='fl'>FALSE</span>) {
+<span class='kw'>conceptSetSql</span> <span class='op'>&lt;-</span> <span class='fu'>extractConceptSetsSqlFromCohortSql</span>(cohortSql = <span class='kw'>sql</span>)
+}
+
+</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
@@ -175,7 +177,7 @@ The standard form SQL is generated using <code>circe-be</code> by
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

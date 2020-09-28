@@ -11,8 +11,10 @@ getCohortCharacteristics(
   oracleTempSchema = NULL,
   cohortDatabaseSchema = cdmDatabaseSchema,
   cohortTable = "cohort",
-  cohortId,
-  covariateSettings
+  cohortIds,
+  cdmVersion = 5,
+  covariateSettings,
+  batchSize = 100
 )
 }
 \arguments{
@@ -40,15 +42,20 @@ this should include both the database and schema name, for example
 
 \item{cohortTable}{Name of the cohort table.}
 
-\item{cohortId}{The cohort definition ID used to reference the cohort in the cohort
+\item{cohortIds}{A vector of cohortIds (1 or more) used to reference the cohort in the cohort
 table.}
+
+\item{cdmVersion}{The version of the OMOP CDM. Default 5. (Note: only 5 is supported.)}
 
 \item{covariateSettings}{Either an object of type \code{covariateSettings} as created using one of
 the createCovariate functions in the FeatureExtraction package, or a list
 of such objects.}
+
+\item{batchSize}{Maximum number of cohorts to characterize at once. A larger batch size will
+be quicker, but may run out of resources on the server.}
 }
 \value{
-A data frame with cohort characteristics.
+An Andromeda object with information on the covariates.
 }
 \description{
 Computes features using all drugs, conditions, procedures, etc. observed on or prior to the cohort

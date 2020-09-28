@@ -14,11 +14,50 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+checkCohortReference <- function(cohortReference, errorMessage = NULL) {
+  if (is.null(errorMessage) | !class(errorMessage) == 'AssertColection') {
+    errorMessage <- checkmate::makeAssertCollection()
+  }
+  checkmate::assertDataFrame(x = cohortReference, 
+                             types = c("integer", "character","numeric"),
+                             min.rows = 1,
+                             min.cols = 6,
+                             null.ok = FALSE,
+                             col.names = "named",
+                             add = errorMessage)
+  if ("referentConceptId" %in% names(cohortReference)) {
+    checkmate::assertDouble(x = cohortReference$referentConceptId, 
+                            lower = 0, 
+                            any.missing = FALSE, 
+                            unique = FALSE, 
+                            null.ok = FALSE, 
+                            add = errorMessage)
+  }
+  checkmate::assertDouble(x = cohortReference$cohortId, 
+                          lower = 0, 
+                          any.missing = FALSE, 
+                          unique = TRUE, 
+                          null.ok = FALSE, 
+                          add = errorMessage)
+  checkmate::assertDouble(x = cohortReference$webApiCohortId, 
+                          lower = 0, 
+                          any.missing = FALSE, 
+                          unique = TRUE, 
+                          null.ok = FALSE, 
+                          add = errorMessage)
+  checkmate::assertNames(x = names(cohortReference),subset.of =  c("referentConceptId","cohortId",
+                                                                   "webApiCohortId","cohortName",
+                                                                   "logicDescription","clinicalRationale" ),
+                         add = errorMessage)
+  invisible(errorMessage)
+}
+
+
 getCohortsJsonAndSqlFromPackage <- function(packageName = packageName,
                                             cohortToCreateFile = cohortToCreateFile,
                                             cohortIds = NULL,
                                             errorMessage = NULL) {
-  ParallelLogger::logInfo("Executing on cohorts specified in package - ", packageName)
+  ParallelLogger::logDebug("Executing on cohorts specified in package - ", packageName)
   
   if (is.null(errorMessage) | !class(errorMessage) == 'AssertColection') {
     errorMessage <- checkmate::makeAssertCollection()
@@ -30,25 +69,30 @@ getCohortsJsonAndSqlFromPackage <- function(packageName = packageName,
                               extension = "csv", 
                               add = errorMessage)
   
-  cohorts <- readr::read_csv(pathToCsv, col_types = readr::cols())
+  cohorts <- readr::read_csv(pathToCsv, 
+                             col_types = readr::cols(),
+                             guess_max = min(1e7))
+  
+  # Adding some backwards compatiblity with v1:
+  if (!"name" %in% colnames(cohorts)) {
+    cohorts <- cohorts %>%
+      mutate(name = .data$cohortId)
+  }
+  if (!"webApiCohortId" %in% colnames(cohorts) && "atlasId" %in% colnames(cohorts)) {
+    cohorts <- cohorts %>%
+      rename(webApiCohortId = .data$atlasId)
+  }
+  if (!"cohortName" %in% colnames(cohorts) && "atlasName" %in% colnames(cohorts)) {
+    cohorts <- cohorts %>%
+      rename(cohortName = .data$atlasName)
+  }
   if (!is.null(cohortIds)) {
-    cohorts <- cohorts %>% dplyr::filter(.data$cohortId %in% cohortIds)
+    cohorts <- cohorts %>% 
+      dplyr::filter(.data$cohortId %in% cohortIds)
   }
   
-  checkmate::assertDataFrame(x = cohorts, 
-                             types = c("integer", "character","numeric"),
-                             any.missing = FALSE,
-                             min.rows = 1,
-                             min.cols = 4,
-                             null.ok = FALSE,
-                             col.names = "named",
-                             add = errorMessage)
-  checkmate::assertNames(x = names(cohorts),subset.of =  c("atlasName", "atlasId", "cohortId", "name"))
+  checkCohortReference(cohortReference = cohorts, errorMessage = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
-  
-  cohorts = cohorts %>% 
-    dplyr::select(-.data$atlasId) %>% 
-    dplyr::rename(cohortFullName = .data$atlasName, cohortName = .data$name)
   
   getSql <- function(name) {
     pathToSql <- system.file("sql", "sql_server", paste0(name, ".sql"), package = packageName)
@@ -56,14 +100,14 @@ getCohortsJsonAndSqlFromPackage <- function(packageName = packageName,
     sql <- readChar(pathToSql, file.info(pathToSql)$size)
     return(sql)
   }
-  cohorts$sql <- sapply(cohorts$cohortName, getSql)
+  cohorts$sql <- sapply(cohorts$name, getSql)
   getJson <- function(name) {
     pathToJson <- system.file("cohorts", paste0(name, ".json"), package = packageName)
     checkmate::assertFile(x = pathToJson, access = "r", extension = ".sql", add = errorMessage)
     json <- readChar(pathToJson, file.info(pathToJson)$size)
     return(json)
   }
-  cohorts$json <- sapply(cohorts$cohortName, getJson)
+  cohorts$json <- sapply(cohorts$name, getJson)
   return(cohorts)
 }
 
@@ -72,7 +116,7 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
                                            cohortSetReference = cohortSetReference,
                                            cohortIds = NULL,
                                            errorMessage = NULL) {
-  ParallelLogger::logInfo("[WebApi mode] Running Cohort Diagnostics on cohort specified in WebApi - ", baseUrl)
+  ParallelLogger::logDebug("Running Cohort Diagnostics on cohort specified in WebApi - ", baseUrl)
   
   if (is.null(errorMessage) | !class(errorMessage) == 'AssertColection') {
     errorMessage <- checkmate::makeAssertCollection()
@@ -81,23 +125,14 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
   webApiVersion <- ROhdsiWebApi::getWebApiVersion(baseUrl)
   ParallelLogger::logInfo("WebApi of version ", webApiVersion, " found at ", baseUrl)
   checkmate::assertCharacter(x = webApiVersion, min.chars = 1, add = errorMessage)
-  checkmate::assertDataFrame(x = cohortSetReference, 
-                             types = c("character","numeric"),
-                             any.missing = FALSE,
-                             min.rows = 1,
-                             ncols = 4,
-                             null.ok = FALSE,
-                             col.names = "named",
-                             add = errorMessage)
-  checkmate::assertNames(x = names(cohortSetReference),
-                         subset.of =  c("atlasName", "atlasId", "cohortId", "name", "cohortName"),
-                         add = errorMessage)
-  checkmate::reportAssertions(collection = errorMessage)
   cohorts <- cohortSetReference
+  errorMessage <- checkCohortReference(cohortReference = cohorts, errorMessage = errorMessage)
+  checkmate::reportAssertions(collection = errorMessage)
+  
   if (!is.null(cohortIds)) {
     cohorts <- cohorts %>% dplyr::filter(.data$cohortId %in% cohortIds)
   }
-
+  
   if ("name" %in% names(cohorts)) {
     cohorts <- dplyr::rename(cohorts, cohortName = "name")
   }
@@ -105,14 +140,14 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
   ParallelLogger::logInfo("Retrieving cohort definitions from WebAPI")
   cohort <- list()
   for (i in 1:nrow(cohorts)) {
-    cohort[[i]] <- cohorts %>% dplyr::slice(i)
+    cohort[[i]] <- cohorts[i,]
     ParallelLogger::logInfo("- Retrieving definitions for cohort ", cohort[[i]]$cohortFullName)
     cohortDefinition <-  ROhdsiWebApi::getCohortDefinition(cohortId = cohort[[i]]$atlasId,
                                                            baseUrl = baseUrl)
     cohort[[i]]$json <- RJSONIO::toJSON(x = cohortDefinition$expression, digits = 23)
     cohort[[i]]$sql <- ROhdsiWebApi::getCohortSql(cohortDefinition = cohortDefinition,
-                                                 baseUrl = baseUrl,
-                                                 generateStats = TRUE)
+                                                  baseUrl = baseUrl,
+                                                  generateStats = TRUE)
   }
   checkmate::reportAssertions(collection = errorMessage)
   return(dplyr::bind_rows(cohort))
@@ -148,12 +183,15 @@ getCohortsJsonAndSql <- function(packageName = NULL,
                                  cohortSetReference = NULL,
                                  cohortIds = NULL) {
   # Input parameters check
-  ParallelLogger::logInfo("Beginning cohort input parameter checks")
+  ParallelLogger::logTrace("Beginning cohort input parameter checks")
   errorMessage <- checkmate::makeAssertCollection()
   
   if (!is.null(cohortIds)) {
-    checkmate::assertIntegerish(x = cohortIds, any.missing = FALSE, min.len = 1, unique = TRUE, add = errorMessage)
-    
+    checkmate::assertDouble(x = cohortIds, 
+                            any.missing = FALSE, 
+                            min.len = 1, 
+                            unique = TRUE, 
+                            add = errorMessage)
   }
   
   if (!is.null(packageName)) {
@@ -162,25 +200,28 @@ getCohortsJsonAndSql <- function(packageName = NULL,
                                                cohortIds = cohortIds)
     if (!is.null(baseUrl)) {
       baseUrl <- NULL
-      ParallelLogger::logInfo("[Package mode] Ignoring parameter baseUrl because packageName is provided.\n",
-                              "Overiding user parameter baseUrl - setting to NULL")
+      ParallelLogger::logInfo("Ignoring parameter baseUrl because packageName is provided. Overiding user parameter baseUrl - setting to NULL")
     }
     if (!is.null(cohortSetReference)) {
       cohortSetReference <- NULL
-      ParallelLogger::logInfo("Ignoring parameter cohortSetReference because packageName is provided.\n",
-                              "Overiding user parameter cohortSetReference - setting to NULL")
+      ParallelLogger::logInfo("Ignoring parameter cohortSetReference because packageName is provided. Overiding user parameter cohortSetReference - setting to NULL")
     }
   } else {
     cohorts <- getCohortsJsonAndSqlFromWebApi(baseUrl = baseUrl,
                                               cohortSetReference = cohortSetReference,
-                                              cohortIds = cohortIds
-    )
+                                              cohortIds = cohortIds)
+  }
+  ParallelLogger::logInfo("Number of cohorts ", nrow(cohorts))
+  if (nrow(cohorts) == 0) {
+    warning("No cohorts founds")
+  }
+  if (nrow(cohorts) != length(cohorts$cohortId %>% unique())) {
+    warning("Please check input cohort specification. Is there duplication of cohortId? Returning empty cohort table.")
+    return(cohorts[0,])
   }
   checkmate::reportAssertions(collection = errorMessage)
   return(cohorts)
 }
-
-
 
 #' Create cohort table(s)
 #'
@@ -229,7 +270,7 @@ createCohortTable <- function(connectionDetails = NULL,
                                            cohort_database_schema = cohortDatabaseSchema,
                                            cohort_table = cohortTable)
   DatabaseConnector::executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
-  ParallelLogger::logDebug("- Created table ", cohortDatabaseSchema, ".", cohortTable)
+  ParallelLogger::logDebug("Created table ", cohortDatabaseSchema, ".", cohortTable)
   
   if (createInclusionStatsTables) {
     ParallelLogger::logInfo("Creating inclusion rule statistics tables")
@@ -242,21 +283,20 @@ createCohortTable <- function(connectionDetails = NULL,
                                              cohort_inclusion_stats_table = cohortInclusionStatsTable,
                                              cohort_summary_stats_table = cohortSummaryStatsTable)
     DatabaseConnector::executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
-    ParallelLogger::logDebug("- Created table ", cohortDatabaseSchema, ".", cohortInclusionTable)
-    ParallelLogger::logDebug("- Created table ",
+    ParallelLogger::logDebug("Created table ", cohortDatabaseSchema, ".", cohortInclusionTable)
+    ParallelLogger::logDebug("Created table ",
                              cohortDatabaseSchema,
                              ".",
                              cohortInclusionResultTable)
-    ParallelLogger::logDebug("- Created table ",
+    ParallelLogger::logDebug("Created table ",
                              cohortDatabaseSchema,
                              ".",
                              cohortInclusionStatsTable)
-    ParallelLogger::logDebug("- Created table ", cohortDatabaseSchema, ".", cohortSummaryStatsTable)
+    ParallelLogger::logDebug("Created table ", cohortDatabaseSchema, ".", cohortSummaryStatsTable)
   }
   delta <- Sys.time() - start
   writeLines(paste("Creating cohort table took", signif(delta, 3), attr(delta, "units")))
 }
-
 
 
 #' Instantiate a cohort
@@ -276,9 +316,7 @@ createCohortTable <- function(connectionDetails = NULL,
 #'
 #' @template CdmDatabaseSchema
 #'
-#' @param cohortId                     The cohort definition ID used to reference the cohort in the
-#'                                     cohort table.
-#'
+#' @param cohortId                     The cohort ID used to reference the cohort in the cohort table.
 #' @param generateInclusionStats       Compute and store inclusion rule statistics?
 #' @param resultsDatabaseSchema        Schema name where the statistics tables reside. Note that for
 #'                                     SQL Server, this should include both the database and schema
@@ -300,7 +338,6 @@ instantiateCohort <- function(connectionDetails = NULL,
                               cohortDatabaseSchema = cdmDatabaseSchema,
                               cohortTable = "cohort",
                               baseUrl = NULL,
-                              webApiCohortId = NULL,
                               cohortJson = NULL,
                               cohortSql = NULL,
                               cohortId = NULL,
@@ -329,14 +366,15 @@ instantiateCohort <- function(connectionDetails = NULL,
     cohortDefinition <- RJSONIO::fromJSON(content = cohortJson, digits = 23)
   }
   if (generateInclusionStats) {
-    inclusionRules <- data.frame()
+    inclusionRules <- tidyr::tibble()
     if (!is.null(cohortDefinition$InclusionRules)) {
       nrOfRules <- length(cohortDefinition$InclusionRules)
       if (nrOfRules > 0) {
         for (i in 1:nrOfRules) {
-          inclusionRules <- rbind(inclusionRules, data.frame(cohortDefinitionId = cohortId,
-                                                             ruleSequence = i - 1,
-                                                             name = cohortDefinition$InclusionRules[[i]]$name))
+          inclusionRules <- dplyr::bind_rows(inclusionRules, tidyr::tibble(cohortId = cohortId,
+                                                                           ruleSequence = i - 1,
+                                                                           name = cohortDefinition$InclusionRules[[i]]$name)) %>%
+            dplyr::mutate(name = stringr::str_replace_na(string = .data$name, replacement = ''))
         }
       }
     }
@@ -474,8 +512,8 @@ getInclusionStatistics <- function(connectionDetails = NULL,
 #' Gets inclusion criteria statistics from files, as stored when using the
 #' \code{ROhdsiWebApi::insertCohortDefinitionSetInPackage} function with \code{generateStats = TRUE}.
 #'
-#' @param cohortId                    The cohort definition ID used to reference the cohort in the
-#'                                    cohort table.
+#' @param cohortIds                   The cohort definition ID(s) used to reference the cohort in the
+#'                                    cohort table. If none are specified, all cohorts are included.
 #' @param simplify                    Simply output the attrition table?
 #' @param folder                      The path to the folder where the inclusion statistics are stored.
 #' @param cohortInclusionFile         Name of the inclusion table, one of the tables for storing
@@ -492,7 +530,7 @@ getInclusionStatistics <- function(connectionDetails = NULL,
 #' returned.
 #'
 #' @export
-getInclusionStatisticsFromFiles <- function(cohortId,
+getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
                                             folder,
                                             cohortInclusionFile = file.path(folder,
                                                                             "cohortInclusion.csv"),
@@ -504,24 +542,33 @@ getInclusionStatisticsFromFiles <- function(cohortId,
                                                                                "cohortSummaryStats.csv"),
                                             simplify = TRUE) {
   start <- Sys.time()
-  ParallelLogger::logInfo("Fetching inclusion statistics for cohort with cohort_definition_id = ",
-                          cohortId)
   
   fetchStats <- function(file) {
     ParallelLogger::logDebug("- Fetching data from ", file)
-    stats <- readr::read_csv(file, col_types = readr::cols())
-    stats <- stats[stats$cohortDefinitionId == cohortId, ]
+    stats <- readr::read_csv(file, 
+                             col_types = readr::cols(),
+                             guess_max = min(1e7))
+    if (!is.null(cohortIds)) {
+      stats <- stats %>%  
+        dplyr::filter(.data$cohortDefinitionId %in% cohortIds)
+    }
     return(stats)
   }
-  inclusion <- fetchStats(cohortInclusionFile)
+  inclusion <- fetchStats(cohortInclusionFile) %>% 
+    tidyr::replace_na(replace = list(description = ''))
   summaryStats <- fetchStats(cohortSummaryStatsFile)
   inclusionStats <- fetchStats(cohortInclusionStatsFile)
   inclusionResults <- fetchStats(cohortInclusionResultFile)
-  result <- processInclusionStats(inclusion = inclusion,
-                                  inclusionResults = inclusionResults,
-                                  inclusionStats = inclusionStats,
-                                  summaryStats = summaryStats,
-                                  simplify = simplify)
+  result <- dplyr::tibble()
+  for (cohortId in unique(inclusion$cohortDefinitionId)) {
+    cohortResult <- processInclusionStats(inclusion = filter(inclusion, .data$cohortDefinitionId == cohortId),
+                                          inclusionResults = filter(inclusionResults, .data$cohortDefinitionId == cohortId),
+                                          inclusionStats = filter(inclusionStats, .data$cohortDefinitionId == cohortId),
+                                          summaryStats = filter(summaryStats, .data$cohortDefinitionId == cohortId),
+                                          simplify = simplify)
+    cohortResult$cohortDefinitionId <- cohortId
+    result <- dplyr::bind_rows(result, cohortResult)
+  }
   delta <- Sys.time() - start
   writeLines(paste("Fetching inclusion statistics took", signif(delta, 3), attr(delta, "units")))
   return(result)
@@ -529,26 +576,30 @@ getInclusionStatisticsFromFiles <- function(cohortId,
 
 processInclusionStats <- function(inclusion,
                                   inclusionResults,
+                                  simplify,
                                   inclusionStats,
-                                  summaryStats,
-                                  simplify) {
+                                  summaryStats) {
   if (simplify) {
     if (nrow(inclusion) == 0 || nrow(inclusionStats) == 0) {
-      return(data.frame())
+      return(tidyr::tibble())
     }
-    result <- merge(unique(inclusion[, c("ruleSequence", "name")]),
-                    inclusionStats[inclusionStats$modeId ==
-                                     0, c("ruleSequence", "personCount", "gainCount", "personTotal")], )
     
-    result$remain <- rep(0, nrow(result))
-    inclusionResults <- inclusionResults[inclusionResults$modeId == 0, ]
+    result <- inclusion %>%
+      dplyr::select(.data$ruleSequence, .data$name) %>%
+      dplyr::distinct() %>%
+      dplyr::inner_join(inclusionStats %>%
+                          dplyr::filter(.data$modeId == 0) %>%
+                          dplyr::select(.data$ruleSequence, .data$personCount, .data$gainCount, .data$personTotal),
+                        by = "ruleSequence") %>%
+      dplyr::mutate(remain = 0)
+
+    inclusionResults <- inclusionResults %>% 
+      dplyr::filter(.data$modeId == 0)
     mask <- 0
     for (ruleId in 0:(nrow(result) - 1)) {
-      if (nrow(inclusionResults) > 0) {
-        mask <- bitwOr(mask, 2^ruleId)
-        idx <- bitwAnd(inclusionResults$inclusionRuleMask, mask) == mask
-        result$remain[result$ruleSequence == ruleId] <- sum(inclusionResults$personCount[idx])
-      }
+      mask <- bitwOr(mask, 2^ruleId)
+      idx <- bitwAnd(inclusionResults$inclusionRuleMask, mask) == mask
+      result$remain[result$ruleSequence == ruleId] <- sum(inclusionResults$personCount[idx])
     }
     colnames(result) <- c("ruleSequenceId",
                           "ruleName",
@@ -675,7 +726,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
     if (!incremental || isTaskRequired(cohortId = cohorts$cohortId[i],
                                        checksum = cohorts$checksum[i],
                                        recordKeepingFile = recordKeepingFile)) {
-      ParallelLogger::logInfo("Instantiation cohort ", cohorts$cohortFullName[i])
+      ParallelLogger::logInfo("Instantiation cohort ", cohorts$cohortName[i], " (Cohort id: ", cohorts$cohortId[i], ")")
       sql <- cohorts$sql[i]
       .warnMismatchSqlInclusionStats(sql, generateInclusionStats = generateInclusionStats)
       if (generateInclusionStats) {
@@ -722,38 +773,59 @@ instantiateCohortSet <- function(connectionDetails = NULL,
 
 createTempInclusionStatsTables <- function(connection, oracleTempSchema, cohorts) {
   ParallelLogger::logInfo("Creating temporary inclusion statistics tables")
-  pathToSql <- system.file( "inclusionStatsTables.sql", package = "ROhdsiWebApi")
-  sql <- SqlRender::readSql(pathToSql)
-  sql <- SqlRender::translate(sql, targetDialect = connection@dbms, oracleTempSchema = oracleTempSchema)
+  sql <- SqlRender::loadRenderTranslateSql("inclusionStatsTables.sql",
+                                           packageName = "CohortDiagnostics",
+                                           dbms = connection@dbms,
+                                           oracleTempSchema = oracleTempSchema)
   DatabaseConnector::executeSql(connection, sql)
   
-  inclusionRules <- data.frame()
+  inclusionRules <- tidyr::tibble()
   for (i in 1:nrow(cohorts)) {
     cohortDefinition <- RJSONIO::fromJSON(content = cohorts$json[i], digits = 23)
     if (!is.null(cohortDefinition$InclusionRules)) {
       nrOfRules <- length(cohortDefinition$InclusionRules)
       if (nrOfRules > 0) {
         for (j in 1:nrOfRules) {
-          inclusionRules <- rbind(inclusionRules, data.frame(cohortId = cohorts$cohortId[i],
-                                                             ruleSequence = j - 1,
-                                                             ruleName = cohortDefinition$InclusionRules[[j]]$name))
+          inclusionRules <- dplyr::bind_rows(inclusionRules, 
+                                             tidyr::tibble(cohortId = cohorts$cohortId[i],
+                                                           ruleSequence = j - 1,
+                                                           ruleName = cohortDefinition$InclusionRules[[j]]$name)) %>% 
+            dplyr::distinct()
         }
       }
     }
   }
-  inclusionRules <- merge(inclusionRules, data.frame(cohortId = cohorts$cohortId,
-                                                     cohortName = cohorts$cohortFullName))
-  inclusionRules <- data.frame(cohort_definition_id = inclusionRules$cohortId,
-                               rule_sequence = inclusionRules$ruleSequence,
-                               name = inclusionRules$ruleName)
+  
+  if (nrow(inclusionRules) > 0) {
+    inclusionRules <- inclusionRules %>% 
+      dplyr::inner_join(cohorts %>% dplyr::select(.data$cohortId, .data$cohortName), by = "cohortId") %>% 
+      dplyr::rename(name = .data$ruleName,
+                    cohortDefinitionId = .data$cohortId) %>% 
+      dplyr::select(.data$cohortDefinitionId, .data$ruleSequence, .data$name)
+    
+    inclusionRules <- data.frame(inclusionRules) # temporary solution till DatabaseConnector supports tibble
+    
+    DatabaseConnector::insertTable(connection = connection,
+                                   tableName = "#cohort_inclusion",
+                                   data = inclusionRules,
+                                   dropTableIfExists = TRUE,
+                                   createTable = TRUE,
+                                   tempTable = TRUE,
+                                   oracleTempSchema = oracleTempSchema,
+                                   camelCaseToSnakeCase = TRUE)
+  } else {
+  inclusionRules <- data.frame(cohortDefinitionId = as.double(),
+                               ruleSequence = as.integer(),
+                               name = as.character())
   DatabaseConnector::insertTable(connection = connection,
                                  tableName = "#cohort_inclusion",
                                  data = inclusionRules,
-                                 dropTableIfExists = FALSE,
-                                 createTable = FALSE,
+                                 dropTableIfExists = TRUE,
+                                 createTable = TRUE,
                                  tempTable = TRUE,
-                                 oracleTempSchema = oracleTempSchema)
-  
+                                 oracleTempSchema = oracleTempSchema,
+                                 camelCaseToSnakeCase = TRUE)
+  }
 }
 
 saveAndDropTempInclusionStatsTables <- function(connection, 
@@ -768,13 +840,13 @@ saveAndDropTempInclusionStatsTables <- function(connection,
                                                        connection = connection,
                                                        oracleTempSchema = oracleTempSchema,
                                                        snakeCaseToCamelCase = TRUE,
-                                                       table = table)
-    data <- tidyr::as_tibble(data)
+                                                       table = table) %>% 
+      tidyr::tibble()
     fullFileName <- file.path(inclusionStatisticsFolder, fileName)
     if (incremental) {
-      saveIncremental(data, fullFileName, cohortDefinitionId = cohortIds)
+      saveIncremental(data, fullFileName, cohortId = cohortIds)
     } else {
-      readr::write_csv(data, fullFileName)
+      readr::write_csv(x = data, path = fullFileName)
     }
   }
   fetchStats("#cohort_inclusion", "cohortInclusion.csv")
@@ -800,7 +872,6 @@ saveAndDropTempInclusionStatsTables <- function(connection,
                                                oracleTempSchema = oracleTempSchema)
 }
 
-
 .warnMismatchSqlInclusionStats <- function(sql, generateInclusionStats) {
   if (any(stringr::str_detect(string = sql, pattern = "_inclusion_result"), 
           stringr::str_detect(string = sql, pattern = "_inclusion_stats"), 
@@ -819,4 +890,50 @@ saveAndDropTempInclusionStatsTables <- function(connection,
               This may cause error and terminate cohort diagnositcs.")
     }
   }
+}
+
+
+
+#' Get record counts for a set of cohort
+#'
+#' @description
+#' This function get record count for a set of cohorts in the cohort table.
+#'
+#' @template Connection
+#' @template CohortTable
+#' @param cohortIds       A vecotr of cohortIds to get counts for.
+#' @return
+#' A tibble data frame object                               
+#'
+#' @export
+getRecordCountOfInstantiatedCohorts <- function(connection = NULL,
+                                                connectionDetails = NULL,
+                                                cohortDatabaseSchema,
+                                                cohortTable,
+                                                cohortIds) {
+  
+  if (is.vector(x = cohortIds) && length(cohortIds) > 1) {
+    cohortIds <- paste0(cohortIds, collapse = ",")
+  }
+  ## set up connection to server
+  if (is.null(connection)) {
+    connection <- DatabaseConnector::connect(connectionDetails)
+    on.exit(DatabaseConnector::disconnect(connection))
+  }
+  
+  sql <- "SELECT cohort_definition_id AS cohort_id, 
+      COUNT(*) AS cohort_count 
+    FROM @cohort_database_schema.@cohort_table 
+    WHERE cohort_definition_id in (@cohort_id)
+    GROUP BY cohort_definition_id ;"
+  
+  cohortTableRecords <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                                   sql = sql,
+                                                                   cohort_database_schema = cohortDatabaseSchema,
+                                                                   cohort_table = cohortTable,
+                                                                   cohort_id = cohortIds,
+                                                                   snakeCaseToCamelCase = TRUE) %>% 
+    dplyr::rename(count = .data$cohortCount) %>%
+    tidyr::tibble()
+  return(cohortTableRecords)
 }
