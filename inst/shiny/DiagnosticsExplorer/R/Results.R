@@ -497,7 +497,8 @@ compareCovariateValueResult <- function(connection = NULL,
                                         maxProportion = 1,
                                         isTemporal = TRUE,
                                         timeIds = NULL,
-                                        resultsDatabaseSchema = NULL) {
+                                        resultsDatabaseSchema = NULL,
+                                        domain = NULL) {
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertLogical(x = isTemporal, 
@@ -549,6 +550,7 @@ compareCovariateValueResult <- function(connection = NULL,
                   mean2 = .data$mean,
                   sd2 = .data$sd)
   
+  
   data <- dplyr::full_join(x = targetCovariateValue,
                            y = comparatorCovariateValue) %>%
     dplyr::relocate(.data$databaseId,
@@ -562,11 +564,14 @@ compareCovariateValueResult <- function(connection = NULL,
     dplyr::arrange(.data$databaseId,
                    .data$targetCohortId,
                    .data$comparatorCohortId, 
-                   .data$covariateId)
+                   .data$covariateId) %>% 
+    dplyr::inner_join(covariateRef)
+  
+  if (domain != "" && !is.null(domain) && domain != "all") {
+    data <- data %>% dplyr::filter(grepl(paste0("^",domain), .data$covariateName))
+  }
   return(data)
 }
-
-
 
 getCohortReference <- function(connection = NULL,
                                connectionDetails = NULL,

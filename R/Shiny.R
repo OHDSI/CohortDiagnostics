@@ -73,8 +73,7 @@ launchDiagnosticsExplorer <- function(dataFolder,
   shinySettings <- list(dataFolder = dataFolder)
   .GlobalEnv$shinySettings <- shinySettings
   on.exit(rm("shinySettings", envir = .GlobalEnv))
-  shiny::runApp(appDir = appDir, 
-                quiet = TRUE)
+  shiny::runApp(appDir = appDir)
 }
 
 #' Premerge Shiny diagnostics files

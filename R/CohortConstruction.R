@@ -810,6 +810,18 @@ createTempInclusionStatsTables <- function(connection, oracleTempSchema, cohorts
                                    tempTable = TRUE,
                                    oracleTempSchema = oracleTempSchema,
                                    camelCaseToSnakeCase = TRUE)
+  } else {
+  inclusionRules <- data.frame(cohortDefinitionId = as.double(),
+                               ruleSequence = as.integer(),
+                               name = as.character())
+  DatabaseConnector::insertTable(connection = connection,
+                                 tableName = "#cohort_inclusion",
+                                 data = inclusionRules,
+                                 dropTableIfExists = TRUE,
+                                 createTable = TRUE,
+                                 tempTable = TRUE,
+                                 oracleTempSchema = oracleTempSchema,
+                                 camelCaseToSnakeCase = TRUE)
   }
 }
 

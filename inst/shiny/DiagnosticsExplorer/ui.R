@@ -430,7 +430,22 @@ bodyTabItems <- shinydashboard::tabItems(
         width = NULL,
         status = "primary",
         shiny::htmlOutput(outputId = "hoverInfoCharComparePlot"),
-        plotly::plotlyOutput(
+        shinyWidgets::pickerInput(
+          inputId = "domain",
+          label = "Filter By Domain",
+          choices = c("all",unique(stringr::word(covariateRef$covariateName))),
+          multiple = FALSE,
+          choicesOpt = list(style = rep_len("color: black;", 999)),
+          options = shinyWidgets::pickerOptions(
+            actionsBox = TRUE, 
+            liveSearch = TRUE, 
+            size = 10,
+            liveSearchStyle = 'contains',
+            liveSearchPlaceholder = "Type here to search",
+            virtualScroll = 50)
+          
+        ),
+        ggiraph::ggiraphOutput(
           outputId = "charComparePlot",
           height = 700,
         )

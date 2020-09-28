@@ -1216,7 +1216,7 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
-  output$charComparePlot <- plotly::renderPlotly(expr = {
+  output$charComparePlot <- ggiraph::renderggiraph(expr = {
     data <- compareCovariateValueResult(connection = NULL, 
                                         connectionDetails = NULL,
                                         targetCohortIds = cohortId(), 
@@ -1226,7 +1226,8 @@ shiny::shinyServer(function(input, output, session) {
                                         maxProportion = 1,
                                         isTemporal = FALSE,
                                         timeIds = NULL,
-                                        resultsDatabaseSchema = NULL)
+                                        resultsDatabaseSchema = NULL,
+                                        domain = input$domain)
     validate(
       need(!is.null(data), paste0('No cohort compare data for this combination')))
     

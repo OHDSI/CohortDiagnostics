@@ -101,6 +101,12 @@ plotTimeDistribution <- function(data,
                    axis.title.y = ggplot2::element_blank(),
                    axis.ticks.y = ggplot2::element_blank(),
                    axis.text.y = ggplot2::element_blank())
+  
+  plot <- ggiraph::girafe(ggobj = plot,
+                          options = list(
+                            ggiraph::opts_sizing(width = .7),
+                            ggiraph::opts_zoom(max = 5)),width_svg = 15,
+                          height_svg = 5)
   # plot <- plotly::ggplotly(plot)
   # This does not work as described here https://github.com/ropensci/plotly/issues/565 
   return(plot)
@@ -151,7 +157,7 @@ plotIncidenceRate <- function(data,
                               stratifyByCalendarYear = TRUE,
                               yscaleFixed = FALSE) {
   if (nrow(data) == 0) {
-    warning("Record counts are too low to plot.")
+    ParallelLogger::logWarn("Record counts are too low to plot.")
   }
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertTibble(x = data, 
@@ -197,6 +203,12 @@ plotIncidenceRate <- function(data,
                            max.len = 1,
                            null.ok = FALSE,
                            add = errorMessage)
+  checkmate::assertDouble(x = data$incidenceRate,
+                          lower = 0,
+                          any.missing = FALSE,
+                          null.ok = FALSE, 
+                          min.len = 1,
+                          add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
   checkmate::assertDouble(x = data$incidenceRate,
                           lower = 0,
@@ -253,6 +265,32 @@ plotIncidenceRate <- function(data,
     plotType <- "bar"
   }
   
+  newSort <- plotData %>% 
+    dplyr::select(.data$ageGroup) %>% 
+    dplyr::distinct() %>% 
+    dplyr::arrange(as.integer(sub(pattern = '-.+$','',x = .data$ageGroup)))
+  
+  plotData <- plotData %>% 
+    dplyr::arrange(ageGroup = factor(.data$ageGroup, levels = newSort$ageGroup), .data$ageGroup)
+  
+  plotData$ageGroup <- factor(plotData$ageGroup,
+                              levels = newSort$ageGroup)
+  plotData$tooltip <- c(paste0("Incidence Rate = ", plotData$incidenceRate, "\n Database = ", plotData$databaseId))
+  
+  if (stratifyByAgeGroup)
+  {
+    plotData$tooltip <- c(paste0(plotData$tooltip, "\nAge Group = ", plotData$ageGroup))
+  }
+  if (stratifyByGender)
+  {
+    plotData$tooltip <- c(paste0(plotData$tooltip, "\nGender = ", plotData$gender))
+  }
+  if (stratifyByCalendarYear)
+  {
+    plotData$tooltip <- c(paste0(plotData$tooltip, "\nYear = ", plotData$calendarYear))
+  }
+  
+  
   plot <- ggplot2::ggplot(data = plotData, 
                           do.call(ggplot2::aes_string, aesthetics)) +
     ggplot2::xlab(xLabel) +
@@ -262,10 +300,12 @@ plotIncidenceRate <- function(data,
                    axis.text.x = if (showX) ggplot2::element_text(angle = 90, vjust = 0.5) else ggplot2::element_blank() )
   
   if (plotType == "line") {
-    plot <- plot + ggplot2::geom_line(size = 1.25, alpha = 0.6) +
-      ggplot2::geom_point(size = 1.25, alpha = 0.6)
+    plot <- plot + 
+      ggiraph::geom_line_interactive(ggplot2::aes(), size = 3, alpha = 0.6) +
+      ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 3, alpha = 0.6)
   } else {
-    plot <- plot + ggplot2::geom_bar(stat = "identity", alpha = 0.6)
+    plot <- plot + ggplot2::geom_bar(stat = "identity") +
+      ggiraph::geom_col_interactive( ggplot2::aes(tooltip = tooltip), size = 2)
   }
   
   # databaseId field only present when called in Shiny app:
@@ -277,7 +317,7 @@ plotIncidenceRate <- function(data,
     }
     if (stratifyByGender | stratifyByCalendarYear) {
       if (stratifyByAgeGroup) {
-        plot <- plot + ggplot2::facet_grid(databaseId~ageGroup, scales = scales)
+        plot <- plot + ggplot2::facet_grid(databaseId~plotData$ageGroup, scales = scales)
       } else {
         plot <- plot + ggplot2::facet_grid(databaseId~., scales = scales) 
       }
@@ -291,6 +331,11 @@ plotIncidenceRate <- function(data,
       plot <- plot + ggplot2::facet_grid(~ageGroup) 
     }
   }
+  plot <- ggiraph::girafe(ggobj = plot,
+                          options = list(
+                            ggiraph::opts_sizing(width = .7),
+                            ggiraph::opts_zoom(max = 5)),width_svg = 15,
+                          height_svg = 10)
   return(plot)
 }
 
