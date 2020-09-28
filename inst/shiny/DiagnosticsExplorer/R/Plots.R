@@ -424,6 +424,9 @@ plotCohortComparisonStandardizedDifference <- function(data,
       title = cohortReference %>% 
         dplyr::filter(.data$cohortId %in% targetCohortIds) %>% 
         dplyr::select(.data$cohortName) %>% 
+        dplyr::mutate(cohortName = stringr::str_replace(string = .data$cohortName,
+                                                        pattern = ":", 
+                                                        replacement = "\n")) %>% 
         dplyr::pull(),
       range = c(0, 1)
     )
@@ -431,6 +434,9 @@ plotCohortComparisonStandardizedDifference <- function(data,
       title = cohortReference %>% 
         dplyr::filter(.data$cohortId %in% comparatorCohortIds) %>% 
         dplyr::select(.data$cohortName) %>% 
+        dplyr::mutate(cohortName = stringr::str_replace(string = .data$cohortName,
+                                                        pattern = ":", 
+                                                        replacement = "\n")) %>%
         dplyr::pull(),
       range = c(0, 1)
     )
@@ -445,37 +451,78 @@ plotCohortComparisonStandardizedDifference <- function(data,
     )
   }
   
-  plot <- plotly::plot_ly(data = plotData, 
-                          x = plotData$mean1, 
-                          y = plotData$mean2,
-                          # Hover text:
-                          text = ~paste("Covariate Name:",
-                                        plotData$covariateName, 
-                                        "<br>Mean Target: ", 
-                                        plotData$mean1, 
-                                        '<br>Mean Comparator:', 
-                                        plotData$mean2,
-                                        '<br>Std diff.:', 
-                                        plotData$stdDiff),
-                          color = ~plotData$absStdDiff,
-                          type   = 'scatter',
-                          mode   = 'markers',
-                          marker = list(size = 10,
-                                        opacity = "0.5")) %>% 
-    plotly::layout(shapes = list(type = "line",
-                                 y0 = 0, 
-                                 y1 = 1, 
-                                 yref = "paper",
-                                 x0 = 0,  
-                                 x1 = 1, 
-                                 line = list(color = "red", 
-                                             dash = "dash"))) %>% 
-    plotly::layout(xaxis = xAxisLabel, 
-                   yaxis = yAxisLabel, 
-                   showlegend = FALSE) %>% 
-    plotly::colorbar(title = "Absolute\nStd. Diff.")
+  # plot <- plotly::plot_ly(data = plotData, 
+  #                         x = plotData$mean1, 
+  #                         y = plotData$mean2,
+  #                         # Hover text:
+  #                         text = ~paste("Covariate Name:",
+  #                                       plotData$covariateName, 
+  #                                       "<br>Mean Target: ", 
+  #                                       plotData$mean1, 
+  #                                       '<br>Mean Comparator:', 
+  #                                       plotData$mean2,
+  #                                       '<br>Std diff.:', 
+  #                                       plotData$stdDiff),
+  #                         color = ~plotData$absStdDiff,
+  #                         type   = 'scatter',
+  #                         mode   = 'markers',
+  #                         marker = list(size = 10,
+  #                                       opacity = "0.5")) %>% 
+  #   plotly::layout(shapes = list(type = "line",
+  #                                y0 = 0, 
+  #                                y1 = 1, 
+  #                                yref = "paper",
+  #                                x0 = 0,  
+  #                                x1 = 1, 
+  #                                line = list(color = "red", 
+  #                                            dash = "dash"))) %>% 
+  #   plotly::layout(xaxis = xAxisLabel, 
+  #                  yaxis = yAxisLabel, 
+  #                  showlegend = FALSE) %>% 
+  #   plotly::colorbar(title = "Absolute\nStd. Diff.")
+  # 
+  plotData$mean1[is.na(plotData$mean1)] <- 0
+  plotData$mean2[is.na(plotData$mean2)] <- 0
+  plotData$domain  <- stringr::word(plotData$covariateName) %>% sort()
+  plotData$mean1 <- round(plotData$mean1, digits = 3)
+  plotData$mean2 <- round(plotData$mean2, digits = 3)
+  plotData$stdDiff <- round(plotData$stdDiff, digits = 3)
+  ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 3, alpha = 0.6)
+  plotData$tooltip <- c(paste("Covariate Name:",plotData$covariateName,
+                              "\nDomain: ",plotData$domain,
+                              "\nMean Target: ",plotData$mean1,
+                              '\nMean Comparator:',plotData$mean2,
+                              '\nStd diff.:',plotData$stdDiff))
+  
+  
+  # distinctDomain <- plotData %>% 
+  #               dplyr::distinct(.data$domain)
+  # distinctDomain <- c("all",distinctDomain)
+  # shiny::observe({
+  #   shinyWidgets::updatePickerInput(session = session,
+  #                                   inputId = "domain",
+  #                                   choicesOpt = list(style = rep_len("color: black;", 999)),
+  #                                   choices = distinctDomain)
+  # })
+  
+  
+  
+  plot <- ggplot2::ggplot(plotData, ggplot2::aes(x = mean1, y = mean2, color = domain)) +
+    ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 3,shape = 16, alpha = 0.5) +
+    ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+    ggplot2::geom_hline(yintercept = 0) +
+    ggplot2::geom_vline(xintercept = 0) +             
+    ggplot2::scale_x_continuous(xAxisLabel, limits = c(0, 1)) +
+    ggplot2::scale_y_continuous(yAxisLabel, limits = c(0, 1)) 
+  # ggplot2::scale_color_gradient("Absolute\nStd. Diff.", low = "blue", high = "red", space = "Lab", na.value = "red")
+  plot <- ggiraph::girafe(ggobj = plot,
+                          options = list(
+                            ggiraph::opts_sizing(width = .7),
+                            ggiraph::opts_zoom(max = 5)),width_svg = 12,
+                          height_svg = 5)
   return(plot)
 }
+
 
 plotCohortOverlapVennDiagram <- function(data,
                                          targetCohortIds, 
