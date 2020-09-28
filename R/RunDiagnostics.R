@@ -97,8 +97,8 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  inclusionStatisticsFolder = file.path(exportFolder, "inclusionStatistics"),
                                  exportFolder,
                                  databaseId,
-                                 databaseName = databaseId,
-                                 databaseDescription = "",
+                                 databaseName = NULL,
+                                 databaseDescription = NULL,
                                  cdmVersion = 5,
                                  runInclusionStatistics = TRUE,
                                  runIncludedSourceConcepts = TRUE,
@@ -206,8 +206,8 @@ runCohortDiagnostics <- function(packageName = NULL,
   ParallelLogger::logInfo("Saving database metadata")
   startMetaData <- Sys.time()
   database <- dplyr::tibble(databaseId = databaseId,
-                            databaseName = databaseName,
-                            description = databaseDescription,
+                            databaseName = dplyr::coalesce(c(databaseName,databaseId)),
+                            description = dplyr::coalesce(c(databaseDescription,databaseId)),
                             isMetaAnalysis = 0)
   writeToCsv(data = database, 
              fileName = file.path(exportFolder, "database.csv"))
