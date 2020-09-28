@@ -259,6 +259,7 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$incidenceRatePlot <- ggiraph::renderggiraph(expr = {
+    validate(length(input$databases) == 0, message = paste0('No data sources chosen'))
     stratifyByAge <- "Age" %in% input$irStratification
     stratifyByGender <- "Gender" %in% input$irStratification
     stratifyByCalendarYear <- "Calendar Year" %in% input$irStratification
@@ -276,7 +277,9 @@ shiny::shinyServer(function(input, output, session) {
                                                      TRUE ~ .data$incidenceRate))
     
     validate(
-      need(!is.null(data), paste0('No incident rate data for this combination')))
+      need(!is.null(data), paste0('No data for this combination')))
+    validate(
+      need(nrow(data) > 0, paste0('No data for this combination')))
     
     plot <- plotIncidenceRate(data = data,
                               cohortIds = NULL,
@@ -289,9 +292,12 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$timeDisPlot <- ggiraph::renderggiraph(expr = {
+    validate(length(input$databases) == 0, message = paste0('No data sources chosen'))
     data <- getTimeDistributionResult(cohortIds = cohortId(), databaseIds = input$databases)
     validate(
-      need(!is.null(data), paste0('No time distribution data for this combination')))
+      need(!is.null(data), paste0('No data for this combination')))
+    validate(
+      need(nrow(data) > 0, paste0('No data for this combination')))
     
     plot <- plotTimeDistribution(data = data,
                                  cohortIds = cohortId(),
@@ -1283,6 +1289,7 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$charComparePlot <- ggiraph::renderggiraph(expr = {
+    validate(length(input$database) == 0, message = paste0('No data sources chosen'))
     data <- compareCovariateValueResult(connection = NULL, 
                                         connectionDetails = NULL,
                                         targetCohortIds = cohortId(), 
@@ -1295,7 +1302,9 @@ shiny::shinyServer(function(input, output, session) {
                                         resultsDatabaseSchema = NULL,
                                         domain = input$domain)
     validate(
-      need(!is.null(data) || nrow(data) > 0, paste0('No cohort compare data for this combination')))
+      need(!is.null(data), paste0('No cohort compare data for this combination')))
+    validate(
+      need(nrow(data) > 0, paste0('No cohort compare data for this combination')))
     
     validate(
       need(!(cohortId() == comparatorCohortId()), paste0('Target cohort and comparator cannot be the same')))
