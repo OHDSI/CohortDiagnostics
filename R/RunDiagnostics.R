@@ -206,8 +206,8 @@ runCohortDiagnostics <- function(packageName = NULL,
   ParallelLogger::logInfo("Saving database metadata")
   startMetaData <- Sys.time()
   database <- dplyr::tibble(databaseId = databaseId,
-                            databaseName = dplyr::coalesce(c(databaseName,databaseId)),
-                            description = dplyr::coalesce(c(databaseDescription,databaseId)),
+                            databaseName = dplyr::coalesce(databaseName,databaseId),
+                            description = dplyr::coalesce(databaseDescription,databaseId),
                             isMetaAnalysis = 0)
   writeToCsv(data = database, 
              fileName = file.path(exportFolder, "database.csv"))

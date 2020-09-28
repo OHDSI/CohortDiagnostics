@@ -2,7 +2,7 @@
 % Please edit documentation in R/ResultsPlot.R
 \name{plotCohortComparisonStandardizedDifference}
 \alias{plotCohortComparisonStandardizedDifference}
-\title{Get Plotly object with cohort comparison plot.}
+\title{Get ggplot (with ggiraph) object with cohort comparison plot.}
 \usage{
 plotCohortComparisonStandardizedDifference(
   data,
@@ -43,10 +43,10 @@ character field values from the `databaseId` field of the `database` table
 of the results data model.}
 }
 \value{
-A Plotly object.
+A ggplot object (with ggiraph).
 }
 \description{
-Get Plotly object with cohort comparison plot.
+Get ggplot (with ggiraph) object with cohort comparison plot.
 }
 \examples{
 \dontrun{
