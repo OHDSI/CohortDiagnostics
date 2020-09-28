@@ -170,11 +170,13 @@ runCohortDiagnostics <- function(packageName = NULL,
                                   cohortIds = cohortIds)
   
   if (!is.null(phenotypeDescriptionFile)) {
-    writePhenotypeDescriptionCsvToResults(packageName = packageName,
-                                          phenotypeDescriptionFile = phenotypeDescriptionFile,
-                                          exportFolder = exportFolder,
-                                          cohorts = cohorts,
-                                          errorMessage)
+    phenotypeDescription <- loadAndExportPhenotypeDescription(packageName = packageName,
+                                                              phenotypeDescriptionFile = phenotypeDescriptionFile,
+                                                              exportFolder = exportFolder,
+                                                              cohorts = cohorts,
+                                                              errorMessage = errorMessage)
+  } else {
+    phenotypeDescription <- NULL
   }
   
   if (nrow(cohorts) == 0) {
@@ -217,24 +219,26 @@ runCohortDiagnostics <- function(packageName = NULL,
                                            oracleTempSchema = oracleTempSchema,
                                            table_name = "#concept_ids")
   DatabaseConnector::executeSql(connection = connection, sql = sql, progressBar = FALSE, reportOverallTime = FALSE)
-  data <- cohorts %>% 
-    dplyr::filter(!is.na(.data$referentConceptId)) %>%
-    dplyr::transmute(conceptId = as.integer(.data$referentConceptId)) %>% 
-    dplyr::distinct() %>%
-    as.data.frame() #DatabaseConnector currently does not support tibble
-  if (nrow(data) > 0) {
-    ParallelLogger::logInfo(sprintf("Inserting %s cohort referent concept IDs into the unique concept ID table. This may take a while.",
-                                    nrow(data)))
-    DatabaseConnector::insertTable(connection = connection, 
-                                   tableName = "#concept_ids",
-                                   data = data,
-                                   dropTableIfExists = FALSE,
-                                   createTable = FALSE, 
-                                   progressBar = TRUE,
-                                   tempTable = TRUE,
-                                   oracleTempSchema = oracleTempSchema,
-                                   camelCaseToSnakeCase = TRUE)
-    ParallelLogger::logTrace("Done inserting")
+  if (!is.null(phenotypeDescription)) {
+    data <- phenotypeDescription %>% 
+      dplyr::filter(!is.na(.data$referentConceptId)) %>%
+      dplyr::transmute(conceptId = as.integer(.data$referentConceptId)) %>% 
+      dplyr::distinct() %>%
+      as.data.frame() #DatabaseConnector currently does not support tibble
+    if (nrow(data) > 0) {
+      ParallelLogger::logInfo(sprintf("Inserting %s referent concept IDs into the concept ID table. This may take a while.",
+                                      nrow(data)))
+      DatabaseConnector::insertTable(connection = connection, 
+                                     tableName = "#concept_ids",
+                                     data = data,
+                                     dropTableIfExists = FALSE,
+                                     createTable = FALSE, 
+                                     progressBar = TRUE,
+                                     tempTable = TRUE,
+                                     oracleTempSchema = oracleTempSchema,
+                                     camelCaseToSnakeCase = TRUE)
+      ParallelLogger::logTrace("Done inserting")
+    }
   }
   
   ##############################
@@ -777,11 +781,11 @@ runCohortDiagnostics <- function(packageName = NULL,
 }
 
 
-writePhenotypeDescriptionCsvToResults <- function(packageName,
-                                                  phenotypeDescriptionFile,
-                                                  exportFolder,
-                                                  cohorts, 
-                                                  errorMessage = NULL) {
+loadAndExportPhenotypeDescription <- function(packageName,
+                                              phenotypeDescriptionFile,
+                                              exportFolder,
+                                              cohorts, 
+                                              errorMessage = NULL) {
   if (is.null(errorMessage)) {
     errorMessage <- checkmate::makeAssertCollection(errorMessage)
   }
@@ -820,10 +824,8 @@ writePhenotypeDescriptionCsvToResults <- function(packageName,
                                     nrow(phenotypeDescription)))
     
     phenotypeDescription <- phenotypeDescription %>% 
-      dplyr::inner_join(cohorts %>% 
-                          dplyr::select(.data$referentConceptId),
-                        by = "referentConceptId")
-    
+      dplyr::filter(.data$phenotypeId %in% unique(cohorts$phenotypeId))
+
     ParallelLogger::logInfo(sprintf("%s rows matched", nrow(phenotypeDescription)))
     
     if (nrow(phenotypeDescription) > 0) {
@@ -831,7 +833,9 @@ writePhenotypeDescriptionCsvToResults <- function(packageName,
     } else {
       warning("Phentoype description csv file found, but records dont match the referent concept ids of the cohorts being diagnosed.")
     }
+    return(phenotypeDescription)
   } else {
     warning("Phentoype description file not found")
+    return(NULL)
   }
 }

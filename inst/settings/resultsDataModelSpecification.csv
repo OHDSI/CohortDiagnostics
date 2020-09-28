@@ -6,7 +6,7 @@ analysis_ref,start_day,float,No,No
 analysis_ref,end_day,float,No,No
 analysis_ref,is_binary,varchar(1),Yes,No
 analysis_ref,missing_means_zero,varchar(1),No,No
-cohort,referent_concept_id,bigint,Yes,No
+cohort,phenotype_id,bigint,Yes,No
 cohort,cohort_id,bigint,Yes,Yes
 cohort,web_api_cohort_id,bigint,Yes,No
 cohort,cohort_name,varchar(255),Yes,No
