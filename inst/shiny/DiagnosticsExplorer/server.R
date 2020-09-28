@@ -76,18 +76,6 @@ shiny::shinyServer(function(input, output, session) {
              dplyr::pull(timeId))
   })
   
-  cohortBaseUrl2 <- shiny::reactive({
-    return(input$cohortBaseUrl2)
-  })
-  
-  cohortBaseUrl <- shiny::reactive({
-    return(input$cohortBaseUrl)
-  })
-  
-  conceptIdBaseUrl <- shiny::reactive({
-    return(input$conceptIdBaseUrl)
-  })
-  
   shiny::observe({
     subset <- unique(conceptSets$conceptSetName[conceptSets$cohortId == cohortId()]) %>% sort()
     shinyWidgets::updatePickerInput(session = session,
@@ -102,7 +90,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::mutate(literatureReview = dplyr::case_when(!.data$literatureReview %in% c('','0') ~ 
                                                           paste0("<a href='", .data$literatureReview, "' target='_blank'>", "Link", "</a>"),
                                                         TRUE ~ 'Ongoing')) %>%
-      dplyr::mutate(phenotypeId = paste0("<a href='", paste0(conceptIdBaseUrl(), .data$referentConceptId), "' target='_blank'>", .data$phenotypeId, "</a>")) %>% 
+      dplyr::mutate(phenotypeId = paste0("<a href='", paste0(conceptBaseUrl, .data$referentConceptId), "' target='_blank'>", .data$phenotypeId, "</a>")) %>% 
       dplyr::mutate(clinicalDescription = stringr::str_replace_all(string = .data$clinicalDescription, 
                                                                    pattern = "Overview:", 
                                                                    replacement = "<strong>Overview:</strong>"))  %>% 
@@ -139,7 +127,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- cohort %>% 
       dplyr::mutate(webApiCohortId = as.integer(.data$webApiCohortId)) %>% #this is temporary - we need to standardize this 
       dplyr::left_join(y = phenotypeDescription) %>% 
-      dplyr::mutate(cohortName = paste0("<a href='", paste0(cohortBaseUrl(), .data$webApiCohortId),"' target='_blank'>", paste0(.data$cohortName), "</a>")) %>% 
+      dplyr::mutate(cohortName = paste0("<a href='", paste0(cohortBaseUrl, .data$webApiCohortId),"' target='_blank'>", paste0(.data$cohortName), "</a>")) %>% 
       dplyr::select(.data$phenotypeId, .data$cohortId, .data$cohortName, .data$logicDescription) %>% 
       dplyr::arrange(.data$phenotypeId, .data$cohortId, .data$cohortName)
     
@@ -197,7 +185,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(.data$cohortId, .data$cohortName, .data$webApiCohortId) %>% 
       dplyr::distinct() %>% 
       dplyr::inner_join(table, by = c("cohortId", "cohortName")) %>% 
-      dplyr::mutate(url = paste0(cohortBaseUrl2(), .data$webApiCohortId),
+      dplyr::mutate(url = paste0(cohortBaseUrl, .data$webApiCohortId),
                     cohortName = paste0("<a href='", 
                                         .data$url, 
                                         "' target='_blank'>", 
