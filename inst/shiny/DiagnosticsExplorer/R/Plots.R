@@ -217,16 +217,15 @@ plotIncidenceRate <- function(data,
                               levels = newSort$ageGroup)
   plotData$tooltip <- c(paste0("Incidence Rate = ", plotData$incidenceRate, "\n Database = ", plotData$databaseId))
   
-  if (stratifyByAgeGroup)
-  {
+  if (stratifyByAgeGroup){
     plotData$tooltip <- c(paste0(plotData$tooltip, "\nAge Group = ", plotData$ageGroup))
   }
-  if (stratifyByGender)
-  {
+  
+  if (stratifyByGender){
     plotData$tooltip <- c(paste0(plotData$tooltip, "\nGender = ", plotData$gender))
   }
-  if (stratifyByCalendarYear)
-  {
+  
+  if (stratifyByCalendarYear){
     plotData$tooltip <- c(paste0(plotData$tooltip, "\nYear = ", plotData$calendarYear))
   }
   

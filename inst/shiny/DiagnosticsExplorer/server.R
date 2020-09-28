@@ -810,11 +810,16 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::select(.data$characteristic, .data$position, 
                         .data$header, .data$sortOrder)
       }
-      characteristics <- dplyr::bind_rows(characteristics[[j]]) %>% 
+      characteristics <- dplyr::bind_rows(characteristics) %>% 
+        dplyr::distinct() %>% 
+        dplyr::group_by(.data$characteristic, .data$position, .data$header) %>% 
+        dplyr::summarise(sortOrder = max(.data$sortOrder)) %>% 
+        dplyr::ungroup() %>% 
+        dplyr::arrange(.data$position, desc(.data$header)) %>% 
+        dplyr::mutate(sortOrder = dplyr::row_number()) %>%
+        dplyr::distinct() %>% 
         tidyr::crossing(dplyr::tibble(databaseId = input$databases)) %>% 
-        dplyr::arrange(.data$databaseId, .data$position, desc(.data$header), .data$sortOrder) %>% 
-        dplyr::mutate(sortOrder = dplyr::row_number()) %>% 
-        dplyr::distinct()
+        dplyr::arrange(.data$databaseId, .data$sortOrder)
       
       table <- characteristics %>% 
         dplyr::left_join(dplyr::bind_rows(table) %>% 
