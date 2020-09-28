@@ -29,20 +29,20 @@ getResultsDataModelSpecifications <- function() {
 
 checkColumns <- function(table, tableName, zipFileName, specifications = getResultsDataModelSpecifications()) {
   observeredNames <- colnames(table)[order(colnames(table))]
-
+  
   tableSpecs <- specifications %>%
-    filter(.data$tableName == !!tableName)
-    
+    dplyr::filter(.data$tableName == !!tableName)
+  
   optionalNames <- tableSpecs %>%
-    filter(.data$optional == "Yes") %>%
-    select(.data$fieldName)
-      
+    dplyr::filter(.data$optional == "Yes") %>%
+    dplyr::select(.data$fieldName)
+  
   expectedNames <- tableSpecs %>%
-    select(.data$fieldName) %>%
-    anti_join(filter(optionalNames, !.data$fieldName %in% observeredNames), by = "fieldName") %>%
-     arrange(.data$fieldName) %>%
-   pull()
-   
+    dplyr::select(.data$fieldName) %>%
+    dplyr::anti_join(dplyr::filter(optionalNames, !.data$fieldName %in% observeredNames), by = "fieldName") %>%
+    dplyr::arrange(.data$fieldName) %>%
+    dplyr::pull()
+  
   
   if (!isTRUE(all.equal(expectedNames, observeredNames))) {
     stop(sprintf("Column names of table %s in zip file %s do not match specifications.\n- Observed columns: %s\n- Expected columns: %s",
@@ -55,16 +55,16 @@ checkColumns <- function(table, tableName, zipFileName, specifications = getResu
 
 checkAndFixDuplicateRows <- function(table, tableName, zipFileName, specifications = getResultsDataModelSpecifications()) {
   primaryKeys <- specifications %>%
-    filter(.data$tableName == !!tableName & .data$primaryKey == "Yes") %>%
-    select(.data$fieldName) %>%
-    pull()
+    dplyr::filter(.data$tableName == !!tableName & .data$primaryKey == "Yes") %>%
+    dplyr::select(.data$fieldName) %>%
+    dplyr::pull()
   duplicated <- duplicated(table[, primaryKeys])
   if (any(duplicated)) {
     warning(sprintf("Table %s in zip file %s has duplicate rows. Removing %s records.",
-                 tableName,
-                 zipFileName,
-                 sum(duplicated)
-                 ))
+                    tableName,
+                    zipFileName,
+                    sum(duplicated)
+    ))
     return(table[!duplicated, ])
   } else {
     return(table)
@@ -74,11 +74,11 @@ checkAndFixDuplicateRows <- function(table, tableName, zipFileName, specificatio
 appendNewRows <- function(data, newData, tableName,  specifications = getResultsDataModelSpecifications()) {
   if (nrow(data) > 0) {
     primaryKeys <- specifications %>%
-      filter(.data$tableName == !!tableName & .data$primaryKey == "Yes") %>%
-      select(.data$fieldName) %>%
-      pull()
+      dplyr::filter(.data$tableName == !!tableName & .data$primaryKey == "Yes") %>%
+      dplyr::select(.data$fieldName) %>%
+      dplyr::pull()
     newData <- newData %>%
-      anti_join(data, by = primaryKeys)
+      dplyr::anti_join(data, by = primaryKeys)
   }
-  return(bind_rows(data, newData))  
+  return(dplyr::bind_rows(data, newData))  
 }
