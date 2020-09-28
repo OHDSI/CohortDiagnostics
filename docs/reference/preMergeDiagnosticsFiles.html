@@ -40,9 +40,9 @@
 
 
 <meta property="og:title" content="Premerge Shiny diagnostics files — preMergeDiagnosticsFiles" />
-<meta property="og:description" content="If there are many diagnostics files, starting the Shiny app may take a very long time. This function 
-already does most of the preprocessing, increasing loading speed.
-The merged data will be stored in the same folder, and will automatically be recognized by the Shiny app." />
+<meta property="og:description" content="This function combines diagnostics results from one or more databases into a single file. The result is a
+single file that can be used as input for the Diagnostics Explorer Shiny app.
+It also checks whether the results conform to the results data model specifications." />
 
 
 
@@ -134,12 +134,12 @@ The merged data will be stored in the same folder, and will automatically be rec
     </div>
 
     <div class="ref-description">
-    <p>If there are many diagnostics files, starting the Shiny app may take a very long time. This function 
-already does most of the preprocessing, increasing loading speed.</p>
-<p>The merged data will be stored in the same folder, and will automatically be recognized by the Shiny app.</p>
+    <p>This function combines diagnostics results from one or more databases into a single file. The result is a
+single file that can be used as input for the Diagnostics Explorer Shiny app.</p>
+<p>It also checks whether the results conform to the results data model specifications.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>preMergeDiagnosticsFiles</span>(<span class='kw'>dataFolder</span>, minCovariateProportion = <span class='fl'>0</span>)</pre>
+    <pre class="usage"><span class='fu'>preMergeDiagnosticsFiles</span>(<span class='kw'>dataFolder</span>, tempFolder = <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempdir</a></span>())</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -148,13 +148,14 @@ already does most of the preprocessing, increasing loading speed.</p>
       <th>dataFolder</th>
       <td><p>folder where the exported zip files for the diagnostics are stored. Use
 the <code><a href='runCohortDiagnostics.html'>runCohortDiagnostics</a></code> function to generate these zip files. 
-Zip files containing results from multiple databases can be placed in the same
+Zip files containing results from multiple databases may be placed in the same
 folder.</p></td>
     </tr>
     <tr>
-      <th>minCovariateProportion</th>
-      <td><p>minimum value threshold for covariates to be included 
-in premerged file (valid number (maybe decimal) between 0 to 1)</p></td>
+      <th>tempFolder</th>
+      <td><p>A folder on the local file system where the zip files are extracted to. Will be cleaned
+up when the function is finished. Can be used to specify a temp folder on a drive that
+has sufficent space if the default system temp space is too limited.</p></td>
     </tr>
     </table>
 

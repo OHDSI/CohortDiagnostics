@@ -150,7 +150,7 @@ Alternatively, a covariate setting object may be created using the above as an e
   cohortToCreateFile = <span class='st'>"settings/CohortsToCreate.csv"</span>,
   baseUrl = <span class='kw'>NULL</span>,
   cohortSetReference = <span class='kw'>NULL</span>,
-  phenotypeDescriptionCsv = <span class='kw'>NULL</span>,
+  phenotypeDescriptionFile = <span class='kw'>NULL</span>,
   connectionDetails = <span class='kw'>NULL</span>,
   connection = <span class='kw'>NULL</span>,
   <span class='kw'>cdmDatabaseSchema</span>,
@@ -161,28 +161,25 @@ Alternatively, a covariate setting object may be created using the above as an e
   inclusionStatisticsFolder = <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='kw'>exportFolder</span>, <span class='st'>"inclusionStatistics"</span>),
   <span class='kw'>exportFolder</span>,
   <span class='kw'>databaseId</span>,
-  databaseName = <span class='kw'>databaseId</span>,
-  databaseDescription = <span class='st'>""</span>,
+  databaseName = <span class='kw'>NULL</span>,
+  databaseDescription = <span class='kw'>NULL</span>,
   cdmVersion = <span class='fl'>5</span>,
   runInclusionStatistics = <span class='fl'>TRUE</span>,
   runIncludedSourceConcepts = <span class='fl'>TRUE</span>,
   runOrphanConcepts = <span class='fl'>TRUE</span>,
-  exportConceptCountTableForDatabase = <span class='fl'>TRUE</span>,
   runTimeDistributions = <span class='fl'>TRUE</span>,
+  runVisitContext = <span class='fl'>TRUE</span>,
   runBreakdownIndexEvents = <span class='fl'>TRUE</span>,
   runIncidenceRate = <span class='fl'>TRUE</span>,
   runCohortOverlap = <span class='fl'>TRUE</span>,
   runCohortCharacterization = <span class='fl'>TRUE</span>,
-  covariateSettings = <span class='kw'>FeatureExtraction</span>::<span class='fu'><a href='https://rdrr.io/pkg/FeatureExtraction/man/createDefaultCovariateSettings.html'>createDefaultCovariateSettings</a></span>(),
+  covariateSettings = <span class='fu'>createDefaultCovariateSettings</span>(),
   runTemporalCohortCharacterization = <span class='fl'>TRUE</span>,
- 
-    temporalCovariateSettings = <span class='kw'>FeatureExtraction</span>::<span class='fu'><a href='https://rdrr.io/pkg/FeatureExtraction/man/createTemporalCovariateSettings.html'>createTemporalCovariateSettings</a></span>(useConditionOccurrence
-    = <span class='fl'>TRUE</span>, useDrugEraStart = <span class='fl'>TRUE</span>, useProcedureOccurrence = <span class='fl'>TRUE</span>, useMeasurement = <span class='fl'>TRUE</span>,
+  temporalCovariateSettings = <span class='fu'>createTemporalCovariateSettings</span>(useConditionOccurrence =
+    <span class='fl'>TRUE</span>, useDrugEraStart = <span class='fl'>TRUE</span>, useProcedureOccurrence = <span class='fl'>TRUE</span>, useMeasurement = <span class='fl'>TRUE</span>,
     temporalStartDays = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='op'>-</span><span class='fl'>365</span>, <span class='op'>-</span><span class='fl'>30</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>31</span>, <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span>(from = <span class='op'>-</span><span class='fl'>30</span>, to = <span class='op'>-</span><span class='fl'>420</span>, by = <span class='op'>-</span><span class='fl'>30</span>),
     <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span>(from = <span class='fl'>1</span>, to = <span class='fl'>390</span>, by = <span class='fl'>30</span>)), temporalEndDays = <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='op'>-</span><span class='fl'>31</span>, <span class='op'>-</span><span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>30</span>, <span class='fl'>365</span>, <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span>(from
     = <span class='fl'>0</span>, to = <span class='op'>-</span><span class='fl'>390</span>, by = <span class='op'>-</span><span class='fl'>30</span>), <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span>(from = <span class='fl'>31</span>, to = <span class='fl'>420</span>, by = <span class='fl'>30</span>))),
-  runSubsetOmopVocabularyTables = <span class='fl'>TRUE</span>,
-  uniqueConceptIdTable = <span class='st'>"unique_concept_id_table"</span>,
   minCellCount = <span class='fl'>5</span>,
   incremental = <span class='fl'>FALSE</span>,
   incrementalFolder = <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='kw'>exportFolder</span>, <span class='st'>"incremental"</span>)
@@ -215,12 +212,12 @@ a dataframe object identical to requirements for <code>cohortSetReference</code>
 <code>packageName</code> and <code>cohortToCreateFile</code> have been specified.</p></td>
     </tr>
     <tr>
-      <th>phenotypeDescriptionCsv</th>
-      <td><p>(Optional) Path for the location of the phenotype_description.csv file.
-This file should have the following columns that may be read into following
-data types: phenotype_id (double), phenotype_name (character),
-referent_concept_id (double), clinical_description (character),
-literature_review (character), phenotype_notes (character). Note: the field
+      <th>phenotypeDescriptionFile</th>
+      <td><p>(Optional) The location of the phenotype descriptioon file within the package. 
+The file must be .csv file and have the following columns that may be read into following
+data types: phenotypeId (double), phenotypeName (character),
+referentConceptId (double), clinicalDescription (character),
+literatureReview (character), phenotypeNotes (character). Note: the field
 names are in snake_case. Also, character fields should not have 'NA' in it.
 'NA's are commonly added by R when R functions exports data from dataframe 
 into CSV. Instead please use '' (empty string) to represent absence of data. 
@@ -308,12 +305,12 @@ does not exist it will be created.</p></td>
       <td><p>Generate and export potential orphan concepts?</p></td>
     </tr>
     <tr>
-      <th>exportConceptCountTableForDatabase</th>
-      <td><p>Do you want to export concept count table for the database?</p></td>
-    </tr>
-    <tr>
       <th>runTimeDistributions</th>
       <td><p>Generate and export cohort time distributions?</p></td>
+    </tr>
+    <tr>
+      <th>runVisitContext</th>
+      <td><p>Generate and export index-date visit context?</p></td>
     </tr>
     <tr>
       <th>runBreakdownIndexEvents</th>
@@ -352,15 +349,6 @@ the createTemporalCovariateSettings function in the FeatureExtraction package, o
 of such objects.</p></td>
     </tr>
     <tr>
-      <th>runSubsetOmopVocabularyTables</th>
-      <td><p>Do you want to retrieve a copy of the OMOP vocabulary, but subset to the unique conceptId
-used in the diagnosis?</p></td>
-    </tr>
-    <tr>
-      <th>uniqueConceptIdTable</th>
-      <td><p>Table to store unique concept_ids.</p></td>
-    </tr>
-    <tr>
       <th>minCellCount</th>
       <td><p>The minimum cell count for fields contains person counts or fractions.</p></td>
     </tr>
@@ -372,12 +360,6 @@ used in the diagnosis?</p></td>
       <th>incrementalFolder</th>
       <td><p>If <code>incremental = TRUE</code>, specify a folder where records are kept
 of which cohort diagnostics has been executed.</p></td>
-    </tr>
-    <tr>
-      <th>vocabularyDatabaseSchema</th>
-      <td><p>(optional) Schema name where your vocabulary resides. Most commonly it is the same
-as CDM databaseSchema. Note that for SQL Server, 
-this should include both the database and schema name, for example 'cdm_data.dbo'.</p></td>
     </tr>
     </table>
 

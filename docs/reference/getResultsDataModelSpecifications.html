@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Import csv files in to postgres database instance — importCsvFilesToPostgres • CohortDiagnostics</title>
+<title>Get specifications for Cohort Diagnostics results data model — getResultsDataModelSpecifications • CohortDiagnostics</title>
 
 
 <!-- jquery -->
@@ -39,9 +39,8 @@
 
 
 
-<meta property="og:title" content="Import csv files in to postgres database instance — importCsvFilesToPostgres" />
-<meta property="og:description" content="This utility is a wrapper around the psql command to 
-allow uploading large datasets to a postgres database" />
+<meta property="og:title" content="Get specifications for Cohort Diagnostics results data model — getResultsDataModelSpecifications" />
+<meta property="og:description" content="Get specifications for Cohort Diagnostics results data model" />
 
 
 
@@ -127,46 +126,21 @@ allow uploading large datasets to a postgres database" />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Import csv files in to postgres database instance</h1>
-    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/LoadDatabaseFiles.R'><code>R/LoadDatabaseFiles.R</code></a></small>
-    <div class="hidden name"><code>importCsvFilesToPostgres.Rd</code></div>
+    <h1>Get specifications for Cohort Diagnostics results data model</h1>
+    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/ResultsDataModel.R'><code>R/ResultsDataModel.R</code></a></small>
+    <div class="hidden name"><code>getResultsDataModelSpecifications.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>This utility is a wrapper around the psql command to 
-allow uploading large datasets to a postgres database</p>
+    <p>Get specifications for Cohort Diagnostics results data model</p>
     </div>
 
-    <pre class="usage"><span class='fu'>importCsvFilesToPostgres</span>(
-  <span class='kw'>connectionDetails</span>,
-  <span class='kw'>schemaName</span>,
-  <span class='kw'>pathToCsvFiles</span>,
-  winPsqlPath = <span class='st'>""</span>
-)</pre>
+    <pre class="usage"><span class='fu'>getResultsDataModelSpecifications</span>()</pre>
 
-    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-    <table class="ref-arguments">
-    <colgroup><col class="name" /><col class="desc" /></colgroup>
-    <tr>
-      <th>connectionDetails</th>
-      <td><p>DatabaseConnector connection details compatible object. 
-Must be dbms="postgres"</p></td>
-    </tr>
-    <tr>
-      <th>schemaName</th>
-      <td><p>Path to cohort diagnostics csv files to export to</p></td>
-    </tr>
-    <tr>
-      <th>pathToCsvFiles</th>
-      <td><p>Path to cohort diagnostics (results) csv files to import from</p></td>
-    </tr>
-    <tr>
-      <th>winPsqlPath</th>
-      <td><p>Path to folder containing postgres executables 
-e.g. "C:/Program Files/PostgresSQL/12/bin"</p></td>
-    </tr>
-    </table>
 
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>A tibble data frame object with specifications</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
