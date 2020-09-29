@@ -27,7 +27,7 @@ createIfNotExist <- function(type, name, recursive = TRUE, errorMessage = NULL) 
         dir.create(name, recursive = recursive)
         ParallelLogger::logInfo("Created ", type, " at ", name)
       } else {
-        ParallelLogger::logInfo(type, " already exists at ", name)
+        # ParallelLogger::logInfo(type, " already exists at ", name)
       }
     }
     checkmate::assertDirectory(x = name, access = 'x', add = errorMessage)

@@ -2,6 +2,8 @@ library(magrittr)
 
 source("R/Tables.R")
 source("R/Other.R")
+source("R/Plots.R")
+source("R/Results.R")
 
 if (!exists("shinySettings")) {
   if (file.exists("data")) {
@@ -34,7 +36,8 @@ suppressWarnings(
     "inclusionRuleStats",
     "indexEventBreakdown",
     "orphanConcept",
-    "timeDistribution"
+    "timeDistribution",
+    "visitContext"
   )
 )
 
@@ -44,6 +47,8 @@ if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {
 } else {
   writeLines("No premerged file found")
 }
+
+rm("visitContext")
 
 database <- database %>% 
   dplyr::distinct() %>%

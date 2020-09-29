@@ -1,5 +1,9 @@
 library(magrittr)
+<<<<<<< HEAD
 csvFilePath = file.path("extras", "CSVFiles")
+=======
+path = file.path("")
+>>>>>>> upstream/develop
 packageName <- "CohortDiagnostics"
 packageVersion <- "2.0"
 modelVersion <- "2.0"
@@ -33,16 +37,19 @@ readr::write_excel_csv(x = specification,
 script <- CohortDiagnostics::createDdl(packageName = packageName, 
                                        packageVersion = packageVersion,
                                        modelVersion = modelVersion,
-                                       specification = readr::read_csv(file = file.path(resultsDataModelDirectory,
-                                                                                        "resultsDataModelSpecification.csv"),
+                                       specification = readr::read_csv(file = file.path(resultsDataModelDirectory,                                                                                        "resultsDataModelSpecification.csv"),
                                                                        col_types = readr::cols(), 
-                                                                       guess_max = min(1e7)))
+                                                                       guess_max = min(1e7)) %>% 
+                                         dplyr::filter(!tableName %in% c('concept', 'conceptAncestor', 'conceptRelationship',
+                                                                         'concept_synonym', 'domain', 'relatioship', 'vocabulary'))
+                                       
+                                       )
 
 pathToDdl <- file.path(rstudioapi::getActiveProject(), "inst", "sql", "sql_server")
 dir.create(pathToDdl, showWarnings = FALSE, recursive = TRUE)
 
 SqlRender::writeSql(sql = script, 
-                    targetFile = file.path(pathToDdl, "postgressql_ddl_results_data_model.sql"))
+                    targetFile = file.path(pathToDdl, "sql_server_ddl_results_data_model.sql"))
 
 
 
@@ -57,7 +64,7 @@ scriptConstraints <- CohortDiagnostics::createDdlPkConstraints(packageName = pac
                                                                                                col_types = readr::cols()))
 
 SqlRender::writeSql(sql = scriptConstraints, 
-                    targetFile = file.path(pathToDdl, "postgressql_ddl_results_data_model_constraints.sql"))
+                    targetFile = file.path(pathToDdl, "sql_server_ddl_results_data_model_constraints.sql"))
 
 ################
 
@@ -70,5 +77,5 @@ scriptDropTable <- CohortDiagnostics::dropDdl(packageName = packageName,
                                                                                col_types = readr::cols()))
 
 SqlRender::writeSql(sql = scriptDropTable, 
-                    targetFile = file.path(pathToDdl, "postgressql_ddl_results_data_model_drop.sql"))
+                    targetFile = file.path(pathToDdl, "sql_server_ddl_results_data_model_drop.sql"))
 

@@ -14,14 +14,15 @@ Maintainer: Gowtham Rao <gowthamrao@gmail.com>
 Description: Diagnostics for studies that use the OMOP Common Data Model and the OHDSI tools.
 Depends:
 	DatabaseConnector (>= 3.0.0),
+	FeatureExtraction (>= 3.1.0),
 	R (>= 3.5.0)
 Imports:
   Andromeda,
   checkmate,
   digest,
   dplyr (>= 1.0.0),
-  FeatureExtraction (>= 3.1.0),
   ggplot2,
+  ggiraph,
   ParallelLogger (>= 2.0.0),
   readr,
   rlang,
@@ -39,11 +40,13 @@ Suggests:
   VennDiagram,
   htmltools,
   RColorBrewer,
+  scales,
   knitr,
   rmarkdown,
   Eunomia,
   testthat,
-  RSQLite (>= 2.2.0)
+  RSQLite (>= 2.2.0),
+  zip
 Remotes:
   ohdsi/Eunomia,
   ohdsi/FeatureExtraction,

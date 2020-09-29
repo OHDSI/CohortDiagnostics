@@ -36,15 +36,6 @@ connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "pdw",
 oracleTempSchema <- NULL
 
 # Details specific to the database:
-outputFolder <- "s:/examplePackage/mdcd"
-cdmDatabaseSchema <- "cdm_ibm_mdcd_v1023.dbo"
-cohortDatabaseSchema <- "scratch.dbo"
-cohortTable <- "mschuemi_skeleton_mdcd"
-databaseId <- "MDCD"
-databaseName <- "Truven Health MarketScan® Multi-State Medicaid Database"
-databaseDescription <- "Truven Health MarketScan® Multi-State Medicaid Database (MDCD) adjudicated US health insurance claims for Medicaid enrollees from multiple states and includes hospital discharge diagnoses, outpatient diagnoses and procedures, and outpatient pharmacy claims as well as ethnicity and Medicare eligibility. Members maintain their same identifier even if they leave the system for a brief period however the dataset lacks lab data. [For further information link to RWE site for Truven MDCD."
-
-#CCAE
 outputFolder <- "s:/examplePackage/ccae"
 cdmDatabaseSchema <- "CDM_IBM_CCAE_V1247.dbo"
 cohortDatabaseSchema <- "scratch.dbo"

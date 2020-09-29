@@ -15,557 +15,121 @@
 # limitations under the License.
 # 
 
-#' Create a DDL script for results data model from specification csv. 
-#'
-#' @param specification  The location of the csv file with the high-level results table specification.
-#' @param packageVersion The version number of cohort diagnostics
-#' @param modelVersion   The version of the results data model
-#' @param packageName    The name of the R package whose output model we are documenting.
-#' @param databaseSchema     The name of the schema binding parameter
-#' 
-#' @export
-createDdl <- function(packageName,
-                      packageVersion,
-                      modelVersion,
-                      specification,
-                      databaseSchema = "databaseSchema"){
-  
-  tableList <- specification$tableName %>% unique()
-  
-  script <- c()
-  script <- c(script, paste0("--DDL Specification for package ", packageName, " package version: ", packageVersion, '\n'))
-  script <- c(script, paste0("--Data Model Version ", modelVersion, '\n'))
-  script <- c(script, paste0("--Last update ", Sys.Date(), '\n'))
-  script <- c(script, paste0("--Number of tables ", length(tableList), '\n'))
-  
-  for (i in (1:length(tableList))) {
-    script <- c(script, paste0('\n'))
-    script <- c(script, paste0('-----------------------------------------------------------------------'))
-    script <- c(script, paste0('\n'))
-    script <- c(script, paste0("--Table name ", tableList[[i]], '\n'))
-    table <- specification %>% 
-      dplyr::filter(.data$tableName == tableList[[i]])
-    
-    fields <- table %>% dplyr::select(.data$fieldName) %>% dplyr::pull()
-    script <- c(script, paste0("--Number of fields in table ", length(fields), '\n'))
-    hint <- "--HINT DISTRIBUTE ON RANDOM\n"
-    script <- c(script, hint, paste0("CREATE TABLE @", databaseSchema, ".", tableList[[i]], " (\n"))
-    end <- length(fields)
-    
-    a <- c()
-    for (f in fields) { #from https://github.com/OHDSI/CdmDdlBase/blob/f256bd2a3350762e4a37108986711516dd5cd5dc/R/createDdlFromFile.R#L50
-      if (subset(table, .data$fieldName == f, .data$isRequired) == "Yes") {
-        r <- (" NOT NULL")
-      } else {
-        r <- (" NULL")
-      }
-      if (f == fields[[end]]) {
-        e <- (" );")
-      } else {
-        e <- (",")
-      }
-      a <- c(a, paste0("\n\t\t\t",f," ",subset(table, .data$fieldName == f, .data$type), r, e))
-    }
-    script <- c(script, a, "")
-    script <- c(script, paste0('\n'))
-  }
-  return(script)
-}
-
-
-
-#' Create DDL with primary key
-#'
-#' @param specification  The location of the csv file with the high-level results table specification.
-#' @param packageVersion The version number of cohort diagnostics
-#' @param modelVersion   The version of the results data model
-#' @param packageName    The name of the R package whose output model we are documenting.
-#' @param databaseSchema     The name of the schema binding parameter
-#' 
-#' @export
-#' 
-createDdlPkConstraints <- function(packageName,
-                                   packageVersion,
-                                   modelVersion,
-                                   specification,
-                                   databaseSchema = "databaseSchema"){
-  
-  script <- c()
-  script <- c(script, paste0("--DDL Primary Key Constraints Specification for package ", 
-                             packageName, " package version: ", packageVersion, '\n'))
-  script <- c(script, paste0("--Data Model Version ", modelVersion, '\n'))
-  script <- c(script, paste0("--Last update ", Sys.Date(), '\n'))
-  
-  tableList <- specification$tableName %>% unique()
-  script <- c(script, paste0("--Number of tables ", length(tableList), '\n'))
-  
-  for (i in (1:length(tableList))) {
-    table <- specification %>% 
-      dplyr::filter(.data$tableName == tableList[[i]]) %>% 
-      dplyr::filter(.data$primaryKey == 'Yes')
-    
-    if (nrow(table) > 0) {
-      primaryKey <- paste0(table$fieldName, collapse = ",")
-      pk <- paste0("ALTER TABLE @", databaseSchema, ".",
-                   tableList[[i]],
-                   " ADD CONSTRAINT xpk_",
-                   tableList[[i]],
-                   " PRIMARY KEY NONCLUSTERED (",
-                   primaryKey,
-                   ");")
-      script <- c(script, paste0('\n'))
-      script <- c(script, pk, "")
-    }
-  }
-  return(script)
-}
-
-
-
-#' Create DDL that drops all results table
-#'
-#' @param specification  The location of the csv file with the high-level results table specification.
-#' @param packageVersion The version number of cohort diagnostics
-#' @param modelVersion   The version of the results data model
-#' @param packageName    The name of the R package whose output model we are documenting.
-#' @param databaseSchema     The name of the schema binding parameter
-#' 
-#' @export
-#' 
-dropDdl <- function(packageName,
-                    packageVersion,
-                    modelVersion,
-                    specification,
-                    databaseSchema = "databaseSchema"){
-  
-  script <- c()
-  script <- c(script, paste0("--DDL Drop table Specification for package ", 
-                             packageName, " package version: ", packageVersion, '\n'))
-  script <- c(script, paste0("--Data Model Version ", modelVersion, '\n'))
-  script <- c(script, paste0("--Last update ", Sys.Date(), '\n'))
-  
-  tableList <- specification$tableName %>% unique()
-  script <- c(script, paste0("--Number of tables ", length(tableList), '\n'))
-  
-  for (i in (1:length(tableList))) {
-    table <- specification %>% 
-      dplyr::filter(.data$tableName == tableList[[i]]) 
-    
-    if (nrow(table) > 0) {
-      pk <- paste0("DROP TABLE IF EXISTS @", databaseSchema, ".",
-                   tableList[[i]],
-                   ";")
-      script <- c(script, paste0('\n'))
-      script <- c(script, pk, "")
-    }
-  }
-  return(script)
-}
-
-
-
-#' Guesses data model specification from multiple csv files.
-#'
-#' @param pathToCsvFile file system path to csv file
+#' Get specifications for Cohort Diagnostics results data model
 #' 
 #' @return 
 #' A tibble data frame object with specifications
 #' 
-#' @examples
-#' \dontrun{
-#' csvFileSpecification <- guessCsvFileSpecification(path)
-#' }
-#' 
 #' @export
-#' 
-guessCsvFileSpecification <- function(pathToCsvFile) {
-  tableToWorkOn <-  stringr::str_remove(string = basename(pathToCsvFile), 
-                                        pattern = ".csv")
+getResultsDataModelSpecifications <- function() {
+  pathToCsv <- system.file("settings", "resultsDataModelSpecification.csv", package = "CohortDiagnostics")
+  resultsDataModelSpecifications <- readr::read_csv(file = pathToCsv, col_types = readr::cols())
+  return(resultsDataModelSpecifications)
+}
+
+checkColumnNames <- function(table, tableName, zipFileName, specifications = getResultsDataModelSpecifications()) {
+  observeredNames <- colnames(table)[order(colnames(table))]
   
-  print(paste0("Reading csv files '", tableToWorkOn, "' and guessing data types."))
+  tableSpecs <- specifications %>%
+    dplyr::filter(.data$tableName == !!tableName)
   
-  csvFile <- readr::read_csv(file = pathToCsvFile,
-                             col_types = readr::cols(),
-                             guess_max = min(1e7),
-                             locale = readr::locale(encoding = "UTF-8"))
-  if (any(stringr::str_detect(string = colnames(csvFile), pattern = "_"))) {
-    colnames(csvFile) <- tolower(colnames(csvFile))
+  optionalNames <- tableSpecs %>%
+    dplyr::filter(.data$optional == "Yes") %>%
+    dplyr::select(.data$fieldName)
+  
+  expectedNames <- tableSpecs %>%
+    dplyr::select(.data$fieldName) %>%
+    dplyr::anti_join(dplyr::filter(optionalNames, !.data$fieldName %in% observeredNames), by = "fieldName") %>%
+    dplyr::arrange(.data$fieldName) %>%
+    dplyr::pull()
+  
+  if (!isTRUE(all.equal(expectedNames, observeredNames))) {
+    stop(sprintf("Column names of table %s in zip file %s do not match specifications.\n- Observed columns: %s\n- Expected columns: %s",
+                 tableName,
+                 zipFileName,
+                 paste(observeredNames, collapse = ", "),
+                 paste(expectedNames, collapse = ", ")))
   }
+}
+
+checkAndFixDataTypes <- function(table, tableName, zipFileName, specifications = getResultsDataModelSpecifications()) {
+  tableSpecs <- specifications %>%
+    filter(.data$tableName == !!tableName)
   
-  patternThatIsNotPrimaryKey = c("subjects", "entries", "name", "sql", "json", "description", "atlas_id", "day")
-  patternThatIsPrimaryKey = c('_id', 'rule_sequence')
-  describe <- list()
-  primaryKeyIfOmopVocabularyTable <-  getPrimaryKeyForOmopVocabularyTable() %>% 
-    dplyr::filter(.data$vocabularyTableName == tableToWorkOn %>% tolower()) %>% 
-    dplyr::pull(.data$primaryKey) %>% 
-    strsplit(split = ",") %>% 
-    unlist() %>% 
-    tolower()
-  
-  for (i in (1:length(colnames(csvFile)))) {
-    tableName <- tableToWorkOn
-    fieldName <- colnames(csvFile)[[i]]
-    fieldData <- csvFile %>% dplyr::select(fieldName)
-    dataVector <- fieldData %>% dplyr::pull(1)
-    type <- suppressWarnings(guessDbmsDataTypeFromVector(value = dataVector))
-    if (stringr::str_detect(string = fieldName, 
-                            pattern = stringr::fixed('_id')) &&
-        type == 'float') {
-      type = 'bigint'
-    }
-    if (stringr::str_detect(string = tolower(fieldName), 
-                            pattern = stringr::fixed('description')) &&
-        (stringr::str_detect(string = type, 
-                             pattern = 'varchar') ||
-         stringr::str_detect(string = type, 
-                             pattern = 'logical')
-        )
-    ) {
-      type = 'varchar(max)'
-    }
-    isRequired <- 'Yes'
-    if (anyNA(csvFile %>% dplyr::pull(fieldName))) {
-      isRequired <- 'No'
-    }
-    primaryKey <- 'No'
-    if (tableName %in% getPrimaryKeyForOmopVocabularyTable()$vocabularyTableName && 
-        fieldName %in% primaryKeyIfOmopVocabularyTable) {
-      primaryKey <- 'Yes'
-    } else if (isRequired == 'Yes' &&
-               nrow(csvFile) == nrow(csvFile %>% dplyr::select(fieldName) %>% dplyr::distinct()) &&
-               all(stringr::str_detect(string = fieldName, 
-                                       pattern = patternThatIsNotPrimaryKey, 
-                                       negate = TRUE))) {
-      primaryKey <- 'Yes'
-    } else if (isRequired == 'Yes' &&
-               any(stringr::str_detect(string = fieldName, 
-                                       pattern = patternThatIsPrimaryKey))) {
-      primaryKey <- 'Yes'
-    }
-    describe[[i]] <- tidyr::tibble(tableName = tableName, 
-                                   fieldName = fieldName,
-                                   type = type,
-                                   isRequired = isRequired,
-                                   primaryKey = primaryKey)
-    
-    if (describe[[i]]$type == 'logical') {
-      describe[[i]]$type == 'varchar(1)'
-    }
-    if (describe[[i]]$tableName == 'cohort' && 
-        describe[[i]]$fieldName == 'cohort_name' &&
-        describe[[i]]$type == 'float') {
-      describe[[i]]$type = 'varchar(255)'
-    }
-    if (describe[[i]]$tableName == 'incidence_rate' && describe[[i]]$fieldName == 'calendar_year') {
-      describe[[i]]$primaryKey = 'Yes'
-    }
-    if (describe[[i]]$tableName %in% c('covariate_value', 'temporal_covariate_value', 'time_distribution') && 
-        describe[[i]]$fieldName %in% c('covariate_id','start_day','end_day')) {
-      describe[[i]]$primaryKey = 'Yes'
-    }
-    if (describe[[i]]$tableName %in% c('included_source_concept','index_event_breakdown', 'orphan_concept')) {
-      if (describe[[i]]$fieldName %in% c('concept_set_id', 'concept_id', 'source_concept_id')) {
-        describe[[i]]$primaryKey = 'Yes'
+  observedTypes <- sapply(table, class)
+  for (i in 1:length(observedTypes)) {
+    fieldName <- names(observedTypes)[i]
+    expectedType <- gsub("\\(.*\\)", "", tolower(tableSpecs$type[tableSpecs$fieldName == fieldName]))
+    if (expectedType == "bigint" || expectedType == "float") {
+      if (observedTypes[i] != "numeric" && observedTypes[i] != "double") {
+        ParallelLogger::logDebug(sprintf("Field %s in table %s in zip file %s is of type %s, but was expecting %s. Attempting to convert.",
+                                         fieldName,
+                                         tableName,
+                                         zipFileName,
+                                         observedTypes[i], 
+                                         expectedType))
+        table <- mutate_at(table, i, as.numeric)
+      }
+    } else if (expectedType == "int") {
+      if (observedTypes[i] != "integer") {
+        ParallelLogger::logDebug(sprintf("Field %s in table %s in zip file %s is of type %s, but was expecting %s. Attempting to convert.",
+                                         fieldName,
+                                         tableName,
+                                         zipFileName,
+                                         observedTypes[i], 
+                                         expectedType))
+        table <- mutate_at(table, i, as.integer)
+      }
+    } else if (expectedType == "varchar") {
+      if (observedTypes[i] != "character") {
+        ParallelLogger::logDebug(sprintf("Field %s in table %s in zip file %s is of type %s, but was expecting %s. Attempting to convert.",
+                                         fieldName,
+                                         tableName,
+                                         zipFileName,
+                                         observedTypes[i], 
+                                         expectedType))
+        table <- mutate_at(table, i, as.character)
+      }
+    } else if (expectedType == "date") {
+      if (observedTypes[i] != "Date") {
+        ParallelLogger::logDebug(sprintf("Field %s in table %s in zip file %s is of type %s, but was expecting %s. Attempting to convert.",
+                                         fieldName,
+                                         tableName,
+                                         zipFileName,
+                                         observedTypes[i], 
+                                         expectedType))
+        table <- mutate_at(table, i, as.Date)
       }
     }
-  }
-  describe <- dplyr::bind_rows(describe)
-  return(describe)
+  } 
+  return(table)
 }
 
-
-getPrimaryKeyForOmopVocabularyTable <- function() {
-  vocabularyTableKeys <- dplyr::bind_rows(
-    tidyr::tibble(vocabularyTableName = 'concept', primaryKey = 'concept_id'),
-    tidyr::tibble(vocabularyTableName = 'vocabulary', primaryKey = 'vocabulary_id'),
-    tidyr::tibble(vocabularyTableName = 'domain', primaryKey = 'domain_id'),
-    tidyr::tibble(vocabularyTableName = 'concept_class', primaryKey = 'concept_class_id'),
-    tidyr::tibble(vocabularyTableName = 'concept_relationship', primaryKey = 'concept_id_1,concept_id_2,relationship_id'),
-    tidyr::tibble(vocabularyTableName = 'relationship', primaryKey = 'relationship_id'),
-    tidyr::tibble(vocabularyTableName = 'concept_ancestor', primaryKey = 'ancestor_concept_id,descendant_concept_id'),
-    tidyr::tibble(vocabularyTableName = 'source_to_concept_map', primaryKey = 'source_vocabulary_id,target_concept_id,source_code,valid_end_date'),
-    tidyr::tibble(vocabularyTableName = 'drug_strength', primaryKey = 'drug_concept_id, ingredient_concept_id'))
-  
-  return(vocabularyTableKeys)
-}
-
-
-#' Get specification for Cohort Diagnostics results data model
-#' 
-#' @return 
-#' A tibble data frame object with specifications
-#' 
-#' @examples
-#' \dontrun{
-#' resultsDataModelSpecification <- getResultsDataModelSpecification()
-#' }
-#' 
-#' @export
-getResultsDataModelSpecification <- function() {
-  pathToCsvFile <- system.file('sql',
-                               'resultsDataModel',
-                               'specification.csv', 
-                               package = 'CohortDiagnostics')
-  specification <- readr::read_csv(file = pathToCsvFile,
-                                   col_types = readr::cols(),
-                                   guess_max = min(1e7),
-                                   locale = readr::locale(encoding = "UTF-8"))
-  return(specification)
-}
-
-
-guessDbmsDataTypeFromVector <- function(value) {
-  class <- value %>% class() %>% max()
-  type <- value %>% typeof() %>% max()
-  mode <- value %>% mode() %>% max()
-  if (type == 'double' && class == 'Date' && mode == 'numeric') {
-    type = 'Date'
-  } else if (type == 'double' && (any(class %in% c("POSIXct", "POSIXt")))  && mode == 'numeric') {
-    type = 'DATETIME2'
-  } else if (type == 'double' && class == 'numeric' && mode == 'numeric') { #in R double and numeric are same
-    type = 'float'
-  } else if (class == 'integer' && type == 'integer' && mode == 'integer') {
-    type = 'integer'
-  } else if (type == 'character' && class == 'character' && mode == 'character') {
-    fieldCharLength <- try(max(stringr::str_length(value)) %>% 
-                             as.integer())
-    if (is.na(fieldCharLength)) {
-      fieldCharLength = 9999
-    }
-    if (fieldCharLength <= 1) {
-      fieldChar = '1'
-    } else if (fieldCharLength <= 20) {
-      fieldChar = '20'
-    } else if (fieldCharLength <= 50) {
-      fieldChar = '50'
-    } else if (fieldCharLength <= 255) {
-      fieldChar = '255'
-    } else {
-      fieldChar = 'max'
-    }
-    type = paste0('varchar(', fieldChar, ')')
-  } else if (class == "logical") {
-    type <- 'varchar(1)'
+checkAndFixDuplicateRows <- function(table, tableName, zipFileName, specifications = getResultsDataModelSpecifications()) {
+  primaryKeys <- specifications %>%
+    dplyr::filter(.data$tableName == !!tableName & .data$primaryKey == "Yes") %>%
+    dplyr::select(.data$fieldName) %>%
+    dplyr::pull()
+  duplicated <- duplicated(table[, primaryKeys])
+  if (any(duplicated)) {
+    warning(sprintf("Table %s in zip file %s has duplicate rows. Removing %s records.",
+                    tableName,
+                    zipFileName,
+                    sum(duplicated)))
+    return(table[!duplicated, ])
   } else {
-    type <- 'Unknown'
+    return(table)
   }
-  return(type)
 }
 
-
-
-#' Combine CSVs that are part of Cohort Diagnostics results data model
-#' 
-#' @return 
-#' This function searches for csv files that conforms to the Cohort 
-#' Diagnostics results data model, parses them, does quality checks,
-#' appends files and makes them ready for upload into a dbms. Note:
-#' the files are expected to be in snake_case format.
-#' 
-#' @param inputLocation   Input location for files
-#' @param outputLocation  Output location for files
-#' @param recursive       Search for files recursively
-#' @param reportLocation  (Optional) Output data quality report to this location.
-#' 
-#' @return 
-#' NULL
-#' 
-#' @examples
-#' \dontrun{
-#' combineResultsDataModelCsvFiles()
-#' }
-#' 
-#' @export
-combineResultsDataModelCsvFiles <- function(inputLocation,
-                                            outputLocation = file.path(inputLocation, 'combined'),
-                                            recursive = TRUE,
-                                            # lookForCsvWithinZipFiles = TRUE, TO DO
-                                            reportLocation = NULL) {
-  unlink(x = outputLocation, recursive = TRUE, force = TRUE)
-  dir.create(path = outputLocation, showWarnings = FALSE, recursive = TRUE)
-  
-  if (!is.null(reportLocation)) {
-    reportLocation <- NULL
-    ParallelLogger::logInfo("TO DO - report generation.")
+appendNewRows <- function(data, newData, tableName, specifications = getResultsDataModelSpecifications()) {
+  if (nrow(data) > 0) {
+    primaryKeys <- specifications %>%
+      dplyr::filter(.data$tableName == !!tableName & .data$primaryKey == "Yes") %>%
+      dplyr::select(.data$fieldName) %>%
+      dplyr::pull()
+    newData <- newData %>%
+      dplyr::anti_join(data, by = primaryKeys)
   }
-  
-  resultsDataModelSpecification <- 
-    readr::read_csv(file = system.file('settings',
-                                       'resultsDataModelSpecification.csv',
-                                       package = 'CohortDiagnostics'),
-                    col_types = readr::cols(), 
-                    guess_max = min(1e7), 
-                    locale = readr::locale(encoding = "UTF-8"))
-  
-  ParallelLogger::logInfo("  Searching for the following files:",
-                          paste0("\n    - ", resultsDataModelSpecification$tableName %>% unique() %>% sort(), ".csv"))
-  
-  csvFiles <- tidyr::tibble(fullName = list.files(path = inputLocation, 
-                                                  pattern = ".csv", 
-                                                  recursive = recursive, 
-                                                  full.names = TRUE, 
-                                                  ignore.case = FALSE)) %>% 
-    dplyr::mutate(tableName = stringr::str_replace(string = basename(.data$fullName),
-                                                   pattern = ".csv",
-                                                   replacement = "")) %>% 
-    dplyr::inner_join(resultsDataModelSpecification %>% 
-                        dplyr::select(.data$tableName) %>% 
-                        dplyr::distinct()
-    ) %>% 
-    dplyr::filter(stringr::str_detect(string = basename(.data$fullName), 
-                                      pattern = basename(outputLocation), 
-                                      negate = TRUE))
-  
-  message1 <- paste0("  Found the following csv files:",
-                     (csvFiles %>% 
-                        dplyr::group_by(.data$tableName) %>% 
-                        dplyr::summarise(count = dplyr::n()) %>% 
-                        dplyr::mutate(report = paste0("\n     - " ,
-                                                      .data$tableName, 
-                                                      " (n = ", 
-                                                      format(big.mark = ",", scientific = FALSE, x = .data$count),
-                                                      ")"
-                        )) %>% 
-                        dplyr::pull(.data$report) %>% 
-                        sort() %>% 
-                        paste0(collapse = ",")))
-  ParallelLogger::logInfo(message1)
-  
-  # zipFiles <- tidyr::tibble(fullName = list.files(path = inputLocation, 
-  #                                                 pattern = ".zip", 
-  #                                                 recursive = TRUE, 
-  #                                                 full.names = TRUE, 
-  #                                                 ignore.case = FALSE)) %>% 
-  #   dplyr::mutate(name = basename(.data$fullName) %>% 
-  #                   stringr::str_replace(string = .,
-  #                                        pattern = ".zip",
-  #                                        replacement = ""))
-  
-  files <- csvFiles$tableName %>% unique() %>% sort()
-  for (i in (1:length(files))) {
-    csvFile <- csvFiles %>% 
-      dplyr::filter(.data$tableName %in% files[[i]])
-    ParallelLogger::logInfo("  Reading csv file(s) ", files[[i]], ".csv")
-    
-    filesRead <- list()
-    for (j in (1:nrow(csvFile))) {
-      ParallelLogger::logInfo("    reading ", csvFile$fullName[[j]])
-      data <- readr::read_csv(file = csvFile$fullName[[j]],
-                              col_types = readr::cols(),
-                              guess_max = min(1e7),
-                              locale = readr::locale(encoding = "UTF-8")) %>%
-        dplyr::distinct()
-      
-      if (nrow(data) > 0) {
-        expectedColNames <- resultsDataModelSpecification %>% 
-          dplyr::filter(.data$tableName == files[[i]]) %>% 
-          dplyr::pull(.data$fieldName) %>% 
-          tolower()
-        observeredColNames <- colnames(data) %>% 
-          tolower()
-        
-        if (length(intersect(x = expectedColNames, y = observeredColNames)) != 
-            length(expectedColNames)) {
-          ParallelLogger::logWarn("Problem with file ", csvFile$fullName[[j]])
-          ParallelLogger::logInfo("  - Agree with expected columns:", 
-                                  intersect(x = expectedColNames, y = observeredColNames) %>% 
-                                    paste0(collapse = ","))
-          ParallelLogger::logInfo("  - Do not agree with expected columns:", 
-                                  setdiff(y = expectedColNames, x = observeredColNames) %>% 
-                                    paste0(collapse = ","))
-          if (!setequal(x = expectedColNames,
-                        y = observeredColNames)) {
-            ParallelLogger::logWarn("Mismatch between expected and observered. ")
-            stop()
-          }
-        }
-        colnames(data) <- tolower(colnames(data))
-        filesRead[[j]] <- data
-      } else {
-        ParallelLogger::logWarn(files[[i]], " has 0 records.")
-        filesRead[[j]] <- tidyr::tibble()
-      }
-      if (('valid_start_date' %in% colnames(filesRead[[j]]) ||
-           'valid_end_date' %in% colnames(filesRead[[j]])) &&
-          typeof(filesRead[[j]]$valid_start_date) == 'character') {
-        filesRead[[j]]$valid_end_date <- as.Date(filesRead[[j]]$valid_end_date)
-        filesRead[[j]]$valid_start_date <- as.Date(filesRead[[j]]$valid_start_date)
-      }
-    }
-    filesRead <- dplyr::bind_rows(filesRead) %>%
-      dplyr::distinct()
-    
-    if (length(colnames(filesRead)) == 0) {
-      ParallelLogger::logWarn("None of files read have any column names, are those files corrupted?")
-      stop()
-    }
-    
-    if (files[[i]] == 'concept') {
-      n <- nrow(filesRead)
-      filesRead <- filesRead[!duplicated(filesRead$concept_id),]
-      difference <- (nrow(filesRead)  - n)
-      if (difference > 0) {
-        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. 
-                                \n    Please check data quality. Removed records = ", 
-                                format(big.mark = ",", scientific = FALSE, x = difference, accuracy = 0))
-      }
-    }
-    if (files[[i]] == 'analysis_ref') {
-      n <- nrow(filesRead)
-      filesRead <- filesRead[!duplicated(filesRead$analysis_id),]
-      difference <- (nrow(filesRead)  - n)
-      if (difference > 0) {
-        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
-      }
-    }
-    if (files[[i]] == 'cohort') {
-      n <- nrow(filesRead)
-      filesRead <- filesRead %>% 
-        dplyr::group_by(.data$referent_concept_id, .data$cohort_id,
-                        .data$web_api_cohort_id) %>% 
-        dplyr::slice(1)
-      difference <- (nrow(filesRead)  - n)
-      if (difference > 0) {
-        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
-      }
-    }
-    if (files[[i]] == 'covariate_ref') {
-      n <- nrow(filesRead)
-      filesRead <- filesRead[!duplicated(filesRead$covariate_id),]
-      difference <- (nrow(filesRead)  - n)
-      if (difference > 0) {
-        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
-      }
-    }
-    if (files[[i]] == 'temporal_analysis_ref') {
-      n <- nrow(filesRead)
-      filesRead <- filesRead[!duplicated(filesRead$analysis_id),]
-      difference <- (nrow(filesRead)  - n)
-      if (difference > 0) {
-        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
-      }
-    }
-    if (files[[i]] == 'temporal_covariate_ref') {
-      n <- nrow(filesRead)
-      filesRead <- filesRead[!duplicated(filesRead$covariate_id),]
-      difference <- (nrow(filesRead)  - n)
-      if (difference > 0) {
-        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
-      }
-    }
-    if (files[[i]] == 'temporal_time_ref') {
-      n <- nrow(filesRead)
-      filesRead <- filesRead[!duplicated(filesRead$time_id),]
-      difference <- (nrow(filesRead)  - n)
-      if (difference > 0) {
-        ParallelLogger::logWarn(" Table has duplicate rows, only first occurrence is retained. Please check data quality. Removed records = ", format(big.mark = ",", scientific = FALSE, x = difference))
-      }
-    }
-    
-    outputCsv <- file.path(outputLocation, paste0(files[[i]], ".csv"))
-    readr::write_excel_csv(x = filesRead, 
-                           path = outputCsv, 
-                           na = '')
-  }
-  return(NULL)
+  return(dplyr::bind_rows(data, newData))  
 }

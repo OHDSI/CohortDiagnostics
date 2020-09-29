@@ -25,12 +25,14 @@ checkCohortReference <- function(cohortReference, errorMessage = NULL) {
                              null.ok = FALSE,
                              col.names = "named",
                              add = errorMessage)
-  checkmate::assertDouble(x = cohortReference$referentConceptId, 
-                          lower = 0, 
-                          any.missing = FALSE, 
-                          unique = FALSE, 
-                          null.ok = FALSE, 
-                          add = errorMessage)
+  if ("referentConceptId" %in% names(cohortReference)) {
+    checkmate::assertDouble(x = cohortReference$referentConceptId, 
+                            lower = 0, 
+                            any.missing = FALSE, 
+                            unique = FALSE, 
+                            null.ok = FALSE, 
+                            add = errorMessage)
+  }
   checkmate::assertDouble(x = cohortReference$cohortId, 
                           lower = 0, 
                           any.missing = FALSE, 
@@ -73,19 +75,20 @@ getCohortsJsonAndSqlFromPackage <- function(packageName = packageName,
   
   # Adding some backwards compatiblity with v1:
   if (!"name" %in% colnames(cohorts)) {
-    cohorts$name <- cohorts$cohortId 
+    cohorts <- cohorts %>%
+      mutate(name = .data$cohortId)
   }
   if (!"webApiCohortId" %in% colnames(cohorts) && "atlasId" %in% colnames(cohorts)) {
-    cohorts$webApiCohortId <- cohorts$atlasId 
-  }
-  if (!"referentConceptId" %in% colnames(cohorts)) {
-    cohorts$referentConceptId <- NA
+    cohorts <- cohorts %>%
+      rename(webApiCohortId = .data$atlasId)
   }
   if (!"cohortName" %in% colnames(cohorts) && "atlasName" %in% colnames(cohorts)) {
-    cohorts$cohortName <- cohorts$atlasName 
+    cohorts <- cohorts %>%
+      rename(cohortName = .data$atlasName)
   }
   if (!is.null(cohortIds)) {
-    cohorts <- cohorts %>% dplyr::filter(.data$cohortId %in% cohortIds)
+    cohorts <- cohorts %>% 
+      dplyr::filter(.data$cohortId %in% cohortIds)
   }
   
   checkCohortReference(cohortReference = cohorts, errorMessage = errorMessage)
@@ -770,9 +773,10 @@ instantiateCohortSet <- function(connectionDetails = NULL,
 
 createTempInclusionStatsTables <- function(connection, oracleTempSchema, cohorts) {
   ParallelLogger::logInfo("Creating temporary inclusion statistics tables")
-  pathToSql <- system.file( "inclusionStatsTables.sql", package = "ROhdsiWebApi")
-  sql <- SqlRender::readSql(pathToSql)
-  sql <- SqlRender::translate(sql, targetDialect = connection@dbms, oracleTempSchema = oracleTempSchema)
+  sql <- SqlRender::loadRenderTranslateSql("inclusionStatsTables.sql",
+                                           packageName = "CohortDiagnostics",
+                                           dbms = connection@dbms,
+                                           oracleTempSchema = oracleTempSchema)
   DatabaseConnector::executeSql(connection, sql)
   
   inclusionRules <- tidyr::tibble()
@@ -804,11 +808,23 @@ createTempInclusionStatsTables <- function(connection, oracleTempSchema, cohorts
     DatabaseConnector::insertTable(connection = connection,
                                    tableName = "#cohort_inclusion",
                                    data = inclusionRules,
-                                   dropTableIfExists = FALSE,
-                                   createTable = FALSE,
+                                   dropTableIfExists = TRUE,
+                                   createTable = TRUE,
                                    tempTable = TRUE,
                                    oracleTempSchema = oracleTempSchema,
                                    camelCaseToSnakeCase = TRUE)
+  } else {
+  inclusionRules <- data.frame(cohortDefinitionId = as.double(),
+                               ruleSequence = as.integer(),
+                               name = as.character())
+  DatabaseConnector::insertTable(connection = connection,
+                                 tableName = "#cohort_inclusion",
+                                 data = inclusionRules,
+                                 dropTableIfExists = TRUE,
+                                 createTable = TRUE,
+                                 tempTable = TRUE,
+                                 oracleTempSchema = oracleTempSchema,
+                                 camelCaseToSnakeCase = TRUE)
   }
 }
 

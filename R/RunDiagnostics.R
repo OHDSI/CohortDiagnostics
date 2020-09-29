@@ -38,9 +38,9 @@
 #' @template CohortSetReference
 #' @param phenotypeDescriptionFile    (Optional) The location of the phenotype descriptioon file within the package. 
 #'                                    The file must be .csv file and have the following columns that may be read into following
-#'                                    data types: phenotype_id (double), phenotype_name (character),
-#'                                    referent_concept_id (double), clinical_description (character),
-#'                                    literature_review (character), phenotype_notes (character). Note: the field
+#'                                    data types: phenotypeId (double), phenotypeName (character),
+#'                                    referentConceptId (double), clinicalDescription (character),
+#'                                    literatureReview (character), phenotypeNotes (character). Note: the field
 #'                                    names are in snake_case. Also, character fields should not have 'NA' in it.
 #'                                    'NA's are commonly added by R when R functions exports data from dataframe 
 #'                                    into CSV. Instead please use '' (empty string) to represent absence of data. 
@@ -97,8 +97,8 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  inclusionStatisticsFolder = file.path(exportFolder, "inclusionStatistics"),
                                  exportFolder,
                                  databaseId,
-                                 databaseName = databaseId,
-                                 databaseDescription = "",
+                                 databaseName = NULL,
+                                 databaseDescription = NULL,
                                  cdmVersion = 5,
                                  runInclusionStatistics = TRUE,
                                  runIncludedSourceConcepts = TRUE,
@@ -109,11 +109,9 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  runIncidenceRate = TRUE,
                                  runCohortOverlap = TRUE,
                                  runCohortCharacterization = TRUE,
-                                 covariateSettings = 
-                                   FeatureExtraction::createDefaultCovariateSettings(),
+                                 covariateSettings = createDefaultCovariateSettings(),
                                  runTemporalCohortCharacterization = TRUE,
-                                 temporalCovariateSettings = 
-                                   FeatureExtraction::createTemporalCovariateSettings(
+                                 temporalCovariateSettings = createTemporalCovariateSettings(
                                      useConditionOccurrence = TRUE, 
                                      useDrugEraStart = TRUE, 
                                      useProcedureOccurrence = TRUE, 
@@ -172,18 +170,26 @@ runCohortDiagnostics <- function(packageName = NULL,
                                   cohortIds = cohortIds)
   
   if (!is.null(phenotypeDescriptionFile)) {
-    writePhenotypeDescriptionCsvToResults(packageName = packageName,
-                                          phenotypeDescriptionFile = phenotypeDescriptionFile,
-                                          exportFolder = exportFolder,
-                                          cohorts = cohorts,
-                                          errorMessage)
+    phenotypeDescription <- loadAndExportPhenotypeDescription(packageName = packageName,
+                                                              phenotypeDescriptionFile = phenotypeDescriptionFile,
+                                                              exportFolder = exportFolder,
+                                                              cohorts = cohorts,
+                                                              errorMessage = errorMessage)
+  } else {
+    phenotypeDescription <- NULL
   }
-  
   
   if (nrow(cohorts) == 0) {
     stop("No cohorts specified")
   }
+  if ('name' %in% colnames(cohorts)) {
+    cohorts <- cohorts %>% 
+      dplyr::select(-.data$name)
+  }
   writeToCsv(data = cohorts, fileName = file.path(exportFolder, "cohort.csv"))
+  if (!"phenotypeId" %in% colnames(cohorts)) {
+    cohorts$phenotypeId <- NA
+  }
   
   ##############################
   ## set up connection to server
@@ -200,8 +206,8 @@ runCohortDiagnostics <- function(packageName = NULL,
   ParallelLogger::logInfo("Saving database metadata")
   startMetaData <- Sys.time()
   database <- dplyr::tibble(databaseId = databaseId,
-                            databaseName = databaseName,
-                            description = databaseDescription,
+                            databaseName = dplyr::coalesce(databaseName,databaseId),
+                            description = dplyr::coalesce(databaseDescription,databaseId),
                             isMetaAnalysis = 0)
   writeToCsv(data = database, 
              fileName = file.path(exportFolder, "database.csv"))
@@ -216,24 +222,26 @@ runCohortDiagnostics <- function(packageName = NULL,
                                            oracleTempSchema = oracleTempSchema,
                                            table_name = "#concept_ids")
   DatabaseConnector::executeSql(connection = connection, sql = sql, progressBar = FALSE, reportOverallTime = FALSE)
-  data <- cohorts %>% 
-    dplyr::filter(!is.na(.data$referentConceptId)) %>%
-    dplyr::select(conceptId = .data$referentConceptId) %>% 
-    dplyr::distinct() %>%
-    as.data.frame()
-  if (nrow(data) > 0) {
-    ParallelLogger::logInfo(sprintf("Inserting %s cohort referent concept IDs into the unique concept ID table. This may take a while.",
-                                    nrow(data)))
-    DatabaseConnector::insertTable(connection = connection, 
-                                   tableName = "#concept_ids",
-                                   data = data,
-                                   dropTableIfExists = FALSE,
-                                   createTable = FALSE, 
-                                   progressBar = TRUE,
-                                   tempTable = TRUE,
-                                   oracleTempSchema = oracleTempSchema,
-                                   camelCaseToSnakeCase = TRUE)
-    ParallelLogger::logTrace("Done inserting")
+  if (!is.null(phenotypeDescription)) {
+    data <- phenotypeDescription %>% 
+      dplyr::filter(!is.na(.data$referentConceptId)) %>%
+      dplyr::transmute(conceptId = as.integer(.data$referentConceptId)) %>% 
+      dplyr::distinct() %>%
+      as.data.frame() #DatabaseConnector currently does not support tibble
+    if (nrow(data) > 0) {
+      ParallelLogger::logInfo(sprintf("Inserting %s referent concept IDs into the concept ID table. This may take a while.",
+                                      nrow(data)))
+      DatabaseConnector::insertTable(connection = connection, 
+                                     tableName = "#concept_ids",
+                                     data = data,
+                                     dropTableIfExists = FALSE,
+                                     createTable = FALSE, 
+                                     progressBar = TRUE,
+                                     tempTable = TRUE,
+                                     oracleTempSchema = oracleTempSchema,
+                                     camelCaseToSnakeCase = TRUE)
+      ParallelLogger::logTrace("Done inserting")
+    }
   }
   
   ##############################
@@ -297,7 +305,12 @@ runCohortDiagnostics <- function(packageName = NULL,
                     recordKeepingFile = recordKeepingFile,
                     incremental = incremental)
   }
-  
+  # Get all counts, not just those we didn't count before:
+  counts <- readr::read_csv(file = file.path(exportFolder, "cohort_count.csv"), 
+                            col_types = readr::cols(),
+                            guess_max = min(1e7))
+  names(counts) <- SqlRender::snakeCaseToCamelCase(names(counts))
+
   # Inclusion statistics -----------------------------------------------------------------------
   if (runInclusionStatistics) {
     ParallelLogger::logInfo("Fetching inclusion statistics from files")
@@ -502,12 +515,12 @@ runCohortDiagnostics <- function(packageName = NULL,
     startCohortOverlap <- Sys.time()
     
     combis <- cohorts %>% 
-      dplyr::select(.data$referentConceptId, .data$cohortId) %>% 
+      dplyr::select(.data$phenotypeId, .data$cohortId) %>% 
       dplyr::rename(targetCohortId = .data$cohortId) %>% 
       dplyr::inner_join(cohorts %>% 
-                          dplyr::select(.data$referentConceptId, .data$cohortId) %>% 
+                          dplyr::select(.data$phenotypeId, .data$cohortId) %>% 
                           dplyr::rename(comparatorCohortId = .data$cohortId),
-                        by = "referentConceptId") %>% 
+                        by = "phenotypeId") %>% 
       dplyr::filter(.data$targetCohortId < .data$comparatorCohortId) %>% 
       dplyr::select(.data$targetCohortId, .data$comparatorCohortId) %>% 
       dplyr::distinct()
@@ -605,54 +618,21 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
     if (nrow(subset) > 0) {  
       ParallelLogger::logInfo(sprintf("Starting large scale characterization of %s cohort(s)", nrow(subset)))
-      cohortCharacteristicsOutput <- getCohortCharacteristics(connection = connection,
-                                                              cdmDatabaseSchema = cdmDatabaseSchema,
-                                                              oracleTempSchema = oracleTempSchema,
-                                                              cohortDatabaseSchema = cohortDatabaseSchema,
-                                                              cohortTable = cohortTable,
-                                                              cohortIds = subset$cohortId,
-                                                              covariateSettings = covariateSettings,
-                                                              cdmVersion = cdmVersion)
-      if (length(cohortCharacteristicsOutput) == 0) {
-        warning("No characterization output for submitted cohorts")
-      }
-      
-      if (nrow(cohortCharacteristicsOutput$result) > 0) {
-        characteristicsResultFiltered <- cohortCharacteristicsOutput$result %>% 
-          dplyr::mutate(mean = round(x = mean, digits = 4)) %>% 
-          dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 4 digits
-        if (nrow(characteristicsResultFiltered) > 0) {
-          writeToCsv(data = cohortCharacteristicsOutput$covariateRef,
-                     fileName = file.path(exportFolder, "covariate_ref.csv"),
-                     incremental = incremental,
-                     covariateId = cohortCharacteristicsOutput$covariateRef$covariateId)
-          writeToCsv(data = cohortCharacteristicsOutput$analysisRef,
-                     fileName = file.path(exportFolder, "analysis_ref.csv"),
-                     incremental = incremental,
-                     analysisId = cohortCharacteristicsOutput$analysisRef$analysisId)
-          if (!exists("counts")) {
-            counts <- readr::read_csv(file = file.path(exportFolder, "cohort_count.csv"), 
-                                      col_types = readr::cols(),
-                                      guess_max = min(1e7))
-            names(counts) <- SqlRender::snakeCaseToCamelCase(names(counts))
-          }
-          characteristicsResultFiltered <- characteristicsResultFiltered %>% 
-            dplyr::mutate(databaseId = !!databaseId) %>% 
-            dplyr::left_join(y = counts, by = c("cohortId", "databaseId"))
-          characteristicsResultFiltered <- enforceMinCellValue(data = characteristicsResultFiltered, 
-                                                               fieldName = "mean", 
-                                                               minValues = minCellCount/characteristicsResultFiltered$cohortEntries)
-          characteristicsResultFiltered <- characteristicsResultFiltered %>% 
-            dplyr::mutate(sd = dplyr::case_when(mean >= 0 ~ sd)) %>% 
-            dplyr::mutate(mean = round(.data$mean, digits = 4),
-                          sd = round(.data$sd, digits = 4)) %>% 
-            dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
-          writeToCsv(data = characteristicsResultFiltered, 
-                     fileName = file.path(exportFolder, "covariate_value.csv"), 
-                     incremental = incremental, 
-                     cohortId = characteristicsResultFiltered$cohortId %>% unique())
-        }
-      } 
+      characteristics <- getCohortCharacteristics(connection = connection,
+                                                  cdmDatabaseSchema = cdmDatabaseSchema,
+                                                  oracleTempSchema = oracleTempSchema,
+                                                  cohortDatabaseSchema = cohortDatabaseSchema,
+                                                  cohortTable = cohortTable,
+                                                  cohortIds = subset$cohortId,
+                                                  covariateSettings = covariateSettings,
+                                                  cdmVersion = cdmVersion)
+      exportCharacterization(characteristics = characteristics,
+                             databaseId = databaseId,
+                             incremental = incremental,
+                             covariateValueFileName = file.path(exportFolder, "covariate_value.csv"),
+                             covariateRefFileName = file.path(exportFolder, "covariate_ref.csv"),
+                             analysisRefFileName = file.path(exportFolder, "analysis_ref.csv"),
+                             counts = counts)
     } 
     recordTasksDone(cohortId = subset$cohortId,
                     task = "runCohortCharacterization",
@@ -679,60 +659,21 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
     if (nrow(subset) > 0) {  
       ParallelLogger::logInfo(sprintf("Starting large scale temporal characterization of %s cohort(s)", nrow(subset)) )
-      cohortCharacteristicsOutput <- getCohortCharacteristics(connection = connection,
-                                                              cdmDatabaseSchema = cdmDatabaseSchema,
-                                                              oracleTempSchema = oracleTempSchema,
-                                                              cohortDatabaseSchema = cohortDatabaseSchema,
-                                                              cohortTable = cohortTable,
-                                                              cohortIds = subset$cohortId,
-                                                              covariateSettings = temporalCovariateSettings,
-                                                              cdmVersion = cdmVersion)
-      
-      if (length(cohortCharacteristicsOutput) == 0) {
-        warning("No temporal characterization output for submitted cohorts")
-      }
-      
-      if (nrow(cohortCharacteristicsOutput$result) > 0) {
-        
-        characteristicsResultFiltered <- cohortCharacteristicsOutput$result %>% 
-          dplyr::mutate(mean = round(x = mean, digits = 4)) %>% 
-          dplyr::filter(mean != 0) # Drop covariates with mean = 0 after rounding to 4 digits
-        if (nrow(characteristicsResultFiltered) > 0) {
-          writeToCsv(data = cohortCharacteristicsOutput$covariateRef,
-                     fileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
-                     incremental = incremental,
-                     covariateId = cohortCharacteristicsOutput$covariateRef$covariateId)
-          writeToCsv(data = cohortCharacteristicsOutput$analysisRef,
-                     fileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
-                     incremental = incremental,
-                     analysisId = cohortCharacteristicsOutput$analysisRef$analysisId)
-          writeToCsv(data = cohortCharacteristicsOutput$timeRef,
-                     fileName = file.path(exportFolder, "temporal_time_ref.csv"),
-                     incremental = incremental,
-                     timeId = cohortCharacteristicsOutput$timeRef$timeId)
-          if (!exists("counts")) {
-            counts <- readr::read_csv(file = file.path(exportFolder, "cohort_count.csv"), 
-                                      col_types = readr::cols(),
-                                      guess_max = min(1e7))
-            names(counts) <- SqlRender::snakeCaseToCamelCase(names(counts))
-          }
-          characteristicsResultFiltered <- characteristicsResultFiltered %>% 
-            dplyr::mutate(databaseId = !!databaseId) %>% 
-            dplyr::left_join(y = counts, by = c("cohortId", "databaseId"))
-          characteristicsResultFiltered <- enforceMinCellValue(data = characteristicsResultFiltered, 
-                                                               fieldName = "mean", 
-                                                               minValues = minCellCount/characteristicsResultFiltered$cohortEntries)
-          characteristicsResultFiltered <- characteristicsResultFiltered %>% 
-            dplyr::mutate(sd = dplyr::case_when(mean >= 0 ~ sd)) %>% 
-            dplyr::mutate(mean = round(.data$mean, digits = 4),
-                          sd = round(.data$sd, digits = 4)) %>% 
-            dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
-          writeToCsv(data = characteristicsResultFiltered, 
-                     fileName = file.path(exportFolder, "temporal_covariate_value.csv"), 
-                     incremental = incremental, 
-                     cohortId = characteristicsResultFiltered$cohortId %>% unique())
-        }
-      } 
+      characteristics <- getCohortCharacteristics(connection = connection,
+                                                  cdmDatabaseSchema = cdmDatabaseSchema,
+                                                  oracleTempSchema = oracleTempSchema,
+                                                  cohortDatabaseSchema = cohortDatabaseSchema,
+                                                  cohortTable = cohortTable,
+                                                  cohortIds = subset$cohortId,
+                                                  covariateSettings = temporalCovariateSettings,
+                                                  cdmVersion = cdmVersion)
+      exportCharacterization(characteristics = characteristics,
+                             incremental = incremental,
+                             covariateValueFileName = file.path(exportFolder, "temporal_covariate_value.csv"),
+                             covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
+                             analysisRefFileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
+                             timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv"),
+                             counts = counts)
     } 
     recordTasksDone(cohortId = subset$cohortId,
                     task = "runTemporalCohortCharacterization",
@@ -776,11 +717,11 @@ runCohortDiagnostics <- function(packageName = NULL,
 }
 
 
-writePhenotypeDescriptionCsvToResults <- function(packageName,
-                                                  phenotypeDescriptionFile,
-                                                  exportFolder,
-                                                  cohorts, 
-                                                  errorMessage = NULL) {
+loadAndExportPhenotypeDescription <- function(packageName,
+                                              phenotypeDescriptionFile,
+                                              exportFolder,
+                                              cohorts, 
+                                              errorMessage = NULL) {
   if (is.null(errorMessage)) {
     errorMessage <- checkmate::makeAssertCollection(errorMessage)
   }
@@ -819,10 +760,8 @@ writePhenotypeDescriptionCsvToResults <- function(packageName,
                                     nrow(phenotypeDescription)))
     
     phenotypeDescription <- phenotypeDescription %>% 
-      dplyr::inner_join(cohorts %>% 
-                          dplyr::select(.data$referentConceptId) %>% 
-                          dplyr::mutate(referent_concept_id = .data$referentConceptId))
-    
+      dplyr::filter(.data$phenotypeId %in% unique(cohorts$phenotypeId))
+
     ParallelLogger::logInfo(sprintf("%s rows matched", nrow(phenotypeDescription)))
     
     if (nrow(phenotypeDescription) > 0) {
@@ -830,7 +769,56 @@ writePhenotypeDescriptionCsvToResults <- function(packageName,
     } else {
       warning("Phentoype description csv file found, but records dont match the referent concept ids of the cohorts being diagnosed.")
     }
+    return(phenotypeDescription)
   } else {
     warning("Phentoype description file not found")
+    return(NULL)
   }
+}
+
+exportCharacterization <- function(characteristics,
+                                   databaseId,
+                                   incremental,
+                                   covariateValueFileName,
+                                   covariateRefFileName,
+                                   analysisRefFileName,
+                                   timeRefFileName = NULL,
+                                   counts) {
+    if (!"covariates" %in% names(characteristics)) {
+    warning("No characterization output for submitted cohorts")
+  } else if (dplyr::pull(dplyr::count(characteristics$covariateRef)) > 0) {
+    characteristics$filteredCovariates <- characteristics$covariates %>% 
+      dplyr::filter(mean >= 0.0001) %>% 
+      dplyr::mutate(databaseId = !!databaseId) %>% 
+      dplyr::left_join(counts, by = c("cohortId", "databaseId"), copy = TRUE) %>%
+      dplyr::mutate(mean = dplyr::case_when(.data$mean != 0 & .data$mean < minCellCount / .data$cohortEntries ~ -minCellCount / .data$cohortEntries, 
+                                            TRUE ~ .data$mean)) %>%
+      dplyr::mutate(sd = dplyr::case_when(.data$mean >= 0 ~ sd)) %>% 
+      dplyr::mutate(mean = round(.data$mean, digits = 4),
+                    sd = round(.data$sd, digits = 4)) %>%
+      dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
+    
+    if (dplyr::pull(dplyr::count(characteristics$filteredCovariates)) > 0) {
+      covariateRef <- dplyr::collect(characteristics$covariateRef)
+      writeToCsv(data = covariateRef,
+                 fileName = covariateRefFileName,
+                 incremental = incremental,
+                 covariateId = covariateRef$covariateId)
+      analysisRef <- dplyr::collect(characteristics$analysisRef)
+      writeToCsv(data = analysisRef,
+                 fileName = analysisRefFileName,
+                 incremental = incremental,
+                 analysisId = analysisRef$analysisId)
+      if (!is.null(timeRefFileName)) {
+        timeRef <- dplyr::collect(characteristics$timeRef)
+        writeToCsv(data = timeRef,
+                   fileName = timeRefFileName,
+                   incremental = incremental,
+                   analysisId = timeRef$timeId)
+      }
+      writeCovariateDataToAndromedaToCsv(data = characteristics$filteredCovariates, 
+                                         fileName = covariateValueFileName, 
+                                         incremental = incremental)
+    }
+  } 
 }
