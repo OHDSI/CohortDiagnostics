@@ -135,7 +135,7 @@ writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
   }
 }
 
-writeCovariateDataToAndromedaToCsv <- function(data, fileName, incremental = FALSE) {
+writeCovariateDataAndromedaToCsv <- function(data, fileName, incremental = FALSE) {
   if (incremental && file.exists(fileName)) {
     ParallelLogger::logDebug("Appending records to ", fileName)
     batchSize <- 1e5
@@ -149,10 +149,7 @@ writeCovariateDataToAndromedaToCsv <- function(data, fileName, incremental = FAL
     processChunk <- function(chunk, pos) {
       chunk <- chunk %>%
         filter(!.data$cohort_id %in% cohortIds)
-      readr::write_csv(x = chunk,
-                       path = tempName,
-                       append = (pos != 1))
-      
+      readr::write_csv(chunk, tempName, append = (pos != 1))
     }
     
     readr::read_csv_chunked(file = fileName, 
@@ -163,10 +160,7 @@ writeCovariateDataToAndromedaToCsv <- function(data, fileName, incremental = FAL
     
     addChunk <- function(chunk) {
       colnames(chunk) <- SqlRender::camelCaseToSnakeCase(colnames(chunk))
-      readr::write_csv(x = chunk,
-                       path = tempName,
-                       append = TRUE)
-      
+      readr::write_csv(chunk, tempName, append = TRUE)
     }
     Andromeda::batchApply(data, addChunk)
     unlink(fileName)                       
@@ -183,11 +177,7 @@ writeCovariateDataToAndromedaToCsv <- function(data, fileName, incremental = FAL
       if (first) {
         colnames(batch) <- SqlRender::camelCaseToSnakeCase(colnames(batch))
       }
-      readr::write_excel_csv(x = batch, 
-                             path = fileName, 
-                             na = "", 
-                             append = !first,
-                             delim = ",")
+      readr::write_csv(batch, fileName, append = !first)
     }
     Andromeda::batchApply(data, writeToFile)
   }

@@ -70,7 +70,7 @@ getTimeDistributions <- function(connectionDetails = NULL,
     result <- tidyr::tibble()
   } else {
     result <- data$covariatesContinuous %>%
-      dplyr::inner_join(data$covariateRef) %>%
+      dplyr::inner_join(data$covariateRef, by = "covariateId") %>%
       dplyr::select(-.data$conceptId, -.data$analysisId, -.data$covariateId, -.data$result$countValue) %>%
       dplyr::rename(timeMetric = .data$covariateName,
                     cohortId = .data$cohortDefinitionId) %>%

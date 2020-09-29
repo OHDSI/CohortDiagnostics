@@ -42,10 +42,10 @@ suppressWarnings(
 )
 
 if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {
-  writeLines("Using merged data detected in data folder")
+  writeLines(paste0("Using merged data detected in folder '", dataFolder, "'"))
   load(file.path(dataFolder, "PreMerged.RData"))
 } else {
-  writeLines("No premerged file found")
+  stop("No premerged file found")
 }
 
 rm("visitContext")

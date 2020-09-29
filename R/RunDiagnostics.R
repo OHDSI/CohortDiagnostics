@@ -668,6 +668,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                                   covariateSettings = temporalCovariateSettings,
                                                   cdmVersion = cdmVersion)
       exportCharacterization(characteristics = characteristics,
+                             databaseId = databaseId,
                              incremental = incremental,
                              covariateValueFileName = file.path(exportFolder, "temporal_covariate_value.csv"),
                              covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
@@ -816,9 +817,9 @@ exportCharacterization <- function(characteristics,
                    incremental = incremental,
                    analysisId = timeRef$timeId)
       }
-      writeCovariateDataToAndromedaToCsv(data = characteristics$filteredCovariates, 
-                                         fileName = covariateValueFileName, 
-                                         incremental = incremental)
+      writeCovariateDataAndromedaToCsv(data = characteristics$filteredCovariates, 
+                                       fileName = covariateValueFileName, 
+                                       incremental = incremental)
     }
   } 
 }
