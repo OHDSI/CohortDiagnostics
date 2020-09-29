@@ -54,13 +54,7 @@ if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {
 
 rm("visitContext")
 
-database <- database %>% 
-  dplyr::distinct() %>%
-  dplyr::mutate(databaseName = dplyr::case_when(is.na(.data$databaseName) ~ .data$databaseId, 
-                                                TRUE ~ as.character(.data$databaseId)),
-                description = dplyr::case_when(is.na(.data$description) ~ .data$databaseName,
-                                               TRUE ~ as.character(.data$description))) %>% 
-  dplyr::arrange(.data$databaseId)
+
 
 if (exists("temporalTimeRef")) {
   temporalCovariateChoices <- temporalTimeRef %>%
