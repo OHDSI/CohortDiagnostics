@@ -1296,7 +1296,6 @@ shiny::shinyServer(function(input, output, session) {
                                         timeIds = NULL,
                                         resultsDatabaseSchema = NULL,
                                         domain = input$domain)
-    str(data)
     validate(need(!is.null(data), paste0('No cohort compare data for this combination')),
              need(nrow(data) > 0, paste0('No cohort compare data for this combination')),
              need(!(cohortId() == comparatorCohortId()), paste0('Target cohort and comparator cannot be the same')))
@@ -1310,8 +1309,6 @@ shiny::shinyServer(function(input, output, session) {
                                                        covariateReference = covariateReference,
                                                        concept = NULL,
                                                        databaseIds = input$database)
-    str(plot)
-    
     return(plot)
   })
   
