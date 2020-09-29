@@ -15,4 +15,4 @@ outputMergedCsvFiles <- function(preMergedFile = "PreMerged.RData", outputPath =
   }
 }
 
-outputMergedCsvFiles(preMergedFile = "\\\\AWSASJNVA4217\\output\\PreMerged.RData", outputPath = "\\\\AWSASJNVA4217\\output\\merged_csvs")
+outputMergedCsvFiles(preMergedFile = "output/PreMerged.RData", outputPath = "output/")
