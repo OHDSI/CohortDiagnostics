@@ -9,7 +9,7 @@ if (!exists("shinySettings")) {
   if (file.exists("data")) {
     shinySettings <- list(dataFolder = "data")
   } else {
-    shinySettings <- list(dataFolder = "c:/temp/exampleStudy")
+    shinySettings <- list(dataFolder = "S:/examplePackageOutput")
   }
 }
 dataFolder <- shinySettings$dataFolder
@@ -19,11 +19,15 @@ suppressWarnings(
     "analysisRef",
     "temporalAnalysisRef",
     "temporalTimeRef",
+    "covariateValue",
     "covariateRef",
-    "temporarlCovariateRef",
+    "temporalCovariateValue",
+    "temporalCovariateRef",
     "concept",
+    "conceptSynonym",
     "vocabulary",
     "domain",
+    "relationship",
     "conceptAncestor",
     "conceptRelationship",
     "cohort",
