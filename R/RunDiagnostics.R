@@ -632,7 +632,8 @@ runCohortDiagnostics <- function(packageName = NULL,
                              covariateValueFileName = file.path(exportFolder, "covariate_value.csv"),
                              covariateRefFileName = file.path(exportFolder, "covariate_ref.csv"),
                              analysisRefFileName = file.path(exportFolder, "analysis_ref.csv"),
-                             counts = counts)
+                             counts = counts,
+                             minCellCount = minCellCount)
     } 
     recordTasksDone(cohortId = subset$cohortId,
                     task = "runCohortCharacterization",
@@ -668,12 +669,14 @@ runCohortDiagnostics <- function(packageName = NULL,
                                                   covariateSettings = temporalCovariateSettings,
                                                   cdmVersion = cdmVersion)
       exportCharacterization(characteristics = characteristics,
+                             databaseId = databaseId,
                              incremental = incremental,
                              covariateValueFileName = file.path(exportFolder, "temporal_covariate_value.csv"),
                              covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
                              analysisRefFileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
                              timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv"),
-                             counts = counts)
+                             counts = counts,
+                             minCellCount = minCellCount)
     } 
     recordTasksDone(cohortId = subset$cohortId,
                     task = "runTemporalCohortCharacterization",
@@ -783,7 +786,8 @@ exportCharacterization <- function(characteristics,
                                    covariateRefFileName,
                                    analysisRefFileName,
                                    timeRefFileName = NULL,
-                                   counts) {
+                                   counts,
+                                   minCellCount) {
     if (!"covariates" %in% names(characteristics)) {
     warning("No characterization output for submitted cohorts")
   } else if (dplyr::pull(dplyr::count(characteristics$covariateRef)) > 0) {
@@ -816,9 +820,9 @@ exportCharacterization <- function(characteristics,
                    incremental = incremental,
                    analysisId = timeRef$timeId)
       }
-      writeCovariateDataToAndromedaToCsv(data = characteristics$filteredCovariates, 
-                                         fileName = covariateValueFileName, 
-                                         incremental = incremental)
+      writeCovariateDataAndromedaToCsv(data = characteristics$filteredCovariates, 
+                                       fileName = covariateValueFileName, 
+                                       incremental = incremental)
     }
   } 
 }

@@ -9,7 +9,7 @@ if (!exists("shinySettings")) {
   if (file.exists("data")) {
     shinySettings <- list(dataFolder = "data")
   } else {
-    shinySettings <- list(dataFolder = "c:/temp/exampleStudy")
+    shinySettings <- list(dataFolder = "S:/examplePackageOutput")
   }
 }
 dataFolder <- shinySettings$dataFolder
@@ -19,11 +19,15 @@ suppressWarnings(
     "analysisRef",
     "temporalAnalysisRef",
     "temporalTimeRef",
+    "covariateValue",
     "covariateRef",
-    "temporarlCovariateRef",
+    "temporalCovariateValue",
+    "temporalCovariateRef",
     "concept",
+    "conceptSynonym",
     "vocabulary",
     "domain",
+    "relationship",
     "conceptAncestor",
     "conceptRelationship",
     "cohort",
@@ -42,10 +46,10 @@ suppressWarnings(
 )
 
 if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {
-  writeLines("Using merged data detected in data folder")
+  writeLines(paste0("Using merged data detected in folder '", dataFolder, "'"))
   load(file.path(dataFolder, "PreMerged.RData"))
 } else {
-  writeLines("No premerged file found")
+  stop("No premerged file found")
 }
 
 rm("visitContext")
