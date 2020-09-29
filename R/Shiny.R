@@ -111,7 +111,7 @@ preMergeDiagnosticsFiles <- function(dataFolder, tempFolder = tempdir()) {
       if (csvFileName %in% list.files(zipFiles$unzipFolder[i])) {
          newData <- readr::read_csv(file.path(zipFiles$unzipFolder[i], csvFileName),
                                     col_types = readr::cols(),
-                                    guess_max = 1e6)
+                                    guess_max = min(1e6))
          checkColumnNames(table = newData, 
                           tableName = tableName, 
                           zipFileName = zipFiles$zipFile[i],
@@ -146,7 +146,7 @@ preMergeDiagnosticsFiles <- function(dataFolder, tempFolder = tempdir()) {
   save(list = ls(newEnvironment),
        envir = newEnvironment,
        compress = TRUE,
-       compression_level = 9,
+       compression_level = 2,
        file = file.path(dataFolder, "PreMerged.RData"))
   rm(list = ls(newEnvironment), envir = newEnvironment)
   ParallelLogger::logInfo("Merged data saved in ", file.path(dataFolder, "PreMerged.RData"))
