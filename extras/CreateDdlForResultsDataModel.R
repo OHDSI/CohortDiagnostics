@@ -1,9 +1,5 @@
 library(magrittr)
-<<<<<<< HEAD
-csvFilePath = file.path("extras", "CSVFiles")
-=======
-path = file.path("")
->>>>>>> upstream/develop
+csvFilePath = file.path("")
 packageName <- "CohortDiagnostics"
 packageVersion <- "2.0"
 modelVersion <- "2.0"

@@ -16,18 +16,22 @@
 
 #' Launch the Diagnostics Explorer Shiny app
 #'
-#' @param dataFolder       A folder where the premerged file is stored. Use
-#'                         the \code{\link{preMergeDiagnosticsFiles}} function to generate this file.
-#' @param runOverNetwork   (optional) Do you want the app to run over your network?
-#' @param port             (optional) Only used if \code{runOverNetwork} = TRUE. 
-#' @param launch.browser   Should the app be launched in your default browser, or in a Shiny window.
-#'                         Note: copying to clipboard will not work in a Shiny window.
+#' @param connectionDetails An object of type \code{connectionDetails} as created using the
+#'                          \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
+#'                          DatabaseConnector package.
+#' @param dataFolder        A folder where the premerged file is stored. Use
+#'                          the \code{\link{preMergeDiagnosticsFiles}} function to generate this file.
+#' @param runOverNetwork    (optional) Do you want the app to run over your network?
+#' @param port              (optional) Only used if \code{runOverNetwork} = TRUE. 
+#' @param launch.browser    Should the app be launched in your default browser, or in a Shiny window.
+#'                          Note: copying to clipboard will not work in a Shiny window.
 #'
 #' @details
 #' Launches a Shiny app that allows the user to explore the diagnostics
 #'
 #' @export
-launchDiagnosticsExplorer <- function(dataFolder, 
+launchDiagnosticsExplorer <- function(connectionDetails = NULL,
+                                      dataFolder = "data", 
                                       runOverNetwork = FALSE,
                                       port = 80,
                                       launch.browser = FALSE) {
@@ -56,7 +60,8 @@ launchDiagnosticsExplorer <- function(dataFolder,
     options(shiny.port = port)
     options(shiny.host = myIpAddress)
   }
-  shinySettings <- list(dataFolder = dataFolder)
+  shinySettings <- list(connectionDetails = connectionDetails,
+                        dataFolder = dataFolder)
   .GlobalEnv$shinySettings <- shinySettings
   on.exit(rm("shinySettings", envir = .GlobalEnv))
   shiny::runApp(appDir = appDir)

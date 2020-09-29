@@ -915,7 +915,8 @@ routeDataQuery <- function(connection = NULL,
   
   if (!is.null(connection) && isTRUE(checkInDbms)) {
     tableExistsInDbms <- DatabaseConnector::dbExistsTable(conn = connection,
-                                                          name = paste0(databaseSchema, ".", table)
+                                                          name = table,
+                                                          schema = datbaseSchema
     )
     if (!tableExistsInDbms) {
       if (!silent) {
@@ -953,7 +954,7 @@ routeDataQuery <- function(connection = NULL,
     }
   }
   if (!is.null(connection) & isTRUE(tableExistsInDbms)) {
-    return(connection)
+    return("database")
   } else if (!is.null(connection) & !isTRUE(tableExistsInDbms) & 
              isTRUE(tableExistsInRMemory)) {
     warning(SqlRender::camelCaseToTitleCase(table), 

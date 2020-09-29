@@ -93,7 +93,7 @@ guessCsvFileSpecification <- function(pathToCsvFile) {
   return(describe)
 }
 
-The location of the csv file with the high-level results table specification.
+# The location of the csv file with the high-level results table specification.
 #' @param packageVersion The version number of cohort diagnostics
 #' @param modelVersion   The version of the results data model
 #' @param packageName    The name of the R package whose output model we are documenting.
