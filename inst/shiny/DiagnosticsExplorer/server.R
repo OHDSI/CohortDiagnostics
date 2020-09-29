@@ -339,17 +339,11 @@ shiny::shinyServer(function(input, output, session) {
                       .data$conceptSetName == input$conceptSet &
                       .data$databaseId %in% input$databases) %>% 
       dplyr::select(-.data$cohortId)
-    
     if (nrow(data) == 0) {
       return(dplyr::tibble('No data available for selected databases and cohorts'))
     }
     
-    databaseIds <- includedSourceConcept %>%
-      dplyr::filter(.data$databaseId %in% input$databases) %>% 
-      dplyr::select(.data$databaseId) %>% 
-      dplyr::distinct() %>% 
-      dplyr::arrange() %>% 
-      dplyr::pull(.data$databaseId)
+    databaseIds <- unique(data$databaseId)
     
     if (!isTRUE(all.equal(databaseIds %>% sort(),
                           input$databases %>% unique() %>% sort()))) {
@@ -514,12 +508,7 @@ shiny::shinyServer(function(input, output, session) {
                       .data$databaseId %in% input$databases) %>% 
       dplyr::select(-.data$cohortId)
     
-    databaseIds <- orphanConcept %>%
-      dplyr::filter(.data$databaseId %in% input$databases) %>% 
-      dplyr::select(.data$databaseId) %>% 
-      dplyr::distinct() %>% 
-      dplyr::arrange() %>% 
-      dplyr::pull(.data$databaseId)
+    databaseIds <- unique(data$databaseId)
     
     if (!isTRUE(all.equal(databaseIds %>% sort(),
                           input$databases %>% unique() %>% sort()))) {
@@ -637,8 +626,7 @@ shiny::shinyServer(function(input, output, session) {
       tidyr::pivot_wider(id_cols = c(.data$ruleSequenceId, .data$ruleName),
                          names_from = .data$name,
                          values_from = .data$value)
-    str(table)
-    
+
     sketch <- htmltools::withTags(table(
       class = 'display',
       thead(
