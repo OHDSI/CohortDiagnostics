@@ -133,3 +133,133 @@ appendNewRows <- function(data, newData, tableName, specifications = getResultsD
   }
   return(dplyr::bind_rows(data, newData))  
 }
+
+
+#' Create the results data model tables on a database server.
+#'
+#' @template Connection 
+#' @param schema         The schema on the postgres server where the tables will be created.
+#'
+#' @export
+createResultsDataModel <- function(connection = NULL,
+                                   connectionDetails = NULL,
+                                   schema) {
+  if (is.null(connection)) {
+    if (!is.null(connectionDetails)) {
+      connection <- DatabaseConnector::connect(connectionDetails)
+      on.exit(DatabaseConnector::disconnect(connection))
+    } else {
+      stop("No connection or connectionDetails provided.")
+    }
+  } 
+  executeSql(connection, sprintf("SET search_path TO %s;", schema), progressBar = FALSE, reportOverallTime = FALSE)
+  pathToSql <- system.file("sql", "postgresql", "CreateResultsDataModel.sql", package = "CohortDiagnostics")
+  sql <- SqlRender::readSql(pathToSql)
+  # sql <- SqlRender::render(sql, results_schema = schema)
+  executeSql(connection, sql)
+}
+
+naToEmpty <- function(x) {
+  x[is.na(x)] <- ""
+  return(x)
+}
+
+#' Upload results to the database server.
+#' 
+#' @description 
+#' Requires the results data model tables have been created using the \code{\link{createResultsDataModel}} function.
+#'
+#' @template Connection 
+#' @param schema         The schema on the postgres server where the tables will be created.
+#' @param zipFileName    The name of the zip file.
+#' @param tempFolder     A folder on the local file system where the zip files are extracted to. Will be cleaned
+#'                       up when the function is finished. Can be used to specify a temp folder on a drive that
+#'                       has sufficent space if the default system temp space is too limited.
+#'
+#' @export
+uploadResults <- function(connection = NULL,
+                          connectionDetails = NULL,
+                          schema,
+                          zipFileName, 
+                          tempFolder = tempdir()) {
+  start <- Sys.time()
+  if (is.null(connection)) {
+    if (!is.null(connectionDetails)) {
+      connection <- DatabaseConnector::connect(connectionDetails)
+      on.exit(DatabaseConnector::disconnect(connection))
+    } else {
+      stop("No connection or connectionDetails provided.")
+    }
+  } 
+
+  unzipFolder <- tempfile("unzipTempFolder", tmpdir = tempFolder)
+  dir.create(path = unzipFolder, recursive = TRUE)
+  on.exit(unlink(unzipFolder, recursive = TRUE), add = TRUE)
+  
+  ParallelLogger::logInfo("Unzipping ", zipFileName)
+  zip::unzip(zipFileName, exdir = unzipFolder)
+
+  specifications = getResultsDataModelSpecifications()
+  
+  uploadTable <- function(tableName, env) {
+    ParallelLogger::logInfo("Uploading table ", tableName)
+    start <- Sys.time()
+    csvFileName <- paste0(tableName, ".csv")
+    if (csvFileName %in% list.files(unzipFolder)) {
+      env <- new.env()
+      env$schema <- schema
+      env$tableName <- tableName
+      uploadChunk <- function(chunk, pos) {
+        ParallelLogger::logInfo("- Uploading rows ", pos, " through ", pos + nrow(chunk) - 1)
+        checkColumnNames(table = chunk, 
+                         tableName = env$tableName, 
+                         zipFileName = zipFileName,
+                         specifications = specifications)
+        chunk <- checkAndFixDataTypes(table = chunk, 
+                                        tableName = env$tableName, 
+                                        zipFileName = zipFileName,
+                                        specifications = specifications)
+        chunk <- checkAndFixDuplicateRows(table = chunk, 
+                                            tableName = env$tableName, 
+                                            zipFileName = zipFileName,
+                                            specifications = specifications) 
+        
+        # Primary key fields cannot be NULL, so for some tables convert NAs to empty:
+        toEmpty <- specifications %>%
+          filter(.data$tableName == env$tableName & .data$emptyIsNa == "No") %>%
+          select(.data$fieldName) %>%
+          pull()
+        if (length(toEmpty) > 0) {
+          chunk <- chunk %>% 
+            dplyr::mutate_at(toEmpty, naToEmpty)
+        }
+        
+        #TODO: Check if primary key already exists in database
+        
+          
+        DatabaseConnector::insertTable(connection = connection,
+                                       tableName = paste(env$schema, env$tableName, sep = "."),
+                                       data = as.data.frame(chunk),
+                                       dropTableIfExists = FALSE,
+                                       createTable = FALSE,
+                                       tempTable = FALSE,
+                                       progressBar = TRUE)
+      }
+      readr::read_csv_chunked(file = file.path(unzipFolder, csvFileName),
+                              callback = uploadChunk,
+                              chunk_size = 1e7,
+                              col_types = readr::cols(),
+                              guess_max = 1e6,
+                              progress = FALSE)
+      
+      # chunk <- readr::read_csv(file = file.path(unzipFolder, csvFileName),
+      # col_types = readr::cols(),
+      # guess_max = 1e6)
+      
+    }
+  }
+  invisible(lapply(unique(specifications$tableName), uploadTable))
+  delta <- Sys.time() - start
+  writeLines(paste("Uploading data took", signif(delta, 3), attr(delta, "units")))
+}
+

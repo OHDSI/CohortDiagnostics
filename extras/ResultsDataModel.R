@@ -1,3 +1,5 @@
+library(dplyr)
+
 guessCsvFileSpecification <- function(pathToCsvFile) {
   tableToWorkOn <-  stringr::str_remove(string = basename(pathToCsvFile), 
                                         pattern = ".csv")
@@ -93,140 +95,57 @@ guessCsvFileSpecification <- function(pathToCsvFile) {
   return(describe)
 }
 
-# The location of the csv file with the high-level results table specification.
-#' @param packageVersion The version number of cohort diagnostics
-#' @param modelVersion   The version of the results data model
-#' @param packageName    The name of the R package whose output model we are documenting.
-#' 
-#' @export
-createDdl <- function(packageName,
-                      packageVersion,
-                      modelVersion,
-                      specification){
-  
-  tableList <- specification$tableName %>% unique()
-  
+
+createDdl <- function(fileName, 
+                      specifications = CohortDiagnostics::getResultsDataModelSpecifications()){
+  tableNames <- specifications$tableName %>% unique()
   script <- c()
-  script <- c(script, paste0("--DDL Specification for package ", packageName, " package version: ", packageVersion, '\n'))
-  script <- c(script, paste0("--Data Model Version ", modelVersion, '\n'))
-  script <- c(script, paste0("--Last update ", Sys.Date(), '\n'))
-  script <- c(script, paste0("--Number of tables ", length(tableList), '\n'))
-  
-  for (i in (1:length(tableList))) {
-    script <- c(script, paste0('\n'))
-    script <- c(script, paste0('-----------------------------------------------------------------------'))
-    script <- c(script, paste0('\n'))
-    script <- c(script, paste0("--Table name ", tableList[[i]], '\n'))
-    table <- specification %>% 
-      dplyr::filter(.data$tableName == tableList[[i]])
-    
-    fields <- table %>% dplyr::select(.data$fieldName) %>% dplyr::pull()
-    script <- c(script, paste0("--Number of fields in table ", length(fields), '\n'))
-    hint <- "--HINT DISTRIBUTE ON RANDOM\n"
-    script <- c(script, hint, paste0("CREATE TABLE @databaseSchema.", tableList[[i]], " (\n"))
-    end <- length(fields)
-    
-    a <- c()
-    for (f in (1:length(fields))) { 
-      #from https://github.com/OHDSI/CdmDdlBase/blob/f256bd2a3350762e4a37108986711516dd5cd5dc/R/createDdlFromFile.R#L50
-      field <- fields[[f]]
-      if (table %>% dplyr::filter(.data$fieldName == !!field) %>% dplyr::pull(.data$isRequired) == "Yes") {
-        r <- (" NOT NULL")
+  script <- c(script, "-- Drop old tables if exist")
+  script <- c(script, "")
+  for (tableName in tableNames) {
+    script <- c(script, paste0("DROP TABLE IF EXISTS ", tableName, ";"))
+  }
+  script <- c(script, "")
+  script <- c(script, "")
+  script <- c(script, "-- Create tables")
+  for (tableName in tableNames) {
+    script <- c(script, "")
+    script <- c(script, paste("--Table", tableName))
+    script <- c(script, "")
+    table <- specifications %>% 
+      dplyr::filter(.data$tableName == !!tableName)
+
+    script <- c(script, paste0("CREATE TABLE ", tableName, " ("))
+    fieldSql <- c()
+    for (fieldName in table$fieldName) { 
+      field <- table %>%
+        filter(.data$fieldName == !!fieldName)
+      
+      if (field$primaryKey == "Yes") {
+        required <- " PRIMARY KEY"
+      } 
+      
+      if (field$isRequired == "Yes") {
+        required <- " NOT NULL"
       } else {
-        r <- (" NULL")
+        required = "" 
       }
-      if (field == fields[[length(fields)]]) {
-        e <- (" );")
-      } else {
-        e <- (",")
-      }
-      a <- c(a, paste0("\n\t\t\t",field," ",
-                       table %>% dplyr::filter(.data$fieldName == !!field) %>% dplyr::pull(.data$type), 
-                       r, e))
-    }
-    script <- c(script, a, "")
-    script <- c(script, paste0('\n'))
-  }
-  return(script)
-}
 
-createDdlPkConstraints <- function(packageName,
-                                   packageVersion,
-                                   modelVersion,
-                                   specification){
-  
-  script <- c()
-  script <- c(script, paste0("--DDL Primary Key Constraints Specification for package ", 
-                             packageName, " package version: ", packageVersion, '\n'))
-  script <- c(script, paste0("--Data Model Version ", modelVersion, '\n'))
-  script <- c(script, paste0("--Last update ", Sys.Date(), '\n'))
-  
-  tableList <- specification$tableName %>% unique()
-  script <- c(script, paste0("--Number of tables ", length(tableList), '\n'))
-  
-  for (i in (1:length(tableList))) {
-    table <- specification %>% 
-      dplyr::filter(.data$tableName == tableList[[i]]) %>% 
-      dplyr::filter(.data$primaryKey == 'Yes')
-    
-    if (nrow(table) > 0) {
-      primaryKey <- paste0(table$fieldName, collapse = ",")
-      pk <- paste0("ALTER TABLE @databaseSchema.",
-                   tableList[[i]],
-                   " ADD CONSTRAINT xpk_",
-                   tableList[[i]],
-                   " PRIMARY KEY NONCLUSTERED (",
-                   primaryKey,
-                   ");")
-      script <- c(script, paste0('\n'))
-      script <- c(script, pk, "")
+      fieldSql <- c(fieldSql, paste0("\t\t\t", 
+                                     fieldName, 
+                                     " ",
+                                     toupper(field$type),
+                                     required))
     }
+    primaryKeys <- table %>%
+      filter(.data$primaryKey == "Yes") %>%
+      select(.data$fieldName) %>%
+      pull()
+    fieldSql <- c(fieldSql, paste0("\t\t\tPRIMARY KEY(", paste(primaryKeys, collapse = ", "), ")")) 
+    script <- c(script, paste(fieldSql, collapse = ",\n"))
+    script <- c(script, ");")
   }
-  return(script)
-}
-
-dropDdl <- function(packageName,
-                    packageVersion,
-                    modelVersion,
-                    specification){
-  
-  script <- c()
-  script <- c(script, paste0("--DDL Drop table Specification for package ", 
-                             packageName, " package version: ", packageVersion, '\n'))
-  script <- c(script, paste0("--Data Model Version ", modelVersion, '\n'))
-  script <- c(script, paste0("--Last update ", Sys.Date(), '\n'))
-  
-  tableList <- specification$tableName %>% unique()
-  script <- c(script, paste0("--Number of tables ", length(tableList), '\n'))
-  
-  for (i in (1:length(tableList))) {
-    table <- specification %>% 
-      dplyr::filter(.data$tableName == tableList[[i]]) 
-    
-    if (nrow(table) > 0) {
-      pk <- paste0("DROP TABLE IF EXISTS @databaseSchema.",
-                   tableList[[i]],
-                   ";")
-      script <- c(script, paste0('\n'))
-      script <- c(script, pk, "")
-    }
-  }
-  return(script)
-}
-
-getPrimaryKeyForOmopVocabularyTable <- function() {
-  vocabularyTableKeys <- dplyr::bind_rows(
-    tidyr::tibble(vocabularyTableName = 'concept', primaryKey = 'concept_id'),
-    tidyr::tibble(vocabularyTableName = 'vocabulary', primaryKey = 'vocabulary_id'),
-    tidyr::tibble(vocabularyTableName = 'domain', primaryKey = 'domain_id'),
-    tidyr::tibble(vocabularyTableName = 'concept_class', primaryKey = 'concept_class_id'),
-    tidyr::tibble(vocabularyTableName = 'concept_relationship', primaryKey = 'concept_id_1,concept_id_2,relationship_id'),
-    tidyr::tibble(vocabularyTableName = 'relationship', primaryKey = 'relationship_id'),
-    tidyr::tibble(vocabularyTableName = 'concept_ancestor', primaryKey = 'ancestor_concept_id,descendant_concept_id'),
-    tidyr::tibble(vocabularyTableName = 'source_to_concept_map', primaryKey = 'source_vocabulary_id,target_concept_id,source_code,valid_end_date'),
-    tidyr::tibble(vocabularyTableName = 'drug_strength', primaryKey = 'drug_concept_id, ingredient_concept_id'))
-  
-  return(vocabularyTableKeys)
+  SqlRender::writeSql(paste(script, collapse = "\n"), fileName)
 }
 
 
