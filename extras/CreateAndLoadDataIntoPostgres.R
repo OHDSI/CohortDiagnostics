@@ -3,36 +3,50 @@ source("extras/PostgresConfigurationVariables.R")
 
 dbms <- "postgresql"
 databaseSchema <- "diagnostics"
-pathToSql <- system.file('sql', 'sql_server', package = 'CohortDiagnostics')
-sqlDropTableFile <- "postgressql_ddl_results_data_model_drop.sql"
-sqlCreateTableFile <- "postgressql_ddl_results_data_model.sql"
-sqlTableConstraintsfile <- "postgressql_ddl_results_data_model_constraints.sql"
+pathToSql <- file.path('inst', 'sql', 'postgres') #system.file('sql', 'sql_server', package = 'CohortDiagnostics')
+sqlDropTableFile <- "postgres_ddl_results_data_model_drop.sql"
+sqlCreateTableFile <- "postgres_ddl_results_data_model.sql"
+sqlTableConstraintsfile <- "postgres_ddl_results_data_model_constraints.sql"
 
-csvLocation = "C:\\tmp\\CSVFiles"
+csvLocation = file.path("extras", "CSVFiles_new") #C:\\tmp\\CSVFiles_new"
 
 uploadCsvToDatabase <- function(file, folder, schema) {
   tableName <- stringr::str_replace(string = file, 
                                     pattern = ".csv$", 
                                     replacement = "")
+  # if ("temporal_covariate_value" %in% tableName) {
+  #   return()
+  # }
   ParallelLogger::logInfo(paste("Uploading", tableName, sep = " "))
   # checking whether the table exists with the CSV file name
   if (DatabaseConnector::dbExistsTable(conn = connection, 
                                        name = tableName, 
-                                       schema = databaseSchema)) {
+                                       schema = schema)) {
     deleteTableContentsSql <- "DELETE from @databaseSchema.@table;"
     deleteTableContentsSql <- SqlRender::render(sql = deleteTableContentsSql, 
                                                 table = tableName, 
-                                                databaseSchema = databaseSchema)
+                                                databaseSchema = schema)
     DatabaseConnector::executeSql(connection = connection, 
                                   sql = deleteTableContentsSql)
     
-    loadTableContentsSql <- "copy @databaseSchema.@table FROM '@csvPath' DELIMITER ',' CSV HEADER"  
-    loadTableContentsSql <- SqlRender::render(sql = loadTableContentsSql, 
-                                              table = tableName, 
-                                              databaseSchema = databaseSchema, 
-                                              csvPath = file.path(folder, file))
-    DatabaseConnector::executeSql(connection = connection, 
-                                  sql = loadTableContentsSql)
+    csvData <- readr::read_csv(file = file.path(folder, file),
+                                            col_types = readr::cols(),
+                                            guess_max = min(1e7),
+                                            locale = readr::locale(encoding = "UTF-8"))
+    
+    csvData <- as.data.frame(csvData)
+    
+    DatabaseConnector::dbWriteTable(conn = connection, name = paste(schema, tableName, sep = "."),
+                                    value = csvData,
+                                    overwrite = TRUE,
+                                    append = FALSE)
+    # loadTableContentsSql <- "copy @databaseSchema.@table FROM '@csvPath' DELIMITER ',' CSV HEADER"
+    # loadTableContentsSql <- SqlRender::render(sql = loadTableContentsSql, 
+    #                                           table = tableName, 
+    #                                           databaseSchema = schema, 
+    #                                           csvPath = file.path(folder, file))
+    # DatabaseConnector::executeSql(connection = connection, 
+    #                               sql = loadTableContentsSql)
     invisible(NULL)
   }
 }

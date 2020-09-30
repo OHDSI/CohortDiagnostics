@@ -123,7 +123,7 @@ createDdl <- function(packageName,
     fields <- table %>% dplyr::select(.data$fieldName) %>% dplyr::pull()
     script <- c(script, paste0("--Number of fields in table ", length(fields), '\n'))
     hint <- "--HINT DISTRIBUTE ON RANDOM\n"
-    script <- c(script, hint, paste0("CREATE TABLE @resultsDatabaseSchema.", tableList[[i]], " (\n"))
+    script <- c(script, hint, paste0("CREATE TABLE @databaseSchema.", tableList[[i]], " (\n"))
     end <- length(fields)
     
     a <- c()
@@ -171,7 +171,7 @@ createDdlPkConstraints <- function(packageName,
     
     if (nrow(table) > 0) {
       primaryKey <- paste0(table$fieldName, collapse = ",")
-      pk <- paste0("ALTER TABLE @resultsDatabaseSchema.",
+      pk <- paste0("ALTER TABLE @databaseSchema.",
                    tableList[[i]],
                    " ADD CONSTRAINT xpk_",
                    tableList[[i]],
@@ -204,7 +204,7 @@ dropDdl <- function(packageName,
       dplyr::filter(.data$tableName == tableList[[i]]) 
     
     if (nrow(table) > 0) {
-      pk <- paste0("DROP TABLE IF EXISTS @resultsDatabaseSchema.",
+      pk <- paste0("DROP TABLE IF EXISTS @databaseSchema.",
                    tableList[[i]],
                    ";")
       script <- c(script, paste0('\n'))

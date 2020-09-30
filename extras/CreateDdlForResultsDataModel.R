@@ -1,5 +1,8 @@
 library(magrittr)
-csvFilePath = file.path("")
+
+source('extras/ResultsDataModel.R')
+csvFilePath <- file.path("extras", "CSVFiles_new")
+#csvFilePath <- "C:\\tmp\\CSVFiles_new"
 packageName <- "CohortDiagnostics"
 packageVersion <- "2.0"
 modelVersion <- "2.0"
@@ -13,7 +16,7 @@ pathToCsvFiles <- tidyr::tibble(fullPath = list.files(path = csvFilePath, patter
 specification <- list()
 for (i in (1:nrow(pathToCsvFiles))) {
   if (!pathToCsvFiles[i,]$dontUse) {
-    specification[[i]] <- CohortDiagnostics::guessCsvFileSpecification(pathToCsvFile = pathToCsvFiles[i,]$fullPath)
+    specification[[i]] <- guessCsvFileSpecification(pathToCsvFile = pathToCsvFiles[i,]$fullPath)
   }
 }
 specification <- dplyr::bind_rows(specification)
@@ -30,28 +33,28 @@ readr::write_excel_csv(x = specification,
 # Especially the keys.
 # The only keys that are valid are concept tables
 #################
-script <- CohortDiagnostics::createDdl(packageName = packageName, 
+script <- createDdl(packageName = packageName, 
                                        packageVersion = packageVersion,
                                        modelVersion = modelVersion,
                                        specification = readr::read_csv(file = file.path(resultsDataModelDirectory,                                                                                        "resultsDataModelSpecification.csv"),
                                                                        col_types = readr::cols(), 
-                                                                       guess_max = min(1e7)) %>% 
-                                         dplyr::filter(!tableName %in% c('concept', 'conceptAncestor', 'conceptRelationship',
-                                                                         'concept_synonym', 'domain', 'relatioship', 'vocabulary'))
+                                                                       guess_max = min(1e7))
+                                         # dplyr::filter(!tableName %in% c('concept', 'conceptAncestor', 'conceptRelationship',
+                                         #                                 'concept_synonym', 'domain', 'relationship', 'vocabulary'))
                                        
                                        )
 
-pathToDdl <- file.path(rstudioapi::getActiveProject(), "inst", "sql", "sql_server")
+pathToDdl <- file.path(rstudioapi::getActiveProject(), "inst", "sql", "postgres")
 dir.create(pathToDdl, showWarnings = FALSE, recursive = TRUE)
 
 SqlRender::writeSql(sql = script, 
-                    targetFile = file.path(pathToDdl, "sql_server_ddl_results_data_model.sql"))
+                    targetFile = file.path(pathToDdl, "postgres_ddl_results_data_model.sql"))
 
 
 
 
 ################
-scriptConstraints <- CohortDiagnostics::createDdlPkConstraints(packageName = packageName, 
+scriptConstraints <- createDdlPkConstraints(packageName = packageName, 
                                                                packageVersion = packageVersion,
                                                                modelVersion = modelVersion,
                                                                specification = readr::read_csv(file = file.path(resultsDataModelDirectory,
@@ -60,11 +63,11 @@ scriptConstraints <- CohortDiagnostics::createDdlPkConstraints(packageName = pac
                                                                                                col_types = readr::cols()))
 
 SqlRender::writeSql(sql = scriptConstraints, 
-                    targetFile = file.path(pathToDdl, "sql_server_ddl_results_data_model_constraints.sql"))
+                    targetFile = file.path(pathToDdl, "postgres_ddl_results_data_model_constraints.sql"))
 
 ################
 
-scriptDropTable <- CohortDiagnostics::dropDdl(packageName = packageName, 
+scriptDropTable <- dropDdl(packageName = packageName, 
                                               packageVersion = packageVersion,
                                               modelVersion = modelVersion,
                                               specification =  readr::read_csv(file = file.path(resultsDataModelDirectory,
@@ -73,5 +76,5 @@ scriptDropTable <- CohortDiagnostics::dropDdl(packageName = packageName,
                                                                                col_types = readr::cols()))
 
 SqlRender::writeSql(sql = scriptDropTable, 
-                    targetFile = file.path(pathToDdl, "sql_server_ddl_results_data_model_drop.sql"))
+                    targetFile = file.path(pathToDdl, "postgres_ddl_results_data_model_drop.sql"))
 

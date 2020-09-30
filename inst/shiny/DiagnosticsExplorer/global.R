@@ -6,6 +6,9 @@ source("R/Plots.R")
 source("R/Results.R")
 source("R/DB.R")
 
+
+#TODO: CDM data schema vs results data schema
+#      (i.e., atm, assumes all tables in resultsDatabaseSchema)
 databaseConnection <- NULL
 defaultLocalDataFolder <- "data"
 defaultLocalDataFile <- "PreMerged.RData"
@@ -75,7 +78,9 @@ if (is.null(shinySettings$connectionDetails)) {
   }
 } else {
   databaseConnection <- DatabaseConnector::connect(connectionDetails = shinySettings$connectionDetails)
-  loadGlobalDataFromDatabase(databaseConnection, verbose = TRUE)
+  loadGlobalDataFromDatabase(databaseConnection,
+                             databaseSchema = resultsDatabaseSchema,
+                             verbose = TRUE)
 }
 
 
