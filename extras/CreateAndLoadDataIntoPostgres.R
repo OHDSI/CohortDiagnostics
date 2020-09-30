@@ -8,7 +8,7 @@ sqlDropTableFile <- "postgres_ddl_results_data_model_drop.sql"
 sqlCreateTableFile <- "postgres_ddl_results_data_model.sql"
 sqlTableConstraintsfile <- "postgres_ddl_results_data_model_constraints.sql"
 
-csvLocation = file.path("extras", "CSVFiles_new") #C:\\tmp\\CSVFiles_new"
+csvLocation = file.path("extras", "CSVFiles")
 
 uploadCsvToDatabase <- function(file, folder, schema) {
   tableName <- stringr::str_replace(string = file, 

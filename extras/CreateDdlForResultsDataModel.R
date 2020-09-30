@@ -1,8 +1,7 @@
 library(magrittr)
 
 source('extras/ResultsDataModel.R')
-csvFilePath <- file.path("extras", "CSVFiles_new")
-#csvFilePath <- "C:\\tmp\\CSVFiles_new"
+csvFilePath <- file.path("extras", "CSVFiles_fmt")
 packageName <- "CohortDiagnostics"
 packageVersion <- "2.0"
 modelVersion <- "2.0"
