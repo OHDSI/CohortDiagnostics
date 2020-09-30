@@ -9,6 +9,8 @@ uploadResults(
   connectionDetails = NULL,
   schema,
   zipFileName,
+  forceOverWriteOfSpecifications = FALSE,
+  purgeSiteDataBeforeUploading = TRUE,
   tempFolder = tempdir()
 )
 }
@@ -27,6 +29,14 @@ provided.}
 \item{schema}{The schema on the postgres server where the tables will be created.}
 
 \item{zipFileName}{The name of the zip file.}
+
+\item{forceOverWriteOfSpecifications}{If TRUE, specifications of the phenotypes, cohort definitions, and analysis 
+will be overwritten if they already exist on the database. Only use this if these specifications
+have changed since the last upload.}
+
+\item{purgeSiteDataBeforeUploading}{If TRUE, before inserting data for a specific databaseId all the data for 
+that site will be dropped. This assumes the input zip file contains the full data for that 
+data site.}
 
 \item{tempFolder}{A folder on the local file system where the zip files are extracted to. Will be cleaned
 up when the function is finished. Can be used to specify a temp folder on a drive that
