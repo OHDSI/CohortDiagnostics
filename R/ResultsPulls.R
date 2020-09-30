@@ -227,6 +227,7 @@ getIncidenceRateResult <- function(connection = NULL,
     warning("No records retrieved for 'incidence rate'.")
   }
   return(data %>% 
+           dplyr::mutate(calendarYear = as.integer(.data$calendarYear)) %>%
            dplyr::arrange(.data$cohortId, .data$databaseId))
 }
 
