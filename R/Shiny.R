@@ -15,7 +15,9 @@
 # limitations under the License.
 
 #' Launch the Diagnostics Explorer Shiny app
-#'
+#' @param connectionDetails An object of type \code{connectionDetails} as created using the
+#'                          \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
+#'                          DatabaseConnector package.
 #' @param dataFolder       A folder where the premerged file is stored. Use
 #'                         the \code{\link{preMergeDiagnosticsFiles}} function to generate this file.
 #' @param runOverNetwork   (optional) Do you want the app to run over your network?
@@ -27,7 +29,10 @@
 #' Launches a Shiny app that allows the user to explore the diagnostics
 #'
 #' @export
-launchDiagnosticsExplorer <- function(dataFolder, 
+launchDiagnosticsExplorer <- function(connectionDetails = NULL,
+                                      resultsDatabaseSchema = NULL,
+                                      cdmDatabaseSchema = NULL,
+                                      dataFolder = "data", 
                                       runOverNetwork = FALSE,
                                       port = 80,
                                       launch.browser = FALSE) {
@@ -56,7 +61,10 @@ launchDiagnosticsExplorer <- function(dataFolder,
     options(shiny.port = port)
     options(shiny.host = myIpAddress)
   }
-  shinySettings <- list(dataFolder = dataFolder)
+  shinySettings <- list(connectionDetails = connectionDetails,
+                        resultsDatabaseSchema = resultsDatabaseSchema,
+                        cdmDatabaseSchema = cdmDatabaseSchema,
+                        dataFolder = dataFolder)
   .GlobalEnv$shinySettings <- shinySettings
   on.exit(rm("shinySettings", envir = .GlobalEnv))
   shiny::runApp(appDir = appDir)
