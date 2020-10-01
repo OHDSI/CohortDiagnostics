@@ -100,10 +100,10 @@ loadListOfTables <- function(connection, databaseSchema, tableList,
     tableName <- SqlRender::camelCaseToSnakeCase(tableName)
     tableExists <- DatabaseConnector::dbExistsTable(conn = connection,
                                                     name = tableName,
-                                                    schema = resultsDatabaseSchema)
+                                                    schema = databaseSchema)
     if (!tableExists) {
       stop(sprintf("Required results reference table %s does not exists in schema %s",
-                   tableName, resultsDatabaseSchema))
+                   tableName, databaseSchema))
     }
     
     
@@ -168,13 +168,15 @@ instantiateEmptyTableObjects <- function(connection, resultsDatabaseSchema,
                                         cdmDatabaseSchema) {
   
   allTables <- union(getAllTablesInSchema(connection, resultsDatabaseSchema),
-                     getAllTablesInSchema(connection, cdmDatabaseSchema))
+                     getAllTablesInSchema(connection, cdmDatabaseSchema)) %>%
+    SqlRender::snakeCaseToCamelCase()
   
   invisible(
-    lapply(setdiff(allTables, union(resultsGlobalReferenceTables,
+    # setdiff(X, Y) = X \setminus Y
+    lapply(setdiff(x = allTables, y = union(resultsGlobalReferenceTables,
                                     cdmGlobalReferenceTables)),
            FUN = function(x) {
-             assign(SqlRender::snakeCaseToCamelCase(x), tidyr::tibble())
+             assign(x = x, value = tidyr::tibble(), envir = .GlobalEnv)
            })
   )
 }
