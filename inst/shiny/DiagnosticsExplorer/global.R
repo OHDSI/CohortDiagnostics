@@ -6,7 +6,6 @@ source("R/Other.R")
 source("R/Plots.R")
 source("R/Results.R")
 
-databaseConnection <- NULL
 connectionPool <- NULL
 defaultLocalDataFolder <- "data"
 defaultLocalDataFile <- "PreMerged.RData"
@@ -71,6 +70,7 @@ if (is.null(shinySettings$connectionDetails)) {
     }
   }
 } else {
+  
   connectionPool <- pool::dbPool(
     drv = DatabaseConnector::DatabaseConnectorDriver(),
     dbms = shinySettings$connectionDetails$dbms,
@@ -83,6 +83,10 @@ if (is.null(shinySettings$connectionDetails)) {
                              resultsDatabaseSchema = shinySettings$resultsDatabaseSchema,
                              cdmDatabaseSchema = shinySettings$cdmDatabaseSchema,
                              verbose = TRUE)
+  
+  instantiateEmptyTableObjects(connection = connectionPool,
+                               resultsDatabaseSchema = shinySettings$resultsDatabaseSchema,
+                               cdmDatabaseSchema = shinySettings$cdmDatabaseSchema)
 }
 
 

@@ -148,3 +148,33 @@ loadGlobalDataFromDatabase <- function(connection,
   
   
 }
+
+
+getAllTablesInSchema <- function(connection, schemaName) {
+  
+  sql <- "SELECT table_name FROM information_schema.tables WHERE table_schema = '@schemaName' order by 1;"
+  
+  sql <- SqlRender::render(sql, schemaName = schemaName)
+  
+  resultSet <- queryDatabase(connection, sql)
+  
+  return(resultSet$tableName)
+  
+}
+
+
+# needed for Shiny UI elements to render
+instantiateEmptyTableObjects <- function(connection, resultsDatabaseSchema,
+                                        cdmDatabaseSchema) {
+  
+  allTables <- union(getAllTablesInSchema(connection, resultsDatabaseSchema),
+                     getAllTablesInSchema(connection, cdmDatabaseSchema))
+  
+  invisible(
+    lapply(setdiff(allTables, union(resultsGlobalReferenceTables,
+                                    cdmGlobalReferenceTables)),
+           FUN = function(x) {
+             assign(SqlRender::snakeCaseToCamelCase(x), tidyr::tibble())
+           })
+  )
+}
