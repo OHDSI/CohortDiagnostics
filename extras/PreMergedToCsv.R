@@ -11,7 +11,7 @@ outputMergedCsvFiles <- function(preMergedFile = "PreMerged.RData", outputPath =
 
     outputFile <- paste0(SqlRender::camelCaseToSnakeCase(obj), ".csv")
     message(sprintf('Saving %s as %s', obj, outputFile))
-    readr::write_excel_csv(.x, file.path(outputPath, outputFile))
+    readr::write_excel_csv(.x, file.path(outputPath, outputFile), na = "")
   }
 }
 
