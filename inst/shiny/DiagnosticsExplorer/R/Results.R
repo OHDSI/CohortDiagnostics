@@ -1,3 +1,21 @@
+getSelectAllStatement <- function(schemaBinding, tableBinding, limit = -1) {
+  sql <- sprintf("SELECT * FROM @%s.@%s",
+                 schemaBinding,
+                 tableBinding)
+  if (limit >= 0) {
+    sql <- sprintf("%s LIMIT %d;", sql, limit)
+  }
+  return(sql)
+}
+
+
+queryDatabase <- function(connection, sql) {
+  resultSet <- DatabaseConnector::dbGetQuery(connection, sql)
+  colnames(resultSet) <- SqlRender::snakeCaseToCamelCase(colnames(resultSet))
+  return(resultSet)
+}
+
+
 getTimeDistributionResult <- function(connection = NULL,
                                       connectionDetails = NULL,
                                       cohortIds,

@@ -7,6 +7,7 @@ source("R/Plots.R")
 source("R/Results.R")
 
 databaseConnection <- NULL
+connectionPool <- NULL
 defaultLocalDataFolder <- "data"
 defaultLocalDataFile <- "PreMerged.RData"
 resultsDatabaseSchema <- NULL
@@ -40,6 +41,18 @@ suppressWarnings(rm(list = resultsGlobalReferenceTables))
 suppressWarnings(rm(list = cdmGlobalReferenceTables))
 
 
+# Cleanup the database connPool if it was created
+# (borrowed from https://github.com/ohdsi-studies/Covid19CharacterizationCharybdis/blob/master/inst/shiny/CharybdisResultsExplorer/global.R)
+onStop(function() {
+  if (!is.null(connectionPool)) {
+    if (DBI::dbIsValid(connectionPool)) {
+      writeLines("Closing database pool")
+      pool::poolClose(connectionPool)
+    }
+  }
+})
+
+
 if (is.null(shinySettings$connectionDetails)) {
   warning("No database connection details. Looking for local data.")
   if (is.null(shinySettings$dataFolder)) {
@@ -58,8 +71,15 @@ if (is.null(shinySettings$connectionDetails)) {
     }
   }
 } else {
-  databaseConnection <- DatabaseConnector::connect(connectionDetails = shinySettings$connectionDetails)
-  loadGlobalDataFromDatabase(databaseConnection,
+  connectionPool <- pool::dbPool(
+    drv = DatabaseConnector::DatabaseConnectorDriver(),
+    dbms = shinySettings$connectionDetails$dbms,
+    server = shinySettings$connectionDetails$server,
+    port = shinySettings$connectionDetails$port,
+    user = shinySettings$connectionDetails$user,
+    password = shinySettings$connectionDetails$password
+  )
+  loadGlobalDataFromDatabase(connectionPool,
                              resultsDatabaseSchema = shinySettings$resultsDatabaseSchema,
                              cdmDatabaseSchema = shinySettings$cdmDatabaseSchema,
                              verbose = TRUE)
