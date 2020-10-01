@@ -9,8 +9,6 @@ source("R/Results.R")
 connectionPool <- NULL
 defaultLocalDataFolder <- "data"
 defaultLocalDataFile <- "PreMerged.RData"
-resultsDatabaseSchema <- NULL
-cdmDatabaseSchema <- NULL
 
 if (!exists("shinySettings")) {
   shinySettings <- list(
@@ -79,7 +77,7 @@ if (is.null(shinySettings$connectionDetails)) {
     user = shinySettings$connectionDetails$user,
     password = shinySettings$connectionDetails$password
   )
-  loadGlobalDataFromDatabase(connectionPool,
+  loadGlobalDataFromDatabase(connection = connectionPool,
                              resultsDatabaseSchema = shinySettings$resultsDatabaseSchema,
                              cdmDatabaseSchema = shinySettings$cdmDatabaseSchema,
                              verbose = TRUE)
