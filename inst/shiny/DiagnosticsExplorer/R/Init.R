@@ -88,17 +88,40 @@ getDbConnectionDetails <- function(dbms = "postgresql",
 }
 
 
-getSelectAllStatement <- function(schemaBinding, tableBinding) {
-  return(sprintf("SELECT * FROM @%s.@%s;",
-                 schemaBinding,
-                 tableBinding))
-}
-
-
 loadGlobalDataFromLocal <- function(localPath) {
   load(localPath)
 }
 
+
+loadListOfTables <- function(connection, databaseSchema, tableList,
+                             verbose, limit = -1) {
+  for (tableName in tableList) {
+    
+    tableName <- SqlRender::camelCaseToSnakeCase(tableName)
+    tableExists <- DatabaseConnector::dbExistsTable(conn = connection,
+                                                    name = tableName,
+                                                    schema = databaseSchema)
+    if (!tableExists) {
+      stop(sprintf("Required results reference table %s does not exists in schema %s",
+                   tableName, databaseSchema))
+    }
+    
+    
+    sql <- SqlRender::render(sql = getSelectAllStatement("databaseSchema",
+                                                         "tableName", limit = limit), 
+                             databaseSchema = databaseSchema, 
+                             tableName = tableName)
+    
+    if (verbose) {
+      ParallelLogger::logInfo(sprintf("loading table %s", tableName))
+    }
+    
+    tableData <- queryDatabase(connection, sql)
+    
+    assign(x = SqlRender::snakeCaseToCamelCase(tableName),
+           value = tableData, envir = .GlobalEnv)
+  }
+}
 
 loadGlobalDataFromDatabase <- function(connection,
                                        resultsDatabaseSchema,
@@ -113,40 +136,47 @@ loadGlobalDataFromDatabase <- function(connection,
   }
   
   
-  loadListOfTables <- function(connection, databaseSchema, tableList) {
-    for (tableName in tableList) {
-      
-      tableName <- SqlRender::camelCaseToSnakeCase(tableName)
-      tableExists <- DatabaseConnector::dbExistsTable(conn = connection,
-                                                      name = tableName,
-                                                      schema = resultsDatabaseSchema)
-      if (!tableExists) {
-        stop(sprintf("Required results reference table %s does not exists in schema %s",
-                     tableName, resultsDatabaseSchema))
-      }
-      
-      
-      sql <- SqlRender::render(sql = getSelectAllStatement("databaseSchema", "tableName"), 
-                               databaseSchema = databaseSchema, 
-                               tableName = tableName)
-      
-      if (verbose) {
-        ParallelLogger::logInfo(sprintf("loading table %s", tableName))
-      }
-      refTableData <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                                                 sql = sql)
-      
-      colnames(refTableData) <- SqlRender::snakeCaseToCamelCase(colnames(refTableData))
-      
-      assign(x = SqlRender::snakeCaseToCamelCase(tableName),
-             value = refTableData, envir = .GlobalEnv)
-    }
-  }
+  loadListOfTables(connection,
+                   resultsDatabaseSchema,
+                   resultsGlobalReferenceTables,
+                   verbose)
+  
+  loadListOfTables(connection,
+                   cdmDatabaseSchema,
+                   cdmGlobalReferenceTables,
+                   verbose)
   
   
-  loadListOfTables(connection, resultsDatabaseSchema, resultsGlobalReferenceTables)
+}
+
+
+getAllTablesInSchema <- function(connection, schemaName) {
   
-  loadListOfTables(connection, cdmDatabaseSchema, cdmGlobalReferenceTables)
+  sql <- "SELECT table_name FROM information_schema.tables WHERE table_schema = '@schemaName' order by 1;"
   
+  sql <- SqlRender::render(sql, schemaName = schemaName)
   
+  resultSet <- queryDatabase(connection, sql)
+  
+  return(resultSet$tableName)
+  
+}
+
+
+# needed for Shiny UI elements to render
+instantiateEmptyTableObjects <- function(connection, resultsDatabaseSchema,
+                                        cdmDatabaseSchema) {
+  
+  allTables <- union(getAllTablesInSchema(connection, resultsDatabaseSchema),
+                     getAllTablesInSchema(connection, cdmDatabaseSchema)) %>%
+    SqlRender::snakeCaseToCamelCase()
+  
+  invisible(
+    # setdiff(X, Y) = X \setminus Y
+    lapply(setdiff(x = allTables, y = union(resultsGlobalReferenceTables,
+                                    cdmGlobalReferenceTables)),
+           FUN = function(x) {
+             assign(x = x, value = tidyr::tibble(), envir = .GlobalEnv)
+           })
+  )
 }

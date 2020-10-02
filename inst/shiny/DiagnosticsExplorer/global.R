@@ -6,11 +6,9 @@ source("R/Other.R")
 source("R/Plots.R")
 source("R/Results.R")
 
-databaseConnection <- NULL
+connectionPool <- NULL
 defaultLocalDataFolder <- "data"
 defaultLocalDataFile <- "PreMerged.RData"
-resultsDatabaseSchema <- NULL
-cdmDatabaseSchema <- NULL
 
 if (!exists("shinySettings")) {
   shinySettings <- list(
@@ -40,29 +38,48 @@ suppressWarnings(rm(list = resultsGlobalReferenceTables))
 suppressWarnings(rm(list = cdmGlobalReferenceTables))
 
 
+# Cleanup the database connPool if it was created
+# (borrowed from https://github.com/ohdsi-studies/Covid19CharacterizationCharybdis/blob/master/inst/shiny/CharybdisResultsExplorer/global.R)
+onStop(function() {
+  if (!is.null(connectionPool)) {
+    if (DBI::dbIsValid(connectionPool)) {
+      writeLines("Closing database pool")
+      pool::poolClose(connectionPool)
+    }
+  }
+})
+
+
 if (is.null(shinySettings$connectionDetails)) {
   warning("No database connection details. Looking for local data.")
   if (is.null(shinySettings$dataFolder)) {
     stop("No mechanism to load data.")
-  } else {
-    localDataPath <- shinySettings$dataFolder
-    if (!file.exists(localDataPath)) {
-      stop(sprintf("Local data path %s does not exist.", localDataPath))
-    } else {
-      localDataPath <- file.path(localDataPath, defaultLocalDataFile)
-      if (!file.exists(localDataPath)) {
-        stop(sprintf("Local data file %s does not exist.", localDataPath))
-      }
-      
-      loadGlobalDataFromLocal(localDataPath)
-    }
   }
+  
+  localDataPath <- file.path(shinySettings$dataFolder, defaultLocalDataFile)
+  if (!file.exists(localDataPath)) {
+    stop(sprintf("Local data file %s does not exist.", localDataPath))
+  }
+    
+  loadGlobalDataFromLocal(localDataPath)
 } else {
-  databaseConnection <- DatabaseConnector::connect(connectionDetails = shinySettings$connectionDetails)
-  loadGlobalDataFromDatabase(databaseConnection,
+  
+  connectionPool <- pool::dbPool(
+    drv = DatabaseConnector::DatabaseConnectorDriver(),
+    dbms = shinySettings$connectionDetails$dbms,
+    server = shinySettings$connectionDetails$server,
+    port = shinySettings$connectionDetails$port,
+    user = shinySettings$connectionDetails$user,
+    password = shinySettings$connectionDetails$password
+  )
+  loadGlobalDataFromDatabase(connection = connectionPool,
                              resultsDatabaseSchema = shinySettings$resultsDatabaseSchema,
                              cdmDatabaseSchema = shinySettings$cdmDatabaseSchema,
                              verbose = TRUE)
+  
+  instantiateEmptyTableObjects(connection = connectionPool,
+                               resultsDatabaseSchema = shinySettings$resultsDatabaseSchema,
+                               cdmDatabaseSchema = shinySettings$cdmDatabaseSchema)
 }
 
 
