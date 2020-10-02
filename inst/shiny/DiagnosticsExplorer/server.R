@@ -258,15 +258,13 @@ shiny::shinyServer(function(input, output, session) {
     stratifyByGender <- "Gender" %in% input$irStratification
     stratifyByCalendarYear <- "Calendar Year" %in% input$irStratification
     
-    data <- getIncidenceRateResult(connection = NULL,
-                                   connectionDetails = NULL,
+    data <- getIncidenceRateResult(dataSource = dataSource,
                                    cohortIds = cohortId(), 
                                    databaseIds = input$databases, 
                                    stratifyByGender =  stratifyByGender,
                                    stratifyByAgeGroup =  stratifyByAge,
                                    stratifyByCalendarYear =  stratifyByCalendarYear,
-                                   minPersonYears = 1000,
-                                   resultsDatabaseSchema = NULL) %>% 
+                                   minPersonYears = 1000) %>% 
       dplyr::mutate(incidenceRate = dplyr::case_when(.data$incidenceRate < 0 ~ 0, 
                                                      TRUE ~ .data$incidenceRate))
     

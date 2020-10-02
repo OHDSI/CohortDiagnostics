@@ -15,6 +15,10 @@ renderTranslateQuerySql <- function(connection, sql, ..., snakeCaseToCamelCase =
     # Connection pool is used by Shiny app, which always uses PostgreSQL:
     sql <- SqlRender::render(sql, ...)
     sql <- SqlRender::translate(sql, targetDialect = "postgresql")
+    
+    # Just for development purposes. Remove when done:
+    writeLines(sql)
+    
     tryCatch({
       data <- DatabaseConnector::dbGetQuery(connection, sql)
     }, error = function(err) {
@@ -26,10 +30,10 @@ renderTranslateQuerySql <- function(connection, sql, ..., snakeCaseToCamelCase =
     }
     return(data)
   } else {
-    return(renderTranslateQuerySql(connection = connection,
-                                   sql = sql,
-                                   ...,
-                                   snakeCaseToCamelCase = snakeCaseToCamelCase))
+    return(DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                      sql = sql,
+                                                      ...,
+                                                      snakeCaseToCamelCase = snakeCaseToCamelCase))
   }
 }
 
@@ -49,14 +53,14 @@ getCohortCounts <- function(dataSource = .GlobalEnv,
       dplyr::filter(.data$databaseId %in% !!databaseIds) 
     if (!is.null(cohortIds)) {
       data <- data %>% 
-      dplyr::filter(.data$cohortId %in% !!cohortIds) 
+        dplyr::filter(.data$cohortId %in% !!cohortIds) 
     }
   } else {
-    sql <-   "SELECT *
-              FROM  @resultsDatabaseSchema.cohort_count
-              WHERE database_id in (@database_id)
-              {@cohort_ids != ''} ? {  AND cohort_id in (@cohort_ids)}
-            	;"
+    sql <- "SELECT *
+            FROM  @resultsDatabaseSchema.cohort_count
+            WHERE database_id in (@database_id)
+            {@cohort_ids != ''} ? {  AND cohort_id in (@cohort_ids)}
+            ;"
     data <- renderTranslateQuerySql(connection = dataSource$connection,
                                     sql = sql,
                                     resultsDatabaseSchema = dataSource$resultsDatabaseSchema,
@@ -113,22 +117,15 @@ getTimeDistributionResult <- function(dataSource = .GlobalEnv,
   return(data)
 }
 
-getIncidenceRateResult <- function(connection = NULL,
-                                   connectionDetails = NULL,
+getIncidenceRateResult <- function(dataSource = .GlobalEnv,
                                    cohortIds,
                                    databaseIds,
                                    stratifyByGender = c(TRUE,FALSE),
                                    stratifyByAgeGroup = c(TRUE,FALSE),
                                    stratifyByCalendarYear = c(TRUE,FALSE),
-                                   minPersonYears = 1000,
-                                   resultsDatabaseSchema = NULL) {
-  table = "incidenceRate"
+                                   minPersonYears = 1000) {
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
-  errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
-                                                  connectionDetails = connectionDetails,
-                                                  resultsDatabaseSchema = resultsDatabaseSchema,
-                                                  errorMessage = errorMessage)
   errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = cohortIds,
                                                  databaseIds = databaseIds,
                                                  errorMessage = errorMessage)
@@ -149,42 +146,8 @@ getIncidenceRateResult <- function(connection = NULL,
                            unique = TRUE)
   checkmate::reportAssertions(collection = errorMessage)
   
-  # route query
-  route <- routeDataQuery(connection = connection,
-                          connectionDetails = connectionDetails,
-                          table = table)
-  
-  if (route == 'quit') {
-    warning("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
-    return(NULL)
-  } else if (route == 'memory') {
-    connection <- NULL
-  }
-  
-  # perform query
-  if (!is.null(connection)) {
-    sql <-   "SELECT *
-              FROM  @resultsDatabaseSchema.@table
-              WHERE cohort_id in (@cohortIds)
-            	AND database_id in c('@databaseIds')
-              {@gender == TRUE} ? {AND gender ISNULL} : {AND gender NOT ISNULL}
-              {@age_group == TRUE} ? {AND age_group ISNULL} : {AND age_group NOT ISNULL}
-            	{@calendar_year == TRUE} ? {AND calendar_year ISNULL} : {AND calendar_year NOT ISNULL}
-              AND person_years > @personYears;"
-    data <- renderTranslateQuerySql(connection = connection,
-                                    sql = sql,
-                                    resultsDatabaseSchema = resultsDatabaseSchema,
-                                    table = SqlRender::camelCaseToSnakeCase(table),
-                                    cohortId = cohortIds,
-                                    databaseIds = databaseIds,
-                                    gender = stratifyByGender,
-                                    age_group = stratifyByAgeGroup,
-                                    calendar_year = stratifyByCalendarYear,
-                                    personYears = minPersonYears,
-                                    snakeCaseToCamelCase = TRUE) %>% 
-      tidyr::tibble()
-  } else {
-    data <- get(table) %>% 
+  if (is(dataSource, "environment")) {
+    data <- get("incidenceRate", envir = dataSource) %>% 
       dplyr::mutate(strataGender = !is.na(.data$gender),
                     strataAgeGroup = !is.na(.data$ageGroup),
                     strataCalendarYear = !is.na(.data$calendarYear)) %>% 
@@ -194,9 +157,33 @@ getIncidenceRateResult <- function(connection = NULL,
                       .data$strataAgeGroup %in% !!stratifyByAgeGroup &
                       .data$strataCalendarYear %in% !!stratifyByCalendarYear &
                       .data$personYears > !!minPersonYears) %>% 
-      dplyr::select(-tidyselect::starts_with('strata')) %>% 
+      dplyr::select(-tidyselect::starts_with('strata'))
+  } else {
+    sql <-   "SELECT *
+              FROM  @resultsDatabaseSchema.incidence_rate
+              WHERE cohort_id in (@cohort_ids)
+            	AND database_id in (@database_ids)
+              {@gender == TRUE} ? {AND gender != ''} : {AND gender = ''}
+              {@age_group == TRUE} ? {AND age_group != ''} : {AND age_group = ''}
+            	{@calendar_year == TRUE} ? {AND calendar_year != ''} : {AND calendar_year = ''}
+              AND person_years > @personYears;"
+    data <- renderTranslateQuerySql(connection = dataSource$connection,
+                                    sql = sql,
+                                    resultsDatabaseSchema = dataSource$resultsDatabaseSchema,
+                                    cohort_ids = cohortIds,
+                                    database_ids = quoteLiterals(databaseIds),
+                                    gender = stratifyByGender,
+                                    age_group = stratifyByAgeGroup,
+                                    calendar_year = stratifyByCalendarYear,
+                                    personYears = minPersonYears,
+                                    snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
-  }
+    data <- data %>%
+      dplyr::mutate(gender = dplyr::na_if(.data$gender, ""),
+                    ageGroup = dplyr::na_if(.data$ageGroup, ""),
+                    calendarYear = dplyr::na_if(.data$calendarYear, ""))
+  } 
+ 
   if (nrow(data) == 0) {
     warning("No records retrieved for 'incidence rate'.")
   }
