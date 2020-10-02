@@ -107,7 +107,7 @@ recordTasksDone <- function(..., checksum, recordKeepingFile, incremental = TRUE
   }
   newRow <- dplyr::as_tibble(list(...))
   newRow$checksum <- checksum
-  newRow$timeStamp <-  Sys.time()
+  newRow$timeStamp <-  as.character(Sys.time())
   recordKeeping <- dplyr::bind_rows(recordKeeping, newRow)
   readr::write_csv(recordKeeping, recordKeepingFile)
 }
