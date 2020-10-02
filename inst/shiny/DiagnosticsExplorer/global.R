@@ -1,88 +1,114 @@
 library(magrittr)
 
-source("R/Init.R")
 source("R/Tables.R")
-source("R/Other.R")
 source("R/Plots.R")
 source("R/Results.R")
 
-connectionPool <- NULL
+# Settings when running on server:
+
 defaultLocalDataFolder <- "data"
 defaultLocalDataFile <- "PreMerged.RData"
 
+connectionPool <- NULL
+defaultServer <- Sys.getenv("phenotypeLibraryDbServer")
+defaultDatabase <- Sys.getenv("phenotypeLibraryDbDatabase")
+defaultPort <- Sys.getenv("phenotypeLibraryDbPort")
+defaultUser <- Sys.getenv("phenotypeLibraryDbUser")
+defaultPassword <- Sys.getenv("phenotypeLibraryDbPassword")
+defaultResultsSchema <- Sys.getenv("phenotypeLibraryDbResultsSchema")
+defaultVocabularySchema <- Sys.getenv("phenotypeLibraryDbVocabularySchema")
+
+defaultDatabaseMode <- TRUE # Use file system if FALSE
+
+cohortBaseUrl <- "https://atlas.ohdsi.org/#/cohortdefinition/"
+conceptBaseUrl <- "https://athena.ohdsi.org/search-terms/terms/"
+cohortDiagnosticModeDefaultTitle <- "Cohort Diagnostics"
+phenotypeLibraryModeDefaultTitle <- "Phenotype Library"
+
+thresholdCohortSubjects <- 0
+thresholdCohortEntries <- 0
+
+
 if (!exists("shinySettings")) {
-  shinySettings <- list(
-    connectionDetails = getDbConnectionDetails(),
-    resultsDatabaseSchema = getResultsDatabaseSchema(),
-    cdmDatabaseSchema = getCdmDatabaseSchema(),
-    dataFolder = defaultLocalDataFolder
-  )
+  writeLines("Using default settings")
+  databaseMode <- defaultDatabaseMode
+  if (databaseMode) {
+    connectionPool <- pool::dbPool(
+      drv = DatabaseConnector::DatabaseConnectorDriver(),
+      dbms = "postgresql",
+      server = paste(defaultServer, defaultDatabase, sep = "/"),
+      port = defaultPort,
+      user = defaultUser,
+      password = defaultPassword
+    )
+    resultsDatabaseSchema <- defaultResultsSchema
+    vocabularyDatabaseSchema <- defaultVocabularySchema
+  } else {
+    dataFolder <- defaultLocalDataFolder
+  }
 } else {
-  if (is.null(shinySettings$connectionDetails)) {
-    shinySettings$connectionDetails <- getDbConnectionDetails()
-  }
-  if (is.null(shinySettings$dataFolder)) {
-    shinySettings$dataFolder <- defaultLocalDatFolder
-  }
-  if (is.null(shinySettings$resultsDatabaseSchema)) {
-    shinySettings$resultsDatabaseSchema <- getResultsDatabaseSchema()
-  }
-  if (is.null(shinySettings$cdmDatabaseSchema)) {
-    shinySettings$cdmDatabaseSchema <- getCdmDatabaseSchema()
+  writeLines("Using settings provided by user")
+  databaseMode <- !is.null(shinySettings$server)
+  if (databaseMode) {
+    connectionPool <- pool::dbPool(
+      drv = DatabaseConnector::DatabaseConnectorDriver(),
+      dbms = "postgresql",
+      server = paste(shinySettings$server, shinySettings$database, sep = "/"),
+      port = shinySettings$port,
+      user = shinySettings$user,
+      password = shinySettings$password
+    )
+    resultsDatabaseSchema <- defaultResultsSchema
+    vocabularyDatabaseSchema <- defaultVocabularySchema
+  } else {
+    dataFolder <- shinySettings$dataFolder
   }
 }
 
+dataModelSpecifications <- read.csv("resultsDataModelSpecification.csv")
+# Cleaning up any tables in memory:
+suppressWarnings(rm(list = SqlRender::snakeCaseToCamelCase(dataModelSpecifications$tableName)))
 
+if (databaseMode) {
 
-suppressWarnings(rm(list = resultsGlobalReferenceTables))
-suppressWarnings(rm(list = cdmGlobalReferenceTables))
-
-
-# Cleanup the database connPool if it was created
-# (borrowed from https://github.com/ohdsi-studies/Covid19CharacterizationCharybdis/blob/master/inst/shiny/CharybdisResultsExplorer/global.R)
-onStop(function() {
-  if (!is.null(connectionPool)) {
+  onStop(function() {
     if (DBI::dbIsValid(connectionPool)) {
       writeLines("Closing database pool")
       pool::poolClose(connectionPool)
     }
+  })
+  
+  resultsTablesOnServer <- tolower(DatabaseConnector::dbListTables(connectionPool, schema = resultsDatabaseSchema))
+  
+  loadResultsTable <- function(tableName, required = FALSE) {
+    if (required || tableName %in% resultsTablesOnServer) {
+      table <- DatabaseConnector::dbReadTable(connectionPool, 
+                                              paste(resultsDatabaseSchema, tableName, sep = "."))
+      colnames(table) <- SqlRender::snakeCaseToCamelCase(colnames(table))
+      return(table)
+    }
   }
-})
 
-
-if (is.null(shinySettings$connectionDetails)) {
-  warning("No database connection details. Looking for local data.")
-  if (is.null(shinySettings$dataFolder)) {
-    stop("No mechanism to load data.")
+  database <- loadResultsTable("database", required = TRUE)
+  cohort <- loadResultsTable("cohort", required = TRUE)
+  phenotypeDescription <- loadResultsTable("phenotype_description")
+  temporalTimeRef <- loadResultsTable("temporal_time_ref")
+  conceptSets <- loadResultsTable("concept_sets")
+  
+  # Create empty objects in memory for all other tables. This is used by the Shiny app to decide what tabs to show:
+  for (table in dataModelSpecifications$tableName) {
+    if (table %in% resultsTablesOnServer && !exists(SqlRender::snakeCaseToCamelCase(table))) {
+      assign(SqlRender::snakeCaseToCamelCase(table), dplyr::tibble())
+    }
   }
   
-  localDataPath <- file.path(shinySettings$dataFolder, defaultLocalDataFile)
+} else {
+  localDataPath <- file.path(dataFolder, defaultLocalDataFile)
   if (!file.exists(localDataPath)) {
     stop(sprintf("Local data file %s does not exist.", localDataPath))
   }
-    
-  loadGlobalDataFromLocal(localDataPath)
-} else {
-  
-  connectionPool <- pool::dbPool(
-    drv = DatabaseConnector::DatabaseConnectorDriver(),
-    dbms = shinySettings$connectionDetails$dbms,
-    server = shinySettings$connectionDetails$server,
-    port = shinySettings$connectionDetails$port,
-    user = shinySettings$connectionDetails$user,
-    password = shinySettings$connectionDetails$password
-  )
-  loadGlobalDataFromDatabase(connection = connectionPool,
-                             resultsDatabaseSchema = shinySettings$resultsDatabaseSchema,
-                             cdmDatabaseSchema = shinySettings$cdmDatabaseSchema,
-                             verbose = TRUE)
-  
-  instantiateEmptyTableObjects(connection = connectionPool,
-                               resultsDatabaseSchema = shinySettings$resultsDatabaseSchema,
-                               cdmDatabaseSchema = shinySettings$cdmDatabaseSchema)
-}
-
-
+  load(localDataPath)
+} 
 
 if (exists("temporalTimeRef")) {
   temporalCovariateChoices <- temporalTimeRef %>%
@@ -91,40 +117,3 @@ if (exists("temporalTimeRef")) {
     dplyr::arrange(.data$timeId) %>% 
     dplyr::slice_head(n = 5)
 }
-
-
-
-# 
-# if (is.null(connection)) {
-#   if (!exists("shinySettings")) {
-#     if (file.exists("data")) {
-#       shinySettings <- list(dataFolder = "data")
-#     } else {
-#       shinySettings <- list(dataFolder = "S:/examplePackageOutput")
-#     }
-#     dataFolder <- shinySettings$dataFolder
-#     if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {
-#       writeLines(paste0("Using merged data detected in folder '", dataFolder, "'"))
-#       load(file.path(dataFolder, "PreMerged.RData"))
-#     } else {
-#       stop("No premerged file found")
-#     }
-#   }
-# } else {
-#   writeLines(paste0("Retrieving some tables from databse "))
-#   allTables <- DatabaseConnector::getTableNames(connection = connection,
-#                                                 databaseSchema = resultsDatabaseSchema)
-#   globalTables <- c('analysis_ref', 'temporal_time_ref', 'cohort', 'cohort_count',
-#                     'concept_sets', 'database', 'phenotype_description')
-#   for (i in (1:length(globalTables))) {
-#     assign(SqlRender::snakeCaseToCamelCase(globalTables[[i]]), 
-#            queryAllData(connection = connection,
-#                         databaseSchema = resultsDatabaseSchema,
-#                         tableName = globalTables[[i]]))
-#   }
-#   blankTables <- setdiff(x = allTables, y = globalTables)
-#   for (i in (1:length(blankTables))) {
-#     assign(SqlRender::snakeCaseToCamelCase(blankTables[[i]]),
-#            tidyr::tibble())
-#   }
-# }

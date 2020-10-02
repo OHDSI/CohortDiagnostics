@@ -15,9 +15,9 @@ connectionDetails <- createConnectionDetails(dbms = "postgresql",
                                              port = Sys.getenv("phenotypeLibraryDbPort"),
                                              user = Sys.getenv("phenotypeLibraryDbUser"),
                                              password = Sys.getenv("phenotypeLibraryDbPassword"))
-schema <- Sys.getenv("phenotypeLibraryDbSchema")
+resultsSchema <- Sys.getenv("phenotypeLibraryDbResultsSchema")
 
-createResultsDataModel(connectionDetails = connectionDetails, schema = schema)
+createResultsDataModel(connectionDetails = connectionDetails, schema = resultsSchema)
 
 Sys.setenv("POSTGRES_PATH" = "C:/Program Files/PostgreSQL/9.3/bin")
 uploadResults(connectionDetails = connectionDetails,

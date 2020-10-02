@@ -1,7 +1,6 @@
 library(magrittr)
 
 source("R/Tables.R")
-source("R/Other.R")
 source("R/Plots.R")
 source("R/Results.R")
 
@@ -400,7 +399,7 @@ bodyTabItems <- shinydashboard::tabItems(
         shinyWidgets::pickerInput(
           inputId = "domain",
           label = "Filter By Domain",
-          choices = c("all",unique(stringr::word(covariateRef$covariateName))),
+          choices = c("all","condition", "drug", "procedure", "observation", "measurement"),
           multiple = FALSE,
           choicesOpt = list(style = rep_len("color: black;", 999)),
           options = shinyWidgets::pickerOptions(
