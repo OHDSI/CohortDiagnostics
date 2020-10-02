@@ -250,60 +250,42 @@ getCohortCountResult <- function(connection = NULL,
   return(data)
 }
 
-getCohortOverlapResult <- function(connection = NULL,
-                                   connectionDetails = NULL,
+getCohortOverlapResult <- function(dataSource = .GlobalEnv,
                                    targetCohortIds,
                                    comparatorCohortIds,
-                                   databaseIds,
-                                   resultsDatabaseSchema = NULL) {
-  table = "cohortOverlap"
-  # Perform error checks for input variables
+                                   databaseIds) {
+
   errorMessage <- checkmate::makeAssertCollection()
-  errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
-                                                  connectionDetails = connectionDetails,
-                                                  resultsDatabaseSchema = resultsDatabaseSchema,
-                                                  errorMessage = errorMessage)
   errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = targetCohortIds,
                                                  databaseIds = databaseIds,
                                                  errorMessage = errorMessage)
   errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = comparatorCohortIds,
                                                  databaseIds = databaseIds,
                                                  errorMessage = errorMessage)
-  # route query
-  route <- routeDataQuery(connection = connection,
-                          connectionDetails = connectionDetails,
-                          table = table)
   
-  if (route == 'quit') {
-    warning("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
-    return(NULL)
-  } else if (route == 'memory') {
-    connection <- NULL
-  }
-  
-  # perform query
-  if (!is.null(connection)) {
-    sql <-   "SELECT *
-              FROM  @resultsDatabaseSchema.@table
-              WHERE target_cohort_id in (@targetCohortIds)
-              AND comparator_cohort_id in (@comparatorCohortIds)
-            	AND database_id in c('@databaseIds');"
-    data <- renderTranslateQuerySql(connection = connection,
-                                    sql = sql,
-                                    resultsDatabaseSchema = resultsDatabaseSchema,
-                                    table = SqlRender::camelCaseToSnakeCase(table),
-                                    targetCohortId = targetCohortIds,
-                                    comparatorCohortId = comparatorCohortIds,
-                                    databaseId = databaseIds, 
-                                    snakeCaseToCamelCase = TRUE) %>% 
-      tidyr::tibble()
-  } else {
+
+  if (is(dataSource, "environment")) {
     data <- get(table) %>% 
       dplyr::filter(.data$targetCohortId %in% !!targetCohortIds &
                       .data$comparatorCohortId %in% !!comparatorCohortIds &
                       .data$databaseId %in% !!databaseIds) %>% 
       tidyr::tibble()
+  } else  {
+    sql <-   "SELECT *
+              FROM  @resultsDatabaseSchema.cohort_overlap
+              WHERE target_cohort_id in (@target_cohort_ids)
+              AND comparator_cohort_id in (@comparator_cohort_ids)
+            	AND database_id in (@database_ids);"
+    data <- renderTranslateQuerySql(connection = dataSource$connection,
+                                    sql = sql,
+                                    resultsDatabaseSchema = resultsDatabaseSchema,
+                                    target_cohort_ids = targetCohortIds,
+                                    comparator_cohort_ids = comparatorCohortIds,
+                                    database_ids = quoteLiterals(databaseIds), 
+                                    snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
   }
+  
   if (nrow(data) == 0) {
     return(NULL)
   }

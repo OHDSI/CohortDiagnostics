@@ -1093,7 +1093,8 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$overlapTable <- DT::renderDataTable(expr = {
-    data <- getCohortOverlapResult(targetCohortIds = cohortId(), 
+    data <- getCohortOverlapResult(dataSource = dataSource,
+                                   targetCohortIds = cohortId(), 
                                    comparatorCohortIds = comparatorCohortId(), 
                                    databaseIds = input$database)
     
@@ -1140,7 +1141,8 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   overLapPlot <- shiny::reactive({
-    data <- getCohortOverlapResult(targetCohortIds = cohortId(), 
+    data <- getCohortOverlapResult(dataSource = dataSource,
+                                   targetCohortIds = cohortId(), 
                                    comparatorCohortIds = comparatorCohortId(), 
                                    databaseIds = input$database)
     validate(need(!(cohortId() == comparatorCohortId()), paste0('Target cohort and comparator cannot be the same')),
@@ -1424,9 +1426,10 @@ shiny::shinyServer(function(input, output, session) {
   output$temporalCharacterizationSelectedDataBase <- shiny::renderText(input$database)
   
   targetCohortCount <- shiny::reactive({
-    targetCohortWithCount <- cohortCount %>% 
-      dplyr::filter(.data$cohortId == cohortId(),
-                    .data$databaseId == input$database) %>% 
+    #jide
+    targetCohortWithCount <- getCohortCounts(dataSource = dataSource,
+                                             cohortIds = cohortId(),
+                                             databaseIds = input$database) %>% 
       dplyr::left_join(y = cohort) %>% 
       dplyr::arrange(.data$cohortName)
     return(targetCohortWithCount)
@@ -1446,16 +1449,16 @@ shiny::shinyServer(function(input, output, session) {
   selectedCohortCounts <- shiny::reactive({
     targetCohortWithCount <- targetCohortCount()
     
-    comparatorCohortWithCount <- cohortCount %>% 
-      dplyr::filter(.data$cohortId == comparatorCohortId(),
-                    .data$databaseId == input$database) %>%
+    comparatorCohortWithCount <- getCohortCounts(dataSource = dataSource,
+                                                 cohortIds = comparatorCohortId(),
+                                                 databaseIds = input$database) %>% 
       dplyr::left_join(y = cohort)
     
     return(htmltools::withTags(
       div(table(
         tr(
           td(
-            h5("Target: ", targetCohortWithCount$cohortName, " ( n = ", scales::comma(targetCohortWithCount$cohortSubjects), " )"),
+            h5("Target: ", targetCohortWithCount$cohortName, " ( n = ", scales::comma(targetCohortWithCount$cohortSubjects), " )")
           ),
           td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;")),
           td(
