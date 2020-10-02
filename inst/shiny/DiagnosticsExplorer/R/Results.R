@@ -193,6 +193,37 @@ getIncidenceRateResult <- function(dataSource = .GlobalEnv,
 }
 
 
+
+getInclusionRuleStats <- function(dataSource = .GlobalEnv,
+                                     cohortIds = NULL,
+                                     databaseIds) {
+  
+  if (is(dataSource, "environment")) {
+    data <- get("inclusionRuleStats", envir = dataSource) %>% 
+      dplyr::filter(.data$databaseId %in% !!databaseIds) 
+    if (!is.null(cohortIds)) {
+      data <- data %>% 
+        dplyr::filter(.data$cohortId %in% !!cohortIds) 
+    }
+  } else {
+    sql <- "SELECT *
+    FROM  @resultsDatabaseSchema.inclusion_rule_stats
+    WHERE database_id in (@database_id)
+    {@cohort_ids != ''} ? {  AND cohort_id in (@cohort_ids)}
+    ;"
+    data <- renderTranslateQuerySql(connection = dataSource$connection,
+                                    sql = sql,
+                                    resultsDatabaseSchema = dataSource$resultsDatabaseSchema,
+                                    cohort_ids = cohortIds,
+                                    database_id = quoteLiterals(databaseIds), 
+                                    snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
+  }
+  return(data)
+}
+
+
+# deprecated
 getCohortCountResult <- function(connection = NULL,
                                  connectionDetails = NULL,
                                  databaseIds = NULL,

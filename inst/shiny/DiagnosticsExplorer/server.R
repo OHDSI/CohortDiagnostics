@@ -584,9 +584,9 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$inclusionRuleTable <- DT::renderDataTable(expr = {
-    table <- inclusionRuleStats %>% 
-      dplyr::filter(.data$cohortId == cohortId() &
-                      .data$databaseId %in% input$databases) %>% 
+    table <- getInclusionRuleStats(dataSource = dataSource,
+                                   cohortIds = cohortId(),
+                                   databaseIds = input$databases) %>% 
       dplyr::select(.data$ruleSequenceId, .data$ruleName, 
                     .data$meetSubjects, .data$gainSubjects, 
                     .data$remainSubjects, .data$totalSubjects, .data$databaseId) %>% 
@@ -596,8 +596,8 @@ shiny::shinyServer(function(input, output, session) {
       return(dplyr::tibble(Note = paste0('No data available for selected databases and cohorts')))
     }
     
-    databaseIds <- inclusionRuleStats %>%
-      dplyr::filter(.data$databaseId %in% input$databases) %>% 
+    databaseIds <- getInclusionRuleStats(dataSource = dataSource,
+                                         databaseIds = input$databases) %>%
       dplyr::select(.data$databaseId) %>% 
       dplyr::distinct() %>% 
       dplyr::arrange() %>% 
