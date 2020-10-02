@@ -4,6 +4,8 @@ source("R/Tables.R")
 source("R/Plots.R")
 source("R/Results.R")
 
+# shinySettings <- list(dataFolder = "s:/examplePhenotypeLibraryPackageOutput/CCAE/diagnosticsExport")
+
 # Settings when running on server:
 
 defaultLocalDataFolder <- "data"

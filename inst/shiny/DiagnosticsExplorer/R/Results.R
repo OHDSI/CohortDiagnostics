@@ -46,9 +46,11 @@ getCohortCounts <- function(dataSource = .GlobalEnv,
                             databaseIds) {
   if (is(dataSource, "environment")) {
     data <- get("cohortCount", envir = dataSource) %>% 
-      dplyr::filter(.data$cohortId %in% !!cohortIds &
-                      .data$databaseId %in% !!databaseIds) %>% 
-      tidyr::tibble()
+      dplyr::filter(.data$databaseId %in% !!databaseIds) 
+    if (!is.null(cohortIds)) {
+      data <- data %>% 
+      dplyr::filter(.data$cohortId %in% !!cohortIds) 
+    }
   } else {
     sql <-   "SELECT *
               FROM  @resultsDatabaseSchema.cohort_count

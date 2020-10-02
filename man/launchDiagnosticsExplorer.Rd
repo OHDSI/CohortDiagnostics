@@ -5,7 +5,10 @@
 \title{Launch the Diagnostics Explorer Shiny app}
 \usage{
 launchDiagnosticsExplorer(
-  dataFolder,
+  dataFolder = "data",
+  connectionDetails = NULL,
+  resultsDatabaseSchema = NULL,
+  cdmDatabaseSchema = NULL,
   runOverNetwork = FALSE,
   port = 80,
   launch.browser = FALSE
@@ -14,6 +17,10 @@ launchDiagnosticsExplorer(
 \arguments{
 \item{dataFolder}{A folder where the premerged file is stored. Use
 the \code{\link{preMergeDiagnosticsFiles}} function to generate this file.}
+
+\item{connectionDetails}{An object of type \code{connectionDetails} as created using the
+\code{\link[DatabaseConnector]{createConnectionDetails}} function in the
+DatabaseConnector package.}
 
 \item{runOverNetwork}{(optional) Do you want the app to run over your network?}
 

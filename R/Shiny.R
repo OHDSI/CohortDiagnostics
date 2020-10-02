@@ -29,10 +29,10 @@
 #' Launches a Shiny app that allows the user to explore the diagnostics
 #'
 #' @export
-launchDiagnosticsExplorer <- function(connectionDetails = NULL,
+launchDiagnosticsExplorer <- function(dataFolder = "data", 
+                                      connectionDetails = NULL,
                                       resultsDatabaseSchema = NULL,
                                       cdmDatabaseSchema = NULL,
-                                      dataFolder = "data", 
                                       runOverNetwork = FALSE,
                                       port = 80,
                                       launch.browser = FALSE) {
