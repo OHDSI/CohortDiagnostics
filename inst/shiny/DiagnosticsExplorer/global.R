@@ -54,19 +54,14 @@ if (is.null(shinySettings$connectionDetails)) {
   warning("No database connection details. Looking for local data.")
   if (is.null(shinySettings$dataFolder)) {
     stop("No mechanism to load data.")
-  } else {
-    localDataPath <- shinySettings$dataFolder
-    if (!file.exists(localDataPath)) {
-      stop(sprintf("Local data path %s does not exist.", localDataPath))
-    } else {
-      localDataPath <- file.path(localDataPath, defaultLocalDataFile)
-      if (!file.exists(localDataPath)) {
-        stop(sprintf("Local data file %s does not exist.", localDataPath))
-      }
-      
-      loadGlobalDataFromLocal(localDataPath)
-    }
   }
+  
+  localDataPath <- file.path(shinySettings$dataFolder, defaultLocalDataFile)
+  if (!file.exists(localDataPath)) {
+    stop(sprintf("Local data file %s does not exist.", localDataPath))
+  }
+    
+  loadGlobalDataFromLocal(localDataPath)
 } else {
   
   connectionPool <- pool::dbPool(
