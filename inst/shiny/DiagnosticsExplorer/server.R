@@ -148,8 +148,8 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$cohortCountsTable <- DT::renderDataTable(expr = {
-    data <- cohortCount %>%
-      dplyr::filter(.data$databaseId %in% input$databases) %>% 
+    data <- getCohortCounts(dataSource = dataSource,
+                            databaseIds = input$databases) %>%
       dplyr::left_join(cohort, by = "cohortId") %>% 
       dplyr::select(.data$cohortId, 
                     .data$cohortName, .data$databaseId, 
@@ -203,12 +203,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(-.data$cohortId, -.data$url, -.data$webApiCohortId) %>%
       dplyr::arrange(.data$cohortName)
     
-    databaseIds <- cohortCount %>%
-      dplyr::filter(.data$databaseId %in% input$databases) %>% 
-      dplyr::select(.data$databaseId) %>% 
-      dplyr::distinct() %>% 
-      dplyr::arrange() %>% 
-      dplyr::pull(.data$databaseId)
+    databaseIds <- unique(data$databaseId)
     
     sketch <- htmltools::withTags(table(
       class = 'display',
@@ -290,7 +285,9 @@ shiny::shinyServer(function(input, output, session) {
   
   output$timeDisPlot <- ggiraph::renderggiraph(expr = {
     validate(need(length(input$databases) > 0, "No data sources chosen"))
-    data <- getTimeDistributionResult(cohortIds = cohortId(), databaseIds = input$databases)
+    data <- getTimeDistributionResult(dataSource = dataSource,
+                                      cohortIds = cohortId(), 
+                                      databaseIds = input$databases)
     validate(need(!is.null(data), paste0('No data for this combination')),
              need(nrow(data) > 0, paste0('No data for this combination')))
     
@@ -302,8 +299,9 @@ shiny::shinyServer(function(input, output, session) {
   
   output$timeDistTable <- DT::renderDataTable(expr = {
     
-    table <- getTimeDistributionResult(cohortIds = cohortId(), 
-                                       databaseIds = input$databases)
+    table <- getTimeDistributionResult(dataSource = dataSource,
+                                      cohortIds = cohortId(), 
+                                      databaseIds = input$databases)
     
     if (is.null(table)) {
       return(dplyr::tibble(Note = paste0('No data available for selected databases and cohorts')))

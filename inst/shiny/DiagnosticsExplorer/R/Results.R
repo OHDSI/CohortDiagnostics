@@ -1,69 +1,88 @@
-getSelectAllStatement <- function(schemaBinding, tableBinding, limit = -1) {
-  sql <- sprintf("SELECT * FROM @%s.@%s",
-                 schemaBinding,
-                 tableBinding)
-  if (limit >= 0) {
-    sql <- sprintf("%s LIMIT %d;", sql, limit)
-  }
-  return(sql)
+createDatabaseDataSource <- function(connection, resultsDatabaseSchema, vocabularyDatabaseSchema = resultsDatabaseSchema) {
+  return(list(connection = connectionPool,
+              resultsDatabaseSchema = resultsDatabaseSchema,
+              vocabularyDatabaseSchema = vocabularyDatabaseSchema))
 }
 
 
-queryDatabase <- function(connection, sql) {
-  resultSet <- DatabaseConnector::dbGetQuery(connection, sql)
-  colnames(resultSet) <- SqlRender::snakeCaseToCamelCase(colnames(resultSet))
-  return(resultSet)
-}
-
-
-getTimeDistributionResult <- function(connection = NULL,
-                                      connectionDetails = NULL,
-                                      cohortIds,
-                                      databaseIds,
-                                      resultsDatabaseSchema = NULL) {
-  table = "timeDistribution"
-  # Perform error checks for input variables
-  errorMessage <- checkmate::makeAssertCollection()
-  errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
-                                                  connectionDetails = connectionDetails,
-                                                  resultsDatabaseSchema = resultsDatabaseSchema,
-                                                  errorMessage = errorMessage)
-  errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = cohortIds,
-                                                 databaseIds = databaseIds,
-                                                 errorMessage = errorMessage)
-  # route query
-  route <- routeDataQuery(connection = connection,
-                          connectionDetails = connectionDetails,
-                          table = table, 
-                          databaseSchema = resultsDatabaseSchema)
-  
-  if (route == 'quit') {
-    warning("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
-    return(NULL)
-  } else if (route == 'memory') {
-    connection <- NULL
-  }
-  
-  # perform query
-  if (!is.null(connection)) {
-    sql <-   "SELECT *
-              FROM  @resultsDatabaseSchema.@table
-              WHERE cohort_id in (@cohortId)
-            	AND database_id in (@databaseIds);"
-    data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                                       sql = sql,
-                                                       resultsDatabaseSchema = resultsDatabaseSchema,
-                                                       table = SqlRender::camelCaseToSnakeCase(table),
-                                                       cohortId = cohortIds,
-                                                       database_id = databaseIds, 
-                                                       snakeCaseToCamelCase = TRUE) %>% 
-      tidyr::tibble()
+renderTranslateQuerySql <- function(connection, sql, ..., snakeCaseToCamelCase = FALSE) {
+  if (is(connection, "Pool")) {
+    # Connection pool is used by Shiny app, which always uses PostgreSQL:
+    sql <- SqlRender::render(sql, ...)
+    sql <- SqlRender::translate(sql, targetDialect = "postgresql")
+    tryCatch({
+      data <- DatabaseConnector::dbGetQuery(connection, sql)
+    }, error = function(err) {
+      writeLines(sql)
+      stop(err)
+    })
+    if (snakeCaseToCamelCase) {
+      colnames(data) <- SqlRender::snakeCaseToCamelCase(colnames(data))
+    }
+    return(data)
   } else {
-    data <- get(table) %>% 
+    return(renderTranslateQuerySql(connection = connection,
+                                   sql = sql,
+                                   ...,
+                                   snakeCaseToCamelCase = snakeCaseToCamelCase))
+  }
+}
+
+quoteLiterals <- function(x) {
+  if (is.null(x)) {
+    return("")
+  } else {
+    return(paste0("'", paste(x, collapse = "', '"), "'")) 
+  }
+}
+
+getCohortCounts <- function(dataSource = .GlobalEnv,
+                            cohortIds = NULL,
+                            databaseIds) {
+  if (is(dataSource, "environment")) {
+    data <- get("cohortCount", envir = dataSource) %>% 
       dplyr::filter(.data$cohortId %in% !!cohortIds &
                       .data$databaseId %in% !!databaseIds) %>% 
       tidyr::tibble()
+  } else {
+    sql <-   "SELECT *
+              FROM  @resultsDatabaseSchema.cohort_count
+              WHERE database_id in (@database_id)
+              {@cohort_ids != ''} ? {  AND cohort_id in (@cohort_ids)}
+            	;"
+    data <- renderTranslateQuerySql(connection = dataSource$connection,
+                                    sql = sql,
+                                    resultsDatabaseSchema = dataSource$resultsDatabaseSchema,
+                                    cohort_ids = cohortIds,
+                                    database_id = quoteLiterals(databaseIds), 
+                                    snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
   }
+  return(data)
+}
+
+getTimeDistributionResult <- function(dataSource = .GlobalEnv,
+                                      cohortIds,
+                                      databaseIds,
+                                      resultsDatabaseSchema = NULL) {
+  if (is(dataSource, "environment")) {
+    data <- get("timeDistribution") %>% 
+      dplyr::filter(.data$cohortId %in% !!cohortIds &
+                      .data$databaseId %in% !!databaseIds) %>% 
+      tidyr::tibble()
+  } else {
+    sql <-   "SELECT *
+              FROM  @resultsDatabaseSchema.time_distribution
+              WHERE cohort_id in (@cohortId)
+            	AND database_id in (@database_ids);"
+    data <- renderTranslateQuerySql(connection = dataSource$connection,
+                                    sql = sql,
+                                    resultsDatabaseSchema = dataSource$resultsDatabaseSchema,
+                                    cohortId = cohortIds,
+                                    database_ids = quoteLiterals(databaseIds), 
+                                    snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
+  } 
   
   if (nrow(data) == 0) {
     warning("No records retrieved for ", SqlRender::camelCaseToTitleCase(table), ".")
@@ -84,14 +103,6 @@ getTimeDistributionResult <- function(connection = NULL,
                   Max = "maxValue") %>% 
     dplyr::relocate(.data$cohortId, .data$Database, .data$TimeMeasure) %>% 
     dplyr::arrange(.data$cohortId, .data$Database, .data$TimeMeasure)
-  
-  # data <- data %>% 
-  #   dplyr::mutate(dplyr::across(.cols = c(.data$Database, 
-  #                                         .data$TimeMeasure), 
-  #                               .fns = dplyr::case_when(stringr::str_detect(string = .,
-  #                                                                           pattern = "_") ~ 
-  #                                                         SqlRender::snakeCaseToCamelCase()
-  #                                                       )))
   return(data)
 }
 
@@ -153,17 +164,17 @@ getIncidenceRateResult <- function(connection = NULL,
               {@age_group == TRUE} ? {AND age_group ISNULL} : {AND age_group NOT ISNULL}
             	{@calendar_year == TRUE} ? {AND calendar_year ISNULL} : {AND calendar_year NOT ISNULL}
               AND person_years > @personYears;"
-    data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                                       sql = sql,
-                                                       resultsDatabaseSchema = resultsDatabaseSchema,
-                                                       table = SqlRender::camelCaseToSnakeCase(table),
-                                                       cohortId = cohortIds,
-                                                       databaseIds = databaseIds,
-                                                       gender = stratifyByGender,
-                                                       age_group = stratifyByAgeGroup,
-                                                       calendar_year = stratifyByCalendarYear,
-                                                       personYears = minPersonYears,
-                                                       snakeCaseToCamelCase = TRUE) %>% 
+    data <- renderTranslateQuerySql(connection = connection,
+                                    sql = sql,
+                                    resultsDatabaseSchema = resultsDatabaseSchema,
+                                    table = SqlRender::camelCaseToSnakeCase(table),
+                                    cohortId = cohortIds,
+                                    databaseIds = databaseIds,
+                                    gender = stratifyByGender,
+                                    age_group = stratifyByAgeGroup,
+                                    calendar_year = stratifyByCalendarYear,
+                                    personYears = minPersonYears,
+                                    snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {
     data <- get(table) %>% 
@@ -221,12 +232,12 @@ getCohortCountResult <- function(connection = NULL,
     sql <-   "SELECT *
               FROM  @resultsDatabaseSchema.@table
             	WHERE database_id in c('@databaseIds');"
-    data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                                       sql = sql,
-                                                       resultsDatabaseSchema = resultsDatabaseSchema, 
-                                                       databaseIds = databaseIds,
-                                                       table = SqlRender::camelCaseToSnakeCase(table),
-                                                       snakeCaseToCamelCase = TRUE) %>% 
+    data <- renderTranslateQuerySql(connection = connection,
+                                    sql = sql,
+                                    resultsDatabaseSchema = resultsDatabaseSchema, 
+                                    databaseIds = databaseIds,
+                                    table = SqlRender::camelCaseToSnakeCase(table),
+                                    snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {
     data <- get(table) 
@@ -283,14 +294,14 @@ getCohortOverlapResult <- function(connection = NULL,
               WHERE target_cohort_id in (@targetCohortIds)
               AND comparator_cohort_id in (@comparatorCohortIds)
             	AND database_id in c('@databaseIds');"
-    data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                                       sql = sql,
-                                                       resultsDatabaseSchema = resultsDatabaseSchema,
-                                                       table = SqlRender::camelCaseToSnakeCase(table),
-                                                       targetCohortId = targetCohortIds,
-                                                       comparatorCohortId = comparatorCohortIds,
-                                                       databaseId = databaseIds, 
-                                                       snakeCaseToCamelCase = TRUE) %>% 
+    data <- renderTranslateQuerySql(connection = connection,
+                                    sql = sql,
+                                    resultsDatabaseSchema = resultsDatabaseSchema,
+                                    table = SqlRender::camelCaseToSnakeCase(table),
+                                    targetCohortId = targetCohortIds,
+                                    comparatorCohortId = comparatorCohortIds,
+                                    databaseId = databaseIds, 
+                                    snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {
     data <- get(table) %>% 
@@ -355,12 +366,12 @@ getCovariateReference <- function(connection = NULL,
     sql <-   "SELECT *
               FROM  @resultsDatabaseSchema.@table
               {covariateIds == }? {WHERE covariate_id in c(@covariateIds)};"
-    data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                                       sql = sql,
-                                                       resultsDatabaseSchema = resultsDatabaseSchema,
-                                                       table = SqlRender::camelCaseToSnakeCase(table),
-                                                       covariateIds = covariateIds,
-                                                       snakeCaseToCamelCase = TRUE) %>% 
+    data <- renderTranslateQuerySql(connection = connection,
+                                    sql = sql,
+                                    resultsDatabaseSchema = resultsDatabaseSchema,
+                                    table = SqlRender::camelCaseToSnakeCase(table),
+                                    covariateIds = covariateIds,
+                                    snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {
     data <- get(table)
@@ -400,11 +411,11 @@ getTimeReference <- function(connection = NULL,
   if (!is.null(connection)) {
     sql <-   "SELECT *
               FROM  @resultsDatabaseSchema.@table;"
-    data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                                       sql = sql,
-                                                       resultsDatabaseSchema = resultsDatabaseSchema,
-                                                       table = SqlRender::camelCaseToSnakeCase(table),
-                                                       snakeCaseToCamelCase = TRUE) %>% 
+    data <- renderTranslateQuerySql(connection = connection,
+                                    sql = sql,
+                                    resultsDatabaseSchema = resultsDatabaseSchema,
+                                    table = SqlRender::camelCaseToSnakeCase(table),
+                                    snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {
     data <- get(table)
@@ -466,17 +477,17 @@ getCovariateValueResult <- function(connection = NULL,
               {@isTemporal == TRUE} ? {AND time_id in ('@timeIds')}
               AND mean >= @minProportion
               AND mean <= @maxProportion;"
-    data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                                       sql = sql,
-                                                       resultsDatabaseSchema = resultsDatabaseSchema,
-                                                       cohortId = cohortIds,
-                                                       databaseIds = databaseIds, 
-                                                       table = SqlRender::camelCaseToSnakeCase(table),
-                                                       isTemporal = isTemporal,
-                                                       timeIds = timeIds,
-                                                       minProportion = minProportion,
-                                                       maxProportion = maxProportion,
-                                                       snakeCaseToCamelCase = TRUE) %>% 
+    data <- renderTranslateQuerySql(connection = connection,
+                                    sql = sql,
+                                    resultsDatabaseSchema = resultsDatabaseSchema,
+                                    cohortId = cohortIds,
+                                    databaseIds = databaseIds, 
+                                    table = SqlRender::camelCaseToSnakeCase(table),
+                                    isTemporal = isTemporal,
+                                    timeIds = timeIds,
+                                    minProportion = minProportion,
+                                    maxProportion = maxProportion,
+                                    snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {
     data <- get(table) %>% 
@@ -636,12 +647,12 @@ getCohortReference <- function(connection = NULL,
     sql <-   "SELECT *
               FROM  @resultsDatabaseSchema.@table
               {@cohortIds == } ? {}:{where cohort_id in ('@cohortIds')};"
-    data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                                       sql = sql,
-                                                       resultsDatabaseSchema = resultsDatabaseSchema,
-                                                       table = SqlRender::camelCaseToSnakeCase(table),
-                                                       cohortIds = cohortIds,
-                                                       snakeCaseToCamelCase = TRUE) %>% 
+    data <- renderTranslateQuerySql(connection = connection,
+                                    sql = sql,
+                                    resultsDatabaseSchema = resultsDatabaseSchema,
+                                    table = SqlRender::camelCaseToSnakeCase(table),
+                                    cohortIds = cohortIds,
+                                    snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {
     data <- get(table)
@@ -695,11 +706,11 @@ getDatabaseReference <- function(connection = NULL,
     sql <-   "SELECT *
               FROM  @resultsDatabaseSchema.@table
               {@databaseIds == } ? {}:{where databaseId in ('@databaseIds')};"
-    data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                                       sql = sql,
-                                                       resultsDatabaseSchema = resultsDatabaseSchema,
-                                                       table = SqlRender::camelCaseToSnakeCase(table),
-                                                       snakeCaseToCamelCase = TRUE) %>% 
+    data <- renderTranslateQuerySql(connection = connection,
+                                    sql = sql,
+                                    resultsDatabaseSchema = resultsDatabaseSchema,
+                                    table = SqlRender::camelCaseToSnakeCase(table),
+                                    snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {
     data <- get(table)
@@ -747,11 +758,11 @@ getConceptReference <- function(connection = NULL,
               FROM  @resultsDatabaseSchema.@table
               WHERE invalid_reason IS NULL 
               {@conceptIds == } ? {}:{AND concept_id IN ('@conceptIds')};"
-    data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                                       sql = sql,
-                                                       resultsDatabaseSchema = resultsDatabaseSchema,
-                                                       table = SqlRender::camelCaseToSnakeCase(table),
-                                                       snakeCaseToCamelCase = TRUE) %>% 
+    data <- renderTranslateQuerySql(connection = connection,
+                                    sql = sql,
+                                    resultsDatabaseSchema = resultsDatabaseSchema,
+                                    table = SqlRender::camelCaseToSnakeCase(table),
+                                    snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {
     data <- get(table)
@@ -811,11 +822,11 @@ getConceptSetDiagnosticsResults <- function(connection = NULL,
               {@cohortIds == } ? {}:{AND cohort_id IN ('@cohortIds')}
               {@databaseIds == } ? {}:{AND database_id IN ('@databaseIds')};"
     dataIncludedSourceConcept <- 
-      DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                                 sql = sql,
-                                                 resultsDatabaseSchema = resultsDatabaseSchema,
-                                                 table = SqlRender::camelCaseToSnakeCase(table),
-                                                 snakeCaseToCamelCase = TRUE) %>% 
+      renderTranslateQuerySql(connection = connection,
+                              sql = sql,
+                              resultsDatabaseSchema = resultsDatabaseSchema,
+                              table = SqlRender::camelCaseToSnakeCase(table),
+                              snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {
     dataIncludedSourceConcept <- get(table)
@@ -850,11 +861,11 @@ getConceptSetDiagnosticsResults <- function(connection = NULL,
               {@cohortIds == } ? {}:{AND cohort_id IN ('@cohortIds')}
               {@databaseIds == } ? {}:{AND database_id IN ('@databaseIds')};"
     dataOrphanConcept <- 
-      DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                                 sql = sql,
-                                                 resultsDatabaseSchema = resultsDatabaseSchema,
-                                                 table = SqlRender::camelCaseToSnakeCase(table),
-                                                 snakeCaseToCamelCase = TRUE) %>% 
+      renderTranslateQuerySql(connection = connection,
+                              sql = sql,
+                              resultsDatabaseSchema = resultsDatabaseSchema,
+                              table = SqlRender::camelCaseToSnakeCase(table),
+                              snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {
     dataOrphanConcept <- get(table)
@@ -911,8 +922,7 @@ routeDataQuery <- function(connection = NULL,
                            checkInDbms = FALSE,
                            checkInRMemory = TRUE,
                            databaseSchema = NULL,
-                           silent = TRUE
-) {
+                           silent = TRUE) {
   if (is.null(connection)) {
     if (is.null(connectionDetails)) {
       if (!silent) {

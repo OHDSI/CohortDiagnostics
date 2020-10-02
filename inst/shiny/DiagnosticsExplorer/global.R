@@ -29,6 +29,7 @@ thresholdCohortSubjects <- 0
 thresholdCohortEntries <- 0
 
 
+
 if (!exists("shinySettings")) {
   writeLines("Using default settings")
   databaseMode <- defaultDatabaseMode
@@ -101,13 +102,16 @@ if (databaseMode) {
       assign(SqlRender::snakeCaseToCamelCase(table), dplyr::tibble())
     }
   }
-  
+  dataSource <- createDatabaseDataSource(connection = connectionPool,
+                                         resultsDatabaseSchema = resultsDatabaseSchema,
+                                         vocabularyDatabaseSchema = vocabularyDatabaseSchema)
 } else {
   localDataPath <- file.path(dataFolder, defaultLocalDataFile)
   if (!file.exists(localDataPath)) {
     stop(sprintf("Local data file %s does not exist.", localDataPath))
   }
   load(localDataPath)
+  dataSource <- .GlobalEnv
 } 
 
 if (exists("temporalTimeRef")) {
