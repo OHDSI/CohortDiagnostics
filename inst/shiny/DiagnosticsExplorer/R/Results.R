@@ -4,6 +4,11 @@ createDatabaseDataSource <- function(connection, resultsDatabaseSchema, vocabula
               vocabularyDatabaseSchema = vocabularyDatabaseSchema))
 }
 
+createFileDataSource <- function(premergedDataFile, envir = new.env()) {
+  load(premergedDataFile, envir = envir)
+  return(envir)
+}
+
 
 renderTranslateQuerySql <- function(connection, sql, ..., snakeCaseToCamelCase = FALSE) {
   if (is(connection, "Pool")) {

@@ -110,8 +110,7 @@ if (databaseMode) {
   if (!file.exists(localDataPath)) {
     stop(sprintf("Local data file %s does not exist.", localDataPath))
   }
-  load(localDataPath)
-  dataSource <- .GlobalEnv
+  dataSource <- createFileDataSource(localDataPath, envir = .GlobalEnv)
 } 
 
 if (exists("temporalTimeRef")) {
