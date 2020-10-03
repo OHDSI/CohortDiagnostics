@@ -223,6 +223,42 @@ getInclusionRuleStats <- function(dataSource = .GlobalEnv,
 }
 
 
+getIndexEventBreakdown <- function(dataSource = .GlobalEnv,
+                                   cohortIds,
+                                   databaseIds) {
+  
+  errorMessage <- checkmate::makeAssertCollection()
+  errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = cohortIds,
+                                                 databaseIds = databaseIds,
+                                                 errorMessage = errorMessage)
+  checkmate::reportAssertions(collection = errorMessage)
+  
+  if (is(dataSource, "environment")) {
+    data <- get("indexEventBreakdown", envir = dataSource) %>% 
+      dplyr::filter(.data$databaseId %in% !!databaseIds) 
+    if (!is.null(cohortIds)) {
+      data <- data %>% 
+        dplyr::filter(.data$cohortId %in% !!cohortIds) 
+    }
+  } else {
+    sql <- "SELECT *
+    FROM  @resultsDatabaseSchema.index_event_breakdown
+    WHERE database_id in (@database_id)
+    AND cohort_id in (@cohort_ids)
+    ;"
+    data <- renderTranslateQuerySql(connection = dataSource$connection,
+                                    sql = sql,
+                                    resultsDatabaseSchema = dataSource$resultsDatabaseSchema,
+                                    cohort_ids = cohortIds,
+                                    database_id = quoteLiterals(databaseIds), 
+                                    snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
+  }
+  return(data)
+}
+
+
+
 # deprecated
 getCohortCountResult <- function(connection = NULL,
                                  connectionDetails = NULL,

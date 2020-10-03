@@ -663,9 +663,9 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$breakdownTable <- DT::renderDataTable(expr = {
-    data <- indexEventBreakdown %>%
-      dplyr::filter(.data$cohortId == cohortId() & 
-                      .data$databaseId %in% input$databases) %>%
+    data <- getIndexEventBreakdown(dataSource = dataSource,
+                                   cohortIds = cohortId(),
+                                   databaseIds = input$databases) %>%
       dplyr::select(-.data$cohortId) %>% 
       dplyr::inner_join(concept, by = "conceptId") %>% 
       dplyr::select(.data$conceptId, .data$conceptName,
@@ -1426,7 +1426,6 @@ shiny::shinyServer(function(input, output, session) {
   output$temporalCharacterizationSelectedDataBase <- shiny::renderText(input$database)
   
   targetCohortCount <- shiny::reactive({
-    #jide
     targetCohortWithCount <- getCohortCounts(dataSource = dataSource,
                                              cohortIds = cohortId(),
                                              databaseIds = input$database) %>% 
