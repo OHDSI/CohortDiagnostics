@@ -462,11 +462,10 @@ bodyTabItems <- shinydashboard::tabItems(
         )
       )
     )
-  )
-),
-shinydashboard::tabItem(tabName = "databaseInformation",
-                        # uiOutput("databaseInformationPanel")
-                        DT::dataTableOutput("databaseInformationTable"))
+  ),
+  shinydashboard::tabItem(tabName = "databaseInformation",
+                          # uiOutput("databaseInformationPanel")
+                          DT::dataTableOutput("databaseInformationTable"))
 )
 
 
