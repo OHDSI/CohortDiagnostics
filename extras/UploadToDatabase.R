@@ -19,7 +19,7 @@ resultsSchema <- Sys.getenv("phenotypeLibraryDbResultsSchema")
 
 createResultsDataModel(connectionDetails = connectionDetails, schema = resultsSchema)
 
-Sys.setenv("POSTGRES_PATH" = "C:/Program Files/PostgreSQL/9.3/bin")
+Sys.setenv("POSTGRES_PATH" = "C:/Program Files/PostgreSQL/11/bin")
 uploadResults(connectionDetails = connectionDetails,
               schema = schema,
               zipFileName = "S:/examplePackageOutput/CCAE/diagnosticsExport/Results_CCAE.zip")
