@@ -2,55 +2,53 @@
 % Please edit documentation in R/ResultsPlot.R
 \name{plotCohortComparisonStandardizedDifference}
 \alias{plotCohortComparisonStandardizedDifference}
-\title{Get Plotly object with cohort comparison plot.}
+\title{Get ggplot object with cohort comparison plot.}
 \usage{
 plotCohortComparisonStandardizedDifference(
   data,
-  targetCohortIds = NULL,
-  comparatorCohortIds = NULL,
-  cohortReference = NULL,
-  covariateReference = NULL,
-  concept = NULL,
+  cohortReference,
+  covariateReference,
   absoluteStandardizedDifferenceLowerThreshold = 0.001,
   absoluteStandardizedDifferenceUpperThreshold = 1,
-  databaseIds = NULL
+  databaseIds = NULL,
+  targetCohortIds = NULL,
+  comparatorCohortIds = NULL
 )
 }
 \arguments{
 \item{data}{A tibble data frame object that is the output 
 of \code{\link{compareCovariateValueResult}} function.}
 
-\item{targetCohortIds}{(optional) A vector of one or more Cohort Ids.}
-
-\item{comparatorCohortIds}{(optional) A vector of one or more Cohort Ids.}
-
-\item{cohortReference}{(optional) A tibble data frame object returned 
+\item{cohortReference}{A tibble data frame object returned 
 from \code{\link{getCohortReference}} function.}
 
-\item{covariateReference}{(optional) A tibble data frame object returned from \code{\link{getCovariateReference}} function.}
+\item{covariateReference}{A tibble data frame object returned from \code{\link{getCovariateReference}} function.}
 
-\item{concept}{(optional) A tibble data frame object returned 
-from \code{\link{getConceptReference}} function.}
+\item{absoluteStandardizedDifferenceLowerThreshold}{(optional) Do you want to keep a lower threshold 
+of absolute standardized difference for plotting}
 
-\item{absoluteStandardizedDifferenceLowerThreshold}{(optional) Do you want to keep a lower threshold of absolute standardized difference
-for plotting}
-
-\item{absoluteStandardizedDifferenceUpperThreshold}{(optional) Do you want to keep a lower threshold of absolute standardized difference
-for plotting}
+\item{absoluteStandardizedDifferenceUpperThreshold}{(optional) Do you want to keep a lower threshold 
+of absolute standardized difference for plotting}
 
 \item{databaseIds}{A vector one or more databaseIds to retrieve the results for. This is a 
 character field values from the `databaseId` field of the `database` table 
 of the results data model.}
+
+\item{targetCohortIds}{(optional) A vector of one or more Cohort Ids.}
+
+\item{comparatorCohortIds}{(optional) A vector of one or more Cohort Ids.}
 }
 \value{
-A Plotly object.
+A ggplot object.
 }
 \description{
-Get Plotly object with cohort comparison plot.
+Get ggplot object with cohort comparison plot.
 }
 \examples{
 \dontrun{
-plotCohortCompare <- plotCohortComparisonStandardizedDifference(data = data)
+plotCohortCompare <- plotCohortComparisonStandardizedDifference(data = data, 
+                                                                cohortReference = cohortReference, 
+                                                                covariateReference = covariateReference)
 }
 
 }

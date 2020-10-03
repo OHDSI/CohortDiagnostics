@@ -402,6 +402,9 @@ getCohortOverlapResult <- function(connection = NULL,
 #' @template ModeAndDetails
 #' @param isTemporal     Get temporal covariate references?
 #' @param covariateIds   (optional) A vector of covariateIds to subset the results
+#' @param domainId       (optional) Default is all. Valid options are
+#'                        "condition", "procedure", "observation", "visit", 
+#'                        "measurement", "drug", "other"
 #'  
 #' @return
 #' The function will return a tibble data frame object.
@@ -415,7 +418,8 @@ getCohortOverlapResult <- function(connection = NULL,
 getCovariateReference <- function(connection = NULL,
                                   connectionDetails = NULL,
                                   covariateIds = NULL,
-                                  isTemporal = TRUE,
+                                  isTemporal = FALSE,
+                                  domainId = NULL,
                                   resultsDatabaseSchema = NULL) {
   if (isTemporal) {
     table <- 'temporalCovariateRef'
@@ -428,17 +432,33 @@ getCovariateReference <- function(connection = NULL,
   checkmate::assertLogical(x = isTemporal, 
                            any.missing = FALSE, 
                            min.len = 1, 
-                           max.len = 1)
+                           max.len = 1,
+                           add = errorMessage)
   checkmate::assertDouble(x = covariateIds, 
                           lower = 0,
                           upper = 2^53, 
                           any.missing = FALSE,
                           unique = TRUE,
-                          null.ok = TRUE)
+                          null.ok = TRUE,
+                          add = errorMessage)
   errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
                                                   connectionDetails = connectionDetails,
                                                   resultsDatabaseSchema = resultsDatabaseSchema,
                                                   errorMessage = errorMessage)
+  
+  if (!is.null(domainId) && domainId == 'all') {
+    domainId <- NULL
+  }
+  if (!is.null(domainId)) {
+    checkmate::assertCharacter(x = domainId, 
+                               min.len = 1, 
+                               max.len = 1, 
+                               any.missing = FALSE,
+                               add = errorMessage)
+    checkmate::assertChoice(x = domainId, 
+                            choices = c("condition", "procedure", "observation", 
+                                        "visit", "measurement", "drug", "other"))
+  }
   checkmate::reportAssertions(collection = errorMessage)
   # route query
   route <- routeDataQuery(connection = connection,
@@ -472,6 +492,21 @@ getCovariateReference <- function(connection = NULL,
     }
   }
   data <- data[!duplicated(data$covariateId),]
+  
+  data <- data %>% 
+    dplyr::mutate(domainId = tolower(stringr::word(.data$covariateName))) %>% 
+    dplyr::mutate(domainId = dplyr::case_when(stringr::str_detect(string = domainId, pattern = 'drug') ~ 'Drug',
+                                              stringr::str_detect(string = domainId, pattern = 'observation') ~ 'Observation',
+                                              stringr::str_detect(string = domainId, pattern = 'condition') ~ 'Condition',
+                                              stringr::str_detect(string = domainId, pattern = 'procedure') ~ 'Procedure',
+                                              stringr::str_detect(string = domainId, pattern = 'measurement') ~ 'Measurement',
+                                              TRUE ~ 'Other'))
+  
+  if (!is.null(domainId)) {
+    data <- data %>% 
+      dplyr::filter(domainId %in% !!domainId)
+  }
+  
   return(data %>% dplyr::arrange(.data$covariateId))
 }
 
@@ -755,8 +790,9 @@ compareCovariateValueResult <- function(connection = NULL,
                   mean2 = .data$mean,
                   sd2 = .data$sd)
   
-  data <- dplyr::full_join(x = targetCovariateValue,
-                           y = comparatorCovariateValue) %>%
+  data <- dplyr::inner_join(x = targetCovariateValue,
+                            y = comparatorCovariateValue,
+                            by = c('covariateId', 'databaseId')) %>%
     dplyr::relocate(.data$databaseId,
                     .data$targetCohortId,
                     .data$comparatorCohortId) %>% 
@@ -771,8 +807,6 @@ compareCovariateValueResult <- function(connection = NULL,
                    .data$covariateId)
   return(data)
 }
-
-
 
 
 #' Get cohort information
@@ -1035,10 +1069,10 @@ getConceptReference <- function(connection = NULL,
 #'
 #' @export
 getConceptSetDiagnosticsResults <- function(connection = NULL,
-                                         connectionDetails = NULL,
-                                         cohortIds = NULL,
-                                         databaseIds = NULL,
-                                         resultsDatabaseSchema = NULL) {
+                                            connectionDetails = NULL,
+                                            cohortIds = NULL,
+                                            databaseIds = NULL,
+                                            resultsDatabaseSchema = NULL) {
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
   errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
@@ -1069,7 +1103,7 @@ getConceptSetDiagnosticsResults <- function(connection = NULL,
   } else if (route == 'memory') {
     connection <- NULL
   }
-
+  
   # perform query
   if (!is.null(connection)) {
     sql <-   "SELECT *
@@ -1134,7 +1168,7 @@ getConceptSetDiagnosticsResults <- function(connection = NULL,
         dplyr::filter(.data$databaseId %in% !!databaseIds)
     }
   }
-
+  
   data <- dplyr::bind_rows(
     dataIncludedSourceConcept %>% 
       dplyr::select(.data$databaseId, 
@@ -1143,7 +1177,7 @@ getConceptSetDiagnosticsResults <- function(connection = NULL,
                     .data$conceptId, 
                     .data$conceptSubjects,
                     .data$conceptCount
-                    ) %>% 
+      ) %>% 
       dplyr::mutate(type = 'included',
                     query = 'S'),
     dataIncludedSourceConcept %>% 
@@ -1206,9 +1240,9 @@ routeDataQuery <- function(connection = NULL,
     if (!tableExistsInDbms) {
       if (!silent) {
         warning("  '", 
-                                table, 
-                                "' not found in ", 
-                                databaseSchema)
+                table, 
+                "' not found in ", 
+                databaseSchema)
       }
     }
   }
@@ -1226,8 +1260,8 @@ routeDataQuery <- function(connection = NULL,
       if (is.null(connection)) {
         if (!silent) {
           warning("  '", 
-                                  SqlRender::camelCaseToTitleCase(table), 
-                                  "' data object not found in R memory.")
+                  SqlRender::camelCaseToTitleCase(table), 
+                  "' data object not found in R memory.")
         }
       } else {
         if (!silent) {
@@ -1243,14 +1277,14 @@ routeDataQuery <- function(connection = NULL,
   } else if (!is.null(connection) & !isTRUE(tableExistsInDbms) & 
              isTRUE(tableExistsInRMemory)) {
     warning(SqlRender::camelCaseToTitleCase(table), 
-                            " was not found in dbms but was found in R memory. 
+            " was not found in dbms but was found in R memory. 
                             Using the data loaded in R memory.")
     return("memory")
   } else if (is.null(connection) & isTRUE(tableExistsInRMemory)) {
     return("memory")
   } else if (is.null(connection) & !isTRUE(tableExistsInRMemory)) {
     warning(SqlRender::camelCaseToTitleCase(table), 
-                            " not found.")
+            " not found.")
     return("quit")
   }
 }

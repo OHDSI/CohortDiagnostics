@@ -8,7 +8,8 @@ getCovariateReference(
   connection = NULL,
   connectionDetails = NULL,
   covariateIds = NULL,
-  isTemporal = TRUE,
+  isTemporal = FALSE,
+  domainId = NULL,
   resultsDatabaseSchema = NULL
 )
 }
@@ -27,6 +28,10 @@ provided.}
 \item{covariateIds}{(optional) A vector of covariateIds to subset the results}
 
 \item{isTemporal}{Get temporal covariate references?}
+
+\item{domainId}{(optional) Default is all. Valid options are
+"condition", "procedure", "observation", "visit", 
+"measurement", "drug", "other"}
 
 \item{resultsDatabaseSchema}{(optional) The databaseSchema where the results data model 
 of cohort diagnostics is stored. This is only required when 
