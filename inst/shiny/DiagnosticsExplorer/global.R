@@ -1,5 +1,6 @@
 library(magrittr)
 
+source("R/Private.R")
 source("R/Tables.R")
 source("R/Plots.R")
 source("R/Results.R")
@@ -124,3 +125,8 @@ if (exists("temporalTimeRef")) {
     dplyr::arrange(.data$timeId) %>% 
     dplyr::slice_head(n = 5)
 }
+
+
+
+
+rm("visitContext")

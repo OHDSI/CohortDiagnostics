@@ -90,6 +90,7 @@ recordTasksDone <- function(..., checksum, recordKeepingFile, incremental = TRUE
     recordKeeping <-  readr::read_csv(recordKeepingFile, 
                                       col_types = readr::cols(),
                                       guess_max = min(1e7))
+    recordKeeping$timeStamp <- as.character(recordKeeping$timeStamp)
     if ('cohortId' %in% colnames(recordKeeping)) {
       recordKeeping <- recordKeeping %>% 
         dplyr::mutate(cohortId = as.double(.data$cohortId))
@@ -107,7 +108,7 @@ recordTasksDone <- function(..., checksum, recordKeepingFile, incremental = TRUE
   }
   newRow <- dplyr::as_tibble(list(...))
   newRow$checksum <- checksum
-  newRow$timeStamp <-  Sys.time()
+  newRow$timeStamp <-  as.character(Sys.time())
   recordKeeping <- dplyr::bind_rows(recordKeeping, newRow)
   readr::write_csv(recordKeeping, recordKeepingFile)
 }

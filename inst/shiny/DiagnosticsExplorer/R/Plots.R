@@ -1,9 +1,9 @@
 plotTimeDistribution <- function(data, 
                                  cohortIds = NULL,
                                  databaseIds = NULL,
-                                 xAxis = 'database') {
+                                 xAxis = "database") {
   
-  if (is.null(cohortIds) || length(cohortIds) > 1 || xAxis != 'database' || is.null(databaseIds)) {
+  if (is.null(cohortIds) || length(cohortIds) > 1 || xAxis != "database" || is.null(databaseIds)) {
     warning("Not yet supported. Upcoming feature.")
     return(NULL)
   }
@@ -30,10 +30,10 @@ plotTimeDistribution <- function(data,
                              unique = TRUE,
                              add = errorMessage)
   checkmate::assertChoice(x = xAxis,
-                          choices = c('database', 'cohortId'),
+                          choices = c("database", "cohortId"),
                           add = errorMessage)
   checkmate::assertNames(x = colnames(data), 
-                         must.include = c('Min', 'P25', 'Median', 'P75', 'Max'),
+                         must.include = c("Min", "P25", "Median", "P75", "Max"),
                          add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
   
@@ -53,18 +53,21 @@ plotTimeDistribution <- function(data,
                  lower = .data$P25,
                  middle = .data$Median,
                  upper = .data$P75,
-                 ymax = .data$Max) +
-    ggplot2::geom_errorbar(mapping = ggplot2::aes(ymin = .data$Min, ymax = .data$Max), size = 1) +
+                 ymax = .data$Max,
+                 group = .data$TimeMeasure,
+                 average = .data$Average) +
+    ggplot2::geom_errorbar(mapping = ggplot2::aes(ymin = .data$Min, 
+                                                  ymax = .data$Max), size = 1) +
     ggplot2::geom_boxplot(stat = "identity", 
                           fill = rgb(0, 0, 0.8, alpha = 0.25), 
                           size = 1) +
-    ggplot2::facet_grid(Database~TimeMeasure, scale = "free") +
+    ggplot2::facet_grid(rows = Database~TimeMeasure, scales = "free") +
     ggplot2::coord_flip() +
     ggplot2::theme(panel.grid.major.y = ggplot2::element_blank(),
                    panel.grid.minor.y = ggplot2::element_blank(),
                    axis.title.y = ggplot2::element_blank(),
                    axis.ticks.y = ggplot2::element_blank(),
-                   axis.text.y = ggplot2::element_blank())
+                   axis.text.y = ggplot2::element_blank()) 
   
   plot <- ggiraph::girafe(ggobj = plot,
                           options = list(
@@ -78,7 +81,7 @@ plotTimeDistribution <- function(data,
 # how to render using pure plot ly. Plotly does not prefer precomputed data.
 # TO DO: color and plot positions are not consistent yet.
 # plot <- plotly::plot_ly(data = plotData,
-#                         type = 'box',
+#                         type = "box",
 #                         median = plotData$P25,
 #                         #Mean = plotData$Average,
 #                         upperfence = plotData$Max,
@@ -175,7 +178,7 @@ plotIncidenceRate <- function(data,
     dplyr::filter(.data$strataGender %in% !!stratifyByGender &
                     .data$strataAgeGroup %in% !!stratifyByAgeGroup &
                     .data$strataCalendarYear %in% !!stratifyByCalendarYear) %>% 
-    dplyr::select(-dplyr::starts_with('strata'))
+    dplyr::select(-dplyr::starts_with("strata"))
   
   aesthetics <- list(y = "incidenceRate")
   if (stratifyByCalendarYear) {
@@ -215,17 +218,20 @@ plotIncidenceRate <- function(data,
   
   plotData$ageGroup <- factor(plotData$ageGroup,
                               levels = newSort$ageGroup)
-  plotData$tooltip <- c(paste0("Incidence Rate = ", plotData$incidenceRate, "\n Database = ", plotData$databaseId))
+  plotData$tooltip <- c(paste0("Incidence Rate = ", scales::comma(plotData$incidenceRate, accuracy = 0.01), 
+                               "\nDatabase = ", plotData$databaseId, 
+                               "\nPerson years = ", scales::comma(plotData$personYears, accuracy = 0.1), 
+                               "\nCohort count = ", scales::comma(plotData$cohortCount)))
   
-  if (stratifyByAgeGroup){
+  if (stratifyByAgeGroup) {
     plotData$tooltip <- c(paste0(plotData$tooltip, "\nAge Group = ", plotData$ageGroup))
   }
   
-  if (stratifyByGender){
+  if (stratifyByGender) {
     plotData$tooltip <- c(paste0(plotData$tooltip, "\nGender = ", plotData$gender))
   }
   
-  if (stratifyByCalendarYear){
+  if (stratifyByCalendarYear) {
     plotData$tooltip <- c(paste0(plotData$tooltip, "\nYear = ", plotData$calendarYear))
   }
   
@@ -279,17 +285,17 @@ plotIncidenceRate <- function(data,
 }
 
 plotCohortComparisonStandardizedDifference <- function(data,
-                                                       targetCohortIds = NULL, 
-                                                       comparatorCohortIds = NULL,
-                                                       cohortReference = NULL,
-                                                       covariateReference = NULL,
-                                                       concept = NULL, # to subset based on domain, or vocabulary
+                                                       cohortReference,
+                                                       covariateReference,
                                                        absoluteStandardizedDifferenceLowerThreshold = 0.001,
                                                        absoluteStandardizedDifferenceUpperThreshold = 1,
-                                                       databaseIds = NULL) {
-  if (!is.null(concept)) {
-    warning("Not yet supported. Upcoming feature. Ignorning for now. Continuing.")
-  }
+                                                       databaseIds = NULL,
+                                                       # concept = NULL,
+                                                       targetCohortIds = NULL, 
+                                                       comparatorCohortIds = NULL) {
+  # if (!is.null(concept)) {
+  #   warning("Not yet supported. Upcoming feature. Ignorning for now. Continuing.")
+  # }
   
   # for now we will support only one combination of targetCohortId, comparatorCohortId and databaseId
   if (length(targetCohortIds) > 1 || length(comparatorCohortIds) > 1 || length(databaseIds) > 1) {
@@ -329,7 +335,7 @@ plotCohortComparisonStandardizedDifference <- function(data,
                           min.rows = 1,
                           min.cols = 11,
                           null.ok = FALSE,
-                          types = c('character', 'double', "integer"),
+                          types = c("character", "double", "integer"),
                           add = errorMessage)
   checkmate::assertDouble(x = targetCohortIds,
                           lower = 1,
@@ -351,56 +357,51 @@ plotCohortComparisonStandardizedDifference <- function(data,
                                           "mean1","sd1","mean2","sd2","sd","stdDiff", "absStdDiff"),
                          add = errorMessage
   )
-  checkmate::reportAssertions(collection = errorMessage)
-  if (!is.null(cohortReference)) {
-    checkmate::assertTibble(x = cohortReference, 
-                            any.missing = FALSE,
-                            min.rows = 1,
-                            min.cols = 2,
-                            null.ok = FALSE,
-                            types = c('character',
-                                      'double', "integer"),
-                            add = errorMessage)
-    checkmate::assertNames(x = colnames(cohortReference),
-                           must.include = c("cohortId",
-                                            "cohortName"),
-                           add = errorMessage
-    )
-  }
-  if (!is.null(covariateReference)) {
-    checkmate::assertTibble(x = covariateReference, 
-                            any.missing = FALSE,
-                            min.rows = 1,
-                            min.cols = 3,
-                            null.ok = FALSE,
-                            types = c('character', 'double', "integer"),
-                            add = errorMessage)
-    checkmate::assertNames(x = colnames(covariateReference),
-                           must.include = c("covariateId",
-                                            "covariateName",
-                                            "conceptId"),
-                           add = errorMessage
-    )
-  }
-  checkmate::reportAssertions(collection = errorMessage)
-  if (!is.null(concept)) {
-    checkmate::assertTibble(x = concept, 
-                            any.missing = TRUE,
-                            min.rows = 1,
-                            min.cols = 5,
-                            null.ok = FALSE,
-                            types = c('character',
-                                      'double', "integer"),
-                            add = errorMessage)
-    checkmate::assertNames(x = colnames(concept),
-                           must.include = c("conceptId",
-                                            "conceptName",
-                                            "domainId",
-                                            "vocabularyId",
-                                            "conceptClassId"),
-                           add = errorMessage
-    )
-  }
+  checkmate::assertTibble(x = cohortReference, 
+                          any.missing = FALSE,
+                          min.rows = 1,
+                          min.cols = 2,
+                          null.ok = FALSE,
+                          types = c("character",
+                                    "double", "integer"),
+                          add = errorMessage)
+  checkmate::assertNames(x = colnames(cohortReference),
+                         must.include = c("cohortId",
+                                          "cohortName"),
+                         add = errorMessage
+  )
+  checkmate::assertTibble(x = covariateReference, 
+                          any.missing = FALSE,
+                          min.rows = 1,
+                          min.cols = 3,
+                          null.ok = FALSE,
+                          types = c("character", "double", "integer"),
+                          add = errorMessage)
+  checkmate::assertNames(x = colnames(covariateReference),
+                         must.include = c("domainId",
+                                          "covariateId",
+                                          "covariateName",
+                                          "conceptId"),
+                         add = errorMessage
+  )
+  # if (!is.null(concept)) {
+  #   checkmate::assertTibble(x = concept, 
+  #                           any.missing = TRUE,
+  #                           min.rows = 1,
+  #                           min.cols = 5,
+  #                           null.ok = FALSE,
+  #                           types = c("character",
+  #                                     "double", "integer"),
+  #                           add = errorMessage)
+  #   checkmate::assertNames(x = colnames(concept),
+  #                          must.include = c("conceptId",
+  #                                           "conceptName",
+  #                                           "domainId",
+  #                                           "vocabularyId",
+  #                                           "conceptClassId"),
+  #                          add = errorMessage
+  #   )
+  # }
   checkmate::reportAssertions(collection = errorMessage)
   
   # when we support more than 1 targetCohortIds, comparatorCohortIds and DatabaseIds -- this 
@@ -408,47 +409,30 @@ plotCohortComparisonStandardizedDifference <- function(data,
   # For now we are only support one unique combination of 
   # databaseId, targetCohortId, comparatorCohortId
   # 
+  plotData <- plotData %>% 
+    dplyr::inner_join(y = covariateReference %>% 
+                        dplyr::select(.data$covariateId, .data$covariateName, .data$domainId))
   
-  if (!is.null(covariateReference)) {
-    plotData <- plotData %>% 
-      dplyr::left_join(y = covariateReference %>% 
-                         dplyr::select(.data$covariateId, .data$covariateName))
-  } else {
-    plotData <- plotData %>% 
-      dplyr::mutate(covariateName = .data$covariateId %>% as.character())
-  }
-  
-  if (!is.null(cohortReference)) {
-    xAxisLabel <- list(
-      title = cohortReference %>% 
-        dplyr::filter(.data$cohortId %in% targetCohortIds) %>% 
-        dplyr::select(.data$cohortName) %>% 
-        dplyr::mutate(cohortName = stringr::str_replace(string = .data$cohortName,
-                                                        pattern = ":", 
-                                                        replacement = "\n")) %>% 
-        dplyr::pull(),
-      range = c(0, 1)
-    )
-    yAxisLabel <- list(
-      title = cohortReference %>% 
-        dplyr::filter(.data$cohortId %in% comparatorCohortIds) %>% 
-        dplyr::select(.data$cohortName) %>% 
-        dplyr::mutate(cohortName = stringr::str_replace(string = .data$cohortName,
-                                                        pattern = ":", 
-                                                        replacement = "\n")) %>%
-        dplyr::pull(),
-      range = c(0, 1)
-    )
-  } else {
-    xAxisLabel <- list(
-      title = targetCohortIds,
-      range = c(0, 1)
-    )
-    yAxisLabel <- list(
-      title = comparatorCohortIds,
-      range = c(0, 1)
-    )
-  }
+  xAxisLabel <- list(
+    title = cohortReference %>% 
+      dplyr::filter(.data$cohortId %in% targetCohortIds) %>% 
+      dplyr::select(.data$cohortName) %>% 
+      dplyr::mutate(cohortName = stringr::str_replace(string = .data$cohortName,
+                                                      pattern = ":", 
+                                                      replacement = "\n")) %>% 
+      dplyr::pull(),
+    range = c(0, 1)
+  )
+  yAxisLabel <- list(
+    title = cohortReference %>% 
+      dplyr::filter(.data$cohortId %in% comparatorCohortIds) %>% 
+      dplyr::select(.data$cohortName) %>% 
+      dplyr::mutate(cohortName = stringr::str_replace(string = .data$cohortName,
+                                                      pattern = ":", 
+                                                      replacement = "\n")) %>%
+      dplyr::pull(),
+    range = c(0, 1)
+  )
   
   # plot <- plotly::plot_ly(data = plotData, 
   #                         x = plotData$mean1, 
@@ -458,13 +442,13 @@ plotCohortComparisonStandardizedDifference <- function(data,
   #                                       plotData$covariateName, 
   #                                       "<br>Mean Target: ", 
   #                                       plotData$mean1, 
-  #                                       '<br>Mean Comparator:', 
+  #                                       "<br>Mean Comparator:", 
   #                                       plotData$mean2,
-  #                                       '<br>Std diff.:', 
+  #                                       "<br>Std diff.:", 
   #                                       plotData$stdDiff),
   #                         color = ~plotData$absStdDiff,
-  #                         type   = 'scatter',
-  #                         mode   = 'markers',
+  #                         type   = "scatter",
+  #                         mode   = "markers",
   #                         marker = list(size = 10,
   #                                       opacity = "0.5")) %>% 
   #   plotly::layout(shapes = list(type = "line",
@@ -480,40 +464,23 @@ plotCohortComparisonStandardizedDifference <- function(data,
   #                  showlegend = FALSE) %>% 
   #   plotly::colorbar(title = "Absolute\nStd. Diff.")
   # 
-  plotData$mean1[is.na(plotData$mean1)] <- 0
-  plotData$mean2[is.na(plotData$mean2)] <- 0
-  plotData$domain  <- stringr::word(plotData$covariateName) %>% sort()
-  plotData$mean1 <- round(plotData$mean1, digits = 3)
-  plotData$mean2 <- round(plotData$mean2, digits = 3)
-  plotData$stdDiff <- round(plotData$stdDiff, digits = 3)
+  
+  
   ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 3, alpha = 0.6)
-  plotData$tooltip <- c(paste("Covariate Name:",plotData$covariateName,
-                              "\nDomain: ",plotData$domain,
-                              "\nMean Target: ",plotData$mean1,
-                              '\nMean Comparator:',plotData$mean2,
-                              '\nStd diff.:',plotData$stdDiff))
+  plotData$tooltip <- c(paste("Covariate Name:", plotData$covariateName,
+                              "\nDomain: ", plotData$domainId,
+                              "\nMean Target: ", scales::comma(plotData$mean1, accuracy = 0.1),
+                              "\nMean Comparator:", scales::comma(plotData$mean2, accuracy = 0.1),
+                              "\nStd diff.:", scales::comma(plotData$stdDiff, accuracy = 0.1)))
   
-  
-  # distinctDomain <- plotData %>% 
-  #               dplyr::distinct(.data$domain)
-  # distinctDomain <- c("all",distinctDomain)
-  # shiny::observe({
-  #   shinyWidgets::updatePickerInput(session = session,
-  #                                   inputId = "domain",
-  #                                   choicesOpt = list(style = rep_len("color: black;", 999)),
-  #                                   choices = distinctDomain)
-  # })
-  
-  
-  
-  plot <- ggplot2::ggplot(plotData, ggplot2::aes(x = mean1, y = mean2, color = domain)) +
-    ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 3,shape = 16, alpha = 0.5) +
+  plot <- ggplot2::ggplot(plotData, ggplot2::aes(x = .data$mean1, y = .data$mean2, color = .data$domainId)) +
+    ggiraph::geom_point_interactive(ggplot2::aes(tooltip = .data$tooltip), size = 3,shape = 16, alpha = 0.5) +
     ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
     ggplot2::geom_hline(yintercept = 0) +
     ggplot2::geom_vline(xintercept = 0) +             
     ggplot2::scale_x_continuous(xAxisLabel, limits = c(0, 1)) +
     ggplot2::scale_y_continuous(yAxisLabel, limits = c(0, 1)) 
-  # ggplot2::scale_color_gradient("Absolute\nStd. Diff.", low = "blue", high = "red", space = "Lab", na.value = "red")
+  
   plot <- ggiraph::girafe(ggobj = plot,
                           options = list(
                             ggiraph::opts_sizing(width = .7),
@@ -556,7 +523,7 @@ plotCohortOverlapVennDiagram <- function(data,
   plot <- VennDiagram::draw.pairwise.venn(area1 = abs(data$eitherSubjects) - abs(data$cOnlySubjects),
                                           area2 = abs(data$eitherSubjects) - abs(data$tOnlySubjects),
                                           cross.area = abs(data$bothSubjects),
-                                          category = c("Target", "Comparator"), 
+                                          category = c("Target", "Comparator"),
                                           col = c(rgb(0.8, 0, 0), rgb(0, 0, 0.8)),
                                           fill = c(rgb(0.8, 0, 0), rgb(0, 0, 0.8)),
                                           alpha = 0.2,
@@ -567,14 +534,234 @@ plotCohortOverlapVennDiagram <- function(data,
   # Borrowed from https://stackoverflow.com/questions/37239128/how-to-put-comma-in-large-number-of-venndiagram
   idx <- sapply(plot, function(i) grepl("text", i$name))
   for (i in 1:3) {
-    plot[idx][[i]]$label <- format(as.numeric(plot[idx][[i]]$label), 
-                                   big.mark = ",", 
+    plot[idx][[i]]$label <- format(as.numeric(plot[idx][[i]]$label),
+                                   big.mark = ",",
                                    scientific = FALSE)
   }
   grid::grid.draw(plot)
   
   return(plot)
-}  
+}
+
+plotCohortOverlap <- function(data,
+                              targetCohortIds = NULL, 
+                              comparatorCohortIds = NULL,
+                              databaseIds = NULL,
+                              cohortReference,
+                              plotType) {
+  
+  # Perform error checks for input variables
+  errorMessage <- checkmate::makeAssertCollection()
+  checkmate::assertTibble(x = data, 
+                          any.missing = FALSE,
+                          min.rows = 1,
+                          min.cols = 6,
+                          null.ok = FALSE,
+                          add = errorMessage)
+  checkmate::reportAssertions(collection = errorMessage)
+  checkmate::assertNames(x = colnames(data), 
+                         must.include = c("databaseId",
+                                          "targetCohortId",
+                                          "comparatorCohortId",
+                                          "tOnlySubjects",
+                                          "cOnlySubjects",
+                                          "bothSubjects"),
+                         add = errorMessage)
+  checkmate::reportAssertions(collection = errorMessage)
+  
+  plotData <- data %>% 
+    dplyr::select(.data$databaseId, 
+                  .data$targetCohortId,
+                  .data$comparatorCohortId,
+                  .data$tOnlySubjects, 
+                  .data$cOnlySubjects,
+                  .data$bothSubjects,
+                  .data$eitherSubjects) %>% 
+    dplyr::mutate(absTOnlySubjects = abs(.data$tOnlySubjects), 
+                  absCOnlySubjects = abs(.data$cOnlySubjects),
+                  absBothSubjects = abs(.data$bothSubjects),
+                  absEitherSubjects = abs(.data$eitherSubjects),
+                  signTOnlySubjects = dplyr::case_when(.data$tOnlySubjects < 0 ~ '<', TRUE ~ ''),
+                  signCOnlySubjects = dplyr::case_when(.data$cOnlySubjects < 0 ~ '<', TRUE ~ ''),
+                  signBothSubjects = dplyr::case_when(.data$bothSubjects < 0 ~ '<', TRUE ~ '')) %>% 
+    dplyr::mutate(tOnlyString = paste0(.data$signTOnlySubjects, 
+                                       scales::comma(.data$absTOnlySubjects), 
+                                       " (", 
+                                       .data$signTOnlySubjects, 
+                                       scales::percent(.data$absTOnlySubjects/.data$absEitherSubjects, 
+                                                       accuracy = 1),
+                                       ")"),
+                  cOnlyString = paste0(.data$signCOnlySubjects, 
+                                       scales::comma(.data$absCOnlySubjects), 
+                                       " (", 
+                                       .data$signCOnlySubjects,
+                                       scales::percent(.data$absCOnlySubjects/.data$absEitherSubjects, 
+                                                       accuracy = 1),
+                                       ")"),
+                  bothString = paste0(.data$signBothSubjects, 
+                                      scales::comma(.data$absBothSubjects), 
+                                      " (", 
+                                      .data$signBothSubjects,
+                                      scales::percent(.data$absBothSubjects/.data$absEitherSubjects, 
+                                                      accuracy = 1),
+                                      ")")) %>% 
+    dplyr::select(.data$databaseId, 
+                  .data$targetCohortId,
+                  .data$comparatorCohortId,
+                  .data$absTOnlySubjects, 
+                  .data$absCOnlySubjects,
+                  .data$absBothSubjects,
+                  .data$tOnlyString, 
+                  .data$cOnlyString,
+                  .data$bothString)
+  
+  if (!is.null(targetCohortIds)) {
+    checkmate::assertDouble(x = targetCohortIds,
+                            lower = 1,
+                            upper = 2^53, 
+                            any.missing = FALSE,
+                            null.ok = FALSE)
+    plotData <- plotData %>% 
+      dplyr::filter(.data$targetCohortId %in% !!targetCohortIds)
+  }
+  if (!is.null(comparatorCohortIds)) {
+    checkmate::assertDouble(x = comparatorCohortIds,
+                            lower = 1,
+                            upper = 2^53, 
+                            any.missing = FALSE,
+                            null.ok = FALSE)
+    plotData <- plotData %>% 
+      dplyr::filter(.data$comparatorCohortId %in% !!comparatorCohortIds)
+  }
+  if (!is.null(databaseIds)) {
+    checkmate::assertCharacter(x = databaseIds,
+                               any.missing = FALSE,
+                               min.len = 1,
+                               null.ok = TRUE)
+    plotData <- plotData %>% 
+      dplyr::filter(.data$databaseId %in% !!databaseIds)
+  }
+  checkmate::reportAssertions(collection = errorMessage)
+  
+  # plot <- VennDiagram::draw.pairwise.venn(area1 = abs(data$eitherSubjects) - abs(data$cOnlySubjects),
+  #                                         area2 = abs(data$eitherSubjects) - abs(data$tOnlySubjects),
+  #                                         cross.area = abs(data$bothSubjects),
+  #                                         category = c("Target", "Comparator"), 
+  #                                         col = c(rgb(0.8, 0, 0), rgb(0, 0, 0.8)),
+  #                                         fill = c(rgb(0.8, 0, 0), rgb(0, 0, 0.8)),
+  #                                         alpha = 0.2,
+  #                                         fontfamily = rep("sans", 3),
+  #                                         cat.fontfamily = rep("sans", 2),
+  #                                         margin = 0.01,
+  #                                         ind = FALSE)
+  # # Borrowed from https://stackoverflow.com/questions/37239128/how-to-put-comma-in-large-number-of-venndiagram
+  # idx <- sapply(plot, function(i) grepl("text", i$name))
+  # for (i in 1:3) {
+  #   plot[idx][[i]]$label <- format(as.numeric(plot[idx][[i]]$label), 
+  #                                  big.mark = ",", 
+  #                                  scientific = FALSE)
+  # }
+  # grid::grid.draw(plot)
+  
+  #find combinations of target and comaprators
+  plotData <- plotData %>% 
+    dplyr::inner_join(
+      plotData %>% 
+        dplyr::select(.data$targetCohortId, 
+                      .data$comparatorCohortId) %>% 
+        dplyr::distinct() %>% 
+        dplyr::arrange(.data$targetCohortId, 
+                       .data$comparatorCohortId) %>% 
+        dplyr::mutate(comparisonGroup = dplyr::row_number())) %>% 
+    dplyr::relocate(.data$comparisonGroup)
+  
+  combis <- 
+    dplyr::bind_rows(
+      plotData %>% 
+        dplyr::select(.data$targetCohortId) %>% 
+        dplyr::distinct() %>% 
+        dplyr::arrange(.data$targetCohortId) %>% 
+        dplyr::mutate(shortName = paste0('T', dplyr::row_number())) %>% 
+        dplyr::rename(cohortId = .data$targetCohortId),
+      plotData %>% 
+        dplyr::select(.data$comparatorCohortId) %>% 
+        dplyr::distinct() %>% 
+        dplyr::arrange(.data$comparatorCohortId) %>% 
+        dplyr::mutate(shortName = paste0('C', dplyr::row_number())) %>% 
+        dplyr::rename(cohortId = .data$comparatorCohortId)) %>% 
+    dplyr::inner_join(y = cohort %>% 
+                        dplyr::select(.data$cohortId, .data$cohortName))
+  
+  
+  plotData <- plotData %>% 
+    dplyr::inner_join(y = combis %>% 
+                        dplyr::filter(stringr::str_detect(string = .data$shortName,
+                                                          pattern = 'T')) %>% 
+                        dplyr::rename(targetCohortId = .data$cohortId,
+                                      targetCohortName = .data$cohortName,
+                                      targetCohortShortName = .data$shortName)) %>% 
+    dplyr::inner_join(y = combis %>% 
+                        dplyr::filter(stringr::str_detect(string = .data$shortName,
+                                                          pattern = 'C')) %>% 
+                        dplyr::rename(comparatorCohortId = .data$cohortId,
+                                      comparatorCohortName = .data$cohortName,
+                                      comparatorCohortShortName = .data$shortName)) %>% 
+    dplyr::mutate(tooltip = paste0("Database: ", .data$databaseId,
+                                   "\n", .data$targetCohortShortName, ": ", .data$targetCohortName,
+                                   "\n", .data$comparatorCohortShortName, ": ", .data$comparatorCohortName,
+                                   "\n", .data$targetCohortShortName, " only: ", .data$tOnlyString,
+                                   "\n", .data$comparatorCohortShortName, " only: ", .data$cOnlyString,
+                                   "\nBoth: ", .data$bothString)) %>% 
+    dplyr::select(.data$comparisonGroup,
+                  .data$targetCohortShortName,
+                  .data$comparatorCohortShortName,
+                  .data$databaseId,
+                  .data$absTOnlySubjects,
+                  .data$absCOnlySubjects,
+                  .data$absBothSubjects,
+                  .data$tooltip) %>% 
+    tidyr::pivot_longer(cols = c("absTOnlySubjects", 
+                                 "absCOnlySubjects",
+                                 "absBothSubjects"),
+                        names_to = "subjectsIn",
+                        values_to = "value") %>% 
+    dplyr::mutate(subjectsIn = camelCaseToTitleCase(stringr::str_replace_all(string = .data$subjectsIn, 
+                                                                             pattern = "abs|Subjects", 
+                                                                             replacement = "")))
+  
+  if (plotType == "Percentage Plots") {
+    position = "fill"
+  } else { 
+    position = "stack"
+  }
+  
+  plot <- ggplot2::ggplot(data = plotData) +
+    ggplot2::aes(fill = .data$subjectsIn, 
+                 y = .data$value,
+                 x = .data$comparatorCohortShortName,
+                 tooltip = .data$tooltip,
+                 group = .data$subjectsIn) +
+    ggplot2::ylab(label = "") +
+    ggplot2::xlab(label = "") +
+    ggiraph::geom_bar_interactive(position = position,
+                                  stat = "identity") 
+  if (plotType == "Percentage Plots") {
+    plot <- plot + ggplot2::scale_y_continuous(labels = scales::percent)
+  } else {
+    plot <- plot + ggplot2::scale_y_continuous(labels = scales::comma)
+  }
+  
+  plot <- plot + 
+    ggplot2::facet_grid(.data$targetCohortShortName ~ .data$databaseId, drop = FALSE) 
+  
+  plot <- ggiraph::girafe(ggobj = plot,
+                          options = list(
+                            ggiraph::opts_sizing(width = .7),
+                            ggiraph::opts_zoom(max = 5)), width_svg = 12,
+                          height_svg = 4)
+  
+  return(plot)
+}   
 # Future function getCohortOverlapHistogram:
 # 1. https://stackoverflow.com/questions/20184096/how-to-plot-multiple-stacked-histograms-together-in-r
 # 2. https://stackoverflow.com/questions/43415709/how-to-use-facet-grid-with-geom-histogram

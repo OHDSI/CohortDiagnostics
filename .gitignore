@@ -9,3 +9,4 @@ inst/shiny/DiagnosticsExplorer/data/cohortDescription.csv
 errorReportSql.txt
 errorReportR.txt
 *.tex
+.DS_Store
