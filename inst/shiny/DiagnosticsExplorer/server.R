@@ -606,9 +606,9 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$inclusionRuleTable <- DT::renderDataTable(expr = {
-    table <- inclusionRuleStats %>% 
-      dplyr::filter(.data$cohortId == cohortId() &
-                      .data$databaseId %in% input$databases) %>% 
+    table <- getInclusionRuleStats(dataSource = dataSource,
+                                   cohortIds = cohortId(),
+                                   databaseIds = input$databases) %>% 
       dplyr::select(.data$ruleSequenceId, .data$ruleName, 
                     .data$meetSubjects, .data$gainSubjects, 
                     .data$remainSubjects, .data$totalSubjects, .data$databaseId) %>% 
@@ -618,8 +618,8 @@ shiny::shinyServer(function(input, output, session) {
       return(dplyr::tibble(Note = paste0("No data available for selected databases and cohorts")))
     }
     
-    databaseIds <- inclusionRuleStats %>%
-      dplyr::filter(.data$databaseId %in% input$databases) %>% 
+    databaseIds <- getInclusionRuleStats(dataSource = dataSource,
+                                         databaseIds = input$databases) %>%
       dplyr::select(.data$databaseId) %>% 
       dplyr::distinct() %>% 
       dplyr::arrange() %>% 
@@ -685,9 +685,9 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$breakdownTable <- DT::renderDataTable(expr = {
-    data <- indexEventBreakdown %>%
-      dplyr::filter(.data$cohortId == cohortId() & 
-                      .data$databaseId %in% input$databases) %>%
+    data <- getIndexEventBreakdown(dataSource = dataSource,
+                                   cohortIds = cohortId(),
+                                   databaseIds = input$databases) %>%
       dplyr::select(-.data$cohortId) %>% 
       dplyr::inner_join(concept, by = "conceptId") %>% 
       dplyr::select(.data$conceptId, .data$conceptName,
@@ -1449,9 +1449,9 @@ shiny::shinyServer(function(input, output, session) {
   output$temporalCharacterizationSelectedDataBase <- shiny::renderText(input$database)
   
   targetCohortCount <- shiny::reactive({
-    targetCohortWithCount <- cohortCount %>% 
-      dplyr::filter(.data$cohortId == cohortId(),
-                    .data$databaseId == input$database) %>% 
+    targetCohortWithCount <- getCohortCountResult(dataSource = dataSource,
+                                             cohortIds = cohortId(),
+                                             databaseIds = input$database) %>% 
       dplyr::left_join(y = cohort) %>% 
       dplyr::arrange(.data$cohortName)
     return(targetCohortWithCount)
@@ -1471,16 +1471,16 @@ shiny::shinyServer(function(input, output, session) {
   selectedCohortCounts <- shiny::reactive({
     targetCohortWithCount <- targetCohortCount()
     
-    comparatorCohortWithCount <- cohortCount %>% 
-      dplyr::filter(.data$cohortId == comparatorCohortId(),
-                    .data$databaseId == input$database) %>%
+    comparatorCohortWithCount <- getCohortCountResult(dataSource = dataSource,
+                                                 cohortIds = comparatorCohortId(),
+                                                 databaseIds = input$database) %>% 
       dplyr::left_join(y = cohort)
     
     return(htmltools::withTags(
       div(table(
         tr(
           td(
-            h5("Target: ", targetCohortWithCount$cohortName, " ( n = ", scales::comma(targetCohortWithCount$cohortSubjects), " )"),
+            h5("Target: ", targetCohortWithCount$cohortName, " ( n = ", scales::comma(targetCohortWithCount$cohortSubjects), " )")
           ),
           td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;")),
           td(
