@@ -59,6 +59,16 @@ camelCaseToTitleCase <- function(string) {
   return(string)
 }
 
+sumCounts <- function(counts) {
+  result <- sum(abs(counts))
+  if (any(counts < 0)) {
+    return(-result)
+  } else {
+    return(result)
+  }
+  
+}
+
 shiny::shinyServer(function(input, output, session) {
   
   cohortId <- shiny::reactive({
@@ -148,8 +158,8 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$cohortCountsTable <- DT::renderDataTable(expr = {
-    data <- getCohortCounts(dataSource = dataSource,
-                            databaseIds = input$databases) %>%
+    data <- getCohortCountResult(dataSource = dataSource,
+                                 databaseIds = input$databases) %>%
       dplyr::left_join(cohort, by = "cohortId") %>% 
       dplyr::select(.data$cohortId, 
                     .data$cohortName, .data$databaseId, 
@@ -298,8 +308,8 @@ shiny::shinyServer(function(input, output, session) {
   output$timeDistTable <- DT::renderDataTable(expr = {
     
     table <- getTimeDistributionResult(dataSource = dataSource,
-                                      cohortIds = cohortId(), 
-                                      databaseIds = input$databases)
+                                       cohortIds = cohortId(), 
+                                       databaseIds = input$databases)
     
     if (is.null(table)) {
       return(dplyr::tibble(Note = paste0('No data available for selected databases and cohorts')))
@@ -328,23 +338,20 @@ shiny::shinyServer(function(input, output, session) {
   
   
   output$includedConceptsTable <- DT::renderDataTable(expr = {
-    data <- includedSourceConcept %>% 
-      dplyr::inner_join(conceptSets, by = c("cohortId", "conceptSetId")) %>% 
-      dplyr::filter(.data$cohortId == cohortId() &
-                      .data$conceptSetName == input$conceptSet &
-                      .data$databaseId %in% input$databases) %>% 
-      dplyr::select(-.data$cohortId)
+    data <- getIncludedConcepts(dataSource = dataSource,
+                                cohortId = cohortId(),
+                                databaseIds = input$databases)
+    data <- data %>%
+      dplyr::filter(.data$conceptSetName == input$conceptSet)
     if (nrow(data) == 0) {
       return(dplyr::tibble('No data available for selected databases and cohorts'))
     }
     
     databaseIds <- unique(data$databaseId)
     
-    if (!isTRUE(all.equal(databaseIds %>% sort(),
-                          input$databases %>% unique() %>% sort()))) {
+    if (!all(input$databases %in% databaseIds)) {
       return(dplyr::tibble(Note = paste0("There is no data for the databases:\n",
-                                         paste0(setdiff(input$databases %>% sort(), 
-                                                        databaseIds %>% sort()), 
+                                         paste0(setdiff(input$databases, databaseIds), 
                                                 collapse = ",\n "), 
                                          ".\n Please unselect them.")))
     }
@@ -353,30 +360,26 @@ shiny::shinyServer(function(input, output, session) {
     
     if (input$includedType == "Source Concepts") {
       table <- data %>%
-        dplyr::group_by(.data$databaseId, .data$conceptSetId, 
-                        .data$sourceConceptId) %>%
-        dplyr::summarise(conceptSubjects = sum(abs(.data$conceptSubjects )) * 
-                           min(.data$conceptSubjects)/abs(min(.data$conceptSubjects)),
-                         conceptCount = sum(abs(.data$conceptCount)) *
-                           min(.data$conceptCount)/abs(min(.data$conceptCount))) %>%
-        dplyr::ungroup() %>% 
-        dplyr::rename(conceptId = .data$sourceConceptId) %>% 
-        dplyr::arrange(.data$databaseId, .data$conceptId) %>% 
+        dplyr::select(.data$databaseId, 
+                      .data$sourceConceptId,
+                      .data$conceptSubjects,
+                      .data$conceptCount) %>%
+        dplyr::arrange(.data$databaseId) %>% 
         tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>% 
         dplyr::mutate(name = paste0(databaseId, "_",
                                     stringr::str_replace(string = .data$name, 
                                                          pattern = 'concept', 
                                                          replacement = ''))) %>% 
-        tidyr::pivot_wider(id_cols = c(.data$conceptId),
+        tidyr::pivot_wider(id_cols = c(.data$sourceConceptId),
                            names_from = .data$name,
-                           values_from = .data$value) %>% 
-        dplyr::inner_join(concept %>% 
-                            dplyr::select(.data$conceptId, 
-                                          .data$conceptName, 
-                                          .data$vocabularyId),
-                          by = "conceptId") %>% 
-        dplyr::select(order(colnames(.))) %>% 
-        dplyr::relocate(.data$conceptId, .data$conceptName, .data$vocabularyId)
+                           values_from = .data$value) %>%
+        dplyr::inner_join(data %>%
+                            dplyr::select(.data$sourceConceptId,
+                                          .data$sourceConceptName,
+                                          .data$sourceVocabularyId) %>%
+                            dplyr::distinct(),
+                          by = "sourceConceptId") %>%
+        dplyr::relocate(.data$sourceConceptId, .data$sourceConceptName, .data$sourceVocabularyId)
       
       if (nrow(table) == 0) {
         return(dplyr::tibble(Note = paste0('No data available for selected databases and cohorts')))
@@ -426,13 +429,15 @@ shiny::shinyServer(function(input, output, session) {
                                backgroundPosition = "center")
     } else {
       table <- data %>%
-        dplyr::group_by(.data$databaseId, .data$conceptSetId, 
+        dplyr::select(.data$databaseId, 
+                      .data$conceptId,
+                      .data$conceptSubjects,
+                      .data$conceptCount) %>%
+        dplyr::group_by(.data$databaseId, 
                         .data$conceptId) %>%
-        dplyr::summarise(conceptSubjects = sum(abs(.data$conceptSubjects )) * 
-                           min(.data$conceptSubjects)/abs(min(.data$conceptSubjects)),
-                         conceptCount = sum(abs(.data$conceptCount)) *
-                           min(.data$conceptCount)/abs(min(.data$conceptCount))) %>%
-        dplyr::ungroup() %>% 
+        dplyr::summarise(conceptSubjects = sum(.data$conceptSubjects),
+                         conceptCount = sum(.data$conceptCount)) %>%
+        dplyr::ungroup() %>%
         dplyr::arrange(.data$databaseId) %>% 
         tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>% 
         dplyr::mutate(name = paste0(databaseId, "_",
@@ -441,16 +446,21 @@ shiny::shinyServer(function(input, output, session) {
                                                          replacement = ''))) %>% 
         tidyr::pivot_wider(id_cols = c(.data$conceptId),
                            names_from = .data$name,
-                           values_from = .data$value) %>% 
-        dplyr::inner_join(concept %>% 
-                            dplyr::select(.data$conceptId, 
-                                          .data$conceptName, 
-                                          .data$vocabularyId),
-                          by = "conceptId") %>% 
-        dplyr::select(order(colnames(.))) %>% 
-        dplyr::relocate(.data$conceptId, 
-                        .data$conceptName, 
-                        .data$vocabularyId)
+                           values_from = .data$value) %>%
+        dplyr::inner_join(data %>%
+                            dplyr::select(.data$conceptId,
+                                          .data$conceptName,
+                                          .data$vocabularyId) %>%
+                            dplyr::distinct(),
+                          by = "conceptId") %>%
+        dplyr::relocate(.data$conceptId, .data$conceptName, .data$vocabularyId)
+      
+      if (nrow(table) == 0) {
+        return(dplyr::tibble(Note = paste0('No data available for selected databases and cohorts')))
+      }
+      
+      table <- table[order(-table[, 4]), ]
+      
       
       sketch <- htmltools::withTags(table(
         class = 'display',
@@ -621,7 +631,7 @@ shiny::shinyServer(function(input, output, session) {
       tidyr::pivot_wider(id_cols = c(.data$ruleSequenceId, .data$ruleName),
                          names_from = .data$name,
                          values_from = .data$value)
-
+    
     sketch <- htmltools::withTags(table(
       class = 'display',
       thead(
@@ -740,8 +750,8 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     visitContextReference <-  tidyr::crossing(dplyr::tibble(visitContext = visitContext$visitContext %>% 
-                                                             unique()),
-                                             dplyr::tibble(databaseId = databaseIds))
+                                                              unique()),
+                                              dplyr::tibble(databaseId = databaseIds))
     visitContextReference <- visitContextReference %>% 
       dplyr::mutate(visitContext = replace(visitContext, 1:4, c("Before", "During visit", "On visit start", "After")))
     
@@ -808,7 +818,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     if (!isTRUE(all.equal(dataCounts$databaseId %>% unique %>% sort(),
-                  input$databases %>% unique() %>% sort()))) {
+                          input$databases %>% unique() %>% sort()))) {
       return(dplyr::tibble(Note = paste0("There is no data for the databases:\n",
                                          paste0(setdiff(input$databases, 
                                                         dataCounts$databaseId), 
