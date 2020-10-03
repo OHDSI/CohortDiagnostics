@@ -275,18 +275,20 @@ plotIncidenceRate <- function(data,
   
   plotData$ageGroup <- factor(plotData$ageGroup,
                               levels = newSort$ageGroup)
-  plotData$tooltip <- c(paste0("Incidence Rate = ", plotData$incidenceRate, "\n Database = ", plotData$databaseId))
+  plotData$tooltip <- c(paste0("Incidence Rate = ", scales::comma(plotData$incidenceRate, accuracy = 0.01), 
+                               "\nDatabase = ", plotData$databaseId, 
+                               "\nPerson years = ", scales::comma(plotData$personYears, accuracy = 0.1), 
+                               "\nCohort count = ", scales::comma(plotData$cohortCount)))
   
-  if (stratifyByAgeGroup)
-  {
+  if (stratifyByAgeGroup) {
     plotData$tooltip <- c(paste0(plotData$tooltip, "\nAge Group = ", plotData$ageGroup))
   }
-  if (stratifyByGender)
-  {
+  
+  if (stratifyByGender) {
     plotData$tooltip <- c(paste0(plotData$tooltip, "\nGender = ", plotData$gender))
   }
-  if (stratifyByCalendarYear)
-  {
+  
+  if (stratifyByCalendarYear) {
     plotData$tooltip <- c(paste0(plotData$tooltip, "\nYear = ", plotData$calendarYear))
   }
   
@@ -302,10 +304,10 @@ plotIncidenceRate <- function(data,
   if (plotType == "line") {
     plot <- plot + 
       ggiraph::geom_line_interactive(ggplot2::aes(), size = 3, alpha = 0.6) +
-      ggiraph::geom_point_interactive(ggplot2::aes(tooltip = plot$tooltip), size = 3, alpha = 0.6)
+      ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 3, alpha = 0.6)
   } else {
     plot <- plot + ggplot2::geom_bar(stat = "identity") +
-      ggiraph::geom_col_interactive( ggplot2::aes(tooltip = plot$tooltip), size = 2)
+      ggiraph::geom_col_interactive( ggplot2::aes(tooltip = tooltip), size = 2)
   }
   
   # databaseId field only present when called in Shiny app:
@@ -339,47 +341,47 @@ plotIncidenceRate <- function(data,
   return(plot)
 }
 
-#' Get Plotly object with cohort comparison plot.
+#' Get ggplot object with cohort comparison plot.
 #'
 #' @description
-#' Get Plotly object with cohort comparison plot.
+#' Get ggplot object with cohort comparison plot.
 #'
 #' @param  data                  A tibble data frame object that is the output 
 #'                               of \code{\link{compareCovariateValueResult}} function.
 #' @template DatabaseIds
 #' @param targetCohortIds        (optional) A vector of one or more Cohort Ids.
 #' @param comparatorCohortIds    (optional) A vector of one or more Cohort Ids.
-#' @param cohortReference        (optional) A tibble data frame object returned 
+#' @param cohortReference        A tibble data frame object returned 
 #'                               from \code{\link{getCohortReference}} function.
-#' @param covariateReference     (optional) A tibble data frame object returned from \code{\link{getCovariateReference}} function.
-#' @param absoluteStandardizedDifferenceLowerThreshold (optional) Do you want to keep a lower threshold of absolute standardized difference
-#'                               for plotting
-#' @param absoluteStandardizedDifferenceUpperThreshold (optional) Do you want to keep a lower threshold of absolute standardized difference
-#'                               for plotting
-#' @param concept                (optional) A tibble data frame object returned 
-#'                               from \code{\link{getConceptReference}} function.
+#' @param covariateReference     A tibble data frame object returned from \code{\link{getCovariateReference}} function.
+#' @param absoluteStandardizedDifferenceLowerThreshold (optional) Do you want to keep a lower threshold 
+#'                               of absolute standardized difference for plotting
+#' @param absoluteStandardizedDifferenceUpperThreshold (optional) Do you want to keep a lower threshold 
+#'                               of absolute standardized difference for plotting
 #' 
 #' @return
-#' A Plotly object.
+#' A ggplot object.
 #'
 #' @examples
 #' \dontrun{
-#' plotCohortCompare <- plotCohortComparisonStandardizedDifference(data = data)
+#' plotCohortCompare <- plotCohortComparisonStandardizedDifference(data = data, 
+#'                                                                 cohortReference = cohortReference, 
+#'                                                                 covariateReference = covariateReference)
 #' }
 #'
 #' @export
 plotCohortComparisonStandardizedDifference <- function(data,
-                                                       targetCohortIds = NULL, 
-                                                       comparatorCohortIds = NULL,
-                                                       cohortReference = NULL,
-                                                       covariateReference = NULL,
-                                                       concept = NULL, # to subset based on domain, or vocabulary
+                                                       cohortReference,
+                                                       covariateReference,
                                                        absoluteStandardizedDifferenceLowerThreshold = 0.001,
                                                        absoluteStandardizedDifferenceUpperThreshold = 1,
-                                                       databaseIds = NULL) {
-  if (!is.null(concept)) {
-    warning("Not yet supported. Upcoming feature. Ignorning for now. Continuing.")
-  }
+                                                       databaseIds = NULL,
+                                                       # concept = NULL,
+                                                       targetCohortIds = NULL, 
+                                                       comparatorCohortIds = NULL) {
+  # if (!is.null(concept)) {
+  #   warning("Not yet supported. Upcoming feature. Ignorning for now. Continuing.")
+  # }
   
   # for now we will support only one combination of targetCohortId, comparatorCohortId and databaseId
   if (length(targetCohortIds) > 1 || length(comparatorCohortIds) > 1 || length(databaseIds) > 1) {
@@ -414,12 +416,12 @@ plotCohortComparisonStandardizedDifference <- function(data,
   
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
-  checkmate::assertTibble(x = plotData, 
+  checkmate::assertTibble(x = plotData,
                           any.missing = FALSE,
                           min.rows = 1,
                           min.cols = 11,
                           null.ok = FALSE,
-                          types = c('character', 'double'),
+                          types = c('character', 'double', "integer"),
                           add = errorMessage)
   checkmate::assertDouble(x = targetCohortIds,
                           lower = 1,
@@ -441,56 +443,51 @@ plotCohortComparisonStandardizedDifference <- function(data,
                                           "mean1","sd1","mean2","sd2","sd","stdDiff", "absStdDiff"),
                          add = errorMessage
   )
-  checkmate::reportAssertions(collection = errorMessage)
-  if (!is.null(cohortReference)) {
-    checkmate::assertTibble(x = cohortReference, 
-                            any.missing = FALSE,
-                            min.rows = 1,
-                            min.cols = 2,
-                            null.ok = FALSE,
-                            types = c('character',
-                                      'double'),
-                            add = errorMessage)
-    checkmate::assertNames(x = colnames(cohortReference),
-                           must.include = c("cohortId",
-                                            "cohortName"),
-                           add = errorMessage
-    )
-  }
-  if (!is.null(covariateReference)) {
-    checkmate::assertTibble(x = covariateReference, 
-                            any.missing = FALSE,
-                            min.rows = 1,
-                            min.cols = 3,
-                            null.ok = FALSE,
-                            types = c('character', 'double'),
-                            add = errorMessage)
-    checkmate::assertNames(x = colnames(covariateReference),
-                           must.include = c("covariateId",
-                                            "covariateName",
-                                            "conceptId"),
-                           add = errorMessage
-    )
-  }
-  checkmate::reportAssertions(collection = errorMessage)
-  if (!is.null(concept)) {
-    checkmate::assertTibble(x = concept, 
-                            any.missing = TRUE,
-                            min.rows = 1,
-                            min.cols = 5,
-                            null.ok = FALSE,
-                            types = c('character',
-                                      'double'),
-                            add = errorMessage)
-    checkmate::assertNames(x = colnames(concept),
-                           must.include = c("conceptId",
-                                            "conceptName",
-                                            "domainId",
-                                            "vocabularyId",
-                                            "conceptClassId"),
-                           add = errorMessage
-    )
-  }
+  checkmate::assertTibble(x = cohortReference, 
+                          any.missing = FALSE,
+                          min.rows = 1,
+                          min.cols = 2,
+                          null.ok = FALSE,
+                          types = c('character',
+                                    'double', "integer"),
+                          add = errorMessage)
+  checkmate::assertNames(x = colnames(cohortReference),
+                         must.include = c("cohortId",
+                                          "cohortName"),
+                         add = errorMessage
+  )
+  checkmate::assertTibble(x = covariateReference, 
+                          any.missing = FALSE,
+                          min.rows = 1,
+                          min.cols = 3,
+                          null.ok = FALSE,
+                          types = c('character', 'double', "integer"),
+                          add = errorMessage)
+  checkmate::assertNames(x = colnames(covariateReference),
+                         must.include = c("domainId",
+                                          "covariateId",
+                                          "covariateName",
+                                          "conceptId"),
+                         add = errorMessage
+  )
+  # if (!is.null(concept)) {
+  #   checkmate::assertTibble(x = concept, 
+  #                           any.missing = TRUE,
+  #                           min.rows = 1,
+  #                           min.cols = 5,
+  #                           null.ok = FALSE,
+  #                           types = c('character',
+  #                                     'double', "integer"),
+  #                           add = errorMessage)
+  #   checkmate::assertNames(x = colnames(concept),
+  #                          must.include = c("conceptId",
+  #                                           "conceptName",
+  #                                           "domainId",
+  #                                           "vocabularyId",
+  #                                           "conceptClassId"),
+  #                          add = errorMessage
+  #   )
+  # }
   checkmate::reportAssertions(collection = errorMessage)
   
   # when we support more than 1 targetCohortIds, comparatorCohortIds and DatabaseIds -- this 
@@ -498,71 +495,83 @@ plotCohortComparisonStandardizedDifference <- function(data,
   # For now we are only support one unique combination of 
   # databaseId, targetCohortId, comparatorCohortId
   # 
+  plotData <- plotData %>% 
+    dplyr::inner_join(y = covariateReference %>% 
+                        dplyr::select(.data$covariateId, .data$covariateName, .data$domainId))
   
-  if (!is.null(covariateReference)) {
-    plotData <- plotData %>% 
-      dplyr::left_join(y = covariateReference %>% 
-                         dplyr::select(.data$covariateId, .data$covariateName))
-  } else {
-    plotData <- plotData %>% 
-      dplyr::mutate(covariateName = .data$covariateId %>% as.character())
-  }
+  xAxisLabel <- list(
+    title = cohortReference %>% 
+      dplyr::filter(.data$cohortId %in% targetCohortIds) %>% 
+      dplyr::select(.data$cohortName) %>% 
+      dplyr::mutate(cohortName = stringr::str_replace(string = .data$cohortName,
+                                                      pattern = ":", 
+                                                      replacement = "\n")) %>% 
+      dplyr::pull(),
+    range = c(0, 1)
+  )
+  yAxisLabel <- list(
+    title = cohortReference %>% 
+      dplyr::filter(.data$cohortId %in% comparatorCohortIds) %>% 
+      dplyr::select(.data$cohortName) %>% 
+      dplyr::mutate(cohortName = stringr::str_replace(string = .data$cohortName,
+                                                      pattern = ":", 
+                                                      replacement = "\n")) %>%
+      dplyr::pull(),
+    range = c(0, 1)
+  )
   
-  if (!is.null(cohortReference)) {
-    xAxisLabel <- list(
-      title = cohortReference %>% 
-        dplyr::filter(.data$cohortId %in% targetCohortIds) %>% 
-        dplyr::select(.data$cohortName) %>% 
-        dplyr::pull(),
-      range = c(0, 1)
-    )
-    yAxisLabel <- list(
-      title = cohortReference %>% 
-        dplyr::filter(.data$cohortId %in% comparatorCohortIds) %>% 
-        dplyr::select(.data$cohortName) %>% 
-        dplyr::pull(),
-      range = c(0, 1)
-    )
-  } else {
-    xAxisLabel <- list(
-      title = targetCohortIds,
-      range = c(0, 1)
-    )
-    yAxisLabel <- list(
-      title = comparatorCohortIds,
-      range = c(0, 1)
-    )
-  }
+  # plot <- plotly::plot_ly(data = plotData, 
+  #                         x = plotData$mean1, 
+  #                         y = plotData$mean2,
+  #                         # Hover text:
+  #                         text = ~paste("Covariate Name:",
+  #                                       plotData$covariateName, 
+  #                                       "<br>Mean Target: ", 
+  #                                       plotData$mean1, 
+  #                                       '<br>Mean Comparator:', 
+  #                                       plotData$mean2,
+  #                                       '<br>Std diff.:', 
+  #                                       plotData$stdDiff),
+  #                         color = ~plotData$absStdDiff,
+  #                         type   = 'scatter',
+  #                         mode   = 'markers',
+  #                         marker = list(size = 10,
+  #                                       opacity = "0.5")) %>% 
+  #   plotly::layout(shapes = list(type = "line",
+  #                                y0 = 0, 
+  #                                y1 = 1, 
+  #                                yref = "paper",
+  #                                x0 = 0,  
+  #                                x1 = 1, 
+  #                                line = list(color = "red", 
+  #                                            dash = "dash"))) %>% 
+  #   plotly::layout(xaxis = xAxisLabel, 
+  #                  yaxis = yAxisLabel, 
+  #                  showlegend = FALSE) %>% 
+  #   plotly::colorbar(title = "Absolute\nStd. Diff.")
+  # 
   
-  plot <- plotly::plot_ly(data = plotData, 
-                          x = plotData$mean1, 
-                          y = plotData$mean2,
-                          # Hover text:
-                          text = ~paste("Covariate Name:",
-                                        plotData$covariateName, 
-                                        "<br>Mean Target: ", 
-                                        plotData$mean1, 
-                                        '<br>Mean Comparator:', 
-                                        plotData$mean2,
-                                        '<br>Std diff.:', 
-                                        plotData$stdDiff),
-                          color = ~plotData$absStdDiff,
-                          type   = 'scatter',
-                          mode   = 'markers',
-                          marker = list(size = 10,
-                                        opacity = "0.5")) %>% 
-    plotly::layout(shapes = list(type = "line",
-                                 y0 = 0, 
-                                 y1 = 1, 
-                                 yref = "paper",
-                                 x0 = 0,  
-                                 x1 = 1, 
-                                 line = list(color = "red", 
-                                             dash = "dash"))) %>% 
-    plotly::layout(xaxis = xAxisLabel, 
-                   yaxis = yAxisLabel, 
-                   showlegend = FALSE) %>% 
-    plotly::colorbar(title = "Absolute\nStd. Diff.")
+  
+  ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 3, alpha = 0.6)
+  plotData$tooltip <- c(paste("Covariate Name:", plotData$covariateName,
+                              "\nDomain: ", plotData$domainId,
+                              "\nMean Target: ", scales::comma(plotData$mean1, accuracy = 0.1),
+                              '\nMean Comparator:', scales::comma(plotData$mean2, accuracy = 0.1),
+                              '\nStd diff.:', scales::comma(plotData$stdDiff, accuracy = 0.1)))
+  
+  plot <- ggplot2::ggplot(plotData, ggplot2::aes(x = .data$mean1, y = .data$mean2, color = .data$domainId)) +
+    ggiraph::geom_point_interactive(ggplot2::aes(tooltip = .data$tooltip), size = 3,shape = 16, alpha = 0.5) +
+    ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+    ggplot2::geom_hline(yintercept = 0) +
+    ggplot2::geom_vline(xintercept = 0) +             
+    ggplot2::scale_x_continuous(xAxisLabel, limits = c(0, 1)) +
+    ggplot2::scale_y_continuous(yAxisLabel, limits = c(0, 1)) 
+  
+  plot <- ggiraph::girafe(ggobj = plot,
+                          options = list(
+                            ggiraph::opts_sizing(width = .7),
+                            ggiraph::opts_zoom(max = 5)),width_svg = 12,
+                          height_svg = 5)
   return(plot)
 }
 

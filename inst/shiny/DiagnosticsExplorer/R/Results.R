@@ -20,7 +20,7 @@ getTimeDistributionResult <- function(connection = NULL,
                           databaseSchema = resultsDatabaseSchema)
   
   if (route == 'quit') {
-    warning("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    warning("  Cannot query '", camelCaseToTitleCase(table), '. Exiting.')
     return(NULL)
   } else if (route == 'memory') {
     connection <- NULL
@@ -35,7 +35,7 @@ getTimeDistributionResult <- function(connection = NULL,
     data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                        sql = sql,
                                                        resultsDatabaseSchema = resultsDatabaseSchema,
-                                                       table = SqlRender::camelCaseToSnakeCase(table),
+                                                       table = camelCaseToSnakeCase(table),
                                                        cohortId = cohortIds,
                                                        database_id = databaseIds, 
                                                        snakeCaseToCamelCase = TRUE) %>% 
@@ -48,7 +48,7 @@ getTimeDistributionResult <- function(connection = NULL,
   }
   
   if (nrow(data) == 0) {
-    warning("No records retrieved for ", SqlRender::camelCaseToTitleCase(table), ".")
+    warning("No records retrieved for ", camelCaseToTitleCase(table), ".")
     return(NULL)
   }
   
@@ -119,7 +119,7 @@ getIncidenceRateResult <- function(connection = NULL,
                           table = table)
   
   if (route == 'quit') {
-    warning("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    warning("  Cannot query '", camelCaseToTitleCase(table), '. Exiting.')
     return(NULL)
   } else if (route == 'memory') {
     connection <- NULL
@@ -138,7 +138,7 @@ getIncidenceRateResult <- function(connection = NULL,
     data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                        sql = sql,
                                                        resultsDatabaseSchema = resultsDatabaseSchema,
-                                                       table = SqlRender::camelCaseToSnakeCase(table),
+                                                       table = camelCaseToSnakeCase(table),
                                                        cohortId = cohortIds,
                                                        databaseIds = databaseIds,
                                                        gender = stratifyByGender,
@@ -192,7 +192,7 @@ getCohortCountResult <- function(connection = NULL,
                           connectionDetails = connectionDetails,
                           table = table)
   if (route == 'quit') {
-    warning("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    warning("  Cannot query '", camelCaseToTitleCase(table), '. Exiting.')
     return(NULL)
   } else if (route == 'memory') {
     connection <- NULL
@@ -207,7 +207,7 @@ getCohortCountResult <- function(connection = NULL,
                                                        sql = sql,
                                                        resultsDatabaseSchema = resultsDatabaseSchema, 
                                                        databaseIds = databaseIds,
-                                                       table = SqlRender::camelCaseToSnakeCase(table),
+                                                       table = camelCaseToSnakeCase(table),
                                                        snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {
@@ -218,7 +218,7 @@ getCohortCountResult <- function(connection = NULL,
     }
   }
   if (nrow(data) == 0) {
-    warning("No records retrieved for '", SqlRender::camelCaseToTitleCase(table), "'")
+    warning("No records retrieved for '", camelCaseToTitleCase(table), "'")
     return(NULL)
   }
   data <- data %>% 
@@ -252,7 +252,7 @@ getCohortOverlapResult <- function(connection = NULL,
                           table = table)
   
   if (route == 'quit') {
-    warning("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    warning("  Cannot query '", camelCaseToTitleCase(table), '. Exiting.')
     return(NULL)
   } else if (route == 'memory') {
     connection <- NULL
@@ -268,7 +268,7 @@ getCohortOverlapResult <- function(connection = NULL,
     data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                        sql = sql,
                                                        resultsDatabaseSchema = resultsDatabaseSchema,
-                                                       table = SqlRender::camelCaseToSnakeCase(table),
+                                                       table = camelCaseToSnakeCase(table),
                                                        targetCohortId = targetCohortIds,
                                                        comparatorCohortId = comparatorCohortIds,
                                                        databaseId = databaseIds, 
@@ -291,11 +291,11 @@ getCohortOverlapResult <- function(connection = NULL,
 }
 
 
-
 getCovariateReference <- function(connection = NULL,
                                   connectionDetails = NULL,
                                   covariateIds = NULL,
                                   isTemporal = TRUE,
+                                  domainId = NULL,
                                   resultsDatabaseSchema = NULL) {
   if (isTemporal) {
     table <- 'temporalCovariateRef'
@@ -308,17 +308,33 @@ getCovariateReference <- function(connection = NULL,
   checkmate::assertLogical(x = isTemporal, 
                            any.missing = FALSE, 
                            min.len = 1, 
-                           max.len = 1)
+                           max.len = 1,
+                           add = errorMessage)
   checkmate::assertDouble(x = covariateIds, 
                           lower = 0,
                           upper = 2^53, 
                           any.missing = FALSE,
                           unique = TRUE,
-                          null.ok = TRUE)
+                          null.ok = TRUE,
+                          add = errorMessage)
   errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
                                                   connectionDetails = connectionDetails,
                                                   resultsDatabaseSchema = resultsDatabaseSchema,
                                                   errorMessage = errorMessage)
+
+  if (!is.null(domainId) && domainId == 'all') {
+    domainId <- NULL
+  }
+  if (!is.null(domainId)) {
+    checkmate::assertCharacter(x = domainId, 
+                               min.len = 1, 
+                               max.len = 1, 
+                               any.missing = FALSE,
+                               add = errorMessage)
+    checkmate::assertChoice(x = domainId, 
+                            choices = c("condition", "procedure", "observation", 
+                                        "visit", "measurement", "drug", "other"))
+  }
   checkmate::reportAssertions(collection = errorMessage)
   # route query
   route <- routeDataQuery(connection = connection,
@@ -326,7 +342,7 @@ getCovariateReference <- function(connection = NULL,
                           table = table)
   
   if (route == 'quit') {
-    warning("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    warning("  Cannot query '", camelCaseToTitleCase(table), '. Exiting.')
     return(NULL)
   } else if (route == 'memory') {
     connection <- NULL
@@ -340,7 +356,7 @@ getCovariateReference <- function(connection = NULL,
     data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                        sql = sql,
                                                        resultsDatabaseSchema = resultsDatabaseSchema,
-                                                       table = SqlRender::camelCaseToSnakeCase(table),
+                                                       table = camelCaseToSnakeCase(table),
                                                        covariateIds = covariateIds,
                                                        snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
@@ -352,6 +368,21 @@ getCovariateReference <- function(connection = NULL,
     }
   }
   data <- data[!duplicated(data$covariateId),]
+  
+  data <- data %>% 
+    dplyr::mutate(domainId = tolower(stringr::word(.data$covariateName))) %>% 
+    dplyr::mutate(domainId = dplyr::case_when(stringr::str_detect(string = domainId, pattern = 'drug') ~ 'Drug',
+                                              stringr::str_detect(string = domainId, pattern = 'observation') ~ 'Observation',
+                                              stringr::str_detect(string = domainId, pattern = 'condition') ~ 'Condition',
+                                              stringr::str_detect(string = domainId, pattern = 'procedure') ~ 'Procedure',
+                                              stringr::str_detect(string = domainId, pattern = 'measurement') ~ 'Measurement',
+                                              TRUE ~ 'Other'))
+  
+  if (!is.null(domainId)) {
+    data <- data %>% 
+      dplyr::filter(domainId %in% !!domainId)
+  }
+  
   return(data %>% dplyr::arrange(.data$covariateId))
 }
 
@@ -372,7 +403,7 @@ getTimeReference <- function(connection = NULL,
                           table = table)
   
   if (route == 'quit') {
-    warning("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    warning("  Cannot query '", camelCaseToTitleCase(table), '. Exiting.')
     return(NULL)
   } else if (route == 'memory') {
     connection <- NULL
@@ -385,7 +416,7 @@ getTimeReference <- function(connection = NULL,
     data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                        sql = sql,
                                                        resultsDatabaseSchema = resultsDatabaseSchema,
-                                                       table = SqlRender::camelCaseToSnakeCase(table),
+                                                       table = camelCaseToSnakeCase(table),
                                                        snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {
@@ -433,7 +464,7 @@ getCovariateValueResult <- function(connection = NULL,
                           connectionDetails = connectionDetails,
                           table = table)
   if (route == 'quit') {
-    warning("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    warning("  Cannot query '", camelCaseToTitleCase(table), '. Exiting.')
     return(NULL)
   } else if (route == 'memory') {
     connection <- NULL
@@ -453,7 +484,7 @@ getCovariateValueResult <- function(connection = NULL,
                                                        resultsDatabaseSchema = resultsDatabaseSchema,
                                                        cohortId = cohortIds,
                                                        databaseIds = databaseIds, 
-                                                       table = SqlRender::camelCaseToSnakeCase(table),
+                                                       table = camelCaseToSnakeCase(table),
                                                        isTemporal = isTemporal,
                                                        timeIds = timeIds,
                                                        minProportion = minProportion,
@@ -498,8 +529,7 @@ compareCovariateValueResult <- function(connection = NULL,
                                         maxProportion = 1,
                                         isTemporal = TRUE,
                                         timeIds = NULL,
-                                        resultsDatabaseSchema = NULL,
-                                        domain = NULL) {
+                                        resultsDatabaseSchema = NULL) {
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertLogical(x = isTemporal, 
@@ -565,12 +595,7 @@ compareCovariateValueResult <- function(connection = NULL,
     dplyr::arrange(.data$databaseId,
                    .data$targetCohortId,
                    .data$comparatorCohortId, 
-                   .data$covariateId) %>% 
-    dplyr::inner_join(covariateRef)
-  
-  if (domain != "" && !is.null(domain) && domain != "all") {
-    data <- data %>% dplyr::filter(grepl(paste0("^",domain), .data$covariateName))
-  }
+                   .data$covariateId)
   return(data)
 }
 
@@ -607,7 +632,7 @@ getCohortReference <- function(connection = NULL,
                           table = table)
   
   if (route == 'quit') {
-    warning("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    warning("  Cannot query '", camelCaseToTitleCase(table), '. Exiting.')
     return(NULL)
   } else if (route == 'memory') {
     connection <- NULL
@@ -621,7 +646,7 @@ getCohortReference <- function(connection = NULL,
     data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                        sql = sql,
                                                        resultsDatabaseSchema = resultsDatabaseSchema,
-                                                       table = SqlRender::camelCaseToSnakeCase(table),
+                                                       table = camelCaseToSnakeCase(table),
                                                        cohortIds = cohortIds,
                                                        snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
@@ -666,7 +691,7 @@ getDatabaseReference <- function(connection = NULL,
                           table = table)
   
   if (route == 'quit') {
-    warning("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    warning("  Cannot query '", camelCaseToTitleCase(table), '. Exiting.')
     return(NULL)
   } else if (route == 'memory') {
     connection <- NULL
@@ -680,7 +705,7 @@ getDatabaseReference <- function(connection = NULL,
     data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                        sql = sql,
                                                        resultsDatabaseSchema = resultsDatabaseSchema,
-                                                       table = SqlRender::camelCaseToSnakeCase(table),
+                                                       table = camelCaseToSnakeCase(table),
                                                        snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {
@@ -717,7 +742,7 @@ getConceptReference <- function(connection = NULL,
                           table = table)
   
   if (route == 'quit') {
-    warning("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    warning("  Cannot query '", camelCaseToTitleCase(table), '. Exiting.')
     return(NULL)
   } else if (route == 'memory') {
     connection <- NULL
@@ -732,7 +757,7 @@ getConceptReference <- function(connection = NULL,
     data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                        sql = sql,
                                                        resultsDatabaseSchema = resultsDatabaseSchema,
-                                                       table = SqlRender::camelCaseToSnakeCase(table),
+                                                       table = camelCaseToSnakeCase(table),
                                                        snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {
@@ -779,7 +804,7 @@ getConceptSetDiagnosticsResults <- function(connection = NULL,
                           table = table)
   
   if (route == 'quit') {
-    warning("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    warning("  Cannot query '", camelCaseToTitleCase(table), '. Exiting.')
     return(NULL)
   } else if (route == 'memory') {
     connection <- NULL
@@ -796,7 +821,7 @@ getConceptSetDiagnosticsResults <- function(connection = NULL,
       DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                  sql = sql,
                                                  resultsDatabaseSchema = resultsDatabaseSchema,
-                                                 table = SqlRender::camelCaseToSnakeCase(table),
+                                                 table = camelCaseToSnakeCase(table),
                                                  snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {
@@ -819,7 +844,7 @@ getConceptSetDiagnosticsResults <- function(connection = NULL,
                           table = table)
   
   if (route == 'quit') {
-    warning("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
+    warning("  Cannot query '", camelCaseToTitleCase(table), '. Exiting.')
     return(NULL)
   } else if (route == 'memory') {
     connection <- NULL
@@ -835,7 +860,7 @@ getConceptSetDiagnosticsResults <- function(connection = NULL,
       DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                  sql = sql,
                                                  resultsDatabaseSchema = resultsDatabaseSchema,
-                                                 table = SqlRender::camelCaseToSnakeCase(table),
+                                                 table = camelCaseToSnakeCase(table),
                                                  snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } else {
@@ -933,7 +958,7 @@ routeDataQuery <- function(connection = NULL,
       tableExistsInRMemory <- TRUE
       if (!silent) {
         ParallelLogger::logInfo("  '", 
-                                SqlRender::camelCaseToTitleCase(table), 
+                                camelCaseToTitleCase(table), 
                                 "' data object found in R memory.")
       }
     } else {
@@ -941,13 +966,13 @@ routeDataQuery <- function(connection = NULL,
       if (is.null(connection)) {
         if (!silent) {
           warning("  '", 
-                  SqlRender::camelCaseToTitleCase(table), 
+                  camelCaseToTitleCase(table), 
                   "' data object not found in R memory.")
         }
       } else {
         if (!silent) {
           ParallelLogger::logInfo("  '", 
-                                  SqlRender::camelCaseToTitleCase(table), 
+                                  camelCaseToTitleCase(table), 
                                   "' data object not found in R memory.")
         }
       }
@@ -957,14 +982,14 @@ routeDataQuery <- function(connection = NULL,
     return(connection)
   } else if (!is.null(connection) & !isTRUE(tableExistsInDbms) & 
              isTRUE(tableExistsInRMemory)) {
-    warning(SqlRender::camelCaseToTitleCase(table), 
+    warning(camelCaseToTitleCase(table), 
             " was not found in dbms but was found in R memory. 
                             Using the data loaded in R memory.")
     return("memory")
   } else if (is.null(connection) & isTRUE(tableExistsInRMemory)) {
     return("memory")
   } else if (is.null(connection) & !isTRUE(tableExistsInRMemory)) {
-    warning(SqlRender::camelCaseToTitleCase(table), 
+    warning(camelCaseToTitleCase(table), 
             " not found.")
     return("quit")
   }
