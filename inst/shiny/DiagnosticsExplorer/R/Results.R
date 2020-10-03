@@ -45,9 +45,9 @@ quoteLiterals <- function(x) {
   }
 }
 
-getCohortCounts <- function(dataSource = .GlobalEnv,
-                            cohortIds = NULL,
-                            databaseIds) {
+getCohortCountResult <- function(dataSource = .GlobalEnv,
+                                 cohortIds = NULL,
+                                 databaseIds) {
   if (is(dataSource, "environment")) {
     data <- get("cohortCount", envir = dataSource) %>% 
       dplyr::filter(.data$databaseId %in% !!databaseIds) 
@@ -57,13 +57,13 @@ getCohortCounts <- function(dataSource = .GlobalEnv,
     }
   } else {
     sql <- "SELECT *
-            FROM  @resultsDatabaseSchema.cohort_count
+            FROM  @results_database_schema.cohort_count
             WHERE database_id in (@database_id)
             {@cohort_ids != ''} ? {  AND cohort_id in (@cohort_ids)}
             ;"
     data <- renderTranslateQuerySql(connection = dataSource$connection,
                                     sql = sql,
-                                    resultsDatabaseSchema = dataSource$resultsDatabaseSchema,
+                                    results_database_schema = dataSource$resultsDatabaseSchema,
                                     cohort_ids = cohortIds,
                                     database_id = quoteLiterals(databaseIds), 
                                     snakeCaseToCamelCase = TRUE) %>% 
@@ -74,31 +74,24 @@ getCohortCounts <- function(dataSource = .GlobalEnv,
 
 getTimeDistributionResult <- function(dataSource = .GlobalEnv,
                                       cohortIds,
-                                      databaseIds,
-                                      resultsDatabaseSchema = NULL) {
+                                      databaseIds) {
   if (is(dataSource, "environment")) {
-    data <- get("timeDistribution") %>% 
+    data <- get("timeDistribution", envir = dataSource) %>% 
       dplyr::filter(.data$cohortId %in% !!cohortIds &
-                      .data$databaseId %in% !!databaseIds) %>% 
-      tidyr::tibble()
+                      .data$databaseId %in% !!databaseIds)
   } else {
     sql <-   "SELECT *
-              FROM  @resultsDatabaseSchema.time_distribution
-              WHERE cohort_id in (@cohortId)
+              FROM  @results_database_schema.time_distribution
+              WHERE cohort_id in (@cohort_ids)
             	AND database_id in (@database_ids);"
     data <- renderTranslateQuerySql(connection = dataSource$connection,
                                     sql = sql,
-                                    resultsDatabaseSchema = dataSource$resultsDatabaseSchema,
-                                    cohortId = cohortIds,
+                                    results_database_schema = dataSource$resultsDatabaseSchema,
+                                    cohort_ids = cohortIds,
                                     database_ids = quoteLiterals(databaseIds), 
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } 
-  
-  if (nrow(data) == 0) {
-    warning("No records retrieved for ", SqlRender::camelCaseToTitleCase(table), ".")
-    return(NULL)
-  }
   
   data <- data %>% 
     dplyr::rename(Database = "databaseId",
@@ -116,6 +109,7 @@ getTimeDistributionResult <- function(dataSource = .GlobalEnv,
     dplyr::arrange(.data$cohortId, .data$Database, .data$TimeMeasure)
   return(data)
 }
+
 
 getIncidenceRateResult <- function(dataSource = .GlobalEnv,
                                    cohortIds,
@@ -159,17 +153,17 @@ getIncidenceRateResult <- function(dataSource = .GlobalEnv,
                       .data$personYears > !!minPersonYears) %>% 
       dplyr::select(-tidyselect::starts_with('strata'))
   } else {
-    sql <-   "SELECT *
-              FROM  @resultsDatabaseSchema.incidence_rate
-              WHERE cohort_id in (@cohort_ids)
-            	AND database_id in (@database_ids)
-              {@gender == TRUE} ? {AND gender != ''} : {AND gender = ''}
-              {@age_group == TRUE} ? {AND age_group != ''} : {AND age_group = ''}
-            	{@calendar_year == TRUE} ? {AND calendar_year != ''} : {AND calendar_year = ''}
+    sql <- "SELECT *
+            FROM  @results_database_schema.incidence_rate
+            WHERE cohort_id in (@cohort_ids)
+           	  AND database_id in (@database_ids)
+            {@gender == TRUE} ? {AND gender != ''} : {  AND gender = ''}
+            {@age_group == TRUE} ? {AND age_group != ''} : {  AND age_group = ''}
+            {@calendar_year == TRUE} ? {AND calendar_year != ''} : {  AND calendar_year = ''}
               AND person_years > @personYears;"
     data <- renderTranslateQuerySql(connection = dataSource$connection,
                                     sql = sql,
-                                    resultsDatabaseSchema = dataSource$resultsDatabaseSchema,
+                                    results_database_schema = dataSource$resultsDatabaseSchema,
                                     cohort_ids = cohortIds,
                                     database_ids = quoteLiterals(databaseIds),
                                     gender = stratifyByGender,
@@ -183,10 +177,7 @@ getIncidenceRateResult <- function(dataSource = .GlobalEnv,
                     ageGroup = dplyr::na_if(.data$ageGroup, ""),
                     calendarYear = dplyr::na_if(.data$calendarYear, ""))
   } 
- 
-  if (nrow(data) == 0) {
-    warning("No records retrieved for 'incidence rate'.")
-  }
+  
   return(data %>% 
            dplyr::mutate(calendarYear = as.integer(.data$calendarYear)) %>%
            dplyr::arrange(.data$cohortId, .data$databaseId))
@@ -293,61 +284,54 @@ getIncludedSourceConcept <- function(dataSource = .GlobalEnv,
 }
 
 
-# deprecated
-getCohortCountResult <- function(connection = NULL,
-                                 connectionDetails = NULL,
-                                 databaseIds = NULL,
-                                 resultsDatabaseSchema = NULL) {
-  table = "cohortCount"
-  # Perform error checks for input variables
-  errorMessage <- checkmate::makeAssertCollection()
-  errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
-                                                  connectionDetails = connectionDetails,
-                                                  resultsDatabaseSchema = resultsDatabaseSchema,
-                                                  errorMessage = errorMessage)
-  checkmate::assertCharacter(x = databaseIds,
-                             any.missing = FALSE, 
-                             min.len = 1,
-                             null.ok = TRUE,
-                             add = errorMessage)
-  
-  # route query
-  route <- routeDataQuery(connection = connection,
-                          connectionDetails = connectionDetails,
-                          table = table)
-  if (route == 'quit') {
-    warning("  Cannot query '", SqlRender::camelCaseToTitleCase(table), '. Exiting.')
-    return(NULL)
-  } else if (route == 'memory') {
-    connection <- NULL
-  }
-  
-  # perform query
-  if (!is.null(connection)) {
-    sql <-   "SELECT *
-              FROM  @resultsDatabaseSchema.@table
-            	WHERE database_id in c('@databaseIds');"
-    data <- renderTranslateQuerySql(connection = connection,
+getIncludedConcepts <- function(dataSource = .GlobalEnv,
+                                cohortId,
+                                databaseIds) {
+  if (is(dataSource, "environment")) {
+    data <- get("includedSourceConcept", envir = dataSource) %>% 
+      dplyr::filter(.data$cohortId == !!cohortId &
+                      .data$databaseId %in% !!databaseIds) %>% 
+      dplyr::inner_join(dplyr::select(get("conceptSets", envir = dataSource),
+                                      .data$cohortId,
+                                      .data$conceptSetId,
+                                      .data$conceptSetName), 
+                        by = c("cohortId", "conceptSetId")) %>%
+      dplyr::inner_join(dplyr::select(get("concept", envir = dataSource),
+                                      sourceConceptId = .data$conceptId,
+                                      sourceConceptName = .data$conceptName,
+                                      sourceVocabularyId = .data$vocabularyId),
+                        by = c("sourceConceptId")) %>%
+      dplyr::inner_join(dplyr::select(get("concept", envir = dataSource),
+                                      .data$conceptId,
+                                      .data$conceptName,
+                                      .data$vocabularyId),
+                        by = c("conceptId"))
+  } else {
+    sql <- "SELECT included_source_concept.*,
+              concept_set_name,
+              source_concept.concept_name AS source_concept_name,
+              source_concept.vocabulary_id AS source_vocabulary_id,
+              standard_concept.concept_name AS concept_name,
+              standard_concept.vocabulary_id AS vocabulary_id
+            FROM  @results_database_schema.included_source_concept
+            INNER JOIN  @results_database_schema.concept_sets
+              ON included_source_concept.cohort_id = concept_sets.cohort_id
+            INNER JOIN  @vocabulary_database_schema.concept source_concept
+              ON included_source_concept.source_concept_id = source_concept.concept_id
+            INNER JOIN  @vocabulary_database_schema.concept standard_concept
+              ON included_source_concept.concept_id = standard_concept.concept_id
+            WHERE included_source_concept.cohort_id = @cohort_id
+             AND database_id in (@database_ids);"
+    data <- renderTranslateQuerySql(connection = dataSource$connection,
                                     sql = sql,
-                                    resultsDatabaseSchema = resultsDatabaseSchema, 
-                                    databaseIds = databaseIds,
-                                    table = SqlRender::camelCaseToSnakeCase(table),
+                                    results_database_schema = dataSource$resultsDatabaseSchema,
+                                    vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
+                                    cohort_id = cohortId,
+                                    database_ids = quoteLiterals(databaseIds), 
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
-  } else {
-    data <- get(table) 
-    if (!is.null(databaseIds)) { 
-      data <- data %>% 
-        dplyr::filter(.data$databaseId %in% databaseIds)
-    }
-  }
-  if (nrow(data) == 0) {
-    warning("No records retrieved for '", SqlRender::camelCaseToTitleCase(table), "'")
-    return(NULL)
-  }
-  data <- data %>% 
-    dplyr::relocate(.data$cohortId, .data$databaseId) %>% 
-    dplyr::arrange(.data$cohortId, .data$databaseId)
+  } 
+  
   return(data)
 }
 
@@ -421,10 +405,6 @@ getCovariateReference <- function(connection = NULL,
                           any.missing = FALSE,
                           unique = TRUE,
                           null.ok = TRUE)
-  errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
-                                                  connectionDetails = connectionDetails,
-                                                  resultsDatabaseSchema = resultsDatabaseSchema,
-                                                  errorMessage = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
   # route query
   route <- routeDataQuery(connection = connection,
@@ -441,11 +421,11 @@ getCovariateReference <- function(connection = NULL,
   # perform query
   if (!is.null(connection)) {
     sql <-   "SELECT *
-              FROM  @resultsDatabaseSchema.@table
+              FROM  @results_database_schema.@table
               {covariateIds == }? {WHERE covariate_id in c(@covariateIds)};"
     data <- renderTranslateQuerySql(connection = connection,
                                     sql = sql,
-                                    resultsDatabaseSchema = resultsDatabaseSchema,
+                                    results_database_schema = resultsDatabaseSchema,
                                     table = SqlRender::camelCaseToSnakeCase(table),
                                     covariateIds = covariateIds,
                                     snakeCaseToCamelCase = TRUE) %>% 
@@ -487,10 +467,10 @@ getTimeReference <- function(connection = NULL,
   # perform query
   if (!is.null(connection)) {
     sql <-   "SELECT *
-              FROM  @resultsDatabaseSchema.@table;"
+              FROM  @results_database_schema.@table;"
     data <- renderTranslateQuerySql(connection = connection,
                                     sql = sql,
-                                    resultsDatabaseSchema = resultsDatabaseSchema,
+                                    results_database_schema = resultsDatabaseSchema,
                                     table = SqlRender::camelCaseToSnakeCase(table),
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
@@ -548,7 +528,7 @@ getCovariateValueResult <- function(connection = NULL,
   # perform query
   if (!is.null(connection)) {
     sql <-   "SELECT *
-              FROM  @resultsDatabaseSchema.@table
+              FROM  @results_database_schema.@table
               WHERE cohort_id in (@cohortIds)
             	AND database_id in ('@databaseIds')
               {@isTemporal == TRUE} ? {AND time_id in ('@timeIds')}
@@ -722,7 +702,7 @@ getCohortReference <- function(connection = NULL,
   # perform query
   if (!is.null(connection)) {
     sql <-   "SELECT *
-              FROM  @resultsDatabaseSchema.@table
+              FROM  @results_database_schema.@table
               {@cohortIds == } ? {}:{where cohort_id in ('@cohortIds')};"
     data <- renderTranslateQuerySql(connection = connection,
                                     sql = sql,
@@ -781,7 +761,7 @@ getDatabaseReference <- function(connection = NULL,
   # perform query
   if (!is.null(connection)) {
     sql <-   "SELECT *
-              FROM  @resultsDatabaseSchema.@table
+              FROM  @results_database_schema.@table
               {@databaseIds == } ? {}:{where databaseId in ('@databaseIds')};"
     data <- renderTranslateQuerySql(connection = connection,
                                     sql = sql,
@@ -832,7 +812,7 @@ getConceptReference <- function(connection = NULL,
   # perform query
   if (!is.null(connection)) {
     sql <-   "SELECT *
-              FROM  @resultsDatabaseSchema.@table
+              FROM  @results_database_schema.@table
               WHERE invalid_reason IS NULL 
               {@conceptIds == } ? {}:{AND concept_id IN ('@conceptIds')};"
     data <- renderTranslateQuerySql(connection = connection,
@@ -894,7 +874,7 @@ getConceptSetDiagnosticsResults <- function(connection = NULL,
   # perform query
   if (!is.null(connection)) {
     sql <-   "SELECT *
-              FROM  @resultsDatabaseSchema.@table
+              FROM  @results_database_schema.@table
               WHERE conceptId > 0
               {@cohortIds == } ? {}:{AND cohort_id IN ('@cohortIds')}
               {@databaseIds == } ? {}:{AND database_id IN ('@databaseIds')};"
@@ -933,7 +913,7 @@ getConceptSetDiagnosticsResults <- function(connection = NULL,
   # perform query
   if (!is.null(connection)) {
     sql <-   "SELECT *
-              FROM  @resultsDatabaseSchema.@table
+              FROM  @results_database_schema.@table
               WHERE conceptId > 0
               {@cohortIds == } ? {}:{AND cohort_id IN ('@cohortIds')}
               {@databaseIds == } ? {}:{AND database_id IN ('@databaseIds')};"
