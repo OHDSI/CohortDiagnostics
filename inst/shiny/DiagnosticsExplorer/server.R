@@ -1449,7 +1449,7 @@ shiny::shinyServer(function(input, output, session) {
   output$temporalCharacterizationSelectedDataBase <- shiny::renderText(input$database)
   
   targetCohortCount <- shiny::reactive({
-    targetCohortWithCount <- getCohortCounts(dataSource = dataSource,
+    targetCohortWithCount <- getCohortCountResult(dataSource = dataSource,
                                              cohortIds = cohortId(),
                                              databaseIds = input$database) %>% 
       dplyr::left_join(y = cohort) %>% 
@@ -1471,7 +1471,7 @@ shiny::shinyServer(function(input, output, session) {
   selectedCohortCounts <- shiny::reactive({
     targetCohortWithCount <- targetCohortCount()
     
-    comparatorCohortWithCount <- getCohortCounts(dataSource = dataSource,
+    comparatorCohortWithCount <- getCohortCountResult(dataSource = dataSource,
                                                  cohortIds = comparatorCohortId(),
                                                  databaseIds = input$database) %>% 
       dplyr::left_join(y = cohort)

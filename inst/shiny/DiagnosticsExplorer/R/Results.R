@@ -186,8 +186,8 @@ getIncidenceRateResult <- function(dataSource = .GlobalEnv,
 
 
 getInclusionRuleStats <- function(dataSource = .GlobalEnv,
-                                     cohortIds = NULL,
-                                     databaseIds) {
+                                  cohortIds = NULL,
+                                  databaseIds) {
   
   if (is(dataSource, "environment")) {
     data <- get("inclusionRuleStats", envir = dataSource) %>% 
@@ -250,8 +250,8 @@ getIndexEventBreakdown <- function(dataSource = .GlobalEnv,
 
 
 getIncludedSourceConcept <- function(dataSource = .GlobalEnv,
-                             cohortIds,
-                             databaseIds) {
+                                     cohortIds,
+                                     databaseIds) {
   
   errorMessage <- checkmate::makeAssertCollection()
   errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = cohortIds,
@@ -339,7 +339,7 @@ getCohortOverlapResult <- function(dataSource = .GlobalEnv,
                                    targetCohortIds,
                                    comparatorCohortIds,
                                    databaseIds) {
-
+  
   errorMessage <- checkmate::makeAssertCollection()
   errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = targetCohortIds,
                                                  databaseIds = databaseIds,
@@ -348,53 +348,30 @@ getCohortOverlapResult <- function(dataSource = .GlobalEnv,
                                                  databaseIds = databaseIds,
                                                  errorMessage = errorMessage)
   
-  if (route == 'quit') {
-    warning("  Cannot query '", camelCaseToTitleCase(table), '. Exiting.')
-    return(NULL)
-  } else if (route == 'memory') {
-    connection <- NULL
-  }
-  
-  # perform query
-  if (!is.null(connection)) {
+  if (is(dataSource, "environment")) {
+    data <- get("cohortOverlap", envir = dataSource) %>% 
+      dplyr::filter(.data$targetCohortId %in% !!targetCohortIds &
+                      .data$comparatorCohortId %in% !!comparatorCohortIds &
+                      .data$databaseId %in% !!databaseIds) %>% 
+      tidyr::tibble()
+  } else {
     sql <-   "SELECT *
               FROM  @results_database_schema.@table
               WHERE target_cohort_id in (@targetCohortIds)
               AND comparator_cohort_id in (@comparatorCohortIds)
             	AND database_id in c('@databaseIds');"
-    data <- renderTranslateQuerySql(connection = connection,
+    data <- renderTranslateQuerySql(connection = dataSource$connection,
                                     sql = sql,
-                                    results_database_schema = resultsDatabaseSchema,
-                                    table = SqlRender::camelCaseToSnakeCase(table),
+                                    results_database_schema = dataSource$resultsDatabaseSchema,
                                     targetCohortId = targetCohortIds,
                                     comparatorCohortId = comparatorCohortIds,
                                     databaseId = databaseIds, 
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
-  } else {
-    data <- get(table) %>% 
-      dplyr::filter(.data$targetCohortId %in% !!targetCohortIds &
-                      .data$comparatorCohortId %in% !!comparatorCohortIds &
-                      .data$databaseId %in% !!databaseIds) %>% 
-      tidyr::tibble()
-  } else  {
-    sql <-   "SELECT *
-              FROM  @resultsDatabaseSchema.cohort_overlap
-              WHERE target_cohort_id in (@target_cohort_ids)
-              AND comparator_cohort_id in (@comparator_cohort_ids)
-            	AND database_id in (@database_ids);"
-    data <- renderTranslateQuerySql(connection = dataSource$connection,
-                                    sql = sql,
-                                    resultsDatabaseSchema = resultsDatabaseSchema,
-                                    target_cohort_ids = targetCohortIds,
-                                    comparator_cohort_ids = comparatorCohortIds,
-                                    database_ids = quoteLiterals(databaseIds), 
-                                    snakeCaseToCamelCase = TRUE) %>% 
-      tidyr::tibble()
-  }
+  } 
   
   if (nrow(data) == 0) {
-    return(NULL)
+    return(tidyr::tibble())
   }
   data <- data %>% 
     dplyr::relocate(.data$databaseId, .data$targetCohortId, .data$comparatorCohortId) %>% 
@@ -692,63 +669,20 @@ compareCovariateValueResult <- function(connection = NULL,
   return(data)
 }
 
-getCohortReference <- function(connection = NULL,
-                               connectionDetails = NULL,
-                               cohortIds = NULL,
-                               resultsDatabaseSchema = NULL,
+getCohortReference <- function(cohortIds = NULL,
                                getJson = FALSE,
                                getSql = FALSE) {
-  table <- 'cohort'
-  # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
-  errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
-                                                  connectionDetails = connectionDetails,
-                                                  resultsDatabaseSchema = resultsDatabaseSchema,
-                                                  errorMessage = errorMessage)
   checkmate::assertDouble(x = cohortIds,
                           min.len = 1, 
                           null.ok = TRUE,
                           add = errorMessage)
-  checkmate::assertLogical(x = getJson, 
-                           any.missing = FALSE, 
-                           min.len = 1, 
-                           max.len = 1)
-  checkmate::assertLogical(x = getSql, 
-                           any.missing = FALSE, 
-                           min.len = 1, 
-                           max.len = 1)
   checkmate::reportAssertions(collection = errorMessage)
-  
-  # route query
-  route <- routeDataQuery(connection = connection,
-                          connectionDetails = connectionDetails,
-                          table = table)
-  
-  if (route == 'quit') {
-    warning("  Cannot query '", camelCaseToTitleCase(table), '. Exiting.')
-    return(NULL)
-  } else if (route == 'memory') {
-    connection <- NULL
-  }
-  
-  # perform query
-  if (!is.null(connection)) {
-    sql <-   "SELECT *
-              FROM  @results_database_schema.@table
-              {@cohortIds == } ? {}:{where cohort_id in ('@cohortIds')};"
-    data <- renderTranslateQuerySql(connection = connection,
-                                    sql = sql,
-                                    resultsDatabaseSchema = resultsDatabaseSchema,
-                                    table = SqlRender::camelCaseToSnakeCase(table),
-                                    cohortIds = cohortIds,
-                                    snakeCaseToCamelCase = TRUE) %>% 
-      tidyr::tibble()
-  } else {
-    data <- get(table)
-    if (!is.null(cohortIds)) {
-      data <- data %>% 
-        dplyr::filter(.data$cohortId %in% cohortIds)
-    }
+  table <- 'cohort'
+  data <- get(table)
+  if (!is.null(cohortIds)) {
+    data <- data %>% 
+      dplyr::filter(.data$cohortId %in% cohortIds)
   }
   if (!getSql) {
     data <- data %>% 
@@ -761,56 +695,21 @@ getCohortReference <- function(connection = NULL,
   return(data )
 }
 
-getDatabaseReference <- function(connection = NULL,
-                                 connectionDetails = NULL,
-                                 databaseIds = NULL,
-                                 resultsDatabaseSchema = NULL) {
-  table <- 'database'
-  # Perform error checks for input variables
+getDatabaseReference <- function(databaseIds = NULL) {
   errorMessage <- checkmate::makeAssertCollection()
-  errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
-                                                  connectionDetails = connectionDetails,
-                                                  resultsDatabaseSchema = resultsDatabaseSchema,
-                                                  errorMessage = errorMessage)
   checkmate::assertCharacter(x = databaseIds,
                              min.len = 1, 
                              null.ok = TRUE,
                              add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
-  
-  # route query
-  route <- routeDataQuery(connection = connection,
-                          connectionDetails = connectionDetails,
-                          table = table)
-  
-  if (route == 'quit') {
-    warning("  Cannot query '", camelCaseToTitleCase(table), '. Exiting.')
-    return(NULL)
-  } else if (route == 'memory') {
-    connection <- NULL
-  }
-  
-  # perform query
-  if (!is.null(connection)) {
-    sql <-   "SELECT *
-              FROM  @results_database_schema.@table
-              {@databaseIds == } ? {}:{where databaseId in ('@databaseIds')};"
-    data <- renderTranslateQuerySql(connection = connection,
-                                    sql = sql,
-                                    resultsDatabaseSchema = resultsDatabaseSchema,
-                                    table = SqlRender::camelCaseToSnakeCase(table),
-                                    snakeCaseToCamelCase = TRUE) %>% 
-      tidyr::tibble()
-  } else {
-    data <- get(table)
-    if (!is.null(databaseIds)) {
-      data <- data %>% 
-        dplyr::filter(.data$databaseId %in% databaseIds)
-    }
+  table <- 'database'
+  data <- get(table)
+  if (!is.null(databaseIds)) {
+    data <- data %>% 
+      dplyr::filter(.data$databaseId %in% databaseIds)
   }
   return(data %>% dplyr::arrange(.data$databaseId))
 }
-
 
 getConceptReference <- function(connection = NULL,
                                 connectionDetails = NULL,
