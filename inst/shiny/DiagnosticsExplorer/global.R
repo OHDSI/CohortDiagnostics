@@ -1,5 +1,6 @@
 library(magrittr)
 
+source("R/Private.R")
 source("R/Tables.R")
 source("R/Other.R")
 source("R/Plots.R")
@@ -52,10 +53,6 @@ if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {
   stop("No premerged file found")
 }
 
-rm("visitContext")
-
-
-
 if (exists("temporalTimeRef")) {
   temporalCovariateChoices <- temporalTimeRef %>%
     dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
@@ -63,3 +60,8 @@ if (exists("temporalTimeRef")) {
     dplyr::arrange(.data$timeId) %>% 
     dplyr::slice_head(n = 5)
 }
+
+
+
+
+rm("visitContext")
