@@ -98,8 +98,6 @@ if (databaseMode) {
   phenotypeDescription <- loadResultsTable("phenotype_description")
   temporalTimeRef <- loadResultsTable("temporal_time_ref")
   conceptSets <- loadResultsTable("concept_sets")
-  concept <- loadResultsTable("concept", required = TRUE)
-  
   
   # Create empty objects in memory for all other tables. This is used by the Shiny app to decide what tabs to show:
   for (table in dataModelSpecifications$tableName) {

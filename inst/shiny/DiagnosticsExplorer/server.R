@@ -143,11 +143,16 @@ shiny::shinyServer(function(input, output, session) {
   
   output$cohortDescriptionTable <- DT::renderDataTable(expr = {
     data <- cohort %>% 
-      dplyr::mutate(webApiCohortId = as.integer(.data$webApiCohortId)) %>% #this is temporary - we need to standardize this 
       dplyr::left_join(y = phenotypeDescription) %>% 
-      dplyr::mutate(cohortName = paste0("<a href='", paste0(cohortBaseUrl, .data$webApiCohortId),"' target='_blank'>", paste0(.data$cohortName), "</a>")) %>% 
-      dplyr::select(.data$phenotypeId, .data$cohortId, .data$cohortName, .data$logicDescription) %>% 
-      dplyr::arrange(.data$phenotypeId, .data$cohortId, .data$cohortName)
+      dplyr::mutate(cohortName = paste0("<a href='", 
+                                        paste0(cohortBaseUrl, 
+                                               .data$webApiCohortId),
+                                        "' target='_blank'>", 
+                                        paste0(.data$cohortName), "</a>")) %>% 
+      dplyr::select(.data$phenotypeId, .data$cohortId, 
+                    .data$cohortName, .data$logicDescription) %>% 
+      dplyr::arrange(.data$phenotypeId, .data$cohortId, 
+                     .data$cohortName)
     
     options = list(pageLength = 10,
                    searching = TRUE,
@@ -516,11 +521,23 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$orphanConceptsTable <- DT::renderDataTable(expr = {
-    data <- orphanConcept %>% 
-      dplyr::inner_join(conceptSets, by = c("cohortId", "conceptSetId")) %>% 
-      dplyr::filter(.data$cohortId == cohortId() &
-                      .data$conceptSetName == input$conceptSet &
-                      .data$databaseId %in% input$databases) %>% 
+    selectedConceptSets <- conceptSets %>% 
+      dplyr::select(.data$cohortId,
+                    .data$conceptSetId,
+                    .data$conceptSetName) %>% 
+      dplyr::filter(.data$conceptSetName == input$conceptSet,
+                    .data$cohortId == cohortId())
+    
+    data <- getOrphanConcept(dataSource = dataSource,
+                             cohortId = cohortId(),
+                             conceptSetId = selectedConceptSets$conceptSetId %>% unique(),
+                             databaseId = input$databases)
+    if (nrow(data) == 0) {
+      return(dplyr::tibble(Note = paste0("There is no data for the selected combination.")))
+    }
+    data <- data %>% 
+      dplyr::inner_join(selectedConceptSets, 
+                        by = c("cohortId", "conceptSetId")) %>% 
       dplyr::select(-.data$cohortId)
     
     databaseIds <- unique(data$databaseId)
@@ -540,6 +557,9 @@ shiny::shinyServer(function(input, output, session) {
       return(dplyr::tibble(Note = paste0("No data available for selected databases and cohorts")))
     }
     
+    conceptsInOrphan <- getConceptReference(dataSource = dataSource,
+                                   conceptIds = data$conceptId %>% unique())
+    
     table <- data %>% 
       tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>% 
       dplyr::group_by(.data$conceptId, .data$databaseId, 
@@ -552,7 +572,7 @@ shiny::shinyServer(function(input, output, session) {
       tidyr::pivot_wider(id_cols = c(.data$conceptId),
                          names_from = .data$name,
                          values_from = .data$value) %>% 
-      dplyr::inner_join(concept %>% 
+      dplyr::inner_join(conceptsInOrphan %>% 
                           dplyr::select(.data$conceptId, 
                                         .data$conceptName, 
                                         .data$vocabularyId,
@@ -1450,8 +1470,8 @@ shiny::shinyServer(function(input, output, session) {
   
   targetCohortCount <- shiny::reactive({
     targetCohortWithCount <- getCohortCountResult(dataSource = dataSource,
-                                             cohortIds = cohortId(),
-                                             databaseIds = input$database) %>% 
+                                                  cohortIds = cohortId(),
+                                                  databaseIds = input$database) %>% 
       dplyr::left_join(y = cohort) %>% 
       dplyr::arrange(.data$cohortName)
     return(targetCohortWithCount)
@@ -1472,8 +1492,8 @@ shiny::shinyServer(function(input, output, session) {
     targetCohortWithCount <- targetCohortCount()
     
     comparatorCohortWithCount <- getCohortCountResult(dataSource = dataSource,
-                                                 cohortIds = comparatorCohortId(),
-                                                 databaseIds = input$database) %>% 
+                                                      cohortIds = comparatorCohortId(),
+                                                      databaseIds = input$database) %>% 
       dplyr::left_join(y = cohort)
     
     return(htmltools::withTags(

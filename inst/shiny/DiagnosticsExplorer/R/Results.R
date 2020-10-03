@@ -183,12 +183,9 @@ getIncidenceRateResult <- function(dataSource = .GlobalEnv,
            dplyr::arrange(.data$cohortId, .data$databaseId))
 }
 
-
-
 getInclusionRuleStats <- function(dataSource = .GlobalEnv,
                                   cohortIds = NULL,
                                   databaseIds) {
-  
   if (is(dataSource, "environment")) {
     data <- get("inclusionRuleStats", envir = dataSource) %>% 
       dplyr::filter(.data$databaseId %in% !!databaseIds) 
@@ -217,7 +214,6 @@ getInclusionRuleStats <- function(dataSource = .GlobalEnv,
 getIndexEventBreakdown <- function(dataSource = .GlobalEnv,
                                    cohortIds,
                                    databaseIds) {
-  
   errorMessage <- checkmate::makeAssertCollection()
   errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = cohortIds,
                                                  databaseIds = databaseIds,
@@ -252,7 +248,6 @@ getIndexEventBreakdown <- function(dataSource = .GlobalEnv,
 getIncludedSourceConcept <- function(dataSource = .GlobalEnv,
                                      cohortIds,
                                      databaseIds) {
-  
   errorMessage <- checkmate::makeAssertCollection()
   errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = cohortIds,
                                                  databaseIds = databaseIds,
@@ -339,7 +334,6 @@ getCohortOverlapResult <- function(dataSource = .GlobalEnv,
                                    targetCohortIds,
                                    comparatorCohortIds,
                                    databaseIds) {
-  
   errorMessage <- checkmate::makeAssertCollection()
   errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = targetCohortIds,
                                                  databaseIds = databaseIds,
@@ -711,59 +705,77 @@ getDatabaseReference <- function(databaseIds = NULL) {
   return(data %>% dplyr::arrange(.data$databaseId))
 }
 
-getConceptReference <- function(connection = NULL,
-                                connectionDetails = NULL,
-                                conceptIds = NULL,
-                                resultsDatabaseSchema = NULL) {
-  table <- 'concept'
+getConceptReference <- function(dataSource = .GlobalEnv,
+                                conceptIds) {
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
-  errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
-                                                  connectionDetails = connectionDetails,
-                                                  resultsDatabaseSchema = resultsDatabaseSchema,
-                                                  errorMessage = errorMessage)
   checkmate::assertIntegerish(x = conceptIds,
                               min.len = 1, 
                               null.ok = TRUE,
                               add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
-  
-  # route query
-  route <- routeDataQuery(connection = connection,
-                          connectionDetails = connectionDetails,
-                          table = table)
-  
-  if (route == 'quit') {
-    warning("  Cannot query '", camelCaseToTitleCase(table), '. Exiting.')
-    return(NULL)
-  } else if (route == 'memory') {
-    connection <- NULL
-  }
-  
-  # perform query
-  if (!is.null(connection)) {
-    sql <-   "SELECT *
-              FROM  @results_database_schema.@table
+  if (is(dataSource, "environment")) {
+    data <- get("cohort", envir = dataSource) %>% 
+      dplyr::filter(!is.na(invalidReason)) %>% 
+      dplyr::filter(.data$conceptId %in% conceptIds)
+  } else {
+    sql <- "SELECT *
+              FROM  @results_database_schema.concept
               WHERE invalid_reason IS NULL 
               {@conceptIds == } ? {}:{AND concept_id IN ('@conceptIds')};"
-    data <- renderTranslateQuerySql(connection = connection,
+    data <- renderTranslateQuerySql(connection = dataSource$connection,
                                     sql = sql,
-                                    resultsDatabaseSchema = resultsDatabaseSchema,
-                                    table = SqlRender::camelCaseToSnakeCase(table),
+                                    results_database_schema = dataSource$resultsDatabaseSchema,
+                                    conceptIds = conceptIds, 
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
-  } else {
-    data <- get(table)
-    if (!is.null(conceptIds)) {
-      data <- data %>% 
-        dplyr::filter(.data$conceptId %in% conceptIds,
-                      is.na(.data$invalidReason)) %>% 
-        dplyr::select(-.data$invalidReason)
-    }
   }
   return(data %>% dplyr::arrange(.data$conceptId))
 }
 
+getOrphanConcept <- function(dataSource = .GlobalEnv,
+                             databaseId,
+                             cohortId,
+                             conceptSetId) {
+  # Perform error checks for input variables
+  errorMessage <- checkmate::makeAssertCollection()
+  checkmate::assertDouble(x = cohortId,
+                          min.len = 1,
+                          max.len = 1,
+                          null.ok = FALSE,
+                          add = errorMessage)
+  checkmate::assertDouble(x = conceptSetId,
+                          min.len = 1,
+                          max.len = 1,
+                          null.ok = FALSE,
+                          add = errorMessage)
+  checkmate::assertCharacter(x = databaseId,
+                          min.len = 1,
+                          null.ok = FALSE,
+                          add = errorMessage)
+  checkmate::reportAssertions(collection = errorMessage)
+  if (is(dataSource, "environment")) {
+    data <- get("orphanConcept", envir = dataSource) %>% 
+      dplyr::filter(.data$cohortId %in% !!cohortId,
+                    .data$databaseId %in% !!databaseId)
+  } else {
+    sql <- "SELECT *
+              FROM  @results_database_schema.orphan_concept
+              WHERE concept_set_id >= 0 
+              {@conceptSetId == } ? {}:{AND concept_set_id IN (@conceptSetId)}
+              {@cohortId == } ? {}:{AND cohort_id IN (@cohortId)}
+              {@databaseId == } ? {}:{AND database_id IN (@databaseId)};"
+    data <- renderTranslateQuerySql(connection = dataSource$connection,
+                                    sql = sql,
+                                    results_database_schema = dataSource$resultsDatabaseSchema,
+                                    cohortId = cohortId, 
+                                    conceptSetId = conceptSetId,
+                                    databaseId = quoteLiterals(databaseId),
+                                    snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
+  }
+  return(data)
+}
 
 
 getConceptSetDiagnosticsResults <- function(connection = NULL,
