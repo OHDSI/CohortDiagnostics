@@ -378,16 +378,17 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::inner_join(concept %>% 
                             dplyr::select(.data$conceptId, 
                                           .data$conceptName, 
-                                          .data$vocabularyId),
+                                          .data$vocabularyId,
+                                          .data$conceptCode),
                           by = "conceptId") %>% 
         dplyr::select(order(colnames(.))) %>% 
-        dplyr::relocate(.data$conceptId, .data$conceptName, .data$vocabularyId)
+        dplyr::relocate(.data$conceptId, .data$conceptName, .data$vocabularyId, .data$conceptCode)
       
       if (nrow(table) == 0) {
         return(dplyr::tibble(Note = paste0('No data available for selected databases and cohorts')))
       }
       
-      table <- table[order(-table[, 4]), ]
+      table <- table[order(-table[, 5]), ]
       
       sketch <- htmltools::withTags(table(
         class = 'display',
@@ -396,6 +397,7 @@ shiny::shinyServer(function(input, output, session) {
             th(rowspan = 2, 'Concept Id'),
             th(rowspan = 2, 'Concept Name'),
             th(rowspan = 2, 'Vocabulary Id'),
+            th(rowspan = 2, 'Concept Code'),
             lapply(databaseIds, th, colspan = 2, class = "dt-center")
           ),
           tr(
@@ -412,7 +414,7 @@ shiny::shinyServer(function(input, output, session) {
                      ordering = TRUE,
                      paging = TRUE,
                      columnDefs = list(truncateStringDef(1, 100),
-                                       minCellCountDef(2 + (1:(length(databaseIds) * 2)))))
+                                       minCellCountDef(3 + (1:(length(databaseIds) * 2)))))
       
       table <- DT::datatable(table,
                              colnames = colnames(table),
@@ -424,7 +426,7 @@ shiny::shinyServer(function(input, output, session) {
                              class = "stripe nowrap compact")
       
       table <- DT::formatStyle(table = table,
-                               columns =  3 + (1:(length(databaseIds)*2)),
+                               columns =  4 + (1:(length(databaseIds) * 2)),
                                background = DT::styleColorBar(c(0,maxConceptSubjects), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
@@ -540,12 +542,13 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::inner_join(concept %>% 
                           dplyr::select(.data$conceptId, 
                                         .data$conceptName, 
-                                        .data$vocabularyId),
+                                        .data$vocabularyId,
+                                        .data$conceptCode),
                         by = "conceptId") %>% 
       dplyr::select(order(colnames(.))) %>% 
-      dplyr::relocate(.data$conceptId, .data$conceptName, .data$vocabularyId)
+      dplyr::relocate(.data$conceptId, .data$conceptName, .data$vocabularyId, .data$conceptCode)
     
-    table <- table[order(-table[, 4]),]
+    table <- table[order(-table[, 5]),]
     
     sketch <- htmltools::withTags(table(
       class = 'display',
@@ -554,6 +557,7 @@ shiny::shinyServer(function(input, output, session) {
           th(rowspan = 2, 'Concept Id'),
           th(rowspan = 2, 'Concept Name'),
           th(rowspan = 2, 'Vocabulary Id'),
+          th(rowspan = 2, 'Concept Code'),
           lapply(databaseIds, th, colspan = 2, class = "dt-center")
         ),
         tr(
@@ -569,7 +573,7 @@ shiny::shinyServer(function(input, output, session) {
                    lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
-                   columnDefs = list(minCellCountDef(2 + (1:(length(databaseIds) * 2)))))
+                   columnDefs = list(minCellCountDef(3 + (1:(length(databaseIds) * 2)))))
     
     table <- DT::datatable(table,
                            options = options,
@@ -580,7 +584,7 @@ shiny::shinyServer(function(input, output, session) {
                            filter = c("bottom"),
                            class = "stripe nowrap compact")
     table <- DT::formatStyle(table = table,
-                             columns = 3 + (1:(length(databaseIds) * 2)),
+                             columns = 4 + (1:(length(databaseIds) * 2)),
                              background = DT::styleColorBar(c(0, maxConceptCount), "lightblue"),
                              backgroundSize = "98% 88%",
                              backgroundRepeat = "no-repeat",
