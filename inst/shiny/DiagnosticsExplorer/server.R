@@ -328,11 +328,12 @@ shiny::shinyServer(function(input, output, session) {
   
   
   output$includedConceptsTable <- DT::renderDataTable(expr = {
-    data <- includedSourceConcept %>% 
+    # note filter than inner join equivalent to inner join than filter
+    data <- getIncludedSourceConcept(dataSource = dataSource,
+                             cohortIds = cohortId(),
+                             databaseIds = input$databases) %>% 
       dplyr::inner_join(conceptSets, by = c("cohortId", "conceptSetId")) %>% 
-      dplyr::filter(.data$cohortId == cohortId() &
-                      .data$conceptSetName == input$conceptSet &
-                      .data$databaseId %in% input$databases) %>% 
+      dplyr::filter(.data$conceptSetName == input$conceptSet) %>% 
       dplyr::select(-.data$cohortId)
     if (nrow(data) == 0) {
       return(dplyr::tibble('No data available for selected databases and cohorts'))
