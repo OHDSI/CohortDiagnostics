@@ -244,41 +244,6 @@ getIndexEventBreakdown <- function(dataSource = .GlobalEnv,
   return(data)
 }
 
-
-getIncludedSourceConcept <- function(dataSource = .GlobalEnv,
-                                     cohortIds,
-                                     databaseIds) {
-  errorMessage <- checkmate::makeAssertCollection()
-  errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = cohortIds,
-                                                 databaseIds = databaseIds,
-                                                 errorMessage = errorMessage)
-  checkmate::reportAssertions(collection = errorMessage)
-  
-  if (is(dataSource, "environment")) {
-    data <- get("includedSourceConcept", envir = dataSource) %>% 
-      dplyr::filter(.data$databaseId %in% !!databaseIds) 
-    if (!is.null(cohortIds)) {
-      data <- data %>% 
-        dplyr::filter(.data$cohortId %in% !!cohortIds) 
-    }
-  } else {
-    sql <- "SELECT *
-    FROM  @resultsDatabaseSchema.included_source_concept
-    WHERE database_id in (@database_id)
-    AND cohort_id in (@cohort_ids)
-    ;"
-    data <- renderTranslateQuerySql(connection = dataSource$connection,
-                                    sql = sql,
-                                    resultsDatabaseSchema = dataSource$resultsDatabaseSchema,
-                                    cohort_ids = cohortIds,
-                                    database_id = quoteLiterals(databaseIds), 
-                                    snakeCaseToCamelCase = TRUE) %>% 
-      tidyr::tibble()
-  }
-  return(data)
-}
-
-
 getIncludedConcepts <- function(dataSource = .GlobalEnv,
                                 cohortId,
                                 databaseIds) {
@@ -294,7 +259,8 @@ getIncludedConcepts <- function(dataSource = .GlobalEnv,
       dplyr::inner_join(dplyr::select(get("concept", envir = dataSource),
                                       sourceConceptId = .data$conceptId,
                                       sourceConceptName = .data$conceptName,
-                                      sourceVocabularyId = .data$vocabularyId),
+                                      sourceVocabularyId = .data$vocabularyId,
+                                      sourceConceptCode = .data$conceptCode),
                         by = c("sourceConceptId")) %>%
       dplyr::inner_join(dplyr::select(get("concept", envir = dataSource),
                                       .data$conceptId,
@@ -306,6 +272,7 @@ getIncludedConcepts <- function(dataSource = .GlobalEnv,
               concept_set_name,
               source_concept.concept_name AS source_concept_name,
               source_concept.vocabulary_id AS source_vocabulary_id,
+              source_concept.concept_code AS source_concept_code,
               standard_concept.concept_name AS concept_name,
               standard_concept.vocabulary_id AS vocabulary_id
             FROM  @results_database_schema.included_source_concept

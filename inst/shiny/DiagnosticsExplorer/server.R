@@ -390,15 +390,19 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::inner_join(data %>%
                             dplyr::select(.data$sourceConceptId,
                                           .data$sourceConceptName,
-                                          .data$sourceVocabularyId) %>%
+                                          .data$sourceVocabularyId,
+                                          .data$sourceConceptCode) %>%
                             dplyr::distinct(),
                           by = "sourceConceptId") %>%
-        dplyr::relocate(.data$sourceConceptId, .data$sourceConceptName, .data$sourceVocabularyId)
+        dplyr::relocate(.data$sourceConceptId, 
+                        .data$sourceConceptName, 
+                        .data$sourceVocabularyId,
+                        .data$sourceConceptCode)
       
       if (nrow(table) == 0) {
         return(dplyr::tibble(Note = paste0("No data available for selected databases and cohorts")))
       }
-      
+      print(nrow(table))
       table <- table[order(-table[, 5]), ]
       
       sketch <- htmltools::withTags(table(
