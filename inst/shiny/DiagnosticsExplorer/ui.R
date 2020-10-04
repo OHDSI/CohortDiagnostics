@@ -458,7 +458,7 @@ bodyTabItems <- shinydashboard::tabItems(
         ),
         ggiraph::ggiraphOutput(
           outputId = "charComparePlot",
-          height = 700,
+          height = 700
         )
       )
     )

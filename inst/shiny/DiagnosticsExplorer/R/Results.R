@@ -490,7 +490,8 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
                                     minValue = 0.01,
                                     maxValue = 1,
                                     isTemporal = TRUE,
-                                    timeIds = c(1,2,3,4,5)) {
+                                    timeIds = c(1,2,3,4,5),
+                                    joinCovariateRef = FALSE) {
   if (isTemporal) {
     table <- 'temporalCovariateValue'
   } else {
@@ -536,8 +537,11 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
                     .data$mean >= !!minValue,
                     .data$mean <= !!maxValue)
   } else {
-    sql <- "SELECT *
-              FROM  @results_database_schema.@table
+    sql <- "SELECT
+              cv.*
+              {@joinCovariateRef == TRUE} ? {, cr.analysis_id, cr.concept_id, cr.covariate_name}
+              FROM  @results_database_schema.@table cv
+              {@joinCovariateRef == TRUE} ? {LEFT JOIN @results_database_schema.covariate_ref cr ON cv.covariate_id = cr.covariate_id}
               WHERE cohort_id in (@cohortIds)
             	AND database_id in (@databaseIds)
               {@isTemporal == TRUE} ? {AND time_id in (@timeIds)}
@@ -553,6 +557,7 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
                                     timeIds = timeIds, 
                                     minValue = minValue,
                                     maxValue = maxValue,
+                                    joinCovariateRef = joinCovariateRef,
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   }
@@ -569,16 +574,14 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
 }
 
 
-compareCovariateValueResult <- function(connection = NULL,
-                                        connectionDetails = NULL,
+compareCovariateValueResult <- function(dataSource = .GlobalEnv,
                                         targetCohortIds,
                                         comparatorCohortIds,
                                         databaseIds,
                                         minProportion = 0.01,
                                         maxProportion = 1,
                                         isTemporal = TRUE,
-                                        timeIds = NULL,
-                                        resultsDatabaseSchema = NULL) {
+                                        timeIds = NULL) {
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertLogical(x = isTemporal, 
@@ -605,15 +608,13 @@ compareCovariateValueResult <- function(connection = NULL,
   }
   checkmate::reportAssertions(collection = errorMessage)
   cohortIds <- c(targetCohortIds, comparatorCohortIds) %>% unique() %>% sort()
-  covariateValue <- getCovariateValueResult(connection = connection, 
-                                            connectionDetails = connectionDetails, 
+  covariateValue <- getCovariateValueResult(dataSource = dataSource,
                                             cohortIds = cohortIds, 
                                             databaseIds = databaseIds, 
-                                            minProportion = minProportion, 
-                                            maxProportion = maxProportion, 
+                                            minValue = minProportion, 
+                                            maxValue = maxProportion, 
                                             isTemporal = isTemporal, 
-                                            timeIds = timeIds, 
-                                            resultsDatabaseSchema = resultsDatabaseSchema)
+                                            timeIds = timeIds)
   
   targetCovariateValue = covariateValue %>% 
     dplyr::filter(.data$cohortId %in% targetCohortIds) %>% 

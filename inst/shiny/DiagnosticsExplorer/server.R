@@ -1186,14 +1186,22 @@ shiny::shinyServer(function(input, output, session) {
     if (cohortId() == comparatorCohortId()) {
       return(dplyr::tibble())
     }
-    covs1 <- covariateValue %>% 
-      dplyr::filter(.data$cohortId == cohortId(),
-                    .data$databaseId == input$database)
-    covs2 <- covariateValue %>% 
-      dplyr::filter(.data$cohortId == comparatorCohortId(),
-                    .data$databaseId == input$database)
-    covs1 <- dplyr::left_join(x = covs1, y = covariateRef, by = "covariateId")
-    covs2 <- dplyr::left_join(x = covs2, y = covariateRef, by = "covariateId")
+    covs1 <- getCovariateValueResult(dataSource = dataSource,
+                                     cohortIds = cohortIds(),
+                                     databaseIds = input$database,
+                                     isTemporal = FALSE,
+                                     joinCovariateRef = TRUE)
+      # dplyr::filter(.data$cohortId == cohortId(),
+      #               .data$databaseId == input$database)
+    covs2 <- getCovariateValueResult(dataSource = dataSource,
+                                     cohortIds = comparatorCohortId(),
+                                     databaseIds = input$database,
+                                     isTemporal = FALSE,
+                                     joinCovariateRef = TRUE)
+      # dplyr::filter(.data$cohortId == comparatorCohortId(),
+      #               .data$databaseId == input$database)
+    # covs1 <- dplyr::left_join(x = covs1, y = covariateRef, by = "covariateId")
+    # covs2 <- dplyr::left_join(x = covs2, y = covariateRef, by = "covariateId")
     balance <- compareCohortCharacteristics(covs1, covs2) %>%
       dplyr::mutate(absStdDiff = abs(.data$stdDiff))
     return(balance)
@@ -1293,22 +1301,28 @@ shiny::shinyServer(function(input, output, session) {
   
   output$charComparePlot <- ggiraph::renderggiraph(expr = {
     validate(need(length(input$databases) > 0, "No data sources chosen"))
-    data <- compareCovariateValueResult(connection = NULL, 
-                                        connectionDetails = NULL,
+    data <- compareCovariateValueResult(dataSource = dataSource,
                                         targetCohortIds = cohortId(), 
                                         comparatorCohortIds = comparatorCohortId(),
                                         databaseIds = input$database,
                                         minProportion = 0.01,
                                         maxProportion = 1,
                                         isTemporal = FALSE,
-                                        timeIds = NULL,
-                                        resultsDatabaseSchema = NULL)
+                                        timeIds = NULL)
     validate(need(!is.null(data), paste0("No cohort compare data for this combination")),
              need(nrow(data) > 0, paste0("No cohort compare data for this combination")),
              need(!(cohortId() == comparatorCohortId()), paste0("Target cohort and comparator cannot be the same")))
     
-    cohortReference <- getCohortReference()
-    covariateReference <- getCovariateReference(isTemporal = FALSE, domainId = input$domainId)
+    cohortReference <- getCohortReference() %>%
+      tidyr::tibble()
+    
+    
+    # covariateReference <- getCovariateReference(isTemporal = FALSE, domainId = input$domainId)
+    # TODO: domainId usage?
+    covariateReference <- getCovariateReference(dataSource = dataSource,
+                                                covariateIds = data$covariateId %>% unique(),
+                                                isTemporal = FALSE)
+    
     plot <- plotCohortComparisonStandardizedDifference(data = data, 
                                                        targetCohortIds = cohortId(), 
                                                        comparatorCohortIds = comparatorCohortId(),
