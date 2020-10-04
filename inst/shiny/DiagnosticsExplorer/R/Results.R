@@ -244,9 +244,9 @@ getIndexEventBreakdown <- function(dataSource = .GlobalEnv,
   return(data)
 }
 
-getIncludedConcepts <- function(dataSource = .GlobalEnv,
-                                cohortId,
-                                databaseIds) {
+getIncludedConceptResult <- function(dataSource = .GlobalEnv,
+                                     cohortId,
+                                     databaseIds) {
   if (is(dataSource, "environment")) {
     data <- get("includedSourceConcept", envir = dataSource) %>% 
       dplyr::filter(.data$cohortId == !!cohortId &
@@ -296,6 +296,51 @@ getIncludedConcepts <- function(dataSource = .GlobalEnv,
   
   return(data)
 }
+
+getOrphanConceptResult <- function(dataSource = .GlobalEnv,
+                                   cohortId,
+                                   databaseIds) {
+  if (is(dataSource, "environment")) {
+    data <- get("orphanConcept", envir = dataSource) %>% 
+      dplyr::filter(.data$cohortId == !!cohortId &
+                      .data$databaseId %in% !!databaseIds) %>% 
+      dplyr::inner_join(dplyr::select(get("conceptSets", envir = dataSource),
+                                      .data$cohortId,
+                                      .data$conceptSetId,
+                                      .data$conceptSetName), 
+                        by = c("cohortId", "conceptSetId")) %>%
+      dplyr::inner_join(dplyr::select(get("concept", envir = dataSource),
+                                      .data$conceptId,
+                                      .data$conceptName,
+                                      .data$vocabularyId,
+                                      .data$conceptCode),
+                        by = c("conceptId"))
+  } else {
+    sql <- "SELECT orphan_concept.*,
+              concept_set_name,
+              standard_concept.concept_name AS concept_name,
+              standard_concept.vocabulary_id AS vocabulary_id,
+              standard_concept.concept_code AS concept_code
+            FROM  @results_database_schema.orphan_concept
+            INNER JOIN  @results_database_schema.concept_sets
+              ON orphan_concept.cohort_id = concept_sets.cohort_id
+            INNER JOIN  @vocabulary_database_schema.concept standard_concept
+              ON orphan_concept.concept_id = standard_concept.concept_id
+            WHERE orphan_concept.cohort_id = @cohort_id
+             AND database_id in (@database_ids);"
+    data <- renderTranslateQuerySql(connection = dataSource$connection,
+                                    sql = sql,
+                                    results_database_schema = dataSource$resultsDatabaseSchema,
+                                    vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
+                                    cohort_id = cohortId,
+                                    database_ids = quoteLiterals(databaseIds), 
+                                    snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
+  } 
+  
+  return(data)
+}
+
 
 getCohortOverlapResult <- function(dataSource = .GlobalEnv,
                                    targetCohortIds,
@@ -700,49 +745,6 @@ getConceptReference <- function(dataSource = .GlobalEnv,
   return(data %>% dplyr::arrange(.data$conceptId))
 }
 
-getOrphanConcept <- function(dataSource = .GlobalEnv,
-                             databaseId,
-                             cohortId,
-                             conceptSetId) {
-  # Perform error checks for input variables
-  errorMessage <- checkmate::makeAssertCollection()
-  checkmate::assertDouble(x = cohortId,
-                          min.len = 1,
-                          max.len = 1,
-                          null.ok = FALSE,
-                          add = errorMessage)
-  checkmate::assertDouble(x = conceptSetId,
-                          min.len = 1,
-                          max.len = 1,
-                          null.ok = FALSE,
-                          add = errorMessage)
-  checkmate::assertCharacter(x = databaseId,
-                          min.len = 1,
-                          null.ok = FALSE,
-                          add = errorMessage)
-  checkmate::reportAssertions(collection = errorMessage)
-  if (is(dataSource, "environment")) {
-    data <- get("orphanConcept", envir = dataSource) %>% 
-      dplyr::filter(.data$cohortId %in% !!cohortId,
-                    .data$databaseId %in% !!databaseId)
-  } else {
-    sql <- "SELECT *
-              FROM  @results_database_schema.orphan_concept
-              WHERE concept_set_id >= 0 
-              {@conceptSetId == } ? {}:{AND concept_set_id IN (@conceptSetId)}
-              {@cohortId == } ? {}:{AND cohort_id IN (@cohortId)}
-              {@databaseId == } ? {}:{AND database_id IN (@databaseId)};"
-    data <- renderTranslateQuerySql(connection = dataSource$connection,
-                                    sql = sql,
-                                    results_database_schema = dataSource$resultsDatabaseSchema,
-                                    cohortId = cohortId, 
-                                    conceptSetId = conceptSetId,
-                                    databaseId = quoteLiterals(databaseId),
-                                    snakeCaseToCamelCase = TRUE) %>% 
-      tidyr::tibble()
-  }
-  return(data)
-}
 
 
 getConceptSetDiagnosticsResults <- function(connection = NULL,
