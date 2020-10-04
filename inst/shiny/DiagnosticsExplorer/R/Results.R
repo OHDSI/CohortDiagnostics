@@ -391,12 +391,9 @@ getCohortOverlapResult <- function(dataSource = .GlobalEnv,
 }
 
 
-getCovariateReference <- function(connection = NULL,
-                                  connectionDetails = NULL,
-                                  covariateIds = NULL,
-                                  isTemporal = TRUE,
-                                  domainId = NULL,
-                                  resultsDatabaseSchema = NULL) {
+getCovariateReference <- function(dataSource = .GlobalEnv,
+                                  covariateIds,
+                                  isTemporal = TRUE) {
   if (isTemporal) {
     table <- 'temporalCovariateRef'
   } else {
@@ -417,53 +414,37 @@ getCovariateReference <- function(connection = NULL,
                           unique = TRUE,
                           null.ok = TRUE)
   checkmate::reportAssertions(collection = errorMessage)
-  # route query
-  route <- routeDataQuery(connection = connection,
-                          connectionDetails = connectionDetails,
-                          table = table)
   
-  if (route == 'quit') {
-    warning("  Cannot query '", camelCaseToTitleCase(table), '. Exiting.')
-    return(NULL)
-  } else if (route == 'memory') {
-    connection <- NULL
-  }
-  
-  # perform query
-  if (!is.null(connection)) {
-    sql <-   "SELECT *
-              FROM  @results_database_schema.@table
-              {covariateIds == }? {WHERE covariate_id in c(@covariateIds)};"
-    data <- renderTranslateQuerySql(connection = connection,
-                                    sql = sql,
-                                    results_database_schema = resultsDatabaseSchema,
-                                    table = SqlRender::camelCaseToSnakeCase(table),
-                                    covariateIds = covariateIds,
-                                    snakeCaseToCamelCase = TRUE) %>% 
-      tidyr::tibble()
-  } else {
-    data <- get(table)
-    if (!is.null(covariateIds)) {
-      data <- data %>% 
-        dplyr::filter(.data$covariateId %in% covariateIds)
-    }
-  }
-  data <- data[!duplicated(data$covariateId),]
-  
-  data <- data %>% 
-    dplyr::mutate(domainId = tolower(stringr::word(.data$covariateName))) %>% 
-    dplyr::mutate(domainId = dplyr::case_when(stringr::str_detect(string = domainId, pattern = 'drug') ~ 'Drug',
-                                              stringr::str_detect(string = domainId, pattern = 'observation') ~ 'Observation',
-                                              stringr::str_detect(string = domainId, pattern = 'condition') ~ 'Condition',
-                                              stringr::str_detect(string = domainId, pattern = 'procedure') ~ 'Procedure',
-                                              stringr::str_detect(string = domainId, pattern = 'measurement') ~ 'Measurement',
-                                              TRUE ~ 'Other'))
-  
-  if (!is.null(domainId)) {
+  if (is(dataSource, "environment")) {
+    data <- get(table, envir = dataSource) %>% 
+      dplyr::filter(.data$covariateIds %in% !!covariateIds)
+    data <- data[!duplicated(data$covariateId),]
+    # we dont expect the full vocabulary tables to be loaded in R's memory.
+    # The logic below will approximate the domain_id
     data <- data %>% 
-      dplyr::filter(domainId %in% !!domainId)
+      dplyr::mutate(domainId = tolower(stringr::word(.data$covariateName))) %>% 
+      dplyr::mutate(domainId = dplyr::case_when(stringr::str_detect(string = domainId, pattern = "drug") ~ "Drug",
+                                                stringr::str_detect(string = domainId, pattern = "observation") ~ "Observation",
+                                                stringr::str_detect(string = domainId, pattern = "condition") ~ "Condition",
+                                                stringr::str_detect(string = domainId, pattern = "procedure") ~ "Procedure",
+                                                stringr::str_detect(string = domainId, pattern = "measurement") ~ "Measurement",
+                                                TRUE ~ "Other"))
+  } else {
+    sql <-   "SELECT cv.*, c.domain_id
+              FROM  @results_database_schema.@table cv
+              LEFT JOIN @results_database_schema.concept c
+              ON cv.concept_id = c.concept_id
+              WHERE covariate_id in (@covariateIds);"
+    data <- renderTranslateQuerySql(connection = dataSource$connection,
+                                    sql = sql,
+                                    results_database_schema = dataSource$resultsDatabaseSchema,
+                                    covariateIds = covariateIds,
+                                    table = SqlRender::camelCaseToSnakeCase(table), 
+                                    snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble() %>% 
+      dplyr::mutate(domainId = tidyr::replace_na(.data$domainId, replace = "Other"),
+                    domainId = stringr::str_replace(string = .data$domainId, pattern = 'Metadata', replacement = 'Other'))
   }
-  
   return(data %>% dplyr::arrange(.data$covariateId))
 }
 
@@ -474,10 +455,6 @@ getTimeReference <- function(connection = NULL,
   table <- 'temporalTimeRef'
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
-  errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
-                                                  connectionDetails = connectionDetails,
-                                                  resultsDatabaseSchema = resultsDatabaseSchema,
-                                                  errorMessage = errorMessage)
   # route query
   route <- routeDataQuery(connection = connection,
                           connectionDetails = connectionDetails,
@@ -507,86 +484,77 @@ getTimeReference <- function(connection = NULL,
 }
 
 
-getCovariateValueResult <- function(connection = NULL,
-                                    connectionDetails = NULL,
+getCovariateValueResult <- function(dataSource = .GlobalEnv,
                                     cohortIds,
                                     databaseIds,
-                                    minProportion = 0.01,
-                                    maxProportion = 1,
+                                    minValue = 0.01,
+                                    maxValue = 1,
                                     isTemporal = TRUE,
-                                    timeIds = c(1,2,3,4,5),
-                                    resultsDatabaseSchema = NULL) {
+                                    timeIds = c(1,2,3,4,5)) {
   if (isTemporal) {
     table <- 'temporalCovariateValue'
   } else {
     table <- 'covariateValue'
   }
+  
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertLogical(x = isTemporal, 
                            any.missing = FALSE, 
                            min.len = 1, 
-                           max.len = 1)
-  errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
-                                                  connectionDetails = connectionDetails,
-                                                  resultsDatabaseSchema = resultsDatabaseSchema,
-                                                  errorMessage = errorMessage)
+                           max.len = 1, 
+                           add = errorMessage)
+  checkmate::assertNumber(x = minValue, 
+                          lower = 0, 
+                          upper = 1, 
+                          na.ok = FALSE, 
+                          null.ok = FALSE, 
+                          add = errorMessage)
+  checkmate::assertNumber(x = maxValue, 
+                          lower = 0, 
+                          upper = 1, 
+                          na.ok = FALSE, 
+                          null.ok = FALSE, 
+                          add = errorMessage)
+  errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = cohortIds,
+                                                 databaseIds = databaseIds,
+                                                 errorMessage = errorMessage)
   if (isTemporal) {
     checkmate::assertIntegerish(x = timeIds, 
-                                lower = -1, 
+                                lower = 0, 
                                 any.missing = FALSE, 
                                 unique = TRUE, 
                                 null.ok = TRUE,
                                 add = errorMessage)
   }
   checkmate::reportAssertions(collection = errorMessage)
-  # route query
-  route <- routeDataQuery(connection = connection,
-                          connectionDetails = connectionDetails,
-                          table = table)
-  if (route == 'quit') {
-    warning("  Cannot query '", camelCaseToTitleCase(table), '. Exiting.')
-    return(NULL)
-  } else if (route == 'memory') {
-    connection <- NULL
-  }
   
-  # perform query
-  if (!is.null(connection)) {
-    sql <-   "SELECT *
+  if (is(dataSource, "environment")) {
+    data <- get(table, envir = dataSource) %>%
+      dplyr::filter(.data$cohortId %in% !!cohortIds,
+                    .data$databaseId %in% !!databaseIds,
+                    .data$mean >= !!minValue,
+                    .data$mean <= !!maxValue)
+  } else {
+    sql <- "SELECT *
               FROM  @results_database_schema.@table
               WHERE cohort_id in (@cohortIds)
-            	AND database_id in ('@databaseIds')
-              {@isTemporal == TRUE} ? {AND time_id in ('@timeIds')}
-              AND mean >= @minProportion
-              AND mean <= @maxProportion;"
-    data <- renderTranslateQuerySql(connection = connection,
+            	AND database_id in (@databaseIds)
+              {@isTemporal == TRUE} ? {AND time_id in (@timeIds)}
+              AND mean >= @minValue
+              AND mean <= @maxValue;"
+    data <- renderTranslateQuerySql(connection = dataSource$connection,
                                     sql = sql,
-                                    resultsDatabaseSchema = resultsDatabaseSchema,
-                                    cohortId = cohortIds,
-                                    databaseIds = databaseIds, 
                                     table = SqlRender::camelCaseToSnakeCase(table),
+                                    results_database_schema = dataSource$resultsDatabaseSchema,
+                                    cohortIds = cohortIds,
+                                    databaseIds = quoteLiterals(databaseIds),
                                     isTemporal = isTemporal,
-                                    timeIds = timeIds,
-                                    minProportion = minProportion,
-                                    maxProportion = maxProportion,
+                                    timeIds = timeIds, 
+                                    minValue = minValue,
+                                    maxValue = maxValue,
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
-  } else {
-    data <- get(table) %>% 
-      dplyr::filter(.data$cohortId %in% cohortIds,
-                    .data$databaseId %in% databaseIds,
-                    .data$mean >= minProportion,
-                    .data$mean <= maxProportion)
-    if (isTemporal && (any(timeIds != 0))) {
-      if (any(timeIds == -1)) {
-        data <- data %>% 
-          dplyr::filter(.data$timeId > 5)
-      } else {
-        data <- data %>% 
-          dplyr::filter(.data$timeId %in% timeIds)
-      }
-    }
   }
   if (isTemporal) {
     data <- data %>% 
@@ -618,10 +586,6 @@ compareCovariateValueResult <- function(connection = NULL,
                            min.len = 1, 
                            max.len = 1,
                            add = errorMessage)
-  errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
-                                                  connectionDetails = connectionDetails,
-                                                  resultsDatabaseSchema = resultsDatabaseSchema,
-                                                  errorMessage = errorMessage)
   errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = targetCohortIds,
                                                  databaseIds = databaseIds,
                                                  errorMessage = errorMessage)
@@ -759,10 +723,6 @@ getConceptSetDiagnosticsResults <- function(connection = NULL,
                                             resultsDatabaseSchema = NULL) {
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
-  errorMessage <- checkErrorResultsDatabaseSchema(connection = connection,
-                                                  connectionDetails = connectionDetails,
-                                                  resultsDatabaseSchema = resultsDatabaseSchema,
-                                                  errorMessage = errorMessage)
   checkmate::assertDouble(x = cohortIds,
                           min.len = 1, 
                           null.ok = TRUE,
@@ -970,22 +930,6 @@ routeDataQuery <- function(connection = NULL,
             " not found.")
     return("quit")
   }
-}
-
-
-checkErrorResultsDatabaseSchema <- function(errorMessage,
-                                            resultsDatabaseSchema,
-                                            connectionDetails,
-                                            connection) {
-  if (!is.null(connectionDetails) || !is.null(connection)) {
-    checkmate::assertCharacter(x = resultsDatabaseSchema,
-                               min.len = 1,
-                               max.len = 1,
-                               any.missing = FALSE,
-                               add = errorMessage)
-  }
-  checkmate::reportAssertions(collection = errorMessage)
-  return(errorMessage)
 }
 
 

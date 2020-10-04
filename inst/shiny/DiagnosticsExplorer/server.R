@@ -773,24 +773,12 @@ shiny::shinyServer(function(input, output, session) {
     if (length(input$databases) == 0) {
       return(dplyr::tibble(Note = paste0("Datasources not selected")))
     }
-    data <- covariateValue %>% 
-      dplyr::filter(.data$cohortId == cohortId() & 
-                      .data$databaseId %in% input$databases) %>% 
-      dplyr::select(-cohortId)
-    
-    dataCounts <- data %>% 
-      dplyr::select(.data$databaseId) %>% 
-      dplyr::distinct() %>% 
-      dplyr::left_join((cohortCount %>% 
-                          dplyr::filter(.data$cohortId == cohortId()) %>% 
-                          dplyr::select(-cohortId)),
-                       by = "databaseId") %>% 
-      dplyr::arrange(.data$databaseId)
-    
+    dataCounts <- getCohortCountResult(dataSource = dataSource,
+                                        databaseIds = input$databases,
+                                        cohortIds = cohortId())
     if (nrow(dataCounts) == 0) {
       return(dplyr::tibble(Note = paste0("No data available for selected databases and cohorts")))
     }
-    
     if (!isTRUE(all.equal(dataCounts$databaseId %>% unique %>% sort(),
                           input$databases %>% unique() %>% sort()))) {
       return(dplyr::tibble(Note = paste0("There is no data for the databases:\n",
@@ -799,20 +787,29 @@ shiny::shinyServer(function(input, output, session) {
                                                 collapse = ",\n "), 
                                          ".\n Please unselect them.")))
     }
-    
     dataCountsWithSubjectCountBelowThreshold <- dataCounts %>% 
       dplyr::filter(.data$cohortSubjects < thresholdCohortSubjects)
-    
     if (nrow(dataCountsWithSubjectCountBelowThreshold) > 0) {
       return(dataCountsWithSubjectCountBelowThreshold %>% 
                dplyr::mutate(threshold = thresholdCohortSubjects) %>% 
-               dplyr::rename("These datasource(s) have less than threshold value. Please unselect the following in the Database selection option:"  = 
-                               .data$databaseId))
+               dplyr::rename("These datasource(s) have less than threshold value. Please unselect the following in the Database selection option:"  = .data$databaseId))
     }
+    
+    data <- getCovariateValueResult(dataSource = dataSource,
+                                    cohortIds = cohortId(),
+                                    databaseIds = input$databases,
+                                    minValue = 0.01,
+                                    maxValue = 1,
+                                    isTemporal = FALSE) %>% 
+      dplyr::select(-cohortId)
+
+    covariateReference <- getCovariateReference(dataSource = dataSource,
+                                                covariateIds = data$covariateId %>% unique(),
+                                                isTemporal = FALSE)
     
     if (input$charType == "Pretty") {
       data <- data %>% 
-        dplyr::inner_join(covariateRef, by = "covariateId") %>% 
+        dplyr::inner_join(covariateReference, by = "covariateId") %>% 
         dplyr::distinct()
       table <- list()
       characteristics <- list()
@@ -907,7 +904,7 @@ shiny::shinyServer(function(input, output, session) {
                            values_from = "mean" ,
                            names_sep = "_"
         ) %>%  
-        dplyr::left_join(covariateRef %>% 
+        dplyr::left_join(covariateReference %>% 
                            dplyr::select(.data$covariateId, 
                                          .data$covariateName, 
                                          .data$conceptId) %>% 
