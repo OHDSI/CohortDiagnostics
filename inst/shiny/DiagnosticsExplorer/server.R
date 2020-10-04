@@ -1,74 +1,9 @@
 library(magrittr)
 
-source("R/Private.R")
+source("R/DisplayFunctions.R")
 source("R/Tables.R")
 source("R/Plots.R")
 source("R/Results.R")
-
-truncateStringDef <- function(columns, maxChars) {
-  list(
-    targets = columns,
-    render = DT::JS(sprintf("function(data, type, row, meta) {\n
-      return type === 'display' && data != null && data.length > %s ?\n
-        '<span title=\"' + data + '\">' + data.substr(0, %s) + '...</span>' : data;\n
-     }", maxChars, maxChars))
-  )
-}
-
-minCellCountDef <- function(columns) {
-  list(
-    targets = columns,
-    render = DT::JS("function(data, type) {
-    if (type !== 'display' || isNaN(parseFloat(data))) return data;
-    if (data >= 0) return data.toString().replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,');
-    return '<' + Math.abs(data).toString().replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,');
-  }")
-  )
-}
-
-minCellPercentDef <- function(columns) {
-  list(
-    targets = columns,
-    render = DT::JS("function(data, type) {
-    if (type !== 'display' || isNaN(parseFloat(data))) return data;
-    if (data >= 0) return (100 * data).toFixed(1).replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,') + '%';
-    return '<' + Math.abs(100 * data).toFixed(1).replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,') + '%';
-  }")
-  )
-}
-
-minCellRealDef <- function(columns, digits = 1) {
-  list(
-    targets = columns,
-    render = DT::JS(sprintf("function(data, type) {
-    if (type !== 'display' || isNaN(parseFloat(data))) return data;
-    if (data >= 0) return data.toFixed(%s).replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,');
-    return '<' + Math.abs(data).toFixed(%s).replace(/(\\d)(?=(\\d{3})+(?!\\d))/g, '$1,');
-  }", digits, digits))
-  )
-}
-
-styleAbsColorBar <- function(maxValue, colorPositive, colorNegative, angle = 90) {
-  DT::JS(sprintf("isNaN(parseFloat(value))? '' : 'linear-gradient(%fdeg, transparent ' + (%f - Math.abs(value))/%f * 100 + '%%, ' + (value > 0 ? '%s ' : '%s ') + (%f - Math.abs(value))/%f * 100 + '%%)'", 
-                 angle, maxValue, maxValue, colorPositive, colorNegative, maxValue, maxValue))
-}
-
-camelCaseToTitleCase <- function(string) {
-  string <- gsub("([A-Z])", " \\1", string)
-  string <- gsub("([a-z])([0-9])", "\\1 \\2", string)
-  substr(string, 1, 1) <- toupper(substr(string, 1, 1))
-  return(string)
-}
-
-sumCounts <- function(counts) {
-  result <- sum(abs(counts))
-  if (any(counts < 0)) {
-    return(-result)
-  } else {
-    return(result)
-  }
-  
-}
 
 shiny::shinyServer(function(input, output, session) {
   
@@ -625,28 +560,16 @@ shiny::shinyServer(function(input, output, session) {
   output$inclusionRuleTable <- DT::renderDataTable(expr = {
     table <- getInclusionRuleStats(dataSource = dataSource,
                                    cohortIds = cohortId(),
-                                   databaseIds = input$databases) %>% 
-      dplyr::select(.data$ruleSequenceId, .data$ruleName, 
-                    .data$meetSubjects, .data$gainSubjects, 
-                    .data$remainSubjects, .data$totalSubjects, .data$databaseId) %>% 
-      dplyr::arrange(.data$ruleSequenceId)
-    
+                                   databaseIds = input$databases) 
     if (nrow(table) == 0) {
       return(dplyr::tibble(Note = paste0("No data available for selected databases and cohorts")))
     }
     
-    databaseIds <- getInclusionRuleStats(dataSource = dataSource,
-                                         databaseIds = input$databases) %>%
-      dplyr::select(.data$databaseId) %>% 
-      dplyr::distinct() %>% 
-      dplyr::arrange() %>% 
-      dplyr::pull(.data$databaseId)
+    databaseIds <- unique(table$databaseId)
     
-    if (!isTRUE(all.equal(databaseIds %>% sort(),
-                          input$databases %>% unique() %>% sort()))) {
+    if (!all(input$databases %in% databaseIds)) {
       return(dplyr::tibble(Note = paste0("There is no data for the databases:\n",
-                                         paste0(setdiff(input$databases %>% sort(), 
-                                                        databaseIds %>% sort()), 
+                                         paste0(setdiff(input$databases, databaseIds), 
                                                 collapse = ",\n "), 
                                          ".\n Please unselect them.")))
     }
@@ -692,6 +615,7 @@ shiny::shinyServer(function(input, output, session) {
                            escape = FALSE,
                            filter = c("bottom"),
                            class = "stripe nowrap compact")
+    
     # table <- DT::formatStyle(table = table,
     #                          columns = 2 + (1:(length(databaseIds) * 4)),
     #                          background = DT::styleColorBar(lims, "lightblue"),

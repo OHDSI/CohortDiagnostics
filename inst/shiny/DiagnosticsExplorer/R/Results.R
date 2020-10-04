@@ -207,6 +207,11 @@ getInclusionRuleStats <- function(dataSource = .GlobalEnv,
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   }
+  data <- data %>% 
+    dplyr::select(.data$ruleSequenceId, .data$ruleName, 
+                  .data$meetSubjects, .data$gainSubjects, 
+                  .data$remainSubjects, .data$totalSubjects, .data$databaseId) %>% 
+    dplyr::arrange(.data$ruleSequenceId)
   return(data)
 }
 
