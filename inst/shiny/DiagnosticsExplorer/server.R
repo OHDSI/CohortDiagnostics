@@ -558,6 +558,9 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$inclusionRuleTable <- DT::renderDataTable(expr = {
+  if (length(input$databases) == 0) {
+    return(dplyr::tibble(Note = paste0("Datasources not selected")))
+  }
     table <- getInclusionRuleStats(dataSource = dataSource,
                                    cohortIds = cohortId(),
                                    databaseIds = input$databases) 
@@ -626,18 +629,30 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$breakdownTable <- DT::renderDataTable(expr = {
+    if (length(input$databases) == 0) {
+      return(dplyr::tibble(Note = paste0("Datasources not selected")))
+    }
     data <- getIndexEventBreakdown(dataSource = dataSource,
                                    cohortIds = cohortId(),
-                                   databaseIds = input$databases) %>%
-      dplyr::select(-.data$cohortId) %>% 
-      dplyr::inner_join(concept, by = "conceptId") %>% 
-      dplyr::select(.data$conceptId, .data$conceptName,
-                    .data$databaseId, .data$conceptCount)
-    
+                                   databaseIds = input$databases)
     if (nrow(data) == 0) {
       return(dplyr::tibble(Note = paste0("No data available for selected databases and cohorts")))
     }
-    
+    nrowDataBeforeJoinToConcept <- nrow(data)
+    conceptReference <- getConceptReference(dataSource = dataSource, 
+                                            conceptIds = data$conceptId %>% unique())
+    data <- data %>%
+      dplyr::select(-.data$cohortId) %>% 
+      dplyr::inner_join(conceptReference, by = "conceptId") %>% 
+      dplyr::select(.data$conceptId, .data$conceptName,
+                    .data$databaseId, .data$conceptCount)
+    nrowDataAfterJoinToConcept <- nrow(data)
+    if (nrowDataBeforeJoinToConcept != nrowDataAfterJoinToConcept) {
+      return(dplyr::tibble(Error = paste0("Error: Concept Id mismatch 1. Please check vocabulary.")))
+    }
+    if (nrow(data) == 0) {
+      return(dplyr::tibble(Error = paste0("Error: Concept Id mismatch 2. Please check vocabulary.")))
+    }
     databaseIds <- unique(data$databaseId) %>% sort()
     table <- data[data$databaseId == databaseIds[1], ]
     table$databaseId <- NULL
@@ -678,6 +693,9 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$visitContextTable <- DT::renderDataTable(expr = {
+    if (length(input$databases) == 0) {
+      return(dplyr::tibble(Note = paste0("Datasources not selected")))
+    }
     data <- visitContext %>% 
       dplyr::filter(.data$cohortId == cohortId() & 
                       .data$databaseId %in% input$databases)
@@ -752,6 +770,9 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$characterizationTable <- DT::renderDataTable(expr = {
+    if (length(input$databases) == 0) {
+      return(dplyr::tibble(Note = paste0("Datasources not selected")))
+    }
     data <- covariateValue %>% 
       dplyr::filter(.data$cohortId == cohortId() & 
                       .data$databaseId %in% input$databases) %>% 
@@ -996,6 +1017,9 @@ shiny::shinyServer(function(input, output, session) {
   # })
   
   output$temporalCharacterizationTable <- DT::renderDataTable(expr = {
+    if (length(input$database) == 0) {
+      return(dplyr::tibble(Note = paste0("Datasources not selected")))
+    }
     table <- temporalCovariateValue %>% 
       dplyr::filter(.data$cohortId == cohortId(),
                     .data$databaseId == input$database,

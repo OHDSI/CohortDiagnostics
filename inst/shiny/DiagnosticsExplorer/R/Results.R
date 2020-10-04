@@ -733,13 +733,13 @@ getConceptReference <- function(dataSource = .GlobalEnv,
   checkmate::reportAssertions(collection = errorMessage)
   if (is(dataSource, "environment")) {
     data <- get("cohort", envir = dataSource) %>% 
-      dplyr::filter(!is.na(invalidReason)) %>% 
+      dplyr::filter(!is.na(.data$invalidReason)) %>% 
       dplyr::filter(.data$conceptId %in% conceptIds)
   } else {
     sql <- "SELECT *
               FROM  @results_database_schema.concept
               WHERE invalid_reason IS NULL 
-              {@conceptIds == } ? {}:{AND concept_id IN ('@conceptIds')};"
+              {@conceptIds == } ? {}:{AND concept_id IN (@conceptIds)};"
     data <- renderTranslateQuerySql(connection = dataSource$connection,
                                     sql = sql,
                                     results_database_schema = dataSource$resultsDatabaseSchema,
