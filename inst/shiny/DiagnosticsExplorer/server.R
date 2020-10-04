@@ -1168,7 +1168,8 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::distinct()
     validate(need(nrow(combisOfTargetComparator) > 0, paste0("Target cohort and comparator cannot be the same")))
     
-    data <- getCohortOverlapResult(targetCohortIds = combisOfTargetComparator$targetCohortId, 
+    data <- getCohortOverlapResult(dataSource = dataSource, 
+                                   targetCohortIds = combisOfTargetComparator$targetCohortId, 
                                    comparatorCohortIds = combisOfTargetComparator$comparatorCohortId, 
                                    databaseIds = input$databases)
     validate(need(!is.null(data), paste0("No cohort overlap data for this combination")))

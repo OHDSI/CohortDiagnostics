@@ -367,16 +367,16 @@ getCohortOverlapResult <- function(dataSource = .GlobalEnv,
       tidyr::tibble()
   } else {
     sql <-   "SELECT *
-              FROM  @results_database_schema.@table
-              WHERE target_cohort_id in (@targetCohortIds)
-              AND comparator_cohort_id in (@comparatorCohortIds)
-            	AND database_id in c('@databaseIds');"
+              FROM  @results_database_schema.cohort_overlap
+              WHERE target_cohort_id in (@targetCohortId)
+              AND comparator_cohort_id in (@comparatorCohortId)
+            	AND database_id in (@databaseId);"
     data <- renderTranslateQuerySql(connection = dataSource$connection,
                                     sql = sql,
                                     results_database_schema = dataSource$resultsDatabaseSchema,
                                     targetCohortId = targetCohortIds,
                                     comparatorCohortId = comparatorCohortIds,
-                                    databaseId = databaseIds, 
+                                    databaseId = quoteLiterals(databaseIds), 
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } 
