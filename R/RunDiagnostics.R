@@ -46,7 +46,8 @@
 #'                                    into CSV. Instead please use '' (empty string) to represent absence of data. 
 #'                                    The literature_review field is expected to be a html link to page that contains
 #'                                    resources related to literature review for the phenotype, and will be used
-#'                                    to create link-out object.
+#'                                    to create link-out object. This csv file is expected to be encoded in either 
+#'                                    ASCII or UTF-8, if not, an error message will be displayed and process stopped.
 #' @param inclusionStatisticsFolder   The folder where the inclusion rule statistics are stored. Can be
 #'                                    left NULL if \code{runInclusionStatistics = FALSE}.
 #' @param exportFolder                The folder where the output will be exported to. If this folder
@@ -727,6 +728,23 @@ loadAndExportPhenotypeDescription <- function(packageName,
   pathToCsv <- system.file(phenotypeDescriptionFile, package = packageName)
   if (file.exists(pathToCsv)) {
     ParallelLogger::logInfo("Found phenotype description file. Loading.")
+    
+    guessedEncoding <- readr::guess_encoding(file = pathToCsv, 
+                                             n_max = min(1e7)) %>% 
+      dplyr::mutate(message = paste0(.data$encoding, " (", scales::percent(.data$confidence), ")"))
+    
+    encodingMessage <- paste0("Please check the encoding of the cohorts to create file at:", 
+                              pathToCsv,
+                              ".\nExpecting either 'ASCII' or 'UTF-8'. Found\n  ",
+                              paste0(guessedEncoding$message, collapse = "\n  "))
+    
+    if (nrow(guessedEncoding %>% 
+             dplyr::filter(.data$confidence == 1,
+                           .data$encoding %in% c('ASCII', 'UTF-8'))) == 0) {
+      ParallelLogger::logError(encodingMessage)
+      stop()
+    }
+    
     phenotypeDescription <- readr::read_csv(file = pathToCsv, 
                                             col_types = readr::cols(),
                                             na = 'NA',

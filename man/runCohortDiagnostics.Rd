@@ -49,7 +49,9 @@ runCohortDiagnostics(
 \item{cohortToCreateFile}{The location of the cohortToCreate file within the package. Is ignored if 
 \code{baseUrl} and \code{cohortSetReference} have been specified. The
 cohortToCreateFile must be .csv file that is expected to be read into 
-a dataframe object identical to requirements for \code{cohortSetReference} argument.}
+a dataframe object identical to requirements for \code{cohortSetReference} argument. 
+This csv file is expected to be encoded in either ASCII or UTF-8, if not, an 
+error message will be displayed and process stopped.}
 
 \item{baseUrl}{The base URL for the WebApi instance, for example:
 "http://server.org:80/WebAPI". Can be left NULL if 
@@ -68,7 +70,8 @@ names are in snake_case. Also, character fields should not have 'NA' in it.
 into CSV. Instead please use '' (empty string) to represent absence of data. 
 The literature_review field is expected to be a html link to page that contains
 resources related to literature review for the phenotype, and will be used
-to create link-out object.}
+to create link-out object. This csv file is expected to be encoded in either 
+ASCII or UTF-8, if not, an error message will be displayed and process stopped.}
 
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the

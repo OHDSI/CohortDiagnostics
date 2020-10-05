@@ -69,11 +69,26 @@ getCohortsJsonAndSqlFromPackage <- function(packageName = packageName,
                               extension = "csv", 
                               add = errorMessage)
   
+  guessedEncoding <- readr::guess_encoding(file = pathToCsv, 
+                                           n_max = min(1e7)) %>% 
+    dplyr::mutate(message = paste0(.data$encoding, " (", scales::percent(.data$confidence), ")"))
+  
+  encodingMessage <- paste0("Please check the encoding of the cohorts to create file at:", 
+                    pathToCsv,
+                    ".\nExpecting either 'ASCII' or 'UTF-8'. Found\n  ",
+                    paste0(guessedEncoding$message, collapse = "\n  "))
+  
+  if (nrow(guessedEncoding %>% 
+           dplyr::filter(.data$confidence == 1,
+                         .data$encoding %in% c('ASCII', 'UTF-8'))) == 0) {
+    ParallelLogger::logError(encodingMessage)
+    stop()
+  }
   cohorts <- readr::read_csv(pathToCsv, 
                              col_types = readr::cols(),
                              guess_max = min(1e7))
   
-  # Adding some backwards compatiblity with v1:
+  # Adding some backwards compatibility with v1:
   if (!"name" %in% colnames(cohorts)) {
     cohorts <- cohorts %>%
       mutate(name = .data$cohortId)
@@ -592,7 +607,7 @@ processInclusionStats <- function(inclusion,
                           dplyr::select(.data$ruleSequence, .data$personCount, .data$gainCount, .data$personTotal),
                         by = "ruleSequence") %>%
       dplyr::mutate(remain = 0)
-
+    
     inclusionResults <- inclusionResults %>% 
       dplyr::filter(.data$modeId == 0)
     mask <- 0
@@ -814,17 +829,17 @@ createTempInclusionStatsTables <- function(connection, oracleTempSchema, cohorts
                                    oracleTempSchema = oracleTempSchema,
                                    camelCaseToSnakeCase = TRUE)
   } else {
-  inclusionRules <- data.frame(cohortDefinitionId = as.double(),
-                               ruleSequence = as.integer(),
-                               name = as.character())
-  DatabaseConnector::insertTable(connection = connection,
-                                 tableName = "#cohort_inclusion",
-                                 data = inclusionRules,
-                                 dropTableIfExists = TRUE,
-                                 createTable = TRUE,
-                                 tempTable = TRUE,
-                                 oracleTempSchema = oracleTempSchema,
-                                 camelCaseToSnakeCase = TRUE)
+    inclusionRules <- data.frame(cohortDefinitionId = as.double(),
+                                 ruleSequence = as.integer(),
+                                 name = as.character())
+    DatabaseConnector::insertTable(connection = connection,
+                                   tableName = "#cohort_inclusion",
+                                   data = inclusionRules,
+                                   dropTableIfExists = TRUE,
+                                   createTable = TRUE,
+                                   tempTable = TRUE,
+                                   oracleTempSchema = oracleTempSchema,
+                                   camelCaseToSnakeCase = TRUE)
   }
 }
 
