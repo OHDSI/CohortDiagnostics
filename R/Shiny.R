@@ -32,10 +32,13 @@
 launchDiagnosticsExplorer <- function(dataFolder = "data", 
                                       connectionDetails = NULL,
                                       resultsDatabaseSchema = NULL,
-                                      cdmDatabaseSchema = NULL,
+                                      vocabularyDatabaseSchema = NULL,
                                       runOverNetwork = FALSE,
                                       port = 80,
                                       launch.browser = FALSE) {
+  if (!is.null(connectionDetails) && connectionDetails$dbms != "postgresql") 
+    stop("Shiny application can only run against a Postgres database")
+  
   ensure_installed("shiny")
   ensure_installed("shinydashboard")
   ensure_installed("shinyWidgets")
@@ -63,7 +66,7 @@ launchDiagnosticsExplorer <- function(dataFolder = "data",
   }
   shinySettings <- list(connectionDetails = connectionDetails,
                         resultsDatabaseSchema = resultsDatabaseSchema,
-                        cdmDatabaseSchema = cdmDatabaseSchema,
+                        vocabularyDatabaseSchema = vocabularyDatabaseSchema,
                         dataFolder = dataFolder)
   .GlobalEnv$shinySettings <- shinySettings
   on.exit(rm("shinySettings", envir = .GlobalEnv))

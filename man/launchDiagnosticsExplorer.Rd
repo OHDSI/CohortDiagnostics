@@ -8,7 +8,7 @@ launchDiagnosticsExplorer(
   dataFolder = "data",
   connectionDetails = NULL,
   resultsDatabaseSchema = NULL,
-  cdmDatabaseSchema = NULL,
+  vocabularyDatabaseSchema = NULL,
   runOverNetwork = FALSE,
   port = 80,
   launch.browser = FALSE
