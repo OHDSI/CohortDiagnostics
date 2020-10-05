@@ -394,7 +394,7 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "cohortOverlap",
-    htmlOutput(outputId = "cohortOverlapSelectedCohort"),
+    shiny::uiOutput(outputId = "cohortOverlapSelectedCohort"),
     shinydashboard::box(
       title = "Cohort Overlap (Subjects)",
       width = NULL,
