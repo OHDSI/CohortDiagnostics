@@ -4,6 +4,12 @@ source("R/Tables.R")
 source("R/Plots.R")
 source("R/Results.R")
 
+# shinySettings <- list(connectionDetails = DatabaseConnector::createConnectionDetails(dbms = "postgresql",
+#                                              server = "localhost/ohdsi",
+#                                              user = "postgres",
+#                                              password = Sys.getenv("pwPostgres")),
+#                       resultsDatabaseSchema =  "phenotype_library",
+#                       vocabularyDatabaseSchema =  "phenotype_library")
 # shinySettings <- list(dataFolder = "s:/examplePackageOutput")
 
 # Settings when running on server:
@@ -118,6 +124,9 @@ if (databaseMode) {
     if (table %in% resultsTablesOnServer && !exists(SqlRender::snakeCaseToCamelCase(table))) {
       assign(SqlRender::snakeCaseToCamelCase(table), dplyr::tibble())
     }
+  }
+  if (nrow(phenotypeDescription) == 0) {
+    rm(phenotypeDescription)
   }
   dataSource <- createDatabaseDataSource(connection = connectionPool,
                                          resultsDatabaseSchema = resultsDatabaseSchema,

@@ -310,7 +310,7 @@ shiny::shinyServer(function(input, output, session) {
                                          ".\n Please unselect them.")))
     }
     
-    maxConceptSubjects <- max(data$conceptSubjects, na.rm = TRUE)
+    maxCount <- max(data$conceptCount, na.rm = TRUE)
     
     if (input$includedType == "Source Concepts") {
       table <- data %>%
@@ -355,7 +355,7 @@ shiny::shinyServer(function(input, output, session) {
             lapply(databaseIds, th, colspan = 2, class = "dt-center")
           ),
           tr(
-            lapply(rep(c("Counts", "Subjects"), length(databaseIds)), th)
+            lapply(rep(c("Subjects", "Count"), length(databaseIds)), th)
           )
         )
       ))
@@ -370,7 +370,7 @@ shiny::shinyServer(function(input, output, session) {
                      columnDefs = list(truncateStringDef(1, 100),
                                        minCellCountDef(3 + (1:(length(databaseIds) * 2)))))
       
-      table <- DT::datatable(table,
+      dataTable <- DT::datatable(table,
                              colnames = colnames(table),
                              options = options,
                              rownames = FALSE, 
@@ -379,12 +379,12 @@ shiny::shinyServer(function(input, output, session) {
                              filter = c("bottom"),
                              class = "stripe nowrap compact")
       
-      table <- DT::formatStyle(table = table,
-                               columns =  4 + (1:(length(databaseIds) * 2)),
-                               background = DT::styleColorBar(c(0,maxConceptSubjects), "lightblue"),
-                               backgroundSize = "98% 88%",
-                               backgroundRepeat = "no-repeat",
-                               backgroundPosition = "center")
+      dataTable <- DT::formatStyle(table = dataTable,
+                                   columns =  4 + (1:(length(databaseIds) * 2)),
+                                   background = DT::styleColorBar(c(0, maxCount), "lightblue"),
+                                   backgroundSize = "98% 88%",
+                                   backgroundRepeat = "no-repeat",
+                                   backgroundPosition = "center")
     } else {
       table <- data %>%
         dplyr::select(.data$databaseId, 
@@ -430,7 +430,7 @@ shiny::shinyServer(function(input, output, session) {
             lapply(databaseIds, th, colspan = 2, class = "dt-center")
           ),
           tr(
-            lapply(rep(c("Counts", "Subjects"), length(databaseIds)), th)
+            lapply(rep(c("Subjects", "Counts"), length(databaseIds)), th)
           )
         )
       ))
@@ -444,23 +444,23 @@ shiny::shinyServer(function(input, output, session) {
                      columnDefs = list(truncateStringDef(1, 100),
                                        minCellCountDef(2 + (1:(length(databaseIds) * 2)))))
       
-      table <- DT::datatable(table,
-                             options = options,
-                             colnames = colnames(table),
-                             rownames = FALSE,
-                             container = sketch,
-                             escape = FALSE,
-                             filter = c("bottom"),
-                             class = "stripe nowrap compact")
+      dataTable <- DT::datatable(table,
+                                 options = options,
+                                 colnames = colnames(table),
+                                 rownames = FALSE,
+                                 container = sketch,
+                                 escape = FALSE,
+                                 filter = c("bottom"),
+                                 class = "stripe nowrap compact")
       
-      table <- DT::formatStyle(table = table,
-                               columns =  3 + (1:(length(databaseIds)*2)),
-                               background = DT::styleColorBar(c(0, maxConceptSubjects), "lightblue"),
-                               backgroundSize = "98% 88%",
-                               backgroundRepeat = "no-repeat",
-                               backgroundPosition = "center")
+      dataTable <- DT::formatStyle(table = dataTable,
+                                   columns =  3 + (1:(length(databaseIds)*2)),
+                                   background = DT::styleColorBar(c(0, maxCount), "lightblue"),
+                                   backgroundSize = "98% 88%",
+                                   backgroundRepeat = "no-repeat",
+                                   backgroundPosition = "center")
     }
-    return(table)
+    return(dataTable)
   }, server = TRUE)
   
   output$orphanConceptsTable <- DT::renderDataTable(expr = {
@@ -484,7 +484,7 @@ shiny::shinyServer(function(input, output, session) {
                                          ".\n Please unselect them.")))
     }
     
-    maxConceptSubjects <- max(data$conceptSubjects, na.rm = TRUE)
+    maxCount <- max(data$conceptCount, na.rm = TRUE)
     
     table <- data %>%
       dplyr::select(.data$databaseId, 
@@ -532,7 +532,7 @@ shiny::shinyServer(function(input, output, session) {
           lapply(databaseIds, th, colspan = 2, class = "dt-center")
         ),
         tr(
-          lapply(rep(c("Counts", "Subjects"), length(databaseIds)), th)
+          lapply(rep(c("Subjects", "Counts"), length(databaseIds)), th)
         )
       )
     ))
@@ -557,7 +557,7 @@ shiny::shinyServer(function(input, output, session) {
     
     table <- DT::formatStyle(table = table,
                              columns =  4 + (1:(length(databaseIds)*2)),
-                             background = DT::styleColorBar(c(0, maxConceptSubjects), "lightblue"),
+                             background = DT::styleColorBar(c(0, maxCount), "lightblue"),
                              backgroundSize = "98% 88%",
                              backgroundRepeat = "no-repeat",
                              backgroundPosition = "center")
@@ -641,6 +641,7 @@ shiny::shinyServer(function(input, output, session) {
     if (nrow(data) == 0) {
       return(dplyr::tibble(Note = paste0("No data available for selected databases and cohorts")))
     }
+    maxCount <- max(data$conceptCount, na.rm = TRUE)
     databaseIds <- unique(data$databaseId) %>% sort()
     data <- data %>%
       dplyr::select(.data$conceptId, .data$conceptName, .data$databaseId, .data$conceptCount)
@@ -671,14 +672,12 @@ shiny::shinyServer(function(input, output, session) {
                                escape = FALSE,
                                filter = c("bottom"),
                                class = "stripe nowrap compact")
-    for (col in 3:ncol(table)) {
-      dataTable <- DT::formatStyle(table = dataTable,
-                                   columns = col,
-                                   background = DT::styleColorBar(c(0, max(table[, col], na.rm = TRUE)), "lightblue"),
-                                   backgroundSize = "98% 88%",
-                                   backgroundRepeat = "no-repeat",
-                                   backgroundPosition = "center")
-    }
+    dataTable <- DT::formatStyle(table = dataTable,
+                                 columns = 3:ncol(table),
+                                 background = DT::styleColorBar(c(0, maxCount), "lightblue"),
+                                 backgroundSize = "98% 88%",
+                                 backgroundRepeat = "no-repeat",
+                                 backgroundPosition = "center")
     return(dataTable)
   }, server = TRUE)
   

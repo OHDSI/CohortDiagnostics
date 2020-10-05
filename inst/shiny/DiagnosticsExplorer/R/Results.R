@@ -329,6 +329,7 @@ getIncludedConceptResult <- function(dataSource = .GlobalEnv,
             FROM  @results_database_schema.included_source_concept
             INNER JOIN  @results_database_schema.concept_sets
               ON included_source_concept.cohort_id = concept_sets.cohort_id
+                AND included_source_concept.concept_set_id = concept_sets.concept_set_id
             INNER JOIN  @vocabulary_database_schema.concept source_concept
               ON included_source_concept.source_concept_id = source_concept.concept_id
             INNER JOIN  @vocabulary_database_schema.concept standard_concept
@@ -375,6 +376,7 @@ getOrphanConceptResult <- function(dataSource = .GlobalEnv,
             FROM  @results_database_schema.orphan_concept
             INNER JOIN  @results_database_schema.concept_sets
               ON orphan_concept.cohort_id = concept_sets.cohort_id
+                AND orphan_concept.concept_set_id = concept_sets.concept_set_id
             INNER JOIN  @vocabulary_database_schema.concept standard_concept
               ON orphan_concept.concept_id = standard_concept.concept_id
             WHERE orphan_concept.cohort_id = @cohort_id
