@@ -8,7 +8,7 @@ launchDiagnosticsExplorer(
   dataFolder = "data",
   connectionDetails = NULL,
   resultsDatabaseSchema = NULL,
-  vocabularyDatabaseSchema = NULL,
+  vocabularyDatabaseSchema = resultsDatabaseSchema,
   runOverNetwork = FALSE,
   port = 80,
   launch.browser = FALSE
@@ -20,7 +20,14 @@ the \code{\link{preMergeDiagnosticsFiles}} function to generate this file.}
 
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-DatabaseConnector package.}
+DatabaseConnector package, specifying how to connect to the server where
+the CohortDiagnostics results have been uploaded using the 
+\code{\link{uploadResults}} function.}
+
+\item{resultsDatabaseSchema}{The schema on the database server where the CohortDiagnostics results 
+have been uploaded.}
+
+\item{vocabularyDatabaseSchema}{The schema on the database server where the vocbulary tables are located.}
 
 \item{runOverNetwork}{(optional) Do you want the app to run over your network?}
 

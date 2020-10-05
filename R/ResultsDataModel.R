@@ -136,6 +136,9 @@ appendNewRows <- function(data, newData, tableName, specifications = getResultsD
 
 
 #' Create the results data model tables on a database server.
+#' 
+#' @details 
+#' Only PostgreSQL servers are supported.
 #'
 #' @template Connection 
 #' @param schema         The schema on the postgres server where the tables will be created.

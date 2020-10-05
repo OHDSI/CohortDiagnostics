@@ -23,3 +23,6 @@ provided.}
 \description{
 Create the results data model tables on a database server.
 }
+\details{
+Only PostgreSQL servers are supported.
+}
