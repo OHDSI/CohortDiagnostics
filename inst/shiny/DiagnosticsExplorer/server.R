@@ -684,42 +684,33 @@ shiny::shinyServer(function(input, output, session) {
   
   output$visitContextTable <- DT::renderDataTable(expr = {
     validate(need(length(input$databases) > 0, "No data sources chosen"))
-    data <- visitContext %>% 
-      dplyr::filter(.data$cohortId == cohortId() & 
-                      .data$databaseId %in% input$databases)
-    
+    data <- getVisitContextResults(dataSource = dataSource,
+                                   cohortIds = cohortId(), 
+                                   databaseIds = input$databases)
     if (nrow(data) == 0) {
       return(dplyr::tibble(Note = paste0("No data available for selected databases and cohort")))
     }
     
-    databaseIds <- visitContext %>%
-      dplyr::filter(.data$databaseId %in% input$databases) %>% 
-      dplyr::select(.data$databaseId) %>% 
-      dplyr::distinct() %>% 
-      dplyr::arrange() %>% 
-      dplyr::pull(.data$databaseId)
+    databaseIds <- sort(unique(data$databaseId))
     
-    if (!isTRUE(all.equal(databaseIds %>% sort(),
-                          input$databases %>% unique() %>% sort()))) {
+    if (!all(input$databases %in% databaseIds)) {
       return(dplyr::tibble(Note = paste0("There is no data for the databases:\n",
-                                         paste0(setdiff(input$databases, 
-                                                        databaseIds), 
-                                                collapse = ", \n"), 
+                                         paste0(setdiff(input$databases, databaseIds), 
+                                                collapse = ",\n "), 
                                          ".\n Please unselect them.")))
     }
     
-    visitContextReference <-  tidyr::crossing(dplyr::tibble(visitContext = visitContext$visitContext %>% 
-                                                              unique()),
-                                              dplyr::tibble(databaseId = databaseIds))
-    visitContextReference <- visitContextReference %>% 
-      dplyr::mutate(visitContext = replace(visitContext, 1:4, c("Before", "During visit", "On visit start", "After")))
+    maxSubjects <- max(data$subjects)
+    visitContextReference <-  expand.grid(visitContext = c("Before", "During visit", "On visit start", "After"), 
+                                          visitConceptName = unique(data$visitConceptName),
+                                          databaseId = databaseIds)
     
     table <- visitContextReference %>% 
-      dplyr::left_join(data) %>% 
-      dplyr::left_join(concept, by = c("visitConceptId" = "conceptId")) %>% 
-      dplyr::select(.data$conceptName, .data$visitContext, .data$subjects, .data$databaseId) %>% 
+      dplyr::left_join(data, by = c("visitConceptName", "visitContext", "databaseId")) %>% 
+      dplyr::select(.data$visitConceptName, .data$visitContext, .data$subjects, .data$databaseId) %>% 
       dplyr::mutate(visitContext = paste0(.data$databaseId, "_", .data$visitContext)) %>% 
-      tidyr::pivot_wider(id_cols = c(.data$conceptName),
+      dplyr::select(-.data$databaseId) %>%
+      tidyr::pivot_wider(id_cols = c(.data$visitConceptName),
                          names_from = .data$visitContext,
                          values_from = .data$subjects)
     
@@ -731,7 +722,7 @@ shiny::shinyServer(function(input, output, session) {
           lapply(databaseIds, th, colspan = 4, class = "dt-center")
         ),
         tr(
-          lapply(rep(c("Before ", "During Visit","On Visit Start", "After"), length(databaseIds)), th)
+          lapply(rep(c("Visits Before", "Visits Ongoing", "Starting Simultateous", "Visits After"), length(databaseIds)), th)
         )
       )
     ))
@@ -743,7 +734,7 @@ shiny::shinyServer(function(input, output, session) {
                    lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
-                   columnDefs = list(truncateStringDef(1, 100),
+                   columnDefs = list(truncateStringDef(1, 30),
                                      minCellCountDef(1:(length(databaseIds) * 4))))
     
     table <- DT::datatable(table,
@@ -754,6 +745,12 @@ shiny::shinyServer(function(input, output, session) {
                            escape = TRUE,
                            filter = c("bottom"))
     
+    table <- DT::formatStyle(table = table,
+                             columns = 1:(length(databaseIds) * 4) + 1,
+                             background = DT::styleColorBar(c(0, maxSubjects), "lightblue"),
+                             backgroundSize = "98% 88%",
+                             backgroundRepeat = "no-repeat",
+                             backgroundPosition = "center")
     
   }, server = TRUE)
   
@@ -1257,6 +1254,10 @@ shiny::shinyServer(function(input, output, session) {
   
   shiny::observeEvent(input$indexEventBreakdownInfo, {
     showInfoBox("Index Event Breakdown", "html/indexEventBreakdown.html")
+  })
+  
+  shiny::observeEvent(input$visitContextInfo, {
+    showInfoBox("Visit Context", "html/visitContext.html")
   })
   
   shiny::observeEvent(input$cohortCharacterizationInfo, {
