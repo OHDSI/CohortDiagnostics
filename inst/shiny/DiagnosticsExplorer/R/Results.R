@@ -232,15 +232,23 @@ getIndexEventBreakdown <- function(dataSource = .GlobalEnv,
       data <- data %>% 
         dplyr::filter(.data$cohortId %in% !!cohortIds) 
     }
+    data <- data %>%
+      dplyr::inner_join(dplyr::select(get("concept", envir = dataSource),
+                                      .data$conceptId,
+                                      .data$conceptName),
+                        by = c("conceptId"))
   } else {
-    sql <- "SELECT *
-    FROM  @resultsDatabaseSchema.index_event_breakdown
-    WHERE database_id in (@database_id)
-    AND cohort_id in (@cohort_ids)
-    ;"
+    sql <- "SELECT index_event_breakdown.*,
+              standard_concept.concept_name AS concept_name
+            FROM  @results_database_schema.index_event_breakdown
+            INNER JOIN  @vocabulary_database_schema.concept standard_concept
+              ON index_event_breakdown.concept_id = standard_concept.concept_id
+            WHERE database_id in (@database_id)
+              AND cohort_id in (@cohort_ids);"
     data <- renderTranslateQuerySql(connection = dataSource$connection,
                                     sql = sql,
-                                    resultsDatabaseSchema = dataSource$resultsDatabaseSchema,
+                                    results_database_schema = dataSource$resultsDatabaseSchema,
+                                    vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
                                     cohort_ids = cohortIds,
                                     database_id = quoteLiterals(databaseIds), 
                                     snakeCaseToCamelCase = TRUE) %>% 

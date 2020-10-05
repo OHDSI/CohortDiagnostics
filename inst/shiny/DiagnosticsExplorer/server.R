@@ -107,6 +107,8 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$cohortCountsTable <- DT::renderDataTable(expr = {
+    validate(need(length(input$databases) > 0, "No data sources chosen"))
+    
     data <- getCohortCountResult(dataSource = dataSource,
                                  databaseIds = input$databases) %>%
       dplyr::left_join(cohort, by = "cohortId") %>% 
@@ -213,6 +215,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$incidenceRatePlot <- ggiraph::renderggiraph(expr = {
     validate(need(length(input$databases) > 0, "No data sources chosen"))
+    
     stratifyByAge <- "Age" %in% input$irStratification
     stratifyByGender <- "Gender" %in% input$irStratification
     stratifyByCalendarYear <- "Calendar Year" %in% input$irStratification
@@ -287,6 +290,8 @@ shiny::shinyServer(function(input, output, session) {
   
   
   output$includedConceptsTable <- DT::renderDataTable(expr = {
+    validate(need(length(input$databases) > 0, "No data sources chosen"))
+    
     data <- getIncludedConceptResult(dataSource = dataSource,
                                      cohortId = cohortId(),
                                      databaseIds = input$databases)
@@ -459,6 +464,8 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$orphanConceptsTable <- DT::renderDataTable(expr = {
+    validate(need(length(input$databases) > 0, "No data sources chosen"))
+    
     data <- getOrphanConceptResult(dataSource = dataSource,
                                    cohortId = cohortId(),
                                    databaseIds = input$databases)
@@ -558,9 +565,7 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$inclusionRuleTable <- DT::renderDataTable(expr = {
-    if (length(input$databases) == 0) {
-      return(dplyr::tibble(Note = paste0("Datasources not selected")))
-    }
+    validate(need(length(input$databases) > 0, "No data sources chosen"))
     table <- getInclusionRuleStats(dataSource = dataSource,
                                    cohortIds = cohortId(),
                                    databaseIds = input$databases) 
@@ -629,31 +634,16 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$breakdownTable <- DT::renderDataTable(expr = {
-    if (length(input$databases) == 0) {
-      return(dplyr::tibble(Note = paste0("Datasources not selected")))
-    }
+    validate(need(length(input$databases) > 0, "No data sources chosen"))
     data <- getIndexEventBreakdown(dataSource = dataSource,
                                    cohortIds = cohortId(),
                                    databaseIds = input$databases)
     if (nrow(data) == 0) {
       return(dplyr::tibble(Note = paste0("No data available for selected databases and cohorts")))
     }
-    nrowDataBeforeJoinToConcept <- nrow(data)
-    conceptReference <- getConceptReference(dataSource = dataSource, 
-                                            conceptIds = data$conceptId %>% unique())
-    data <- data %>%
-      dplyr::select(-.data$cohortId) %>% 
-      dplyr::inner_join(conceptReference, by = "conceptId") %>% 
-      dplyr::select(.data$conceptId, .data$conceptName,
-                    .data$databaseId, .data$conceptCount)
-    nrowDataAfterJoinToConcept <- nrow(data)
-    if (nrowDataBeforeJoinToConcept != nrowDataAfterJoinToConcept) {
-      return(dplyr::tibble(Error = paste0("Error: Concept Id mismatch 1. Please check vocabulary.")))
-    }
-    if (nrow(data) == 0) {
-      return(dplyr::tibble(Error = paste0("Error: Concept Id mismatch 2. Please check vocabulary.")))
-    }
     databaseIds <- unique(data$databaseId) %>% sort()
+    data <- data %>%
+      dplyr::select(.data$conceptId, .data$conceptName, .data$databaseId, .data$conceptCount)
     table <- data[data$databaseId == databaseIds[1], ]
     table$databaseId <- NULL
     colnames(table)[3] <- databaseIds[1]
