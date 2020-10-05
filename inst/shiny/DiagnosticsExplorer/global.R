@@ -51,18 +51,29 @@ if (!exists("shinySettings")) {
   }
 } else {
   writeLines("Using settings provided by user")
-  databaseMode <- !is.null(shinySettings$server)
+  databaseMode <- !is.null(shinySettings$connectionDetails)
   if (databaseMode) {
-    connectionPool <- pool::dbPool(
-      drv = DatabaseConnector::DatabaseConnectorDriver(),
-      dbms = "postgresql",
-      server = paste(shinySettings$server, shinySettings$database, sep = "/"),
-      port = shinySettings$port,
-      user = shinySettings$user,
-      password = shinySettings$password
-    )
-    resultsDatabaseSchema <- defaultResultsSchema
-    vocabularyDatabaseSchema <- defaultVocabularySchema
+    connectionDetails <- shinySettings$connectionDetails
+    if (is(connectionDetails$server, "function")) {
+      connectionPool <- pool::dbPool(drv = DatabaseConnector::DatabaseConnectorDriver(),
+                                     dbms = "postgresql",
+                                     server = connectionDetails$server(),
+                                     port = connectionDetails$port(),
+                                     user = connectionDetails$user(),
+                                     password = connectionDetails$password(),
+                                     connectionString = connectionDetails$connectionString())
+    } else {
+      # For backwards compatibility with older versions of DatabaseConnector:
+      connectionPool <- pool::dbPool(drv = DatabaseConnector::DatabaseConnectorDriver(),
+                                     dbms = "postgresql",
+                                     server = connectionDetails$server,
+                                     port = connectionDetails$port,
+                                     user = connectionDetails$user,
+                                     password = connectionDetails$password,
+                                     connectionString = connectionDetails$connectionString)
+    }
+    resultsDatabaseSchema <- shinySettings$resultsDatabaseSchema
+    vocabularyDatabaseSchema <- shinySettings$vocabularyDatabaseSchema
   } else {
     dataFolder <- shinySettings$dataFolder
   }
@@ -85,8 +96,12 @@ if (databaseMode) {
   
   loadResultsTable <- function(tableName, required = FALSE) {
     if (required || tableName %in% resultsTablesOnServer) {
-      table <- DatabaseConnector::dbReadTable(connectionPool, 
-                                              paste(resultsDatabaseSchema, tableName, sep = "."))
+      tryCatch({
+        table <- DatabaseConnector::dbReadTable(connectionPool, 
+                                                paste(resultsDatabaseSchema, tableName, sep = "."))
+      }, error = function(err) {
+        stop("Error reading from ", paste(resultsDatabaseSchema, tableName, sep = "."), ": ", err$message)
+      })
       colnames(table) <- SqlRender::snakeCaseToCamelCase(colnames(table))
       return(table)
     }

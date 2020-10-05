@@ -33,11 +33,7 @@ sidebarMenu <-
   shinydashboard::sidebarMenu(
     id = "tabs",
     if (exists("phenotypeDescription") && exists("cohort"))
-      addInfo(
-        shinydashboard::menuItem(text = "Description", tabName = "description"),
-        infoId = "descriptionInfo"
-      ),
-    
+      shinydashboard::menuItem(text = "Description", tabName = "description"),
     if (exists("cohortCount"))
       addInfo(
         item = shinydashboard::menuItem(text = "Cohort Counts", tabName = "cohortCounts"),
@@ -410,7 +406,7 @@ bodyTabItems <- shinydashboard::tabItems(
         selected = "Percentages",
         inline = TRUE
       ),
-      ggiraph::ggiraphOutput("overlapPlot", width = "100%", height = 800)
+      ggiraph::ggiraphOutput("overlapPlot", width = "100%", height = 600)
     )
     # shinydashboard::box(
     #   title = "Cohort Overlap Statistics",

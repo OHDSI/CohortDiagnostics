@@ -61,20 +61,21 @@ plotTimeDistribution <- function(data,
     ggplot2::geom_boxplot(stat = "identity", 
                           fill = rgb(0, 0, 0.8, alpha = 0.25), 
                           size = 0.2) +
-    ggplot2::facet_grid(rows = Database~TimeMeasure, scales = "free") +
+    ggplot2::facet_grid(rows = Database~TimeMeasure, scales = "free", switch = "y") +
     ggplot2::coord_flip() +
     ggplot2::theme(panel.grid.major.y = ggplot2::element_blank(),
                    panel.grid.minor.y = ggplot2::element_blank(),
                    axis.title.y = ggplot2::element_blank(),
                    axis.ticks.y = ggplot2::element_blank(),
-                   axis.text.y = ggplot2::element_blank()) 
+                   axis.text.y = ggplot2::element_blank(),
+                   strip.text.y.left = ggplot2::element_text(angle = 0)) 
   
   plot <- ggiraph::girafe(ggobj = plot,
                           options = list(
                             ggiraph::opts_sizing(width = .7),
                             ggiraph::opts_zoom(max = 5)),
-                          width_svg = 15,
-                          height_svg = 1 + 0.5 * length(databaseIds))
+                          width_svg = 12,
+                          height_svg = 0.7 + 0.5 * length(databaseIds))
   return(plot)
 }  
 # how to render using pure plot ly. Plotly does not prefer precomputed data.
@@ -246,7 +247,7 @@ plotIncidenceRate <- function(data,
   if (plotType == "line") {
     plot <- plot + 
       ggiraph::geom_line_interactive(ggplot2::aes(), size = 1, alpha = 0.6) +
-      ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 1, alpha = 0.6)
+      ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 2, alpha = 0.6)
   } else {
     plot <- plot + ggplot2::geom_bar(stat = "identity") +
       ggiraph::geom_col_interactive( ggplot2::aes(tooltip = tooltip), size = 1)
@@ -588,8 +589,8 @@ plotCohortOverlap <- function(data,
                           options = list(
                             ggiraph::opts_sizing(width = .7),
                             ggiraph::opts_zoom(max = 5)), 
-                          width_svg = 7 * aspectRatio,
-                          height_svg = 7)
+                          width_svg = 6 * aspectRatio,
+                          height_svg = 6)
   
   return(plot)
 }   
