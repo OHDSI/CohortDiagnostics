@@ -4,7 +4,7 @@ source("R/Tables.R")
 source("R/Plots.R")
 source("R/Results.R")
 
-# shinySettings <- list(dataFolder = "s:/examplePackageOutput/CCAE/diagnosticsExport")
+# shinySettings <- list(dataFolder = "s:/examplePackageOutput")
 
 # Settings when running on server:
 

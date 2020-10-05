@@ -284,202 +284,55 @@ plotIncidenceRate <- function(data,
   return(plot)
 }
 
-plotCohortComparisonStandardizedDifference <- function(data,
-                                                       cohortReference,
-                                                       covariateReference,
-                                                       absoluteStandardizedDifferenceLowerThreshold = 0.001,
-                                                       absoluteStandardizedDifferenceUpperThreshold = 1,
-                                                       databaseIds = NULL,
-                                                       # concept = NULL,
-                                                       targetCohortIds = NULL, 
-                                                       comparatorCohortIds = NULL) {
-  # if (!is.null(concept)) {
-  #   warning("Not yet supported. Upcoming feature. Ignorning for now. Continuing.")
-  # }
+plotCohortComparisonStandardizedDifference <- function(balance, 
+                                                       domain = "all",
+                                                       targetLabel = "Mean Target",
+                                                       comparatorLabel = "Mean Comparator") {
+  balance <- balance %>%
+    replace(is.na(.), 0)
   
-  # for now we will support only one combination of targetCohortId, comparatorCohortId and databaseId
-  if (length(targetCohortIds) > 1 || length(comparatorCohortIds) > 1 || length(databaseIds) > 1) {
-    warning("Not yet supported. Upcoming feature. Executing with first choices only")
-    targetCohortIds <- targetCohortIds[[1]]
-    comparatorCohortIds <- comparatorCohortIds[[1]]
-    databaseIds <- databaseIds[[1]]
-    return(NULL)
+  domains <- c("condition", "device", "drug", "measurement", "observation", "procedure")
+  balance$domain <- tolower(gsub("[_ ].*", "", balance$covariateName))
+  balance$domain[!balance$domain %in% domains] <- "other"
+  
+  if (domain != "all") {
+    balance <- balance %>%
+      dplyr::filter(.data$domain == !!domain)
   }
   
-  plotData <- data
-  if (absoluteStandardizedDifferenceLowerThreshold > 0) {
-    plotData <- plotData %>% 
-      dplyr::filter(.data$absStdDiff >= absoluteStandardizedDifferenceLowerThreshold)
-  }
-  if (absoluteStandardizedDifferenceUpperThreshold > 0) {
-    plotData <- plotData %>% 
-      dplyr::filter(.data$absStdDiff <= absoluteStandardizedDifferenceUpperThreshold)
-  }
-  if (!is.null(targetCohortIds)) {
-    plotData <- plotData %>% 
-      dplyr::filter(.data$targetCohortId %in% !!targetCohortIds)
-  }
-  if (!is.null(comparatorCohortIds)) {
-    plotData <- plotData %>% 
-      dplyr::filter(.data$comparatorCohortId %in% !!comparatorCohortIds)
-  }
-  if (!is.null(databaseIds)) {
-    plotData <- plotData %>% 
-      dplyr::filter(.data$databaseId %in% !!databaseIds)
+  # Can't make sense of plot with > 1000 dots anyway, so remove anything with small mean in both target and comparator:
+  if (nrow(balance) > 1000) {
+    balance <- balance %>% 
+      dplyr::filter(.data$mean1 > 0.01 | .data$mean2 > 0.01)
   }
   
-  # Perform error checks for input variables
-  errorMessage <- checkmate::makeAssertCollection()
-  checkmate::assertTibble(x = plotData,
-                          any.missing = FALSE,
-                          min.rows = 1,
-                          min.cols = 11,
-                          null.ok = FALSE,
-                          types = c("character", "double", "integer"),
-                          add = errorMessage)
-  checkmate::assertDouble(x = targetCohortIds,
-                          lower = 1,
-                          upper = 2^53, 
-                          any.missing = FALSE,
-                          null.ok = FALSE)
-  checkmate::assertDouble(x = comparatorCohortIds,
-                          lower = 1,
-                          upper = 2^53, 
-                          any.missing = FALSE,
-                          null.ok = FALSE)
-  checkmate::assertCharacter(x = databaseIds,
-                             any.missing = FALSE,
-                             min.len = 1,
-                             null.ok = TRUE
-  )
-  checkmate::assertNames(x = colnames(plotData),
-                         must.include = c("databaseId","targetCohortId","comparatorCohortId","covariateId",
-                                          "mean1","sd1","mean2","sd2","sd","stdDiff", "absStdDiff"),
-                         add = errorMessage
-  )
-  checkmate::assertTibble(x = cohortReference, 
-                          any.missing = FALSE,
-                          min.rows = 1,
-                          min.cols = 2,
-                          null.ok = FALSE,
-                          types = c("character",
-                                    "double", "integer"),
-                          add = errorMessage)
-  checkmate::assertNames(x = colnames(cohortReference),
-                         must.include = c("cohortId",
-                                          "cohortName"),
-                         add = errorMessage
-  )
-  checkmate::assertTibble(x = covariateReference, 
-                          any.missing = FALSE,
-                          min.rows = 1,
-                          min.cols = 3,
-                          null.ok = FALSE,
-                          types = c("character", "double", "integer"),
-                          add = errorMessage)
-  checkmate::assertNames(x = colnames(covariateReference),
-                         must.include = c("domainId",
-                                          "covariateId",
-                                          "covariateName",
-                                          "conceptId"),
-                         add = errorMessage
-  )
-  # if (!is.null(concept)) {
-  #   checkmate::assertTibble(x = concept, 
-  #                           any.missing = TRUE,
-  #                           min.rows = 1,
-  #                           min.cols = 5,
-  #                           null.ok = FALSE,
-  #                           types = c("character",
-  #                                     "double", "integer"),
-  #                           add = errorMessage)
-  #   checkmate::assertNames(x = colnames(concept),
-  #                          must.include = c("conceptId",
-  #                                           "conceptName",
-  #                                           "domainId",
-  #                                           "vocabularyId",
-  #                                           "conceptClassId"),
-  #                          add = errorMessage
-  #   )
-  # }
-  checkmate::reportAssertions(collection = errorMessage)
+  # ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 3, alpha = 0.6)
+  balance$tooltip <- c(paste("Covariate Name:", balance$covariateName,
+                              "\nDomain: ", balance$domain,
+                              "\nMean Target: ", scales::comma(balance$mean1, accuracy = 0.1),
+                              "\nMean Comparator:", scales::comma(balance$mean2, accuracy = 0.1),
+                              "\nStd diff.:", scales::comma(balance$stdDiff, accuracy = 0.1)))
   
-  # when we support more than 1 targetCohortIds, comparatorCohortIds and DatabaseIds -- this 
-  # will be the begining of the iteration. 
-  # For now we are only support one unique combination of 
-  # databaseId, targetCohortId, comparatorCohortId
-  # 
-  plotData <- plotData %>% 
-    dplyr::inner_join(y = covariateReference %>% 
-                        dplyr::select(.data$covariateId, .data$covariateName, .data$domainId))
+  # Code used to generate palette:
+  # writeLines(paste(RColorBrewer::brewer.pal(n = length(domains), name = "Dark2"), collapse = "\", \""))
   
-  xAxisLabel <- list(
-    title = cohortReference %>% 
-      dplyr::filter(.data$cohortId %in% targetCohortIds) %>% 
-      dplyr::select(.data$cohortName) %>% 
-      dplyr::mutate(cohortName = stringr::str_replace(string = .data$cohortName,
-                                                      pattern = ":", 
-                                                      replacement = "\n")) %>% 
-      dplyr::pull(),
-    range = c(0, 1)
-  )
-  yAxisLabel <- list(
-    title = cohortReference %>% 
-      dplyr::filter(.data$cohortId %in% comparatorCohortIds) %>% 
-      dplyr::select(.data$cohortName) %>% 
-      dplyr::mutate(cohortName = stringr::str_replace(string = .data$cohortName,
-                                                      pattern = ":", 
-                                                      replacement = "\n")) %>%
-      dplyr::pull(),
-    range = c(0, 1)
-  )
+  # Make sure colors are consistent, no matter which domains are included:
+  colors <- c("#1B9E77", "#D95F02", "#7570B3", "#E7298A", "#66A61E", "#E6AB02", "#444444")
+  colors <- colors[c(domains, "other") %in% unique(balance$domain)]
+
+  balance$domain <- factor(balance$domain, levels = c(domains, "other"))
   
-  # plot <- plotly::plot_ly(data = plotData, 
-  #                         x = plotData$mean1, 
-  #                         y = plotData$mean2,
-  #                         # Hover text:
-  #                         text = ~paste("Covariate Name:",
-  #                                       plotData$covariateName, 
-  #                                       "<br>Mean Target: ", 
-  #                                       plotData$mean1, 
-  #                                       "<br>Mean Comparator:", 
-  #                                       plotData$mean2,
-  #                                       "<br>Std diff.:", 
-  #                                       plotData$stdDiff),
-  #                         color = ~plotData$absStdDiff,
-  #                         type   = "scatter",
-  #                         mode   = "markers",
-  #                         marker = list(size = 10,
-  #                                       opacity = "0.5")) %>% 
-  #   plotly::layout(shapes = list(type = "line",
-  #                                y0 = 0, 
-  #                                y1 = 1, 
-  #                                yref = "paper",
-  #                                x0 = 0,  
-  #                                x1 = 1, 
-  #                                line = list(color = "red", 
-  #                                            dash = "dash"))) %>% 
-  #   plotly::layout(xaxis = xAxisLabel, 
-  #                  yaxis = yAxisLabel, 
-  #                  showlegend = FALSE) %>% 
-  #   plotly::colorbar(title = "Absolute\nStd. Diff.")
-  # 
+  targetLabel <- paste(strwrap(targetLabel, width = 50), collapse = "\n")
+  comparatorLabel <- paste(strwrap(comparatorLabel, width = 50), collapse = "\n")
   
-  
-  ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 3, alpha = 0.6)
-  plotData$tooltip <- c(paste("Covariate Name:", plotData$covariateName,
-                              "\nDomain: ", plotData$domainId,
-                              "\nMean Target: ", scales::comma(plotData$mean1, accuracy = 0.1),
-                              "\nMean Comparator:", scales::comma(plotData$mean2, accuracy = 0.1),
-                              "\nStd diff.:", scales::comma(plotData$stdDiff, accuracy = 0.1)))
-  
-  plot <- ggplot2::ggplot(plotData, ggplot2::aes(x = .data$mean1, y = .data$mean2, color = .data$domainId)) +
+  plot <- ggplot2::ggplot(balance, ggplot2::aes(x = .data$mean1, y = .data$mean2, color = .data$domain)) +
     ggiraph::geom_point_interactive(ggplot2::aes(tooltip = .data$tooltip), size = 3,shape = 16, alpha = 0.5) +
     ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
     ggplot2::geom_hline(yintercept = 0) +
     ggplot2::geom_vline(xintercept = 0) +             
-    ggplot2::scale_x_continuous(xAxisLabel, limits = c(0, 1)) +
-    ggplot2::scale_y_continuous(yAxisLabel, limits = c(0, 1)) 
+    ggplot2::scale_x_continuous(targetLabel, limits = c(0, 1)) +
+    ggplot2::scale_y_continuous(comparatorLabel, limits = c(0, 1)) +
+    ggplot2::scale_color_manual("Domain", values = colors)
   
   plot <- ggiraph::girafe(ggobj = plot,
                           options = list(
@@ -547,7 +400,7 @@ plotCohortOverlap <- function(data,
                               targetCohortIds = NULL, 
                               comparatorCohortIds = NULL,
                               databaseIds = NULL,
-                              cohortReference,
+                              # cohortReference,
                               yAxis = "Percentages") {
   
   # Perform error checks for input variables
@@ -705,9 +558,7 @@ plotCohortOverlap <- function(data,
     dplyr::mutate(subjectsIn = camelCaseToTitleCase(stringr::str_replace_all(string = .data$subjectsIn,
                                                                              pattern = "abs|Subjects",
                                                                              replacement = "")))
-  str(plotData)
   plotData$subjectsIn <- factor(plotData$subjectsIn, levels = c(" T Only", " Both", " C Only"))
-  str(plotData)
   if (yAxis == "Percentages") {
     position = "fill"
   } else { 

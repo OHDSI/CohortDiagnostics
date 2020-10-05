@@ -1017,10 +1017,10 @@ shiny::shinyServer(function(input, output, session) {
                                    databaseIds = input$databases)
     validate(need(!is.null(data), paste0("No cohort overlap data for this combination")))
     
-    cohortReference <- getCohortReference(cohortIds = c(combisOfTargetComparator$targetCohortId, 
-                                                        combisOfTargetComparator$comparatorCohortId))
+    # cohortReference <- getCohortReference(cohortIds = c(combisOfTargetComparator$targetCohortId, 
+    #                                                     combisOfTargetComparator$comparatorCohortId))
     plot <- plotCohortOverlap(data = data,
-                              cohortReference = cohortReference,
+                              # cohortReference = cohortReference,
                               yAxis = input$overlapPlotType)
     return(plot)
   })
@@ -1029,27 +1029,28 @@ shiny::shinyServer(function(input, output, session) {
     if (cohortId() == comparatorCohortId()) {
       return(dplyr::tibble())
     }
-    covs1 <- covariateValue %>% 
-      dplyr::filter(.data$cohortId == cohortId(),
-                    .data$databaseId == input$database)
-    covs2 <- covariateValue %>% 
-      dplyr::filter(.data$cohortId == comparatorCohortId(),
-                    .data$databaseId == input$database)
-    covs1 <- dplyr::left_join(x = covs1, y = covariateRef, by = "covariateId")
-    covs2 <- dplyr::left_join(x = covs2, y = covariateRef, by = "covariateId")
+    covs1 <- getCovariateValueResult(dataSource = dataSource,
+                                     cohortIds = cohortId(),
+                                     # analysisIds = NULL,
+                                     databaseIds = input$database,
+                                     isTemporal = FALSE)
+    covs2 <- getCovariateValueResult(dataSource = dataSource,
+                                     cohortIds = comparatorCohortId(),
+                                     # analysisIds = NULL,
+                                     databaseIds = input$database,
+                                     isTemporal = FALSE)
     balance <- compareCohortCharacteristics(covs1, covs2) %>%
       dplyr::mutate(absStdDiff = abs(.data$stdDiff))
     return(balance)
   })
   
   output$charCompareTable <- DT::renderDataTable(expr = {
+    if (cohortId() == comparatorCohortId()) {
+      return(dplyr::tibble(Note = "Cohort and Target are the same. Nothing to compare"))
+    } 
     balance <- computeBalance()
     if (nrow(balance) == 0) {
-      if (cohortId() == comparatorCohortId()) {
-        return(dplyr::tibble(Note = "Cohort and Target are the same. Nothing to compare"))
-      } else {
-        return(dplyr::tibble(Note = "No data for the selected combination."))
-      }
+      return(dplyr::tibble(Note = "No data for the selected combination."))
     }
     
     if (input$charCompareType == "Pretty table") {
@@ -1093,12 +1094,9 @@ shiny::shinyServer(function(input, output, session) {
       table <- DT::formatRound(table, 4, digits = 2)
     } else {
       table <- balance %>% 
-        dplyr::arrange(.data$covariateName) %>% 
-        dplyr::select(.data$covariateName, .data$mean1, .data$mean2, .data$stdDiff, .data$conceptId) %>% 
-        dplyr::mutate(stdDiff = round(x = .data$stdDiff, digits = 3)) %>% 
-        dplyr::rename_with(.fn = ~ stringr::str_replace(string = ., pattern = "mean1", replacement = "Target")) %>% 
-        dplyr::rename_with(.fn = ~ stringr::str_replace(string = ., pattern = "mean2", replacement = "Comparator")) %>% 
-        dplyr::rename_with(.fn = camelCaseToTitleCase)
+        dplyr::select(.data$covariateName, .data$conceptId, .data$mean1, .data$sd1, .data$mean2, .data$sd2, .data$stdDiff)
+
+      table <- table[order(-abs(table[7])), ]
       
       options = list(pageLength = 100,
                      searching = TRUE,
@@ -1109,55 +1107,45 @@ shiny::shinyServer(function(input, output, session) {
                      paging = TRUE,
                      columnDefs = list(
                        truncateStringDef(0, 150),
-                       minCellPercentDef(1:2)))
+                       minCellRealDef(2:6, digits = 2)))
       
       table <- DT::datatable(table,
                              options = options,
                              rownames = FALSE,
+                             colnames = c("Covariate Name", "Concept ID", "Mean Target", "SD Target", "Mean Comparator", "SD Comparator", "StdDiff"),
                              escape = FALSE,
                              filter = c("bottom"),
                              class = "stripe nowrap compact")
       table <- DT::formatStyle(table = table,
-                               columns = 2:3,
+                               columns = c(3, 5),
                                background = DT::styleColorBar(c(0,1), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
                                backgroundPosition = "center")
       table <- DT::formatStyle(table = table,
-                               columns = 4,
+                               columns = 7,
                                background = styleAbsColorBar(1, "lightblue", "pink"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
                                backgroundPosition = "center")
-      table <- DT::formatRound(table, 4, digits = 2)
     }
     return(table)
   }, server = TRUE)
   
   output$charComparePlot <- ggiraph::renderggiraph(expr = {
-    validate(need(length(input$databases) > 0, "No data sources chosen"))
-    data <- compareCovariateValueResult(connection = NULL, 
-                                        connectionDetails = NULL,
-                                        targetCohortIds = cohortId(), 
-                                        comparatorCohortIds = comparatorCohortId(),
-                                        databaseIds = input$database,
-                                        minProportion = 0.01,
-                                        maxProportion = 1,
-                                        isTemporal = FALSE,
-                                        timeIds = NULL,
-                                        resultsDatabaseSchema = NULL)
-    validate(need(!is.null(data), paste0("No cohort compare data for this combination")),
-             need(nrow(data) > 0, paste0("No cohort compare data for this combination")),
-             need(!(cohortId() == comparatorCohortId()), paste0("Target cohort and comparator cannot be the same")))
+    if (cohortId() == comparatorCohortId()) {
+      return(dplyr::tibble(Note = "Cohort and Target are the same. Nothing to compare"))
+    } 
+    balance <- computeBalance()
+    if (nrow(balance) == 0) {
+      return(dplyr::tibble(Note = "No data for the selected combination."))
+    }
     
-    cohortReference <- getCohortReference()
-    covariateReference <- getCovariateReference(isTemporal = FALSE, domainId = input$domainId)
-    plot <- plotCohortComparisonStandardizedDifference(data = data, 
-                                                       targetCohortIds = cohortId(), 
-                                                       comparatorCohortIds = comparatorCohortId(),
-                                                       cohortReference = cohortReference,
-                                                       covariateReference = covariateReference,
-                                                       databaseIds = input$database)
+    
+    plot <- plotCohortComparisonStandardizedDifference(balance = balance,
+                                                       domain = input$domainId,
+                                                       targetLabel = paste0("Mean in Target (", input$cohort, ")"),
+                                                       comparatorLabel = paste0("Mean in Comparator (", input$comparator, ")"))
     return(plot)
   })
   
@@ -1293,7 +1281,7 @@ shiny::shinyServer(function(input, output, session) {
     targetCohortWithCount <- getCohortCountResult(dataSource = dataSource,
                                                   cohortIds = cohortId(),
                                                   databaseIds = input$database) %>% 
-      dplyr::left_join(y = cohort) %>% 
+      dplyr::left_join(y = cohort, by = "cohortId") %>% 
       dplyr::arrange(.data$cohortName)
     return(targetCohortWithCount)
   }) 
@@ -1315,7 +1303,7 @@ shiny::shinyServer(function(input, output, session) {
     comparatorCohortWithCount <- getCohortCountResult(dataSource = dataSource,
                                                       cohortIds = comparatorCohortId(),
                                                       databaseIds = input$database) %>% 
-      dplyr::left_join(y = cohort)
+      dplyr::left_join(y = cohort, by = "cohortId")
     
     return(htmltools::withTags(
       div(table(

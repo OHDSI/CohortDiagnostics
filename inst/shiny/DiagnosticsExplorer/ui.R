@@ -411,13 +411,13 @@ bodyTabItems <- shinydashboard::tabItems(
         inline = TRUE
       ),
       ggiraph::ggiraphOutput("overlapPlot", width = "100%", height = 800)
-    ),
-    shinydashboard::box(
-      title = "Cohort Overlap Statistics",
-      width = NULL,
-      status = "primary",
-      DT::dataTableOutput("overlapTable")
     )
+    # shinydashboard::box(
+    #   title = "Cohort Overlap Statistics",
+    #   width = NULL,
+    #   status = "primary",
+    #   DT::dataTableOutput("overlapTable")
+    # )
   ),
   shinydashboard::tabItem(
     tabName = "compareCohortCharacterization",
@@ -441,7 +441,7 @@ bodyTabItems <- shinydashboard::tabItems(
         shinyWidgets::pickerInput(
           inputId = "domainId",
           label = "Filter By Domain",
-          choices = c("all","condition", "drug", "procedure", "observation", "measurement"),
+          choices = c("all","condition", "device", "drug", "measurement", "observation", "procedure", "other"),
           multiple = FALSE,
           choicesOpt = list(style = rep_len("color: black;", 999)),
           options = shinyWidgets::pickerOptions(
@@ -453,10 +453,7 @@ bodyTabItems <- shinydashboard::tabItems(
             virtualScroll = 50)
           
         ),
-        ggiraph::ggiraphOutput(
-          outputId = "charComparePlot",
-          height = 700,
-        )
+        ggiraph::ggiraphOutput(outputId = "charComparePlot", width = "100%", height = "100%")
       )
     )
   ),

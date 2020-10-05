@@ -15,10 +15,7 @@ renderTranslateQuerySql <- function(connection, sql, ..., snakeCaseToCamelCase =
     # Connection pool is used by Shiny app, which always uses PostgreSQL:
     sql <- SqlRender::render(sql, ...)
     sql <- SqlRender::translate(sql, targetDialect = "postgresql")
-    
-    # Just for development purposes. Remove when done:
-    writeLines(sql)
-    
+  
     tryCatch({
       data <- DatabaseConnector::dbGetQuery(connection, sql)
     }, error = function(err) {
