@@ -123,7 +123,12 @@ if (exists("temporalTimeRef")) {
     dplyr::slice_head(n = 5)
 }
 
-
+if (exists("covariateRef")) {
+  specifications <- readr::read_csv(file = "Table1Specs.csv", 
+                                    col_types = readr::cols(),
+                                    guess_max = min(1e7))
+  prettyAnalysisIds <- specifications$analysisId
+}
 
 
 rm("visitContext")

@@ -494,16 +494,10 @@ getTimeReference <- function(connection = NULL,
 
 getCovariateValueResult <- function(dataSource = .GlobalEnv,
                                     cohortIds,
+                                    analysisIds = NULL,
                                     databaseIds,
-                                    minValue = 0.01,
-                                    maxValue = 1,
-                                    isTemporal = TRUE,
-                                    timeIds = c(1,2,3,4,5)) {
-  if (isTemporal) {
-    table <- 'temporalCovariateValue'
-  } else {
-    table <- 'covariateValue'
-  }
+                                    timeIds = NULL,
+                                    isTemporal = FALSE) {
   
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
@@ -512,18 +506,6 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
                            min.len = 1, 
                            max.len = 1, 
                            add = errorMessage)
-  checkmate::assertNumber(x = minValue, 
-                          lower = 0, 
-                          upper = 1, 
-                          na.ok = FALSE, 
-                          null.ok = FALSE, 
-                          add = errorMessage)
-  checkmate::assertNumber(x = maxValue, 
-                          lower = 0, 
-                          upper = 1, 
-                          na.ok = FALSE, 
-                          null.ok = FALSE, 
-                          add = errorMessage)
   errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = cohortIds,
                                                  databaseIds = databaseIds,
                                                  errorMessage = errorMessage)
@@ -537,40 +519,91 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
   }
   checkmate::reportAssertions(collection = errorMessage)
   
+
+  if (isTemporal) {
+    table <- "temporalCovariateValue"
+    refTable <- "temporalCovariateRef"
+    timeRefTable <- "temporalTimeRef"
+  } else {
+    table <- "covariateValue"
+    refTable <- "covariateRef"
+    timeRefTable <- ""
+  }
+  
   if (is(dataSource, "environment")) {
     data <- get(table, envir = dataSource) %>%
       dplyr::filter(.data$cohortId %in% !!cohortIds,
-                    .data$databaseId %in% !!databaseIds,
-                    .data$mean >= !!minValue,
-                    .data$mean <= !!maxValue)
+                    .data$databaseId %in% !!databaseIds) %>%
+      dplyr::inner_join(get(refTable, envir = dataSource), by = "covariateId")
+    if (!is.null(analysisIds)) {
+      data <- data %>%
+        dplyr::filter(.data$analysisId %in% analysisIds)
+    }
+    if (isTemporal) {
+      data <- data %>%
+        dplyr::inner_join(get(timeRefTable, envir = dataSource), by = "timeId")
+      if (!is.null(timeIds)) {
+        data <- data %>%
+          dplyr::filter(.data$timeId %in% timeIds)
+      }
+    }
   } else {
-    sql <- "SELECT *
-              FROM  @results_database_schema.@table
-              WHERE cohort_id in (@cohortIds)
-            	AND database_id in (@databaseIds)
-              {@isTemporal == TRUE} ? {AND time_id in (@timeIds)}
-              AND mean >= @minValue
-              AND mean <= @maxValue;"
+    sql <- "SELECT covariate.*,
+              covariate_name,
+            {@time_ref_table != \"\"} ? {
+              start_day,
+              end_day,
+            }
+              concept_id,
+              analysis_id
+            FROM  @results_database_schema.@table covariate
+            INNER JOIN @results_database_schema.@ref_table covariate_ref
+              ON covariate.covariate_id = covariate_ref.covariate_id
+            {@time_ref_table != \"\"} ? {
+            INNER JOIN @results_database_schema.@time_ref_table time_ref
+              ON covariate.time_id = time_ref.time_id
+            }
+            WHERE cohort_id in (@cohort_ids)
+            {@time_ref_table != \"\" & @time_ids != \"\"} ? {  AND covariate.time_id IN (@time_ids)}
+            {@analysis_ids != \"\"} ? {  AND analysis_id IN (@analysis_ids)}
+            	AND database_id in (@databaseIds);"
+    if (is.null(timeIds)) {
+      timeIds <- ""
+    }
+    if (is.null(analysisIds)) {
+      analysisIds <- ""
+    }
     data <- renderTranslateQuerySql(connection = dataSource$connection,
                                     sql = sql,
                                     table = SqlRender::camelCaseToSnakeCase(table),
+                                    ref_table = SqlRender::camelCaseToSnakeCase(refTable),
+                                    time_ref_table = SqlRender::camelCaseToSnakeCase(timeRefTable),
                                     results_database_schema = dataSource$resultsDatabaseSchema,
-                                    cohortIds = cohortIds,
+                                    cohort_ids = cohortIds,
+                                    analysis_ids = analysisIds,
                                     databaseIds = quoteLiterals(databaseIds),
-                                    isTemporal = isTemporal,
-                                    timeIds = timeIds, 
-                                    minValue = minValue,
-                                    maxValue = maxValue,
+                                    time_ids = timeIds,
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   }
   if (isTemporal) {
     data <- data %>% 
-      dplyr::relocate(.data$cohortId, .data$databaseId, .data$timeId, .data$covariateId) %>% 
-      dplyr::arrange(.data$cohortId, .data$databaseId, .data$timeId, .data$covariateId)
+      dplyr::relocate(.data$cohortId, 
+                      .data$databaseId, 
+                      .data$timeId, 
+                      .data$startDay, 
+                      .data$endDay,
+                      .data$analysisId,
+                      .data$covariateId, 
+                      .data$covariateName) %>% 
+      dplyr::arrange(.data$cohortId, .data$databaseId, .data$timeId, .data$covariateId, .data$covariateName)
   } else {
     data <- data %>% 
-      dplyr::relocate(.data$cohortId, .data$databaseId, .data$covariateId) %>% 
+      dplyr::relocate(.data$cohortId, 
+                      .data$databaseId, 
+                      .data$analysisId,
+                      .data$covariateId, 
+                      .data$covariateName) %>% 
       dplyr::arrange(.data$cohortId, .data$databaseId, .data$covariateId)
   }
   return(data)
