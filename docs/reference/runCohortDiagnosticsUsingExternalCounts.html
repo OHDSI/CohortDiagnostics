@@ -151,27 +151,27 @@ must have the following columns:</p>
 
     </div>
 
-    <pre class="usage"><span class='fu'>runCohortDiagnosticsUsingExternalCounts</span>(
-  packageName = <span class='kw'>NULL</span>,
-  cohortToCreateFile = <span class='st'>"settings/CohortsToCreate.csv"</span>,
-  baseUrl = <span class='kw'>NULL</span>,
-  cohortSetReference = <span class='kw'>NULL</span>,
-  connectionDetails = <span class='kw'>NULL</span>,
-  connection = <span class='kw'>NULL</span>,
-  <span class='kw'>cdmDatabaseSchema</span>,
-  oracleTempSchema = <span class='kw'>NULL</span>,
-  cohortIds = <span class='kw'>NULL</span>,
-  conceptCountsDatabaseSchema = <span class='kw'>cdmDatabaseSchema</span>,
-  conceptCountsTable = <span class='st'>"concept_counts"</span>,
-  conceptCountsTableIsTemp = <span class='fl'>FALSE</span>,
-  <span class='kw'>exportFolder</span>,
-  <span class='kw'>databaseId</span>,
-  databaseName = <span class='kw'>databaseId</span>,
-  databaseDescription = <span class='st'>""</span>,
-  runIncludedSourceConcepts = <span class='fl'>TRUE</span>,
-  runOrphanConcepts = <span class='fl'>TRUE</span>,
-  minCellCount = <span class='fl'>5</span>
-)</pre>
+    <pre class="usage"><span class='fu'>runCohortDiagnosticsUsingExternalCounts</span><span class='op'>(</span>
+  packageName <span class='op'>=</span> <span class='cn'>NULL</span>,
+  cohortToCreateFile <span class='op'>=</span> <span class='st'>"settings/CohortsToCreate.csv"</span>,
+  baseUrl <span class='op'>=</span> <span class='cn'>NULL</span>,
+  cohortSetReference <span class='op'>=</span> <span class='cn'>NULL</span>,
+  connectionDetails <span class='op'>=</span> <span class='cn'>NULL</span>,
+  connection <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>cdmDatabaseSchema</span>,
+  oracleTempSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
+  cohortIds <span class='op'>=</span> <span class='cn'>NULL</span>,
+  conceptCountsDatabaseSchema <span class='op'>=</span> <span class='va'>cdmDatabaseSchema</span>,
+  conceptCountsTable <span class='op'>=</span> <span class='st'>"concept_counts"</span>,
+  conceptCountsTableIsTemp <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  <span class='va'>exportFolder</span>,
+  <span class='va'>databaseId</span>,
+  databaseName <span class='op'>=</span> <span class='va'>databaseId</span>,
+  databaseDescription <span class='op'>=</span> <span class='st'>""</span>,
+  runIncludedSourceConcepts <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  runOrphanConcepts <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  minCellCount <span class='op'>=</span> <span class='fl'>5</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -186,7 +186,9 @@ must have the following columns:</p>
       <td><p>The location of the cohortToCreate file within the package. Is ignored if 
 <code>baseUrl</code> and <code>cohortSetReference</code> have been specified. The
 cohortToCreateFile must be .csv file that is expected to be read into 
-a dataframe object identical to requirements for <code>cohortSetReference</code> argument.</p></td>
+a dataframe object identical to requirements for <code>cohortSetReference</code> argument. 
+This csv file is expected to be encoded in either ASCII or UTF-8, if not, an 
+error message will be displayed and process stopped.</p></td>
     </tr>
     <tr>
       <th>baseUrl</th>
@@ -202,14 +204,14 @@ a dataframe object identical to requirements for <code>cohortSetReference</code>
     <tr>
       <th>connectionDetails</th>
       <td><p>An object of type <code>connectionDetails</code> as created using the
-<code><a href='https://rdrr.io/pkg/DatabaseConnector/man/createConnectionDetails.html'>createConnectionDetails</a></code> function in the
+<code><a href='https://ohdsi.github.io/DatabaseConnector/reference/createConnectionDetails.html'>createConnectionDetails</a></code> function in the
 DatabaseConnector package. Can be left NULL if <code>connection</code> is
 provided.</p></td>
     </tr>
     <tr>
       <th>connection</th>
       <td><p>An object of type <code>connection</code> as created using the
-<code><a href='https://rdrr.io/pkg/DatabaseConnector/man/connect.html'>connect</a></code> function in the
+<code><a href='https://ohdsi.github.io/DatabaseConnector/reference/connect.html'>connect</a></code> function in the
 DatabaseConnector package. Can be left NULL if <code>connectionDetails</code>
 is provided, in which case a new connection will be opened at the start
 of the function, and closed when the function finishes.</p></td>
