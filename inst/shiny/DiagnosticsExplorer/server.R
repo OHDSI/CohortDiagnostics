@@ -759,8 +759,13 @@ shiny::shinyServer(function(input, output, session) {
   
   output$characterizationTable <- DT::renderDataTable({
     validate(need(length(input$databases) > 0, "No data sources chosen"))
+    if (input$charType == "Pretty") {
+      analysisIds <- prettyAnalysisIds
+    } else {
+      analysisIds <- NULL
+    }
     data <- getCovariateValueResult(dataSource = dataSource,
-                                    analysisIds = prettyAnalysisIds,
+                                    analysisIds = analysisIds,
                                     cohortIds = cohortId(),
                                     databaseIds = input$databases,
                                     isTemporal = FALSE) 
@@ -935,102 +940,29 @@ shiny::shinyServer(function(input, output, session) {
       covariateIdArray(c(covariateIdArray(),input$rows[[2]]))
   })
   
-  # covariateTimeSeriesPlot <- shiny::reactive({
-  #   data <- temporalCovariateValue %>% 
-  #     dplyr::filter(.data$cohortId == cohortId() & 
-  #                     .data$databaseId == input$database & 
-  #                     .data$timeId > 5 & 
-  #                     .data$covariateId %in% covariateIdArray()) %>% 
-  #     dplyr::inner_join(temporalTimeRef) %>% 
-  #     dplyr::inner_join(temporalCovariateRef)
-  #   
-  #   dataTS <- tsibble::as_tsibble(x = data %>% 
-  #                                   dplyr::select(.data$startDay,
-  #                                                 .data$endDay,
-  #                                                 .data$timeId,
-  #                                                 .data$covariateId,
-  #                                                 .data$covariateName,
-  #                                                 .data$mean) %>% 
-  #                                   dplyr::arrange(.data$timeId),
-  #                                 key = c(.data$covariateName), 
-  #                                 index = .data$timeId,
-  #                                 regular = TRUE,
-  #                                 validate = TRUE)
-  #   
-  #   # dcmp <- dataTS %>%
-  #   #   fabletools::model(.data = feasts::STL(.data$mea ~ season(window = Inf)))
-  #   # 
-  #   # plot <- feasts::gg_season(data = dataTS)
-  #   
-  #   
-  #   
-  #   
-  #   plot <- dataTS %>%
-  #     ggplot2::autoplot(.data$mean) +
-  #     ggplot2::xlab("Start Day") +
-  #     ggiraph::geom_point_interactive(
-  #       ggplot2::aes(tooltip = .data$covariateName), size = 2) +
-  #     ggplot2::theme(legend.position = "none")
-  # 
-  #   plot <- ggiraph::girafe(ggobj = plot,width_svg = 10, height_svg = 4, options = list(
-  #     ggiraph::opts_sizing(width = .7),
-  #     ggiraph::opts_zoom(max = 5))
-  #   )
-  #   return(plot)
-  # })
-  
-  # output$covariateTimeSeriesPlot <- ggiraph::renderggiraph(expr = {
-  #   return(covariateTimeSeriesPlot())
-  # })
-  
   output$temporalCharacterizationTable <- DT::renderDataTable(expr = {
-    if (length(input$database) == 0) {
-      return(dplyr::tibble(Note = paste0("Datasources not selected")))
-    }
-    if (length(timeId()) == 0) {
-      return(dplyr::tibble(Note = paste0("No temporal periods selected")))
-    }
-    dataCounts <- getCohortCountResult(dataSource = dataSource,
-                                       databaseIds = input$databases,
-                                       cohortIds = cohortId())
-    if (nrow(dataCounts) == 0) {
-      return(dplyr::tibble(Note = paste0("No data available for selected databases and cohorts")))
-    }
-    if (!isTRUE(all.equal(dataCounts$databaseId %>% unique %>% sort(),
-                          input$databases %>% unique() %>% sort()))) {
-      return(dplyr::tibble(Note = paste0("There is no data for the databases:\n",
-                                         paste0(setdiff(input$databases, 
-                                                        dataCounts$databaseId), 
-                                                collapse = ",\n "), 
-                                         ".\n Please unselect them.")))
-    }
-    dataCountsWithSubjectCountBelowThreshold <- dataCounts %>% 
-      dplyr::filter(.data$cohortSubjects < thresholdCohortSubjects)
-    if (nrow(dataCountsWithSubjectCountBelowThreshold) > 0) {
-      return(dataCountsWithSubjectCountBelowThreshold %>% 
-               dplyr::mutate(threshold = thresholdCohortSubjects) %>% 
-               dplyr::rename("These datasource(s) have less than threshold value. Please unselect the following in the Database selection option:"  = .data$databaseId))
-    }
-    
+    validate(need(length(input$databases) > 0, "No data sources chosen"))
+    validate(need(length(timeId()) > 0, "No time periods selected"))
+
     data <- getCovariateValueResult(dataSource = dataSource,
                                     cohortIds = cohortId(),
                                     databaseIds = input$databases,
-                                    minValue = 0.01,
-                                    maxValue = 1,
-                                    isTemporal = TRUE,
-                                    timeIds = timeId()) %>% 
-      dplyr::select(-cohortId)
+                                    timeIds = timeId(),
+                                    isTemporal = TRUE) 
+    if (nrow(data) == 0) {
+      return(dplyr::tibble(Note = paste0("No data available for selected databases and cohorts")))
+    }
     
-    covariateReference <- getCovariateReference(dataSource = dataSource,
-                                                covariateIds = data$covariateId %>% unique(),
-                                                isTemporal = TRUE)
+    databaseIds <- sort(unique(data$databaseId))
     
+    if (!all(input$databases %in% databaseIds)) {
+      return(dplyr::tibble(Note = paste0("There is no data for the databases:\n",
+                                         paste0(setdiff(input$databases, databaseIds), 
+                                                collapse = ",\n "), 
+                                         ".\n Please unselect them.")))
+    }
     table <- data %>% 
-      dplyr::mutate(databaseId = stringr::str_replace_all(string = .data$databaseId, 
-                                                          pattern = "_", 
-                                                          replacement = " ")) %>% 
       dplyr::inner_join(temporalCovariateChoices, by = "timeId") %>% 
-      dplyr::inner_join(covariateReference, by = "covariateId")  %>%
       dplyr::arrange(.data$timeId)  %>% 
       tidyr::pivot_wider(id_cols = c("covariateId", "covariateName", "conceptId"), 
                          names_from = "choices",
@@ -1038,13 +970,10 @@ shiny::shinyServer(function(input, output, session) {
                          names_sep = "_"
       ) %>% 
       dplyr::select(-.data$conceptId) %>% 
-      dplyr::relocate(.data$covariateName, .data$covariateId) %>% 
-      dplyr::arrange(.data$covariateName)
+      dplyr::relocate(.data$covariateName, .data$covariateId) 
     
-    if (nrow(table) == 0) {
-      return(dplyr::tibble(Note = paste0("No data available for selected databases and cohorts")))
-    }
-    
+    table <- table[order(-table[3]), ]
+
     temporalCovariateChoicesSelected <- temporalCovariateChoices %>% 
       dplyr::filter(.data$timeId %in% c(timeId())) %>% 
       dplyr::arrange(.data$timeId)
