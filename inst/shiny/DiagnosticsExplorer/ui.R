@@ -311,10 +311,7 @@ bodyTabItems <- shinydashboard::tabItems(
                    )
                  )),
       shiny::htmlOutput(outputId = "hoverInfoIr"),
-      ggiraph::ggiraphOutput(
-        outputId = "incidenceRatePlot",
-        height = 1000
-      )
+      ggiraph::ggiraphOutput( outputId = "incidenceRatePlot", width = "100%", height = "100%" )
     )
   ),
   shinydashboard::tabItem(
@@ -324,7 +321,7 @@ bodyTabItems <- shinydashboard::tabItems(
       width = NULL,
       status = "primary",
       tags$br(),
-      ggiraph::ggiraphOutput("timeDisPlot")
+      ggiraph::ggiraphOutput("timeDisPlot", width = "100%", height = "100%")
     ),
     shinydashboard::box(
       title = "Time Distributions Table",
@@ -409,11 +406,11 @@ bodyTabItems <- shinydashboard::tabItems(
       shiny::radioButtons(
         inputId = "overlapPlotType",
         label = "",
-        choices = c("Percentage Plots", "Stacked Plots"),
-        selected = "Percentage Plots",
+        choices = c("Percentages", "Counts"),
+        selected = "Percentages",
         inline = TRUE
       ),
-      ggiraph::ggiraphOutput("overlapPlot")
+      ggiraph::ggiraphOutput("overlapPlot", width = "100%", height = 800)
     ),
     shinydashboard::box(
       title = "Cohort Overlap Statistics",

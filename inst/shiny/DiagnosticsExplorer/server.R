@@ -946,21 +946,13 @@ shiny::shinyServer(function(input, output, session) {
 
     data <- getCovariateValueResult(dataSource = dataSource,
                                     cohortIds = cohortId(),
-                                    databaseIds = input$databases,
+                                    databaseIds = input$database,
                                     timeIds = timeId(),
                                     isTemporal = TRUE) 
     if (nrow(data) == 0) {
       return(dplyr::tibble(Note = paste0("No data available for selected databases and cohorts")))
     }
     
-    databaseIds <- sort(unique(data$databaseId))
-    
-    if (!all(input$databases %in% databaseIds)) {
-      return(dplyr::tibble(Note = paste0("There is no data for the databases:\n",
-                                         paste0(setdiff(input$databases, databaseIds), 
-                                                collapse = ",\n "), 
-                                         ".\n Please unselect them.")))
-    }
     table <- data %>% 
       dplyr::inner_join(temporalCovariateChoices, by = "timeId") %>% 
       dplyr::arrange(.data$timeId)  %>% 
@@ -1010,54 +1002,6 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
-  # output$overlapTable <- DT::renderDataTable(expr = {
-  #   data <- getCohortOverlapResult(targetCohortIds = cohortId(), 
-  #                                  comparatorCohortIds = comparatorCohortId(), 
-  #                                  databaseIds = input$database)
-  #   
-  #   if (is.null(data)) {
-  #     return(dplyr::tibble(" " = paste0("No data available for selected databases and cohorts and comaprator")))
-  #   }
-  #   table <- data.frame(row.names = c("Subject in either cohort",
-  #                                     "Subject in both cohort",
-  #                                     "Subject in target not in comparator",
-  #                                     "Subject in comparator not in target",
-  #                                     "Subject in target before comparator",
-  #                                     "Subject in comparator before target",
-  #                                     "Subject in target and comparator on same day"),
-  #                       Value = c(data$eitherSubjects,
-  #                                 data$bothSubjects,
-  #                                 data$tOnlySubjects,
-  #                                 data$cOnlySubjects,
-  #                                 data$tBeforeCSubjects,
-  #                                 data$cBeforeTSubjects,
-  #                                 data$sameDaySubjects))
-  #   if (!is.null(data$tInCSubjects)) {
-  #     table <- rbind(table,
-  #                    data.frame(row.names = c("Subject having target start during comparator",
-  #                                             "Subject having comparator start during target"),
-  #                               Value = c(data$tInCSubjects,
-  #                                         data$cInTSubjects)))
-  #   }
-  #   table$Value[is.na(table$Value)] <- 0
-  #   options = list(pageLength = 7,
-  #                  searching = TRUE,
-  #                  scrollX = TRUE,
-  #                  lengthChange = TRUE,
-  #                  searchHighlight = TRUE,
-  #                  ordering = FALSE,
-  #                  paging = FALSE,
-  #                  info = FALSE,
-  #                  columnDefs = list(minCellCountDef(1)))
-  #   table <- DT::datatable(table,
-  #                          options = options,
-  #                          rownames = TRUE,
-  #                          filter = c("bottom"),
-  #                          class = "stripe nowrap compact")
-  #   return(table)
-  # }, server = TRUE)
-  
-  
   output$overlapPlot <- ggiraph::renderggiraph(expr = {
     validate(need(length(cohortIds()) > 0, paste0("Please select Target Cohort(s)")))
     validate(need(length(comparatorCohortIds()) > 0, paste0("Please select Comparator Cohort(s)")))
@@ -1077,7 +1021,7 @@ shiny::shinyServer(function(input, output, session) {
                                                         combisOfTargetComparator$comparatorCohortId))
     plot <- plotCohortOverlap(data = data,
                               cohortReference = cohortReference,
-                              plotType = input$overlapPlotType)
+                              yAxis = input$overlapPlotType)
     return(plot)
   })
   

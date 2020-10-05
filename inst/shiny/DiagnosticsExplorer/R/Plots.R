@@ -57,10 +57,10 @@ plotTimeDistribution <- function(data,
                  group = .data$TimeMeasure,
                  average = .data$Average) +
     ggplot2::geom_errorbar(mapping = ggplot2::aes(ymin = .data$Min, 
-                                                  ymax = .data$Max), size = 1) +
+                                                  ymax = .data$Max), size = 0.5) +
     ggplot2::geom_boxplot(stat = "identity", 
                           fill = rgb(0, 0, 0.8, alpha = 0.25), 
-                          size = 1) +
+                          size = 0.2) +
     ggplot2::facet_grid(rows = Database~TimeMeasure, scales = "free") +
     ggplot2::coord_flip() +
     ggplot2::theme(panel.grid.major.y = ggplot2::element_blank(),
@@ -72,10 +72,9 @@ plotTimeDistribution <- function(data,
   plot <- ggiraph::girafe(ggobj = plot,
                           options = list(
                             ggiraph::opts_sizing(width = .7),
-                            ggiraph::opts_zoom(max = 5)),width_svg = 15,
-                          height_svg = 5)
-  # plot <- plotly::ggplotly(plot)
-  # This does not work as described here https://github.com/ropensci/plotly/issues/565 
+                            ggiraph::opts_zoom(max = 5)),
+                          width_svg = 15,
+                          height_svg = 1 + 0.5 * length(databaseIds))
   return(plot)
 }  
 # how to render using pure plot ly. Plotly does not prefer precomputed data.
@@ -246,11 +245,11 @@ plotIncidenceRate <- function(data,
   
   if (plotType == "line") {
     plot <- plot + 
-      ggiraph::geom_line_interactive(ggplot2::aes(), size = 3, alpha = 0.6) +
-      ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 3, alpha = 0.6)
+      ggiraph::geom_line_interactive(ggplot2::aes(), size = 1, alpha = 0.6) +
+      ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 1, alpha = 0.6)
   } else {
     plot <- plot + ggplot2::geom_bar(stat = "identity") +
-      ggiraph::geom_col_interactive( ggplot2::aes(tooltip = tooltip), size = 2)
+      ggiraph::geom_col_interactive( ggplot2::aes(tooltip = tooltip), size = 1)
   }
   
   # databaseId field only present when called in Shiny app:
@@ -279,8 +278,9 @@ plotIncidenceRate <- function(data,
   plot <- ggiraph::girafe(ggobj = plot,
                           options = list(
                             ggiraph::opts_sizing(width = .7),
-                            ggiraph::opts_zoom(max = 5)),width_svg = 15,
-                          height_svg = 10)
+                            ggiraph::opts_zoom(max = 5)),
+                          width_svg = 15,
+                          height_svg = 1.5 + 2*length(unique(data$databaseId)))
   return(plot)
 }
 
@@ -548,7 +548,7 @@ plotCohortOverlap <- function(data,
                               comparatorCohortIds = NULL,
                               databaseIds = NULL,
                               cohortReference,
-                              plotType) {
+                              yAxis = "Percentages") {
   
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
@@ -643,27 +643,7 @@ plotCohortOverlap <- function(data,
   }
   checkmate::reportAssertions(collection = errorMessage)
   
-  # plot <- VennDiagram::draw.pairwise.venn(area1 = abs(data$eitherSubjects) - abs(data$cOnlySubjects),
-  #                                         area2 = abs(data$eitherSubjects) - abs(data$tOnlySubjects),
-  #                                         cross.area = abs(data$bothSubjects),
-  #                                         category = c("Target", "Comparator"), 
-  #                                         col = c(rgb(0.8, 0, 0), rgb(0, 0, 0.8)),
-  #                                         fill = c(rgb(0.8, 0, 0), rgb(0, 0, 0.8)),
-  #                                         alpha = 0.2,
-  #                                         fontfamily = rep("sans", 3),
-  #                                         cat.fontfamily = rep("sans", 2),
-  #                                         margin = 0.01,
-  #                                         ind = FALSE)
-  # # Borrowed from https://stackoverflow.com/questions/37239128/how-to-put-comma-in-large-number-of-venndiagram
-  # idx <- sapply(plot, function(i) grepl("text", i$name))
-  # for (i in 1:3) {
-  #   plot[idx][[i]]$label <- format(as.numeric(plot[idx][[i]]$label), 
-  #                                  big.mark = ",", 
-  #                                  scientific = FALSE)
-  # }
-  # grid::grid.draw(plot)
-  
-  #find combinations of target and comaprators
+  #find combinations of target and comparators
   plotData <- plotData %>% 
     dplyr::inner_join(
       plotData %>% 
@@ -675,23 +655,20 @@ plotCohortOverlap <- function(data,
         dplyr::mutate(comparisonGroup = dplyr::row_number())) %>% 
     dplyr::relocate(.data$comparisonGroup)
   
-  combis <- 
-    dplyr::bind_rows(
-      plotData %>% 
-        dplyr::select(.data$targetCohortId) %>% 
-        dplyr::distinct() %>% 
-        dplyr::arrange(.data$targetCohortId) %>% 
-        dplyr::mutate(shortName = paste0('T', dplyr::row_number())) %>% 
-        dplyr::rename(cohortId = .data$targetCohortId),
-      plotData %>% 
-        dplyr::select(.data$comparatorCohortId) %>% 
-        dplyr::distinct() %>% 
-        dplyr::arrange(.data$comparatorCohortId) %>% 
-        dplyr::mutate(shortName = paste0('C', dplyr::row_number())) %>% 
-        dplyr::rename(cohortId = .data$comparatorCohortId)) %>% 
+  combis <- dplyr::bind_rows(plotData %>% 
+                               dplyr::select(.data$targetCohortId) %>% 
+                               dplyr::distinct() %>% 
+                               dplyr::arrange(.data$targetCohortId) %>% 
+                               dplyr::mutate(shortName = paste0('T', dplyr::row_number())) %>% 
+                               dplyr::rename(cohortId = .data$targetCohortId),
+                             plotData %>% 
+                               dplyr::select(.data$comparatorCohortId) %>% 
+                               dplyr::distinct() %>% 
+                               dplyr::arrange(.data$comparatorCohortId) %>% 
+                               dplyr::mutate(shortName = paste0('C', dplyr::row_number())) %>% 
+                               dplyr::rename(cohortId = .data$comparatorCohortId)) %>% 
     dplyr::inner_join(y = cohort %>% 
                         dplyr::select(.data$cohortId, .data$cohortName))
-  
   
   plotData <- plotData %>% 
     dplyr::inner_join(y = combis %>% 
@@ -724,12 +701,14 @@ plotCohortOverlap <- function(data,
                                  "absCOnlySubjects",
                                  "absBothSubjects"),
                         names_to = "subjectsIn",
-                        values_to = "value") %>% 
-    dplyr::mutate(subjectsIn = camelCaseToTitleCase(stringr::str_replace_all(string = .data$subjectsIn, 
-                                                                             pattern = "abs|Subjects", 
+                        values_to = "value") %>%
+    dplyr::mutate(subjectsIn = camelCaseToTitleCase(stringr::str_replace_all(string = .data$subjectsIn,
+                                                                             pattern = "abs|Subjects",
                                                                              replacement = "")))
-  
-  if (plotType == "Percentage Plots") {
+  str(plotData)
+  plotData$subjectsIn <- factor(plotData$subjectsIn, levels = c(" T Only", " Both", " C Only"))
+  str(plotData)
+  if (yAxis == "Percentages") {
     position = "fill"
   } else { 
     position = "stack"
@@ -743,22 +722,23 @@ plotCohortOverlap <- function(data,
                  group = .data$subjectsIn) +
     ggplot2::ylab(label = "") +
     ggplot2::xlab(label = "") +
-    ggiraph::geom_bar_interactive(position = position,
-                                  stat = "identity") 
-  if (plotType == "Percentage Plots") {
+    ggplot2::scale_fill_manual("Subjects in", values = c(rgb(0.8, 0.2, 0.2), rgb(0.3, 0.2, 0.4), rgb(0.4, 0.4, 0.9))) +
+    ggplot2::facet_grid(.data$targetCohortShortName ~ .data$databaseId, drop = FALSE) +
+    ggiraph::geom_bar_interactive(position = position, alpha = 0.6, stat = "identity") 
+  if (yAxis == "Percentages") {
     plot <- plot + ggplot2::scale_y_continuous(labels = scales::percent)
   } else {
     plot <- plot + ggplot2::scale_y_continuous(labels = scales::comma)
   }
-  
-  plot <- plot + 
-    ggplot2::facet_grid(.data$targetCohortShortName ~ .data$databaseId, drop = FALSE) 
-  
+  width <- 1.5 + 1*length(unique(plotData$databaseId))
+  height <- 1.5 + 1*length(unique(plotData$targetCohortShortName))
+  aspectRatio <- width / height                        
   plot <- ggiraph::girafe(ggobj = plot,
                           options = list(
                             ggiraph::opts_sizing(width = .7),
-                            ggiraph::opts_zoom(max = 5)), width_svg = 12,
-                          height_svg = 4)
+                            ggiraph::opts_zoom(max = 5)), 
+                          width_svg = 7 * aspectRatio,
+                          height_svg = 7)
   
   return(plot)
 }   
