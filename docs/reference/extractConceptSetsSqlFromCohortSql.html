@@ -137,7 +137,7 @@ to instantiated conceptSets during cohort construction." />
 to instantiated conceptSets during cohort construction.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>extractConceptSetsSqlFromCohortSql</span>(<span class='kw'>cohortSql</span>)</pre>
+    <pre class="usage"><span class='fu'>extractConceptSetsSqlFromCohortSql</span><span class='op'>(</span><span class='va'>cohortSql</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -157,9 +157,9 @@ The standard form SQL is generated using <code>circe-be</code> by
                     concept set combination in cohort definition.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='co'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='kw'>conceptSetSql</span> <span class='op'>&lt;-</span> <span class='fu'>extractConceptSetsSqlFromCohortSql</span>(cohortSql = <span class='kw'>sql</span>)
-}
+    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<span class='va'>conceptSetSql</span> <span class='op'>&lt;-</span> <span class='fu'>extractConceptSetsSqlFromCohortSql</span><span class='op'>(</span>cohortSql <span class='op'>=</span> <span class='va'>sql</span><span class='op'>)</span>
+<span class='op'>}</span>
 
 </div></pre>
   </div>

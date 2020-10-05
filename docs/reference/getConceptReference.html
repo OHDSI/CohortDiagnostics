@@ -135,12 +135,12 @@
     <p>Get concept information</p>
     </div>
 
-    <pre class="usage"><span class='fu'>getConceptReference</span>(
-  connection = <span class='kw'>NULL</span>,
-  connectionDetails = <span class='kw'>NULL</span>,
-  conceptIds = <span class='kw'>NULL</span>,
-  resultsDatabaseSchema = <span class='kw'>NULL</span>
-)</pre>
+    <pre class="usage"><span class='fu'>getConceptReference</span><span class='op'>(</span>
+  connection <span class='op'>=</span> <span class='cn'>NULL</span>,
+  connectionDetails <span class='op'>=</span> <span class='cn'>NULL</span>,
+  conceptIds <span class='op'>=</span> <span class='cn'>NULL</span>,
+  resultsDatabaseSchema <span class='op'>=</span> <span class='cn'>NULL</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -148,7 +148,7 @@
     <tr>
       <th>connection</th>
       <td><p>(optional) An object of type <code>connection</code> as created using the
-<code><a href='https://rdrr.io/pkg/DatabaseConnector/man/connect.html'>connect</a></code> function in the
+<code><a href='https://ohdsi.github.io/DatabaseConnector/reference/connect.html'>connect</a></code> function in the
 DatabaseConnector package. Can be left NULL if <code>connectionDetails</code>
 is provided, in which case a new connection will be opened at the start
 of the function, and closed when the function finishes.</p></td>
@@ -156,7 +156,7 @@ of the function, and closed when the function finishes.</p></td>
     <tr>
       <th>connectionDetails</th>
       <td><p>(optional) An object of type <code>connectionDetails</code> as created using the
-<code><a href='https://rdrr.io/pkg/DatabaseConnector/man/createConnectionDetails.html'>createConnectionDetails</a></code> function in the
+<code><a href='https://ohdsi.github.io/DatabaseConnector/reference/createConnectionDetails.html'>createConnectionDetails</a></code> function in the
 DatabaseConnector package. Can be left NULL if <code>connection</code> is
 provided.</p></td>
     </tr>
@@ -168,7 +168,7 @@ provided.</p></td>
       <th>resultsDatabaseSchema</th>
       <td><p>(optional) The databaseSchema where the results data model 
 of cohort diagnostics is stored. This is only required when 
-<code>connectionDetails</code> or <code><a href='https://rdrr.io/pkg/DatabaseConnector/man/connect.html'>connect</a></code> 
+<code>connectionDetails</code> or <code><a href='https://ohdsi.github.io/DatabaseConnector/reference/connect.html'>connect</a></code> 
 is provided.</p></td>
     </tr>
     </table>
@@ -183,9 +183,9 @@ on data available in Cohort Diagnostics results data model. The function will us
 methods to connect to the results data model, 1) database mode, and 2) in-memory mode.</p>
 <p>Database mode: In this mode, R will look for the results data model in a remote relational dbms. The 
 database system should be one of the databases supported by DatabaseConnector package. If 
-either <code>connectionDetails</code> or <code><a href='https://rdrr.io/pkg/DatabaseConnector/man/connect.html'>connect</a></code> parameters are
+either <code>connectionDetails</code> or <code><a href='https://ohdsi.github.io/DatabaseConnector/reference/connect.html'>connect</a></code> parameters are
 populated with an argument during a function call, the connection gets set to database mode.</p>
-<p>In-memory mode: If both <code>connectionDetails</code> and <code><a href='https://rdrr.io/pkg/DatabaseConnector/man/connect.html'>connect</a></code> are 
+<p>In-memory mode: If both <code>connectionDetails</code> and <code><a href='https://ohdsi.github.io/DatabaseConnector/reference/connect.html'>connect</a></code> are 
 parameters have a NULL argument then query will be in-memory mode. R will now expect and check
 for a data frame object available in R's memory, as required for the function. The object should be
 an object specificed in Cohort Diagnostics results data model.</p>
@@ -193,9 +193,9 @@ an object specificed in Cohort Diagnostics results data model.</p>
 in a relational database system are expected to follow snake-case naming conventions.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='co'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='kw'>conceptReference</span> <span class='op'>&lt;-</span> <span class='fu'>getConceptReference</span>()
-}
+    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<span class='va'>conceptReference</span> <span class='op'>&lt;-</span> <span class='fu'>getConceptReference</span><span class='op'>(</span><span class='op'>)</span>
+<span class='op'>}</span>
 
 </div></pre>
   </div>

@@ -135,15 +135,15 @@
     <p>Get ggplot object with incidence rate plot.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>plotIncidenceRate</span>(
-  <span class='kw'>data</span>,
-  cohortIds = <span class='kw'>NULL</span>,
-  databaseIds = <span class='kw'>NULL</span>,
-  stratifyByAgeGroup = <span class='fl'>TRUE</span>,
-  stratifyByGender = <span class='fl'>TRUE</span>,
-  stratifyByCalendarYear = <span class='fl'>TRUE</span>,
-  yscaleFixed = <span class='fl'>FALSE</span>
-)</pre>
+    <pre class="usage"><span class='fu'>plotIncidenceRate</span><span class='op'>(</span>
+  <span class='va'>data</span>,
+  cohortIds <span class='op'>=</span> <span class='cn'>NULL</span>,
+  databaseIds <span class='op'>=</span> <span class='cn'>NULL</span>,
+  stratifyByAgeGroup <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  stratifyByGender <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  stratifyByCalendarYear <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  yscaleFixed <span class='op'>=</span> <span class='cn'>FALSE</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -184,9 +184,9 @@ of <code><a href='getIncidenceRate.html'>getIncidenceRate</a></code> function.</
     <p>A ggplot object.</p>
 
     <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'><span class='co'>if</span> (<span class='fl'>FALSE</span>) {
-<span class='kw'>incidenceRatePlot</span> <span class='op'>&lt;-</span> <span class='fu'>plotIncidenceRate</span>(data = <span class='kw'>data</span>)
-}
+    <pre class="examples"><div class='input'><span class='kw'>if</span> <span class='op'>(</span><span class='cn'>FALSE</span><span class='op'>)</span> <span class='op'>{</span>
+<span class='va'>incidenceRatePlot</span> <span class='op'>&lt;-</span> <span class='fu'>plotIncidenceRate</span><span class='op'>(</span>data <span class='op'>=</span> <span class='va'>data</span><span class='op'>)</span>
+<span class='op'>}</span>
 
 </div></pre>
   </div>

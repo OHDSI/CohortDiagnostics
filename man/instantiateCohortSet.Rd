@@ -57,7 +57,9 @@ construction to.}
 \item{cohortToCreateFile}{The location of the cohortToCreate file within the package. Is ignored if 
 \code{baseUrl} and \code{cohortSetReference} have been specified. The
 cohortToCreateFile must be .csv file that is expected to be read into 
-a dataframe object identical to requirements for \code{cohortSetReference} argument.}
+a dataframe object identical to requirements for \code{cohortSetReference} argument. 
+This csv file is expected to be encoded in either ASCII or UTF-8, if not, an 
+error message will be displayed and process stopped.}
 
 \item{baseUrl}{The base URL for the WebApi instance, for example:
 "http://server.org:80/WebAPI". Can be left NULL if 
