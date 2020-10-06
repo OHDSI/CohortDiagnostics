@@ -8,6 +8,7 @@ connectionDetails <- createConnectionDetails(dbms = "postgresql",
                                              password = Sys.getenv("pwPostgres"))
 resultsSchema <- "phenotype_library"
 
+# OHDSI's server:
 connectionDetails <- createConnectionDetails(dbms = "postgresql",
                                              server = paste(Sys.getenv("phenotypeLibraryDbServer"),
                                                             Sys.getenv("phenotypeLibraryDbDatabase"),
@@ -23,21 +24,21 @@ createResultsDataModel(connectionDetails = connectionDetails, schema = resultsSc
 
 Sys.setenv("POSTGRES_PATH" = "C:/Program Files/PostgreSQL/11/bin")
 uploadResults(connectionDetails = connectionDetails,
-              schema = schema,
+              schema = resultsSchema,
               zipFileName = "S:/examplePackageOutput/CCAE/diagnosticsExport/Results_CCAE.zip")
 
 uploadResults(connectionDetails = connectionDetails,
-              schema = schema,
+              schema = resultsSchema,
               zipFileName = "S:/examplePackageOutput/MDCD/diagnosticsExport/Results_IBM_MDCD.zip")
 launchDiagnosticsExplorer(connectionDetails = connectionDetails,
                           resultsDatabaseSchema = resultsSchema)
 
 
 uploadResults(connectionDetails = connectionDetails,
-              schema = schema,
+              schema = resultsSchema,
               zipFileName = "s:/immunology/Results_JMDC.zip")
 
 uploadResults(connectionDetails = connectionDetails,
-              schema = schema,
+              schema = resultsSchema,
               zipFileName = "s:/immunology/Results_OPTUM_PANTHER.zip")
 

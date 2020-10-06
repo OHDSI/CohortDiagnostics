@@ -109,25 +109,33 @@ if (databaseMode) {
         stop("Error reading from ", paste(resultsDatabaseSchema, tableName, sep = "."), ": ", err$message)
       })
       colnames(table) <- SqlRender::snakeCaseToCamelCase(colnames(table))
-      return(dplyr::as_tibble(table))
+      if (nrow(table) > 0) {
+        assign(SqlRender::snakeCaseToCamelCase(tableName), dplyr::as_tibble(table), envir = .GlobalEnv)
+      }
     }
   }
   
-  database <- loadResultsTable("database", required = TRUE)
-  cohort <- loadResultsTable("cohort", required = TRUE)
-  phenotypeDescription <- loadResultsTable("phenotype_description")
-  temporalTimeRef <- loadResultsTable("temporal_time_ref")
-  conceptSets <- loadResultsTable("concept_sets")
+  loadResultsTable("database", required = TRUE)
+  loadResultsTable("cohort", required = TRUE)
+  loadResultsTable("phenotype_description")
+  loadResultsTable("temporal_time_ref")
+  loadResultsTable("concept_sets")
   
   # Create empty objects in memory for all other tables. This is used by the Shiny app to decide what tabs to show:
+  isEmpty <- function(tableName) {
+    sql <- sprintf("SELECT 1 FROM %s.%s LIMIT 1;", resultsDatabaseSchema, tableName)
+    oneRow <- DatabaseConnector::dbGetQuery(connectionPool, sql)
+    return(nrow(oneRow) == 0)
+  }
+  
   for (table in dataModelSpecifications$tableName) {
-    if (table %in% resultsTablesOnServer && !exists(SqlRender::snakeCaseToCamelCase(table))) {
+    if (table %in% resultsTablesOnServer && 
+        !exists(SqlRender::snakeCaseToCamelCase(table)) &&
+        !isEmpty(table)) {
       assign(SqlRender::snakeCaseToCamelCase(table), dplyr::tibble())
     }
   }
-  if (nrow(phenotypeDescription) == 0) {
-    rm(phenotypeDescription)
-  }
+
   dataSource <- createDatabaseDataSource(connection = connectionPool,
                                          resultsDatabaseSchema = resultsDatabaseSchema,
                                          vocabularyDatabaseSchema = vocabularyDatabaseSchema)

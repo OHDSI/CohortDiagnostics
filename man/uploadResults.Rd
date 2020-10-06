@@ -36,4 +36,7 @@ has sufficent space if the default system temp space is too limited.}
 }
 \description{
 Requires the results data model tables have been created using the \code{\link{createResultsDataModel}} function.
+
+Set the POSTGRES_PATH environmental variable to the path to the folder containing the psql executable to enable
+bulk upload (recommended).
 }

@@ -176,6 +176,9 @@ naToEmpty <- function(x) {
 #' 
 #' @description 
 #' Requires the results data model tables have been created using the \code{\link{createResultsDataModel}} function.
+#' 
+#' Set the POSTGRES_PATH environmental variable to the path to the folder containing the psql executable to enable
+#' bulk upload (recommended).
 #'
 #' @param connectionDetails   An object of type \code{connectionDetails} as created using the
 #'                            \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
