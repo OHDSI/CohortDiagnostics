@@ -113,9 +113,11 @@ shiny::shinyServer(function(input, output, session) {
                                  databaseIds = input$databases) %>%
       dplyr::left_join(cohort, by = "cohortId") %>% 
       dplyr::select(.data$cohortId, 
-                    .data$cohortName, .data$databaseId, 
+                    .data$cohortName, 
+                    .data$databaseId, 
                     .data$webApiCohortId,
-                    .data$cohortSubjects, .data$cohortEntries)
+                    .data$cohortSubjects, 
+                    .data$cohortEntries)
     
     if (nrow(data) == 0) {
       return(tidyr::tibble("There is no data on any cohort"))
@@ -154,7 +156,6 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(.data$cohortId, .data$cohortName, .data$webApiCohortId) %>% 
       dplyr::distinct() %>% 
       dplyr::inner_join(table, by = c("cohortId", "cohortName")) %>%
-      dplyr::select(-.data$cohortId) %>%
       dplyr::arrange(.data$cohortName)
     
     
@@ -166,9 +167,11 @@ shiny::shinyServer(function(input, output, session) {
                                         "' target='_blank'>", 
                                         .data$cohortName, 
                                         "</a>")) %>%
-      dplyr::select(-.data$url, -.data$webApiCohortId)
+      dplyr::select(-.data$url)
     }
-      
+    table <- table %>%
+      dplyr::select(-.data$cohortId, -.data$webApiCohortId) 
+    
     databaseIds <- unique(data$databaseId)
     
     sketch <- htmltools::withTags(table(
@@ -738,7 +741,7 @@ shiny::shinyServer(function(input, output, session) {
                    lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
-                   columnDefs = list(truncateStringDef(1, 30),
+                   columnDefs = list(truncateStringDef(0, 30),
                                      minCellCountDef(1:(length(databaseIds) * 4))))
     
     table <- DT::datatable(table,
