@@ -412,10 +412,23 @@ getCohortOverlapResult <- function(dataSource = .GlobalEnv,
       dplyr::filter(.data$targetCohortId %in% !!targetCohortIds &
                       .data$comparatorCohortId %in% !!comparatorCohortIds &
                       .data$databaseId %in% !!databaseIds) %>% 
-      tidyr::tibble()
+      dplyr::inner_join(dplyr::select(get("cohort", envir = dataSource), 
+                                      targetCohortId = .data$cohortId,
+                                      targetCohortName = .data$cohortName),
+                        by = "targetCohortId") %>% 
+      dplyr::inner_join(dplyr::select(get("cohort", envir = dataSource), 
+                                      comparatorCohortId = .data$cohortId,
+                                     comparatorCohortName = .data$cohortName),
+                        by = "comparatorCohortId")
   } else {
-    sql <-   "SELECT *
+    sql <-   "SELECT cohort_overlap.*,
+                target_cohort.cohort_name AS target_cohort_name,
+                comparator_cohort.cohort_name AS comparator_cohort_name
               FROM  @results_database_schema.cohort_overlap
+              INNER JOIN @results_database_schema.cohort target_cohort
+                ON cohort_overlap.target_cohort_id = target_cohort.cohort_id
+              INNER JOIN @results_database_schema.cohort comparator_cohort
+                ON cohort_overlap.comparator_cohort_id = comparator_cohort.cohort_id
               WHERE target_cohort_id in (@targetCohortId)
               AND comparator_cohort_id in (@comparatorCohortId)
             	AND database_id in (@databaseId);"
@@ -432,9 +445,21 @@ getCohortOverlapResult <- function(dataSource = .GlobalEnv,
   if (nrow(data) == 0) {
     return(tidyr::tibble())
   }
+  targetShortNames <- data %>%
+    dplyr::distinct(.data$targetCohortId, .data$targetCohortName) %>%
+    dplyr::arrange(.data$targetCohortName) %>%
+    dplyr::select(-.data$targetCohortName) %>%
+    dplyr::mutate(targetShortName = paste0('T', dplyr::row_number()))
+  
+  comparatorShortNames <- data %>%
+    dplyr::distinct(.data$comparatorCohortId, .data$comparatorCohortName) %>%
+    dplyr::arrange(.data$comparatorCohortName) %>%
+    dplyr::select(-.data$comparatorCohortName) %>%
+    dplyr::mutate(comparatorShortName = paste0('C', dplyr::row_number()))
+  
   data <- data %>% 
-    dplyr::relocate(.data$databaseId, .data$targetCohortId, .data$comparatorCohortId) %>% 
-    dplyr::arrange(.data$databaseId, .data$targetCohortId, .data$comparatorCohortId)
+    dplyr::inner_join(targetShortNames, by = "targetCohortId") %>%
+    dplyr::inner_join(comparatorShortNames, by = "comparatorCohortId") 
   return(data)
 }
 

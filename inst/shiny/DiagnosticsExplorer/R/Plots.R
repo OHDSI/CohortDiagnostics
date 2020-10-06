@@ -398,10 +398,6 @@ plotCohortOverlapVennDiagram <- function(data,
 }
 
 plotCohortOverlap <- function(data,
-                              targetCohortIds = NULL, 
-                              comparatorCohortIds = NULL,
-                              databaseIds = NULL,
-                              # cohortReference,
                               yAxis = "Percentages") {
   
   # Perform error checks for input variables
@@ -424,13 +420,6 @@ plotCohortOverlap <- function(data,
   checkmate::reportAssertions(collection = errorMessage)
   
   plotData <- data %>% 
-    dplyr::select(.data$databaseId, 
-                  .data$targetCohortId,
-                  .data$comparatorCohortId,
-                  .data$tOnlySubjects, 
-                  .data$cOnlySubjects,
-                  .data$bothSubjects,
-                  .data$eitherSubjects) %>% 
     dplyr::mutate(absTOnlySubjects = abs(.data$tOnlySubjects), 
                   absCOnlySubjects = abs(.data$cOnlySubjects),
                   absBothSubjects = abs(.data$bothSubjects),
@@ -458,94 +447,15 @@ plotCohortOverlap <- function(data,
                                       .data$signBothSubjects,
                                       scales::percent(.data$absBothSubjects/.data$absEitherSubjects, 
                                                       accuracy = 1),
-                                      ")")) %>% 
-    dplyr::select(.data$databaseId, 
-                  .data$targetCohortId,
-                  .data$comparatorCohortId,
-                  .data$absTOnlySubjects, 
-                  .data$absCOnlySubjects,
-                  .data$absBothSubjects,
-                  .data$tOnlyString, 
-                  .data$cOnlyString,
-                  .data$bothString)
-  
-  if (!is.null(targetCohortIds)) {
-    checkmate::assertDouble(x = targetCohortIds,
-                            lower = 1,
-                            upper = 2^53, 
-                            any.missing = FALSE,
-                            null.ok = FALSE)
-    plotData <- plotData %>% 
-      dplyr::filter(.data$targetCohortId %in% !!targetCohortIds)
-  }
-  if (!is.null(comparatorCohortIds)) {
-    checkmate::assertDouble(x = comparatorCohortIds,
-                            lower = 1,
-                            upper = 2^53, 
-                            any.missing = FALSE,
-                            null.ok = FALSE)
-    plotData <- plotData %>% 
-      dplyr::filter(.data$comparatorCohortId %in% !!comparatorCohortIds)
-  }
-  if (!is.null(databaseIds)) {
-    checkmate::assertCharacter(x = databaseIds,
-                               any.missing = FALSE,
-                               min.len = 1,
-                               null.ok = TRUE)
-    plotData <- plotData %>% 
-      dplyr::filter(.data$databaseId %in% !!databaseIds)
-  }
-  checkmate::reportAssertions(collection = errorMessage)
-  
-  #find combinations of target and comparators
-  plotData <- plotData %>% 
-    dplyr::inner_join(
-      plotData %>% 
-        dplyr::select(.data$targetCohortId, 
-                      .data$comparatorCohortId) %>% 
-        dplyr::distinct() %>% 
-        dplyr::arrange(.data$targetCohortId, 
-                       .data$comparatorCohortId) %>% 
-        dplyr::mutate(comparisonGroup = dplyr::row_number())) %>% 
-    dplyr::relocate(.data$comparisonGroup)
-  
-  combis <- dplyr::bind_rows(plotData %>% 
-                               dplyr::select(.data$targetCohortId) %>% 
-                               dplyr::distinct() %>% 
-                               dplyr::arrange(.data$targetCohortId) %>% 
-                               dplyr::mutate(shortName = paste0('T', dplyr::row_number())) %>% 
-                               dplyr::rename(cohortId = .data$targetCohortId),
-                             plotData %>% 
-                               dplyr::select(.data$comparatorCohortId) %>% 
-                               dplyr::distinct() %>% 
-                               dplyr::arrange(.data$comparatorCohortId) %>% 
-                               dplyr::mutate(shortName = paste0('C', dplyr::row_number())) %>% 
-                               dplyr::rename(cohortId = .data$comparatorCohortId)) %>% 
-    dplyr::inner_join(y = cohort %>% 
-                        dplyr::select(.data$cohortId, .data$cohortName))
-  
-  plotData <- plotData %>% 
-    dplyr::inner_join(y = combis %>% 
-                        dplyr::filter(stringr::str_detect(string = .data$shortName,
-                                                          pattern = 'T')) %>% 
-                        dplyr::rename(targetCohortId = .data$cohortId,
-                                      targetCohortName = .data$cohortName,
-                                      targetCohortShortName = .data$shortName)) %>% 
-    dplyr::inner_join(y = combis %>% 
-                        dplyr::filter(stringr::str_detect(string = .data$shortName,
-                                                          pattern = 'C')) %>% 
-                        dplyr::rename(comparatorCohortId = .data$cohortId,
-                                      comparatorCohortName = .data$cohortName,
-                                      comparatorCohortShortName = .data$shortName)) %>% 
+                                      ")"))  %>% 
     dplyr::mutate(tooltip = paste0("Database: ", .data$databaseId,
-                                   "\n", .data$targetCohortShortName, ": ", .data$targetCohortName,
-                                   "\n", .data$comparatorCohortShortName, ": ", .data$comparatorCohortName,
-                                   "\n", .data$targetCohortShortName, " only: ", .data$tOnlyString,
-                                   "\n", .data$comparatorCohortShortName, " only: ", .data$cOnlyString,
-                                   "\nBoth: ", .data$bothString)) %>% 
-    dplyr::select(.data$comparisonGroup,
-                  .data$targetCohortShortName,
-                  .data$comparatorCohortShortName,
+                                   "\n", .data$targetShortName, ": ", .data$targetCohortName,
+                                   "\n", .data$comparatorShortName, ": ", .data$comparatorCohortName,
+                                   "\n", .data$targetShortName, " only: ", .data$tOnlyString,
+                                   "\n", .data$comparatorShortName, " only: ", .data$cOnlyString,
+                                   "\nBoth: ", .data$bothString)) %>%
+    dplyr::select(.data$targetShortName,
+                  .data$comparatorShortName,
                   .data$databaseId,
                   .data$absTOnlySubjects,
                   .data$absCOnlySubjects,
@@ -559,6 +469,7 @@ plotCohortOverlap <- function(data,
     dplyr::mutate(subjectsIn = camelCaseToTitleCase(stringr::str_replace_all(string = .data$subjectsIn,
                                                                              pattern = "abs|Subjects",
                                                                              replacement = "")))
+  
   plotData$subjectsIn <- factor(plotData$subjectsIn, levels = c(" T Only", " Both", " C Only"))
   if (yAxis == "Percentages") {
     position = "fill"
@@ -569,13 +480,13 @@ plotCohortOverlap <- function(data,
   plot <- ggplot2::ggplot(data = plotData) +
     ggplot2::aes(fill = .data$subjectsIn, 
                  y = .data$value,
-                 x = .data$comparatorCohortShortName,
+                 x = .data$comparatorShortName,
                  tooltip = .data$tooltip,
                  group = .data$subjectsIn) +
     ggplot2::ylab(label = "") +
     ggplot2::xlab(label = "") +
     ggplot2::scale_fill_manual("Subjects in", values = c(rgb(0.8, 0.2, 0.2), rgb(0.3, 0.2, 0.4), rgb(0.4, 0.4, 0.9))) +
-    ggplot2::facet_grid(.data$targetCohortShortName ~ .data$databaseId, drop = FALSE) +
+    ggplot2::facet_grid(.data$targetShortName ~ .data$databaseId, drop = FALSE) +
     ggiraph::geom_bar_interactive(position = position, alpha = 0.6, stat = "identity") 
   if (yAxis == "Percentages") {
     plot <- plot + ggplot2::scale_y_continuous(labels = scales::percent)
@@ -583,7 +494,7 @@ plotCohortOverlap <- function(data,
     plot <- plot + ggplot2::scale_y_continuous(labels = scales::comma)
   }
   width <- 1.5 + 1*length(unique(plotData$databaseId))
-  height <- 1.5 + 1*length(unique(plotData$targetCohortShortName))
+  height <- 1.5 + 1*length(unique(plotData$targetShortName))
   aspectRatio <- width / height                        
   plot <- ggiraph::girafe(ggobj = plot,
                           options = list(

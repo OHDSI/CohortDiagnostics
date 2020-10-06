@@ -38,25 +38,9 @@ thresholdCohortEntries <- 0
 
 databaseMode = FALSE
 
-if (defaultDatabaseMode) {
-  if (all(!defaultServer == '' &&
-          !defaultDatabase == '' &&
-          !defaultPort == '' &&
-          !defaultUser == '' &&
-          !defaultPassword == '' &&
-          !defaultResultsSchema == '' &&
-          !defaultVocabularySchema == ''
-  )) {
-    databaseMode = TRUE
-  } else {
-    writeLines("Cant find all the connection details required to connect to DBMS (specified by default).\n
-               Attempting to use user settings.")
-  }
-}
-
 if (!exists("shinySettings")) {
   writeLines("Using default settings")
-  databaseMode <- defaultDatabaseMode
+  databaseMode <- defaultDatabaseMode & defaultServer != ""
   if (databaseMode) {
     connectionPool <- pool::dbPool(
       drv = DatabaseConnector::DatabaseConnectorDriver(),
@@ -125,7 +109,7 @@ if (databaseMode) {
         stop("Error reading from ", paste(resultsDatabaseSchema, tableName, sep = "."), ": ", err$message)
       })
       colnames(table) <- SqlRender::snakeCaseToCamelCase(colnames(table))
-      return(table)
+      return(dplyr::as_tibble(table))
     }
   }
   

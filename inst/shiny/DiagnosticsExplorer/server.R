@@ -998,9 +998,7 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
-  output$overlapPlot <- ggiraph::renderggiraph(expr = {
-    validate(need(length(cohortIds()) > 0, paste0("Please select Target Cohort(s)")))
-    validate(need(length(comparatorCohortIds()) > 0, paste0("Please select Comparator Cohort(s)")))
+  cohortOverlap <- reactive({
     combisOfTargetComparator <- tidyr::crossing(targetCohortId = cohortIds(),
                                                 comparatorCohortId = comparatorCohortIds()) %>% 
       dplyr::filter(!.data$targetCohortId == .data$comparatorCohortId) %>% 
@@ -1011,12 +1009,15 @@ shiny::shinyServer(function(input, output, session) {
                                    targetCohortIds = combisOfTargetComparator$targetCohortId, 
                                    comparatorCohortIds = combisOfTargetComparator$comparatorCohortId, 
                                    databaseIds = input$databases)
+  })
+  
+  output$overlapPlot <- ggiraph::renderggiraph(expr = {
+    validate(need(length(cohortIds()) > 0, paste0("Please select Target Cohort(s)")))
+    validate(need(length(comparatorCohortIds()) > 0, paste0("Please select Comparator Cohort(s)")))
+    data <- cohortOverlap()
     validate(need(!is.null(data), paste0("No cohort overlap data for this combination")))
     
-    # cohortReference <- getCohortReference(cohortIds = c(combisOfTargetComparator$targetCohortId, 
-    #                                                     combisOfTargetComparator$comparatorCohortId))
     plot <- plotCohortOverlap(data = data,
-                              # cohortReference = cohortReference,
                               yAxis = input$overlapPlotType)
     return(plot)
   })
@@ -1027,12 +1028,10 @@ shiny::shinyServer(function(input, output, session) {
     }
     covs1 <- getCovariateValueResult(dataSource = dataSource,
                                      cohortIds = cohortId(),
-                                     # analysisIds = NULL,
                                      databaseIds = input$database,
                                      isTemporal = FALSE)
     covs2 <- getCovariateValueResult(dataSource = dataSource,
                                      cohortIds = comparatorCohortId(),
-                                     # analysisIds = NULL,
                                      databaseIds = input$database,
                                      isTemporal = FALSE)
     balance <- compareCohortCharacteristics(covs1, covs2) %>%
@@ -1320,155 +1319,6 @@ shiny::shinyServer(function(input, output, session) {
       )))
   })
   
-  selectedCohortForOverlapTab <- shiny::reactive({#this code is repeated, we need to clean it up (repeated in results.r)
-    
-    combisOfTargetComparator <- tidyr::crossing(targetCohortId = cohortIds(),
-                                                comparatorCohortId = comparatorCohortIds()) %>% 
-      dplyr::filter(!.data$targetCohortId == .data$comparatorCohortId) %>% 
-      dplyr::distinct()
-    
-    data <- cohortOverlap %>% 
-      dplyr::filter(.data$targetCohortId %in% combisOfTargetComparator$targetCohortId &
-                      .data$comparatorCohortId %in% combisOfTargetComparator$comparatorCohortId &
-                      .data$databaseId %in% input$databases)
-    plotData <- data %>% 
-      dplyr::select(.data$databaseId, 
-                    .data$targetCohortId,
-                    .data$comparatorCohortId,
-                    .data$tOnlySubjects, 
-                    .data$cOnlySubjects,
-                    .data$bothSubjects,
-                    .data$eitherSubjects) %>% 
-      dplyr::mutate(absTOnlySubjects = abs(.data$tOnlySubjects), 
-                    absCOnlySubjects = abs(.data$cOnlySubjects),
-                    absBothSubjects = abs(.data$bothSubjects),
-                    absEitherSubjects = abs(.data$eitherSubjects),
-                    signTOnlySubjects = dplyr::case_when(.data$tOnlySubjects < 0 ~ '<', TRUE ~ ''),
-                    signCOnlySubjects = dplyr::case_when(.data$cOnlySubjects < 0 ~ '<', TRUE ~ ''),
-                    signBothSubjects = dplyr::case_when(.data$bothSubjects < 0 ~ '<', TRUE ~ '')) %>% 
-      dplyr::mutate(tOnlyString = paste0(.data$signTOnlySubjects, 
-                                         scales::comma(.data$absTOnlySubjects), 
-                                         " (", 
-                                         .data$signTOnlySubjects, 
-                                         scales::percent(.data$absTOnlySubjects/.data$absEitherSubjects, 
-                                                         accuracy = 1),
-                                         ")"),
-                    cOnlyString = paste0(.data$signCOnlySubjects, 
-                                         scales::comma(.data$absCOnlySubjects), 
-                                         " (", 
-                                         .data$signCOnlySubjects,
-                                         scales::percent(.data$absCOnlySubjects/.data$absEitherSubjects, 
-                                                         accuracy = 1),
-                                         ")"),
-                    bothString = paste0(.data$signBothSubjects, 
-                                        scales::comma(.data$absBothSubjects), 
-                                        " (", 
-                                        .data$signBothSubjects,
-                                        scales::percent(.data$absBothSubjects/.data$absEitherSubjects, 
-                                                        accuracy = 1),
-                                        ")")) %>% 
-      dplyr::select(.data$databaseId, 
-                    .data$targetCohortId,
-                    .data$comparatorCohortId,
-                    .data$absTOnlySubjects, 
-                    .data$absCOnlySubjects,
-                    .data$absBothSubjects,
-                    .data$tOnlyString, 
-                    .data$cOnlyString,
-                    .data$bothString)
-    
-    plotData <- plotData %>% 
-      dplyr::inner_join(
-        plotData %>% 
-          dplyr::select(.data$targetCohortId, 
-                        .data$comparatorCohortId) %>% 
-          dplyr::distinct() %>% 
-          dplyr::arrange(.data$targetCohortId, 
-                         .data$comparatorCohortId) %>% 
-          dplyr::mutate(comparisonGroup = dplyr::row_number())) %>% 
-      dplyr::relocate(.data$comparisonGroup)
-    
-    combis <- 
-      dplyr::bind_rows(
-        plotData %>% 
-          dplyr::select(.data$targetCohortId) %>% 
-          dplyr::distinct() %>% 
-          dplyr::arrange(.data$targetCohortId) %>% 
-          dplyr::mutate(shortName = paste0('T', dplyr::row_number())) %>% 
-          dplyr::rename(cohortId = .data$targetCohortId),
-        plotData %>% 
-          dplyr::select(.data$comparatorCohortId) %>% 
-          dplyr::distinct() %>% 
-          dplyr::arrange(.data$comparatorCohortId) %>% 
-          dplyr::mutate(shortName = paste0('C', dplyr::row_number())) %>% 
-          dplyr::rename(cohortId = .data$comparatorCohortId)) %>% 
-      dplyr::inner_join(y = cohort %>% 
-                          dplyr::select(.data$cohortId, .data$cohortName))
-    
-    plotData <- plotData %>% 
-      dplyr::inner_join(y = combis %>% 
-                          dplyr::filter(stringr::str_detect(string = .data$shortName,
-                                                            pattern = 'T')) %>% 
-                          dplyr::rename(targetCohortId = .data$cohortId,
-                                        targetCohortName = .data$cohortName,
-                                        targetCohortShortName = .data$shortName)) %>% 
-      dplyr::inner_join(y = combis %>% 
-                          dplyr::filter(stringr::str_detect(string = .data$shortName,
-                                                            pattern = 'C')) %>% 
-                          dplyr::rename(comparatorCohortId = .data$cohortId,
-                                        comparatorCohortName = .data$cohortName,
-                                        comparatorCohortShortName = .data$shortName))
-    
-    plotData <- plotData %>% 
-      dplyr::select(.data$targetCohortShortName, 
-                    .data$targetCohortName, 
-                    .data$comparatorCohortShortName,
-                    .data$comparatorCohortName,
-                    .data$comparisonGroup) %>% 
-      dplyr::distinct()
-    
-    targetCohortWithShortName = ""
-    comparatorCohortWithShortName = ""
-    for (i in 1:nrow(plotData)) {
-      dataNew <- plotData %>% 
-        dplyr::filter(.data$comparisonGroup == i)
-      
-      if (!grepl(dataNew$targetCohortShortName, targetCohortWithShortName, fixed = TRUE)) {
-        targetCohortWithShortName <- paste(targetCohortWithShortName, 
-                                           dataNew$targetCohortShortName, 
-                                           " = ", 
-                                           dataNew$targetCohortName, 
-                                           "<br/>")
-      }
-    }
-    
-    for (i in 1:nrow(plotData)) {
-      dataNew <- plotData %>% 
-        dplyr::filter(.data$comparisonGroup == i) 
-      
-      if (!grepl(dataNew$comparatorCohortShortName, comparatorCohortWithShortName, fixed = TRUE)){
-        comparatorCohortWithShortName <- paste0(comparatorCohortWithShortName, 
-                                                dataNew$comparatorCohortShortName, 
-                                                " = ", 
-                                                dataNew$comparatorCohortName, "<br/>")
-      }
-    }
-    
-    return(htmltools::withTags(
-      div(table(
-        tr(
-          td(
-            HTML(targetCohortWithShortName)
-          ),
-          td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;")),
-          td(
-            HTML(comparatorCohortWithShortName)
-          )
-        )
-      )
-      )))
-  })
-  
   output$temporalCharacterizationSelectedCohort <- shiny::renderUI({
     return(targetCohortCountHtml())
   })
@@ -1482,7 +1332,28 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$cohortOverlapSelectedCohort <- shiny::renderUI({
-    return(selectedCohortForOverlapTab())
+    data <- cohortOverlap()
+    targetCohorts <- data %>%
+      dplyr::distinct(.data$targetShortName, .data$targetCohortName) %>%
+      dplyr::arrange(.data$targetShortName)
+    comparatorCohorts <- data %>%
+      dplyr::distinct(.data$comparatorShortName, .data$comparatorCohortName) %>%
+      dplyr::arrange(.data$comparatorShortName)
+    
+    html <- htmltools::withTags(
+      div(table(
+        tr(
+          td(
+            HTML(paste(paste(targetCohorts$targetShortName, targetCohorts$targetCohortName, sep = ": "), collapse = "</br>"))
+          ),
+          td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;")),
+          td(
+            HTML(paste(paste(comparatorCohorts$comparatorShortName, comparatorCohorts$comparatorCohortName, paste = ": "), collapse = "</br>"))
+          )
+        )
+      )
+      ))
+    return(html)
   })
   
   #Download
