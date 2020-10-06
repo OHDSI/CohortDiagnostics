@@ -153,17 +153,22 @@ shiny::shinyServer(function(input, output, session) {
     table <- data %>% 
       dplyr::select(.data$cohortId, .data$cohortName, .data$webApiCohortId) %>% 
       dplyr::distinct() %>% 
-      dplyr::inner_join(table, by = c("cohortId", "cohortName")) %>% 
+      dplyr::inner_join(table, by = c("cohortId", "cohortName")) %>%
+      dplyr::select(-.data$cohortId) %>%
+      dplyr::arrange(.data$cohortName)
+    
+    
+    if (!is.null(cohortBaseUrl)) {
+    table <- table %>%
       dplyr::mutate(url = paste0(cohortBaseUrl, .data$webApiCohortId),
                     cohortName = paste0("<a href='", 
                                         .data$url, 
                                         "' target='_blank'>", 
                                         .data$cohortName, 
-                                        "</a>")
-      ) %>% 
-      dplyr::select(-.data$cohortId, -.data$url, -.data$webApiCohortId) %>%
-      dplyr::arrange(.data$cohortName)
-    
+                                        "</a>")) %>%
+      dplyr::select(-.data$url, -.data$webApiCohortId)
+    }
+      
     databaseIds <- unique(data$databaseId)
     
     sketch <- htmltools::withTags(table(

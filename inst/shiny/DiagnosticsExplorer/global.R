@@ -28,15 +28,11 @@ defaultVocabularySchema <- Sys.getenv("phenotypeLibraryDbVocabularySchema")
 
 defaultDatabaseMode <- TRUE # Use file system if FALSE
 
-cohortBaseUrl <- "https://atlas.ohdsi.org/#/cohortdefinition/"
-conceptBaseUrl <- "https://athena.ohdsi.org/search-terms/terms/"
+defaultCohortBaseUrl <- "https://atlas.ohdsi.org/#/cohortdefinition/"
+defaultConceptBaseUrl <- "https://athena.ohdsi.org/search-terms/terms/"
+
 cohortDiagnosticModeDefaultTitle <- "Cohort Diagnostics"
 phenotypeLibraryModeDefaultTitle <- "Phenotype Library"
-
-thresholdCohortSubjects <- 0
-thresholdCohortEntries <- 0
-
-databaseMode = FALSE
 
 if (!exists("shinySettings")) {
   writeLines("Using default settings")
@@ -55,6 +51,8 @@ if (!exists("shinySettings")) {
   } else {
     dataFolder <- defaultLocalDataFolder
   }
+  cohortBaseUrl <- defaultCohortBaseUrl
+  conceptBaseUrl <- defaultCohortBaseUrl
 } else {
   writeLines("Using settings provided by user")
   databaseMode <- !is.null(shinySettings$connectionDetails)
@@ -83,6 +81,8 @@ if (!exists("shinySettings")) {
   } else {
     dataFolder <- shinySettings$dataFolder
   }
+  cohortBaseUrl <- shinySettings$cohortBaseUrl
+  conceptBaseUrl <- shinySettings$cohortBaseUrl
 }
 
 dataModelSpecifications <- read.csv("resultsDataModelSpecification.csv")

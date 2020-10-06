@@ -9,6 +9,8 @@ launchDiagnosticsExplorer(
   connectionDetails = NULL,
   resultsDatabaseSchema = NULL,
   vocabularyDatabaseSchema = resultsDatabaseSchema,
+  cohortBaseUrl = "https://atlas.ohdsi.org/#/cohortdefinition/",
+  conceptBaseUrl = "https://athena.ohdsi.org/search-terms/terms/",
   runOverNetwork = FALSE,
   port = 80,
   launch.browser = FALSE
@@ -28,6 +30,13 @@ the CohortDiagnostics results have been uploaded using the
 have been uploaded.}
 
 \item{vocabularyDatabaseSchema}{The schema on the database server where the vocbulary tables are located.}
+
+\item{cohortBaseUrl}{The base URL for constructing linkouts to an ATLAS instance, using the 
+webApiCohortId in the cohortsToCreate file. If NULL, no linkouts will be 
+created.}
+
+\item{conceptBaseUrl}{The base URL for constructing linkouts to an Athena instance, using the
+concept ID.}
 
 \item{runOverNetwork}{(optional) Do you want the app to run over your network?}
 

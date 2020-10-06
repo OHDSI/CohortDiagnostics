@@ -29,6 +29,11 @@
 #' @param port             (optional) Only used if \code{runOverNetwork} = TRUE. 
 #' @param launch.browser   Should the app be launched in your default browser, or in a Shiny window.
 #'                         Note: copying to clipboard will not work in a Shiny window.
+#' @param cohortBaseUrl    The base URL for constructing linkouts to an ATLAS instance, using the 
+#'                         webApiCohortId in the cohortsToCreate file. If NULL, no linkouts will be 
+#'                         created.
+#' @param conceptBaseUrl   The base URL for constructing linkouts to an Athena instance, using the
+#'                         concept ID.
 #'
 #' @details
 #' Launches a Shiny app that allows the user to explore the diagnostics
@@ -38,6 +43,8 @@ launchDiagnosticsExplorer <- function(dataFolder = "data",
                                       connectionDetails = NULL,
                                       resultsDatabaseSchema = NULL,
                                       vocabularyDatabaseSchema = resultsDatabaseSchema,
+                                      cohortBaseUrl = "https://atlas.ohdsi.org/#/cohortdefinition/",
+                                      conceptBaseUrl = "https://athena.ohdsi.org/search-terms/terms/",
                                       runOverNetwork = FALSE,
                                       port = 80,
                                       launch.browser = FALSE) {
@@ -72,7 +79,9 @@ launchDiagnosticsExplorer <- function(dataFolder = "data",
   shinySettings <- list(connectionDetails = connectionDetails,
                         resultsDatabaseSchema = resultsDatabaseSchema,
                         vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-                        dataFolder = dataFolder)
+                        dataFolder = dataFolder,
+                        cohortBaseUrl = cohortBaseUrl,
+                        conceptBaseUrl = conceptBaseUrl)
   .GlobalEnv$shinySettings <- shinySettings
   on.exit(rm("shinySettings", envir = .GlobalEnv))
   shiny::runApp(appDir = appDir)
