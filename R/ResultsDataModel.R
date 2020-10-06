@@ -155,11 +155,16 @@ createResultsDataModel <- function(connection = NULL,
       stop("No connection or connectionDetails provided.")
     }
   } 
-  executeSql(connection, sprintf("SET search_path TO %s;", schema), progressBar = FALSE, reportOverallTime = FALSE)
+  schemas <- unlist(DatabaseConnector::querySql(connection, 
+                                                "SELECT schema_name FROM information_schema.schemata;", 
+                                                snakeCaseToCamelCase = TRUE)[, 1])
+  if (!tolower(schema) %in% tolower(schemas)) {
+    stop("Schema '", schema, "' not found on database. Only found these schemas: '", paste(schemas, collapse = "', '"), "'")
+  }
+  DatabaseConnector::executeSql(connection, sprintf("SET search_path TO %s;", schema), progressBar = FALSE, reportOverallTime = FALSE)
   pathToSql <- system.file("sql", "postgresql", "CreateResultsDataModel.sql", package = "CohortDiagnostics")
   sql <- SqlRender::readSql(pathToSql)
-  # sql <- SqlRender::render(sql, results_schema = schema)
-  executeSql(connection, sql)
+  DatabaseConnector::executeSql(connection, sql)
 }
 
 naToEmpty <- function(x) {
@@ -401,13 +406,24 @@ bulkUploadTable <- function(connectionDetails,
                             schema,
                             csvFileName,
                             tableName) {
-  # Note: code assumes DatabaseConnector 3.0.1 is installed (currently in develop)
-  hostServerDb <- strsplit(connectionDetails$server(), "/")[[1]]
-  
   startTime <- Sys.time()
   
+  # For backwards compatibility with older versions of DatabaseConnector:
+  if (is(connectionDetails$server, "function")) {
+    hostServerDb <- strsplit(connectionDetails$server(), "/")[[1]]
+    port <- connectionDetails$port()
+    user <- connectionDetails$user()
+    password <- connectionDetails$password()
+  } else {
+    hostServerDb <- strsplit(connectionDetails$server, "/")[[1]]
+    port <- connectionDetails$port
+    user <- connectionDetails$user
+    password <- connectionDetails$password
+  }
+
   # Required by psql:
-  Sys.setenv("PGPASSWORD" = connectionDetails$password())
+  Sys.setenv("PGPASSWORD" = password)
+  rm(password)
   on.exit(Sys.unsetenv("PGPASSWORD"))
   
   if (.Platform$OS.type == "windows") {
@@ -426,7 +442,7 @@ bulkUploadTable <- function(connectionDetails,
   headers <- paste0("(", headers, ")")
   tablePath <- paste(schema, tableName, sep = ".")
   filePathStr <- paste0("'", csvFileName, "'")
-  port <- connectionDetails$port()
+  
   if (is.null(port)) {
     port <- 5432
   }
@@ -434,7 +450,7 @@ bulkUploadTable <- function(connectionDetails,
                        "-h", hostServerDb[[1]], # Host
                        "-d", hostServerDb[[2]], # Database
                        "-p", port,
-                       "-U", connectionDetails$user(),
+                       "-U", user,
                        "-c \"\\copy", tablePath,
                        headers,
                        "FROM", filePathStr,
