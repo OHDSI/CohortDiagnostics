@@ -14,36 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#' Create characterization of a cohort
-#'
-#' @description
-#' Computes features using all drugs, conditions, procedures, etc. observed on or prior to the cohort
-#' index date.
-#'
-#' @template Connection
-#'
-#' @template CdmDatabaseSchema
-#'
-#' @template OracleTempSchema
-#'
-#' @template CohortTable
-#'
-#' @param cohortIds           A vector of cohortIds (1 or more) used to reference the cohort in the cohort
-#'                            table. 
-#'
-#' @template  cdmVersion
-#' 
-#' @param covariateSettings   Either an object of type \code{covariateSettings} as created using one of
-#'                            the createCovariate functions in the FeatureExtraction package, or a list
-#'                            of such objects.
-#'                            
-#' @param batchSize           Maximum number of cohorts to characterize at once. A larger batch size will
-#'                            be quicker, but may run out of resources on the server.
-#'
-#' @return
-#' An Andromeda object with information on the covariates.
-#'
-#' @export
 getCohortCharacteristics <- function(connectionDetails = NULL,
                                      connection = NULL,
                                      cdmDatabaseSchema,
@@ -144,29 +114,4 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
   delta <- Sys.time() - startTime
   ParallelLogger::logInfo("Cohort characterization took ", signif(delta, 3), " ", attr(delta, "units"))
   return(results)
-}
-
-#' Compare cohort characteristics
-#'
-#' @description
-#' Compare the characteristics of two cohorts, computing the standardized difference of the mean.
-#'
-#' @param characteristics1   Characteristics of the first cohort, as created using the
-#'                           \code{\link{getCohortCharacteristics}} function.
-#' @param characteristics2   Characteristics of the second cohort, as created using the
-#'                           \code{\link{getCohortCharacteristics}} function.
-#'
-#' @return
-#' A data frame comparing the characteristics of the two cohorts.
-#'
-#' @export
-compareCohortCharacteristics <- function(characteristics1, characteristics2) {
-  m <- dplyr::full_join(x = characteristics1 %>% dplyr::distinct(), 
-                        y = characteristics2 %>% dplyr::distinct(),
-                        suffix = c("1", "2")) %>%
-    dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = 0)),
-                  sd = sqrt(.data$sd1^2 + .data$sd2^2),
-                  stdDiff = (.data$mean2 - .data$mean1)/.data$sd) %>% 
-    dplyr::arrange(-abs(.data$stdDiff))
-  return(m)
 }

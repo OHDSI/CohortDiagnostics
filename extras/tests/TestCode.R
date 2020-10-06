@@ -64,101 +64,6 @@ instantiateCohort(connectionDetails = connectionDetails,
                   cohortId = cohortId,
                   generateInclusionStats = TRUE)
 
-inclusionStatistics <- getInclusionStatistics(connectionDetails = connectionDetails,
-                                              resultsDatabaseSchema = resultsDatabaseSchema,
-                                              cohortId = cohortId,
-                                              cohortTable = cohortTable)
-
-# Source concepts -------------------------------------------------------------------------
-createConceptCountsTable(connectionDetails = connectionDetails,
-                         cdmDatabaseSchema = cdmDatabaseSchema,
-                         conceptCountsDatabaseSchema = workDatabaseSchema)
-
-includedSourceConcepts <- findCohortIncludedSourceConcepts(connectionDetails = connectionDetails,
-                                                           cdmDatabaseSchema = cdmDatabaseSchema,
-                                                           oracleTempSchema = oracleTempSchema,
-                                                           baseUrl = baseUrl,
-                                                           webApiCohortId = cohortId,
-                                                           byMonth = FALSE,
-                                                           useSourceValues = FALSE)
-
-orphanConcepts <- findCohortOrphanConcepts(connectionDetails = connectionDetails,
-                                           cdmDatabaseSchema = cdmDatabaseSchema,
-                                           oracleTempSchema = oracleTempSchema,
-                                           conceptCountsDatabaseSchema = workDatabaseSchema,
-                                           baseUrl = baseUrl,
-                                           webApiCohortId = cohortId)
-
-# Cohort-level ------------------------------------------------------------------
-counts <- getCohortCounts(connectionDetails = connectionDetails,
-                          cohortDatabaseSchema = cohortDatabaseSchema,
-                          cohortTable = cohortTable,
-                          cohortIds = cohortId) 
-
-timeDist <- getTimeDistributions(connectionDetails = connectionDetails,
-                                 oracleTempSchema = oracleTempSchema,
-                                 cdmDatabaseSchema = cdmDatabaseSchema,
-                                 cohortDatabaseSchema = cohortDatabaseSchema,
-                                 cohortTable = cohortTable,
-                                 cohortId = cohortId)
-
-breakdown <- breakDownIndexEvents(connectionDetails = connectionDetails,
-                                  cdmDatabaseSchema = cdmDatabaseSchema,
-                                  oracleTempSchema = oracleTempSchema,
-                                  baseUrl = baseUrl,
-                                  webApiCohortId = cohortId,
-                                  cohortDatabaseSchema = cohortDatabaseSchema,
-                                  cohortTable = cohortTable,
-                                  cohortId = cohortId)
-
-incidenceRate <- getIncidenceRate(connectionDetails = connectionDetails,
-                                  cohortDatabaseSchema = cohortDatabaseSchema,
-                                  cohortTable = cohortTable,
-                                  oracleTempSchema = oracleTempSchema,
-                                  cdmDatabaseSchema = cdmDatabaseSchema,
-                                  firstOccurrenceOnly = TRUE,
-                                  washoutPeriod = 365,
-                                  cohortId = cohortId)
-
-plotincidenceRate(incidenceRate)
-
-
-overlap <- computeCohortOverlap(connectionDetails = connectionDetails,
-                                cohortDatabaseSchema = cohortDatabaseSchema,
-                                cohortTable = cohortTable,
-                                targetCohortId = 7399,
-                                comparatorCohortId = 5665)
-
-# Cohort characteristics level ---------------------------------------------------
-chars <- getCohortCharacteristics(connectionDetails = connectionDetails,
-                                  oracleTempSchema = oracleTempSchema,
-                                  cdmDatabaseSchema = cdmDatabaseSchema,
-                                  cohortDatabaseSchema = cohortDatabaseSchema,
-                                  cohortTable = cohortTable,
-                                  cohortId = cohortId, 
-                                  covariateSettings = FeatureExtraction::createDefaultCovariateSettings())
-
-chars1 <- getCohortCharacteristics(connectionDetails = connectionDetails,
-                                   oracleTempSchema = oracleTempSchema,
-                                   cdmDatabaseSchema = cdmDatabaseSchema,
-                                   cohortDatabaseSchema = cohortDatabaseSchema,
-                                   cohortTable = cohortTable,
-                                   cohortId = 7362, 
-                                   covariateSettings = FeatureExtraction::createDefaultCovariateSettings())
-
-chars2 <- getCohortCharacteristics(connectionDetails = connectionDetails,
-                                   oracleTempSchema = oracleTempSchema,
-                                   cdmDatabaseSchema = cdmDatabaseSchema,
-                                   cohortDatabaseSchema = cohortDatabaseSchema,
-                                   cohortTable = cohortTable,
-                                   cohortId = 5665, 
-                                   covariateSettings = FeatureExtraction::createDefaultCovariateSettings())
-
-# saveRDS(chars1, 'c:/temp/chars1.rds') saveRDS(chars2, 'c:/temp/chars2.rds')
-
-comparison <- compareCohortCharacteristics(chars1, chars2)
-
-
 # Launch Diagnostics Explorer app ----------------------------------------------
 preMergeDiagnosticsFiles("C:/temp/exampleStudy")
 
@@ -204,24 +109,7 @@ packageName <- "BarcelonaStudyAThon"
 exportFolder <- file.path(folder, "export")
 
 library(CohortDiagnostics)
-runStudyDiagnostics(packageName = "BarcelonaStudyAThon",
-                    connectionDetails = connectionDetails,
-                    cdmDatabaseSchema = cdmDatabaseSchema,
-                    oracleTempSchema = oracleTempSchema,
-                    cohortDatabaseSchema = cohortDatabaseSchema,
-                    cohortTable = cohortTable,
-                    inclusionStatisticsFolder = outputFolder,
-                    exportFolder = file.path(outputFolder, "export"),
-                    databaseId = databaseId,
-                    databaseName = databaseName,
-                    databaseDescription = databaseDescription,
-                    runInclusionStatistics = TRUE,
-                    runIncludedSourceConcepts = TRUE,
-                    runOrphanConcepts = TRUE,
-                    runBreakdownIndexEvents = TRUE,
-                    runIncidenceProportion = TRUE,
-                    runCohortOverlap = TRUE,
-                    runCohortCharacterization = TRUE)
+
 
 
 # Using cohort set with WebAPI ---------------------------------------------------

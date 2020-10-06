@@ -125,25 +125,28 @@ preMergeDiagnosticsFiles <- function(dataFolder, tempFolder = tempdir()) {
     data <- dplyr::tibble()
     for (i in 1:nrow(zipFiles)) {
       if (csvFileName %in% list.files(zipFiles$unzipFolder[i])) {
-         newData <- readr::read_csv(file.path(zipFiles$unzipFolder[i], csvFileName),
-                                    col_types = readr::cols(),
-                                    guess_max = min(1e6))
-         checkColumnNames(table = newData, 
-                          tableName = tableName, 
-                          zipFileName = zipFiles$zipFile[i],
-                          specifications = specifications)
-         newData <- checkAndFixDataTypes(table = newData, 
-                                         tableName = tableName, 
-                                         zipFileName = zipFiles$zipFile[i],
-                                         specifications = specifications)
-         newData <- checkAndFixDuplicateRows(table = newData, 
-                                             tableName = tableName, 
-                                             zipFileName = zipFiles$zipFile[i],
-                                             specifications = specifications) 
-         data <- appendNewRows(data = data, 
-                               newData = newData, 
-                               tableName = tableName, 
-                               specifications = specifications)
+        newData <- readr::read_csv(file.path(zipFiles$unzipFolder[i], csvFileName),
+                                   col_types = readr::cols(),
+                                   guess_max = min(1e6))
+        if (nrow(newData) > 0) {
+          checkColumnNames(table = newData, 
+                           tableName = tableName, 
+                           zipFileName = zipFiles$zipFile[i],
+                           specifications = specifications)
+          newData <- checkAndFixDataTypes(table = newData, 
+                                          tableName = tableName, 
+                                          zipFileName = zipFiles$zipFile[i],
+                                          specifications = specifications)
+          newData <- checkAndFixDuplicateRows(table = newData, 
+                                              tableName = tableName, 
+                                              zipFileName = zipFiles$zipFile[i],
+                                              specifications = specifications) 
+          data <- appendNewRows(data = data, 
+                                newData = newData, 
+                                tableName = tableName, 
+                                specifications = specifications)
+          
+        }
       }
     }
     if (nrow(data) == 0) {

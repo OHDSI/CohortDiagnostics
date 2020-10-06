@@ -155,30 +155,6 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
   return(dplyr::bind_rows(cohort))
 }
 
-#' Get cohorts JSON and parameterized OHDSI SQL
-#'
-#' @description
-#' This function may be used to collect a cohorts JSON and OHDSI SQL. Based on whether a
-#' baseUrl is available, the function will collect the specifications from either from
-#' WebApi or a Package. 
-#'
-#' @template CohortSetSpecs
-#' 
-#' @template CohortSetReference
-#' 
-#' @param cohortIds                   Optionally, provide a subset of cohort IDs to restrict the
-#'                                    diagnostics to.
-#' @return 
-#' The function will return a R list object with cohort information including specifications 
-#' such as JSON and SQL.
-#'
-#' @examples
-#' \dontrun{
-#' cohorts <- getCohortsJsonAndSql(packageName = 'cohortDiagnostics',
-#'                                 baseUrl = "http://server.org:80/WebAPI")
-#' }
-#' 
-#' @export
 getCohortsJsonAndSql <- function(packageName = NULL,
                                  cohortToCreateFile = "settings/CohortsToCreate.csv",
                                  baseUrl = NULL,
@@ -438,100 +414,6 @@ instantiateCohort <- function(connectionDetails = NULL,
   
 }
 
-#' Get statistics on cohort inclusion criteria
-#'
-#' @template Connection
-#'
-#' @param cohortTable                  Name of the cohort table. Used only to conveniently derive names
-#'                                     of the four rule statistics tables.
-#' @param cohortId                     The cohort definition ID used to reference the cohort in the
-#'                                     cohort table.
-#' @param simplify                     Simply output the attrition table?
-#' @param resultsDatabaseSchema        Schema name where the statistics tables reside. Note that for
-#'                                     SQL Server, this should include both the database and schema
-#'                                     name, for example 'scratch.dbo'.
-#' @param cohortInclusionTable         Name of the inclusion table, one of the tables for storing
-#'                                     inclusion rule statistics.
-#' @param cohortInclusionResultTable   Name of the inclusion result table, one of the tables for
-#'                                     storing inclusion rule statistics.
-#' @param cohortInclusionStatsTable    Name of the inclusion stats table, one of the tables for storing
-#'                                     inclusion rule statistics.
-#' @param cohortSummaryStatsTable      Name of the summary stats table, one of the tables for storing
-#'                                     inclusion rule statistics.
-#'
-#' @return
-#' If `simplify = TRUE`, this function returns a single data frame. Else a list of data frames is
-#' returned.
-#'
-#' @export
-getInclusionStatistics <- function(connectionDetails = NULL,
-                                   connection = NULL,
-                                   resultsDatabaseSchema,
-                                   cohortId,
-                                   simplify = TRUE,
-                                   cohortTable = "cohort",
-                                   cohortInclusionTable = paste0(cohortTable, "_inclusion"),
-                                   cohortInclusionResultTable = paste0(cohortTable,
-                                                                       "_inclusion_result"),
-                                   cohortInclusionStatsTable = paste0(cohortTable,
-                                                                      "_inclusion_stats"),
-                                   cohortSummaryStatsTable = paste0(cohortTable,
-                                                                    "_summary_stats")) {
-  start <- Sys.time()
-  ParallelLogger::logInfo("Fetching inclusion statistics for cohort with cohort_definition_id = ",
-                          cohortId)
-  if (is.null(connection)) {
-    connection <- DatabaseConnector::connect(connectionDetails)
-    on.exit(DatabaseConnector::disconnect(connection))
-  }
-  fetchStats <- function(table) {
-    ParallelLogger::logDebug("- Fetching data from ", table)
-    sql <- "SELECT * FROM @database_schema.@table WHERE cohort_definition_id = @cohort_id"
-    DatabaseConnector::renderTranslateQuerySql(sql = sql,
-                                               connection = connection,
-                                               snakeCaseToCamelCase = TRUE,
-                                               database_schema = resultsDatabaseSchema,
-                                               table = table,
-                                               cohort_id = cohortId)
-  }
-  inclusion <- fetchStats(cohortInclusionTable)
-  summaryStats <- fetchStats(cohortSummaryStatsTable)
-  inclusionStats <- fetchStats(cohortInclusionStatsTable)
-  inclusionResults <- fetchStats(cohortInclusionResultTable)
-  result <- processInclusionStats(inclusion = inclusion,
-                                  inclusionResults = inclusionResults,
-                                  inclusionStats = inclusionStats,
-                                  summaryStats = summaryStats,
-                                  simplify = simplify)
-  delta <- Sys.time() - start
-  writeLines(paste("Fetching inclusion statistics took", signif(delta, 3), attr(delta, "units")))
-  return(result)
-}
-
-#' Get inclusion criteria statistics from files
-#'
-#' @description
-#' Gets inclusion criteria statistics from files, as stored when using the
-#' \code{ROhdsiWebApi::insertCohortDefinitionSetInPackage} function with \code{generateStats = TRUE}.
-#'
-#' @param cohortIds                   The cohort definition ID(s) used to reference the cohort in the
-#'                                    cohort table. If none are specified, all cohorts are included.
-#' @param simplify                    Simply output the attrition table?
-#' @param folder                      The path to the folder where the inclusion statistics are stored.
-#' @param cohortInclusionFile         Name of the inclusion table, one of the tables for storing
-#'                                    inclusion rule statistics.
-#' @param cohortInclusionResultFile   Name of the inclusion result table, one of the tables for storing
-#'                                    inclusion rule statistics.
-#' @param cohortInclusionStatsFile    Name of the inclusion stats table, one of the tables for storing
-#'                                    inclusion rule statistics.
-#' @param cohortSummaryStatsFile      Name of the summary stats table, one of the tables for storing
-#'                                    inclusion rule statistics.
-#'
-#' @return
-#' If `simplify = TRUE`, this function returns a single data frame. Else a list of data frames is
-#' returned.
-#'
-#' @export
 getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
                                             folder,
                                             cohortInclusionFile = file.path(folder,
@@ -892,50 +774,4 @@ saveAndDropTempInclusionStatsTables <- function(connection,
               This may cause error and terminate cohort diagnositcs.")
     }
   }
-}
-
-
-
-#' Get record counts for a set of cohort
-#'
-#' @description
-#' This function get record count for a set of cohorts in the cohort table.
-#'
-#' @template Connection
-#' @template CohortTable
-#' @param cohortIds       A vecotr of cohortIds to get counts for.
-#' @return
-#' A tibble data frame object                               
-#'
-#' @export
-getRecordCountOfInstantiatedCohorts <- function(connection = NULL,
-                                                connectionDetails = NULL,
-                                                cohortDatabaseSchema,
-                                                cohortTable,
-                                                cohortIds) {
-  
-  if (is.vector(x = cohortIds) && length(cohortIds) > 1) {
-    cohortIds <- paste0(cohortIds, collapse = ",")
-  }
-  ## set up connection to server
-  if (is.null(connection)) {
-    connection <- DatabaseConnector::connect(connectionDetails)
-    on.exit(DatabaseConnector::disconnect(connection))
-  }
-  
-  sql <- "SELECT cohort_definition_id AS cohort_id, 
-      COUNT(*) AS cohort_count 
-    FROM @cohort_database_schema.@cohort_table 
-    WHERE cohort_definition_id in (@cohort_id)
-    GROUP BY cohort_definition_id ;"
-  
-  cohortTableRecords <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                                                   sql = sql,
-                                                                   cohort_database_schema = cohortDatabaseSchema,
-                                                                   cohort_table = cohortTable,
-                                                                   cohort_id = cohortIds,
-                                                                   snakeCaseToCamelCase = TRUE) %>% 
-    dplyr::rename(count = .data$cohortCount) %>%
-    tidyr::tibble()
-  return(cohortTableRecords)
 }

@@ -188,8 +188,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     cohorts$phenotypeId <- NA
   }
   
-  ##############################
-  ## set up connection to server
+  # Set up connection to server ----------------------------------------------------
   if (is.null(connection)) {
     if (!is.null(connectionDetails)) {
       connection <- DatabaseConnector::connect(connectionDetails)
@@ -199,7 +198,16 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
   }
   
-  ##############################
+  if (incremental) {
+    ParallelLogger::logDebug("Working in incremental mode.")
+    cohorts$checksum <- computeChecksum(cohorts$sql)
+    recordKeepingFile <- file.path(incrementalFolder, "CreatedDiagnostics.csv")
+    if (file.exists(path = recordKeepingFile)) {
+      ParallelLogger::logInfo("Found existing record keeping file in incremental folder - CreatedDiagnostics.csv")
+    }
+  }
+  
+  # Database metadata ---------------------------------------------
   ParallelLogger::logInfo("Saving database metadata")
   startMetaData <- Sys.time()
   database <- dplyr::tibble(databaseId = databaseId,
@@ -211,8 +219,8 @@ runCohortDiagnostics <- function(packageName = NULL,
   delta <- Sys.time() - startMetaData
   writeLines(paste("Saving database metadata took", signif(delta, 3), attr(delta, "units")))
   
-  ##############################
-  ParallelLogger::logTrace("Creating unique concept ID table")
+  # Create concept table ------------------------------------------
+  ParallelLogger::logTrace("Creating concept ID table for tracking concepts used in diagnostics")
   sql <- SqlRender::loadRenderTranslateSql("CreateConceptIdTable.sql",
                                            packageName = "CohortDiagnostics",
                                            dbms = connection@dbms,
@@ -241,15 +249,25 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
   }
   
-  ##############################
-  recordCountOfInstantiatedCohorts <- getRecordCountOfInstantiatedCohorts(connection = connection,
-                                                                          cohortDatabaseSchema = cohortDatabaseSchema,
-                                                                          cohortTable = cohortTable, 
-                                                                          cohortIds = cohorts$cohortId)
-  if (nrow(recordCountOfInstantiatedCohorts %>% 
-           dplyr::filter(.data$count > 0)) > 0) {
-    instantiatedCohorts <- recordCountOfInstantiatedCohorts %>% 
-      dplyr::filter(.data$count > 0) %>% 
+  # Counting cohorts -----------------------------------------------------------------------
+  ParallelLogger::logInfo("Counting cohort records and subjects")
+  cohortCounts <- getCohortCounts(connection = connection,
+                                  cohortDatabaseSchema = cohortDatabaseSchema,
+                                  cohortTable = cohortTable, 
+                                  cohortIds = cohorts$cohortId)
+  cohortCounts <- cohortCounts %>% 
+    dplyr::mutate(databaseId = !!databaseId)
+  if (nrow(cohortCounts) > 0) {
+    cohortCounts <- enforceMinCellValue(data = cohortCounts, fieldName = "cohortEntries", minValues = minCellCount)
+    cohortCounts <- enforceMinCellValue(data = cohortCounts, fieldName = "cohortSubjects", minValues = minCellCount)
+  }
+  writeToCsv(data = cohortCounts, 
+             fileName = file.path(exportFolder, "cohort_count.csv"), 
+             incremental = FALSE, 
+             cohortId = subset$cohortId)
+  
+  if (nrow(cohortCounts) > 0) {
+    instantiatedCohorts <- cohortCounts %>% 
       dplyr::pull(.data$cohortId)
     ParallelLogger::logInfo(sprintf("Found %s of %s (%1.2f%%) submitted cohorts instantiated. ", 
                                     length(instantiatedCohorts), 
@@ -259,54 +277,6 @@ runCohortDiagnostics <- function(packageName = NULL,
   } else {
     stop("All cohorts were either not instantiated or all have 0 records.")
   }
-  
-  ##############################
-  if (incremental) {
-    ParallelLogger::logDebug("Working in incremental mode.")
-    cohorts$checksum <- computeChecksum(cohorts$sql)
-    recordKeepingFile <- file.path(incrementalFolder, "CreatedDiagnostics.csv")
-    if (file.exists(path = recordKeepingFile)) {
-      ParallelLogger::logInfo("Found existing record keeping file in incremental folder - CreatedDiagnostics.csv")
-    }
-  }
-  ##############################
-  # Counting cohorts -----------------------------------------------------------------------
-  ParallelLogger::logInfo("Counting cohort records and subjects")
-  subset <- subsetToRequiredCohorts(cohorts = cohorts %>% 
-                                      dplyr::filter(.data$cohortId %in% instantiatedCohorts), 
-                                    task = "getCohortCounts", 
-                                    incremental = incremental, 
-                                    recordKeepingFile = recordKeepingFile)
-  if (incremental && (length(instantiatedCohorts) - nrow(subset)) > 0) {
-    ParallelLogger::logInfo(sprintf("Skipping %s cohorts in incremental mode.", 
-                                    length(instantiatedCohorts) - nrow(subset)))
-  }
-  if (nrow(subset) > 0) {
-    counts <- getCohortCounts(connection = connection,
-                              cohortDatabaseSchema = cohortDatabaseSchema,
-                              cohortTable = cohortTable,
-                              cohortIds = subset$cohortId)
-    
-    if (nrow(counts) > 0) {
-      counts <- counts %>% dplyr::mutate(databaseId = !!databaseId)
-      counts <- enforceMinCellValue(data = counts, fieldName = "cohortEntries", minValues = minCellCount)
-      counts <- enforceMinCellValue(data = counts, fieldName = "cohortSubjects", minValues = minCellCount)
-    }
-    writeToCsv(data = counts, 
-               fileName = file.path(exportFolder, "cohort_count.csv"), 
-               incremental = incremental, 
-               cohortId = subset$cohortId)
-    recordTasksDone(cohortId = subset$cohortId,
-                    task = "getCohortCounts",
-                    checksum = subset$checksum,
-                    recordKeepingFile = recordKeepingFile,
-                    incremental = incremental)
-  }
-  # Get all counts, not just those we didn't count before:
-  counts <- readr::read_csv(file = file.path(exportFolder, "cohort_count.csv"), 
-                            col_types = readr::cols(),
-                            guess_max = min(1e7))
-  names(counts) <- SqlRender::snakeCaseToCamelCase(names(counts))
 
   # Inclusion statistics -----------------------------------------------------------------------
   if (runInclusionStatistics) {
@@ -629,7 +599,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                              covariateValueFileName = file.path(exportFolder, "covariate_value.csv"),
                              covariateRefFileName = file.path(exportFolder, "covariate_ref.csv"),
                              analysisRefFileName = file.path(exportFolder, "analysis_ref.csv"),
-                             counts = counts,
+                             counts = cohortCounts,
                              minCellCount = minCellCount)
     } 
     recordTasksDone(cohortId = subset$cohortId,
@@ -672,7 +642,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                              covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
                              analysisRefFileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
                              timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv"),
-                             counts = counts,
+                             counts = cohortCounts,
                              minCellCount = minCellCount)
     } 
     recordTasksDone(cohortId = subset$cohortId,

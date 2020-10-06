@@ -14,24 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#' Compute overlap between two cohorts
-#'
-#' @description
-#' Computes the overlap between a target and a comparator cohort.
-#'
-#' @template Connection
-#'
-#' @template CohortTable
-#'
-#' @param targetCohortId       The cohort ID used to reference the target cohort in the
-#'                             cohort table.
-#' @param comparatorCohortId   The cohort ID used to reference the comparator cohort in the
-#'                             cohort table.
-#'
-#' @return
-#' A data frame with overlap statistics.
-#'
-#' @export
 computeCohortOverlap <- function(connectionDetails = NULL,
                                  connection = NULL,
                                  cohortDatabaseSchema,

@@ -14,28 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#' Get time distributions for a set of cohorts
-#'
-#' @description
-#' Computes the distribution of the observation time before and after index, and time within a cohort.
-#'
-#' @template Connection
-#'
-#' @template CdmDatabaseSchema
-#'
-#' @template OracleTempSchema
-#'
-#' @template CohortTable
-#' 
-#' @template cdmVersion
-#'
-#' @param cohortIds           A vector of cohortIds (1 or more) used to reference the cohort in the cohort
-#'                            table.
-#'
-#' @return
-#' A list object with tibbles returned from Feature Extraction
-#'
-#' @export
 getTimeDistributions <- function(connectionDetails = NULL,
                                  connection = NULL,
                                  cdmDatabaseSchema,

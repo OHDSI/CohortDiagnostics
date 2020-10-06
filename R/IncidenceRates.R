@@ -14,38 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#' @title
-#' Compute incidence rate for a cohort
-#'
-#' @description
-#' Returns yearly incidence rate stratified by age and gender
-#'
-#' @template Connection
-#'
-#' @template CohortTable
-#'
-#' @template CdmDatabaseSchema
-#' 
-#' @template cdmVersion
-#' 
-#' @template OracleTempSchema
-#'
-#' @param firstOccurrenceOnly   Use only the first occurrence of the cohort per person?
-#'
-#' @param washoutPeriod         The minimum amount of observation time required before the occurrence
-#'                              of a cohort entry. This is also used to eliminate immortal time from
-#'                              the denominator.
-#' @param cohortId              The cohort Id used to reference the cohort in the cohort
-#'                              table.
-#'
-#' @return
-#' Returns a data frame of cohort count, person year count, and incidence rate per 1000 persons
-#' years with the following stratifications: 1) no stratification, 2) gender stratification,
-#' 3) age (10-year) stratification, 4) calendar year and age (10-year) stratification, 5) calendar
-#' year and gender stratification, 6) calendar year, age (10-year), and gender stratification with
-#' option to save dataframes.
-#'
-#' @export
 getIncidenceRate <- function(connectionDetails = NULL,
                              connection = NULL,
                              cohortDatabaseSchema,

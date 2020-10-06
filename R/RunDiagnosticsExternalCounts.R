@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
 #' Run cohort diagnostics using external concept counts
 #'
 #' @description
@@ -32,12 +33,16 @@
 #'
 #' @template OracleTempSchema
 #'
-#' @template ConceptCounts
-#'
 #' @template CohortSetSpecs
 #' 
 #' @template CohortSetReference
 #' 
+#' @param conceptCountsDatabaseSchema Schema name where your concept counts table resides. Note that
+#'                                    for SQL Server, this should include both the database and
+#'                                    schema name, for example 'scratch.dbo'. Ignored if
+#'                                    \code{conceptCountsTableIsTemp = TRUE}.
+#' @param conceptCountsTable          Name of the concept counts table. 
+#' @param conceptCountsTableIsTemp    Is the concept counts table a temp table?   
 #' @param exportFolder                The folder where the output will be exported to. If this folder
 #'                                    does not exist it will be created.
 #' @param cohortIds                   Optionally, provide a subset of cohort IDs to restrict the
@@ -49,92 +54,92 @@
 #' @param runOrphanConcepts           Generate and export potential orphan concepts?
 #' @param minCellCount                The minimum cell count for fields contains person counts or fractions.
 #'
-#' @export
-runCohortDiagnosticsUsingExternalCounts <- function(packageName = NULL,
-                                                    cohortToCreateFile = "settings/CohortsToCreate.csv",
-                                                    baseUrl = NULL,
-                                                    cohortSetReference = NULL,
-                                                    connectionDetails = NULL,
-                                                    connection = NULL,
-                                                    cdmDatabaseSchema,
-                                                    oracleTempSchema = NULL,
-                                                    cohortIds = NULL,
-                                                    conceptCountsDatabaseSchema = cdmDatabaseSchema,
-                                                    conceptCountsTable = "concept_counts",
-                                                    conceptCountsTableIsTemp = FALSE,
-                                                    exportFolder,
-                                                    databaseId,
-                                                    databaseName = databaseId,
-                                                    databaseDescription = "",
-                                                    runIncludedSourceConcepts = TRUE,
-                                                    runOrphanConcepts = TRUE,
-                                                    minCellCount = 5) {
-  if (is.null(packageName) && is.null(baseUrl)) {
-    stop("Must provide either packageName and cohortToCreateFile, or baseUrl and cohortSetReference")
-  }
-  if (!is.null(cohortSetReference)) {
-    if (is.null(cohortSetReference$atlasId))
-      stop("cohortSetReference must contain atlasId field")
-    if (is.null(cohortSetReference$atlasName))
-      stop("cohortSetReference must contain atlasName field")
-    if (is.null(cohortSetReference$cohortId))
-      stop("cohortSetReference must contain cohortId field")
-    if (is.null(cohortSetReference$name))
-      stop("cohortSetReference must contain name field")
-  }
-  
-  start <- Sys.time()
-  if (!file.exists(exportFolder)) {
-    dir.create(exportFolder)
-  }
-  
-  if (is.null(connection)) {
-    connection <- DatabaseConnector::connect(connectionDetails)
-    on.exit(DatabaseConnector::disconnect(connection))
-  }
-  
-  cohorts <- getCohortsJsonAndSql(packageName = packageName,
-                                  cohortToCreateFile = cohortToCreateFile,
-                                  baseUrl = baseUrl,
-                                  cohortSetReference = cohortSetReference,
-                                  cohortIds = cohortIds)
-  
-  writeToCsv(cohorts, file.path(exportFolder, "cohort.csv"))
-  
-  ParallelLogger::logInfo("Saving database metadata")
-  database <- data.frame(databaseId = databaseId,
-                         databaseName = databaseName,
-                         description = databaseDescription,
-                         isMetaAnalysis = 0)
-  writeToCsv(database, file.path(exportFolder, "database.csv"))
-  if (runIncludedSourceConcepts || runOrphanConcepts) {
-    runConceptSetDiagnostics(connection = connection,
-                             oracleTempSchema = oracleTempSchema,
-                             cdmDatabaseSchema = cdmDatabaseSchema,
-                             databaseId = databaseId,
-                             cohorts = cohorts,
-                             runIncludedSourceConcepts = runIncludedSourceConcepts,
-                             runOrphanConcepts = runOrphanConcepts,
-                             exportFolder = exportFolder,
-                             minCellCount = minCellCount,
-                             conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
-                             conceptCountsTable = conceptCountsTable,
-                             conceptCountsTableIsTemp = conceptCountsTableIsTemp,
-                             useExternalConceptCountsTable = TRUE)
-  }
-  
-  # Add all to zip file -------------------------------------------------------------------------------
-  ParallelLogger::logInfo("Adding results to zip file")
-  zipName <- file.path(exportFolder, paste0("Results_", databaseId, ".zip"))
-  files <- list.files(exportFolder, pattern = ".*\\.csv$")
-  oldWd <- setwd(exportFolder)
-  on.exit(setwd(oldWd), add = TRUE)
-  DatabaseConnector::createZipFile(zipFile = zipName, files = files)
-  ParallelLogger::logInfo("Results are ready for sharing at:", zipName)
-  
-  delta <- Sys.time() - start
-  ParallelLogger::logInfo(paste("Computing all diagnostics took",
-                                signif(delta, 3),
-                                attr(delta, "units")))
-}
+# Disabling because currently doesn't work
+# runCohortDiagnosticsUsingExternalCounts <- function(packageName = NULL,
+#                                                     cohortToCreateFile = "settings/CohortsToCreate.csv",
+#                                                     baseUrl = NULL,
+#                                                     cohortSetReference = NULL,
+#                                                     connectionDetails = NULL,
+#                                                     connection = NULL,
+#                                                     cdmDatabaseSchema,
+#                                                     oracleTempSchema = NULL,
+#                                                     cohortIds = NULL,
+#                                                     conceptCountsDatabaseSchema = cdmDatabaseSchema,
+#                                                     conceptCountsTable = "concept_counts",
+#                                                     conceptCountsTableIsTemp = FALSE,
+#                                                     exportFolder,
+#                                                     databaseId,
+#                                                     databaseName = databaseId,
+#                                                     databaseDescription = "",
+#                                                     runIncludedSourceConcepts = TRUE,
+#                                                     runOrphanConcepts = TRUE,
+#                                                     minCellCount = 5) {
+#   if (is.null(packageName) && is.null(baseUrl)) {
+#     stop("Must provide either packageName and cohortToCreateFile, or baseUrl and cohortSetReference")
+#   }
+#   if (!is.null(cohortSetReference)) {
+#     if (is.null(cohortSetReference$atlasId))
+#       stop("cohortSetReference must contain atlasId field")
+#     if (is.null(cohortSetReference$atlasName))
+#       stop("cohortSetReference must contain atlasName field")
+#     if (is.null(cohortSetReference$cohortId))
+#       stop("cohortSetReference must contain cohortId field")
+#     if (is.null(cohortSetReference$name))
+#       stop("cohortSetReference must contain name field")
+#   }
+#   
+#   start <- Sys.time()
+#   if (!file.exists(exportFolder)) {
+#     dir.create(exportFolder)
+#   }
+#   
+#   if (is.null(connection)) {
+#     connection <- DatabaseConnector::connect(connectionDetails)
+#     on.exit(DatabaseConnector::disconnect(connection))
+#   }
+#   
+#   cohorts <- getCohortsJsonAndSql(packageName = packageName,
+#                                   cohortToCreateFile = cohortToCreateFile,
+#                                   baseUrl = baseUrl,
+#                                   cohortSetReference = cohortSetReference,
+#                                   cohortIds = cohortIds)
+#   
+#   writeToCsv(cohorts, file.path(exportFolder, "cohort.csv"))
+#   
+#   ParallelLogger::logInfo("Saving database metadata")
+#   database <- data.frame(databaseId = databaseId,
+#                          databaseName = databaseName,
+#                          description = databaseDescription,
+#                          isMetaAnalysis = 0)
+#   writeToCsv(database, file.path(exportFolder, "database.csv"))
+#   if (runIncludedSourceConcepts || runOrphanConcepts) {
+#     runConceptSetDiagnostics(connection = connection,
+#                              oracleTempSchema = oracleTempSchema,
+#                              cdmDatabaseSchema = cdmDatabaseSchema,
+#                              databaseId = databaseId,
+#                              cohorts = cohorts,
+#                              runIncludedSourceConcepts = runIncludedSourceConcepts,
+#                              runOrphanConcepts = runOrphanConcepts,
+#                              exportFolder = exportFolder,
+#                              minCellCount = minCellCount,
+#                              conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
+#                              conceptCountsTable = conceptCountsTable,
+#                              conceptCountsTableIsTemp = conceptCountsTableIsTemp,
+#                              useExternalConceptCountsTable = TRUE)
+#   }
+#   
+#   # Add all to zip file -------------------------------------------------------------------------------
+#   ParallelLogger::logInfo("Adding results to zip file")
+#   zipName <- file.path(exportFolder, paste0("Results_", databaseId, ".zip"))
+#   files <- list.files(exportFolder, pattern = ".*\\.csv$")
+#   oldWd <- setwd(exportFolder)
+#   on.exit(setwd(oldWd), add = TRUE)
+#   DatabaseConnector::createZipFile(zipFile = zipName, files = files)
+#   ParallelLogger::logInfo("Results are ready for sharing at:", zipName)
+#   
+#   delta <- Sys.time() - start
+#   ParallelLogger::logInfo(paste("Computing all diagnostics took",
+#                                 signif(delta, 3),
+#                                 attr(delta, "units")))
+# }
 
