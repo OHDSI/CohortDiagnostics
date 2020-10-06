@@ -20,9 +20,9 @@ filesWithDiagnosticsLog <- list.files(path = logFolder,
 
 for (i in (1:length(filesWithDiagnosticsLog))) {
   readr::read_csv(file = filesWithDiagnosticsLog[[i]],
-                          col_types = readr::cols(), 
-                          guess_max = min(1e7)) %>% 
+                  col_types = readr::cols(), 
+                  guess_max = min(1e7)) %>% 
     dplyr::filter(!.data$task %in% tasksToRemove) %>% 
-    readr::write_excel_csv(path = filesWithDiagnosticsLog[[i]])
+    readr::write_excel_csv(file = filesWithDiagnosticsLog[[i]])
 }
 
