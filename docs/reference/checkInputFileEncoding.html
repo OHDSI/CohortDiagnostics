@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Function reference • CohortDiagnostics</title>
+<title>Check character encoding of input file — checkInputFileEncoding • CohortDiagnostics</title>
 
 
 <!-- jquery -->
@@ -39,7 +39,9 @@
 
 
 
-<meta property="og:title" content="Function reference" />
+<meta property="og:title" content="Check character encoding of input file — checkInputFileEncoding" />
+<meta property="og:description" content="For its input files, CohortDiagnostics only accepts UTF-8 or ASCII character encoding. This 
+function can be used to check whether a file meets these criteria." />
 
 
 
@@ -58,7 +60,7 @@
   </head>
 
   <body data-spy="scroll" data-target="#toc">
-    <div class="container template-reference-index">
+    <div class="container template-reference-topic">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -123,108 +125,34 @@
       </header>
 
 <div class="row">
-  <div class="contents col-md-9">
+  <div class="col-md-9 contents">
     <div class="page-header">
-      <h1>Reference</h1>
+    <h1>Check character encoding of input file</h1>
+    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/RunDiagnostics.R'><code>R/RunDiagnostics.R</code></a></small>
+    <div class="hidden name"><code>checkInputFileEncoding.Rd</code></div>
     </div>
 
-    <table class="ref-index">
+    <div class="ref-description">
+    <p>For its input files, CohortDiagnostics only accepts UTF-8 or ASCII character encoding. This 
+function can be used to check whether a file meets these criteria.</p>
+    </div>
 
-    <colgroup>
-      
-      <col class="alias" />
-      <col class="title" />
-    </colgroup>
+    <pre class="usage"><span class='fu'>checkInputFileEncoding</span><span class='op'>(</span><span class='va'>fileName</span><span class='op'>)</span></pre>
 
-    <tbody>
-      <tr>
-        <th colspan="2">
-          <h2 id="section-all-functions" class="hasAnchor"><a href="#section-all-functions" class="anchor"></a>All functions</h2>
-          <p class="section-desc"></p>
-        </th>
-      </tr>
-      
-      
-    </tbody><tbody>
-      
-      
-      <tr>
-        
-        <td>
-          <p><code><a href="checkInputFileEncoding.html">checkInputFileEncoding()</a></code> </p>
-        </td>
-        <td><p>Check character encoding of input file</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="createCohortTable.html">createCohortTable()</a></code> </p>
-        </td>
-        <td><p>Create cohort table(s)</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="createResultsDataModel.html">createResultsDataModel()</a></code> </p>
-        </td>
-        <td><p>Create the results data model tables on a database server.</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="getCohortCounts.html">getCohortCounts()</a></code> </p>
-        </td>
-        <td><p>Count the cohort(s)</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="getResultsDataModelSpecifications.html">getResultsDataModelSpecifications()</a></code> </p>
-        </td>
-        <td><p>Get specifications for Cohort Diagnostics results data model</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="instantiateCohort.html">instantiateCohort()</a></code> </p>
-        </td>
-        <td><p>Instantiate a cohort</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="instantiateCohortSet.html">instantiateCohortSet()</a></code> </p>
-        </td>
-        <td><p>Instantiate a set of cohort</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="launchCohortExplorer.html">launchCohortExplorer()</a></code> </p>
-        </td>
-        <td><p>Launch the CohortExplorer Shiny app</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="launchDiagnosticsExplorer.html">launchDiagnosticsExplorer()</a></code> </p>
-        </td>
-        <td><p>Launch the Diagnostics Explorer Shiny app</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="preMergeDiagnosticsFiles.html">preMergeDiagnosticsFiles()</a></code> </p>
-        </td>
-        <td><p>Premerge Shiny diagnostics files</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="runCohortDiagnostics.html">runCohortDiagnostics()</a></code> </p>
-        </td>
-        <td><p>Run cohort diagnostics</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="uploadResults.html">uploadResults()</a></code> </p>
-        </td>
-        <td><p>Upload results to the database server.</p></td>
-      </tr>
-    </tbody>
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>fileName</th>
+      <td><p>The path to the file to check</p></td>
+    </tr>
     </table>
-  </div>
 
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>Throws an error if the input file does not have the correct encoding.</p>
+
+  </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
       <h2 data-toc-skip>Contents</h2>
