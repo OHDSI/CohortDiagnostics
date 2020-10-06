@@ -24,6 +24,7 @@ runPhenotypeLibraryDiagnostics(
   runCohortOverlap = TRUE,
   runCohortCharacterization = TRUE,
   runTemporalCohortCharacterization = TRUE,
+  runVisitContext = TRUE,
   minCellCount = 5
 )
 }
@@ -78,6 +79,8 @@ Synthetic Public Use Files (SynPUFs)').}
 \item{runCohortCharacterization}{Generate and export the cohort characterization?}
 
 \item{runTemporalCohortCharacterization}{Generate and export the temporal cohort characterization?}
+
+\item{runVisitContext}{Generate and export the visit context?}
 
 \item{minCellCount}{The minimum number of subjects contributing to a count before it can be included 
 in packaged results.}

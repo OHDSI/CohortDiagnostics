@@ -69,21 +69,8 @@ getCohortsJsonAndSqlFromPackage <- function(packageName = packageName,
                               extension = "csv", 
                               add = errorMessage)
   
-  guessedEncoding <- readr::guess_encoding(file = pathToCsv, 
-                                           n_max = min(1e7)) %>% 
-    dplyr::mutate(message = paste0(.data$encoding, " (", scales::percent(.data$confidence), ")"))
+  checkInputFileEncoding(pathToCsv)
   
-  encodingMessage <- paste0("Please check the encoding of the cohorts to create file at:", 
-                    pathToCsv,
-                    ".\nExpecting either 'ASCII' or 'UTF-8'. Found\n  ",
-                    paste0(guessedEncoding$message, collapse = "\n  "))
-  
-  if (nrow(guessedEncoding %>% 
-           dplyr::filter(.data$confidence == 1,
-                         .data$encoding %in% c('ASCII', 'UTF-8'))) == 0) {
-    ParallelLogger::logError(encodingMessage)
-    stop()
-  }
   cohorts <- readr::read_csv(pathToCsv, 
                              col_types = readr::cols(),
                              guess_max = min(1e7))

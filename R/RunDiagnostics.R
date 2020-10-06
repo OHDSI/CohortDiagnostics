@@ -729,21 +729,7 @@ loadAndExportPhenotypeDescription <- function(packageName,
   if (file.exists(pathToCsv)) {
     ParallelLogger::logInfo("Found phenotype description file. Loading.")
     
-    guessedEncoding <- readr::guess_encoding(file = pathToCsv, 
-                                             n_max = min(1e7)) %>% 
-      dplyr::mutate(message = paste0(.data$encoding, " (", scales::percent(.data$confidence), ")"))
-    
-    encodingMessage <- paste0("Please check the encoding of the cohorts to create file at:", 
-                              pathToCsv,
-                              ".\nExpecting either 'ASCII' or 'UTF-8'. Found\n  ",
-                              paste0(guessedEncoding$message, collapse = "\n  "))
-    
-    if (nrow(guessedEncoding %>% 
-             dplyr::filter(.data$confidence == 1,
-                           .data$encoding %in% c('ASCII', 'UTF-8'))) == 0) {
-      ParallelLogger::logError(encodingMessage)
-      stop()
-    }
+    checkInputFileEncoding(pathToCsv)
     
     phenotypeDescription <- readr::read_csv(file = pathToCsv, 
                                             col_types = readr::cols(),
@@ -839,4 +825,28 @@ exportCharacterization <- function(characteristics,
                                        incremental = incremental)
     }
   } 
+}
+
+#' Check character encoding of input file
+#' 
+#' @description 
+#' For its input files, CohortDiagnostics only accepts UTF-8 or ASCII character encoding. This 
+#' function can be used to check whether a file meets these criteria.
+#'
+#' @param fileName  The path to the file to check
+#'
+#' @return
+#' Throws an error if the input file does not have the correct encoding.
+#' 
+#' @export
+checkInputFileEncoding <- function(fileName) {
+  encoding <- readr::guess_encoding(file = fileName, n_max = min(1e7))
+  
+  if (!encoding$encoding[1] %in% c("UTF-8", "ASCII")) {
+    stop("Illegal encoding found in file ",
+         basename(fileName),
+         ". Should be 'ASCII' or 'UTF-8', found:",
+         paste(paste0(encoding$encoding, " (", encoding$confidence, ")"), collapse = ", "))
+  }
+  invisible(TRUE)
 }

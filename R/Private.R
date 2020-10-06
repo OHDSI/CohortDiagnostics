@@ -61,4 +61,3 @@ enforceMinCellValue <- function(data, fieldName, minValues, silent = FALSE) {
   }
   return(data)
 }
-

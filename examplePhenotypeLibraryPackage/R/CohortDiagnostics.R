@@ -51,6 +51,7 @@
 #' @param runCohortOverlap            Generate and export the cohort overlap?
 #' @param runCohortCharacterization   Generate and export the cohort characterization?
 #' @param runTemporalCohortCharacterization Generate and export the temporal cohort characterization? 
+#' @param runVisitContext       Generate and export the visit context? 
 #' @param minCellCount         The minimum number of subjects contributing to a count before it can be included 
 #'                             in packaged results.
 #'
@@ -74,6 +75,7 @@ runPhenotypeLibraryDiagnostics <- function(connectionDetails,
                                            runCohortOverlap = TRUE,
                                            runCohortCharacterization = TRUE,
                                            runTemporalCohortCharacterization = TRUE,
+                                           runVisitContext = TRUE,
                                            minCellCount = 5) {
   if (!file.exists(outputFolder))
     dir.create(outputFolder, recursive = TRUE)
@@ -126,6 +128,7 @@ runPhenotypeLibraryDiagnostics <- function(connectionDetails,
                                           runCohortOverlap = runCohortOverlap,
                                           runCohortCharacterization = runCohortCharacterization,
                                           runTemporalCohortCharacterization = runTemporalCohortCharacterization,
+                                          runVisitContext = runVisitContext,
                                           minCellCount = minCellCount,
                                           incremental = TRUE,
                                           incrementalFolder = incrementalFolder)
