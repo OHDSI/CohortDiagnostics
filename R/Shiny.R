@@ -55,7 +55,6 @@ launchDiagnosticsExplorer <- function(dataFolder = "data",
   ensure_installed("shinydashboard")
   ensure_installed("shinyWidgets")
   ensure_installed("DT")
-  ensure_installed("VennDiagram")
   ensure_installed("htmltools")
   ensure_installed("scales")
   ensure_installed("plotly")

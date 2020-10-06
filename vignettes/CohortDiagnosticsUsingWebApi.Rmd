@@ -106,7 +106,7 @@ To instantiate the cohorts:
 
 ```{r tidy=FALSE,eval=FALSE}
 baseUrl <- "http://server.org:80/WebAPI"
-inclusionStatisticsFolder <- "c:/temp/incStats/"
+inclusionStatisticsFolder <- "c:/temp/incStats"
 
 instantiateCohortSet(connectionDetails = connectionDetails,
                      cdmDatabaseSchema = cdmDatabaseSchema,
@@ -158,7 +158,7 @@ Once completed, a zip file will have been created in the specified export folder
 
 Assuming you completed the steps described above for one or more databases, you should now have a set of zip files, one per database. Make sure to place all zip files in a single folder, for example `c:/temp/allZipFiles`. 
 
-Optionally, we can pre-merge the zip files. Merging the files can take a while, and doing it beforehand will speed up starting the Shiny app:
+Optionally, we can pre-merge the zip files, so we can view results in the Shiny app:
 
 ```{r tidy=FALSE,eval=FALSE}
 preMergeDiagnosticsFiles("C:/temp/allZipFiles")
@@ -182,9 +182,9 @@ To share the results with others, it may make sense to make the Shiny app availa
 
 - The Shiny app itself. This can be found [here](https://github.com/OHDSI/CohortDiagnostics/tree/master/inst/shiny/DiagnosticsExplorer). Make sure to copy all files in the `DiagnosticsExplorer` folder.
 
-- The diagnostics data should be placed in a subfolder that should be called `data`. In this data folder, either place all the individual zip files generated for each database, or (recommended) place the premerged .RDA file here.
+- The diagnostics data should be placed in a subfolder that should be called `data`. place the premerged .RDA file in this data folder.
 
 
-Once the app and data are in place, the Shiny Server should automatically detect them and launch the app. You may need to install additional packages required by the app, including 'shinydashboard', 'VennDiagram', 'htmltools', and 'DT'.
+Once the app and data are in place, the Shiny Server should automatically detect them and launch the app. You may need to install additional packages required by the app, including shiny, shinydashboard, shinyWidgets, DT, htmltools, scales, plotly, dplyr, tidyr, ggiraph.
 
 

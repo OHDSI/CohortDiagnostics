@@ -37,7 +37,6 @@ Suggests:
   shinyWidgets,
   DT,
   plotly,
-  VennDiagram,
   htmltools,
   RColorBrewer,
   scales,

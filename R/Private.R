@@ -22,8 +22,8 @@ createIfNotExist <- function(type, name, recursive = TRUE, errorMessage = NULL) 
     if (length(name) == 0) {
       stop(ParallelLogger::logError("Must specify ", name))
     }
-    if (type %in% c('folder')) {
-      if (!file.exists(name)) {
+    if (type %in% c("folder")) {
+      if (!file.exists(gsub("/$", "", name))) {
         dir.create(name, recursive = recursive)
         ParallelLogger::logInfo("Created ", type, " at ", name)
       } else {
