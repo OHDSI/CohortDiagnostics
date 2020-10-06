@@ -36,7 +36,23 @@ phenotypeLibraryModeDefaultTitle <- "Phenotype Library"
 thresholdCohortSubjects <- 0
 thresholdCohortEntries <- 0
 
+databaseMode = FALSE
 
+if (defaultDatabaseMode) {
+  if (all(!defaultServer == '' &&
+          !defaultDatabase == '' &&
+          !defaultPort == '' &&
+          !defaultUser == '' &&
+          !defaultPassword == '' &&
+          !defaultResultsSchema == '' &&
+          !defaultVocabularySchema == ''
+  )) {
+    databaseMode = TRUE
+  } else {
+    writeLines("Cant find all the connection details required to connect to DBMS (specified by default).\n
+               Attempting to use user settings.")
+  }
+}
 
 if (!exists("shinySettings")) {
   writeLines("Using default settings")
@@ -90,7 +106,7 @@ dataModelSpecifications <- read.csv("resultsDataModelSpecification.csv")
 suppressWarnings(rm(list = SqlRender::snakeCaseToCamelCase(dataModelSpecifications$tableName)))
 
 if (databaseMode) {
-
+  
   onStop(function() {
     if (DBI::dbIsValid(connectionPool)) {
       writeLines("Closing database pool")
@@ -112,7 +128,7 @@ if (databaseMode) {
       return(table)
     }
   }
-
+  
   database <- loadResultsTable("database", required = TRUE)
   cohort <- loadResultsTable("cohort", required = TRUE)
   phenotypeDescription <- loadResultsTable("phenotype_description")
