@@ -395,7 +395,7 @@ insertDataIntoDb <- function(connection,
   } else {
     ParallelLogger::logInfo("- Inserting ", nrow(data), " rows into database using bulk import")
     tempFile <- tempfile(fileext = ".csv")
-    readr::write_excel_csv(data, tempFile)
+    readr::write_excel_csv(x = data, file = tempFile)
     on.exit(unlink(tempFile))
     DatabaseConnector::executeSql(connection, "COMMIT;", progressBar = FALSE, reportOverallTime = FALSE)
     bulkUploadTable(connectionDetails = connectionDetails,

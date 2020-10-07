@@ -22,7 +22,7 @@ resultsDataModelDirectory <- file.path(rstudioapi::getActiveProject(),
                                        "inst", 
                                        "settings")
 readr::write_excel_csv(x = specification, 
-                       path = file.path(resultsDataModelDirectory, "resultsDataModelSpecification.csv"), 
+                       file = file.path(resultsDataModelDirectory, "resultsDataModelSpecification.csv"), 
                        na = '')
 
 #################

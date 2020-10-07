@@ -129,7 +129,7 @@ writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
       ParallelLogger::logDebug("creating ",fileName)
     }
     readr::write_excel_csv(x = data, 
-                           path = fileName, 
+                           file = fileName, 
                            na = "", 
                            append = FALSE,
                            delim = ",")
