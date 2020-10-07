@@ -503,9 +503,16 @@ runConceptSetDiagnostics <- function(connection,
         
         cohortDefinition <- RJSONIO::fromJSON(cohort$json)
         primaryCodesetIds <- lapply(cohortDefinition$PrimaryCriteria$CriteriaList, getCodeSetIds) %>% 
-          dplyr::bind_rows() %>% 
-          dplyr::filter(!is.na(.data$codeSetIds))
-        if (is.null(primaryCodesetIds) || nrow(primaryCodesetIds) == 0) {
+          dplyr::bind_rows() 
+        if (any(is.null(primaryCodesetIds) || 
+                nrow(primaryCodesetIds) == 0 || 
+                !'codeSetids' %in% colnames(primaryCodesetIds))) {
+          warning("No primary event criteria concept sets found for cohort id: ", cohort$cohortId)
+          return(tidyr::tibble())
+        }
+        primaryCodesetIds <- primaryCodesetIds %>% 
+            dplyr::filter(!is.na(.data$codeSetIds)) 
+        if (nrow(primaryCodesetIds) == 0) {
           warning("No primary event criteria concept sets found for cohort id: ", cohort$cohortId)
           return(tidyr::tibble())
         }
