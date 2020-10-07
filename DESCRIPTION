@@ -24,7 +24,7 @@ Imports:
   ggplot2,
   ggiraph,
   ParallelLogger (>= 2.0.0),
-  readr,
+  readr (>= 1.4.0),
   rlang,
   RJSONIO,
   ROhdsiWebApi (>= 1.1.2),

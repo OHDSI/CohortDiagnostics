@@ -110,13 +110,13 @@ checkAndFixDuplicateRows <- function(table, tableName, zipFileName, specificatio
     dplyr::filter(.data$tableName == !!tableName & .data$primaryKey == "Yes") %>%
     dplyr::select(.data$fieldName) %>%
     dplyr::pull()
-  duplicated <- duplicated(table[, primaryKeys])
-  if (any(duplicated)) {
+  duplicatedRows <- duplicated(table[, primaryKeys])
+  if (any(duplicatedRows)) {
     warning(sprintf("Table %s in zip file %s has duplicate rows. Removing %s records.",
                     tableName,
                     zipFileName,
-                    sum(duplicated)))
-    return(table[!duplicated, ])
+                    sum(duplicatedRows)))
+    return(table[!duplicatedRows, ])
   } else {
     return(table)
   }
@@ -221,10 +221,9 @@ uploadResults <- function(connectionDetails = NULL,
     databaseId <- database$databaseId
   }
   
-  uploadTable <- function(tableName, env) {
+  uploadTable <- function(tableName) {
     ParallelLogger::logInfo("Uploading table ", tableName)
-    start <- Sys.time()
-    
+
     primaryKey <- specifications %>%
       filter(.data$tableName == !!tableName & .data$primaryKey == "Yes") %>%
       select(.data$fieldName) %>%
@@ -345,6 +344,7 @@ deleteFromServer <- function(connection, schema, tableName, keyValues) {
                   "\nWHERE ",
                   paste(paste0(colnames(keyValues), " = '", keyValues[i, ], "'"), collapse = " AND "),
                   ";")
+    return(sql)
   }
   batchSize <- 1000
   for (start in seq(1, nrow(keyValues), by = batchSize)) {
@@ -395,7 +395,7 @@ insertDataIntoDb <- function(connection,
   } else {
     ParallelLogger::logInfo("- Inserting ", nrow(data), " rows into database using bulk import")
     tempFile <- tempfile(fileext = ".csv")
-    readr::write_excel_csv(x = data, file = tempFile)
+    readr::write_excel_csv(data, tempFile)
     on.exit(unlink(tempFile))
     DatabaseConnector::executeSql(connection, "COMMIT;", progressBar = FALSE, reportOverallTime = FALSE)
     bulkUploadTable(connectionDetails = connectionDetails,
