@@ -290,7 +290,51 @@ plotCohortComparisonStandardizedDifference <- function(balance,
                                                        targetLabel = "Mean Target",
                                                        comparatorLabel = "Mean Comparator") {
   balance <- balance %>%
-    replace(is.na(.), 0)
+    dplyr::replace(is.na(.), 0) %>% 
+    dplyr::filter(.data$cohortId1 != 0) %>% 
+    dplyr::filter(.data$cohortId2 != 0)
+  
+  balance <- balance %>%
+    dplyr::inner_join(
+      balance %>%
+        dplyr::select(.data$cohortId1,
+                      .data$cohortId2) %>%
+        dplyr::distinct() %>%
+        dplyr::arrange(.data$cohortId1,
+                       .data$cohortId2) %>%
+        dplyr::mutate(comparisonGroup = dplyr::row_number())) %>%
+    dplyr::relocate(.data$comparisonGroup)
+  
+  combis <- dplyr::bind_rows(balance %>% 
+                               dplyr::select(.data$cohortId1) %>% 
+                               dplyr::distinct() %>% 
+                               dplyr::arrange(.data$cohortId1) %>% 
+                               dplyr::mutate(shortName = paste0('C', dplyr::row_number())) %>% 
+                               dplyr::rename(cohortId = .data$cohortId1),
+                             balance %>% 
+                               dplyr::select(.data$cohortId2) %>% 
+                               dplyr::distinct() %>% 
+                               dplyr::arrange(.data$cohortId2) %>% 
+                               dplyr::mutate(shortName = paste0('C', dplyr::row_number())) %>% 
+                               dplyr::rename(cohortId = .data$cohortId2)) %>% 
+    dplyr::inner_join(y = cohort %>% 
+                        dplyr::select(.data$cohortId, .data$cohortName))
+  
+  balance <- balance %>% 
+    dplyr::inner_join(y = combis %>% 
+                        dplyr::filter(stringr::str_detect(string = .data$shortName,
+                                                          pattern = 'C')) %>% 
+                        dplyr::rename(targetCohortId = .data$cohortId,
+                                      targetCohortName = .data$cohortName,
+                                      targetCohortShortName = .data$shortName),
+                      by = c("cohortId1" = "targetCohortId")) %>% 
+    dplyr::inner_join(y = combis %>% 
+                        dplyr::filter(stringr::str_detect(string = .data$shortName,
+                                                          pattern = 'C')) %>% 
+                        dplyr::rename(comparatorCohortId = .data$cohortId,
+                                      comparatorCohortName = .data$cohortName,
+                                      comparatorCohortShortName = .data$shortName),
+                      by = c("cohortId2" = "comparatorCohortId"))
   
   domains <- c("condition", "device", "drug", "measurement", "observation", "procedure")
   balance$domain <- tolower(gsub("[_ ].*", "", balance$covariateName))
@@ -309,10 +353,10 @@ plotCohortComparisonStandardizedDifference <- function(balance,
   
   # ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 3, alpha = 0.6)
   balance$tooltip <- c(paste("Covariate Name:", balance$covariateName,
-                              "\nDomain: ", balance$domain,
-                              "\nMean Target: ", scales::comma(balance$mean1, accuracy = 0.1),
-                              "\nMean Comparator:", scales::comma(balance$mean2, accuracy = 0.1),
-                              "\nStd diff.:", scales::comma(balance$stdDiff, accuracy = 0.1)))
+                             "\nDomain: ", balance$domain,
+                             "\nMean Target: ", scales::comma(balance$mean1, accuracy = 0.1),
+                             "\nMean Comparator:", scales::comma(balance$mean2, accuracy = 0.1),
+                             "\nStd diff.:", scales::comma(balance$stdDiff, accuracy = 0.1)))
   
   # Code used to generate palette:
   # writeLines(paste(RColorBrewer::brewer.pal(n = length(domains), name = "Dark2"), collapse = "\", \""))
@@ -320,20 +364,22 @@ plotCohortComparisonStandardizedDifference <- function(balance,
   # Make sure colors are consistent, no matter which domains are included:
   colors <- c("#1B9E77", "#D95F02", "#7570B3", "#E7298A", "#66A61E", "#E6AB02", "#444444")
   colors <- colors[c(domains, "other") %in% unique(balance$domain)]
-
+  
   balance$domain <- factor(balance$domain, levels = c(domains, "other"))
   
-  targetLabel <- paste(strwrap(targetLabel, width = 50), collapse = "\n")
-  comparatorLabel <- paste(strwrap(comparatorLabel, width = 50), collapse = "\n")
+  # targetLabel <- paste(strwrap(targetLabel, width = 50), collapse = "\n")
+  # comparatorLabel <- paste(strwrap(comparatorLabel, width = 50), collapse = "\n")
   
   plot <- ggplot2::ggplot(balance, ggplot2::aes(x = .data$mean1, y = .data$mean2, color = .data$domain)) +
     ggiraph::geom_point_interactive(ggplot2::aes(tooltip = .data$tooltip), size = 3,shape = 16, alpha = 0.5) +
     ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
     ggplot2::geom_hline(yintercept = 0) +
     ggplot2::geom_vline(xintercept = 0) +             
-    ggplot2::scale_x_continuous(targetLabel, limits = c(0, 1)) +
-    ggplot2::scale_y_continuous(comparatorLabel, limits = c(0, 1)) +
+    ggplot2::scale_x_continuous("MEAN") +
+    ggplot2::scale_y_continuous("MEAN") +
     ggplot2::scale_color_manual("Domain", values = colors)
+  
+  plot <- plot + ggplot2::facet_grid(targetCohortShortName~databaseId+comparatorCohortShortName) 
   
   plot <- ggiraph::girafe(ggobj = plot,
                           options = list(
@@ -418,6 +464,10 @@ plotCohortOverlap <- function(data,
                                           "bothSubjects"),
                          add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
+  
+  
+  
+  
   
   plotData <- data %>% 
     dplyr::mutate(absTOnlySubjects = abs(.data$tOnlySubjects), 
