@@ -135,17 +135,17 @@
     <p>Launch the Diagnostics Explorer Shiny app</p>
     </div>
 
-    <pre class="usage"><span class='fu'>launchDiagnosticsExplorer</span><span class='op'>(</span>
-  dataFolder <span class='op'>=</span> <span class='st'>"data"</span>,
-  connectionDetails <span class='op'>=</span> <span class='cn'>NULL</span>,
-  resultsDatabaseSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
-  vocabularyDatabaseSchema <span class='op'>=</span> <span class='va'>resultsDatabaseSchema</span>,
-  cohortBaseUrl <span class='op'>=</span> <span class='st'>"https://atlas.ohdsi.org/#/cohortdefinition/"</span>,
-  conceptBaseUrl <span class='op'>=</span> <span class='st'>"https://athena.ohdsi.org/search-terms/terms/"</span>,
-  runOverNetwork <span class='op'>=</span> <span class='cn'>FALSE</span>,
-  port <span class='op'>=</span> <span class='fl'>80</span>,
-  launch.browser <span class='op'>=</span> <span class='cn'>FALSE</span>
-<span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>launchDiagnosticsExplorer</span>(
+  <span class='kw'>dataFolder</span> <span class='kw'>=</span> <span class='st'>"data"</span>,
+  <span class='kw'>connectionDetails</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>resultsDatabaseSchema</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>vocabularyDatabaseSchema</span> <span class='kw'>=</span> <span class='no'>resultsDatabaseSchema</span>,
+  <span class='kw'>cohortBaseUrl</span> <span class='kw'>=</span> <span class='st'>"https://atlas.ohdsi.org/#/cohortdefinition/"</span>,
+  <span class='kw'>conceptBaseUrl</span> <span class='kw'>=</span> <span class='st'>"https://athena.ohdsi.org/search-terms/terms/"</span>,
+  <span class='kw'>runOverNetwork</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>port</span> <span class='kw'>=</span> <span class='fl'>80</span>,
+  <span class='kw'>launch.browser</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -158,7 +158,7 @@ the <code><a href='preMergeDiagnosticsFiles.html'>preMergeDiagnosticsFiles</a></
     <tr>
       <th>connectionDetails</th>
       <td><p>An object of type <code>connectionDetails</code> as created using the
-<code><a href='https://ohdsi.github.io/DatabaseConnector/reference/createConnectionDetails.html'>createConnectionDetails</a></code> function in the
+<code><a href='https://rdrr.io/pkg/DatabaseConnector/man/createConnectionDetails.html'>createConnectionDetails</a></code> function in the
 DatabaseConnector package, specifying how to connect to the server where
 the CohortDiagnostics results have been uploaded using the 
 <code><a href='uploadResults.html'>uploadResults</a></code> function.</p></td>
@@ -170,7 +170,7 @@ have been uploaded.</p></td>
     </tr>
     <tr>
       <th>vocabularyDatabaseSchema</th>
-      <td><p>The schema on the database server where the vocbulary tables are located.</p></td>
+      <td><p>The schema on the database server where the vocabulary tables are located.</p></td>
     </tr>
     <tr>
       <th>cohortBaseUrl</th>
@@ -217,7 +217,7 @@ Note: copying to clipboard will not work in a Shiny window.</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
 </div>
 
       </footer>

@@ -49,7 +49,7 @@ User Documentation
 Documentation can be found on the [package website](https://ohdsi.github.io/CohortDiagnostics).
 
 PDF versions of the documentation are also available:
-* Package manual: [CohortDiagnostics manual]((https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/extras/CohortDiagnostics.pdf) 
+* Package manual: [CohortDiagnostics manual](https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/extras/CohortDiagnostics.pdf) 
 * Vignette: [Running cohort diagnostics using WebAPI](https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/CohortDiagnosticsUsingWebApi.pdf)
 
 Support

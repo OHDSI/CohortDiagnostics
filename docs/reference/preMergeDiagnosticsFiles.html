@@ -139,7 +139,7 @@ single file that can be used as input for the Diagnostics Explorer Shiny app.</p
 <p>It also checks whether the results conform to the results data model specifications.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>preMergeDiagnosticsFiles</span><span class='op'>(</span><span class='va'>dataFolder</span>, tempFolder <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempdir</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>preMergeDiagnosticsFiles</span>(<span class='no'>dataFolder</span>, <span class='kw'>tempFolder</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/tempfile.html'>tempdir</a></span>())</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -155,7 +155,7 @@ folder.</p></td>
       <th>tempFolder</th>
       <td><p>A folder on the local file system where the zip files are extracted to. Will be cleaned
 up when the function is finished. Can be used to specify a temp folder on a drive that
-has sufficent space if the default system temp space is too limited.</p></td>
+has sufficient space if the default system temp space is too limited.</p></td>
     </tr>
     </table>
 
@@ -175,7 +175,7 @@ has sufficent space if the default system temp space is too limited.</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
 </div>
 
       </footer>

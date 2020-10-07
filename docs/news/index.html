@@ -132,17 +132,24 @@
     <div id="cohortdiagnostics-200" class="section level1">
 <h1 class="page-header" data-toc-text="2.0.0">
 <a href="#cohortdiagnostics-200" class="anchor"></a>CohortDiagnostics 2.0.0</h1>
-<p>Unreleased version</p>
-<ul>
-<li>working on eunomia</li>
-<li>use of tidy r</li>
-</ul>
+<p>Changes:</p>
+<ol>
+<li><p>Many improvements in performance when computing diagnostics. Now allows computation of diagnostics for many (&gt;100) cohorts at once.</p></li>
+<li><p>The Diagnostics Explorer Shiny app can now also run against results data in a database. Added functions for uploading the diagnostics data to a database. This becomes necessary when dealing with very large data (e.g. more than 100 cohort definitions).</p></li>
+<li><p>Added ability to group cohort definitions by phenotypes, and add descriptions of phenotypes. Currently the only consequence of grouping by phenotype is that cohort overlap is only computed within a phenotype. Grouping by phenotypes is done by adding a <code>phenotypeId</code> field to the <code>cohortsToCreate</code> file, and by adding a <code>phenotypeDescription</code> file. See the <code>examplePhenotypeLibraryPackage</code> in the repo for an example.</p></li>
+<li><p>The cohort overlap plot now uses stacked bar charts instead of a Venn diagram to allow showing multiple comparisons across multiple databases at once.</p></li>
+<li><p>The cohort characteristics comparison plot now colors by domain, and allows filtering by domain.</p></li>
+<li><p>Switching from ‘plotly’ to ‘ggiraph’ for interactive plotting.</p></li>
+<li><p>Added a Visit Context diagnostic.</p></li>
+</ol>
+<p>Bug fixes:</p>
+<ol>
+<li>Fixing numerous bugs introduced in v1.2.x.</li>
+</ol>
 </div>
     <div id="cohortdiagnostics-126" class="section level1">
 <h1 class="page-header" data-toc-text="1.2.6">
 <a href="#cohortdiagnostics-126" class="anchor"></a>CohortDiagnostics 1.2.6</h1>
-<p>Note:</p>
-<p>1.2.x is last release of v 1.x.x series. Future releases with new functionality are expected to have breaking changes with no backward compatability and will be 2.x.x series.</p>
 <p>Bug fixes:</p>
 <ol>
 <li>Additional bug fixes for characterization/temporal characterization.</li>
@@ -178,7 +185,7 @@
     <div id="cohortdiagnostics-122" class="section level1">
 <h1 class="page-header" data-toc-text="1.2.2">
 <a href="#cohortdiagnostics-122" class="anchor"></a>CohortDiagnostics 1.2.2</h1>
-<p>Changes:</p>
+<p>New features:</p>
 <ol>
 <li>Minor UI changes to Diagnostics explorer. Added missing sort.</li>
 <li>Added better labels for plots.</li>
@@ -193,36 +200,6 @@
     <div id="cohortdiagnostics-121" class="section level1">
 <h1 class="page-header" data-toc-text="1.2.1">
 <a href="#cohortdiagnostics-121" class="anchor"></a>CohortDiagnostics 1.2.1</h1>
-<p>Changes:</p>
-<ol>
-<li>All objects in DiagnosticsExplorer are sorted by default <a href='https://github.com/OHDSI/CohortDiagnostics/issues/173'>#173</a></li>
-<li>Multi select for concepts <a href='https://github.com/OHDSI/CohortDiagnostics/issues/199'>#199</a></li>
-</ol>
-<p>Bug fixes:</p>
-<ol>
-<li>Ensure concept sets across cohort definitions are unique <a href='https://github.com/OHDSI/CohortDiagnostics/issues/174'>#174</a> (changes dependency to ROhdsiWebApi (&gt;= 1.1.0))</li>
-</ol>
-<p>Note: 1.2.x are the last planned release in v1.x.x series. No new functionalities will be added to 1.2.x moving forward. All future releases in 1.2.x series will be bug fixes.</p>
-<p>Version 2.x is planned for release by October 2020, and will be a breaking change. Output of Versions 2.x will use a different data model and will not be backward compatible with 1.x.</p>
-</div>
-    <div id="cohortdiagnostics-122-1" class="section level1">
-<h1 class="page-header" data-toc-text="1.2.2">
-<a href="#cohortdiagnostics-122-1" class="anchor"></a>CohortDiagnostics 1.2.2</h1>
-<p>New features:</p>
-<ol>
-<li>Minor UI changes to Diagnostics explorer. Added missing sort.</li>
-<li>Added better labels for plots.</li>
-<li>Download plots.</li>
-</ol>
-<p>Bug fixes:</p>
-<ol>
-<li>Changes dependency to ROhdsiWebApi (&gt;= 1.1.0)</li>
-<li>DiagnosticsExplorer display bug fixes</li>
-</ol>
-</div>
-    <div id="cohortdiagnostics-121-1" class="section level1">
-<h1 class="page-header" data-toc-text="1.2.1">
-<a href="#cohortdiagnostics-121-1" class="anchor"></a>CohortDiagnostics 1.2.1</h1>
 <p>New features:</p>
 <ol>
 <li>All objects in DiagnosticsExplorer are sorted by default <a href='https://github.com/OHDSI/CohortDiagnostics/issues/173'>#173</a></li>
@@ -236,19 +213,6 @@
     <div id="cohortdiagnostics-120" class="section level1">
 <h1 class="page-header" data-toc-text="1.2.0">
 <a href="#cohortdiagnostics-120" class="anchor"></a>CohortDiagnostics 1.2.0</h1>
-<p>Changes:</p>
-<ol>
-<li>All objects in DiagnosticsExplorer are sorted by default <a href='https://github.com/OHDSI/CohortDiagnostics/issues/173'>#173</a></li>
-<li>Multi select for concepts <a href='https://github.com/OHDSI/CohortDiagnostics/issues/199'>#199</a></li>
-</ol>
-<p>Bug fixes:</p>
-<ol>
-<li>Ensure concept sets across cohort definitions are unique <a href='https://github.com/OHDSI/CohortDiagnostics/issues/174'>#174</a></li>
-</ol>
-</div>
-    <div id="cohortdiagnostics-120-1" class="section level1">
-<h1 class="page-header" data-toc-text="1.2.0">
-<a href="#cohortdiagnostics-120-1" class="anchor"></a>CohortDiagnostics 1.2.0</h1>
 <p>Changes:</p>
 <ol>
 <li>New function to retrieve concept set json from cohort json \code{extractConceptSetsJsonFromCohortJson}</li>
@@ -300,9 +264,9 @@
 </ol>
 <p>Note: The code has been partially refactored to depend on tidyverse.</p>
 </div>
-    <div id="cohortdiagnostics-100" class="section level1">
-<h1 class="page-header" data-toc-text="1.0.0">
-<a href="#cohortdiagnostics-100" class="anchor"></a>CohortDiagnostics 1.0.0</h1>
+    <div id="cohortdiagnostics-102" class="section level1">
+<h1 class="page-header" data-toc-text="1.0.2">
+<a href="#cohortdiagnostics-102" class="anchor"></a>CohortDiagnostics 1.0.2</h1>
 <p>Changes:</p>
 <ol>
 <li><p>Adapting to new ROhdsiWebApi (&gt;= 1.0.0) interface.</p></li>
@@ -314,9 +278,9 @@
 <li><p>Fixing broken instantiateCohort function.</p></li>
 </ol>
 </div>
-    <div id="cohortdiagnostics-100-1" class="section level1">
+    <div id="cohortdiagnostics-100" class="section level1">
 <h1 class="page-header" data-toc-text="1.0.0">
-<a href="#cohortdiagnostics-100-1" class="anchor"></a>CohortDiagnostics 1.0.0</h1>
+<a href="#cohortdiagnostics-100" class="anchor"></a>CohortDiagnostics 1.0.0</h1>
 <p>Changes:</p>
 <ol>
 <li><p>Added database information tab to Diagnostics Explorer Shiny app.</p></li>
@@ -392,7 +356,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
 </div>
 
       </footer>
