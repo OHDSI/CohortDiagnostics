@@ -218,7 +218,7 @@ plotIncidenceRate <- function(data,
   
   plotData$ageGroup <- factor(plotData$ageGroup,
                               levels = newSort$ageGroup)
-  plotData$tooltip <- c(paste0("Incidence Rate = ", scales::comma(plotData$incidenceRate, accuracy = 0.01), 
+  plotData$tooltip <- c(paste0(plotData$shortName, ":", plotData$cohortName,"\n","Incidence Rate = ", scales::comma(plotData$incidenceRate, accuracy = 0.01), 
                                "\nDatabase = ", plotData$databaseId, 
                                "\nPerson years = ", scales::comma(plotData$personYears, accuracy = 0.1), 
                                "\nCohort count = ", scales::comma(plotData$cohortCount)))
@@ -262,14 +262,14 @@ plotIncidenceRate <- function(data,
     }
     if (stratifyByGender | stratifyByCalendarYear) {
       if (stratifyByAgeGroup) {
-        plot <- plot + ggplot2::facet_grid(databaseId~plotData$ageGroup, scales = scales)
+        plot <- plot + ggplot2::facet_grid(databaseId+shortName~plotData$ageGroup, scales = scales)
       } else {
-        plot <- plot + ggplot2::facet_grid(databaseId~., scales = scales) 
+        plot <- plot + ggplot2::facet_grid(databaseId+shortName~., scales = scales) 
       }
     }
     else
     {
-      plot <- plot + ggplot2::facet_grid(databaseId~., scales = scales) 
+      plot <- plot + ggplot2::facet_grid(databaseId+shortName~., scales = scales) 
     }
   } else {
     if (stratifyByAgeGroup) {
@@ -289,8 +289,6 @@ plotCohortComparisonStandardizedDifference <- function(balance,
                                                        domain = "all",
                                                        targetLabel = "Mean Target",
                                                        comparatorLabel = "Mean Comparator") {
-  balance <- balance %>%
-    replace(is.na(.), 0)
   
   domains <- c("condition", "device", "drug", "measurement", "observation", "procedure")
   balance$domain <- tolower(gsub("[_ ].*", "", balance$covariateName))
@@ -309,10 +307,10 @@ plotCohortComparisonStandardizedDifference <- function(balance,
   
   # ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 3, alpha = 0.6)
   balance$tooltip <- c(paste("Covariate Name:", balance$covariateName,
-                              "\nDomain: ", balance$domain,
-                              "\nMean Target: ", scales::comma(balance$mean1, accuracy = 0.1),
-                              "\nMean Comparator:", scales::comma(balance$mean2, accuracy = 0.1),
-                              "\nStd diff.:", scales::comma(balance$stdDiff, accuracy = 0.1)))
+                             "\nDomain: ", balance$domain,
+                             "\nMean Target: ", scales::comma(balance$mean1, accuracy = 0.1),
+                             "\nMean Comparator:", scales::comma(balance$mean2, accuracy = 0.1),
+                             "\nStd diff.:", scales::comma(balance$stdDiff, accuracy = 0.1)))
   
   # Code used to generate palette:
   # writeLines(paste(RColorBrewer::brewer.pal(n = length(domains), name = "Dark2"), collapse = "\", \""))
@@ -320,20 +318,22 @@ plotCohortComparisonStandardizedDifference <- function(balance,
   # Make sure colors are consistent, no matter which domains are included:
   colors <- c("#1B9E77", "#D95F02", "#7570B3", "#E7298A", "#66A61E", "#E6AB02", "#444444")
   colors <- colors[c(domains, "other") %in% unique(balance$domain)]
-
+  
   balance$domain <- factor(balance$domain, levels = c(domains, "other"))
   
-  targetLabel <- paste(strwrap(targetLabel, width = 50), collapse = "\n")
-  comparatorLabel <- paste(strwrap(comparatorLabel, width = 50), collapse = "\n")
+  # targetLabel <- paste(strwrap(targetLabel, width = 50), collapse = "\n")
+  # comparatorLabel <- paste(strwrap(comparatorLabel, width = 50), collapse = "\n")
   
   plot <- ggplot2::ggplot(balance, ggplot2::aes(x = .data$mean1, y = .data$mean2, color = .data$domain)) +
     ggiraph::geom_point_interactive(ggplot2::aes(tooltip = .data$tooltip), size = 3,shape = 16, alpha = 0.5) +
     ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
     ggplot2::geom_hline(yintercept = 0) +
     ggplot2::geom_vline(xintercept = 0) +             
-    ggplot2::scale_x_continuous(targetLabel, limits = c(0, 1)) +
-    ggplot2::scale_y_continuous(comparatorLabel, limits = c(0, 1)) +
+    ggplot2::scale_x_continuous("MEAN") +
+    ggplot2::scale_y_continuous("MEAN") +
     ggplot2::scale_color_manual("Domain", values = colors)
+  
+  plot <- plot + ggplot2::facet_grid(targetCohortShortName~databaseId+comparatorCohortShortName) 
   
   plot <- ggiraph::girafe(ggobj = plot,
                           options = list(
@@ -418,6 +418,10 @@ plotCohortOverlap <- function(data,
                                           "bothSubjects"),
                          add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
+  
+  
+  
+  
   
   plotData <- data %>% 
     dplyr::mutate(absTOnlySubjects = abs(.data$tOnlySubjects), 
