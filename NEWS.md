@@ -1,15 +1,30 @@
 CohortDiagnostics 2.0.0
 =======================
-Unreleased version
 
-- working on eunomia
-- use of tidy r
+Changes:
+
+1. Many improvements in performance when computing diagnostics. Now allows computation of diagnostics for many (>100) cohorts at once. 
+
+2. The Diagnostics Explorer Shiny app can now also run against results data in a database. Added functions for uploading the diagnostics data to a database. This becomes necessary when dealing with very large data (e.g. more than 100 cohort definitions).
+
+3. Added ability to group cohort definitions by phenotypes, and add descriptions of phenotypes. Currently the only consequence of grouping by phenotype is that cohort overlap is only computed within a phenotype. Grouping by phenotypes is done by adding a `phenotypeId` field to the `cohortsToCreate` file, and by adding a `phenotypeDescription` file. See the `examplePhenotypeLibraryPackage` in the repo for an example.
+
+4. The cohort overlap plot now uses stacked bar charts instead of a Venn diagram to allow showing multiple comparisons across multiple databases at once.
+
+5. The cohort characteristics comparison plot now colors by domain, and allows filtering by domain.
+
+6. Switching from 'plotly' to 'ggiraph' for interactive plotting.
+
+7. Added a Visit Context diagnostic.
+
+
+Bug fixes:
+
+1. Fixing numerous bugs introduced in v1.2.x.
+
 
 CohortDiagnostics 1.2.6
 =======================
-Note: 
-
-1.2.x is last release of v 1.x.x series. Future releases with new functionality are expected to have breaking changes with no backward compatability and will be 2.x.x series.
 
 Bug fixes:
 
@@ -43,32 +58,6 @@ Bug fixes:
 
 CohortDiagnostics 1.2.2
 =======================
-Changes:
-1. Minor UI changes to Diagnostics explorer. Added missing sort.
-2. Added better labels for plots.
-3. Download plots.
-
-Bug fixes:
-1. Changes dependency to ROhdsiWebApi (>= 1.1.0)
-2. DiagnosticsExplorer display bug fixes
-
-CohortDiagnostics 1.2.1
-=======================
-Changes:
-1. All objects in DiagnosticsExplorer are sorted by default #173
-2. Multi select for concepts #199
-
-Bug fixes:
-1. Ensure concept sets across cohort definitions are unique #174 (changes dependency to ROhdsiWebApi (>= 1.1.0))
-
-Note: 1.2.x are the last planned release in v1.x.x series. No new functionalities will 
-be added to 1.2.x moving forward. All future releases in 1.2.x series will be bug fixes.
-
-Version 2.x is planned for release by October 2020, and will be a breaking change. Output of 
-Versions 2.x will use a different data model and will not be backward compatible with 1.x.
-
-CohortDiagnostics 1.2.2
-=======================
 New features:
 1. Minor UI changes to Diagnostics explorer. Added missing sort.
 2. Added better labels for plots.
@@ -86,15 +75,6 @@ New features:
 
 Bug fixes:
 1. Ensure concept sets across cohort definitions are unique #174 (changes dependency to ROhdsiWebApi (>= 1.1.0))
-
-CohortDiagnostics 1.2.0
-=======================
-Changes:
-1. All objects in DiagnosticsExplorer are sorted by default #173
-2. Multi select for concepts #199
-
-Bug fixes:
-1. Ensure concept sets across cohort definitions are unique #174
 
 CohortDiagnostics 1.2.0
 =======================
@@ -141,7 +121,7 @@ get the JSON and parameterized OHDSI SQL for the cohorts for which diagnostics h
 
 Note: The code has been partially refactored to depend on tidyverse. 
 
-CohortDiagnostics 1.0.0
+CohortDiagnostics 1.0.2
 =======================
 
 Changes:

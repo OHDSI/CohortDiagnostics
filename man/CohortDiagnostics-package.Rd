@@ -4,9 +4,9 @@
 \name{CohortDiagnostics-package}
 \alias{CohortDiagnostics}
 \alias{CohortDiagnostics-package}
-\title{CohortDiagnostics: Diagnostics for OHDSI Studies}
+\title{CohortDiagnostics: Diagnostics for OHDSI Cohorts}
 \description{
-Diagnostics for studies that use the OMOP Common Data Model and the OHDSI tools.
+Diagnostics for cohorts that use the OMOP Common Data Model and the OHDSI tools.
 }
 \seealso{
 Useful links:
