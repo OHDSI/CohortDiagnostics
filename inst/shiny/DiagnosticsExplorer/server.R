@@ -1038,7 +1038,7 @@ shiny::shinyServer(function(input, output, session) {
                                                 comparatorCohortId = cohortIds()) %>% 
       dplyr::filter(!.data$targetCohortId == .data$comparatorCohortId) %>% 
       dplyr::distinct()
-    validate(need(nrow(combisOfTargetComparator) > 0, paste0("Please select atlease two cohorts for comparision")))
+    validate(need(nrow(combisOfTargetComparator) > 0, paste0("Please select atleast two cohorts.")))
     
     data <- getCohortOverlapResult(dataSource = dataSource, 
                                    targetCohortIds = combisOfTargetComparator$targetCohortId, 
@@ -1058,9 +1058,6 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   computeBalance <- shiny::reactive({
-    # if (cohortId() == comparatorCohortId()) {
-    #   return(dplyr::tibble())
-    # }
     covs1 <- getCovariateValueResult(dataSource = dataSource,
                                      cohortIds = cohortIds(),
                                      databaseIds = input$databases,
@@ -1075,9 +1072,6 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$charCompareTable <- DT::renderDataTable(expr = {
-    # if (cohortId() == comparatorCohortId()) {
-    #   return(dplyr::tibble(Note = "Cohort and Target are the same. Nothing to compare"))
-    # } 
     balance <- computeBalance()
     if (nrow(balance) == 0) {
       return(dplyr::tibble(Note = "No data for the selected combination."))
