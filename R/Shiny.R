@@ -22,7 +22,7 @@
 #'                          \code{\link{uploadResults}} function.
 #' @param resultsDatabaseSchema  The schema on the database server where the CohortDiagnostics results 
 #'                               have been uploaded.       
-#' @param vocabularyDatabaseSchema  The schema on the database server where the vocbulary tables are located.
+#' @param vocabularyDatabaseSchema  The schema on the database server where the vocabulary tables are located.
 #' @param dataFolder       A folder where the premerged file is stored. Use
 #'                         the \code{\link{preMergeDiagnosticsFiles}} function to generate this file.
 #' @param runOverNetwork   (optional) Do you want the app to run over your network?
@@ -100,7 +100,7 @@ launchDiagnosticsExplorer <- function(dataFolder = "data",
 #'                         folder. 
 #' @param tempFolder       A folder on the local file system where the zip files are extracted to. Will be cleaned
 #'                         up when the function is finished. Can be used to specify a temp folder on a drive that
-#'                         has sufficent space if the default system temp space is too limited.
+#'                         has sufficient space if the default system temp space is too limited.
 #'                      
 #' @export
 preMergeDiagnosticsFiles <- function(dataFolder, tempFolder = tempdir()) {

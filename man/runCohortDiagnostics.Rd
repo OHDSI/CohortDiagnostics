@@ -60,7 +60,7 @@ error message will be displayed and process stopped.}
 \item{cohortSetReference}{A data frame with four columns, as described in the details. Can be left NULL if 
 \code{packageName} and \code{cohortToCreateFile} have been specified.}
 
-\item{phenotypeDescriptionFile}{(Optional) The location of the phenotype descriptioon file within the package. 
+\item{phenotypeDescriptionFile}{(Optional) The location of the phenotype description file within the package. 
 The file must be .csv file and have the following columns that may be read into following
 data types: phenotypeId (double), phenotypeName (character),
 referentConceptId (double), clinicalDescription (character),
@@ -129,7 +129,7 @@ does not exist it will be created.}
 \item{runIncidenceRate}{Generate and export the cohort incidence  rates?}
 
 \item{runCohortOverlap}{Generate and export the cohort overlap? Overlaps are checked within cohortIds
-that have the same referrent conceptId sourced from the CohortSetReference or 
+that have the same phenotype ID sourced from the CohortSetReference or 
 cohortToCreateFile.}
 
 \item{runCohortCharacterization}{Generate and export the cohort characterization? 

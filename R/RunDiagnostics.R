@@ -36,7 +36,7 @@
 #' @template CohortSetSpecs
 #' 
 #' @template CohortSetReference
-#' @param phenotypeDescriptionFile    (Optional) The location of the phenotype descriptioon file within the package. 
+#' @param phenotypeDescriptionFile    (Optional) The location of the phenotype description file within the package. 
 #'                                    The file must be .csv file and have the following columns that may be read into following
 #'                                    data types: phenotypeId (double), phenotypeName (character),
 #'                                    referentConceptId (double), clinicalDescription (character),
@@ -66,7 +66,7 @@
 #' @param runBreakdownIndexEvents     Generate and export the breakdown of index events?
 #' @param runIncidenceRate            Generate and export the cohort incidence  rates?
 #' @param runCohortOverlap            Generate and export the cohort overlap? Overlaps are checked within cohortIds
-#'                                    that have the same referrent conceptId sourced from the CohortSetReference or 
+#'                                    that have the same phenotype ID sourced from the CohortSetReference or 
 #'                                    cohortToCreateFile.
 #' @param runCohortCharacterization   Generate and export the cohort characterization? 
 #'                                    Only records with values greater than 0.0001 are returned.

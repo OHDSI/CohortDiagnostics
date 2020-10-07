@@ -29,7 +29,7 @@ the CohortDiagnostics results have been uploaded using the
 \item{resultsDatabaseSchema}{The schema on the database server where the CohortDiagnostics results 
 have been uploaded.}
 
-\item{vocabularyDatabaseSchema}{The schema on the database server where the vocbulary tables are located.}
+\item{vocabularyDatabaseSchema}{The schema on the database server where the vocabulary tables are located.}
 
 \item{cohortBaseUrl}{The base URL for constructing linkouts to an ATLAS instance, using the 
 webApiCohortId in the cohortsToCreate file. If NULL, no linkouts will be 
