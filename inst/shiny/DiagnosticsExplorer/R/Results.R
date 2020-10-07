@@ -173,7 +173,16 @@ getIncidenceRateResult <- function(dataSource = .GlobalEnv,
       dplyr::mutate(gender = dplyr::na_if(.data$gender, ""),
                     ageGroup = dplyr::na_if(.data$ageGroup, ""),
                     calendarYear = dplyr::na_if(.data$calendarYear, ""))
-  } 
+  }
+  shortNames <- data %>%
+    dplyr::inner_join(cohort) %>% 
+    dplyr::distinct(.data$cohortId, .data$cohortName) %>%
+    dplyr::arrange(.data$cohortName) %>%
+    dplyr::mutate(shortName = paste0('C', dplyr::row_number()))
+
+  
+  data <- data %>% 
+    dplyr::inner_join(shortNames, by = "cohortId")
   
   return(data %>% 
            dplyr::mutate(calendarYear = as.integer(.data$calendarYear)) %>%
@@ -449,7 +458,7 @@ getCohortOverlapResult <- function(dataSource = .GlobalEnv,
     dplyr::distinct(.data$targetCohortId, .data$targetCohortName) %>%
     dplyr::arrange(.data$targetCohortName) %>%
     dplyr::select(-.data$targetCohortName) %>%
-    dplyr::mutate(targetShortName = paste0('T', dplyr::row_number()))
+    dplyr::mutate(targetShortName = paste0('C', dplyr::row_number()))
   
   comparatorShortNames <- data %>%
     dplyr::distinct(.data$comparatorCohortId, .data$comparatorCohortName) %>%
