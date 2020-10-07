@@ -1171,16 +1171,11 @@ shiny::shinyServer(function(input, output, session) {
     # if (cohortId() == comparatorCohortId()) {
     #   return(dplyr::tibble(Note = "Cohort and Target are the same. Nothing to compare"))
     # } 
-    
-    validate(need((length(cohortIds()) != 1), paste0("Atlease 2 cohort needed")))
-    
+    validate(need((length(cohortIds()) != 1), paste0("Please select atleast two different cohorts.")))
     balance <- computeBalance()
     if (nrow(balance) == 0) {
       return(dplyr::tibble(Note = "No data for the selected combination."))
     }
-    
-    
-    
     plot <- plotCohortComparisonStandardizedDifference(balance = balance,
                                                        domain = input$domainId,
                                                        targetLabel = paste0("Mean in Target (", input$cohort, ")"),
