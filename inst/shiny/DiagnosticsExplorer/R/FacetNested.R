@@ -70,7 +70,7 @@ new_data_frame <- function (x, n = NULL)
 gtable_add_grob <- function(x, grobs, t, l, b = t, r = l, z = Inf, clip = "on", 
                              name = x$name) 
 {
-  if (!is.gtable(x)) 
+  if (!gtable::is.gtable(x)) 
     stop("x must be a gtable", call. = FALSE)
   # if (is.grob(grobs)) 
   #   grobs <- list(grobs)
