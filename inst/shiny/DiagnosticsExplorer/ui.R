@@ -198,7 +198,8 @@ sidebarMenu <-
       input.tabs != 'description' & 
       input.tabs != 'cohortOverlap'&
       input.tabs != 'compareCohortCharacterization' &
-      input.tabs != 'incidenceRate'",
+      input.tabs != 'incidenceRate' &
+      input.tabs != 'timeDistribution'",
       shinyWidgets::pickerInput(
         inputId = "cohort",
         label = "Cohorts",
@@ -232,7 +233,7 @@ sidebarMenu <-
       )
     ),
     shiny::conditionalPanel(
-      condition = "input.tabs == 'cohortOverlap' | input.tabs=='compareCohortCharacterization' | input.tabs=='incidenceRate'" ,
+      condition = "input.tabs == 'cohortOverlap' | input.tabs=='compareCohortCharacterization' | input.tabs=='incidenceRate' | input.tabs=='timeDistribution'" ,
       shinyWidgets::pickerInput(
         inputId = "cohorts",
         label = "Cohorts",
@@ -309,6 +310,7 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "timeDistribution",
+    shiny::uiOutput(outputId = "timeDistSelectedCohort"),
     shinydashboard::box(
       title = "Time Distributions",
       width = NULL,

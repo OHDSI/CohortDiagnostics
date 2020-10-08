@@ -278,16 +278,20 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
   })
   
+  timeDist <- reactive({
+    data <- getTimeDistributionResult(dataSource = dataSource,
+                                      cohortIds = cohortIds(), 
+                                      databaseIds = input$databases)
+  })
+  
   output$timeDisPlot <- ggiraph::renderggiraph(expr = {
     validate(need(length(input$databases) > 0, "No data sources chosen"))
-    data <- getTimeDistributionResult(dataSource = dataSource,
-                                      cohortIds = cohortId(), 
-                                      databaseIds = input$databases)
+    data <- timeDist()
     validate(need(!is.null(data), paste0('No data for this combination')),
              need(nrow(data) > 0, paste0('No data for this combination')))
     
     plot <- plotTimeDistribution(data = data,
-                                 cohortIds = cohortId(),
+                                 cohortIds = cohortIds(),
                                  databaseIds = input$databases)
     return(plot)
   })
@@ -1377,6 +1381,24 @@ shiny::shinyServer(function(input, output, session) {
   
   output$incidenceRateSelectedCohort <- shiny::renderUI({
     data <- incidenceRate()
+    targetCohorts <- data %>%
+      dplyr::distinct(.data$shortName, .data$cohortName) %>%
+      dplyr::arrange(.data$shortName)
+    
+    html <- htmltools::withTags(
+      div(table(
+        tr(
+          td(
+            HTML(paste(paste(targetCohorts$shortName, targetCohorts$cohortName, sep = ": "), collapse = "</br>"))
+          )
+        )
+      )
+      ))
+    return(html)
+  })
+  
+  output$timeDistSelectedCohort <- shiny::renderUI({
+    data <- timeDist()
     targetCohorts <- data %>%
       dplyr::distinct(.data$shortName, .data$cohortName) %>%
       dplyr::arrange(.data$shortName)

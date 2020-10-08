@@ -89,6 +89,15 @@ getTimeDistributionResult <- function(dataSource = .GlobalEnv,
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } 
+  shortNames <- data %>%
+    dplyr::inner_join(cohort) %>% 
+    dplyr::distinct(.data$cohortId, .data$cohortName) %>%
+    dplyr::arrange(.data$cohortName) %>%
+    dplyr::mutate(shortName = paste0('C', dplyr::row_number()))
+  
+  
+  data <- data %>% 
+    dplyr::inner_join(shortNames, by = "cohortId")
   
   data <- data %>% 
     dplyr::rename(Database = "databaseId",
