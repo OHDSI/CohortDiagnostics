@@ -38,11 +38,13 @@ rmarkdown::render("vignettes/CohortDiagnosticsUsingWebApi.Rmd",
 pkgdown::build_site()
 OhdsiRTools::fixHadesLogo()
 
-# Install cohorts for testing
-ROhdsiWebApi::insertCohortDefinitionSetInPackage(fileName = "inst/settings/CohortsToCreateForTesting.csv",
-                                                 baseUrl = Sys.getenv("baseUrl"),
-                                                 insertTableSql = FALSE,
-                                                 generateStats = TRUE,
-                                                 insertCohortCreationR = FALSE,
-                                                 packageName = "CohortDiagnostics")
+# Regenerate DDL
+pathToCsv <- file.path("inst", "settings", "resultsDataModelSpecification.csv")
+specifications <- readr::read_csv(file = pathToCsv, col_types = readr::cols())
+source("extras/ResultsDataModel.R")
+createDdl("inst/sql/postgresql/CreateResultsDataModel.sql", specifications)
 
+# Copy data model specs to Shiny app
+file.copy(from = "inst/settings/resultsDataModelSpecification.csv", 
+          to = "inst/shiny/DiagnosticsExplorer/resultsDataModelSpecification.csv",
+          overwrite = TRUE)

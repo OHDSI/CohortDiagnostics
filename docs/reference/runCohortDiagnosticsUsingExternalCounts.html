@@ -80,7 +80,7 @@ concept_subjectsThe number of unique persons having the concept.
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.0</span>
       </span>
     </div>
 
@@ -142,7 +142,7 @@ concept_subjectsThe number of unique persons having the concept.
     <div class="ref-description">
     <p>Runs  cohort diagnostics on all (or a subset of) the cohorts, but using external concept counts. The external counts 
 must have the following columns:</p>
-<dl'>
+<dl>
 <dt>concept_id</dt><dd><p>The source or target concept ID.</p></dd>
 <dt>concept_count</dt><dd><p>The number of records having the concept.</p></dd>
 <dt>concept_subjects</dt><dd><p>The number of unique persons having the concept.</p></dd>
@@ -151,27 +151,27 @@ must have the following columns:</p>
 
     </div>
 
-    <pre class="usage"><span class='fu'>runCohortDiagnosticsUsingExternalCounts</span>(
-  <span class='kw'>packageName</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cohortToCreateFile</span> <span class='kw'>=</span> <span class='st'>"settings/CohortsToCreate.csv"</span>,
-  <span class='kw'>baseUrl</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cohortSetReference</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>connectionDetails</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>connection</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='no'>cdmDatabaseSchema</span>,
-  <span class='kw'>oracleTempSchema</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cohortIds</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>conceptCountsDatabaseSchema</span> <span class='kw'>=</span> <span class='no'>cdmDatabaseSchema</span>,
-  <span class='kw'>conceptCountsTable</span> <span class='kw'>=</span> <span class='st'>"concept_counts"</span>,
-  <span class='kw'>conceptCountsTableIsTemp</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='no'>exportFolder</span>,
-  <span class='no'>databaseId</span>,
-  <span class='kw'>databaseName</span> <span class='kw'>=</span> <span class='no'>databaseId</span>,
-  <span class='kw'>databaseDescription</span> <span class='kw'>=</span> <span class='st'>""</span>,
-  <span class='kw'>runIncludedSourceConcepts</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>runOrphanConcepts</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>minCellCount</span> <span class='kw'>=</span> <span class='fl'>5</span>
-)</pre>
+    <pre class="usage"><span class='fu'>runCohortDiagnosticsUsingExternalCounts</span><span class='op'>(</span>
+  packageName <span class='op'>=</span> <span class='cn'>NULL</span>,
+  cohortToCreateFile <span class='op'>=</span> <span class='st'>"settings/CohortsToCreate.csv"</span>,
+  baseUrl <span class='op'>=</span> <span class='cn'>NULL</span>,
+  cohortSetReference <span class='op'>=</span> <span class='cn'>NULL</span>,
+  connectionDetails <span class='op'>=</span> <span class='cn'>NULL</span>,
+  connection <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>cdmDatabaseSchema</span>,
+  oracleTempSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
+  cohortIds <span class='op'>=</span> <span class='cn'>NULL</span>,
+  conceptCountsDatabaseSchema <span class='op'>=</span> <span class='va'>cdmDatabaseSchema</span>,
+  conceptCountsTable <span class='op'>=</span> <span class='st'>"concept_counts"</span>,
+  conceptCountsTableIsTemp <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  <span class='va'>exportFolder</span>,
+  <span class='va'>databaseId</span>,
+  databaseName <span class='op'>=</span> <span class='va'>databaseId</span>,
+  databaseDescription <span class='op'>=</span> <span class='st'>""</span>,
+  runIncludedSourceConcepts <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  runOrphanConcepts <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  minCellCount <span class='op'>=</span> <span class='fl'>5</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -184,9 +184,11 @@ must have the following columns:</p>
     <tr>
       <th>cohortToCreateFile</th>
       <td><p>The location of the cohortToCreate file within the package. Is ignored if 
-<code>baseUrl</code> and <code>cohortSetReference</code> have been specified. The cohortToCreateFile
-must be .csv file that is expected to be read into a dataframe object identical to requirements
-for <code>cohortSetReference</code> argument.</p></td>
+<code>baseUrl</code> and <code>cohortSetReference</code> have been specified. The
+cohortToCreateFile must be .csv file that is expected to be read into 
+a dataframe object identical to requirements for <code>cohortSetReference</code> argument. 
+This csv file is expected to be encoded in either ASCII or UTF-8, if not, an 
+error message will be displayed and process stopped.</p></td>
     </tr>
     <tr>
       <th>baseUrl</th>
@@ -202,14 +204,14 @@ for <code>cohortSetReference</code> argument.</p></td>
     <tr>
       <th>connectionDetails</th>
       <td><p>An object of type <code>connectionDetails</code> as created using the
-<code><a href='https://rdrr.io/pkg/DatabaseConnector/man/createConnectionDetails.html'>createConnectionDetails</a></code> function in the
+<code><a href='https://ohdsi.github.io/DatabaseConnector/reference/createConnectionDetails.html'>createConnectionDetails</a></code> function in the
 DatabaseConnector package. Can be left NULL if <code>connection</code> is
 provided.</p></td>
     </tr>
     <tr>
       <th>connection</th>
       <td><p>An object of type <code>connection</code> as created using the
-<code><a href='https://rdrr.io/pkg/DatabaseConnector/man/connect.html'>connect</a></code> function in the
+<code><a href='https://ohdsi.github.io/DatabaseConnector/reference/connect.html'>connect</a></code> function in the
 DatabaseConnector package. Can be left NULL if <code>connectionDetails</code>
 is provided, in which case a new connection will be opened at the start
 of the function, and closed when the function finishes.</p></td>
@@ -280,19 +282,21 @@ does not exist it will be created.</p></td>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>Currently two ways of executing this function are supported, either 
-(1) [Package Mode] embedded in a study package, assuming the cohort definitions are stored in that package using the 
-    <code><a href='https://rdrr.io/pkg/ROhdsiWebApi/man/insertCohortDefinitionSetInPackage.html'>ROhdsiWebApi::insertCohortDefinitionSetInPackage</a></code>, or 
+(1) [Package Mode] embedded in a study package, assuming the cohort definitions are stored in that package using the <code><a href='https://rdrr.io/pkg/ROhdsiWebApi/man/insertCohortDefinitionSetInPackage.html'>ROhdsiWebApi::insertCohortDefinitionSetInPackage</a></code>, or 
 (2) [WebApi Mode] By using a WebApi interface to retrieve the cohort definitions.</p>
 <p>When using this function in Package Mode: Use the <code>packageName</code> and <code>cohortToCreateFile</code> to specify
 the name of the study package, and the name of the cohortToCreate file within that package, respectively</p>
 <p>When using this function in WebApi Mode: use the <code>baseUrl</code> and <code>cohortSetReference</code> to specify how to 
 connect to the WebApi, and which cohorts to fetch, respectively.</p>
 <p>Note: if the parameters for both Package Mode and WebApi Mode are provided, then Package mode is preferred.</p>
-<p>The <code>cohortSetReference</code> argument must be a data frame with  the following columns:</p><dl'>
-<dt>atlasId</dt><dd><p>The cohort ID in ATLAS.</p></dd>
-<dt>atlasName</dt><dd><p>The full name of the cohort. This will be shown in the Shiny app.</p></dd>
-<dt>cohortId</dt><dd><p>The cohort ID to use in the package. Usually the same as the cohort ID in ATLAS.</p></dd>
-<dt>name</dt><dd><p>A short name for the cohort, to use to create file names. do not use special characters.</p></dd>
+<p>The <code>cohortSetReference</code> argument must be a data frame with  the following columns:</p><dl>
+<dt>referentConceptId</dt><dd><p>A standard omop concept id that serves as the referant phenotype definition for the cohort Id.</p></dd>
+<dt>cohortId</dt><dd><p>The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names. It is recommended to be (referrentConceptId * 1000) + a number between 3 to 999</p></dd>
+<dt>webApiCohortId</dt><dd><p>Cohort Id in the webApi/atlas instance. It is a required field to run Cohort Diagnostics in WebApi mode. It is discarded in package mode.</p></dd>
+<dt>cohortName</dt><dd><p>The full name of the cohort. This will be shown in the Shiny app.</p></dd>
+<dt>logicDescription</dt><dd><p>A human understandable brief description of the cohort definition. This logic does not have to a 
+fully specified description of the cohort definition, but should provide enough context to help user understand the
+meaning of the cohort definition</p></dd>
 
 </dl>
 
@@ -312,7 +316,7 @@ connect to the WebApi, and which cohorts to fetch, respectively.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

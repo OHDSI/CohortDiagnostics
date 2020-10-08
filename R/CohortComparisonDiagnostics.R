@@ -14,24 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#' Compute overlap between two cohorts
-#'
-#' @description
-#' Computes the overlap between a target and a comparator cohort.
-#'
-#' @template Connection
-#'
-#' @template CohortTable
-#'
-#' @param targetCohortId       The cohort definition ID used to reference the target cohort in the
-#'                             cohort table.
-#' @param comparatorCohortId   The cohort definition ID used to reference the comparator cohort in the
-#'                             cohort table.
-#'
-#' @return
-#' A data frame with overlap statistics.
-#'
-#' @export
 computeCohortOverlap <- function(connectionDetails = NULL,
                                  connection = NULL,
                                  cohortDatabaseSchema,
@@ -49,7 +31,9 @@ computeCohortOverlap <- function(connectionDetails = NULL,
                                  cohortDatabaseSchema = cohortDatabaseSchema,
                                  cohortTable = cohortTable,
                                  cohortId = targetCohortId)) {
-    warning("Target cohort with ID ", targetCohortId, " appears to be empty. Was it instantiated? Skipping overlap computation.")
+    warning("- Target cohort with ID ", 
+                            targetCohortId, 
+                            " appears to be empty. Was it instantiated? Skipping overlap computation.")
     delta <- Sys.time() - start
     ParallelLogger::logInfo(paste("Computing overlap took", signif(delta, 3), attr(delta, "units")))
     return(tidyr::tibble())
@@ -59,12 +43,12 @@ computeCohortOverlap <- function(connectionDetails = NULL,
                                  cohortDatabaseSchema = cohortDatabaseSchema,
                                  cohortTable = cohortTable,
                                  cohortId = comparatorCohortId)) {
-    warning("Comparator cohort with ID ",
-            comparatorCohortId,
-            " appears to be empty. Was it instantiated?")
+    warning("- Comparator cohort with ID ", 
+                            comparatorCohortId, 
+                            " appears to be empty. Was it instantiated? Skipping overlap computation.")
     delta <- Sys.time() - start
     ParallelLogger::logInfo(paste("Computing overlap took", signif(delta, 3), attr(delta, "units")))
-    return(data.frame())
+    return(tidyr::tibble())
   }
   
   sql <- SqlRender::loadRenderTranslateSql("CohortOverlap.sql",
@@ -74,7 +58,10 @@ computeCohortOverlap <- function(connectionDetails = NULL,
                                            cohort_table = cohortTable,
                                            target_cohort_id = targetCohortId,
                                            comparator_cohort_id = comparatorCohortId)
-  overlap <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
+  overlap <- DatabaseConnector::querySql(connection = connection, 
+                                         sql = sql, 
+                                         snakeCaseToCamelCase = TRUE) %>% 
+    tidyr::tibble()
   delta <- Sys.time() - start
   ParallelLogger::logInfo(paste("Computing overlap took", signif(delta, 3), attr(delta, "units")))
   return(overlap)

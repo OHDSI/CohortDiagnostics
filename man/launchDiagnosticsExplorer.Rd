@@ -4,13 +4,43 @@
 \alias{launchDiagnosticsExplorer}
 \title{Launch the Diagnostics Explorer Shiny app}
 \usage{
-launchDiagnosticsExplorer(dataFolder, launch.browser = FALSE)
+launchDiagnosticsExplorer(
+  dataFolder = "data",
+  connectionDetails = NULL,
+  resultsDatabaseSchema = NULL,
+  vocabularyDatabaseSchema = resultsDatabaseSchema,
+  cohortBaseUrl = "https://atlas.ohdsi.org/#/cohortdefinition/",
+  conceptBaseUrl = "https://athena.ohdsi.org/search-terms/terms/",
+  runOverNetwork = FALSE,
+  port = 80,
+  launch.browser = FALSE
+)
 }
 \arguments{
-\item{dataFolder}{A folder where the exported zip files for the diagnostics are stored. Use
-the \code{\link{runCohortDiagnostics}} function to generate these zip files. 
-Zip files containing results from multiple databases can be placed in the same
-folder.}
+\item{dataFolder}{A folder where the premerged file is stored. Use
+the \code{\link{preMergeDiagnosticsFiles}} function to generate this file.}
+
+\item{connectionDetails}{An object of type \code{connectionDetails} as created using the
+\code{\link[DatabaseConnector]{createConnectionDetails}} function in the
+DatabaseConnector package, specifying how to connect to the server where
+the CohortDiagnostics results have been uploaded using the 
+\code{\link{uploadResults}} function.}
+
+\item{resultsDatabaseSchema}{The schema on the database server where the CohortDiagnostics results 
+have been uploaded.}
+
+\item{vocabularyDatabaseSchema}{The schema on the database server where the vocabulary tables are located.}
+
+\item{cohortBaseUrl}{The base URL for constructing linkouts to an ATLAS instance, using the 
+webApiCohortId in the cohortsToCreate file. If NULL, no linkouts will be 
+created.}
+
+\item{conceptBaseUrl}{The base URL for constructing linkouts to an Athena instance, using the
+concept ID.}
+
+\item{runOverNetwork}{(optional) Do you want the app to run over your network?}
+
+\item{port}{(optional) Only used if \code{runOverNetwork} = TRUE.}
 
 \item{launch.browser}{Should the app be launched in your default browser, or in a Shiny window.
 Note: copying to clipboard will not work in a Shiny window.}

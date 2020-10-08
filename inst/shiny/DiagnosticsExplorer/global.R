@@ -1,183 +1,163 @@
 library(magrittr)
 
-source("R/Plots.R")
 source("R/Tables.R")
-source("R/Other.R")
+source("R/Plots.R")
+source("R/Results.R")
 
+# shinySettings <- list(connectionDetails = DatabaseConnector::createConnectionDetails(dbms = "postgresql",
+#                                              server = "localhost/ohdsi",
+#                                              user = "postgres",
+#                                              password = Sys.getenv("pwPostgres")),
+#                       resultsDatabaseSchema =  "phenotype_library",
+#                       vocabularyDatabaseSchema =  "phenotype_library")
+# shinySettings <- list(dataFolder = "s:/examplePackageOutput")
+
+# Settings when running on server:
+
+defaultLocalDataFolder <- "data"
+defaultLocalDataFile <- "PreMerged.RData"
+
+connectionPool <- NULL
+defaultServer <- Sys.getenv("phenotypeLibraryDbServer")
+defaultDatabase <- Sys.getenv("phenotypeLibraryDbDatabase")
+defaultPort <- Sys.getenv("phenotypeLibraryDbPort")
+defaultUser <- Sys.getenv("phenotypeLibraryDbUser")
+defaultPassword <- Sys.getenv("phenotypeLibraryDbPassword")
+defaultResultsSchema <- Sys.getenv("phenotypeLibraryDbResultsSchema")
+defaultVocabularySchema <- Sys.getenv("phenotypeLibraryDbVocabularySchema")
+
+defaultDatabaseMode <- TRUE # Use file system if FALSE
+
+defaultCohortBaseUrl <- "https://atlas.ohdsi.org/#/cohortdefinition/"
+defaultConceptBaseUrl <- "https://athena.ohdsi.org/search-terms/terms/"
+
+cohortDiagnosticModeDefaultTitle <- "Cohort Diagnostics"
+phenotypeLibraryModeDefaultTitle <- "Phenotype Library"
 
 if (!exists("shinySettings")) {
-  if (file.exists("data")) {
-    shinySettings <- list(dataFolder = "data")
+  writeLines("Using default settings")
+  databaseMode <- defaultDatabaseMode & defaultServer != ""
+  if (databaseMode) {
+    connectionPool <- pool::dbPool(
+      drv = DatabaseConnector::DatabaseConnectorDriver(),
+      dbms = "postgresql",
+      server = paste(defaultServer, defaultDatabase, sep = "/"),
+      port = defaultPort,
+      user = defaultUser,
+      password = defaultPassword
+    )
+    resultsDatabaseSchema <- defaultResultsSchema
+    vocabularyDatabaseSchema <- defaultVocabularySchema
   } else {
-    shinySettings <- list(dataFolder = "c:/temp/exampleStudy")
+    dataFolder <- defaultLocalDataFolder
   }
-}
-dataFolder <- shinySettings$dataFolder
-
-suppressWarnings(rm("cohort", "cohortCount", "cohortOverlap", "conceptSets", "database", "incidenceRate", "includedSourceConcept", "inclusionRuleStats", "indexEventBreakdown", "orphanConcept", "timeDistribution"))
-
-if (file.exists(file.path(dataFolder, "PreMerged.RData"))) {
-  writeLines("Using merged data detected in data folder")
-  load(file.path(dataFolder, "PreMerged.RData"))
+  cohortBaseUrl <- defaultCohortBaseUrl
+  conceptBaseUrl <- defaultCohortBaseUrl
 } else {
-  zipFiles <- list.files(dataFolder, pattern = ".zip", full.names = TRUE)
-  
-  loadFile <- function(file, folder, overwrite) {
-    # print(file)
-    tableName <- gsub(".csv$", "", file)
-    camelCaseName <- SqlRender::snakeCaseToCamelCase(tableName)
-    data <- readr::read_csv(file.path(folder, file), col_types = readr::cols(), guess_max = 1e7, locale = readr::locale(encoding = "UTF-8"))
-    colnames(data) <- SqlRender::snakeCaseToCamelCase(colnames(data))
-    
-    if (!overwrite && exists(camelCaseName, envir = .GlobalEnv)) {
-      existingData <- get(camelCaseName, envir = .GlobalEnv)
-      if (nrow(existingData) > 0) {
-        if (nrow(data) > 0) {
-          if (all(colnames(existingData) %in% colnames(data)) &&
-              all(colnames(data) %in% colnames(existingData))) {
-            data <- data[, colnames(existingData)]
-          } else {
-            stop("Table columns do no match previously seen columns. Columns in ", 
-                 file, 
-                 ":\n", 
-                 paste(colnames(data), collapse = ", "), 
-                 "\nPrevious columns:\n",
-                 paste(colnames(existingData), collapse = ", "))
-          }
-        }
-      }
-      data <- rbind(existingData, data)
-    }
-    assign(camelCaseName, data, envir = .GlobalEnv)
-    
-    invisible(NULL)
-  }
-  
-  for (i in 1:length(zipFiles)) {
-    writeLines(paste("Processing", zipFiles[i]))
-    tempFolder <- tempfile()
-    dir.create(tempFolder)
-    unzip(zipFiles[i], exdir = tempFolder)
-    
-    csvFiles <- list.files(tempFolder, pattern = ".csv")
-    lapply(csvFiles, loadFile, folder = tempFolder, overwrite = (i == 1))
-    
-    unlink(tempFolder, recursive = TRUE)
-  }
-}
-
-cohort <- cohort %>% 
-          dplyr::distinct() %>% 
-          dplyr::select(.data$cohortFullName, .data$cohortId, .data$cohortName) %>% 
-          dplyr::arrange(.data$cohortFullName, .data$cohortId)
-
-database <- database %>% 
-            dplyr::distinct() %>% 
-            dplyr::arrange(.data$databaseId)
-
-if (exists("covariate")) {
-  covariate <- covariate %>% 
-    dplyr::distinct() %>% 
-    dplyr::arrange(.data$covariateName)
-  if (!"conceptId" %in% colnames(covariate)) {
-    warning("conceptId not found in covariate file. Calculating conceptId from covariateId. This may rarely cause errors.")
-  covariate <- covariate %>% 
-    dplyr::mutate(conceptId = (.data$covariateId - .data$covariateAnalysisId)/1000)
-  }
-}
-
-if (exists("temporalCovariate")) {
-  temporalCovariate <- temporalCovariate %>% 
-    dplyr::distinct() %>% 
-    dplyr::arrange(.data$covariateName)
-  if (!"conceptId" %in% colnames(temporalCovariate)) {
-    warning("conceptId not found in temporalCovariate file. Calculating conceptId from covariateId. This may rarely cause errors.")
-    temporalCovariate <- temporalCovariate %>% 
-      dplyr::mutate(conceptId = (.data$covariateId - .data$covariateAnalysisId)/1000)
-  }
-  if ('timeId' %in% colnames(temporalCovariate) && 
-      'startDayTemporalCharacterization' %in% colnames(temporalCovariate) && 
-      'endDayTemporalCharacterization' %in% colnames(temporalCovariate)) {
-    temporalCovariateChoices <- temporalCovariate %>%
-      dplyr::select(.data$timeId, 
-                    .data$startDayTemporalCharacterization, 
-                    .data$endDayTemporalCharacterization) %>%
-      dplyr::distinct() %>%
-      dplyr::mutate(choices = paste0("Start ", 
-                                     .data$startDayTemporalCharacterization, 
-                                     " to end ", 
-                                     .data$endDayTemporalCharacterization)) %>%
-      dplyr::select(.data$timeId, .data$choices) %>% 
-      dplyr::arrange(.data$timeId)
-  } else if ('timeId' %in% colnames(temporalCovariateValue)) {
-    temporalCovariateChoices <- temporalCovariateValue %>% 
-      dplyr::select(.data$timeId) %>% 
-      dplyr::distinct()
-    if (exists("timeRef")) {
-      temporalCovariateChoices <- temporalCovariateChoices %>% 
-        dplyr::left_join(timeRef) %>%
-        dplyr::distinct() %>%
-        dplyr::mutate(choices = paste0("Start ", 
-                                       .data$startDay, 
-                                       " to end ", 
-                                       .data$endDay)) %>% 
-        dplyr::select(-.data$startDay, -.data$endDay)
+  writeLines("Using settings provided by user")
+  databaseMode <- !is.null(shinySettings$connectionDetails)
+  if (databaseMode) {
+    connectionDetails <- shinySettings$connectionDetails
+    if (is(connectionDetails$server, "function")) {
+      connectionPool <- pool::dbPool(drv = DatabaseConnector::DatabaseConnectorDriver(),
+                                     dbms = "postgresql",
+                                     server = connectionDetails$server(),
+                                     port = connectionDetails$port(),
+                                     user = connectionDetails$user(),
+                                     password = connectionDetails$password(),
+                                     connectionString = connectionDetails$connectionString())
     } else {
-      rm(temporalCovariateValue)
-      rm(temporalCovariate)
+      # For backwards compatibility with older versions of DatabaseConnector:
+      connectionPool <- pool::dbPool(drv = DatabaseConnector::DatabaseConnectorDriver(),
+                                     dbms = "postgresql",
+                                     server = connectionDetails$server,
+                                     port = connectionDetails$port,
+                                     user = connectionDetails$user,
+                                     password = connectionDetails$password,
+                                     connectionString = connectionDetails$connectionString)
+    }
+    resultsDatabaseSchema <- shinySettings$resultsDatabaseSchema
+    vocabularyDatabaseSchema <- shinySettings$vocabularyDatabaseSchema
+  } else {
+    dataFolder <- shinySettings$dataFolder
+  }
+  cohortBaseUrl <- shinySettings$cohortBaseUrl
+  conceptBaseUrl <- shinySettings$cohortBaseUrl
+}
+
+dataModelSpecifications <- read.csv("resultsDataModelSpecification.csv")
+# Cleaning up any tables in memory:
+suppressWarnings(rm(list = SqlRender::snakeCaseToCamelCase(dataModelSpecifications$tableName)))
+
+if (databaseMode) {
+  
+  onStop(function() {
+    if (DBI::dbIsValid(connectionPool)) {
+      writeLines("Closing database pool")
+      pool::poolClose(connectionPool)
+    }
+  })
+  
+  resultsTablesOnServer <- tolower(DatabaseConnector::dbListTables(connectionPool, schema = resultsDatabaseSchema))
+  
+  loadResultsTable <- function(tableName, required = FALSE) {
+    if (required || tableName %in% resultsTablesOnServer) {
+      tryCatch({
+        table <- DatabaseConnector::dbReadTable(connectionPool, 
+                                                paste(resultsDatabaseSchema, tableName, sep = "."))
+      }, error = function(err) {
+        stop("Error reading from ", paste(resultsDatabaseSchema, tableName, sep = "."), ": ", err$message)
+      })
+      colnames(table) <- SqlRender::snakeCaseToCamelCase(colnames(table))
+      if (nrow(table) > 0) {
+        assign(SqlRender::snakeCaseToCamelCase(tableName), dplyr::as_tibble(table), envir = .GlobalEnv)
+      }
     }
   }
+  
+  loadResultsTable("database", required = TRUE)
+  loadResultsTable("cohort", required = TRUE)
+  loadResultsTable("phenotype_description")
+  loadResultsTable("temporal_time_ref")
+  loadResultsTable("concept_sets")
+  
+  # Create empty objects in memory for all other tables. This is used by the Shiny app to decide what tabs to show:
+  isEmpty <- function(tableName) {
+    sql <- sprintf("SELECT 1 FROM %s.%s LIMIT 1;", resultsDatabaseSchema, tableName)
+    oneRow <- DatabaseConnector::dbGetQuery(connectionPool, sql)
+    return(nrow(oneRow) == 0)
+  }
+  
+  for (table in dataModelSpecifications$tableName) {
+    if (table %in% resultsTablesOnServer && 
+        !exists(SqlRender::snakeCaseToCamelCase(table)) &&
+        !isEmpty(table)) {
+      assign(SqlRender::snakeCaseToCamelCase(table), dplyr::tibble())
+    }
+  }
+
+  dataSource <- createDatabaseDataSource(connection = connectionPool,
+                                         resultsDatabaseSchema = resultsDatabaseSchema,
+                                         vocabularyDatabaseSchema = vocabularyDatabaseSchema)
+} else {
+  localDataPath <- file.path(dataFolder, defaultLocalDataFile)
+  if (!file.exists(localDataPath)) {
+    stop(sprintf("Local data file %s does not exist.", localDataPath))
+  }
+  dataSource <- createFileDataSource(localDataPath, envir = .GlobalEnv)
+} 
+
+if (exists("temporalTimeRef")) {
+  temporalCovariateChoices <- temporalTimeRef %>%
+    dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
+    dplyr::select(.data$timeId, .data$choices) %>% 
+    dplyr::arrange(.data$timeId) %>% 
+    dplyr::slice_head(n = 5)
 }
 
-if (exists("includedSourceConcept")) {
-  conceptSets <- includedSourceConcept %>% 
-                  dplyr::select(.data$cohortId, .data$conceptSetId, .data$conceptSetName) %>% 
-                  dplyr::distinct() %>% 
-                  dplyr::arrange(.data$cohortId, .data$conceptSetName)
-} else if (exists("orphanConcept")) {
-  conceptSets <- orphanConcept %>% 
-                  dplyr::select(.data$cohortId, .data$conceptSetId, .data$conceptSetName) %>% 
-                  dplyr::distinct() %>% 
-                  dplyr::arrange(.data$cohortId, .data$conceptSetName)
-} else {
-  conceptSets <- NULL 
-}
-
-
-if ("phenotypeDescription.csv" %in% list.files(path = dataFolder)) {
-  print("loading phenotypeDescription and cohortDescription from local folder. App set to work in Phenotype library mode.")
-  appTitle <- "Phenotype Library"
-  cohortDescription <- readr::read_csv(file.path(dataFolder, 'cohortDescription.csv'), 
-                                       col_types = readr::cols(), 
-                                       guess_max = 1e7, 
-                                       locale = readr::locale(encoding = "UTF-8"),
-                                       trim_ws = TRUE, 
-                                       na = '0', 
-                                       skip_empty_rows = TRUE) %>% 
-    dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = ''))) %>% 
-    dplyr::arrange(.data$phenotypeId, .data$cohortDefinitionName)
-  
-  cohort <- cohort %>%
-    dplyr::rename(cohortFullNameOld = .data$cohortFullName) %>% 
-        dplyr::left_join(y = cohortDescription %>% 
-                           dplyr::mutate(cohortId = utils::type.convert(.data$atlasId),
-                                         cohortFullName = .data$cohortDefinitionName) %>% 
-                           dplyr::select(.data$cohortId, .data$cohortFullName)) %>% 
-                           dplyr::relocate(.data$cohortFullName) %>% 
-        dplyr::mutate(cohortFullName = dplyr::case_when(is.na(.data$cohortFullName) ~ .data$cohortFullNameOld,
-                                                        TRUE ~ .data$cohortFullName)) %>% 
-        dplyr::select(-.data$cohortFullNameOld) %>% 
-        dplyr::arrange(.data$cohortFullName)
-  
-  phenotypeDescription <- readr::read_csv(file.path(dataFolder, "phenotypeDescription.csv"), 
-                                          col_types = readr::cols(), 
-                                          guess_max = 1e7, 
-                                          locale = readr::locale(encoding = "UTF-8"),
-                                          trim_ws = TRUE, 
-                                          na = '0', 
-                                          skip_empty_rows = TRUE) %>% 
-    dplyr::mutate(dplyr::across(tidyr::everything(), ~tidyr::replace_na(data = .x, replace = ''))) %>% 
-    dplyr::arrange(.data$phenotypeName, .data$phenotypeId)
-} else {
-  print("phenotypeDescription not found. App set to work in Cohort Diagnostics mode.")
+if (exists("covariateRef")) {
+  specifications <- readr::read_csv(file = "Table1Specs.csv", 
+                                    col_types = readr::cols(),
+                                    guess_max = min(1e7))
+  prettyAnalysisIds <- specifications$analysisId
 }

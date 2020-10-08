@@ -4,20 +4,21 @@
 \alias{preMergeDiagnosticsFiles}
 \title{Premerge Shiny diagnostics files}
 \usage{
-preMergeDiagnosticsFiles(dataFolder, minCovariateProportion = 0)
+preMergeDiagnosticsFiles(dataFolder, tempFolder = tempdir())
 }
 \arguments{
 \item{dataFolder}{folder where the exported zip files for the diagnostics are stored. Use
 the \code{\link{runCohortDiagnostics}} function to generate these zip files. 
-Zip files containing results from multiple databases can be placed in the same
+Zip files containing results from multiple databases may be placed in the same
 folder.}
 
-\item{minCovariateProportion}{minimum value threshold for covariates to be included 
-in premerged file (valid number (maybe decimal) between 0 to 1)}
+\item{tempFolder}{A folder on the local file system where the zip files are extracted to. Will be cleaned
+up when the function is finished. Can be used to specify a temp folder on a drive that
+has sufficient space if the default system temp space is too limited.}
 }
 \description{
-If there are many diagnostics files, starting the Shiny app may take a very long time. This function 
-already does most of the preprocessing, increasing loading speed.
+This function combines diagnostics results from one or more databases into a single file. The result is a
+single file that can be used as input for the Diagnostics Explorer Shiny app.
 
-The merged data will be stored in the same folder, and will automatically be recognized by the Shiny app.
+It also checks whether the results conform to the results data model specifications.
 }

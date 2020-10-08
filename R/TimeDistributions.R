@@ -14,33 +14,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#' Get time distributions of a cohort
-#'
-#' @description
-#' Computes the distribution of the observation time before and after index, and time within a cohort.
-#'
-#' @template Connection
-#'
-#' @template CdmDatabaseSchema
-#'
-#' @template OracleTempSchema
-#'
-#' @template CohortTable
-#'
-#' @param cohortId            The cohort definition ID used to reference the cohort in the cohort
-#'                            table.
-#'
-#' @return
-#' A data frame with time distributions
-#'
-#' @export
 getTimeDistributions <- function(connectionDetails = NULL,
                                  connection = NULL,
                                  cdmDatabaseSchema,
                                  oracleTempSchema = NULL,
                                  cohortDatabaseSchema = cdmDatabaseSchema,
                                  cohortTable = "cohort",
-                                 cohortId) {
+                                 cohortIds,
+                                 cdmVersion = 5) {
   
   start <- Sys.time()
   
@@ -48,19 +29,7 @@ getTimeDistributions <- function(connectionDetails = NULL,
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-  
-  if (!checkIfCohortInstantiated(connection = connection,
-                                 cohortDatabaseSchema = cohortDatabaseSchema,
-                                 cohortTable = cohortTable,
-                                 cohortId = cohortId)) {
-    warning("Cohort with ID ", cohortId, " appears to be empty. Was it instantiated? Skipping time distribution computation.")
-    delta <- Sys.time() - start
-    ParallelLogger::logInfo(paste("Cohort characterization took",
-                                  signif(delta, 3),
-                                  attr(delta, "units")))
-    return(tidyr::tibble())
-  }
-  
+
   covariateSettings <- FeatureExtraction::createCovariateSettings(useDemographicsPriorObservationTime = TRUE,
                                                                   useDemographicsPostObservationTime = TRUE,
                                                                   useDemographicsTimeInCohort = TRUE)
@@ -70,24 +39,23 @@ getTimeDistributions <- function(connectionDetails = NULL,
                                                 cdmDatabaseSchema = cdmDatabaseSchema,
                                                 cohortDatabaseSchema = cohortDatabaseSchema,
                                                 cohortTable = cohortTable,
-                                                cohortId = cohortId,
+                                                cohortId = cohortIds,
                                                 covariateSettings = covariateSettings,
+                                                cdmVersion = cdmVersion,
                                                 aggregated = TRUE)
   
   if (is.null(data$covariatesContinuous)) {
     result <- tidyr::tibble()
   } else {
     result <- data$covariatesContinuous %>%
-      dplyr::inner_join(data$covariateRef) %>%
+      dplyr::inner_join(data$covariateRef, by = "covariateId") %>%
       dplyr::select(-.data$conceptId, -.data$analysisId, -.data$covariateId, -.data$result$countValue) %>%
-      dplyr::rename(timeMetric = .data$covariateName) %>%
+      dplyr::rename(timeMetric = .data$covariateName,
+                    cohortId = .data$cohortDefinitionId) %>%
       dplyr::collect()
   }
   attr(result, "cohortSize") <- data$metaData$populationSize
   delta <- Sys.time() - start
-  ParallelLogger::logInfo(paste("Computing time distributions took",
-                                signif(delta, 3),
-                                attr(delta, "units")))
+  ParallelLogger::logInfo("Computing time distributions took ", signif(delta, 3), " ", attr(delta, "units"))
   return(result)
 }
-

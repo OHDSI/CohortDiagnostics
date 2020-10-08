@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.0</span>
       </span>
     </div>
 
@@ -135,17 +135,61 @@
     <p>Launch the Diagnostics Explorer Shiny app</p>
     </div>
 
-    <pre class="usage"><span class='fu'>launchDiagnosticsExplorer</span>(<span class='no'>dataFolder</span>, <span class='kw'>launch.browser</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
+    <pre class="usage"><span class='fu'>launchDiagnosticsExplorer</span>(
+  <span class='kw'>dataFolder</span> <span class='kw'>=</span> <span class='st'>"data"</span>,
+  <span class='kw'>connectionDetails</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>resultsDatabaseSchema</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>vocabularyDatabaseSchema</span> <span class='kw'>=</span> <span class='no'>resultsDatabaseSchema</span>,
+  <span class='kw'>cohortBaseUrl</span> <span class='kw'>=</span> <span class='st'>"https://atlas.ohdsi.org/#/cohortdefinition/"</span>,
+  <span class='kw'>conceptBaseUrl</span> <span class='kw'>=</span> <span class='st'>"https://athena.ohdsi.org/search-terms/terms/"</span>,
+  <span class='kw'>runOverNetwork</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>port</span> <span class='kw'>=</span> <span class='fl'>80</span>,
+  <span class='kw'>launch.browser</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
+)</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
       <th>dataFolder</th>
-      <td><p>A folder where the exported zip files for the diagnostics are stored. Use
-the <code><a href='runCohortDiagnostics.html'>runCohortDiagnostics</a></code> function to generate these zip files. 
-Zip files containing results from multiple databases can be placed in the same
-folder.</p></td>
+      <td><p>A folder where the premerged file is stored. Use
+the <code><a href='preMergeDiagnosticsFiles.html'>preMergeDiagnosticsFiles</a></code> function to generate this file.</p></td>
+    </tr>
+    <tr>
+      <th>connectionDetails</th>
+      <td><p>An object of type <code>connectionDetails</code> as created using the
+<code><a href='https://rdrr.io/pkg/DatabaseConnector/man/createConnectionDetails.html'>createConnectionDetails</a></code> function in the
+DatabaseConnector package, specifying how to connect to the server where
+the CohortDiagnostics results have been uploaded using the 
+<code><a href='uploadResults.html'>uploadResults</a></code> function.</p></td>
+    </tr>
+    <tr>
+      <th>resultsDatabaseSchema</th>
+      <td><p>The schema on the database server where the CohortDiagnostics results 
+have been uploaded.</p></td>
+    </tr>
+    <tr>
+      <th>vocabularyDatabaseSchema</th>
+      <td><p>The schema on the database server where the vocabulary tables are located.</p></td>
+    </tr>
+    <tr>
+      <th>cohortBaseUrl</th>
+      <td><p>The base URL for constructing linkouts to an ATLAS instance, using the 
+webApiCohortId in the cohortsToCreate file. If NULL, no linkouts will be 
+created.</p></td>
+    </tr>
+    <tr>
+      <th>conceptBaseUrl</th>
+      <td><p>The base URL for constructing linkouts to an Athena instance, using the
+concept ID.</p></td>
+    </tr>
+    <tr>
+      <th>runOverNetwork</th>
+      <td><p>(optional) Do you want the app to run over your network?</p></td>
+    </tr>
+    <tr>
+      <th>port</th>
+      <td><p>(optional) Only used if <code>runOverNetwork</code> = TRUE.</p></td>
     </tr>
     <tr>
       <th>launch.browser</th>

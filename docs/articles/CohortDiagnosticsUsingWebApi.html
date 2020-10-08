@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.0</span>
       </span>
     </div>
 
@@ -88,7 +88,7 @@
       <h1 data-toc-skip>Running cohort diagnostics using WebAPI</h1>
                         <h4 class="author">Martijn J. Schuemie</h4>
             
-            <h4 class="date">2020-09-08</h4>
+            <h4 class="date">2020-10-07</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/master/vignettes/CohortDiagnosticsUsingWebApi.Rmd"><code>vignettes/CohortDiagnosticsUsingWebApi.Rmd</code></a></small>
       <div class="hidden name"><code>CohortDiagnosticsUsingWebApi.Rmd</code></div>
@@ -203,7 +203,7 @@
 <p>We have the option to also generate inclusion rule statistics while the cohorts are instantiated (recommended). If we want to do this, we need to provide a folder where the inclusion rule statistics will be stored for later use.</p>
 <p>To instantiate the cohorts:</p>
 <div class="sourceCode" id="cb4"><html><body><pre class="r"><span class="no">baseUrl</span> <span class="kw">&lt;-</span> <span class="st">"http://server.org:80/WebAPI"</span>
-<span class="no">inclusionStatisticsFolder</span> <span class="kw">&lt;-</span> <span class="st">"c:/temp/incStats/"</span>
+<span class="no">inclusionStatisticsFolder</span> <span class="kw">&lt;-</span> <span class="st">"c:/temp/incStats"</span>
 
 <span class="fu"><a href="../reference/instantiateCohortSet.html">instantiateCohortSet</a></span>(<span class="kw">connectionDetails</span> <span class="kw">=</span> <span class="no">connectionDetails</span>,
                      <span class="kw">cdmDatabaseSchema</span> <span class="kw">=</span> <span class="no">cdmDatabaseSchema</span>,
@@ -250,7 +250,7 @@
 <h1 class="hasAnchor">
 <a href="#viewing-the-diagnostics" class="anchor"></a>Viewing the diagnostics</h1>
 <p>Assuming you completed the steps described above for one or more databases, you should now have a set of zip files, one per database. Make sure to place all zip files in a single folder, for example <code>c:/temp/allZipFiles</code>.</p>
-<p>Optionally, we can pre-merge the zip files. Merging the files can take a while, and doing it beforehand will speed up starting the Shiny app:</p>
+<p>Optionally, we can pre-merge the zip files, so we can view results in the Shiny app:</p>
 <div class="sourceCode" id="cb6"><html><body><pre class="r"><span class="fu"><a href="../reference/preMergeDiagnosticsFiles.html">preMergeDiagnosticsFiles</a></span>(<span class="st">"C:/temp/allZipFiles"</span>)</pre></body></html></div>
 <p>To view the diagnostics, use</p>
 <div class="sourceCode" id="cb7"><html><body><pre class="r"><span class="fu"><a href="../reference/launchDiagnosticsExplorer.html">launchDiagnosticsExplorer</a></span>(<span class="st">"C:/temp/allZipFiles"</span>)</pre></body></html></div>
@@ -265,9 +265,9 @@
 <p>To share the results with others, it may make sense to make the Shiny app available through a Shiny Server. On the Shiny Server, a folder should be created for the app. The following should be placed in this folder:</p>
 <ul>
 <li><p>The Shiny app itself. This can be found <a href="https://github.com/OHDSI/CohortDiagnostics/tree/master/inst/shiny/DiagnosticsExplorer">here</a>. Make sure to copy all files in the <code>DiagnosticsExplorer</code> folder.</p></li>
-<li><p>The diagnostics data should be placed in a subfolder that should be called <code>data</code>. In this data folder, either place all the individual zip files generated for each database, or (recommended) place the premerged .RDA file here.</p></li>
+<li><p>The diagnostics data should be placed in a subfolder that should be called <code>data</code>. place the premerged .RDA file in this data folder.</p></li>
 </ul>
-<p>Once the app and data are in place, the Shiny Server should automatically detect them and launch the app. You may need to install additional packages required by the app, including ‘shinydashboard’, ‘VennDiagram’, ‘htmltools’, and ‘DT’.</p>
+<p>Once the app and data are in place, the Shiny Server should automatically detect them and launch the app. You may need to install additional packages required by the app, including shiny, shinydashboard, shinyWidgets, DT, htmltools, scales, plotly, dplyr, tidyr, ggiraph.</p>
 </div>
 </div>
   </div>

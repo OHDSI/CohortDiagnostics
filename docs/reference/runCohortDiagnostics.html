@@ -77,7 +77,7 @@ Alternatively, a covariate setting object may be created using the above as an e
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2.7</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.0</span>
       </span>
     </div>
 
@@ -150,6 +150,7 @@ Alternatively, a covariate setting object may be created using the above as an e
   <span class='kw'>cohortToCreateFile</span> <span class='kw'>=</span> <span class='st'>"settings/CohortsToCreate.csv"</span>,
   <span class='kw'>baseUrl</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>cohortSetReference</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>phenotypeDescriptionFile</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>connectionDetails</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>connection</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='no'>cdmDatabaseSchema</span>,
@@ -157,28 +158,29 @@ Alternatively, a covariate setting object may be created using the above as an e
   <span class='no'>cohortDatabaseSchema</span>,
   <span class='kw'>cohortTable</span> <span class='kw'>=</span> <span class='st'>"cohort"</span>,
   <span class='kw'>cohortIds</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>inclusionStatisticsFolder</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>inclusionStatisticsFolder</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='no'>exportFolder</span>, <span class='st'>"inclusionStatistics"</span>),
   <span class='no'>exportFolder</span>,
   <span class='no'>databaseId</span>,
-  <span class='kw'>databaseName</span> <span class='kw'>=</span> <span class='no'>databaseId</span>,
-  <span class='kw'>databaseDescription</span> <span class='kw'>=</span> <span class='st'>""</span>,
+  <span class='kw'>databaseName</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>databaseDescription</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>cdmVersion</span> <span class='kw'>=</span> <span class='fl'>5</span>,
   <span class='kw'>runInclusionStatistics</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>runIncludedSourceConcepts</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>runOrphanConcepts</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>runTimeDistributions</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>runVisitContext</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>runBreakdownIndexEvents</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>runIncidenceRate</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>runCohortOverlap</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>runCohortCharacterization</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>covariateSettings</span> <span class='kw'>=</span> <span class='kw pkg'>FeatureExtraction</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/FeatureExtraction/man/createDefaultCovariateSettings.html'>createDefaultCovariateSettings</a></span>(),
+  <span class='kw'>covariateSettings</span> <span class='kw'>=</span> <span class='fu'>createDefaultCovariateSettings</span>(),
   <span class='kw'>runTemporalCohortCharacterization</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-
-    <span class='kw'>temporalCovariateSettings</span> <span class='kw'>=</span> <span class='kw pkg'>FeatureExtraction</span><span class='kw ns'>::</span><span class='fu'><a href='https://rdrr.io/pkg/FeatureExtraction/man/createTemporalCovariateSettings.html'>createTemporalCovariateSettings</a></span>(<span class='kw'>useConditionOccurrence</span>
-    <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>useDrugEraStart</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>useProcedureOccurrence</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>useMeasurement</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>temporalCovariateSettings</span> <span class='kw'>=</span> <span class='fu'>createTemporalCovariateSettings</span>(<span class='kw'>useConditionOccurrence</span> <span class='kw'>=</span>
+    <span class='fl'>TRUE</span>, <span class='kw'>useDrugEraStart</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>useProcedureOccurrence</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>useMeasurement</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
     <span class='kw'>temporalStartDays</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(-<span class='fl'>365</span>, -<span class='fl'>30</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>31</span>), <span class='kw'>temporalEndDays</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(-<span class='fl'>31</span>, -<span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>30</span>, <span class='fl'>365</span>)),
   <span class='kw'>minCellCount</span> <span class='kw'>=</span> <span class='fl'>5</span>,
   <span class='kw'>incremental</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>incrementalFolder</span> <span class='kw'>=</span> <span class='no'>exportFolder</span>
+  <span class='kw'>incrementalFolder</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='no'>exportFolder</span>, <span class='st'>"incremental"</span>)
 )</pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -192,9 +194,11 @@ Alternatively, a covariate setting object may be created using the above as an e
     <tr>
       <th>cohortToCreateFile</th>
       <td><p>The location of the cohortToCreate file within the package. Is ignored if 
-<code>baseUrl</code> and <code>cohortSetReference</code> have been specified. The cohortToCreateFile
-must be .csv file that is expected to be read into a dataframe object identical to requirements
-for <code>cohortSetReference</code> argument.</p></td>
+<code>baseUrl</code> and <code>cohortSetReference</code> have been specified. The
+cohortToCreateFile must be .csv file that is expected to be read into 
+a dataframe object identical to requirements for <code>cohortSetReference</code> argument. 
+This csv file is expected to be encoded in either ASCII or UTF-8, if not, an 
+error message will be displayed and process stopped.</p></td>
     </tr>
     <tr>
       <th>baseUrl</th>
@@ -206,6 +210,21 @@ for <code>cohortSetReference</code> argument.</p></td>
       <th>cohortSetReference</th>
       <td><p>A data frame with four columns, as described in the details. Can be left NULL if 
 <code>packageName</code> and <code>cohortToCreateFile</code> have been specified.</p></td>
+    </tr>
+    <tr>
+      <th>phenotypeDescriptionFile</th>
+      <td><p>(Optional) The location of the phenotype description file within the package. 
+The file must be .csv file and have the following columns that may be read into following
+data types: phenotypeId (double), phenotypeName (character),
+referentConceptId (double), clinicalDescription (character),
+literatureReview (character), phenotypeNotes (character). Note: the field
+names are in snake_case. Also, character fields should not have 'NA' in it.
+'NA's are commonly added by R when R functions exports data from dataframe 
+into CSV. Instead please use '' (empty string) to represent absence of data. 
+The literature_review field is expected to be a html link to page that contains
+resources related to literature review for the phenotype, and will be used
+to create link-out object. This csv file is expected to be encoded in either 
+ASCII or UTF-8, if not, an error message will be displayed and process stopped.</p></td>
     </tr>
     <tr>
       <th>connectionDetails</th>
@@ -271,6 +290,10 @@ does not exist it will be created.</p></td>
       <td><p>A short description (several sentences) of the database.</p></td>
     </tr>
     <tr>
+      <th>cdmVersion</th>
+      <td><p>The version of the OMOP CDM. Default 5. (Note: only 5 is supported.)</p></td>
+    </tr>
+    <tr>
       <th>runInclusionStatistics</th>
       <td><p>Generate and export statistic on the cohort inclusion rules?</p></td>
     </tr>
@@ -287,6 +310,10 @@ does not exist it will be created.</p></td>
       <td><p>Generate and export cohort time distributions?</p></td>
     </tr>
     <tr>
+      <th>runVisitContext</th>
+      <td><p>Generate and export index-date visit context?</p></td>
+    </tr>
+    <tr>
       <th>runBreakdownIndexEvents</th>
       <td><p>Generate and export the breakdown of index events?</p></td>
     </tr>
@@ -296,7 +323,9 @@ does not exist it will be created.</p></td>
     </tr>
     <tr>
       <th>runCohortOverlap</th>
-      <td><p>Generate and export the cohort overlap?</p></td>
+      <td><p>Generate and export the cohort overlap? Overlaps are checked within cohortIds
+that have the same phenotype ID sourced from the CohortSetReference or 
+cohortToCreateFile.</p></td>
     </tr>
     <tr>
       <th>runCohortCharacterization</th>
@@ -338,8 +367,7 @@ of which cohort diagnostics has been executed.</p></td>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>Currently two ways of executing this function are supported, either 
-(1) [Package Mode] embedded in a study package, assuming the cohort definitions are stored in that package using the 
-    <code><a href='https://rdrr.io/pkg/ROhdsiWebApi/man/insertCohortDefinitionSetInPackage.html'>ROhdsiWebApi::insertCohortDefinitionSetInPackage</a></code>, or 
+(1) [Package Mode] embedded in a study package, assuming the cohort definitions are stored in that package using the <code><a href='https://rdrr.io/pkg/ROhdsiWebApi/man/insertCohortDefinitionSetInPackage.html'>ROhdsiWebApi::insertCohortDefinitionSetInPackage</a></code>, or 
 (2) [WebApi Mode] By using a WebApi interface to retrieve the cohort definitions.</p>
 <p>When using this function in Package Mode: Use the <code>packageName</code> and <code>cohortToCreateFile</code> to specify
 the name of the study package, and the name of the cohortToCreate file within that package, respectively</p>
@@ -347,10 +375,13 @@ the name of the study package, and the name of the cohortToCreate file within th
 connect to the WebApi, and which cohorts to fetch, respectively.</p>
 <p>Note: if the parameters for both Package Mode and WebApi Mode are provided, then Package mode is preferred.</p>
 <p>The <code>cohortSetReference</code> argument must be a data frame with  the following columns:</p><dl'>
-<dt>atlasId</dt><dd><p>The cohort ID in ATLAS.</p></dd>
-<dt>atlasName</dt><dd><p>The full name of the cohort. This will be shown in the Shiny app.</p></dd>
-<dt>cohortId</dt><dd><p>The cohort ID to use in the package. Usually the same as the cohort ID in ATLAS.</p></dd>
-<dt>name</dt><dd><p>A short name for the cohort, to use to create file names. do not use special characters.</p></dd>
+<dt>referentConceptId</dt><dd><p>A standard omop concept id that serves as the referant phenotype definition for the cohort Id.</p></dd>
+<dt>cohortId</dt><dd><p>The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names. It is recommended to be (referrentConceptId * 1000) + a number between 3 to 999</p></dd>
+<dt>webApiCohortId</dt><dd><p>Cohort Id in the webApi/atlas instance. It is a required field to run Cohort Diagnostics in WebApi mode. It is discarded in package mode.</p></dd>
+<dt>cohortName</dt><dd><p>The full name of the cohort. This will be shown in the Shiny app.</p></dd>
+<dt>logicDescription</dt><dd><p>A human understandable brief description of the cohort definition. This logic does not have to a 
+fully specified description of the cohort definition, but should provide enough context to help user understand the
+meaning of the cohort definition</p></dd>
 
 </dl>
 
