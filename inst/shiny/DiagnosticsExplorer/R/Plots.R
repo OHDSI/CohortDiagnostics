@@ -272,15 +272,16 @@ plotIncidenceRate <- function(data,
     }
     if (stratifyByGender | stratifyByCalendarYear) {
       if (stratifyByAgeGroup) {
-        plot <- plot + ggplot2::facet_grid(databaseId+shortName~plotData$ageGroup, scales = scales)
+        plot <- plot + facet_nested(databaseId + shortName ~ plotData$ageGroup, scales = scales)
       } else {
-        plot <- plot + ggplot2::facet_grid(databaseId+shortName~., scales = scales) 
+        plot <- plot + facet_nested(databaseId + shortName ~ ., scales = scales) 
       }
+    } else {
+      plot <- plot + facet_nested(databaseId + shortName ~., scales = scales) 
     }
-    else
-    {
-      plot <- plot + ggplot2::facet_grid(databaseId+shortName~., scales = scales) 
-    }
+    spacing <- rep(c(1, rep(0.5, length(unique(plotData$shortName)) - 1)), length(unique(plotData$databaseId)))[-1]
+    plot <- plot + ggplot2::theme(panel.spacing.y = ggplot2::unit(spacing, "lines"),
+                                  strip.background = ggplot2::element_blank())
   } else {
     if (stratifyByAgeGroup) {
       plot <- plot + ggplot2::facet_grid(~ageGroup) 
@@ -299,9 +300,8 @@ plotCohortComparisonStandardizedDifference <- function(balance,
                                                        domain = "all",
                                                        targetLabel = "Mean Target",
                                                        comparatorLabel = "Mean Comparator") {
-  
   domains <- c("condition", "device", "drug", "measurement", "observation", "procedure")
-  balance$domain <- tolower(gsub("[_ ].*", "", balance$covariateName))
+  balance$domain <- tolower(stringr::str_extract(balance$covariateName, "[a-z]+"))
   balance$domain[!balance$domain %in% domains] <- "other"
   
   if (domain != "all") {
@@ -341,9 +341,8 @@ plotCohortComparisonStandardizedDifference <- function(balance,
     ggplot2::geom_vline(xintercept = 0) +             
     ggplot2::scale_x_continuous("MEAN") +
     ggplot2::scale_y_continuous("MEAN") +
-    ggplot2::scale_color_manual("Domain", values = colors)
-  
-  plot <- plot + ggplot2::facet_grid(targetCohortShortName~databaseId+comparatorCohortShortName) 
+    ggplot2::scale_color_manual("Domain", values = colors) +
+    ggplot2::facet_grid(targetCohortShortName ~ databaseId + comparatorCohortShortName)
   
   plot <- ggiraph::girafe(ggobj = plot,
                           options = list(
