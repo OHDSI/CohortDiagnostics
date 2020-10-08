@@ -31,8 +31,8 @@ cohort_overlap,comparator_cohort_id,bigint,Yes,Yes,No,Yes
 cohort_overlap,database_id,varchar(20),Yes,Yes,No,Yes
 concept,concept_id,int,Yes,Yes,No,Yes
 concept,concept_name,varchar(255),Yes,No,No,Yes
-concept,domain_id,varchar(20),Yes,Yes,No,Yes
-concept,vocabulary_id,varchar(20),Yes,Yes,No,Yes
+concept,domain_id,varchar(20),Yes,No,No,Yes
+concept,vocabulary_id,varchar(20),Yes,No,No,Yes
 concept,concept_class_id,varchar(20),Yes,No,No,Yes
 concept,standard_concept,varchar(1),No,No,No,Yes
 concept,concept_code,varchar(20),Yes,No,No,Yes
