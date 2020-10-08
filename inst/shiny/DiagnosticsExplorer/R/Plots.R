@@ -300,9 +300,8 @@ plotCohortComparisonStandardizedDifference <- function(balance,
                                                        domain = "all",
                                                        targetLabel = "Mean Target",
                                                        comparatorLabel = "Mean Comparator") {
-  
   domains <- c("condition", "device", "drug", "measurement", "observation", "procedure")
-  balance$domain <- tolower(gsub("[_ ].*", "", balance$covariateName))
+  balance$domain <- tolower(stringr::str_extract(balance$covariateName, "[a-z]+"))
   balance$domain[!balance$domain %in% domains] <- "other"
   
   if (domain != "all") {
