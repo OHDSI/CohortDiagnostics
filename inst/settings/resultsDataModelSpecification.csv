@@ -35,7 +35,7 @@ concept,domain_id,varchar(20),Yes,No,No,Yes
 concept,vocabulary_id,varchar(20),Yes,No,No,Yes
 concept,concept_class_id,varchar(20),Yes,No,No,Yes
 concept,standard_concept,varchar(1),No,No,No,Yes
-concept,concept_code,varchar(20),Yes,No,No,Yes
+concept,concept_code,varchar(50),Yes,No,No,Yes
 concept,valid_start_date,Date,Yes,No,No,Yes
 concept,valid_end_date,Date,Yes,No,No,Yes
 concept,invalid_reason,varchar,No,No,No,Yes
