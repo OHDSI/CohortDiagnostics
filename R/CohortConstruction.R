@@ -128,10 +128,12 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
     cohortSetReference <- dplyr::rename(cohortSetReference, cohortName = "name")
   }
   cohortSetReference <- makeBackwardsCompatible(cohortSetReference)
+  cohortSetReference$json <- ""
+  cohortSetReference$sql <- ""
   
   ParallelLogger::logInfo("Retrieving cohort definitions from WebAPI")
   for (i in 1:nrow(cohortSetReference)) {
-    ParallelLogger::logInfo("- Retrieving definitions for cohort ", cohortSetReference$cohortFullName[i])
+    ParallelLogger::logInfo("- Retrieving definitions for cohort ", cohortSetReference$cohortName[i])
     cohortDefinition <-  ROhdsiWebApi::getCohortDefinition(cohortId = cohortSetReference$webApiCohortId[i],
                                                            baseUrl = baseUrl)
     cohortSetReference$json[i] <- RJSONIO::toJSON(x = cohortDefinition$expression, digits = 23)
