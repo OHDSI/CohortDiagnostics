@@ -117,6 +117,7 @@ if (databaseMode) {
   
   loadResultsTable("database", required = TRUE)
   loadResultsTable("cohort", required = TRUE)
+  loadResultsTable("cohort_extra")
   loadResultsTable("phenotype_description")
   loadResultsTable("temporal_time_ref")
   loadResultsTable("concept_sets")

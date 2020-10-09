@@ -19,8 +19,6 @@ shiny::shinyServer(function(input, output, session) {
     return(cohort$cohortId[cohort$cohortName  %in% input$cohorts])
   })
   
-
-  
   timeId <- shiny::reactive({
     return(temporalCovariateChoices %>%
              dplyr::filter(choices %in% input$timeIdChoices) %>%
@@ -29,6 +27,17 @@ shiny::shinyServer(function(input, output, session) {
   
   phenotypeId <- shiny::reactive({
     return(phenotypeDescription$phenotypeId[phenotypeDescription$phenotypeName %in% input$phenotypes])
+  })
+  
+  cohortSubset <- shiny::reactive({
+    if (exists("phenotypeDescription")) {
+      return(cohort %>%
+               dplyr::filter(.data$phenotypeId == phenotypeId()) %>%
+               dplyr::arrange(.data$cohortId))
+    } else {
+      return(cohort %>%
+               dplyr::arrange(.data$cohortId))
+    }
   })
   
   shiny::observe({
@@ -40,7 +49,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   shiny::observe({
-    subset <- unique(cohort$cohortName[cohort$phenotypeId == phenotypeId()]) %>% sort()
+    subset <- cohortSubset()$cohortName
     shinyWidgets::updatePickerInput(session = session,
                                     inputId = "cohort",
                                     choicesOpt = list(style = rep_len("color: black;", 999)),
@@ -48,14 +57,15 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   shiny::observe({
-    subset <- unique(cohort$cohortName[cohort$phenotypeId == phenotypeId()]) %>% sort()
+    subset <- cohortSubset()$cohortName
     shinyWidgets::updatePickerInput(session = session,
                                     inputId = "cohorts",
                                     choicesOpt = list(style = rep_len("color: black;", 999)),
                                     choices = subset,
-                                    selected = c(subset[1],subset[2]))
+                                    selected = c(subset[1], subset[2]))
   })
   
+  # Phenotype Description ------------------------------------------------------------------------------
   output$phenoTypeDescriptionTable <- DT::renderDataTable(expr = {
     data <- phenotypeDescription %>% 
       dplyr::mutate(dplyr::across(.cols = dplyr::everything(), tidyr::replace_na, "")) %>% 
@@ -95,20 +105,12 @@ shiny::shinyServer(function(input, output, session) {
     return(dataTable)
   }, server = TRUE)
   
+  # Cohort Description ---------------------------------------------------------
   output$cohortDescriptionTable <- DT::renderDataTable(expr = {
-    data <- cohort %>%
-      dplyr::filter(.data$phenotypeId == phenotypeId()) %>% 
-      dplyr::left_join(y = phenotypeDescription) %>% 
-      dplyr::mutate(cohortName = paste0("<a href='", 
-                                        paste0(cohortBaseUrl, 
-                                               .data$webApiCohortId),
-                                        "' target='_blank'>", 
-                                        paste0(.data$cohortName), "</a>")) %>% 
+    data <- cohortSubset() %>%
       dplyr::select(.data$phenotypeId, .data$cohortId, 
-                    .data$cohortName, .data$logicDescription) %>% 
-      dplyr::arrange(.data$phenotypeId, .data$cohortId, 
-                     .data$cohortName)
-    
+                    .data$cohortName, .data$logicDescription) 
+
     options = list(pageLength = 10,
                    searching = TRUE,
                    ordering = TRUE,
@@ -126,6 +128,21 @@ shiny::shinyServer(function(input, output, session) {
     return(dataTable)
   }, server = TRUE)
   
+  selectedRow <- reactive({
+    idx <- input$cohortDescriptionTable_rows_selected
+    if (is.null(idx)) {
+      return(NULL)
+    } else {
+      subset <- cohortSubset()
+      if (nrow(subset) == 0) {
+        return(NULL)
+      }
+      row <- subset[idx, ]
+      return(row)
+    }
+  })
+  
+  # Cohort Counts ---------------------------------------------------------------------------
   output$cohortCountsTable <- DT::renderDataTable(expr = {
     validate(need(length(input$databases) > 0, "No data sources chosen"))
     

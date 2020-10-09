@@ -65,8 +65,10 @@ sidebarMenu <-
       condition = "input.tabs != 'databaseInformation'",
       
     ),
-    if (exists("phenotypeDescription") && exists("cohort"))
-      shinydashboard::menuItem(text = "Description", tabName = "description"),
+    if (exists("phenotypeDescription"))
+      shinydashboard::menuItem(text = "Phenotype Description", tabName = "phenotypeDescription"),
+    if (exists("cohort"))
+      shinydashboard::menuItem(text = "Cohort Description", tabName = "cohortDescription"),
     if (exists("cohortCount"))
       addInfo(
         item = shinydashboard::menuItem(text = "Cohort Counts", tabName = "cohortCounts"),
@@ -129,7 +131,20 @@ sidebarMenu <-
       ),
     shinydashboard::menuItem(text = "Database information", tabName = "databaseInformation"),
     shiny::conditionalPanel(
-      condition = "input.tabs!='incidenceRate' & input.tabs!='timeDistribution' & input.tabs!='cohortCharacterization' & input.tabs!='cohortCounts' & input.tabs!='indexEventBreakdown' & input.tabs!='databaseInformation' & input.tabs != 'description' & input.tabs != 'includedConcepts' & input.tabs != 'orphanConcepts' & input.tabs != 'inclusionRuleStats' & input.tabs != 'visitContext' & input.tabs != 'cohortOverlap' & input.tabs != 'compareCohortCharacterization'",
+      condition = "input.tabs!='incidenceRate' & 
+      input.tabs != 'timeDistribution' & 
+      input.tabs != 'cohortCharacterization' & 
+      input.tabs != 'cohortCounts' & 
+      input.tabs != 'indexEventBreakdown' & 
+      input.tabs != 'databaseInformation' & 
+      input.tabs != 'cohortDescription' &
+      input.tabs != 'phenotypeDescription' & 
+      input.tabs != 'includedConcepts' & 
+      input.tabs != 'orphanConcepts' & 
+      input.tabs != 'inclusionRuleStats' & 
+      input.tabs != 'visitContext' & 
+      input.tabs != 'cohortOverlap' & 
+      input.tabs != 'compareCohortCharacterization'",
       shinyWidgets::pickerInput(
         inputId = "database",
         label = "Database",
@@ -195,7 +210,8 @@ sidebarMenu <-
     shiny::conditionalPanel(
       condition = "input.tabs!='cohortCounts' & 
       input.tabs!='databaseInformation' & 
-      input.tabs != 'description' & 
+      input.tabs != 'cohortDescription' &
+      input.tabs != 'phenotypeDescription' & 
       input.tabs != 'cohortOverlap'&
       input.tabs != 'compareCohortCharacterization' &
       input.tabs != 'incidenceRate' &
@@ -259,20 +275,28 @@ sidebar <-
 #body - items in tab
 bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
-    tabName = "description",
+    tabName = "phenotypeDescription",
     shinydashboard::box(
-      title = "Description",
+      title = "Phenotype Description",
       width = NULL,
       status = "primary",
+      DT::dataTableOutput(outputId = "phenoTypeDescriptionTable")
+    )
+  ),
+  shinydashboard::tabItem(
+    tabName = "cohortDescription",
+    shinydashboard::box(
+      title = "Cohort Description",
+      width = NULL,
+      status = "primary",
+      DT::dataTableOutput(outputId = "cohortDescriptionTable"),
       shiny::tabsetPanel(type = "tab",
-                         shiny::tabPanel(
-                           tags$br(),
-                           title = "Cohort", 
-                           DT::dataTableOutput(outputId = "cohortDescriptionTable")),
-                         shiny::tabPanel(
-                           tags$br(),
-                           title = "Phenotype",
-                           DT::dataTableOutput(outputId = "phenoTypeDescriptionTable"))
+                         shiny::tabPanel(title = "Description",
+                                         shiny::htmlOutput("cohortDescriptionText")),
+                         shiny::tabPanel(title = "Logic"),
+                         shiny::tabPanel(title = "Concept Set"),
+                         shiny::tabPanel(title = "JSON"),
+                         shiny::tabPanel(title = "SQL")
       )
     )
   ),
