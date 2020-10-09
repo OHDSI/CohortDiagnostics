@@ -91,10 +91,10 @@ CREATE TABLE concept (
 			concept_id INT NOT NULL,
 			concept_name VARCHAR(255) NOT NULL,
 			domain_id VARCHAR(20) NOT NULL,
-			vocabulary_id VARCHAR(50) NOT NULL,
+			vocabulary_id VARCHAR NOT NULL,
 			concept_class_id VARCHAR(20) NOT NULL,
 			standard_concept VARCHAR(1),
-			concept_code VARCHAR(50) NOT NULL,
+			concept_code VARCHAR NOT NULL,
 			valid_start_date DATE NOT NULL,
 			valid_end_date DATE NOT NULL,
 			invalid_reason VARCHAR,
@@ -345,7 +345,7 @@ CREATE TABLE visit_context (
 --Table vocabulary
 
 CREATE TABLE vocabulary (
-			vocabulary_id VARCHAR(50) NOT NULL,
+			vocabulary_id VARCHAR NOT NULL,
 			vocabulary_name VARCHAR(255) NOT NULL,
 			vocabulary_reference VARCHAR,
 			vocabulary_version VARCHAR,
