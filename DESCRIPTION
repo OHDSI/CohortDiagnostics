@@ -46,12 +46,14 @@ Suggests:
   Eunomia,
   testthat,
   RSQLite (>= 2.2.1),
-  zip
+  zip,
+  CirceR
 Remotes:
   ohdsi/Eunomia,
   ohdsi/FeatureExtraction,
   ohdsi/ROhdsiWebApi,
   ohdsi/DatabaseConnector,
+  ohdsi/CirceR
 License: Apache License
 VignetteBuilder: knitr
 URL: https://ohdsi.github.io/CohortDiagnostics, https://github.com/OHDSI/CohortDiagnostics

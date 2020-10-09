@@ -183,7 +183,7 @@ naToEmpty <- function(x) {
 #' @param connectionDetails   An object of type \code{connectionDetails} as created using the
 #'                            \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
 #'                            DatabaseConnector package. 
-#' @param schema         The schema on the postgres server where the tables will be created.
+#' @param schema         The schema on the postgres server where the tables have been created.
 #' @param zipFileName    The name of the zip file.
 #' @param forceOverWriteOfSpecifications  If TRUE, specifications of the phenotypes, cohort definitions, and analysis 
 #'                       will be overwritten if they already exist on the database. Only use this if these specifications
@@ -205,14 +205,14 @@ uploadResults <- function(connectionDetails = NULL,
   start <- Sys.time()
   connection <- DatabaseConnector::connect(connectionDetails)
   on.exit(DatabaseConnector::disconnect(connection))
-
+  
   unzipFolder <- tempfile("unzipTempFolder", tmpdir = tempFolder)
   dir.create(path = unzipFolder, recursive = TRUE)
   on.exit(unlink(unzipFolder, recursive = TRUE), add = TRUE)
   
   ParallelLogger::logInfo("Unzipping ", zipFileName)
   zip::unzip(zipFileName, exdir = unzipFolder)
-
+  
   specifications = getResultsDataModelSpecifications()
   
   if (purgeSiteDataBeforeUploading) {
@@ -223,7 +223,7 @@ uploadResults <- function(connectionDetails = NULL,
   
   uploadTable <- function(tableName) {
     ParallelLogger::logInfo("Uploading table ", tableName)
-
+    
     primaryKey <- specifications %>%
       filter(.data$tableName == !!tableName & .data$primaryKey == "Yes") %>%
       select(.data$fieldName) %>%
@@ -254,7 +254,7 @@ uploadResults <- function(connectionDetails = NULL,
         colnames(primaryKeyValuesInDb) <- tolower(colnames(primaryKeyValuesInDb))
         env$primaryKeyValuesInDb <- primaryKeyValuesInDb
       }
-
+      
       uploadChunk <- function(chunk, pos) {
         ParallelLogger::logInfo("- Preparing to upload rows ", pos, " through ", pos + nrow(chunk) - 1)
         
@@ -263,13 +263,13 @@ uploadResults <- function(connectionDetails = NULL,
                          zipFileName = zipFileName,
                          specifications = specifications)
         chunk <- checkAndFixDataTypes(table = chunk, 
-                                        tableName = env$tableName, 
-                                        zipFileName = zipFileName,
-                                        specifications = specifications)
+                                      tableName = env$tableName, 
+                                      zipFileName = zipFileName,
+                                      specifications = specifications)
         chunk <- checkAndFixDuplicateRows(table = chunk, 
-                                            tableName = env$tableName, 
-                                            zipFileName = zipFileName,
-                                            specifications = specifications) 
+                                          tableName = env$tableName, 
+                                          zipFileName = zipFileName,
+                                          specifications = specifications) 
         
         # Primary key fields cannot be NULL, so for some tables convert NAs to empty:
         toEmpty <- specifications %>%
@@ -423,7 +423,7 @@ bulkUploadTable <- function(connectionDetails,
     user <- connectionDetails$user
     password <- connectionDetails$password
   }
-
+  
   # Required by psql:
   Sys.setenv("PGPASSWORD" = password)
   rm(password)
@@ -460,10 +460,74 @@ bulkUploadTable <- function(connectionDetails,
                        "NULL 'NA' DELIMITER ',' CSV HEADER;\"")
   
   result <- base::system(copyCommand)
-
+  
   if (result != 0) {
     stop("Error while bulk uploading data, psql returned a non zero status. Status = ", result)
   }
   delta <- Sys.time() - startTime
   writeLines(paste("Uploading data took", signif(delta, 3), attr(delta, "units")))
+}
+
+#' Upload print-friendly cohort representations to the database server.
+#' 
+#' @description 
+#' For all the cohorts in the 'cohort' table, this will generate print-friendly text and store it
+#' in a new table called 'cohort_extra'. 
+#'
+#' @param connectionDetails   An object of type \code{connectionDetails} as created using the
+#'                            \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
+#'                            DatabaseConnector package. 
+#' @param schema         The schema on the postgres server where the results are stored.
+#'
+#' @export
+uploadPrintFriendly <- function(connectionDetails = NULL,
+                                schema) {
+  
+  startTime <- Sys.time()
+  ensure_installed("CirceR")
+  
+  connection <- DatabaseConnector::connect(connectionDetails)
+  on.exit(DatabaseConnector::disconnect(connection))
+  
+  ParallelLogger::logInfo("Retrieving cohort JSON from server")
+  sql <- "SELECT cohort_id, json FROM @schema.cohort;"
+  cohort <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                       sql = sql,
+                                                       schema = schema,
+                                                       snakeCaseToCamelCase = TRUE) %>%
+    dplyr::tibble()
+  
+  ParallelLogger::logInfo("Generating print-friendly")
+  cohort$html <- ""
+  pb <- pb <- txtProgressBar(style = 3)
+  for (i in 1:nrow(cohort)) {
+    expression <- CirceR::cohortExpressionFromJson(cohort$json[i])
+    tryCatch({
+      expressionMarkdown <- CirceR::cohortPrintFriendly(expression)
+      conceptSetListmarkdown <- CirceR::conceptSetListPrintFriendly(expression$conceptSets)
+      cohort$html[i] <- markdown::renderMarkdown(file = NULL, text = c(expressionMarkdown, conceptSetListmarkdown))
+    }, error = function(e) {
+      ParallelLogger::logWarn("Error generating print-friendly for cohort ID ", cohort$cohortId[i], ": ", e$message)
+      cohort$html[i] <- "Could not generate print-friendly"
+    })
+    setTxtProgressBar(pb, i/nrow(cohort))
+  }
+  close(pb)
+  
+  ParallelLogger::logInfo("Uploading print-friendly to server")
+  cohort <- cohort %>%
+    select(-.data$json) %>%
+    as.data.frame()
+    
+  DatabaseConnector::insertTable(connection = connection,
+                                 tableName = paste(schema, "cohort_extra", sep = "."),
+                                 data = cohort,
+                                 dropTableIfExists = TRUE,
+                                 createTable = TRUE,
+                                 tempTable = FALSE,
+                                 progressBar = TRUE,
+                                 camelCaseToSnakeCase = TRUE)
+  
+  delta <- Sys.time() - startTime
+  writeLines(paste("Uploading print-friendly took", signif(delta, 3), attr(delta, "units")))
 }

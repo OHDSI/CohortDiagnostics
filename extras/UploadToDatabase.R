@@ -35,5 +35,8 @@ for (i in (1:length(zipFilesToUpload))) {
                 zipFileName = zipFilesToUpload[[i]])
 }
 
+uploadPrintFriendly(connectionDetails = connectionDetails,
+                    schema = resultsSchema)
+
 launchDiagnosticsExplorer(connectionDetails = connectionDetails,
                           resultsDatabaseSchema = resultsSchema)

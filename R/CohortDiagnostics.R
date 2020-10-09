@@ -20,7 +20,7 @@
 #' @import DatabaseConnector
 #' @importFrom grDevices rgb
 #' @importFrom stats aggregate
-#' @importFrom utils write.csv install.packages menu unzip
+#' @importFrom utils write.csv install.packages menu unzip setTxtProgressBar txtProgressBar
 #' @import dplyr
 #' @importFrom rlang .data
 #' @importFrom methods is
