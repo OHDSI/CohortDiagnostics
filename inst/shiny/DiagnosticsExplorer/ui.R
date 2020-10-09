@@ -29,7 +29,7 @@ header <-
   shinydashboard::dashboardHeader(title = appTitle, 
                                   tags$li(
                                     tags$div(
-                                      tags$strong("Phenotype ID:"),
+                                      tags$strong("Phenotype:"),
                                       style = "color: white; margin-top: 14px; margin-right: 10px;"
                                     ),
                                     class = "dropdown"

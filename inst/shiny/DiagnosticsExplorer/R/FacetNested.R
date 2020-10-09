@@ -1,6 +1,6 @@
-# Code borrowed from https://github.com/teunbrand/ggh4x and gtable, just to merge the labels of grouped facets.
+# Code borrowed from https://github.com/teunbrand/ggh4x , just to merge the labels of grouped facets.
 # May need to simplify a bit.
-library(ggplot2)
+# library(ggplot2)
 
 .grab_ggplot_internals <- function() {
   objects <- c(
@@ -50,68 +50,15 @@ library(ggplot2)
 # Store the needed ggplot internals here
 .int <- .grab_ggplot_internals()
 
-# From gtable:
-neg_to_pos <- function (x, max) {
-  ifelse(x >= 0, x, max + 1 + x)
-}
-
-new_data_frame <- function (x, n = NULL) 
+label_value <- function (labels, multi_line = TRUE) 
 {
-  if (is.null(n)) {
-    n <- if (length(x) == 0) 
-      0
-    else length(x[[1]])
-  }
-  class(x) <- "data.frame"
-  attr(x, "row.names") <- .set_row_names(n)
-  x
-}
-
-gtable_add_grob <- function(x, grobs, t, l, b = t, r = l, z = Inf, clip = "on", 
-                             name = x$name) 
-{
-  if (!gtable::is.gtable(x)) 
-    stop("x must be a gtable", call. = FALSE)
-  # if (is.grob(grobs)) 
-  #   grobs <- list(grobs)
-  if (!is.list(grobs)) 
-    stop("grobs must either be a single grob or a list of grobs", 
-         call. = FALSE)
-  n_grobs <- length(grobs)
-  if (is.logical(clip)) {
-    clip <- ifelse(clip, "on", "off")
-  }
-  layout <- unclass(x$layout)
-  # if (!all(vapply(list(t, r, b, l, z, clip, name), len_same_or_1, 
-  #                 logical(1), n_grobs))) {
-  #   stop("Not all inputs have either length 1 or same length same as 'grobs'")
-  # }
-  z <- rep(z, length.out = n_grobs)
-  zval <- c(layout$z, z[!is.infinite(z)])
-  if (length(zval) == 0) {
-    zmin <- 1
-    zmax <- 0
+  labels <- lapply(labels, as.character)
+  if (multi_line) {
+    labels
   }
   else {
-    zmin <- min(zval)
-    zmax <- max(zval)
+    collapse_labels_lines(labels)
   }
-  z[z == -Inf] <- zmin - rev(seq_len(sum(z == -Inf)))
-  z[z == Inf] <- zmax + seq_len(sum(z == Inf))
-  x_row <- length(x$heights)
-  x_col <- length(x$widths)
-  t <- rep(neg_to_pos(t, x_row), length.out = n_grobs)
-  b <- rep(neg_to_pos(b, x_row), length.out = n_grobs)
-  l <- rep(neg_to_pos(l, x_col), length.out = n_grobs)
-  r <- rep(neg_to_pos(r, x_col), length.out = n_grobs)
-  clip <- rep(clip, length.out = n_grobs)
-  name <- rep(name, length.out = n_grobs)
-  x$grobs <- c(x$grobs, grobs)
-  x$layout <- new_data_frame(list(t = c(layout$t, t), l = c(layout$l, 
-                                                            l), b = c(layout$b, b), r = c(layout$r, r), z = c(layout$z, 
-                                                                                                              z), clip = c(layout$clip, clip), name = c(layout$name, 
-                                                                                                                                                        name)))
-  x
 }
 
 # Main function -----------------------------------------------------------
@@ -188,7 +135,7 @@ facet_nested <- function(
   rows = NULL, cols = NULL, scales = "fixed", space = "fixed",
   shrink = TRUE, labeller = "label_value", as.table = TRUE,
   switch = NULL, drop = TRUE, margins = FALSE, facets = NULL,
-  nest_line = FALSE, resect = unit(0, "mm"), bleed = FALSE
+  nest_line = FALSE, resect = ggplot2::unit(0, "mm"), bleed = FALSE
 ) {
   if (!is.null(facets)) {
     rows <- facets
@@ -216,7 +163,7 @@ facet_nested <- function(
          .call = FALSE)
   }
   if (n == 1L) {
-    rows <- quos()
+    rows <- ggplot2::quos()
     cols <- facets_list[[1]]
   } else {
     rows <- facets_list[[1]]
@@ -247,7 +194,7 @@ facet_nested <- function(
 #' @export
 #' @rdname ggh4x_extensions
 FacetNested <- ggplot2::ggproto(
-  "FacetNested", FacetGrid,
+  "FacetNested", ggplot2::FacetGrid,
   map_data = function(data, layout, params) {
     # Handle empty data
     if (.int$empty(data)) {
@@ -367,7 +314,7 @@ FacetNested <- ggplot2::ggproto(
   },
   draw_panels = function(panels, layout, x_scales, y_scales, ranges, coord,
                          data, theme, params) {
-    panel_table <- FacetGrid$draw_panels(panels, layout, x_scales, y_scales,
+    panel_table <- ggplot2::FacetGrid$draw_panels(panels, layout, x_scales, y_scales,
                                          ranges, coord, data, theme, params)
     
     # Setup strips
@@ -491,7 +438,7 @@ merge_strips <- function(
       x$layout <- x$layout[j,]
       x
     })
-    template <- gtable_add_grob(
+    template <- gtable::gtable_add_grob(
       template,
       sub, t = lay$t, l = lay$l, b = lay$b, r = lay$r,
       z = lay$z, clip = lay$clip, name = paste0(lay$name, "-", seq_len(n))
@@ -559,9 +506,9 @@ merge_strips <- function(
   
   # Add nesting indicator
   if (params$nest_line) {
-    active <- unit(c(0, 1), "npc") + c(1, -1) * params$resect
+    active <- ggplot2::unit(c(0, 1), "npc") + c(1, -1) * params$resect
     passive <- if (switch) c(1, 1) else c(0, 0)
-    nindi <- element_render(
+    nindi <- ggplot2::element_render(
       theme, "ggh4x.facet.nestline",
       x = switch(orient, x = active,  y = passive),
       y = switch(orient, x = passive, y = active)
@@ -574,7 +521,7 @@ merge_strips <- function(
     )
     offset <- if (where %in% c("r", "b")) offset else nlevels - offset
     template$grobs[i] <- lapply(template$grobs[i], function(grb) {
-      grb <- with(grb$layout, gtable_add_grob(
+      grb <- with(grb$layout, gtable::gtable_add_grob(
         grb, nindi, t = t, l = l, r = r, b = b,
         z = z,
         name = "nester",
@@ -585,11 +532,11 @@ merge_strips <- function(
   }
   
   # Delete old strips
-  panel_table <- gtable_filter(panel_table, paste0("strip-", where),
+  panel_table <- gtable::gtable_filter(panel_table, paste0("strip-", where),
                                fixed = TRUE, trim = FALSE, invert = TRUE)
   
   # Place back new strips
-  panel_table <- with(template$layout, gtable_add_grob(
+  panel_table <- with(template$layout, gtable::gtable_add_grob(
     panel_table,
     template$grobs,
     t = t - 1 + strp_rows[1],
