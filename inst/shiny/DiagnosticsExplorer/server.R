@@ -124,11 +124,12 @@ shiny::shinyServer(function(input, output, session) {
                                colnames = colnames(data) %>% camelCaseToTitleCase(),
                                escape = FALSE,
                                filter = c("bottom"),
+                               selection = list(mode = "single", target = "row"),
                                class = "stripe compact")
     return(dataTable)
   }, server = TRUE)
   
-  selectedRow <- reactive({
+  selectedCohortDescriptionRow <- reactive({
     idx <- input$cohortDescriptionTable_rows_selected
     if (is.null(idx)) {
       return(NULL)
@@ -140,6 +141,131 @@ shiny::shinyServer(function(input, output, session) {
       row <- subset[idx, ]
       return(row)
     }
+  })
+  
+  output$cohortDescriptionRowIsSelected <- reactive({
+    return(!is.null(selectedCohortDescriptionRow()))
+  })
+  outputOptions(output, "cohortDescriptionRowIsSelected", suspendWhenHidden = FALSE)
+  
+  output$cohortDescriptionText <- shiny::renderUI({
+    row <- selectedCohortDescriptionRow()
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+      tags$p(row$logicDescription)
+    }
+  })
+  
+  output$cohortDescriptionDefinition <- shiny::renderUI({
+    row <- selectedCohortDescriptionRow()
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+      cohortExtra %>%
+        dplyr::filter(.data$cohortId == row$cohortId) %>%
+        dplyr::pull(.data$html) %>%
+        shiny::HTML()
+    }
+  })
+  
+  output$cohortDescriptionJson <- shiny::renderText({
+    row <- selectedCohortDescriptionRow()
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+      row$json
+    }
+  })
+  
+  output$cohortDescriptionSql <- shiny::renderText({
+    row <- selectedCohortDescriptionRow()
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+      row$sql
+    }
+  })
+  
+  output$cohortDescriptionConceptSetsTable <- DT::renderDataTable(expr = {
+    row <- selectedCohortDescriptionRow()
+    if (is.null(row)) {
+      return(NULL)
+    } 
+    
+    if (is(dataSource, "environment") || input$conceptSetsType == "Concept Set Expression") {
+      expression <- RJSONIO::fromJSON(row$json)
+      if (is.null(expression$ConceptSets)) {
+        return(NULL)
+      } 
+      
+      doItem <- function(item) {
+        row <- dplyr::as_tibble(item$concept)
+        colnames(row) <- snakeCaseToCamelCase(colnames(row))
+        row$isExcluded <- item$isExcluded
+        row$includeDescendants <- item$includeDescendants
+        row$includeMapped <- item$includeMapped
+        return(row)
+      }
+      doConceptSet <- function(conceptSet) {
+        rows <- lapply(conceptSet$expression$items, doItem) %>%
+          dplyr::bind_rows()
+        rows$conceptSetName <- rep(conceptSet$name, nrow(rows))
+        return(rows)
+      }
+      data <- lapply(expression$ConceptSet, doConceptSet) %>%
+        dplyr::bind_rows()
+      data <- data %>%
+        dplyr::select(.data$conceptSetName,
+                      .data$conceptId, 
+                      .data$conceptCode, 
+                      .data$conceptName,
+                      .data$domainId,
+                      .data$standardConcept,
+                      .data$isExcluded,
+                      .data$includeDescendants,
+                      .data$includeMapped) %>%
+        dplyr::arrange(.data$conceptSetName, .data$conceptId)
+      colnames(data) <- camelCaseToTitleCase(colnames(data))
+    } else {
+      subset <- conceptSets %>%
+        dplyr::filter(.data$cohortId == row$cohortId)
+      if (nrow(subset) == 0) {
+        return(NULL)
+      } 
+      source <- (input$conceptSetsType == "Included Source Concepts")
+      data <- resolveConceptSet(dataSource = dataSource, subset, source = source)
+      data <- data %>%
+        dplyr::inner_join(subset, by = "conceptSetId") %>%
+        dplyr::select(.data$conceptSetName,
+                      .data$conceptId, 
+                      .data$conceptCode, 
+                      .data$conceptName,
+                      .data$conceptClassId,
+                      .data$domainId,
+                      .data$vocabularyId,
+                      .data$standardConcept) %>%
+        dplyr::arrange(.data$conceptSetName, .data$conceptId)
+      colnames(data) <- camelCaseToTitleCase(colnames(data))
+    }
+    
+    options = list(pageLength = 10,
+                   searching = TRUE,
+                   lengthChange = TRUE,
+                   ordering = TRUE,
+                   paging = TRUE,
+                   info = TRUE,
+                   searchHighlight = TRUE,
+                   scrollX = TRUE)
+    
+    dataTable <- DT::datatable(data,
+                               options = options,
+                               rownames = FALSE,
+                               escape = FALSE,
+                               filter = c("bottom"),
+                               class = "stripe nowrap compact")
+    return(dataTable)
+    
   })
   
   # Cohort Counts ---------------------------------------------------------------------------

@@ -290,13 +290,31 @@ bodyTabItems <- shinydashboard::tabItems(
       width = NULL,
       status = "primary",
       DT::dataTableOutput(outputId = "cohortDescriptionTable"),
-      shiny::tabsetPanel(type = "tab",
-                         shiny::tabPanel(title = "Description",
-                                         shiny::htmlOutput("cohortDescriptionText")),
-                         shiny::tabPanel(title = "Logic"),
-                         shiny::tabPanel(title = "Concept Set"),
-                         shiny::tabPanel(title = "JSON"),
-                         shiny::tabPanel(title = "SQL")
+      conditionalPanel("output.cohortDescriptionRowIsSelected == true",
+                       shiny::tabsetPanel(type = "tab",
+                                          shiny::tabPanel(title = "Description",
+                                                          shiny::htmlOutput("cohortDescriptionText")),
+                                          if (exists("cohortExtra")) {
+                                            shiny::tabPanel(title = "Definition",
+                                                            shiny::htmlOutput("cohortDescriptionDefinition"))
+                                          },
+                                          shiny::tabPanel(title = "Concept Sets",
+                                                          if (!is(dataSource, "environment")) {
+                                                            shiny::radioButtons(
+                                                              inputId = "conceptSetsType",
+                                                              label = "",
+                                                              choices = c("Concept Set Expression", "Included Standard Concepts", "Included Source Concepts"),
+                                                              selected = "Concept Set Expression",
+                                                              inline = TRUE
+                                                            )
+                                                          },
+                                                          DT::dataTableOutput(outputId = "cohortDescriptionConceptSetsTable")
+                                          ),
+                                          shiny::tabPanel(title = "JSON",
+                                                          shiny::verbatimTextOutput("cohortDescriptionJson")),
+                                          shiny::tabPanel(title = "SQL",
+                                                          shiny::verbatimTextOutput("cohortDescriptionSql"))
+                       )
       )
     )
   ),
