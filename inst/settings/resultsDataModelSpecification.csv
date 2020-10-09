@@ -32,7 +32,7 @@ cohort_overlap,database_id,varchar(20),Yes,Yes,No,Yes
 concept,concept_id,int,Yes,Yes,No,Yes
 concept,concept_name,varchar(255),Yes,No,No,Yes
 concept,domain_id,varchar(20),Yes,No,No,Yes
-concept,vocabulary_id,varchar(20),Yes,No,No,Yes
+concept,vocabulary_id,varchar(50),Yes,No,No,Yes
 concept,concept_class_id,varchar(20),Yes,No,No,Yes
 concept,standard_concept,varchar(1),No,No,No,Yes
 concept,concept_code,varchar(50),Yes,No,No,Yes
@@ -154,7 +154,7 @@ visit_context,visit_concept_id,int,Yes,Yes,No,Yes
 visit_context,visit_context,varchar(20),Yes,Yes,No,Yes
 visit_context,subjects,float,Yes,No,No,Yes
 visit_context,database_id,varchar(20),Yes,Yes,No,Yes
-vocabulary,vocabulary_id,varchar(20),Yes,Yes,No,Yes
+vocabulary,vocabulary_id,varchar(50),Yes,Yes,No,Yes
 vocabulary,vocabulary_name,varchar(255),Yes,No,No,Yes
 vocabulary,vocabulary_reference,varchar,No,No,No,Yes
 vocabulary,vocabulary_version,varchar,No,No,No,Yes
