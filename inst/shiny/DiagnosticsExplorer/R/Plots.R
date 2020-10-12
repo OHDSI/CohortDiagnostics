@@ -47,7 +47,7 @@ plotTimeDistribution <- function(data,
       dplyr::filter(.data$Database %in% !!databaseIds)
   }
   
-  plotData$tooltip <- c(paste0(plotData$shortName, " : ", plotData$cohortName,
+  plotData$tooltip <- c(paste0(plotData$cohortName,
                               "\nDatabase = ", plotData$Database, 
                               "\nMin = ",  plotData$Min,
                               "\nMax = ",  plotData$Max,
@@ -72,14 +72,14 @@ plotTimeDistribution <- function(data,
                                       stat = "identity", 
                                       fill = rgb(0, 0, 0.8, alpha = 0.25), 
                                       size = 0.2) +
-    ggplot2::facet_grid(Database+shortName~TimeMeasure, scales = "free", switch = "y") +
+    ggplot2::facet_grid(Database+shortName~TimeMeasure, scales = "free") +
     ggplot2::coord_flip() +
     ggplot2::theme(panel.grid.major.y = ggplot2::element_blank(),
                    panel.grid.minor.y = ggplot2::element_blank(),
                    axis.title.y = ggplot2::element_blank(),
                    axis.ticks.y = ggplot2::element_blank(),
                    axis.text.y = ggplot2::element_blank(),
-                   strip.text.y.left = ggplot2::element_text(angle = 0)) 
+                   strip.text.y.right = ggplot2::element_text(angle = 0)) 
   plot <- ggiraph::girafe(ggobj = plot,
                           options = list(
                             ggiraph::opts_sizing(width = .7),
@@ -228,7 +228,7 @@ plotIncidenceRate <- function(data,
   
   plotData$ageGroup <- factor(plotData$ageGroup,
                               levels = newSort$ageGroup)
-  plotData$tooltip <- c(paste0(plotData$shortName, ":", plotData$cohortName,"\n","Incidence Rate = ", scales::comma(plotData$incidenceRate, accuracy = 0.01), 
+  plotData$tooltip <- c(paste0(plotData$cohortName,"\n","Incidence Rate = ", scales::comma(plotData$incidenceRate, accuracy = 0.01), 
                                "\nDatabase = ", plotData$databaseId, 
                                "\nPerson years = ", scales::comma(plotData$personYears, accuracy = 0.1), 
                                "\nCohort count = ", scales::comma(plotData$cohortCount)))
@@ -342,7 +342,7 @@ plotCohortComparisonStandardizedDifference <- function(balance,
     ggplot2::scale_x_continuous("MEAN") +
     ggplot2::scale_y_continuous("MEAN") +
     ggplot2::scale_color_manual("Domain", values = colors) +
-    ggplot2::facet_grid(targetCohortShortName ~ databaseId + comparatorCohortShortName)
+    ggplot2::facet_grid(databaseId + targetCohortShortName ~ comparatorCohortShortName)
   
   plot <- ggiraph::girafe(ggobj = plot,
                           options = list(
@@ -407,7 +407,8 @@ plotCohortOverlapVennDiagram <- function(data,
 }
 
 plotCohortOverlap <- function(data,
-                              yAxis = "Percentages") {
+                              yAxis = "Percentages",
+                              cohortIdLength = 2) {
   
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
@@ -462,8 +463,8 @@ plotCohortOverlap <- function(data,
                                                       accuracy = 1),
                                       ")"))  %>% 
     dplyr::mutate(tooltip = paste0("Database: ", .data$databaseId,
-                                   "\n", .data$targetShortName, ": ", .data$targetCohortName,
-                                   "\n", .data$comparatorShortName, ": ", .data$comparatorCohortName,
+                                   "\n", .data$targetCohortName,
+                                   "\n", .data$comparatorCohortName,
                                    "\n", .data$targetShortName, " only: ", .data$tOnlyString,
                                    "\n", .data$comparatorShortName, " only: ", .data$cOnlyString,
                                    "\nBoth: ", .data$bothString)) %>%
@@ -492,19 +493,20 @@ plotCohortOverlap <- function(data,
   
   plot <- ggplot2::ggplot(data = plotData) +
     ggplot2::aes(fill = .data$subjectsIn, 
-                 y = .data$value,
-                 x = .data$comparatorShortName,
+                 y = .data$comparatorShortName,
+                 x = .data$value,
                  tooltip = .data$tooltip,
                  group = .data$subjectsIn) +
     ggplot2::ylab(label = "") +
     ggplot2::xlab(label = "") +
     ggplot2::scale_fill_manual("Subjects in", values = c(rgb(0.8, 0.2, 0.2), rgb(0.3, 0.2, 0.4), rgb(0.4, 0.4, 0.9))) +
-    ggplot2::facet_grid(.data$targetShortName ~ .data$databaseId, drop = FALSE) +
+    ggplot2::facet_wrap(. ~ databaseId + targetShortName,ncol = cohortIdLength*2) +
+    ggplot2::theme(strip.text.y.right = ggplot2::element_text(angle = 0)) +
     ggiraph::geom_bar_interactive(position = position, alpha = 0.6, stat = "identity") 
   if (yAxis == "Percentages") {
-    plot <- plot + ggplot2::scale_y_continuous(labels = scales::percent)
+    plot <- plot + ggplot2::scale_x_continuous(labels = scales::percent)
   } else {
-    plot <- plot + ggplot2::scale_y_continuous(labels = scales::comma)
+    plot <- plot + ggplot2::scale_x_continuous(labels = scales::comma)
   }
   width <- 1.5 + 1*length(unique(plotData$databaseId))
   height <- 1.5 + 1*length(unique(plotData$targetShortName))
@@ -513,8 +515,8 @@ plotCohortOverlap <- function(data,
                           options = list(
                             ggiraph::opts_sizing(width = .7),
                             ggiraph::opts_zoom(max = 5)), 
-                          width_svg = 6 * aspectRatio,
-                          height_svg = 6)
+                          width_svg = 12,
+                          height_svg = 7 )
   
   return(plot)
 }   
