@@ -209,7 +209,7 @@ launchCohortExplorer <- function(connectionDetails,
                                    cdmDatabaseSchema = cdmDatabaseSchema,
                                    cohortDatabaseSchema = cohortDatabaseSchema,
                                    cohortTable = cohortTable,
-                                   cohortId = cohortId,
+                                   cohortDefinitionId = cohortId,
                                    sampleSize = sampleSize,
                                    subjectIds = subjectIds)
   on.exit(rm("shinySettings", envir = .GlobalEnv))
