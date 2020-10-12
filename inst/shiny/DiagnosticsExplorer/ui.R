@@ -324,8 +324,8 @@ bodyTabItems <- shinydashboard::tabItems(
       DT::dataTableOutput(outputId = "cohortDescriptionTable"),
       conditionalPanel("output.cohortDescriptionRowIsSelected == true",
                        shiny::tabsetPanel(type = "tab",
-                                          shiny::tabPanel(title = "Description",
-                                                          shiny::htmlOutput("cohortDescriptionText")),
+                                          shiny::tabPanel(title = "Details",
+                                                          shiny::htmlOutput("cohortDetailsText")),
                                           if (exists("cohortExtra")) {
                                             shiny::tabPanel(title = "Definition",
                                                             copyToClipboardButton("cohortDescriptionDefinition", style = "margin-top: 5px; margin-bottom: 5px;"),

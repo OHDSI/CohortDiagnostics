@@ -159,12 +159,28 @@ shiny::shinyServer(function(input, output, session) {
   })
   outputOptions(output, "cohortDescriptionRowIsSelected", suspendWhenHidden = FALSE)
   
-  output$cohortDescriptionText <- shiny::renderUI({
+  output$cohortDetailsText <- shiny::renderUI({
     row <- selectedCohortDescriptionRow()
     if (is.null(row)) {
       return(NULL)
     } else {
-      tags$p(row$logicDescription)
+      tags$table(style = "margin-top: 5px;",
+                 tags$tr(
+                   tags$td(tags$strong("Cohort ID: ")),
+                   tags$td(HTML("&nbsp;&nbsp;")),
+                   tags$td(row$cohortId)
+                 ),
+                 tags$tr(
+                   tags$td(tags$strong("Cohort Name: ")),
+                   tags$td(HTML("&nbsp;&nbsp;")),
+                   tags$td(row$cohortName)
+                 ),
+                 tags$tr(
+                   tags$td(tags$strong("Logic: ")),
+                   tags$td(HTML("&nbsp;&nbsp;")),
+                   tags$td(row$logicDescription)
+                 )
+      )
     }
   })
   
@@ -237,6 +253,9 @@ shiny::shinyServer(function(input, output, session) {
                       .data$includeDescendants,
                       .data$includeMapped) %>%
         dplyr::arrange(.data$conceptSetName, .data$conceptId)
+      data$conceptSetName <- as.factor(data$conceptSetName)
+      data$domainId <- as.factor(data$domainId)
+      data$standardConcept <- as.factor(data$standardConcept)
       colnames(data) <- camelCaseToTitleCase(colnames(data))
     } else {
       subset <- conceptSets %>%
@@ -257,6 +276,11 @@ shiny::shinyServer(function(input, output, session) {
                       .data$vocabularyId,
                       .data$standardConcept) %>%
         dplyr::arrange(.data$conceptSetName, .data$conceptId)
+      data$conceptSetName <- as.factor(data$conceptSetName)
+      data$conceptClassId <- as.factor(data$conceptClassId)
+      data$domainId <- as.factor(data$domainId)
+      data$vocabularyId <- as.factor(data$vocabularyId)
+      data$standardConcept <- as.factor(data$standardConcept)
       colnames(data) <- camelCaseToTitleCase(colnames(data))
     }
     
@@ -273,7 +297,7 @@ shiny::shinyServer(function(input, output, session) {
                                options = options,
                                rownames = FALSE,
                                escape = FALSE,
-                               filter = c("bottom"),
+                               filter = c("top"),
                                class = "stripe nowrap compact")
     return(dataTable)
     
