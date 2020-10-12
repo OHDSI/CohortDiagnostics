@@ -146,10 +146,23 @@ if (databaseMode) {
     stop(sprintf("Local data file %s does not exist.", localDataPath))
   }
   dataSource <- createFileDataSource(localDataPath, envir = .GlobalEnv)
-} 
+}
+
+if (exists("cohort")) {
+  cohort <- get("cohort") %>%
+    dplyr::mutate(cohortName = paste0(
+      "C",
+      cohort$cohortId - cohort$phenotypeId,
+      ": ",
+      purrr::map_chr(stringr::str_split(cohort$cohortName, "]"), 2)
+    ),
+    shortName = paste0(
+      "C",
+      cohort$cohortId - cohort$phenotypeId))
+}
 
 if (exists("temporalTimeRef")) {
-  temporalCovariateChoices <- temporalTimeRef %>%
+  temporalCovariateChoices <- get("temporalTimeRef") %>%
     dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
     dplyr::select(.data$timeId, .data$choices) %>% 
     dplyr::arrange(.data$timeId) %>% 

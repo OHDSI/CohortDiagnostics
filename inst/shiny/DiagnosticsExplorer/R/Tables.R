@@ -48,14 +48,19 @@ prepareTable1 <- function(covariates,
                                                                              covariatesSubset$covariateName),
                                                      value = covariatesSubset$mean,
                                                      header = 0,
-                                                     position = i)) %>% 
+                                                     position = i,
+                                                     cohortId = covariatesSubset$cohortId,
+                                                     databaseId = covariatesSubset$databaseId)) %>% 
         dplyr::distinct() %>%
         dplyr::mutate(sortOrder = dplyr::row_number())
     }
   }
   if (nrow(resultsTable) > 0) {
     resultsTable <- resultsTable %>% 
-      dplyr::arrange(.data$position, dplyr::desc(.data$header), .data$sortOrder)
+      dplyr::arrange(.data$databaseId, .data$cohortId, 
+                     .data$position, 
+                     dplyr::desc(.data$header), 
+                     .data$sortOrder)
   }
   return(resultsTable)
 }
