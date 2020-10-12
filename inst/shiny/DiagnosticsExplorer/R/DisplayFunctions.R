@@ -77,5 +77,22 @@ sumCounts <- function(counts) {
   } else {
     return(result)
   }
+}
+
+copyToClipboardButton <- function(toCopyId, label = "Copy to clipboard", icon = shiny::icon("clipboard"), ...) {
+
+  script <- sprintf("
+  text = document.getElementById('%s').textContent;
+  html = document.getElementById('%s').innerHTML;
+  function listener(e) {
+    e.clipboardData.setData('text/html', html);
+    e.clipboardData.setData('text/plain', text);
+    e.preventDefault();
+  }
+  document.addEventListener('copy', listener);
+  document.execCommand('copy');
+  document.removeEventListener('copy', listener);
+  return false;",toCopyId, toCopyId)
   
+  tags$button(type = "button", class = "btn btn-default action-button", onclick = script, icon, label, ...)
 }

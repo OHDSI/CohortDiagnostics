@@ -328,6 +328,7 @@ bodyTabItems <- shinydashboard::tabItems(
                                                           shiny::htmlOutput("cohortDescriptionText")),
                                           if (exists("cohortExtra")) {
                                             shiny::tabPanel(title = "Definition",
+                                                            copyToClipboardButton("cohortDescriptionDefinition", style = "margin-top: 5px; margin-bottom: 5px;"),
                                                             shiny::htmlOutput("cohortDescriptionDefinition"))
                                           },
                                           shiny::tabPanel(title = "Concept Sets",
@@ -343,8 +344,10 @@ bodyTabItems <- shinydashboard::tabItems(
                                                           DT::dataTableOutput(outputId = "cohortDescriptionConceptSetsTable")
                                           ),
                                           shiny::tabPanel(title = "JSON",
+                                                          copyToClipboardButton("cohortDescriptionJson", style = "margin-top: 5px; margin-bottom: 5px;"),
                                                           shiny::verbatimTextOutput("cohortDescriptionJson")),
                                           shiny::tabPanel(title = "SQL",
+                                                          copyToClipboardButton("cohortDescriptionSql", style = "margin-top: 5px; margin-bottom: 5px;"),
                                                           shiny::verbatimTextOutput("cohortDescriptionSql"))
                        )
       )
