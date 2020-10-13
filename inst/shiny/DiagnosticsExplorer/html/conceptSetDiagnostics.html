@@ -1,0 +1,24 @@
+<h3>Description</h3>
+<p> A table showing the concepts included in a concept set of a cohort along with concepts recommended for review.
+    Record and database counts represent counts collected across participating ConceptPrevalence datasources and do not represent your datasource counts. Concept counts and database counts with descendants reflect the total counts of a concept with its descendants. </p>
+    
+<p> Recommended concepts include (Concept in Set):</p>
+<ul>
+<li> Not included - parent: a list of all immediate ancestors of the concepts in a concept set;</li>
+<li>Not included - descendant: a list of all descendants of the concepts in a concept set, which were not included in this concept set;</li>
+<li>Not included - recommended via standard: a list of recommendations of standard concepts not included in a concept set;</li>
+<li> Not included - recommended via source: a list of recommendations of concepts not included in a concept set, which were found through not included source concepts (e.g. ICD-10 CM);</li>
+</ul>
+
+<p> Source concepts are identified in the _source_concept_id fields of the Common Data Model, (e.g. drug_source_concept_id) and are used to identify the specific source codes used in a database. Standard concepts are found using the _concept_id fields (e.g. drug_concept_id), and use the same coding system across all databases.</p>
+
+<h3>Options</h3>
+<p>Select the cohort and the specific concept set within that cohort to explore in the side bar.</p>
+<p>You can switch between Source Concepts and Standard Concepts at the top of the table.</p>
+
+<h3>What to look for</h3>
+<ul>
+<li>Are there included codes that should not be? For example, in a concept set for hypertensive disorder, are hypotension codes included by accident?</li>
+<li>Are there parent or descendant concepts that should be included? For example, in a concept set for hypertensive disorder, Chronic kidney disease due to hypertension is a suggested parent that may be included.</li>
+<li>Are there recommended concepts that should be included in the concept set?</li>
+</ul>
