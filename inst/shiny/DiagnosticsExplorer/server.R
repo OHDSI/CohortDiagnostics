@@ -199,12 +199,11 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  output$cohortDescriptionConceptSetsTable <- DT::renderDataTable(expr = {
+  cohortDescriptionConceptSets <- reactive({
     row <- selectedCohortDescriptionRow()
     if (is.null(row)) {
       return(NULL)
     } 
-    
     if (is(dataSource, "environment") || input$conceptSetsType == "Concept Set Expression") {
       expression <- RJSONIO::fromJSON(row$json)
       if (is.null(expression$ConceptSets)) {
@@ -268,6 +267,16 @@ shiny::shinyServer(function(input, output, session) {
       data$standardConcept <- as.factor(data$standardConcept)
       colnames(data) <- camelCaseToTitleCase(colnames(data))
     }
+    return(data)
+    
+  })
+  
+  output$cohortDescriptionConceptSetsTable <- DT::renderDataTable(expr = {
+    
+    data <- cohortDescriptionConceptSets()
+    if (is.null(data)) {
+      return(NULL)
+    } 
     
     options = list(pageLength = 10,
                    searching = TRUE,
@@ -287,6 +296,16 @@ shiny::shinyServer(function(input, output, session) {
     return(dataTable)
     
   })
+  
+  output$saveConceptSetButton <- downloadHandler(
+    filename = function() {
+      paste("conceptSet-", Sys.Date(), ".csv", sep="")
+    },
+    content = function(file) {
+      data <- cohortDescriptionConceptSets()
+      write.csv(data, file)
+    }
+  )
   
   # Phenotype description --------------------------------------------------------
   selectedPhenotypeDescriptionRow <- reactive({
@@ -1750,8 +1769,9 @@ shiny::shinyServer(function(input, output, session) {
   
   selectedCohorts <- shiny::reactive({
     cohorts <- cohortSubset() %>%
-      dplyr::distinct(.data$cohortName) %>% 
-      dplyr::arrange(.data$cohortName)
+      dplyr::filter(.data$cohortId %in% cohortIds()) %>%
+      dplyr::arrange(.data$cohortId) %>%
+      dplyr::distinct(.data$cohortName)
     
     html <- htmltools::withTags(
       div(table(
