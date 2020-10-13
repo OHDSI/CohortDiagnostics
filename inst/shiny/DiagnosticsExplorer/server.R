@@ -73,9 +73,6 @@ shiny::shinyServer(function(input, output, session) {
                                     selected = c(subset[1], subset[2]))
   })
   
-  extractedData <- reactiveVal()
-  extractedData(c())
-  
   # Phenotype Description ------------------------------------------------------------------------------
   output$phenoTypeDescriptionTable <- DT::renderDataTable(expr = {
     data <- phenotypeDescription %>% 
@@ -106,18 +103,10 @@ shiny::shinyServer(function(input, output, session) {
   
   
   # Cohort Description ---------------------------------------------------------
-  cohortDescription <- reactive({
-    data <- cohortSubset() %>%
-      dplyr::inner_join(phenotypeDescription %>% 
-                          dplyr::select(.data$phenotypeId, .data$phenotypeName)) %>% 
-      dplyr::select(.data$phenotypeId, .data$phenotypeName, .data$cohortId, 
-                    .data$cohortName)
-    return(data)
-  })
-  
   output$cohortDescriptionTable <- DT::renderDataTable(expr = {
-    extractedData(cohortDescription())
-    
+    data <- cohortSubset() %>%
+      dplyr::select(.data$cohortId, .data$cohortName)
+
     options = list(pageLength = 10,
                    searching = TRUE,
                    ordering = TRUE,
@@ -125,10 +114,10 @@ shiny::shinyServer(function(input, output, session) {
                    info = TRUE,
                    searchHighlight = TRUE)
     
-    dataTable <- DT::datatable(extractedData(),
+    dataTable <- DT::datatable(data,
                                options = options,
                                rownames = FALSE,
-                               colnames = colnames(extractedData()) %>% camelCaseToTitleCase(),
+                               colnames = colnames(data) %>% camelCaseToTitleCase(),
                                escape = FALSE,
                                filter = c("bottom"),
                                selection = list(mode = "single", target = "row"),
@@ -390,14 +379,14 @@ shiny::shinyServer(function(input, output, session) {
   output$cohortCountsTable <- DT::renderDataTable(expr = {
     validate(need(length(input$databases) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
-    extractedData(cohortCounts())
+    data <- cohortCounts()
     
-    if (nrow(extractedData()) == 0) {
+    if (nrow(data) == 0) {
       return(tidyr::tibble("There is no data on any cohort"))
     }
     
     # instead maybe we can just convert this to a warning message in header.
-    if (!isTRUE(all.equal(extractedData()$databaseId %>% unique %>% sort(),
+    if (!isTRUE(all.equal(data$databaseId %>% unique %>% sort(),
                           input$databases %>% unique() %>% sort()))) {
       return(dplyr::tibble(Note = paste0("There is no data for the databases:\n",
                                          paste0(setdiff(input$databases, 
@@ -407,7 +396,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     table <- dplyr::full_join(
-      extractedData() %>% 
+      data %>% 
         dplyr::select(.data$cohort, .data$databaseId, 
                       .data$cohortSubjects) %>% 
         dplyr::mutate(columnName = paste0(.data$databaseId, "_subjects")) %>% 
@@ -415,7 +404,7 @@ shiny::shinyServer(function(input, output, session) {
         tidyr::pivot_wider(id_cols = .data$cohort,
                            names_from = columnName,
                            values_from = .data$cohortSubjects),
-      extractedData() %>% 
+      data %>% 
         dplyr::select(.data$cohort, .data$databaseId, 
                       .data$cohortEntries) %>% 
         dplyr::mutate(columnName = paste0(.data$databaseId, "_entries")) %>% 
@@ -429,7 +418,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::relocate(.data$cohort) %>%
       dplyr::arrange(.data$cohort)
     
-    databaseIds <- sort(unique(extractedData()$databaseId))
+    databaseIds <- sort(unique(data$databaseId))
     
     sketch <- htmltools::withTags(table(
       class = "display",
@@ -501,12 +490,12 @@ shiny::shinyServer(function(input, output, session) {
     stratifyByAge <- "Age" %in% input$irStratification
     stratifyByGender <- "Gender" %in% input$irStratification
     stratifyByCalendarYear <- "Calendar Year" %in% input$irStratification
-    extractedData(incidenceRate())
+    data <- incidenceRate()
     
-    validate(need(!is.null(extractedData()), paste0("No data for this combination")),
-             need(nrow(extractedData()) > 0, paste0("No data for this combination")))
+    validate(need(!is.null(data), paste0("No data for this combination")),
+             need(nrow(data) > 0, paste0("No data for this combination")))
     
-    plot <- plotIncidenceRate(data = extractedData(),
+    plot <- plotIncidenceRate(data = data,
                               cohortIds = NULL,
                               databaseIds = NULL,
                               stratifyByAgeGroup = stratifyByAge,
@@ -526,20 +515,20 @@ shiny::shinyServer(function(input, output, session) {
   
   output$timeDisPlot <- ggiraph::renderggiraph(expr = {
     validate(need(length(input$databases) > 0, "No data sources chosen"))
-    extractedData(timeDist())
-    validate(need(!is.null(extractedData()), paste0('No data for this combination')),
-             need(nrow(extractedData()) > 0, paste0('No data for this combination')))
+    data <- timeDist()
+    validate(need(!is.null(data), paste0('No data for this combination')),
+             need(nrow(data) > 0, paste0('No data for this combination')))
     
-    plot <- plotTimeDistribution(data = extractedData(),
+    plot <- plotTimeDistribution(data = data,
                                  cohortIds = cohortIds(),
                                  databaseIds = input$databases)
     return(plot)
   })
   
   output$timeDistTable <- DT::renderDataTable(expr = {
-    extractedData(timeDist())
+    data <- timeDist()
     
-    if (is.null(extractedData()) || nrow(extractedData()) == 0) {
+    if (is.null(data) || nrow(data) == 0) {
       return(dplyr::tibble(Note = paste0("No data available for selected databases and cohorts")))
     }
     
@@ -552,10 +541,10 @@ shiny::shinyServer(function(input, output, session) {
                    paging = TRUE,
                    info = TRUE,
                    columnDefs = list(minCellCountDef(3)))
-    table <- DT::datatable(extractedData(),
+    table <- DT::datatable(data,
                            options = options,
                            rownames = FALSE,
-                           colnames = colnames(extractedData()) %>% 
+                           colnames = colnames(data) %>% 
                              camelCaseToTitleCase(),
                            filter = c("bottom"),
                            class = "stripe nowrap compact")
@@ -1015,12 +1004,12 @@ shiny::shinyServer(function(input, output, session) {
   output$breakdownTable <- DT::renderDataTable(expr = {
     validate(need(length(input$databases) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen chosen"))
-    extractedData(indexEvent())
-    if (nrow(extractedData()) == 0) {
+    data <- indexEvent()
+    if (nrow(data) == 0) {
       return(dplyr::tibble(Note = paste0("No data available for selected databases and cohorts")))
     }
-    maxCount <- max(extractedData()$conceptCount, na.rm = TRUE)
-    table <- extractedData() %>% 
+    maxCount <- max(data$conceptCount, na.rm = TRUE)
+    table <- data %>% 
       dplyr::select(.data$shortName, .data$databaseId,
                     .data$conceptId, .data$conceptName,
                     .data$conceptCount) %>% 
@@ -1074,12 +1063,12 @@ shiny::shinyServer(function(input, output, session) {
   output$visitContextTable <- DT::renderDataTable(expr = {
     validate(need(length(input$databases) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
-    extractedData(visitContextTableData())
-    if (nrow(extractedData()) == 0) {
+    data <- visitContextTableData()
+    if (nrow(data) == 0) {
       return(dplyr::tibble(Note = paste0("No data available for selected databases and cohort")))
     }
     
-    databaseIds <- sort(unique(extractedData()$databaseId))
+    databaseIds <- sort(unique(data$databaseId))
     
     if (!all(input$databases %in% databaseIds)) {
       return(dplyr::tibble(Note = paste0("There is no data for the databases:\n",
@@ -1088,14 +1077,14 @@ shiny::shinyServer(function(input, output, session) {
                                          ".\n Please unselect them.")))
     }
     
-    maxSubjects <- max(extractedData()$subjects)
+    maxSubjects <- max(data$subjects)
     visitContextReference <-  expand.grid(visitContext = c("Before", "During visit", "On visit start", "After"), 
-                                          visitConceptName = unique(extractedData()$visitConceptName),
+                                          visitConceptName = unique(data$visitConceptName),
                                           databaseId = databaseIds) %>% 
       tidyr::tibble()
     
     table <- visitContextReference %>% 
-      dplyr::inner_join(extractedData(), by = c("visitConceptName", "visitContext", "databaseId")) %>% 
+      dplyr::inner_join(data, by = c("visitConceptName", "visitContext", "databaseId")) %>% 
       dplyr::select(.data$visitConceptName, .data$visitContext, .data$subjects, .data$databaseId, .data$shortName) %>% 
       dplyr::mutate(visitContext = paste0(.data$databaseId, "_", .data$visitContext)) %>% 
       dplyr::select(-.data$databaseId) %>%
@@ -1177,12 +1166,12 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$characterizationTable <- DT::renderDataTable({
-    extractedData(characterizationTable())
-    if (nrow(extractedData()) == 0) {
+    data <- characterizationTable()
+    if (nrow(data) == 0) {
       return(dplyr::tibble(Note = paste0("No data available for selected databases and cohorts")))
     }
     
-    databaseIds <- sort(unique(extractedData()$databaseId))
+    databaseIds <- sort(unique(data$databaseId))
     if (!all(input$databases %in% databaseIds)) {
       return(dplyr::tibble(Note = paste0("There is no data for the databases:\n",
                                          paste0(setdiff(input$databases, databaseIds), 
@@ -1196,7 +1185,7 @@ shiny::shinyServer(function(input, output, session) {
                                         cohortIds = cohortIds()) %>%
         dplyr::arrange(.data$databaseId)
       
-      table <- extractedData() %>% 
+      table <- data %>% 
         prepareTable1()
       if (nrow(table) == 0) {
         return(dplyr::tibble(Note = "There is no data to return."))       
@@ -1288,14 +1277,14 @@ shiny::shinyServer(function(input, output, session) {
                                backgroundRepeat = "no-repeat",
                                backgroundPosition = "center")
     } else {
-      data <- extractedData() %>% 
+      data <- data %>% 
         dplyr::arrange(.data$databaseId, .data$cohortId) %>% 
         tidyr::pivot_longer(cols = c(.data$mean, .data$sd)) %>% 
         dplyr::mutate(name = paste0(databaseId, "_", .data$name)) %>% 
         tidyr::pivot_wider(id_cols = c(.data$cohortId, .data$covariateId),
                            names_from = .data$name,
                            values_from = .data$value) %>%
-        dplyr::inner_join(extractedData() %>% dplyr::select(.data$covariateId, 
+        dplyr::inner_join(data %>% dplyr::select(.data$covariateId, 
                                                             .data$covariateName, 
                                                             .data$conceptId) %>% 
                             dplyr::distinct(),
@@ -1372,16 +1361,18 @@ shiny::shinyServer(function(input, output, session) {
       covariateIdArray(c(covariateIdArray(),input$rows[[2]]))
   })
   
+  # Temporal characterization -----------------------------------------------------------------
   temporalCharacterizationTable <- shiny::reactive({
     validate(need(length(input$databases) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
     validate(need(length(timeId()) > 0, "No time periods selected"))
-    
+    startTime <- Sys.time()
     data <- getCovariateValueResult(dataSource = dataSource,
                                     cohortIds = cohortIds(),
                                     databaseIds = input$databases,
                                     timeIds = timeId(),
                                     isTemporal = TRUE)
+    print(Sys.time() - startTime)
     
     if ('shortName' %in% colnames(cohort)) {
       data <- data %>%  
@@ -1402,12 +1393,12 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$temporalCharacterizationTable <- DT::renderDataTable(expr = {
-    extractedData(temporalCharacterizationTable())
-    if (nrow(extractedData()) == 0) {
+    data <- temporalCharacterizationTable()
+    if (nrow(data) == 0) {
       return(dplyr::tibble(Note = paste0("No data available for selected databases and cohorts")))
     }
     
-    table <- extractedData() %>% 
+    table <- data %>% 
       dplyr::inner_join(temporalCovariateChoices, by = "timeId") %>% 
       dplyr::arrange(.data$timeId)  %>% 
       tidyr::pivot_wider(id_cols = c("cohortId", "shortName", "databaseId", "covariateId", "covariateName", "conceptId"), 
@@ -1471,10 +1462,10 @@ shiny::shinyServer(function(input, output, session) {
   output$overlapPlot <- ggiraph::renderggiraph(expr = {
     validate(need(length(cohortIds()) > 0, paste0("Please select Target Cohort(s)")))
     
-    extractedData(cohortOverlap())
-    validate(need(!is.null(extractedData()), paste0("No cohort overlap data for this combination")))
+    data <- cohortOverlap()
+    validate(need(!is.null(data), paste0("No cohort overlap data for this combination")))
     
-    plot <- plotCohortOverlap(data = extractedData(),
+    plot <- plotCohortOverlap(data = data,
                               yAxis = input$overlapPlotType,
                               cohortIdLength = length(cohortIds()))
     return(plot)
@@ -1640,11 +1631,11 @@ shiny::shinyServer(function(input, output, session) {
   
   output$charComparePlot <- ggiraph::renderggiraph(expr = {
     validate(need((length(cohortIds()) != 1), paste0("Please select atleast two different cohorts.")))
-    extractedData(cohortCompare())
-    if (nrow(extractedData()) == 0) {
+    data <- cohortCompare()
+    if (nrow(data) == 0) {
       return(dplyr::tibble(Note = "No data for the selected combination."))
     }
-    plot <- plotCohortComparisonStandardizedDifference(balance = extractedData(),
+    plot <- plotCohortComparisonStandardizedDifference(balance = data,
                                                        domain = input$domainId,
                                                        targetLabel = paste0("Mean in Target (", input$cohort, ")"),
                                                        comparatorLabel = paste0("Mean in Comparator (", input$comparator, ")"))
@@ -1758,7 +1749,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   selectedCohorts <- shiny::reactive({
-    cohorts <- extractedData() %>%
+    cohorts <- cohortSubset() %>%
       dplyr::distinct(.data$cohortName) %>% 
       dplyr::arrange(.data$cohortName)
     
