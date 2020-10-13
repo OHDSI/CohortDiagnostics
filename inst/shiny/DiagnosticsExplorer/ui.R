@@ -61,10 +61,10 @@ header <-
 sidebarMenu <-
   shinydashboard::sidebarMenu(
     id = "tabs",
-    shiny::conditionalPanel(
-      condition = "input.tabs != 'databaseInformation'",
-      
-    ),
+    # shiny::conditionalPanel(
+    #   condition = "input.tabs != 'databaseInformation'",
+    #   
+    # ),
     if (exists("phenotypeDescription"))
       shinydashboard::menuItem(text = "Phenotype Description", tabName = "phenotypeDescription"),
     if (exists("cohort"))
@@ -93,6 +93,11 @@ sidebarMenu <-
       addInfo(
         item = shinydashboard::menuItem(text = "Orphan (Source) Concepts", tabName = "orphanConcepts"),
         infoId = "orphanConceptsInfo"
+      ),
+    if (exists("recommenderSet"))
+      addInfo(
+        item = shinydashboard::menuItem(text = "Concept Set Diagnostics", tabName = "conceptSetDiagnostics"),
+        infoId = "conceptSetDiagnosticsInfo"
       ),
     if (exists("inclusionRuleStats"))
       addInfo(
@@ -130,6 +135,7 @@ sidebarMenu <-
         infoId = "compareCohortCharacterizationInfo"
       ),
     shinydashboard::menuItem(text = "Database information", tabName = "databaseInformation"),
+    # Conditional dropdown boxes in the side bar ------------------------------------------------------
     shiny::conditionalPanel(
       condition = "input.tabs!='incidenceRate' & 
       input.tabs != 'timeDistribution' & 
@@ -141,6 +147,7 @@ sidebarMenu <-
       input.tabs != 'phenotypeDescription' & 
       input.tabs != 'includedConcepts' & 
       input.tabs != 'orphanConcepts' & 
+      input.tabs != 'conceptSetDiagnostics' & 
       input.tabs != 'inclusionRuleStats' & 
       input.tabs != 'visitContext' & 
       input.tabs != 'cohortOverlap' & 
@@ -248,7 +255,7 @@ sidebarMenu <-
       )
     ),
     shiny::conditionalPanel(
-      condition = "input.tabs=='includedConcepts' | input.tabs=='orphanConcepts'",
+      condition = "input.tabs=='includedConcepts' | input.tabs=='orphanConcepts' | input.tabs == 'conceptSetDiagnostics'",
       shinyWidgets::pickerInput(
         inputId = "conceptSet",
         label = "Concept Set",
@@ -298,7 +305,7 @@ sidebarMenu <-
 sidebar <-
   shinydashboard::dashboardSidebar(sidebarMenu, width = NULL, collapsed = FALSE)
 
-#body - items in tab
+# Body - items in tabs --------------------------------------------------
 bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "phenotypeDescription",
@@ -424,6 +431,15 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(tabName = "orphanConcepts",
                           DT::dataTableOutput("orphanConceptsTable")),
+  shinydashboard::tabItem(tabName = "conceptSetDiagnostics",
+                          shiny::radioButtons(
+                            inputId = "conceptSetDiagnosticsType",
+                            label = "",
+                            choices = c("Standard Concepts", "Source Concepts"),
+                            selected = "Standard Concepts",
+                            inline = TRUE
+                          ),
+                          DT::dataTableOutput("conceptSetDiagnosticsTable")),
   shinydashboard::tabItem(tabName = "inclusionRuleStats",
                           div(style = "font-size:15px;font-weight: bold", "Target cohort:"),
                           shiny::htmlOutput(outputId = "inclusionRuleStatSelectedCohort"),
