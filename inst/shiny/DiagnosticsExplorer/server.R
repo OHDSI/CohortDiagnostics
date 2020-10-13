@@ -4,6 +4,7 @@ source("R/DisplayFunctions.R")
 source("R/Tables.R")
 source("R/Plots.R")
 source("R/Results.R")
+source("R/ConceptRecommender.R")
 
 shiny::shinyServer(function(input, output, session) {
   
@@ -298,6 +299,7 @@ shiny::shinyServer(function(input, output, session) {
     
   })
   
+  # Phenotype description --------------------------------------------------------
   selectedPhenotypeDescriptionRow <- reactive({
     idx <- input$phenoTypeDescriptionTable_rows_selected
     if (is.null(idx)) {
@@ -837,6 +839,88 @@ shiny::shinyServer(function(input, output, session) {
                              backgroundPosition = "center")
     return(table)
   }, server = TRUE)
+  
+  # Concept set diagnostics ---------------------------------------------------------------------
+  output$conceptSetDiagnosticsTable <- DT::renderDataTable(expr = {
+    conceptSetSql <- conceptSets %>%
+      dplyr::filter(.data$cohortId == cohortId() & .data$conceptSetName == input$conceptSet) %>%
+      dplyr::pull(.data$conceptSetSql)
+    if (length(conceptSetSql) == 0) {
+      # Happens when switching cohorts: first the cohortId changes, and later the conceptSetName changes
+      return(NULL)
+    }
+    standard <- (input$conceptSetDiagnosticsType == "Standard Concepts")
+    data <- getRecommendedConcepts(dataSource = dataSource, 
+                                   conceptSetSql = conceptSetSql,
+                                   standard = standard) %>%
+      dplyr::mutate(conceptInSet = as.factor(.data$conceptInSet),
+                    domainId = as.factor(.data$domainId),
+                    vocabularyId = as.factor(.data$vocabularyId)) %>% 
+      dplyr::relocate (.data$conceptInSet)  
+    if (nrow(data) == 0) {
+      return(dplyr::tibble(Note = paste0('No data available for selected concept set')))
+    }
+    if (standard) {
+      maxRecords <- max(c(data$recordCount, data$descendantRecordCount))
+      maxDbs <- max(c(data$databaseCount, data$descendantDatabaseCount))
+      data <- data %>%
+        dplyr::arrange(dplyr::desc(.data$descendantDatabaseCount), dplyr::desc(.data$descendantRecordCount))
+    } else {
+      maxRecords <- max(c(data$recordCount))
+      maxDbs <- max(c(data$databaseCount))
+      data <- data %>%
+        dplyr::arrange(dplyr::desc(.data$databaseCount), dplyr::desc(.data$recordCount))
+    }
+    options <- list(pageLength = 10,
+                   searching = TRUE,
+                   scrollX = TRUE,
+                   lengthChange = TRUE,
+                   ordering = TRUE,
+                   paging = TRUE,
+                   columnDefs = list(truncateStringDef(2, 50),
+                                     minCellCountDef(6:ifelse(standard, 9, 7))))
+    
+    sketch <- htmltools::withTags(table(
+      class = "display",
+      thead(
+        tr(
+          th(rowspan = 2, "Concept in Set"),
+          th(rowspan = 2, "Concept ID"),
+          th(rowspan = 2, "Concept Name"),
+          th(rowspan = 2, "Vocabulary ID"),
+          th(rowspan = 2, "Domain Id"),
+          th(rowspan = 2, "Standard Concept"),
+          th(colspan = 2, "Without Descendants", class = "dt-center"),
+          if(standard) th(colspan = 2, "With Descendants", class = "dt-center"),
+        ),
+        tr(
+          lapply(rep(c("Records", "Databases"), ifelse(standard, 2, 1)), th)
+        )
+      )
+    ))
+    
+    table <- DT::datatable(data = data,
+                           rownames = FALSE,
+                           container = sketch,
+                           filter = 'top',
+                           options = options)
+    table <- DT::formatStyle(table,
+                             columns = 1, 
+                             color = DT::JS("value == 'Included' ? 'green' : value == 'Not included - parent' ? 'orange' : value == 'Not included - descendant' ? 'orange' : 'red'"))
+    table <- DT::formatStyle(table = table,
+                             columns =  c(7, if (standard) 9 ),
+                             background = DT::styleColorBar(c(0, maxRecords), "lightblue"),
+                             backgroundSize = "98% 88%",
+                             backgroundRepeat = "no-repeat",
+                             backgroundPosition = "center")
+    table <- DT::formatStyle(table = table,
+                             columns =  c(8, if (standard) 10),
+                             background = DT::styleColorBar(c(0, maxDbs), "#ffd699"),
+                             backgroundSize = "98% 88%",
+                             backgroundRepeat = "no-repeat",
+                             backgroundPosition = "center")
+    return(table)
+  })
   
   # inclusion rules table -----------------------------------------------------------------------
   output$inclusionRuleTable <- DT::renderDataTable(expr = {

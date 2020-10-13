@@ -18,13 +18,13 @@ defaultLocalDataFolder <- "data"
 defaultLocalDataFile <- "PreMerged.RData"
 
 connectionPool <- NULL
-defaultServer <- Sys.getenv("phenotypeLibraryDbServer")
-defaultDatabase <- Sys.getenv("phenotypeLibraryDbDatabase")
-defaultPort <- Sys.getenv("phenotypeLibraryDbPort")
-defaultUser <- Sys.getenv("phenotypeLibraryDbUser")
-defaultPassword <- Sys.getenv("phenotypeLibraryDbPassword")
-defaultResultsSchema <- Sys.getenv("phenotypeLibraryDbResultsSchema")
-defaultVocabularySchema <- Sys.getenv("phenotypeLibraryDbVocabularySchema")
+defaultServer <- Sys.getenv("phoebedbServer")
+defaultDatabase <- Sys.getenv("phoebedb")
+defaultPort <- 5432
+defaultUser <- Sys.getenv("phoebedbUser")
+defaultPassword <- Sys.getenv("phoebedbPw")
+defaultResultsSchema <- Sys.getenv("phoebedbTargetSchema")
+defaultVocabularySchema <- Sys.getenv("phoebedbVocabSchema")
 
 defaultDatabaseMode <- TRUE # Use file system if FALSE
 
@@ -129,14 +129,14 @@ if (databaseMode) {
     return(nrow(oneRow) == 0)
   }
   
-  for (table in dataModelSpecifications$tableName) {
+  for (table in c(dataModelSpecifications$tableName, "recommender_set")) {
     if (table %in% resultsTablesOnServer && 
         !exists(SqlRender::snakeCaseToCamelCase(table)) &&
         !isEmpty(table)) {
       assign(SqlRender::snakeCaseToCamelCase(table), dplyr::tibble())
     }
   }
-
+  
   dataSource <- createDatabaseDataSource(connection = connectionPool,
                                          resultsDatabaseSchema = resultsDatabaseSchema,
                                          vocabularyDatabaseSchema = vocabularyDatabaseSchema)
