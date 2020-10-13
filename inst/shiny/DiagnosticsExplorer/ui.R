@@ -273,7 +273,8 @@ sidebarMenu <-
       )
     ),
     shiny::conditionalPanel(
-      condition = "input.tabs == 'cohortCounts' |
+      condition = "input.tabs == 'cohortDescription' |
+      input.tabs == 'cohortCounts' |
       input.tabs == 'cohortOverlap' |
       input.tabs == 'compareCohortCharacterization' |
       input.tabs == 'incidenceRate' |
@@ -375,7 +376,7 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(tabName = "cohortCounts",
                           shiny::htmlOutput(outputId = "cohortCountsSelectedCohort"),
                           DT::dataTableOutput("cohortCountsTable"),
-                          ),
+  ),
   shinydashboard::tabItem(
     tabName = "incidenceRate",
     shiny::uiOutput(outputId = "incidenceRateSelectedCohort"),
@@ -476,13 +477,15 @@ bodyTabItems <- shinydashboard::tabItems(
       width = NULL,
       status = "primary",
       DT::dataTableOutput("temporalCharacterizationTable")
-    ),
-    shinydashboard::box(
-      title = "Temporal Characterization Plot",
-      width = NULL,
-      status = "primary",
-      ggiraph::ggiraphOutput("compareTemporalCharacterizationPlot",width = "100%", height = "100%")
     )
+    # ,
+    # shinydashboard::box(
+    #   title = "Temporal Characterization Plot",
+    #   width = NULL,
+    #   status = "primary",
+    #   ggiraph::ggiraphOutput(
+    #     outputId = "covariateTimeSeriesPlot")
+    # )
   ),
   shinydashboard::tabItem(
     tabName = "cohortOverlap",
