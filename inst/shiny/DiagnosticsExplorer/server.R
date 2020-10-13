@@ -157,7 +157,6 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   observeEvent(input$selectPhenotypeButton, {
-    print(selectedPhenotypeDescriptionRow()$phenotypeName)
     shinyWidgets::updatePickerInput(session = session, 
                                     inputId = "phenotypes", 
                                     selected = selectedPhenotypeDescriptionRow()$phenotypeName)
@@ -1062,28 +1061,15 @@ shiny::shinyServer(function(input, output, session) {
     return(dataTable)
   }, server = TRUE)
   
-  visitContextTableData <- shiny::reactive({
-    data <- getVisitContextResults(dataSource = dataSource,
-                                   cohortIds = cohortIds(), 
-                                   databaseIds = input$databases)
-    if ('shortName' %in% colnames(cohort)) {
-      data <- data %>%  dplyr::inner_join(cohort %>% 
-                                            dplyr::filter(.data$phenotypeId == phenotypeId()) %>%
-                                            dplyr::select(.data$cohortId, .data$shortName, .data$cohortName))
-    } else {
-      data <- data %>%  dplyr::inner_join(cohort %>% 
-                                            dplyr::filter(.data$phenotypeId == phenotypeId()) %>%
-                                            dplyr::select(.data$cohortId) %>%
-                                            dplyr::distinct() %>% 
-                                            dplyr::mutate(shortName = paste0('C', dplyr::row_number())))
-    }
-    return(data)
-  })
-  
+  # Visit Context ---------------------------------------------------------------------------------------------
   output$visitContextTable <- DT::renderDataTable(expr = {
     validate(need(length(input$databases) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
-    data <- visitContextTableData()
+    data <- getVisitContextResults(dataSource = dataSource,
+                                   cohortIds = cohortIds(), 
+                                   databaseIds = input$databases) %>%  
+      dplyr::inner_join(dplyr::select(cohort, .data$cohortId, .data$shortName), by = "cohortId")
+    
     if (nrow(data) == 0) {
       return(dplyr::tibble(Note = paste0("No data available for selected databases and cohort")))
     }
@@ -1097,6 +1083,7 @@ shiny::shinyServer(function(input, output, session) {
                                          ".\n Please unselect them.")))
     }
     
+    
     maxSubjects <- max(data$subjects)
     visitContextReference <-  expand.grid(visitContext = c("Before", "During visit", "On visit start", "After"), 
                                           visitConceptName = unique(data$visitConceptName),
@@ -1104,7 +1091,7 @@ shiny::shinyServer(function(input, output, session) {
       tidyr::tibble()
     
     table <- visitContextReference %>% 
-      dplyr::inner_join(data, by = c("visitConceptName", "visitContext", "databaseId")) %>% 
+      dplyr::left_join(data, by = c("visitConceptName", "visitContext", "databaseId")) %>% 
       dplyr::select(.data$visitConceptName, .data$visitContext, .data$subjects, .data$databaseId, .data$shortName) %>% 
       dplyr::mutate(visitContext = paste0(.data$databaseId, "_", .data$visitContext)) %>% 
       dplyr::select(-.data$databaseId) %>%
