@@ -15,7 +15,8 @@ getRecommendedConcepts <- function(dataSource, conceptSetSql, standard = TRUE) {
                              target_database_schema = dataSource$resultsDatabaseSchema, 
                              vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
                              concept_set_query = conceptSetSql)
-    data <- DatabaseConnector::dbGetQuery(dataSource$connection, sql)
+    data <- DatabaseConnector::dbGetQuery(dataSource$connection, sql) %>% 
+      dplyr::tibble()
     colnames(data) <- SqlRender::snakeCaseToCamelCase(colnames(data))
     return(data)
   }

@@ -48,14 +48,14 @@ plotTimeDistribution <- function(data,
   }
   
   plotData$tooltip <- c(paste0(plotData$cohortName,
-                              "\nDatabase = ", plotData$Database, 
-                              "\nMin = ", scales::comma(plotData$Min),
-                              "\nMax = ", scales::comma(plotData$Max),
-                              "\nP25 = ", scales::comma(plotData$P25),
-                              "\nMedian = ", scales::comma(plotData$Median),
-                              "\nP75 = ", scales::comma(plotData$P75),
-                              "\nTime Measure = ",  plotData$TimeMeasure,
-                              "\nAverage = ",  scales::comma(x = plotData$Average, accuracy = 0.01)))
+                               "\nDatabase = ", plotData$Database, 
+                               "\nMin = ", scales::comma(plotData$Min),
+                               "\nMax = ", scales::comma(plotData$Max),
+                               "\nP25 = ", scales::comma(plotData$P25),
+                               "\nMedian = ", scales::comma(plotData$Median),
+                               "\nP75 = ", scales::comma(plotData$P75),
+                               "\nTime Measure = ",  plotData$TimeMeasure,
+                               "\nAverage = ",  scales::comma(x = plotData$Average, accuracy = 0.01)))
   
   plot <- ggplot2::ggplot(data = plotData) +
     ggplot2::aes(x = .data$Database,
@@ -309,9 +309,10 @@ plotCohortComparisonStandardizedDifference <- function(balance,
       dplyr::filter(.data$domain == !!domain)
   }
   
-  # Can't make sense of plot with > 1000 dots anyway, so remove anything with small mean in both target and comparator:
+  # Can't make sense of plot with > 1000 dots anyway, so remove 
+  # anything with small mean in both target and comparator:
   if (nrow(balance) > 1000) {
-    balance <- balance %>% 
+    balance <- balance %>%
       dplyr::filter(.data$mean1 > 0.01 | .data$mean2 > 0.01)
   }
   
@@ -334,15 +335,16 @@ plotCohortComparisonStandardizedDifference <- function(balance,
   # targetLabel <- paste(strwrap(targetLabel, width = 50), collapse = "\n")
   # comparatorLabel <- paste(strwrap(comparatorLabel, width = 50), collapse = "\n")
   
+  
   plot <- ggplot2::ggplot(balance, ggplot2::aes(x = .data$mean1, y = .data$mean2, color = .data$domain)) +
     ggiraph::geom_point_interactive(ggplot2::aes(tooltip = .data$tooltip), size = 3,shape = 16, alpha = 0.5) +
     ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
     ggplot2::geom_hline(yintercept = 0) +
     ggplot2::geom_vline(xintercept = 0) +             
-    ggplot2::scale_x_continuous("MEAN") +
-    ggplot2::scale_y_continuous("MEAN") +
+    ggplot2::scale_x_continuous("") +
+    ggplot2::scale_y_continuous("") +
     ggplot2::scale_color_manual("Domain", values = colors) +
-    ggplot2::facet_grid(databaseId + targetCohortShortName ~ comparatorCohortShortName)
+    ggplot2::facet_grid(databaseId + targetCohort ~ comparatorCohort)
   
   plot <- ggiraph::girafe(ggobj = plot,
                           options = list(
@@ -429,10 +431,6 @@ plotCohortOverlap <- function(data,
                          add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
   
-  
-  
-  
-  
   plotData <- data %>% 
     dplyr::mutate(absTOnlySubjects = abs(.data$tOnlySubjects), 
                   absCOnlySubjects = abs(.data$cOnlySubjects),
@@ -517,9 +515,42 @@ plotCohortOverlap <- function(data,
                             ggiraph::opts_zoom(max = 5)), 
                           width_svg = 12,
                           height_svg = 7 )
-  
   return(plot)
-}   
+}  
+
+plotTemporalCohortComparisonStandardizedDifference <- function(balance){
+  balance$tooltip <- c(paste("Covariate Name:", balance$covariateName,
+                             "\nDatabase: ", balance$databaseId,
+                             "\nMean Target: ", scales::comma(balance$mean1, accuracy = 0.1),
+                             "\nMean Comparator:", scales::comma(balance$mean2, accuracy = 0.1),
+                             "\nStd diff.:", scales::comma(balance$stdDiff, accuracy = 0.1)))
+  # cant make sense anyways - so throwing away small values when too much data
+  if (nrow(balance) > 1000) {
+    balance <- balance %>%
+      dplyr::filter(.data$mean1 > 0.01 | .data$mean2 > 0.01)
+  }
+  
+  plot <- ggplot2::ggplot(balance, ggplot2::aes(x = .data$mean1, 
+                                                y = .data$mean2, 
+                                                color = .data$temporalChoices)) +
+    ggiraph::geom_point_interactive(ggplot2::aes(tooltip = .data$tooltip), 
+                                    size = 3,
+                                    shape = 16,
+                                    alpha = 0.5) +
+    ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+    ggplot2::geom_hline(yintercept = 0) +
+    ggplot2::geom_vline(xintercept = 0) +             
+    ggplot2::scale_x_continuous("") +
+    ggplot2::scale_y_continuous("") +
+    ggplot2::facet_grid(databaseId + targetCohort ~ comparatorCohort)
+  
+  plot <- ggiraph::girafe(ggobj = plot,
+                          options = list(
+                            ggiraph::opts_sizing(width = .7),
+                            ggiraph::opts_zoom(max = 5)),width_svg = 12,
+                          height_svg = 5)
+  return(plot)
+}
 # Future function getCohortOverlapHistogram:
 # 1. https://stackoverflow.com/questions/20184096/how-to-plot-multiple-stacked-histograms-together-in-r
 # 2. https://stackoverflow.com/questions/43415709/how-to-use-facet-grid-with-geom-histogram

@@ -1,15 +1,16 @@
 connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "postgresql",
-                                                                server = paste(Sys.getenv("phenotypeLibraryDbServer"),
-                                                                               Sys.getenv("phenotypeLibraryDbDatabase"),
+                                                                server = paste(Sys.getenv("phoebedbServer"),
+                                                                               Sys.getenv("phoebedb"),
                                                                                sep = "/"),
                                                                 port = Sys.getenv("phenotypeLibraryDbPort"),
-                                                                user = Sys.getenv("phenotypeLibraryDbUser"),
-                                                                password = Sys.getenv("phenotypeLibraryDbPassword"))
+                                                                user = Sys.getenv("phoebedbUser"),
+                                                                password = Sys.getenv("phoebedbPw"))
 
 CohortDiagnostics::launchDiagnosticsExplorer(connectionDetails = connectionDetails, 
-                                             resultsDatabaseSchema = Sys.getenv("phenotypeLibraryDbResultsSchema"), 
-                                             vocabularyDatabaseSchema = Sys.getenv("phenotypeLibraryDbVocabularySchema"), 
+                                             resultsDatabaseSchema = Sys.getenv("phoebedbTargetSchema"), 
+                                             vocabularyDatabaseSchema = Sys.getenv("phoebedbVocabSchema"), 
                                              cohortBaseUrl = "https://epi.jnj.com/atlas/#/cohortdefinition/", 
                                              conceptBaseUrl = "https://epi.jnj.com/atlas/#/concept/", 
                                              runOverNetwork = TRUE
 )
+

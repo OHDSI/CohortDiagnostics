@@ -476,15 +476,13 @@ bodyTabItems <- shinydashboard::tabItems(
       width = NULL,
       status = "primary",
       DT::dataTableOutput("temporalCharacterizationTable")
+    ),
+    shinydashboard::box(
+      title = "Temporal Characterization Plot",
+      width = NULL,
+      status = "primary",
+      ggiraph::ggiraphOutput("compareTemporalCharacterizationPlot",width = "100%", height = "100%")
     )
-    # ,
-    # shinydashboard::box(
-    #   title = "Temporal Characterization Plot",
-    #   width = NULL,
-    #   status = "primary",
-    #   ggiraph::ggiraphOutput(
-    #     outputId = "covariateTimeSeriesPlot")
-    # )
   ),
   shinydashboard::tabItem(
     tabName = "cohortOverlap",

@@ -1373,30 +1373,13 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(length(input$databases) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
     validate(need(length(timeId()) > 0, "No time periods selected"))
-    startTime <- Sys.time()
+    # startTime <- Sys.time()
     data <- getCovariateValueResult(dataSource = dataSource,
                                     cohortIds = cohortIds(),
                                     databaseIds = input$databases,
                                     timeIds = timeId(),
                                     isTemporal = TRUE)
-    print(Sys.time() - startTime)
-    
-    if ('shortName' %in% colnames(cohort)) {
-      data <- data %>%  
-        dplyr::left_join(cohort %>%
-                           dplyr::filter(.data$phenotypeId == phenotypeId()) %>%
-                           dplyr::select(.data$cohortId, .data$cohortName, .data$shortName) %>%
-                           dplyr::distinct()) %>% 
-        dplyr::relocate(.data$shortName, .data$databaseId, .data$covariateName, .data$covariateId)
-    } else {
-      data <- data %>%  
-        dplyr::left_join(cohort %>% 
-                           dplyr::filter(.data$phenotypeId == phenotypeId()) %>%
-                           dplyr::select(.data$cohortId, .data$cohortName) %>%
-                           dplyr::distinct() %>% 
-                           dplyr::mutate(shortName = paste0('C', dplyr::row_number()))) %>%
-        dplyr::relocate(.data$shortName, .data$databaseId, .data$covariateName, .data$covariateId)
-    }
+    # print(Sys.time() - startTime)
   })
   
   output$temporalCharacterizationTable <- DT::renderDataTable(expr = {
@@ -1408,11 +1391,29 @@ shiny::shinyServer(function(input, output, session) {
     table <- data %>% 
       dplyr::inner_join(temporalCovariateChoices, by = "timeId") %>% 
       dplyr::arrange(.data$timeId)  %>% 
-      tidyr::pivot_wider(id_cols = c("cohortId", "shortName", "databaseId", "covariateId", "covariateName", "conceptId"), 
+      tidyr::pivot_wider(id_cols = c("cohortId", "databaseId", "covariateId", "covariateName", "conceptId"), 
                          names_from = "choices",
                          values_from = "mean" ,
                          names_sep = "_") %>% 
-      dplyr::relocate(.data$cohortId, .data$shortName, .data$databaseId, .data$covariateName, .data$covariateId) %>% 
+      dplyr::relocate(.data$cohortId, .data$databaseId, .data$covariateName, .data$covariateId)
+    
+    if ('shortName' %in% colnames(cohort)) {
+      table <- table %>%
+        dplyr::left_join(cohort %>%
+                           dplyr::filter(.data$phenotypeId == phenotypeId()) %>%
+                           dplyr::select(.data$cohortId, .data$cohortName, .data$shortName) %>%
+                           dplyr::distinct()) %>%
+        dplyr::relocate(.data$shortName, .data$databaseId, .data$covariateName, .data$covariateId)
+    } else {
+      table <- table %>%
+        dplyr::left_join(cohort %>%
+                           dplyr::filter(.data$phenotypeId == phenotypeId()) %>%
+                           dplyr::select(.data$cohortId, .data$cohortName) %>%
+                           dplyr::distinct() %>%
+                           dplyr::mutate(shortName = paste0('C', dplyr::row_number()))) %>%
+        dplyr::relocate(.data$shortName, .data$databaseId, .data$covariateName, .data$covariateId)
+    }
+    table <- table %>%
       dplyr::rename(cohort = .data$shortName) %>% 
       dplyr::select(-.data$conceptId, -.data$cohortId) %>% 
       dplyr::arrange(.data$cohort, .data$databaseId, dplyr::desc(dplyr::across(dplyr::starts_with('Start'))))
@@ -1453,6 +1454,42 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
+  
+  output$compareTemporalCharacterizationPlot <- ggiraph::renderggiraph(expr = {
+    data <- temporalCharacterizationTable()
+    data <- compareTemporalCohortCharacteristics(characteristics1 = data, characteristics2 = data) %>% 
+      dplyr::select(.data$databaseId,
+                    .data$cohortId1, 
+                    .data$cohortId2,
+                    .data$covariateId,
+                    .data$covariateName,
+                    .data$conceptId,
+                    .data$timeId,
+                    .data$mean1,
+                    .data$mean2,
+                    .data$stdDiff) %>% 
+      dplyr::left_join(cohort %>% 
+                         dplyr::select(.data$cohortId, .data$shortName) %>% 
+                         dplyr::rename(targetCohort = .data$shortName),
+                       by = c('cohortId1' = 'cohortId')) %>% 
+      dplyr::left_join(cohort %>% 
+                         dplyr::select(.data$cohortId, .data$shortName) %>% 
+                         dplyr::rename(comparatorCohort = .data$shortName),
+                       by = c('cohortId2' = 'cohortId')) %>% 
+      dplyr::relocate(.data$targetCohort, .data$comparatorCohort) %>% 
+      dplyr::select(-.data$cohortId1, -.data$cohortId2) %>% 
+      dplyr::inner_join(temporalCovariateChoices) %>% 
+      dplyr::select(-.data$timeId) %>% 
+      dplyr::rename(temporalChoices = .data$choices)
+    
+    if (nrow(data) == 0) {
+      return(dplyr::tibble(Note = "No data for the selected combination."))
+    }
+    plot <- plotTemporalCohortComparisonStandardizedDifference(balance = data)
+    return(plot)
+  })
+  
+  #Cohort Overlap ------------------------
   cohortOverlap <- reactive({
     combisOfTargetComparator <- tidyr::crossing(targetCohortId = cohortIds(),
                                                 comparatorCohortId = cohortIds()) %>% 
@@ -1479,15 +1516,13 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   computeBalance <- shiny::reactive({
+    validate(need((length(cohortIds()) != 1), paste0("Please select atleast two different cohorts.")))
+    validate(need((length(input$databases) >= 1), paste0("Please select atleast one datasource.")))
     covs1 <- getCovariateValueResult(dataSource = dataSource,
                                      cohortIds = cohortIds(),
                                      databaseIds = input$databases,
                                      isTemporal = FALSE)
-    covs2 <- getCovariateValueResult(dataSource = dataSource,
-                                     cohortIds = cohortIds(),
-                                     databaseIds = input$databases,
-                                     isTemporal = FALSE)
-    balance <- compareCohortCharacteristics(covs1, covs2) %>%
+    balance <- compareCohortCharacteristics(covs1, covs1) %>%
       dplyr::mutate(absStdDiff = abs(.data$stdDiff))
     return(balance)
   })
@@ -1503,11 +1538,21 @@ shiny::shinyServer(function(input, output, session) {
       if (nrow(table) > 0) {
         table <- table %>% 
           dplyr::arrange(.data$sortOrder) %>% 
-          dplyr::select(-.data$sortOrder)
+          dplyr::select(-.data$sortOrder) %>% 
+          dplyr::left_join(cohort %>% 
+                             dplyr::select(.data$cohortId, .data$shortName) %>% 
+                             dplyr::rename(targetCohort = .data$shortName),
+                           by = c('cohortId1' = 'cohortId')) %>% 
+          dplyr::left_join(cohort %>% 
+                             dplyr::select(.data$cohortId, .data$shortName) %>% 
+                             dplyr::rename(comparatorCohort = .data$shortName),
+                           by = c('cohortId2' = 'cohortId')) %>% 
+          dplyr::relocate(.data$targetCohort, .data$comparatorCohort) %>% 
+          dplyr::select(-.data$cohortId1, -.data$cohortId2)
       } else {
         return(dplyr::tibble(Note = "No data for covariates that are part of pretty table."))
       }
-      
+       
       options = list(pageLength = 100,
                      searching = TRUE,
                      scrollX = TRUE,
@@ -1520,28 +1565,45 @@ shiny::shinyServer(function(input, output, session) {
       table <- DT::datatable(table,
                              options = options,
                              rownames = FALSE,
-                             colnames = c("Characteristic", "Target", "Comparator","StdDiff"),
+                             colnames = c("Target", "Comparator", "Characteristic", "Target", "Comparator","Std. Diff."),
                              escape = FALSE,
                              filter = c("bottom"),
                              class = "stripe nowrap compact")
       table <- DT::formatStyle(table = table,
-                               columns = 2:3,
+                               columns = 4:5,
                                background = DT::styleColorBar(c(0,1), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
                                backgroundPosition = "center")
       table <- DT::formatStyle(table = table,
-                               columns = 4,
+                               columns = 6,
                                background = styleAbsColorBar(1, "lightblue", "pink"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
                                backgroundPosition = "center")
-      table <- DT::formatRound(table, 4, digits = 2)
+      table <- DT::formatRound(table, 6, digits = 2)
     } else {
       table <- balance %>% 
-        dplyr::select(.data$covariateName, .data$conceptId, .data$mean1, .data$sd1, .data$mean2, .data$sd2, .data$stdDiff)
-      
-      table <- table[order(-abs(table[7])), ]
+        dplyr::select(.data$cohortId1,
+                      .data$cohortId2,
+                      .data$covariateName, 
+                      .data$conceptId, 
+                      .data$mean1, 
+                      .data$sd1, 
+                      .data$mean2, 
+                      .data$sd2, 
+                      .data$stdDiff) %>% 
+        dplyr::left_join(cohort %>% 
+                           dplyr::select(.data$cohortId, .data$shortName) %>% 
+                           dplyr::rename(targetCohort = .data$shortName),
+                         by = c('cohortId1' = 'cohortId')) %>% 
+        dplyr::left_join(cohort %>% 
+                           dplyr::select(.data$cohortId, .data$shortName) %>% 
+                           dplyr::rename(comparatorCohort = .data$shortName),
+                         by = c('cohortId2' = 'cohortId')) %>% 
+        dplyr::relocate(.data$targetCohort, .data$comparatorCohort) %>% 
+        dplyr::select(-.data$cohortId1, -.data$cohortId2) %>% 
+        dplyr::arrange(desc(abs(.data$stdDiff)))
       
       options = list(pageLength = 100,
                      searching = TRUE,
@@ -1552,23 +1614,31 @@ shiny::shinyServer(function(input, output, session) {
                      paging = TRUE,
                      columnDefs = list(
                        truncateStringDef(0, 150),
-                       minCellRealDef(2:6, digits = 2)))
+                       minCellRealDef(4:8, digits = 2)))
       
       table <- DT::datatable(table,
                              options = options,
                              rownames = FALSE,
-                             colnames = c("Covariate Name", "Concept ID", "Mean Target", "SD Target", "Mean Comparator", "SD Comparator", "StdDiff"),
+                             colnames = c("Target", 
+                                          "Comparator", 
+                                          "Covariate Name", 
+                                          "Concept ID", 
+                                          "Mean Target", 
+                                          "SD Target", 
+                                          "Mean Comparator", 
+                                          "SD Comparator", 
+                                          "StdDiff"),
                              escape = FALSE,
                              filter = c("bottom"),
                              class = "stripe nowrap compact")
       table <- DT::formatStyle(table = table,
-                               columns = c(3, 5),
+                               columns = c(5, 7),
                                background = DT::styleColorBar(c(0,1), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
                                backgroundPosition = "center")
       table <- DT::formatStyle(table = table,
-                               columns = 7,
+                               columns = 9,
                                background = styleAbsColorBar(1, "lightblue", "pink"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
@@ -1577,68 +1647,19 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
-  cohortCompare <- shiny::reactive({
-    balance <- computeBalance()
-    
-    balance <- balance %>%
-      replace(is.na(.), 0) %>% 
-      dplyr::filter(.data$cohortId1 != 0) %>% 
-      dplyr::filter(.data$cohortId2 != 0)
-    
-    balance <- balance %>%
-      dplyr::inner_join(
-        balance %>%
-          dplyr::select(.data$cohortId1,
-                        .data$cohortId2) %>%
-          dplyr::distinct() %>%
-          dplyr::arrange(.data$cohortId1,
-                         .data$cohortId2) %>%
-          dplyr::mutate(comparisonGroup = dplyr::row_number())) %>%
-      dplyr::relocate(.data$comparisonGroup)
-    
-    combis <- dplyr::bind_rows(balance %>% 
-                                 dplyr::inner_join(cohort %>% 
-                                                     dplyr::select(.data$cohortId, .data$shortName),
-                                                   by = c('cohortId1' = 'cohortId')) %>% 
-                                 dplyr::select(.data$cohortId1) %>% 
-                                 dplyr::distinct() %>% 
-                                 dplyr::arrange(.data$cohortId1) %>% 
-                                 dplyr::rename(cohortId = .data$cohortId1),
-                               balance %>% 
-                                 dplyr::inner_join(cohort %>% 
-                                                     dplyr::select(.data$cohortId, .data$shortName),
-                                                   by = c('cohortId2' = 'cohortId')) %>% 
-                                 dplyr::select(.data$cohortId2) %>% 
-                                 dplyr::distinct() %>% 
-                                 dplyr::arrange(.data$cohortId2) %>% 
-                                 dplyr::rename(cohortId = .data$cohortId2)) %>% 
-      dplyr::inner_join(y = cohort %>% 
-                          dplyr::select(.data$cohortId, .data$cohortName,.data$shortName))
-    
-    balance <- balance %>% 
-      dplyr::inner_join(y = combis %>% 
-                          dplyr::filter(stringr::str_detect(string = .data$shortName,
-                                                            pattern = 'C')) %>% 
-                          dplyr::rename(targetCohortId = .data$cohortId,
-                                        targetCohortName = .data$cohortName,
-                                        targetCohortShortName = .data$shortName),
-                        by = c("cohortId1" = "targetCohortId")) %>% 
-      dplyr::inner_join(y = combis %>% 
-                          dplyr::filter(stringr::str_detect(string = .data$shortName,
-                                                            pattern = 'C')) %>% 
-                          dplyr::rename(comparatorCohortId = .data$cohortId,
-                                        comparatorCohortName = .data$cohortName,
-                                        comparatorCohortShortName = .data$shortName),
-                        by = c("cohortId2" = "comparatorCohortId")) %>% 
-      dplyr::inner_join(y = cohort %>% 
-                          dplyr::select(.data$cohortName,.data$cohortId), by = c("cohortId1" = "cohortId"))
-    
-    return(balance)
-  })
-  
   output$charComparePlot <- ggiraph::renderggiraph(expr = {
-    validate(need((length(cohortIds()) != 1), paste0("Please select atleast two different cohorts.")))
-    data <- cohortCompare()
+    data <- computeBalance() %>% 
+      dplyr::left_join(cohort %>% 
+                         dplyr::select(.data$cohortId, .data$shortName) %>% 
+                         dplyr::rename(targetCohort = .data$shortName),
+                       by = c('cohortId1' = 'cohortId')) %>% 
+      dplyr::left_join(cohort %>% 
+                         dplyr::select(.data$cohortId, .data$shortName) %>% 
+                         dplyr::rename(comparatorCohort = .data$shortName),
+                       by = c('cohortId2' = 'cohortId')) %>% 
+      dplyr::relocate(.data$targetCohort, .data$comparatorCohort) %>% 
+      dplyr::select(-.data$cohortId1, -.data$cohortId2)
+    # data <- cohortCompare()
     if (nrow(data) == 0) {
       return(dplyr::tibble(Note = "No data for the selected combination."))
     }
@@ -1649,16 +1670,7 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
   })
   
-  # output$databaseInformationPanel <- renderUI({
-  #   row <- database[database$databaseId == input$database, ]
-  #   text <- div(tags$p(tags$h3("ID"), wellPanel(row$databaseId)),
-  #               tags$p(tags$h3("Name"), wellPanel(row$databaseName)),
-  #               tags$p(tags$h3("Description"), wellPanel(row$description)))
-  #   return(text)
-  # })
-  
   output$databaseInformationTable <- DT::renderDataTable(expr = {
-    
     table <- database[, c("databaseId", "databaseName", "description")]
     options = list(pageLength = 20,
                    searching = TRUE,
