@@ -220,16 +220,18 @@ sidebarMenu <-
       )
     },
     shiny::conditionalPanel(
-      condition = "input.tabs!='cohortCounts' & 
-      input.tabs != 'databaseInformation' & 
+      condition = "input.tabs != 'databaseInformation' & 
       input.tabs != 'cohortDescription' &
+      input.tabs != 'cohortCounts' &
       input.tabs != 'phenotypeDescription' & 
       input.tabs != 'cohortOverlap'&
       input.tabs != 'compareCohortCharacterization' &
       input.tabs != 'incidenceRate' &
       input.tabs != 'timeDistribution' &
+      input.tabs != 'indexEventBreakdown' &
       input.tabs != 'cohortCharacterization' &
-      input.tabs != 'temporalCharacterization'",
+      input.tabs != 'temporalCharacterization' &
+      input.tabs != 'visitContext'",
       shinyWidgets::pickerInput(
         inputId = "cohort",
         label = "Cohorts",
@@ -257,18 +259,22 @@ sidebarMenu <-
           actionsBox = TRUE,
           liveSearch = TRUE,
           size = 10,
+          dropupAuto = TRUE,
           liveSearchStyle = "contains",
           liveSearchPlaceholder = "Type here to search",
           virtualScroll = 50)
       )
     ),
     shiny::conditionalPanel(
-      condition = "input.tabs == 'cohortOverlap' |
+      condition = "input.tabs == 'cohortCounts' |
+      input.tabs == 'cohortOverlap' |
       input.tabs == 'compareCohortCharacterization' |
       input.tabs == 'incidenceRate' |
       input.tabs == 'timeDistribution' |
+      input.tabs == 'indexEventBreakdown' |
       input.tabs == 'cohortCharacterization' |
-      input.tabs == 'temporalCharacterization'",
+      input.tabs == 'temporalCharacterization' |
+      input.tabs == 'visitContext'",
       shinyWidgets::pickerInput(
         inputId = "cohorts",
         label = "Cohorts",
@@ -281,6 +287,7 @@ sidebarMenu <-
           liveSearch = TRUE, 
           liveSearchStyle = "contains",
           size = 10,
+          dropupAuto = TRUE,
           liveSearchPlaceholder = "Type here to search",
           virtualScroll = 50)
       )
@@ -354,6 +361,7 @@ bodyTabItems <- shinydashboard::tabItems(
     )
   ),
   shinydashboard::tabItem(tabName = "cohortCounts",
+                          shiny::htmlOutput(outputId = "cohortCountsSelectedCohort"),
                           DT::dataTableOutput("cohortCountsTable"),
                           ),
   shinydashboard::tabItem(
@@ -422,12 +430,14 @@ bodyTabItems <- shinydashboard::tabItems(
                           tags$br(),
                           DT::dataTableOutput("inclusionRuleTable")),
   shinydashboard::tabItem(tabName = "indexEventBreakdown",
+                          shiny::htmlOutput(outputId = "indexEventBreakdownSelectedCohort"),
                           DT::dataTableOutput("breakdownTable")),
   shinydashboard::tabItem(tabName = "visitContext",
+                          shiny::htmlOutput(outputId = "visitContextSelectedCohort"),
                           DT::dataTableOutput("visitContextTable")),
   shinydashboard::tabItem(
     tabName = "cohortCharacterization",
-    htmlOutput(outputId = "characterizationSelectedCohort"),
+    shiny::htmlOutput(outputId = "characterizationSelectedCohort"),
     shiny::radioButtons(
       inputId = "charType",
       label = "",
@@ -435,9 +445,6 @@ bodyTabItems <- shinydashboard::tabItems(
       selected = "Pretty",
       inline = TRUE
     ),
-    div(style = "font-size:15px;font-weight: bold", "Target cohort:"),
-    shiny::textOutput(outputId = "cohortCharacterizationSelectedCohort"),
-    tags$br(),
     DT::dataTableOutput("characterizationTable")
   ),
   shinydashboard::tabItem(
