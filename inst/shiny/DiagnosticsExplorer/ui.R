@@ -316,6 +316,7 @@ bodyTabItems <- shinydashboard::tabItems(
       DT::dataTableOutput(outputId = "phenoTypeDescriptionTable"),
       shiny::conditionalPanel(
         condition = "output.phenotypeRowIsSelected == true",
+        shiny::actionButton("selectPhenotypeButton", label = "Select this phenotype", style = "margin-top: 5px; margin-bottom: 5px;"),
         shiny::tabsetPanel(id = "phenotypeInfoTab",
                            type = "tab",
                            shiny::tabPanel(title = "Description",

@@ -628,8 +628,8 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
   return(data)
 }
 
-getConceptReference <- function(dataSource = .GlobalEnv,
-                                conceptIds) {
+getConceptDetails <- function(dataSource = .GlobalEnv,
+                              conceptIds) {
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertIntegerish(x = conceptIds,
@@ -638,22 +638,20 @@ getConceptReference <- function(dataSource = .GlobalEnv,
                               add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
   if (is(dataSource, "environment")) {
-    data <- get("cohort", envir = dataSource) %>% 
-      dplyr::filter(!is.na(.data$invalidReason)) %>% 
+    data <- get("concept", envir = dataSource) %>% 
       dplyr::filter(.data$conceptId %in% conceptIds)
   } else {
     sql <- "SELECT *
-              FROM  @results_database_schema.concept
-              WHERE invalid_reason IS NULL 
-              {@conceptIds == } ? {}:{AND concept_id IN (@conceptIds)};"
+            FROM @vocabulary_database_schema.concept
+            WHERE concept_id IN (@concept_ids);"
     data <- renderTranslateQuerySql(connection = dataSource$connection,
                                     sql = sql,
-                                    results_database_schema = dataSource$resultsDatabaseSchema,
-                                    conceptIds = conceptIds, 
+                                    vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
+                                    concept_ids = conceptIds, 
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   }
-  return(data %>% dplyr::arrange(.data$conceptId))
+  return(data)
 }
 
 resolveConceptSet <- function(dataSource = .GlobalEnv, conceptSets, source = FALSE) {
