@@ -12,3 +12,6 @@ errorReportR.txt
 .DS_Store
 *.history
 .RDataTmp
+*.log
+*.log
+*.log

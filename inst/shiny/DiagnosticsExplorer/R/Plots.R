@@ -49,13 +49,13 @@ plotTimeDistribution <- function(data,
   
   plotData$tooltip <- c(paste0(plotData$cohortName,
                               "\nDatabase = ", plotData$Database, 
-                              "\nMin = ",  plotData$Min,
-                              "\nMax = ",  plotData$Max,
-                              "\nP25 = ",  plotData$P25,
-                              "\nMedian = ",  plotData$Median,
-                              "\nP75 = ", plotData$P75,
+                              "\nMin = ", scales::comma(plotData$Min),
+                              "\nMax = ", scales::comma(plotData$Max),
+                              "\nP25 = ", scales::comma(plotData$P25),
+                              "\nMedian = ", scales::comma(plotData$Median),
+                              "\nP75 = ", scales::comma(plotData$P75),
                               "\nTime Measure = ",  plotData$TimeMeasure,
-                              "\nAverage = ",  plotData$Average))
+                              "\nAverage = ",  scales::comma(x = plotData$Average, accuracy = 0.01)))
   
   plot <- ggplot2::ggplot(data = plotData) +
     ggplot2::aes(x = .data$Database,
@@ -85,7 +85,7 @@ plotTimeDistribution <- function(data,
                             ggiraph::opts_sizing(width = .7),
                             ggiraph::opts_zoom(max = 5)),
                           width_svg = 12,
-                          height_svg = 0.7 + 0.5 * length(databaseIds))
+                          height_svg = 1.5 + 2*length(unique(databaseIds)))
   return(plot)
 }  
 # how to render using pure plot ly. Plotly does not prefer precomputed data.
@@ -280,8 +280,8 @@ plotIncidenceRate <- function(data,
       plot <- plot + facet_nested(databaseId + shortName ~., scales = scales) 
     }
     spacing <- rep(c(1, rep(0.5, length(unique(plotData$shortName)) - 1)), length(unique(plotData$databaseId)))[-1]
-    plot <- plot + ggplot2::theme(panel.spacing.y = ggplot2::unit(spacing, "lines"),
-                                  strip.background = ggplot2::element_blank())
+    # plot <- plot + ggplot2::theme(panel.spacing.y = ggplot2::unit(spacing, "lines"),
+    #                               strip.background = ggplot2::element_blank())
   } else {
     if (stratifyByAgeGroup) {
       plot <- plot + ggplot2::facet_grid(~ageGroup) 

@@ -52,7 +52,7 @@ if (!exists("shinySettings")) {
     dataFolder <- defaultLocalDataFolder
   }
   cohortBaseUrl <- defaultCohortBaseUrl
-  conceptBaseUrl <- defaultCohortBaseUrl
+  conceptBaseUrl <- defaultConceptBaseUrl
 } else {
   writeLines("Using settings provided by user")
   databaseMode <- !is.null(shinySettings$connectionDetails)
@@ -161,6 +161,11 @@ if (exists("cohort")) {
       cohort$cohortId - cohort$phenotypeId))
 }
 
+if (exists("database")) {
+  database <- get("database") %>% 
+    dplyr::filter(!database == 'CPRD')
+}
+
 if (exists("temporalTimeRef")) {
   temporalCovariateChoices <- get("temporalTimeRef") %>%
     dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
@@ -174,4 +179,24 @@ if (exists("covariateRef")) {
                                     col_types = readr::cols(),
                                     guess_max = min(1e7))
   prettyAnalysisIds <- specifications$analysisId
+}
+
+if (exists("phenotypeDescription")) {
+  phenotypeDescription <- phenotypeDescription %>% 
+    dplyr::mutate(overview = (stringr::str_match(.data$clinicalDescription, 
+                                                 "Overview:(.*?)Presentation:"))[,2] %>%
+                    stringr::str_squish() %>% 
+                    stringr::str_trim()) %>% 
+    dplyr::mutate(clinicalDescription = stringr::str_replace_all(string = .data$clinicalDescription, 
+                                                                 pattern = "Overview:", 
+                                                                 replacement = "<strong>Overview:</strong>")) %>% 
+    dplyr::mutate(clinicalDescription = stringr::str_replace_all(string = .data$clinicalDescription, 
+                                                                 pattern = "Assessment:", 
+                                                                 replacement = "<br/> <strong>Assessment:</strong>")) %>% 
+    dplyr::mutate(clinicalDescription = stringr::str_replace_all(string = .data$clinicalDescription, 
+                                                                 pattern = "Presentation:", 
+                                                                 replacement = "<br/> <strong>Presentation: </strong>")) %>% 
+    dplyr::mutate(clinicalDescription = stringr::str_replace_all(string = .data$clinicalDescription,
+                                                                 pattern = "Plan:",
+                                                                 replacement = "<br/> <strong>Plan: </strong>"))
 }
