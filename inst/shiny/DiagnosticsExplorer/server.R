@@ -75,13 +75,13 @@ shiny::shinyServer(function(input, output, session) {
   
   # Phenotype Description ------------------------------------------------------------------------------
   output$phenoTypeDescriptionTable <- DT::renderDataTable(expr = {
-    data <- phenotypeDescription %>% 
-      dplyr::mutate(literatureReview = dplyr::case_when(!.data$literatureReview %in% c("","0") ~ 
-                                                          paste0("<a href='", .data$literatureReview, "' target='_blank'>", "Link", "</a>"),
-                                                        TRUE ~ "Ongoing")) %>%
-      dplyr::mutate(phenotypeId = paste0("<a href='", paste0(conceptBaseUrl, .data$referentConceptId), "' target='_blank'>", .data$phenotypeId, "</a>")) %>% 
-      dplyr::select(.data$phenotypeId, .data$phenotypeName, .data$overview)
-    
+    data <- phenotypeDescription %>%
+      dplyr::select(.data$phenotypeId, .data$phenotypeName, .data$overview, .data$cohortDefinitions)
+      # dplyr::mutate(literatureReview = dplyr::case_when(!.data$literatureReview %in% c("","0") ~ 
+      #                                                     paste0("<a href='", .data$literatureReview, "' target='_blank'>", "Link", "</a>"),
+      #                                                   TRUE ~ "Ongoing")) %>%
+      # dplyr::mutate(phenotypeId = paste0("<a href='", paste0(conceptBaseUrl, .data$referentConceptId), "' target='_blank'>", .data$phenotypeId, "</a>")) %>% 
+      
     options = list(pageLength = 5,
                    searching = TRUE,
                    ordering = TRUE,
@@ -101,6 +101,66 @@ shiny::shinyServer(function(input, output, session) {
     return(dataTable)
   }, server = TRUE)
   
+  selectedPhenotypeDescriptionRow <- reactive({
+    idx <- input$phenoTypeDescriptionTable_rows_selected
+    if (is.null(idx)) {
+      return(NULL)
+    } else {
+      row <- phenotypeDescription[idx, ]
+      return(row)
+    }
+  })
+  
+  output$phenotypeRowIsSelected <- reactive({
+    return(!is.null(selectedPhenotypeDescriptionRow()))
+  })
+  outputOptions(output, "phenotypeRowIsSelected", suspendWhenHidden = FALSE)
+  
+  output$phenotypeDescriptionText <- shiny::renderUI({
+    row <- selectedPhenotypeDescriptionRow()
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+      text <-  row$clinicalDescription
+      
+      referentConcept <- getConceptDetails(dataSource, row$referentConceptId)
+      if (nrow(referentConcept) > 0) {
+        text <- paste(sprintf("<strong>Referent concept: </strong>%s (concept ID: %s)<br/><br/>",
+                              referentConcept$conceptName,
+                              referentConcept$conceptId),
+                      text)
+      }
+      shiny::HTML(text)
+    }
+  })
+  
+  output$phenotypeLiteratureReviewText <- shiny::renderUI({
+    row <- selectedPhenotypeDescriptionRow()
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+      row <- row %>%
+        dplyr::mutate(literatureReview = dplyr::case_when(!.data$literatureReview %in% c("","0") ~ 
+                                                            paste0("<a href='", .data$literatureReview, "' target='_blank'>", "Link", "</a>"),
+                                                          TRUE ~ "Ongoing"))
+      return(tags$p(HTML(row$literatureReview)))
+    }
+  })
+  
+  output$phenotypeNotesText <- shiny::renderUI({
+    row <- selectedPhenotypeDescriptionRow()
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+      tags$p(row$phenotypeNotes)
+    }
+  })
+  
+  observeEvent(input$selectPhenotypeButton, {
+    shinyWidgets::updatePickerInput(session = session, 
+                                    inputId = "phenotypes", 
+                                    selected = selectedPhenotypeDescriptionRow()$phenotypeName)
+  })
   
   # Cohort Description ---------------------------------------------------------
   output$cohortDescriptionTable <- DT::renderDataTable(expr = {
@@ -307,67 +367,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   )
   
-  # Phenotype description --------------------------------------------------------
-  selectedPhenotypeDescriptionRow <- reactive({
-    idx <- input$phenoTypeDescriptionTable_rows_selected
-    if (is.null(idx)) {
-      return(NULL)
-    } else {
-      subset <- phenotypeSubset()
-      if (nrow(subset) == 0) {
-        return(NULL)
-      }
-      row <- subset[idx, ]
-      return(row)
-    }
-  })
-  
-  output$phenotypeRowIsSelected <- reactive({
-    return(!is.null(selectedPhenotypeDescriptionRow()))
-  })
-  outputOptions(output, "phenotypeRowIsSelected", suspendWhenHidden = FALSE)
-  
-  output$phenotypeDescriptionText <- shiny::renderUI({
-    row <- selectedPhenotypeDescriptionRow()
-    if (is.null(row)) {
-      return(NULL)
-    } else {
-      row <- row %>% 
-        dplyr::mutate(clinicalDescription = stringr::str_replace_all(string = .data$clinicalDescription, 
-                                                                     pattern = "Overview:", 
-                                                                     replacement = "<strong>Overview:</strong>"))  %>% 
-        dplyr::mutate(clinicalDescription = stringr::str_replace_all(string = .data$clinicalDescription, 
-                                                                     pattern = "Assessment:", 
-                                                                     replacement = "<br/> <strong>Assessment:</strong>")) %>% 
-        dplyr::mutate(clinicalDescription = stringr::str_replace_all(string = .data$clinicalDescription, 
-                                                                     pattern = "Presentation:", 
-                                                                     replacement = "<br/> <strong>Presentation: </strong>")) %>% 
-        dplyr::mutate(clinicalDescription = stringr::str_replace_all(string = .data$clinicalDescription,
-                                                                     pattern = "Plan:",
-                                                                     replacement = "<br/> <strong>Plan: </strong>"))
-      
-      HTML(row$clinicalDescription)
-    }
-  })
-  
-  output$phenotypeLiteratureReviewText <- shiny::renderUI({
-    row <- selectedPhenotypeDescriptionRow()
-    if (is.null(row)) {
-      return(NULL)
-    } else {
-      tags$p(row$literatureReview)
-    }
-  })
-  
-  output$phenotypeNotesText <- shiny::renderUI({
-    row <- selectedPhenotypeDescriptionRow()
-    if (is.null(row)) {
-      return(NULL)
-    } else {
-      tags$p(row$phenotypeNotes)
-    }
-  })
-  
+ 
   # Cohort Counts --------------------------------------------------------------------------- 
   cohortCounts <- reactive({
     data <- getCohortCountResult(dataSource = dataSource,
@@ -1061,28 +1061,15 @@ shiny::shinyServer(function(input, output, session) {
     return(dataTable)
   }, server = TRUE)
   
-  visitContextTableData <- shiny::reactive({
-    data <- getVisitContextResults(dataSource = dataSource,
-                                   cohortIds = cohortIds(), 
-                                   databaseIds = input$databases)
-    if ('shortName' %in% colnames(cohort)) {
-      data <- data %>%  dplyr::inner_join(cohort %>% 
-                                            dplyr::filter(.data$phenotypeId == phenotypeId()) %>%
-                                            dplyr::select(.data$cohortId, .data$shortName, .data$cohortName))
-    } else {
-      data <- data %>%  dplyr::inner_join(cohort %>% 
-                                            dplyr::filter(.data$phenotypeId == phenotypeId()) %>%
-                                            dplyr::select(.data$cohortId) %>%
-                                            dplyr::distinct() %>% 
-                                            dplyr::mutate(shortName = paste0('C', dplyr::row_number())))
-    }
-    return(data)
-  })
-  
+  # Visit Context ---------------------------------------------------------------------------------------------
   output$visitContextTable <- DT::renderDataTable(expr = {
     validate(need(length(input$databases) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
-    data <- visitContextTableData()
+    data <- getVisitContextResults(dataSource = dataSource,
+                                   cohortIds = cohortIds(), 
+                                   databaseIds = input$databases) %>%  
+      dplyr::inner_join(dplyr::select(cohort, .data$cohortId, .data$shortName), by = "cohortId")
+    
     if (nrow(data) == 0) {
       return(dplyr::tibble(Note = paste0("No data available for selected databases and cohort")))
     }
@@ -1096,6 +1083,7 @@ shiny::shinyServer(function(input, output, session) {
                                          ".\n Please unselect them.")))
     }
     
+    
     maxSubjects <- max(data$subjects)
     visitContextReference <-  expand.grid(visitContext = c("Before", "During visit", "On visit start", "After"), 
                                           visitConceptName = unique(data$visitConceptName),
@@ -1103,7 +1091,7 @@ shiny::shinyServer(function(input, output, session) {
       tidyr::tibble()
     
     table <- visitContextReference %>% 
-      dplyr::inner_join(data, by = c("visitConceptName", "visitContext", "databaseId")) %>% 
+      dplyr::left_join(data, by = c("visitConceptName", "visitContext", "databaseId")) %>% 
       dplyr::select(.data$visitConceptName, .data$visitContext, .data$subjects, .data$databaseId, .data$shortName) %>% 
       dplyr::mutate(visitContext = paste0(.data$databaseId, "_", .data$visitContext)) %>% 
       dplyr::select(-.data$databaseId) %>%
