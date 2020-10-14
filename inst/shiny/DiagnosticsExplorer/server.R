@@ -195,8 +195,7 @@ shiny::shinyServer(function(input, output, session) {
   # Cohort Description ---------------------------------------------------------
   output$cohortDescriptionTable <- DT::renderDataTable(expr = {
     data <- cohortSubset() %>%
-      dplyr::select(.data$cohortId, .data$cohortName) %>% 
-      dplyr::filter(.data$cohortId %in% cohortIds())
+      dplyr::select(.data$cohortId, .data$cohortName) 
 
     options = list(pageLength = 10,
                    searching = TRUE,

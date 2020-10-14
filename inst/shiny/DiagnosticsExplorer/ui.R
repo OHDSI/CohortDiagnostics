@@ -273,8 +273,7 @@ sidebarMenu <-
       )
     ),
     shiny::conditionalPanel(
-      condition = "input.tabs == 'cohortDescription' |
-      input.tabs == 'cohortCounts' |
+      condition = "input.tabs == 'cohortCounts' |
       input.tabs == 'cohortOverlap' |
       input.tabs == 'compareCohortCharacterization' |
       input.tabs == 'incidenceRate' |
@@ -562,6 +561,13 @@ body <- shinydashboard::dashboardBody(bodyTabItems)
 
 
 #main
-shinydashboard::dashboardPage(header = header,
-                              sidebar = sidebar,
-                              body = body)
+shinydashboard::dashboardPage(tags$head(
+  tags$style(HTML("
+      th, td {
+        padding-right: 10px;
+      }
+
+    "))),
+  header = header,
+  sidebar = sidebar,
+  body = body)
