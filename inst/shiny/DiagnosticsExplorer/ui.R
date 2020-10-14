@@ -326,6 +326,9 @@ bodyTabItems <- shinydashboard::tabItems(
                            shiny::tabPanel(title = "Literature Review",
                                            tags$br(),
                                            shiny::htmlOutput(outputId = "phenotypeLiteratureReviewText")),
+                           shiny::tabPanel(title = "Evaluation",
+                                           tags$br(),
+                                           shiny::htmlOutput(outputId = "phenotypeEvaluationText")),
                            shiny::tabPanel(title = "Notes",
                                            tags$br(),
                                            shiny::htmlOutput(outputId = "phenotypeNotesText"))))

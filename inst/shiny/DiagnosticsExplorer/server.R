@@ -5,6 +5,7 @@ source("R/Tables.R")
 source("R/Plots.R")
 source("R/Results.R")
 source("R/ConceptRecommender.R")
+source("R/GitHubScraper.R")
 
 shiny::shinyServer(function(input, output, session) {
   
@@ -77,11 +78,7 @@ shiny::shinyServer(function(input, output, session) {
   output$phenoTypeDescriptionTable <- DT::renderDataTable(expr = {
     data <- phenotypeDescription %>%
       dplyr::select(.data$phenotypeId, .data$phenotypeName, .data$overview, .data$cohortDefinitions)
-      # dplyr::mutate(literatureReview = dplyr::case_when(!.data$literatureReview %in% c("","0") ~ 
-      #                                                     paste0("<a href='", .data$literatureReview, "' target='_blank'>", "Link", "</a>"),
-      #                                                   TRUE ~ "Ongoing")) %>%
-      # dplyr::mutate(phenotypeId = paste0("<a href='", paste0(conceptBaseUrl, .data$referentConceptId), "' target='_blank'>", .data$phenotypeId, "</a>")) %>% 
-      
+
     options = list(pageLength = 5,
                    searching = TRUE,
                    ordering = TRUE,
@@ -139,11 +136,26 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(row)) {
       return(NULL)
     } else {
-      row <- row %>%
-        dplyr::mutate(literatureReview = dplyr::case_when(!.data$literatureReview %in% c("","0") ~ 
-                                                            paste0("<a href='", .data$literatureReview, "' target='_blank'>", "Link", "</a>"),
-                                                          TRUE ~ "Ongoing"))
-      return(tags$p(HTML(row$literatureReview)))
+      files <- listFilesInGitHub(phenotypeId = row$phenotypeId, subFolder = "literature")
+      if (nrow(files) == 0) {
+        return("Nothing here (yet)")
+      } else {
+        return(HTML(paste(files$html, sep = "<br/>")))
+      }
+    }
+  })
+  
+  output$phenotypeEvaluationText <- shiny::renderUI({
+    row <- selectedPhenotypeDescriptionRow()
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+      files <- listFilesInGitHub(phenotypeId = row$phenotypeId, subFolder = "evaluation")
+      if (nrow(files) == 0) {
+        return("Nothing here (yet)")
+      } else {
+        return(HTML(paste(files$html, sep = "<br/>")))
+      }
     }
   })
   
@@ -152,7 +164,12 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(row)) {
       return(NULL)
     } else {
-      tags$p(row$phenotypeNotes)
+      files <- listFilesInGitHub(phenotypeId = row$phenotypeId, subFolder = "notes")
+      if (nrow(files) == 0) {
+        return("Nothing here (yet)")
+      } else {
+        return(HTML(paste(files$html, sep = "<br/>")))
+      }
     }
   })
   
