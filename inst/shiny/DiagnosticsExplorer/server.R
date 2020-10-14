@@ -1707,6 +1707,7 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
+  # Infoboxes ------------------------------------------------------------------------
   showInfoBox <- function(title, htmlFileName) {
     shiny::showModal(shiny::modalDialog(
       title = title,
@@ -1737,6 +1738,10 @@ shiny::shinyServer(function(input, output, session) {
     showInfoBox("Orphan (Source) Concepts", "html/orphanConcepts.html")
   })
   
+  shiny::observeEvent(input$conceptSetDiagnosticsInfo, {
+    showInfoBox("Concept Set Diagnostics", "html/conceptSetDiagnostics.html")
+  })
+
   shiny::observeEvent(input$inclusionRuleStatsInfo, {
     showInfoBox("Inclusion Rule Statistics", "html/inclusionRuleStats.html")
   })
@@ -1764,6 +1769,8 @@ shiny::shinyServer(function(input, output, session) {
   shiny::observeEvent(input$compareCohortCharacterizationInfo, {
     showInfoBox("Compare Cohort Characteristics", "html/compareCohortCharacterization.html")
   })
+  
+  # Cohort labels --------------------------------------------------------------------------------------------
   
   targetCohortCount <- shiny::reactive({
     targetCohortWithCount <- getCohortCountResult(dataSource = dataSource,
