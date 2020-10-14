@@ -28,7 +28,19 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   phenotypeId <- shiny::reactive({
-    return(phenotypeDescription$phenotypeId[phenotypeDescription$phenotypeName %in% input$phenotypes])
+    return(phenotypeDescription$phenotypeId[phenotypeDescription$phenotypeName == input$phenotypes])
+  })
+  
+  shiny::observe({
+    idx <- which(phenotypeDescription$phenotypeName == input$phenotypes)
+    isolate({
+      proxy <- DT::dataTableProxy(outputId = "phenoTypeDescriptionTable",
+                                  session = session,
+                                  deferUntilFlush = FALSE)
+      DT::selectRows(proxy, idx)
+      DT::selectPage(proxy, which(input$phenoTypeDescriptionTable_rows_all == idx) %/% 
+                       input$phenoTypeDescriptionTable_state$length + 1)
+    })
   })
   
   cohortSubset <- shiny::reactive({
@@ -84,7 +96,8 @@ shiny::shinyServer(function(input, output, session) {
                    ordering = TRUE,
                    paging = TRUE,
                    info = TRUE,
-                   searchHighlight = TRUE)
+                   searchHighlight = TRUE,
+                   stateSave = TRUE)
     
     dataTable <- DT::datatable(data,
                                options = options,
