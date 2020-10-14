@@ -468,6 +468,25 @@ bulkUploadTable <- function(connectionDetails,
   writeLines(paste("Uploading data took", signif(delta, 3), attr(delta, "units")))
 }
 
+convertMdToHtml <- function(markdown) {
+  mdFile <- tempfile(fileext = ".md")
+  htmlFile <- tempfile(fileext = ".html")
+  SqlRender::writeSql(markdown, mdFile)
+  rmarkdown::render(input = mdFile,
+                    output_format = "html_fragment ",
+                    output_file = htmlFile,
+                    clean = TRUE,
+                    quiet = TRUE)
+  html <- SqlRender::readSql(htmlFile) 
+  unlink(mdFile)
+  unlink(htmlFile)
+  # Can't find a way to disable "smart quotes", so removing them afterwards:
+  html <- stringi::stri_escape_unicode(html)
+  html <- gsub("\\\\u00e2\\\\u20ac\\\\u0153|\\\\u00e2\\\\u20ac\\\\u009d", "'", html)
+  html <- stringi::stri_unescape_unicode(html)
+  return(html)
+}
+
 #' Upload print-friendly cohort representations to the database server.
 #' 
 #' @description 
@@ -485,6 +504,8 @@ uploadPrintFriendly <- function(connectionDetails = NULL,
   
   startTime <- Sys.time()
   ensure_installed("CirceR")
+  ensure_installed("rmarkdown")
+  ensure_installed("stringi")
   
   connection <- DatabaseConnector::connect(connectionDetails)
   on.exit(DatabaseConnector::disconnect(connection))
@@ -501,11 +522,11 @@ uploadPrintFriendly <- function(connectionDetails = NULL,
   cohort$html <- ""
   pb <- pb <- txtProgressBar(style = 3)
   for (i in 1:nrow(cohort)) {
-    expression <- CirceR::cohortExpressionFromJson(cohort$json[i])
     tryCatch({
+      expression <- CirceR::cohortExpressionFromJson(cohort$json[i])
       expressionMarkdown <- CirceR::cohortPrintFriendly(expression)
       conceptSetListmarkdown <- CirceR::conceptSetListPrintFriendly(expression$conceptSets)
-      cohort$html[i] <- markdown::renderMarkdown(file = NULL, text = c(expressionMarkdown, conceptSetListmarkdown))
+      cohort$html[i] <- convertMdToHtml(paste(expressionMarkdown, conceptSetListmarkdown, sep = "\n\n"))
     }, error = function(e) {
       ParallelLogger::logWarn("Error generating print-friendly for cohort ID ", cohort$cohortId[i], ": ", e$message)
       cohort$html[i] <- "Could not generate print-friendly"
