@@ -460,15 +460,15 @@ plotCohortOverlap <- function(data,
                                                       accuracy = 1),
                                       ")"))  %>% 
     dplyr::mutate(tooltip = paste0("Database: ", .data$databaseId,
-								   "\n",
+                                   "\n",
                                    "\n Target Cohort (T)",
                                    "\n",space,space,space,space,.data$targetShortName,space,.data$targetCohortName,
                                    "\n",space,space,space,space,.data$targetShortName,' only: ',.data$tOnlyString,
-								   "\n",
+                                   "\n",
                                    "\n Comparator Cohort (T)",
                                    "\n",space,space,space,space,.data$comparatorShortName,space,.data$comparatorCohortName,
                                    "\n",space,space,space,space,.data$comparatorShortName,' only: ',.data$cOnlyString,
-								   "\n",
+                                   "\n",
                                    "\nBoth T & C: ", .data$bothString)) %>%
     dplyr::select(.data$targetShortName,
                   .data$comparatorShortName,
@@ -532,13 +532,19 @@ plotTemporalCohortComparisonStandardizedDifference <- function(balance,
       dplyr::filter(.data$domain == !!domain)
   }
   validate(need(nrow(balance) != 0, "No data for current selection"))
-  balance$tooltip <- c(paste("Covariate Name:", balance$covariateName,
-                             "\nDomain:", balance$domain,
-                             "\nTemporal Choice:", balance$temporalChoices,
-                             "\nDatabase: ", balance$databaseId,
-                             "\nMean Target: ", scales::percent(balance$mean1, accuracy = 0.01),
-                             "\nMean Comparator:", scales::percent(balance$mean2, accuracy = 0.01),
-                             "\nStd diff.:", scales::percent(balance$stdDiff, accuracy = 0.01)))
+  space <- "&nbsp"
+  balance$tooltip <- c(paste(
+    "Database: ", balance$databaseId,
+    "\nCovariate Name:", balance$covariateName,
+    "\nDomain:", balance$domain,
+    "\n",
+    "\n Target Cohort (T)",
+    "\n",space,space,space,space,balance$targetCohortShortName,space,balance$targetCohortName,
+    "\n",space,space,space,space,balance$targetCohortShortName, scales::percent(balance$mean1, accuracy = 0.01),
+    "\n",
+    "\n Comparator Cohort (T)",
+    "\n",space,space,space,space,balance$comparatorCohortShortName,space,balance$comparatorCohortName,
+    "\n",space,space,space,space,balance$comparatorCohortShortName, scales::percent(balance$stdDiff, accuracy = 0.01)))
   
   # Code used to generate palette:
   # writeLines(paste(RColorBrewer::brewer.pal(n = length(balance$temporalChoices), name = "Dark2"), collapse = "\", \""))
@@ -565,7 +571,7 @@ plotTemporalCohortComparisonStandardizedDifference <- function(balance,
     ggplot2::scale_x_continuous("") +
     ggplot2::scale_y_continuous("") +
     ggplot2::scale_color_manual("temporalChoices", values = colors) +
-    ggplot2::facet_grid(databaseId + targetCohort ~ comparatorCohort)
+    ggplot2::facet_grid(databaseId + targetCohortShortName ~ comparatorCohortShortName)
   
   plot <- ggiraph::girafe(ggobj = plot,
                           options = list(

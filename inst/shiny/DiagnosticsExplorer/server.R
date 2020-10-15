@@ -1450,14 +1450,15 @@ shiny::shinyServer(function(input, output, session) {
                     .data$mean2,
                     .data$stdDiff) %>% 
       dplyr::left_join(cohort %>% 
-                         dplyr::select(.data$cohortId, .data$shortName) %>% 
-                         dplyr::rename(targetCohort = .data$shortName),
+                         dplyr::select(.data$cohortId, .data$shortName, .data$cohortName) %>% 
+                         dplyr::rename(targetCohortShortName = .data$shortName,
+                                       targetCohortName = .data$cohortName),
                        by = c('cohortId1' = 'cohortId')) %>% 
       dplyr::left_join(cohort %>% 
-                         dplyr::select(.data$cohortId, .data$shortName) %>% 
-                         dplyr::rename(comparatorCohort = .data$shortName),
+                         dplyr::select(.data$cohortId, .data$shortName, .data$cohortName) %>% 
+                         dplyr::rename(comparatorCohortShortName = .data$shortName,
+                                       comparatorCohortName = .data$cohortName),
                        by = c('cohortId2' = 'cohortId')) %>% 
-      dplyr::relocate(.data$targetCohort, .data$comparatorCohort) %>% 
       dplyr::select(-.data$cohortId1, -.data$cohortId2) %>% 
       dplyr::inner_join(temporalCovariateChoices) %>% 
       dplyr::select(-.data$timeId) %>% 

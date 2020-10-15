@@ -13,4 +13,3 @@ CohortDiagnostics::launchDiagnosticsExplorer(connectionDetails = connectionDetai
                                              conceptBaseUrl = "https://epi.jnj.com/atlas/#/concept/", 
                                              runOverNetwork = TRUE
 )
-
