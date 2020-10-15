@@ -1175,8 +1175,8 @@ shiny::shinyServer(function(input, output, session) {
     
   }, server = TRUE)
   
-  # characterization --------------------------------------------------
-  characterizationTable <- shiny::reactive({
+  # Characterization --------------------------------------------------
+  output$characterizationTable <- DT::renderDataTable(expr = {
     validate(need(length(input$databases) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
     if (input$charType == "Pretty") {
@@ -1189,21 +1189,6 @@ shiny::shinyServer(function(input, output, session) {
                                     cohortIds = cohortIds(),
                                     databaseIds = input$databases,
                                     isTemporal = FALSE)
-    if ('shortName' %in% colnames(cohort)) {
-      data <- data %>%  dplyr::inner_join(cohort %>% 
-                                            dplyr::filter(.data$phenotypeId == phenotypeId()) %>%
-                                            dplyr::select(.data$cohortId, .data$shortName, .data$cohortName))
-    } else {
-      data <- data %>%  dplyr::inner_join(cohort %>% 
-                                            dplyr::filter(.data$phenotypeId == phenotypeId()) %>%
-                                            dplyr::select(.data$cohortId, .data$cohortName) %>%
-                                            dplyr::distinct() %>% 
-                                            dplyr::mutate(shortName = paste0('C', dplyr::row_number())))
-    }
-  })
-  
-  output$characterizationTable <- DT::renderDataTable({
-    data <- characterizationTable()
     if (nrow(data) == 0) {
       return(dplyr::tibble(Note = paste0("No data available for selected databases and cohorts")))
     }
@@ -1259,17 +1244,10 @@ shiny::shinyServer(function(input, output, session) {
                            values_from = "value" ,
                            names_sep = "_",
                            names_prefix = "Value_")
-      if ('shortName' %in% colnames(cohort)) {
         table <- table %>%  dplyr::inner_join(cohort %>% 
                                                 dplyr::filter(.data$phenotypeId == phenotypeId()) %>%
-                                                dplyr::select(.data$cohortId, .data$shortName))
-      } else {
-        table <- table %>%  dplyr::inner_join(cohort %>% 
-                                                dplyr::filter(.data$phenotypeId == phenotypeId()) %>%
-                                                dplyr::select(.data$cohortId) %>%
-                                                dplyr::distinct() %>% 
-                                                dplyr::mutate(shortName = paste0('C', dplyr::row_number())))
-      }
+                                                dplyr::select(.data$cohortId, .data$shortName),
+                                              by = "cohortId")
       table <- table %>%
         dplyr::relocate(.data$shortName, .data$characteristic) %>% 
         dplyr::select(-.data$cohortId)
@@ -1283,7 +1261,7 @@ shiny::shinyServer(function(input, output, session) {
                      paging = TRUE,
                      columnDefs = list(
                        truncateStringDef(0, 150),
-                       minCellPercentDef(1:length(databaseIds))
+                       minCellPercentDef(1 + 1:length(databaseIds))
                      ))
       sketch <- htmltools::withTags(table(
         class = "display",
@@ -1308,7 +1286,7 @@ shiny::shinyServer(function(input, output, session) {
                              class = "stripe nowrap compact")
       
       table <- DT::formatStyle(table = table,
-                               columns = 3 + (1:length(databaseIds)),
+                               columns = 2 + (1:length(databaseIds)),
                                background = DT::styleColorBar(c(0,1), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
@@ -1330,18 +1308,10 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::relocate("cohortId", "covariateName", "conceptId") %>% 
         dplyr::distinct()
       
-      if ('shortName' %in% colnames(cohort)) {
-        data <- data %>%  dplyr::inner_join(cohort %>% 
-                                              dplyr::filter(.data$phenotypeId == phenotypeId()) %>%
-                                              dplyr::select(.data$cohortId, .data$shortName))
-      } else {
-        data <- data %>%  dplyr::inner_join(cohort %>% 
-                                              dplyr::filter(.data$phenotypeId == phenotypeId()) %>%
-                                              dplyr::select(.data$cohortId) %>%
-                                              dplyr::distinct() %>% 
-                                              dplyr::mutate(shortName = paste0('C', dplyr::row_number())))
-      }
-      
+      data <- data %>%  dplyr::inner_join(cohort %>% 
+                                            dplyr::filter(.data$phenotypeId == phenotypeId()) %>%
+                                            dplyr::select(.data$cohortId, .data$shortName),
+                                          by = "cohortId")
       data <- data %>%
         dplyr::select(-.data$cohortId) %>% 
         dplyr::relocate(.data$shortName, .data$covariateName, .data$conceptId)
@@ -1356,8 +1326,8 @@ shiny::shinyServer(function(input, output, session) {
                      ordering = TRUE,
                      paging = TRUE,
                      columnDefs = list(
-                       truncateStringDef(0, 150),
-                       minCellRealDef(2:(2 + length(databaseIds)*2), digits = 3)))
+                       truncateStringDef(1, 150),
+                       minCellRealDef(2 + 1:(length(databaseIds)*2), digits = 3)))
       sketch <- htmltools::withTags(table(
         class = "display",
         thead(
