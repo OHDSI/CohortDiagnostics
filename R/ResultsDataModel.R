@@ -469,11 +469,12 @@ bulkUploadTable <- function(connectionDetails,
 }
 
 convertMdToHtml <- function(markdown) {
+  markdown <- gsub("'", "%sq%", markdown)
   mdFile <- tempfile(fileext = ".md")
   htmlFile <- tempfile(fileext = ".html")
   SqlRender::writeSql(markdown, mdFile)
   rmarkdown::render(input = mdFile,
-                    output_format = "html_fragment ",
+                    output_format = "html_fragment",
                     output_file = htmlFile,
                     clean = TRUE,
                     quiet = TRUE)
@@ -481,9 +482,10 @@ convertMdToHtml <- function(markdown) {
   unlink(mdFile)
   unlink(htmlFile)
   # Can't find a way to disable "smart quotes", so removing them afterwards:
-  html <- stringi::stri_escape_unicode(html)
-  html <- gsub("\\\\u00e2\\\\u20ac\\\\u0153|\\\\u00e2\\\\u20ac\\\\u009d", "'", html)
-  html <- stringi::stri_unescape_unicode(html)
+  html <- gsub("%sq%", "'", html)
+  # html <- stringi::stri_escape_unicode(html)
+  # html <- gsub("\\\\u00e2\\\\u20ac\\\\u02dc|\\\\u00e2\\\\u20ac\\\\u2122", "'", html)
+  # html <- stringi::stri_unescape_unicode(html)
   return(html)
 }
 
@@ -505,7 +507,7 @@ uploadPrintFriendly <- function(connectionDetails = NULL,
   startTime <- Sys.time()
   ensure_installed("CirceR")
   ensure_installed("rmarkdown")
-  ensure_installed("stringi")
+  # ensure_installed("stringi")
   
   connection <- DatabaseConnector::connect(connectionDetails)
   on.exit(DatabaseConnector::disconnect(connection))

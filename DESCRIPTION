@@ -43,7 +43,6 @@ Suggests:
   scales,
   knitr,
   rmarkdown,
-  stringi,
   Eunomia,
   testthat,
   RSQLite (>= 2.2.1),
