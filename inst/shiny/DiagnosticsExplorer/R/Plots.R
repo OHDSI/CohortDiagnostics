@@ -524,6 +524,7 @@ plotCohortOverlap <- function(data,
 }  
 
 plotTemporalCohortComparisonStandardizedDifference <- function(balance){
+  validate(need(nrow(balance) != 0, "No data for current selection"))
   balance$tooltip <- c(paste("Covariate Name:", balance$covariateName,
                              "\nDatabase: ", balance$databaseId,
                              "\nMean Target: ", scales::percent(balance$mean1, accuracy = 0.01),

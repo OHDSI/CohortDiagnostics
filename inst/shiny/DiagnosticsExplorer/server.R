@@ -1427,6 +1427,17 @@ shiny::shinyServer(function(input, output, session) {
   
   output$compareTemporalCharacterizationPlot <- ggiraph::renderggiraph(expr = {
     data <- temporalCharacterizationTable()
+    if (input$timeIdChoicesFilter != 'All') {
+      data <- data %>% 
+        dplyr::filter(.data$timeId %in% (temporalCovariateChoices %>% 
+                                                    dplyr::filter(choices %in% 
+                                                                    input$timeIdChoicesFilter) %>% 
+                                                    dplyr::pull(.data$timeId)))
+    }
+    
+    if (nrow(data) == 0) {
+      return(dplyr::tibble(Note = "No data for the selected combination."))
+    }
     data <- compareTemporalCohortCharacteristics(characteristics1 = data, characteristics2 = data) %>% 
       dplyr::select(.data$databaseId,
                     .data$cohortId1, 
@@ -1452,9 +1463,17 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(-.data$timeId) %>% 
       dplyr::rename(temporalChoices = .data$choices)
     
+    domains <- c("condition", "device", "drug", "measurement", "observation", "procedure")
+    data$domain <- tolower(stringr::str_extract(data$covariateName, "[a-z]+"))
+    data$domain[!data$domain %in% domains] <- "other"
+    if (input$temporalDomainId != "all") {
+      data <- data %>%
+        dplyr::filter(.data$domain == !!input$temporalDomainId)
+    }
     if (nrow(data) == 0) {
       return(dplyr::tibble(Note = "No data for the selected combination."))
     }
+    
     plot <- plotTemporalCohortComparisonStandardizedDifference(balance = data)
     return(plot)
   })
