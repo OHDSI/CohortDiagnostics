@@ -18,6 +18,14 @@ addInfo <- function(item, infoId) {
   return(item)
 }
 
+cohortReference <- function(outputId) {
+  shinydashboard::box(# title = "Reference",
+                      status = "warning",
+                      width = "100%",
+                      shiny::uiOutput(outputId = outputId)
+  )
+}
+
 if (!exists("phenotypeDescription")) {
   appTitle <- cohortDiagnosticModeDefaultTitle
 } else {
@@ -378,12 +386,12 @@ bodyTabItems <- shinydashboard::tabItems(
     )
   ),
   shinydashboard::tabItem(tabName = "cohortCounts",
-                          shiny::htmlOutput(outputId = "cohortCountsSelectedCohort"),
+                          cohortReference("cohortCountsSelectedCohort"),
                           DT::dataTableOutput("cohortCountsTable"),
   ),
   shinydashboard::tabItem(
     tabName = "incidenceRate",
-    shiny::uiOutput(outputId = "incidenceRateSelectedCohort"),
+    cohortReference("incidenceRateSelectedCohort"),
     shinydashboard::box(
       title = "Incidence Rate",
       width = NULL,
@@ -413,7 +421,7 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "timeDistribution",
-    shiny::uiOutput(outputId = "timeDistSelectedCohort"),
+    cohortReference("timeDistSelectedCohort"),
     shinydashboard::box(
       title = "Time Distributions",
       width = NULL,
@@ -451,19 +459,17 @@ bodyTabItems <- shinydashboard::tabItems(
                           ),
                           DT::dataTableOutput("conceptSetDiagnosticsTable")),
   shinydashboard::tabItem(tabName = "inclusionRuleStats",
-                          div(style = "font-size:15px;font-weight: bold", "Target cohort:"),
-                          shiny::htmlOutput(outputId = "inclusionRuleStatSelectedCohort"),
-                          tags$br(),
+                          cohortReference("inclusionRuleStatSelectedCohort"),
                           DT::dataTableOutput("inclusionRuleTable")),
   shinydashboard::tabItem(tabName = "indexEventBreakdown",
-                          shiny::htmlOutput(outputId = "indexEventBreakdownSelectedCohort"),
+                          cohortReference("indexEventBreakdownSelectedCohort"),
                           DT::dataTableOutput("breakdownTable")),
   shinydashboard::tabItem(tabName = "visitContext",
-                          shiny::htmlOutput(outputId = "visitContextSelectedCohort"),
+                          cohortReference("visitContextSelectedCohort"),
                           DT::dataTableOutput("visitContextTable")),
   shinydashboard::tabItem(
     tabName = "cohortCharacterization",
-    shiny::htmlOutput(outputId = "characterizationSelectedCohort"),
+    cohortReference("characterizationSelectedCohort"),
     shiny::radioButtons(
       inputId = "charType",
       label = "",
@@ -475,7 +481,7 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "temporalCharacterization",
-    htmlOutput(outputId = "temporalCharacterizationSelectedCohort"),
+    cohortReference("temporalCharacterizationSelectedCohort"),
     shiny::radioButtons(
       inputId = "tempCharType",
       label = "",
@@ -497,7 +503,7 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "cohortOverlap",
-    shiny::uiOutput(outputId = "cohortOverlapSelectedCohort"),
+    cohortReference("cohortOverlapSelectedCohort"),
     shinydashboard::box(
       title = "Cohort Overlap (Subjects)",
       width = NULL,
@@ -511,15 +517,10 @@ bodyTabItems <- shinydashboard::tabItems(
       ),
       ggiraph::ggiraphOutput("overlapPlot",height = "100%")
     )
-    # shinydashboard::box(
-    #   title = "Cohort Overlap Statistics",
-    #   width = NULL,
-    #   status = "primary",
-    #   DT::dataTableOutput("overlapTable")
-    # )
   ),
   shinydashboard::tabItem(
     tabName = "compareCohortCharacterization",
+    cohortReference("cohortCharCompareSelectedCohort"),
     shiny::radioButtons(
       inputId = "charCompareType",
       label = "",
@@ -556,7 +557,6 @@ bodyTabItems <- shinydashboard::tabItems(
     )
   ),
   shinydashboard::tabItem(tabName = "databaseInformation",
-                          # uiOutput("databaseInformationPanel")
                           DT::dataTableOutput("databaseInformationTable"))
 )
 

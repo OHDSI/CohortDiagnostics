@@ -157,15 +157,9 @@ if (databaseMode) {
 
 if (exists("cohort")) {
   cohort <- get("cohort") %>%
-    dplyr::mutate(cohortName = paste0(
-      "C",
-      cohort$cohortId - cohort$phenotypeId,
-      ": ",
-      purrr::map_chr(stringr::str_split(cohort$cohortName, "]"), 2)
-    ),
-    shortName = paste0(
-      "C",
-      cohort$cohortId - cohort$phenotypeId))
+    dplyr::mutate(cohortName = stringr::str_remove(.data$cohortName, "\\[.*?\\] "),
+                  shortName = paste0("C", .data$cohortId - .data$phenotypeId)) %>%
+    dplyr::mutate(compoundName = paste(shortName, cohortName, sep = ": "))
 }
 
 if (exists("database")) {

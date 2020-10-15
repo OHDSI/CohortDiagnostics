@@ -10,15 +10,11 @@ source("R/GitHubScraper.R")
 shiny::shinyServer(function(input, output, session) {
   
   cohortId <- shiny::reactive({
-    return(cohort$cohortId[cohort$cohortName == input$cohort])
-  })
-  
-  comparatorCohortId <- shiny::reactive({
-    return(cohort$cohortId[cohort$cohortName == input$comparator])
+    return(cohort$cohortId[cohort$compoundName == input$cohort])
   })
   
   cohortIds <- shiny::reactive({
-    return(cohort$cohortId[cohort$cohortName  %in% input$cohorts])
+    return(cohort$cohortId[cohort$compoundName  %in% input$cohorts])
   })
   
   timeId <- shiny::reactive({
@@ -70,7 +66,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   shiny::observe({
-    subset <- cohortSubset()$cohortName
+    subset <- cohortSubset()$compoundName
     shinyWidgets::updatePickerInput(session = session,
                                     inputId = "cohort",
                                     choicesOpt = list(style = rep_len("color: black;", 999)),
@@ -78,7 +74,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   shiny::observe({
-    subset <- cohortSubset()$cohortName
+    subset <- cohortSubset()$compoundName
     shinyWidgets::updatePickerInput(session = session,
                                     inputId = "cohorts",
                                     choicesOpt = list(style = rep_len("color: black;", 999)),
@@ -195,7 +191,7 @@ shiny::shinyServer(function(input, output, session) {
   # Cohort Description ---------------------------------------------------------
   output$cohortDescriptionTable <- DT::renderDataTable(expr = {
     data <- cohortSubset() %>%
-      dplyr::select(.data$cohortId, .data$cohortName) 
+      dplyr::select(label = .data$shortName, .data$cohortId, .data$cohortName) 
 
     options = list(pageLength = 10,
                    searching = TRUE,
@@ -1495,7 +1491,7 @@ shiny::shinyServer(function(input, output, session) {
                                                 comparatorCohortId = cohortIds()) %>% 
       dplyr::filter(!.data$targetCohortId == .data$comparatorCohortId) %>% 
       dplyr::distinct()
-    validate(need(nrow(combisOfTargetComparator) > 0, paste0("Please select atleast two cohorts.")))
+    validate(need(nrow(combisOfTargetComparator) > 0, paste0("Please select at least two cohorts.")))
     
     data <- getCohortOverlapResult(dataSource = dataSource, 
                                    targetCohortIds = combisOfTargetComparator$targetCohortId, 
@@ -1753,7 +1749,6 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   # Cohort labels --------------------------------------------------------------------------------------------
-  
   targetCohortCount <- shiny::reactive({
     targetCohortWithCount <- getCohortCountResult(dataSource = dataSource,
                                                   cohortIds = cohortId(),
@@ -1778,62 +1773,20 @@ shiny::shinyServer(function(input, output, session) {
     cohorts <- cohortSubset() %>%
       dplyr::filter(.data$cohortId %in% cohortIds()) %>%
       dplyr::arrange(.data$cohortId) %>%
-      dplyr::distinct(.data$cohortName)
-    
-    html <- htmltools::withTags(
-      div(table(
-        tr(
-          td(
-            HTML(paste(paste(cohorts$cohortName), collapse = "</br>"), "<br></br>")
-          )
-        )
-      )
-      ))
-    return(html)
+      dplyr::select(.data$shortName, .data$cohortName)
+    return(apply(cohorts, 1, function(x) tags$tr(lapply(x, tags$td))))
   })
   
-  output$cohortCountsSelectedCohort <- shiny::renderUI({
-    html <- selectedCohorts()
-    return(html)
-  })
-  
-  output$indexEventBreakdownSelectedCohort <- shiny::renderUI({
-    html <- selectedCohorts()
-    return(html)
-  })
-  
-  output$characterizationSelectedCohort <- shiny::renderUI({
-    return(selectedCohorts())
-  })
-  
-  output$temporalCharacterizationSelectedCohort <- shiny::renderUI({
-    return(selectedCohorts())
-  })
-  
-  output$inclusionRuleStatSelectedCohort <- shiny::renderUI({
-    return(targetCohortCountHtml())
-  })
-  
-  output$cohortOverlapSelectedCohort <- shiny::renderUI({
-    html <- selectedCohorts()
-    return(html)
-  })
-  
-  output$incidenceRateSelectedCohort <- shiny::renderUI({
-    html <- selectedCohorts()
-    return(html)
-  })
-  
-  output$timeDistSelectedCohort <- shiny::renderUI({
-    html <- selectedCohorts()
-    return(html)
-  })
-  
-  output$visitContextSelectedCohort <- shiny::renderUI({
-    html <- selectedCohorts()
-    return(html)
-  })
-  
+  output$cohortCountsSelectedCohort <- shiny::renderUI({selectedCohorts()})
+  output$indexEventBreakdownSelectedCohort <- shiny::renderUI({selectedCohorts()})
+  output$characterizationSelectedCohort <- shiny::renderUI({selectedCohorts()})
+  output$temporalCharacterizationSelectedCohort <- shiny::renderUI({selectedCohorts()})
+  output$inclusionRuleStatSelectedCohort <- shiny::renderUI({selectedCohorts()})
+  output$cohortOverlapSelectedCohort <- shiny::renderUI({selectedCohorts()})
+  output$incidenceRateSelectedCohort <- shiny::renderUI({selectedCohorts()})
+  output$timeDistSelectedCohort <- shiny::renderUI({selectedCohorts()})
+  output$visitContextSelectedCohort <- shiny::renderUI({selectedCohorts()})
+  output$cohortCharCompareSelectedCohort <- shiny::renderUI({selectedCohorts()})
   #Download
   # download_box <- function(exportname, plot){
   #   downloadHandler(
