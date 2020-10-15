@@ -91,6 +91,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(.data$phenotypeId, .data$extendedName, .data$overview, .data$cohortDefinitions)
 
     options = list(pageLength = 5,
+                   lengthMenu = c(5, 10, 15, 20, 100, 500, 1000),
                    searching = TRUE,
                    ordering = TRUE,
                    paging = TRUE,

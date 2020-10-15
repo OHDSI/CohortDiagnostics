@@ -430,7 +430,7 @@ plotCohortOverlap <- function(data,
                                           "bothSubjects"),
                          add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
-  
+  space <- "&nbsp"
   plotData <- data %>% 
     dplyr::mutate(absTOnlySubjects = abs(.data$tOnlySubjects), 
                   absCOnlySubjects = abs(.data$cOnlySubjects),
@@ -461,11 +461,16 @@ plotCohortOverlap <- function(data,
                                                       accuracy = 1),
                                       ")"))  %>% 
     dplyr::mutate(tooltip = paste0("Database: ", .data$databaseId,
-                                   "\n", .data$targetCohortName,
-                                   "\n", .data$comparatorCohortName,
-                                   "\n", .data$targetShortName, " only: ", .data$tOnlyString,
-                                   "\n", .data$comparatorShortName, " only: ", .data$cOnlyString,
-                                   "\nBoth: ", .data$bothString)) %>%
+								   "\n",
+                                   "\n Target Cohort (T)",
+                                   "\n",space,space,space,space,.data$targetShortName,space,.data$targetCohortName,
+                                   "\n",space,space,space,space,.data$targetShortName,' only: ',.data$tOnlyString,
+								   "\n",
+                                   "\n Comparator Cohort (T)",
+                                   "\n",space,space,space,space,.data$comparatorShortName,space,.data$comparatorCohortName,
+                                   "\n",space,space,space,space,.data$comparatorShortName,' only: ',.data$cOnlyString,
+								   "\n",
+                                   "\nBoth T & C: ", .data$bothString)) %>%
     dplyr::select(.data$targetShortName,
                   .data$comparatorShortName,
                   .data$databaseId,
