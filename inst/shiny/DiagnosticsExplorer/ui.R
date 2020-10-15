@@ -476,21 +476,24 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "temporalCharacterization",
     htmlOutput(outputId = "temporalCharacterizationSelectedCohort"),
-    shinydashboard::box(
-      title = "Temporal Characterization Table",
-      width = NULL,
-      status = "primary",
-      DT::dataTableOutput("temporalCharacterizationTable")
+    shiny::radioButtons(
+      inputId = "tempCharType",
+      label = "",
+      choices = c("Table", "Plot"),
+      selected = "Table",
+      inline = TRUE
     ),
-    ggiraph::ggiraphOutput("compareTemporalCharacterizationPlot",height = "100%")
-    # ,
-    # shinydashboard::box(
-    #   title = "Temporal Characterization Plot",
-    #   width = NULL,
-    #   status = "primary",
-    #   ggiraph::ggiraphOutput(
-    #     outputId = "covariateTimeSeriesPlot")
-    # )
+    shiny::conditionalPanel(condition = "input.tempCharType=='Table'",
+                            DT::dataTableOutput("temporalCharacterizationTable")),
+    shiny::conditionalPanel(
+      condition = "input.tempCharType=='Plot'",
+      shinydashboard::box(
+        title = "Compare Temporal Characterization",
+        width = NULL,
+        status = "primary",
+        ggiraph::ggiraphOutput("compareTemporalCharacterizationPlot",height = "100%")
+      )
+    )
   ),
   shinydashboard::tabItem(
     tabName = "cohortOverlap",
