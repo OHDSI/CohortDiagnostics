@@ -157,7 +157,8 @@ if (databaseMode) {
 
 if (exists("cohort")) {
   cohort <- get("cohort") %>%
-    dplyr::arrange(.data$cohortId)
+    dplyr::arrange(.data$cohortId) %>%
+    dplyr::mutate(cohortName = stringr::str_remove(.data$cohortName, "\\[.+?\\] "))
   
   if (exists("phenotypeDescription")) {
     cohort <- cohort %>%
@@ -213,4 +214,12 @@ if (exists("phenotypeDescription")) {
                         dplyr::summarize(cohortDefinitions = dplyr::n()) %>%
                         dplyr::ungroup(),
                       by = "phenotypeId")
+  searchTerms <- getSearchTerms(dataSource = dataSource, includeDescendants = FALSE) %>% 
+    dplyr::group_by(.data$phenotypeId) %>%
+    dplyr::summarise(searchTermString = paste(.data$term, collapse = ", ")) %>%
+    dplyr::ungroup()
+  
+  phenotypeDescription <- phenotypeDescription %>%
+    dplyr::left_join(searchTerms,
+                     by = "phenotypeId")
 }

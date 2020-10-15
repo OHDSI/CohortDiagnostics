@@ -87,7 +87,8 @@ shiny::shinyServer(function(input, output, session) {
   # Phenotype Description ------------------------------------------------------------------------------
   output$phenoTypeDescriptionTable <- DT::renderDataTable(expr = {
     data <- phenotypeDescription %>%
-      dplyr::select(.data$phenotypeId, .data$phenotypeName, .data$overview, .data$cohortDefinitions)
+      dplyr::mutate(extendedName = sprintf("%s <div style=\"display: none\">%s</div>", .data$phenotypeName, .data$searchTermString)) %>%
+      dplyr::select(.data$phenotypeId, .data$extendedName, .data$overview, .data$cohortDefinitions)
 
     options = list(pageLength = 5,
                    searching = TRUE,
@@ -405,7 +406,8 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$cohortId %in% cohortIds()) %>%  
       dplyr::inner_join(cohort %>% 
                           dplyr::filter(.data$cohortId %in% cohortIds()) %>%
-                          dplyr::select(.data$cohortId, .data$shortName, .data$cohortName)) %>%
+                          dplyr::select(.data$cohortId, .data$shortName, .data$cohortName),
+                        by = "cohortId") %>%
       dplyr::select(.data$shortName, 
                     .data$databaseId, 
                     .data$cohortSubjects, 
@@ -1023,7 +1025,8 @@ shiny::shinyServer(function(input, output, session) {
                                    cohortIds = cohortIds(),
                                    databaseIds = input$databases) %>% 
       dplyr::inner_join(cohort %>% 
-                          dplyr::select(.data$cohortId, .data$shortName, .data$cohortName))
+                          dplyr::select(.data$cohortId, .data$shortName, .data$cohortName),
+                        by = "cohortId")
     
     if (nrow(data) == 0) {
       return(dplyr::tibble(Note = paste0("No data available for selected databases and cohorts")))

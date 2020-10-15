@@ -707,36 +707,68 @@ checkErrorCohortIdsDatabaseIds <- function(errorMessage,
   return(errorMessage)
 }
 
-getSearchTerms <- function(dataSource) {
+getSearchTerms <- function(dataSource, includeDescendants = FALSE) {
   if (is(dataSource, "environment")) {
-    stop("Search terms using ")
+    warning("Search terms not implemented when using in-memory objects")
+    return(dplyr::tibble(phenotypeId = -1, term = ""))
   } else {
-    sql <- paste("SELECT codeset_id AS concept_set_id, concept.*",
-                 "FROM (",
-                 paste(conceptSets$conceptSetSql, collapse = ("\nUNION ALL\n")),
-                 ") concept_sets",
-                 sep = "\n")
-    
-    if (source) {
-      sql <- paste(sql,
-                   "INNER JOIN @vocabulary_database_schema.concept_relationship",
-                   "  ON concept_sets.concept_id = concept_relationship.concept_id_2",
-                   "INNER JOIN @vocabulary_database_schema.concept",
-                   "  ON concept_relationship.concept_id_1 = concept.concept_id",
-                   "WHERE relationship_id = 'Maps to'",
-                   "  AND standard_concept IS NULL;",
-                   sep = "\n")
+    if (includeDescendants) {
+      sql <- "SELECT DISTINCT phenotype_id, 
+              LOWER(term) AS term
+              FROM (
+                SELECT phenotype_id,
+                  concept_synonym_name AS term
+                FROM @results_database_schema.phenotype_description
+                INNER JOIN @vocabulary_database_schema.concept_ancestor
+                  ON phenotype_description.referent_concept_id = ancestor_concept_id
+                INNER JOIN @vocabulary_database_schema.concept_synonym 
+                  ON descendant_concept_id = concept_synonym.concept_id
+                WHERE language_concept_id = 4180186 -- English
+                  
+                UNION
+                
+                SELECT phenotype_id,
+                  concept_synonym_name AS term
+                FROM @results_database_schema.phenotype_description
+                INNER JOIN @vocabulary_database_schema.concept_ancestor
+                  ON phenotype_description.referent_concept_id = ancestor_concept_id
+                INNER JOIN @vocabulary_database_schema.concept_relationship
+                  ON descendant_concept_id = concept_id_2
+                INNER JOIN @vocabulary_database_schema.concept_synonym 
+                  ON concept_id_1 = concept_synonym.concept_id
+                WHERE relationship_id = 'Maps to'
+                  AND language_concept_id = 4180186 -- English
+              ) tmp;"
     } else {
-      sql <- paste(sql,
-                   "INNER JOIN @vocabulary_database_schema.concept",
-                   "  ON concept_sets.concept_id = concept.concept_id;",
-                   sep = "\n")
+      sql <- "SELECT DISTINCT phenotype_id, 
+                LOWER(term) AS term
+              FROM (
+                SELECT phenotype_id,
+                  concept_synonym_name AS term
+                FROM @results_database_schema.phenotype_description
+                INNER JOIN @vocabulary_database_schema.concept_synonym 
+                  ON phenotype_description.referent_concept_id = concept_synonym.concept_id
+                WHERE language_concept_id = 4180186 -- English
+                  
+                UNION
+                
+                SELECT phenotype_id,
+                  concept_synonym_name AS term
+                FROM @results_database_schema.phenotype_description
+                INNER JOIN @vocabulary_database_schema.concept_relationship
+                  ON phenotype_description.referent_concept_id = concept_id_2
+                INNER JOIN @vocabulary_database_schema.concept_synonym 
+                  ON concept_id_1 = concept_synonym.concept_id
+                WHERE relationship_id = 'Maps to'
+                  AND language_concept_id = 4180186 -- English
+              ) tmp;"
     }
-    
     data <- renderTranslateQuerySql(connection = dataSource$connection,
                                     sql = sql,
+                                    results_database_schema = dataSource$resultsDatabaseSchema,
                                     vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
+    return(data)
   }
 }
