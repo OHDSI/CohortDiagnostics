@@ -26,45 +26,41 @@ cohortReference <- function(outputId) {
   )
 }
 
-if (!exists("phenotypeDescription")) {
-  appTitle <- cohortDiagnosticModeDefaultTitle
-} else {
-  appTitle <- phenotypeLibraryModeDefaultTitle
-}
-
-#header name
-header <-
-  shinydashboard::dashboardHeader(title = appTitle, 
-                                  tags$li(
-                                    tags$div(
-                                      tags$strong("Phenotype:"),
-                                      style = "color: white; margin-top: 14px; margin-right: 10px;"
-                                    ),
-                                    class = "dropdown"
-                                  ), 
-                                  tags$li(
-                                    tags$div(
-                                      shinyWidgets::pickerInput(
-                                        inputId = "phenotypes",
-                                        choices = phenotypeDescription$phenotypeName,
-                                        selected = phenotypeDescription$phenotypeName[1],
-                                        multiple = FALSE,
-                                        choicesOpt = list(style = rep_len("color: black;", 999)),
-                                        options = shinyWidgets::pickerOptions(
-                                          actionsBox = FALSE,
-                                          liveSearch = TRUE,
-                                          size = 20,
-                                          liveSearchStyle = "contains",
-                                          liveSearchPlaceholder = "Type here to search",
-                                          virtualScroll = 50,
-                                          dropdownAlignRight = TRUE
-                                        )
-                                      ),
-                                      style = "margin-top: 8px; margin-right: 10px; margin-bottom: -8px;"
-                                    ),
-                                    class = "dropdown"
-                                  )
+if (exists("phenotypeDescription")) {
+  header <-shinydashboard::dashboardHeader(title = phenotypeLibraryModeDefaultTitle, 
+                                           tags$li(
+                                             tags$div(
+                                               tags$strong("Phenotype:"),
+                                               style = "color: white; margin-top: 14px; margin-right: 10px;"
+                                             ),
+                                             class = "dropdown"
+                                           ), 
+                                           tags$li(
+                                             tags$div(
+                                               shinyWidgets::pickerInput(
+                                                 inputId = "phenotypes",
+                                                 choices = phenotypeDescription$phenotypeName,
+                                                 selected = phenotypeDescription$phenotypeName[1],
+                                                 multiple = FALSE,
+                                                 choicesOpt = list(style = rep_len("color: black;", 999)),
+                                                 options = shinyWidgets::pickerOptions(
+                                                   actionsBox = FALSE,
+                                                   liveSearch = TRUE,
+                                                   size = 20,
+                                                   liveSearchStyle = "contains",
+                                                   liveSearchPlaceholder = "Type here to search",
+                                                   virtualScroll = 50,
+                                                   dropdownAlignRight = TRUE
+                                                 )
+                                               ),
+                                               style = "margin-top: 8px; margin-right: 10px; margin-bottom: -8px;"
+                                             ),
+                                             class = "dropdown"
+                                           )
   )
+} else { 
+  header <- shinydashboard::dashboardHeader(title = cohortDiagnosticModeDefaultTitle)
+}
 #sidebarMenu
 sidebarMenu <-
   shinydashboard::sidebarMenu(

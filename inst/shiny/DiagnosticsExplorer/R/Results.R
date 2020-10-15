@@ -706,3 +706,37 @@ checkErrorCohortIdsDatabaseIds <- function(errorMessage,
   checkmate::reportAssertions(collection = errorMessage)
   return(errorMessage)
 }
+
+getSearchTerms <- function(dataSource) {
+  if (is(dataSource, "environment")) {
+    stop("Search terms using ")
+  } else {
+    sql <- paste("SELECT codeset_id AS concept_set_id, concept.*",
+                 "FROM (",
+                 paste(conceptSets$conceptSetSql, collapse = ("\nUNION ALL\n")),
+                 ") concept_sets",
+                 sep = "\n")
+    
+    if (source) {
+      sql <- paste(sql,
+                   "INNER JOIN @vocabulary_database_schema.concept_relationship",
+                   "  ON concept_sets.concept_id = concept_relationship.concept_id_2",
+                   "INNER JOIN @vocabulary_database_schema.concept",
+                   "  ON concept_relationship.concept_id_1 = concept.concept_id",
+                   "WHERE relationship_id = 'Maps to'",
+                   "  AND standard_concept IS NULL;",
+                   sep = "\n")
+    } else {
+      sql <- paste(sql,
+                   "INNER JOIN @vocabulary_database_schema.concept",
+                   "  ON concept_sets.concept_id = concept.concept_id;",
+                   sep = "\n")
+    }
+    
+    data <- renderTranslateQuerySql(connection = dataSource$connection,
+                                    sql = sql,
+                                    vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
+                                    snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
+  }
+}
