@@ -1386,7 +1386,8 @@ shiny::shinyServer(function(input, output, session) {
     table <- table %>%
       dplyr::rename(cohort = .data$shortName) %>% 
       dplyr::select(-.data$conceptId, -.data$cohortId) %>% 
-      dplyr::arrange(.data$cohort, .data$databaseId, dplyr::desc(dplyr::across(dplyr::starts_with('Start'))))
+      dplyr::arrange(.data$cohort, .data$databaseId, dplyr::desc(dplyr::across(dplyr::starts_with('Start')))) %>% 
+      dplyr::select(-.data$cohortName)
     
     temporalCovariateChoicesSelected <- temporalCovariateChoices %>% 
       dplyr::filter(.data$timeId %in% c(timeId())) %>% 
