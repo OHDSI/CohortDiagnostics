@@ -116,11 +116,11 @@ sidebarMenu <-
         item = shinydashboard::menuItem(text = "Visit Context", tabName = "visitContext"),
         infoId = "visitContextInfo"
       ),
-    if (exists("covariateValue"))
-      addInfo(
-        shinydashboard::menuItem(text = "Cohort Characterization", tabName = "cohortCharacterization"),
-        infoId = "cohortCharacterizationInfo"
-      ),
+    # if (exists("covariateValue"))
+    #   addInfo(
+    #     shinydashboard::menuItem(text = "Cohort Characterization", tabName = "cohortCharacterization"),
+    #     infoId = "cohortCharacterizationInfo"
+    #   ),
     if (exists("temporalCovariateValue"))
       addInfo(
         shinydashboard::menuItem(text = "Temporal Characterization", tabName = "temporalCharacterization"),
@@ -131,11 +131,11 @@ sidebarMenu <-
         shinydashboard::menuItem(text = "Cohort Overlap", tabName = "cohortOverlap"),
         infoId = "cohortOverlapInfo"
       ),
-    if (exists("covariateValue"))
-      addInfo(
-        item = shinydashboard::menuItem(text = "Compare Cohort Char.", tabName = "compareCohortCharacterization"),
-        infoId = "compareCohortCharacterizationInfo"
-      ),
+    # if (exists("covariateValue"))
+    #   addInfo(
+    #     item = shinydashboard::menuItem(text = "Compare Cohort Char.", tabName = "compareCohortCharacterization"),
+    #     infoId = "compareCohortCharacterizationInfo"
+    #   ),
     shinydashboard::menuItem(text = "Database information", tabName = "databaseInformation"),
     # Conditional dropdown boxes in the side bar ------------------------------------------------------
     shiny::conditionalPanel(
