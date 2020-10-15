@@ -353,60 +353,6 @@ plotCohortComparisonStandardizedDifference <- function(balance,
   return(plot)
 }
 
-
-plotCohortOverlapVennDiagram <- function(data,
-                                         targetCohortIds, 
-                                         comparatorCohortIds,
-                                         databaseIds) {
-  
-  # Perform error checks for input variables
-  errorMessage <- checkmate::makeAssertCollection()
-  checkmate::assertTibble(x = data, 
-                          any.missing = FALSE,
-                          min.rows = 1,
-                          min.cols = 5,
-                          null.ok = FALSE,
-                          add = errorMessage)
-  checkmate::assertDouble(x = targetCohortIds,
-                          lower = 1,
-                          upper = 2^53, 
-                          any.missing = FALSE,
-                          null.ok = FALSE)
-  checkmate::assertDouble(x = comparatorCohortIds,
-                          lower = 1,
-                          upper = 2^53, 
-                          any.missing = FALSE,
-                          null.ok = FALSE)
-  checkmate::assertCharacter(x = databaseIds,
-                             any.missing = FALSE,
-                             min.len = 1,
-                             null.ok = TRUE
-  )
-  checkmate::reportAssertions(collection = errorMessage)
-  
-  plot <- VennDiagram::draw.pairwise.venn(area1 = abs(data$eitherSubjects) - abs(data$cOnlySubjects),
-                                          area2 = abs(data$eitherSubjects) - abs(data$tOnlySubjects),
-                                          cross.area = abs(data$bothSubjects),
-                                          category = c("Target", "Comparator"),
-                                          col = c(rgb(0.8, 0, 0), rgb(0, 0, 0.8)),
-                                          fill = c(rgb(0.8, 0, 0), rgb(0, 0, 0.8)),
-                                          alpha = 0.2,
-                                          fontfamily = rep("sans", 3),
-                                          cat.fontfamily = rep("sans", 2),
-                                          margin = 0.01,
-                                          ind = FALSE)
-  # Borrowed from https://stackoverflow.com/questions/37239128/how-to-put-comma-in-large-number-of-venndiagram
-  idx <- sapply(plot, function(i) grepl("text", i$name))
-  for (i in 1:3) {
-    plot[idx][[i]]$label <- format(as.numeric(plot[idx][[i]]$label),
-                                   big.mark = ",",
-                                   scientific = FALSE)
-  }
-  grid::grid.draw(plot)
-  
-  return(plot)
-}
-
 plotCohortOverlap <- function(data,
                               yAxis = "Percentages",
                               cohortIdLength = 2) {
@@ -482,28 +428,43 @@ plotCohortOverlap <- function(data,
                                  "absBothSubjects"),
                         names_to = "subjectsIn",
                         values_to = "value") %>%
-    dplyr::mutate(subjectsIn = camelCaseToTitleCase(stringr::str_replace_all(string = .data$subjectsIn,
-                                                                             pattern = "abs|Subjects",
-                                                                             replacement = "")))
+    dplyr::mutate(subjectsIn = dplyr::recode(.data$subjectsIn, 
+                                             absTOnlySubjects = "Right cohort only",
+                                             absBothSubjects = "Both cohorts",
+                                             absCOnlySubjects = "Top cohort only"),
+                  y = "dummy")
   
-  plotData$subjectsIn <- factor(plotData$subjectsIn, levels = c(" T Only", " Both", " C Only"))
+  plotData$subjectsIn <- factor(plotData$subjectsIn, levels = c("Right cohort only", "Both cohorts", "Top cohort only"))
+  
   if (yAxis == "Percentages") {
     position = "fill"
   } else { 
     position = "stack"
   }
-  
+  spacing <- plotData %>%
+    dplyr::distinct(.data$databaseId, .data$targetShortName) %>%
+    dplyr::arrange(.data$databaseId) %>%
+    dplyr::group_by(.data$databaseId) %>%
+    dplyr::summarise(count = dplyr::n()) %>%
+    dplyr::ungroup() 
+  spacing <- unlist(sapply(spacing$count, function(x) c(1, rep(0, x - 1))))[-1]
+
   plot <- ggplot2::ggplot(data = plotData) +
     ggplot2::aes(fill = .data$subjectsIn, 
-                 y = .data$comparatorShortName,
+                 y = y,
                  x = .data$value,
                  tooltip = .data$tooltip,
                  group = .data$subjectsIn) +
     ggplot2::ylab(label = "") +
     ggplot2::xlab(label = "") +
     ggplot2::scale_fill_manual("Subjects in", values = c(rgb(0.8, 0.2, 0.2), rgb(0.3, 0.2, 0.4), rgb(0.4, 0.4, 0.9))) +
-    ggplot2::facet_wrap(. ~ databaseId + targetShortName,ncol = cohortIdLength*2) +
-    ggplot2::theme(strip.text.y.right = ggplot2::element_text(angle = 0)) +
+    facet_nested(databaseId + targetShortName ~ comparatorShortName) +
+    ggplot2::theme(panel.background = ggplot2::element_blank(),
+                   axis.text.y = ggplot2::element_blank(),
+                   strip.background = ggplot2::element_blank(),
+                   panel.grid.major.x = ggplot2::element_line(color = "gray"),
+                   axis.ticks.y = ggplot2::element_blank(),
+                   panel.spacing.y = ggplot2::unit(spacing, "lines")) +
     ggiraph::geom_bar_interactive(position = position, alpha = 0.6, stat = "identity") 
   if (yAxis == "Percentages") {
     plot <- plot + ggplot2::scale_x_continuous(labels = scales::percent)
