@@ -209,6 +209,9 @@ if (exists("phenotypeDescription")) {
     dplyr::mutate(clinicalDescription = stringr::str_replace_all(string = .data$clinicalDescription,
                                                                  pattern = "Plan:",
                                                                  replacement = "<br/><br/> <strong>Plan: </strong>")) %>% 
+    dplyr::mutate(clinicalDescription = stringr::str_replace_all(string = .data$clinicalDescription,
+                                                                 pattern = "Prognosis:",
+                                                                 replacement = "<br/><br/> <strong>Prognosis: </strong>")) %>% 
     dplyr::inner_join(cohort %>%
                         dplyr::group_by(.data$phenotypeId) %>%
                         dplyr::summarize(cohortDefinitions = dplyr::n()) %>%
