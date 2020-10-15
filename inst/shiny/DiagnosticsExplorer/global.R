@@ -13,7 +13,6 @@ source("R/Results.R")
 # shinySettings <- list(dataFolder = "s:/examplePackageOutput")
 
 # Settings when running on server:
-
 defaultLocalDataFolder <- "data"
 defaultLocalDataFile <- "PreMerged.RData"
 
@@ -34,6 +33,8 @@ defaultConceptBaseUrl <- "https://athena.ohdsi.org/search-terms/terms/"
 cohortDiagnosticModeDefaultTitle <- "Cohort Diagnostics"
 phenotypeLibraryModeDefaultTitle <- "Phenotype Library"
 
+defaultAboutText <- "<h3>Cohort Diagnostics</h3> This Cohort Diagnostics app is currently under development. Do not use"
+
 if (!exists("shinySettings")) {
   writeLines("Using default settings")
   databaseMode <- defaultDatabaseMode & defaultServer != ""
@@ -53,6 +54,9 @@ if (!exists("shinySettings")) {
   }
   cohortBaseUrl <- defaultCohortBaseUrl
   conceptBaseUrl <- defaultConceptBaseUrl
+  if (!is.null(defaultAboutText)) {
+    aboutText <- defaultAboutText
+  } 
 } else {
   writeLines("Using settings provided by user")
   databaseMode <- !is.null(shinySettings$connectionDetails)
@@ -83,6 +87,9 @@ if (!exists("shinySettings")) {
   }
   cohortBaseUrl <- shinySettings$cohortBaseUrl
   conceptBaseUrl <- shinySettings$cohortBaseUrl
+  if (!is.null(shinySettings$aboutText)) {
+    aboutText <- shinySettings$aboutText
+  }
 }
 
 dataModelSpecifications <- read.csv("resultsDataModelSpecification.csv")

@@ -9,6 +9,7 @@ launchDiagnosticsExplorer(
   connectionDetails = NULL,
   resultsDatabaseSchema = NULL,
   vocabularyDatabaseSchema = resultsDatabaseSchema,
+  aboutText = NULL,
   cohortBaseUrl = "https://atlas.ohdsi.org/#/cohortdefinition/",
   conceptBaseUrl = "https://athena.ohdsi.org/search-terms/terms/",
   runOverNetwork = FALSE,
@@ -30,6 +31,9 @@ the CohortDiagnostics results have been uploaded using the
 have been uploaded.}
 
 \item{vocabularyDatabaseSchema}{The schema on the database server where the vocabulary tables are located.}
+
+\item{aboutText}{Text (using HTML markup) that will be displayed in an About tab in the Shiny app.
+If not provided, no About tab will be shown.}
 
 \item{cohortBaseUrl}{The base URL for constructing linkouts to an ATLAS instance, using the 
 webApiCohortId in the cohortsToCreate file. If NULL, no linkouts will be 

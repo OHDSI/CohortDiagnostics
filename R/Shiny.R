@@ -29,6 +29,8 @@
 #' @param port             (optional) Only used if \code{runOverNetwork} = TRUE. 
 #' @param launch.browser   Should the app be launched in your default browser, or in a Shiny window.
 #'                         Note: copying to clipboard will not work in a Shiny window.
+#' @param aboutText        Text (using HTML markup) that will be displayed in an About tab in the Shiny app.
+#'                         If not provided, no About tab will be shown.
 #' @param cohortBaseUrl    The base URL for constructing linkouts to an ATLAS instance, using the 
 #'                         webApiCohortId in the cohortsToCreate file. If NULL, no linkouts will be 
 #'                         created.
@@ -43,6 +45,7 @@ launchDiagnosticsExplorer <- function(dataFolder = "data",
                                       connectionDetails = NULL,
                                       resultsDatabaseSchema = NULL,
                                       vocabularyDatabaseSchema = resultsDatabaseSchema,
+                                      aboutText = NULL,
                                       cohortBaseUrl = "https://atlas.ohdsi.org/#/cohortdefinition/",
                                       conceptBaseUrl = "https://athena.ohdsi.org/search-terms/terms/",
                                       runOverNetwork = FALSE,
@@ -81,6 +84,7 @@ launchDiagnosticsExplorer <- function(dataFolder = "data",
                         resultsDatabaseSchema = resultsDatabaseSchema,
                         vocabularyDatabaseSchema = vocabularyDatabaseSchema,
                         dataFolder = dataFolder,
+                        aboutText = aboutText,
                         cohortBaseUrl = cohortBaseUrl,
                         conceptBaseUrl = conceptBaseUrl)
   .GlobalEnv$shinySettings <- shinySettings

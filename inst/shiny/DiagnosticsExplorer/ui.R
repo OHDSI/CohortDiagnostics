@@ -61,10 +61,8 @@ header <-
 sidebarMenu <-
   shinydashboard::sidebarMenu(
     id = "tabs",
-    # shiny::conditionalPanel(
-    #   condition = "input.tabs != 'databaseInformation'",
-    #   
-    # ),
+    if (exists("aboutText"))
+      shinydashboard::menuItem(text = "About", tabName = "about"),
     if (exists("phenotypeDescription"))
       shinydashboard::menuItem(text = "Phenotype Description", tabName = "phenotypeDescription"),
     if (exists("cohort"))
@@ -307,6 +305,10 @@ sidebar <-
 
 # Body - items in tabs --------------------------------------------------
 bodyTabItems <- shinydashboard::tabItems(
+  shinydashboard::tabItem(
+    tabName = "about",
+    if (exists("aboutText")) HTML(aboutText)
+  ), 
   shinydashboard::tabItem(
     tabName = "phenotypeDescription",
     shinydashboard::box(
