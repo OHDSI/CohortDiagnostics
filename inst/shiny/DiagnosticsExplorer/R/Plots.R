@@ -526,13 +526,13 @@ plotCohortOverlap <- function(data,
 plotTemporalCohortComparisonStandardizedDifference <- function(balance){
   balance$tooltip <- c(paste("Covariate Name:", balance$covariateName,
                              "\nDatabase: ", balance$databaseId,
-                             "\nMean Target: ", scales::comma(balance$mean1, accuracy = 0.1),
-                             "\nMean Comparator:", scales::comma(balance$mean2, accuracy = 0.1),
-                             "\nStd diff.:", scales::comma(balance$stdDiff, accuracy = 0.1)))
+                             "\nMean Target: ", scales::percent(balance$mean1, accuracy = 0.01),
+                             "\nMean Comparator:", scales::percent(balance$mean2, accuracy = 0.01),
+                             "\nStd diff.:", scales::percent(balance$stdDiff, accuracy = 0.01)))
   # cant make sense anyways - so throwing away small values when too much data
   if (nrow(balance) > 1000) {
     balance <- balance %>%
-      dplyr::filter(.data$mean1 > 0.01 | .data$mean2 > 0.01)
+      dplyr::filter(.data$mean1 > 0.005 | .data$mean2 > 0.005)
   }
   
   plot <- ggplot2::ggplot(balance, ggplot2::aes(x = .data$mean1, 
