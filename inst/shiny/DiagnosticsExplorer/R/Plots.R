@@ -303,7 +303,6 @@ plotCohortComparisonStandardizedDifference <- function(balance,
   domains <- c("condition", "device", "drug", "measurement", "observation", "procedure")
   balance$domain <- tolower(stringr::str_extract(balance$covariateName, "[a-z]+"))
   balance$domain[!balance$domain %in% domains] <- "other"
-  
   if (domain != "all") {
     balance <- balance %>%
       dplyr::filter(.data$domain == !!domain)
@@ -523,13 +522,30 @@ plotCohortOverlap <- function(data,
   return(plot)
 }  
 
-plotTemporalCohortComparisonStandardizedDifference <- function(balance){
+plotTemporalCohortComparisonStandardizedDifference <- function(balance,
+                                                               domain = "all") {
+  domains <- c("condition", "device", "drug", "measurement", "observation", "procedure")
+  balance$domain <- tolower(stringr::str_extract(balance$covariateName, "[a-z]+"))
+  balance$domain[!balance$domain %in% domains] <- "other"
+  if (domain != "all") {
+    balance <- balance %>%
+      dplyr::filter(.data$domain == !!domain)
+  }
   validate(need(nrow(balance) != 0, "No data for current selection"))
   balance$tooltip <- c(paste("Covariate Name:", balance$covariateName,
+                             "\nDomain:", balance$domain,
+                             "\nTemporal Choice:", balance$temporalChoices,
                              "\nDatabase: ", balance$databaseId,
                              "\nMean Target: ", scales::percent(balance$mean1, accuracy = 0.01),
                              "\nMean Comparator:", scales::percent(balance$mean2, accuracy = 0.01),
                              "\nStd diff.:", scales::percent(balance$stdDiff, accuracy = 0.01)))
+  
+  # Code used to generate palette:
+  # writeLines(paste(RColorBrewer::brewer.pal(n = length(balance$temporalChoices), name = "Dark2"), collapse = "\", \""))
+  
+  # Make sure colors are consistent, no matter which Temporal choices are included:
+  colors <- c("#1B9E77", "#D95F02", "#7570B3", "#E7298A", "#66A61E")
+  
   # cant make sense anyways - so throwing away small values when too much data
   if (nrow(balance) > 1000) {
     balance <- balance %>%
@@ -548,6 +564,7 @@ plotTemporalCohortComparisonStandardizedDifference <- function(balance){
     ggplot2::geom_vline(xintercept = 0) +             
     ggplot2::scale_x_continuous("") +
     ggplot2::scale_y_continuous("") +
+    ggplot2::scale_color_manual("temporalChoices", values = colors) +
     ggplot2::facet_grid(databaseId + targetCohort ~ comparatorCohort)
   
   plot <- ggiraph::girafe(ggobj = plot,

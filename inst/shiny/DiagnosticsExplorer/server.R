@@ -881,7 +881,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::mutate(conceptInSet = as.factor(.data$conceptInSet),
                     domainId = as.factor(.data$domainId),
                     vocabularyId = as.factor(.data$vocabularyId)) %>% 
-      dplyr::relocate (.data$conceptInSet)  
+      dplyr::relocate(.data$conceptInSet) 
     if (nrow(data) == 0) {
       return(dplyr::tibble(Note = paste0('No data available for selected concept set')))
     }
@@ -916,7 +916,7 @@ shiny::shinyServer(function(input, output, session) {
           th(rowspan = 2, "Domain Id"),
           th(rowspan = 2, "Standard Concept"),
           th(colspan = 2, "Without Descendants", class = "dt-center"),
-          if(standard) th(colspan = 2, "With Descendants", class = "dt-center"),
+          if (standard) th(colspan = 2, "With Descendants", class = "dt-center"),
         ),
         tr(
           lapply(rep(c("Records", "Databases"), ifelse(standard, 2, 1)), th)
@@ -1463,18 +1463,8 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(-.data$timeId) %>% 
       dplyr::rename(temporalChoices = .data$choices)
     
-    domains <- c("condition", "device", "drug", "measurement", "observation", "procedure")
-    data$domain <- tolower(stringr::str_extract(data$covariateName, "[a-z]+"))
-    data$domain[!data$domain %in% domains] <- "other"
-    if (input$temporalDomainId != "all") {
-      data <- data %>%
-        dplyr::filter(.data$domain == !!input$temporalDomainId)
-    }
-    if (nrow(data) == 0) {
-      return(dplyr::tibble(Note = "No data for the selected combination."))
-    }
-    
-    plot <- plotTemporalCohortComparisonStandardizedDifference(balance = data)
+    plot <- plotTemporalCohortComparisonStandardizedDifference(balance = data,
+                                                               domain = input$temporalDomainId)
     return(plot)
   })
   
