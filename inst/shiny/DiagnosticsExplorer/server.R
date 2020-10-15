@@ -91,6 +91,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(.data$phenotypeId, .data$name, .data$overview, .data$cohortDefinitions)
 
     options = list(pageLength = 5,
+                   lengthMenu = c(5, 10, 15, 20, 100, 500, 1000),
                    searching = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
@@ -880,7 +881,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::mutate(conceptInSet = as.factor(.data$conceptInSet),
                     domainId = as.factor(.data$domainId),
                     vocabularyId = as.factor(.data$vocabularyId)) %>% 
-      dplyr::relocate (.data$conceptInSet)  
+      dplyr::relocate(.data$conceptInSet) 
     if (nrow(data) == 0) {
       return(dplyr::tibble(Note = paste0('No data available for selected concept set')))
     }
@@ -915,7 +916,7 @@ shiny::shinyServer(function(input, output, session) {
           th(rowspan = 2, "Domain Id"),
           th(rowspan = 2, "Standard Concept"),
           th(colspan = 2, "Without Descendants", class = "dt-center"),
-          if(standard) th(colspan = 2, "With Descendants", class = "dt-center"),
+          if (standard) th(colspan = 2, "With Descendants", class = "dt-center"),
         ),
         tr(
           lapply(rep(c("Records", "Databases"), ifelse(standard, 2, 1)), th)
@@ -1426,6 +1427,17 @@ shiny::shinyServer(function(input, output, session) {
   
   output$compareTemporalCharacterizationPlot <- ggiraph::renderggiraph(expr = {
     data <- temporalCharacterizationTable()
+    if (input$timeIdChoicesFilter != 'All') {
+      data <- data %>% 
+        dplyr::filter(.data$timeId %in% (temporalCovariateChoices %>% 
+                                                    dplyr::filter(choices %in% 
+                                                                    input$timeIdChoicesFilter) %>% 
+                                                    dplyr::pull(.data$timeId)))
+    }
+    
+    if (nrow(data) == 0) {
+      return(dplyr::tibble(Note = "No data for the selected combination."))
+    }
     data <- compareTemporalCohortCharacteristics(characteristics1 = data, characteristics2 = data) %>% 
       dplyr::select(.data$databaseId,
                     .data$cohortId1, 
@@ -1451,10 +1463,8 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(-.data$timeId) %>% 
       dplyr::rename(temporalChoices = .data$choices)
     
-    if (nrow(data) == 0) {
-      return(dplyr::tibble(Note = "No data for the selected combination."))
-    }
-    plot <- plotTemporalCohortComparisonStandardizedDifference(balance = data)
+    plot <- plotTemporalCohortComparisonStandardizedDifference(balance = data,
+                                                               domain = input$temporalDomainId)
     return(plot)
   })
   

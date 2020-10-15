@@ -116,11 +116,11 @@ sidebarMenu <-
         item = shinydashboard::menuItem(text = "Visit Context", tabName = "visitContext"),
         infoId = "visitContextInfo"
       ),
-    if (exists("covariateValue"))
-      addInfo(
-        shinydashboard::menuItem(text = "Cohort Characterization", tabName = "cohortCharacterization"),
-        infoId = "cohortCharacterizationInfo"
-      ),
+    # if (exists("covariateValue"))
+    #   addInfo(
+    #     shinydashboard::menuItem(text = "Cohort Characterization", tabName = "cohortCharacterization"),
+    #     infoId = "cohortCharacterizationInfo"
+    #   ),
     if (exists("temporalCovariateValue"))
       addInfo(
         shinydashboard::menuItem(text = "Temporal Characterization", tabName = "temporalCharacterization"),
@@ -131,11 +131,11 @@ sidebarMenu <-
         shinydashboard::menuItem(text = "Cohort Overlap", tabName = "cohortOverlap"),
         infoId = "cohortOverlapInfo"
       ),
-    if (exists("covariateValue"))
-      addInfo(
-        item = shinydashboard::menuItem(text = "Compare Cohort Char.", tabName = "compareCohortCharacterization"),
-        infoId = "compareCohortCharacterizationInfo"
-      ),
+    # if (exists("covariateValue"))
+    #   addInfo(
+    #     item = shinydashboard::menuItem(text = "Compare Cohort Char.", tabName = "compareCohortCharacterization"),
+    #     infoId = "compareCohortCharacterizationInfo"
+    #   ),
     shinydashboard::menuItem(text = "Database information", tabName = "databaseInformation"),
     # Conditional dropdown boxes in the side bar ------------------------------------------------------
     shiny::conditionalPanel(
@@ -489,6 +489,47 @@ bodyTabItems <- shinydashboard::tabItems(
                             DT::dataTableOutput("temporalCharacterizationTable")),
     shiny::conditionalPanel(
       condition = "input.tempCharType=='Plot'",
+      
+      
+      tags$table(style = "width:100%",
+                 tags$tr(
+                   tags$td(
+                     shinyWidgets::pickerInput(
+                       inputId = "timeIdChoicesFilter",
+                       label = "Filter By Temporal Choices",
+                       choices = c("All", temporalCovariateChoices$choices),
+                       multiple = FALSE,
+                       choicesOpt = list(style = rep_len("color: black;", 999)),
+                       options = shinyWidgets::pickerOptions(
+                         actionsBox = TRUE,
+                         liveSearch = TRUE,
+                         size = 10,
+                         liveSearchStyle = "contains",
+                         liveSearchPlaceholder = "Type here to search",
+                         virtualScroll = 50))
+                   ),
+                   tags$td(
+                     shinyWidgets::pickerInput(
+                       inputId = "temporalDomainId",
+                       label = "Filter By Covariate Domain",
+                       choices = c("all","condition", "device", "drug", "measurement", "observation", "procedure", "other"),
+                       multiple = FALSE,
+                       choicesOpt = list(style = rep_len("color: black;", 999)),
+                       options = shinyWidgets::pickerOptions(
+                         actionsBox = TRUE, 
+                         liveSearch = TRUE, 
+                         size = 10,
+                         liveSearchStyle = 'contains',
+                         liveSearchPlaceholder = "Type here to search",
+                         virtualScroll = 50))
+                   )
+                 )
+      ),
+    
+    
+    
+    
+    
       shinydashboard::box(
         title = "Compare Temporal Characterization",
         width = NULL,
