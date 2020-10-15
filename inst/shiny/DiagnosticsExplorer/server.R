@@ -1050,6 +1050,7 @@ shiny::shinyServer(function(input, output, session) {
                    lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
+                   colnames = colnames(data) %>% camelCaseToTitleCase(),
                    columnDefs = list(minCellCountDef(3:ncol(table) - 1)))
     dataTable <- DT::datatable(table,
                                options = options,
