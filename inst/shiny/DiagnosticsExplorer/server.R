@@ -87,8 +87,8 @@ shiny::shinyServer(function(input, output, session) {
   # Phenotype Description ------------------------------------------------------------------------------
   output$phenoTypeDescriptionTable <- DT::renderDataTable(expr = {
     data <- phenotypeDescription %>%
-      dplyr::mutate(extendedName = sprintf("%s <div style=\"display: none\">%s</div>", .data$phenotypeName, .data$searchTermString)) %>%
-      dplyr::select(.data$phenotypeId, .data$extendedName, .data$overview, .data$cohortDefinitions)
+      dplyr::mutate(name = sprintf("%s <div style=\"display: none\">%s</div>", .data$phenotypeName, .data$searchTermString)) %>%
+      dplyr::select(.data$phenotypeId, .data$name, .data$overview, .data$cohortDefinitions)
 
     options = list(pageLength = 5,
                    lengthMenu = c(5, 10, 15, 20, 100, 500, 1000),
