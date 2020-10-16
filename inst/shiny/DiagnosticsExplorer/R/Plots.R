@@ -1,14 +1,22 @@
-plotTimeDistribution <- function(data, 
-                                 cohortIds = NULL,
-                                 databaseIds = NULL,
-                                 xAxis = "database") {
+addShortName <- function(data, shortNameRef = NULL, cohortIdColumn = "cohortId", shortNameColumn = "shortName") {
+  if (is.null(shortNameRef)) {
+    shortNameRef <- data %>%
+      dplyr::distinct(.data$cohortId) %>%
+      dplyr::arrange(.data$cohortId) %>%
+      dplyr::mutate(shortName = paste0("C", dplyr::row_number()))
+  } 
   
-  if (is.null(cohortIds) || xAxis != "database" || is.null(databaseIds)) {
-    warning("Not yet supported. Upcoming feature.")
-    return(NULL)
-  }
+  shortNameRef <- shortNameRef %>%
+    dplyr::distinct(.data$cohortId, .data$shortName) 
+  colnames(shortNameRef) <- c(cohortIdColumn, shortNameColumn)
+  data <- data %>%
+    dplyr::inner_join(shortNameRef, by = cohortIdColumn)
+  return(data)
   
-  # Perform error checks for input variables
+}
+
+plotTimeDistribution <- function(data, shortNameRef = NULL) {
+  
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertTibble(x = data, 
                           any.missing = FALSE,
@@ -16,70 +24,45 @@ plotTimeDistribution <- function(data,
                           min.cols = 5,
                           null.ok = FALSE,
                           add = errorMessage)
-  checkmate::assertDouble(x = cohortIds,
-                          lower = 1,
-                          upper = 2^53,
-                          any.missing = FALSE,
-                          null.ok = TRUE, 
-                          min.len = 1,
-                          add = errorMessage)
-  checkmate::assertCharacter(x = databaseIds,
-                             any.missing = FALSE,
-                             null.ok = TRUE, 
-                             min.len = 1, 
-                             unique = TRUE,
-                             add = errorMessage)
-  checkmate::assertChoice(x = xAxis,
-                          choices = c("database", "cohortId"),
-                          add = errorMessage)
   checkmate::assertNames(x = colnames(data), 
-                         must.include = c("Min", "P25", "Median", "P75", "Max"),
+                         must.include = c("minValue", "p25Value", "medianValue", "p75Value", "maxValue"),
                          add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
   
-  plotData <- data 
-  if (!is.null(cohortIds)) {
-    plotData <- plotData %>% 
-      dplyr::filter(.data$cohortId %in% !!cohortIds)
-  }
-  if (!is.null(databaseIds)) {
-    plotData <- plotData %>% 
-      dplyr::filter(.data$Database %in% !!databaseIds)
-  }
+  plotData <- addShortName(data = data, shortNameRef = shortNameRef) 
   
-  plotData$tooltip <- c(paste0(plotData$cohortName,
-                               "\nDatabase = ", plotData$Database, 
-                               "\nMin = ", scales::comma(plotData$Min),
-                               "\nMax = ", scales::comma(plotData$Max),
-                               "\nP25 = ", scales::comma(plotData$P25),
-                               "\nMedian = ", scales::comma(plotData$Median),
-                               "\nP75 = ", scales::comma(plotData$P75),
-                               "\nTime Measure = ",  plotData$TimeMeasure,
-                               "\nAverage = ",  scales::comma(x = plotData$Average, accuracy = 0.01)))
+  plotData$tooltip <- c(paste0(plotData$shortName,
+                               "\nDatabase = ", plotData$databaseId, 
+                               "\nMin = ", scales::comma(plotData$minValue),
+                               "\nP25 = ", scales::comma(plotData$p25Value),
+                               "\nMedian = ", scales::comma(plotData$medianValue),
+                               "\nP75 = ", scales::comma(plotData$p75Value),
+                               "\nMax = ", scales::comma(plotData$maxValue),
+                               "\nTime Measure = ",  plotData$timeMetric,
+                               "\nAverage = ",  scales::comma(x = plotData$averageValue, accuracy = 0.01)))
   
   plot <- ggplot2::ggplot(data = plotData) +
     ggplot2::aes(x = .data$shortName,
-                 ymin = .data$Min,
-                 lower = .data$P25,
-                 middle = .data$Median,
-                 upper = .data$P75,
-                 ymax = .data$Max,
+                 ymin = .data$minValue,
+                 lower = .data$p25Value,
+                 middle = .data$medianValue,
+                 upper = .data$p75Value,
+                 ymax = .data$maxValue,
                  group = .data$shortName,
-                 average = .data$Average) +
-    ggplot2::geom_errorbar(mapping = ggplot2::aes(ymin = .data$Min, 
-                                                  ymax = .data$Max), size = 0.5) +
+                 average = .data$averageValue) +
+    ggplot2::geom_errorbar(size = 0.5) +
     ggiraph::geom_boxplot_interactive(ggplot2::aes(tooltip = tooltip),
                                       stat = "identity", 
                                       fill = rgb(0, 0, 0.8, alpha = 0.25), 
                                       size = 0.2) +
-    ggplot2::facet_grid(Database ~ TimeMeasure, scales = "free") +
+    ggplot2::facet_grid(databaseId ~ timeMetric, scales = "free") +
     ggplot2::coord_flip() +
     ggplot2::theme(panel.grid.major.y = ggplot2::element_blank(),
                    panel.grid.minor.y = ggplot2::element_blank(),
                    axis.title.y = ggplot2::element_blank(),
                    axis.ticks.y = ggplot2::element_blank(),
                    strip.background = ggplot2::element_blank()) 
-  height <- 1.5 + 0.4*nrow(dplyr::distinct(plotData, .data$Database, .data$shortName))
+  height <- 1.5 + 0.4*nrow(dplyr::distinct(plotData, .data$databaseId, .data$shortName))
   plot <- ggiraph::girafe(ggobj = plot,
                           options = list(
                             ggiraph::opts_sizing(width = .7),
@@ -87,30 +70,13 @@ plotTimeDistribution <- function(data,
                           width_svg = 12,
                           height_svg = height)
 }  
-# how to render using pure plot ly. Plotly does not prefer precomputed data.
-# TO DO: color and plot positions are not consistent yet.
-# plot <- plotly::plot_ly(data = plotData,
-#                         type = "box",
-#                         median = plotData$P25,
-#                         #Mean = plotData$Average,
-#                         upperfence = plotData$Max,
-#                         lowerfence = plotData$Min,
-#                         split = plotData$TimeMeasure)
-# loop thru database or cohorts as needed
-# then subplot
-# plot <- plotly::subplot(plots,nrows = length(input$databases),margin = 0.05)
-
 
 plotIncidenceRate <- function(data,
-                              cohortIds = NULL,
-                              databaseIds = NULL,
+                              shortNameRef = NULL,
                               stratifyByAgeGroup = TRUE,
                               stratifyByGender = TRUE,
                               stratifyByCalendarYear = TRUE,
                               yscaleFixed = FALSE) {
-  if (nrow(data) == 0) {
-    ParallelLogger::logWarn("Record counts are too low to plot.")
-  }
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertTibble(x = data, 
                           any.missing = TRUE,
@@ -118,19 +84,6 @@ plotIncidenceRate <- function(data,
                           min.cols = 5,
                           null.ok = FALSE,
                           add = errorMessage)
-  checkmate::assertDouble(x = cohortIds,
-                          lower = 1,
-                          upper = 2^53,
-                          any.missing = FALSE,
-                          null.ok = TRUE, 
-                          min.len = 1,
-                          add = errorMessage)
-  checkmate::assertCharacter(x = databaseIds,
-                             any.missing = FALSE,
-                             null.ok = TRUE, 
-                             min.len = 1, 
-                             unique = TRUE,
-                             add = errorMessage)
   checkmate::assertLogical(x = stratifyByAgeGroup, 
                            any.missing = FALSE, 
                            min.len = 1, 
@@ -171,15 +124,8 @@ plotIncidenceRate <- function(data,
   checkmate::reportAssertions(collection = errorMessage)
   
   plotData <- data %>% 
+    addShortName(shortNameRef) %>%
     dplyr::mutate(incidenceRate = round(.data$incidenceRate, digits = 3))
-  if (!is.null(cohortIds)) {
-    plotData <- plotData %>% 
-      dplyr::filter(.data$cohortId %in% !!cohortIds)
-  }
-  if (!is.null(databaseIds)) {
-    plotData <- plotData %>% 
-      dplyr::filter(.data$databaseId %in% !!databaseIds)
-  }
   plotData <- plotData %>% 
     dplyr::mutate(strataGender = !is.na(.data$gender),
                   strataAgeGroup = !is.na(.data$ageGroup),
@@ -227,7 +173,8 @@ plotIncidenceRate <- function(data,
   
   plotData$ageGroup <- factor(plotData$ageGroup,
                               levels = newSort$ageGroup)
-  plotData$tooltip <- c(paste0(plotData$cohortName,"\n","Incidence Rate = ", scales::comma(plotData$incidenceRate, accuracy = 0.01), 
+  plotData$tooltip <- c(paste0(plotData$shortName,
+                               "\nIncidence Rate = ", scales::comma(plotData$incidenceRate, accuracy = 0.01), 
                                "\nDatabase = ", plotData$databaseId, 
                                "\nPerson years = ", scales::comma(plotData$personYears, accuracy = 0.1), 
                                "\nCohort count = ", scales::comma(plotData$cohortCount)))
@@ -244,9 +191,7 @@ plotIncidenceRate <- function(data,
     plotData$tooltip <- c(paste0(plotData$tooltip, "\nYear = ", plotData$calendarYear))
   }
   
-  
-  plot <- ggplot2::ggplot(data = plotData, 
-                          do.call(ggplot2::aes_string, aesthetics)) +
+  plot <- ggplot2::ggplot(data = plotData, do.call(ggplot2::aes_string, aesthetics)) +
     ggplot2::xlab(xLabel) +
     ggplot2::ylab("Incidence Rate (/1,000 person years)") +
     ggplot2::theme(legend.position = "top",
@@ -286,7 +231,7 @@ plotIncidenceRate <- function(data,
       dplyr::summarise(count = dplyr::n()) %>%
       dplyr::ungroup()
     spacing <- unlist(sapply(spacing$count, function(x) c(1, rep(0.5, x - 1))))[-1]
-
+    
     plot <- plot + ggplot2::theme(panel.spacing.y = ggplot2::unit(spacing, "lines"),
                                   strip.background = ggplot2::element_blank())
   } else {
@@ -305,9 +250,8 @@ plotIncidenceRate <- function(data,
 }
 
 plotCohortComparisonStandardizedDifference <- function(balance, 
-                                                       domain = "all",
-                                                       targetLabel = "Mean Target",
-                                                       comparatorLabel = "Mean Comparator") {
+                                                       shortNameRef = NULL,
+                                                       domain = "all") {
   domains <- c("condition", "device", "drug", "measurement", "observation", "procedure")
   balance$domain <- tolower(stringr::str_extract(balance$covariateName, "[a-z]+"))
   balance$domain[!balance$domain %in% domains] <- "other"
@@ -323,11 +267,19 @@ plotCohortComparisonStandardizedDifference <- function(balance,
       dplyr::filter(.data$mean1 > 0.01 | .data$mean2 > 0.01)
   }
   
+  balance <- balance %>%
+    addShortName(shortNameRef = shortNameRef,
+                 cohortIdColumn = "cohortId1",
+                 shortNameColumn = "targetCohort") %>%
+    addShortName(shortNameRef = shortNameRef,
+                 cohortIdColumn = "cohortId2",
+                 shortNameColumn = "comparatorCohort")
+  
   # ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 3, alpha = 0.6)
-  balance$tooltip <- c(paste("Covariate Name:", balance$covariateName,
+  balance$tooltip <- c(paste0("Covariate Name: ", balance$covariateName,
                              "\nDomain: ", balance$domain,
-                             "\nMean Target: ", scales::comma(balance$mean1, accuracy = 0.1),
-                             "\nMean Comparator:", scales::comma(balance$mean2, accuracy = 0.1),
+                             "\nMean ", balance$targetCohort, ": ", scales::comma(balance$mean1, accuracy = 0.1),
+                             "\nMean ", balance$comparatorCohort, ": ", scales::comma(balance$mean2, accuracy = 0.1),
                              "\nStd diff.:", scales::comma(balance$stdDiff, accuracy = 0.1)))
   
   # Code used to generate palette:
@@ -348,10 +300,11 @@ plotCohortComparisonStandardizedDifference <- function(balance,
     ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
     ggplot2::geom_hline(yintercept = 0) +
     ggplot2::geom_vline(xintercept = 0) +             
-    ggplot2::scale_x_continuous("") +
-    ggplot2::scale_y_continuous("") +
+    ggplot2::scale_x_continuous("Mean") +
+    ggplot2::scale_y_continuous("Mean") +
     ggplot2::scale_color_manual("Domain", values = colors) +
-    ggplot2::facet_grid(databaseId + targetCohort ~ comparatorCohort)
+    facet_nested(databaseId + targetCohort ~ comparatorCohort) +
+    ggplot2::theme(strip.background = ggplot2::element_blank())
   
   plot <- ggiraph::girafe(ggobj = plot,
                           options = list(
@@ -362,8 +315,8 @@ plotCohortComparisonStandardizedDifference <- function(balance,
 }
 
 plotCohortOverlap <- function(data,
-                              yAxis = "Percentages",
-                              cohortIdLength = 2) {
+                              shortNameRef = NULL,
+                              yAxis = "Percentages") {
   
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
@@ -383,7 +336,16 @@ plotCohortOverlap <- function(data,
                                           "bothSubjects"),
                          add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
-  space <- "&nbsp"
+  
+  
+  data <- data %>%
+    addShortName(shortNameRef = shortNameRef,
+                 cohortIdColumn = "targetCohortId",
+                 shortNameColumn = "targetShortName") %>%
+    addShortName(shortNameRef = shortNameRef,
+                 cohortIdColumn = "comparatorCohortId",
+                 shortNameColumn = "comparatorShortName")
+  
   plotData <- data %>% 
     dplyr::mutate(absTOnlySubjects = abs(.data$tOnlySubjects), 
                   absCOnlySubjects = abs(.data$cOnlySubjects),
@@ -415,15 +377,9 @@ plotCohortOverlap <- function(data,
                                       ")"))  %>% 
     dplyr::mutate(tooltip = paste0("Database: ", .data$databaseId,
                                    "\n",
-                                   "\n Target Cohort (T)",
-                                   "\n",space,space,space,space,.data$targetShortName,space,.data$targetCohortName,
-                                   "\n",space,space,space,space,.data$targetShortName,' only: ',.data$tOnlyString,
-                                   "\n",
-                                   "\n Comparator Cohort (T)",
-                                   "\n",space,space,space,space,.data$comparatorShortName,space,.data$comparatorCohortName,
-                                   "\n",space,space,space,space,.data$comparatorShortName,' only: ',.data$cOnlyString,
-                                   "\n",
-                                   "\nBoth T & C: ", .data$bothString)) %>%
+                                   "\n", .data$targetShortName,' only: ',.data$tOnlyString,
+                                   "\nBoth: ", .data$bothString,
+                                   "\n", .data$comparatorShortName,' only: ',.data$cOnlyString)) %>%
     dplyr::select(.data$targetShortName,
                   .data$comparatorShortName,
                   .data$databaseId,
@@ -448,7 +404,7 @@ plotCohortOverlap <- function(data,
   } else { 
     position = "stack"
   }
-
+  
   plot <- ggplot2::ggplot(data = plotData) +
     ggplot2::aes(fill = .data$subjectsIn, 
                  y = targetShortName,
@@ -482,6 +438,7 @@ plotCohortOverlap <- function(data,
 }  
 
 plotTemporalCohortComparison <- function(balance,
+                                         shortNameRef = NULL,
                                          domain = "all") {
   domains <- c("condition", "device", "drug", "measurement", "observation", "procedure")
   balance$domain <- tolower(stringr::str_extract(balance$covariateName, "[a-z]+"))
@@ -490,7 +447,9 @@ plotTemporalCohortComparison <- function(balance,
     balance <- balance %>%
       dplyr::filter(.data$domain == !!domain)
   }
-  validate(need(nrow(balance) != 0, "No data for current selection"))
+  if (nrow(balance) == 0) {
+    return(NULL)
+  }
   
   # Can't make sense of plot with > 1000 dots anyway, so remove 
   # anything with small mean in both target and comparator:
@@ -498,33 +457,29 @@ plotTemporalCohortComparison <- function(balance,
     balance <- balance %>%
       dplyr::filter(.data$mean1 > 0.01 | .data$mean2 > 0.01)
   }
+
+  balance <- balance %>%
+    addShortName(shortNameRef = shortNameRef,
+                 cohortIdColumn = "cohortId1",
+                 shortNameColumn = "shortName1") %>%
+    addShortName(shortNameRef = shortNameRef,
+                 cohortIdColumn = "cohortId2",
+                 shortNameColumn = "shortName2") %>%
+    dplyr::mutate(temporalChoices =  paste0("Start ", .data$startDay, " to end ", .data$endDay))
   
-  space <- "&nbsp"
   balance$tooltip <- c(paste(
     "Database: ", balance$databaseId,
     "\nCovariate Name:", balance$covariateName,
     "\nDomain:", balance$domain,
-    "\nDomain:", balance$temporalChoices,
-    "\n",
-    "\n Target Cohort (T)",
-    "\n",space,space,space,space,balance$targetCohortShortName,space,balance$targetCohortName,
-    "\n",space,space,space,space,balance$targetCohortShortName, scales::percent(balance$mean1, accuracy = 0.01),
-    "\n",
-    "\n Comparator Cohort (T)",
-    "\n",space,space,space,space,balance$comparatorCohortShortName,space,balance$comparatorCohortName,
-    "\n",space,space,space,space,balance$comparatorCohortShortName, scales::percent(balance$stdDiff, accuracy = 0.01)))
+    "\nTime:", balance$temporalChoices,
+    "\n",balance$shortName1, scales::percent(balance$mean1, accuracy = 0.01),
+    "\n",balance$shortName2, scales::percent(balance$stdDiff, accuracy = 0.01)))
   
   # Code used to generate palette:
   # writeLines(paste(RColorBrewer::brewer.pal(n = length(balance$temporalChoices), name = "Dark2"), collapse = "\", \""))
   
   # Make sure colors are consistent, no matter which Temporal choices are included:
   colors <- c("#1B9E77", "#D95F02", "#7570B3", "#E7298A", "#66A61E")
-  
-  # cant make sense anyways - so throwing away small values when too much data
-  if (nrow(balance) > 1000) {
-    balance <- balance %>%
-      dplyr::filter(.data$mean1 > 0.005 | .data$mean2 > 0.005)
-  }
   
   plot <- ggplot2::ggplot(balance, ggplot2::aes(x = .data$mean1, 
                                                 y = .data$mean2, 
@@ -539,10 +494,10 @@ plotTemporalCohortComparison <- function(balance,
     ggplot2::scale_x_continuous("") +
     ggplot2::scale_y_continuous("") +
     ggplot2::scale_color_manual("Time Periods", values = colors) +
-    facet_nested(databaseId + targetCohortShortName ~ comparatorCohortShortName) +
+    facet_nested(databaseId + shortName1 ~ shortName2) +
     ggplot2::theme(strip.background = ggplot2::element_blank())
-  width <- 1 + 1*length(unique(balance$comparatorCohortShortName))
-  height <- 0.5 + 0.5*nrow(dplyr::distinct(balance, .data$databaseId, .data$targetCohortShortName))
+  width <- 1 + 1*length(unique(balance$shortName2))
+  height <- 0.5 + 0.5*nrow(dplyr::distinct(balance, .data$databaseId, .data$shortName1))
   aspectRatio <- width / height
   
   plot <- ggiraph::girafe(ggobj = plot,

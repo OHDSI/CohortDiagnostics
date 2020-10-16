@@ -150,10 +150,10 @@ compareCohortCharacteristics <- function(characteristics1, characteristics2) {
 
 
 compareTemporalCohortCharacteristics <- function(characteristics1, characteristics2) {
-  m <- dplyr::full_join(x = characteristics1 %>% dplyr::distinct(), 
-                        y = characteristics2 %>% dplyr::distinct(), 
-                        by = c("covariateId", "conceptId", "databaseId", "covariateName", "analysisId", "timeId"),
-                        suffix = c("1", "2")) %>%
+  m <- characteristics1 %>%
+    dplyr::full_join(characteristics2,
+                     by = c("covariateId", "conceptId", "databaseId", "covariateName", "analysisId", "timeId", "startDay", "endDay"),
+                     suffix = c("1", "2")) %>%
     dplyr::mutate(sd = sqrt(.data$sd1^2 + .data$sd2^2),
                   stdDiff = (.data$mean2 - .data$mean1)/.data$sd) %>% 
     dplyr::arrange(-abs(.data$stdDiff))

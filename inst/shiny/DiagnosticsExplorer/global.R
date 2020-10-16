@@ -25,7 +25,7 @@ defaultPassword <- Sys.getenv("phoebedbPw")
 defaultResultsSchema <- Sys.getenv("phoebedbTargetSchema")
 defaultVocabularySchema <- Sys.getenv("phoebedbVocabSchema")
 
-defaultDatabaseMode <- FALSE # Use file system if FALSE
+defaultDatabaseMode <- TRUE # Use file system if FALSE
 
 defaultCohortBaseUrl <- "https://atlas.ohdsi.org/#/cohortdefinition/"
 defaultConceptBaseUrl <- "https://athena.ohdsi.org/search-terms/terms/"
@@ -226,3 +226,5 @@ if (exists("phenotypeDescription")) {
     dplyr::left_join(searchTerms,
                      by = "phenotypeId")
 }
+# Temporary: only for testing PhenotypeLibrary app for symposium
+rm(covariateValue)

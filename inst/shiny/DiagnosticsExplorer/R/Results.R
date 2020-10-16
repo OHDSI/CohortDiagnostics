@@ -89,36 +89,6 @@ getTimeDistributionResult <- function(dataSource = .GlobalEnv,
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } 
-  if ('shortName' %in% colnames(cohort)) {
-    shortNames <- data %>%
-      dplyr::inner_join(cohort) %>% 
-      dplyr::distinct(.data$cohortId, .data$cohortName, .data$shortName) %>%
-      dplyr::arrange(.data$cohortName)
-  } else {
-    shortNames <- data %>%
-      dplyr::inner_join(cohort) %>% 
-      dplyr::distinct(.data$cohortId, .data$cohortName) %>%
-      dplyr::arrange(.data$cohortName) %>%
-      dplyr::mutate(shortName = paste0('C', dplyr::row_number()))
-  }
-  
-  data <- data %>% 
-    dplyr::inner_join(shortNames, by = "cohortId")
-  
-  data <- data %>% 
-    dplyr::rename(Database = "databaseId",
-                  TimeMeasure = "timeMetric", 
-                  Average = "averageValue", 
-                  SD = "standardDeviation", 
-                  Min = "minValue", 
-                  P10 = "p10Value", 
-                  P25 = "p25Value", 
-                  Median = "medianValue", 
-                  P75 = "p75Value", 
-                  P90 = "p90Value", 
-                  Max = "maxValue") %>% 
-    dplyr::relocate(.data$cohortId, .data$Database, .data$TimeMeasure) %>% 
-    dplyr::arrange(.data$cohortId, .data$Database, .data$TimeMeasure)
   return(data)
 }
 
@@ -189,22 +159,6 @@ getIncidenceRateResult <- function(dataSource = .GlobalEnv,
                     ageGroup = dplyr::na_if(.data$ageGroup, ""),
                     calendarYear = dplyr::na_if(.data$calendarYear, ""))
   }
-  if ('shortName' %in% colnames(cohort)) {
-    shortNames <- data %>%
-      dplyr::inner_join(cohort) %>% 
-      dplyr::distinct(.data$cohortId, .data$cohortName, .data$shortName) %>%
-      dplyr::arrange(.data$cohortName)
-  } else {
-    shortNames <- data %>%
-      dplyr::inner_join(cohort) %>% 
-      dplyr::distinct(.data$cohortId, .data$cohortName) %>%
-      dplyr::arrange(.data$cohortName) %>%
-      dplyr::mutate(shortName = paste0('C', dplyr::row_number()))
-  }
-  
-  data <- data %>% 
-    dplyr::inner_join(shortNames, by = "cohortId")
-  
   return(data %>% 
            dplyr::mutate(calendarYear = as.integer(.data$calendarYear)) %>%
            dplyr::arrange(.data$cohortId, .data$databaseId))
@@ -476,36 +430,6 @@ getCohortOverlapResult <- function(dataSource = .GlobalEnv,
   if (nrow(data) == 0) {
     return(tidyr::tibble())
   }
-  if ('shortName' %in% colnames(cohort)) {
-    targetShortNames <- data %>%
-      dplyr::distinct(.data$targetCohortId) %>%
-      dplyr::inner_join(cohort %>% 
-                          dplyr::select(.data$cohortId, .data$shortName), 
-                        by = c('targetCohortId' = 'cohortId')) %>% 
-      dplyr::arrange(.data$shortName) %>%
-      dplyr::rename(targetShortName = .data$shortName)
-    comparatorShortNames <- data %>%
-      dplyr::distinct(.data$comparatorCohortId) %>%
-      dplyr::inner_join(cohort %>% dplyr::select(.data$cohortId, .data$shortName), 
-                        by = c('comparatorCohortId' = 'cohortId')) %>% 
-      dplyr::arrange(.data$shortName) %>%
-      dplyr::rename(comparatorShortName = .data$shortName)
-  } else {
-  targetShortNames <- data %>%
-    dplyr::distinct(.data$targetCohortId) %>%
-    dplyr::arrange(.data$targetCohortName) %>%
-    dplyr::select(-.data$targetCohortName) %>%
-    dplyr::mutate(targetShortName = paste0('C', dplyr::row_number()))
-  comparatorShortNames <- data %>%
-    dplyr::distinct(.data$comparatorCohortId, .data$comparatorCohortName) %>%
-    dplyr::arrange(.data$comparatorCohortName) %>%
-    dplyr::select(-.data$comparatorCohortName) %>%
-    dplyr::mutate(comparatorShortName = paste0('C', dplyr::row_number()))
-  }
-  
-  data <- data %>% 
-    dplyr::inner_join(targetShortNames, by = "targetCohortId") %>%
-    dplyr::inner_join(comparatorShortNames, by = "comparatorCohortId") 
   return(data)
 }
 
