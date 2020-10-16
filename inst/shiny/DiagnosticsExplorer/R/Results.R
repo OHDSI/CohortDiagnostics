@@ -189,10 +189,15 @@ getInclusionRuleStats <- function(dataSource = .GlobalEnv,
       tidyr::tibble()
   }
   data <- data %>% 
-    dplyr::select(.data$ruleSequenceId, .data$ruleName, 
-                  .data$meetSubjects, .data$gainSubjects, 
-                  .data$remainSubjects, .data$totalSubjects, .data$databaseId) %>% 
-    dplyr::arrange(.data$ruleSequenceId)
+    dplyr::select(.data$cohortId,
+                  .data$ruleSequenceId, 
+                  .data$ruleName, 
+                  .data$meetSubjects, 
+                  .data$gainSubjects, 
+                  .data$remainSubjects, 
+                  .data$totalSubjects, 
+                  .data$databaseId) %>% 
+    dplyr::arrange(.data$cohortId, .data$ruleSequenceId)
   return(data)
 }
 

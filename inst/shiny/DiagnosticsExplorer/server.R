@@ -952,7 +952,7 @@ shiny::shinyServer(function(input, output, session) {
   output$inclusionRuleTable <- DT::renderDataTable(expr = {
     validate(need(length(input$databases) > 0, "No data sources chosen"))
     table <- getInclusionRuleStats(dataSource = dataSource,
-                                   cohortIds = cohortId(),
+                                   cohortIds = cohortIds(),
                                    databaseIds = input$databases) 
     if (nrow(table) == 0) {
       return(dplyr::tibble(Note = paste0("No data available for selected databases and cohorts")))
@@ -970,17 +970,19 @@ shiny::shinyServer(function(input, output, session) {
     table <- table %>% 
       tidyr::pivot_longer(cols = c(.data$meetSubjects, .data$gainSubjects, 
                                    .data$totalSubjects, .data$remainSubjects)) %>% 
-      dplyr::group_by(.data$ruleSequenceId, .data$databaseId, .data$name, .data$ruleName) %>% 
-      dplyr::summarise(value = sum(.data$value)) %>% 
       dplyr::mutate(name = paste0(databaseId, "_", .data$name)) %>% 
-      tidyr::pivot_wider(id_cols = c(.data$ruleSequenceId, .data$ruleName),
+      tidyr::pivot_wider(id_cols = c(.data$cohortId, .data$ruleSequenceId, .data$ruleName),
                          names_from = .data$name,
-                         values_from = .data$value)
+                         values_from = .data$value) %>%
+      addShortName(cohort) %>%
+      dplyr::relocate(.data$shortName) %>%
+      dplyr::mutate(shortName = as.factor(.data$shortName))
     
     sketch <- htmltools::withTags(table(
       class = "display",
       thead(
         tr(
+          th(rowspan = 2, "Cohort"),
           th(rowspan = 2, "Rule Sequence ID"),
           th(rowspan = 2, "Rule Name"),
           lapply(databaseIds, th, colspan = 4, class = "dt-center")
@@ -998,7 +1000,7 @@ shiny::shinyServer(function(input, output, session) {
                    lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
-                   columnDefs = list(minCellCountDef(1 + (1:(length(databaseIds) * 4)))))
+                   columnDefs = list(minCellCountDef(2 + (1:(length(databaseIds) * 4)))))
     
     table <- DT::datatable(table,
                            options = options,

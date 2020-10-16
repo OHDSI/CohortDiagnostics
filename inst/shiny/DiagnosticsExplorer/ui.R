@@ -237,6 +237,7 @@ sidebarMenu <-
       input.tabs != 'compareCohortCharacterization' &
       input.tabs != 'incidenceRate' &
       input.tabs != 'timeDistribution' &
+      input.tabs != 'inclusionRuleStats' &
       input.tabs != 'indexEventBreakdown' &
       input.tabs != 'cohortCharacterization' &
       input.tabs != 'temporalCharacterization' &
@@ -280,6 +281,7 @@ sidebarMenu <-
       input.tabs == 'compareCohortCharacterization' |
       input.tabs == 'incidenceRate' |
       input.tabs == 'timeDistribution' |
+      input.tabs == 'inclusionRuleStats' |
       input.tabs == 'indexEventBreakdown' |
       input.tabs == 'cohortCharacterization' |
       input.tabs == 'temporalCharacterization' |
