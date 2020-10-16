@@ -1465,8 +1465,8 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(-.data$timeId) %>% 
       dplyr::rename(temporalChoices = .data$choices)
     
-    plot <- plotTemporalCohortComparisonStandardizedDifference(balance = data,
-                                                               domain = input$temporalDomainId)
+    plot <- plotTemporalCohortComparison(balance = data,
+                                         domain = input$temporalDomainId)
     return(plot)
   })
   

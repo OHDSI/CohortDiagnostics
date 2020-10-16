@@ -535,7 +535,7 @@ bodyTabItems <- shinydashboard::tabItems(
         title = "Compare Temporal Characterization",
         width = NULL,
         status = "primary",
-        ggiraph::ggiraphOutput("compareTemporalCharacterizationPlot",height = "100%")
+        ggiraph::ggiraphOutput("compareTemporalCharacterizationPlot", width = "100%", height = "100%")
       )
     )
   ),

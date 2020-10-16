@@ -481,8 +481,8 @@ plotCohortOverlap <- function(data,
   return(plot)
 }  
 
-plotTemporalCohortComparisonStandardizedDifference <- function(balance,
-                                                               domain = "all") {
+plotTemporalCohortComparison <- function(balance,
+                                         domain = "all") {
   domains <- c("condition", "device", "drug", "measurement", "observation", "procedure")
   balance$domain <- tolower(stringr::str_extract(balance$covariateName, "[a-z]+"))
   balance$domain[!balance$domain %in% domains] <- "other"
@@ -491,6 +491,14 @@ plotTemporalCohortComparisonStandardizedDifference <- function(balance,
       dplyr::filter(.data$domain == !!domain)
   }
   validate(need(nrow(balance) != 0, "No data for current selection"))
+  
+  # Can't make sense of plot with > 1000 dots anyway, so remove 
+  # anything with small mean in both target and comparator:
+  if (nrow(balance) > 1000) {
+    balance <- balance %>%
+      dplyr::filter(.data$mean1 > 0.01 | .data$mean2 > 0.01)
+  }
+  
   space <- "&nbsp"
   balance$tooltip <- c(paste(
     "Database: ", balance$databaseId,
@@ -530,14 +538,19 @@ plotTemporalCohortComparisonStandardizedDifference <- function(balance,
     ggplot2::geom_vline(xintercept = 0) +             
     ggplot2::scale_x_continuous("") +
     ggplot2::scale_y_continuous("") +
-    ggplot2::scale_color_manual("temporalChoices", values = colors) +
-    ggplot2::facet_grid(databaseId + targetCohortShortName ~ comparatorCohortShortName)
+    ggplot2::scale_color_manual("Time Periods", values = colors) +
+    facet_nested(databaseId + targetCohortShortName ~ comparatorCohortShortName) +
+    ggplot2::theme(strip.background = ggplot2::element_blank())
+  width <- 1 + 1*length(unique(balance$comparatorCohortShortName))
+  height <- 0.5 + 0.5*nrow(dplyr::distinct(balance, .data$databaseId, .data$targetCohortShortName))
+  aspectRatio <- width / height
   
   plot <- ggiraph::girafe(ggobj = plot,
                           options = list(
                             ggiraph::opts_sizing(width = .7),
-                            ggiraph::opts_zoom(max = 5)),width_svg = 12,
-                          height_svg = 5)
+                            ggiraph::opts_zoom(max = 5)),
+                          width_svg = 12,
+                          height_svg = 12 / aspectRatio)
   return(plot)
 }
 # Future function getCohortOverlapHistogram:
