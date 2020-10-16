@@ -587,7 +587,7 @@ resolveConceptSet <- function(dataSource = .GlobalEnv, conceptSets, source = FAL
   if (is(dataSource, "environment")) {
     stop("Cannot resolve concept sets without a database connection")
   } else {
-    sql <- paste("SELECT codeset_id AS concept_set_id, concept.*",
+    sql <- paste("SELECT DISTINCT codeset_id AS concept_set_id, concept.*",
                  "FROM (",
                  paste(conceptSets$conceptSetSql, collapse = ("\nUNION ALL\n")),
                  ") concept_sets",
