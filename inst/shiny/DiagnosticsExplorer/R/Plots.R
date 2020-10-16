@@ -429,57 +429,54 @@ plotCohortOverlap <- function(data,
                         names_to = "subjectsIn",
                         values_to = "value") %>%
     dplyr::mutate(subjectsIn = dplyr::recode(.data$subjectsIn, 
-                                             absTOnlySubjects = "Right cohort only",
+                                             absTOnlySubjects = "Left cohort only",
                                              absBothSubjects = "Both cohorts",
-                                             absCOnlySubjects = "Top cohort only"),
-                  y = "dummy")
+                                             absCOnlySubjects = "Top cohort only"))
   
-  plotData$subjectsIn <- factor(plotData$subjectsIn, levels = c("Right cohort only", "Both cohorts", "Top cohort only"))
+  plotData$subjectsIn <- factor(plotData$subjectsIn, levels = c("Top cohort only", "Both cohorts", "Left cohort only"))
   
   if (yAxis == "Percentages") {
     position = "fill"
   } else { 
     position = "stack"
   }
-  spacing <- plotData %>%
-    dplyr::distinct(.data$databaseId, .data$targetShortName) %>%
-    dplyr::arrange(.data$databaseId) %>%
-    dplyr::group_by(.data$databaseId) %>%
-    dplyr::summarise(count = dplyr::n()) %>%
-    dplyr::ungroup() 
-  spacing <- unlist(sapply(spacing$count, function(x) c(1, rep(0, x - 1))))[-1]
+  # spacing <- plotData %>%
+  #   dplyr::distinct(.data$databaseId, .data$targetShortName) %>%
+  #   dplyr::arrange(.data$databaseId) %>%
+  #   dplyr::group_by(.data$databaseId) %>%
+  #   dplyr::summarise(count = dplyr::n()) %>%
+  #   dplyr::ungroup() 
+  # spacing <- unlist(sapply(spacing$count, function(x) c(1, rep(0, x - 1))))[-1]
 
   plot <- ggplot2::ggplot(data = plotData) +
     ggplot2::aes(fill = .data$subjectsIn, 
-                 y = y,
+                 y = targetShortName,
                  x = .data$value,
                  tooltip = .data$tooltip,
                  group = .data$subjectsIn) +
     ggplot2::ylab(label = "") +
     ggplot2::xlab(label = "") +
     ggplot2::scale_fill_manual("Subjects in", values = c(rgb(0.8, 0.2, 0.2), rgb(0.3, 0.2, 0.4), rgb(0.4, 0.4, 0.9))) +
-    facet_nested(databaseId + targetShortName ~ comparatorShortName) +
+    ggplot2::facet_grid(databaseId ~ comparatorShortName) +
     ggplot2::theme(panel.background = ggplot2::element_blank(),
-                   axis.text.y = ggplot2::element_blank(),
                    strip.background = ggplot2::element_blank(),
                    panel.grid.major.x = ggplot2::element_line(color = "gray"),
-                   axis.ticks.y = ggplot2::element_blank(),
-                   panel.spacing.y = ggplot2::unit(spacing, "lines")) +
+                   axis.ticks.y = ggplot2::element_blank()) +
     ggiraph::geom_bar_interactive(position = position, alpha = 0.6, stat = "identity") 
   if (yAxis == "Percentages") {
     plot <- plot + ggplot2::scale_x_continuous(labels = scales::percent)
   } else {
     plot <- plot + ggplot2::scale_x_continuous(labels = scales::comma)
   }
-  width <- 1.5 + 1*length(unique(plotData$databaseId))
-  height <- 1.5 + 1*length(unique(plotData$targetShortName))
+  width <- 1 + 0.5*length(unique(plotData$comparatorShortName))
+  height <- 0.25 + 0.08*nrow(dplyr::distinct(plotData, .data$databaseId, .data$targetShortName))
   aspectRatio <- width / height                        
   plot <- ggiraph::girafe(ggobj = plot,
                           options = list(
                             ggiraph::opts_sizing(width = .7),
                             ggiraph::opts_zoom(max = 5)), 
                           width_svg = 12,
-                          height_svg = 7 )
+                          height_svg = 12 / aspectRatio )
   return(plot)
 }  
 
