@@ -418,18 +418,24 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "timeDistribution",
     cohortReference("timeDistSelectedCohort"),
-    shinydashboard::box(
-      title = "Time Distributions",
-      width = NULL,
-      status = "primary",
-      tags$br(),
-      ggiraph::ggiraphOutput("timeDisPlot", width = "100%", height = "100%")
+    shiny::radioButtons(
+      inputId = "timeDistributionType",
+      label = "",
+      choices = c("Table", "Plot"),
+      selected = "Table",
+      inline = TRUE
     ),
-    shinydashboard::box(
-      title = "Time Distributions Table",
-      width = NULL,
-      status = "primary",
-      DT::dataTableOutput("timeDistTable")
+    shiny::conditionalPanel(condition = "input.timeDistributionType=='Table'",
+                            DT::dataTableOutput("timeDistTable")),
+    shiny::conditionalPanel(
+      condition = "input.timeDistributionType=='Plot'",
+      shinydashboard::box(
+        title = "Time Distributions",
+        width = NULL,
+        status = "primary",
+        tags$br(),
+        ggiraph::ggiraphOutput("timeDisPlot", width = "100%", height = "100%")
+      )
     )
   ),
   shinydashboard::tabItem(
@@ -525,11 +531,6 @@ bodyTabItems <- shinydashboard::tabItems(
                    )
                  )
       ),
-    
-    
-    
-    
-    
       shinydashboard::box(
         title = "Compare Temporal Characterization",
         width = NULL,
