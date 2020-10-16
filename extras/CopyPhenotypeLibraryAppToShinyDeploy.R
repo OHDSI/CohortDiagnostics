@@ -21,4 +21,7 @@ This app is under development. Please do not use.
 "
 global <- gsub("defaultAboutText <-.+?\r\n", sprintf("defaultAboutText <- \"%s\"\r\n", aboutText), global)
 
+# Remove characterization tabs:
+global <- paste(global, "\r\nrm(covariateValue)")
+
 SqlRender::writeSql(global, file.path(targetFolder, "global.R"))
