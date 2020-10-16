@@ -279,20 +279,29 @@ plotIncidenceRate <- function(data,
     } else {
       plot <- plot + facet_nested(databaseId + shortName ~., scales = scales) 
     }
-    spacing <- rep(c(1, rep(0.5, length(unique(plotData$shortName)) - 1)), length(unique(plotData$databaseId)))[-1]
-    # plot <- plot + ggplot2::theme(panel.spacing.y = ggplot2::unit(spacing, "lines"),
-    #                               strip.background = ggplot2::element_blank())
+    # spacing <- rep(c(1, rep(0.5, length(unique(plotData$shortName)) - 1)), length(unique(plotData$databaseId)))[-1]
+    spacing <- plotData %>%
+      dplyr::distinct(.data$databaseId, .data$shortName) %>%
+      dplyr::arrange(.data$databaseId) %>%
+      dplyr::group_by(.data$databaseId) %>%
+      dplyr::summarise(count = dplyr::n()) %>%
+      dplyr::ungroup()
+    spacing <- unlist(sapply(spacing$count, function(x) c(1, rep(0.5, x - 1))))[-1]
+
+    plot <- plot + ggplot2::theme(panel.spacing.y = ggplot2::unit(spacing, "lines"),
+                                  strip.background = ggplot2::element_blank())
   } else {
     if (stratifyByAgeGroup) {
       plot <- plot + ggplot2::facet_grid(~ageGroup) 
     }
   }
+  height <- 1.5 + 1 * nrow(dplyr::distinct(plotData, .data$databaseId, .data$shortName))
   plot <- ggiraph::girafe(ggobj = plot,
                           options = list(
                             ggiraph::opts_sizing(width = .7),
                             ggiraph::opts_zoom(max = 5)),
                           width_svg = 15,
-                          height_svg = 1.5 + 2*length(unique(data$databaseId)))
+                          height_svg = height)
   return(plot)
 }
 
@@ -440,13 +449,6 @@ plotCohortOverlap <- function(data,
   } else { 
     position = "stack"
   }
-  # spacing <- plotData %>%
-  #   dplyr::distinct(.data$databaseId, .data$targetShortName) %>%
-  #   dplyr::arrange(.data$databaseId) %>%
-  #   dplyr::group_by(.data$databaseId) %>%
-  #   dplyr::summarise(count = dplyr::n()) %>%
-  #   dplyr::ungroup() 
-  # spacing <- unlist(sapply(spacing$count, function(x) c(1, rep(0, x - 1))))[-1]
 
   plot <- ggplot2::ggplot(data = plotData) +
     ggplot2::aes(fill = .data$subjectsIn, 
