@@ -60,7 +60,7 @@ launchDiagnosticsExplorer <- function(dataFolder = "data",
   ensure_installed("DT")
   ensure_installed("htmltools")
   ensure_installed("scales")
-  ensure_installed("plotly")
+  ensure_installed("pool")
   ensure_installed("dplyr")
   ensure_installed("tidyr")
   ensure_installed("ggiraph")

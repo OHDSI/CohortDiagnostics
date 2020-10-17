@@ -571,30 +571,28 @@ shiny::shinyServer(function(input, output, session) {
                                        selected = calenderFilter$calendarYear)
      }
    })
-  
-   incidenceRateDataFilter <- reactive({
-     if (!"All" %in% input$incidenceRateAgeFilter) {
-       data <- incidenceRateData()
-       data <- data %>% 
-         dplyr::filter(.data$ageGroup %in% input$incidenceRateAgeFilter)}
-     if (!"All" %in% input$incidenceRateGenderFilter) {
-       data <- data %>% 
-         dplyr::filter(.data$gender %in% input$incidenceRateGenderFilter)}
-     if (!"All" %in% input$incidenceRateCalenderFilter) {
-       data <- data %>% 
-         dplyr::filter(.data$calendarYear %in% input$incidenceRateCalenderFilter)}
-     return(data)
-   })
-   
+
   output$incidenceRatePlot <- ggiraph::renderggiraph(expr = {
     validate(need(length(input$databases) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
     stratifyByAge <- "Age" %in% input$irStratification
     stratifyByGender <- "Gender" %in% input$irStratification
     stratifyByCalendarYear <- "Calendar Year" %in% input$irStratification
-    validate(need(nrow(incidenceRateDataFilter()) > 0, paste0("No data for this combination")))
+    data <- incidenceRateData()
     
-    plot <- plotIncidenceRate(data = incidenceRateDataFilter(),
+    if (stratifyByAge && !"All" %in% input$incidenceRateAgeFilter) {
+      data <- data %>% 
+        dplyr::filter(.data$ageGroup %in% input$incidenceRateAgeFilter)}
+    if (stratifyByGender && !"All" %in% input$incidenceRateGenderFilter) {
+      data <- data %>% 
+        dplyr::filter(.data$gender %in% input$incidenceRateGenderFilter)}
+    if (stratifyByCalendarYear && !"All" %in% input$incidenceRateCalenderFilter) {
+      data <- data %>% 
+        dplyr::filter(.data$calendarYear %in% input$incidenceRateCalenderFilter)}
+
+    validate(need(nrow(data) > 0, paste0("No data for this combination")))
+    
+    plot <- plotIncidenceRate(data = data,
                               shortNameRef = cohort,
                               stratifyByAgeGroup = stratifyByAge,
                               stratifyByGender = stratifyByGender,
