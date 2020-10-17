@@ -190,6 +190,17 @@ plotIncidenceRate <- function(data,
   if (stratifyByCalendarYear) {
     plotData$tooltip <- c(paste0(plotData$tooltip, "\nYear = ", plotData$calendarYear))
   }
+
+  if (stratifyByGender) {
+    # Make sure colors are consistent, no matter which genders are included:
+    
+    genders <- c("Female", "Male", "No matching concept")
+    # Code used to generate palette:
+    # writeLines(paste(RColorBrewer::brewer.pal(n = 2, name = "Dark2"), collapse = "\", \""))
+    colors <- c("#D95F02", "#1B9E77", "#444444")
+    colors <- colors[genders %in% unique(plotData$gender)]
+    plotData$gender <- factor(plotData$gender, levels = genders)
+  }
   
   plot <- ggplot2::ggplot(data = plotData, do.call(ggplot2::aes_string, aesthetics)) +
     ggplot2::xlab(xLabel) +
@@ -203,10 +214,12 @@ plotIncidenceRate <- function(data,
       ggiraph::geom_line_interactive(ggplot2::aes(), size = 1, alpha = 0.6) +
       ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 2, alpha = 0.6)
   } else {
-    plot <- plot + ggplot2::geom_bar(stat = "identity") +
-      ggiraph::geom_col_interactive( ggplot2::aes(tooltip = tooltip), size = 1)
+      plot <- plot +   ggiraph::geom_col_interactive(ggplot2::aes(tooltip = tooltip), alpha = 0.6)
   }
-  
+  if (stratifyByGender) {
+     plot <- plot + ggplot2::scale_color_manual(values = colors)
+     plot <- plot + ggplot2::scale_fill_manual(values = colors)
+  }
   # databaseId field only present when called in Shiny app:
   if (!is.null(data$databaseId) && length(data$databaseId) > 1) {
     if (yscaleFixed) {
