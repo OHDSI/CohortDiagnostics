@@ -485,8 +485,9 @@ plotTemporalCohortComparison <- function(balance,
     "\nCovariate Name:", balance$covariateName,
     "\nDomain:", balance$domain,
     "\nTime:", balance$temporalChoices,
-    "\n",balance$shortName1, scales::percent(balance$mean1, accuracy = 0.01),
-    "\n",balance$shortName2, scales::percent(balance$stdDiff, accuracy = 0.01)))
+    "\nX- ",balance$shortName1, ": ",scales::percent(balance$mean1, accuracy = 0.01),
+    "\nY- ",balance$shortName2, ": ",scales::percent(balance$mean2, accuracy = 0.01),
+    "\nStd.Diff.", scales::percent(balance$stdDiff, accuracy = 0.01)))
   
   # Code used to generate palette:
   # writeLines(paste(RColorBrewer::brewer.pal(n = length(balance$temporalChoices), name = "Dark2"), collapse = "\", \""))
