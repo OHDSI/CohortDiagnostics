@@ -11,5 +11,6 @@ CohortDiagnostics::launchDiagnosticsExplorer(connectionDetails = connectionDetai
                                              vocabularyDatabaseSchema = Sys.getenv("phoebedbVocabSchema"), 
                                              cohortBaseUrl = "https://epi.jnj.com/atlas/#/cohortdefinition/", 
                                              conceptBaseUrl = "https://epi.jnj.com/atlas/#/concept/", 
-                                             runOverNetwork = TRUE
+                                             runOverNetwork = TRUE,
+                                             aboutText = 'TRUE'
 )
