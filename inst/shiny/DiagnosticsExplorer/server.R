@@ -83,7 +83,7 @@ shiny::shinyServer(function(input, output, session) {
                                     choices = subset,
                                     selected = c(subset[1], subset[2]))
   })
-  
+
   # Phenotype Description ------------------------------------------------------------------------------
   output$phenoTypeDescriptionTable <- DT::renderDataTable(expr = {
     data <- phenotypeDescription %>%
@@ -192,8 +192,8 @@ shiny::shinyServer(function(input, output, session) {
                                     selected = selectedPhenotypeDescriptionRow()$phenotypeName)
   })
   
-  # Cohort Description ---------------------------------------------------------
-  output$cohortDescriptionTable <- DT::renderDataTable(expr = {
+  # Cohort Definition ---------------------------------------------------------
+  output$cohortDefinitionTable <- DT::renderDataTable(expr = {
     data <- cohortSubset() %>%
       dplyr::select(cohort = .data$shortName, .data$cohortId, .data$cohortName) %>%
       dplyr::mutate(cohort = as.factor(.data$cohort))
@@ -216,8 +216,8 @@ shiny::shinyServer(function(input, output, session) {
     return(dataTable)
   }, server = TRUE)
   
-  selectedCohortDescriptionRow <- reactive({
-    idx <- input$cohortDescriptionTable_rows_selected
+  selectedCohortDefinitionRow <- reactive({
+    idx <- input$cohortDefinitionTable_rows_selected
     if (is.null(idx)) {
       return(NULL)
     } else {
@@ -230,13 +230,13 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  output$cohortDescriptionRowIsSelected <- reactive({
-    return(!is.null(selectedCohortDescriptionRow()))
+  output$cohortDefinitionRowIsSelected <- reactive({
+    return(!is.null(selectedCohortDefinitionRow()))
   })
-  outputOptions(output, "cohortDescriptionRowIsSelected", suspendWhenHidden = FALSE)
+  outputOptions(output, "cohortDefinitionRowIsSelected", suspendWhenHidden = FALSE)
   
   output$cohortDetailsText <- shiny::renderUI({
-    row <- selectedCohortDescriptionRow()
+    row <- selectedCohortDefinitionRow()
     if (is.null(row)) {
       return(NULL)
     } else {
@@ -260,8 +260,8 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  output$cohortDescriptionDefinition <- shiny::renderUI({
-    row <- selectedCohortDescriptionRow()
+  output$cohortDefinitionDetails <- shiny::renderUI({
+    row <- selectedCohortDefinitionRow()
     if (is.null(row)) {
       return(NULL)
     } else {
@@ -272,8 +272,8 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  output$cohortDescriptionJson <- shiny::renderText({
-    row <- selectedCohortDescriptionRow()
+  output$cohortDefinitionJson <- shiny::renderText({
+    row <- selectedCohortDefinitionRow()
     if (is.null(row)) {
       return(NULL)
     } else {
@@ -281,8 +281,8 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  output$cohortDescriptionSql <- shiny::renderText({
-    row <- selectedCohortDescriptionRow()
+  output$cohortDefinitionSql <- shiny::renderText({
+    row <- selectedCohortDefinitionRow()
     if (is.null(row)) {
       return(NULL)
     } else {
@@ -290,8 +290,8 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  cohortDescriptionConceptSets <- reactive({
-    row <- selectedCohortDescriptionRow()
+  cohortDefinitionConceptSets <- reactive({
+    row <- selectedCohortDefinitionRow()
     if (is.null(row)) {
       return(NULL)
     } 
@@ -362,9 +362,9 @@ shiny::shinyServer(function(input, output, session) {
     
   })
   
-  output$cohortDescriptionConceptSetsTable <- DT::renderDataTable(expr = {
+  output$cohortDefinitionConceptSetsTable <- DT::renderDataTable(expr = {
     
-    data <- cohortDescriptionConceptSets()
+    data <- cohortDefinitionConceptSets()
     if (is.null(data)) {
       return(NULL)
     } 
@@ -393,7 +393,7 @@ shiny::shinyServer(function(input, output, session) {
       paste("conceptSet-", Sys.Date(), ".csv", sep="")
     },
     content = function(file) {
-      data <- cohortDescriptionConceptSets()
+      data <- cohortDefinitionConceptSets()
       write.csv(data, file)
     }
   )
@@ -502,26 +502,99 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   # Incidence rate --------------------------------------------------------------------------------
-  output$incidenceRatePlot <- ggiraph::renderggiraph(expr = {
-    validate(need(length(input$databases) > 0, "No data sources chosen"))
-    validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
-    
+  incidenceRateData <- reactive({
     stratifyByAge <- "Age" %in% input$irStratification
     stratifyByGender <- "Gender" %in% input$irStratification
     stratifyByCalendarYear <- "Calendar Year" %in% input$irStratification
-    data <- getIncidenceRateResult(dataSource = dataSource,
-                                   cohortIds = cohortIds(), 
-                                   databaseIds = input$databases, 
-                                   stratifyByGender =  stratifyByGender,
-                                   stratifyByAgeGroup =  stratifyByAge,
-                                   stratifyByCalendarYear =  stratifyByCalendarYear,
-                                   minPersonYears = 1000) %>% 
-      dplyr::mutate(incidenceRate = dplyr::case_when(.data$incidenceRate < 0 ~ 0, 
-                                                     TRUE ~ .data$incidenceRate))
+    if (length(cohortIds()) > 0) {
+      data <- getIncidenceRateResult(dataSource = dataSource,
+                                     cohortIds = cohortIds(), 
+                                     databaseIds = input$databases, 
+                                     stratifyByGender =  stratifyByGender,
+                                     stratifyByAgeGroup =  stratifyByAge,
+                                     stratifyByCalendarYear =  stratifyByCalendarYear,
+                                     minPersonYears = 1000) %>% 
+        dplyr::mutate(incidenceRate = dplyr::case_when(.data$incidenceRate < 0 ~ 0, 
+                                                       TRUE ~ .data$incidenceRate))
+    } else {
+      data <- tidyr::tibble()
+    }
+    return(data)
+  })
+  
+   shiny::observe({
+     if (nrow(incidenceRateData()) > 0) {
+       ageFilter <- incidenceRateData() %>% 
+         dplyr::select(.data$ageGroup) %>%
+         dplyr::filter(.data$ageGroup != "NA",!is.na(.data$ageGroup)) %>%
+         dplyr::distinct() %>%
+         dplyr::arrange(as.integer(sub(pattern = '-.+$','',x = .data$ageGroup)))
+       
+       shinyWidgets::updatePickerInput(session = session,
+                                       inputId = "incidenceRateAgeFilter",
+                                       selected = ageFilter$ageGroup,
+                                       choices = ageFilter$ageGroup,
+                                       choicesOpt = list(style = rep_len("color: black;", 999)))
+     }
+   })
+  
+   shiny::observe({
+     if (nrow(incidenceRateData()) > 0) {
+       genderFilter <- incidenceRateData() %>% 
+         dplyr::select(.data$gender) %>% 
+         dplyr::filter(.data$gender != "NA",
+                       !is.na(.data$gender)) %>%
+         dplyr::distinct() %>% 
+         dplyr::arrange(.data$gender)
+       
+       shinyWidgets::updatePickerInput(session = session,
+                                       inputId = "incidenceRateGenderFilter",
+                                       choicesOpt = list(style = rep_len("color: black;", 999)),
+                                       choices = genderFilter$gender,
+                                       selected = genderFilter$gender)
+     }
+   })
+  
+   shiny::observe({
+     if (nrow(incidenceRateData()) > 0) {
+       calenderFilter <- incidenceRateData() %>% 
+         dplyr::select(.data$calendarYear) %>% 
+         dplyr::filter(.data$calendarYear != "NA",
+                       !is.na(.data$calendarYear)) %>%
+         dplyr::distinct(.data$calendarYear) %>% 
+         dplyr::arrange(.data$calendarYear)
+       
+       shinyWidgets::updatePickerInput(session = session,
+                                       inputId = "incidenceRateCalenderFilter",
+                                       choicesOpt = list(style = rep_len("color: black;", 999)),
+                                       choices = calenderFilter$calendarYear,
+                                       selected = calenderFilter$calendarYear)
+     }
+   })
+  
+   incidenceRateDataFilter <- reactive({
+     if (!"All" %in% input$incidenceRateAgeFilter) {
+       data <- incidenceRateData()
+       data <- data %>% 
+         dplyr::filter(.data$ageGroup %in% input$incidenceRateAgeFilter)}
+     if (!"All" %in% input$incidenceRateGenderFilter) {
+       data <- data %>% 
+         dplyr::filter(.data$gender %in% input$incidenceRateGenderFilter)}
+     if (!"All" %in% input$incidenceRateCalenderFilter) {
+       data <- data %>% 
+         dplyr::filter(.data$calendarYear %in% input$incidenceRateCalenderFilter)}
+     return(data)
+   })
+   
+  output$incidenceRatePlot <- ggiraph::renderggiraph(expr = {
+    validate(need(length(input$databases) > 0, "No data sources chosen"))
+    validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
+    stratifyByAge <- "Age" %in% input$irStratification
+    stratifyByGender <- "Gender" %in% input$irStratification
+    stratifyByCalendarYear <- "Calendar Year" %in% input$irStratification
+    validate(need(nrow(incidenceRateDataFilter()) > 0, paste0("No data for this combination")))
     
-    validate(need(nrow(data) > 0, paste0("No data for this combination")))
-    
-    plot <- plotIncidenceRate(data = data,
+    plot <- plotIncidenceRate(data = incidenceRateDataFilter(),
                               shortNameRef = cohort,
                               stratifyByAgeGroup = stratifyByAge,
                               stratifyByGender = stratifyByGender,
