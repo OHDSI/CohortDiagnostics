@@ -1,0 +1,16 @@
+Package: SkeletonCohortDiagnostics
+Type: Package
+Title: A package skeleton for Cohort Diagnostics. Optionally results maybe shared to coordinating site.
+Version: 0.0.1
+Author: Gowtham Rao [aut, cre]
+Maintainer: Gowtham A. Rao <rao@ohdsi.org>
+Description: Generating cohort diagnostics for a set of cohorts.
+Depends:
+    DatabaseConnector (>= 3.0.0)
+Imports:
+	CohortDiagnostics,
+	OhdsiSharing,
+	ParallelLogger
+License: Apache License 2.0
+LazyData: TRUE
+RoxygenNote: 7.1.1

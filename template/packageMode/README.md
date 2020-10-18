@@ -1,0 +1,1 @@
+# It is recommended to follow the instructions for readme in OHDSI studies-template (here)[https://github.com/ohdsi-studies/StudyRepoTemplate].

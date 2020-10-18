@@ -1,5 +1,5 @@
 ---
-title: "Cohort Diagnostics in an OHDSI Package mode"
+title: "Cohort Diagnostics in a Package mode"
 author: "Gowtham A. Rao"
 date: "`r Sys.Date()`"
 output:
@@ -9,7 +9,7 @@ output:
     number_sections: yes
     toc: yes
 vignette: >
-  %\VignetteIndexEntry{How to hydrate a template package with your study specifications}
+  %\VignetteIndexEntry{Cohort Diagnostics in a Package mode}
   %\VignetteEncoding{UTF-8}    
   %\VignetteEngine{knitr::rmarkdown}
 ---
@@ -23,38 +23,65 @@ knitr::opts_chunk$set(
   tidy = FALSE)
 ```
 
+# Requirement
+
+- Please see the instructions at https://ohdsi.github.io/Hades/rSetup.html for configuring your R environment, including Java and RStudio. This is a required first step prior to using this vignette.
+- The following code will help set up the environment needed to set up your study package. 
+```{r, include = FALSE}
+install.packages(pkgs = 'magrittr', dependencies = TRUE)
+install.packages(pkgs = 'remotes', dependencies = TRUE)
+remotes::install_github(repo = c('OHDSI/PhenotypeLibrary', 'OHDSI/OhdsiSharing', 'OHDSI/ROhdsiWebApi'), dependencies = TRUE, upgrade = TRUE)
+```
+
+
+
 # Introduction
 
-This vignette describes how to create a self contained shareable study package that can execute cohort diagnostics on a given set of cohort definitions. 
-
-In this vignette, you will learn how to 
-- use the Cohort Diagnostics template package
-- Hydrate the template package with the cohort definitions you want to diagnose.
-- Execute the diagnostics on one or more data sources.
-- Review the result set using the Diagnostics Explorer R shiny app of Cohort Diagnostics
-- (optional) Submit the results of your cohort diagnostics to the OHDSI Phenotype library.
+This vignette describes how to create a self contained share able Cohort Diagnostics study package. This vignette is designed to work with the skeleton package at https://github.com/OHDSI/CohortDiagnostics/template/packageMode.zip . Please download a local copy of the referenced .zip file and unzip to your study location. Start R-studio by double selecting the file called 'SkeletonCohortDiagnostics.Rproj'.
 
 ## Assumptions:
 - You have the ability to create cohort definitions on an Atlas instance.
 - You are able to (manually) export those cohort definitions from Atlas by going to the 'export' tab on the Cohorts menu of Atlas, or you are able to use ROhdsiWebApi (recommended) to (automatically) extract cohort definitions from Atlas/WebApi.
-- You have R-studio installed with OHDSI R-package ROhdsiWebApi, CohortDiagnostics and all their dependencies.
-- You have access (via R) to a data in OMOP CDM V5.x + format on a database.
+- You have R-studio installed with OHDSI R-package ROhdsiWebApi, CohortDiagnostics and all their dependencies (see requirement above).
+- You have access to a data in OMOP CDM V5.x + format on a database (using OHDSI DatabaseConnector).
 - You have Create, Read, Update, Delete privileges on a schema in the same database.
+
 
 ## Defining the set of cohorts to diagnose
 
-The first step is to define the set of cohorts we wish to run cohort diagnostics. Cohort definitions are almost always authored using OHDSI Atlas (few exceptions, e.g. SQL only cohorts not covered in this vignette). The process of authoring cohort definitions are beyond the scope of this vignette. It is assumed that you have a cohort definition, and have access to its definition as both JSON and OHDSI SQL specification.
+Before using Cohort Diagnostics in package mode, it is expected that you have one or more cohort definitions you would like to diagnose using cohort diagnostics. The process of authoring cohort definitions using Atlas, or how patient level data is represented using OMOP CDM V5+ or OHDSI Vocabulary is beyond the scope of this vignette. 
 
-To execute Cohort Diagnostics, you need to have the following information for each of your cohorts.
+We begin by creating two csv files, cohortDescription.csv (required) and phenotypeDescription.csv (optional but recommended).  
 
-- **phenotypeId**: This is an integer ID for a phenotype in the OHDSI Phenotype Library. Please see [OHDSI Phenotype Library](https://github.com/ohdsi/phenotypeLibrary) for list of existing phenotypeIds. If you believe that your phenotype is not currently in the OHDSI Phenotype library, please make a proposal for a new phenotype. If you are unable to assign a phenotypeId, then please assign the value 0.
-- **cohortId**: A unique integer identifier for the cohort you are diagnosing. If you intend to contribute your cohort diagnostics results to the OHDSI phenotype library, then this cohortId and its corresponding JSON/SQL expression is expected to match the expression in the phenotoype library. If you do not intend to contribute, then this field may be any unique integer id to uniquely identify your cohort id. In such cases, cohortId is generally the same as webApiCohortId.
-- **webApiCohortId**: The unique integer id of your cohort in your Atlas/WebApi instance. This is used to extract cohort definitions from your webapi/Atlas using ROhsdiWebApi.
-- **cohortName**: The unique string name for your cohort. Usually it is the same as your Atlas cohort name, but it can be any name you wish to identify your cohort. This name will be used to display your cohort in the Diagnostics Explorer shiny app.
-- **logicDescription**: In this field, please concisely (not more than two short sentences) describe the logic behind your cohort definition. The purpose of this field is to help you, or someone else, easiy identify this cohort definition and contrast it to other similar cohort definitions. 
+### cohortDescription.csv
+The cohortDescription.csv is the required input for your study package. The file has five columns. 
+
+- **phenotypeId**: This is an unique integer ID for a phenotype in the [OHDSI Phenotype Library](https://data.ohdsi.org/PhenotypeLibrary/). Please see [OHDSI Phenotype Library list of phenotype ids](https://github.com/OHDSI/PhenotypeLibrary/tree/master/inst) for list of existing phenotypeIds. If you believe that your phenotype is not currently in the OHDSI Phenotype library, please make a proposal for a new phenotype to the phenotype library workgroup. If you need to use a custom phenotypeId because your phenotype does not already exist in [OHDSI Phenotype Library](https://data.ohdsi.org/PhenotypeLibrary/), you may either use phenotypeId = 0 or create your own custom phenotypeId. If custom phenotype id is chosen, then you will not be use the [OHDSI Phenotype Library](https://data.ohdsi.org/PhenotypeLibrary/) with your cohort diagnostics output.
+- **cohortId**: This is an unique integer ID for a cohort definition that is in the [OHDSI Phenotype Library Cohort Diagnostics.csv](https://github.com/OHDSI/PhenotypeLibrary/blob/master/extras/CohortDescription.csv). If you believe that your cohort definition is not currently in the OHDSI Phenotype library, please make a proposal for a new cohort definition to the phenotype library workgroup. If you need to use a cohort definition that is not currently in the OHDSI Phenotype library (this commonly happens when you are developing a new cohort definition), you may leave this field as 0. Prior to contributing a cohort definition(s) to the OHDSI Phenotype library, you will need to have a cohortId assigned to your definition by the OHDSI Phenotype library's librarian.
+- **webApiCohortId**: The unique integer id of your cohort in your Atlas/WebApi instance (see exception: cohorts built with custom SQL). This is required if you are attempting to build and diagnose a new cohort definition that is not currently in the OHDSI Phenotype Library, and not required if you are diagnosing a cohort definition that is already in the OHDSI phenotype library.
+- **cohortName**: The unique string name for your cohort. This is required if you are attempting to build and diagnose a new cohort definition that is not currently in the OHDSI Phenotype Library, and not required if you are diagnosing a cohort definition that is already in the OHDSI phenotype library.
+- **logicDescription**: A concise (not more than two short sentences) description of the logic behind your cohort definition. The purpose of this field is to help you, or someone else, easily identify this cohort definition and contrast it to other similar cohort definitions. This is required if you are attempting to build and diagnose a new cohort definition that is not currently in the OHDSI Phenotype Library, and not required if you are diagnosing a cohort definition that is already in the OHDSI phenotype library.
+
+An extract from a fully populated in [OHDSI PhenotypeLibrary CohortDescription.csv](https://raw.githubusercontent.com/OHDSI/PhenotypeLibrary/master/extras/CohortDescription.csv) is shown here.
 
 | phenotypeId | webApiCohortId | cohortName | logicDescription |cohortId| 
 | -----------:|:-------------- | --------:|:-------------- |:-------------- |
 4112853000|17561|[PL 4112853001] Malignant tumor of breast referent concept incident cohort: First occurrence of referent concept + descendants with >=365d prior observation|Incident cohort based on referent concept id|4112853001|
 
+
+
+### phenotypeDescription.csv
+The phenotypeDescription.csv is an optional input for your study package. The file has 
+
+- **phenotypeId**: This is an unique integer ID for a phenotype in the [OHDSI Phenotype Library](https://data.ohdsi.org/PhenotypeLibrary/). Please see [OHDSI Phenotype Library list of phenotypeIds](https://github.com/OHDSI/PhenotypeLibrary/tree/master/inst) for list of existing phenotypeIds. If you believe that your phenotype is not currently in the OHDSI Phenotype library, please make a proposal for a new phenotype to the phenotype library workgroup. If you need to use a custom phenotypeId because your phenotype does not already exist in [OHDSI Phenotype Library list of phenotypeIds](https://github.com/OHDSI/PhenotypeLibrary/tree/master/inst), you may either use phenotypeId = 0 or create your own custom phenotypeId. If custom phenotype id is chosen, then you will not be able to use the [OHDSI Phenotype Library](https://data.ohdsi.org/PhenotypeLibrary/) as part of your cohort diagnostics output, and you will have to populate meta-data content.
+- **phenotypeName**: The unique string name for your phenotype. If the cohort you are diagnosing belongs to the phenotype that is already in the [OHDSI Phenotype Library list of phenotypeIds](https://github.com/OHDSI/PhenotypeLibrary/tree/master/inst), then this field is not required. If you are diagnosing a cohort definition that does not belong to a phenotypeId in the [OHDSI Phenotype Library](https://data.ohdsi.org/PhenotypeLibrary/) and have assigned a custom phenotypeId then this field is required.
+- **referentConceptId**: This is an unique integer ID of a standard OMOP concept id, that captures the central idea behind your phenotype. If you are using a phenotypeId that already exists in [OHDSI Phenotype Library](https://data.ohdsi.org/PhenotypeLibrary/), then this field is not required. If you are using a custom phenotype that is not in [OHDSI Phenotype Library](https://data.ohdsi.org/PhenotypeLibrary/) then you may select a referent Concept id that belongs to a standard OMOP concept id.
+- **clinicalDescription**: The clinical description follows a standard template with the sections Overview, Presentation, Assessment, Plan and Prognosis. If you are using a phenotypeId that already exists in [OHDSI Phenotype Library](https://data.ohdsi.org/PhenotypeLibrary/), then this field is not required. If you are using a custom phenotype that is not in [OHDSI Phenotype Library](https://data.ohdsi.org/PhenotypeLibrary/) then you are recommended to populate this field with clinical description using the template described.
+- **literatureReview**: The literature review section is the link to a file system location that contains one or more documents containing literature review for the phenotype. Although there is no rigid structure for data collection via literature review, the [OHDSI Phenotype Library](https://data.ohdsi.org/PhenotypeLibrary/) has examples of literature review that has followed a template. If you are using a phenotypeId that already exists in [OHDSI Phenotype Library](https://data.ohdsi.org/PhenotypeLibrary/), then this field is not required. If you are using a custom phenotype that is not in [OHDSI Phenotype Library](https://data.ohdsi.org/PhenotypeLibrary/) then you are recommended to contribute your literature to the [OHDSI Phenotype Library](https://data.ohdsi.org/PhenotypeLibrary/).
+- **phenotypeNotes**: This section is a link to a file system location that has the synthesis of phenotype level insights. There is no rigid structure for these insights. 
+
+
+| phenotypeId | phenotypeName | referentConceptId | clinicalDescription | literatureReview | phenotypeNotes |
+| -----------:|:-------------- | ----------------:|:------------------- |:---------------- |:-------------- |
+132702000|Erythema multiforme|132702|"Overview: Skin changes characterized by circular target shaped lesions or raised lesions that are red. Can also involve mucous membranes. Known to be a reaction to some viral infections and to some drugs. Up to 10% of body surface area skin can become detached. Presentation: Either after an infection or an offending drug development of multiple, sometimes spreading rashes *** Assessment: Skin biopsy with staining to rule out autoimmune disease Plan: If not autoimmune disease, topical steroids. If severe, systemic treatment with mycophenolate, thalidomide, immunoglobulins. Systemic corticosteroids are also used Prognosis: Usually self limited. Good prognosis."|https://github.com/OHDSI/PhenotypeLibrary/tree/master/inst/132702000/literature|https://github.com/OHDSI/PhenotypeLibrary/tree/master/inst/132702000/notes|
 
