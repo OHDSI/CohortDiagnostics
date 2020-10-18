@@ -15,13 +15,17 @@ R.utils::copyDirectory(sourceFolder, targetFolder)
 global <- SqlRender::readSql(file.path(targetFolder, "global.R"))
 
 # Change about text
-aboutText <- "
-<h3>The OHDSI Phenotype Library</h3>
-This app is under development. Please do not use.
-"
-global <- gsub("defaultAboutText <-.+?\r\n", sprintf("defaultAboutText <- \"%s\"\r\n", aboutText), global)
+aboutText <- SqlRender::readSql("extras/about/about.html")
+global <- gsub("defaultAboutText <-.+?\r\n", 
+               sprintf("defaultAboutText <- \"%s\"\r\n", gsub("\"", "\\\\\\\\\"", aboutText)), 
+               global)
 
 # Remove characterization tabs:
 global <- paste(global, "\r\nrm(covariateValue)")
 
 SqlRender::writeSql(global, file.path(targetFolder, "global.R"))
+
+# Copy image files for about page -------------------------------------------------
+wwwDir <- file.path(targetFolder, "www")
+dir.create(wwwDir)
+file.copy(list.files("extras/about", pattern = ".png", full.names = TRUE), wwwDir)

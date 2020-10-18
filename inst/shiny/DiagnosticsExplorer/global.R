@@ -226,5 +226,3 @@ if (exists("phenotypeDescription")) {
     dplyr::left_join(searchTerms,
                      by = "phenotypeId")
 }
-# Temporary: only for testing PhenotypeLibrary app for symposium
-rm(covariateValue)

@@ -68,7 +68,7 @@ sidebarMenu <-
     if (exists("aboutText"))
       shinydashboard::menuItem(text = "About", tabName = "about"),
     if (exists("phenotypeDescription"))
-      shinydashboard::menuItem(text = "Phenotype Description", tabName = "phenotypeDescription", selected = TRUE),
+      shinydashboard::menuItem(text = "Phenotype Description", tabName = "phenotypeDescription"),
     if (exists("cohort"))
       shinydashboard::menuItem(text = "Cohort Definition", tabName = "cohortDefinition"),
     if (exists("cohortCount"))
@@ -302,42 +302,6 @@ sidebarMenu <-
           liveSearchPlaceholder = "Type here to search",
           virtualScroll = 50)
       )
-    ),
-    tags$li(
-      tags$div(
-        tags$table(style = "margin-left: 50px",
-          tags$tr(
-            tags$td(style = "text-align: center",
-              tags$a(href = "https://www.apache.org/licenses/LICENSE-2.0", "Apache 2.0", target = "_blank",
-                     style = "text-decoration: underline; color: #003142"),
-            )
-          ),
-          tags$tr(
-            tags$td(style = "text-align: center",
-              tags$p("Open source software"),
-            )
-          ),
-          tags$tr(
-            tags$td(style = "text-align: center",
-              tags$p("Provided by"),
-            )
-          ),
-          tags$tr(
-            tags$td(style = "text-align: center",
-                    tags$a( href = "https://www.ohdsi.org/", target = "_blank",
-                            tags$img(src = "https://atlas.ohdsi.org/images/ohdsi_color.png", width = 100, height = 30, target = "_blank" )
-                    )
-            )
-          ),
-          tags$tr(
-            tags$td(style = "text-align: center",
-              tags$a(href = "https://www.ohdsi.org/", "join the journey",
-                     style = "text-decoration: underline; color: #003142")
-            )
-          )
-        ),
-        style = "color: #003142; margin-top: 14px; background-color : #eee; margin-right: 3px; margin-left: 3px",
-      )
     )
   )
 
@@ -349,86 +313,8 @@ sidebar <-
 bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "about",
-    if (exists("aboutText"))
-    tags$table(
-      tags$tr(
-        tags$td(tags$h3("Cohort Diagnostics")),
-        tags$td(style = "align: right",
-          tags$img(src = "https://avatars2.githubusercontent.com/u/6570077?s=280&v=4", width = 100, height = 100)
-        )
-      ),
-      tags$tr(
-        tags$td(
-          tags$p("OHDSI Phenotype Library is an open community resource maintained by the OHDSI community to support phenotype development, evaluation, sharing and re-use. The Phenotype Library is maintained by community librarians. They are volunteer collaborators who are curating the content contributed by the rest of the community to ensure it is appropriately organized and conforms to community library standards. ", tags$br(), tags$br(), "The OHDSI Phenotype work group is responsible to facilitate the generation and maintenance of  the content in the library. To be included, every cohort definition is expected to belong to one Phenotype, and it should have at least one full result set from Cohort Diagnostics executed on  at least one data source. The output should have been contributed to the Phenotype library.", tags$br(), tags$br(), "All cohort definitions in the phenotype library are expressed in JSON and SQL (OHDSI SQL) instructions that are compatible with OHDSI analytic tools and OHDSI OMOP CDM v5.0+Currently, cohort definitions in the Phenotype Library are implemented in OHDSI SQL compatible with OMOP CDM v5.0+, with JSON specifications compatible with the OHDSI ATLAS platform. Supporting content is organized in the respective folders: literature, notes and evaluation. Literature review is organized using a standardized template."),
-          tags$p(
-            tags$strong("How to download the library contents:"), "To download the full set of phenotypes and cohort definitions please go to",
-            tags$a( href = "https://github.com/ohdsi/phenotypeLibrary", "OHDSI Phenotype Library GitHub repository", target = "_blank")
-          ),
-          tags$p(
-            tags$strong("How to contribute a full set of phenotype library diagnostics across the full library: "), "Please download the study repository from",
-            tags$a( href = "https://github.com/ohdsi-studies/phenotypeLibraryDiagnostics/", " OHDSI Studies Phenotype Library Diagnostics", target = "_blank"), "and submit the results to the coordinating site."
-          ),
-          tags$p(
-            tags$strong("How to run diagnostics on your cohorts using Cohort Diagnostics:"), "You can develop your own cohort using ATLAS and evaluate it using CohortDiagnostics, by following the instructions at",
-            tags$a( href = "https://github.com/ohdsi/cohortdiagnostics", "OHDSI Cohort Diagnostics.", target = "_blank")
-          )
-      )
-    ),
-    tags$tr(
-      tags$td(
-        tags$h4(tags$strong("How to Contribute:")),
-        tags$a( href = "https://forms.office.com/Pages/ResponsePage.aspx?id=lAAPoyCRq0q6TOVQkCOy1aDcZLTRBnxHtm0Rgn5NBBJURVA3NThUWU42RjRUWDVZWlpUNjM2OVlIWSQlQCN0PWcu", target = "_blank",
-          tags$h5("Add a phenotype")
-        ),
-        tags$p("'Add a phenotype' should be completed if you are interested in submitting a new phenotype to the library.  The minimum required elements to contribute a new phenotype are:  1) Phenotype Name, 2) Clinical Description, 3) At least one cohort definition, with logical description and JSON specification, 4) at least one Cohort Diagnostics resultset from a database.")
-      ),
-      tags$td(
-        tags$a(
-          href = "https://forms.office.com/Pages/ResponsePage.aspx?id=lAAPoyCRq0q6TOVQkCOy1aDcZLTRBnxHtm0Rgn5NBBJURVA3NThUWU42RjRUWDVZWlpUNjM2OVlIWSQlQCN0PWcu", target = "_blank",
-          tags$img(src = "Add-Phenotype.png", width = 300)
-        )
-      )
-    ),
-    tags$tr(
-      tags$td(
-        tags$a( href = "https://forms.office.com/Pages/ResponsePage.aspx?id=lAAPoyCRq0q6TOVQkCOy1aDcZLTRBnxHtm0Rgn5NBBJUNllaNVk5NUIwOTRIUzVMTVRDSkdHWFVHRCQlQCN0PWcu", target = "_blank",
-        tags$h5("Add a cohort definition")),
-        tags$p("'Add a cohort definition' should be completed if you are interested in submitting a new cohort definition to an existing phenotype within the OHDSI Phenotype Library.  The minimum required elements to contribute a new cohort definition are:  1) Cohort Definition Name, 2) Existing Phenotype Name, 3) Logical Description, 4) JSON Specification, 5) at least one Cohort Diagnostics resultset from a database.")
-      ),
-      tags$td(
-        tags$a(
-          href = "https://forms.office.com/Pages/ResponsePage.aspx?id=lAAPoyCRq0q6TOVQkCOy1aDcZLTRBnxHtm0Rgn5NBBJUNllaNVk5NUIwOTRIUzVMTVRDSkdHWFVHRCQlQCN0PWcu", target = "_blank",
-          tags$img(src = "Add-Cohort-Definition.png", width = 300)
-        )
-      )
-    ),
-    tags$tr(
-      tags$td(
-        tags$a( href = "https://forms.office.com/Pages/ResponsePage.aspx?id=lAAPoyCRq0q6TOVQkCOy1aDcZLTRBnxHtm0Rgn5NBBJURFJORE1LUERHV1lNNlRGNEU5TDgwTlZXVCQlQCN0PWcu", target = "_blank",
-                tags$h5("Add Diagnostics")),
-        tags$p("'Add diagnostics' should be completed if you are interested in submitting new diagnostics results to an existing Phenotype/Cohort Definition in the OHDSI Phenotype Library. ")
-      ),
-      tags$td(
-        tags$a(
-          href = "https://forms.office.com/Pages/ResponsePage.aspx?id=lAAPoyCRq0q6TOVQkCOy1aDcZLTRBnxHtm0Rgn5NBBJURFJORE1LUERHV1lNNlRGNEU5TDgwTlZXVCQlQCN0PWcu", target = "_blank",
-          tags$img(src = "Add-Diagnostics.png", width = 300)
-        )
-      )
-    ),
-    tags$tr(
-      tags$td(
-        tags$a( href = "https://forms.office.com/Pages/ResponsePage.aspx?id=lAAPoyCRq0q6TOVQkCOy1aDcZLTRBnxHtm0Rgn5NBBJUMTdMUkhUOFE1SFpPRVlKSzlEMkxCN1JRUiQlQCN0PWcu", target = "_blank",
-                tags$h5("Add Insights")),
-        tags$p("'Add insights' should be completed if you are interested in submitting new insight or information to an existing Phenotype/Cohort Definition in the OHDSI Phenotype Library. ")
-      ),
-      tags$td(
-        tags$a(
-          href = "https://forms.office.com/Pages/ResponsePage.aspx?id=lAAPoyCRq0q6TOVQkCOy1aDcZLTRBnxHtm0Rgn5NBBJUMTdMUkhUOFE1SFpPRVlKSzlEMkxCN1JRUiQlQCN0PWcu", target = "_blank",
-          tags$img(src = "Add-Insights.png", width = 300)
-        )
-      )
-    )
-  )), 
+    if (exists("aboutText")) HTML(aboutText)
+  ), 
   shinydashboard::tabItem(
     tabName = "phenotypeDescription",
     shinydashboard::box(
