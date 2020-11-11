@@ -19,6 +19,7 @@
 #' @details
 #' This function executes the cohort diagnostics.
 #'
+#' @param packageName          Study package name. This package has the cohort specifications.
 #' @param connectionDetails    An object of type \code{connectionDetails} as created using the
 #'                             \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
 #'                             DatabaseConnector package.
@@ -55,7 +56,8 @@
 #'                             in packaged results.
 #'
 #' @export
-runCohortDiagnostics <- function(connectionDetails,
+runCohortDiagnostics <- function(packageName = "examplePackage",
+                                 connectionDetails,
                                  cdmDatabaseSchema,
                                  cohortDatabaseSchema = cdmDatabaseSchema,
                                  cohortTable = "cohort",
@@ -96,7 +98,7 @@ runCohortDiagnostics <- function(connectionDetails,
   }
   
   ParallelLogger::logInfo("Running study diagnostics")
-  CohortDiagnostics::runCohortDiagnostics(packageName = "examplePackage",
+  CohortDiagnostics::runCohortDiagnostics(packageName = packageName,
                                           connectionDetails = connectionDetails,
                                           cdmDatabaseSchema = cdmDatabaseSchema,
                                           oracleTempSchema = oracleTempSchema,

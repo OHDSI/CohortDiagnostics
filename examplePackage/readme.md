@@ -17,10 +17,12 @@ To modify the package to include the cohorts of interest, take these steps:
 
 4. Modify *inst/settings/CohortsToCreate.csv* to include only those cohorts you are interested in. Fill in each of the four columns:
 
-    - **atlasId**: The cohort ID in ATLAS.
-    - **atlasName**: The full name of the cohort. This will be shown in the Shiny app.
-    - **cohortId**: The cohort ID to use in the package. USually the same as the cohort ID in ATLAS.
-    - **name**: A short name for the cohort, to use to create file names. do not use special characters.
+    - **phenotypeId**: This is an unique integer ID for a phenotype in the [OHDSI Phenotype Library](https://data.ohdsi.org/PhenotypeLibrary/). If you don't find an appropriate phenotypeId to capture your clinical idea, then you may use phenotype = 0. Advanced users may consider using custom phenotype ids.
+    - **cohortId**: This is an unique integer ID for a cohort definition that is in the [OHDSI Phenotype Library Cohort Diagnostics.csv](https://github.com/OHDSI/PhenotypeLibrary/blob/master/extras/CohortDescription.csv). If you need to use a cohort definition that is not currently in the OHDSI Phenotype library (this commonly happens when you are developing a new cohort definition), you may leave this field maybe the webApiCohortId.
+    - **webApiCohortId**: The unique integer id of your cohort in your Atlas/WebApi instance. 
+    - **cohortName**: The unique string name for your cohort.
+    - **logicDescription**: A concise (not more than two short sentences) description of the logic behind your cohort definition. The purpose of this field is to help you, or someone else, easily identify this cohort definition and contrast it to other similar cohort definitions. This is required if you are attempting to build and diagnose a new cohort definition that is not currently in the OHDSI Phenotype Library, and not required if you are diagnosing a cohort definition that is already in the OHDSI phenotype library.
+
 
 5. Run this code (note, this can also be found in *extras/PackageMaintenance.R*):
 
@@ -29,7 +31,15 @@ To modify the package to include the cohorts of interest, take these steps:
     install.packages("devtools")
     devtools::install_github("ROhdsiWebApi")
     
-    ROhdsiWebApi::insertCohortDefinitionSetInPackage(fileName = "inst/settings/CohortsToCreate.csv",
+    baseUrl = "" # please provide the base url for your webApi
+    
+    CohortsToCreate %>% 
+    dplyr::select(.data$webApiCohortId) %>% 
+    dplyr::rename(atlasId = .data$webApiCohortId) %>% 
+    dplyr::mutate(cohortId = .data$atlasId, name = as.character(.data$atlasId)) %>% 
+    readr::write_excel_csv(file = file.path(tempdir, 'CohortsToCreate.csv'), na = "")
+    
+    ROhdsiWebApi::insertCohortDefinitionSetInPackage(fileName = file.path(tempdir, 'CohortsToCreate.csv'),
                                                      baseUrl = <baseUrl>,
                                                      insertTableSql = TRUE,
                                                      insertCohortCreationR = TRUE,
