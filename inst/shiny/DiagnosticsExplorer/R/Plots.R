@@ -190,7 +190,7 @@ plotIncidenceRate <- function(data,
   if (stratifyByCalendarYear) {
     plotData$tooltip <- c(paste0(plotData$tooltip, "\nYear = ", plotData$calendarYear))
   }
-
+  
   if (stratifyByGender) {
     # Make sure colors are consistent, no matter which genders are included:
     
@@ -214,11 +214,11 @@ plotIncidenceRate <- function(data,
       ggiraph::geom_line_interactive(ggplot2::aes(), size = 1, alpha = 0.6) +
       ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 2, alpha = 0.6)
   } else {
-      plot <- plot +   ggiraph::geom_col_interactive(ggplot2::aes(tooltip = tooltip), alpha = 0.6)
+    plot <- plot +   ggiraph::geom_col_interactive(ggplot2::aes(tooltip = tooltip), alpha = 0.6)
   }
   if (stratifyByGender) {
-     plot <- plot + ggplot2::scale_color_manual(values = colors)
-     plot <- plot + ggplot2::scale_fill_manual(values = colors)
+    plot <- plot + ggplot2::scale_color_manual(values = colors)
+    plot <- plot + ggplot2::scale_fill_manual(values = colors)
   }
   # databaseId field only present when called in Shiny app:
   if (!is.null(data$databaseId) && length(data$databaseId) > 1) {
@@ -290,10 +290,10 @@ plotCohortComparisonStandardizedDifference <- function(balance,
   
   # ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 3, alpha = 0.6)
   balance$tooltip <- c(paste0("Covariate Name: ", balance$covariateName,
-                             "\nDomain: ", balance$domain,
-                             "\nMean ", balance$targetCohort, ": ", scales::comma(balance$mean1, accuracy = 0.1),
-                             "\nMean ", balance$comparatorCohort, ": ", scales::comma(balance$mean2, accuracy = 0.1),
-                             "\nStd diff.:", scales::comma(balance$stdDiff, accuracy = 0.1)))
+                              "\nDomain: ", balance$domain,
+                              "\nMean ", balance$targetCohort, ": ", scales::comma(balance$mean1, accuracy = 0.1),
+                              "\nMean ", balance$comparatorCohort, ": ", scales::comma(balance$mean2, accuracy = 0.1),
+                              "\nStd diff.:", scales::comma(balance$stdDiff, accuracy = 0.1)))
   
   # Code used to generate palette:
   # writeLines(paste(RColorBrewer::brewer.pal(n = length(domains), name = "Dark2"), collapse = "\", \""))
@@ -470,7 +470,79 @@ plotTemporalCohortComparison <- function(balance,
     balance <- balance %>%
       dplyr::filter(.data$mean1 > 0.01 | .data$mean2 > 0.01)
   }
+  
+  balance <- balance %>%
+    addShortName(shortNameRef = shortNameRef,
+                 cohortIdColumn = "cohortId1",
+                 shortNameColumn = "shortName1") %>%
+    addShortName(shortNameRef = shortNameRef,
+                 cohortIdColumn = "cohortId2",
+                 shortNameColumn = "shortName2") %>%
+    dplyr::mutate(temporalChoices =  paste0("Start ", .data$startDay, " to end ", .data$endDay))
+  
+  balance$tooltip <- c(paste(
+    "Database: ", balance$databaseId,
+    "\nCovariate Name:", balance$covariateName,
+    "\nDomain:", balance$domain,
+    "\nTime:", balance$temporalChoices,
+    "\nX- ",balance$shortName1, ": ",scales::percent(balance$mean1, accuracy = 0.01),
+    "\nY- ",balance$shortName2, ": ",scales::percent(balance$mean2, accuracy = 0.01),
+    "\nStd.Diff.", scales::percent(balance$stdDiff, accuracy = 0.01)))
+  
+  # Code used to generate palette:
+  # writeLines(paste(RColorBrewer::brewer.pal(n = length(balance$temporalChoices), name = "Dark2"), collapse = "\", \""))
+  
+  # Make sure colors are consistent, no matter which Temporal choices are included:
+  colors <- c("#1B9E77", "#D95F02", "#7570B3", "#E7298A", "#66A61E")
+  
+  balance$rowname <- row.names(balance)
+  
+  plot <- ggplot2::ggplot(balance, ggplot2::aes(x = .data$mean1, 
+                                                y = .data$mean2, 
+                                                color = .data$temporalChoices)) +
+    ggiraph::geom_point_interactive(ggplot2::aes(tooltip = .data$tooltip, data_id = .data$rowname), 
+                                    size = 3,
+                                    shape = 16,
+                                    alpha = 0.5) +
+    ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+    ggplot2::geom_hline(yintercept = 0) +
+    ggplot2::geom_vline(xintercept = 0) +             
+    ggplot2::xlim(0,1.0) +
+    ggplot2::ylim(0,1.0) +
+    ggplot2::scale_color_manual("Time Periods", values = colors) +
+    facet_nested(databaseId + shortName1 ~ shortName2) +
+    ggplot2::theme(strip.background = ggplot2::element_blank())
+  width <- 1 + 1*length(unique(balance$shortName2))
+  height <- 0.5 + 0.5*nrow(dplyr::distinct(balance, .data$databaseId, .data$shortName1))
+  aspectRatio <- width / height
+  
+  plot <- ggiraph::girafe(ggobj = plot,
+                          options = list(
+                            ggiraph::opts_sizing(width = .7),
+                            ggiraph::opts_zoom(max = 5)),
+                          width_svg = 12,
+                          height_svg = 12 / aspectRatio)
+  return(plot)
+}
 
+plotTemporalLassoCohortComparison <- function(balance,
+                                              shortNameRef = NULL,
+                                              domain = "all") {
+  domains <- c("condition", "device", "drug", "measurement", "observation", "procedure")
+  balance$domain <- tolower(stringr::str_extract(balance$covariateName, "[a-z]+"))
+  balance$domain[!balance$domain %in% domains] <- "other"
+  
+  if (nrow(balance) == 0) {
+    return(NULL)
+  }
+  
+  # Can't make sense of plot with > 1000 dots anyway, so remove 
+  # anything with small mean in both target and comparator:
+  if (nrow(balance) > 1000) {
+    balance <- balance %>%
+      dplyr::filter(.data$mean1 > 0.01 | .data$mean2 > 0.01)
+  }
+  
   balance <- balance %>%
     addShortName(shortNameRef = shortNameRef,
                  cohortIdColumn = "cohortId1",
@@ -505,10 +577,9 @@ plotTemporalCohortComparison <- function(balance,
     ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
     ggplot2::geom_hline(yintercept = 0) +
     ggplot2::geom_vline(xintercept = 0) +             
-    ggplot2::scale_x_continuous("") +
-    ggplot2::scale_y_continuous("") +
+    ggplot2::xlim(0,1.0) +
+    ggplot2::ylim(0,1.0) +
     ggplot2::scale_color_manual("Time Periods", values = colors) +
-    facet_nested(databaseId + shortName1 ~ shortName2) +
     ggplot2::theme(strip.background = ggplot2::element_blank())
   width <- 1 + 1*length(unique(balance$shortName2))
   height <- 0.5 + 0.5*nrow(dplyr::distinct(balance, .data$databaseId, .data$shortName1))

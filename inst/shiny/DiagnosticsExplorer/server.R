@@ -83,13 +83,13 @@ shiny::shinyServer(function(input, output, session) {
                                     choices = subset,
                                     selected = c(subset[1], subset[2]))
   })
-
+  
   # Phenotype Description ------------------------------------------------------------------------------
   output$phenoTypeDescriptionTable <- DT::renderDataTable(expr = {
     data <- phenotypeDescription %>%
       dplyr::mutate(name = sprintf("%s <div style=\"display: none\">%s</div>", .data$phenotypeName, .data$searchTermString)) %>%
       dplyr::select(.data$phenotypeId, .data$name, .data$overview, .data$cohortDefinitions)
-
+    
     options = list(pageLength = 5,
                    lengthMenu = c(5, 10, 15, 20, 100, 500, 1000),
                    searching = TRUE,
@@ -197,7 +197,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- cohortSubset() %>%
       dplyr::select(cohort = .data$shortName, .data$cohortId, .data$cohortName) %>%
       dplyr::mutate(cohort = as.factor(.data$cohort))
-
+    
     options = list(pageLength = 10,
                    searching = TRUE,
                    ordering = TRUE,
@@ -398,7 +398,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   )
   
- 
+  
   # Cohort Counts --------------------------------------------------------------------------- 
   output$cohortCountsTable <- DT::renderDataTable(expr = {
     validate(need(length(input$databases) > 0, "No data sources chosen"))
@@ -522,56 +522,56 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-   shiny::observe({
-     if (nrow(incidenceRateData()) > 0) {
-       ageFilter <- incidenceRateData() %>% 
-         dplyr::select(.data$ageGroup) %>%
-         dplyr::filter(.data$ageGroup != "NA",!is.na(.data$ageGroup)) %>%
-         dplyr::distinct() %>%
-         dplyr::arrange(as.integer(sub(pattern = '-.+$','',x = .data$ageGroup)))
-       
-       shinyWidgets::updatePickerInput(session = session,
-                                       inputId = "incidenceRateAgeFilter",
-                                       selected = ageFilter$ageGroup,
-                                       choices = ageFilter$ageGroup,
-                                       choicesOpt = list(style = rep_len("color: black;", 999)))
-     }
-   })
+  shiny::observe({
+    if (nrow(incidenceRateData()) > 0) {
+      ageFilter <- incidenceRateData() %>% 
+        dplyr::select(.data$ageGroup) %>%
+        dplyr::filter(.data$ageGroup != "NA",!is.na(.data$ageGroup)) %>%
+        dplyr::distinct() %>%
+        dplyr::arrange(as.integer(sub(pattern = '-.+$','',x = .data$ageGroup)))
+      
+      shinyWidgets::updatePickerInput(session = session,
+                                      inputId = "incidenceRateAgeFilter",
+                                      selected = ageFilter$ageGroup,
+                                      choices = ageFilter$ageGroup,
+                                      choicesOpt = list(style = rep_len("color: black;", 999)))
+    }
+  })
   
-   shiny::observe({
-     if (nrow(incidenceRateData()) > 0) {
-       genderFilter <- incidenceRateData() %>% 
-         dplyr::select(.data$gender) %>% 
-         dplyr::filter(.data$gender != "NA",
-                       !is.na(.data$gender)) %>%
-         dplyr::distinct() %>% 
-         dplyr::arrange(.data$gender)
-       
-       shinyWidgets::updatePickerInput(session = session,
-                                       inputId = "incidenceRateGenderFilter",
-                                       choicesOpt = list(style = rep_len("color: black;", 999)),
-                                       choices = genderFilter$gender,
-                                       selected = genderFilter$gender)
-     }
-   })
+  shiny::observe({
+    if (nrow(incidenceRateData()) > 0) {
+      genderFilter <- incidenceRateData() %>% 
+        dplyr::select(.data$gender) %>% 
+        dplyr::filter(.data$gender != "NA",
+                      !is.na(.data$gender)) %>%
+        dplyr::distinct() %>% 
+        dplyr::arrange(.data$gender)
+      
+      shinyWidgets::updatePickerInput(session = session,
+                                      inputId = "incidenceRateGenderFilter",
+                                      choicesOpt = list(style = rep_len("color: black;", 999)),
+                                      choices = genderFilter$gender,
+                                      selected = genderFilter$gender)
+    }
+  })
   
-   shiny::observe({
-     if (nrow(incidenceRateData()) > 0) {
-       calenderFilter <- incidenceRateData() %>% 
-         dplyr::select(.data$calendarYear) %>% 
-         dplyr::filter(.data$calendarYear != "NA",
-                       !is.na(.data$calendarYear)) %>%
-         dplyr::distinct(.data$calendarYear) %>% 
-         dplyr::arrange(.data$calendarYear)
-       
-       shinyWidgets::updatePickerInput(session = session,
-                                       inputId = "incidenceRateCalenderFilter",
-                                       choicesOpt = list(style = rep_len("color: black;", 999)),
-                                       choices = calenderFilter$calendarYear,
-                                       selected = calenderFilter$calendarYear)
-     }
-   })
-
+  shiny::observe({
+    if (nrow(incidenceRateData()) > 0) {
+      calenderFilter <- incidenceRateData() %>% 
+        dplyr::select(.data$calendarYear) %>% 
+        dplyr::filter(.data$calendarYear != "NA",
+                      !is.na(.data$calendarYear)) %>%
+        dplyr::distinct(.data$calendarYear) %>% 
+        dplyr::arrange(.data$calendarYear)
+      
+      shinyWidgets::updatePickerInput(session = session,
+                                      inputId = "incidenceRateCalenderFilter",
+                                      choicesOpt = list(style = rep_len("color: black;", 999)),
+                                      choices = calenderFilter$calendarYear,
+                                      selected = calenderFilter$calendarYear)
+    }
+  })
+  
   output$incidenceRatePlot <- ggiraph::renderggiraph(expr = {
     validate(need(length(input$databases) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
@@ -589,7 +589,7 @@ shiny::shinyServer(function(input, output, session) {
     if (stratifyByCalendarYear && !"All" %in% input$incidenceRateCalenderFilter) {
       data <- data %>% 
         dplyr::filter(.data$calendarYear %in% input$incidenceRateCalenderFilter)}
-
+    
     validate(need(nrow(data) > 0, paste0("No data for this combination")))
     
     plot <- plotIncidenceRate(data = data,
@@ -636,7 +636,7 @@ shiny::shinyServer(function(input, output, session) {
                     P75 = .data$p75Value, 
                     P90 = .data$p90Value, 
                     Max = .data$maxValue) 
-      
+    
     
     if (is.null(data) || nrow(data) == 0) {
       return(dplyr::tibble(Note = paste0("No data available for selected databases and cohorts")))
@@ -969,13 +969,13 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::arrange(dplyr::desc(.data$databaseCount), dplyr::desc(.data$recordCount))
     }
     options <- list(pageLength = 10,
-                   searching = TRUE,
-                   scrollX = TRUE,
-                   lengthChange = TRUE,
-                   ordering = TRUE,
-                   paging = TRUE,
-                   columnDefs = list(truncateStringDef(2, 50),
-                                     minCellCountDef(6:ifelse(standard, 9, 7))))
+                    searching = TRUE,
+                    scrollX = TRUE,
+                    lengthChange = TRUE,
+                    ordering = TRUE,
+                    paging = TRUE,
+                    columnDefs = list(truncateStringDef(2, 50),
+                                      minCellCountDef(6:ifelse(standard, 9, 7))))
     
     sketch <- htmltools::withTags(table(
       class = "display",
@@ -1351,8 +1351,8 @@ shiny::shinyServer(function(input, output, session) {
                            names_from = .data$name,
                            values_from = .data$value) %>%
         dplyr::inner_join(data %>% dplyr::select(.data$covariateId, 
-                                                            .data$covariateName, 
-                                                            .data$conceptId) %>% 
+                                                 .data$covariateName, 
+                                                 .data$conceptId) %>% 
                             dplyr::distinct(),
                           by = "covariateId") %>%
         dplyr::select(-.data$covariateId) %>% 
@@ -1425,6 +1425,7 @@ shiny::shinyServer(function(input, output, session) {
                                     isTemporal = TRUE)
   })
   
+  # Table inside the table radio button
   output$temporalCharacterizationTable <- DT::renderDataTable(expr = {
     data <- temporalCharacterization()
     if (nrow(data) == 0) {
@@ -1482,26 +1483,164 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
-  
-  output$compareTemporalCharacterizationPlot <- ggiraph::renderggiraph(expr = {
-    data <- temporalCharacterization()
+  # reactive function to filter characterization data based on timeId or domainId
+  filterByTimeIdAndDomainId <- reactive({
+    data <- temporalCharacterization() 
+    #filter data by timeId
     if (input$timeIdChoicesFilter != 'All') {
       data <- data %>% 
         dplyr::filter(.data$timeId %in% (temporalCovariateChoices %>% 
-                                                    dplyr::filter(choices %in% 
-                                                                    input$timeIdChoicesFilter) %>% 
-                                                    dplyr::pull(.data$timeId)))
+                                           dplyr::filter(choices %in% input$timeIdChoicesFilter) %>% 
+                                           dplyr::pull(.data$timeId)))
     }
+    #filter data by domain
+    # domains <- c("condition", "device", "drug", "measurement", "observation", "procedure")
+    data$domain <- tolower(stringr::str_extract(data$covariateName, "[a-z]+"))
+    data$domain[!data$domain %in% input$temporalDomainId] <- "other"
+    if (input$temporalDomainId != "all") {
+      data <- data %>%
+        dplyr::filter(.data$domain == !!input$temporalDomainId)
+    }
+    return(data)
+  })
+  
+  # Temporal characterization table that is shown on selecting the plot radio button
+  output$temporalCharacterizationCovariateTable <- DT::renderDataTable(expr = {
+    data <- filterByTimeIdAndDomainId()
+    data <- compareTemporalCohortCharacteristics(characteristics1 = data, characteristics2 = data)
+    if (nrow(data) == 0) {
+      return(dplyr::tibble(Note = "No data for the selected combination."))
+    }
+    if (nrow(data) > 1000) {
+      data <- data %>%
+        dplyr::filter(.data$mean1 > 0.01 | .data$mean2 > 0.01)
+    }
+    data <- data %>% 
+      dplyr::select(.data$covariateName)
+    options = list(pageLength = 10,
+                   searching = TRUE,
+                   searchHighlight = TRUE,
+                   scrollX = TRUE,
+                   lengthChange = TRUE,
+                   ordering = TRUE,
+                   paging = TRUE,
+                   stateSave = TRUE,
+                   dom = 'tip', 
+                   columnDefs = list(truncateStringDef(0,40)))
+    table <- DT::datatable(data,
+                           options = options,
+                           rownames = FALSE,
+                           colnames = colnames(table) %>% 
+                             camelCaseToTitleCase(),
+                           escape = FALSE,
+                           filter = "top",
+                           class = "stripe nowrap compact")
+    return(table)
+  })
+  
+  # Temporal characterization table that shows the covariates selected by lasso method
+  output$temporalCharacterizationCovariateLassoTable <- DT::renderDataTable(expr = {
+    data <- temporalCharacterization() 
+    if (nrow(data) > 1000) {
+      data <- data %>%
+        dplyr::filter(.data$mean > 0.01)
+    }
+    if (nrow(data) == 0) {
+      return(dplyr::tibble(Note = "No data for the selected combination."))
+    }
+    table <- data %>% 
+      dplyr::select(.data$covariateName)
+    table <- table[selectedPlotPoints(),]
+    options = list(pageLength = 10,
+                   searching = TRUE,
+                   searchHighlight = TRUE,
+                   scrollX = TRUE,
+                   lengthChange = TRUE,
+                   ordering = TRUE,
+                   paging = TRUE,
+                   stateSave = TRUE,
+                   dom = 'tip', 
+                   columnDefs = list(truncateStringDef(0,40)))
     
+    table <- DT::datatable(table,
+                           options = options,
+                           rownames = FALSE,
+                           colnames = colnames(table) %>% 
+                             camelCaseToTitleCase(),
+                           escape = FALSE,
+                           filter = "top",
+                           class = "stripe nowrap compact")
+    return(table)
+  })
+  
+  selectedtemporalCharacterizationCovariateRow <- reactive({
+    # _row_selected is an inbuilt property of DT that provides the index of selected row.
+    idx <- input$temporalCharacterizationCovariateTable_rows_selected
+    if (is.null(idx)) {
+      return(NULL)
+    } else {
+      return(idx)
+    }
+  })
+  
+  filteredTemporalCovariateName <- reactiveVal()
+  filteredTemporalCovariateName(c())
+  # collect the user selected covariate names 
+  observeEvent(input$temporalCharacterizationCovariateTable_state, {
+    if (input$temporalCharacterizationCovariateTable_state$columns[[1]]$search != "")
+      filteredTemporalCovariateName(input$temporalCharacterizationCovariateTable_state$columns[[1]]$search$search)
+    else
+      filteredTemporalCovariateName(c())
+  })
+  
+  selectedPlotPoints <- reactiveVal()
+  selectedPlotPoints(c())
+  # observe the selection of covariates inside the plot
+  observeEvent(input$compareTemporalCharacterizationPlot_selected, {
+    selectedPlotPoints(input$compareTemporalCharacterizationPlot_selected)
+  })
+  
+  output$compareTemporalCharacterizationPlot <- ggiraph::renderggiraph(expr = {
+    data <- filterByTimeIdAndDomainId()
     if (nrow(data) == 0) {
       return(dplyr::tibble(Note = "No data for the selected combination."))
     }
     data <- compareTemporalCohortCharacteristics(characteristics1 = data, characteristics2 = data)
+    if (!is.null(selectedtemporalCharacterizationCovariateRow())) {
+      data <- data[selectedtemporalCharacterizationCovariateRow(), ]
+    }
+    else if (!is.null(filteredTemporalCovariateName())) {
+      data <- data %>% 
+        dplyr::filter(grepl(filteredTemporalCovariateName(),.data$covariateName))
+    }
+    
+    if (nrow(data) > 1000) {
+      data <- data %>%
+        dplyr::filter(.data$mean1 > 0.01 | .data$mean2 > 0.01)
+    }
     plot <- plotTemporalCohortComparison(balance = data,
                                          shortNameRef = cohort,
                                          domain = input$temporalDomainId)
     return(plot)
   })
+  
+  output$compareTemporalCharacterizationLassoPlot <- ggiraph::renderggiraph(expr = {
+    data <- filterByTimeIdAndDomainId()
+    if (nrow(data) == 0) {
+      return(dplyr::tibble(Note = "No data for the selected combination."))
+    }
+    data <- compareTemporalCohortCharacteristics(characteristics1 = data, characteristics2 = data)
+    if (nrow(data) > 1000) {
+      data <- data %>%
+        dplyr::filter(.data$mean1 > 0.01 | .data$mean2 > 0.01)
+    }
+    data <- data[selectedPlotPoints(), ]
+    plot <- plotTemporalLassoCohortComparison(balance = data,
+                                              shortNameRef = cohort,
+                                              domain = input$temporalDomainId)
+    return(plot)
+  })
+  
   
   #Cohort Overlap ------------------------
   cohortOverlap <- reactive({
@@ -1562,7 +1701,7 @@ shiny::shinyServer(function(input, output, session) {
       } else {
         return(dplyr::tibble(Note = "No data for covariates that are part of pretty table."))
       }
-       
+      
       options = list(pageLength = 100,
                      searching = TRUE,
                      scrollX = TRUE,
@@ -1715,7 +1854,7 @@ shiny::shinyServer(function(input, output, session) {
   shiny::observeEvent(input$conceptSetDiagnosticsInfo, {
     showInfoBox("Concept Set Diagnostics", "html/conceptSetDiagnostics.html")
   })
-
+  
   shiny::observeEvent(input$inclusionRuleStatsInfo, {
     showInfoBox("Inclusion Rule Statistics", "html/inclusionRuleStats.html")
   })
