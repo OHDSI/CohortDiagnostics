@@ -562,8 +562,7 @@ bodyTabItems <- shinydashboard::tabItems(
                             DT::dataTableOutput("temporalCharacterizationTable")),
     shiny::conditionalPanel(
       condition = "input.tempCharType=='Plot'",
-      
-      
+  
       tags$table(style = "width:100%",
                  tags$tr(
                    tags$td(
@@ -602,8 +601,27 @@ bodyTabItems <- shinydashboard::tabItems(
         title = "Compare Temporal Characterization",
         width = NULL,
         status = "primary",
-        ggiraph::ggiraphOutput("compareTemporalCharacterizationPlot", width = "100%", height = "100%")
-      )
+        fluidPage(
+          fluidRow(
+            column(3,DT::dataTableOutput("temporalCharacterizationCovariateTable")),
+            column(9,ggiraph::ggiraphOutput("compareTemporalCharacterizationPlot", width = "100%", height = "100%"))
+          )
+        )
+      ),
+      shiny::conditionalPanel(
+        condition = "input.compareTemporalCharacterizationPlot_selected.length>0",
+        shinydashboard::box(
+          title = "Selected covariates",
+          width = NULL,
+          status = "primary",
+          fluidPage(
+            fluidRow(
+              column(6,DT::dataTableOutput("temporalCharacterizationCovariateLassoTable")),
+              column(6,ggiraph::ggiraphOutput("compareTemporalCharacterizationLassoPlot", width = "100%", height = "100%"))
+            )
+          )
+        )
+        )
     )
   ),
   shinydashboard::tabItem(
