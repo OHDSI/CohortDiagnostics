@@ -55,8 +55,8 @@
 #' @param cohortIds                   Optionally, provide a subset of cohort IDs to restrict the
 #'                                    diagnostics to.
 #' @param databaseId                  A short string for identifying the database (e.g. 'Synpuf').
-#' @param databaseName                The full name of the database.
-#' @param databaseDescription         A short description (several sentences) of the database.
+#' @param databaseName                The full name of the database. If NULL, defaults to databaseId.
+#' @param databaseDescription         A short description (several sentences) of the database. If NULL, defaults to databaseId.
 #' @template cdmVersion
 #' @param runInclusionStatistics      Generate and export statistic on the cohort inclusion rules?
 #' @param runIncludedSourceConcepts   Generate and export the source concepts included in the cohorts?
@@ -98,8 +98,8 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  inclusionStatisticsFolder = file.path(exportFolder, "inclusionStatistics"),
                                  exportFolder,
                                  databaseId,
-                                 databaseName = NULL,
-                                 databaseDescription = NULL,
+                                 databaseName = databaseId,
+                                 databaseDescription = databaseId,
                                  cdmVersion = 5,
                                  runInclusionStatistics = TRUE,
                                  runIncludedSourceConcepts = TRUE,
@@ -126,6 +126,13 @@ runCohortDiagnostics <- function(packageName = NULL,
   start <- Sys.time()
   ParallelLogger::logInfo("Run Cohort Diagnostics started at ", start)
   
+  if (is.null(databaseName) | is.na(databaseName)) {
+    databaseName <- databaseId
+  }
+  if (is.null(databaseDescription) | is.na(databaseDescription)) {
+    databaseDescription <- databaseId
+  }
+  
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertLogical(runInclusionStatistics, add = errorMessage)
   checkmate::assertLogical(runIncludedSourceConcepts, add = errorMessage)
@@ -147,7 +154,6 @@ runCohortDiagnostics <- function(packageName = NULL,
     checkmate::assertCharacter(x = cohortDatabaseSchema, min.len = 1, add = errorMessage)
     checkmate::assertCharacter(x = cohortTable, min.len = 1, add = errorMessage)
     checkmate::assertCharacter(x = databaseId, min.len = 1, add = errorMessage)
-    checkmate::assertCharacter(x = databaseDescription, min.len = 1, add = errorMessage)
   }
   checkmate::reportAssertions(collection = errorMessage)
   
