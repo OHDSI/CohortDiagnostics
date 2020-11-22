@@ -20,8 +20,8 @@ runCohortDiagnostics(
   inclusionStatisticsFolder = file.path(exportFolder, "inclusionStatistics"),
   exportFolder,
   databaseId,
-  databaseName = NULL,
-  databaseDescription = NULL,
+  databaseName = databaseId,
+  databaseDescription = databaseId,
   cdmVersion = 5,
   runInclusionStatistics = TRUE,
   runIncludedSourceConcepts = TRUE,
@@ -108,9 +108,9 @@ does not exist it will be created.}
 
 \item{databaseId}{A short string for identifying the database (e.g. 'Synpuf').}
 
-\item{databaseName}{The full name of the database.}
+\item{databaseName}{The full name of the database. If NULL, defaults to databaseId.}
 
-\item{databaseDescription}{A short description (several sentences) of the database.}
+\item{databaseDescription}{A short description (several sentences) of the database. If NULL, defaults to databaseId.}
 
 \item{cdmVersion}{The version of the OMOP CDM. Default 5. (Note: only 5 is supported.)}
 

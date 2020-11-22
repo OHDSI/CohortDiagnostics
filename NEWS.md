@@ -1,3 +1,28 @@
+CohortDiagnostics 2.1.0
+=======================
+
+Changes:
+
+1. Diagnostics explorer Shiny app enhancements: 
+- Cohorts are now multiselect across most diagnostics. This allows users to compare cohorts.
+- Lasso selection UX for covariates in characterization
+- Improved tool tip
+- Various improvements to plots for consistent color, axis labels and labels
+- Concept synonyms are now part of search results for phenotype (https://github.com/OHDSI/CohortDiagnostics/commit/050bd608cb5ca247835cf9e99503cf6e731a0e8a)
+- Added print friendly description for cohort from Circe-be R package
+- Link outs to phenotype library github repository
+- Visit context table addition
+- Concept set recommender
+- File reorganization
+
+
+Bug fixes:
+
+1. databaseName and databaseDescription should be non NULL
+
+
+
+
 CohortDiagnostics 2.0.0
 =======================
 
