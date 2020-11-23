@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Launch the CohortExplorer Shiny app — launchCohortExplorer • CohortDiagnostics</title>
+<title>Upload print-friendly cohort representations to the database server. — uploadPrintFriendly • CohortDiagnostics</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,9 @@
 
 
 
-<meta property="og:title" content="Launch the CohortExplorer Shiny app — launchCohortExplorer" />
-<meta property="og:description" content="Launch the CohortExplorer Shiny app" />
+<meta property="og:title" content="Upload print-friendly cohort representations to the database server. — uploadPrintFriendly" />
+<meta property="og:description" content="For all the cohorts in the 'cohort' table, this will generate print-friendly text and store it
+in a new table called 'cohort_extra'." />
 
 
 
@@ -129,24 +130,17 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Launch the CohortExplorer Shiny app</h1>
-    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/Shiny.R'><code>R/Shiny.R</code></a></small>
-    <div class="hidden name"><code>launchCohortExplorer.Rd</code></div>
+    <h1>Upload print-friendly cohort representations to the database server.</h1>
+    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/ResultsDataModel.R'><code>R/ResultsDataModel.R</code></a></small>
+    <div class="hidden name"><code>uploadPrintFriendly.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Launch the CohortExplorer Shiny app</p>
+    <p>For all the cohorts in the 'cohort' table, this will generate print-friendly text and store it
+in a new table called 'cohort_extra'.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>launchCohortExplorer</span><span class='op'>(</span>
-  <span class='va'>connectionDetails</span>,
-  <span class='va'>cdmDatabaseSchema</span>,
-  <span class='va'>cohortDatabaseSchema</span>,
-  <span class='va'>cohortTable</span>,
-  <span class='va'>cohortId</span>,
-  sampleSize <span class='op'>=</span> <span class='fl'>100</span>,
-  subjectIds <span class='op'>=</span> <span class='cn'>NULL</span>
-<span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>uploadPrintFriendly</span><span class='op'>(</span>connectionDetails <span class='op'>=</span> <span class='cn'>NULL</span>, <span class='va'>schema</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -158,38 +152,11 @@
 DatabaseConnector package.</p></td>
     </tr>
     <tr>
-      <th>cdmDatabaseSchema</th>
-      <td><p>Schema name where your patient-level data in OMOP CDM format resides.
-Note that for SQL Server, this should include both the database and
-schema name, for example 'cdm_data.dbo'.</p></td>
-    </tr>
-    <tr>
-      <th>cohortDatabaseSchema</th>
-      <td><p>Schema name where your cohort table resides. Note that for SQL Server,
-this should include both the database and schema name, for example
-'scratch.dbo'.</p></td>
-    </tr>
-    <tr>
-      <th>cohortTable</th>
-      <td><p>Name of the cohort table.</p></td>
-    </tr>
-    <tr>
-      <th>cohortId</th>
-      <td><p>The ID of the cohort.</p></td>
-    </tr>
-    <tr>
-      <th>sampleSize</th>
-      <td><p>Number of subjects to sample from the cohort. Ignored if subjectIds is specified.</p></td>
-    </tr>
-    <tr>
-      <th>subjectIds</th>
-      <td><p>A vector of subject IDs to view.</p></td>
+      <th>schema</th>
+      <td><p>The schema on the postgres server where the results are stored.</p></td>
     </tr>
     </table>
 
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
-
-    <p>Launches a Shiny app that allows the user to explore a cohort of interest.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

@@ -71,7 +71,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.0</span>
       </span>
     </div>
 
@@ -96,6 +96,9 @@
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/CohortDiagnosticsInPackageMode.html">Cohort Diagnostics in an OHDSI Package mode</a>
+    </li>
     <li>
       <a href="../articles/CohortDiagnosticsUsingWebApi.html">Running cohort diagnostics using WebAPI</a>
     </li>
@@ -129,6 +132,30 @@
       <small>Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/NEWS.md'><code>NEWS.md</code></a></small>
     </div>
 
+    <div id="cohortdiagnostics-210" class="section level1">
+<h1 class="page-header" data-toc-text="2.1.0">
+<a href="#cohortdiagnostics-210" class="anchor"></a>CohortDiagnostics 2.1.0</h1>
+<p>Changes:</p>
+<ol>
+<li>Diagnostics explorer Shiny app enhancements:</li>
+</ol>
+<ul>
+<li>Cohorts are now multiselect across most diagnostics. This allows users to compare cohorts.</li>
+<li>Lasso selection UX for covariates in characterization</li>
+<li>Improved tool tip</li>
+<li>Various improvements to plots for consistent color, axis labels and labels</li>
+<li>Concept synonyms are now part of search results for phenotype (<a href="https://github.com/OHDSI/CohortDiagnostics/commit/050bd608cb5ca247835cf9e99503cf6e731a0e8a" class="uri">https://github.com/OHDSI/CohortDiagnostics/commit/050bd608cb5ca247835cf9e99503cf6e731a0e8a</a>)</li>
+<li>Added print friendly description for cohort from Circe-be R package</li>
+<li>Link outs to phenotype library github repository</li>
+<li>Visit context table addition</li>
+<li>Concept set recommender</li>
+<li>File reorganization</li>
+</ul>
+<p>Bug fixes:</p>
+<ol>
+<li>databaseName and databaseDescription should be non NULL</li>
+</ol>
+</div>
     <div id="cohortdiagnostics-200" class="section level1">
 <h1 class="page-header" data-toc-text="2.0.0">
 <a href="#cohortdiagnostics-200" class="anchor"></a>CohortDiagnostics 2.0.0</h1>
@@ -356,7 +383,7 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

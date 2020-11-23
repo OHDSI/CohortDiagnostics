@@ -18,7 +18,7 @@ Useful links:
 
 }
 \author{
-\strong{Maintainer}: Gowtham Rao \email{gowthamrao@gmail.com}
+\strong{Maintainer}: Gowtham Rao \email{rao@ohdsi.org}
 
 Authors:
 \itemize{
