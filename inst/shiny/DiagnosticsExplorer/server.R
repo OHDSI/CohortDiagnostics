@@ -211,7 +211,7 @@ shiny::shinyServer(function(input, output, session) {
                                colnames = colnames(data) %>% camelCaseToTitleCase(),
                                escape = FALSE,
                                filter = "top",
-                               selection = list(mode = "single", target = "row"),
+                               selection = list(mode = "multiple", target = "row"),
                                class = "stripe compact")
     return(dataTable)
   }, server = TRUE)
@@ -225,14 +225,41 @@ shiny::shinyServer(function(input, output, session) {
       if (nrow(subset) == 0) {
         return(NULL)
       }
-      row <- subset[idx, ]
+      row <- subset[idx[1],]
       return(row)
     }
   })
   
-  output$cohortDefinitionRowIsSelected <- reactive({
-    return(!is.null(selectedCohortDefinitionRow()))
+  compareCohortDefinitionRow <- reactive({
+    idx <- input$cohortDefinitionTable_rows_selected
+    if (is.null(idx) && length(idx) != 2) {
+      return(NULL)
+    } else {
+      subset <- cohortSubset()
+      if (nrow(subset) == 0) {
+        return(NULL)
+      }
+      row <- subset[idx[2],]
+      return(row)
+    }
   })
+  
+  
+  # output$cohortDefinitionRowIsSelected <- reactive({
+  #   return(!is.null(selectedCohortDefinitionRow()))
+  # })
+  
+  observeEvent(length(input$cohortDefinitionTable_rows_selected) != 2, {
+    shinyWidgets::updatePickerInput(session = session, 
+                                    inputId = "isCompare", 
+                                    selected = "No Comparision")
+  })
+  
+  output$cohortDefinitionRowIsSelected <- reactive({
+    return(length(input$cohortDefinitionTable_rows_selected))
+  })
+  
+  
   outputOptions(output, "cohortDefinitionRowIsSelected", suspendWhenHidden = FALSE)
   
   output$cohortDetailsText <- shiny::renderUI({
@@ -240,6 +267,8 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(row)) {
       return(NULL)
     } else {
+      # for(i in 1:nrow(row))
+      # {
       tags$table(style = "margin-top: 5px;",
                  tags$tr(
                    tags$td(tags$strong("Cohort ID: ")),
@@ -257,6 +286,7 @@ shiny::shinyServer(function(input, output, session) {
                    tags$td(row$logicDescription)
                  )
       )
+      # }
     }
   })
   
@@ -397,6 +427,242 @@ shiny::shinyServer(function(input, output, session) {
       write.csv(data, file)
     }
   )
+  
+  output$compareCohortDetailsText <- shiny::renderUI({
+    row <- compareCohortDefinitionRow()
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+      # for(i in 1:nrow(row))
+      # {
+      tags$table(style = "margin-top: 5px;",
+                 tags$tr(
+                   tags$td(tags$strong("Cohort ID: ")),
+                   tags$td(HTML("&nbsp;&nbsp;")),
+                   tags$td(row$cohortId)
+                 ),
+                 tags$tr(
+                   tags$td(tags$strong("Cohort Name: ")),
+                   tags$td(HTML("&nbsp;&nbsp;")),
+                   tags$td(row$cohortName)
+                 ),
+                 tags$tr(
+                   tags$td(tags$strong("Logic: ")),
+                   tags$td(HTML("&nbsp;&nbsp;")),
+                   tags$td(row$logicDescription)
+                 )
+      )
+      # }
+    }
+  })
+  
+  output$compareCohortDefinitionDetails <- shiny::renderUI({
+    row <- compareCohortDefinitionRow()
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+      cohortExtra %>%
+        dplyr::filter(.data$cohortId == row$cohortId) %>%
+        dplyr::pull(.data$html) %>%
+        shiny::HTML()
+    }
+  })
+  
+  output$compareCohortDefinitionJson <- shiny::renderText({
+    row <- compareCohortDefinitionRow()
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+      row$json
+    }
+  })
+  
+  output$compareCohortDefinitionSql <- shiny::renderText({
+    row <- compareCohortDefinitionRow()
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+      row$sql
+    }
+  })
+  
+  compareCohortDefinitionConceptSets <- reactive({
+    row <- compareCohortDefinitionRow()
+    if (is.null(row)) {
+      return(NULL)
+    } 
+    if (is(dataSource, "environment") || input$compareConceptSetsType == "Concept Set Expression") {
+      expression <- RJSONIO::fromJSON(row$json)
+      if (is.null(expression$ConceptSets)) {
+        return(NULL)
+      } 
+      
+      doItem <- function(item) {
+        row <- dplyr::as_tibble(item$concept)
+        colnames(row) <- snakeCaseToCamelCase(colnames(row))
+        row$isExcluded <- item$isExcluded
+        row$includeDescendants <- item$includeDescendants
+        row$includeMapped <- item$includeMapped
+        return(row)
+      }
+      doConceptSet <- function(conceptSet) {
+        rows <- lapply(conceptSet$expression$items, doItem) %>%
+          dplyr::bind_rows()
+        rows$conceptSetName <- rep(conceptSet$name, nrow(rows))
+        return(rows)
+      }
+      data <- lapply(expression$ConceptSet, doConceptSet) %>%
+        dplyr::bind_rows()
+      data <- data %>%
+        dplyr::select(.data$conceptSetName,
+                      .data$conceptId, 
+                      .data$conceptCode, 
+                      .data$conceptName,
+                      .data$domainId,
+                      .data$standardConcept,
+                      .data$isExcluded,
+                      .data$includeDescendants,
+                      .data$includeMapped) %>%
+        dplyr::arrange(.data$conceptSetName, .data$conceptId)
+      data$conceptSetName <- as.factor(data$conceptSetName)
+      data$domainId <- as.factor(data$domainId)
+      data$standardConcept <- as.factor(data$standardConcept)
+      colnames(data) <- camelCaseToTitleCase(colnames(data))
+    } else {
+      subset <- conceptSets %>%
+        dplyr::filter(.data$cohortId == row$cohortId)
+      if (nrow(subset) == 0) {
+        return(NULL)
+      } 
+      source <- (input$conceptSetsType == "Included Source Concepts")
+      data <- resolveConceptSet(dataSource = dataSource, subset, source = source)
+      data <- data %>%
+        dplyr::inner_join(subset, by = "conceptSetId") %>%
+        dplyr::select(.data$conceptSetName,
+                      .data$conceptId, 
+                      .data$conceptCode, 
+                      .data$conceptName,
+                      .data$conceptClassId,
+                      .data$domainId,
+                      .data$vocabularyId,
+                      .data$standardConcept) %>%
+        dplyr::arrange(.data$conceptSetName, .data$conceptId)
+      data$conceptSetName <- as.factor(data$conceptSetName)
+      data$conceptClassId <- as.factor(data$conceptClassId)
+      data$domainId <- as.factor(data$domainId)
+      data$vocabularyId <- as.factor(data$vocabularyId)
+      data$standardConcept <- as.factor(data$standardConcept)
+      colnames(data) <- camelCaseToTitleCase(colnames(data))
+    }
+    return(data)
+    
+  })
+  
+  output$compareCohortDefinitionConceptSetsTable <- DT::renderDataTable(expr = {
+    
+    data <- compareCohortDefinitionConceptSets()
+    if (is.null(data)) {
+      return(NULL)
+    } 
+    
+    options = list(pageLength = 10,
+                   searching = TRUE,
+                   lengthChange = TRUE,
+                   ordering = TRUE,
+                   paging = TRUE,
+                   info = TRUE,
+                   searchHighlight = TRUE,
+                   scrollX = TRUE)
+    
+    dataTable <- DT::datatable(data,
+                               options = options,
+                               rownames = FALSE,
+                               escape = FALSE,
+                               filter = "top",
+                               class = "stripe nowrap compact")
+    return(dataTable)
+    
+  })
+  
+  output$compareSaveConceptSetButton <- downloadHandler(
+    filename = function() {
+      paste("conceptSet-", Sys.Date(), ".csv", sep="")
+    },
+    content = function(file) {
+      data <- compareCohortDefinitionConceptSets()
+      write.csv(data, file)
+    }
+  )
+  
+  output$detailsDiff <- diffr::renderDiffr({
+    row1 <- selectedCohortDefinitionRow()
+    row2 <- compareCohortDefinitionRow()
+    file1 <- tempfile()
+    writeLines(row1$logicDescription, con = file1)
+    file2 <- tempfile()
+    writeLines(row2$logicDescription, con = file2)
+    detailsDiffOutput <- diffr::diffr(file1, file2, wordWrap = TRUE,
+                                   before = row1$compoundName, after = row2$compoundName)
+    unlink(file1)
+    unlink(file2)
+    return(detailsDiffOutput)
+  })
+  
+  output$concesptSetDiff <- DT::renderDataTable(expr = {
+    
+    data1 <- cohortDefinitionConceptSets()
+    data2 <- compareCohortDefinitionConceptSets()
+    data <- data1 %>% dplyr::semi_join(data2, by = c("Concept Id","Is Excluded","Include Descendants","Include Mapped"))
+    if (is.null(data)) {
+      return(NULL)
+    } 
+    
+    options = list(pageLength = 10,
+                   searching = TRUE,
+                   lengthChange = TRUE,
+                   ordering = TRUE,
+                   paging = TRUE,
+                   info = TRUE,
+                   searchHighlight = TRUE,
+                   scrollX = TRUE)
+    
+    dataTable <- DT::datatable(data,
+                               options = options,
+                               rownames = FALSE,
+                               escape = FALSE,
+                               filter = "top",
+                               class = "stripe nowrap compact")
+    return(dataTable)
+    
+  })
+  
+  output$jsonDiff <- diffr::renderDiffr({
+    row1 <- selectedCohortDefinitionRow()
+    row2 <- compareCohortDefinitionRow()
+    file1 <- tempfile()
+    writeLines(row1$json, con = file1)
+    file2 <- tempfile()
+    writeLines(row2$json, con = file2)
+    jsonDiffOutput <- diffr::diffr(file1, file2, wordWrap = TRUE,
+          before = row1$compoundName, after = row2$compoundName)
+    unlink(file1)
+    unlink(file2)
+    return(jsonDiffOutput)
+  })
+  
+  output$sqlDiff <- diffr::renderDiffr({
+    row1 <- selectedCohortDefinitionRow()
+    row2 <- compareCohortDefinitionRow()
+    file1 <- tempfile()
+    writeLines(row1$sql, con = file1)
+    file2 <- tempfile()
+    writeLines(row2$sql, con = file2)
+    sqlDiffOutput <- diffr::diffr(file1, file2, wordWrap = FALSE,
+                 before = row1$compoundName, after = row2$compoundName,width = "100%")
+    unlink(file1)
+    unlink(file2)
+    return(sqlDiffOutput)
+  })
   
   
   # Cohort Counts --------------------------------------------------------------------------- 
