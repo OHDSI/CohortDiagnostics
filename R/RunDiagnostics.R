@@ -716,23 +716,20 @@ loadAndExportPhenotypeDescription <- function(packageName,
     checkmate::assertTibble(x = phenotypeDescription, 
                             any.missing = TRUE, 
                             min.rows = 1, 
-                            min.cols = 6, 
+                            min.cols = 3, 
                             add = errorMessage)
     checkmate::assertNames(x = colnames(phenotypeDescription),
-                           must.include = c("phenotypeId", "phenotypeName",
-                                            "referentConceptId", "clinicalDescription",
-                                            "literatureReview", "phenotypeNotes"),
+                           must.include = c("phenotypeId", "phenotypeName","clinicalDescription"),
                            add = errorMessage)
     checkmate::reportAssertions(collection = errorMessage)
     
     phenotypeDescription <- phenotypeDescription %>% 
+      dplyr::select(.data$phenotypeId, .data$phenotypeName, .data$clinicalDescription) %>% 
       dplyr::mutate(phenotypeName = dplyr::coalesce(as.character(.data$phenotypeName),""),
-                    clinicalDescription = dplyr::coalesce(as.character(.data$clinicalDescription),""),
-                    literatureReview = dplyr::coalesce(as.character(.data$literatureReview),""),
-                    phenotypeNotes = dplyr::coalesce(as.character(.data$phenotypeNotes),"")
+                    clinicalDescription = dplyr::coalesce(as.character(.data$clinicalDescription),"")
       )  
     checkmate::assertTibble(x = phenotypeDescription,
-                            types = c("double", "character"))
+                            types = c("double", "character"), add = errorMessage)
     checkmate::reportAssertions(collection = errorMessage)
     
     ParallelLogger::logInfo(sprintf("Phenotype description file has %s rows. Matching with submitted cohorts", 
