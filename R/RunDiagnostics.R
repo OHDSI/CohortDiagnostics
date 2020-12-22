@@ -233,27 +233,38 @@ runCohortDiagnostics <- function(packageName = NULL,
                                            oracleTempSchema = oracleTempSchema,
                                            table_name = "#concept_ids")
   DatabaseConnector::executeSql(connection = connection, sql = sql, progressBar = FALSE, reportOverallTime = FALSE)
+  
+  referentConceptIdToInsert <- dplyr::tibble()
   if (!is.null(phenotypeDescription)) {
-    data <- phenotypeDescription %>% 
-      dplyr::filter(!is.na(.data$referentConceptId)) %>%
-      dplyr::transmute(conceptId = as.integer(.data$referentConceptId)) %>% 
-      dplyr::distinct() %>%
-      as.data.frame() #DatabaseConnector currently does not support tibble
-    if (nrow(data) > 0) {
-      ParallelLogger::logInfo(sprintf("Inserting %s referent concept IDs into the concept ID table. This may take a while.",
-                                      nrow(data)))
-      DatabaseConnector::insertTable(connection = connection, 
-                                     tableName = "#concept_ids",
-                                     data = data,
-                                     dropTableIfExists = FALSE,
-                                     createTable = FALSE, 
-                                     progressBar = TRUE,
-                                     tempTable = TRUE,
-                                     oracleTempSchema = oracleTempSchema,
-                                     camelCaseToSnakeCase = TRUE)
-      ParallelLogger::logTrace("Done inserting")
-    }
+    referentConceptIdToInsert <- dplyr::bind_rows(referentConceptIdToInsert, phenotypeDescription %>% 
+                                                    dplyr::transmute(conceptId = as.double(.data$phenotypeId/1000))) %>%
+      dplyr::distinct()
   }
+  if ('referentConceptId' %in% colnames(cohorts)) {
+    referentConceptIdToInsert <- dplyr::bind_rows(referentConceptIdToInsert, cohorts %>% 
+                                                    dplyr::transmute(conceptId = as.double(.data$referentConceptId))) %>%
+      dplyr::distinct()
+  }
+  if ('phenotypeId' %in% colnames(cohorts)) {
+    referentConceptIdToInsert <- dplyr::bind_rows(referentConceptIdToInsert, cohorts %>% 
+                                                    dplyr::transmute(conceptId = as.double(.data$phenotypeId/1000))) %>%
+      dplyr::distinct()
+  }
+  if (nrow(referentConceptIdToInsert) > 0) {
+    ParallelLogger::logInfo(sprintf("Inserting %s referent concept IDs into the concept ID table. This may take a while.",
+                                    nrow(referentConceptIdToInsert)))
+    DatabaseConnector::insertTable(connection = connection, 
+                                   tableName = "#concept_ids",
+                                   data = referentConceptIdToInsert %>% as.data.frame(), #DatabaseConnector currently does not support tibble,
+                                   dropTableIfExists = FALSE,
+                                   createTable = FALSE, 
+                                   progressBar = TRUE,
+                                   tempTable = TRUE,
+                                   oracleTempSchema = oracleTempSchema,
+                                   camelCaseToSnakeCase = TRUE)
+    ParallelLogger::logTrace("Done inserting")
+  }
+  
   
   # Counting cohorts -----------------------------------------------------------------------
   ParallelLogger::logInfo("Counting cohort records and subjects")

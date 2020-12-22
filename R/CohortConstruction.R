@@ -43,7 +43,7 @@ checkCohortReference <- function(cohortReference, errorMessage = NULL) {
 makeBackwardsCompatible <- function(cohorts) {
   if (!"name" %in% colnames(cohorts)) {
     cohorts <- cohorts %>%
-      mutate(name = .data$cohortId)
+      mutate(name = as.character(.data$cohortId))
   }
   if (!"webApiCohortId" %in% colnames(cohorts) && "atlasId" %in% colnames(cohorts)) {
     cohorts <- cohorts %>%
@@ -153,7 +153,15 @@ selectColumnAccordingToResultsModel <- function(data) {
   if ("logicDescription" %in% colnames(data)) {
     columsToInclude <- c(columsToInclude, "logicDescription")
   }
-  
+  if ("PMID" %in% colnames(data)) {
+    columsToInclude <- c(columsToInclude, "PMID")
+  }
+  if ("referentConceptId" %in% colnames(data)) {
+    columsToInclude <- c(columsToInclude, "referentConceptId")
+  }
+  if ("cohortType" %in% colnames(data)) {
+    columsToInclude <- c(columsToInclude, "cohortType")
+  }
   columsToInclude <- c(columsToInclude, "json" ,"sql", "webApiCohortId")
   return(data[, columsToInclude])
 }
