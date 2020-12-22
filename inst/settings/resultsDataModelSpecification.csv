@@ -11,6 +11,9 @@ cohort,cohort_id,bigint,Yes,Yes,No,Yes
 cohort,web_api_cohort_id,bigint,Yes,No,No,Yes
 cohort,cohort_name,varchar(255),Yes,No,No,Yes
 cohort,logic_description,varchar,No,No,Yes,Yes
+cohort,referent_concept_id,int,No,No,Yes,Yes
+cohort,cohort_type,varchar,Yes,No,No,Yes
+cohort,metadata,varchar,Yes,No,No,Yes
 cohort,sql,varchar,Yes,No,No,Yes
 cohort,json,varchar,Yes,No,No,Yes
 cohort_count,cohort_id,bigint,Yes,Yes,No,Yes
@@ -112,6 +115,7 @@ phenotype_description,referent_concept_id,int,Yes,No,No,Yes
 phenotype_description,clinical_description,varchar,Yes,No,No,Yes
 phenotype_description,literature_review,varchar,No,No,No,Yes
 phenotype_description,phenotype_notes,varchar,No,No,No,Yes
+phenotype_description,metadata,varchar,No,No,No,Yes
 relationship,relationship_id,varchar(20),Yes,Yes,No,Yes
 relationship,relationship_name,varchar(255),Yes,No,No,Yes
 relationship,is_hierarchical,varchar(1),Yes,No,No,Yes

@@ -14,6 +14,7 @@ Changes:
 - Visit context table addition
 - Concept set recommender
 - File reorganization
+2. Cohort Diagnostics results data model. Added columns referent_concept_id, cohort_type, metadata to cohort, and metadata to phenotype_description.
 
 
 Bug fixes:
