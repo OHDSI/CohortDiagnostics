@@ -109,10 +109,7 @@ orphan_concept,concept_count,float,Yes,No,No,Yes
 orphan_concept,concept_subjects,float,Yes,No,No,Yes
 phenotype_description,phenotype_id,bigint,Yes,Yes,No,Yes
 phenotype_description,phenotype_name,varchar(255),Yes,No,No,Yes
-phenotype_description,referent_concept_id,int,Yes,No,No,Yes
 phenotype_description,clinical_description,varchar,Yes,No,No,Yes
-phenotype_description,literature_review,varchar,No,No,No,Yes
-phenotype_description,phenotype_notes,varchar,No,No,No,Yes
 phenotype_description,metadata,varchar,No,No,No,Yes
 relationship,relationship_id,varchar(20),Yes,Yes,No,Yes
 relationship,relationship_name,varchar(255),Yes,No,No,Yes

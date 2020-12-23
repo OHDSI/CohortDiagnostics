@@ -252,10 +252,7 @@ CREATE TABLE orphan_concept (
 CREATE TABLE phenotype_description (
 			phenotype_id BIGINT NOT NULL,
 			phenotype_name VARCHAR(255) NOT NULL,
-			referent_concept_id INT NOT NULL,
 			clinical_description VARCHAR NOT NULL,
-			literature_review VARCHAR,
-			phenotype_notes VARCHAR,
 			metadata VARCHAR,
 			PRIMARY KEY(phenotype_id)
 );
