@@ -649,7 +649,7 @@ getSearchTerms <- function(dataSource, includeDescendants = FALSE) {
                   concept_synonym_name AS term
                 FROM @results_database_schema.phenotype_description
                 INNER JOIN @vocabulary_database_schema.concept_ancestor
-                  ON phenotype_description.referent_concept_id = ancestor_concept_id
+                  ON (phenotype_description.phenotype_id/1000) = ancestor_concept_id
                 INNER JOIN @vocabulary_database_schema.concept_synonym 
                   ON descendant_concept_id = concept_synonym.concept_id
                 WHERE language_concept_id = 4180186 -- English
@@ -660,7 +660,7 @@ getSearchTerms <- function(dataSource, includeDescendants = FALSE) {
                   concept_synonym_name AS term
                 FROM @results_database_schema.phenotype_description
                 INNER JOIN @vocabulary_database_schema.concept_ancestor
-                  ON phenotype_description.referent_concept_id = ancestor_concept_id
+                  ON (phenotype_description.phenotype_id/1000) = ancestor_concept_id
                 INNER JOIN @vocabulary_database_schema.concept_relationship
                   ON descendant_concept_id = concept_id_2
                 INNER JOIN @vocabulary_database_schema.concept_synonym 
@@ -676,7 +676,7 @@ getSearchTerms <- function(dataSource, includeDescendants = FALSE) {
                   concept_synonym_name AS term
                 FROM @results_database_schema.phenotype_description
                 INNER JOIN @vocabulary_database_schema.concept_synonym 
-                  ON phenotype_description.referent_concept_id = concept_synonym.concept_id
+                  ON (phenotype_description.phenotype_id/1000) = concept_synonym.concept_id
                 WHERE language_concept_id = 4180186 -- English
                   
                 UNION
@@ -685,7 +685,7 @@ getSearchTerms <- function(dataSource, includeDescendants = FALSE) {
                   concept_synonym_name AS term
                 FROM @results_database_schema.phenotype_description
                 INNER JOIN @vocabulary_database_schema.concept_relationship
-                  ON phenotype_description.referent_concept_id = concept_id_2
+                  ON (phenotype_description.phenotype_id/1000) = concept_id_2
                 INNER JOIN @vocabulary_database_schema.concept_synonym 
                   ON concept_id_1 = concept_synonym.concept_id
                 WHERE relationship_id = 'Maps to'
