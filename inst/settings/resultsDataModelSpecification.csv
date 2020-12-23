@@ -11,8 +11,6 @@ cohort,cohort_id,bigint,Yes,Yes,No,Yes
 cohort,web_api_cohort_id,bigint,Yes,No,No,Yes
 cohort,cohort_name,varchar(255),Yes,No,No,Yes
 cohort,logic_description,varchar,No,No,Yes,Yes
-cohort,referent_concept_id,int,No,No,Yes,Yes
-cohort,cohort_type,varchar,Yes,No,No,Yes
 cohort,metadata,varchar,Yes,No,No,Yes
 cohort,sql,varchar,Yes,No,No,Yes
 cohort,json,varchar,Yes,No,No,Yes

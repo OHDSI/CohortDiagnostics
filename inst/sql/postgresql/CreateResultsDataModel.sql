@@ -52,8 +52,6 @@ CREATE TABLE cohort (
 			web_api_cohort_id BIGINT NOT NULL,
 			cohort_name VARCHAR(255) NOT NULL,
 			logic_description VARCHAR,
-			referent_concept_id INT,
-			cohort_type VARCHAR,
 			metadata VARCHAR,
 			sql VARCHAR NOT NULL,
 			json VARCHAR NOT NULL,
