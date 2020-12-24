@@ -133,7 +133,7 @@ shiny::shinyServer(function(input, output, session) {
     } else {
       text <-  row$clinicalDescription
       
-      referentConcept <- getConceptDetails(dataSource, row$referentConceptId)
+      referentConcept <- getConceptDetails(dataSource, row$phenotypeId/1000)
       if (nrow(referentConcept) > 0) {
         text <- paste(sprintf("<strong>Referent concept: </strong>%s (concept ID: %s)<br/><br/>",
                               referentConcept$conceptName,

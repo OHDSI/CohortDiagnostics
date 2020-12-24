@@ -52,6 +52,7 @@ CREATE TABLE cohort (
 			web_api_cohort_id BIGINT NOT NULL,
 			cohort_name VARCHAR(255) NOT NULL,
 			logic_description VARCHAR,
+			metadata VARCHAR,
 			sql VARCHAR NOT NULL,
 			json VARCHAR NOT NULL,
 			PRIMARY KEY(cohort_id)
@@ -251,10 +252,8 @@ CREATE TABLE orphan_concept (
 CREATE TABLE phenotype_description (
 			phenotype_id BIGINT NOT NULL,
 			phenotype_name VARCHAR(255) NOT NULL,
-			referent_concept_id INT NOT NULL,
-			clinical_description VARCHAR NOT NULL,
-			literature_review VARCHAR,
-			phenotype_notes VARCHAR,
+			clinical_description VARCHAR,
+			metadata VARCHAR,
 			PRIMARY KEY(phenotype_id)
 );
 

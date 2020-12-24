@@ -233,27 +233,38 @@ runCohortDiagnostics <- function(packageName = NULL,
                                            oracleTempSchema = oracleTempSchema,
                                            table_name = "#concept_ids")
   DatabaseConnector::executeSql(connection = connection, sql = sql, progressBar = FALSE, reportOverallTime = FALSE)
+  
+  referentConceptIdToInsert <- dplyr::tibble()
   if (!is.null(phenotypeDescription)) {
-    data <- phenotypeDescription %>% 
-      dplyr::filter(!is.na(.data$referentConceptId)) %>%
-      dplyr::transmute(conceptId = as.integer(.data$referentConceptId)) %>% 
-      dplyr::distinct() %>%
-      as.data.frame() #DatabaseConnector currently does not support tibble
-    if (nrow(data) > 0) {
-      ParallelLogger::logInfo(sprintf("Inserting %s referent concept IDs into the concept ID table. This may take a while.",
-                                      nrow(data)))
-      DatabaseConnector::insertTable(connection = connection, 
-                                     tableName = "#concept_ids",
-                                     data = data,
-                                     dropTableIfExists = FALSE,
-                                     createTable = FALSE, 
-                                     progressBar = TRUE,
-                                     tempTable = TRUE,
-                                     oracleTempSchema = oracleTempSchema,
-                                     camelCaseToSnakeCase = TRUE)
-      ParallelLogger::logTrace("Done inserting")
-    }
+    referentConceptIdToInsert <- dplyr::bind_rows(referentConceptIdToInsert, phenotypeDescription %>% 
+                                                    dplyr::transmute(conceptId = as.double(.data$phenotypeId/1000))) %>%
+      dplyr::distinct()
   }
+  if ('referentConceptId' %in% colnames(cohorts)) {
+    referentConceptIdToInsert <- dplyr::bind_rows(referentConceptIdToInsert, cohorts %>% 
+                                                    dplyr::transmute(conceptId = as.double(.data$referentConceptId))) %>%
+      dplyr::distinct()
+  }
+  if ('phenotypeId' %in% colnames(cohorts)) {
+    referentConceptIdToInsert <- dplyr::bind_rows(referentConceptIdToInsert, cohorts %>% 
+                                                    dplyr::transmute(conceptId = as.double(.data$phenotypeId/1000))) %>%
+      dplyr::distinct()
+  }
+  if (nrow(referentConceptIdToInsert) > 0) {
+    ParallelLogger::logInfo(sprintf("Inserting %s referent concept IDs into the concept ID table. This may take a while.",
+                                    nrow(referentConceptIdToInsert)))
+    DatabaseConnector::insertTable(connection = connection, 
+                                   tableName = "#concept_ids",
+                                   data = referentConceptIdToInsert %>% as.data.frame(), #DatabaseConnector currently does not support tibble,
+                                   dropTableIfExists = FALSE,
+                                   createTable = FALSE, 
+                                   progressBar = TRUE,
+                                   tempTable = TRUE,
+                                   oracleTempSchema = oracleTempSchema,
+                                   camelCaseToSnakeCase = TRUE)
+    ParallelLogger::logTrace("Done inserting")
+  }
+  
   
   # Counting cohorts -----------------------------------------------------------------------
   ParallelLogger::logInfo("Counting cohort records and subjects")
@@ -716,23 +727,20 @@ loadAndExportPhenotypeDescription <- function(packageName,
     checkmate::assertTibble(x = phenotypeDescription, 
                             any.missing = TRUE, 
                             min.rows = 1, 
-                            min.cols = 6, 
+                            min.cols = 3, 
                             add = errorMessage)
     checkmate::assertNames(x = colnames(phenotypeDescription),
-                           must.include = c("phenotypeId", "phenotypeName",
-                                            "referentConceptId", "clinicalDescription",
-                                            "literatureReview", "phenotypeNotes"),
+                           must.include = c("phenotypeId", "phenotypeName","clinicalDescription"),
                            add = errorMessage)
     checkmate::reportAssertions(collection = errorMessage)
     
     phenotypeDescription <- phenotypeDescription %>% 
+      dplyr::select(.data$phenotypeId, .data$phenotypeName, .data$clinicalDescription) %>% 
       dplyr::mutate(phenotypeName = dplyr::coalesce(as.character(.data$phenotypeName),""),
-                    clinicalDescription = dplyr::coalesce(as.character(.data$clinicalDescription),""),
-                    literatureReview = dplyr::coalesce(as.character(.data$literatureReview),""),
-                    phenotypeNotes = dplyr::coalesce(as.character(.data$phenotypeNotes),"")
+                    clinicalDescription = dplyr::coalesce(as.character(.data$clinicalDescription),"")
       )  
     checkmate::assertTibble(x = phenotypeDescription,
-                            types = c("double", "character"))
+                            types = c("double", "character"), add = errorMessage)
     checkmate::reportAssertions(collection = errorMessage)
     
     ParallelLogger::logInfo(sprintf("Phenotype description file has %s rows. Matching with submitted cohorts", 
