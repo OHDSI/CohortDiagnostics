@@ -6,6 +6,7 @@
 \usage{
 launchDiagnosticsExplorer(
   dataFolder = "data",
+  dataFile = "PreMerged.RData",
   connectionDetails = NULL,
   resultsDatabaseSchema = NULL,
   vocabularyDatabaseSchema = resultsDatabaseSchema,

@@ -42,6 +42,7 @@
 #'
 #' @export
 launchDiagnosticsExplorer <- function(dataFolder = "data", 
+                                      dataFile = "PreMerged.RData",
                                       connectionDetails = NULL,
                                       resultsDatabaseSchema = NULL,
                                       vocabularyDatabaseSchema = resultsDatabaseSchema,
@@ -84,6 +85,7 @@ launchDiagnosticsExplorer <- function(dataFolder = "data",
                         resultsDatabaseSchema = resultsDatabaseSchema,
                         vocabularyDatabaseSchema = vocabularyDatabaseSchema,
                         dataFolder = dataFolder,
+                        dataFile = dataFile,
                         aboutText = aboutText,
                         cohortBaseUrl = cohortBaseUrl,
                         conceptBaseUrl = conceptBaseUrl)

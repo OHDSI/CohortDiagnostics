@@ -3,194 +3,263 @@ library(magrittr)
 source("R/Tables.R")
 source("R/Plots.R")
 source("R/Results.R")
-
-# shinySettings <- list(connectionDetails = DatabaseConnector::createConnectionDetails(dbms = "postgresql",
-#                                              server = "localhost/ohdsi",
-#                                              user = "postgres",
-#                                              password = Sys.getenv("pwPostgres")),
-#                       resultsDatabaseSchema =  "phenotype_library",
-#                       vocabularyDatabaseSchema =  "phenotype_library")
-# shinySettings <- list(dataFolder = "s:/examplePackageOutput")
+source("R/ConceptRecommender.R")
+source("R/DataPulls.R")
+source("R/Connections.R")
+source("R/DisplayFunctions.R")
 
 # Settings when running on server:
-defaultLocalDataFolder <- "data"
-defaultLocalDataFile <- "PreMerged.RData"
+assign(x = "defaultLocalDataFolder", value = "data", envir = .GlobalEnv)
+assign(x = "defaultLocalDataFile", value = "PreMerged.RData", envir = .GlobalEnv)
+assign(x = "isValidConnection", value = FALSE, envir = .GlobalEnv)
 
-connectionPool <- NULL
-defaultServer <- Sys.getenv("phoebedbServer")
-defaultDatabase <- Sys.getenv("phoebedb")
-defaultPort <- 5432
-defaultUser <- Sys.getenv("phoebedbUser")
-defaultPassword <- Sys.getenv("phoebedbPw")
-defaultResultsSchema <- Sys.getenv("phoebedbTargetSchema")
-defaultVocabularySchema <- Sys.getenv("phoebedbVocabSchema")
+assign(x = "defaultDatabaseMode", value = TRUE, envir = .GlobalEnv) # Set to FALSE if using file system.
+assign(x = "dbms", value = "postgresql", envir = .GlobalEnv)
+assign(x = "port", value = 5432, envir = .GlobalEnv)
 
-defaultDatabaseMode <- TRUE # Use file system if FALSE
+# default app titles and text
+assign(x = "cohortDiagnosticModeDefaultTitle", value = "Cohort Diagnostics", envir = .GlobalEnv)
+assign(x = "phenotypeLibraryModeDefaultTitle", value = "Phenotype Library", envir = .GlobalEnv)
+source("html/defaultAboutTextPhenotypeLibrary.txt")
 
-defaultCohortBaseUrl <- "https://atlas.ohdsi.org/#/cohortdefinition/"
-defaultConceptBaseUrl <- "https://athena.ohdsi.org/search-terms/terms/"
+# Cleaning up any tables in memory:
+dataModelSpecifications <- readr::read_csv(file = "resultsDataModelSpecification.csv", 
+                                           col_types = readr::cols(),
+                                           guess_max = min(1e7))
+suppressWarnings(rm(list = snakeCaseToCamelCase(dataModelSpecifications$tableName)))
 
-cohortDiagnosticModeDefaultTitle <- "Cohort Diagnostics"
-phenotypeLibraryModeDefaultTitle <- "Phenotype Library"
-
-defaultAboutText <- "<h3>Cohort Diagnostics</h3> This Cohort Diagnostics app is currently under development. Do not use"
-
-if (!exists("shinySettings")) {
-  writeLines("Using default settings")
-  databaseMode <- defaultDatabaseMode & defaultServer != ""
-  if (databaseMode) {
-    connectionPool <- pool::dbPool(
-      drv = DatabaseConnector::DatabaseConnectorDriver(),
-      dbms = "postgresql",
-      server = paste(defaultServer, defaultDatabase, sep = "/"),
-      port = defaultPort,
-      user = defaultUser,
-      password = defaultPassword
-    )
-    resultsDatabaseSchema <- defaultResultsSchema
-    vocabularyDatabaseSchema <- defaultVocabularySchema
-  } else {
-    dataFolder <- defaultLocalDataFolder
-  }
-  cohortBaseUrl <- defaultCohortBaseUrl
-  conceptBaseUrl <- defaultConceptBaseUrl
-  if (!is.null(defaultAboutText)) {
-    aboutText <- defaultAboutText
-  } 
-} else {
-  writeLines("Using settings provided by user")
-  databaseMode <- !is.null(shinySettings$connectionDetails)
-  if (databaseMode) {
-    connectionDetails <- shinySettings$connectionDetails
-    if (is(connectionDetails$server, "function")) {
-      connectionPool <- pool::dbPool(drv = DatabaseConnector::DatabaseConnectorDriver(),
-                                     dbms = "postgresql",
-                                     server = connectionDetails$server(),
-                                     port = connectionDetails$port(),
-                                     user = connectionDetails$user(),
-                                     password = connectionDetails$password(),
-                                     connectionString = connectionDetails$connectionString())
-    } else {
-      # For backwards compatibility with older versions of DatabaseConnector:
-      connectionPool <- pool::dbPool(drv = DatabaseConnector::DatabaseConnectorDriver(),
-                                     dbms = "postgresql",
-                                     server = connectionDetails$server,
-                                     port = connectionDetails$port,
-                                     user = connectionDetails$user,
-                                     password = connectionDetails$password,
-                                     connectionString = connectionDetails$connectionString)
+# connection information
+if (!exists("shinySettings")) { # shinySettings object is from CohortDiagnostics::launchDiagnosticsExplorer()
+  writeLines("Using default settings -- attempting to connect to OHDSI phenotype library")
+  assign(x = "usingUserProvidedSettings", value = FALSE, envir = .GlobalEnv)
+  assign(x = "dataFolder", value = defaultLocalDataFolder, envir = .GlobalEnv)
+  assign(x = "dataFile", value = defaultLocalDataFile, envir = .GlobalEnv)
+  if (Sys.getenv("phoebedbUser") != '') {assign("username", Sys.getenv("phoebedbUser"), envir = .GlobalEnv)}
+  if (Sys.getenv("phoebedbPw") != '') {assign("password", Sys.getenv("phoebedbPw"), envir = .GlobalEnv)}
+  if (Sys.getenv("phoebedbServer") != '') {assign("server", Sys.getenv("phoebedbServer"), envir = .GlobalEnv)}
+  if (Sys.getenv("phoebedb") != '') {assign("database", Sys.getenv("phoebedb"), envir = .GlobalEnv)}
+  if (all((Sys.getenv("phoebedbServer") != ''),
+          (Sys.getenv("phoebedb") != ''))) {assign("server", paste(Sys.getenv("phoebedbServer"),
+                                                                   Sys.getenv("phoebedb"),sep = "/"), 
+                                                   envir = .GlobalEnv)}
+  if (Sys.getenv("phoebedbVocabSchema") != '') {assign("vocabularyDatabaseSchema", Sys.getenv("phoebedbVocabSchema"), envir = .GlobalEnv)}
+  if (Sys.getenv("phoebedbTargetSchema") != '') {assign("resultsDatabaseSchema", Sys.getenv("phoebedbTargetSchema"), envir = .GlobalEnv)}
+  
+  if (server != "" && 
+      database != "" && 
+      username != "" && 
+      password != "" && 
+      port != "") {
+    connectionIsValid <- isConnectionValid(dbms = dbms, 
+                                           server = server,
+                                           port = port,
+                                           username = username,
+                                           password = password)
+    if (connectionIsValid) {
+      assign(x = "isValidConnection", value = TRUE, envir = .GlobalEnv)
+      connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = dbms,
+                                                                      server = server,
+                                                                      port = port,
+                                                                      user = username,
+                                                                      password = password)
+      connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
+      connectionPool <- NULL
+      connectionPool <- pool::dbPool(
+        drv = DatabaseConnector::DatabaseConnectorDriver(),
+        dbms = dbms,
+        server = paste(server, database, sep = "/"),
+        port = port,
+        user = username,
+        password = password
+      )
     }
-    resultsDatabaseSchema <- shinySettings$resultsDatabaseSchema
-    vocabularyDatabaseSchema <- shinySettings$vocabularyDatabaseSchema
-  } else {
+  }
+  if (!is.null(x = defaultAboutTextPhenotypeLibrary)) {
+    aboutText <- defaultAboutTextPhenotypeLibrary
+  }
+} else {
+  assign(x = "usingUserProvidedSettings", value = TRUE, envir = .GlobalEnv)
+  databaseMode <- !is.null(x = shinySettings$connectionDetails)
+  if (is.null(x = shinySettings$dataFolder)) {
     dataFolder <- shinySettings$dataFolder
   }
-  cohortBaseUrl <- shinySettings$cohortBaseUrl
-  conceptBaseUrl <- shinySettings$cohortBaseUrl
-  if (!is.null(shinySettings$aboutText)) {
+  if (is.null(x = shinySettings$dataFile)) {
+    dataFile <- shinySettings$dataFile
+  }
+  if (!is.null(x = shinySettings$aboutText)) {
     aboutText <- shinySettings$aboutText
+  }
+  if (databaseMode) {
+    writeLines(text = "Using user provided settings - connecting to database in dbms mode.")
+    connectionDetails <- shinySettings$connectionDetails
+    if (is(object = connectionDetails$server, class2 = "function")) {
+      drv <- DatabaseConnector::DatabaseConnectorDriver()
+      dbms <- connectionDetails$dbms()
+      server <- connectionDetails$server()
+      port <- connectionDetails$port()
+      user <- connectionDetails$user()
+      password <- connectionDetails$password()
+      connectionString <- connectionDetails$connectionString()
+    } else {
+      # For backwards compatibility with older versions of DatabaseConnector:
+      drv <- DatabaseConnector::DatabaseConnectorDriver()
+      dbms <- connectionDetails$dbms
+      server <- connectionDetails$server
+      port <- connectionDetails$port
+      user <- connectionDetails$user
+      password <- connectionDetails$password
+      connectionString <- connectionDetails$connectionString
+    }
+    connectionIsValid <- isConnectionValid(dbms = dbms, 
+                                           server = server,
+                                           port = port,
+                                           username = username,
+                                           password = password)
+    if (connectionIsValid) {
+      assign(x = "isValidConnection", value = TRUE, envir = .GlobalEnv)
+      connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = dbms,
+                                                                      server = server,
+                                                                      port = port,
+                                                                      user = username,
+                                                                      password = password)
+      connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
+      connectionPool <- NULL
+      connectionPool <- pool::dbPool(
+        drv = DatabaseConnector::DatabaseConnectorDriver(),
+        dbms = database,
+        server = paste(server, database, sep = "/"),
+        port = port,
+        user = user,
+        password = password
+      )
+    } else {
+      writeLines(text = "User provided connection parameters are not valid.")
+    }
+    if (is.null(x = shinySettings$resultsDatabaseSchema)) {
+      writeLines(text = "No results database schema provided.")
+    } else {resultsDatabaseSchema <- shinySettings$resultsDatabaseSchema
+    }
+    if (is.null(x = shinySettings$vocabularyDatabaseSchema)) {
+      writeLines(text = "No results database schema provided.")
+    } else {vocabularyDatabaseSchema <- shinySettings$vocabularyDatabaseSchema
+    }
+  } else {
+    writeLines(text = "Using user provided settings - running on local mode. Looking for premerged file.")
   }
 }
 
-dataModelSpecifications <- read.csv("resultsDataModelSpecification.csv")
-# Cleaning up any tables in memory:
-suppressWarnings(rm(list = SqlRender::snakeCaseToCamelCase(dataModelSpecifications$tableName)))
-
-if (databaseMode) {
-  
-  onStop(function() {
-    if (DBI::dbIsValid(connectionPool)) {
-      writeLines("Closing database pool")
-      pool::poolClose(connectionPool)
+# Cleanup connection when the application stops
+shiny::onStop(function() {
+  if (isValidConnection) {
+    writeLines(text = "Closing database connections")
+    if (DBI::dbIsValid(dbObj = connectionPool)) {
+      pool::poolClose(pool = connectionPool)
     }
-  })
-  
-  resultsTablesOnServer <- tolower(DatabaseConnector::dbListTables(connectionPool, schema = resultsDatabaseSchema))
-  
-  loadResultsTable <- function(tableName, required = FALSE) {
-    if (required || tableName %in% resultsTablesOnServer) {
-      tryCatch({
-        table <- DatabaseConnector::dbReadTable(connectionPool, 
-                                                paste(resultsDatabaseSchema, tableName, sep = "."))
-      }, error = function(err) {
-        stop("Error reading from ", paste(resultsDatabaseSchema, tableName, sep = "."), ": ", err$message)
-      })
-      colnames(table) <- SqlRender::snakeCaseToCamelCase(colnames(table))
-      if (nrow(table) > 0) {
-        assign(SqlRender::snakeCaseToCamelCase(tableName), dplyr::as_tibble(table), envir = .GlobalEnv)
-      }
+    if (DBI::dbIsValid(dbObj = connection)) {
+      DatabaseConnector::disconnect(connection = connection)
     }
   }
+})
+
+
+if (isValidConnection) {
+  resultsTablesOnServer <- tolower(x = DatabaseConnector::dbListTables(conn = connectionPool, 
+                                                                       schema = resultsDatabaseSchema))
   
-  loadResultsTable("database", required = TRUE)
-  loadResultsTable("cohort", required = TRUE)
-  loadResultsTable("cohort_extra")
-  loadResultsTable("phenotype_description")
-  loadResultsTable("temporal_time_ref")
-  loadResultsTable("concept_sets")
+  # the code section below instantiates set of tables in R memory. 
+  # some tables are 'dummy' tables.
+  loadRequiredTables(tableName = "database", databaseSChema = resultsDatabaseSchema, required = TRUE)
+  loadRequiredTables(tableName = "cohort", databaseSChema = resultsDatabaseSchema, required = TRUE)
+  loadRequiredTables(tableName = "cohort_extra", databaseSChema = resultsDatabaseSchema)
+  loadRequiredTables(tableName = "phenotype_description", databaseSChema = resultsDatabaseSchema)
+  loadRequiredTables(tableName = "temporal_time_ref", databaseSChema = resultsDatabaseSchema)
+  loadRequiredTables(tableName = "concept_sets", databaseSChema = resultsDatabaseSchema)
   
   # Create empty objects in memory for all other tables. This is used by the Shiny app to decide what tabs to show:
-  isEmpty <- function(tableName) {
+  isEmpty <- function(connection, resultsDatabaseSchema, tableName) {
     sql <- sprintf("SELECT 1 FROM %s.%s LIMIT 1;", resultsDatabaseSchema, tableName)
-    oneRow <- DatabaseConnector::dbGetQuery(connectionPool, sql)
+    oneRow <- DatabaseConnector::dbGetQuery(conn = connection, sql) %>% 
+      dplyr::tibble()
     return(nrow(oneRow) == 0)
   }
   
   for (table in c(dataModelSpecifications$tableName, "recommender_set")) {
     if (table %in% resultsTablesOnServer && 
-        !exists(SqlRender::snakeCaseToCamelCase(table)) &&
-        !isEmpty(table)) {
-      assign(SqlRender::snakeCaseToCamelCase(table), dplyr::tibble())
+        !exists(x = snakeCaseToCamelCase(string = table)) &&
+        !isEmpty(connection = connectionPool, 
+                 tableName = table, 
+                 resultsDatabaseSchema = resultsDatabaseSchema)) {
+      assign(x = snakeCaseToCamelCase(table), 
+             value = dplyr::tibble(), 
+             envir = .GlobalEnv)
     }
   }
-  
   dataSource <- createDatabaseDataSource(connection = connectionPool,
                                          resultsDatabaseSchema = resultsDatabaseSchema,
                                          vocabularyDatabaseSchema = vocabularyDatabaseSchema)
 } else {
-  localDataPath <- file.path(dataFolder, defaultLocalDataFile)
+  localDataPath <- file.path(dataFolder, dataFile)
   if (!file.exists(localDataPath)) {
     stop(sprintf("Local data file %s does not exist.", localDataPath))
   }
-  dataSource <- createFileDataSource(localDataPath, envir = .GlobalEnv)
+  dataSource <- createFileDataSource(premergedDataFile = localDataPath, envir = .GlobalEnv)
 }
 
-if (exists("cohort")) {
-  cohort <- get("cohort") %>%
-    dplyr::arrange(.data$cohortId) %>%
-    dplyr::mutate(cohortName = stringr::str_remove(.data$cohortName, "\\[.+?\\] "))
 
-  cohort <- cohort %>%
-    dplyr::group_by(.data$phenotypeId) %>% 
-    dplyr::arrange(.data$cohortId) %>% 
-    dplyr::mutate(shortName = paste0("C", dplyr::row_number())) %>% 
-    dplyr::ungroup()
-
-  cohort <- cohort %>%
-    dplyr::mutate(compoundName = paste(shortName, cohortName, sep = ": "))
-}
-
-if (exists("database")) {
-  database <- get("database") %>% 
-    dplyr::filter(!database == 'CPRD')
-}
-
+# create memory variables based on 
 if (exists("temporalTimeRef")) {
   temporalCovariateChoices <- get("temporalTimeRef") %>%
     dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
     dplyr::select(.data$timeId, .data$choices) %>% 
-    dplyr::arrange(.data$timeId) %>% 
-    dplyr::slice_head(n = 5)
+    dplyr::arrange(.data$timeId)
+  assign(x = "temporalCovariateChoices", value = temporalCovariateChoices, envir = .GlobalEnv)
 }
-
 if (exists("covariateRef")) {
   specifications <- readr::read_csv(file = "Table1Specs.csv", 
                                     col_types = readr::cols(),
                                     guess_max = min(1e7))
-  prettyAnalysisIds <- specifications$analysisId
+  assign(x = "prettyAnalysisIds", value = specifications$analysisId, envir = .GlobalEnv)
 }
 
-if (exists("phenotypeDescription")) {
+
+referentConceptIds <- c(0)
+# modify tables in memory - process cohort table.
+if (exists("cohort")) { # this table is required for app to work.
+  cohort <- get("cohort") %>%
+    dplyr::arrange(.data$cohortId) %>%
+    dplyr::mutate(cohortName = stringr::str_remove(.data$cohortName, "\\[.+?\\] "))
+  
+  if ('phenotypeId' %in% colnames(cohort)) {
+    referentConceptIds <- unique(cohort$phenotypeId/1000)
+  }
+  
+  if ('metadata' %in% colnames(cohort)) {
+    cohortMetaData <- list()
+    for (i in 1:nrow(cohort)) {
+      x <- RJSONIO::fromJSON(cohort[i,]$metadata)
+      for (j in 1:length(x)) {
+        if  (!any(is.null(x[[j]]), is.na(x[[j]]))) {
+          x[[j]] <- stringr::str_split(string = x[[j]], pattern = ";")[[1]]
+        }
+      }
+      x <- dplyr::bind_rows(x)
+      x$cohort_id <- cohort[i,]$cohortId
+      x$phenotype_id <- cohort[i,]$phenotypeId
+      cohortMetaData[[i]] <- x
+    }
+    cohortMetaData <- dplyr::bind_rows(cohortMetaData) %>% 
+      readr::type_convert(col_types = readr::cols())
+    if ('referent_concept_id' %in% colnames(cohortMetaData)) {
+      referentConceptIds <- c(referentConceptIds, cohortMetaData$referent_concept_id) %>% unique()
+    }
+    colnames(cohortMetaData) <- snakeCaseToCamelCase(colnames(cohortMetaData))
+  }
+} else {
+  writeLines("Cohort table not found")
+}
+
+
+if (exists("phenotypeDescription")) { # this table is optional.
   phenotypeDescription <- phenotypeDescription %>% 
     dplyr::mutate(overview = (stringr::str_match(.data$clinicalDescription, 
                                                  "Overview:(.*?)Presentation:"))[,2] %>%
@@ -216,7 +285,115 @@ if (exists("phenotypeDescription")) {
                         dplyr::summarize(cohortDefinitions = dplyr::n()) %>%
                         dplyr::ungroup(),
                       by = "phenotypeId")
-  searchTerms <- getSearchTerms(dataSource = dataSource, includeDescendants = FALSE) %>% 
+  
+  if ('metadata' %in% colnames(phenotypeDescription)) {
+    phenotypeDescriptionMetaData <- list()
+    for (i in 1:nrow(phenotypeDescription)) {
+      x <- RJSONIO::fromJSON(phenotypeDescription[i,]$metadata)
+      for (j in 1:length(x)) {
+        if  (!any(is.null(x[[j]]), is.na(x[[j]]))) {
+          x[[j]] <- stringr::str_split(string = x[[j]], pattern = ";")[[1]]
+        }
+      }
+      x <- dplyr::bind_rows(x)
+      x$phenotype_id <- cohort[i,]$phenotypeId
+      phenotypeDescriptionMetaData[[i]] <- x
+    }
+    phenotypeDescriptionMetaData <- dplyr::bind_rows(phenotypeDescriptionMetaData) %>% 
+      readr::type_convert(col_types = readr::cols())
+    if ('referent_concept_id' %in% colnames(phenotypeDescriptionMetaData)) {
+      referentConceptIds <- c(referentConceptIds, phenotypeDescriptionMetaData$referent_concept_id) %>% unique()
+    }
+  }
+  colnames(phenotypeDescriptionMetaData) <- snakeCaseToCamelCase(colnames(phenotypeDescriptionMetaData))
+  # get concept name and concept synonyms for all referent concepts to memory
+}
+
+referentConceptIdsDataFrame <- queryRenderedSqlFromDatabase(connection = connection,
+                                                            sql = SqlRender::render(sql = SqlRender::readSql("sql/ConceptSynonymNamesForListOfConceptIds.sql"),
+                                                                                    vocabulary_database_schema = vocabularyDatabaseSchema,
+                                                                                    concept_id_list = referentConceptIds)) %>% 
+  dplyr::arrange(.data$conceptId)
+
+if (exists('cohortMetaData')) {
+  if ('referentConceptId' %in% colnames(cohortMetaData)) {
+    cohortMetaData <- cohortMetaData %>% 
+      dplyr::left_join(referentConceptIdsDataFrame %>% 
+                         dplyr::rename(referent = conceptSynonymName), 
+                       by = c("referentConceptId" = "conceptId")) %>% 
+      dplyr::select(-.data$referentConceptId) %>% 
+      dplyr::left_join(cohort %>% 
+                         dplyr::select(.data$cohortId, .data$cohortName, .data$logicDescription),
+                       by = "cohortId") %>% 
+      dplyr::distinct()
+    if ('cohortType' %in% colnames(cohortMetaData)) {
+      cohortMetaData <- cohortMetaData %>% 
+        dplyr::rename(type = cohortType)
+    }
+    if ('logicDescription' %in% colnames(cohortMetaData)) {
+      cohortMetaData <- cohortMetaData %>% 
+        dplyr::rename(description = logicDescription)
+    }
+    if ('cohortName' %in% colnames(cohortMetaData)) {
+      cohortMetaData <- cohortMetaData %>% 
+        dplyr::rename(name = cohortName)
+    }
+  }
+  cohortMetaData <- tidyr::pivot_longer(data = cohortMetaData, 
+                                        cols = colnames(cohortMetaData)[!colnames(cohortMetaData) %in% c("phenotypeId", "cohortId")],
+                                        names_to = "metaDataType",
+                                        values_to = "metaData",
+                                        values_transform = list(metaData = as.character),
+                                        values_drop_na = TRUE
+  ) %>% 
+    dplyr::relocate(.data$cohortId, .data$phenotypeId)
+}
+if (exists('phenotypeDescriptionMetaData')) {
+  if ('referentConceptId' %in% colnames(phenotypeDescriptionMetaData)) {
+    phenotypeDescriptionMetaData <- phenotypeDescriptionMetaData %>% 
+      dplyr::left_join(referentConceptIdsDataFrame %>% 
+                         dplyr::rename(referent = conceptSynonymName), 
+                       by = c("referentConceptId" = "conceptId")) %>% 
+      dplyr::select(-.data$referentConceptId) %>% 
+      dplyr::left_join(phenotypeDescription %>% 
+                         dplyr::select(.data$phenotypeId, .data$phenotypeName, .data$clinicalDescription),
+                       by = "phenotypeId") %>% 
+      dplyr::distinct() %>% 
+      dplyr::rename(description = clinicalDescription,
+                    name = phenotypeName)
+  }
+  phenotypeDescriptionMetaData <- tidyr::pivot_longer(data = phenotypeDescriptionMetaData, 
+                                                      cols = colnames(phenotypeDescriptionMetaData)[!colnames(phenotypeDescriptionMetaData) %in% c("phenotypeId")],
+                                                      names_to = "metaDataType",
+                                                      values_to = "metaData",
+                                                      values_transform = list(metaData = as.character),
+                                                      values_drop_na = TRUE
+  )
+}  
+
+
+if (exists("phenotypeDescription")) {
+  cohort <- cohort %>%
+    dplyr::group_by(.data$phenotypeId) %>% 
+    dplyr::arrange(.data$cohortId) %>%
+    dplyr::left_join(dplyr::select(phenotypeDescription, phenotypeId, phenotypeName), by = "phenotypeId") %>% 
+    dplyr::mutate(shortName = paste0("C", dplyr::row_number()," (Phenotype: ", .data$phenotypeName, ") ")) %>% 
+    dplyr::ungroup()
+} else {
+  cohort <- cohort %>%
+    dplyr::group_by(.data$phenotypeId) %>% 
+    dplyr::arrange(.data$cohortId) %>% 
+    dplyr::mutate(shortName = paste0("C", dplyr::row_number())) %>% 
+    dplyr::ungroup()
+}
+cohort <- cohort %>%
+  dplyr::mutate(compoundName = paste(shortName, cohortName, sep = ": "))
+
+
+# getSearchTerms might not be useful in future.
+if (exists("phenotypeDescription")) {
+  searchTerms <- getSearchTerms(dataSource = dataSource, 
+                                includeDescendants = FALSE) %>% 
     dplyr::group_by(.data$phenotypeId) %>%
     dplyr::summarise(searchTermString = paste(.data$term, collapse = ", ")) %>%
     dplyr::ungroup()
