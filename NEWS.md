@@ -14,6 +14,8 @@ Changes:
 - Visit context table addition
 - Concept set recommender
 - File reorganization
+- rewrote global.R for connection and file management for diagnostics explorer
+- updated loadDiagnosticsExplorer function
 2. Cohort Diagnostics results data model. Added columns metadata to cohort, and metadata to phenotype_description. These fields are expected to hold JSON expression with additional metadata regarding cohorts.
 
 

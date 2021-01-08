@@ -1,5 +1,5 @@
 createDatabaseDataSource <- function(connection, resultsDatabaseSchema, vocabularyDatabaseSchema = resultsDatabaseSchema) {
-  return(list(connection = connectionPool,
+  return(list(connection = connection,
               resultsDatabaseSchema = resultsDatabaseSchema,
               vocabularyDatabaseSchema = vocabularyDatabaseSchema))
 }
