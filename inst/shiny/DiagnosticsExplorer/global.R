@@ -1,12 +1,13 @@
 library(magrittr)
 
+source("R/DisplayFunctions.R")
 source("R/Tables.R")
 source("R/Plots.R")
 source("R/Results.R")
 source("R/ConceptRecommender.R")
 source("R/DataPulls.R")
 source("R/Connections.R")
-source("R/DisplayFunctions.R")
+source("R/HelperFunctions.R")
 
 # Settings when running on server:
 assign(x = "defaultLocalDataFolder", value = "data", envir = .GlobalEnv)
@@ -32,8 +33,6 @@ suppressWarnings(rm(list = snakeCaseToCamelCase(dataModelSpecifications$tableNam
 if (!exists("shinySettings")) { # shinySettings object is from CohortDiagnostics::launchDiagnosticsExplorer()
   writeLines("Using default settings -- attempting to connect to OHDSI phenotype library")
   assign(x = "usingUserProvidedSettings", value = FALSE, envir = .GlobalEnv)
-  # assign(x = "dataFolder", value = defaultLocalDataFolder, envir = .GlobalEnv)
-  # assign(x = "dataFile", value = defaultLocalDataFile, envir = .GlobalEnv)
   if (Sys.getenv("phoebedbUser") != '') {assign("username", Sys.getenv("phoebedbUser"), envir = .GlobalEnv)}
   if (Sys.getenv("phoebedbPw") != '') {assign("password", Sys.getenv("phoebedbPw"), envir = .GlobalEnv)}
   if (Sys.getenv("phoebedbServer") != '') {assign("server", Sys.getenv("phoebedbServer"), envir = .GlobalEnv)}
@@ -42,8 +41,12 @@ if (!exists("shinySettings")) { # shinySettings object is from CohortDiagnostics
           (Sys.getenv("phoebedb") != ''))) {assign("server", paste(Sys.getenv("phoebedbServer"),
                                                                    Sys.getenv("phoebedb"),sep = "/"), 
                                                    envir = .GlobalEnv)}
-  if (Sys.getenv("phoebedbVocabSchema") != '') {assign("vocabularyDatabaseSchema", Sys.getenv("phoebedbVocabSchema"), envir = .GlobalEnv)}
-  if (Sys.getenv("phoebedbTargetSchema") != '') {assign("resultsDatabaseSchema", Sys.getenv("phoebedbTargetSchema"), envir = .GlobalEnv)}
+  if (Sys.getenv("phoebedbVocabSchema") != '') {
+    assign("vocabularyDatabaseSchema", Sys.getenv("phoebedbVocabSchema"), envir = .GlobalEnv)
+    }
+  if (Sys.getenv("phoebedbTargetSchema") != '') {
+    assign("resultsDatabaseSchema", Sys.getenv("phoebedbTargetSchema"), envir = .GlobalEnv)
+    }
   
   if (server != "" && 
       database != "" && 
@@ -268,6 +271,7 @@ if (exists("cohort")) { # this table is required for app to work.
 
 if (exists("phenotypeDescription")) { # this table is optional.
   phenotypeDescription <- phenotypeDescription %>% 
+    dplyr::mutate(searchTerms = paste(.data$phenotypeId, .data$phenotypeName, .data$clinicalDescription, sep = ", ")) %>% 
     dplyr::mutate(overview = (stringr::str_match(.data$clinicalDescription, 
                                                  "Overview:(.*?)Presentation:"))[,2] %>%
                     stringr::str_squish() %>% 
@@ -316,96 +320,110 @@ if (exists("phenotypeDescription")) { # this table is optional.
   # get concept name and concept synonyms for all referent concepts to memory
 }
 
-referentConceptIdsDataFrame <- queryRenderedSqlFromDatabase(connection = connection,
-                                                            sql = SqlRender::render(sql = SqlRender::readSql("sql/ConceptSynonymNamesForListOfConceptIds.sql"),
-                                                                                    vocabulary_database_schema = vocabularyDatabaseSchema,
-                                                                                    concept_id_list = referentConceptIds)) %>% 
-  dplyr::arrange(.data$conceptId)
+if (isValidConnection) {
+  referentConceptIdsDataFrame <- queryRenderedSqlFromDatabase(connection = connection,
+                                                              sql = SqlRender::render(sql = SqlRender::readSql("sql/ConceptSynonymNamesForListOfConceptIds.sql"),
+                                                                                      vocabulary_database_schema = vocabularyDatabaseSchema,
+                                                                                      concept_id_list = referentConceptIds)) %>% 
+    dplyr::arrange(.data$conceptId)
+} else {
+  referentConceptIdsDataFrame <- dplyr::tibble(conceptId = 0, conceptSynonymName = 'No matching concept')
+}
+
+
+referentConceptIdsSearchTerms <- referentConceptIdsDataFrame %>% 
+  dplyr::group_by(.data$conceptId) %>% 
+  dplyr::summarise(conceptNameSearchTerms = toString(.data$conceptSynonymName)) %>% 
+  dplyr::ungroup()
+
+# pubmedQueryString <- tidyr::replace_na(data = cohortMetaData$pmid %>% unique(),
+#                                        replace = 0) %>% 
+#   paste(collapse = '[UID] OR ')
+# pubmedIds <- easyPubMed::get_pubmed_ids(pubmed_query_string = pubmedQueryString)
+# pubmedXmlData <- easyPubMed::fetch_pubmed_data(pubmed_id_list = pubmedIds)
+
 
 if (exists('cohortMetaData')) {
+  cohortMetaData$searchTerms <- ""
   if ('referentConceptId' %in% colnames(cohortMetaData)) {
     cohortMetaData <- cohortMetaData %>% 
-      dplyr::left_join(referentConceptIdsDataFrame %>% 
-                         dplyr::rename(referent = conceptSynonymName), 
+      dplyr::left_join(referentConceptIdsSearchTerms, 
                        by = c("referentConceptId" = "conceptId")) %>% 
       dplyr::select(-.data$referentConceptId) %>% 
-      dplyr::left_join(cohort %>% 
-                         dplyr::select(.data$cohortId, .data$cohortName, .data$logicDescription),
-                       by = "cohortId") %>% 
-      dplyr::distinct()
-    if ('cohortType' %in% colnames(cohortMetaData)) {
-      cohortMetaData <- cohortMetaData %>% 
-        dplyr::rename(type = cohortType)
-    }
-    if ('logicDescription' %in% colnames(cohortMetaData)) {
-      cohortMetaData <- cohortMetaData %>% 
-        dplyr::rename(description = logicDescription)
-    }
-    if ('cohortName' %in% colnames(cohortMetaData)) {
-      cohortMetaData <- cohortMetaData %>% 
-        dplyr::rename(name = cohortName)
-    }
+      dplyr::mutate(searchTerms = paste(searchTerms, conceptNameSearchTerms, sep = ", ")) %>% 
+      dplyr::select(-.data$conceptNameSearchTerms)
   }
-  cohortMetaData <- tidyr::pivot_longer(data = cohortMetaData, 
-                                        cols = colnames(cohortMetaData)[!colnames(cohortMetaData) %in% c("phenotypeId", "cohortId")],
-                                        names_to = "metaDataType",
-                                        values_to = "metaData",
-                                        values_transform = list(metaData = as.character),
-                                        values_drop_na = TRUE
-  ) %>% 
-    dplyr::relocate(.data$cohortId, .data$phenotypeId)
+  cohortMetaData <- cohortMetaData %>% 
+      dplyr::left_join(cohort %>% 
+                         dplyr::mutate(cohortSearchString = paste(.data$phenotypeId, 
+                                                                  .data$cohortId, 
+                                                                  .data$cohortName, 
+                                                                  .data$logicDescription, 
+                                                                  sep = ", ")) %>% 
+                         dplyr::select(.data$cohortId, .data$cohortName, .data$cohortSearchString),
+                       by = "cohortId") %>% 
+      dplyr::mutate(searchTerms = paste(searchTerms, cohortSearchString, cohortType, sep = ", ")) %>% 
+      dplyr::select(.data$cohortId, .data$searchTerms) %>% 
+      dplyr::distinct()
+  cohort <- cohort %>% 
+    dplyr::left_join(cohortMetaData, by = "cohortId")
+} else {
+  cohort <- cohort %>% 
+    dplyr::mutate(searchTerms = paste(.data$cohortName, .data$logicDescription, sep = ", "))
 }
+remove(cohortMetaData)
+
 if (exists('phenotypeDescriptionMetaData')) {
   if ('referentConceptId' %in% colnames(phenotypeDescriptionMetaData)) {
     phenotypeDescriptionMetaData <- phenotypeDescriptionMetaData %>% 
-      dplyr::left_join(referentConceptIdsDataFrame %>% 
-                         dplyr::rename(referent = conceptSynonymName), 
-                       by = c("referentConceptId" = "conceptId")) %>% 
-      dplyr::select(-.data$referentConceptId) %>% 
-      dplyr::left_join(phenotypeDescription %>% 
-                         dplyr::select(.data$phenotypeId, .data$phenotypeName, .data$clinicalDescription),
-                       by = "phenotypeId") %>% 
-      dplyr::distinct() %>% 
-      dplyr::rename(description = clinicalDescription,
-                    name = phenotypeName)
+      dplyr::left_join(referentConceptIdsSearchTerms, by = c('referentConceptId' = 'conceptId')) %>% 
+      dplyr::rename(phenotypeReferentConceptsSearchTerms = conceptNameSearchTerms) %>% 
+      dplyr::select(-.data$referentConceptId) %>%   
+      dplyr::group_by(.data$phenotypeId) %>% 
+      dplyr::summarise(phenotypeReferentConceptsSearchTerms = toString(.data$phenotypeReferentConceptsSearchTerms)) %>% 
+      dplyr::ungroup()
+    phenotypeDescription <- phenotypeDescription %>% 
+      dplyr::left_join(phenotypeDescriptionMetaData, by = 'phenotypeId') %>% 
+      dplyr::mutate(searchTerms = paste(searchTerms, phenotypeReferentConceptsSearchTerms, sep = ", ")) %>% 
+      dplyr::select(-.data$phenotypeReferentConceptsSearchTerms)
   }
-  phenotypeDescriptionMetaData <- tidyr::pivot_longer(data = phenotypeDescriptionMetaData, 
-                                                      cols = colnames(phenotypeDescriptionMetaData)[!colnames(phenotypeDescriptionMetaData) %in% c("phenotypeId")],
-                                                      names_to = "metaDataType",
-                                                      values_to = "metaData",
-                                                      values_transform = list(metaData = as.character),
-                                                      values_drop_na = TRUE
-  )
-}  
+}
+remove(phenotypeDescriptionMetaData)
 
-
-if (exists("phenotypeDescription")) {
+if (exists('phenotypeDescription')) {
   cohort <- cohort %>%
+    dplyr::left_join(phenotypeDescription %>% 
+                       dplyr::rename(phenotypeSearchTerms = searchTerms) %>% 
+                       dplyr::select(.data$phenotypeId, .data$phenotypeSearchTerms),
+                     by = "phenotypeId") %>% 
+    dplyr::mutate(searchTerms = paste(searchTerms, phenotypeSearchTerms, sep = ", ")) %>% 
+    dplyr::select(-.data$phenotypeSearchTerms) %>%
     dplyr::group_by(.data$phenotypeId) %>% 
     dplyr::arrange(.data$cohortId) %>%
     dplyr::left_join(dplyr::select(phenotypeDescription, phenotypeId, phenotypeName), by = "phenotypeId") %>% 
     dplyr::mutate(shortName = paste0("C", dplyr::row_number()," (Phenotype: ", .data$phenotypeName, ") ")) %>% 
-    dplyr::ungroup()
+    dplyr::ungroup() %>%
+    dplyr::mutate(compoundName = paste(shortName, cohortName, sep = ": "))
 } else {
   cohort <- cohort %>%
     dplyr::group_by(.data$phenotypeId) %>% 
     dplyr::arrange(.data$cohortId) %>% 
     dplyr::mutate(shortName = paste0("C", dplyr::row_number())) %>% 
-    dplyr::ungroup()
+    dplyr::ungroup() %>%
+    dplyr::mutate(compoundName = paste(shortName, cohortName, sep = ": "))
 }
-cohort <- cohort %>%
-  dplyr::mutate(compoundName = paste(shortName, cohortName, sep = ": "))
 
 
-# getSearchTerms might not be useful in future.
-if (exists("phenotypeDescription")) {
-  searchTerms <- getSearchTerms(dataSource = dataSource, 
-                                includeDescendants = FALSE) %>% 
-    dplyr::group_by(.data$phenotypeId) %>%
-    dplyr::summarise(searchTermString = paste(.data$term, collapse = ", ")) %>%
-    dplyr::ungroup()
-  
-  phenotypeDescription <- phenotypeDescription %>%
-    dplyr::left_join(searchTerms,
-                     by = "phenotypeId")
-}
+# 
+# # getSearchTerms might not be useful in future.
+# if (exists("phenotypeDescription")) {
+#   searchTerms <- getSearchTerms(dataSource = dataSource, 
+#                                 includeDescendants = FALSE) %>% 
+#     dplyr::group_by(.data$phenotypeId) %>%
+#     dplyr::summarise(searchTermString = paste(.data$term, collapse = ", ")) %>%
+#     dplyr::ungroup()
+#   
+#   phenotypeDescription <- phenotypeDescription %>%
+#     dplyr::left_join(searchTerms,
+#                      by = "phenotypeId")
+# }

@@ -1,12 +1,3 @@
-library(magrittr)
-
-source("R/DisplayFunctions.R")
-source("R/Tables.R")
-source("R/Plots.R")
-source("R/Results.R")
-source("R/ConceptRecommender.R")
-source("R/GitHubScraper.R")
-
 shiny::shinyServer(function(input, output, session) {
   
   cohortId <- shiny::reactive({
