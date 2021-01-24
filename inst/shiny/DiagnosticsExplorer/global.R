@@ -32,8 +32,8 @@ suppressWarnings(rm(list = snakeCaseToCamelCase(dataModelSpecifications$tableNam
 if (!exists("shinySettings")) { # shinySettings object is from CohortDiagnostics::launchDiagnosticsExplorer()
   writeLines("Using default settings -- attempting to connect to OHDSI phenotype library")
   assign(x = "usingUserProvidedSettings", value = FALSE, envir = .GlobalEnv)
-  assign(x = "dataFolder", value = defaultLocalDataFolder, envir = .GlobalEnv)
-  assign(x = "dataFile", value = defaultLocalDataFile, envir = .GlobalEnv)
+  # assign(x = "dataFolder", value = defaultLocalDataFolder, envir = .GlobalEnv)
+  # assign(x = "dataFile", value = defaultLocalDataFile, envir = .GlobalEnv)
   if (Sys.getenv("phoebedbUser") != '') {assign("username", Sys.getenv("phoebedbUser"), envir = .GlobalEnv)}
   if (Sys.getenv("phoebedbPw") != '') {assign("password", Sys.getenv("phoebedbPw"), envir = .GlobalEnv)}
   if (Sys.getenv("phoebedbServer") != '') {assign("server", Sys.getenv("phoebedbServer"), envir = .GlobalEnv)}
@@ -50,11 +50,12 @@ if (!exists("shinySettings")) { # shinySettings object is from CohortDiagnostics
       username != "" && 
       password != "" && 
       port != "") {
-    connectionIsValid <- isConnectionValid(dbms = dbms, 
+    # writeLines(text = "Checking Connection parameters.")
+    connectionIsValid <- try(isConnectionValid(dbms = dbms, 
                                            server = server,
                                            port = port,
                                            username = username,
-                                           password = password)
+                                           password = password))
     if (connectionIsValid) {
       assign(x = "isValidConnection", value = TRUE, envir = .GlobalEnv)
       connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = dbms,
@@ -63,7 +64,9 @@ if (!exists("shinySettings")) { # shinySettings object is from CohortDiagnostics
                                                                       user = username,
                                                                       password = password)
       connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
+      # writeLines(text = "Database Connector Connection.")
       connectionPool <- NULL
+      # writeLines(text = "Connecting to Pool.")
       connectionPool <- pool::dbPool(
         drv = DatabaseConnector::DatabaseConnectorDriver(),
         dbms = dbms,
@@ -72,6 +75,7 @@ if (!exists("shinySettings")) { # shinySettings object is from CohortDiagnostics
         user = username,
         password = password
       )
+      writeLines(text = "Connected.")
     }
   }
   if (!is.null(x = defaultAboutTextPhenotypeLibrary)) {
@@ -80,15 +84,9 @@ if (!exists("shinySettings")) { # shinySettings object is from CohortDiagnostics
 } else {
   assign(x = "usingUserProvidedSettings", value = TRUE, envir = .GlobalEnv)
   databaseMode <- !is.null(x = shinySettings$connectionDetails)
-  if (is.null(x = shinySettings$dataFolder)) {
-    dataFolder <- shinySettings$dataFolder
-  }
-  if (is.null(x = shinySettings$dataFile)) {
-    dataFile <- shinySettings$dataFile
-  }
   if (!is.null(x = shinySettings$aboutText)) {
     aboutText <- shinySettings$aboutText
-  }
+  } else {aboutText <- ''}
   if (databaseMode) {
     writeLines(text = "Using user provided settings - connecting to database in dbms mode.")
     connectionDetails <- shinySettings$connectionDetails
@@ -132,19 +130,28 @@ if (!exists("shinySettings")) { # shinySettings object is from CohortDiagnostics
         user = user,
         password = password
       )
+      writeLines(text = "Connected.")
+      if (!is.null(x = shinySettings$resultsDatabaseSchema)) {
+        writeLines(text = "No results database schema provided.")
+      } else {resultsDatabaseSchema <- shinySettings$resultsDatabaseSchema}
+      if (!is.null(x = shinySettings$vocabularyDatabaseSchema)) {
+        writeLines(text = "No results database schema provided.")
+      } else {vocabularyDatabaseSchema <- shinySettings$vocabularyDatabaseSchema}
     } else {
       writeLines(text = "User provided connection parameters are not valid.")
     }
-    if (is.null(x = shinySettings$resultsDatabaseSchema)) {
-      writeLines(text = "No results database schema provided.")
-    } else {resultsDatabaseSchema <- shinySettings$resultsDatabaseSchema
-    }
-    if (is.null(x = shinySettings$vocabularyDatabaseSchema)) {
-      writeLines(text = "No results database schema provided.")
-    } else {vocabularyDatabaseSchema <- shinySettings$vocabularyDatabaseSchema
-    }
   } else {
     writeLines(text = "Using user provided settings - running on local mode. Looking for premerged file.")
+    if (!is.null(x = shinySettings$dataFolder)) {
+      dataFolder <- shinySettings$dataFolder
+    } else {
+      writeLines(text = "No data folder provided.User provided settings are not valid.")
+      dataFolder <- NULL
+    }
+    if (!is.null(x = shinySettings$dataFile)) {
+      writeLines(text = "No data file provided. User provided settings are not valid.")
+      dataFile <- shinySettings$dataFile
+    } else {dataFile <- NULL}
   }
 }
 
