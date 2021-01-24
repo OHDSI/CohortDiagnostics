@@ -322,6 +322,7 @@ bodyTabItems <- shinydashboard::tabItems(
       width = NULL,
       status = "primary",
       DT::dataTableOutput(outputId = "phenoTypeDescriptionTable"),
+      
       shiny::conditionalPanel(
         condition = "output.phenotypeRowIsSelected == true",
         shiny::actionButton("selectPhenotypeButton", label = "Select this phenotype", style = "margin-top: 5px; margin-bottom: 5px;"),
@@ -348,39 +349,99 @@ bodyTabItems <- shinydashboard::tabItems(
       width = NULL,
       status = "primary",
       DT::dataTableOutput(outputId = "cohortDefinitionTable"),
-      conditionalPanel("output.cohortDefinitionRowIsSelected == true",
-                       shiny::tabsetPanel(type = "tab",
-                                          shiny::tabPanel(title = "Details",
-                                                          shiny::htmlOutput("cohortDetailsText")),
-                                          if (exists("cohortExtra")) {
-                                            shiny::tabPanel(title = "Definition",
-                                                            copyToClipboardButton("cohortDefinitionDetails", style = "margin-top: 5px; margin-bottom: 5px;"),
-                                                            shiny::htmlOutput("cohortDefinitionDetails"))
-                                          },
-                                          shiny::tabPanel(title = "Concept Sets",
-                                                          shiny::downloadButton("saveConceptSetButton", 
-                                                                                label = "Save to CSV file", 
-                                                                                icon = shiny::icon("download"),
-                                                                                style = "margin-top: 5px; margin-bottom: 5px;"),
-                                                          if (!is(dataSource, "environment")) {
-                                                            shiny::radioButtons(
-                                                              inputId = "conceptSetsType",
-                                                              label = "",
-                                                              choices = c("Concept Set Expression", "Included Standard Concepts", "Included Source Concepts"),
-                                                              selected = "Concept Set Expression",
-                                                              inline = TRUE
-                                                            )
-                                                          },
-                                                          DT::dataTableOutput(outputId = "cohortDefinitionConceptSetsTable")
-                                          ),
-                                          shiny::tabPanel(title = "JSON",
-                                                          copyToClipboardButton("cohortDefinitionJson", style = "margin-top: 5px; margin-bottom: 5px;"),
-                                                          shiny::verbatimTextOutput("cohortDefinitionJson")),
-                                          shiny::tabPanel(title = "SQL",
-                                                          copyToClipboardButton("cohortDefinitionSql", style = "margin-top: 5px; margin-bottom: 5px;"),
-                                                          shiny::verbatimTextOutput("cohortDefinitionSql"))
-                       )
+      shiny::conditionalPanel(
+        condition = "output.cohortDefinitionRowIsSelected == 2",
+        shiny::radioButtons(
+          inputId = "isCompare",
+          label = "Comparision",
+          choices = c("No Comparision","Compare Details","Compare Concept Sets", "Compare JSON", "Compare SQL"),
+          selected = "No Comparision",
+          inline = TRUE
+        )
+      ),
+      column(6,conditionalPanel("output.cohortDefinitionRowIsSelected > 0&input.isCompare=='No Comparision'",
+                             shiny::tabsetPanel(type = "tab",
+                                                shiny::tabPanel(title = "Details",
+                                                                shiny::htmlOutput("cohortDetailsText")),
+                                                if (exists("cohortExtra")) {
+                                                  shiny::tabPanel(title = "Definition",
+                                                                  copyToClipboardButton("cohortDefinitionDetails", style = "margin-top: 5px; margin-bottom: 5px;"),
+                                                                  shiny::htmlOutput("cohortDefinitionDetails"))
+                                                },
+                                                shiny::tabPanel(title = "Concept Sets",
+                                                                shiny::downloadButton("saveConceptSetButton", 
+                                                                                      label = "Save to CSV file", 
+                                                                                      icon = shiny::icon("download"),
+                                                                                      style = "margin-top: 5px; margin-bottom: 5px;"),
+                                                                if (!is(dataSource, "environment")) {
+                                                                  shiny::radioButtons(
+                                                                    inputId = "conceptSetsType",
+                                                                    label = "",
+                                                                    choices = c("Concept Set Expression", "Included Standard Concepts", "Included Source Concepts"),
+                                                                    selected = "Concept Set Expression",
+                                                                    inline = TRUE
+                                                                  )
+                                                                },
+                                                                DT::dataTableOutput(outputId = "cohortDefinitionConceptSetsTable")
+                                                ),
+                                                shiny::tabPanel(title = "JSON",
+                                                                copyToClipboardButton("cohortDefinitionJson", style = "margin-top: 5px; margin-bottom: 5px;"),
+                                                                shiny::verbatimTextOutput("cohortDefinitionJson")),
+                                                shiny::tabPanel(title = "SQL",
+                                                                copyToClipboardButton("cohortDefinitionSql", style = "margin-top: 5px; margin-bottom: 5px;"),
+                                                                shiny::verbatimTextOutput("cohortDefinitionSql"))
+                             )
+            )),
+          column(6,conditionalPanel("output.cohortDefinitionRowIsSelected == 2&input.isCompare=='No Comparision'",
+                             shiny::tabsetPanel(type = "tab",
+                                                shiny::tabPanel(title = "Details",
+                                                                shiny::htmlOutput("compareCohortDetailsText")),
+                             if (exists("cohortExtra")) {
+                               shiny::tabPanel(title = "Definition",
+                                               copyToClipboardButton("compareCohortDefinitionDetails", style = "margin-top: 5px; margin-bottom: 5px;"),
+                                               shiny::htmlOutput("compareCohortDefinitionDetails"))
+                             },
+                             shiny::tabPanel(title = "Concept Sets",
+                                             shiny::downloadButton("compareSaveConceptSetButton", 
+                                                                   label = "Save to CSV file", 
+                                                                   icon = shiny::icon("download"),
+                                                                   style = "margin-top: 5px; margin-bottom: 5px;"),
+                                             if (!is(dataSource, "environment")) {
+                                               shiny::radioButtons(
+                                                 inputId = "compareConceptSetsType",
+                                                 label = "",
+                                                 choices = c("Concept Set Expression", "Included Standard Concepts", "Included Source Concepts"),
+                                                 selected = "Concept Set Expression",
+                                                 inline = TRUE
+                                               )
+                                             },
+                                             DT::dataTableOutput(outputId = "compareCohortDefinitionConceptSetsTable")
+                             ),
+                             shiny::tabPanel(title = "JSON",
+                                             copyToClipboardButton("compareCohortDefinitionJson", style = "margin-top: 5px; margin-bottom: 5px;"),
+                                             shiny::verbatimTextOutput("compareCohortDefinitionJson")),
+                             shiny::tabPanel(title = "SQL",
+                                             copyToClipboardButton("compareCohortDefinitionSql", style = "margin-top: 5px; margin-bottom: 5px;"),
+                                             shiny::verbatimTextOutput("compareCohortDefinitionSql"))
+                             )
+                             )),
+      column(12,conditionalPanel("output.cohortDefinitionRowIsSelected == 2&input.isCompare=='Compare Details'",
+                                 diffr::diffrOutput("detailsDiff",width = "100%")
       )
+      ),
+      column(12,conditionalPanel("output.cohortDefinitionRowIsSelected == 2&input.isCompare=='Compare Concept Sets'",
+                                 DT::dataTableOutput(outputId = "concesptSetDiff")
+      )
+      ),
+      column(12,conditionalPanel("output.cohortDefinitionRowIsSelected == 2&input.isCompare=='Compare JSON'",
+                      diffr::diffrOutput("jsonDiff",width = "100%",height = "50000px")
+                       )
+             ),
+      column(12,conditionalPanel("output.cohortDefinitionRowIsSelected == 2&input.isCompare=='Compare SQL'",
+                                 diffr::diffrOutput("sqlDiff",width = "100%",height = "50000px")
+      )
+      )
+      
     )
   ),
   shinydashboard::tabItem(tabName = "cohortCounts",
