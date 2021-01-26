@@ -1,4 +1,5 @@
 library(magrittr)
+appVersion <- "2.1.0"
 
 source("R/DisplayFunctions.R")
 source("R/Tables.R")
@@ -113,6 +114,7 @@ if (!exists("shinySettings")) {
   if (!is.null(x = defaultAboutTextPhenotypeLibrary)) {
     aboutText <- defaultAboutTextPhenotypeLibrary
   }
+  userNotification <- paste0("Cohort Diagnostics app (version ", appVersion, ")") 
 } else {
   assign(x = "usingUserProvidedSettings", value = TRUE, envir = .GlobalEnv)
   databaseMode <- !is.null(x = shinySettings$connectionDetails)
@@ -123,6 +125,7 @@ if (!exists("shinySettings")) {
   }
   if (databaseMode) {
     writeLines(text = "Using user provided settings - connecting to database in dbms mode.")
+    userNotification <- paste0("Connected to database.")
     connectionDetails <- shinySettings$connectionDetails
     if (is(object = connectionDetails$server, class2 = "function")) {
       drv <- DatabaseConnector::DatabaseConnectorDriver()
@@ -188,6 +191,7 @@ if (!exists("shinySettings")) {
     }
   } else {
     writeLines(text = "Using user provided settings - running on local mode. Looking for premerged file.")
+    userNotification <- paste0("Using premerged file.")
     if (!is.null(x = shinySettings$dataFolder)) {
       dataFolder <- shinySettings$dataFolder
     } else {

@@ -1,7 +1,12 @@
 if (exists("phenotypeDescription")) {
+  # app is now in phenotype library mode.
   header <-
     shinydashboard::dashboardHeader(
-      title = phenotypeLibraryModeDefaultTitle,
+      title = paste0(phenotypeLibraryModeDefaultTitle),
+      shinydashboard::dropdownMenu(type = "notifications", 
+                                   badgeStatus = "info",
+                                   shinydashboard::notificationItem(text = userNotification
+                   )),
       tags$li(
         tags$div(tags$strong("Phenotype:"),
                  style = "color: white; margin-top: 14px; margin-right: 10px;"),
@@ -31,9 +36,11 @@ if (exists("phenotypeDescription")) {
       )
     )
 } else {
+  # app is now in cohort diagnostics mode.
   header <-
     shinydashboard::dashboardHeader(title = cohortDiagnosticModeDefaultTitle)
 }
+
 #sidebarMenu
 sidebarMenu <-
   shinydashboard::sidebarMenu(
