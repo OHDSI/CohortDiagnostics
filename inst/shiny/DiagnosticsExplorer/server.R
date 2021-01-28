@@ -93,10 +93,12 @@ shiny::shinyServer(function(input, output, session) {
   # Phenotype Description ------------------------------------------------------------------------------
   output$phenoTypeDescriptionTable <- DT::renderDataTable(expr = {
     data <- phenotypeDescription %>%
-      dplyr::select(.data$phenotypeId,
-                    .data$phenotypeName,
-                    .data$overview,
-                    .data$cohortDefinitions)
+      dplyr::select(
+        .data$phenotypeId,
+        .data$phenotypeName,
+        .data$overview,
+        .data$cohortDefinitions
+      )
     
     options = list(
       pageLength = 5,

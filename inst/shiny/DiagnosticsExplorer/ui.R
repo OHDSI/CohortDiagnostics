@@ -3,10 +3,11 @@ if (exists("phenotypeDescription")) {
   header <-
     shinydashboard::dashboardHeader(
       title = paste0(phenotypeLibraryModeDefaultTitle),
-      shinydashboard::dropdownMenu(type = "notifications", 
-                                   badgeStatus = "info",
-                                   shinydashboard::notificationItem(text = userNotification
-                   )),
+      shinydashboard::dropdownMenu(
+        type = "notifications",
+        badgeStatus = "info",
+        shinydashboard::notificationItem(text = userNotification)
+      ),
       tags$li(
         tags$div(tags$strong("Phenotype:"),
                  style = "color: white; margin-top: 14px; margin-right: 10px;"),

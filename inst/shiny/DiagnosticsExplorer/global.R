@@ -114,7 +114,8 @@ if (!exists("shinySettings")) {
   if (!is.null(x = defaultAboutTextPhenotypeLibrary)) {
     aboutText <- defaultAboutTextPhenotypeLibrary
   }
-  userNotification <- paste0("Cohort Diagnostics app (version ", appVersion, ")") 
+  userNotification <-
+    paste0("Cohort Diagnostics app (version ", appVersion, ")")
 } else {
   assign(x = "usingUserProvidedSettings", value = TRUE, envir = .GlobalEnv)
   databaseMode <- !is.null(x = shinySettings$connectionDetails)
