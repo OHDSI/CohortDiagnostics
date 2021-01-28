@@ -93,15 +93,8 @@ shiny::shinyServer(function(input, output, session) {
   # Phenotype Description ------------------------------------------------------------------------------
   output$phenoTypeDescriptionTable <- DT::renderDataTable(expr = {
     data <- phenotypeDescription %>%
-      dplyr::mutate(
-        name = sprintf(
-          "%s <div style=\"display: none\">%s</div>",
-          .data$phenotypeName,
-          .data$searchTermString
-        )
-      ) %>%
       dplyr::select(.data$phenotypeId,
-                    .data$name,
+                    .data$phenotypeName,
                     .data$overview,
                     .data$cohortDefinitions)
     
