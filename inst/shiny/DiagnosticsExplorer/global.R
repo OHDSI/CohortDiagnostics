@@ -551,6 +551,37 @@ if (exists('phenotypeDescription')) {
     dplyr::mutate(compoundName = paste(shortName, cohortName, sep = ": "))
 }
 
+options(DT.options = list(
+  pageLength = 10,
+  lengthMenu = c(5, 10, 15, 20, 100, 500, 1000),
+  lengthChange = TRUE,
+  searching = TRUE,
+  ordering = TRUE,
+  scrollX = TRUE,
+  ordering = TRUE,
+  paging = TRUE,
+  info = TRUE,
+  searchHighlight = TRUE,
+  # search = list(regex = TRUE, caseInsensitive = FALSE),
+  stateSave = TRUE,
+  dom = 'Bfrtip', # for buttons
+  buttons = c('copy', 'csv', 'excel', 'pdf', 'print', 'colvis'),
+  colReorder = TRUE,
+  realtime = FALSE, # for col reorder
+  # fixedColumns = list(leftColumns = 1),
+  # fixedHeader = TRUE,
+  # processing = TRUE,
+  autoWidth = TRUE
+))
+
+assign(x = "defaultDataTableFilter",
+       value =
+         list(
+           position = 'top',
+           clear = TRUE,
+           plain = FALSE
+         ))
+
 
 #
 # # getSearchTerms might not be useful in future.
