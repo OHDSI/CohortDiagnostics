@@ -310,7 +310,7 @@ bodyTabItems <- shinydashboard::tabItems(
       title = "Phenotype Description",
       width = NULL,
       status = "primary",
-      DT::dataTableOutput(outputId = "phenoTypeDescriptionTable"),
+      DT::DTOutput(outputId = "phenoTypeDescriptionTable"),
       
       shiny::conditionalPanel(
         condition = "output.phenotypeRowIsSelected == true",
@@ -348,7 +348,7 @@ bodyTabItems <- shinydashboard::tabItems(
       title = "Cohort Definition",
       width = NULL,
       status = "primary",
-      DT::dataTableOutput(outputId = "cohortDefinitionTable"),
+      DT::DTOutput(outputId = "cohortDefinitionTable"),
       shiny::conditionalPanel(
         condition = "output.cohortDefinitionRowIsSelected == 2",
         shiny::radioButtons(
@@ -376,8 +376,8 @@ bodyTabItems <- shinydashboard::tabItems(
             if (exists("cohortExtra")) {
               shiny::tabPanel(
                 title = "Definition",
-                copyToClipboardButton("cohortDefinitionDetails", style = "margin-top: 5px; margin-bottom: 5px;"),
-                shiny::htmlOutput("cohortDefinitionDetails")
+                copyToClipboardButton(toCopyId = "cohortDefinitionDetails", style = "margin-top: 5px; margin-bottom: 5px;"),
+                shiny::htmlOutput(outputId = "cohortDefinitionDetails")
               )
             },
             shiny::tabPanel(
@@ -401,7 +401,7 @@ bodyTabItems <- shinydashboard::tabItems(
                   inline = TRUE
                 )
               },
-              DT::dataTableOutput(outputId = "cohortDefinitionConceptSetsTable")
+              DT::DTOutput(outputId = "cohortDefinitionConceptSetsTable")
             ),
             shiny::tabPanel(
               title = "JSON",
@@ -452,7 +452,7 @@ bodyTabItems <- shinydashboard::tabItems(
                   inline = TRUE
                 )
               },
-              DT::dataTableOutput(outputId = "compareCohortDefinitionConceptSetsTable")
+              DT::DTOutput(outputId = "compareCohortDefinitionConceptSetsTable")
             ),
             shiny::tabPanel(
               title = "JSON",
@@ -478,7 +478,7 @@ bodyTabItems <- shinydashboard::tabItems(
         12,
         conditionalPanel(
           "output.cohortDefinitionRowIsSelected == 2&input.isCompare=='Compare Concept Sets'",
-          DT::dataTableOutput(outputId = "concesptSetDiff")
+          DT::DTOutput(outputId = "concesptSetDiff")
         )
       ),
       column(
@@ -501,7 +501,7 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "cohortCounts",
     cohortReference("cohortCountsSelectedCohort"),
-    DT::dataTableOutput("cohortCountsTable"),
+    DT::DTOutput("cohortCountsTable"),
   ),
   shinydashboard::tabItem(
     tabName = "incidenceRate",
@@ -620,7 +620,7 @@ bodyTabItems <- shinydashboard::tabItems(
       inline = TRUE
     ),
     shiny::conditionalPanel(condition = "input.timeDistributionType=='Table'",
-                            DT::dataTableOutput("timeDistTable")),
+                            DT::DTOutput("timeDistTable")),
     shiny::conditionalPanel(
       condition = "input.timeDistributionType=='Plot'",
       shinydashboard::box(
@@ -641,10 +641,10 @@ bodyTabItems <- shinydashboard::tabItems(
       selected = "Source Concepts",
       inline = TRUE
     ),
-    DT::dataTableOutput("includedConceptsTable")
+    DT::DTOutput("includedConceptsTable")
   ),
   shinydashboard::tabItem(tabName = "orphanConcepts",
-                          DT::dataTableOutput("orphanConceptsTable")),
+                          DT::DTOutput("orphanConceptsTable")),
   shinydashboard::tabItem(
     tabName = "conceptSetDiagnostics",
     shiny::radioButtons(
@@ -654,22 +654,22 @@ bodyTabItems <- shinydashboard::tabItems(
       selected = "Standard Concepts",
       inline = TRUE
     ),
-    DT::dataTableOutput("conceptSetDiagnosticsTable")
+    DT::DTOutput("conceptSetDiagnosticsTable")
   ),
   shinydashboard::tabItem(
     tabName = "inclusionRuleStats",
     cohortReference("inclusionRuleStatSelectedCohort"),
-    DT::dataTableOutput("inclusionRuleTable")
+    DT::DTOutput("inclusionRuleTable")
   ),
   shinydashboard::tabItem(
     tabName = "indexEventBreakdown",
     cohortReference("indexEventBreakdownSelectedCohort"),
-    DT::dataTableOutput("breakdownTable")
+    DT::DTOutput("breakdownTable")
   ),
   shinydashboard::tabItem(
     tabName = "visitContext",
     cohortReference("visitContextSelectedCohort"),
-    DT::dataTableOutput("visitContextTable")
+    DT::DTOutput("visitContextTable")
   ),
   shinydashboard::tabItem(
     tabName = "cohortCharacterization",
@@ -681,7 +681,7 @@ bodyTabItems <- shinydashboard::tabItems(
       selected = "Pretty",
       inline = TRUE
     ),
-    DT::dataTableOutput("characterizationTable")
+    DT::DTOutput("characterizationTable")
   ),
   shinydashboard::tabItem(
     tabName = "temporalCharacterization",
@@ -695,7 +695,7 @@ bodyTabItems <- shinydashboard::tabItems(
     ),
     shiny::conditionalPanel(
       condition = "input.tempCharType=='Table'",
-      DT::dataTableOutput("temporalCharacterizationTable")
+      DT::DTOutput("temporalCharacterizationTable")
     ),
     shiny::conditionalPanel(
       condition = "input.tempCharType=='Plot'",
@@ -753,7 +753,7 @@ bodyTabItems <- shinydashboard::tabItems(
         fluidPage(fluidRow(
           column(
             3,
-            DT::dataTableOutput("temporalCharacterizationCovariateTable")
+            DT::DTOutput("temporalCharacterizationCovariateTable")
           ),
           column(
             9,
@@ -774,7 +774,7 @@ bodyTabItems <- shinydashboard::tabItems(
           fluidPage(fluidRow(
             column(
               6,
-              DT::dataTableOutput("temporalCharacterizationCovariateLassoTable")
+              DT::DTOutput("temporalCharacterizationCovariateLassoTable")
             ),
             column(
               6,
@@ -817,7 +817,7 @@ bodyTabItems <- shinydashboard::tabItems(
       inline = TRUE
     ),
     shiny::conditionalPanel(condition = "input.charCompareType=='Pretty table' | input.charCompareType=='Raw table'",
-                            DT::dataTableOutput("charCompareTable")),
+                            DT::DTOutput("charCompareTable")),
     shiny::conditionalPanel(
       condition = "input.charCompareType=='Plot'",
       shinydashboard::box(
@@ -859,7 +859,7 @@ bodyTabItems <- shinydashboard::tabItems(
     )
   ),
   shinydashboard::tabItem(tabName = "databaseInformation",
-                          DT::dataTableOutput("databaseInformationTable"))
+                          DT::DTOutput("databaseInformationTable"))
 )
 
 
