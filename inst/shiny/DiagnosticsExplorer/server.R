@@ -1,3 +1,29 @@
+# Default Data table options that will apply to all DTs, unless local options are specified
+options(DT.options = list(
+  pageLength = 10,
+  lengthMenu = c(5, 10, 15, 20, 100, 500, 1000),
+  lengthChange = TRUE,
+  searching = TRUE,
+  ordering = TRUE,
+  scrollX = TRUE,
+  ordering = TRUE,
+  paging = TRUE,
+  info = TRUE,
+  searchHighlight = TRUE,
+  # search = list(regex = TRUE, caseInsensitive = FALSE),
+  stateSave = TRUE,
+  dom = 'Blfrtip', # for buttons
+  buttons = c('copy', 'csv', 'excel', 'pdf', 'print', 'colvis'),
+  colReorder = TRUE,
+  realtime = FALSE, # for col reorder
+  # fixedColumns = list(leftColumns = 1),
+  # fixedHeader = TRUE,
+  # processing = TRUE,
+  autoWidth = TRUE
+))
+
+
+
 shiny::shinyServer(function(input, output, session) {
   cohortId <- shiny::reactive({
     return(cohort$cohortId[cohort$compoundName == input$cohort])
@@ -22,7 +48,7 @@ shiny::shinyServer(function(input, output, session) {
   if (exists("phenotypeDescription")) {
     shiny::observe({
       idx <- which(phenotypeDescription$phenotypeName == input$phenotypes)
-      isolate({
+      shiny::isolate({
         proxy <- DT::dataTableProxy(
           outputId = "phenoTypeDescriptionTable",
           session = session,
@@ -91,7 +117,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   # Phenotype Description ------------------------------------------------------------------------------
-  output$phenoTypeDescriptionTable <- DT::renderDataTable(expr = {
+  output$phenoTypeDescriptionTable <- DT::renderDT(expr = {
     data <- phenotypeDescription %>%
       dplyr::select(
         .data$phenotypeId,
@@ -112,7 +138,7 @@ shiny::shinyServer(function(input, output, session) {
       escape = TRUE, #c(1:length(data)),
       selection = list(mode = "single", target = "row"),
       editable = FALSE,
-      extensions = c('Buttons','ColReorder','FixedColumns', 'FixedHeader','Responsive'),
+      extensions = c('Buttons','ColReorder','FixedColumns', 'FixedHeader'),
       plugins = c('natural') #'ellipsis'
     )
     return(dataTable)
@@ -214,7 +240,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   # Cohort Definition ---------------------------------------------------------
-  output$cohortDefinitionTable <- DT::renderDataTable(expr = {
+  output$cohortDefinitionTable <- DT::renderDT(expr = {
     data <- cohortSubset() %>%
       dplyr::select(cohort = .data$shortName, .data$cohortId, .data$cohortName) %>%
       dplyr::mutate(cohort = as.factor(.data$cohort))
@@ -418,7 +444,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$cohortDefinitionConceptSetsTable <-
-    DT::renderDataTable(expr = {
+    DT::renderDT(expr = {
       data <- cohortDefinitionConceptSets()
       if (is.null(data)) {
         return(NULL)
@@ -584,7 +610,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$compareCohortDefinitionConceptSetsTable <-
-    DT::renderDataTable(expr = {
+    DT::renderDT(expr = {
       data <- compareCohortDefinitionConceptSets()
       if (is.null(data)) {
         return(NULL)
@@ -630,7 +656,7 @@ shiny::shinyServer(function(input, output, session) {
     return(detailsDiffOutput)
   })
   
-  output$concesptSetDiff <- DT::renderDataTable(expr = {
+  output$concesptSetDiff <- DT::renderDT(expr = {
     data1 <- cohortDefinitionConceptSets()
     data2 <- compareCohortDefinitionConceptSets()
     data <-
@@ -697,7 +723,7 @@ shiny::shinyServer(function(input, output, session) {
   
   
   # Cohort Counts ---------------------------------------------------------------------------
-  output$cohortCountsTable <- DT::renderDataTable(expr = {
+  output$cohortCountsTable <- DT::renderDT(expr = {
     validate(need(length(input$databases) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
     data <- getCohortCountResult(
@@ -969,7 +995,7 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
   })
   
-  output$timeDistTable <- DT::renderDataTable(expr = {
+  output$timeDistTable <- DT::renderDT(expr = {
     data <- timeDist()  %>%
       addShortName(cohort) %>%
       dplyr::arrange(.data$databaseId, .data$cohortId) %>%
@@ -1026,7 +1052,7 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   # included concepts table --------------------------------------------------------------------------
-  output$includedConceptsTable <- DT::renderDataTable(expr = {
+  output$includedConceptsTable <- DT::renderDT(expr = {
     validate(need(length(input$databases) > 0, "No data sources chosen"))
     
     data <- getIncludedConceptResult(
@@ -1251,7 +1277,7 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   # orphan concepts table -------------------------------------------------------------------------
-  output$orphanConceptsTable <- DT::renderDataTable(expr = {
+  output$orphanConceptsTable <- DT::renderDT(expr = {
     validate(need(length(input$databases) > 0, "No data sources chosen"))
     
     data <- getOrphanConceptResult(
@@ -1385,7 +1411,7 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   # Concept set diagnostics ---------------------------------------------------------------------
-  output$conceptSetDiagnosticsTable <- DT::renderDataTable(expr = {
+  output$conceptSetDiagnosticsTable <- DT::renderDT(expr = {
     conceptSetSql <- conceptSets %>%
       dplyr::filter(.data$cohortId == cohortId() &
                       .data$conceptSetName == input$conceptSet) %>%
@@ -1497,7 +1523,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   # Inclusion rules table -----------------------------------------------------------------------
-  output$inclusionRuleTable <- DT::renderDataTable(expr = {
+  output$inclusionRuleTable <- DT::renderDT(expr = {
     validate(need(length(input$databases) > 0, "No data sources chosen"))
     table <- getInclusionRuleStats(
       dataSource = dataSource,
@@ -1590,7 +1616,7 @@ shiny::shinyServer(function(input, output, session) {
   
   
   # Index event breakdown ----------------------------------------------------------------
-  output$breakdownTable <- DT::renderDataTable(expr = {
+  output$breakdownTable <- DT::renderDT(expr = {
     validate(need(length(input$databases) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen chosen"))
     data <- getIndexEventBreakdown(
@@ -1655,7 +1681,7 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   # Visit Context ---------------------------------------------------------------------------------------------
-  output$visitContextTable <- DT::renderDataTable(expr = {
+  output$visitContextTable <- DT::renderDT(expr = {
     validate(need(length(input$databases) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
     data <- getVisitContextResults(
@@ -1773,7 +1799,7 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   # Characterization --------------------------------------------------
-  output$characterizationTable <- DT::renderDataTable(expr = {
+  output$characterizationTable <- DT::renderDT(expr = {
     validate(need(length(input$databases) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
     if (input$charType == "Pretty") {
@@ -2013,7 +2039,7 @@ shiny::shinyServer(function(input, output, session) {
   
   # Table inside the table radio button
   output$temporalCharacterizationTable <-
-    DT::renderDataTable(expr = {
+    DT::renderDT(expr = {
       data <- temporalCharacterization()
       if (nrow(data) == 0) {
         return(dplyr::tibble(
@@ -2126,7 +2152,7 @@ shiny::shinyServer(function(input, output, session) {
   
   # Temporal characterization table that is shown on selecting the plot radio button
   output$temporalCharacterizationCovariateTable <-
-    DT::renderDataTable(expr = {
+    DT::renderDT(expr = {
       data <- filterByTimeIdAndDomainId()
       data <-
         compareTemporalCohortCharacteristics(characteristics1 = data,
@@ -2167,7 +2193,7 @@ shiny::shinyServer(function(input, output, session) {
   
   # Temporal characterization table that shows the covariates selected by lasso method
   output$temporalCharacterizationCovariateLassoTable <-
-    DT::renderDataTable(expr = {
+    DT::renderDT(expr = {
       data <- temporalCharacterization()
       if (nrow(data) > 1000) {
         data <- data %>%
@@ -2345,7 +2371,7 @@ shiny::shinyServer(function(input, output, session) {
     return(balance)
   })
   
-  output$charCompareTable <- DT::renderDataTable(expr = {
+  output$charCompareTable <- DT::renderDT(expr = {
     balance <- computeBalance()
     if (nrow(balance) == 0) {
       return(dplyr::tibble(Note = "No data for the selected combination."))
@@ -2503,7 +2529,7 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
   })
   
-  output$databaseInformationTable <- DT::renderDataTable(expr = {
+  output$databaseInformationTable <- DT::renderDT(expr = {
     table <- database[, c("databaseId", "databaseName", "description")]
     options = list(
       pageLength = 20,
