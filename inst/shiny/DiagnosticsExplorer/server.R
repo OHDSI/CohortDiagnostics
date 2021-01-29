@@ -98,29 +98,22 @@ shiny::shinyServer(function(input, output, session) {
         .data$phenotypeName,
         .data$overview,
         .data$cohortDefinitions
-      )
-    
-    options = list(
-      pageLength = 5,
-      lengthMenu = c(5, 10, 15, 20, 100, 500, 1000),
-      searching = TRUE,
-      ordering = TRUE,
-      paging = TRUE,
-      info = TRUE,
-      searchHighlight = TRUE,
-      stateSave = TRUE
-    )
+      ) %>% 
+      dplyr::mutate(phenotypeName = as.factor(.data$phenotypeName))
     
     dataTable <- DT::datatable(
-      data,
-      options = options,
+      data = data, 
+      class = "stripe compact order-column hover",
       rownames = FALSE,
       colnames = colnames(data) %>%
         camelCaseToTitleCase(),
-      escape = FALSE,
-      filter = "top",
+      filter = defaultDataTableFilter,
+      style = 'bootstrap4',
+      escape = TRUE, #c(1:length(data)),
       selection = list(mode = "single", target = "row"),
-      class = "stripe compact"
+      editable = FALSE,
+      extensions = c('Buttons','ColReorder','FixedColumns', 'FixedHeader','Responsive'),
+      plugins = c('natural') #'ellipsis'
     )
     return(dataTable)
   }, server = TRUE)
@@ -226,18 +219,8 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(cohort = .data$shortName, .data$cohortId, .data$cohortName) %>%
       dplyr::mutate(cohort = as.factor(.data$cohort))
     
-    options = list(
-      pageLength = 10,
-      searching = TRUE,
-      ordering = TRUE,
-      paging = TRUE,
-      info = TRUE,
-      searchHighlight = TRUE
-    )
-    
     dataTable <- DT::datatable(
       data,
-      options = options,
       rownames = FALSE,
       colnames = colnames(data) %>% camelCaseToTitleCase(),
       escape = FALSE,
@@ -441,20 +424,8 @@ shiny::shinyServer(function(input, output, session) {
         return(NULL)
       }
       
-      options = list(
-        pageLength = 10,
-        searching = TRUE,
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        info = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE
-      )
-      
       dataTable <- DT::datatable(
         data,
-        options = options,
         rownames = FALSE,
         escape = FALSE,
         filter = "top",
@@ -619,20 +590,8 @@ shiny::shinyServer(function(input, output, session) {
         return(NULL)
       }
       
-      options = list(
-        pageLength = 10,
-        searching = TRUE,
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        info = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE
-      )
-      
       dataTable <- DT::datatable(
         data,
-        options = options,
         rownames = FALSE,
         escape = FALSE,
         filter = "top",
@@ -686,20 +645,8 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     
-    options = list(
-      pageLength = 10,
-      searching = TRUE,
-      lengthChange = TRUE,
-      ordering = TRUE,
-      paging = TRUE,
-      info = TRUE,
-      searchHighlight = TRUE,
-      scrollX = TRUE
-    )
-    
     dataTable <- DT::datatable(
       data,
-      options = options,
       rownames = FALSE,
       escape = FALSE,
       filter = "top",
