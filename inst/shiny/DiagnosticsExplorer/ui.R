@@ -382,12 +382,6 @@ bodyTabItems <- shinydashboard::tabItems(
             },
             shiny::tabPanel(
               title = "Concept Sets",
-              shiny::downloadButton(
-                "saveConceptSetButton",
-                label = "Save to CSV file",
-                icon = shiny::icon("download"),
-                style = "margin-top: 5px; margin-bottom: 5px;"
-              ),
               if (!is(dataSource, "environment")) {
                 shiny::radioButtons(
                   inputId = "conceptSetsType",

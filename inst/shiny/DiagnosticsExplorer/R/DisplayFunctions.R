@@ -96,3 +96,25 @@ copyToClipboardButton <- function(toCopyId, label = "Copy to clipboard", icon = 
   
   tags$button(type = "button", class = "btn btn-default action-button", onclick = script, icon, label, ...)
 }
+
+
+toCamelCaseIfSnakeCase <- function(string) {
+  if (all(toupper(string) == string)) {
+    allUpper <- TRUE
+  } else {allUpper <- FALSE}
+
+  if (all(tolower(string) == string)) {
+    allLower <- TRUE
+  } else {allLower <- FALSE}
+
+  if (any(stringr::str_detect(string = string, pattern = stringr::fixed("_")))) {
+    hasSnake <- TRUE
+  } else {hasSnake <- FALSE}
+
+  if (all(any(allUpper, allLower), hasSnake)) {
+    string <- string %>%
+      snakeCaseToCamelCase()
+    
+  } 
+  return(string)
+}
