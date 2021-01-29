@@ -12,7 +12,7 @@ options(DT.options = list(
   searchHighlight = TRUE,
   # search = list(regex = TRUE, caseInsensitive = FALSE),
   stateSave = TRUE,
-  dom = 'Blfrtip', # for buttons
+  dom = 'lBfrtip', # B for buttons
   buttons = c('copy', 'csv', 'excel', 'pdf', 'print', 'colvis'),
   colReorder = TRUE,
   realtime = FALSE, # for col reorder
@@ -134,7 +134,7 @@ shiny::shinyServer(function(input, output, session) {
       colnames = colnames(data) %>%
         camelCaseToTitleCase(),
       filter = defaultDataTableFilter,
-      style = 'bootstrap4',
+      # style = 'bootstrap4',
       escape = TRUE, #c(1:length(data)),
       selection = list(mode = "single", target = "row"),
       editable = FALSE,
@@ -247,12 +247,18 @@ shiny::shinyServer(function(input, output, session) {
     
     dataTable <- DT::datatable(
       data,
+      class = "stripe compact order-column hover",
       rownames = FALSE,
-      colnames = colnames(data) %>% camelCaseToTitleCase(),
-      escape = FALSE,
-      filter = "top",
+      colnames = colnames(data) %>%
+        camelCaseToTitleCase(),
+      filter = defaultDataTableFilter,
+      # style = 'bootstrap4',
+      escape = TRUE, #c(1:length(data)),
       selection = list(mode = "multiple", target = "row"),
-      class = "stripe compact"
+      editable = FALSE,
+      extensions = c('Buttons','ColReorder','FixedColumns', 'FixedHeader'),
+      plugins = c('natural') #'ellipsis'
+      # escape = FALSE
     )
     return(dataTable)
   }, server = TRUE)
@@ -450,12 +456,28 @@ shiny::shinyServer(function(input, output, session) {
         return(NULL)
       }
       
+      # dataTable <- DT::datatable(
+      #   data,
+      #   rownames = FALSE,
+      #   escape = FALSE,
+      #   filter = "top",
+      #   class = "stripe nowrap compact"
+      # )
+      
       dataTable <- DT::datatable(
-        data,
+        data = data,
+        class = "stripe compact order-column hover",
         rownames = FALSE,
-        escape = FALSE,
-        filter = "top",
-        class = "stripe nowrap compact"
+        colnames = colnames(data) %>%
+          camelCaseToTitleCase(),
+        filter = defaultDataTableFilter,
+        # style = 'bootstrap4',
+        escape = FALSE, #c(1:length(data)),
+        selection = list(mode = "single", target = "row"),
+        editable = FALSE,
+        extensions = c('Buttons','ColReorder','FixedColumns', 'FixedHeader'),
+        plugins = c('natural') #'ellipsis'
+        # escape = FALSE
       )
       return(dataTable)
       
@@ -617,11 +639,20 @@ shiny::shinyServer(function(input, output, session) {
       }
       
       dataTable <- DT::datatable(
-        data,
+        data = data,
+        class = "stripe compact order-column hover",
         rownames = FALSE,
+        colnames = colnames(data) %>%
+          camelCaseToTitleCase(),
+        filter = defaultDataTableFilter,
+        # style = 'bootstrap4',
         escape = FALSE,
-        filter = "top",
-        class = "stripe nowrap compact"
+        #c(1:length(data)),
+        selection = list(mode = "single", target = "row"),
+        editable = FALSE,
+        extensions = c('Buttons', 'ColReorder', 'FixedColumns', 'FixedHeader'),
+        plugins = c('natural') #'ellipsis'
+        # escape = FALSE
       )
       return(dataTable)
       
@@ -672,12 +703,22 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     dataTable <- DT::datatable(
-      data,
+      data = data,
+      class = "stripe compact order-column hover",
       rownames = FALSE,
+      colnames = colnames(data) %>%
+        camelCaseToTitleCase(),
+      filter = defaultDataTableFilter,
+      # style = 'bootstrap4',
       escape = FALSE,
-      filter = "top",
-      class = "stripe nowrap compact"
+      #c(1:length(data)),
+      selection = list(mode = "single", target = "row"),
+      editable = FALSE,
+      extensions = c('Buttons', 'ColReorder', 'FixedColumns', 'FixedHeader'),
+      plugins = c('natural') #'ellipsis'
+      # escape = FALSE
     )
+    
     return(dataTable)
     
   })
@@ -822,14 +863,22 @@ shiny::shinyServer(function(input, output, session) {
     )
     
     dataTable <- DT::datatable(
-      table,
-      options = options,
+      data = data,
+      class = "stripe compact order-column hover",
       rownames = FALSE,
-      container = sketch,
+      colnames = colnames(data) %>%
+        camelCaseToTitleCase(),
+      filter = defaultDataTableFilter,
+      # style = 'bootstrap4',
       escape = FALSE,
-      filter = "top",
-      class = "stripe nowrap compact"
+      #c(1:length(data)),
+      selection = list(mode = "single", target = "row"),
+      editable = FALSE,
+      extensions = c('Buttons', 'ColReorder', 'FixedColumns', 'FixedHeader'),
+      plugins = c('natural') #'ellipsis'
+      # escape = FALSE
     )
+    
     for (i in 1:length(databaseIds)) {
       dataTable <- DT::formatStyle(
         table = dataTable,
@@ -1037,15 +1086,24 @@ shiny::shinyServer(function(input, output, session) {
       columnDefs = list(minCellCountDef(3))
     )
     table <- DT::datatable(
-      data,
-      options = options,
+      data = data,
+      class = "stripe compact order-column hover",
       rownames = FALSE,
-      filter = "top",
-      class = "stripe nowrap compact"
+      colnames = colnames(data) %>%
+        camelCaseToTitleCase(),
+      filter = options,
+      # style = 'bootstrap4',
+      escape = FALSE,
+      #c(1:length(data)),
+      selection = list(mode = "single", target = "row"),
+      editable = FALSE,
+      extensions = c('Buttons', 'ColReorder', 'FixedColumns', 'FixedHeader'),
+      plugins = c('natural') #'ellipsis'
+      # escape = FALSE
     )
-    table <- DT::formatRound(table, c("Average", "SD"), digits = 2)
+    table <- DT::formatRound(table = table, c("Average", "SD"), digits = 2)
     table <-
-      DT::formatRound(table,
+      DT::formatRound(table = table,
                       c("Min", "P10", "P25", "Median", "P75", "P90", "Max"),
                       digits = 0)
     return(table)
@@ -1159,14 +1217,21 @@ shiny::shinyServer(function(input, output, session) {
       )
       
       dataTable <- DT::datatable(
-        table,
-        colnames = colnames(table),
-        options = options,
+        data = data,
+        class = "stripe compact order-column hover",
         rownames = FALSE,
+        colnames = colnames(data) %>%
+          camelCaseToTitleCase(),
+        filter = options,
         container = sketch,
+        # style = 'bootstrap4',
         escape = FALSE,
-        filter = "top",
-        class = "stripe nowrap compact"
+        #c(1:length(data)),
+        selection = list(mode = "single", target = "row"),
+        editable = FALSE,
+        extensions = c('Buttons', 'ColReorder', 'FixedColumns', 'FixedHeader'),
+        plugins = c('natural') #'ellipsis'
+        # escape = FALSE
       )
       
       dataTable <- DT::formatStyle(
