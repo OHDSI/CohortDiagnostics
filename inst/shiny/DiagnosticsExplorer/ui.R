@@ -858,7 +858,9 @@ bodyTabItems <- shinydashboard::tabItems(
 
 
 #body
-body <- shinydashboard::dashboardBody(bodyTabItems)
+body <- shinydashboard::dashboardBody(bodyTabItems, 
+                                      tags$script(HTML("$('body').addClass('fixed');")) # fixed header bar.
+                                      )
 
 
 #main
