@@ -9,6 +9,7 @@ source("R/ConceptRecommender.R")
 source("R/DataPulls.R")
 source("R/Connections.R")
 source("R/HelperFunctions.R")
+source("R/ModifyDataSource.R")
 
 # Settings when running on server:
 assign(x = "defaultLocalDataFolder", value = "data", envir = .GlobalEnv)
@@ -239,21 +240,8 @@ if (isValidConnection) {
   loadRequiredTables(tableName = "phenotype_description", databaseSChema = resultsDatabaseSchema)
   loadRequiredTables(tableName = "temporal_time_ref", databaseSChema = resultsDatabaseSchema)
   loadRequiredTables(tableName = "concept_sets", databaseSChema = resultsDatabaseSchema)
-  
-  # Create empty objects in memory for all other tables. This is used by the Shiny app to decide what tabs to show:
-  isEmpty <-
-    function(connection,
-             resultsDatabaseSchema,
-             tableName) {
-      sql <-
-        sprintf("SELECT 1 FROM %s.%s LIMIT 1;",
-                resultsDatabaseSchema,
-                tableName)
-      oneRow <-
-        DatabaseConnector::dbGetQuery(conn = connection, sql) %>%
-        dplyr::tibble()
-      return(nrow(oneRow) == 0)
-    }
+  loadRequiredTables(tableName = "analysis_ref", databaseSChema = resultsDatabaseSchema)
+  loadRequiredTables(tableName = "temporal_analysis_ref", databaseSChema = resultsDatabaseSchema)
   
   for (table in c(dataModelSpecifications$tableName, "recommender_set")) {
     if (table %in% resultsTablesOnServer &&

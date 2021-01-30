@@ -79,7 +79,7 @@ sidebarMenu <-
       ),
     if (exists("recommenderSet"))
       addInfo(
-        item = shinydashboard::menuItem(text = "Concept Set Diagnostics", tabName = "conceptSetDiagnostics"),
+        item = shinydashboard::menuItem(text = "Concept Set Diagnostics MOVE TO COHORTS", tabName = "conceptSetDiagnostics"),
         infoId = "conceptSetDiagnosticsInfo"
       ),
     if (exists("inclusionRuleStats"))
@@ -382,12 +382,6 @@ bodyTabItems <- shinydashboard::tabItems(
             },
             shiny::tabPanel(
               title = "Concept Sets",
-              shiny::downloadButton(
-                "saveConceptSetButton",
-                label = "Save to CSV file",
-                icon = shiny::icon("download"),
-                style = "margin-top: 5px; margin-bottom: 5px;"
-              ),
               if (!is(dataSource, "environment")) {
                 shiny::radioButtons(
                   inputId = "conceptSetsType",
