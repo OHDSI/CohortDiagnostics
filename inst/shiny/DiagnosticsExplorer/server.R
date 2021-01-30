@@ -13,7 +13,12 @@ options(DT.options = list(
   # search = list(regex = TRUE, caseInsensitive = FALSE),
   stateSave = TRUE,
   dom = 'lBfrtip', # B for buttons
-  buttons = c('copy', 'csv', 'excel', 'pdf', 'print', 'colvis'),
+  buttons = list('copy', 
+              list(
+                extend = 'collection',
+                buttons = c('csv', 'excel', 'pdf'),
+                text = 'Download'), 
+              'print', 'colvis'),
   colReorder = TRUE,
   realtime = FALSE, # for col reorder
   # fixedColumns = list(leftColumns = 1),
@@ -668,7 +673,7 @@ shiny::shinyServer(function(input, output, session) {
       dataSource = dataSource,
       databaseIds = input$databases,
       cohortIds = cohortIds()
-    ) 
+    )
     data <- addMetaDataInformationToResults(data)
     dataTable <- standardDataTable(data = data)
     return(dataTable)
@@ -820,14 +825,6 @@ shiny::shinyServer(function(input, output, session) {
     data <- addMetaDataInformationToResults(data)
     colnames(data) <- colnames(data) %>% stringr::str_replace_all(string = ., pattern = "Value", replacement = "")
     table <- standardDataTable(data)
-    table <- DT::formatRound(table = table, c("average", "standardDeviation"), digits = 2)
-    table <-
-      DT::formatRound(table = table,
-                      c("min", "p10", 
-                        "p25", "median", 
-                        "p75", "p90", 
-                        "max", "count"),
-                      digits = 0)
     return(table)
   }, server = TRUE)
   
@@ -1158,7 +1155,8 @@ shiny::shinyServer(function(input, output, session) {
     if (input$charType == "Pretty") {
       analysisIds <- prettyAnalysisIds
       table <- data %>%
-        prepareTable1()
+        prepareTable1() %>% 
+        dplyr::rename(percent = .data$value)
       characteristics <- table %>%
         dplyr::select(.data$characteristic,
                       .data$position,

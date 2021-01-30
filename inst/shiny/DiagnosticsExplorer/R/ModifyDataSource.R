@@ -9,40 +9,41 @@ addShortName <-
         dplyr::arrange(.data$cohortId) %>%
         dplyr::mutate(shortName = paste0("C", dplyr::row_number()))
     }
-
+    
     shortNameRef <- shortNameRef %>%
       dplyr::distinct(.data$cohortId, .data$shortName)
     colnames(shortNameRef) <- c(cohortIdColumn, shortNameColumn)
     data <- data %>%
       dplyr::inner_join(shortNameRef, by = cohortIdColumn)
     return(data)
-
+    
   }
 
 addMetaDataInformationToResults <- function(data) {
   data <- data %>%
-    dplyr::left_join(y = cohort %>% 
-                       dplyr::select(.data$cohortId, 
-                                     .data$phenotypeName,
-                                     .data$cohortName),
-                     by = c('cohortId')) %>%
-    dplyr::relocate(
-      .data$databaseId,
-      .data$phenotypeName,
-      .data$cohortId,
-      .data$cohortName
+    dplyr::left_join(
+      y = cohort %>%
+        dplyr::select(.data$cohortId,
+                      .data$phenotypeName,
+                      .data$cohortName),
+      by = c('cohortId')
     ) %>%
+    dplyr::relocate(.data$databaseId,
+                    .data$phenotypeName,
+                    .data$cohortId,
+                    .data$cohortName) %>%
     dplyr::mutate(
       databaseId = as.factor(.data$databaseId),
       phenotypeName = as.factor(.data$phenotypeName),
       cohortId = as.factor(.data$cohortId),
-      cohortName = as.factor(.data$cohortName)) %>% 
+      cohortName = as.factor(.data$cohortName)
+    ) %>%
     dplyr::arrange(.data$phenotypeName, .data$cohortName)
   
   if (is.null(data) || nrow(data) == 0) {
-    return(dplyr::tibble(
-      Note = paste0("No data available for selected databases and cohorts")
-    ))
+    return(dplyr::tibble(Note = paste0(
+      "No data available for selected databases and cohorts"
+    )))
   }
   return(data)
 }
