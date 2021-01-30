@@ -240,6 +240,9 @@ getIndexEventBreakdown <- function(dataSource = .GlobalEnv,
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   }
+  data <- data %>% dplyr::relocate(.data$databaseId, .data$cohortId, 
+                                   .data$conceptId, .data$conceptName,
+                                   .data$conceptCount)
   return(data)
 }
 
@@ -281,6 +284,22 @@ getVisitContextResults <- function(dataSource = .GlobalEnv,
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   }
+  data <- data %>%
+    tidyr::pivot_wider(
+      id_cols = c(
+        .data$databaseId,
+        .data$cohortId,
+        .data$visitConceptId,
+        .data$visitConceptName
+      ),
+      names_from = .data$visitContext,
+      values_from = .data$subjects
+    ) %>% dplyr::relocate(.data$databaseId,
+                          .data$cohortId,
+                          .data$visitConceptId,
+                          .data$visitConceptName) %>% 
+    dplyr::mutate(visitConceptName = as.factor(.data$visitConceptName),
+                  visitConceptId = as.factor(.data$visitConceptId))
   return(data)
 }
 
@@ -440,7 +459,7 @@ getCohortOverlapResult <- function(dataSource = .GlobalEnv,
 
 getCovariateValueResult <- function(dataSource = .GlobalEnv,
                                     cohortIds,
-                                    analysisIds = NULL,
+                                    # analysisIds = NULL,
                                     databaseIds,
                                     timeIds = NULL,
                                     isTemporal = FALSE) {
@@ -481,10 +500,11 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
       dplyr::filter(.data$cohortId %in% !!cohortIds,
                     .data$databaseId %in% !!databaseIds) %>%
       dplyr::inner_join(get(refTable, envir = dataSource), by = "covariateId")
-    if (!is.null(analysisIds)) {
-      data <- data %>%
-        dplyr::filter(.data$analysisId %in% analysisIds)
-    }
+    
+    # if (!is.null(analysisIds)) {
+    #   data <- data %>%
+    #     dplyr::filter(.data$analysisId %in% analysisIds)
+    # }
     if (isTemporal) {
       data <- data %>%
         dplyr::inner_join(get(timeRefTable, envir = dataSource), by = "timeId")
@@ -511,14 +531,14 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
             }
             WHERE cohort_id in (@cohort_ids)
             {@time_ref_table != \"\" & @time_ids != \"\"} ? {  AND covariate.time_id IN (@time_ids)}
-            {@analysis_ids != \"\"} ? {  AND analysis_id IN (@analysis_ids)}
+            --{@analysis_ids != \"\"} ? {  AND analysis_id IN (@analysis_ids)}
             	AND database_id in (@databaseIds);"
     if (is.null(timeIds)) {
       timeIds <- ""
     }
-    if (is.null(analysisIds)) {
-      analysisIds <- ""
-    }
+    # if (is.null(analysisIds)) {
+    #   analysisIds <- ""
+    # }
     # bringing down a lot of covariateName is probably slowing the return.
     # An alternative is to create two temp tables - one of it has distinct values of covariateId, covariateName
     data <- renderTranslateQuerySql(connection = dataSource$connection,
@@ -528,31 +548,45 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
                                     time_ref_table = SqlRender::camelCaseToSnakeCase(timeRefTable),
                                     results_database_schema = dataSource$resultsDatabaseSchema,
                                     cohort_ids = cohortIds,
-                                    analysis_ids = analysisIds,
+                                    # analysis_ids = analysisIds,
                                     databaseIds = quoteLiterals(databaseIds),
                                     time_ids = timeIds,
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   }
+  
   if (isTemporal) {
-    data <- data %>% 
-      dplyr::relocate(.data$cohortId, 
-                      .data$databaseId, 
-                      .data$timeId, 
-                      .data$startDay, 
-                      .data$endDay,
-                      .data$analysisId,
-                      .data$covariateId, 
-                      .data$covariateName) %>% 
-      dplyr::arrange(.data$cohortId, .data$databaseId, .data$timeId, .data$covariateId, .data$covariateName)
-  } else {
-    data <- data %>% 
-      dplyr::relocate(.data$cohortId, 
-                      .data$databaseId, 
-                      .data$analysisId,
-                      .data$covariateId, 
-                      .data$covariateName) %>% 
-      dplyr::arrange(.data$cohortId, .data$databaseId, .data$covariateId)
+    analysisRef <- temporalAnalysisRef
+  }
+  
+  data <- data %>% 
+    dplyr::left_join(y = analysisRef %>% dplyr::select(.data$analysisId,
+                                                       .data$domainId, 
+                                                       .data$analysisName,
+                                                       .data$isBinary),
+                     by = c('analysisId')) %>% 
+    dplyr::relocate(.data$databaseId,
+                    .data$cohortId,
+                    .data$analysisId,
+                    .data$domainId, 
+                    .data$analysisName,
+                    .data$isBinary,
+                    .data$covariateId, 
+                    .data$covariateName) %>% 
+    dplyr::mutate(analysisId = as.factor(.data$analysisId),
+                  domainId = as.factor(.data$domainId),
+                  analysisName = as.factor(.data$analysisName),
+                  isBinary = as.factor(.data$isBinary),
+                  covariateId = as.factor(.data$covariateId),
+                  covariateName = as.factor(.data$covariateName))
+  if (isTemporal) {
+    data <- data %>%
+      dplyr::inner_join(temporalCovariateChoices %>% 
+                          dplyr::rename(timeIdChoices = .data$choices), 
+                        by = "timeId") %>%
+      dplyr::select(-.data$timeId, -.data$startDay, -.data$endDay) %>% 
+      dplyr::mutate(timeIdChoices = as.factor(.data$timeIdChoices)) %>% 
+      dplyr::relocate(.data$timeIdChoices)
   }
   return(data)
 }

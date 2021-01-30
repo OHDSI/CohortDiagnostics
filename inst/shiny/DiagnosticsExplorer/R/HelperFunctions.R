@@ -19,7 +19,7 @@ cohortReference <- function(outputId) {
   )
 }
 
-standardDataTable <- function(data) {
+standardDataTable <- function(data, selectionMode = "single") {
   dataTable <- DT::datatable(
     data = data,
     class = "stripe compact order-column hover",
@@ -28,7 +28,7 @@ standardDataTable <- function(data) {
     filter = defaultDataTableFilter,
     # style = 'bootstrap4',
     escape = FALSE,
-    selection = list(mode = "single", target = "row"),
+    selection = list(mode = selectionMode, target = "row"),
     editable = FALSE,
     # container = sketch,
     extensions = c('Buttons', 'ColReorder', 'FixedColumns', 'FixedHeader'),

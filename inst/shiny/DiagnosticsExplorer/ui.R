@@ -79,7 +79,7 @@ sidebarMenu <-
       ),
     if (exists("recommenderSet"))
       addInfo(
-        item = shinydashboard::menuItem(text = "Concept Set Diagnostics", tabName = "conceptSetDiagnostics"),
+        item = shinydashboard::menuItem(text = "Concept Set Diagnostics MOVE TO COHORTS", tabName = "conceptSetDiagnostics"),
         infoId = "conceptSetDiagnosticsInfo"
       ),
     if (exists("inclusionRuleStats"))
