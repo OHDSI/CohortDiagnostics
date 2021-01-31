@@ -1,32 +1,3 @@
-# Default Data table options that will apply to all DTs, unless local options are specified
-options(DT.options = list(
-  pageLength = 10,
-  lengthMenu = c(5, 10, 15, 20, 100, 500, 1000),
-  lengthChange = TRUE,
-  searching = TRUE,
-  ordering = TRUE,
-  scrollX = TRUE,
-  ordering = TRUE,
-  paging = TRUE,
-  info = TRUE,
-  searchHighlight = TRUE,
-  # search = list(regex = TRUE, caseInsensitive = FALSE),
-  stateSave = TRUE,
-  dom = 'lBfrtip', # B for buttons
-  buttons = list('copy', 
-              list(
-                extend = 'collection',
-                buttons = c('csv', 'excel', 'pdf'),
-                text = 'Download'), 
-              'print', 'colvis'),
-  colReorder = TRUE,
-  realtime = FALSE, # for col reorder
-  # fixedColumns = list(leftColumns = 1),
-  # fixedHeader = TRUE,
-  # processing = TRUE,
-  autoWidth = TRUE
-))
-
 shiny::shinyServer(function(input, output, session) {
   cohortId <- shiny::reactive({
     return(cohort$cohortId[cohort$compoundName == input$cohort])

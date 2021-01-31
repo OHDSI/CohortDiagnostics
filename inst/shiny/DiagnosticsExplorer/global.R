@@ -539,16 +539,6 @@ if (exists('phenotypeDescription')) {
     dplyr::mutate(compoundName = paste(shortName, cohortName, sep = ": "))
 }
 
-
-assign(x = "defaultDataTableFilter",
-       value =
-         list(
-           position = 'top',
-           clear = TRUE,
-           plain = FALSE
-         ))
-
-
 #
 # # getSearchTerms might not be useful in future.
 # if (exists("phenotypeDescription")) {
