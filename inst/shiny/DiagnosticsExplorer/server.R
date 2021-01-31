@@ -1544,8 +1544,8 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   shiny::observeEvent(input$visitContextInfo, {
-    showInfoBox(htmlFileName = title = "Visit Context",
-                "html/visitContext.html")
+    showInfoBox(title = "Visit Context",
+                htmlFileName = "html/visitContext.html")
   })
   
   shiny::observeEvent(input$cohortCharacterizationInfo, {
