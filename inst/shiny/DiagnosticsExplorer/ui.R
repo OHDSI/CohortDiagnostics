@@ -1,4 +1,4 @@
-if (exists("phenotypeDescription")) {
+if (exists(x = "phenotypeDescription")) {
   # app is now in phenotype library mode.
   header <-
     shinydashboard::dashboardHeader(
@@ -46,73 +46,73 @@ if (exists("phenotypeDescription")) {
 sidebarMenu <-
   shinydashboard::sidebarMenu(
     id = "tabs",
-    if (exists("aboutText"))
+    if (exists(x = "aboutText"))
       shinydashboard::menuItem(text = "About", tabName = "about"),
-    if (exists("phenotypeDescription"))
+    if (exists(x = "phenotypeDescription"))
       shinydashboard::menuItem(text = "Phenotype Description", tabName = "phenotypeDescription"),
-    if (exists("cohort"))
+    if (exists(x = "cohort"))
       shinydashboard::menuItem(text = "Cohort Definition", tabName = "cohortDefinition"),
-    if (exists("cohortCount"))
+    if (exists(x = "cohortCount"))
       addInfo(
         item = shinydashboard::menuItem(text = "Cohort Counts", tabName = "cohortCounts"),
         infoId = "cohortCountsInfo"
       ),
-    if (exists("incidenceRate"))
+    if (exists(x = "incidenceRate"))
       addInfo(
         item = shinydashboard::menuItem(text = "Incidence Rate", tabName = "incidenceRate"),
         infoId = "incidenceRateInfo"
       ),
-    if (exists("timeDistribution"))
+    if (exists(x = "timeDistribution"))
       addInfo(
         item = shinydashboard::menuItem(text = "Time Distributions", tabName = "timeDistribution"),
         infoId = "timeDistributionInfo"
       ),
-    # if (exists("includedSourceConcept"))
+    # if (exists(x = "includedSourceConcept"))
     #   addInfo(
     #     item = shinydashboard::menuItem(text = "Included (Source) Concepts", tabName = "includedConcepts"),
     #     infoId = "includedConceptsInfo"
     #   ),
-    # if (exists("orphanConcept"))
+    # if (exists(x = "orphanConcept"))
     #   addInfo(
     #     item = shinydashboard::menuItem(text = "Orphan (Source) Concepts", tabName = "orphanConcepts"),
     #     infoId = "orphanConceptsInfo"
     #   ),
-    if (exists("recommenderSet"))
+    if (exists(x = "recommenderSet"))
       addInfo(
         item = shinydashboard::menuItem(text = "Concept Set Diagnostics MOVE TO COHORTS", tabName = "conceptSetDiagnostics"),
         infoId = "conceptSetDiagnosticsInfo"
       ),
-    if (exists("inclusionRuleStats"))
+    if (exists(x = "inclusionRuleStats"))
       addInfo(
         item = shinydashboard::menuItem(text = "Inclusion Rule Statistics", tabName = "inclusionRuleStats"),
         infoId = "inclusionRuleStatsInfo"
       ),
-    if (exists("indexEventBreakdown"))
+    if (exists(x = "indexEventBreakdown"))
       addInfo(
         item = shinydashboard::menuItem(text = "Index Event Breakdown", tabName = "indexEventBreakdown"),
         infoId = "indexEventBreakdownInfo"
       ),
-    if (exists("visitContext"))
+    if (exists(x = "visitContext"))
       addInfo(
         item = shinydashboard::menuItem(text = "Visit Context", tabName = "visitContext"),
         infoId = "visitContextInfo"
       ),
-    if (exists("covariateValue"))
+    if (exists(x = "covariateValue"))
       addInfo(
         shinydashboard::menuItem(text = "Cohort Characterization", tabName = "cohortCharacterization"),
         infoId = "cohortCharacterizationInfo"
       ),
-    if (exists("temporalCovariateValue"))
+    if (exists(x = "temporalCovariateValue"))
       addInfo(
         shinydashboard::menuItem(text = "Temporal Characterization", tabName = "temporalCharacterization"),
         infoId = "temporalCharacterizationInfo"
       ),
-    if (exists("cohortOverlap"))
+    if (exists(x = "cohortOverlap"))
       addInfo(
         shinydashboard::menuItem(text = "Cohort Overlap", tabName = "cohortOverlap"),
         infoId = "cohortOverlapInfo"
       ),
-    if (exists("covariateValue"))
+    if (exists(x = "covariateValue"))
       addInfo(
         item = shinydashboard::menuItem(text = "Compare Cohort Char.", tabName = "compareCohortCharacterization"),
         infoId = "compareCohortCharacterizationInfo"
@@ -179,7 +179,7 @@ sidebarMenu <-
         )
       )
     ),
-    if (exists("temporalCovariateValue")) {
+    if (exists(x = "temporalCovariateValue")) {
       shiny::conditionalPanel(
         condition = "input.tabs=='temporalCharacterization'",
         shinyWidgets::pickerInput(
@@ -298,7 +298,7 @@ sidebar <-
 # Body - items in tabs --------------------------------------------------
 bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(tabName = "about",
-                          if (exists("aboutText"))
+                          if (exists(x = "aboutText"))
                             HTML(aboutText)),
   shinydashboard::tabItem(
     tabName = "phenotypeDescription",
@@ -369,7 +369,7 @@ bodyTabItems <- shinydashboard::tabItems(
             type = "tab",
             shiny::tabPanel(title = "Details",
                             shiny::htmlOutput("cohortDetailsText")),
-            if (exists("cohortExtra")) {
+            if (exists(x = "cohortExtra")) {
               shiny::tabPanel(
                 title = "Definition",
                 copyToClipboardButton(toCopyId = "cohortDefinitionDetails", style = "margin-top: 5px; margin-bottom: 5px;"),
@@ -414,7 +414,7 @@ bodyTabItems <- shinydashboard::tabItems(
             type = "tab",
             shiny::tabPanel(title = "Details",
                             shiny::htmlOutput("compareCohortDetailsText")),
-            if (exists("cohortExtra")) {
+            if (exists(x = "cohortExtra")) {
               shiny::tabPanel(
                 title = "Definition",
                 copyToClipboardButton("compareCohortDefinitionDetails", style = "margin-top: 5px; margin-bottom: 5px;"),
