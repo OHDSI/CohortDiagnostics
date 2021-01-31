@@ -67,16 +67,16 @@ sidebarMenu <-
         item = shinydashboard::menuItem(text = "Time Distributions", tabName = "timeDistribution"),
         infoId = "timeDistributionInfo"
       ),
-    if (exists("includedSourceConcept"))
-      addInfo(
-        item = shinydashboard::menuItem(text = "Included (Source) Concepts", tabName = "includedConcepts"),
-        infoId = "includedConceptsInfo"
-      ),
-    if (exists("orphanConcept"))
-      addInfo(
-        item = shinydashboard::menuItem(text = "Orphan (Source) Concepts", tabName = "orphanConcepts"),
-        infoId = "orphanConceptsInfo"
-      ),
+    # if (exists("includedSourceConcept"))
+    #   addInfo(
+    #     item = shinydashboard::menuItem(text = "Included (Source) Concepts", tabName = "includedConcepts"),
+    #     infoId = "includedConceptsInfo"
+    #   ),
+    # if (exists("orphanConcept"))
+    #   addInfo(
+    #     item = shinydashboard::menuItem(text = "Orphan (Source) Concepts", tabName = "orphanConcepts"),
+    #     infoId = "orphanConceptsInfo"
+    #   ),
     if (exists("recommenderSet"))
       addInfo(
         item = shinydashboard::menuItem(text = "Concept Set Diagnostics MOVE TO COHORTS", tabName = "conceptSetDiagnostics"),
@@ -128,8 +128,6 @@ sidebarMenu <-
       input.tabs != 'databaseInformation' &
       input.tabs != 'cohortDefinition' &
       input.tabs != 'phenotypeDescription' &
-      input.tabs != 'includedConcepts' &
-      input.tabs != 'orphanConcepts' &
       input.tabs != 'conceptSetDiagnostics' &
       input.tabs != 'inclusionRuleStats' &
       input.tabs != 'visitContext' &
@@ -159,8 +157,6 @@ sidebarMenu <-
       input.tabs =='cohortCharacterization' |
       input.tabs == 'cohortCounts' |
       input.tabs == 'indexEventBreakdown' |
-      input.tabs == 'includedConcepts' |
-      input.tabs == 'orphanConcepts' |
       input.tabs == 'inclusionRuleStats' |
       input.tabs == 'visitContext' |
       input.tabs == 'cohortOverlap' |
@@ -246,7 +242,7 @@ sidebarMenu <-
       )
     ),
     shiny::conditionalPanel(
-      condition = "input.tabs=='includedConcepts' | input.tabs=='orphanConcepts' | input.tabs == 'conceptSetDiagnostics'",
+      condition = "input.tabs == 'conceptSetDiagnostics'",
       shinyWidgets::pickerInput(
         inputId = "conceptSet",
         label = "Concept Set",
@@ -626,19 +622,19 @@ bodyTabItems <- shinydashboard::tabItems(
       )
     )
   ),
-  shinydashboard::tabItem(
-    tabName = "includedConcepts",
-    shiny::radioButtons(
-      inputId = "includedType",
-      label = "",
-      choices = c("Source Concepts", "Standard Concepts"),
-      selected = "Source Concepts",
-      inline = TRUE
-    ),
-    DT::DTOutput("includedConceptsTable")
-  ),
-  shinydashboard::tabItem(tabName = "orphanConcepts",
-                          DT::DTOutput("orphanConceptsTable")),
+  # shinydashboard::tabItem(
+  #   tabName = "includedConcepts",
+  #   shiny::radioButtons(
+  #     inputId = "includedType",
+  #     label = "",
+  #     choices = c("Source Concepts", "Standard Concepts"),
+  #     selected = "Source Concepts",
+  #     inline = TRUE
+  #   ),
+  #   DT::DTOutput("includedConceptsTable")
+  # ),
+  # shinydashboard::tabItem(tabName = "orphanConcepts",
+  #                         DT::DTOutput("orphanConceptsTable")),
   shinydashboard::tabItem(
     tabName = "conceptSetDiagnostics",
     shiny::radioButtons(

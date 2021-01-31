@@ -800,221 +800,221 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   # included concepts table --------------------------------------------------------------------------
-  output$includedConceptsTable <- DT::renderDT(expr = {
-    validate(need(length(input$databases) > 0, "No data sources chosen"))
-    data <- getIncludedConceptResult(
-      dataSource = dataSource,
-      cohortId = cohortId(),
-      databaseIds = input$databases
-    )
-    data <- data %>%
-      dplyr::filter(.data$conceptSetName == input$conceptSet)
-    if (nrow(data) == 0) {
-      return(dplyr::tibble("No data available for selected databases and cohorts"))
-    }
-    
-    databaseIds <- unique(data$databaseId)
-    
-    if (!all(input$databases %in% databaseIds)) {
-      return(dplyr::tibble(
-        Note = paste0(
-          "There is no data for the databases:\n",
-          paste0(setdiff(input$databases, databaseIds),
-                 collapse = ",\n "),
-          ".\n Please unselect them."
-        )
-      ))
-    }
-    
-    maxCount <- max(data$conceptCount, na.rm = TRUE)
-    
-    if (input$includedType == "Source Concepts") {
-      table <- data %>%
-        dplyr::select(
-          .data$databaseId,
-          .data$sourceConceptId,
-          .data$conceptSubjects,
-          .data$conceptCount
-        ) %>%
-        dplyr::arrange(.data$databaseId) %>%
-        tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>%
-        dplyr::mutate(name = paste0(
-          databaseId,
-          "_",
-          stringr::str_replace(
-            string = .data$name,
-            pattern = 'concept',
-            replacement = ''
-          )
-        )) %>%
-        tidyr::pivot_wider(
-          id_cols = c(.data$sourceConceptId),
-          names_from = .data$name,
-          values_from = .data$value
-        ) %>%
-        dplyr::inner_join(
-          data %>%
-            dplyr::select(
-              .data$sourceConceptId,
-              .data$sourceConceptName,
-              .data$sourceVocabularyId,
-              .data$sourceConceptCode
-            ) %>%
-            dplyr::distinct(),
-          by = "sourceConceptId"
-        ) %>%
-        dplyr::relocate(
-          .data$sourceConceptId,
-          .data$sourceConceptName,
-          .data$sourceVocabularyId,
-          .data$sourceConceptCode
-        )
-      
-      if (nrow(table) == 0) {
-        return(dplyr::tibble(
-          Note = paste0("No data available for selected databases and cohorts")
-        ))
-      }
-      table <- table[order(-table[, 5]), ]
-      dataTable <- standardDataTable(table)
-    } else {
-      table <- data %>%
-        dplyr::select(
-          .data$databaseId,
-          .data$conceptId,
-          .data$conceptSubjects,
-          .data$conceptCount
-        ) %>%
-        dplyr::group_by(.data$databaseId,
-                        .data$conceptId) %>%
-        dplyr::summarise(
-          conceptSubjects = sum(.data$conceptSubjects),
-          conceptCount = sum(.data$conceptCount)
-        ) %>%
-        dplyr::ungroup() %>%
-        dplyr::arrange(.data$databaseId) %>%
-        tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>%
-        dplyr::mutate(name = paste0(
-          databaseId,
-          "_",
-          stringr::str_replace(
-            string = .data$name,
-            pattern = "concept",
-            replacement = ""
-          )
-        )) %>%
-        tidyr::pivot_wider(
-          id_cols = c(.data$conceptId),
-          names_from = .data$name,
-          values_from = .data$value
-        ) %>%
-        dplyr::inner_join(
-          data %>%
-            dplyr::select(.data$conceptId,
-                          .data$conceptName,
-                          .data$vocabularyId) %>%
-            dplyr::distinct(),
-          by = "conceptId"
-        ) %>%
-        dplyr::relocate(.data$conceptId, .data$conceptName, .data$vocabularyId)
-      
-      if (nrow(table) == 0) {
-        return(dplyr::tibble(
-          Note = paste0('No data available for selected databases and cohorts')
-        ))
-      }
-      table <- table[order(-table[, 4]), ]
-      dataTable <- standardDataTable(table)
-    }
-    return(dataTable)
-  }, server = TRUE)
+  # output$includedConceptsTable <- DT::renderDT(expr = {
+  #   validate(need(length(input$databases) > 0, "No data sources chosen"))
+  #   data <- getIncludedConceptResult(
+  #     dataSource = dataSource,
+  #     cohortId = cohortId(),
+  #     databaseIds = input$databases
+  #   )
+  #   data <- data %>%
+  #     dplyr::filter(.data$conceptSetName == input$conceptSet)
+  #   if (nrow(data) == 0) {
+  #     return(dplyr::tibble("No data available for selected databases and cohorts"))
+  #   }
+  #   
+  #   databaseIds <- unique(data$databaseId)
+  #   
+  #   if (!all(input$databases %in% databaseIds)) {
+  #     return(dplyr::tibble(
+  #       Note = paste0(
+  #         "There is no data for the databases:\n",
+  #         paste0(setdiff(input$databases, databaseIds),
+  #                collapse = ",\n "),
+  #         ".\n Please unselect them."
+  #       )
+  #     ))
+  #   }
+  #   
+  #   maxCount <- max(data$conceptCount, na.rm = TRUE)
+  #   
+  #   if (input$includedType == "Source Concepts") {
+  #     table <- data %>%
+  #       dplyr::select(
+  #         .data$databaseId,
+  #         .data$sourceConceptId,
+  #         .data$conceptSubjects,
+  #         .data$conceptCount
+  #       ) %>%
+  #       dplyr::arrange(.data$databaseId) %>%
+  #       tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>%
+  #       dplyr::mutate(name = paste0(
+  #         databaseId,
+  #         "_",
+  #         stringr::str_replace(
+  #           string = .data$name,
+  #           pattern = 'concept',
+  #           replacement = ''
+  #         )
+  #       )) %>%
+  #       tidyr::pivot_wider(
+  #         id_cols = c(.data$sourceConceptId),
+  #         names_from = .data$name,
+  #         values_from = .data$value
+  #       ) %>%
+  #       dplyr::inner_join(
+  #         data %>%
+  #           dplyr::select(
+  #             .data$sourceConceptId,
+  #             .data$sourceConceptName,
+  #             .data$sourceVocabularyId,
+  #             .data$sourceConceptCode
+  #           ) %>%
+  #           dplyr::distinct(),
+  #         by = "sourceConceptId"
+  #       ) %>%
+  #       dplyr::relocate(
+  #         .data$sourceConceptId,
+  #         .data$sourceConceptName,
+  #         .data$sourceVocabularyId,
+  #         .data$sourceConceptCode
+  #       )
+  #     
+  #     if (nrow(table) == 0) {
+  #       return(dplyr::tibble(
+  #         Note = paste0("No data available for selected databases and cohorts")
+  #       ))
+  #     }
+  #     table <- table[order(-table[, 5]), ]
+  #     dataTable <- standardDataTable(table)
+  #   } else {
+  #     table <- data %>%
+  #       dplyr::select(
+  #         .data$databaseId,
+  #         .data$conceptId,
+  #         .data$conceptSubjects,
+  #         .data$conceptCount
+  #       ) %>%
+  #       dplyr::group_by(.data$databaseId,
+  #                       .data$conceptId) %>%
+  #       dplyr::summarise(
+  #         conceptSubjects = sum(.data$conceptSubjects),
+  #         conceptCount = sum(.data$conceptCount)
+  #       ) %>%
+  #       dplyr::ungroup() %>%
+  #       dplyr::arrange(.data$databaseId) %>%
+  #       tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>%
+  #       dplyr::mutate(name = paste0(
+  #         databaseId,
+  #         "_",
+  #         stringr::str_replace(
+  #           string = .data$name,
+  #           pattern = "concept",
+  #           replacement = ""
+  #         )
+  #       )) %>%
+  #       tidyr::pivot_wider(
+  #         id_cols = c(.data$conceptId),
+  #         names_from = .data$name,
+  #         values_from = .data$value
+  #       ) %>%
+  #       dplyr::inner_join(
+  #         data %>%
+  #           dplyr::select(.data$conceptId,
+  #                         .data$conceptName,
+  #                         .data$vocabularyId) %>%
+  #           dplyr::distinct(),
+  #         by = "conceptId"
+  #       ) %>%
+  #       dplyr::relocate(.data$conceptId, .data$conceptName, .data$vocabularyId)
+  #     
+  #     if (nrow(table) == 0) {
+  #       return(dplyr::tibble(
+  #         Note = paste0('No data available for selected databases and cohorts')
+  #       ))
+  #     }
+  #     table <- table[order(-table[, 4]), ]
+  #     dataTable <- standardDataTable(table)
+  #   }
+  #   return(dataTable)
+  # }, server = TRUE)
   
   # orphan concepts table -------------------------------------------------------------------------
-  output$orphanConceptsTable <- DT::renderDT(expr = {
-    validate(need(length(input$databases) > 0, "No data sources chosen"))
-    
-    data <- getOrphanConceptResult(
-      dataSource = dataSource,
-      cohortId = cohortId(),
-      databaseIds = input$databases
-    )
-    data <- data %>%
-      dplyr::filter(.data$conceptSetName == input$conceptSet)
-    
-    if (nrow(data) == 0) {
-      return(dplyr::tibble(Note = paste0(
-        "There is no data for the selected combination."
-      )))
-    }
-    databaseIds <- unique(data$databaseId)
-    
-    if (!all(input$databases %in% databaseIds)) {
-      return(dplyr::tibble(
-        Note = paste0(
-          "There is no data for the databases:\n",
-          paste0(setdiff(input$databases, databaseIds),
-                 collapse = ",\n "),
-          ".\n Please unselect them."
-        )
-      ))
-    }
-    
-    maxCount <- max(data$conceptCount, na.rm = TRUE)
-    
-    table <- data %>%
-      dplyr::select(.data$databaseId,
-                    .data$conceptId,
-                    .data$conceptSubjects,
-                    .data$conceptCount) %>%
-      dplyr::group_by(.data$databaseId,
-                      .data$conceptId) %>%
-      dplyr::summarise(
-        conceptSubjects = sum(.data$conceptSubjects),
-        conceptCount = sum(.data$conceptCount)
-      ) %>%
-      dplyr::ungroup() %>%
-      dplyr::arrange(.data$databaseId) %>%
-      tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>%
-      dplyr::mutate(name = paste0(
-        databaseId,
-        "_",
-        stringr::str_replace(
-          string = .data$name,
-          pattern = "concept",
-          replacement = ""
-        )
-      )) %>%
-      tidyr::pivot_wider(
-        id_cols = c(.data$conceptId),
-        names_from = .data$name,
-        values_from = .data$value
-      ) %>%
-      dplyr::inner_join(
-        data %>%
-          dplyr::select(
-            .data$conceptId,
-            .data$conceptName,
-            .data$vocabularyId,
-            .data$conceptCode
-          ) %>%
-          dplyr::distinct(),
-        by = "conceptId"
-      ) %>%
-      dplyr::relocate(.data$conceptId,
-                      .data$conceptName,
-                      .data$vocabularyId,
-                      .data$conceptCode)
-    
-    if (nrow(table) == 0) {
-      return(dplyr::tibble(
-        Note = paste0('No data available for selected databases and cohorts')
-      ))
-    }
-    
-    table <- table[order(-table[, 5]), ]
-    dataTable <- standardDataTable(table)
-    return(table)
-  }, server = TRUE)
+  # output$orphanConceptsTable <- DT::renderDT(expr = {
+  #   validate(need(length(input$databases) > 0, "No data sources chosen"))
+  #   
+  #   data <- getOrphanConceptResult(
+  #     dataSource = dataSource,
+  #     cohortId = cohortId(),
+  #     databaseIds = input$databases
+  #   )
+  #   data <- data %>%
+  #     dplyr::filter(.data$conceptSetName == input$conceptSet)
+  #   
+  #   if (nrow(data) == 0) {
+  #     return(dplyr::tibble(Note = paste0(
+  #       "There is no data for the selected combination."
+  #     )))
+  #   }
+  #   databaseIds <- unique(data$databaseId)
+  #   
+  #   if (!all(input$databases %in% databaseIds)) {
+  #     return(dplyr::tibble(
+  #       Note = paste0(
+  #         "There is no data for the databases:\n",
+  #         paste0(setdiff(input$databases, databaseIds),
+  #                collapse = ",\n "),
+  #         ".\n Please unselect them."
+  #       )
+  #     ))
+  #   }
+  #   
+  #   maxCount <- max(data$conceptCount, na.rm = TRUE)
+  #   
+  #   table <- data %>%
+  #     dplyr::select(.data$databaseId,
+  #                   .data$conceptId,
+  #                   .data$conceptSubjects,
+  #                   .data$conceptCount) %>%
+  #     dplyr::group_by(.data$databaseId,
+  #                     .data$conceptId) %>%
+  #     dplyr::summarise(
+  #       conceptSubjects = sum(.data$conceptSubjects),
+  #       conceptCount = sum(.data$conceptCount)
+  #     ) %>%
+  #     dplyr::ungroup() %>%
+  #     dplyr::arrange(.data$databaseId) %>%
+  #     tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>%
+  #     dplyr::mutate(name = paste0(
+  #       databaseId,
+  #       "_",
+  #       stringr::str_replace(
+  #         string = .data$name,
+  #         pattern = "concept",
+  #         replacement = ""
+  #       )
+  #     )) %>%
+  #     tidyr::pivot_wider(
+  #       id_cols = c(.data$conceptId),
+  #       names_from = .data$name,
+  #       values_from = .data$value
+  #     ) %>%
+  #     dplyr::inner_join(
+  #       data %>%
+  #         dplyr::select(
+  #           .data$conceptId,
+  #           .data$conceptName,
+  #           .data$vocabularyId,
+  #           .data$conceptCode
+  #         ) %>%
+  #         dplyr::distinct(),
+  #       by = "conceptId"
+  #     ) %>%
+  #     dplyr::relocate(.data$conceptId,
+  #                     .data$conceptName,
+  #                     .data$vocabularyId,
+  #                     .data$conceptCode)
+  #   
+  #   if (nrow(table) == 0) {
+  #     return(dplyr::tibble(
+  #       Note = paste0('No data available for selected databases and cohorts')
+  #     ))
+  #   }
+  #   
+  #   table <- table[order(-table[, 5]), ]
+  #   dataTable <- standardDataTable(table)
+  #   return(table)
+  # }, server = TRUE)
   
   # Concept set diagnostics ---------------------------------------------------------------------
   output$conceptSetDiagnosticsTable <- DT::renderDT(expr = {
