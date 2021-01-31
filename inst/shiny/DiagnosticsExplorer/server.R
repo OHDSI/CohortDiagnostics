@@ -98,9 +98,7 @@ shiny::shinyServer(function(input, output, session) {
         .data$phenotypeName,
         .data$overview,
         .data$cohortDefinitions
-      ) %>% 
-      dplyr::mutate(phenotypeId = as.factor(.data$phenotypeId),
-                    phenotypeName = as.factor(.data$phenotypeName))
+      )
     dataTable <- standardDataTable(data = data)
     return(dataTable)
   }, server = TRUE)
@@ -203,9 +201,7 @@ shiny::shinyServer(function(input, output, session) {
   # Cohort Definition ---------------------------------------------------------
   output$cohortDefinitionTable <- DT::renderDT(expr = {
     data <- cohortSubset() %>%
-      dplyr::select(.data$cohortId, .data$cohortName) %>%
-      dplyr::mutate(cohortId = as.factor(.data$cohortId),
-                    cohortName = as.factor(.data$cohortName))
+      dplyr::select(.data$cohortId, .data$cohortName)
     dataTable <- standardDataTable(data = data, selectionMode = 'multiple')
     return(dataTable)
   }, server = TRUE)
@@ -353,9 +349,6 @@ shiny::shinyServer(function(input, output, session) {
           .data$includeMapped
         ) %>%
         dplyr::arrange(.data$conceptSetName, .data$conceptId)
-      data$conceptSetName <- as.factor(data$conceptSetName)
-      data$domainId <- as.factor(data$domainId)
-      data$standardConcept <- as.factor(data$standardConcept)
       colnames(data) <- camelCaseToTitleCase(colnames(data))
     } else {
       subset <- conceptSets %>%
@@ -380,11 +373,6 @@ shiny::shinyServer(function(input, output, session) {
           .data$standardConcept
         ) %>%
         dplyr::arrange(.data$conceptSetName, .data$conceptId)
-      data$conceptSetName <- as.factor(data$conceptSetName)
-      data$conceptClassId <- as.factor(data$conceptClassId)
-      data$domainId <- as.factor(data$domainId)
-      data$vocabularyId <- as.factor(data$vocabularyId)
-      data$standardConcept <- as.factor(data$standardConcept)
       colnames(data) <- camelCaseToTitleCase(colnames(data))
     }
     return(data)
@@ -501,9 +489,6 @@ shiny::shinyServer(function(input, output, session) {
           .data$includeMapped
         ) %>%
         dplyr::arrange(.data$conceptSetName, .data$conceptId)
-      data$conceptSetName <- as.factor(data$conceptSetName)
-      data$domainId <- as.factor(data$domainId)
-      data$standardConcept <- as.factor(data$standardConcept)
       colnames(data) <- camelCaseToTitleCase(colnames(data))
     } else {
       subset <- conceptSets %>%
@@ -528,11 +513,6 @@ shiny::shinyServer(function(input, output, session) {
           .data$standardConcept
         ) %>%
         dplyr::arrange(.data$conceptSetName, .data$conceptId)
-      data$conceptSetName <- as.factor(data$conceptSetName)
-      data$conceptClassId <- as.factor(data$conceptClassId)
-      data$domainId <- as.factor(data$domainId)
-      data$vocabularyId <- as.factor(data$vocabularyId)
-      data$standardConcept <- as.factor(data$standardConcept)
       colnames(data) <- camelCaseToTitleCase(colnames(data))
     }
     return(data)
@@ -1033,11 +1013,6 @@ shiny::shinyServer(function(input, output, session) {
       conceptSetSql = conceptSetSql,
       standard = standard
     ) %>%
-      dplyr::mutate(
-        conceptInSet = as.factor(.data$conceptInSet),
-        domainId = as.factor(.data$domainId),
-        vocabularyId = as.factor(.data$vocabularyId)
-      ) %>%
       dplyr::relocate(.data$conceptInSet)
     if (nrow(data) == 0) {
       return(dplyr::tibble(Note = paste0(

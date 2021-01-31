@@ -80,6 +80,33 @@ standardDataTable <- function(data,
     plugins = c('natural') #'ellipsis'
     # escape = FALSE
   )
+  listOfVariablesThatAreAlwaysFactors <- c('domainId',
+                                           'conceptClassId',
+                                           'vocabularyId',
+                                           'standardConcept',
+                                           'conceptSetName',
+                                           'conceptName',
+                                           'cohortId',
+                                           'cohortName',
+                                           'phenotypeId',
+                                           'phenotypeName',
+                                           'analysisName',
+                                           'startDay',
+                                           'endDay',
+                                           'analysisId'
+                                           )
+  
+  convertVariableToFactor <- function(data, variables) {
+    for (i in (1:length(variables))) {
+      variable <- variables[i]
+      if (variable %in% colnames(data)) {    
+        data[[variable]] <- as.factor(data[[variable]]) %>%
+          dplyr::tibble()
+      }
+    }
+    return(data)
+  }
+  
   colNames <- colnames(data)
   listRounds <-
     colNames[stringr::str_detect(string = tolower(colNames),
