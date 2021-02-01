@@ -523,46 +523,22 @@ bodyTabItems <- shinydashboard::tabItems(
         tags$td(
           shiny::conditionalPanel(
             condition = "input.irStratification.indexOf('Age') > -1",
-            shinyWidgets::pickerInput(
+            shiny::selectizeInput(
               inputId = "incidenceRateAgeFilter",
-              label = "Filter By Age",
-              width = 400,
-              choices = c("All"),
-              selected = c("All"),
+              choices = NULL,
+              label = NULL,
               multiple = TRUE,
-              choicesOpt = list(style = rep_len("color: black;", 999)),
-              options = shinyWidgets::pickerOptions(
-                actionsBox = TRUE,
-                liveSearch = TRUE,
-                size = 10,
-                dropupAuto = TRUE,
-                liveSearchStyle = "contains",
-                liveSearchPlaceholder = "Type here to search",
-                virtualScroll = 50
-              )
             )
           )
         ),
         tags$td(
           shiny::conditionalPanel(
             condition = "input.irStratification.indexOf('Gender') > -1",
-            shinyWidgets::pickerInput(
+            shiny::selectizeInput(
               inputId = "incidenceRateGenderFilter",
-              label = "Filter By Gender",
-              width = 400,
-              choices = c("All"),
-              selected = c("All"),
-              multiple = TRUE,
-              choicesOpt = list(style = rep_len("color: black;", 999)),
-              options = shinyWidgets::pickerOptions(
-                actionsBox = TRUE,
-                liveSearch = TRUE,
-                size = 10,
-                dropupAuto = TRUE,
-                liveSearchStyle = "contains",
-                liveSearchPlaceholder = "Type here to search",
-                virtualScroll = 50
-              )
+              choices = NULL,
+              label = NULL,
+              multiple = TRUE
             )
           )
         ),
@@ -570,23 +546,11 @@ bodyTabItems <- shinydashboard::tabItems(
           style = "width:30% !important",
           shiny::conditionalPanel(
             condition = "input.irStratification.indexOf('Calendar Year') > -1",
-            shinyWidgets::pickerInput(
+            shiny::selectizeInput(
               inputId = "incidenceRateCalenderFilter",
-              label = "Filter By Calender Year",
-              width = 400,
-              choices = c("All"),
-              selected = c("All"),
-              multiple = TRUE,
-              choicesOpt = list(style = rep_len("color: black;", 999)),
-              options = shinyWidgets::pickerOptions(
-                actionsBox = TRUE,
-                liveSearch = TRUE,
-                size = 10,
-                dropupAuto = TRUE,
-                liveSearchStyle = "contains",
-                liveSearchPlaceholder = "Type here to search",
-                virtualScroll = 50
-              )
+              choices = NULL,
+              label = NULL,
+              multiple = TRUE
             )
           )
         )

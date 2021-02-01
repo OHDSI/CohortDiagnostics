@@ -633,26 +633,17 @@ shiny::shinyServer(function(input, output, session) {
     return(dataTable)
   }, server = TRUE)
   
+  
+  
+  
   # Incidence rate --------------------------------------------------------------------------------
-  incidenceRateData <- reactive({
-    stratifyByAge <- "Age" %in% input$irStratification
-    stratifyByGender <- "Gender" %in% input$irStratification
-    stratifyByCalendarYear <-
-      "Calendar Year" %in% input$irStratification
+  incidenceRateDataFromRemote <- shiny::reactive(x = {
     if (length(cohortIds()) > 0) {
       data <- getIncidenceRateResult(
         dataSource = dataSource,
         cohortIds = cohortIds(),
-        databaseIds = input$databases,
-        stratifyByGender =  stratifyByGender,
-        stratifyByAgeGroup =  stratifyByAge,
-        stratifyByCalendarYear =  stratifyByCalendarYear,
-        minPersonYears = 1000
-      ) %>%
-        dplyr::mutate(
-          incidenceRate = dplyr::case_when(.data$incidenceRate < 0 ~ 0,
-                                           TRUE ~ .data$incidenceRate)
-        )
+        minPersonYears = 0
+      )
     } else {
       data <- tidyr::tibble()
     }
@@ -660,87 +651,77 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   shiny::observe(x = {
-    if (nrow(incidenceRateData()) > 0) {
-      ageFilter <- incidenceRateData() %>%
-        dplyr::select(.data$ageGroup) %>%
-        dplyr::filter(.data$ageGroup != "NA", !is.na(.data$ageGroup)) %>%
-        dplyr::distinct() %>%
-        dplyr::arrange(as.integer(sub(
-          pattern = '-.+$', '', x = .data$ageGroup
-        )))
-      
-      shinyWidgets::updatePickerInput(
+    if (nrow(incidenceRateDataFromRemote()) > 0) {
+    ageFilter <- incidenceRateDataFromRemote()$ageGroup %>% unique()
+    ageFilter <- ageFilter[!ageFilter == 'All']
+      shiny::updateSelectizeInput(
         session = session,
         inputId = "incidenceRateAgeFilter",
-        selected = ageFilter$ageGroup,
-        choices = ageFilter$ageGroup,
-        choicesOpt = list(style = rep_len("color: black;", 999))
+        label = "Age",
+        selected = ageFilter,
+        choices = ageFilter,
+        server = TRUE
       )
-    }
-  })
-  
-  shiny::observe(x = {
-    if (nrow(incidenceRateData()) > 0) {
-      genderFilter <- incidenceRateData() %>%
-        dplyr::select(.data$gender) %>%
-        dplyr::filter(.data$gender != "NA", !is.na(.data$gender)) %>%
-        dplyr::distinct() %>%
-        dplyr::arrange(.data$gender)
-      
-      shinyWidgets::updatePickerInput(
+      genderFilter <- incidenceRateDataFromRemote()$gender %>% unique()
+      genderFilter <- genderFilter[!genderFilter == 'All']
+      shiny::updateSelectizeInput(
         session = session,
         inputId = "incidenceRateGenderFilter",
-        choicesOpt = list(style = rep_len("color: black;", 999)),
-        choices = genderFilter$gender,
-        selected = genderFilter$gender
+        label = "Gender",
+        selected = genderFilter,
+        choices = genderFilter,
+        server = TRUE
       )
-    }
-  })
-  
-  shiny::observe(x = {
-    if (nrow(incidenceRateData()) > 0) {
-      calenderFilter <- incidenceRateData() %>%
-        dplyr::select(.data$calendarYear) %>%
-        dplyr::filter(.data$calendarYear != "NA", !is.na(.data$calendarYear)) %>%
-        dplyr::distinct(.data$calendarYear) %>%
-        dplyr::arrange(.data$calendarYear)
-      
-      shinyWidgets::updatePickerInput(
+      calendarFilter <- incidenceRateDataFromRemote()$calendarYear %>% unique()
+      calendarFilter <- calendarFilter[!calendarFilter == 'All']
+      shiny::updateSelectizeInput(
         session = session,
         inputId = "incidenceRateCalenderFilter",
-        choicesOpt = list(style = rep_len("color: black;", 999)),
-        choices = calenderFilter$calendarYear,
-        selected = calenderFilter$calendarYear
+        label = "Calendar Year",
+        selected = calendarFilter,
+        choices = calendarFilter,
+        server = TRUE
       )
     }
   })
   
-  output$incidenceRatePlot <- ggiraph::renderggiraph(expr = {
-    validate(need(length(input$databases) > 0, "No data sources chosen"))
-    validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
+  incidenceRateDataFiltered <- reactive({
+    if (all(is.null(input$incidenceRateGenderFilter),
+            is.null(input$incidenceRateAgeFilter),
+            is.null(input$incidenceRateCalenderFilter))) {
+      return(dplyr::tibble())
+    }
     stratifyByAge <- "Age" %in% input$irStratification
     stratifyByGender <- "Gender" %in% input$irStratification
     stratifyByCalendarYear <-
       "Calendar Year" %in% input$irStratification
-    data <- incidenceRateData()
     
-    if (stratifyByAge && !"All" %in% input$incidenceRateAgeFilter) {
-      data <- data %>%
+    data <- incidenceRateDataFromRemote() %>%
+      dplyr::filter(.data$databaseId %in% input$databases)
+    
+    if (stratifyByAge) {
+      data <- data %>% 
         dplyr::filter(.data$ageGroup %in% input$incidenceRateAgeFilter)
     }
-    if (stratifyByGender &&
-        !"All" %in% input$incidenceRateGenderFilter) {
-      data <- data %>%
-        dplyr::filter(.data$gender %in% input$incidenceRateGenderFilter)
-    }
-    if (stratifyByCalendarYear &&
-        !"All" %in% input$incidenceRateCalenderFilter) {
-      data <- data %>%
+    if (stratifyByCalendarYear) {
+      data <- data %>% 
         dplyr::filter(.data$calendarYear %in% input$incidenceRateCalenderFilter)
     }
-    
+    if (stratifyByGender) {
+      data <- data %>% 
+        dplyr::filter(.data$gender %in% input$incidenceRateGenderFilter)
+    }
+    return(data)
+  })
+  
+  
+  output$incidenceRatePlot <- ggiraph::renderggiraph(expr = {
+    data <- incidenceRateDataFiltered()
     validate(need(nrow(data) > 0, paste0("No data for this combination")))
-    
+    stratifyByAge <- "Age" %in% input$irStratification
+    stratifyByGender <- "Gender" %in% input$irStratification
+    stratifyByCalendarYear <-
+      "Calendar Year" %in% input$irStratification
     plot <- plotIncidenceRate(
       data = data,
       shortNameRef = cohort,

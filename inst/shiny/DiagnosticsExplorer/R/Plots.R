@@ -89,7 +89,18 @@ plotIncidenceRate <- function(data,
                               stratifyByAgeGroup = TRUE,
                               stratifyByGender = TRUE,
                               stratifyByCalendarYear = TRUE,
+                              minPersonYears = 1000,
                               yscaleFixed = FALSE) {
+  
+  #filtering incidence rates that are negative
+  data <- data %>% 
+    dplyr::filter(.data$incidenceRate >= 0)
+  
+  if (!is.null(minPersonYears)) {
+    data <- data %>% 
+      dplyr::filter(.data$personYears > minPersonYears)
+  }
+  
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertTibble(
     x = data,
@@ -151,20 +162,8 @@ plotIncidenceRate <- function(data,
   checkmate::reportAssertions(collection = errorMessage)
   
   plotData <- data %>%
-    addShortName(shortNameRef) %>%
+    dplyr::left_join(y = cohort %>% dplyr::select(.data$cohortId, .data$shortName), by = c('cohortId')) %>%
     dplyr::mutate(incidenceRate = round(.data$incidenceRate, digits = 3))
-  plotData <- plotData %>%
-    dplyr::mutate(
-      strataGender = !is.na(.data$gender),
-      strataAgeGroup = !is.na(.data$ageGroup),
-      strataCalendarYear = !is.na(.data$calendarYear)
-    ) %>%
-    dplyr::filter(
-      .data$strataGender %in% !!stratifyByGender &
-        .data$strataAgeGroup %in% !!stratifyByAgeGroup &
-        .data$strataCalendarYear %in% !!stratifyByCalendarYear
-    ) %>%
-    dplyr::select(-dplyr::starts_with("strata"))
   
   aesthetics <- list(y = "incidenceRate")
   if (stratifyByCalendarYear) {
@@ -194,19 +193,6 @@ plotIncidenceRate <- function(data,
     plotType <- "bar"
   }
   
-  newSort <- plotData %>%
-    dplyr::select(.data$ageGroup) %>%
-    dplyr::distinct() %>%
-    dplyr::arrange(as.integer(sub(
-      pattern = '-.+$', '', x = .data$ageGroup
-    )))
-  
-  plotData <- plotData %>%
-    dplyr::arrange(ageGroup = factor(.data$ageGroup, levels = newSort$ageGroup),
-                   .data$ageGroup)
-  
-  plotData$ageGroup <- factor(plotData$ageGroup,
-                              levels = newSort$ageGroup)
   plotData$tooltip <- c(
     paste0(
       plotData$shortName,
@@ -222,6 +208,17 @@ plotIncidenceRate <- function(data,
   )
   
   if (stratifyByAgeGroup) {
+    newSort <- plotData %>%
+      dplyr::select(.data$ageGroup) %>%
+      dplyr::distinct() %>%
+      dplyr::arrange(as.integer(sub(
+        pattern = '-.+$', '', x = .data$ageGroup
+      )))
+    plotData <- plotData %>%
+      dplyr::arrange(ageGroup = factor(.data$ageGroup, levels = newSort$ageGroup),
+                     .data$ageGroup)
+    plotData$ageGroup <- factor(plotData$ageGroup,
+                                levels = newSort$ageGroup)
     plotData$tooltip <-
       c(paste0(plotData$tooltip, "\nAge Group = ", plotData$ageGroup))
   }
@@ -238,8 +235,8 @@ plotIncidenceRate <- function(data,
   
   if (stratifyByGender) {
     # Make sure colors are consistent, no matter which genders are included:
-    
     genders <- c("Female", "Male", "No matching concept")
+    
     # Code used to generate palette:
     # writeLines(paste(RColorBrewer::brewer.pal(n = 2, name = "Dark2"), collapse = "\", \""))
     colors <- c("#D95F02", "#1B9E77", "#444444")
