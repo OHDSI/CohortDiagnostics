@@ -1187,16 +1187,12 @@ shiny::shinyServer(function(input, output, session) {
   filterByTimeIdAndDomainId <- reactive({
     data <- temporalCharacterization()
     #filter data by timeId
-    # if (input$timeIdChoicesFilter != 'All') {
-    #   data <- data %>%
-    #     dplyr::filter(
-    #       .data$timeId %in% (
-    #         temporalCovariateChoices %>%
-    #           dplyr::filter(choices %in% input$timeIdChoicesFilter) %>%
-    #           dplyr::pull(.data$timeId)
-    #       )
-    #     )
-    # }
+    if (input$timeIdChoicesFilter != 'All') {
+      data <- data %>%
+        dplyr::filter(
+          .data$timeIdChoices %in% input$timeIdChoicesFilter 
+        )
+    }
     #filter data by domain
     # domains <- c("condition", "device", "drug", "measurement", "observation", "procedure")
     data$domain <-
@@ -1305,7 +1301,7 @@ shiny::shinyServer(function(input, output, session) {
   filteredTemporalCovariateName(c())
   # collect the user selected covariate names
   observeEvent(input$temporalCharacterizationCovariateTable_state, {
-    if (input$temporalCharacterizationCovariateTable_state$columns[[1]]$search != "")
+    if (input$temporalCharacterizationCovariateTable_state$columns[[1]]$search$search != "")
       filteredTemporalCovariateName(input$temporalCharacterizationCovariateTable_state$columns[[1]]$search$search)
     else
       filteredTemporalCovariateName(c())

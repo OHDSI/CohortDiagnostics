@@ -662,8 +662,8 @@ plotTemporalCohortComparison <- function(balance,
       "\nDomain:",
       balance$domain,
       "\nTime:",
-      # balance$temporalChoices,
-      # "\nX- ",
+      balance$timeIdChoices,
+      "\nX- ",
       balance$shortName1,
       ": ",
       scales::percent(balance$mean1, accuracy = 0.01),
@@ -689,7 +689,7 @@ plotTemporalCohortComparison <- function(balance,
     ggplot2::aes(
       x = .data$mean1,
       y = .data$mean2,
-      color = .data$domain
+      color = .data$timeIdChoices
     )
   ) +
     ggiraph::geom_point_interactive(
@@ -771,8 +771,8 @@ plotTemporalLassoCohortComparison <- function(balance,
       "\nDomain:",
       balance$domain,
       "\nTime:",
-      # balance$temporalChoices,
-      # "\nX- ",
+      balance$temporalChoices,
+      "\nX- ",
       balance$shortName1,
       ": ",
       scales::percent(balance$mean1, accuracy = 0.01),
@@ -797,7 +797,7 @@ plotTemporalLassoCohortComparison <- function(balance,
       x = .data$mean1,
       y = .data$mean2,
       # color = .data$temporalChoices
-      color = .data$domain
+      color = .data$timeIdChoices
     )
   ) +
     ggiraph::geom_point_interactive(
