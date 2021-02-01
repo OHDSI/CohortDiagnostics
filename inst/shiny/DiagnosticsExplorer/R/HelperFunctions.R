@@ -98,7 +98,7 @@ standardDataTable <- function(data,
                                  pattern = 'entries|subjects|count|min|max|p10|p25|median|p75|p90|max|before|onvisitstart|after|duringvisit')]
   listDecimal <-
     colNames[stringr::str_detect(string = tolower(colNames),
-                                 pattern = 'average|standarddeviation|mean|sd')]
+                                 pattern = 'average|standarddeviation|mean|sd|personYears|incidenceRate')]
   listPercent <-
     colNames[stringr::str_detect(string = tolower(colNames),
                                  pattern = 'percent')]

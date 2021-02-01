@@ -560,7 +560,8 @@ bodyTabItems <- shinydashboard::tabItems(
         outputId = "incidenceRatePlot",
         width = "100%",
         height = "100%"
-      )
+      ),
+      DT::DTOutput("incidenceRateTable")
     )
   ),
   shinydashboard::tabItem(

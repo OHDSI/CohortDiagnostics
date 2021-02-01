@@ -728,10 +728,24 @@ shiny::shinyServer(function(input, output, session) {
       stratifyByAgeGroup = stratifyByAge,
       stratifyByGender = stratifyByGender,
       stratifyByCalendarYear = stratifyByCalendarYear,
-      yscaleFixed = input$irYscaleFixed
+      yscaleFixed = input$irYscaleFixed,
+      minPersonYears = 1000
     )
     return(plot)
   })
+  
+  output$incidenceRateTable <- DT::renderDT(expr = {
+    data <- incidenceRateDataFiltered()
+    if (nrow(data) > 0) {
+      data <- addMetaDataInformationToResults(data)
+      colnames(data) <-
+        colnames(data) %>% stringr::str_replace_all(string = .,
+                                                    pattern = "Value",
+                                                    replacement = "")
+    }
+    table <- standardDataTable(data)
+    return(table)
+  }, server = TRUE)
   
   # Time distribution -----------------------------------------------------------------------------
   timeDist <- reactive({
