@@ -657,23 +657,23 @@ bodyTabItems <- shinydashboard::tabItems(
       
       tags$table(style = "width:100%",
                  tags$tr(
-                   tags$td(
-                     shinyWidgets::pickerInput(
-                       inputId = "timeIdChoicesFilter",
-                       label = "Filter By Temporal Choices",
-                       choices = c("All", temporalCovariateChoices$choices),
-                       multiple = FALSE,
-                       choicesOpt = list(style = rep_len("color: black;", 999)),
-                       options = shinyWidgets::pickerOptions(
-                         actionsBox = TRUE,
-                         liveSearch = TRUE,
-                         size = 10,
-                         liveSearchStyle = "contains",
-                         liveSearchPlaceholder = "Type here to search",
-                         virtualScroll = 50
-                       )
-                     )
-                   ),
+                   # tags$td(
+                   #   shinyWidgets::pickerInput(
+                   #     inputId = "timeIdChoicesFilter",
+                   #     label = "Filter By Temporal Choices",
+                   #     choices = c("All", temporalCovariateChoices$choices),
+                   #     multiple = FALSE,
+                   #     choicesOpt = list(style = rep_len("color: black;", 999)),
+                   #     options = shinyWidgets::pickerOptions(
+                   #       actionsBox = TRUE,
+                   #       liveSearch = TRUE,
+                   #       size = 10,
+                   #       liveSearchStyle = "contains",
+                   #       liveSearchPlaceholder = "Type here to search",
+                   #       virtualScroll = 50
+                   #     )
+                   #   )
+                   # ),
                    tags$td(
                      shinyWidgets::pickerInput(
                        inputId = "temporalDomainId",

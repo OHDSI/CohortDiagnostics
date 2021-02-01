@@ -649,8 +649,9 @@ plotTemporalCohortComparison <- function(balance,
       shortNameRef = shortNameRef,
       cohortIdColumn = "cohortId2",
       shortNameColumn = "shortName2"
-    ) %>%
-    dplyr::mutate(temporalChoices =  paste0("Start ", .data$startDay, " to end ", .data$endDay))
+    ) 
+  # %>%
+  #   dplyr::mutate(temporalChoices =  paste0("Start ", .data$startDay, " to end ", .data$endDay))
   
   balance$tooltip <- c(
     paste(
@@ -661,8 +662,8 @@ plotTemporalCohortComparison <- function(balance,
       "\nDomain:",
       balance$domain,
       "\nTime:",
-      balance$temporalChoices,
-      "\nX- ",
+      # balance$temporalChoices,
+      # "\nX- ",
       balance$shortName1,
       ": ",
       scales::percent(balance$mean1, accuracy = 0.01),
@@ -688,7 +689,7 @@ plotTemporalCohortComparison <- function(balance,
     ggplot2::aes(
       x = .data$mean1,
       y = .data$mean2,
-      color = .data$temporalChoices
+      color = .data$domain
     )
   ) +
     ggiraph::geom_point_interactive(
@@ -757,8 +758,9 @@ plotTemporalLassoCohortComparison <- function(balance,
       shortNameRef = shortNameRef,
       cohortIdColumn = "cohortId2",
       shortNameColumn = "shortName2"
-    ) %>%
-    dplyr::mutate(temporalChoices =  paste0("Start ", .data$startDay, " to end ", .data$endDay))
+    ) 
+  # %>%
+  #   dplyr::mutate(temporalChoices =  paste0("Start ", .data$startDay, " to end ", .data$endDay))
   
   balance$tooltip <- c(
     paste(
@@ -769,8 +771,8 @@ plotTemporalLassoCohortComparison <- function(balance,
       "\nDomain:",
       balance$domain,
       "\nTime:",
-      balance$temporalChoices,
-      "\nX- ",
+      # balance$temporalChoices,
+      # "\nX- ",
       balance$shortName1,
       ": ",
       scales::percent(balance$mean1, accuracy = 0.01),
@@ -794,7 +796,8 @@ plotTemporalLassoCohortComparison <- function(balance,
     ggplot2::aes(
       x = .data$mean1,
       y = .data$mean2,
-      color = .data$temporalChoices
+      # color = .data$temporalChoices
+      color = .data$domain
     )
   ) +
     ggiraph::geom_point_interactive(

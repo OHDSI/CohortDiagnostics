@@ -225,10 +225,7 @@ compareTemporalCohortCharacteristics <-
           "conceptId",
           "databaseId",
           "covariateName",
-          "analysisId",
-          "timeId",
-          "startDay",
-          "endDay"
+          "analysisId"
         ),
         suffix = c("1", "2")
       ) %>%

@@ -1187,16 +1187,16 @@ shiny::shinyServer(function(input, output, session) {
   filterByTimeIdAndDomainId <- reactive({
     data <- temporalCharacterization()
     #filter data by timeId
-    if (input$timeIdChoicesFilter != 'All') {
-      data <- data %>%
-        dplyr::filter(
-          .data$timeId %in% (
-            temporalCovariateChoices %>%
-              dplyr::filter(choices %in% input$timeIdChoicesFilter) %>%
-              dplyr::pull(.data$timeId)
-          )
-        )
-    }
+    # if (input$timeIdChoicesFilter != 'All') {
+    #   data <- data %>%
+    #     dplyr::filter(
+    #       .data$timeId %in% (
+    #         temporalCovariateChoices %>%
+    #           dplyr::filter(choices %in% input$timeIdChoicesFilter) %>%
+    #           dplyr::pull(.data$timeId)
+    #       )
+    #     )
+    # }
     #filter data by domain
     # domains <- c("condition", "device", "drug", "measurement", "observation", "procedure")
     data$domain <-
