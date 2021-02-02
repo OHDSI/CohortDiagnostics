@@ -11,12 +11,10 @@ addShortName <-
     }
     
     shortNameRef <- shortNameRef %>%
-      dplyr::distinct(.data$cohortId, .data$shortName)
-    colnames(shortNameRef) <- c(cohortIdColumn, shortNameColumn)
+      dplyr::distinct(.data$cohortId, .data$cohortName)
     data <- data %>%
-      dplyr::inner_join(shortNameRef, by = cohortIdColumn)
+      dplyr::inner_join(shortNameRef, by = "cohortId")
     return(data)
-    
   }
 
 addMetaDataInformationToResults <- function(data) {
@@ -24,16 +22,23 @@ addMetaDataInformationToResults <- function(data) {
     dplyr::left_join(
       y = cohort %>%
         dplyr::select(.data$cohortId,
-                      .data$phenotypeName,
+                      .data$phenotypeId,
                       .data$cohortName),
       by = c('cohortId')
     ) %>%
+    dplyr::left_join(
+      y = phenotypeDescription %>% 
+        dplyr::select(.data$phenotypeId, .data$phenotypeName),
+      by = "phenotypeId"
+    ) %>% 
     dplyr::relocate(.data$databaseId,
+                    .data$phenotypeId,
                     .data$phenotypeName,
                     .data$cohortId,
                     .data$cohortName) %>%
     dplyr::mutate(
       databaseId = as.factor(.data$databaseId),
+      phenotypeId = as.factor(.data$phenotypeId),
       phenotypeName = as.factor(.data$phenotypeName),
       cohortId = as.factor(.data$cohortId),
       cohortName = as.factor(.data$cohortName)

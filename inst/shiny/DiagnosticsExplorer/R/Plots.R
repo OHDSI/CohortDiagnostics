@@ -26,7 +26,7 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
   
   plotData$tooltip <- c(
     paste0(
-      plotData$shortName,
+      plotData$cohortName,
       "\nDatabase = ",
       plotData$databaseId,
       "\nMin = ",
@@ -48,13 +48,13 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
   
   plot <- ggplot2::ggplot(data = plotData) +
     ggplot2::aes(
-      x = .data$shortName,
+      x = .data$cohortName,
       ymin = .data$minValue,
       lower = .data$p25Value,
       middle = .data$medianValue,
       upper = .data$p75Value,
       ymax = .data$maxValue,
-      group = .data$shortName,
+      group = .data$cohortName,
       average = .data$averageValue
     ) +
     ggplot2::geom_errorbar(size = 0.5) +
@@ -74,7 +74,7 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
       strip.background = ggplot2::element_blank()
     )
   height <-
-    1.5 + 0.4 * nrow(dplyr::distinct(plotData, .data$databaseId, .data$shortName))
+    1.5 + 0.4 * nrow(dplyr::distinct(plotData, .data$databaseId, .data$cohortName))
   plot <- ggiraph::girafe(
     ggobj = plot,
     options = list(ggiraph::opts_sizing(width = .7),
@@ -162,7 +162,7 @@ plotIncidenceRate <- function(data,
   checkmate::reportAssertions(collection = errorMessage)
   
   plotData <- data %>%
-    dplyr::left_join(y = cohort %>% dplyr::select(.data$cohortId, .data$shortName), by = c('cohortId')) %>%
+    dplyr::left_join(y = cohort %>% dplyr::select(.data$cohortId, .data$cohortName), by = c('cohortId')) %>%
     dplyr::mutate(incidenceRate = round(.data$incidenceRate, digits = 3))
   
   aesthetics <- list(y = "incidenceRate")
@@ -195,7 +195,7 @@ plotIncidenceRate <- function(data,
   
   plotData$tooltip <- c(
     paste0(
-      plotData$shortName,
+      plotData$cohortName,
       "\nIncidence Rate = ",
       scales::comma(plotData$incidenceRate, accuracy = 0.01),
       "\nDatabase = ",
@@ -281,18 +281,18 @@ plotIncidenceRate <- function(data,
     if (stratifyByGender | stratifyByCalendarYear) {
       if (stratifyByAgeGroup) {
         plot <-
-          plot + facet_nested(databaseId + shortName ~ plotData$ageGroup, scales = scales)
+          plot + facet_nested(databaseId + cohortName ~ plotData$ageGroup, scales = scales)
       } else {
         plot <-
-          plot + facet_nested(databaseId + shortName ~ ., scales = scales)
+          plot + facet_nested(databaseId + cohortName ~ ., scales = scales)
       }
     } else {
       plot <-
-        plot + facet_nested(databaseId + shortName ~ ., scales = scales)
+        plot + facet_nested(databaseId + cohortName ~ ., scales = scales)
     }
-    # spacing <- rep(c(1, rep(0.5, length(unique(plotData$shortName)) - 1)), length(unique(plotData$databaseId)))[-1]
+    # spacing <- rep(c(1, rep(0.5, length(unique(plotData$cohortName)) - 1)), length(unique(plotData$databaseId)))[-1]
     spacing <- plotData %>%
-      dplyr::distinct(.data$databaseId, .data$shortName) %>%
+      dplyr::distinct(.data$databaseId, .data$cohortName) %>%
       dplyr::arrange(.data$databaseId) %>%
       dplyr::group_by(.data$databaseId) %>%
       dplyr::summarise(count = dplyr::n()) %>%
@@ -312,7 +312,7 @@ plotIncidenceRate <- function(data,
     }
   }
   height <-
-    1.5 + 1 * nrow(dplyr::distinct(plotData, .data$databaseId, .data$shortName))
+    1.5 + 1 * nrow(dplyr::distinct(plotData, .data$databaseId, .data$cohortName))
   plot <- ggiraph::girafe(
     ggobj = plot,
     options = list(ggiraph::opts_sizing(width = .7),
