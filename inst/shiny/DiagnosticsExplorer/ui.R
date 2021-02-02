@@ -485,7 +485,6 @@ bodyTabItems <- shinydashboard::tabItems(
           diffr::diffrOutput("sqlDiff", width = "100%", height = "50000px")
         )
       )
-      
     )
   ),
   shinydashboard::tabItem(

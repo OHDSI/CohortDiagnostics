@@ -1,10 +1,10 @@
 shiny::shinyServer(function(input, output, session) {
   cohortId <- shiny::reactive(x = {
-    return(cohort$cohortId[cohort$compoundName == input$cohort])
+    return(cohort$cohortId[cohort$cohortName == input$cohort])
   })
   
   cohortIds <- shiny::reactive(x = {
-    return(cohort$cohortId[cohort$compoundName  %in% input$cohorts])
+    return(cohort$cohortId[cohort$cohortName  %in% input$cohorts])
   })
   
   timeId <- shiny::reactive(x = {
@@ -70,7 +70,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   shiny::observe(x = {
-    subset <- cohortSubset()$compoundName
+    subset <- cohortSubset()$cohortName
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "cohort",
@@ -80,7 +80,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   shiny::observe(x = {
-    subset <- cohortSubset()$compoundName
+    subset <- cohortSubset()$cohortName
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "cohorts",
@@ -553,8 +553,8 @@ shiny::shinyServer(function(input, output, session) {
       file1,
       file2,
       wordWrap = TRUE,
-      before = row1$compoundName,
-      after = row2$compoundName
+      before = row1$cohortName,
+      after = row2$cohortName
     )
     unlink(file1)
     unlink(file2)
@@ -590,8 +590,8 @@ shiny::shinyServer(function(input, output, session) {
       file1,
       file2,
       wordWrap = TRUE,
-      before = row1$compoundName,
-      after = row2$compoundName
+      before = row1$cohortName,
+      after = row2$cohortName
     )
     unlink(file1)
     unlink(file2)
@@ -609,8 +609,8 @@ shiny::shinyServer(function(input, output, session) {
       file1,
       file2,
       wordWrap = FALSE,
-      before = row1$compoundName,
-      after = row2$compoundName,
+      before = row1$cohortName,
+      after = row2$cohortName,
       width = "100%"
     )
     unlink(file1)
@@ -1593,7 +1593,7 @@ shiny::shinyServer(function(input, output, session) {
     cohorts <- cohortSubset() %>%
       dplyr::filter(.data$cohortId %in% cohortIds()) %>%
       dplyr::arrange(.data$cohortId) %>%
-      dplyr::select(.data$shortName, .data$cohortName)
+      dplyr::select(.data$cohortName)
     return(apply(cohorts, 1, function(x)
       tags$tr(lapply(x, tags$td))))
   })

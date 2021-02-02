@@ -302,10 +302,6 @@ if (exists("cohort")) {
     dplyr::arrange(.data$cohortId) %>%
     dplyr::mutate(cohortName = stringr::str_remove(.data$cohortName, "\\[.+?\\] "))
   
-  if ('phenotypeId' %in% colnames(cohort)) {
-    referentConceptIds <- unique(cohort$phenotypeId / 1000)
-  }
-  
   if ('metadata' %in% colnames(cohort)) {
     cohortMetaData <- list()
     for (i in 1:nrow(cohort)) {
@@ -338,14 +334,6 @@ if (exists("cohort")) {
 if (exists("phenotypeDescription")) {
   # this table is optional.
   phenotypeDescription <- phenotypeDescription %>%
-    dplyr::mutate(
-      searchTerms = paste(
-        .data$phenotypeId,
-        .data$phenotypeName,
-        .data$clinicalDescription,
-        sep = ", "
-      )
-    ) %>%
     dplyr::mutate(overview = (
       stringr::str_match(.data$clinicalDescription,
                          "Overview:(.*?)Presentation:")
@@ -393,33 +381,15 @@ if (exists("phenotypeDescription")) {
         dplyr::summarize(cohortDefinitions = dplyr::n()) %>%
         dplyr::ungroup(),
       by = "phenotypeId"
-    )
+    ) %>% 
+    dplyr::mutate(referentConceptId = .data$phenotypeId/1000) %>% 
+    dplyr::select(.data$phenotypeId, .data$phenotypeName,
+                  .data$clinicalDescription, .data$overview,
+                  .data$cohortDefinitions, .data$referentConceptId)
   
-  if ('metadata' %in% colnames(phenotypeDescription)) {
-    phenotypeDescriptionMetaData <- list()
-    for (i in 1:nrow(phenotypeDescription)) {
-      x <- RJSONIO::fromJSON(phenotypeDescription[i, ]$metadata)
-      for (j in 1:length(x)) {
-        if (!any(is.null(x[[j]]), is.na(x[[j]]))) {
-          x[[j]] <- stringr::str_split(string = x[[j]], pattern = ";")[[1]]
-        }
-      }
-      x <- dplyr::bind_rows(x)
-      x$phenotype_id <- cohort[i, ]$phenotypeId
-      phenotypeDescriptionMetaData[[i]] <- x
-    }
-    phenotypeDescriptionMetaData <-
-      dplyr::bind_rows(phenotypeDescriptionMetaData) %>%
-      readr::type_convert(col_types = readr::cols())
-    if ('referent_concept_id' %in% colnames(phenotypeDescriptionMetaData)) {
-      referentConceptIds <-
-        c(referentConceptIds,
-          phenotypeDescriptionMetaData$referent_concept_id) %>% unique()
-    }
-  }
-  colnames(phenotypeDescriptionMetaData) <-
-    snakeCaseToCamelCase(colnames(phenotypeDescriptionMetaData))
-  # get concept name and concept synonyms for all referent concepts to memory
+  referentConceptIds <-
+    c(referentConceptIds,
+      phenotypeDescription$referentConceptId) %>% unique()
 }
 
 if (isValidConnection) {
@@ -438,7 +408,6 @@ if (isValidConnection) {
     dplyr::tibble(conceptId = 0, conceptSynonymName = 'No matching concept')
 }
 
-
 referentConceptIdsSearchTerms <- referentConceptIdsDataFrame %>%
   dplyr::group_by(.data$conceptId) %>%
   dplyr::summarise(conceptNameSearchTerms = toString(.data$conceptSynonymName)) %>%
@@ -452,103 +421,46 @@ referentConceptIdsSearchTerms <- referentConceptIdsDataFrame %>%
 
 
 if (exists('cohortMetaData')) {
-  cohortMetaData$searchTerms <- ""
   if ('referentConceptId' %in% colnames(cohortMetaData)) {
-    cohortMetaData <- cohortMetaData %>%
+    cohortReferentConceptSearchTerms <- cohortMetaData %>%
+      dplyr::select(.data$cohortId, .data$referentConceptId) %>% 
       dplyr::left_join(referentConceptIdsSearchTerms,
                        by = c("referentConceptId" = "conceptId")) %>%
-      dplyr::select(-.data$referentConceptId) %>%
-      dplyr::mutate(searchTerms = paste(searchTerms, conceptNameSearchTerms, sep = ", ")) %>%
-      dplyr::select(-.data$conceptNameSearchTerms)
+      dplyr::group_by(.data$cohortId) %>% 
+      dplyr::mutate(referentConceptId = paste0(as.character(.data$referentConceptId), collapse = ", "),
+                    referentConceptIdsSearchTerms = paste0(.data$conceptNameSearchTerms, collapse = ", ")) %>% 
+      dplyr::ungroup() %>% 
+      dplyr::mutate(referentConceptIdsSearchTerms = paste(referentConceptId,referentConceptIdsSearchTerms)) %>%
+      dplyr::select(-.data$referentConceptId, - .data$conceptNameSearchTerms)
+    
+    cohort <- cohort %>% 
+      dplyr::left_join(y = cohortReferentConceptSearchTerms, by = c('cohortId'))
+    
+    remove(cohortReferentConceptSearchTerms)
   }
-  cohortMetaData <- cohortMetaData %>%
-    dplyr::left_join(
-      cohort %>%
-        dplyr::mutate(
-          cohortSearchString = paste(
-            .data$phenotypeId,
-            .data$cohortId,
-            .data$cohortName,
-            .data$logicDescription,
-            sep = ", "
-          )
-        ) %>%
-        dplyr::select(.data$cohortId, .data$cohortName, .data$cohortSearchString),
-      by = "cohortId"
-    ) %>%
-    dplyr::mutate(searchTerms = paste(searchTerms, cohortSearchString, cohortType, sep = ", ")) %>%
-    dplyr::select(.data$cohortId, .data$searchTerms) %>%
-    dplyr::distinct()
-  cohort <- cohort %>%
-    dplyr::left_join(cohortMetaData, by = "cohortId")
-} else {
-  cohort <- cohort %>%
-    dplyr::mutate(searchTerms = paste(.data$cohortName, .data$logicDescription, sep = ", "))
+  if ('cohortType' %in% colnames(cohortMetaData)) {
+    cohortType <- cohortMetaData %>%
+      dplyr::select(.data$cohortId, .data$cohortType) %>% 
+      dplyr::group_by(.data$cohortId) %>% 
+      dplyr::mutate(cohortType = paste0(.data$cohortType, collapse = ", ")) %>% 
+      dplyr::ungroup()
+    
+    cohort <- cohort %>% 
+      dplyr::left_join(y = cohortType, by = c('cohortId'))
+    
+    remove(cohortType)
+  }
 }
 remove(cohortMetaData)
 
-if (exists('phenotypeDescriptionMetaData')) {
-  if ('referentConceptId' %in% colnames(phenotypeDescriptionMetaData)) {
-    phenotypeDescriptionMetaData <- phenotypeDescriptionMetaData %>%
+if (exists('phenotypeDescription')) {
+  if ('referentConceptId' %in% colnames(phenotypeDescription)) {
+    phenotypeDescription <- phenotypeDescription %>%
       dplyr::left_join(referentConceptIdsSearchTerms,
                        by = c('referentConceptId' = 'conceptId')) %>%
-      dplyr::rename(phenotypeReferentConceptsSearchTerms = conceptNameSearchTerms) %>%
       dplyr::select(-.data$referentConceptId) %>%
-      dplyr::group_by(.data$phenotypeId) %>%
-      dplyr::summarise(
-        phenotypeReferentConceptsSearchTerms = toString(.data$phenotypeReferentConceptsSearchTerms)
-      ) %>%
-      dplyr::ungroup()
-    phenotypeDescription <- phenotypeDescription %>%
-      dplyr::left_join(phenotypeDescriptionMetaData, by = 'phenotypeId') %>%
-      dplyr::mutate(searchTerms = paste(searchTerms, phenotypeReferentConceptsSearchTerms, sep = ", ")) %>%
-      dplyr::select(-.data$phenotypeReferentConceptsSearchTerms)
+      dplyr::mutate(
+        referentConceptIdsSearchTerms = paste0(.data$conceptNameSearchTerms, collapse = ",")
+      )
   }
 }
-remove(phenotypeDescriptionMetaData)
-
-if (exists('phenotypeDescription')) {
-  cohort <- cohort %>%
-    dplyr::left_join(
-      phenotypeDescription %>%
-        dplyr::rename(phenotypeSearchTerms = searchTerms) %>%
-        dplyr::select(.data$phenotypeId, .data$phenotypeSearchTerms),
-      by = "phenotypeId"
-    ) %>%
-    dplyr::mutate(searchTerms = paste(searchTerms, phenotypeSearchTerms, sep = ", ")) %>%
-    dplyr::select(-.data$phenotypeSearchTerms) %>%
-    dplyr::group_by(.data$phenotypeId) %>%
-    dplyr::arrange(.data$cohortId) %>%
-    dplyr::left_join(dplyr::select(phenotypeDescription, phenotypeId, phenotypeName),
-                     by = "phenotypeId") %>%
-    dplyr::mutate(shortName = paste0(
-      "C",
-      dplyr::row_number(),
-      " (Phenotype: ",
-      .data$phenotypeName,
-      ") "
-    )) %>%
-    dplyr::ungroup() %>%
-    dplyr::mutate(compoundName = paste(shortName, cohortName, sep = ": "))
-} else {
-  cohort <- cohort %>%
-    dplyr::group_by(.data$phenotypeId) %>%
-    dplyr::arrange(.data$cohortId) %>%
-    dplyr::mutate(shortName = paste0("C", dplyr::row_number())) %>%
-    dplyr::ungroup() %>%
-    dplyr::mutate(compoundName = paste(shortName, cohortName, sep = ": "))
-}
-
-#
-# # getSearchTerms might not be useful in future.
-# if (exists("phenotypeDescription")) {
-#   searchTerms <- getSearchTerms(dataSource = dataSource,
-#                                 includeDescendants = FALSE) %>%
-#     dplyr::group_by(.data$phenotypeId) %>%
-#     dplyr::summarise(searchTermString = paste(.data$term, collapse = ", ")) %>%
-#     dplyr::ungroup()
-#
-#   phenotypeDescription <- phenotypeDescription %>%
-#     dplyr::left_join(searchTerms,
-#                      by = "phenotypeId")
-# }
