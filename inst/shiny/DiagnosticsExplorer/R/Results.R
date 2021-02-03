@@ -88,24 +88,20 @@ getCohortCountResult <- function(dataSource = .GlobalEnv,
 }
 
 getTimeDistributionResult <- function(dataSource = .GlobalEnv,
-                                      cohortIds,
-                                      databaseIds) {
+                                      cohortIds) {
   if (is(dataSource, "environment")) {
     data <- get("timeDistribution", envir = dataSource) %>%
-      dplyr::filter(.data$cohortId %in% !!cohortIds &
-                      .data$databaseId %in% !!databaseIds)
+      dplyr::filter(.data$cohortId %in% !!cohortIds)
   } else {
     sql <-   "SELECT *
               FROM  @results_database_schema.time_distribution
-              WHERE cohort_id in (@cohort_ids)
-            	AND database_id in (@database_ids);"
+              WHERE cohort_id in (@cohort_ids);"
     data <-
       renderTranslateQuerySql(
         connection = dataSource$connection,
         sql = sql,
         results_database_schema = dataSource$resultsDatabaseSchema,
         cohort_ids = cohortIds,
-        database_ids = quoteLiterals(databaseIds),
         snakeCaseToCamelCase = TRUE
       )
   }

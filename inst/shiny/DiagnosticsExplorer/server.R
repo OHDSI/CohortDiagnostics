@@ -116,9 +116,6 @@ shiny::shinyServer(function(input, output, session) {
   output$phenotypeRowIsSelected <- reactive({
     return(!is.null(selectedPhenotypeDescriptionRow()))
   })
-  outputOptions(x = output,
-                name = "phenotypeRowIsSelected",
-                suspendWhenHidden = FALSE)
   
   output$phenotypeDescriptionText <- shiny::renderUI(expr = {
     row <- selectedPhenotypeDescriptionRow()
@@ -246,11 +243,6 @@ shiny::shinyServer(function(input, output, session) {
   output$cohortDefinitionRowIsSelected <- reactive({
     return(length(input$cohortDefinitionTable_rows_selected))
   })
-  
-  
-  outputOptions(x = output,
-                name = "cohortDefinitionRowIsSelected",
-                suspendWhenHidden = FALSE)
   
   output$cohortDetailsText <- shiny::renderUI(expr = {
     row <- selectedCohortDefinitionRow()
@@ -632,6 +624,9 @@ shiny::shinyServer(function(input, output, session) {
     dataTable <- standardDataTable(data = data)
     return(dataTable)
   }, server = TRUE)
+  shiny::outputOptions(x = output,
+                       name = "cohortCountsTable", 
+                       suspendWhenHidden = FALSE)
   
   
   
@@ -733,6 +728,9 @@ shiny::shinyServer(function(input, output, session) {
     )
     return(plot)
   })
+  shiny::outputOptions(x = output,
+                       name = "incidenceRatePlot", 
+                       suspendWhenHidden = FALSE)
   
   output$incidenceRateTable <- DT::renderDT(expr = {
     data <- incidenceRateDataFiltered()
@@ -746,37 +744,62 @@ shiny::shinyServer(function(input, output, session) {
     table <- standardDataTable(data)
     return(table)
   }, server = TRUE)
+  shiny::outputOptions(x = output,
+                       name = "incidenceRateTable", 
+                       suspendWhenHidden = FALSE)
   
   # Time distribution -----------------------------------------------------------------------------
-  timeDist <- reactive({
+  timeDistributionFromRemote <- reactive({
+    if (length(cohortIds()) > 0) {
     data <- getTimeDistributionResult(
       dataSource = dataSource,
-      cohortIds = cohortIds(),
-      databaseIds = input$databases
+      cohortIds = cohortIds()
     )
+    } else {
+      data <- dplyr::tibble()
+    }
+    return(data)
+  })
+  
+  timeDistributionFiltered <- reactive({
+    if (nrow(timeDistributionFromRemote()) > 0) {
+      data <- timeDistributionFromRemote() %>% 
+        dplyr::filter(.data$databaseId %in% input$databases)
+    } else {
+      data <- dplyr::tibble()
+    }
     return(data)
   })
   
   output$timeDisPlot <- ggiraph::renderggiraph(expr = {
     validate(need(length(input$databases) > 0, "No data sources chosen"))
-    data <- timeDist()
+    data <- timeDistributionFiltered()
     validate(need(nrow(data) > 0, paste0("No data for this combination")))
     
-    plot <- plotTimeDistribution(data = data, shortNameRef = cohort)
+    plot <- plotTimeDistribution(data = data, 
+                                 shortNameRef = cohort)
     return(plot)
   })
+  shiny::outputOptions(x = output,
+                       name = "timeDisPlot", 
+                       suspendWhenHidden = FALSE)
   
-  output$timeDistTable <- DT::renderDT(expr = {
-    data <- timeDist()
-    data <- data %>% dplyr::relocate(.data$timeMetric)
-    data <- addMetaDataInformationToResults(data)
-    colnames(data) <-
-      colnames(data) %>% stringr::str_replace_all(string = .,
-                                                  pattern = "Value",
-                                                  replacement = "")
+  output$timeDistributionTable <- DT::renderDT(expr = {
+    data <- timeDistributionFiltered()
+    if (nrow(data) > 0) {
+      data <- data %>% dplyr::relocate(.data$timeMetric)
+      data <- addMetaDataInformationToResults(data)
+      colnames(data) <-
+        colnames(data) %>% stringr::str_replace_all(string = .,
+                                                    pattern = "Value",
+                                                    replacement = "")
+    }
     table <- standardDataTable(data)
     return(table)
   }, server = TRUE)
+  shiny::outputOptions(x = output,
+                       name = "timeDistributionTable", 
+                       suspendWhenHidden = FALSE)
   
   # included concepts table --------------------------------------------------------------------------
   # output$includedConceptsTable <- DT::renderDT(expr = {
@@ -1053,6 +1076,9 @@ shiny::shinyServer(function(input, output, session) {
     table <- standardDataTable(data)
     return(table)
   }, server = TRUE)
+  shiny::outputOptions(x = output,
+                       name = "inclusionRuleTable", 
+                       suspendWhenHidden = FALSE)
   
   
   # Index event breakdown ----------------------------------------------------------------
@@ -1068,6 +1094,9 @@ shiny::shinyServer(function(input, output, session) {
     dataTable <- standardDataTable(data)
     return(dataTable)
   }, server = TRUE)
+  shiny::outputOptions(x = output,
+                       name = "breakdownTable", 
+                       suspendWhenHidden = FALSE)
   
   
   # Visit Context ---------------------------------------------------------------------------------------------
@@ -1082,6 +1111,9 @@ shiny::shinyServer(function(input, output, session) {
     data <- addMetaDataInformationToResults(data)
     table <- standardDataTable(data)
   }, server = TRUE)
+  shiny::outputOptions(x = output,
+                       name = "visitContextTable", 
+                       suspendWhenHidden = FALSE)
   
   
   # Characterization -----------------------------------------------------------------
@@ -1158,6 +1190,9 @@ shiny::shinyServer(function(input, output, session) {
     table <- standardDataTable(data = data)
     return(table)
   })
+  shiny::outputOptions(x = output,
+                       name = "characterizationTable", 
+                       suspendWhenHidden = FALSE)
   
   # covariateIdArray <- reactiveVal()
   # covariateIdArray(c())
@@ -1249,7 +1284,7 @@ shiny::shinyServer(function(input, output, session) {
                       .data$covariateName)
     return(data)
   })
-
+  
   output$temporalCharacterizationTable <-
     DT::renderDT(expr = {
       data <- temporalCharacterizationDataFiltered()
@@ -1257,6 +1292,9 @@ shiny::shinyServer(function(input, output, session) {
       table <- standardDataTable(data = data)
       return(table)
     }, server = TRUE)
+  shiny::outputOptions(x = output,
+                       name = "temporalCharacterizationTable", 
+                       suspendWhenHidden = FALSE)
   
   
   
@@ -1429,89 +1467,91 @@ shiny::shinyServer(function(input, output, session) {
     )
     return(plot)
   })
+  shiny::outputOptions(x = output,
+                       name = "overlapPlot", 
+                       suspendWhenHidden = FALSE)
   
   # Compare cohort characteristics --------------------------------------------
-  
-  computeBalance <- shiny::reactive(x = {
-    validate(need((length(cohortIds()) != 1),
-                  paste0("Please select atleast two different cohorts.")
-    ))
-    validate(need((length(input$databases) >= 1),
-                  paste0("Please select atleast one datasource.")
-    ))
-    covs1 <- getCovariateValueResult(
-      dataSource = dataSource,
-      cohortIds = cohortIds()
-    )
-    balance <- compareCohortCharacteristics(covs1, covs1) %>%
-      dplyr::mutate(absStdDiff = abs(.data$stdDiff))
-    return(balance)
-  })
-  
-  output$charCompareTable <- DT::renderDT(expr = {
-    balance <- computeBalance()
-    if (nrow(balance) == 0) {
-      return(dplyr::tibble(Note = "No data for the selected combination."))
-    }
-    
-    if (input$charCompareType == "Pretty table") {
-      table <- prepareTable1Comp(balance)
-      if (nrow(table) > 0) {
-        table <- table %>%
-          dplyr::arrange(.data$sortOrder) %>%
-          dplyr::select(-.data$sortOrder) %>%
-          addShortName(cohort,
-                       cohortIdColumn = "cohortId1",
-                       shortNameColumn = "shortName1") %>%
-          addShortName(cohort,
-                       cohortIdColumn = "cohortId2",
-                       shortNameColumn = "shortName2") %>%
-          dplyr::relocate(.data$shortName1, .data$shortName2) %>%
-          dplyr::select(-.data$cohortId1, -.data$cohortId2)
-      } else {
-        return(dplyr::tibble(Note = "No data for covariates that are part of pretty table."))
-      }
-      table <- standardDataTable(table)
-    } else {
-      table <- balance %>%
-        dplyr::select(
-          .data$cohortId1,
-          .data$cohortId2,
-          .data$covariateName,
-          .data$conceptId,
-          .data$mean1,
-          .data$sd1,
-          .data$mean2,
-          .data$sd2,
-          .data$stdDiff
-        ) %>%
-        addShortName(cohort,
-                     cohortIdColumn = "cohortId1",
-                     shortNameColumn = "shortName1") %>%
-        addShortName(cohort,
-                     cohortIdColumn = "cohortId2",
-                     shortNameColumn = "shortName2") %>%
-        dplyr::relocate(.data$shortName1, .data$shortName2) %>%
-        dplyr::select(-.data$cohortId1, -.data$cohortId2) %>%
-        dplyr::arrange(desc(abs(.data$stdDiff)))
-      table <- standardDataTable(data = table)
-    }
-    return(table)
-  }, server = TRUE)
-  
-  output$charComparePlot <- ggiraph::renderggiraph(expr = {
-    data <- computeBalance()
-    if (nrow(data) == 0) {
-      return(dplyr::tibble(Note = "No data for the selected combination."))
-    }
-    plot <-
-      plotCohortComparisonStandardizedDifference(
-        balance = data,
-        shortNameRef = cohort,
-        domain = input$domainId
-      )
-    return(plot)
-  })
+  # computeBalance <- shiny::reactive(x = {
+  #   validate(need((length(cohortIds()) != 1),
+  #                 paste0("Please select atleast two different cohorts.")
+  #   ))
+  #   validate(need((length(input$databases) >= 1),
+  #                 paste0("Please select atleast one datasource.")
+  #   ))
+  #   covs1 <- getCovariateValueResult(
+  #     dataSource = dataSource,
+  #     cohortIds = cohortIds()
+  #   )
+  #   balance <- compareCohortCharacteristics(covs1, covs1) %>%
+  #     dplyr::mutate(absStdDiff = abs(.data$stdDiff))
+  #   return(balance)
+  # })
+  # 
+  # output$charCompareTable <- DT::renderDT(expr = {
+  #   balance <- computeBalance()
+  #   if (nrow(balance) == 0) {
+  #     return(dplyr::tibble(Note = "No data for the selected combination."))
+  #   }
+  #   
+  #   if (input$charCompareType == "Pretty table") {
+  #     table <- prepareTable1Comp(balance)
+  #     if (nrow(table) > 0) {
+  #       table <- table %>%
+  #         dplyr::arrange(.data$sortOrder) %>%
+  #         dplyr::select(-.data$sortOrder) %>%
+  #         addShortName(cohort,
+  #                      cohortIdColumn = "cohortId1",
+  #                      shortNameColumn = "shortName1") %>%
+  #         addShortName(cohort,
+  #                      cohortIdColumn = "cohortId2",
+  #                      shortNameColumn = "shortName2") %>%
+  #         dplyr::relocate(.data$shortName1, .data$shortName2) %>%
+  #         dplyr::select(-.data$cohortId1, -.data$cohortId2)
+  #     } else {
+  #       return(dplyr::tibble(Note = "No data for covariates that are part of pretty table."))
+  #     }
+  #     table <- standardDataTable(table)
+  #   } else {
+  #     table <- balance %>%
+  #       dplyr::select(
+  #         .data$cohortId1,
+  #         .data$cohortId2,
+  #         .data$covariateName,
+  #         .data$conceptId,
+  #         .data$mean1,
+  #         .data$sd1,
+  #         .data$mean2,
+  #         .data$sd2,
+  #         .data$stdDiff
+  #       ) %>%
+  #       addShortName(cohort,
+  #                    cohortIdColumn = "cohortId1",
+  #                    shortNameColumn = "shortName1") %>%
+  #       addShortName(cohort,
+  #                    cohortIdColumn = "cohortId2",
+  #                    shortNameColumn = "shortName2") %>%
+  #       dplyr::relocate(.data$shortName1, .data$shortName2) %>%
+  #       dplyr::select(-.data$cohortId1, -.data$cohortId2) %>%
+  #       dplyr::arrange(desc(abs(.data$stdDiff)))
+  #     table <- standardDataTable(data = table)
+  #   }
+  #   return(table)
+  # }, server = TRUE)
+  # 
+  # output$charComparePlot <- ggiraph::renderggiraph(expr = {
+  #   data <- computeBalance()
+  #   if (nrow(data) == 0) {
+  #     return(dplyr::tibble(Note = "No data for the selected combination."))
+  #   }
+  #   plot <-
+  #     plotCohortComparisonStandardizedDifference(
+  #       balance = data,
+  #       shortNameRef = cohort,
+  #       domain = input$domainId
+  #     )
+  #   return(plot)
+  # })
   
   output$databaseInformationTable <- DT::renderDT(expr = {
     table <- database[, c("databaseId", "databaseName", "description")]

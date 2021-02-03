@@ -112,11 +112,11 @@ sidebarMenu <-
         shinydashboard::menuItem(text = "Cohort Overlap", tabName = "cohortOverlap"),
         infoId = "cohortOverlapInfo"
       ),
-    if (exists(x = "covariateValue"))
-      addInfo(
-        item = shinydashboard::menuItem(text = "Compare Cohort Char.", tabName = "compareCohortCharacterization"),
-        infoId = "compareCohortCharacterizationInfo"
-      ),
+    # if (exists(x = "covariateValue"))
+    #   addInfo(
+    #     item = shinydashboard::menuItem(text = "Compare Cohort Char.", tabName = "compareCohortCharacterization"),
+    #     infoId = "compareCohortCharacterizationInfo"
+    #   ),
     shinydashboard::menuItem(text = "Database information", tabName = "databaseInformation"),
     # Conditional dropdown boxes in the side bar ------------------------------------------------------
     shiny::conditionalPanel(
@@ -565,7 +565,7 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "timeDistribution",
-    cohortReference("timeDistSelectedCohort"),
+    cohortReference("timeDistributionSelectedCohort"),
     shiny::radioButtons(
       inputId = "timeDistributionType",
       label = "",
@@ -574,7 +574,7 @@ bodyTabItems <- shinydashboard::tabItems(
       inline = TRUE
     ),
     shiny::conditionalPanel(condition = "input.timeDistributionType=='Table'",
-                            DT::DTOutput("timeDistTable")),
+                            DT::DTOutput("timeDistributionTable")),
     shiny::conditionalPanel(
       condition = "input.timeDistributionType=='Plot'",
       shinydashboard::box(
@@ -795,58 +795,58 @@ bodyTabItems <- shinydashboard::tabItems(
       ggiraph::ggiraphOutput("overlapPlot", width = "100%", height = "100%")
     )
   ),
-  shinydashboard::tabItem(
-    tabName = "compareCohortCharacterization",
-    cohortReference("cohortCharCompareSelectedCohort"),
-    shiny::radioButtons(
-      inputId = "charCompareType",
-      label = "",
-      choices = c("Pretty table", "Raw table", "Plot"),
-      selected = "Pretty table",
-      inline = TRUE
-    ),
-    shiny::conditionalPanel(condition = "input.charCompareType=='Pretty table' | input.charCompareType=='Raw table'",
-                            DT::DTOutput("charCompareTable")),
-    shiny::conditionalPanel(
-      condition = "input.charCompareType=='Plot'",
-      shinydashboard::box(
-        title = "Compare Cohort Characterization",
-        width = NULL,
-        status = "primary",
-        shiny::htmlOutput("compareCohortCharacterizationSelectedCohort"),
-        shinyWidgets::pickerInput(
-          inputId = "domainId",
-          label = "Filter By Domain",
-          choices = c(
-            "all",
-            "condition",
-            "device",
-            "drug",
-            "measurement",
-            "observation",
-            "procedure",
-            "other"
-          ),
-          multiple = FALSE,
-          choicesOpt = list(style = rep_len("color: black;", 999)),
-          options = shinyWidgets::pickerOptions(
-            actionsBox = TRUE,
-            liveSearch = TRUE,
-            size = 10,
-            liveSearchStyle = 'contains',
-            liveSearchPlaceholder = "Type here to search",
-            virtualScroll = 50
-          )
-          
-        ),
-        ggiraph::ggiraphOutput(
-          outputId = "charComparePlot",
-          width = "100%",
-          height = "100%"
-        )
-      )
-    )
-  ),
+  # shinydashboard::tabItem(
+  #   tabName = "compareCohortCharacterization",
+  #   cohortReference("cohortCharCompareSelectedCohort"),
+  #   shiny::radioButtons(
+  #     inputId = "charCompareType",
+  #     label = "",
+  #     choices = c("Pretty table", "Raw table", "Plot"),
+  #     selected = "Pretty table",
+  #     inline = TRUE
+  #   ),
+  #   shiny::conditionalPanel(condition = "input.charCompareType=='Pretty table' | input.charCompareType=='Raw table'",
+  #                           DT::DTOutput("charCompareTable")),
+  #   shiny::conditionalPanel(
+  #     condition = "input.charCompareType=='Plot'",
+  #     shinydashboard::box(
+  #       title = "Compare Cohort Characterization",
+  #       width = NULL,
+  #       status = "primary",
+  #       shiny::htmlOutput("compareCohortCharacterizationSelectedCohort"),
+  #       shinyWidgets::pickerInput(
+  #         inputId = "domainId",
+  #         label = "Filter By Domain",
+  #         choices = c(
+  #           "all",
+  #           "condition",
+  #           "device",
+  #           "drug",
+  #           "measurement",
+  #           "observation",
+  #           "procedure",
+  #           "other"
+  #         ),
+  #         multiple = FALSE,
+  #         choicesOpt = list(style = rep_len("color: black;", 999)),
+  #         options = shinyWidgets::pickerOptions(
+  #           actionsBox = TRUE,
+  #           liveSearch = TRUE,
+  #           size = 10,
+  #           liveSearchStyle = 'contains',
+  #           liveSearchPlaceholder = "Type here to search",
+  #           virtualScroll = 50
+  #         )
+  #         
+  #       ),
+  #       ggiraph::ggiraphOutput(
+  #         outputId = "charComparePlot",
+  #         width = "100%",
+  #         height = "100%"
+  #       )
+  #     )
+  #   )
+  # ),
   shinydashboard::tabItem(tabName = "databaseInformation",
                           DT::DTOutput("databaseInformationTable"))
 )
