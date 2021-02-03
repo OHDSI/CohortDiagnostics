@@ -17,7 +17,7 @@ standardDataTable <- function(data,
   dataTableOption =
     list(
       pageLength = 10,
-      lengthMenu = c(5, 10, 15, 20, 100, 500, 1000),
+      lengthMenu = list(c(5, 10, 20, -1), c("5", "10", "20", "All")),
       lengthChange = TRUE,
       searching = searching,
       ordering = TRUE,
@@ -48,6 +48,37 @@ standardDataTable <- function(data,
       # processing = TRUE,
       autoWidth = TRUE
     )
+  listOfVariablesThatAreAlwaysFactors <- c('domainId',
+                                           'conceptClassId',
+                                           'vocabularyId',
+                                           'standardConcept',
+                                           'conceptSetName',
+                                           'conceptName',
+                                           'cohortId',
+                                           'cohortName',
+                                           'phenotypeId',
+                                           'phenotypeName',
+                                           'analysisName',
+                                           'startDay',
+                                           'endDay',
+                                           'analysisId',
+                                           'temporalChoices',
+                                           'covariateName',
+                                           'conceptId'
+                                           )
+  
+  convertVariableToFactor <- function(data, variables) {
+    for (i in (1:length(variables))) {
+      variable <- variables[i]
+      if (variable %in% colnames(data)) {    
+        data[[variable]] <- as.factor(data[[variable]]) %>%
+          dplyr::tibble()
+      }
+    }
+    return(data)
+  }
+  data <- convertVariableToFactor(data = data, 
+                                  variables = listOfVariablesThatAreAlwaysFactors)
   
   dataTable <- DT::datatable(
     data = data,
@@ -65,58 +96,32 @@ standardDataTable <- function(data,
     plugins = c('natural') #'ellipsis'
     # escape = FALSE
   )
-  listOfVariablesThatAreAlwaysFactors <- c('domainId',
-                                           'conceptClassId',
-                                           'vocabularyId',
-                                           'standardConcept',
-                                           'conceptSetName',
-                                           'conceptName',
-                                           'cohortId',
-                                           'cohortName',
-                                           'phenotypeId',
-                                           'phenotypeName',
-                                           'analysisName',
-                                           'startDay',
-                                           'endDay',
-                                           'analysisId'
-                                           )
-  
-  convertVariableToFactor <- function(data, variables) {
-    for (i in (1:length(variables))) {
-      variable <- variables[i]
-      if (variable %in% colnames(data)) {    
-        data[[variable]] <- as.factor(data[[variable]]) %>%
-          dplyr::tibble()
-      }
-    }
-    return(data)
-  }
   
   colNames <- colnames(data)
-  listRounds <-
-    colNames[stringr::str_detect(string = tolower(colNames),
-                                 pattern = 'entries|subjects|count|min|max|p10|p25|median|p75|p90|max|before|onvisitstart|after|duringvisit')]
-  listDecimal <-
-    colNames[stringr::str_detect(string = tolower(colNames),
-                                 pattern = 'average|standarddeviation|mean|sd|personyears|incidencerate')]
-  listPercent <-
-    colNames[stringr::str_detect(string = tolower(colNames),
-                                 pattern = 'percent')]
-  if (length(listRounds) > 0) {
-    dataTable <- DT::formatRound(table = dataTable,
-                                 columns = listRounds,
-                                 digits = 0)
-  }
-  if (length(listDecimal) > 0) {
-    dataTable <- DT::formatRound(table = dataTable,
-                                 columns = listDecimal,
-                                 digits = 2)
-  }
-  if (length(listPercent) > 0) {
-    dataTable <- DT::formatPercentage(table = dataTable,
-                                      columns = listPercent,
-                                      digits = 1)
-  }
+  # listRounds <-
+  #   colNames[stringr::str_detect(string = tolower(colNames),
+  #                                pattern = 'entries|subjects|count|min|max|p10|p25|median|p75|p90|max|before|onvisitstart|after|duringvisit')]
+  # listDecimal <-
+  #   colNames[stringr::str_detect(string = tolower(colNames),
+  #                                pattern = 'average|standarddeviation|mean|sd|personyears|incidencerate')]
+  # listPercent <-
+  #   colNames[stringr::str_detect(string = tolower(colNames),
+  #                                pattern = 'percent')]
+  # if (length(listRounds) > 0) {
+  #   dataTable <- DT::formatRound(table = dataTable,
+  #                                columns = listRounds,
+  #                                digits = 0)
+  # }
+  # if (length(listDecimal) > 0) {
+  #   dataTable <- DT::formatRound(table = dataTable,
+  #                                columns = listDecimal,
+  #                                digits = 2)
+  # }
+  # if (length(listPercent) > 0) {
+  #   dataTable <- DT::formatPercentage(table = dataTable,
+  #                                     columns = listPercent,
+  #                                     digits = 1)
+  # }
   return(dataTable)
 }
 

@@ -1,8 +1,14 @@
 library(magrittr)
 
 prepareTable1 <- function(covariates,
+                          covariateRef,
                           pathToCsv = "Table1Specs.csv") {
   covariates <- covariates %>%
+    dplyr::left_join(y = covariateRef %>% 
+                       dplyr::select(.data$covariateId,
+                                     .data$analysisId,
+                                     .data$covariateName), 
+                     by = "covariateId") %>% 
     dplyr::mutate(covariateName = stringr::str_to_sentence(
       stringr::str_replace_all(
         string = .data$covariateName,
@@ -21,7 +27,7 @@ prepareTable1 <- function(covariates,
       ~ tidyr::replace_na(data = .x, replace = '')
     ))
   
-  resultsTable <- tidyr::tibble()
+  resultsTable <- dplyr::tibble()
   
   if (nrow(specifications) == 0) {
     return(resultsTable)

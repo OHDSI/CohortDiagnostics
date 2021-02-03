@@ -464,19 +464,6 @@ plotCohortOverlap <- function(data,
   )
   checkmate::reportAssertions(collection = errorMessage)
   
-  
-  data <- data %>%
-    addShortName(
-      shortNameRef = shortNameRef,
-      cohortIdColumn = "targetCohortId",
-      shortNameColumn = "targetShortName"
-    ) %>%
-    addShortName(
-      shortNameRef = shortNameRef,
-      cohortIdColumn = "comparatorCohortId",
-      shortNameColumn = "comparatorShortName"
-    )
-  
   plotData <- data %>%
     dplyr::mutate(
       absTOnlySubjects = abs(.data$tOnlySubjects),
@@ -525,20 +512,20 @@ plotCohortOverlap <- function(data,
         .data$databaseId,
         "\n",
         "\n",
-        .data$targetShortName,
+        .data$targetCohortName,
         ' only: ',
         .data$tOnlyString,
         "\nBoth: ",
         .data$bothString,
         "\n",
-        .data$comparatorShortName,
+        .data$comparatorCohortName,
         ' only: ',
         .data$cOnlyString
       )
     ) %>%
     dplyr::select(
-      .data$targetShortName,
-      .data$comparatorShortName,
+      .data$targetCohortName,
+      .data$comparatorCohortName,
       .data$databaseId,
       .data$absTOnlySubjects,
       .data$absCOnlySubjects,
@@ -574,7 +561,7 @@ plotCohortOverlap <- function(data,
   plot <- ggplot2::ggplot(data = plotData) +
     ggplot2::aes(
       fill = .data$subjectsIn,
-      y = targetShortName,
+      y = targetCohortName,
       x = .data$value,
       tooltip = .data$tooltip,
       group = .data$subjectsIn
@@ -582,7 +569,7 @@ plotCohortOverlap <- function(data,
     ggplot2::ylab(label = "") +
     ggplot2::xlab(label = "") +
     ggplot2::scale_fill_manual("Subjects in", values = c(rgb(0.8, 0.2, 0.2), rgb(0.3, 0.2, 0.4), rgb(0.4, 0.4, 0.9))) +
-    ggplot2::facet_grid(databaseId ~ comparatorShortName) +
+    ggplot2::facet_grid(databaseId ~ comparatorCohortName) +
     ggplot2::theme(
       panel.background = ggplot2::element_blank(),
       strip.background = ggplot2::element_blank(),
@@ -597,9 +584,9 @@ plotCohortOverlap <- function(data,
   } else {
     plot <- plot + ggplot2::scale_x_continuous(labels = scales::comma)
   }
-  width <- 1 + 0.5 * length(unique(plotData$comparatorShortName))
+  width <- 1 + 0.5 * length(unique(plotData$comparatorCohortName))
   height <-
-    0.25 + 0.08 * nrow(dplyr::distinct(plotData, .data$databaseId, .data$targetShortName))
+    0.25 + 0.08 * nrow(dplyr::distinct(plotData, .data$databaseId, .data$targetCohortName))
   aspectRatio <- width / height
   plot <- ggiraph::girafe(
     ggobj = plot,

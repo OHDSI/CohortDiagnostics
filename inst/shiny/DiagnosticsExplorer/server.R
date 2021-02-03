@@ -1085,25 +1085,33 @@ shiny::shinyServer(function(input, output, session) {
   
   
   # Characterization -----------------------------------------------------------------
-  characterizationData <- shiny::reactive(x = {
+   characterizationDataFromRemote <- shiny::reactive(x = {
+    if (length(cohortIds()) > 0) {
+      data <- getCovariateValueResult(
+        dataSource = dataSource,
+        table = "covariateValue",
+        cohortIds = cohortIds()
+      )
+    } else {
+      data <- dplyr::tibble()
+    }
+    return(data)
+   })
+  
+  characterizationDataFiltered <- shiny::reactive(x = {
     validate(need(length(input$databases) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
-    data <- getCovariateValueResult(
-      dataSource = dataSource,
-      # analysisIds = analysisIds,
-      cohortIds = cohortIds(),
-      databaseIds = input$databases,
-      isTemporal = FALSE
-    )
+    data <- characterizationDataFromRemote() %>% 
+      dplyr::filter(databaseId %in% input$databases)
   })
   
   # Characterization --------------------------------------------------
   output$characterizationTable <- DT::renderDT(expr = {
-    data <- characterizationData()
+    data <- characterizationDataFiltered()
     if (input$charType == "Pretty") {
       analysisIds <- prettyAnalysisIds
       table <- data %>%
-        prepareTable1() %>%
+        prepareTable1(covariateRef = covariateRef) %>%
         dplyr::rename(percent = .data$value)
       characteristics <- table %>%
         dplyr::select(.data$characteristic,
@@ -1117,7 +1125,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::arrange(.data$position, desc(.data$header)) %>%
         dplyr::mutate(sortOrder = dplyr::row_number()) %>%
         dplyr::distinct()
-      
+
       characteristics <- dplyr::bind_rows(
         tidyr::crossing(
           characteristics %>%
@@ -1161,213 +1169,223 @@ shiny::shinyServer(function(input, output, session) {
   # })
   
   # Temporal characterization -----------------------------------------------------------------
-  temporalCharacterization <- shiny::reactive(x = {
-    validate(need(length(input$databases) > 0, "No data sources chosen"))
-    validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
-    validate(need(length(timeId()) > 0, "No time periods selected"))
-    data <- getCovariateValueResult(
-      dataSource = dataSource,
-      cohortIds = cohortIds(),
-      databaseIds = input$databases,
-      timeIds = timeId(),
-      isTemporal = TRUE
-    )
-  })
-  
-  # Table inside the table radio button
-  output$temporalCharacterizationTable <-
-    DT::renderDT(expr = {
-      data <- temporalCharacterization()
-      table <- addMetaDataInformationToResults(data)
-      table <- standardDataTable(data = table)
-      return(table)
-    }, server = TRUE)
-  
-  # reactive function to filter characterization data based on timeId or domainId
-  filterByTimeIdAndDomainId <- reactive({
-    data <- temporalCharacterization()
-    #filter data by timeId
-    if (input$timeIdChoicesFilter != 'All') {
-      data <- data %>%
-        dplyr::filter(
-          .data$timeIdChoices %in% input$timeIdChoicesFilter 
-        )
-    }
-    #filter data by domain
-    # domains <- c("condition", "device", "drug", "measurement", "observation", "procedure")
-    data$domain <-
-      tolower(stringr::str_extract(data$covariateName, "[a-z]+"))
-    data$domain[!data$domain %in% input$temporalDomainId] <- "other"
-    if (input$temporalDomainId != "all") {
-      data <- data %>%
-        dplyr::filter(.data$domain == !!input$temporalDomainId)
+  # Characterization -----------------------------------------------------------------
+  temporalCharacterizationDataFromRemote <- shiny::reactive(x = {
+    if (length(cohortIds()) > 0) {
+      data <- getCovariateValueResult(
+        dataSource = dataSource,
+        table = "temporalCovariateValue",
+        cohortIds = cohortIds()
+      )
+    } else {
+      data <- dplyr::tibble()
     }
     return(data)
   })
   
-  # Temporal characterization table that is shown on selecting the plot radio button
-  output$temporalCharacterizationCovariateTable <-
-    DT::renderDT(expr = {
-      data <- filterByTimeIdAndDomainId()
-      data <-
-        compareTemporalCohortCharacteristics(characteristics1 = data,
-                                             characteristics2 = data)
-      if (nrow(data) == 0) {
-        return(dplyr::tibble(Note = "No data for the selected combination."))
-      }
-      if (nrow(data) > 1000) {
-        data <- data %>%
-          dplyr::filter(.data$mean1 > 0.01 | .data$mean2 > 0.01)
-      }
-      data <- data %>%
-        dplyr::select(.data$covariateName)
-      options = list(
-        pageLength = 10,
-        searching = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE,
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        stateSave = TRUE,
-        dom = 'tip',
-        columnDefs = list(truncateStringDef(0, 40))
-      )
-      table <- DT::datatable(
-        data,
-        options = options,
-        rownames = FALSE,
-        colnames = colnames(table) %>%
-          camelCaseToTitleCase(),
-        escape = FALSE,
-        filter = "top",
-        class = "stripe nowrap compact"
-      )
-      return(table)
-    })
+  temporalCharacterizationDataFilterOptions <- shiny::reactive(x = {
+    data <- temporalCharacterizationDataFromRemote() %>% 
+      dplyr::select(.data$timeId,
+                    .data$covariateId) %>% 
+      dplyr::distinct() %>% 
+      dplyr::left_join(temporalCovariateChoices, by = "timeId") %>% 
+      dplyr::left_join(temporalCovariateRef, by = "covariateId") %>% 
+      dplyr::left_join(temporalAnalysisRef %>% 
+                         dplyr::select(.data$analysisId,
+                                       .data$analysisName,
+                                       .data$domainId), 
+                       by = "analysisId")
+    return(data)
+  })
   
-  # Temporal characterization table that shows the covariates selected by lasso method
-  output$temporalCharacterizationCovariateLassoTable <-
-    DT::renderDT(expr = {
-      data <- temporalCharacterization()
-      if (nrow(data) > 1000) {
-        data <- data %>%
-          dplyr::filter(.data$mean > 0.01)
-      }
-      if (nrow(data) == 0) {
-        return(dplyr::tibble(Note = "No data for the selected combination."))
-      }
-      table <- data %>%
-        dplyr::select(.data$covariateName)
-      table <- table[selectedPlotPoints(),]
-      options = list(
-        pageLength = 10,
-        searching = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE,
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        stateSave = TRUE,
-        dom = 'tip',
-        columnDefs = list(truncateStringDef(0, 40))
+  shiny::observe(x = {
+    if (nrow(temporalCharacterizationDataFromRemote()) > 0) {
+      data <- temporalCharacterizationDataFilterOptions()
+      shiny::updateSelectizeInput(
+        session = session,
+        inputId = "temporalAnalysisNameFilter",
+        label = "Analysis Choices",
+        selected = data$analysisName %>% unique(),
+        choices = data$analysisName %>% unique(),
+        server = TRUE
       )
-      
-      table <- DT::datatable(
-        table,
-        options = options,
-        rownames = FALSE,
-        colnames = colnames(table) %>%
-          camelCaseToTitleCase(),
-        escape = FALSE,
-        filter = "top",
-        class = "stripe nowrap compact"
+      shiny::updateSelectizeInput(
+        session = session,
+        inputId = "temporalDomainFilter",
+        label = "Domain Choices",
+        selected = data$domainId %>% unique(),
+        choices = data$domainId %>% unique(),
+        server = TRUE
       )
-      return(table)
-    })
-  
-  selectedtemporalCharacterizationCovariateRow <- reactive({
-    # _row_selected is an inbuilt property of DT that provides the index of selected row.
-    idx <-
-      input$temporalCharacterizationCovariateTable_rows_selected
-    if (is.null(idx)) {
-      return(NULL)
-    } else {
-      return(idx)
     }
   })
   
-  filteredTemporalCovariateName <- reactiveVal()
-  filteredTemporalCovariateName(c())
-  # collect the user selected covariate names
-  observeEvent(input$temporalCharacterizationCovariateTable_state, {
-    if (input$temporalCharacterizationCovariateTable_state$columns[[1]]$search$search != "")
-      filteredTemporalCovariateName(input$temporalCharacterizationCovariateTable_state$columns[[1]]$search$search)
-    else
-      filteredTemporalCovariateName(c())
+  temporalCharacterizationDataFiltered <- shiny::reactive(x = {
+    validate(need(length(input$databases) > 0, "No data sources chosen"))
+    validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
+    if (all(is.null(input$temporalChoicesFilter),
+            is.null(input$temporalAnalysisNameFilter),
+            is.null(input$temporalDomainFilter))) {
+      return(dplyr::tibble())
+    }
+    dataFilterOptions <- temporalCharacterizationDataFilterOptions() %>% 
+      dplyr::filter(choices %in% input$timeIdChoices,
+                    analysisName %in% input$temporalAnalysisNameFilter,
+                    domainId %in% input$temporalDomainFilter)
+    
+    data <- temporalCharacterizationDataFromRemote() %>% 
+      dplyr::filter(databaseId %in% input$databases) %>% 
+      dplyr::inner_join(y = dataFilterOptions,
+                        by = c("timeId" = "timeId",
+                               "covariateId" = "covariateId"
+                               )) %>% 
+      dplyr::select(-.data$timeId,
+                    -.data$covariateId,
+                    -.data$analysisId) %>% 
+      dplyr::rename(temporalChoices = .data$choices) %>% 
+      dplyr::relocate(.data$temporalChoices,
+                      .data$analysisName,
+                      .data$domainId,
+                      .data$covariateName)
+    return(data)
   })
+
+  output$temporalCharacterizationTable <-
+    DT::renderDT(expr = {
+      data <- temporalCharacterizationDataFiltered()
+      data <- addMetaDataInformationToResults(data = data)
+      table <- standardDataTable(data = data)
+      return(table)
+    }, server = TRUE)
   
-  selectedPlotPoints <- reactiveVal()
-  selectedPlotPoints(c())
-  # observe the selection of covariates inside the plot
-  observeEvent(input$compareTemporalCharacterizationPlot_selected, {
-    selectedPlotPoints(input$compareTemporalCharacterizationPlot_selected)
-  })
   
-  output$compareTemporalCharacterizationPlot <-
-    ggiraph::renderggiraph(expr = {
-      data <- filterByTimeIdAndDomainId()
-      if (nrow(data) == 0) {
-        return(dplyr::tibble(Note = "No data for the selected combination."))
-      }
-      data <-
-        compareTemporalCohortCharacteristics(characteristics1 = data,
-                                             characteristics2 = data)
-      if (!is.null(selectedtemporalCharacterizationCovariateRow())) {
-        data <- data[selectedtemporalCharacterizationCovariateRow(), ]
-      }
-      else if (!is.null(filteredTemporalCovariateName())) {
-        data <- data %>%
-          dplyr::filter(grepl(filteredTemporalCovariateName(), .data$covariateName))
-      }
-      
-      if (nrow(data) > 1000) {
-        data <- data %>%
-          dplyr::filter(.data$mean1 > 0.01 | .data$mean2 > 0.01)
-      }
-      plot <- plotTemporalCohortComparison(
-        balance = data,
-        shortNameRef = cohort,
-        domain = input$temporalDomainId
-      )
-      return(plot)
-    })
   
-  output$compareTemporalCharacterizationLassoPlot <-
-    ggiraph::renderggiraph(expr = {
-      data <- filterByTimeIdAndDomainId()
-      if (nrow(data) == 0) {
-        return(dplyr::tibble(Note = "No data for the selected combination."))
-      }
-      data <-
-        compareTemporalCohortCharacteristics(characteristics1 = data,
-                                             characteristics2 = data)
-      if (nrow(data) > 1000) {
-        data <- data %>%
-          dplyr::filter(.data$mean1 > 0.01 | .data$mean2 > 0.01)
-      }
-      data <- data[selectedPlotPoints(), ]
-      plot <- plotTemporalLassoCohortComparison(
-        balance = data,
-        shortNameRef = cohort,
-        domain = input$temporalDomainId
-      )
-      return(plot)
-    })
+  # 
+  # 
+  # 
+  # # Temporal characterization table that shows the covariates selected by lasso method
+  # output$temporalCharacterizationCovariateLassoTable <-
+  #   DT::renderDT(expr = {
+  #     data <- temporalCharacterizationDataFiltered()
+  #     if (nrow(data) > 1000) {
+  #       data <- data %>%
+  #         dplyr::filter(.data$mean > 0.01)
+  #     }
+  #     table <- data %>%
+  #       dplyr::select(.data$covariateName)
+  #     table <- table[selectedPlotPoints(),]
+  #     options = list(
+  #       pageLength = 10,
+  #       searching = TRUE,
+  #       searchHighlight = TRUE,
+  #       scrollX = TRUE,
+  #       lengthChange = TRUE,
+  #       ordering = TRUE,
+  #       paging = TRUE,
+  #       stateSave = TRUE,
+  #       dom = 'tip',
+  #       columnDefs = list(truncateStringDef(0, 40))
+  #     )
+  #     
+  #     table <- DT::datatable(
+  #       table,
+  #       options = options,
+  #       rownames = FALSE,
+  #       colnames = colnames(table) %>%
+  #         camelCaseToTitleCase(),
+  #       escape = FALSE,
+  #       filter = "top",
+  #       class = "stripe nowrap compact"
+  #     )
+  #     return(table)
+  #   })
+  # 
+  # selectedtemporalCharacterizationCovariateRow <- reactive({
+  #   # _row_selected is an inbuilt property of DT that provides the index of selected row.
+  #   idx <-
+  #     input$temporalCharacterizationCovariateTable_rows_selected
+  #   if (is.null(idx)) {
+  #     return(NULL)
+  #   } else {
+  #     return(idx)
+  #   }
+  # })
+  # 
+  # filteredTemporalCovariateName <- reactiveVal()
+  # filteredTemporalCovariateName(c())
+  # # collect the user selected covariate names
+  # observeEvent(input$temporalCharacterizationCovariateTable_state, {
+  #   if (input$temporalCharacterizationCovariateTable_state$columns[[1]]$search$search != "")
+  #     filteredTemporalCovariateName(input$temporalCharacterizationCovariateTable_state$columns[[1]]$search$search)
+  #   else
+  #     filteredTemporalCovariateName(c())
+  # })
+  # 
+  # selectedPlotPoints <- reactiveVal()
+  # selectedPlotPoints(c())
+  # # observe the selection of covariates inside the plot
+  # observeEvent(input$compareTemporalCharacterizationPlot_selected, {
+  #   selectedPlotPoints(input$compareTemporalCharacterizationPlot_selected)
+  # })
+  # 
+  # output$compareTemporalCharacterizationPlot <-
+  #   ggiraph::renderggiraph(expr = {
+  #     data <- filterByTimeIdAndDomainId()
+  #     if (nrow(data) == 0) {
+  #       return(dplyr::tibble(Note = "No data for the selected combination."))
+  #     }
+  #     data <-
+  #       compareTemporalCohortCharacteristics(characteristics1 = data,
+  #                                            characteristics2 = data)
+  #     if (!is.null(selectedtemporalCharacterizationCovariateRow())) {
+  #       data <- data[selectedtemporalCharacterizationCovariateRow(), ]
+  #     }
+  #     else if (!is.null(filteredTemporalCovariateName())) {
+  #       data <- data %>%
+  #         dplyr::filter(grepl(filteredTemporalCovariateName(), .data$covariateName))
+  #     }
+  #     
+  #     if (nrow(data) > 1000) {
+  #       data <- data %>%
+  #         dplyr::filter(.data$mean1 > 0.01 | .data$mean2 > 0.01)
+  #     }
+  #     plot <- plotTemporalCohortComparison(
+  #       balance = data,
+  #       shortNameRef = cohort,
+  #       domain = input$temporalDomainId
+  #     )
+  #     return(plot)
+  #   })
+  # 
+  # output$compareTemporalCharacterizationLassoPlot <-
+  #   ggiraph::renderggiraph(expr = {
+  #     data <- filterByTimeIdAndDomainId()
+  #     if (nrow(data) == 0) {
+  #       return(dplyr::tibble(Note = "No data for the selected combination."))
+  #     }
+  #     data <-
+  #       compareTemporalCohortCharacteristics(characteristics1 = data,
+  #                                            characteristics2 = data)
+  #     if (nrow(data) > 1000) {
+  #       data <- data %>%
+  #         dplyr::filter(.data$mean1 > 0.01 | .data$mean2 > 0.01)
+  #     }
+  #     data <- data[selectedPlotPoints(), ]
+  #     plot <- plotTemporalLassoCohortComparison(
+  #       balance = data,
+  #       shortNameRef = cohort,
+  #       domain = input$temporalDomainId
+  #     )
+  #     return(plot)
+  #   })
+  
+  
+  
+  
   
   
   #Cohort Overlap ------------------------
-  cohortOverlap <- reactive({
+  cohortOverlapFromRemote <- reactive({
     combisOfTargetComparator <-
       tidyr::crossing(targetCohortId = cohortIds(),
                       comparatorCohortId = cohortIds()) %>%
@@ -1377,22 +1395,28 @@ shiny::shinyServer(function(input, output, session) {
       nrow(combisOfTargetComparator) > 0,
       paste0("Please select at least two cohorts.")
     ))
-    
     data <- getCohortOverlapResult(
       dataSource = dataSource,
       targetCohortIds = combisOfTargetComparator$targetCohortId,
-      comparatorCohortIds = combisOfTargetComparator$comparatorCohortId,
-      databaseIds = input$databases
+      comparatorCohortIds = combisOfTargetComparator$comparatorCohortId
     )
+    return(data)
+  })
+  
+  cohortOverlaDataFiltered <- reactive({
+    data <- cohortOverlapFromRemote()
+    data <- data %>% 
+      dplyr::filter(.data$databaseId %in% input$databases)
+    return(data)
   })
   
   output$overlapPlot <- ggiraph::renderggiraph(expr = {
+    data <- cohortOverlaDataFiltered()
     validate(need(
       length(cohortIds()) > 0,
       paste0("Please select Target Cohort(s)")
     ))
     
-    data <- cohortOverlap()
     validate(need(
       !is.null(data),
       paste0("No cohort overlap data for this combination")
@@ -1417,9 +1441,7 @@ shiny::shinyServer(function(input, output, session) {
     ))
     covs1 <- getCovariateValueResult(
       dataSource = dataSource,
-      cohortIds = cohortIds(),
-      databaseIds = input$databases,
-      isTemporal = FALSE
+      cohortIds = cohortIds()
     )
     balance <- compareCohortCharacteristics(covs1, covs1) %>%
       dplyr::mutate(absStdDiff = abs(.data$stdDiff))

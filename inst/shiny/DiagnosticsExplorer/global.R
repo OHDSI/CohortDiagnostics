@@ -232,16 +232,36 @@ if (isValidConnection) {
   # some tables are 'dummy' tables.
   loadRequiredTables(tableName = "database",
                      databaseSChema = resultsDatabaseSchema,
-                     required = TRUE)
+                     required = TRUE,
+                     connection = connectionPool)
   loadRequiredTables(tableName = "cohort",
                      databaseSChema = resultsDatabaseSchema,
-                     required = TRUE)
-  loadRequiredTables(tableName = "cohort_extra", databaseSChema = resultsDatabaseSchema)
-  loadRequiredTables(tableName = "phenotype_description", databaseSChema = resultsDatabaseSchema)
-  loadRequiredTables(tableName = "temporal_time_ref", databaseSChema = resultsDatabaseSchema)
-  loadRequiredTables(tableName = "concept_sets", databaseSChema = resultsDatabaseSchema)
-  loadRequiredTables(tableName = "analysis_ref", databaseSChema = resultsDatabaseSchema)
-  loadRequiredTables(tableName = "temporal_analysis_ref", databaseSChema = resultsDatabaseSchema)
+                     required = TRUE,
+                     connection = connectionPool)
+  loadRequiredTables(tableName = "cohort_extra", 
+                     databaseSChema = resultsDatabaseSchema,
+                     connection = connectionPool)
+  loadRequiredTables(tableName = "phenotype_description", 
+                     databaseSChema = resultsDatabaseSchema,
+                     connection = connectionPool)
+  loadRequiredTables(tableName = "temporal_time_ref", 
+                     databaseSChema = resultsDatabaseSchema,
+                     connection = connectionPool)
+  loadRequiredTables(tableName = "concept_sets", 
+                     databaseSChema = resultsDatabaseSchema,
+                     connection = connectionPool)
+  loadRequiredTables(tableName = "analysis_ref", 
+                     databaseSChema = resultsDatabaseSchema,
+                     connection = connectionPool)
+  loadRequiredTables(tableName = "temporal_analysis_ref", 
+                     databaseSChema = resultsDatabaseSchema,
+                     connection = connectionPool)
+  loadRequiredTables(tableName = "covariate_ref", 
+                     databaseSChema = resultsDatabaseSchema,
+                     connection = connectionPool)
+  loadRequiredTables(tableName = "temporal_covariate_ref", 
+                     databaseSChema = resultsDatabaseSchema,
+                     connection = connectionPool)
   
   for (table in c(dataModelSpecifications$tableName, "recommender_set")) {
     if (table %in% resultsTablesOnServer &&

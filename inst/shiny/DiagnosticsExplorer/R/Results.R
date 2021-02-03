@@ -37,7 +37,7 @@ renderTranslateQuerySql <-
       if (snakeCaseToCamelCase) {
         colnames(data) <- SqlRender::snakeCaseToCamelCase(colnames(data))
       }
-      return(data)
+      return(data %>% dplyr::tibble())
     } else {
       return(
         DatabaseConnector::renderTranslateQuerySql(
@@ -45,7 +45,7 @@ renderTranslateQuerySql <-
           sql = sql,
           ...,
           snakeCaseToCamelCase = snakeCaseToCamelCase
-        )
+        ) %>% dplyr::tibble()
       )
     }
   }
@@ -82,8 +82,7 @@ getCohortCountResult <- function(dataSource = .GlobalEnv,
         cohort_ids = cohortIds,
         database_id = quoteLiterals(databaseIds),
         snakeCaseToCamelCase = TRUE
-      ) %>%
-      tidyr::tibble()
+      )
   }
   return(data)
 }
@@ -108,8 +107,7 @@ getTimeDistributionResult <- function(dataSource = .GlobalEnv,
         cohort_ids = cohortIds,
         database_ids = quoteLiterals(databaseIds),
         snakeCaseToCamelCase = TRUE
-      ) %>%
-      tidyr::tibble()
+      )
   }
   data <- data %>%
     dplyr::mutate(timeMetric = as.factor(.data$timeMetric))
@@ -149,8 +147,7 @@ getIncidenceRateResult <- function(dataSource = .GlobalEnv,
         cohort_ids = cohortIds,
         personYears = minPersonYears,
         snakeCaseToCamelCase = TRUE
-      ) %>%
-      tidyr::tibble()
+      )
   }
   data <- data %>% 
     dplyr::mutate(gender = dplyr::case_when(.data$gender == "" ~ "All", TRUE ~ .data$gender),
@@ -183,8 +180,7 @@ getInclusionRuleStats <- function(dataSource = .GlobalEnv,
         cohort_ids = cohortIds,
         database_id = quoteLiterals(databaseIds),
         snakeCaseToCamelCase = TRUE
-      ) %>%
-      tidyr::tibble()
+      )
   }
   data <- data %>%
     dplyr::select(
@@ -245,8 +241,7 @@ getIndexEventBreakdown <- function(dataSource = .GlobalEnv,
         cohort_ids = cohortIds,
         database_id = quoteLiterals(databaseIds),
         snakeCaseToCamelCase = TRUE
-      ) %>%
-      tidyr::tibble()
+      )
   }
   data <-
     data %>% dplyr::relocate(
@@ -304,8 +299,7 @@ getVisitContextResults <- function(dataSource = .GlobalEnv,
         cohort_ids = cohortIds,
         database_id = quoteLiterals(databaseIds),
         snakeCaseToCamelCase = TRUE
-      ) %>%
-      tidyr::tibble()
+      )
   }
   data <- data %>%
     tidyr::pivot_wider(
@@ -390,8 +384,7 @@ getIncludedConceptResult <- function(dataSource = .GlobalEnv,
         cohort_id = cohortId,
         database_ids = quoteLiterals(databaseIds),
         snakeCaseToCamelCase = TRUE
-      ) %>%
-      tidyr::tibble()
+      )
   }
   
   return(data)
@@ -446,8 +439,7 @@ getOrphanConceptResult <- function(dataSource = .GlobalEnv,
         cohort_id = cohortId,
         database_ids = quoteLiterals(databaseIds),
         snakeCaseToCamelCase = TRUE
-      ) %>%
-      tidyr::tibble()
+      )
   }
   
   return(data)
@@ -456,35 +448,37 @@ getOrphanConceptResult <- function(dataSource = .GlobalEnv,
 
 getCohortOverlapResult <- function(dataSource = .GlobalEnv,
                                    targetCohortIds,
-                                   comparatorCohortIds,
-                                   databaseIds) {
+                                   comparatorCohortIds) {
   errorMessage <- checkmate::makeAssertCollection()
-  errorMessage <-
-    checkErrorCohortIdsDatabaseIds(
-      cohortIds = targetCohortIds,
-      databaseIds = databaseIds,
-      errorMessage = errorMessage
-    )
-  errorMessage <-
-    checkErrorCohortIdsDatabaseIds(
-      cohortIds = comparatorCohortIds,
-      databaseIds = databaseIds,
-      errorMessage = errorMessage
-    )
+  checkmate::assertDouble(
+    x = targetCohortIds,
+    null.ok = FALSE,
+    lower = 1,
+    upper = 2 ^ 53,
+    any.missing = FALSE,
+    add = errorMessage
+  )  
+  checkmate::assertDouble(
+    x = comparatorCohortIds,
+    null.ok = FALSE,
+    lower = 1,
+    upper = 2 ^ 53,
+    any.missing = FALSE,
+    add = errorMessage
+  )
+  checkmate::reportAssertions(collection = errorMessage)
   
   if (is(dataSource, "environment")) {
     data <- get("cohortOverlap", envir = dataSource) %>%
       dplyr::filter(
         .data$targetCohortId %in% !!targetCohortIds &
-          .data$comparatorCohortId %in% !!comparatorCohortIds &
-          .data$databaseId %in% !!databaseIds
+          .data$comparatorCohortId %in% !!comparatorCohortIds
       ) %>%
       dplyr::inner_join(
         dplyr::select(
           get("cohort", envir = dataSource),
           targetCohortId = .data$cohortId,
-          targetCohortName = .data$cohortName,
-          cohortName = .data$cohortName
+          targetCohortName = .data$cohortName
         ),
         by = "targetCohortId"
       ) %>%
@@ -506,8 +500,7 @@ getCohortOverlapResult <- function(dataSource = .GlobalEnv,
               INNER JOIN @results_database_schema.cohort comparator_cohort
                 ON cohort_overlap.comparator_cohort_id = comparator_cohort.cohort_id
               WHERE target_cohort_id in (@targetCohortId)
-              AND comparator_cohort_id in (@comparatorCohortId)
-            	AND database_id in (@databaseId);"
+              AND comparator_cohort_id in (@comparatorCohortId);"
     data <-
       renderTranslateQuerySql(
         connection = dataSource$connection,
@@ -515,165 +508,51 @@ getCohortOverlapResult <- function(dataSource = .GlobalEnv,
         results_database_schema = dataSource$resultsDatabaseSchema,
         targetCohortId = targetCohortIds,
         comparatorCohortId = comparatorCohortIds,
-        databaseId = quoteLiterals(databaseIds),
         snakeCaseToCamelCase = TRUE
-      ) %>%
-      tidyr::tibble()
+      )
   }
   
   if (nrow(data) == 0) {
-    return(tidyr::tibble())
+    return(dplyr::tibble())
   }
   return(data)
 }
 
 getCovariateValueResult <- function(dataSource = .GlobalEnv,
-                                    cohortIds,
-                                    # analysisIds = NULL,
-                                    databaseIds,
-                                    timeIds = NULL,
-                                    isTemporal = FALSE) {
+                                    table = "covariate_value",
+                                    cohortIds) {
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
-  checkmate::assertLogical(
-    x = isTemporal,
+  checkmate::assertDouble(
+    x = cohortIds,
+    null.ok = FALSE,
+    lower = 1,
+    upper = 2 ^ 53,
     any.missing = FALSE,
-    min.len = 1,
-    max.len = 1,
     add = errorMessage
   )
-  errorMessage <-
-    checkErrorCohortIdsDatabaseIds(
-      cohortIds = cohortIds,
-      databaseIds = databaseIds,
-      errorMessage = errorMessage
-    )
-  if (isTemporal) {
-    checkmate::assertIntegerish(
-      x = timeIds,
-      lower = 0,
-      any.missing = FALSE,
-      unique = TRUE,
-      null.ok = TRUE,
-      add = errorMessage
-    )
-  }
+  checkmate::assertCharacter(x = table, add = errorMessage)
+  checkmate::assertChoice(x = table, 
+                          choices = c("covariateValue",
+                                      "temporalCovariateValue")
+                          , add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
-  
-  
-  if (isTemporal) {
-    table <- "temporalCovariateValue"
-    refTable <- "temporalCovariateRef"
-    timeRefTable <- "temporalTimeRef"
-  } else {
-    table <- "covariateValue"
-    refTable <- "covariateRef"
-    timeRefTable <- ""
-  }
   
   if (is(dataSource, "environment")) {
     data <- get(table, envir = dataSource) %>%
-      dplyr::filter(.data$cohortId %in% !!cohortIds,
-                    .data$databaseId %in% !!databaseIds) %>%
-      dplyr::inner_join(get(refTable, envir = dataSource), by = "covariateId")
-    
-    # if (!is.null(analysisIds)) {
-    #   data <- data %>%
-    #     dplyr::filter(.data$analysisId %in% analysisIds)
-    # }
-    if (isTemporal) {
-      data <- data %>%
-        dplyr::inner_join(get(timeRefTable, envir = dataSource), by = "timeId")
-      if (!is.null(timeIds)) {
-        data <- data %>%
-          dplyr::filter(.data$timeId %in% timeIds)
-      }
-    }
+      dplyr::filter(.data$cohortId %in% !!cohortIds)
   } else {
-    sql <- "SELECT covariate.*,
-              covariate_name,
-            {@time_ref_table != \"\"} ? {
-              start_day,
-              end_day,
-            }
-              concept_id,
-              analysis_id
-            FROM  @results_database_schema.@table covariate
-            INNER JOIN @results_database_schema.@ref_table covariate_ref
-              ON covariate.covariate_id = covariate_ref.covariate_id
-            {@time_ref_table != \"\"} ? {
-            INNER JOIN @results_database_schema.@time_ref_table time_ref
-              ON covariate.time_id = time_ref.time_id
-            }
-            WHERE cohort_id in (@cohort_ids)
-            {@time_ref_table != \"\" & @time_ids != \"\"} ? {  AND covariate.time_id IN (@time_ids)}
-            --{@analysis_ids != \"\"} ? {  AND analysis_id IN (@analysis_ids)}
-            	AND database_id in (@databaseIds);"
-    if (is.null(timeIds)) {
-      timeIds <- ""
-    }
-    # if (is.null(analysisIds)) {
-    #   analysisIds <- ""
-    # }
-    # bringing down a lot of covariateName is probably slowing the return.
-    # An alternative is to create two temp tables - one of it has distinct values of covariateId, covariateName
-    data <-
-      renderTranslateQuerySql(
-        connection = dataSource$connection,
-        sql = sql,
-        table = SqlRender::camelCaseToSnakeCase(table),
-        ref_table = SqlRender::camelCaseToSnakeCase(refTable),
-        time_ref_table = SqlRender::camelCaseToSnakeCase(timeRefTable),
-        results_database_schema = dataSource$resultsDatabaseSchema,
-        cohort_ids = cohortIds,
-        # analysis_ids = analysisIds,
-        databaseIds = quoteLiterals(databaseIds),
-        time_ids = timeIds,
-        snakeCaseToCamelCase = TRUE
-      ) %>%
-      tidyr::tibble()
-  }
-  
-  if (isTemporal) {
-    analysisRef <- temporalAnalysisRef
-  }
-  
-  data <- data %>%
-    dplyr::left_join(
-      y = analysisRef %>% dplyr::select(
-        .data$analysisId,
-        .data$domainId,
-        .data$analysisName,
-        .data$isBinary
-      ),
-      by = c('analysisId')
-    ) %>%
-    dplyr::relocate(
-      .data$databaseId,
-      .data$cohortId,
-      .data$analysisId,
-      .data$domainId,
-      .data$analysisName,
-      .data$isBinary,
-      .data$covariateId,
-      .data$covariateName
-    ) %>%
-    dplyr::mutate(
-      analysisId = as.factor(.data$analysisId),
-      domainId = as.factor(.data$domainId),
-      analysisName = as.factor(.data$analysisName),
-      isBinary = as.factor(.data$isBinary),
-      covariateId = as.factor(.data$covariateId),
-      covariateName = as.factor(.data$covariateName)
-    )
-  if (isTemporal) {
-    data <- data %>%
-      dplyr::inner_join(temporalCovariateChoices %>%
-                          dplyr::rename(timeIdChoices = .data$choices),
-                        by = "timeId") %>%
-      dplyr::select(-.data$timeId, -.data$startDay, -.data$endDay) %>%
-      dplyr::mutate(timeIdChoices = as.factor(.data$timeIdChoices)) %>%
-      dplyr::relocate(.data$timeIdChoices)
+    sql <- "
+    SELECT *
+    FROM @results_database_schema.@table
+    WHERE cohort_id IN (@cohort_ids);
+    "
+    data <- renderTranslateQuerySql(connection = dataSource$connection,
+                            sql = sql,
+                            table = camelCaseToSnakeCase(table),
+                            results_database_schema = dataSource$resultsDatabaseSchema,
+                            cohort_ids = cohortIds,
+                            snakeCaseToCamelCase = TRUE)
   }
   return(data)
 }
@@ -703,8 +582,7 @@ getConceptDetails <- function(dataSource = .GlobalEnv,
         vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
         concept_ids = conceptIds,
         snakeCaseToCamelCase = TRUE
-      ) %>%
-      tidyr::tibble()
+      )
   }
   return(data)
 }
@@ -751,8 +629,7 @@ resolveConceptSet <-
           sql = sql,
           vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
           snakeCaseToCamelCase = TRUE
-        ) %>%
-        tidyr::tibble()
+        )
     }
     return(data %>% dplyr::arrange(.data$conceptId))
   }
@@ -842,8 +719,7 @@ getSearchTerms <- function(dataSource, includeDescendants = FALSE) {
         results_database_schema = dataSource$resultsDatabaseSchema,
         vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
         snakeCaseToCamelCase = TRUE
-      ) %>%
-      tidyr::tibble()
+      )
     return(data)
   }
 }
