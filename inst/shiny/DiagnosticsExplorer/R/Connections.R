@@ -17,13 +17,13 @@ loadRequiredTables <- function(databaseSChema,
                                connection) {
   if (required) {
     tryCatch(expr = {
-      table <- DatabaseConnector::dbReadTable(connectionPool, 
-                                              paste(databaseSChema, tableName, sep = "."))
+      table <- DatabaseConnector::dbReadTable(conn = connection, 
+                                              name = paste(databaseSChema, tableName, sep = "."))
     }, error = function(err) {
       stop("Error reading from ", paste(databaseSChema, tableName, sep = "."), ": ", err$message)
     })} else {
-      table <- DatabaseConnector::dbReadTable(connectionPool, 
-                                              paste(databaseSChema, tableName, sep = "."))
+      table <- DatabaseConnector::dbReadTable(conn = connection, 
+                                              name = paste(databaseSChema, tableName, sep = "."))
     }
   colnames(table) <- snakeCaseToCamelCase(colnames(table))
   table <- dplyr::tibble(table)

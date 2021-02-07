@@ -1,7 +1,6 @@
 queryRenderedSqlFromDatabase <- function(connectionDetails = NULL,
-                                         connection = NULL, 
+                                         connection = NULL,
                                          sql) {
-  
   # Set up connection to server ----------------------------------------------------
   if (is.null(connection)) {
     if (!is.null(connectionDetails)) {
@@ -12,9 +11,12 @@ queryRenderedSqlFromDatabase <- function(connectionDetails = NULL,
     }
   }
   
-  data <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                                     sql = sql,
-                                                     snakeCaseToCamelCase = TRUE) %>% 
+  data <-
+    DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = sql,
+      snakeCaseToCamelCase = TRUE
+    ) %>%
     dplyr::tibble()
   return(data)
 }
