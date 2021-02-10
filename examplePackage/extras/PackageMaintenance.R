@@ -14,7 +14,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+library(magrittr)
 packageName = "examplePackage"
+
+
+##### use this code if you would like to import cohort definitions from Atlas. This code will generate
+##### cohortDiagnostics specifications using ROhdsiWebApi
+# packageDirectory <- rstudioapi::getActiveProject()
+# unlink(file.path(dir, 'inst', 'settings'))
+# dir.create(path = file.path(dir, 'inst', 'settings'), recursive = TRUE, showWarnings = FALSE)
+# atlasCohortId <- c() # enter your Altas cohort ids
+# baseUrl <- "" # enter the base Url of your Atlas webapi instance. Note this does not work on security enabled Atlas.
+# cohortsToCreate <- list()
+# for (i in (1:length(atlasCohortId))) {
+#   df <- tidyr::tibble(atlasId = atlasCohortId[[i]],
+#                       referentConceptId = 0,
+#                       webApiCohortId = atlasCohortId[[i]], 
+#                       cohortId = atlasCohortId[[i]], 
+#                       ROhdsiWebApi::getCohortDefinition(cohortId = atlasCohortId[[i]],
+#                                                         baseUrl = baseUrl)$name)),
+#                       cohortName = stringr::str_trim(stringr::str_squish(
+#                       ROhdsiWebApi::getCohortDefinition(cohortId = atlasCohortId[[i]],
+#                                                         baseUrl = baseUrl)$name)),
+#                       logicDescription = 'None provided')
+#   cohortsToCreate[[i]] <- df
+# }
+# cohortsToCreate <- dplyr::bind_rows(cohortsToCreate)
+# readr::write_excel_csv(x = cohortsToCreate, file = "inst/settings/CohortsToCreate.csv")
+# #### Insert cohort definitions from ATLAS into package -----------------------
+# ROhdsiWebApi::insertCohortDefinitionSetInPackage(fileName = "inst/settings/CohortsToCreate.csv",
+#                                                  baseUrl = baseUrl,
+#                                                  insertTableSql = TRUE,
+#                                                  insertCohortCreationR = TRUE,
+#                                                  generateStats = TRUE,
+#                                                  packageName = packageName)
 
 # Format and check code ---------------------------------------------------
 OhdsiRTools::formatRFolder()
@@ -24,15 +57,6 @@ OhdsiRTools::updateCopyrightYearFolder()
 # Create manual -----------------------------------------------------------
 shell("rm extras/examplePackage.pdf")
 shell("R CMD Rd2pdf ./ --output=extras/examplePackage.pdf")
-
-
-# Insert cohort definitions from ATLAS into package -----------------------
-ROhdsiWebApi::insertCohortDefinitionSetInPackage(fileName = "inst/settings/CohortsToCreate.csv",
-                                                 baseUrl = Sys.getenv("ohdsiBaseUrl"),
-                                                 insertTableSql = TRUE,
-                                                 insertCohortCreationR = TRUE,
-                                                 generateStats = TRUE,
-                                                 packageName = packageName)
 
 # Store environment in which the study was executed -----------------------
 OhdsiRTools::insertEnvironmentSnapshotInPackage(packageName)
