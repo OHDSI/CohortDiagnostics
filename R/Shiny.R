@@ -145,7 +145,7 @@ preMergeDiagnosticsFiles <- function(dataFolder, tempFolder = tempdir()) {
                                    col_types = readr::cols(),
                                    guess_max = min(1e6))
         if (nrow(newData) > 0) {
-          checkColumnNames(table = newData, 
+          newData <- checkFixColumnNames(table = newData, 
                            tableName = tableName, 
                            zipFileName = zipFiles$zipFile[i],
                            specifications = specifications)

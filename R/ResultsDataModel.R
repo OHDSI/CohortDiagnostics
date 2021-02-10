@@ -27,7 +27,32 @@ getResultsDataModelSpecifications <- function() {
   return(resultsDataModelSpecifications)
 }
 
-checkColumnNames <- function(table, tableName, zipFileName, specifications = getResultsDataModelSpecifications()) {
+fixCohortTableMetadataForBackwardCompatibility <- function(cohort) {
+  if (!'metadata' %in% colnames(cohort)) {
+    data <- list()
+    for (i in (1:nrow(cohort))) {
+      data[[i]] <- cohort[i, ]
+      colnames <- colnames(data[[i]])
+      metaDataList <- list()
+      for (j in (1:length(colnames))) {
+        metaDataList[[colnames[[j]]]] = data[[i]][colnames[[j]]] %>% dplyr::pull()
+      }
+      data[[i]]$metadata <-
+        RJSONIO::toJSON(metaDataList, pretty = TRUE)
+    }
+    cohort <- dplyr::bind_rows(data)
+  }
+  if ('referent_concept_id' %in% colnames(cohort)) {
+    cohort <- cohort %>% 
+      dplyr::select(-.data$referent_concept_id)
+  }
+  return(cohort)
+}
+
+checkFixColumnNames <- function(table, tableName, zipFileName, specifications = getResultsDataModelSpecifications()) {
+  if (tableName == 'cohort') {
+    table <- fixCohortTableMetadataForBackwardCompatibility(cohort = table)
+  }
   observeredNames <- colnames(table)[order(colnames(table))]
   
   tableSpecs <- specifications %>%
@@ -50,6 +75,7 @@ checkColumnNames <- function(table, tableName, zipFileName, specifications = get
                  paste(observeredNames, collapse = ", "),
                  paste(expectedNames, collapse = ", ")))
   }
+  return(table)
 }
 
 checkAndFixDataTypes <- function(table, tableName, zipFileName, specifications = getResultsDataModelSpecifications()) {
@@ -258,7 +284,7 @@ uploadResults <- function(connectionDetails = NULL,
       uploadChunk <- function(chunk, pos) {
         ParallelLogger::logInfo("- Preparing to upload rows ", pos, " through ", pos + nrow(chunk) - 1)
         
-        checkColumnNames(table = chunk, 
+        chunk <- checkFixColumnNames(table = chunk, 
                          tableName = env$tableName, 
                          zipFileName = zipFileName,
                          specifications = specifications)

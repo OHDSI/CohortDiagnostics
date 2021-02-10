@@ -322,6 +322,8 @@ if (exists("cohort")) {
     dplyr::arrange(.data$cohortId) %>%
     dplyr::mutate(cohortName = stringr::str_remove(.data$cohortName, "\\[.+?\\] "))
   
+  fixCohortTableMetadataForBackwardCompatibility()
+  
   if ('metadata' %in% colnames(cohort)) {
     cohortMetaData <- list()
     for (i in 1:nrow(cohort)) {
