@@ -1,99 +1,99 @@
-library(dplyr)
-
-guessCsvFileSpecification <- function(pathToCsvFile) {
-  tableToWorkOn <-  stringr::str_remove(string = basename(pathToCsvFile), 
-                                        pattern = ".csv")
-  
-  print(paste0("Reading csv files '", tableToWorkOn, "' and guessing data types."))
-  
-  csvFile <- readr::read_csv(file = pathToCsvFile,
-                             col_types = readr::cols(),
-                             guess_max = min(1e7),
-                             locale = readr::locale(encoding = "UTF-8"))
-  if (any(stringr::str_detect(string = colnames(csvFile), pattern = "_"))) {
-    colnames(csvFile) <- tolower(colnames(csvFile))
-  }
-  
-  patternThatIsNotPrimaryKey = c("subjects", "entries", "name", "sql", "json", "description", "atlas_id", "day")
-  patternThatIsPrimaryKey = c('_id', 'rule_sequence')
-  describe <- list()
-  primaryKeyIfOmopVocabularyTable <-  getPrimaryKeyForOmopVocabularyTable() %>% 
-    dplyr::filter(.data$vocabularyTableName == tableToWorkOn %>% tolower()) %>% 
-    dplyr::pull(.data$primaryKey) %>% 
-    strsplit(split = ",") %>% 
-    unlist() %>% 
-    tolower()
-  
-  for (i in (1:length(colnames(csvFile)))) {
-    tableName <- tableToWorkOn
-    fieldName <- colnames(csvFile)[[i]]
-    fieldData <- csvFile %>% dplyr::select(fieldName)
-    dataVector <- fieldData %>% dplyr::pull(1)
-    type <- suppressWarnings(guessDbmsDataTypeFromVector(value = dataVector))
-    if (stringr::str_detect(string = fieldName, 
-                            pattern = stringr::fixed('_id')) &&
-        type == 'float') {
-      type = 'bigint'
-    }
-    if (stringr::str_detect(string = tolower(fieldName), 
-                            pattern = stringr::fixed('description')) &&
-        (stringr::str_detect(string = type, 
-                             pattern = 'varchar') ||
-         stringr::str_detect(string = type, 
-                             pattern = 'logical')
-        )
-    ) {
-      type = 'varchar(max)'
-    }
-    isRequired <- 'Yes'
-    if (anyNA(csvFile %>% dplyr::pull(fieldName))) {
-      isRequired <- 'No'
-    }
-    primaryKey <- 'No'
-    if (tableName %in% getPrimaryKeyForOmopVocabularyTable()$vocabularyTableName && 
-        fieldName %in% primaryKeyIfOmopVocabularyTable) {
-      primaryKey <- 'Yes'
-    } else if (isRequired == 'Yes' &&
-               nrow(csvFile) == nrow(csvFile %>% dplyr::select(fieldName) %>% dplyr::distinct()) &&
-               all(stringr::str_detect(string = fieldName, 
-                                       pattern = patternThatIsNotPrimaryKey, 
-                                       negate = TRUE))) {
-      primaryKey <- 'Yes'
-    } else if (isRequired == 'Yes' &&
-               any(stringr::str_detect(string = fieldName, 
-                                       pattern = patternThatIsPrimaryKey))) {
-      primaryKey <- 'Yes'
-    }
-    describe[[i]] <- tidyr::tibble(tableName = tableName, 
-                                   fieldName = fieldName,
-                                   type = type,
-                                   isRequired = isRequired,
-                                   primaryKey = primaryKey)
-    
-    if (describe[[i]]$type == 'logical') {
-      describe[[i]]$type == 'varchar(1)'
-    }
-    if (describe[[i]]$tableName == 'cohort' && 
-        describe[[i]]$fieldName == 'cohort_name' &&
-        describe[[i]]$type == 'float') {
-      describe[[i]]$type = 'varchar(255)'
-    }
-    if (describe[[i]]$tableName == 'incidence_rate' && describe[[i]]$fieldName == 'calendar_year') {
-      describe[[i]]$primaryKey = 'Yes'
-    }
-    if (describe[[i]]$tableName %in% c('covariate_value', 'temporal_covariate_value', 'time_distribution') && 
-        describe[[i]]$fieldName %in% c('covariate_id','start_day','end_day')) {
-      describe[[i]]$primaryKey = 'Yes'
-    }
-    if (describe[[i]]$tableName %in% c('included_source_concept','index_event_breakdown', 'orphan_concept')) {
-      if (describe[[i]]$fieldName %in% c('concept_set_id', 'concept_id', 'source_concept_id')) {
-        describe[[i]]$primaryKey = 'Yes'
-      }
-    }
-  }
-  describe <- dplyr::bind_rows(describe)
-  return(describe)
-}
+# library(dplyr)
+# 
+# guessCsvFileSpecification <- function(pathToCsvFile) {
+#   tableToWorkOn <-  stringr::str_remove(string = basename(pathToCsvFile), 
+#                                         pattern = ".csv")
+#   
+#   print(paste0("Reading csv files '", tableToWorkOn, "' and guessing data types."))
+#   
+#   csvFile <- readr::read_csv(file = pathToCsvFile,
+#                              col_types = readr::cols(),
+#                              guess_max = min(1e7),
+#                              locale = readr::locale(encoding = "UTF-8"))
+#   if (any(stringr::str_detect(string = colnames(csvFile), pattern = "_"))) {
+#     colnames(csvFile) <- tolower(colnames(csvFile))
+#   }
+#   
+#   patternThatIsNotPrimaryKey = c("subjects", "entries", "name", "sql", "json", "description", "atlas_id", "day")
+#   patternThatIsPrimaryKey = c('_id', 'rule_sequence')
+#   describe <- list()
+#   primaryKeyIfOmopVocabularyTable <-  getPrimaryKeyForOmopVocabularyTable() %>% 
+#     dplyr::filter(.data$vocabularyTableName == tableToWorkOn %>% tolower()) %>% 
+#     dplyr::pull(.data$primaryKey) %>% 
+#     strsplit(split = ",") %>% 
+#     unlist() %>% 
+#     tolower()
+#   
+#   for (i in (1:length(colnames(csvFile)))) {
+#     tableName <- tableToWorkOn
+#     fieldName <- colnames(csvFile)[[i]]
+#     fieldData <- csvFile %>% dplyr::select(fieldName)
+#     dataVector <- fieldData %>% dplyr::pull(1)
+#     type <- suppressWarnings(guessDbmsDataTypeFromVector(value = dataVector))
+#     if (stringr::str_detect(string = fieldName, 
+#                             pattern = stringr::fixed('_id')) &&
+#         type == 'float') {
+#       type = 'bigint'
+#     }
+#     if (stringr::str_detect(string = tolower(fieldName), 
+#                             pattern = stringr::fixed('description')) &&
+#         (stringr::str_detect(string = type, 
+#                              pattern = 'varchar') ||
+#          stringr::str_detect(string = type, 
+#                              pattern = 'logical')
+#         )
+#     ) {
+#       type = 'varchar(max)'
+#     }
+#     isRequired <- 'Yes'
+#     if (anyNA(csvFile %>% dplyr::pull(fieldName))) {
+#       isRequired <- 'No'
+#     }
+#     primaryKey <- 'No'
+#     if (tableName %in% getPrimaryKeyForOmopVocabularyTable()$vocabularyTableName && 
+#         fieldName %in% primaryKeyIfOmopVocabularyTable) {
+#       primaryKey <- 'Yes'
+#     } else if (isRequired == 'Yes' &&
+#                nrow(csvFile) == nrow(csvFile %>% dplyr::select(fieldName) %>% dplyr::distinct()) &&
+#                all(stringr::str_detect(string = fieldName, 
+#                                        pattern = patternThatIsNotPrimaryKey, 
+#                                        negate = TRUE))) {
+#       primaryKey <- 'Yes'
+#     } else if (isRequired == 'Yes' &&
+#                any(stringr::str_detect(string = fieldName, 
+#                                        pattern = patternThatIsPrimaryKey))) {
+#       primaryKey <- 'Yes'
+#     }
+#     describe[[i]] <- tidyr::tibble(tableName = tableName, 
+#                                    fieldName = fieldName,
+#                                    type = type,
+#                                    isRequired = isRequired,
+#                                    primaryKey = primaryKey)
+#     
+#     if (describe[[i]]$type == 'logical') {
+#       describe[[i]]$type == 'varchar(1)'
+#     }
+#     if (describe[[i]]$tableName == 'cohort' && 
+#         describe[[i]]$fieldName == 'cohort_name' &&
+#         describe[[i]]$type == 'float') {
+#       describe[[i]]$type = 'varchar(255)'
+#     }
+#     if (describe[[i]]$tableName == 'incidence_rate' && describe[[i]]$fieldName == 'calendar_year') {
+#       describe[[i]]$primaryKey = 'Yes'
+#     }
+#     if (describe[[i]]$tableName %in% c('covariate_value', 'temporal_covariate_value', 'time_distribution') && 
+#         describe[[i]]$fieldName %in% c('covariate_id','start_day','end_day')) {
+#       describe[[i]]$primaryKey = 'Yes'
+#     }
+#     if (describe[[i]]$tableName %in% c('included_source_concept','index_event_breakdown', 'orphan_concept')) {
+#       if (describe[[i]]$fieldName %in% c('concept_set_id', 'concept_id', 'source_concept_id')) {
+#         describe[[i]]$primaryKey = 'Yes'
+#       }
+#     }
+#   }
+#   describe <- dplyr::bind_rows(describe)
+#   return(describe)
+# }
 
 createDdl <- function(fileName, 
                       specifications = CohortDiagnostics::getResultsDataModelSpecifications()){
