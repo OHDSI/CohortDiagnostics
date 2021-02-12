@@ -198,6 +198,11 @@ naToEmpty <- function(x) {
   return(x)
 }
 
+naToZero <- function(x) {
+  x[is.na(x)] <- 0
+  return(x)
+}
+
 #' Upload results to the database server.
 #' 
 #' @description 
@@ -285,9 +290,9 @@ uploadResults <- function(connectionDetails = NULL,
         ParallelLogger::logInfo("- Preparing to upload rows ", pos, " through ", pos + nrow(chunk) - 1)
         
         chunk <- checkFixColumnNames(table = chunk, 
-                         tableName = env$tableName, 
-                         zipFileName = zipFileName,
-                         specifications = specifications)
+                                     tableName = env$tableName, 
+                                     zipFileName = zipFileName,
+                                     specifications = specifications)
         chunk <- checkAndFixDataTypes(table = chunk, 
                                       tableName = env$tableName, 
                                       zipFileName = zipFileName,
@@ -297,14 +302,23 @@ uploadResults <- function(connectionDetails = NULL,
                                           zipFileName = zipFileName,
                                           specifications = specifications) 
         
-        # Primary key fields cannot be NULL, so for some tables convert NAs to empty:
+        # Primary key fields cannot be NULL, so for some tables convert NAs to empty or zero:
         toEmpty <- specifications %>%
-          filter(.data$tableName == env$tableName & .data$emptyIsNa == "No") %>%
+          filter(.data$tableName == env$tableName & .data$emptyIsNa == "No" & grepl("varchar", .data$type)) %>%
           select(.data$fieldName) %>%
           pull()
         if (length(toEmpty) > 0) {
           chunk <- chunk %>% 
             dplyr::mutate_at(toEmpty, naToEmpty)
+        }
+        
+        tozero <- specifications %>%
+          filter(.data$tableName == env$tableName & .data$emptyIsNa == "No" & .data$type %in% c("int", "bigint", "float")) %>%
+          select(.data$fieldName) %>%
+          pull()
+        if (length(tozero) > 0) {
+          chunk <- chunk %>% 
+            dplyr::mutate_at(tozero, naToZero)
         }
         
         # Check if inserting data would violate primary key constraints:
@@ -567,7 +581,7 @@ uploadPrintFriendly <- function(connectionDetails = NULL,
   cohort <- cohort %>%
     select(-.data$json) %>%
     as.data.frame()
-    
+  
   DatabaseConnector::insertTable(connection = connection,
                                  tableName = paste(schema, "cohort_extra", sep = "."),
                                  data = cohort,
