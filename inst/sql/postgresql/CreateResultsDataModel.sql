@@ -35,7 +35,7 @@ DROP TABLE IF EXISTS vocabulary;
 
 CREATE TABLE analysis_ref (
 			analysis_id BIGINT NOT NULL,
-			analysis_name VARCHAR(50) NOT NULL,
+			analysis_name VARCHAR NOT NULL,
 			domain_id VARCHAR(20),
 			start_day FLOAT,
 			end_day FLOAT,
@@ -215,7 +215,7 @@ CREATE TABLE included_source_concept (
 
 CREATE TABLE inclusion_rule_stats (
 			rule_sequence_id INT NOT NULL,
-			rule_name VARCHAR(255) NOT NULL,
+			rule_name VARCHAR NOT NULL,
 			meet_subjects FLOAT NOT NULL,
 			gain_subjects FLOAT NOT NULL,
 			total_subjects FLOAT NOT NULL,
@@ -251,7 +251,7 @@ CREATE TABLE orphan_concept (
 
 CREATE TABLE phenotype_description (
 			phenotype_id BIGINT NOT NULL,
-			phenotype_name VARCHAR(255) NOT NULL,
+			phenotype_name VARCHAR NOT NULL,
 			clinical_description VARCHAR,
 			metadata VARCHAR,
 			PRIMARY KEY(phenotype_id)
@@ -273,7 +273,7 @@ CREATE TABLE relationship (
 
 CREATE TABLE temporal_analysis_ref (
 			analysis_id INT NOT NULL,
-			analysis_name VARCHAR(20) NOT NULL,
+			analysis_name VARCHAR NOT NULL,
 			domain_id VARCHAR(20) NOT NULL,
 			is_binary VARCHAR(1) NOT NULL,
 			missing_means_zero VARCHAR(1),
@@ -325,7 +325,7 @@ CREATE TABLE time_distribution (
 			p_25_value FLOAT NOT NULL,
 			p_75_value FLOAT NOT NULL,
 			p_90_value FLOAT NOT NULL,
-			time_metric VARCHAR(50) NOT NULL,
+			time_metric VARCHAR NOT NULL,
 			database_id VARCHAR NOT NULL,
 			PRIMARY KEY(cohort_id, time_metric, database_id)
 );
@@ -335,7 +335,7 @@ CREATE TABLE time_distribution (
 CREATE TABLE visit_context (
 			cohort_id BIGINT NOT NULL,
 			visit_concept_id INT NOT NULL,
-			visit_context VARCHAR(20) NOT NULL,
+			visit_context VARCHAR NOT NULL,
 			subjects FLOAT NOT NULL,
 			database_id VARCHAR NOT NULL,
 			PRIMARY KEY(cohort_id, visit_concept_id, visit_context, database_id)
