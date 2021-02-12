@@ -90,34 +90,17 @@ getIncidenceRate <- function(connectionDetails = NULL,
                                                oracleTempSchema = oracleTempSchema)
   
   irYearAgeGender <- recode(ratesSummary)
-  
-  irOverall <- irYearAgeGender %>%
-    summarize(cohortCount = sum(.data$cohortCount), personYears = sum(.data$personYears))
-  
-  irGender <- irYearAgeGender %>%
-    group_by(.data$gender) %>%
-    summarize(cohortCount = sum(.data$cohortCount), personYears = sum(.data$personYears))
-  
-  irAge <- irYearAgeGender %>%
-    group_by(.data$ageGroup) %>%
-    summarize(cohortCount = sum(.data$cohortCount), personYears = sum(.data$personYears))
-  
-  irAgeGender <- irYearAgeGender %>%
-    group_by(.data$gender, .data$ageGroup) %>%
-    summarize(cohortCount = sum(.data$cohortCount), personYears = sum(.data$personYears))
-  
-  irYear <- irYearAgeGender %>%
-    group_by(.data$calendarYear) %>%
-    summarize(cohortCount = sum(.data$cohortCount), personYears = sum(.data$personYears))
-  
-  irYearAge <- irYearAgeGender %>%
-    group_by(.data$calendarYear, .data$ageGroup) %>%
-    summarize(cohortCount = sum(.data$cohortCount), personYears = sum(.data$personYears))
-  
-  irYearGender <- irYearAgeGender %>%
-    group_by(.data$calendarYear, .data$gender) %>%
-    summarize(cohortCount = sum(.data$cohortCount), personYears = sum(.data$personYears))
-  
+  irOverall <- tidyr::tibble(cohortCount = sum(irYearAgeGender$cohortCount),
+                             personYears = sum(irYearAgeGender$personYears))
+  irGender <- aggregateIr(irYearAgeGender, list(gender = irYearAgeGender$gender))
+  irAge <- aggregateIr(irYearAgeGender, list(ageGroup = irYearAgeGender$ageGroup))
+  irAgeGender <- aggregateIr(irYearAgeGender, list(ageGroup = irYearAgeGender$ageGroup,
+                                                   gender = irYearAgeGender$gender))
+  irYear <- aggregateIr(irYearAgeGender, list(calendarYear = irYearAgeGender$calendarYear))
+  irYearAge <- aggregateIr(irYearAgeGender, list(calendarYear = irYearAgeGender$calendarYear,
+                                                 ageGroup = irYearAgeGender$ageGroup))
+  irYearGender <- aggregateIr(irYearAgeGender, list(calendarYear = irYearAgeGender$calendarYear,
+                                                    gender = irYearAgeGender$gender))
   result <- dplyr::bind_rows(irOverall,
                              irGender,
                              irAge,
@@ -140,4 +123,15 @@ recode <- function(ratesSummary) {
   ratesSummary$gender <- tolower(ratesSummary$gender)
   substr(ratesSummary$gender, 1, 1) <- toupper(substr(ratesSummary$gender, 1, 1) ) 
   return(tidyr::tibble(ratesSummary))
+}
+
+aggregateIr <- function(ratesSummary, aggregateList) {
+  if (nrow(ratesSummary) > 0) {
+    return(aggregate(cbind(cohortCount = ratesSummary$cohortCount,
+                           personYears = ratesSummary$personYears), 
+                     by = aggregateList, 
+                     FUN = sum)) 
+  } else {
+    return(tidyr::tibble())
+  }
 }
