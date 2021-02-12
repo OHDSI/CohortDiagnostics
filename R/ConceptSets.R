@@ -217,6 +217,12 @@ getCodeSetId <- function(criterion) {
 }
 
 getCodeSetIds <- function(criterionList) {
+  con <- file("Debug.txt", open = "at", blocking = FALSE)
+  message <- capture.output(str(criterionList))
+  writeLines(text = message, con = con)
+  flush(con)
+  close(con)
+  
   codeSetIds <- lapply(criterionList, getCodeSetId)
   codeSetIds <- do.call(c, codeSetIds)
   if (is.null(codeSetIds)) {
