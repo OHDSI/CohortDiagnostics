@@ -32,7 +32,6 @@ Imports:
   SqlRender (>= 1.6.7),
   stringr,
   tidyr (>= 1.0.0),
-  DatabaseConnector
   methods
 Suggests:
   shiny,
