@@ -22,3 +22,6 @@ compare_versions
 _pkgdown.yml
 examplePhenotypeLibraryPackage
 examplePackage
+.github
+deploy.sh
+compare_versions
