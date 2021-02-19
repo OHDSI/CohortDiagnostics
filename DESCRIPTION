@@ -32,6 +32,7 @@ Imports:
   SqlRender (>= 1.6.7),
   stringr,
   tidyr (>= 1.0.0),
+  DatabaseConnector
   methods
 Suggests:
   shiny,
@@ -49,12 +50,6 @@ Suggests:
   RSQLite (>= 2.2.1),
   zip,
   CirceR
-Remotes:
-  ohdsi/Eunomia,
-  ohdsi/FeatureExtraction,
-  ohdsi/ROhdsiWebApi,
-  ohdsi/DatabaseConnector,
-  ohdsi/CirceR
 License: Apache License
 VignetteBuilder: knitr
 URL: https://ohdsi.github.io/CohortDiagnostics, https://github.com/OHDSI/CohortDiagnostics
