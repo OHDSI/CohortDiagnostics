@@ -86,8 +86,7 @@ jobs:
         run: |
           remotes::install_deps(dependencies = TRUE, INSTALL_opts=c("--no-multiarch"))
           remotes::install_cran("rcmdcheck")
-        # Note that this is not a long term solution but a work around to see if the rest of the build works
-          remotes::install_github(c("ohdsi/Eunomia", "ohdsi/FeatureExtraction", "ohdsi/ROhdsiWebApi", "ohdsi/CirceR"), dependencies = TRUE)
+          remotes::install_github(c("ohdsi/Eunomia", "ohdsi/FeatureExtraction", "ohdsi/ROhdsiWebApi", "ohdsi/CirceR"), dependencies = TRUE)  # Note that this is not a long term solution but a work around to see if the rest of the build works
         shell: Rscript {0}
 
       - name: Install covr
