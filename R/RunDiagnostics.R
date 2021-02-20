@@ -189,7 +189,53 @@ runCohortDiagnostics <- function(packageName = NULL,
     cohorts <- cohorts %>% 
       dplyr::select(-.data$name)
   }
+  cohortTableColumnNamesObserved <- colnames(cohort)
+  cohortTableColumnNamesExpected <- CohortDiagnostics:::getResultsDataModelSpecifications() %>% 
+    dplyr::filter(.data$tableName == 'cohort') %>% 
+    dplyr::pull(.data$fieldName)
+  cohortTableColumnNamesRequired <- CohortDiagnostics:::getResultsDataModelSpecifications() %>% 
+    dplyr::filter(.data$tableName == 'cohort') %>% 
+    dplyr::filter(.data$isRequired == 'Yes') %>% 
+    dplyr::pull(.data$fieldName)
+  cohortTableColumnNamesMissing <- list()
+  cohortTableColumnNamesExtra <- list()
+  for (i in (1:length(cohortTableColumnNamesExpected))) {
+    if (!cohortTableColumnNamesExpected[[i]] %in% cohortTableColumnNamesObserved) {
+      cohortTableColumnNamesMissing <- c(cohortTableColumnNamesExtra, cohortTableColumnNamesObserved[[i]])
+    }
+  }
+  for (i in (1:length(cohortTableColumnNamesObserved))) {
+    if (!cohortTableColumnNamesObserved[[i]] %in% cohortTableColumnNamesExpected) {
+      cohortTableColumnNamesExtra <- c(cohortTableColumnNamesExtra, cohortTableColumnNamesObserved[[i]])
+    }
+  }
+  cohortTableColumnNamesMissingButRequired <- list()
+  if (length(cohortTableColumnNamesMissing) > 0) {
+    for (i in (1:length(cohortTableColumnNamesMissingButRequired))) {
+      if (cohortTableColumnNamesMissing[[i]] %in% cohortTableColumnNamesRequired) {
+        cohortTableColumnNamesMissingButRequired <- c(cohortTableColumnNamesMissingButRequired,
+                                                      cohortTableColumnNamesMissing[[i]])
+      }
+    }
+  }
+  if (length(cohortTableColumnNamesMissingButRequired) > 0) {
+    stop(paste0("The following columns are missing from the cohort table: ", 
+                paste(cohortTableColumnNamesMissingButRequired ,sep = ", ")))
+  }
+  if (length(cohortTableColumnNamesExtra) > 0) {
+    if ('metadata' %in% colnames(cohort)) {
+      row <- list()
+      for (i in (1:nrow(cohort))) {
+        row[[i]] <- cohort[i,]
+        row[[i]]$metadata <- c(RJSONIO::fromJSON(row[[i]]$metadata), 
+                               row[[i]] %>% dplyr::select(cohortTableColumnNamesExtra) %>% as.list())
+      }
+    }
+  }
+  cohort <- cohort %>% 
+    dplyr::select(cohortTableColumnNamesRequired)
   writeToCsv(data = cohorts, fileName = file.path(exportFolder, "cohort.csv"))
+  
   if (!"phenotypeId" %in% colnames(cohorts)) {
     cohorts$phenotypeId <- NA
   }
