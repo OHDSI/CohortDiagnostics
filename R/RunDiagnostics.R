@@ -189,7 +189,73 @@ runCohortDiagnostics <- function(packageName = NULL,
     cohorts <- cohorts %>% 
       dplyr::select(-.data$name)
   }
+  cohortTableColumnNamesObserved <- colnames(cohorts) %>% 
+    sort()
+  cohortTableColumnNamesExpected <- CohortDiagnostics:::getResultsDataModelSpecifications() %>% 
+    dplyr::filter(.data$tableName == 'cohort') %>% 
+    dplyr::pull(.data$fieldName) %>% 
+    SqlRender::snakeCaseToCamelCase() %>% 
+    sort()
+  cohortTableColumnNamesRequired <- CohortDiagnostics:::getResultsDataModelSpecifications() %>% 
+    dplyr::filter(.data$tableName == 'cohort') %>% 
+    dplyr::filter(.data$isRequired == 'Yes') %>% 
+    dplyr::pull(.data$fieldName) %>% 
+    SqlRender::snakeCaseToCamelCase() %>% 
+    sort()
+  
+  expectedButNotObsevered <- setdiff(x = cohortTableColumnNamesExpected, y = cohortTableColumnNamesObserved)
+  if (length(expectedButNotObsevered) > 0) {
+    requiredButNotObsevered <- setdiff(x = cohortTableColumnNamesRequired, y = cohortTableColumnNamesObserved)
+  }
+  obseveredButNotExpected <- setdiff(x = cohortTableColumnNamesObserved, y = cohortTableColumnNamesExpected)
+  
+  if (length(requiredButNotObsevered) > 0) {
+    stop(paste("The following required fields not found in cohort table:", 
+               paste0(requiredButNotObsevered, collapse = ", ")))
+  }
+  
+  if (length(expectedButNotObsevered) > 0) {
+    warning(paste("The following columns are recommended but missing from the cohort table.", 
+                  paste0(expectedButNotObsevered ,collapse = ", ")))
+  }
+  
+  if ('metadata' %in% expectedButNotObsevered) {
+    writeLines(
+      paste(
+        "The following columns were observed in the cohort table, \n
+        that are not expected and will be available as part of json object \n
+        in a newly created 'metadata' column.",
+        paste0(obseveredButNotExpected, collapse = ", ")
+      )
+    )
+    columnsToAddToJson <-
+      c(
+        obseveredButNotExpected,
+        'logicDescription',
+        'cohortId',
+        'cohortName',
+        'phenotypeId'
+      ) %>%
+      unique() %>%
+      sort()
+    cohorts <- cohorts %>%
+      dplyr::mutate(metadata = as.list(columnsToAddToJson) %>% RJSONIO::toJSON())
+  } else {
+    writeLines(
+      paste(
+        "The following columns were observed in the cohort table, \n
+        that are not expected. If you would like to retain them please \n
+        them as JSON objects in the 'metadata' column.",
+        paste0(obseveredButNotExpected, collapse = ", ")
+      )
+    )
+    stop(paste0("Terminating - please update the metadata column to include: ", paste0(obseveredButNotExpected, collapse = ", ")))
+  }
+  
+  cohorts <- cohorts %>% 
+    dplyr::select(cohortTableColumnNamesExpected)
   writeToCsv(data = cohorts, fileName = file.path(exportFolder, "cohort.csv"))
+  
   if (!"phenotypeId" %in% colnames(cohorts)) {
     cohorts$phenotypeId <- NA
   }
