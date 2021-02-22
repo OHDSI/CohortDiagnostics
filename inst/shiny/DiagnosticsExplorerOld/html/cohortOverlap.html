@@ -1,0 +1,27 @@
+<h3>Description</h3>
+<p>Stacked bar graph showing the overlap between two cohorts, and a table listing several overlap statistics.</p>
+
+<p>The stacked bar shows the overlap in terms of subjects. It shows the number of subjects that belong to each cohort and to both. The diagram does <em>not</em> consider whether the subjects were in the different cohorts at the same time.</p>
+<p>The table show the same information and more:
+<ul>
+<li>Subject in either cohort: The number of subjects that enter one or both cohorts. (The union)</li>
+<li>Subject in both cohort: The number of subjects that enter both cohorts, although not necessarily at the same time. (The intersection)</li>
+<li>Subject in target not in comparator: The number of subjects that enter the target cohort, but not the comparator cohort. (Subtracting the comparator from the target)</li>
+<li>Subject in comparator not in target: The number of subjects that enter the comparator cohort, but not the target cohort. (Subtracting the comparator from the target)</li>
+<li>Subject in target before comparator: The number of subjects that enter both cohorts, but enter the target cohort before entering the comparator cohort. This number considers only the first entry per cohort per person.</li>
+<li>Subject in comparator before target: The number of subjects that enter both cohorts, but enter the comparator cohort before entering the target cohort. This number considers only the first entry per cohort per person.</li>
+<li>Subject in target and comparator on same day: The number of subjects that enter both cohorts on the same date. This number considers only the first entry per cohort per person.</li>
+<li>Subject having target start during comparator: The number of subjects that enter the target cohort during the comparator cohort, meaning comparator cohort start date &lt;= target cohort start date &lt;= comparator cohort end date. This number considers only the first entry per cohort per person.</li>
+<li>Subject having comparator start during target: The number of subjects that enter the comparator cohort during the target cohort, meaning target cohort start date &lt;= comparator cohort start date &lt;= target cohort end date. This number considers only the first entry per cohort per person.</li>
+</p>
+
+<h3>Options</h3>
+<p>You can select one or more database in the side bar.</p>
+<p>You can select the (target) cohort(s) and comparator cohort(s) in the side bar.</p>
+
+<h3>What to look for</h3>
+<ul>
+<li>Are there many people in both cohorts? For example, if we want to compare two exposures, are there many people that receive both?</li>
+<li>Is the overlap of sufficient size for a specific research question? For example, if we wish to study the effect of an exposure on an outcome, we may require a minimum number of outcomes during exposure.</li>
+</ul>
+
