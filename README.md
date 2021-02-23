@@ -1,7 +1,7 @@
 CohortDiagnostics
 =================
 
-[![Build Status](https://travis-ci.org/OHDSI/CohortDiagnostics.svg?branch=master)](https://travis-ci.org/OHDSI/CohortDiagnostics)
+[![Build Status](https://github.com/OHDSI/CohortDiagnostics/workflows/R-CMD-check/badge.svg)](https://github.com/OHDSI/CohortDiagnostics/actions?query=workflow%3AR-CMD-check)
 [![codecov.io](https://codecov.io/github/OHDSI/CohortDiagnostics/coverage.svg?branch=master)](https://codecov.io/github/OHDSI/CohortDiagnostics?branch=master)
 
 CohortDiagnostics is part of [HADES](https://ohdsi.github.io/Hades).
