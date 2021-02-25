@@ -212,20 +212,35 @@ if (databaseMode) {
 }
 
 if (exists("cohort")) {
-  cohort <- get("cohort") %>%
-    dplyr::arrange(.data$cohortId) %>%
-    dplyr::mutate(cohortName = stringr::str_remove(.data$cohortName, "\\[.+?\\] ")) %>%
-    dplyr::group_by(.data$phenotypeId) %>% 
-    dplyr::arrange(.data$cohortId) %>% 
-    dplyr::mutate(shortName = paste0("C", dplyr::row_number())) %>% 
-    dplyr::ungroup() %>%
-    dplyr::mutate(compoundName = paste(shortName, cohortName, sep = ": "))
+  cohort <- get("cohort") 
+  if ('phenotypeId' %in% colnames(cohort)) {
+    pId <- cohort %>% 
+      dplyr::select(.data$phenotypeId) %>% 
+      dplyr::distinct() %>% 
+      dplyr::arrange(.data$phenotypeId) %>% 
+      dplyr::filter(!is.na(.data$phenotypeId)) %>% 
+      dplyr::mutate(shortNamePhenotypeId = paste("P", dplyr::row_number()))
+    
+    cohort <- cohort %>%
+      dplyr::left_join(pId, by = "phenotypeId") %>% 
+      dplyr::mutate(shortNamePhenotypeId = tidyr::replace_na(data = .data$shortNamePhenotypeId, replace = "")) %>% 
+      dplyr::group_by(.data$phenotypeId) %>% 
+      dplyr::arrange(.data$cohortId) %>% 
+      dplyr::mutate(shortName = paste0(.data$shortNamePhenotypeId,
+                                       " ", 
+                                       "C", 
+                                       dplyr::row_number())) %>%
+      dplyr::mutate(compoundName = paste(.data$shortName, .data$cohortName)) %>% 
+      dplyr::select(-.data$shortNamePhenotypeId) %>% 
+      dplyr::ungroup(.data$phenotypeId)
+  } else {
+    cohort <- cohort %>%
+      dplyr::arrange(.data$cohortId) %>% 
+      dplyr::mutate(shortName = paste0("C", dplyr::row_number())) %>% 
+      dplyr::mutate(compoundName = paste0(.data$shortName, .data$cohortName))
+  }
 }
 
-if (exists("database")) {
-  database <- get("database") %>% 
-    dplyr::filter(!database == 'CPRD')
-}
 
 if (exists("temporalTimeRef")) {
   temporalCovariateChoices <- get("temporalTimeRef") %>%
