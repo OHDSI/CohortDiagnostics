@@ -1,0 +1,20 @@
+Package: EunomiaPhenotypeLibrary
+Type: Package
+Title: A package that generates cohort diagnostics output based on Eunomia data set
+Version: 0.0.1
+Author: Gowtham Rao [aut, cre]
+Maintainer: Gowtham Rao <rao@ohdsi.org>
+Description: A package that generates cohort diagnostics output based on Eunomia data set
+Depends:
+    DatabaseConnector (>= 2.2.0)
+Imports:
+	CohortDiagnostics
+Suggests:
+    knitr,
+    rmarkdown,
+    ROhdsiWebApi,
+    OhdsiRTools
+License: Apache License 2.0
+VignetteBuilder: knitr
+LazyData: TRUE
+RoxygenNote: 7.1.1

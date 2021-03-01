@@ -1,0 +1,3 @@
+either_subjects,both_subjects,t_only_subjects,c_only_subjects,t_before_c_subjects,c_before_t_subjects,same_day_subjects,t_in_c_subjects,c_in_t_subjects,target_cohort_id,comparator_cohort_id,database_id
+479,479,0,0,0,0,479,479,479,17492,17493,Eunomia
+479,479,0,0,0,0,479,479,479,17493,17492,Eunomia

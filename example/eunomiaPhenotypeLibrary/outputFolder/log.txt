@@ -1,0 +1,151 @@
+2021-03-01 18:02:10	[Main thread]	INFO	EunomiaPhenotypeLibrary	runCohortDiagnostics	Creating cohorts
+2021-03-01 18:04:47	[Main thread]	INFO	EunomiaPhenotypeLibrary	runCohortDiagnostics	Creating cohorts
+2021-03-01 18:04:47	[Main thread]	INFO	CohortDiagnostics	instantiateCohortSet	Cohort table already exists and in incremental mode, so not recreating table.
+2021-03-01 18:04:47	[Main thread]	DEBUG	CohortDiagnostics	getCohortsJsonAndSqlFromPackage	Executing on cohorts specified in package - EunomiaPhenotypeLibrary
+2021-03-01 18:04:58	[Main thread]	INFO	CohortDiagnostics	getCohortsJsonAndSql	Number of cohorts 6
+2021-03-01 18:04:58	[Main thread]	INFO	CohortDiagnostics	createTempInclusionStatsTables	Creating temporary inclusion statistics tables
+2021-03-01 18:05:01	[Main thread]	INFO	CohortDiagnostics	instantiateCohortSet	Instantiation cohort [PL 192671002] Gastrointestinal hemorrhage referent concept prevalent cohort: First occurrence of referent concept + descendants (Cohort id: 17492)
+2021-03-01 18:05:03	[Main thread]	INFO	CohortDiagnostics	instantiateCohortSet	Instantiation cohort [PL 192671001] Gastrointestinal hemorrhage referent concept incident cohort: First occurrence of referent concept + descendants with >=365d prior observation (Cohort id: 17493)
+2021-03-01 18:05:05	[Main thread]	INFO	CohortDiagnostics	instantiateCohortSet	Instantiation cohort [PL 201254002] Type 1 diabetes mellitus referent concept prevalent cohort: First occurrence of referent concept + descendants (Cohort id: 17692)
+2021-03-01 18:05:06	[Main thread]	INFO	CohortDiagnostics	instantiateCohortSet	Instantiation cohort [PL 201254001] Type 1 diabetes mellitus referent concept incident cohort: First occurrence of referent concept + descendants with >=365d prior observation (Cohort id: 17693)
+2021-03-01 18:05:06	[Main thread]	INFO	CohortDiagnostics	instantiateCohortSet	Instantiation cohort [PL 201826002] Type 2 diabetes mellitus referent concept prevalent cohort: First occurrence of referent concept + descendants (Cohort id: 17694)
+2021-03-01 18:05:08	[Main thread]	INFO	CohortDiagnostics	instantiateCohortSet	Instantiation cohort [PL 201826003] Type 2 diabetes mellitus prevalent cohort: First condition occurrence of 'Type 2 diabetes mellitus' conceptset or observation of 'History of diabetes' (Cohort id: 17720)
+2021-03-01 18:05:11	[Main thread]	DEBUG	CohortDiagnostics	fetchStats	- Fetching data from #cohort_inclusion
+2021-03-01 18:05:11	[Main thread]	DEBUG	CohortDiagnostics	fetchStats	- Fetching data from #cohort_inc_result
+2021-03-01 18:05:11	[Main thread]	DEBUG	CohortDiagnostics	fetchStats	- Fetching data from #cohort_inc_stats
+2021-03-01 18:05:11	[Main thread]	DEBUG	CohortDiagnostics	fetchStats	- Fetching data from #cohort_summary_stats
+2021-03-01 18:05:11	[Main thread]	INFO	EunomiaPhenotypeLibrary	runCohortDiagnostics	Running study diagnostics
+2021-03-01 18:05:11	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Run Cohort Diagnostics started at 2021-03-01 18:05:11
+2021-03-01 18:05:11	[Main thread]	INFO	CohortDiagnostics	createIfNotExist	Created folder at D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/diagnosticsExport
+2021-03-01 18:05:11	[Main thread]	DEBUG	CohortDiagnostics	getCohortsJsonAndSqlFromPackage	Executing on cohorts specified in package - EunomiaPhenotypeLibrary
+2021-03-01 18:05:26	[Main thread]	INFO	CohortDiagnostics	getCohortsJsonAndSql	Number of cohorts 6
+2021-03-01 18:05:27	[Main thread]	WARN	CohortDiagnostics	fixTableColumnsForBackwardCompatibility	The following fields are recommended but missing from the cohort table :  metadata  They will be created.
+2021-03-01 18:05:27	[Main thread]	DEBUG	CohortDiagnostics	writeToCsv	creating D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/diagnosticsExport/cohort.csv
+2021-03-01 18:05:28	[Main thread]	DEBUG	CohortDiagnostics	runCohortDiagnostics	Working in incremental mode.
+2021-03-01 18:05:28	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Saving database metadata
+2021-03-01 18:05:28	[Main thread]	DEBUG	CohortDiagnostics	writeToCsv	creating D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/diagnosticsExport/database.csv
+2021-03-01 18:05:28	[Main thread]	TRACE	CohortDiagnostics	runCohortDiagnostics	Creating concept ID table for tracking concepts used in diagnostics
+2021-03-01 18:05:28	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Inserting 2 referent concept IDs into the concept ID table. This may take a while.
+2021-03-01 18:05:30	[Main thread]	TRACE	CohortDiagnostics	runCohortDiagnostics	Done inserting
+2021-03-01 18:05:30	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Counting cohort records and subjects
+2021-03-01 18:05:30	[Main thread]	INFO	CohortDiagnostics	getCohortCounts	Counting cohorts took 0.0274 secs
+2021-03-01 18:05:30	[Main thread]	INFO	CohortDiagnostics	enforceMinCellValue	- Censoring 0 values (0%) from cohortEntries because value below minimum
+2021-03-01 18:05:30	[Main thread]	INFO	CohortDiagnostics	enforceMinCellValue	- Censoring 0 values (0%) from cohortSubjects because value below minimum
+2021-03-01 18:05:30	[Main thread]	DEBUG	CohortDiagnostics	writeToCsv	creating D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/diagnosticsExport/cohort_count.csv
+2021-03-01 18:05:30	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Found 2 of 6 (33.33%) submitted cohorts instantiated. Beginning cohort diagnostics for instantiated cohorts. 
+2021-03-01 18:05:30	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Fetching inclusion statistics from files
+2021-03-01 18:05:30	[Main thread]	DEBUG	CohortDiagnostics	fetchStats	- Fetching data from D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/cohortInclusion.csv
+2021-03-01 18:05:30	[Main thread]	DEBUG	CohortDiagnostics	fetchStats	- Fetching data from D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/cohortSummaryStats.csv
+2021-03-01 18:05:41	[Main thread]	DEBUG	CohortDiagnostics	fetchStats	- Fetching data from D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/cohortIncStats.csv
+2021-03-01 18:05:41	[Main thread]	DEBUG	CohortDiagnostics	fetchStats	- Fetching data from D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/cohortIncResult.csv
+2021-03-01 18:05:46	[Main thread]	DEBUG	CohortDiagnostics	writeToCsv	appending records to D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/diagnosticsExport/inclusion_rule_stats.csv
+2021-03-01 18:05:46	[Main thread]	INFO	CohortDiagnostics	runConceptSetDiagnostics	Starting concept set diagnostics
+2021-03-01 18:06:00	[Main thread]	DEBUG	CohortDiagnostics	writeToCsv	appending records to D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/diagnosticsExport/concept_sets.csv
+2021-03-01 18:06:00	[Main thread]	INFO	CohortDiagnostics	instantiateUniqueConceptSets	Instantiating concept sets
+2021-03-01 18:06:14	[Main thread]	INFO	CohortDiagnostics	runConceptSetDiagnostics	Breaking down index events
+2021-03-01 18:06:31	[Main thread]	INFO	CohortDiagnostics	FUN	- Breaking down index events for cohort '[PL 192671002] Gastrointestinal hemorrhage referent concept prevalent cohort: First occurrence of referent concept + descendants'
+2021-03-01 18:06:58	[Main thread]	INFO	CohortDiagnostics	FUN	- Breaking down index events for cohort '[PL 192671001] Gastrointestinal hemorrhage referent concept incident cohort: First occurrence of referent concept + descendants with >=365d prior observation'
+2021-03-01 18:07:54	[Main thread]	INFO	CohortDiagnostics	FUN	- Breaking down index events for cohort '[PL 201254002] Type 1 diabetes mellitus referent concept prevalent cohort: First occurrence of referent concept + descendants'
+2021-03-01 18:08:16	[Main thread]	INFO	CohortDiagnostics	FUN	- Breaking down index events for cohort '[PL 201254001] Type 1 diabetes mellitus referent concept incident cohort: First occurrence of referent concept + descendants with >=365d prior observation'
+2021-03-01 18:08:57	[Main thread]	INFO	CohortDiagnostics	FUN	- Breaking down index events for cohort '[PL 201826002] Type 2 diabetes mellitus referent concept prevalent cohort: First occurrence of referent concept + descendants'
+2021-03-01 18:09:26	[Main thread]	INFO	CohortDiagnostics	FUN	- Breaking down index events for cohort '[PL 201826003] Type 2 diabetes mellitus prevalent cohort: First condition occurrence of 'Type 2 diabetes mellitus' conceptset or observation of 'History of diabetes''
+2021-03-01 18:10:42	[Main thread]	INFO	CohortDiagnostics	enforceMinCellValue	- Censoring 0 values (0%) from conceptCount because value below minimum
+2021-03-01 18:10:42	[Main thread]	DEBUG	CohortDiagnostics	writeToCsv	appending records to D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/diagnosticsExport/index_event_breakdown.csv
+2021-03-01 18:11:11	[Main thread]	INFO	CohortDiagnostics	runConceptSetDiagnostics	Breaking down index event took 4.96 mins
+2021-03-01 18:11:11	[Main thread]	TRACE	CohortDiagnostics	runConceptSetDiagnostics	Dropping temp concept set table
+2021-03-01 18:11:13	[Main thread]	INFO	CohortDiagnostics	runConceptSetDiagnostics	Running concept set diagnostics took 5.44 mins
+2021-03-01 18:11:13	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Creating time distributions
+2021-03-01 18:12:30	[Main thread]	INFO	FeatureExtraction		Constructing features on server
+2021-03-01 18:14:12	[Main thread]	INFO	FeatureExtraction		Fetching data from server
+2021-03-01 18:15:25	[Main thread]	INFO	FeatureExtraction		Fetching data took 1.21 mins
+2021-03-01 18:18:01	[Main thread]	INFO	CohortDiagnostics	getTimeDistributions	Computing time distributions took 6.28 mins
+2021-03-01 18:18:01	[Main thread]	DEBUG	CohortDiagnostics	writeToCsv	appending records to D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/diagnosticsExport/time_distribution.csv
+2021-03-01 18:18:41	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Retrieving visit context for index dates
+2021-03-01 18:19:29	[Main thread]	INFO	CohortDiagnostics	getVisitContext	Retrieving visit context took 43.6 secs
+2021-03-01 18:19:29	[Main thread]	INFO	CohortDiagnostics	enforceMinCellValue	- Censoring 0 values (0%) from subjects because value below minimum
+2021-03-01 18:19:29	[Main thread]	DEBUG	CohortDiagnostics	writeToCsv	appending records to D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/diagnosticsExport/visit_context.csv
+2021-03-01 18:20:20	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Computing incidence rates
+2021-03-01 18:20:25	[Main thread]	INFO	CohortDiagnostics	FUN	  Computing incidence rate for cohort '[PL 192671002] Gastrointestinal hemorrhage referent concept prevalent cohort: First occurrence of referent concept + descendants'
+2021-03-01 18:20:25	[Main thread]	INFO	CohortDiagnostics	getIncidenceRate	Calculating incidence rate per year by age and gender
+2021-03-01 18:22:13	[Main thread]	INFO	CohortDiagnostics	getIncidenceRate	Computing incidence rates took 1.81 mins
+2021-03-01 18:22:13	[Main thread]	INFO	CohortDiagnostics	FUN	  Computing incidence rate for cohort '[PL 192671001] Gastrointestinal hemorrhage referent concept incident cohort: First occurrence of referent concept + descendants with >=365d prior observation'
+2021-03-01 18:23:07	[Main thread]	INFO	CohortDiagnostics	getIncidenceRate	Calculating incidence rate per year by age and gender
+2021-03-01 18:24:57	[Main thread]	INFO	CohortDiagnostics	getIncidenceRate	Computing incidence rates took 2.73 mins
+2021-03-01 18:24:57	[Main thread]	INFO	CohortDiagnostics	enforceMinCellValue	- Censoring 0 values (0%) from cohortCount because value below minimum
+2021-03-01 18:24:57	[Main thread]	INFO	CohortDiagnostics	enforceMinCellValue	- Censoring 0 values (0%) from incidenceRate because value below minimum
+2021-03-01 18:24:57	[Main thread]	DEBUG	CohortDiagnostics	writeToCsv	appending records to D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/diagnosticsExport/incidence_rate.csv
+2021-03-01 18:25:01	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Running Incidence Rate took 4.69 mins
+2021-03-01 18:25:01	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Computing cohort overlap
+2021-03-01 18:25:51	[Main thread]	INFO	CohortDiagnostics	FUN	- Computing overlap for cohorts 17492 and 17493
+2021-03-01 18:25:58	[Main thread]	INFO	CohortDiagnostics	computeCohortOverlap	Computing overlap took 4.3 secs
+2021-03-01 18:26:42	[Main thread]	INFO	CohortDiagnostics	FUN	- Computing overlap for cohorts 17692 and 17693
+2021-03-01 18:27:14	[Main thread]	WARN	CohortDiagnostics	computeCohortOverlap	- Target cohort with ID 17692 appears to be empty. Was it instantiated? Skipping overlap computation.
+2021-03-01 18:27:14	[Main thread]	INFO	CohortDiagnostics	computeCohortOverlap	Computing overlap took 28.5 secs
+2021-03-01 18:27:14	[Main thread]	INFO	CohortDiagnostics	FUN	- Computing overlap for cohorts 17692 and 17694
+2021-03-01 18:27:14	[Main thread]	WARN	CohortDiagnostics	computeCohortOverlap	- Target cohort with ID 17692 appears to be empty. Was it instantiated? Skipping overlap computation.
+2021-03-01 18:27:14	[Main thread]	INFO	CohortDiagnostics	computeCohortOverlap	Computing overlap took 0.0541 secs
+2021-03-01 18:27:14	[Main thread]	INFO	CohortDiagnostics	FUN	- Computing overlap for cohorts 17692 and 17720
+2021-03-01 18:27:14	[Main thread]	WARN	CohortDiagnostics	computeCohortOverlap	- Target cohort with ID 17692 appears to be empty. Was it instantiated? Skipping overlap computation.
+2021-03-01 18:27:14	[Main thread]	INFO	CohortDiagnostics	computeCohortOverlap	Computing overlap took 0.0342 secs
+2021-03-01 18:27:14	[Main thread]	INFO	CohortDiagnostics	FUN	- Computing overlap for cohorts 17693 and 17694
+2021-03-01 18:27:15	[Main thread]	WARN	CohortDiagnostics	computeCohortOverlap	- Target cohort with ID 17693 appears to be empty. Was it instantiated? Skipping overlap computation.
+2021-03-01 18:27:15	[Main thread]	INFO	CohortDiagnostics	computeCohortOverlap	Computing overlap took 0.314 secs
+2021-03-01 18:27:15	[Main thread]	INFO	CohortDiagnostics	FUN	- Computing overlap for cohorts 17693 and 17720
+2021-03-01 18:27:15	[Main thread]	WARN	CohortDiagnostics	computeCohortOverlap	- Target cohort with ID 17693 appears to be empty. Was it instantiated? Skipping overlap computation.
+2021-03-01 18:27:15	[Main thread]	INFO	CohortDiagnostics	computeCohortOverlap	Computing overlap took 0.0732 secs
+2021-03-01 18:27:15	[Main thread]	INFO	CohortDiagnostics	FUN	- Computing overlap for cohorts 17694 and 17720
+2021-03-01 18:27:15	[Main thread]	WARN	CohortDiagnostics	computeCohortOverlap	- Target cohort with ID 17694 appears to be empty. Was it instantiated? Skipping overlap computation.
+2021-03-01 18:27:15	[Main thread]	INFO	CohortDiagnostics	computeCohortOverlap	Computing overlap took 0.0527 secs
+2021-03-01 18:27:15	[Main thread]	INFO	CohortDiagnostics	enforceMinCellValue	- Censoring 0 values (0%) from eitherSubjects because value below minimum
+2021-03-01 18:27:15	[Main thread]	INFO	CohortDiagnostics	enforceMinCellValue	- Censoring 0 values (0%) from bothSubjects because value below minimum
+2021-03-01 18:27:17	[Main thread]	INFO	CohortDiagnostics	enforceMinCellValue	- Censoring 0 values (0%) from tOnlySubjects because value below minimum
+2021-03-01 18:27:17	[Main thread]	INFO	CohortDiagnostics	enforceMinCellValue	- Censoring 0 values (0%) from cOnlySubjects because value below minimum
+2021-03-01 18:27:17	[Main thread]	INFO	CohortDiagnostics	enforceMinCellValue	- Censoring 0 values (0%) from tBeforeCSubjects because value below minimum
+2021-03-01 18:27:17	[Main thread]	INFO	CohortDiagnostics	enforceMinCellValue	- Censoring 0 values (0%) from cBeforeTSubjects because value below minimum
+2021-03-01 18:27:17	[Main thread]	INFO	CohortDiagnostics	enforceMinCellValue	- Censoring 0 values (0%) from sameDaySubjects because value below minimum
+2021-03-01 18:27:20	[Main thread]	INFO	CohortDiagnostics	enforceMinCellValue	- Censoring 0 values (0%) from tInCSubjects because value below minimum
+2021-03-01 18:27:20	[Main thread]	INFO	CohortDiagnostics	enforceMinCellValue	- Censoring 0 values (0%) from cInTSubjects because value below minimum
+2021-03-01 18:27:20	[Main thread]	DEBUG	CohortDiagnostics	writeToCsv	appending records to D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/diagnosticsExport/cohort_overlap.csv
+2021-03-01 18:27:29	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Running Cohort Overlap took 2.46 mins
+2021-03-01 18:27:29	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Characterizing cohorts
+2021-03-01 18:27:36	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Starting large scale characterization of 2 cohort(s)
+2021-03-01 18:27:36	[Main thread]	INFO	FeatureExtraction		Constructing features on server
+2021-03-01 18:27:42	[Main thread]	INFO	FeatureExtraction		Fetching data from server
+2021-03-01 18:27:44	[Main thread]	INFO	FeatureExtraction		Fetching data took 1.65 secs
+2021-03-01 18:27:46	[Main thread]	INFO	CohortDiagnostics	getCohortCharacteristics	Cohort characterization took 10 secs
+2021-03-01 18:27:48	[Main thread]	DEBUG	CohortDiagnostics	writeToCsv	appending records to D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/diagnosticsExport/covariate_ref.csv
+2021-03-01 18:27:48	[Main thread]	DEBUG	CohortDiagnostics	writeToCsv	appending records to D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/diagnosticsExport/analysis_ref.csv
+2021-03-01 18:27:48	[Main thread]	DEBUG	CohortDiagnostics	writeCovariateDataAndromedaToCsv	Creating D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/diagnosticsExport/covariate_value.csv
+2021-03-01 18:27:56	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Running Characterization took 27.7 secs
+2021-03-01 18:27:56	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Temporal Cohort characterization
+2021-03-01 18:28:04	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Starting large scale temporal characterization of 2 cohort(s)
+2021-03-01 18:28:04	[Main thread]	INFO	FeatureExtraction		Sending temp tables to server
+2021-03-01 18:28:04	[Main thread]	INFO	FeatureExtraction		Constructing features on server
+2021-03-01 18:28:06	[Main thread]	INFO	FeatureExtraction		Fetching data from server
+2021-03-01 18:28:07	[Main thread]	INFO	FeatureExtraction		Fetching data took 0.171 secs
+2021-03-01 18:28:10	[Main thread]	INFO	CohortDiagnostics	getCohortCharacteristics	Cohort characterization took 5.92 secs
+2021-03-01 18:28:12	[Main thread]	DEBUG	CohortDiagnostics	writeToCsv	appending records to D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/diagnosticsExport/temporal_covariate_ref.csv
+2021-03-01 18:28:12	[Main thread]	DEBUG	CohortDiagnostics	writeToCsv	appending records to D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/diagnosticsExport/temporal_analysis_ref.csv
+2021-03-01 18:28:12	[Main thread]	DEBUG	CohortDiagnostics	writeToCsv	appending records to D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/diagnosticsExport/temporal_time_ref.csv
+2021-03-01 18:28:12	[Main thread]	DEBUG	CohortDiagnostics	writeCovariateDataAndromedaToCsv	Creating D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/diagnosticsExport/temporal_covariate_value.csv
+2021-03-01 18:28:19	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Running Temporal Characterization took 22.5 secs
+2021-03-01 18:28:19	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Retrieving concept information
+2021-03-01 18:28:19	[Main thread]	INFO	CohortDiagnostics	exportConceptInformation	- Retrieving concept information from vocabulary table 'concept'
+2021-03-01 18:28:19	[Main thread]	DEBUG	CohortDiagnostics	writeToCsv	appending records to D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/diagnosticsExport/concept.csv
+2021-03-01 18:28:19	[Main thread]	INFO	CohortDiagnostics	exportConceptInformation	- Retrieving concept information from vocabulary table 'concept_ancestor'
+2021-03-01 18:28:22	[Main thread]	DEBUG	CohortDiagnostics	writeToCsv	appending records to D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/diagnosticsExport/concept_ancestor.csv
+2021-03-01 18:28:22	[Main thread]	INFO	CohortDiagnostics	exportConceptInformation	- Retrieving concept information from vocabulary table 'concept_class'
+2021-03-01 18:28:22	[Main thread]	INFO	CohortDiagnostics	exportConceptInformation	- Retrieving concept information from vocabulary table 'concept_relationship'
+2021-03-01 18:28:22	[Main thread]	INFO	CohortDiagnostics	exportConceptInformation	- Retrieving concept information from vocabulary table 'concept_synonym'
+2021-03-01 18:28:22	[Main thread]	DEBUG	CohortDiagnostics	writeToCsv	appending records to D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/diagnosticsExport/concept_synonym.csv
+2021-03-01 18:28:22	[Main thread]	INFO	CohortDiagnostics	exportConceptInformation	- Retrieving concept information from vocabulary table 'domain'
+2021-03-01 18:28:26	[Main thread]	DEBUG	CohortDiagnostics	writeToCsv	creating D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/diagnosticsExport/domain.csv
+2021-03-01 18:28:26	[Main thread]	INFO	CohortDiagnostics	exportConceptInformation	- Retrieving concept information from vocabulary table 'relationship'
+2021-03-01 18:28:26	[Main thread]	DEBUG	CohortDiagnostics	writeToCsv	creating D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/diagnosticsExport/relationship.csv
+2021-03-01 18:28:26	[Main thread]	INFO	CohortDiagnostics	exportConceptInformation	- Retrieving concept information from vocabulary table 'vocabulary'
+2021-03-01 18:28:26	[Main thread]	DEBUG	CohortDiagnostics	writeToCsv	creating D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/diagnosticsExport/vocabulary.csv
+2021-03-01 18:28:26	[Main thread]	INFO	CohortDiagnostics	exportConceptInformation	Retrieving concept information took 7.27 secs
+2021-03-01 18:28:26	[Main thread]	TRACE	CohortDiagnostics	runCohortDiagnostics	Deleting concept ID table
+2021-03-01 18:28:26	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Adding results to zip file
+2021-03-01 18:28:29	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Results are ready for sharing at: D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/diagnosticsExport/Results_Eunomia.zip
+2021-03-01 18:28:29	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Computing all diagnostics took 23.3 mins

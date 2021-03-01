@@ -1,0 +1,110 @@
+covariate_id,covariate_name,analysis_id,concept_id
+3000876701,measurement: Codfish IgE Ab [Units/volume] in Serum,701,3000876
+3000963701,measurement: Hemoglobin,701,3000963
+3001247701,measurement: Common Ragweed IgE Ab [Units/volume] in Serum,701,3001247
+3001488701,measurement: Cow milk IgE Ab [Units/volume] in Serum,701,3001488
+3005136701,measurement: Cladosporium herbarum IgE Ab [Units/volume] in Serum,701,3005136
+3006322701,measurement: Oral temperature,701,3006322
+3006451701,measurement: Walnut IgE Ab [Units/volume] in Serum,701,3006451
+3006734701,measurement: White Oak IgE Ab [Units/volume] in Serum,701,3006734
+3009542701,measurement: Hematocrit,701,3009542
+3011505701,measurement: FEV1/FVC,701,3011505
+3012494701,measurement: Peanut IgE Ab [Units/volume] in Serum,701,3012494
+3014599701,measurement: Egg white IgE Ab [Units/volume] in Serum,701,3014599
+3015076701,measurement: Soybean IgE Ab [Units/volume] in Serum,701,3015076
+3019406701,measurement: Latex IgE Ab [Units/volume] in Serum,701,3019406
+3020655701,measurement: Honey bee IgE Ab [Units/volume] in Serum,701,3020655
+3021226701,measurement: Shrimp IgE Ab [Units/volume] in Serum,701,3021226
+3023430701,measurement: Cat dander IgE Ab [Units/volume] in Serum,701,3023430
+3027231701,measurement: Wheat IgE Ab [Units/volume] in Serum,701,3027231
+3036780701,measurement: American house dust mite IgE Ab [Units/volume] in Serum,701,3036780
+3051031701,measurement: History of Hospitalizations+Outpatient visits Narrative,701,3051031
+4024958701,measurement: Throat culture,701,4024958
+4052083701,measurement: Measurement of respiratory function,701,4052083
+4133840701,measurement: Spirometry,701,4133840
+40758406701,measurement: HIV status,701,40758406
+40766240701,measurement: Are you covered by health insurance or some other kind of health care plan [PhenX],701,40766240
+40769179701,measurement: Percentage area affected by eczema Head and Neck [PhenX],701,40769179
+40769184701,measurement: Percentage area affected by eczema Upper extremity - bilateral [PhenX],701,40769184
+40769189701,measurement: Percentage area affected by eczema Trunk [PhenX],701,40769189
+40769194701,measurement: Percentage area affected by eczema Lower extremity - bilateral [PhenX],701,40769194
+46235214701,measurement: Sexual orientation,701,46235214
+28060101,condition_occurrence: Streptococcal sore throat,101,28060
+30753101,condition_occurrence: Esophagitis,101,30753
+78272101,condition_occurrence: Sprain of wrist,101,78272
+80180101,condition_occurrence: Osteoarthritis,101,80180
+81151101,condition_occurrence: Sprain of ankle,101,81151
+81893101,condition_occurrence: Ulcerative colitis,101,81893
+134438101,condition_occurrence: Contact dermatitis,101,134438
+192671101,condition_occurrence: Gastrointestinal hemorrhage,101,192671
+195588101,condition_occurrence: Cystitis,101,195588
+257012101,condition_occurrence: Chronic sinusitis,101,257012
+258780101,condition_occurrence: Emphysematous bronchitis,101,258780
+260139101,condition_occurrence: Acute bronchitis,101,260139
+261325101,condition_occurrence: Pulmonary emphysema,101,261325
+321042101,condition_occurrence: Cardiac arrest,101,321042
+378001101,condition_occurrence: Concussion with no loss of consciousness,101,378001
+381316101,condition_occurrence: Cerebrovascular accident,101,381316
+439777101,condition_occurrence: Anemia,101,439777
+4001336101,condition_occurrence: Concussion injury of brain,101,4001336
+4048695101,condition_occurrence: Fracture of vertebral column without spinal cord injury,101,4048695
+4094814101,condition_occurrence: Bullet wound,101,4094814
+4109685101,condition_occurrence: Laceration of foot,101,4109685
+4112343101,condition_occurrence: Acute viral pharyngitis,101,4112343
+4113008101,condition_occurrence: Laceration of hand,101,4113008
+4116491101,condition_occurrence: Escherichia coli urinary tract infection,101,4116491
+4134304101,condition_occurrence: Fracture subluxation of wrist,101,4134304
+4142905101,condition_occurrence: Fracture of rib,101,4142905
+4152936101,condition_occurrence: Laceration of thigh,101,4152936
+4155034101,condition_occurrence: Laceration of forearm,101,4155034
+4156265101,condition_occurrence: Facial laceration,101,4156265
+4218389101,condition_occurrence: Whiplash injury to neck,101,4218389
+4237458101,condition_occurrence: Fracture of clavicle,101,4237458
+4266809101,condition_occurrence: Diverticular disease,101,4266809
+4283893101,condition_occurrence: Sinusitis,101,4283893
+4285898101,condition_occurrence: Polyp of colon,101,4285898
+4294548101,condition_occurrence: Acute bacterial sinusitis,101,4294548
+4296204101,condition_occurrence: First degree burn,101,4296204
+4296205101,condition_occurrence: Second degree burn,101,4296205
+40481087101,condition_occurrence: Viral sinusitis,101,40481087
+738818401,drug_era: Doxylamine,401,738818
+740275401,drug_era: Carbamazepine,401,740275
+914335401,drug_era: Atropine,401,914335
+920293401,drug_era: Nitrofurantoin,401,920293
+933724401,drug_era: Phenazopyridine,401,933724
+975125401,drug_era: Hydrocortisone,401,975125
+1112807401,drug_era: Aspirin,401,1112807
+1115008401,drug_era: Naproxen,401,1115008
+1118084401,drug_era: celecoxib,401,1118084
+1119510401,drug_era: Dextromethorphan,401,1119510
+1124300401,drug_era: Diclofenac,401,1124300
+1124957401,drug_era: Oxycodone,401,1124957
+1125315401,drug_era: Acetaminophen,401,1125315
+1150770401,drug_era: Astemizole,401,1150770
+1174888401,drug_era: Hydrocodone,401,1174888
+1177480401,drug_era: Ibuprofen,401,1177480
+1309944401,drug_era: Amiodarone,401,1309944
+1322184401,drug_era: clopidogrel,401,1322184
+1332418401,drug_era: Amlodipine,401,1332418
+1343916401,drug_era: Epinephrine,401,1343916
+1539403401,drug_era: Simvastatin,401,1539403
+1713332401,drug_era: Amoxicillin,401,1713332
+1729720401,drug_era: Penicillin V,401,1729720
+1759842401,drug_era: Clavulanate,401,1759842
+4010253501,procedure_occurrence: Nasal sinus endoscopy,501,4010253
+4035793501,procedure_occurrence: Pulmonary rehabilitation,501,4035793
+4037675501,procedure_occurrence: Brief general examination,501,4037675
+4057420501,procedure_occurrence: Catheter ablation of tissue of heart,501,4057420
+4058899501,procedure_occurrence: Plain X-ray of clavicle,501,4058899
+4107731501,procedure_occurrence: Subcutaneous immunotherapy,501,4107731
+4125906501,procedure_occurrence: Suture open wound,501,4125906
+4151422501,procedure_occurrence: Sputum examination,501,4151422
+4163872501,procedure_occurrence: Plain chest X-ray,501,4163872
+4170947501,procedure_occurrence: Bone immobilization,501,4170947
+4187458501,procedure_occurrence: Review of systems,501,4187458
+4191853501,procedure_occurrence: Allergy screening test,501,4191853
+4202451501,procedure_occurrence: Percutaneous mechanical thrombectomy of portal vein using fluoroscopic guidance,501,4202451
+4243062501,procedure_occurrence: Radiography of wrist,501,4243062
+4293740501,procedure_occurrence: Injection of tetanus antitoxin,501,4293740
+4326177501,procedure_occurrence: Medication Reconciliation,501,4326177
+40492359501,procedure_occurrence: Insertion of biventricular implantable cardioverter defibrillator,501,40492359
