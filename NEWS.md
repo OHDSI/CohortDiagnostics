@@ -23,6 +23,8 @@ Bug fixes:
 
 1. databaseName and databaseDescription should be non NULL
 
+2. Fixed computation of standard deviation and standard difference of mean for binary covariates.
+
 
 
 

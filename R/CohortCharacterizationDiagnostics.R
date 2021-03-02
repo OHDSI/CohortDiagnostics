@@ -72,7 +72,9 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
       covariates <- featureExtractionOutput$covariates %>% 
         dplyr::rename(cohortId = .data$cohortDefinitionId) %>% 
         dplyr::left_join(populationSize, by = "cohortId", copy = TRUE) %>% 
-        dplyr::mutate(sd = sqrt(((populationSize * .data$sumValue) + .data$sumValue)/(populationSize^2))) %>% 
+        dplyr::mutate(p = .data$sumValue / populationSize) %>%
+        dplyr::mutate(sd = sqrt(.data$p * (1 - .data$p))) %>% 
+        dplyr::select(-.data$p) %>%
         dplyr::rename(mean = .data$averageValue) %>% 
         dplyr::select(-.data$sumValue, -.data$populationSize)
       
