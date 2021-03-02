@@ -64,3 +64,4 @@ for (i in (1:length(zipFilesToUpload))) {
                 schema = resultsSchema,
                 zipFileName = zipFilesToUpload[[i]])
 }
+

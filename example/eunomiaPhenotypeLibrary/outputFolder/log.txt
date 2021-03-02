@@ -149,3 +149,35 @@
 2021-03-01 18:28:26	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Adding results to zip file
 2021-03-01 18:28:29	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Results are ready for sharing at: D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/diagnosticsExport/Results_Eunomia.zip
 2021-03-01 18:28:29	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Computing all diagnostics took 23.3 mins
+2021-03-01 18:39:22	[Main thread]	INFO	EunomiaPhenotypeLibrary	runCohortDiagnostics	Creating cohorts
+2021-03-01 18:39:22	[Main thread]	INFO	CohortDiagnostics	instantiateCohortSet	Cohort table already exists and in incremental mode, so not recreating table.
+2021-03-01 18:39:22	[Main thread]	DEBUG	CohortDiagnostics	getCohortsJsonAndSqlFromPackage	Executing on cohorts specified in package - EunomiaPhenotypeLibrary
+2021-03-01 18:39:32	[Main thread]	INFO	CohortDiagnostics	getCohortsJsonAndSql	Number of cohorts 6
+2021-03-01 18:39:32	[Main thread]	INFO	CohortDiagnostics	createTempInclusionStatsTables	Creating temporary inclusion statistics tables
+2021-03-01 18:39:35	[Main thread]	INFO	CohortDiagnostics	isTaskRequired	Skipping cohortId = '17492' because unchanged from earlier run
+2021-03-01 18:39:37	[Main thread]	INFO	CohortDiagnostics	isTaskRequired	Skipping cohortId = '17493' because unchanged from earlier run
+2021-03-01 18:39:39	[Main thread]	INFO	CohortDiagnostics	isTaskRequired	Skipping cohortId = '17692' because unchanged from earlier run
+2021-03-01 18:39:42	[Main thread]	INFO	CohortDiagnostics	isTaskRequired	Skipping cohortId = '17693' because unchanged from earlier run
+2021-03-01 18:39:44	[Main thread]	INFO	CohortDiagnostics	isTaskRequired	Skipping cohortId = '17694' because unchanged from earlier run
+2021-03-01 18:39:47	[Main thread]	INFO	CohortDiagnostics	isTaskRequired	Skipping cohortId = '17720' because unchanged from earlier run
+2021-03-01 18:39:47	[Main thread]	DEBUG	CohortDiagnostics	fetchStats	- Fetching data from #cohort_inclusion
+2021-03-01 18:39:47	[Main thread]	DEBUG	CohortDiagnostics	fetchStats	- Fetching data from #cohort_inc_result
+2021-03-01 18:39:47	[Main thread]	DEBUG	CohortDiagnostics	fetchStats	- Fetching data from #cohort_inc_stats
+2021-03-01 18:39:47	[Main thread]	DEBUG	CohortDiagnostics	fetchStats	- Fetching data from #cohort_summary_stats
+2021-03-01 18:39:49	[Main thread]	INFO	EunomiaPhenotypeLibrary	runCohortDiagnostics	Running study diagnostics
+2021-03-01 18:39:49	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Run Cohort Diagnostics started at 2021-03-01 18:39:49
+2021-03-01 18:39:49	[Main thread]	DEBUG	CohortDiagnostics	getCohortsJsonAndSqlFromPackage	Executing on cohorts specified in package - EunomiaPhenotypeLibrary
+2021-03-01 18:40:02	[Main thread]	INFO	CohortDiagnostics	getCohortsJsonAndSql	Number of cohorts 6
+2021-03-01 18:40:02	[Main thread]	WARN	CohortDiagnostics	fixTableColumnsForBackwardCompatibility	The following fields are recommended but missing from the cohort table :  metadata  They will be created.
+2021-03-01 18:40:03	[Main thread]	DEBUG	CohortDiagnostics	writeToCsv	Overwriting and replacing previous D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/diagnosticsExport/cohort.csv with new.
+2021-03-01 18:40:03	[Main thread]	DEBUG	CohortDiagnostics	runCohortDiagnostics	Working in incremental mode.
+2021-03-01 18:40:03	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Found existing record keeping file in incremental folder - CreatedDiagnostics.csv
+2021-03-01 18:40:03	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Saving database metadata
+2021-03-01 18:40:03	[Main thread]	DEBUG	CohortDiagnostics	writeToCsv	Overwriting and replacing previous D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/diagnosticsExport/database.csv with new.
+2021-03-01 18:40:03	[Main thread]	TRACE	CohortDiagnostics	runCohortDiagnostics	Creating concept ID table for tracking concepts used in diagnostics
+2021-03-01 18:40:03	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Inserting 2 referent concept IDs into the concept ID table. This may take a while.
+2021-03-01 18:40:03	[Main thread]	TRACE	CohortDiagnostics	runCohortDiagnostics	Done inserting
+2021-03-01 18:40:03	[Main thread]	INFO	CohortDiagnostics	runCohortDiagnostics	Counting cohort records and subjects
+2021-03-01 18:40:04	[Main thread]	INFO	CohortDiagnostics	getCohortCounts	Counting cohorts took 0.604 secs
+2021-03-01 18:40:04	[Main thread]	DEBUG	CohortDiagnostics	writeToCsv	Overwriting and replacing previous D:/git/github/ohdsi/CohortDiagnosticss/example/eunomiaPhenotypeLibrary/outputFolder/diagnosticsExport/cohort_count.csv with new.
+2021-03-01 18:40:04	[Main thread]	FATAL	CohortDiagnostics	runCohortDiagnostics	Error in CohortDiagnostics::runCohortDiagnostics(packageName = packageName,  :    All cohorts were either not instantiated or all have 0 records. 
