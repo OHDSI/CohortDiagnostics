@@ -214,7 +214,7 @@ compareCohortCharacteristics <-
       suffix = c("1", "2")
     ) %>%
       dplyr::mutate(
-        sd = sqrt(.data$sd1 ^ 2 + .data$sd2 ^ 2),
+        sd = sqrt((.data$sd1 ^ 2 + .data$sd2 ^ 2) / 2),
         stdDiff = (.data$mean2 - .data$mean1) / .data$sd
       ) %>%
       dplyr::arrange(-abs(.data$stdDiff))
