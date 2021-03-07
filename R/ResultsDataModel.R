@@ -27,11 +27,11 @@ getResultsDataModelSpecifications <- function() {
   return(resultsDataModelSpecifications)
 }
 
-fixCohortTableMetadataForBackwardCompatibility <- function(cohort) {
-  if (!'metadata' %in% colnames(cohort)) {
+fixTableMetadataForBackwardCompatibility <- function(table) {
+  if (!'metadata' %in% colnames(table)) {
     data <- list()
-    for (i in (1:nrow(cohort))) {
-      data[[i]] <- cohort[i, ]
+    for (i in (1:nrow(table))) {
+      data[[i]] <- table[i, ]
       colnames <- colnames(data[[i]])
       metaDataList <- list()
       for (j in (1:length(colnames))) {
@@ -40,18 +40,18 @@ fixCohortTableMetadataForBackwardCompatibility <- function(cohort) {
       data[[i]]$metadata <-
         RJSONIO::toJSON(metaDataList, pretty = TRUE)
     }
-    cohort <- dplyr::bind_rows(data)
+    table <- dplyr::bind_rows(data)
   }
-  if ('referent_concept_id' %in% colnames(cohort)) {
-    cohort <- cohort %>% 
+  if ('referent_concept_id' %in% colnames(table)) {
+    table <- table %>% 
       dplyr::select(-.data$referent_concept_id)
   }
-  return(cohort)
+  return(table)
 }
 
 checkFixColumnNames <- function(table, tableName, zipFileName, specifications = getResultsDataModelSpecifications()) {
-  if (tableName == 'cohort') {
-    table <- fixCohortTableMetadataForBackwardCompatibility(cohort = table)
+  if (tableName %in% c('cohort', 'phenotype_description')) {
+    table <- fixTableMetadataForBackwardCompatibility(table = table)
   }
   observeredNames <- colnames(table)[order(colnames(table))]
   
