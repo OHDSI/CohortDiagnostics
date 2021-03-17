@@ -10,13 +10,13 @@ library(CohortDiagnostics)
 
 # OHDSI's server:
 connectionDetails <- createConnectionDetails(dbms = "postgresql",
-                                             server = paste(Sys.getenv("phenotypeLibraryDbServer"),
-                                                            Sys.getenv("phenotypeLibraryDbDatabase"),
+                                             server = paste(Sys.getenv("shinydbServer"),
+                                                            Sys.getenv("shinydbDatabase"),
                                                             sep = "/"),
-                                             port = Sys.getenv("phenotypeLibraryDbPort"),
-                                             user = Sys.getenv("phenotypeLibraryDbUser"),
-                                             password = Sys.getenv("phenotypeLibraryDbPassword"))
-resultsSchema <- Sys.getenv("phenotypeLibraryDbResultsSchema")
+                                             port = Sys.getenv("shinydbPort"),
+                                             user = Sys.getenv("shinyDbUserGowtham"),
+                                             password = Sys.getenv("shinyDbPasswordGowtham"))
+resultsSchema <- 'aesi20210310'
 
 createResultsDataModel(connectionDetails = connectionDetails, schema = resultsSchema)
 

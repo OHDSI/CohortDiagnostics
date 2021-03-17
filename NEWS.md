@@ -17,12 +17,12 @@ Changes:
 - rewrote global.R for connection and file management for diagnostics explorer
 - updated loadDiagnosticsExplorer function
 2. Cohort Diagnostics results data model. Added columns metadata to cohort, and metadata to phenotype_description. These fields are expected to hold JSON expression with additional metadata regarding cohorts.
+3. Index event breakdown now has subject count
 
 
 Bug fixes:
 
 1. databaseName and databaseDescription should be non NULL
-
 2. Fixed computation of standard deviation and standard difference of mean for binary covariates.
 
 
