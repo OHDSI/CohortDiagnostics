@@ -1,0 +1,5 @@
+rule_sequence_id,rule_name,meet_subjects,gain_subjects,total_subjects,remain_subjects,cohort_id,database_id
+0,Gender is male,395,435,830,395,18349,Eunomia
+0,Gender is male,395,435,830,395,18350,Eunomia
+1,Metabolic disease at any time,830,0,830,395,18350,Eunomia
+0,With no history of gastrointestinal hemorrhage,830,0,830,830,14907,Eunomia
