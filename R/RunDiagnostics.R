@@ -219,37 +219,43 @@ runCohortDiagnostics <- function(packageName = NULL,
                   paste0(expectedButNotObsevered ,collapse = ", ")))
   }
   
+  if ('logicDescription' %in% expectedButNotObsevered) {
+    cohorts$logicDescription <- cohorts$cohortName
+  }
+  if ('phenotypeId' %in% expectedButNotObsevered) {
+    cohorts$phenotypeId <- 0
+  }
   if ('metadata' %in% expectedButNotObsevered) {
-    writeLines(
-      paste(
-        "The following columns were observed in the cohort table, \n
+    if (length(obseveredButNotExpected) > 0) {
+      writeLines(
+        paste(
+          "The following columns were observed in the cohort table, \n
         that are not expected and will be available as part of json object \n
         in a newly created 'metadata' column.",
-        paste0(obseveredButNotExpected, collapse = ", ")
+          paste0(obseveredButNotExpected, collapse = ", ")
+        )
       )
-    )
+    }
     columnsToAddToJson <-
-      c(
-        obseveredButNotExpected,
-        'logicDescription',
-        'cohortId',
-        'cohortName',
-        'phenotypeId'
-      ) %>%
+      setdiff(x = cohortTableColumnNamesObserved,
+              y = c('json', 'sql')) %>%
       unique() %>%
       sort()
     cohorts <- cohorts %>%
       dplyr::mutate(metadata = as.list(columnsToAddToJson) %>% RJSONIO::toJSON())
   } else {
-    writeLines(
-      paste(
-        "The following columns were observed in the cohort table, \n
-        that are not expected. If you would like to retain them please \n
-        them as JSON objects in the 'metadata' column.",
-        paste0(obseveredButNotExpected, collapse = ", ")
+    if (length(obseveredButNotExpected) > 0) {
+      writeLines(
+        paste(
+          "The following columns were observed in the cohort table, \n
+          that are not expected. If you would like to retain them please \n
+          them as JSON objects in the 'metadata' column.",
+          paste0(obseveredButNotExpected, collapse = ", ")
+        )
       )
-    )
-    stop(paste0("Terminating - please update the metadata column to include: ", paste0(obseveredButNotExpected, collapse = ", ")))
+      stop(paste0("Terminating - please update the metadata column to include: ", 
+                  paste0(obseveredButNotExpected, collapse = ", ")))
+    }
   }
   
   cohorts <- cohorts %>% 

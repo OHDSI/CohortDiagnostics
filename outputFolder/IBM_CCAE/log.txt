@@ -1,7 +1,0 @@
-2021-02-25 09:05:54	[Main thread]	INFO	SuicFeasibility	runCohortDiagnostics	Creating cohorts
-2021-02-25 09:06:01	[Main thread]	INFO	CohortDiagnostics	createCohortTable	Creating cohort table
-2021-02-25 09:06:03	[Main thread]	DEBUG	CohortDiagnostics	createCohortTable	Created table scratch_grao9_ccae.s308_SuicFeasibility
-2021-02-25 09:06:03	[Main thread]	DEBUG	CohortDiagnostics	getCohortsJsonAndSqlFromPackage	Executing on cohorts specified in package - SuicFeasibility
-2021-02-25 09:06:14	[Main thread]	INFO	CohortDiagnostics	getCohortsJsonAndSql	Number of cohorts 6
-2021-02-25 09:06:14	[Main thread]	INFO	CohortDiagnostics	createTempInclusionStatsTables	Creating temporary inclusion statistics tables
-2021-02-25 09:06:14	[Main thread]	FATAL	methods	validObject	reached elapsed time limit

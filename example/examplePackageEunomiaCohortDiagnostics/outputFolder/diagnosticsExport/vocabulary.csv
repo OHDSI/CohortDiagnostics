@@ -1,0 +1,126 @@
+﻿vocabulary_id,vocabulary_name,vocabulary_reference,vocabulary_version,vocabulary_concept_id
+ABMS,Provider Specialty (American Board of Medical Specialties),http://www.abms.org/member-boards/specialty-subspecialty-certificates,2018-06-26 ABMS,45756746
+AMT,Australian Medicines Terminology (NEHTA),https://www.nehta.gov.au/implementation-resources/terminology-access,AMT 01-SEP-17,238
+APC,Ambulatory Payment Classification (CMS),http://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/HospitalOutpatientPPS/Hospital-Outpatient-Regulations-and-Notices.html,2018-January-Addendum-A,44819132
+ATC,WHO Anatomic Therapeutic Chemical Classification,FDB UK distribution package,RXNORM 2018-08-12,44819117
+BDPM,Public Database of Medications (Social-Sante),http://base-donnees-publique.medicaments.gouv.fr/telechargement.php,BDPM 17-JUL-17,236
+CDM,OMOP Common DataModel,https://github.com/OHDSI/CommonDataModel,CDM v6.0.0,32485
+CDT,Current Dental Terminology (ADA),http://www.nlm.nih.gov/research/umls/licensedcontent/umlsknowledgesources.html,2018 Release,581438
+CIEL,Columbia International eHealth Laboratory (Columbia University),https://wiki.openmrs.org/display/docs/Getting+and+Using+the+MVP-CIEL+Concept+Dictionary,Openmrs 1.11.0 20150227,45905710
+Cohort,Legacy OMOP HOI or DOI cohort,OMOP generated,,44819123
+Cohort Type,OMOP Cohort Type,OMOP generated,,44819234
+Concept Class,OMOP Concept Class,OMOP generated,,44819233
+Condition Type,OMOP Condition Occurrence Type,OMOP generated,,44819127
+Cost,OMOP Cost,OMOP generated,,581457
+Cost Type,OMOP Cost Type,OMOP generated,,5029
+CPT4,Current Procedural Terminology version 4 (AMA),http://www.nlm.nih.gov/research/umls/licensedcontent/umlsknowledgesources.html,2018 Release,44819100
+Currency,International Currency Symbol (ISO 4217),http://www.iso.org/iso/home/standards/currency_codes.htm,2008,44819153
+CVX,CDC Vaccine Administered CVX (NCIRD),https://www2a.cdc.gov/vaccines/iis/iisstandards/vaccines.asp?rpt=cvx,CVX code set 31-JUL-17,581400
+DA_France,Disease Analyzer France (IMS),IMS proprietary,DA_France2018-11-19,204
+Death Type,OMOP Death Type,OMOP generated,,44819135
+Device Type,OMOP Device Type,OMOP generated,,44819151
+dm+d,Dictionary of Medicines and Devices (NHS),https://isd.hscic.gov.uk/trud3/user/authenticated/group/0/pack/1/subpack/24/releases,dm+d Version 6.0.0 20180604,232
+Domain,OMOP Domain,OMOP generated,,44819147
+DPD,Drug Product Database (Health Canada),http://open.canada.ca/data/en/dataset/bf55e42a-63cb-4556-bfd8-44f26e5a36fe,DPD 25-JUN-17,231
+DRG,Diagnosis-related group (CMS),http://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/AcuteInpatientPPS/Acute-Inpatient-Files-for-Download.html,2011-18-02,44819130
+Drug Type,OMOP Drug Exposure Type,OMOP generated,,44819126
+EphMRA ATC,Anatomical Classification of Pharmaceutical Products (EphMRA),http://www.ephmra.org/Anatomical-Classification,EphMRA ATC 2016,243
+Episode,OMOP Episode,OMOP generated,,32523
+ETC,Enhanced Therapeutic Classification (FDB),FDB US distribution package,20151119 Release,44819116
+Ethnicity,OMOP Ethnicity,OMOP generated,,44819134
+GCN_SEQNO,Clinical Formulation ID (FDB),FDB US distribution package,20151119 Release,44819141
+Gemscript,Gemscript (Resip),http://www.whocc.no/atc_ddd_index/,Gemscript 2018-07-01,44819144
+Gender,OMOP Gender,OMOP generated,,44819108
+GGR,Commented Drug Directory (BCFI),http://www.bcfi.be/nl/download,GGR 20180901,581450
+GPI,Medi-Span Generic Product Identifier (Wolters Kluwer Health),Medi-Span distribution package,GPI 2017,44819106
+GRR,Global Reference Repository (IMS),IMS proprietary,GRR 2019-01-17,5047
+HCPCS,Healthcare Common Procedure Coding System (CMS),http://www.nlm.nih.gov/research/umls/licensedcontent/umlsknowledgesources.html,20180101 Alpha Numeric HCPCS File,44819101
+HES Specialty,Hospital Episode Statistics Specialty (NHS),http://www.datadictionary.nhs.uk/data_dictionary/attributes/m/main_specialty_code_de.asp?shownav=0,2018-06-26 HES Specialty,44819145
+ICD10,"International Classification of Diseases, Tenth Revision (WHO)",http://www.who.int/classifications/icd/icdonlineversions/en/,2016 Release,44819124
+ICD10CM,"International Classification of Diseases, Tenth Revision, Clinical Modification (NCHS)",http://www.cdc.gov/nchs/icd/icd10cm.htm,ICD10CM FY2019 code descriptions,44819098
+ICD10PCS,ICD-10 Procedure Coding System (CMS),http://www.cms.gov/Medicare/Coding/ICD10/index.html,ICD10PCS 2019,44819125
+ICD9CM,"International Classification of Diseases, Ninth Revision, Clinical Modification, Volume 1 and 2 (NCHS)",http://www.cms.gov/Medicare/Coding/ICD9ProviderDiagnosticCodes/codes.html,ICD9CM v32 master descriptions,5046
+ICD9Proc,"International Classification of Diseases, Ninth Revision, Clinical Modification, Volume 3 (NCHS)",http://www.cms.gov/Medicare/Coding/ICD9ProviderDiagnosticCodes/codes.html,ICD9CM v32 master descriptions,44819099
+ICDO3,"International Classification of Diseases for Oncology, Third Edition (WHO)",https://seer.cancer.gov/icd-o-3/,ICDO3 SEER Site/Histology Released 09/18/2015,581426
+Indication,Indications and Contraindications (FDB),FDB US distribution package,20151119 Release,44819115
+JNJ_CPRD_ET_LOINC,CPRD Additional Enttypes Mapped to LOINC Concepts,,,0
+JNJ_CPRD_GS_RXN,CPRD Prodcode (Gemscript Dictionary) Mapped to RxNorm Concepts,,,0
+JNJ_CPRD_HES_LOINC,CPRD HES Observation Fields to LOINC,,,0
+JNJ_CPRD_PROV_CMS2,CPRD Provider to CMS2,,,0
+JNJ_CPRD_PROV_SPEC,CPRD Provider Roles Mapped to CMS Specialty,,,0
+JNJ_CPRD_SCORE_LOINC,CPRD Scoring Method Plus Read Codes Mapped to LOINC,,,0
+JNJ_CPRD_T_ET_LOINC,CPRD Test Enttypes Mapped to LOINC Concepts,,,0
+JNJ_DEATH,Death Source Code List,,,0
+JNJ_JMDC_DRUGS,JMDC Drug codes,,,0
+JNJ_JMDC_OBSERVATION,JMDC Observation codes,,,0
+JNJ_JMDC_SPECIALTIES,JMDC Specialty codes,,,0
+JNJ_LAB_UNIT,Lab Unit,,,0
+JNJ_NHANES_DRUG,NHANES Drug Codes,,,0
+JNJ_OPTUM_DPOS,OPTUM Discharge Codes,,,0
+JNJ_OPTUM_EHR_LABNAM,OPTUM Oncology EHR Lab Names,,,0
+JNJ_OPTUM_EHR_LABRES,OPTUM Oncology EHR Lab Results,,,0
+JNJ_OPTUM_EHR_OBTYPE,OPTUM Oncology EHR Observation Type,,,0
+JNJ_OPTUM_EHR_ROUTE,OPTUM Oncology EHR Route,,,0
+JNJ_OPTUM_EHR_SPCLTY,OPTUM Oncology EHR Specialty,,,0
+JNJ_OPTUM_EHR_VISIT,OPTUM Oncology EHR Visit,,,0
+JNJ_OPTUM_NLP_DRUG,OPTUM Oncology EHR Drug,,,0
+JNJ_OPTUM_P_SPCLTY,Optum Provider Specialty,,,0
+JNJ_PMR_COST_CHRG_CD,Premier Cost Charge Codes,,,0
+JNJ_PMR_DRUG_CHRG_CD,Premier Standard Charge Code - Drugs,,,0
+JNJ_PMR_OBS_CODE,Premier Observation Code,,,0
+JNJ_PMR_P_SPCLTY,Premier Provider Specialty,,,0
+JNJ_PMR_PROC_CHRG_CD,Premier Standard Charge Code - Procedures,,,0
+JNJ_TREAT_OBS,TREAT Observations,,,0
+JNJ_TRU_HRA,Truven Health Risk Assessment (HRA),,,0
+JNJ_TRU_HRA_QUESTION,Truven Health Risk Assessment (HRA) Questions,,,0
+JNJ_TRU_P_SPCLTY,Truven Provider Specialty,,,0
+LOINC,Logical Observation Identifiers Names and Codes (Regenstrief Institute),http://loinc.org/downloads/loinc,2.65,44819102
+LPD_Australia,Longitudinal Patient Data Australia (IMS),IMS proprietary,LPD_Australia_052018,5045
+LPD_Belgium,LPD_Belgium,IMS proprietary,LPD_Belgium 18-JAN-18,581451
+MDC,Major Diagnostic Categories (CMS),http://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/AcuteInpatientPPS/Acute-Inpatient-Files-for-Download.html,2013-01-06,44819131
+Meas Type,OMOP Measurement Type,OMOP generated,,44819152
+MedDRA,Medical Dictionary for Regulatory Activities (MSSO),http://www.meddramsso.com/subscriber_download.asp,MedDRA version 19.1,44819111
+MEDRT,Medication Reference Terminology MED-RT (VA),https://nciterms.nci.nih.gov/ncitbrowser/pages/vocabulary.jsf?dictionary=MED-RT,MED-RT 2018-09-04,32537
+MeSH,Medical Subject Headings (NLM),http://www.nlm.nih.gov/research/umls/licensedcontent/umlsknowledgesources.html,2018 Release,44819136
+MMI,Modernizing Medicine (MMI),MMI proprietary,,581367
+Multilex,Multilex (FDB),http://www.nlm.nih.gov/research/umls/rxnorm/docs/rxnormfiles.html,2013-05-06,44819118
+Multum,Cerner Multum (Cerner),http://www.nlm.nih.gov/research/umls/rxnorm/docs/rxnormfiles.html,2013-07-10,44819112
+NDC,National Drug Code (FDA and manufacturers),"http://www.nlm.nih.gov/research/umls/rxnorm/docs/rxnormfiles.html, http://www.fda.gov/downloads/Drugs/DevelopmentApprovalProcess/UCM070838.zip",NDC 20190113,44819105
+NDFRT,National Drug File - Reference Terminology (VA),http://www.nlm.nih.gov/research/umls/rxnorm/docs/rxnormfiles.html,RXNORM 2018-08-12,44819103
+NFC,New Form Code (EphMRA),http://www.ephmra.org/New-Form-Codes-Classification,NFC 20160704,245
+None,OMOP Standardized Vocabularies,OMOP generated,v5.0 18-JAN-19,44819096
+Note Type,OMOP Note Type,OMOP generated,,44819146
+NUCC,National Uniform Claim Committee Health Care Provider Taxonomy Code Set (NUCC),http://www.nucc.org/index.php?option=com_content&view=article&id=107&Itemid=132,2018-06-26 NUCC,44819137
+Obs Period Type,OMOP Observation Period Type,OMOP generated,,44819149
+Observation Type,OMOP Observation Type,OMOP generated,,44819129
+OPCS4,OPCS Classification of Interventions and Procedures version 4 (NHS),http://systems.hscic.gov.uk/data/clinicalcoding/codingstandards/opcs4,2018 Release,44819143
+OXMIS,Oxford Medical Information System (OCHP),"Codes extracted from GPRD database, courtesy of GSK",,44819114
+PCORNet,National Patient-Centered Clinical Research Network (PCORI),OMOP generated,,44819148
+PHDSC,Source of Payment Typology (PHDSC),http://www.phdsc.org/standards/payer-typology-source.asp,Version 3.0,32473
+Place of Service,Place of Service Codes for Professional Claims (CMS),http://www.cms.gov/Medicare/Medicare-Fee-for-Service-Payment/PhysicianFeeSched/downloads//Website_POS_database.pdf,2009-01-11,44819110
+Plan,"Health Plan - contract to administer healthcare transactions by the payer, facilitated by the sponsor",,,32471
+Plan Stop Reason,Plan Stop Reason - Reason for termination of the Health Plan,,,32474
+PPI,AllOfUs_PPI (Columbia),http://terminology.pmi-ops.org/CodeSystem/ppi,Codebook Version 0.3.12,581404
+Procedure Type,OMOP Procedure Occurrence Type,OMOP generated,,44819128
+Race,Race and Ethnicity Code Set (USBC),http://www.cdc.gov/nchs/data/dvs/Race_Ethnicity_CodeSet.pdf,Version 1.0,44819109
+Read,NHS UK Read Codes Version 2 (HSCIC),http://www.nlm.nih.gov/research/umls/licensedcontent/umlsknowledgesources.html,NHS READV2 21.0.0 20160401000001 + DATAMIGRATION_25.0.0_20180403000001,44819113
+Relationship,OMOP Relationship,OMOP generated,,44819235
+Revenue Code,UB04/CMS1450 Revenue Codes (CMS),http://www.mpca.net/?page=ERC_finance,2010 Release,44819133
+RxNorm,RxNorm (NLM),http://www.nlm.nih.gov/research/umls/rxnorm/docs/rxnormfiles.html,RxNorm 20181203,44819104
+RxNorm Extension,RxNorm Extension (OMOP),OMOP generated,RxNorm Extension 2019-01-17,252
+SMQ,Standardised MedDRA Queries (MSSO),http://www.meddramsso.com/secure/smq/SMQ_Spreadsheet_14_0_English_update.xlsx,Version 14.0,44819121
+SNOMED,Systematic Nomenclature of Medicine - Clinical Terms (IHTSDO),http://www.nlm.nih.gov/research/umls/licensedcontent/umlsknowledgesources.html,Snomed Release 20180731,44819097
+Specialty,Medicare provider/supplier specialty codes (CMS),http://www.cms.gov/Medicare/Provider-Enrollment-and-Certification/MedicareProviderSupEnroll/Taxonomy.html,2018-06-26 Specialty,44819138
+Specimen Type,OMOP Specimen Type,OMOP generated,,581376
+SPL,Structured Product Labeling (FDA),http://www.fda.gov/Drugs/InformationOnDrugs/ucm142438.htm,NDC 20190113,44819140
+Sponsor,Sponsor - institution or individual financing healthcare transactions,,,32472
+UB04 Point of Origin,UB04 Claim Source Inpatient Admission Code (CMS),https://www.resdac.org/cms-data/variables/Claim-Source-Inpatient-Admission-Code,,32045
+UB04 Pri Typ of Adm,UB04 Claim Inpatient Admission Type Code (CMS),https://www.resdac.org/cms-data/variables/Claim-Inpatient-Admission-Type-Code,,32046
+UB04 Pt dis status,UB04 Patient Discharge Status Code (CMS),https://www.resdac.org/cms-data/variables/patient-discharge-status-code,,32047
+UB04 Typ bill,UB04 Type of Bill - Institutional (USHIK),https://ushik.ahrq.gov/ViewItemDetails?&system=apcd&itemKey=196987000,,32044
+UCUM,Unified Code for Units of Measure (Regenstrief Institute),http://aurora.regenstrief.org/~ucum/ucum.html#section-Alphabetic-Index,Version 1.8.2,44819107
+VA Class,VA National Drug File Class (VA),http://www.nlm.nih.gov/research/umls/rxnorm/docs/rxnormfiles.html,RXNORM 2018-08-12,44819122
+VA Product,VA National Drug File Product (VA),http://www.nlm.nih.gov/research/umls/rxnorm/docs/rxnormfiles.html,RXNORM 2018-08-12,44819120
+Visit,OMOP Visit,OMOP generated,,44819119
+Visit Type,OMOP Visit Type,OMOP generated,,44819150
+Vocabulary,OMOP Vocabulary,OMOP generated,,44819232
