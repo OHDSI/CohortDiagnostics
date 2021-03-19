@@ -22,7 +22,6 @@ createResultsDataModel(connectionDetails = connectionDetails, schema = resultsSc
 
 
 
-Sys.setenv("POSTGRES_PATH" = "C:/Program Files/PostgreSQL/11/bin")
 path = ""
 zipFilesToUpload <- list.files(path = path, 
            pattern = ".zip", 
