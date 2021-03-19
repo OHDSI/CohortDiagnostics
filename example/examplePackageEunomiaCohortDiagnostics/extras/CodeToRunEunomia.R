@@ -41,8 +41,11 @@ EunomiaCohortDiagnostics::runCohortDiagnostics(
 )
 
 CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = outputFolder)
+
 CohortDiagnostics::launchDiagnosticsExplorer(dataFolder = outputFolder)
-# 
+
+
+ 
 # connectionDetailsToUpload <- createConnectionDetails(dbms = "postgresql",
 #                                              server = paste(Sys.getenv("shinydbServer"),
 #                                                             Sys.getenv("shinydbDatabase"),
