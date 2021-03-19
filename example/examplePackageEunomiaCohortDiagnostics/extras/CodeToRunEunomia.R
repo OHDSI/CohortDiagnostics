@@ -55,7 +55,7 @@ CohortDiagnostics::launchDiagnosticsExplorer(dataFolder = outputFolder)
 #                                              password = Sys.getenv("shinyDbPasswordGowtham"))
 # 
 # 
-# resultsSchema <- "eunomia"
+# resultsSchema <- "eunomiaCd"
 # createResultsDataModel(connectionDetails = connectionDetailsToUpload, schema = resultsSchema)
 # 
 # 
