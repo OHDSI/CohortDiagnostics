@@ -17,7 +17,7 @@ INTO @store_table
 FROM (
 	SELECT @domain_concept_id AS concept_id,
 		COUNT(*) AS concept_count,
-		COUNT(distinct subject_count) AS subject_count
+		COUNT(distinct subject_id) AS subject_count
 	FROM @cohort_database_schema.@cohort_table
 	INNER JOIN @cdm_database_schema.@domain_table
 		ON subject_id = person_id
