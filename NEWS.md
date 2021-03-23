@@ -18,6 +18,8 @@ Changes:
 - updated loadDiagnosticsExplorer function
 2. Cohort Diagnostics results data model. Added columns metadata to cohort, and metadata to phenotype_description. These fields are expected to hold JSON expression with additional metadata regarding cohorts.
 3. Index event breakdown now has subject count
+4. Since phenotypeId/1000 is not always referentConceptId - this logic is now removed.
+5. With upgrade of DatabaseConnector, tibble may be used instead of dataframe by DatabaseConnector. Changes made in code to reflect that.
 
 
 Bug fixes:
@@ -85,6 +87,7 @@ Bug fixes:
 1. Fixed error when many concept sets have to be instantiated.
 2. Removed ohdsi/SqlRender from Remotes https://github.com/OHDSI/CohortDiagnostics/issues/189
 3. Fixed Digit precision for RJSONIO::toJson and fromJSON https://github.com/OHDSI/CohortDiagnostics/issues/161 This is an important fix. If digit precision is not explicitly specified in RJSONIO, then scientific notation is used. This issue seems to only happen when an integer id (conceptId, conceptSetId, cohortId etc) >= 10,000,000 (which is rare). Please use this update if you have id's > 10,000,000.
+
 
 CohortDiagnostics 1.2.2
 =======================

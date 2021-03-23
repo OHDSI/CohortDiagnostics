@@ -427,7 +427,7 @@ insertDataIntoDb <- function(connection,
     ParallelLogger::logInfo("- Inserting ", nrow(data), " rows into database")
     DatabaseConnector::insertTable(connection = connection,
                                    tableName = paste(schema, tableName, sep = "."),
-                                   data = as.data.frame(data),
+                                   data = data,
                                    dropTableIfExists = FALSE,
                                    createTable = FALSE,
                                    tempTable = FALSE,
@@ -579,8 +579,7 @@ uploadPrintFriendly <- function(connectionDetails = NULL,
   
   ParallelLogger::logInfo("Uploading print-friendly to server")
   cohort <- cohort %>%
-    select(-.data$json) %>%
-    as.data.frame()
+    dplyr::select(-.data$json)
   
   DatabaseConnector::insertTable(connection = connection,
                                  tableName = paste(schema, "cohort_extra", sep = "."),
