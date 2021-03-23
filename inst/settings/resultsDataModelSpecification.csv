@@ -99,6 +99,7 @@ inclusion_rule_stats,cohort_id,bigint,Yes,Yes,No,Yes
 inclusion_rule_stats,database_id,varchar,Yes,Yes,No,Yes
 index_event_breakdown,concept_id,int,Yes,Yes,No,Yes
 index_event_breakdown,concept_count,float,Yes,No,No,Yes
+index_event_breakdown,subject_count,float,Yes,No,No,Yes
 index_event_breakdown,cohort_id,bigint,Yes,Yes,No,Yes
 index_event_breakdown,database_id,varchar,Yes,Yes,No,Yes
 orphan_concept,cohort_id,bigint,Yes,Yes,No,Yes
