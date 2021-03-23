@@ -24,6 +24,8 @@ runCohortDiagnostics(
   runBreakdownIndexEvents = TRUE,
   runIncidenceRates = TRUE,
   runCohortOverlap = TRUE,
+  runVisitContext = TRUE,
+  cohortIds = NULL,
   runCohortCharacterization = TRUE,
   runTemporalCohortCharacterization = TRUE,
   minCellCount = 5
@@ -84,6 +86,8 @@ cohorts?}
 \item{runIncidenceRates}{Generate and export the cohort incidence rates?}
 
 \item{runCohortOverlap}{Generate and export the cohort overlap?}
+
+\item{cohortIds}{Optionally, provide a subset of cohort IDs to restrict the diagnostics to.}
 
 \item{runCohortCharacterization}{Generate and export the cohort characterization?}
 

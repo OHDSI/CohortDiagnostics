@@ -60,6 +60,7 @@
 #' @param minCellCount                        The minimum number of subjects contributing to a count
 #'                                            before it can be included in packaged results.
 #' @param packageName                         The package to look for study specifications
+#' @param cohortIds                           Optionally, provide a subset of cohort IDs to restrict the diagnostics to.
 #'
 #' @export
 runCohortDiagnostics <- function(connectionDetails,
@@ -81,6 +82,8 @@ runCohortDiagnostics <- function(connectionDetails,
                                  runBreakdownIndexEvents = TRUE,
                                  runIncidenceRates = TRUE,
                                  runCohortOverlap = TRUE,
+                                 runVisitContext = TRUE,
+                                 cohortIds = NULL,
                                  runCohortCharacterization = TRUE,
                                  runTemporalCohortCharacterization = TRUE,
                                  minCellCount = 5) {
@@ -104,6 +107,7 @@ runCohortDiagnostics <- function(connectionDetails,
                                             createCohortTable = TRUE,
                                             generateInclusionStats = TRUE,
                                             inclusionStatisticsFolder = outputFolder,
+                                            cohortIds = cohortIds,
                                             incremental = TRUE,
                                             incrementalFolder = incrementalFolder)
     
@@ -126,6 +130,7 @@ runCohortDiagnostics <- function(connectionDetails,
                                           inclusionStatisticsFolder = outputFolder,
                                           exportFolder = file.path(outputFolder,
                                                                    "diagnosticsExport"),
+                                          cohortIds = cohortIds,
                                           databaseId = databaseId,
                                           databaseName = databaseName,
                                           databaseDescription = databaseDescription,
@@ -136,6 +141,7 @@ runCohortDiagnostics <- function(connectionDetails,
                                           runBreakdownIndexEvents = runBreakdownIndexEvents,
                                           runIncidenceRate = runIncidenceRates,
                                           runCohortOverlap = runCohortOverlap,
+                                          runVisitContext = runVisitContext,
                                           runCohortCharacterization = runCohortCharacterization,
                                           runTemporalCohortCharacterization = runTemporalCohortCharacterization,
                                           minCellCount = minCellCount,
