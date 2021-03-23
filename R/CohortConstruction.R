@@ -686,8 +686,6 @@ createTempInclusionStatsTables <- function(connection, oracleTempSchema, cohorts
                     cohortDefinitionId = .data$cohortId) %>% 
       dplyr::select(.data$cohortDefinitionId, .data$ruleSequence, .data$name)
     
-    inclusionRules <- data.frame(inclusionRules) # temporary solution till DatabaseConnector supports tibble
-    
     DatabaseConnector::insertTable(connection = connection,
                                    tableName = "#cohort_inclusion",
                                    data = inclusionRules,
@@ -697,9 +695,9 @@ createTempInclusionStatsTables <- function(connection, oracleTempSchema, cohorts
                                    oracleTempSchema = oracleTempSchema,
                                    camelCaseToSnakeCase = TRUE)
   } else {
-    inclusionRules <- data.frame(cohortDefinitionId = as.double(),
-                                 ruleSequence = as.integer(),
-                                 name = as.character())
+    inclusionRules <- dplyr::tibble(cohortDefinitionId = as.double(),
+                                    ruleSequence = as.integer(),
+                                    name = as.character())
     DatabaseConnector::insertTable(connection = connection,
                                    tableName = "#cohort_inclusion",
                                    data = inclusionRules,

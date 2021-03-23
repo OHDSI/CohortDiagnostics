@@ -52,8 +52,8 @@ getIncidenceRate <- function(connectionDetails = NULL,
                                            dbms = connection@dbms,
                                            cdm_database_schema = cdmDatabaseSchema)
   yearRange <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
-  # Temporarily using data.frame instead of tibble, until DatabaseConnector is fixed (see https://github.com/OHDSI/DatabaseConnector/issues/127)
-  calendarYears <- data.frame(calendarYear = seq(yearRange$startYear, yearRange$endYear, by = 1))
+
+  calendarYears <- dplyr::tibble(calendarYear = seq(yearRange$startYear, yearRange$endYear, by = 1))
   DatabaseConnector::insertTable(connection = connection,
                                  tableName = "#calendar_years",
                                  data = calendarYears,

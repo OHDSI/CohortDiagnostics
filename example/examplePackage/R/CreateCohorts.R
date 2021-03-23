@@ -36,9 +36,9 @@
   # Insert rule names in cohort_inclusion table:
   pathToCsv <- system.file("cohorts", "InclusionRules.csv", package = packageName)
   inclusionRules <- readr::read_csv(pathToCsv, col_types = readr::cols()) 
-  inclusionRules <- data.frame(cohort_definition_id = inclusionRules$cohortId,
-                               rule_sequence = inclusionRules$ruleSequence,
-                               name = inclusionRules$ruleName)
+  inclusionRules <- dplyr::tibble(cohort_definition_id = inclusionRules$cohortId,
+                                  rule_sequence = inclusionRules$ruleSequence,
+                                  name = inclusionRules$ruleName)
   DatabaseConnector::insertTable(connection = connection,
                                  tableName = "#cohort_inclusion",
                                  data = inclusionRules,

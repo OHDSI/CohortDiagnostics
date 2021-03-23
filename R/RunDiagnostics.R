@@ -307,27 +307,27 @@ runCohortDiagnostics <- function(packageName = NULL,
   DatabaseConnector::executeSql(connection = connection, sql = sql, progressBar = FALSE, reportOverallTime = FALSE)
   
   referentConceptIdToInsert <- dplyr::tibble()
-  if (!is.null(phenotypeDescription)) {
-    referentConceptIdToInsert <- dplyr::bind_rows(referentConceptIdToInsert, phenotypeDescription %>% 
-                                                    dplyr::transmute(conceptId = as.double(.data$phenotypeId/1000))) %>%
-      dplyr::distinct()
-  }
+  # if (!is.null(phenotypeDescription)) {
+  #   referentConceptIdToInsert <- dplyr::bind_rows(referentConceptIdToInsert, phenotypeDescription %>% 
+  #                                                   dplyr::transmute(conceptId = as.double(.data$phenotypeId/1000))) %>%
+  #     dplyr::distinct()
+  # }
   if ('referentConceptId' %in% colnames(cohorts)) {
     referentConceptIdToInsert <- dplyr::bind_rows(referentConceptIdToInsert, cohorts %>% 
                                                     dplyr::transmute(conceptId = as.double(.data$referentConceptId))) %>%
       dplyr::distinct()
   }
-  if ('phenotypeId' %in% colnames(cohorts)) {
-    referentConceptIdToInsert <- dplyr::bind_rows(referentConceptIdToInsert, cohorts %>% 
-                                                    dplyr::transmute(conceptId = as.double(.data$phenotypeId/1000))) %>%
-      dplyr::distinct()
-  }
+  # if ('phenotypeId' %in% colnames(cohorts)) {
+  #   referentConceptIdToInsert <- dplyr::bind_rows(referentConceptIdToInsert, cohorts %>% 
+  #                                                   dplyr::transmute(conceptId = as.double(.data$phenotypeId/1000))) %>%
+  #     dplyr::distinct()
+  # }
   if (nrow(referentConceptIdToInsert) > 0) {
     ParallelLogger::logInfo(sprintf("Inserting %s referent concept IDs into the concept ID table. This may take a while.",
                                     nrow(referentConceptIdToInsert)))
     DatabaseConnector::insertTable(connection = connection, 
                                    tableName = "#concept_ids",
-                                   data = referentConceptIdToInsert %>% as.data.frame(), #DatabaseConnector currently does not support tibble,
+                                   data = referentConceptIdToInsert,
                                    dropTableIfExists = FALSE,
                                    createTable = FALSE, 
                                    progressBar = TRUE,
