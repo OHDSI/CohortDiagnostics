@@ -326,7 +326,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     } 
     if (is(dataSource, "environment") || input$conceptSetsType == "Concept Set Expression") {
-      expression <- RJSONIO::fromJSON(row$json)
+      expression <- RJSONIO::fromJSON(row$json, digits = 23)
       if (is.null(expression$ConceptSets)) {
         return(NULL)
       } 
@@ -492,7 +492,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     } 
     if (is(dataSource, "environment") || input$compareConceptSetsType == "Concept Set Expression") {
-      expression <- RJSONIO::fromJSON(row$json)
+      expression <- RJSONIO::fromJSON(row$json, digits = 23)
       if (is.null(expression$ConceptSets)) {
         return(NULL)
       } 

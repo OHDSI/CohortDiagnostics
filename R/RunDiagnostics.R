@@ -242,7 +242,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       unique() %>%
       sort()
     cohorts <- cohorts %>%
-      dplyr::mutate(metadata = as.list(columnsToAddToJson) %>% RJSONIO::toJSON())
+      dplyr::mutate(metadata = as.list(columnsToAddToJson) %>% RJSONIO::toJSON(digits = 23))
   } else {
     if (length(obseveredButNotExpected) > 0) {
       writeLines(
@@ -525,7 +525,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     if (nrow(subset) > 0) {
       runIncidenceRate <- function(row) {
         ParallelLogger::logInfo("  Computing incidence rate for cohort '", row$cohortName, "'")
-        cohortExpression <- RJSONIO::fromJSON(row$json)
+        cohortExpression <- RJSONIO::fromJSON(row$json, digits = 23)
         washoutPeriod <- tryCatch({
           cohortExpression$PrimaryCriteria$ObservationWindow$PriorDays
         }, error = function(e) {

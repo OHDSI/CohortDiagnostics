@@ -502,7 +502,7 @@ runConceptSetDiagnostics <- function(connection,
       runBreakdownIndexEvents <- function(cohort) {
         ParallelLogger::logInfo("- Breaking down index events for cohort '", cohort$cohortName, "'")
         
-        cohortDefinition <- RJSONIO::fromJSON(cohort$json)
+        cohortDefinition <- RJSONIO::fromJSON(cohort$json, digits = 23)
         primaryCodesetIds <- lapply(cohortDefinition$PrimaryCriteria$CriteriaList, getCodeSetIds) %>% 
           dplyr::bind_rows() 
         if (nrow(primaryCodesetIds) == 0) {

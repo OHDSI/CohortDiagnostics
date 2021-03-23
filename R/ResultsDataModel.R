@@ -38,7 +38,7 @@ fixTableMetadataForBackwardCompatibility <- function(table) {
         metaDataList[[colnames[[j]]]] = data[[i]][colnames[[j]]] %>% dplyr::pull()
       }
       data[[i]]$metadata <-
-        RJSONIO::toJSON(metaDataList, pretty = TRUE)
+        RJSONIO::toJSON(metaDataList, pretty = TRUE, digits = 23)
     }
     table <- dplyr::bind_rows(data)
   }
