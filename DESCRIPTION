@@ -19,6 +19,7 @@ Depends:
 Imports:
   Andromeda,
   checkmate,
+  DatabaseConnector (>= 4.0.0),
   digest,
   dplyr (>= 1.0.0),
   ggplot2,
@@ -50,8 +51,7 @@ Suggests:
 Remotes:
   ohdsi/Eunomia,
   ohdsi/FeatureExtraction,
-  ohdsi/ROhdsiWebApi,
-  ohdsi/DatabaseConnector,
+  ohdsi/ROhdsiWebApi
 License: Apache License
 VignetteBuilder: knitr
 URL: https://ohdsi.github.io/CohortDiagnostics, https://github.com/OHDSI/CohortDiagnostics
