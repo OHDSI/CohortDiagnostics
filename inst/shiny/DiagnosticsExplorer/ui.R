@@ -65,8 +65,6 @@ if (exists("phenotypeDescription")) {
 sidebarMenu <-
   shinydashboard::sidebarMenu(
     id = "tabs",
-    if (exists("aboutText"))
-      shinydashboard::menuItem(text = "About", tabName = "about"),
     if (exists("phenotypeDescription"))
       shinydashboard::menuItem(text = "Phenotype Description", tabName = "phenotypeDescription"),
     if (exists("cohort"))
