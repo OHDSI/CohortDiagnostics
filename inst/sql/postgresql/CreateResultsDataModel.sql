@@ -230,6 +230,7 @@ CREATE TABLE inclusion_rule_stats (
 CREATE TABLE index_event_breakdown (
 			concept_id INT NOT NULL,
 			concept_count FLOAT NOT NULL,
+			subject_count FLOAT NOT NULL,
 			cohort_id BIGINT NOT NULL,
 			database_id VARCHAR NOT NULL,
 			PRIMARY KEY(concept_id, cohort_id, database_id)
