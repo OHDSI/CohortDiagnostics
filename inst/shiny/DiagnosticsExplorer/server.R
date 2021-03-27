@@ -23,40 +23,9 @@ shiny::shinyServer(function(input, output, session) {
              dplyr::pull(timeId))
   })
   
-  phenotypeId <- shiny::reactive({
-    return(phenotypeDescription$phenotypeId[phenotypeDescription$phenotypeName == input$phenotypes])
-  })
-  
-  if (exists("phenotypeDescription")) {
-    shiny::observe({
-      idx <- which(phenotypeDescription$phenotypeName == input$phenotypes)
-      isolate({
-        proxy <- DT::dataTableProxy(outputId = "phenoTypeDescriptionTable",
-                                    session = session,
-                                    deferUntilFlush = FALSE)
-        DT::selectRows(proxy, idx)
-        DT::selectPage(proxy, which(input$phenoTypeDescriptionTable_rows_all == idx) %/%
-                         input$phenoTypeDescriptionTable_state$length + 1)
-      })
-    })
-  }
-  
   cohortSubset <- shiny::reactive({
-    if (exists("phenotypeDescription")) {
-      return(cohort %>%
-               dplyr::filter(.data$phenotypeId == phenotypeId()) %>%
-               dplyr::arrange(.data$cohortId))
-    } else {
       return(cohort %>%
                dplyr::arrange(.data$cohortId))
-    }
-  })
-  
-  phenotypeSubset <- shiny::reactive({
-    if (exists("phenotypeDescription")) {
-      return(phenotypeDescription %>% 
-               dplyr::arrange(.data$phenotypeId))
-    }
   })
   
   shiny::observe({
@@ -82,114 +51,6 @@ shiny::shinyServer(function(input, output, session) {
                                     choicesOpt = list(style = rep_len("color: black;", 999)),
                                     choices = subset,
                                     selected = c(subset[1], subset[2]))
-  })
-  
-  # Phenotype Description ------------------------------------------------------------------------------
-  output$phenoTypeDescriptionTable <- DT::renderDataTable(expr = {
-    data <- phenotypeDescription %>%
-      dplyr::mutate(name = sprintf("%s <div style=\"display: none\">%s</div>", .data$phenotypeName, .data$searchTermString)) %>%
-      dplyr::select(.data$phenotypeId, .data$name, .data$overview, .data$cohortDefinitions)
-    
-    options = list(pageLength = 5,
-                   lengthMenu = c(5, 10, 15, 20, 100, 500, 1000),
-                   searching = TRUE,
-                   ordering = TRUE,
-                   paging = TRUE,
-                   info = TRUE,
-                   searchHighlight = TRUE,
-                   stateSave = TRUE)
-    
-    dataTable <- DT::datatable(data,
-                               options = options,
-                               rownames = FALSE,
-                               colnames = colnames(data) %>% 
-                                 camelCaseToTitleCase(),
-                               escape = FALSE,
-                               filter = "top",
-                               selection = list(mode = "single", target = "row"),
-                               class = "stripe compact")
-    return(dataTable)
-  }, server = TRUE)
-  
-  selectedPhenotypeDescriptionRow <- reactive({
-    idx <- input$phenoTypeDescriptionTable_rows_selected
-    if (is.null(idx)) {
-      return(NULL)
-    } else {
-      row <- phenotypeDescription[idx, ]
-      return(row)
-    }
-  })
-  
-  output$phenotypeRowIsSelected <- reactive({
-    return(!is.null(selectedPhenotypeDescriptionRow()))
-  })
-  outputOptions(output, "phenotypeRowIsSelected", suspendWhenHidden = FALSE)
-  
-  output$phenotypeDescriptionText <- shiny::renderUI({
-    row <- selectedPhenotypeDescriptionRow()
-    if (is.null(row)) {
-      return(NULL)
-    } else {
-      text <-  row$clinicalDescription
-      
-      referentConcept <- getConceptDetails(dataSource, row$phenotypeId/1000)
-      if (nrow(referentConcept) > 0) {
-        text <- paste(sprintf("<strong>Referent concept: </strong>%s (concept ID: %s)<br/><br/>",
-                              referentConcept$conceptName,
-                              referentConcept$conceptId),
-                      text)
-      }
-      shiny::HTML(text)
-    }
-  })
-  
-  output$phenotypeLiteratureReviewText <- shiny::renderUI({
-    row <- selectedPhenotypeDescriptionRow()
-    if (is.null(row)) {
-      return(NULL)
-    } else {
-      files <- listFilesInGitHub(phenotypeId = row$phenotypeId, subFolder = "literature")
-      if (nrow(files) == 0) {
-        return("Nothing here (yet)")
-      } else {
-        return(HTML(paste(files$html, sep = "<br/>")))
-      }
-    }
-  })
-  
-  output$phenotypeEvaluationText <- shiny::renderUI({
-    row <- selectedPhenotypeDescriptionRow()
-    if (is.null(row)) {
-      return(NULL)
-    } else {
-      files <- listFilesInGitHub(phenotypeId = row$phenotypeId, subFolder = "evaluation")
-      if (nrow(files) == 0) {
-        return("Nothing here (yet)")
-      } else {
-        return(HTML(paste(files$html, sep = "<br/>")))
-      }
-    }
-  })
-  
-  output$phenotypeNotesText <- shiny::renderUI({
-    row <- selectedPhenotypeDescriptionRow()
-    if (is.null(row)) {
-      return(NULL)
-    } else {
-      files <- listFilesInGitHub(phenotypeId = row$phenotypeId, subFolder = "notes")
-      if (nrow(files) == 0) {
-        return("Nothing here (yet)")
-      } else {
-        return(HTML(paste(files$html, sep = "<br/>")))
-      }
-    }
-  })
-  
-  observeEvent(input$selectPhenotypeButton, {
-    shinyWidgets::updatePickerInput(session = session, 
-                                    inputId = "phenotypes", 
-                                    selected = selectedPhenotypeDescriptionRow()$phenotypeName)
   })
   
   # Cohort Definition ---------------------------------------------------------

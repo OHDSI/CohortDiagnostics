@@ -26,47 +26,11 @@ cohortReference <- function(outputId) {
   )
 }
 
-if (exists("phenotypeDescription")) {
-  header <- shinydashboard::dashboardHeader(title = phenotypeLibraryModeDefaultTitle, 
-                                           tags$li(
-                                             tags$div(
-                                               tags$strong("Phenotype:"),
-                                               style = "color: white; margin-top: 14px; margin-right: 10px;"
-                                             ),
-                                             class = "dropdown"
-                                           ), 
-                                           tags$li(
-                                             tags$div(
-                                               shinyWidgets::pickerInput(
-                                                 inputId = "phenotypes",
-                                                 choices = phenotypeDescription$phenotypeName,
-                                                 selected = phenotypeDescription$phenotypeName[1],
-                                                 multiple = FALSE,
-                                                 choicesOpt = list(style = rep_len("color: black;", 999)),
-                                                 options = shinyWidgets::pickerOptions(
-                                                   actionsBox = FALSE,
-                                                   liveSearch = TRUE,
-                                                   size = 20,
-                                                   liveSearchStyle = "contains",
-                                                   liveSearchPlaceholder = "Type here to search",
-                                                   virtualScroll = 50,
-                                                   dropdownAlignRight = TRUE
-                                                 )
-                                               ),
-                                               style = "margin-top: 8px; margin-right: 10px; margin-bottom: -8px;"
-                                             ),
-                                             class = "dropdown"
-                                           )
-  )
-} else { 
-  header <- shinydashboard::dashboardHeader(title = cohortDiagnosticModeDefaultTitle)
-}
-#sidebarMenu
+
+  header <- shinydashboard::dashboardHeader(title = "Cohort Diagnostics")
 sidebarMenu <-
   shinydashboard::sidebarMenu(
     id = "tabs",
-    if (exists("phenotypeDescription"))
-      shinydashboard::menuItem(text = "Phenotype Description", tabName = "phenotypeDescription"),
     if (exists("cohort"))
       shinydashboard::menuItem(text = "Cohort Definition", tabName = "cohortDefinition"),
     if (exists("cohortCount"))
@@ -144,7 +108,6 @@ sidebarMenu <-
       input.tabs != 'indexEventBreakdown' & 
       input.tabs != 'databaseInformation' & 
       input.tabs != 'cohortDefinition' &
-      input.tabs != 'phenotypeDescription' & 
       input.tabs != 'includedConcepts' & 
       input.tabs != 'orphanConcepts' & 
       input.tabs != 'conceptSetDiagnostics' & 
@@ -230,7 +193,6 @@ sidebarMenu <-
       condition = "input.tabs != 'databaseInformation' & 
       input.tabs != 'cohortDefinition' &
       input.tabs != 'cohortCounts' &
-      input.tabs != 'phenotypeDescription' & 
       input.tabs != 'cohortOverlap'&
       input.tabs != 'compareCohortCharacterization' &
       input.tabs != 'incidenceRate' &
@@ -312,33 +274,6 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "about",
     if (exists("aboutText")) HTML(aboutText)
-  ), 
-  shinydashboard::tabItem(
-    tabName = "phenotypeDescription",
-    shinydashboard::box(
-      title = "Phenotype Description",
-      width = NULL,
-      status = "primary",
-      DT::dataTableOutput(outputId = "phenoTypeDescriptionTable"),
-      
-      shiny::conditionalPanel(
-        condition = "output.phenotypeRowIsSelected == true",
-        shiny::actionButton("selectPhenotypeButton", label = "Select this phenotype", style = "margin-top: 5px; margin-bottom: 5px;"),
-        shiny::tabsetPanel(id = "phenotypeInfoTab",
-                           type = "tab",
-                           shiny::tabPanel(title = "Description",
-                                           tags$br(),
-                                           shiny::uiOutput(outputId = "phenotypeDescriptionText")),
-                           shiny::tabPanel(title = "Literature Review",
-                                           tags$br(),
-                                           shiny::htmlOutput(outputId = "phenotypeLiteratureReviewText")),
-                           shiny::tabPanel(title = "Evaluation",
-                                           tags$br(),
-                                           shiny::htmlOutput(outputId = "phenotypeEvaluationText")),
-                           shiny::tabPanel(title = "Notes",
-                                           tags$br(),
-                                           shiny::htmlOutput(outputId = "phenotypeNotesText"))))
-    )
   ),
   shinydashboard::tabItem(
     tabName = "cohortDefinition",
