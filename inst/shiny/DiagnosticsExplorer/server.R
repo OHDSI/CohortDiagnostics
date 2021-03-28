@@ -13,14 +13,36 @@ shiny::shinyServer(function(input, output, session) {
     return(cohort$cohortId[cohort$compoundName == input$cohort])
   })
   
-  cohortIds <- shiny::reactive({
-    return(cohort$cohortId[cohort$compoundName  %in% input$cohorts])
+  cohortIds <- reactiveVal(NULL)
+  shiny::observeEvent(eventExpr = {list(input$cohorts_open,
+                                        input$tabs)
+  },handlerExpr = {
+    if (isFALSE(input$cohorts_open) || !is.null(input$tabs)) {
+      selectedCohortIds <- cohort$cohortId[cohort$compoundName  %in% input$cohorts]
+      cohortIds(selectedCohortIds)
+    }
   })
   
-  timeId <- shiny::reactive({
-    return(temporalCovariateChoices %>%
-             dplyr::filter(choices %in% input$timeIdChoices) %>%
-             dplyr::pull(timeId))
+  timeId <- reactiveVal(NULL)
+  shiny::observeEvent(eventExpr = {list(input$timeIdChoices_open,
+                                        input$tabs)
+  },handlerExpr = {
+    if (isFALSE(input$timeIdChoices_open) || !is.null(input$tabs)) {
+      selectedTimeIds <- temporalCovariateChoices %>%
+        dplyr::filter(choices %in% input$timeIdChoices) %>%
+        dplyr::pull(timeId)
+      timeId(selectedTimeIds)
+    }
+  })
+  
+  databaseIds <- reactiveVal(NULL)
+  shiny::observeEvent(eventExpr = {list(input$databases_open,
+                                        input$tabs)
+  },handlerExpr = {
+    if (isFALSE(input$databases_open) || !is.null(input$tabs)) {
+      selectedDatabaseIds <- input$databases
+      databaseIds(selectedDatabaseIds)
+    }
   })
   
   cohortSubset <- shiny::reactive({
@@ -262,10 +284,10 @@ shiny::shinyServer(function(input, output, session) {
   
   # Cohort Counts --------------------------------------------------------------------------- 
   output$cohortCountsTable <- DT::renderDataTable(expr = {
-    validate(need(length(input$databases) > 0, "No data sources chosen"))
+    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
     data <- getCohortCountResult(dataSource = dataSource,
-                                 databaseIds = input$databases,
+                                 databaseIds = databaseIds(),
                                  cohortIds = cohortIds()) %>% 
       addShortName(cohort) %>%
       dplyr::select(.data$databaseId, 
@@ -282,9 +304,9 @@ shiny::shinyServer(function(input, output, session) {
     
     # instead maybe we can just convert this to a warning message in header.
     if (!isTRUE(all.equal(data$databaseId %>% unique %>% sort(),
-                          input$databases %>% unique() %>% sort()))) {
+                          databaseIds() %>% unique() %>% sort()))) {
       return(dplyr::tibble(Note = paste0("There is no data for the databases:\n",
-                                         paste0(setdiff(input$databases, 
+                                         paste0(setdiff(databaseIds(), 
                                                         data$databaseId %>% unique()), 
                                                 collapse = ",\n "), 
                                          ".\n Please unselect them.")))
@@ -363,6 +385,7 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   # Incidence rate --------------------------------------------------------------------------------
+  
   incidenceRateData <- reactive({
     stratifyByAge <- "Age" %in% input$irStratification
     stratifyByGender <- "Gender" %in% input$irStratification
@@ -370,7 +393,7 @@ shiny::shinyServer(function(input, output, session) {
     if (length(cohortIds()) > 0) {
       data <- getIncidenceRateResult(dataSource = dataSource,
                                      cohortIds = cohortIds(), 
-                                     databaseIds = input$databases, 
+                                     databaseIds = databaseIds(), 
                                      stratifyByGender =  stratifyByGender,
                                      stratifyByAgeGroup =  stratifyByAge,
                                      stratifyByCalendarYear =  stratifyByCalendarYear,
@@ -433,23 +456,54 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  
+  incidenceRateAgeFilter <- reactiveVal(NULL)
+  shiny::observeEvent(eventExpr = {list(input$incidenceRateAgeFilter_open,
+                                        input$tabs)
+  },handlerExpr = {
+    if (isFALSE(input$incidenceRateAgeFilter_open) || !is.null(input$tabs)) {
+      selectedIncidenceRateAgeFilter <- input$incidenceRateAgeFilter
+      incidenceRateAgeFilter(selectedIncidenceRateAgeFilter)
+    }
+  })
+  
+  incidenceRateGenderFilter <- reactiveVal(NULL)
+  shiny::observeEvent(eventExpr = {list(input$incidenceRateGenderFilter_open,
+                                        input$tabs)
+  },handlerExpr = {
+    if (isFALSE(input$incidenceRateGenderFilter_open) || !is.null(input$tabs)) {
+      selectedIncidenceRateGenderFilter <- input$incidenceRateGenderFilter
+      incidenceRateGenderFilter(selectedIncidenceRateGenderFilter)
+    }
+  })
+  
+  incidenceRateCalenderFilter <- reactiveVal(NULL)
+  shiny::observeEvent(eventExpr = {list(input$incidenceRateCalenderFilter_open,
+                                        input$tabs)
+  },handlerExpr = {
+    if (isFALSE(input$incidenceRateCalenderFilter_open) || !is.null(input$tabs)) {
+      selectedIncidenceRateCalenderFilter <- input$incidenceRateCalenderFilter
+      incidenceRateCalenderFilter(selectedIncidenceRateCalenderFilter)
+    }
+  })
+  
   output$incidenceRatePlot <- ggiraph::renderggiraph(expr = {
-    validate(need(length(input$databases) > 0, "No data sources chosen"))
+    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
     stratifyByAge <- "Age" %in% input$irStratification
     stratifyByGender <- "Gender" %in% input$irStratification
     stratifyByCalendarYear <- "Calendar Year" %in% input$irStratification
     data <- incidenceRateData()
     
-    if (stratifyByAge && !"All" %in% input$incidenceRateAgeFilter) {
+    if (stratifyByAge && !"All" %in% incidenceRateAgeFilter()) {
       data <- data %>% 
-        dplyr::filter(.data$ageGroup %in% input$incidenceRateAgeFilter)}
-    if (stratifyByGender && !"All" %in% input$incidenceRateGenderFilter) {
+        dplyr::filter(.data$ageGroup %in% incidenceRateAgeFilter())}
+    if (stratifyByGender && !"All" %in% incidenceRateGenderFilter()) {
       data <- data %>% 
-        dplyr::filter(.data$gender %in% input$incidenceRateGenderFilter)}
-    if (stratifyByCalendarYear && !"All" %in% input$incidenceRateCalenderFilter) {
+        dplyr::filter(.data$gender %in% incidenceRateGenderFilter())}
+    if (stratifyByCalendarYear && !"All" %in% incidenceRateCalenderFilter()) {
       data <- data %>% 
-        dplyr::filter(.data$calendarYear %in% input$incidenceRateCalenderFilter)}
+        dplyr::filter(.data$calendarYear %in% incidenceRateCalenderFilter())}
     
     validate(need(nrow(data) > 0, paste0("No data for this combination")))
     
@@ -466,12 +520,12 @@ shiny::shinyServer(function(input, output, session) {
   timeDist <- reactive({
     data <- getTimeDistributionResult(dataSource = dataSource,
                                       cohortIds = cohortIds(), 
-                                      databaseIds = input$databases)
+                                      databaseIds = databaseIds())
     return(data)
   })
   
   output$timeDisPlot <- ggiraph::renderggiraph(expr = {
-    validate(need(length(input$databases) > 0, "No data sources chosen"))
+    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     data <- timeDist()
     validate(need(nrow(data) > 0, paste0("No data for this combination")))
     
@@ -524,11 +578,11 @@ shiny::shinyServer(function(input, output, session) {
   
   # included concepts table --------------------------------------------------------------------------
   output$includedConceptsTable <- DT::renderDataTable(expr = {
-    validate(need(length(input$databases) > 0, "No data sources chosen"))
+    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     
     data <- getIncludedConceptResult(dataSource = dataSource,
                                      cohortId = cohortId(),
-                                     databaseIds = input$databases)
+                                     databaseIds = databaseIds())
     data <- data %>%
       dplyr::filter(.data$conceptSetName == input$conceptSet)
     if (nrow(data) == 0) {
@@ -537,9 +591,9 @@ shiny::shinyServer(function(input, output, session) {
     
     databaseIds <- unique(data$databaseId)
     
-    if (!all(input$databases %in% databaseIds)) {
+    if (!all(databaseIds() %in% databaseIds)) {
       return(dplyr::tibble(Note = paste0("There is no data for the databases:\n",
-                                         paste0(setdiff(input$databases, databaseIds), 
+                                         paste0(setdiff(databaseIds(), databaseIds), 
                                                 collapse = ",\n "), 
                                          ".\n Please unselect them.")))
     }
@@ -698,11 +752,11 @@ shiny::shinyServer(function(input, output, session) {
   
   # orphan concepts table -------------------------------------------------------------------------
   output$orphanConceptsTable <- DT::renderDataTable(expr = {
-    validate(need(length(input$databases) > 0, "No data sources chosen"))
+    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     
     data <- getOrphanConceptResult(dataSource = dataSource,
                                    cohortId = cohortId(),
-                                   databaseIds = input$databases)
+                                   databaseIds = databaseIds())
     data <- data %>%
       dplyr::filter(.data$conceptSetName == input$conceptSet)
     
@@ -711,9 +765,9 @@ shiny::shinyServer(function(input, output, session) {
     }
     databaseIds <- unique(data$databaseId)
     
-    if (!all(input$databases %in% databaseIds)) {
+    if (!all(databaseIds() %in% databaseIds)) {
       return(dplyr::tibble(Note = paste0("There is no data for the databases:\n",
-                                         paste0(setdiff(input$databases, databaseIds), 
+                                         paste0(setdiff(databaseIds(), databaseIds), 
                                                 collapse = ",\n "), 
                                          ".\n Please unselect them.")))
     }
@@ -882,19 +936,19 @@ shiny::shinyServer(function(input, output, session) {
   
   # Inclusion rules table -----------------------------------------------------------------------
   output$inclusionRuleTable <- DT::renderDataTable(expr = {
-    validate(need(length(input$databases) > 0, "No data sources chosen"))
+    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     table <- getInclusionRuleStats(dataSource = dataSource,
                                    cohortIds = cohortIds(),
-                                   databaseIds = input$databases) 
+                                   databaseIds = databaseIds()) 
     if (nrow(table) == 0) {
       return(dplyr::tibble(Note = paste0("No data available for selected databases and cohorts")))
     }
     
     databaseIds <- unique(table$databaseId)
     
-    if (!all(input$databases %in% databaseIds)) {
+    if (!all(databaseIds() %in% databaseIds)) {
       return(dplyr::tibble(Note = paste0("There is no data for the databases:\n",
-                                         paste0(setdiff(input$databases, databaseIds), 
+                                         paste0(setdiff(databaseIds(), databaseIds), 
                                                 collapse = ",\n "), 
                                          ".\n Please unselect them.")))
     }
@@ -956,11 +1010,11 @@ shiny::shinyServer(function(input, output, session) {
   
   # Index event breakdown ----------------------------------------------------------------
   output$breakdownTable <- DT::renderDataTable(expr = {
-    validate(need(length(input$databases) > 0, "No data sources chosen"))
+    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen chosen"))
     data <- getIndexEventBreakdown(dataSource = dataSource,
                                    cohortIds = cohortIds(),
-                                   databaseIds = input$databases) %>% 
+                                   databaseIds = databaseIds()) %>% 
       addShortName(cohort)
     
     if (nrow(data) == 0) {
@@ -1008,11 +1062,11 @@ shiny::shinyServer(function(input, output, session) {
   
   # Visit Context ---------------------------------------------------------------------------------------------
   output$visitContextTable <- DT::renderDataTable(expr = {
-    validate(need(length(input$databases) > 0, "No data sources chosen"))
+    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
     data <- getVisitContextResults(dataSource = dataSource,
                                    cohortIds = cohortIds(), 
-                                   databaseIds = input$databases) %>%  
+                                   databaseIds = databaseIds()) %>%  
       addShortName(cohort)
     
     if (nrow(data) == 0) {
@@ -1021,9 +1075,9 @@ shiny::shinyServer(function(input, output, session) {
     
     databaseIds <- sort(unique(data$databaseId))
     
-    if (!all(input$databases %in% databaseIds)) {
+    if (!all(databaseIds() %in% databaseIds)) {
       return(dplyr::tibble(Note = paste0("There is no data for the databases:\n",
-                                         paste0(setdiff(input$databases, databaseIds), 
+                                         paste0(setdiff(databaseIds(), databaseIds), 
                                                 collapse = ",\n "), 
                                          ".\n Please unselect them.")))
     }
@@ -1094,7 +1148,7 @@ shiny::shinyServer(function(input, output, session) {
   
   # Characterization --------------------------------------------------
   output$characterizationTable <- DT::renderDataTable(expr = {
-    validate(need(length(input$databases) > 0, "No data sources chosen"))
+    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
     if (input$charType == "Pretty") {
       analysisIds <- prettyAnalysisIds
@@ -1104,23 +1158,23 @@ shiny::shinyServer(function(input, output, session) {
     data <- getCovariateValueResult(dataSource = dataSource,
                                     analysisIds = analysisIds,
                                     cohortIds = cohortIds(),
-                                    databaseIds = input$databases,
+                                    databaseIds = databaseIds(),
                                     isTemporal = FALSE)
     if (nrow(data) == 0) {
       return(dplyr::tibble(Note = paste0("No data available for selected databases and cohorts")))
     }
     
     databaseIds <- sort(unique(data$databaseId))
-    if (!all(input$databases %in% databaseIds)) {
+    if (!all(databaseIds() %in% databaseIds)) {
       return(dplyr::tibble(Note = paste0("There is no data for the databases:\n",
-                                         paste0(setdiff(input$databases, databaseIds), 
+                                         paste0(setdiff(databaseIds(), databaseIds), 
                                                 collapse = ",\n "), 
                                          ".\n Please unselect them.")))
     }
     
     if (input$charType == "Pretty") {
       countData <- getCohortCountResult(dataSource = dataSource,
-                                        databaseIds = input$databases,
+                                        databaseIds = databaseIds(),
                                         cohortIds = cohortIds()) %>%
         dplyr::arrange(.data$databaseId)
       
@@ -1278,12 +1332,12 @@ shiny::shinyServer(function(input, output, session) {
   
   # Temporal characterization -----------------------------------------------------------------
   temporalCharacterization <- shiny::reactive({
-    validate(need(length(input$databases) > 0, "No data sources chosen"))
+    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
     validate(need(length(timeId()) > 0, "No time periods selected"))
     data <- getCovariateValueResult(dataSource = dataSource,
                                     cohortIds = cohortIds(),
-                                    databaseIds = input$databases,
+                                    databaseIds = databaseIds(),
                                     timeIds = timeId(),
                                     isTemporal = TRUE)
   })
@@ -1516,7 +1570,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- getCohortOverlapResult(dataSource = dataSource, 
                                    targetCohortIds = combisOfTargetComparator$targetCohortId, 
                                    comparatorCohortIds = combisOfTargetComparator$comparatorCohortId, 
-                                   databaseIds = input$databases)
+                                   databaseIds = databaseIds())
   })
   
   output$overlapPlot <- ggiraph::renderggiraph(expr = {
@@ -1535,10 +1589,10 @@ shiny::shinyServer(function(input, output, session) {
   
   computeBalance <- shiny::reactive({
     validate(need((length(cohortIds()) != 1), paste0("Please select atleast two different cohorts.")))
-    validate(need((length(input$databases) >= 1), paste0("Please select atleast one datasource.")))
+    validate(need((length(databaseIds()) >= 1), paste0("Please select atleast one datasource.")))
     covs1 <- getCovariateValueResult(dataSource = dataSource,
                                      cohortIds = cohortIds(),
-                                     databaseIds = input$databases,
+                                     databaseIds = databaseIds(),
                                      isTemporal = FALSE)
     balance <- compareCohortCharacteristics(covs1, covs1) %>%
       dplyr::mutate(absStdDiff = abs(.data$stdDiff))
