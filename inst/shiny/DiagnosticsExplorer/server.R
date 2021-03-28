@@ -908,7 +908,8 @@ shiny::shinyServer(function(input, output, session) {
                          values_from = .data$value) %>%
       addShortName(cohort) %>%
       dplyr::relocate(.data$shortName) %>%
-      dplyr::mutate(shortName = as.factor(.data$shortName))
+      dplyr::mutate(shortName = as.factor(.data$shortName)) %>% 
+      dplyr::select(-.data$cohortId)
     
     sketch <- htmltools::withTags(table(
       class = "display",
@@ -971,11 +972,12 @@ shiny::shinyServer(function(input, output, session) {
                     .data$shortName, 
                     .data$conceptId, 
                     .data$conceptName,
-                    .data$conceptCount) %>% 
+                    .data$conceptCount,
+                    .data$subjectCount) %>% 
       dplyr::arrange(.data$shortName, .data$databaseId) %>% 
       tidyr::pivot_wider(id_cols = c("shortName", "conceptId", "conceptName"),
                          names_from = "databaseId", 
-                         values_from = "conceptCount") %>% 
+                         values_from = c("conceptCount", "subjectCount")) %>% 
       dplyr::rename(cohort = .data$shortName) %>%
       dplyr::mutate(cohort = as.factor(.data$cohort))
     

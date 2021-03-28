@@ -14,10 +14,10 @@ defaultDatabase <- Sys.getenv("shinydbDatabase")
 defaultPort <- 5432
 defaultUser <- Sys.getenv("shinyDbUserGowtham")
 defaultPassword <- Sys.getenv("shinyDbPasswordGowtham")
-defaultResultsSchema <- 
+defaultResultsSchema <- 'eunomiaCd'
 defaultVocabularySchema <- Sys.getenv("phoebedbVocabSchema")
 
-defaultDatabaseMode <- FALSE # Use file system if FALSE
+defaultDatabaseMode <- TRUE # Use file system if FALSE
 
 defaultCohortBaseUrl <- "https://atlas.ohdsi.org/#/cohortdefinition/"
 defaultConceptBaseUrl <- "https://athena.ohdsi.org/search-terms/terms/"
@@ -105,8 +105,8 @@ if (databaseMode) {
   
   loadResultsTable("database", required = TRUE)
   loadResultsTable("cohort", required = TRUE)
-  loadResultsTable("cohort_extra")
-  loadResultsTable("phenotype_description")
+  #loadResultsTable("cohort_extra")
+  #loadResultsTable("phenotype_description")
   loadResultsTable("temporal_time_ref")
   loadResultsTable("concept_sets")
   
@@ -117,8 +117,8 @@ if (databaseMode) {
     return(nrow(oneRow) == 0)
   }
   
-  for (table in c(dataModelSpecifications$tableName, "recommender_set")) {
-    if (table %in% resultsTablesOnServer && 
+  for (table in c(dataModelSpecifications$tableName)) { #, "recommender_set"
+    if (table %in% resultsTablesOnServer &&
         !exists(SqlRender::snakeCaseToCamelCase(table)) &&
         !isEmpty(table)) {
       assign(SqlRender::snakeCaseToCamelCase(table), dplyr::tibble())
