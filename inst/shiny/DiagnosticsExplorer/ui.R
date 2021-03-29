@@ -286,11 +286,6 @@ bodyTabItems <- shinydashboard::tabItems(
                              shiny::tabsetPanel(type = "tab",
                                                 shiny::tabPanel(title = "Details",
                                                                 shiny::htmlOutput("cohortDetailsText")),
-                                                if (exists("cohortExtra")) {
-                                                  shiny::tabPanel(title = "Definition",
-                                                                  copyToClipboardButton("cohortDefinitionDetails", style = "margin-top: 5px; margin-bottom: 5px;"),
-                                                                  shiny::htmlOutput("cohortDefinitionDetails"))
-                                                },
                                                 shiny::tabPanel(title = "Concept Sets",
                                                                 shiny::downloadButton("saveConceptSetButton", 
                                                                                       label = "Save to CSV file", 

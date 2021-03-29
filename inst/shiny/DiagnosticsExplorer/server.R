@@ -144,18 +144,6 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  output$cohortDefinitionDetails <- shiny::renderUI({
-    row <- selectedCohortDefinitionRow()
-    if (is.null(row)) {
-      return(NULL)
-    } else {
-      cohortExtra %>%
-        dplyr::filter(.data$cohortId == row$cohortId) %>%
-        dplyr::pull(.data$html) %>%
-        shiny::HTML()
-    }
-  })
-  
   output$cohortDefinitionJson <- shiny::renderText({
     row <- selectedCohortDefinitionRow()
     if (is.null(row)) {
@@ -1048,6 +1036,8 @@ shiny::shinyServer(function(input, output, session) {
     dataTable <- DT::datatable(data,
                                options = options,
                                rownames = FALSE,
+                               colnames = colnames(data) %>% 
+                                 camelCaseToTitleCase(),
                                escape = FALSE,
                                filter = "top",
                                class = "stripe nowrap compact")
