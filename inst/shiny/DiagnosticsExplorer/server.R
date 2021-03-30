@@ -1022,14 +1022,17 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(.data$databaseId,
                     .data$conceptId, 
                     .data$conceptName,
+                    .data$domainId,
+                    .data$vocabularyId,
+                    .data$standardConcept,
                     .data$conceptCount,
                     .data$subjectCount) %>% 
       dplyr::arrange(.data$databaseId) %>% 
-      tidyr::pivot_wider(id_cols = c("conceptId", "conceptName"),
+      tidyr::pivot_wider(id_cols = c("conceptId", "conceptName", "domainId", "vocabularyId", "standardConcept"),
                          names_from = "databaseId", 
                          values_from = c("conceptCount", "subjectCount"))
     
-    data <- data[order(-data[3]), ]
+    data <- data[order(-data[6]), ]
     
     sketch <- htmltools::withTags(table(
       class = "display",
@@ -1037,6 +1040,9 @@ shiny::shinyServer(function(input, output, session) {
         tr(
           th(rowspan = 2, "Concept Id"),
           th(rowspan = 2, "Concept Name"),
+          th(rowspan = 2, "Domain Id"),
+          th(rowspan = 2, "Vocabulary Id"),
+          th(rowspan = 2, "Standard Concept"),
           lapply(databaseIds, th, colspan = 2, class = "dt-center")
         ),
         tr(
@@ -1063,7 +1069,7 @@ shiny::shinyServer(function(input, output, session) {
                                filter = "top",
                                class = "stripe nowrap compact")
     dataTable <- DT::formatStyle(table = dataTable,
-                                 columns = 2 + 1:(length(databaseIds) * 2),
+                                 columns = 5 + 1:(length(databaseIds) * 2),
                                  background = DT::styleColorBar(c(0, maxCount), "lightblue"),
                                  backgroundSize = "98% 88%",
                                  backgroundRepeat = "no-repeat",
