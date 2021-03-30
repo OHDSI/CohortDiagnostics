@@ -1039,7 +1039,7 @@ shiny::shinyServer(function(input, output, session) {
                    lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
-                   columnDefs = list(minCellCountDef(2:(length(databaseIds) * 2))))
+                   columnDefs = list(minCellCountDef(1 + 1:(length(databaseIds) * 2))))
     dataTable <- DT::datatable(data,
                                options = options,
                                rownames = FALSE,
@@ -1050,7 +1050,7 @@ shiny::shinyServer(function(input, output, session) {
                                filter = "top",
                                class = "stripe nowrap compact")
     dataTable <- DT::formatStyle(table = dataTable,
-                                 columns = 2:(length(databaseIds) * 2),
+                                 columns = 2 + 1:(length(databaseIds) * 2),
                                  background = DT::styleColorBar(c(0, maxCount), "lightblue"),
                                  backgroundSize = "98% 88%",
                                  backgroundRepeat = "no-repeat",
@@ -1245,7 +1245,7 @@ shiny::shinyServer(function(input, output, session) {
                              class = "stripe nowrap compact")
       
       table <- DT::formatStyle(table = table,
-                               columns = 1:length(databaseIds),
+                               columns = 1+ 1:length(databaseIds),
                                background = DT::styleColorBar(c(0,1), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
@@ -1301,7 +1301,7 @@ shiny::shinyServer(function(input, output, session) {
                              filter = "top",
                              class = "stripe nowrap compact")
       table <- DT::formatStyle(table = table,
-                               columns = (1 + (1:length(databaseIds) * 2)),
+                               columns = (2 + (1:length(databaseIds) * 2)),
                                background = DT::styleColorBar(c(0,1), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
@@ -1375,7 +1375,7 @@ shiny::shinyServer(function(input, output, session) {
                                             var data = [row_];
                                             Shiny.onInputChange('rows',data );});"))
     table <- DT::formatStyle(table = table,
-                             columns = (1 + (1:length(temporalCovariateChoicesSelected$choices))), #0 index
+                             columns = (2 + (1:length(temporalCovariateChoicesSelected$choices))), #0 index
                              background = DT::styleColorBar(c(0,1), "lightblue"),
                              backgroundSize = "98% 88%",
                              backgroundRepeat = "no-repeat",
