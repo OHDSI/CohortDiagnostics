@@ -995,31 +995,42 @@ shiny::shinyServer(function(input, output, session) {
   # Index event breakdown ----------------------------------------------------------------
   output$breakdownTable <- DT::renderDataTable(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
-    validate(need(length(cohortIds()) > 0, "No cohorts chosen chosen"))
+    validate(need(length(cohortId()) > 0, "No cohorts chosen chosen"))
     data <- getIndexEventBreakdown(dataSource = dataSource,
-                                   cohortIds = cohortIds(),
-                                   databaseIds = databaseIds()) %>% 
-      addShortName(cohort)
+                                   cohortIds = cohortId(),
+                                   databaseIds = databaseIds())
     
     if (nrow(data) == 0) {
       return(dplyr::tibble(Note = paste0("No data available for selected databases and cohorts")))
     }
     maxCount <- max(data$conceptCount, na.rm = TRUE)
+    databaseIds <- unique(data$databaseId)
     data <- data %>% 
       dplyr::select(.data$databaseId,
-                    .data$shortName, 
                     .data$conceptId, 
                     .data$conceptName,
                     .data$conceptCount,
                     .data$subjectCount) %>% 
-      dplyr::arrange(.data$shortName, .data$databaseId) %>% 
-      tidyr::pivot_wider(id_cols = c("shortName", "conceptId", "conceptName"),
+      dplyr::arrange(.data$databaseId) %>% 
+      tidyr::pivot_wider(id_cols = c("conceptId", "conceptName"),
                          names_from = "databaseId", 
-                         values_from = c("conceptCount", "subjectCount")) %>% 
-      dplyr::rename(cohort = .data$shortName) %>%
-      dplyr::mutate(cohort = as.factor(.data$cohort))
+                         values_from = c("conceptCount", "subjectCount"))
     
-    data <- data[order(-data[4]), ]
+    data <- data[order(-data[3]), ]
+    
+    sketch <- htmltools::withTags(table(
+      class = "display",
+      thead(
+        tr(
+          th(rowspan = 2, "Concept Id"),
+          th(rowspan = 2, "Concept Name"),
+          lapply(databaseIds, th, colspan = 2, class = "dt-center")
+        ),
+        tr(
+          lapply(rep(c("Concept Count", "Subject Count"), length(databaseIds)), th)
+        )
+      )
+    ))
     
     options = list(pageLength = 10,
                    searching = TRUE,
@@ -1028,17 +1039,18 @@ shiny::shinyServer(function(input, output, session) {
                    lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
-                   columnDefs = list(minCellCountDef(3:ncol(data) - 1)))
+                   columnDefs = list(minCellCountDef(2:(length(databaseIds) * 2))))
     dataTable <- DT::datatable(data,
                                options = options,
                                rownames = FALSE,
+                               container = sketch,
                                colnames = colnames(data) %>% 
                                  camelCaseToTitleCase(),
                                escape = FALSE,
                                filter = "top",
                                class = "stripe nowrap compact")
     dataTable <- DT::formatStyle(table = dataTable,
-                                 columns = 4:ncol(data),
+                                 columns = 2:(length(databaseIds) * 2),
                                  background = DT::styleColorBar(c(0, maxCount), "lightblue"),
                                  backgroundSize = "98% 88%",
                                  backgroundRepeat = "no-repeat",
@@ -1049,11 +1061,10 @@ shiny::shinyServer(function(input, output, session) {
   # Visit Context ---------------------------------------------------------------------------------------------
   output$visitContextTable <- DT::renderDataTable(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
-    validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
+    validate(need(length(cohortId()) > 0, "No cohorts chosen"))
     data <- getVisitContextResults(dataSource = dataSource,
-                                   cohortIds = cohortIds(), 
-                                   databaseIds = databaseIds()) %>%  
-      addShortName(cohort)
+                                   cohortIds = cohortId(), 
+                                   databaseIds = databaseIds())
     
     if (nrow(data) == 0) {
       return(dplyr::tibble(Note = paste0("No data available for selected databases and cohort")))
@@ -1077,24 +1088,20 @@ shiny::shinyServer(function(input, output, session) {
     
     table <- visitContextReference %>% 
       dplyr::left_join(data, by = c("visitConceptName", "visitContext", "databaseId")) %>% 
-      dplyr::select(.data$visitConceptName, .data$visitContext, .data$subjects, .data$databaseId, .data$shortName) %>% 
+      dplyr::select(.data$visitConceptName, .data$visitContext, .data$subjects, .data$databaseId) %>% 
       dplyr::mutate(visitContext = paste0(.data$databaseId, "_", .data$visitContext)) %>% 
       dplyr::select(-.data$databaseId) %>%
-      dplyr::arrange(.data$shortName, .data$visitConceptName) %>% 
-      tidyr::pivot_wider(id_cols = c( .data$shortName, .data$visitConceptName),
+      dplyr::arrange(.data$visitConceptName) %>% 
+      tidyr::pivot_wider(id_cols = c(.data$visitConceptName),
                          names_from = .data$visitContext,
                          values_from = .data$subjects) %>% 
-      dplyr::relocate(.data$shortName, .data$visitConceptName) %>% 
-      dplyr::rename(cohort = .data$shortName) %>% 
-      dplyr::filter(!is.na(.data$cohort)) %>%
-      dplyr::mutate(cohort = as.factor(cohort),
-                    visitConceptName = as.factor(visitConceptName))
+      dplyr::relocate(.data$visitConceptName) %>%
+      dplyr::mutate(visitConceptName = as.factor(visitConceptName))
     
     sketch <- htmltools::withTags(table(
       class = "display",
       thead(
         tr(
-          th(rowspan = 2, "Cohorts"),
           th(rowspan = 2, "Visit"),
           lapply(databaseIds, th, colspan = 4, class = "dt-center")
         ),
@@ -1112,7 +1119,7 @@ shiny::shinyServer(function(input, output, session) {
                    ordering = TRUE,
                    paging = TRUE,
                    columnDefs = list(truncateStringDef(0, 30),
-                                     minCellCountDef(1 + 1:(length(databaseIds) * 4))))
+                                     minCellCountDef(1:(length(databaseIds) * 4))))
     
     table <- DT::datatable(table,
                            options = options,
@@ -1124,7 +1131,7 @@ shiny::shinyServer(function(input, output, session) {
                            filter = "top")
     
     table <- DT::formatStyle(table = table,
-                             columns = 1:(length(databaseIds) * 4) + 1,
+                             columns = 1:(length(databaseIds) * 4),
                              background = DT::styleColorBar(c(0, maxSubjects), "lightblue"),
                              backgroundSize = "98% 88%",
                              backgroundRepeat = "no-repeat",
@@ -1818,14 +1825,14 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$cohortCountsSelectedCohort <- shiny::renderUI({selectedCohorts()})
-  output$indexEventBreakdownSelectedCohort <- shiny::renderUI({selectedCohorts()})
+  output$indexEventBreakdownSelectedCohort <- shiny::renderUI({selectedCohort()})
   output$characterizationSelectedCohort <- shiny::renderUI({selectedCohorts()})
   output$temporalCharacterizationSelectedCohort <- shiny::renderUI({selectedCohorts()})
   output$inclusionRuleStatSelectedCohort <- shiny::renderUI({selectedCohort()})
   output$cohortOverlapSelectedCohort <- shiny::renderUI({selectedCohorts()})
   output$incidenceRateSelectedCohort <- shiny::renderUI({selectedCohorts()})
   output$timeDistSelectedCohort <- shiny::renderUI({selectedCohorts()})
-  output$visitContextSelectedCohort <- shiny::renderUI({selectedCohorts()})
+  output$visitContextSelectedCohort <- shiny::renderUI({selectedCohort()})
   output$cohortCharCompareSelectedCohort <- shiny::renderUI({selectedCohorts()})
   #Download
   # download_box <- function(exportname, plot){
