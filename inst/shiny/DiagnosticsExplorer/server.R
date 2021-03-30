@@ -23,6 +23,10 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  comparatorCohortId <- shiny::reactive({
+    return(cohort$cohortId[cohort$compoundName == input$cohort])
+  })
+  
   timeId <- reactiveVal(NULL)
   shiny::observeEvent(eventExpr = {list(input$timeIdChoices_open,
                                         input$tabs)
@@ -73,6 +77,15 @@ shiny::shinyServer(function(input, output, session) {
                                     choicesOpt = list(style = rep_len("color: black;", 999)),
                                     choices = subset,
                                     selected = c(subset[1], subset[2]))
+  })
+  
+  shiny::observe({
+    subset <- cohortSubset()$compoundName
+    shinyWidgets::updatePickerInput(session = session,
+                                    inputId = "comparatorCohort",
+                                    choicesOpt = list(style = rep_len("color: black;", 999)),
+                                    choices = subset,
+                                    selected = subset[2])
   })
   
   # Cohort Definition ---------------------------------------------------------
@@ -1411,13 +1424,21 @@ shiny::shinyServer(function(input, output, session) {
   # Compare cohort characteristics --------------------------------------------
   
   computeBalance <- shiny::reactive({
-    validate(need((length(cohortIds()) != 1), paste0("Please select atleast two different cohorts.")))
-    validate(need((length(databaseIds()) >= 1), paste0("Please select atleast one datasource.")))
+    validate(need((length(cohortId()) > 0), paste0("Please select cohort.")))
+    validate(need((length(comparatorCohortId()) > 0), paste0("Please select comparator cohort.")))
+    validate(need((comparatorCohortId() == cohortId()), paste0("Please select different cohort and comarator.")))
+    validate(need((length(input$database) > 0), paste0("Please select atleast one datasource.")))
     covs1 <- getCovariateValueResult(dataSource = dataSource,
-                                     cohortIds = cohortIds(),
-                                     databaseIds = databaseIds(),
+                                     cohortIds = cohortId(),
+                                     databaseIds = input$database,
                                      isTemporal = FALSE)
-    balance <- compareCohortCharacteristics(covs1, covs1) %>%
+    
+    covs2 <- getCovariateValueResult(dataSource = dataSource,
+                                     cohortIds = comparatorCohortId(),
+                                     databaseIds = input$database,
+                                     isTemporal = FALSE)
+    
+    balance <- compareCohortCharacteristics(covs1, covs2) %>%
       dplyr::mutate(absStdDiff = abs(.data$stdDiff))
     return(balance)
   })
@@ -1433,10 +1454,7 @@ shiny::shinyServer(function(input, output, session) {
       if (nrow(table) > 0) {
         table <- table %>% 
           dplyr::arrange(.data$sortOrder) %>% 
-          dplyr::select(-.data$sortOrder) %>% 
-          addShortName(cohort, cohortIdColumn = "cohortId1", shortNameColumn = "shortName1") %>%
-          addShortName(cohort, cohortIdColumn = "cohortId2", shortNameColumn = "shortName2") %>%
-          dplyr::relocate(.data$shortName1, .data$shortName2) %>% 
+          dplyr::select(-.data$sortOrder) %>%
           dplyr::select(-.data$cohortId1, -.data$cohortId2)
       } else {
         return(dplyr::tibble(Note = "No data for covariates that are part of pretty table."))
@@ -1454,23 +1472,23 @@ shiny::shinyServer(function(input, output, session) {
       table <- DT::datatable(table,
                              options = options,
                              rownames = FALSE,
-                             colnames = c("Target", "Comparator", "Characteristic", "Target", "Comparator","Std. Diff."),
+                             colnames = c("Characteristic", "Target", "Comparator","Std. Diff."),
                              escape = FALSE,
                              filter = "top",
                              class = "stripe nowrap compact")
       table <- DT::formatStyle(table = table,
-                               columns = 4:5,
+                               columns = 2:4,
                                background = DT::styleColorBar(c(0,1), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
                                backgroundPosition = "center")
       table <- DT::formatStyle(table = table,
-                               columns = 6,
+                               columns = 4,
                                background = styleAbsColorBar(1, "lightblue", "pink"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
                                backgroundPosition = "center")
-      table <- DT::formatRound(table, 6, digits = 2)
+      table <- DT::formatRound(table, 4, digits = 2)
     } else {
       table <- balance %>% 
         dplyr::select(.data$cohortId1,
@@ -1481,10 +1499,7 @@ shiny::shinyServer(function(input, output, session) {
                       .data$sd1, 
                       .data$mean2, 
                       .data$sd2, 
-                      .data$stdDiff) %>% 
-        addShortName(cohort, cohortIdColumn = "cohortId1", shortNameColumn = "shortName1") %>%
-        addShortName(cohort, cohortIdColumn = "cohortId2", shortNameColumn = "shortName2") %>%
-        dplyr::relocate(.data$shortName1, .data$shortName2) %>% 
+                      .data$stdDiff) %>%  
         dplyr::select(-.data$cohortId1, -.data$cohortId2) %>% 
         dplyr::arrange(desc(abs(.data$stdDiff)))
       
@@ -1497,14 +1512,12 @@ shiny::shinyServer(function(input, output, session) {
                      paging = TRUE,
                      columnDefs = list(
                        truncateStringDef(0, 150),
-                       minCellRealDef(4:8, digits = 2)))
+                       minCellRealDef(2:6, digits = 2)))
       
       table <- DT::datatable(table,
                              options = options,
                              rownames = FALSE,
-                             colnames = c("Target", 
-                                          "Comparator", 
-                                          "Covariate Name", 
+                             colnames = c("Covariate Name", 
                                           "Concept ID", 
                                           "Mean Target", 
                                           "SD Target", 
@@ -1515,13 +1528,13 @@ shiny::shinyServer(function(input, output, session) {
                              filter = "top",
                              class = "stripe nowrap compact")
       table <- DT::formatStyle(table = table,
-                               columns = c(5, 7),
+                               columns = c(3, 5),
                                background = DT::styleColorBar(c(0,1), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
                                backgroundPosition = "center")
       table <- DT::formatStyle(table = table,
-                               columns = 9,
+                               columns = 7,
                                background = styleAbsColorBar(1, "lightblue", "pink"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",

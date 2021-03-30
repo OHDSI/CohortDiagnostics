@@ -114,8 +114,7 @@ sidebarMenu <-
       input.tabs != 'conceptSetDiagnostics' & 
       input.tabs != 'inclusionRuleStats' & 
       input.tabs != 'visitContext' & 
-      input.tabs != 'cohortOverlap' & 
-      input.tabs != 'compareCohortCharacterization'",
+      input.tabs != 'cohortOverlap'",
       shinyWidgets::pickerInput(
         inputId = "database",
         label = "Database",
@@ -143,8 +142,7 @@ sidebarMenu <-
       input.tabs == 'orphanConcepts' |
       input.tabs == 'inclusionRuleStats' |
       input.tabs == 'visitContext' |
-      input.tabs == 'cohortOverlap' |
-      input.tabs == 'compareCohortCharacterization'",
+      input.tabs == 'cohortOverlap'",
       shinyWidgets::pickerInput(
         inputId = "databases",
         label = "Database",
@@ -193,7 +191,6 @@ sidebarMenu <-
       input.tabs != 'cohortDefinition' &
       input.tabs != 'cohortCounts' &
       input.tabs != 'cohortOverlap'&
-      input.tabs != 'compareCohortCharacterization' &
       input.tabs != 'incidenceRate' &
       input.tabs != 'timeDistribution'",
       shinyWidgets::pickerInput(
@@ -214,7 +211,6 @@ sidebarMenu <-
     shiny::conditionalPanel(
       condition = "input.tabs == 'cohortCounts' |
       input.tabs == 'cohortOverlap' |
-      input.tabs == 'compareCohortCharacterization' |
       input.tabs == 'incidenceRate' |
       input.tabs == 'timeDistribution'",
       shinyWidgets::pickerInput(
@@ -223,6 +219,24 @@ sidebarMenu <-
         choices = c(""),
         selected = c(""),
         multiple = TRUE,
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        options = shinyWidgets::pickerOptions(
+          actionsBox = TRUE, 
+          liveSearch = TRUE, 
+          liveSearchStyle = "contains",
+          size = 10,
+          dropupAuto = TRUE,
+          liveSearchPlaceholder = "Type here to search",
+          virtualScroll = 50)
+      )
+    ),
+    shiny::conditionalPanel(
+      condition = "input.tabs == 'compareCohortCharacterization'",
+      shinyWidgets::pickerInput(
+        inputId = "comparatorCohort",
+        label = "Comparator",
+        choices = c(""),
+        multiple = FALSE,
         choicesOpt = list(style = rep_len("color: black;", 999)),
         options = shinyWidgets::pickerOptions(
           actionsBox = TRUE, 
