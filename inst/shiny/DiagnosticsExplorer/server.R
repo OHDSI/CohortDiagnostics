@@ -1432,7 +1432,7 @@ shiny::shinyServer(function(input, output, session) {
   computeBalance <- shiny::reactive({
     validate(need((length(cohortId()) > 0), paste0("Please select cohort.")))
     validate(need((length(comparatorCohortId()) > 0), paste0("Please select comparator cohort.")))
-    validate(need((comparatorCohortId() == cohortId()), paste0("Please select different cohort and comarator.")))
+    validate(need((comparatorCohortId() != cohortId()), paste0("Please select different cohort and comarator.")))
     validate(need((length(input$database) > 0), paste0("Please select atleast one datasource.")))
     covs1 <- getCovariateValueResult(dataSource = dataSource,
                                      cohortIds = cohortId(),
