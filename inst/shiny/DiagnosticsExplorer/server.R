@@ -1322,12 +1322,10 @@ shiny::shinyServer(function(input, output, session) {
   
   # Temporal characterization -----------------------------------------------------------------
   temporalCharacterization <- shiny::reactive({
-    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
-    validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
     validate(need(length(timeId()) > 0, "No time periods selected"))
     data <- getCovariateValueResult(dataSource = dataSource,
-                                    cohortIds = cohortIds(),
-                                    databaseIds = databaseIds(),
+                                    cohortIds = cohortId(),
+                                    databaseIds = input$database,
                                     timeIds = timeId(),
                                     isTemporal = TRUE)
   })

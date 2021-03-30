@@ -114,8 +114,7 @@ sidebarMenu <-
       input.tabs != 'inclusionRuleStats' & 
       input.tabs != 'visitContext' & 
       input.tabs != 'cohortOverlap' & 
-      input.tabs != 'compareCohortCharacterization' &
-      input.tabs != 'temporalCharacterization'",
+      input.tabs != 'compareCohortCharacterization'",
       shinyWidgets::pickerInput(
         inputId = "database",
         label = "Database",
@@ -144,8 +143,7 @@ sidebarMenu <-
       input.tabs == 'inclusionRuleStats' |
       input.tabs == 'visitContext' |
       input.tabs == 'cohortOverlap' |
-      input.tabs == 'compareCohortCharacterization'|
-      input.tabs == 'temporalCharacterization'",
+      input.tabs == 'compareCohortCharacterization'",
       shinyWidgets::pickerInput(
         inputId = "databases",
         label = "Database",
@@ -200,7 +198,6 @@ sidebarMenu <-
       input.tabs != 'inclusionRuleStats' &
       input.tabs != 'indexEventBreakdown' &
       input.tabs != 'cohortCharacterization' &
-      input.tabs != 'temporalCharacterization' &
       input.tabs != 'visitContext'",
       shinyWidgets::pickerInput(
         inputId = "cohort",
@@ -213,6 +210,33 @@ sidebarMenu <-
           liveSearch = TRUE, 
           liveSearchStyle = "contains",
           size = 10,
+          liveSearchPlaceholder = "Type here to search",
+          virtualScroll = 50)
+      )
+    ),
+    shiny::conditionalPanel(
+      condition = "input.tabs == 'cohortCounts' |
+      input.tabs == 'cohortOverlap' |
+      input.tabs == 'compareCohortCharacterization' |
+      input.tabs == 'incidenceRate' |
+      input.tabs == 'timeDistribution' |
+      input.tabs == 'inclusionRuleStats' |
+      input.tabs == 'indexEventBreakdown' |
+      input.tabs == 'cohortCharacterization' |
+      input.tabs == 'visitContext'",
+      shinyWidgets::pickerInput(
+        inputId = "cohorts",
+        label = "Cohorts",
+        choices = c(""),
+        selected = c(""),
+        multiple = TRUE,
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        options = shinyWidgets::pickerOptions(
+          actionsBox = TRUE, 
+          liveSearch = TRUE, 
+          liveSearchStyle = "contains",
+          size = 10,
+          dropupAuto = TRUE,
           liveSearchPlaceholder = "Type here to search",
           virtualScroll = 50)
       )
@@ -231,34 +255,6 @@ sidebarMenu <-
           size = 10,
           dropupAuto = TRUE,
           liveSearchStyle = "contains",
-          liveSearchPlaceholder = "Type here to search",
-          virtualScroll = 50)
-      )
-    ),
-    shiny::conditionalPanel(
-      condition = "input.tabs == 'cohortCounts' |
-      input.tabs == 'cohortOverlap' |
-      input.tabs == 'compareCohortCharacterization' |
-      input.tabs == 'incidenceRate' |
-      input.tabs == 'timeDistribution' |
-      input.tabs == 'inclusionRuleStats' |
-      input.tabs == 'indexEventBreakdown' |
-      input.tabs == 'cohortCharacterization' |
-      input.tabs == 'temporalCharacterization' |
-      input.tabs == 'visitContext'",
-      shinyWidgets::pickerInput(
-        inputId = "cohorts",
-        label = "Cohorts",
-        choices = c(""),
-        selected = c(""),
-        multiple = TRUE,
-        choicesOpt = list(style = rep_len("color: black;", 999)),
-        options = shinyWidgets::pickerOptions(
-          actionsBox = TRUE, 
-          liveSearch = TRUE, 
-          liveSearchStyle = "contains",
-          size = 10,
-          dropupAuto = TRUE,
           liveSearchPlaceholder = "Type here to search",
           virtualScroll = 50)
       )
