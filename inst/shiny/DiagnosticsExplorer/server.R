@@ -1310,6 +1310,15 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   })
   
+  covariateIdArray <- reactiveVal()
+  covariateIdArray(c())
+  observeEvent(input$rows, {
+    if (input$rows[[2]] %in% covariateIdArray())
+      covariateIdArray(covariateIdArray()[covariateIdArray() %in% input$rows[[2]] == FALSE])
+    else
+      covariateIdArray(c(covariateIdArray(),input$rows[[2]]))
+  })
+  
   # Temporal characterization -----------------------------------------------------------------
   temporalCharacterization <- shiny::reactive({
     validate(need(length(timeId()) > 0, "No time periods selected"))
@@ -1813,7 +1822,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$cohortCountsSelectedCohort <- shiny::renderUI({selectedCohorts()})
   output$indexEventBreakdownSelectedCohort <- shiny::renderUI({selectedCohort()})
-  output$characterizationSelectedCohort <- shiny::renderUI({selectedCohorts()})
+  output$characterizationSelectedCohort <- shiny::renderUI({selectedCohort()})
   output$temporalCharacterizationSelectedCohort <- shiny::renderUI({selectedCohorts()})
   output$inclusionRuleStatSelectedCohort <- shiny::renderUI({selectedCohort()})
   output$cohortOverlapSelectedCohort <- shiny::renderUI({selectedCohorts()})
