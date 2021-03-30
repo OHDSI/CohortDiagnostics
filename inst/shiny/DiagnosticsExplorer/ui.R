@@ -27,7 +27,8 @@ cohortReference <- function(outputId) {
 }
 
 
-  header <- shinydashboard::dashboardHeader(title = "Cohort Diagnostics")
+header <- shinydashboard::dashboardHeader(title = "Cohort Diagnostics")
+
 sidebarMenu <-
   shinydashboard::sidebarMenu(
     id = "tabs",
@@ -195,7 +196,6 @@ sidebarMenu <-
       input.tabs != 'compareCohortCharacterization' &
       input.tabs != 'incidenceRate' &
       input.tabs != 'timeDistribution' &
-      input.tabs != 'inclusionRuleStats' &
       input.tabs != 'indexEventBreakdown' &
       input.tabs != 'cohortCharacterization' &
       input.tabs != 'visitContext'",
@@ -220,7 +220,6 @@ sidebarMenu <-
       input.tabs == 'compareCohortCharacterization' |
       input.tabs == 'incidenceRate' |
       input.tabs == 'timeDistribution' |
-      input.tabs == 'inclusionRuleStats' |
       input.tabs == 'indexEventBreakdown' |
       input.tabs == 'cohortCharacterization' |
       input.tabs == 'visitContext'",

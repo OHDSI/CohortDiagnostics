@@ -926,7 +926,7 @@ shiny::shinyServer(function(input, output, session) {
   output$inclusionRuleTable <- DT::renderDataTable(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     table <- getInclusionRuleStats(dataSource = dataSource,
-                                   cohortIds = cohortIds(),
+                                   cohortIds = cohortId(),
                                    databaseIds = databaseIds()) 
     if (nrow(table) == 0) {
       return(dplyr::tibble(Note = paste0("No data available for selected databases and cohorts")))
@@ -948,16 +948,12 @@ shiny::shinyServer(function(input, output, session) {
       tidyr::pivot_wider(id_cols = c(.data$cohortId, .data$ruleSequenceId, .data$ruleName),
                          names_from = .data$name,
                          values_from = .data$value) %>%
-      addShortName(cohort) %>%
-      dplyr::relocate(.data$shortName) %>%
-      dplyr::mutate(shortName = as.factor(.data$shortName)) %>% 
       dplyr::select(-.data$cohortId)
     
     sketch <- htmltools::withTags(table(
       class = "display",
       thead(
         tr(
-          th(rowspan = 2, "Cohort"),
           th(rowspan = 2, "Rule Sequence ID"),
           th(rowspan = 2, "Rule Name"),
           lapply(databaseIds, th, colspan = 4, class = "dt-center")
@@ -975,7 +971,7 @@ shiny::shinyServer(function(input, output, session) {
                    lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
-                   columnDefs = list(minCellCountDef(2 + (1:(length(databaseIds) * 4)))))
+                   columnDefs = list(minCellCountDef(1 + (1:(length(databaseIds) * 4)))))
     
     table <- DT::datatable(table,
                            options = options,
@@ -1813,11 +1809,19 @@ shiny::shinyServer(function(input, output, session) {
     return(apply(cohorts, 1, function(x) tags$tr(lapply(x, tags$td))))
   })
   
+  selectedCohort <- shiny::reactive({
+    cohorts <- cohortSubset() %>%
+      dplyr::filter(.data$cohortId == cohortId()) %>%
+      dplyr::arrange(.data$cohortId) %>%
+      dplyr::select(.data$shortName, .data$cohortName)
+    return(apply(cohorts, 1, function(x) tags$tr(lapply(x, tags$td))))
+  })
+  
   output$cohortCountsSelectedCohort <- shiny::renderUI({selectedCohorts()})
   output$indexEventBreakdownSelectedCohort <- shiny::renderUI({selectedCohorts()})
   output$characterizationSelectedCohort <- shiny::renderUI({selectedCohorts()})
   output$temporalCharacterizationSelectedCohort <- shiny::renderUI({selectedCohorts()})
-  output$inclusionRuleStatSelectedCohort <- shiny::renderUI({selectedCohorts()})
+  output$inclusionRuleStatSelectedCohort <- shiny::renderUI({selectedCohort()})
   output$cohortOverlapSelectedCohort <- shiny::renderUI({selectedCohorts()})
   output$incidenceRateSelectedCohort <- shiny::renderUI({selectedCohorts()})
   output$timeDistSelectedCohort <- shiny::renderUI({selectedCohorts()})
