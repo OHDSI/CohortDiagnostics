@@ -24,7 +24,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   comparatorCohortId <- shiny::reactive({
-    return(cohort$cohortId[cohort$compoundName == input$cohort])
+    return(cohort$cohortId[cohort$compoundName == input$comparatorCohort])
   })
   
   timeId <- reactiveVal(NULL)
