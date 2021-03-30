@@ -1360,7 +1360,7 @@ shiny::shinyServer(function(input, output, session) {
                    paging = TRUE,
                    columnDefs = list(
                      truncateStringDef(2, 40),
-                     minCellPercentDef(2 + 1:(length(temporalCovariateChoicesSelected$choices)))))
+                     minCellPercentDef(1 + 1:(length(temporalCovariateChoicesSelected$choices)))))
     
     table <- DT::datatable(table,
                            options = options,
@@ -1375,7 +1375,7 @@ shiny::shinyServer(function(input, output, session) {
                                             var data = [row_];
                                             Shiny.onInputChange('rows',data );});"))
     table <- DT::formatStyle(table = table,
-                             columns = (2 + (1:length(temporalCovariateChoicesSelected$choices))), #0 index
+                             columns = (1 + (1:length(temporalCovariateChoicesSelected$choices))), #0 index
                              background = DT::styleColorBar(c(0,1), "lightblue"),
                              backgroundSize = "98% 88%",
                              backgroundRepeat = "no-repeat",
@@ -1823,7 +1823,7 @@ shiny::shinyServer(function(input, output, session) {
   output$cohortCountsSelectedCohort <- shiny::renderUI({selectedCohorts()})
   output$indexEventBreakdownSelectedCohort <- shiny::renderUI({selectedCohort()})
   output$characterizationSelectedCohort <- shiny::renderUI({selectedCohort()})
-  output$temporalCharacterizationSelectedCohort <- shiny::renderUI({selectedCohorts()})
+  output$temporalCharacterizationSelectedCohort <- shiny::renderUI({selectedCohort()})
   output$inclusionRuleStatSelectedCohort <- shiny::renderUI({selectedCohort()})
   output$cohortOverlapSelectedCohort <- shiny::renderUI({selectedCohorts()})
   output$incidenceRateSelectedCohort <- shiny::renderUI({selectedCohorts()})
