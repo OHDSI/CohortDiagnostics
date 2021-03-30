@@ -195,8 +195,7 @@ sidebarMenu <-
       input.tabs != 'cohortOverlap'&
       input.tabs != 'compareCohortCharacterization' &
       input.tabs != 'incidenceRate' &
-      input.tabs != 'timeDistribution' &
-      input.tabs != 'cohortCharacterization'",
+      input.tabs != 'timeDistribution'",
       shinyWidgets::pickerInput(
         inputId = "cohort",
         label = "Cohorts",
@@ -217,8 +216,7 @@ sidebarMenu <-
       input.tabs == 'cohortOverlap' |
       input.tabs == 'compareCohortCharacterization' |
       input.tabs == 'incidenceRate' |
-      input.tabs == 'timeDistribution' |
-      input.tabs == 'cohortCharacterization'",
+      input.tabs == 'timeDistribution'",
       shinyWidgets::pickerInput(
         inputId = "cohorts",
         label = "Cohorts",

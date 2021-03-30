@@ -1142,7 +1142,7 @@ shiny::shinyServer(function(input, output, session) {
   # Characterization --------------------------------------------------
   output$characterizationTable <- DT::renderDataTable(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
-    validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
+    validate(need(length(cohortId()) > 0, "No cohorts chosen"))
     if (input$charType == "Pretty") {
       analysisIds <- prettyAnalysisIds
     } else {
@@ -1150,7 +1150,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- getCovariateValueResult(dataSource = dataSource,
                                     analysisIds = analysisIds,
-                                    cohortIds = cohortIds(),
+                                    cohortIds = cohortId(),
                                     databaseIds = databaseIds(),
                                     isTemporal = FALSE)
     if (nrow(data) == 0) {
@@ -1168,7 +1168,7 @@ shiny::shinyServer(function(input, output, session) {
     if (input$charType == "Pretty") {
       countData <- getCohortCountResult(dataSource = dataSource,
                                         databaseIds = databaseIds(),
-                                        cohortIds = cohortIds()) %>%
+                                        cohortIds = cohortId()) %>%
         dplyr::arrange(.data$databaseId)
       
       table <- data %>% 
@@ -1190,12 +1190,12 @@ shiny::shinyServer(function(input, output, session) {
       
       characteristics <- dplyr::bind_rows(characteristics %>% 
                                             dplyr::filter(.data$header == 1) %>% 
-                                            dplyr::mutate(cohortId = sort(cohortIds())[[1]], 
+                                            dplyr::mutate(cohortId = sort(cohortId())[[1]], 
                                                           databaseId = sort(databaseIds[[1]])),
                                           characteristics %>% 
                                             dplyr::filter(.data$header == 0) %>% 
                                             tidyr::crossing(dplyr::tibble(databaseId = databaseIds)) %>% 
-                                            tidyr::crossing(dplyr::tibble(cohortId = cohortIds()))) %>% 
+                                            tidyr::crossing(dplyr::tibble(cohortId = cohortId()))) %>% 
         dplyr::arrange(.data$sortOrder, .data$databaseId, .data$cohortId)
       
       table <- characteristics %>% 
@@ -1207,10 +1207,9 @@ shiny::shinyServer(function(input, output, session) {
                            names_from = "databaseId",
                            values_from = "value" ,
                            names_sep = "_",
-                           names_prefix = "Value_") %>%
-        addShortName(cohort)
+                           names_prefix = "Value_")
       table <- table %>%
-        dplyr::relocate(.data$shortName, .data$characteristic) %>% 
+        dplyr::relocate(.data$characteristic) %>% 
         dplyr::select(-.data$cohortId)
       
       options = list(pageLength = 100,
@@ -1222,13 +1221,12 @@ shiny::shinyServer(function(input, output, session) {
                      paging = TRUE,
                      columnDefs = list(
                        truncateStringDef(0, 150),
-                       minCellPercentDef(1 + 1:length(databaseIds))
+                       minCellPercentDef(1:length(databaseIds))
                      ))
       sketch <- htmltools::withTags(table(
         class = "display",
         thead(
           tr(
-            th(rowspan = 2, "Cohorts"),
             th(rowspan = 2, "Covariate Name"),
             lapply(databaseIds, th, colspan = 1, class = "dt-center")
           ),
@@ -1247,7 +1245,7 @@ shiny::shinyServer(function(input, output, session) {
                              class = "stripe nowrap compact")
       
       table <- DT::formatStyle(table = table,
-                               columns = 2 + (1:length(databaseIds)),
+                               columns = 1:length(databaseIds),
                                background = DT::styleColorBar(c(0,1), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
@@ -1265,12 +1263,11 @@ shiny::shinyServer(function(input, output, session) {
                                                  .data$conceptId) %>% 
                             dplyr::distinct(),
                           by = "covariateId") %>%
-        dplyr::select(-.data$covariateId) %>% 
-        addShortName(cohort) %>%
+        dplyr::select(-.data$covariateId) %>%
         dplyr::select(-.data$cohortId) %>% 
-        dplyr::relocate(.data$shortName, .data$covariateName, .data$conceptId)
+        dplyr::relocate(.data$covariateName, .data$conceptId)
       
-      data <- data[order(-data[4]), ]
+      data <- data[order(-data[3]), ]
       
       options = list(pageLength = 100,
                      searching = TRUE,
@@ -1282,12 +1279,11 @@ shiny::shinyServer(function(input, output, session) {
                      paging = TRUE,
                      columnDefs = list(
                        truncateStringDef(1, 150),
-                       minCellRealDef(2 + 1:(length(databaseIds)*2), digits = 3)))
+                       minCellRealDef(1 + 1:(length(databaseIds)*2), digits = 3)))
       sketch <- htmltools::withTags(table(
         class = "display",
         thead(
           tr(
-            th(rowspan = 2, "Cohorts"),
             th(rowspan = 2, "Covariate Name"),
             th(rowspan = 2, "Concept Id"),
             lapply(databaseIds, th, colspan = 2, class = "dt-center")
@@ -1305,22 +1301,13 @@ shiny::shinyServer(function(input, output, session) {
                              filter = "top",
                              class = "stripe nowrap compact")
       table <- DT::formatStyle(table = table,
-                               columns = (2 + (1:length(databaseIds) * 2)),
+                               columns = (1 + (1:length(databaseIds) * 2)),
                                background = DT::styleColorBar(c(0,1), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
                                backgroundPosition = "center")
     }
     return(table)
-  })
-  
-  covariateIdArray <- reactiveVal()
-  covariateIdArray(c())
-  observeEvent(input$rows, {
-    if (input$rows[[2]] %in% covariateIdArray())
-      covariateIdArray(covariateIdArray()[covariateIdArray() %in% input$rows[[2]] == FALSE])
-    else
-      covariateIdArray(c(covariateIdArray(),input$rows[[2]]))
   })
   
   # Temporal characterization -----------------------------------------------------------------
