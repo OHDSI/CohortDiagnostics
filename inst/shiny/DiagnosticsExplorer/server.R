@@ -1602,7 +1602,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   shiny::observeEvent(input$includedConceptsInfo, {
-    showInfoBox("Included (Source) Concepts", "html/includedConcepts.html")
+    showInfoBox("Concepts in data source", "html/conceptsInDataSource.html")
   })
   
   shiny::observeEvent(input$orphanConceptsInfo, {
