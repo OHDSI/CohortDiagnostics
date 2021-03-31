@@ -88,7 +88,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
       if ("covariates" %in% names(results)) {
         Andromeda::appendToTable(results$covariates, covariates) 
       } else {
-        results$covariates <- covariates %>% dplyr::collect()
+        results$covariates <- covariates
       }
     }
     
