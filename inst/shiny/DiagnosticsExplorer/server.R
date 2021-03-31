@@ -388,6 +388,8 @@ shiny::shinyServer(function(input, output, session) {
   # Incidence rate --------------------------------------------------------------------------------
   
   incidenceRateData <- reactive({
+    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
+    validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
     stratifyByAge <- "Age" %in% input$irStratification
     stratifyByGender <- "Gender" %in% input$irStratification
     stratifyByCalendarYear <- "Calendar Year" %in% input$irStratification
@@ -519,6 +521,8 @@ shiny::shinyServer(function(input, output, session) {
   
   # Time distribution -----------------------------------------------------------------------------
   timeDist <- reactive({
+    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
+    validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
     data <- getTimeDistributionResult(dataSource = dataSource,
                                       cohortIds = cohortIds(), 
                                       databaseIds = databaseIds())
@@ -1329,18 +1333,11 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   })
   
-  covariateIdArray <- reactiveVal()
-  covariateIdArray(c())
-  observeEvent(input$rows, {
-    if (input$rows[[2]] %in% covariateIdArray())
-      covariateIdArray(covariateIdArray()[covariateIdArray() %in% input$rows[[2]] == FALSE])
-    else
-      covariateIdArray(c(covariateIdArray(),input$rows[[2]]))
-  })
-  
   # Temporal characterization -----------------------------------------------------------------
   temporalCharacterization <- shiny::reactive({
     validate(need(length(timeId()) > 0, "No time periods selected"))
+    validate(need(length(input$database) > 0, "No data sources chosen"))
+    validate(need(length(cohortId()) > 0, "No cohorts chosen"))
     data <- getCovariateValueResult(dataSource = dataSource,
                                     cohortIds = cohortId(),
                                     databaseIds = input$database,
@@ -1403,6 +1400,8 @@ shiny::shinyServer(function(input, output, session) {
   
   #Cohort Overlap ------------------------
   cohortOverlap <- reactive({
+    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
+    validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
     combisOfTargetComparator <- tidyr::crossing(targetCohortId = cohortIds(),
                                                 comparatorCohortId = cohortIds()) %>% 
       dplyr::filter(!.data$targetCohortId == .data$comparatorCohortId) %>% 
