@@ -51,7 +51,7 @@ sidebarMenu <-
       ),
     if (exists("includedSourceConcept"))
       addInfo(
-        item = shinydashboard::menuItem(text = "Included (Source) Concepts", tabName = "includedConcepts"),
+        item = shinydashboard::menuItem(text = "Concepts in DataSource", tabName = "includedConcepts"),
         infoId = "includedConceptsInfo"
       ),
     if (exists("orphanConcept"))
@@ -388,7 +388,7 @@ bodyTabItems <- shinydashboard::tabItems(
                 virtualScroll = 50)
             ))
           ),
-          tags$td(style="width:30% !important",
+          tags$td(style = "width:30% !important",
             shiny::conditionalPanel(condition = "input.irStratification.indexOf('Calendar Year') > -1",
             shinyWidgets::pickerInput(
               inputId = "incidenceRateCalenderFilter",
