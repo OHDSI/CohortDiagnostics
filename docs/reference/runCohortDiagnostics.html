@@ -77,7 +77,7 @@ Alternatively, a covariate setting object may be created using the above as an e
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.0</span>
       </span>
     </div>
 
@@ -102,6 +102,9 @@ Alternatively, a covariate setting object may be created using the above as an e
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="../articles/CohortDiagnosticsInPackageMode.html">Cohort Diagnostics in an OHDSI Package mode</a>
+    </li>
     <li>
       <a href="../articles/CohortDiagnosticsUsingWebApi.html">Running cohort diagnostics using WebAPI</a>
     </li>
@@ -145,43 +148,43 @@ using <code>RFeatureExtraction::createTemporalCovariateSettings</code>
 Alternatively, a covariate setting object may be created using the above as an example.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>runCohortDiagnostics</span>(
-  <span class='kw'>packageName</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cohortToCreateFile</span> <span class='kw'>=</span> <span class='st'>"settings/CohortsToCreate.csv"</span>,
-  <span class='kw'>baseUrl</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cohortSetReference</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>phenotypeDescriptionFile</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>connectionDetails</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>connection</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='no'>cdmDatabaseSchema</span>,
-  <span class='kw'>oracleTempSchema</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='no'>cohortDatabaseSchema</span>,
-  <span class='kw'>cohortTable</span> <span class='kw'>=</span> <span class='st'>"cohort"</span>,
-  <span class='kw'>cohortIds</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>inclusionStatisticsFolder</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='no'>exportFolder</span>, <span class='st'>"inclusionStatistics"</span>),
-  <span class='no'>exportFolder</span>,
-  <span class='no'>databaseId</span>,
-  <span class='kw'>databaseName</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>databaseDescription</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cdmVersion</span> <span class='kw'>=</span> <span class='fl'>5</span>,
-  <span class='kw'>runInclusionStatistics</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>runIncludedSourceConcepts</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>runOrphanConcepts</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>runTimeDistributions</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>runVisitContext</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>runBreakdownIndexEvents</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>runIncidenceRate</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>runCohortOverlap</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>runCohortCharacterization</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>covariateSettings</span> <span class='kw'>=</span> <span class='fu'>createDefaultCovariateSettings</span>(),
-  <span class='kw'>runTemporalCohortCharacterization</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>temporalCovariateSettings</span> <span class='kw'>=</span> <span class='fu'>createTemporalCovariateSettings</span>(<span class='kw'>useConditionOccurrence</span> <span class='kw'>=</span>
-    <span class='fl'>TRUE</span>, <span class='kw'>useDrugEraStart</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>useProcedureOccurrence</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>useMeasurement</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-    <span class='kw'>temporalStartDays</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(-<span class='fl'>365</span>, -<span class='fl'>30</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>31</span>), <span class='kw'>temporalEndDays</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(-<span class='fl'>31</span>, -<span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>30</span>, <span class='fl'>365</span>)),
-  <span class='kw'>minCellCount</span> <span class='kw'>=</span> <span class='fl'>5</span>,
-  <span class='kw'>incremental</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>incrementalFolder</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span>(<span class='no'>exportFolder</span>, <span class='st'>"incremental"</span>)
-)</pre>
+    <pre class="usage"><span class='fu'>runCohortDiagnostics</span><span class='op'>(</span>
+  packageName <span class='op'>=</span> <span class='cn'>NULL</span>,
+  cohortToCreateFile <span class='op'>=</span> <span class='st'>"settings/CohortsToCreate.csv"</span>,
+  baseUrl <span class='op'>=</span> <span class='cn'>NULL</span>,
+  cohortSetReference <span class='op'>=</span> <span class='cn'>NULL</span>,
+  phenotypeDescriptionFile <span class='op'>=</span> <span class='cn'>NULL</span>,
+  connectionDetails <span class='op'>=</span> <span class='cn'>NULL</span>,
+  connection <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>cdmDatabaseSchema</span>,
+  oracleTempSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>cohortDatabaseSchema</span>,
+  cohortTable <span class='op'>=</span> <span class='st'>"cohort"</span>,
+  cohortIds <span class='op'>=</span> <span class='cn'>NULL</span>,
+  inclusionStatisticsFolder <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>exportFolder</span>, <span class='st'>"inclusionStatistics"</span><span class='op'>)</span>,
+  <span class='va'>exportFolder</span>,
+  <span class='va'>databaseId</span>,
+  databaseName <span class='op'>=</span> <span class='va'>databaseId</span>,
+  databaseDescription <span class='op'>=</span> <span class='va'>databaseId</span>,
+  cdmVersion <span class='op'>=</span> <span class='fl'>5</span>,
+  runInclusionStatistics <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  runIncludedSourceConcepts <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  runOrphanConcepts <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  runTimeDistributions <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  runVisitContext <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  runBreakdownIndexEvents <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  runIncidenceRate <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  runCohortOverlap <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  runCohortCharacterization <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  covariateSettings <span class='op'>=</span> <span class='fu'>createDefaultCovariateSettings</span><span class='op'>(</span><span class='op'>)</span>,
+  runTemporalCohortCharacterization <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  temporalCovariateSettings <span class='op'>=</span> <span class='fu'>createTemporalCovariateSettings</span><span class='op'>(</span>useConditionOccurrence <span class='op'>=</span>
+    <span class='cn'>TRUE</span>, useDrugEraStart <span class='op'>=</span> <span class='cn'>TRUE</span>, useProcedureOccurrence <span class='op'>=</span> <span class='cn'>TRUE</span>, useMeasurement <span class='op'>=</span> <span class='cn'>TRUE</span>,
+    temporalStartDays <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='op'>-</span><span class='fl'>365</span>, <span class='op'>-</span><span class='fl'>30</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>31</span><span class='op'>)</span>, temporalEndDays <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='op'>-</span><span class='fl'>31</span>, <span class='op'>-</span><span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>30</span>, <span class='fl'>365</span><span class='op'>)</span><span class='op'>)</span>,
+  minCellCount <span class='op'>=</span> <span class='fl'>5</span>,
+  incremental <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  incrementalFolder <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>exportFolder</span>, <span class='st'>"incremental"</span><span class='op'>)</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -229,14 +232,14 @@ ASCII or UTF-8, if not, an error message will be displayed and process stopped.<
     <tr>
       <th>connectionDetails</th>
       <td><p>An object of type <code>connectionDetails</code> as created using the
-<code><a href='https://rdrr.io/pkg/DatabaseConnector/man/createConnectionDetails.html'>createConnectionDetails</a></code> function in the
+<code><a href='https://ohdsi.github.io/DatabaseConnector/reference/createConnectionDetails.html'>createConnectionDetails</a></code> function in the
 DatabaseConnector package. Can be left NULL if <code>connection</code> is
 provided.</p></td>
     </tr>
     <tr>
       <th>connection</th>
       <td><p>An object of type <code>connection</code> as created using the
-<code><a href='https://rdrr.io/pkg/DatabaseConnector/man/connect.html'>connect</a></code> function in the
+<code><a href='https://ohdsi.github.io/DatabaseConnector/reference/connect.html'>connect</a></code> function in the
 DatabaseConnector package. Can be left NULL if <code>connectionDetails</code>
 is provided, in which case a new connection will be opened at the start
 of the function, and closed when the function finishes.</p></td>
@@ -283,11 +286,11 @@ does not exist it will be created.</p></td>
     </tr>
     <tr>
       <th>databaseName</th>
-      <td><p>The full name of the database.</p></td>
+      <td><p>The full name of the database. If NULL, defaults to databaseId.</p></td>
     </tr>
     <tr>
       <th>databaseDescription</th>
-      <td><p>A short description (several sentences) of the database.</p></td>
+      <td><p>A short description (several sentences) of the database. If NULL, defaults to databaseId.</p></td>
     </tr>
     <tr>
       <th>cdmVersion</th>
@@ -374,7 +377,7 @@ the name of the study package, and the name of the cohortToCreate file within th
 <p>When using this function in WebApi Mode: use the <code>baseUrl</code> and <code>cohortSetReference</code> to specify how to 
 connect to the WebApi, and which cohorts to fetch, respectively.</p>
 <p>Note: if the parameters for both Package Mode and WebApi Mode are provided, then Package mode is preferred.</p>
-<p>The <code>cohortSetReference</code> argument must be a data frame with  the following columns:</p><dl'>
+<p>The <code>cohortSetReference</code> argument must be a data frame with  the following columns:</p><dl>
 <dt>referentConceptId</dt><dd><p>A standard omop concept id that serves as the referant phenotype definition for the cohort Id.</p></dd>
 <dt>cohortId</dt><dd><p>The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names. It is recommended to be (referrentConceptId * 1000) + a number between 3 to 999</p></dd>
 <dt>webApiCohortId</dt><dd><p>Cohort Id in the webApi/atlas instance. It is a required field to run Cohort Diagnostics in WebApi mode. It is discarded in package mode.</p></dd>
@@ -401,7 +404,7 @@ meaning of the cohort definition</p></dd>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

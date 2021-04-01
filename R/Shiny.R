@@ -29,6 +29,8 @@
 #' @param port             (optional) Only used if \code{runOverNetwork} = TRUE. 
 #' @param launch.browser   Should the app be launched in your default browser, or in a Shiny window.
 #'                         Note: copying to clipboard will not work in a Shiny window.
+#' @param aboutText        Text (using HTML markup) that will be displayed in an About tab in the Shiny app.
+#'                         If not provided, no About tab will be shown.
 #' @param cohortBaseUrl    The base URL for constructing linkouts to an ATLAS instance, using the 
 #'                         webApiCohortId in the cohortsToCreate file. If NULL, no linkouts will be 
 #'                         created.
@@ -40,9 +42,11 @@
 #'
 #' @export
 launchDiagnosticsExplorer <- function(dataFolder = "data", 
+                                      dataFile = "PreMerged.RData",
                                       connectionDetails = NULL,
                                       resultsDatabaseSchema = NULL,
                                       vocabularyDatabaseSchema = resultsDatabaseSchema,
+                                      aboutText = NULL,
                                       cohortBaseUrl = "https://atlas.ohdsi.org/#/cohortdefinition/",
                                       conceptBaseUrl = "https://athena.ohdsi.org/search-terms/terms/",
                                       runOverNetwork = FALSE,
@@ -57,10 +61,12 @@ launchDiagnosticsExplorer <- function(dataFolder = "data",
   ensure_installed("DT")
   ensure_installed("htmltools")
   ensure_installed("scales")
-  ensure_installed("plotly")
+  ensure_installed("pool")
   ensure_installed("dplyr")
   ensure_installed("tidyr")
   ensure_installed("ggiraph")
+  ensure_installed("stringr")
+  ensure_installed("purrr")
 
   appDir <- system.file("shiny", "DiagnosticsExplorer", package = "CohortDiagnostics")  
   
@@ -79,6 +85,8 @@ launchDiagnosticsExplorer <- function(dataFolder = "data",
                         resultsDatabaseSchema = resultsDatabaseSchema,
                         vocabularyDatabaseSchema = vocabularyDatabaseSchema,
                         dataFolder = dataFolder,
+                        dataFile = dataFile,
+                        aboutText = aboutText,
                         cohortBaseUrl = cohortBaseUrl,
                         conceptBaseUrl = conceptBaseUrl)
   .GlobalEnv$shinySettings <- shinySettings
@@ -137,7 +145,7 @@ preMergeDiagnosticsFiles <- function(dataFolder, tempFolder = tempdir()) {
                                    col_types = readr::cols(),
                                    guess_max = min(1e6))
         if (nrow(newData) > 0) {
-          checkColumnNames(table = newData, 
+          newData <- checkFixColumnNames(table = newData, 
                            tableName = tableName, 
                            zipFileName = zipFiles$zipFile[i],
                            specifications = specifications)
@@ -207,7 +215,7 @@ launchCohortExplorer <- function(connectionDetails,
                                    cdmDatabaseSchema = cdmDatabaseSchema,
                                    cohortDatabaseSchema = cohortDatabaseSchema,
                                    cohortTable = cohortTable,
-                                   cohortId = cohortId,
+                                   cohortDefinitionId = cohortId,
                                    sampleSize = sampleSize,
                                    subjectIds = subjectIds)
   on.exit(rm("shinySettings", envir = .GlobalEnv))

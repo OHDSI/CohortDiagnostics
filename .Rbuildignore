@@ -1,3 +1,5 @@
+^renv$
+^renv\.lock$
 extras
 man-roxygen
 license_header_stub.txt
@@ -22,3 +24,6 @@ compare_versions
 _pkgdown.yml
 examplePhenotypeLibraryPackage
 examplePackage
+.github
+deploy.sh
+compare_versions

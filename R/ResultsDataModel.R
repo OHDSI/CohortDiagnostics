@@ -27,7 +27,32 @@ getResultsDataModelSpecifications <- function() {
   return(resultsDataModelSpecifications)
 }
 
-checkColumnNames <- function(table, tableName, zipFileName, specifications = getResultsDataModelSpecifications()) {
+fixTableMetadataForBackwardCompatibility <- function(table) {
+  if (!'metadata' %in% colnames(table)) {
+    data <- list()
+    for (i in (1:nrow(table))) {
+      data[[i]] <- table[i, ]
+      colnames <- colnames(data[[i]])
+      metaDataList <- list()
+      for (j in (1:length(colnames))) {
+        metaDataList[[colnames[[j]]]] = data[[i]][colnames[[j]]] %>% dplyr::pull()
+      }
+      data[[i]]$metadata <-
+        RJSONIO::toJSON(metaDataList, pretty = TRUE, digits = 23)
+    }
+    table <- dplyr::bind_rows(data)
+  }
+  if ('referent_concept_id' %in% colnames(table)) {
+    table <- table %>% 
+      dplyr::select(-.data$referent_concept_id)
+  }
+  return(table)
+}
+
+checkFixColumnNames <- function(table, tableName, zipFileName, specifications = getResultsDataModelSpecifications()) {
+  if (tableName %in% c('cohort', 'phenotype_description')) {
+    table <- fixTableMetadataForBackwardCompatibility(table = table)
+  }
   observeredNames <- colnames(table)[order(colnames(table))]
   
   tableSpecs <- specifications %>%
@@ -50,6 +75,7 @@ checkColumnNames <- function(table, tableName, zipFileName, specifications = get
                  paste(observeredNames, collapse = ", "),
                  paste(expectedNames, collapse = ", ")))
   }
+  return(table)
 }
 
 checkAndFixDataTypes <- function(table, tableName, zipFileName, specifications = getResultsDataModelSpecifications()) {
@@ -172,6 +198,11 @@ naToEmpty <- function(x) {
   return(x)
 }
 
+naToZero <- function(x) {
+  x[is.na(x)] <- 0
+  return(x)
+}
+
 #' Upload results to the database server.
 #' 
 #' @description 
@@ -183,7 +214,7 @@ naToEmpty <- function(x) {
 #' @param connectionDetails   An object of type \code{connectionDetails} as created using the
 #'                            \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
 #'                            DatabaseConnector package. 
-#' @param schema         The schema on the postgres server where the tables will be created.
+#' @param schema         The schema on the postgres server where the tables have been created.
 #' @param zipFileName    The name of the zip file.
 #' @param forceOverWriteOfSpecifications  If TRUE, specifications of the phenotypes, cohort definitions, and analysis 
 #'                       will be overwritten if they already exist on the database. Only use this if these specifications
@@ -205,14 +236,14 @@ uploadResults <- function(connectionDetails = NULL,
   start <- Sys.time()
   connection <- DatabaseConnector::connect(connectionDetails)
   on.exit(DatabaseConnector::disconnect(connection))
-
+  
   unzipFolder <- tempfile("unzipTempFolder", tmpdir = tempFolder)
   dir.create(path = unzipFolder, recursive = TRUE)
   on.exit(unlink(unzipFolder, recursive = TRUE), add = TRUE)
   
   ParallelLogger::logInfo("Unzipping ", zipFileName)
   zip::unzip(zipFileName, exdir = unzipFolder)
-
+  
   specifications = getResultsDataModelSpecifications()
   
   if (purgeSiteDataBeforeUploading) {
@@ -223,7 +254,7 @@ uploadResults <- function(connectionDetails = NULL,
   
   uploadTable <- function(tableName) {
     ParallelLogger::logInfo("Uploading table ", tableName)
-
+    
     primaryKey <- specifications %>%
       filter(.data$tableName == !!tableName & .data$primaryKey == "Yes") %>%
       select(.data$fieldName) %>%
@@ -254,31 +285,40 @@ uploadResults <- function(connectionDetails = NULL,
         colnames(primaryKeyValuesInDb) <- tolower(colnames(primaryKeyValuesInDb))
         env$primaryKeyValuesInDb <- primaryKeyValuesInDb
       }
-
+      
       uploadChunk <- function(chunk, pos) {
         ParallelLogger::logInfo("- Preparing to upload rows ", pos, " through ", pos + nrow(chunk) - 1)
         
-        checkColumnNames(table = chunk, 
-                         tableName = env$tableName, 
-                         zipFileName = zipFileName,
-                         specifications = specifications)
+        chunk <- checkFixColumnNames(table = chunk, 
+                                     tableName = env$tableName, 
+                                     zipFileName = zipFileName,
+                                     specifications = specifications)
         chunk <- checkAndFixDataTypes(table = chunk, 
-                                        tableName = env$tableName, 
-                                        zipFileName = zipFileName,
-                                        specifications = specifications)
+                                      tableName = env$tableName, 
+                                      zipFileName = zipFileName,
+                                      specifications = specifications)
         chunk <- checkAndFixDuplicateRows(table = chunk, 
-                                            tableName = env$tableName, 
-                                            zipFileName = zipFileName,
-                                            specifications = specifications) 
+                                          tableName = env$tableName, 
+                                          zipFileName = zipFileName,
+                                          specifications = specifications) 
         
-        # Primary key fields cannot be NULL, so for some tables convert NAs to empty:
+        # Primary key fields cannot be NULL, so for some tables convert NAs to empty or zero:
         toEmpty <- specifications %>%
-          filter(.data$tableName == env$tableName & .data$emptyIsNa == "No") %>%
+          filter(.data$tableName == env$tableName & .data$emptyIsNa == "No" & grepl("varchar", .data$type)) %>%
           select(.data$fieldName) %>%
           pull()
         if (length(toEmpty) > 0) {
           chunk <- chunk %>% 
             dplyr::mutate_at(toEmpty, naToEmpty)
+        }
+        
+        tozero <- specifications %>%
+          filter(.data$tableName == env$tableName & .data$emptyIsNa == "No" & .data$type %in% c("int", "bigint", "float")) %>%
+          select(.data$fieldName) %>%
+          pull()
+        if (length(tozero) > 0) {
+          chunk <- chunk %>% 
+            dplyr::mutate_at(tozero, naToZero)
         }
         
         # Check if inserting data would violate primary key constraints:
@@ -387,7 +427,7 @@ insertDataIntoDb <- function(connection,
     ParallelLogger::logInfo("- Inserting ", nrow(data), " rows into database")
     DatabaseConnector::insertTable(connection = connection,
                                    tableName = paste(schema, tableName, sep = "."),
-                                   data = as.data.frame(data),
+                                   data = data,
                                    dropTableIfExists = FALSE,
                                    createTable = FALSE,
                                    tempTable = FALSE,
@@ -423,7 +463,7 @@ bulkUploadTable <- function(connectionDetails,
     user <- connectionDetails$user
     password <- connectionDetails$password
   }
-
+  
   # Required by psql:
   Sys.setenv("PGPASSWORD" = password)
   rm(password)
@@ -460,10 +500,96 @@ bulkUploadTable <- function(connectionDetails,
                        "NULL 'NA' DELIMITER ',' CSV HEADER;\"")
   
   result <- base::system(copyCommand)
-
+  
   if (result != 0) {
     stop("Error while bulk uploading data, psql returned a non zero status. Status = ", result)
   }
   delta <- Sys.time() - startTime
   writeLines(paste("Uploading data took", signif(delta, 3), attr(delta, "units")))
+}
+
+convertMdToHtml <- function(markdown) {
+  markdown <- gsub("'", "%sq%", markdown)
+  mdFile <- tempfile(fileext = ".md")
+  htmlFile <- tempfile(fileext = ".html")
+  SqlRender::writeSql(markdown, mdFile)
+  rmarkdown::render(input = mdFile,
+                    output_format = "html_fragment",
+                    output_file = htmlFile,
+                    clean = TRUE,
+                    quiet = TRUE)
+  html <- SqlRender::readSql(htmlFile) 
+  unlink(mdFile)
+  unlink(htmlFile)
+  # Can't find a way to disable "smart quotes", so removing them afterwards:
+  html <- gsub("%sq%", "'", html)
+  # html <- stringi::stri_escape_unicode(html)
+  # html <- gsub("\\\\u00e2\\\\u20ac\\\\u02dc|\\\\u00e2\\\\u20ac\\\\u2122", "'", html)
+  # html <- stringi::stri_unescape_unicode(html)
+  return(html)
+}
+
+#' Upload print-friendly cohort representations to the database server.
+#' 
+#' @description 
+#' For all the cohorts in the 'cohort' table, this will generate print-friendly text and store it
+#' in a new table called 'cohort_extra'. 
+#'
+#' @param connectionDetails   An object of type \code{connectionDetails} as created using the
+#'                            \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
+#'                            DatabaseConnector package. 
+#' @param schema         The schema on the postgres server where the results are stored.
+#'
+#' @export
+uploadPrintFriendly <- function(connectionDetails = NULL,
+                                schema) {
+  
+  startTime <- Sys.time()
+  ensure_installed("CirceR")
+  ensure_installed("rmarkdown")
+  # ensure_installed("stringi")
+  
+  connection <- DatabaseConnector::connect(connectionDetails)
+  on.exit(DatabaseConnector::disconnect(connection))
+  
+  ParallelLogger::logInfo("Retrieving cohort JSON from server")
+  sql <- "SELECT cohort_id, json FROM @schema.cohort;"
+  cohort <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                       sql = sql,
+                                                       schema = schema,
+                                                       snakeCaseToCamelCase = TRUE) %>%
+    dplyr::tibble()
+  
+  ParallelLogger::logInfo("Generating print-friendly")
+  cohort$html <- ""
+  pb <- pb <- txtProgressBar(style = 3)
+  for (i in 1:nrow(cohort)) {
+    tryCatch({
+      expression <- CirceR::cohortExpressionFromJson(cohort$json[i])
+      expressionMarkdown <- CirceR::cohortPrintFriendly(expression)
+      conceptSetListmarkdown <- CirceR::conceptSetListPrintFriendly(expression$conceptSets)
+      cohort$html[i] <- convertMdToHtml(paste(expressionMarkdown, conceptSetListmarkdown, sep = "\n\n"))
+    }, error = function(e) {
+      ParallelLogger::logWarn("Error generating print-friendly for cohort ID ", cohort$cohortId[i], ": ", e$message)
+      cohort$html[i] <- "Could not generate print-friendly"
+    })
+    setTxtProgressBar(pb, i/nrow(cohort))
+  }
+  close(pb)
+  
+  ParallelLogger::logInfo("Uploading print-friendly to server")
+  cohort <- cohort %>%
+    dplyr::select(-.data$json)
+  
+  DatabaseConnector::insertTable(connection = connection,
+                                 tableName = paste(schema, "cohort_extra", sep = "."),
+                                 data = cohort,
+                                 dropTableIfExists = TRUE,
+                                 createTable = TRUE,
+                                 tempTable = FALSE,
+                                 progressBar = TRUE,
+                                 camelCaseToSnakeCase = TRUE)
+  
+  delta <- Sys.time() - startTime
+  writeLines(paste("Uploading print-friendly took", signif(delta, 3), attr(delta, "units")))
 }

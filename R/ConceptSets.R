@@ -502,7 +502,7 @@ runConceptSetDiagnostics <- function(connection,
       runBreakdownIndexEvents <- function(cohort) {
         ParallelLogger::logInfo("- Breaking down index events for cohort '", cohort$cohortName, "'")
         
-        cohortDefinition <- RJSONIO::fromJSON(cohort$json)
+        cohortDefinition <- RJSONIO::fromJSON(cohort$json, digits = 23)
         primaryCodesetIds <- lapply(cohortDefinition$PrimaryCriteria$CriteriaList, getCodeSetIds) %>% 
           dplyr::bind_rows() 
         if (nrow(primaryCodesetIds) == 0) {
@@ -534,6 +534,7 @@ runConceptSetDiagnostics <- function(connection,
                                                    domain_table = domain$domainTable,
                                                    domain_start_date = domain$domainStartDate,
                                                    domain_concept_id = domain$domainConceptId,
+                                                   domain_source_concept_id = domain$domainSourceConceptId,
                                                    primary_codeset_ids = row$uniqueConceptSetId,
                                                    concept_set_table = "#inst_concept_sets",
                                                    store = TRUE,

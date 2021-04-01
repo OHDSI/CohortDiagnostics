@@ -1,0 +1,60 @@
+---
+title: "Cohort Diagnostics in an OHDSI Package mode"
+author: "Gowtham A. Rao"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: 
+    toc: yes     
+  html_document:
+    number_sections: yes
+    toc: yes
+vignette: >
+  %\VignetteIndexEntry{How to hydrate a template package with your study specifications}
+  %\VignetteEncoding{UTF-8}    
+  %\VignetteEngine{knitr::rmarkdown}
+---
+
+```{r, echo = FALSE, message = FALSE}
+library(SqlRender)
+knitr::opts_chunk$set(
+  cache = FALSE,
+  comment = "#>",
+  error = FALSE,
+  tidy = FALSE)
+```
+
+# Introduction
+
+This vignette describes how to create a self contained shareable study package that can execute cohort diagnostics on a given set of cohort definitions. 
+
+In this vignette, you will learn how to 
+- use the Cohort Diagnostics template package
+- Hydrate the template package with the cohort definitions you want to diagnose.
+- Execute the diagnostics on one or more data sources.
+- Review the result set using the Diagnostics Explorer R shiny app of Cohort Diagnostics
+- (optional) Submit the results of your cohort diagnostics to the OHDSI Phenotype library.
+
+## Assumptions:
+- You have the ability to create cohort definitions on an Atlas instance.
+- You are able to (manually) export those cohort definitions from Atlas by going to the 'export' tab on the Cohorts menu of Atlas, or you are able to use ROhdsiWebApi (recommended) to (automatically) extract cohort definitions from Atlas/WebApi.
+- You have R-studio installed with OHDSI R-package ROhdsiWebApi, CohortDiagnostics and all their dependencies.
+- You have access (via R) to a data in OMOP CDM V5.x + format on a database.
+- You have Create, Read, Update, Delete privileges on a schema in the same database.
+
+## Defining the set of cohorts to diagnose
+
+The first step is to define the set of cohorts we wish to run cohort diagnostics. Cohort definitions are almost always authored using OHDSI Atlas (few exceptions, e.g. SQL only cohorts not covered in this vignette). The process of authoring cohort definitions are beyond the scope of this vignette. It is assumed that you have a cohort definition, and have access to its definition as both JSON and OHDSI SQL specification.
+
+To execute Cohort Diagnostics, you need to have the following information for each of your cohorts.
+
+- **phenotypeId**: This is an integer ID for a phenotype in the OHDSI Phenotype Library. Please see [OHDSI Phenotype Library](https://github.com/ohdsi/phenotypeLibrary) for list of existing phenotypeIds. If you believe that your phenotype is not currently in the OHDSI Phenotype library, please make a proposal for a new phenotype. If you are unable to assign a phenotypeId, then please assign the value 0.
+- **cohortId**: A unique integer identifier for the cohort you are diagnosing. If you intend to contribute your cohort diagnostics results to the OHDSI phenotype library, then this cohortId and its corresponding JSON/SQL expression is expected to match the expression in the phenotoype library. If you do not intend to contribute, then this field may be any unique integer id to uniquely identify your cohort id. In such cases, cohortId is generally the same as webApiCohortId.
+- **webApiCohortId**: The unique integer id of your cohort in your Atlas/WebApi instance. This is used to extract cohort definitions from your webapi/Atlas using ROhsdiWebApi.
+- **cohortName**: The unique string name for your cohort. Usually it is the same as your Atlas cohort name, but it can be any name you wish to identify your cohort. This name will be used to display your cohort in the Diagnostics Explorer shiny app.
+- **logicDescription**: In this field, please concisely (not more than two short sentences) describe the logic behind your cohort definition. The purpose of this field is to help you, or someone else, easiy identify this cohort definition and contrast it to other similar cohort definitions. 
+
+| phenotypeId | webApiCohortId | cohortName | logicDescription |cohortId| 
+| -----------:|:-------------- | --------:|:-------------- |:-------------- |
+4112853000|17561|[PL 4112853001] Malignant tumor of breast referent concept incident cohort: First occurrence of referent concept + descendants with >=365d prior observation|Incident cohort based on referent concept id|4112853001|
+
+

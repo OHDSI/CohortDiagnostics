@@ -1,7 +1,0 @@
-Sys.setenv(phenotypeLibraryDbServer = "")
-Sys.setenv(phenotypeLibraryDbPort = 5432)
-Sys.setenv(phenotypeLibraryDbDatabase = "")
-Sys.setenv(phenotypeLibraryDbResultsSchema = "")
-Sys.setenv(phenotypeLibraryCdmSchema = "")
-Sys.setenv(phenotypeLibraryDbUser = "")
-Sys.setenv(phenotypeLibraryDbPassword = "")

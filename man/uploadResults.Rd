@@ -18,7 +18,7 @@ uploadResults(
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
 DatabaseConnector package.}
 
-\item{schema}{The schema on the postgres server where the tables will be created.}
+\item{schema}{The schema on the postgres server where the tables have been created.}
 
 \item{zipFileName}{The name of the zip file.}
 

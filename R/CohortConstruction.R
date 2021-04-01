@@ -43,7 +43,7 @@ checkCohortReference <- function(cohortReference, errorMessage = NULL) {
 makeBackwardsCompatible <- function(cohorts) {
   if (!"name" %in% colnames(cohorts)) {
     cohorts <- cohorts %>%
-      mutate(name = .data$cohortId)
+      mutate(name = as.character(.data$cohortId))
   }
   if (!"webApiCohortId" %in% colnames(cohorts) && "atlasId" %in% colnames(cohorts)) {
     cohorts <- cohorts %>%
@@ -153,7 +153,15 @@ selectColumnAccordingToResultsModel <- function(data) {
   if ("logicDescription" %in% colnames(data)) {
     columsToInclude <- c(columsToInclude, "logicDescription")
   }
-  
+  if ("PMID" %in% colnames(data)) {
+    columsToInclude <- c(columsToInclude, "PMID")
+  }
+  if ("referentConceptId" %in% colnames(data)) {
+    columsToInclude <- c(columsToInclude, "referentConceptId")
+  }
+  if ("cohortType" %in% colnames(data)) {
+    columsToInclude <- c(columsToInclude, "cohortType")
+  }
   columsToInclude <- c(columsToInclude, "json" ,"sql", "webApiCohortId")
   return(data[, columsToInclude])
 }
@@ -678,8 +686,6 @@ createTempInclusionStatsTables <- function(connection, oracleTempSchema, cohorts
                     cohortDefinitionId = .data$cohortId) %>% 
       dplyr::select(.data$cohortDefinitionId, .data$ruleSequence, .data$name)
     
-    inclusionRules <- data.frame(inclusionRules) # temporary solution till DatabaseConnector supports tibble
-    
     DatabaseConnector::insertTable(connection = connection,
                                    tableName = "#cohort_inclusion",
                                    data = inclusionRules,
@@ -689,9 +695,9 @@ createTempInclusionStatsTables <- function(connection, oracleTempSchema, cohorts
                                    oracleTempSchema = oracleTempSchema,
                                    camelCaseToSnakeCase = TRUE)
   } else {
-    inclusionRules <- data.frame(cohortDefinitionId = as.double(),
-                                 ruleSequence = as.integer(),
-                                 name = as.character())
+    inclusionRules <- dplyr::tibble(cohortDefinitionId = as.double(),
+                                    ruleSequence = as.integer(),
+                                    name = as.character())
     DatabaseConnector::insertTable(connection = connection,
                                    tableName = "#cohort_inclusion",
                                    data = inclusionRules,

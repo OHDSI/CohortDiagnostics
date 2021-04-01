@@ -89,21 +89,6 @@ getTimeDistributionResult <- function(dataSource = .GlobalEnv,
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   } 
-  
-  data <- data %>% 
-    dplyr::rename(Database = "databaseId",
-                  TimeMeasure = "timeMetric", 
-                  Average = "averageValue", 
-                  SD = "standardDeviation", 
-                  Min = "minValue", 
-                  P10 = "p10Value", 
-                  P25 = "p25Value", 
-                  Median = "medianValue", 
-                  P75 = "p75Value", 
-                  P90 = "p90Value", 
-                  Max = "maxValue") %>% 
-    dplyr::relocate(.data$cohortId, .data$Database, .data$TimeMeasure) %>% 
-    dplyr::arrange(.data$cohortId, .data$Database, .data$TimeMeasure)
   return(data)
 }
 
@@ -173,8 +158,7 @@ getIncidenceRateResult <- function(dataSource = .GlobalEnv,
       dplyr::mutate(gender = dplyr::na_if(.data$gender, ""),
                     ageGroup = dplyr::na_if(.data$ageGroup, ""),
                     calendarYear = dplyr::na_if(.data$calendarYear, ""))
-  } 
-  
+  }
   return(data %>% 
            dplyr::mutate(calendarYear = as.integer(.data$calendarYear)) %>%
            dplyr::arrange(.data$cohortId, .data$databaseId))
@@ -205,10 +189,15 @@ getInclusionRuleStats <- function(dataSource = .GlobalEnv,
       tidyr::tibble()
   }
   data <- data %>% 
-    dplyr::select(.data$ruleSequenceId, .data$ruleName, 
-                  .data$meetSubjects, .data$gainSubjects, 
-                  .data$remainSubjects, .data$totalSubjects, .data$databaseId) %>% 
-    dplyr::arrange(.data$ruleSequenceId)
+    dplyr::select(.data$cohortId,
+                  .data$ruleSequenceId, 
+                  .data$ruleName, 
+                  .data$meetSubjects, 
+                  .data$gainSubjects, 
+                  .data$remainSubjects, 
+                  .data$totalSubjects, 
+                  .data$databaseId) %>% 
+    dplyr::arrange(.data$cohortId, .data$ruleSequenceId)
   return(data)
 }
 
@@ -414,7 +403,8 @@ getCohortOverlapResult <- function(dataSource = .GlobalEnv,
                       .data$databaseId %in% !!databaseIds) %>% 
       dplyr::inner_join(dplyr::select(get("cohort", envir = dataSource), 
                                       targetCohortId = .data$cohortId,
-                                      targetCohortName = .data$cohortName),
+                                      targetCohortName = .data$cohortName,
+                                      cohortName = .data$cohortName),
                         by = "targetCohortId") %>% 
       dplyr::inner_join(dplyr::select(get("cohort", envir = dataSource), 
                                       comparatorCohortId = .data$cohortId,
@@ -445,21 +435,6 @@ getCohortOverlapResult <- function(dataSource = .GlobalEnv,
   if (nrow(data) == 0) {
     return(tidyr::tibble())
   }
-  targetShortNames <- data %>%
-    dplyr::distinct(.data$targetCohortId, .data$targetCohortName) %>%
-    dplyr::arrange(.data$targetCohortName) %>%
-    dplyr::select(-.data$targetCohortName) %>%
-    dplyr::mutate(targetShortName = paste0('T', dplyr::row_number()))
-  
-  comparatorShortNames <- data %>%
-    dplyr::distinct(.data$comparatorCohortId, .data$comparatorCohortName) %>%
-    dplyr::arrange(.data$comparatorCohortName) %>%
-    dplyr::select(-.data$comparatorCohortName) %>%
-    dplyr::mutate(comparatorShortName = paste0('C', dplyr::row_number()))
-  
-  data <- data %>% 
-    dplyr::inner_join(targetShortNames, by = "targetCohortId") %>%
-    dplyr::inner_join(comparatorShortNames, by = "comparatorCohortId") 
   return(data)
 }
 
@@ -544,6 +519,8 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
     if (is.null(analysisIds)) {
       analysisIds <- ""
     }
+    # bringing down a lot of covariateName is probably slowing the return.
+    # An alternative is to create two temp tables - one of it has distinct values of covariateId, covariateName
     data <- renderTranslateQuerySql(connection = dataSource$connection,
                                     sql = sql,
                                     table = SqlRender::camelCaseToSnakeCase(table),
@@ -580,8 +557,8 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
   return(data)
 }
 
-getConceptReference <- function(dataSource = .GlobalEnv,
-                                conceptIds) {
+getConceptDetails <- function(dataSource = .GlobalEnv,
+                              conceptIds) {
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertIntegerish(x = conceptIds,
@@ -590,18 +567,51 @@ getConceptReference <- function(dataSource = .GlobalEnv,
                               add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
   if (is(dataSource, "environment")) {
-    data <- get("cohort", envir = dataSource) %>% 
-      dplyr::filter(!is.na(.data$invalidReason)) %>% 
+    data <- get("concept", envir = dataSource) %>% 
       dplyr::filter(.data$conceptId %in% conceptIds)
   } else {
     sql <- "SELECT *
-              FROM  @results_database_schema.concept
-              WHERE invalid_reason IS NULL 
-              {@conceptIds == } ? {}:{AND concept_id IN (@conceptIds)};"
+            FROM @vocabulary_database_schema.concept
+            WHERE concept_id IN (@concept_ids);"
     data <- renderTranslateQuerySql(connection = dataSource$connection,
                                     sql = sql,
-                                    results_database_schema = dataSource$resultsDatabaseSchema,
-                                    conceptIds = conceptIds, 
+                                    vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
+                                    concept_ids = conceptIds, 
+                                    snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
+  }
+  return(data)
+}
+
+resolveConceptSet <- function(dataSource = .GlobalEnv, conceptSets, source = FALSE) {
+  if (is(dataSource, "environment")) {
+    stop("Cannot resolve concept sets without a database connection")
+  } else {
+    sql <- paste("SELECT DISTINCT codeset_id AS concept_set_id, concept.*",
+                 "FROM (",
+                 paste(conceptSets$conceptSetSql, collapse = ("\nUNION ALL\n")),
+                 ") concept_sets",
+                 sep = "\n")
+    
+    if (source) {
+      sql <- paste(sql,
+                   "INNER JOIN @vocabulary_database_schema.concept_relationship",
+                   "  ON concept_sets.concept_id = concept_relationship.concept_id_2",
+                   "INNER JOIN @vocabulary_database_schema.concept",
+                   "  ON concept_relationship.concept_id_1 = concept.concept_id",
+                   "WHERE relationship_id = 'Maps to'",
+                   "  AND standard_concept IS NULL;",
+                   sep = "\n")
+    } else {
+      sql <- paste(sql,
+                   "INNER JOIN @vocabulary_database_schema.concept",
+                   "  ON concept_sets.concept_id = concept.concept_id;",
+                   sep = "\n")
+    }
+                 
+    data <- renderTranslateQuerySql(connection = dataSource$connection,
+                                    sql = sql,
+                                    vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   }
@@ -624,4 +634,70 @@ checkErrorCohortIdsDatabaseIds <- function(errorMessage,
                              add = errorMessage)
   checkmate::reportAssertions(collection = errorMessage)
   return(errorMessage)
+}
+
+getSearchTerms <- function(dataSource, includeDescendants = FALSE) {
+  if (is(dataSource, "environment")) {
+    warning("Search terms not implemented when using in-memory objects")
+    return(dplyr::tibble(phenotypeId = -1, term = ""))
+  } else {
+    if (includeDescendants) {
+      sql <- "SELECT DISTINCT phenotype_id, 
+              LOWER(term) AS term
+              FROM (
+                SELECT phenotype_id,
+                  concept_synonym_name AS term
+                FROM @results_database_schema.phenotype_description
+                INNER JOIN @vocabulary_database_schema.concept_ancestor
+                  ON (phenotype_description.phenotype_id/1000) = ancestor_concept_id
+                INNER JOIN @vocabulary_database_schema.concept_synonym 
+                  ON descendant_concept_id = concept_synonym.concept_id
+                WHERE language_concept_id = 4180186 -- English
+                  
+                UNION
+                
+                SELECT phenotype_id,
+                  concept_synonym_name AS term
+                FROM @results_database_schema.phenotype_description
+                INNER JOIN @vocabulary_database_schema.concept_ancestor
+                  ON (phenotype_description.phenotype_id/1000) = ancestor_concept_id
+                INNER JOIN @vocabulary_database_schema.concept_relationship
+                  ON descendant_concept_id = concept_id_2
+                INNER JOIN @vocabulary_database_schema.concept_synonym 
+                  ON concept_id_1 = concept_synonym.concept_id
+                WHERE relationship_id = 'Maps to'
+                  AND language_concept_id = 4180186 -- English
+              ) tmp;"
+    } else {
+      sql <- "SELECT DISTINCT phenotype_id, 
+                LOWER(term) AS term
+              FROM (
+                SELECT phenotype_id,
+                  concept_synonym_name AS term
+                FROM @results_database_schema.phenotype_description
+                INNER JOIN @vocabulary_database_schema.concept_synonym 
+                  ON (phenotype_description.phenotype_id/1000) = concept_synonym.concept_id
+                WHERE language_concept_id = 4180186 -- English
+                  
+                UNION
+                
+                SELECT phenotype_id,
+                  concept_synonym_name AS term
+                FROM @results_database_schema.phenotype_description
+                INNER JOIN @vocabulary_database_schema.concept_relationship
+                  ON (phenotype_description.phenotype_id/1000) = concept_id_2
+                INNER JOIN @vocabulary_database_schema.concept_synonym 
+                  ON concept_id_1 = concept_synonym.concept_id
+                WHERE relationship_id = 'Maps to'
+                  AND language_concept_id = 4180186 -- English
+              ) tmp;"
+    }
+    data <- renderTranslateQuerySql(connection = dataSource$connection,
+                                    sql = sql,
+                                    results_database_schema = dataSource$resultsDatabaseSchema,
+                                    vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
+                                    snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
+    return(data)
+  }
 }

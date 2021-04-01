@@ -10,3 +10,8 @@ errorReportSql.txt
 errorReportR.txt
 *.tex
 .DS_Store
+*.history
+.RDataTmp
+*.log
+*.log
+*.log

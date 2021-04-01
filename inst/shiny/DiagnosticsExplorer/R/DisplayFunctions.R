@@ -13,6 +13,14 @@ camelCaseToTitleCase <- function(string) {
   return(string)
 }
 
+snakeCaseToCamelCase <- function(string) {
+  string <- tolower(string)
+  for (letter in letters) {
+    string <- gsub(paste("_", letter, sep = ""), toupper(letter), string)
+  }
+  string <- gsub("_([0-9])", "\\1", string)
+  return(string)
+}
 
 truncateStringDef <- function(columns, maxChars) {
   list(
@@ -69,5 +77,22 @@ sumCounts <- function(counts) {
   } else {
     return(result)
   }
+}
+
+copyToClipboardButton <- function(toCopyId, label = "Copy to clipboard", icon = shiny::icon("clipboard"), ...) {
+
+  script <- sprintf("
+  text = document.getElementById('%s').textContent;
+  html = document.getElementById('%s').innerHTML;
+  function listener(e) {
+    e.clipboardData.setData('text/html', html);
+    e.clipboardData.setData('text/plain', text);
+    e.preventDefault();
+  }
+  document.addEventListener('copy', listener);
+  document.execCommand('copy');
+  document.removeEventListener('copy', listener);
+  return false;",toCopyId, toCopyId)
   
+  tags$button(type = "button", class = "btn btn-default action-button", onclick = script, icon, label, ...)
 }

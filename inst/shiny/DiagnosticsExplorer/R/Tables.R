@@ -48,14 +48,19 @@ prepareTable1 <- function(covariates,
                                                                              covariatesSubset$covariateName),
                                                      value = covariatesSubset$mean,
                                                      header = 0,
-                                                     position = i)) %>% 
+                                                     position = i,
+                                                     cohortId = covariatesSubset$cohortId,
+                                                     databaseId = covariatesSubset$databaseId)) %>% 
         dplyr::distinct() %>%
         dplyr::mutate(sortOrder = dplyr::row_number())
     }
   }
   if (nrow(resultsTable) > 0) {
     resultsTable <- resultsTable %>% 
-      dplyr::arrange(.data$position, dplyr::desc(.data$header), .data$sortOrder)
+      dplyr::arrange(.data$databaseId, .data$cohortId, 
+                     .data$position, 
+                     dplyr::desc(.data$header), 
+                     .data$sortOrder)
   }
   return(resultsTable)
 }
@@ -105,7 +110,9 @@ prepareTable1Comp <- function(balance,
                                                      StdDiff = NA,
                                                      header = 1,
                                                      position = i), 
-                                       tidyr::tibble(characteristic = paste0(space,
+                                       tidyr::tibble(cohortId1 = balanceSubset$cohortId1,
+                                                     cohortId2 = balanceSubset$cohortId2, 
+                                                     characteristic = paste0(space,
                                                                              space,
                                                                              space,
                                                                              space,
@@ -123,7 +130,8 @@ prepareTable1Comp <- function(balance,
     resultsTable <- resultsTable %>% 
       dplyr::arrange(.data$position, dplyr::desc(.data$header), .data$sortOrder) %>% 
       dplyr::mutate(sortOrder = dplyr::row_number()) %>% 
-      dplyr::select(-.data$header, -.data$position)
+      dplyr::select(-.data$header, -.data$position) %>% 
+      dplyr::distinct()
   }
   return(resultsTable)
 }
@@ -134,6 +142,18 @@ compareCohortCharacteristics <- function(characteristics1, characteristics2) {
                         y = characteristics2 %>% dplyr::distinct(), 
                         by = c("covariateId", "conceptId", "databaseId", "covariateName", "analysisId"),
                         suffix = c("1", "2")) %>%
+    dplyr::mutate(sd = sqrt(.data$sd1^2 + .data$sd2^2),
+                  stdDiff = (.data$mean2 - .data$mean1)/.data$sd) %>% 
+    dplyr::arrange(-abs(.data$stdDiff))
+  return(m)
+}
+
+
+compareTemporalCohortCharacteristics <- function(characteristics1, characteristics2) {
+  m <- characteristics1 %>%
+    dplyr::full_join(characteristics2,
+                     by = c("covariateId", "conceptId", "databaseId", "covariateName", "analysisId", "timeId", "startDay", "endDay"),
+                     suffix = c("1", "2")) %>%
     dplyr::mutate(sd = sqrt(.data$sd1^2 + .data$sd2^2),
                   stdDiff = (.data$mean2 - .data$mean1)/.data$sd) %>% 
     dplyr::arrange(-abs(.data$stdDiff))
