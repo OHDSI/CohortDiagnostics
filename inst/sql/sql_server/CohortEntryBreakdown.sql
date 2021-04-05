@@ -33,7 +33,7 @@ FROM (
 		AND codeset_id IN (@primary_codeset_ids)
 	GROUP BY @domain_concept_id
 	
-	{use_source_concept_id} ? {
+	{@use_source_concept_id} ? {
 	UNION
 	
 	SELECT "@domain_table" AS domain_table,
