@@ -18,8 +18,8 @@ INTO @store_table
 	,concept_name
 }
 FROM (
-	SELECT "@domain_table" AS domain_table,
-	  "@domain_concept_id" AS domain_field,
+	SELECT '@domain_table' AS domain_table,
+	  '@domain_concept_id' AS domain_field,
 	  @domain_concept_id AS concept_id,
 		COUNT(*) AS concept_count,
 		COUNT(distinct subject_id) AS subject_count
@@ -36,8 +36,8 @@ FROM (
 	{@use_source_concept_id} ? {
 	UNION
 	
-	SELECT "@domain_table" AS domain_table,
-	  "@domain_concept_id" AS domain_field,
+	SELECT '@domain_table' AS domain_table,
+	  '@domain_source_concept_id' AS domain_field,
 	  @domain_source_concept_id AS concept_id,
 		COUNT(*) AS concept_count,
 		COUNT(distinct subject_id) AS subject_count
@@ -53,8 +53,8 @@ FROM (
 	
 	UNION
 	
-	SELECT "@domain_table" AS domain_table,
-	  "@domain_concept_id" AS domain_field,
+	SELECT '@domain_table' AS domain_table,
+	  '@domain_source_concept_id' AS domain_field,
 	  @domain_source_concept_id AS concept_id,
 		COUNT(*) AS concept_count,
 		COUNT(distinct subject_id) AS subject_count
