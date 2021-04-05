@@ -20,6 +20,7 @@ Depends:
 Imports:
   Andromeda,
   checkmate,
+  DatabaseConnector (>= 4.0.0),
   digest,
   dplyr (>= 1.0.0),
   ggplot2,
@@ -53,7 +54,6 @@ Remotes:
   ohdsi/Eunomia,
   ohdsi/FeatureExtraction,
   ohdsi/ROhdsiWebApi,
-  ohdsi/DatabaseConnector,
   ohdsi/CirceR
 License: Apache License
 VignetteBuilder: knitr
