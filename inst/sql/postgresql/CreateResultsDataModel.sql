@@ -233,7 +233,9 @@ CREATE TABLE index_event_breakdown (
 			subject_count FLOAT NOT NULL,
 			cohort_id BIGINT NOT NULL,
 			database_id VARCHAR NOT NULL,
-			PRIMARY KEY(concept_id, cohort_id, database_id)
+			domain_field VARCHAR NOT NULL,
+			domain_table VARCHAR NOT NULL,
+			PRIMARY KEY(concept_id, cohort_id, database_id, domain_field, domain_table)
 );
 
 --Table orphan_concept

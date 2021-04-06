@@ -102,6 +102,8 @@ index_event_breakdown,concept_count,float,Yes,No,No,Yes
 index_event_breakdown,subject_count,float,Yes,No,No,Yes
 index_event_breakdown,cohort_id,bigint,Yes,Yes,No,Yes
 index_event_breakdown,database_id,varchar,Yes,Yes,No,Yes
+index_event_breakdown,domain_field,varchar,Yes,Yes,No,Yes
+index_event_breakdown,domain_table,varchar,Yes,Yes,No,Yes
 orphan_concept,cohort_id,bigint,Yes,Yes,No,Yes
 orphan_concept,concept_set_id,int,Yes,Yes,No,Yes
 orphan_concept,database_id,varchar,Yes,Yes,No,Yes
