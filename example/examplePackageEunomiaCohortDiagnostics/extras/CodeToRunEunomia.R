@@ -29,7 +29,7 @@ EunomiaCohortDiagnostics::runCohortDiagnostics(
   databaseDescription = "This is a test data base called Eunomia",
   runCohortCharacterization = TRUE,
   runCohortOverlap = TRUE,
-  runOrphanConcepts = FALSE,
+  runOrphanConcepts = TRUE,
   runVisitContext = TRUE,
   runIncludedSourceConcepts = TRUE,
   runTimeDistributions = TRUE,

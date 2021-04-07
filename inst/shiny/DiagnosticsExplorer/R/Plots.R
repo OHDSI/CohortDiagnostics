@@ -245,8 +245,12 @@ plotIncidenceRate <- function(data,
       dplyr::ungroup()
     spacing <- unlist(sapply(spacing$count, function(x) c(1, rep(0.5, x - 1))))[-1]
     
-    plot <- plot + ggplot2::theme(panel.spacing.y = ggplot2::unit(spacing, "lines"),
-                                  strip.background = ggplot2::element_blank())
+    if (length(spacing) > 0) {
+      plot <- plot + ggplot2::theme(panel.spacing.y = ggplot2::unit(spacing, "lines"),
+                                    strip.background = ggplot2::element_blank())
+    } else {
+      plot <- plot + ggplot2::theme(strip.background = ggplot2::element_blank())
+    }
   } else {
     if (stratifyByAgeGroup) {
       plot <- plot + ggplot2::facet_grid(~ageGroup) 
