@@ -20,7 +20,7 @@ Changes:
 3. Index event breakdown now has subject count
 4. Since phenotypeId/1000 is not always referentConceptId - this logic is now removed.
 5. With upgrade of DatabaseConnector, tibble may be used instead of dataframe by DatabaseConnector. Changes made in code to reflect that.
-
+6. Index event breakdown calculates _source_concept_id from source fields in CDM tables.
 
 Bug fixes:
 
