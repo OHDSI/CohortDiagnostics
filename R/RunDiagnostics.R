@@ -191,12 +191,12 @@ runCohortDiagnostics <- function(packageName = NULL,
   }
   cohortTableColumnNamesObserved <- colnames(cohorts) %>% 
     sort()
-  cohortTableColumnNamesExpected <- CohortDiagnostics:::getResultsDataModelSpecifications() %>% 
+  cohortTableColumnNamesExpected <- getResultsDataModelSpecifications() %>% 
     dplyr::filter(.data$tableName == 'cohort') %>% 
     dplyr::pull(.data$fieldName) %>% 
     SqlRender::snakeCaseToCamelCase() %>% 
     sort()
-  cohortTableColumnNamesRequired <- CohortDiagnostics:::getResultsDataModelSpecifications() %>% 
+  cohortTableColumnNamesRequired <- getResultsDataModelSpecifications() %>% 
     dplyr::filter(.data$tableName == 'cohort') %>% 
     dplyr::filter(.data$isRequired == 'Yes') %>% 
     dplyr::pull(.data$fieldName) %>% 
