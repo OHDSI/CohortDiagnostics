@@ -55,11 +55,13 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   shiny::observe({
+    if (!is.null(conceptSets) && nrow(conceptSets) > 0) {
     subset <- unique(conceptSets$conceptSetName[conceptSets$cohortId == cohortId()]) %>% sort()
     shinyWidgets::updatePickerInput(session = session,
                                     inputId = "conceptSet",
                                     choicesOpt = list(style = rep_len("color: black;", 999)),
                                     choices = subset)
+    }
   })
   
   shiny::observe({

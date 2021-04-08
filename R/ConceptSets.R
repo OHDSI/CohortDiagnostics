@@ -133,6 +133,9 @@ combineConceptSetsFromCohorts <- function(cohorts) {
       }
     }
   }
+  if (length(conceptSets) == 0) {
+    return(NULL)
+  }
   conceptSets <- dplyr::bind_rows(conceptSets) %>%
     dplyr::arrange(.data$cohortId, .data$conceptSetId)
   
@@ -146,7 +149,6 @@ combineConceptSetsFromCohorts <- function(cohorts) {
     dplyr::distinct() %>% 
     dplyr::relocate(.data$uniqueConceptSetId, .data$cohortId, .data$conceptSetId) %>% 
     dplyr::arrange(.data$uniqueConceptSetId, .data$cohortId, .data$conceptSetId)
-  
   return(conceptSets)
 }
 
@@ -280,6 +282,11 @@ runConceptSetDiagnostics <- function(connection,
   }
   
   conceptSets <- combineConceptSetsFromCohorts(subset)
+  
+  if (is.null(conceptSets)) {
+    ParallelLogger::logInfo("Cohorts being diagnosed does not have concept ids. Skipping concept set diagnostics.")
+    return(NULL)
+  }
   
   # Save concept set metadata ---------------------------------------
   writeToCsv(data = conceptSets %>%
@@ -510,7 +517,7 @@ runConceptSetDiagnostics <- function(connection,
           return(tidyr::tibble())
         }
         primaryCodesetIds <- conceptSets %>%
-          dplyr::filter(.data$cohortId == cohort$cohortId) %>%
+          dplyr::filter(.data$cohortId %in% cohort$cohortId) %>%
           dplyr::select(codeSetIds = .data$conceptSetId, .data$uniqueConceptSetId) %>%
           dplyr::inner_join(primaryCodesetIds, by = "codeSetIds")
         
@@ -578,6 +585,9 @@ runConceptSetDiagnostics <- function(connection,
         
         if (nrow(counts) > 0) {
           counts$cohortId <- cohort$cohortId
+        } else {
+          ParallelLogger::logInfo("Index event breakdown results were not returned for: ", cohort$cohortId)
+          return(dplyr::tibble())
         }
         return(counts)
       }
@@ -671,15 +681,15 @@ runConceptSetDiagnostics <- function(connection,
       }
       
       writeToCsv(data,
-        file.path(exportFolder, "orphan_concept.csv"),
-        incremental = incremental,
-        cohortId = subsetOrphans$cohortId)
+                 file.path(exportFolder, "orphan_concept.csv"),
+                 incremental = incremental,
+                 cohortId = subsetOrphans$cohortId)
       
       recordTasksDone(cohortId = subsetOrphans$cohortId,
-        task = "runOrphanConcepts",
-        checksum = subsetOrphans$checksum,
-        recordKeepingFile = recordKeepingFile,
-        incremental = incremental)
+                      task = "runOrphanConcepts",
+                      checksum = subsetOrphans$checksum,
+                      recordKeepingFile = recordKeepingFile,
+                      incremental = incremental)
       
       delta <- Sys.time() - start
       ParallelLogger::logInfo("Finding orphan concepts took ", signif(delta, 3), " ", attr(delta, "units"))
