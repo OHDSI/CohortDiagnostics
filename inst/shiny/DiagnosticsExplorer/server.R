@@ -1034,20 +1034,14 @@ shiny::shinyServer(function(input, output, session) {
     maxCount <- max(data$conceptCount, na.rm = TRUE)
     databaseIds <- unique(data$databaseId)
     data <- data %>% 
-      dplyr::select(.data$databaseId,
-                    .data$conceptId, 
-                    .data$conceptName,
-                    .data$domainId,
-                    .data$vocabularyId,
-                    .data$standardConcept,
-                    .data$conceptCount,
-                    .data$subjectCount) %>% 
       dplyr::arrange(.data$databaseId) %>% 
-      tidyr::pivot_wider(id_cols = c("conceptId", "conceptName", "domainId", "vocabularyId", "standardConcept"),
+      tidyr::pivot_wider(id_cols = c("conceptId", "conceptName", "domainId", 
+                                     "vocabularyId", "standardConcept", 
+                                     "domainTable", "domainField"),
                          names_from = "databaseId", 
                          values_from = c("conceptCount", "subjectCount"))
     
-    data <- data[order(-data[6]), ]
+    data <- data[order(-data[8]), ]
     
     sketch <- htmltools::withTags(table(
       class = "display",
@@ -1058,6 +1052,8 @@ shiny::shinyServer(function(input, output, session) {
           th(rowspan = 2, "Domain Id"),
           th(rowspan = 2, "Vocabulary Id"),
           th(rowspan = 2, "Standard Concept"),
+          th(rowspan = 2, "Domain Table"),
+          th(rowspan = 2, "Domain Field"),
           lapply(databaseIds, th, colspan = 2, class = "dt-center")
         ),
         tr(
@@ -1085,7 +1081,7 @@ shiny::shinyServer(function(input, output, session) {
                                filter = "top",
                                class = "stripe nowrap compact")
     dataTable <- DT::formatStyle(table = dataTable,
-                                 columns = 5 + 1:(length(databaseIds) * 2),
+                                 columns = 7 + 1:(length(databaseIds) * 2),
                                  background = DT::styleColorBar(c(0, maxCount), "lightblue"),
                                  backgroundSize = "98% 88%",
                                  backgroundRepeat = "no-repeat",

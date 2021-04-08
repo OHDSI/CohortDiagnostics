@@ -17,7 +17,7 @@ defaultPassword <- Sys.getenv("shinyDbPasswordGowtham")
 defaultResultsSchema <- 'aesi20210324'
 defaultVocabularySchema <- Sys.getenv("phoebedbVocabSchema")
 
-defaultDatabaseMode <- TRUE # Use file system if FALSE
+defaultDatabaseMode <- FALSE # Use file system if FALSE
 
 defaultCohortBaseUrl <- "https://atlas.ohdsi.org/#/cohortdefinition/"
 defaultConceptBaseUrl <- "https://athena.ohdsi.org/search-terms/terms/"
