@@ -41,7 +41,7 @@ Installation
 2. In R, use the following commands to download and install CohortDiagnostics:
 
   ```r
-  remotes::install.github("OHDSI/CohortDiagnostics")
+  remotes::install_github("OHDSI/CohortDiagnostics")
 ```
 
 User Documentation
