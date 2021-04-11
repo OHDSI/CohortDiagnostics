@@ -20,6 +20,7 @@ Depends:
 Imports:
   Andromeda,
   checkmate,
+  CirceR,
   digest,
   dplyr (>= 1.0.0),
   ggplot2,
