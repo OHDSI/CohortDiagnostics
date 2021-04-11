@@ -677,10 +677,14 @@ createTempInclusionStatsTables <- function(connection, oracleTempSchema, cohorts
       nrOfRules <- length(cohortDefinition$InclusionRules)
       if (nrOfRules > 0) {
         for (j in 1:nrOfRules) {
+          ruleName <- cohortDefinition$InclusionRules[[j]]$name
+          if (length(ruleName) == 0) {
+            ruleName <- paste0("Unamed rule (Sequence ", j - 1, ")")
+          }
           inclusionRules <- dplyr::bind_rows(inclusionRules, 
                                              tidyr::tibble(cohortId = cohorts$cohortId[i],
                                                            ruleSequence = j - 1,
-                                                           ruleName = cohortDefinition$InclusionRules[[j]]$name)) %>% 
+                                                           ruleName = !!ruleName)) %>% 
             dplyr::distinct()
         }
       }
