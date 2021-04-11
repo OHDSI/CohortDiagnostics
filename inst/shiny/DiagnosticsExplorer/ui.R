@@ -1,10 +1,3 @@
-library(magrittr)
-
-source("R/DisplayFunctions.R")
-source("R/Tables.R")
-source("R/Plots.R")
-source("R/Results.R")
-
 addInfo <- function(item, infoId) {
   infoTag <- tags$small(
     class = "badge pull-right action-button",
@@ -39,18 +32,13 @@ sidebarMenu <-
       shinydashboard::menuItem(text = "Cohort Definition", tabName = "cohortDefinition"),
     if (exists("includedSourceConcept"))
       addInfo(
-        item = shinydashboard::menuItem(text = "Concepts in DataSource", tabName = "includedConcepts"),
+        item = shinydashboard::menuItem(text = "Concepts in Data Source", tabName = "includedConcepts"),
         infoId = "includedConceptsInfo"
       ),
     if (exists("orphanConcept"))
       addInfo(
-        item = shinydashboard::menuItem(text = "Orphan (Source) Concepts", tabName = "orphanConcepts"),
+        item = shinydashboard::menuItem(text = "Orphan Concepts", tabName = "orphanConcepts"),
         infoId = "orphanConceptsInfo"
-      ),
-    if (exists("recommenderSet"))
-      addInfo(
-        item = shinydashboard::menuItem(text = "Concept Set Diagnostics", tabName = "conceptSetDiagnostics"),
-        infoId = "conceptSetDiagnosticsInfo"
       ),
     if (exists("cohortCount"))
       addInfo(
@@ -114,7 +102,6 @@ sidebarMenu <-
       input.tabs != 'cohortDefinition' &
       input.tabs != 'includedConcepts' &
       input.tabs != 'orphanConcepts' &
-      input.tabs != 'conceptSetDiagnostics' &
       input.tabs != 'inclusionRuleStats' &
       input.tabs != 'visitContext' &
       input.tabs != 'cohortOverlap'",
@@ -260,7 +247,7 @@ sidebarMenu <-
       )
     ),
     shiny::conditionalPanel(
-      condition = "input.tabs=='includedConcepts' | input.tabs=='orphanConcepts' | input.tabs == 'conceptSetDiagnostics'",
+      condition = "input.tabs=='includedConcepts' | input.tabs=='orphanConcepts'",
       shinyWidgets::pickerInput(
         inputId = "conceptSet",
         label = "Concept Set",
@@ -482,17 +469,6 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(tabName = "orphanConcepts",
                           DT::dataTableOutput("orphanConceptsTable")),
-  shinydashboard::tabItem(
-    tabName = "conceptSetDiagnostics",
-    shiny::radioButtons(
-      inputId = "conceptSetDiagnosticsType",
-      label = "",
-      choices = c("Standard Concepts", "Source Concepts"),
-      selected = "Standard Concepts",
-      inline = TRUE
-    ),
-    DT::dataTableOutput("conceptSetDiagnosticsTable")
-  ),
   shinydashboard::tabItem(
     tabName = "inclusionRuleStats",
     cohortReference("inclusionRuleStatSelectedCohort"),
