@@ -80,7 +80,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -112,7 +112,7 @@
 </li>
 <li>
   <a href="https://github.com/OHDSI/CohortDiagnostics/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -140,12 +140,11 @@
 
     <pre class="usage"><span class='fu'>launchDiagnosticsExplorer</span><span class='op'>(</span>
   dataFolder <span class='op'>=</span> <span class='st'>"data"</span>,
+  dataFile <span class='op'>=</span> <span class='st'>"PreMerged.RData"</span>,
   connectionDetails <span class='op'>=</span> <span class='cn'>NULL</span>,
   resultsDatabaseSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
   vocabularyDatabaseSchema <span class='op'>=</span> <span class='va'>resultsDatabaseSchema</span>,
   aboutText <span class='op'>=</span> <span class='cn'>NULL</span>,
-  cohortBaseUrl <span class='op'>=</span> <span class='st'>"https://atlas.ohdsi.org/#/cohortdefinition/"</span>,
-  conceptBaseUrl <span class='op'>=</span> <span class='st'>"https://athena.ohdsi.org/search-terms/terms/"</span>,
   runOverNetwork <span class='op'>=</span> <span class='cn'>FALSE</span>,
   port <span class='op'>=</span> <span class='fl'>80</span>,
   launch.browser <span class='op'>=</span> <span class='cn'>FALSE</span>
@@ -182,17 +181,6 @@ have been uploaded.</p></td>
 If not provided, no About tab will be shown.</p></td>
     </tr>
     <tr>
-      <th>cohortBaseUrl</th>
-      <td><p>The base URL for constructing linkouts to an ATLAS instance, using the 
-webApiCohortId in the cohortsToCreate file. If NULL, no linkouts will be 
-created.</p></td>
-    </tr>
-    <tr>
-      <th>conceptBaseUrl</th>
-      <td><p>The base URL for constructing linkouts to an Athena instance, using the
-concept ID.</p></td>
-    </tr>
-    <tr>
       <th>runOverNetwork</th>
       <td><p>(optional) Do you want the app to run over your network?</p></td>
     </tr>
@@ -222,7 +210,7 @@ Note: copying to clipboard will not work in a Shiny window.</p></td>
 
       <footer>
       <div class="copyright">
-  <p>Developed by Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver.</p>
+  <p>Developed by Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver, Jamie Gilbert.</p>
 </div>
 
 <div class="pkgdown">
