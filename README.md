@@ -18,7 +18,7 @@ Features
 - Compute cohort incidence across calendar years, age, and gender.
 - Break down index events into the specific concepts that triggered them.
 - Compute overlap between two cohorts.
-- Characterize cohorts, and compare these characterizations.
+- Characterize cohorts, and compare these characterizations. Perform cohort comparison and temporal comparisons. 
 - Explore patient profiles of a random sample of subjects in a cohort.
 
 Screenshot
@@ -71,4 +71,4 @@ CohortDiagnostics is being developed in R Studio.
 
 ### Development status
 
-Beta testing
+Stable
