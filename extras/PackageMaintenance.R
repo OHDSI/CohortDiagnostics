@@ -1,6 +1,6 @@
 # @file PackageMaintenance
 #
-# Copyright 2020 Observational Health Data Sciences and Informatics
+# Copyright 2021 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
 # 
@@ -38,11 +38,11 @@ rmarkdown::render("vignettes/CohortDiagnosticsUsingWebApi.Rmd",
 pkgdown::build_site()
 OhdsiRTools::fixHadesLogo()
 
-# Regenerate DDL
-pathToCsv <- file.path("inst", "settings", "resultsDataModelSpecification.csv")
-specifications <- readr::read_csv(file = pathToCsv, col_types = readr::cols())
-source("extras/ResultsDataModel.R")
-createDdl("inst/sql/postgresql/CreateResultsDataModel.sql", specifications)
+# Regenerate DDL - doesnt work. Maintain manually
+# pathToCsv <- file.path("inst", "settings", "resultsDataModelSpecification.csv")
+# specifications <- readr::read_csv(file = pathToCsv, col_types = readr::cols())
+# source("extras/ResultsDataModel.R")
+# createDdl("inst/sql/postgresql/CreateResultsDataModel.sql", specifications)
 
 # Copy data model specs to Shiny app
 file.copy(from = "inst/settings/resultsDataModelSpecification.csv", 

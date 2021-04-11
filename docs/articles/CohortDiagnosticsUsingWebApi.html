@@ -39,7 +39,7 @@
       <ul class="nav navbar-nav">
 <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -71,7 +71,7 @@
 </li>
 <li>
   <a href="https://github.com/OHDSI/CohortDiagnostics/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -85,13 +85,13 @@
 
       
 
-      </header><script src="CohortDiagnosticsUsingWebApi_files/accessible-code-block-0.0.1/empty-anchor.js"></script><div class="row">
+      </header><script src="CohortDiagnosticsUsingWebApi_files/header-attrs-2.7/header-attrs.js"></script><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
       <h1 data-toc-skip>Running cohort diagnostics using WebAPI</h1>
                         <h4 class="author">Martijn J. Schuemie</h4>
             
-            <h4 class="date">2020-11-22</h4>
+            <h4 class="date">2021-04-11</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/master/vignettes/CohortDiagnosticsUsingWebApi.Rmd"><code>vignettes/CohortDiagnosticsUsingWebApi.Rmd</code></a></small>
       <div class="hidden name"><code>CohortDiagnosticsUsingWebApi.Rmd</code></div>
@@ -171,16 +171,16 @@
 </tbody>
 </table>
 <p>We can read the table using</p>
-<div class="sourceCode" id="cb1"><pre class="downlit">
-<span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://ohdsi.github.io/CohortDiagnostics">CohortDiagnostics</a></span><span class="op">)</span>
-<span class="va">cohortSetReference</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span><span class="op">(</span><span class="st">"cohortsToDiagnose.csv"</span><span class="op">)</span></pre></div>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="kw"><a href="https://rdrr.io/r/base/library.html">library</a></span><span class="op">(</span><span class="va"><a href="https://ohdsi.github.io/CohortDiagnostics">CohortDiagnostics</a></span><span class="op">)</span>
+<span class="va">cohortSetReference</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/utils/read.table.html">read.csv</a></span><span class="op">(</span><span class="st">"cohortsToDiagnose.csv"</span><span class="op">)</span></code></pre></div>
 </div>
 <div id="configuring-the-connection-to-the-server" class="section level2">
 <h2 class="hasAnchor">
 <a href="#configuring-the-connection-to-the-server" class="anchor"></a>Configuring the connection to the server</h2>
 <p>We need to tell R how to connect to the server where the data are. <code>CohortDiagnostics</code> uses the <code>DatabaseConnector</code> package, which provides the <code>createConnectionDetails</code> function. Type <code>?createConnectionDetails</code> for the specific settings required for the various database management systems (DBMS). For example, one might connect to a PostgreSQL database using this code:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit">
-<span class="va">connectionDetails</span> <span class="op">&lt;-</span> <span class="fu">createConnectionDetails</span><span class="op">(</span>dbms <span class="op">=</span> <span class="st">"postgresql"</span>,
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">connectionDetails</span> <span class="op">&lt;-</span> <span class="fu">createConnectionDetails</span><span class="op">(</span>dbms <span class="op">=</span> <span class="st">"postgresql"</span>,
                                              server <span class="op">=</span> <span class="st">"localhost/ohdsi"</span>,
                                              user <span class="op">=</span> <span class="st">"joe"</span>,
                                              password <span class="op">=</span> <span class="st">"supersecret"</span><span class="op">)</span>
@@ -188,17 +188,17 @@
 <span class="va">cdmDatabaseSchema</span> <span class="op">&lt;-</span> <span class="st">"my_cdm_data"</span>
 <span class="va">oracleTempSchema</span> <span class="op">&lt;-</span> <span class="cn">NULL</span>
 <span class="va">cohortDatabaseSchema</span> <span class="op">&lt;-</span> <span class="st">"my_schema"</span>
-<span class="va">cohortTable</span> <span class="op">&lt;-</span> <span class="st">"my_cohort_table"</span></pre></div>
+<span class="va">cohortTable</span> <span class="op">&lt;-</span> <span class="st">"my_cohort_table"</span></code></pre></div>
 <p>The last four lines define the <code>cdmDatabaseSchema</code>, <code>oracleTempSchema</code>, <code>cohortDatabaseSchema</code>, and <code>cohortTable</code> variables. We’ll use the <code>cdmDatabaseSchema</code> later to tell R where the data in CDM format live. The <code>oracleTempSchema</code> is needed only for Oracle users, since Oracle does not support temporary tables. The <code>cohortDatabaseSchema</code>, and <code>cohortTable</code> specify where we want to instantiate our cohorts. Note that for Microsoft SQL Server, databaseschemas need to specify both the database and the schema, so for example <code>cdmDatabaseSchema &lt;- "my_cdm_data.dbo"</code>.</p>
 </div>
 <div id="creating-a-new-cohort-table" class="section level2">
 <h2 class="hasAnchor">
 <a href="#creating-a-new-cohort-table" class="anchor"></a>Creating a new cohort table</h2>
 <p>In order to run most of the cohort diagnostics, we need to instantiate the cohorts. The best way is to instantiate the cohorts in a new cohort table. We can use the <code>createCohortTable</code> to create an empty cohort table:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit">
-<span class="fu"><a href="../reference/createCohortTable.html">createCohortTable</a></span><span class="op">(</span>connectionDetails <span class="op">=</span> <span class="va">connectionDetails</span>,
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/createCohortTable.html">createCohortTable</a></span><span class="op">(</span>connectionDetails <span class="op">=</span> <span class="va">connectionDetails</span>,
                   cohortDatabaseSchema <span class="op">=</span> <span class="va">cohortDatabaseSchema</span>,
-                  cohortTable <span class="op">=</span> <span class="va">cohortTable</span><span class="op">)</span></pre></div>
+                  cohortTable <span class="op">=</span> <span class="va">cohortTable</span><span class="op">)</span></code></pre></div>
 <p>Note this this function will <strong>delete the table if it already exists</strong> before creating it.</p>
 </div>
 <div id="instantiating-the-cohorts" class="section level2">
@@ -208,8 +208,8 @@
 <p>To connect to the WebAPI, we need to provide the base URL. This is a URL that looks something like “<a href="http://server.org:80/WebAPI" class="uri">http://server.org:80/WebAPI</a>”. If you do not know the WebAPI’s base URL, contact the ATLAS administrator.</p>
 <p>We have the option to also generate inclusion rule statistics while the cohorts are instantiated (recommended). If we want to do this, we need to provide a folder where the inclusion rule statistics will be stored for later use.</p>
 <p>To instantiate the cohorts:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit">
-<span class="va">baseUrl</span> <span class="op">&lt;-</span> <span class="st">"http://server.org:80/WebAPI"</span>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">baseUrl</span> <span class="op">&lt;-</span> <span class="st">"http://server.org:80/WebAPI"</span>
 <span class="va">inclusionStatisticsFolder</span> <span class="op">&lt;-</span> <span class="st">"c:/temp/incStats"</span>
 
 <span class="fu"><a href="../reference/instantiateCohortSet.html">instantiateCohortSet</a></span><span class="op">(</span>connectionDetails <span class="op">=</span> <span class="va">connectionDetails</span>,
@@ -220,15 +220,15 @@
                      baseUrl <span class="op">=</span> <span class="va">baseUrl</span>,
                      cohortSetReference <span class="op">=</span> <span class="va">cohortSetReference</span>,
                      generateInclusionStats <span class="op">=</span> <span class="cn">TRUE</span>,
-                     inclusionStatisticsFolder <span class="op">=</span> <span class="va">inclusionStatisticsFolder</span><span class="op">)</span></pre></div>
+                     inclusionStatisticsFolder <span class="op">=</span> <span class="va">inclusionStatisticsFolder</span><span class="op">)</span></code></pre></div>
 <p>This command will contact the WebApi to obtain the cohort definitions, instantiate them in the cohort table, and write the inclusion rule statistics to the specified folder.</p>
 </div>
 <div id="generating-the-diagnostics" class="section level2">
 <h2 class="hasAnchor">
 <a href="#generating-the-diagnostics" class="anchor"></a>Generating the diagnostics</h2>
 <p>Next we generate the cohort diagnostics:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit">
-<span class="va">databaseId</span> <span class="op">&lt;-</span> <span class="st">"MyData"</span>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="va">databaseId</span> <span class="op">&lt;-</span> <span class="st">"MyData"</span>
 <span class="va">exportFolder</span> <span class="op">&lt;-</span> <span class="st">"c:/temp/export"</span>
 
 <span class="fu"><a href="../reference/runCohortDiagnostics.html">runCohortDiagnostics</a></span><span class="op">(</span>baseUrl <span class="op">=</span> <span class="va">baseUrl</span>,
@@ -249,7 +249,7 @@
                      runIncidenceRate <span class="op">=</span> <span class="cn">TRUE</span>,
                      runCohortOverlap <span class="op">=</span> <span class="cn">TRUE</span>,
                      runCohortCharacterization <span class="op">=</span> <span class="cn">TRUE</span>,
-                     minCellCount <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></pre></div>
+                     minCellCount <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></code></pre></div>
 <p>The databaseId is a short string that will be used to identify the data from this database in the Shiny app. Make sure to give it a name you can easily recognize.</p>
 <p>Once completed, a zip file will have been created in the specified export folder. This zip file can be shared between sites, as it does not contain patient-identifiable information. Note that cell counts smaller than 5 have been removed, as specified using the <code>minCellCount</code> argument, to ensure non-identifiability.</p>
 </div>
@@ -259,11 +259,11 @@
 <a href="#viewing-the-diagnostics" class="anchor"></a>Viewing the diagnostics</h1>
 <p>Assuming you completed the steps described above for one or more databases, you should now have a set of zip files, one per database. Make sure to place all zip files in a single folder, for example <code>c:/temp/allZipFiles</code>.</p>
 <p>Optionally, we can pre-merge the zip files, so we can view results in the Shiny app:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit">
-<span class="fu"><a href="../reference/preMergeDiagnosticsFiles.html">preMergeDiagnosticsFiles</a></span><span class="op">(</span><span class="st">"C:/temp/allZipFiles"</span><span class="op">)</span></pre></div>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/preMergeDiagnosticsFiles.html">preMergeDiagnosticsFiles</a></span><span class="op">(</span><span class="st">"C:/temp/allZipFiles"</span><span class="op">)</span></code></pre></div>
 <p>To view the diagnostics, use</p>
-<div class="sourceCode" id="cb7"><pre class="downlit">
-<span class="fu"><a href="../reference/launchDiagnosticsExplorer.html">launchDiagnosticsExplorer</a></span><span class="op">(</span><span class="st">"C:/temp/allZipFiles"</span><span class="op">)</span></pre></div>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu"><a href="../reference/launchDiagnosticsExplorer.html">launchDiagnosticsExplorer</a></span><span class="op">(</span><span class="st">"C:/temp/allZipFiles"</span><span class="op">)</span></code></pre></div>
 <p>This will launch the Shiny app shown below:</p>
 <div class="figure">
 <img src="shiny.png" alt=""><p class="caption">The Diagnostics Explorer Shiny app</p>
@@ -293,7 +293,7 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver.</p>
+  <p>Developed by Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver, Jamie Gilbert.</p>
 </div>
 
 <div class="pkgdown">

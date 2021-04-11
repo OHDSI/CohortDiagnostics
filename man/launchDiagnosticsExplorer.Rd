@@ -11,8 +11,6 @@ launchDiagnosticsExplorer(
   resultsDatabaseSchema = NULL,
   vocabularyDatabaseSchema = resultsDatabaseSchema,
   aboutText = NULL,
-  cohortBaseUrl = "https://atlas.ohdsi.org/#/cohortdefinition/",
-  conceptBaseUrl = "https://athena.ohdsi.org/search-terms/terms/",
   runOverNetwork = FALSE,
   port = 80,
   launch.browser = FALSE
@@ -35,13 +33,6 @@ have been uploaded.}
 
 \item{aboutText}{Text (using HTML markup) that will be displayed in an About tab in the Shiny app.
 If not provided, no About tab will be shown.}
-
-\item{cohortBaseUrl}{The base URL for constructing linkouts to an ATLAS instance, using the 
-webApiCohortId in the cohortsToCreate file. If NULL, no linkouts will be 
-created.}
-
-\item{conceptBaseUrl}{The base URL for constructing linkouts to an Athena instance, using the
-concept ID.}
 
 \item{runOverNetwork}{(optional) Do you want the app to run over your network?}
 
