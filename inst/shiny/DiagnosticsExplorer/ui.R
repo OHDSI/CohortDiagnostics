@@ -1,10 +1,3 @@
-library(magrittr)
-
-source("R/DisplayFunctions.R")
-source("R/Tables.R")
-source("R/Plots.R")
-source("R/Results.R")
-
 addInfo <- function(item, infoId) {
   infoTag <- tags$small(
     class = "badge pull-right action-button",
@@ -19,23 +12,34 @@ addInfo <- function(item, infoId) {
 }
 
 cohortReference <- function(outputId) {
-  shinydashboard::box(# title = "Reference",
-                      status = "warning",
-                      width = "100%",
-                      tags$div(style = "max-height: 100px; overflow-y: auto",
-                        shiny::uiOutput(outputId = outputId)
-                      )
+  shinydashboard::box(
+    # title = "Reference",
+    status = "warning",
+    width = "100%",
+    tags$div(style = "max-height: 100px; overflow-y: auto",
+             shiny::uiOutput(outputId = outputId))
   )
 }
 
 
-header <- shinydashboard::dashboardHeader(title = "Cohort Diagnostics")
+header <-
+  shinydashboard::dashboardHeader(title = "Cohort Diagnostics")
 
 sidebarMenu <-
   shinydashboard::sidebarMenu(
     id = "tabs",
     if (exists("cohort"))
       shinydashboard::menuItem(text = "Cohort Definition", tabName = "cohortDefinition"),
+    if (exists("includedSourceConcept"))
+      addInfo(
+        item = shinydashboard::menuItem(text = "Concepts in Data Source", tabName = "includedConcepts"),
+        infoId = "includedConceptsInfo"
+      ),
+    if (exists("orphanConcept"))
+      addInfo(
+        item = shinydashboard::menuItem(text = "Orphan Concepts", tabName = "orphanConcepts"),
+        infoId = "orphanConceptsInfo"
+      ),
     if (exists("cohortCount"))
       addInfo(
         item = shinydashboard::menuItem(text = "Cohort Counts", tabName = "cohortCounts"),
@@ -50,21 +54,6 @@ sidebarMenu <-
       addInfo(
         item = shinydashboard::menuItem(text = "Time Distributions", tabName = "timeDistribution"),
         infoId = "timeDistributionInfo"
-      ),
-    if (exists("includedSourceConcept"))
-      addInfo(
-        item = shinydashboard::menuItem(text = "Concepts in DataSource", tabName = "includedConcepts"),
-        infoId = "includedConceptsInfo"
-      ),
-    if (exists("orphanConcept"))
-      addInfo(
-        item = shinydashboard::menuItem(text = "Orphan (Source) Concepts", tabName = "orphanConcepts"),
-        infoId = "orphanConceptsInfo"
-      ),
-    if (exists("recommenderSet"))
-      addInfo(
-        item = shinydashboard::menuItem(text = "Concept Set Diagnostics", tabName = "conceptSetDiagnostics"),
-        infoId = "conceptSetDiagnosticsInfo"
       ),
     if (exists("inclusionRuleStats"))
       addInfo(
@@ -104,18 +93,17 @@ sidebarMenu <-
     shinydashboard::menuItem(text = "Database information", tabName = "databaseInformation"),
     # Conditional dropdown boxes in the side bar ------------------------------------------------------
     shiny::conditionalPanel(
-      condition = "input.tabs!='incidenceRate' & 
-      input.tabs != 'timeDistribution' & 
-      input.tabs != 'cohortCharacterization' & 
-      input.tabs != 'cohortCounts' & 
-      input.tabs != 'indexEventBreakdown' & 
-      input.tabs != 'databaseInformation' & 
+      condition = "input.tabs!='incidenceRate' &
+      input.tabs != 'timeDistribution' &
+      input.tabs != 'cohortCharacterization' &
+      input.tabs != 'cohortCounts' &
+      input.tabs != 'indexEventBreakdown' &
+      input.tabs != 'databaseInformation' &
       input.tabs != 'cohortDefinition' &
-      input.tabs != 'includedConcepts' & 
-      input.tabs != 'orphanConcepts' & 
-      input.tabs != 'conceptSetDiagnostics' & 
-      input.tabs != 'inclusionRuleStats' & 
-      input.tabs != 'visitContext' & 
+      input.tabs != 'includedConcepts' &
+      input.tabs != 'orphanConcepts' &
+      input.tabs != 'inclusionRuleStats' &
+      input.tabs != 'visitContext' &
       input.tabs != 'cohortOverlap'",
       shinyWidgets::pickerInput(
         inputId = "database",
@@ -125,7 +113,7 @@ sidebarMenu <-
         multiple = FALSE,
         choicesOpt = list(style = rep_len("color: black;", 999)),
         options = shinyWidgets::pickerOptions(
-          actionsBox = TRUE, 
+          actionsBox = TRUE,
           liveSearch = TRUE,
           size = 10,
           liveSearchStyle = "contains",
@@ -153,12 +141,13 @@ sidebarMenu <-
         multiple = TRUE,
         choicesOpt = list(style = rep_len("color: black;", 999)),
         options = shinyWidgets::pickerOptions(
-          actionsBox = TRUE, 
-          liveSearch = TRUE, 
+          actionsBox = TRUE,
+          liveSearch = TRUE,
           size = 10,
           liveSearchStyle = "contains",
           liveSearchPlaceholder = "Type here to search",
-          virtualScroll = 50)
+          virtualScroll = 50
+        )
       )
     ),
     if (exists("temporalCovariateValue")) {
@@ -170,12 +159,16 @@ sidebarMenu <-
           choices = temporalCovariateChoices$choices,
           multiple = TRUE,
           choicesOpt = list(style = rep_len("color: black;", 999)),
-          selected = temporalCovariateChoices %>% 
-            dplyr::filter(.data$timeId %in% (c(min(temporalCovariateChoices$timeId),
-                                               temporalCovariateChoices %>% 
-                                                 dplyr::pull(.data$timeId)) %>% 
-                                               unique() %>% 
-                                               sort())) %>%
+          selected = temporalCovariateChoices %>%
+            dplyr::filter(.data$timeId %in% (
+              c(
+                min(temporalCovariateChoices$timeId),
+                temporalCovariateChoices %>%
+                  dplyr::pull(.data$timeId)
+              ) %>%
+                unique() %>%
+                sort()
+            )) %>%
             dplyr::pull("choices"),
           options = shinyWidgets::pickerOptions(
             actionsBox = TRUE,
@@ -183,12 +176,13 @@ sidebarMenu <-
             size = 10,
             liveSearchStyle = "contains",
             liveSearchPlaceholder = "Type here to search",
-            virtualScroll = 50)
+            virtualScroll = 50
+          )
         )
       )
     },
     shiny::conditionalPanel(
-      condition = "input.tabs != 'databaseInformation' & 
+      condition = "input.tabs != 'databaseInformation' &
       input.tabs != 'cohortDefinition' &
       input.tabs != 'cohortCounts' &
       input.tabs != 'cohortOverlap'&
@@ -201,12 +195,13 @@ sidebarMenu <-
         multiple = FALSE,
         choicesOpt = list(style = rep_len("color: black;", 999)),
         options = shinyWidgets::pickerOptions(
-          actionsBox = TRUE, 
-          liveSearch = TRUE, 
+          actionsBox = TRUE,
+          liveSearch = TRUE,
           liveSearchStyle = "contains",
           size = 10,
           liveSearchPlaceholder = "Type here to search",
-          virtualScroll = 50)
+          virtualScroll = 50
+        )
       )
     ),
     shiny::conditionalPanel(
@@ -222,13 +217,14 @@ sidebarMenu <-
         multiple = TRUE,
         choicesOpt = list(style = rep_len("color: black;", 999)),
         options = shinyWidgets::pickerOptions(
-          actionsBox = TRUE, 
-          liveSearch = TRUE, 
+          actionsBox = TRUE,
+          liveSearch = TRUE,
           liveSearchStyle = "contains",
           size = 10,
           dropupAuto = TRUE,
           liveSearchPlaceholder = "Type here to search",
-          virtualScroll = 50)
+          virtualScroll = 50
+        )
       )
     ),
     shiny::conditionalPanel(
@@ -240,17 +236,18 @@ sidebarMenu <-
         multiple = FALSE,
         choicesOpt = list(style = rep_len("color: black;", 999)),
         options = shinyWidgets::pickerOptions(
-          actionsBox = TRUE, 
-          liveSearch = TRUE, 
+          actionsBox = TRUE,
+          liveSearch = TRUE,
           liveSearchStyle = "contains",
           size = 10,
           dropupAuto = TRUE,
           liveSearchPlaceholder = "Type here to search",
-          virtualScroll = 50)
+          virtualScroll = 50
+        )
       )
     ),
     shiny::conditionalPanel(
-      condition = "input.tabs=='includedConcepts' | input.tabs=='orphanConcepts' | input.tabs == 'conceptSetDiagnostics'",
+      condition = "input.tabs=='includedConcepts' | input.tabs=='orphanConcepts'",
       shinyWidgets::pickerInput(
         inputId = "conceptSet",
         label = "Concept Set",
@@ -264,7 +261,8 @@ sidebarMenu <-
           dropupAuto = TRUE,
           liveSearchStyle = "contains",
           liveSearchPlaceholder = "Type here to search",
-          virtualScroll = 50)
+          virtualScroll = 50
+        )
       )
     )
   )
@@ -275,10 +273,9 @@ sidebar <-
 
 # Body - items in tabs --------------------------------------------------
 bodyTabItems <- shinydashboard::tabItems(
-  shinydashboard::tabItem(
-    tabName = "about",
-    if (exists("aboutText")) HTML(aboutText)
-  ),
+  shinydashboard::tabItem(tabName = "about",
+                          if (exists("aboutText"))
+                            HTML(aboutText)),
   shinydashboard::tabItem(
     tabName = "cohortDefinition",
     shinydashboard::box(
@@ -286,39 +283,56 @@ bodyTabItems <- shinydashboard::tabItems(
       width = NULL,
       status = "primary",
       DT::dataTableOutput(outputId = "cohortDefinitionTable"),
-      column(12,conditionalPanel("output.cohortDefinitionRowIsSelected == true",
-                             shiny::tabsetPanel(type = "tab",
-                                                shiny::tabPanel(title = "Details",
-                                                                shiny::htmlOutput("cohortDetailsText")),
-                                                shiny::tabPanel(title = "Concept Sets",
-                                                                shiny::downloadButton("saveConceptSetButton", 
-                                                                                      label = "Save to CSV file", 
-                                                                                      icon = shiny::icon("download"),
-                                                                                      style = "margin-top: 5px; margin-bottom: 5px;"),
-                                                                if (!is(dataSource, "environment")) {
-                                                                  shiny::radioButtons(
-                                                                    inputId = "conceptSetsType",
-                                                                    label = "",
-                                                                    choices = c("Concept Set Expression", "Included Standard Concepts", "Included Source Concepts"),
-                                                                    selected = "Concept Set Expression",
-                                                                    inline = TRUE
-                                                                  )
-                                                                },
-                                                                DT::dataTableOutput(outputId = "cohortDefinitionConceptSetsTable")
-                                                ),
-                                                shiny::tabPanel(title = "JSON",
-                                                                copyToClipboardButton("cohortDefinitionJson", style = "margin-top: 5px; margin-bottom: 5px;"),
-                                                                shiny::verbatimTextOutput("cohortDefinitionJson")),
-                                                shiny::tabPanel(title = "SQL",
-                                                                copyToClipboardButton("cohortDefinitionSql", style = "margin-top: 5px; margin-bottom: 5px;"),
-                                                                shiny::verbatimTextOutput("cohortDefinitionSql"))
-                             )
-            )),
+      column(
+        12,
+        conditionalPanel(
+          "output.cohortDefinitionRowIsSelected == true",
+          shiny::tabsetPanel(
+            type = "tab",
+            shiny::tabPanel(title = "Details",
+                            shiny::htmlOutput("cohortDetailsText")),
+            shiny::tabPanel(
+              title = "Concept Sets",
+              shiny::downloadButton(
+                "saveConceptSetButton",
+                label = "Save to CSV file",
+                icon = shiny::icon("download"),
+                style = "margin-top: 5px; margin-bottom: 5px;"
+              ),
+              if (!is(dataSource, "environment")) {
+                shiny::radioButtons(
+                  inputId = "conceptSetsType",
+                  label = "",
+                  choices = c(
+                    "Concept Set Expression",
+                    "Included Standard Concepts",
+                    "Included Source Concepts"
+                  ),
+                  selected = "Concept Set Expression",
+                  inline = TRUE
+                )
+              },
+              DT::dataTableOutput(outputId = "cohortDefinitionConceptSetsTable")
+            ),
+            shiny::tabPanel(
+              title = "JSON",
+              copyToClipboardButton("cohortDefinitionJson", style = "margin-top: 5px; margin-bottom: 5px;"),
+              shiny::verbatimTextOutput("cohortDefinitionJson")
+            ),
+            shiny::tabPanel(
+              title = "SQL",
+              copyToClipboardButton("cohortDefinitionSql", style = "margin-top: 5px; margin-bottom: 5px;"),
+              shiny::verbatimTextOutput("cohortDefinitionSql")
+            )
+          )
+        )
+      ),
     )
   ),
-  shinydashboard::tabItem(tabName = "cohortCounts",
-                          cohortReference("cohortCountsSelectedCohort"),
-                          DT::dataTableOutput("cohortCountsTable"),
+  shinydashboard::tabItem(
+    tabName = "cohortCounts",
+    cohortReference("cohortCountsSelectedCohort"),
+    DT::dataTableOutput("cohortCountsTable"),
   ),
   shinydashboard::tabItem(
     tabName = "incidenceRate",
@@ -345,12 +359,11 @@ bodyTabItems <- shinydashboard::tabItems(
                      style = "text-align: right",
                      shiny::checkboxInput("irYscaleFixed", "Use same y-scale across databases")
                    )
-                 )
-                 ),
-      tags$table( 
-        tags$tr(
-          tags$td(
-            shiny::conditionalPanel(condition = "input.irStratification.indexOf('Age') > -1",
+                 )),
+      tags$table(tags$tr(
+        tags$td(
+          shiny::conditionalPanel(
+            condition = "input.irStratification.indexOf('Age') > -1",
             shinyWidgets::pickerInput(
               inputId = "incidenceRateAgeFilter",
               label = "Filter By Age",
@@ -366,11 +379,14 @@ bodyTabItems <- shinydashboard::tabItems(
                 dropupAuto = TRUE,
                 liveSearchStyle = "contains",
                 liveSearchPlaceholder = "Type here to search",
-                virtualScroll = 50)
-            ))
-          ),
-          tags$td(
-            shiny::conditionalPanel(condition = "input.irStratification.indexOf('Gender') > -1",
+                virtualScroll = 50
+              )
+            )
+          )
+        ),
+        tags$td(
+          shiny::conditionalPanel(
+            condition = "input.irStratification.indexOf('Gender') > -1",
             shinyWidgets::pickerInput(
               inputId = "incidenceRateGenderFilter",
               label = "Filter By Gender",
@@ -386,33 +402,35 @@ bodyTabItems <- shinydashboard::tabItems(
                 dropupAuto = TRUE,
                 liveSearchStyle = "contains",
                 liveSearchPlaceholder = "Type here to search",
-                virtualScroll = 50)
-            ))
-          ),
-          tags$td(style = "width:30% !important",
-            shiny::conditionalPanel(condition = "input.irStratification.indexOf('Calendar Year') > -1",
-            shinyWidgets::pickerInput(
+                virtualScroll = 50
+              )
+            )
+          )
+        ),
+        tags$td(
+          style = "width:30% !important",
+          shiny::conditionalPanel(
+            condition = "input.irStratification.indexOf('Calendar Year') > -1",
+            shiny::sliderInput(
               inputId = "incidenceRateCalenderFilter",
               label = "Filter By Calender Year",
-              width = 400,
-              choices = c("All"),
-              selected = c("All"),
-              multiple = TRUE,
-              choicesOpt = list(style = rep_len("color: black;", 999)),
-              options = shinyWidgets::pickerOptions(
-                actionsBox = TRUE,
-                liveSearch = TRUE,
-                size = 10,
-                dropupAuto = TRUE,
-                liveSearchStyle = "contains",
-                liveSearchPlaceholder = "Type here to search",
-                virtualScroll = 50)
-            ))
+              min = c(0),
+              max = c(0),
+              value = c(0, 0),
+              dragRange = TRUE,
+              pre = "Year ",
+              step = 1,
+              sep = ""
+            )
           )
         )
-      ),
+      )),
       shiny::htmlOutput(outputId = "hoverInfoIr"),
-      ggiraph::ggiraphOutput( outputId = "incidenceRatePlot", width = "100%", height = "100%")
+      ggiraph::ggiraphOutput(
+        outputId = "incidenceRatePlot",
+        width = "100%",
+        height = "100%"
+      )
     )
   ),
   shinydashboard::tabItem(
@@ -422,7 +440,7 @@ bodyTabItems <- shinydashboard::tabItems(
       inputId = "timeDistributionType",
       label = "",
       choices = c("Table", "Plot"),
-      selected = "Table",
+      selected = "Plot",
       inline = TRUE
     ),
     shiny::conditionalPanel(condition = "input.timeDistributionType=='Table'",
@@ -451,24 +469,21 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(tabName = "orphanConcepts",
                           DT::dataTableOutput("orphanConceptsTable")),
-  shinydashboard::tabItem(tabName = "conceptSetDiagnostics",
-                          shiny::radioButtons(
-                            inputId = "conceptSetDiagnosticsType",
-                            label = "",
-                            choices = c("Standard Concepts", "Source Concepts"),
-                            selected = "Standard Concepts",
-                            inline = TRUE
-                          ),
-                          DT::dataTableOutput("conceptSetDiagnosticsTable")),
-  shinydashboard::tabItem(tabName = "inclusionRuleStats",
-                          cohortReference("inclusionRuleStatSelectedCohort"),
-                          DT::dataTableOutput("inclusionRuleTable")),
-  shinydashboard::tabItem(tabName = "indexEventBreakdown",
-                          cohortReference("indexEventBreakdownSelectedCohort"),
-                          DT::dataTableOutput("breakdownTable")),
-  shinydashboard::tabItem(tabName = "visitContext",
-                          cohortReference("visitContextSelectedCohort"),
-                          DT::dataTableOutput("visitContextTable")),
+  shinydashboard::tabItem(
+    tabName = "inclusionRuleStats",
+    cohortReference("inclusionRuleStatSelectedCohort"),
+    DT::dataTableOutput("inclusionRuleTable")
+  ),
+  shinydashboard::tabItem(
+    tabName = "indexEventBreakdown",
+    cohortReference("indexEventBreakdownSelectedCohort"),
+    DT::dataTableOutput("breakdownTable")
+  ),
+  shinydashboard::tabItem(
+    tabName = "visitContext",
+    cohortReference("visitContextSelectedCohort"),
+    DT::dataTableOutput("visitContextTable")
+  ),
   shinydashboard::tabItem(
     tabName = "cohortCharacterization",
     cohortReference("characterizationSelectedCohort"),
@@ -525,19 +540,33 @@ bodyTabItems <- shinydashboard::tabItems(
         shinyWidgets::pickerInput(
           inputId = "domainId",
           label = "Filter By Domain",
-          choices = c("all","condition", "device", "drug", "measurement", "observation", "procedure", "other"),
+          choices = c(
+            "all",
+            "condition",
+            "device",
+            "drug",
+            "measurement",
+            "observation",
+            "procedure",
+            "other"
+          ),
           multiple = FALSE,
           choicesOpt = list(style = rep_len("color: black;", 999)),
           options = shinyWidgets::pickerOptions(
-            actionsBox = TRUE, 
-            liveSearch = TRUE, 
+            actionsBox = TRUE,
+            liveSearch = TRUE,
             size = 10,
             liveSearchStyle = 'contains',
             liveSearchPlaceholder = "Type here to search",
-            virtualScroll = 50)
+            virtualScroll = 50
+          )
           
         ),
-        ggiraph::ggiraphOutput(outputId = "charComparePlot", width = "100%", height = "100%")
+        ggiraph::ggiraphOutput(
+          outputId = "charComparePlot",
+          width = "100%",
+          height = "100%"
+        )
       )
     )
   ),
@@ -551,13 +580,16 @@ body <- shinydashboard::dashboardBody(bodyTabItems)
 
 
 #main
-shinydashboard::dashboardPage(tags$head(
-  tags$style(HTML("
+shinydashboard::dashboardPage(
+  tags$head(tags$style(HTML(
+    "
       th, td {
         padding-right: 10px;
       }
 
-    "))),
+    "
+  ))),
   header = header,
   sidebar = sidebar,
-  body = body)
+  body = body
+)

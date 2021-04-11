@@ -64,9 +64,13 @@ launchDiagnosticsExplorer <- function(dataFolder = "data",
   ensure_installed("pool")
   ensure_installed("dplyr")
   ensure_installed("tidyr")
+  ensure_installed("ggplot2")
+  ensure_installed("gtable")
+  ensure_installed("checkmate")
   ensure_installed("ggiraph")
   ensure_installed("stringr")
-  ensure_installed("purrr")
+  ensure_installed("SqlRender")
+  ensure_installed("DatabaseConnector")
 
   appDir <- system.file("shiny", "DiagnosticsExplorer", package = "CohortDiagnostics")  
   
