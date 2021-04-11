@@ -47,7 +47,8 @@ makeBackwardsCompatible <- function(cohorts) {
         dplyr::mutate(name = as.character(.data$cohortId))
     } else if ('id' %in% colnames(cohorts)) {
       cohorts <- cohorts %>%
-        dplyr::mutate(name = as.character(.data$id))
+        dplyr::mutate(name = as.character(.data$id)) %>% 
+        dplyr::mutate(cohortId = .data$id)
     }
   }
   if (!"webApiCohortId" %in% colnames(cohorts) && 
