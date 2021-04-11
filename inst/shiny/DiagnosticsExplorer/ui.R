@@ -391,23 +391,16 @@ bodyTabItems <- shinydashboard::tabItems(
           ),
           tags$td(style = "width:30% !important",
             shiny::conditionalPanel(condition = "input.irStratification.indexOf('Calendar Year') > -1",
-            shinyWidgets::pickerInput(
-              inputId = "incidenceRateCalenderFilter",
-              label = "Filter By Calender Year",
-              width = 400,
-              choices = c("All"),
-              selected = c("All"),
-              multiple = TRUE,
-              choicesOpt = list(style = rep_len("color: black;", 999)),
-              options = shinyWidgets::pickerOptions(
-                actionsBox = TRUE,
-                liveSearch = TRUE,
-                size = 10,
-                dropupAuto = TRUE,
-                liveSearchStyle = "contains",
-                liveSearchPlaceholder = "Type here to search",
-                virtualScroll = 50)
-            ))
+            shiny::sliderInput(inputId = "incidenceRateCalenderFilter", 
+                        label = "Filter By Calender Year",
+                        min = c(0), 
+                        max = c(0), 
+                        value = c(0, 0),
+                        dragRange = TRUE,
+                        pre = "Year ",
+                        step = 1,
+                        sep = "")
+            )
           )
         )
       ),
@@ -422,7 +415,7 @@ bodyTabItems <- shinydashboard::tabItems(
       inputId = "timeDistributionType",
       label = "",
       choices = c("Table", "Plot"),
-      selected = "Table",
+      selected = "Plot",
       inline = TRUE
     ),
     shiny::conditionalPanel(condition = "input.timeDistributionType=='Table'",

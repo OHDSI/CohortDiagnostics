@@ -456,14 +456,18 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::distinct(.data$calendarYear) %>% 
         dplyr::arrange(.data$calendarYear)
       
-      shinyWidgets::updatePickerInput(session = session,
-                                      inputId = "incidenceRateCalenderFilter",
-                                      choicesOpt = list(style = rep_len("color: black;", 999)),
-                                      choices = calenderFilter$calendarYear,
-                                      selected = calenderFilter$calendarYear)
+      minValue <- min(calenderFilter$calendarYear) 
+      
+      maxValue <- max(calenderFilter$calendarYear)
+      
+      shiny::updateSliderInput(session = session,
+                               inputId = "incidenceRateCalenderFilter",
+                               min = minValue,
+                               max = maxValue,
+                               value = c(2010,maxValue))
+      
     }
   })
-  
   
   incidenceRateAgeFilter <- reactiveVal(NULL)
   shiny::observeEvent(eventExpr = {list(input$incidenceRateAgeFilter_open,
@@ -485,14 +489,16 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  incidenceRateCalenderFilter <- reactiveVal(NULL)
-  shiny::observeEvent(eventExpr = {list(input$incidenceRateCalenderFilter_open,
-                                        input$tabs)
-  },handlerExpr = {
-    if (isFALSE(input$incidenceRateCalenderFilter_open) || !is.null(input$tabs)) {
-      selectedIncidenceRateCalenderFilter <- input$incidenceRateCalenderFilter
-      incidenceRateCalenderFilter(selectedIncidenceRateCalenderFilter)
-    }
+  incidenceRateCalenderFilter <- shiny::reactive({
+    calenderFilter <- incidenceRateData() %>% 
+      dplyr::select(.data$calendarYear) %>% 
+      dplyr::filter(.data$calendarYear != "NA",
+                    !is.na(.data$calendarYear)) %>%
+      dplyr::distinct(.data$calendarYear) %>% 
+      dplyr::arrange(.data$calendarYear)
+    calenderFilter <- calenderFilter[calenderFilter$calendarYear >= input$incidenceRateCalenderFilter[1] & calenderFilter$calendarYear <= input$incidenceRateCalenderFilter[2],,drop = FALSE] %>% 
+      dplyr::pull(.data$calendarYear)
+    return(calenderFilter)
   })
   
   output$incidenceRatePlot <- ggiraph::renderggiraph(expr = {
@@ -505,13 +511,16 @@ shiny::shinyServer(function(input, output, session) {
     
     if (stratifyByAge && !"All" %in% incidenceRateAgeFilter()) {
       data <- data %>% 
-        dplyr::filter(.data$ageGroup %in% incidenceRateAgeFilter())}
+        dplyr::filter(.data$ageGroup %in% incidenceRateAgeFilter())
+      }
     if (stratifyByGender && !"All" %in% incidenceRateGenderFilter()) {
       data <- data %>% 
-        dplyr::filter(.data$gender %in% incidenceRateGenderFilter())}
-    if (stratifyByCalendarYear && !"All" %in% incidenceRateCalenderFilter()) {
+        dplyr::filter(.data$gender %in% incidenceRateGenderFilter())
+      }
+    if (stratifyByCalendarYear) {
       data <- data %>% 
-        dplyr::filter(.data$calendarYear %in% incidenceRateCalenderFilter())}
+        dplyr::filter(.data$calendarYear %in% incidenceRateCalenderFilter())
+      }
     
     validate(need(nrow(data) > 0, paste0("No data for this combination")))
     
@@ -1238,8 +1247,7 @@ shiny::shinyServer(function(input, output, session) {
         tidyr::pivot_wider(id_cols = c("cohortId", "characteristic"), 
                            names_from = "databaseId",
                            values_from = "value" ,
-                           names_sep = "_",
-                           names_prefix = "Value_")
+                           names_sep = "_")
       table <- table %>%
         dplyr::relocate(.data$characteristic) %>% 
         dplyr::select(-.data$cohortId)
@@ -1256,23 +1264,10 @@ shiny::shinyServer(function(input, output, session) {
                        truncateStringDef(0, 150),
                        minCellPercentDef(1:length(databaseIds))
                      ))
-      sketch <- htmltools::withTags(table(
-        class = "display",
-        thead(
-          tr(
-            th(rowspan = 2, "Covariate Name"),
-            lapply(databaseIds, th, colspan = 1, class = "dt-center")
-          ),
-          tr(
-            lapply(rep(c("Proportion"), 
-                       length(databaseIds)), th)
-          )
-        )
-      ))
+      
       table <- DT::datatable(table,
                              options = options,
                              rownames = FALSE,
-                             container = sketch, 
                              escape = FALSE,
                              filter = "top",
                              class = "stripe nowrap compact")
@@ -1312,7 +1307,7 @@ shiny::shinyServer(function(input, output, session) {
                      ordering = TRUE,
                      paging = TRUE,
                      columnDefs = list(
-                       truncateStringDef(1, 150),
+                       truncateStringDef(0, 80),
                        minCellRealDef(1 + 1:(length(databaseIds)*2), digits = 3)))
       sketch <- htmltools::withTags(table(
         class = "display",
@@ -1386,7 +1381,7 @@ shiny::shinyServer(function(input, output, session) {
                    ordering = TRUE,
                    paging = TRUE,
                    columnDefs = list(
-                     truncateStringDef(1, 40),
+                     truncateStringDef(0, 80),
                      minCellPercentDef(1 + 1:(length(temporalCovariateChoicesSelected$choices)))))
     
     table <- DT::datatable(table,
@@ -1424,6 +1419,9 @@ shiny::shinyServer(function(input, output, session) {
                                    targetCohortIds = combisOfTargetComparator$targetCohortId, 
                                    comparatorCohortIds = combisOfTargetComparator$comparatorCohortId, 
                                    databaseIds = databaseIds())
+    validate(need(!is.null(data), paste0("No cohort overlap data for this combination")))
+    validate(need(nrow(data) > 0, paste0("No cohort overlap data for this combination.")))
+    return(data)
   })
   
   output$overlapPlot <- ggiraph::renderggiraph(expr = {
@@ -1431,6 +1429,7 @@ shiny::shinyServer(function(input, output, session) {
     
     data <- cohortOverlap()
     validate(need(!is.null(data), paste0("No cohort overlap data for this combination")))
+    validate(need(nrow(data) > 0, paste0("No cohort overlap data for this combination.")))
     
     plot <- plotCohortOverlap(data = data,
                               shortNameRef = cohort,
@@ -1530,7 +1529,7 @@ shiny::shinyServer(function(input, output, session) {
                      ordering = TRUE,
                      paging = TRUE,
                      columnDefs = list(
-                       truncateStringDef(0, 150),
+                       truncateStringDef(0, 80),
                        minCellRealDef(2:6, digits = 2)))
       
       table <- DT::datatable(table,
