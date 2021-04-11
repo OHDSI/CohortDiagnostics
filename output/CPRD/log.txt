@@ -1,0 +1,2 @@
+2021-04-11 10:41:02	[Main thread]	INFO	CohortDiagnosticsFeasibilityTTP	runCohortDiagnostics	Creating cohorts
+2021-04-11 10:41:04	[Main thread]	FATAL	methods	cacheMetaData	cyclic namespace dependency detected when loading ‘dplyr’, already loading ‘dbplyr’, ‘dplyr’

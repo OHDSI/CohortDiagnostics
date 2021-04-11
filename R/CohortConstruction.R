@@ -42,16 +42,23 @@ checkCohortReference <- function(cohortReference, errorMessage = NULL) {
 
 makeBackwardsCompatible <- function(cohorts) {
   if (!"name" %in% colnames(cohorts)) {
-    cohorts <- cohorts %>%
-      mutate(name = as.character(.data$cohortId))
+    if ('cohortId' %in% colnames(cohorts)) {
+      cohorts <- cohorts %>%
+        dplyr::mutate(name = as.character(.data$cohortId))
+    } else if ('id' %in% colnames(cohorts)) {
+      cohorts <- cohorts %>%
+        dplyr::mutate(name = as.character(.data$id))
+    }
   }
-  if (!"webApiCohortId" %in% colnames(cohorts) && "atlasId" %in% colnames(cohorts)) {
+  if (!"webApiCohortId" %in% colnames(cohorts) && 
+      "atlasId" %in% colnames(cohorts)) {
     cohorts <- cohorts %>%
-      rename(webApiCohortId = .data$atlasId)
+      dplyr::rename(webApiCohortId = .data$atlasId)
   }
-  if (!"cohortName" %in% colnames(cohorts) && "atlasName" %in% colnames(cohorts)) {
+  if (!"cohortName" %in% colnames(cohorts) && 
+      "atlasName" %in% colnames(cohorts)) {
     cohorts <- cohorts %>%
-      rename(cohortName = .data$atlasName)
+      dplyr::rename(cohortName = .data$atlasName)
   }
   return(cohorts)
 }
