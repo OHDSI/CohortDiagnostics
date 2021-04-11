@@ -131,7 +131,7 @@ shiny::shinyServer(function(input, output, session) {
       if (nrow(subset) == 0) {
         return(NULL)
       }
-      row <- subset[idx[1], ]
+      row <- subset[idx[1],]
       return(row)
     }
   })
@@ -761,7 +761,7 @@ shiny::shinyServer(function(input, output, session) {
           Note = paste0("No data available for selected databases and cohorts")
         ))
       }
-      table <- table[order(-table[, 5]),]
+      table <- table[order(-table[, 5]), ]
       
       sketch <- htmltools::withTags(table(class = "display",
                                           thead(
@@ -858,7 +858,7 @@ shiny::shinyServer(function(input, output, session) {
         ))
       }
       
-      table <- table[order(-table[, 4]),]
+      table <- table[order(-table[, 4]), ]
       
       sketch <- htmltools::withTags(table(class = "display",
                                           thead(
@@ -993,7 +993,7 @@ shiny::shinyServer(function(input, output, session) {
       ))
     }
     
-    table <- table[order(-table[, 5]),]
+    table <- table[order(-table[, 5]), ]
     
     
     sketch <- htmltools::withTags(table(class = "display",
@@ -1170,7 +1170,7 @@ shiny::shinyServer(function(input, output, session) {
         values_from = c("conceptCount", "subjectCount")
       )
     
-    data <- data[order(-data[8]),]
+    data <- data[order(-data[8]), ]
     
     sketch <- htmltools::withTags(table(class = "display",
                                         thead(
@@ -1488,7 +1488,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::select(-.data$cohortId) %>%
         dplyr::relocate(.data$covariateName, .data$conceptId)
       
-      data <- data[order(-data[3]),]
+      data <- data[order(-data[3]), ]
       
       options = list(
         pageLength = 1000,
@@ -1682,6 +1682,7 @@ shiny::shinyServer(function(input, output, session) {
   
   computeBalance <- shiny::reactive({
     validate(need((length(cohortId(
+      
     )) > 0), paste0("Please select cohort.")))
     validate(need((length(
       comparatorCohortId()
