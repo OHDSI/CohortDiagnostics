@@ -1,3 +1,4 @@
+# Disabling until new version of DatabaseConnector is released:
 library(testthat)
 library(CohortDiagnostics)
 library(Eunomia)
@@ -19,7 +20,7 @@ test_that("Cohort instantiation", {
                                           cohortDatabaseSchema = cohortDatabaseSchema,
                                           cohortTable = cohortTable,
                                           packageName = "CohortDiagnostics",
-                                          cohortToCreateFile = "settings/testing/CohortsToCreateForTesting.csv",
+                                          cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
                                           generateInclusionStats = TRUE,
                                           createCohortTable = TRUE,
                                           inclusionStatisticsFolder = file.path(folder, "incStats"))
