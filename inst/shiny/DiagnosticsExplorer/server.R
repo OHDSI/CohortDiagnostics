@@ -1154,73 +1154,131 @@ shiny::shinyServer(function(input, output, session) {
     }
     maxCount <- max(data$conceptCount, na.rm = TRUE)
     databaseIds <- unique(data$databaseId)
-    data <- data %>%
-      dplyr::arrange(.data$databaseId) %>%
-      tidyr::pivot_wider(
-        id_cols = c(
-          "conceptId",
-          "conceptName",
-          "domainId",
-          "vocabularyId",
-          "standardConcept",
-          "domainTable",
-          "domainField"
-        ),
-        names_from = "databaseId",
-        values_from = c("conceptCount", "subjectCount")
+    
+    if ("subjectCount" %in% names(data)) {
+      data <- data %>%
+        dplyr::arrange(.data$databaseId) %>%
+        tidyr::pivot_wider(
+          id_cols = c(
+            "conceptId",
+            "conceptName",
+            "domainId",
+            "vocabularyId",
+            "standardConcept",
+            "domainTable",
+            "domainField"
+          ),
+          names_from = "databaseId",
+          values_from = c("conceptCount", "subjectCount")
+        )
+      
+      data <- data[order(-data[8]), ]
+      
+      sketch <- htmltools::withTags(table(class = "display",
+                                          thead(
+                                            tr(
+                                              th(rowspan = 2, "Concept Id"),
+                                              th(rowspan = 2, "Concept Name"),
+                                              th(rowspan = 2, "Domain Id"),
+                                              th(rowspan = 2, "Vocabulary Id"),
+                                              th(rowspan = 2, "Standard Concept"),
+                                              th(rowspan = 2, "Domain Table"),
+                                              th(rowspan = 2, "Domain Field"),
+                                              lapply(databaseIds, th, colspan = 2, class = "dt-center")
+                                            ),
+                                            tr(lapply(rep(
+                                              c("Concept Count", "Subject Count"), length(databaseIds)
+                                            ), th))
+                                          )))
+      
+      options = list(
+        pageLength = 100,
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        searchHighlight = TRUE,
+        scrollX = TRUE,
+        lengthChange = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        columnDefs = list(minCellCountDef(1 + 1:(
+          length(databaseIds) * 2
+        )))
       )
+      
+      dataTable <- DT::datatable(
+        data,
+        options = options,
+        rownames = FALSE,
+        container = sketch,
+        colnames = colnames(data) %>%
+          camelCaseToTitleCase(),
+        escape = FALSE,
+        filter = "top",
+        class = "stripe nowrap compact"
+      )
+      
+      dataTable <- DT::formatStyle(
+        table = dataTable,
+        columns = 7 + 1:(length(databaseIds) * 2),
+        background = DT::styleColorBar(c(0, maxCount), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+    } else {
+      
+      data <- data %>%
+        dplyr::arrange(.data$databaseId) %>%
+        tidyr::pivot_wider(
+          id_cols = c(
+            "conceptId",
+            "conceptName",
+            "domainId",
+            "vocabularyId",
+            "standardConcept"
+          ),
+          names_from = "databaseId",
+          values_from = "conceptCount",
+          names_prefix = "conceptCount_"
+        )
+      
+      data <- data[order(-data[6]), ]
+      
+      options = list(
+        pageLength = 100,
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        searchHighlight = TRUE,
+        scrollX = TRUE,
+        lengthChange = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        columnDefs = list(minCellCountDef(1 + 1:(
+          length(databaseIds) * 2
+        )))
+      )
+      
+      dataTable <- DT::datatable(
+        data,
+        options = options,
+        rownames = FALSE,
+        colnames = colnames(data) %>%
+          camelCaseToTitleCase(),
+        escape = FALSE,
+        filter = "top",
+        class = "stripe nowrap compact"
+      )
+      
+      dataTable <- DT::formatStyle(
+        table = dataTable,
+        columns = 5 + 1:(length(databaseIds)),
+        background = DT::styleColorBar(c(0, maxCount), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+    }
     
-    data <- data[order(-data[8]), ]
-    
-    sketch <- htmltools::withTags(table(class = "display",
-                                        thead(
-                                          tr(
-                                            th(rowspan = 2, "Concept Id"),
-                                            th(rowspan = 2, "Concept Name"),
-                                            th(rowspan = 2, "Domain Id"),
-                                            th(rowspan = 2, "Vocabulary Id"),
-                                            th(rowspan = 2, "Standard Concept"),
-                                            th(rowspan = 2, "Domain Table"),
-                                            th(rowspan = 2, "Domain Field"),
-                                            lapply(databaseIds, th, colspan = 2, class = "dt-center")
-                                          ),
-                                          tr(lapply(rep(
-                                            c("Concept Count", "Subject Count"), length(databaseIds)
-                                          ), th))
-                                        )))
-    
-    options = list(
-      pageLength = 100,
-      lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-      searching = TRUE,
-      searchHighlight = TRUE,
-      scrollX = TRUE,
-      lengthChange = TRUE,
-      ordering = TRUE,
-      paging = TRUE,
-      columnDefs = list(minCellCountDef(1 + 1:(
-        length(databaseIds) * 2
-      )))
-    )
-    dataTable <- DT::datatable(
-      data,
-      options = options,
-      rownames = FALSE,
-      container = sketch,
-      colnames = colnames(data) %>%
-        camelCaseToTitleCase(),
-      escape = FALSE,
-      filter = "top",
-      class = "stripe nowrap compact"
-    )
-    dataTable <- DT::formatStyle(
-      table = dataTable,
-      columns = 7 + 1:(length(databaseIds) * 2),
-      background = DT::styleColorBar(c(0, maxCount), "lightblue"),
-      backgroundSize = "98% 88%",
-      backgroundRepeat = "no-repeat",
-      backgroundPosition = "center"
-    )
     return(dataTable)
   }, server = TRUE)
   
