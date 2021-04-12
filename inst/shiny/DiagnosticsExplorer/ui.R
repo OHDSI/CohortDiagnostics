@@ -525,7 +525,7 @@ bodyTabItems <- shinydashboard::tabItems(
       inputId = "charCompareType",
       label = "",
       choices = c("Pretty table", "Raw table", "Plot"),
-      selected = "Pretty table",
+      selected = "Plot",
       inline = TRUE
     ),
     shiny::conditionalPanel(condition = "input.charCompareType=='Pretty table' | input.charCompareType=='Raw table'",
