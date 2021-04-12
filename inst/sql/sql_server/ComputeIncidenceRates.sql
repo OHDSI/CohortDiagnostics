@@ -116,7 +116,7 @@ SELECT denominator.calendar_year,
 	person_years
 INTO #rates_summary
 FROM #denominator denominator
-INNER JOIN @cdm_database_schema.concept
+INNER JOIN @vocabulary_database_schema.concept
 	ON denominator.gender_concept_id = concept_id
 LEFT JOIN #numerator numerator
 	ON denominator.calendar_year = numerator.calendar_year

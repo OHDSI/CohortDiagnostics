@@ -17,6 +17,7 @@ instantiateCohort(
   cohortId = NULL,
   generateInclusionStats = FALSE,
   resultsDatabaseSchema = cohortDatabaseSchema,
+  vocabularyDatabaseSchema = cdmDatabaseSchema,
   cohortInclusionTable = paste0(cohortTable, "_inclusion"),
   cohortInclusionResultTable = paste0(cohortTable, "_inclusion_result"),
   cohortInclusionStatsTable = paste0(cohortTable, "_inclusion_stats"),
@@ -65,6 +66,11 @@ provided if \code{baseUrl} and \code{cohortId} are provided.}
 \item{resultsDatabaseSchema}{Schema name where the statistics tables reside. Note that for
 SQL Server, this should include both the database and schema
 name, for example 'scratch.dbo'.}
+
+\item{vocabularyDatabaseSchema}{Schema name where your OMOP vocabulary data resides. This is 
+commonly the same as cdmDatabaseSchema. Note that for 
+SQL Server, this should include both the database and
+schema name, for example 'vocabulary.dbo'.}
 
 \item{cohortInclusionTable}{Name of the inclusion table, one of the tables for storing
 inclusion rule statistics.}

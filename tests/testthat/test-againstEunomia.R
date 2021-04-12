@@ -18,6 +18,7 @@ test_that("Cohort instantiation", {
                                           cdmDatabaseSchema = cdmDatabaseSchema,
                                           oracleTempSchema = oracleTempSchema,
                                           cohortDatabaseSchema = cohortDatabaseSchema,
+                                          vocabularyDatabase = vocabularyDatabase,
                                           cohortTable = cohortTable,
                                           packageName = "CohortDiagnostics",
                                           cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",

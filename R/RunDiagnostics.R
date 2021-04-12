@@ -28,6 +28,7 @@
 #' @template Connection
 #'
 #' @template CdmDatabaseSchema
+#' @template VocabularyDatabaseSchema
 #' @template CohortDatabaseSchema
 #' @template OracleTempSchema
 #'
@@ -93,6 +94,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  cdmDatabaseSchema,
                                  oracleTempSchema = NULL,
                                  cohortDatabaseSchema,
+                                 vocabularyDatabaseSchema = cdmDatabaseSchema,
                                  cohortTable = "cohort",
                                  cohortIds = NULL,
                                  inclusionStatisticsFolder = file.path(exportFolder, "inclusionStatistics"),
@@ -125,7 +127,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   
   start <- Sys.time()
   ParallelLogger::logInfo("Run Cohort Diagnostics started at ", start)
-  
+
   if (is.null(databaseName) | is.na(databaseName)) {
     databaseName <- databaseId
   }
@@ -337,7 +339,6 @@ runCohortDiagnostics <- function(packageName = NULL,
     ParallelLogger::logTrace("Done inserting")
   }
   
-  
   # Counting cohorts -----------------------------------------------------------------------
   ParallelLogger::logInfo("Counting cohort records and subjects")
   cohortCounts <- getCohortCounts(connection = connection,
@@ -414,6 +415,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     runConceptSetDiagnostics(connection = connection,
                              oracleTempSchema = oracleTempSchema,
                              cdmDatabaseSchema = cdmDatabaseSchema,
+                             vocabularyDatabaseSchema = vocabularyDatabaseSchema,
                              databaseId = databaseId,
                              cohorts = cohorts,
                              runIncludedSourceConcepts = runIncludedSourceConcepts,

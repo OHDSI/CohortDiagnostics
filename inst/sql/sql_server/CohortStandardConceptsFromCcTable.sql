@@ -16,6 +16,6 @@ INNER JOIN @concept_counts_table concept_counts
 INNER JOIN @concept_counts_database_schema.@concept_counts_table concept_counts
 }
 	ON concept_counts.concept_id = codesets.concept_id
-INNER JOIN @cdm_database_schema.concept standard_concept
+INNER JOIN @vocabulary_database_schema.concept standard_concept
 	ON standard_concept.concept_id = codesets.concept_id
 WHERE standard_concept.standard_concept = 'S';
