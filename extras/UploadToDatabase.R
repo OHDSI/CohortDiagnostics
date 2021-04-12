@@ -1,37 +1,40 @@
 # Using the official uploading functions to get data from zip files into the postgres database
 library(CohortDiagnostics)
 
-# local server:
-# connectionDetails <- createConnectionDetails(dbms = "postgresql",
-#                                              server = "localhost/ohdsi",
-#                                              user = "postgres",
-#                                              password = Sys.getenv("pwPostgres"))
-# resultsSchema <- "phenotype_library"
-
 # OHDSI's server:
-connectionDetails <- createConnectionDetails(dbms = "postgresql",
-                                             server = paste(Sys.getenv("shinydbServer"),
-                                                            Sys.getenv("shinydbDatabase"),
-                                                            sep = "/"),
-                                             port = Sys.getenv("shinydbPort"),
-                                             user = Sys.getenv("shinyDbUserGowtham"),
-                                             password = Sys.getenv("shinyDbPasswordGowtham"))
-resultsSchema <- 'aesi20210310'
+connectionDetails <- createConnectionDetails(
+  dbms = "postgresql",
+  server = paste(
+    Sys.getenv("shinydbServer"),
+    Sys.getenv("shinydbDatabase"),
+    sep = "/"
+  ),
+  port = Sys.getenv("shinydbPort"),
+  user = Sys.getenv("shinyDbUser"),
+  password = Sys.getenv("shinyDbPassword")
+)
+resultsSchema <- ''
 
-createResultsDataModel(connectionDetails = connectionDetails, schema = resultsSchema)
+# commenting this function as it maybe accidentally run - loosing data.
+# createResultsDataModel(connectionDetails = connectionDetails, schema = resultsSchema)
 
+Sys.setenv("POSTGRES_PATH" = Sys.getenv('POSTGRES_PATH'))
 
+folderWithZipFilesToUpload <- ""
+listOfZipFilesToUpload <-
+  list.files(
+    path = folderWithZipFilesToUpload,
+    pattern = ".zip",
+    full.names = TRUE,
+    recursive = TRUE
+  )
 
-path = ""
-zipFilesToUpload <- list.files(path = path, 
-           pattern = ".zip", 
-           recursive = TRUE, 
-           full.names = TRUE)
-
-for (i in (1:length(zipFilesToUpload))) {
-  uploadResults(connectionDetails = connectionDetails,
-                schema = resultsSchema,
-                zipFileName = zipFilesToUpload[[i]])
+for (i in (1:length(listOfZipFilesToUpload))) {
+  CohortDiagnostics::uploadResults(
+    connectionDetails = connectionDetails,
+    schema = resultsSchema,
+    zipFileName = listOfZipFilesToUpload[[i]]
+  )
 }
 
 uploadPrintFriendly(connectionDetails = connectionDetails,
