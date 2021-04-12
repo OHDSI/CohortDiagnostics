@@ -70,5 +70,5 @@ FROM (
 	}
 	
 	) concept_counts
-INNER JOIN @cdm_database_schema.concept
+INNER JOIN @vocabulary_database_schema.concept
 	ON concept_counts.concept_id = concept.concept_id;
