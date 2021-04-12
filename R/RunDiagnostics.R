@@ -278,6 +278,28 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
   }
   
+  vocabularyVersionCdm <-
+    DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = "select * from @cdm_database_schema.cdm_source;",
+      cdm_database_schema = cdmDatabaseSchema,
+      snakeCaseToCamelCase = TRUE
+    ) %>%
+    dplyr::tibble() %>%
+    dplyr::rename(vocabularyVersionCdm = .data$vocabularyVersion) %>% 
+    dplyr::pull(vocabularyVersionCdm)
+  
+  vocabularyVersion <-
+    DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = "select * from @vocabulary_database_schema.vocabulary where vocabulary_id = 'None';",
+      vocabulary_database_schema = vocabularyDatabaseSchema,
+      snakeCaseToCamelCase = TRUE
+    ) %>%
+    dplyr::tibble() %>%
+    dplyr::rename(vocabularyVersion = .data$vocabularyVersion) %>% 
+    dplyr::pull(.data$vocabularyVersion)
+  
   if (incremental) {
     ParallelLogger::logDebug("Working in incremental mode.")
     cohorts$checksum <- computeChecksum(cohorts$sql)
@@ -774,6 +796,12 @@ runCohortDiagnostics <- function(packageName = NULL,
   ParallelLogger::logInfo("Results are ready for sharing at: ", zipName)
   
   delta <- Sys.time() - start
+  metaData <- dplyr::tibble(databaseId = databaseId,
+                            variableField = c('vocabularyVersionCdm', 'vocabularyVersion'),
+                            valueField = c(vocabularyVersionCdm, vocabularyVersion))
+  writeToCsv(data = metaData,
+             fileName = "metaData.csv")
+  
   ParallelLogger::logInfo("Computing all diagnostics took ", signif(delta, 3), " ", attr(delta, "units"))
 }
 

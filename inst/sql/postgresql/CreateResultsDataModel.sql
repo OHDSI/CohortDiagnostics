@@ -17,6 +17,7 @@ DROP TABLE IF EXISTS incidence_rate;
 DROP TABLE IF EXISTS included_source_concept;
 DROP TABLE IF EXISTS inclusion_rule_stats;
 DROP TABLE IF EXISTS index_event_breakdown;
+DROP TABLE IF EXISTS metadata;
 DROP TABLE IF EXISTS orphan_concept;
 DROP TABLE IF EXISTS phenotype_description;
 DROP TABLE IF EXISTS relationship;
@@ -236,6 +237,15 @@ CREATE TABLE index_event_breakdown (
 			domain_field VARCHAR NOT NULL,
 			domain_table VARCHAR NOT NULL,
 			PRIMARY KEY(concept_id, cohort_id, database_id, domain_field, domain_table)
+);
+
+--Table metadata
+
+CREATE TABLE metadata (
+			database_id VARCHAR NOT NULL,
+			variable_field VARCHAR NOT NULL,
+			value_field VARCHAR,
+			PRIMARY KEY(database_id, variable)
 );
 
 --Table orphan_concept
