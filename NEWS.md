@@ -13,6 +13,7 @@ Changes:
 2. Index event breakdown now has subject count
 3. Index event breakdown calculates _source_concept_id from source fields in CDM tables.
 4. Vocabulary database schema is now supported.
+5. Metadata (vocabulary version information from data source) is now collected.
 
 Bug fixes:
 
