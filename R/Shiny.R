@@ -25,6 +25,8 @@
 #' @param vocabularyDatabaseSchema  The schema on the database server where the vocabulary tables are located.
 #' @param dataFolder       A folder where the premerged file is stored. Use
 #'                         the \code{\link{preMergeDiagnosticsFiles}} function to generate this file.
+#' @param dataFile         (Optional) The name of the .RData file with results. It is commonly known as the
+#'                         Premerged file.                    
 #' @param runOverNetwork   (optional) Do you want the app to run over your network?
 #' @param port             (optional) Only used if \code{runOverNetwork} = TRUE. 
 #' @param launch.browser   Should the app be launched in your default browser, or in a Shiny window.
