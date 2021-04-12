@@ -1,20 +1,21 @@
-referentConceptId,cohortId,webApiCohortId,cohortName,logicDescription, clinicalRationale
-1118084,1118084001,18345,Celecoxib referent concept incident cohort: First occurrence of referent concept + descendants with >=365d prior observation,"Persons with drug exposure of referent concept (1118084) or descendants, for the first time in the persons history, with at least 365 days of prior continuous observation.  Persons exit cohort at the end of continuous drug exposure.",referent cohort (incident)
-1118084,1118084002,18346,Celecoxib referent concept prevalent cohort: First occurrence of referent concept + descendants,"Persons with drug exposure of referent concept (1118084) or descendants, for the first time in the persons history.  Persons exit cohort at the end of continuous drug exposure.",referent cohort (prevalence)
-1118084,1118084003,14906,"Celecoxib, all dispensations",All dispensations of Celecoxib with exit on continuous drug exposure,To help understand the periods of continous use of Celecoxib
-1118084,1118084004,18351,"[1118084004] Second dispensation of Celecoxib, till end of drug continuous coverage for second dispensation",Second dispensations of Celecoxib with exit on continuous drug exposure,To study if repeat users of celecoxib have a different pattern of continuous use compared to first time users of Celecoxib
-1124300,1124300001,18347,Diclofenac referent concept incident cohort: First occurrence of referent concept + descendants with >=365d prior observation,"Persons with drug exposure of referent concept (1124300) or descendants, for the first time in the persons history, with at least 365 days of prior continuous observation.  Persons exit cohort at the end of continuous drug exposure.",referent cohort (incident)
-1124300,1124300002,18348,Diclofenac referent concept prevalent cohort: First occurrence of referent concept + descendants,"Persons with drug exposure of referent concept (1124300) or descendants, for the first time in the persons history.  Persons exit cohort at the end of continuous drug exposure.",referent cohort (prevalence)
-1124300,1124300003,14907,Users of diclofenac with no history of gastrointestinal hemorrhage,"All events of diclofenac exposure, with inclusion criteria of no gastrointestinal hemorrhage at any time in past. Cohort exit at continous exposure of diclofenac with 30 days of persistence window",These diclofenac users never had a history of GI hemorrhage
-1124300,1124300004,18349,Male Diclofenac,First time new users of Diclofenac who are Male,
-1124300,1124300005,18350,Male Diclofenac with body system disorder,First time new users of Diclofenac who are Male with some body system disorder at any time,
-1124300,1124300006,18352,Users of diclofenac with history of gastrointestinal hemorrhage,"All events of diclofenac exposure, with inclusion criteria of gastrointestinal hemorrhage at any time in past. Cohort exit at continous exposure of diclofenac with 30 days of persistence window",These diclofenac users had a history of GI hemorrhage
-192671,192671001,17493,[PL 192671001] Gastrointestinal hemorrhage referent concept incident cohort: First occurrence of referent concept + descendants with >=365d prior observation,"Persons with condition occurrence of referent concept (192671) or descendants, for the first time in the persons history, with at least 365 days of prior continuous observation.  Persons exit cohort at the end of the observation period.",referent cohort (incident)
-192671,192671002,17492,[PL 192671002] Gastrointestinal hemorrhage referent concept prevalent cohort: First occurrence of referent concept + descendants,"Persons with condition occurrence of referent concept (192671) or descendants, for the first time in the persons history.  Persons exit cohort at the end of the observation period.",referent cohort (prevalence)
-192671,192671003,14909,All Gastrointestinal hemorrhage,All events of Gastrointestinal hemorrhage,
-192671,192671004,18342,First Gastrointestinal hemorrhage,First event of Gastrointestinal hemorrhage,
-201254,201254001,17693,Type 1 diabetes mellitus referent concept incident cohort: First occurrence of referent concept + descendants with >=365d prior observation,"Persons with condition occurrence of referent concept (201254) or descendants, for the first time in the person's history, with at least 365 days of prior continuous observation.  Persons exit cohort at the end of the observation period.",
-201254,201254002,17692,Type 1 diabetes mellitus referent concept prevalent cohort: First occurrence of referent concept + descendants,"Persons with condition occurrence of referent concept (201254) or descendants, for the first time in the person's history.  Persons exit cohort at the end of the observation period.",
-201826,201826001,17695,Type 2 diabetes mellitus referent concept incident cohort: First occurrence of referent concept + descendants with >=365d prior observation,"Persons with condition occurrence of referent concept (201826) or descendants, for the first time in the person's history, with at least 365 days of prior continuous observation.  Persons exit cohort at the end of the observation period.",
-201826,201826002,17694,Type 2 diabetes mellitus referent concept prevalent cohort: First occurrence of referent concept + descendants,"Persons with condition occurrence of referent concept (201826) or descendants, for the first time in the person's history.  Persons exit cohort at the end of the observation period.",
-201826,201826003,17720,Type 2 diabetes mellitus prevalent cohort:  First condition occurrence of 'Type 2 diabetes mellitus' conceptset or observation of 'History of diabetes',Persons with a condition occurrence of 'Type 2 diabetes mellitus' conceptset or an observation of 'History of diabetes' at earliest entry event.   Persons exit cohort at end of observation period,
+﻿atlasId,cohortId,cohortName
+17492,17492,[PL 192671002] Gastrointestinal hemorrhage referent concept prevalent cohort: First occurrence of referent concept + descendants
+17493,17493,[PL 192671001] Gastrointestinal hemorrhage referent concept incident cohort: First occurrence of referent concept + descendants with >=365d prior observation
+17692,17692,[PL 201254002] Type 1 diabetes mellitus referent concept prevalent cohort: First occurrence of referent concept + descendants
+17693,17693,[PL 201254001] Type 1 diabetes mellitus referent concept incident cohort: First occurrence of referent concept + descendants with >=365d prior observation
+17694,17694,[PL 201826002] Type 2 diabetes mellitus referent concept prevalent cohort: First occurrence of referent concept + descendants
+17720,17720,[PL 201826003] Type 2 diabetes mellitus prevalent cohort: First condition occurrence of 'Type 2 diabetes mellitus' conceptset or observation of 'History of diabetes'
+17695,17695,[PL 201826001] Type 2 diabetes mellitus referent concept incident cohort: First occurrence of referent concept + descendants with >=365d prior observation
+14909,14909,[Cohort Diagnostics] Gastrointestinal hemorrhage for Eunomia
+18342,18342,"[Cohort Diagnostics] Gastrointestinal hemorrhage for Eunomia, first time in persons history"
+18345,18345,[1118084001] Celecoxib referent concept incident cohort: First occurrence of referent concept + descendants with >=365d prior observation
+18346,18346,[1118084002] Celecoxib referent concept incident cohort: First occurrence of referent concept + descendants
+18347,18347,[1124300002] Diclofenac referent concept incident cohort: First occurrence of referent concept + descendants
+18348,18348,[1124300001] Diclofenac referent concept incident cohort: First occurrence of referent concept + descendants with >=365d prior observation
+18349,18349,[1124300004] Male Diclofenac
+18350,18350,[1124300005] Male Diclofenac with some disorder or body system
+14906,14906,"[1118084003] All users of Celecoxis, till end of drug continuous coverage"
+18351,18351,"[1118084004] Second dispensation of Celecoxib, till end of drug continuous coverage for second dispensation"
+14907,14907,[1124300003] Users of diclofenac with no history of gastrointestinal hemorrhage
+18352,18352,[1124300006] Users of diclofenac with history of gastrointestinal hemorrhage
+21402,21402,Eunomia Persons at risk at first encounter
