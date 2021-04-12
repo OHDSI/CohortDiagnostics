@@ -20,6 +20,9 @@ launchDiagnosticsExplorer(
 \item{dataFolder}{A folder where the premerged file is stored. Use
 the \code{\link{preMergeDiagnosticsFiles}} function to generate this file.}
 
+\item{dataFile}{(Optional) The name of the .RData file with results. It is commonly known as the
+Premerged file.}
+
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
 DatabaseConnector package, specifying how to connect to the server where
