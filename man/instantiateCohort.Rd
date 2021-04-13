@@ -9,6 +9,8 @@ instantiateCohort(
   connection = NULL,
   cdmDatabaseSchema,
   oracleTempSchema = NULL,
+  tempEmulationSchema = NULL,
+  OracleTempSchema = NULL,
   cohortDatabaseSchema = cdmDatabaseSchema,
   cohortTable = "cohort",
   baseUrl = NULL,
@@ -40,8 +42,10 @@ of the function, and closed when the function finishes.}
 Note that for SQL Server, this should include both the database and
 schema name, for example 'cdm_data.dbo'.}
 
-\item{oracleTempSchema}{Should be used in Oracle to specify a schema where the user has write
-privileges for storing temporary tables.}
+\item{oracleTempSchema}{DEPRECATED by DatabaseConnector: use \code{tempEmulationSchema} instead.}
+
+\item{tempEmulationSchema}{Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
+tables, provide a schema with write privileges where temp tables can be created.}
 
 \item{cohortDatabaseSchema}{Schema name where your cohort table resides. Note that for SQL Server,
 this should include both the database and schema name, for example

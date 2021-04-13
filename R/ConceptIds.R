@@ -16,7 +16,7 @@
 
 exportConceptInformation <- function(connection = NULL,
                                      cdmDatabaseSchema,
-                                     oracleTempSchema,
+                                     tempEmulationSchema,
                                      conceptIdTable,
                                      vocabularyTableNames = c("concept",
                                                               "conceptAncestor",
@@ -45,7 +45,7 @@ exportConceptInformation <- function(connection = NULL,
                                                                  sql = sql,
                                                                  unique_concept_id_table = conceptIdTable,
                                                                  snakeCaseToCamelCase = TRUE,
-                                                                 oracleTempSchema = oracleTempSchema)[, 1]
+                                                                 tempEmulationSchema = tempEmulationSchema)[, 1]
   if (length(uniqueConceptIds) == 0) {
     warning("No concept IDs in cohorts. No concept information exported.")
     return(NULL)
@@ -76,7 +76,7 @@ exportConceptInformation <- function(connection = NULL,
                                "concept_relationship")) {
       data <- DatabaseConnector::renderTranslateQuerySql(connection = connection, 
                                                          sql = sql,
-                                                         oracleTempSchema = oracleTempSchema,
+                                                         tempEmulationSchema = tempEmulationSchema,
                                                          cdm_database_schema = cdmDatabaseSchema,
                                                          unique_concept_id_table = conceptIdTable,
                                                          table = vocabularyTable,
@@ -94,7 +94,7 @@ exportConceptInformation <- function(connection = NULL,
       sql <- "SELECT * FROM @cdm_database_schema.@table;"
       data <- DatabaseConnector::renderTranslateQuerySql(connection = connection, 
                                                          sql = sql,
-                                                         oracleTempSchema = oracleTempSchema,
+                                                         tempEmulationSchema = tempEmulationSchema,
                                                          cdm_database_schema = cdmDatabaseSchema,
                                                          table = vocabularyTable,
                                                          snakeCaseToCamelCase = TRUE)

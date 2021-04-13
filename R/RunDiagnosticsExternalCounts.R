@@ -31,7 +31,7 @@
 #'
 #' @template CdmDatabaseSchema
 #'
-#' @template OracleTempSchema
+#' @template tempEmulationSchema
 #'
 #' @template CohortSetSpecs
 #' 
@@ -62,7 +62,7 @@
 #                                                     connectionDetails = NULL,
 #                                                     connection = NULL,
 #                                                     cdmDatabaseSchema,
-#                                                     oracleTempSchema = NULL,
+#                                                     tempEmulationSchema = NULL,
 #                                                     cohortIds = NULL,
 #                                                     conceptCountsDatabaseSchema = cdmDatabaseSchema,
 #                                                     conceptCountsTable = "concept_counts",
@@ -114,7 +114,7 @@
 #   writeToCsv(database, file.path(exportFolder, "database.csv"))
 #   if (runIncludedSourceConcepts || runOrphanConcepts) {
 #     runConceptSetDiagnostics(connection = connection,
-#                              oracleTempSchema = oracleTempSchema,
+#                              tempEmulationSchema = tempEmulationSchema,
 #                              cdmDatabaseSchema = cdmDatabaseSchema,
 #                              databaseId = databaseId,
 #                              cohorts = cohorts,

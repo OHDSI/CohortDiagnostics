@@ -21,7 +21,7 @@ getIncidenceRate <- function(connectionDetails = NULL,
                              cdmDatabaseSchema,
                              vocabularyDatabaseSchema = cdmDatabaseSchema,
                              cdmVersion = 5,
-                             oracleTempSchema = oracleTempSchema,
+                             tempEmulationSchema = tempEmulationSchema,
                              firstOccurrenceOnly = TRUE,
                              washoutPeriod = 365,
                              cohortId) {
@@ -61,13 +61,13 @@ getIncidenceRate <- function(connectionDetails = NULL,
                                  dropTableIfExists = TRUE,
                                  createTable = TRUE,
                                  tempTable = TRUE,
-                                 oracleTempSchema = oracleTempSchema,
+                                 tempEmulationSchema = tempEmulationSchema,
                                  camelCaseToSnakeCase = TRUE)
   
   sql <- SqlRender::loadRenderTranslateSql(sqlFilename = "ComputeIncidenceRates.sql",
                                            packageName = "CohortDiagnostics",
                                            dbms = connection@dbms,
-                                           oracleTempSchema = oracleTempSchema,
+                                           tempEmulationSchema = tempEmulationSchema,
                                            cohort_database_schema = cohortDatabaseSchema,
                                            cohort_table = cohortTable,
                                            cdm_database_schema = cdmDatabaseSchema,
@@ -80,7 +80,7 @@ getIncidenceRate <- function(connectionDetails = NULL,
   sql <- "SELECT * FROM #rates_summary;"
   ratesSummary <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                              sql = sql,
-                                                             oracleTempSchema = oracleTempSchema,
+                                                             tempEmulationSchema = tempEmulationSchema,
                                                              snakeCaseToCamelCase = TRUE) %>% 
     tidyr::tibble()
   
@@ -89,7 +89,7 @@ getIncidenceRate <- function(connectionDetails = NULL,
                                                sql = sql,
                                                progressBar = FALSE,
                                                reportOverallTime = FALSE,
-                                               oracleTempSchema = oracleTempSchema)
+                                               tempEmulationSchema = tempEmulationSchema)
   
   irYearAgeGender <- recode(ratesSummary)
   irOverall <- tidyr::tibble(cohortCount = sum(irYearAgeGender$cohortCount),

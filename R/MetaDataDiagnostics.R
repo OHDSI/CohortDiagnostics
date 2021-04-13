@@ -18,7 +18,7 @@
                                 connection = NULL,
                                 cdmDatabaseSchema,
                                 vocabularyDatabaseSchema = cdmDatabaseSchema,
-                                oracleTempSchema = NULL,
+                                tempEmulationSchema = NULL,
                                 conceptIds = c(),
                                 useCodesetTable = FALSE,
                                 codesetId = 1,
@@ -34,7 +34,7 @@
   sql <- SqlRender::loadRenderTranslateSql("OrphanCodes.sql",
                                            packageName = "CohortDiagnostics",
                                            dbms = connection@dbms,
-                                           oracleTempSchema = oracleTempSchema,
+                                           tempEmulationSchema = tempEmulationSchema,
                                            cdm_database_schema = cdmDatabaseSchema,
                                            vocabulary_database_schema = vocabularyDatabaseSchema,
                                            work_database_schema = conceptCountsDatabaseSchema,
@@ -50,7 +50,7 @@
   sql <- "SELECT * FROM @orphan_concept_table;"
   orphanConcepts <- DatabaseConnector::renderTranslateQuerySql(sql = sql,
                                                                connection = connection,
-                                                               oracleTempSchema = oracleTempSchema,
+                                                               tempEmulationSchema = tempEmulationSchema,
                                                                orphan_concept_table = orphanConceptTable,
                                                                snakeCaseToCamelCase = TRUE) %>% 
     tidyr::tibble()
@@ -78,7 +78,7 @@
   sql <- SqlRender::loadRenderTranslateSql("DropOrphanConceptTempTables.sql",
                                            packageName = "CohortDiagnostics",
                                            dbms = connection@dbms,
-                                           oracleTempSchema = oracleTempSchema)
+                                           tempEmulationSchema = tempEmulationSchema)
   DatabaseConnector::executeSql(connection = connection, 
                                 sql = sql, 
                                 progressBar = FALSE, 
@@ -89,7 +89,7 @@
 createConceptCountsTable <- function(connectionDetails = NULL,
                                      connection = NULL,
                                      cdmDatabaseSchema,
-                                     oracleTempSchema = NULL,
+                                     tempEmulationSchema = NULL,
                                      conceptCountsDatabaseSchema = cdmDatabaseSchema,
                                      conceptCountsTable = "concept_counts",
                                      conceptCountsTableIsTemp = FALSE) {
@@ -101,7 +101,7 @@ createConceptCountsTable <- function(connectionDetails = NULL,
   sql <- SqlRender::loadRenderTranslateSql("CreateConceptCountTable.sql",
                                            packageName = "CohortDiagnostics",
                                            dbms = connection@dbms,
-                                           oracleTempSchema = oracleTempSchema,
+                                           tempEmulationSchema = tempEmulationSchema,
                                            cdm_database_schema = cdmDatabaseSchema,
                                            work_database_schema = conceptCountsDatabaseSchema,
                                            concept_counts_table = conceptCountsTable,

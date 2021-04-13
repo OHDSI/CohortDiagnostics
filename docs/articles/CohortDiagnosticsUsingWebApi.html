@@ -186,10 +186,10 @@
                                              password <span class="op">=</span> <span class="st">"supersecret"</span><span class="op">)</span>
 
 <span class="va">cdmDatabaseSchema</span> <span class="op">&lt;-</span> <span class="st">"my_cdm_data"</span>
-<span class="va">oracleTempSchema</span> <span class="op">&lt;-</span> <span class="cn">NULL</span>
+<span class="va">tempEmulationSchema</span> <span class="op">&lt;-</span> <span class="cn">NULL</span>
 <span class="va">cohortDatabaseSchema</span> <span class="op">&lt;-</span> <span class="st">"my_schema"</span>
 <span class="va">cohortTable</span> <span class="op">&lt;-</span> <span class="st">"my_cohort_table"</span></code></pre></div>
-<p>The last four lines define the <code>cdmDatabaseSchema</code>, <code>oracleTempSchema</code>, <code>cohortDatabaseSchema</code>, and <code>cohortTable</code> variables. We’ll use the <code>cdmDatabaseSchema</code> later to tell R where the data in CDM format live. The <code>oracleTempSchema</code> is needed only for Oracle users, since Oracle does not support temporary tables. The <code>cohortDatabaseSchema</code>, and <code>cohortTable</code> specify where we want to instantiate our cohorts. Note that for Microsoft SQL Server, databaseschemas need to specify both the database and the schema, so for example <code>cdmDatabaseSchema &lt;- "my_cdm_data.dbo"</code>.</p>
+<p>The last four lines define the <code>cdmDatabaseSchema</code>, <code>tempEmulationSchema</code>, <code>cohortDatabaseSchema</code>, and <code>cohortTable</code> variables. We’ll use the <code>cdmDatabaseSchema</code> later to tell R where the data in CDM format live. The <code>tempEmulationSchema</code> is needed only for Oracle users, since Oracle does not support temporary tables. The <code>cohortDatabaseSchema</code>, and <code>cohortTable</code> specify where we want to instantiate our cohorts. Note that for Microsoft SQL Server, databaseschemas need to specify both the database and the schema, so for example <code>cdmDatabaseSchema &lt;- "my_cdm_data.dbo"</code>.</p>
 </div>
 <div id="creating-a-new-cohort-table" class="section level2">
 <h2 class="hasAnchor">
@@ -214,7 +214,7 @@
 
 <span class="fu"><a href="../reference/instantiateCohortSet.html">instantiateCohortSet</a></span><span class="op">(</span>connectionDetails <span class="op">=</span> <span class="va">connectionDetails</span>,
                      cdmDatabaseSchema <span class="op">=</span> <span class="va">cdmDatabaseSchema</span>,
-                     oracleTempSchema <span class="op">=</span> <span class="va">oracleTempSchema</span>,
+                     tempEmulationSchema <span class="op">=</span> <span class="va">tempEmulationSchema</span>,
                      cohortDatabaseSchema <span class="op">=</span> <span class="va">cohortDatabaseSchema</span>,
                      cohortTable <span class="op">=</span> <span class="va">cohortTable</span>,
                      baseUrl <span class="op">=</span> <span class="va">baseUrl</span>,
@@ -235,7 +235,7 @@
                      cohortSetReference <span class="op">=</span> <span class="va">cohortSetReference</span>,
                      connectionDetails <span class="op">=</span> <span class="va">connectionDetails</span>,
                      cdmDatabaseSchema <span class="op">=</span> <span class="va">cdmDatabaseSchema</span>,
-                     oracleTempSchema <span class="op">=</span> <span class="va">oracleTempSchema</span>,
+                     tempEmulationSchema <span class="op">=</span> <span class="va">tempEmulationSchema</span>,
                      cohortDatabaseSchema <span class="op">=</span> <span class="va">cohortDatabaseSchema</span>,
                      cohortTable <span class="op">=</span> <span class="va">cohortTable</span>,
                      inclusionStatisticsFolder <span class="op">=</span> <span class="va">inclusionStatisticsFolder</span>,

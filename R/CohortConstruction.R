@@ -161,9 +161,6 @@ selectColumnAccordingToResultsModel <- function(data) {
   if ("logicDescription" %in% colnames(data)) {
     columsToInclude <- c(columsToInclude, "logicDescription")
   }
-  if ("PMID" %in% colnames(data)) {
-    columsToInclude <- c(columsToInclude, "PMID")
-  }
   if ("referentConceptId" %in% colnames(data)) {
     columsToInclude <- c(columsToInclude, "referentConceptId")
   }
@@ -297,6 +294,8 @@ createCohortTable <- function(connectionDetails = NULL,
 #'
 #' @template CohortDef
 #'
+#' @template tempEmulationSchema
+#' 
 #' @template OracleTempSchema
 #'
 #' @template CdmDatabaseSchema
@@ -322,6 +321,8 @@ instantiateCohort <- function(connectionDetails = NULL,
                               connection = NULL,
                               cdmDatabaseSchema,
                               oracleTempSchema = NULL,
+                              tempEmulationSchema = NULL,
+                              OracleTempSchema = NULL,
                               cohortDatabaseSchema = cdmDatabaseSchema,
                               cohortTable = "cohort",
                               baseUrl = NULL,
@@ -335,6 +336,12 @@ instantiateCohort <- function(connectionDetails = NULL,
                               cohortInclusionResultTable = paste0(cohortTable, "_inclusion_result"),
                               cohortInclusionStatsTable = paste0(cohortTable, "_inclusion_stats"),
                               cohortSummaryStatsTable = paste0(cohortTable, "_summary_stats")) {
+  
+  if (!is.null(oracleTempSchema) && is.null(tempEmulationSchema)) {
+    tempEmulationSchema <- oracleTempSchema
+    warning('OracleTempSchema has been deprecated by DatabaseConnector')
+  }
+  
   if (is.null(baseUrl) && is.null(cohortJson)) {
     stop("Must provide either baseUrl and cohortId, or cohortJson and cohortSql")
   }
@@ -405,7 +412,7 @@ instantiateCohort <- function(connectionDetails = NULL,
   }
   sql <- SqlRender::translate(sql,
                               targetDialect = connection@dbms,
-                              oracleTempSchema = oracleTempSchema)
+                              tempEmulationSchema = tempEmulationSchema)
   DatabaseConnector::executeSql(connection, sql)
   
   if (generateInclusionStats && nrow(inclusionRules) > 0) {
@@ -523,6 +530,8 @@ processInclusionStats <- function(inclusion,
 #'
 #' @template CohortTable
 #'
+#' @template tempEmulationSchema
+#' 
 #' @template OracleTempSchema
 #'
 #' @template CdmDatabaseSchema
@@ -551,6 +560,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
                                  connection = NULL,
                                  cdmDatabaseSchema,
                                  vocabularyDatabaseSchema = cdmDatabaseSchema,
+                                 tempEmulationSchema = NULL,
                                  oracleTempSchema = NULL,
                                  cohortDatabaseSchema = cdmDatabaseSchema,
                                  cohortTable = "cohort",
@@ -564,6 +574,12 @@ instantiateCohortSet <- function(connectionDetails = NULL,
                                  createCohortTable = FALSE,
                                  incremental = FALSE,
                                  incrementalFolder = NULL) {
+  
+  if (!is.null(oracleTempSchema) && is.null(tempEmulationSchema)) {
+    tempEmulationSchema <- oracleTempSchema
+    warning('OracleTempSchema has been deprecated by DatabaseConnector')
+  }
+  
   if (generateInclusionStats) {
     if (is.null(inclusionStatisticsFolder)) {
       stop("Must specify inclusionStatisticsFolder when generateInclusionStats = TRUE")
@@ -615,7 +631,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
   }
   
   if (generateInclusionStats) {
-    createTempInclusionStatsTables(connection, oracleTempSchema, cohorts) 
+    createTempInclusionStatsTables(connection, tempEmulationSchema, cohorts) 
   }
   
   instantiatedCohortIds <- c() 
@@ -647,7 +663,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
       }
       sql <- SqlRender::translate(sql,
                                   targetDialect = connection@dbms,
-                                  oracleTempSchema = oracleTempSchema)
+                                  tempEmulationSchema = tempEmulationSchema)
       DatabaseConnector::executeSql(connection, sql)
       instantiatedCohortIds <- c(instantiatedCohortIds, cohorts$cohortId[i])
     }
@@ -655,7 +671,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
   
   if (generateInclusionStats) {
     saveAndDropTempInclusionStatsTables(connection = connection, 
-                                        oracleTempSchema = oracleTempSchema, 
+                                        tempEmulationSchema = tempEmulationSchema, 
                                         inclusionStatisticsFolder = inclusionStatisticsFolder, 
                                         incremental = incremental, 
                                         cohortIds = instantiatedCohortIds)
@@ -668,12 +684,12 @@ instantiateCohortSet <- function(connectionDetails = NULL,
   writeLines(paste("Instantiating cohort set took", signif(delta, 3), attr(delta, "units")))
 }
 
-createTempInclusionStatsTables <- function(connection, oracleTempSchema, cohorts) {
+createTempInclusionStatsTables <- function(connection, tempEmulationSchema, cohorts) {
   ParallelLogger::logInfo("Creating temporary inclusion statistics tables")
   sql <- SqlRender::loadRenderTranslateSql("inclusionStatsTables.sql",
                                            packageName = "CohortDiagnostics",
                                            dbms = connection@dbms,
-                                           oracleTempSchema = oracleTempSchema)
+                                           tempEmulationSchema = tempEmulationSchema)
   DatabaseConnector::executeSql(connection, sql)
   
   inclusionRules <- tidyr::tibble()
@@ -710,7 +726,7 @@ createTempInclusionStatsTables <- function(connection, oracleTempSchema, cohorts
                                    dropTableIfExists = TRUE,
                                    createTable = TRUE,
                                    tempTable = TRUE,
-                                   oracleTempSchema = oracleTempSchema,
+                                   tempEmulationSchema = tempEmulationSchema,
                                    camelCaseToSnakeCase = TRUE)
   } else {
     inclusionRules <- dplyr::tibble(cohortDefinitionId = as.double(),
@@ -722,13 +738,13 @@ createTempInclusionStatsTables <- function(connection, oracleTempSchema, cohorts
                                    dropTableIfExists = TRUE,
                                    createTable = TRUE,
                                    tempTable = TRUE,
-                                   oracleTempSchema = oracleTempSchema,
+                                   tempEmulationSchema = tempEmulationSchema,
                                    camelCaseToSnakeCase = TRUE)
   }
 }
 
 saveAndDropTempInclusionStatsTables <- function(connection, 
-                                                oracleTempSchema, 
+                                                tempEmulationSchema, 
                                                 inclusionStatisticsFolder, 
                                                 incremental,
                                                 cohortIds) {
@@ -737,7 +753,7 @@ saveAndDropTempInclusionStatsTables <- function(connection,
     sql <- "SELECT * FROM @table"
     data <- DatabaseConnector::renderTranslateQuerySql(sql = sql,
                                                        connection = connection,
-                                                       oracleTempSchema = oracleTempSchema,
+                                                       tempEmulationSchema = tempEmulationSchema,
                                                        snakeCaseToCamelCase = TRUE,
                                                        table = table) %>% 
       tidyr::tibble()
@@ -768,7 +784,7 @@ saveAndDropTempInclusionStatsTables <- function(connection,
                                                sql = sql,
                                                progressBar = FALSE,
                                                reportOverallTime = FALSE,
-                                               oracleTempSchema = oracleTempSchema)
+                                               tempEmulationSchema = tempEmulationSchema)
 }
 
 .warnMismatchSqlInclusionStats <- function(sql, generateInclusionStats) {

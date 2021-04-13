@@ -3,8 +3,6 @@
 .RData
 .Ruserdata
 *.RData
-*phenotypeDescription.csv
-*cohortDescription.csv
 *.zip
 errorReportSql.txt
 errorReportR.txt
