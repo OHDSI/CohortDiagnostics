@@ -161,9 +161,6 @@ selectColumnAccordingToResultsModel <- function(data) {
   if ("logicDescription" %in% colnames(data)) {
     columsToInclude <- c(columsToInclude, "logicDescription")
   }
-  if ("PMID" %in% colnames(data)) {
-    columsToInclude <- c(columsToInclude, "PMID")
-  }
   if ("referentConceptId" %in% colnames(data)) {
     columsToInclude <- c(columsToInclude, "referentConceptId")
   }
