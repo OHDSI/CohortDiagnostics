@@ -119,8 +119,10 @@ runCohortDiagnostics <- function(connectionDetails,
     
   }
   
-  if (file.exists("settings/PhenotypeDescription.csv")) {
-    phenotypeDescriptionFile <- "settings/PhenotypeDescription.csv"
+  if (!is.null(packageName)) {
+    if (file.exists(system.file("settings/PhenotypeDescription.csv", package = packageName))) {
+      phenotypeDescriptionFile <- system.file("settings/PhenotypeDescription.csv", package = packageName)
+    }
   } else {
     phenotypeDescriptionFile <- NULL
   }
