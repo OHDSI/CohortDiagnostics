@@ -8,7 +8,7 @@ instantiateCohortSet(
   connectionDetails = NULL,
   connection = NULL,
   cdmDatabaseSchema,
-  vocabularyDatabaseSchema,
+  vocabularyDatabaseSchema = cdmDatabaseSchema,
   oracleTempSchema = NULL,
   cohortDatabaseSchema = cdmDatabaseSchema,
   cohortTable = "cohort",

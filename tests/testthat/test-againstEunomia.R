@@ -16,9 +16,9 @@ test_that("Cohort instantiation", {
   CohortDiagnostics::instantiateCohortSet(
     connectionDetails = connectionDetails,
     cdmDatabaseSchema = cdmDatabaseSchema,
+    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     oracleTempSchema = oracleTempSchema,
     cohortDatabaseSchema = cohortDatabaseSchema,
-    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     cohortTable = cohortTable,
     packageName = "CohortDiagnostics",
     cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
@@ -26,6 +26,7 @@ test_that("Cohort instantiation", {
     createCohortTable = TRUE,
     inclusionStatisticsFolder = file.path(folder, "incStats")
   )
+  
   
   connection <- DatabaseConnector::connect(connectionDetails)
   sql <-
@@ -49,6 +50,7 @@ test_that("Cohort diagnostics in incremental mode", {
     CohortDiagnostics::runCohortDiagnostics(
       connectionDetails = connectionDetails,
       cdmDatabaseSchema = cdmDatabaseSchema,
+      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
       oracleTempSchema = oracleTempSchema,
       cohortDatabaseSchema = cohortDatabaseSchema,
       cohortTable = cohortTable,
@@ -88,7 +90,6 @@ test_that("Cohort diagnostics in incremental mode", {
       exportFolder =  file.path(folder, "export"),
       databaseId = "Eunomia",
       runInclusionStatistics = TRUE,
-      runVisitContext = TRUE, 
       runBreakdownIndexEvents = TRUE,
       runCohortCharacterization = TRUE,
       runCohortOverlap = TRUE,
@@ -97,7 +98,6 @@ test_that("Cohort diagnostics in incremental mode", {
       runOrphanConcepts = TRUE,
       runTimeDistributions = TRUE,
       incremental = TRUE,
-      minCellCount = 0,
       incrementalFolder = file.path(folder, "incremental")
     )
   )
