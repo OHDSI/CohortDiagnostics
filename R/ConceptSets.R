@@ -153,16 +153,16 @@ combineConceptSetsFromCohorts <- function(cohorts) {
 }
 
 
-mergeTempTables <- function(connection, tableName, tempTables, oracleTempSchema) {
+mergeTempTables <- function(connection, tableName, tempTables, tempEmulationSchema) {
   valueString <- paste(tempTables, collapse = "\n\n  UNION ALL\n\n  SELECT *\n  FROM ")
   sql <- sprintf("SELECT *\nINTO %s\nFROM (\n  SELECT *\n  FROM %s\n) tmp;", tableName, valueString)
-  sql <- SqlRender::translate(sql, targetDialect = connection@dbms, oracleTempSchema = oracleTempSchema)
+  sql <- SqlRender::translate(sql, targetDialect = connection@dbms, tempEmulationSchema = tempEmulationSchema)
   DatabaseConnector::executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
   
   # Drop temp tables:
   for (tempTable in tempTables) {
     sql <- sprintf("TRUNCATE TABLE %s;\nDROP TABLE %s;", tempTable, tempTable)
-    sql <- SqlRender::translate(sql, targetDialect = connection@dbms, oracleTempSchema = oracleTempSchema)
+    sql <- SqlRender::translate(sql, targetDialect = connection@dbms, tempEmulationSchema = tempEmulationSchema)
     DatabaseConnector::executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
   }
 }
@@ -171,7 +171,7 @@ instantiateUniqueConceptSets <- function(uniqueConceptSets,
                                          connection,
                                          cdmDatabaseSchema,
                                          vocabularyDatabaseSchema = cdmDatabaseSchema,
-                                         oracleTempSchema,
+                                         tempEmulationSchema,
                                          conceptSetsTable = '#inst_concept_sets') {
   ParallelLogger::logInfo("Instantiating concept sets")
   sql <- sapply(split(uniqueConceptSets, 1:nrow(uniqueConceptSets)),
@@ -197,7 +197,7 @@ instantiateUniqueConceptSets <- function(uniqueConceptSets,
     sqlSubset <- SqlRender::render(sqlSubset, vocabulary_database_schema = vocabularyDatabaseSchema)
     sqlSubset <- SqlRender::translate(sqlSubset,
                                       targetDialect = connection@dbms,
-                                      oracleTempSchema = oracleTempSchema)
+                                      tempEmulationSchema = tempEmulationSchema)
     DatabaseConnector::executeSql(connection, sqlSubset, progressBar = FALSE, reportOverallTime = FALSE)
   }
   utils::setTxtProgressBar(pb, 1)
@@ -206,7 +206,7 @@ instantiateUniqueConceptSets <- function(uniqueConceptSets,
   mergeTempTables(connection = connection,
                   tableName = conceptSetsTable,
                   tempTables = tempTables, 
-                  oracleTempSchema = oracleTempSchema)
+                  tempEmulationSchema = tempEmulationSchema)
 }
 
 getCodeSetId <- function(criterion) {
@@ -232,7 +232,7 @@ getCodeSetIds <- function(criterionList) {
 
 
 runConceptSetDiagnostics <- function(connection,
-                                     oracleTempSchema,
+                                     tempEmulationSchema,
                                      cdmDatabaseSchema,
                                      vocabularyDatabaseSchema = cdmDatabaseSchema,
                                      databaseId,
@@ -304,7 +304,7 @@ runConceptSetDiagnostics <- function(connection,
                                connection = connection,
                                cdmDatabaseSchema = cdmDatabaseSchema,
                                vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-                               oracleTempSchema = oracleTempSchema,
+                               tempEmulationSchema = tempEmulationSchema,
                                conceptSetsTable = "#inst_concept_sets")
   
   # Export concept IDs per concept set ------------------------------------------
@@ -336,7 +336,7 @@ runConceptSetDiagnostics <- function(connection,
   #           FROM @concept_sets_table;"
   #   DatabaseConnector::renderTranslateExecuteSql(connection = connection,
   #                                                sql = sql,
-  #                                                oracleTempSchema = oracleTempSchema,
+  #                                                tempEmulationSchema = tempEmulationSchema,
   #                                                concept_id_table = conceptIdTable,
   #                                                concept_sets_table = "#inst_concept_sets",
   #                                                progressBar = FALSE,
@@ -347,7 +347,7 @@ runConceptSetDiagnostics <- function(connection,
       (runOrphanConcepts && nrow(subsetOrphans) > 0)) {
     createConceptCountsTable(connection = connection,
                              cdmDatabaseSchema = cdmDatabaseSchema,
-                             oracleTempSchema = oracleTempSchema,
+                             tempEmulationSchema = tempEmulationSchema,
                              conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
                              conceptCountsTable = conceptCountsTable,
                              conceptCountsTableIsTemp = conceptCountsTableIsTemp)
@@ -371,7 +371,7 @@ runConceptSetDiagnostics <- function(connection,
         #     "CohortSourceConceptsFromCcTable.sql",
         #     packageName = "CohortDiagnostics",
         #     dbms = connection@dbms,
-        #     oracleTempSchema = oracleTempSchema,
+        #     tempEmulationSchema = tempEmulationSchema,
         #     cdm_database_schema = cdmDatabaseSchema,
         #     concept_counts_database_schema = conceptCountsDatabaseSchema,
         #     concept_counts_table = conceptCountsTable,
@@ -386,7 +386,7 @@ runConceptSetDiagnostics <- function(connection,
         #     "CohortStandardConceptsFromCcTable.sql",
         #     packageName = "CohortDiagnostics",
         #     dbms = connection@dbms,
-        #     oracleTempSchema = oracleTempSchema,
+        #     tempEmulationSchema = tempEmulationSchema,
         #     cdm_database_schema = cdmDatabaseSchema,
         #     concept_counts_database_schema = conceptCountsDatabaseSchema,
         #     concept_counts_table = conceptCountsTable,
@@ -424,7 +424,7 @@ runConceptSetDiagnostics <- function(connection,
         sql <- SqlRender::loadRenderTranslateSql( "CohortSourceCodes.sql",
                                                   packageName = "CohortDiagnostics",
                                                   dbms = connection@dbms,
-                                                  oracleTempSchema = oracleTempSchema,
+                                                  tempEmulationSchema = tempEmulationSchema,
                                                   cdm_database_schema = cdmDatabaseSchema,
                                                   instantiated_concept_sets = "#inst_concept_sets",
                                                   include_source_concept_table = "#inc_src_concepts",
@@ -433,7 +433,7 @@ runConceptSetDiagnostics <- function(connection,
         counts <- DatabaseConnector::renderTranslateQuerySql(connection = connection, 
                                                              sql = "SELECT * FROM @include_source_concept_table;",
                                                              include_source_concept_table = "#inc_src_concepts",
-                                                             oracleTempSchema = oracleTempSchema,
+                                                             tempEmulationSchema = tempEmulationSchema,
                                                              snakeCaseToCamelCase = TRUE) %>% 
           tidyr::tibble()
         
@@ -476,7 +476,7 @@ runConceptSetDiagnostics <- function(connection,
                   FROM @include_source_concept_table;"
           DatabaseConnector::renderTranslateExecuteSql(connection = connection,
                                                        sql = sql,
-                                                       oracleTempSchema = oracleTempSchema,
+                                                       tempEmulationSchema = tempEmulationSchema,
                                                        concept_id_table = conceptIdTable,
                                                        include_source_concept_table = "#inc_src_concepts",
                                                        progressBar = FALSE,
@@ -485,7 +485,7 @@ runConceptSetDiagnostics <- function(connection,
         sql <- "TRUNCATE TABLE @include_source_concept_table;\nDROP TABLE @include_source_concept_table;"
         DatabaseConnector::renderTranslateExecuteSql(connection = connection,
                                                      sql = sql,
-                                                     oracleTempSchema = oracleTempSchema,
+                                                     tempEmulationSchema = tempEmulationSchema,
                                                      include_source_concept_table = "#inc_src_concepts",
                                                      progressBar = FALSE,
                                                      reportOverallTime = FALSE)
@@ -536,7 +536,7 @@ runConceptSetDiagnostics <- function(connection,
           sql <- SqlRender::loadRenderTranslateSql("CohortEntryBreakdown.sql",
                                                    packageName = "CohortDiagnostics",
                                                    dbms = connection@dbms,
-                                                   oracleTempSchema = oracleTempSchema,
+                                                   tempEmulationSchema = tempEmulationSchema,
                                                    cdm_database_schema = cdmDatabaseSchema,
                                                    vocabulary_database_schema = vocabularyDatabaseSchema,
                                                    cohort_database_schema = cohortDatabaseSchema,
@@ -558,7 +558,7 @@ runConceptSetDiagnostics <- function(connection,
           sql <- "SELECT * FROM @store_table;"
           counts <- DatabaseConnector::renderTranslateQuerySql(connection = connection, 
                                                                sql = sql,
-                                                               oracleTempSchema = oracleTempSchema,
+                                                               tempEmulationSchema = tempEmulationSchema,
                                                                store_table = "#breakdown",
                                                                snakeCaseToCamelCase = TRUE) %>% 
             tidyr::tibble()
@@ -568,7 +568,7 @@ runConceptSetDiagnostics <- function(connection,
                   FROM @store_table;"
             DatabaseConnector::renderTranslateExecuteSql(connection = connection,
                                                          sql = sql,
-                                                         oracleTempSchema = oracleTempSchema,
+                                                         tempEmulationSchema = tempEmulationSchema,
                                                          concept_id_table = conceptIdTable,
                                                          store_table = "#breakdown",
                                                          progressBar = FALSE,
@@ -577,7 +577,7 @@ runConceptSetDiagnostics <- function(connection,
           sql <- "TRUNCATE TABLE @store_table;\nDROP TABLE @store_table;"
           DatabaseConnector::renderTranslateExecuteSql(connection = connection,
                                                        sql = sql,
-                                                       oracleTempSchema = oracleTempSchema,
+                                                       tempEmulationSchema = tempEmulationSchema,
                                                        store_table = "#breakdown",
                                                        progressBar = FALSE,
                                                        reportOverallTime = FALSE)
@@ -638,7 +638,7 @@ runConceptSetDiagnostics <- function(connection,
         ParallelLogger::logInfo("- Finding orphan concepts for concept set '", conceptSet$conceptSetName, "'")
         data[[i]] <- .findOrphanConcepts(connection = connection,
                                          cdmDatabaseSchema = cdmDatabaseSchema,
-                                         oracleTempSchema = oracleTempSchema,
+                                         tempEmulationSchema = tempEmulationSchema,
                                          useCodesetTable = TRUE,
                                          codesetId = conceptSet$uniqueConceptSetId,
                                          conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
@@ -653,7 +653,7 @@ runConceptSetDiagnostics <- function(connection,
                   FROM @orphan_concept_table;"
           DatabaseConnector::renderTranslateExecuteSql(connection = connection,
                                                        sql = sql,
-                                                       oracleTempSchema = oracleTempSchema,
+                                                       tempEmulationSchema = tempEmulationSchema,
                                                        concept_id_table = conceptIdTable,
                                                        orphan_concept_table = "#orphan_concepts",
                                                        progressBar = FALSE,
@@ -662,7 +662,7 @@ runConceptSetDiagnostics <- function(connection,
         sql <- "TRUNCATE TABLE @orphan_concept_table;\nDROP TABLE @orphan_concept_table;"
         DatabaseConnector::renderTranslateExecuteSql(connection = connection,
                                                      sql = sql,
-                                                     oracleTempSchema = oracleTempSchema,
+                                                     tempEmulationSchema = tempEmulationSchema,
                                                      orphan_concept_table = "#orphan_concepts",
                                                      progressBar = FALSE,
                                                      reportOverallTime = FALSE)
@@ -703,7 +703,7 @@ runConceptSetDiagnostics <- function(connection,
   sql <- "TRUNCATE TABLE #inst_concept_sets; DROP TABLE #inst_concept_sets;"
   DatabaseConnector::renderTranslateExecuteSql(connection,
                                                sql,
-                                               oracleTempSchema = oracleTempSchema,
+                                               tempEmulationSchema = tempEmulationSchema,
                                                progressBar = FALSE,
                                                reportOverallTime = FALSE)
   
@@ -719,7 +719,7 @@ runConceptSetDiagnostics <- function(connection,
     sql <- "TRUNCATE TABLE @count_table; DROP TABLE @count_table;"
     DatabaseConnector::renderTranslateExecuteSql(connection,
                                                  sql,
-                                                 oracleTempSchema = oracleTempSchema,
+                                                 tempEmulationSchema = tempEmulationSchema,
                                                  count_table = countTable,
                                                  progressBar = FALSE,
                                                  reportOverallTime = FALSE)

@@ -2,7 +2,7 @@ library(CohortDiagnostics)
 connectionDetails <- createConnectionDetails(dbms = "pdw",
                                              server = Sys.getenv("PDW_SERVER"),
                                              port = Sys.getenv("PDW_PORT"))
-oracleTempSchema <- NULL
+tempEmulationSchema <- NULL
 
 cdmDatabaseSchema <- "CDM_jmdc_v1063.dbo"
 conceptCountsDatabaseSchema <- "scratch.dbo"
@@ -22,7 +22,7 @@ DatabaseConnector::insertTable(connection = connection,
                                dropTableIfExists = TRUE,
                                createTable = TRUE,
                                tempTable = FALSE,
-                               oracleTempSchema = oracleTempSchema,
+                               tempEmulationSchema = tempEmulationSchema,
                                progressBar = TRUE,
                                useMppBulkLoad = FALSE)
 DatabaseConnector::disconnect(connection)
@@ -38,7 +38,7 @@ runCohortDiagnosticsUsingExternalCounts(baseUrl = baseUrl,
                                         cohortSetReference = cohortSetReference,
                                         connectionDetails = connectionDetails,
                                         cdmDatabaseSchema = cdmDatabaseSchema,
-                                        oracleTempSchema = oracleTempSchema,
+                                        tempEmulationSchema = tempEmulationSchema,
                                         conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
                                         conceptCountsTable = conceptCountsTable,
                                         exportFolder = "c:/exampleStudy/OhdsiConceptPrevalence",

@@ -38,7 +38,7 @@
 #' @param cohortTable                         The name of the table that will be created in the work
 #'                                            database schema. This table will hold the exposure and
 #'                                            outcome cohorts used in this study.
-#' @param oracleTempSchema                    Should be used in Oracle to specify a schema where the
+#' @param tempEmulationSchema                    Should be used in Oracle to specify a schema where the
 #'                                            user has write privileges for storing temporary tables.
 #' @param outputFolder                        Name of local folder to place results; make sure to use
 #'                                            forward slashes (/). Do not use a folder on a network
@@ -73,7 +73,8 @@ runCohortDiagnostics <- function(connectionDetails,
                                  packageName,
                                  cohortDatabaseSchema = cdmDatabaseSchema,
                                  cohortTable = "cohort",
-                                 oracleTempSchema = cohortDatabaseSchema,
+                                 tempEmulationSchema = cohortDatabaseSchema,
+                                 oracleTempSchema = NULL,
                                  outputFolder,
                                  incrementalFolder = file.path(outputFolder, 'incrementalFolder'),
                                  databaseId = "Unknown",
@@ -107,7 +108,7 @@ runCohortDiagnostics <- function(connectionDetails,
                                             vocabularyDatabaseSchema = vocabularyDatabaseSchema,
                                             cohortDatabaseSchema = cohortDatabaseSchema,
                                             cohortTable = cohortTable,
-                                            oracleTempSchema = oracleTempSchema,
+                                            tempEmulationSchema = tempEmulationSchema,
                                             packageName = packageName,
                                             cohortToCreateFile = "settings/CohortsToCreate.csv",
                                             createCohortTable = TRUE,
@@ -134,7 +135,7 @@ runCohortDiagnostics <- function(connectionDetails,
                                           connectionDetails = connectionDetails,
                                           cdmDatabaseSchema = cdmDatabaseSchema,
                                           vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-                                          oracleTempSchema = oracleTempSchema,
+                                          tempEmulationSchema = tempEmulationSchema,
                                           cohortDatabaseSchema = cohortDatabaseSchema,
                                           cohortTable = cohortTable,
                                           inclusionStatisticsFolder = outputFolder,

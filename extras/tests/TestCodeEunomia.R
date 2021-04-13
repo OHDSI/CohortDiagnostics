@@ -7,7 +7,7 @@ connectionDetails <- Eunomia::getEunomiaConnectionDetails()
 cdmDatabaseSchema <- "main"
 cohortDatabaseSchema <- "main"
 cohortTable <- "cohort"
-oracleTempSchema <- NULL
+tempEmulationSchema <- NULL
 folder <- "D:\\git\\bitbucket\\cohortDiagnosticsTest\\results\\firstRun\\eunomia" #tempfile()
 unlink(x = folder, recursive = TRUE, force = TRUE)
 dir.create(folder, recursive = TRUE, showWarnings = FALSE)
@@ -15,7 +15,7 @@ dir.create(folder, recursive = TRUE, showWarnings = FALSE)
 
 CohortDiagnostics::instantiateCohortSet(connectionDetails = connectionDetails,
                                         cdmDatabaseSchema = cdmDatabaseSchema,
-                                        oracleTempSchema = oracleTempSchema,
+                                        tempEmulationSchema = tempEmulationSchema,
                                         cohortDatabaseSchema = cohortDatabaseSchema,
                                         cohortTable = cohortTable,
                                         packageName = "CohortDiagnostics",
@@ -31,7 +31,7 @@ CohortDiagnostics::instantiateCohortSet(connectionDetails = connectionDetails,
 
 CohortDiagnostics::runCohortDiagnostics(connectionDetails = connectionDetails,
                                         cdmDatabaseSchema = cdmDatabaseSchema,
-                                        oracleTempSchema = oracleTempSchema,
+                                        tempEmulationSchema = tempEmulationSchema,
                                         cohortDatabaseSchema = cohortDatabaseSchema,
                                         cohortTable = cohortTable,
                                         packageName = "CohortDiagnostics",

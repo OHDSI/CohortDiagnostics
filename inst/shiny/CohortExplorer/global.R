@@ -1,4 +1,4 @@
-# oracleTempSchema <- NULL
+# tempEmulationSchema <- NULL
 # cdmDatabaseSchema <- "cdm_truven_mdcd_v610.dbo"
 # cohortDatabaseSchema <- "scratch.dbo"
 # cohortTable <- "coxibVsNonselVsGiBleed"

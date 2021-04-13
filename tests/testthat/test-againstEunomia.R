@@ -8,7 +8,7 @@ cdmDatabaseSchema <- "main"
 cohortDatabaseSchema <- "main"
 vocabularyDatabaseSchema <- cohortDatabaseSchema
 cohortTable <- "cohort"
-oracleTempSchema <- NULL
+tempEmulationSchema <- NULL
 folder <- tempfile()
 dir.create(folder, recursive = TRUE)
 
@@ -17,7 +17,7 @@ test_that("Cohort instantiation", {
     connectionDetails = connectionDetails,
     cdmDatabaseSchema = cdmDatabaseSchema,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    oracleTempSchema = oracleTempSchema,
+    tempEmulationSchema = tempEmulationSchema,
     cohortDatabaseSchema = cohortDatabaseSchema,
     cohortTable = cohortTable,
     packageName = "CohortDiagnostics",
@@ -51,7 +51,7 @@ test_that("Cohort diagnostics in incremental mode", {
       connectionDetails = connectionDetails,
       cdmDatabaseSchema = cdmDatabaseSchema,
       vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-      oracleTempSchema = oracleTempSchema,
+      tempEmulationSchema = tempEmulationSchema,
       cohortDatabaseSchema = cohortDatabaseSchema,
       cohortTable = cohortTable,
       packageName = "CohortDiagnostics",
@@ -81,7 +81,7 @@ test_that("Cohort diagnostics in incremental mode", {
     CohortDiagnostics::runCohortDiagnostics(
       connectionDetails = connectionDetails,
       cdmDatabaseSchema = cdmDatabaseSchema,
-      oracleTempSchema = oracleTempSchema,
+      tempEmulationSchema = tempEmulationSchema,
       cohortDatabaseSchema = cohortDatabaseSchema,
       cohortTable = cohortTable,
       packageName = "CohortDiagnostics",

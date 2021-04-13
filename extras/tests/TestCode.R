@@ -6,7 +6,7 @@ ParallelLogger::addDefaultErrorReportLogger()
 connectionDetails <- createConnectionDetails(dbms = "pdw",
                                              server = Sys.getenv("PDW_SERVER"),
                                              port = Sys.getenv("PDW_PORT"))
-oracleTempSchema <- NULL
+tempEmulationSchema <- NULL
 workDatabaseSchema <- "scratch.dbo"
 
 
@@ -26,7 +26,7 @@ connectionDetails <- createConnectionDetails(dbms = "redshift",
                                              connectionString = Sys.getenv("jmdcRedShiftConnectionString"),
                                              user = Sys.getenv("redShiftUser"),
                                              password = Sys.getenv("redShiftPassword"))
-oracleTempSchema <- NULL
+tempEmulationSchema <- NULL
 workDatabaseSchema <- "scratch_mschuemi"
 cdmDatabaseSchema <- "cdm"
 cohortDatabaseSchema <- workDatabaseSchema
@@ -57,7 +57,7 @@ createCohortTable(connectionDetails = connectionDetails,
 
 instantiateCohort(connectionDetails = connectionDetails,
                   cdmDatabaseSchema = cdmDatabaseSchema,
-                  oracleTempSchema = oracleTempSchema,
+                  tempEmulationSchema = tempEmulationSchema,
                   cohortDatabaseSchema = cohortDatabaseSchema,
                   cohortTable = cohortTable,
                   baseUrl = baseUrl,
@@ -84,7 +84,7 @@ user <- NULL
 pw <- NULL
 server <- Sys.getenv("PDW_SERVER")
 port <- Sys.getenv("PDW_PORT")
-oracleTempSchema <- NULL
+tempEmulationSchema <- NULL
 connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = dbms,
                                                                 server = server,
                                                                 user = user,
@@ -127,7 +127,7 @@ createCohortTable(connectionDetails = connectionDetails,
 
 instantiateCohortSet(connectionDetails = connectionDetails,
                      cdmDatabaseSchema = cdmDatabaseSchema,
-                     oracleTempSchema = oracleTempSchema,
+                     tempEmulationSchema = tempEmulationSchema,
                      cohortDatabaseSchema = cohortDatabaseSchema,
                      cohortTable = cohortTable,
                      baseUrl = baseUrl,
@@ -139,7 +139,7 @@ runCohortDiagnostics(baseUrl = baseUrl,
                      cohortSetReference = cohortSetReference,
                      connectionDetails = connectionDetails,
                      cdmDatabaseSchema = cdmDatabaseSchema,
-                     oracleTempSchema = oracleTempSchema,
+                     tempEmulationSchema = tempEmulationSchema,
                      cohortDatabaseSchema = cohortDatabaseSchema,
                      cohortTable = cohortTable,
                      inclusionStatisticsFolder = inclusionStatisticsFolder,
@@ -173,7 +173,7 @@ runCohortDiagnosticsUsingExternalCounts(baseUrl = baseUrl,
                                         cohortSetReference = cohortSetReference,
                                         connectionDetails = connectionDetails,
                                         cdmDatabaseSchema = cdmDatabaseSchema,
-                                        oracleTempSchema = oracleTempSchema,
+                                        tempEmulationSchema = tempEmulationSchema,
                                         conceptCountsDatabaseSchema = conceptCountsDatabaseSchema,
                                         conceptCountsTable = conceptCountsTable,
                                         exportFolder = exportFolder,
@@ -190,7 +190,7 @@ runCohortDiagnostics(baseUrl = baseUrl,
                      cohortSetReference = cohortSetReference,
                      connectionDetails = connectionDetails,
                      cdmDatabaseSchema = cdmDatabaseSchema,
-                     oracleTempSchema = oracleTempSchema,
+                     tempEmulationSchema = tempEmulationSchema,
                      cohortDatabaseSchema = cohortDatabaseSchema,
                      cohortTable = cohortTable,
                      exportFolder = paste0(exportFolder, "_check"),
@@ -226,7 +226,7 @@ DatabaseConnector::disconnect(connection)
 subset <- cohortSetReference[c(1,3), ]
 instantiateCohortSet(connectionDetails = connectionDetails,
                      cdmDatabaseSchema = cdmDatabaseSchema,
-                     oracleTempSchema = oracleTempSchema,
+                     tempEmulationSchema = tempEmulationSchema,
                      cohortDatabaseSchema = cohortDatabaseSchema,
                      cohortTable = cohortTable,
                      createCohortTable = TRUE,
@@ -239,7 +239,7 @@ instantiateCohortSet(connectionDetails = connectionDetails,
 
 runCohortDiagnostics(connectionDetails = connectionDetails,
                      cdmDatabaseSchema = cdmDatabaseSchema,
-                     oracleTempSchema = oracleTempSchema,
+                     tempEmulationSchema = tempEmulationSchema,
                      cohortDatabaseSchema = cohortDatabaseSchema,
                      cohortTable = cohortTable,
                      baseUrl = baseUrl,
@@ -261,7 +261,7 @@ runCohortDiagnostics(connectionDetails = connectionDetails,
 # Then run all:
 instantiateCohortSet(connectionDetails = connectionDetails,
                      cdmDatabaseSchema = cdmDatabaseSchema,
-                     oracleTempSchema = oracleTempSchema,
+                     tempEmulationSchema = tempEmulationSchema,
                      cohortDatabaseSchema = cohortDatabaseSchema,
                      cohortTable = cohortTable,
                      createCohortTable = TRUE,
@@ -274,7 +274,7 @@ instantiateCohortSet(connectionDetails = connectionDetails,
 
 runCohortDiagnostics(connectionDetails = connectionDetails,
                      cdmDatabaseSchema = cdmDatabaseSchema,
-                     oracleTempSchema = oracleTempSchema,
+                     tempEmulationSchema = tempEmulationSchema,
                      cohortDatabaseSchema = cohortDatabaseSchema,
                      cohortTable = cohortTable,
                      baseUrl = baseUrl,

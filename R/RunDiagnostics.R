@@ -30,6 +30,7 @@
 #' @template CdmDatabaseSchema
 #' @template VocabularyDatabaseSchema
 #' @template CohortDatabaseSchema
+#' @template TempEmulationSchema
 #' @template OracleTempSchema
 #'
 #' @template CohortTable
@@ -93,6 +94,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  connection = NULL,
                                  cdmDatabaseSchema,
                                  oracleTempSchema = NULL,
+                                 tempEmulationSchema = NULL,
                                  cohortDatabaseSchema,
                                  vocabularyDatabaseSchema = cdmDatabaseSchema,
                                  cohortTable = "cohort",
@@ -127,6 +129,11 @@ runCohortDiagnostics <- function(packageName = NULL,
   
   start <- Sys.time()
   ParallelLogger::logInfo("Run Cohort Diagnostics started at ", start)
+  
+  if (!is.null(oracleTempSchema) && is.null(tempEmulationSchema)) {
+    tempEmulationSchema <- oracleTempSchema
+    warning('OracleTempSchema has been deprecated by DatabaseConnector')
+  }
 
   if (is.null(databaseName) | is.na(databaseName)) {
     databaseName <- databaseId
@@ -323,7 +330,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   sql <- SqlRender::loadRenderTranslateSql("CreateConceptIdTable.sql",
                                            packageName = "CohortDiagnostics",
                                            dbms = connection@dbms,
-                                           oracleTempSchema = oracleTempSchema,
+                                           tempEmulationSchema = tempEmulationSchema,
                                            table_name = "#concept_ids")
   DatabaseConnector::executeSql(connection = connection, sql = sql, progressBar = FALSE, reportOverallTime = FALSE)
   
@@ -353,7 +360,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                    createTable = FALSE, 
                                    progressBar = TRUE,
                                    tempTable = TRUE,
-                                   oracleTempSchema = oracleTempSchema,
+                                   tempEmulationSchema = tempEmulationSchema,
                                    camelCaseToSnakeCase = TRUE)
     ParallelLogger::logTrace("Done inserting")
   }
@@ -432,7 +439,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   # Concept set diagnostics -----------------------------------------------
   if (runIncludedSourceConcepts || runOrphanConcepts || runBreakdownIndexEvents) {
     runConceptSetDiagnostics(connection = connection,
-                             oracleTempSchema = oracleTempSchema,
+                             tempEmulationSchema = tempEmulationSchema,
                              cdmDatabaseSchema = cdmDatabaseSchema,
                              vocabularyDatabaseSchema = vocabularyDatabaseSchema,
                              databaseId = databaseId,
@@ -468,7 +475,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
     if (nrow(subset) > 0) {
       data <- getTimeDistributions(connection = connection,
-                                   oracleTempSchema = oracleTempSchema,
+                                   tempEmulationSchema = tempEmulationSchema,
                                    cdmDatabaseSchema = cdmDatabaseSchema,
                                    cohortDatabaseSchema = cohortDatabaseSchema,
                                    cohortTable = cohortTable,
@@ -505,7 +512,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
     if (nrow(subset) > 0) {
       data <- getVisitContext(connection = connection,
-                              oracleTempSchema = oracleTempSchema,
+                              tempEmulationSchema = tempEmulationSchema,
                               cdmDatabaseSchema = cdmDatabaseSchema,
                               cohortDatabaseSchema = cohortDatabaseSchema,
                               cohortTable = cohortTable,
@@ -554,7 +561,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         })
         data <- getIncidenceRate(connection = connection,
                                  cdmDatabaseSchema = cdmDatabaseSchema,
-                                 oracleTempSchema = oracleTempSchema,
+                                 tempEmulationSchema = tempEmulationSchema,
                                  cohortDatabaseSchema = cohortDatabaseSchema,
                                  cohortTable = cohortTable,
                                  cohortId = row$cohortId,
@@ -699,7 +706,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       ParallelLogger::logInfo(sprintf("Starting large scale characterization of %s cohort(s)", nrow(subset)))
       characteristics <- getCohortCharacteristics(connection = connection,
                                                   cdmDatabaseSchema = cdmDatabaseSchema,
-                                                  oracleTempSchema = oracleTempSchema,
+                                                  tempEmulationSchema = tempEmulationSchema,
                                                   cohortDatabaseSchema = cohortDatabaseSchema,
                                                   cohortTable = cohortTable,
                                                   cohortIds = subset$cohortId,
@@ -741,7 +748,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       ParallelLogger::logInfo(sprintf("Starting large scale temporal characterization of %s cohort(s)", nrow(subset)) )
       characteristics <- getCohortCharacteristics(connection = connection,
                                                   cdmDatabaseSchema = cdmDatabaseSchema,
-                                                  oracleTempSchema = oracleTempSchema,
+                                                  tempEmulationSchema = tempEmulationSchema,
                                                   cohortDatabaseSchema = cohortDatabaseSchema,
                                                   cohortTable = cohortTable,
                                                   cohortIds = subset$cohortId,
@@ -770,7 +777,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   ParallelLogger::logInfo("Retrieving concept information")
   exportConceptInformation(connection = connection,
                            cdmDatabaseSchema = cdmDatabaseSchema,
-                           oracleTempSchema = oracleTempSchema,
+                           tempEmulationSchema = tempEmulationSchema,
                            conceptIdTable = "#concept_ids",
                            incremental = incremental,
                            exportFolder = exportFolder)
@@ -780,7 +787,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   sql <- "TRUNCATE TABLE @table;\nDROP TABLE @table;"
   DatabaseConnector::renderTranslateExecuteSql(connection = connection,
                                                sql = sql,
-                                               oracleTempSchema = oracleTempSchema,
+                                               tempEmulationSchema = tempEmulationSchema,
                                                table = "#concept_ids",
                                                progressBar = FALSE,
                                                reportOverallTime = FALSE)

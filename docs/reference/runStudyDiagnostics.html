@@ -137,7 +137,7 @@ ROhdsiWebApi::insertCohortDefinitionSetInPackage function." />
   <span class='kw'>connectionDetails</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>connection</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='no'>cdmDatabaseSchema</span>,
-  <span class='kw'>oracleTempSchema</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>tempEmulationSchema</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='no'>cohortDatabaseSchema</span>,
   <span class='kw'>cohortTable</span> <span class='kw'>=</span> <span class='st'>"cohort"</span>,
   <span class='kw'>cohortIds</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
@@ -188,7 +188,7 @@ Note that for SQL Server, this should include both the database and
 schema name, for example 'cdm_data.dbo'.</p></td>
     </tr>
     <tr>
-      <th>oracleTempSchema</th>
+      <th>tempEmulationSchema</th>
       <td><p>Should be used in Oracle to specify a schema where the user has write
 privileges for storing temporary tables.</p></td>
     </tr>

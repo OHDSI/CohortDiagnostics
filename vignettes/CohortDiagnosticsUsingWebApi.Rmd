@@ -75,12 +75,12 @@ connectionDetails <- createConnectionDetails(dbms = "postgresql",
                                              password = "supersecret")
 
 cdmDatabaseSchema <- "my_cdm_data"
-oracleTempSchema <- NULL
+tempEmulationSchema <- NULL
 cohortDatabaseSchema <- "my_schema"
 cohortTable <- "my_cohort_table"
 ```
 
-The last four lines define the `cdmDatabaseSchema`, `oracleTempSchema`, `cohortDatabaseSchema`, and `cohortTable` variables. We'll use the `cdmDatabaseSchema` later to tell R where the data in CDM format live. The `oracleTempSchema` is needed only for Oracle users, since Oracle does not support temporary tables. The `cohortDatabaseSchema`, and `cohortTable` specify where we want to instantiate our cohorts. Note that for Microsoft SQL Server, databaseschemas need to specify both the database and the schema, so for example `cdmDatabaseSchema <- "my_cdm_data.dbo"`.
+The last four lines define the `cdmDatabaseSchema`, `tempEmulationSchema`, `cohortDatabaseSchema`, and `cohortTable` variables. We'll use the `cdmDatabaseSchema` later to tell R where the data in CDM format live. The `tempEmulationSchema` is needed only for Oracle users, since Oracle does not support temporary tables. The `cohortDatabaseSchema`, and `cohortTable` specify where we want to instantiate our cohorts. Note that for Microsoft SQL Server, databaseschemas need to specify both the database and the schema, so for example `cdmDatabaseSchema <- "my_cdm_data.dbo"`.
 
 ## Creating a new cohort table
 
@@ -110,7 +110,7 @@ inclusionStatisticsFolder <- "c:/temp/incStats"
 
 instantiateCohortSet(connectionDetails = connectionDetails,
                      cdmDatabaseSchema = cdmDatabaseSchema,
-                     oracleTempSchema = oracleTempSchema,
+                     tempEmulationSchema = tempEmulationSchema,
                      cohortDatabaseSchema = cohortDatabaseSchema,
                      cohortTable = cohortTable,
                      baseUrl = baseUrl,
@@ -133,7 +133,7 @@ runCohortDiagnostics(baseUrl = baseUrl,
                      cohortSetReference = cohortSetReference,
                      connectionDetails = connectionDetails,
                      cdmDatabaseSchema = cdmDatabaseSchema,
-                     oracleTempSchema = oracleTempSchema,
+                     tempEmulationSchema = tempEmulationSchema,
                      cohortDatabaseSchema = cohortDatabaseSchema,
                      cohortTable = cohortTable,
                      inclusionStatisticsFolder = inclusionStatisticsFolder,

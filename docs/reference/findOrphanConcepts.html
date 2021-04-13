@@ -141,7 +141,7 @@ missing source-to-standard concept maps, or erroneous hierarchical relationships
   connectionDetails <span class='op'>=</span> <span class='cn'>NULL</span>,
   connection <span class='op'>=</span> <span class='cn'>NULL</span>,
   <span class='va'>cdmDatabaseSchema</span>,
-  oracleTempSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
+  tempEmulationSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
   <span class='va'>conceptIds</span>,
   conceptCountsDatabaseSchema <span class='op'>=</span> <span class='va'>cdmDatabaseSchema</span>,
   conceptCountsTable <span class='op'>=</span> <span class='st'>"concept_counts"</span>,
@@ -173,7 +173,7 @@ Note that for SQL Server, this should include both the database and
 schema name, for example 'cdm_data.dbo'.</p></td>
     </tr>
     <tr>
-      <th>oracleTempSchema</th>
+      <th>tempEmulationSchema</th>
       <td><p>Should be used in Oracle to specify a schema where the user has write
 privileges for storing temporary tables.</p></td>
     </tr>
