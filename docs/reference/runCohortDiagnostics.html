@@ -159,6 +159,7 @@ Alternatively, a covariate setting object may be created using the above as an e
   <span class='va'>cdmDatabaseSchema</span>,
   oracleTempSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
   <span class='va'>cohortDatabaseSchema</span>,
+  vocabularyDatabaseSchema <span class='op'>=</span> <span class='va'>cdmDatabaseSchema</span>,
   cohortTable <span class='op'>=</span> <span class='st'>"cohort"</span>,
   cohortIds <span class='op'>=</span> <span class='cn'>NULL</span>,
   inclusionStatisticsFolder <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>exportFolder</span>, <span class='st'>"inclusionStatistics"</span><span class='op'>)</span>,
@@ -260,6 +261,13 @@ privileges for storing temporary tables.</p></td>
       <td><p>Schema name where your cohort table resides. Note that for SQL Server,
 this should include both the database and schema name, for example
 'scratch.dbo'.</p></td>
+    </tr>
+    <tr>
+      <th>vocabularyDatabaseSchema</th>
+      <td><p>Schema name where your OMOP vocabulary data resides. This is 
+commonly the same as cdmDatabaseSchema. Note that for 
+SQL Server, this should include both the database and
+schema name, for example 'vocabulary.dbo'.</p></td>
     </tr>
     <tr>
       <th>cohortTable</th>

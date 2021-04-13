@@ -35,6 +35,12 @@ rmarkdown::render("vignettes/CohortDiagnosticsUsingWebApi.Rmd",
                                           toc = TRUE,
                                           number_sections = TRUE))
 
+rmarkdown::render("vignettes/CohortDiagnosticsInPackageMode.Rmd",
+                  output_file = "../inst/doc/CohortDiagnosticsInPackageMode.pdf",
+                  rmarkdown::pdf_document(latex_engine = "pdflatex",
+                                          toc = TRUE,
+                                          number_sections = TRUE))
+
 pkgdown::build_site()
 OhdsiRTools::fixHadesLogo()
 
