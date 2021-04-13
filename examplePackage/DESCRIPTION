@@ -1,10 +1,10 @@
-Package: EunomiaCohortDiagnostics
+Package: examplePackage
 Type: Package
-Title: A package that generates cohort diagnostics output based on Eunomia data set
+Title: A package that generates cohort diagnostics output.
 Version: 0.0.1
 Author: Gowtham Rao [aut, cre]
 Maintainer: Gowtham Rao <rao@ohdsi.org>
-Description: A package that generates cohort diagnostics output based on Eunomia data set
+Description: A package that generates cohort diagnostics output.
 Depends:
     DatabaseConnector (>= 2.2.0)
 Imports:

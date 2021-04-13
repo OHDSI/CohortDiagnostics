@@ -1,31 +1,28 @@
 library(CohortDiagnostics)
 library(Eunomia)
-library(EunomiaCohortDiagnostics)
+library(examplePackage)
 
-
-packageName <- 'EunomiaCohortDiagnostics'
-baseUrl <- Sys.getenv("OHDSIbaseUrl")
+packageName <- 'examplePackage'
 
 connectionDetails <- Eunomia::getEunomiaConnectionDetails()
 cdmDatabaseSchema <- "main"
 cohortDatabaseSchema <- "main"
 cohortTable <- "cohort"
-oracleTempSchema <- NULL
+databaseId <- "Eunomia"
 
-outputFolder <- file.path(rstudioapi::getActiveProject(), "outputFolder")
+outputFolder <- file.path(rstudioapi::getActiveProject(), "outputFolder", databaseId)
 unlink(x = outputFolder, recursive = TRUE, force = TRUE)
 dir.create(path = outputFolder, showWarnings = FALSE, recursive = TRUE)
 
-EunomiaCohortDiagnostics::runCohortDiagnostics(
+examplePackage::runCohortDiagnostics(
   packageName = packageName,
   connectionDetails = connectionDetails,
   cdmDatabaseSchema = cdmDatabaseSchema,
   vocabularyDatabaseSchema = cdmDatabaseSchema,
   cohortDatabaseSchema = cohortDatabaseSchema,
   cohortTable = cohortTable,
-  oracleTempSchema = oracleTempSchema,
   outputFolder = outputFolder,
-  databaseId = "Eunomia",
+  databaseId = databaseId,
   databaseName = "Eunomia Test",
   databaseDescription = "This is a test data base called Eunomia",
   runCohortCharacterization = TRUE,
