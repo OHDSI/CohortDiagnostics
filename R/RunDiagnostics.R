@@ -216,11 +216,6 @@ runCohortDiagnostics <- function(packageName = NULL,
                paste0(requiredButNotObsevered, collapse = ", ")))
   }
   
-  if (length(expectedButNotObsevered) > 0) {
-    warning(paste("The following columns are recommended but missing from the cohort table.", 
-                  paste0(expectedButNotObsevered ,collapse = ", ")))
-  }
-  
   if ('logicDescription' %in% expectedButNotObsevered) {
     cohorts$logicDescription <- cohorts$cohortName
   }
