@@ -593,9 +593,11 @@ runCohortDiagnostics <- function(packageName = NULL,
     
     combis <- cohorts %>% 
       dplyr::select(.data$phenotypeId, .data$cohortId) %>% 
+      dplyr::distinct()
+    
+    combis <- combis %>% 
       dplyr::rename(targetCohortId = .data$cohortId) %>% 
-      dplyr::inner_join(cohorts %>% 
-                          dplyr::select(.data$phenotypeId, .data$cohortId) %>% 
+      dplyr::inner_join(combis %>% 
                           dplyr::rename(comparatorCohortId = .data$cohortId),
                         by = "phenotypeId") %>% 
       dplyr::filter(.data$targetCohortId < .data$comparatorCohortId) %>% 
