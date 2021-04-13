@@ -1,0 +1,217 @@
+covariate_id,covariate_name,analysis_id,concept_id
+3000876701,measurement: Codfish IgE Ab [Units/volume] in Serum,701,3000876
+3000963701,measurement: Hemoglobin,701,3000963
+3001247701,measurement: Common Ragweed IgE Ab [Units/volume] in Serum,701,3001247
+3001488701,measurement: Cow milk IgE Ab [Units/volume] in Serum,701,3001488
+3002385701,measurement: Erythrocyte distribution width [Ratio],701,3002385
+3004501701,measurement: Glucose lab,701,3004501
+3005136701,measurement: Cladosporium herbarum IgE Ab [Units/volume] in Serum,701,3005136
+3006322701,measurement: Oral temperature,701,3006322
+3006451701,measurement: Walnut IgE Ab [Units/volume] in Serum,701,3006451
+3006734701,measurement: White Oak IgE Ab [Units/volume] in Serum,701,3006734
+3006906701,measurement: Calcium serum/plasma serum/plasma,701,3006906
+3006923701,measurement: Alanine aminotransferase serum/plasma,701,3006923
+3007461701,measurement: Platelet count,701,3007461
+3009542701,measurement: Hematocrit,701,3009542
+3010813701,measurement: White Blood cell (WBC) count (leukocyte),701,3010813
+3011505701,measurement: FEV1/FVC,701,3011505
+3012494701,measurement: Peanut IgE Ab [Units/volume] in Serum,701,3012494
+3013682701,measurement: Urea nitrogen serum/plasma,701,3013682
+3013721701,measurement: Aspartate aminotransferase serum/plasma,701,3013721
+3014576701,measurement: Chloride serum/plasma,701,3014576
+3014599701,measurement: Egg white IgE Ab [Units/volume] in Serum,701,3014599
+3015076701,measurement: Soybean IgE Ab [Units/volume] in Serum,701,3015076
+3015632701,measurement: Carbon dioxide serum/plasma,701,3015632
+3016723701,measurement: Creatinine serum/plasma,701,3016723
+3019406701,measurement: Latex IgE Ab [Units/volume] in Serum,701,3019406
+3019550701,measurement: Sodium serum/plasma,701,3019550
+3020630701,measurement: Protein serum/plasma,701,3020630
+3020655701,measurement: Honey bee IgE Ab [Units/volume] in Serum,701,3020655
+3021226701,measurement: Shrimp IgE Ab [Units/volume] in Serum,701,3021226
+3023103701,measurement: Potassium serum/plasma,701,3023103
+3023430701,measurement: Cat dander IgE Ab [Units/volume] in Serum,701,3023430
+3024561701,measurement: Albumin serum/plasma,701,3024561
+3024731701,measurement: MCV,701,3024731
+3026361701,measurement: Red blood cell (RBC) count,701,3026361
+3027231701,measurement: Wheat IgE Ab [Units/volume] in Serum,701,3027231
+3027970701,measurement: Globulin [Mass/volume] in Serum by calculation,701,3027970
+3028833701,measurement: Bilirubin.total [Mass/volume] in Blood,701,3028833
+3035995701,measurement: Alkaline phosphatase serum/plasma,701,3035995
+3036780701,measurement: American house dust mite IgE Ab [Units/volume] in Serum,701,3036780
+3045716701,measurement: Anion gap serum/plasma,701,3045716
+3051031701,measurement: History of Hospitalizations+Outpatient visits Narrative,701,3051031
+4024958701,measurement: Throat culture,701,4024958
+4052083701,measurement: Measurement of respiratory function,701,4052083
+4133840701,measurement: Spirometry,701,4133840
+21494966701,measurement: Physical findings of Abdomen by Palpation,701,21494966
+40758406701,measurement: HIV status,701,40758406
+40766240701,measurement: Are you covered by health insurance or some other kind of health care plan [PhenX],701,40766240
+40769179701,measurement: Percentage area affected by eczema Head and Neck [PhenX],701,40769179
+40769184701,measurement: Percentage area affected by eczema Upper extremity - bilateral [PhenX],701,40769184
+40769189701,measurement: Percentage area affected by eczema Trunk [PhenX],701,40769189
+40769194701,measurement: Percentage area affected by eczema Lower extremity - bilateral [PhenX],701,40769194
+46235214701,measurement: Sexual orientation,701,46235214
+3049273701,measurement: DXA Radius and Ulna [T-score] Bone density,701,3049273
+28060101,condition_occurrence: Streptococcal sore throat,101,28060
+30753101,condition_occurrence: Esophagitis,101,30753
+78272101,condition_occurrence: Sprain of wrist,101,78272
+80180101,condition_occurrence: Osteoarthritis,101,80180
+80809101,condition_occurrence: Rheumatoid arthritis,101,80809
+81151101,condition_occurrence: Sprain of ankle,101,81151
+81893101,condition_occurrence: Ulcerative colitis,101,81893
+134438101,condition_occurrence: Contact dermatitis,101,134438
+192671101,condition_occurrence: Gastrointestinal hemorrhage,101,192671
+195588101,condition_occurrence: Cystitis,101,195588
+196456101,condition_occurrence: Gallstone,101,196456
+198199101,condition_occurrence: Pyelonephritis,101,198199
+198809101,condition_occurrence: Acute cholecystitis,101,198809
+257012101,condition_occurrence: Chronic sinusitis,101,257012
+258780101,condition_occurrence: Emphysematous bronchitis,101,258780
+260139101,condition_occurrence: Acute bronchitis,101,260139
+261325101,condition_occurrence: Pulmonary emphysema,101,261325
+317576101,condition_occurrence: Coronary arteriosclerosis,101,317576
+321042101,condition_occurrence: Cardiac arrest,101,321042
+372328101,condition_occurrence: Otitis media,101,372328
+375671101,condition_occurrence: Concussion with loss of consciousness,101,375671
+378001101,condition_occurrence: Concussion with no loss of consciousness,101,378001
+381316101,condition_occurrence: Cerebrovascular accident,101,381316
+439777101,condition_occurrence: Anemia,101,439777
+440448101,condition_occurrence: Appendicitis,101,440448
+4001336101,condition_occurrence: Concussion injury of brain,101,4001336
+4029498101,condition_occurrence: Seizure disorder,101,4029498
+4035415101,condition_occurrence: Tear of meniscus of knee,101,4035415
+4056621101,condition_occurrence: Recurrent urinary tract infection,101,4056621
+4059173101,condition_occurrence: Fracture of ankle,101,4059173
+4084167101,condition_occurrence: Acute allergic reaction,101,4084167
+4094814101,condition_occurrence: Bullet wound,101,4094814
+4109685101,condition_occurrence: Laceration of foot,101,4109685
+4112343101,condition_occurrence: Acute viral pharyngitis,101,4112343
+4113008101,condition_occurrence: Laceration of hand,101,4113008
+4116491101,condition_occurrence: Escherichia coli urinary tract infection,101,4116491
+4132546101,condition_occurrence: Traumatic brain injury,101,4132546
+4134304101,condition_occurrence: Fracture subluxation of wrist,101,4134304
+4142905101,condition_occurrence: Fracture of rib,101,4142905
+4146173101,condition_occurrence: Injury of tendon of the rotator cuff of shoulder,101,4146173
+4149245101,condition_occurrence: Rupture of patellar tendon,101,4149245
+4152936101,condition_occurrence: Laceration of thigh,101,4152936
+4155034101,condition_occurrence: Laceration of forearm,101,4155034
+4156265101,condition_occurrence: Facial laceration,101,4156265
+4166224101,condition_occurrence: Rupture of appendix,101,4166224
+4218389101,condition_occurrence: Whiplash injury to neck,101,4218389
+4230399101,condition_occurrence: Closed fracture of hip,101,4230399
+4237458101,condition_occurrence: Fracture of clavicle,101,4237458
+4266809101,condition_occurrence: Diverticular disease,101,4266809
+4278672101,condition_occurrence: Fracture of forearm,101,4278672
+4283893101,condition_occurrence: Sinusitis,101,4283893
+4285898101,condition_occurrence: Polyp of colon,101,4285898
+4294548101,condition_occurrence: Acute bacterial sinusitis,101,4294548
+4296204101,condition_occurrence: First degree burn,101,4296204
+4296205101,condition_occurrence: Second degree burn,101,4296205
+4310024101,condition_occurrence: Angiodysplasia of stomach,101,4310024
+4329847101,condition_occurrence: Myocardial infarction,101,4329847
+40479422101,condition_occurrence: Injury of medial collateral ligament of knee,101,40479422
+40479768101,condition_occurrence: Injury of anterior cruciate ligament,101,40479768
+40481087101,condition_occurrence: Viral sinusitis,101,40481087
+4048695101,condition_occurrence: Fracture of vertebral column without spinal cord injury,101,4048695
+80502101,condition_occurrence: Osteoporosis,101,80502
+255848101,condition_occurrence: Pneumonia,101,255848
+313217101,condition_occurrence: Atrial fibrillation,101,313217
+378419101,condition_occurrence: Alzheimer's disease,101,378419
+708298401,drug_era: Midazolam,401,708298
+738818401,drug_era: Doxylamine,401,738818
+753626401,drug_era: Propofol,401,753626
+782043401,drug_era: Isoflurane,401,782043
+914335401,drug_era: Atropine,401,914335
+920293401,drug_era: Nitrofurantoin,401,920293
+933724401,drug_era: Phenazopyridine,401,933724
+967823401,drug_era: Sodium Chloride,401,967823
+975125401,drug_era: Hydrocortisone,401,975125
+1000560401,drug_era: Ondansetron,401,1000560
+1102527401,drug_era: Meperidine,401,1102527
+1110410401,drug_era: Morphine,401,1110410
+1112807401,drug_era: Aspirin,401,1112807
+1115008401,drug_era: Naproxen,401,1115008
+1118084401,drug_era: celecoxib,401,1118084
+1119510401,drug_era: Dextromethorphan,401,1119510
+1124957401,drug_era: Oxycodone,401,1124957
+1125315401,drug_era: Acetaminophen,401,1125315
+1137529401,drug_era: salmeterol,401,1137529
+1149380401,drug_era: fluticasone,401,1149380
+1150770401,drug_era: Astemizole,401,1150770
+1154029401,drug_era: Fentanyl,401,1154029
+1174888401,drug_era: Hydrocodone,401,1174888
+1177480401,drug_era: Ibuprofen,401,1177480
+1305058401,drug_era: Methotrexate,401,1305058
+1309944401,drug_era: Amiodarone,401,1309944
+1322184401,drug_era: clopidogrel,401,1322184
+1332418401,drug_era: Amlodipine,401,1332418
+1343916401,drug_era: Epinephrine,401,1343916
+1347450401,drug_era: alteplase,401,1347450
+1361711401,drug_era: Nitroglycerin,401,1361711
+1367571401,drug_era: heparin,401,1367571
+1519936401,drug_era: Etonogestrel,401,1519936
+1521369401,drug_era: Norethindrone,401,1521369
+1539403401,drug_era: Simvastatin,401,1539403
+1545958401,drug_era: atorvastatin,401,1545958
+1549786401,drug_era: Ethinyl Estradiol,401,1549786
+1551099401,drug_era: Prednisone,401,1551099
+1713332401,drug_era: Amoxicillin,401,1713332
+1717327401,drug_era: Ampicillin,401,1717327
+1728416401,drug_era: Penicillin G,401,1728416
+1729720401,drug_era: Penicillin V,401,1729720
+1738521401,drug_era: Doxycycline,401,1738521
+1741122401,drug_era: tazobactam,401,1741122
+1746114401,drug_era: Piperacillin,401,1746114
+1759842401,drug_era: Clavulanate,401,1759842
+1768849401,drug_era: Cefaclor,401,1768849
+1778162401,drug_era: Cefuroxime,401,1778162
+19003953401,drug_era: Rocuronium,401,19003953
+19010482401,drug_era: Cyclosporine,401,19010482
+19016749401,drug_era: remifentanil,401,19016749
+723013401,drug_era: Diazepam,401,723013
+740275401,drug_era: Carbamazepine,401,740275
+1124300401,drug_era: Diclofenac,401,1124300
+757627401,drug_era: Galantamine,401,757627
+1307863401,drug_era: Verapamil,401,1307863
+1310149401,drug_era: Warfarin,401,1310149
+1326303401,drug_era: Digoxin,401,1326303
+1557272401,drug_era: Alendronate,401,1557272
+4010253501,procedure_occurrence: Nasal sinus endoscopy,501,4010253
+4024289501,procedure_occurrence: Radiography of ankle,501,4024289
+4035793501,procedure_occurrence: Pulmonary rehabilitation,501,4035793
+4037675501,procedure_occurrence: Brief general examination,501,4037675
+4047491501,procedure_occurrence: Radiography of humerus,501,4047491
+4057420501,procedure_occurrence: Catheter ablation of tissue of heart,501,4057420
+4058899501,procedure_occurrence: Plain X-ray of clavicle,501,4058899
+4107731501,procedure_occurrence: Subcutaneous immunotherapy,501,4107731
+4108705501,procedure_occurrence: Intravenous blood transfusion of packed cells,501,4108705
+4125906501,procedure_occurrence: Suture open wound,501,4125906
+4145310501,procedure_occurrence: Pelvis X-ray,501,4145310
+4151422501,procedure_occurrence: Sputum examination,501,4151422
+4163872501,procedure_occurrence: Plain chest X-ray,501,4163872
+4163951501,procedure_occurrence: Electrocardiographic procedure,501,4163951
+4163971501,procedure_occurrence: Laparoscopic cholecystectomy,501,4163971
+4170947501,procedure_occurrence: Bone immobilization,501,4170947
+4181917501,procedure_occurrence: Electroencephalogram,501,4181917
+4187458501,procedure_occurrence: Review of systems,501,4187458
+4191853501,procedure_occurrence: Allergy screening test,501,4191853
+4197460501,procedure_occurrence: Injection of epinephrine,501,4197460
+4198190501,procedure_occurrence: Appendectomy,501,4198190
+4202451501,procedure_occurrence: Percutaneous mechanical thrombectomy of portal vein using fluoroscopic guidance,501,4202451
+4202832501,procedure_occurrence: Intubation,501,4202832
+4216130501,procedure_occurrence: Percutaneous coronary intervention,501,4216130
+4243062501,procedure_occurrence: Radiography of wrist,501,4243062
+4252419501,procedure_occurrence: Radiologic examination of knee,501,4252419
+4293740501,procedure_occurrence: Injection of tetanus antitoxin,501,4293740
+4326177501,procedure_occurrence: Medication Reconciliation,501,4326177
+4330583501,procedure_occurrence: Vasectomy,501,4330583
+4336464501,procedure_occurrence: Coronary artery bypass graft,501,4336464
+40492359501,procedure_occurrence: Insertion of biventricular implantable cardioverter defibrillator,501,40492359
+42535580501,"procedure_occurrence: Ultrasonography of abdomen, right upper quadrant and epigastrium",501,42535580
+44783196501,procedure_occurrence: Surgical manipulation of joint of knee,501,44783196
+4078793501,procedure_occurrence: Direct current cardioversion,501,4078793
+4117038501,procedure_occurrence: Bilateral tubal ligation,501,4117038
+4195803501,procedure_occurrence: Bone density scan,501,4195803
+4301346501,procedure_occurrence: Surgical manipulation of shoulder joint,501,4301346
+4323902501,procedure_occurrence: Lung volume reduction surgery,501,4323902
+4337138501,procedure_occurrence: Transplant of lung,501,4337138

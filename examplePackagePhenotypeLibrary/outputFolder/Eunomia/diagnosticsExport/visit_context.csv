@@ -1,0 +1,21 @@
+cohort_id,visit_concept_id,visit_context,subjects,database_id
+14906,9201,After,115,Eunomia
+14907,9201,After,46,Eunomia
+14907,9201,Before,1,Eunomia
+14909,9201,After,88,Eunomia
+14909,9201,On visit start,391,Eunomia
+17492,9201,After,88,Eunomia
+17492,9201,On visit start,391,Eunomia
+17493,9201,After,88,Eunomia
+17493,9201,On visit start,391,Eunomia
+18342,9201,After,88,Eunomia
+18342,9201,On visit start,391,Eunomia
+18345,9201,After,115,Eunomia
+18346,9201,After,115,Eunomia
+18347,9201,After,46,Eunomia
+18347,9201,Before,1,Eunomia
+18348,9201,After,46,Eunomia
+18348,9201,Before,1,Eunomia
+18349,9201,After,21,Eunomia
+18350,9201,After,21,Eunomia
+21402,9201,On visit start,318,Eunomia
