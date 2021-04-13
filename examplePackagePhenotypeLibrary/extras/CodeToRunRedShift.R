@@ -1,9 +1,9 @@
 source(Sys.getenv("startUpScriptLocation"))
 
 library(CohortDiagnostics)
-library(examplePackage)
+library(examplePackagePhenotypeLibrary)
 
-packageName <- 'examplePackage'
+packageName <- 'examplePackagePhenotypeLibrary'
 connectionSpecifications <- cdmSources %>%
   dplyr::filter(sequence == 1) %>%
   dplyr::filter(database == 'truven_ccae')
@@ -45,7 +45,7 @@ dataSouceInformation <-
   )
 
 
-examplePackage::runCohortDiagnostics(
+examplePackagePhenotypeLibrary::runCohortDiagnostics(
   packageName = packageName,
   connectionDetails = connectionDetails,
   cdmDatabaseSchema = cdmDatabaseSchema,
@@ -85,7 +85,7 @@ CohortDiagnostics::launchDiagnosticsExplorer(dataFolder = outputFolder)
 #                                              password = Sys.getenv("shinyDbPasswordGowtham"))
 #
 #
-# resultsSchema <- "examplePackageCdTruven"
+# resultsSchema <- "examplePackagePhenotypeLibraryCdTruven"
 # createResultsDataModel(connectionDetails = connectionDetailsToUpload, schema = resultsSchema)
 #
 #

@@ -1,61 +1,30 @@
-source(Sys.getenv("startUpScriptLocation"))
-
 library(CohortDiagnostics)
-library(examplePackage)
+library(Eunomia)
+library(examplePackagePhenotypeLibrary)
 
-packageName <- 'examplePackage'
-connectionSpecifications <- cdmSources %>%
-  dplyr::filter(sequence == 1) %>%
-  dplyr::filter(database == 'truven_ccae')
+packageName <- 'examplePackagePhenotypeLibrary'
 
-
-dbms <- connectionSpecifications$dbms
-port <- connectionSpecifications$port
-server <- connectionSpecifications$server
-cdmDatabaseSchema <- connectionSpecifications$cdmDatabaseSchema
-vocabDatabaseSchema <- connectionSpecifications$vocabDatabaseSchema
-databaseId <- connectionSpecifications$database
-cohortDatabaseSchema = 'scratch_grao9'
-userNameService = "OHDA_USER"
-passwordService = "OHDA_PASSWORD"
-
-connectionDetails <- DatabaseConnector::createConnectionDetails(
-  dbms = dbms,
-  user = keyring::key_get(service = userNameService),
-  password = keyring::key_get(service = passwordService),
-  port = port,
-  server = server
-)
-
-cohortTable <- "cohort"
+connectionDetails <- Eunomia::getEunomiaConnectionDetails()
+cdmDatabaseSchema <- "main"
+cohortDatabaseSchema <- "main"
+cohortTable <- "cohortPhenotypeLibrary"
+databaseId <- "Eunomia"
 
 outputFolder <- file.path(rstudioapi::getActiveProject(), "outputFolder", databaseId)
-unlink(x = outputFolder,
-       recursive = TRUE,
-       force = TRUE)
-dir.create(path = outputFolder,
-           showWarnings = FALSE,
-           recursive = TRUE)
+unlink(x = outputFolder, recursive = TRUE, force = TRUE)
+dir.create(path = outputFolder, showWarnings = FALSE, recursive = TRUE)
 
-dataSouceInformation <-
-  getDataSourceInformation(
-    connectionDetails = connectionDetails,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    vocabDatabaseSchema = vocabDatabaseSchema
-  )
-
-
-examplePackage::runCohortDiagnostics(
+examplePackagePhenotypeLibrary::runCohortDiagnostics(
   packageName = packageName,
   connectionDetails = connectionDetails,
   cdmDatabaseSchema = cdmDatabaseSchema,
-  vocabularyDatabaseSchema = vocabDatabaseSchema,
+  vocabularyDatabaseSchema = cdmDatabaseSchema,
   cohortDatabaseSchema = cohortDatabaseSchema,
   cohortTable = cohortTable,
   outputFolder = outputFolder,
   databaseId = databaseId,
-  databaseName = dataSouceInformation$cdmSourceName,
-  databaseDescription = dataSouceInformation$sourceDescription,
+  databaseName = "Eunomia Test",
+  databaseDescription = "This is a test data base called Eunomia",
   runCohortCharacterization = TRUE,
   runCohortOverlap = TRUE,
   runOrphanConcepts = TRUE,
@@ -75,7 +44,7 @@ CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = outputFolder)
 CohortDiagnostics::launchDiagnosticsExplorer(dataFolder = outputFolder)
 
 
-
+ 
 # connectionDetailsToUpload <- createConnectionDetails(dbms = "postgresql",
 #                                              server = paste(Sys.getenv("shinydbServer"),
 #                                                             Sys.getenv("shinydbDatabase"),
@@ -83,20 +52,21 @@ CohortDiagnostics::launchDiagnosticsExplorer(dataFolder = outputFolder)
 #                                              port = Sys.getenv("shinydbPort"),
 #                                              user = Sys.getenv("shinyDbUserGowtham"),
 #                                              password = Sys.getenv("shinyDbPasswordGowtham"))
-#
-#
-# resultsSchema <- "examplePackageCdTruven"
+# 
+# 
+# resultsSchema <- "eunomiaCd"
 # createResultsDataModel(connectionDetails = connectionDetailsToUpload, schema = resultsSchema)
-#
-#
+# 
+# 
 # path = outputFolder
-# zipFilesToUpload <- list.files(path = path,
-#                                pattern = ".zip",
-#                                recursive = TRUE,
+# zipFilesToUpload <- list.files(path = path, 
+#                                pattern = ".zip", 
+#                                recursive = TRUE, 
 #                                full.names = TRUE)
-#
+# 
 # for (i in (1:length(zipFilesToUpload))) {
 #   uploadResults(connectionDetails = connectionDetailsToUpload,
 #                 schema = resultsSchema,
 #                 zipFileName = zipFilesToUpload[[i]])
 # }
+

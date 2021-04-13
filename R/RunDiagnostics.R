@@ -221,7 +221,8 @@ runCohortDiagnostics <- function(packageName = NULL,
     cohorts$logicDescription <- cohorts$cohortName
   }
   if ('phenotypeId' %in% expectedButNotObsevered) {
-    cohorts$phenotypeId <- 0
+    cohorts$phenotypeId <- 0  # phenotypeId is assigned = 0 when no phenotypeId is provided. 
+                              # This is required for cohort overlap
   }
   if ('metadata' %in% expectedButNotObsevered) {
     if (length(obseveredButNotExpected) > 0) {
@@ -592,9 +593,11 @@ runCohortDiagnostics <- function(packageName = NULL,
     
     combis <- cohorts %>% 
       dplyr::select(.data$phenotypeId, .data$cohortId) %>% 
+      dplyr::distinct()
+    
+    combis <- combis %>% 
       dplyr::rename(targetCohortId = .data$cohortId) %>% 
-      dplyr::inner_join(cohorts %>% 
-                          dplyr::select(.data$phenotypeId, .data$cohortId) %>% 
+      dplyr::inner_join(combis %>% 
                           dplyr::rename(comparatorCohortId = .data$cohortId),
                         by = "phenotypeId") %>% 
       dplyr::filter(.data$targetCohortId < .data$comparatorCohortId) %>% 
@@ -810,7 +813,7 @@ loadAndExportPhenotypeDescription <- function(packageName,
   if (is.null(errorMessage)) {
     errorMessage <- checkmate::makeAssertCollection(errorMessage)
   }
-  pathToCsv <- system.file(phenotypeDescriptionFile, package = packageName)
+  pathToCsv <- system.file("settings", phenotypeDescriptionFile, package = packageName)
   if (file.exists(pathToCsv)) {
     ParallelLogger::logInfo("Found phenotype description file. Loading.")
     
