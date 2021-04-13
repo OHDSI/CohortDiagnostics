@@ -31,6 +31,10 @@
 #'                                            will need to have write privileges in this schema. Note
 #'                                            that for SQL Server, this should include both the
 #'                                            database and schema name, for example 'cdm_data.dbo'.
+#' @param vocabularyDatabaseSchema            Schema name where your OMOP vocabulary data resides. This is 
+#'                                            commonly the same as cdmDatabaseSchema. Note that for 
+#'                                            SQL Server, this should include both the database and
+#'                                            schema name, for example 'vocabulary.dbo'.
 #' @param cohortTable                         The name of the table that will be created in the work
 #'                                            database schema. This table will hold the exposure and
 #'                                            outcome cohorts used in this study.
@@ -65,6 +69,7 @@
 #' @export
 runCohortDiagnostics <- function(connectionDetails,
                                  cdmDatabaseSchema,
+                                 vocabularyDatabaseSchema = cdmDatabaseSchema,
                                  packageName,
                                  cohortDatabaseSchema = cdmDatabaseSchema,
                                  cohortTable = "cohort",
@@ -99,6 +104,7 @@ runCohortDiagnostics <- function(connectionDetails,
     ParallelLogger::logInfo("Creating cohorts")
     CohortDiagnostics::instantiateCohortSet(connectionDetails = connectionDetails,
                                             cdmDatabaseSchema = cdmDatabaseSchema,
+                                            vocabularyDatabaseSchema = vocabularyDatabaseSchema,
                                             cohortDatabaseSchema = cohortDatabaseSchema,
                                             cohortTable = cohortTable,
                                             oracleTempSchema = oracleTempSchema,
@@ -124,6 +130,7 @@ runCohortDiagnostics <- function(connectionDetails,
                                           phenotypeDescriptionFile = phenotypeDescriptionFile,
                                           connectionDetails = connectionDetails,
                                           cdmDatabaseSchema = cdmDatabaseSchema,
+                                          vocabularyDatabaseSchema = vocabularyDatabaseSchema,
                                           oracleTempSchema = oracleTempSchema,
                                           cohortDatabaseSchema = cohortDatabaseSchema,
                                           cohortTable = cohortTable,

@@ -8,10 +8,12 @@ Changes:
 - Various improvements to plots for consistent color, axis labels and labels
 - Visit context table addition
 - Diagnostic explorer is now a distinct shiny application from phenotype library. PhenotypeExplorer is a stand alone shiny app in package PhenotypeLibrarian.
+- Lot of UX changes. Reactivity deferred on drop down menus.
 - Changes to improve app stability.
 2. Index event breakdown now has subject count
 3. Index event breakdown calculates _source_concept_id from source fields in CDM tables.
-4. Lot of UX changes. Reactivity deferred on drop down menus.
+4. Vocabulary database schema is now supported.
+5. Metadata (vocabulary version information from data source) is now collected.
 
 Bug fixes:
 

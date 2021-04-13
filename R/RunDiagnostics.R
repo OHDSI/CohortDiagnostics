@@ -28,6 +28,7 @@
 #' @template Connection
 #'
 #' @template CdmDatabaseSchema
+#' @template VocabularyDatabaseSchema
 #' @template CohortDatabaseSchema
 #' @template OracleTempSchema
 #'
@@ -93,6 +94,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  cdmDatabaseSchema,
                                  oracleTempSchema = NULL,
                                  cohortDatabaseSchema,
+                                 vocabularyDatabaseSchema = cdmDatabaseSchema,
                                  cohortTable = "cohort",
                                  cohortIds = NULL,
                                  inclusionStatisticsFolder = file.path(exportFolder, "inclusionStatistics"),
@@ -125,7 +127,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   
   start <- Sys.time()
   ParallelLogger::logInfo("Run Cohort Diagnostics started at ", start)
-  
+
   if (is.null(databaseName) | is.na(databaseName)) {
     databaseName <- databaseId
   }
@@ -151,6 +153,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           runTimeDistributions, runBreakdownIndexEvents, runIncidenceRate,
           runCohortOverlap, runCohortCharacterization)) {
     checkmate::assertCharacter(x = cdmDatabaseSchema, min.len = 1, add = errorMessage)
+    checkmate::assertCharacter(x = vocabularyDatabaseSchema, min.len = 1, add = errorMessage)
     checkmate::assertCharacter(x = cohortDatabaseSchema, min.len = 1, add = errorMessage)
     checkmate::assertCharacter(x = cohortTable, min.len = 1, add = errorMessage)
     checkmate::assertCharacter(x = databaseId, min.len = 1, add = errorMessage)
@@ -214,11 +217,6 @@ runCohortDiagnostics <- function(packageName = NULL,
                paste0(requiredButNotObsevered, collapse = ", ")))
   }
   
-  if (length(expectedButNotObsevered) > 0) {
-    warning(paste("The following columns are recommended but missing from the cohort table.", 
-                  paste0(expectedButNotObsevered ,collapse = ", ")))
-  }
-  
   if ('logicDescription' %in% expectedButNotObsevered) {
     cohorts$logicDescription <- cohorts$cohortName
   }
@@ -275,6 +273,28 @@ runCohortDiagnostics <- function(packageName = NULL,
       stop("No connection or connectionDetails provided.")
     }
   }
+  
+  vocabularyVersionCdm <-
+    DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = "select * from @cdm_database_schema.cdm_source;",
+      cdm_database_schema = cdmDatabaseSchema,
+      snakeCaseToCamelCase = TRUE
+    ) %>%
+    dplyr::tibble() %>%
+    dplyr::rename(vocabularyVersionCdm = .data$vocabularyVersion) %>% 
+    dplyr::pull(vocabularyVersionCdm)
+  
+  vocabularyVersion <-
+    DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = "select * from @vocabulary_database_schema.vocabulary where vocabulary_id = 'None';",
+      vocabulary_database_schema = vocabularyDatabaseSchema,
+      snakeCaseToCamelCase = TRUE
+    ) %>%
+    dplyr::tibble() %>%
+    dplyr::rename(vocabularyVersion = .data$vocabularyVersion) %>% 
+    dplyr::pull(.data$vocabularyVersion)
   
   if (incremental) {
     ParallelLogger::logDebug("Working in incremental mode.")
@@ -336,7 +356,6 @@ runCohortDiagnostics <- function(packageName = NULL,
                                    camelCaseToSnakeCase = TRUE)
     ParallelLogger::logTrace("Done inserting")
   }
-  
   
   # Counting cohorts -----------------------------------------------------------------------
   ParallelLogger::logInfo("Counting cohort records and subjects")
@@ -414,6 +433,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     runConceptSetDiagnostics(connection = connection,
                              oracleTempSchema = oracleTempSchema,
                              cdmDatabaseSchema = cdmDatabaseSchema,
+                             vocabularyDatabaseSchema = vocabularyDatabaseSchema,
                              databaseId = databaseId,
                              cohorts = cohorts,
                              runIncludedSourceConcepts = runIncludedSourceConcepts,
@@ -772,6 +792,12 @@ runCohortDiagnostics <- function(packageName = NULL,
   ParallelLogger::logInfo("Results are ready for sharing at: ", zipName)
   
   delta <- Sys.time() - start
+  metaData <- dplyr::tibble(databaseId = databaseId,
+                            variableField = c('vocabularyVersionCdm', 'vocabularyVersion'),
+                            valueField = c(vocabularyVersionCdm, vocabularyVersion))
+  writeToCsv(data = metaData,
+             fileName = "metaData.csv")
+  
   ParallelLogger::logInfo("Computing all diagnostics took ", signif(delta, 3), " ", attr(delta, "units"))
 }
 

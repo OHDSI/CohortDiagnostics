@@ -155,6 +155,7 @@ statistics are computed and stored in the inclusion rule statistics tables descr
   cohortId <span class='op'>=</span> <span class='cn'>NULL</span>,
   generateInclusionStats <span class='op'>=</span> <span class='cn'>FALSE</span>,
   resultsDatabaseSchema <span class='op'>=</span> <span class='va'>cohortDatabaseSchema</span>,
+  vocabularyDatabaseSchema <span class='op'>=</span> <span class='va'>cdmDatabaseSchema</span>,
   cohortInclusionTable <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span><span class='op'>(</span><span class='va'>cohortTable</span>, <span class='st'>"_inclusion"</span><span class='op'>)</span>,
   cohortInclusionResultTable <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span><span class='op'>(</span><span class='va'>cohortTable</span>, <span class='st'>"_inclusion_result"</span><span class='op'>)</span>,
   cohortInclusionStatsTable <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span><span class='op'>(</span><span class='va'>cohortTable</span>, <span class='st'>"_inclusion_stats"</span><span class='op'>)</span>,
@@ -229,6 +230,13 @@ provided if <code>baseUrl</code> and <code>cohortId</code> are provided.</p></td
       <td><p>Schema name where the statistics tables reside. Note that for
 SQL Server, this should include both the database and schema
 name, for example 'scratch.dbo'.</p></td>
+    </tr>
+    <tr>
+      <th>vocabularyDatabaseSchema</th>
+      <td><p>Schema name where your OMOP vocabulary data resides. This is 
+commonly the same as cdmDatabaseSchema. Note that for 
+SQL Server, this should include both the database and
+schema name, for example 'vocabulary.dbo'.</p></td>
     </tr>
     <tr>
       <th>cohortInclusionTable</th>

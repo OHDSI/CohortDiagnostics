@@ -15,6 +15,7 @@ runCohortDiagnostics(
   cdmDatabaseSchema,
   oracleTempSchema = NULL,
   cohortDatabaseSchema,
+  vocabularyDatabaseSchema = cdmDatabaseSchema,
   cohortTable = "cohort",
   cohortIds = NULL,
   inclusionStatisticsFolder = file.path(exportFolder, "inclusionStatistics"),
@@ -94,6 +95,11 @@ privileges for storing temporary tables.}
 \item{cohortDatabaseSchema}{Schema name where your cohort table resides. Note that for SQL Server,
 this should include both the database and schema name, for example
 'scratch.dbo'.}
+
+\item{vocabularyDatabaseSchema}{Schema name where your OMOP vocabulary data resides. This is 
+commonly the same as cdmDatabaseSchema. Note that for 
+SQL Server, this should include both the database and
+schema name, for example 'vocabulary.dbo'.}
 
 \item{cohortTable}{Name of the cohort table.}
 

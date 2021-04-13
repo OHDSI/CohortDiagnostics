@@ -170,6 +170,7 @@ mergeTempTables <- function(connection, tableName, tempTables, oracleTempSchema)
 instantiateUniqueConceptSets <- function(uniqueConceptSets,
                                          connection,
                                          cdmDatabaseSchema,
+                                         vocabularyDatabaseSchema = cdmDatabaseSchema,
                                          oracleTempSchema,
                                          conceptSetsTable = '#inst_concept_sets') {
   ParallelLogger::logInfo("Instantiating concept sets")
@@ -193,7 +194,7 @@ instantiateUniqueConceptSets <- function(uniqueConceptSets,
     sqlSubset <- sql[start:end]
     sqlSubset <- paste(sqlSubset, collapse = "\n\n  UNION ALL\n\n")
     sqlSubset <- sprintf("SELECT *\nINTO %s\nFROM (\n %s\n) tmp;", tempTable, sqlSubset)
-    sqlSubset <- SqlRender::render(sqlSubset, vocabulary_database_schema = cdmDatabaseSchema)
+    sqlSubset <- SqlRender::render(sqlSubset, vocabulary_database_schema = vocabularyDatabaseSchema)
     sqlSubset <- SqlRender::translate(sqlSubset,
                                       targetDialect = connection@dbms,
                                       oracleTempSchema = oracleTempSchema)
@@ -233,6 +234,7 @@ getCodeSetIds <- function(criterionList) {
 runConceptSetDiagnostics <- function(connection,
                                      oracleTempSchema,
                                      cdmDatabaseSchema,
+                                     vocabularyDatabaseSchema = cdmDatabaseSchema,
                                      databaseId,
                                      cohorts,
                                      runIncludedSourceConcepts,
@@ -301,6 +303,7 @@ runConceptSetDiagnostics <- function(connection,
   instantiateUniqueConceptSets(uniqueConceptSets = uniqueConceptSets,
                                connection = connection,
                                cdmDatabaseSchema = cdmDatabaseSchema,
+                               vocabularyDatabaseSchema = vocabularyDatabaseSchema,
                                oracleTempSchema = oracleTempSchema,
                                conceptSetsTable = "#inst_concept_sets")
   
@@ -535,6 +538,7 @@ runConceptSetDiagnostics <- function(connection,
                                                    dbms = connection@dbms,
                                                    oracleTempSchema = oracleTempSchema,
                                                    cdm_database_schema = cdmDatabaseSchema,
+                                                   vocabulary_database_schema = vocabularyDatabaseSchema,
                                                    cohort_database_schema = cohortDatabaseSchema,
                                                    cohort_table = cohortTable,
                                                    cohort_id = cohort$cohortId,

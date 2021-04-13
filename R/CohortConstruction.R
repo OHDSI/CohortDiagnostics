@@ -300,6 +300,8 @@ createCohortTable <- function(connectionDetails = NULL,
 #' @template OracleTempSchema
 #'
 #' @template CdmDatabaseSchema
+#' 
+#' @template VocabularyDatabaseSchema
 #'
 #' @param cohortId                     The cohort ID used to reference the cohort in the cohort table.
 #' @param generateInclusionStats       Compute and store inclusion rule statistics?
@@ -328,6 +330,7 @@ instantiateCohort <- function(connectionDetails = NULL,
                               cohortId = NULL,
                               generateInclusionStats = FALSE,
                               resultsDatabaseSchema = cohortDatabaseSchema,
+                              vocabularyDatabaseSchema = cdmDatabaseSchema,
                               cohortInclusionTable = paste0(cohortTable, "_inclusion"),
                               cohortInclusionResultTable = paste0(cohortTable, "_inclusion_result"),
                               cohortInclusionStatsTable = paste0(cohortTable, "_inclusion_stats"),
@@ -376,7 +379,7 @@ instantiateCohort <- function(connectionDetails = NULL,
   if (generateInclusionStats) {
     sql <- SqlRender::render(sql,
                              cdm_database_schema = cdmDatabaseSchema,
-                             vocabulary_database_schema = cdmDatabaseSchema,
+                             vocabulary_database_schema = vocabularyDatabaseSchema,
                              target_database_schema = cohortDatabaseSchema,
                              target_cohort_table = cohortTable,
                              target_cohort_id = cohortId,
@@ -395,7 +398,7 @@ instantiateCohort <- function(connectionDetails = NULL,
   } else {
     sql <- SqlRender::render(sql,
                              cdm_database_schema = cdmDatabaseSchema,
-                             vocabulary_database_schema = cdmDatabaseSchema,
+                             vocabulary_database_schema = vocabularyDatabaseSchema,
                              target_database_schema = cohortDatabaseSchema,
                              target_cohort_table = cohortTable,
                              target_cohort_id = cohortId)
@@ -524,6 +527,8 @@ processInclusionStats <- function(inclusion,
 #'
 #' @template CdmDatabaseSchema
 #' 
+#' @template VocabularyDatabaseSchema
+#' 
 #' @template CohortSetSpecs
 #' 
 #' @template CohortSetReference
@@ -545,6 +550,7 @@ processInclusionStats <- function(inclusion,
 instantiateCohortSet <- function(connectionDetails = NULL,
                                  connection = NULL,
                                  cdmDatabaseSchema,
+                                 vocabularyDatabaseSchema,
                                  oracleTempSchema = NULL,
                                  cohortDatabaseSchema = cdmDatabaseSchema,
                                  cohortTable = "cohort",
@@ -623,7 +629,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
       if (generateInclusionStats) {
         sql <- SqlRender::render(sql,
                                  cdm_database_schema = cdmDatabaseSchema,
-                                 vocabulary_database_schema = cdmDatabaseSchema,
+                                 vocabulary_database_schema = vocabularyDatabaseSchema,
                                  target_database_schema = cohortDatabaseSchema,
                                  target_cohort_table = cohortTable,
                                  target_cohort_id = cohorts$cohortId[i],
@@ -634,7 +640,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
       } else {
         sql <- SqlRender::render(sql,
                                  cdm_database_schema = cdmDatabaseSchema,
-                                 vocabulary_database_schema = cdmDatabaseSchema,
+                                 vocabulary_database_schema = vocabularyDatabaseSchema,
                                  target_database_schema = cohortDatabaseSchema,
                                  target_cohort_table = cohortTable,
                                  target_cohort_id = cohorts$cohortId[i])
