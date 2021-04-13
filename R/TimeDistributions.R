@@ -35,7 +35,7 @@ getTimeDistributions <- function(connectionDetails = NULL,
                                                                   useDemographicsTimeInCohort = TRUE)
   
   data <- FeatureExtraction::getDbCovariateData(connection = connection,
-                                                tempEmulationSchema = tempEmulationSchema,
+                                                oracleTempSchema = tempEmulationSchema,
                                                 cdmDatabaseSchema = cdmDatabaseSchema,
                                                 cohortDatabaseSchema = cohortDatabaseSchema,
                                                 cohortTable = cohortTable,

@@ -38,7 +38,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
                                       end))
     }
     featureExtractionOutput <- FeatureExtraction::getDbCovariateData(connection = connection,
-                                                                     tempEmulationSchema = tempEmulationSchema,
+                                                                     oracleTempSchema = tempEmulationSchema,
                                                                      cdmDatabaseSchema = cdmDatabaseSchema,
                                                                      cohortDatabaseSchema = cohortDatabaseSchema,
                                                                      cdmVersion = cdmVersion,
