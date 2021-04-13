@@ -8,7 +8,7 @@ baseUrl <- Sys.getenv("OHDSIbaseUrl")
 connectionDetails <- Eunomia::getEunomiaConnectionDetails()
 cdmDatabaseSchema <- "main"
 cohortDatabaseSchema <- "main"
-vocabularyDatabase <- cohortDatabaseSchema
+vocabularyDatabaseSchema <- cohortDatabaseSchema
 cohortTable <- "cohort"
 oracleTempSchema <- NULL
 folder <- tempfile()
@@ -19,7 +19,7 @@ test_that("Cohort instantiation", {
                                           cdmDatabaseSchema = cdmDatabaseSchema,
                                           oracleTempSchema = oracleTempSchema,
                                           cohortDatabaseSchema = cohortDatabaseSchema,
-                                          vocabularyDatabase = vocabularyDatabase,
+                                          vocabularyDatabaseSchema = vocabularyDatabaseSchema,
                                           cohortTable = cohortTable,
                                           packageName = "CohortDiagnostics",
                                           cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
