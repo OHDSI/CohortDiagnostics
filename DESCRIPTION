@@ -28,6 +28,7 @@ Imports:
   ParallelLogger (>= 2.0.0),
   readr (>= 1.4.0),
   rlang,
+  purrr,
   RJSONIO,
   ROhdsiWebApi (>= 1.2.0),
   SqlRender (>= 1.7.0),

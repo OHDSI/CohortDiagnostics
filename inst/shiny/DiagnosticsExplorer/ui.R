@@ -312,7 +312,25 @@ bodyTabItems <- shinydashboard::tabItems(
                   inline = TRUE
                 )
               },
-              DT::dataTableOutput(outputId = "cohortDefinitionConceptSetsTable")
+              # DT::dataTableOutput(outputId = "conceptsetExpressionTable"),
+              shiny::conditionalPanel(
+                condition = "input.conceptSetsType == 'Concept Set Expression' | output.isDataSourceEnvironment == true",
+                DT::dataTableOutput(outputId = "conceptsetExpressionTable")
+              ),
+              shiny::conditionalPanel(
+                condition = "input.conceptSetsType == 'Included Standard Concepts'",
+                DT::dataTableOutput(outputId = "cohortDefinitionIncludedStandardConceptsTable")
+              ),
+              shiny::conditionalPanel(
+                condition = "input.conceptSetsType == 'Included Source Concepts'",
+                DT::dataTableOutput(outputId = "cohortDefinitionIncludedSourceConceptsTable")
+              ),
+              shiny::conditionalPanel(
+                condition = "output.conceptSetExpressionRowSelected == true &
+                input.conceptSetsType != 'Included Standard Concepts' &
+                input.conceptSetsType != 'Included Source Concepts'",
+                DT::dataTableOutput(outputId = "cohortDefinitionConceptSetsTable")
+              )
             ),
             shiny::tabPanel(
               title = "JSON",

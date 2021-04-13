@@ -153,6 +153,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           runTimeDistributions, runBreakdownIndexEvents, runIncidenceRate,
           runCohortOverlap, runCohortCharacterization)) {
     checkmate::assertCharacter(x = cdmDatabaseSchema, min.len = 1, add = errorMessage)
+    checkmate::assertCharacter(x = vocabularyDatabaseSchema, min.len = 1, add = errorMessage)
     checkmate::assertCharacter(x = cohortDatabaseSchema, min.len = 1, add = errorMessage)
     checkmate::assertCharacter(x = cohortTable, min.len = 1, add = errorMessage)
     checkmate::assertCharacter(x = databaseId, min.len = 1, add = errorMessage)
@@ -214,11 +215,6 @@ runCohortDiagnostics <- function(packageName = NULL,
   if (length(requiredButNotObsevered) > 0) {
     stop(paste("The following required fields not found in cohort table:", 
                paste0(requiredButNotObsevered, collapse = ", ")))
-  }
-  
-  if (length(expectedButNotObsevered) > 0) {
-    warning(paste("The following columns are recommended but missing from the cohort table.", 
-                  paste0(expectedButNotObsevered ,collapse = ", ")))
   }
   
   if ('logicDescription' %in% expectedButNotObsevered) {

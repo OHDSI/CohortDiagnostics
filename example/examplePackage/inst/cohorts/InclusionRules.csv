@@ -1,7 +1,0 @@
-cohortName,ruleSequence,ruleName,cohortId
-New_users_of_ACE_inhibitors_as_firstline_monotherapy_for_hypertension_2,0,has hypertension diagnosis in 1 yr prior to treatment,1770710
-New_users_of_ACE_inhibitors_as_firstline_monotherapy_for_hypertension_2,1,Has no prior antihypertensive drug exposures in medical history,1770710
-New_users_of_ACE_inhibitors_as_firstline_monotherapy_for_hypertension_2,2,"Is only taking ACE as monotherapy, with no concomitant combination treatments",1770710
-New_users_of_Thiazidelike_diuretics_as_firstline_monotherapy_for_hypertension_2,0,has hypertension diagnosis in 1 yr prior to treatment,1770711
-New_users_of_Thiazidelike_diuretics_as_firstline_monotherapy_for_hypertension_2,1,Has no prior antihypertensive drug exposures in medical history,1770711
-New_users_of_Thiazidelike_diuretics_as_firstline_monotherapy_for_hypertension_2,2,"Is only taking ACE as monotherapy, with no concomitant combination treatments",1770711
