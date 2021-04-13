@@ -24,7 +24,8 @@ shiny::shinyServer(function(input, output, session) {
     list(input$timeIdChoices_open,
          input$tabs)
   }, handlerExpr = {
-    if (isFALSE(input$timeIdChoices_open) || !is.null(input$tabs)) {
+    if (exists('temporalCovariateChoices') && 
+        (isFALSE(input$timeIdChoices_open) || !is.null(input$tabs))) {
       selectedTimeIds <- temporalCovariateChoices %>%
         dplyr::filter(choices %in% input$timeIdChoices) %>%
         dplyr::pull(timeId)
@@ -49,7 +50,9 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   shiny::observe({
-    if (!is.null(conceptSets) && nrow(conceptSets) > 0) {
+    if (exists('conceptSets') &&
+        !is.null(conceptSets) && 
+        nrow(conceptSets) > 0) {
       subset <-
         unique(conceptSets$conceptSetName[conceptSets$cohortId == cohortId()]) %>% sort()
       shinyWidgets::updatePickerInput(
@@ -449,7 +452,7 @@ shiny::shinyServer(function(input, output, session) {
     stratifyByGender <- "Gender" %in% input$irStratification
     stratifyByCalendarYear <-
       "Calendar Year" %in% input$irStratification
-    if (length(cohortIds()) > 0) {
+    if (exists('incidenceRate') && length(cohortIds()) > 0) {
       data <- getIncidenceRateResult(
         dataSource = dataSource,
         cohortIds = cohortIds(),
