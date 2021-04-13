@@ -8,6 +8,7 @@ baseUrl <- Sys.getenv("OHDSIbaseUrl")
 connectionDetails <- Eunomia::getEunomiaConnectionDetails()
 cdmDatabaseSchema <- "main"
 cohortDatabaseSchema <- "main"
+vocabularyDatabase <- cohortDatabaseSchema
 cohortTable <- "cohort"
 oracleTempSchema <- NULL
 folder <- tempfile()
