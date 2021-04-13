@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-packageName = "EunomiaCohortDiagnostics"
+packageName = "examplePackage"
 # remotes::install_github("OHDSI/CohortDiagnostics",
 #                         ref = "develop",
 #                         dependencies = TRUE)
