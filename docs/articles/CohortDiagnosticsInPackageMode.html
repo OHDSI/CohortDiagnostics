@@ -91,7 +91,7 @@
       <h1 data-toc-skip>Cohort Diagnostics in an OHDSI Package mode</h1>
                         <h4 class="author">Gowtham A. Rao</h4>
             
-            <h4 class="date">2021-04-11</h4>
+            <h4 class="date">2021-04-12</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/master/vignettes/CohortDiagnosticsInPackageMode.Rmd"><code>vignettes/CohortDiagnosticsInPackageMode.Rmd</code></a></small>
       <div class="hidden name"><code>CohortDiagnosticsInPackageMode.Rmd</code></div>
@@ -109,53 +109,107 @@
 <h2 class="hasAnchor">
 <a href="#assumptions" class="anchor"></a>Assumptions:</h2>
 <ul>
-<li>You have the ability to create cohort definitions on an Atlas instance.</li>
-<li>You are able to (manually) export those cohort definitions from Atlas by going to the ‘export’ tab on the Cohorts menu of Atlas, or you are able to use ROhdsiWebApi (recommended) to (automatically) extract cohort definitions from Atlas/WebApi.</li>
-<li>You have R-studio installed with OHDSI R-package ROhdsiWebApi, CohortDiagnostics and all their dependencies.</li>
-<li>You have access (via R) to a data in OMOP CDM V5.x + format on a database.</li>
-<li>You have Create, Read, Update, Delete privileges on a schema in the same database.</li>
+<li>You have a set of valid cohort definition sql files (in parameterized OHDSI Sql format) that you want to run diagnostics on, or you are able to export cohort definitions that you want to diagnose from Atlas by using the export tab within cohort definition module of Atlas or using ROhdsiWebApi as described <a href="https://ohdsi.github.io/ROhdsiWebApi/articles/InsertCohortDefinitionsIntoPackage.html">here</a>.</li>
+<li>You have access to person level data in OMOP CDM V5.x + format on a database, are able to execute and instantiate cohorts in cohort tables (i.e. you have access to a schema in the same database with Create, Read, Update, Delete privileges.)</li>
 </ul>
 </div>
-<div id="defining-the-set-of-cohorts-to-diagnose" class="section level2">
+<div id="identifying-cohorts" class="section level2">
 <h2 class="hasAnchor">
-<a href="#defining-the-set-of-cohorts-to-diagnose" class="anchor"></a>Defining the set of cohorts to diagnose</h2>
-<p>The first step is to define the set of cohorts we wish to run cohort diagnostics. Cohort definitions are almost always authored using OHDSI Atlas (few exceptions, e.g. SQL only cohorts not covered in this vignette). The process of authoring cohort definitions are beyond the scope of this vignette. It is assumed that you have a cohort definition, and have access to its definition as both JSON and OHDSI SQL specification.</p>
-<p>To execute Cohort Diagnostics, you need to have the following information for each of your cohorts.</p>
+<a href="#identifying-cohorts" class="anchor"></a>identifying cohorts:</h2>
+<p>The cohorts to diagnose should have two attributes to them.</p>
 <ul>
 <li>
-<strong>phenotypeId</strong>: This is an integer ID for a phenotype in the OHDSI Phenotype Library. Please see <a href="https://github.com/ohdsi/phenotypeLibrary">OHDSI Phenotype Library</a> for list of existing phenotypeIds. If you believe that your phenotype is not currently in the OHDSI Phenotype library, please make a proposal for a new phenotype. If you are unable to assign a phenotypeId, then please assign the value 0.</li>
-<li>
-<strong>cohortId</strong>: A unique integer identifier for the cohort you are diagnosing. If you intend to contribute your cohort diagnostics results to the OHDSI phenotype library, then this cohortId and its corresponding JSON/SQL expression is expected to match the expression in the phenotoype library. If you do not intend to contribute, then this field may be any unique integer id to uniquely identify your cohort id. In such cases, cohortId is generally the same as webApiCohortId.</li>
-<li>
-<strong>webApiCohortId</strong>: The unique integer id of your cohort in your Atlas/WebApi instance. This is used to extract cohort definitions from your webapi/Atlas using ROhsdiWebApi.</li>
+<strong>id</strong>: A unique integer identifier for the cohort you are diagnosing. If you created your cohort using atlas, this is your atlas id.</li>
 <li>
 <strong>cohortName</strong>: The unique string name for your cohort. Usually it is the same as your Atlas cohort name, but it can be any name you wish to identify your cohort. This name will be used to display your cohort in the Diagnostics Explorer shiny app.</li>
-<li>
-<strong>logicDescription</strong>: In this field, please concisely (not more than two short sentences) describe the logic behind your cohort definition. The purpose of this field is to help you, or someone else, easiy identify this cohort definition and contrast it to other similar cohort definitions.</li>
 </ul>
+<p>Example:</p>
 <table class="table">
 <colgroup>
-<col width="18%">
-<col width="22%">
-<col width="13%">
-<col width="22%">
-<col width="22%">
+<col width="44%">
+<col width="55%">
 </colgroup>
 <thead><tr class="header">
-<th align="right">phenotypeId</th>
-<th align="left">webApiCohortId</th>
-<th align="right">cohortName</th>
-<th align="left">logicDescription</th>
-<th align="left">cohortId</th>
+<th align="right">id</th>
+<th align="left">cohortName</th>
 </tr></thead>
 <tbody><tr class="odd">
-<td align="right">4112853000</td>
-<td align="left">17561</td>
-<td align="right">[PL 4112853001] Malignant tumor of breast referent concept incident cohort: First occurrence of referent concept + descendants with &gt;=365d prior observation</td>
-<td align="left">Incident cohort based on referent concept id</td>
-<td align="left">4112853001</td>
+<td align="right">17561</td>
+<td align="left">[PL 4112853001] Malignant tumor of breast referent concept incident cohort: First occurrence of referent concept + descendants with &gt;=365d prior observation</td>
 </tr></tbody>
 </table>
+</div>
+<div id="option-a-using-hydra-and-rohdsiwebapi" class="section level2">
+<h2 class="hasAnchor">
+<a href="#option-a-using-hydra-and-rohdsiwebapi" class="anchor"></a>option A: Using Hydra and ROhdsiWebApi</h2>
+<p>The skeleton cohort diagnostics study package is <a href="https://github.com/OHDSI/SkeletonCohortDiagnostics">here</a>. A skeleton package is a special package that is designed to be used with <a href="https://github.com/OHDSI/Hydra">Hydra</a>. The input for Hydra is study a specifications file (in json format). Example is <a href="https://github.com/OHDSI/Hydra/blob/master/extras/ExampleCohortDiagnosticsSpecs.json">here</a>.</p>
+<p>We can create this json using the shiny app ‘Diagnostics Editor’ available here(XXXXXX). A version is deployed at data.ohdsi.org/XXXXXXXXXXXXX. The user interface of this shiny app allows you to make selections that are then used to create the specifications json file. The application also allows you to hydrate a package using Hydra, and download a .zip that contains your study package.</p>
+<p>Alternatively, you can take the example specification-json file and edit it in notepad. You can then use to create the study package as follows</p>
+<p>XXXXXXXXXx</p>
+<p>Now you may install your package and execute the study.</p>
+</div>
+<div id="option-b-using-only-rohdsiwebapi" class="section level2">
+<h2 class="hasAnchor">
+<a href="#option-b-using-only-rohdsiwebapi" class="anchor"></a>option B: using only ROhdsiWebApi</h2>
+<p>Start with the skeleton cohort diagnostics study package is <a href="https://github.com/OHDSI/SkeletonCohortDiagnostics">here</a>. See Vignette from ROhdsiWebApi <a href="https://ohdsi.github.io/ROhdsiWebApi/articles/InsertCohortDefinitionsIntoPackage.html">here</a>. Create the ‘CohortsToCreate.csv’ file by extracting the cohorts from your atlas as described. Now, open your study package and run</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu">ROhdsiWebApi</span><span class="fu">::</span><span class="fu"><a href="https://ohdsi.github.io/ROhdsiWebApi/reference/insertCohortDefinitionSetInPackage.html">insertCohortDefinitionSetInPackage</a></span><span class="op">(</span>fileName <span class="op">=</span> <span class="st">"CohortsToCreate.csv"</span>,
+                                                 baseUrl <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Sys.getenv.html">Sys.getenv</a></span><span class="op">(</span><span class="st">"baseUrl"</span><span class="op">)</span>,
+                                                 insertTableSql <span class="op">=</span> <span class="cn">TRUE</span>,
+                                                 insertCohortCreationR <span class="op">=</span> <span class="cn">TRUE</span>,
+                                                 generateStats <span class="op">=</span> <span class="cn">TRUE</span>,
+                                                 packageName <span class="op">=</span> <span class="st">"SkeletonCohortDiagnosticsStudy"</span><span class="op">)</span></code></pre></div>
+<p>This will create the relevant files in your package.</p>
+<p>The next step is to rename the generic name of the package ‘SkeletonCohortDiagnosticsStudy’ into something more meaningful to identify your study such as ‘CandidateHypertensionCohorts’. One way of doing this is to use Notepad ++ find and replace ‘SkeletonCohortDiagnosticsStudy’ with a name for your study. Also change the ‘SkeletonCohortDiagnosticsStudy.Rproj’ to your study name ‘CandidateHypertensionCohorts.Rproj’.</p>
+<p>Now you may install your package and execute the study.</p>
+</div>
+<div id="option-c-manual-advanced-users" class="section level2">
+<h2 class="hasAnchor">
+<a href="#option-c-manual-advanced-users" class="anchor"></a>Option C: Manual (advanced users)</h2>
+<p>Start with the skeleton cohort diagnostics study package is <a href="https://github.com/OHDSI/SkeletonCohortDiagnostics">here</a>. Manually populate the <a href="https://github.com/OHDSI/SkeletonCohortDiagnostics/blob/main/inst/settings/CohortsToCreate.csv">CohortToCreate.csv file</a> with the atlasId, cohortId and cohortName. In most cases atlasId = cohortId and should be an integer. cohortName is a meaningful name to identify your cohorts.</p>
+<p>Next - create a new folder called ‘sql’ in the ‘inst’ folder and put all your SQLs. The sql file should be named to match the cohortId e.g. if the cohortId is 1232 then the sql file should be 1232.sql. Optionally, you can also add the cohort json in another folder in ‘inst’ folder of your package called ‘cohorts’. The names of the cohorts should be the same as the sql files, except they will end with .json instead of .sql.</p>
+<p>If your cohorts have inclusion-rules, then you will have to create a file called ‘InclusionRules.csv’ and populate it as shown in this example:</p>
+<table class="table">
+<thead><tr class="header">
+<th>cohortName</th>
+<th>ruleSequence</th>
+<th>ruleName</th>
+<th>cohortId</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>14907</td>
+<td>0</td>
+<td>With no history of gastrointestinal hemorrhage</td>
+<td>14907</td>
+</tr>
+<tr class="even">
+<td>18349</td>
+<td>0</td>
+<td>Gender is male</td>
+<td>18349</td>
+</tr>
+<tr class="odd">
+<td>18350</td>
+<td>0</td>
+<td>Gender is male</td>
+<td>18350</td>
+</tr>
+<tr class="even">
+<td>18350</td>
+<td>1</td>
+<td>Metabolic disease at any time</td>
+<td>18350</td>
+</tr>
+<tr class="odd">
+<td>18352</td>
+<td>0</td>
+<td>With gastrointestinal hemorrhage at some point</td>
+<td>18352</td>
+</tr>
+</tbody>
+</table>
+<p>Now you may install your package and execute the study.</p>
 </div>
 </div>
   </div>
