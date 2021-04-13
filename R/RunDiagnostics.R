@@ -153,6 +153,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           runTimeDistributions, runBreakdownIndexEvents, runIncidenceRate,
           runCohortOverlap, runCohortCharacterization)) {
     checkmate::assertCharacter(x = cdmDatabaseSchema, min.len = 1, add = errorMessage)
+    checkmate::assertCharacter(x = vocabularyDatabaseSchema, min.len = 1, add = errorMessage)
     checkmate::assertCharacter(x = cohortDatabaseSchema, min.len = 1, add = errorMessage)
     checkmate::assertCharacter(x = cohortTable, min.len = 1, add = errorMessage)
     checkmate::assertCharacter(x = databaseId, min.len = 1, add = errorMessage)
