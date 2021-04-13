@@ -184,6 +184,7 @@ test_that("Record keeping of multiple tasks at once", {
 
 test_that("Incremental save", {
   tmpFile <- tempfile()
+  tmpFile <- "D:\\git\\github\\test.csv"
   data <- dplyr::tibble(cohortId = c(1, 1, 2, 2, 3), 
                          count = c(100, 200, 300, 400, 500)) 
   CohortDiagnostics:::saveIncremental(data, tmpFile, cohortId = c(1, 2, 3))
@@ -199,10 +200,10 @@ test_that("Incremental save", {
                                  count = c(500, 600, 700, 800)) 
   
   
-  expect_equal(readr::read_csv(tmpFile, 
-                               col_types = readr::cols(),
-                               guess_max = min(1e7)),
-               goldStandard)
+  expect_equivalent(readr::read_csv(tmpFile, 
+                                    col_types = readr::cols(),
+                                    guess_max = min(1e7)),
+                    goldStandard)
   unlink(tmpFile)
 })
 
@@ -216,9 +217,9 @@ test_that("Incremental save with empty key", {
   
   CohortDiagnostics:::saveIncremental(newData, tmpFile, cohortId = c())
   
-  expect_equal(readr::read_csv(tmpFile, 
-                               col_types = readr::cols(),
-                               guess_max = min(1e7)),
-               data)
+  expect_equivalent(readr::read_csv(tmpFile, 
+                                    col_types = readr::cols(),
+                                    guess_max = min(1e7)),
+                    data)
   unlink(tmpFile)
 })
