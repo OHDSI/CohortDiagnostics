@@ -326,8 +326,8 @@ bodyTabItems <- shinydashboard::tabItems(
                 DT::dataTableOutput(outputId = "cohortDefinitionIncludedSourceConceptsTable")
               ),
               shiny::conditionalPanel(
-                condition = "output.conceptSetExpressionRowSelected == true & 
-                input.conceptSetsType != 'Included Standard Concepts' &  
+                condition = "output.conceptSetExpressionRowSelected == true &
+                input.conceptSetsType != 'Included Standard Concepts' &
                 input.conceptSetsType != 'Included Source Concepts'",
                 DT::dataTableOutput(outputId = "cohortDefinitionConceptSetsTable")
               )
