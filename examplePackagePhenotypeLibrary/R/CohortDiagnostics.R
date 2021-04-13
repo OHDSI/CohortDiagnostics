@@ -121,7 +121,8 @@ runCohortDiagnostics <- function(connectionDetails,
   
   if (!is.null(packageName)) {
     if (file.exists(system.file("settings/PhenotypeDescription.csv", package = packageName))) {
-      phenotypeDescriptionFile <- system.file("settings/PhenotypeDescription.csv", package = packageName)
+      writeLines("Found PhenotypeDescription.csv")
+      phenotypeDescriptionFile <- "PhenotypeDescription.csv"
     }
   } else {
     phenotypeDescriptionFile <- NULL

@@ -10,7 +10,7 @@ cohortDatabaseSchema <- "main"
 cohortTable <- "cohortPhenotypeLibrary"
 databaseId <- "Eunomia"
 
-outputFolder <- file.path(rstudioapi::getActiveProject(), "outputFolder", "phenotypeLibrary", databaseId)
+outputFolder <- file.path(rstudioapi::getActiveProject(), "outputFolder", databaseId)
 unlink(x = outputFolder, recursive = TRUE, force = TRUE)
 dir.create(path = outputFolder, showWarnings = FALSE, recursive = TRUE)
 
