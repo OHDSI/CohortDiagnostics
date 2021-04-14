@@ -245,7 +245,7 @@ CREATE TABLE metadata (
 			database_id VARCHAR NOT NULL,
 			variable_field VARCHAR NOT NULL,
 			value_field VARCHAR,
-			PRIMARY KEY(database_id, variable)
+			PRIMARY KEY(database_id, variable_field)
 );
 
 --Table orphan_concept
