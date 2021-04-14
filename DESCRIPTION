@@ -49,6 +49,7 @@ Suggests:
   Eunomia,
   testthat,
   RSQLite (>= 2.2.1),
+  withr,
   zip
 Remotes:
   ohdsi/Eunomia,
