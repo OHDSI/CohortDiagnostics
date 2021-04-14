@@ -19,7 +19,13 @@ shiny::shinyServer(function(input, output, session) {
     return(cohort$cohortId[cohort$compoundName == input$comparatorCohort])
   })
   
-  timeId <- reactiveVal(NULL)
+  timeId <- shiny::reactive(x = {
+    temporalCovariateChoices %>%
+      dplyr::filter(choices %in% input$timeId) %>%
+      dplyr::pull(timeId)
+  })
+  
+  timeIds <- reactiveVal(NULL)
   shiny::observeEvent(eventExpr = {
     list(input$timeIdChoices_open,
          input$tabs)
@@ -30,7 +36,7 @@ shiny::shinyServer(function(input, output, session) {
       selectedTimeIds <- temporalCovariateChoices %>%
         dplyr::filter(choices %in% input$timeIdChoices) %>%
         dplyr::pull(timeId)
-      timeId(selectedTimeIds)
+      timeIds(selectedTimeIds)
     }
   })
   
@@ -1911,14 +1917,14 @@ shiny::shinyServer(function(input, output, session) {
   
   # Temporal characterization -----------------------------------------------------------------
   temporalCharacterization <- shiny::reactive({
-    validate(need(length(timeId()) > 0, "No time periods selected"))
+    validate(need(length(timeIds()) > 0, "No time periods selected"))
     validate(need(length(input$database) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
     data <- getCovariateValueResult(
       dataSource = dataSource,
       cohortIds = cohortId(),
       databaseIds = input$database,
-      timeIds = timeId(),
+      timeIds = timeIds(),
       isTemporal = TRUE
     ) %>%
       dplyr::select(-.data$cohortId, -.data$databaseId, -.data$covariateId)
@@ -1947,7 +1953,7 @@ shiny::shinyServer(function(input, output, session) {
       
       temporalCovariateChoicesSelected <-
         temporalCovariateChoices %>%
-        dplyr::filter(.data$timeId %in% c(timeId())) %>%
+        dplyr::filter(.data$timeId %in% c(timeIds())) %>%
         dplyr::arrange(.data$timeId)
       
       options = list(
@@ -2219,6 +2225,180 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
   })
   
+  #Compare Temporal Characterization.-----------------------------------------
+  
+  computeBalanceForCompareTemporalChar <- shiny::reactive({
+    validate(need((length(cohortId(
+      
+    )) > 0), paste0("Please select cohort.")))
+    validate(need((length(
+      comparatorCohortId()
+    ) > 0), paste0("Please select comparator cohort.")))
+    validate(need((comparatorCohortId() != cohortId()),
+                  paste0("Please select different cohort and comarator.")
+    ))
+    validate(need((length(input$database) > 0),
+                  paste0("Please select atleast one datasource.")
+    ))
+    validate(need((length(timeId()) > 0), paste0("Please select time id")))
+    
+    covs1 <- getCovariateValueResult(
+      dataSource = dataSource,
+      cohortIds = cohortId(),
+      databaseIds = input$database,
+      isTemporal = TRUE,
+      timeIds = timeId()
+    )
+    
+    covs2 <- getCovariateValueResult(
+      dataSource = dataSource,
+      cohortIds = comparatorCohortId(),
+      databaseIds = input$database,
+      isTemporal = TRUE,
+      timeIds = timeId()
+    )
+    
+    balance <- compareTemporalCohortCharacteristics(covs1, covs2) %>%
+      dplyr::mutate(absStdDiff = abs(.data$stdDiff))
+    return(balance)
+  })
+  
+  output$tempralcharacterizationCompareTable <- DT::renderDataTable(expr = {
+    balance <- computeBalanceForCompareTemporalChar()
+    if (nrow(balance) == 0) {
+      return(dplyr::tibble(Note = "No data for the selected combination."))
+    }
+    
+    if (input$temporalCharCompareType == "Pretty table") {
+      table <- prepareTable1Comp(balance)
+      if (nrow(table) > 0) {
+        table <- table %>%
+          dplyr::arrange(.data$sortOrder) %>%
+          dplyr::select(-.data$sortOrder) %>%
+          dplyr::select(-.data$cohortId1, -.data$cohortId2)
+      } else {
+        return(dplyr::tibble(Note = "No data for covariates that are part of pretty table."))
+      }
+      
+      options = list(
+        pageLength = 100,
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        scrollX = TRUE,
+        searchHighlight = TRUE,
+        lengthChange = TRUE,
+        ordering = FALSE,
+        paging = TRUE,
+        columnDefs = list(minCellPercentDef(1:2))
+      )
+      
+      table <- DT::datatable(
+        table,
+        options = options,
+        rownames = FALSE,
+        colnames = c("Characteristic", "Target", "Comparator", "Std. Diff."),
+        escape = FALSE,
+        filter = "top",
+        class = "stripe nowrap compact"
+      )
+      table <- DT::formatStyle(
+        table = table,
+        columns = 2:4,
+        background = DT::styleColorBar(c(0, 1), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+      table <- DT::formatStyle(
+        table = table,
+        columns = 4,
+        background = styleAbsColorBar(1, "lightblue", "pink"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+      table <- DT::formatRound(table, 4, digits = 2)
+    } else {
+      table <- balance %>%
+        dplyr::select(
+          .data$cohortId1,
+          .data$cohortId2,
+          .data$covariateName,
+          .data$conceptId,
+          .data$mean1,
+          .data$sd1,
+          .data$mean2,
+          .data$sd2,
+          .data$stdDiff
+        ) %>%
+        dplyr::select(-.data$cohortId1, -.data$cohortId2) %>%
+        dplyr::arrange(desc(abs(.data$stdDiff)))
+      
+      options = list(
+        pageLength = 100,
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        searchHighlight = TRUE,
+        scrollX = TRUE,
+        lengthChange = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        columnDefs = list(truncateStringDef(0, 80),
+                          minCellRealDef(2:6, digits = 2))
+      )
+      
+      table <- DT::datatable(
+        table,
+        options = options,
+        rownames = FALSE,
+        colnames = c(
+          "Covariate Name",
+          "Concept ID",
+          "Mean Target",
+          "SD Target",
+          "Mean Comparator",
+          "SD Comparator",
+          "StdDiff"
+        ),
+        escape = FALSE,
+        filter = "top",
+        class = "stripe nowrap compact"
+      )
+      table <- DT::formatStyle(
+        table = table,
+        columns = c(3, 5),
+        background = DT::styleColorBar(c(0, 1), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+      table <- DT::formatStyle(
+        table = table,
+        columns = 7,
+        background = styleAbsColorBar(1, "lightblue", "pink"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+    }
+    return(table)
+  }, server = TRUE)
+  
+  output$temporalCharComparePlot <- ggiraph::renderggiraph(expr = {
+    data <- computeBalanceForCompareTemporalChar()
+    if (nrow(data) == 0) {
+      return(dplyr::tibble(Note = "No data for the selected combination."))
+    }
+    plot <-
+      plotTemporalCompareStandardizedDifference(
+        balance = data,
+        shortNameRef = cohort,
+        domain = input$compareTemporalCharDomainId
+      )
+    return(plot)
+  })
+  
+  
   output$databaseInformationTable <- DT::renderDataTable(expr = {
     table <- database[, c("databaseId", "databaseName", "description")]
     options = list(
@@ -2243,6 +2423,7 @@ shiny::shinyServer(function(input, output, session) {
     )
     return(table)
   }, server = TRUE)
+  
   
   # Infoboxes ------------------------------------------------------------------------
   showInfoBox <- function(title, htmlFileName) {
