@@ -2,13 +2,15 @@ library(CohortDiagnostics)
 library(Eunomia)
 library(examplePackagePhenotypeLibrary)
 
+temporaryLocation <- tempdir()
+
 connectionDetails <- Eunomia::getEunomiaConnectionDetails()
 cdmDatabaseSchema <- "main"
 cohortDatabaseSchema <- "main"
 cohortTable <- "cohortPhenotypeLibrary"
 databaseId <- "Eunomia"
 
-outputFolder <- file.path(tempdir(), "outputFolder", "packageMode", "eunomia", databaseId)
+outputFolder <- file.path(temporaryLocation, "outputFolder", "packageMode", "eunomia", databaseId)
 unlink(x = outputFolder, recursive = TRUE, force = TRUE)
 dir.create(path = outputFolder, showWarnings = FALSE, recursive = TRUE)
 

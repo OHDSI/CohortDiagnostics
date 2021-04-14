@@ -1,5 +1,7 @@
 source(Sys.getenv("startUpScriptLocation"))
 
+temporaryLocation <- tempdir()
+
 library(CohortDiagnostics)
 library(examplePackagePhenotypeLibrary)
 
@@ -29,7 +31,7 @@ connectionDetails <- DatabaseConnector::createConnectionDetails(
 
 cohortTable <- "cohort"
 
-outputFolder <- file.path(tempdir(), "outputFolder", "packageMode", "realData", databaseId)
+outputFolder <- file.path(temporaryLocation, "outputFolder", "packageMode", "realData", databaseId)
 unlink(x = outputFolder,
        recursive = TRUE,
        force = TRUE)

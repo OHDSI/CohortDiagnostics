@@ -82,12 +82,11 @@ for (i in (1:nrow(webApiCohorts))) {
                                       baseUrl = baseUrl)
   cohortsToCreate[[i]] <- tidyr::tibble(
     atlasId = webApiCohorts$id[[i]],
-    atlasName = stringr::str_trim(stringr::str_squish(cohortDefinition$name),
+    atlasName = stringr::str_trim(string = stringr::str_squish(cohortDefinition$name)),
     cohortId = webApiCohorts$id[[i]],
     name = stringr::str_trim(stringr::str_squish(cohortDefinition$name))
-  )
+    )
 }
-
 cohortsToCreate <- dplyr::bind_rows(cohortsToCreate)
 
 readr::write_excel_csv(x = cohortsToCreate, na = "", 
