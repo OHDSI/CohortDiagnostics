@@ -41,6 +41,30 @@ rmarkdown::render("vignettes/CohortDiagnosticsInPackageMode.Rmd",
                                           toc = TRUE,
                                           number_sections = TRUE))
 
+rmarkdown::render("vignettes/ViewingResultsUsingDiagnosticsExplorer.Rmd",
+                  output_file = "../inst/doc/ViewingResultsUsingDiagnosticsExplorer.pdf",
+                  rmarkdown::pdf_document(latex_engine = "pdflatex",
+                                          toc = TRUE,
+                                          number_sections = TRUE))
+
+rmarkdown::render("vignettes/DatabaseModeInDiagnosticsExplorer.Rmd",
+                  output_file = "../inst/doc/DatabaseModeInDiagnosticsExplorer.pdf",
+                  rmarkdown::pdf_document(latex_engine = "pdflatex",
+                                          toc = TRUE,
+                                          number_sections = TRUE))
+
+rmarkdown::render("vignettes/WhatIsCohortDiagnostics.Rmd",
+                  output_file = "../inst/doc/WhatIsCohortDiagnostics.pdf",
+                  rmarkdown::pdf_document(latex_engine = "pdflatex",
+                                          toc = TRUE,
+                                          number_sections = TRUE))
+
+rmarkdown::render("vignettes/RunningCohortDiagnostics.Rmd",
+                  output_file = "../inst/doc/RunningCohortDiagnostics.pdf",
+                  rmarkdown::pdf_document(latex_engine = "pdflatex",
+                                          toc = TRUE,
+                                          number_sections = TRUE))
+
 pkgdown::build_site()
 OhdsiRTools::fixHadesLogo()
 
