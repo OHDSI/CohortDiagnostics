@@ -190,7 +190,7 @@ sidebarMenu <-
       input.tabs != 'timeDistribution'",
       shinyWidgets::pickerInput(
         inputId = "cohort",
-        label = "Cohorts",
+        label = "Cohort",
         choices = c(""),
         multiple = FALSE,
         choicesOpt = list(style = rep_len("color: black;", 999)),
