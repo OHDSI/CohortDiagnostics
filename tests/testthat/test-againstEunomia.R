@@ -102,6 +102,12 @@ test_that("Cohort diagnostics in incremental mode", {
     )
   )
   testthat::expect_lt(secondTime[1], firstTime[1])
+  
+  # generate premerged file
+  CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = file.path(folder, "export"))
+  testthat::expect_true(file.exists(file.path(
+    folder, "export", "PreMerged.RData"
+  )))
 })
 
 unlink(folder, recursive = TRUE)
