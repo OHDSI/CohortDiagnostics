@@ -10,7 +10,6 @@ instantiateCohort(
   cdmDatabaseSchema,
   oracleTempSchema = NULL,
   tempEmulationSchema = NULL,
-  OracleTempSchema = NULL,
   cohortDatabaseSchema = cdmDatabaseSchema,
   cohortTable = "cohort",
   baseUrl = NULL,
