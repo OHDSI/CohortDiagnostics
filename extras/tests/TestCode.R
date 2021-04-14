@@ -1,52 +1,32 @@
+source(Sys.getenv("startUpScriptLocation"))
 library(CohortDiagnostics)
+library('examplePackagePhenotypeLibrary')
+
+# Connection specification
+connectionSpecifications <- cdmSources %>%
+  dplyr::filter(sequence == 1) %>%
+  dplyr::filter(database == 'truven_ccae')
+dbms <- connectionSpecifications$dbms
+port <- connectionSpecifications$port
+server <- connectionSpecifications$server
+cdmDatabaseSchema <- connectionSpecifications$cdmDatabaseSchema
+vocabDatabaseSchema <- connectionSpecifications$vocabDatabaseSchema
+databaseId <- connectionSpecifications$database
+tempEmulationSchema <- NULL
+cohortDatabaseSchema = 'scratch_grao9'
+userNameService = "OHDA_USER"
+passwordService = "OHDA_PASSWORD"
+
+connectionDetails <- DatabaseConnector::createConnectionDetails(
+  dbms = dbms,
+  user = keyring::key_get(service = userNameService),
+  password = keyring::key_get(service = passwordService),
+  port = port,
+  server = server
+)
 
 ParallelLogger::addDefaultErrorReportLogger()
 
-# PDW --------------------------------------------------------
-connectionDetails <- createConnectionDetails(dbms = "pdw",
-                                             server = Sys.getenv("PDW_SERVER"),
-                                             port = Sys.getenv("PDW_PORT"))
-tempEmulationSchema <- NULL
-workDatabaseSchema <- "scratch.dbo"
-
-
-# Using private cohort table: cdmDatabaseSchema <- 'CDM_IBM_MDCR_V1062.dbo'
-cdmDatabaseSchema <- "CDM_jmdc_v1063.dbo"
-cohortDatabaseSchema <- workDatabaseSchema
-resultsDatabaseSchema <- workDatabaseSchema
-cohortTable <- "mschuemi_temp"
-databaseId <- "JMDC"
-
-# Using ATLAS cohort table:
-cohortDatabaseSchema <- "CDM_IBM_MDCR_V1062.dbo"
-resultsDatabaseSchema <- "CDM_IBM_MDCR_V1062.ohdsi_results"
-
-# RedShift --------------------------------------------------------
-connectionDetails <- createConnectionDetails(dbms = "redshift",
-                                             connectionString = Sys.getenv("jmdcRedShiftConnectionString"),
-                                             user = Sys.getenv("redShiftUser"),
-                                             password = Sys.getenv("redShiftPassword"))
-tempEmulationSchema <- NULL
-workDatabaseSchema <- "scratch_mschuemi"
-cdmDatabaseSchema <- "cdm"
-cohortDatabaseSchema <- workDatabaseSchema
-resultsDatabaseSchema <- workDatabaseSchema
-cohortTable <- "mschuemi_temp"
-databaseId <- "JMDC"
-
-connection <- connect(connectionDetails)
-DatabaseConnector::getTableNames(connection, "scratch_mschuemI")
-disconnect(connection)
-
-baseUrl <- Sys.getenv("baseUrl")
-
-cohortId <- 7399  # LEGEND Cardiac Arrhythmia
-
-cohortId <- 7362  # LEGEND cardiovascular-related mortality
-
-cohortId <- 13567  # Test cohort with two initial event criteria
-
-cohortId <- 5665  # Zoledronic acid new users with prostate cancer (many inclusion rules)
 
 
 # Cohort construction (when not using ATLAS cohorts) -------------------------------------

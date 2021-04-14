@@ -8,7 +8,6 @@ runCohortDiagnostics(
   connectionDetails,
   cdmDatabaseSchema,
   vocabularyDatabaseSchema = cdmDatabaseSchema,
-  packageName,
   cohortDatabaseSchema = cdmDatabaseSchema,
   cohortTable = "cohort",
   tempEmulationSchema = cohortDatabaseSchema,
@@ -47,8 +46,6 @@ include both the database and schema name, for example
 commonly the same as cdmDatabaseSchema. Note that for 
 SQL Server, this should include both the database and
 schema name, for example 'vocabulary.dbo'.}
-
-\item{packageName}{The package to look for study specifications}
 
 \item{cohortDatabaseSchema}{Schema name where intermediate data can be stored. You
 will need to have write privileges in this schema. Note

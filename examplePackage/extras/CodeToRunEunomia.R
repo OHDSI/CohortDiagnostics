@@ -2,8 +2,6 @@ library(CohortDiagnostics)
 library(Eunomia)
 library(examplePackage)
 
-packageName <- 'examplePackage'
-
 connectionDetails <- Eunomia::getEunomiaConnectionDetails()
 cdmDatabaseSchema <- "main"
 cohortDatabaseSchema <- "main"
@@ -15,7 +13,6 @@ unlink(x = outputFolder, recursive = TRUE, force = TRUE)
 dir.create(path = outputFolder, showWarnings = FALSE, recursive = TRUE)
 
 examplePackage::runCohortDiagnostics(
-  packageName = packageName,
   connectionDetails = connectionDetails,
   cdmDatabaseSchema = cdmDatabaseSchema,
   vocabularyDatabaseSchema = cdmDatabaseSchema,

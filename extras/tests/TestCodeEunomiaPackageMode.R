@@ -8,7 +8,7 @@ cohortDatabaseSchema <- "main"
 cohortTable <- "cohortPhenotypeLibrary"
 databaseId <- "Eunomia"
 
-outputFolder <- file.path(rstudioapi::getActiveProject(), "outputFolder", databaseId)
+outputFolder <- file.path(tempdir(), "outputFolder", "packageMode", "eunomia", databaseId)
 unlink(x = outputFolder, recursive = TRUE, force = TRUE)
 dir.create(path = outputFolder, showWarnings = FALSE, recursive = TRUE)
 
@@ -41,7 +41,7 @@ CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = outputFolder)
 CohortDiagnostics::launchDiagnosticsExplorer(dataFolder = outputFolder)
 
 
- 
+
 # connectionDetailsToUpload <- createConnectionDetails(dbms = "postgresql",
 #                                              server = paste(Sys.getenv("shinydbServer"),
 #                                                             Sys.getenv("shinydbDatabase"),

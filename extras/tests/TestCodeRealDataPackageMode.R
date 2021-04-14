@@ -3,6 +3,7 @@ source(Sys.getenv("startUpScriptLocation"))
 library(CohortDiagnostics)
 library(examplePackagePhenotypeLibrary)
 
+packageName <- 'examplePackagePhenotypeLibrary'
 connectionSpecifications <- cdmSources %>%
   dplyr::filter(sequence == 1) %>%
   dplyr::filter(database == 'truven_ccae')
@@ -28,7 +29,7 @@ connectionDetails <- DatabaseConnector::createConnectionDetails(
 
 cohortTable <- "cohort"
 
-outputFolder <- file.path(rstudioapi::getActiveProject(), "outputFolder", databaseId)
+outputFolder <- file.path(tempdir(), "outputFolder", "packageMode", "realData", databaseId)
 unlink(x = outputFolder,
        recursive = TRUE,
        force = TRUE)
@@ -36,6 +37,7 @@ dir.create(path = outputFolder,
            showWarnings = FALSE,
            recursive = TRUE)
 
+# the function below is a private function that gets meta information about data sources
 dataSouceInformation <-
   getDataSourceInformation(
     connectionDetails = connectionDetails,
@@ -79,8 +81,8 @@ CohortDiagnostics::launchDiagnosticsExplorer(dataFolder = outputFolder)
 #                                                             Sys.getenv("shinydbDatabase"),
 #                                                             sep = "/"),
 #                                              port = Sys.getenv("shinydbPort"),
-#                                              user = Sys.getenv("shinyDbUserGowtham"),
-#                                              password = Sys.getenv("shinyDbPasswordGowtham"))
+#                                              user = Sys.getenv("shinyDbUser"),
+#                                              password = Sys.getenv("shinyDbPassword"))
 #
 #
 # resultsSchema <- "examplePackagePhenotypeLibraryCdTruven"
