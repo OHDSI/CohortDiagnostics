@@ -349,12 +349,12 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "cohortCounts",
-    cohortReference("cohortCountsSelectedCohort"),
+    cohortReference("cohortCountsSelectedCohorts"),
     DT::dataTableOutput("cohortCountsTable"),
   ),
   shinydashboard::tabItem(
     tabName = "incidenceRate",
-    cohortReference("incidenceRateSelectedCohort"),
+    cohortReference("incidenceRateSelectedCohorts"),
     shinydashboard::box(
       title = "Incidence Rate",
       width = NULL,
@@ -453,7 +453,7 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "timeDistribution",
-    cohortReference("timeDistSelectedCohort"),
+    cohortReference("timeDistSelectedCohorts"),
     shiny::radioButtons(
       inputId = "timeDistributionType",
       label = "",
@@ -476,6 +476,7 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "includedConcepts",
+    cohortReference("includedConceptsSelectedCohort"),
     shiny::radioButtons(
       inputId = "includedType",
       label = "",
@@ -486,6 +487,7 @@ bodyTabItems <- shinydashboard::tabItems(
     DT::dataTableOutput("includedConceptsTable")
   ),
   shinydashboard::tabItem(tabName = "orphanConcepts",
+                          cohortReference("orphanConceptsSelectedCohort"),
                           DT::dataTableOutput("orphanConceptsTable")),
   shinydashboard::tabItem(
     tabName = "inclusionRuleStats",
