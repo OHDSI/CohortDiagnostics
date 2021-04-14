@@ -350,11 +350,14 @@ uploadResults <- function(connectionDetails = NULL,
         if (nrow(chunk) == 0) {
           ParallelLogger::logInfo("- No data left to insert")
         } else {
-          insertDataIntoDb(connection = connection,
-                           connectionDetails = connectionDetails,
-                           schema = env$schema,
-                           tableName = env$tableName,
-                           data = chunk)
+
+          DatabaseConnector::insertTable(connection = connection,
+                                         tableName = paste(env$schema, env$tableName, sep = "."),
+                                         data = chunk,
+                                         dropTableIfExists = FALSE,
+                                         createTable = FALSE,
+                                         tempTable = FALSE,
+                                         progressBar = TRUE)
         }
       }
       readr::read_csv_chunked(file = file.path(unzipFolder, csvFileName),
@@ -416,96 +419,6 @@ deleteAllRecordsForDatabaseId <- function(connection,
                              database_id = databaseId)
     DatabaseConnector::executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
   }
-}
-
-insertDataIntoDb <- function(connection,
-                             connectionDetails,
-                             schema,
-                             tableName,
-                             data) {
-  if (nrow(data) < 1e4 || is.null(Sys.getenv("POSTGRES_PATH"))) {
-    ParallelLogger::logInfo("- Inserting ", nrow(data), " rows into database")
-    DatabaseConnector::insertTable(connection = connection,
-                                   tableName = paste(schema, tableName, sep = "."),
-                                   data = data,
-                                   dropTableIfExists = FALSE,
-                                   createTable = FALSE,
-                                   tempTable = FALSE,
-                                   progressBar = TRUE)
-  } else {
-    ParallelLogger::logInfo("- Inserting ", nrow(data), " rows into database using bulk import")
-    tempFile <- tempfile(fileext = ".csv")
-    readr::write_excel_csv(data, tempFile)
-    on.exit(unlink(tempFile))
-    DatabaseConnector::executeSql(connection, "COMMIT;", progressBar = FALSE, reportOverallTime = FALSE)
-    bulkUploadTable(connectionDetails = connectionDetails,
-                    schema = schema,
-                    csvFileName = tempFile,
-                    tableName = tableName)
-  }
-}
-
-bulkUploadTable <- function(connectionDetails,
-                            schema,
-                            csvFileName,
-                            tableName) {
-  startTime <- Sys.time()
-  
-  # For backwards compatibility with older versions of DatabaseConnector:
-  if (is(connectionDetails$server, "function")) {
-    hostServerDb <- strsplit(connectionDetails$server(), "/")[[1]]
-    port <- connectionDetails$port()
-    user <- connectionDetails$user()
-    password <- connectionDetails$password()
-  } else {
-    hostServerDb <- strsplit(connectionDetails$server, "/")[[1]]
-    port <- connectionDetails$port
-    user <- connectionDetails$user
-    password <- connectionDetails$password
-  }
-  
-  # Required by psql:
-  Sys.setenv("PGPASSWORD" = password)
-  rm(password)
-  on.exit(Sys.unsetenv("PGPASSWORD"))
-  
-  if (.Platform$OS.type == "windows") {
-    winPsqlPath <- Sys.getenv("POSTGRES_PATH")
-    command <- file.path(winPsqlPath, "psql.exe")
-    if (!file.exists(command)) {
-      stop("Could not find psql.exe in ", winPsqlPath)
-    }
-    command <- paste0("\"", command, "\"")
-  } else {
-    command <- "psql"
-  }
-  
-  head <- readr::read_csv(file = csvFileName, n_max = 1, col_types = readr::cols())
-  headers <- paste(names(head), collapse = ", ")
-  headers <- paste0("(", headers, ")")
-  tablePath <- paste(schema, tableName, sep = ".")
-  filePathStr <- paste0("'", csvFileName, "'")
-  
-  if (is.null(port)) {
-    port <- 5432
-  }
-  copyCommand <- paste(command,
-                       "-h", hostServerDb[[1]], # Host
-                       "-d", hostServerDb[[2]], # Database
-                       "-p", port,
-                       "-U", user,
-                       "-c \"\\copy", tablePath,
-                       headers,
-                       "FROM", filePathStr,
-                       "NULL 'NA' DELIMITER ',' CSV HEADER;\"")
-  
-  result <- base::system(copyCommand)
-  
-  if (result != 0) {
-    stop("Error while bulk uploading data, psql returned a non zero status. Status = ", result)
-  }
-  delta <- Sys.time() - startTime
-  writeLines(paste("Uploading data took", signif(delta, 3), attr(delta, "units")))
 }
 
 convertMdToHtml <- function(markdown) {
