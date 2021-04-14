@@ -1473,8 +1473,12 @@ shiny::shinyServer(function(input, output, session) {
     databaseIds <- unique(data$databaseId)
     
     if ("subjectCount" %in% names(data)) {
-      data <- data %>%
+      data <- data %>% 
         dplyr::arrange(.data$databaseId) %>%
+        dplyr::select(.data$conceptId, .data$conceptName, .data$databaseId,
+                      .data$vocabularyId, .data$conceptCount, .data$subjectCount) %>% 
+        dplyr::distinct() %>% # distinct is needed here because many time condition_concept_id and condition_source_concept_id 
+        # may have the same value leading to duplication of row records
         tidyr::pivot_wider(
           id_cols = c(
             "conceptId",
@@ -1535,8 +1539,12 @@ shiny::shinyServer(function(input, output, session) {
         backgroundPosition = "center"
       )
     } else {
-      data <- data %>%
+      data <-  data %>% 
         dplyr::arrange(.data$databaseId) %>%
+        dplyr::select(.data$conceptId, .data$conceptName, .data$databaseId,
+                      .data$vocabularyId, .data$conceptCount) %>% 
+        dplyr::distinct() %>% # distinct is needed here because many time condition_concept_id and condition_source_concept_id 
+        # may have the same value
         tidyr::pivot_wider(
           id_cols = c(
             "conceptId",
