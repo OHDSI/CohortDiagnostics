@@ -1383,18 +1383,26 @@ shiny::shinyServer(function(input, output, session) {
   
   # Index event breakdown ----------------------------------------------------------------
   indexEventBreakDownData <- shiny::reactive(x = {
-    data <- getIndexEventBreakdown(
-      dataSource = dataSource,
-      cohortIds = cohortId(),
-      databaseIds = databaseIds()
-    )
-    
+    if (length(cohortId()) > 0 &&
+        length(databaseIds()) > 0) {
+      data <- getIndexEventBreakdown(
+        dataSource = dataSource,
+        cohortIds = cohortId(),
+        databaseIds = databaseIds()
+      )
+    } else {
+      data <- NULL
+    }
     return(data)
   })
   
   domaintable <- shiny::reactive(x = {
-    return(indexEventBreakDownData() %>% 
-             dplyr::pull(.data$domainTable) %>% unique())
+    if (!is.null(indexEventBreakDownData())) {
+      return(indexEventBreakDownData() %>% 
+               dplyr::pull(.data$domainTable) %>% unique())
+    } else {
+      return(NULL)
+    }
   })
   
   shiny::observe({
@@ -1409,9 +1417,13 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   shiny::observe({
-    data <- indexEventBreakDownData() %>% 
+    data <- indexEventBreakDownData()
+    if (!is.null(data) &&
+        nrow(data) > 0) {
+     data <- data %>% 
       dplyr::filter(.data$domainTable %in% input$breakdownDomainTable) %>% 
       dplyr::pull(.data$domainField) %>% unique()
+    }
     
     shinyWidgets::updatePickerInput(
       session = session,
