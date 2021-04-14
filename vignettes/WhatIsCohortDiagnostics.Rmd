@@ -1,5 +1,5 @@
 ---
-  title: "What is Cohort Diagnostics?"
+title: "What is Cohort Diagnostics?"
 author: "Gowtham Rao"
 date: "`r Sys.Date()`"
 output:
