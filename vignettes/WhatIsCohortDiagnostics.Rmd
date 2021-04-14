@@ -34,3 +34,13 @@ The CohortDiagnostics package in general works in two steps:
 
 The use of Cohort Diagnostics is a recommended best practice to help improve the confidence in your cohort definitions. 
 
+Features
+========
+- Show cohort inclusion rule attrition. 
+- List all source codes used when running a cohort definition on a specific database.
+- Find orphan codes, (source) codes that should be, but are not included in a particular concept set.
+- Compute cohort incidence across calendar years, age, and gender.
+- Break down index events into the specific concepts that triggered them.
+- Compute overlap between two cohorts.
+- Characterize cohorts, and compare these characterizations. Perform cohort comparison and temporal comparisons. 
+- Explore patient profiles of a random sample of subjects in a cohort.
