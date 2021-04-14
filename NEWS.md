@@ -15,6 +15,8 @@ Changes:
 4. Vocabulary database schema is now supported.
 5. Metadata (vocabulary version information from data source) is now collected.
 6. OracleTempSchema use deprecated in favor of tempEmulationSchema.
+7. Run against external concept count has been removed, as concept counts data is not available. Function 'runCohortDiagnosticsUsingExternalCounts' is removed.
+8. Removed code related to referentConceptId = phenotypeId/1000 as it does not always hold true.
 
 Bug fixes:
 
