@@ -334,6 +334,73 @@ plotCohortComparisonStandardizedDifference <- function(balance,
   return(plot)
 }
 
+plotTemporalCompareStandardizedDifference <- function(balance, 
+                                                       shortNameRef = NULL,
+                                                       domain = "all") {
+  domains <- c("condition", "device", "drug", "measurement", "observation", "procedure")
+  balance$domain <- tolower(stringr::str_extract(balance$covariateName, "[a-z]+"))
+  balance$domain[!balance$domain %in% domains] <- "other"
+  if (domain != "all") {
+    balance <- balance %>%
+      dplyr::filter(.data$domain == !!domain)
+  }
+  
+  validate(need((nrow(balance) > 0), paste0("No data for selected combination.")))
+  
+  # Can't make sense of plot with > 1000 dots anyway, so remove 
+  # anything with small mean in both target and comparator:
+  if (nrow(balance) > 1000) {
+    balance <- balance %>%
+      dplyr::filter(.data$mean1 > 0.01 | .data$mean2 > 0.01)
+  }
+  
+  balance <- balance %>%
+    addShortName(shortNameRef = shortNameRef,
+                 cohortIdColumn = "cohortId1",
+                 shortNameColumn = "targetCohort") %>%
+    addShortName(shortNameRef = shortNameRef,
+                 cohortIdColumn = "cohortId2",
+                 shortNameColumn = "comparatorCohort")
+  
+  # ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 3, alpha = 0.6)
+  balance$tooltip <- c(paste0("Covariate Name: ", balance$covariateName,
+                              "\nDomain: ", balance$domain,
+                              "\nMean ", balance$targetCohort, ": ", scales::comma(balance$mean1, accuracy = 0.1),
+                              "\nMean ", balance$comparatorCohort, ": ", scales::comma(balance$mean2, accuracy = 0.1),
+                              "\nStd diff.:", scales::comma(balance$stdDiff, accuracy = 0.1)))
+  
+  # Code used to generate palette:
+  # writeLines(paste(RColorBrewer::brewer.pal(n = length(domains), name = "Dark2"), collapse = "\", \""))
+  
+  # Make sure colors are consistent, no matter which domains are included:
+  colors <- c("#1B9E77", "#D95F02", "#7570B3", "#E7298A", "#66A61E", "#E6AB02", "#444444")
+  colors <- colors[c(domains, "other") %in% unique(balance$domain)]
+  
+  balance$domain <- factor(balance$domain, levels = c(domains, "other"))
+  
+  # targetLabel <- paste(strwrap(targetLabel, width = 50), collapse = "\n")
+  # comparatorLabel <- paste(strwrap(comparatorLabel, width = 50), collapse = "\n")
+  
+  
+  plot <- ggplot2::ggplot(balance, ggplot2::aes(x = .data$mean1, y = .data$mean2, color = .data$domain)) +
+    ggiraph::geom_point_interactive(ggplot2::aes(tooltip = .data$tooltip), size = 3,shape = 16, alpha = 0.5) +
+    ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
+    ggplot2::geom_hline(yintercept = 0) +
+    ggplot2::geom_vline(xintercept = 0) +             
+    ggplot2::scale_x_continuous("Mean") +
+    ggplot2::scale_y_continuous("Mean") +
+    ggplot2::scale_color_manual("Domain", values = colors) +
+    facet_nested(databaseId + targetCohort ~ comparatorCohort) +
+    ggplot2::theme(strip.background = ggplot2::element_blank())
+  
+  plot <- ggiraph::girafe(ggobj = plot,
+                          options = list(
+                            ggiraph::opts_sizing(width = .7),
+                            ggiraph::opts_zoom(max = 5)),width_svg = 12,
+                          height_svg = 5)
+  return(plot)
+}
+
 plotCohortOverlap <- function(data,
                               shortNameRef = NULL,
                               yAxis = "Percentages") {
