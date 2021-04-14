@@ -1412,7 +1412,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$domainTable %in% selectedDomainTable()) %>% 
       dplyr::filter(.data$domainField %in% selectedDomainField()) %>% 
       dplyr::select(-.data$domainTable, .data$domainField,
-                    -.data$domainId, 
+                    -.data$domainId, -.data$vocabulary,
                     -.data$standardConcept)
     
     if (nrow(data) == 0) {
