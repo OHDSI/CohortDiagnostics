@@ -244,7 +244,7 @@ uploadResults <- function(connectionDetails = NULL,
   ParallelLogger::logInfo("Unzipping ", zipFileName)
   zip::unzip(zipFileName, exdir = unzipFolder)
   
-  specifications = getResultsDataModelSpecifications()
+  specifications <- getResultsDataModelSpecifications()
   
   if (purgeSiteDataBeforeUploading) {
     database <- readr::read_csv(file = file.path(unzipFolder, "database.csv"), col_types = readr::cols())

@@ -31,35 +31,12 @@ withr::defer({
 
 test_that("Create schema", {
   createResultsDataModel(connectionDetails = connectionDetails, schema = cohortDiagnosticsSchema)
-  assert_true(.tableExists(connection, "analysis_ref"))
-  assert_true(.tableExists(connection, "cohort"))
-  assert_true(.tableExists(connection, "cohort_count"))
-  assert_true(.tableExists(connection, "cohort_overlap"))
-  assert_true(.tableExists(connection, "concept"))
-  assert_true(.tableExists(connection, "concept_ancestor"))
-  assert_true(.tableExists(connection, "concept_relationship"))
-  assert_true(.tableExists(connection, "concept_sets"))
-  assert_true(.tableExists(connection, "concept_synonym"))
-  assert_true(.tableExists(connection, "covariate_ref"))
-  assert_true(.tableExists(connection, "covariate_value"))
-  assert_true(.tableExists(connection, "database"))
-  assert_true(.tableExists(connection, "domain"))
-  assert_true(.tableExists(connection, "incidence_rate"))
-  assert_true(.tableExists(connection, "included_source_concept"))
-  assert_true(.tableExists(connection, "inclusion_rule_stats"))
-  assert_true(.tableExists(connection, "index_event_breakdown"))
-  assert_true(.tableExists(connection, "metadata"))
-  assert_true(.tableExists(connection, "orphan_concept"))
-  assert_true(.tableExists(connection, "phenotype_description"))
-  assert_true(.tableExists(connection, "relationship"))
-  assert_true(.tableExists(connection, "temporal_analysis_ref"))
-  assert_true(.tableExists(connection, "temporal_covariate_ref"))
-  assert_true(.tableExists(connection, "temporal_covariate_value"))
-  assert_true(.tableExists(connection, "temporal_time_ref"))
-  assert_true(.tableExists(connection, "time_distribution"))
-  assert_true(.tableExists(connection, "visit_context"))
-  assert_true(.tableExists(connection, "vocabulary"))
 
+  specifications <- getResultsDataModelSpecifications()
+
+  for (tableName in unique(specifications$tableName)) {
+    expect_true(.tableExists(connection, cohortDiagnosticsSchema, tableName))
+  }
   # Bad schema name
   expect_error(createResultsDataModel(connection = connection, schema = "non_existant_schema"))
 })
@@ -113,4 +90,52 @@ test_that("Results upload", {
                   schema = cohortDiagnosticsSchema,
                   zipFileName = listOfZipFilesToUpload[[i]])
   }
+
+  specifications <- getResultsDataModelSpecifications()
+
+  for (tableName in unique(specifications$tableName)) {
+
+    primaryKey <- specifications %>%
+      filter(.data$tableName == !!tableName & .data$primaryKey == "Yes") %>%
+      select(.data$fieldName) %>%
+      pull()
+
+    if ("database_id" %in% primaryKey) {
+      sql <- "SELECT COUNT(*) FROM @schema.@table_name WHERE database_id = '@database_id';"
+      sql <- SqlRender::render(sql = sql,
+                               schema = schema,
+                               table_name = tableName,
+                               database_id = databaseId)
+      databaseIdCount <- DatabaseConnector::querySql(connection, sql)[, 1]
+      expect_true(databaseIdCount =! 0)
+    }
+  }
+})
+
+test_that("Data removal works", {
+  specifications <- getResultsDataModelSpecifications()
+
+  for (tableName in unique(specifications$tableName)) {
+
+   primaryKey <- specifications %>%
+      filter(.data$tableName == !!tableName & .data$primaryKey == "Yes") %>%
+      select(.data$fieldName) %>%
+      pull()
+
+    if ("database_id" %in% primaryKey) {
+      deleteAllRecordsForDatabaseId(connection = connection,
+                                    schema = cohortDiagnosticsSchema,
+                                    tableName = tableName,
+                                    databaseId = "cdmv5")
+
+      sql <- "SELECT COUNT(*) FROM @schema.@table_name WHERE database_id = '@database_id';"
+      sql <- SqlRender::render(sql = sql,
+                               schema = cohortDiagnosticsSchema,
+                               table_name = tableName,
+                               database_id = databaseId)
+      databaseIdCount <- DatabaseConnector::querySql(connection, sql)[, 1]
+      expect_true(databaseIdCount == 0)
+    }
+  }
+
 })
