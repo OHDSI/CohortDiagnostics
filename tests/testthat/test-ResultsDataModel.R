@@ -111,6 +111,4 @@ test_that("Results upload", {
                   schema = cohortDiagnosticsSchema,
                   zipFileName = listOfZipFilesToUpload[[i]])
   }
-
-  uploadPrintFriendly(connectionDetails = connectionDetails, schema = resultsSchema)
 })
