@@ -1385,13 +1385,26 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  selectedDomainTable <- shiny::reactive(x = {
-    return(input$breakdownDomainTable)
+  selectedDomainTable <- reactiveVal(NULL)
+  shiny::observeEvent(eventExpr = {
+    list(input$breakdownDomainTable_open,
+         input$tabs)
+  }, handlerExpr = {
+    if (isFALSE(input$breakdownDomainTable_open) || !is.null(input$tabs)) {
+      selectedDomainTable(input$breakdownDomainTable)
+    }
+  })
+
+  selectedDomainField <- reactiveVal(NULL)
+  shiny::observeEvent(eventExpr = {
+    list(input$breakdownDomainField_open,
+         input$tabs)
+  }, handlerExpr = {
+    if (isFALSE(input$breakdownDomainField_open) || !is.null(input$tabs)) {
+      selectedDomainField(input$breakdownDomainField)
+    }
   })
   
-  selectedDomainField <- shiny::reactive(x = {
-    return(input$breakdownDomainField)
-  })
   output$breakdownTable <- DT::renderDataTable(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen chosen"))
@@ -1399,7 +1412,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$domainTable %in% selectedDomainTable()) %>% 
       dplyr::filter(.data$domainField %in% selectedDomainField()) %>% 
       dplyr::select(-.data$domainTable, .data$domainField,
-                    -.data$domainId, -.data$vocabulary,
+                    -.data$domainId, 
                     -.data$standardConcept)
     
     if (nrow(data) == 0) {
@@ -1464,7 +1477,7 @@ shiny::shinyServer(function(input, output, session) {
       
       dataTable <- DT::formatStyle(
         table = dataTable,
-        columns = 7 + 1:(length(databaseIds) * 2),
+        columns = 2 + 1:(length(databaseIds) * 2),
         background = DT::styleColorBar(c(0, maxCount), "lightblue"),
         backgroundSize = "98% 88%",
         backgroundRepeat = "no-repeat",
@@ -1512,7 +1525,7 @@ shiny::shinyServer(function(input, output, session) {
       
       dataTable <- DT::formatStyle(
         table = dataTable,
-        columns = 5 + 1:(length(databaseIds)),
+        columns = 2 + 1:(length(databaseIds)),
         background = DT::styleColorBar(c(0, maxCount), "lightblue"),
         backgroundSize = "98% 88%",
         backgroundRepeat = "no-repeat",
