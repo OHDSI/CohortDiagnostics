@@ -10,8 +10,8 @@ html_document:
 toc: yes
 vignette: >
   %\VignetteIndexEntry{WhatIsCohortDiagnostics}
-%\VignetteEncoding{UTF-8}    
-%\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}    
+  %\VignetteEngine{knitr::rmarkdown}
 ---
   
   ```{r, echo = FALSE, message = FALSE}

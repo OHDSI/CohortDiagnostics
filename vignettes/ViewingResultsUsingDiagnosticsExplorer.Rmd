@@ -9,7 +9,7 @@ output:
     number_sections: yes
     toc: yes
 vignette: >
-  %\VignetteIndexEntry{Viewing results using Diagnostics Explorer
+  %\VignetteIndexEntry{Viewing results using Diagnostics Explorer}
   %\VignetteEncoding{UTF-8}    
   %\VignetteEngine{knitr::rmarkdown}
 ---
