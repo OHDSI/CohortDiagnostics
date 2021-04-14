@@ -574,6 +574,11 @@ instantiateCohortSet <- function(connectionDetails = NULL,
                                  incremental = FALSE,
                                  incrementalFolder = NULL) {
   
+  if (!is.null(cohortSetReference)) {
+    ParallelLogger::logInfo("Found cohortSetReference. Cohort Diagnostics is running in WebApi mode.")
+    cohortToCreateFile <- NULL
+  }
+  
   if (!is.null(oracleTempSchema) && is.null(tempEmulationSchema)) {
     tempEmulationSchema <- oracleTempSchema
     warning('OracleTempSchema has been deprecated by DatabaseConnector')

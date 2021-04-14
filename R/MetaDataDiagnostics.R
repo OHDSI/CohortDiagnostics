@@ -35,7 +35,6 @@
                                            packageName = "CohortDiagnostics",
                                            dbms = connection@dbms,
                                            tempEmulationSchema = tempEmulationSchema,
-                                           cdm_database_schema = cdmDatabaseSchema,
                                            vocabulary_database_schema = vocabularyDatabaseSchema,
                                            work_database_schema = conceptCountsDatabaseSchema,
                                            concept_counts_table = conceptCountsTable,
