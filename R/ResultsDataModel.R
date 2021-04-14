@@ -529,67 +529,73 @@ convertMdToHtml <- function(markdown) {
   return(html)
 }
 
-#' Upload print-friendly cohort representations to the database server.
-#' 
-#' @description 
-#' For all the cohorts in the 'cohort' table, this will generate print-friendly text and store it
-#' in a new table called 'cohort_extra'. 
-#'
-#' @param connectionDetails   An object of type \code{connectionDetails} as created using the
-#'                            \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-#'                            DatabaseConnector package. 
-#' @param schema         The schema on the postgres server where the results are stored.
-#'
-#' @export
-uploadPrintFriendly <- function(connectionDetails = NULL,
-                                schema) {
-  
-  startTime <- Sys.time()
-  ensure_installed("CirceR")
-  ensure_installed("rmarkdown")
-  # ensure_installed("stringi")
-  
-  connection <- DatabaseConnector::connect(connectionDetails)
-  on.exit(DatabaseConnector::disconnect(connection))
-  
-  ParallelLogger::logInfo("Retrieving cohort JSON from server")
-  sql <- "SELECT cohort_id, json FROM @schema.cohort;"
-  cohort <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                                       sql = sql,
-                                                       schema = schema,
-                                                       snakeCaseToCamelCase = TRUE) %>%
-    dplyr::tibble()
-  
-  ParallelLogger::logInfo("Generating print-friendly")
-  cohort$html <- ""
-  pb <- pb <- txtProgressBar(style = 3)
-  for (i in 1:nrow(cohort)) {
-    tryCatch({
-      expression <- CirceR::cohortExpressionFromJson(cohort$json[i])
-      expressionMarkdown <- CirceR::cohortPrintFriendly(expression)
-      conceptSetListmarkdown <- CirceR::conceptSetListPrintFriendly(expression$conceptSets)
-      cohort$html[i] <- convertMdToHtml(paste(expressionMarkdown, conceptSetListmarkdown, sep = "\n\n"))
-    }, error = function(e) {
-      ParallelLogger::logWarn("Error generating print-friendly for cohort ID ", cohort$cohortId[i], ": ", e$message)
-      cohort$html[i] <- "Could not generate print-friendly"
-    })
-    setTxtProgressBar(pb, i/nrow(cohort))
-  }
-  close(pb)
-  
-  ParallelLogger::logInfo("Uploading print-friendly to server")
-  cohort <- cohort %>%
-    dplyr::select(-.data$json)
-  
-  DatabaseConnector::insertTable(connection = connection,
-                                 tableName = paste(schema, "cohort_extra", sep = "."),
-                                 data = cohort,
-                                 dropTableIfExists = TRUE,
-                                 createTable = TRUE,
-                                 tempTable = FALSE,
-                                 progressBar = TRUE,
-                                 camelCaseToSnakeCase = TRUE)
-  
-  delta <- Sys.time() - startTime
-  writeLines(paste("Uploading print-friendly took", signif(delta, 3), attr(delta, "units")))
-}
+
+
+############### Note: removed upload print friendly in version 2.1 as it is not being used
+############### PhenotypeExplorer shiny app is able to call CirceR dynamically and does not need this to be precomputed
+############### DiagnosticsExplorer shiny app will not show print friendly version as it is designed for a smaller set of cohorts
+
+#' #' Upload print-friendly cohort representations to the database server.
+#' #' 
+#' #' @description 
+#' #' For all the cohorts in the 'cohort' table, this will generate print-friendly text and store it
+#' #' in a new table called 'cohort_extra'. 
+#' #'
+#' #' @param connectionDetails   An object of type \code{connectionDetails} as created using the
+#' #'                            \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
+#' #'                            DatabaseConnector package. 
+#' #' @param schema         The schema on the postgres server where the results are stored.
+#' #'
+#' #' @export
+#' uploadPrintFriendly <- function(connectionDetails = NULL,
+#'                                 schema) {
+#'   
+#'   startTime <- Sys.time()
+#'   ensure_installed("CirceR")
+#'   ensure_installed("rmarkdown")
+#'   # ensure_installed("stringi")
+#'   
+#'   connection <- DatabaseConnector::connect(connectionDetails)
+#'   on.exit(DatabaseConnector::disconnect(connection))
+#'   
+#'   ParallelLogger::logInfo("Retrieving cohort JSON from server")
+#'   sql <- "SELECT cohort_id, json FROM @schema.cohort;"
+#'   cohort <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
+#'                                                        sql = sql,
+#'                                                        schema = schema,
+#'                                                        snakeCaseToCamelCase = TRUE) %>%
+#'     dplyr::tibble()
+#'   
+#'   ParallelLogger::logInfo("Generating print-friendly")
+#'   cohort$html <- ""
+#'   pb <- pb <- txtProgressBar(style = 3)
+#'   for (i in 1:nrow(cohort)) {
+#'     tryCatch({
+#'       expression <- CirceR::cohortExpressionFromJson(cohort$json[i])
+#'       expressionMarkdown <- CirceR::cohortPrintFriendly(expression)
+#'       conceptSetListmarkdown <- CirceR::conceptSetListPrintFriendly(expression$conceptSets)
+#'       cohort$html[i] <- convertMdToHtml(paste(expressionMarkdown, conceptSetListmarkdown, sep = "\n\n"))
+#'     }, error = function(e) {
+#'       ParallelLogger::logWarn("Error generating print-friendly for cohort ID ", cohort$cohortId[i], ": ", e$message)
+#'       cohort$html[i] <- "Could not generate print-friendly"
+#'     })
+#'     setTxtProgressBar(pb, i/nrow(cohort))
+#'   }
+#'   close(pb)
+#'   
+#'   ParallelLogger::logInfo("Uploading print-friendly to server")
+#'   cohort <- cohort %>%
+#'     dplyr::select(-.data$json)
+#'   
+#'   DatabaseConnector::insertTable(connection = connection,
+#'                                  tableName = paste(schema, "cohort_extra", sep = "."),
+#'                                  data = cohort,
+#'                                  dropTableIfExists = TRUE,
+#'                                  createTable = TRUE,
+#'                                  tempTable = FALSE,
+#'                                  progressBar = TRUE,
+#'                                  camelCaseToSnakeCase = TRUE)
+#'   
+#'   delta <- Sys.time() - startTime
+#'   writeLines(paste("Uploading print-friendly took", signif(delta, 3), attr(delta, "units")))
+#' }

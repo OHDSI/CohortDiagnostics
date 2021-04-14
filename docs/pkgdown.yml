@@ -4,5 +4,9 @@ pkgdown_sha: ~
 articles:
   CohortDiagnosticsInPackageMode: CohortDiagnosticsInPackageMode.html
   CohortDiagnosticsUsingWebApi: CohortDiagnosticsUsingWebApi.html
-last_built: 2021-04-13T00:17Z
+  DatabaseModeInDiagnosticsExplorer: DatabaseModeInDiagnosticsExplorer.html
+  RunningCohortDiagnostics: RunningCohortDiagnostics.html
+  ViewingResultsUsingDiagnosticsExplorer: ViewingResultsUsingDiagnosticsExplorer.html
+  WhatIsCohortDiagnostics: WhatIsCohortDiagnostics.html
+last_built: 2021-04-14T11:08Z
 

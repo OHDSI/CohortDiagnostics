@@ -11,12 +11,6 @@ cohortTable <- "cohort"
 tempEmulationSchema <- NULL
 folder <- tempfile()
 dir.create(folder, recursive = TRUE)
-connection <- DatabaseConnector::connect(connectionDetails)
-
-withr::defer({
-  unlink(folder, recursive = TRUE)
-  DatabaseConnector::disconnect(connection)
-}, testthat::teardown_env())
 
 test_that("Cohort instantiation", {
   CohortDiagnostics::instantiateCohortSet(
@@ -32,7 +26,9 @@ test_that("Cohort instantiation", {
     createCohortTable = TRUE,
     inclusionStatisticsFolder = file.path(folder, "incStats")
   )
-
+  
+  
+  connection <- DatabaseConnector::connect(connectionDetails)
   sql <-
     "SELECT COUNT(*) AS cohort_count, cohort_definition_id 
   FROM @cohort_database_schema.@cohort_table 
@@ -46,6 +42,7 @@ test_that("Cohort instantiation", {
       snakeCaseToCamelCase = TRUE
     )
   testthat::expect_gt(nrow(counts), 2)
+  DatabaseConnector::disconnect(connection)
 })
 
 test_that("Cohort diagnostics in incremental mode", {
@@ -105,4 +102,12 @@ test_that("Cohort diagnostics in incremental mode", {
     )
   )
   testthat::expect_lt(secondTime[1], firstTime[1])
+  
+  # generate premerged file
+  CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = file.path(folder, "export"))
+  testthat::expect_true(file.exists(file.path(
+    folder, "export", "PreMerged.RData"
+  )))
 })
+
+unlink(folder, recursive = TRUE)

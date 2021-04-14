@@ -2252,9 +2252,22 @@ shiny::shinyServer(function(input, output, session) {
     return(input$comparatorCohort)
   })
   
-  output$cohortCountsSelectedCohort <-
+  
+  output$cohortCountsSelectedCohorts <-
     shiny::renderUI({
       selectedCohorts()
+    })
+  output$inclusionRuleStatSelectedCohort <-
+    shiny::renderUI({
+      selectedCohort()
+    })
+  output$includedConceptsSelectedCohort <-
+    shiny::renderUI({
+      selectedCohort()
+    })
+  output$orphanConceptsSelectedCohort <-
+    shiny::renderUI({
+      selectedCohort()
     })
   output$indexEventBreakdownSelectedCohort <-
     shiny::renderUI({
@@ -2272,11 +2285,11 @@ shiny::shinyServer(function(input, output, session) {
     shiny::renderUI({
       selectedCohorts()
     })
-  output$incidenceRateSelectedCohort <-
+  output$incidenceRateSelectedCohorts <-
     shiny::renderUI({
       selectedCohorts()
     })
-  output$timeDistSelectedCohort <-
+  output$timeDistSelectedCohorts <-
     shiny::renderUI({
       selectedCohorts()
     })

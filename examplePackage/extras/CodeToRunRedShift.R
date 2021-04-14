@@ -3,7 +3,6 @@ source(Sys.getenv("startUpScriptLocation"))
 library(CohortDiagnostics)
 library(examplePackage)
 
-packageName <- 'examplePackage'
 connectionSpecifications <- cdmSources %>%
   dplyr::filter(sequence == 1) %>%
   dplyr::filter(database == 'truven_ccae')
@@ -46,7 +45,6 @@ dataSouceInformation <-
 
 
 examplePackage::runCohortDiagnostics(
-  packageName = packageName,
   connectionDetails = connectionDetails,
   cdmDatabaseSchema = cdmDatabaseSchema,
   vocabularyDatabaseSchema = vocabDatabaseSchema,

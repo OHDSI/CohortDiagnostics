@@ -14,6 +14,7 @@ Changes:
 3. Index event breakdown calculates _source_concept_id from source fields in CDM tables.
 4. Vocabulary database schema is now supported.
 5. Metadata (vocabulary version information from data source) is now collected.
+6. OracleTempSchema use deprecated in favor of tempEmulationSchema.
 
 Bug fixes:
 

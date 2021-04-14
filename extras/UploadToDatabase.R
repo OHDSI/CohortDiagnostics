@@ -37,8 +37,9 @@ for (i in (1:length(listOfZipFilesToUpload))) {
   )
 }
 
-uploadPrintFriendly(connectionDetails = connectionDetails,
-                    schema = resultsSchema)
+# uploadPrintFriendly was removed in version 2.1
+# uploadPrintFriendly(connectionDetails = connectionDetails,
+#                     schema = resultsSchema)
 
 launchDiagnosticsExplorer(connectionDetails = connectionDetails,
                           resultsDatabaseSchema = resultsSchema)

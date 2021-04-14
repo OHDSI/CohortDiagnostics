@@ -1,6 +1,6 @@
 # Copyright 2021 Observational Health Data Sciences and Informatics
 #
-# This file is part of epi808CohortDiagnostics
+# This file is part of examplePackagePhenotypeLibrary
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -63,14 +63,12 @@
 #' @param runTemporalCohortCharacterization   Generate and export the temporal cohort characterization?
 #' @param minCellCount                        The minimum number of subjects contributing to a count
 #'                                            before it can be included in packaged results.
-#' @param packageName                         The package to look for study specifications
 #' @param cohortIds                           Optionally, provide a subset of cohort IDs to restrict the diagnostics to.
 #'
 #' @export
 runCohortDiagnostics <- function(connectionDetails,
                                  cdmDatabaseSchema,
                                  vocabularyDatabaseSchema = cdmDatabaseSchema,
-                                 packageName,
                                  cohortDatabaseSchema = cdmDatabaseSchema,
                                  cohortTable = "cohort",
                                  tempEmulationSchema = cohortDatabaseSchema,
@@ -93,6 +91,9 @@ runCohortDiagnostics <- function(connectionDetails,
                                  runCohortCharacterization = TRUE,
                                  runTemporalCohortCharacterization = TRUE,
                                  minCellCount = 5) {
+  
+  packageName = 'examplePackagePhenotypeLibrary'
+  
   if (!file.exists(outputFolder))
     dir.create(outputFolder, recursive = TRUE)
   

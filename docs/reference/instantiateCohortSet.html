@@ -99,10 +99,22 @@ Optionally, the inclusion rule statistics are computed and stored in the inclusi
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="../articles/CohortDiagnosticsInPackageMode.html">Cohort Diagnostics in an OHDSI Package mode</a>
+      <a href="../articles/CohortDiagnosticsInPackageMode.html">Runing Cohort Diagnostics in an OHDSI Package mode</a>
     </li>
     <li>
       <a href="../articles/CohortDiagnosticsUsingWebApi.html">Running cohort diagnostics using WebAPI</a>
+    </li>
+    <li>
+      <a href="../articles/DatabaseModeInDiagnosticsExplorer.html">Database mode in Diagnostics Explorer</a>
+    </li>
+    <li>
+      <a href="../articles/RunningCohortDiagnostics.html">Running cohort diagnostics</a>
+    </li>
+    <li>
+      <a href="../articles/ViewingResultsUsingDiagnosticsExplorer.html">Viewing results using Diagnostics Explorer</a>
+    </li>
+    <li>
+      <a href="../articles/WhatIsCohortDiagnostics.html">What is Cohort Diagnostics?</a>
     </li>
   </ul>
 </li>
@@ -144,7 +156,9 @@ Optionally, the inclusion rule statistics are computed and stored in the <code>i
   connectionDetails <span class='op'>=</span> <span class='cn'>NULL</span>,
   connection <span class='op'>=</span> <span class='cn'>NULL</span>,
   <span class='va'>cdmDatabaseSchema</span>,
+  vocabularyDatabaseSchema <span class='op'>=</span> <span class='va'>cdmDatabaseSchema</span>,
   tempEmulationSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
+  oracleTempSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
   cohortDatabaseSchema <span class='op'>=</span> <span class='va'>cdmDatabaseSchema</span>,
   cohortTable <span class='op'>=</span> <span class='st'>"cohort"</span>,
   cohortIds <span class='op'>=</span> <span class='cn'>NULL</span>,
@@ -184,9 +198,20 @@ Note that for SQL Server, this should include both the database and
 schema name, for example 'cdm_data.dbo'.</p></td>
     </tr>
     <tr>
+      <th>vocabularyDatabaseSchema</th>
+      <td><p>Schema name where your OMOP vocabulary data resides. This is 
+commonly the same as cdmDatabaseSchema. Note that for 
+SQL Server, this should include both the database and
+schema name, for example 'vocabulary.dbo'.</p></td>
+    </tr>
+    <tr>
       <th>tempEmulationSchema</th>
-      <td><p>Should be used in Oracle to specify a schema where the user has write
-privileges for storing temporary tables.</p></td>
+      <td><p>Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
+tables, provide a schema with write privileges where temp tables can be created.</p></td>
+    </tr>
+    <tr>
+      <th>oracleTempSchema</th>
+      <td><p>DEPRECATED by DatabaseConnector: use <code>tempEmulationSchema</code> instead.</p></td>
     </tr>
     <tr>
       <th>cohortDatabaseSchema</th>

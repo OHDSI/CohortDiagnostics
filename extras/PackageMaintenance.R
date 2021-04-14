@@ -41,14 +41,32 @@ rmarkdown::render("vignettes/CohortDiagnosticsInPackageMode.Rmd",
                                           toc = TRUE,
                                           number_sections = TRUE))
 
+rmarkdown::render("vignettes/ViewingResultsUsingDiagnosticsExplorer.Rmd",
+                  output_file = "../inst/doc/ViewingResultsUsingDiagnosticsExplorer.pdf",
+                  rmarkdown::pdf_document(latex_engine = "pdflatex",
+                                          toc = TRUE,
+                                          number_sections = TRUE))
+
+rmarkdown::render("vignettes/DatabaseModeInDiagnosticsExplorer.Rmd",
+                  output_file = "../inst/doc/DatabaseModeInDiagnosticsExplorer.pdf",
+                  rmarkdown::pdf_document(latex_engine = "pdflatex",
+                                          toc = TRUE,
+                                          number_sections = TRUE))
+
+rmarkdown::render("vignettes/WhatIsCohortDiagnostics.Rmd",
+                  output_file = "../inst/doc/WhatIsCohortDiagnostics.pdf",
+                  rmarkdown::pdf_document(latex_engine = "pdflatex",
+                                          toc = TRUE,
+                                          number_sections = TRUE))
+
+rmarkdown::render("vignettes/RunningCohortDiagnostics.Rmd",
+                  output_file = "../inst/doc/RunningCohortDiagnostics.pdf",
+                  rmarkdown::pdf_document(latex_engine = "pdflatex",
+                                          toc = TRUE,
+                                          number_sections = TRUE))
+
 pkgdown::build_site()
 OhdsiRTools::fixHadesLogo()
-
-# Regenerate DDL - doesnt work. Maintain manually
-# pathToCsv <- file.path("inst", "settings", "resultsDataModelSpecification.csv")
-# specifications <- readr::read_csv(file = pathToCsv, col_types = readr::cols())
-# source("extras/ResultsDataModel.R")
-# createDdl("inst/sql/postgresql/CreateResultsDataModel.sql", specifications)
 
 # Copy data model specs to Shiny app
 file.copy(from = "inst/settings/resultsDataModelSpecification.csv", 

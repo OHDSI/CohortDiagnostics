@@ -1,15 +1,15 @@
 ---
-title: "Cohort Diagnostics in an OHDSI Package mode"
+title: "Runing Cohort Diagnostics in an OHDSI Package mode"
 author: "Gowtham A. Rao"
 date: "`r Sys.Date()`"
 output:
-  html_document:
-    number_sections: yes
-    toc: yes
   pdf_document: 
     toc: yes     
+  html_document:
+    number_sections: yes
+    toc: yes  
 vignette: >
-  %\VignetteIndexEntry{How to hydrate a template package with your study specifications}
+  %\VignetteIndexEntry{Runing Cohort Diagnostics in an OHDSI Package mode}
   %\VignetteEncoding{UTF-8}    
   %\VignetteEngine{knitr::rmarkdown}
 ---
@@ -25,7 +25,16 @@ knitr::opts_chunk$set(
 
 # Introduction
 
-This vignette describes how to create a self contained shareable study package that can execute cohort diagnostics on a given set of cohort definitions. 
+There are currently two approaches to run Cohort Diagnostics.
+- Embed in an OHDSI study package, where all the cohort definitions are stored as part of that study package, or 
+- WebAPi mode - where cohort diagnostics dynamically pulls the cohort definition from a webapi instance. WebAPI is the backend of the OHDSI ATLAS application, allowing programmatic access to the cohort definitions created in ATLAS. 
+
+This vignette describes the former approach (package): how to run CohortDiagnostics using the WebAPI.
+
+
+There are currently two approaches one can take to step 1: The cohort diagnostics can be embedded in an OHDSI study package, where all the cohort definitions are stored as part of that study package, or the cohort diagnostics can be used as a stand-alone solution, relying on a WebAPI instance to provide the cohort definitions. WebAPI is the backend of the OHDSI ATLAS application, allowing programmatic access to the cohort definitions created in ATLAS. This vignette describes the latter approach: how to run CohortDiagnostics using the WebAPI.
+
+This vignette describes how to create a self contained shareable study package that can execute cohort diagnostics on a given set of cohort definitions. This is the recommended mode to run CohortDiagnostics for a study.
 
 In this vignette, you will learn how to 
 - use the Cohort Diagnostics template package
@@ -38,7 +47,9 @@ In this vignette, you will learn how to
 - You have a set of valid cohort definition sql files (in parameterized OHDSI Sql format) that you want to run diagnostics on, or you are able to export cohort definitions that you want to diagnose from Atlas by using the export tab within cohort definition module of Atlas or using ROhdsiWebApi as described [here](https://ohdsi.github.io/ROhdsiWebApi/articles/InsertCohortDefinitionsIntoPackage.html).
 - You have access to person level data in OMOP CDM V5.x + format on a database, are able to execute and instantiate cohorts in cohort tables (i.e. you have access to a schema in the same database with Create, Read, Update, Delete privileges.)
 
-## identifying cohorts:
+
+# Creating the study package
+
 The cohorts to diagnose should have two attributes to them. 
 
 - **id**: A unique integer identifier for the cohort you are diagnosing. If you created your cohort using atlas, this is your atlas id.
@@ -50,19 +61,22 @@ Example:
 | -----------:|:-------------- |
 17561|[PL 4112853001] Malignant tumor of breast referent concept incident cohort: First occurrence of referent concept + descendants with >=365d prior observation|
 
-
 ## option A: Using Hydra and ROhdsiWebApi
+
+Note: this option is expected to be available starting version 2.2 of CohortDiagnostics. It is currently possible to do the steps described below, but is not fully tested.
+
 The skeleton cohort diagnostics study package is [here](https://github.com/OHDSI/SkeletonCohortDiagnostics). A skeleton package is a special package that is designed to be used with [Hydra](https://github.com/OHDSI/Hydra). The input for Hydra is study a specifications file (in json format). Example is [here](https://github.com/OHDSI/Hydra/blob/master/extras/ExampleCohortDiagnosticsSpecs.json).
 
-We can create this json using the shiny app 'Diagnostics Editor' available here(XXXXXX). A version is deployed at data.ohdsi.org/XXXXXXXXXXXXX. The user interface of this shiny app allows you to make selections that are then used to create the specifications json file. The application also allows you to hydrate a package using Hydra, and download a .zip that contains your study package. 
+We can create this json using the shiny app 'Diagnostics Editor' available here(XX-- to do --XXXX). A version is deployed at data.ohdsi.org/XXXXXXXXXXXXX. The user interface of this shiny app allows you to make selections that are then used to create the specifications json file. The application also allows you to hydrate a package using Hydra, and download a .zip that contains your study package. 
 
 Alternatively, you can take the example specification-json file and edit it in notepad. You can then use to create the study package as follows
 
-XXXXXXXXXx
+XXX---to do---XXXXXXx
 
 Now you may install your package and execute the study.
 
 ## option B: using only ROhdsiWebApi
+
 Start with the skeleton cohort diagnostics study package is [here](https://github.com/OHDSI/SkeletonCohortDiagnostics). See Vignette from ROhdsiWebApi [here](https://ohdsi.github.io/ROhdsiWebApi/articles/InsertCohortDefinitionsIntoPackage.html). Create the 'CohortsToCreate.csv’ file by extracting the cohorts from your atlas as described. Now, open your study package and run
 
 ```{r tidy=FALSE,eval=FALSE}
@@ -80,6 +94,7 @@ The next step is to rename the generic name of the package 'SkeletonCohortDiagno
 Now you may install your package and execute the study.
 
 ## Option C: Manual (advanced users)
+
 Start with the skeleton cohort diagnostics study package is [here](https://github.com/OHDSI/SkeletonCohortDiagnostics). Manually populate the [CohortToCreate.csv file](https://github.com/OHDSI/SkeletonCohortDiagnostics/blob/main/inst/settings/CohortsToCreate.csv) with the atlasId, cohortId and cohortName. In most cases atlasId = cohortId and should be an integer. cohortName is a meaningful name to identify your cohorts.
 
 Next - create a new folder called 'sql' in the 'inst' folder and put all your SQLs. The sql file should be named to match the cohortId e.g. if the cohortId is 1232 then the sql file should be 1232.sql. Optionally, you can also add the cohort json in another folder in 'inst' folder of your package called 'cohorts'. The names of the cohorts should be the same as the sql files, except they will end with .json instead of .sql.
@@ -95,3 +110,16 @@ If your cohorts have inclusion-rules, then you will have to create a file called
 18352|0|With gastrointestinal hemorrhage at some point|18352
 
 Now you may install your package and execute the study.
+
+
+# Running Cohort Diagnostics
+
+The Cohort Diagnostics package has an examplePackage that may be used to understand the structure of a study package. 
+
+See Vignette on 'Running Cohort Diagnostics' on how to connect cohort diagnostics to CDM and creating cohort table.
+
+In the extras folder of your study package will be a CodeToRun.R file. Please update the conectionDetails object as described in the vignette on 'Running Cohort Diagnostics'. Also the page based on your local configuration information.
+
+Run the entire script.
+
+

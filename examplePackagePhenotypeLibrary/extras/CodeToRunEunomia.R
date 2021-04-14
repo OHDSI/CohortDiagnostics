@@ -2,8 +2,6 @@ library(CohortDiagnostics)
 library(Eunomia)
 library(examplePackagePhenotypeLibrary)
 
-packageName <- 'examplePackagePhenotypeLibrary'
-
 connectionDetails <- Eunomia::getEunomiaConnectionDetails()
 cdmDatabaseSchema <- "main"
 cohortDatabaseSchema <- "main"
@@ -15,7 +13,6 @@ unlink(x = outputFolder, recursive = TRUE, force = TRUE)
 dir.create(path = outputFolder, showWarnings = FALSE, recursive = TRUE)
 
 examplePackagePhenotypeLibrary::runCohortDiagnostics(
-  packageName = packageName,
   connectionDetails = connectionDetails,
   cdmDatabaseSchema = cdmDatabaseSchema,
   vocabularyDatabaseSchema = cdmDatabaseSchema,
@@ -50,8 +47,8 @@ CohortDiagnostics::launchDiagnosticsExplorer(dataFolder = outputFolder)
 #                                                             Sys.getenv("shinydbDatabase"),
 #                                                             sep = "/"),
 #                                              port = Sys.getenv("shinydbPort"),
-#                                              user = Sys.getenv("shinyDbUserGowtham"),
-#                                              password = Sys.getenv("shinyDbPasswordGowtham"))
+#                                              user = Sys.getenv("shinyDbUser"),
+#                                              password = Sys.getenv("shinyDbPassword"))
 # 
 # 
 # resultsSchema <- "eunomiaCd"
