@@ -174,6 +174,40 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  cohortDefinitionCirceRDetails <- shiny::reactive(x = {
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(message = "Rendering human readable cohort description using CirceR", value = 0)
+    
+    data <- selectedCohortDefinitionRow()
+    if (nrow(selectedCohortDefinitionRow()) > 0) {
+      details <- list()
+        circeExpression <-
+          CirceR::cohortExpressionFromJson(expressionJson = data$json)
+        circeExpressionMarkdown <-
+          CirceR::cohortPrintFriendly(circeExpression)
+        circeConceptSetListmarkdown <-
+          CirceR::conceptSetListPrintFriendly(circeExpression$conceptSets)
+        details <- data
+        details$circeConceptSetListmarkdown <-
+          circeConceptSetListmarkdown
+        details$htmlExpressionCohort <-
+          convertMdToHtml(circeExpressionMarkdown)
+        details$htmlExpressionConceptSetExpression <-
+          convertMdToHtml(circeConceptSetListmarkdown)
+      
+      details <- dplyr::bind_rows(details)
+    } else {
+      return(NULL)
+    }
+    return(details)
+  })
+  
+  output$cohortDefinitionText <- shiny::renderUI(expr = {
+    cohortDefinitionCirceRDetails()$htmlExpressionCohort %>%
+      shiny::HTML()
+  })
+  
   output$cohortDefinitionJson <- shiny::renderText({
     row <- selectedCohortDefinitionRow()
     if (is.null(row)) {
@@ -302,6 +336,7 @@ shiny::shinyServer(function(input, output, session) {
     dataTable <- DT::datatable(
       data,
       options = options,
+      colnames = colnames(data) %>% camelCaseToTitleCase(),
       rownames = FALSE,
       selection = 'single',
       escape = FALSE,
@@ -330,7 +365,6 @@ shiny::shinyServer(function(input, output, session) {
   shiny::outputOptions(x = output,
                        name = "conceptSetExpressionRowSelected",
                        suspendWhenHidden = FALSE)
-  
   
   output$isDataSourceEnvironment <- shiny::reactive(x = {
     return(is(dataSource, "environment"))
@@ -435,6 +469,7 @@ shiny::shinyServer(function(input, output, session) {
         data,
         options = options,
         rownames = FALSE,
+        colnames = colnames(data) %>% camelCaseToTitleCase(), 
         escape = FALSE,
         selection = 'single',
         filter = "top",
@@ -465,6 +500,7 @@ shiny::shinyServer(function(input, output, session) {
       dataTable <- DT::datatable(
         data,
         options = options,
+        colnames = colnames(data) %>% camelCaseToTitleCase(),
         rownames = FALSE,
         escape = FALSE,
         selection = 'single',
@@ -496,6 +532,7 @@ shiny::shinyServer(function(input, output, session) {
       dataTable <- DT::datatable(
         data,
         options = options,
+        colnames = colnames(data) %>% camelCaseToTitleCase(),
         rownames = FALSE,
         escape = FALSE,
         selection = 'single',
@@ -1344,16 +1381,76 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
-  
   # Index event breakdown ----------------------------------------------------------------
-  output$breakdownTable <- DT::renderDataTable(expr = {
-    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
-    validate(need(length(cohortId()) > 0, "No cohorts chosen chosen"))
+  indexEventBreakDownData <- shiny::reactive(x = {
     data <- getIndexEventBreakdown(
       dataSource = dataSource,
       cohortIds = cohortId(),
       databaseIds = databaseIds()
     )
+    
+    return(data)
+  })
+  
+  domaintable <- shiny::reactive(x = {
+    return(indexEventBreakDownData() %>% 
+             dplyr::pull(.data$domainTable) %>% unique())
+  })
+  
+  shiny::observe({
+    data <- domaintable()
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "breakdownDomainTable",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = data,
+      selected = data
+    )
+  })
+  
+  shiny::observe({
+    data <- indexEventBreakDownData() %>% 
+      dplyr::filter(.data$domainTable %in% input$breakdownDomainTable) %>% 
+      dplyr::pull(.data$domainField) %>% unique()
+    
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "breakdownDomainField",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = data,
+      selected = data
+    )
+  })
+  
+  selectedDomainTable <- reactiveVal(NULL)
+  shiny::observeEvent(eventExpr = {
+    list(input$breakdownDomainTable_open,
+         input$tabs)
+  }, handlerExpr = {
+    if (isFALSE(input$breakdownDomainTable_open) || !is.null(input$tabs)) {
+      selectedDomainTable(input$breakdownDomainTable)
+    }
+  })
+
+  selectedDomainField <- reactiveVal(NULL)
+  shiny::observeEvent(eventExpr = {
+    list(input$breakdownDomainField_open,
+         input$tabs)
+  }, handlerExpr = {
+    if (isFALSE(input$breakdownDomainField_open) || !is.null(input$tabs)) {
+      selectedDomainField(input$breakdownDomainField)
+    }
+  })
+  
+  output$breakdownTable <- DT::renderDataTable(expr = {
+    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
+    validate(need(length(cohortId()) > 0, "No cohorts chosen chosen"))
+    data <- indexEventBreakDownData() %>%  
+      dplyr::filter(.data$domainTable %in% selectedDomainTable()) %>% 
+      dplyr::filter(.data$domainField %in% selectedDomainField()) %>% 
+      dplyr::select(-.data$domainTable, .data$domainField,
+                    -.data$domainId, #-.data$vocabularyId,
+                    -.data$standardConcept)
     
     if (nrow(data) == 0) {
       return(dplyr::tibble(
@@ -1370,28 +1467,20 @@ shiny::shinyServer(function(input, output, session) {
           id_cols = c(
             "conceptId",
             "conceptName",
-            "domainId",
-            "vocabularyId",
-            "standardConcept",
-            "domainTable",
-            "domainField"
+            "vocabularyId"
           ),
           names_from = "databaseId",
           values_from = c("conceptCount", "subjectCount")
         )
       
-      data <- data[order(-data[8]),]
+      data <- data[order(-data[4]),]
       
       sketch <- htmltools::withTags(table(class = "display",
                                           thead(
                                             tr(
                                               th(rowspan = 2, "Concept Id"),
                                               th(rowspan = 2, "Concept Name"),
-                                              th(rowspan = 2, "Domain Id"),
                                               th(rowspan = 2, "Vocabulary Id"),
-                                              th(rowspan = 2, "Standard Concept"),
-                                              th(rowspan = 2, "Domain Table"),
-                                              th(rowspan = 2, "Domain Field"),
                                               lapply(databaseIds, th, colspan = 2, class = "dt-center")
                                             ),
                                             tr(lapply(rep(
@@ -1427,7 +1516,7 @@ shiny::shinyServer(function(input, output, session) {
       
       dataTable <- DT::formatStyle(
         table = dataTable,
-        columns = 7 + 1:(length(databaseIds) * 2),
+        columns = 3 + 1:(length(databaseIds) * 2),
         background = DT::styleColorBar(c(0, maxCount), "lightblue"),
         backgroundSize = "98% 88%",
         backgroundRepeat = "no-repeat",
@@ -1440,16 +1529,14 @@ shiny::shinyServer(function(input, output, session) {
           id_cols = c(
             "conceptId",
             "conceptName",
-            "domainId",
-            "vocabularyId",
-            "standardConcept"
+            "vocabularyId"
           ),
           names_from = "databaseId",
           values_from = "conceptCount",
           names_prefix = "conceptCount_"
         )
       
-      data <- data[order(-data[6]),]
+      data <- data[order(-data[5]),]
       
       options = list(
         pageLength = 100,
@@ -1460,7 +1547,7 @@ shiny::shinyServer(function(input, output, session) {
         lengthChange = TRUE,
         ordering = TRUE,
         paging = TRUE,
-        columnDefs = list(minCellCountDef(1 + 1:(
+        columnDefs = list(minCellCountDef(2 + 1:(
           length(databaseIds) * 2
         )))
       )
@@ -1478,7 +1565,7 @@ shiny::shinyServer(function(input, output, session) {
       
       dataTable <- DT::formatStyle(
         table = dataTable,
-        columns = 5 + 1:(length(databaseIds)),
+        columns = 3 + 1:(length(databaseIds)),
         background = DT::styleColorBar(c(0, maxCount), "lightblue"),
         backgroundSize = "98% 88%",
         backgroundRepeat = "no-repeat",

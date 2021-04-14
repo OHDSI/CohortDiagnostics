@@ -291,6 +291,8 @@ bodyTabItems <- shinydashboard::tabItems(
             type = "tab",
             shiny::tabPanel(title = "Details",
                             shiny::htmlOutput("cohortDetailsText")),
+            shiny::tabPanel(title = "Cohort definition",
+                            shiny::htmlOutput("cohortDefinitionText")),
             shiny::tabPanel(
               title = "Concept Sets",
               shiny::downloadButton(
@@ -497,12 +499,50 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "indexEventBreakdown",
     cohortReference("indexEventBreakdownSelectedCohort"),
-    DT::dataTableOutput("breakdownTable")
+    tags$table(
+      tags$tr(
+        tags$td(
+          shinyWidgets::pickerInput(
+            inputId = "breakdownDomainTable",
+            label = "Domain Table",
+            choices = c(""),
+            multiple = TRUE,
+            choicesOpt = list(style = rep_len("color: black;", 999)),
+            options = shinyWidgets::pickerOptions(
+              actionsBox = TRUE,
+              liveSearch = TRUE,
+              liveSearchStyle = "contains",
+              size = 10,
+              liveSearchPlaceholder = "Type here to search",
+              virtualScroll = 50
+            )
+          )
+        ),
+        tags$td(
+          shinyWidgets::pickerInput(
+            inputId = "breakdownDomainField",
+            label = "Domain Field",
+            choices = c(""),
+            multiple = TRUE,
+            choicesOpt = list(style = rep_len("color: black;", 999)),
+            options = shinyWidgets::pickerOptions(
+              actionsBox = TRUE,
+              liveSearch = TRUE,
+              liveSearchStyle = "contains",
+              size = 10,
+              liveSearchPlaceholder = "Type here to search",
+              virtualScroll = 50
+            )
+          )
+        )
+      )
+    ),
+    DT::dataTableOutput(outputId = "breakdownTable")
   ),
   shinydashboard::tabItem(
     tabName = "visitContext",
     cohortReference("visitContextSelectedCohort"),
-    DT::dataTableOutput("visitContextTable")
+    DT::dataTableOutput(outputId = "visitContextTable")
   ),
   shinydashboard::tabItem(
     tabName = "cohortCharacterization",
