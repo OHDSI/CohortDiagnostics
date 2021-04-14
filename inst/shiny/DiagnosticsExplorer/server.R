@@ -961,6 +961,7 @@ shiny::shinyServer(function(input, output, session) {
     
     if (input$includedType == "Source Concepts") {
       table <- data %>%
+        dplyr::filter(.data$sourceConceptId > 0) %>% 
         dplyr::select(
           .data$databaseId,
           .data$sourceConceptId,
@@ -1058,6 +1059,7 @@ shiny::shinyServer(function(input, output, session) {
       )
     } else {
       table <- data %>%
+        dplyr::filter(.data$conceptId > 0) %>% 
         dplyr::select(
           .data$databaseId,
           .data$conceptId,
@@ -1239,7 +1241,6 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     table <- table[order(-table[, 5]),]
-    
     
     sketch <- htmltools::withTags(table(class = "display",
                                         thead(
@@ -1477,6 +1478,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::arrange(.data$databaseId) %>%
         dplyr::select(.data$conceptId, .data$conceptName, .data$databaseId,
                       .data$vocabularyId, .data$conceptCount, .data$subjectCount) %>% 
+        dplyr::filter(.data$conceptId > 0) %>% 
         dplyr::distinct() %>% # distinct is needed here because many time condition_concept_id and condition_source_concept_id 
         # may have the same value leading to duplication of row records
         tidyr::pivot_wider(
@@ -1543,6 +1545,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::arrange(.data$databaseId) %>%
         dplyr::select(.data$conceptId, .data$conceptName, .data$databaseId,
                       .data$vocabularyId, .data$conceptCount) %>% 
+        dplyr::filter(.data$conceptId > 0) %>% 
         dplyr::distinct() %>% # distinct is needed here because many time condition_concept_id and condition_source_concept_id 
         # may have the same value
         tidyr::pivot_wider(
