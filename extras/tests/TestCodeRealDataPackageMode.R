@@ -1,12 +1,14 @@
 source(Sys.getenv("startUpScriptLocation"))
 
+temporaryLocation <- tempdir()
+
 library(CohortDiagnostics)
 library(examplePackagePhenotypeLibrary)
 
 packageName <- 'examplePackagePhenotypeLibrary'
 connectionSpecifications <- cdmSources %>%
-  dplyr::filter(sequence == 1) %>%
-  dplyr::filter(database == 'truven_ccae')
+  dplyr::filter(.data$sequence == 1) %>%
+  dplyr::filter(.data$database == 'truven_ccae')
 
 
 dbms <- connectionSpecifications$dbms
@@ -29,7 +31,7 @@ connectionDetails <- DatabaseConnector::createConnectionDetails(
 
 cohortTable <- "cohort"
 
-outputFolder <- file.path(tempdir(), "outputFolder", "packageMode", "realData", databaseId)
+outputFolder <- file.path(temporaryLocation, "outputFolder", "packageMode", "realData", databaseId)
 unlink(x = outputFolder,
        recursive = TRUE,
        force = TRUE)

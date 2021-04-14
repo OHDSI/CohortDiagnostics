@@ -2,7 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
-*.RData
 *.zip
 errorReportSql.txt
 errorReportR.txt
@@ -10,7 +9,5 @@ errorReportR.txt
 .DS_Store
 *.history
 .RDataTmp
-*.log
-*.log
 *.log
 *log.txt
