@@ -33,7 +33,7 @@ Note that each of the tabs on the left has an information icon. Clicking on thes
 
 # Launching Diagnostics Explorer
 
-- From R, launch the DiagnosticExplorer shiny application by calling the \code{\link{launchDiagnosticsExplorer}} function of CohortDiagnostics. 
+- From R, launch the DiagnosticExplorer shiny application by calling the 'launchDiagnosticsExplorer()' function of CohortDiagnostics. 
 - From R-studio, you may start the project by clicking on the 'DiagnosticsExplorer.RProj' in the shiny folder, then open the global.R and press the 'RunApp' button.
 From R-server (shiny server), you will need to copy all the files in the DiagnosticsExplorer shiny app into a folder on the server. The server should automatically launch the application (please talk to the shiny server administrator for your site specific rules.)
 
@@ -58,4 +58,4 @@ We recommend the use of a database system, when file size of the cohort diagnost
 
 
 # Running over the network
-If you want to run the application over the network then set `runOverNetwork = TRUE` while launching the application using launchDiagnosticsExplorer(). This will make the shiny application available over your network (i.e. within your networks firewall).
+If you want to run the application over the network then set `runOverNetwork = TRUE` while launching the application using 'launchDiagnosticsExplorer()'. This will make the shiny application available over your network (i.e. within your networks firewall).
