@@ -68,12 +68,6 @@ rmarkdown::render("vignettes/RunningCohortDiagnostics.Rmd",
 pkgdown::build_site()
 OhdsiRTools::fixHadesLogo()
 
-# Regenerate DDL - doesnt work. Maintain manually
-# pathToCsv <- file.path("inst", "settings", "resultsDataModelSpecification.csv")
-# specifications <- readr::read_csv(file = pathToCsv, col_types = readr::cols())
-# source("extras/ResultsDataModel.R")
-# createDdl("inst/sql/postgresql/CreateResultsDataModel.sql", specifications)
-
 # Copy data model specs to Shiny app
 file.copy(from = "inst/settings/resultsDataModelSpecification.csv", 
           to = "inst/shiny/DiagnosticsExplorer/resultsDataModelSpecification.csv",
