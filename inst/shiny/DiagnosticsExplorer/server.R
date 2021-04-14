@@ -1449,7 +1449,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$domainTable %in% selectedDomainTable()) %>% 
       dplyr::filter(.data$domainField %in% selectedDomainField()) %>% 
       dplyr::select(-.data$domainTable, .data$domainField,
-                    -.data$domainId, -.data$vocabulary,
+                    -.data$domainId, #-.data$vocabularyId,
                     -.data$standardConcept)
     
     if (nrow(data) == 0) {
@@ -1467,6 +1467,7 @@ shiny::shinyServer(function(input, output, session) {
           id_cols = c(
             "conceptId",
             "conceptName",
+            "vocabularyId"
           ),
           names_from = "databaseId",
           values_from = c("conceptCount", "subjectCount")
@@ -1479,6 +1480,7 @@ shiny::shinyServer(function(input, output, session) {
                                             tr(
                                               th(rowspan = 2, "Concept Id"),
                                               th(rowspan = 2, "Concept Name"),
+                                              th(rowspan = 2, "Vocabulary Id"),
                                               lapply(databaseIds, th, colspan = 2, class = "dt-center")
                                             ),
                                             tr(lapply(rep(
@@ -1514,7 +1516,7 @@ shiny::shinyServer(function(input, output, session) {
       
       dataTable <- DT::formatStyle(
         table = dataTable,
-        columns = 2 + 1:(length(databaseIds) * 2),
+        columns = 3 + 1:(length(databaseIds) * 2),
         background = DT::styleColorBar(c(0, maxCount), "lightblue"),
         backgroundSize = "98% 88%",
         backgroundRepeat = "no-repeat",
@@ -1526,14 +1528,15 @@ shiny::shinyServer(function(input, output, session) {
         tidyr::pivot_wider(
           id_cols = c(
             "conceptId",
-            "conceptName"
+            "conceptName",
+            "vocabularyId"
           ),
           names_from = "databaseId",
           values_from = "conceptCount",
           names_prefix = "conceptCount_"
         )
       
-      data <- data[order(-data[4]),]
+      data <- data[order(-data[5]),]
       
       options = list(
         pageLength = 100,
@@ -1544,7 +1547,7 @@ shiny::shinyServer(function(input, output, session) {
         lengthChange = TRUE,
         ordering = TRUE,
         paging = TRUE,
-        columnDefs = list(minCellCountDef(1 + 1:(
+        columnDefs = list(minCellCountDef(2 + 1:(
           length(databaseIds) * 2
         )))
       )
@@ -1562,7 +1565,7 @@ shiny::shinyServer(function(input, output, session) {
       
       dataTable <- DT::formatStyle(
         table = dataTable,
-        columns = 2 + 1:(length(databaseIds)),
+        columns = 3 + 1:(length(databaseIds)),
         background = DT::styleColorBar(c(0, maxCount), "lightblue"),
         backgroundSize = "98% 88%",
         backgroundRepeat = "no-repeat",
