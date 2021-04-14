@@ -291,6 +291,8 @@ bodyTabItems <- shinydashboard::tabItems(
             type = "tab",
             shiny::tabPanel(title = "Details",
                             shiny::htmlOutput("cohortDetailsText")),
+            shiny::tabPanel(title = "Cohort definition",
+                            shiny::htmlOutput("cohortDefinitionText")),
             shiny::tabPanel(
               title = "Concept Sets",
               shiny::downloadButton(

@@ -96,3 +96,21 @@ copyToClipboardButton <- function(toCopyId, label = "Copy to clipboard", icon = 
   
   tags$button(type = "button", class = "btn btn-default action-button", onclick = script, icon, label, ...)
 }
+
+convertMdToHtml <- function(markdown) {
+  markdown <- gsub("'", "%sq%", markdown)
+  mdFile <- tempfile(fileext = ".md")
+  htmlFile <- tempfile(fileext = ".html")
+  SqlRender::writeSql(markdown, mdFile)
+  rmarkdown::render(input = mdFile,
+                    output_format = "html_fragment",
+                    output_file = htmlFile,
+                    clean = TRUE,
+                    quiet = TRUE)
+  html <- SqlRender::readSql(htmlFile) 
+  unlink(mdFile)
+  unlink(htmlFile)
+  html <- gsub("%sq%", "'", html)
+  
+  return(html)
+}

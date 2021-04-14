@@ -174,6 +174,40 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  cohortDefinitionCirceRDetails <- shiny::reactive(x = {
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(message = "Rendering human readable cohort description using CirceR", value = 0)
+    
+    data <- selectedCohortDefinitionRow()
+    if (nrow(selectedCohortDefinitionRow()) > 0) {
+      details <- list()
+        circeExpression <-
+          CirceR::cohortExpressionFromJson(expressionJson = data$json)
+        circeExpressionMarkdown <-
+          CirceR::cohortPrintFriendly(circeExpression)
+        circeConceptSetListmarkdown <-
+          CirceR::conceptSetListPrintFriendly(circeExpression$conceptSets)
+        details <- data
+        details$circeConceptSetListmarkdown <-
+          circeConceptSetListmarkdown
+        details$htmlExpressionCohort <-
+          convertMdToHtml(circeExpressionMarkdown)
+        details$htmlExpressionConceptSetExpression <-
+          convertMdToHtml(circeConceptSetListmarkdown)
+      
+      details <- dplyr::bind_rows(details)
+    } else {
+      return(NULL)
+    }
+    return(details)
+  })
+  
+  output$cohortDefinitionText <- shiny::renderUI(expr = {
+    cohortDefinitionCirceRDetails()$htmlExpressionCohort %>%
+      shiny::HTML()
+  })
+  
   output$cohortDefinitionJson <- shiny::renderText({
     row <- selectedCohortDefinitionRow()
     if (is.null(row)) {
@@ -302,6 +336,7 @@ shiny::shinyServer(function(input, output, session) {
     dataTable <- DT::datatable(
       data,
       options = options,
+      colnames = colnames(data) %>% camelCaseToTitleCase(),
       rownames = FALSE,
       selection = 'single',
       escape = FALSE,
@@ -330,7 +365,6 @@ shiny::shinyServer(function(input, output, session) {
   shiny::outputOptions(x = output,
                        name = "conceptSetExpressionRowSelected",
                        suspendWhenHidden = FALSE)
-  
   
   output$isDataSourceEnvironment <- shiny::reactive(x = {
     return(is(dataSource, "environment"))
@@ -435,6 +469,7 @@ shiny::shinyServer(function(input, output, session) {
         data,
         options = options,
         rownames = FALSE,
+        colnames = colnames(data) %>% camelCaseToTitleCase(), 
         escape = FALSE,
         selection = 'single',
         filter = "top",
@@ -465,6 +500,7 @@ shiny::shinyServer(function(input, output, session) {
       dataTable <- DT::datatable(
         data,
         options = options,
+        colnames = colnames(data) %>% camelCaseToTitleCase(),
         rownames = FALSE,
         escape = FALSE,
         selection = 'single',
@@ -496,6 +532,7 @@ shiny::shinyServer(function(input, output, session) {
       dataTable <- DT::datatable(
         data,
         options = options,
+        colnames = colnames(data) %>% camelCaseToTitleCase(),
         rownames = FALSE,
         escape = FALSE,
         selection = 'single',
