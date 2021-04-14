@@ -1345,15 +1345,38 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   
+  # reactive object - indexEventBreakDownData 
+  # indexEventBreakDownData <- getIndexEventBreakdown(
+#   dataSource = dataSource,
+#   cohortIds = cohortId(),
+#   databaseIds = databaseIds()
+# )
+# 
+#
+# reactive 1
+# domainTable -- indexEventBreakDownData %>% dplyr::pull(.data$domainTable) %>% unique()
+# 
+# selection 1
+# ui domain table selections -- domainTable selections -- selectedDomainTable - default select all
+# 
+# reactive 2 dependent on selection 1
+# domainField -- indexEventBreakDownData %>% 
+# dplyr::filter(.data$domainTable %in% selectedDomainTable()) %>% 
+# dplyr::pull(.data$domainField) %>% 
+# unique()
+  # selection 2
+  # ui domainField() --  selectedDomainField() - default select all
+  
   # Index event breakdown ----------------------------------------------------------------
   output$breakdownTable <- DT::renderDataTable(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen chosen"))
-    data <- getIndexEventBreakdown(
-      dataSource = dataSource,
-      cohortIds = cohortId(),
-      databaseIds = databaseIds()
-    )
+    data <- indexEventBreakDownData %>%  
+      dplyr::filter(.data$domainTable %in% selectedDomainTable()) %>% 
+      dplyr::filter(.data$domainField %in% selectedDomainField()) %>% 
+      dplyr::select(-.data$domainTable, .data$domainField,
+                    -.data$domainId, -.data$vocabulary,
+                    -.data$standardConcept)
     
     if (nrow(data) == 0) {
       return(dplyr::tibble(
