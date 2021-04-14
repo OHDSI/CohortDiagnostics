@@ -1344,34 +1344,58 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
-  
-  # reactive object - indexEventBreakDownData 
-  # indexEventBreakDownData <- getIndexEventBreakdown(
-#   dataSource = dataSource,
-#   cohortIds = cohortId(),
-#   databaseIds = databaseIds()
-# )
-# 
-#
-# reactive 1
-# domainTable -- indexEventBreakDownData %>% dplyr::pull(.data$domainTable) %>% unique()
-# 
-# selection 1
-# ui domain table selections -- domainTable selections -- selectedDomainTable - default select all
-# 
-# reactive 2 dependent on selection 1
-# domainField -- indexEventBreakDownData %>% 
-# dplyr::filter(.data$domainTable %in% selectedDomainTable()) %>% 
-# dplyr::pull(.data$domainField) %>% 
-# unique()
-  # selection 2
-  # ui domainField() --  selectedDomainField() - default select all
-  
   # Index event breakdown ----------------------------------------------------------------
+  indexEventBreakDownData <- shiny::reactive(x = {
+    data <- getIndexEventBreakdown(
+      dataSource = dataSource,
+      cohortIds = cohortId(),
+      databaseIds = databaseIds()
+    )
+    
+    return(data)
+  })
+  
+  domaintable <- shiny::reactive(x = {
+    return(indexEventBreakDownData() %>% 
+             dplyr::pull(.data$domainTable) %>% unique())
+  })
+  
+  shiny::observe({
+    data <- domaintable()
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "breakdownDomainTable",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = data,
+      selected = data
+    )
+  })
+  
+  shiny::observe({
+    data <- indexEventBreakDownData() %>% 
+      dplyr::filter(.data$domainTable %in% input$breakdownDomainTable) %>% 
+      dplyr::pull(.data$domainField) %>% unique()
+    
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "breakdownDomainField",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = data,
+      selected = data
+    )
+  })
+  
+  selectedDomainTable <- shiny::reactive(x = {
+    return(input$breakdownDomainTable)
+  })
+  
+  selectedDomainField <- shiny::reactive(x = {
+    return(input$breakdownDomainField)
+  })
   output$breakdownTable <- DT::renderDataTable(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen chosen"))
-    data <- indexEventBreakDownData %>%  
+    data <- indexEventBreakDownData() %>%  
       dplyr::filter(.data$domainTable %in% selectedDomainTable()) %>% 
       dplyr::filter(.data$domainField %in% selectedDomainField()) %>% 
       dplyr::select(-.data$domainTable, .data$domainField,
@@ -1393,28 +1417,18 @@ shiny::shinyServer(function(input, output, session) {
           id_cols = c(
             "conceptId",
             "conceptName",
-            "domainId",
-            "vocabularyId",
-            "standardConcept",
-            "domainTable",
-            "domainField"
           ),
           names_from = "databaseId",
           values_from = c("conceptCount", "subjectCount")
         )
       
-      data <- data[order(-data[8]),]
+      data <- data[order(-data[4]),]
       
       sketch <- htmltools::withTags(table(class = "display",
                                           thead(
                                             tr(
                                               th(rowspan = 2, "Concept Id"),
                                               th(rowspan = 2, "Concept Name"),
-                                              th(rowspan = 2, "Domain Id"),
-                                              th(rowspan = 2, "Vocabulary Id"),
-                                              th(rowspan = 2, "Standard Concept"),
-                                              th(rowspan = 2, "Domain Table"),
-                                              th(rowspan = 2, "Domain Field"),
                                               lapply(databaseIds, th, colspan = 2, class = "dt-center")
                                             ),
                                             tr(lapply(rep(
@@ -1462,17 +1476,14 @@ shiny::shinyServer(function(input, output, session) {
         tidyr::pivot_wider(
           id_cols = c(
             "conceptId",
-            "conceptName",
-            "domainId",
-            "vocabularyId",
-            "standardConcept"
+            "conceptName"
           ),
           names_from = "databaseId",
           values_from = "conceptCount",
           names_prefix = "conceptCount_"
         )
       
-      data <- data[order(-data[6]),]
+      data <- data[order(-data[4]),]
       
       options = list(
         pageLength = 100,
