@@ -294,7 +294,7 @@ createCohortTable <- function(connectionDetails = NULL,
 #'
 #' @template CohortDef
 #'
-#' @template tempEmulationSchema
+#' @template TempEmulationSchema
 #' 
 #' @template OracleTempSchema
 #'
@@ -530,7 +530,7 @@ processInclusionStats <- function(inclusion,
 #'
 #' @template CohortTable
 #'
-#' @template tempEmulationSchema
+#' @template TempEmulationSchema
 #' 
 #' @template OracleTempSchema
 #'
