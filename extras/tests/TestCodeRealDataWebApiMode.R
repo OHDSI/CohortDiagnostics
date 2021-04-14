@@ -1,15 +1,32 @@
-library(CohortDiagnostics)
-library(Eunomia)
-library(examplePackagePhenotypeLibrary)
+source(Sys.getenv("startUpScriptLocation"))
 
 temporaryLocation <- tempdir()
 
-connectionDetails <- Eunomia::getEunomiaConnectionDetails()
-cdmDatabaseSchema <- "main"
-cohortDatabaseSchema <- "main"
-cohortTable <- "cohort"
-databaseId <- "Eunomia"
+library(CohortDiagnostics)
 
+connectionSpecifications <- cdmSources %>%
+  dplyr::filter(.data$sequence == 1) %>%
+  dplyr::filter(.data$database == 'truven_ccae')
+
+dbms <- connectionSpecifications$dbms
+port <- connectionSpecifications$port
+server <- connectionSpecifications$server
+cdmDatabaseSchema <- connectionSpecifications$cdmDatabaseSchema
+vocabDatabaseSchema <- connectionSpecifications$vocabDatabaseSchema
+databaseId <- connectionSpecifications$database
+cohortDatabaseSchema = 'scratch_grao9'
+userNameService = "OHDA_USER"
+passwordService = "OHDA_PASSWORD"
+
+connectionDetails <- DatabaseConnector::createConnectionDetails(
+  dbms = dbms,
+  user = keyring::key_get(service = userNameService),
+  password = keyring::key_get(service = passwordService),
+  port = port,
+  server = server
+)
+
+cohortTable <- "cohort"
 
 library(magrittr)
 # Set up
@@ -42,7 +59,7 @@ readr::write_excel_csv(x = cohortsToCreate, na = "",
                        append = FALSE)
 
 
-outputFolder <- file.path(temporaryLocation, "outputFolder", "webApiMode", "eunomia", databaseId)
+outputFolder <- file.path(temporaryLocation, "outputFolder", "webApiMode", "realData", databaseId)
 unlink(x = outputFolder, recursive = TRUE, force = TRUE)
 dir.create(path = outputFolder, showWarnings = FALSE, recursive = TRUE)
 

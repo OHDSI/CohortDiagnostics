@@ -7,8 +7,8 @@ library(examplePackagePhenotypeLibrary)
 
 packageName <- 'examplePackagePhenotypeLibrary'
 connectionSpecifications <- cdmSources %>%
-  dplyr::filter(sequence == 1) %>%
-  dplyr::filter(database == 'truven_ccae')
+  dplyr::filter(.data$sequence == 1) %>%
+  dplyr::filter(.data$database == 'truven_ccae')
 
 
 dbms <- connectionSpecifications$dbms
