@@ -228,153 +228,153 @@ createCohortTable <- function(connectionDetails = NULL,
 }
 
 
-#' Instantiate a cohort
-#'
-#' @description
-#' This function instantiates the cohort in the cohort table. Optionally, the inclusion rule
-#' statistics are computed and stored in the inclusion rule statistics tables.
-#'
-#' @template Connection
-#'
-#' @template CohortTable
-#'
-#' @template CohortDef
-#'
-#' @template TempEmulationSchema
-#' 
-#' @template OracleTempSchema
-#'
-#' @template CdmDatabaseSchema
-#' 
-#' @template VocabularyDatabaseSchema
-#'
-#' @param cohortId                     The cohort ID used to reference the cohort in the cohort table.
-#' @param generateInclusionStats       Compute and store inclusion rule statistics?
-#' @param resultsDatabaseSchema        Schema name where the statistics tables reside. Note that for
-#'                                     SQL Server, this should include both the database and schema
-#'                                     name, for example 'scratch.dbo'.
-#' @param cohortInclusionTable         Name of the inclusion table, one of the tables for storing
-#'                                     inclusion rule statistics.
-#' @param cohortInclusionResultTable   Name of the inclusion result table, one of the tables for
-#'                                     storing inclusion rule statistics.
-#' @param cohortInclusionStatsTable    Name of the inclusion stats table, one of the tables for storing
-#'                                     inclusion rule statistics.
-#' @param cohortSummaryStatsTable      Name of the summary stats table, one of the tables for storing
-#'                                     inclusion rule statistics.
-#'
-#' @export
-instantiateCohort <- function(connectionDetails = NULL,
-                              connection = NULL,
-                              cdmDatabaseSchema,
-                              oracleTempSchema = NULL,
-                              tempEmulationSchema = NULL,
-                              cohortDatabaseSchema = cdmDatabaseSchema,
-                              cohortTable = "cohort",
-                              baseUrl = NULL,
-                              cohortJson = NULL,
-                              cohortSql = NULL,
-                              cohortId = NULL,
-                              generateInclusionStats = FALSE,
-                              resultsDatabaseSchema = cohortDatabaseSchema,
-                              vocabularyDatabaseSchema = cdmDatabaseSchema,
-                              cohortInclusionTable = paste0(cohortTable, "_inclusion"),
-                              cohortInclusionResultTable = paste0(cohortTable, "_inclusion_result"),
-                              cohortInclusionStatsTable = paste0(cohortTable, "_inclusion_stats"),
-                              cohortSummaryStatsTable = paste0(cohortTable, "_summary_stats")) {
-  
-  if (!is.null(oracleTempSchema) && is.null(tempEmulationSchema)) {
-    tempEmulationSchema <- oracleTempSchema
-    warning('OracleTempSchema has been deprecated by DatabaseConnector')
-  }
-  
-  if (is.null(baseUrl) && is.null(cohortJson)) {
-    stop("Must provide either baseUrl and cohortId, or cohortJson and cohortSql")
-  }
-  if (!is.null(cohortJson) && !is.character(cohortJson)) {
-    stop("cohortJson should be character (a JSON string).")
-  }
-  start <- Sys.time()
-  if (is.null(cohortJson)) {
-    ParallelLogger::logInfo("Retrieving cohort definition from WebAPI")
-    cohortDefinition <- ROhdsiWebApi::getCohortDefinition(cohortId = cohortId,
-                                                          baseUrl = baseUrl)
-    cohortDefinition <- cohortDefinition$expression
-    cohortSql <- ROhdsiWebApi::getCohortSql(cohortDefinition = cohortDefinition,
-                                            baseUrl = baseUrl,
-                                            generateStats = generateInclusionStats)
-  } else {
-    cohortDefinition <- RJSONIO::fromJSON(content = cohortJson, digits = 23)
-  }
-  if (generateInclusionStats) {
-    inclusionRules <- tidyr::tibble()
-    if (!is.null(cohortDefinition$InclusionRules)) {
-      nrOfRules <- length(cohortDefinition$InclusionRules)
-      if (nrOfRules > 0) {
-        for (i in 1:nrOfRules) {
-          inclusionRules <- dplyr::bind_rows(inclusionRules, tidyr::tibble(cohortId = cohortId,
-                                                                           ruleSequence = i - 1,
-                                                                           name = cohortDefinition$InclusionRules[[i]]$name)) %>%
-            dplyr::mutate(name = stringr::str_replace_na(string = .data$name, replacement = ''))
-        }
-      }
-    }
-  }
-  
-  if (is.null(connection)) {
-    connection <- DatabaseConnector::connect(connectionDetails)
-    on.exit(DatabaseConnector::disconnect(connection))
-  }
-  
-  ParallelLogger::logInfo("Instantiation cohort with cohort_definition_id = ", cohortId)
-  sql <- cohortSql
-  .warnMismatchSqlInclusionStats(sql, generateInclusionStats = generateInclusionStats)
-  if (generateInclusionStats) {
-    sql <- SqlRender::render(sql,
-                             cdm_database_schema = cdmDatabaseSchema,
-                             vocabulary_database_schema = vocabularyDatabaseSchema,
-                             target_database_schema = cohortDatabaseSchema,
-                             target_cohort_table = cohortTable,
-                             target_cohort_id = cohortId,
-                             results_database_schema.cohort_inclusion = paste(resultsDatabaseSchema,
-                                                                              cohortInclusionTable,
-                                                                              sep = "."),
-                             results_database_schema.cohort_inclusion_result = paste(resultsDatabaseSchema,
-                                                                                     cohortInclusionResultTable,
-                                                                                     sep = "."),
-                             results_database_schema.cohort_inclusion_stats = paste(resultsDatabaseSchema,
-                                                                                    cohortInclusionStatsTable,
-                                                                                    sep = "."),
-                             results_database_schema.cohort_summary_stats = paste(resultsDatabaseSchema,
-                                                                                  cohortSummaryStatsTable,
-                                                                                  sep = "."))
-  } else {
-    sql <- SqlRender::render(sql,
-                             cdm_database_schema = cdmDatabaseSchema,
-                             vocabulary_database_schema = vocabularyDatabaseSchema,
-                             target_database_schema = cohortDatabaseSchema,
-                             target_cohort_table = cohortTable,
-                             target_cohort_id = cohortId)
-  }
-  sql <- SqlRender::translate(sql,
-                              targetDialect = connection@dbms,
-                              tempEmulationSchema = tempEmulationSchema)
-  DatabaseConnector::executeSql(connection, sql)
-  
-  if (generateInclusionStats && nrow(inclusionRules) > 0) {
-    DatabaseConnector::insertTable(connection = connection,
-                                   tableName = paste(resultsDatabaseSchema,
-                                                     cohortInclusionTable,
-                                                     sep = "."),
-                                   data = inclusionRules,
-                                   dropTableIfExists = FALSE,
-                                   createTable = FALSE,
-                                   tempTable = FALSE,
-                                   camelCaseToSnakeCase = TRUE)
-  }
-  delta <- Sys.time() - start
-  writeLines(paste("Instantiating cohort took", signif(delta, 3), attr(delta, "units")))
-  
-}
+#' #' Instantiate a cohort
+#' #'
+#' #' @description
+#' #' This function instantiates the cohort in the cohort table. Optionally, the inclusion rule
+#' #' statistics are computed and stored in the inclusion rule statistics tables.
+#' #'
+#' #' @template Connection
+#' #'
+#' #' @template CohortTable
+#' #'
+#' #' @template CohortDef
+#' #'
+#' #' @template TempEmulationSchema
+#' #' 
+#' #' @template OracleTempSchema
+#' #'
+#' #' @template CdmDatabaseSchema
+#' #' 
+#' #' @template VocabularyDatabaseSchema
+#' #'
+#' #' @param cohortId                     The cohort ID used to reference the cohort in the cohort table.
+#' #' @param generateInclusionStats       Compute and store inclusion rule statistics?
+#' #' @param resultsDatabaseSchema        Schema name where the statistics tables reside. Note that for
+#' #'                                     SQL Server, this should include both the database and schema
+#' #'                                     name, for example 'scratch.dbo'.
+#' #' @param cohortInclusionTable         Name of the inclusion table, one of the tables for storing
+#' #'                                     inclusion rule statistics.
+#' #' @param cohortInclusionResultTable   Name of the inclusion result table, one of the tables for
+#' #'                                     storing inclusion rule statistics.
+#' #' @param cohortInclusionStatsTable    Name of the inclusion stats table, one of the tables for storing
+#' #'                                     inclusion rule statistics.
+#' #' @param cohortSummaryStatsTable      Name of the summary stats table, one of the tables for storing
+#' #'                                     inclusion rule statistics.
+#' #'
+#' #' @export
+#' instantiateCohort <- function(connectionDetails = NULL,
+#'                               connection = NULL,
+#'                               cdmDatabaseSchema,
+#'                               oracleTempSchema = NULL,
+#'                               tempEmulationSchema = NULL,
+#'                               cohortDatabaseSchema = cdmDatabaseSchema,
+#'                               cohortTable = "cohort",
+#'                               baseUrl = NULL,
+#'                               cohortJson = NULL,
+#'                               cohortSql = NULL,
+#'                               cohortId = NULL,
+#'                               generateInclusionStats = FALSE,
+#'                               resultsDatabaseSchema = cohortDatabaseSchema,
+#'                               vocabularyDatabaseSchema = cdmDatabaseSchema,
+#'                               cohortInclusionTable = paste0(cohortTable, "_inclusion"),
+#'                               cohortInclusionResultTable = paste0(cohortTable, "_inclusion_result"),
+#'                               cohortInclusionStatsTable = paste0(cohortTable, "_inclusion_stats"),
+#                               cohortSummaryStatsTable = paste0(cohortTable, "_summary_stats")) {
+#   
+#   if (!is.null(oracleTempSchema) && is.null(tempEmulationSchema)) {
+#     tempEmulationSchema <- oracleTempSchema
+#     warning('OracleTempSchema has been deprecated by DatabaseConnector')
+#   }
+#   
+#   if (is.null(baseUrl) && is.null(cohortJson)) {
+#     stop("Must provide either baseUrl and cohortId, or cohortJson and cohortSql")
+#   }
+#   if (!is.null(cohortJson) && !is.character(cohortJson)) {
+#     stop("cohortJson should be character (a JSON string).")
+#   }
+#   start <- Sys.time()
+#   if (is.null(cohortJson)) {
+#     ParallelLogger::logInfo("Retrieving cohort definition from WebAPI")
+#     cohortDefinition <- ROhdsiWebApi::getCohortDefinition(cohortId = cohortId,
+#                                                           baseUrl = baseUrl)
+#     cohortDefinition <- cohortDefinition$expression
+#     cohortSql <- ROhdsiWebApi::getCohortSql(cohortDefinition = cohortDefinition,
+#                                             baseUrl = baseUrl,
+#                                             generateStats = generateInclusionStats)
+#   } else {
+#     cohortDefinition <- RJSONIO::fromJSON(content = cohortJson, digits = 23)
+#   }
+#   if (generateInclusionStats) {
+#     inclusionRules <- tidyr::tibble()
+#     if (!is.null(cohortDefinition$InclusionRules)) {
+#       nrOfRules <- length(cohortDefinition$InclusionRules)
+#       if (nrOfRules > 0) {
+#         for (i in 1:nrOfRules) {
+#           inclusionRules <- dplyr::bind_rows(inclusionRules, tidyr::tibble(cohortId = cohortId,
+#                                                                            ruleSequence = i - 1,
+#                                                                            name = cohortDefinition$InclusionRules[[i]]$name)) %>%
+#             dplyr::mutate(name = stringr::str_replace_na(string = .data$name, replacement = ''))
+#         }
+#       }
+#     }
+#   }
+#   
+#   if (is.null(connection)) {
+#     connection <- DatabaseConnector::connect(connectionDetails)
+#     on.exit(DatabaseConnector::disconnect(connection))
+#   }
+#   
+#   ParallelLogger::logInfo("Instantiation cohort with cohort_definition_id = ", cohortId)
+#   sql <- cohortSql
+#   .warnMismatchSqlInclusionStats(sql, generateInclusionStats = generateInclusionStats)
+#   if (generateInclusionStats) {
+#     sql <- SqlRender::render(sql,
+#                              cdm_database_schema = cdmDatabaseSchema,
+#                              vocabulary_database_schema = vocabularyDatabaseSchema,
+#                              target_database_schema = cohortDatabaseSchema,
+#                              target_cohort_table = cohortTable,
+#                              target_cohort_id = cohortId,
+#                              results_database_schema.cohort_inclusion = paste(resultsDatabaseSchema,
+#                                                                               cohortInclusionTable,
+#                                                                               sep = "."),
+#                              results_database_schema.cohort_inclusion_result = paste(resultsDatabaseSchema,
+#                                                                                      cohortInclusionResultTable,
+#                                                                                      sep = "."),
+#                              results_database_schema.cohort_inclusion_stats = paste(resultsDatabaseSchema,
+#                                                                                     cohortInclusionStatsTable,
+#                                                                                     sep = "."),
+#                              results_database_schema.cohort_summary_stats = paste(resultsDatabaseSchema,
+#                                                                                   cohortSummaryStatsTable,
+#                                                                                   sep = "."))
+#   } else {
+#     sql <- SqlRender::render(sql,
+#                              cdm_database_schema = cdmDatabaseSchema,
+#                              vocabulary_database_schema = vocabularyDatabaseSchema,
+#                              target_database_schema = cohortDatabaseSchema,
+#                              target_cohort_table = cohortTable,
+#                              target_cohort_id = cohortId)
+#   }
+#   sql <- SqlRender::translate(sql,
+#                               targetDialect = connection@dbms,
+#                               tempEmulationSchema = tempEmulationSchema)
+#   DatabaseConnector::executeSql(connection, sql)
+#   
+#   if (generateInclusionStats && nrow(inclusionRules) > 0) {
+#     DatabaseConnector::insertTable(connection = connection,
+#                                    tableName = paste(resultsDatabaseSchema,
+#                                                      cohortInclusionTable,
+#                                                      sep = "."),
+#                                    data = inclusionRules,
+#                                    dropTableIfExists = FALSE,
+#                                    createTable = FALSE,
+#                                    tempTable = FALSE,
+#                                    camelCaseToSnakeCase = TRUE)
+#   }
+#   delta <- Sys.time() - start
+#   writeLines(paste("Instantiating cohort took", signif(delta, 3), attr(delta, "units")))
+#   
+# }
 
 getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
                                             folder,
