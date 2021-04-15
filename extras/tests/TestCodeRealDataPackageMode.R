@@ -6,6 +6,8 @@ library(CohortDiagnostics)
 library('SkeletonCohortDiagnosticsStudy')
 packageName <- 'SkeletonCohortDiagnosticsStudy'
 
+temporaryLocation <- tempdir()
+
 connectionSpecifications <- cdmSources %>%
   dplyr::filter(sequence == 1) %>%
   dplyr::filter(database == 'truven_ccae')
@@ -38,7 +40,7 @@ cohortTable <- # example: 'cohort'
   paste0("s", connectionSpecifications$sourceId, "_", packageName)
 
 outputFolder <-
-  file.path(rstudioapi::getActiveProject(), "outputFolder", databaseId)
+  file.path(temporaryLocation, "outputFolder", databaseId)
 unlink(x = outputFolder,
        recursive = TRUE,
        force = TRUE)
