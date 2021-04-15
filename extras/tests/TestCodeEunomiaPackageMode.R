@@ -5,13 +5,13 @@ library(CohortDiagnostics)
 library(SkeletonCohortDiagnosticsStudy)
 
 temporaryLocation <- tempdir()
-outputFolder <- file.path(temporaryLocation, "outputFolder", "packageMode", "eunomia", databaseId)
+outputFolder <- file.path(temporaryLocation, "outputFolder", "packageMode", "eunomia")
 unlink(x = outputFolder, recursive = TRUE, force = TRUE)
 dir.create(path = outputFolder, showWarnings = FALSE, recursive = TRUE)
 
 SkeletonCohortDiagnosticsStudy::runCohortDiagnostics(
   connectionDetails = Eunomia::getEunomiaConnectionDetails(),
-  cdmDatabaseSchema = cdmDatabaseSchema,
+  cdmDatabaseSchema = 'main',
   vocabularyDatabaseSchema = "main",
   cohortDatabaseSchema = "main",
   cohortTable = "cohortEunomia",

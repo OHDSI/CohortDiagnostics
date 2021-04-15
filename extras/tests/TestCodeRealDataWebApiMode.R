@@ -8,16 +8,17 @@ connectionSpecifications <- cdmSources %>%
   dplyr::filter(.data$sequence == 1) %>%
   dplyr::filter(.data$database == 'truven_ccae')
 
-dbms <- connectionSpecifications$dbms
-port <- connectionSpecifications$port
-server <- connectionSpecifications$server
-cdmDatabaseSchema <- connectionSpecifications$cdmDatabaseSchema
-vocabDatabaseSchema <- connectionSpecifications$vocabDatabaseSchema
-databaseId <- connectionSpecifications$database
-userNameService = "OHDA_USER"
-passwordService = "OHDA_PASSWORD"
+dbms <- connectionSpecifications$dbms # example: 'redshift'
+port <- connectionSpecifications$port # example: 2234
+server <- connectionSpecifications$server # example: 'fdsfd.yourdatabase.yourserver.com"
+cdmDatabaseSchema <- connectionSpecifications$cdmDatabaseSchema # example: "cdm"
+vocabDatabaseSchema <- connectionSpecifications$vocabDatabaseSchema # example: "vocabulary"
+databaseId <- connectionSpecifications$database # example: "truven_ccae"
+userNameService = "OHDSE_USER" # example: "this is key ring service that securely stores credentials"
+passwordService = "OHDSI_PASSWORD" # example: "this is key ring service that securely stores credentials"
 
 cohortDatabaseSchema = paste0('scratch_', keyring::key_get(service = userNameService))
+# scratch - usually something like 'scratch_grao'
 
 connectionDetails <- DatabaseConnector::createConnectionDetails(
   dbms = dbms,
