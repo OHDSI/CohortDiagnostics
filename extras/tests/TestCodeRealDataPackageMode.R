@@ -1,14 +1,12 @@
 source(Sys.getenv("startUpScriptLocation"))
 
-temporaryLocation <- tempdir()
-
 library(CohortDiagnostics)
-library(examplePackagePhenotypeLibrary)
-
+library('examplePackagePhenotypeLibrary')
 packageName <- 'examplePackagePhenotypeLibrary'
+
 connectionSpecifications <- cdmSources %>%
-  dplyr::filter(.data$sequence == 1) %>%
-  dplyr::filter(.data$database == 'truven_ccae')
+  dplyr::filter(sequence == 1) %>%
+  dplyr::filter(database == 'truven_ccae')
 
 
 dbms <- connectionSpecifications$dbms
@@ -17,9 +15,10 @@ server <- connectionSpecifications$server
 cdmDatabaseSchema <- connectionSpecifications$cdmDatabaseSchema
 vocabDatabaseSchema <- connectionSpecifications$vocabDatabaseSchema
 databaseId <- connectionSpecifications$database
-cohortDatabaseSchema = 'scratch_grao9'
 userNameService = "OHDA_USER"
 passwordService = "OHDA_PASSWORD"
+
+cohortDatabaseSchema = paste0('scratch_', keyring::key_get(service = userNameService))
 
 connectionDetails <- DatabaseConnector::createConnectionDetails(
   dbms = dbms,
@@ -29,9 +28,10 @@ connectionDetails <- DatabaseConnector::createConnectionDetails(
   server = server
 )
 
-cohortTable <- "cohort"
+cohortTable <- 
+  paste0("s", connectionSpecifications$sourceId, "_", packageName)
 
-outputFolder <- file.path(temporaryLocation, "outputFolder", "packageMode", "realData", databaseId)
+outputFolder <- file.path(rstudioapi::getActiveProject(), "outputFolder", databaseId)
 unlink(x = outputFolder,
        recursive = TRUE,
        force = TRUE)
@@ -39,7 +39,6 @@ dir.create(path = outputFolder,
            showWarnings = FALSE,
            recursive = TRUE)
 
-# the function below is a private function that gets meta information about data sources
 dataSouceInformation <-
   getDataSourceInformation(
     connectionDetails = connectionDetails,
@@ -83,8 +82,8 @@ CohortDiagnostics::launchDiagnosticsExplorer(dataFolder = outputFolder)
 #                                                             Sys.getenv("shinydbDatabase"),
 #                                                             sep = "/"),
 #                                              port = Sys.getenv("shinydbPort"),
-#                                              user = Sys.getenv("shinyDbUser"),
-#                                              password = Sys.getenv("shinyDbPassword"))
+#                                              user = Sys.getenv("shinyDbUserGowtham"),
+#                                              password = Sys.getenv("shinyDbPasswordGowtham"))
 #
 #
 # resultsSchema <- "examplePackagePhenotypeLibraryCdTruven"

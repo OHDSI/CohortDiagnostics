@@ -14,9 +14,10 @@ server <- connectionSpecifications$server
 cdmDatabaseSchema <- connectionSpecifications$cdmDatabaseSchema
 vocabDatabaseSchema <- connectionSpecifications$vocabDatabaseSchema
 databaseId <- connectionSpecifications$database
-cohortDatabaseSchema = 'scratch_grao9'
 userNameService = "OHDA_USER"
 passwordService = "OHDA_PASSWORD"
+
+cohortDatabaseSchema = paste0('scratch_', keyring::key_get(service = userNameService))
 
 connectionDetails <- DatabaseConnector::createConnectionDetails(
   dbms = dbms,
@@ -26,7 +27,8 @@ connectionDetails <- DatabaseConnector::createConnectionDetails(
   server = server
 )
 
-cohortTable <- "cohort"
+cohortTable <- 
+  paste0("s", connectionSpecifications$sourceId, "_webapi")
 
 library(magrittr)
 # Set up
