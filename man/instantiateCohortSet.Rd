@@ -20,7 +20,7 @@ instantiateCohortSet(
   cohortSetReference = NULL,
   generateInclusionStats = FALSE,
   inclusionStatisticsFolder = NULL,
-  createCohortTable = FALSE,
+  createCohortTable = TRUE,
   incremental = FALSE,
   incrementalFolder = NULL
 )

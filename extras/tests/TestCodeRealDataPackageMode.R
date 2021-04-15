@@ -1,6 +1,6 @@
 # remotes::install_github('OHDSI/SkeletonCohortDiagnosticsStudy')
 
-source(Sys.getenv("startUpScriptLocation")) # this sources information for cdmSources and dataSourceInformation. 
+source(Sys.getenv("startUpScriptLocation")) # this sources information for cdmSources and dataSourceInformation.
 
 library(CohortDiagnostics)
 library('SkeletonCohortDiagnosticsStudy')
@@ -12,14 +12,18 @@ connectionSpecifications <- cdmSources %>%
 
 dbms <- connectionSpecifications$dbms # example: 'redshift'
 port <- connectionSpecifications$port # example: 2234
-server <- connectionSpecifications$server # example: 'fdsfd.yourdatabase.yourserver.com"
-cdmDatabaseSchema <- connectionSpecifications$cdmDatabaseSchema # example: "cdm"
-vocabDatabaseSchema <- connectionSpecifications$vocabDatabaseSchema # example: "vocabulary"
-databaseId <- connectionSpecifications$database # example: "truven_ccae"
-userNameService = "OHDSE_USER" # example: "this is key ring service that securely stores credentials"
+server <-
+  connectionSpecifications$server # example: 'fdsfd.yourdatabase.yourserver.com"
+cdmDatabaseSchema <-
+  connectionSpecifications$cdmDatabaseSchema # example: "cdm"
+vocabDatabaseSchema <-
+  connectionSpecifications$vocabDatabaseSchema # example: "vocabulary"
+databaseId <-
+  connectionSpecifications$database # example: "truven_ccae"
+userNameService = "OHDSI_USER" # example: "this is key ring service that securely stores credentials"
 passwordService = "OHDSI_PASSWORD" # example: "this is key ring service that securely stores credentials"
 
-cohortDatabaseSchema = paste0('scratch_', keyring::key_get(service = userNameService)) 
+cohortDatabaseSchema = paste0('scratch_', keyring::key_get(service = userNameService))
 # scratch - usually something like 'scratch_grao'
 
 connectionDetails <- DatabaseConnector::createConnectionDetails(
@@ -30,10 +34,11 @@ connectionDetails <- DatabaseConnector::createConnectionDetails(
   server = server
 )
 
-cohortTable <- 
+cohortTable <- # example: 'cohort'
   paste0("s", connectionSpecifications$sourceId, "_", packageName)
 
-outputFolder <- file.path(rstudioapi::getActiveProject(), "outputFolder", databaseId)
+outputFolder <-
+  file.path(rstudioapi::getActiveProject(), "outputFolder", databaseId)
 unlink(x = outputFolder,
        recursive = TRUE,
        force = TRUE)
@@ -47,7 +52,6 @@ dataSouceInformation <-
     cdmDatabaseSchema = cdmDatabaseSchema,
     vocabDatabaseSchema = vocabDatabaseSchema
   )
-
 
 SkeletonCohortDiagnosticsStudy::runCohortDiagnostics(
   connectionDetails = connectionDetails,
@@ -76,8 +80,6 @@ SkeletonCohortDiagnosticsStudy::runCohortDiagnostics(
 CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = outputFolder)
 
 CohortDiagnostics::launchDiagnosticsExplorer(dataFolder = outputFolder)
-
-
 
 # connectionDetailsToUpload <- createConnectionDetails(dbms = "postgresql",
 #                                              server = paste(Sys.getenv("shinydbServer"),

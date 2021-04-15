@@ -5,9 +5,14 @@ library(CohortDiagnostics)
 library(SkeletonCohortDiagnosticsStudy)
 
 temporaryLocation <- tempdir()
-outputFolder <- file.path(temporaryLocation, "outputFolder", "packageMode", "eunomia")
-unlink(x = outputFolder, recursive = TRUE, force = TRUE)
-dir.create(path = outputFolder, showWarnings = FALSE, recursive = TRUE)
+outputFolder <-
+  file.path(temporaryLocation, "outputFolder", "packageMode", "eunomia")
+unlink(x = outputFolder,
+       recursive = TRUE,
+       force = TRUE)
+dir.create(path = outputFolder,
+           showWarnings = FALSE,
+           recursive = TRUE)
 
 SkeletonCohortDiagnosticsStudy::runCohortDiagnostics(
   connectionDetails = Eunomia::getEunomiaConnectionDetails(),
@@ -45,21 +50,20 @@ CohortDiagnostics::launchDiagnosticsExplorer(dataFolder = outputFolder)
 #                                              port = Sys.getenv("shinydbPort"),
 #                                              user = Sys.getenv("shinyDbUser"),
 #                                              password = Sys.getenv("shinyDbPassword"))
-# 
-# 
+#
+#
 # resultsSchema <- "eunomiaCd"
 # createResultsDataModel(connectionDetails = connectionDetailsToUpload, schema = resultsSchema)
-# 
-# 
+#
+#
 # path = outputFolder
-# zipFilesToUpload <- list.files(path = path, 
-#                                pattern = ".zip", 
-#                                recursive = TRUE, 
+# zipFilesToUpload <- list.files(path = path,
+#                                pattern = ".zip",
+#                                recursive = TRUE,
 #                                full.names = TRUE)
-# 
+#
 # for (i in (1:length(zipFilesToUpload))) {
 #   uploadResults(connectionDetails = connectionDetailsToUpload,
 #                 schema = resultsSchema,
 #                 zipFileName = zipFilesToUpload[[i]])
 # }
-
