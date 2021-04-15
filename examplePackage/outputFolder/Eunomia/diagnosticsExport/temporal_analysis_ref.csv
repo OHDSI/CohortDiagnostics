@@ -1,0 +1,5 @@
+analysis_id,analysis_name,domain_id,is_binary,missing_means_zero
+701,Measurement,Measurement,Y,NA
+101,ConditionOccurrence,Condition,Y,NA
+401,DrugEraStart,Drug,Y,NA
+501,ProcedureOccurrence,Procedure,Y,NA

@@ -1,0 +1,23 @@
+Package: examplePackage
+Type: Package
+Title: A package that generates cohort diagnostics output.
+Version: 0.0.1
+Author: Gowtham Rao [aut, cre]
+Maintainer: Gowtham Rao <rao@ohdsi.org>
+Description: A package that generates cohort diagnostics output.
+Depends:
+    DatabaseConnector (>= 4.0.2),
+    OhdsiRTools,
+    CohortDiagnostics
+Imports:
+	ParallelLogger
+Suggests:
+    knitr,
+    rmarkdown,
+    ROhdsiWebApi,
+License: Apache License (>= 2)
+VignetteBuilder: knitr
+LazyData: TRUE
+RoxygenNote: 7.1.1
+Encoding: UTF-8
+Language: en-US
