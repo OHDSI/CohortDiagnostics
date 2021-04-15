@@ -89,6 +89,5 @@ inclusion rule statistics.}
 }
 \description{
 This function instantiates the cohort in the cohort table. Optionally, the inclusion rule
-statistics are computed and stored in the inclusion rule statistics tables described in
-\code{\link{createCohortTable}}).
+statistics are computed and stored in the inclusion rule statistics tables.
 }
