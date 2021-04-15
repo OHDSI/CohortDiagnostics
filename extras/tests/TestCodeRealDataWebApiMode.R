@@ -76,9 +76,10 @@ outputFolder <-
             "webApiMode",
             "realData",
             databaseId)
-unlink(x = outputFolder,
-       recursive = TRUE,
-       force = TRUE)
+# Please delete previous content if needed
+# unlink(x = outputFolder,
+#        recursive = TRUE,
+#        force = TRUE)
 dir.create(path = outputFolder,
            showWarnings = FALSE,
            recursive = TRUE)

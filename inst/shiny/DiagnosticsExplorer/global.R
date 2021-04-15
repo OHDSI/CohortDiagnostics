@@ -16,7 +16,9 @@ defaultPort <- 5432
 defaultUser <- Sys.getenv("shinyDbUser")
 defaultPassword <- Sys.getenv("shinyDbPassword")
 defaultResultsSchema <- 'eunomiacd'
-defaultVocabularySchema <- 'vocabulary'
+defaultVocabularySchema <- defaultResultsSchema
+alternateVocabularySchema <- c('vocabulary')
+
 
 defaultDatabaseMode <- TRUE # Use file system if FALSE
 
@@ -92,6 +94,21 @@ if (databaseMode) {
   resultsTablesOnServer <-
     tolower(DatabaseConnector::dbListTables(connectionPool, schema = resultsDatabaseSchema))
   
+  vocabularyDatabaseSchemas <- c(defaultVocabularySchema, alternateVocabularySchema) %>% 
+    unique() %>% 
+    sort()
+  
+  vocabularyTablesOnServer <- list()
+  vocabularyTablesInOmopCdm <- c('concept', 'concept_relationship', 'concept_ancestor', 
+                                 'concept_class', 'concept_synonym',
+                                 'vocabulary', 'domain', 'relationship')
+  
+  # for (i in length(vocabularyDatabaseSchemas)) {
+  # 
+  #     tolower(DatabaseConnector::dbListTables(connectionPool, schema = vocabularyDatabaseSchemas[[i]]))
+  # vocabularyTablesOnServer[[i]] <- intersect(x = )
+  # }
+  
   loadResultsTable <- function(tableName, required = FALSE) {
     if (required || tableName %in% resultsTablesOnServer) {
       tryCatch({
@@ -136,7 +153,7 @@ if (databaseMode) {
     #, "recommender_set"
     if (table %in% resultsTablesOnServer &&
         !exists(SqlRender::snakeCaseToCamelCase(table)) &&
-        !isEmpty(table)) {
+        !isEmpty(table)) { #if table is empty, nothing is returned because type instability concerns.
       assign(SqlRender::snakeCaseToCamelCase(table),
              dplyr::tibble())
     }

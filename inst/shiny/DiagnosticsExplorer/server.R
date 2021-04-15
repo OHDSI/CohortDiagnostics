@@ -2245,19 +2245,15 @@ shiny::shinyServer(function(input, output, session) {
   
   #Compare Temporal Characterization.-----------------------------------------
   
-  computeBalanceForCompareTemporalChar <- shiny::reactive({
-    validate(need((length(cohortId(
-      
-    )) > 0), paste0("Please select cohort.")))
-    validate(need((length(
-      comparatorCohortId()
-    ) > 0), paste0("Please select comparator cohort.")))
+  computeBalanceForCompareTemporalCharacterization <- shiny::reactive({
+    validate(need((length(cohortId()) > 0), 
+                  paste0("Please select cohort.")))
+    validate(need((length(comparatorCohortId()) > 0), 
+                  paste0("Please select comparator cohort.")))
     validate(need((comparatorCohortId() != cohortId()),
-                  paste0("Please select different cohort and comarator.")
-    ))
+                  paste0("Please select different cohort and comarator.")))
     validate(need((length(input$database) > 0),
-                  paste0("Please select atleast one datasource.")
-    ))
+                  paste0("Please select atleast one datasource.")))
     validate(need((length(timeId()) > 0), paste0("Please select time id")))
     
     covs1 <- getCovariateValueResult(
@@ -2281,8 +2277,8 @@ shiny::shinyServer(function(input, output, session) {
     return(balance)
   })
   
-  output$tempralcharacterizationCompareTable <- DT::renderDataTable(expr = {
-    balance <- computeBalanceForCompareTemporalChar()
+  output$temporalCharacterizationCompareTable <- DT::renderDataTable(expr = {
+    balance <- computeBalanceForCompareTemporalCharacterization()
     if (nrow(balance) == 0) {
       return(dplyr::tibble(Note = "No data for the selected combination."))
     }
@@ -2403,7 +2399,7 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$temporalCharComparePlot <- ggiraph::renderggiraph(expr = {
-    data <- computeBalanceForCompareTemporalChar()
+    data <- computeBalanceForCompareTemporalCharacterization()
     if (nrow(data) == 0) {
       return(dplyr::tibble(Note = "No data for the selected combination."))
     }
@@ -2411,7 +2407,7 @@ shiny::shinyServer(function(input, output, session) {
       plotTemporalCompareStandardizedDifference(
         balance = data,
         shortNameRef = cohort,
-        domain = input$compareTemporalCharDomainId
+        domain = input$compareTemporalCharacterizationDomainId
       )
     return(plot)
   })

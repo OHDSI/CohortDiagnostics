@@ -61,3 +61,27 @@ enforceMinCellValue <- function(data, fieldName, minValues, silent = FALSE) {
   }
   return(data)
 }
+
+
+#' Check character encoding of input file
+#' 
+#' @description 
+#' For its input files, CohortDiagnostics only accepts UTF-8 or ASCII character encoding. This 
+#' function can be used to check whether a file meets these criteria.
+#'
+#' @param fileName  The path to the file to check
+#'
+#' @return
+#' Throws an error if the input file does not have the correct encoding.
+#' 
+checkInputFileEncoding <- function(fileName) {
+  encoding <- readr::guess_encoding(file = fileName, n_max = min(1e7))
+  
+  if (!encoding$encoding[1] %in% c("UTF-8", "ASCII")) {
+    stop("Illegal encoding found in file ",
+         basename(fileName),
+         ". Should be 'ASCII' or 'UTF-8', found:",
+         paste(paste0(encoding$encoding, " (", encoding$confidence, ")"), collapse = ", "))
+  }
+  invisible(TRUE)
+}
