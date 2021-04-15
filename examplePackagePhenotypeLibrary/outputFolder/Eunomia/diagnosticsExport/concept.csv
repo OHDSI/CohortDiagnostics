@@ -8,6 +8,7 @@ concept_id,concept_name,domain_id,vocabulary_id,concept_class_id,standard_concep
 40486433,Perennial allergic rhinitis,Condition,SNOMED,Clinical Finding,S,446096008,2011-01-31,2099-12-31,NA
 4051466,Childhood asthma,Condition,SNOMED,Clinical Finding,S,233678006,1970-01-01,2099-12-31,NA
 4142905,Fracture of rib,Condition,SNOMED,Clinical Finding,S,33737001,1970-01-01,2099-12-31,NA
+4144583,Diabetes mellitus due to cystic fibrosis,Condition,SNOMED,Clinical Finding,S,427089005,1970-01-01,2099-12-31,NA
 4296204,First degree burn,Condition,SNOMED,Clinical Finding,S,403190006,1970-01-01,2099-12-31,NA
 4294548,Acute bacterial sinusitis,Condition,SNOMED,Clinical Finding,S,75498004,1970-01-01,2099-12-31,NA
 4278672,Fracture of forearm,Condition,SNOMED,Clinical Finding,S,65966004,1970-01-01,2099-12-31,NA
@@ -23,6 +24,7 @@ concept_id,concept_name,domain_id,vocabulary_id,concept_class_id,standard_concep
 4230399,Closed fracture of hip,Condition,SNOMED,Clinical Finding,S,359817006,1970-01-01,2099-12-31,NA
 4166224,Rupture of appendix,Condition,SNOMED,Clinical Finding,S,47693006,1970-01-01,2099-12-31,NA
 9201,Inpatient Visit,Visit,Visit,Visit,S,IP,1970-01-01,2099-12-31,NA
+45769019,Female infertility due to cystic fibrosis,Condition,SNOMED,Clinical Finding,S,707577004,2015-01-31,2099-12-31,NA
 198809,Acute cholecystitis,Condition,SNOMED,Clinical Finding,S,65275009,1970-01-01,2099-12-31,NA
 195588,Cystitis,Condition,SNOMED,Clinical Finding,S,38822007,1970-01-01,2099-12-31,NA
 378001,Concussion with no loss of consciousness,Condition,SNOMED,Clinical Finding,S,62106007,1970-01-01,2099-12-31,NA
@@ -47,6 +49,7 @@ concept_id,concept_name,domain_id,vocabulary_id,concept_class_id,standard_concep
 261325,Pulmonary emphysema,Condition,SNOMED,Clinical Finding,S,87433001,1970-01-01,2099-12-31,NA
 30753,Esophagitis,Condition,SNOMED,Clinical Finding,S,16761005,1970-01-01,2099-12-31,NA
 4035415,Tear of meniscus of knee,Condition,SNOMED,Clinical Finding,S,239720000,1970-01-01,2099-12-31,NA
+441267,Cystic fibrosis,Condition,SNOMED,Clinical Finding,S,190905008,1970-01-01,2099-12-31,NA
 196456,Gallstone,Condition,SNOMED,Clinical Finding,S,235919008,1970-01-01,2099-12-31,NA
 4112343,Acute viral pharyngitis,Condition,SNOMED,Clinical Finding,S,195662009,1970-01-01,2099-12-31,NA
 80180,Osteoarthritis,Condition,SNOMED,Clinical Finding,S,396275006,1970-01-01,2099-12-31,NA

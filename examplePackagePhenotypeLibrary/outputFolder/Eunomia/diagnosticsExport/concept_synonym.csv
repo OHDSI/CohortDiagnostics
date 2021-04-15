@@ -1,4 +1,5 @@
 concept_id,concept_synonym_name,language_concept_id
+441267,Cystic fibrosis (disorder),4180186
 4237458,Fracture of collar bone,4180186
 4280726,Spasmodic rhinorrhoea,4180186
 80809,Rheumatoid arthritis,4180186
@@ -6,17 +7,20 @@ concept_id,concept_synonym_name,language_concept_id
 40480160,Pathological fracture due to osteoporosis (disorder),4180186
 192671,GI haemorrhage,4180186
 44782520,Chronic paralysis due to lesion of spinal cord (disorder),4180186
+441267,Fibrocystic disease,4180186
 4280726,Seasonal allergic rhinitis,4180186
 80809,Rheumatoid disease,4180186
 196456,Gallstones,4180186
 40480160,Pathological fracture due to osteoporosis,4180186
 192671,GI bleeding,4180186
+441267,Cystic fibrosis,4180186
 4280726,Spasmodic rhinorrhea,4180186
 80809,Proliferative arthritis,4180186
 196456,Gallbladder stones,4180186
 372328,Otitis media,4180186
 192671,Gastrointestinal bleeding,4180186
 317009,Hyperreactive airway disease,4180186
+441267,Mucoviscidosis,4180186
 80809,RA - Rheumatoid arthritis,4180186
 196456,Gallstone,4180186
 372328,Otitis media (disorder),4180186
@@ -25,6 +29,7 @@ concept_id,concept_synonym_name,language_concept_id
 192671,GIH - Gastrointestinal hemorrhage,4180186
 1124300,Diclofenac,4180186
 317009,Bronchial hyperresponsiveness,4180186
+441267,CF - Cystic fibrosis,4180186
 1118084,celecoxib,4180186
 4329847,MI - Myocardial infarction,4180186
 80809,Rheumatic gout,4180186
@@ -35,6 +40,7 @@ concept_id,concept_synonym_name,language_concept_id
 255848,Pneumonia (disorder),4180186
 134438,Contact eczema,4180186
 317009,Asthma (disorder),4180186
+441267,CF,4180186
 4329847,Myocardial infarct,4180186
 4285898,Polyp of colon (disorder),4180186
 80809,RhA - Rheumatoid arthritis,4180186
@@ -173,6 +179,7 @@ concept_id,concept_synonym_name,language_concept_id
 4149245,Rupture of patellar tendon,4180186
 40486433,Perennial allergic rhinitis (disorder),4180186
 4027663,Peptic ulcer disease,4180186
+4144583,Diabetes mellitus due to cystic fibrosis (disorder),4180186
 198199,Pyelonephritis (disorder),4180186
 81151,Sprain of ankle (disorder),4180186
 4132546,Traumatic brain injury,4180186
@@ -181,6 +188,7 @@ concept_id,concept_synonym_name,language_concept_id
 313217,Atrial fibrillation (disorder),4180186
 40486433,Perennial allergic rhinitis,4180186
 4027663,Peptic ulceration,4180186
+4144583,Diabetes mellitus due to cystic fibrosis,4180186
 4266809,Diverticular disease (disorder),4180186
 198809,Acute cholecystitis (disorder),4180186
 81151,Ankle sprain,4180186
@@ -194,6 +202,7 @@ concept_id,concept_synonym_name,language_concept_id
 81151,Sprain of ligament of ankle joint,4180186
 381316,Stroke,4180186
 192671,Gastrointestinal hemorrhage,4180186
+45769019,Female infertility due to cystic fibrosis (disorder),4180186
 4027663,Gastroduodenal ulcer,4180186
 4266809,DD - Diverticular disease,4180186
 80180,Osteoarthrosis,4180186
@@ -203,6 +212,7 @@ concept_id,concept_synonym_name,language_concept_id
 28060,Streptococcal sore throat (disorder),4180186
 192671,Gastrointestinal haemorrhage,4180186
 4112343,Acute viral pharyngitis,4180186
+45769019,Female infertility due to cystic fibrosis,4180186
 4027663,PUD - Peptic ulcer disease,4180186
 80180,Osteoarthritis,4180186
 81893,Colitis gravis,4180186
@@ -211,6 +221,7 @@ concept_id,concept_synonym_name,language_concept_id
 28060,Strep throat,4180186
 192671,Gastrointestinal hemorrhage (disorder),4180186
 4112343,Acute viral pharyngitis (disorder),4180186
+45769019,Female hypofertility due to cystic fibrosis,4180186
 4027663,Peptic ulcer (disorder),4180186
 80180,Hypertrophic polyarthritis,4180186
 81893,Ulcerative colitis,4180186
@@ -218,6 +229,7 @@ concept_id,concept_synonym_name,language_concept_id
 28060,Streptococcal angina,4180186
 192671,GI hemorrhage,4180186
 4035415,Torn meniscus,4180186
+45769019,Female hypofertility in classical cystic fibrosis,4180186
 4051466,Childhood asthma (disorder),4180186
 4056621,Recurrent UTI - urinary tract infection,4180186
 4146173,Injury of tendon of the rotator cuff of shoulder (disorder),4180186
