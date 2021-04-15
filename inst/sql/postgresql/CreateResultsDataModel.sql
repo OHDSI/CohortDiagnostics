@@ -173,6 +173,8 @@ CREATE TABLE database (
 			database_name VARCHAR,
 			description VARCHAR,
 			is_meta_analysis VARCHAR(1) NOT NULL,
+			vocabulary_version VARCHAR,
+			vocabulary_version_cdm VARCHAR,
 			PRIMARY KEY(database_id)
 );
 

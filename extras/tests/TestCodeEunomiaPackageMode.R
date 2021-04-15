@@ -7,9 +7,10 @@ library(SkeletonCohortDiagnosticsStudy)
 temporaryLocation <- tempdir()
 outputFolder <-
   file.path(temporaryLocation, "outputFolder", "packageMode", "eunomia")
-unlink(x = outputFolder,
-       recursive = TRUE,
-       force = TRUE)
+# Please delete previous content if needed
+# unlink(x = outputFolder,
+#        recursive = TRUE,
+#        force = TRUE)
 dir.create(path = outputFolder,
            showWarnings = FALSE,
            recursive = TRUE)
@@ -41,29 +42,29 @@ SkeletonCohortDiagnosticsStudy::runCohortDiagnostics(
 CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = outputFolder)
 CohortDiagnostics::launchDiagnosticsExplorer(dataFolder = outputFolder)
 
-
-
+# 
+# 
 # connectionDetailsToUpload <- createConnectionDetails(dbms = "postgresql",
-#                                              server = paste(Sys.getenv("shinydbServer"),
-#                                                             Sys.getenv("shinydbDatabase"),
-#                                                             sep = "/"),
-#                                              port = Sys.getenv("shinydbPort"),
-#                                              user = Sys.getenv("shinyDbUser"),
-#                                              password = Sys.getenv("shinyDbPassword"))
-#
-#
+#                                                      server = paste(Sys.getenv("shinydbServer"),
+#                                                                     Sys.getenv("shinydbDatabase"),
+#                                                                     sep = "/"),
+#                                                      port = Sys.getenv("shinydbPort"),
+#                                                      user = Sys.getenv("shinyDbUser"),
+#                                                      password = Sys.getenv("shinyDbPassword"))
+# 
+# 
 # resultsSchema <- "eunomiaCd"
 # createResultsDataModel(connectionDetails = connectionDetailsToUpload, schema = resultsSchema)
-#
-#
+# 
+# 
 # path = outputFolder
 # zipFilesToUpload <- list.files(path = path,
 #                                pattern = ".zip",
 #                                recursive = TRUE,
 #                                full.names = TRUE)
-#
+# 
 # for (i in (1:length(zipFilesToUpload))) {
-#   uploadResults(connectionDetails = connectionDetailsToUpload,
-#                 schema = resultsSchema,
-#                 zipFileName = zipFilesToUpload[[i]])
+#   CohortDiagnostics::uploadResults(connectionDetails = connectionDetailsToUpload,
+#                                    schema = resultsSchema,
+#                                    zipFileName = zipFilesToUpload[[i]])
 # }

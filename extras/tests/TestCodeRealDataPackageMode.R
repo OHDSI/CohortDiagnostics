@@ -40,10 +40,11 @@ cohortTable <- # example: 'cohort'
   paste0("s", connectionSpecifications$sourceId, "_", packageName)
 
 outputFolder <-
-  file.path(temporaryLocation, "outputFolder", databaseId)
-unlink(x = outputFolder,
-       recursive = TRUE,
-       force = TRUE)
+  file.path(rstudioapi::getActiveProject(), "outputFolder", databaseId)
+# Please delete previous content if needed
+# unlink(x = outputFolder,
+#        recursive = TRUE,
+#        force = TRUE)
 dir.create(path = outputFolder,
            showWarnings = FALSE,
            recursive = TRUE)
@@ -65,7 +66,7 @@ SkeletonCohortDiagnosticsStudy::runCohortDiagnostics(
   databaseId = databaseId,
   databaseName = dataSouceInformation$cdmSourceName,
   databaseDescription = dataSouceInformation$sourceDescription,
-  runCohortCharacterization = TRUE,
+  runCohortCharacterization = FALSE,
   runCohortOverlap = TRUE,
   runOrphanConcepts = TRUE,
   runVisitContext = TRUE,
