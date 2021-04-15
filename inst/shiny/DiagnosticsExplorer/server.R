@@ -183,7 +183,7 @@ shiny::shinyServer(function(input, output, session) {
   cohortDefinitionCirceRDetails <- shiny::reactive(x = {
     progress <- shiny::Progress$new()
     on.exit(progress$close())
-    progress$set(message = "Rendering human readable cohort description using CirceR", value = 0)
+    progress$set(message = "Rendering human readable cohort description using CirceR (may take time)", value = 0)
     
     data <- selectedCohortDefinitionRow()
     if (nrow(selectedCohortDefinitionRow()) > 0) {
