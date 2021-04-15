@@ -205,41 +205,10 @@ getCohortsJsonAndSql <- function(packageName = NULL,
   return(cohorts)
 }
 
-#' Create cohort table(s)
-#'
-#' @description
-#' This function creates an empty cohort table. Optionally, additional empty tables are created to
-#' store statistics on the various inclusion criteria.
-#'
-#' @template Connection
-#'
-#' @template CohortTable
-#'
-#' @param createInclusionStatsTables   Create the four additional tables for storing inclusion rule
-#'                                     statistics?
-#' @param resultsDatabaseSchema        Schema name where the statistics tables reside. Note that for
-#'                                     SQL Server, this should include both the database and schema
-#'                                     name, for example 'scratch.dbo'.
-#' @param cohortInclusionTable         Name of the inclusion table, one of the tables for storing
-#'                                     inclusion rule statistics.
-#' @param cohortInclusionResultTable   Name of the inclusion result table, one of the tables for
-#'                                     storing inclusion rule statistics.
-#' @param cohortInclusionStatsTable    Name of the inclusion stats table, one of the tables for storing
-#'                                     inclusion rule statistics.
-#' @param cohortSummaryStatsTable      Name of the summary stats table, one of the tables for storing
-#'                                     inclusion rule statistics.
-#'
-#' @export
 createCohortTable <- function(connectionDetails = NULL,
                               connection = NULL,
                               cohortDatabaseSchema,
-                              cohortTable = "cohort",
-                              createInclusionStatsTables = FALSE,
-                              resultsDatabaseSchema = cohortDatabaseSchema,
-                              cohortInclusionTable = paste0(cohortTable, "_inclusion"),
-                              cohortInclusionResultTable = paste0(cohortTable, "_inclusion_result"),
-                              cohortInclusionStatsTable = paste0(cohortTable, "_inclusion_stats"),
-                              cohortSummaryStatsTable = paste0(cohortTable, "_summary_stats")) {
+                              cohortTable = "cohort") {
   start <- Sys.time()
   ParallelLogger::logInfo("Creating cohort table")
   if (is.null(connection)) {
@@ -254,28 +223,6 @@ createCohortTable <- function(connectionDetails = NULL,
   DatabaseConnector::executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
   ParallelLogger::logDebug("Created table ", cohortDatabaseSchema, ".", cohortTable)
   
-  if (createInclusionStatsTables) {
-    ParallelLogger::logInfo("Creating inclusion rule statistics tables")
-    sql <- SqlRender::loadRenderTranslateSql("CreateInclusionStatsTables.sql",
-                                             packageName = "CohortDiagnostics",
-                                             dbms = connection@dbms,
-                                             cohort_database_schema = resultsDatabaseSchema,
-                                             cohort_inclusion_table = cohortInclusionTable,
-                                             cohort_inclusion_result_table = cohortInclusionResultTable,
-                                             cohort_inclusion_stats_table = cohortInclusionStatsTable,
-                                             cohort_summary_stats_table = cohortSummaryStatsTable)
-    DatabaseConnector::executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
-    ParallelLogger::logDebug("Created table ", cohortDatabaseSchema, ".", cohortInclusionTable)
-    ParallelLogger::logDebug("Created table ",
-                             cohortDatabaseSchema,
-                             ".",
-                             cohortInclusionResultTable)
-    ParallelLogger::logDebug("Created table ",
-                             cohortDatabaseSchema,
-                             ".",
-                             cohortInclusionStatsTable)
-    ParallelLogger::logDebug("Created table ", cohortDatabaseSchema, ".", cohortSummaryStatsTable)
-  }
   delta <- Sys.time() - start
   writeLines(paste("Creating cohort table took", signif(delta, 3), attr(delta, "units")))
 }
@@ -618,8 +565,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
     if (needToCreate) {
       createCohortTable(connection = connection,
                         cohortDatabaseSchema = cohortDatabaseSchema,
-                        cohortTable = cohortTable,
-                        createInclusionStatsTables = FALSE)
+                        cohortTable = cohortTable)
     }
   }
   
