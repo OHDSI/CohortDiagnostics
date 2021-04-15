@@ -571,7 +571,14 @@ bodyTabItems <- shinydashboard::tabItems(
             )
           )
         )
-      )
+      ),
+      shiny::radioButtons(
+        inputId = "indexEventBreakdownTableRadioButton",
+        label = "",
+        choices = c("All", "Standard concepts", "Non Standard Concepts"),
+        selected = "All",
+        inline = TRUE
+      ),
     ),
     DT::dataTableOutput(outputId = "breakdownTable")
   ),
