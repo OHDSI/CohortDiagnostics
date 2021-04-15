@@ -338,22 +338,22 @@ bodyTabItems <- shinydashboard::tabItems(
                 icon = shiny::icon("download"),
                 style = "margin-top: 5px; margin-bottom: 5px;"
               ),
-              if (!is(dataSource, "environment")) {
-                shiny::radioButtons(
-                  inputId = "conceptSetsType",
-                  label = "",
-                  choices = c(
-                    "Concept Set Expression",
-                    "Included Standard Concepts",
-                    "Included Source Concepts"
-                  ),
-                  selected = "Concept Set Expression",
-                  inline = TRUE
-                )
-              },
+              DT::dataTableOutput(outputId = "conceptsetExpressionTable"),
               shiny::conditionalPanel(
-                condition = "input.conceptSetsType == 'Concept Set Expression' | output.isDataSourceEnvironment == true",
-                DT::dataTableOutput(outputId = "conceptsetExpressionTable")
+                condition = "output.conceptSetExpressionRowSelected == true",
+                if (!is(dataSource, "environment")) {
+                  shiny::radioButtons(
+                    inputId = "conceptSetsType",
+                    label = "",
+                    choices = c(
+                      "Concept Set Expression",
+                      "Included Standard Concepts",
+                      "Included Source Concepts"
+                    ),
+                    selected = "Concept Set Expression",
+                    inline = TRUE
+                  )
+                }
               ),
               shiny::conditionalPanel(
                 condition = "input.conceptSetsType == 'Included Standard Concepts'",
