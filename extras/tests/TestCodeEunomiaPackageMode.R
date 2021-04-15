@@ -1,27 +1,22 @@
+# remotes::install_github('OHDSI/SkeletonCohortDiagnosticsStudy')
+# remotes::install_github('OHDSI/Eunomia')
+
 library(CohortDiagnostics)
-library(Eunomia)
-library(examplePackagePhenotypeLibrary)
+library(SkeletonCohortDiagnosticsStudy)
 
 temporaryLocation <- tempdir()
-
-connectionDetails <- Eunomia::getEunomiaConnectionDetails()
-cdmDatabaseSchema <- "main"
-cohortDatabaseSchema <- "main"
-cohortTable <- "cohortPhenotypeLibrary"
-databaseId <- "Eunomia"
-
 outputFolder <- file.path(temporaryLocation, "outputFolder", "packageMode", "eunomia", databaseId)
 unlink(x = outputFolder, recursive = TRUE, force = TRUE)
 dir.create(path = outputFolder, showWarnings = FALSE, recursive = TRUE)
 
-examplePackagePhenotypeLibrary::runCohortDiagnostics(
-  connectionDetails = connectionDetails,
+SkeletonCohortDiagnosticsStudy::runCohortDiagnostics(
+  connectionDetails = Eunomia::getEunomiaConnectionDetails(),
   cdmDatabaseSchema = cdmDatabaseSchema,
-  vocabularyDatabaseSchema = cdmDatabaseSchema,
-  cohortDatabaseSchema = cohortDatabaseSchema,
-  cohortTable = cohortTable,
+  vocabularyDatabaseSchema = "main",
+  cohortDatabaseSchema = "main",
+  cohortTable = "cohortEunomia",
   outputFolder = outputFolder,
-  databaseId = databaseId,
+  databaseId = "Eunomia",
   databaseName = "Eunomia Test",
   databaseDescription = "This is a test data base called Eunomia",
   runCohortCharacterization = TRUE,
@@ -39,7 +34,6 @@ examplePackagePhenotypeLibrary::runCohortDiagnostics(
 )
 
 CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = outputFolder)
-
 CohortDiagnostics::launchDiagnosticsExplorer(dataFolder = outputFolder)
 
 

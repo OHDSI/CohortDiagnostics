@@ -1,18 +1,19 @@
-source(Sys.getenv("startUpScriptLocation"))
+# remotes::install_github('OHDSI/SkeletonCohortDiagnosticsStudy')
+
+source(Sys.getenv("startUpScriptLocation")) # this sources information for cdmSources and dataSourceInformation. 
 
 library(CohortDiagnostics)
-library('examplePackagePhenotypeLibrary')
-packageName <- 'examplePackagePhenotypeLibrary'
+library('SkeletonCohortDiagnosticsStudy')
+packageName <- 'SkeletonCohortDiagnosticsStudy'
 
 connectionSpecifications <- cdmSources %>%
   dplyr::filter(sequence == 1) %>%
   dplyr::filter(database == 'truven_ccae')
 
-
-dbms <- connectionSpecifications$dbms
-port <- connectionSpecifications$port
-server <- connectionSpecifications$server
-cdmDatabaseSchema <- connectionSpecifications$cdmDatabaseSchema
+dbms <- connectionSpecifications$dbms # example: 'redshift'
+port <- connectionSpecifications$port # example: 2234
+server <- connectionSpecifications$server # example: 'fdsfd.yourdatabase.yourserver.com"
+cdmDatabaseSchema <- connectionSpecifications$cdmDatabaseSchema # example: "cdm"
 vocabDatabaseSchema <- connectionSpecifications$vocabDatabaseSchema
 databaseId <- connectionSpecifications$database
 userNameService = "OHDA_USER"
@@ -47,7 +48,7 @@ dataSouceInformation <-
   )
 
 
-examplePackagePhenotypeLibrary::runCohortDiagnostics(
+SkeletonCohortDiagnosticsStudy::runCohortDiagnostics(
   connectionDetails = connectionDetails,
   cdmDatabaseSchema = cdmDatabaseSchema,
   vocabularyDatabaseSchema = vocabDatabaseSchema,
@@ -86,7 +87,7 @@ CohortDiagnostics::launchDiagnosticsExplorer(dataFolder = outputFolder)
 #                                              password = Sys.getenv("shinyDbPasswordGowtham"))
 #
 #
-# resultsSchema <- "examplePackagePhenotypeLibraryCdTruven"
+# resultsSchema <- "SkeletonCohortDiagnosticsStudyCdTruven"
 # createResultsDataModel(connectionDetails = connectionDetailsToUpload, schema = resultsSchema)
 #
 #
