@@ -123,6 +123,10 @@ relationship,is_hierarchical,varchar(1),Yes,No,No,Yes
 relationship,defines_ancestry,varchar(1),Yes,No,No,Yes
 relationship,reverse_relationship_id,varchar(20),Yes,Yes,No,Yes
 relationship,relationship_concept_id,int,Yes,Yes,No,Yes
+resolved_concepts,cohort_id,bigint,Yes,Yes,No,Yes
+resolved_concepts,concept_set_id,int,Yes,Yes,No,Yes
+resolved_concepts,concept_id,int,Yes,Yes,No,Yes
+resolved_concepts,database_id,varchar,Yes,Yes,No,Yes
 temporal_analysis_ref,analysis_id,int,Yes,Yes,No,Yes
 temporal_analysis_ref,analysis_name,varchar,Yes,No,No,Yes
 temporal_analysis_ref,domain_id,varchar(20),Yes,Yes,No,Yes

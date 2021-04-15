@@ -103,7 +103,7 @@
       <h1 data-toc-skip>Running cohort diagnostics</h1>
                         <h4 class="author">Gowtham Rao</h4>
             
-            <h4 class="date">2021-04-14</h4>
+            <h4 class="date">2021-04-15</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/master/vignettes/RunningCohortDiagnostics.Rmd"><code>vignettes/RunningCohortDiagnostics.Rmd</code></a></small>
       <div class="hidden name"><code>RunningCohortDiagnostics.Rmd</code></div>
@@ -132,7 +132,7 @@
 <a href="#creating-a-new-cohort-table" class="anchor"></a>Creating a new cohort table</h2>
 <p>In order to run most of the cohort diagnostics, we need to instantiate the cohorts. The best way is to instantiate the cohorts in a new cohort table. We can use the <code>createCohortTable</code> to create an empty cohort table:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span class="fu"><a href="../reference/createCohortTable.html">createCohortTable</a></span><span class="op">(</span>connectionDetails <span class="op">=</span> <span class="va">connectionDetails</span>,
+<code class="sourceCode R"><span class="fu">createCohortTable</span><span class="op">(</span>connectionDetails <span class="op">=</span> <span class="va">connectionDetails</span>,
                   cohortDatabaseSchema <span class="op">=</span> <span class="va">cohortDatabaseSchema</span>,
                   cohortTable <span class="op">=</span> <span class="va">cohortTable</span><span class="op">)</span></code></pre></div>
 <p>Note this this function will <strong>delete the table if it already exists</strong> before creating it.</p>

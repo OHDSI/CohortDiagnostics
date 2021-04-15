@@ -17,6 +17,7 @@ Changes:
 6. OracleTempSchema use deprecated in favor of tempEmulationSchema.
 7. Run against external concept count has been removed, as concept counts data is not available. Function 'runCohortDiagnosticsUsingExternalCounts' is removed.
 8. Removed code related to referentConceptId = phenotypeId/1000 as it does not always hold true.
+9. Create cohort table function is now private. Please use instantiate cohort.
 
 Bug fixes:
 
