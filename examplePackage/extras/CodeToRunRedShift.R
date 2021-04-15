@@ -1,7 +1,8 @@
 source(Sys.getenv("startUpScriptLocation"))
 
 library(CohortDiagnostics)
-library(examplePackage)
+library('examplePackage')
+packageName <- 'examplePackage'
 
 connectionSpecifications <- cdmSources %>%
   dplyr::filter(sequence == 1) %>%
@@ -14,9 +15,10 @@ server <- connectionSpecifications$server
 cdmDatabaseSchema <- connectionSpecifications$cdmDatabaseSchema
 vocabDatabaseSchema <- connectionSpecifications$vocabDatabaseSchema
 databaseId <- connectionSpecifications$database
-cohortDatabaseSchema = 'scratch_grao9'
 userNameService = "OHDA_USER"
 passwordService = "OHDA_PASSWORD"
+
+cohortDatabaseSchema = paste0('scratch_', keyring::key_get(service = userNameService))
 
 connectionDetails <- DatabaseConnector::createConnectionDetails(
   dbms = dbms,
@@ -26,7 +28,8 @@ connectionDetails <- DatabaseConnector::createConnectionDetails(
   server = server
 )
 
-cohortTable <- "cohort"
+cohortTable <- 
+  paste0("s", connectionSpecifications$sourceId, "_", packageName)
 
 outputFolder <- file.path(rstudioapi::getActiveProject(), "outputFolder", databaseId)
 unlink(x = outputFolder,
