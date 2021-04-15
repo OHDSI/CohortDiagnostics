@@ -1,6 +1,8 @@
+# remotes::install_github('OHDSI/SkeletonCohortDiagnosticsStudy')
+# remotes::install_github('OHDSI/Eunomia')
+
 library(CohortDiagnostics)
-library(Eunomia)
-library(examplePackagePhenotypeLibrary)
+library(SkeletonCohortDiagnosticsStudy)
 
 temporaryLocation <- tempdir()
 
@@ -9,7 +11,6 @@ cdmDatabaseSchema <- "main"
 cohortDatabaseSchema <- "main"
 cohortTable <- "cohort"
 databaseId <- "Eunomia"
-
 
 library(magrittr)
 # Set up
@@ -42,7 +43,7 @@ readr::write_excel_csv(x = cohortsToCreate, na = "",
                        append = FALSE)
 
 
-outputFolder <- file.path(temporaryLocation, "outputFolder", "webApiMode", "eunomia", databaseId)
+outputFolder <- file.path(temporaryLocation, "outputFolder", "webApiMode", "eunomia")
 unlink(x = outputFolder, recursive = TRUE, force = TRUE)
 dir.create(path = outputFolder, showWarnings = FALSE, recursive = TRUE)
 
@@ -83,7 +84,6 @@ CohortDiagnostics::runCohortDiagnostics(baseUrl = baseUrl,
 CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = outputFolder)
 
 CohortDiagnostics::launchDiagnosticsExplorer(dataFolder = outputFolder)
-
 
 
 # connectionDetailsToUpload <- createConnectionDetails(dbms = "postgresql",
