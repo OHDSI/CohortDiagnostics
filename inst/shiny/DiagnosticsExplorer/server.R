@@ -314,7 +314,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$conceptsetExpressionTable <- DT::renderDataTable(expr = {
     data <- cohortDefinistionConceptSetExpression()
-    if (is.null(data)) {
+    if (is.null(data) && nrow(data) == 0) {
       return(NULL)
     }
     
@@ -381,7 +381,7 @@ shiny::shinyServer(function(input, output, session) {
   
   cohortDefinitionConceptSets <- shiny::reactive({
     row <- selectedCohortDefinitionRow()
-    if (is.null(row)) {
+    if (is.null(row) && nrow(row) == 0) {
       return(NULL)
     }
     
@@ -390,6 +390,7 @@ shiny::shinyServer(function(input, output, session) {
       if (is.null(cohortDefinitionConceptSetExpressionRow())) {
         return(NULL)
       }
+      
       data <-
         cohortDefinistionConceptSetExpression()$conceptSetExpressionDetails
       data <- data %>%
@@ -408,10 +409,8 @@ shiny::shinyServer(function(input, output, session) {
           .data$vocabularyId,
           .data$conceptClassId
         )
-      
     }
     return(data)
-    
   })
   
   getIncludeOrSourceConcepts <- shiny::reactive({
@@ -519,7 +518,7 @@ shiny::shinyServer(function(input, output, session) {
   output$cohortDefinitionConceptSetsTable <-
     DT::renderDataTable(expr = {
       data <- cohortDefinitionConceptSets()
-      if (is.null(data) && nrow(data) == 0) {
+      if (is.null(cohortDefinitionConceptSets()) || nrow(cohortDefinitionConceptSets()) == 0) {
         return(NULL)
       }
       
@@ -547,7 +546,7 @@ shiny::shinyServer(function(input, output, session) {
       )
       return(dataTable)
       
-    })
+    }, server = TRUE)
   
   output$saveConceptSetButton <- downloadHandler(
     filename = function() {
