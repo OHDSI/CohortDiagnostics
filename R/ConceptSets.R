@@ -699,6 +699,41 @@ runConceptSetDiagnostics <- function(connection,
       ParallelLogger::logInfo("Finding orphan concepts took ", signif(delta, 3), " ", attr(delta, "units"))
     }
   }
+  
+  # put all instantiated concepts into #concept_ids table
+  # this is extracted with vocabulary tables
+  # this will have more codes than included source concepts
+  # included source concepts is limited to resolved concept ids in source data
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection = connection,
+    sql =  "INSERT INTO #concept_ids (concept_id)
+            SELECT DISTINCT concept_id
+            FROM #inst_concept_sets;",
+    tempEmulationSchema = tempEmulationSchema,
+    progressBar = FALSE,
+    reportOverallTime = FALSE
+  )
+  
+  resolvedConceptIds <- 
+    DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                               sql = "SELECT *
+                                                      FROM #inst_concept_sets;",
+                                               tempEmulationSchema = tempEmulationSchema, 
+                                               snakeCaseToCamelCase = TRUE) %>% 
+    dplyr::tibble() %>% 
+    dplyr::rename(uniqueConceptSetId = .data$codesetId) %>% 
+    dplyr::inner_join(conceptSets,
+                      by = "uniqueConceptSetId") %>% 
+    dplyr::select(.data$cohortId, 
+                  .data$conceptSetId,
+                  .data$conceptId) %>% 
+    dplyr::mutate(databaseId = !!databaseId) %>% 
+    dplyr::distinct()
+  
+  writeToCsv(resolvedConceptIds,
+             file.path(exportFolder, "resolved_concept_id.csv"),
+             incremental = TRUE)
+  
   ParallelLogger::logTrace("Dropping temp concept set table")
   sql <- "TRUNCATE TABLE #inst_concept_sets; DROP TABLE #inst_concept_sets;"
   DatabaseConnector::renderTranslateExecuteSql(connection,
