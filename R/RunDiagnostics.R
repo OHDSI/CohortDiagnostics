@@ -286,17 +286,27 @@ runCohortDiagnostics <- function(packageName = NULL,
       stop("No connection or connectionDetails provided.")
     }
   }
-  
-  vocabularyVersionCdm <-
-    DatabaseConnector::renderTranslateQuerySql(
-      connection = connection,
-      sql = "select * from @cdm_database_schema.cdm_source;",
-      cdm_database_schema = cdmDatabaseSchema,
-      snakeCaseToCamelCase = TRUE
-    ) %>%
-    dplyr::tibble() %>%
-    dplyr::rename(vocabularyVersionCdm = .data$vocabularyVersion) %>% 
-    dplyr::pull(vocabularyVersionCdm)
+
+  vocabularyVersionCdm <- ""
+  tryCatch({
+    vocabularyVersionCdm <-
+      DatabaseConnector::renderTranslateQuerySql(
+        connection = connection,
+        sql = "select * from @cdm_database_schema.cdm_source;",
+        cdm_database_schema = cdmDatabaseSchema,
+        snakeCaseToCamelCase = TRUE
+      ) %>%
+      dplyr::tibble() %>%
+      dplyr::rename(vocabularyVersionCdm = .data$vocabularyVersion) %>%
+      dplyr::pull(vocabularyVersionCdm)
+  }, error = function(...) {
+    warning("Problem getting vocabulary version")
+    vocabularyVersionCdm <<- paste0("v", cdmVersion, ".0 -")
+
+    if (connection@dbms == "postgresql") {
+      DatabaseConnector::dbExecute(connection, "ABORT;")
+    }
+  })
   
   vocabularyVersion <-
     DatabaseConnector::renderTranslateQuerySql(

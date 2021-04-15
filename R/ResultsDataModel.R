@@ -244,7 +244,7 @@ uploadResults <- function(connectionDetails = NULL,
   ParallelLogger::logInfo("Unzipping ", zipFileName)
   zip::unzip(zipFileName, exdir = unzipFolder)
   
-  specifications = getResultsDataModelSpecifications()
+  specifications <- getResultsDataModelSpecifications()
   
   if (purgeSiteDataBeforeUploading) {
     database <- readr::read_csv(file = file.path(unzipFolder, "database.csv"), col_types = readr::cols())
@@ -350,11 +350,14 @@ uploadResults <- function(connectionDetails = NULL,
         if (nrow(chunk) == 0) {
           ParallelLogger::logInfo("- No data left to insert")
         } else {
-          insertDataIntoDb(connection = connection,
-                           connectionDetails = connectionDetails,
-                           schema = env$schema,
-                           tableName = env$tableName,
-                           data = chunk)
+
+          DatabaseConnector::insertTable(connection = connection,
+                                         tableName = paste(env$schema, env$tableName, sep = "."),
+                                         data = chunk,
+                                         dropTableIfExists = FALSE,
+                                         createTable = FALSE,
+                                         tempTable = FALSE,
+                                         progressBar = TRUE)
         }
       }
       readr::read_csv_chunked(file = file.path(unzipFolder, csvFileName),
@@ -418,96 +421,6 @@ deleteAllRecordsForDatabaseId <- function(connection,
   }
 }
 
-insertDataIntoDb <- function(connection,
-                             connectionDetails,
-                             schema,
-                             tableName,
-                             data) {
-  if (nrow(data) < 1e4 || is.null(Sys.getenv("POSTGRES_PATH"))) {
-    ParallelLogger::logInfo("- Inserting ", nrow(data), " rows into database")
-    DatabaseConnector::insertTable(connection = connection,
-                                   tableName = paste(schema, tableName, sep = "."),
-                                   data = data,
-                                   dropTableIfExists = FALSE,
-                                   createTable = FALSE,
-                                   tempTable = FALSE,
-                                   progressBar = TRUE)
-  } else {
-    ParallelLogger::logInfo("- Inserting ", nrow(data), " rows into database using bulk import")
-    tempFile <- tempfile(fileext = ".csv")
-    readr::write_excel_csv(data, tempFile)
-    on.exit(unlink(tempFile))
-    DatabaseConnector::executeSql(connection, "COMMIT;", progressBar = FALSE, reportOverallTime = FALSE)
-    bulkUploadTable(connectionDetails = connectionDetails,
-                    schema = schema,
-                    csvFileName = tempFile,
-                    tableName = tableName)
-  }
-}
-
-bulkUploadTable <- function(connectionDetails,
-                            schema,
-                            csvFileName,
-                            tableName) {
-  startTime <- Sys.time()
-  
-  # For backwards compatibility with older versions of DatabaseConnector:
-  if (is(connectionDetails$server, "function")) {
-    hostServerDb <- strsplit(connectionDetails$server(), "/")[[1]]
-    port <- connectionDetails$port()
-    user <- connectionDetails$user()
-    password <- connectionDetails$password()
-  } else {
-    hostServerDb <- strsplit(connectionDetails$server, "/")[[1]]
-    port <- connectionDetails$port
-    user <- connectionDetails$user
-    password <- connectionDetails$password
-  }
-  
-  # Required by psql:
-  Sys.setenv("PGPASSWORD" = password)
-  rm(password)
-  on.exit(Sys.unsetenv("PGPASSWORD"))
-  
-  if (.Platform$OS.type == "windows") {
-    winPsqlPath <- Sys.getenv("POSTGRES_PATH")
-    command <- file.path(winPsqlPath, "psql.exe")
-    if (!file.exists(command)) {
-      stop("Could not find psql.exe in ", winPsqlPath)
-    }
-    command <- paste0("\"", command, "\"")
-  } else {
-    command <- "psql"
-  }
-  
-  head <- readr::read_csv(file = csvFileName, n_max = 1, col_types = readr::cols())
-  headers <- paste(names(head), collapse = ", ")
-  headers <- paste0("(", headers, ")")
-  tablePath <- paste(schema, tableName, sep = ".")
-  filePathStr <- paste0("'", csvFileName, "'")
-  
-  if (is.null(port)) {
-    port <- 5432
-  }
-  copyCommand <- paste(command,
-                       "-h", hostServerDb[[1]], # Host
-                       "-d", hostServerDb[[2]], # Database
-                       "-p", port,
-                       "-U", user,
-                       "-c \"\\copy", tablePath,
-                       headers,
-                       "FROM", filePathStr,
-                       "NULL 'NA' DELIMITER ',' CSV HEADER;\"")
-  
-  result <- base::system(copyCommand)
-  
-  if (result != 0) {
-    stop("Error while bulk uploading data, psql returned a non zero status. Status = ", result)
-  }
-  delta <- Sys.time() - startTime
-  writeLines(paste("Uploading data took", signif(delta, 3), attr(delta, "units")))
-}
-
 convertMdToHtml <- function(markdown) {
   markdown <- gsub("'", "%sq%", markdown)
   mdFile <- tempfile(fileext = ".md")
@@ -528,74 +441,3 @@ convertMdToHtml <- function(markdown) {
   # html <- stringi::stri_unescape_unicode(html)
   return(html)
 }
-
-
-
-############### Note: removed upload print friendly in version 2.1 as it is not being used
-############### PhenotypeExplorer shiny app is able to call CirceR dynamically and does not need this to be precomputed
-############### DiagnosticsExplorer shiny app will not show print friendly version as it is designed for a smaller set of cohorts
-
-#' #' Upload print-friendly cohort representations to the database server.
-#' #' 
-#' #' @description 
-#' #' For all the cohorts in the 'cohort' table, this will generate print-friendly text and store it
-#' #' in a new table called 'cohort_extra'. 
-#' #'
-#' #' @param connectionDetails   An object of type \code{connectionDetails} as created using the
-#' #'                            \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-#' #'                            DatabaseConnector package. 
-#' #' @param schema         The schema on the postgres server where the results are stored.
-#' #'
-#' #' @export
-#' uploadPrintFriendly <- function(connectionDetails = NULL,
-#'                                 schema) {
-#'   
-#'   startTime <- Sys.time()
-#'   ensure_installed("CirceR")
-#'   ensure_installed("rmarkdown")
-#'   # ensure_installed("stringi")
-#'   
-#'   connection <- DatabaseConnector::connect(connectionDetails)
-#'   on.exit(DatabaseConnector::disconnect(connection))
-#'   
-#'   ParallelLogger::logInfo("Retrieving cohort JSON from server")
-#'   sql <- "SELECT cohort_id, json FROM @schema.cohort;"
-#'   cohort <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
-#'                                                        sql = sql,
-#'                                                        schema = schema,
-#'                                                        snakeCaseToCamelCase = TRUE) %>%
-#'     dplyr::tibble()
-#'   
-#'   ParallelLogger::logInfo("Generating print-friendly")
-#'   cohort$html <- ""
-#'   pb <- pb <- txtProgressBar(style = 3)
-#'   for (i in 1:nrow(cohort)) {
-#'     tryCatch({
-#'       expression <- CirceR::cohortExpressionFromJson(cohort$json[i])
-#'       expressionMarkdown <- CirceR::cohortPrintFriendly(expression)
-#'       conceptSetListmarkdown <- CirceR::conceptSetListPrintFriendly(expression$conceptSets)
-#'       cohort$html[i] <- convertMdToHtml(paste(expressionMarkdown, conceptSetListmarkdown, sep = "\n\n"))
-#'     }, error = function(e) {
-#'       ParallelLogger::logWarn("Error generating print-friendly for cohort ID ", cohort$cohortId[i], ": ", e$message)
-#'       cohort$html[i] <- "Could not generate print-friendly"
-#'     })
-#'     setTxtProgressBar(pb, i/nrow(cohort))
-#'   }
-#'   close(pb)
-#'   
-#'   ParallelLogger::logInfo("Uploading print-friendly to server")
-#'   cohort <- cohort %>%
-#'     dplyr::select(-.data$json)
-#'   
-#'   DatabaseConnector::insertTable(connection = connection,
-#'                                  tableName = paste(schema, "cohort_extra", sep = "."),
-#'                                  data = cohort,
-#'                                  dropTableIfExists = TRUE,
-#'                                  createTable = TRUE,
-#'                                  tempTable = FALSE,
-#'                                  progressBar = TRUE,
-#'                                  camelCaseToSnakeCase = TRUE)
-#'   
-#'   delta <- Sys.time() - startTime
-#'   writeLines(paste("Uploading print-friendly took", signif(delta, 3), attr(delta, "units")))
-#' }
