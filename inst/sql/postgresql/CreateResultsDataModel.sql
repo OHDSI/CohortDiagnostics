@@ -282,6 +282,16 @@ CREATE TABLE relationship (
 			PRIMARY KEY(relationship_id, reverse_relationship_id, relationship_concept_id)
 );
 
+--Table resolved_concepts
+
+CREATE TABLE resolved_concepts (
+			cohort_id BIGINT NOT NULL,
+			concept_set_id INT NOT NULL,
+			concept_id INT NOT NULL,
+			database_id VARCHAR NOT NULL,
+			PRIMARY KEY(cohort_id, concept_set_id, concept_id, database_id)
+);
+
 --Table temporal_analysis_ref
 
 CREATE TABLE temporal_analysis_ref (

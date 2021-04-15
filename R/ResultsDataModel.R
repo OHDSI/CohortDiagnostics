@@ -420,24 +420,3 @@ deleteAllRecordsForDatabaseId <- function(connection,
     DatabaseConnector::executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
   }
 }
-
-convertMdToHtml <- function(markdown) {
-  markdown <- gsub("'", "%sq%", markdown)
-  mdFile <- tempfile(fileext = ".md")
-  htmlFile <- tempfile(fileext = ".html")
-  SqlRender::writeSql(markdown, mdFile)
-  rmarkdown::render(input = mdFile,
-                    output_format = "html_fragment",
-                    output_file = htmlFile,
-                    clean = TRUE,
-                    quiet = TRUE)
-  html <- SqlRender::readSql(htmlFile) 
-  unlink(mdFile)
-  unlink(htmlFile)
-  # Can't find a way to disable "smart quotes", so removing them afterwards:
-  html <- gsub("%sq%", "'", html)
-  # html <- stringi::stri_escape_unicode(html)
-  # html <- gsub("\\\\u00e2\\\\u20ac\\\\u02dc|\\\\u00e2\\\\u20ac\\\\u2122", "'", html)
-  # html <- stringi::stri_unescape_unicode(html)
-  return(html)
-}

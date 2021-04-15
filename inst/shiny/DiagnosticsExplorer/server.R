@@ -188,19 +188,19 @@ shiny::shinyServer(function(input, output, session) {
     data <- selectedCohortDefinitionRow()
     if (nrow(selectedCohortDefinitionRow()) > 0) {
       details <- list()
-        circeExpression <-
-          CirceR::cohortExpressionFromJson(expressionJson = data$json)
-        circeExpressionMarkdown <-
-          CirceR::cohortPrintFriendly(circeExpression)
-        circeConceptSetListmarkdown <-
-          CirceR::conceptSetListPrintFriendly(circeExpression$conceptSets)
-        details <- data
-        details$circeConceptSetListmarkdown <-
-          circeConceptSetListmarkdown
-        details$htmlExpressionCohort <-
-          convertMdToHtml(circeExpressionMarkdown)
-        details$htmlExpressionConceptSetExpression <-
-          convertMdToHtml(circeConceptSetListmarkdown)
+      circeExpression <-
+        CirceR::cohortExpressionFromJson(expressionJson = data$json)
+      circeExpressionMarkdown <-
+        CirceR::cohortPrintFriendly(circeExpression)
+      circeConceptSetListmarkdown <-
+        CirceR::conceptSetListPrintFriendly(circeExpression$conceptSets)
+      details <- data
+      details$circeConceptSetListmarkdown <-
+        circeConceptSetListmarkdown
+      details$htmlExpressionCohort <-
+        convertMdToHtml(circeExpressionMarkdown)
+      details$htmlExpressionConceptSetExpression <-
+        convertMdToHtml(circeConceptSetListmarkdown)
       
       details <- dplyr::bind_rows(details)
     } else {
@@ -1427,9 +1427,9 @@ shiny::shinyServer(function(input, output, session) {
     data <- indexEventBreakDownData()
     if (!is.null(data) &&
         nrow(data) > 0) {
-     data <- data %>% 
-      dplyr::filter(.data$domainTable %in% input$breakdownDomainTable) %>% 
-      dplyr::pull(.data$domainField) %>% unique()
+      data <- data %>% 
+        dplyr::filter(.data$domainTable %in% input$breakdownDomainTable) %>% 
+        dplyr::pull(.data$domainField) %>% unique()
     }
     
     shinyWidgets::updatePickerInput(
@@ -1450,7 +1450,7 @@ shiny::shinyServer(function(input, output, session) {
       selectedDomainTable(input$breakdownDomainTable)
     }
   })
-
+  
   selectedDomainField <- reactiveVal(NULL)
   shiny::observeEvent(eventExpr = {
     list(input$breakdownDomainField_open,
