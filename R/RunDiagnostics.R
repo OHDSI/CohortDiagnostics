@@ -298,7 +298,8 @@ runCohortDiagnostics <- function(packageName = NULL,
       ) %>%
       dplyr::tibble() %>%
       dplyr::rename(vocabularyVersionCdm = .data$vocabularyVersion) %>%
-      dplyr::pull(vocabularyVersionCdm)
+      dplyr::pull(vocabularyVersionCdm) %>% 
+      unique()
   }, error = function(...) {
     warning("Problem getting vocabulary version")
     vocabularyVersionCdm <<- paste0("v", cdmVersion, ".0 -")
@@ -317,7 +318,8 @@ runCohortDiagnostics <- function(packageName = NULL,
     ) %>%
     dplyr::tibble() %>%
     dplyr::rename(vocabularyVersion = .data$vocabularyVersion) %>% 
-    dplyr::pull(.data$vocabularyVersion)
+    dplyr::pull(.data$vocabularyVersion) %>% 
+    unique()
   
   if (incremental) {
     ParallelLogger::logDebug("Working in incremental mode.")
