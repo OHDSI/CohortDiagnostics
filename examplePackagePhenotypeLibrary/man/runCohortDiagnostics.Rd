@@ -13,7 +13,8 @@ runCohortDiagnostics(
   tempEmulationSchema = cohortDatabaseSchema,
   oracleTempSchema = NULL,
   outputFolder,
-  incrementalFolder = file.path(outputFolder, "incrementalFolder"),
+  incremental = TRUE,
+  incrementalFolder = file.path(outputFolder, "incremental"),
   databaseId = "Unknown",
   databaseName = "Unknown",
   databaseDescription = "Unknown",
@@ -64,6 +65,11 @@ user has write privileges for storing temporary tables.}
 forward slashes (/). Do not use a folder on a network
 drive since this greatly impacts performance.}
 
+\item{incremental}{Create only cohort diagnostics that haven't been created before?}
+
+\item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
+of which cohort diagnostics has been executed.}
+
 \item{databaseId}{A short string for identifying the database (e.g.
 'Synpuf').}
 
@@ -90,6 +96,8 @@ cohorts?}
 \item{runIncidenceRates}{Generate and export the cohort incidence rates?}
 
 \item{runCohortOverlap}{Generate and export the cohort overlap?}
+
+\item{runVisitContext}{Generate and export index-date visit context?}
 
 \item{cohortIds}{Optionally, provide a subset of cohort IDs to restrict the diagnostics to.}
 

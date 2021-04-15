@@ -6,7 +6,8 @@ Author: Gowtham Rao [aut, cre]
 Maintainer: Gowtham Rao <rao@ohdsi.org>
 Description: A package that generates cohort diagnostics output.
 Depends:
-    DatabaseConnector (>= 2.2.0)
+    DatabaseConnector (>= 2.2.0),
+    OhdsiRTools
 Imports:
 	CohortDiagnostics,
 	ParallelLogger
@@ -14,7 +15,6 @@ Suggests:
     knitr,
     rmarkdown,
     ROhdsiWebApi,
-    OhdsiRTools,
 License: Apache License (>= 2)
 VignetteBuilder: knitr
 LazyData: TRUE

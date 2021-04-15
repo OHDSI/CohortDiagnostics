@@ -1,6 +1,6 @@
 # Copyright 2021 Observational Health Data Sciences and Informatics
 #
-# This file is part of Cohort Diagnostics
+# This file is part of examplePackagePhenotypeLibrary
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,4 +13,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+# Format and check code ---------------------------------------------------
+OhdsiRTools::formatRFolder()
+OhdsiRTools::checkUsagePackage("examplePackage")
+OhdsiRTools::updateCopyrightYearFolder()
+devtools::spell_check()
+
+# Create manual -----------------------------------------------------------
+unlink("extras/UsingExamplePackagePhenotypeLibrary.pdf")
+shell("R CMD Rd2pdf ./ --output=extras/UsingExamplePackagePhenotypeLibrary.pdf")
+
 

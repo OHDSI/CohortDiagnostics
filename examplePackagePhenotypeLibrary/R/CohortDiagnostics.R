@@ -31,14 +31,14 @@
 #'                                            will need to have write privileges in this schema. Note
 #'                                            that for SQL Server, this should include both the
 #'                                            database and schema name, for example 'cdm_data.dbo'.
-#' @param vocabularyDatabaseSchema            Schema name where your OMOP vocabulary data resides. This is 
-#'                                            commonly the same as cdmDatabaseSchema. Note that for 
+#' @param vocabularyDatabaseSchema            Schema name where your OMOP vocabulary data resides. This
+#'                                            is commonly the same as cdmDatabaseSchema. Note that for
 #'                                            SQL Server, this should include both the database and
 #'                                            schema name, for example 'vocabulary.dbo'.
 #' @param cohortTable                         The name of the table that will be created in the work
 #'                                            database schema. This table will hold the exposure and
 #'                                            outcome cohorts used in this study.
-#' @param tempEmulationSchema                    Should be used in Oracle to specify a schema where the
+#' @param tempEmulationSchema                 Should be used in Oracle to specify a schema where the
 #'                                            user has write privileges for storing temporary tables.
 #' @param outputFolder                        Name of local folder to place results; make sure to use
 #'                                            forward slashes (/). Do not use a folder on a network
@@ -63,7 +63,14 @@
 #' @param runTemporalCohortCharacterization   Generate and export the temporal cohort characterization?
 #' @param minCellCount                        The minimum number of subjects contributing to a count
 #'                                            before it can be included in packaged results.
-#' @param cohortIds                           Optionally, provide a subset of cohort IDs to restrict the diagnostics to.
+#' @param runVisitContext                     Generate and export index-date visit context?
+#' @param incremental                         Create only cohort diagnostics that haven't been created
+#'                                            before?
+#' @param incrementalFolder                   If \code{incremental = TRUE}, specify a folder where
+#'                                            records are kept of which cohort diagnostics has been
+#'                                            executed.
+#' @param cohortIds                           Optionally, provide a subset of cohort IDs to restrict
+#'                                            the diagnostics to.
 #'
 #' @export
 runCohortDiagnostics <- function(connectionDetails,
@@ -74,7 +81,8 @@ runCohortDiagnostics <- function(connectionDetails,
                                  tempEmulationSchema = cohortDatabaseSchema,
                                  oracleTempSchema = NULL,
                                  outputFolder,
-                                 incrementalFolder = file.path(outputFolder, 'incrementalFolder'),
+                                 incremental = TRUE,
+                                 incrementalFolder = file.path(outputFolder, "incremental"),
                                  databaseId = "Unknown",
                                  databaseName = "Unknown",
                                  databaseDescription = "Unknown",
@@ -91,17 +99,17 @@ runCohortDiagnostics <- function(connectionDetails,
                                  runCohortCharacterization = TRUE,
                                  runTemporalCohortCharacterization = TRUE,
                                  minCellCount = 5) {
-  
-  packageName = 'examplePackagePhenotypeLibrary'
-  
+
+  packageName <- "examplePackagePhenotypeLibrary"
+
   if (!file.exists(outputFolder))
     dir.create(outputFolder, recursive = TRUE)
-  
+
   ParallelLogger::addDefaultFileLogger(file.path(outputFolder, "log.txt"))
   ParallelLogger::addDefaultErrorReportLogger(file.path(outputFolder, "errorReportR.txt"))
   on.exit(ParallelLogger::unregisterLogger("DEFAULT_FILE_LOGGER", silent = TRUE))
   on.exit(ParallelLogger::unregisterLogger("DEFAULT_ERRORREPORT_LOGGER", silent = TRUE), add = TRUE)
-  
+
   if (createCohorts) {
     ParallelLogger::logInfo("Creating cohorts")
     CohortDiagnostics::instantiateCohortSet(connectionDetails = connectionDetails,
@@ -118,9 +126,9 @@ runCohortDiagnostics <- function(connectionDetails,
                                             cohortIds = cohortIds,
                                             incremental = TRUE,
                                             incrementalFolder = incrementalFolder)
-    
+
   }
-  
+
   if (!is.null(packageName)) {
     if (file.exists(system.file("settings/PhenotypeDescription.csv", package = packageName))) {
       writeLines("Found PhenotypeDescription.csv")
@@ -129,7 +137,7 @@ runCohortDiagnostics <- function(connectionDetails,
   } else {
     phenotypeDescriptionFile <- NULL
   }
-  
+
   ParallelLogger::logInfo("Running study diagnostics")
   CohortDiagnostics::runCohortDiagnostics(packageName = packageName,
                                           phenotypeDescriptionFile = phenotypeDescriptionFile,

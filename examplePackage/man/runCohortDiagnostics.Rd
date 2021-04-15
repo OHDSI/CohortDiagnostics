@@ -42,8 +42,8 @@ format resides. Note that for SQL Server, this should
 include both the database and schema name, for example
 'cdm_data.dbo'.}
 
-\item{vocabularyDatabaseSchema}{Schema name where your OMOP vocabulary data resides. This is 
-commonly the same as cdmDatabaseSchema. Note that for 
+\item{vocabularyDatabaseSchema}{Schema name where your OMOP vocabulary data resides. This
+is commonly the same as cdmDatabaseSchema. Note that for
 SQL Server, this should include both the database and
 schema name, for example 'vocabulary.dbo'.}
 
@@ -90,7 +90,8 @@ cohorts?}
 
 \item{runCohortOverlap}{Generate and export the cohort overlap?}
 
-\item{cohortIds}{Optionally, provide a subset of cohort IDs to restrict the diagnostics to.}
+\item{cohortIds}{Optionally, provide a subset of cohort IDs to restrict
+the diagnostics to.}
 
 \item{runCohortCharacterization}{Generate and export the cohort characterization?}
 
