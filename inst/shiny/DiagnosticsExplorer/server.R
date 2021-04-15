@@ -1397,15 +1397,30 @@ shiny::shinyServer(function(input, output, session) {
         cohortIds = cohortId(),
         databaseIds = databaseIds()
       )
+      return(data)
     } else {
-      data <- NULL
+      return(NULL)
     }
-    return(data)
   })
   
+  indexEventBreakDownDataFilteredByRadioButton <- shiny::reactive(x = {
+      data <- indexEventBreakDownData()
+      if (!is.null(data) && nrow(data) > 0) {
+        if (input$indexEventBreakdownTableRadioButton == 'All') {
+          return(data)
+        } else if (input$indexEventBreakdownTableRadioButton == "Standard concepts") {
+          return(data %>% dplyr::filter(.data$standardConcept == 'S'))
+        } else {
+          return(data %>% dplyr::filter(is.na(.data$standardConcept)))
+        }
+      } else {
+        return(NULL)
+      }
+    })
+  
   domaintable <- shiny::reactive(x = {
-    if (!is.null(indexEventBreakDownData())) {
-      return(indexEventBreakDownData() %>% 
+    if (!is.null(indexEventBreakDownDataFilteredByRadioButton())) {
+      return(indexEventBreakDownDataFilteredByRadioButton() %>% 
                dplyr::pull(.data$domainTable) %>% unique())
     } else {
       return(NULL)
@@ -1424,7 +1439,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   shiny::observe({
-    data <- indexEventBreakDownData()
+    data <- indexEventBreakDownDataFilteredByRadioButton()
     if (!is.null(data) &&
         nrow(data) > 0) {
       data <- data %>% 
@@ -1464,7 +1479,7 @@ shiny::shinyServer(function(input, output, session) {
   output$breakdownTable <- DT::renderDataTable(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen chosen"))
-    data <- indexEventBreakDownData() %>%  
+    data <- indexEventBreakDownDataFilteredByRadioButton() %>%  
       dplyr::filter(.data$domainTable %in% selectedDomainTable()) %>% 
       dplyr::filter(.data$domainField %in% selectedDomainField()) %>% 
       dplyr::select(-.data$domainTable, .data$domainField,
