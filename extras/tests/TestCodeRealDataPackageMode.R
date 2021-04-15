@@ -6,6 +6,8 @@ library(CohortDiagnostics)
 library('SkeletonCohortDiagnosticsStudy')
 packageName <- 'SkeletonCohortDiagnosticsStudy'
 
+temporaryLocation <- tempdir()
+
 connectionSpecifications <- cdmSources %>%
   dplyr::filter(sequence == 1) %>%
   dplyr::filter(database == 'truven_ccae')
