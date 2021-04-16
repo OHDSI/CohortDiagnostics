@@ -425,7 +425,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     source <-
-      (input$conceptSetsType == "Included Source Concepts")
+      (input$conceptSetsType == "Mapped")
     data <-
       resolveConceptSet(dataSource = dataSource, subset, source = source)
     data <- data %>%
@@ -518,7 +518,8 @@ shiny::shinyServer(function(input, output, session) {
   output$cohortDefinitionConceptSetsTable <-
     DT::renderDataTable(expr = {
       data <- cohortDefinitionConceptSets()
-      if (is.null(cohortDefinitionConceptSets()) || nrow(cohortDefinitionConceptSets()) == 0) {
+      if (is.null(cohortDefinitionConceptSets()) || 
+          nrow(cohortDefinitionConceptSets()) == 0) {
         return(NULL)
       }
       

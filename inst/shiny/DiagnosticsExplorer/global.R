@@ -15,12 +15,12 @@ defaultDatabase <- Sys.getenv("shinydbDatabase")
 defaultPort <- 5432
 defaultUser <- Sys.getenv("shinyDbUser")
 defaultPassword <- Sys.getenv("shinyDbPassword")
-defaultResultsSchema <- 'eunomiacd'
+defaultResultsSchema <- 'CdSkeletonCohortDiagnosticsStudy'
 defaultVocabularySchema <- defaultResultsSchema
 alternateVocabularySchema <- c('vocabulary')
 
 
-defaultDatabaseMode <- FALSE # Use file system if FALSE
+defaultDatabaseMode <- TRUE # Use file system if FALSE
 
 if (!exists("shinySettings")) {
   writeLines("Using default settings")

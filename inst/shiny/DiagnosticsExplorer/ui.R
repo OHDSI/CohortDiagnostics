@@ -347,8 +347,8 @@ bodyTabItems <- shinydashboard::tabItems(
                     label = "",
                     choices = c(
                       "Concept Set Expression",
-                      "Included Standard Concepts",
-                      "Included Source Concepts"
+                      "Resolved",
+                      "Mapped"
                     ),
                     selected = "Concept Set Expression",
                     inline = TRUE
@@ -356,11 +356,11 @@ bodyTabItems <- shinydashboard::tabItems(
                 }
               ),
               shiny::conditionalPanel(
-                condition = "input.conceptSetsType == 'Included Standard Concepts'",
+                condition = "input.conceptSetsType == 'Resolved'",
                 DT::dataTableOutput(outputId = "cohortDefinitionIncludedStandardConceptsTable")
               ),
               shiny::conditionalPanel(
-                condition = "input.conceptSetsType == 'Included Source Concepts'",
+                condition = "input.conceptSetsType == 'Mapped'",
                 DT::dataTableOutput(outputId = "cohortDefinitionIncludedSourceConceptsTable")
               ),
               shiny::conditionalPanel(
