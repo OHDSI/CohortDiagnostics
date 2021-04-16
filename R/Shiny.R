@@ -68,8 +68,8 @@ launchDiagnosticsExplorer <- function(dataFolder = "data",
   ensure_installed("SqlRender")
   ensure_installed("tidyr")
 
-  appDir <- system.file("shiny", "DiagnosticsExplorer", package = "CohortDiagnostics")  
-  
+  appDir <- system.file("shiny", "DiagnosticsExplorer", package = "CohortDiagnostics")
+
   if (launch.browser) {
     options(shiny.launch.browser = TRUE)
   }
@@ -127,7 +127,7 @@ preMergeDiagnosticsFiles <- function(dataFolder, tempFolder = tempdir()) {
     zipFiles$unzipFolder[i] <- unzipFolder
   }
     
-  specifications = getResultsDataModelSpecifications()
+  specifications <- getResultsDataModelSpecifications()
   
   # Storing output in an environment for now. If things get too big, we may want to write 
   # directly to CSV files for insertion into database:
