@@ -356,18 +356,17 @@ bodyTabItems <- shinydashboard::tabItems(
                 }
               ),
               shiny::conditionalPanel(
+                condition = "output.conceptSetExpressionRowSelected == true &
+                input.conceptSetsType == 'Concept Set Expression'",
+                DT::dataTableOutput(outputId = "cohortDefinitionConceptSetsTable")
+              ),
+              shiny::conditionalPanel(
                 condition = "input.conceptSetsType == 'Resolved'",
                 DT::dataTableOutput(outputId = "cohortDefinitionIncludedStandardConceptsTable")
               ),
               shiny::conditionalPanel(
                 condition = "input.conceptSetsType == 'Mapped'",
                 DT::dataTableOutput(outputId = "cohortDefinitionIncludedSourceConceptsTable")
-              ),
-              shiny::conditionalPanel(
-                condition = "output.conceptSetExpressionRowSelected == true &
-                input.conceptSetsType != 'Included Standard Concepts' &
-                input.conceptSetsType != 'Included Source Concepts'",
-                DT::dataTableOutput(outputId = "cohortDefinitionConceptSetsTable")
               )
             ),
             shiny::tabPanel(
