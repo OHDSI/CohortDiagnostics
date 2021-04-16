@@ -92,7 +92,7 @@ sidebarMenu <-
       ),
     if (exists("temporalCovariateValue"))
       addInfo(
-        shinydashboard::menuItem(text = "Compare Temporal Char,", tabName = "compareTemporalCharacterization"),
+        shinydashboard::menuItem(text = "Compare Temporal Char.", tabName = "compareTemporalCharacterization"),
         infoId = "compareTemporalCharacterizationInfo"
       ),
     shinydashboard::menuItem(text = "Data Source Information", tabName = "databaseInformation"),
