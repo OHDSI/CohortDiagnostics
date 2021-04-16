@@ -2416,7 +2416,7 @@ shiny::shinyServer(function(input, output, session) {
     if (nrow(database) == 0) {
       return(dplyr::tibble("No information on the data source."))
     }
-    table <- database %>% 
+    data <- database %>% 
       dplyr::select(.data$databaseId,
                     .data$databaseName,
                     .data$vocabularyVersionCdm,
@@ -2441,7 +2441,7 @@ shiny::shinyServer(function(input, output, session) {
     # need to add sketch here - and split the vocabulary columns with common header 'Vocabulary version'
     # if mismatch = FALSE, make entire ROW red.
     table <- DT::datatable(
-      table,
+      data %>% dplyr:select(.data$match),
       options = options,
       colnames = c("ID", "Name", 
                    "Vocabulary version (CDM source)", "Vocabulary version (Vocabulary table)", 
