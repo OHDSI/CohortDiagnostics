@@ -314,7 +314,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$conceptsetExpressionTable <- DT::renderDataTable(expr = {
     data <- cohortDefinistionConceptSetExpression()
-    if (is.null(data) && nrow(data) == 0) {
+    if (is.null(data)) {
       return(NULL)
     }
     
@@ -379,14 +379,7 @@ shiny::shinyServer(function(input, output, session) {
                        name = "isDataSourceEnvironment",
                        suspendWhenHidden = FALSE)
   
-  cohortDefinitionConceptSets <- shiny::reactive({
-    row <- selectedCohortDefinitionRow()
-    if (is.null(row) && nrow(row) == 0) {
-      return(NULL)
-    }
-    
-    if (is(dataSource, "environment") ||
-        input$conceptSetsType == "Concept Set Expression") {
+  cohortDefinitionConceptSets <- shiny::reactive(x = {
       if (is.null(cohortDefinitionConceptSetExpressionRow())) {
         return(NULL)
       }
@@ -409,7 +402,6 @@ shiny::shinyServer(function(input, output, session) {
           .data$vocabularyId,
           .data$conceptClassId
         )
-    }
     return(data)
   })
   
@@ -521,8 +513,7 @@ shiny::shinyServer(function(input, output, session) {
   output$cohortDefinitionConceptSetsTable <-
     DT::renderDataTable(expr = {
       data <- cohortDefinitionConceptSets()
-      if (is.null(cohortDefinitionConceptSets()) || 
-          nrow(cohortDefinitionConceptSets()) == 0) {
+      if (is.null(cohortDefinitionConceptSets())) {
         return(NULL)
       }
       
