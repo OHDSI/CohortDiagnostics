@@ -206,11 +206,17 @@ plotIncidenceRate <- function(data,
   
   plot <- ggplot2::ggplot(data = plotData, do.call(ggplot2::aes_string, aesthetics)) +
     ggplot2::xlab(xLabel) +
-    ggplot2::ylab("Incidence Rate (/1,000 person years)") +
-    ggplot2::scale_x_continuous(breaks = distinctCalenderYear) +
-    ggplot2::theme(legend.position = "top",
-                   legend.title = ggplot2::element_blank(),
-                   axis.text.x = if (showX) ggplot2::element_text(angle = 90, vjust = 0.5) else ggplot2::element_blank() )
+    ggplot2::ylab("Incidence Rate (/1,000 person years)")
+
+  if (length(distinctCalenderYear) >= 8) {
+    plot <- plot + ggplot2::scale_x_continuous(n.breaks = 8, labels = round)
+  } else {
+    plot <- plot + ggplot2::scale_x_continuous(breaks = distinctCalenderYear)
+  }
+
+  plot <- plot + ggplot2::theme(legend.position = "top",
+                                legend.title = ggplot2::element_blank(),
+                                axis.text.x = if (showX) ggplot2::element_text(angle = 90, vjust = 0.5) else ggplot2::element_blank())
   
   if (plotType == "line") {
     plot <- plot + 
