@@ -2440,6 +2440,7 @@ shiny::shinyServer(function(input, output, session) {
                                           th(rowspan = 2, "Name"),
                                           th("Vocabulary version", colspan = 2, class = "dt-center"),
                                           th(rowspan = 2, "Description"),
+                                          th(rowspan = 2, "Match"),
                                         ),
                                         tr(
                                           lapply(
@@ -2447,13 +2448,19 @@ shiny::shinyServer(function(input, output, session) {
                                         ))))
     # need to add sketch here - and split the vocabulary columns with common header 'Vocabulary version'
     # if mismatch = FALSE, make entire ROW red.
+    
     table <- DT::datatable(
-      data %>% dplyr::select(-.data$match),
+      data ,
       options = options,
       container = sketch,
       rownames = FALSE,
       class = "stripe compact"
-    )
+    ) %>% 
+      DT::formatStyle(
+        'match',
+        target = 'row',
+        color = DT::styleEqual(FALSE, 'red')
+      )
     return(table)
   }, server = TRUE)
   
