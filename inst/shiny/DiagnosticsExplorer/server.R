@@ -2282,7 +2282,7 @@ shiny::shinyServer(function(input, output, session) {
       return(dplyr::tibble(Note = "No data for the selected combination."))
     }
     
-    if (input$temporalCharCompareType == "Pretty table") {
+    if (input$temporalCharacterizationType == "Pretty table") {
       table <- prepareTable1Comp(balance)
       if (nrow(table) > 0) {
         table <- table %>%
@@ -2411,9 +2411,19 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
   })
   
-  
   output$databaseInformationTable <- DT::renderDataTable(expr = {
-    table <- database[, c("databaseId", "databaseName", "description")]
+    if (nrow(database) == 0) {
+      return(dplyr::tibble("No information on the data source."))
+    }
+    table <- database %>% 
+      dplyr::select(.data$databaseId,
+                    .data$databaseName,
+                    .data$vocabularyVersionCdm,
+                    .data$vocabularyVersion,
+                    .data$description
+                    ) %>% 
+      dplyr::mutate(match = dplyr::case_when(.data$vocabularyVersionCdm == .data$vocabularyVersion ~ TRUE, 
+                    TRUE ~ FALSE))
     options = list(
       pageLength = 100,
       lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
@@ -2427,10 +2437,14 @@ shiny::shinyServer(function(input, output, session) {
         list(width = "60%", targets = 2)
       )
     )
+    # need to add sketch here - and split the vocabulary columns with common header 'Vocabulary version'
+    # if mismatch = FALSE, make entire ROW red.
     table <- DT::datatable(
       table,
       options = options,
-      colnames = c("ID", "Name", "Description"),
+      colnames = c("ID", "Name", 
+                   "Vocabulary version (CDM source)", "Vocabulary version (Vocabulary table)", 
+                   "Description"),
       rownames = FALSE,
       class = "stripe compact"
     )

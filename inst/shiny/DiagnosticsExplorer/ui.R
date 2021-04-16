@@ -95,7 +95,7 @@ sidebarMenu <-
         shinydashboard::menuItem(text = "Compare Temporal Char,", tabName = "compareTemporalCharacterization"),
         infoId = "compareTemporalCharacterizationInfo"
       ),
-    shinydashboard::menuItem(text = "Database information", tabName = "databaseInformation"),
+    shinydashboard::menuItem(text = "Data Source Information", tabName = "databaseInformation"),
     # Conditional dropdown boxes in the side bar ------------------------------------------------------
     shiny::conditionalPanel(
       condition = "input.tabs!='incidenceRate' &

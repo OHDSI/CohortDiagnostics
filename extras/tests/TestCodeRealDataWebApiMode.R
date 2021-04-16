@@ -4,7 +4,7 @@ source(Sys.getenv("startUpScriptLocation")) # this sources information for cdmSo
 
 library(CohortDiagnostics)
 
-temporaryLocation <- tempdir()
+temporaryLocation <- rstudioapi::getActiveProject()
 
 connectionSpecifications <- cdmSources %>%
   dplyr::filter(sequence == 1) %>%
@@ -74,7 +74,6 @@ outputFolder <-
   file.path(temporaryLocation,
             "outputFolder",
             "webApiMode",
-            "realData",
             databaseId)
 # Please delete previous content if needed
 # unlink(x = outputFolder,
@@ -129,27 +128,28 @@ CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = outputFolder)
 
 CohortDiagnostics::launchDiagnosticsExplorer(dataFolder = outputFolder)
 
+# 
 # connectionDetailsToUpload <- createConnectionDetails(dbms = "postgresql",
-#                                              server = paste(Sys.getenv("shinydbServer"),
-#                                                             Sys.getenv("shinydbDatabase"),
-#                                                             sep = "/"),
-#                                              port = Sys.getenv("shinydbPort"),
-#                                              user = Sys.getenv("shinyDbUser"),
-#                                              password = Sys.getenv("shinyDbPassword"))
-#
-#
-# resultsSchema <- "eunomiaCd"
-# createResultsDataModel(connectionDetails = connectionDetailsToUpload, schema = resultsSchema)
-#
-#
+#                                                      server = paste(Sys.getenv("shinydbServer"),
+#                                                                     Sys.getenv("shinydbDatabase"),
+#                                                                     sep = "/"),
+#                                                      port = Sys.getenv("shinydbPort"),
+#                                                      user = Sys.getenv("shinyDbUserGowtham"),
+#                                                      password = Sys.getenv("shinyDbPasswordGowtham"))
+# 
+# 
+# resultsSchema <- "CdSkeletonCohortDiagnosticsStudy"
+# CohortDiagnostics::createResultsDataModel(connectionDetails = connectionDetailsToUpload, schema = resultsSchema)
+# 
+# 
 # path = outputFolder
 # zipFilesToUpload <- list.files(path = path,
 #                                pattern = ".zip",
 #                                recursive = TRUE,
 #                                full.names = TRUE)
-#
+# 
 # for (i in (1:length(zipFilesToUpload))) {
-#   uploadResults(connectionDetails = connectionDetailsToUpload,
-#                 schema = resultsSchema,
-#                 zipFileName = zipFilesToUpload[[i]])
+#   CohortDiagnostics::uploadResults(connectionDetails = connectionDetailsToUpload,
+#                                    schema = resultsSchema,
+#                                    zipFileName = zipFilesToUpload[[i]])
 # }
