@@ -6,7 +6,7 @@ library(CohortDiagnostics)
 library('SkeletonCohortDiagnosticsStudy')
 packageName <- 'SkeletonCohortDiagnosticsStudy'
 
-temporaryLocation <- tempdir()
+temporaryLocation <- rstudioapi::getActiveProject()
 
 connectionSpecifications <- cdmSources %>%
   dplyr::filter(sequence == 1) %>%
@@ -40,7 +40,7 @@ cohortTable <- # example: 'cohort'
   paste0("s", connectionSpecifications$sourceId, "_", packageName)
 
 outputFolder <-
-  file.path(rstudioapi::getActiveProject(), "outputFolder", databaseId)
+  file.path(rstudioapi::getActiveProject(), "outputFolder", 'packageMode', databaseId)
 # Please delete previous content if needed
 # unlink(x = outputFolder,
 #        recursive = TRUE,
@@ -66,7 +66,7 @@ SkeletonCohortDiagnosticsStudy::runCohortDiagnostics(
   databaseId = databaseId,
   databaseName = dataSouceInformation$cdmSourceName,
   databaseDescription = dataSouceInformation$sourceDescription,
-  runCohortCharacterization = FALSE,
+  runCohortCharacterization = TRUE,
   runCohortOverlap = TRUE,
   runOrphanConcepts = TRUE,
   runVisitContext = TRUE,
@@ -85,26 +85,26 @@ CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = outputFolder)
 CohortDiagnostics::launchDiagnosticsExplorer(dataFolder = outputFolder)
 
 # connectionDetailsToUpload <- createConnectionDetails(dbms = "postgresql",
-#                                              server = paste(Sys.getenv("shinydbServer"),
-#                                                             Sys.getenv("shinydbDatabase"),
-#                                                             sep = "/"),
-#                                              port = Sys.getenv("shinydbPort"),
-#                                              user = Sys.getenv("shinyDbUserGowtham"),
-#                                              password = Sys.getenv("shinyDbPasswordGowtham"))
-#
-#
-# resultsSchema <- "SkeletonCohortDiagnosticsStudyCdTruven"
-# createResultsDataModel(connectionDetails = connectionDetailsToUpload, schema = resultsSchema)
-#
-#
+#                                                      server = paste(Sys.getenv("shinydbServer"),
+#                                                                     Sys.getenv("shinydbDatabase"),
+#                                                                     sep = "/"),
+#                                                      port = Sys.getenv("shinydbPort"),
+#                                                      user = Sys.getenv("shinyDbUserGowtham"),
+#                                                      password = Sys.getenv("shinyDbPasswordGowtham"))
+# 
+# 
+# resultsSchema <- "CdSkeletonCohortDiagnosticsStudy"
+# CohortDiagnostics::createResultsDataModel(connectionDetails = connectionDetailsToUpload, schema = resultsSchema)
+# 
+# 
 # path = outputFolder
 # zipFilesToUpload <- list.files(path = path,
 #                                pattern = ".zip",
 #                                recursive = TRUE,
 #                                full.names = TRUE)
-#
+# 
 # for (i in (1:length(zipFilesToUpload))) {
-#   uploadResults(connectionDetails = connectionDetailsToUpload,
-#                 schema = resultsSchema,
-#                 zipFileName = zipFilesToUpload[[i]])
+#   CohortDiagnostics::uploadResults(connectionDetails = connectionDetailsToUpload,
+#                                    schema = resultsSchema,
+#                                    zipFileName = zipFilesToUpload[[i]])
 # }

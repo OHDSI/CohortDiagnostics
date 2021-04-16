@@ -95,7 +95,7 @@ sidebarMenu <-
         shinydashboard::menuItem(text = "Compare Temporal Char,", tabName = "compareTemporalCharacterization"),
         infoId = "compareTemporalCharacterizationInfo"
       ),
-    shinydashboard::menuItem(text = "Database information", tabName = "databaseInformation"),
+    shinydashboard::menuItem(text = "Data Source Information", tabName = "databaseInformation"),
     # Conditional dropdown boxes in the side bar ------------------------------------------------------
     shiny::conditionalPanel(
       condition = "input.tabs!='incidenceRate' &
@@ -347,8 +347,8 @@ bodyTabItems <- shinydashboard::tabItems(
                     label = "",
                     choices = c(
                       "Concept Set Expression",
-                      "Included Standard Concepts",
-                      "Included Source Concepts"
+                      "Resolved",
+                      "Mapped"
                     ),
                     selected = "Concept Set Expression",
                     inline = TRUE
@@ -356,11 +356,11 @@ bodyTabItems <- shinydashboard::tabItems(
                 }
               ),
               shiny::conditionalPanel(
-                condition = "input.conceptSetsType == 'Included Standard Concepts'",
+                condition = "input.conceptSetsType == 'Resolved'",
                 DT::dataTableOutput(outputId = "cohortDefinitionIncludedStandardConceptsTable")
               ),
               shiny::conditionalPanel(
-                condition = "input.conceptSetsType == 'Included Source Concepts'",
+                condition = "input.conceptSetsType == 'Mapped'",
                 DT::dataTableOutput(outputId = "cohortDefinitionIncludedSourceConceptsTable")
               ),
               shiny::conditionalPanel(
