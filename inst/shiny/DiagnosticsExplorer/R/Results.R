@@ -589,7 +589,10 @@ getConceptDetails <- function(dataSource = .GlobalEnv,
   return(data)
 }
 
-resolveConceptSet <- function(dataSource = .GlobalEnv, conceptSets, source = FALSE) {
+resolveConceptSetFromVocabularyDatabaseSchema <- function(dataSource = .GlobalEnv, 
+                                                          conceptSets, 
+                                                          source = FALSE,
+                                                          vocabularyDatabaseSchema = 'vocabulary') {
   if (is(dataSource, "environment")) {
     stop("Cannot resolve concept sets without a database connection")
   } else {
@@ -614,15 +617,64 @@ resolveConceptSet <- function(dataSource = .GlobalEnv, conceptSets, source = FAL
                    "  ON concept_sets.concept_id = concept.concept_id;",
                    sep = "\n")
     }
-                 
+    
     data <- renderTranslateQuerySql(connection = dataSource$connection,
                                     sql = sql,
-                                    vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
+                                    vocabulary_database_schema = vocabularyDatabaseSchema,
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   }
   return(data %>% dplyr::arrange(.data$conceptId))
 }
+
+
+resolveConceptSet <- function(dataSource = .GlobalEnv, 
+                              databaseId,
+                              cohortId,
+                              conceptSetId,
+                              source = FALSE) {
+  # Perform error checks for input variables
+  errorMessage <- checkmate::makeAssertCollection()
+  checkmate::assertIntegerish(x = cohortId,
+                              min.len = 1, 
+                              max.len = 1,
+                              null.ok = TRUE,
+                              add = errorMessage)
+  checkmate::assertIntegerish(x = conceptSetId,
+                              min.len = 1, 
+                              max.len = 1,
+                              null.ok = TRUE,
+                              add = errorMessage)
+  checkmate::assertCharacter(x = databaseId,
+                             min.len = 1, 
+                             max.len = 1,
+                             min.chars = 1,
+                             null.ok = TRUE,
+                             add = errorMessage)
+  checkmate::reportAssertions(collection = errorMessage)
+  
+  if (is(dataSource, "environment")) {
+    data <- get("resolvedConcepts", envir = dataSource) %>% 
+      dplyr::filter(.data$databaseId == !!databaseId) %>% 
+      dplyr::filter(.data$cohortId == !!cohortId) %>% 
+      dplyr::filter(.data$conceptSetId == !!conceptSetId)
+  } else {
+    sql <- "SELECT * FROM @resultsDatabaseSchema.resolved_concepts
+            WHERE database_id = @databaseId AND
+                  cohort_id = @cohortId AND
+                  concept_set_id = @conceptSetId;"
+    data <- renderTranslateQuerySql(connection = dataSource$connection,
+                                    sql = sql,
+                                    results_database_schema = dataSource$resultsDatabaseSchema,
+                                    database_id = databaseId,
+                                    cohort_id = cohortId,
+                                    concept_set_id = conceptSetId,
+                                    snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
+  }
+  return(data %>% dplyr::arrange(.data$conceptId))
+}
+
 
 checkErrorCohortIdsDatabaseIds <- function(errorMessage,
                                            cohortIds,
