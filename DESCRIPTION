@@ -24,6 +24,7 @@ Imports:
   digest,
   dplyr (>= 1.0.0),
   ParallelLogger (>= 2.0.0),
+  pool,
   readr (>= 1.4.0),
   rlang,
   RJSONIO,
