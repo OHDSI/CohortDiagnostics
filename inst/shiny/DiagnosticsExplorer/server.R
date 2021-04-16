@@ -2428,18 +2428,29 @@ shiny::shinyServer(function(input, output, session) {
       paging = TRUE,
       searchHighlight = TRUE,
       columnDefs = list(
-        list(width = "30%", targets = 1),
-        list(width = "60%", targets = 2)
+        list(width = "20%", targets = 0),
+        list(width = "20%", targets = 1),
+        list(width = "30%", targets = 4)
       )
     )
+    
+    sketch <- htmltools::withTags(table(class = "display",
+                                        thead(tr(
+                                          th(rowspan = 2, "ID"),
+                                          th(rowspan = 2, "Name"),
+                                          th("Vocabulary version", colspan = 2, class = "dt-center"),
+                                          th(rowspan = 2, "Description"),
+                                        ),
+                                        tr(
+                                          lapply(
+                                            c("CDM source", "Vocabulary table"), th)
+                                        ))))
     # need to add sketch here - and split the vocabulary columns with common header 'Vocabulary version'
     # if mismatch = FALSE, make entire ROW red.
     table <- DT::datatable(
       data %>% dplyr::select(-.data$match),
       options = options,
-      colnames = c("ID", "Name", 
-                   "Vocabulary version (CDM source)", "Vocabulary version (Vocabulary table)", 
-                   "Description"),
+      container = sketch,
       rownames = FALSE,
       class = "stripe compact"
     )
