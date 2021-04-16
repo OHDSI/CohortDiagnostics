@@ -2441,7 +2441,7 @@ shiny::shinyServer(function(input, output, session) {
     # need to add sketch here - and split the vocabulary columns with common header 'Vocabulary version'
     # if mismatch = FALSE, make entire ROW red.
     table <- DT::datatable(
-      data %>% dplyr:select(.data$match),
+      data %>% dplyr::select(-.data$match),
       options = options,
       colnames = c("ID", "Name", 
                    "Vocabulary version (CDM source)", "Vocabulary version (Vocabulary table)", 
