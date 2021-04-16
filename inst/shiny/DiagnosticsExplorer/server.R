@@ -427,7 +427,10 @@ shiny::shinyServer(function(input, output, session) {
     source <-
       (input$conceptSetsType == "Mapped")
     data <-
-      resolveConceptSet(dataSource = dataSource, subset, source = source)
+      resolveConceptSetFromVocabularyDatabaseSchema(dataSource = dataSource, 
+                                                    subset, 
+                                                    source = source, 
+                                                    vocabularyDatabaseSchema = dataSource$vocabularyDatabaseSchema)
     data <- data %>%
       dplyr::inner_join(subset, by = "conceptSetId") %>%
       dplyr::select(
