@@ -424,26 +424,31 @@ shiny::shinyServer(function(input, output, session) {
                                                     source = source, 
                                                     vocabularyDatabaseSchema = dataSource$vocabularyDatabaseSchema)
     data <- data %>%
-      dplyr::inner_join(subset, by = "conceptSetId") %>%
-      dplyr::select(
-        .data$conceptSetName,
-        .data$conceptId,
-        .data$conceptCode,
-        .data$conceptName,
-        .data$conceptClassId,
-        .data$domainId,
-        .data$vocabularyId,
-        .data$standardConcept
-      ) %>%
-      dplyr::arrange(.data$conceptSetName, .data$conceptId)
-    data$conceptSetName <- as.factor(data$conceptSetName)
-    data$conceptClassId <- as.factor(data$conceptClassId)
-    data$domainId <- as.factor(data$domainId)
-    data$vocabularyId <- as.factor(data$vocabularyId)
-    data$standardConcept <- as.factor(data$standardConcept)
-    colnames(data) <- camelCaseToTitleCase(colnames(data))
+      dplyr::inner_join(subset, by = "conceptSetId")
     
-    return(data)
+    if (!is.null(cohortDefinitionConceptSetExpressionRow()$id)) {
+      data <- data %>% 
+        dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id) %>% 
+        dplyr::select(
+          .data$conceptId,
+          .data$conceptCode,
+          .data$conceptName,
+          .data$conceptClassId,
+          .data$domainId,
+          .data$vocabularyId,
+          .data$standardConcept
+        ) %>%
+        dplyr::arrange(.data$conceptId)
+      data$conceptClassId <- as.factor(data$conceptClassId)
+      data$domainId <- as.factor(data$domainId)
+      data$vocabularyId <- as.factor(data$vocabularyId)
+      data$standardConcept <- as.factor(data$standardConcept)
+      colnames(data) <- camelCaseToTitleCase(colnames(data))
+      
+      return(data)
+    } else {
+      return(NULL)
+    }
   })
   
   output$cohortDefinitionIncludedStandardConceptsTable <-
