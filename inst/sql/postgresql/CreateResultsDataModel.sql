@@ -21,6 +21,7 @@ DROP TABLE IF EXISTS metadata;
 DROP TABLE IF EXISTS orphan_concept;
 DROP TABLE IF EXISTS phenotype_description;
 DROP TABLE IF EXISTS relationship;
+DROP TABLE IF EXISTS resolved_concepts;
 DROP TABLE IF EXISTS temporal_analysis_ref;
 DROP TABLE IF EXISTS temporal_covariate_ref;
 DROP TABLE IF EXISTS temporal_covariate_value;

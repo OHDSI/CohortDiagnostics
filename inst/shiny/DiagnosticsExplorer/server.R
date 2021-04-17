@@ -2168,10 +2168,10 @@ shiny::shinyServer(function(input, output, session) {
           .data$sd1,
           .data$mean2,
           .data$sd2,
-          .data$stdDiff
+          .data$absStdDiff
         ) %>%
         dplyr::select(-.data$cohortId1, -.data$cohortId2) %>%
-        dplyr::arrange(desc(abs(.data$stdDiff)))
+        dplyr::arrange(desc(absStdDiff))
       
       options = list(
         pageLength = 100,

@@ -119,7 +119,7 @@ prepareTable1Comp <- function(balance,
                                                                              balanceSubset$covariateName),
                                                      MeanT = balanceSubset$mean1,
                                                      MeanC = balanceSubset$mean2,
-                                                     StdDiff = balanceSubset$stdDiff,
+                                                     StdDiff = balanceSubset$absStdDiff,
                                                      header = 0,
                                                      position = i)) %>% 
         dplyr::distinct() %>%
