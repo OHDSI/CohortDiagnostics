@@ -2018,9 +2018,55 @@ shiny::shinyServer(function(input, output, session) {
     # also the place to filter by resolved conceptIds in the selected cohorts conceptSetExpression (only in raw, not for pretty)
   })
   
+  shiny::observe({
+    subset <- temporalCharacterization()$analysisName %>% unique() %>% sort()
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "temporalAnalysisNameFilter",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = subset,
+      selected = subset
+    )
+  })
+  
+  shiny::observe({
+    subset <- temporalCharacterization()$domainId %>% unique() %>% sort()
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "temporalDomainNameFilter",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = subset,
+      selected = subset
+    )
+  })
+  
+  temporalAnalysisNameFilter <- reactiveVal(NULL)
+  shiny::observeEvent(eventExpr = {
+    list(input$temporalAnalysisNameFilter_open,
+         input$tabs)
+  }, handlerExpr = {
+    if (isFALSE(input$temporalAnalysisNameFilter_open) || !is.null(input$tabs)) {
+      selectedValue <- input$temporalAnalysisNameFilter
+      temporalAnalysisNameFilter(selectedValue)
+    }
+  })
+  
+  temporalDomainNameFilter <- reactiveVal(NULL)
+  shiny::observeEvent(eventExpr = {
+    list(input$temporalDomainNameFilter_open,
+         input$tabs)
+  }, handlerExpr = {
+    if (isFALSE(input$temporalDomainNameFilter_open) || !is.null(input$tabs)) {
+      selectedValue <- input$temporalDomainNameFilter
+      temporalDomainNameFilter(selectedValue)
+    }
+  })
+  
   output$temporalCharacterizationTable <-
     DT::renderDataTable(expr = {
-      data <- temporalCharacterization()
+      data <- temporalCharacterization() %>% 
+        dplyr::filter(.data$analysisName %in% temporalAnalysisNameFilter()) %>% 
+        dplyr::filter(.data$domainId %in% temporalDomainNameFilter())
       if (nrow(data) == 0) {
         return(dplyr::tibble(
           Note = paste0("No data available for selected databases and cohorts")

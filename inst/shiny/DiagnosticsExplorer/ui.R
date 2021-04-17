@@ -658,6 +658,46 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "temporalCharacterization",
     cohortReference("temporalCharacterizationSelectedCohort"),
+      tags$table(
+        tags$tr(
+          tags$td(
+            shinyWidgets::pickerInput(
+              inputId = "temporalAnalysisNameFilter",
+              label = "Analysis name",
+              choices = c(""),
+              selected = c(""),
+              multiple = TRUE,
+              choicesOpt = list(style = rep_len("color: black;", 999)),
+              options = shinyWidgets::pickerOptions(
+                actionsBox = TRUE,
+                liveSearch = TRUE,
+                size = 10,
+                liveSearchStyle = "contains",
+                liveSearchPlaceholder = "Type here to search",
+                virtualScroll = 50
+              )
+            )
+          ), 
+          tags$td(
+            shinyWidgets::pickerInput(
+              inputId = "temporalDomainNameFilter",
+              label = "Domain name",
+              choices = c(""),
+              selected = c(""),
+              multiple = TRUE,
+              choicesOpt = list(style = rep_len("color: black;", 999)),
+              options = shinyWidgets::pickerOptions(
+                actionsBox = TRUE,
+                liveSearch = TRUE,
+                size = 10,
+                liveSearchStyle = "contains",
+                liveSearchPlaceholder = "Type here to search",
+                virtualScroll = 50
+              )
+            )
+          )
+        )
+      ),
     DT::dataTableOutput("temporalCharacterizationTable")
   ),
   shinydashboard::tabItem(
