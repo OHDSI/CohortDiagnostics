@@ -1738,6 +1738,7 @@ shiny::shinyServer(function(input, output, session) {
     
   }, server = TRUE)
   
+  # Characterization --------------------------------------------------
   characterizationTableData <- shiny::reactive(x = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
@@ -1755,7 +1756,50 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  # Characterization --------------------------------------------------
+  shiny::observe({
+    subset <- characterizationTableData()$analysisName %>% unique() %>% sort()
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "characterizationAnalysisNameFilter",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = subset,
+      selected = subset
+    )
+  })
+  
+  shiny::observe({
+    subset <- characterizationTableData()$domainId %>% unique() %>% sort()
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "characterizationDomainNameFilter",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = subset,
+      selected = subset
+    )
+  })
+  
+  characterizationAnalysisNameFilter <- reactiveVal(NULL)
+  shiny::observeEvent(eventExpr = {
+    list(input$characterizationAnalysisNameFilter_open,
+         input$tabs)
+  }, handlerExpr = {
+    if (isFALSE(input$characterizationAnalysisNameFilter_open) || !is.null(input$tabs)) {
+      selectedValue <- input$characterizationAnalysisNameFilter
+      characterizationAnalysisNameFilter(selectedValue)
+    }
+  })
+  
+  characterizationDomainNameFilter <- reactiveVal(NULL)
+  shiny::observeEvent(eventExpr = {
+    list(input$characterizationDomainNameFilter_open,
+         input$tabs)
+  }, handlerExpr = {
+    if (isFALSE(input$characterizationDomainNameFilter_open) || !is.null(input$tabs)) {
+      selectedValue <- input$characterizationDomainNameFilter
+      characterizationDomainNameFilter(selectedValue)
+    }
+  })
+  
   output$characterizationTable <- DT::renderDataTable(expr = {
     data <- characterizationTableData()
 
@@ -1874,14 +1918,13 @@ shiny::shinyServer(function(input, output, session) {
         backgroundPosition = "center"
       )
     } else {
-      # filter this data based on drop down for analysisName, domainName in Characterization table tab.
-      # default select all
-      
       # split by isBinary == Y vs N for raw (radio button). Default = 'Y'
       
       # also the place to filter by resolved conceptIds in the selected cohorts conceptSetExpression (only in raw, not for pretty)
       # 
       data <- data %>%
+        dplyr::filter(.data$analysisName %in% characterizationAnalysisNameFilter()) %>% 
+        dplyr::filter(.data$domainId %in% characterizationDomainNameFilter()) %>%
         dplyr::arrange(.data$databaseId, .data$cohortId) %>%
         tidyr::pivot_longer(cols = c(.data$mean, .data$sd)) %>%
         dplyr::mutate(name = paste0(databaseId, "_", .data$name)) %>%
