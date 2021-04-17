@@ -474,19 +474,22 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
 
   if (isTemporal) {
     table <- "temporalCovariateValue"
-    refTable <- "temporalCovariateRef"
+    covariateRefTable <- "temporalCovariateRef"
+    analysisRefTable <- "temporalAnalysisRef"
     timeRefTable <- "temporalTimeRef"
   } else {
     table <- "covariateValue"
-    refTable <- "covariateRef"
+    covariateRefTable <- "covariateRef"
+    analysisRefTable <- "analysisRef"
     timeRefTable <- ""
   }
   
   if (is(dataSource, "environment")) {
     data <- get(table, envir = dataSource) %>%
-      dplyr::filter(.data$cohortId %in% !!cohortIds,
-                    .data$databaseId %in% !!databaseIds) %>%
-      dplyr::inner_join(get(refTable, envir = dataSource), by = "covariateId")
+      dplyr::filter(.data$cohortId %in% !!cohortIds) %>% 
+      dplyr::filter(.data$databaseId %in% !!databaseIds) %>%
+      dplyr::inner_join(get(covariateRefTable, envir = dataSource), by = "covariateId") %>% 
+      dplyr::inner_join(get(analysisRefTable, envir = dataSource), by = "analysisId")
     if (!is.null(analysisIds)) {
       data <- data %>%
         dplyr::filter(.data$analysisId %in% analysisIds)
@@ -509,8 +512,10 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
               concept_id,
               analysis_id
             FROM  @results_database_schema.@table covariate
-            INNER JOIN @results_database_schema.@ref_table covariate_ref
+            INNER JOIN @results_database_schema.@covariate_ref_table covariate_ref
               ON covariate.covariate_id = covariate_ref.covariate_id
+            INNER JOIN @results_database_schema.@analysis_ref_table analysis_ref
+              ON covariate.analysis_id = analysis_ref.analysis_id
             {@time_ref_table != \"\"} ? {
             INNER JOIN @results_database_schema.@time_ref_table time_ref
               ON covariate.time_id = time_ref.time_id
@@ -530,7 +535,8 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
     data <- renderTranslateQuerySql(connection = dataSource$connection,
                                     sql = sql,
                                     table = SqlRender::camelCaseToSnakeCase(table),
-                                    ref_table = SqlRender::camelCaseToSnakeCase(refTable),
+                                    covariate_ref_table = SqlRender::camelCaseToSnakeCase(covariateRefTable),
+                                    analysis_ref_table = SqlRender::camelCaseToSnakeCase(analysisRefTable),
                                     time_ref_table = SqlRender::camelCaseToSnakeCase(timeRefTable),
                                     results_database_schema = dataSource$resultsDatabaseSchema,
                                     cohort_ids = cohortIds,
@@ -549,7 +555,8 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
                       .data$endDay,
                       .data$analysisId,
                       .data$covariateId, 
-                      .data$covariateName) %>% 
+                      .data$covariateName,
+                      .data$isBinary) %>% 
       dplyr::arrange(.data$cohortId, .data$databaseId, .data$timeId, .data$covariateId, .data$covariateName)
   } else {
     data <- data %>% 
@@ -557,8 +564,18 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
                       .data$databaseId, 
                       .data$analysisId,
                       .data$covariateId, 
-                      .data$covariateName) %>% 
-      dplyr::arrange(.data$cohortId, .data$databaseId, .data$covariateId)
+                      .data$covariateName,
+                      .data$isBinary) %>% 
+      dplyr::arrange(.data$cohortId, .data$databaseId, .data$covariateId) %>% 
+      dplyr::select(-.data$startDay, -.data$endDay)
+  }
+  if ('missingMeansZero' %in% colnames(data)) {
+    data <- data %>% 
+      dplyr::mutate(mean = dplyr::case_when(is.na(.data$mean) &&
+                                                    !is.na(.data$missingMeansZero) &&
+                                                    .data$missionMeansZero == 'Y' ~ 0,
+                    TRUE ~ .data$mean)) %>% 
+      dplyr::select(-.data$missingMeansZero)
   }
   return(data)
 }

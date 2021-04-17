@@ -1730,8 +1730,7 @@ shiny::shinyServer(function(input, output, session) {
     
   }, server = TRUE)
   
-  # Characterization --------------------------------------------------
-  output$characterizationTable <- DT::renderDataTable(expr = {
+  characterizationTableData <- shiny::reactive(x = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
     if (input$charType == "Pretty") {
@@ -1746,6 +1745,12 @@ shiny::shinyServer(function(input, output, session) {
       databaseIds = databaseIds(),
       isTemporal = FALSE
     )
+  })
+  
+  # Characterization --------------------------------------------------
+  output$characterizationTable <- DT::renderDataTable(expr = {
+    data <- characterizationTableData()
+
     if (nrow(data) == 0) {
       return(dplyr::tibble(
         Note = paste0("No data available for selected databases and cohorts")
@@ -1861,6 +1866,13 @@ shiny::shinyServer(function(input, output, session) {
         backgroundPosition = "center"
       )
     } else {
+      # filter this data based on drop down for analysisName, domainName in Characterization table tab.
+      # default select all
+      
+      # split by isBinary == Y vs N for raw (radio button). Default = 'Y'
+      
+      # also the place to filter by resolved conceptIds in the selected cohorts conceptSetExpression (only in raw, not for pretty)
+      # 
       data <- data %>%
         dplyr::arrange(.data$databaseId, .data$cohortId) %>%
         tidyr::pivot_longer(cols = c(.data$mean, .data$sd)) %>%
@@ -1944,7 +1956,15 @@ shiny::shinyServer(function(input, output, session) {
       timeIds = timeIds(),
       isTemporal = TRUE
     ) %>%
+      dplyr::inner_join(temporalCovariateChoices, by = "timeId") %>%
+      dplyr::arrange(.data$timeId) %>%
       dplyr::select(-.data$cohortId, -.data$databaseId, -.data$covariateId)
+    # filter this data based on drop down for analysisName, domainName.
+    # default select all
+    
+    # split by isBinary == Y vs N for raw (radio button). Default = 'Y'
+    
+    # also the place to filter by resolved conceptIds in the selected cohorts conceptSetExpression (only in raw, not for pretty)
   })
   
   output$temporalCharacterizationTable <-
@@ -1957,8 +1977,6 @@ shiny::shinyServer(function(input, output, session) {
       }
       
       table <- data %>%
-        dplyr::inner_join(temporalCovariateChoices, by = "timeId") %>%
-        dplyr::arrange(.data$timeId)  %>%
         tidyr::pivot_wider(
           id_cols = c("covariateName", "conceptId"),
           names_from = "choices",
@@ -2074,11 +2092,8 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   # Compare cohort characteristics --------------------------------------------
-  
   computeBalance <- shiny::reactive({
-    validate(need((length(cohortId(
-      
-    )) > 0), paste0("Please select cohort.")))
+    validate(need((length(cohortId()) > 0), paste0("Please select cohort.")))
     validate(need((length(
       comparatorCohortId()
     ) > 0), paste0("Please select comparator cohort.")))
@@ -2163,6 +2178,14 @@ shiny::shinyServer(function(input, output, session) {
       )
       table <- DT::formatRound(table, 4, digits = 2)
     } else {
+      
+      # filter this data based on drop down for analysisName, domainName
+      # default select all
+      
+      # split by isBinary == Y vs N for raw (radio button). Default = 'Y'
+      
+      # also the place to filter by resolved conceptIds in the selected cohorts conceptSetExpression (only in raw, not for pretty)
+      # 
       table <- balance %>%
         dplyr::select(
           .data$cohortId1,
@@ -2235,7 +2258,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     plot <-
       plotCohortComparisonStandardizedDifference(
-        balance = data,
+        balance = data %>% dplyr::filter(.data$isBinary == 'Y'),
         shortNameRef = cohort,
         domain = input$domainId
       )
@@ -2332,6 +2355,13 @@ shiny::shinyServer(function(input, output, session) {
       )
       table <- DT::formatRound(table, 4, digits = 2)
     } else {
+      # filter this data based on drop down for analysisName, domainName 
+      # default select all
+      
+      # split by isBinary == Y vs N for raw (radio button)
+      
+      # also the place to filter by resolved conceptIds in the selected cohorts conceptSetExpression (only in raw, not for pretty)
+      # 
       table <- balance %>%
         dplyr::select(
           .data$cohortId1,
@@ -2404,7 +2434,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     plot <-
       plotTemporalCompareStandardizedDifference(
-        balance = data,
+        balance = data %>% dplyr::filter(.data$isBinary == 'Y'),
         shortNameRef = cohort,
         domain = input$compareTemporalCharacterizationDomainId
       )
@@ -2451,9 +2481,6 @@ shiny::shinyServer(function(input, output, session) {
                                           lapply(
                                             c("CDM source", "Vocabulary table"), th)
                                         ))))
-    # need to add sketch here - and split the vocabulary columns with common header 'Vocabulary version'
-    # if mismatch = FALSE, make entire ROW red.
-    
     table <- DT::datatable(
       data ,
       options = options,
