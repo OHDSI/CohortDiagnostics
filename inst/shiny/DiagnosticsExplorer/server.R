@@ -2438,6 +2438,50 @@ shiny::shinyServer(function(input, output, session) {
     return(balance)
   })
   
+  shiny::observe({
+    subset <- computeBalanceForCompareTemporalCharacterization()$analysisName %>% unique() %>% sort()
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "temporalCompareAnalysisNameFilter",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = subset,
+      selected = subset
+    )
+  })
+  
+  shiny::observe({
+    subset <- computeBalanceForCompareTemporalCharacterization()$domainId %>% unique() %>% sort()
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "temporalCompareDomainNameFilter",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = subset,
+      selected = subset
+    )
+  })
+  
+  temporalCompareAnalysisNameFilter <- reactiveVal(NULL)
+  shiny::observeEvent(eventExpr = {
+    list(input$temporalCompareAnalysisNameFilter_open,
+         input$tabs)
+  }, handlerExpr = {
+    if (isFALSE(input$temporalCompareAnalysisNameFilter_open) || !is.null(input$tabs)) {
+      selectedValue <- input$temporalCompareAnalysisNameFilter
+      temporalCompareAnalysisNameFilter(selectedValue)
+    }
+  })
+  
+  temporalCompareDomainNameFilter <- reactiveVal(NULL)
+  shiny::observeEvent(eventExpr = {
+    list(input$temporalCompareDomainNameFilter_open,
+         input$tabs)
+  }, handlerExpr = {
+    if (isFALSE(input$temporalCompareDomainNameFilter_open) || !is.null(input$tabs)) {
+      selectedValue <- input$temporalCompareDomainNameFilter
+      temporalCompareDomainNameFilter(selectedValue)
+    }
+  })
+  
   output$temporalCharacterizationCompareTable <- DT::renderDataTable(expr = {
     balance <- computeBalanceForCompareTemporalCharacterization()
     if (nrow(balance) == 0) {
@@ -2494,13 +2538,19 @@ shiny::shinyServer(function(input, output, session) {
       )
       table <- DT::formatRound(table, 4, digits = 2)
     } else {
-      # filter this data based on drop down for analysisName, domainName 
-      # default select all
-      
       # split by isBinary == Y vs N for raw (radio button)
       
       # also the place to filter by resolved conceptIds in the selected cohorts conceptSetExpression (only in raw, not for pretty)
       # 
+      
+      balance <- balance %>% 
+        dplyr::filter(.data$analysisName %in% temporalCompareAnalysisNameFilter()) %>%
+        dplyr::filter(.data$domainId %in% temporalCompareDomainNameFilter()) 
+      
+      if (nrow(balance) == 0) {
+        return(dplyr::tibble(Note = "No data for the selected combination."))
+      }
+      
       table <- balance %>%
         dplyr::select(
           .data$cohortId1,

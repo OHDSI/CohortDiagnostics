@@ -823,6 +823,49 @@ bodyTabItems <- shinydashboard::tabItems(
       selected = "Plot",
       inline = TRUE
     ),
+    shiny::conditionalPanel(
+      condition = "input.temporalCharacterizationType == 'Raw table'",
+      tags$table(
+        tags$tr(
+          tags$td(
+            shinyWidgets::pickerInput(
+              inputId = "temporalCompareAnalysisNameFilter",
+              label = "Analysis name",
+              choices = c(""),
+              selected = c(""),
+              multiple = TRUE,
+              choicesOpt = list(style = rep_len("color: black;", 999)),
+              options = shinyWidgets::pickerOptions(
+                actionsBox = TRUE,
+                liveSearch = TRUE,
+                size = 10,
+                liveSearchStyle = "contains",
+                liveSearchPlaceholder = "Type here to search",
+                virtualScroll = 50
+              )
+            )
+          ), 
+          tags$td(
+            shinyWidgets::pickerInput(
+              inputId = "temporalCompareDomainNameFilter",
+              label = "Domain name",
+              choices = c(""),
+              selected = c(""),
+              multiple = TRUE,
+              choicesOpt = list(style = rep_len("color: black;", 999)),
+              options = shinyWidgets::pickerOptions(
+                actionsBox = TRUE,
+                liveSearch = TRUE,
+                size = 10,
+                liveSearchStyle = "contains",
+                liveSearchPlaceholder = "Type here to search",
+                virtualScroll = 50
+              )
+            )
+          )
+        )
+      )
+    ),
     shiny::conditionalPanel(condition = "input.temporalCharacterizationType=='Pretty table' | 
                             input.temporalCharacterizationType=='Raw table'",
                             DT::dataTableOutput(outputId = "temporalCharacterizationCompareTable")),
