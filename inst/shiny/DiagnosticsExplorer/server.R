@@ -2010,9 +2010,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::inner_join(temporalCovariateChoices, by = "timeId") %>%
       dplyr::arrange(.data$timeId) %>%
       dplyr::select(-.data$cohortId, -.data$databaseId, -.data$covariateId)
-    # filter this data based on drop down for analysisName, domainName.
-    # default select all
-    
+   
     # split by isBinary == Y vs N for raw (radio button). Default = 'Y'
     
     # also the place to filter by resolved conceptIds in the selected cohorts conceptSetExpression (only in raw, not for pretty)
@@ -2219,8 +2217,52 @@ shiny::shinyServer(function(input, output, session) {
     return(balance)
   })
   
+  shiny::observe({
+    subset <- computeBalance()$analysisName %>% unique() %>% sort()
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "charCompareAnalysisNameFilter",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = subset,
+      selected = subset
+    )
+  })
+  
+  shiny::observe({
+    subset <- computeBalance()$domainId %>% unique() %>% sort()
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "charaCompareDomainNameFilter",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = subset,
+      selected = subset
+    )
+  })
+  
+  charCompareAnalysisNameFilter <- reactiveVal(NULL)
+  shiny::observeEvent(eventExpr = {
+    list(input$charCompareAnalysisNameFilter_open,
+         input$tabs)
+  }, handlerExpr = {
+    if (isFALSE(input$charCompareAnalysisNameFilter_open) || !is.null(input$tabs)) {
+      selectedValue <- input$charCompareAnalysisNameFilter
+      charCompareAnalysisNameFilter(selectedValue)
+    }
+  })
+  
+  charaCompareDomainNameFilter <- reactiveVal(NULL)
+  shiny::observeEvent(eventExpr = {
+    list(input$charaCompareDomainNameFilter_open,
+         input$tabs)
+  }, handlerExpr = {
+    if (isFALSE(input$charaCompareDomainNameFilter_open) || !is.null(input$tabs)) {
+      selectedValue <- input$charaCompareDomainNameFilter
+      charaCompareDomainNameFilter(selectedValue)
+    }
+  })
+  
   output$charCompareTable <- DT::renderDataTable(expr = {
-    balance <- computeBalance()
+    balance <- computeBalance() 
     if (nrow(balance) == 0) {
       return(dplyr::tibble(Note = "No data for the selected combination."))
     }
@@ -2276,13 +2318,13 @@ shiny::shinyServer(function(input, output, session) {
       table <- DT::formatRound(table, 4, digits = 2)
     } else {
       
-      # filter this data based on drop down for analysisName, domainName
-      # default select all
-      
       # split by isBinary == Y vs N for raw (radio button). Default = 'Y'
       
       # also the place to filter by resolved conceptIds in the selected cohorts conceptSetExpression (only in raw, not for pretty)
       # 
+      balance <- balance %>% 
+        dplyr::filter(.data$analysisName %in% charCompareAnalysisNameFilter()) %>%
+        dplyr::filter(.data$domainId %in% charaCompareDomainNameFilter()) 
       table <- balance %>%
         dplyr::select(
           .data$cohortId1,

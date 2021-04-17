@@ -727,6 +727,49 @@ bodyTabItems <- shinydashboard::tabItems(
       selected = "Plot",
       inline = TRUE
     ),
+    shiny::conditionalPanel(
+      condition = "input.charCompareType == 'Raw table'",
+      tags$table(
+        tags$tr(
+          tags$td(
+            shinyWidgets::pickerInput(
+              inputId = "charCompareAnalysisNameFilter",
+              label = "Analysis name",
+              choices = c(""),
+              selected = c(""),
+              multiple = TRUE,
+              choicesOpt = list(style = rep_len("color: black;", 999)),
+              options = shinyWidgets::pickerOptions(
+                actionsBox = TRUE,
+                liveSearch = TRUE,
+                size = 10,
+                liveSearchStyle = "contains",
+                liveSearchPlaceholder = "Type here to search",
+                virtualScroll = 50
+              )
+            )
+          ), 
+          tags$td(
+            shinyWidgets::pickerInput(
+              inputId = "charaCompareDomainNameFilter",
+              label = "Domain name",
+              choices = c(""),
+              selected = c(""),
+              multiple = TRUE,
+              choicesOpt = list(style = rep_len("color: black;", 999)),
+              options = shinyWidgets::pickerOptions(
+                actionsBox = TRUE,
+                liveSearch = TRUE,
+                size = 10,
+                liveSearchStyle = "contains",
+                liveSearchPlaceholder = "Type here to search",
+                virtualScroll = 50
+              )
+            )
+          )
+        )
+      )
+    ),
     shiny::conditionalPanel(condition = "input.charCompareType=='Pretty table' | input.charCompareType=='Raw table'",
                             DT::dataTableOutput("charCompareTable")),
     shiny::conditionalPanel(
