@@ -548,6 +548,14 @@ shiny::shinyServer(function(input, output, session) {
       
     }, server = TRUE)
   
+  output$cohortConceptsetExpressionJson <- shiny::renderText({
+    if (is.null(cohortDefinitionConceptSetExpressionRow())) {
+      return(NULL)
+    }
+    
+    cohortDefinitionConceptSetExpressionRow()$json
+  })
+  
   output$saveConceptSetButton <- downloadHandler(
     filename = function() {
       paste("conceptSet-", Sys.Date(), ".csv", sep = "")

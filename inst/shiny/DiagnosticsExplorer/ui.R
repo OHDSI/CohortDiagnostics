@@ -348,7 +348,8 @@ bodyTabItems <- shinydashboard::tabItems(
                     choices = c(
                       "Concept Set Expression",
                       "Resolved",
-                      "Mapped"
+                      "Mapped",
+                      "Json"
                     ),
                     selected = "Concept Set Expression",
                     inline = TRUE
@@ -358,7 +359,8 @@ bodyTabItems <- shinydashboard::tabItems(
               shiny::conditionalPanel(
                 condition = "output.conceptSetExpressionRowSelected == true &
                 input.conceptSetsType != 'Resolved' &
-                input.conceptSetsType != 'Mapped'",
+                input.conceptSetsType != 'Mapped' & 
+                input.conceptSetsType != 'Json'",
                 DT::dataTableOutput(outputId = "cohortDefinitionConceptSetsTable")
               ),
               shiny::conditionalPanel(
@@ -368,6 +370,17 @@ bodyTabItems <- shinydashboard::tabItems(
               shiny::conditionalPanel(
                 condition = "input.conceptSetsType == 'Mapped'",
                 DT::dataTableOutput(outputId = "cohortDefinitionIncludedSourceConceptsTable")
+              ),
+              shiny::conditionalPanel(
+                condition = "input.conceptSetsType == 'Json'",
+                copyToClipboardButton(toCopyId = "cohortConceptsetExpressionJson", 
+                                      style = "margin-top: 5px; margin-bottom: 5px;"),
+                shiny::verbatimTextOutput(outputId = "cohortConceptsetExpressionJson"),
+                tags$head(
+                  tags$style(
+                    "#cohortConceptsetExpressionJson { max-height:400px};"
+                  )
+                )
               )
             ),
             shiny::tabPanel(
