@@ -357,7 +357,8 @@ bodyTabItems <- shinydashboard::tabItems(
               ),
               shiny::conditionalPanel(
                 condition = "output.conceptSetExpressionRowSelected == true &
-                input.conceptSetsType == 'Concept Set Expression'",
+                input.conceptSetsType != 'Resolved' &
+                input.conceptSetsType != 'Mapped'",
                 DT::dataTableOutput(outputId = "cohortDefinitionConceptSetsTable")
               ),
               shiny::conditionalPanel(
