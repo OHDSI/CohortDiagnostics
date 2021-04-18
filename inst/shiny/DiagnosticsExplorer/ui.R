@@ -738,6 +738,15 @@ bodyTabItems <- shinydashboard::tabItems(
                 virtualScroll = 50
               )
             )
+          ),
+          tags$td(
+            shiny::radioButtons(
+              inputId = "temporalProportionOrContinuous",
+              label = "",
+              choices = c("All", "Proportion", "Continuous"),
+              selected = "All",
+              inline = TRUE
+            )
           )
         )
       ),
@@ -781,6 +790,7 @@ bodyTabItems <- shinydashboard::tabItems(
               choices = c(""),
               selected = c(""),
               multiple = TRUE,
+              width = 200,
               choicesOpt = list(style = rep_len("color: black;", 999)),
               options = shinyWidgets::pickerOptions(
                 actionsBox = TRUE,
@@ -799,6 +809,7 @@ bodyTabItems <- shinydashboard::tabItems(
               choices = c(""),
               selected = c(""),
               multiple = TRUE,
+              width = 200,
               choicesOpt = list(style = rep_len("color: black;", 999)),
               options = shinyWidgets::pickerOptions(
                 actionsBox = TRUE,
@@ -808,6 +819,15 @@ bodyTabItems <- shinydashboard::tabItems(
                 liveSearchPlaceholder = "Type here to search",
                 virtualScroll = 50
               )
+            )
+          ),
+          tags$td(
+            shiny::radioButtons(
+              inputId = "charCompareProportionOrContinuous",
+              label = "",
+              choices = c("All", "Proportion", "Continuous"),
+              selected = "All",
+              inline = TRUE
             )
           )
         )
@@ -904,6 +924,15 @@ bodyTabItems <- shinydashboard::tabItems(
                 liveSearchPlaceholder = "Type here to search",
                 virtualScroll = 50
               )
+            )
+          ),
+          tags$td(
+            shiny::radioButtons(
+              inputId = "temporalCharacterProportionOrContinuous",
+              label = "",
+              choices = c("All", "Proportion", "Continuous"),
+              selected = "All",
+              inline = TRUE
             )
           )
         )
