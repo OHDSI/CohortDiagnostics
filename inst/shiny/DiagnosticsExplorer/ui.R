@@ -302,6 +302,28 @@ sidebarMenu <-
         )
       )
     )
+    # shiny::conditionalPanel(
+    #   condition = "input.tabs == 'cohortCharacterization' |
+    #   input.tabs == 'compareCohortCharacterization' |
+    #   input.tabs == 'temporalCharacterization' |
+    #   input.tabs == 'compareTemporalCharacterization'",
+    #   shinyWidgets::pickerInput(
+    #     inputId = "conceptIds",
+    #     label = "Concept Ids",
+    #     choices = c(""),
+    #     selected = c(""),
+    #     multiple = TRUE,
+    #     choicesOpt = list(style = rep_len("color: black;", 999)),
+    #     options = shinyWidgets::pickerOptions(
+    #       actionsBox = TRUE,
+    #       liveSearch = TRUE,
+    #       size = 10,
+    #       liveSearchStyle = "contains",
+    #       liveSearchPlaceholder = "Type here to search",
+    #       virtualScroll = 50
+    #     )
+    #   )
+    # )
   )
 
 #Side bar code

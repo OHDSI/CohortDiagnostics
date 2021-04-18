@@ -1738,7 +1738,41 @@ shiny::shinyServer(function(input, output, session) {
     
   }, server = TRUE)
   
-  # Characterization --------------------------------------------------
+  
+  # getResolvedConceptForFilters <- shiny::reactive(x = {
+  #   cohortId <- cohortId()
+  #   if (is.null(cohortId)) {
+  #     return(NULL)
+  #   }
+  #   
+  #   subset <- conceptSets %>%
+  #     dplyr::filter(.data$cohortId == cohortId)
+  #   if (nrow(subset) == 0) {
+  #     return(NULL)
+  #   }
+  #   
+  #   data <-
+  #     resolveConceptSetFromVocabularyDatabaseSchema(dataSource = dataSource, 
+  #                                                   subset, 
+  #                                                   source = FALSE, 
+  #                                                   vocabularyDatabaseSchema = dataSource$vocabularyDatabaseSchema)
+  #   data <- data %>%
+  #     dplyr::inner_join(subset, by = "conceptSetId") %>% 
+  #     dplyr::select(.data$conceptId)
+  #   
+  #   return(expression)
+  # })
+  
+  # Characterization -------------------------------------------------
+  characterizationDomainNameFilter <- shiny::reactive({
+    return(input$characterizationDomainNameFilter)
+  })
+  
+  characterizationAnalysisNameFilter <- shiny::reactive({
+    return(input$characterizationAnalysisNameFilter)
+  })
+  
+  
   characterizationTableData <- shiny::reactive(x = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
@@ -1754,6 +1788,20 @@ shiny::shinyServer(function(input, output, session) {
       databaseIds = databaseIds(),
       isTemporal = FALSE
     )
+    
+    if (input$charType == "Raw" && input$charProportionOrContinuous == "Proportion") {
+      data <- data %>% 
+        dplyr::filter(.data$isBinary == 'Y')
+    } else if (input$charType == "Raw" && input$charProportionOrContinuous == "Continuous") {
+      data <- data %>% 
+        dplyr::filter(.data$isBinary == 'N')
+    }
+    
+    if (!is.null(data)) {
+      return(data)
+    } else {
+      return(NULL)
+    }
   })
   
   shiny::observe({
@@ -1778,34 +1826,17 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  characterizationAnalysisNameFilter <- reactiveVal(NULL)
-  shiny::observeEvent(eventExpr = {
-    list(input$characterizationAnalysisNameFilter_open,
-         input$tabs, !is.null(input$charType),
-         !is.null(input$charProportionOrContinuous))
-  }, handlerExpr = {
-    if (isFALSE(input$characterizationAnalysisNameFilter_open) || 
-        !is.null(input$charProportionOrContinuous) ||
-        !is.null(input$charType)) {
-      selectedValue <- input$characterizationAnalysisNameFilter
-      characterizationAnalysisNameFilter(selectedValue)
-    }
-  })
+  # shiny::observe({
+  #   subset <- getResolvedConceptForFilters()$ConceptId %>% sort() %>% unique()
+  #   shinyWidgets::updatePickerInput(
+  #     session = session,
+  #     inputId = "conceptIds",
+  #     choicesOpt = list(style = rep_len("color: black;", 999)),
+  #     choices = subset
+  #   )
+  # })
   
-  characterizationDomainNameFilter <- reactiveVal(NULL)
-  shiny::observeEvent(eventExpr = {
-    list(input$characterizationDomainNameFilter_open,
-         input$tabs, input$charType,
-         !is.null(input$charProportionOrContinuous))
-  }, handlerExpr = {
-    if (isFALSE(input$characterizationDomainNameFilter_open) || 
-        !is.null(input$tabs) ||
-        !is.null(input$charType) ||
-        !is.null(input$charProportionOrContinuous)) {
-      selectedValue <- input$characterizationDomainNameFilter
-      characterizationDomainNameFilter(selectedValue)
-    }
-  })
+ 
   
   output$characterizationTable <- DT::renderDataTable(expr = {
     data <- characterizationTableData()
@@ -1924,20 +1955,11 @@ shiny::shinyServer(function(input, output, session) {
         backgroundRepeat = "no-repeat",
         backgroundPosition = "center"
       )
-    } else {    
-      # also the place to filter by resolved conceptIds in the selected cohorts conceptSetExpression (only in raw, not for pretty)
-      # 
-      if (input$charType == "Raw" && input$charProportionOrContinuous == "Proportion") {
-        data <- data %>% 
-          dplyr::filter(.data$isBinary == 'Y')
-      } else if (input$charType == "Raw" && input$charProportionOrContinuous == "Continuous") {
-        data <- data %>% 
-          dplyr::filter(.data$isBinary == 'N')
-      }
+    } else {
       
       data <- data %>%
-        dplyr::filter(.data$analysisName %in% characterizationAnalysisNameFilter() &
-                        .data$domainId %in% characterizationDomainNameFilter())
+        dplyr::filter(.data$analysisName %in% characterizationAnalysisNameFilter()) %>% 
+        dplyr::filter(.data$domainId %in% characterizationDomainNameFilter())                
       
       if (nrow(data) == 0) {
         return(dplyr::tibble(
@@ -2014,7 +2036,7 @@ shiny::shinyServer(function(input, output, session) {
       )
     }
     return(table)
-  })
+  }, server = TRUE)
   
   # Temporal characterization -----------------------------------------------------------------
   temporalCharacterization <- shiny::reactive({
