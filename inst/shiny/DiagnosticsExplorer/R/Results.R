@@ -510,19 +510,19 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
               end_day,
             }
               concept_id,
-              analysis_id
+              covariate_ref.analysis_id
             FROM  @results_database_schema.@table covariate
             INNER JOIN @results_database_schema.@covariate_ref_table covariate_ref
               ON covariate.covariate_id = covariate_ref.covariate_id
             INNER JOIN @results_database_schema.@analysis_ref_table analysis_ref
-              ON covariate.analysis_id = analysis_ref.analysis_id
+              ON covariate_ref.analysis_id = analysis_ref.analysis_id
             {@time_ref_table != \"\"} ? {
             INNER JOIN @results_database_schema.@time_ref_table time_ref
               ON covariate.time_id = time_ref.time_id
             }
             WHERE cohort_id in (@cohort_ids)
             {@time_ref_table != \"\" & @time_ids != \"\"} ? {  AND covariate.time_id IN (@time_ids)}
-            {@analysis_ids != \"\"} ? {  AND analysis_id IN (@analysis_ids)}
+            {@analysis_ids != \"\"} ? {  AND covariate_ref.analysis_id IN (@analysis_ids)}
             	AND database_id in (@databaseIds);"
     if (is.null(timeIds)) {
       timeIds <- ""
