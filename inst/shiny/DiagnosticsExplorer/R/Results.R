@@ -606,50 +606,53 @@ getConceptDetails <- function(dataSource = .GlobalEnv,
   return(data)
 }
 
-resolveConceptSetFromVocabularyDatabaseSchema <- function(dataSource = .GlobalEnv, 
-                                                          conceptSets, 
-                                                          source = FALSE,
-                                                          vocabularyDatabaseSchema = 'vocabulary') {
+resolveMappedConceptSetFromVocabularyDatabaseSchema <- function(dataSource = .GlobalEnv, 
+                                                                conceptSets, 
+                                                                source = FALSE,
+                                                                vocabularyDatabaseSchema = 'vocabulary') {
   if (is(dataSource, "environment")) {
     stop("Cannot resolve concept sets without a database connection")
   } else {
-    sql <- paste("SELECT DISTINCT codeset_id AS concept_set_id, concept.*",
-                 "FROM (",
-                 paste(conceptSets$conceptSetSql, collapse = ("\nUNION ALL\n")),
-                 ") concept_sets",
-                 sep = "\n")
+    sqlBase <- paste("SELECT DISTINCT codeset_id AS concept_set_id, concept.*",
+                     "FROM (",
+                     paste(conceptSets$conceptSetSql, collapse = ("\nUNION ALL\n")),
+                     ") concept_sets",
+                     sep = "\n")
+    sqlResolved <- paste(sqlBase,
+                         "INNER JOIN @vocabulary_database_schema.concept",
+                         "  ON concept_sets.concept_id = concept.concept_id;",
+                         sep = "\n")
+    sqlMapped <- paste(sqlBase,
+                       "INNER JOIN @vocabulary_database_schema.concept_relationship",
+                       "  ON concept_sets.concept_id = concept_relationship.concept_id_2",
+                       "INNER JOIN @vocabulary_database_schema.concept",
+                       "  ON concept_relationship.concept_id_1 = concept.concept_id",
+                       "WHERE relationship_id = 'Maps to'",
+                       "  AND standard_concept IS NULL;",
+                       sep = "\n")
     
-    if (source) {
-      sql <- paste(sql,
-                   "INNER JOIN @vocabulary_database_schema.concept_relationship",
-                   "  ON concept_sets.concept_id = concept_relationship.concept_id_2",
-                   "INNER JOIN @vocabulary_database_schema.concept",
-                   "  ON concept_relationship.concept_id_1 = concept.concept_id",
-                   "WHERE relationship_id = 'Maps to'",
-                   "  AND standard_concept IS NULL;",
-                   sep = "\n")
-    } else {
-      sql <- paste(sql,
-                   "INNER JOIN @vocabulary_database_schema.concept",
-                   "  ON concept_sets.concept_id = concept.concept_id;",
-                   sep = "\n")
-    }
-    
-    data <- renderTranslateQuerySql(connection = dataSource$connection,
-                                    sql = sql,
-                                    vocabulary_database_schema = vocabularyDatabaseSchema,
-                                    snakeCaseToCamelCase = TRUE) %>% 
-      tidyr::tibble()
+    resolved <- renderTranslateQuerySql(connection = dataSource$connection,
+                                        sql = sqlResolved,
+                                        vocabulary_database_schema = vocabularyDatabaseSchema,
+                                        snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble() %>% 
+      dplyr::arrange(.data$conceptId)
+    mapped <- renderTranslateQuerySql(connection = dataSource$connection,
+                                      sql = sqlMapped,
+                                      vocabulary_database_schema = vocabularyDatabaseSchema,
+                                      snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble() %>% 
+      dplyr::arrange(.data$conceptId)
   }
-  return(data %>% dplyr::arrange(.data$conceptId))
+  data <- list(resolved = resolved, mapped = mapped)
+  return(data)
 }
 
 
-resolveConceptSet <- function(dataSource = .GlobalEnv, 
-                              databaseId,
-                              cohortId,
-                              conceptSetId,
-                              source = FALSE) {
+resolveMappedConceptSet <- function(dataSource = .GlobalEnv, 
+                                    databaseId,
+                                    cohortId,
+                                    conceptSetId) {
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertIntegerish(x = cohortId,
@@ -671,25 +674,63 @@ resolveConceptSet <- function(dataSource = .GlobalEnv,
   checkmate::reportAssertions(collection = errorMessage)
   
   if (is(dataSource, "environment")) {
-    data <- get("resolvedConcepts", envir = dataSource) %>% 
+    resolved <- get("resolvedConcepts", envir = dataSource) %>% 
       dplyr::filter(.data$databaseId == !!databaseId) %>% 
       dplyr::filter(.data$cohortId == !!cohortId) %>% 
       dplyr::filter(.data$conceptSetId == !!conceptSetId)
+    mapped <- resolved %>% 
+      dplyr::select(.data$conceptId) %>% 
+      dplyr::distinct() %>% 
+      dplyr::inner_join(get("conceptRelationship"), by = c("conceptId" = "conceptId2")) %>%
+      dplyr::filter(.data$relationshipId == 'Maps to') %>%
+      dplyr::filter(is.na(.data$invalidReason)) %>% 
+      dplyr::select(.data$conceptId, .data$conceptId1) %>% 
+      dplyr::rename(resolvedConceptId = .data$conceptId) %>% 
+      dplyr::inner_join(get("concept"), by = c("conceptId1" = "conceptId")) %>% 
+      dplyr::filter(is.na(.data$invalidReason)) %>% 
+      dplyr::rename(conceptId = .data$conceptId1) %>% 
+      dplyr::select(.data$resolvedConceptId, .data$conceptId,
+                    .data$conceptName, .data$domainId,
+                    .data$vocabularyId, .data$conceptClassId, 
+                    .data$standardConcept, .data$conceptCode)
   } else {
-    sql <- "SELECT * FROM @resultsDatabaseSchema.resolved_concepts
-            WHERE database_id = @databaseId AND
-                  cohort_id = @cohortId AND
-                  concept_set_id = @conceptSetId;"
-    data <- renderTranslateQuerySql(connection = dataSource$connection,
-                                    sql = sql,
-                                    results_database_schema = dataSource$resultsDatabaseSchema,
-                                    database_id = databaseId,
-                                    cohort_id = cohortId,
-                                    concept_set_id = conceptSetId,
-                                    snakeCaseToCamelCase = TRUE) %>% 
+    sqlResolved <- "SELECT *
+                    FROM @resultsDatabaseSchema.resolved_concepts
+                    WHERE database_id = @databaseId
+                    	AND cohort_id = @cohortId
+                    	AND concept_set_id = @conceptSetId;"
+    resolved <- renderTranslateQuerySql(connection = dataSource$connection,
+                                        sql = sqlResolved,
+                                        results_database_schema = dataSource$resultsDatabaseSchema,
+                                        database_id = databaseId,
+                                        cohort_id = cohortId,
+                                        concept_set_id = conceptSetId,
+                                        snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
+    sqlMapped <- "SELECT *
+                  FROM (
+                  	SELECT DISTINCT concept_id
+                  	FROM @resultsDatabaseSchema.resolved_concepts
+                  	WHERE database_id = @databaseId
+                  		AND cohort_id = @cohortId
+                  		AND concept_set_id = @conceptSetId
+                  	) concept_sets
+                  INNER JOIN @vocabulary_database_schema.concept_relationship ON concept_sets.concept_id = concept_relationship.concept_id_2
+                  INNER JOIN @vocabulary_database_schema.concept ON concept_relationship.concept_id_1 = concept.concept_id
+                  WHERE relationship_id = 'Maps to'
+                  	AND standard_concept IS NULL;"
+    mapped <- renderTranslateQuerySql(connection = dataSource$connection,
+                                      sql = sqlMapped,
+                                      results_database_schema = dataSource$resultsDatabaseSchema,
+                                      database_id = databaseId,
+                                      cohort_id = cohortId,
+                                      concept_set_id = conceptSetId,
+                                      snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   }
-  return(data %>% dplyr::arrange(.data$conceptId))
+  data <- list(resolved = resolved %>% dplyr::arrange(.data$conceptId), 
+               mapped = mapped %>% dplyr::arrange(.data$resolvedConceptId))
+  return(data)
 }
 
 
