@@ -1781,9 +1781,12 @@ shiny::shinyServer(function(input, output, session) {
   characterizationAnalysisNameFilter <- reactiveVal(NULL)
   shiny::observeEvent(eventExpr = {
     list(input$characterizationAnalysisNameFilter_open,
-         input$tabs)
+         input$tabs, !is.null(input$charType),
+         !is.null(input$charProportionOrContinuous))
   }, handlerExpr = {
-    if (isFALSE(input$characterizationAnalysisNameFilter_open) || !is.null(input$tabs)) {
+    if (isFALSE(input$characterizationAnalysisNameFilter_open) || 
+        !is.null(input$charProportionOrContinuous) ||
+        !is.null(input$charType)) {
       selectedValue <- input$characterizationAnalysisNameFilter
       characterizationAnalysisNameFilter(selectedValue)
     }
@@ -1792,9 +1795,13 @@ shiny::shinyServer(function(input, output, session) {
   characterizationDomainNameFilter <- reactiveVal(NULL)
   shiny::observeEvent(eventExpr = {
     list(input$characterizationDomainNameFilter_open,
-         input$tabs)
+         input$tabs, input$charType,
+         !is.null(input$charProportionOrContinuous))
   }, handlerExpr = {
-    if (isFALSE(input$characterizationDomainNameFilter_open) || !is.null(input$tabs)) {
+    if (isFALSE(input$characterizationDomainNameFilter_open) || 
+        !is.null(input$tabs) ||
+        !is.null(input$charType) ||
+        !is.null(input$charProportionOrContinuous)) {
       selectedValue <- input$characterizationDomainNameFilter
       characterizationDomainNameFilter(selectedValue)
     }
@@ -1917,14 +1924,27 @@ shiny::shinyServer(function(input, output, session) {
         backgroundRepeat = "no-repeat",
         backgroundPosition = "center"
       )
-    } else {
-      # split by isBinary == Y vs N for raw (radio button). Default = 'Y'
-      
+    } else {    
       # also the place to filter by resolved conceptIds in the selected cohorts conceptSetExpression (only in raw, not for pretty)
       # 
+      if (input$charType == "Raw" && input$charProportionOrContinuous == "Proportion") {
+        data <- data %>% 
+          dplyr::filter(.data$isBinary == 'Y')
+      } else if (input$charType == "Raw" && input$charProportionOrContinuous == "Continuous") {
+        data <- data %>% 
+          dplyr::filter(.data$isBinary == 'N')
+      }
+      
       data <- data %>%
-        dplyr::filter(.data$analysisName %in% characterizationAnalysisNameFilter()) %>% 
-        dplyr::filter(.data$domainId %in% characterizationDomainNameFilter()) %>%
+        dplyr::filter(.data$analysisName %in% characterizationAnalysisNameFilter() &
+                        .data$domainId %in% characterizationDomainNameFilter())
+      
+      if (nrow(data) == 0) {
+        return(dplyr::tibble(
+          Note = paste0("No data available for selected databases and cohorts")
+        ))
+      }
+      data <- data %>% 
         dplyr::arrange(.data$databaseId, .data$cohortId) %>%
         tidyr::pivot_longer(cols = c(.data$mean, .data$sd)) %>%
         dplyr::mutate(name = paste0(databaseId, "_", .data$name)) %>%
@@ -1945,6 +1965,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::select(-.data$covariateId) %>%
         dplyr::select(-.data$cohortId) %>%
         dplyr::relocate(.data$covariateName, .data$conceptId)
+      
       
       data <- data[order(-data[3]),]
       

@@ -603,50 +603,71 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "cohortCharacterization",
     cohortReference("characterizationSelectedCohort"),
-    shiny::radioButtons(
-      inputId = "charType",
-      label = "",
-      choices = c("Pretty", "Raw"),
-      selected = "Pretty",
-      inline = TRUE
-    ),
-    shiny::conditionalPanel(
-      condition = "input.charType == 'Raw'",
-      tags$table(
-        tags$tr(
-          tags$td(
-            shinyWidgets::pickerInput(
-              inputId = "characterizationAnalysisNameFilter",
-              label = "Analysis name",
-              choices = c(""),
-              selected = c(""),
-              multiple = TRUE,
-              choicesOpt = list(style = rep_len("color: black;", 999)),
-              options = shinyWidgets::pickerOptions(
-                actionsBox = TRUE,
-                liveSearch = TRUE,
-                size = 10,
-                liveSearchStyle = "contains",
-                liveSearchPlaceholder = "Type here to search",
-                virtualScroll = 50
-              )
-            )
-          ), 
-          tags$td(
-            shinyWidgets::pickerInput(
-              inputId = "characterizationDomainNameFilter",
-              label = "Domain name",
-              choices = c(""),
-              selected = c(""),
-              multiple = TRUE,
-              choicesOpt = list(style = rep_len("color: black;", 999)),
-              options = shinyWidgets::pickerOptions(
-                actionsBox = TRUE,
-                liveSearch = TRUE,
-                size = 10,
-                liveSearchStyle = "contains",
-                liveSearchPlaceholder = "Type here to search",
-                virtualScroll = 50
+    tags$table(
+      tags$tr(
+        tags$td(
+          shiny::radioButtons(
+            inputId = "charType",
+            label = "",
+            choices = c("Pretty", "Raw"),
+            selected = "Pretty",
+            inline = TRUE
+          )
+        ),
+        tags$td(
+          shiny::conditionalPanel(
+            condition = "input.charType == 'Raw'",
+            tags$table(
+              tags$tr(
+                tags$td(
+                  shinyWidgets::pickerInput(
+                    inputId = "characterizationAnalysisNameFilter",
+                    label = "Analysis name",
+                    choices = c(""),
+                    selected = c(""),
+                    inline = TRUE,
+                    multiple = TRUE,
+                    width = 300,
+                    choicesOpt = list(style = rep_len("color: black;", 999)),
+                    options = shinyWidgets::pickerOptions(
+                      actionsBox = TRUE,
+                      liveSearch = TRUE,
+                      size = 10,
+                      liveSearchStyle = "contains",
+                      liveSearchPlaceholder = "Type here to search",
+                      virtualScroll = 50
+                    )
+                  )
+                ), 
+                tags$td(
+                  shinyWidgets::pickerInput(
+                    inputId = "characterizationDomainNameFilter",
+                    label = "Domain name",
+                    choices = c(""),
+                    selected = c(""),
+                    inline = TRUE,
+                    multiple = TRUE,
+                    width = 300,
+                    choicesOpt = list(style = rep_len("color: black;", 999)),
+                    options = shinyWidgets::pickerOptions(
+                      actionsBox = TRUE,
+                      liveSearch = TRUE,
+                      size = 10,
+                      liveSearchStyle = "contains",
+                      liveSearchPlaceholder = "Type here to search",
+                      virtualScroll = 50
+                    )
+                  )
+                ),
+                tags$td(
+                  shiny::radioButtons(
+                    inputId = "charProportionOrContinuous",
+                    label = "",
+                    choices = c("All", "Proportion", "Continuous"),
+                    selected = "All",
+                    inline = TRUE
+                  )
+                )
               )
             )
           )
