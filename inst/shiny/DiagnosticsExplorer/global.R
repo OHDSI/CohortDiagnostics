@@ -36,10 +36,13 @@ if (!exists("shinySettings")) {
       password = defaultPassword
     )
     resultsDatabaseSchema <- defaultResultsSchema
-    vocabularyDatabaseSchema <- defaultVocabularySchema
   } else {
     dataFolder <- defaultLocalDataFolder
   }
+  vocabularyDatabaseSchemas <- setdiff(x = c(defaultVocabularySchema, alternateVocabularySchema),
+                                       y = defaultResultsSchema) %>% 
+    unique() %>% 
+    sort()
 } else {
   writeLines("Using settings provided by user")
   databaseMode <- !is.null(shinySettings$connectionDetails)
@@ -70,18 +73,12 @@ if (!exists("shinySettings")) {
         )
     }
     resultsDatabaseSchema <- shinySettings$resultsDatabaseSchema
-    vocabularyDatabaseSchema <-
-      shinySettings$vocabularyDatabaseSchema
+    vocabularyDatabaseSchemas <-
+      shinySettings$vocabularyDatabaseSchemas
   } else {
     dataFolder <- shinySettings$dataFolder
   }
 }
-
-
-vocabularyDatabaseSchemas <- setdiff(x = c(defaultVocabularySchema, alternateVocabularySchema, vocabularyDatabaseSchema),
-                                     y = defaultResultsSchema) %>% 
-  unique() %>% 
-  sort()
 
 dataModelSpecifications <-
   read.csv("resultsDataModelSpecification.csv")
@@ -131,7 +128,7 @@ if (databaseMode) {
     createDatabaseDataSource(
       connection = connectionPool,
       resultsDatabaseSchema = resultsDatabaseSchema,
-      vocabularyDatabaseSchema = vocabularyDatabaseSchema
+      vocabularyDatabaseSchema = resultsDatabaseSchema
     )
 } else {
   localDataPath <- file.path(dataFolder, defaultLocalDataFile)
