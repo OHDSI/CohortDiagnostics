@@ -677,7 +677,8 @@ resolveMappedConceptSet <- function(dataSource = .GlobalEnv,
     resolved <- get("resolvedConcepts", envir = dataSource) %>% 
       dplyr::filter(.data$databaseId == !!databaseId) %>% 
       dplyr::filter(.data$cohortId == !!cohortId) %>% 
-      dplyr::filter(.data$conceptSetId == !!conceptSetId)
+      dplyr::filter(.data$conceptSetId == !!conceptSetId) %>% 
+      dplyr::inner_join(get("concept"), by = "conceptId")
     mapped <- resolved %>% 
       dplyr::select(.data$conceptId) %>% 
       dplyr::distinct() %>% 

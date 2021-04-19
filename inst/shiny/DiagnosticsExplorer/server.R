@@ -360,7 +360,11 @@ shiny::shinyServer(function(input, output, session) {
           nrow(cohortDefinistionConceptSetExpression()$conceptSetExpression) > 0) {
         data <-
           cohortDefinistionConceptSetExpression()$conceptSetExpression[idx,]
-        return(data)
+        if (!is.null(data)) {
+          return(data)
+        } else {
+          return(NULL)
+        }
       }
     }
   })
@@ -407,7 +411,7 @@ shiny::shinyServer(function(input, output, session) {
   
   getIncludeOrSourceConcepts <- shiny::reactive({
     row <- selectedCohortDefinitionRow()
-    if (is.null(row)) {
+    if (is.null(row) || is.null(cohortDefinitionConceptSetExpressionRow()$id)) {
       return(NULL)
     }
     
@@ -419,28 +423,36 @@ shiny::shinyServer(function(input, output, session) {
     source <-
       (input$conceptSetsType == "Mapped")
     data <-
-      resolveConceptSetFromVocabularyDatabaseSchema(dataSource = dataSource, 
-                                                    subset, 
-                                                    source = source, 
-                                                    vocabularyDatabaseSchema = dataSource$vocabularyDatabaseSchema)
-    data <- data %>%
-      dplyr::inner_join(subset, by = "conceptSetId")
-    
-    if (!is.null(cohortDefinitionConceptSetExpressionRow()$id)) {
-      data <- data %>% 
-        dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id) %>% 
-        dplyr::select(
-          .data$conceptId,
-          .data$conceptCode,
-          .data$conceptName,
-          .data$conceptClassId,
-          .data$domainId,
-          .data$vocabularyId,
-          .data$standardConcept
-        ) %>%
-        dplyr::arrange(.data$conceptId)
+      resolveMappedConceptSet(dataSource = dataSource,
+                              databaseId = input$databaseOrVocabularyScema,
+                              cohortId =  row$cohortId,
+                              conceptSetId = cohortDefinitionConceptSetExpressionRow()$id)
+    if (!is.null(data)) {
+      source <-
+        (input$conceptSetsType == "Mapped")
+      if (source) {
+        data <- data$mapped
+        data$resolvedConceptId <- as.factor(data$resolvedConceptId)
+      } else {
+        data <- data$resolved %>% 
+          dplyr::inner_join(subset, by = "conceptSetId") %>% 
+          dplyr::select(
+            .data$conceptId,
+            .data$conceptCode,
+            .data$conceptName,
+            .data$conceptClassId,
+            .data$domainId,
+            .data$vocabularyId,
+            .data$standardConcept
+          ) %>%
+          dplyr::arrange(.data$conceptId)
+      }
+      
       data$conceptClassId <- as.factor(data$conceptClassId)
       data$domainId <- as.factor(data$domainId)
+      data$conceptCode <- as.factor(data$conceptCode)
+      data$conceptId <- as.factor(data$conceptId)
+      data$conceptName <- as.factor(data$conceptName)
       data$vocabularyId <- as.factor(data$vocabularyId)
       data$standardConcept <- as.factor(data$standardConcept)
       colnames(data) <- camelCaseToTitleCase(colnames(data))

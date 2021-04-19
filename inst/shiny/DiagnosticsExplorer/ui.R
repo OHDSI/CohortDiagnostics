@@ -21,6 +21,15 @@ cohortReference <- function(outputId) {
   )
 }
 
+if (is(dataSource, "environment")) {
+  choicesForDatabaseOrVocabularyScema <- c(database$databaseId)
+} else {
+  choicesForDatabaseOrVocabularyScema <- list(
+    database = database$databaseId,
+    vocabularyDatabaseSchemas = c(vocabularyDatabaseSchemas)
+  )
+}
+
 
 header <-
   shinydashboard::dashboardHeader(title = "Cohort Diagnostics")
@@ -363,20 +372,44 @@ bodyTabItems <- shinydashboard::tabItems(
               DT::dataTableOutput(outputId = "conceptsetExpressionTable"),
               shiny::conditionalPanel(
                 condition = "output.conceptSetExpressionRowSelected == true",
-                if (!is(dataSource, "environment")) {
-                  shiny::radioButtons(
-                    inputId = "conceptSetsType",
-                    label = "",
-                    choices = c(
-                      "Concept Set Expression",
-                      "Resolved",
-                      "Mapped",
-                      "Json"
+                tags$table(
+                  tags$tr(
+                    tags$td(
+                      shiny::radioButtons(
+                        inputId = "conceptSetsType",
+                        label = "",
+                        choices = c(
+                          "Concept Set Expression",
+                          "Resolved",
+                          "Mapped",
+                          "Json"
+                        ),
+                        selected = "Concept Set Expression",
+                        inline = TRUE
+                      )
                     ),
-                    selected = "Concept Set Expression",
-                    inline = TRUE
+                    tags$td(
+                      
+                      shinyWidgets::pickerInput(
+                        inputId = "databaseOrVocabularyScema",
+                        label = "Database",
+                        choices = choicesForDatabaseOrVocabularyScema,
+                        multiple = FALSE,
+                        width = NULL,
+                        inline = TRUE,
+                        choicesOpt = list(style = rep_len("color: black;", 999)),
+                        options = shinyWidgets::pickerOptions(
+                          actionsBox = TRUE,
+                          liveSearch = TRUE,
+                          size = 10,
+                          liveSearchStyle = "contains",
+                          liveSearchPlaceholder = "Type here to search",
+                          virtualScroll = 50
+                        )
+                      )
+                    )
                   )
-                }
+                )
               ),
               shiny::conditionalPanel(
                 condition = "output.conceptSetExpressionRowSelected == true &
