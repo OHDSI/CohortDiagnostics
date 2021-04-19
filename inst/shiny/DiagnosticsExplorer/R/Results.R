@@ -679,7 +679,7 @@ resolveMappedConceptSet <- function(dataSource = .GlobalEnv,
       dplyr::distinct() %>% 
       dplyr::arrange(.data$conceptId)
     mapped <- resolved %>% 
-      dplyr::select(.data$conceptId) %>% 
+      dplyr::select(.data$conceptId, .data$databaseId) %>% 
       dplyr::distinct() %>% 
       dplyr::inner_join(get("conceptRelationship"), by = c("conceptId" = "conceptId2")) %>%
       dplyr::filter(.data$relationshipId == 'Maps to') %>%
@@ -693,7 +693,7 @@ resolveMappedConceptSet <- function(dataSource = .GlobalEnv,
                     .data$conceptName, .data$domainId,
                     .data$vocabularyId, .data$conceptClassId, 
                     .data$standardConcept, .data$conceptCode,
-                    .data$databaseId) %>% 
+                    .data$databaseId, .data$conceptSetId) %>% 
       dplyr::distinct() %>% 
       dplyr::arrange(.data$conceptId)
   } else {
