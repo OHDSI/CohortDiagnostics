@@ -163,4 +163,6 @@ if (exists("covariateRef")) {
     guess_max = min(1e7)
   )
   prettyAnalysisIds <- specifications$analysisId
+} else {
+  prettyAnalysisIds <- c(0)
 }

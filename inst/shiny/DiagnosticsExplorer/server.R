@@ -1782,7 +1782,6 @@ shiny::shinyServer(function(input, output, session) {
     return(input$characterizationAnalysisNameFilter)
   })
   
-  
   characterizationTableData <- shiny::reactive(x = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
@@ -1799,15 +1798,14 @@ shiny::shinyServer(function(input, output, session) {
       isTemporal = FALSE
     )
     
-    if (input$charType == "Raw" && input$charProportionOrContinuous == "Proportion") {
-      data <- data %>% 
-        dplyr::filter(.data$isBinary == 'Y')
-    } else if (input$charType == "Raw" && input$charProportionOrContinuous == "Continuous") {
-      data <- data %>% 
-        dplyr::filter(.data$isBinary == 'N')
-    }
-    
     if (!is.null(data)) {
+      if (input$charType == "Raw" && input$charProportionOrContinuous == "Proportion") {
+        data <- data %>% 
+          dplyr::filter(.data$isBinary == 'Y')
+      } else if (input$charType == "Raw" && input$charProportionOrContinuous == "Continuous") {
+        data <- data %>% 
+          dplyr::filter(.data$isBinary == 'N')
+      }
       return(data)
     } else {
       return(NULL)
@@ -2259,6 +2257,10 @@ shiny::shinyServer(function(input, output, session) {
       databaseIds = input$database,
       isTemporal = FALSE
     )
+    
+    if (is.null(covs1) || is.null(covs2)) {
+      return(NULL)
+    }
     
     balance <- compareCohortCharacteristics(covs1, covs2) %>%
       dplyr::mutate(absStdDiff = abs(.data$stdDiff))

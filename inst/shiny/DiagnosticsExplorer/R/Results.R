@@ -212,20 +212,24 @@ getIndexEventBreakdown <- function(dataSource = .GlobalEnv,
   checkmate::reportAssertions(collection = errorMessage)
   
   if (is(dataSource, "environment")) {
-    data <- get("indexEventBreakdown", envir = dataSource) %>% 
-      dplyr::filter(.data$databaseId %in% !!databaseIds) 
-    if (!is.null(cohortIds)) {
-      data <- data %>% 
-        dplyr::filter(.data$cohortId %in% !!cohortIds) 
+    if (exists("indexEventBreakdown", envir = dataSource)) {
+      data <- get("indexEventBreakdown", envir = dataSource) %>% 
+        dplyr::filter(.data$databaseId %in% !!databaseIds) 
+      if (!is.null(cohortIds)) {
+        data <- data %>% 
+          dplyr::filter(.data$cohortId %in% !!cohortIds) 
+      }
+      data <- data %>%
+        dplyr::inner_join(dplyr::select(get("concept", envir = dataSource),
+                                        .data$conceptId,
+                                        .data$conceptName,
+                                        .data$domainId,
+                                        .data$vocabularyId,
+                                        .data$standardConcept),
+                          by = c("conceptId"))
+    } else {
+      data <- NULL
     }
-    data <- data %>%
-      dplyr::inner_join(dplyr::select(get("concept", envir = dataSource),
-                                      .data$conceptId,
-                                      .data$conceptName,
-                                      .data$domainId,
-                                      .data$vocabularyId,
-                                      .data$standardConcept),
-                        by = c("conceptId"))
   } else {
     sql <- "SELECT index_event_breakdown.*,
               concept.concept_name,
@@ -485,25 +489,29 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
   }
   
   if (is(dataSource, "environment")) {
-    data <- get(table, envir = dataSource) %>%
-      dplyr::filter(.data$cohortId %in% !!cohortIds) %>% 
-      dplyr::filter(.data$databaseId %in% !!databaseIds) %>%
-      dplyr::inner_join(get(covariateRefTable, envir = dataSource), by = "covariateId") %>% 
-      dplyr::inner_join(get(analysisRefTable, envir = dataSource), by = "analysisId")
-    if (!is.null(analysisIds)) {
-      data <- data %>%
-        dplyr::filter(.data$analysisId %in% analysisIds)
-    }
-    if (isTemporal) {
-      data <- data %>%
-        dplyr::inner_join(get(timeRefTable, envir = dataSource), by = "timeId")
-      if (!is.null(timeIds)) {
+    if (exists(table, envir = dataSource)) {
+      data <- get(table, envir = dataSource) %>%
+        dplyr::filter(.data$cohortId %in% !!cohortIds) %>% 
+        dplyr::filter(.data$databaseId %in% !!databaseIds) %>%
+        dplyr::inner_join(get(covariateRefTable, envir = dataSource), by = "covariateId") %>% 
+        dplyr::inner_join(get(analysisRefTable, envir = dataSource), by = "analysisId")
+      if (!is.null(analysisIds)) {
         data <- data %>%
-          dplyr::filter(.data$timeId %in% timeIds)
+          dplyr::filter(.data$analysisId %in% analysisIds)
+      }
+      if (isTemporal) {
+        data <- data %>%
+          dplyr::inner_join(get(timeRefTable, envir = dataSource), by = "timeId")
+        if (!is.null(timeIds)) {
+          data <- data %>%
+            dplyr::filter(.data$timeId %in% timeIds)
+        }
+      } else {
+        data <- data %>%
+          dplyr::select(-.data$startDay, -.data$endDay)
       }
     } else {
-      data <- data %>%
-        dplyr::select(-.data$startDay, -.data$endDay)
+      return(NULL)
     }
   } else {
     sql <- "SELECT covariate.*,
