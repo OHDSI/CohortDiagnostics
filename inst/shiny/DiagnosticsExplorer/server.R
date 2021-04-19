@@ -20,9 +20,13 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   timeId <- shiny::reactive(x = {
-    temporalCovariateChoices %>%
-      dplyr::filter(choices %in% input$timeId) %>%
-      dplyr::pull(timeId)
+    if (exists('temporalCovariateChoices')) {
+      return(temporalCovariateChoices %>%
+               dplyr::filter(choices %in% input$timeId) %>%
+               dplyr::pull(timeId))
+    } else {
+      return(NULL)
+    }
   })
   
   timeIds <- reactiveVal(NULL)
@@ -711,13 +715,16 @@ shiny::shinyServer(function(input, output, session) {
   # Incidence rate --------------------------------------------------------------------------------
   
   incidenceRateData <- reactive({
+    if (!exists('incidenceRate')) {
+      return(NULL)
+    }
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
     stratifyByAge <- "Age" %in% input$irStratification
     stratifyByGender <- "Gender" %in% input$irStratification
     stratifyByCalendarYear <-
       "Calendar Year" %in% input$irStratification
-    if (exists('incidenceRate') && length(cohortIds()) > 0) {
+    if (length(cohortIds()) > 0) {
       data <- getIncidenceRateResult(
         dataSource = dataSource,
         cohortIds = cohortIds(),
