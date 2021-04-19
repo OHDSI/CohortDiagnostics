@@ -21,8 +21,12 @@
 #'                          the CohortDiagnostics results have been uploaded using the 
 #'                          \code{\link{uploadResults}} function.
 #' @param resultsDatabaseSchema  The schema on the database server where the CohortDiagnostics results 
-#'                               have been uploaded.       
-#' @param vocabularyDatabaseSchema  The schema on the database server where the vocabulary tables are located.
+#'                               have been uploaded.   
+#' @param vocabularyDatabaseSchema (Deprecated) Please use vocabularyDatabaseSchemas.    
+#' @param vocabularyDatabaseSchemas  (optional) A list of one or more schemas on the database server where the vocabulary tables are located.
+#'                                   The default value is the value of the resultsDatabaseSchema. We can provide a list of vocabulary schema
+#'                                   that might represent different versions of the OMOP vocabulary tables. It allows us to compare the impact
+#'                                   of vocabulary changes on Diagnostics.
 #' @param dataFolder       A folder where the premerged file is stored. Use
 #'                         the \code{\link{preMergeDiagnosticsFiles}} function to generate this file.
 #' @param dataFile         (Optional) The name of the .RData file with results. It is commonly known as the
@@ -42,13 +46,26 @@ launchDiagnosticsExplorer <- function(dataFolder = "data",
                                       dataFile = "PreMerged.RData",
                                       connectionDetails = NULL,
                                       resultsDatabaseSchema = NULL,
-                                      vocabularyDatabaseSchema = resultsDatabaseSchema,
+                                      vocabularyDatabaseSchema = NULL,
+                                      vocabularyDatabaseSchemas = resultsDatabaseSchema,
                                       aboutText = NULL,
                                       runOverNetwork = FALSE,
                                       port = 80,
                                       launch.browser = FALSE) {
-  if (!is.null(connectionDetails) && connectionDetails$dbms != "postgresql") 
+  if (!is.null(connectionDetails) && connectionDetails$dbms != "postgresql") {
     stop("Shiny application can only run against a Postgres database")
+  }
+  if (!is.null(connectionDetails)) {
+    dataFolder <- NULL
+    dataFile <- NULL
+    if (is.null(resultsDatabaseSchema)) {
+      stop("resultsDatabaseSchema is required to connect to the database.")
+    }
+    if (!is.null(vocabularyDatabaseSchema) & is.null(vocabularyDatabaseSchemas)) {
+      vocabularyDatabaseSchemas <- vocabularyDatabaseSchema
+      warning('vocabularyDatabaseSchema option is deprecated. Please use vocabularyDatabaseSchema.')
+    }
+  }
   
   ensure_installed("checkmate")
   ensure_installed("DatabaseConnector")
@@ -83,7 +100,7 @@ launchDiagnosticsExplorer <- function(dataFolder = "data",
   }
   shinySettings <- list(connectionDetails = connectionDetails,
                         resultsDatabaseSchema = resultsDatabaseSchema,
-                        vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+                        vocabularyDatabaseSchemas = vocabularyDatabaseSchemas,
                         dataFolder = dataFolder,
                         dataFile = dataFile,
                         aboutText = aboutText)
