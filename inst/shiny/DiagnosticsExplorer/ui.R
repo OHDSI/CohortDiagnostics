@@ -22,9 +22,9 @@ cohortReference <- function(outputId) {
 }
 
 if (is(dataSource, "environment")) {
-  choicesForDatabaseOrVocabularyScema <- c(database$databaseId)
+  choicesFordatabaseOrVocabularySchema <- c(database$databaseId)
 } else {
-  choicesForDatabaseOrVocabularyScema <- list(
+  choicesFordatabaseOrVocabularySchema <- list(
     database = database$databaseId,
     vocabularyDatabaseSchemas = c(vocabularyDatabaseSchemas)
   )
@@ -391,9 +391,9 @@ bodyTabItems <- shinydashboard::tabItems(
                     tags$td(
                       
                       shinyWidgets::pickerInput(
-                        inputId = "databaseOrVocabularyScema",
+                        inputId = "databaseOrVocabularySchema",
                         label = "Database",
-                        choices = choicesForDatabaseOrVocabularyScema,
+                        choices = choicesFordatabaseOrVocabularySchema,
                         multiple = FALSE,
                         width = NULL,
                         inline = TRUE,

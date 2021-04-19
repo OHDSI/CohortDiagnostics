@@ -422,30 +422,23 @@ shiny::shinyServer(function(input, output, session) {
     }
     source <-
       (input$conceptSetsType == "Mapped")
-    data <-
+    output <-
       resolveMappedConceptSet(dataSource = dataSource,
-                              databaseId = input$databaseOrVocabularyScema,
+                              databaseIds = input$databaseOrVocabularySchema,
                               cohortId =  row$cohortId,
                               conceptSetId = cohortDefinitionConceptSetExpressionRow()$id)
-    if (!is.null(data)) {
+    
+    
+    #### split the function here
+    
+    if (!is.null(output) && length(output) == 2) {
       source <-
         (input$conceptSetsType == "Mapped")
       if (source) {
-        data <- data$mapped
+        data <- output$mapped
         data$resolvedConceptId <- as.factor(data$resolvedConceptId)
       } else {
-        data <- data$resolved %>% 
-          dplyr::inner_join(subset, by = "conceptSetId") %>% 
-          dplyr::select(
-            .data$conceptId,
-            .data$conceptCode,
-            .data$conceptName,
-            .data$conceptClassId,
-            .data$domainId,
-            .data$vocabularyId,
-            .data$standardConcept
-          ) %>%
-          dplyr::arrange(.data$conceptId)
+        data <- output$resolved
       }
       
       data$conceptClassId <- as.factor(data$conceptClassId)

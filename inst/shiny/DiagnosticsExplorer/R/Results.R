@@ -655,7 +655,7 @@ resolveMappedConceptSetFromVocabularyDatabaseSchema <- function(dataSource = .Gl
 
 
 resolveMappedConceptSet <- function(dataSource = .GlobalEnv, 
-                                    databaseId,
+                                    databaseIds,
                                     cohortId,
                                     conceptSetId) {
   # Perform error checks for input variables
@@ -670,9 +670,8 @@ resolveMappedConceptSet <- function(dataSource = .GlobalEnv,
                               max.len = 1,
                               null.ok = TRUE,
                               add = errorMessage)
-  checkmate::assertCharacter(x = databaseId,
+  checkmate::assertCharacter(x = databaseIds,
                              min.len = 1, 
-                             max.len = 1,
                              min.chars = 1,
                              null.ok = TRUE,
                              add = errorMessage)
@@ -680,10 +679,13 @@ resolveMappedConceptSet <- function(dataSource = .GlobalEnv,
   
   if (is(dataSource, "environment")) {
     resolved <- get("resolvedConcepts", envir = dataSource) %>% 
-      dplyr::filter(.data$databaseId == !!databaseId) %>% 
+      dplyr::filter(.data$databaseId %in% !!databaseIds) %>% 
       dplyr::filter(.data$cohortId == !!cohortId) %>% 
       dplyr::filter(.data$conceptSetId == !!conceptSetId) %>% 
-      dplyr::inner_join(get("concept"), by = "conceptId")
+      dplyr::inner_join(get("concept"), by = "conceptId") %>% 
+      dplyr::select(-.data$databaseId) %>% 
+      dplyr::distinct() %>% 
+      dplyr::arrange(.data$conceptId)
     mapped <- resolved %>% 
       dplyr::select(.data$conceptId) %>% 
       dplyr::distinct() %>% 
@@ -698,37 +700,58 @@ resolveMappedConceptSet <- function(dataSource = .GlobalEnv,
       dplyr::select(.data$resolvedConceptId, .data$conceptId,
                     .data$conceptName, .data$domainId,
                     .data$vocabularyId, .data$conceptClassId, 
-                    .data$standardConcept, .data$conceptCode)
+                    .data$standardConcept, .data$conceptCode) %>% 
+      dplyr::distinct() %>% 
+      dplyr::arrange(.data$conceptId)
   } else {
-    sqlResolved <- "SELECT *
+    sqlResolved <- "SELECT DISTINCT resolved_concepts.cohort_id,
+                    	resolved_concepts.concept_set_id,
+                    	concept.concept_id,
+                    	concept.concept_name,
+                    	concept.domain_id,
+                    	concept.vocabulary_id,
+                    	concept.concept_class_id,
+                    	concept.standard_concept,
+                    	concept.concept_code
                     FROM @results_database_schema.resolved_concepts
-                    WHERE database_id = @databaseId
+                    INNER JOIN @results_database_schema.concept
+                    ON resolved_concepts.concept_id = concept.concept_id
+                    WHERE database_id IN (@databaseIds)
                     	AND cohort_id = @cohortId
-                    	AND concept_set_id = @conceptSetId;"
+                    	AND concept_set_id = @conceptSetId
+                    ORDER BY concept.concept_id;"
     resolved <- renderTranslateQuerySql(connection = dataSource$connection,
                                         sql = sqlResolved,
                                         results_database_schema = dataSource$resultsDatabaseSchema,
-                                        databaseId = databaseId,
+                                        databaseIds = quoteLiterals(databaseIds),
                                         cohortId = cohortId,
                                         conceptSetId = conceptSetId,
                                         snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
-    sqlMapped <- "SELECT *
+    sqlMapped <- "SELECT DISTINCT concept_sets.concept_id AS resolved_concept_id,
+                  	concept.concept_id,
+                  	concept.concept_name,
+                  	concept.domain_id,
+                  	concept.vocabulary_id,
+                  	concept.concept_class_id,
+                  	concept.standard_concept,
+                  	concept.concept_code
                   FROM (
                   	SELECT DISTINCT concept_id
                   	FROM @results_database_schema.resolved_concepts
-                  	WHERE database_id = @databaseId
+                  	WHERE database_id IN (@databaseIds)
                   		AND cohort_id = @cohortId
                   		AND concept_set_id = @conceptSetId
                   	) concept_sets
-                  INNER JOIN @vocabulary_database_schema.concept_relationship ON concept_sets.concept_id = concept_relationship.concept_id_2
-                  INNER JOIN @vocabulary_database_schema.concept ON concept_relationship.concept_id_1 = concept.concept_id
+                  INNER JOIN @results_database_schema.concept_relationship ON concept_sets.concept_id = concept_relationship.concept_id_2
+                  INNER JOIN @results_database_schema.concept ON concept_relationship.concept_id_1 = concept.concept_id
                   WHERE relationship_id = 'Maps to'
-                  	AND standard_concept IS NULL;"
+                  	AND standard_concept IS NULL
+                  ORDER BY concept.concept_id;"
     mapped <- renderTranslateQuerySql(connection = dataSource$connection,
                                       sql = sqlMapped,
                                       results_database_schema = dataSource$resultsDatabaseSchema,
-                                      databaseId = databaseId,
+                                      databaseIds = quoteLiterals(databaseIds),
                                       cohortId = cohortId,
                                       conceptSetId = conceptSetId,
                                       snakeCaseToCamelCase = TRUE) %>% 
