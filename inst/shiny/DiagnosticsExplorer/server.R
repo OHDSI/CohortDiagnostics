@@ -439,14 +439,6 @@ shiny::shinyServer(function(input, output, session) {
         data$resolvedConceptId <- as.factor(data$resolvedConceptId)
       } else {
         data <- output$resolved
-        if (nrow(data) > 0) {
-          data <- data %>% 
-            dplyr::select(-.data$cohortId,
-                          -.data$conceptSetId,
-                          -.data$validStartDate,
-                          -.data$validEndDate,
-                          -.data$invalidReason)
-        }
       }
       
       data$conceptClassId <- as.factor(data$conceptClassId)
@@ -1784,6 +1776,7 @@ shiny::shinyServer(function(input, output, session) {
   characterizationAnalysisNameFilter <- shiny::reactive({
     return(input$characterizationAnalysisNameFilter)
   })
+  
   
   characterizationTableData <- shiny::reactive(x = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
