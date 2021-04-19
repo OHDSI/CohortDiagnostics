@@ -1,5 +1,6 @@
 library(magrittr)
 
+source("R/StartUpScripts.R")
 source("R/DisplayFunctions.R")
 source("R/Tables.R")
 source("R/Plots.R")
@@ -20,7 +21,7 @@ defaultVocabularySchema <- defaultResultsSchema
 alternateVocabularySchema <- c('vocabulary')
 
 
-defaultDatabaseMode <- TRUE # Use file system if FALSE
+defaultDatabaseMode <- FALSE # Use file system if FALSE
 
 if (!exists("shinySettings")) {
   writeLines("Using default settings")
@@ -109,45 +110,10 @@ if (databaseMode) {
   # vocabularyTablesOnServer[[i]] <- intersect(x = )
   # }
   
-  loadResultsTable <- function(tableName, required = FALSE) {
-    if (required || tableName %in% resultsTablesOnServer) {
-      tryCatch({
-        table <- DatabaseConnector::dbReadTable(connectionPool,
-                                                paste(resultsDatabaseSchema, tableName, sep = "."))
-      }, error = function(err) {
-        stop(
-          "Error reading from ",
-          paste(resultsDatabaseSchema, tableName, sep = "."),
-          ": ",
-          err$message
-        )
-      })
-      colnames(table) <-
-        SqlRender::snakeCaseToCamelCase(colnames(table))
-      if (nrow(table) > 0) {
-        assign(
-          SqlRender::snakeCaseToCamelCase(tableName),
-          dplyr::as_tibble(table),
-          envir = .GlobalEnv
-        )
-      }
-    }
-  }
-  
   loadResultsTable("database", required = TRUE)
   loadResultsTable("cohort", required = TRUE)
   loadResultsTable("temporal_time_ref")
   loadResultsTable("concept_sets")
-  
-  # Create empty objects in memory for all other tables. This is used by the Shiny app to decide what tabs to show:
-  isEmpty <- function(tableName) {
-    sql <-
-      sprintf("SELECT 1 FROM %s.%s LIMIT 1;",
-              resultsDatabaseSchema,
-              tableName)
-    oneRow <- DatabaseConnector::dbGetQuery(connectionPool, sql)
-    return(nrow(oneRow) == 0)
-  }
   
   for (table in c(dataModelSpecifications$tableName)) {
     #, "recommender_set"
