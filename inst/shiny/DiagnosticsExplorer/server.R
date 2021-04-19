@@ -2424,12 +2424,19 @@ shiny::shinyServer(function(input, output, session) {
     data <- data %>% 
       dplyr::filter(.data$analysisName %in% charCompareAnalysisNameFilter()) %>%
       dplyr::filter(.data$domainId %in% charaCompareDomainNameFilter()) 
+    if (input$charCompareType == "Plot" && input$charCompareProportionOrContinuous == "Proportion") {
+      data <- data %>% 
+        dplyr::filter(.data$isBinary == 'Y')
+    } else if (input$charCompareType == "Plot" && input$charCompareProportionOrContinuous == "Continuous") {
+      data <- data %>% 
+        dplyr::filter(.data$isBinary == 'N')
+    }
     if (nrow(data) == 0) {
       return(dplyr::tibble(Note = "No data for the selected combination."))
     }
     plot <-
       plotCohortComparisonStandardizedDifference(
-        balance = data %>% dplyr::filter(.data$isBinary == 'Y'),
+        balance = data,
         shortNameRef = cohort,
         xLimitMin = 0,
         xLimitMax = 1,
@@ -2654,9 +2661,16 @@ shiny::shinyServer(function(input, output, session) {
     if (nrow(data) == 0) {
       return(dplyr::tibble(Note = "No data for the selected combination."))
     }
+    if (input$temporalCharacterizationType == "Plot" && input$temporalCharacterProportionOrContinuous == "Proportion") {
+      data <- data %>% 
+        dplyr::filter(.data$isBinary == 'Y')
+    } else if (input$temporalCharacterizationType == "Plot" && input$temporalCharacterProportionOrContinuous == "Continuous") {
+      data <- data %>% 
+        dplyr::filter(.data$isBinary == 'N')
+    }
     plot <-
       plotTemporalCompareStandardizedDifference(
-        balance = data %>% dplyr::filter(.data$isBinary == 'Y'),
+        balance = data,
         shortNameRef = cohort,
         xLimitMin = 0,
         xLimitMax = 1,
