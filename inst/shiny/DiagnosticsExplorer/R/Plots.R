@@ -277,6 +277,10 @@ plotIncidenceRate <- function(data,
 
 plotCohortComparisonStandardizedDifference <- function(balance, 
                                                        shortNameRef = NULL,
+                                                       xLimitMin = 0,
+                                                       xLimitMax = 1,
+                                                       yLimitMin = 0,
+                                                       yLimitMax = 1,
                                                        domain = "all") {
   domains <- c("condition", "device", "drug", "measurement", "observation", "procedure")
   balance$domain <- tolower(stringr::str_extract(balance$covariateName, "[a-z]+"))
@@ -326,11 +330,13 @@ plotCohortComparisonStandardizedDifference <- function(balance,
     ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
     ggplot2::geom_hline(yintercept = 0) +
     ggplot2::geom_vline(xintercept = 0) +             
-    ggplot2::scale_x_continuous("Mean") +
-    ggplot2::scale_y_continuous("Mean") +
+    # ggplot2::scale_x_continuous("Mean") +
+    # ggplot2::scale_y_continuous("Mean") +
     ggplot2::scale_color_manual("Domain", values = colors) +
     facet_nested(databaseId + targetCohort ~ comparatorCohort) +
-    ggplot2::theme(strip.background = ggplot2::element_blank())
+    ggplot2::theme(strip.background = ggplot2::element_blank()) +
+    ggplot2::xlim(xLimitMin, xLimitMax) +
+    ggplot2::ylim(yLimitMin, yLimitMax)
   
   plot <- ggiraph::girafe(ggobj = plot,
                           options = list(
@@ -341,8 +347,12 @@ plotCohortComparisonStandardizedDifference <- function(balance,
 }
 
 plotTemporalCompareStandardizedDifference <- function(balance, 
-                                                       shortNameRef = NULL,
-                                                       domain = "all") {
+                                                      shortNameRef = NULL,
+                                                      xLimitMin = 0,
+                                                      xLimitMax = 1,
+                                                      yLimitMin = 0,
+                                                      yLimitMax = 1,
+                                                      domain = "all") {
   domains <- c("condition", "device", "drug", "measurement", "observation", "procedure")
   balance$domain <- tolower(stringr::str_extract(balance$covariateName, "[a-z]+"))
   balance$domain[!balance$domain %in% domains] <- "other"
@@ -393,11 +403,13 @@ plotTemporalCompareStandardizedDifference <- function(balance,
     ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed") +
     ggplot2::geom_hline(yintercept = 0) +
     ggplot2::geom_vline(xintercept = 0) +             
-    ggplot2::scale_x_continuous("Mean") +
-    ggplot2::scale_y_continuous("Mean") +
+    # ggplot2::scale_x_continuous("Mean") +
+    # ggplot2::scale_y_continuous("Mean") +
     ggplot2::scale_color_manual("Domain", values = colors) +
     facet_nested(databaseId + targetCohort ~ comparatorCohort) +
-    ggplot2::theme(strip.background = ggplot2::element_blank())
+    ggplot2::theme(strip.background = ggplot2::element_blank()) +
+    ggplot2::xlim(xLimitMin, xLimitMax) +
+    ggplot2::ylim(yLimitMin, yLimitMax)
   
   plot <- ggiraph::girafe(ggobj = plot,
                           options = list(
@@ -406,6 +418,10 @@ plotTemporalCompareStandardizedDifference <- function(balance,
                           height_svg = 5)
   return(plot)
 }
+
+
+
+### cohort overlap plot ##############
 
 plotCohortOverlap <- function(data,
                               shortNameRef = NULL,

@@ -2430,7 +2430,11 @@ shiny::shinyServer(function(input, output, session) {
     plot <-
       plotCohortComparisonStandardizedDifference(
         balance = data %>% dplyr::filter(.data$isBinary == 'Y'),
-        shortNameRef = cohort
+        shortNameRef = cohort,
+        xLimitMin = 0,
+        xLimitMax = 1,
+        yLimitMin = 0,
+        yLimitMax = 1
       )
     return(plot)
   })
@@ -2653,7 +2657,11 @@ shiny::shinyServer(function(input, output, session) {
     plot <-
       plotTemporalCompareStandardizedDifference(
         balance = data %>% dplyr::filter(.data$isBinary == 'Y'),
-        shortNameRef = cohort
+        shortNameRef = cohort,
+        xLimitMin = 0,
+        xLimitMax = 1,
+        yLimitMin = 0,
+        yLimitMax = 1
       )
     return(plot)
   })
