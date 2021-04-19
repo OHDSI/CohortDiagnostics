@@ -72,7 +72,16 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
       covariates <- featureExtractionOutput$covariates %>% 
         dplyr::rename(cohortId = .data$cohortDefinitionId) %>% 
         dplyr::left_join(populationSize, by = "cohortId", copy = TRUE) %>% 
-        dplyr::mutate(p = .data$sumValue / .data$populationSize)  %>% 
+        dplyr::mutate(p = .data$sumValue / .data$populationSize)
+      
+      if (nrow(covariates %>% 
+               dplyr::filter(.data$p > 1) %>% 
+               dplyr::collect()) > 0) {
+        stop(paste0("During characterization, population size (denominator) was found to be smaller than features Value (numerator).",
+             "- this may have happened because of an error in Feature generation process. Please contact the package developer."))
+      }
+      
+      covariates <- covariates %>% 
         dplyr::mutate(sd = sqrt(.data$p * (1 - .data$p))) %>%
         dplyr::select(-.data$p) %>%
         dplyr::rename(mean = .data$averageValue) %>%  
