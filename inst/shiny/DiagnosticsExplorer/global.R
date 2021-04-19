@@ -11,6 +11,7 @@ defaultLocalDataFolder <- "data"
 defaultLocalDataFile <- "PreMerged.RData"
 
 connectionPool <- NULL
+connectionPool <- NULL
 defaultServer <- Sys.getenv("shinydbServer")
 defaultDatabase <- Sys.getenv("shinydbDatabase")
 defaultPort <- 5432
@@ -19,7 +20,6 @@ defaultPassword <- Sys.getenv("shinyDbPassword")
 defaultResultsSchema <- 'CdSkeletonCohortDiagnosticsStudy'
 defaultVocabularySchema <- defaultResultsSchema
 alternateVocabularySchema <- c('vocabulary')
-
 
 defaultDatabaseMode <- FALSE # Use file system if FALSE
 
@@ -77,6 +77,12 @@ if (!exists("shinySettings")) {
   }
 }
 
+
+vocabularyDatabaseSchemas <- setdiff(x = c(defaultVocabularySchema, alternateVocabularySchema, vocabularyDatabaseSchema),
+                                     y = defaultResultsSchema) %>% 
+  unique() %>% 
+  sort()
+
 dataModelSpecifications <-
   read.csv("resultsDataModelSpecification.csv")
 # Cleaning up any tables in memory:
@@ -95,14 +101,10 @@ if (databaseMode) {
   resultsTablesOnServer <-
     tolower(DatabaseConnector::dbListTables(connectionPool, schema = resultsDatabaseSchema))
   
-  vocabularyDatabaseSchemas <- c(defaultVocabularySchema, alternateVocabularySchema) %>% 
-    unique() %>% 
-    sort()
-  
-  vocabularyTablesOnServer <- list()
-  vocabularyTablesInOmopCdm <- c('concept', 'concept_relationship', 'concept_ancestor', 
-                                 'concept_class', 'concept_synonym',
-                                 'vocabulary', 'domain', 'relationship')
+  # vocabularyTablesOnServer <- list()
+  # vocabularyTablesInOmopCdm <- c('concept', 'concept_relationship', 'concept_ancestor', 
+  #                                'concept_class', 'concept_synonym',
+  #                                'vocabulary', 'domain', 'relationship')
   
   # for (i in length(vocabularyDatabaseSchemas)) {
   # 

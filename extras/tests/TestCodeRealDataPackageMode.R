@@ -89,8 +89,8 @@ CohortDiagnostics::launchDiagnosticsExplorer(dataFolder = outputFolder)
 #                                                                     Sys.getenv("shinydbDatabase"),
 #                                                                     sep = "/"),
 #                                                      port = Sys.getenv("shinydbPort"),
-#                                                      user = Sys.getenv("shinyDbUserGowtham"),
-#                                                      password = Sys.getenv("shinyDbPasswordGowtham"))
+#                                                      user = Sys.getenv("shinyDbUser"),
+#                                                      password = Sys.getenv("shinyDbPassword"))
 # 
 # 
 # resultsSchema <- "CdSkeletonCohortDiagnosticsStudy"
