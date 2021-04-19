@@ -813,7 +813,7 @@ bodyTabItems <- shinydashboard::tabItems(
       inline = TRUE
     ),
     shiny::conditionalPanel(
-      condition = "input.charCompareType == 'Raw table'",
+      condition = "input.charCompareType == 'Raw table' | input.charCompareType=='Plot'",
       tags$table(
         tags$tr(
           tags$td(
@@ -875,31 +875,31 @@ bodyTabItems <- shinydashboard::tabItems(
         width = NULL,
         status = "primary",
         shiny::htmlOutput("compareCohortCharacterizationSelectedCohort"),
-        shinyWidgets::pickerInput(
-          inputId = "domainId",
-          label = "Filter By Domain",
-          choices = c(
-            "all",
-            "condition",
-            "device",
-            "drug",
-            "measurement",
-            "observation",
-            "procedure",
-            "other"
-          ),
-          multiple = FALSE,
-          choicesOpt = list(style = rep_len("color: black;", 999)),
-          options = shinyWidgets::pickerOptions(
-            actionsBox = TRUE,
-            liveSearch = TRUE,
-            size = 10,
-            liveSearchStyle = 'contains',
-            liveSearchPlaceholder = "Type here to search",
-            virtualScroll = 50
-          )
-          
-        ),
+        # shinyWidgets::pickerInput(
+        #   inputId = "domainId",
+        #   label = "Filter By Domain",
+        #   choices = c(
+        #     "all",
+        #     "condition",
+        #     "device",
+        #     "drug",
+        #     "measurement",
+        #     "observation",
+        #     "procedure",
+        #     "other"
+        #   ),
+        #   multiple = FALSE,
+        #   choicesOpt = list(style = rep_len("color: black;", 999)),
+        #   options = shinyWidgets::pickerOptions(
+        #     actionsBox = TRUE,
+        #     liveSearch = TRUE,
+        #     size = 10,
+        #     liveSearchStyle = 'contains',
+        #     liveSearchPlaceholder = "Type here to search",
+        #     virtualScroll = 50
+        #   )
+        #   
+        # ),
         ggiraph::ggiraphOutput(
           outputId = "charComparePlot",
           width = "100%",
@@ -920,7 +920,7 @@ bodyTabItems <- shinydashboard::tabItems(
       inline = TRUE
     ),
     shiny::conditionalPanel(
-      condition = "input.temporalCharacterizationType == 'Raw table'",
+      condition = "input.temporalCharacterizationType == 'Raw table' | input.temporalCharacterizationType=='Plot'",
       tags$table(
         tags$tr(
           tags$td(
@@ -980,31 +980,6 @@ bodyTabItems <- shinydashboard::tabItems(
         title = "Compare Temporal Characterization",
         width = NULL,
         status = "primary",
-        shinyWidgets::pickerInput(
-          inputId = "compareTemporalCharacterizationDomainId",
-          label = "Filter By Domain",
-          choices = c(
-            "all",
-            "condition",
-            "device",
-            "drug",
-            "measurement",
-            "observation",
-            "procedure",
-            "other"
-          ),
-          multiple = FALSE,
-          choicesOpt = list(style = rep_len("color: black;", 999)),
-          options = shinyWidgets::pickerOptions(
-            actionsBox = TRUE,
-            liveSearch = TRUE,
-            size = 10,
-            liveSearchStyle = 'contains',
-            liveSearchPlaceholder = "Type here to search",
-            virtualScroll = 50
-          )
-          
-        ),
         ggiraph::ggiraphOutput(
           outputId = "temporalCharComparePlot",
           width = "100%",

@@ -2421,11 +2421,16 @@ shiny::shinyServer(function(input, output, session) {
     if (nrow(data) == 0) {
       return(dplyr::tibble(Note = "No data for the selected combination."))
     }
+    data <- data %>% 
+      dplyr::filter(.data$analysisName %in% charCompareAnalysisNameFilter()) %>%
+      dplyr::filter(.data$domainId %in% charaCompareDomainNameFilter()) 
+    if (nrow(data) == 0) {
+      return(dplyr::tibble(Note = "No data for the selected combination."))
+    }
     plot <-
       plotCohortComparisonStandardizedDifference(
         balance = data %>% dplyr::filter(.data$isBinary == 'Y'),
-        shortNameRef = cohort,
-        domain = input$domainId
+        shortNameRef = cohort
       )
     return(plot)
   })
@@ -2639,11 +2644,16 @@ shiny::shinyServer(function(input, output, session) {
     if (nrow(data) == 0) {
       return(dplyr::tibble(Note = "No data for the selected combination."))
     }
+    data <- data %>% 
+      dplyr::filter(.data$analysisName %in% temporalCompareAnalysisNameFilter()) %>%
+      dplyr::filter(.data$domainId %in% temporalCompareDomainNameFilter()) 
+    if (nrow(data) == 0) {
+      return(dplyr::tibble(Note = "No data for the selected combination."))
+    }
     plot <-
       plotTemporalCompareStandardizedDifference(
         balance = data %>% dplyr::filter(.data$isBinary == 'Y'),
-        shortNameRef = cohort,
-        domain = input$compareTemporalCharacterizationDomainId
+        shortNameRef = cohort
       )
     return(plot)
   })
