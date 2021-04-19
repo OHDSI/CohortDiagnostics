@@ -19,6 +19,7 @@ Changes:
 8. Removed code related to referentConceptId = phenotypeId/1000 as it does not always hold true.
 9. Create cohort table function is now private. Please use instantiate cohort.
 10. checkInputFileEncoding is not exported as a public function (as not the scope of CohortDiagnostics).
+11. Updated results data model to include new tables (resolved_concepts).
 
 Bug fixes:
 
