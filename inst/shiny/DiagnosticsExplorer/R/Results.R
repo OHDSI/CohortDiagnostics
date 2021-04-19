@@ -701,22 +701,22 @@ resolveMappedConceptSet <- function(dataSource = .GlobalEnv,
                     .data$standardConcept, .data$conceptCode)
   } else {
     sqlResolved <- "SELECT *
-                    FROM @resultsDatabaseSchema.resolved_concepts
+                    FROM @results_database_schema.resolved_concepts
                     WHERE database_id = @databaseId
                     	AND cohort_id = @cohortId
                     	AND concept_set_id = @conceptSetId;"
     resolved <- renderTranslateQuerySql(connection = dataSource$connection,
                                         sql = sqlResolved,
                                         results_database_schema = dataSource$resultsDatabaseSchema,
-                                        database_id = databaseId,
-                                        cohort_id = cohortId,
-                                        concept_set_id = conceptSetId,
+                                        databaseId = databaseId,
+                                        cohortId = cohortId,
+                                        conceptSetId = conceptSetId,
                                         snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
     sqlMapped <- "SELECT *
                   FROM (
                   	SELECT DISTINCT concept_id
-                  	FROM @resultsDatabaseSchema.resolved_concepts
+                  	FROM @results_database_schema.resolved_concepts
                   	WHERE database_id = @databaseId
                   		AND cohort_id = @cohortId
                   		AND concept_set_id = @conceptSetId
@@ -728,9 +728,9 @@ resolveMappedConceptSet <- function(dataSource = .GlobalEnv,
     mapped <- renderTranslateQuerySql(connection = dataSource$connection,
                                       sql = sqlMapped,
                                       results_database_schema = dataSource$resultsDatabaseSchema,
-                                      database_id = databaseId,
-                                      cohort_id = cohortId,
-                                      concept_set_id = conceptSetId,
+                                      databaseId = databaseId,
+                                      cohortId = cohortId,
+                                      conceptSetId = conceptSetId,
                                       snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   }
