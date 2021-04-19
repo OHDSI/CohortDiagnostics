@@ -501,6 +501,9 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
         data <- data %>%
           dplyr::filter(.data$timeId %in% timeIds)
       }
+    } else {
+      data <- data %>%
+        dplyr::select(-.data$startDay, -.data$endDay)
     }
   } else {
     sql <- "SELECT covariate.*,
@@ -510,7 +513,10 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
               end_day,
             }
               concept_id,
-              covariate_ref.analysis_id
+              covariate_ref.analysis_id,
+              analysis_ref.is_binary,
+              analysis_ref.analysis_name,
+              analysis_ref.domain_id
             FROM  @results_database_schema.@table covariate
             INNER JOIN @results_database_schema.@covariate_ref_table covariate_ref
               ON covariate.covariate_id = covariate_ref.covariate_id
@@ -566,8 +572,7 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
                       .data$covariateId, 
                       .data$covariateName,
                       .data$isBinary) %>% 
-      dplyr::arrange(.data$cohortId, .data$databaseId, .data$covariateId) %>% 
-      dplyr::select(-.data$startDay, -.data$endDay)
+      dplyr::arrange(.data$cohortId, .data$databaseId, .data$covariateId)
   }
   if ('missingMeansZero' %in% colnames(data)) {
     data <- data %>% 
