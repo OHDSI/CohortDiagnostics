@@ -656,16 +656,10 @@ resolveMappedConceptSetFromVocabularyDatabaseSchema <- function(dataSource = .Gl
 
 resolveMappedConceptSet <- function(dataSource = .GlobalEnv, 
                                     databaseIds,
-                                    cohortId,
-                                    conceptSetId) {
+                                    cohortId) {
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertIntegerish(x = cohortId,
-                              min.len = 1, 
-                              max.len = 1,
-                              null.ok = TRUE,
-                              add = errorMessage)
-  checkmate::assertIntegerish(x = conceptSetId,
                               min.len = 1, 
                               max.len = 1,
                               null.ok = TRUE,
@@ -681,9 +675,7 @@ resolveMappedConceptSet <- function(dataSource = .GlobalEnv,
     resolved <- get("resolvedConcepts", envir = dataSource) %>% 
       dplyr::filter(.data$databaseId %in% !!databaseIds) %>% 
       dplyr::filter(.data$cohortId == !!cohortId) %>% 
-      dplyr::filter(.data$conceptSetId == !!conceptSetId) %>% 
       dplyr::inner_join(get("concept"), by = "conceptId") %>% 
-      dplyr::select(-.data$databaseId) %>% 
       dplyr::distinct() %>% 
       dplyr::arrange(.data$conceptId)
     mapped <- resolved %>% 
@@ -700,7 +692,8 @@ resolveMappedConceptSet <- function(dataSource = .GlobalEnv,
       dplyr::select(.data$resolvedConceptId, .data$conceptId,
                     .data$conceptName, .data$domainId,
                     .data$vocabularyId, .data$conceptClassId, 
-                    .data$standardConcept, .data$conceptCode) %>% 
+                    .data$standardConcept, .data$conceptCode,
+                    .data$databaseId) %>% 
       dplyr::distinct() %>% 
       dplyr::arrange(.data$conceptId)
   } else {
@@ -712,20 +705,19 @@ resolveMappedConceptSet <- function(dataSource = .GlobalEnv,
                     	concept.vocabulary_id,
                     	concept.concept_class_id,
                     	concept.standard_concept,
-                    	concept.concept_code
+                    	concept.concept_code,
+                    	resolved_concepts.database_id
                     FROM @results_database_schema.resolved_concepts
                     INNER JOIN @results_database_schema.concept
                     ON resolved_concepts.concept_id = concept.concept_id
                     WHERE database_id IN (@databaseIds)
                     	AND cohort_id = @cohortId
-                    	AND concept_set_id = @conceptSetId
                     ORDER BY concept.concept_id;"
     resolved <- renderTranslateQuerySql(connection = dataSource$connection,
                                         sql = sqlResolved,
                                         results_database_schema = dataSource$resultsDatabaseSchema,
                                         databaseIds = quoteLiterals(databaseIds),
                                         cohortId = cohortId,
-                                        conceptSetId = conceptSetId,
                                         snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
     sqlMapped <- "SELECT DISTINCT concept_sets.concept_id AS resolved_concept_id,
@@ -735,13 +727,14 @@ resolveMappedConceptSet <- function(dataSource = .GlobalEnv,
                   	concept.vocabulary_id,
                   	concept.concept_class_id,
                   	concept.standard_concept,
-                  	concept.concept_code
+                  	concept.concept_code,
+                  	concept_sets.database_id,
+                  	concept_sets.concept_set_id
                   FROM (
-                  	SELECT DISTINCT concept_id
+                  	SELECT DISTINCT concept_id, database_id, concept_set_id
                   	FROM @results_database_schema.resolved_concepts
                   	WHERE database_id IN (@databaseIds)
                   		AND cohort_id = @cohortId
-                  		AND concept_set_id = @conceptSetId
                   	) concept_sets
                   INNER JOIN @results_database_schema.concept_relationship ON concept_sets.concept_id = concept_relationship.concept_id_2
                   INNER JOIN @results_database_schema.concept ON concept_relationship.concept_id_1 = concept.concept_id
@@ -753,7 +746,6 @@ resolveMappedConceptSet <- function(dataSource = .GlobalEnv,
                                       results_database_schema = dataSource$resultsDatabaseSchema,
                                       databaseIds = quoteLiterals(databaseIds),
                                       cohortId = cohortId,
-                                      conceptSetId = conceptSetId,
                                       snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   }

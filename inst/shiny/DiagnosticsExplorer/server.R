@@ -409,36 +409,41 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  getIncludeOrSourceConcepts <- shiny::reactive({
+  getResolvedOrMappedConceptSetForAllDatabase <- shiny::reactive(x = {
     row <- selectedCohortDefinitionRow()
     if (is.null(row) || is.null(cohortDefinitionConceptSetExpressionRow()$id)) {
       return(NULL)
     }
     
-    subset <- conceptSets %>%
-      dplyr::filter(.data$cohortId == row$cohortId)
-    if (nrow(subset) == 0) {
-      return(NULL)
-    }
-    source <-
-      (input$conceptSetsType == "Mapped")
     output <-
       resolveMappedConceptSet(dataSource = dataSource,
-                              databaseIds = input$databaseOrVocabularySchema,
-                              cohortId =  row$cohortId,
-                              conceptSetId = cohortDefinitionConceptSetExpressionRow()$id)
-    
-    
-    #### split the function here
+                              databaseIds = database$databaseId,
+                              cohortId =  row$cohortId)
+      
+    if (!is.null(output)) {
+      return(output)
+    } else {
+      return(NULL)
+    }
+  })
+  
+  getIncludeOrSourceConcepts <- shiny::reactive({
+    output <- getResolvedOrMappedConceptSetForAllDatabase() 
     
     if (!is.null(output) && length(output) == 2) {
       source <-
         (input$conceptSetsType == "Mapped")
       if (source) {
-        data <- output$mapped
+        data <- output$mapped %>% 
+          dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id) %>% 
+          dplyr::filter(.data$databaseId == input$databaseOrVocabularySchema) %>% 
+          dplyr::select(-.data$databaseId, -.data$conceptSetId)
         data$resolvedConceptId <- as.factor(data$resolvedConceptId)
       } else {
-        data <- output$resolved
+        data <- output$resolved %>% 
+          dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id) %>% 
+          dplyr::filter(.data$databaseId == input$databaseOrVocabularySchema) %>% 
+          dplyr::select(-.data$databaseId, -.data$conceptSetId)
       }
       
       data$conceptClassId <- as.factor(data$conceptClassId)
