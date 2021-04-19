@@ -679,12 +679,12 @@ resolveMappedConceptSet <- function(dataSource = .GlobalEnv,
       dplyr::distinct() %>% 
       dplyr::arrange(.data$conceptId)
     mapped <- resolved %>% 
-      dplyr::select(.data$conceptId, .data$databaseId) %>% 
+      dplyr::select(.data$conceptId, .data$databaseId, .data$cohortId, .data$conceptSetId) %>% 
       dplyr::distinct() %>% 
       dplyr::inner_join(get("conceptRelationship"), by = c("conceptId" = "conceptId2")) %>%
       dplyr::filter(.data$relationshipId == 'Maps to') %>%
       dplyr::filter(is.na(.data$invalidReason)) %>% 
-      dplyr::select(.data$conceptId, .data$conceptId1) %>% 
+      dplyr::select(.data$conceptId, .data$conceptId1, .data$databaseId, .data$cohortId, .data$conceptSetId) %>% 
       dplyr::rename(resolvedConceptId = .data$conceptId) %>% 
       dplyr::inner_join(get("concept"), by = c("conceptId1" = "conceptId")) %>% 
       dplyr::filter(is.na(.data$invalidReason)) %>% 
