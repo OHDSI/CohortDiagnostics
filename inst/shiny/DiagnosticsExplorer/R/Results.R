@@ -584,10 +584,11 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
   }
   if ('missingMeansZero' %in% colnames(data)) {
     data <- data %>% 
-      dplyr::mutate(mean = dplyr::case_when(is.na(.data$mean) &&
-                                                    !is.na(.data$missingMeansZero) &&
-                                                    .data$missionMeansZero == 'Y' ~ 0,
-                    TRUE ~ .data$mean)) %>% 
+      dplyr::mutate(mean = dplyr::if_else(is.na(.data$mean) &
+                                                    !is.na(.data$missingMeansZero) &
+                                                    .data$missingMeansZero  == 'Y',
+                                          0,
+                                          .data$mean)) %>% 
       dplyr::select(-.data$missingMeansZero)
   }
   return(data)
