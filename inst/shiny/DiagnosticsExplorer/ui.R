@@ -555,8 +555,8 @@ bodyTabItems <- shinydashboard::tabItems(
     shiny::radioButtons(
       inputId = "includedType",
       label = "",
-      choices = c("Source Concepts", "Standard Concepts"),
-      selected = "Source Concepts",
+      choices = c("Source fields", "Standard fields"),
+      selected = "Source fields",
       inline = TRUE
     ),
     DT::dataTableOutput("includedConceptsTable")
