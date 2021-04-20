@@ -317,8 +317,8 @@ sidebarMenu <-
       input.tabs == 'temporalCharacterization' |
       input.tabs == 'compareTemporalCharacterization'",
       shinyWidgets::pickerInput(
-        inputId = "conceptIds",
-        label = "Concept Ids",
+        inputId = "conceptSetsToFilterCharacterization",
+        label = "Concept sets",
         choices = c(""),
         selected = c(""),
         multiple = TRUE,
