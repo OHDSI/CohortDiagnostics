@@ -513,15 +513,15 @@ shiny::shinyServer(function(input, output, session) {
         if (source) {
           data <- resolvedOrMappedConceptSetForAllVocabulary$mapped %>%
             dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id) %>%
-            dplyr::filter(.data$vocabularyId == !!vocabularyDataSchemaToFilter) %>%
-            dplyr::select(-.data$vocabularyId, -.data$conceptSetId)
+            dplyr::filter(.data$vocabularyDatabaseSchema == !!vocabularyDataSchemaToFilter) %>%
+            dplyr::select(-.data$vocabularyDatabaseSchema, -.data$conceptSetId)
           data$resolvedConceptId <-
             as.factor(data$resolvedConceptId)
         } else {
           data <- resolvedOrMappedConceptSetForAllVocabulary$resolved %>%
             dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id) %>%
-            dplyr::filter(.data$vocabularyId == !!vocabularyDataSchemaToFilter) %>%
-            dplyr::select(-.data$vocabularyId, -.data$conceptSetId)
+            dplyr::filter(.data$vocabularyDatabaseSchema == !!vocabularyDataSchemaToFilter) %>%
+            dplyr::select(-.data$vocabularyDatabaseSchema, -.data$conceptSetId)
         }
       }
     }
