@@ -311,28 +311,6 @@ sidebarMenu <-
         )
       )
     )
-    # shiny::conditionalPanel(
-    #   condition = "input.tabs == 'cohortCharacterization' |
-    #   input.tabs == 'compareCohortCharacterization' |
-    #   input.tabs == 'temporalCharacterization' |
-    #   input.tabs == 'compareTemporalCharacterization'",
-    #   shinyWidgets::pickerInput(
-    #     inputId = "conceptIds",
-    #     label = "Concept Ids",
-    #     choices = c(""),
-    #     selected = c(""),
-    #     multiple = TRUE,
-    #     choicesOpt = list(style = rep_len("color: black;", 999)),
-    #     options = shinyWidgets::pickerOptions(
-    #       actionsBox = TRUE,
-    #       liveSearch = TRUE,
-    #       size = 10,
-    #       liveSearchStyle = "contains",
-    #       liveSearchPlaceholder = "Type here to search",
-    #       virtualScroll = 50
-    #     )
-    #   )
-    # )
   )
 
 #Side bar code
@@ -856,31 +834,6 @@ bodyTabItems <- shinydashboard::tabItems(
         width = NULL,
         status = "primary",
         shiny::htmlOutput("compareCohortCharacterizationSelectedCohort"),
-        # shinyWidgets::pickerInput(
-        #   inputId = "domainId",
-        #   label = "Filter By Domain",
-        #   choices = c(
-        #     "all",
-        #     "condition",
-        #     "device",
-        #     "drug",
-        #     "measurement",
-        #     "observation",
-        #     "procedure",
-        #     "other"
-        #   ),
-        #   multiple = FALSE,
-        #   choicesOpt = list(style = rep_len("color: black;", 999)),
-        #   options = shinyWidgets::pickerOptions(
-        #     actionsBox = TRUE,
-        #     liveSearch = TRUE,
-        #     size = 10,
-        #     liveSearchStyle = 'contains',
-        #     liveSearchPlaceholder = "Type here to search",
-        #     virtualScroll = 50
-        #   )
-        #
-        # ),
         ggiraph::ggiraphOutput(
           outputId = "charComparePlot",
           width = "100%",

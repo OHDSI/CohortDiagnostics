@@ -18,7 +18,8 @@
     "draw_axis_labels",
     "reshape_add_margins",
     "new_data_frame",
-    "defaults", "id",
+    "defaults",
+    "id",
     "empty",
     "eval_facets",
     "ggname",
@@ -50,7 +51,7 @@
 # Store the needed ggplot internals here
 .int <- .grab_ggplot_internals()
 
-label_value <- function (labels, multi_line = TRUE) 
+label_value <- function (labels, multi_line = TRUE)
 {
   labels <- lapply(labels, as.character)
   if (multi_line) {
@@ -131,12 +132,20 @@ label_value <- function (labels, multi_line = TRUE)
 #'   geom_point() +
 #'   facet_nested(~ nester + Species, nest_line = TRUE) +
 #'   theme(ggh4x.facet.nestline = element_line(linetype = 3))
-facet_nested <- function(
-  rows = NULL, cols = NULL, scales = "fixed", space = "fixed",
-  shrink = TRUE, labeller = "label_value", as.table = TRUE,
-  switch = NULL, drop = TRUE, margins = FALSE, facets = NULL,
-  nest_line = FALSE, resect = ggplot2::unit(0, "mm"), bleed = FALSE
-) {
+facet_nested <- function(rows = NULL,
+                         cols = NULL,
+                         scales = "fixed",
+                         space = "fixed",
+                         shrink = TRUE,
+                         labeller = "label_value",
+                         as.table = TRUE,
+                         switch = NULL,
+                         drop = TRUE,
+                         margins = FALSE,
+                         facets = NULL,
+                         nest_line = FALSE,
+                         resect = ggplot2::unit(0, "mm"),
+                         bleed = FALSE) {
   if (!is.null(facets)) {
     rows <- facets
   }
@@ -144,7 +153,8 @@ facet_nested <- function(
     margins <- cols
     cols <- NULL
   }
-  scales <- match.arg(scales, c("fixed", "free_x", "free_y", "free"))
+  scales <-
+    match.arg(scales, c("fixed", "free_x", "free_y", "free"))
   free <- list(x = any(scales %in% c("free_x", "free")),
                y = any(scales %in% c("free_y", "free")))
   
@@ -170,21 +180,25 @@ facet_nested <- function(
     cols <- facets_list[[2]]
   }
   labeller <- .int$check_labeller(labeller)
-  ggplot2::ggproto(NULL, FacetNested, shrink = shrink,
-                   params = list(
-                     rows = rows,
-                     cols = cols,
-                     margins = margins,
-                     free = free,
-                     space_free = space_free,
-                     labeller = labeller,
-                     as.table = as.table,
-                     switch = switch,
-                     drop = drop,
-                     nest_line = nest_line,
-                     resect = resect,
-                     bleed = bleed
-                   ))
+  ggplot2::ggproto(
+    NULL,
+    FacetNested,
+    shrink = shrink,
+    params = list(
+      rows = rows,
+      cols = cols,
+      margins = margins,
+      free = free,
+      space_free = space_free,
+      labeller = labeller,
+      as.table = as.table,
+      switch = switch,
+      drop = drop,
+      nest_line = nest_line,
+      resect = resect,
+      bleed = bleed
+    )
+  )
 }
 
 # ggproto -----------------------------------------------------------------
@@ -194,7 +208,8 @@ facet_nested <- function(
 #' @export
 #' @rdname ggh4x_extensions
 FacetNested <- ggplot2::ggproto(
-  "FacetNested", ggplot2::FacetGrid,
+  "FacetNested",
+  ggplot2::FacetGrid,
   map_data = function(data, layout, params) {
     # Handle empty data
     if (.int$empty(data)) {
@@ -214,16 +229,18 @@ FacetNested <- ggplot2::ggproto(
                         intersect(names(cols), names(data)))
     
     # Add variables
-    data <- .int$reshape_add_margins(data, margin_vars, params$margins)
-    facet_vals <- .int$eval_facets(c(rows, cols), data, params$.possible_columns)
+    data <-
+      .int$reshape_add_margins(data, margin_vars, params$margins)
+    facet_vals <-
+      .int$eval_facets(c(rows, cols), data, params$.possible_columns)
     
     # Only set as missing if it has no variable in that direction
     missing_facets <- character(0)
-    if (!any(names(rows) %in% names(facet_vals))){
+    if (!any(names(rows) %in% names(facet_vals))) {
       missing_facets <- c(missing_facets,
                           setdiff(names(rows), names(facet_vals)))
     }
-    if (!any(names(cols) %in% names(facet_vals))){
+    if (!any(names(cols) %in% names(facet_vals))) {
       missing_facets <- c(missing_facets,
                           setdiff(names(cols), names(facet_vals)))
     }
@@ -258,27 +275,35 @@ FacetNested <- ggplot2::ggproto(
     dups <- intersect(names(rows), names(cols))
     
     if (length(dups) > 0) {
-      stop("Facetting variables can only appear in row or cols, not both.\n",
-           "Problems: ", paste0(dups, collapse = "'"), call. = FALSE)
+      stop(
+        "Facetting variables can only appear in row or cols, not both.\n",
+        "Problems: ",
+        paste0(dups, collapse = "'"),
+        call. = FALSE
+      )
     }
     
     base_rows <- combine_nested_vars(data, params$plot_env,
                                      rows, drop = params$drop)
     if (!params$as.table) {
-      rev_order <- function(x) factor(x, levels = rev(.int$ulevels(x)))
+      rev_order <- function(x)
+        factor(x, levels = rev(.int$ulevels(x)))
     }
     base_cols <- combine_nested_vars(data, params$plot_env, cols,
                                      drop = params$drop)
     base <- .int$df.grid(base_rows, base_cols)
     
     if (nrow(base) == 0) {
-      return(.int$new_data_frame(list(PANEL = 1L, ROW = 1L, COL = 1L,
-                                      SCALE_X = 1L, SCALE_Y = 1L)))
+      return(.int$new_data_frame(list(
+        PANEL = 1L,
+        ROW = 1L,
+        COL = 1L,
+        SCALE_X = 1L,
+        SCALE_Y = 1L
+      )))
     }
     
-    base <- .int$reshape_add_margins(
-      base, list(names(rows), names(cols)), params$margins
-    )
+    base <- .int$reshape_add_margins(base, list(names(rows), names(cols)), params$margins)
     base <- unique(base)
     
     panel <- .int$id(base, drop = TRUE)
@@ -295,9 +320,9 @@ FacetNested <- ggplot2::ggproto(
       .int$id(base[names(cols)], drop = TRUE)
     }
     
-    panels <- .int$new_data_frame(
-      c(list(PANEL = panel, ROW = rows, COL = cols), base)
-    )
+    panels <- .int$new_data_frame(c(list(
+      PANEL = panel, ROW = rows, COL = cols
+    ), base))
     panels <- panels[order(panels$PANEL), , drop = FALSE]
     rownames(panels) <- NULL
     panels$SCALE_X <- if (params$free$x) {
@@ -312,10 +337,25 @@ FacetNested <- ggplot2::ggproto(
     }
     panels
   },
-  draw_panels = function(panels, layout, x_scales, y_scales, ranges, coord,
-                         data, theme, params) {
-    panel_table <- ggplot2::FacetGrid$draw_panels(panels, layout, x_scales, y_scales,
-                                         ranges, coord, data, theme, params)
+  draw_panels = function(panels,
+                         layout,
+                         x_scales,
+                         y_scales,
+                         ranges,
+                         coord,
+                         data,
+                         theme,
+                         params) {
+    panel_table <-
+      ggplot2::FacetGrid$draw_panels(panels,
+                                     layout,
+                                     x_scales,
+                                     y_scales,
+                                     ranges,
+                                     coord,
+                                     data,
+                                     theme,
+                                     params)
     
     # Setup strips
     col_vars  <- unique(layout[names(params$cols)])
@@ -326,12 +366,18 @@ FacetNested <- ggplot2::ggproto(
     attr(row_vars, "facet") <- "grid"
     
     # Build strips
-    switch_x <- !is.null(params$switch) && params$switch %in% c("both", "x")
-    switch_y <- !is.null(params$switch) && params$switch %in% c("both", "y")
+    switch_x <-
+      !is.null(params$switch) && params$switch %in% c("both", "x")
+    switch_y <-
+      !is.null(params$switch) && params$switch %in% c("both", "y")
     
     # Merging strips
-    merge_cols <- apply(col_vars, 2, function(x) any(rle(x)$lengths > 1))
-    merge_rows <- apply(row_vars, 2, function(x) any(rle(x)$lengths > 1))
+    merge_cols <-
+      apply(col_vars, 2, function(x)
+        any(rle(x)$lengths > 1))
+    merge_rows <-
+      apply(row_vars, 2, function(x)
+        any(rle(x)$lengths > 1))
     
     if (any(merge_cols)) {
       if (switch_x) {
@@ -358,26 +404,38 @@ FacetNested <- ggplot2::ggproto(
 
 # Helper functions -----------------------------------------------
 
-combine_nested_vars <- function(
-  data, env = emptyenv(), vars = NULL, drop = TRUE
-) {
+combine_nested_vars <- function(data,
+                                env = emptyenv(),
+                                vars = NULL,
+                                drop = TRUE) {
   if (length(vars) == 0) {
     return(.int$new_data_frame())
   }
   
   possible_columns <- unique(unlist(lapply(data, names)))
   
-  values <- .int$compact(lapply(data, .int$eval_facets, facets = vars,
-                                possible_columns = possible_columns))
+  values <-
+    .int$compact(lapply(
+      data,
+      .int$eval_facets,
+      facets = vars,
+      possible_columns = possible_columns
+    ))
   has_all <- unlist(lapply(values, length)) == length(vars)
   if (!any(has_all)) {
-    missing <- lapply(values, function(x) setdiff(names(vars), names(x)))
+    missing <-
+      lapply(values, function(x)
+        setdiff(names(vars), names(x)))
     missing_txt <- vapply(missing, .int$var_list, character(1))
     name <- c("Plot", paste0("Layer ", seq_len(length(data) - 1)))
-    stop("At least one layer must contain all faceting variables: ",
-         .int$var_list(names(vars)), ".\n", paste0("* ", name, " is missing ",
-                                                   missing_txt, collapse = "\n"),
-         call. = FALSE)
+    stop(
+      "At least one layer must contain all faceting variables: ",
+      .int$var_list(names(vars)),
+      ".\n",
+      paste0("* ", name, " is missing ",
+             missing_txt, collapse = "\n"),
+      call. = FALSE
+    )
   }
   base <- unique(.int$rbind_dfs(values[has_all]))
   if (!drop) {
@@ -403,13 +461,20 @@ combine_nested_vars <- function(
 
 # New merge strips --------------------------------------------------------
 
-merge_strips <- function(
-  panel_table, vars, switch, params, theme, where = "t"
-) {
-  orient <- if (where %in% c("t", "b")) "x" else "y"
+merge_strips <- function(panel_table,
+                         vars,
+                         switch,
+                         params,
+                         theme,
+                         where = "t") {
+  orient <- if (where %in% c("t", "b"))
+    "x"
+  else
+    "y"
   nlevels <- ncol(vars)
   
-  these_strips <- grep(paste0("strip-", where), panel_table$layout$name)
+  these_strips <-
+    grep(paste0("strip-", where), panel_table$layout$name)
   strp_rows <- range(panel_table$layout$t[these_strips])
   strp_cols <- range(panel_table$layout$l[these_strips])
   strp_rows <- seq(strp_rows[1], strp_rows[2])
@@ -419,7 +484,7 @@ merge_strips <- function(
   # Make empty template
   template <- strp
   template$grobs <- list()
-  template$layout <- template$layout[0,]
+  template$layout <- template$layout[0, ]
   
   # Inflate strips
   for (i in seq_along(strp$grobs)) {
@@ -429,19 +494,25 @@ merge_strips <- function(
       sub$layout$b <- rev(sub$layout$b)
     }
     n <- length(sub$grobs)
-    lay <- strp$layout[i,]
-    lay <- lay[rep(1, n),]
+    lay <- strp$layout[i, ]
+    lay <- lay[rep(1, n), ]
     rownames(lay) <- NULL
     sub <- lapply(seq_len(n), function(j) {
       x <- sub
       x$grobs <- x$grobs[j]
-      x$layout <- x$layout[j,]
+      x$layout <- x$layout[j, ]
       x
     })
     template <- gtable::gtable_add_grob(
       template,
-      sub, t = lay$t, l = lay$l, b = lay$b, r = lay$r,
-      z = lay$z, clip = lay$clip, name = paste0(lay$name, "-", seq_len(n))
+      sub,
+      t = lay$t,
+      l = lay$l,
+      b = lay$b,
+      r = lay$r,
+      z = lay$z,
+      clip = lay$clip,
+      name = paste0(lay$name, "-", seq_len(n))
     )
   }
   
@@ -450,7 +521,8 @@ merge_strips <- function(
       do.call(paste0, vars[, seq(i), drop = FALSE])
     })
   }
-  merge <- apply(vars, 2, function(x) any(rle(x)$lengths > 1))
+  merge <- apply(vars, 2, function(x)
+    any(rle(x)$lengths > 1))
   
   if (where == "r") {
     vars <- rev(vars)
@@ -460,7 +532,7 @@ merge_strips <- function(
   # Abstract away strips
   strip_ids <- strsplit(template$layout$name, "-", fixed = TRUE)
   strip_ids <- do.call(rbind, strip_ids)
-  strip_ids <- strip_ids[,3:ncol(strip_ids)]
+  strip_ids <- strip_ids[, 3:ncol(strip_ids)]
   mode(strip_ids) <- "integer"
   
   template$layout$delete <- rep(FALSE, nrow(strip_ids))
@@ -489,7 +561,8 @@ merge_strips <- function(
     expand <- which(strip_ids[, 1] %in% expand & ii)
     expand_where <- seqs[seqs %in% ends]
     expand_where <- which(strip_ids[, 1] %in% expand_where & ii)
-    template$layout$aquire[expand] <- template$layout$aquire[expand_where]
+    template$layout$aquire[expand] <-
+      template$layout$aquire[expand_where]
   }
   
   # Do expansion
@@ -501,49 +574,78 @@ merge_strips <- function(
   
   # Do deletion
   template$grobs  <- template$grobs[!template$layout$delete]
-  strip_ids <- strip_ids[!template$layout$delete,]
-  template$layout <- template$layout[!template$layout$delete,]
+  strip_ids <- strip_ids[!template$layout$delete, ]
+  template$layout <- template$layout[!template$layout$delete, ]
   
   # Add nesting indicator
   if (params$nest_line) {
     active <- ggplot2::unit(c(0, 1), "npc") + c(1, -1) * params$resect
-    passive <- if (switch) c(1, 1) else c(0, 0)
-    nindi <- ggplot2::element_render(
-      theme, "ggh4x.facet.nestline",
-      x = switch(orient, x = active,  y = passive),
-      y = switch(orient, x = passive, y = active)
-    )
+    passive <- if (switch)
+      c(1, 1)
+    else
+      c(0, 0)
+    nindi <- ggplot2::element_render(theme,
+                                     "ggh4x.facet.nestline",
+                                     x = switch(orient, x = active,  y = passive),
+                                     y = switch(orient, x = passive, y = active))
     i <- which(with(template$layout, t != b | l != r))
     offset <- switch(
       orient,
-      x = vapply(template$grobs, function(grob){grob$layout$t}, numeric(1)),
-      y = vapply(template$grobs, function(grob){grob$layout$l}, numeric(1))
+      x = vapply(template$grobs, function(grob) {
+        grob$layout$t
+      }, numeric(1)),
+      y = vapply(template$grobs, function(grob) {
+        grob$layout$l
+      }, numeric(1))
     )
-    offset <- if (where %in% c("r", "b")) offset else nlevels - offset
+    offset <-
+      if (where %in% c("r", "b"))
+        offset
+    else
+      nlevels - offset
     template$grobs[i] <- lapply(template$grobs[i], function(grb) {
-      grb <- with(grb$layout, gtable::gtable_add_grob(
-        grb, nindi, t = t, l = l, r = r, b = b,
-        z = z,
-        name = "nester",
-        clip = "off"
-      ))
+      grb <- with(
+        grb$layout,
+        gtable::gtable_add_grob(
+          grb,
+          nindi,
+          t = t,
+          l = l,
+          r = r,
+          b = b,
+          z = z,
+          name = "nester",
+          clip = "off"
+        )
+      )
     })
     template$layout$z <- template$layout$z + offset
   }
   
   # Delete old strips
-  panel_table <- gtable::gtable_filter(panel_table, paste0("strip-", where),
-                               fixed = TRUE, trim = FALSE, invert = TRUE)
+  panel_table <-
+    gtable::gtable_filter(
+      panel_table,
+      paste0("strip-", where),
+      fixed = TRUE,
+      trim = FALSE,
+      invert = TRUE
+    )
   
   # Place back new strips
-  panel_table <- with(template$layout, gtable::gtable_add_grob(
-    panel_table,
-    template$grobs,
-    t = t - 1 + strp_rows[1],
-    l = l - 1 + strp_cols[1],
-    b = b - 1 + strp_rows[1],
-    r = r - 1 + strp_cols[1],
-    z = z, clip = clip, name = name
-  ))
+  panel_table <- with(
+    template$layout,
+    gtable::gtable_add_grob(
+      panel_table,
+      template$grobs,
+      t = t - 1 + strp_rows[1],
+      l = l - 1 + strp_cols[1],
+      b = b - 1 + strp_rows[1],
+      r = r - 1 + strp_cols[1],
+      z = z,
+      clip = clip,
+      name = name
+    )
+  )
   panel_table
 }
