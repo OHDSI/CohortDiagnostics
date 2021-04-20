@@ -458,6 +458,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   getIncludeOrSourceConcepts <- shiny::reactive({
+    data <- NULL
     databaseIdToFilter <- database %>% 
       dplyr::filter(.data$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchema) %>% 
       dplyr::pull(.data$databaseId)
