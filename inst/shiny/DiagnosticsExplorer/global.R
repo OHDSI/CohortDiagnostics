@@ -21,7 +21,7 @@ defaultResultsSchema <- 'CdSkeletonCohortDiagnosticsStudy'
 defaultVocabularySchema <- defaultResultsSchema
 alternateVocabularySchema <- c('vocabulary')
 
-defaultDatabaseMode <- TRUE # Use file system if FALSE
+defaultDatabaseMode <- FALSE # Use file system if FALSE
 
 if (!exists("shinySettings")) {
   writeLines("Using default settings")
@@ -110,13 +110,6 @@ if (databaseMode) {
   # vocabularyTablesOnServer[[i]] <- intersect(x = )
   # }
   loadResultsTable("database", required = TRUE)
-  if (nrow(database) > 0 &&
-      "vocabularyVersion" %in% colnames(database)) {
-    database <- database %>%
-      dplyr::mutate(
-        databaseIdWithVocabularyVersion = paste0(databaseId, " (", .data$vocabularyVersion, ")")
-      )
-  }
   loadResultsTable("cohort", required = TRUE)
   loadResultsTable("temporal_time_ref")
   loadResultsTable("concept_sets")
@@ -145,6 +138,16 @@ if (databaseMode) {
   }
   dataSource <-
     createFileDataSource(localDataPath, envir = .GlobalEnv)
+}
+
+if (exists("database")) {
+  if (nrow(database) > 0 &&
+      "vocabularyVersion" %in% colnames(database)) {
+    database <- database %>%
+      dplyr::mutate(
+        databaseIdWithVocabularyVersion = paste0(databaseId, " (", .data$vocabularyVersion, ")")
+      )
+  }
 }
 
 if (exists("cohort")) {
