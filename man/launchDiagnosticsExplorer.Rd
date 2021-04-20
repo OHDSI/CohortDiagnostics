@@ -27,10 +27,10 @@ Premerged file.}
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
 DatabaseConnector package, specifying how to connect to the server where
-the CohortDiagnostics results have been uploaded using the 
+the CohortDiagnostics results have been uploaded using the
 \code{\link{uploadResults}} function.}
 
-\item{resultsDatabaseSchema}{The schema on the database server where the CohortDiagnostics results 
+\item{resultsDatabaseSchema}{The schema on the database server where the CohortDiagnostics results
 have been uploaded.}
 
 \item{vocabularyDatabaseSchema}{(Deprecated) Please use vocabularyDatabaseSchemas.}

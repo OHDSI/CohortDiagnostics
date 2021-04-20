@@ -1,20 +1,19 @@
 # Copyright 2021 Observational Health Data Sciences and Informatics
 #
 # This file is part of CohortDiagnostics
-# 
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-# 
+#
 #     http://www.apache.org/licenses/LICENSE-2.0
-# 
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# 
-
+#
 
 exportCharacterization <- function(characteristics,
                                    databaseId,
@@ -28,38 +27,54 @@ exportCharacterization <- function(characteristics,
   if (!"covariates" %in% names(characteristics)) {
     warning("No characterization output for submitted cohorts")
   } else if (dplyr::pull(dplyr::count(characteristics$covariateRef)) > 0) {
-    characteristics$filteredCovariates <- characteristics$covariates %>% 
-      dplyr::filter(mean >= 0.0001) %>% 
-      dplyr::mutate(databaseId = !!databaseId) %>% 
-      dplyr::left_join(counts, by = c("cohortId", "databaseId"), copy = TRUE) %>%
-      dplyr::mutate(mean = dplyr::case_when(.data$mean != 0 & .data$mean < minCellCount / .data$cohortEntries ~ -minCellCount / .data$cohortEntries, 
-                                            TRUE ~ .data$mean)) %>%
-      dplyr::mutate(sd = dplyr::case_when(.data$mean >= 0 ~ sd)) %>% 
+    characteristics$filteredCovariates <-
+      characteristics$covariates %>%
+      dplyr::filter(mean >= 0.0001) %>%
+      dplyr::mutate(databaseId = !!databaseId) %>%
+      dplyr::left_join(counts,
+                       by = c("cohortId", "databaseId"),
+                       copy = TRUE) %>%
+      dplyr::mutate(
+        mean = dplyr::case_when(
+          .data$mean != 0 &
+            .data$mean < minCellCount / .data$cohortEntries ~ -minCellCount / .data$cohortEntries,
+          TRUE ~ .data$mean
+        )
+      ) %>%
+      dplyr::mutate(sd = dplyr::case_when(.data$mean >= 0 ~ sd)) %>%
       dplyr::mutate(mean = round(.data$mean, digits = 4),
                     sd = round(.data$sd, digits = 4)) %>%
       dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
     
     if (dplyr::pull(dplyr::count(characteristics$filteredCovariates)) > 0) {
       covariateRef <- dplyr::collect(characteristics$covariateRef)
-      writeToCsv(data = covariateRef,
-                 fileName = covariateRefFileName,
-                 incremental = incremental,
-                 covariateId = covariateRef$covariateId)
+      writeToCsv(
+        data = covariateRef,
+        fileName = covariateRefFileName,
+        incremental = incremental,
+        covariateId = covariateRef$covariateId
+      )
       analysisRef <- dplyr::collect(characteristics$analysisRef)
-      writeToCsv(data = analysisRef,
-                 fileName = analysisRefFileName,
-                 incremental = incremental,
-                 analysisId = analysisRef$analysisId)
+      writeToCsv(
+        data = analysisRef,
+        fileName = analysisRefFileName,
+        incremental = incremental,
+        analysisId = analysisRef$analysisId
+      )
       if (!is.null(timeRefFileName)) {
         timeRef <- dplyr::collect(characteristics$timeRef)
-        writeToCsv(data = timeRef,
-                   fileName = timeRefFileName,
-                   incremental = incremental,
-                   analysisId = timeRef$timeId)
+        writeToCsv(
+          data = timeRef,
+          fileName = timeRefFileName,
+          incremental = incremental,
+          analysisId = timeRef$timeId
+        )
       }
-      writeCovariateDataAndromedaToCsv(data = characteristics$filteredCovariates, 
-                                       fileName = covariateValueFileName, 
-                                       incremental = incremental)
+      writeCovariateDataAndromedaToCsv(
+        data = characteristics$filteredCovariates,
+        fileName = covariateValueFileName,
+        incremental = incremental
+      )
     }
-  } 
+  }
 }

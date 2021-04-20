@@ -17,7 +17,6 @@
 # limitations under the License.
 
 # Format and check code
-# OhdsiRTools::formatRFolder() (note: this function has been impacted by change in formatR)
 OhdsiRTools::checkUsagePackage("CohortDiagnostics")
 OhdsiRTools::updateCopyrightYearFolder()
 devtools::spell_check()

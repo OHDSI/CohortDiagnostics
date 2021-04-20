@@ -13,6 +13,6 @@ checkInputFileEncoding(fileName)
 Throws an error if the input file does not have the correct encoding.
 }
 \description{
-For its input files, CohortDiagnostics only accepts UTF-8 or ASCII character encoding. This 
+For its input files, CohortDiagnostics only accepts UTF-8 or ASCII character encoding. This
 function can be used to check whether a file meets these criteria.
 }
