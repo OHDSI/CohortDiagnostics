@@ -26,7 +26,7 @@ if (is(dataSource, "environment")) {
 } else {
   choicesFordatabaseOrVocabularySchema <- list(
     'From site' = database$databaseIdWithVocabularyVersion,
-    'Reference Vocabulary' = c(vocabularyDatabaseSchemas)
+    'Reference Vocabulary' = vocabularyDatabaseSchemas
   )
 }
 
@@ -388,7 +388,6 @@ bodyTabItems <- shinydashboard::tabItems(
                       )
                     ),
                     tags$td(
-                      
                       shinyWidgets::pickerInput(
                         inputId = "databaseOrVocabularySchema",
                         label = "Vocabulary version choices:",

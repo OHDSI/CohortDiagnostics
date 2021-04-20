@@ -432,29 +432,81 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  getResolvedOrMappedConceptSetForAllVocabulary <- shiny::reactive(x = {
+    data <- NULL
+    row <- selectedCohortDefinitionRow()
+    if (is.null(row) || is.null(cohortDefinitionConceptSetExpressionRow()$id)) {
+      return(NULL)
+    }
+    outputResolved <- list()
+    outputMapped <- list()
+    for (i in (1:length(vocabularyDatabaseSchemas))) {
+      vocabularyDatabaseSchema <- vocabularyDatabaseSchemas[[i]]
+      output <-
+        resolveMappedConceptSetFromVocabularyDatabaseSchema(dataSource = dataSource,
+                                                            conceptSets = conceptSets %>% 
+                                                              dplyr::filter(cohortId == selectedCohortDefinitionRow()$cohortId),
+                                                            vocabularyDatabaseSchema = vocabularyDatabaseSchema)
+      outputResolved <- output$resolved
+      outputMapped <- output$mapped
+      outputResolved$vocabularyDatabaseSchema <- vocabularyDatabaseSchema
+      outputMapped$vocabularyDatabaseSchema <- vocabularyDatabaseSchema
+    }
+    outputResolved <- dplyr::bind_rows(outputResolved)
+    outputMapped <- dplyr::bind_rows(outputMapped)
+    return(list(resolved = outputResolved, mapped = outputMapped))
+  })
+  
   getIncludeOrSourceConcepts <- shiny::reactive({
-    output <- getResolvedOrMappedConceptSetForAllDatabase() 
-    
     databaseIdToFilter <- database %>% 
       dplyr::filter(.data$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchema) %>% 
       dplyr::pull(.data$databaseId)
     
-    if (!is.null(output) && length(output) == 2) {
-      source <-
-        (input$conceptSetsType == "Mapped")
-      if (source) {
-        data <- output$mapped %>% 
-          dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id) %>% 
-          dplyr::filter(.data$databaseId == !!databaseIdToFilter) %>% 
-          dplyr::select(-.data$databaseId, -.data$conceptSetId)
-        data$resolvedConceptId <- as.factor(data$resolvedConceptId)
-      } else {
-        data <- output$resolved %>% 
-          dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id) %>% 
-          dplyr::filter(.data$databaseId == !!databaseIdToFilter) %>% 
-          dplyr::select(-.data$databaseId, -.data$conceptSetId)
+    vocabularyDataSchemaToFilter <- intersect(vocabularyDatabaseSchemas, 
+                                              input$databaseOrVocabularySchema)
+    
+    if (length(databaseIdToFilter) > 0) {
+      resolvedOrMappedConceptSetForAllDatabase <- getResolvedOrMappedConceptSetForAllDatabase()
+      if (!is.null(resolvedOrMappedConceptSetForAllDatabase) && 
+          length(resolvedOrMappedConceptSetForAllDatabase) == 2) {
+        source <-
+          (input$conceptSetsType == "Mapped")
+        if (source) {
+          data <- resolvedOrMappedConceptSetForAllDatabase$mapped %>% 
+            dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id) %>% 
+            dplyr::filter(.data$databaseId == !!databaseIdToFilter) %>% 
+            dplyr::select(-.data$databaseId, -.data$conceptSetId)
+          data$resolvedConceptId <- as.factor(data$resolvedConceptId)
+        } else {
+          data <- resolvedOrMappedConceptSetForAllDatabase$resolved %>% 
+            dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id) %>% 
+            dplyr::filter(.data$databaseId == !!databaseIdToFilter) %>% 
+            dplyr::select(-.data$databaseId, -.data$conceptSetId)
+        }
       }
-      
+    }
+    
+    if (length(vocabularyDataSchemaToFilter) > 0) {
+      resolvedOrMappedConceptSetForAllVocabulary <- getResolvedOrMappedConceptSetForAllVocabulary()
+      if (!is.null(resolvedOrMappedConceptSetForAllVocabulary) && 
+          length(resolvedOrMappedConceptSetForAllVocabulary) == 2) {
+        source <-
+          (input$conceptSetsType == "Mapped")
+        if (source) {
+          data <- resolvedOrMappedConceptSetForAllVocabulary$mapped %>% 
+            dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id) %>% 
+            dplyr::filter(.data$vocabularyId == !!vocabularyDataSchemaToFilter) %>% 
+            dplyr::select(-.data$vocabularyId, -.data$conceptSetId)
+          data$resolvedConceptId <- as.factor(data$resolvedConceptId)
+        } else {
+          data <- resolvedOrMappedConceptSetForAllVocabulary$resolved %>% 
+            dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id) %>% 
+            dplyr::filter(.data$vocabularyId == !!vocabularyDataSchemaToFilter) %>% 
+            dplyr::select(-.data$vocabularyId, -.data$conceptSetId)
+        }
+      }
+    }
+    if (!is.null(data) && nrow(data) > 0) {
       data$conceptClassId <- as.factor(data$conceptClassId)
       data$domainId <- as.factor(data$domainId)
       data$conceptCode <- as.factor(data$conceptCode)
@@ -463,11 +515,8 @@ shiny::shinyServer(function(input, output, session) {
       data$vocabularyId <- as.factor(data$vocabularyId)
       data$standardConcept <- as.factor(data$standardConcept)
       colnames(data) <- camelCaseToTitleCase(colnames(data))
-      
-      return(data)
-    } else {
-      return(NULL)
     }
+    return(data)
   })
   
   output$cohortDefinitionIncludedStandardConceptsTable <-
