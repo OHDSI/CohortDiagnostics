@@ -158,7 +158,6 @@ if (exists("cohort")) {
     dplyr::mutate(compoundName = paste0(.data$shortName, .data$cohortName))
 }
 
-
 if (exists("temporalTimeRef")) {
   temporalCovariateChoices <- get("temporalTimeRef") %>%
     dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
