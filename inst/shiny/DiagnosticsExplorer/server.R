@@ -1834,6 +1834,60 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   # Characterization -------------------------------------------------
+  getConceptSetNameForFilter <- shiny::reactive(x = {
+    if (length(cohortId()) == 0 || length(databaseIds()) == 0) {
+      return(NULL)
+    }
+    
+    jsonExpression <- cohortSubset() %>% 
+      dplyr::filter(.data$cohortId == cohortId()) %>% 
+      dplyr::select(.data$json)
+    
+    jsonExpression <- RJSONIO::fromJSON(jsonExpression$json, digits = 23)
+    expression <-
+      getConceptSetDetailsFromCohortDefinition(cohortDefinitionExpression = jsonExpression)
+    
+    if (!is.null(expression)) {
+      expression <- expression$conceptSetExpression %>% 
+        dplyr::select(.data$name)
+      
+      return(expression)
+    } else {
+      return(NULL)
+    }
+  })
+  
+  getConceptSetIds <- shiny::reactive(x = {
+    return(conceptSets$conceptSetId[conceptSets$conceptSetName  %in% input$conceptIds])
+  })
+  
+  getResoledAndMappedConceptIdsForFilters <- shiny::reactive({
+    output <-
+      resolveMappedConceptSet(
+        dataSource = dataSource,
+        databaseIds = databaseIds(),
+        cohortId = cohortId()
+      )
+    
+    resolvedConceptSetIds <- output$resolved %>% 
+      dplyr::filter(.data$conceptSetId %in% getConceptSetIds()) %>% 
+      dplyr::select(.data$conceptId)
+    
+    mappedConceptSetIds <- output$mapped %>% 
+      dplyr::filter(.data$conceptSetId %in% getConceptSetIds()) %>% 
+      dplyr::select(.data$conceptId) 
+    
+      output <- resolvedConceptSetIds %>% 
+        dplyr::bind_rows(mappedConceptSetIds) %>% unique() %>% 
+        dplyr::pull()
+      
+      if (!is.null(output)) {
+        return(output)
+      } else {
+        return(NULL)
+      }
+  })
+  
   characterizationDomainNameFilter <- shiny::reactive({
     return(input$characterizationDomainNameFilter)
   })
@@ -1897,6 +1951,17 @@ shiny::shinyServer(function(input, output, session) {
       selected = subset
     )
   })
+  
+  shiny::observe({
+    subset <- getConceptSetNameForFilter()$name %>% sort() %>% unique()
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "conceptIds",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = subset
+    )
+  })
+  
   
   output$characterizationTable <- DT::renderDataTable(expr = {
     data <- characterizationTableData()
@@ -2020,6 +2085,11 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$analysisName %in% characterizationAnalysisNameFilter()) %>%
         dplyr::filter(.data$domainId %in% characterizationDomainNameFilter())
       
+      if (!is.null(input$conceptIds)) {
+        data <- data %>% 
+          dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
+      }
+      
       if (nrow(data) == 0) {
         return(dplyr::tibble(
           Note = paste0("No data available for selected databases and cohorts")
@@ -2126,6 +2196,11 @@ shiny::shinyServer(function(input, output, session) {
     } else if (input$temporalProportionOrContinuous == "Continuous") {
       data <- data %>%
         dplyr::filter(.data$isBinary == 'N')
+    }
+    
+    if (!is.null(input$conceptIds)) {
+      data <- data %>% 
+        dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
     }
     
     return(data)
@@ -2410,6 +2485,12 @@ shiny::shinyServer(function(input, output, session) {
       balance <- balance %>%
         dplyr::filter(.data$analysisName %in% charCompareAnalysisNameFilter()) %>%
         dplyr::filter(.data$domainId %in% charaCompareDomainNameFilter())
+      
+      if (!is.null(input$conceptIds)) {
+        balance <- balance %>% 
+          dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
+      }
+      
       table <- balance %>%
         dplyr::select(
           .data$cohortId1,
@@ -2483,6 +2564,12 @@ shiny::shinyServer(function(input, output, session) {
     data <- data %>%
       dplyr::filter(.data$analysisName %in% charCompareAnalysisNameFilter()) %>%
       dplyr::filter(.data$domainId %in% charaCompareDomainNameFilter())
+    
+    if (!is.null(input$conceptIds)) {
+      data <- data %>% 
+        dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
+    }
+    
     if (input$charCompareType == "Plot" &&
         input$charCompareProportionOrContinuous == "Proportion") {
       data <- data %>%
@@ -2647,6 +2734,11 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::filter(.data$analysisName %in% temporalCompareAnalysisNameFilter()) %>%
           dplyr::filter(.data$domainId %in% temporalCompareDomainNameFilter())
         
+        if (!is.null(input$conceptIds)) {
+          balance <- balance %>% 
+            dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
+        }
+        
         if (nrow(balance) == 0) {
           return(dplyr::tibble(Note = "No data for the selected combination."))
         }
@@ -2722,7 +2814,13 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- data %>%
       dplyr::filter(.data$analysisName %in% temporalCompareAnalysisNameFilter()) %>%
-      dplyr::filter(.data$domainId %in% temporalCompareDomainNameFilter())
+      dplyr::filter(.data$domainId %in% temporalCompareDomainNameFilter()) 
+    
+    if (!is.null(input$conceptIds)) {
+      data <- data %>% 
+        dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
+    }
+    
     if (nrow(data) == 0) {
       return(dplyr::tibble(Note = "No data for the selected combination."))
     }
