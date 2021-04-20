@@ -359,16 +359,17 @@ shiny::shinyServer(function(input, output, session) {
   
   cohortDefinitionConceptSetExpressionRow <- shiny::reactive(x = {
     idx <- input$conceptsetExpressionTable_rows_selected
-    if (length(idx) > 0) {
-      if (!is.null(cohortDefinistionConceptSetExpression()$conceptSetExpression) &&
-          nrow(cohortDefinistionConceptSetExpression()$conceptSetExpression) > 0) {
-        data <-
-          cohortDefinistionConceptSetExpression()$conceptSetExpression[idx,]
-        if (!is.null(data)) {
-          return(data)
-        } else {
-          return(NULL)
-        }
+    if (length(idx) == 0 || is.null(idx)) {
+      return(NULL)
+    }
+    if (!is.null(cohortDefinistionConceptSetExpression()$conceptSetExpression) &&
+        nrow(cohortDefinistionConceptSetExpression()$conceptSetExpression) > 0) {
+      data <-
+        cohortDefinistionConceptSetExpression()$conceptSetExpression[idx,]
+      if (!is.null(data)) {
+        return(data)
+      } else {
+        return(NULL)
       }
     }
   })
