@@ -53,7 +53,7 @@ getCohortCounts <- function(connectionDetails = NULL,
     )
   tablesInServer <-
     tolower(DatabaseConnector::dbListTables(conn = connection, schema = cohortDatabaseSchema))
-  if ('cohortTable' %in% tablesInServer) {
+  if (tolower(cohortTable) %in% tablesInServer) {
     counts <-
       DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE) %>%
       tidyr::tibble()
