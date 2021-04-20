@@ -310,6 +310,28 @@ sidebarMenu <-
           virtualScroll = 50
         )
       )
+    ),
+    shiny::conditionalPanel(
+      condition = "input.tabs == 'cohortCharacterization' |
+      input.tabs == 'compareCohortCharacterization' |
+      input.tabs == 'temporalCharacterization' |
+      input.tabs == 'compareTemporalCharacterization'",
+      shinyWidgets::pickerInput(
+        inputId = "conceptSetsToFilterCharacterization",
+        label = "Concept sets",
+        choices = c(""),
+        selected = c(""),
+        multiple = TRUE,
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        options = shinyWidgets::pickerOptions(
+          actionsBox = TRUE,
+          liveSearch = TRUE,
+          size = 10,
+          liveSearchStyle = "contains",
+          liveSearchPlaceholder = "Type here to search",
+          virtualScroll = 50
+        )
+      )
     )
   )
 
@@ -609,15 +631,17 @@ bodyTabItems <- shinydashboard::tabItems(
               virtualScroll = 50
             )
           )
+        ),
+        tags$td(
+          shiny::radioButtons(
+            inputId = "indexEventBreakdownTableRadioButton",
+            label = "",
+            choices = c("All", "Standard concepts", "Non Standard Concepts"),
+            selected = "All",
+            inline = TRUE
+          )
         )
-      ),
-      shiny::radioButtons(
-        inputId = "indexEventBreakdownTableRadioButton",
-        label = "",
-        choices = c("All", "Standard concepts", "Non Standard Concepts"),
-        selected = "All",
-        inline = TRUE
-      ),
+      )
     ),
     DT::dataTableOutput(outputId = "breakdownTable")
   ),
