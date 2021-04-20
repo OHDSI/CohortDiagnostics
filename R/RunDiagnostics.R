@@ -390,27 +390,31 @@ runCohortDiagnostics <- function(packageName = NULL,
                                   cohortDatabaseSchema = cohortDatabaseSchema,
                                   cohortTable = cohortTable, 
                                   cohortIds = cohorts$cohortId)
-  cohortCounts <- cohortCounts %>% 
-    dplyr::mutate(databaseId = !!databaseId)
-  if (nrow(cohortCounts) > 0) {
-    cohortCounts <- enforceMinCellValue(data = cohortCounts, fieldName = "cohortEntries", minValues = minCellCount)
-    cohortCounts <- enforceMinCellValue(data = cohortCounts, fieldName = "cohortSubjects", minValues = minCellCount)
-  }
-  writeToCsv(data = cohortCounts, 
-             fileName = file.path(exportFolder, "cohort_count.csv"), 
-             incremental = FALSE, 
-             cohortId = subset$cohortId)
-  
-  if (nrow(cohortCounts) > 0) {
-    instantiatedCohorts <- cohortCounts %>% 
-      dplyr::pull(.data$cohortId)
-    ParallelLogger::logInfo(sprintf("Found %s of %s (%1.2f%%) submitted cohorts instantiated. ", 
-                                    length(instantiatedCohorts), 
-                                    nrow(cohorts),
-                                    100*(length(instantiatedCohorts)/nrow(cohorts))),
-                            "Beginning cohort diagnostics for instantiated cohorts. ")
+  if (!is.null(cohortCounts)) {
+    cohortCounts <- cohortCounts %>% 
+      dplyr::mutate(databaseId = !!databaseId)
+    if (nrow(cohortCounts) > 0) {
+      cohortCounts <- enforceMinCellValue(data = cohortCounts, fieldName = "cohortEntries", minValues = minCellCount)
+      cohortCounts <- enforceMinCellValue(data = cohortCounts, fieldName = "cohortSubjects", minValues = minCellCount)
+    }
+    writeToCsv(data = cohortCounts, 
+               fileName = file.path(exportFolder, "cohort_count.csv"), 
+               incremental = FALSE, 
+               cohortId = subset$cohortId)
+    
+    if (nrow(cohortCounts) > 0) {
+      instantiatedCohorts <- cohortCounts %>% 
+        dplyr::pull(.data$cohortId)
+      ParallelLogger::logInfo(sprintf("Found %s of %s (%1.2f%%) submitted cohorts instantiated. ", 
+                                      length(instantiatedCohorts), 
+                                      nrow(cohorts),
+                                      100*(length(instantiatedCohorts)/nrow(cohorts))),
+                              "Beginning cohort diagnostics for instantiated cohorts. ")
+    } else {
+      stop("All cohorts were either not instantiated or all have 0 records.")
+    }
   } else {
-    stop("All cohorts were either not instantiated or all have 0 records.")
+    stop("Cohort table should be instantiated. If there is no cohort table, there are no cohorts to diagnose.")
   }
 
   # Inclusion statistics -----------------------------------------------------------------------

@@ -48,14 +48,20 @@ getCohortCounts <- function(connectionDetails = NULL,
                                            cohort_database_schema = cohortDatabaseSchema,
                                            cohort_table = cohortTable,
                                            cohort_ids = cohortIds)
-  counts <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE) %>% 
-    tidyr::tibble()
-  delta <- Sys.time() - start
-  ParallelLogger::logInfo(paste("Counting cohorts took",
-                                signif(delta, 3),
-                                attr(delta, "units")))
-  return(counts)
-  
+  tablesInServer <-
+    tolower(DatabaseConnector::dbListTables(conn = connection, schema = cohortDatabaseSchema))
+  if ('cohortTable' %in% tablesInServer) {
+    counts <- DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
+    delta <- Sys.time() - start
+    ParallelLogger::logInfo(paste("Counting cohorts took",
+                                  signif(delta, 3),
+                                  attr(delta, "units")))
+    return(counts)
+  } else {
+    warning('Cohort table was not found. Was it created?')
+    return(NULL)
+  }
 }
 
 checkIfCohortInstantiated <- function(connection, cohortDatabaseSchema, cohortTable, cohortId) {
