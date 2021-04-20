@@ -22,14 +22,13 @@ cohortReference <- function(outputId) {
 }
 
 if (is(dataSource, "environment")) {
-  choicesFordatabaseOrVocabularySchema <- c(database$databaseId)
+  choicesFordatabaseOrVocabularySchema <- c(database$databaseIdWithVocabularyVersion)
 } else {
   choicesFordatabaseOrVocabularySchema <- list(
-    database = database$databaseId,
-    vocabularyDatabaseSchemas = c(vocabularyDatabaseSchemas)
+    'From site' = database$databaseIdWithVocabularyVersion,
+    'Reference Vocabulary' = c(vocabularyDatabaseSchemas)
   )
 }
-
 
 header <-
   shinydashboard::dashboardHeader(title = "Cohort Diagnostics")
@@ -392,7 +391,7 @@ bodyTabItems <- shinydashboard::tabItems(
                       
                       shinyWidgets::pickerInput(
                         inputId = "databaseOrVocabularySchema",
-                        label = "Database",
+                        label = "Vocabulary version choices:",
                         choices = choicesFordatabaseOrVocabularySchema,
                         multiple = FALSE,
                         width = NULL,

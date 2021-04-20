@@ -435,19 +435,23 @@ shiny::shinyServer(function(input, output, session) {
   getIncludeOrSourceConcepts <- shiny::reactive({
     output <- getResolvedOrMappedConceptSetForAllDatabase() 
     
+    databaseIdToFilter <- database %>% 
+      dplyr::filter(.data$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchema) %>% 
+      dplyr::pull(.data$databaseId)
+    
     if (!is.null(output) && length(output) == 2) {
       source <-
         (input$conceptSetsType == "Mapped")
       if (source) {
         data <- output$mapped %>% 
           dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id) %>% 
-          dplyr::filter(.data$databaseId == input$databaseOrVocabularySchema) %>% 
+          dplyr::filter(.data$databaseId == !!databaseIdToFilter) %>% 
           dplyr::select(-.data$databaseId, -.data$conceptSetId)
         data$resolvedConceptId <- as.factor(data$resolvedConceptId)
       } else {
         data <- output$resolved %>% 
           dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id) %>% 
-          dplyr::filter(.data$databaseId == input$databaseOrVocabularySchema) %>% 
+          dplyr::filter(.data$databaseId == !!databaseIdToFilter) %>% 
           dplyr::select(-.data$databaseId, -.data$conceptSetId)
       }
       
