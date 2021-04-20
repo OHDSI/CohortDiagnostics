@@ -621,8 +621,7 @@ getConceptDetails <- function(dataSource = .GlobalEnv,
 }
 
 resolveMappedConceptSetFromVocabularyDatabaseSchema <- function(dataSource = .GlobalEnv, 
-                                                                conceptSets, 
-                                                                source = FALSE,
+                                                                conceptSets,
                                                                 vocabularyDatabaseSchema = 'vocabulary') {
   if (is(dataSource, "environment")) {
     stop("Cannot resolve concept sets without a database connection")
@@ -650,13 +649,19 @@ resolveMappedConceptSetFromVocabularyDatabaseSchema <- function(dataSource = .Gl
                                         vocabulary_database_schema = vocabularyDatabaseSchema,
                                         snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble() %>% 
-      dplyr::arrange(.data$conceptId)
+      dplyr::arrange(.data$conceptId) %>% 
+      dplyr::select(.data$conceptSetId, .data$conceptId, .data$conceptName,
+                    .data$domainId, .data$vocabularyId, .data$conceptClassId,
+                    .data$standardConcept, .data$conceptCode, .data$invalidReason)
     mapped <- renderTranslateQuerySql(connection = dataSource$connection,
                                       sql = sqlMapped,
                                       vocabulary_database_schema = vocabularyDatabaseSchema,
                                       snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble() %>% 
-      dplyr::arrange(.data$conceptId)
+      dplyr::arrange(.data$conceptId) %>% 
+      dplyr::select(.data$conceptSetId, .data$conceptId, .data$conceptName,
+                    .data$domainId, .data$vocabularyId, .data$conceptClassId,
+                    .data$standardConcept, .data$conceptCode, .data$invalidReason)
   }
   data <- list(resolved = resolved, mapped = mapped)
   return(data)
