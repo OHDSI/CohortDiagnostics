@@ -22,7 +22,8 @@ cohortReference <- function(outputId) {
 }
 
 if (is(dataSource, "environment")) {
-  choicesFordatabaseOrVocabularySchema <- c(database$databaseIdWithVocabularyVersion)
+  choicesFordatabaseOrVocabularySchema <-
+    c(database$databaseIdWithVocabularyVersion)
 } else {
   choicesFordatabaseOrVocabularySchema <- list(
     'From site' = database$databaseIdWithVocabularyVersion,
@@ -310,28 +311,6 @@ sidebarMenu <-
         )
       )
     )
-    # shiny::conditionalPanel(
-    #   condition = "input.tabs == 'cohortCharacterization' |
-    #   input.tabs == 'compareCohortCharacterization' |
-    #   input.tabs == 'temporalCharacterization' |
-    #   input.tabs == 'compareTemporalCharacterization'",
-    #   shinyWidgets::pickerInput(
-    #     inputId = "conceptIds",
-    #     label = "Concept Ids",
-    #     choices = c(""),
-    #     selected = c(""),
-    #     multiple = TRUE,
-    #     choicesOpt = list(style = rep_len("color: black;", 999)),
-    #     options = shinyWidgets::pickerOptions(
-    #       actionsBox = TRUE,
-    #       liveSearch = TRUE,
-    #       size = 10,
-    #       liveSearchStyle = "contains",
-    #       liveSearchPlaceholder = "Type here to search",
-    #       virtualScroll = 50
-    #     )
-    #   )
-    # )
   )
 
 #Side bar code
@@ -369,50 +348,44 @@ bodyTabItems <- shinydashboard::tabItems(
                 style = "margin-top: 5px; margin-bottom: 5px;"
               ),
               DT::dataTableOutput(outputId = "conceptsetExpressionTable"),
-              shiny::conditionalPanel(
-                condition = "output.conceptSetExpressionRowSelected == true",
-                tags$table(
-                  tags$tr(
-                    tags$td(
-                      shiny::radioButtons(
-                        inputId = "conceptSetsType",
-                        label = "",
-                        choices = c(
-                          "Concept Set Expression",
-                          "Resolved",
-                          "Mapped",
-                          "Json"
-                        ),
-                        selected = "Concept Set Expression",
-                        inline = TRUE
-                      )
-                    ),
-                    tags$td(
-                      shinyWidgets::pickerInput(
-                        inputId = "databaseOrVocabularySchema",
-                        label = "Vocabulary version choices:",
-                        choices = choicesFordatabaseOrVocabularySchema,
-                        multiple = FALSE,
-                        width = NULL,
-                        inline = TRUE,
-                        choicesOpt = list(style = rep_len("color: black;", 999)),
-                        options = shinyWidgets::pickerOptions(
-                          actionsBox = TRUE,
-                          liveSearch = TRUE,
-                          size = 10,
-                          liveSearchStyle = "contains",
-                          liveSearchPlaceholder = "Type here to search",
-                          virtualScroll = 50
-                        )
-                      )
-                    )
-                  )
-                )
-              ),
+              shiny::conditionalPanel(condition = "output.conceptSetExpressionRowSelected == true",
+                                      tags$table(tags$tr(
+                                        tags$td(
+                                          shiny::radioButtons(
+                                            inputId = "conceptSetsType",
+                                            label = "",
+                                            choices = c("Concept Set Expression",
+                                                        "Resolved",
+                                                        "Mapped",
+                                                        "Json"),
+                                            selected = "Concept Set Expression",
+                                            inline = TRUE
+                                          )
+                                        ),
+                                        tags$td(
+                                          shinyWidgets::pickerInput(
+                                            inputId = "databaseOrVocabularySchema",
+                                            label = "Vocabulary version choices:",
+                                            choices = choicesFordatabaseOrVocabularySchema,
+                                            multiple = FALSE,
+                                            width = NULL,
+                                            inline = TRUE,
+                                            choicesOpt = list(style = rep_len("color: black;", 999)),
+                                            options = shinyWidgets::pickerOptions(
+                                              actionsBox = TRUE,
+                                              liveSearch = TRUE,
+                                              size = 10,
+                                              liveSearchStyle = "contains",
+                                              liveSearchPlaceholder = "Type here to search",
+                                              virtualScroll = 50
+                                            )
+                                          )
+                                        )
+                                      ))),
               shiny::conditionalPanel(
                 condition = "output.conceptSetExpressionRowSelected == true &
                 input.conceptSetsType != 'Resolved' &
-                input.conceptSetsType != 'Mapped' & 
+                input.conceptSetsType != 'Mapped' &
                 input.conceptSetsType != 'Json'",
                 DT::dataTableOutput(outputId = "cohortDefinitionConceptSetsTable")
               ),
@@ -426,13 +399,11 @@ bodyTabItems <- shinydashboard::tabItems(
               ),
               shiny::conditionalPanel(
                 condition = "input.conceptSetsType == 'Json'",
-                copyToClipboardButton(toCopyId = "cohortConceptsetExpressionJson", 
+                copyToClipboardButton(toCopyId = "cohortConceptsetExpressionJson",
                                       style = "margin-top: 5px; margin-bottom: 5px;"),
                 shiny::verbatimTextOutput(outputId = "cohortConceptsetExpressionJson"),
                 tags$head(
-                  tags$style(
-                    "#cohortConceptsetExpressionJson { max-height:400px};"
-                  )
+                  tags$style("#cohortConceptsetExpressionJson { max-height:400px};")
                 )
               )
             ),
@@ -584,15 +555,17 @@ bodyTabItems <- shinydashboard::tabItems(
     shiny::radioButtons(
       inputId = "includedType",
       label = "",
-      choices = c("Source Concepts", "Standard Concepts"),
-      selected = "Source Concepts",
+      choices = c("Source fields", "Standard fields"),
+      selected = "Source fields",
       inline = TRUE
     ),
     DT::dataTableOutput("includedConceptsTable")
   ),
-  shinydashboard::tabItem(tabName = "orphanConcepts",
-                          cohortReference("orphanConceptsSelectedCohort"),
-                          DT::dataTableOutput(outputId = "orphanConceptsTable")),
+  shinydashboard::tabItem(
+    tabName = "orphanConcepts",
+    cohortReference("orphanConceptsSelectedCohort"),
+    DT::dataTableOutput(outputId = "orphanConceptsTable")
+  ),
   shinydashboard::tabItem(
     tabName = "inclusionRuleStats",
     cohortReference("inclusionRuleStatSelectedCohort"),
@@ -656,131 +629,123 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "cohortCharacterization",
     cohortReference("characterizationSelectedCohort"),
-    tags$table(
-      tags$tr(
-        tags$td(
-          shiny::radioButtons(
-            inputId = "charType",
-            label = "",
-            choices = c("Pretty", "Raw"),
-            selected = "Pretty",
-            inline = TRUE
-          )
-        ),
-        tags$td(
-          shiny::conditionalPanel(
-            condition = "input.charType == 'Raw'",
-            tags$table(
-              tags$tr(
-                tags$td(
-                  shinyWidgets::pickerInput(
-                    inputId = "characterizationAnalysisNameFilter",
-                    label = "Analysis name",
-                    choices = c(""),
-                    selected = c(""),
-                    inline = TRUE,
-                    multiple = TRUE,
-                    width = 300,
-                    choicesOpt = list(style = rep_len("color: black;", 999)),
-                    options = shinyWidgets::pickerOptions(
-                      actionsBox = TRUE,
-                      liveSearch = TRUE,
-                      size = 10,
-                      liveSearchStyle = "contains",
-                      liveSearchPlaceholder = "Type here to search",
-                      virtualScroll = 50
-                    )
-                  )
-                ), 
-                tags$td(
-                  shinyWidgets::pickerInput(
-                    inputId = "characterizationDomainNameFilter",
-                    label = "Domain name",
-                    choices = c(""),
-                    selected = c(""),
-                    inline = TRUE,
-                    multiple = TRUE,
-                    width = 300,
-                    choicesOpt = list(style = rep_len("color: black;", 999)),
-                    options = shinyWidgets::pickerOptions(
-                      actionsBox = TRUE,
-                      liveSearch = TRUE,
-                      size = 10,
-                      liveSearchStyle = "contains",
-                      liveSearchPlaceholder = "Type here to search",
-                      virtualScroll = 50
-                    )
-                  )
-                ),
-                tags$td(
-                  shiny::radioButtons(
-                    inputId = "charProportionOrContinuous",
-                    label = "",
-                    choices = c("All", "Proportion", "Continuous"),
-                    selected = "All",
-                    inline = TRUE
-                  )
-                )
-              )
-            )
-          )
+    tags$table(tags$tr(
+      tags$td(
+        shiny::radioButtons(
+          inputId = "charType",
+          label = "",
+          choices = c("Pretty", "Raw"),
+          selected = "Pretty",
+          inline = TRUE
         )
+      ),
+      tags$td(
+        shiny::conditionalPanel(condition = "input.charType == 'Raw'",
+                                tags$table(tags$tr(
+                                  tags$td(
+                                    shinyWidgets::pickerInput(
+                                      inputId = "characterizationAnalysisNameFilter",
+                                      label = "Analysis name",
+                                      choices = c(""),
+                                      selected = c(""),
+                                      inline = TRUE,
+                                      multiple = TRUE,
+                                      width = 300,
+                                      choicesOpt = list(style = rep_len("color: black;", 999)),
+                                      options = shinyWidgets::pickerOptions(
+                                        actionsBox = TRUE,
+                                        liveSearch = TRUE,
+                                        size = 10,
+                                        liveSearchStyle = "contains",
+                                        liveSearchPlaceholder = "Type here to search",
+                                        virtualScroll = 50
+                                      )
+                                    )
+                                  ),
+                                  tags$td(
+                                    shinyWidgets::pickerInput(
+                                      inputId = "characterizationDomainNameFilter",
+                                      label = "Domain name",
+                                      choices = c(""),
+                                      selected = c(""),
+                                      inline = TRUE,
+                                      multiple = TRUE,
+                                      width = 300,
+                                      choicesOpt = list(style = rep_len("color: black;", 999)),
+                                      options = shinyWidgets::pickerOptions(
+                                        actionsBox = TRUE,
+                                        liveSearch = TRUE,
+                                        size = 10,
+                                        liveSearchStyle = "contains",
+                                        liveSearchPlaceholder = "Type here to search",
+                                        virtualScroll = 50
+                                      )
+                                    )
+                                  ),
+                                  tags$td(
+                                    shiny::radioButtons(
+                                      inputId = "charProportionOrContinuous",
+                                      label = "",
+                                      choices = c("All", "Proportion", "Continuous"),
+                                      selected = "All",
+                                      inline = TRUE
+                                    )
+                                  )
+                                )))
       )
-    ),
+    )),
     DT::dataTableOutput(outputId = "characterizationTable")
   ),
   shinydashboard::tabItem(
     tabName = "temporalCharacterization",
     cohortReference("temporalCharacterizationSelectedCohort"),
-      tags$table(
-        tags$tr(
-          tags$td(
-            shinyWidgets::pickerInput(
-              inputId = "temporalAnalysisNameFilter",
-              label = "Analysis name",
-              choices = c(""),
-              selected = c(""),
-              multiple = TRUE,
-              choicesOpt = list(style = rep_len("color: black;", 999)),
-              options = shinyWidgets::pickerOptions(
-                actionsBox = TRUE,
-                liveSearch = TRUE,
-                size = 10,
-                liveSearchStyle = "contains",
-                liveSearchPlaceholder = "Type here to search",
-                virtualScroll = 50
-              )
-            )
-          ), 
-          tags$td(
-            shinyWidgets::pickerInput(
-              inputId = "temporalDomainNameFilter",
-              label = "Domain name",
-              choices = c(""),
-              selected = c(""),
-              multiple = TRUE,
-              choicesOpt = list(style = rep_len("color: black;", 999)),
-              options = shinyWidgets::pickerOptions(
-                actionsBox = TRUE,
-                liveSearch = TRUE,
-                size = 10,
-                liveSearchStyle = "contains",
-                liveSearchPlaceholder = "Type here to search",
-                virtualScroll = 50
-              )
-            )
-          ),
-          tags$td(
-            shiny::radioButtons(
-              inputId = "temporalProportionOrContinuous",
-              label = "",
-              choices = c("All", "Proportion", "Continuous"),
-              selected = "All",
-              inline = TRUE
-            )
+    tags$table(tags$tr(
+      tags$td(
+        shinyWidgets::pickerInput(
+          inputId = "temporalAnalysisNameFilter",
+          label = "Analysis name",
+          choices = c(""),
+          selected = c(""),
+          multiple = TRUE,
+          choicesOpt = list(style = rep_len("color: black;", 999)),
+          options = shinyWidgets::pickerOptions(
+            actionsBox = TRUE,
+            liveSearch = TRUE,
+            size = 10,
+            liveSearchStyle = "contains",
+            liveSearchPlaceholder = "Type here to search",
+            virtualScroll = 50
           )
         )
       ),
+      tags$td(
+        shinyWidgets::pickerInput(
+          inputId = "temporalDomainNameFilter",
+          label = "Domain name",
+          choices = c(""),
+          selected = c(""),
+          multiple = TRUE,
+          choicesOpt = list(style = rep_len("color: black;", 999)),
+          options = shinyWidgets::pickerOptions(
+            actionsBox = TRUE,
+            liveSearch = TRUE,
+            size = 10,
+            liveSearchStyle = "contains",
+            liveSearchPlaceholder = "Type here to search",
+            virtualScroll = 50
+          )
+        )
+      ),
+      tags$td(
+        shiny::radioButtons(
+          inputId = "temporalProportionOrContinuous",
+          label = "",
+          choices = c("All", "Proportion", "Continuous"),
+          selected = "All",
+          inline = TRUE
+        )
+      )
+    )),
     DT::dataTableOutput("temporalCharacterizationTable")
   ),
   shinydashboard::tabItem(
@@ -810,60 +775,56 @@ bodyTabItems <- shinydashboard::tabItems(
       selected = "Plot",
       inline = TRUE
     ),
-    shiny::conditionalPanel(
-      condition = "input.charCompareType == 'Raw table' | input.charCompareType=='Plot'",
-      tags$table(
-        tags$tr(
-          tags$td(
-            shinyWidgets::pickerInput(
-              inputId = "charCompareAnalysisNameFilter",
-              label = "Analysis name",
-              choices = c(""),
-              selected = c(""),
-              multiple = TRUE,
-              width = 200,
-              choicesOpt = list(style = rep_len("color: black;", 999)),
-              options = shinyWidgets::pickerOptions(
-                actionsBox = TRUE,
-                liveSearch = TRUE,
-                size = 10,
-                liveSearchStyle = "contains",
-                liveSearchPlaceholder = "Type here to search",
-                virtualScroll = 50
-              )
-            )
-          ), 
-          tags$td(
-            shinyWidgets::pickerInput(
-              inputId = "charaCompareDomainNameFilter",
-              label = "Domain name",
-              choices = c(""),
-              selected = c(""),
-              multiple = TRUE,
-              width = 200,
-              choicesOpt = list(style = rep_len("color: black;", 999)),
-              options = shinyWidgets::pickerOptions(
-                actionsBox = TRUE,
-                liveSearch = TRUE,
-                size = 10,
-                liveSearchStyle = "contains",
-                liveSearchPlaceholder = "Type here to search",
-                virtualScroll = 50
-              )
-            )
-          ),
-          tags$td(
-            shiny::radioButtons(
-              inputId = "charCompareProportionOrContinuous",
-              label = "",
-              choices = c("All", "Proportion", "Continuous"),
-              selected = "All",
-              inline = TRUE
-            )
-          )
-        )
-      )
-    ),
+    shiny::conditionalPanel(condition = "input.charCompareType == 'Raw table' | input.charCompareType=='Plot'",
+                            tags$table(tags$tr(
+                              tags$td(
+                                shinyWidgets::pickerInput(
+                                  inputId = "charCompareAnalysisNameFilter",
+                                  label = "Analysis name",
+                                  choices = c(""),
+                                  selected = c(""),
+                                  multiple = TRUE,
+                                  width = 200,
+                                  choicesOpt = list(style = rep_len("color: black;", 999)),
+                                  options = shinyWidgets::pickerOptions(
+                                    actionsBox = TRUE,
+                                    liveSearch = TRUE,
+                                    size = 10,
+                                    liveSearchStyle = "contains",
+                                    liveSearchPlaceholder = "Type here to search",
+                                    virtualScroll = 50
+                                  )
+                                )
+                              ),
+                              tags$td(
+                                shinyWidgets::pickerInput(
+                                  inputId = "charaCompareDomainNameFilter",
+                                  label = "Domain name",
+                                  choices = c(""),
+                                  selected = c(""),
+                                  multiple = TRUE,
+                                  width = 200,
+                                  choicesOpt = list(style = rep_len("color: black;", 999)),
+                                  options = shinyWidgets::pickerOptions(
+                                    actionsBox = TRUE,
+                                    liveSearch = TRUE,
+                                    size = 10,
+                                    liveSearchStyle = "contains",
+                                    liveSearchPlaceholder = "Type here to search",
+                                    virtualScroll = 50
+                                  )
+                                )
+                              ),
+                              tags$td(
+                                shiny::radioButtons(
+                                  inputId = "charCompareProportionOrContinuous",
+                                  label = "",
+                                  choices = c("All", "Proportion", "Continuous"),
+                                  selected = "All",
+                                  inline = TRUE
+                                )
+                              )
+                            ))),
     shiny::conditionalPanel(condition = "input.charCompareType=='Pretty table' | input.charCompareType=='Raw table'",
                             DT::dataTableOutput("charCompareTable")),
     shiny::conditionalPanel(
@@ -873,31 +834,6 @@ bodyTabItems <- shinydashboard::tabItems(
         width = NULL,
         status = "primary",
         shiny::htmlOutput("compareCohortCharacterizationSelectedCohort"),
-        # shinyWidgets::pickerInput(
-        #   inputId = "domainId",
-        #   label = "Filter By Domain",
-        #   choices = c(
-        #     "all",
-        #     "condition",
-        #     "device",
-        #     "drug",
-        #     "measurement",
-        #     "observation",
-        #     "procedure",
-        #     "other"
-        #   ),
-        #   multiple = FALSE,
-        #   choicesOpt = list(style = rep_len("color: black;", 999)),
-        #   options = shinyWidgets::pickerOptions(
-        #     actionsBox = TRUE,
-        #     liveSearch = TRUE,
-        #     size = 10,
-        #     liveSearchStyle = 'contains',
-        #     liveSearchPlaceholder = "Type here to search",
-        #     virtualScroll = 50
-        #   )
-        #   
-        # ),
         ggiraph::ggiraphOutput(
           outputId = "charComparePlot",
           width = "100%",
@@ -912,66 +848,65 @@ bodyTabItems <- shinydashboard::tabItems(
     shiny::radioButtons(
       inputId = "temporalCharacterizationType",
       label = "",
-      choices = c("Raw table", "Plot"), #"Pretty table", removed pretty option for compare temporal characterization
+      choices = c("Raw table", "Plot"),
+      #"Pretty table", removed pretty option for compare temporal characterization
       # Pretty table can be put back in - we will need a different Table1Specs for temporal characterization
       selected = "Plot",
       inline = TRUE
     ),
+    shiny::conditionalPanel(condition = "input.temporalCharacterizationType == 'Raw table' | input.temporalCharacterizationType=='Plot'",
+                            tags$table(tags$tr(
+                              tags$td(
+                                shinyWidgets::pickerInput(
+                                  inputId = "temporalCompareAnalysisNameFilter",
+                                  label = "Analysis name",
+                                  choices = c(""),
+                                  selected = c(""),
+                                  multiple = TRUE,
+                                  choicesOpt = list(style = rep_len("color: black;", 999)),
+                                  options = shinyWidgets::pickerOptions(
+                                    actionsBox = TRUE,
+                                    liveSearch = TRUE,
+                                    size = 10,
+                                    liveSearchStyle = "contains",
+                                    liveSearchPlaceholder = "Type here to search",
+                                    virtualScroll = 50
+                                  )
+                                )
+                              ),
+                              tags$td(
+                                shinyWidgets::pickerInput(
+                                  inputId = "temporalCompareDomainNameFilter",
+                                  label = "Domain name",
+                                  choices = c(""),
+                                  selected = c(""),
+                                  multiple = TRUE,
+                                  choicesOpt = list(style = rep_len("color: black;", 999)),
+                                  options = shinyWidgets::pickerOptions(
+                                    actionsBox = TRUE,
+                                    liveSearch = TRUE,
+                                    size = 10,
+                                    liveSearchStyle = "contains",
+                                    liveSearchPlaceholder = "Type here to search",
+                                    virtualScroll = 50
+                                  )
+                                )
+                              ),
+                              tags$td(
+                                shiny::radioButtons(
+                                  inputId = "temporalCharacterProportionOrContinuous",
+                                  label = "",
+                                  choices = c("All", "Proportion", "Continuous"),
+                                  selected = "All",
+                                  inline = TRUE
+                                )
+                              )
+                            ))),
     shiny::conditionalPanel(
-      condition = "input.temporalCharacterizationType == 'Raw table' | input.temporalCharacterizationType=='Plot'",
-      tags$table(
-        tags$tr(
-          tags$td(
-            shinyWidgets::pickerInput(
-              inputId = "temporalCompareAnalysisNameFilter",
-              label = "Analysis name",
-              choices = c(""),
-              selected = c(""),
-              multiple = TRUE,
-              choicesOpt = list(style = rep_len("color: black;", 999)),
-              options = shinyWidgets::pickerOptions(
-                actionsBox = TRUE,
-                liveSearch = TRUE,
-                size = 10,
-                liveSearchStyle = "contains",
-                liveSearchPlaceholder = "Type here to search",
-                virtualScroll = 50
-              )
-            )
-          ), 
-          tags$td(
-            shinyWidgets::pickerInput(
-              inputId = "temporalCompareDomainNameFilter",
-              label = "Domain name",
-              choices = c(""),
-              selected = c(""),
-              multiple = TRUE,
-              choicesOpt = list(style = rep_len("color: black;", 999)),
-              options = shinyWidgets::pickerOptions(
-                actionsBox = TRUE,
-                liveSearch = TRUE,
-                size = 10,
-                liveSearchStyle = "contains",
-                liveSearchPlaceholder = "Type here to search",
-                virtualScroll = 50
-              )
-            )
-          ),
-          tags$td(
-            shiny::radioButtons(
-              inputId = "temporalCharacterProportionOrContinuous",
-              label = "",
-              choices = c("All", "Proportion", "Continuous"),
-              selected = "All",
-              inline = TRUE
-            )
-          )
-        )
-      )
-    ),
-    shiny::conditionalPanel(condition = "input.temporalCharacterizationType=='Pretty table' | 
+      condition = "input.temporalCharacterizationType=='Pretty table' |
                             input.temporalCharacterizationType=='Raw table'",
-                            DT::dataTableOutput(outputId = "temporalCharacterizationCompareTable")),
+      DT::dataTableOutput(outputId = "temporalCharacterizationCompareTable")
+    ),
     shiny::conditionalPanel(
       condition = "input.temporalCharacterizationType=='Plot'",
       shinydashboard::box(

@@ -2,7 +2,8 @@
 <p>A table or plot showing cohort characteristics (covariates) for two cohorts side-by-side. These characteristics are captured on or before the cohort start date. There is a Pretty and a Raw version of the table.</p>
 <p>The Pretty table shows the standard OHDSI characteristics table, which includes only covariates that were manually selected to provide a general overview of the comorbidities and medications of the cohort. These are all binary covariates, and the table shows the proportion (%) of the cohort entries having the covariate, as well as the standardized difference of the mean (StdDiff).<p>
 <p>The Raw table shows all captured covariates. These include binary and continuous covariates (e.g. the Charlson comorbidity index). For each covariate the table lists the mean, which for binary covariates is equal to the proportion, the standard deviation (SD), and the standardized difference of the mean (StdDiff).</p>
-<p>The plot shows all covariates, include binary and continuous covariates. The x-axis represents the mean value in the target cohort, the y-axis the mean value in the comparator cohort. Each dot represents a covariate, and the color indicates the absolute value of the standardized difference of the mean.</p>
+<p>The plot shows all covariates, include binary and continuous covariates. The x-axis represents the mean value in the target cohort, the y-axis the mean value in the comparator cohort. Each dot represents a covariate, and the color indicates the domain of the covariate being plotted. In the plot, domains are fixed (even though additional domains may exist in data) to ensure the color of the domains are consistenly applied. </p>
+<p>Filters maybe used to limit the number of covariates being visualized/tabulated. Filters are available for analysis names and domain names. </p>
 
 <h3>Options</h3>
 <p>You can select a database in the side bar.</p>

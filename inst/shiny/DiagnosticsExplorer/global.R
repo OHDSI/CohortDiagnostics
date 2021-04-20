@@ -39,9 +39,10 @@ if (!exists("shinySettings")) {
   } else {
     dataFolder <- defaultLocalDataFolder
   }
-  vocabularyDatabaseSchemas <- setdiff(x = c(defaultVocabularySchema, alternateVocabularySchema),
-                                       y = defaultResultsSchema) %>% 
-    unique() %>% 
+  vocabularyDatabaseSchemas <-
+    setdiff(x = c(defaultVocabularySchema, alternateVocabularySchema),
+            y = defaultResultsSchema) %>%
+    unique() %>%
     sort()
 } else {
   writeLines("Using settings provided by user")
@@ -99,19 +100,22 @@ if (databaseMode) {
     tolower(DatabaseConnector::dbListTables(connectionPool, schema = resultsDatabaseSchema))
   
   # vocabularyTablesOnServer <- list()
-  # vocabularyTablesInOmopCdm <- c('concept', 'concept_relationship', 'concept_ancestor', 
+  # vocabularyTablesInOmopCdm <- c('concept', 'concept_relationship', 'concept_ancestor',
   #                                'concept_class', 'concept_synonym',
   #                                'vocabulary', 'domain', 'relationship')
   
   # for (i in length(vocabularyDatabaseSchemas)) {
-  # 
+  #
   #     tolower(DatabaseConnector::dbListTables(connectionPool, schema = vocabularyDatabaseSchemas[[i]]))
   # vocabularyTablesOnServer[[i]] <- intersect(x = )
   # }
   loadResultsTable("database", required = TRUE)
-  if (nrow(database) > 0 && "vocabularyVersion" %in% colnames(database)) {
-    database <- database %>% 
-      dplyr::mutate(databaseIdWithVocabularyVersion = paste0(databaseId, " (", .data$vocabularyVersion, ")"))
+  if (nrow(database) > 0 &&
+      "vocabularyVersion" %in% colnames(database)) {
+    database <- database %>%
+      dplyr::mutate(
+        databaseIdWithVocabularyVersion = paste0(databaseId, " (", .data$vocabularyVersion, ")")
+      )
   }
   loadResultsTable("cohort", required = TRUE)
   loadResultsTable("temporal_time_ref")
@@ -121,7 +125,8 @@ if (databaseMode) {
     #, "recommender_set"
     if (table %in% resultsTablesOnServer &&
         !exists(SqlRender::snakeCaseToCamelCase(table)) &&
-        !isEmpty(table)) { #if table is empty, nothing is returned because type instability concerns.
+        !isEmpty(table)) {
+      #if table is empty, nothing is returned because type instability concerns.
       assign(SqlRender::snakeCaseToCamelCase(table),
              dplyr::tibble())
     }
