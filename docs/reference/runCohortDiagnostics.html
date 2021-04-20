@@ -230,17 +230,17 @@ error message will be displayed and process stopped.</p></td>
     </tr>
     <tr>
       <th>phenotypeDescriptionFile</th>
-      <td><p>(Optional) The location of the phenotype description file within the package. 
+      <td><p>(Optional) The location of the phenotype description file within the package.
 The file must be .csv file and have the following columns that may be read into following
 data types: phenotypeId (double), phenotypeName (character),
 referentConceptId (double), clinicalDescription (character),
 literatureReview (character), phenotypeNotes (character). Note: the field
 names are in snake_case. Also, character fields should not have 'NA' in it.
-'NA's are commonly added by R when R functions exports data from dataframe 
-into CSV. Instead please use '' (empty string) to represent absence of data. 
+'NA's are commonly added by R when R functions exports data from dataframe
+into CSV. Instead please use '' (empty string) to represent absence of data.
 The literature_review field is expected to be a html link to page that contains
 resources related to literature review for the phenotype, and will be used
-to create link-out object. This csv file is expected to be encoded in either 
+to create link-out object. This csv file is expected to be encoded in either
 ASCII or UTF-8, if not, an error message will be displayed and process stopped.</p></td>
     </tr>
     <tr>
@@ -352,12 +352,12 @@ does not exist it will be created.</p></td>
     <tr>
       <th>runCohortOverlap</th>
       <td><p>Generate and export the cohort overlap? Overlaps are checked within cohortIds
-that have the same phenotype ID sourced from the CohortSetReference or 
+that have the same phenotype ID sourced from the CohortSetReference or
 cohortToCreateFile.</p></td>
     </tr>
     <tr>
       <th>runCohortCharacterization</th>
-      <td><p>Generate and export the cohort characterization? 
+      <td><p>Generate and export the cohort characterization?
 Only records with values greater than 0.0001 are returned.</p></td>
     </tr>
     <tr>
