@@ -476,10 +476,6 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchema) %>%
       dplyr::pull(.data$databaseId)
     
-    vocabularyDataSchemaToFilter <-
-      intersect(vocabularyDatabaseSchemas,
-                input$databaseOrVocabularySchema)
-    
     if (length(databaseIdToFilter) > 0) {
       resolvedOrMappedConceptSetForAllDatabase <-
         getResolvedOrMappedConceptSetForAllDatabase()
@@ -506,6 +502,16 @@ shiny::shinyServer(function(input, output, session) {
             dplyr::select(-.data$databaseId, -.data$conceptSetId)
         }
       }
+    }
+    
+    if (exists("vocabularyDatabaseSchemas") &&
+        !is.null(input$databaseOrVocabularySchema) &&
+        length(input$databaseOrVocabularySchema) > 0) {
+      vocabularyDataSchemaToFilter <-
+        intersect(vocabularyDatabaseSchemas,
+                  input$databaseOrVocabularySchema)
+    } else {
+      vocabularyDataSchemaToFilter <- NULL
     }
     
     if (length(vocabularyDataSchemaToFilter) > 0) {
