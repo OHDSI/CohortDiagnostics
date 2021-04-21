@@ -686,12 +686,16 @@ resolveMappedConceptSet <- function(dataSource = .GlobalEnv,
   checkmate::reportAssertions(collection = errorMessage)
   
   if (is(dataSource, "environment")) {
+    if (!exists("resolvedConcepts") || !exists("concept")) {
+      return(NULL)
+    }
     resolved <- get("resolvedConcepts", envir = dataSource) %>% 
       dplyr::filter(.data$databaseId %in% !!databaseIds) %>% 
       dplyr::filter(.data$cohortId == !!cohortId) %>% 
       dplyr::inner_join(get("concept"), by = "conceptId") %>% 
       dplyr::distinct() %>% 
       dplyr::arrange(.data$conceptId)
+    if (exists("conceptRelationship")) {
     mapped <- resolved %>% 
       dplyr::select(.data$conceptId, .data$databaseId, .data$cohortId, .data$conceptSetId) %>% 
       dplyr::distinct() %>% 
@@ -709,7 +713,11 @@ resolveMappedConceptSet <- function(dataSource = .GlobalEnv,
                     .data$standardConcept, .data$conceptCode,
                     .data$databaseId, .data$conceptSetId) %>% 
       dplyr::distinct() %>% 
-      dplyr::arrange(.data$conceptId)
+      dplyr::arrange(.data$conceptId) %>% 
+      dplyr::arrange(.data$resolvedConceptId)
+    } else {
+      mapped <- NULL
+    }
   } else {
     sqlResolved <- "SELECT DISTINCT resolved_concepts.cohort_id,
                     	resolved_concepts.concept_set_id,
@@ -733,7 +741,8 @@ resolveMappedConceptSet <- function(dataSource = .GlobalEnv,
                                         databaseIds = quoteLiterals(databaseIds),
                                         cohortId = cohortId,
                                         snakeCaseToCamelCase = TRUE) %>% 
-      tidyr::tibble()
+      tidyr::tibble() %>% 
+      dplyr::arrange(.data$conceptId)
     sqlMapped <- "SELECT DISTINCT concept_sets.concept_id AS resolved_concept_id,
                   	concept.concept_id,
                   	concept.concept_name,
@@ -761,10 +770,11 @@ resolveMappedConceptSet <- function(dataSource = .GlobalEnv,
                                       databaseIds = quoteLiterals(databaseIds),
                                       cohortId = cohortId,
                                       snakeCaseToCamelCase = TRUE) %>% 
-      tidyr::tibble()
+      tidyr::tibble() %>% 
+      dplyr::arrange(.data$resolvedConceptId)
   }
-  data <- list(resolved = resolved %>% dplyr::arrange(.data$conceptId), 
-               mapped = mapped %>% dplyr::arrange(.data$resolvedConceptId))
+  data <- list(resolved = resolved, 
+               mapped = mapped)
   return(data)
 }
 

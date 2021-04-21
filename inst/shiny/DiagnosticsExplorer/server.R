@@ -488,12 +488,17 @@ shiny::shinyServer(function(input, output, session) {
         source <-
           (input$conceptSetsType == "Mapped")
         if (source) {
-          data <- resolvedOrMappedConceptSetForAllDatabase$mapped %>%
-            dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id) %>%
-            dplyr::filter(.data$databaseId == !!databaseIdToFilter) %>%
-            dplyr::select(-.data$databaseId, -.data$conceptSetId)
-          data$resolvedConceptId <-
-            as.factor(data$resolvedConceptId)
+          data <- resolvedOrMappedConceptSetForAllDatabase$mapped 
+          if (!is.null(data)) {
+            data <- data %>%
+              dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id) %>%
+              dplyr::filter(.data$databaseId == !!databaseIdToFilter) %>%
+              dplyr::select(-.data$databaseId, -.data$conceptSetId)
+            data$resolvedConceptId <-
+              as.factor(data$resolvedConceptId)
+          } else {
+            data <- NULL
+          }
         } else {
           data <- resolvedOrMappedConceptSetForAllDatabase$resolved %>%
             dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id) %>%
@@ -534,6 +539,8 @@ shiny::shinyServer(function(input, output, session) {
       data$vocabularyId <- as.factor(data$vocabularyId)
       data$standardConcept <- as.factor(data$standardConcept)
       colnames(data) <- camelCaseToTitleCase(colnames(data))
+    } else {
+      data <- dplyr::tibble("No data.")
     }
     return(data)
   })
@@ -1868,24 +1875,29 @@ shiny::shinyServer(function(input, output, session) {
         databaseIds = databaseIds(),
         cohortId = cohortId()
       )
-    
-    resolvedConceptSetIds <- output$resolved %>% 
+    if (is.null(output)) {
+      return(NULL)
+    }
+    conceptIdsForFilters <- output$resolved %>% 
       dplyr::filter(.data$conceptSetId %in% getConceptSetIds()) %>% 
-      dplyr::select(.data$conceptId)
+      dplyr::select(.data$conceptId) %>% 
+      dplyr::distinct()
     
+    if (!is.null(output$mapped) &&
+        nrow(output$mapped) > 0) {
     mappedConceptSetIds <- output$mapped %>% 
       dplyr::filter(.data$conceptSetId %in% getConceptSetIds()) %>% 
-      dplyr::select(.data$conceptId) 
-    
-      output <- resolvedConceptSetIds %>% 
-        dplyr::bind_rows(mappedConceptSetIds) %>% unique() %>% 
-        dplyr::pull()
-      
-      if (!is.null(output)) {
-        return(output)
-      } else {
-        return(NULL)
-      }
+      dplyr::select(.data$conceptId) %>% 
+      dplyr::distinct()
+
+    conceptIdsForFilters <- conceptIdsForFilters %>% 
+      dplyr::bind_rows(mappedConceptSetIds) %>%
+      dplyr::distinct()
+    }
+    output <- conceptIdsForFilters %>% 
+      dplyr::distinct() %>% 
+      dplyr::pull(.data$conceptId)
+    return(output)
   })
   
   characterizationDomainNameFilter <- shiny::reactive({
@@ -2086,8 +2098,12 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$domainId %in% characterizationDomainNameFilter())
       
       if (!is.null(input$conceptSetsToFilterCharacterization)) {
-        data <- data %>% 
-          dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
+        if (length(getResoledAndMappedConceptIdsForFilters()) > 0) {
+          data <- data %>% 
+            dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
+        } else {
+          data <- data[0,]
+        }
       }
       
       if (nrow(data) == 0) {
@@ -2199,10 +2215,13 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     if (!is.null(input$conceptSetsToFilterCharacterization)) {
-      data <- data %>% 
-        dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
+      if (length(getResoledAndMappedConceptIdsForFilters()) > 0) {
+        data <- data %>% 
+          dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
+      } else {
+        data <- data[0,]
+      }
     }
-    
     return(data)
   })
   
