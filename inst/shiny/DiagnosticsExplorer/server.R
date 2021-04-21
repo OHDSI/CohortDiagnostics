@@ -822,7 +822,8 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   shiny::observe({
-    if (nrow(incidenceRateData()) > 0) {
+    if (!is.null(incidenceRateData()) &&
+        nrow(incidenceRateData()) > 0) {
       ageFilter <- incidenceRateData() %>%
         dplyr::select(.data$ageGroup) %>%
         dplyr::filter(.data$ageGroup != "NA", !is.na(.data$ageGroup)) %>%
@@ -842,7 +843,8 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   shiny::observe({
-    if (nrow(incidenceRateData()) > 0) {
+    if (!is.null(incidenceRateData()) &&
+        nrow(incidenceRateData()) > 0) {
       genderFilter <- incidenceRateData() %>%
         dplyr::select(.data$gender) %>%
         dplyr::filter(.data$gender != "NA",
@@ -861,7 +863,8 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   shiny::observe({
-    if (nrow(incidenceRateData()) > 0) {
+    if (!is.null(incidenceRateData()) &&
+        nrow(incidenceRateData()) > 0) {
       calenderFilter <- incidenceRateData() %>%
         dplyr::select(.data$calendarYear) %>%
         dplyr::filter(.data$calendarYear != "NA",
@@ -1885,14 +1888,14 @@ shiny::shinyServer(function(input, output, session) {
     
     if (!is.null(output$mapped) &&
         nrow(output$mapped) > 0) {
-    mappedConceptSetIds <- output$mapped %>% 
-      dplyr::filter(.data$conceptSetId %in% getConceptSetIds()) %>% 
-      dplyr::select(.data$conceptId) %>% 
-      dplyr::distinct()
-
-    conceptIdsForFilters <- conceptIdsForFilters %>% 
-      dplyr::bind_rows(mappedConceptSetIds) %>%
-      dplyr::distinct()
+      mappedConceptSetIds <- output$mapped %>% 
+        dplyr::filter(.data$conceptSetId %in% getConceptSetIds()) %>% 
+        dplyr::select(.data$conceptId) %>% 
+        dplyr::distinct()
+      
+      conceptIdsForFilters <- conceptIdsForFilters %>% 
+        dplyr::bind_rows(mappedConceptSetIds) %>%
+        dplyr::distinct()
     }
     output <- conceptIdsForFilters %>% 
       dplyr::distinct() %>% 
