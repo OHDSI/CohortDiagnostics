@@ -363,6 +363,8 @@ bodyTabItems <- shinydashboard::tabItems(
             shiny::tabPanel(title = "Details",
                             shiny::htmlOutput("cohortDetailsText")),
             shiny::tabPanel(title = "Cohort definition",
+                            copyToClipboardButton(toCopyId = "cohortDefinitionText",
+                                                  style = "margin-top: 5px; margin-bottom: 5px;"),
                             shiny::htmlOutput("cohortDefinitionText")),
             shiny::tabPanel(
               title = "Concept Sets",
