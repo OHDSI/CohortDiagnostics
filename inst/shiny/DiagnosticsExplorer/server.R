@@ -499,7 +499,7 @@ shiny::shinyServer(function(input, output, session) {
           data <- resolvedOrMappedConceptSetForAllDatabase$resolved %>%
             dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id) %>%
             dplyr::filter(.data$databaseId == !!databaseIdToFilter) %>%
-            dplyr::select(-.data$databaseId, -.data$conceptSetId)
+            dplyr::select(-.data$databaseId, -.data$conceptSetId, -.data$cohortId)
         }
       }
     }
