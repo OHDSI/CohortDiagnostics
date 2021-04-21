@@ -337,7 +337,10 @@ sidebarMenu <-
 
 #Side bar code
 sidebar <-
-  shinydashboard::dashboardSidebar(sidebarMenu, width = NULL, collapsed = FALSE)
+  shinydashboard::dashboardSidebar(sidebarMenu, 
+                                   width = NULL, 
+                                   collapsed = FALSE
+                                   )
 
 # Body - items in tabs --------------------------------------------------
 bodyTabItems <- shinydashboard::tabItems(
@@ -951,7 +954,11 @@ bodyTabItems <- shinydashboard::tabItems(
 
 
 #body
-body <- shinydashboard::dashboardBody(bodyTabItems)
+body <- shinydashboard::dashboardBody(bodyTabItems,
+                                      htmltools::withTags(
+                                        div(style = "margin-left : 0px",
+                                            h6(appInformationText)
+                                        )))
 
 
 #main

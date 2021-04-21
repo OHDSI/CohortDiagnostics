@@ -79,6 +79,7 @@ launchDiagnosticsExplorer <- function(dataFolder = "data",
   ensure_installed("ggiraph")
   ensure_installed("gtable")
   ensure_installed("htmltools")
+  ensure_installed("lubridate")
   ensure_installed("pool")
   ensure_installed("purrr")
   ensure_installed("scales")

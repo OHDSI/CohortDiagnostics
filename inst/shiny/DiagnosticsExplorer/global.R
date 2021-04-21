@@ -17,11 +17,23 @@ defaultDatabase <- Sys.getenv("shinydbDatabase")
 defaultPort <- 5432
 defaultUser <- Sys.getenv("shinyDbUser")
 defaultPassword <- Sys.getenv("shinyDbPassword")
-defaultResultsSchema <- 'CdSkeletonCohortDiagnosticsStudy'
+defaultResultsSchema <- 'covid'
 defaultVocabularySchema <- defaultResultsSchema
 alternateVocabularySchema <- c('vocabulary')
 
-defaultDatabaseMode <- FALSE # Use file system if FALSE
+defaultDatabaseMode <- TRUE # Use file system if FALSE
+
+appInformationText <- "V 2.1"
+appInformationText <- "Powered by OHDSI Cohort Diagnostics application - Version 2.1. This app is working in"
+if (defaultDatabaseMode) {
+  appInformationText <- paste0(appInformationText, " database")
+} else {
+  appInformationText <- paste0(appInformationText, " local file")
+}
+appInformationText <- paste0(appInformationText, 
+                             " mode. Application was last initated on ", 
+                             lubridate::now(tzone = "EST"),
+                             " EST. Cohort Diagnostics website is at https://ohdsi.github.io/CohortDiagnostics/")
 
 if (!exists("shinySettings")) {
   writeLines("Using default settings")
