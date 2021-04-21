@@ -2594,8 +2594,12 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$domainId %in% charaCompareDomainNameFilter())
     
     if (!is.null(input$conceptSetsToFilterCharacterization)) {
-      data <- data %>% 
-        dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
+      if (length(getResoledAndMappedConceptIdsForFilters()) > 0) {
+        data <- data %>% 
+          dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
+      } else {
+        data <- data[0,]
+      }
     }
     
     if (input$charCompareType == "Plot" &&
@@ -2845,8 +2849,12 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$domainId %in% temporalCompareDomainNameFilter()) 
     
     if (!is.null(input$conceptSetsToFilterCharacterization)) {
-      data <- data %>% 
-        dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
+      if (length(getResoledAndMappedConceptIdsForFilters()) > 0) {
+        data <- data %>% 
+          dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
+      } else {
+        data <- data[0,]
+      }
     }
     
     if (nrow(data) == 0) {
