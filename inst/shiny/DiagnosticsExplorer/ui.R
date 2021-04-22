@@ -583,7 +583,7 @@ bodyTabItems <- shinydashboard::tabItems(
       inputId = "includedType",
       label = "",
       choices = c("Source fields", "Standard fields"),
-      selected = "Source fields",
+      selected = "Standard fields",
       inline = TRUE
     ),
     DT::dataTableOutput("includedConceptsTable")

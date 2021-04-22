@@ -1079,7 +1079,7 @@ shiny::shinyServer(function(input, output, session) {
     
     maxCount <- max(data$conceptCount, na.rm = TRUE)
     
-    if (input$includedType == "Source Concepts") {
+    if (input$includedType == "Source fields") {
       table <- data %>%
         dplyr::filter(.data$sourceConceptId > 0) %>%
         dplyr::select(
