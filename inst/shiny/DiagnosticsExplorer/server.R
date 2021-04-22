@@ -1052,6 +1052,9 @@ shiny::shinyServer(function(input, output, session) {
       cohortId = cohortId(),
       databaseIds = databaseIds()
     )
+    if (is.null(data) || nrow(data) == 0) {
+      return(dplyr::tibble("No data available for selected databases and cohorts"))
+    }
     data <- data %>%
       dplyr::filter(.data$conceptSetName == input$conceptSet)
     if (nrow(data) == 0) {
