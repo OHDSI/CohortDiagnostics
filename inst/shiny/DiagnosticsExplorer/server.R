@@ -1624,10 +1624,11 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::select(
           .data$conceptId,
           .data$conceptName,
+          .data$domainField,
           .data$databaseId,
           .data$vocabularyId,
           .data$conceptCount,
-          .data$subjectCount
+          .data$subjectCount 
         ) %>%
         dplyr::filter(.data$conceptId > 0) %>%
         dplyr::distinct() %>% # distinct is needed here because many time condition_concept_id and condition_source_concept_id
@@ -1635,18 +1636,20 @@ shiny::shinyServer(function(input, output, session) {
         tidyr::pivot_wider(
           id_cols = c("conceptId",
                       "conceptName",
+                      "domainField",
                       "vocabularyId"),
           names_from = "databaseId",
           values_from = c("conceptCount", "subjectCount")
         )
       
-      data <- data[order(-data[4]), ]
+      data <- data[order(-data[5]), ]
       
       sketch <- htmltools::withTags(table(class = "display",
                                           thead(
                                             tr(
                                               th(rowspan = 2, "Concept Id"),
                                               th(rowspan = 2, "Concept Name"),
+                                              th(rowspan = 2, "Domain field"),
                                               th(rowspan = 2, "Vocabulary Id"),
                                               lapply(databaseIds, th, colspan = 2, class = "dt-center")
                                             ),
@@ -1654,64 +1657,6 @@ shiny::shinyServer(function(input, output, session) {
                                               c("Concept Count", "Subject Count"), length(databaseIds)
                                             ), th))
                                           )))
-      
-      options = list(
-        pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE,
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        columnDefs = list(minCellCountDef(1 + 1:(
-          length(databaseIds) * 2
-        )))
-      )
-      
-      dataTable <- DT::datatable(
-        data,
-        options = options,
-        rownames = FALSE,
-        container = sketch,
-        colnames = colnames(data) %>%
-          camelCaseToTitleCase(),
-        escape = FALSE,
-        filter = "top",
-        class = "stripe nowrap compact"
-      )
-      
-      dataTable <- DT::formatStyle(
-        table = dataTable,
-        columns = 3 + 1:(length(databaseIds) * 2),
-        background = DT::styleColorBar(c(0, maxCount), "lightblue"),
-        backgroundSize = "98% 88%",
-        backgroundRepeat = "no-repeat",
-        backgroundPosition = "center"
-      )
-    } else {
-      data <-  data %>%
-        dplyr::arrange(.data$databaseId) %>%
-        dplyr::select(
-          .data$conceptId,
-          .data$conceptName,
-          .data$databaseId,
-          .data$vocabularyId,
-          .data$conceptCount
-        ) %>%
-        dplyr::filter(.data$conceptId > 0) %>%
-        dplyr::distinct() %>% # distinct is needed here because many time condition_concept_id and condition_source_concept_id
-        # may have the same value
-        tidyr::pivot_wider(
-          id_cols = c("conceptId",
-                      "conceptName",
-                      "vocabularyId"),
-          names_from = "databaseId",
-          values_from = "conceptCount",
-          names_prefix = "conceptCount_"
-        )
-      
-      data <- data[order(-data[5]), ]
       
       options = list(
         pageLength = 100,
@@ -1731,6 +1676,7 @@ shiny::shinyServer(function(input, output, session) {
         data,
         options = options,
         rownames = FALSE,
+        container = sketch,
         colnames = colnames(data) %>%
           camelCaseToTitleCase(),
         escape = FALSE,
@@ -1740,7 +1686,66 @@ shiny::shinyServer(function(input, output, session) {
       
       dataTable <- DT::formatStyle(
         table = dataTable,
-        columns = 3 + 1:(length(databaseIds)),
+        columns = 4 + 1:(length(databaseIds) * 2),
+        background = DT::styleColorBar(c(0, maxCount), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+    } else {
+      data <-  data %>%
+        dplyr::arrange(.data$databaseId) %>%
+        dplyr::select(
+          .data$conceptId,
+          .data$conceptName,
+          .data$domainField,
+          .data$databaseId,
+          .data$vocabularyId,
+          .data$conceptCount
+        ) %>%
+        dplyr::filter(.data$conceptId > 0) %>%
+        dplyr::distinct() %>% # distinct is needed here because many time condition_concept_id and condition_source_concept_id
+        # may have the same value
+        tidyr::pivot_wider(
+          id_cols = c("conceptId",
+                      "conceptName",
+                      "domainField",
+                      "vocabularyId"),
+          names_from = "databaseId",
+          values_from = "conceptCount",
+          names_prefix = "conceptCount_"
+        )
+      
+      data <- data[order(-data[5]), ]
+      
+      options = list(
+        pageLength = 100,
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        searchHighlight = TRUE,
+        scrollX = TRUE,
+        lengthChange = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        columnDefs = list(minCellCountDef(3 + 1:(
+          length(databaseIds) * 2
+        )))
+      )
+      
+      dataTable <- DT::datatable(
+        data,
+        options = options,
+        rownames = FALSE,
+        colnames = colnames(data) %>%
+          camelCaseToTitleCase(),
+        escape = FALSE,
+        filter = "top",
+        class = "stripe nowrap compact"
+      )
+      
+      dataTable <- DT::formatStyle(
+        table = dataTable,
+        columns = 4 + 1:(length(databaseIds)),
         background = DT::styleColorBar(c(0, maxCount), "lightblue"),
         backgroundSize = "98% 88%",
         backgroundRepeat = "no-repeat",
