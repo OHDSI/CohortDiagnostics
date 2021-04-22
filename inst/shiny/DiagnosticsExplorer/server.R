@@ -162,6 +162,9 @@ shiny::shinyServer(function(input, output, session) {
   
   output$cohortDetailsText <- shiny::renderUI({
     row <- selectedCohortDefinitionRow()
+    if (!'logicDescription' %in% colnames(row)) {
+      row$logicDescription <- row$cohortName
+    }
     if (is.null(row)) {
       return(NULL)
     } else {
@@ -1523,6 +1526,12 @@ shiny::shinyServer(function(input, output, session) {
         cohortIds = cohortId(),
         databaseIds = databaseIds()
       )
+      if (!'domainTable' %in% colnames(data)) {
+        data$domainTable <- "Not in data"
+      }
+      if (!'domainField' %in% colnames(data)) {
+        data$domainField <- "Not in data"
+      }
       return(data)
     } else {
       return(NULL)
@@ -2916,7 +2925,14 @@ shiny::shinyServer(function(input, output, session) {
     if (nrow(database) == 0) {
       return(dplyr::tibble("No information on the data source."))
     }
-    data <- database %>%
+    data <- database 
+    if (!'vocabularyVersionCdm' %in% database) {
+      data$vocabularyVersionCdm <- "Not in data"
+    }
+    if (!'vocabularyVersion' %in% database) {
+      data$vocabularyVersion <- "Not in data"
+    }
+    data <- data %>%
       dplyr::select(
         .data$databaseId,
         .data$databaseName,

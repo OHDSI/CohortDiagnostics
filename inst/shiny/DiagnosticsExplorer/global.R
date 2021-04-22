@@ -20,7 +20,7 @@ defaultResultsSchema <- 'covid'
 defaultVocabularySchema <- defaultResultsSchema
 alternateVocabularySchema <- c('vocabulary')
 
-defaultDatabaseMode <- TRUE # Use file system if FALSE
+defaultDatabaseMode <- FALSE # Use file system if FALSE
 
 appInformationText <- "V 2.1"
 appInformationText <- "Powered by OHDSI Cohort Diagnostics application - Version 2.1. This app is working in"
@@ -151,13 +151,14 @@ if (databaseMode) {
     createFileDataSource(localDataPath, envir = .GlobalEnv)
 }
 
-if (exists("database")) {
-  if (nrow(database) > 0 &&
-      "vocabularyVersion" %in% colnames(database)) {
+if (exists("database") && nrow(database) > 0) {
+  if ("vocabularyVersion" %in% colnames(database)) {
     database <- database %>%
       dplyr::mutate(
         databaseIdWithVocabularyVersion = paste0(databaseId, " (", .data$vocabularyVersion, ")")
       )
+  } else {
+    database$databaseIdWithVocabularyVersion <- "Not in data"
   }
 }
 
