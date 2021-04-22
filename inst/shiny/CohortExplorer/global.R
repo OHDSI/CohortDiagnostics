@@ -36,12 +36,7 @@ if (exists("cdmSources")) {
 if (exists("shinySettings")) {
   writeLines("Using user provided settings")
   if (!is.null(shinySettings$connectionDetails)) {
-  connectionDetails <- DatabaseConnector::createConnectionDetails(
-    dbms = shinySettings$dbms,
-    user = shinySettings$user,
-    password = shinySettings$password,
-    port = shinySettings$port,
-    server = shinySettings$server)
+    stop("No connection details provided.")
   }
     
   cohortTable <- shinySettings$cohortTable
