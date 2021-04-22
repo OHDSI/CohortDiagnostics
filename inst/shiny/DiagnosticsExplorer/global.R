@@ -11,7 +11,6 @@ defaultLocalDataFolder <- "data"
 defaultLocalDataFile <- "PreMerged.RData"
 
 connectionPool <- NULL
-connectionPool <- NULL
 defaultServer <- Sys.getenv("shinydbServer")
 defaultDatabase <- Sys.getenv("shinydbDatabase")
 defaultPort <- 5432
