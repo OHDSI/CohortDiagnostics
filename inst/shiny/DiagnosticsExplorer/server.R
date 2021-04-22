@@ -689,22 +689,22 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     # instead maybe we can just convert this to a warning message in header.
-    if (!isTRUE(all.equal(
-      data$databaseId %>% unique %>% sort(),
-      databaseIds() %>% unique() %>% sort()
-    ))) {
-      return(dplyr::tibble(
-        Note = paste0(
-          "There is no data for the databases:\n",
-          paste0(
-            setdiff(databaseIds(),
-                    data$databaseId %>% unique()),
-            collapse = ",\n "
-          ),
-          ".\n Please unselect them."
-        )
-      ))
-    }
+    # if (!isTRUE(all.equal(
+    #   data$databaseId %>% unique %>% sort(),
+    #   databaseIds() %>% unique() %>% sort()
+    # ))) {
+    #   return(dplyr::tibble(
+    #     Note = paste0(
+    #       "There is no data for the databases:\n",
+    #       paste0(
+    #         setdiff(databaseIds(),
+    #                 data$databaseId %>% unique()),
+    #         collapse = ",\n "
+    #       ),
+    #       ".\n Please unselect them."
+    #     )
+    #   ))
+    # }
     
     table <- dplyr::full_join(
       data %>%
@@ -1066,16 +1066,16 @@ shiny::shinyServer(function(input, output, session) {
       return(dplyr::tibble("No data available for selected databases and cohorts"))
     }
     databaseIds <- unique(data$databaseId)
-    if (!all(databaseIds() %in% databaseIds)) {
-      return(dplyr::tibble(
-        Note = paste0(
-          "There is no data for the databases:\n",
-          paste0(setdiff(databaseIds(), databaseIds),
-                 collapse = ",\n "),
-          ".\n Please unselect them."
-        )
-      ))
-    }
+    # if (!all(databaseIds() %in% databaseIds)) {
+    #   return(dplyr::tibble(
+    #     Note = paste0(
+    #       "There is no data for the databases:\n",
+    #       paste0(setdiff(databaseIds(), databaseIds),
+    #              collapse = ",\n "),
+    #       ".\n Please unselect them."
+    #     )
+    #   ))
+    # }
     
     maxCount <- max(data$conceptCount, na.rm = TRUE)
     
@@ -1295,16 +1295,16 @@ shiny::shinyServer(function(input, output, session) {
     }
     databaseIds <- unique(data$databaseId)
     
-    if (!all(databaseIds() %in% databaseIds)) {
-      return(dplyr::tibble(
-        Note = paste0(
-          "There is no data for the databases:\n",
-          paste0(setdiff(databaseIds(), databaseIds),
-                 collapse = ",\n "),
-          ".\n Please unselect them."
-        )
-      ))
-    }
+    # if (!all(databaseIds() %in% databaseIds)) {
+    #   return(dplyr::tibble(
+    #     Note = paste0(
+    #       "There is no data for the databases:\n",
+    #       paste0(setdiff(databaseIds(), databaseIds),
+    #              collapse = ",\n "),
+    #       ".\n Please unselect them."
+    #     )
+    #   ))
+    # }
     
     maxCount <- max(data$conceptCount, na.rm = TRUE)
     
@@ -1426,16 +1426,16 @@ shiny::shinyServer(function(input, output, session) {
     
     databaseIds <- unique(table$databaseId)
     
-    if (!all(databaseIds() %in% databaseIds)) {
-      return(dplyr::tibble(
-        Note = paste0(
-          "There is no data for the databases:\n",
-          paste0(setdiff(databaseIds(), databaseIds),
-                 collapse = ",\n "),
-          ".\n Please unselect them."
-        )
-      ))
-    }
+    # if (!all(databaseIds() %in% databaseIds)) {
+    #   return(dplyr::tibble(
+    #     Note = paste0(
+    #       "There is no data for the databases:\n",
+    #       paste0(setdiff(databaseIds(), databaseIds),
+    #              collapse = ",\n "),
+    #       ".\n Please unselect them."
+    #     )
+    #   ))
+    # }
     
     table <- table %>%
       tidyr::pivot_longer(
@@ -1774,16 +1774,16 @@ shiny::shinyServer(function(input, output, session) {
     
     databaseIds <- sort(unique(data$databaseId))
     
-    if (!all(databaseIds() %in% databaseIds)) {
-      return(dplyr::tibble(
-        Note = paste0(
-          "There is no data for the databases:\n",
-          paste0(setdiff(databaseIds(), databaseIds),
-                 collapse = ",\n "),
-          ".\n Please unselect them."
-        )
-      ))
-    }
+    # if (!all(databaseIds() %in% databaseIds)) {
+    #   return(dplyr::tibble(
+    #     Note = paste0(
+    #       "There is no data for the databases:\n",
+    #       paste0(setdiff(databaseIds(), databaseIds),
+    #              collapse = ",\n "),
+    #       ".\n Please unselect them."
+    #     )
+    #   ))
+    # }
     
     maxSubjects <- max(data$subjects)
     visitContextReference <-
@@ -2011,16 +2011,16 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     databaseIds <- sort(unique(data$databaseId))
-    if (!all(databaseIds() %in% databaseIds)) {
-      return(dplyr::tibble(
-        Note = paste0(
-          "There is no data for the databases:\n",
-          paste0(setdiff(databaseIds(), databaseIds),
-                 collapse = ",\n "),
-          ".\n Please unselect them."
-        )
-      ))
-    }
+    # if (!all(databaseIds() %in% databaseIds)) {
+    #   return(dplyr::tibble(
+    #     Note = paste0(
+    #       "There is no data for the databases:\n",
+    #       paste0(setdiff(databaseIds(), databaseIds),
+    #              collapse = ",\n "),
+    #       ".\n Please unselect them."
+    #     )
+    #   ))
+    # }
     
     if (input$charType == "Pretty") {
       countData <- getCohortCountResult(
