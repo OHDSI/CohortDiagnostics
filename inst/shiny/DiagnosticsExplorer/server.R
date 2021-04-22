@@ -1047,6 +1047,9 @@ shiny::shinyServer(function(input, output, session) {
   # included concepts table --------------------------------------------------------------------------
   output$includedConceptsTable <- DT::renderDataTable(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
+    if (is.null(cohortId()) || length(cohortId()) == 0) {
+      return(dplyr::tibble("No data available for selected databases and cohorts"))
+    }
     data <- getIncludedConceptResult(
       dataSource = dataSource,
       cohortId = cohortId(),
@@ -1055,8 +1058,10 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(data) || nrow(data) == 0) {
       return(dplyr::tibble("No data available for selected databases and cohorts"))
     }
-    data <- data %>%
-      dplyr::filter(.data$conceptSetName == input$conceptSet)
+    if (!is.null(input$conceptSet) && length(input$conceptSet) > 0) {
+      data <- data %>%
+        dplyr::filter(.data$conceptSetName == input$conceptSet)
+    }
     if (nrow(data) == 0) {
       return(dplyr::tibble("No data available for selected databases and cohorts"))
     }
