@@ -260,6 +260,9 @@ launchCohortExplorer <- function(connectionDetails,
   ensure_installed("DT")
   ensure_installed("plotly")
   ensure_installed("RColorBrewer")
+  ensure_installed("ggplot2")
+  ensure_installed("magrittr")
+  
   .GlobalEnv$shinySettings <-
     list(
       connectionDetails = connectionDetails,
