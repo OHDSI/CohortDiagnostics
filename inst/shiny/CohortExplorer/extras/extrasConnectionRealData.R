@@ -47,5 +47,6 @@ shinySettings <- list(connectionDetails = connectionDetails,
                       cohortDatabaseSchema = cohortDatabaseSchema,
                       vocabularyDatabaseSchema = vocabDatabaseSchema,
                       cohortTable = cohortTable,
+                      dbms = dbms,
                       cohortDefinitionId = cohortDefinitionId,
                       sampleSize = 10)

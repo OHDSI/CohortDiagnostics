@@ -1,10 +1,4 @@
 shinyServer(function(input, output, session) {
-  # connection <- DatabaseConnector::connect(shinySettings$connectionDetails)
-  
-  session$onSessionEnded(function() {
-    writeLines("Closing connection")
-    DatabaseConnector::disconnect(conn)
-  })
   
   subject <- reactiveValues(index = 1)
   
@@ -12,9 +6,10 @@ shinyServer(function(input, output, session) {
     if (is.null(input$domains)) {
       return(data.frame())
     } else {
-      sql <- SqlRender::render(
+      events <- DatabaseConnector::renderTranslateQuerySql(
+        connection = connection,
         sql = eventSql,
-        cdm_database_schema = shinySettings$cdmDatabaseSchema,
+        cdm_database_schema = cdmDatabaseSchema,
         subject_id = subjectIds[subject$index],
         drug_era = "Drug era" %in% input$domains,
         drug_exposure = "Drug exposure" %in% input$domains,
@@ -25,13 +20,11 @@ shinyServer(function(input, output, session) {
         observation = "Observation" %in% input$domains,
         visit = "Visit" %in% input$domains,
         observation_period = "Observation period" %in% input$domains,
-        vocabulary_database_schema = shinySettings$vocabularyDatabaseSchema
-      )
-      sql <-
-        SqlRender::translate(sql = sql,
-                             targetDialect = shinySettings$connectionDetails$dbms)
-      events <-
-        DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE)
+        vocabulary_database_schema = vocabularyDatabaseSchema, 
+        snakeCaseToCamelCase = TRUE, 
+        tempEmulationSchema = tempEmulationSchema
+      ) %>% 
+        dplyr::tibble()
       colnames(events)[colnames(events) == "domainName"] <- "domain"
       return(events)
     }
@@ -111,7 +104,7 @@ shinyServer(function(input, output, session) {
         events,
         data.frame(
           domain = "Cohort",
-          conceptId = shinySettings$cohortDefinitionId,
+          conceptId = cohortDefinitionId,
           conceptName = "Cohort entry",
           typeConceptName = "",
           startDate = cohort$cohortStartDate[i],
@@ -169,8 +162,6 @@ shinyServer(function(input, output, session) {
     if (nrow(events) == 0) {
       return(NULL)
     } else {
-      # saveRDS(events, "c:/temp/events.rds")
-      # events <- readRDS("c:/temp/events.rds")
       colors <- colorScale()
       domains <- aggregate(y ~ domain, events, max)
       domains <- domains[order(domains$domain),]

@@ -1,9 +1,9 @@
 shinyUI(fluidPage(titlePanel(
   sprintf(
     "Exploring cohort %s in %s.%s",
-    shinySettings$cohortDefinitionId,
-    shinySettings$cohortDatabaseSchema,
-    shinySettings$cohortTable
+    cohortDefinitionId,
+    cohortDatabaseSchema,
+    cohortTable
   )
 ),
 fluidRow(
