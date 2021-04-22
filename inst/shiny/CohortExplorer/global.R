@@ -1,59 +1,60 @@
-# tempEmulationSchema <- NULL
-# cdmDatabaseSchema <- "cdm_truven_mdcd_v610.dbo"
-# cohortDatabaseSchema <- "scratch.dbo"
-# cohortTable <- "coxibVsNonselVsGiBleed"
-# connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "pdw",
-#                                                                 server = Sys.getenv("PDW_SERVER"),
-#                                                                 user = NULL,
-#                                                                 password = NULL,
-#                                                                 port = Sys.getenv("PDW_PORT"))
-# 
-# cohortDefinitionId = 1
-# shinySettings <- list(connectionDetails = connectionDetails,
-#                       cdmDatabaseSchema = cdmDatabaseSchema,
-#                       cohortDatabaseSchema = cohortDatabaseSchema,
-#                       cohortTable = cohortTable,
-#                       cohortDefinitionId = cohortDefinitionId,
-#                       sampleSize = 10)
+library(shiny)
+library(ggplot2)
+library(DT)
+library(plotly)
+library(magrittr)
 
-conn <- DatabaseConnector::connect(shinySettings$connectionDetails)
+# Set up connection to server ----------------------------------------------------
+if (is.null(shinySettings$connection)) {
+  if (!is.null(shinySettings$connectionDetails)) {
+    connection <- DatabaseConnector::connect(shinySettings$connectionDetails)
+    on.exit(DatabaseConnector::disconnect(shinySettings$connection))
+  } else {
+    stop("No connection or connectionDetails provided.")
+  }
+}
 
+# take a random sample
 if (is.null(shinySettings$subjectIds)) {
   sql <- "SELECT TOP @sample_size subject_id
-  FROM (
-    SELECT DISTINCT subject_id 
-    FROM @cohort_database_schema.@cohort_table 
-    WHERE cohort_definition_id = @cohort_definition_id
-  ) all_ids
-  ORDER BY NEWID();"
-  sql <- SqlRender::render(sql = sql, 
-                           sample_size = shinySettings$sampleSize,
-                           cohort_database_schema = shinySettings$cohortDatabaseSchema,
-                           cohort_table = shinySettings$cohortTable,
-                           cohort_definition_id = shinySettings$cohortDefinitionId)
-  sql <- SqlRender::translate(sql = sql, targetDialect = shinySettings$connectionDetails$dbms)
-  subjectIds <- DatabaseConnector::querySql(conn, sql)[, 1]
+          FROM (
+          	SELECT DISTINCT subject_id
+          	FROM @cohort_database_schema.@cohort_table
+          	WHERE cohort_definition_id = @cohort_definition_id
+          	) all_ids
+          ORDER BY NEWID();"
+
+  subjectIds <- DatabaseConnector::renderTranslateQuerySql(connection = connection, 
+                                                           sql = sql, 
+                                                           sample_size = shinySettings$sampleSize,
+                                                           cohort_database_schema = shinySettings$cohortDatabaseSchema,
+                                                           cohort_table = shinySettings$cohortTable,
+                                                           cohort_definition_id = shinySettings$cohortDefinitionId,
+                                                           tempEmulationSchema = shinySettings$tempEmulationSchema)[, 1]
 } else {
-  subjectIds <- shinySettings$subjectIds 
+  subjectIds <- shinySettings$subjectIds
 }
 
 if (length(subjectIds) == 0) {
-  stop("No subjects found in cohort ", shinySettings$cohortDefinitionId)
+  stop("No subjects found in cohort ",
+       shinySettings$cohortDefinitionId)
 }
 
-sql <- SqlRender::readSql("GetCohort.sql")
-sql <- SqlRender::render(sql = sql, 
-                         cohort_database_schema = shinySettings$cohortDatabaseSchema,
-                         cohort_table = shinySettings$cohortTable,
-                         cohort_definition_id = shinySettings$cohortDefinitionId,
-                         cdm_database_schema = shinySettings$cdmDatabaseSchema,
-                         subject_ids = subjectIds)
-sql <- SqlRender::translate(sql = sql, targetDialect = shinySettings$connectionDetails$dbms)
-cohort <- DatabaseConnector::querySql(conn, sql, snakeCaseToCamelCase = TRUE)
-cohort <- cohort[order(cohort$subjectId, cohort$cohortStartDate), ]
+sql <- SqlRender::readSql("sql/GetCohort.sql")
+cohort <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
+                                                     sql = sql,
+                                                     cohort_database_schema = shinySettings$cohortDatabaseSchema,
+                                                     cohort_table = shinySettings$cohortTable,
+                                                     cdm_database_schema = shinySettings$cdmDatabaseSchema,
+                                                     cohort_definition_id = shinySettings$cohortDefinitionId,
+                                                     subject_ids = subjectIds,
+                                                     tempEmulationSchema = shinySettings$tempEmulationSchema,
+                                                     snakeCaseToCamelCase = TRUE) %>% 
+  dplyr::tibble() %>% 
+  dplyr::arrange(.data$subjectId, .data$cohortStartDate)
 subjectIds <- unique(cohort$subjectId)
 
 if (nrow(cohort) == 0) {
-  stop("Cohort is empty") 
+  stop("Cohort is empty")
 }
-eventSql <- SqlRender::readSql("GetEvents.sql")
+eventSql <- SqlRender::readSql("sql/GetEvents.sql")

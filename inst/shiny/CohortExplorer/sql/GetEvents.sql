@@ -114,7 +114,7 @@ FROM (
   WHERE measurement.person_id = @subject_id
 }
   ) all_events
-INNER JOIN @cdm_database_schema.concept concept
+INNER JOIN @vocabulary_database_schema.concept concept
   ON all_events.concept_id = concept.concept_id
-INNER JOIN @cdm_database_schema.concept type_concept
+INNER JOIN @vocabulary_database_schema.concept type_concept
   ON all_events.type_concept_id = type_concept.concept_id;
