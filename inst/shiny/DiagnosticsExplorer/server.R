@@ -1285,6 +1285,12 @@ shiny::shinyServer(function(input, output, session) {
       cohortId = cohortId(),
       databaseIds = databaseIds()
     )
+    if (is.null(data) || nrow(data) == 0) {
+      return(dplyr::tibble(Note = paste0(
+        "There is no data for the selected combination."
+      )))
+    }
+    
     data <- data %>%
       dplyr::filter(.data$conceptSetName == input$conceptSet)
     
