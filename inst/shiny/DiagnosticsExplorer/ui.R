@@ -603,40 +603,40 @@ bodyTabItems <- shinydashboard::tabItems(
     cohortReference("indexEventBreakdownSelectedCohort"),
     tags$table(
       tags$tr(
-        tags$td(
-          shinyWidgets::pickerInput(
-            inputId = "breakdownDomainTable",
-            label = "Domain Table",
-            choices = c(""),
-            multiple = TRUE,
-            choicesOpt = list(style = rep_len("color: black;", 999)),
-            options = shinyWidgets::pickerOptions(
-              actionsBox = TRUE,
-              liveSearch = TRUE,
-              liveSearchStyle = "contains",
-              size = 10,
-              liveSearchPlaceholder = "Type here to search",
-              virtualScroll = 50
-            )
-          )
-        ),
-        tags$td(
-          shinyWidgets::pickerInput(
-            inputId = "breakdownDomainField",
-            label = "Domain Field",
-            choices = c(""),
-            multiple = TRUE,
-            choicesOpt = list(style = rep_len("color: black;", 999)),
-            options = shinyWidgets::pickerOptions(
-              actionsBox = TRUE,
-              liveSearch = TRUE,
-              liveSearchStyle = "contains",
-              size = 10,
-              liveSearchPlaceholder = "Type here to search",
-              virtualScroll = 50
-            )
-          )
-        ),
+        # tags$td(
+        #   shinyWidgets::pickerInput(
+        #     inputId = "breakdownDomainTable",
+        #     label = "Domain Table",
+        #     choices = c(""),
+        #     multiple = TRUE,
+        #     choicesOpt = list(style = rep_len("color: black;", 999)),
+        #     options = shinyWidgets::pickerOptions(
+        #       actionsBox = TRUE,
+        #       liveSearch = TRUE,
+        #       liveSearchStyle = "contains",
+        #       size = 10,
+        #       liveSearchPlaceholder = "Type here to search",
+        #       virtualScroll = 50
+        #     )
+        #   )
+        # ),
+        # tags$td(
+        #   shinyWidgets::pickerInput(
+        #     inputId = "breakdownDomainField",
+        #     label = "Domain Field",
+        #     choices = c(""),
+        #     multiple = TRUE,
+        #     choicesOpt = list(style = rep_len("color: black;", 999)),
+        #     options = shinyWidgets::pickerOptions(
+        #       actionsBox = TRUE,
+        #       liveSearch = TRUE,
+        #       liveSearchStyle = "contains",
+        #       size = 10,
+        #       liveSearchPlaceholder = "Type here to search",
+        #       virtualScroll = 50
+        #     )
+        #   )
+        # ),
         tags$td(
           shiny::radioButtons(
             inputId = "indexEventBreakdownTableRadioButton",

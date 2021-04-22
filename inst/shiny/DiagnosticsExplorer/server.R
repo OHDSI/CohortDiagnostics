@@ -1588,9 +1588,13 @@ shiny::shinyServer(function(input, output, session) {
   output$breakdownTable <- DT::renderDataTable(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen chosen"))
-    data <- indexEventBreakDownDataFilteredByRadioButton() %>%
-      dplyr::filter(.data$domainTable %in% selectedDomainTable()) %>%
-      dplyr::filter(.data$domainField %in% selectedDomainField()) %>%
+    data <- indexEventBreakDownDataFilteredByRadioButton()
+    if (is.null(data) || nrow(data) == 0) {
+      return(dplyr::tibble("No data for the combination."))
+    }
+    data <- data %>%
+      # dplyr::filter(.data$domainTable %in% selectedDomainTable()) %>%
+      # dplyr::filter(.data$domainField %in% selectedDomainField()) %>%
       dplyr::select(
         -.data$domainTable,
         .data$domainField,
