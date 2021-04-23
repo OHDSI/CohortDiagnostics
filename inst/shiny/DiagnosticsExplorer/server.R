@@ -1701,7 +1701,7 @@ shiny::shinyServer(function(input, output, session) {
         paging = TRUE,
         columnDefs = list(minCellCountDef(2 + 1:(
           length(databaseIds) * 2
-        )))
+        )), truncateStringDef(1, 80))
       )
       
       dataTable <- DT::datatable(
