@@ -570,7 +570,10 @@ shiny::shinyServer(function(input, output, session) {
         paging = TRUE,
         info = TRUE,
         searchHighlight = TRUE,
-        scrollX = TRUE
+        scrollX = TRUE,
+        columnDefs = list(
+          truncateStringDef(1, 80)
+        )
       )
       
       dataTable <- DT::datatable(
@@ -602,7 +605,10 @@ shiny::shinyServer(function(input, output, session) {
         paging = TRUE,
         info = TRUE,
         searchHighlight = TRUE,
-        scrollX = TRUE
+        scrollX = TRUE,
+        columnDefs = list(
+          truncateStringDef(2, 80)
+        )
       )
       
       dataTable <- DT::datatable(
@@ -634,7 +640,10 @@ shiny::shinyServer(function(input, output, session) {
         paging = TRUE,
         info = TRUE,
         searchHighlight = TRUE,
-        scrollX = TRUE
+        scrollX = TRUE,
+        columnDefs = list(
+          truncateStringDef(1, 80)
+        )
       )
       
       dataTable <- DT::datatable(
