@@ -3101,7 +3101,7 @@ shiny::shinyServer(function(input, output, session) {
     cohorts <- cohortSubset() %>%
       dplyr::filter(.data$cohortId %in% cohortIds()) %>%
       dplyr::arrange(.data$cohortId) %>%
-      dplyr::select(.data$shortName, .data$cohortName)
+      dplyr::select(.data$compoundName)
     return(apply(cohorts, 1, function(x)
       tags$tr(lapply(x, tags$td))))
   })
