@@ -293,29 +293,12 @@ sidebarMenu <-
       )
     ),
     shiny::conditionalPanel(
-      condition = "input.tabs=='includedConcepts' | input.tabs=='orphanConcepts'",
-      shinyWidgets::pickerInput(
-        inputId = "conceptSet",
-        label = "Concept Set",
-        choices = c(""),
-        multiple = FALSE,
-        choicesOpt = list(style = rep_len("color: black;", 999)),
-        options = shinyWidgets::pickerOptions(
-          actionsBox = TRUE,
-          liveSearch = TRUE,
-          size = 10,
-          dropupAuto = TRUE,
-          liveSearchStyle = "contains",
-          liveSearchPlaceholder = "Type here to search",
-          virtualScroll = 50
-        )
-      )
-    ),
-    shiny::conditionalPanel(
       condition = "input.tabs == 'cohortCharacterization' |
       input.tabs == 'compareCohortCharacterization' |
       input.tabs == 'temporalCharacterization' |
-      input.tabs == 'compareTemporalCharacterization'",
+      input.tabs == 'compareTemporalCharacterization' |
+      input.tabs == 'includedConcepts' |
+      input.tabs == 'orphanConcepts'",
       shinyWidgets::pickerInput(
         inputId = "conceptSetsToFilterCharacterization",
         label = "Concept sets",

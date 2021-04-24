@@ -63,21 +63,6 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   shiny::observe({
-    if (exists('conceptSets') &&
-        !is.null(conceptSets) &&
-        nrow(conceptSets) > 0) {
-      subset <-
-        unique(conceptSets$conceptSetName[conceptSets$cohortId == cohortId()]) %>% sort()
-      shinyWidgets::updatePickerInput(
-        session = session,
-        inputId = "conceptSet",
-        choicesOpt = list(style = rep_len("color: black;", 999)),
-        choices = subset
-      )
-    }
-  })
-  
-  shiny::observe({
     subset <- cohortSubset()$compoundName
     shinyWidgets::updatePickerInput(
       session = session,
@@ -676,6 +661,42 @@ shiny::shinyServer(function(input, output, session) {
     }
   )
   
+  getConceptSetIds <- shiny::reactive(x = {
+    return(conceptSets$conceptSetId[conceptSets$conceptSetName  %in% input$conceptSetsToFilterCharacterization])
+  })
+  
+  getResoledAndMappedConceptIdsForFilters <- shiny::reactive({
+    output <-
+      resolveMappedConceptSet(
+        dataSource = dataSource,
+        databaseIds = databaseIds(),
+        cohortId = cohortId()
+      )
+    if (is.null(output)) {
+      return(NULL)
+    }
+    conceptIdsForFilters <- output$resolved %>% 
+      dplyr::filter(.data$conceptSetId %in% getConceptSetIds()) %>% 
+      dplyr::select(.data$conceptId) %>% 
+      dplyr::distinct()
+    
+    if (!is.null(output$mapped) &&
+        nrow(output$mapped) > 0) {
+      mappedConceptSetIds <- output$mapped %>% 
+        dplyr::filter(.data$conceptSetId %in% getConceptSetIds()) %>% 
+        dplyr::select(.data$conceptId) %>% 
+        dplyr::distinct()
+      
+      conceptIdsForFilters <- conceptIdsForFilters %>% 
+        dplyr::bind_rows(mappedConceptSetIds) %>%
+        dplyr::distinct()
+    }
+    output <- conceptIdsForFilters %>% 
+      dplyr::distinct() %>% 
+      dplyr::pull(.data$conceptId)
+    return(output)
+  })
+  
   # Cohort Counts ---------------------------------------------------------------------------
   output$cohortCountsTable <- DT::renderDataTable(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
@@ -1070,10 +1091,19 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(data) || nrow(data) == 0) {
       return(dplyr::tibble("No data available for selected databases and cohorts"))
     }
-    if (!is.null(input$conceptSet) && length(input$conceptSet) > 0) {
-      data <- data %>%
-        dplyr::filter(.data$conceptSetName == input$conceptSet)
+    
+    if (!is.null(input$conceptSetsToFilterCharacterization) && length(input$conceptSetsToFilterCharacterization) > 0) {
+      
+      if (!is.null(input$conceptSetsToFilterCharacterization)) {
+        if (length(getResoledAndMappedConceptIdsForFilters()) > 0) {
+          data <- data %>% 
+            dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
+        } else {
+          data <- data[0,]
+        }
+      }
     }
+    
     if (nrow(data) == 0) {
       return(dplyr::tibble("No data available for selected databases and cohorts"))
     }
@@ -1311,8 +1341,17 @@ shiny::shinyServer(function(input, output, session) {
       )))
     }
     
-    data <- data %>%
-      dplyr::filter(.data$conceptSetName == input$conceptSet)
+    if (!is.null(input$conceptSetsToFilterCharacterization) && length(input$conceptSetsToFilterCharacterization) > 0) {
+      
+      if (!is.null(input$conceptSetsToFilterCharacterization)) {
+        if (length(getResoledAndMappedConceptIdsForFilters()) > 0) {
+          data <- data %>% 
+            dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
+        } else {
+          data <- data[0,]
+        }
+      }
+    }
     
     if (nrow(data) == 0) {
       return(dplyr::tibble(Note = paste0(
@@ -1920,42 +1959,6 @@ shiny::shinyServer(function(input, output, session) {
     } else {
       return(NULL)
     }
-  })
-  
-  getConceptSetIds <- shiny::reactive(x = {
-    return(conceptSets$conceptSetId[conceptSets$conceptSetName  %in% input$conceptSetsToFilterCharacterization])
-  })
-  
-  getResoledAndMappedConceptIdsForFilters <- shiny::reactive({
-    output <-
-      resolveMappedConceptSet(
-        dataSource = dataSource,
-        databaseIds = databaseIds(),
-        cohortId = cohortId()
-      )
-    if (is.null(output)) {
-      return(NULL)
-    }
-    conceptIdsForFilters <- output$resolved %>% 
-      dplyr::filter(.data$conceptSetId %in% getConceptSetIds()) %>% 
-      dplyr::select(.data$conceptId) %>% 
-      dplyr::distinct()
-    
-    if (!is.null(output$mapped) &&
-        nrow(output$mapped) > 0) {
-      mappedConceptSetIds <- output$mapped %>% 
-        dplyr::filter(.data$conceptSetId %in% getConceptSetIds()) %>% 
-        dplyr::select(.data$conceptId) %>% 
-        dplyr::distinct()
-      
-      conceptIdsForFilters <- conceptIdsForFilters %>% 
-        dplyr::bind_rows(mappedConceptSetIds) %>%
-        dplyr::distinct()
-    }
-    output <- conceptIdsForFilters %>% 
-      dplyr::distinct() %>% 
-      dplyr::pull(.data$conceptId)
-    return(output)
   })
   
   characterizationDomainNameFilter <- shiny::reactive({
