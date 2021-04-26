@@ -506,8 +506,6 @@ plotTemporalCompareStandardizedDifference <- function(balance,
       dplyr::filter(.data$domain == !!domain)
   }
   
-  validate(need((nrow(balance) > 0), paste0("No data for selected combination.")))
-  
   # Can't make sense of plot with > 1000 dots anyway, so remove
   # anything with small mean in both target and comparator:
   if (nrow(balance) > 1000) {
@@ -526,6 +524,8 @@ plotTemporalCompareStandardizedDifference <- function(balance,
       cohortIdColumn = "cohortId2",
       shortNameColumn = "comparatorCohort"
     )
+  
+  validate(need((nrow(balance) > 0), paste0("No data for selected combination.")))
   
   # ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 3, alpha = 0.6)
   balance$tooltip <-

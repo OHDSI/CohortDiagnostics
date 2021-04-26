@@ -31,6 +31,18 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  timeIdComparator <- shiny::reactive(x = {
+    if (exists('temporalCovariateChoices')) {
+      return(
+        temporalCovariateChoices %>%
+          dplyr::filter(choices %in% input$timeIdComparator) %>%
+          dplyr::pull(timeId)
+      )
+    } else {
+      return(NULL)
+    }
+  })
+  
   timeIds <- reactiveVal(NULL)
   shiny::observeEvent(eventExpr = {
     list(input$timeIdChoices_open,
@@ -2717,7 +2729,7 @@ shiny::shinyServer(function(input, output, session) {
         cohortIds = comparatorCohortId(),
         databaseIds = input$database,
         isTemporal = TRUE,
-        timeIds = timeId()
+        timeIds = timeIdComparator()
       )
       balance <-
         compareTemporalCohortCharacteristics(covs1, covs2) %>%
