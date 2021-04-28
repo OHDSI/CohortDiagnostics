@@ -275,12 +275,14 @@ plotIncidenceRate <- function(data,
     ggplot2::xlab(xLabel) +
     ggplot2::ylab("Incidence Rate (/1,000 person years)")
   
-  if (length(distinctCalenderYear) >= 8) {
-    plot <-
-      plot + ggplot2::scale_x_continuous(n.breaks = 8, labels = round)
-  } else {
-    plot <-
-      plot + ggplot2::scale_x_continuous(breaks = distinctCalenderYear)
+  if (!is.na(distinctCalenderYear)) {
+    if (length(distinctCalenderYear) >= 8) {
+      plot <-
+        plot + ggplot2::scale_x_continuous(n.breaks = 8, labels = round)
+    } else {
+      plot <-
+        plot + ggplot2::scale_x_continuous(breaks = distinctCalenderYear)
+    }
   }
   
   plot <- plot + ggplot2::theme(
