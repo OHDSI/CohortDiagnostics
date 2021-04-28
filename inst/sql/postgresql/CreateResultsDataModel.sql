@@ -11,6 +11,7 @@ DROP TABLE IF EXISTS concept_sets;
 DROP TABLE IF EXISTS concept_synonym;
 DROP TABLE IF EXISTS covariate_ref;
 DROP TABLE IF EXISTS covariate_value;
+DROP TABLE IF EXISTS covariate_value_cont;
 DROP TABLE IF EXISTS database;
 DROP TABLE IF EXISTS domain;
 DROP TABLE IF EXISTS incidence_rate;
@@ -25,6 +26,7 @@ DROP TABLE IF EXISTS resolved_concepts;
 DROP TABLE IF EXISTS temporal_analysis_ref;
 DROP TABLE IF EXISTS temporal_covariate_ref;
 DROP TABLE IF EXISTS temporal_covariate_value;
+DROP TABLE IF EXISTS temporal_covariate_cont;
 DROP TABLE IF EXISTS temporal_time_ref;
 DROP TABLE IF EXISTS time_distribution;
 DROP TABLE IF EXISTS visit_context;
@@ -161,8 +163,28 @@ CREATE TABLE covariate_ref (
 CREATE TABLE covariate_value (
 			cohort_id BIGINT NOT NULL,
 			covariate_id BIGINT NOT NULL,
+			sum_value FLOAT NOT NULL,
 			mean FLOAT NOT NULL,
 			sd FLOAT,
+			database_id VARCHAR NOT NULL,
+			PRIMARY KEY(cohort_id, covariate_id, database_id)
+);
+
+--Table covariate_value_cont
+
+CREATE TABLE covariate_value_cont (
+			cohort_id BIGINT NOT NULL,
+			covariate_id BIGINT NOT NULL,
+			count_value FLOAT NOT NULL,
+			min_value FLOAT NOT NULL,
+			max_value FLOAT NOT NULL,
+			mean FLOAT NOT NULL,
+			sd FLOAT NOT NULL,
+			median_value FLOAT NOT NULL,
+			p_10_value FLOAT NOT NULL,
+			p_25_value FLOAT NOT NULL,
+			p_75_value FLOAT NOT NULL,
+			p_90_value FLOAT NOT NULL,
 			database_id VARCHAR NOT NULL,
 			PRIMARY KEY(cohort_id, covariate_id, database_id)
 );
@@ -322,10 +344,31 @@ CREATE TABLE temporal_covariate_value (
 			cohort_id BIGINT NOT NULL,
 			time_id INT NOT NULL,
 			covariate_id BIGINT NOT NULL,
+			sum_value FLOAT NOT NULL,
 			mean FLOAT NOT NULL,
 			sd FLOAT,
 			database_id VARCHAR NOT NULL,
 			PRIMARY KEY(cohort_id, time_id, covariate_id, database_id)
+);
+
+--Table temporal_covariate_cont
+
+CREATE TABLE temporal_covariate_cont (
+			cohort_id BIGINT NOT NULL,
+			time_id INT NOT NULL,
+			covariate_id BIGINT NOT NULL,
+			count_value FLOAT NOT NULL,
+			min_value FLOAT NOT NULL,
+			max_value FLOAT NOT NULL,
+			mean FLOAT NOT NULL,
+			sd FLOAT NOT NULL,
+			median_value FLOAT NOT NULL,
+			p_10_value FLOAT NOT NULL,
+			p_25_value FLOAT NOT NULL,
+			p_75_value FLOAT NOT NULL,
+			p_90_value FLOAT NOT NULL,
+			database_id VARCHAR NOT NULL,
+			PRIMARY KEY(cohort_id, covariate_id, database_id)
 );
 
 --Table temporal_time_ref
