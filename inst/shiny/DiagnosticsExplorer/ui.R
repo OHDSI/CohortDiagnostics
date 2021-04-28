@@ -164,29 +164,6 @@ sidebarMenu <-
         )
       )
     ),
-    shiny::conditionalPanel(
-      condition = "input.tabs != 'databaseInformation' &
-      input.tabs != 'cohortDefinition' &
-      input.tabs != 'cohortCounts' &
-      input.tabs != 'cohortOverlap'&
-      input.tabs != 'incidenceRate' &
-      input.tabs != 'timeDistribution'",
-      shinyWidgets::pickerInput(
-        inputId = "cohort",
-        label = "Cohort",
-        choices = c(""),
-        multiple = FALSE,
-        choicesOpt = list(style = rep_len("color: black;", 999)),
-        options = shinyWidgets::pickerOptions(
-          actionsBox = TRUE,
-          liveSearch = TRUE,
-          liveSearchStyle = "contains",
-          size = 10,
-          liveSearchPlaceholder = "Type here to search",
-          virtualScroll = 50
-        )
-      )
-    ),
     if (exists("temporalCovariateValue")) {
       shiny::conditionalPanel(
         condition = "input.tabs=='temporalCharacterization'",
@@ -250,6 +227,29 @@ sidebarMenu <-
       )
     },
     shiny::conditionalPanel(
+      condition = "input.tabs != 'databaseInformation' &
+      input.tabs != 'cohortDefinition' &
+      input.tabs != 'cohortCounts' &
+      input.tabs != 'cohortOverlap'&
+      input.tabs != 'incidenceRate' &
+      input.tabs != 'timeDistribution'",
+      shinyWidgets::pickerInput(
+        inputId = "cohort",
+        label = "Cohort",
+        choices = c(""),
+        multiple = FALSE,
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        options = shinyWidgets::pickerOptions(
+          actionsBox = TRUE,
+          liveSearch = TRUE,
+          liveSearchStyle = "contains",
+          size = 10,
+          liveSearchPlaceholder = "Type here to search",
+          virtualScroll = 50
+        )
+      )
+    ),
+    shiny::conditionalPanel(
       condition = "input.tabs == 'cohortCounts' |
       input.tabs == 'cohortOverlap' |
       input.tabs == 'incidenceRate' |
@@ -292,37 +292,6 @@ sidebarMenu <-
         )
       )
     ),
-    if (exists("temporalCovariateValue")) {
-      shiny::conditionalPanel(
-        condition = "input.tabs == 'compareTemporalCharacterization'",
-        shinyWidgets::pickerInput(
-          inputId = "timeIdComparator",
-          label = "Temporal Choice",
-          choices = temporalCovariateChoices$choices,
-          multiple = FALSE,
-          choicesOpt = list(style = rep_len("color: black;", 999)),
-          selected = temporalCovariateChoices %>%
-            dplyr::filter(.data$timeId %in% (
-              c(
-                min(temporalCovariateChoices$timeId),
-                temporalCovariateChoices %>%
-                  dplyr::pull(.data$timeId)
-              ) %>%
-                unique() %>%
-                sort()
-            )) %>%
-            dplyr::pull("choices"),
-          options = shinyWidgets::pickerOptions(
-            actionsBox = TRUE,
-            liveSearch = TRUE,
-            size = 10,
-            liveSearchStyle = "contains",
-            liveSearchPlaceholder = "Type here to search",
-            virtualScroll = 50
-          )
-        )
-      )
-    },
     shiny::conditionalPanel(
       condition = "input.tabs == 'cohortCharacterization' |
       input.tabs == 'compareCohortCharacterization' |
