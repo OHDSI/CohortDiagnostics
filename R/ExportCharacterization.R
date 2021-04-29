@@ -19,17 +19,19 @@ exportCharacterization <- function(characteristics,
                                    databaseId,
                                    incremental,
                                    covariateValueFileName,
+                                   covariateValueContFileName,
                                    covariateRefFileName,
                                    analysisRefFileName,
                                    timeRefFileName = NULL,
                                    counts,
+                                   cutOff = 0.0001,
                                    minCellCount) {
   if (!"covariates" %in% names(characteristics)) {
     warning("No characterization output for submitted cohorts")
   } else if (dplyr::pull(dplyr::count(characteristics$covariateRef)) > 0) {
     characteristics$filteredCovariates <-
       characteristics$covariates %>%
-      dplyr::filter(mean >= 0.0001) %>%
+      dplyr::filter(mean >= cutOff) %>%
       dplyr::mutate(databaseId = !!databaseId) %>%
       dplyr::left_join(counts,
                        by = c("cohortId", "databaseId"),
@@ -73,6 +75,37 @@ exportCharacterization <- function(characteristics,
       writeCovariateDataAndromedaToCsv(
         data = characteristics$filteredCovariates,
         fileName = covariateValueFileName,
+        incremental = incremental
+      )
+    }
+  }
+  
+  if (!"covariatesContinuous" %in% names(characteristics)) {
+    ParallelLogger::logInfo("No continuous characterization output for submitted cohorts")
+  } else if (dplyr::pull(dplyr::count(characteristics$covariateRef)) > 0) {
+    characteristics$filteredCovariates <-
+      characteristics$covariatesContinuous %>%
+      # dplyr::filter(mean >= cutOff) %>%
+      dplyr::mutate(databaseId = !!databaseId) %>%
+      dplyr::left_join(counts,
+                       by = c("cohortId", "databaseId"),
+                       copy = TRUE) %>%
+      dplyr::mutate(
+        mean = dplyr::case_when(
+          .data$mean != 0 &
+            .data$mean < minCellCount / .data$cohortEntries ~ -minCellCount / .data$cohortEntries,
+          TRUE ~ .data$mean
+        )
+      ) %>%
+      dplyr::mutate(sd = dplyr::case_when(.data$mean >= 0 ~ sd)) %>%
+      # dplyr::mutate(mean = round(.data$mean, digits = 4),
+      #               sd = round(.data$sd, digits = 4)) %>%
+      dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
+    
+    if (dplyr::pull(dplyr::count(characteristics$filteredCovariates)) > 0) {
+      writeCovariateDataAndromedaToCsv(
+        data = characteristics$filteredCovariates,
+        fileName = covariateValueContFileName,
         incremental = incremental
       )
     }
