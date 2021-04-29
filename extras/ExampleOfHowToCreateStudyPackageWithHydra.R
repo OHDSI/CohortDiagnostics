@@ -4,8 +4,8 @@ outputFolder <- "d:/temp/output"  # location where you study package will be cre
 
 ########## Please populate the information below #####################
 version <- "v0.1.0"
-name <- "Thrombocytopenia with thrombosis cohorts - an OHDSI network study"
-packageName <- "thrombocytopeniaWithThrombosis"
+name <- "Thrombosis With Thrombocytopenia Syndrome cohorts - an OHDSI network study"
+packageName <- "ThrombosisWithThrombocytopeniaSyndrome"
 skeletonVersion <- "v0.0.1"
 createdBy <- "rao@ohdsi.org"
 createdDate <- Sys.Date() # default
@@ -13,7 +13,7 @@ modifiedBy <- "rao@ohdsi.org"
 modifiedDate <- Sys.Date()
 skeletonType <- "CohortDiagnosticsStudy"
 organizationName <- "OHDSI"
-description <- "Cohort diagnostics on Thrombocytopenia with thrombosis cohorts."
+description <- "Cohort diagnostics on Thrombosis With Thrombocytopenia Syndrome cohorts."
 
 
 library(magrittr)
