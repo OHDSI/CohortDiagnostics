@@ -29,24 +29,31 @@ getResultsDataModelSpecifications <- function() {
   return(resultsDataModelSpecifications)
 }
 
-fixTableMetadataForBackwardCompatibility <- function(table) {
-  if (!'metadata' %in% colnames(table)) {
-    data <- list()
-    for (i in (1:nrow(table))) {
-      data[[i]] <- table[i,]
-      colnames <- colnames(data[[i]])
-      metaDataList <- list()
-      for (j in (1:length(colnames))) {
-        metaDataList[[colnames[[j]]]] = data[[i]][colnames[[j]]] %>% dplyr::pull()
+fixTableMetadataForBackwardCompatibility <- function(table, tableName) {
+  if (tableName %in% c("cohort", "phenotype_description")) {
+    if (!'metadata' %in% colnames(table)) {
+      data <- list()
+      for (i in (1:nrow(table))) {
+        data[[i]] <- table[i,]
+        colnames <- colnames(data[[i]])
+        metaDataList <- list()
+        for (j in (1:length(colnames))) {
+          metaDataList[[colnames[[j]]]] = data[[i]][colnames[[j]]] %>% dplyr::pull()
+        }
+        data[[i]]$metadata <-
+          RJSONIO::toJSON(metaDataList, pretty = TRUE, digits = 23)
       }
-      data[[i]]$metadata <-
-        RJSONIO::toJSON(metaDataList, pretty = TRUE, digits = 23)
+      table <- dplyr::bind_rows(data)
     }
-    table <- dplyr::bind_rows(data)
+    if ('referent_concept_id' %in% colnames(table)) {
+      table <- table %>%
+        dplyr::select(-.data$referent_concept_id)
+    }
   }
-  if ('referent_concept_id' %in% colnames(table)) {
-    table <- table %>%
-      dplyr::select(-.data$referent_concept_id)
+  if (tableName %in% c('covariate_value', 'temporal_covariate_value')) {
+    if (!'sum_value' %in% colnames(table)) {
+      table$sum_value <- -1
+    }
   }
   return(table)
 }
@@ -56,8 +63,10 @@ checkFixColumnNames <-
            tableName,
            zipFileName,
            specifications = getResultsDataModelSpecifications()) {
-    if (tableName %in% c('cohort', 'phenotype_description')) {
-      table <- fixTableMetadataForBackwardCompatibility(table = table)
+    if (tableName %in% c('cohort', 'phenotype_description', 
+                         'covariate_value', 'temporal_covariate_value')) {
+      table <- fixTableMetadataForBackwardCompatibility(table = table,
+                                                        tableName = tableName)
     }
     observeredNames <- colnames(table)[order(colnames(table))]
     
