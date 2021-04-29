@@ -101,19 +101,21 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
         dplyr::mutate(sd = sqrt(.data$p * (1 - .data$p))) %>%
         dplyr::select(-.data$p) %>%
         dplyr::rename(mean = .data$averageValue) %>%
-        dplyr::select(-.data$sumValue, -.data$populationSize)
+        dplyr::select(-.data$populationSize)
       
       if (FeatureExtraction::isTemporalCovariateData(featureExtractionOutput)) {
         covariates <- covariates %>%
           dplyr::select(.data$cohortId,
                         .data$timeId,
                         .data$covariateId,
+                        .data$sumValue,
                         .data$mean,
                         .data$sd)
       } else {
         covariates <- covariates %>%
           dplyr::select(.data$cohortId,
                         .data$covariateId,
+                        .data$sumValue,
                         .data$mean,
                         .data$sd)
       }
@@ -132,17 +134,22 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
           sd = .data$standardDeviation,
           cohortId = .data$cohortDefinitionId
         )
+      covariatesContinuous <- covariates
       if (FeatureExtraction::isTemporalCovariateData(featureExtractionOutput)) {
         covariates <- covariates %>%
+          dplyr::mutate(sumValue = -1) %>% 
           dplyr::select(.data$cohortId,
                         .data$timeId,
                         .data$covariateId,
+                        .data$sum,
                         .data$mean,
                         .data$sd)
       } else {
         covariates <- covariates %>%
+          dplyr::mutate(sumValue = -1) %>% 
           dplyr::select(.data$cohortId,
                         .data$covariateId,
+                        .data$sumValue,
                         .data$mean,
                         .data$sd)
       }
@@ -150,6 +157,11 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
         Andromeda::appendToTable(results$covariates, covariates)
       } else {
         results$covariates <- covariates
+      }
+      if ("covariatesContinuous" %in% names(results)) {
+        Andromeda::appendToTable(results$covariatesContinuous, covariatesContinuous)
+      } else {
+        results$covariatesContinuous <- covariatesContinuous
       }
     }
   }

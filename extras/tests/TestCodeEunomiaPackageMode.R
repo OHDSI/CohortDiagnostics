@@ -40,31 +40,33 @@ SkeletonCohortDiagnosticsStudy::runCohortDiagnostics(
 )
 
 CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = outputFolder)
-CohortDiagnostics::launchDiagnosticsExplorer(dataFolder = outputFolder)
 
-# 
-# 
-# connectionDetailsToUpload <- createConnectionDetails(dbms = "postgresql",
-#                                                      server = paste(Sys.getenv("shinydbServer"),
-#                                                                     Sys.getenv("shinydbDatabase"),
-#                                                                     sep = "/"),
-#                                                      port = Sys.getenv("shinydbPort"),
-#                                                      user = Sys.getenv("shinyDbUser"),
-#                                                      password = Sys.getenv("shinyDbPassword"))
-# 
-# 
-# resultsSchema <- "eunomiaCd"
-# createResultsDataModel(connectionDetails = connectionDetailsToUpload, schema = resultsSchema)
-# 
-# 
-# path = outputFolder
-# zipFilesToUpload <- list.files(path = path,
-#                                pattern = ".zip",
-#                                recursive = TRUE,
-#                                full.names = TRUE)
-# 
-# for (i in (1:length(zipFilesToUpload))) {
-#   CohortDiagnostics::uploadResults(connectionDetails = connectionDetailsToUpload,
-#                                    schema = resultsSchema,
-#                                    zipFileName = zipFilesToUpload[[i]])
-# }
+
+
+connectionDetailsToUpload <- createConnectionDetails(dbms = "postgresql",
+                                                     server = paste(Sys.getenv("shinydbServer"),
+                                                                    Sys.getenv("shinydbDatabase"),
+                                                                    sep = "/"),
+                                                     port = Sys.getenv("shinydbPort"),
+                                                     user = Sys.getenv("shinyDbUser"),
+                                                     password = Sys.getenv("shinyDbPassword"))
+
+
+resultsSchema <- "eunomiaCd"
+createResultsDataModel(connectionDetails = connectionDetailsToUpload, schema = resultsSchema)
+
+
+path = outputFolder
+zipFilesToUpload <- list.files(path = path,
+                               pattern = ".zip",
+                               recursive = TRUE,
+                               full.names = TRUE)
+
+for (i in (1:length(zipFilesToUpload))) {
+  CohortDiagnostics::uploadResults(connectionDetails = connectionDetailsToUpload,
+                                   schema = resultsSchema,
+                                   zipFileName = zipFilesToUpload[[i]])
+}
+
+
+CohortDiagnostics::launchDiagnosticsExplorer(dataFolder = outputFolder)
