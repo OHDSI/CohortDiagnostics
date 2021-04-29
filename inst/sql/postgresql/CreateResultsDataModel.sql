@@ -11,7 +11,7 @@ DROP TABLE IF EXISTS concept_sets;
 DROP TABLE IF EXISTS concept_synonym;
 DROP TABLE IF EXISTS covariate_ref;
 DROP TABLE IF EXISTS covariate_value;
-DROP TABLE IF EXISTS covariate_value_cont;
+DROP TABLE IF EXISTS covariate_value_dist;
 DROP TABLE IF EXISTS database;
 DROP TABLE IF EXISTS domain;
 DROP TABLE IF EXISTS incidence_rate;
@@ -170,9 +170,9 @@ CREATE TABLE covariate_value (
 			PRIMARY KEY(cohort_id, covariate_id, database_id)
 );
 
---Table covariate_value_cont
+--Table covariate_value_dist
 
-CREATE TABLE covariate_value_cont (
+CREATE TABLE covariate_value_dist (
 			cohort_id BIGINT NOT NULL,
 			covariate_id BIGINT NOT NULL,
 			count_value FLOAT NOT NULL,
