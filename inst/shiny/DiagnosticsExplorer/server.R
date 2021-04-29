@@ -19,18 +19,6 @@ shiny::shinyServer(function(input, output, session) {
     return(cohort$cohortId[cohort$compoundName == input$comparatorCohort])
   })
   
-  timeId <- shiny::reactive(x = {
-    if (exists('temporalCovariateChoices')) {
-      return(
-        temporalCovariateChoices %>%
-          dplyr::filter(choices %in% input$timeId) %>%
-          dplyr::pull(timeId)
-      )
-    } else {
-      return(NULL)
-    }
-  })
-  
   timeIds <- reactiveVal(NULL)
   shiny::observeEvent(eventExpr = {
     list(input$timeIdChoices_open,
@@ -2263,6 +2251,7 @@ shiny::shinyServer(function(input, output, session) {
       timeIds = timeIds(),
       isTemporal = TRUE
     ) %>%
+      dplyr::select(-.data$choices) %>% 
       dplyr::inner_join(temporalCovariateChoices, by = "timeId") %>%
       dplyr::arrange(.data$timeId) %>%
       dplyr::select(-.data$cohortId, -.data$databaseId, -.data$covariateId)
@@ -2702,22 +2691,21 @@ shiny::shinyServer(function(input, output, session) {
       validate(need((length(input$database) > 0),
                     paste0("Please select atleast one datasource.")
       ))
-      validate(need((length(timeId(
-      )) > 0), paste0("Please select time id")))
+      validate(need((length(timeIds()) > 0), paste0("Please select time id")))
       
       covs1 <- getCovariateValueResult(
         dataSource = dataSource,
         cohortIds = cohortId(),
         databaseIds = input$database,
         isTemporal = TRUE,
-        timeIds = timeId()
+        timeIds = timeIds()
       )
       covs2 <- getCovariateValueResult(
         dataSource = dataSource,
         cohortIds = comparatorCohortId(),
         databaseIds = input$database,
         isTemporal = TRUE,
-        timeIds = timeId()
+        timeIds = timeIds()
       )
       balance <-
         compareTemporalCohortCharacteristics(covs1, covs2) %>%
@@ -2921,6 +2909,7 @@ shiny::shinyServer(function(input, output, session) {
       data <- data %>%
         dplyr::filter(.data$isBinary == 'N')
     }
+    
     plot <-
       plotTemporalCompareStandardizedDifference(
         balance = data,

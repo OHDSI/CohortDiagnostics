@@ -413,15 +413,17 @@ plotCohortComparisonStandardizedDifference <- function(balance,
         "Covariate Name: ",
         balance$covariateName,
         "\nDomain: ",
-        balance$domain,
-        "\nMean ",
+        balance$domainId,
+        "\nAnalysis: ",
+        balance$analysisName,
+        "\nY ",
         balance$targetCohort,
         ": ",
-        scales::comma(balance$mean1, accuracy = 0.1),
-        "\nMean ",
+        scales::comma(balance$mean2, accuracy = 0.1),
+        "\nX ",
         balance$comparatorCohort,
         ": ",
-        scales::comma(balance$mean2, accuracy = 0.1),
+        scales::comma(balance$mean1, accuracy = 0.1),
         "\nStd diff.:",
         scales::comma(balance$stdDiff, accuracy = 0.1)
       )
@@ -536,15 +538,17 @@ plotTemporalCompareStandardizedDifference <- function(balance,
         "Covariate Name: ",
         balance$covariateName,
         "\nDomain: ",
-        balance$domain,
-        "\nMean ",
+        balance$domainId,
+        "\nAnalysis: ",
+        balance$analysisName,
+        "\n Y ",
         balance$targetCohort,
         ": ",
-        scales::comma(balance$mean1, accuracy = 0.1),
-        "\nMean ",
+        scales::comma(balance$mean2, accuracy = 0.1),
+        "\n X ",
         balance$comparatorCohort,
         ": ",
-        scales::comma(balance$mean2, accuracy = 0.1),
+        scales::comma(balance$mean1, accuracy = 0.1),
         "\nStd diff.:",
         scales::comma(balance$stdDiff, accuracy = 0.1)
       )
@@ -592,19 +596,19 @@ plotTemporalCompareStandardizedDifference <- function(balance,
     # ggplot2::scale_x_continuous("Mean") +
     # ggplot2::scale_y_continuous("Mean") +
     ggplot2::scale_color_manual("Domain", values = colors) +
-    facet_nested(databaseId + targetCohort ~ comparatorCohort) +
+    facet_nested(databaseId + choices1 ~ choices2) +
     ggplot2::theme(strip.background = ggplot2::element_blank()) +
     ggplot2::xlim(xLimitMin, xLimitMax) +
     ggplot2::ylim(yLimitMin, yLimitMax) +
-    ggplot2::xlab(balance$cohortId2 %>% unique()) +
-    ggplot2::ylab(balance$cohortId1 %>% unique())
+    ggplot2::xlab(balance$comparatorCohort %>% unique()) +
+    ggplot2::ylab(balance$targetCohort %>% unique())
   
   plot <- ggiraph::girafe(
     ggobj = plot,
     options = list(ggiraph::opts_sizing(width = .7),
                    ggiraph::opts_zoom(max = 5)),
     width_svg = 12,
-    height_svg = 5
+    height_svg = 8
   )
   return(plot)
 }
