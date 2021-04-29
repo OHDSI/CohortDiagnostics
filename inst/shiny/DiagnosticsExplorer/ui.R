@@ -79,6 +79,11 @@ sidebarMenu <-
         item = shinydashboard::menuItem(text = "Visit Context", tabName = "visitContext"),
         infoId = "visitContextInfo"
       ),
+    if (exists("cohortOverlap"))
+      addInfo(
+        shinydashboard::menuItem(text = "Cohort Overlap", tabName = "cohortOverlap"),
+        infoId = "cohortOverlapInfo"
+      ),
     if (exists("covariateValue"))
       addInfo(
         shinydashboard::menuItem(text = "Cohort Characterization", tabName = "cohortCharacterization"),
@@ -88,11 +93,6 @@ sidebarMenu <-
       addInfo(
         shinydashboard::menuItem(text = "Temporal Characterization", tabName = "temporalCharacterization"),
         infoId = "temporalCharacterizationInfo"
-      ),
-    if (exists("cohortOverlap"))
-      addInfo(
-        shinydashboard::menuItem(text = "Cohort Overlap", tabName = "cohortOverlap"),
-        infoId = "cohortOverlapInfo"
       ),
     if (exists("covariateValue"))
       addInfo(
@@ -166,43 +166,12 @@ sidebarMenu <-
     ),
     if (exists("temporalCovariateValue")) {
       shiny::conditionalPanel(
-        condition = "input.tabs=='temporalCharacterization'",
+        condition = "input.tabs=='temporalCharacterization' | input.tabs =='compareTemporalCharacterization'",
         shinyWidgets::pickerInput(
           inputId = "timeIdChoices",
           label = "Temporal Choice",
           choices = temporalCovariateChoices$choices,
           multiple = TRUE,
-          choicesOpt = list(style = rep_len("color: black;", 999)),
-          selected = temporalCovariateChoices %>%
-            dplyr::filter(.data$timeId %in% (
-              c(
-                min(temporalCovariateChoices$timeId),
-                temporalCovariateChoices %>%
-                  dplyr::pull(.data$timeId)
-              ) %>%
-                unique() %>%
-                sort()
-            )) %>%
-            dplyr::pull("choices"),
-          options = shinyWidgets::pickerOptions(
-            actionsBox = TRUE,
-            liveSearch = TRUE,
-            size = 10,
-            liveSearchStyle = "contains",
-            liveSearchPlaceholder = "Type here to search",
-            virtualScroll = 50
-          )
-        )
-      )
-    },
-    if (exists("temporalCovariateValue")) {
-      shiny::conditionalPanel(
-        condition = "input.tabs == 'compareTemporalCharacterization'",
-        shinyWidgets::pickerInput(
-          inputId = "timeId",
-          label = "Temporal Choice",
-          choices = temporalCovariateChoices$choices,
-          multiple = FALSE,
           choicesOpt = list(style = rep_len("color: black;", 999)),
           selected = temporalCovariateChoices %>%
             dplyr::filter(.data$timeId %in% (
@@ -639,6 +608,23 @@ bodyTabItems <- shinydashboard::tabItems(
     DT::dataTableOutput(outputId = "visitContextTable")
   ),
   shinydashboard::tabItem(
+    tabName = "cohortOverlap",
+    cohortReference("cohortOverlapSelectedCohort"),
+    shinydashboard::box(
+      title = "Cohort Overlap (Subjects)",
+      width = NULL,
+      status = "primary",
+      shiny::radioButtons(
+        inputId = "overlapPlotType",
+        label = "",
+        choices = c("Percentages", "Counts"),
+        selected = "Percentages",
+        inline = TRUE
+      ),
+      ggiraph::ggiraphOutput("overlapPlot", width = "100%", height = "100%")
+    )
+  ),
+  shinydashboard::tabItem(
     tabName = "cohortCharacterization",
     cohortReference("characterizationSelectedCohort"),
     tags$table(tags$tr(
@@ -759,23 +745,6 @@ bodyTabItems <- shinydashboard::tabItems(
       )
     )),
     DT::dataTableOutput("temporalCharacterizationTable")
-  ),
-  shinydashboard::tabItem(
-    tabName = "cohortOverlap",
-    cohortReference("cohortOverlapSelectedCohort"),
-    shinydashboard::box(
-      title = "Cohort Overlap (Subjects)",
-      width = NULL,
-      status = "primary",
-      shiny::radioButtons(
-        inputId = "overlapPlotType",
-        label = "",
-        choices = c("Percentages", "Counts"),
-        selected = "Percentages",
-        inline = TRUE
-      ),
-      ggiraph::ggiraphOutput("overlapPlot", width = "100%", height = "100%")
-    )
   ),
   shinydashboard::tabItem(
     tabName = "compareCohortCharacterization",

@@ -229,9 +229,6 @@ compareTemporalCohortCharacteristics <-
           "databaseId",
           "covariateName",
           "analysisId",
-          "timeId",
-          "startDay",
-          "endDay",
           "isBinary",
           "analysisName",
           "domainId"

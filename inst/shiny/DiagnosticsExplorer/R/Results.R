@@ -504,7 +504,7 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
           dplyr::inner_join(get(timeRefTable, envir = dataSource), by = "timeId")
         if (!is.null(timeIds)) {
           data <- data %>%
-            dplyr::filter(.data$timeId %in% timeIds)
+            dplyr::filter(.data$timeId %in% timeIds) 
         }
       } else {
         data <- data %>%
@@ -561,7 +561,8 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
       tidyr::tibble()
   }
   if (isTemporal) {
-    data <- data %>% 
+    data <- data %>%
+      dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>% 
       dplyr::relocate(.data$cohortId, 
                       .data$databaseId, 
                       .data$timeId, 
