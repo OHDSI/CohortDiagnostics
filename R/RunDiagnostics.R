@@ -70,7 +70,7 @@
 #' @param runCohortOverlap            Generate and export the cohort overlap? Overlaps are checked within cohortIds
 #'                                    that have the same phenotype ID sourced from the CohortSetReference or
 #'                                    cohortToCreateFile.
-#' @param runCohortAsFeatures         Generate and export the Cohort as feature? Cohorts are compared to each other for temporal
+#' @param runCohortAsFeatures         (beta) Generate and export the Cohort as feature? Cohorts are compared to each other for temporal
 #'                                    relationship and summary statistics on the temporal relationship are provided.
 #' @param runCohortCharacterization   Generate and export the cohort characterization?
 #'                                    Only records with values greater than 0.0001 are returned.
@@ -110,7 +110,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  runInclusionStatistics = TRUE,
                                  runIncludedSourceConcepts = TRUE,
                                  runOrphanConcepts = TRUE,
-                                 runCohortAsFeatures = TRUE,
+                                 runCohortAsFeatures = FALSE,
                                  runTimeDistributions = TRUE,
                                  runVisitContext = TRUE,
                                  runBreakdownIndexEvents = TRUE,

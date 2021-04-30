@@ -166,14 +166,12 @@ SELECT a.cohort_definition_id AS cohort_id,
 	SUM(CASE 
 			WHEN b.cohort_end_date >= a.cohort_start_date
 				AND a.cohort_end_date >= b.cohort_end_date
-				THEN 1
-			ELSE 0
+				THEN (DATEDIFF(dd, a.cohort_start_date, b.cohort_end_date))
 			END) AS fe_during_sum,
 	STDEV(CASE 
 			WHEN b.cohort_end_date >= a.cohort_start_date
 				AND a.cohort_end_date >= b.cohort_end_date
-				THEN 1
-			ELSE 0
+				THEN (DATEDIFF(dd, a.cohort_start_date, b.cohort_end_date))
 			END) AS fe_during_stdev,
 	COUNT_BIG(DISTINCT CASE 
 			WHEN b.cohort_end_date >= a.cohort_start_date
@@ -208,16 +206,14 @@ SELECT a.cohort_definition_id AS cohort_id,
 				AND a.cohort_start_date >= b.cohort_end_date
 				AND b.cohort_end_date >= a.cohort_start_date
 				AND a.cohort_end_date >= b.cohort_end_date
-				THEN 1
-			ELSE 0
+				THEN (DATEDIFF(dd, a.cohort_start_date, b.cohort_end_date))
 			END) AS fo_during_sum,
 	STDEV(CASE 
 			WHEN b.cohort_start_date >= a.cohort_start_date
 				AND a.cohort_start_date >= b.cohort_end_date
 				AND b.cohort_end_date >= a.cohort_start_date
 				AND a.cohort_end_date >= b.cohort_end_date
-				THEN 1
-			ELSE 0
+				THEN (DATEDIFF(dd, a.cohort_start_date, b.cohort_end_date))
 			END) AS fo_during_stdev,
 	COUNT_BIG(CASE 
 			WHEN b.cohort_start_date >= a.cohort_start_date
