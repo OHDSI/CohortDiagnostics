@@ -800,10 +800,10 @@ runCohortDiagnostics <- function(packageName = NULL,
         ) %>%
         dplyr::inner_join(
           dplyr::tibble(
-            featureCohortId = cohorts$cohortId,
-            featureChecksum = cohorts$checksum
+            comparatorCohortId = cohorts$cohortId,
+            comparatorChecksum = cohorts$checksum
           ),
-          by = "featureCohortId"
+          by = "comparatorCohortId"
         ) %>%
         dplyr::mutate(checksum = paste(.data$targetChecksum, .data$comparatorChecksum))
     }
@@ -814,10 +814,10 @@ runCohortDiagnostics <- function(packageName = NULL,
       recordKeepingFile = recordKeepingFile
     )
     
-    if (incremental && (length(combis) - nrow(subset)) > 0) {
+    if (incremental && (nrow(combis) - nrow(subset)) > 0) {
       ParallelLogger::logInfo(sprintf(
         "Skipping %s cohort combinations in incremental mode.",
-        length(combis) - nrow(subset)
+        nrow(combis) - nrow(subset)
       ))
     }
     if (nrow(subset) > 0) {
@@ -919,9 +919,9 @@ runCohortDiagnostics <- function(packageName = NULL,
     combis <-
       tidyr::crossing(
         combis %>% dplyr::rename(targetCohortId = .data$cohortId),
-        combis %>% dplyr::rename(featureCohortId = .data$cohortId)
+        combis %>% dplyr::rename(comparatorCohortId = .data$cohortId)
       ) %>%
-      dplyr::filter(.data$targetCohortId != .data$featureCohortId)
+      dplyr::filter(.data$targetCohortId != .data$comparatorCohortId)
     
     if (incremental) {
       combis <- combis %>%
@@ -934,12 +934,12 @@ runCohortDiagnostics <- function(packageName = NULL,
         ) %>%
         dplyr::inner_join(
           dplyr::tibble(
-            featureCohortId = cohorts$cohortId,
-            featureChecksum = cohorts$checksum
+            comparatorCohortId = cohorts$cohortId,
+            comparatorChecksum = cohorts$checksum
           ),
-          by = "featureCohortId"
+          by = "comparatorCohortId"
         ) %>%
-        dplyr::mutate(checksum = paste(.data$targetChecksum, .data$featureChecksum))
+        dplyr::mutate(checksum = paste(.data$targetChecksum, .data$comparatorChecksum))
     }
     subset <- subsetToRequiredCombis(
       combis = combis,
@@ -948,10 +948,10 @@ runCohortDiagnostics <- function(packageName = NULL,
       recordKeepingFile = recordKeepingFile
     )
     
-    if (incremental && (length(combis) - nrow(subset)) > 0) {
+    if (incremental && (nrow(combis) - nrow(subset)) > 0) {
       ParallelLogger::logInfo(sprintf(
         "Skipping %s cohort combinations in incremental mode.",
-        length(combis) - nrow(subset)
+        nrow(combis) - nrow(subset)
       ))
     }
     if (nrow(subset) > 0) {
@@ -1015,7 +1015,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       }
       recordTasksDone(
         cohortId = subset$targetCohortId,
-        featureCohortId = subset$featureCohortId,
+        featureCohortId = subset$comparatorCohortId,
         task = "runCohortAsFeatures",
         checksum = subset$checksum,
         recordKeepingFile = recordKeepingFile,

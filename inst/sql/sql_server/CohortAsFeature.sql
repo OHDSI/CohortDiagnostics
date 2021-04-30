@@ -97,7 +97,7 @@ SELECT a.cohort_definition_id AS cohort_id,
 FROM @cohort_database_schema.@cohort_table a
 CROSS JOIN @cohort_database_schema.@feature_cohort_table b
 INNER JOIN #cohort_combis c ON a.cohort_definition_id = c.target_cohort_id
-	AND b.cohort_definition_id = c.feature_cohort_id
+	AND b.cohort_definition_id = c.comparator_cohort_id
 WHERE a.subject_id = b.subject_id
 	AND a.cohort_definition_id != b.cohort_definition_id
 GROUP BY a.cohort_definition_id,
