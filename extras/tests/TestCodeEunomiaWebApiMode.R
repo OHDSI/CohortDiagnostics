@@ -81,6 +81,7 @@ CohortDiagnostics::runCohortDiagnostics(baseUrl = baseUrl,
                                         runBreakdownIndexEvents = TRUE,
                                         runIncidenceRate = TRUE,
                                         runCohortOverlap = TRUE,
+                                        runCohortAsFeatures = TRUE,
                                         runCohortCharacterization = TRUE,
                                         minCellCount = 5)
 

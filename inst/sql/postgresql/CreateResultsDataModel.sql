@@ -2,6 +2,7 @@
 
 DROP TABLE IF EXISTS analysis_ref;
 DROP TABLE IF EXISTS cohort;
+DROP TABLE IF EXISTS cohort_as_features;
 DROP TABLE IF EXISTS cohort_count;
 DROP TABLE IF EXISTS cohort_overlap;
 DROP TABLE IF EXISTS concept;
@@ -60,6 +61,35 @@ CREATE TABLE cohort (
 			sql VARCHAR NOT NULL,
 			json VARCHAR NOT NULL,
 			PRIMARY KEY(cohort_id)
+);
+
+--Table cohort_as_features
+
+CREATE TABLE cohort_as_features (
+			cohort_id	BIGINT NOT NULL,
+			feature_cohort_id	BIGINT NOT NULL,
+			same_day_subjects	FLOAT,
+			same_day_records	FLOAT,
+			before_days_max	FLOAT,
+			before_days_min	FLOAT,
+			before_days_avg	FLOAT,
+			before_days_sum	FLOAT,
+			before_days_count	FLOAT,
+			before_days_stdev	FLOAT,
+			after_days_max	FLOAT,
+			after_days_min	FLOAT,
+			after_days_avg	FLOAT,
+			after_days_sum	FLOAT,
+			after_days_stdev	FLOAT,
+			after_days_count	FLOAT,
+			during_days_max	FLOAT,
+			during_days_min	FLOAT,
+			during_days_avg	FLOAT,
+			during_days_sum	FLOAT,
+			during_days_stdev	FLOAT,
+			during_days_count	FLOAT,
+			database_id	varchar NOT NULL,
+			PRIMARY KEY(cohort_id, feature_cohort_id, database_id)
 );
 
 --Table cohort_count

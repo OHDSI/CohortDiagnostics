@@ -27,6 +27,7 @@ SkeletonCohortDiagnosticsStudy::runCohortDiagnostics(
   databaseDescription = "This is a test data base called Eunomia",
   runCohortCharacterization = TRUE,
   runCohortOverlap = TRUE,
+  runCohortAsFeatures = TRUE,
   runOrphanConcepts = TRUE,
   runVisitContext = TRUE,
   runIncludedSourceConcepts = TRUE,

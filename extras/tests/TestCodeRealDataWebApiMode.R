@@ -120,6 +120,7 @@ CohortDiagnostics::runCohortDiagnostics(
   runBreakdownIndexEvents = TRUE,
   runIncidenceRate = TRUE,
   runCohortOverlap = TRUE,
+  runCohortAsFeatures = TRUE,
   runCohortCharacterization = TRUE,
   minCellCount = 5
 )

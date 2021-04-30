@@ -68,6 +68,7 @@ SkeletonCohortDiagnosticsStudy::runCohortDiagnostics(
   databaseDescription = dataSouceInformation$sourceDescription,
   runCohortCharacterization = TRUE,
   runCohortOverlap = TRUE,
+  runCohortAsFeatures = TRUE,
   runOrphanConcepts = TRUE,
   runVisitContext = TRUE,
   runIncludedSourceConcepts = TRUE,
