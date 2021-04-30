@@ -994,41 +994,11 @@ runCohortDiagnostics <- function(packageName = NULL,
         data <-
           enforceMinCellValue(data, "sameDayRecords", minCellCount)
         data <-
-          enforceMinCellValue(data, "beforeDaysMax", minCellCount)
-        data <-
-          enforceMinCellValue(data, "beforeDaysMin", minCellCount)
-        data <-
-          enforceMinCellValue(data, "beforeDaysAvg", minCellCount)
-        data <-
-          enforceMinCellValue(data, "beforeDaysSum", minCellCount)
-        data <-
           enforceMinCellValue(data, "beforeDaysCount", minCellCount)
-        data <-
-          enforceMinCellValue(data, "beforeDaysStdev", minCellCount)
-        data <-
-          enforceMinCellValue(data, "afterDaysMax", minCellCount)
-        data <-
-          enforceMinCellValue(data, "afterDaysMin", minCellCount)
-        data <-
-          enforceMinCellValue(data, "afterDaysAvg", minCellCount)
-        data <-
-          enforceMinCellValue(data, "afterDaysSum", minCellCount)
         data <-
           enforceMinCellValue(data, "afterDaysCount", minCellCount)
         data <-
-          enforceMinCellValue(data, "afterDaysStdev", minCellCount)
-        data <-
-          enforceMinCellValue(data, "duringDaysMax", minCellCount)
-        data <-
-          enforceMinCellValue(data, "duringDaysMin", minCellCount)
-        data <-
-          enforceMinCellValue(data, "duringDaysAvg", minCellCount)
-        data <-
-          enforceMinCellValue(data, "duringDaysSum", minCellCount)
-        data <-
           enforceMinCellValue(data, "duringDaysCount", minCellCount)
-        data <-
-          enforceMinCellValue(data, "duringDaysStdev", minCellCount)
         
         data <- data %>%
           dplyr::mutate(dplyr::across(.cols = everything(), ~ tidyr::replace_na(

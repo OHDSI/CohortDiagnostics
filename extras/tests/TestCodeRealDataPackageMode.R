@@ -66,19 +66,7 @@ SkeletonCohortDiagnosticsStudy::runCohortDiagnostics(
   databaseId = databaseId,
   databaseName = dataSouceInformation$cdmSourceName,
   databaseDescription = dataSouceInformation$sourceDescription,
-  runCohortCharacterization = TRUE,
-  runCohortOverlap = TRUE,
-  runCohortAsFeatures = TRUE,
-  runOrphanConcepts = TRUE,
-  runVisitContext = TRUE,
-  runIncludedSourceConcepts = TRUE,
-  runTimeDistributions = TRUE,
-  runTemporalCohortCharacterization = TRUE,
-  runBreakdownIndexEvents = TRUE,
-  runInclusionStatistics = TRUE,
-  runIncidenceRates = TRUE,
-  createCohorts = TRUE,
-  minCellCount = 0
+  minCellCount = 5
 )
 
 CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = outputFolder)

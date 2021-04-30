@@ -74,16 +74,7 @@ CohortDiagnostics::runCohortDiagnostics(baseUrl = baseUrl,
                                         exportFolder = file.path(outputFolder, 
                                                                  'exportFolder'),
                                         databaseId = databaseId,
-                                        runInclusionStatistics = TRUE,
-                                        runIncludedSourceConcepts = TRUE,
-                                        runOrphanConcepts = TRUE,
-                                        runTimeDistributions = TRUE,
-                                        runBreakdownIndexEvents = TRUE,
-                                        runIncidenceRate = TRUE,
-                                        runCohortOverlap = TRUE,
-                                        runCohortAsFeatures = TRUE,
-                                        runCohortCharacterization = TRUE,
-                                        minCellCount = 5)
+                                        minCellCount = 0)
 
 CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = outputFolder)
 
