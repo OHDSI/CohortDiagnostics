@@ -990,15 +990,27 @@ runCohortDiagnostics <- function(packageName = NULL,
         data <- data %>%
           dplyr::mutate(databaseId = !!databaseId)
         data <-
-          enforceMinCellValue(data, "sameDaySubjects", minCellCount)
+          enforceMinCellValue(data, "fsSameSubjects", minCellCount)
         data <-
-          enforceMinCellValue(data, "sameDayRecords", minCellCount)
+          enforceMinCellValue(data, "fsSameRecords", minCellCount)
         data <-
-          enforceMinCellValue(data, "beforeDaysCount", minCellCount)
+          enforceMinCellValue(data, "fsBeforeCount", minCellCount)
         data <-
-          enforceMinCellValue(data, "afterDaysCount", minCellCount)
+          enforceMinCellValue(data, "fsAfterCount", minCellCount)
         data <-
-          enforceMinCellValue(data, "duringDaysCount", minCellCount)
+          enforceMinCellValue(data, "fsDuringCount", minCellCount)
+        data <-
+          enforceMinCellValue(data, "feSameSubjects", minCellCount)
+        data <-
+          enforceMinCellValue(data, "feSameRecords", minCellCount)
+        data <-
+          enforceMinCellValue(data, "feBeforeCount", minCellCount)
+        data <-
+          enforceMinCellValue(data, "feAfterCount", minCellCount)
+        data <-
+          enforceMinCellValue(data, "feDuringCount", minCellCount)
+        data <-
+          enforceMinCellValue(data, "foDuringCount", minCellCount)
         
         data <- data %>%
           dplyr::mutate(dplyr::across(.cols = everything(), ~ tidyr::replace_na(

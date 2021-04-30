@@ -4,9 +4,9 @@
 library(CohortDiagnostics)
 library(SkeletonCohortDiagnosticsStudy)
 
-temporaryLocation <- rstudioapi::getActiveProject()
+outputLocation <- "D:\\temp"
 outputFolder <-
-  file.path(temporaryLocation, "outputFolder", "packageMode", "eunomia")
+  file.path(outputLocation, "outputFolder", "packageMode", "eunomia")
 # Please delete previous content if needed
 unlink(x = outputFolder,
        recursive = TRUE,

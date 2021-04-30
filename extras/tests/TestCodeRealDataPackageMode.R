@@ -6,11 +6,11 @@ library(CohortDiagnostics)
 library('SkeletonCohortDiagnosticsStudy')
 packageName <- 'SkeletonCohortDiagnosticsStudy'
 
-temporaryLocation <- rstudioapi::getActiveProject()
+outputLocation <- "D:\\temp"
 
 connectionSpecifications <- cdmSources %>%
   dplyr::filter(sequence == 1) %>%
-  dplyr::filter(database == 'truven_ccae')
+  dplyr::filter(database == 'ims_australia_lpd')
 
 dbms <- connectionSpecifications$dbms # example: 'redshift'
 port <- connectionSpecifications$port # example: 2234
@@ -40,7 +40,7 @@ cohortTable <- # example: 'cohort'
   paste0("s", connectionSpecifications$sourceId, "_", packageName)
 
 outputFolder <-
-  file.path(rstudioapi::getActiveProject(), "outputFolder", 'packageMode', databaseId)
+  file.path(outputLocation, "outputFolder", 'packageMode', databaseId)
 # Please delete previous content if needed
 # unlink(x = outputFolder,
 #        recursive = TRUE,
