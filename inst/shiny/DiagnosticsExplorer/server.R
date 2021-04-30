@@ -1925,6 +1925,44 @@ shiny::shinyServer(function(input, output, session) {
     
   }, server = TRUE)
   
+  
+  # Cohorts as features ---------------------------------------------------------------------------------------------
+  output$cohortAsFeaturesTable <- DT::renderDataTable(expr = {
+    data <- getCohortAsFeatures(
+      dataSource = dataSource
+      # cohortIds = cohortId(),
+      # databaseIds = databaseIds()
+    )
+    
+    if (nrow(data) == 0) {
+      return(dplyr::tibble(
+        Note = paste0("No data available for selected databases and cohort")
+      ))
+    }
+    
+    options = list(
+      pageLength = 100,
+      lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+      searching = TRUE,
+      searchHighlight = TRUE,
+      scrollX = TRUE,
+      lengthChange = TRUE,
+      ordering = TRUE,
+      paging = TRUE
+    )
+    
+    table <- DT::datatable(
+      data = data,
+      options = options,
+      colnames = colnames(data) %>%
+        camelCaseToTitleCase(),
+      rownames = FALSE,
+      escape = TRUE,
+      filter = "top"
+    )
+    
+  }, server = TRUE)
+  
   # Characterization -------------------------------------------------
   getConceptSetNameForFilter <- shiny::reactive(x = {
     if (length(cohortId()) == 0 || length(databaseIds()) == 0) {
