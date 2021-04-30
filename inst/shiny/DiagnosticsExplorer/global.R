@@ -16,11 +16,11 @@ defaultDatabase <- Sys.getenv("shinydbDatabase")
 defaultPort <- 5432
 defaultUser <- Sys.getenv("shinyDbUser")
 defaultPassword <- Sys.getenv("shinyDbPassword")
-defaultResultsSchema <- 'covid'
+defaultResultsSchema <- 'CdSkeletonCohortDiagnosticsStudy'
 defaultVocabularySchema <- defaultResultsSchema
 alternateVocabularySchema <- c('vocabulary')
 
-defaultDatabaseMode <- FALSE # Use file system if FALSE
+defaultDatabaseMode <- TRUE # Use file system if FALSE
 
 appInformationText <- "V 2.1"
 appInformationText <- "Powered by OHDSI Cohort Diagnostics application - Version 2.1. This app is working in"

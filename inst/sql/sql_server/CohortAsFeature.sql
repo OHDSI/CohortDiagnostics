@@ -13,7 +13,7 @@ SELECT a.cohort_definition_id AS cohort_id,
 	-- feature cohort start date is before target cohort start date
 	MAX(CASE 
 			WHEN b.cohort_start_date < a.cohort_start_date
-				THEN (DATEDIFF(dd, b.cohort_start_date, a.cohort_end_date))
+				THEN (DATEDIFF(dd, b.cohort_start_date, a.cohort_start_date))
 			END) AS fs_before_max,
 	MIN(CASE 
 			WHEN b.cohort_start_date < a.cohort_start_date
@@ -108,7 +108,7 @@ SELECT a.cohort_definition_id AS cohort_id,
 	-- feature cohort end date is before target cohort start date
 	MAX(CASE 
 			WHEN b.cohort_end_date < a.cohort_start_date
-				THEN (DATEDIFF(dd, b.cohort_end_date, a.cohort_end_date))
+				THEN (DATEDIFF(dd, b.cohort_end_date, a.cohort_start_date))
 			END) AS fe_before_max,
 	MIN(CASE 
 			WHEN b.cohort_end_date < a.cohort_start_date
