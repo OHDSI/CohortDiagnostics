@@ -2,6 +2,7 @@
 
 DROP TABLE IF EXISTS analysis_ref;
 DROP TABLE IF EXISTS cohort;
+DROP TABLE IF EXISTS cohort_as_features;
 DROP TABLE IF EXISTS cohort_count;
 DROP TABLE IF EXISTS cohort_overlap;
 DROP TABLE IF EXISTS concept;
@@ -60,6 +61,61 @@ CREATE TABLE cohort (
 			sql VARCHAR NOT NULL,
 			json VARCHAR NOT NULL,
 			PRIMARY KEY(cohort_id)
+);
+
+--Table cohort_as_features
+
+CREATE TABLE cohort_as_features (
+			cohort_id	BIGINT NOT NULL,
+			feature_cohort_id	BIGINT NOT NULL,
+			fs_same_subjects	FLOAT NOT NULL,
+			fs_same_records	FLOAT NOT NULL,
+			fs_before_max	FLOAT NOT NULL,
+			fs_before_min	FLOAT NOT NULL,
+			fs_before_avg	FLOAT NOT NULL,
+			fs_before_sum	FLOAT NOT NULL,
+			fs_before_count	FLOAT NOT NULL,
+			fs_before_stdev	FLOAT NOT NULL,
+			fs_after_max	FLOAT NOT NULL,
+			fs_after_min	FLOAT NOT NULL,
+			fs_after_avg	FLOAT NOT NULL,
+			fs_after_sum	FLOAT NOT NULL,
+			fs_after_stdev	FLOAT NOT NULL,
+			fs_after_count	FLOAT NOT NULL,
+			fs_during_max	FLOAT NOT NULL,
+			fs_during_min	FLOAT NOT NULL,
+			fs_during_avg	FLOAT NOT NULL,
+			fs_during_sum	FLOAT NOT NULL,
+			fs_during_stdev	FLOAT NOT NULL,
+			fs_during_count	FLOAT NOT NULL,			
+			fe_same_subjects	FLOAT NOT NULL,
+			fe_same_records	FLOAT NOT NULL,
+			fe_before_max	FLOAT NOT NULL,
+			fe_before_min	FLOAT NOT NULL,
+			fe_before_avg	FLOAT NOT NULL,
+			fe_before_sum	FLOAT NOT NULL,
+			fe_before_count	FLOAT NOT NULL,
+			fe_before_stdev	FLOAT NOT NULL,
+			fe_after_max	FLOAT NOT NULL,
+			fe_after_min	FLOAT NOT NULL,
+			fe_after_avg	FLOAT NOT NULL,
+			fe_after_sum	FLOAT NOT NULL,
+			fe_after_stdev	FLOAT NOT NULL,
+			fe_after_count	FLOAT NOT NULL,
+			fe_during_max	FLOAT NOT NULL,
+			fe_during_min	FLOAT NOT NULL,
+			fe_during_avg	FLOAT NOT NULL,
+			fe_during_sum	FLOAT NOT NULL,
+			fe_during_stdev	FLOAT NOT NULL,
+			fe_during_count	FLOAT NOT NULL,
+			fo_during_max	FLOAT NOT NULL,
+			fo_during_min	FLOAT NOT NULL,
+			fo_during_avg	FLOAT NOT NULL,
+			fo_during_sum	FLOAT NOT NULL,
+			fo_during_stdev	FLOAT NOT NULL,
+			fo_during_count	FLOAT NOT NULL,
+			database_id	varchar NOT NULL,
+			PRIMARY KEY(cohort_id, feature_cohort_id, database_id)
 );
 
 --Table cohort_count

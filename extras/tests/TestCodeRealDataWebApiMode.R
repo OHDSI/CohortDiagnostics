@@ -113,14 +113,6 @@ CohortDiagnostics::runCohortDiagnostics(
   exportFolder = file.path(outputFolder,
                            'exportFolder'),
   databaseId = databaseId,
-  runInclusionStatistics = TRUE,
-  runIncludedSourceConcepts = TRUE,
-  runOrphanConcepts = TRUE,
-  runTimeDistributions = TRUE,
-  runBreakdownIndexEvents = TRUE,
-  runIncidenceRate = TRUE,
-  runCohortOverlap = TRUE,
-  runCohortCharacterization = TRUE,
   minCellCount = 5
 )
 

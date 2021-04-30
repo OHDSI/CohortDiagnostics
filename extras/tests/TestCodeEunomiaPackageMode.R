@@ -4,13 +4,13 @@
 library(CohortDiagnostics)
 library(SkeletonCohortDiagnosticsStudy)
 
-temporaryLocation <- rstudioapi::getActiveProject()
+outputLocation <- "D:\\temp"
 outputFolder <-
-  file.path(temporaryLocation, "outputFolder", "packageMode", "eunomia")
+  file.path(outputLocation, "outputFolder", "packageMode", "eunomia")
 # Please delete previous content if needed
-# unlink(x = outputFolder,
-#        recursive = TRUE,
-#        force = TRUE)
+unlink(x = outputFolder,
+       recursive = TRUE,
+       force = TRUE)
 dir.create(path = outputFolder,
            showWarnings = FALSE,
            recursive = TRUE)
@@ -25,17 +25,6 @@ SkeletonCohortDiagnosticsStudy::runCohortDiagnostics(
   databaseId = "Eunomia",
   databaseName = "Eunomia Test",
   databaseDescription = "This is a test data base called Eunomia",
-  runCohortCharacterization = TRUE,
-  runCohortOverlap = TRUE,
-  runOrphanConcepts = TRUE,
-  runVisitContext = TRUE,
-  runIncludedSourceConcepts = TRUE,
-  runTimeDistributions = TRUE,
-  runTemporalCohortCharacterization = TRUE,
-  runBreakdownIndexEvents = TRUE,
-  runInclusionStatistics = TRUE,
-  runIncidenceRates = TRUE,
-  createCohorts = TRUE,
   minCellCount = 0
 )
 

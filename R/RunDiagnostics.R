@@ -70,6 +70,8 @@
 #' @param runCohortOverlap            Generate and export the cohort overlap? Overlaps are checked within cohortIds
 #'                                    that have the same phenotype ID sourced from the CohortSetReference or
 #'                                    cohortToCreateFile.
+#' @param runCohortAsFeatures         Generate and export the Cohort as feature? Cohorts are compared to each other for temporal
+#'                                    relationship and summary statistics on the temporal relationship are provided.
 #' @param runCohortCharacterization   Generate and export the cohort characterization?
 #'                                    Only records with values greater than 0.0001 are returned.
 #' @param covariateSettings           Either an object of type \code{covariateSettings} as created using one of
@@ -108,6 +110,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  runInclusionStatistics = TRUE,
                                  runIncludedSourceConcepts = TRUE,
                                  runOrphanConcepts = TRUE,
+                                 runCohortAsFeatures = TRUE,
                                  runTimeDistributions = TRUE,
                                  runVisitContext = TRUE,
                                  runBreakdownIndexEvents = TRUE,
@@ -811,10 +814,10 @@ runCohortDiagnostics <- function(packageName = NULL,
       recordKeepingFile = recordKeepingFile
     )
     
-    if (incremental && (length(combis) - nrow(subset)) > 0) {
+    if (incremental && (nrow(combis) - nrow(subset)) > 0) {
       ParallelLogger::logInfo(sprintf(
         "Skipping %s cohort combinations in incremental mode.",
-        length(combis) - nrow(subset)
+        nrow(combis) - nrow(subset)
       ))
     }
     if (nrow(subset) > 0) {
@@ -899,6 +902,141 @@ runCohortDiagnostics <- function(packageName = NULL,
     
     delta <- Sys.time() - startCohortOverlap
     ParallelLogger::logInfo("Running Cohort Overlap took ",
+                            signif(delta, 3),
+                            " ",
+                            attr(delta, "units"))
+  }
+  
+  # Cohort As Features ---------------------------------------------------------------------------------
+  if (runCohortAsFeatures) {
+    ParallelLogger::logInfo("Computing cohort as features")
+    startCohortOverlap <- Sys.time()
+    
+    combis <- cohorts %>%
+      dplyr::select(.data$cohortId) %>%
+      dplyr::distinct()
+    
+    combis <-
+      tidyr::crossing(
+        combis %>% dplyr::rename(targetCohortId = .data$cohortId),
+        combis %>% dplyr::rename(comparatorCohortId = .data$cohortId)
+      ) %>%
+      dplyr::filter(.data$targetCohortId != .data$comparatorCohortId)
+    
+    if (incremental) {
+      combis <- combis %>%
+        dplyr::inner_join(
+          dplyr::tibble(
+            targetCohortId = cohorts$cohortId,
+            targetChecksum = cohorts$checksum
+          ),
+          by = "targetCohortId"
+        ) %>%
+        dplyr::inner_join(
+          dplyr::tibble(
+            comparatorCohortId = cohorts$cohortId,
+            comparatorChecksum = cohorts$checksum
+          ),
+          by = "comparatorCohortId"
+        ) %>%
+        dplyr::mutate(checksum = paste(.data$targetChecksum, .data$comparatorChecksum))
+    }
+    subset <- subsetToRequiredCombis(
+      combis = combis,
+      task = "runCohortAsFeatures",
+      incremental = incremental,
+      recordKeepingFile = recordKeepingFile
+    )
+    
+    if (incremental && (nrow(combis) - nrow(subset)) > 0) {
+      ParallelLogger::logInfo(sprintf(
+        "Skipping %s cohort combinations in incremental mode.",
+        nrow(combis) - nrow(subset)
+      ))
+    }
+    if (nrow(subset) > 0) {
+      ParallelLogger::logTrace("Inserting combination of target and feature cohorts to remote database.")
+      DatabaseConnector::insertTable(
+        connection = connection,
+        tableName = "#cohort_combis",
+        data = subset,
+        dropTableIfExists = TRUE,
+        createTable = TRUE,
+        progressBar = TRUE,
+        tempTable = TRUE,
+        tempEmulationSchema = tempEmulationSchema,
+        camelCaseToSnakeCase = TRUE
+      )
+      ParallelLogger::logTrace("Done inserting")
+      
+      sql <-
+        SqlRender::loadRenderTranslateSql(
+          sqlFilename = "CohortAsFeature.sql",
+          packageName = "CohortDiagnostics",
+          dbms = connection@dbms,
+          tempEmulationSchema = tempEmulationSchema,
+          cohort_database_schema = cohortDatabaseSchema,
+          cohort_table = cohortTable,
+          feature_cohort_table = cohortTable
+        )
+      data <- DatabaseConnector::querySql(
+        connection = connection,
+        sql = sql, 
+        snakeCaseToCamelCase = TRUE 
+      ) %>%
+        dplyr::tibble()
+      
+      if (nrow(data) > 0) {
+        data <- data %>%
+          dplyr::mutate(databaseId = !!databaseId)
+        data <-
+          enforceMinCellValue(data, "fsSameSubjects", minCellCount)
+        data <-
+          enforceMinCellValue(data, "fsSameRecords", minCellCount)
+        data <-
+          enforceMinCellValue(data, "fsBeforeCount", minCellCount)
+        data <-
+          enforceMinCellValue(data, "fsAfterCount", minCellCount)
+        data <-
+          enforceMinCellValue(data, "fsDuringCount", minCellCount)
+        data <-
+          enforceMinCellValue(data, "feSameSubjects", minCellCount)
+        data <-
+          enforceMinCellValue(data, "feSameRecords", minCellCount)
+        data <-
+          enforceMinCellValue(data, "feBeforeCount", minCellCount)
+        data <-
+          enforceMinCellValue(data, "feAfterCount", minCellCount)
+        data <-
+          enforceMinCellValue(data, "feDuringCount", minCellCount)
+        data <-
+          enforceMinCellValue(data, "foDuringCount", minCellCount)
+        
+        data <- data %>%
+          dplyr::mutate(dplyr::across(.cols = everything(), ~ tidyr::replace_na(
+            data = ., replace = 0
+          )))
+        
+        writeToCsv(
+          data = data,
+          fileName = file.path(exportFolder, "cohort_as_features.csv"),
+          incremental = incremental,
+          targetCohortId = subset$targetCohortId,
+          featureCohortId = subset$featureCohortId
+        )
+      }
+      recordTasksDone(
+        cohortId = subset$targetCohortId,
+        featureCohortId = subset$comparatorCohortId,
+        task = "runCohortAsFeatures",
+        checksum = subset$checksum,
+        recordKeepingFile = recordKeepingFile,
+        incremental = incremental
+      )
+    }
+    
+    delta <- Sys.time() - startCohortOverlap
+    ParallelLogger::logInfo("Running Cohort as features took ",
                             signif(delta, 3),
                             " ",
                             attr(delta, "units"))

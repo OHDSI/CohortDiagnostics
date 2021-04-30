@@ -6,7 +6,7 @@ library(CohortDiagnostics)
 library('SkeletonCohortDiagnosticsStudy')
 packageName <- 'SkeletonCohortDiagnosticsStudy'
 
-temporaryLocation <- rstudioapi::getActiveProject()
+outputLocation <- "D:\\temp"
 
 connectionSpecifications <- cdmSources %>%
   dplyr::filter(sequence == 1) %>%
@@ -40,7 +40,7 @@ cohortTable <- # example: 'cohort'
   paste0("s", connectionSpecifications$sourceId, "_", packageName)
 
 outputFolder <-
-  file.path(rstudioapi::getActiveProject(), "outputFolder", 'packageMode', databaseId)
+  file.path(outputLocation, "outputFolder", 'packageMode', databaseId)
 # Please delete previous content if needed
 # unlink(x = outputFolder,
 #        recursive = TRUE,
@@ -66,18 +66,7 @@ SkeletonCohortDiagnosticsStudy::runCohortDiagnostics(
   databaseId = databaseId,
   databaseName = dataSouceInformation$cdmSourceName,
   databaseDescription = dataSouceInformation$sourceDescription,
-  runCohortCharacterization = TRUE,
-  runCohortOverlap = TRUE,
-  runOrphanConcepts = TRUE,
-  runVisitContext = TRUE,
-  runIncludedSourceConcepts = TRUE,
-  runTimeDistributions = TRUE,
-  runTemporalCohortCharacterization = TRUE,
-  runBreakdownIndexEvents = TRUE,
-  runInclusionStatistics = TRUE,
-  runIncidenceRates = TRUE,
-  createCohorts = TRUE,
-  minCellCount = 0
+  minCellCount = 5
 )
 
 CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = outputFolder)

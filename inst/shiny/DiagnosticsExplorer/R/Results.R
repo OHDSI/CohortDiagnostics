@@ -873,3 +873,21 @@ getSearchTerms <- function(dataSource, includeDescendants = FALSE) {
     return(data)
   }
 }
+
+
+getCohortAsFeatures <- function(dataSource = .GlobalEnv) {
+  # add filters by drop down similar to VisitContext
+  
+  if (is(dataSource, "environment")) {
+    data <- get("cohortAsFeatures", envir = dataSource)
+  } else {
+    sql <- "SELECT *
+            FROM  @results_database_schema.cohort_as_features;"
+    data <- renderTranslateQuerySql(connection = dataSource$connection,
+                                    sql = sql,
+                                    results_database_schema = dataSource$resultsDatabaseSchema, 
+                                    snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
+  }
+  return(data)
+}

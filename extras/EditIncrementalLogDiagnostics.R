@@ -3,7 +3,7 @@
 
 library(magrittr)
 logFolder <-
-  ""
+  "D:\\git\\github\\ohdsi\\outputFolder\\packageMode"
 diagnosticsFileName <- "CreatedDiagnostics.csv"
 
 listFiles <-
@@ -16,7 +16,7 @@ listFiles <-
 
 # "getCohortCounts", "runInclusionStatistics", "runIncludedSourceConcepts",
 # "runBreakdownIndexEvents", "runOrphanConcepts", "runTimeDistributions",
-# "runVisitContext", "runIncidenceRate", "runCohortOverlap",
+# "runVisitContext", "runIncidenceRate", "runCohortOverlap","runCohortAsFeatures",
 # "runCohortCharacterization", "runTemporalCohortCharacterization"
 
 
