@@ -3000,10 +3000,10 @@ shiny::shinyServer(function(input, output, session) {
       return(dplyr::tibble("No information on the data source."))
     }
     data <- database 
-    if (!'vocabularyVersionCdm' %in% database) {
+    if (!'vocabularyVersionCdm' %in% colnames(database)) {
       data$vocabularyVersionCdm <- "Not in data"
     }
-    if (!'vocabularyVersion' %in% database) {
+    if (!'vocabularyVersion' %in% colnames(database)) {
       data$vocabularyVersion <- "Not in data"
     }
     data <- data %>%
