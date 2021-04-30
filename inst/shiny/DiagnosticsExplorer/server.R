@@ -1928,17 +1928,52 @@ shiny::shinyServer(function(input, output, session) {
   
   # Cohorts as features ---------------------------------------------------------------------------------------------
   output$cohortAsFeaturesTable <- DT::renderDataTable(expr = {
+    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
+    validate(need(length(cohortId()) > 0, "No cohorts chosen"))
     data <- getCohortAsFeatures(
-      dataSource = dataSource
-      # cohortIds = cohortId(),
-      # databaseIds = databaseIds()
+      dataSource = dataSource,
+      cohortIds = cohortId(),
+      databaseIds = databaseIds()
     )
-    
     if (nrow(data) == 0) {
       return(dplyr::tibble(
         Note = paste0("No data available for selected databases and cohort")
       ))
     }
+    data <- data %>% 
+      tidyr::pivot_longer(cols = c(dplyr::starts_with("fs"), 
+                                   dplyr::starts_with("fe"),
+                                   dplyr::starts_with("fo")), 
+                          names_to = "calculation",
+                          values_to = "value"
+                          )
+    data$distribution <- patternReplacement(x = data$calculation, 
+                                       patterns = c('Max', 'Min', 'Avg', 'Stdev', 'Count', 'Sum', 'Subjects', 'Records'),
+                                       replacement = c('max', 'min', 'avg', 'stdev', 'count', 'sum', 'subjects', 'records'),
+                                       fill = 'Other')
+    data$type <- patternReplacement(x = data$calculation, 
+                                       patterns = c('Same', 'Before', 'During', 'After'),
+                                       fill = 'Other')
+    data$relationship <- patternReplacement(x = data$calculation, 
+                                            patterns = c('fs', 'fe', 'fo'),
+                                            replacements = c('feature cohort start prior to target cohort start',
+                                                             'feature cohort end prior to target cohort start',
+                                                             'feature cohort entirely within target cohort'),
+                                            fill = 'Other')
+    data <- data %>% 
+      dplyr::distinct() %>% 
+      dplyr::select(.data$cohortId,
+                    .data$databaseId,
+                    .data$type,
+                    .data$relationship,
+                    .data$value,
+                    .data$distribution,
+                    .data$calculation) %>% 
+      tidyr::pivot_wider(id_cols = c("cohortId", "databaseId", "calculation", "type", "relationship"), 
+                         values_from = "value", 
+                         names_from = "distribution")
+    
+    databaseIds <- sort(unique(data$databaseId))
     
     options = list(
       pageLength = 100,

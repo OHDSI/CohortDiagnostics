@@ -632,7 +632,7 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "cohortAsFeatures",
     shinydashboard::box(
-      title = "Cohort As Features (beta - raw data only)",
+      title = "Cohort As Features (beta - raw data only - do not use)",
       width = NULL,
       status = "primary",
       DT::dataTableOutput(outputId = "cohortAsFeaturesTable")

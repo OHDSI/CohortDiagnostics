@@ -33,3 +33,21 @@ isEmpty <- function(tableName) {
   oneRow <- DatabaseConnector::dbGetQuery(connectionPool, sql)
   return(nrow(oneRow) == 0)
 }
+
+
+
+# borrowed from https://stackoverflow.com/questions/19747384/create-new-column-in-dataframe-based-on-partial-string-matching-other-column
+patternReplacement <- function(x, patterns, replacements = patterns, fill = NA, ...)
+{
+  stopifnot(length(patterns) == length(replacements))
+  
+  ans = rep_len(as.character(fill), length(x))    
+  empty = seq_along(x)
+  
+  for (i in seq_along(patterns)) {
+    greps = grepl(patterns[[i]], x[empty], ...)
+    ans[empty[greps]] = replacements[[i]]  
+    empty = empty[!greps]
+  }
+  return(ans)
+}
