@@ -17,7 +17,6 @@ cohort,json,varchar,Yes,No,No,Yes
 cohort_as_features,cohort_id,bigint,Yes,Yes,No,Yes
 cohort_as_features,feature_cohort_id,bigint,Yes,Yes,No,Yes
 cohort_as_features,fs_same_subjects,float,Yes,No,No,Yes
-cohort_as_features,fs_same_records,float,Yes,No,No,Yes
 cohort_as_features,fs_before_max,float,Yes,No,No,Yes
 cohort_as_features,fs_before_min,float,Yes,No,No,Yes
 cohort_as_features,fs_before_avg,float,Yes,No,No,Yes
@@ -37,7 +36,6 @@ cohort_as_features,fs_during_sum,float,Yes,No,No,Yes
 cohort_as_features,fs_during_stdev,float,Yes,No,No,Yes
 cohort_as_features,fs_during_count,float,Yes,No,No,Yes
 cohort_as_features,fe_same_subjects,float,Yes,No,No,Yes
-cohort_as_features,fe_same_records,float,Yes,No,No,Yes
 cohort_as_features,fe_before_max,float,Yes,No,No,Yes
 cohort_as_features,fe_before_min,float,Yes,No,No,Yes
 cohort_as_features,fe_before_avg,float,Yes,No,No,Yes
