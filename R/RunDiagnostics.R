@@ -800,10 +800,10 @@ runCohortDiagnostics <- function(packageName = NULL,
         ) %>%
         dplyr::inner_join(
           dplyr::tibble(
-            comparatorCohortId = cohorts$cohortId,
-            comparatorChecksum = cohorts$checksum
+            featureCohortId = cohorts$cohortId,
+            featureChecksum = cohorts$checksum
           ),
-          by = "comparatorCohortId"
+          by = "featureCohortId"
         ) %>%
         dplyr::mutate(checksum = paste(.data$targetChecksum, .data$comparatorChecksum))
     }
