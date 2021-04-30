@@ -3101,6 +3101,10 @@ shiny::shinyServer(function(input, output, session) {
                 "html/compareCohortCharacterization.html")
   })
   
+  shiny::observeEvent(input$cohortAsFeaturesInfo, {
+    showInfoBox("Cohort as Features", "html/cohortAsFeatures.html")
+  })
+  
   # Cohort labels --------------------------------------------------------------------------------------------
   targetCohortCount <- shiny::reactive({
     targetCohortWithCount <-
