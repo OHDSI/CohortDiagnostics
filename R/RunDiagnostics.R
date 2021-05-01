@@ -992,8 +992,6 @@ runCohortDiagnostics <- function(packageName = NULL,
         data <-
           enforceMinCellValue(data, "fsSameSubjects", minCellCount)
         data <-
-          enforceMinCellValue(data, "fsSameRecords", minCellCount)
-        data <-
           enforceMinCellValue(data, "fsBeforeCount", minCellCount)
         data <-
           enforceMinCellValue(data, "fsAfterCount", minCellCount)
@@ -1001,8 +999,6 @@ runCohortDiagnostics <- function(packageName = NULL,
           enforceMinCellValue(data, "fsDuringCount", minCellCount)
         data <-
           enforceMinCellValue(data, "feSameSubjects", minCellCount)
-        data <-
-          enforceMinCellValue(data, "feSameRecords", minCellCount)
         data <-
           enforceMinCellValue(data, "feBeforeCount", minCellCount)
         data <-
