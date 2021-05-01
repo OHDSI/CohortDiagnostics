@@ -1939,25 +1939,32 @@ shiny::shinyServer(function(input, output, session) {
       cohortIds = cohortId(),
       databaseIds = databaseIds()
     )
+    
     if (nrow(data) == 0) {
       return(dplyr::tibble(
         Note = paste0("No data available for selected databases and cohort")
       ))
     }
-    data <- data %>% 
+    
+    data <- data  %>% 
+      dplyr::rename(xfeatureCohortId = featureCohortId) %>% 
       tidyr::pivot_longer(cols = c(dplyr::starts_with("fs"), 
                                    dplyr::starts_with("fe"),
                                    dplyr::starts_with("fo")), 
                           names_to = "calculation",
                           values_to = "value"
-                          )
+                          ) %>% 
+      dplyr::rename(featureCohortId = xfeatureCohortId)
+    
     data$distribution <- patternReplacement(x = data$calculation, 
                                        patterns = c('Max', 'Min', 'Avg', 'Stdev', 'Count', 'Sum', 'Subjects', 'Records'),
                                        replacement = c('max', 'min', 'avg', 'stdev', 'count', 'sum', 'subjects', 'records'),
                                        fill = 'Other')
+    
     data$type <- patternReplacement(x = data$calculation, 
                                        patterns = c('Same', 'Before', 'During', 'After'),
                                        fill = 'Other')
+    
     data$relationship <- patternReplacement(x = data$calculation, 
                                             patterns = c('fs', 'fe', 'fo'),
                                             replacements = c('feature cohort start prior to target cohort start',
@@ -1965,17 +1972,17 @@ shiny::shinyServer(function(input, output, session) {
                                                              'feature cohort entirely within target cohort'),
                                             fill = 'Other')
     data <- data %>% 
-      dplyr::distinct() %>% 
       dplyr::select(.data$cohortId,
+                    .data$featureCohortId,
                     .data$databaseId,
                     .data$type,
                     .data$relationship,
                     .data$value,
-                    .data$distribution,
-                    .data$calculation) %>% 
-      tidyr::pivot_wider(id_cols = c("cohortId", "databaseId", "calculation", "type", "relationship"), 
+                    .data$distribution) %>% 
+      tidyr::pivot_wider(id_cols = c("cohortId", "featureCohortId", "databaseId", "type", "relationship"), 
                          values_from = "value", 
-                         names_from = "distribution")
+                         names_from = "distribution") %>% 
+      dplyr::filter(type != 'Same')
     
     databaseIds <- sort(unique(data$databaseId))
     
