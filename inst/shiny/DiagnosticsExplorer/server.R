@@ -1562,13 +1562,17 @@ shiny::shinyServer(function(input, output, session) {
         cohortIds = cohortId(),
         databaseIds = databaseIds()
       )
-      if (!'domainTable' %in% colnames(data)) {
-        data$domainTable <- "Not in data"
+      if (!is.null(data)) {
+        if (!'domainTable' %in% colnames(data)) {
+          data$domainTable <- "Not in data"
+        }
+        if (!'domainField' %in% colnames(data)) {
+          data$domainField <- "Not in data"
+        }
+        return(data)
+      } else {
+        return(NULL)
       }
-      if (!'domainField' %in% colnames(data)) {
-        data$domainField <- "Not in data"
-      }
-      return(data)
     } else {
       return(NULL)
     }
