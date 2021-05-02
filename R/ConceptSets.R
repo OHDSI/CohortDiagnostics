@@ -722,6 +722,10 @@ runConceptSetDiagnostics <- function(connection,
           dplyr::mutate(databaseId = !!databaseId)
         data <-
           enforceMinCellValue(data, "conceptCount", minCellCount)
+        if ('subjectCount' %in% colnames(data)) {
+          data <-
+            enforceMinCellValue(data, "subjectCount", minCellCount)
+        }
       }
       writeToCsv(
         data = data,
