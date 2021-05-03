@@ -28,7 +28,6 @@ runCohortDiagnostics(
   runInclusionStatistics = TRUE,
   runIncludedSourceConcepts = TRUE,
   runOrphanConcepts = TRUE,
-  runCohortAsFeatures = FALSE,
   runTimeDistributions = TRUE,
   runVisitContext = TRUE,
   runBreakdownIndexEvents = TRUE,
@@ -129,9 +128,6 @@ does not exist it will be created.}
 \item{runIncludedSourceConcepts}{Generate and export the source concepts included in the cohorts?}
 
 \item{runOrphanConcepts}{Generate and export potential orphan concepts?}
-
-\item{runCohortAsFeatures}{(beta) Generate and export the Cohort as feature? Cohorts are compared to each other for temporal
-relationship and summary statistics on the temporal relationship are provided.}
 
 \item{runTimeDistributions}{Generate and export cohort time distributions?}
 

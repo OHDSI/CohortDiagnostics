@@ -84,11 +84,6 @@ sidebarMenu <-
         shinydashboard::menuItem(text = "Cohort Overlap", tabName = "cohortOverlap"),
         infoId = "cohortOverlapInfo"
       ),
-    if (exists("cohortAsFeatures"))
-      addInfo(
-        shinydashboard::menuItem(text = "Cohort As Feature", tabName = "cohortAsFeatures"),
-        infoId = "cohortAsFeaturesInfo"
-      ),
     if (exists("covariateValue"))
       addInfo(
         shinydashboard::menuItem(text = "Cohort Characterization", tabName = "cohortCharacterization"),
@@ -627,15 +622,6 @@ bodyTabItems <- shinydashboard::tabItems(
         inline = TRUE
       ),
       ggiraph::ggiraphOutput("overlapPlot", width = "100%", height = "100%")
-    )
-  ),
-  shinydashboard::tabItem(
-    tabName = "cohortAsFeatures",
-    shinydashboard::box(
-      title = "Cohort As Features (beta - raw data only - do not use)",
-      width = NULL,
-      status = "primary",
-      DT::dataTableOutput(outputId = "cohortAsFeaturesTable")
     )
   ),
   shinydashboard::tabItem(

@@ -21,7 +21,6 @@ Changes:
 10. checkInputFileEncoding is not exported as a public function (as not the scope of CohortDiagnostics).
 11. Updated results data model to include new tables (resolved_concepts).
 12. Cohort Diagnostics results data model now compliant with standard characterization output.
-13. Added new diagnostics called 'Cohorts as features'. Here all cohorts are considered features of other cohorts.
 
 Bug fixes:
 

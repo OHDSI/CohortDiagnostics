@@ -1929,86 +1929,6 @@ shiny::shinyServer(function(input, output, session) {
     
   }, server = TRUE)
   
-  
-  # Cohorts as features ---------------------------------------------------------------------------------------------
-  output$cohortAsFeaturesTable <- DT::renderDataTable(expr = {
-    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
-    validate(need(length(cohortId()) > 0, "No cohorts chosen"))
-    data <- getCohortAsFeatures(
-      dataSource = dataSource,
-      cohortIds = cohortId(),
-      databaseIds = databaseIds()
-    )
-    
-    if (nrow(data) == 0) {
-      return(dplyr::tibble(
-        Note = paste0("No data available for selected databases and cohort")
-      ))
-    }
-    
-    data <- data  %>% 
-      dplyr::rename(xfeatureCohortId = featureCohortId) %>% 
-      tidyr::pivot_longer(cols = c(dplyr::starts_with("fs"), 
-                                   dplyr::starts_with("fe"),
-                                   dplyr::starts_with("fo")), 
-                          names_to = "calculation",
-                          values_to = "value"
-                          ) %>% 
-      dplyr::rename(featureCohortId = xfeatureCohortId)
-    
-    data$distribution <- patternReplacement(x = data$calculation, 
-                                       patterns = c('Max', 'Min', 'Avg', 'Stdev', 'Count', 'Sum', 'Subjects', 'Records'),
-                                       replacement = c('max', 'min', 'avg', 'stdev', 'count', 'sum', 'subjects', 'records'),
-                                       fill = 'Other')
-    
-    data$type <- patternReplacement(x = data$calculation, 
-                                       patterns = c('Same', 'Before', 'During', 'After'),
-                                       fill = 'Other')
-    
-    data$relationship <- patternReplacement(x = data$calculation, 
-                                            patterns = c('fs', 'fe', 'fo'),
-                                            replacements = c('feature cohort start prior to target cohort start',
-                                                             'feature cohort end prior to target cohort start',
-                                                             'feature cohort entirely within target cohort'),
-                                            fill = 'Other')
-    data <- data %>% 
-      dplyr::select(.data$cohortId,
-                    .data$featureCohortId,
-                    .data$databaseId,
-                    .data$type,
-                    .data$relationship,
-                    .data$value,
-                    .data$distribution) %>% 
-      tidyr::pivot_wider(id_cols = c("cohortId", "featureCohortId", "databaseId", "type", "relationship"), 
-                         values_from = "value", 
-                         names_from = "distribution") %>% 
-      dplyr::filter(type != 'Same')
-    
-    databaseIds <- sort(unique(data$databaseId))
-    
-    options = list(
-      pageLength = 100,
-      lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-      searching = TRUE,
-      searchHighlight = TRUE,
-      scrollX = TRUE,
-      lengthChange = TRUE,
-      ordering = TRUE,
-      paging = TRUE
-    )
-    
-    table <- DT::datatable(
-      data = data,
-      options = options,
-      colnames = colnames(data) %>%
-        camelCaseToTitleCase(),
-      rownames = FALSE,
-      escape = TRUE,
-      filter = "top"
-    )
-    
-  }, server = TRUE)
-  
   # Characterization -------------------------------------------------
   getConceptSetNameForFilter <- shiny::reactive(x = {
     if (length(cohortId()) == 0 || length(databaseIds()) == 0) {
@@ -3145,10 +3065,6 @@ shiny::shinyServer(function(input, output, session) {
   shiny::observeEvent(input$compareCohortCharacterizationInfo, {
     showInfoBox("Compare Cohort Characteristics",
                 "html/compareCohortCharacterization.html")
-  })
-  
-  shiny::observeEvent(input$cohortAsFeaturesInfo, {
-    showInfoBox("Cohort as Features", "html/cohortAsFeatures.html")
   })
   
   # Cohort labels --------------------------------------------------------------------------------------------

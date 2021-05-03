@@ -873,34 +873,3 @@ getSearchTerms <- function(dataSource, includeDescendants = FALSE) {
     return(data)
   }
 }
-
-
-getCohortAsFeatures <- function(dataSource = .GlobalEnv,
-                                cohortIds,
-                                databaseIds) {
-  errorMessage <- checkmate::makeAssertCollection()
-  errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = cohortIds,
-                                                 databaseIds = databaseIds,
-                                                 errorMessage = errorMessage)
-  checkmate::reportAssertions(collection = errorMessage)
-  
-  if (is(dataSource, "environment")) {
-    data <- get("cohortAsFeatures", envir = dataSource) %>% 
-      dplyr::filter(.data$databaseId %in% !!databaseIds) 
-    if (!is.null(cohortIds)) {
-      data <- data %>% 
-        dplyr::filter(.data$cohortId %in% !!cohortIds) 
-    }
-  } else {
-    sql <- "SELECT *
-            FROM  @results_database_schema.cohort_as_features;"
-    data <- renderTranslateQuerySql(connection = dataSource$connection,
-                                    sql = sql,
-                                    results_database_schema = dataSource$resultsDatabaseSchema,
-                                    cohort_ids = cohortIds,
-                                    database_id = quoteLiterals(databaseIds), 
-                                    snakeCaseToCamelCase = TRUE) %>% 
-      tidyr::tibble()
-  }
-  return(data)
-}
