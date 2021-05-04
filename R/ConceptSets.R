@@ -618,6 +618,15 @@ runConceptSetDiagnostics <- function(connection,
                   cohort$cohortId)
           return(tidyr::tibble())
         }
+        primaryCodesetIds <- primaryCodesetIds %>% dplyr::filter(.data$domain %in% 
+                                                                   c(domains$domain %>% unique()))
+        if (nrow(primaryCodesetIds) == 0) {
+          warning("Primary event criteria concept sets found for cohort id: ", 
+                  cohort$cohortId, " but,", "\nnone of the concept sets belong to the supported domains.", 
+                  "\nThe supported domains are:\n", paste(domains$domain, 
+                                                          collapse = ", "))
+          return(tidyr::tibble())
+        }
         primaryCodesetIds <- conceptSets %>%
           dplyr::filter(.data$cohortId %in% cohort$cohortId) %>%
           dplyr::select(codeSetIds = .data$conceptSetId, .data$uniqueConceptSetId) %>%
