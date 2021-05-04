@@ -632,10 +632,6 @@ runConceptSetDiagnostics <- function(connection,
           dplyr::select(codeSetIds = .data$conceptSetId, .data$uniqueConceptSetId) %>%
           dplyr::inner_join(primaryCodesetIds, by = "codeSetIds")
         
-        # filtering to supported domains
-        primaryCodesetIds <- primaryCodesetIds %>% 
-          dplyr::filter(.data$domain %in% domains$domains %>% unique())
-        
         pasteIds <- function(row) {
           return(dplyr::tibble(
             domain = row$domain[1],
@@ -646,16 +642,6 @@ runConceptSetDiagnostics <- function(connection,
           lapply(split(primaryCodesetIds, primaryCodesetIds$domain),
                  pasteIds)
         primaryCodesetIds <- dplyr::bind_rows(primaryCodesetIds)
-        
-        if (nrow(primaryCodesetIds) == 0) {
-          warning("Primary event criteria concept sets found for cohort id: ",
-                  cohort$cohortId, 
-                  " but,",
-                  "\nnone of the concept sets belong to the supported domains.",
-                  "\nThe supported domains are:\n",
-                  paste(domains$domain, collapse = ", "))
-          return(tidyr::tibble())
-        }
         
         getCounts <- function(row) {
           domain <- domains[domains$domain == row$domain,]
