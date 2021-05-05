@@ -56,7 +56,7 @@ dataSouceInformation <-
     vocabDatabaseSchema = vocabDatabaseSchema
   )
 
-SkeletonCohortDiagnosticsStudy::runCohortDiagnostics(
+SkeletonCohortDiagnosticsStudy::execute(
   connectionDetails = connectionDetails,
   cdmDatabaseSchema = cdmDatabaseSchema,
   vocabularyDatabaseSchema = vocabDatabaseSchema,

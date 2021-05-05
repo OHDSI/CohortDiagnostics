@@ -15,7 +15,7 @@ dir.create(path = outputFolder,
            showWarnings = FALSE,
            recursive = TRUE)
 
-SkeletonCohortDiagnosticsStudy::runCohortDiagnostics(
+SkeletonCohortDiagnosticsStudy::execute(
   connectionDetails = Eunomia::getEunomiaConnectionDetails(),
   cdmDatabaseSchema = 'main',
   vocabularyDatabaseSchema = "main",
