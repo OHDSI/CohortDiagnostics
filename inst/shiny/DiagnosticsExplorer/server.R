@@ -1717,7 +1717,7 @@ shiny::shinyServer(function(input, output, session) {
                                               lapply(databaseIds, th, colspan = 2, class = "dt-center")
                                             ),
                                             tr(lapply(rep(
-                                              c("Concept Count", "Subject Count"), length(databaseIds)
+                                              c("Records", "Persons"), length(databaseIds)
                                             ), th))
                                           )))
       
