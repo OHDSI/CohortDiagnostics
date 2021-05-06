@@ -32,7 +32,7 @@ if (defaultDatabaseMode) {
 appInformationText <- paste0(appInformationText, 
                              " mode. Application was last initated on ", 
                              lubridate::now(tzone = "EST"),
-                             " EST. Cohort Diagnostics website is at https://ohdsi.github.io/CohortDiagnostics/. Email: rao@ohdsi.org")
+                             " EST. Cohort Diagnostics website is at https://ohdsi.github.io/CohortDiagnostics/")
 
 if (!exists("shinySettings")) {
   writeLines("Using default settings")
