@@ -21,6 +21,7 @@ Changes:
 10. checkInputFileEncoding is not exported as a public function (as not the scope of CohortDiagnostics).
 11. Updated results data model to include new tables (resolved_concepts).
 12. Cohort Diagnostics results data model now compliant with standard characterization output.
+13. Support for cohort_censor_stats table in webapi 2.8.1 #387
 
 Bug fixes:
 
