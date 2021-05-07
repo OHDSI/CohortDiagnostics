@@ -1314,7 +1314,6 @@ shiny::shinyServer(function(input, output, session) {
   output$orphanConceptsTable <- DT::renderDataTable(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
-    validate(need(length(input$conceptSet) > 0, "No concept set chosen"))
     
     if (is.null(cohortId()) || length(cohortId()) == 0) {
       return(dplyr::tibble(Note = paste0(
