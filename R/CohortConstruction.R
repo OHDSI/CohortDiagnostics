@@ -429,9 +429,8 @@ processInclusionStats <- function(inclusion,
 #'
 #' @param cohortIds                   Optionally, provide a subset of cohort IDs to restrict the
 #'                                    construction to.
-#' @param generateInclusionStats      Compute and store inclusion rule statistics?
-#' @param inclusionStatisticsFolder   The folder where the inclusion rule statistics are stored. Can be
-#'                                    left NULL if \code{generateInclusionStats = FALSE}.
+#' @param generateInclusionStats      [DEPRECATED] Compute and store inclusion rule statistics?
+#' @param inclusionStatisticsFolder   The folder where the inclusion rule statistics are stored.
 #' @param createCohortTable           Create the cohort table? If \code{incremental = TRUE} and the table
 #'                                    already exists this will be skipped.
 #' @param incremental                 Create only cohorts that haven't been created before?
@@ -454,11 +453,17 @@ instantiateCohortSet <- function(connectionDetails = NULL,
                                  cohortToCreateFile = "settings/CohortsToCreate.csv",
                                  baseUrl = NULL,
                                  cohortSetReference = NULL,
-                                 generateInclusionStats = FALSE,
-                                 inclusionStatisticsFolder = NULL,
+                                 generateInclusionStats = TRUE,
+                                 inclusionStatisticsFolder,
                                  createCohortTable = TRUE,
                                  incremental = FALSE,
                                  incrementalFolder = NULL) {
+  if (generateInclusionStats == FALSE) {
+    .Deprecated(new = 'None', 
+                package = 'CohortDiagnostics',
+                msg = paste0('generateInclusionStats parameter in function instantiateCohortSet is deprecated as of Cohort Diagnostics v2.1.',
+                ' \nIf your SQL has inclusion stats, it will be instantiated.'))
+  }
   if (!is.null(cohortSetReference)) {
     ParallelLogger::logInfo("Found cohortSetReference. Cohort Diagnostics is running in WebApi mode.")
     cohortToCreateFile <- NULL
@@ -468,15 +473,11 @@ instantiateCohortSet <- function(connectionDetails = NULL,
     tempEmulationSchema <- oracleTempSchema
     warning('OracleTempSchema has been deprecated by DatabaseConnector')
   }
-  
-  if (generateInclusionStats) {
-    if (is.null(inclusionStatisticsFolder)) {
-      stop("Must specify inclusionStatisticsFolder when generateInclusionStats = TRUE")
-    }
-    if (!file.exists(inclusionStatisticsFolder)) {
-      dir.create(inclusionStatisticsFolder, recursive = TRUE)
-    }
+
+  if (!file.exists(inclusionStatisticsFolder)) {
+    dir.create(inclusionStatisticsFolder, recursive = TRUE)
   }
+  
   if (incremental) {
     if (is.null(incrementalFolder)) {
       stop("Must specify incrementalFolder when incremental = TRUE")
@@ -524,10 +525,9 @@ instantiateCohortSet <- function(connectionDetails = NULL,
       file.path(incrementalFolder, "InstantiatedCohorts.csv")
   }
   
-  if (generateInclusionStats) {
-    createTempInclusionStatsTables(connection, tempEmulationSchema, cohorts)
-  }
-  
+  # starting version 2.1 inclusion stats are not optional
+  createTempInclusionStatsTables(connection, tempEmulationSchema, cohorts)
+
   instantiatedCohortIds <- c()
   for (i in 1:nrow(cohorts)) {
     if (!incremental || isTaskRequired(
@@ -543,8 +543,12 @@ instantiateCohortSet <- function(connectionDetails = NULL,
         ")"
       )
       sql <- cohorts$sql[i]
-      .warnMismatchSqlInclusionStats(sql, generateInclusionStats = generateInclusionStats)
-      if (generateInclusionStats) {
+      if (any(
+        stringr::str_detect(string = sql, pattern = "_inclusion_result"),
+        stringr::str_detect(string = sql, pattern = "_inclusion_stats"),
+        stringr::str_detect(string = sql, pattern = "_summary_stats"),
+        stringr::str_detect(string = sql, pattern = "_censor_stats")
+      )) {
         sql <- SqlRender::render(
           sql,
           cdm_database_schema = cdmDatabaseSchema,
@@ -585,15 +589,14 @@ instantiateCohortSet <- function(connectionDetails = NULL,
     }
   }
   
-  if (generateInclusionStats) {
-    saveAndDropTempInclusionStatsTables(
-      connection = connection,
-      tempEmulationSchema = tempEmulationSchema,
-      inclusionStatisticsFolder = inclusionStatisticsFolder,
-      incremental = incremental,
-      cohortIds = instantiatedCohortIds
-    )
-  }
+  saveAndDropTempInclusionStatsTables(
+    connection = connection,
+    tempEmulationSchema = tempEmulationSchema,
+    inclusionStatisticsFolder = inclusionStatisticsFolder,
+    incremental = incremental,
+    cohortIds = instantiatedCohortIds
+  )
+  
   if (incremental) {
     recordTasksDone(
       cohortId = cohorts$cohortId,
@@ -732,29 +735,3 @@ saveAndDropTempInclusionStatsTables <- function(connection,
     tempEmulationSchema = tempEmulationSchema
   )
 }
-
-.warnMismatchSqlInclusionStats <-
-  function(sql, generateInclusionStats) {
-    if (any(
-      stringr::str_detect(string = sql, pattern = "_inclusion_result"),
-      stringr::str_detect(string = sql, pattern = "_inclusion_stats"),
-      stringr::str_detect(string = sql, pattern = "_summary_stats"),
-      stringr::str_detect(string = sql, pattern = "_censor_stats")
-    )) {
-      if (isFALSE(generateInclusionStats)) {
-        warning(
-          "The SQL template used to instantiate cohort was designed to output cohort inclusion statistics.
-              But, generateInclusionStats is set to False while instantiating cohort.
-              This may cause error and terminate cohort diagnositcs."
-        )
-      }
-    } else {
-      if (isTRUE(generateInclusionStats)) {
-        warning(
-          "The SQL template used to instantiate cohort was designed to NOT output cohort inclusion statistics.
-              But, generateInclusionStats is set to TRUE while instantiating cohort.
-              This may cause error and terminate cohort diagnositcs."
-        )
-      }
-    }
-  }

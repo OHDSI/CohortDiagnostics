@@ -18,8 +18,8 @@ instantiateCohortSet(
   cohortToCreateFile = "settings/CohortsToCreate.csv",
   baseUrl = NULL,
   cohortSetReference = NULL,
-  generateInclusionStats = FALSE,
-  inclusionStatisticsFolder = NULL,
+  generateInclusionStats = TRUE,
+  inclusionStatisticsFolder,
   createCohortTable = TRUE,
   incremental = FALSE,
   incrementalFolder = NULL
@@ -77,10 +77,9 @@ error message will be displayed and process stopped.}
 \item{cohortSetReference}{A data frame with four columns, as described in the details. Can be left NULL if 
 \code{packageName} and \code{cohortToCreateFile} have been specified.}
 
-\item{generateInclusionStats}{Compute and store inclusion rule statistics?}
+\item{generateInclusionStats}{[DEPRECATED] Compute and store inclusion rule statistics?}
 
-\item{inclusionStatisticsFolder}{The folder where the inclusion rule statistics are stored. Can be
-left NULL if \code{generateInclusionStats = FALSE}.}
+\item{inclusionStatisticsFolder}{The folder where the inclusion rule statistics are stored.}
 
 \item{createCohortTable}{Create the cohort table? If \code{incremental = TRUE} and the table
 already exists this will be skipped.}
