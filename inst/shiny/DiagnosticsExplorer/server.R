@@ -2894,9 +2894,8 @@ shiny::shinyServer(function(input, output, session) {
   
   output$temporalCharComparePlot <- ggiraph::renderggiraph(expr = {
     data <- computeBalanceForCompareTemporalCharacterization()
-    if (nrow(data) == 0) {
-      return(dplyr::tibble(Note = "No data for the selected combination."))
-    }
+    validate(need(nrow(data) != 0, paste0("No data for the selected combination.")))
+    
     data <- data %>%
       dplyr::filter(.data$analysisName %in% temporalCompareAnalysisNameFilter()) %>%
       dplyr::filter(.data$domainId %in% temporalCompareDomainNameFilter()) 
@@ -2910,9 +2909,8 @@ shiny::shinyServer(function(input, output, session) {
       }
     }
     
-    if (nrow(data) == 0) {
-      return(dplyr::tibble("No data for the selected combination."))
-    }
+    
+    validate(need(nrow(data) != 0, paste0("No data for the selected combination.")))
     
     validate(need((nrow(data) - nrow(data[data$mean1 < 0.001, ])) > 5 &&
                     (nrow(data) - nrow(data[data$mean2 < 0.001, ])) > 5, paste0("No data for the selected combination.")))
