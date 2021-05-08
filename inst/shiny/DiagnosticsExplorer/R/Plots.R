@@ -215,19 +215,29 @@ plotIncidenceRate <- function(data,
     plotType <- "bar"
   }
   
-  newSort <- plotData %>%
+  sortAgeGroup <- plotData %>%
     dplyr::select(.data$ageGroup) %>%
     dplyr::distinct() %>%
     dplyr::arrange(as.integer(sub(
       pattern = '-.+$', '', x = .data$ageGroup
     )))
   
+  sortShortName <- plotData %>%
+    dplyr::select(.data$shortName) %>%
+    dplyr::distinct() %>%
+    dplyr::arrange(as.integer(sub(
+      pattern = '^C', '', x = .data$shortName
+    )))
+  
   plotData <- plotData %>%
-    dplyr::arrange(ageGroup = factor(.data$ageGroup, levels = newSort$ageGroup),
-                   .data$ageGroup)
+    dplyr::arrange(ageGroup = factor(.data$ageGroup, levels = sortAgeGroup$ageGroup),.data$ageGroup) %>% 
+    dplyr::arrange(shortName = factor(.data$shortName, levels = sortShortName$shortName),.data$shortName)
   
   plotData$ageGroup <- factor(plotData$ageGroup,
-                              levels = newSort$ageGroup)
+                              levels = sortAgeGroup$ageGroup)
+  
+  plotData$shortName <- factor(plotData$shortName,
+                              levels = sortShortName$shortName)
   plotData$tooltip <- c(
     paste0(
       plotData$shortName,
