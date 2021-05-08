@@ -740,7 +740,8 @@ shiny::shinyServer(function(input, output, session) {
         tidyr::pivot_wider(
           id_cols = .data$cohort,
           names_from = columnName,
-          values_from = .data$cohortSubjects
+          values_from = .data$cohortSubjects,
+          values_fill = 0
         ),
       data %>%
         dplyr::select(.data$cohort, .data$databaseId,
@@ -750,7 +751,8 @@ shiny::shinyServer(function(input, output, session) {
         tidyr::pivot_wider(
           id_cols = .data$cohort,
           names_from = columnName,
-          values_from = .data$cohortEntries
+          values_from = .data$cohortEntries,
+          values_fill = 0
         ),
       by = c("cohort")
     )
