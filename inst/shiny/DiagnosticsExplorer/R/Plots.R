@@ -67,6 +67,19 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
     )
   )
   
+  sortShortName <- plotData %>%
+    dplyr::select(.data$shortName) %>%
+    dplyr::distinct() %>%
+    dplyr::arrange(as.integer(sub(
+      pattern = '^C', '', x = .data$shortName
+    )))
+  
+  plotData <- plotData %>%
+    dplyr::arrange(shortName = factor(.data$shortName, levels = sortShortName$shortName),.data$shortName)
+  
+  plotData$shortName <- factor(plotData$shortName,
+                               levels = sortShortName$shortName)
+  
   plot <- ggplot2::ggplot(data = plotData) +
     ggplot2::aes(
       x = .data$shortName,
@@ -75,7 +88,6 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
       middle = .data$medianValue,
       upper = .data$p75Value,
       ymax = .data$maxValue,
-      group = .data$shortName,
       average = .data$averageValue
     ) +
     ggplot2::geom_errorbar(size = 0.5) +
