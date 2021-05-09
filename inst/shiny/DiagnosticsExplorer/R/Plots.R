@@ -694,7 +694,7 @@ plotCohortOverlap <- function(data,
     dplyr::mutate(
       tOnlyString = paste0(
         .data$signTOnlySubjects,
-        scales::comma(.data$absTOnlySubjects),
+        scales::comma(.data$absTOnlySubjects,accuracy = 1),
         " (",
         .data$signTOnlySubjects,
         scales::percent(.data$absTOnlySubjects /
@@ -704,7 +704,7 @@ plotCohortOverlap <- function(data,
       ),
       cOnlyString = paste0(
         .data$signCOnlySubjects,
-        scales::comma(.data$absCOnlySubjects),
+        scales::comma(.data$absCOnlySubjects,accuracy = 1),
         " (",
         .data$signCOnlySubjects,
         scales::percent(.data$absCOnlySubjects /
@@ -714,7 +714,7 @@ plotCohortOverlap <- function(data,
       ),
       bothString = paste0(
         .data$signBothSubjects,
-        scales::comma(.data$absBothSubjects),
+        scales::comma(.data$absBothSubjects,accuracy = 1),
         " (",
         .data$signBothSubjects,
         scales::percent(.data$absBothSubjects /
