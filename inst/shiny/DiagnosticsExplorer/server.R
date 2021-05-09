@@ -1711,7 +1711,8 @@ shiny::shinyServer(function(input, output, session) {
                       "domainField",
                       "vocabularyId"),
           names_from = "databaseId",
-          values_from = c("conceptCount", "subjectCount")
+          values_from = c("conceptCount", "subjectCount"),
+          values_fill = 0
         )
       
       data <- data[order(-data[5]), ]
@@ -1780,6 +1781,7 @@ shiny::shinyServer(function(input, output, session) {
                         "vocabularyId"),
             names_from = "databaseId",
             values_from = "conceptCount",
+            values_fill = 0,
             names_prefix = "conceptCount_"
           )
       } else {
@@ -1791,6 +1793,7 @@ shiny::shinyServer(function(input, output, session) {
                         "vocabularyId"),
             names_from = "databaseId",
             values_from = "subjectCount",
+            values_fill = 0,
             names_prefix = "subjectCount_"
           )
       }
