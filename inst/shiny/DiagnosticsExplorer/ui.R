@@ -21,6 +21,26 @@ cohortReference <- function(outputId) {
   )
 }
 
+cohortReferenceWithDatabaseId <- function(cohortOutputId, databaseOutputId) {
+  shinydashboard::box(
+    # title = "Reference",
+    status = "warning",
+    width = "100%",
+    tags$div(style = "max-height: 100px; overflow-y: auto",
+             tags$table(
+               tags$tr(
+                 tags$td(
+                   shiny::uiOutput(outputId = cohortOutputId)
+                 ),
+                 tags$td(style = "align: right !important; width: 50%",
+                   shiny::uiOutput(outputId = databaseOutputId)
+                 )
+               )
+             )
+    )
+  )
+}
+
 if (is(dataSource, "environment")) {
   choicesFordatabaseOrVocabularySchema <-
     c(database$databaseIdWithVocabularyVersion)
@@ -705,7 +725,7 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "temporalCharacterization",
-    cohortReference("temporalCharacterizationSelectedCohort"),
+    cohortReferenceWithDatabaseId("temporalCharacterizationSelectedCohort", "temporalCharacterizationSelectedDatabase"),
     tags$table(tags$tr(
       tags$td(
         shinyWidgets::pickerInput(
