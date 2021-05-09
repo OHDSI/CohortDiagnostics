@@ -597,6 +597,15 @@ bodyTabItems <- shinydashboard::tabItems(
             selected = "All",
             inline = TRUE
           )
+        ),
+        tags$td(
+          shiny::radioButtons(
+            inputId = "indexEventBreakdownTableFilter",
+            label = "Filter",
+            choices = c("Both", "Concept Count", "Subject Count"),
+            selected = "Both",
+            inline = TRUE
+          )
         )
       )
     ),

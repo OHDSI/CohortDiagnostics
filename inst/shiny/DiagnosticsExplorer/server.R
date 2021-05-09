@@ -1690,7 +1690,7 @@ shiny::shinyServer(function(input, output, session) {
     maxCount <- max(data$conceptCount, na.rm = TRUE)
     databaseIds <- unique(data$databaseId)
     
-    if ("subjectCount" %in% names(data)) {
+    if ("subjectCount" %in% names(data) && input$indexEventBreakdownTableFilter == "Both") {
       data <- data %>%
         dplyr::arrange(.data$databaseId) %>%
         dplyr::select(
@@ -1764,29 +1764,36 @@ shiny::shinyServer(function(input, output, session) {
         backgroundRepeat = "no-repeat",
         backgroundPosition = "center"
       )
-    } else {
+    } else if (input$indexEventBreakdownTableFilter == "Concept Count" || input$indexEventBreakdownTableFilter == "Subject Count") {
       data <-  data %>%
         dplyr::arrange(.data$databaseId) %>%
-        dplyr::select(
-          .data$conceptId,
-          .data$conceptName,
-          .data$domainField,
-          .data$databaseId,
-          .data$vocabularyId,
-          .data$conceptCount
-        ) %>%
         dplyr::filter(.data$conceptId > 0) %>%
-        dplyr::distinct() %>% # distinct is needed here because many time condition_concept_id and condition_source_concept_id
+        dplyr::distinct() # distinct is needed here because many time condition_concept_id and condition_source_concept_id
         # may have the same value
-        tidyr::pivot_wider(
-          id_cols = c("conceptId",
-                      "conceptName",
-                      "domainField",
-                      "vocabularyId"),
-          names_from = "databaseId",
-          values_from = "conceptCount",
-          names_prefix = "conceptCount_"
-        )
+      
+      if (input$indexEventBreakdownTableFilter == "Concept Count" || !"subjectCount" %in% names(data)) {
+        data <- data %>% 
+          tidyr::pivot_wider(
+            id_cols = c("conceptId",
+                        "conceptName",
+                        "domainField",
+                        "vocabularyId"),
+            names_from = "databaseId",
+            values_from = "conceptCount",
+            names_prefix = "conceptCount_"
+          )
+      } else {
+        data <- data %>% 
+          tidyr::pivot_wider(
+            id_cols = c("conceptId",
+                        "conceptName",
+                        "domainField",
+                        "vocabularyId"),
+            names_from = "databaseId",
+            values_from = "subjectCount",
+            names_prefix = "subjectCount_"
+          )
+      }
       
       data <- data[order(-data[5]), ]
       
@@ -1799,9 +1806,7 @@ shiny::shinyServer(function(input, output, session) {
         lengthChange = TRUE,
         ordering = TRUE,
         paging = TRUE,
-        columnDefs = list(minCellCountDef(3 + 1:(
-          length(databaseIds) * 2
-        )))
+        columnDefs = list(minCellCountDef(3 + 1:(length(databaseIds))))
       )
       
       dataTable <- DT::datatable(
