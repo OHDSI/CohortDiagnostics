@@ -2355,6 +2355,7 @@ shiny::shinyServer(function(input, output, session) {
         searching = TRUE,
         searchHighlight = TRUE,
         scrollX = TRUE,
+        scrollY = "60vh",
         lengthChange = TRUE,
         ordering = TRUE,
         paging = TRUE,
