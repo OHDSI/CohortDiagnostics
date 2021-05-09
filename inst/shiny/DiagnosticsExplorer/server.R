@@ -1884,7 +1884,8 @@ shiny::shinyServer(function(input, output, session) {
       tidyr::pivot_wider(
         id_cols = c(.data$visitConceptName),
         names_from = .data$visitContext,
-        values_from = .data$subjects
+        values_from = .data$subjects,
+        values_fill = 0
       ) %>%
       dplyr::relocate(.data$visitConceptName) %>%
       dplyr::mutate(visitConceptName = as.factor(visitConceptName))
@@ -1912,10 +1913,12 @@ shiny::shinyServer(function(input, output, session) {
       searching = TRUE,
       searchHighlight = TRUE,
       scrollX = TRUE,
+      scrollY = TRUE,
       lengthChange = TRUE,
       ordering = TRUE,
       paging = TRUE,
-      columnDefs = list(truncateStringDef(0, 30),
+      columnDefs = list(truncateStringDef(0, 60),
+                        list(width = "40%", targets = 0),
                         minCellCountDef(1:(
                           length(databaseIds) * 4
                         )))
@@ -1928,7 +1931,7 @@ shiny::shinyServer(function(input, output, session) {
         camelCaseToTitleCase(),
       rownames = FALSE,
       container = sketch,
-      escape = TRUE,
+      escape = FALSE,
       filter = "top"
     )
     
