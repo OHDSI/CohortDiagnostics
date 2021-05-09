@@ -2839,66 +2839,127 @@ shiny::shinyServer(function(input, output, session) {
           return(dplyr::tibble(Note = "No data for the selected combination."))
         }
         
-        table <- balance %>%
-          dplyr::select(
-            .data$cohortId1,
-            .data$cohortId2,
-            .data$covariateName,
-            .data$conceptId,
-            .data$mean1,
-            .data$sd1,
-            .data$mean2,
-            .data$sd2,
-            .data$stdDiff
-          ) %>%
-          dplyr::select(-.data$cohortId1, -.data$cohortId2) %>%
-          dplyr::arrange(desc(abs(.data$stdDiff)))
+        balance <- balance %>% 
+          dplyr::rename("meanTarget" = mean1, 
+                        "sDTarget" = sd1,
+                        "meanComparator" = mean2,
+                        "sDComparator" = sd2,
+                        "stdDiff" = stdDiff)
         
-        options = list(
-          pageLength = 100,
-          lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-          searching = TRUE,
-          searchHighlight = TRUE,
-          scrollX = TRUE,
-          lengthChange = TRUE,
-          ordering = TRUE,
-          paging = TRUE,
-          columnDefs = list(truncateStringDef(0, 80),
-                            minCellRealDef(2:6, digits = 2))
-        )
-        table <- DT::datatable(
-          table,
-          options = options,
-          rownames = FALSE,
-          colnames = c(
-            "Covariate Name",
-            "Concept ID",
-            "Mean Target",
-            "SD Target",
-            "Mean Comparator",
-            "SD Comparator",
-            "StdDiff"
-          ),
-          escape = FALSE,
-          filter = "top",
-          class = "stripe nowrap compact"
-        )
-        table <- DT::formatStyle(
-          table = table,
-          columns = c(3, 5),
-          background = DT::styleColorBar(c(0, 1), "lightblue"),
-          backgroundSize = "98% 88%",
-          backgroundRepeat = "no-repeat",
-          backgroundPosition = "center"
-        )
-        table <- DT::formatStyle(
-          table = table,
-          columns = 7,
-          background = styleAbsColorBar(1, "lightblue", "pink"),
-          backgroundSize = "98% 88%",
-          backgroundRepeat = "no-repeat",
-          backgroundPosition = "center"
-        )
+        if (input$temporalCharacterizationTypeColumnFilter == "Both") {
+          table <- balance %>%
+            dplyr::select(
+              .data$covariateName,
+              .data$conceptId,
+              .data$meanTarget,
+              .data$sDTarget,
+              .data$meanComparator,
+              .data$sDComparator,
+              .data$stdDiff
+            ) %>%
+            dplyr::arrange(desc(abs(.data$stdDiff)))
+          
+          options = list(
+            pageLength = 100,
+            lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+            searching = TRUE,
+            searchHighlight = TRUE,
+            scrollX = TRUE,
+            lengthChange = TRUE,
+            ordering = TRUE,
+            paging = TRUE,
+            columnDefs = list(truncateStringDef(0, 80),
+                              minCellRealDef(2:6, digits = 2))
+          )
+          table <- DT::datatable(
+            table,
+            options = options,
+            rownames = FALSE,
+            colnames = colnames(table) %>%
+              camelCaseToTitleCase(),
+            escape = FALSE,
+            filter = "top",
+            class = "stripe nowrap compact"
+          )
+          table <- DT::formatStyle(
+            table = table,
+            columns = c(3, 5),
+            background = DT::styleColorBar(c(0, 1), "lightblue"),
+            backgroundSize = "98% 88%",
+            backgroundRepeat = "no-repeat",
+            backgroundPosition = "center"
+          )
+          table <- DT::formatStyle(
+            table = table,
+            columns = 7,
+            background = styleAbsColorBar(1, "lightblue", "pink"),
+            backgroundSize = "98% 88%",
+            backgroundRepeat = "no-repeat",
+            backgroundPosition = "center"
+          )
+          
+        } else {
+          if (input$temporalCharacterizationTypeColumnFilter == "Only Mean SD") {
+            table <- balance %>%
+              dplyr::select(
+                .data$covariateName,
+                .data$conceptId,
+                .data$meanTarget,
+                .data$sDTarget,
+                .data$stdDiff
+              ) %>%
+              dplyr::arrange(desc(abs(.data$stdDiff)))
+          } else {
+            table <- balance %>%
+              dplyr::select(
+                .data$covariateName,
+                .data$conceptId,
+                .data$meanComparator,
+                .data$sDComparator,
+                .data$stdDiff
+              ) %>% 
+              dplyr::arrange(desc(abs(.data$stdDiff)))
+          }
+          
+          options = list(
+            pageLength = 100,
+            lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+            searching = TRUE,
+            searchHighlight = TRUE,
+            scrollX = TRUE,
+            lengthChange = TRUE,
+            ordering = TRUE,
+            paging = TRUE,
+            columnDefs = list(truncateStringDef(0, 80),
+                              minCellRealDef(2:4, digits = 2))
+          )
+          table <- DT::datatable(
+            table,
+            options = options,
+            rownames = FALSE,
+            colnames = colnames(table) %>%
+              camelCaseToTitleCase(),
+            escape = FALSE,
+            filter = "top",
+            class = "stripe nowrap compact"
+          )
+          table <- DT::formatStyle(
+            table = table,
+            columns = 3,
+            background = DT::styleColorBar(c(0, 1), "lightblue"),
+            backgroundSize = "98% 88%",
+            backgroundRepeat = "no-repeat",
+            backgroundPosition = "center"
+          )
+          table <- DT::formatStyle(
+            table = table,
+            columns = 5,
+            background = styleAbsColorBar(1, "lightblue", "pink"),
+            backgroundSize = "98% 88%",
+            backgroundRepeat = "no-repeat",
+            backgroundPosition = "center"
+          )
+        }
       }
       return(table)
     }, server = TRUE)

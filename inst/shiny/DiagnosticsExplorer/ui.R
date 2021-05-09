@@ -855,14 +855,31 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "compareTemporalCharacterization",
     cohortReference("cohortTemporalCharCompareSelectedCohort"),
-    shiny::radioButtons(
-      inputId = "temporalCharacterizationType",
-      label = "",
-      choices = c("Raw table", "Plot"),
-      #"Pretty table", removed pretty option for compare temporal characterization
-      # Pretty table can be put back in - we will need a different Table1Specs for temporal characterization
-      selected = "Plot",
-      inline = TRUE
+    tags$table(
+      tags$tr(
+        tags$td(
+          shiny::radioButtons(
+            inputId = "temporalCharacterizationType",
+            label = "",
+            choices = c("Raw table", "Plot"),
+            #"Pretty table", removed pretty option for compare temporal characterization
+            # Pretty table can be put back in - we will need a different Table1Specs for temporal characterization
+            selected = "Plot",
+            inline = TRUE
+          )
+        ),
+        tags$td(
+          shiny::radioButtons(
+            inputId = "temporalCharacterizationTypeColumnFilter",
+            label = "Filter",
+            choices = c("Both", "Only Mean SD", "Only Comparator SD"),
+            #"Pretty table", removed pretty option for compare temporal characterization
+            # Pretty table can be put back in - we will need a different Table1Specs for temporal characterization
+            selected = "Both",
+            inline = TRUE
+          )
+        )
+      )
     ),
     shiny::conditionalPanel(condition = "input.temporalCharacterizationType == 'Raw table' | input.temporalCharacterizationType=='Plot'",
                             tags$table(tags$tr(
