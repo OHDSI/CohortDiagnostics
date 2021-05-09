@@ -497,9 +497,7 @@ plotCohortComparisonStandardizedDifference <- function(balance,
     facet_nested(databaseId + targetCohort ~ comparatorCohort) +
     ggplot2::theme(strip.background = ggplot2::element_blank()) +
     ggplot2::xlim(xLimitMin, xLimitMax) +
-    ggplot2::ylim(yLimitMin, yLimitMax) +
-    ggplot2::xlab(balance$cohortId2 %>% unique()) +
-    ggplot2::ylab(balance$cohortId1 %>% unique())
+    ggplot2::ylim(yLimitMin, yLimitMax)
   
   plot <- ggiraph::girafe(
     ggobj = plot,
@@ -622,9 +620,7 @@ plotTemporalCompareStandardizedDifference <- function(balance,
     facet_nested(databaseId + choices1 ~ choices2) +
     ggplot2::theme(strip.background = ggplot2::element_blank()) +
     ggplot2::xlim(xLimitMin, xLimitMax) +
-    ggplot2::ylim(yLimitMin, yLimitMax) +
-    ggplot2::xlab(balance$comparatorCohort %>% unique()) +
-    ggplot2::ylab(balance$targetCohort %>% unique())
+    ggplot2::ylim(yLimitMin, yLimitMax) 
   
   plot <- ggiraph::girafe(
     ggobj = plot,
