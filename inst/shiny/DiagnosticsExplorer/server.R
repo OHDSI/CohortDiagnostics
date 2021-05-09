@@ -3257,6 +3257,12 @@ shiny::shinyServer(function(input, output, session) {
       selectedComparatorCohort()
     ))))
   })
+  
+  output$cohortCharCompareSelectedDatabase <-
+    shiny::renderUI({
+      return(paste("selected database :", input$database))
+    })
+  
   output$cohortTemporalCharCompareSelectedCohort <-
     shiny::renderUI({
       htmltools::withTags(table(tr(td(

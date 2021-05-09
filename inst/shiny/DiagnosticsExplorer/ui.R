@@ -777,7 +777,7 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "compareCohortCharacterization",
-    cohortReference("cohortCharCompareSelectedCohort"),
+    cohortReferenceWithDatabaseId("cohortCharCompareSelectedCohort", "cohortCharCompareSelectedDatabase"),
     shiny::radioButtons(
       inputId = "charCompareType",
       label = "",
