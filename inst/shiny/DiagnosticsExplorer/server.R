@@ -2847,7 +2847,7 @@ shiny::shinyServer(function(input, output, session) {
                         "sDComparator" = sd2,
                         "stdDiff" = stdDiff)
         
-        if (input$temporalCharacterizationTypeColumnFilter == "Both") {
+        if (input$temporalCharacterizationTypeColumnFilter == "Mean and Standard Deviation") {
           table <- balance %>%
             dplyr::select(
               .data$covariateName,
@@ -2900,25 +2900,17 @@ shiny::shinyServer(function(input, output, session) {
           )
           
         } else {
-          if (input$temporalCharacterizationTypeColumnFilter == "Only Mean SD") {
+          if (input$temporalCharacterizationTypeColumnFilter == "Mean only") {
             table <- balance %>%
               dplyr::select(
                 .data$covariateName,
                 .data$conceptId,
                 .data$meanTarget,
-                .data$sDTarget,
+                .data$meanComparator,
                 .data$stdDiff
               ) %>%
-              dplyr::arrange(desc(abs(.data$stdDiff)))
-          } else {
-            table <- balance %>%
-              dplyr::select(
-                .data$covariateName,
-                .data$conceptId,
-                .data$meanComparator,
-                .data$sDComparator,
-                .data$stdDiff
-              ) %>% 
+              dplyr::rename(target = .data$meanTarget,
+                            comparator = .data$meanComparator) %>% 
               dplyr::arrange(desc(abs(.data$stdDiff)))
           }
           

@@ -867,17 +867,6 @@ bodyTabItems <- shinydashboard::tabItems(
             selected = "Plot",
             inline = TRUE
           )
-        ),
-        tags$td(
-          shiny::radioButtons(
-            inputId = "temporalCharacterizationTypeColumnFilter",
-            label = "Filter",
-            choices = c("Both", "Only Mean SD", "Only Comparator SD"),
-            #"Pretty table", removed pretty option for compare temporal characterization
-            # Pretty table can be put back in - we will need a different Table1Specs for temporal characterization
-            selected = "Both",
-            inline = TRUE
-          )
         )
       )
     ),
@@ -922,9 +911,18 @@ bodyTabItems <- shinydashboard::tabItems(
                               tags$td(
                                 shiny::radioButtons(
                                   inputId = "temporalCharacterProportionOrContinuous",
-                                  label = "",
+                                  label = "Filter to:",
                                   choices = c("All", "Proportion", "Continuous"),
                                   selected = "All",
+                                  inline = TRUE
+                                )
+                              ),
+                              tags$td(
+                                shiny::radioButtons(
+                                  inputId = "temporalCharacterizationTypeColumnFilter",
+                                  label = "Show  in table:",
+                                  choices = c("Mean and Standard Deviation", "Mean only"),
+                                  selected = "Mean only",
                                   inline = TRUE
                                 )
                               )
