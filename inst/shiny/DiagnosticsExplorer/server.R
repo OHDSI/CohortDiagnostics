@@ -1118,6 +1118,10 @@ shiny::shinyServer(function(input, output, session) {
           .data$conceptSubjects,
           .data$conceptCount
         ) %>%
+        dplyr::group_by(.data$databaseId,.data$sourceConceptId) %>% 
+        dplyr::summarise(conceptSubjects = max(.data$conceptSubjects),
+                         conceptCount = max(.data$conceptCount)) %>% 
+        dplyr::ungroup() %>% 
         dplyr::arrange(.data$databaseId) %>%
         tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>%
         dplyr::mutate(name = paste0(
