@@ -290,7 +290,8 @@ plotIncidenceRate <- function(data,
     plotData$gender <- factor(plotData$gender, levels = genders)
   }
   distinctCalenderYear <- plotData$calendarYear %>%
-    unique()
+    unique() %>% 
+    sort()
   
   plot <-
     ggplot2::ggplot(data = plotData, do.call(ggplot2::aes_string, aesthetics)) +
@@ -298,7 +299,7 @@ plotIncidenceRate <- function(data,
     ggplot2::ylab("Incidence Rate (/1,000 person years)") +
     ggplot2::scale_y_continuous(expand = c(0, 0))
   
-  if (!is.na(distinctCalenderYear)) {
+  if (all(!is.na(distinctCalenderYear))) {
     if (length(distinctCalenderYear) >= 8) {
       plot <-
         plot + ggplot2::scale_x_continuous(n.breaks = 8, labels = round)
