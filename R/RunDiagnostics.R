@@ -523,45 +523,49 @@ runCohortDiagnostics <- function(packageName = NULL,
           folder = inclusionStatisticsFolder,
           simplify = TRUE
         )
-      if (nrow(stats) > 0) {
-        stats <- stats %>%
-          dplyr::mutate(databaseId = !!databaseId)
-        stats <-
-          enforceMinCellValue(data = stats,
-                              fieldName = "meetSubjects",
-                              minValues = minCellCount)
-        stats <-
-          enforceMinCellValue(data = stats,
-                              fieldName = "gainSubjects",
-                              minValues = minCellCount)
-        stats <-
-          enforceMinCellValue(data = stats,
-                              fieldName = "totalSubjects",
-                              minValues = minCellCount)
-        stats <-
-          enforceMinCellValue(data = stats,
-                              fieldName = "remainSubjects",
-                              minValues = minCellCount)
+      if (!is.null(stats)) {
+        if (nrow(stats) > 0) {
+          stats <- stats %>%
+            dplyr::mutate(databaseId = !!databaseId)
+          stats <-
+            enforceMinCellValue(data = stats,
+                                fieldName = "meetSubjects",
+                                minValues = minCellCount)
+          stats <-
+            enforceMinCellValue(data = stats,
+                                fieldName = "gainSubjects",
+                                minValues = minCellCount)
+          stats <-
+            enforceMinCellValue(data = stats,
+                                fieldName = "totalSubjects",
+                                minValues = minCellCount)
+          stats <-
+            enforceMinCellValue(data = stats,
+                                fieldName = "remainSubjects",
+                                minValues = minCellCount)
+        }
+        if ("cohortDefinitionId" %in% (colnames(stats))) {
+          stats <- stats %>%
+            dplyr::rename(cohortId = .data$cohortDefinitionId)
+        }
+        colnames(stats) <-
+          SqlRender::camelCaseToSnakeCase(colnames(stats))
+        writeToCsv(
+          data = stats,
+          fileName = file.path(exportFolder, "inclusion_rule_stats.csv"),
+          incremental = incremental,
+          cohortId = subset$cohortId
+        )
+        recordTasksDone(
+          cohortId = subset$cohortId,
+          task = "runInclusionStatistics",
+          checksum = subset$checksum,
+          recordKeepingFile = recordKeepingFile,
+          incremental = incremental
+        )
+      } else {
+        warning("Cohort Inclusion statistics file not found. Inclusion Statistis not run.")
       }
-      if ("cohortDefinitionId" %in% (colnames(stats))) {
-        stats <- stats %>%
-          dplyr::rename(cohortId = .data$cohortDefinitionId)
-      }
-      colnames(stats) <-
-        SqlRender::camelCaseToSnakeCase(colnames(stats))
-      writeToCsv(
-        data = stats,
-        fileName = file.path(exportFolder, "inclusion_rule_stats.csv"),
-        incremental = incremental,
-        cohortId = subset$cohortId
-      )
-      recordTasksDone(
-        cohortId = subset$cohortId,
-        task = "runInclusionStatistics",
-        checksum = subset$checksum,
-        recordKeepingFile = recordKeepingFile,
-        incremental = incremental
-      )
     }
   }
   

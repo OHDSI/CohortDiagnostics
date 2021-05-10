@@ -312,6 +312,10 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
                                             simplify = TRUE) {
   start <- Sys.time()
   
+  if (!exists(cohortInclusionFile)) {
+    return(NULL)
+  }
+  
   fetchStats <- function(file) {
     ParallelLogger::logDebug("- Fetching data from ", file)
     stats <- readr::read_csv(file,
