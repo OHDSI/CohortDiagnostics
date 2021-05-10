@@ -1860,6 +1860,8 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(.data$cohortSubjects) %>% 
       dplyr::pull(.data$cohortSubjects) %>% unique()
     
+    databaseIdsWithCount <- paste(databaseIds, "(n = ", format(cohortCounts, big.mark = ","), ")")
+    
     # if (!all(databaseIds() %in% databaseIds)) {
     #   return(dplyr::tibble(
     #     Note = paste0(
@@ -1901,11 +1903,8 @@ shiny::shinyServer(function(input, output, session) {
     
     sketch <- htmltools::withTags(table(class = "display",
                                         thead(tr(
-                                          th(rowspan = 3, "Visit"),
-                                          lapply(databaseIds, th, style = "border : 1px solid black !important", colspan = 4, class = "dt-center")
-                                        ),
-                                        tr(
-                                          lapply(paste0("(n = ", format(cohortCounts, big.mark = ","), ")"), th,style = "border : 1px solid black !important", colspan = 4, class = "dt-center no-padding")
+                                          th(rowspan = 2, "Visit"),
+                                          lapply(databaseIdsWithCount, th, colspan = 4, class = "dt-center")
                                         ),
                                         tr(
                                           lapply(rep(
@@ -2067,6 +2066,15 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     databaseIds <- sort(unique(data$databaseId))
+    
+    cohortCounts <- data %>% 
+      dplyr::inner_join(cohortCount) %>% 
+      dplyr::filter(.data$cohortId == cohortId()) %>% 
+      dplyr::filter(.data$databaseId %in% databaseIds()) %>% 
+      dplyr::select(.data$cohortSubjects) %>% 
+      dplyr::pull(.data$cohortSubjects) %>% unique()
+    
+    databaseIdsWithCount <- paste(databaseIds, "(n = ", format(cohortCounts, big.mark = ","), ")")
     # if (!all(databaseIds() %in% databaseIds)) {
     #   return(dplyr::tibble(
     #     Note = paste0(
@@ -2236,7 +2244,7 @@ shiny::shinyServer(function(input, output, session) {
                                           thead(tr(
                                             th(rowspan = 2, "Covariate Name"),
                                             th(rowspan = 2, "Concept Id"),
-                                            lapply(databaseIds, th, colspan = 2, class = "dt-center")
+                                            lapply(databaseIdsWithCount, th, colspan = 2, class = "dt-center")
                                           ),
                                           tr(
                                             lapply(rep(
