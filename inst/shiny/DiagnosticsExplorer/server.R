@@ -1853,6 +1853,12 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     databaseIds <- sort(unique(data$databaseId))
+    cohortCounts <- data %>% 
+      dplyr::inner_join(cohortCount) %>% 
+      dplyr::filter(.data$cohortId == cohortId()) %>% 
+      dplyr::filter(.data$databaseId %in% databaseIds()) %>% 
+      dplyr::select(.data$cohortSubjects) %>% 
+      dplyr::pull(.data$cohortSubjects) %>% unique()
     
     # if (!all(databaseIds() %in% databaseIds)) {
     #   return(dplyr::tibble(
@@ -1895,8 +1901,11 @@ shiny::shinyServer(function(input, output, session) {
     
     sketch <- htmltools::withTags(table(class = "display",
                                         thead(tr(
-                                          th(rowspan = 2, "Visit"),
+                                          th(rowspan = 3, "Visit"),
                                           lapply(databaseIds, th, style = "border : 1px solid black !important", colspan = 4, class = "dt-center")
+                                        ),
+                                        tr(
+                                          lapply(paste0("(n = ", format(cohortCounts, big.mark = ","), ")"), th,style = "border : 1px solid black !important", colspan = 4, class = "dt-center no-padding")
                                         ),
                                         tr(
                                           lapply(rep(
