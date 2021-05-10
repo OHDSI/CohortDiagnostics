@@ -152,7 +152,8 @@ getCohortsJsonAndSqlFromPackage <-
 getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
                                            cohortSetReference = cohortSetReference,
                                            cohortIds = NULL,
-                                           errorMessage = NULL) {
+                                           errorMessage = NULL,
+                                           generateStats = TRUE) {
   ParallelLogger::logDebug("Running Cohort Diagnostics on cohort specified in WebApi - ",
                            baseUrl)
   
@@ -195,7 +196,7 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
       ROhdsiWebApi::getCohortSql(
         cohortDefinition = cohortDefinition,
         baseUrl = baseUrl,
-        generateStats = TRUE
+        generateStats = generateStats
       )
   }
   return(selectColumnAccordingToResultsModel(cohortSetReference))
@@ -225,7 +226,8 @@ getCohortsJsonAndSql <- function(packageName = NULL,
                                  cohortToCreateFile = "settings/CohortsToCreate.csv",
                                  baseUrl = NULL,
                                  cohortSetReference = NULL,
-                                 cohortIds = NULL) {
+                                 cohortIds = NULL,
+                                 generateStats = TRUE) {
   if (!is.null(packageName)) {
     cohorts <-
       getCohortsJsonAndSqlFromPackage(
@@ -249,7 +251,8 @@ getCohortsJsonAndSql <- function(packageName = NULL,
     cohorts <- getCohortsJsonAndSqlFromWebApi(
       baseUrl = baseUrl,
       cohortSetReference = cohortSetReference,
-      cohortIds = cohortIds
+      cohortIds = cohortIds,
+      generateStats = generateStats
     )
   }
   ParallelLogger::logInfo("Number of cohorts ", nrow(cohorts))
@@ -515,7 +518,8 @@ instantiateCohortSet <- function(connectionDetails = NULL,
     cohortToCreateFile = cohortToCreateFile,
     baseUrl = baseUrl,
     cohortSetReference = cohortSetReference,
-    cohortIds = cohortIds
+    cohortIds = cohortIds,
+    generateStats = generateInclusionStats
   )
   
   if (incremental) {
