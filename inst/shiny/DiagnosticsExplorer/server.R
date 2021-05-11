@@ -2241,11 +2241,11 @@ shiny::shinyServer(function(input, output, session) {
             dplyr::distinct(),
           by = "covariateId"
         ) %>%
-        dplyr::select(-.data$covariateId) %>%
-        dplyr::select(-.data$cohortId) %>%
-        dplyr::relocate(.data$covariateName, .data$conceptId)
+        dplyr::mutate(covariateName = paste(.data$covariateName, "(",.data$conceptId, ")")) %>% 
+        dplyr::select(-.data$covariateId, -.data$cohortId, -.data$conceptId) %>% 
+        dplyr::relocate(.data$covariateName)
       
-      data <- data[order(-data[3]), ]
+      data <- data[order(-data[2]), ]
       
       if (input$characterizationColumnFilters == "Both") {
         options = list(
@@ -2260,13 +2260,12 @@ shiny::shinyServer(function(input, output, session) {
           paging = TRUE,
           columnDefs = list(
             truncateStringDef(0, 80),
-            minCellRealDef(1 + 1:(length(databaseIds) * 2), digits = 3)
+            minCellRealDef(1:(length(databaseIds) * 2), digits = 3)
           )
         )
         sketch <- htmltools::withTags(table(class = "display",
                                             thead(tr(
                                               th(rowspan = 2, "Covariate Name"),
-                                              th(rowspan = 2, "Concept Id"),
                                               lapply(databaseIdsWithCount, th, colspan = 2, class = "dt-center")
                                             ),
                                             tr(
@@ -2286,7 +2285,7 @@ shiny::shinyServer(function(input, output, session) {
         
         table <- DT::formatStyle(
           table = table,
-          columns = (2 + (1:length(databaseIds) * 2)),
+          columns = (1 + (1:length(databaseIds) * 2)),
           background = DT::styleColorBar(c(0, 1), "lightblue"),
           backgroundSize = "98% 88%",
           backgroundRepeat = "no-repeat",
@@ -2306,7 +2305,7 @@ shiny::shinyServer(function(input, output, session) {
           paging = TRUE,
           columnDefs = list(
             truncateStringDef(0, 80),
-            minCellRealDef(1 + 1:(length(databaseIds)), digits = 3)
+            minCellRealDef(1:(length(databaseIds)), digits = 3)
           )
         )
         
@@ -2320,7 +2319,7 @@ shiny::shinyServer(function(input, output, session) {
         )
         table <- DT::formatStyle(
           table = table,
-          columns = (2 + (1:length(databaseIds))),
+          columns = (1 + (1:length(databaseIds))),
           background = DT::styleColorBar(c(0, 1), "lightblue"),
           backgroundSize = "98% 88%",
           backgroundRepeat = "no-repeat",
