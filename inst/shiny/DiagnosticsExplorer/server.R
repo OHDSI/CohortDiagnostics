@@ -1690,6 +1690,15 @@ shiny::shinyServer(function(input, output, session) {
     maxCount <- max(data$conceptCount, na.rm = TRUE)
     databaseIds <- unique(data$databaseId)
     
+    cohortCounts <- data %>% 
+      dplyr::inner_join(cohortCount) %>% 
+      dplyr::filter(.data$cohortId == cohortId()) %>% 
+      dplyr::filter(.data$databaseId %in% databaseIds()) %>% 
+      dplyr::select(.data$cohortSubjects) %>% 
+      dplyr::pull(.data$cohortSubjects) %>% unique()
+    
+    databaseIdsWithCount <- paste(databaseIds, "(n = ", format(cohortCounts, big.mark = ","), ")")
+    
     if ("subjectCount" %in% names(data) && input$indexEventBreakdownTableFilter == "Both") {
       data <- data %>%
         dplyr::arrange(.data$databaseId) %>%
@@ -1724,7 +1733,7 @@ shiny::shinyServer(function(input, output, session) {
                                               th(rowspan = 2, "Concept Name"),
                                               th(rowspan = 2, "Domain field"),
                                               th(rowspan = 2, "Vocabulary Id"),
-                                              lapply(databaseIds, th, colspan = 2, class = "dt-center")
+                                              lapply(databaseIdsWithCount, th, colspan = 2, class = "dt-center")
                                             ),
                                             tr(lapply(rep(
                                               c("Records", "Persons"), length(databaseIds)
@@ -1765,14 +1774,14 @@ shiny::shinyServer(function(input, output, session) {
         backgroundRepeat = "no-repeat",
         backgroundPosition = "center"
       )
-    } else if (input$indexEventBreakdownTableFilter == "Concept Count" || input$indexEventBreakdownTableFilter == "Subject Count") {
+    } else if (input$indexEventBreakdownTableFilter == "Records" || input$indexEventBreakdownTableFilter == "Persons") {
       data <-  data %>%
         dplyr::arrange(.data$databaseId) %>%
         dplyr::filter(.data$conceptId > 0) %>%
         dplyr::distinct() # distinct is needed here because many time condition_concept_id and condition_source_concept_id
         # may have the same value
       
-      if (input$indexEventBreakdownTableFilter == "Concept Count" || !"subjectCount" %in% names(data)) {
+      if (input$indexEventBreakdownTableFilter == "Records" || !"subjectCount" %in% names(data)) {
         data <- data %>% 
           tidyr::pivot_wider(
             id_cols = c("conceptId",
@@ -1782,7 +1791,7 @@ shiny::shinyServer(function(input, output, session) {
             names_from = "databaseId",
             values_from = "conceptCount",
             values_fill = 0,
-            names_prefix = "conceptCount_"
+            names_prefix = "Records_"
           )
       } else {
         data <- data %>% 
@@ -1794,7 +1803,7 @@ shiny::shinyServer(function(input, output, session) {
             names_from = "databaseId",
             values_from = "subjectCount",
             values_fill = 0,
-            names_prefix = "subjectCount_"
+            names_prefix = "Persons_"
           )
       }
       
