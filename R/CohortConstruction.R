@@ -152,7 +152,8 @@ getCohortsJsonAndSqlFromPackage <-
 getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
                                            cohortSetReference = cohortSetReference,
                                            cohortIds = NULL,
-                                           errorMessage = NULL) {
+                                           errorMessage = NULL,
+                                           generateStats = TRUE) {
   ParallelLogger::logDebug("Running Cohort Diagnostics on cohort specified in WebApi - ",
                            baseUrl)
   
@@ -195,7 +196,7 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
       ROhdsiWebApi::getCohortSql(
         cohortDefinition = cohortDefinition,
         baseUrl = baseUrl,
-        generateStats = TRUE
+        generateStats = generateStats
       )
   }
   return(selectColumnAccordingToResultsModel(cohortSetReference))
@@ -225,7 +226,8 @@ getCohortsJsonAndSql <- function(packageName = NULL,
                                  cohortToCreateFile = "settings/CohortsToCreate.csv",
                                  baseUrl = NULL,
                                  cohortSetReference = NULL,
-                                 cohortIds = NULL) {
+                                 cohortIds = NULL,
+                                 generateStats = TRUE) {
   if (!is.null(packageName)) {
     cohorts <-
       getCohortsJsonAndSqlFromPackage(
@@ -249,7 +251,8 @@ getCohortsJsonAndSql <- function(packageName = NULL,
     cohorts <- getCohortsJsonAndSqlFromWebApi(
       baseUrl = baseUrl,
       cohortSetReference = cohortSetReference,
-      cohortIds = cohortIds
+      cohortIds = cohortIds,
+      generateStats = generateStats
     )
   }
   ParallelLogger::logInfo("Number of cohorts ", nrow(cohorts))
@@ -308,6 +311,10 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
                                                                                "cohortSummaryStats.csv"),
                                             simplify = TRUE) {
   start <- Sys.time()
+  
+  if (!exists(cohortInclusionFile)) {
+    return(NULL)
+  }
   
   fetchStats <- function(file) {
     ParallelLogger::logDebug("- Fetching data from ", file)
@@ -515,7 +522,8 @@ instantiateCohortSet <- function(connectionDetails = NULL,
     cohortToCreateFile = cohortToCreateFile,
     baseUrl = baseUrl,
     cohortSetReference = cohortSetReference,
-    cohortIds = cohortIds
+    cohortIds = cohortIds,
+    generateStats = generateInclusionStats
   )
   
   if (incremental) {
@@ -557,6 +565,15 @@ instantiateCohortSet <- function(connectionDetails = NULL,
           results_database_schema.cohort_inclusion_stats = "#cohort_inc_stats",
           results_database_schema.cohort_summary_stats = "#cohort_summary_stats"
         )
+        # added for compatibility for 2.8.1
+        # https://github.com/OHDSI/CohortDiagnostics/issues/387
+        # this table was introduced in v2.8.1, and does not exist in prior version of webapi
+        if (stringr::str_detect(string = sql,
+                                pattern = 'cohort_censor_stats')) {
+          sql <- SqlRender::render(sql = sql,
+                                   results_database_schema.cohort_censor_stats = "#cohort_censor_stats"
+                                   )
+        }
       } else {
         sql <- SqlRender::render(
           sql,
@@ -729,7 +746,8 @@ saveAndDropTempInclusionStatsTables <- function(connection,
     if (any(
       stringr::str_detect(string = sql, pattern = "_inclusion_result"),
       stringr::str_detect(string = sql, pattern = "_inclusion_stats"),
-      stringr::str_detect(string = sql, pattern = "_summary_stats")
+      stringr::str_detect(string = sql, pattern = "_summary_stats"),
+      stringr::str_detect(string = sql, pattern = "_censor_stats")
     )) {
       if (isFALSE(generateInclusionStats)) {
         warning(
