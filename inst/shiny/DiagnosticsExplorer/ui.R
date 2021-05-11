@@ -857,7 +857,7 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "compareTemporalCharacterization",
-    cohortReference("cohortTemporalCharCompareSelectedCohort"),
+    cohortReferenceWithDatabaseId(cohortOutputId = "temporalCharCompareSelectedCohort", databaseOutputId = "temporalCharCompareSelectedDatabase"),
     tags$table(
       tags$tr(
         tags$td(
@@ -869,6 +869,19 @@ bodyTabItems <- shinydashboard::tabItems(
             # Pretty table can be put back in - we will need a different Table1Specs for temporal characterization
             selected = "Plot",
             inline = TRUE
+          )
+        ),
+        tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
+        tags$td(
+          shiny::conditionalPanel(
+            condition = "input.temporalCharacterizationType == 'Raw table'",
+            shiny::radioButtons(
+              inputId = "temporalCharacterizationTypeColumnFilter",
+              label = "Show  in table:",
+              choices = c("Mean and Standard Deviation", "Mean only"),
+              selected = "Mean only",
+              inline = TRUE
+            )
           )
         )
       )
@@ -917,15 +930,6 @@ bodyTabItems <- shinydashboard::tabItems(
                                   label = "Filter to:",
                                   choices = c("All", "Proportion", "Continuous"),
                                   selected = "All",
-                                  inline = TRUE
-                                )
-                              ),
-                              tags$td(
-                                shiny::radioButtons(
-                                  inputId = "temporalCharacterizationTypeColumnFilter",
-                                  label = "Show  in table:",
-                                  choices = c("Mean and Standard Deviation", "Mean only"),
-                                  selected = "Mean only",
                                   inline = TRUE
                                 )
                               )

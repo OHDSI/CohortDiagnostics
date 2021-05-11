@@ -3282,7 +3282,7 @@ shiny::shinyServer(function(input, output, session) {
       return(input$database)
     })
   
-  output$cohortTemporalCharCompareSelectedCohort <-
+  output$temporalCharCompareSelectedCohort <-
     shiny::renderUI({
       htmltools::withTags(table(tr(td(
         selectedCohort()
@@ -3290,6 +3290,11 @@ shiny::shinyServer(function(input, output, session) {
       tr(td(
         selectedComparatorCohort()
       ))))
+    })
+  
+  output$temporalCharCompareSelectedDatabase <-
+    shiny::renderUI({
+      return(input$database)
     })
   #Download
   # download_box <- function(exportname, plot){
