@@ -624,7 +624,7 @@ bodyTabItems <- shinydashboard::tabItems(
         tags$td(
           shiny::radioButtons(
             inputId = "indexEventBreakdownTableFilter",
-            label = "Filter",
+            label = "Display",
             choices = c("Both", "Records", "Persons"),
             selected = "Both",
             inline = TRUE
@@ -659,7 +659,8 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "cohortCharacterization",
     cohortReference("characterizationSelectedCohort"),
-    tags$table(tags$tr(
+    tags$table(
+      tags$tr(
       tags$td(
         shiny::radioButtons(
           inputId = "charType",
@@ -722,6 +723,20 @@ bodyTabItems <- shinydashboard::tabItems(
                                     )
                                   )
                                 )))
+      )
+    ),
+    tags$tr(
+      tags$td(colspan = 2,
+        shiny::conditionalPanel(
+          condition = "input.charType == 'Raw'",
+          shiny::radioButtons(
+            inputId = "characterizationColumnFilters",
+            label = "Display",
+            choices = c("Both", "Mean Only", "SD Only"),
+            selected = "Both",
+            inline = TRUE
+          )
+        )
       )
     )),
     DT::dataTableOutput(outputId = "characterizationTable")

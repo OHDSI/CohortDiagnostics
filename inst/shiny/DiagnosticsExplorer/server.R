@@ -2210,9 +2210,22 @@ shiny::shinyServer(function(input, output, session) {
           Note = paste0("No data available for selected databases and cohorts")
         ))
       }
-      data <- data %>%
-        dplyr::arrange(.data$databaseId, .data$cohortId) %>%
-        tidyr::pivot_longer(cols = c(.data$mean, .data$sd)) %>%
+      
+      if (input$characterizationColumnFilters == "Both") {
+        data <- data %>%
+          dplyr::arrange(.data$databaseId, .data$cohortId) %>%
+          tidyr::pivot_longer(cols = c(.data$mean, .data$sd))
+      } else if (input$characterizationColumnFilters == "Mean Only") {
+        data <- data %>%
+          dplyr::arrange(.data$databaseId, .data$cohortId) %>%
+          tidyr::pivot_longer(cols = c(.data$mean))
+      } else {
+        data <- data %>%
+          dplyr::arrange(.data$databaseId, .data$cohortId) %>%
+          tidyr::pivot_longer(cols = c(.data$sd))
+      }
+      
+       data <-  data %>% 
         dplyr::mutate(name = paste0(databaseId, "_", .data$name)) %>%
         tidyr::pivot_wider(
           id_cols = c(.data$cohortId, .data$covariateId),
@@ -2234,49 +2247,86 @@ shiny::shinyServer(function(input, output, session) {
       
       data <- data[order(-data[3]), ]
       
-      options = list(
-        pageLength = 1000,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE,
-        scrollY = TRUE,
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        columnDefs = list(
-          truncateStringDef(0, 80),
-          minCellRealDef(1 + 1:(length(databaseIds) * 2), digits = 3)
+      if (input$characterizationColumnFilters == "Both") {
+        options = list(
+          pageLength = 1000,
+          lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+          searching = TRUE,
+          searchHighlight = TRUE,
+          scrollX = TRUE,
+          scrollY = TRUE,
+          lengthChange = TRUE,
+          ordering = TRUE,
+          paging = TRUE,
+          columnDefs = list(
+            truncateStringDef(0, 80),
+            minCellRealDef(1 + 1:(length(databaseIds) * 2), digits = 3)
+          )
         )
-      )
-      sketch <- htmltools::withTags(table(class = "display",
-                                          thead(tr(
-                                            th(rowspan = 2, "Covariate Name"),
-                                            th(rowspan = 2, "Concept Id"),
-                                            lapply(databaseIdsWithCount, th, colspan = 2, class = "dt-center")
-                                          ),
-                                          tr(
-                                            lapply(rep(
-                                              c("Mean", "SD"), length(databaseIds)
-                                            ), th)
-                                          ))))
-      table <- DT::datatable(
-        data,
-        options = options,
-        rownames = FALSE,
-        container = sketch,
-        escape = FALSE,
-        filter = "top",
-        class = "stripe nowrap compact"
-      )
-      table <- DT::formatStyle(
-        table = table,
-        columns = (2 + (1:length(databaseIds) * 2)),
-        background = DT::styleColorBar(c(0, 1), "lightblue"),
-        backgroundSize = "98% 88%",
-        backgroundRepeat = "no-repeat",
-        backgroundPosition = "center"
-      )
+        sketch <- htmltools::withTags(table(class = "display",
+                                            thead(tr(
+                                              th(rowspan = 2, "Covariate Name"),
+                                              th(rowspan = 2, "Concept Id"),
+                                              lapply(databaseIdsWithCount, th, colspan = 2, class = "dt-center")
+                                            ),
+                                            tr(
+                                              lapply(rep(
+                                                c("Mean", "SD"), length(databaseIds)
+                                              ), th)
+                                            ))))
+        table <- DT::datatable(
+          data,
+          options = options,
+          rownames = FALSE,
+          container = sketch,
+          escape = FALSE,
+          filter = "top",
+          class = "stripe nowrap compact"
+        )
+        
+        table <- DT::formatStyle(
+          table = table,
+          columns = (2 + (1:length(databaseIds) * 2)),
+          background = DT::styleColorBar(c(0, 1), "lightblue"),
+          backgroundSize = "98% 88%",
+          backgroundRepeat = "no-repeat",
+          backgroundPosition = "center"
+        )
+      } else {
+        
+        options = list(
+          pageLength = 1000,
+          lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+          searching = TRUE,
+          searchHighlight = TRUE,
+          scrollX = TRUE,
+          scrollY = TRUE,
+          lengthChange = TRUE,
+          ordering = TRUE,
+          paging = TRUE,
+          columnDefs = list(
+            truncateStringDef(0, 80),
+            minCellRealDef(1 + 1:(length(databaseIds)), digits = 3)
+          )
+        )
+        
+        table <- DT::datatable(
+          data,
+          options = options,
+          rownames = FALSE,
+          escape = FALSE,
+          filter = "top",
+          class = "stripe nowrap compact"
+        )
+        table <- DT::formatStyle(
+          table = table,
+          columns = (2 + (1:length(databaseIds))),
+          background = DT::styleColorBar(c(0, 1), "lightblue"),
+          backgroundSize = "98% 88%",
+          backgroundRepeat = "no-repeat",
+          backgroundPosition = "center"
+        )
+      } 
     }
     return(table)
   }, server = TRUE)
