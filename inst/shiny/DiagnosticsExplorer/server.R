@@ -3260,12 +3260,12 @@ shiny::shinyServer(function(input, output, session) {
     })
   output$temporalCharacterizationSelectedCohort <-
     shiny::renderUI({
-      return(paste("Selected cohort :", selectedCohort()))
+      return(selectedCohort())
     })
   
   output$temporalCharacterizationSelectedDatabase <-
     shiny::renderUI({
-      return(paste("selected database :", input$database))
+      return(input$database)
     })
   
   output$cohortCharCompareSelectedCohort <- shiny::renderUI({
@@ -3279,7 +3279,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$cohortCharCompareSelectedDatabase <-
     shiny::renderUI({
-      return(paste("selected database :", input$database))
+      return(input$database)
     })
   
   output$cohortTemporalCharCompareSelectedCohort <-

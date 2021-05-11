@@ -28,14 +28,16 @@ cohortReferenceWithDatabaseId <- function(cohortOutputId, databaseOutputId) {
     width = "100%",
     tags$div(style = "max-height: 100px; overflow-y: auto",
              tags$table(width = "100%",
-               tags$tr(
-                 tags$td(width = "70%",
-                   shiny::uiOutput(outputId = cohortOutputId)
-                 ),
-                 tags$td(style = "align: right !important;", width = "30%",
-                   shiny::uiOutput(outputId = databaseOutputId)
-                 )
-               )
+                        tags$tr(
+                          tags$td(width = "70%",
+                                  tags$b("Cohorts :"),
+                                  shiny::uiOutput(outputId = cohortOutputId)
+                          ),
+                          tags$td(style = "align: right !important;", width = "30%",
+                                  tags$b("Database :"),
+                                  shiny::uiOutput(outputId = databaseOutputId)
+                          )
+                        )
              )
     )
   )
