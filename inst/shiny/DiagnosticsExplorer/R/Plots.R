@@ -70,7 +70,7 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
   sortShortName <- plotData %>%
     dplyr::select(.data$shortName) %>%
     dplyr::distinct() %>%
-    dplyr::arrange(as.integer(sub(
+    dplyr::arrange(-as.integer(sub(
       pattern = '^C', '', x = .data$shortName
     )))
   
@@ -762,6 +762,8 @@ plotCohortOverlap <- function(data,
       )
     )
   
+  
+  
   plotData$subjectsIn <-
     factor(plotData$subjectsIn,
            levels = c("Top cohort only", "Both cohorts", "Left cohort only"))
@@ -772,10 +774,35 @@ plotCohortOverlap <- function(data,
     position = "stack"
   }
   
+  sortTargetShortName <- plotData %>%
+    dplyr::select(.data$targetShortName) %>%
+    dplyr::distinct() %>%
+    dplyr::arrange(-as.integer(sub(
+      pattern = '^C', '', x = .data$targetShortName
+    )))
+  
+  sortComparatorShortName <- plotData %>%
+    dplyr::select(.data$comparatorShortName) %>%
+    dplyr::distinct() %>%
+    dplyr::arrange(as.integer(sub(
+      pattern = '^C', '', x = .data$comparatorShortName
+    )))
+  
+  plotData <- plotData %>%
+    dplyr::arrange(targetShortName = factor(.data$targetShortName, levels = sortTargetShortName$targetShortName),.data$targetShortName) %>% 
+    dplyr::arrange(comparatorShortName = factor(.data$comparatorShortName, levels = sortComparatorShortName$comparatorShortName),.data$comparatorShortName)
+  
+  plotData$targetShortName <- factor(plotData$targetShortName,
+                               levels = sortTargetShortName$targetShortName)
+  
+  plotData$comparatorShortName <- factor(plotData$comparatorShortName,
+                                     levels = sortComparatorShortName$comparatorShortName)
+  
+  
   plot <- ggplot2::ggplot(data = plotData) +
     ggplot2::aes(
       fill = .data$subjectsIn,
-      y = targetShortName,
+      y = .data$targetShortName,
       x = .data$value,
       tooltip = .data$tooltip,
       group = .data$subjectsIn
