@@ -1904,7 +1904,7 @@ shiny::shinyServer(function(input, output, session) {
     sketch <- htmltools::withTags(table(class = "display",
                                         thead(tr(
                                           th(rowspan = 2, "Visit"),
-                                          lapply(databaseIdsWithCount, th, colspan = 4, class = "dt-center")
+                                          lapply(databaseIdsWithCount, th, colspan = 4, class = "dt-center",style = "border-right:1px solid black")
                                         ),
                                         tr(
                                           lapply(rep(
@@ -1915,7 +1915,7 @@ shiny::shinyServer(function(input, output, session) {
                                               "Visits After"
                                             ),
                                             length(databaseIds)
-                                          ), th)
+                                          ), th,style = "border-right:1px solid black")
                                         ))))
     
     options = list(
