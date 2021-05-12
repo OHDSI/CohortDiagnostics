@@ -347,7 +347,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       ) %>%
       dplyr::tibble()
   }, error = function(...) {
-    warning("Problem getting vocabulary version")
+    warning("Problem getting vocabulary version. cdm_source table not found in the database.")
     vocabularyVersionCdm <- dplyr::tibble()
     if (connection@dbms == "postgresql") { #this is for test that automated testing purpose
       DatabaseConnector::dbExecute(connection, "ABORT;")
@@ -361,6 +361,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       dplyr::pull(vocabularyVersionCdm) %>%
       unique()
   } else {
+    warning("Problem getting vocabulary version. cdm_source table either does not have data, or does not have the field vocabulary_version.")
     vocabularyVersionCdm <<- paste0("v", cdmVersion, ".0 -")
   }
   
