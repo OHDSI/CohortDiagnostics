@@ -3037,19 +3037,26 @@ shiny::shinyServer(function(input, output, session) {
           )
           
         } else {
-          if (input$temporalCharacterizationTypeColumnFilter == "Mean only") {
-            table <- balance %>%
-              dplyr::select(
-                .data$covariateName,
-                .data$conceptId,
-                .data$meanTarget,
-                .data$meanComparator,
-                .data$stdDiff
-              ) %>%
-              dplyr::rename(target = .data$meanTarget,
-                            comparator = .data$meanComparator) %>% 
-              dplyr::arrange(desc(abs(.data$stdDiff)))
-          }
+          
+          table <- balance %>%
+            dplyr::mutate(covariateName = paste(.data$covariateName, "(", .data$conceptId, ")")) %>% 
+            dplyr::arrange(desc(abs(.data$stdDiff))) %>% 
+            tidyr::pivot_wider(id_cols = c("covariateName"),
+                               names_from = "choices",
+                               values_from = c("meanTarget", "meanComparator", "stdDiff"),
+                               values_fill = 0
+            )
+          
+          sketch <- htmltools::withTags(table(class = "display",
+                                              thead(tr(
+                                                th(rowspan = 2, "Covariate Name"),
+                                                lapply(temporalCovariateChoicesSelected, th, colspan = 3, class = "dt-center", style = "border-right:1px solid black")
+                                              ),
+                                              tr(
+                                                lapply(rep(
+                                                  c("meanTarget", "meanComparator", "stdDiff"), length(temporalCovariateChoicesSelected)
+                                                ), th, style = "border-right:1px solid black")
+                                              ))))
           
           options = list(
             pageLength = 100,
@@ -3062,12 +3069,14 @@ shiny::shinyServer(function(input, output, session) {
             ordering = TRUE,
             paging = TRUE,
             columnDefs = list(truncateStringDef(0, 80),
-                              minCellRealDef(2:4, digits = 2))
+                              minCellRealDef(1:(length(temporalCovariateChoicesSelected) * 3), digits = 2))
           )
+          
           table <- DT::datatable(
             table,
             options = options,
             rownames = FALSE,
+            container = sketch,
             colnames = colnames(table) %>%
               camelCaseToTitleCase(),
             escape = FALSE,
@@ -3076,16 +3085,8 @@ shiny::shinyServer(function(input, output, session) {
           )
           table <- DT::formatStyle(
             table = table,
-            columns = 3,
+            columns = 1 + 1:(length(temporalCovariateChoicesSelected) * 5),
             background = DT::styleColorBar(c(0, 1), "lightblue"),
-            backgroundSize = "98% 88%",
-            backgroundRepeat = "no-repeat",
-            backgroundPosition = "center"
-          )
-          table <- DT::formatStyle(
-            table = table,
-            columns = 5,
-            background = styleAbsColorBar(1, "lightblue", "pink"),
             backgroundSize = "98% 88%",
             backgroundRepeat = "no-repeat",
             backgroundPosition = "center"
