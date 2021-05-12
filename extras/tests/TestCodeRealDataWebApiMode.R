@@ -1,7 +1,5 @@
 # remotes::install_github('OHDSI/SkeletonCohortDiagnosticsStudy')
 
-source(Sys.getenv("startUpScriptLocation")) # this sources information for cdmSources and dataSourceInformation.
-
 library(CohortDiagnostics)
 
 temporaryLocation <- rstudioapi::getActiveProject()
