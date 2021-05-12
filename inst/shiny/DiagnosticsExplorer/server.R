@@ -98,6 +98,8 @@ shiny::shinyServer(function(input, output, session) {
       searching = TRUE,
       ordering = TRUE,
       paging = TRUE,
+      scrollX = TRUE,
+      scrollY = '50vh',
       info = TRUE,
       searchHighlight = TRUE
     )
@@ -3001,7 +3003,7 @@ shiny::shinyServer(function(input, output, session) {
             
             colspan <- 5
             
-            containerColumns <- c("meanTarget","sDTarget","meanComparator","sDComparator","stdDiff")
+            containerColumns <- c("Mean Target","SD Target","Mean Comparator","SD Comparator","Std. Diff")
           } else {
             table <- table %>% 
               tidyr::pivot_wider(id_cols = c("covariateName"),
@@ -3018,7 +3020,7 @@ shiny::shinyServer(function(input, output, session) {
             
             colspan <- 4
             
-            containerColumns <- c("meanTarget","sDTarget","meanComparator","sDComparator")
+            containerColumns <- c("Mean Target","SD Target","Mean Comparator","SD Comparator")
           }
         } else {
           
@@ -3034,7 +3036,7 @@ shiny::shinyServer(function(input, output, session) {
                                  values_fill = 0
               )
             
-            containerColumns <- c("meanTarget", "meanComparator", "stdDiff")
+            containerColumns <- c("Mean Target", "Mean Comparator", "Std. Diff")
             
             columnDefs <- list(truncateStringDef(0, 80),
                                minCellRealDef(1:(length(temporalCovariateChoicesSelected) * 3), digits = 2))
@@ -3049,7 +3051,7 @@ shiny::shinyServer(function(input, output, session) {
                                  values_fill = 0
               )
             
-            containerColumns <- c("meanTarget", "meanComparator")
+            containerColumns <- c("Mean Target", "Mean Comparator")
             
             columnDefs <- list(truncateStringDef(0, 80),
                                minCellRealDef(1:(length(temporalCovariateChoicesSelected) * 2), digits = 2))
