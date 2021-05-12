@@ -231,6 +231,32 @@ compareTemporalCohortCharacteristics <-
           "analysisId",
           "isBinary",
           "analysisName",
+          "domainId",
+          "timeId"
+        ),
+        suffix = c("1", "2")
+      ) %>%
+      dplyr::mutate(
+        sd = sqrt(.data$sd1 ^ 2 + .data$sd2 ^ 2),
+        stdDiff = (.data$mean2 - .data$mean1) / .data$sd
+      ) %>%
+      dplyr::arrange(-abs(.data$stdDiff))
+    return(m)
+  }
+
+compareTemporalCohortCharacteristicsPlot <-
+  function(characteristics1, characteristics2) {
+    m <- characteristics1 %>%
+      dplyr::full_join(
+        characteristics2,
+        by = c(
+          "covariateId",
+          "conceptId",
+          "databaseId",
+          "covariateName",
+          "analysisId",
+          "isBinary",
+          "analysisName",
           "domainId"
         ),
         suffix = c("1", "2")

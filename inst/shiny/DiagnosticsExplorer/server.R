@@ -1933,7 +1933,7 @@ shiny::shinyServer(function(input, output, session) {
       searching = TRUE,
       searchHighlight = TRUE,
       scrollX = TRUE,
-      scrollY = TRUE,
+      scrollY = "60vh",
       lengthChange = TRUE,
       ordering = TRUE,
       paging = TRUE,
@@ -2164,7 +2164,7 @@ shiny::shinyServer(function(input, output, session) {
         lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
         searching = TRUE,
         scrollX = TRUE,
-        scrollY = TRUE,
+        scrollY = "60vh",
         lengthChange = TRUE,
         ordering = FALSE,
         paging = TRUE,
@@ -2254,7 +2254,7 @@ shiny::shinyServer(function(input, output, session) {
           searching = TRUE,
           searchHighlight = TRUE,
           scrollX = TRUE,
-          scrollY = TRUE,
+          scrollY = "60vh",
           lengthChange = TRUE,
           ordering = TRUE,
           paging = TRUE,
@@ -2273,6 +2273,7 @@ shiny::shinyServer(function(input, output, session) {
                                                 c("Mean", "SD"), length(databaseIds)
                                               ), th)
                                             ))))
+        
         table <- DT::datatable(
           data,
           options = options,
@@ -2299,7 +2300,7 @@ shiny::shinyServer(function(input, output, session) {
           searching = TRUE,
           searchHighlight = TRUE,
           scrollX = TRUE,
-          scrollY = TRUE,
+          scrollY = "60vh",
           lengthChange = TRUE,
           ordering = TRUE,
           paging = TRUE,
@@ -2618,6 +2619,7 @@ shiny::shinyServer(function(input, output, session) {
         lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
         searching = TRUE,
         scrollX = TRUE,
+        scrollY = "60vh",
         searchHighlight = TRUE,
         lengthChange = TRUE,
         ordering = FALSE,
@@ -2681,6 +2683,7 @@ shiny::shinyServer(function(input, output, session) {
         searching = TRUE,
         searchHighlight = TRUE,
         scrollX = TRUE,
+        scrollY = "60vh",
         lengthChange = TRUE,
         ordering = TRUE,
         paging = TRUE,
@@ -2809,6 +2812,54 @@ shiny::shinyServer(function(input, output, session) {
       )
       balance <-
         compareTemporalCohortCharacteristics(covs1, covs2) %>%
+        dplyr::mutate(absStdDiff = abs(.data$stdDiff)) %>% 
+        dplyr::inner_join(temporalCovariateChoices, by = "timeId")
+      
+      if (input$temporalCharacterizationType == "Raw table" &&
+          input$temporalCharacterProportionOrContinuous == "Proportion") {
+        balance <- balance %>%
+          dplyr::filter(.data$isBinary == 'Y')
+      } else if (input$temporalCharacterizationType == "Raw table" &&
+                 input$temporalCharacterProportionOrContinuous == "Continuous") {
+        balance <- balance %>%
+          dplyr::filter(.data$isBinary == 'N')
+      }
+      return(balance)
+    })
+  
+  computeBalanceForCompareTemporalCharacterizationPlot <-
+    shiny::reactive({
+      validate(need((length(cohortId(
+      )) > 0),
+      paste0("Please select cohort.")))
+      validate(need((length(
+        comparatorCohortId()
+      ) > 0),
+      paste0("Please select comparator cohort.")))
+      # validate(need((comparatorCohortId() != cohortId()),
+      #               paste0("Please select different cohort and comparator.")
+      # ))
+      validate(need((length(input$database) > 0),
+                    paste0("Please select atleast one datasource.")
+      ))
+      validate(need((length(timeIds()) > 0), paste0("Please select time id")))
+      
+      covs1 <- getCovariateValueResult(
+        dataSource = dataSource,
+        cohortIds = cohortId(),
+        databaseIds = input$database,
+        isTemporal = TRUE,
+        timeIds = timeIds()
+      )
+      covs2 <- getCovariateValueResult(
+        dataSource = dataSource,
+        cohortIds = comparatorCohortId(),
+        databaseIds = input$database,
+        isTemporal = TRUE,
+        timeIds = timeIds()
+      )
+      balance <-
+        compareTemporalCohortCharacteristicsPlot(covs1, covs2) %>%
         dplyr::mutate(absStdDiff = abs(.data$stdDiff))
       
       if (input$temporalCharacterizationType == "Raw table" &&
@@ -2868,6 +2919,7 @@ shiny::shinyServer(function(input, output, session) {
           lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
           searching = TRUE,
           scrollX = TRUE,
+          scrollY = "60vh",
           searchHighlight = TRUE,
           lengthChange = TRUE,
           ordering = FALSE,
@@ -2922,18 +2974,37 @@ shiny::shinyServer(function(input, output, session) {
                         "sDComparator" = sd2,
                         "stdDiff" = stdDiff)
         
+        temporalCovariateChoicesSelected <-
+          temporalCovariateChoices %>%
+          dplyr::filter(.data$timeId %in% c(timeIds())) %>%
+          dplyr::arrange(.data$timeId) %>% 
+          dplyr::pull(.data$choices)
+        
         if (input$temporalCharacterizationTypeColumnFilter == "Mean and Standard Deviation") {
           table <- balance %>%
-            dplyr::select(
-              .data$covariateName,
-              .data$conceptId,
-              .data$meanTarget,
-              .data$sDTarget,
-              .data$meanComparator,
-              .data$sDComparator,
-              .data$stdDiff
-            ) %>%
-            dplyr::arrange(desc(abs(.data$stdDiff)))
+            tidyr::pivot_wider(id_cols = c("covariateName","conceptId"),
+                               names_from = "choices",
+                               values_from = c("meanTarget","sDTarget","meanComparator","sDComparator","stdDiff"),
+                               values_fill = 0
+                               ) 
+          
+          # %>% 
+          #   dplyr::arrange(desc(abs(.data$stdDiff)))
+          
+          
+          sketch <- htmltools::withTags(table(class = "display",
+                                              thead(tr(
+                                                th(rowspan = 2, "Covariate Name"),
+                                                th(rowspan = 2, "Concept ID"),
+                                                lapply(temporalCovariateChoicesSelected, th, colspan = 5, class = "dt-center", style = "border-right:1px solid black")
+                                              ),
+                                              tr(
+                                                lapply(rep(
+                                                  c("meanTarget","sDTarget","meanComparator","sDComparator","stdDiff"), length(temporalCovariateChoicesSelected)
+                                                ), th, style = "border-right:1px solid black")
+                                              ))))
+          
+          
           
           options = list(
             pageLength = 100,
@@ -2941,16 +3012,18 @@ shiny::shinyServer(function(input, output, session) {
             searching = TRUE,
             searchHighlight = TRUE,
             scrollX = TRUE,
+            scrollY = "50vh",
             lengthChange = TRUE,
             ordering = TRUE,
             paging = TRUE,
             columnDefs = list(truncateStringDef(0, 80),
-                              minCellRealDef(2:6, digits = 2))
+                              minCellRealDef(1 + 1:length(temporalCovariateChoicesSelected) * 5, digits = 2))
           )
           table <- DT::datatable(
             table,
             options = options,
             rownames = FALSE,
+            container = sketch,
             colnames = colnames(table) %>%
               camelCaseToTitleCase(),
             escape = FALSE,
@@ -2959,20 +3032,20 @@ shiny::shinyServer(function(input, output, session) {
           )
           table <- DT::formatStyle(
             table = table,
-            columns = c(3, 5),
+            columns = 2 + (1:length(temporalCovariateChoicesSelected) * 5),
             background = DT::styleColorBar(c(0, 1), "lightblue"),
             backgroundSize = "98% 88%",
             backgroundRepeat = "no-repeat",
             backgroundPosition = "center"
           )
-          table <- DT::formatStyle(
-            table = table,
-            columns = 7,
-            background = styleAbsColorBar(1, "lightblue", "pink"),
-            backgroundSize = "98% 88%",
-            backgroundRepeat = "no-repeat",
-            backgroundPosition = "center"
-          )
+          # table <- DT::formatStyle(
+          #   table = table,
+          #   columns = 7,
+          #   background = styleAbsColorBar(1, "lightblue", "pink"),
+          #   backgroundSize = "98% 88%",
+          #   backgroundRepeat = "no-repeat",
+          #   backgroundPosition = "center"
+          # )
           
         } else {
           if (input$temporalCharacterizationTypeColumnFilter == "Mean only") {
@@ -2995,6 +3068,7 @@ shiny::shinyServer(function(input, output, session) {
             searching = TRUE,
             searchHighlight = TRUE,
             scrollX = TRUE,
+            scrollY = "60vh",
             lengthChange = TRUE,
             ordering = TRUE,
             paging = TRUE,
@@ -3033,7 +3107,7 @@ shiny::shinyServer(function(input, output, session) {
     }, server = TRUE)
   
   output$temporalCharComparePlot <- ggiraph::renderggiraph(expr = {
-    data <- computeBalanceForCompareTemporalCharacterization()
+    data <- computeBalanceForCompareTemporalCharacterizationPlot()
     validate(need(nrow(data) != 0, paste0("No data for the selected combination.")))
     
     data <- data %>%
