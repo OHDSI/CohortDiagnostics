@@ -2211,18 +2211,14 @@ shiny::shinyServer(function(input, output, session) {
         ))
       }
       
-      if (input$characterizationColumnFilters == "Both") {
+      if (input$characterizationColumnFilters == "Mean and Standard Deviation") {
         data <- data %>%
           dplyr::arrange(.data$databaseId, .data$cohortId) %>%
           tidyr::pivot_longer(cols = c(.data$mean, .data$sd))
-      } else if (input$characterizationColumnFilters == "Mean Only") {
-        data <- data %>%
-          dplyr::arrange(.data$databaseId, .data$cohortId) %>%
-          tidyr::pivot_longer(cols = c(.data$mean))
       } else {
         data <- data %>%
           dplyr::arrange(.data$databaseId, .data$cohortId) %>%
-          tidyr::pivot_longer(cols = c(.data$sd))
+          tidyr::pivot_longer(cols = c(.data$mean))
       }
       
        data <-  data %>% 
@@ -2247,7 +2243,7 @@ shiny::shinyServer(function(input, output, session) {
       
       data <- data[order(-data[2]), ]
       
-      if (input$characterizationColumnFilters == "Both") {
+      if (input$characterizationColumnFilters == "Mean and Standard Deviation") {
         options = list(
           pageLength = 1000,
           lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
@@ -2286,7 +2282,7 @@ shiny::shinyServer(function(input, output, session) {
         
         table <- DT::formatStyle(
           table = table,
-          columns = (1 + (1:length(databaseIds) * 2)),
+          columns = (1 + 1:(length(databaseIds) * 2)),
           background = DT::styleColorBar(c(0, 1), "lightblue"),
           backgroundSize = "98% 88%",
           backgroundRepeat = "no-repeat",
@@ -2320,7 +2316,7 @@ shiny::shinyServer(function(input, output, session) {
         )
         table <- DT::formatStyle(
           table = table,
-          columns = (1 + (1:length(databaseIds))),
+          columns = (1 + 1:(length(databaseIds))),
           background = DT::styleColorBar(c(0, 1), "lightblue"),
           backgroundSize = "98% 88%",
           backgroundRepeat = "no-repeat",

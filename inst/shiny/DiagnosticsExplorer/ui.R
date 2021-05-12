@@ -732,8 +732,8 @@ bodyTabItems <- shinydashboard::tabItems(
           shiny::radioButtons(
             inputId = "characterizationColumnFilters",
             label = "Display",
-            choices = c("Both", "Mean Only", "SD Only"),
-            selected = "Both",
+            choices = c("Mean and Standard Deviation", "Mean only"),
+            selected = "Mean only",
             inline = TRUE
           )
         )
