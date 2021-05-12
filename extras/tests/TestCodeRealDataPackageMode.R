@@ -54,7 +54,7 @@ dataSouceInformation <-
     vocabDatabaseSchema = vocabDatabaseSchema
   )
 
-SkeletonCohortDiagnosticsStudy::execute(
+execute(
   connectionDetails = connectionDetails,
   cdmDatabaseSchema = cdmDatabaseSchema,
   vocabularyDatabaseSchema = vocabDatabaseSchema,
@@ -63,8 +63,7 @@ SkeletonCohortDiagnosticsStudy::execute(
   outputFolder = outputFolder,
   databaseId = databaseId,
   databaseName = dataSouceInformation$cdmSourceName,
-  databaseDescription = dataSouceInformation$sourceDescription,
-  minCellCount = 5
+  databaseDescription = dataSouceInformation$sourceDescription
 )
 
 CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = outputFolder)
