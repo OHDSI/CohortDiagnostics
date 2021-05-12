@@ -2407,8 +2407,9 @@ shiny::shinyServer(function(input, output, session) {
       }
       
       table <- data %>%
+        dplyr::mutate(covariateName = paste(.data$covariateName, "(", .data$conceptId, ")")) %>% 
         tidyr::pivot_wider(
-          id_cols = c("covariateName", "conceptId"),
+          id_cols = c("covariateName"),
           names_from = "choices",
           values_from = "mean" ,
           names_sep = "_"
@@ -2432,7 +2433,7 @@ shiny::shinyServer(function(input, output, session) {
         ordering = TRUE,
         paging = TRUE,
         columnDefs = list(truncateStringDef(0, 80),
-                          minCellPercentDef(1 + 1:(
+                          minCellPercentDef(1:(
                             length(temporalCovariateChoicesSelected$choices)
                           )))
       )
@@ -2450,7 +2451,7 @@ shiny::shinyServer(function(input, output, session) {
       
       table <- DT::formatStyle(
         table = table,
-        columns = (2 + (
+        columns = (1 + (
           1:length(temporalCovariateChoicesSelected$choices)
         )),
         #0 index
