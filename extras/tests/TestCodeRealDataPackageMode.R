@@ -1,7 +1,5 @@
 # remotes::install_github('OHDSI/SkeletonCohortDiagnosticsStudy')
 
-source(Sys.getenv("startUpScriptLocation")) # this sources information for cdmSources and dataSourceInformation.
-
 library(CohortDiagnostics)
 library('SkeletonCohortDiagnosticsStudy')
 packageName <- 'SkeletonCohortDiagnosticsStudy'
@@ -26,6 +24,7 @@ userNameService = "OHDSI_USER" # example: "this is key ring service that securel
 passwordService = "OHDSI_PASSWORD" # example: "this is key ring service that securely stores credentials"
 
 cohortDatabaseSchema = paste0('scratch_', keyring::key_get(service = userNameService))
+# cohortDatabaseSchema = paste0('scratch_rao_', databaseId)
 # scratch - usually something like 'scratch_grao'
 
 connectionDetails <- DatabaseConnector::createConnectionDetails(
@@ -56,7 +55,7 @@ dataSouceInformation <-
     vocabDatabaseSchema = vocabDatabaseSchema
   )
 
-SkeletonCohortDiagnosticsStudy::execute(
+execute(
   connectionDetails = connectionDetails,
   cdmDatabaseSchema = cdmDatabaseSchema,
   vocabularyDatabaseSchema = vocabDatabaseSchema,
@@ -65,8 +64,7 @@ SkeletonCohortDiagnosticsStudy::execute(
   outputFolder = outputFolder,
   databaseId = databaseId,
   databaseName = dataSouceInformation$cdmSourceName,
-  databaseDescription = dataSouceInformation$sourceDescription,
-  minCellCount = 5
+  databaseDescription = dataSouceInformation$sourceDescription
 )
 
 CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = outputFolder)

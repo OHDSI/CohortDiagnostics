@@ -15,7 +15,7 @@ dir.create(path = outputFolder,
            showWarnings = FALSE,
            recursive = TRUE)
 
-SkeletonCohortDiagnosticsStudy::execute(
+execute(
   connectionDetails = Eunomia::getEunomiaConnectionDetails(),
   cdmDatabaseSchema = 'main',
   vocabularyDatabaseSchema = "main",
@@ -24,8 +24,7 @@ SkeletonCohortDiagnosticsStudy::execute(
   outputFolder = outputFolder,
   databaseId = "Eunomia",
   databaseName = "Eunomia Test",
-  databaseDescription = "This is a test data base called Eunomia",
-  minCellCount = 0
+  databaseDescription = "This is a test data base called Eunomia"
 )
 
 CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = outputFolder)
