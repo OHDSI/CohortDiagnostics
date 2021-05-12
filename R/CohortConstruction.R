@@ -312,7 +312,7 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
                                             simplify = TRUE) {
   start <- Sys.time()
   
-  if (!exists(cohortInclusionFile)) {
+  if (!file.exists(cohortInclusionFile)) {
     return(NULL)
   }
   
