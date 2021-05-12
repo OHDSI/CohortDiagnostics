@@ -362,7 +362,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       unique()
   } else {
     warning("Problem getting vocabulary version. cdm_source table either does not have data, or does not have the field vocabulary_version.")
-    vocabularyVersionCdm <<- paste0("v", cdmVersion, ".0 -")
+    vocabularyVersionCdm <- 'NA'
   }
   
   vocabularyVersion <-
