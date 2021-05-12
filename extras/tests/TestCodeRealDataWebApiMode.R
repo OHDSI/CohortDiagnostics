@@ -22,6 +22,7 @@ userNameService = "OHDSI_USER" # example: "this is key ring service that securel
 passwordService = "OHDSI_PASSWORD" # example: "this is key ring service that securely stores credentials"
 
 cohortDatabaseSchema = paste0('scratch_', keyring::key_get(service = userNameService))
+# cohortDatabaseSchema = paste0('scratch_rao_', databaseId)
 # scratch - usually something like 'scratch_grao'
 
 connectionDetails <- DatabaseConnector::createConnectionDetails(
