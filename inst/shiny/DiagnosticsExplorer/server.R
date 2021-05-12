@@ -2660,8 +2660,6 @@ shiny::shinyServer(function(input, output, session) {
       
       table <- balance %>%
         dplyr::select(
-          .data$cohortId1,
-          .data$cohortId2,
           .data$covariateName,
           .data$conceptId,
           .data$mean1,
@@ -2670,8 +2668,15 @@ shiny::shinyServer(function(input, output, session) {
           .data$sd2,
           .data$absStdDiff
         ) %>%
-        dplyr::select(-.data$cohortId1, -.data$cohortId2) %>%
-        dplyr::arrange(desc(absStdDiff))
+        dplyr::mutate(covariateName =  paste(.data$covariateName, "(", .data$conceptId, ")")) %>% 
+        dplyr::arrange(desc(absStdDiff)) %>% 
+        dplyr::select(-.data$conceptId) %>% 
+        dplyr::relocate(.data$covariateName,
+                        .data$mean1,
+                        .data$sd1,
+                        .data$mean2,
+                        .data$sd2,
+                        .data$absStdDiff)
       
       options = list(
         pageLength = 100,
@@ -2684,7 +2689,7 @@ shiny::shinyServer(function(input, output, session) {
         ordering = TRUE,
         paging = TRUE,
         columnDefs = list(truncateStringDef(0, 80),
-                          minCellRealDef(2:6, digits = 2))
+                          minCellRealDef(1:5, digits = 2))
       )
       
       table <- DT::datatable(
@@ -2693,7 +2698,6 @@ shiny::shinyServer(function(input, output, session) {
         rownames = FALSE,
         colnames = c(
           "Covariate Name",
-          "Concept ID",
           "Mean Target",
           "SD Target",
           "Mean Comparator",
@@ -2706,7 +2710,7 @@ shiny::shinyServer(function(input, output, session) {
       )
       table <- DT::formatStyle(
         table = table,
-        columns = c(3, 5),
+        columns = c(2, 4),
         background = DT::styleColorBar(c(0, 1), "lightblue"),
         backgroundSize = "98% 88%",
         backgroundRepeat = "no-repeat",
@@ -2714,7 +2718,7 @@ shiny::shinyServer(function(input, output, session) {
       )
       table <- DT::formatStyle(
         table = table,
-        columns = 7,
+        columns = 6,
         background = styleAbsColorBar(1, "lightblue", "pink"),
         backgroundSize = "98% 88%",
         backgroundRepeat = "no-repeat",
