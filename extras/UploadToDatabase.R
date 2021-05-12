@@ -10,8 +10,8 @@ connectionDetails <- createConnectionDetails(
     sep = "/"
   ),
   port = Sys.getenv("shinydbPort"),
-  user = Sys.getenv("shinyDbUser"),
-  password = Sys.getenv("shinyDbPassword")
+  user = Sys.getenv("shinydbUser"),
+  password = Sys.getenv("shinydbPW")
 )
 resultsSchema <- ''
 
