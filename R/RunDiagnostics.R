@@ -135,15 +135,15 @@ runCohortDiagnostics <- function(packageName = NULL,
   start <- Sys.time()
   ParallelLogger::logInfo("Run Cohort Diagnostics started at ", start)
   
-  if (!is.null(oracleTempSchema) && is.null(tempEmulationSchema)) {
+  if (all(!is.null(oracleTempSchema), is.null(tempEmulationSchema))) {
     tempEmulationSchema <- oracleTempSchema
     warning('OracleTempSchema has been deprecated by DatabaseConnector')
   }
   
-  if (is.null(databaseName) | is.na(databaseName)) {
+  if (any(is.null(databaseName), is.na(databaseName))) {
     databaseName <- databaseId
   }
-  if (is.null(databaseDescription) | is.na(databaseDescription)) {
+  if (any(is.null(databaseDescription), is.na(databaseDescription))) {
     databaseDescription <- databaseId
   }
   
@@ -345,18 +345,23 @@ runCohortDiagnostics <- function(packageName = NULL,
         cdm_database_schema = cdmDatabaseSchema,
         snakeCaseToCamelCase = TRUE
       ) %>%
-      dplyr::tibble() %>%
-      dplyr::rename(vocabularyVersionCdm = .data$vocabularyVersion) %>%
-      dplyr::pull(vocabularyVersionCdm) %>%
-      unique()
+      dplyr::tibble()
   }, error = function(...) {
     warning("Problem getting vocabulary version")
-    vocabularyVersionCdm <<- paste0("v", cdmVersion, ".0 -")
-    
-    if (connection@dbms == "postgresql") {
+    if (connection@dbms == "postgresql") { #this is for test that automated testing purpose
       DatabaseConnector::dbExecute(connection, "ABORT;")
     }
   })
+  
+  if (nrow(vocabularyVersionCdm) > 0 &
+      vocabularyVersion %in% colnames(vocabularyVersionCdm)) {
+    vocabularyVersionCdm <- vocabularyVersionCdm %>% 
+      dplyr::rename(vocabularyVersionCdm = .data$vocabularyVersion) %>%
+      dplyr::pull(vocabularyVersionCdm) %>%
+      unique()
+  } else {
+    vocabularyVersionCdm <<- paste0("v", cdmVersion, ".0 -")
+  }
   
   vocabularyVersion <-
     DatabaseConnector::renderTranslateQuerySql(
