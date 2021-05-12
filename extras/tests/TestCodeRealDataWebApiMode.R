@@ -11,18 +11,18 @@ connectionSpecifications <- cdmSources %>%
 dbms <- connectionSpecifications$dbms # example: 'redshift'
 port <- connectionSpecifications$port # example: 2234
 server <-
-  connectionSpecifications$server # example: 'fdsfd.yourdatabase.yourserver.com"
+  connectionSpecifications$serverRHealth # example: 'fdsfd.yourdatabase.yourserver.com"
 cdmDatabaseSchema <-
-  connectionSpecifications$cdmDatabaseSchema # example: "cdm"
+  connectionSpecifications$cdmDatabaseSchemaRhealth # example: "cdm"
 vocabDatabaseSchema <-
-  connectionSpecifications$vocabDatabaseSchema # example: "vocabulary"
+  connectionSpecifications$vocabDatabaseSchemaRhealth # example: "vocabulary"
 databaseId <-
   connectionSpecifications$database # example: "truven_ccae"
 userNameService = "OHDSI_USER" # example: "this is key ring service that securely stores credentials"
 passwordService = "OHDSI_PASSWORD" # example: "this is key ring service that securely stores credentials"
 
-cohortDatabaseSchema = paste0('scratch_', keyring::key_get(service = userNameService))
-# cohortDatabaseSchema = paste0('scratch_rao_', databaseId)
+# cohortDatabaseSchema = paste0('scratch_', keyring::key_get(service = userNameService))
+cohortDatabaseSchema = paste0('scratch_rao_', databaseId)
 # scratch - usually something like 'scratch_grao'
 
 connectionDetails <- DatabaseConnector::createConnectionDetails(
@@ -38,7 +38,7 @@ cohortTable <-
 
 library(magrittr)
 # Set up
-baseUrl <- Sys.getenv("baseUrlUnsecure")
+baseUrl <- Sys.getenv("baseUrl")
 # list of cohort ids
 cohortIds <- c(18345, 18346)
 

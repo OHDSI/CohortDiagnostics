@@ -14,7 +14,7 @@ databaseId <- "Eunomia"
 
 library(magrittr)
 # Set up
-baseUrl <- Sys.getenv("baseUrlUnsecure")
+baseUrl <- Sys.getenv("baseUrl")
 # list of cohort ids
 cohortIds <- c(18345,18346)
 
