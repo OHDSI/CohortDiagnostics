@@ -552,19 +552,37 @@ instantiateCohortSet <- function(connectionDetails = NULL,
       )
       sql <- cohorts$sql[i]
       .warnMismatchSqlInclusionStats(sql, generateInclusionStats = generateInclusionStats)
+      sql <- SqlRender::render(
+        sql,
+        cdm_database_schema = cdmDatabaseSchema,
+        target_database_schema = cohortDatabaseSchema,
+        target_cohort_table = cohortTable,
+        target_cohort_id = cohorts$cohortId[i]
+      )
+      if (stringr::str_detect(string = sql,
+                              pattern = 'vocabulary_database_schema')) {
+        sql <- SqlRender::render(sql,
+                                 vocabulary_database_schema = vocabularyDatabaseSchema)
+      } else {
+        ParallelLogger::logDebug('Cohort id ', cohorts$cohortId[i], " SQL does not have vocabularyDatabaseSchema.")
+      }
+      if (stringr::str_detect(string = sql,
+                              pattern = 'results_database_schema')) {
+        ParallelLogger::logDebug('Cohort id ', cohorts$cohortId[i], " SQL has inclusion rule statistics tables.")
+      }
       if (generateInclusionStats) {
-        sql <- SqlRender::render(
-          sql,
-          cdm_database_schema = cdmDatabaseSchema,
-          vocabulary_database_schema = vocabularyDatabaseSchema,
-          target_database_schema = cohortDatabaseSchema,
-          target_cohort_table = cohortTable,
-          target_cohort_id = cohorts$cohortId[i],
-          results_database_schema.cohort_inclusion = "#cohort_inclusion",
-          results_database_schema.cohort_inclusion_result = "#cohort_inc_result",
-          results_database_schema.cohort_inclusion_stats = "#cohort_inc_stats",
-          results_database_schema.cohort_summary_stats = "#cohort_summary_stats"
-        )
+        if (stringr::str_detect(string = sql,
+                                pattern = 'cohort_inclusion')) {
+          sql <- SqlRender::render(
+            sql,
+            results_database_schema.cohort_inclusion = "#cohort_inclusion",
+            results_database_schema.cohort_inclusion_result = "#cohort_inc_result",
+            results_database_schema.cohort_inclusion_stats = "#cohort_inc_stats",
+            results_database_schema.cohort_summary_stats = "#cohort_summary_stats"
+          )
+        } else {
+          ParallelLogger::logDebug('Cohort id ', cohorts$cohortId[i], " SQL does not have inclusion rule statistics tables.")
+        }
         # added for compatibility for 2.8.1
         # https://github.com/OHDSI/CohortDiagnostics/issues/387
         # this table was introduced in v2.8.1, and does not exist in prior version of webapi
@@ -575,14 +593,9 @@ instantiateCohortSet <- function(connectionDetails = NULL,
                                    )
         }
       } else {
-        sql <- SqlRender::render(
-          sql,
-          cdm_database_schema = cdmDatabaseSchema,
-          vocabulary_database_schema = vocabularyDatabaseSchema,
-          target_database_schema = cohortDatabaseSchema,
-          target_cohort_table = cohortTable,
-          target_cohort_id = cohorts$cohortId[i]
-        )
+        ParallelLogger::logDebug("Skipping inclusion rules for cohort id ", 
+                                cohorts$cohortId[i], 
+                                " because this diagnostics is set to FALSE.")
       }
       sql <- SqlRender::translate(sql,
                                   targetDialect = connection@dbms,
