@@ -2984,115 +2984,123 @@ shiny::shinyServer(function(input, output, session) {
         if (input$temporalCharacterizationTypeColumnFilter == "Mean and Standard Deviation") {
           table <- balance %>%
             dplyr::mutate(covariateName = paste(.data$covariateName, "(", .data$conceptId, ")")) %>% 
-            dplyr::arrange(desc(abs(.data$stdDiff))) %>% 
-            tidyr::pivot_wider(id_cols = c("covariateName"),
-                               names_from = "choices",
-                               values_from = c("meanTarget","sDTarget","meanComparator","sDComparator","stdDiff"),
-                               values_fill = 0
-                               )
+            dplyr::arrange(desc(abs(.data$stdDiff)))
           
-          sketch <- htmltools::withTags(table(class = "display",
-                                              thead(tr(
-                                                th(rowspan = 2, "Covariate Name"),
-                                                lapply(temporalCovariateChoicesSelected, th, colspan = 5, class = "dt-center", style = "border-right:1px solid black")
-                                              ),
-                                              tr(
-                                                lapply(rep(
-                                                  c("meanTarget","sDTarget","meanComparator","sDComparator","stdDiff"), length(temporalCovariateChoicesSelected)
-                                                ), th, style = "border-right:1px solid black")
-                                              ))))
-          
-          
-          
-          options = list(
-            pageLength = 100,
-            lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-            searching = TRUE,
-            searchHighlight = TRUE,
-            scrollX = TRUE,
-            scrollY = "50vh",
-            lengthChange = TRUE,
-            ordering = TRUE,
-            paging = TRUE,
-            columnDefs = list(truncateStringDef(0, 80),
-                              minCellRealDef(1:(length(temporalCovariateChoicesSelected) * 5), digits = 2))
-          )
-          table <- DT::datatable(
-            table,
-            options = options,
-            rownames = FALSE,
-            container = sketch,
-            colnames = colnames(table) %>%
-              camelCaseToTitleCase(),
-            escape = FALSE,
-            filter = "top",
-            class = "stripe nowrap compact"
-          )
-          table <- DT::formatStyle(
-            table = table,
-            columns = 1 + 1:(length(temporalCovariateChoicesSelected) * 5),
-            background = DT::styleColorBar(c(0, 1), "lightblue"),
-            backgroundSize = "98% 88%",
-            backgroundRepeat = "no-repeat",
-            backgroundPosition = "center"
-          )
-          
+          if (length(temporalCovariateChoicesSelected) == 1) {
+            table <- table %>% 
+              tidyr::pivot_wider(id_cols = c("covariateName"),
+                                 names_from = "choices",
+                                 values_from = c("meanTarget","sDTarget","meanComparator","sDComparator","stdDiff"),
+                                 values_fill = 0
+              )
+            
+            columnDefs <- list(truncateStringDef(0, 80),
+                               minCellRealDef(1:(length(temporalCovariateChoicesSelected) * 5), digits = 2))
+            
+            colorBarColumns <- 1 + 1:(length(temporalCovariateChoicesSelected) * 5)
+            
+            colspan <- 5
+            
+            containerColumns <- c("meanTarget","sDTarget","meanComparator","sDComparator","stdDiff")
+          } else {
+            table <- table %>% 
+              tidyr::pivot_wider(id_cols = c("covariateName"),
+                                 names_from = "choices",
+                                 values_from = c("meanTarget","sDTarget","meanComparator","sDComparator"),
+                                 values_fill = 0
+              )
+            
+            
+            columnDefs <- list(truncateStringDef(0, 80),
+                               minCellRealDef(1:(length(temporalCovariateChoicesSelected) * 4), digits = 2))
+            
+            colorBarColumns <- 1 + 1:(length(temporalCovariateChoicesSelected) * 4)
+            
+            colspan <- 4
+            
+            containerColumns <- c("meanTarget","sDTarget","meanComparator","sDComparator")
+          }
         } else {
           
           table <- balance %>%
             dplyr::mutate(covariateName = paste(.data$covariateName, "(", .data$conceptId, ")")) %>% 
-            dplyr::arrange(desc(abs(.data$stdDiff))) %>% 
-            tidyr::pivot_wider(id_cols = c("covariateName"),
-                               names_from = "choices",
-                               values_from = c("meanTarget", "meanComparator", "stdDiff"),
-                               values_fill = 0
-            )
+            dplyr::arrange(desc(abs(.data$stdDiff))) 
           
-          sketch <- htmltools::withTags(table(class = "display",
-                                              thead(tr(
-                                                th(rowspan = 2, "Covariate Name"),
-                                                lapply(temporalCovariateChoicesSelected, th, colspan = 3, class = "dt-center", style = "border-right:1px solid black")
-                                              ),
-                                              tr(
-                                                lapply(rep(
-                                                  c("meanTarget", "meanComparator", "stdDiff"), length(temporalCovariateChoicesSelected)
-                                                ), th, style = "border-right:1px solid black")
-                                              ))))
-          
-          options = list(
-            pageLength = 100,
-            lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-            searching = TRUE,
-            searchHighlight = TRUE,
-            scrollX = TRUE,
-            scrollY = "60vh",
-            lengthChange = TRUE,
-            ordering = TRUE,
-            paging = TRUE,
-            columnDefs = list(truncateStringDef(0, 80),
-                              minCellRealDef(1:(length(temporalCovariateChoicesSelected) * 3), digits = 2))
-          )
-          
-          table <- DT::datatable(
-            table,
-            options = options,
-            rownames = FALSE,
-            container = sketch,
-            colnames = colnames(table) %>%
-              camelCaseToTitleCase(),
-            escape = FALSE,
-            filter = "top",
-            class = "stripe nowrap compact"
-          )
-          table <- DT::formatStyle(
-            table = table,
-            columns = 1 + 1:(length(temporalCovariateChoicesSelected) * 5),
-            background = DT::styleColorBar(c(0, 1), "lightblue"),
-            backgroundSize = "98% 88%",
-            backgroundRepeat = "no-repeat",
-            backgroundPosition = "center"
-          )
+          if (length(temporalCovariateChoicesSelected) == 1) {
+            table <- table %>% 
+              tidyr::pivot_wider(id_cols = c("covariateName"),
+                                 names_from = "choices",
+                                 values_from = c("meanTarget", "meanComparator", "stdDiff"),
+                                 values_fill = 0
+              )
+            
+            containerColumns <- c("meanTarget", "meanComparator", "stdDiff")
+            
+            columnDefs <- list(truncateStringDef(0, 80),
+                               minCellRealDef(1:(length(temporalCovariateChoicesSelected) * 3), digits = 2))
+            colorBarColumns <- 1 + 1:(length(temporalCovariateChoicesSelected) * 3)
+            
+            colspan <- 3
+          } else {
+            table <- table %>% 
+              tidyr::pivot_wider(id_cols = c("covariateName"),
+                                 names_from = "choices",
+                                 values_from = c("meanTarget", "meanComparator"),
+                                 values_fill = 0
+              )
+            
+            containerColumns <- c("meanTarget", "meanComparator")
+            
+            columnDefs <- list(truncateStringDef(0, 80),
+                               minCellRealDef(1:(length(temporalCovariateChoicesSelected) * 2), digits = 2))
+            colorBarColumns <- 1 + 1:(length(temporalCovariateChoicesSelected) * 2)
+            colspan <- 2
+          }
         }
+        
+        sketch <- htmltools::withTags(table(class = "display",
+                                            thead(tr(
+                                              th(rowspan = 2, "Covariate Name"),
+                                              lapply(temporalCovariateChoicesSelected, th, colspan = colspan, class = "dt-center", style = "border-right:1px solid black")
+                                            ),
+                                            tr(
+                                              lapply(rep(
+                                                containerColumns, length(temporalCovariateChoicesSelected)
+                                              ), th, style = "border-right:1px solid black")
+                                            ))))
+        
+        options = list(
+          pageLength = 100,
+          lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+          searching = TRUE,
+          searchHighlight = TRUE,
+          scrollX = TRUE,
+          scrollY = "60vh",
+          lengthChange = TRUE,
+          ordering = TRUE,
+          paging = TRUE,
+          columnDefs = columnDefs
+        )
+        
+        table <- DT::datatable(
+          table,
+          options = options,
+          rownames = FALSE,
+          container = sketch,
+          colnames = colnames(table) %>%
+            camelCaseToTitleCase(),
+          escape = FALSE,
+          filter = "top",
+          class = "stripe nowrap compact"
+        )
+        table <- DT::formatStyle(
+          table = table,
+          columns = colorBarColumns,
+          background = DT::styleColorBar(c(0, 1), "lightblue"),
+          backgroundSize = "98% 88%",
+          backgroundRepeat = "no-repeat",
+          backgroundPosition = "center"
+        )
       }
       return(table)
     }, server = TRUE)
