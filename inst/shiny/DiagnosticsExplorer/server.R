@@ -2982,20 +2982,17 @@ shiny::shinyServer(function(input, output, session) {
         
         if (input$temporalCharacterizationTypeColumnFilter == "Mean and Standard Deviation") {
           table <- balance %>%
-            tidyr::pivot_wider(id_cols = c("covariateName","conceptId"),
+            dplyr::mutate(covariateName = paste(.data$covariateName, "(", .data$conceptId, ")")) %>% 
+            dplyr::arrange(desc(abs(.data$stdDiff))) %>% 
+            tidyr::pivot_wider(id_cols = c("covariateName"),
                                names_from = "choices",
                                values_from = c("meanTarget","sDTarget","meanComparator","sDComparator","stdDiff"),
                                values_fill = 0
-                               ) 
-          
-          # %>% 
-          #   dplyr::arrange(desc(abs(.data$stdDiff)))
-          
+                               )
           
           sketch <- htmltools::withTags(table(class = "display",
                                               thead(tr(
                                                 th(rowspan = 2, "Covariate Name"),
-                                                th(rowspan = 2, "Concept ID"),
                                                 lapply(temporalCovariateChoicesSelected, th, colspan = 5, class = "dt-center", style = "border-right:1px solid black")
                                               ),
                                               tr(
@@ -3017,7 +3014,7 @@ shiny::shinyServer(function(input, output, session) {
             ordering = TRUE,
             paging = TRUE,
             columnDefs = list(truncateStringDef(0, 80),
-                              minCellRealDef(1 + 1:length(temporalCovariateChoicesSelected) * 5, digits = 2))
+                              minCellRealDef(1:(length(temporalCovariateChoicesSelected) * 5), digits = 2))
           )
           table <- DT::datatable(
             table,
@@ -3032,20 +3029,12 @@ shiny::shinyServer(function(input, output, session) {
           )
           table <- DT::formatStyle(
             table = table,
-            columns = 2 + (1:length(temporalCovariateChoicesSelected) * 5),
+            columns = 1 + 1:(length(temporalCovariateChoicesSelected) * 5),
             background = DT::styleColorBar(c(0, 1), "lightblue"),
             backgroundSize = "98% 88%",
             backgroundRepeat = "no-repeat",
             backgroundPosition = "center"
           )
-          # table <- DT::formatStyle(
-          #   table = table,
-          #   columns = 7,
-          #   background = styleAbsColorBar(1, "lightblue", "pink"),
-          #   backgroundSize = "98% 88%",
-          #   backgroundRepeat = "no-repeat",
-          #   backgroundPosition = "center"
-          # )
           
         } else {
           if (input$temporalCharacterizationTypeColumnFilter == "Mean only") {
