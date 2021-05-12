@@ -348,13 +348,14 @@ runCohortDiagnostics <- function(packageName = NULL,
       dplyr::tibble()
   }, error = function(...) {
     warning("Problem getting vocabulary version")
+    vocabularyVersionCdm <- dplyr::tibble()
     if (connection@dbms == "postgresql") { #this is for test that automated testing purpose
       DatabaseConnector::dbExecute(connection, "ABORT;")
     }
   })
   
-  if (nrow(vocabularyVersionCdm) > 0 &
-      vocabularyVersion %in% colnames(vocabularyVersionCdm)) {
+  if (all(nrow(vocabularyVersionCdm) > 0,
+      'vocabularyVersion' %in% colnames(vocabularyVersionCdm))) {
     vocabularyVersionCdm <- vocabularyVersionCdm %>% 
       dplyr::rename(vocabularyVersionCdm = .data$vocabularyVersion) %>%
       dplyr::pull(vocabularyVersionCdm) %>%
