@@ -597,6 +597,12 @@ plotTemporalCompareStandardizedDifference <- function(balance,
   # targetLabel <- paste(strwrap(targetLabel, width = 50), collapse = "\n")
   # comparatorLabel <- paste(strwrap(comparatorLabel, width = 50), collapse = "\n")
   
+  targetCohort <- balance %>%  
+    dplyr::distinct(balance$targetCohort) %>% 
+    dplyr::pull()
+  comparatorCohort <- balance %>%  
+    dplyr::distinct(balance$comparatorCohort) %>% 
+    dplyr::pull()
   
   plot <-
     ggplot2::ggplot(balance,
@@ -616,6 +622,8 @@ plotTemporalCompareStandardizedDifference <- function(balance,
                          linetype = "dashed") +
     ggplot2::geom_hline(yintercept = 0) +
     ggplot2::geom_vline(xintercept = 0) +
+    ggplot2::xlab(paste("Mean ",targetCohort)) +
+    ggplot2::ylab(paste("Mean ",comparatorCohort)) +
     # ggplot2::scale_x_continuous("Mean") +
     # ggplot2::scale_y_continuous("Mean") +
     ggplot2::scale_color_manual("Domain", values = colors) +
