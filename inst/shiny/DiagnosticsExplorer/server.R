@@ -1736,6 +1736,7 @@ shiny::shinyServer(function(input, output, session) {
                             cols = c("conceptCount", "subjectCount"), 
                             values_to = "count") %>% 
         dplyr::mutate(names = paste0(.data$databaseId, " ", .data$type)) %>% 
+        dplyr::arrange(.data$databaseid, .data$type) %>% 
         tidyr::pivot_wider(id_cols = c("conceptId",
                                        "conceptName",
                                        "domainField",
@@ -3007,7 +3008,7 @@ shiny::shinyServer(function(input, output, session) {
             dplyr::arrange(desc(abs(.data$stdDiff)))
           
           if (length(temporalCovariateChoicesSelected) == 1) {
-            table <- table %>% 
+            table <- table %>%
               tidyr::pivot_wider(id_cols = c("covariateName"),
                                  names_from = "choices",
                                  values_from = c("meanTarget","sDTarget","meanComparator","sDComparator","stdDiff"),
@@ -3063,9 +3064,14 @@ shiny::shinyServer(function(input, output, session) {
             colspan <- 3
           } else {
             table <- table %>% 
+              tidyr::pivot_longer(cols = c("meanTarget", "meanComparator"), 
+                                  names_to = "type", 
+                                  values_to = "values") %>% 
+              dplyr::mutate(names = paste0(.data$databaseId, " ", .data$choices, " ", .data$type)) %>%
+              dplyr::arrange(.data$startDay1, .data$endDay1) %>% 
               tidyr::pivot_wider(id_cols = c("covariateName"),
-                                 names_from = "choices",
-                                 values_from = c("meanTarget", "meanComparator"),
+                                 names_from = "names",
+                                 values_from = "values",
                                  values_fill = 0
               )
             
