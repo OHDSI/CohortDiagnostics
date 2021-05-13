@@ -3086,7 +3086,7 @@ shiny::shinyServer(function(input, output, session) {
                                  values_fill = 0
               )
             
-            containerColumns <- c("Mean Target", "Mean Comparator")
+            containerColumns <- c("Target", "Comparator")
             
             columnDefs <- list(truncateStringDef(0, 80),
                                minCellRealDef(1:(length(temporalCovariateChoicesSelected) * 2), digits = 2))
