@@ -90,16 +90,18 @@ shiny::shinyServer(function(input, output, session) {
   output$cohortDefinitionTable <- DT::renderDataTable(expr = {
     data <- cohortSubset() %>%
       dplyr::select(cohort = .data$shortName, .data$cohortId, .data$cohortName) %>%
-      dplyr::mutate(cohort = as.factor(.data$cohort))
+      dplyr::mutate(cohort = as.factor(.data$cohort),
+                    cohortName = as.factor(.data$cohortName),
+                    cohortId = as.factor(.data$cohortId))
     
     options = list(
-      pageLength = 10,
+      pageLength = 100,
       lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
       searching = TRUE,
       ordering = TRUE,
       paging = TRUE,
       scrollX = TRUE,
-      scrollY = '50vh',
+      scrollY = '25vh',
       info = TRUE,
       searchHighlight = TRUE
     )
@@ -541,7 +543,7 @@ shiny::shinyServer(function(input, output, session) {
       }
       
       options = list(
-        pageLength = 100,
+        pageLength = 1000,
         lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
         searching = TRUE,
         lengthChange = TRUE,
@@ -550,6 +552,7 @@ shiny::shinyServer(function(input, output, session) {
         info = TRUE,
         searchHighlight = TRUE,
         scrollX = TRUE,
+        scrollY = "20vh",
         columnDefs = list(
           truncateStringDef(1, 80)
         )
@@ -574,7 +577,10 @@ shiny::shinyServer(function(input, output, session) {
       if (is.null(data)) {
         return(NULL)
       }
-      
+      data <- data %>% 
+        dplyr::mutate(conceptId = as.factor(.data$conceptId),
+                      conceptName = as.factor(.data$conceptName),
+                      vocabularyId = as.factor(.data$vocabularyId))
       options = list(
         pageLength = 100,
         lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
@@ -585,6 +591,7 @@ shiny::shinyServer(function(input, output, session) {
         info = TRUE,
         searchHighlight = TRUE,
         scrollX = TRUE,
+        scrollY = "20vh",
         columnDefs = list(
           truncateStringDef(2, 80)
         )
@@ -620,6 +627,7 @@ shiny::shinyServer(function(input, output, session) {
         info = TRUE,
         searchHighlight = TRUE,
         scrollX = TRUE,
+        scrollY = "20vh",
         columnDefs = list(
           truncateStringDef(1, 80)
         )
@@ -776,7 +784,7 @@ shiny::shinyServer(function(input, output, session) {
                                           ), th)
                                         ))))
     options = list(
-      pageLength = 100,
+      pageLength = 1000,
       lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
       searching = TRUE,
       lengthChange = TRUE,
@@ -785,6 +793,7 @@ shiny::shinyServer(function(input, output, session) {
       info = TRUE,
       searchHighlight = TRUE,
       scrollX = TRUE,
+      scrollY = "50vh",
       columnDefs = list(minCellCountDef(1:(
         2 * length(databaseIds)
       )))
@@ -1180,14 +1189,15 @@ shiny::shinyServer(function(input, output, session) {
                                               lapply(databaseIds, th, colspan = 2, class = "dt-center")
                                             ),
                                             tr(lapply(rep(
-                                              c("Subjects", "Count"), length(databaseIds)
+                                              c("Subjects", "Records"), length(databaseIds)
                                             ), th))
                                           )))
       options = list(
-        pageLength = 100,
+        pageLength = 1000,
         lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
         searching = TRUE,
         scrollX = TRUE,
+        scrollY = "50vh",
         lengthChange = TRUE,
         searchHighlight = TRUE,
         ordering = TRUE,
@@ -1276,15 +1286,16 @@ shiny::shinyServer(function(input, output, session) {
                                               lapply(databaseIds, th, colspan = 2, class = "dt-center")
                                             ),
                                             tr(lapply(rep(
-                                              c("Subjects", "Counts"), length(databaseIds)
+                                              c("Subjects", "Records"), length(databaseIds)
                                             ), th))
                                           )))
       
       options = list(
-        pageLength = 100,
+        pageLength = 1000,
         lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
         searching = TRUE,
         scrollX = TRUE,
+        scrollY = "50vh",
         lengthChange = TRUE,
         ordering = TRUE,
         paging = TRUE,
@@ -1439,10 +1450,11 @@ shiny::shinyServer(function(input, output, session) {
                                         )))
     
     options = list(
-      pageLength = 100,
+      pageLength = 1000,
       lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
       searching = TRUE,
       scrollX = TRUE,
+      scrollY = "50vh",
       lengthChange = TRUE,
       ordering = TRUE,
       paging = TRUE,
@@ -1792,8 +1804,7 @@ shiny::shinyServer(function(input, output, session) {
                         "vocabularyId"),
             names_from = "databaseId",
             values_from = "conceptCount",
-            values_fill = 0,
-            names_prefix = "Records_"
+            values_fill = 0
           )
       } else {
         data <- data %>% 
@@ -1804,8 +1815,7 @@ shiny::shinyServer(function(input, output, session) {
                         "vocabularyId"),
             names_from = "databaseId",
             values_from = "subjectCount",
-            values_fill = 0,
-            names_prefix = "Persons_"
+            values_fill = 0
           )
       }
       
