@@ -1732,15 +1732,17 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$conceptId > 0) %>%
         dplyr::distinct() %>% # distinct is needed here because many time condition_concept_id and condition_source_concept_id
         # may have the same value leading to duplication of row records
-        tidyr::pivot_wider(
-          id_cols = c("conceptId",
-                      "conceptName",
-                      "domainField",
-                      "vocabularyId"),
-          names_from = "databaseId",
-          values_from = c("conceptCount", "subjectCount"),
-          values_fill = 0
-        )
+        tidyr::pivot_longer(names_to = "type", 
+                            cols = c("conceptCount", "subjectCount"), 
+                            values_to = "count") %>% 
+        dplyr::mutate(names = paste0(.data$databaseId, " ", .data$type)) %>% 
+        tidyr::pivot_wider(id_cols = c("conceptId",
+                                       "conceptName",
+                                       "domainField",
+                                       "vocabularyId"),
+                           names_from = "names",
+                           values_from = count,
+                           values_fill = 0)
       
       data <- data[order(-data[5]), ]
       
