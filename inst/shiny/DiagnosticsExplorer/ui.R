@@ -411,12 +411,18 @@ bodyTabItems <- shinydashboard::tabItems(
             shiny::tabPanel(
               title = "JSON",
               copyToClipboardButton("cohortDefinitionJson", style = "margin-top: 5px; margin-bottom: 5px;"),
-              shiny::verbatimTextOutput("cohortDefinitionJson")
+              shiny::verbatimTextOutput("cohortDefinitionJson"),
+              tags$head(
+                tags$style("#cohortDefinitionJson { max-height:400px};")
+              )
             ),
             shiny::tabPanel(
               title = "SQL",
               copyToClipboardButton("cohortDefinitionSql", style = "margin-top: 5px; margin-bottom: 5px;"),
-              shiny::verbatimTextOutput("cohortDefinitionSql")
+              shiny::verbatimTextOutput("cohortDefinitionSql"),
+              tags$head(
+                tags$style("#cohortDefinitionSql { max-height:400px};")
+              )
             )
           )
         )
