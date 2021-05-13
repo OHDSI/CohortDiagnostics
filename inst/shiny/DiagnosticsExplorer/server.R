@@ -1771,7 +1771,7 @@ shiny::shinyServer(function(input, output, session) {
         lengthChange = TRUE,
         ordering = TRUE,
         paging = TRUE,
-        columnDefs = list(minCellCountDef(2 + 1:(
+        columnDefs = list(minCellCountDef(3 + 1:(
           length(databaseIds) * 2
         )), truncateStringDef(1, 80))
       )
