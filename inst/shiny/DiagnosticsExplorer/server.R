@@ -2178,11 +2178,11 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::select(-.data$cohortId)
       
       options = list(
-        pageLength = 100,
+        pageLength = 1000,
         lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
         searching = TRUE,
         scrollX = TRUE,
-        scrollY = "60vh",
+        scrollY = "100vh",
         lengthChange = TRUE,
         ordering = FALSE,
         paging = TRUE,

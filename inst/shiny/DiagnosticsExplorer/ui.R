@@ -718,7 +718,7 @@ bodyTabItems <- shinydashboard::tabItems(
                                       inputId = "charProportionOrContinuous",
                                       label = "",
                                       choices = c("All", "Proportion", "Continuous"),
-                                      selected = "All",
+                                      selected = "Proportion",
                                       inline = TRUE
                                     )
                                   )
@@ -786,7 +786,7 @@ bodyTabItems <- shinydashboard::tabItems(
           inputId = "temporalProportionOrContinuous",
           label = "",
           choices = c("All", "Proportion", "Continuous"),
-          selected = "All",
+          selected = "Proportion",
           inline = TRUE
         )
       )
@@ -848,7 +848,7 @@ bodyTabItems <- shinydashboard::tabItems(
                                   inputId = "charCompareProportionOrContinuous",
                                   label = "",
                                   choices = c("All", "Proportion", "Continuous"),
-                                  selected = "All",
+                                  selected = "Proportion",
                                   inline = TRUE
                                 )
                               )
@@ -944,7 +944,7 @@ bodyTabItems <- shinydashboard::tabItems(
                                   inputId = "temporalCharacterProportionOrContinuous",
                                   label = "Filter to:",
                                   choices = c("All", "Proportion", "Continuous"),
-                                  selected = "All",
+                                  selected = "Proportion",
                                   inline = TRUE
                                 )
                               )
