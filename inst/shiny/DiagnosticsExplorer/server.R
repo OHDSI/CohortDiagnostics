@@ -1736,7 +1736,7 @@ shiny::shinyServer(function(input, output, session) {
                             cols = c("conceptCount", "subjectCount"), 
                             values_to = "count") %>% 
         dplyr::mutate(names = paste0(.data$databaseId, " ", .data$type)) %>% 
-        dplyr::arrange(.data$databaseid, .data$type) %>% 
+        dplyr::arrange(.data$databaseId, .data$type) %>% 
         tidyr::pivot_wider(id_cols = c("conceptId",
                                        "conceptName",
                                        "domainField",
