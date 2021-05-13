@@ -104,7 +104,8 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
       panel.grid.minor.y = ggplot2::element_blank(),
       axis.title.y = ggplot2::element_blank(),
       axis.ticks.y = ggplot2::element_blank(),
-      strip.background = ggplot2::element_blank()
+      strip.background = ggplot2::element_blank(),
+      strip.text.y = ggplot2::element_text(size = 5)
     )
   height <-
     1.5 + 0.4 * nrow(dplyr::distinct(plotData, .data$databaseId, .data$shortName))
