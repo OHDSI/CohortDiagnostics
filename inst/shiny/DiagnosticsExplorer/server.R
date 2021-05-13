@@ -1713,7 +1713,11 @@ shiny::shinyServer(function(input, output, session) {
     
     databaseIdsWithCount <- paste(databaseIds, "(n = ", format(cohortCounts, big.mark = ","), ")")
     
-    if ("subjectCount" %in% names(data) && input$indexEventBreakdownTableFilter == "Both") {
+    if (!"subjectCount" %in% names(data)) {
+      data$subjectCount <- 0
+    }
+    
+    if (input$indexEventBreakdownTableFilter == "Both") {
       data <- data %>%
         dplyr::arrange(.data$databaseId) %>%
         dplyr::select(
@@ -1755,11 +1759,12 @@ shiny::shinyServer(function(input, output, session) {
                                           )))
       
       options = list(
-        pageLength = 100,
+        pageLength = 1000,
         lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
         searching = TRUE,
         searchHighlight = TRUE,
         scrollX = TRUE,
+        scrollY = "50vh",
         lengthChange = TRUE,
         ordering = TRUE,
         paging = TRUE,
@@ -1795,7 +1800,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::distinct() # distinct is needed here because many time condition_concept_id and condition_source_concept_id
         # may have the same value
       
-      if (input$indexEventBreakdownTableFilter == "Records" || !"subjectCount" %in% names(data)) {
+      if (input$indexEventBreakdownTableFilter == "Records") {
         data <- data %>% 
           tidyr::pivot_wider(
             id_cols = c("conceptId",
@@ -1822,11 +1827,12 @@ shiny::shinyServer(function(input, output, session) {
       data <- data[order(-data[5]), ]
       
       options = list(
-        pageLength = 100,
+        pageLength = 1000,
         lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
         searching = TRUE,
         searchHighlight = TRUE,
         scrollX = TRUE,
+        scrollY = "50vh",
         lengthChange = TRUE,
         ordering = TRUE,
         paging = TRUE,
