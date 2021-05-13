@@ -3009,6 +3009,7 @@ shiny::shinyServer(function(input, output, session) {
           
           if (length(temporalCovariateChoicesSelected) == 1) {
             table <- table %>%
+              dplyr::arrange(.data$choices) %>% 
               tidyr::pivot_wider(id_cols = c("covariateName"),
                                  names_from = "choices",
                                  values_from = c("meanTarget","sDTarget","meanComparator","sDComparator","stdDiff"),
@@ -3025,12 +3026,22 @@ shiny::shinyServer(function(input, output, session) {
             containerColumns <- c("Mean Target","SD Target","Mean Comparator","SD Comparator","Std. Diff")
           } else {
             table <- table %>% 
+              dplyr::arrange(.data$choices) %>% 
+              dplyr::rename(aMeanTarget = "meanTarget", 
+                            bSdTarget = "sDTarget",
+                            cMeanComparator = "meanComparator",
+                            dSdComparator = "sDComparator") %>% 
+              tidyr::pivot_longer(cols = c("aMeanTarget","bSdTarget","cMeanComparator","dSdComparator"),
+                                  names_to = "type", 
+                                  values_to = "values" 
+                                    ) %>% 
+              dplyr::mutate(names = paste0(.data$databaseId, " ", .data$choices, " ", .data$type)) %>% 
+              dplyr::arrange(.data$databaseId, .data$startDay1, .data$endDay1, .data$type) %>% 
               tidyr::pivot_wider(id_cols = c("covariateName"),
-                                 names_from = "choices",
-                                 values_from = c("meanTarget","sDTarget","meanComparator","sDComparator"),
+                                 names_from = "names",
+                                 values_from = c("values"),
                                  values_fill = 0
               )
-            
             
             columnDefs <- list(truncateStringDef(0, 80),
                                minCellRealDef(1:(length(temporalCovariateChoicesSelected) * 4), digits = 2))
