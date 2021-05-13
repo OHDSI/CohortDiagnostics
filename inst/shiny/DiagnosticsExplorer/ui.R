@@ -625,8 +625,8 @@ bodyTabItems <- shinydashboard::tabItems(
           shiny::radioButtons(
             inputId = "indexEventBreakdownTableFilter",
             label = "Display",
-            choices = c("Both", "Records", "Persons"),
-            selected = "Both",
+            choices = c("Records", "Persons"), #"Both", 
+            selected = "Persons",
             inline = TRUE
           )
         )
