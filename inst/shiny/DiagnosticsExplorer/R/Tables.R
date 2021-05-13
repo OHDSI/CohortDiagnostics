@@ -10,6 +10,14 @@ prepareTable1 <- function(covariates,
         replacement = ""
       )
     ))
+  
+  covariates <- covariates %>% 
+    dplyr::mutate(covariateName = stringr::str_replace(string = .data$covariateName, 
+                                                       pattern = "black or african american", 
+                                                       replacement = "Black or African American")) %>% 
+    dplyr::mutate(covariateName = stringr::str_replace(string = .data$covariateName, pattern = "white", replacement = "White")) %>% 
+    dplyr::mutate(covariateName = stringr::str_replace(string = .data$covariateName, pattern = "asian", replacement = "Asian"))
+  
   space <- "&nbsp;"
   specifications <- readr::read_csv(
     file = pathToCsv,
@@ -188,6 +196,14 @@ prepareTable1Comp <- function(balance,
       dplyr::select(-.data$header, -.data$position) %>%
       dplyr::distinct()
   }
+  
+  resultsTable <- resultsTable %>% 
+    dplyr::mutate(characteristic = stringr::str_replace(string = .data$characteristic, 
+                                                        pattern = "black or african american", 
+                                                        replacement = "Black or African American")) %>% 
+    dplyr::mutate(characteristic = stringr::str_replace(string = .data$characteristic, pattern = "white", replacement = "White")) %>% 
+    dplyr::mutate(characteristic = stringr::str_replace(string = .data$characteristic, pattern = "asian", replacement = "Asian"))
+  
   return(resultsTable)
 }
 
