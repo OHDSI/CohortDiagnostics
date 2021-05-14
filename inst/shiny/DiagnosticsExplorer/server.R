@@ -528,7 +528,6 @@ shiny::shinyServer(function(input, output, session) {
       data$conceptName <- as.factor(data$conceptName)
       data$vocabularyId <- as.factor(data$vocabularyId)
       data$standardConcept <- as.factor(data$standardConcept)
-      colnames(data) <- camelCaseToTitleCase(colnames(data))
     } else {
       data <- dplyr::tibble("No data.")
     }
