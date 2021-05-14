@@ -442,11 +442,11 @@ plotCohortComparisonStandardizedDifference <- function(balance,
         "\nAnalysis: ",
         balance$analysisName,
         "\nY ",
-        balance$targetCohort,
+        balance$comparatorCohort,
         ": ",
         scales::comma(balance$mean2, accuracy = 0.01),
         "\nX ",
-        balance$comparatorCohort,
+        balance$targetCohort,
         ": ",
         scales::comma(balance$mean1, accuracy = 0.01),
         "\nStd diff.:",
@@ -474,6 +474,12 @@ plotCohortComparisonStandardizedDifference <- function(balance,
   # targetLabel <- paste(strwrap(targetLabel, width = 50), collapse = "\n")
   # comparatorLabel <- paste(strwrap(comparatorLabel, width = 50), collapse = "\n")
   
+  xCohort <- balance %>%  
+    dplyr::distinct(balance$targetCohort) %>% 
+    dplyr::pull()
+  yCohort <- balance %>%  
+    dplyr::distinct(balance$comparatorCohort) %>% 
+    dplyr::pull()
   
   plot <-
     ggplot2::ggplot(balance,
@@ -495,6 +501,8 @@ plotCohortComparisonStandardizedDifference <- function(balance,
     ggplot2::geom_vline(xintercept = 0) +
     # ggplot2::scale_x_continuous("Mean") +
     # ggplot2::scale_y_continuous("Mean") +
+    ggplot2::xlab(paste("Mean ",xCohort)) +
+    ggplot2::ylab(paste("Mean ",yCohort)) +
     ggplot2::scale_color_manual("Domain", values = colors) +
     facet_nested(databaseId + targetCohort ~ comparatorCohort) +
     ggplot2::theme(strip.background = ggplot2::element_blank()) +
@@ -565,11 +573,11 @@ plotTemporalCompareStandardizedDifference <- function(balance,
         "\nAnalysis: ",
         balance$analysisName,
         "\n Y ",
-        balance$targetCohort,
+        balance$comparatorCohort,
         ": ",
         scales::comma(balance$mean2, accuracy = 0.01),
         "\n X ",
-        balance$comparatorCohort,
+        balance$targetCohort,
         ": ",
         scales::comma(balance$mean1, accuracy = 0.01),
         "\nStd diff.: ",
@@ -599,10 +607,10 @@ plotTemporalCompareStandardizedDifference <- function(balance,
   # targetLabel <- paste(strwrap(targetLabel, width = 50), collapse = "\n")
   # comparatorLabel <- paste(strwrap(comparatorLabel, width = 50), collapse = "\n")
   
-  targetCohort <- balance %>%  
+  xCohort <- balance %>%  
     dplyr::distinct(balance$targetCohort) %>% 
     dplyr::pull()
-  comparatorCohort <- balance %>%  
+  yCohort <- balance %>%  
     dplyr::distinct(balance$comparatorCohort) %>% 
     dplyr::pull()
   
@@ -624,8 +632,8 @@ plotTemporalCompareStandardizedDifference <- function(balance,
                          linetype = "dashed") +
     ggplot2::geom_hline(yintercept = 0) +
     ggplot2::geom_vline(xintercept = 0) +
-    ggplot2::xlab(paste("Mean ",targetCohort)) +
-    ggplot2::ylab(paste("Mean ",comparatorCohort)) +
+    ggplot2::xlab(paste("Mean ",xCohort)) +
+    ggplot2::ylab(paste("Mean ",yCohort)) +
     # ggplot2::scale_x_continuous("Mean") +
     # ggplot2::scale_y_continuous("Mean") +
     ggplot2::scale_color_manual("Domain", values = colors) +
