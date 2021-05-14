@@ -720,6 +720,7 @@ shiny::shinyServer(function(input, output, session) {
       return(tidyr::tibble("There is no data on any cohort"))
     }
     
+    databaseIds <- sort(unique(data$databaseId))
     # instead maybe we can just convert this to a warning message in header.
     # if (!isTRUE(all.equal(
     #   data$databaseId %>% unique %>% sort(),
@@ -738,94 +739,165 @@ shiny::shinyServer(function(input, output, session) {
     #   ))
     # }
     
-    table <- dplyr::full_join(
-      data %>%
-        dplyr::select(.data$cohort, .data$databaseId,
-                      .data$cohortSubjects) %>%
-        dplyr::mutate(columnName = paste0(.data$databaseId, "_subjects")) %>%
-        dplyr::arrange(.data$cohort, .data$databaseId) %>%
-        tidyr::pivot_wider(
-          id_cols = .data$cohort,
-          names_from = columnName,
-          values_from = .data$cohortSubjects,
-          values_fill = 0
-        ),
-      data %>%
-        dplyr::select(.data$cohort, .data$databaseId,
-                      .data$cohortEntries) %>%
-        dplyr::mutate(columnName = paste0(.data$databaseId, "_entries")) %>%
-        dplyr::arrange(.data$cohort, .data$databaseId) %>%
-        tidyr::pivot_wider(
-          id_cols = .data$cohort,
-          names_from = columnName,
-          values_from = .data$cohortEntries,
-          values_fill = 0
-        ),
-      by = c("cohort")
-    )
-    table <- table %>%
-      dplyr::select(order(colnames(table))) %>%
-      dplyr::relocate(.data$cohort) %>%
-      dplyr::arrange(.data$cohort)
-    
-    databaseIds <- sort(unique(data$databaseId))
-    
-    sketch <- htmltools::withTags(table(class = "display",
-                                        thead(tr(
-                                          th(rowspan = 2, "Cohort"),
-                                          lapply(databaseIds, th, colspan = 2, class = "dt-center", style = "border-right:1px solid silver")
-                                        ),
-                                        tr(
-                                          lapply(rep(
-                                            c("Records", "Subjects"), length(databaseIds)
-                                          ), th, style = "border-right:1px solid silver")
-                                        ))))
-    options = list(
-      pageLength = 1000,
-      lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-      searching = TRUE,
-      lengthChange = TRUE,
-      ordering = TRUE,
-      paging = TRUE,
-      info = TRUE,
-      searchHighlight = TRUE,
-      scrollX = TRUE,
-      scrollY = "50vh",
-      columnDefs = list(minCellCountDef(1:(
-        2 * length(databaseIds)
-      )))
-    )
-    
-    dataTable <- DT::datatable(
-      table,
-      options = options,
-      rownames = FALSE,
-      container = sketch,
-      escape = FALSE,
-      filter = "top",
-      class = "stripe nowrap compact"
-    )
-    for (i in 1:length(databaseIds)) {
+    if (input$cohortCountsTableColumnFilter == "Both") {
+      table <- dplyr::full_join(
+        data %>%
+          dplyr::select(.data$cohort, .data$databaseId,
+                        .data$cohortSubjects) %>%
+          dplyr::mutate(columnName = paste0(.data$databaseId, "_subjects")) %>%
+          dplyr::arrange(.data$cohort, .data$databaseId) %>%
+          tidyr::pivot_wider(
+            id_cols = .data$cohort,
+            names_from = columnName,
+            values_from = .data$cohortSubjects,
+            values_fill = 0
+          ),
+        data %>%
+          dplyr::select(.data$cohort, .data$databaseId,
+                        .data$cohortEntries) %>%
+          dplyr::mutate(columnName = paste0(.data$databaseId, "_entries")) %>%
+          dplyr::arrange(.data$cohort, .data$databaseId) %>%
+          tidyr::pivot_wider(
+            id_cols = .data$cohort,
+            names_from = columnName,
+            values_from = .data$cohortEntries,
+            values_fill = 0
+          ),
+        by = c("cohort")
+      )
+      
+      table <- table %>%
+        dplyr::select(order(colnames(table))) %>%
+        dplyr::relocate(.data$cohort) %>%
+        dplyr::arrange(.data$cohort)
+      
+      
+      
+      sketch <- htmltools::withTags(table(class = "display",
+                                          thead(tr(
+                                            th(rowspan = 2, "Cohort"),
+                                            lapply(databaseIds, th, colspan = 2, class = "dt-center", style = "border-right:1px solid silver")
+                                          ),
+                                          tr(
+                                            lapply(rep(
+                                              c("Records", "Subjects"), length(databaseIds)
+                                            ), th, style = "border-right:1px solid silver")
+                                          ))))
+      options = list(
+        pageLength = 1000,
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        lengthChange = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        info = TRUE,
+        searchHighlight = TRUE,
+        scrollX = TRUE,
+        scrollY = "50vh",
+        columnDefs = list(minCellCountDef(1:(
+          2 * length(databaseIds)
+        )))
+      )
+      
+      dataTable <- DT::datatable(
+        table,
+        options = options,
+        rownames = FALSE,
+        container = sketch,
+        escape = FALSE,
+        filter = "top",
+        class = "stripe nowrap compact"
+      )
+      for (i in 1:length(databaseIds)) {
+        dataTable <- DT::formatStyle(
+          table = dataTable,
+          columns = i * 2,
+          background = DT::styleColorBar(c(0, max(
+            table[, i * 2], na.rm = TRUE
+          )), "lightblue"),
+          backgroundSize = "98% 88%",
+          backgroundRepeat = "no-repeat",
+          backgroundPosition = "center"
+        )
+        dataTable <- DT::formatStyle(
+          table = dataTable,
+          columns = i * 2 + 1,
+          background = DT::styleColorBar(c(0, max(
+            table[, i * 2 + 1], na.rm = TRUE
+          )), "#ffd699"),
+          backgroundSize = "98% 88%",
+          backgroundRepeat = "no-repeat",
+          backgroundPosition = "center"
+        )
+      }
+    } else if (input$cohortCountsTableColumnFilter == "Subjects Only" || input$cohortCountsTableColumnFilter == "Records Only") {
+      
+      if (input$cohortCountsTableColumnFilter == "Subjects Only") {
+        maxValue <- max(data$cohortSubjects)
+        table <- data %>%
+          dplyr::select(.data$cohort, .data$databaseId,
+                        .data$cohortSubjects) %>%
+          dplyr::mutate(columnName = paste0(.data$databaseId, "_subjects")) %>%
+          dplyr::arrange(.data$cohort, .data$databaseId) %>%
+          tidyr::pivot_wider(
+            id_cols = .data$cohort,
+            names_from = columnName,
+            values_from = .data$cohortSubjects,
+            values_fill = 0
+          )
+        
+        
+      } else {
+        maxValue <- max(data$cohortEntries)
+        table <- data %>%
+          dplyr::select(.data$cohort, .data$databaseId,
+                        .data$cohortEntries) %>%
+          dplyr::mutate(columnName = paste0(.data$databaseId, "_records")) %>%
+          dplyr::arrange(.data$cohort, .data$databaseId) %>%
+          tidyr::pivot_wider(
+            id_cols = .data$cohort,
+            names_from = columnName,
+            values_from = .data$cohortEntries,
+            values_fill = 0
+          )
+      }
+      
+      options = list(
+        pageLength = 1000,
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        lengthChange = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        info = TRUE,
+        searchHighlight = TRUE,
+        scrollX = TRUE,
+        scrollY = "50vh",
+        columnDefs = list(minCellCountDef(1:(
+          length(databaseIds)
+        )))
+      )
+      
+      dataTable <- DT::datatable(
+        table,
+        options = options,
+        colnames = colnames(table) %>% 
+          camelCaseToTitleCase(),
+        rownames = FALSE,
+        escape = FALSE,
+        filter = "top",
+        class = "stripe nowrap compact"
+      )
+      
       dataTable <- DT::formatStyle(
         table = dataTable,
-        columns = i * 2,
-        background = DT::styleColorBar(c(0, max(
-          table[, i * 2], na.rm = TRUE
-        )), "lightblue"),
+        columns = 1 + 1:(length(databaseIds)),
+        background = DT::styleColorBar(c(0, maxValue), "lightblue"),
         backgroundSize = "98% 88%",
         backgroundRepeat = "no-repeat",
         backgroundPosition = "center"
       )
-      dataTable <- DT::formatStyle(
-        table = dataTable,
-        columns = i * 2 + 1,
-        background = DT::styleColorBar(c(0, max(
-          table[, i * 2 + 1], na.rm = TRUE
-        )), "#ffd699"),
-        backgroundSize = "98% 88%",
-        backgroundRepeat = "no-repeat",
-        backgroundPosition = "center"
-      )
+      
     }
     return(dataTable)
   }, server = TRUE)

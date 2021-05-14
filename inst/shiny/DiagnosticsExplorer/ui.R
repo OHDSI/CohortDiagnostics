@@ -432,6 +432,13 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "cohortCounts",
     cohortReference("cohortCountsSelectedCohorts"),
+    shiny::radioButtons(
+      inputId = "cohortCountsTableColumnFilter",
+      label = "Display",
+      choices = c("Both", "Subjects Only", "Records Only"), 
+      selected = "Both",
+      inline = TRUE
+    ),
     DT::dataTableOutput("cohortCountsTable"),
   ),
   shinydashboard::tabItem(
