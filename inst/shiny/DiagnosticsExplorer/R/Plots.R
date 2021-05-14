@@ -259,7 +259,7 @@ plotIncidenceRate <- function(data,
       "\nDatabase = ",
       plotData$databaseId,
       "\nPerson years = ",
-      scales::comma(plotData$personYears, accuracy = 0.1),
+      scales::comma(plotData$personYears, accuracy = 0.01),
       "\nCohort count = ",
       scales::comma(plotData$cohortCount)
     )
@@ -444,13 +444,13 @@ plotCohortComparisonStandardizedDifference <- function(balance,
         "\nY ",
         balance$targetCohort,
         ": ",
-        scales::comma(balance$mean2, accuracy = 0.1),
+        scales::comma(balance$mean2, accuracy = 0.01),
         "\nX ",
         balance$comparatorCohort,
         ": ",
-        scales::comma(balance$mean1, accuracy = 0.1),
+        scales::comma(balance$mean1, accuracy = 0.01),
         "\nStd diff.:",
-        scales::comma(balance$stdDiff, accuracy = 0.1)
+        scales::comma(balance$stdDiff, accuracy = 0.01)
       )
     )
   
@@ -567,13 +567,15 @@ plotTemporalCompareStandardizedDifference <- function(balance,
         "\n Y ",
         balance$targetCohort,
         ": ",
-        scales::comma(balance$mean2, accuracy = 0.1),
+        scales::comma(balance$mean2, accuracy = 0.01),
         "\n X ",
         balance$comparatorCohort,
         ": ",
-        scales::comma(balance$mean1, accuracy = 0.1),
-        "\nStd diff.:",
-        scales::comma(balance$stdDiff, accuracy = 0.1)
+        scales::comma(balance$mean1, accuracy = 0.01),
+        "\nStd diff.: ",
+        scales::comma(balance$stdDiff, accuracy = 0.01),
+        "\nTime Id: ",
+        balance$choices
       )
     )
   
@@ -627,7 +629,8 @@ plotTemporalCompareStandardizedDifference <- function(balance,
     # ggplot2::scale_x_continuous("Mean") +
     # ggplot2::scale_y_continuous("Mean") +
     ggplot2::scale_color_manual("Domain", values = colors) +
-    facet_nested(databaseId + choices1 ~ choices2) +
+    ggplot2::facet_grid(rows = ggplot2::vars(choices)) +
+    # ggplot2::facet_wrap(~choices) +
     ggplot2::theme(strip.background = ggplot2::element_blank()) +
     ggplot2::xlim(xLimitMin, xLimitMax) +
     ggplot2::ylim(yLimitMin, yLimitMax) 
@@ -637,7 +640,7 @@ plotTemporalCompareStandardizedDifference <- function(balance,
     options = list(ggiraph::opts_sizing(width = .7),
                    ggiraph::opts_zoom(max = 5)),
     width_svg = 12,
-    height_svg = 8
+    height_svg = 24
   )
   return(plot)
 }

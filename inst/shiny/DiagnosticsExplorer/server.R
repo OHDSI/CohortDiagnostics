@@ -2833,54 +2833,6 @@ shiny::shinyServer(function(input, output, session) {
       )
       balance <-
         compareTemporalCohortCharacteristics(covs1, covs2) %>%
-        dplyr::mutate(absStdDiff = abs(.data$stdDiff)) %>% 
-        dplyr::inner_join(temporalCovariateChoices, by = "timeId")
-      
-      if (input$temporalCharacterizationType == "Raw table" &&
-          input$temporalCharacterProportionOrContinuous == "Proportion") {
-        balance <- balance %>%
-          dplyr::filter(.data$isBinary == 'Y')
-      } else if (input$temporalCharacterizationType == "Raw table" &&
-                 input$temporalCharacterProportionOrContinuous == "Continuous") {
-        balance <- balance %>%
-          dplyr::filter(.data$isBinary == 'N')
-      }
-      return(balance)
-    })
-  
-  computeBalanceForCompareTemporalCharacterizationPlot <-
-    shiny::reactive({
-      validate(need((length(cohortId(
-      )) > 0),
-      paste0("Please select cohort.")))
-      validate(need((length(
-        comparatorCohortId()
-      ) > 0),
-      paste0("Please select comparator cohort.")))
-      # validate(need((comparatorCohortId() != cohortId()),
-      #               paste0("Please select different cohort and comparator.")
-      # ))
-      validate(need((length(input$database) > 0),
-                    paste0("Please select atleast one datasource.")
-      ))
-      validate(need((length(timeIds()) > 0), paste0("Please select time id")))
-      
-      covs1 <- getCovariateValueResult(
-        dataSource = dataSource,
-        cohortIds = cohortId(),
-        databaseIds = input$database,
-        isTemporal = TRUE,
-        timeIds = timeIds()
-      )
-      covs2 <- getCovariateValueResult(
-        dataSource = dataSource,
-        cohortIds = comparatorCohortId(),
-        databaseIds = input$database,
-        isTemporal = TRUE,
-        timeIds = timeIds()
-      )
-      balance <-
-        compareTemporalCohortCharacteristicsPlot(covs1, covs2) %>%
         dplyr::mutate(absStdDiff = abs(.data$stdDiff))
       
       if (input$temporalCharacterizationType == "Raw table" &&
@@ -2892,6 +2844,17 @@ shiny::shinyServer(function(input, output, session) {
         balance <- balance %>%
           dplyr::filter(.data$isBinary == 'N')
       }
+      
+      if (input$temporalCharacterizationType == "Plot" &&
+          input$temporalCharacterProportionOrContinuous == "Proportion") {
+        balance <- balance %>%
+          dplyr::filter(.data$isBinary == 'Y')
+      } else if (input$temporalCharacterizationType == "Plot" &&
+                 input$temporalCharacterProportionOrContinuous == "Continuous") {
+        balance <- balance %>%
+          dplyr::filter(.data$isBinary == 'N')
+      }
+      
       return(balance)
     })
   
@@ -3142,7 +3105,7 @@ shiny::shinyServer(function(input, output, session) {
     }, server = TRUE)
   
   output$temporalCharComparePlot <- ggiraph::renderggiraph(expr = {
-    data <- computeBalanceForCompareTemporalCharacterizationPlot()
+    data <- computeBalanceForCompareTemporalCharacterization()
     validate(need(nrow(data) != 0, paste0("No data for the selected combination.")))
     
     data <- data %>%
@@ -3158,22 +3121,10 @@ shiny::shinyServer(function(input, output, session) {
       }
     }
     
-    
     validate(need(nrow(data) != 0, paste0("No data for the selected combination.")))
     
     validate(need((nrow(data) - nrow(data[data$mean1 < 0.001, ])) > 5 &&
                     (nrow(data) - nrow(data[data$mean2 < 0.001, ])) > 5, paste0("No data for the selected combination.")))
-  
-    if (input$temporalCharacterizationType == "Plot" &&
-        input$temporalCharacterProportionOrContinuous == "Proportion") {
-      data <- data %>%
-        dplyr::filter(.data$isBinary == 'Y')
-    } else if (input$temporalCharacterizationType == "Plot" &&
-               input$temporalCharacterProportionOrContinuous == "Continuous") {
-      data <- data %>%
-        dplyr::filter(.data$isBinary == 'N')
-    }
-    
     
     plot <-
       plotTemporalCompareStandardizedDifference(
