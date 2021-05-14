@@ -1110,6 +1110,14 @@ shiny::shinyServer(function(input, output, session) {
       return(dplyr::tibble("No data available for selected databases and cohorts"))
     }
     databaseIds <- unique(data$databaseId)
+    cohortCounts <- data %>% 
+      dplyr::inner_join(cohortCount) %>% 
+      dplyr::filter(.data$cohortId == cohortId()) %>% 
+      dplyr::filter(.data$databaseId %in% databaseIds()) %>% 
+      dplyr::select(.data$cohortSubjects) %>% 
+      dplyr::pull(.data$cohortSubjects) %>% unique()
+    
+    databaseIdsWithCount <- paste(databaseIds, "(n = ", format(cohortCounts, big.mark = ","), ")")
     # if (!all(databaseIds() %in% databaseIds)) {
     #   return(dplyr::tibble(
     #     Note = paste0(
@@ -1150,7 +1158,8 @@ shiny::shinyServer(function(input, output, session) {
         tidyr::pivot_wider(
           id_cols = c(.data$sourceConceptId),
           names_from = .data$name,
-          values_from = .data$value
+          values_from = .data$value,
+          values_fill = 0
         ) %>%
         dplyr::inner_join(
           data %>%
@@ -1183,7 +1192,7 @@ shiny::shinyServer(function(input, output, session) {
                                               th(rowspan = 2, 'Concept Name'),
                                               th(rowspan = 2, 'Vocabulary ID'),
                                               th(rowspan = 2, 'Concept Code'),
-                                              lapply(databaseIds, th, colspan = 2, class = "dt-center", style = "border-right:1px solid silver")
+                                              lapply(databaseIdsWithCount, th, colspan = 2, class = "dt-center", style = "border-right:1px solid silver")
                                             ),
                                             tr(lapply(rep(
                                               c("Subjects", "Records"), length(databaseIds)
@@ -1254,7 +1263,8 @@ shiny::shinyServer(function(input, output, session) {
         tidyr::pivot_wider(
           id_cols = c(.data$conceptId),
           names_from = .data$name,
-          values_from = .data$value
+          values_from = .data$value,
+          values_fill = 0
         ) %>%
         dplyr::inner_join(
           data %>%
@@ -1280,7 +1290,7 @@ shiny::shinyServer(function(input, output, session) {
                                               th(rowspan = 2, "Concept ID"),
                                               th(rowspan = 2, "Concept Name"),
                                               th(rowspan = 2, "Vocabulary ID"),
-                                              lapply(databaseIds, th, colspan = 2, class = "dt-center", style = "border-right:1px solid silver")
+                                              lapply(databaseIdsWithCount, th, colspan = 2, class = "dt-center", style = "border-right:1px solid silver")
                                             ),
                                             tr(lapply(rep(
                                               c("Subjects", "Records"), length(databaseIds)
