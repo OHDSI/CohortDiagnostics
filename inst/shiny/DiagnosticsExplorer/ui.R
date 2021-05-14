@@ -463,6 +463,24 @@ bodyTabItems <- shinydashboard::tabItems(
                    tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;")),
                    tags$td(
                      valign = "bottom",
+                     style = "width:30% !important;margin-top:10px;",
+                     shiny::conditionalPanel(
+                       condition = "input.irYscaleFixed",
+                       shiny::sliderInput(
+                         inputId = "YscaleMinAndMax",
+                         label = "Filter Incident Rate Between :",
+                         min = c(0),
+                         max = c(0),
+                         value = c(0, 0),
+                         dragRange = TRUE,width = 400,
+                         step = 1,
+                         sep = "",
+                       )
+                     )
+                   ),
+                   tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;")),
+                   tags$td(
+                     valign = "bottom",
                      style = "text-align: right",
                      shiny::checkboxInput("irYscaleFixed", "Use same y-scale across databases")
                    )

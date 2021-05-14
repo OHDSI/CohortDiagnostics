@@ -996,6 +996,20 @@ shiny::shinyServer(function(input, output, session) {
         value = c(2010, maxValue)
       )
       
+      minIncidenceRateValue <- round(min(incidenceRateData()$incidenceRate),digits = 2)
+      
+      maxIncidenceRateValue <- round(max(incidenceRateData()$incidenceRate),digits = 2)
+      
+      shiny::updateSliderInput(
+        session = session,
+        inputId = "YscaleMinAndMax",
+        min = 0,
+        max = maxIncidenceRateValue,
+        value = c(minIncidenceRateValue, maxIncidenceRateValue),
+        step = round((maxIncidenceRateValue - minIncidenceRateValue)/5,digits = 2)
+      )
+      
+      
     }
   })
   
@@ -1037,6 +1051,21 @@ shiny::shinyServer(function(input, output, session) {
     return(calenderFilter)
   })
   
+  
+  incidenceRateYScaleFilter <- shiny::reactive({
+    incidenceRateFilter <- incidenceRateData() %>%
+      dplyr::select(.data$incidenceRate) %>%
+      dplyr::filter(.data$incidenceRate != "NA",
+                    !is.na(.data$incidenceRate)) %>%
+      dplyr::distinct(.data$incidenceRate) %>%
+      dplyr::arrange(.data$incidenceRate)
+    incidenceRateFilter <-
+      incidenceRateFilter[incidenceRateFilter$incidenceRate >= input$YscaleMinAndMax[1] &
+                       incidenceRateFilter$incidenceRate <= input$YscaleMinAndMax[2], , drop = FALSE] %>%
+      dplyr::pull(.data$incidenceRate)
+    return(incidenceRateFilter)
+  })
+  
   output$incidenceRatePlot <- ggiraph::renderggiraph(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
@@ -1066,6 +1095,10 @@ shiny::shinyServer(function(input, output, session) {
         if (stratifyByCalendarYear) {
           data <- data %>%
             dplyr::filter(.data$calendarYear %in% incidenceRateCalenderFilter())
+        }
+        if (input$irYscaleFixed) {
+          data <- data %>%
+            dplyr::filter(.data$incidenceRate %in% incidenceRateYScaleFilter())
         }
         
         validate(need(nrow(data) > 0, paste0("No data for this combination")))
