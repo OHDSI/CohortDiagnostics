@@ -228,12 +228,7 @@ plotIncidenceRate <- function(data,
     plotType <- "bar"
   }
   
-  sortAgeGroup <- plotData %>%
-    dplyr::select(.data$ageGroup) %>%
-    dplyr::distinct() %>%
-    dplyr::arrange(as.integer(sub(
-      pattern = '-.+$', '', x = .data$ageGroup
-    )))
+ 
   
   sortShortName <- plotData %>%
     dplyr::select(.data$shortName) %>%
@@ -243,14 +238,28 @@ plotIncidenceRate <- function(data,
     )))
   
   plotData <- plotData %>%
-    dplyr::arrange(ageGroup = factor(.data$ageGroup, levels = sortAgeGroup$ageGroup),.data$ageGroup) %>% 
     dplyr::arrange(shortName = factor(.data$shortName, levels = sortShortName$shortName),.data$shortName)
   
-  plotData$ageGroup <- factor(plotData$ageGroup,
-                              levels = sortAgeGroup$ageGroup)
+  
   
   plotData$shortName <- factor(plotData$shortName,
-                              levels = sortShortName$shortName)
+                               levels = sortShortName$shortName)
+  
+  if (stratifyByAgeGroup) {
+    sortAgeGroup <- plotData %>%
+      dplyr::select(.data$ageGroup) %>%
+      dplyr::distinct() %>%
+      dplyr::arrange(as.integer(sub(
+        pattern = '-.+$', '', x = .data$ageGroup
+      )))
+    
+    plotData <- plotData %>%
+      dplyr::arrange(ageGroup = factor(.data$ageGroup, levels = sortAgeGroup$ageGroup),.data$ageGroup)
+    
+    plotData$ageGroup <- factor(plotData$ageGroup,
+                                levels = sortAgeGroup$ageGroup)
+  }
+  
   plotData$tooltip <- c(
     paste0(
       plotData$shortName,
@@ -290,9 +299,7 @@ plotIncidenceRate <- function(data,
     colors <- colors[genders %in% unique(plotData$gender)]
     plotData$gender <- factor(plotData$gender, levels = genders)
   }
-  distinctCalenderYear <- plotData$calendarYear %>%
-    unique() %>% 
-    sort()
+  
   
   plot <-
     ggplot2::ggplot(data = plotData, do.call(ggplot2::aes_string, aesthetics)) +
@@ -300,15 +307,22 @@ plotIncidenceRate <- function(data,
     ggplot2::ylab("Incidence Rate (/1,000 person years)") +
     ggplot2::scale_y_continuous(expand = c(0, 0))
   
-  if (all(!is.na(distinctCalenderYear))) {
-    if (length(distinctCalenderYear) >= 8) {
-      plot <-
-        plot + ggplot2::scale_x_continuous(n.breaks = 8, labels = round)
-    } else {
-      plot <-
-        plot + ggplot2::scale_x_continuous(breaks = distinctCalenderYear)
+  if(stratifyByCalendarYear) {
+    distinctCalenderYear <- plotData$calendarYear %>%
+      unique() %>% 
+      sort()
+    if (all(!is.na(distinctCalenderYear))) {
+      if (length(distinctCalenderYear) >= 8) {
+        plot <-
+          plot + ggplot2::scale_x_continuous(n.breaks = 8, labels = round)
+      } else {
+        plot <-
+          plot + ggplot2::scale_x_continuous(breaks = distinctCalenderYear)
+      }
     }
   }
+  
+  
   
   plot <- plot + ggplot2::theme(
     legend.position = "top",
