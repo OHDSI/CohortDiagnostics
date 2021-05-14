@@ -2906,54 +2906,54 @@ shiny::shinyServer(function(input, output, session) {
         return(dplyr::tibble(Note = "No data for the selected combination."))
       }
       if (input$temporalCharacterizationType == "Pretty table") {
-        table <- prepareTable1Comp(balance)
-        if (nrow(table) > 0) {
-          table <- table %>%
-            dplyr::arrange(.data$sortOrder) %>%
-            dplyr::select(-.data$sortOrder) %>%
-            dplyr::select(-.data$cohortId1, -.data$cohortId2)
-        } else {
-          return(dplyr::tibble(Note = "No data for covariates that are part of pretty table."))
-        }
-        options = list(
-          pageLength = 100,
-          lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-          searching = TRUE,
-          scrollX = TRUE,
-          scrollY = "60vh",
-          searchHighlight = TRUE,
-          lengthChange = TRUE,
-          ordering = FALSE,
-          paging = TRUE,
-          columnDefs = list(minCellPercentDef(1:2))
-        )
-        
-        table <- DT::datatable(
-          table,
-          options = options,
-          rownames = FALSE,
-          colnames = c("Characteristic", "Target", "Comparator", "Std. Diff."),
-          escape = FALSE,
-          filter = "top",
-          class = "stripe nowrap compact"
-        )
-        table <- DT::formatStyle(
-          table = table,
-          columns = 2:4,
-          background = DT::styleColorBar(c(0, 1), "lightblue"),
-          backgroundSize = "98% 88%",
-          backgroundRepeat = "no-repeat",
-          backgroundPosition = "center"
-        )
-        table <- DT::formatStyle(
-          table = table,
-          columns = 4,
-          background = styleAbsColorBar(1, "lightblue", "pink"),
-          backgroundSize = "98% 88%",
-          backgroundRepeat = "no-repeat",
-          backgroundPosition = "center"
-        )
-        table <- DT::formatRound(table, 4, digits = 2)
+        # table <- prepareTable1Comp(balance)
+        # if (nrow(table) > 0) {
+        #   table <- table %>%
+        #     dplyr::arrange(.data$sortOrder) %>%
+        #     dplyr::select(-.data$sortOrder) %>%
+        #     dplyr::select(-.data$cohortId1, -.data$cohortId2)
+        # } else {
+        #   return(dplyr::tibble(Note = "No data for covariates that are part of pretty table."))
+        # }
+        # options = list(
+        #   pageLength = 100,
+        #   lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        #   searching = TRUE,
+        #   scrollX = TRUE,
+        #   scrollY = "60vh",
+        #   searchHighlight = TRUE,
+        #   lengthChange = TRUE,
+        #   ordering = FALSE,
+        #   paging = TRUE,
+        #   columnDefs = list(minCellPercentDef(1:2))
+        # )
+        # 
+        # table <- DT::datatable(
+        #   table,
+        #   options = options,
+        #   rownames = FALSE,
+        #   colnames = c("Characteristic", "Target", "Comparator", "Std. Diff."),
+        #   escape = FALSE,
+        #   filter = "top",
+        #   class = "stripe nowrap compact"
+        # )
+        # table <- DT::formatStyle(
+        #   table = table,
+        #   columns = 2:4,
+        #   background = DT::styleColorBar(c(0, 1), "lightblue"),
+        #   backgroundSize = "98% 88%",
+        #   backgroundRepeat = "no-repeat",
+        #   backgroundPosition = "center"
+        # )
+        # table <- DT::formatStyle(
+        #   table = table,
+        #   columns = 4,
+        #   background = styleAbsColorBar(1, "lightblue", "pink"),
+        #   backgroundSize = "98% 88%",
+        #   backgroundRepeat = "no-repeat",
+        #   backgroundPosition = "center"
+        # )
+        # table <- DT::formatRound(table, 4, digits = 2)
       } else {
         balance <- balance %>%
           dplyr::filter(.data$analysisName %in% temporalCompareAnalysisNameFilter()) %>%
@@ -3015,7 +3015,7 @@ shiny::shinyServer(function(input, output, session) {
                                   values_to = "values" 
                                     ) %>% 
               dplyr::mutate(names = paste0(.data$databaseId, " ", .data$choices, " ", .data$type)) %>% 
-              dplyr::arrange(.data$databaseId, .data$startDay1, .data$endDay1, .data$type) %>% 
+              dplyr::arrange(.data$databaseId, .data$startDay, .data$endDay, .data$type) %>% 
               tidyr::pivot_wider(id_cols = c("covariateName"),
                                  names_from = "names",
                                  values_from = c("values"),
@@ -3058,7 +3058,7 @@ shiny::shinyServer(function(input, output, session) {
                                   names_to = "type", 
                                   values_to = "values") %>% 
               dplyr::mutate(names = paste0(.data$databaseId, " ", .data$choices, " ", .data$type)) %>%
-              dplyr::arrange(.data$startDay1, .data$endDay1) %>% 
+              dplyr::arrange(.data$startDay, .data$endDay) %>% 
               tidyr::pivot_wider(id_cols = c("covariateName"),
                                  names_from = "names",
                                  values_from = "values",
