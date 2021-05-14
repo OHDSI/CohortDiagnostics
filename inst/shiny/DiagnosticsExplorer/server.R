@@ -469,7 +469,7 @@ shiny::shinyServer(function(input, output, session) {
           (input$conceptSetsType == "Mapped")
         if (source) {
           data <- resolvedOrMappedConceptSetForAllDatabase$mapped 
-          if (!is.null(data)) {
+          if (!is.null(data) && nrow(data) > 0) {
             data <- data %>%
               dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id) %>%
               dplyr::filter(.data$databaseId == !!databaseIdToFilter) %>%
@@ -528,8 +528,6 @@ shiny::shinyServer(function(input, output, session) {
       data$conceptName <- as.factor(data$conceptName)
       data$vocabularyId <- as.factor(data$vocabularyId)
       data$standardConcept <- as.factor(data$standardConcept)
-    } else {
-      data <- dplyr::tibble("No data.")
     }
     return(data)
   })
@@ -538,7 +536,7 @@ shiny::shinyServer(function(input, output, session) {
     DT::renderDataTable(expr = {
       data <- getIncludeOrSourceConcepts()
       if (is.null(data)) {
-        return(NULL)
+        return(dplyr::tibble("No included standard concepts."))
       }
       
       options = list(
@@ -574,7 +572,7 @@ shiny::shinyServer(function(input, output, session) {
     DT::renderDataTable(expr = {
       data <- getIncludeOrSourceConcepts()
       if (is.null(data)) {
-        return(NULL)
+        return("No included source concepts")
       }
       data <- data %>% 
         dplyr::mutate(conceptId = as.factor(.data$conceptId),
