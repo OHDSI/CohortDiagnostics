@@ -221,8 +221,8 @@ plotIncidenceRate <- function(data,
       aesthetics$x <- "ageGroup"
       showX <- TRUE
     }
-    else{
-      aesthetics$x <- "cohortId"
+    else {
+      aesthetics$x <- 1
       showX <- FALSE
     }
     plotType <- "bar"
