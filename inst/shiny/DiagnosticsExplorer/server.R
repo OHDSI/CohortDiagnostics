@@ -777,7 +777,7 @@ shiny::shinyServer(function(input, output, session) {
                                         ),
                                         tr(
                                           lapply(rep(
-                                            c("Entries", "Subjects"), length(databaseIds)
+                                            c("Records", "Subjects"), length(databaseIds)
                                           ), th, style = "border-right:1px solid silver")
                                         ))))
     options = list(
