@@ -1425,7 +1425,7 @@ shiny::shinyServer(function(input, output, session) {
         id_cols = c(.data$conceptId),
         names_from = .data$name,
         values_from = .data$value,
-        value_fill = 0
+        values_fill = 0
       ) %>%
       dplyr::inner_join(
         data %>%
