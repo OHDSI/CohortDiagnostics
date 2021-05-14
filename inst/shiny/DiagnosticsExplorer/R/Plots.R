@@ -501,8 +501,8 @@ plotCohortComparisonStandardizedDifference <- function(balance,
     ggplot2::geom_vline(xintercept = 0) +
     # ggplot2::scale_x_continuous("Mean") +
     # ggplot2::scale_y_continuous("Mean") +
-    ggplot2::xlab(paste("Mean ",xCohort)) +
-    ggplot2::ylab(paste("Mean ",yCohort)) +
+    ggplot2::xlab(paste("Covariate Mean in ", xCohort)) +
+    ggplot2::ylab(paste("Covariate Mean in ", yCohort)) +
     ggplot2::scale_color_manual("Domain", values = colors) +
     facet_nested(databaseId + targetCohort ~ comparatorCohort) +
     ggplot2::theme(strip.background = ggplot2::element_blank()) +
@@ -632,8 +632,8 @@ plotTemporalCompareStandardizedDifference <- function(balance,
                          linetype = "dashed") +
     ggplot2::geom_hline(yintercept = 0) +
     ggplot2::geom_vline(xintercept = 0) +
-    ggplot2::xlab(paste("Mean ",xCohort)) +
-    ggplot2::ylab(paste("Mean ",yCohort)) +
+    ggplot2::xlab(paste("Covariate Mean in ",xCohort)) +
+    ggplot2::ylab(paste("Covariate Mean in ",yCohort)) +
     # ggplot2::scale_x_continuous("Mean") +
     # ggplot2::scale_y_continuous("Mean") +
     ggplot2::scale_color_manual("Domain", values = colors) +
