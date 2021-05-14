@@ -924,10 +924,9 @@ shiny::shinyServer(function(input, output, session) {
         stratifyByCalendarYear =  stratifyByCalendarYear,
         minPersonYears = 1000
       ) %>%
-        dplyr::mutate(
-          incidenceRate = dplyr::case_when(.data$incidenceRate < 0 ~ 0,
-                                           TRUE ~ .data$incidenceRate)
-        )
+        dplyr::mutate(incidenceRate = dplyr::case_when(.data$incidenceRate < 0 ~ 0,
+                                                       TRUE ~ .data$incidenceRate))
+      
     } else {
       data <- tidyr::tibble()
     }
@@ -1045,33 +1044,43 @@ shiny::shinyServer(function(input, output, session) {
     stratifyByGender <- "Gender" %in% input$irStratification
     stratifyByCalendarYear <-
       "Calendar Year" %in% input$irStratification
-    data <- incidenceRateData()
-    
-    if (stratifyByAge && !"All" %in% incidenceRateAgeFilter()) {
-      data <- data %>%
-        dplyr::filter(.data$ageGroup %in% incidenceRateAgeFilter())
-    }
-    if (stratifyByGender &&
-        !"All" %in% incidenceRateGenderFilter()) {
-      data <- data %>%
-        dplyr::filter(.data$gender %in% incidenceRateGenderFilter())
-    }
-    if (stratifyByCalendarYear) {
-      data <- data %>%
-        dplyr::filter(.data$calendarYear %in% incidenceRateCalenderFilter())
-    }
-    
-    validate(need(nrow(data) > 0, paste0("No data for this combination")))
-    
-    plot <- plotIncidenceRate(
-      data = data,
-      shortNameRef = cohort,
-      stratifyByAgeGroup = stratifyByAge,
-      stratifyByGender = stratifyByGender,
-      stratifyByCalendarYear = stratifyByCalendarYear,
-      yscaleFixed = input$irYscaleFixed
+    shiny::withProgress(
+      message = paste(
+        "Building incidence rate plot data for ",
+        length(cohortIds()),
+        " cohorts and ",
+        length(databaseIds()),
+        " databases"
+      ),{
+        data <- incidenceRateData()
+        
+        if (stratifyByAge && !"All" %in% incidenceRateAgeFilter()) {
+          data <- data %>%
+            dplyr::filter(.data$ageGroup %in% incidenceRateAgeFilter())
+        }
+        if (stratifyByGender &&
+            !"All" %in% incidenceRateGenderFilter()) {
+          data <- data %>%
+            dplyr::filter(.data$gender %in% incidenceRateGenderFilter())
+        }
+        if (stratifyByCalendarYear) {
+          data <- data %>%
+            dplyr::filter(.data$calendarYear %in% incidenceRateCalenderFilter())
+        }
+        
+        validate(need(nrow(data) > 0, paste0("No data for this combination")))
+        
+        plot <- plotIncidenceRate(
+          data = data,
+          shortNameRef = cohort,
+          stratifyByAgeGroup = stratifyByAge,
+          stratifyByGender = stratifyByGender,
+          stratifyByCalendarYear = stratifyByCalendarYear,
+          yscaleFixed = input$irYscaleFixed
+        )
+        return(plot)
+      },detail = "Please Wait"
     )
-    return(plot)
   })
   
   # Time distribution -----------------------------------------------------------------------------
