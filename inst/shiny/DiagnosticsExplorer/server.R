@@ -2836,18 +2836,24 @@ shiny::shinyServer(function(input, output, session) {
         
         colorBarColumns <- c(2,4)
         
+        standardDifferenceColumn <- 6
+        
       } else {
         table <- balance %>%
           dplyr::select(
             .data$covariateName,
             .data$meanTarget,
-            .data$meanComparator
-          )
+            .data$meanComparator,
+            .data$StdDiff
+          ) %>% 
+          dplyr::rename("target" = meanTarget,
+                        "comparator" = meanComparator)
         
         columsDefs <- list(truncateStringDef(0, 80),
-                           minCellRealDef(1:2, digits = 2))
+                           minCellRealDef(1:3, digits = 2))
         
         colorBarColumns <- c(2,3)
+        standardDifferenceColumn <- 4
       }
       
       options = list(
@@ -2883,7 +2889,7 @@ shiny::shinyServer(function(input, output, session) {
       )
       table <- DT::formatStyle(
         table = table,
-        columns = 6,
+        columns = standardDifferenceColumn,
         background = styleAbsColorBar(1, "lightblue", "pink"),
         backgroundSize = "98% 88%",
         backgroundRepeat = "no-repeat",
