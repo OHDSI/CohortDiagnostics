@@ -21,6 +21,28 @@ cohortReference <- function(outputId) {
   )
 }
 
+cohortReferenceWithDatabaseId <- function(cohortOutputId, databaseOutputId) {
+  shinydashboard::box(
+    # title = "Reference",
+    status = "warning",
+    width = "100%",
+    tags$div(style = "max-height: 100px; overflow-y: auto",
+             tags$table(width = "100%",
+                        tags$tr(
+                          tags$td(width = "70%",
+                                  tags$b("Cohorts :"),
+                                  shiny::uiOutput(outputId = cohortOutputId)
+                          ),
+                          tags$td(style = "align: right !important;", width = "30%",
+                                  tags$b("Database :"),
+                                  shiny::uiOutput(outputId = databaseOutputId)
+                          )
+                        )
+             )
+    )
+  )
+}
+
 if (is(dataSource, "environment")) {
   choicesFordatabaseOrVocabularySchema <-
     c(database$databaseIdWithVocabularyVersion)
@@ -389,12 +411,18 @@ bodyTabItems <- shinydashboard::tabItems(
             shiny::tabPanel(
               title = "JSON",
               copyToClipboardButton("cohortDefinitionJson", style = "margin-top: 5px; margin-bottom: 5px;"),
-              shiny::verbatimTextOutput("cohortDefinitionJson")
+              shiny::verbatimTextOutput("cohortDefinitionJson"),
+              tags$head(
+                tags$style("#cohortDefinitionJson { max-height:400px};")
+              )
             ),
             shiny::tabPanel(
               title = "SQL",
               copyToClipboardButton("cohortDefinitionSql", style = "margin-top: 5px; margin-bottom: 5px;"),
-              shiny::verbatimTextOutput("cohortDefinitionSql")
+              shiny::verbatimTextOutput("cohortDefinitionSql"),
+              tags$head(
+                tags$style("#cohortDefinitionSql { max-height:400px};")
+              )
             )
           )
         )
@@ -404,6 +432,13 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "cohortCounts",
     cohortReference("cohortCountsSelectedCohorts"),
+    shiny::radioButtons(
+      inputId = "cohortCountsTableColumnFilter",
+      label = "Display",
+      choices = c("Both", "Subjects Only", "Records Only"), 
+      selected = "Both",
+      inline = TRUE
+    ),
     DT::dataTableOutput("cohortCountsTable"),
   ),
   shinydashboard::tabItem(
@@ -423,6 +458,24 @@ bodyTabItems <- shinydashboard::tabItems(
                        choices = c("Age", "Gender", "Calendar Year"),
                        selected = c("Age", "Gender", "Calendar Year"),
                        inline = TRUE
+                     )
+                   ),
+                   tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;")),
+                   tags$td(
+                     valign = "bottom",
+                     style = "width:30% !important;margin-top:10px;",
+                     shiny::conditionalPanel(
+                       condition = "input.irYscaleFixed",
+                       shiny::sliderInput(
+                         inputId = "YscaleMinAndMax",
+                         label = "Filter Incident Rate Between :",
+                         min = c(0),
+                         max = c(0),
+                         value = c(0, 0),
+                         dragRange = TRUE,width = 400,
+                         step = 1,
+                         sep = "",
+                       )
                      )
                    ),
                    tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;")),
@@ -597,6 +650,16 @@ bodyTabItems <- shinydashboard::tabItems(
             selected = "All",
             inline = TRUE
           )
+        ),
+        tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
+        tags$td(
+          shiny::radioButtons(
+            inputId = "indexEventBreakdownTableFilter",
+            label = "Display",
+            choices = c("Both", "Records", "Persons"), 
+            selected = "Persons",
+            inline = TRUE
+          )
         )
       )
     ),
@@ -627,7 +690,8 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "cohortCharacterization",
     cohortReference("characterizationSelectedCohort"),
-    tags$table(tags$tr(
+    tags$table(
+      tags$tr(
       tags$td(
         shiny::radioButtons(
           inputId = "charType",
@@ -685,18 +749,32 @@ bodyTabItems <- shinydashboard::tabItems(
                                       inputId = "charProportionOrContinuous",
                                       label = "",
                                       choices = c("All", "Proportion", "Continuous"),
-                                      selected = "All",
+                                      selected = "Proportion",
                                       inline = TRUE
                                     )
                                   )
                                 )))
+      )
+    ),
+    tags$tr(
+      tags$td(colspan = 2,
+        shiny::conditionalPanel(
+          condition = "input.charType == 'Raw'",
+          shiny::radioButtons(
+            inputId = "characterizationColumnFilters",
+            label = "Display",
+            choices = c("Mean and Standard Deviation", "Mean only"),
+            selected = "Mean only",
+            inline = TRUE
+          )
+        )
       )
     )),
     DT::dataTableOutput(outputId = "characterizationTable")
   ),
   shinydashboard::tabItem(
     tabName = "temporalCharacterization",
-    cohortReference("temporalCharacterizationSelectedCohort"),
+    cohortReferenceWithDatabaseId("temporalCharacterizationSelectedCohort", "temporalCharacterizationSelectedDatabase"),
     tags$table(tags$tr(
       tags$td(
         shinyWidgets::pickerInput(
@@ -739,7 +817,7 @@ bodyTabItems <- shinydashboard::tabItems(
           inputId = "temporalProportionOrContinuous",
           label = "",
           choices = c("All", "Proportion", "Continuous"),
-          selected = "All",
+          selected = "Proportion",
           inline = TRUE
         )
       )
@@ -748,14 +826,34 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "compareCohortCharacterization",
-    cohortReference("cohortCharCompareSelectedCohort"),
-    shiny::radioButtons(
-      inputId = "charCompareType",
-      label = "",
-      choices = c("Pretty table", "Raw table", "Plot"),
-      selected = "Plot",
-      inline = TRUE
+    cohortReferenceWithDatabaseId("cohortCharCompareSelectedCohort", "cohortCharCompareSelectedDatabase"),
+    tags$table(
+      tags$tr(
+        tags$td(
+          shiny::radioButtons(
+            inputId = "charCompareType",
+            label = "",
+            choices = c("Pretty table", "Raw table", "Plot"),
+            selected = "Plot",
+            inline = TRUE
+          ),
+        ),
+        tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
+        tags$td(
+          shiny::conditionalPanel(
+            condition = "input.charCompareType == 'Raw table'",
+            shiny::radioButtons(
+              inputId = "compareCharacterizationColumnFilters",
+              label = "Display",
+              choices = c("Mean and Standard Deviation", "Mean only"),
+              selected = "Mean only",
+              inline = TRUE
+            )
+          )
+        )
+      )
     ),
+    
     shiny::conditionalPanel(condition = "input.charCompareType == 'Raw table' | input.charCompareType=='Plot'",
                             tags$table(tags$tr(
                               tags$td(
@@ -801,7 +899,7 @@ bodyTabItems <- shinydashboard::tabItems(
                                   inputId = "charCompareProportionOrContinuous",
                                   label = "",
                                   choices = c("All", "Proportion", "Continuous"),
-                                  selected = "All",
+                                  selected = "Proportion",
                                   inline = TRUE
                                 )
                               )
@@ -825,15 +923,34 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "compareTemporalCharacterization",
-    cohortReference("cohortTemporalCharCompareSelectedCohort"),
-    shiny::radioButtons(
-      inputId = "temporalCharacterizationType",
-      label = "",
-      choices = c("Raw table", "Plot"),
-      #"Pretty table", removed pretty option for compare temporal characterization
-      # Pretty table can be put back in - we will need a different Table1Specs for temporal characterization
-      selected = "Plot",
-      inline = TRUE
+    cohortReferenceWithDatabaseId(cohortOutputId = "temporalCharCompareSelectedCohort", databaseOutputId = "temporalCharCompareSelectedDatabase"),
+    tags$table(
+      tags$tr(
+        tags$td(
+          shiny::radioButtons(
+            inputId = "temporalCharacterizationType",
+            label = "",
+            choices = c("Raw table", "Plot"),
+            #"Pretty table", removed pretty option for compare temporal characterization
+            # Pretty table can be put back in - we will need a different Table1Specs for temporal characterization
+            selected = "Plot",
+            inline = TRUE
+          )
+        ),
+        tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
+        tags$td(
+          shiny::conditionalPanel(
+            condition = "input.temporalCharacterizationType == 'Raw table'",
+            shiny::radioButtons(
+              inputId = "temporalCharacterizationTypeColumnFilter",
+              label = "Show  in table:",
+              choices = c("Mean and Standard Deviation", "Mean only"),
+              selected = "Mean only",
+              inline = TRUE
+            )
+          )
+        )
+      )
     ),
     shiny::conditionalPanel(condition = "input.temporalCharacterizationType == 'Raw table' | input.temporalCharacterizationType=='Plot'",
                             tags$table(tags$tr(
@@ -876,9 +993,9 @@ bodyTabItems <- shinydashboard::tabItems(
                               tags$td(
                                 shiny::radioButtons(
                                   inputId = "temporalCharacterProportionOrContinuous",
-                                  label = "",
+                                  label = "Filter to:",
                                   choices = c("All", "Proportion", "Continuous"),
-                                  selected = "All",
+                                  selected = "Proportion",
                                   inline = TRUE
                                 )
                               )

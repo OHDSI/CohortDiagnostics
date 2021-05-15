@@ -14,13 +14,13 @@ connectionPool <- NULL
 defaultServer <- Sys.getenv("shinydbServer")
 defaultDatabase <- Sys.getenv("shinydbDatabase")
 defaultPort <- 5432
-defaultUser <- Sys.getenv("shinyDbUser")
-defaultPassword <- Sys.getenv("shinyDbPassword")
-defaultResultsSchema <- 'CdSkeletonCohortDiagnosticsStudy'
+defaultUser <- Sys.getenv("shinydbUser")
+defaultPassword <- Sys.getenv("shinydbPw")
+defaultResultsSchema <- 'thrombosisthrombocytopenia'
 defaultVocabularySchema <- defaultResultsSchema
 alternateVocabularySchema <- c('vocabulary')
 
-defaultDatabaseMode <- FALSE # Use file system if FALSE
+defaultDatabaseMode <- TRUE # Use file system if FALSE
 
 appInformationText <- "V 2.1"
 appInformationText <- "Powered by OHDSI Cohort Diagnostics application - Version 2.1. This app is working in"
@@ -124,6 +124,7 @@ if (databaseMode) {
   loadResultsTable("cohort", required = TRUE)
   loadResultsTable("temporal_time_ref")
   loadResultsTable("concept_sets")
+  loadResultsTable("cohort_count", required = TRUE)
   
   for (table in c(dataModelSpecifications$tableName)) {
     #, "recommender_set"
