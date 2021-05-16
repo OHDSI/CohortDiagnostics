@@ -74,7 +74,7 @@ covariate_value_dist,count_value,float,Yes,No,No,Yes
 covariate_value_dist,min_value,float,Yes,No,No,Yes
 covariate_value_dist,max_value,float,Yes,No,No,Yes
 covariate_value_dist,mean,float,Yes,No,No,Yes
-covariate_value_dist,sd,float,Yes,No,No,Yes
+covariate_value_dist,sd,float,No,No,No,Yes
 covariate_value_dist,median_value,float,Yes,No,No,Yes
 covariate_value_dist,p_10_value,float,Yes,No,No,Yes
 covariate_value_dist,p_25_value,float,Yes,No,No,Yes

@@ -180,7 +180,7 @@ CREATE TABLE covariate_value_dist (
 			min_value FLOAT NOT NULL,
 			max_value FLOAT NOT NULL,
 			mean FLOAT NOT NULL,
-			sd FLOAT NOT NULL,
+			sd FLOAT,
 			median_value FLOAT NOT NULL,
 			p_10_value FLOAT NOT NULL,
 			p_25_value FLOAT NOT NULL,
