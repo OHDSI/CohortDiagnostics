@@ -222,7 +222,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     cohortIds = cohortIds
   )
   
-  if (!is.null(phenotypeDescriptionFile)) {
+  if (all(exists('phenotypeDescription'), !is.null(phenotypeDescriptionFile))) {
     phenotypeDescription <-
       loadAndExportPhenotypeDescription(
         packageName = packageName,
@@ -347,7 +347,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       dplyr::tibble()
   }, error = function(...) {
     warning("Problem getting vocabulary version. cdm_source table not found in the database.")
-    vocabularyVersionCdm <- dplyr::tibble()
+    vocabularyVersionCdm <- NULL
     if (connection@dbms == "postgresql") { #this is for test that automated testing purpose
       DatabaseConnector::dbExecute(connection, "ABORT;")
     }
@@ -363,7 +363,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       unique()
   } else {
     warning("Problem getting vocabulary version. cdm_source table either does not have data, or does not have the field vocabulary_version.")
-    vocabularyVersionCdm <- 'NA'
+    vocabularyVersionCdm <- NULL
   }
   
   vocabularyVersion <-
