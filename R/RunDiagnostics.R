@@ -222,17 +222,14 @@ runCohortDiagnostics <- function(packageName = NULL,
     cohortIds = cohortIds
   )
   
-  if (all(exists('phenotypeDescription'), !is.null(phenotypeDescriptionFile))) {
-    phenotypeDescription <-
-      loadAndExportPhenotypeDescription(
-        packageName = packageName,
-        phenotypeDescriptionFile = phenotypeDescriptionFile,
-        exportFolder = exportFolder,
-        cohorts = cohorts,
-        errorMessage = errorMessage
-      )
-  } else {
-    phenotypeDescription <- NULL
+  if (!is.null(phenotypeDescriptionFile)) {
+    loadAndExportPhenotypeDescription(
+      packageName = packageName,
+      phenotypeDescriptionFile = phenotypeDescriptionFile,
+      exportFolder = exportFolder,
+      cohorts = cohorts,
+      errorMessage = errorMessage
+    )
   }
   
   if (nrow(cohorts) == 0) {
@@ -347,7 +344,6 @@ runCohortDiagnostics <- function(packageName = NULL,
       dplyr::tibble()
   }, error = function(...) {
     warning("Problem getting vocabulary version. cdm_source table not found in the database.")
-    vocabularyVersionCdm <- NULL
     if (connection@dbms == "postgresql") { #this is for test that automated testing purpose
       DatabaseConnector::dbExecute(connection, "ABORT;")
     }
