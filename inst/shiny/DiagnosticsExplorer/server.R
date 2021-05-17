@@ -3306,13 +3306,8 @@ shiny::shinyServer(function(input, output, session) {
         .data$vocabularyVersionCdm,
         .data$vocabularyVersion,
         .data$description
-      ) %>%
-      dplyr::mutate(
-        match = dplyr::case_when(
-          .data$vocabularyVersionCdm == .data$vocabularyVersion ~ TRUE,
-          TRUE ~ FALSE
-        )
-      )
+      ) 
+    
     options = list(
       pageLength = 100,
       lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
@@ -3322,9 +3317,7 @@ shiny::shinyServer(function(input, output, session) {
       paging = TRUE,
       searchHighlight = TRUE,
       columnDefs = list(
-        list(width = "20%", targets = 0),
-        list(width = "20%", targets = 1),
-        list(width = "30%", targets = 4)
+        list(width = "50%", targets = 4)
       )
     )
     sketch <- htmltools::withTags(table(class = "display",
@@ -3338,8 +3331,7 @@ shiny::shinyServer(function(input, output, session) {
                                               class = "dt-center",
                                               style = "border-right:1px solid silver"
                                             ),
-                                            th(rowspan = 2, "Description"),
-                                            th(rowspan = 2, "Match"),
+                                            th(rowspan = 2, "Description")
                                           ),
                                           tr(lapply(
                                             c("CDM source", "Vocabulary table"), th, style = "border-right:1px solid silver"
@@ -3351,10 +3343,7 @@ shiny::shinyServer(function(input, output, session) {
       container = sketch,
       rownames = FALSE,
       class = "stripe compact"
-    ) %>%
-      DT::formatStyle('match',
-                      target = 'row',
-                      color = DT::styleEqual(FALSE, 'red'))
+    ) 
     return(table)
   }, server = TRUE)
   
