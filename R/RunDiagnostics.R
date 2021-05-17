@@ -336,7 +336,6 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
   }
   
-  vocabularyVersionCdm <- ""
   tryCatch({
     vocabularyVersionCdm <-
       DatabaseConnector::renderTranslateQuerySql(
@@ -354,8 +353,10 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
   })
   
-  if (all(nrow(vocabularyVersionCdm) > 0,
-      'vocabularyVersion' %in% colnames(vocabularyVersionCdm))) {
+  if (all(exists('vocabularyVersionCdm'),
+          !is.null(vocabularyVersionCdm), 
+          nrow(vocabularyVersionCdm) > 0,
+          'vocabularyVersion' %in% colnames(vocabularyVersionCdm))) {
     vocabularyVersionCdm <- vocabularyVersionCdm %>% 
       dplyr::rename(vocabularyVersionCdm = .data$vocabularyVersion) %>%
       dplyr::pull(vocabularyVersionCdm) %>%
