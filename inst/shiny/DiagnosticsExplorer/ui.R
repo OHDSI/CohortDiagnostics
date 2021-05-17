@@ -327,6 +327,18 @@ bodyTabItems <- shinydashboard::tabItems(
       title = "Cohort Definition",
       width = NULL,
       status = "primary",
+      tags$table(width = "100%", 
+        tags$tr(
+          tags$td(align = "right",
+            shiny::downloadButton(
+              "saveCohortDefinitionButton",
+              label = "Save to CSV file",
+              icon = shiny::icon("download"),
+              style = "margin-top: 5px; margin-bottom: 5px;"
+            )
+          )
+        )
+      ),    
       DT::dataTableOutput(outputId = "cohortDefinitionTable"),
       column(
         12,

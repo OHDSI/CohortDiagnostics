@@ -86,10 +86,28 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
+  downloadTableData <- function(data, fileName) {
+    downloadHandler(
+      filename = function() {
+        paste(fileName, "-",  Sys.Date(), ".csv", sep = "")
+      },
+      content = function(file) {
+        write.csv(data, file)
+      }
+    )
+  }
+  
+  cohortDefinitionTableData <- shiny::reactive(x = {
+    data <-  cohortSubset() %>%
+      dplyr::select(cohort = .data$shortName, .data$cohortId, .data$cohortName)
+    return(data)
+  })
+  
+  output$saveCohortDefinitionButton <- downloadTableData(data = cohortDefinitionTableData(), fileName = "CohortDefinition") 
+  
   # Cohort Definition ---------------------------------------------------------
   output$cohortDefinitionTable <- DT::renderDataTable(expr = {
-    data <- cohortSubset() %>%
-      dplyr::select(cohort = .data$shortName, .data$cohortId, .data$cohortName) %>%
+    data <- cohortDefinitionTableData() %>%
       dplyr::mutate(cohort = as.factor(.data$cohort),
                     cohortName = as.factor(.data$cohortName),
                     cohortId = as.factor(.data$cohortId))
