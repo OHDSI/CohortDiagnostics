@@ -468,7 +468,7 @@ bodyTabItems <- shinydashboard::tabItems(
                        condition = "input.irYscaleFixed",
                        shiny::sliderInput(
                          inputId = "YscaleMinAndMax",
-                         label = "Filter Incident Rate Between :",
+                         label = "Limit y-scale range to:",
                          min = c(0),
                          max = c(0),
                          value = c(0, 0),
