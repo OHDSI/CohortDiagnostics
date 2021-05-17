@@ -39,7 +39,7 @@ exportCharacterization <- function(characteristics,
       dplyr::mutate(
         mean = dplyr::case_when(
           .data$mean != 0 &
-            .data$mean < minCellCount / .data$cohortEntries ~ -minCellCount / .data$cohortEntries,
+            .data$mean < !!minCellCount / .data$cohortEntries ~ -!!minCellCount / .data$cohortEntries,
           TRUE ~ .data$mean
         )
       ) %>%
@@ -93,7 +93,7 @@ exportCharacterization <- function(characteristics,
       dplyr::mutate(
         mean = dplyr::case_when(
           .data$mean != 0 &
-            .data$mean < minCellCount / .data$cohortEntries ~ -minCellCount / .data$cohortEntries,
+            .data$mean < !!minCellCount / .data$cohortEntries ~ -!!minCellCount / .data$cohortEntries,
           TRUE ~ .data$mean
         )
       ) %>%
