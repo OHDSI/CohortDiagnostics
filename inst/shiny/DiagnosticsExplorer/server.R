@@ -2285,6 +2285,11 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
+  output$saveCohortCharacterizationTable <- downloadTableData(
+    data = characterizationTableData(),
+    fileName = "cohortCharacterization"
+  )
+  
   
   output$characterizationTable <- DT::renderDataTable(expr = {
     data <- characterizationTableData()
@@ -2549,6 +2554,18 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   # Temporal characterization -----------------------------------------------------------------
+  
+  output$saveTemporalCharacterizationTable <- downloadTableData(
+    data = getCovariateValueResult(
+      dataSource = dataSource,
+      cohortIds = cohortId(),
+      databaseIds = input$database,
+      timeIds = timeIds(),
+      isTemporal = TRUE
+    ),
+    fileName = "temporalCharacterization"
+  )
+  
   temporalAnalysisNameFilter <- shiny::reactive(x = {
     return(input$temporalAnalysisNameFilter)
   })
@@ -2815,6 +2832,11 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
+  output$saveCompareCohortCharacterizationTable <- downloadTableData(
+    data = computeBalance(),
+    fileName = "compareCohortCharacterization"
+  )
+  
   output$charCompareTable <- DT::renderDataTable(expr = {
     balance <- computeBalance()
     if (nrow(balance) == 0) {
@@ -3077,6 +3099,12 @@ shiny::shinyServer(function(input, output, session) {
       
       return(balance)
     })
+  
+  output$saveCompareTemporalCharacterizationTable <- downloadTableData(
+    data = computeBalanceForCompareTemporalCharacterization(),
+    fileName = "compareTemporalCharacterization"
+  )
+  
   
   shiny::observe({
     subset <-

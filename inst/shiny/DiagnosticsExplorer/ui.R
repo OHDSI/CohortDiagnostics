@@ -331,8 +331,8 @@ bodyTabItems <- shinydashboard::tabItems(
         tags$tr(
           tags$td(align = "right",
             shiny::downloadButton(
-              "saveCohortDefinitionButton",
-              label = "Save to CSV file",
+              outputId = "saveCohortDefinitionButton",
+              label = NULL,
               icon = shiny::icon("download"),
               style = "margin-top: 5px; margin-bottom: 5px;"
             )
@@ -878,6 +878,18 @@ bodyTabItems <- shinydashboard::tabItems(
         )
       )
     )),
+    tags$table(width = "100%", 
+               tags$tr(
+                 tags$td(align = "right",
+                         shiny::downloadButton(
+                           outputId = "saveCohortCharacterizationTable",
+                           label = "",
+                           icon = shiny::icon("download"),
+                           style = "margin-top: 5px; margin-bottom: 5px;"
+                         )
+                 )
+               )
+    ),
     DT::dataTableOutput(outputId = "characterizationTable")
   ),
   shinydashboard::tabItem(
@@ -930,6 +942,18 @@ bodyTabItems <- shinydashboard::tabItems(
         )
       )
     )),
+    tags$table(width = "100%", 
+               tags$tr(
+                 tags$td(align = "right",
+                         shiny::downloadButton(
+                           outputId = "saveTemporalCharacterizationTable",
+                           label = "",
+                           icon = shiny::icon("download"),
+                           style = "margin-top: 5px; margin-bottom: 5px;"
+                         )
+                 )
+               )
+    ),
     DT::dataTableOutput("temporalCharacterizationTable")
   ),
   shinydashboard::tabItem(
@@ -1013,6 +1037,18 @@ bodyTabItems <- shinydashboard::tabItems(
                               )
                             ))),
     shiny::conditionalPanel(condition = "input.charCompareType=='Pretty table' | input.charCompareType=='Raw table'",
+                            tags$table(width = "100%", 
+                                       tags$tr(
+                                         tags$td(align = "right",
+                                                 shiny::downloadButton(
+                                                   outputId = "saveCompareCohortCharacterizationTable",
+                                                   label = "",
+                                                   icon = shiny::icon("download"),
+                                                   style = "margin-top: 5px; margin-bottom: 5px;"
+                                                 )
+                                         )
+                                       )
+                            ),
                             DT::dataTableOutput("charCompareTable")),
     shiny::conditionalPanel(
       condition = "input.charCompareType=='Plot'",
@@ -1111,6 +1147,18 @@ bodyTabItems <- shinydashboard::tabItems(
     shiny::conditionalPanel(
       condition = "input.temporalCharacterizationType=='Pretty table' |
                             input.temporalCharacterizationType=='Raw table'",
+      tags$table(width = "100%", 
+                 tags$tr(
+                   tags$td(align = "right",
+                           shiny::downloadButton(
+                             outputId = "saveCompareTemporalCharacterizationTable",
+                             label = "",
+                             icon = shiny::icon("download"),
+                             style = "margin-top: 5px; margin-bottom: 5px;"
+                           )
+                   )
+                 )
+      ),
       DT::dataTableOutput(outputId = "temporalCharacterizationCompareTable")
     ),
     shiny::conditionalPanel(
