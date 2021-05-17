@@ -35,10 +35,10 @@ fixTableMetadataForBackwardCompatibility <- function(table, tableName) {
       data <- list()
       for (i in (1:nrow(table))) {
         data[[i]] <- table[i,]
-        colnames <- colnames(data[[i]])
+        colnamesDf <- colnames(data[[i]])
         metaDataList <- list()
-        for (j in (1:length(colnames))) {
-          metaDataList[[colnames[[j]]]] = data[[i]][colnames[[j]]] %>% dplyr::pull()
+        for (j in (1:length(colnamesDf))) {
+          metaDataList[[colnamesDf[[j]]]] = data[[i]][colnamesDf[[j]]] %>% dplyr::pull()
         }
         data[[i]]$metadata <-
           RJSONIO::toJSON(metaDataList, pretty = TRUE, digits = 23)
