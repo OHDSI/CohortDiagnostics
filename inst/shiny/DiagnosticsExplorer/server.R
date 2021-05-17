@@ -87,9 +87,12 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   downloadTableData <- function(data, fileName) {
+    date <- stringr::str_replace_all(Sys.Date(),pattern = "-", replacement = "")
+    time <- stringr::str_split(string = Sys.time(), pattern = " ", n = 2)[[1]][2]
+    timeArray <- stringr::str_split(string = time, pattern = ":", n = 3)
     downloadHandler(
       filename = function() {
-        paste(fileName, "-",  Sys.Date(), ".csv", sep = "")
+        paste(fileName, "_",  date, "_", timeArray[[1]][1], timeArray[[1]][2], ".csv", sep = "")
       },
       content = function(file) {
         write.csv(data, file)
