@@ -32,7 +32,7 @@ data site.}
 
 \item{tempFolder}{A folder on the local file system where the zip files are extracted to. Will be cleaned
 up when the function is finished. Can be used to specify a temp folder on a drive that
-has sufficent space if the default system temp space is too limited.}
+has sufficient space if the default system temp space is too limited.}
 }
 \description{
 Requires the results data model tables have been created using the \code{\link{createResultsDataModel}} function.
