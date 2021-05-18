@@ -1961,7 +1961,6 @@ shiny::shinyServer(function(input, output, session) {
     databaseIds <- unique(data$databaseId)
     
     cohortCounts <- data %>% 
-      dplyr::inner_join(y = cohortCount, by = c("cohortId", "databaseId")) %>% 
       dplyr::filter(.data$cohortId == cohortId()) %>% 
       dplyr::filter(.data$databaseId %in% databaseIds()) %>% 
       dplyr::select(.data$cohortSubjects) %>% 
