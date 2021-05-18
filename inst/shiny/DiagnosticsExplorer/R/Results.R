@@ -165,6 +165,11 @@ getIncidenceRateResult <- function(dataSource = .GlobalEnv,
     dplyr::mutate(calendarYear = as.integer(.data$calendarYear)) %>%
     dplyr::arrange(.data$cohortId, .data$databaseId)
   
+  if (!is.null(minSubjectCount)) {
+    data <- data %>% 
+      dplyr::filter(.data$cohortSubjects > !!minSubjectCount)
+  }
+  
   return(data)
 }
 
