@@ -583,7 +583,8 @@ shiny::shinyServer(function(input, output, session) {
               'conceptId' %in% colnames(conceptCounts))) {
         data <- data %>% 
           dplyr::left_join(conceptCounts, by = "conceptId") %>% 
-          dplyr::arrange(dplyr::desc(.data$conceptCount))
+          dplyr::arrange(dplyr::desc(.data$conceptSubjects)) %>% 
+          dplyr::relocate(.data$conceptSubjects, .data$conceptCount)
       }
       
       data$conceptClassId <- as.factor(data$conceptClassId)
@@ -593,6 +594,9 @@ shiny::shinyServer(function(input, output, session) {
       data$conceptName <- as.factor(data$conceptName)
       data$vocabularyId <- as.factor(data$vocabularyId)
       data$standardConcept <- as.factor(data$standardConcept)
+      
+      data <- data %>% 
+        dplyr::relocate(.data$conceptId, .data$conceptName)
     }
     return(data)
   })
