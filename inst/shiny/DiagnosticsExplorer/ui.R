@@ -354,12 +354,16 @@ bodyTabItems <- shinydashboard::tabItems(
                             shiny::htmlOutput("cohortDefinitionText")),
             shiny::tabPanel(
               title = "Concept Sets",
-              shiny::downloadButton(
-                "saveConceptSetButton",
-                label = "Save to CSV file",
-                icon = shiny::icon("download"),
-                style = "margin-top: 5px; margin-bottom: 5px;"
-              ),
+              tags$table(width = "100%",
+                         tags$tr(tags$td(
+                           align = "right",
+                           shiny::downloadButton(
+                             "saveConceptSetButton",
+                             label = "",
+                             icon = shiny::icon("download"),
+                             style = "margin-top: 5px; margin-bottom: 5px;"
+                           )
+                         ))),
               DT::dataTableOutput(outputId = "conceptsetExpressionTable"),
               shiny::conditionalPanel(condition = "output.conceptSetExpressionRowSelected == true",
                                       tags$table(tags$tr(

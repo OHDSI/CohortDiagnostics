@@ -745,15 +745,7 @@ shiny::shinyServer(function(input, output, session) {
     cohortDefinitionConceptSetExpressionRow()$json
   })
   
-  output$saveConceptSetButton <- downloadHandler(
-    filename = function() {
-      paste("conceptSet-", Sys.Date(), ".csv", sep = "")
-    },
-    content = function(file) {
-      data <- cohortDefinitionConceptSets()
-      write.csv(data, file)
-    }
-  )
+  output$saveConceptSetButton <- downloadTableData(data = cohortDefinitionConceptSets(), fileName = "ConceptSetsExpression")
   
   getConceptSetIds <- shiny::reactive(x = {
     return(conceptSets$conceptSetId[conceptSets$conceptSetName  %in% input$conceptSetsToFilterCharacterization])
