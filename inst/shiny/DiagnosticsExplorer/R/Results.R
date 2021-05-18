@@ -99,7 +99,8 @@ getIncidenceRateResult <- function(dataSource = .GlobalEnv,
                                    stratifyByGender = c(TRUE,FALSE),
                                    stratifyByAgeGroup = c(TRUE,FALSE),
                                    stratifyByCalendarYear = c(TRUE,FALSE),
-                                   minPersonYears = 1000) {
+                                   minPersonYears = 1000,
+                                   minSubjectCount = NULL) {
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
   errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = cohortIds,
@@ -159,9 +160,12 @@ getIncidenceRateResult <- function(dataSource = .GlobalEnv,
                     ageGroup = dplyr::na_if(.data$ageGroup, ""),
                     calendarYear = dplyr::na_if(.data$calendarYear, ""))
   }
-  return(data %>% 
-           dplyr::mutate(calendarYear = as.integer(.data$calendarYear)) %>%
-           dplyr::arrange(.data$cohortId, .data$databaseId))
+  data <- data %>% 
+    dplyr::inner_join(cohortCount, by = c("cohortId", "databaseId")) %>% 
+    dplyr::mutate(calendarYear = as.integer(.data$calendarYear)) %>%
+    dplyr::arrange(.data$cohortId, .data$databaseId)
+  
+  return(data)
 }
 
 getInclusionRuleStats <- function(dataSource = .GlobalEnv,

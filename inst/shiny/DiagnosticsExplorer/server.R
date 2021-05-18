@@ -530,9 +530,20 @@ shiny::shinyServer(function(input, output, session) {
             data <- data %>%
               dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id) %>%
               dplyr::filter(.data$databaseId %in% !!databaseIdToFilter) %>%
-              dplyr::select(-.data$databaseId, -.data$conceptSetId)
-            data$resolvedConceptId <-
-              as.factor(data$resolvedConceptId)
+              dplyr::select(-.data$databaseId, -.data$conceptSetId) %>% 
+              dplyr::filter(.data$conceptId != .data$resolvedConceptId) %>% 
+              dplyr::relocate(.data$resolvedConceptId) %>% 
+              dplyr::inner_join(resolvedOrMappedConceptSetForAllDatabase$resolved %>% 
+                                  dplyr::select(.data$conceptId, .data$conceptName) %>% 
+                                  dplyr::distinct() %>% 
+                                  dplyr::rename("resolvedConceptId" = .data$conceptId,
+                                                "resolvedConceptName" = .data$conceptName),
+                                by = "resolvedConceptId") %>% 
+              dplyr::mutate(resolvedConcept = paste0(.data$resolvedConceptId, " (", .data$resolvedConceptName, ")")) %>% 
+              dplyr::select(-.data$resolvedConceptId, -.data$resolvedConceptName) %>% 
+              dplyr::relocate(.data$resolvedConcept)
+            data$resolvedConcept <-
+              as.factor(data$resolvedConcept)
           } else {
             data <- NULL
           }
@@ -566,9 +577,20 @@ shiny::shinyServer(function(input, output, session) {
           data <- resolvedOrMappedConceptSetForAllVocabulary$mapped %>%
             dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id) %>%
             dplyr::filter(.data$vocabularyDatabaseSchema == !!vocabularyDataSchemaToFilter) %>%
-            dplyr::select(-.data$vocabularyDatabaseSchema, -.data$conceptSetId)
-          data$resolvedConceptId <-
-            as.factor(data$resolvedConceptId)
+            dplyr::select(-.data$vocabularyDatabaseSchema, -.data$conceptSetId) %>% 
+            dplyr::filter(.data$conceptId != .data$resolvedConceptId) %>% 
+            dplyr::relocate(.data$resolvedConceptId) %>% 
+            dplyr::inner_join(resolvedOrMappedConceptSetForAllVocabulary$resolved %>% 
+                                dplyr::select(.data$conceptId, .data$conceptName) %>% 
+                                dplyr::distinct() %>% 
+                                dplyr::rename("resolvedConceptId" = .data$conceptId,
+                                              "resolvedConceptName" = .data$conceptName),
+                              by = "resolvedConceptId") %>% 
+            dplyr::mutate(resolvedConcept = paste0(.data$resolvedConceptId, " (", .data$resolvedConceptName, ")")) %>% 
+            dplyr::select(-.data$resolvedConceptId, -.data$resolvedConceptName) %>% 
+            dplyr::relocate(.data$resolvedConcept)
+          data$resolvedConcept <-
+            as.factor(data$resolvedConcept)
         } else {
           data <- resolvedOrMappedConceptSetForAllVocabulary$resolved %>%
             dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id) %>%
@@ -584,7 +606,9 @@ shiny::shinyServer(function(input, output, session) {
         data <- data %>% 
           dplyr::left_join(conceptCounts, by = "conceptId") %>% 
           dplyr::arrange(dplyr::desc(.data$conceptSubjects)) %>% 
-          dplyr::relocate(.data$conceptSubjects, .data$conceptCount)
+          dplyr::relocate(.data$conceptSubjects, .data$conceptCount) %>% 
+          dplyr::rename("subjects" = .data$conceptSubjects,
+                        "count" = .data$conceptCount)
       }
       
       data$conceptClassId <- as.factor(data$conceptClassId)
@@ -1673,7 +1697,7 @@ shiny::shinyServer(function(input, output, session) {
                                             lapply(databaseIdsWithCount, th, colspan = 2, class = "dt-center", style = "border-bottom:1px solid silver;border-bottom:1px solid silver")
                                           ),
                                           tr(lapply(rep(
-                                            c("Subjects", "Counts"), length(databaseIds)
+                                            c("Subjects", "Records"), length(databaseIds)
                                           ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver"))
                                         )))
     
