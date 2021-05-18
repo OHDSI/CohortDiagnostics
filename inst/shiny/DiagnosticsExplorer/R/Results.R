@@ -306,6 +306,10 @@ getVisitContextResults <- function(dataSource = .GlobalEnv,
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   }
+  data <- data %>%
+    dplyr::inner_join(get("cohortCount", envir = dataSource),
+                      by = c("cohortId", "databaseId")) %>% 
+    dplyr::mutate(subjectPercent = .data$subjects/.data$cohortSubjects)
   return(data)
 }
 
