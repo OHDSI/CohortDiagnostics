@@ -584,7 +584,9 @@ shiny::shinyServer(function(input, output, session) {
         data <- data %>% 
           dplyr::left_join(conceptCounts, by = "conceptId") %>% 
           dplyr::arrange(dplyr::desc(.data$conceptSubjects)) %>% 
-          dplyr::relocate(.data$conceptSubjects, .data$conceptCount)
+          dplyr::relocate(.data$conceptSubjects, .data$conceptCount) %>% 
+          dplyr::rename("subjects" = .data$conceptSubjects,
+                        "count" = .data$conceptCount)
       }
       
       data$conceptClassId <- as.factor(data$conceptClassId)
