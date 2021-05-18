@@ -2058,6 +2058,12 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::distinct() # distinct is needed here because many time condition_concept_id and condition_source_concept_id
       # may have the same value
       
+      data <- data %>% 
+        dplyr::mutate(databaseId = paste0(.data$databaseId, 
+                                          "<br>(n = ", 
+                                          scales::comma(.data$cohortSubjects,accuracy = 1), 
+                                          ")"))
+      
       if (input$indexEventBreakdownTableFilter == "Records") {
         data <- data %>% 
           tidyr::pivot_wider(
