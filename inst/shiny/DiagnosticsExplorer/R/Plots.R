@@ -263,14 +263,16 @@ plotIncidenceRate <- function(data,
   plotData$tooltip <- c(
     paste0(
       plotData$shortName,
+      " ", 
+      plotData$databaseId,
       "\nIncidence Rate = ",
       scales::comma(plotData$incidenceRate, accuracy = 0.01),
-      "\nDatabase = ",
-      plotData$databaseId,
+      "\nCount = ",
+      paste0(scales::comma(plotData$cohortCount, accuracy = 1)),
       "\nPerson years = ",
       scales::comma(plotData$personYears, accuracy = 0.01),
       "\nCohort count = ",
-      scales::comma(plotData$cohortCount)
+      scales::comma(plotData$cohortSubjects, accuracy = 1)
     )
   )
   
