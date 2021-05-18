@@ -416,11 +416,11 @@ bodyTabItems <- shinydashboard::tabItems(
               ),
               shiny::conditionalPanel(
                 condition = "input.conceptSetsType == 'Resolved'",
-                DT::dataTableOutput(outputId = "cohortDefinitionIncludedStandardConceptsTable")
+                DT::dataTableOutput(outputId = "cohortDefinitionIncludedResolvedConceptsTable")
               ),
               shiny::conditionalPanel(
                 condition = "input.conceptSetsType == 'Mapped'",
-                DT::dataTableOutput(outputId = "cohortDefinitionIncludedSourceConceptsTable")
+                DT::dataTableOutput(outputId = "cohortDefinitionMappedConceptsTable")
               ),
               shiny::conditionalPanel(
                 condition = "input.conceptSetsType == 'Json'",

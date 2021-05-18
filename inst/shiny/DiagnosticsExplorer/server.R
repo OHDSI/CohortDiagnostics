@@ -475,10 +475,10 @@ shiny::shinyServer(function(input, output, session) {
       return(list(resolved = outputResolved, mapped = outputMapped))
     })
   
-  getIncludeOrSourceConcepts <- shiny::reactive({
+  getResolvedOrMappedConcepts <- shiny::reactive({
     data <- NULL
     databaseIdToFilter <- database %>%
-      # dplyr::filter(.data$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchema) %>%
+      dplyr::filter(.data$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchema) %>%
       dplyr::pull(.data$databaseId)
     
     if (length(databaseIdToFilter) > 0) {
@@ -493,7 +493,7 @@ shiny::shinyServer(function(input, output, session) {
           if (!is.null(data) && nrow(data) > 0) {
             data <- data %>%
               dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id) %>%
-              dplyr::filter(.data$databaseId == !!databaseIdToFilter) %>%
+              dplyr::filter(.data$databaseId %in% !!databaseIdToFilter) %>%
               dplyr::select(-.data$databaseId, -.data$conceptSetId)
             data$resolvedConceptId <-
               as.factor(data$resolvedConceptId)
@@ -503,7 +503,7 @@ shiny::shinyServer(function(input, output, session) {
         } else {
           data <- resolvedOrMappedConceptSetForAllDatabase$resolved %>%
             dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id) %>%
-            dplyr::filter(.data$databaseId == !!databaseIdToFilter) %>%
+            dplyr::filter(.data$databaseId %in% !!databaseIdToFilter) %>%
             dplyr::select(-.data$databaseId, -.data$conceptSetId, -.data$cohortId)
         }
       }
@@ -553,9 +553,9 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  output$cohortDefinitionIncludedStandardConceptsTable <-
+  output$cohortDefinitionIncludedResolvedConceptsTable <-
     DT::renderDataTable(expr = {
-      data <- getIncludeOrSourceConcepts()
+      data <- getResolvedOrMappedConcepts()
       if (is.null(data)) {
         return(dplyr::tibble("No included standard concepts."))
       }
@@ -589,9 +589,9 @@ shiny::shinyServer(function(input, output, session) {
       return(dataTable)
     }, server = TRUE)
   
-  output$cohortDefinitionIncludedSourceConceptsTable <-
+  output$cohortDefinitionMappedConceptsTable <-
     DT::renderDataTable(expr = {
-      data <- getIncludeOrSourceConcepts()
+      data <- getResolvedOrMappedConcepts()
       if (is.null(data)) {
         return("No included source concepts")
       }
