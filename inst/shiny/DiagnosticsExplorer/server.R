@@ -566,7 +566,9 @@ shiny::shinyServer(function(input, output, session) {
           data <- resolvedOrMappedConceptSetForAllVocabulary$mapped %>%
             dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id) %>%
             dplyr::filter(.data$vocabularyDatabaseSchema == !!vocabularyDataSchemaToFilter) %>%
-            dplyr::select(-.data$vocabularyDatabaseSchema, -.data$conceptSetId)
+            dplyr::select(-.data$vocabularyDatabaseSchema, -.data$conceptSetId) %>% 
+            dplyr::filter(.data$conceptId != .data$resolvedConceptId) %>% 
+            dplyr::relocate(.data$resolvedConceptId)
           data$resolvedConceptId <-
             as.factor(data$resolvedConceptId)
         } else {
