@@ -475,11 +475,47 @@ shiny::shinyServer(function(input, output, session) {
       return(list(resolved = outputResolved, mapped = outputMapped))
     })
   
+  getConceptCountForAllDatabase <- 
+    shiny::reactive(x = {
+      row <- selectedCohortDefinitionRow()
+      if (is.null(row) ||
+          is.null(cohortDefinitionConceptSetExpressionRow()$id)) {
+        return(NULL)
+      }
+      getIncludedConceptResult(
+        dataSource = dataSource,
+        databaseIds = database$databaseId,
+        cohortId = row$cohortId
+      )
+    })
+  
   getResolvedOrMappedConcepts <- shiny::reactive({
     data <- NULL
     databaseIdToFilter <- database %>%
       dplyr::filter(.data$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchema) %>%
       dplyr::pull(.data$databaseId)
+    
+    conceptCounts <- getConceptCountForAllDatabase()
+    if (all(!is.null(conceptCounts),
+            nrow(conceptCounts) > 0)) {
+      conceptCounts <- conceptCounts %>% 
+        dplyr::filter(.data$databaseId %in% !!databaseIdToFilter) %>% 
+        dplyr::select(.data$conceptId, .data$sourceConceptId, .data$conceptSubjects, .data$conceptCount) %>% 
+        dplyr::distinct()
+      conceptCounts <- dplyr::bind_rows(
+        conceptCounts %>% 
+          dplyr::select(.data$conceptId, .data$conceptSubjects, .data$conceptCount),
+        conceptCounts %>% 
+          dplyr::select(.data$sourceConceptId, .data$conceptSubjects, .data$conceptCount) %>% 
+          dplyr::rename("conceptId" = .data$sourceConceptId)
+      ) %>% 
+        dplyr::group_by(.data$conceptId) %>% 
+        dplyr::summarise(conceptSubjects = max(conceptSubjects),
+                         conceptCount = max(conceptCount)) %>% 
+        dplyr::distinct() %>% 
+        dplyr::ungroup() %>% 
+        dplyr::arrange(dplyr::desc(.data$conceptCount))
+    }
     
     if (length(databaseIdToFilter) > 0) {
       resolvedOrMappedConceptSetForAllDatabase <-
@@ -542,6 +578,14 @@ shiny::shinyServer(function(input, output, session) {
       }
     }
     if (!is.null(data) && nrow(data) > 0) {
+      
+      if (all(nrow(conceptCounts) > 0,
+              'conceptId' %in% colnames(conceptCounts))) {
+        data <- data %>% 
+          dplyr::left_join(conceptCounts, by = "conceptId") %>% 
+          dplyr::arrange(dplyr::desc(.data$conceptCount))
+      }
+      
       data$conceptClassId <- as.factor(data$conceptClassId)
       data$domainId <- as.factor(data$domainId)
       data$conceptCode <- as.factor(data$conceptCode)
@@ -1227,7 +1271,7 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
-  # included concepts table --------------------------------------------------------------------------
+  # included concepts table /concepts in data source-----------------------------------------------------------
   output$saveIncludedConceptsTable <- downloadTableData(
     data = getIncludedConceptResult(
       dataSource = dataSource,
