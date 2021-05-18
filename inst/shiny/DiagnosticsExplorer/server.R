@@ -1625,7 +1625,7 @@ shiny::shinyServer(function(input, output, session) {
                                             lapply(databaseIdsWithCount, th, colspan = 2, class = "dt-center", style = "border-bottom:1px solid silver;border-bottom:1px solid silver")
                                           ),
                                           tr(lapply(rep(
-                                            c("Subjects", "Counts"), length(databaseIds)
+                                            c("Subjects", "Records"), length(databaseIds)
                                           ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver"))
                                         )))
     
