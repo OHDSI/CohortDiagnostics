@@ -848,7 +848,8 @@ plotCohortOverlap <- function(data,
       panel.background = ggplot2::element_blank(),
       strip.background = ggplot2::element_blank(),
       panel.grid.major.x = ggplot2::element_line(color = "gray"),
-      axis.ticks.y = ggplot2::element_blank()
+      axis.ticks.y = ggplot2::element_blank(),
+      panel.spacing = ggplot2::unit(2, "lines")
     ) +
     ggiraph::geom_bar_interactive(position = position,
                                   alpha = 0.6,
@@ -856,7 +857,7 @@ plotCohortOverlap <- function(data,
   if (yAxis == "Percentages") {
     plot <- plot + ggplot2::scale_x_continuous(labels = scales::percent)
   } else {
-    plot <- plot + ggplot2::scale_x_continuous(labels = scales::comma)
+    plot <- plot + ggplot2::scale_x_continuous(labels = scales::comma, n.breaks = 3)
   }
   width <- length(unique(plotData$databaseId))
   height <- nrow(plotData %>% dplyr::select(.data$targetShortName, .data$comparatorShortName) %>% dplyr::distinct())
