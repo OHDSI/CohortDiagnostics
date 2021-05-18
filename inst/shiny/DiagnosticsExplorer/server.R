@@ -1093,7 +1093,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::arrange(.data$incidenceRate)
     incidenceRateFilter <-
       incidenceRateFilter[incidenceRateFilter$incidenceRate >= input$YscaleMinAndMax[1] &
-                       incidenceRateFilter$incidenceRate <= input$YscaleMinAndMax[2], , drop = FALSE] %>%
+                            incidenceRateFilter$incidenceRate <= input$YscaleMinAndMax[2], , drop = FALSE] %>%
       dplyr::pull(.data$incidenceRate)
     return(incidenceRateFilter)
   })
@@ -1993,7 +1993,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::arrange(.data$databaseId) %>%
         dplyr::filter(.data$conceptId > 0) %>%
         dplyr::distinct() # distinct is needed here because many time condition_concept_id and condition_source_concept_id
-        # may have the same value
+      # may have the same value
       
       if (input$indexEventBreakdownTableFilter == "Records") {
         data <- data %>% 
@@ -2447,7 +2447,7 @@ shiny::shinyServer(function(input, output, session) {
           tidyr::pivot_longer(cols = c(.data$mean))
       }
       
-       data <-  data %>% 
+      data <-  data %>% 
         dplyr::mutate(name = paste0(databaseId, "_", .data$name)) %>%
         tidyr::pivot_wider(
           id_cols = c(.data$cohortId, .data$covariateId),
@@ -3244,7 +3244,7 @@ shiny::shinyServer(function(input, output, session) {
               tidyr::pivot_longer(cols = c("aMeanTarget","bSdTarget","cMeanComparator","dSdComparator"),
                                   names_to = "type", 
                                   values_to = "values" 
-                                    ) %>% 
+              ) %>% 
               dplyr::mutate(names = paste0(.data$databaseId, " ", .data$choices, " ", .data$type)) %>% 
               dplyr::arrange(.data$databaseId, .data$startDay, .data$endDay, .data$type) %>% 
               tidyr::pivot_wider(id_cols = c("covariateName"),
