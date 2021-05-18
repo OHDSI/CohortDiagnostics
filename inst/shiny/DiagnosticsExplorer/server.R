@@ -2990,6 +2990,43 @@ shiny::shinyServer(function(input, output, session) {
                       "sdComparator" = sd2,
                       "StdDiff" = absStdDiff)
       
+      targetCohortIdValue <- balance %>% dplyr::filter(!is.na(.data$cohortId1)) %>% dplyr::pull(.data$cohortId1) %>% unique()
+      comparatorcohortIdValue <- balance %>% dplyr::filter(!is.na(.data$cohortId2)) %>% dplyr::pull(.data$cohortId2) %>% unique()
+      
+      databaseIdForCohortCharacterization <- balance$databaseId %>% unique()
+      
+      targetCohortShortName <- cohort %>% 
+        dplyr::filter(.data$cohortId == !!targetCohortIdValue) %>% 
+        dplyr::select(.data$shortName) %>% 
+        dplyr::pull()
+      
+      comparatorCohortShortName <- cohort %>% 
+        dplyr::filter(.data$cohortId == !!comparatorcohortIdValue) %>% 
+        dplyr::select(.data$shortName) %>% 
+        dplyr::pull()
+      
+      targetCohortSubjects <- cohortCount %>% 
+        dplyr::filter(.data$databaseId == databaseIdForCohortCharacterization) %>% 
+        dplyr::filter(.data$cohortId == !!targetCohortIdValue) %>% 
+        dplyr::pull(.data$cohortSubjects)
+      
+      comparatorCohortSubjects <- cohortCount %>% 
+        dplyr::filter(.data$databaseId == databaseIdForCohortCharacterization) %>% 
+        dplyr::filter(.data$cohortId == !!comparatorcohortIdValue) %>% 
+        dplyr::pull(.data$cohortSubjects)
+      
+      targetCohortHeader <- paste0(targetCohortShortName,
+                                   " (n = ",
+                                   scales::comma(targetCohortSubjects,
+                                                 accuracy = 1),
+                                   ")")
+      
+      comparatorCohortHeader <- paste0(comparatorCohortShortName,
+                                       " (n = ",
+                                       scales::comma(comparatorCohortSubjects,
+                                                     accuracy = 1),
+                                       ")")
+      
       if (input$compareCharacterizationColumnFilters == "Mean and Standard Deviation") {
         
         table <- balance %>%
@@ -3010,6 +3047,10 @@ shiny::shinyServer(function(input, output, session) {
         
         standardDifferenceColumn <- 6
         
+        table <- table %>% 
+          dplyr::rename(!!targetCohortHeader := .data$meanTarget) %>% 
+          dplyr::rename(!!comparatorCohortHeader := .data$meanComparator)
+        
       } else {
         table <- balance %>%
           dplyr::select(
@@ -3026,7 +3067,13 @@ shiny::shinyServer(function(input, output, session) {
         
         colorBarColumns <- c(2,3)
         standardDifferenceColumn <- 4
+        
+        table <- table %>% 
+          dplyr::rename(!!targetCohortHeader := .data$target) %>% 
+          dplyr::rename(!!comparatorCohortHeader := .data$comparator)
       }
+      
+
       
       options = list(
         pageLength = 100,
