@@ -161,7 +161,8 @@ getIncidenceRateResult <- function(dataSource = .GlobalEnv,
                     calendarYear = dplyr::na_if(.data$calendarYear, ""))
   }
   data <- data %>% 
-    dplyr::inner_join(cohortCount, by = c("cohortId", "databaseId")) %>% 
+    dplyr::inner_join(get("cohortCount", envir = dataSource), 
+                      by = c("cohortId", "databaseId")) %>% 
     dplyr::mutate(calendarYear = as.integer(.data$calendarYear)) %>%
     dplyr::arrange(.data$cohortId, .data$databaseId)
   
@@ -236,6 +237,11 @@ getIndexEventBreakdown <- function(dataSource = .GlobalEnv,
                                         .data$vocabularyId,
                                         .data$standardConcept),
                           by = c("conceptId"))
+      data <- data %>% 
+        dplyr::inner_join(get("cohortCount", envir = dataSource), 
+                          by = c('databaseId', 'cohortId')) %>% 
+        dplyr::mutate(subjectPercent = .data$subjectCount/.data$cohortSubjects,
+                      conceptPercent = .data$conceptCount/.data$cohortEntries)
     } else {
       data <- NULL
     }
