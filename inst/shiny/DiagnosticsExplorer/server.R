@@ -530,9 +530,20 @@ shiny::shinyServer(function(input, output, session) {
             data <- data %>%
               dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id) %>%
               dplyr::filter(.data$databaseId %in% !!databaseIdToFilter) %>%
-              dplyr::select(-.data$databaseId, -.data$conceptSetId)
-            data$resolvedConceptId <-
-              as.factor(data$resolvedConceptId)
+              dplyr::select(-.data$databaseId, -.data$conceptSetId) %>% 
+              dplyr::filter(.data$conceptId != .data$resolvedConceptId) %>% 
+              dplyr::relocate(.data$resolvedConceptId) %>% 
+              dplyr::inner_join(resolvedOrMappedConceptSetForAllDatabase$resolved %>% 
+                                  dplyr::select(.data$conceptId, .data$conceptName) %>% 
+                                  dplyr::distinct() %>% 
+                                  dplyr::rename("resolvedConceptId" = .data$conceptId,
+                                                "resolvedConceptName" = .data$conceptName),
+                                by = "resolvedConceptId") %>% 
+              dplyr::mutate(resolvedConcept = paste0(.data$resolvedConceptId, " (", .data$resolvedConceptName, ")")) %>% 
+              dplyr::select(-.data$resolvedConceptId, -.data$resolvedConceptName) %>% 
+              dplyr::relocate(.data$resolvedConcept)
+            data$resolvedConcept <-
+              as.factor(data$resolvedConcept)
           } else {
             data <- NULL
           }
@@ -568,9 +579,18 @@ shiny::shinyServer(function(input, output, session) {
             dplyr::filter(.data$vocabularyDatabaseSchema == !!vocabularyDataSchemaToFilter) %>%
             dplyr::select(-.data$vocabularyDatabaseSchema, -.data$conceptSetId) %>% 
             dplyr::filter(.data$conceptId != .data$resolvedConceptId) %>% 
-            dplyr::relocate(.data$resolvedConceptId)
-          data$resolvedConceptId <-
-            as.factor(data$resolvedConceptId)
+            dplyr::relocate(.data$resolvedConceptId) %>% 
+            dplyr::inner_join(resolvedOrMappedConceptSetForAllVocabulary$resolved %>% 
+                                dplyr::select(.data$conceptId, .data$conceptName) %>% 
+                                dplyr::distinct() %>% 
+                                dplyr::rename("resolvedConceptId" = .data$conceptId,
+                                              "resolvedConceptName" = .data$conceptName),
+                              by = "resolvedConceptId") %>% 
+            dplyr::mutate(resolvedConcept = paste0(.data$resolvedConceptId, " (", .data$resolvedConceptName, ")")) %>% 
+            dplyr::select(-.data$resolvedConceptId, -.data$resolvedConceptName) %>% 
+            dplyr::relocate(.data$resolvedConcept)
+          data$resolvedConcept <-
+            as.factor(data$resolvedConcept)
         } else {
           data <- resolvedOrMappedConceptSetForAllVocabulary$resolved %>%
             dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id) %>%
