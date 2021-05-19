@@ -1646,95 +1646,178 @@ shiny::shinyServer(function(input, output, session) {
         conceptCount = sum(.data$conceptCount)
       ) %>%
       dplyr::ungroup() %>%
-      dplyr::arrange(.data$databaseId) %>%
-      tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>%
-      dplyr::mutate(name = paste0(
-        databaseId,
-        "_",
-        stringr::str_replace(
-          string = .data$name,
-          pattern = "concept",
-          replacement = ""
-        )
-      )) %>%
-      tidyr::pivot_wider(
-        id_cols = c(.data$conceptId),
-        names_from = .data$name,
-        values_from = .data$value,
-        values_fill = 0
-      ) %>%
-      dplyr::inner_join(
-        data %>%
-          dplyr::select(
-            .data$conceptId,
-            .data$conceptName,
-            .data$vocabularyId,
-            .data$conceptCode
-          ) %>%
-          dplyr::distinct(),
-        by = "conceptId"
-      ) %>%
-      dplyr::relocate(.data$conceptId,
-                      .data$conceptName,
-                      .data$vocabularyId,
-                      .data$conceptCode)
+      dplyr::arrange(.data$databaseId)
     
-    if (nrow(table) == 0) {
-      return(dplyr::tibble(
-        Note = paste0('No data available for selected databases and cohorts')
-      ))
+    if (input$orphanConceptsColumFilterType == "All") {
+      table <- table %>% 
+        tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>%
+        dplyr::mutate(name = paste0(
+          databaseId,
+          "_",
+          stringr::str_replace(
+            string = .data$name,
+            pattern = "concept",
+            replacement = ""
+          )
+        )) %>%
+        tidyr::pivot_wider(
+          id_cols = c(.data$conceptId),
+          names_from = .data$name,
+          values_from = .data$value,
+          values_fill = 0
+        ) %>%
+        dplyr::inner_join(
+          data %>%
+            dplyr::select(
+              .data$conceptId,
+              .data$conceptName,
+              .data$vocabularyId,
+              .data$conceptCode
+            ) %>%
+            dplyr::distinct(),
+          by = "conceptId"
+        ) %>%
+        dplyr::relocate(.data$conceptId,
+                        .data$conceptName,
+                        .data$vocabularyId,
+                        .data$conceptCode) %>% 
+        dplyr::mutate(conceptId = as.factor(.data$conceptId),
+                      conceptName = as.factor(.data$conceptName),
+                      vocabularyId = as.factor(.data$vocabularyId),
+                      conceptCode = as.factor(.data$conceptCode))
+      
+      if (nrow(table) == 0) {
+        return(dplyr::tibble(
+          Note = paste0('No data available for selected databases and cohorts')
+        ))
+      }
+      
+      table <- table[order(-table[, 5]), ]
+      
+      sketch <- htmltools::withTags(table(class = "display",
+                                          thead(
+                                            tr(
+                                              th(rowspan = 2, "Concept ID"),
+                                              th(rowspan = 2, "Concept Name"),
+                                              th(rowspan = 2, "Vocabulary ID"),
+                                              th(rowspan = 2, "Concept Code"),
+                                              lapply(databaseIdsWithCount, th, colspan = 2, class = "dt-center", style = "border-bottom:1px solid silver;border-bottom:1px solid silver")
+                                            ),
+                                            tr(lapply(rep(
+                                              c("Subjects", "Records"), length(databaseIds)
+                                            ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver"))
+                                          )))
+      
+      options = list(
+        pageLength = 1000,
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        scrollX = TRUE,
+        scrollY = "50vh",
+        lengthChange = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        columnDefs = list(truncateStringDef(1, 100),
+                          minCellCountDef(3 + (1:(
+                            length(databaseIds) * 2
+                          ))))
+      )
+      
+      table <- DT::datatable(
+        table,
+        options = options,
+        colnames = colnames(table),
+        rownames = FALSE,
+        container = sketch,
+        escape = FALSE,
+        filter = "top",
+        class = "stripe nowrap compact"
+      )
+      
+      table <- DT::formatStyle(
+        table = table,
+        columns =  4 + (1:(length(databaseIds) * 2)),
+        background = DT::styleColorBar(c(0, maxCount), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+    } else {
+      if (input$orphanConceptsColumFilterType == "Subjects only") {
+        table <- table %>% 
+          tidyr::pivot_wider(
+            id_cols = c(.data$conceptId),
+            names_from = .data$databaseId,
+            values_from = .data$conceptSubjects,
+            values_fill = 0
+          )
+        
+      } else {
+        table <- table %>% 
+          tidyr::pivot_wider(
+            id_cols = c(.data$conceptId),
+            names_from = .data$databaseId,
+            values_from = .data$conceptCount,
+            values_fill = 0
+          )
+      }
+      
+      table <- table %>% 
+        dplyr::inner_join(
+          data %>%
+            dplyr::select(
+              .data$conceptId,
+              .data$conceptName,
+              .data$vocabularyId,
+              .data$conceptCode
+            ) %>%
+            dplyr::distinct(),
+          by = "conceptId"
+        ) %>%
+        dplyr::relocate(.data$conceptId,
+                        .data$conceptName,
+                        .data$vocabularyId,
+                        .data$conceptCode) %>% 
+        dplyr::mutate(conceptId = as.factor(.data$conceptId),
+                      conceptName = as.factor(.data$conceptName),
+                      vocabularyId = as.factor(.data$vocabularyId),
+                      conceptCode = as.factor(.data$conceptCode))
+      
+      options = list(
+        pageLength = 1000,
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        scrollX = TRUE,
+        scrollY = "50vh",
+        lengthChange = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        columnDefs = list(truncateStringDef(1, 100),
+                          minCellCountDef(3 + (1:(
+                            length(databaseIds)
+                          ))))
+      )
+      
+      table <- DT::datatable(
+        table,
+        options = options,
+        colnames = colnames(table),
+        rownames = FALSE,
+        escape = FALSE,
+        filter = "top",
+        class = "stripe nowrap compact"
+      )
+      
+      table <- DT::formatStyle(
+        table = table,
+        columns =  4 + (1:(length(databaseIds))),
+        background = DT::styleColorBar(c(0, maxCount), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
     }
     
-    table <- table[order(-table[, 5]), ]
-    
-    sketch <- htmltools::withTags(table(class = "display",
-                                        thead(
-                                          tr(
-                                            th(rowspan = 2, "Concept ID"),
-                                            th(rowspan = 2, "Concept Name"),
-                                            th(rowspan = 2, "Vocabulary ID"),
-                                            th(rowspan = 2, "Concept Code"),
-                                            lapply(databaseIdsWithCount, th, colspan = 2, class = "dt-center", style = "border-bottom:1px solid silver;border-bottom:1px solid silver")
-                                          ),
-                                          tr(lapply(rep(
-                                            c("Subjects", "Records"), length(databaseIds)
-                                          ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver"))
-                                        )))
-    
-    options = list(
-      pageLength = 1000,
-      lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-      searching = TRUE,
-      scrollX = TRUE,
-      scrollY = "50vh",
-      lengthChange = TRUE,
-      ordering = TRUE,
-      paging = TRUE,
-      columnDefs = list(truncateStringDef(1, 100),
-                        minCellCountDef(3 + (1:(
-                          length(databaseIds) * 2
-                        ))))
-    )
-    
-    table <- DT::datatable(
-      table,
-      options = options,
-      colnames = colnames(table),
-      rownames = FALSE,
-      container = sketch,
-      escape = FALSE,
-      filter = "top",
-      class = "stripe nowrap compact"
-    )
-    
-    table <- DT::formatStyle(
-      table = table,
-      columns =  4 + (1:(length(databaseIds) * 2)),
-      background = DT::styleColorBar(c(0, maxCount), "lightblue"),
-      backgroundSize = "98% 88%",
-      backgroundRepeat = "no-repeat",
-      backgroundPosition = "center"
-    )
     return(table)
   }, server = TRUE)
   

@@ -660,6 +660,29 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "orphanConcepts",
     cohortReference("orphanConceptsSelectedCohort"),
+    tags$table(
+      tags$tr(
+        tags$td(
+          shiny::radioButtons(
+            inputId = "orphanConceptsType",
+            label = "",
+            choices = c("Standard Only", "Non Standard Only"),
+            selected = "Standard Only",
+            inline = TRUE
+          )
+        ),
+        tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
+        tags$td(
+          shiny::radioButtons(
+            inputId = "orphanConceptsColumFilterType",
+            label = "Display",
+            choices = c("All", "Subjects only","Records only"),
+            selected = "All",
+            inline = TRUE
+          )
+        )
+      )
+    ),
     tags$table(width = "100%", 
                tags$tr(
                  tags$td(align = "right",
