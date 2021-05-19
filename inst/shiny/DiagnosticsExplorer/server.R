@@ -2923,6 +2923,42 @@ shiny::shinyServer(function(input, output, session) {
       return(dplyr::tibble(Note = "No data for the selected combination."))
     }
     
+    targetCohortIdValue <- balance %>% dplyr::filter(!is.na(.data$cohortId1)) %>% dplyr::pull(.data$cohortId1) %>% unique()
+    comparatorcohortIdValue <- balance %>% dplyr::filter(!is.na(.data$cohortId2)) %>% dplyr::pull(.data$cohortId2) %>% unique()
+    databaseIdForCohortCharacterization <- balance$databaseId %>% unique()
+    
+    targetCohortShortName <- cohort %>% 
+      dplyr::filter(.data$cohortId == !!targetCohortIdValue) %>% 
+      dplyr::select(.data$shortName) %>% 
+      dplyr::pull()
+    
+    comparatorCohortShortName <- cohort %>% 
+      dplyr::filter(.data$cohortId == !!comparatorcohortIdValue) %>% 
+      dplyr::select(.data$shortName) %>% 
+      dplyr::pull()
+    
+    targetCohortSubjects <- cohortCount %>% 
+      dplyr::filter(.data$databaseId == databaseIdForCohortCharacterization) %>% 
+      dplyr::filter(.data$cohortId == !!targetCohortIdValue) %>% 
+      dplyr::pull(.data$cohortSubjects)
+    
+    comparatorCohortSubjects <- cohortCount %>% 
+      dplyr::filter(.data$databaseId == databaseIdForCohortCharacterization) %>% 
+      dplyr::filter(.data$cohortId == !!comparatorcohortIdValue) %>% 
+      dplyr::pull(.data$cohortSubjects)
+    
+    targetCohortHeader <- paste0(targetCohortShortName,
+                                 " (n = ",
+                                 scales::comma(targetCohortSubjects,
+                                               accuracy = 1),
+                                 ")")
+    
+    comparatorCohortHeader <- paste0(comparatorCohortShortName,
+                                     " (n = ",
+                                     scales::comma(comparatorCohortSubjects,
+                                                   accuracy = 1),
+                                     ")")
+    
     if (input$charCompareType == "Pretty table") {
       table <- prepareTable1Comp(balance)
       if (nrow(table) > 0) {
@@ -2930,6 +2966,7 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::arrange(.data$sortOrder) %>%
           dplyr::select(-.data$sortOrder) %>%
           dplyr::select(-.data$cohortId1, -.data$cohortId2)
+        
       } else {
         return(dplyr::tibble(Note = "No data for covariates that are part of pretty table."))
       }
@@ -2950,7 +2987,7 @@ shiny::shinyServer(function(input, output, session) {
         table,
         options = options,
         rownames = FALSE,
-        colnames = c("Characteristic", "Target", "Comparator", "Std. Diff."),
+        colnames = c("Characteristic", targetCohortHeader, comparatorCohortHeader, "Std. Diff."),
         escape = FALSE,
         filter = "top",
         class = "stripe nowrap compact"
@@ -2993,42 +3030,6 @@ shiny::shinyServer(function(input, output, session) {
                       "meanComparator" = mean2,
                       "sdComparator" = sd2,
                       "StdDiff" = absStdDiff)
-      
-      targetCohortIdValue <- balance %>% dplyr::filter(!is.na(.data$cohortId1)) %>% dplyr::pull(.data$cohortId1) %>% unique()
-      comparatorcohortIdValue <- balance %>% dplyr::filter(!is.na(.data$cohortId2)) %>% dplyr::pull(.data$cohortId2) %>% unique()
-      databaseIdForCohortCharacterization <- balance$databaseId %>% unique()
-      
-      targetCohortShortName <- cohort %>% 
-        dplyr::filter(.data$cohortId == !!targetCohortIdValue) %>% 
-        dplyr::select(.data$shortName) %>% 
-        dplyr::pull()
-      
-      comparatorCohortShortName <- cohort %>% 
-        dplyr::filter(.data$cohortId == !!comparatorcohortIdValue) %>% 
-        dplyr::select(.data$shortName) %>% 
-        dplyr::pull()
-      
-      targetCohortSubjects <- cohortCount %>% 
-        dplyr::filter(.data$databaseId == databaseIdForCohortCharacterization) %>% 
-        dplyr::filter(.data$cohortId == !!targetCohortIdValue) %>% 
-        dplyr::pull(.data$cohortSubjects)
-      
-      comparatorCohortSubjects <- cohortCount %>% 
-        dplyr::filter(.data$databaseId == databaseIdForCohortCharacterization) %>% 
-        dplyr::filter(.data$cohortId == !!comparatorcohortIdValue) %>% 
-        dplyr::pull(.data$cohortSubjects)
-      
-      targetCohortHeader <- paste0(targetCohortShortName,
-                                   " (n = ",
-                                   scales::comma(targetCohortSubjects,
-                                                 accuracy = 1),
-                                   ")")
-      
-      comparatorCohortHeader <- paste0(comparatorCohortShortName,
-                                       " (n = ",
-                                       scales::comma(comparatorCohortSubjects,
-                                                     accuracy = 1),
-                                       ")")
       
       if (input$compareCharacterizationColumnFilters == "Mean and Standard Deviation") {
         
