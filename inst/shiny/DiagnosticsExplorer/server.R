@@ -2919,7 +2919,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$charCompareTable <- DT::renderDataTable(expr = {
     balance <- computeBalance()
-    if (nrow(balance) == 0) {
+    if (any(is.null(balance), nrow(balance) == 0)) {
       return(dplyr::tibble(Note = "No data for the selected combination."))
     }
     
@@ -2982,6 +2982,10 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
       }
       
+      if (any(is.null(balance), nrow(balance) == 0)) {
+        return(dplyr::tibble(Note = "No data for the selected combination."))
+      }
+      
       balance <- balance %>% 
         dplyr::mutate(covariateName =  paste(.data$covariateName, "(", .data$conceptId, ")")) %>% 
         dplyr::rename("meanTarget" = mean1,
@@ -2992,7 +2996,6 @@ shiny::shinyServer(function(input, output, session) {
       
       targetCohortIdValue <- balance %>% dplyr::filter(!is.na(.data$cohortId1)) %>% dplyr::pull(.data$cohortId1) %>% unique()
       comparatorcohortIdValue <- balance %>% dplyr::filter(!is.na(.data$cohortId2)) %>% dplyr::pull(.data$cohortId2) %>% unique()
-      
       databaseIdForCohortCharacterization <- balance$databaseId %>% unique()
       
       targetCohortShortName <- cohort %>% 
