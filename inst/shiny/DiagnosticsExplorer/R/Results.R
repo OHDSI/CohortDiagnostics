@@ -383,14 +383,16 @@ getOrphanConceptResult <- function(dataSource = .GlobalEnv,
                                       .data$conceptId,
                                       .data$conceptName,
                                       .data$vocabularyId,
-                                      .data$conceptCode),
+                                      .data$conceptCode,
+                                      .data$standardConcept),
                         by = c("conceptId"))
   } else {
     sql <- "SELECT orphan_concept.*,
               concept_set_name,
               standard_concept.concept_name AS concept_name,
               standard_concept.vocabulary_id AS vocabulary_id,
-              standard_concept.concept_code AS concept_code
+              standard_concept.concept_code AS concept_code,
+              standard_concept.standard_concept AS standard_concept
             FROM  @results_database_schema.orphan_concept
             INNER JOIN  @results_database_schema.concept_sets
               ON orphan_concept.cohort_id = concept_sets.cohort_id
@@ -407,8 +409,7 @@ getOrphanConceptResult <- function(dataSource = .GlobalEnv,
                                     database_ids = quoteLiterals(databaseIds), 
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
-  } 
-  
+  }
   return(data)
 }
 
