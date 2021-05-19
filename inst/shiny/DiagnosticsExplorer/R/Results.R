@@ -161,9 +161,15 @@ getIncidenceRateResult <- function(dataSource = .GlobalEnv,
                     calendarYear = dplyr::na_if(.data$calendarYear, ""))
   }
   data <- data %>% 
-    dplyr::inner_join(cohortCount, by = c("cohortId", "databaseId")) %>% 
+    dplyr::inner_join(get("cohortCount", envir = dataSource), 
+                      by = c("cohortId", "databaseId")) %>% 
     dplyr::mutate(calendarYear = as.integer(.data$calendarYear)) %>%
     dplyr::arrange(.data$cohortId, .data$databaseId)
+  
+  if (!is.null(minSubjectCount)) {
+    data <- data %>% 
+      dplyr::filter(.data$cohortSubjects > !!minSubjectCount)
+  }
   
   return(data)
 }
@@ -231,6 +237,11 @@ getIndexEventBreakdown <- function(dataSource = .GlobalEnv,
                                         .data$vocabularyId,
                                         .data$standardConcept),
                           by = c("conceptId"))
+      data <- data %>% 
+        dplyr::inner_join(get("cohortCount", envir = dataSource), 
+                          by = c('databaseId', 'cohortId')) %>% 
+        dplyr::mutate(subjectPercent = .data$subjectCount/.data$cohortSubjects,
+                      conceptPercent = .data$conceptCount/.data$cohortEntries)
     } else {
       data <- NULL
     }
@@ -295,6 +306,10 @@ getVisitContextResults <- function(dataSource = .GlobalEnv,
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   }
+  data <- data %>%
+    dplyr::inner_join(get("cohortCount", envir = dataSource),
+                      by = c("cohortId", "databaseId")) %>% 
+    dplyr::mutate(subjectPercent = .data$subjects/.data$cohortSubjects)
   return(data)
 }
 

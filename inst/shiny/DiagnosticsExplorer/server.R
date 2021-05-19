@@ -745,15 +745,7 @@ shiny::shinyServer(function(input, output, session) {
     cohortDefinitionConceptSetExpressionRow()$json
   })
   
-  output$saveConceptSetButton <- downloadHandler(
-    filename = function() {
-      paste("conceptSet-", Sys.Date(), ".csv", sep = "")
-    },
-    content = function(file) {
-      data <- cohortDefinitionConceptSets()
-      write.csv(data, file)
-    }
-  )
+  output$saveConceptSetButton <- downloadTableData(data = cohortDefinitionConceptSets(), fileName = "ConceptSetsExpression")
   
   getConceptSetIds <- shiny::reactive(x = {
     return(conceptSets$conceptSetId[conceptSets$conceptSetName  %in% input$conceptSetsToFilterCharacterization])
@@ -1969,7 +1961,6 @@ shiny::shinyServer(function(input, output, session) {
     databaseIds <- unique(data$databaseId)
     
     cohortCounts <- data %>% 
-      dplyr::inner_join(y = cohortCount, by = c("cohortId", "databaseId")) %>% 
       dplyr::filter(.data$cohortId == cohortId()) %>% 
       dplyr::filter(.data$databaseId %in% databaseIds()) %>% 
       dplyr::select(.data$cohortSubjects) %>% 
@@ -2066,6 +2057,12 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$conceptId > 0) %>%
         dplyr::distinct() # distinct is needed here because many time condition_concept_id and condition_source_concept_id
       # may have the same value
+      
+      data <- data %>% 
+        dplyr::mutate(databaseId = paste0(.data$databaseId, 
+                                          "<br>(n = ", 
+                                          scales::comma(.data$cohortSubjects,accuracy = 1), 
+                                          ")"))
       
       if (input$indexEventBreakdownTableFilter == "Records") {
         data <- data %>% 
@@ -2362,7 +2359,6 @@ shiny::shinyServer(function(input, output, session) {
     fileName = "cohortCharacterization"
   )
   
-  
   output$characterizationTable <- DT::renderDataTable(expr = {
     data <- characterizationTableData()
     
@@ -2445,7 +2441,14 @@ shiny::shinyServer(function(input, output, session) {
             "databaseId",
             "cohortId"
           )
-        )  %>%
+        )  %>% 
+        dplyr::inner_join(cohortCount %>% 
+                            dplyr::select(-.data$cohortEntries),
+                          by = c("databaseId", "cohortId")) %>% 
+        dplyr::mutate(databaseId = paste0(.data$databaseId, 
+                                          "<br>(n = ", 
+                                          scales::comma(.data$cohortSubjects,accuracy = 1), 
+                                          ")")) %>%
         dplyr::arrange(.data$sortOrder) %>%
         tidyr::pivot_wider(
           id_cols = c("cohortId", "characteristic"),
@@ -2520,7 +2523,13 @@ shiny::shinyServer(function(input, output, session) {
       }
       
       data <-  data %>% 
-        dplyr::mutate(name = paste0(databaseId, "_", .data$name)) %>%
+        dplyr::inner_join(cohortCount %>% 
+                            dplyr::select(-.data$cohortEntries),
+                          by = c("databaseId", "cohortId")) %>% 
+        dplyr::mutate(name = paste0(.data$databaseId, 
+                                          "<br>(n = ", 
+                                          scales::comma(.data$cohortSubjects,accuracy = 1), 
+                                          ")")) %>%
         tidyr::pivot_wider(
           id_cols = c(.data$cohortId, .data$covariateId),
           names_from = .data$name,
@@ -2774,18 +2783,13 @@ shiny::shinyServer(function(input, output, session) {
     }, server = TRUE)
   
   #Cohort Overlap ------------------------
-  cohortOverlap <- reactive({
+  cohortOverlapData <- reactive({
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
-    validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
-    combisOfTargetComparator <-
-      tidyr::crossing(targetCohortId = cohortIds(),
-                      comparatorCohortId = cohortIds()) %>%
-      dplyr::filter(!.data$targetCohortId == .data$comparatorCohortId) %>%
-      dplyr::distinct()
-    validate(need(
-      nrow(combisOfTargetComparator) > 0,
-      paste0("Please select at least two cohorts.")
-    ))
+    validate(need(length(cohortIds()) > 1, "Please select at least two cohorts."))
+    combisOfTargetComparator <- t(utils::combn(cohortIds(), 2)) %>% 
+      as.data.frame() %>% 
+      dplyr::tibble()
+    colnames(combisOfTargetComparator) <- c('targetCohortId', 'comparatorCohortId')
     
     data <- getCohortOverlapResult(
       dataSource = dataSource,
@@ -2810,7 +2814,7 @@ shiny::shinyServer(function(input, output, session) {
       paste0("Please select Target Cohort(s)")
     ))
     
-    data <- cohortOverlap()
+    data <- cohortOverlapData()
     validate(need(
       !is.null(data),
       paste0("No cohort overlap data for this combination")
@@ -2911,9 +2915,45 @@ shiny::shinyServer(function(input, output, session) {
   
   output$charCompareTable <- DT::renderDataTable(expr = {
     balance <- computeBalance()
-    if (nrow(balance) == 0) {
+    if (any(is.null(balance), nrow(balance) == 0)) {
       return(dplyr::tibble(Note = "No data for the selected combination."))
     }
+    
+    targetCohortIdValue <- balance %>% dplyr::filter(!is.na(.data$cohortId1)) %>% dplyr::pull(.data$cohortId1) %>% unique()
+    comparatorcohortIdValue <- balance %>% dplyr::filter(!is.na(.data$cohortId2)) %>% dplyr::pull(.data$cohortId2) %>% unique()
+    databaseIdForCohortCharacterization <- balance$databaseId %>% unique()
+    
+    targetCohortShortName <- cohort %>% 
+      dplyr::filter(.data$cohortId == !!targetCohortIdValue) %>% 
+      dplyr::select(.data$shortName) %>% 
+      dplyr::pull()
+    
+    comparatorCohortShortName <- cohort %>% 
+      dplyr::filter(.data$cohortId == !!comparatorcohortIdValue) %>% 
+      dplyr::select(.data$shortName) %>% 
+      dplyr::pull()
+    
+    targetCohortSubjects <- cohortCount %>% 
+      dplyr::filter(.data$databaseId == databaseIdForCohortCharacterization) %>% 
+      dplyr::filter(.data$cohortId == !!targetCohortIdValue) %>% 
+      dplyr::pull(.data$cohortSubjects)
+    
+    comparatorCohortSubjects <- cohortCount %>% 
+      dplyr::filter(.data$databaseId == databaseIdForCohortCharacterization) %>% 
+      dplyr::filter(.data$cohortId == !!comparatorcohortIdValue) %>% 
+      dplyr::pull(.data$cohortSubjects)
+    
+    targetCohortHeader <- paste0(targetCohortShortName,
+                                 " (n = ",
+                                 scales::comma(targetCohortSubjects,
+                                               accuracy = 1),
+                                 ")")
+    
+    comparatorCohortHeader <- paste0(comparatorCohortShortName,
+                                     " (n = ",
+                                     scales::comma(comparatorCohortSubjects,
+                                                   accuracy = 1),
+                                     ")")
     
     if (input$charCompareType == "Pretty table") {
       table <- prepareTable1Comp(balance)
@@ -2922,6 +2962,7 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::arrange(.data$sortOrder) %>%
           dplyr::select(-.data$sortOrder) %>%
           dplyr::select(-.data$cohortId1, -.data$cohortId2)
+        
       } else {
         return(dplyr::tibble(Note = "No data for covariates that are part of pretty table."))
       }
@@ -2942,7 +2983,7 @@ shiny::shinyServer(function(input, output, session) {
         table,
         options = options,
         rownames = FALSE,
-        colnames = c("Characteristic", "Target", "Comparator", "Std. Diff."),
+        colnames = c("Characteristic", targetCohortHeader, comparatorCohortHeader, "Std. Diff."),
         escape = FALSE,
         filter = "top",
         class = "stripe nowrap compact"
@@ -2974,6 +3015,10 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
       }
       
+      if (any(is.null(balance), nrow(balance) == 0)) {
+        return(dplyr::tibble(Note = "No data for the selected combination."))
+      }
+      
       balance <- balance %>% 
         dplyr::mutate(covariateName =  paste(.data$covariateName, "(", .data$conceptId, ")")) %>% 
         dplyr::rename("meanTarget" = mean1,
@@ -3002,6 +3047,10 @@ shiny::shinyServer(function(input, output, session) {
         
         standardDifferenceColumn <- 6
         
+        table <- table %>% 
+          dplyr::rename(!!targetCohortHeader := .data$meanTarget) %>% 
+          dplyr::rename(!!comparatorCohortHeader := .data$meanComparator)
+        
       } else {
         table <- balance %>%
           dplyr::select(
@@ -3018,7 +3067,13 @@ shiny::shinyServer(function(input, output, session) {
         
         colorBarColumns <- c(2,3)
         standardDifferenceColumn <- 4
+        
+        table <- table %>% 
+          dplyr::rename(!!targetCohortHeader := .data$target) %>% 
+          dplyr::rename(!!comparatorCohortHeader := .data$comparator)
       }
+      
+
       
       options = list(
         pageLength = 100,
@@ -3271,6 +3326,42 @@ shiny::shinyServer(function(input, output, session) {
           return(dplyr::tibble(Note = "No data for the selected combination."))
         }
         
+        targetCohortIdValue <- balance %>% dplyr::filter(!is.na(.data$cohortId1)) %>% dplyr::pull(.data$cohortId1) %>% unique()
+        comparatorcohortIdValue <- balance %>% dplyr::filter(!is.na(.data$cohortId2)) %>% dplyr::pull(.data$cohortId2) %>% unique()
+        databaseIdForCohortCharacterization <- balance$databaseId %>% unique()
+        
+        targetCohortShortName <- cohort %>% 
+          dplyr::filter(.data$cohortId == !!targetCohortIdValue) %>% 
+          dplyr::select(.data$shortName) %>% 
+          dplyr::pull()
+        
+        comparatorCohortShortName <- cohort %>% 
+          dplyr::filter(.data$cohortId == !!comparatorcohortIdValue) %>% 
+          dplyr::select(.data$shortName) %>% 
+          dplyr::pull()
+        
+        targetCohortSubjects <- cohortCount %>% 
+          dplyr::filter(.data$databaseId == databaseIdForCohortCharacterization) %>% 
+          dplyr::filter(.data$cohortId == !!targetCohortIdValue) %>% 
+          dplyr::pull(.data$cohortSubjects)
+        
+        comparatorCohortSubjects <- cohortCount %>% 
+          dplyr::filter(.data$databaseId == databaseIdForCohortCharacterization) %>% 
+          dplyr::filter(.data$cohortId == !!comparatorcohortIdValue) %>% 
+          dplyr::pull(.data$cohortSubjects)
+        
+        targetCohortHeader <- paste0(targetCohortShortName,
+                                     " (n = ",
+                                     scales::comma(targetCohortSubjects,
+                                                   accuracy = 1),
+                                     ")")
+        
+        comparatorCohortHeader <- paste0(comparatorCohortShortName,
+                                         " (n = ",
+                                         scales::comma(comparatorCohortSubjects,
+                                                       accuracy = 1),
+                                         ")")
+        
         balance <- balance %>% 
           dplyr::rename("meanTarget" = mean1, 
                         "sDTarget" = sd1,
@@ -3305,7 +3396,11 @@ shiny::shinyServer(function(input, output, session) {
             
             colspan <- 5
             
-            containerColumns <- c("Mean Target","SD Target","Mean Comparator","SD Comparator","Std. Diff")
+            containerColumns <- c(paste0("Mean ", targetCohortShortName),
+                                  paste0("SD ", targetCohortShortName),
+                                  paste0("Mean ", comparatorCohortShortName),
+                                  paste0("SD ", comparatorCohortShortName),
+                                  "Std. Diff")
           } else {
             table <- table %>% 
               dplyr::arrange(.data$choices) %>% 
@@ -3332,7 +3427,10 @@ shiny::shinyServer(function(input, output, session) {
             
             colspan <- 4
             
-            containerColumns <- c("Mean Target","SD Target","Mean Comparator","SD Comparator")
+            containerColumns <- c(paste0("Mean ", targetCohortShortName),
+                                  paste0("SD ", targetCohortShortName),
+                                  paste0("Mean ", comparatorCohortShortName),
+                                  paste0("SD ", comparatorCohortShortName))
           }
         } else {
           
@@ -3348,7 +3446,7 @@ shiny::shinyServer(function(input, output, session) {
                                  values_fill = 0
               )
             
-            containerColumns <- c("Mean Target", "Mean Comparator", "Std. Diff")
+            containerColumns <- c(targetCohortShortName, comparatorCohortShortName, "Std. Diff")
             
             columnDefs <- list(truncateStringDef(0, 80),
                                minCellRealDef(1:(length(temporalCovariateChoicesSelected) * 3), digits = 2))
@@ -3368,7 +3466,7 @@ shiny::shinyServer(function(input, output, session) {
                                  values_fill = 0
               )
             
-            containerColumns <- c("Target", "Comparator")
+            containerColumns <- c(targetCohortShortName, comparatorCohortShortName)
             
             columnDefs <- list(truncateStringDef(0, 80),
                                minCellRealDef(1:(length(temporalCovariateChoicesSelected) * 2), digits = 2))

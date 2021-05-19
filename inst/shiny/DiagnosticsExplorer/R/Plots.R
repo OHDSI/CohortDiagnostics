@@ -677,29 +677,29 @@ plotCohortOverlap <- function(data,
                               shortNameRef = NULL,
                               yAxis = "Percentages") {
   # Perform error checks for input variables
-  errorMessage <- checkmate::makeAssertCollection()
-  checkmate::assertTibble(
-    x = data,
-    any.missing = FALSE,
-    min.rows = 1,
-    min.cols = 6,
-    null.ok = FALSE,
-    add = errorMessage
-  )
-  checkmate::reportAssertions(collection = errorMessage)
-  checkmate::assertNames(
-    x = colnames(data),
-    must.include = c(
-      "databaseId",
-      "targetCohortId",
-      "comparatorCohortId",
-      "tOnlySubjects",
-      "cOnlySubjects",
-      "bothSubjects"
-    ),
-    add = errorMessage
-  )
-  checkmate::reportAssertions(collection = errorMessage)
+  # errorMessage <- checkmate::makeAssertCollection()
+  # checkmate::assertTibble(
+  #   x = data,
+  #   any.missing = FALSE,
+  #   min.rows = 1,
+  #   min.cols = 6,
+  #   null.ok = FALSE,
+  #   add = errorMessage
+  # )
+  # checkmate::reportAssertions(collection = errorMessage)
+  # checkmate::assertNames(
+  #   x = colnames(data),
+  #   must.include = c(
+  #     "databaseId",
+  #     "targetCohortId",
+  #     "comparatorCohortId",
+  #     "tOnlySubjects",
+  #     "cOnlySubjects",
+  #     "bothSubjects"
+  #   ),
+  #   add = errorMessage
+  # )
+  # checkmate::reportAssertions(collection = errorMessage)
   
   
   data <- data %>%
@@ -794,15 +794,13 @@ plotCohortOverlap <- function(data,
         .data$subjectsIn,
         absTOnlySubjects = "Left cohort only",
         absBothSubjects = "Both cohorts",
-        absCOnlySubjects = "Top cohort only"
+        absCOnlySubjects = "Right cohort only"
       )
     )
   
-  
-  
   plotData$subjectsIn <-
     factor(plotData$subjectsIn,
-           levels = c("Top cohort only", "Both cohorts", "Left cohort only"))
+           levels = c("Right cohort only", "Both cohorts", "Left cohort only"))
   
   if (yAxis == "Percentages") {
     position = "fill"
@@ -834,7 +832,6 @@ plotCohortOverlap <- function(data,
   plotData$comparatorShortName <- factor(plotData$comparatorShortName,
                                      levels = sortComparatorShortName$comparatorShortName)
   
-  
   plot <- ggplot2::ggplot(data = plotData) +
     ggplot2::aes(
       fill = .data$subjectsIn,
@@ -846,12 +843,13 @@ plotCohortOverlap <- function(data,
     ggplot2::ylab(label = "") +
     ggplot2::xlab(label = "") +
     ggplot2::scale_fill_manual("Subjects in", values = c(rgb(0.8, 0.2, 0.2), rgb(0.3, 0.2, 0.4), rgb(0.4, 0.4, 0.9))) +
-    ggplot2::facet_grid(databaseId ~ comparatorShortName) +
+    ggplot2::facet_grid(comparatorShortName ~ databaseId) +
     ggplot2::theme(
       panel.background = ggplot2::element_blank(),
       strip.background = ggplot2::element_blank(),
       panel.grid.major.x = ggplot2::element_line(color = "gray"),
-      axis.ticks.y = ggplot2::element_blank()
+      axis.ticks.y = ggplot2::element_blank(),
+      panel.spacing = ggplot2::unit(2, "lines")
     ) +
     ggiraph::geom_bar_interactive(position = position,
                                   alpha = 0.6,
@@ -859,18 +857,15 @@ plotCohortOverlap <- function(data,
   if (yAxis == "Percentages") {
     plot <- plot + ggplot2::scale_x_continuous(labels = scales::percent)
   } else {
-    plot <- plot + ggplot2::scale_x_continuous(labels = scales::comma)
+    plot <- plot + ggplot2::scale_x_continuous(labels = scales::comma, n.breaks = 3)
   }
-  width <- 1 + 0.5 * length(unique(plotData$comparatorShortName))
-  height <-
-    0.25 + 0.08 * nrow(dplyr::distinct(plotData, .data$databaseId, .data$targetShortName))
-  aspectRatio <- width / height
+  width <- length(unique(plotData$databaseId))
+  height <- nrow(plotData %>% dplyr::select(.data$targetShortName, .data$comparatorShortName) %>% dplyr::distinct())
   plot <- ggiraph::girafe(
     ggobj = plot,
-    options = list(ggiraph::opts_sizing(width = .7),
-                   ggiraph::opts_zoom(max = 5)),
-    width_svg = 12,
-    height_svg = 12 / aspectRatio
+    options = list(ggiraph::opts_sizing(rescale = TRUE)),
+    width_svg = max(12, 2 * width),
+    height_svg = max(2, 0.2 * height)
   )
   return(plot)
 }
