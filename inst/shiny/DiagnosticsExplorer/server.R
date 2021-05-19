@@ -933,7 +933,7 @@ shiny::shinyServer(function(input, output, session) {
         table <- data %>%
           dplyr::select(.data$cohort, .data$databaseId,
                         .data$cohortSubjects) %>%
-          dplyr::mutate(columnName = paste0(.data$databaseId, "_subjects")) %>%
+          dplyr::mutate(columnName = paste0(.data$databaseId)) %>%
           dplyr::arrange(.data$cohort, .data$databaseId) %>%
           tidyr::pivot_wider(
             id_cols = .data$cohort,
@@ -941,14 +941,12 @@ shiny::shinyServer(function(input, output, session) {
             values_from = .data$cohortSubjects,
             values_fill = 0
           )
-        
-        
       } else {
         maxValue <- max(data$cohortEntries)
         table <- data %>%
           dplyr::select(.data$cohort, .data$databaseId,
                         .data$cohortEntries) %>%
-          dplyr::mutate(columnName = paste0(.data$databaseId, "_records")) %>%
+          dplyr::mutate(columnName = paste0(.data$databaseId)) %>%
           dplyr::arrange(.data$cohort, .data$databaseId) %>%
           tidyr::pivot_wider(
             id_cols = .data$cohort,
@@ -1405,6 +1403,12 @@ shiny::shinyServer(function(input, output, session) {
         ))
       }
       table <- table[order(-table[, 5]), ]
+      
+      table$sourceConceptId <- as.factor(table$sourceConceptId)
+      table$sourceConceptName <- as.factor(table$sourceConceptName)
+      table$sourceVocabularyId <- as.factor(table$sourceVocabularyId)
+      table$sourceConceptCode <- as.factor(table$sourceConceptCode)
+      
       sketch <- htmltools::withTags(table(class = "display",
                                           thead(
                                             tr(
@@ -1495,6 +1499,10 @@ shiny::shinyServer(function(input, output, session) {
           by = "conceptId"
         ) %>%
         dplyr::relocate(.data$conceptId, .data$conceptName, .data$vocabularyId)
+      
+      table$conceptId <- as.factor(table$conceptId)
+      table$conceptName <- as.factor(table$conceptName)
+      table$vocabularyId <- as.factor(table$vocabularyId)
       
       if (nrow(table) == 0) {
         return(dplyr::tibble(
@@ -1638,95 +1646,178 @@ shiny::shinyServer(function(input, output, session) {
         conceptCount = sum(.data$conceptCount)
       ) %>%
       dplyr::ungroup() %>%
-      dplyr::arrange(.data$databaseId) %>%
-      tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>%
-      dplyr::mutate(name = paste0(
-        databaseId,
-        "_",
-        stringr::str_replace(
-          string = .data$name,
-          pattern = "concept",
-          replacement = ""
-        )
-      )) %>%
-      tidyr::pivot_wider(
-        id_cols = c(.data$conceptId),
-        names_from = .data$name,
-        values_from = .data$value,
-        values_fill = 0
-      ) %>%
-      dplyr::inner_join(
-        data %>%
-          dplyr::select(
-            .data$conceptId,
-            .data$conceptName,
-            .data$vocabularyId,
-            .data$conceptCode
-          ) %>%
-          dplyr::distinct(),
-        by = "conceptId"
-      ) %>%
-      dplyr::relocate(.data$conceptId,
-                      .data$conceptName,
-                      .data$vocabularyId,
-                      .data$conceptCode)
+      dplyr::arrange(.data$databaseId)
     
-    if (nrow(table) == 0) {
-      return(dplyr::tibble(
-        Note = paste0('No data available for selected databases and cohorts')
-      ))
+    if (input$orphanConceptsColumFilterType == "All") {
+      table <- table %>% 
+        tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>%
+        dplyr::mutate(name = paste0(
+          databaseId,
+          "_",
+          stringr::str_replace(
+            string = .data$name,
+            pattern = "concept",
+            replacement = ""
+          )
+        )) %>%
+        tidyr::pivot_wider(
+          id_cols = c(.data$conceptId),
+          names_from = .data$name,
+          values_from = .data$value,
+          values_fill = 0
+        ) %>%
+        dplyr::inner_join(
+          data %>%
+            dplyr::select(
+              .data$conceptId,
+              .data$conceptName,
+              .data$vocabularyId,
+              .data$conceptCode
+            ) %>%
+            dplyr::distinct(),
+          by = "conceptId"
+        ) %>%
+        dplyr::relocate(.data$conceptId,
+                        .data$conceptName,
+                        .data$vocabularyId,
+                        .data$conceptCode) %>% 
+        dplyr::mutate(conceptId = as.factor(.data$conceptId),
+                      conceptName = as.factor(.data$conceptName),
+                      vocabularyId = as.factor(.data$vocabularyId),
+                      conceptCode = as.factor(.data$conceptCode))
+      
+      if (nrow(table) == 0) {
+        return(dplyr::tibble(
+          Note = paste0('No data available for selected databases and cohorts')
+        ))
+      }
+      
+      table <- table[order(-table[, 5]), ]
+      
+      sketch <- htmltools::withTags(table(class = "display",
+                                          thead(
+                                            tr(
+                                              th(rowspan = 2, "Concept ID"),
+                                              th(rowspan = 2, "Concept Name"),
+                                              th(rowspan = 2, "Vocabulary ID"),
+                                              th(rowspan = 2, "Concept Code"),
+                                              lapply(databaseIdsWithCount, th, colspan = 2, class = "dt-center", style = "border-bottom:1px solid silver;border-bottom:1px solid silver")
+                                            ),
+                                            tr(lapply(rep(
+                                              c("Subjects", "Records"), length(databaseIds)
+                                            ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver"))
+                                          )))
+      
+      options = list(
+        pageLength = 1000,
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        scrollX = TRUE,
+        scrollY = "50vh",
+        lengthChange = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        columnDefs = list(truncateStringDef(1, 100),
+                          minCellCountDef(3 + (1:(
+                            length(databaseIds) * 2
+                          ))))
+      )
+      
+      table <- DT::datatable(
+        table,
+        options = options,
+        colnames = colnames(table),
+        rownames = FALSE,
+        container = sketch,
+        escape = FALSE,
+        filter = "top",
+        class = "stripe nowrap compact"
+      )
+      
+      table <- DT::formatStyle(
+        table = table,
+        columns =  4 + (1:(length(databaseIds) * 2)),
+        background = DT::styleColorBar(c(0, maxCount), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+    } else {
+      if (input$orphanConceptsColumFilterType == "Subjects only") {
+        table <- table %>% 
+          tidyr::pivot_wider(
+            id_cols = c(.data$conceptId),
+            names_from = .data$databaseId,
+            values_from = .data$conceptSubjects,
+            values_fill = 0
+          )
+        
+      } else {
+        table <- table %>% 
+          tidyr::pivot_wider(
+            id_cols = c(.data$conceptId),
+            names_from = .data$databaseId,
+            values_from = .data$conceptCount,
+            values_fill = 0
+          )
+      }
+      
+      table <- table %>% 
+        dplyr::inner_join(
+          data %>%
+            dplyr::select(
+              .data$conceptId,
+              .data$conceptName,
+              .data$vocabularyId,
+              .data$conceptCode
+            ) %>%
+            dplyr::distinct(),
+          by = "conceptId"
+        ) %>%
+        dplyr::relocate(.data$conceptId,
+                        .data$conceptName,
+                        .data$vocabularyId,
+                        .data$conceptCode) %>% 
+        dplyr::mutate(conceptId = as.factor(.data$conceptId),
+                      conceptName = as.factor(.data$conceptName),
+                      vocabularyId = as.factor(.data$vocabularyId),
+                      conceptCode = as.factor(.data$conceptCode))
+      
+      options = list(
+        pageLength = 1000,
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        scrollX = TRUE,
+        scrollY = "50vh",
+        lengthChange = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        columnDefs = list(truncateStringDef(1, 100),
+                          minCellCountDef(3 + (1:(
+                            length(databaseIds)
+                          ))))
+      )
+      
+      table <- DT::datatable(
+        table,
+        options = options,
+        colnames = colnames(table),
+        rownames = FALSE,
+        escape = FALSE,
+        filter = "top",
+        class = "stripe nowrap compact"
+      )
+      
+      table <- DT::formatStyle(
+        table = table,
+        columns =  4 + (1:(length(databaseIds))),
+        background = DT::styleColorBar(c(0, maxCount), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
     }
     
-    table <- table[order(-table[, 5]), ]
-    
-    sketch <- htmltools::withTags(table(class = "display",
-                                        thead(
-                                          tr(
-                                            th(rowspan = 2, "Concept ID"),
-                                            th(rowspan = 2, "Concept Name"),
-                                            th(rowspan = 2, "Vocabulary ID"),
-                                            th(rowspan = 2, "Concept Code"),
-                                            lapply(databaseIdsWithCount, th, colspan = 2, class = "dt-center", style = "border-bottom:1px solid silver;border-bottom:1px solid silver")
-                                          ),
-                                          tr(lapply(rep(
-                                            c("Subjects", "Records"), length(databaseIds)
-                                          ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver"))
-                                        )))
-    
-    options = list(
-      pageLength = 1000,
-      lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-      searching = TRUE,
-      scrollX = TRUE,
-      scrollY = "50vh",
-      lengthChange = TRUE,
-      ordering = TRUE,
-      paging = TRUE,
-      columnDefs = list(truncateStringDef(1, 100),
-                        minCellCountDef(3 + (1:(
-                          length(databaseIds) * 2
-                        ))))
-    )
-    
-    table <- DT::datatable(
-      table,
-      options = options,
-      colnames = colnames(table),
-      rownames = FALSE,
-      container = sketch,
-      escape = FALSE,
-      filter = "top",
-      class = "stripe nowrap compact"
-    )
-    
-    table <- DT::formatStyle(
-      table = table,
-      columns =  4 + (1:(length(databaseIds) * 2)),
-      background = DT::styleColorBar(c(0, maxCount), "lightblue"),
-      backgroundSize = "98% 88%",
-      backgroundRepeat = "no-repeat",
-      backgroundPosition = "center"
-    )
     return(table)
   }, server = TRUE)
   
@@ -2371,7 +2462,8 @@ shiny::shinyServer(function(input, output, session) {
     databaseIds <- sort(unique(data$databaseId))
     
     cohortCounts <- data %>% 
-      dplyr::inner_join(cohortCount) %>% 
+      dplyr::inner_join(cohortCount,
+                        by = c("cohortId", "databaseId")) %>% 
       dplyr::filter(.data$cohortId == cohortId()) %>% 
       dplyr::filter(.data$databaseId %in% databaseIds()) %>% 
       dplyr::select(.data$cohortSubjects) %>% 
@@ -2512,36 +2604,39 @@ shiny::shinyServer(function(input, output, session) {
         ))
       }
       
+      covariateNames <- data %>% dplyr::select(
+        .data$covariateId,
+        .data$covariateName,
+        .data$conceptId
+      ) %>%
+        dplyr::distinct()
+        
       if (input$characterizationColumnFilters == "Mean and Standard Deviation") {
         data <- data %>%
           dplyr::arrange(.data$databaseId, .data$cohortId) %>%
-          tidyr::pivot_longer(cols = c(.data$mean, .data$sd))
+          tidyr::pivot_longer(cols = c(.data$mean, .data$sd), names_to = 'names') %>% 
+          dplyr::mutate(names = paste0(.data$databaseId, " ", .data$names)) %>% 
+          dplyr::arrange(.data$databaseId, .data$names, .data$covariateId) %>% 
+          tidyr::pivot_wider(
+            id_cols = c(.data$cohortId, .data$covariateId),
+            names_from = .data$names,
+            values_from = .data$value,
+            values_fill = 0 
+          )
       } else {
         data <- data %>%
           dplyr::arrange(.data$databaseId, .data$cohortId) %>%
-          tidyr::pivot_longer(cols = c(.data$mean))
+          dplyr::select(-.data$sd) %>% 
+          tidyr::pivot_wider(
+            id_cols = c(.data$cohortId, .data$covariateId),
+            names_from = .data$databaseId,
+            values_from = .data$mean,
+            values_fill = 0 
+          )
       }
       
-      data <-  data %>% 
-        dplyr::inner_join(cohortCount %>% 
-                            dplyr::select(-.data$cohortEntries),
-                          by = c("databaseId", "cohortId")) %>% 
-        dplyr::mutate(name = paste0(.data$databaseId, 
-                                          "<br>(n = ", 
-                                          scales::comma(.data$cohortSubjects,accuracy = 1), 
-                                          ")")) %>%
-        tidyr::pivot_wider(
-          id_cols = c(.data$cohortId, .data$covariateId),
-          names_from = .data$name,
-          values_from = .data$value
-        ) %>%
-        dplyr::inner_join(
-          data %>% dplyr::select(
-            .data$covariateId,
-            .data$covariateName,
-            .data$conceptId
-          ) %>%
-            dplyr::distinct(),
+      data <-  data %>%
+        dplyr::inner_join(covariateNames,
           by = "covariateId"
         ) %>%
         dplyr::mutate(covariateName = paste(.data$covariateName, "(",.data$conceptId, ")")) %>% 
@@ -2613,10 +2708,21 @@ shiny::shinyServer(function(input, output, session) {
           )
         )
         
+        colnames <- cohortCount %>% 
+          dplyr::filter(.data$databaseId %in% colnames(data)) %>% 
+          dplyr::filter(.data$cohortId == characterizationTableData()$cohortId %>% unique()) %>% 
+          dplyr::mutate(colnames = paste0(.data$databaseId, 
+                                          "<br>(n = ",
+                                          scales::comma(.data$cohortSubjects, accuracy = 1),
+                                          ")")) %>% 
+          dplyr::arrange(.data$databaseId) %>% 
+          dplyr::pull(colnames)
+        
         table <- DT::datatable(
           data,
           options = options,
           rownames = FALSE,
+          colnames = colnames,
           escape = FALSE,
           filter = "top",
           class = "stripe nowrap compact"
@@ -2848,7 +2954,7 @@ shiny::shinyServer(function(input, output, session) {
       comparatorCohortId()
     ) > 0), paste0("Please select comparator cohort.")))
     validate(need((comparatorCohortId() != cohortId()),
-                  paste0("Please select different cohort and comparator.")
+                  paste0("Please select different cohorts for target and comparator cohorts.")
     ))
     validate(need((length(input$database) > 0),
                   paste0("Please select atleast one datasource.")
@@ -3178,9 +3284,9 @@ shiny::shinyServer(function(input, output, session) {
         comparatorCohortId()
       ) > 0),
       paste0("Please select comparator cohort.")))
-      # validate(need((comparatorCohortId() != cohortId()),
-      #               paste0("Please select different cohort and comparator.")
-      # ))
+      validate(need((comparatorCohortId() != cohortId()),
+                    paste0("Please select different cohorts for target and comparator cohorts.")
+      ))
       validate(need((length(input$database) > 0),
                     paste0("Please select atleast one datasource.")
       ))
