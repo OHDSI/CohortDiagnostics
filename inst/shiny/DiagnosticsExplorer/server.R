@@ -281,7 +281,7 @@ shiny::shinyServer(function(input, output, session) {
       }
       
       if (is.null(expression$ConceptSets)) {
-        return(dplyr::tibble())
+        return(NULL)
       }
       
       conceptSetExpression <- expression$ConceptSets %>%
@@ -600,7 +600,6 @@ shiny::shinyServer(function(input, output, session) {
       }
     }
     if (!is.null(data) && nrow(data) > 0) {
-      
       if (all(nrow(conceptCounts) > 0,
               'conceptId' %in% colnames(conceptCounts))) {
         data <- data %>% 
@@ -628,9 +627,12 @@ shiny::shinyServer(function(input, output, session) {
   output$cohortDefinitionIncludedResolvedConceptsTable <-
     DT::renderDataTable(expr = {
       data <- getResolvedOrMappedConcepts()
-      if (is.null(data)) {
-        return(dplyr::tibble("No included standard concepts."))
-      }
+      
+      validate(need(length(cohortDefinitionConceptSetExpressionRow()$id) > 0,
+               "Please select concept set"))
+      
+      validate(need((all(!is.null(data), nrow(data) > 0)),
+                    "No resolved or mapped concept ids"))
       
       options = list(
         pageLength = 1000,
@@ -664,9 +666,13 @@ shiny::shinyServer(function(input, output, session) {
   output$cohortDefinitionMappedConceptsTable <-
     DT::renderDataTable(expr = {
       data <- getResolvedOrMappedConcepts()
-      if (is.null(data)) {
-        return("No included source concepts")
-      }
+      
+      validate(need(length(cohortDefinitionConceptSetExpressionRow()$id) > 0,
+               "Please select concept set"))
+      
+      validate(need((all(!is.null(data), nrow(data) > 0)),
+                    "No resolved or mapped concept ids"))
+
       data <- data %>% 
         dplyr::mutate(conceptId = as.factor(.data$conceptId),
                       conceptName = as.factor(.data$conceptName),
@@ -1259,11 +1265,14 @@ shiny::shinyServer(function(input, output, session) {
       )
     
     
-    if (is.null(data) || nrow(data) == 0) {
-      return(dplyr::tibble(
-        Note = paste0("No data available for selected databases and cohorts")
-      ))
-    }
+    validate(need(all(!is.null(data), nrow(data) > 0),
+             "No data available for selected combination."))
+    
+    # if (is.null(data) || nrow(data) == 0) {
+    #   return(dplyr::tibble(
+    #     Note = paste0("No data available for selected combination")
+    #   ))
+    # }
     
     options = list(
       pageLength = 100,
@@ -1302,18 +1311,24 @@ shiny::shinyServer(function(input, output, session) {
     fileName = "includedConcept"
   ) 
   output$includedConceptsTable <- DT::renderDataTable(expr = {
-    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
-    if (is.null(cohortId()) || length(cohortId()) == 0) {
-      return(dplyr::tibble("No data available for selected databases and cohorts"))
-    }
+    validate(need(length(databaseIds()) > 0, 
+                  "No data sources chosen"))
+    validate(need(any(!is.null(cohortId()) || length(cohortId()) > 0),
+             "No cohort chosen"))
+    # if (is.null(cohortId()) || length(cohortId()) == 0) {
+    #   return(dplyr::tibble("No data available for selected combination"))
+    # }
     data <- getIncludedConceptResult(
       dataSource = dataSource,
       cohortId = cohortId(),
       databaseIds = databaseIds()
     )
-    if (is.null(data) || nrow(data) == 0) {
-      return(dplyr::tibble("No data available for selected databases and cohorts"))
-    }
+    validate(need(any(!is.null(data) || nrow(data) > 0),
+             "No data available for selected combination"))
+    
+    # if (is.null(data) || nrow(data) == 0) {
+    #   return(dplyr::tibble("No data available for selected combination"))
+    # }
     
     if (!is.null(input$conceptSetsToFilterCharacterization) && length(input$conceptSetsToFilterCharacterization) > 0) {
       
@@ -1327,9 +1342,12 @@ shiny::shinyServer(function(input, output, session) {
       }
     }
     
-    if (nrow(data) == 0) {
-      return(dplyr::tibble("No data available for selected databases and cohorts"))
-    }
+    validate(need(any(!is.null(data) || nrow(data) > 0),
+             "No data available for selected combination"))
+    
+    # if (nrow(data) == 0) {
+    #   return(dplyr::tibble("No data available for selected combination"))
+    # }
     databaseIds <- unique(data$databaseId)
     cohortCounts <- data %>% 
       dplyr::inner_join(cohortCount) %>% 
@@ -1399,12 +1417,17 @@ shiny::shinyServer(function(input, output, session) {
           .data$sourceVocabularyId,
           .data$sourceConceptCode
         )
+
+      validate(need((nrow(table) > 0),
+               "No data available for selected combination"))
       
-      if (nrow(table) == 0) {
-        return(dplyr::tibble(
-          Note = paste0("No data available for selected databases and cohorts")
-        ))
-      }
+      # if (nrow(table) == 0) {
+      #   return(dplyr::tibble(
+      #     Note = paste0("No data available for selected combination")
+      #   ))
+      # }
+      # 
+      
       table <- table[order(-table[, 5]), ]
       
       table$sourceConceptId <- as.factor(table$sourceConceptId)
@@ -1507,11 +1530,14 @@ shiny::shinyServer(function(input, output, session) {
       table$conceptName <- as.factor(table$conceptName)
       table$vocabularyId <- as.factor(table$vocabularyId)
       
-      if (nrow(table) == 0) {
-        return(dplyr::tibble(
-          Note = paste0('No data available for selected databases and cohorts')
-        ))
-      }
+      validate(need((nrow(table) > 0),
+               "No data available for selected combination"))
+      # 
+      # if (nrow(table) == 0) {
+      #   return(dplyr::tibble(
+      #     Note = paste0('No data available for selected combination')
+      #   ))
+      # }
       
       table <- table[order(-table[, 4]), ]
       
@@ -1581,22 +1607,28 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
     
-    if (is.null(cohortId()) || length(cohortId()) == 0) {
-      return(dplyr::tibble(Note = paste0(
-        "There is no data for the selected combination."
-      )))
-    }
+    validate(need(!is.null(cohortId()) || length(cohortId()) > 0,
+             "No data available for selected combination"))
+    
+    # if (is.null(cohortId()) || length(cohortId()) == 0) {
+    #   return(dplyr::tibble(Note = paste0(
+    #     "There is no data for the selected combination."
+    #   )))
+    # }
     
     data <- getOrphanConceptResult(
       dataSource = dataSource,
       cohortId = cohortId(),
       databaseIds = databaseIds()
     )
-    if (is.null(data) || nrow(data) == 0) {
-      return(dplyr::tibble(Note = paste0(
-        "There is no data for the selected combination."
-      )))
-    }
+    validate(need((!is.null(data) || nrow(data) > 0),
+             "There is no data for the selected combination."))
+    
+    # if (is.null(data) || nrow(data) == 0) {
+    #   return(dplyr::tibble(Note = paste0(
+    #     "There is no data for the selected combination."
+    #   )))
+    # }
     
     if (!is.null(input$conceptSetsToFilterCharacterization) && length(input$conceptSetsToFilterCharacterization) > 0) {
       
@@ -1610,11 +1642,14 @@ shiny::shinyServer(function(input, output, session) {
       }
     }
     
-    if (nrow(data) == 0) {
-      return(dplyr::tibble(Note = paste0(
-        "There is no data for the selected combination."
-      )))
-    }
+    validate(need((nrow(data) > 0),
+             "There is no data for the selected combination."))
+    
+    # if (nrow(data) == 0) {
+    #   return(dplyr::tibble(Note = paste0(
+    #     "There is no data for the selected combination."
+    #   )))
+    # }
     databaseIds <- unique(data$databaseId)
     
     databaseIdsWithCount <- data %>% 
@@ -1685,11 +1720,14 @@ shiny::shinyServer(function(input, output, session) {
                       vocabularyId = as.factor(.data$vocabularyId),
                       conceptCode = as.factor(.data$conceptCode))
       
-      if (nrow(table) == 0) {
-        return(dplyr::tibble(
-          Note = paste0('No data available for selected databases and cohorts')
-        ))
-      }
+      validate(need((nrow(table) > 0),
+               "There is no data for the selected combination."))
+      
+      # if (nrow(table) == 0) {
+      #   return(dplyr::tibble(
+      #     Note = paste0('No data available for selected combination')
+      #   ))
+      # }
       
       table <- table[order(-table[, 5]), ]
       
@@ -1839,11 +1877,16 @@ shiny::shinyServer(function(input, output, session) {
       cohortIds = cohortId(),
       databaseIds = databaseIds()
     )
-    if (nrow(table) == 0) {
-      return(dplyr::tibble(
-        Note = paste0("No data available for selected databases and cohorts")
-      ))
-    }
+    
+    validate(need((nrow(table) > 0),
+             "There is no data for the selected combination."))
+    
+    # 
+    # if (nrow(table) == 0) {
+    #   return(dplyr::tibble(
+    #     Note = paste0("No data available for selected combination")
+    #   ))
+    # }
     
     databaseIds <- unique(table$databaseId)
     
@@ -2034,9 +2077,13 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen chosen"))
     data <- indexEventBreakDownDataFilteredByRadioButton()
-    if (is.null(data) || nrow(data) == 0) {
-      return(dplyr::tibble("No data for the combination."))
-    }
+    
+    validate(need((!is.null(data) || nrow(data) > 0),
+             "There is no data for the selected combination."))
+    
+    # if (is.null(data) || nrow(data) == 0) {
+    #   return(dplyr::tibble("No data for the combination."))
+    # }
     data <- data %>%
       # dplyr::filter(.data$domainTable %in% selectedDomainTable()) %>%
       # dplyr::filter(.data$domainField %in% selectedDomainField()) %>%
@@ -2047,11 +2094,9 @@ shiny::shinyServer(function(input, output, session) {
         #-.data$vocabularyId,-.data$standardConcept
       )
     
-    if (nrow(data) == 0) {
-      return(dplyr::tibble(
-        Note = paste0("No data available for selected databases and cohorts")
-      ))
-    }
+    validate(need(nrow(data) > 0,
+             "No data available for selected combination."))
+    
     maxCount <- max(data$conceptCount, na.rm = TRUE)
     databaseIds <- unique(data$databaseId)
     
@@ -2240,11 +2285,14 @@ shiny::shinyServer(function(input, output, session) {
       databaseIds = databaseIds()
     )
     
-    if (nrow(data) == 0) {
-      return(dplyr::tibble(
-        Note = paste0("No data available for selected databases and cohort")
-      ))
-    }
+    validate(need(nrow(data) > 0,
+             "No data available for selected combination."))
+    # 
+    # if (nrow(data) == 0) {
+    #   return(dplyr::tibble(
+    #     Note = paste0("No data available for selected databases and cohort")
+    #   ))
+    # }
     
     databaseIds <- sort(unique(data$databaseId))
     cohortCounts <- data %>% 
@@ -2459,7 +2507,7 @@ shiny::shinyServer(function(input, output, session) {
     
     if (nrow(data) == 0) {
       return(dplyr::tibble(
-        Note = paste0("No data available for selected databases and cohorts")
+        Note = paste0("No data available for selected combination")
       ))
     }
     
@@ -2495,9 +2543,13 @@ shiny::shinyServer(function(input, output, session) {
       
       table <- data %>%
         prepareTable1()
-      if (nrow(table) == 0) {
-        return(dplyr::tibble(Note = "There is no data to return."))
-      }
+      
+      validate(need(nrow(table) > 0,
+               "No data available for selected combination."))
+      
+      # if (nrow(table) == 0) {
+      #   return(dplyr::tibble(Note = "There is no data to return."))
+      # }
       
       characteristics <- table %>%
         dplyr::select(.data$characteristic,
@@ -2602,11 +2654,14 @@ shiny::shinyServer(function(input, output, session) {
         }
       }
       
-      if (nrow(data) == 0) {
-        return(dplyr::tibble(
-          Note = paste0("No data available for selected databases and cohorts")
-        ))
-      }
+      validate(need(nrow(data) > 0,
+               "No data available for selected combination."))
+      
+      # if (nrow(data) == 0) {
+      #   return(dplyr::tibble(
+      #     Note = paste0("No data available for selected combination")
+      #   ))
+      # }
       
       covariateNames <- data %>% dplyr::select(
         .data$covariateId,
@@ -2829,11 +2884,15 @@ shiny::shinyServer(function(input, output, session) {
       data <- temporalCharacterization() %>%
         dplyr::filter(.data$analysisName %in% temporalAnalysisNameFilter()) %>%
         dplyr::filter(.data$domainId %in% temporalDomainNameFilter())
-      if (nrow(data) == 0) {
-        return(dplyr::tibble(
-          Note = paste0("No data available for selected databases and cohorts")
-        ))
-      }
+      
+      validate(need(nrow(data) > 0,
+               "No data available for selected combination."))
+      # 
+      # if (nrow(data) == 0) {
+      #   return(dplyr::tibble(
+      #     Note = paste0("No data available for selected combination")
+      #   ))
+      # }
       
       table <- data %>%
         dplyr::mutate(covariateName = paste(.data$covariateName, "(", .data$conceptId, ")")) %>% 
@@ -3025,9 +3084,13 @@ shiny::shinyServer(function(input, output, session) {
   
   output$charCompareTable <- DT::renderDataTable(expr = {
     balance <- computeBalance()
-    if (any(is.null(balance), nrow(balance) == 0)) {
-      return(dplyr::tibble(Note = "No data for the selected combination."))
-    }
+    
+    validate(need(all(!is.null(balance), nrow(balance) > 0),
+             "No data available for selected combination."))
+    
+    # if (any(is.null(balance), nrow(balance) == 0)) {
+    #   return(dplyr::tibble(Note = "No data for the selected combination."))
+    # }
     
     targetCohortIdValue <- balance %>% dplyr::filter(!is.na(.data$cohortId1)) %>% dplyr::pull(.data$cohortId1) %>% unique()
     comparatorcohortIdValue <- balance %>% dplyr::filter(!is.na(.data$cohortId2)) %>% dplyr::pull(.data$cohortId2) %>% unique()
@@ -3067,16 +3130,15 @@ shiny::shinyServer(function(input, output, session) {
     
     if (input$charCompareType == "Pretty table") {
       table <- prepareTable1Comp(balance)
-      if (nrow(table) > 0) {
-        table <- table %>%
-          dplyr::arrange(.data$sortOrder) %>%
-          dplyr::select(-.data$sortOrder) %>%
-          dplyr::select(-.data$cohortId1, -.data$cohortId2)
-        
-      } else {
-        return(dplyr::tibble(Note = "No data for covariates that are part of pretty table."))
-      }
       
+      validate(need(nrow(table) > 0,
+               "No data available for selected combination."))
+    
+      table <- table %>%
+        dplyr::arrange(.data$sortOrder) %>%
+        dplyr::select(-.data$sortOrder) %>%
+        dplyr::select(-.data$cohortId1, -.data$cohortId2)
+    
       options = list(
         pageLength = 100,
         lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
@@ -3125,9 +3187,12 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
       }
       
-      if (any(is.null(balance), nrow(balance) == 0)) {
-        return(dplyr::tibble(Note = "No data for the selected combination."))
-      }
+      validate(need(all(!is.null(balance), nrow(balance) > 0),
+               "No data available for selected combination."))
+      
+      # if (any(is.null(balance), nrow(balance) == 0)) {
+      #   return(dplyr::tibble(Note = "No data for the selected combination."))
+      # }
       
       balance <- balance %>% 
         dplyr::mutate(covariateName =  paste(.data$covariateName, "(", .data$conceptId, ")")) %>% 
@@ -3230,9 +3295,13 @@ shiny::shinyServer(function(input, output, session) {
   
   output$charComparePlot <- ggiraph::renderggiraph(expr = {
     data <- computeBalance()
-    if (nrow(data) == 0) {
-      return(dplyr::tibble(Note = "No data for the selected combination."))
-    }
+    
+    validate(need(nrow(data) > 0,
+             "No data available for selected combination."))
+    
+    # if (nrow(data) == 0) {
+    #   return(dplyr::tibble(Note = "No data for the selected combination."))
+    # }
     data <- data %>%
       dplyr::filter(.data$analysisName %in% charCompareAnalysisNameFilter()) %>%
       dplyr::filter(.data$domainId %in% charaCompareDomainNameFilter())
@@ -3255,9 +3324,13 @@ shiny::shinyServer(function(input, output, session) {
       data <- data %>%
         dplyr::filter(.data$isBinary == 'N')
     }
-    if (nrow(data) == 0) {
-      return(dplyr::tibble(Note = "No data for the selected combination."))
-    }
+    
+    validate(need(nrow(data) > 0,
+             "No data available for selected combination."))
+    
+    # if (nrow(data) == 0) {
+    #   return(dplyr::tibble(Note = "No data for the selected combination."))
+    # }
     plot <-
       plotCohortComparisonStandardizedDifference(
         balance = data,
@@ -3303,6 +3376,7 @@ shiny::shinyServer(function(input, output, session) {
         isTemporal = TRUE,
         timeIds = timeIds()
       )
+      validate(need((nrow(covs1) > 0), paste0("Target cohort id:", cohortId(), " does not have data.")))
       covs2 <- getCovariateValueResult(
         dataSource = dataSource,
         cohortIds = comparatorCohortId(),
@@ -3310,6 +3384,7 @@ shiny::shinyServer(function(input, output, session) {
         isTemporal = TRUE,
         timeIds = timeIds()
       )
+      validate(need((nrow(covs2) > 0), paste0("Target cohort id:", comparatorCohortId(), " does not have data.")))
       balance <-
         compareTemporalCohortCharacteristics(covs1, covs2) %>%
         dplyr::mutate(absStdDiff = abs(.data$stdDiff))
@@ -3370,9 +3445,13 @@ shiny::shinyServer(function(input, output, session) {
   output$temporalCharacterizationCompareTable <-
     DT::renderDataTable(expr = {
       balance <- computeBalanceForCompareTemporalCharacterization()
-      if (nrow(balance) == 0) {
-        return(dplyr::tibble(Note = "No data for the selected combination."))
-      }
+      
+      validate(need(nrow(balance) > 0,
+               "No data available for selected combination."))
+      
+      # if (nrow(balance) == 0) {
+      #   return(dplyr::tibble(Note = "No data for the selected combination."))
+      # }
       if (input$temporalCharacterizationType == "Pretty table") {
         # table <- prepareTable1Comp(balance)
         # if (nrow(table) > 0) {
@@ -3432,9 +3511,12 @@ shiny::shinyServer(function(input, output, session) {
             dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
         }
         
-        if (nrow(balance) == 0) {
-          return(dplyr::tibble(Note = "No data for the selected combination."))
-        }
+        validate(need(all(!is.null(balance), nrow(balance) > 0),
+                 "No data available for selected combination."))
+        # 
+        # if (nrow(balance) == 0) {
+        #   return(dplyr::tibble(Note = "No data for the selected combination."))
+        # }
         
         targetCohortIdValue <- balance %>% dplyr::filter(!is.na(.data$cohortId1)) %>% dplyr::pull(.data$cohortId1) %>% unique()
         comparatorcohortIdValue <- balance %>% dplyr::filter(!is.na(.data$cohortId2)) %>% dplyr::pull(.data$cohortId2) %>% unique()
@@ -3667,9 +3749,13 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$databaseInformationTable <- DT::renderDataTable(expr = {
-    if (nrow(database) == 0) {
-      return(dplyr::tibble("No information on the data source."))
-    }
+    
+    validate(need(all(!is.null(database), nrow(database) > 0),
+             "No data available for selected combination."))
+    
+    # if (nrow(database) == 0) {
+    #   return(dplyr::tibble("No information on the data source."))
+    # }
     data <- database 
     if (!'vocabularyVersionCdm' %in% colnames(database)) {
       data$vocabularyVersionCdm <- "Not in data"
