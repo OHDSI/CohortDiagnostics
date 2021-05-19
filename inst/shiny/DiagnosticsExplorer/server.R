@@ -3186,9 +3186,9 @@ shiny::shinyServer(function(input, output, session) {
         comparatorCohortId()
       ) > 0),
       paste0("Please select comparator cohort.")))
-      # validate(need((comparatorCohortId() != cohortId()),
-      #               paste0("Please select different cohort and comparator.")
-      # ))
+      validate(need((comparatorCohortId() != cohortId()),
+                    paste0("Please select different cohorts for target and comparator cohorts.")
+      ))
       validate(need((length(input$database) > 0),
                     paste0("Please select atleast one datasource.")
       ))
