@@ -715,6 +715,10 @@ shiny::shinyServer(function(input, output, session) {
         return(NULL)
       }
       
+      data$isExcluded <- ifelse(data$isExcluded,as.character(icon("check")),as.character(icon('remove')))
+      data$includeDescendants <- ifelse(data$includeDescendants,as.character(icon("check")),as.character(icon('remove')))
+      data$includeMapped <- ifelse(data$includeMapped,as.character(icon("check")),as.character(icon('remove')))
+      
       options = list(
         pageLength = 100,
         lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
