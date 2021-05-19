@@ -690,26 +690,30 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "includedConcepts",
     cohortReference("includedConceptsSelectedCohort"),
-    shiny::radioButtons(
-      inputId = "includedType",
-      label = "",
-      choices = c("Source fields", "Standard fields"),
-      selected = "Standard fields",
-      inline = TRUE
-    ),
-    tags$table(width = "100%", 
-               tags$tr(
-                 tags$td(align = "right",
-                         shiny::downloadButton(
-                           "saveIncludedConceptsTable",
-                           label = "",
-                           icon = shiny::icon("download"),
-                           style = "margin-top: 5px; margin-bottom: 5px;"
-                         )
-                 )
-               )
-    ),
-    DT::dataTableOutput("includedConceptsTable")
+    shinydashboard::box(
+      title = "Concepts in Data Source",
+      width = NULL,
+      shiny::radioButtons(
+        inputId = "includedType",
+        label = "",
+        choices = c("Source fields", "Standard fields"),
+        selected = "Standard fields",
+        inline = TRUE
+      ),
+      tags$table(width = "100%",
+                 tags$tr(
+                   tags$td(
+                     align = "right",
+                     shiny::downloadButton(
+                       "saveIncludedConceptsTable",
+                       label = "",
+                       icon = shiny::icon("download"),
+                       style = "margin-top: 5px; margin-bottom: 5px;"
+                     )
+                   )
+                 )),
+      DT::dataTableOutput("includedConceptsTable")
+    )
   ),
   shinydashboard::tabItem(
     tabName = "orphanConcepts",
