@@ -1016,7 +1016,8 @@ shiny::shinyServer(function(input, output, session) {
         stratifyByGender =  stratifyByGender,
         stratifyByAgeGroup =  stratifyByAge,
         stratifyByCalendarYear =  stratifyByCalendarYear,
-        minPersonYears = 1000
+        minPersonYears = input$minPersonYear,
+        minSubjectCount = input$minSubjetCount
       ) %>%
         dplyr::mutate(incidenceRate = dplyr::case_when(.data$incidenceRate < 0 ~ 0,
                                                        TRUE ~ .data$incidenceRate))
@@ -1026,6 +1027,8 @@ shiny::shinyServer(function(input, output, session) {
     }
     return(data)
   })
+  
+  
   
   shiny::observe({
     if (!is.null(incidenceRateData()) &&

@@ -555,7 +555,7 @@ bodyTabItems <- shinydashboard::tabItems(
             shinyWidgets::pickerInput(
               inputId = "incidenceRateGenderFilter",
               label = "Filter By Gender",
-              width = 400,
+              width = 200,
               choices = c("All"),
               selected = c("All"),
               multiple = TRUE,
@@ -587,6 +587,21 @@ bodyTabItems <- shinydashboard::tabItems(
               step = 1,
               sep = ""
             )
+          )
+        ),
+        tags$td(
+          shiny::numericInput(
+            inputId = "minPersonYear",
+            label = "Minimum person years",
+            value = 1000,
+            min = 0
+          )
+        ),
+        tags$td(
+          shiny::numericInput(
+            inputId = "minSubjetCount",
+            label = "Minimum subject count",
+            value = NULL
           )
         )
       )),

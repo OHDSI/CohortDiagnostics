@@ -100,7 +100,7 @@ getIncidenceRateResult <- function(dataSource = .GlobalEnv,
                                    stratifyByAgeGroup = c(TRUE,FALSE),
                                    stratifyByCalendarYear = c(TRUE,FALSE),
                                    minPersonYears = 1000,
-                                   minSubjectCount = NULL) {
+                                   minSubjectCount = NA) {
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
   errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = cohortIds,
@@ -166,7 +166,7 @@ getIncidenceRateResult <- function(dataSource = .GlobalEnv,
     dplyr::mutate(calendarYear = as.integer(.data$calendarYear)) %>%
     dplyr::arrange(.data$cohortId, .data$databaseId)
   
-  if (!is.null(minSubjectCount)) {
+  if (!is.na(minSubjectCount)) {
     data <- data %>% 
       dplyr::filter(.data$cohortSubjects > !!minSubjectCount)
   }
