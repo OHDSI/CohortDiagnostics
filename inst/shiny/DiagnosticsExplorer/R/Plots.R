@@ -267,12 +267,14 @@ plotIncidenceRate <- function(data,
       plotData$databaseId,
       "\nIncidence Rate = ",
       scales::comma(plotData$incidenceRate, accuracy = 0.01),
-      "\nCount = ",
-      paste0(scales::comma(plotData$cohortCount, accuracy = 1)),
+      "\nIncidence Proportion = ",
+      scales::percent(plotData$cohortCount/plotData$cohortSubjects, accuracy = 0.1),
       "\nPerson years = ",
       scales::comma(plotData$personYears, accuracy = 0.01),
       "\nCohort count = ",
-      scales::comma(plotData$cohortSubjects, accuracy = 1)
+      scales::comma(plotData$cohortSubjects, accuracy = 1),
+      "\nCount = ",
+      paste0(scales::comma(plotData$cohortCount, accuracy = 1))
     )
   )
   
