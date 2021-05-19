@@ -865,7 +865,7 @@ plotCohortOverlap <- function(data,
     ggobj = plot,
     options = list(ggiraph::opts_sizing(rescale = TRUE)),
     width_svg = max(12, 2 * width),
-    height_svg = max(2, 0.2 * height)
+    height_svg = max(2, 0.5 * height)
   )
   return(plot)
 }
