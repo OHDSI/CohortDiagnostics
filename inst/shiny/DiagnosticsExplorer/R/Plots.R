@@ -677,29 +677,29 @@ plotCohortOverlap <- function(data,
                               shortNameRef = NULL,
                               yAxis = "Percentages") {
   # Perform error checks for input variables
-  errorMessage <- checkmate::makeAssertCollection()
-  checkmate::assertTibble(
-    x = data,
-    any.missing = FALSE,
-    min.rows = 1,
-    min.cols = 6,
-    null.ok = FALSE,
-    add = errorMessage
-  )
-  checkmate::reportAssertions(collection = errorMessage)
-  checkmate::assertNames(
-    x = colnames(data),
-    must.include = c(
-      "databaseId",
-      "targetCohortId",
-      "comparatorCohortId",
-      "tOnlySubjects",
-      "cOnlySubjects",
-      "bothSubjects"
-    ),
-    add = errorMessage
-  )
-  checkmate::reportAssertions(collection = errorMessage)
+  # errorMessage <- checkmate::makeAssertCollection()
+  # checkmate::assertTibble(
+  #   x = data,
+  #   any.missing = FALSE,
+  #   min.rows = 1,
+  #   min.cols = 6,
+  #   null.ok = FALSE,
+  #   add = errorMessage
+  # )
+  # checkmate::reportAssertions(collection = errorMessage)
+  # checkmate::assertNames(
+  #   x = colnames(data),
+  #   must.include = c(
+  #     "databaseId",
+  #     "targetCohortId",
+  #     "comparatorCohortId",
+  #     "tOnlySubjects",
+  #     "cOnlySubjects",
+  #     "bothSubjects"
+  #   ),
+  #   add = errorMessage
+  # )
+  # checkmate::reportAssertions(collection = errorMessage)
   
   
   data <- data %>%
