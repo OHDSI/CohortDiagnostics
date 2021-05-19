@@ -2379,7 +2379,8 @@ shiny::shinyServer(function(input, output, session) {
     databaseIds <- sort(unique(data$databaseId))
     
     cohortCounts <- data %>% 
-      dplyr::inner_join(cohortCount) %>% 
+      dplyr::inner_join(cohortCount,
+                        by = c("cohortId", "databaseId")) %>% 
       dplyr::filter(.data$cohortId == cohortId()) %>% 
       dplyr::filter(.data$databaseId %in% databaseIds()) %>% 
       dplyr::select(.data$cohortSubjects) %>% 
@@ -2520,29 +2521,39 @@ shiny::shinyServer(function(input, output, session) {
         ))
       }
       
+      covariateNames <- data %>% dplyr::select(
+        .data$covariateId,
+        .data$covariateName,
+        .data$conceptId
+      ) %>%
+        dplyr::distinct()
+        
       if (input$characterizationColumnFilters == "Mean and Standard Deviation") {
         data <- data %>%
           dplyr::arrange(.data$databaseId, .data$cohortId) %>%
-          tidyr::pivot_longer(cols = c(.data$mean, .data$sd))
+          tidyr::pivot_longer(cols = c(.data$mean, .data$sd), names_to = 'names') %>% 
+          dplyr::mutate(names = paste0(.data$databaseId, " ", .data$names)) %>% 
+          dplyr::arrange(.data$databaseId, .data$names, .data$covariateId) %>% 
+          tidyr::pivot_wider(
+            id_cols = c(.data$cohortId, .data$covariateId),
+            names_from = .data$names,
+            values_from = .data$value,
+            values_fill = 0 
+          )
       } else {
         data <- data %>%
           dplyr::arrange(.data$databaseId, .data$cohortId) %>%
-          tidyr::pivot_longer(cols = c(.data$mean))
+          dplyr::select(-.data$sd) %>% 
+          tidyr::pivot_wider(
+            id_cols = c(.data$cohortId, .data$covariateId),
+            names_from = .data$databaseId,
+            values_from = .data$mean,
+            values_fill = 0 
+          )
       }
       
-      data <-  data %>% 
-        tidyr::pivot_wider(
-          id_cols = c(.data$cohortId, .data$covariateId),
-          names_from = .data$name,
-          values_from = .data$value
-        ) %>%
-        dplyr::inner_join(
-          data %>% dplyr::select(
-            .data$covariateId,
-            .data$covariateName,
-            .data$conceptId
-          ) %>%
-            dplyr::distinct(),
+      data <-  data %>%
+        dplyr::inner_join(covariateNames,
           by = "covariateId"
         ) %>%
         dplyr::mutate(covariateName = paste(.data$covariateName, "(",.data$conceptId, ")")) %>% 
@@ -2614,10 +2625,21 @@ shiny::shinyServer(function(input, output, session) {
           )
         )
         
+        colnames <- cohortCount %>% 
+          dplyr::filter(.data$databaseId %in% colnames(data)) %>% 
+          dplyr::filter(.data$cohortId == characterizationTableData()$cohortId %>% unique()) %>% 
+          dplyr::mutate(colnames = paste0(.data$databaseId, 
+                                          "<br>(n = ",
+                                          scales::comma(.data$cohortSubjects, accuracy = 1),
+                                          ")")) %>% 
+          dplyr::arrange(.data$databaseId) %>% 
+          dplyr::pull(colnames)
+        
         table <- DT::datatable(
           data,
           options = options,
           rownames = FALSE,
+          colnames = colnames,
           escape = FALSE,
           filter = "top",
           class = "stripe nowrap compact"
