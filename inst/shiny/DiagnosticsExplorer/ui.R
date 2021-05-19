@@ -324,21 +324,22 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "cohortDefinition",
     shinydashboard::box(
-      title = "Cohort Definition",
       width = NULL,
       status = "primary",
-      tags$table(width = "100%", 
-                 tags$tr(
-                   tags$td(align = "right",
-                           shiny::downloadButton(
-                             outputId = "saveCohortDefinitionButton",
-                             label = NULL,
-                             icon = shiny::icon("download"),
-                             style = "margin-top: 5px; margin-bottom: 5px;"
-                           )
-                   )
-                 )
-      ),    
+      column(6,tags$h4("Cohort Definition")),
+      column(6,
+             tags$table(width = "100%",
+                        tags$tr(
+                          tags$td(
+                            align = "right",
+                            shiny::downloadButton(
+                              outputId = "saveCohortDefinitionButton",
+                              label = NULL,
+                              icon = shiny::icon("download"),
+                              style = "margin-top: 5px; margin-bottom: 5px;"
+                            )
+                          )
+                        ))),    
       DT::dataTableOutput(outputId = "cohortDefinitionTable"),
       column(
         12,
@@ -420,10 +421,34 @@ bodyTabItems <- shinydashboard::tabItems(
               ),
               shiny::conditionalPanel(
                 condition = "input.conceptSetsType == 'Resolved'",
+                tags$table(width = "100%", 
+                           tags$tr(
+                             tags$td(align = "right",
+                                     shiny::downloadButton(
+                                       "saveCohortDefinitionIncludedResolvedConceptsTable",
+                                       label = "",
+                                       icon = shiny::icon("download"),
+                                       style = "margin-top: 5px; margin-bottom: 5px;"
+                                     )
+                             )
+                           )
+                ), 
                 DT::dataTableOutput(outputId = "cohortDefinitionIncludedResolvedConceptsTable")
               ),
               shiny::conditionalPanel(
                 condition = "input.conceptSetsType == 'Mapped'",
+                tags$table(width = "100%", 
+                           tags$tr(
+                             tags$td(align = "right",
+                                     shiny::downloadButton(
+                                       "saveCohortDefinitionMappedConceptsTable",
+                                       label = "",
+                                       icon = shiny::icon("download"),
+                                       style = "margin-top: 5px; margin-bottom: 5px;"
+                                     )
+                             )
+                           )
+                ), 
                 DT::dataTableOutput(outputId = "cohortDefinitionMappedConceptsTable")
               ),
               shiny::conditionalPanel(
@@ -555,7 +580,7 @@ bodyTabItems <- shinydashboard::tabItems(
             shinyWidgets::pickerInput(
               inputId = "incidenceRateGenderFilter",
               label = "Filter By Gender",
-              width = 400,
+              width = 200,
               choices = c("All"),
               selected = c("All"),
               multiple = TRUE,
@@ -588,6 +613,35 @@ bodyTabItems <- shinydashboard::tabItems(
               sep = ""
             )
           )
+        ),
+        tags$td(
+          shiny::numericInput(
+            inputId = "minPersonYear",
+            label = "Minimum person years",
+            value = 1000,
+            min = 0
+          )
+        ),
+        tags$td(
+          shiny::numericInput(
+            inputId = "minSubjetCount",
+            label = "Minimum subject count",
+            value = NULL
+          )
+        ),
+        tags$td(
+          tags$table(width = "100%", 
+                     tags$tr(
+                       tags$td(align = "right",
+                               shiny::downloadButton(
+                                 "saveIncidenceRatePlot",
+                                 label = "",
+                                 icon = shiny::icon("download"),
+                                 style = "margin-top: 5px; margin-bottom: 5px;"
+                               )
+                       )
+                     )
+          ), 
         )
       )),
       shiny::htmlOutput(outputId = "hoverInfoIr"),
@@ -636,26 +690,30 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "includedConcepts",
     cohortReference("includedConceptsSelectedCohort"),
-    shiny::radioButtons(
-      inputId = "includedType",
-      label = "",
-      choices = c("Source fields", "Standard fields"),
-      selected = "Standard fields",
-      inline = TRUE
-    ),
-    tags$table(width = "100%", 
-               tags$tr(
-                 tags$td(align = "right",
-                         shiny::downloadButton(
-                           "saveIncludedConceptsTable",
-                           label = "",
-                           icon = shiny::icon("download"),
-                           style = "margin-top: 5px; margin-bottom: 5px;"
-                         )
-                 )
-               )
-    ),
-    DT::dataTableOutput("includedConceptsTable")
+    shinydashboard::box(
+      title = "Concepts in Data Source",
+      width = NULL,
+      shiny::radioButtons(
+        inputId = "includedType",
+        label = "",
+        choices = c("Source fields", "Standard fields"),
+        selected = "Standard fields",
+        inline = TRUE
+      ),
+      tags$table(width = "100%",
+                 tags$tr(
+                   tags$td(
+                     align = "right",
+                     shiny::downloadButton(
+                       "saveIncludedConceptsTable",
+                       label = "",
+                       icon = shiny::icon("download"),
+                       style = "margin-top: 5px; margin-bottom: 5px;"
+                     )
+                   )
+                 )),
+      DT::dataTableOutput("includedConceptsTable")
+    )
   ),
   shinydashboard::tabItem(
     tabName = "orphanConcepts",

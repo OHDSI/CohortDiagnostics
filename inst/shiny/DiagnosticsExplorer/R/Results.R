@@ -46,7 +46,7 @@ getCohortCountResult <- function(dataSource = .GlobalEnv,
                                  cohortIds = NULL,
                                  databaseIds) {
   if (is(dataSource, "environment")) {
-    data <- get("cohortCount", envir = dataSource) %>% 
+    data <- cohortCount %>% 
       dplyr::filter(.data$databaseId %in% !!databaseIds) 
     if (!is.null(cohortIds)) {
       data <- data %>% 
@@ -100,7 +100,7 @@ getIncidenceRateResult <- function(dataSource = .GlobalEnv,
                                    stratifyByAgeGroup = c(TRUE,FALSE),
                                    stratifyByCalendarYear = c(TRUE,FALSE),
                                    minPersonYears = 1000,
-                                   minSubjectCount = NULL) {
+                                   minSubjectCount = NA) {
   # Perform error checks for input variables
   errorMessage <- checkmate::makeAssertCollection()
   errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = cohortIds,
@@ -161,12 +161,12 @@ getIncidenceRateResult <- function(dataSource = .GlobalEnv,
                     calendarYear = dplyr::na_if(.data$calendarYear, ""))
   }
   data <- data %>% 
-    dplyr::inner_join(get("cohortCount", envir = dataSource), 
+    dplyr::inner_join(cohortCount, 
                       by = c("cohortId", "databaseId")) %>% 
     dplyr::mutate(calendarYear = as.integer(.data$calendarYear)) %>%
     dplyr::arrange(.data$cohortId, .data$databaseId)
   
-  if (!is.null(minSubjectCount)) {
+  if (!is.na(minSubjectCount)) {
     data <- data %>% 
       dplyr::filter(.data$cohortSubjects > !!minSubjectCount)
   }
@@ -238,7 +238,7 @@ getIndexEventBreakdown <- function(dataSource = .GlobalEnv,
                                         .data$standardConcept),
                           by = c("conceptId"))
       data <- data %>% 
-        dplyr::inner_join(get("cohortCount", envir = dataSource), 
+        dplyr::inner_join(cohortCount, 
                           by = c('databaseId', 'cohortId')) %>% 
         dplyr::mutate(subjectPercent = .data$subjectCount/.data$cohortSubjects,
                       conceptPercent = .data$conceptCount/.data$cohortEntries)
@@ -307,7 +307,7 @@ getVisitContextResults <- function(dataSource = .GlobalEnv,
       tidyr::tibble()
   }
   data <- data %>%
-    dplyr::inner_join(get("cohortCount", envir = dataSource),
+    dplyr::inner_join(cohortCount,
                       by = c("cohortId", "databaseId")) %>% 
     dplyr::mutate(subjectPercent = .data$subjects/.data$cohortSubjects)
   return(data)
@@ -383,14 +383,16 @@ getOrphanConceptResult <- function(dataSource = .GlobalEnv,
                                       .data$conceptId,
                                       .data$conceptName,
                                       .data$vocabularyId,
-                                      .data$conceptCode),
+                                      .data$conceptCode,
+                                      .data$standardConcept),
                         by = c("conceptId"))
   } else {
     sql <- "SELECT orphan_concept.*,
               concept_set_name,
               standard_concept.concept_name AS concept_name,
               standard_concept.vocabulary_id AS vocabulary_id,
-              standard_concept.concept_code AS concept_code
+              standard_concept.concept_code AS concept_code,
+              standard_concept.standard_concept AS standard_concept
             FROM  @results_database_schema.orphan_concept
             INNER JOIN  @results_database_schema.concept_sets
               ON orphan_concept.cohort_id = concept_sets.cohort_id
@@ -407,8 +409,7 @@ getOrphanConceptResult <- function(dataSource = .GlobalEnv,
                                     database_ids = quoteLiterals(databaseIds), 
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
-  } 
-  
+  }
   return(data)
 }
 

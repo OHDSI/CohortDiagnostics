@@ -266,13 +266,15 @@ plotIncidenceRate <- function(data,
       " ", 
       plotData$databaseId,
       "\nIncidence Rate = ",
-      scales::comma(plotData$incidenceRate, accuracy = 0.01),
-      "\nCount = ",
-      paste0(scales::comma(plotData$cohortCount, accuracy = 1)),
+      scales::comma(plotData$incidenceRate, accuracy = 0.01), "/per 1k PY",
+      "\nIncidence Proportion = ",
+      scales::percent(plotData$cohortCount/plotData$cohortSubjects, accuracy = 0.1),
       "\nPerson years = ",
       scales::comma(plotData$personYears, accuracy = 0.01),
       "\nCohort count = ",
-      scales::comma(plotData$cohortSubjects, accuracy = 1)
+      scales::comma(plotData$cohortSubjects, accuracy = 1),
+      "\nCount = ",
+      paste0(scales::comma(plotData$cohortCount, accuracy = 1))
     )
   )
   
@@ -865,7 +867,7 @@ plotCohortOverlap <- function(data,
     ggobj = plot,
     options = list(ggiraph::opts_sizing(rescale = TRUE)),
     width_svg = max(12, 2 * width),
-    height_svg = max(2, 0.2 * height)
+    height_svg = max(2, 0.5 * height)
   )
   return(plot)
 }
