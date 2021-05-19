@@ -624,6 +624,8 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
+  output$saveCohortDefinitionIncludedResolvedConceptsTable <- downloadTableData(data = getResolvedOrMappedConcepts(), fileName = "ResolvedConcepts") 
+  
   output$cohortDefinitionIncludedResolvedConceptsTable <-
     DT::renderDataTable(expr = {
       data <- getResolvedOrMappedConcepts()
@@ -662,6 +664,8 @@ shiny::shinyServer(function(input, output, session) {
       )
       return(dataTable)
     }, server = TRUE)
+  
+  output$saveCohortDefinitionMappedConceptsTable <- downloadTableData(data = getResolvedOrMappedConcepts(), fileName = "MappedConcepts")
   
   output$cohortDefinitionMappedConceptsTable <-
     DT::renderDataTable(expr = {
