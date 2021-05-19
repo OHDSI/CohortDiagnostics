@@ -941,8 +941,6 @@ shiny::shinyServer(function(input, output, session) {
             values_from = .data$cohortSubjects,
             values_fill = 0
           )
-        
-        
       } else {
         maxValue <- max(data$cohortEntries)
         table <- data %>%
@@ -1405,6 +1403,12 @@ shiny::shinyServer(function(input, output, session) {
         ))
       }
       table <- table[order(-table[, 5]), ]
+      
+      table$sourceConceptId <- as.factor(table$sourceConceptId)
+      table$sourceConceptName <- as.factor(table$sourceConceptName)
+      table$sourceVocabularyId <- as.factor(table$sourceVocabularyId)
+      table$sourceConceptCode <- as.factor(table$sourceConceptCode)
+      
       sketch <- htmltools::withTags(table(class = "display",
                                           thead(
                                             tr(
@@ -1495,6 +1499,10 @@ shiny::shinyServer(function(input, output, session) {
           by = "conceptId"
         ) %>%
         dplyr::relocate(.data$conceptId, .data$conceptName, .data$vocabularyId)
+      
+      table$conceptId <- as.factor(table$conceptId)
+      table$conceptName <- as.factor(table$conceptName)
+      table$vocabularyId <- as.factor(table$vocabularyId)
       
       if (nrow(table) == 0) {
         return(dplyr::tibble(
