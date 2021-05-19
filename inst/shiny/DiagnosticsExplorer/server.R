@@ -2531,13 +2531,6 @@ shiny::shinyServer(function(input, output, session) {
       }
       
       data <-  data %>% 
-        dplyr::inner_join(cohortCount %>% 
-                            dplyr::select(-.data$cohortEntries),
-                          by = c("databaseId", "cohortId")) %>% 
-        dplyr::mutate(name = paste0(.data$databaseId, 
-                                          "<br>(n = ", 
-                                          scales::comma(.data$cohortSubjects,accuracy = 1), 
-                                          ")")) %>%
         tidyr::pivot_wider(
           id_cols = c(.data$cohortId, .data$covariateId),
           names_from = .data$name,
