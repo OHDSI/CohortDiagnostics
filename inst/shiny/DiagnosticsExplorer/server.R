@@ -724,11 +724,13 @@ shiny::shinyServer(function(input, output, session) {
       data$isExcluded <- ifelse(data$isExcluded,as.character(icon("check")),"")
       data$includeDescendants <- ifelse(data$includeDescendants,as.character(icon("check")),"")
       data$includeMapped <- ifelse(data$includeMapped,as.character(icon("check")),"")
+      data$invalidReason <- ifelse(data$invalidReason != 'V',as.character(icon("check")),"")
       
       data <- data %>% 
         dplyr::rename(exclude = .data$isExcluded,
                       descendants = .data$includeDescendants,
-                      mapped = .data$includeMapped)
+                      mapped = .data$includeMapped,
+                      invalid = .data$invalidReason)
       
       options = list(
         pageLength = 100,
