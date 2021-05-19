@@ -1046,12 +1046,10 @@ shiny::shinyServer(function(input, output, session) {
                                                        TRUE ~ .data$incidenceRate))
       
     } else {
-      data <- tidyr::tibble()
+      data <- NULL
     }
     return(data)
   })
-  
-  
   
   shiny::observe({
     if (!is.null(incidenceRateData()) &&
@@ -1205,6 +1203,8 @@ shiny::shinyServer(function(input, output, session) {
       ),{
         data <- incidenceRateData()
         
+        validate(need(all(!is.null(data), nrow(data) > 0), paste0("No data for this combination")))
+        
         if (stratifyByAge && !"All" %in% incidenceRateAgeFilter()) {
           data <- data %>%
             dplyr::filter(.data$ageGroup %in% incidenceRateAgeFilter())
@@ -1222,18 +1222,18 @@ shiny::shinyServer(function(input, output, session) {
           data <- data %>%
             dplyr::filter(.data$incidenceRate %in% incidenceRateYScaleFilter())
         }
+        if (all(!is.null(data), nrow(data) > 0)) {
+          plot <- plotIncidenceRate(
+            data = data,
+            shortNameRef = cohort,
+            stratifyByAgeGroup = stratifyByAge,
+            stratifyByGender = stratifyByGender,
+            stratifyByCalendarYear = stratifyByCalendarYear,
+            yscaleFixed = input$irYscaleFixed
+          )
+          return(plot)
+        }
         
-        validate(need(nrow(data) > 0, paste0("No data for this combination")))
-        
-        plot <- plotIncidenceRate(
-          data = data,
-          shortNameRef = cohort,
-          stratifyByAgeGroup = stratifyByAge,
-          stratifyByGender = stratifyByGender,
-          stratifyByCalendarYear = stratifyByCalendarYear,
-          yscaleFixed = input$irYscaleFixed
-        )
-        return(plot)
       },detail = "Please Wait"
     )
   })

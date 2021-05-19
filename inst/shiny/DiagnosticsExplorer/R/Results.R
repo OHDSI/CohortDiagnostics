@@ -46,7 +46,7 @@ getCohortCountResult <- function(dataSource = .GlobalEnv,
                                  cohortIds = NULL,
                                  databaseIds) {
   if (is(dataSource, "environment")) {
-    data <- get("cohortCount", envir = dataSource) %>% 
+    data <- cohortCount %>% 
       dplyr::filter(.data$databaseId %in% !!databaseIds) 
     if (!is.null(cohortIds)) {
       data <- data %>% 
@@ -161,7 +161,7 @@ getIncidenceRateResult <- function(dataSource = .GlobalEnv,
                     calendarYear = dplyr::na_if(.data$calendarYear, ""))
   }
   data <- data %>% 
-    dplyr::inner_join(get("cohortCount", envir = dataSource), 
+    dplyr::inner_join(cohortCount, 
                       by = c("cohortId", "databaseId")) %>% 
     dplyr::mutate(calendarYear = as.integer(.data$calendarYear)) %>%
     dplyr::arrange(.data$cohortId, .data$databaseId)
@@ -238,7 +238,7 @@ getIndexEventBreakdown <- function(dataSource = .GlobalEnv,
                                         .data$standardConcept),
                           by = c("conceptId"))
       data <- data %>% 
-        dplyr::inner_join(get("cohortCount", envir = dataSource), 
+        dplyr::inner_join(cohortCount, 
                           by = c('databaseId', 'cohortId')) %>% 
         dplyr::mutate(subjectPercent = .data$subjectCount/.data$cohortSubjects,
                       conceptPercent = .data$conceptCount/.data$cohortEntries)
@@ -307,7 +307,7 @@ getVisitContextResults <- function(dataSource = .GlobalEnv,
       tidyr::tibble()
   }
   data <- data %>%
-    dplyr::inner_join(get("cohortCount", envir = dataSource),
+    dplyr::inner_join(cohortCount,
                       by = c("cohortId", "databaseId")) %>% 
     dplyr::mutate(subjectPercent = .data$subjects/.data$cohortSubjects)
   return(data)
