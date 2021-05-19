@@ -721,9 +721,14 @@ shiny::shinyServer(function(input, output, session) {
         return(NULL)
       }
       
-      data$isExcluded <- ifelse(data$isExcluded,as.character(icon("check")),as.character(icon('remove')))
-      data$includeDescendants <- ifelse(data$includeDescendants,as.character(icon("check")),as.character(icon('remove')))
-      data$includeMapped <- ifelse(data$includeMapped,as.character(icon("check")),as.character(icon('remove')))
+      data$isExcluded <- ifelse(data$isExcluded,as.character(icon("check")),"")
+      data$includeDescendants <- ifelse(data$includeDescendants,as.character(icon("check")),"")
+      data$includeMapped <- ifelse(data$includeMapped,as.character(icon("check")),"")
+      
+      data <- data %>% 
+        dplyr::rename(exclude = .data$isExcluded,
+                      descendants = .data$includeDescendants,
+                      mapped = .data$includeMapped)
       
       options = list(
         pageLength = 100,
