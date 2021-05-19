@@ -625,6 +625,8 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
+  output$saveCohortDefinitionIncludedResolvedConceptsTable <- downloadTableData(data = getResolvedOrMappedConcepts(), fileName = "ResolvedConcepts") 
+  
   output$cohortDefinitionIncludedResolvedConceptsTable <-
     DT::renderDataTable(expr = {
       data <- getResolvedOrMappedConcepts()
@@ -663,6 +665,8 @@ shiny::shinyServer(function(input, output, session) {
       )
       return(dataTable)
     }, server = TRUE)
+  
+  output$saveCohortDefinitionMappedConceptsTable <- downloadTableData(data = getResolvedOrMappedConcepts(), fileName = "MappedConcepts")
   
   output$cohortDefinitionMappedConceptsTable <-
     DT::renderDataTable(expr = {
@@ -716,6 +720,10 @@ shiny::shinyServer(function(input, output, session) {
       if (is.null(cohortDefinitionConceptSets())) {
         return(NULL)
       }
+      
+      data$isExcluded <- ifelse(data$isExcluded,as.character(icon("check")),as.character(icon('remove')))
+      data$includeDescendants <- ifelse(data$includeDescendants,as.character(icon("check")),as.character(icon('remove')))
+      data$includeMapped <- ifelse(data$includeMapped,as.character(icon("check")),as.character(icon('remove')))
       
       options = list(
         pageLength = 100,
@@ -1170,6 +1178,8 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::pull(.data$incidenceRate)
     return(incidenceRateFilter)
   })
+  
+  output$saveIncidenceRatePlot <- downloadTableData(data = incidenceRateData(), fileName = "IncidenceRate") 
   
   output$incidenceRatePlot <- ggiraph::renderggiraph(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
