@@ -110,10 +110,11 @@ shiny::shinyServer(function(input, output, session) {
   
   # Cohort Definition ---------------------------------------------------------
   output$cohortDefinitionTable <- DT::renderDataTable(expr = {
-    data <- cohortDefinitionTableData() %>%
-      dplyr::mutate(cohort = as.factor(.data$cohort),
-                    cohortName = as.factor(.data$cohortName),
-                    cohortId = as.factor(.data$cohortId))
+    data <- cohortDefinitionTableData()  %>%
+      dplyr::mutate(
+        # cohort = as.factor(.data$cohort),
+        # cohortName = as.factor(.data$cohortName),
+        cohortId = as.character(.data$cohortId))
     
     options = list(
       pageLength = 100,
@@ -542,8 +543,8 @@ shiny::shinyServer(function(input, output, session) {
               dplyr::mutate(resolvedConcept = paste0(.data$resolvedConceptId, " (", .data$resolvedConceptName, ")")) %>% 
               dplyr::select(-.data$resolvedConceptId, -.data$resolvedConceptName) %>% 
               dplyr::relocate(.data$resolvedConcept)
-            data$resolvedConcept <-
-              as.factor(data$resolvedConcept)
+            # data$resolvedConcept <-
+            #   as.factor(data$resolvedConcept)
           } else {
             data <- NULL
           }
@@ -589,8 +590,8 @@ shiny::shinyServer(function(input, output, session) {
             dplyr::mutate(resolvedConcept = paste0(.data$resolvedConceptId, " (", .data$resolvedConceptName, ")")) %>% 
             dplyr::select(-.data$resolvedConceptId, -.data$resolvedConceptName) %>% 
             dplyr::relocate(.data$resolvedConcept)
-          data$resolvedConcept <-
-            as.factor(data$resolvedConcept)
+          # data$resolvedConcept <-
+          #   as.factor(data$resolvedConcept)
         } else {
           data <- resolvedOrMappedConceptSetForAllVocabulary$resolved %>%
             dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id) %>%
@@ -612,9 +613,9 @@ shiny::shinyServer(function(input, output, session) {
       
       data$conceptClassId <- as.factor(data$conceptClassId)
       data$domainId <- as.factor(data$domainId)
-      data$conceptCode <- as.factor(data$conceptCode)
-      data$conceptId <- as.factor(data$conceptId)
-      data$conceptName <- as.factor(data$conceptName)
+      # data$conceptCode <- as.factor(data$conceptCode)
+      data$conceptId <- as.character(data$conceptId)
+      # data$conceptName <- as.factor(data$conceptName)
       data$vocabularyId <- as.factor(data$vocabularyId)
       data$standardConcept <- as.factor(data$standardConcept)
       
@@ -674,9 +675,10 @@ shiny::shinyServer(function(input, output, session) {
                     "No resolved or mapped concept ids"))
 
       data <- data %>% 
-        dplyr::mutate(conceptId = as.factor(.data$conceptId),
-                      conceptName = as.factor(.data$conceptName),
-                      vocabularyId = as.factor(.data$vocabularyId))
+        dplyr::mutate(
+          conceptId = as.character(.data$conceptId),
+          # conceptName = as.factor(.data$conceptName),
+          vocabularyId = as.factor(.data$vocabularyId))
       options = list(
         pageLength = 100,
         lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
@@ -815,8 +817,8 @@ shiny::shinyServer(function(input, output, session) {
         .data$cohortEntries,
         .data$cohortId
       ) %>%
-      dplyr::rename(cohort = .data$shortName) %>%
-      dplyr::mutate(cohort = as.factor(.data$cohort))
+      dplyr::rename(cohort = .data$shortName) #%>%
+      # dplyr::mutate(cohort = as.factor(.data$cohort))
     
     if (nrow(data) == 0) {
       return(tidyr::tibble("There is no data on any cohort"))
@@ -1246,7 +1248,7 @@ shiny::shinyServer(function(input, output, session) {
       addShortName(cohort) %>%
       dplyr::arrange(.data$databaseId, .data$cohortId) %>%
       dplyr::mutate(
-        shortName = as.factor(.data$shortName),
+        # shortName = as.factor(.data$shortName),
         databaseId = as.factor(.data$databaseId)
       ) %>%
       dplyr::select(
@@ -1430,10 +1432,10 @@ shiny::shinyServer(function(input, output, session) {
       
       table <- table[order(-table[, 5]), ]
       
-      table$sourceConceptId <- as.factor(table$sourceConceptId)
-      table$sourceConceptName <- as.factor(table$sourceConceptName)
+      table$sourceConceptId <- as.character(table$sourceConceptId)
+      # table$sourceConceptName <- as.factor(table$sourceConceptName)
       table$sourceVocabularyId <- as.factor(table$sourceVocabularyId)
-      table$sourceConceptCode <- as.factor(table$sourceConceptCode)
+      # table$sourceConceptCode <- as.factor(table$sourceConceptCode)
       
       sketch <- htmltools::withTags(table(class = "display",
                                           thead(
@@ -1526,8 +1528,8 @@ shiny::shinyServer(function(input, output, session) {
         ) %>%
         dplyr::relocate(.data$conceptId, .data$conceptName, .data$vocabularyId)
       
-      table$conceptId <- as.factor(table$conceptId)
-      table$conceptName <- as.factor(table$conceptName)
+      table$conceptId <- as.character(table$conceptId)
+      # table$conceptName <- as.factor(table$conceptName)
       table$vocabularyId <- as.factor(table$vocabularyId)
       
       validate(need((nrow(table) > 0),
@@ -1715,10 +1717,11 @@ shiny::shinyServer(function(input, output, session) {
                         .data$conceptName,
                         .data$vocabularyId,
                         .data$conceptCode) %>% 
-        dplyr::mutate(conceptId = as.factor(.data$conceptId),
-                      conceptName = as.factor(.data$conceptName),
-                      vocabularyId = as.factor(.data$vocabularyId),
-                      conceptCode = as.factor(.data$conceptCode))
+        dplyr::mutate(
+          conceptId = as.character(.data$conceptId),
+          # conceptName = as.factor(.data$conceptName),
+          # conceptCode = as.factor(.data$conceptCode),
+          vocabularyId = as.factor(.data$vocabularyId))
       
       validate(need((nrow(table) > 0),
                "There is no data for the selected combination."))
@@ -1820,10 +1823,11 @@ shiny::shinyServer(function(input, output, session) {
                         .data$conceptName,
                         .data$vocabularyId,
                         .data$conceptCode) %>% 
-        dplyr::mutate(conceptId = as.factor(.data$conceptId),
-                      conceptName = as.factor(.data$conceptName),
-                      vocabularyId = as.factor(.data$vocabularyId),
-                      conceptCode = as.factor(.data$conceptCode))
+        dplyr::mutate(
+          conceptId = as.character(.data$conceptId),
+          # conceptName = as.factor(.data$conceptName),
+          # conceptCode = as.factor(.data$conceptCode),
+          vocabularyId = as.factor(.data$vocabularyId))
       
       options = list(
         pageLength = 1000,
@@ -2340,8 +2344,8 @@ shiny::shinyServer(function(input, output, session) {
         values_from = .data$subjects,
         values_fill = 0
       ) %>%
-      dplyr::relocate(.data$visitConceptName) %>%
-      dplyr::mutate(visitConceptName = as.factor(visitConceptName))
+      dplyr::relocate(.data$visitConceptName) #%>%
+      # dplyr::mutate(visitConceptName = as.factor(visitConceptName))
     
     sketch <- htmltools::withTags(table(class = "display",
                                         thead(tr(
