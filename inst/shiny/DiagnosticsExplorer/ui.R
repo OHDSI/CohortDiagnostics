@@ -324,21 +324,22 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "cohortDefinition",
     shinydashboard::box(
-      title = "Cohort Definition",
       width = NULL,
       status = "primary",
-      tags$table(width = "100%", 
-                 tags$tr(
-                   tags$td(align = "right",
-                           shiny::downloadButton(
-                             outputId = "saveCohortDefinitionButton",
-                             label = NULL,
-                             icon = shiny::icon("download"),
-                             style = "margin-top: 5px; margin-bottom: 5px;"
-                           )
-                   )
-                 )
-      ),    
+      column(6,tags$h4("Cohort Definition")),
+      column(6,
+             tags$table(width = "100%",
+                        tags$tr(
+                          tags$td(
+                            align = "right",
+                            shiny::downloadButton(
+                              outputId = "saveCohortDefinitionButton",
+                              label = NULL,
+                              icon = shiny::icon("download"),
+                              style = "margin-top: 5px; margin-bottom: 5px;"
+                            )
+                          )
+                        ))),    
       DT::dataTableOutput(outputId = "cohortDefinitionTable"),
       column(
         12,
