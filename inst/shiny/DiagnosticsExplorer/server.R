@@ -1680,7 +1680,11 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::relocate(.data$conceptId,
                         .data$conceptName,
                         .data$vocabularyId,
-                        .data$conceptCode)
+                        .data$conceptCode) %>% 
+        dplyr::mutate(conceptId = as.factor(.data$conceptId),
+                      conceptName = as.factor(.data$conceptName),
+                      vocabularyId = as.factor(.data$vocabularyId),
+                      conceptCode = as.factor(.data$conceptCode))
       
       if (nrow(table) == 0) {
         return(dplyr::tibble(
@@ -1773,7 +1777,11 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::relocate(.data$conceptId,
                         .data$conceptName,
                         .data$vocabularyId,
-                        .data$conceptCode)
+                        .data$conceptCode) %>% 
+        dplyr::mutate(conceptId = as.factor(.data$conceptId),
+                      conceptName = as.factor(.data$conceptName),
+                      vocabularyId = as.factor(.data$vocabularyId),
+                      conceptCode = as.factor(.data$conceptCode))
       
       options = list(
         pageLength = 1000,
