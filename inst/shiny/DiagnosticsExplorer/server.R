@@ -1573,6 +1573,7 @@ shiny::shinyServer(function(input, output, session) {
     ),
     fileName = "orphanConcept"
   ) 
+  
   output$orphanConceptsTable <- DT::renderDataTable(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
@@ -1613,24 +1614,19 @@ shiny::shinyServer(function(input, output, session) {
     }
     databaseIds <- unique(data$databaseId)
     
-    cohortCounts <- data %>% 
-      dplyr::inner_join(cohortCount) %>% 
+    databaseIdsWithCount <- data %>% 
+      dplyr::inner_join(cohortCount, by = c('databaseId', 'cohortId')) %>% 
       dplyr::filter(.data$cohortId == cohortId()) %>% 
       dplyr::filter(.data$databaseId %in% databaseIds()) %>% 
-      dplyr::select(.data$cohortSubjects) %>% 
-      dplyr::pull(.data$cohortSubjects) %>% unique()
-    
-    databaseIdsWithCount <- paste(databaseIds, "(n = ", format(cohortCounts, big.mark = ","), ")")
-    # if (!all(databaseIds() %in% databaseIds)) {
-    #   return(dplyr::tibble(
-    #     Note = paste0(
-    #       "There is no data for the databases:\n",
-    #       paste0(setdiff(databaseIds(), databaseIds),
-    #              collapse = ",\n "),
-    #       ".\n Please unselect them."
-    #     )
-    #   ))
-    # }
+      dplyr::arrange(.data$databaseId) %>% 
+      dplyr::mutate(databaseIdsWithCount = paste0(.data$databaseId, 
+                                                  "<br>(n = ",
+                                                  scales::comma(.data$cohortSubjects, accuracy = 1),
+                                                  ")"
+                                                  )) %>% 
+      dplyr::select(.data$databaseIdsWithCount) %>% 
+      dplyr::distinct() %>% 
+      dplyr::pull()
     
     maxCount <- max(data$conceptCount, na.rm = TRUE)
     
@@ -1694,6 +1690,10 @@ shiny::shinyServer(function(input, output, session) {
       
       table <- table[order(-table[, 5]), ]
       
+      databaseIdsWithCountNoBr <- stringr::str_replace(string = databaseIdsWithCount,
+                                                       pattern = stringr::fixed('<br>'),
+                                                       replacement = ' ')
+      
       sketch <- htmltools::withTags(table(class = "display",
                                           thead(
                                             tr(
@@ -1701,7 +1701,7 @@ shiny::shinyServer(function(input, output, session) {
                                               th(rowspan = 2, "Concept Name"),
                                               th(rowspan = 2, "Vocabulary ID"),
                                               th(rowspan = 2, "Concept Code"),
-                                              lapply(databaseIdsWithCount, th, colspan = 2, class = "dt-center", style = "border-bottom:1px solid silver;border-bottom:1px solid silver")
+                                              lapply(databaseIdsWithCountNoBr, th, colspan = 2, class = "dt-center", style = "border-bottom:1px solid silver;border-bottom:1px solid silver")
                                             ),
                                             tr(lapply(rep(
                                               c("Subjects", "Records"), length(databaseIds)
@@ -1745,15 +1745,16 @@ shiny::shinyServer(function(input, output, session) {
     } else {
       if (input$orphanConceptsColumFilterType == "Subjects only") {
         table <- table %>% 
+          dplyr::arrange(.data$databaseId) %>% 
           tidyr::pivot_wider(
             id_cols = c(.data$conceptId),
             names_from = .data$databaseId,
             values_from = .data$conceptSubjects,
             values_fill = 0
           )
-        
       } else {
         table <- table %>% 
+          dplyr::arrange(.data$databaseId) %>% 
           tidyr::pivot_wider(
             id_cols = c(.data$conceptId),
             names_from = .data$databaseId,
@@ -1801,7 +1802,7 @@ shiny::shinyServer(function(input, output, session) {
       table <- DT::datatable(
         table,
         options = options,
-        colnames = colnames(table),
+        colnames = c(colnames(table[,1:4]),databaseIdsWithCount),
         rownames = FALSE,
         escape = FALSE,
         filter = "top",
