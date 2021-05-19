@@ -3330,6 +3330,42 @@ shiny::shinyServer(function(input, output, session) {
           return(dplyr::tibble(Note = "No data for the selected combination."))
         }
         
+        targetCohortIdValue <- balance %>% dplyr::filter(!is.na(.data$cohortId1)) %>% dplyr::pull(.data$cohortId1) %>% unique()
+        comparatorcohortIdValue <- balance %>% dplyr::filter(!is.na(.data$cohortId2)) %>% dplyr::pull(.data$cohortId2) %>% unique()
+        databaseIdForCohortCharacterization <- balance$databaseId %>% unique()
+        
+        targetCohortShortName <- cohort %>% 
+          dplyr::filter(.data$cohortId == !!targetCohortIdValue) %>% 
+          dplyr::select(.data$shortName) %>% 
+          dplyr::pull()
+        
+        comparatorCohortShortName <- cohort %>% 
+          dplyr::filter(.data$cohortId == !!comparatorcohortIdValue) %>% 
+          dplyr::select(.data$shortName) %>% 
+          dplyr::pull()
+        
+        targetCohortSubjects <- cohortCount %>% 
+          dplyr::filter(.data$databaseId == databaseIdForCohortCharacterization) %>% 
+          dplyr::filter(.data$cohortId == !!targetCohortIdValue) %>% 
+          dplyr::pull(.data$cohortSubjects)
+        
+        comparatorCohortSubjects <- cohortCount %>% 
+          dplyr::filter(.data$databaseId == databaseIdForCohortCharacterization) %>% 
+          dplyr::filter(.data$cohortId == !!comparatorcohortIdValue) %>% 
+          dplyr::pull(.data$cohortSubjects)
+        
+        targetCohortHeader <- paste0(targetCohortShortName,
+                                     " (n = ",
+                                     scales::comma(targetCohortSubjects,
+                                                   accuracy = 1),
+                                     ")")
+        
+        comparatorCohortHeader <- paste0(comparatorCohortShortName,
+                                         " (n = ",
+                                         scales::comma(comparatorCohortSubjects,
+                                                       accuracy = 1),
+                                         ")")
+        
         balance <- balance %>% 
           dplyr::rename("meanTarget" = mean1, 
                         "sDTarget" = sd1,
@@ -3364,7 +3400,11 @@ shiny::shinyServer(function(input, output, session) {
             
             colspan <- 5
             
-            containerColumns <- c("Mean Target","SD Target","Mean Comparator","SD Comparator","Std. Diff")
+            containerColumns <- c(paste0("Mean ", targetCohortShortName),
+                                  paste0("SD ", targetCohortShortName),
+                                  paste0("Mean ", comparatorCohortShortName),
+                                  paste0("SD ", comparatorCohortShortName),
+                                  "Std. Diff")
           } else {
             table <- table %>% 
               dplyr::arrange(.data$choices) %>% 
@@ -3391,7 +3431,10 @@ shiny::shinyServer(function(input, output, session) {
             
             colspan <- 4
             
-            containerColumns <- c("Mean Target","SD Target","Mean Comparator","SD Comparator")
+            containerColumns <- c(paste0("Mean ", targetCohortShortName),
+                                  paste0("SD ", targetCohortShortName),
+                                  paste0("Mean ", comparatorCohortShortName),
+                                  paste0("SD ", comparatorCohortShortName))
           }
         } else {
           
@@ -3407,7 +3450,7 @@ shiny::shinyServer(function(input, output, session) {
                                  values_fill = 0
               )
             
-            containerColumns <- c("Mean Target", "Mean Comparator", "Std. Diff")
+            containerColumns <- c(targetCohortShortName, comparatorCohortShortName, "Std. Diff")
             
             columnDefs <- list(truncateStringDef(0, 80),
                                minCellRealDef(1:(length(temporalCovariateChoicesSelected) * 3), digits = 2))
@@ -3427,7 +3470,7 @@ shiny::shinyServer(function(input, output, session) {
                                  values_fill = 0
               )
             
-            containerColumns <- c("Target", "Comparator")
+            containerColumns <- c(targetCohortShortName, comparatorCohortShortName)
             
             columnDefs <- list(truncateStringDef(0, 80),
                                minCellRealDef(1:(length(temporalCovariateChoicesSelected) * 2), digits = 2))
