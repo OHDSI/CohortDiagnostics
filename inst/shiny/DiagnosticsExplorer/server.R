@@ -933,7 +933,7 @@ shiny::shinyServer(function(input, output, session) {
         table <- data %>%
           dplyr::select(.data$cohort, .data$databaseId,
                         .data$cohortSubjects) %>%
-          dplyr::mutate(columnName = paste0(.data$databaseId, "_subjects")) %>%
+          dplyr::mutate(columnName = paste0(.data$databaseId)) %>%
           dplyr::arrange(.data$cohort, .data$databaseId) %>%
           tidyr::pivot_wider(
             id_cols = .data$cohort,
@@ -948,7 +948,7 @@ shiny::shinyServer(function(input, output, session) {
         table <- data %>%
           dplyr::select(.data$cohort, .data$databaseId,
                         .data$cohortEntries) %>%
-          dplyr::mutate(columnName = paste0(.data$databaseId, "_records")) %>%
+          dplyr::mutate(columnName = paste0(.data$databaseId)) %>%
           dplyr::arrange(.data$cohort, .data$databaseId) %>%
           tidyr::pivot_wider(
             id_cols = .data$cohort,
