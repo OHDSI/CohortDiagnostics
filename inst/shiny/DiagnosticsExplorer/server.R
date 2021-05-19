@@ -1177,6 +1177,8 @@ shiny::shinyServer(function(input, output, session) {
     return(incidenceRateFilter)
   })
   
+  output$saveIncidenceRatePlot <- downloadTableData(data = incidenceRateData(), fileName = "IncidenceRate") 
+  
   output$incidenceRatePlot <- ggiraph::renderggiraph(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))

@@ -627,6 +627,20 @@ bodyTabItems <- shinydashboard::tabItems(
             label = "Minimum subject count",
             value = NULL
           )
+        ),
+        tags$td(
+          tags$table(width = "100%", 
+                     tags$tr(
+                       tags$td(align = "right",
+                               shiny::downloadButton(
+                                 "saveIncidenceRatePlot",
+                                 label = "",
+                                 icon = shiny::icon("download"),
+                                 style = "margin-top: 5px; margin-bottom: 5px;"
+                               )
+                       )
+                     )
+          ), 
         )
       )),
       shiny::htmlOutput(outputId = "hoverInfoIr"),
