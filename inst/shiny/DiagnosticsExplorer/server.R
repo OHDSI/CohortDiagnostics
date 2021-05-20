@@ -2016,17 +2016,57 @@ shiny::shinyServer(function(input, output, session) {
       ) %>%
       dplyr::select(-.data$cohortId)
     
-    sketch <- htmltools::withTags(table(class = "display",
-                                        thead(tr(
-                                          th(rowspan = 2, "Rule Sequence ID"),
-                                          th(rowspan = 2, "Rule Name"),
-                                          lapply(databaseIds, th, colspan = 4, class = "dt-center", style = "border-right:1px solid silver;border-bottom:1px solid silver")
-                                        ),
-                                        tr(
-                                          lapply(rep(
-                                            c("Meet", "Gain", "Remain", "Total"), length(databaseIds)
-                                          ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
-                                        ))))
+    if (input$inclusionRuleTableFilters == "Meet") {
+      table <- table %>% 
+        dplyr::select(-dplyr::contains("Total"),-dplyr::contains("Gain"),-dplyr::contains("Remain"))
+      
+      columnDefs <- minCellCountDef(1 + (
+        1:(length(databaseIds))
+      ))
+      
+    } else if (input$inclusionRuleTableFilters == "Total") {
+      table <- table %>% 
+        dplyr::select(-dplyr::contains("Meet"),-dplyr::contains("Gain"),-dplyr::contains("Remain"))
+      
+      columnDefs <- minCellCountDef(1 + (
+        1:(length(databaseIds))
+      ))
+      
+    } else if (input$inclusionRuleTableFilters == "Gain") {
+      table <- table %>% 
+        dplyr::select(-dplyr::contains("Total"),-dplyr::contains("Meet"),-dplyr::contains("Remain"))
+      
+      columnDefs <- minCellCountDef(1 + (
+        1:(length(databaseIds))
+      ))
+      
+    } else if (input$inclusionRuleTableFilters == "Remain") {
+      table <- table %>% 
+        dplyr::select(-dplyr::contains("Total"),-dplyr::contains("Meet"),-dplyr::contains("Gain"))
+      
+      columnDefs <- minCellCountDef(1 + (
+        1:(length(databaseIds))
+      ))
+      
+    }  else {
+      sketch <- htmltools::withTags(table(class = "display",
+                                          thead(tr(
+                                            th(rowspan = 2, "Rule Sequence ID"),
+                                            th(rowspan = 2, "Rule Name"),
+                                            lapply(databaseIds, th, colspan = 4, class = "dt-center", style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                          ),
+                                          tr(
+                                            lapply(rep(
+                                              c("Meet", "Gain", "Remain", "Total"), length(databaseIds)
+                                            ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                          ))))
+      
+      columnDefs <- minCellCountDef(1 + (
+        1:(length(databaseIds) * 4)
+      ))
+    }
+    
+    
     
     options = list(
       pageLength = 100,
@@ -2037,21 +2077,34 @@ shiny::shinyServer(function(input, output, session) {
       lengthChange = TRUE,
       ordering = TRUE,
       paging = TRUE,
-      columnDefs = list(minCellCountDef(1 + (1:(
-        length(databaseIds) * 4
-      ))))
+      columnDefs = list(truncateStringDef(1, 100),
+                        columnDefs)
     )
     
-    table <- DT::datatable(
-      table,
-      options = options,
-      colnames = colnames(table) %>% camelCaseToTitleCase(),
-      rownames = FALSE,
-      container = sketch,
-      escape = FALSE,
-      filter = "top",
-      class = "stripe nowrap compact"
-    )
+    if (input$inclusionRuleTableFilters == "All") {
+      table <- DT::datatable(
+        table,
+        options = options,
+        colnames = colnames(table) %>% camelCaseToTitleCase(),
+        rownames = FALSE,
+        container = sketch,
+        escape = FALSE,
+        filter = "top",
+        class = "stripe nowrap compact"
+      )
+    } else {
+      table <- DT::datatable(
+        table,
+        options = options,
+        colnames = colnames(table) %>% camelCaseToTitleCase(),
+        rownames = FALSE,
+        escape = FALSE,
+        filter = "top",
+        class = "stripe nowrap compact"
+      )
+    }
+    
+    
     
     # table <- DT::formatStyle(table = table,
     #                          columns = 2 + (1:(length(databaseIds) * 4)),
