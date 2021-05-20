@@ -508,6 +508,7 @@ bodyTabItems <- shinydashboard::tabItems(
                )
     ),
     DT::dataTableOutput("cohortCountsTable"),
+    DT::dataTableOutput("InclusionRuleStatForCohortSeletedTable")
   ),
   shinydashboard::tabItem(
     tabName = "incidenceRate",
