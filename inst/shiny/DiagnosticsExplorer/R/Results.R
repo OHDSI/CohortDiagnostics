@@ -237,13 +237,6 @@ getIndexEventBreakdown <- function(dataSource = .GlobalEnv,
                                         .data$vocabularyId,
                                         .data$standardConcept),
                           by = c("conceptId"))
-      data <- data %>% 
-        dplyr::inner_join(cohortCount, 
-                          by = c('databaseId', 'cohortId')) %>% 
-        dplyr::mutate(subjectPercent = .data$subjectCount/.data$cohortSubjects,
-                      conceptPercent = .data$conceptCount/.data$cohortEntries)
-    } else {
-      data <- NULL
     }
   } else {
     sql <- "SELECT index_event_breakdown.*,
@@ -265,6 +258,13 @@ getIndexEventBreakdown <- function(dataSource = .GlobalEnv,
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   }
+  
+  data <- data %>% 
+    dplyr::inner_join(cohortCount, 
+                      by = c('databaseId', 'cohortId')) %>% 
+    dplyr::mutate(subjectPercent = .data$subjectCount/.data$cohortSubjects,
+                  conceptPercent = .data$conceptCount/.data$cohortEntries)
+  
   return(data)
 }
 
