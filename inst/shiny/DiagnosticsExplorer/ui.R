@@ -777,7 +777,7 @@ bodyTabItems <- shinydashboard::tabItems(
       shiny::radioButtons(
         inputId = "inclusionRuleTableFilters",
         label = "Display",
-        choices = c("All", "Meet", "Gain", "Totals"),
+        choices = c("All", "Meet", "Gain", "Remain", "Totals"),
         selected = "All",
         inline = TRUE
       )
@@ -874,18 +874,29 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "visitContext",
     cohortReference("visitContextSelectedCohort"),
-    tags$table(width = "100%", 
-               tags$tr(
-                 tags$td(align = "right",
-                         shiny::downloadButton(
-                           "saveVisitContextTable",
-                           label = "",
-                           icon = shiny::icon("download"),
-                           style = "margin-top: 5px; margin-bottom: 5px;"
-                         )
-                 )
-               )
+    column(
+      6,
+      shiny::radioButtons(
+        inputId = "visitContextTableFilters",
+        label = "Display",
+        choices = c("All", "Before", "During", "Simultaneous", "After"),
+        selected = "All",
+        inline = TRUE
+      )
     ),
+    column(6,
+           tags$table(width = "100%",
+                      tags$tr(
+                        tags$td(
+                          align = "right",
+                          shiny::downloadButton(
+                            "saveVisitContextTable",
+                            label = "",
+                            icon = shiny::icon("download"),
+                            style = "margin-top: 5px; margin-bottom: 5px;"
+                          )
+                        )
+                      ))),
     DT::dataTableOutput(outputId = "visitContextTable")
   ),
   shinydashboard::tabItem(

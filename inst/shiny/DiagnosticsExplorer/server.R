@@ -2494,22 +2494,62 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::relocate(.data$visitConceptName) #%>%
       # dplyr::mutate(visitConceptName = as.factor(visitConceptName))
     
-    sketch <- htmltools::withTags(table(class = "display",
-                                        thead(tr(
-                                          th(rowspan = 2, "Visit"),
-                                          lapply(databaseIdsWithCount, th, colspan = 4, class = "dt-center",style = "border-right:1px solid silver;border-bottom:1px solid silver")
-                                        ),
-                                        tr(
-                                          lapply(rep(
-                                            c(
-                                              "Visits Before",
-                                              "Visits Ongoing",
-                                              "Starting Simultaneous",
-                                              "Visits After"
-                                            ),
-                                            length(databaseIds)
-                                          ), th,style = "border-right:1px solid silver;border-bottom:1px solid silver")
-                                        ))))
+    if (input$visitContextTableFilters == "Before") {
+      table <- table %>% 
+        dplyr::select(-dplyr::contains("During"),-dplyr::contains("On visit"),-dplyr::contains("After"))
+      
+      columnDefs <- minCellCountDef(1:(
+        length(databaseIds)
+      ))
+      
+    } else if (input$visitContextTableFilters == "During") {
+      table <- table %>% 
+        dplyr::select(-dplyr::contains("Before"),-dplyr::contains("On visit"),-dplyr::contains("After"))
+      
+      columnDefs <- minCellCountDef(1:(
+        length(databaseIds)
+      ))
+      
+    } else if (input$visitContextTableFilters == "Simultaneous") {
+      table <- table %>% 
+        dplyr::select(-dplyr::contains("During"),-dplyr::contains("Before"),-dplyr::contains("After"))
+      
+      columnDefs <- minCellCountDef(1:(
+        length(databaseIds)
+      ))
+      
+    } else if (input$visitContextTableFilters == "After") {
+      table <- table %>% 
+        dplyr::select(-dplyr::contains("During"),-dplyr::contains("Before"),-dplyr::contains("On visit"))
+      
+      columnDefs <- minCellCountDef(1:(
+        length(databaseIds)
+      ))
+      
+    }  else {
+      sketch <- htmltools::withTags(table(class = "display",
+                                          thead(tr(
+                                            th(rowspan = 2, "Visit"),
+                                            lapply(databaseIdsWithCount, th, colspan = 4, class = "dt-center",style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                          ),
+                                          tr(
+                                            lapply(rep(
+                                              c(
+                                                "Visits Before",
+                                                "Visits Ongoing",
+                                                "Starting Simultaneous",
+                                                "Visits After"
+                                              ),
+                                              length(databaseIds)
+                                            ), th,style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                          ))))
+      
+      columnDefs <- minCellCountDef(1:(
+        length(databaseIds) * 4
+      ))
+    }
+    
+    
     
     options = list(
       pageLength = 100,
@@ -2523,21 +2563,32 @@ shiny::shinyServer(function(input, output, session) {
       paging = TRUE,
       columnDefs = list(truncateStringDef(0, 60),
                         list(width = "40%", targets = 0),
-                        minCellCountDef(1:(
-                          length(databaseIds) * 4
-                        )))
+                        columnDefs)
     )
     
-    table <- DT::datatable(
-      table,
-      options = options,
-      colnames = colnames(table) %>%
-        camelCaseToTitleCase(),
-      rownames = FALSE,
-      container = sketch,
-      escape = FALSE,
-      filter = "top"
-    )
+    if (input$visitContextTableFilters == "All") {
+      table <- DT::datatable(
+        table,
+        options = options,
+        colnames = colnames(table) %>%
+          camelCaseToTitleCase(),
+        rownames = FALSE,
+        container = sketch,
+        escape = FALSE,
+        filter = "top"
+      )
+    } else {
+      table <- DT::datatable(
+        table,
+        options = options,
+        colnames = colnames(table) %>%
+          camelCaseToTitleCase(),
+        rownames = FALSE,
+        escape = FALSE,
+        filter = "top"
+      )
+    }
+    
     
     table <- DT::formatStyle(
       table = table,
