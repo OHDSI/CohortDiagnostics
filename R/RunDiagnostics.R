@@ -866,7 +866,6 @@ runCohortDiagnostics <- function(packageName = NULL,
       progressBar = TRUE,
       tempTable = TRUE,
       tempEmulationSchema = tempEmulationSchema,
-      cdm_database_schema = cdmDatabaseSchema,
       camelCaseToSnakeCase = TRUE
     )
     ParallelLogger::logTrace("Done inserting calendar periods")
@@ -885,6 +884,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       cohort_table = cohortTable, 
       snakeCaseToCamelCase = TRUE,
       tempEmulationSchema = tempEmulationSchema,
+      cdm_database_schema = cdmDatabaseSchema,
       cohort_ids = subset$cohortId
     ) %>% 
       dplyr::tibble()
