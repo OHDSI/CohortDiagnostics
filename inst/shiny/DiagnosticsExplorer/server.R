@@ -1332,7 +1332,7 @@ shiny::shinyServer(function(input, output, session) {
   output$includedConceptsTable <- DT::renderDataTable(expr = {
     validate(need(length(databaseIds()) > 0, 
                   "No data sources chosen"))
-    validate(need(any(!is.null(cohortId()) || length(cohortId()) > 0),
+    validate(need(all(!is.null(cohortId()),length(cohortId()) > 0),
              "No cohort chosen"))
     # if (is.null(cohortId()) || length(cohortId()) == 0) {
     #   return(dplyr::tibble("No data available for selected combination"))
@@ -1361,20 +1361,25 @@ shiny::shinyServer(function(input, output, session) {
       }
     }
     
-    validate(need(any(!is.null(data) || nrow(data) > 0),
+    validate(need(all(!is.null(data), nrow(data) > 0),
              "No data available for selected combination"))
     
     # if (nrow(data) == 0) {
     #   return(dplyr::tibble("No data available for selected combination"))
     # }
-    databaseIds <- unique(data$databaseId)
-    cohortCounts <- data %>% 
+    databaseIdsWithCount <- data %>% 
+      dplyr::inner_join(cohortCount, by = c('databaseId', 'cohortId')) %>% 
       dplyr::filter(.data$cohortId == cohortId()) %>% 
       dplyr::filter(.data$databaseId %in% databaseIds()) %>% 
-      dplyr::select(.data$cohortSubjects) %>% 
-      dplyr::pull(.data$cohortSubjects) %>% unique()
-    
-    databaseIdsWithCount <- paste(databaseIds, "(n = ", format(cohortCounts, big.mark = ","), ")")
+      dplyr::arrange(.data$databaseId) %>% 
+      dplyr::mutate(databaseIdsWithCount = paste0(.data$databaseId, 
+                                                  "<br>(n = ",
+                                                  scales::comma(.data$cohortSubjects, accuracy = 1),
+                                                  ")"
+      )) %>% 
+      dplyr::select(.data$databaseIdsWithCount) %>% 
+      dplyr::distinct() %>% 
+      dplyr::pull()
     # if (!all(databaseIds() %in% databaseIds)) {
     #   return(dplyr::tibble(
     #     Note = paste0(
@@ -1465,6 +1470,11 @@ shiny::shinyServer(function(input, output, session) {
         ))
         
       } else {
+        
+        databaseIdsWithCountNoBr <- stringr::str_replace(string = databaseIdsWithCount,
+                                                         pattern = stringr::fixed('<br>'),
+                                                         replacement = ' ')
+        
         sketch <- htmltools::withTags(table(class = "display",
                                             thead(
                                               tr(
@@ -1472,7 +1482,7 @@ shiny::shinyServer(function(input, output, session) {
                                                 th(rowspan = 2, 'Concept Name'),
                                                 th(rowspan = 2, 'Vocabulary ID'),
                                                 th(rowspan = 2, 'Concept Code'),
-                                                lapply(databaseIdsWithCount, th, colspan = 2, class = "dt-center", style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                                lapply(databaseIdsWithCountNoBr, th, colspan = 2, class = "dt-center", style = "border-right:1px solid silver;border-bottom:1px solid silver")
                                               ),
                                               tr(lapply(rep(
                                                 c("Subjects", "Records"), length(databaseIds)
@@ -1610,13 +1620,18 @@ shiny::shinyServer(function(input, output, session) {
         ))
         
       } else {
+        
+        databaseIdsWithCountNoBr <- stringr::str_replace(string = databaseIdsWithCount,
+                                                         pattern = stringr::fixed('<br>'),
+                                                         replacement = ' ')
+        
         sketch <- htmltools::withTags(table(class = "display",
                                             thead(
                                               tr(
                                                 th(rowspan = 2, "Concept ID"),
                                                 th(rowspan = 2, "Concept Name"),
                                                 th(rowspan = 2, "Vocabulary ID"),
-                                                lapply(databaseIdsWithCount, th, colspan = 2, class = "dt-center", style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                                lapply(databaseIdsWithCountNoBr, th, colspan = 2, class = "dt-center", style = "border-right:1px solid silver;border-bottom:1px solid silver")
                                               ),
                                               tr(lapply(rep(
                                                 c("Subjects", "Records"), length(databaseIds)
