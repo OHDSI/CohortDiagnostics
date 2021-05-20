@@ -36,7 +36,7 @@ INNER JOIN #calendar_periods cp ON (
 		AND cohort_end_date <= period_end
 		)
 INNER JOIN @cdm_database_schema.person ON subject_id = person.person_id
-WHERE cohort_definition_id IN c(@cohort_ids)
+WHERE cohort_definition_id IN (@cohort_ids)
 GROUP BY period_begin
 	,period_end
 	,cohort_definition_id
