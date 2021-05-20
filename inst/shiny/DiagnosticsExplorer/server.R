@@ -3480,8 +3480,6 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::rename(!!comparatorCohortHeader := .data$comparator)
       }
       
-
-      
       options = list(
         pageLength = 100,
         lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
