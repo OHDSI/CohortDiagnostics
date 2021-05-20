@@ -1342,7 +1342,7 @@ shiny::shinyServer(function(input, output, session) {
       cohortId = cohortId(),
       databaseIds = databaseIds()
     )
-    validate(need(any(!is.null(data) || nrow(data) > 0),
+    validate(need(all(!is.null(data), nrow(data) > 0),
              "No data available for selected combination"))
     
     # if (is.null(data) || nrow(data) == 0) {
@@ -1708,7 +1708,7 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
     
-    validate(need(!is.null(cohortId()) || length(cohortId()) > 0,
+    validate(need(all(!is.null(cohortId()),length(cohortId()) > 0),
              "No data available for selected combination"))
     
     # if (is.null(cohortId()) || length(cohortId()) == 0) {
@@ -1722,7 +1722,7 @@ shiny::shinyServer(function(input, output, session) {
       cohortId = cohortId(),
       databaseIds = databaseIds()
     )
-    validate(need((!is.null(data) || nrow(data) > 0),
+    validate(need(all(!is.null(data), nrow(data) > 0),
              "There is no data for the selected combination."))
     
     # if (is.null(data) || nrow(data) == 0) {
@@ -2252,7 +2252,7 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(length(cohortId()) > 0, "No cohorts chosen chosen"))
     data <- indexEventBreakDownDataFilteredByRadioButton()
     
-    validate(need((!is.null(data) || nrow(data) > 0),
+    validate(need(all(!is.null(data),nrow(data) > 0),
              "There is no data for the selected combination."))
     
     # if (is.null(data) || nrow(data) == 0) {
