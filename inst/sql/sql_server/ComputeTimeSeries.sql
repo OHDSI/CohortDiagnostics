@@ -40,5 +40,5 @@ WHERE cohort_definition_id IN (@cohort_ids)
 GROUP BY period_begin
 	,period_end
 	,cohort_definition_id
-	,FLOOR((YEAR(cohort_start_date) - year_of_birth) / 10) AS age_group
+	,FLOOR((YEAR(cohort_start_date) - year_of_birth) / 10)
 	,gender_concept_id;
