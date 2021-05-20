@@ -837,8 +837,10 @@ runCohortDiagnostics <- function(packageName = NULL,
   
     calendarPeriods <- dplyr::bind_rows(calendarWeek, calendarMonth, calendarYear) %>% 
       dplyr::filter(periodBegin >= as.Date('1999-12-25')) %>% 
-      dplyr::filter(periodEnd <= clock::date_today(""))
+      dplyr::filter(periodEnd <= clock::date_today("")) %>% 
+      dplyr::distinct()
   
+    ParallelLogger::logTrace("Inserting calendar periods into temporay table. This might take time.")
     DatabaseConnector::insertTable(
       connection = connection,
       tableName = "#calendar_periods",
@@ -867,6 +869,9 @@ runCohortDiagnostics <- function(packageName = NULL,
             OR (cohort_end_date >= period_begin AND cohort_end_date <= period_end)
             GROUP BY period_begin,
             	period_end,
+            	cohort_definition_id
+            ORDER BY period_begin,
+            	period_end,
             	cohort_definition_id;"
   
     data <- DatabaseConnector::renderTranslateQuerySql(
@@ -876,7 +881,8 @@ runCohortDiagnostics <- function(packageName = NULL,
       cohort_table = cohortTable, 
       snakeCaseToCamelCase = TRUE,
       tempEmulationSchema = tempEmulationSchema
-    )
+    ) %>% 
+      dplyr::tibble()
     
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
@@ -890,7 +896,6 @@ runCohortDiagnostics <- function(packageName = NULL,
       enforceMinCellValue(data, "subjects", minCellCount)
     data <-
       enforceMinCellValue(data, "personDays", minCellCount)
-    
     
     writeToCsv(
       data = data,
