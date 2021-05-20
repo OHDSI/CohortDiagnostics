@@ -2000,6 +2000,9 @@ shiny::shinyServer(function(input, output, session) {
     # }
     
     table <- table %>%
+      dplyr::inner_join(cohortCount %>% 
+                          dplyr::select(.data$databaseId, .data$cohortId, .data$cohortSubjects), 
+                        by = c('databaseId', 'cohortId')) %>% 
       tidyr::pivot_longer(
         cols = c(
           .data$meetSubjects,
@@ -2008,7 +2011,11 @@ shiny::shinyServer(function(input, output, session) {
           .data$remainSubjects
         )
       ) %>%
-      dplyr::mutate(name = paste0(databaseId, "_", .data$name)) %>%
+      dplyr::mutate(name = paste0(.data$databaseId, 
+                                  "<br>(n = ", 
+                                  scales::comma(x = .data$cohortSubjects, accuracy = 1),
+                                  ")_", 
+                                  .data$name)) %>%
       tidyr::pivot_wider(
         id_cols = c(.data$cohortId, .data$ruleSequenceId, .data$ruleName),
         names_from = .data$name,
@@ -2025,7 +2032,7 @@ shiny::shinyServer(function(input, output, session) {
         1:(length(databaseIds))
       ))
       
-    } else if (input$inclusionRuleTableFilters == "Total") {
+    } else if (input$inclusionRuleTableFilters == "Totals") {
       table <- table %>% 
         dplyr::select(-dplyr::contains("Meet"),-dplyr::contains("Gain"),-dplyr::contains("Remain"))
       colnames(table) <- stringr::str_replace(string = colnames(table), pattern = '_totalSubjects', replacement = '')
@@ -2555,8 +2562,6 @@ shiny::shinyServer(function(input, output, session) {
       ))
     }
     
-    
-    
     options = list(
       pageLength = 100,
       lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
@@ -2594,7 +2599,6 @@ shiny::shinyServer(function(input, output, session) {
         filter = "top"
       )
     }
-    
     
     table <- DT::formatStyle(
       table = table,
