@@ -632,6 +632,15 @@ plotTemporalCompareStandardizedDifference <- function(balance,
     dplyr::distinct(balance$comparatorCohort) %>% 
     dplyr::pull()
   
+  # balance <- balance %>% 
+  #   dplyr::arrange(.data$startDay, .data$endDay)
+  
+  # facetLabel <- balance %>% 
+  #   dplyr::select(.data$startDay, .data$choices) %>% 
+  #   dplyr::distinct() %>% 
+  #   dplyr::arrange(.data$startDay) %>% 
+  #   dplyr::pull(.data$choices)
+  
   plot <-
     ggplot2::ggplot(balance,
                     ggplot2::aes(
@@ -655,18 +664,21 @@ plotTemporalCompareStandardizedDifference <- function(balance,
     # ggplot2::scale_x_continuous("Mean") +
     # ggplot2::scale_y_continuous("Mean") +
     ggplot2::scale_color_manual("Domain", values = colors) +
-    ggplot2::facet_grid(rows = ggplot2::vars(choices)) +
+    ggplot2::facet_grid(cols = ggplot2::vars(choices)) + # need to facet by 'startDay' that way it is arranged in numeric order.
+    # but labels should be based on choices
     # ggplot2::facet_wrap(~choices) +
-    ggplot2::theme(strip.background = ggplot2::element_blank()) +
+    ggplot2::theme(strip.background = ggplot2::element_blank(),
+                   panel.spacing = ggplot2::unit(2, "lines")) +
     ggplot2::xlim(xLimitMin, xLimitMax) +
     ggplot2::ylim(yLimitMin, yLimitMax) 
   
+  numberOfTimeIds <- balance$timeId %>% unique() %>% length()
+  
   plot <- ggiraph::girafe(
     ggobj = plot,
-    options = list(ggiraph::opts_sizing(width = .7),
-                   ggiraph::opts_zoom(max = 5)),
-    width_svg = 12,
-    height_svg = 24
+    options = list(ggiraph::opts_sizing(rescale = TRUE)),
+    width_svg = max(8, 3*numberOfTimeIds),
+    height_svg = 3
   )
   return(plot)
 }

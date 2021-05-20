@@ -349,6 +349,9 @@ bodyTabItems <- shinydashboard::tabItems(
             type = "tab",
             shiny::tabPanel(title = "Details",
                             shiny::htmlOutput("cohortDetailsText")),
+            shiny::tabPanel(title = "Cohort Count",
+                            tags$br(),
+                            DT::dataTableOutput(outputId = "cohortCountsTableInCohortDefinition")),
             shiny::tabPanel(title = "Cohort definition",
                             copyToClipboardButton(toCopyId = "cohortDefinitionText",
                                                   style = "margin-top: 5px; margin-bottom: 5px;"),
@@ -693,26 +696,40 @@ bodyTabItems <- shinydashboard::tabItems(
     shinydashboard::box(
       title = "Concepts in Data Source",
       width = NULL,
-      shiny::radioButtons(
-        inputId = "includedType",
-        label = "",
-        choices = c("Source fields", "Standard fields"),
-        selected = "Standard fields",
-        inline = TRUE
+      column(
+        4,
+        shiny::radioButtons(
+          inputId = "includedType",
+          label = "",
+          choices = c("Source fields", "Standard fields"),
+          selected = "Standard fields",
+          inline = TRUE
+        )
       ),
-      tags$table(width = "100%",
-                 tags$tr(
-                   tags$td(
-                     align = "right",
-                     shiny::downloadButton(
-                       "saveIncludedConceptsTable",
-                       label = "",
-                       icon = shiny::icon("download"),
-                       style = "margin-top: 5px; margin-bottom: 5px;"
-                     )
-                   )
-                 )),
-      DT::dataTableOutput("includedConceptsTable")
+      column(
+        4,
+        shiny::radioButtons(
+          inputId = "includedConceptsTableColumnFilter",
+          label = "",
+          choices = c("Subjects only", "Records only"), #"Both", 
+          selected = "Subjects only",
+          inline = TRUE
+        )
+      ),
+      column(4,
+             tags$table(width = "100%",
+                        tags$tr(
+                          tags$td(
+                            align = "right",
+                            shiny::downloadButton(
+                              "saveIncludedConceptsTable",
+                              label = "",
+                              icon = shiny::icon("download"),
+                              style = "margin-top: 5px; margin-bottom: 5px;"
+                            )
+                          )
+                        ))),
+    DT::dataTableOutput("includedConceptsTable")
     )
   ),
   shinydashboard::tabItem(
@@ -723,9 +740,9 @@ bodyTabItems <- shinydashboard::tabItems(
         tags$td(
           shiny::radioButtons(
             inputId = "orphanConceptsType",
-            label = "",
-            choices = c("Standard Only", "Non Standard Only"),
-            selected = "Standard Only",
+            label = "Filters",
+            choices = c("All", "Standard Only", "Non Standard Only"),
+            selected = "All",
             inline = TRUE
           )
         ),
@@ -758,18 +775,29 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "inclusionRuleStats",
     cohortReference("inclusionRuleStatSelectedCohort"),
-    tags$table(width = "100%", 
-               tags$tr(
-                 tags$td(align = "right",
-                         shiny::downloadButton(
-                           "saveInclusionRuleTable",
-                           label = "",
-                           icon = shiny::icon("download"),
-                           style = "margin-top: 5px; margin-bottom: 5px;"
-                         )
-                 )
-               )
+    column(
+      6,
+      shiny::radioButtons(
+        inputId = "inclusionRuleTableFilters",
+        label = "Display",
+        choices = c("All", "Meet", "Gain", "Remain", "Totals"),
+        selected = "All",
+        inline = TRUE
+      )
     ),
+    column(6,
+           tags$table(width = "100%",
+                      tags$tr(
+                        tags$td(
+                          align = "right",
+                          shiny::downloadButton(
+                            "saveInclusionRuleTable",
+                            label = "",
+                            icon = shiny::icon("download"),
+                            style = "margin-top: 5px; margin-bottom: 5px;"
+                          )
+                        )
+                      ))),
     DT::dataTableOutput(outputId = "inclusionRuleTable")
   ),
   shinydashboard::tabItem(
@@ -849,18 +877,29 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "visitContext",
     cohortReference("visitContextSelectedCohort"),
-    tags$table(width = "100%", 
-               tags$tr(
-                 tags$td(align = "right",
-                         shiny::downloadButton(
-                           "saveVisitContextTable",
-                           label = "",
-                           icon = shiny::icon("download"),
-                           style = "margin-top: 5px; margin-bottom: 5px;"
-                         )
-                 )
-               )
+    column(
+      6,
+      shiny::radioButtons(
+        inputId = "visitContextTableFilters",
+        label = "Display",
+        choices = c("All", "Before", "During", "Simultaneous", "After"),
+        selected = "All",
+        inline = TRUE
+      )
     ),
+    column(6,
+           tags$table(width = "100%",
+                      tags$tr(
+                        tags$td(
+                          align = "right",
+                          shiny::downloadButton(
+                            "saveVisitContextTable",
+                            label = "",
+                            icon = shiny::icon("download"),
+                            style = "margin-top: 5px; margin-bottom: 5px;"
+                          )
+                        )
+                      ))),
     DT::dataTableOutput(outputId = "visitContextTable")
   ),
   shinydashboard::tabItem(

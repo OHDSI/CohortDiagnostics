@@ -192,6 +192,65 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  output$cohortCountsTableInCohortDefinition <- DT::renderDataTable(expr = {
+    row <- selectedCohortDefinitionRow()
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+      
+      data <- cohortCount %>%
+        dplyr::filter(.data$cohortId == selectedCohortDefinitionRow()$cohortId) %>% 
+        dplyr::filter(.data$databaseId %in% database$databaseId) %>% 
+        dplyr::select(.data$databaseId, .data$cohortSubjects, .data$cohortEntries)
+      
+      maxCohortSubjects <- max(data$cohortSubjects)
+      maxCohortEntries <- max(data$cohortEntries)
+      
+      options = list(
+        pageLength = 100,
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        lengthChange = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        info = TRUE,
+        searchHighlight = TRUE,
+        scrollX = TRUE,
+        columnDefs = list(minCellCountDef(1:2))
+      )
+      
+      dataTable <- DT::datatable(
+        data,
+        options = options,
+        colnames = colnames(data) %>% camelCaseToTitleCase(),
+        rownames = FALSE,
+        selection = 'none',
+        escape = FALSE,
+        filter = "top",
+        class = "stripe nowrap compact"
+      )
+      
+      dataTable <- DT::formatStyle(
+        table = dataTable,
+        columns = 2,
+        background = DT::styleColorBar(c(0, maxCohortSubjects), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+
+      dataTable <- DT::formatStyle(
+        table = dataTable,
+        columns = 3,
+        background = DT::styleColorBar(c(0, maxCohortEntries), "#ffd699"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+      return(dataTable)
+    }
+  }, server = TRUE)
+  
   cohortDefinitionCirceRDetails <- shiny::reactive(x = {
     progress <- shiny::Progress$new()
     on.exit(progress$close())
@@ -1332,7 +1391,7 @@ shiny::shinyServer(function(input, output, session) {
   output$includedConceptsTable <- DT::renderDataTable(expr = {
     validate(need(length(databaseIds()) > 0, 
                   "No data sources chosen"))
-    validate(need(any(!is.null(cohortId()) || length(cohortId()) > 0),
+    validate(need(all(!is.null(cohortId()),length(cohortId()) > 0),
              "No cohort chosen"))
     # if (is.null(cohortId()) || length(cohortId()) == 0) {
     #   return(dplyr::tibble("No data available for selected combination"))
@@ -1342,7 +1401,7 @@ shiny::shinyServer(function(input, output, session) {
       cohortId = cohortId(),
       databaseIds = databaseIds()
     )
-    validate(need(any(!is.null(data) || nrow(data) > 0),
+    validate(need(all(!is.null(data), nrow(data) > 0),
              "No data available for selected combination"))
     
     # if (is.null(data) || nrow(data) == 0) {
@@ -1361,21 +1420,25 @@ shiny::shinyServer(function(input, output, session) {
       }
     }
     
-    validate(need(any(!is.null(data) || nrow(data) > 0),
+    validate(need(all(!is.null(data), nrow(data) > 0),
              "No data available for selected combination"))
     
     # if (nrow(data) == 0) {
     #   return(dplyr::tibble("No data available for selected combination"))
     # }
-    databaseIds <- unique(data$databaseId)
-    cohortCounts <- data %>% 
-      dplyr::inner_join(cohortCount) %>% 
+    databaseIdsWithCount <- data %>% 
+      dplyr::inner_join(cohortCount, by = c('databaseId', 'cohortId')) %>% 
       dplyr::filter(.data$cohortId == cohortId()) %>% 
       dplyr::filter(.data$databaseId %in% databaseIds()) %>% 
-      dplyr::select(.data$cohortSubjects) %>% 
-      dplyr::pull(.data$cohortSubjects) %>% unique()
-    
-    databaseIdsWithCount <- paste(databaseIds, "(n = ", format(cohortCounts, big.mark = ","), ")")
+      dplyr::arrange(.data$databaseId) %>% 
+      dplyr::mutate(databaseIdsWithCount = paste0(.data$databaseId, 
+                                                  "<br>(n = ",
+                                                  scales::comma(.data$cohortSubjects, accuracy = 1),
+                                                  ")"
+      )) %>% 
+      dplyr::select(.data$databaseIdsWithCount) %>% 
+      dplyr::distinct() %>% 
+      dplyr::pull()
     # if (!all(databaseIds() %in% databaseIds)) {
     #   return(dplyr::tibble(
     #     Note = paste0(
@@ -1449,24 +1512,53 @@ shiny::shinyServer(function(input, output, session) {
       
       table <- table[order(-table[, 5]), ]
       
+      if (input$includedConceptsTableColumnFilter == "Subjects only") {
+        table <- table %>% 
+          dplyr::select(-dplyr::contains("Count"))
+        columnDefs <- minCellCountDef(3 + (
+          1:(length(databaseIds))
+        ))
+        
+        
+      } else if (input$includedConceptsTableColumnFilter == "Records only") {
+        table <- table %>% 
+          dplyr::select(-dplyr::contains("Subjects"))
+        
+        columnDefs <- minCellCountDef(3 + (
+          1:(length(databaseIds))
+        ))
+        
+      } else {
+        
+        databaseIdsWithCountNoBr <- stringr::str_replace(string = databaseIdsWithCount,
+                                                         pattern = stringr::fixed('<br>'),
+                                                         replacement = ' ')
+        
+        sketch <- htmltools::withTags(table(class = "display",
+                                            thead(
+                                              tr(
+                                                th(rowspan = 2, 'Concept ID'),
+                                                th(rowspan = 2, 'Concept Name'),
+                                                th(rowspan = 2, 'Vocabulary ID'),
+                                                th(rowspan = 2, 'Concept Code'),
+                                                lapply(databaseIdsWithCountNoBr, th, colspan = 2, class = "dt-center", style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                              ),
+                                              tr(lapply(rep(
+                                                c("Subjects", "Records"), length(databaseIds)
+                                              ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver"))
+                                            )))
+        
+        columnDefs <- minCellCountDef(3 + (
+          1:(length(databaseIds) * 2)
+        ))
+      }
+      
       table$sourceConceptId <- as.character(table$sourceConceptId)
       # table$sourceConceptName <- as.factor(table$sourceConceptName)
       table$sourceVocabularyId <- as.factor(table$sourceVocabularyId)
       # table$sourceConceptCode <- as.factor(table$sourceConceptCode)
       
-      sketch <- htmltools::withTags(table(class = "display",
-                                          thead(
-                                            tr(
-                                              th(rowspan = 2, 'Concept ID'),
-                                              th(rowspan = 2, 'Concept Name'),
-                                              th(rowspan = 2, 'Vocabulary ID'),
-                                              th(rowspan = 2, 'Concept Code'),
-                                              lapply(databaseIdsWithCount, th, colspan = 2, class = "dt-center", style = "border-right:1px solid silver;border-bottom:1px solid silver")
-                                            ),
-                                            tr(lapply(rep(
-                                              c("Subjects", "Records"), length(databaseIds)
-                                            ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver"))
-                                          )))
+      
       options = list(
         pageLength = 1000,
         lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
@@ -1478,21 +1570,31 @@ shiny::shinyServer(function(input, output, session) {
         ordering = TRUE,
         paging = TRUE,
         columnDefs = list(truncateStringDef(1, 100),
-                          minCellCountDef(3 + (
-                            1:(length(databaseIds) * 2)
-                          )))
+                          columnDefs)
       )
       
-      dataTable <- DT::datatable(
-        table,
-        colnames = colnames(table),
-        options = options,
-        rownames = FALSE,
-        container = sketch,
-        escape = FALSE,
-        filter = "top",
-        class = "stripe nowrap compact"
-      )
+      if(input$includedConceptsTableColumnFilter == "Both") {
+        dataTable <- DT::datatable(
+          table,
+          options = options,
+          colnames = colnames(table),
+          rownames = FALSE,
+          container = sketch,
+          escape = FALSE,
+          filter = "top",
+          class = "stripe nowrap compact"
+        )
+      } else {
+        dataTable <- DT::datatable(
+          table,
+          colnames = colnames(table),
+          options = options,
+          rownames = FALSE,
+          escape = FALSE,
+          filter = "top",
+          class = "stripe nowrap compact"
+        )
+      }
       
       dataTable <- DT::formatStyle(
         table = dataTable,
@@ -1560,18 +1662,47 @@ shiny::shinyServer(function(input, output, session) {
       
       table <- table[order(-table[, 4]), ]
       
-      sketch <- htmltools::withTags(table(class = "display",
-                                          thead(
-                                            tr(
-                                              th(rowspan = 2, "Concept ID"),
-                                              th(rowspan = 2, "Concept Name"),
-                                              th(rowspan = 2, "Vocabulary ID"),
-                                              lapply(databaseIdsWithCount, th, colspan = 2, class = "dt-center", style = "border-right:1px solid silver;border-bottom:1px solid silver")
-                                            ),
-                                            tr(lapply(rep(
-                                              c("Subjects", "Records"), length(databaseIds)
-                                            ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver"))
-                                          )))
+      if (input$includedConceptsTableColumnFilter == "Subjects only") {
+        table <- table %>% 
+          dplyr::select(-dplyr::contains("Count"))
+        
+        columnDefs <- minCellCountDef(2 + (
+          1:(length(databaseIds))
+        ))
+        
+      } else if (input$includedConceptsTableColumnFilter == "Records only") {
+        table <- table %>% 
+          dplyr::select(-dplyr::contains("Subjects"))
+        
+        columnDefs <- minCellCountDef(2 + (
+          1:(length(databaseIds))
+        ))
+        
+      } else {
+        
+        databaseIdsWithCountNoBr <- stringr::str_replace(string = databaseIdsWithCount,
+                                                         pattern = stringr::fixed('<br>'),
+                                                         replacement = ' ')
+        
+        sketch <- htmltools::withTags(table(class = "display",
+                                            thead(
+                                              tr(
+                                                th(rowspan = 2, "Concept ID"),
+                                                th(rowspan = 2, "Concept Name"),
+                                                th(rowspan = 2, "Vocabulary ID"),
+                                                lapply(databaseIdsWithCountNoBr, th, colspan = 2, class = "dt-center", style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                              ),
+                                              tr(lapply(rep(
+                                                c("Subjects", "Records"), length(databaseIds)
+                                              ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver"))
+                                            )))
+        
+        columnDefs <- minCellCountDef(2 + (
+          1:(length(databaseIds) * 2)
+        ))
+      }
+      
+      
       
       options = list(
         pageLength = 1000,
@@ -1583,21 +1714,31 @@ shiny::shinyServer(function(input, output, session) {
         ordering = TRUE,
         paging = TRUE,
         columnDefs = list(truncateStringDef(1, 100),
-                          minCellCountDef(2 + (
-                            1:(length(databaseIds) * 2)
-                          )))
+                          columnDefs)
       )
       
-      dataTable <- DT::datatable(
-        table,
-        options = options,
-        colnames = colnames(table),
-        rownames = FALSE,
-        container = sketch,
-        escape = FALSE,
-        filter = "top",
-        class = "stripe nowrap compact"
-      )
+      if (input$includedConceptsTableColumnFilter == "Both") {
+        dataTable <- DT::datatable(
+          table,
+          options = options,
+          colnames = colnames(table),
+          rownames = FALSE,
+          container = sketch,
+          escape = FALSE,
+          filter = "top",
+          class = "stripe nowrap compact"
+        )
+      } else {
+        dataTable <- DT::datatable(
+          table,
+          options = options,
+          colnames = colnames(table),
+          rownames = FALSE,
+          escape = FALSE,
+          filter = "top",
+          class = "stripe nowrap compact"
+        )
+      }
       
       dataTable <- DT::formatStyle(
         table = dataTable,
@@ -1626,7 +1767,7 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
     
-    validate(need(!is.null(cohortId()) || length(cohortId()) > 0,
+    validate(need(all(!is.null(cohortId()),length(cohortId()) > 0),
              "No data available for selected combination"))
     
     # if (is.null(cohortId()) || length(cohortId()) == 0) {
@@ -1640,7 +1781,7 @@ shiny::shinyServer(function(input, output, session) {
       cohortId = cohortId(),
       databaseIds = databaseIds()
     )
-    validate(need((!is.null(data) || nrow(data) > 0),
+    validate(need(all(!is.null(data), nrow(data) > 0),
              "There is no data for the selected combination."))
     
     # if (is.null(data) || nrow(data) == 0) {
@@ -1661,6 +1802,14 @@ shiny::shinyServer(function(input, output, session) {
       }
     }
     
+    if (input$orphanConceptsType == "Standard Only") {
+      data <- data %>% 
+        dplyr::filter(.data$standardConcept == "S")
+    } else if (input$orphanConceptsType == "Non Standard Only") {
+      data <- data %>% 
+        dplyr::filter(.data$standardConcept != "S")
+    }
+    
     validate(need((nrow(data) > 0),
              "There is no data for the selected combination."))
     
@@ -1669,6 +1818,7 @@ shiny::shinyServer(function(input, output, session) {
     #     "There is no data for the selected combination."
     #   )))
     # }
+    
     databaseIds <- unique(data$databaseId)
     
     databaseIdsWithCount <- data %>% 
@@ -1923,6 +2073,9 @@ shiny::shinyServer(function(input, output, session) {
     # }
     
     table <- table %>%
+      dplyr::inner_join(cohortCount %>% 
+                          dplyr::select(.data$databaseId, .data$cohortId, .data$cohortSubjects), 
+                        by = c('databaseId', 'cohortId')) %>% 
       tidyr::pivot_longer(
         cols = c(
           .data$meetSubjects,
@@ -1931,7 +2084,11 @@ shiny::shinyServer(function(input, output, session) {
           .data$remainSubjects
         )
       ) %>%
-      dplyr::mutate(name = paste0(databaseId, "_", .data$name)) %>%
+      dplyr::mutate(name = paste0(.data$databaseId, 
+                                  "<br>(n = ", 
+                                  scales::comma(x = .data$cohortSubjects, accuracy = 1),
+                                  ")_", 
+                                  .data$name)) %>%
       tidyr::pivot_wider(
         id_cols = c(.data$cohortId, .data$ruleSequenceId, .data$ruleName),
         names_from = .data$name,
@@ -1939,17 +2096,59 @@ shiny::shinyServer(function(input, output, session) {
       ) %>%
       dplyr::select(-.data$cohortId)
     
-    sketch <- htmltools::withTags(table(class = "display",
-                                        thead(tr(
-                                          th(rowspan = 2, "Rule Sequence ID"),
-                                          th(rowspan = 2, "Rule Name"),
-                                          lapply(databaseIds, th, colspan = 4, class = "dt-center", style = "border-right:1px solid silver;border-bottom:1px solid silver")
-                                        ),
-                                        tr(
-                                          lapply(rep(
-                                            c("Meet", "Gain", "Remain", "Total"), length(databaseIds)
-                                          ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
-                                        ))))
+    if (input$inclusionRuleTableFilters == "Meet") {
+      table <- table %>% 
+        dplyr::select(-dplyr::contains("Total"),-dplyr::contains("Gain"),-dplyr::contains("Remain"))
+      colnames(table) <- stringr::str_replace(string = colnames(table), pattern = '_meetSubjects', replacement = '')
+      
+      columnDefs <- minCellCountDef(1 + (
+        1:(length(databaseIds))
+      ))
+      
+    } else if (input$inclusionRuleTableFilters == "Totals") {
+      table <- table %>% 
+        dplyr::select(-dplyr::contains("Meet"),-dplyr::contains("Gain"),-dplyr::contains("Remain"))
+      colnames(table) <- stringr::str_replace(string = colnames(table), pattern = '_totalSubjects', replacement = '')
+      
+      columnDefs <- minCellCountDef(1 + (
+        1:(length(databaseIds))
+      ))
+      
+    } else if (input$inclusionRuleTableFilters == "Gain") {
+      table <- table %>% 
+        dplyr::select(-dplyr::contains("Total"),-dplyr::contains("Meet"),-dplyr::contains("Remain"))
+      colnames(table) <- stringr::str_replace(string = colnames(table), pattern = '_gainSubjects', replacement = '')
+      
+      columnDefs <- minCellCountDef(1 + (
+        1:(length(databaseIds))
+      ))
+      
+    } else if (input$inclusionRuleTableFilters == "Remain") {
+      table <- table %>% 
+        dplyr::select(-dplyr::contains("Total"),-dplyr::contains("Meet"),-dplyr::contains("Gain"))
+      colnames(table) <- stringr::str_replace(string = colnames(table), pattern = '_remainSubjects', replacement = '')
+      
+      columnDefs <- minCellCountDef(1 + (
+        1:(length(databaseIds))
+      ))
+      
+    }  else {
+      sketch <- htmltools::withTags(table(class = "display",
+                                          thead(tr(
+                                            th(rowspan = 2, "Rule Sequence ID"),
+                                            th(rowspan = 2, "Rule Name"),
+                                            lapply(databaseIds, th, colspan = 4, class = "dt-center", style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                          ),
+                                          tr(
+                                            lapply(rep(
+                                              c("Meet", "Gain", "Remain", "Total"), length(databaseIds)
+                                            ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                          ))))
+      
+      columnDefs <- minCellCountDef(1 + (
+        1:(length(databaseIds) * 4)
+      ))
+    }
     
     options = list(
       pageLength = 100,
@@ -1960,21 +2159,34 @@ shiny::shinyServer(function(input, output, session) {
       lengthChange = TRUE,
       ordering = TRUE,
       paging = TRUE,
-      columnDefs = list(minCellCountDef(1 + (1:(
-        length(databaseIds) * 4
-      ))))
+      columnDefs = list(truncateStringDef(1, 100),
+                        columnDefs)
     )
     
-    table <- DT::datatable(
-      table,
-      options = options,
-      colnames = colnames(table) %>% camelCaseToTitleCase(),
-      rownames = FALSE,
-      container = sketch,
-      escape = FALSE,
-      filter = "top",
-      class = "stripe nowrap compact"
-    )
+    if (input$inclusionRuleTableFilters == "All") {
+      table <- DT::datatable(
+        table,
+        options = options,
+        colnames = colnames(table) %>% camelCaseToTitleCase(),
+        rownames = FALSE,
+        container = sketch,
+        escape = FALSE,
+        filter = "top",
+        class = "stripe nowrap compact"
+      )
+    } else {
+      table <- DT::datatable(
+        table,
+        options = options,
+        colnames = colnames(table) %>% camelCaseToTitleCase(),
+        rownames = FALSE,
+        escape = FALSE,
+        filter = "top",
+        class = "stripe nowrap compact"
+      )
+    }
+    
+    
     
     # table <- DT::formatStyle(table = table,
     #                          columns = 2 + (1:(length(databaseIds) * 4)),
@@ -2099,7 +2311,7 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(length(cohortId()) > 0, "No cohorts chosen chosen"))
     data <- indexEventBreakDownDataFilteredByRadioButton()
     
-    validate(need((!is.null(data) || nrow(data) > 0),
+    validate(need(all(!is.null(data),nrow(data) > 0),
              "There is no data for the selected combination."))
     
     # if (is.null(data) || nrow(data) == 0) {
@@ -2317,7 +2529,7 @@ shiny::shinyServer(function(input, output, session) {
     
     databaseIds <- sort(unique(data$databaseId))
     cohortCounts <- data %>% 
-      dplyr::inner_join(cohortCount) %>% 
+      # dplyr::inner_join(cohortCount) %>% 
       dplyr::filter(.data$cohortId == cohortId()) %>% 
       dplyr::filter(.data$databaseId %in% databaseIds()) %>% 
       dplyr::select(.data$cohortSubjects) %>% 
@@ -2364,22 +2576,64 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::relocate(.data$visitConceptName) #%>%
       # dplyr::mutate(visitConceptName = as.factor(visitConceptName))
     
-    sketch <- htmltools::withTags(table(class = "display",
-                                        thead(tr(
-                                          th(rowspan = 2, "Visit"),
-                                          lapply(databaseIdsWithCount, th, colspan = 4, class = "dt-center",style = "border-right:1px solid silver;border-bottom:1px solid silver")
-                                        ),
-                                        tr(
-                                          lapply(rep(
-                                            c(
-                                              "Visits Before",
-                                              "Visits Ongoing",
-                                              "Starting Simultaneous",
-                                              "Visits After"
-                                            ),
-                                            length(databaseIds)
-                                          ), th,style = "border-right:1px solid silver;border-bottom:1px solid silver")
-                                        ))))
+    if (input$visitContextTableFilters == "Before") {
+      table <- table %>% 
+        dplyr::select(-dplyr::contains("During"),-dplyr::contains("On visit"),-dplyr::contains("After"))
+      colnames(table) <- stringr::str_replace(string = colnames(table), pattern = '_Before', replacement = '')
+      
+      columnDefs <- minCellCountDef(1:(
+        length(databaseIds)
+      ))
+      
+    } else if (input$visitContextTableFilters == "During") {
+      table <- table %>% 
+        dplyr::select(-dplyr::contains("Before"),-dplyr::contains("On visit"),-dplyr::contains("After"))
+      colnames(table) <- stringr::str_replace(string = colnames(table), pattern = '_During visit', replacement = '')
+      
+      columnDefs <- minCellCountDef(1:(
+        length(databaseIds)
+      ))
+      
+    } else if (input$visitContextTableFilters == "Simultaneous") {
+      table <- table %>% 
+        dplyr::select(-dplyr::contains("During"),-dplyr::contains("Before"),-dplyr::contains("After"))
+      colnames(table) <- stringr::str_replace(string = colnames(table), pattern = '_On visit start', replacement = '')
+      
+      columnDefs <- minCellCountDef(1:(
+        length(databaseIds)
+      ))
+      
+    } else if (input$visitContextTableFilters == "After") {
+      table <- table %>% 
+        dplyr::select(-dplyr::contains("During"),-dplyr::contains("Before"),-dplyr::contains("On visit"))
+      colnames(table) <- stringr::str_replace(string = colnames(table), pattern = '_After', replacement = '')
+      
+      columnDefs <- minCellCountDef(1:(
+        length(databaseIds)
+      ))
+      
+    }  else {
+      sketch <- htmltools::withTags(table(class = "display",
+                                          thead(tr(
+                                            th(rowspan = 2, "Visit"),
+                                            lapply(databaseIdsWithCount, th, colspan = 4, class = "dt-center",style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                          ),
+                                          tr(
+                                            lapply(rep(
+                                              c(
+                                                "Visits Before",
+                                                "Visits Ongoing",
+                                                "Starting Simultaneous",
+                                                "Visits After"
+                                              ),
+                                              length(databaseIds)
+                                            ), th,style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                          ))))
+      
+      columnDefs <- minCellCountDef(1:(
+        length(databaseIds) * 4
+      ))
+    }
     
     options = list(
       pageLength = 100,
@@ -2393,21 +2647,31 @@ shiny::shinyServer(function(input, output, session) {
       paging = TRUE,
       columnDefs = list(truncateStringDef(0, 60),
                         list(width = "40%", targets = 0),
-                        minCellCountDef(1:(
-                          length(databaseIds) * 4
-                        )))
+                        columnDefs)
     )
     
-    table <- DT::datatable(
-      table,
-      options = options,
-      colnames = colnames(table) %>%
-        camelCaseToTitleCase(),
-      rownames = FALSE,
-      container = sketch,
-      escape = FALSE,
-      filter = "top"
-    )
+    if (input$visitContextTableFilters == "All") {
+      table <- DT::datatable(
+        table,
+        options = options,
+        colnames = colnames(table) %>%
+          camelCaseToTitleCase(),
+        rownames = FALSE,
+        container = sketch,
+        escape = FALSE,
+        filter = "top"
+      )
+    } else {
+      table <- DT::datatable(
+        table,
+        options = options,
+        colnames = colnames(table) %>%
+          camelCaseToTitleCase(),
+        rownames = FALSE,
+        escape = FALSE,
+        filter = "top"
+      )
+    }
     
     table <- DT::formatStyle(
       table = table,
@@ -3268,8 +3532,6 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::rename(!!targetCohortHeader := .data$target) %>% 
           dplyr::rename(!!comparatorCohortHeader := .data$comparator)
       }
-      
-
       
       options = list(
         pageLength = 100,
