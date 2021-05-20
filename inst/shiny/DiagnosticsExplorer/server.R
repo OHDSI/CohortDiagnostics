@@ -2019,6 +2019,7 @@ shiny::shinyServer(function(input, output, session) {
     if (input$inclusionRuleTableFilters == "Meet") {
       table <- table %>% 
         dplyr::select(-dplyr::contains("Total"),-dplyr::contains("Gain"),-dplyr::contains("Remain"))
+      colnames(table) <- stringr::str_replace(string = colnames(table), pattern = '_meetSubjects', replacement = '')
       
       columnDefs <- minCellCountDef(1 + (
         1:(length(databaseIds))
@@ -2027,6 +2028,7 @@ shiny::shinyServer(function(input, output, session) {
     } else if (input$inclusionRuleTableFilters == "Total") {
       table <- table %>% 
         dplyr::select(-dplyr::contains("Meet"),-dplyr::contains("Gain"),-dplyr::contains("Remain"))
+      colnames(table) <- stringr::str_replace(string = colnames(table), pattern = '_totalSubjects', replacement = '')
       
       columnDefs <- minCellCountDef(1 + (
         1:(length(databaseIds))
@@ -2035,6 +2037,7 @@ shiny::shinyServer(function(input, output, session) {
     } else if (input$inclusionRuleTableFilters == "Gain") {
       table <- table %>% 
         dplyr::select(-dplyr::contains("Total"),-dplyr::contains("Meet"),-dplyr::contains("Remain"))
+      colnames(table) <- stringr::str_replace(string = colnames(table), pattern = '_gainSubjects', replacement = '')
       
       columnDefs <- minCellCountDef(1 + (
         1:(length(databaseIds))
@@ -2043,6 +2046,7 @@ shiny::shinyServer(function(input, output, session) {
     } else if (input$inclusionRuleTableFilters == "Remain") {
       table <- table %>% 
         dplyr::select(-dplyr::contains("Total"),-dplyr::contains("Meet"),-dplyr::contains("Gain"))
+      colnames(table) <- stringr::str_replace(string = colnames(table), pattern = '_remainSubjects', replacement = '')
       
       columnDefs <- minCellCountDef(1 + (
         1:(length(databaseIds))
@@ -2065,8 +2069,6 @@ shiny::shinyServer(function(input, output, session) {
         1:(length(databaseIds) * 4)
       ))
     }
-    
-    
     
     options = list(
       pageLength = 100,
@@ -2497,6 +2499,7 @@ shiny::shinyServer(function(input, output, session) {
     if (input$visitContextTableFilters == "Before") {
       table <- table %>% 
         dplyr::select(-dplyr::contains("During"),-dplyr::contains("On visit"),-dplyr::contains("After"))
+      colnames(table) <- stringr::str_replace(string = colnames(table), pattern = '_Before', replacement = '')
       
       columnDefs <- minCellCountDef(1:(
         length(databaseIds)
@@ -2505,6 +2508,7 @@ shiny::shinyServer(function(input, output, session) {
     } else if (input$visitContextTableFilters == "During") {
       table <- table %>% 
         dplyr::select(-dplyr::contains("Before"),-dplyr::contains("On visit"),-dplyr::contains("After"))
+      colnames(table) <- stringr::str_replace(string = colnames(table), pattern = '_During visit', replacement = '')
       
       columnDefs <- minCellCountDef(1:(
         length(databaseIds)
@@ -2513,6 +2517,7 @@ shiny::shinyServer(function(input, output, session) {
     } else if (input$visitContextTableFilters == "Simultaneous") {
       table <- table %>% 
         dplyr::select(-dplyr::contains("During"),-dplyr::contains("Before"),-dplyr::contains("After"))
+      colnames(table) <- stringr::str_replace(string = colnames(table), pattern = '_On visit start', replacement = '')
       
       columnDefs <- minCellCountDef(1:(
         length(databaseIds)
@@ -2521,6 +2526,7 @@ shiny::shinyServer(function(input, output, session) {
     } else if (input$visitContextTableFilters == "After") {
       table <- table %>% 
         dplyr::select(-dplyr::contains("During"),-dplyr::contains("Before"),-dplyr::contains("On visit"))
+      colnames(table) <- stringr::str_replace(string = colnames(table), pattern = '_After', replacement = '')
       
       columnDefs <- minCellCountDef(1:(
         length(databaseIds)
