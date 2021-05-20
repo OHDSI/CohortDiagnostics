@@ -693,29 +693,39 @@ bodyTabItems <- shinydashboard::tabItems(
     shinydashboard::box(
       title = "Concepts in Data Source",
       width = NULL,
-      column(6,
-      shiny::radioButtons(
-        inputId = "includedType",
-        label = "",
-        choices = c("Source fields", "Standard fields"),
-        selected = "Standard fields",
-        inline = TRUE
-      )
+      column(
+        4,
+        shiny::radioButtons(
+          inputId = "includedType",
+          label = "",
+          choices = c("Source fields", "Standard fields"),
+          selected = "Standard fields",
+          inline = TRUE
+        )
       ),
-      column(6,
-      tags$table(width = "100%",
-                 tags$tr(
-                   tags$td(
-                     align = "right",
-                     shiny::downloadButton(
-                       "saveIncludedConceptsTable",
-                       label = "",
-                       icon = shiny::icon("download"),
-                       style = "margin-top: 5px; margin-bottom: 5px;"
-                     )
-                   )
-                 ))
-    ),
+      column(
+        4,
+        shiny::radioButtons(
+          inputId = "includedConceptsTableColumnFilter",
+          label = "",
+          choices = c("Both", "Subjects only", "Records only"),
+          selected = "Both",
+          inline = TRUE
+        )
+      ),
+      column(4,
+             tags$table(width = "100%",
+                        tags$tr(
+                          tags$td(
+                            align = "right",
+                            shiny::downloadButton(
+                              "saveIncludedConceptsTable",
+                              label = "",
+                              icon = shiny::icon("download"),
+                              style = "margin-top: 5px; margin-bottom: 5px;"
+                            )
+                          )
+                        ))),
     DT::dataTableOutput("includedConceptsTable")
     )
   ),

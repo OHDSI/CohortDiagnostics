@@ -1449,6 +1449,18 @@ shiny::shinyServer(function(input, output, session) {
       
       table <- table[order(-table[, 5]), ]
       
+      sketchColumns <- c("Subjects", "Records")
+      
+      if (input$includedConceptsTableColumnFilter == "Subjects only") {
+        table <- table %>% 
+          dplyr::select(-dplyr::contains("Count"))
+        sketchColumns <- c("Subjects")
+      } else if (input$includedConceptsTableColumnFilter == "Records only") {
+        table <- table %>% 
+          dplyr::select(-dplyr::contains("Subjects"))
+        sketchColumns <- c("Records")
+      } 
+      
       table$sourceConceptId <- as.character(table$sourceConceptId)
       # table$sourceConceptName <- as.factor(table$sourceConceptName)
       table$sourceVocabularyId <- as.factor(table$sourceVocabularyId)
@@ -1464,7 +1476,7 @@ shiny::shinyServer(function(input, output, session) {
                                               lapply(databaseIdsWithCount, th, colspan = 2, class = "dt-center", style = "border-right:1px solid silver;border-bottom:1px solid silver")
                                             ),
                                             tr(lapply(rep(
-                                              c("Subjects", "Records"), length(databaseIds)
+                                              sketchColumns, length(databaseIds)
                                             ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver"))
                                           )))
       options = list(
@@ -1476,23 +1488,35 @@ shiny::shinyServer(function(input, output, session) {
         lengthChange = TRUE,
         searchHighlight = TRUE,
         ordering = TRUE,
-        paging = TRUE,
-        columnDefs = list(truncateStringDef(1, 100),
-                          minCellCountDef(3 + (
-                            1:(length(databaseIds) * 2)
-                          )))
+        paging = TRUE
+        # columnDefs = list(truncateStringDef(1, 100),
+        #                   minCellCountDef(3 + (
+        #                     1:(length(databaseIds) * 2)
+        #                   )))
       )
       
-      dataTable <- DT::datatable(
-        table,
-        colnames = colnames(table),
-        options = options,
-        rownames = FALSE,
-        container = sketch,
-        escape = FALSE,
-        filter = "top",
-        class = "stripe nowrap compact"
-      )
+      if(input$includedConceptsTableColumnFilter == "Both") {
+        dataTable <- DT::datatable(
+          table,
+          options = options,
+          colnames = colnames(table),
+          rownames = FALSE,
+          container = sketch,
+          escape = FALSE,
+          filter = "top",
+          class = "stripe nowrap compact"
+        )
+      } else {
+        dataTable <- DT::datatable(
+          table,
+          colnames = colnames(table),
+          options = options,
+          rownames = FALSE,
+          escape = FALSE,
+          filter = "top",
+          class = "stripe nowrap compact"
+        )
+      }
       
       dataTable <- DT::formatStyle(
         table = dataTable,
@@ -1560,6 +1584,18 @@ shiny::shinyServer(function(input, output, session) {
       
       table <- table[order(-table[, 4]), ]
       
+      sketchColumns <- c("Subjects", "Records")
+      
+      if (input$includedConceptsTableColumnFilter == "Subjects only") {
+        table <- table %>% 
+          dplyr::select(-dplyr::contains("Count"))
+        sketchColumns <- c("Subjects")
+      } else if (input$includedConceptsTableColumnFilter == "Records only") {
+        table <- table %>% 
+          dplyr::select(-dplyr::contains("Subjects"))
+        sketchColumns <- c("Records")
+      } 
+      
       sketch <- htmltools::withTags(table(class = "display",
                                           thead(
                                             tr(
@@ -1569,7 +1605,7 @@ shiny::shinyServer(function(input, output, session) {
                                               lapply(databaseIdsWithCount, th, colspan = 2, class = "dt-center", style = "border-right:1px solid silver;border-bottom:1px solid silver")
                                             ),
                                             tr(lapply(rep(
-                                              c("Subjects", "Records"), length(databaseIds)
+                                              sketchColumns, length(databaseIds)
                                             ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver"))
                                           )))
       
@@ -1581,23 +1617,35 @@ shiny::shinyServer(function(input, output, session) {
         scrollY = "50vh",
         lengthChange = TRUE,
         ordering = TRUE,
-        paging = TRUE,
-        columnDefs = list(truncateStringDef(1, 100),
-                          minCellCountDef(2 + (
-                            1:(length(databaseIds) * 2)
-                          )))
+        paging = TRUE
+        # columnDefs = list(truncateStringDef(1, 100),
+        #                   minCellCountDef(2 + (
+        #                     1:(length(databaseIds) * 2)
+        #                   )))
       )
       
-      dataTable <- DT::datatable(
-        table,
-        options = options,
-        colnames = colnames(table),
-        rownames = FALSE,
-        container = sketch,
-        escape = FALSE,
-        filter = "top",
-        class = "stripe nowrap compact"
-      )
+      if(input$includedConceptsTableColumnFilter == "Both") {
+        dataTable <- DT::datatable(
+          table,
+          options = options,
+          colnames = colnames(table),
+          rownames = FALSE,
+          container = sketch,
+          escape = FALSE,
+          filter = "top",
+          class = "stripe nowrap compact"
+        )
+      } else {
+        dataTable <- DT::datatable(
+          table,
+          options = options,
+          colnames = colnames(table),
+          rownames = FALSE,
+          escape = FALSE,
+          filter = "top",
+          class = "stripe nowrap compact"
+        )
+      }
       
       dataTable <- DT::formatStyle(
         table = dataTable,
