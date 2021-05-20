@@ -871,9 +871,6 @@ runCohortDiagnostics <- function(packageName = NULL,
             OR (cohort_end_date >= period_begin AND cohort_end_date <= period_end)
             GROUP BY period_begin,
             	period_end,
-            	cohort_definition_id
-            ORDER BY period_begin,
-            	period_end,
             	cohort_definition_id;"
   
     data <- DatabaseConnector::renderTranslateQuerySql(
