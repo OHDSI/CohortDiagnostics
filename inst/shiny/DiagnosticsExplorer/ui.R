@@ -708,8 +708,8 @@ bodyTabItems <- shinydashboard::tabItems(
         shiny::radioButtons(
           inputId = "includedConceptsTableColumnFilter",
           label = "",
-          choices = c("Both", "Subjects only", "Records only"),
-          selected = "Both",
+          choices = c("Subjects only", "Records only"), #"Both", 
+          selected = "Subjects only",
           inline = TRUE
         )
       ),
