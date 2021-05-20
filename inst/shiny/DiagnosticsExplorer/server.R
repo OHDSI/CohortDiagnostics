@@ -511,7 +511,7 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(row)) {
       return(NULL)
     } else {
-      paste("Subjects: ", row$cohortSubjects)
+      paste("Subjects: ", scales::comma(row$cohortSubjects, accuracy = 1))
     }
   })
   
@@ -520,7 +520,7 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(row)) {
       return(NULL)
     } else {
-      paste("Records: ", row$cohortEntries)
+      paste("Records: ", scales::comma(row$cohortEntries, accuracy = 1))
     }
   })
   
@@ -1075,7 +1075,7 @@ shiny::shinyServer(function(input, output, session) {
         info = TRUE,
         searchHighlight = TRUE,
         scrollX = TRUE,
-        scrollY = "50vh",
+        scrollY = "30vh",
         columnDefs = list(minCellCountDef(1:(
           length(databaseIds)
         )))
