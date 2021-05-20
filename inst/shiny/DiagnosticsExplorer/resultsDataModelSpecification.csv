@@ -98,6 +98,13 @@ incidence_rate,calendar_year,varchar(4),No,Yes,No,No
 incidence_rate,incidence_rate,float,Yes,No,No,Yes
 incidence_rate,cohort_id,bigint,Yes,Yes,No,Yes
 incidence_rate,database_id,varchar,Yes,Yes,No,Yes
+prevalence_rate,cohort_id,bigint,Yes,Yes,No,Yes
+prevalence_rate,database_id,varchar,Yes,Yes,No,Yes
+prevalence_rate,period_begin,Date,Yes,Yes,No,Yes
+prevalence_rate,period_end,Date,Yes,Yes,No,Yes
+prevalence_rate,records,bigint,Yes,No,No,Yes
+prevalence_rate,subjects,bigint,Yes,No,No,Yes
+prevalence_rate,person_days,bigint,Yes,No,No,Yes
 included_source_concept,database_id,varchar,Yes,Yes,No,Yes
 included_source_concept,cohort_id,bigint,Yes,Yes,No,Yes
 included_source_concept,concept_set_id,int,Yes,Yes,No,Yes
