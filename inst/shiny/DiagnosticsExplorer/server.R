@@ -1729,6 +1729,14 @@ shiny::shinyServer(function(input, output, session) {
       }
     }
     
+    if (input$orphanConceptsType == "Standard Only") {
+      data <- data %>% 
+        dplyr::filter(.data$standardConcept == "S")
+    } else if (input$orphanConceptsType == "Non Standard Only") {
+      data <- data %>% 
+        dplyr::filter(.data$standardConcept != "S")
+    }
+    
     validate(need((nrow(data) > 0),
              "There is no data for the selected combination."))
     
@@ -1737,6 +1745,7 @@ shiny::shinyServer(function(input, output, session) {
     #     "There is no data for the selected combination."
     #   )))
     # }
+    
     databaseIds <- unique(data$databaseId)
     
     databaseIdsWithCount <- data %>% 

@@ -737,9 +737,9 @@ bodyTabItems <- shinydashboard::tabItems(
         tags$td(
           shiny::radioButtons(
             inputId = "orphanConceptsType",
-            label = "",
-            choices = c("Standard Only", "Non Standard Only"),
-            selected = "Standard Only",
+            label = "Filters",
+            choices = c("All", "Standard Only", "Non Standard Only"),
+            selected = "All",
             inline = TRUE
           )
         ),
