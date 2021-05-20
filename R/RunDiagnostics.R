@@ -856,13 +856,15 @@ runCohortDiagnostics <- function(packageName = NULL,
   
     sql <- "SELECT period_begin,
             	period_end,
-            	cohort_definition_id,
-            	COUNT(*) records,
-            	COUNT(DISTINCT subject_id) subjects,
+            	cohort_definition_id cohort_id,
+            	COUNT_BIG(*) records,
+            	COUNT_BIG(DISTINCT subject_id) subjects,
             	SUM(datediff( dd,
             	              CASE WHEN cohort_start_date >= period_begin THEN cohort_start_date ELSE period_begin END,
             	              CASE WHEN cohort_end_date >= period_end THEN period_end ELSE cohort_end_date END
-            	              ) + 1) person_days
+            	              ) + 1) person_days,
+            	COUNT_BIG(CASE WHEN cohort_start_date >= period_begin AND cohort_start_date <= period_end THEN subject_id else NULL end) records_incidence,
+            	COUNT_BIG(DISTINCT CASE WHEN cohort_start_date >= period_begin AND cohort_start_date <= period_end THEN subject_id else NULL end) subjects_incidence
             FROM @cohort_database_schema.@cohort_table
             INNER JOIN #calendar_periods cp
             ON (cohort_start_date >= period_begin AND cohort_start_date <= period_end)
@@ -896,13 +898,21 @@ runCohortDiagnostics <- function(packageName = NULL,
       enforceMinCellValue(data, "subjects", minCellCount)
     data <-
       enforceMinCellValue(data, "personDays", minCellCount)
+    data <-
+      enforceMinCellValue(data, "recordsIncidence", minCellCount)
+    data <-
+      enforceMinCellValue(data, "subjectsIncidence", minCellCount)
     
-    writeToCsv(
-      data = data,
-      fileName = file.path(exportFolder, "prevalence_rate.csv"),
-      incremental = incremental,
-      cohortId = subset$cohortId
-    )
+    if (nrow(data) > 0) {
+      data <- data %>%
+        dplyr::mutate(databaseId = !!databaseId)
+      writeToCsv(
+        data = data,
+        fileName = file.path(exportFolder, "prevalence_rate.csv"),
+        incremental = incremental,
+        cohortId = subset$cohortId
+      )
+    }
     
     recordTasksDone(
       cohortId = subset$cohortId,

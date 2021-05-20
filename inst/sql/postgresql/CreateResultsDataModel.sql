@@ -307,6 +307,8 @@ CREATE TABLE prevalence_rate (
 			records BIGINT NOT NULL,
 			subjects BIGINT NOT NULL,
 			person_days BIGINT NOT NULL,
+			records_incidence BIGINT,
+			subjects_incidence BIGINT,
 			PRIMARY KEY(cohort_id, database_id, period_begin, period_end)
 );
 
