@@ -21,6 +21,7 @@ Imports:
   Andromeda,
   checkmate,
   CirceR,
+  clock,
   digest,
   dplyr (>= 1.0.0),
   methods,
