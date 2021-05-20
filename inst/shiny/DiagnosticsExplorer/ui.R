@@ -389,7 +389,7 @@ bodyTabItems <- shinydashboard::tabItems(
                                             label = "Vocabulary version choices:",
                                             choices = choicesFordatabaseOrVocabularySchema,
                                             multiple = FALSE,
-                                            width = NULL,
+                                            width = 200,
                                             inline = TRUE,
                                             choicesOpt = list(style = rep_len("color: black;", 999)),
                                             options = shinyWidgets::pickerOptions(
@@ -401,6 +401,12 @@ bodyTabItems <- shinydashboard::tabItems(
                                               virtualScroll = 50
                                             )
                                           )
+                                        ),
+                                        tags$td(
+                                          shiny::verbatimTextOutput(outputId = "subjectCountInCohortConceptSet")
+                                        ),
+                                        tags$td(
+                                          shiny::verbatimTextOutput(outputId = "recordCountInCohortConceptSet")
                                         )
                                       ))),
               shiny::conditionalPanel(
@@ -508,6 +514,7 @@ bodyTabItems <- shinydashboard::tabItems(
                )
     ),
     DT::dataTableOutput("cohortCountsTable"),
+    DT::dataTableOutput("InclusionRuleStatForCohortSeletedTable")
   ),
   shinydashboard::tabItem(
     tabName = "incidenceRate",

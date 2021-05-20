@@ -482,6 +482,48 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
+  getDatabaseIDInCohortConceptSet <- shiny::reactive({
+    return(database$databaseId[database$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchema])
+  })
+  
+  getSubjectAndRecordCountForCohortConceptSet <- shiny::reactive(x = {
+    row <- selectedCohortDefinitionRow()
+    
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+  
+      data <- cohortCount %>%
+        dplyr::filter(.data$cohortId == row$cohortId) %>% 
+        dplyr::filter(.data$databaseId == getDatabaseIDInCohortConceptSet()) %>% 
+        dplyr::select(.data$cohortSubjects, .data$cohortEntries)
+      
+      if (is.null(data)) {
+        return(NULL)
+      } else {
+        return(data)
+      }
+    }
+  })
+  
+  output$subjectCountInCohortConceptSet <- shiny::renderText({
+    row <- getSubjectAndRecordCountForCohortConceptSet()
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+      paste("Subjects: ", scales::comma(row$cohortSubjects, accuracy = 1))
+    }
+  })
+  
+  output$recordCountInCohortConceptSet <- shiny::renderText({
+    row <- getSubjectAndRecordCountForCohortConceptSet()
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+      paste("Records: ", scales::comma(row$cohortEntries, accuracy = 1))
+    }
+  })
+  
   getResolvedOrMappedConceptSetForAllDatabase <-
     shiny::reactive(x = {
       row <- selectedCohortDefinitionRow()
@@ -867,23 +909,28 @@ shiny::shinyServer(function(input, output, session) {
   
   # Cohort Counts ---------------------------------------------------------------------------
   
-  output$saveCohortCountsTable <- downloadTableData(
-    data = getCohortCountResult(
-      dataSource = dataSource,
-      databaseIds = databaseIds(),
-      cohortIds = cohortIds()
-    ),
-    fileName = "cohortCount"
-  ) 
-  output$cohortCountsTable <- DT::renderDataTable(expr = {
+  getCohortCountResultReactive <- shiny::reactive(x = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
     data <- getCohortCountResult(
       dataSource = dataSource,
       databaseIds = databaseIds(),
       cohortIds = cohortIds()
-    ) %>%
+    ) %>% 
       addShortName(cohort) %>%
+      dplyr::arrange(.data$shortName, .data$databaseId)
+    return(data)
+  })
+  
+  output$saveCohortCountsTable <- downloadTableData(
+    data = getCohortCountResultReactive(),
+    fileName = "cohortCount"
+  )
+  
+  output$cohortCountsTable <- DT::renderDataTable(expr = {
+    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
+    validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
+    data <- getCohortCountResultReactive() %>%
       dplyr::select(
         .data$databaseId,
         .data$shortName,
@@ -899,31 +946,13 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     databaseIds <- sort(unique(data$databaseId))
-    # instead maybe we can just convert this to a warning message in header.
-    # if (!isTRUE(all.equal(
-    #   data$databaseId %>% unique %>% sort(),
-    #   databaseIds() %>% unique() %>% sort()
-    # ))) {
-    #   return(dplyr::tibble(
-    #     Note = paste0(
-    #       "There is no data for the databases:\n",
-    #       paste0(
-    #         setdiff(databaseIds(),
-    #                 data$databaseId %>% unique()),
-    #         collapse = ",\n "
-    #       ),
-    #       ".\n Please unselect them."
-    #     )
-    #   ))
-    # }
-    
+   
     if (input$cohortCountsTableColumnFilter == "Both") {
       table <- dplyr::full_join(
         data %>%
           dplyr::select(.data$cohort, .data$databaseId,
                         .data$cohortSubjects) %>%
           dplyr::mutate(columnName = paste0(.data$databaseId, "_subjects")) %>%
-          dplyr::arrange(.data$cohort, .data$databaseId) %>%
           tidyr::pivot_wider(
             id_cols = .data$cohort,
             names_from = columnName,
@@ -934,7 +963,6 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::select(.data$cohort, .data$databaseId,
                         .data$cohortEntries) %>%
           dplyr::mutate(columnName = paste0(.data$databaseId, "_entries")) %>%
-          dplyr::arrange(.data$cohort, .data$databaseId) %>%
           tidyr::pivot_wider(
             id_cols = .data$cohort,
             names_from = columnName,
@@ -949,9 +977,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::relocate(.data$cohort) %>%
         dplyr::arrange(.data$cohort)
       
-      
-      
-      sketch <- htmltools::withTags(table(class = "display",
+     sketch <- htmltools::withTags(table(class = "display",
                                           thead(tr(
                                             th(rowspan = 2, "Cohort"),
                                             lapply(databaseIds, th, colspan = 2, class = "dt-center", style = "border-right:1px solid silver;border-bottom:1px solid silver")
@@ -971,7 +997,7 @@ shiny::shinyServer(function(input, output, session) {
         info = TRUE,
         searchHighlight = TRUE,
         scrollX = TRUE,
-        scrollY = "50vh",
+        scrollY = "30vh",
         columnDefs = list(minCellCountDef(1:(
           2 * length(databaseIds)
         )))
@@ -980,6 +1006,7 @@ shiny::shinyServer(function(input, output, session) {
       dataTable <- DT::datatable(
         table,
         options = options,
+        selection = "single",
         rownames = FALSE,
         container = sketch,
         escape = FALSE,
@@ -1048,7 +1075,7 @@ shiny::shinyServer(function(input, output, session) {
         info = TRUE,
         searchHighlight = TRUE,
         scrollX = TRUE,
-        scrollY = "50vh",
+        scrollY = "30vh",
         columnDefs = list(minCellCountDef(1:(
           length(databaseIds)
         )))
@@ -1057,6 +1084,7 @@ shiny::shinyServer(function(input, output, session) {
       dataTable <- DT::datatable(
         table,
         options = options,
+        selection = "single",
         colnames = colnames(table) %>% 
           camelCaseToTitleCase(),
         rownames = FALSE,
@@ -1076,6 +1104,97 @@ shiny::shinyServer(function(input, output, session) {
       
     }
     return(dataTable)
+  }, server = TRUE)
+  
+  getCohortIdOnCohortCountRowSelect <- reactive({
+    idx <- input$cohortCountsTable_rows_selected
+    if(is.null(idx)) {
+      return(NULL)
+    } else {
+      subset <- getCohortCountResultReactive()[idx,]
+      return(subset)
+    }
+    
+  })
+  
+  output$InclusionRuleStatForCohortSeletedTable <- DT::renderDataTable(expr = {
+    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
+    validate(need(
+      nrow(getCohortIdOnCohortCountRowSelect()) > 0,
+      "No cohorts chosen"
+    ))
+    table <- getInclusionRuleStats(
+      dataSource = dataSource,
+      cohortIds = getCohortIdOnCohortCountRowSelect()$cohortId,
+      databaseIds = databaseIds()
+    )
+    
+    validate(need((nrow(table) > 0),
+                  "There is no data for the selected combination."))
+    
+    databaseIds <- unique(table$databaseId)
+    
+    table <- table %>%
+      tidyr::pivot_longer(
+        cols = c(
+          .data$meetSubjects,
+          .data$gainSubjects,
+          .data$totalSubjects,
+          .data$remainSubjects
+        )
+      ) %>%
+      dplyr::mutate(name = paste0(databaseId, "_", .data$name)) %>%
+      tidyr::pivot_wider(
+        id_cols = c(.data$cohortId, .data$ruleSequenceId, .data$ruleName),
+        names_from = .data$name,
+        values_from = .data$value
+      ) %>%
+      dplyr::select(-.data$cohortId)
+    
+    
+    
+    sketch <- htmltools::withTags(table(class = "display",
+                                        thead(tr(
+                                          th(rowspan = 2, "Rule Sequence ID"),
+                                          th(rowspan = 2, "Rule Name"),
+                                          lapply(
+                                            databaseIds,
+                                            th,
+                                            colspan = 4,
+                                            class = "dt-center",
+                                            style = "border-right:1px solid silver;border-bottom:1px solid silver"
+                                          )
+                                        ),
+                                        tr(
+                                          lapply(rep(
+                                            c("Meet", "Gain", "Remain", "Total"), length(databaseIds)
+                                          ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                        ))))
+    options = list(
+      pageLength = 100,
+      lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+      searching = TRUE,
+      searchHighlight = TRUE,
+      scrollX = TRUE,
+      lengthChange = TRUE,
+      ordering = TRUE,
+      paging = TRUE,
+      columnDefs = list(truncateStringDef(1, 100),
+                        minCellCountDef(1 + (1:(
+                          length(databaseIds) * 4
+                        ))))
+    )
+    table <- DT::datatable(
+      table,
+      options = options,
+      colnames = colnames(table) %>% camelCaseToTitleCase(),
+      rownames = FALSE,
+      container = sketch,
+      escape = FALSE,
+      filter = "top",
+      class = "stripe nowrap compact"
+    )
+    return(table)
   }, server = TRUE)
   
   # Incidence rate --------------------------------------------------------------------------------
