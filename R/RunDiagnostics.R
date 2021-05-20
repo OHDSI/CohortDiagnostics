@@ -891,6 +891,14 @@ runCohortDiagnostics <- function(packageName = NULL,
     data <-
       enforceMinCellValue(data, "personDays", minCellCount)
     
+    
+    writeToCsv(
+      data = data,
+      fileName = file.path(exportFolder, "prevalence_rate.csv"),
+      incremental = incremental,
+      cohortId = subset$cohortId
+    )
+    
     recordTasksDone(
       cohortId = subset$cohortId,
       task = "runPrevalenceRate",
