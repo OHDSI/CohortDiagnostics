@@ -67,6 +67,7 @@
 #' @param runVisitContext             Generate and export index-date visit context?
 #' @param runBreakdownIndexEvents     Generate and export the breakdown of index events?
 #' @param runIncidenceRate            Generate and export the cohort incidence  rates?
+#' @param runPrevalenceRate           Generate and export the cohort prevalence  rates?
 #' @param runCohortOverlap            Generate and export the cohort overlap? Overlaps are checked within cohortIds
 #'                                    that have the same phenotype ID sourced from the CohortSetReference or
 #'                                    cohortToCreateFile.
@@ -112,6 +113,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  runVisitContext = TRUE,
                                  runBreakdownIndexEvents = TRUE,
                                  runIncidenceRate = TRUE,
+                                 runPrevalenceRate = TRUE,
                                  runCohortOverlap = TRUE,
                                  runCohortCharacterization = TRUE,
                                  covariateSettings = createDefaultCovariateSettings(),
@@ -771,6 +773,133 @@ runCohortDiagnostics <- function(packageName = NULL,
     )
     delta <- Sys.time() - startIncidenceRate
     ParallelLogger::logInfo("Running Incidence Rate took ",
+                            signif(delta, 3),
+                            " ",
+                            attr(delta, "units"))
+  }
+
+  # Cohort prevalence -----------------------------------------------------------------------
+  ParallelLogger::logInfo("Calculating prevalence of subjects and records.")
+  startPrevalenceRate <- Sys.time()
+  subset <- subsetToRequiredCohorts(
+    cohorts = cohorts %>%
+      dplyr::filter(.data$cohortId %in% instantiatedCohorts),
+    task = "runPrevalenceRate",
+    incremental = incremental,
+    recordKeepingFile = recordKeepingFile
+  )
+  
+  if (incremental &&
+      (length(instantiatedCohorts) - nrow(subset)) > 0) {
+    ParallelLogger::logInfo(sprintf(
+      "Skipping %s cohorts in incremental mode.",
+      length(instantiatedCohorts) - nrow(subset)
+    ))
+  }
+  if (nrow(subset) > 0) {
+    cohortDateRange <- DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = "SELECT MIN(year(cohort_start_date)) MIN_YEAR, 
+             MAX(year(cohort_end_date)) MAX_YEAR 
+             FROM @cohort_database_schema.@cohort_table;",
+      cohort_database_schema = cohortDatabaseSchema,
+      cohort_table = cohortTable, 
+      snakeCaseToCamelCase = TRUE,
+      tempEmulationSchema = tempEmulationSchema
+    )
+  
+    calendarMonth <- dplyr::tibble(periodBegin = clock::date_seq(from = clock::date_build(year = max(2000,
+                                                                                                     cohortDateRange$minYear %>% as.integer())), 
+                                                                 to = clock::date_build(year = min(clock::get_year(clock::date_today("")),
+                                                                                                   (cohortDateRange$maxYear %>% as.integer())) 
+                                                                                        + 1), 
+                                                                 by = clock::duration_months(1))) %>% 
+      dplyr::mutate(periodEnd = clock::add_months(x = .data$periodBegin, n = 1) - 1)
+    
+    calendarYear <- dplyr::tibble(periodBegin = clock::date_seq(from = clock::date_build(year = cohortDateRange$minYear %>% as.integer()), 
+                                                                to = clock::date_build(year = (cohortDateRange$maxYear %>% as.integer()) + 1), 
+                                                                by = clock::duration_years(1))) %>% 
+      dplyr::mutate(periodEnd = clock::add_years(x = .data$periodBegin, n = 1) - 1)
+    
+    calendarWeek <- dplyr::tibble(periodBegin = clock::date_seq(from = (clock::year_month_weekday(year = cohortDateRange$minYear %>% as.integer(),
+                                                                                                  month = clock::clock_months$january,
+                                                                                                  day = clock::clock_weekdays$monday,
+                                                                                                  index = 1) %>% 
+                                                                          clock::as_date() %>% 
+                                                                          clock::add_weeks(n = -1)),
+                                                                to = (clock::year_month_weekday(year = (cohortDateRange$maxYear  %>% as.integer()) + 1,
+                                                                                                month = clock::clock_months$january,
+                                                                                                day = clock::clock_weekdays$sunday,
+                                                                                                index = 1) %>% 
+                                                                        clock::as_date()), 
+                                                                by = clock::duration_weeks(n = 1))) %>% 
+      dplyr::mutate(periodEnd = clock::add_days(x = .data$periodBegin, n = 6))
+  
+    calendarPeriods <- dplyr::bind_rows(calendarWeek, calendarMonth, calendarYear) %>% 
+      dplyr::filter(periodBegin >= as.Date('1999-12-25')) %>% 
+      dplyr::filter(periodEnd <= clock::date_today(""))
+  
+    DatabaseConnector::insertTable(
+      connection = connection,
+      tableName = "#calendar_periods",
+      data = calendarPeriods,
+      dropTableIfExists = TRUE,
+      createTable = TRUE,
+      progressBar = TRUE,
+      tempTable = TRUE,
+      tempEmulationSchema = tempEmulationSchema,
+      camelCaseToSnakeCase = TRUE
+    )
+    ParallelLogger::logTrace("Done inserting calendar periods")
+  
+    sql <- "SELECT period_begin,
+            	period_end,
+            	cohort_definition_id,
+            	COUNT(*) records,
+            	COUNT(DISTINCT subject_id) subjects,
+            	SUM(datediff( dd,
+            	              CASE WHEN cohort_start_date >= period_begin THEN cohort_start_date ELSE period_begin END,
+            	              CASE WHEN cohort_end_date >= period_end THEN period_end ELSE cohort_end_date END
+            	              ) + 1) person_days
+            FROM @cohort_database_schema.@cohort_table
+            INNER JOIN #calendar_periods cp
+            ON (cohort_start_date >= period_begin AND cohort_start_date <= period_end)
+            OR (cohort_end_date >= period_begin AND cohort_end_date <= period_end)
+            GROUP BY period_begin,
+            	period_end,
+            	cohort_definition_id;"
+  
+    data <- DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = sql,
+      cohort_database_schema = cohortDatabaseSchema,
+      cohort_table = cohortTable, 
+      snakeCaseToCamelCase = TRUE,
+      tempEmulationSchema = tempEmulationSchema
+    )
+    
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = "IF OBJECT_ID('tempdb..#calendar_periods', 'U') IS NOT NULL DROP TABLE #calendar_periods;",
+      progressBar = TRUE, 
+      tempEmulationSchema = tempEmulationSchema
+    )
+    data <-
+      enforceMinCellValue(data, "records", minCellCount)
+    data <-
+      enforceMinCellValue(data, "subjects", minCellCount)
+    data <-
+      enforceMinCellValue(data, "personDays", minCellCount)
+    
+    recordTasksDone(
+      cohortId = subset$cohortId,
+      task = "runPrevalenceRate",
+      checksum = subset$checksum,
+      recordKeepingFile = recordKeepingFile,
+      incremental = incremental
+    )
+    delta <- Sys.time() - startPrevalenceRate
+    ParallelLogger::logInfo("Running Prevalence Rate took ",
                             signif(delta, 3),
                             " ",
                             attr(delta, "units"))
