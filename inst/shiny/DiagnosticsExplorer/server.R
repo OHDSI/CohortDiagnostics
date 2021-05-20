@@ -192,6 +192,65 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  output$cohortCountsTableInCohortDefinition <- DT::renderDataTable(expr = {
+    row <- selectedCohortDefinitionRow()
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+      
+      data <- cohortCount %>%
+        dplyr::filter(.data$cohortId == selectedCohortDefinitionRow()$cohortId) %>% 
+        dplyr::filter(.data$databaseId %in% database$databaseId) %>% 
+        dplyr::select(.data$databaseId, .data$cohortSubjects, .data$cohortEntries)
+      
+      maxCohortSubjects <- max(data$cohortSubjects)
+      maxCohortEntries <- max(data$cohortEntries)
+      
+      options = list(
+        pageLength = 100,
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        lengthChange = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        info = TRUE,
+        searchHighlight = TRUE,
+        scrollX = TRUE,
+        columnDefs = list(minCellCountDef(1:2))
+      )
+      
+      dataTable <- DT::datatable(
+        data,
+        options = options,
+        colnames = colnames(data) %>% camelCaseToTitleCase(),
+        rownames = FALSE,
+        selection = 'none',
+        escape = FALSE,
+        filter = "top",
+        class = "stripe nowrap compact"
+      )
+      
+      dataTable <- DT::formatStyle(
+        table = dataTable,
+        columns = 2,
+        background = DT::styleColorBar(c(0, maxCohortSubjects), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+
+      dataTable <- DT::formatStyle(
+        table = dataTable,
+        columns = 3,
+        background = DT::styleColorBar(c(0, maxCohortEntries), "#ffd699"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+      return(dataTable)
+    }
+  }, server = TRUE)
+  
   cohortDefinitionCirceRDetails <- shiny::reactive(x = {
     progress <- shiny::Progress$new()
     on.exit(progress$close())
@@ -1321,24 +1380,14 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   # included concepts table /concepts in data source-----------------------------------------------------------
-  
-  includedConceptsData <- shiny::reactive(x = {
-    if (length(cohortId()) > 0 &&
-        length(databaseIds()) > 0) {
-      data = getIncludedConceptResult(
-        dataSource = dataSource,
-        cohortId = cohortId(),
-        databaseIds = databaseIds()
-      )} else {
-      return(NULL)
-    }
-  })
-  
   output$saveIncludedConceptsTable <- downloadTableData(
-    data = includedConceptsData(),
+    data = getIncludedConceptResult(
+      dataSource = dataSource,
+      cohortId = cohortId(),
+      databaseIds = databaseIds()
+    ),
     fileName = "includedConcept"
-  )
-  
+  ) 
   output$includedConceptsTable <- DT::renderDataTable(expr = {
     validate(need(length(databaseIds()) > 0, 
                   "No data sources chosen"))
@@ -1347,7 +1396,11 @@ shiny::shinyServer(function(input, output, session) {
     # if (is.null(cohortId()) || length(cohortId()) == 0) {
     #   return(dplyr::tibble("No data available for selected combination"))
     # }
-    data <- includedConceptsData()
+    data <- getIncludedConceptResult(
+      dataSource = dataSource,
+      cohortId = cohortId(),
+      databaseIds = databaseIds()
+    )
     validate(need(all(!is.null(data), nrow(data) > 0),
              "No data available for selected combination"))
     
@@ -1355,9 +1408,7 @@ shiny::shinyServer(function(input, output, session) {
     #   return(dplyr::tibble("No data available for selected combination"))
     # }
     
-    if (!is.null(input$conceptSetsToFilterCharacterization) && 
-        length(input$conceptSetsToFilterCharacterization) > 0 &&
-        input$conceptSetsToFilterCharacterization != '') {
+    if (!is.null(input$conceptSetsToFilterCharacterization) && length(input$conceptSetsToFilterCharacterization) > 0) {
       
       if (!is.null(input$conceptSetsToFilterCharacterization)) {
         if (length(getResoledAndMappedConceptIdsForFilters()) > 0) {
@@ -1536,7 +1587,7 @@ shiny::shinyServer(function(input, output, session) {
       } else {
         dataTable <- DT::datatable(
           table,
-          colnames = c(colnames(table[1:3]) %>% camelCaseToTitleCase(), databaseIdsWithCount),
+          colnames = colnames(table),
           options = options,
           rownames = FALSE,
           escape = FALSE,
@@ -1651,6 +1702,8 @@ shiny::shinyServer(function(input, output, session) {
         ))
       }
       
+      
+      
       options = list(
         pageLength = 1000,
         lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
@@ -1679,7 +1732,7 @@ shiny::shinyServer(function(input, output, session) {
         dataTable <- DT::datatable(
           table,
           options = options,
-          colnames = c(colnames(table[1:3]) %>% camelCaseToTitleCase(), databaseIdsWithCount),
+          colnames = colnames(table),
           rownames = FALSE,
           escape = FALSE,
           filter = "top",
