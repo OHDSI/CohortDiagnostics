@@ -866,6 +866,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       progressBar = TRUE,
       tempTable = TRUE,
       tempEmulationSchema = tempEmulationSchema,
+      cdm_database_schema = cdmDatabaseSchema,
       camelCaseToSnakeCase = TRUE
     )
     ParallelLogger::logTrace("Done inserting calendar periods")
