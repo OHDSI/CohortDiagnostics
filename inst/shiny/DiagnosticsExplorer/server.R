@@ -1449,36 +1449,48 @@ shiny::shinyServer(function(input, output, session) {
       
       table <- table[order(-table[, 5]), ]
       
-      sketchColumns <- c("Subjects", "Records")
-      
       if (input$includedConceptsTableColumnFilter == "Subjects only") {
         table <- table %>% 
           dplyr::select(-dplyr::contains("Count"))
-        sketchColumns <- c("Subjects")
+        columnDefs <- minCellCountDef(3 + (
+          1:(length(databaseIds))
+        ))
+        
+        
       } else if (input$includedConceptsTableColumnFilter == "Records only") {
         table <- table %>% 
           dplyr::select(-dplyr::contains("Subjects"))
-        sketchColumns <- c("Records")
-      } 
+        
+        columnDefs <- minCellCountDef(3 + (
+          1:(length(databaseIds))
+        ))
+        
+      } else {
+        sketch <- htmltools::withTags(table(class = "display",
+                                            thead(
+                                              tr(
+                                                th(rowspan = 2, 'Concept ID'),
+                                                th(rowspan = 2, 'Concept Name'),
+                                                th(rowspan = 2, 'Vocabulary ID'),
+                                                th(rowspan = 2, 'Concept Code'),
+                                                lapply(databaseIdsWithCount, th, colspan = 2, class = "dt-center", style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                              ),
+                                              tr(lapply(rep(
+                                                c("Subjects", "Records"), length(databaseIds)
+                                              ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver"))
+                                            )))
+        
+        columnDefs <- minCellCountDef(3 + (
+          1:(length(databaseIds) * 2)
+        ))
+      }
       
       table$sourceConceptId <- as.character(table$sourceConceptId)
       # table$sourceConceptName <- as.factor(table$sourceConceptName)
       table$sourceVocabularyId <- as.factor(table$sourceVocabularyId)
       # table$sourceConceptCode <- as.factor(table$sourceConceptCode)
       
-      sketch <- htmltools::withTags(table(class = "display",
-                                          thead(
-                                            tr(
-                                              th(rowspan = 2, 'Concept ID'),
-                                              th(rowspan = 2, 'Concept Name'),
-                                              th(rowspan = 2, 'Vocabulary ID'),
-                                              th(rowspan = 2, 'Concept Code'),
-                                              lapply(databaseIdsWithCount, th, colspan = 2, class = "dt-center", style = "border-right:1px solid silver;border-bottom:1px solid silver")
-                                            ),
-                                            tr(lapply(rep(
-                                              sketchColumns, length(databaseIds)
-                                            ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver"))
-                                          )))
+      
       options = list(
         pageLength = 1000,
         lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
@@ -1488,11 +1500,9 @@ shiny::shinyServer(function(input, output, session) {
         lengthChange = TRUE,
         searchHighlight = TRUE,
         ordering = TRUE,
-        paging = TRUE
-        # columnDefs = list(truncateStringDef(1, 100),
-        #                   minCellCountDef(3 + (
-        #                     1:(length(databaseIds) * 2)
-        #                   )))
+        paging = TRUE,
+        columnDefs = list(truncateStringDef(1, 100),
+                          columnDefs)
       )
       
       if(input$includedConceptsTableColumnFilter == "Both") {
@@ -1584,30 +1594,42 @@ shiny::shinyServer(function(input, output, session) {
       
       table <- table[order(-table[, 4]), ]
       
-      sketchColumns <- c("Subjects", "Records")
-      
       if (input$includedConceptsTableColumnFilter == "Subjects only") {
         table <- table %>% 
           dplyr::select(-dplyr::contains("Count"))
-        sketchColumns <- c("Subjects")
+        
+        columnDefs <- minCellCountDef(2 + (
+          1:(length(databaseIds))
+        ))
+        
       } else if (input$includedConceptsTableColumnFilter == "Records only") {
         table <- table %>% 
           dplyr::select(-dplyr::contains("Subjects"))
-        sketchColumns <- c("Records")
-      } 
+        
+        columnDefs <- minCellCountDef(2 + (
+          1:(length(databaseIds))
+        ))
+        
+      } else {
+        sketch <- htmltools::withTags(table(class = "display",
+                                            thead(
+                                              tr(
+                                                th(rowspan = 2, "Concept ID"),
+                                                th(rowspan = 2, "Concept Name"),
+                                                th(rowspan = 2, "Vocabulary ID"),
+                                                lapply(databaseIdsWithCount, th, colspan = 2, class = "dt-center", style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                              ),
+                                              tr(lapply(rep(
+                                                c("Subjects", "Records"), length(databaseIds)
+                                              ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver"))
+                                            )))
+        
+        columnDefs <- minCellCountDef(2 + (
+          1:(length(databaseIds) * 2)
+        ))
+      }
       
-      sketch <- htmltools::withTags(table(class = "display",
-                                          thead(
-                                            tr(
-                                              th(rowspan = 2, "Concept ID"),
-                                              th(rowspan = 2, "Concept Name"),
-                                              th(rowspan = 2, "Vocabulary ID"),
-                                              lapply(databaseIdsWithCount, th, colspan = 2, class = "dt-center", style = "border-right:1px solid silver;border-bottom:1px solid silver")
-                                            ),
-                                            tr(lapply(rep(
-                                              sketchColumns, length(databaseIds)
-                                            ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver"))
-                                          )))
+      
       
       options = list(
         pageLength = 1000,
@@ -1617,14 +1639,12 @@ shiny::shinyServer(function(input, output, session) {
         scrollY = "50vh",
         lengthChange = TRUE,
         ordering = TRUE,
-        paging = TRUE
-        # columnDefs = list(truncateStringDef(1, 100),
-        #                   minCellCountDef(2 + (
-        #                     1:(length(databaseIds) * 2)
-        #                   )))
+        paging = TRUE,
+        columnDefs = list(truncateStringDef(1, 100),
+                          columnDefs)
       )
       
-      if(input$includedConceptsTableColumnFilter == "Both") {
+      if (input$includedConceptsTableColumnFilter == "Both") {
         dataTable <- DT::datatable(
           table,
           options = options,
