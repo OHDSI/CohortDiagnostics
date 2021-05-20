@@ -482,6 +482,48 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
+  getDatabaseIDInCohortConceptSet <- shiny::reactive({
+    return(database$databaseId[database$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchema])
+  })
+  
+  getSubjectAndRecordCountForCohortConceptSet <- shiny::reactive(x = {
+    row <- selectedCohortDefinitionRow()
+    
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+  
+      data <- cohortCount %>%
+        dplyr::filter(.data$cohortId == row$cohortId) %>% 
+        dplyr::filter(.data$databaseId == getDatabaseIDInCohortConceptSet()) %>% 
+        dplyr::select(.data$cohortSubjects, .data$cohortEntries)
+      
+      if (is.null(data)) {
+        return(NULL)
+      } else {
+        return(data)
+      }
+    }
+  })
+  
+  output$subjectCountInCohortConceptSet <- shiny::renderText({
+    row <- getSubjectAndRecordCountForCohortConceptSet()
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+      paste("Subjects: ", row$cohortSubjects)
+    }
+  })
+  
+  output$recordCountInCohortConceptSet <- shiny::renderText({
+    row <- getSubjectAndRecordCountForCohortConceptSet()
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+      paste("Records: ", row$cohortEntries)
+    }
+  })
+  
   getResolvedOrMappedConceptSetForAllDatabase <-
     shiny::reactive(x = {
       row <- selectedCohortDefinitionRow()
