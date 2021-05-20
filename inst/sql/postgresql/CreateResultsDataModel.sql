@@ -21,7 +21,7 @@ DROP TABLE IF EXISTS index_event_breakdown;
 DROP TABLE IF EXISTS metadata;
 DROP TABLE IF EXISTS orphan_concept;
 DROP TABLE IF EXISTS phenotype_description;
-DROP TABLE IF EXISTS prevalence_rate;
+DROP TABLE IF EXISTS time_series;
 DROP TABLE IF EXISTS relationship;
 DROP TABLE IF EXISTS resolved_concepts;
 DROP TABLE IF EXISTS temporal_analysis_ref;
@@ -297,21 +297,6 @@ CREATE TABLE phenotype_description (
 			PRIMARY KEY(phenotype_id)
 );
 
---Table prevalence_rate
-
-CREATE TABLE prevalence_rate (
-			cohort_id BIGINT NOT NULL,
-			database_id VARCHAR NOT NULL,
-			period_begin DATE NOT NULL,
-			period_end DATE NOT NULL,
-			records BIGINT NOT NULL,
-			subjects BIGINT NOT NULL,
-			person_days BIGINT NOT NULL,
-			records_incidence BIGINT,
-			subjects_incidence BIGINT,
-			PRIMARY KEY(cohort_id, database_id, period_begin, period_end)
-);
-
 --Table relationship
 
 CREATE TABLE relationship (
@@ -414,6 +399,21 @@ CREATE TABLE time_distribution (
 			time_metric VARCHAR NOT NULL,
 			database_id VARCHAR NOT NULL,
 			PRIMARY KEY(cohort_id, time_metric, database_id)
+);
+
+--Table time_series
+
+CREATE TABLE time_series (
+			cohort_id BIGINT NOT NULL,
+			database_id VARCHAR NOT NULL,
+			period_begin DATE NOT NULL,
+			period_end DATE NOT NULL,
+			records BIGINT NOT NULL,
+			subjects BIGINT NOT NULL,
+			person_days BIGINT NOT NULL,
+			records_incidence BIGINT,
+			subjects_incidence BIGINT,
+			PRIMARY KEY(cohort_id, database_id, period_begin, period_end)
 );
 
 --Table visit_context
