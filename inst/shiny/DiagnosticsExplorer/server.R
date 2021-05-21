@@ -1505,7 +1505,7 @@ shiny::shinyServer(function(input, output, session) {
   
   # included concepts table /concepts in data source-----------------------------------------------------------
   includedConceptsData <- shiny::reactive(x = {
-    validate(need(all(!is.null(databaseIds(), length(databaseIds()) > 0)), 
+    validate(need(all(!is.null(databaseIds()), length(databaseIds()) > 0), 
                   "No data sources chosen"))
     validate(need(all(!is.null(cohortId()),length(cohortId()) > 0),
                   "No cohort chosen"))
@@ -1559,7 +1559,8 @@ shiny::shinyServer(function(input, output, session) {
         ) %>%
         dplyr::group_by(.data$databaseId,.data$sourceConceptId) %>% 
         dplyr::summarise(conceptSubjects = max(.data$conceptSubjects),
-                         conceptCount = max(.data$conceptCount)) %>% 
+                         conceptCount = max(.data$conceptCount), 
+                         .groups = 'keep') %>% 
         dplyr::ungroup() %>% 
         dplyr::arrange(.data$databaseId) %>%
         tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>%
@@ -1599,13 +1600,6 @@ shiny::shinyServer(function(input, output, session) {
       validate(need((nrow(table) > 0),
                "No data available for selected combination"))
       
-      # if (nrow(table) == 0) {
-      #   return(dplyr::tibble(
-      #     Note = paste0("No data available for selected combination")
-      #   ))
-      # }
-      # 
-      
       table <- table[order(-table[, 5]), ]
       
       if (input$includedConceptsTableColumnFilter == "Subjects only") {
@@ -1614,8 +1608,6 @@ shiny::shinyServer(function(input, output, session) {
         columnDefs <- minCellCountDef(3 + (
           1:(length(databaseIds))
         ))
-        
-        
       } else if (input$includedConceptsTableColumnFilter == "Records only") {
         table <- table %>% 
           dplyr::select(-dplyr::contains("Subjects"))
@@ -1623,9 +1615,7 @@ shiny::shinyServer(function(input, output, session) {
         columnDefs <- minCellCountDef(3 + (
           1:(length(databaseIds))
         ))
-        
       } else {
-        
         sketch <- htmltools::withTags(table(class = "display",
                                             thead(
                                               tr(
@@ -1646,10 +1636,7 @@ shiny::shinyServer(function(input, output, session) {
       }
       
       table$sourceConceptId <- as.character(table$sourceConceptId)
-      # table$sourceConceptName <- as.factor(table$sourceConceptName)
       table$sourceVocabularyId <- as.factor(table$sourceVocabularyId)
-      # table$sourceConceptCode <- as.factor(table$sourceConceptCode)
-      
       
       options = list(
         pageLength = 1000,
@@ -1698,7 +1685,6 @@ shiny::shinyServer(function(input, output, session) {
       )
     } else {
       table <- data %>%
-        dplyr::filter(.data$conceptId > 0) %>%
         dplyr::select(
           .data$databaseId,
           .data$conceptId,
@@ -1709,7 +1695,8 @@ shiny::shinyServer(function(input, output, session) {
                         .data$conceptId) %>%
         dplyr::summarise(
           conceptSubjects = sum(.data$conceptSubjects),
-          conceptCount = sum(.data$conceptCount)
+          conceptCount = sum(.data$conceptCount),
+          .groups = 'keep'
         ) %>%
         dplyr::ungroup() %>%
         dplyr::arrange(.data$databaseId) %>%
@@ -1740,26 +1727,18 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::relocate(.data$conceptId, .data$conceptName, .data$vocabularyId)
       
       table$conceptId <- as.character(table$conceptId)
-      # table$conceptName <- as.factor(table$conceptName)
       table$vocabularyId <- as.factor(table$vocabularyId)
       
       validate(need((nrow(table) > 0),
                "No data available for selected combination"))
-      # 
-      # if (nrow(table) == 0) {
-      #   return(dplyr::tibble(
-      #     Note = paste0('No data available for selected combination')
-      #   ))
-      # }
       
       table <- table[order(-table[, 4]), ]
       
       if (input$includedConceptsTableColumnFilter == "Subjects only") {
         table <- table %>% 
           dplyr::select(-dplyr::contains("Count"))
-        
         columnDefs <- minCellCountDef(2 + (
-          1:(length(databaseIds))
+          1:(nrow(databaseIdsWithCount))
         ))
         
       } else if (input$includedConceptsTableColumnFilter == "Records only") {
@@ -1767,11 +1746,9 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::select(-dplyr::contains("Subjects"))
         
         columnDefs <- minCellCountDef(2 + (
-          1:(length(databaseIds))
+          1:(nrow(databaseIdsWithCount))
         ))
-        
       } else {
-        
         sketch <- htmltools::withTags(table(class = "display",
                                             thead(
                                               tr(
