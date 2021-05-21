@@ -1522,7 +1522,7 @@ shiny::shinyServer(function(input, output, session) {
   ) 
   
   output$includedConceptsTable <- DT::renderDataTable(expr = {
-    validate(need(all(!is.null(databaseIds(), length(databaseIds()) > 0)), 
+    validate(need(all(!is.null(databaseIds()), length(databaseIds()) > 0), 
                   "No data sources chosen"))
     validate(need(all(!is.null(cohortId()),length(cohortId()) > 0),
                   "No cohort chosen"))
@@ -1544,29 +1544,7 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(all(!is.null(data), nrow(data) > 0),
              "No data available for selected combination"))
     
-    databaseIdsWithCount <- data %>% 
-      dplyr::inner_join(cohortCount, by = c('databaseId', 'cohortId')) %>% 
-      dplyr::filter(.data$cohortId == cohortId()) %>% 
-      dplyr::filter(.data$databaseId %in% databaseIds()) %>% 
-      dplyr::arrange(.data$databaseId) %>% 
-      dplyr::mutate(databaseIdsWithCount = paste0(.data$databaseId, 
-                                                  "<br>(n = ",
-                                                  scales::comma(.data$cohortSubjects, accuracy = 1),
-                                                  ")"
-      )) %>% 
-      dplyr::select(.data$databaseIdsWithCount) %>% 
-      dplyr::distinct() %>% 
-      dplyr::pull()
-    # if (!all(databaseIds() %in% databaseIds)) {
-    #   return(dplyr::tibble(
-    #     Note = paste0(
-    #       "There is no data for the databases:\n",
-    #       paste0(setdiff(databaseIds(), databaseIds),
-    #              collapse = ",\n "),
-    #       ".\n Please unselect them."
-    #     )
-    #   ))
-    # }
+    databaseIdsWithCount <- getSubjectCountsByDatabasae(data = data, cohortId = cohortId(), databaseIds = databaseIds())
     
     maxCount <- max(data$conceptCount, na.rm = TRUE)
     
@@ -1647,10 +1625,6 @@ shiny::shinyServer(function(input, output, session) {
         ))
         
       } else {
-        
-        databaseIdsWithCountNoBr <- stringr::str_replace(string = databaseIdsWithCount,
-                                                         pattern = stringr::fixed('<br>'),
-                                                         replacement = ' ')
         
         sketch <- htmltools::withTags(table(class = "display",
                                             thead(
@@ -1804,19 +1778,17 @@ shiny::shinyServer(function(input, output, session) {
                                                 th(rowspan = 2, "Concept ID"),
                                                 th(rowspan = 2, "Concept Name"),
                                                 th(rowspan = 2, "Vocabulary ID"),
-                                                lapply(databaseIdsWithCountNoBr, th, colspan = 2, class = "dt-center", style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                                lapply(databaseIdsWithCount$databaseIdsWithCount, th, colspan = 2, class = "dt-center", style = "border-right:1px solid silver;border-bottom:1px solid silver")
                                               ),
                                               tr(lapply(rep(
-                                                c("Subjects", "Records"), length(databaseIds)
+                                                c("Subjects", "Records"), nrow(databaseIdsWithCount)
                                               ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver"))
                                             )))
         
         columnDefs <- minCellCountDef(2 + (
-          1:(length(databaseIds) * 2)
+          1:(nrow(databaseIdsWithCount) * 2)
         ))
       }
-      
-      
       
       options = list(
         pageLength = 1000,
@@ -1856,7 +1828,7 @@ shiny::shinyServer(function(input, output, session) {
       
       dataTable <- DT::formatStyle(
         table = dataTable,
-        columns =  3 + (1:(length(databaseIds) *
+        columns =  3 + (1:(nrow(databaseIdsWithCount) *
                              2)),
         background = DT::styleColorBar(c(0, maxCount), "lightblue"),
         backgroundSize = "98% 88%",
@@ -1919,7 +1891,6 @@ shiny::shinyServer(function(input, output, session) {
              "There is no data for the selected combination."))
     
     # databaseIds for data table names
-    # databaseIds <- unique(data$databaseId)
     databaseIdsWithCount <- getSubjectCountsByDatabasae(data = data, cohortId = cohortId(), databaseIds = databaseIds())
     
     maxCount <- max(data$conceptCount, na.rm = TRUE)
