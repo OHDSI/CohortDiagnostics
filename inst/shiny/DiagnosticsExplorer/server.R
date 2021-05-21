@@ -876,6 +876,10 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   getResoledAndMappedConceptIdsForFilters <- shiny::reactive({
+    validate(need(all(!is.null(databaseIds()), length(databaseIds()) > 0), 
+                  "No data sources chosen"))
+    validate(need(all(!is.null(cohortId()),length(cohortId()) > 0),
+                  "No cohort chosen"))
     output <-
       resolveMappedConceptSet(
         dataSource = dataSource,
@@ -885,6 +889,7 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(output)) {
       return(NULL)
     }
+    
     conceptIdsForFilters <- output$resolved %>% 
       dplyr::filter(.data$conceptSetId %in% getConceptSetIds()) %>% 
       dplyr::select(.data$conceptId) %>% 
@@ -1499,52 +1504,46 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   # included concepts table /concepts in data source-----------------------------------------------------------
-  output$saveIncludedConceptsTable <- downloadTableData(
+  includedConceptsData <- shiny::reactive(x = {
+    validate(need(all(!is.null(databaseIds(), length(databaseIds()) > 0)), 
+                  "No data sources chosen"))
+    validate(need(all(!is.null(cohortId()),length(cohortId()) > 0),
+                  "No cohort chosen"))
     data = getIncludedConceptResult(
       dataSource = dataSource,
       cohortId = cohortId(),
       databaseIds = databaseIds()
-    ),
+    )
+  })
+  
+  output$saveIncludedConceptsTable <- downloadTableData(
+    data = includedConceptsData(),
     fileName = "includedConcept"
   ) 
+  
   output$includedConceptsTable <- DT::renderDataTable(expr = {
-    validate(need(length(databaseIds()) > 0, 
+    validate(need(all(!is.null(databaseIds(), length(databaseIds()) > 0)), 
                   "No data sources chosen"))
     validate(need(all(!is.null(cohortId()),length(cohortId()) > 0),
-             "No cohort chosen"))
-    # if (is.null(cohortId()) || length(cohortId()) == 0) {
-    #   return(dplyr::tibble("No data available for selected combination"))
-    # }
-    data <- getIncludedConceptResult(
-      dataSource = dataSource,
-      cohortId = cohortId(),
-      databaseIds = databaseIds()
-    )
+                  "No cohort chosen"))
+    
+    data <- includedConceptsData()
     validate(need(all(!is.null(data), nrow(data) > 0),
              "No data available for selected combination"))
     
-    # if (is.null(data) || nrow(data) == 0) {
-    #   return(dplyr::tibble("No data available for selected combination"))
-    # }
-    
-    if (!is.null(input$conceptSetsToFilterCharacterization) && length(input$conceptSetsToFilterCharacterization) > 0) {
-      
-      if (!is.null(input$conceptSetsToFilterCharacterization)) {
-        if (length(getResoledAndMappedConceptIdsForFilters()) > 0) {
-          data <- data %>% 
-            dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
-        } else {
-          data <- data[0,]
-        }
+    if (!is.null(input$conceptSetsToFilterCharacterization) && 
+        length(input$conceptSetsToFilterCharacterization) > 0) {
+      if (length(getResoledAndMappedConceptIdsForFilters()) > 0) {
+        data <- data %>% 
+          dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
+      } else {
+        data <- data[0,]
       }
     }
     
     validate(need(all(!is.null(data), nrow(data) > 0),
              "No data available for selected combination"))
     
-    # if (nrow(data) == 0) {
-    #   return(dplyr::tibble("No data available for selected combination"))
-    # }
     databaseIdsWithCount <- data %>% 
       dplyr::inner_join(cohortCount, by = c('databaseId', 'cohortId')) %>% 
       dplyr::filter(.data$cohortId == cohortId()) %>% 
@@ -1799,10 +1798,6 @@ shiny::shinyServer(function(input, output, session) {
         
       } else {
         
-        databaseIdsWithCountNoBr <- stringr::str_replace(string = databaseIdsWithCount,
-                                                         pattern = stringr::fixed('<br>'),
-                                                         replacement = ' ')
-        
         sketch <- htmltools::withTags(table(class = "display",
                                             thead(
                                               tr(
@@ -1875,7 +1870,7 @@ shiny::shinyServer(function(input, output, session) {
   # orphan concepts table -------------------------------------------------------------------------
   
   orphanConceptsData <- shiny::reactive(x = {
-    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
+    validate(need(all(!is.null(databaseIds()), length(databaseIds()) > 0), "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
     getOrphanConceptResult(
       dataSource = dataSource,
@@ -1924,25 +1919,8 @@ shiny::shinyServer(function(input, output, session) {
              "There is no data for the selected combination."))
     
     # databaseIds for data table names
-    databaseIds <- unique(data$databaseId)
-    databaseIdsWithCount <- data %>% 
-      dplyr::inner_join(cohortCount, by = c('databaseId', 'cohortId')) %>% 
-      dplyr::filter(.data$cohortId == cohortId()) %>% 
-      dplyr::filter(.data$databaseId %in% databaseIds()) %>% 
-      dplyr::arrange(.data$databaseId) %>% 
-      dplyr::mutate(databaseIdsWithCount = paste0(.data$databaseId, 
-                                                  "<br>(n = ",
-                                                  scales::comma(.data$cohortSubjects, accuracy = 1),
-                                                  ")"
-                                                  )) %>% 
-      dplyr::mutate(databaseIdsWithCountWithoutBr = paste0(.data$databaseId, 
-                                                  " (n = ",
-                                                  scales::comma(.data$cohortSubjects, accuracy = 1),
-                                                  ")"
-      )) %>% 
-      dplyr::select(.data$databaseId, .data$databaseIdsWithCount, .data$databaseIdsWithCountWithoutBr) %>% 
-      dplyr::distinct() %>% 
-      dplyr::arrange(.data$databaseId)
+    # databaseIds <- unique(data$databaseId)
+    databaseIdsWithCount <- getSubjectCountsByDatabasae(data = data, cohortId = cohortId(), databaseIds = databaseIds())
     
     maxCount <- max(data$conceptCount, na.rm = TRUE)
     table <- data %>%
@@ -2014,7 +1992,7 @@ shiny::shinyServer(function(input, output, session) {
                                               lapply(databaseIdsWithCount$databaseIdsWithCountWithoutBr, th, colspan = 2, class = "dt-center", style = "border-bottom:1px solid silver;border-bottom:1px solid silver")
                                             ),
                                             tr(lapply(rep(
-                                              c("Subjects", "Records"), length(databaseIds)
+                                              c("Subjects", "Records"), nrow(databaseIdsWithCount)
                                             ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver"))
                                           )))
       
@@ -2029,7 +2007,7 @@ shiny::shinyServer(function(input, output, session) {
         paging = TRUE,
         columnDefs = list(truncateStringDef(1, 100),
                           minCellCountDef(3 + (1:(
-                            length(databaseIds) * 2
+                            nrow(databaseIdsWithCount) * 2
                           ))))
       )
       
@@ -2046,7 +2024,7 @@ shiny::shinyServer(function(input, output, session) {
       
       table <- DT::formatStyle(
         table = table,
-        columns =  4 + (1:(length(databaseIds) * 2)),
+        columns =  4 + (1:(nrow(databaseIdsWithCount) * 2)),
         background = DT::styleColorBar(c(0, maxCount), "lightblue"),
         backgroundSize = "98% 88%",
         backgroundRepeat = "no-repeat",
@@ -2106,7 +2084,7 @@ shiny::shinyServer(function(input, output, session) {
         paging = TRUE,
         columnDefs = list(truncateStringDef(1, 100),
                           minCellCountDef(3 + (1:(
-                            length(databaseIds)
+                            nrow(databaseIdsWithCount)
                           ))))
       )
       
@@ -2125,7 +2103,7 @@ shiny::shinyServer(function(input, output, session) {
       
       table <- DT::formatStyle(
         table = table,
-        columns =  4 + (1:(length(databaseIds))),
+        columns =  4 + (1:(nrow(databaseIdsWithCount))),
         background = DT::styleColorBar(c(0, maxCount), "lightblue"),
         backgroundSize = "98% 88%",
         backgroundRepeat = "no-repeat",
