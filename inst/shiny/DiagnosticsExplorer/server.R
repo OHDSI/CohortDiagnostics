@@ -871,7 +871,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$saveConceptSetButton <- downloadTableData(data = cohortDefinitionConceptSets(), fileName = "ConceptSetsExpression")
   
-  output$cohortDefinitionOrphanConceptTable <- DT::renderDataTable(expr = {
+  cohortDefinitionOrphanConceptTableData <- shiny::reactive(x = {
     row <- selectedCohortDefinitionRow()
     
     if (is.null(row)) {
@@ -884,7 +884,14 @@ shiny::shinyServer(function(input, output, session) {
                                    databaseIds = getDatabaseIDInCohortConceptSet())
     data <- data %>%
       dplyr::filter(.data$conceptSetName == cohortDefinitionConceptSetExpressionRow()$name)
+  })
+  
+  output$saveCohortDefinitionOrphanConceptsTable <- downloadTableData(data = cohortDefinitionOrphanConceptTableData(),
+                                                                      fileName = "orphanConcepts")
+  
+  output$cohortDefinitionOrphanConceptTable <- DT::renderDataTable(expr = {
     
+    data <- cohortDefinitionOrphanConceptTableData()
     if (nrow(data) == 0) {
       return(dplyr::tibble(Note = paste0("There is no data for the selected combination.")))
     }
