@@ -874,15 +874,14 @@ shiny::shinyServer(function(input, output, session) {
   cohortDefinitionOrphanConceptTableData <- shiny::reactive(x = {
     row <- selectedCohortDefinitionRow()
     
-    if (is.null(row)) {
+    if (is.null(row) || length(cohortDefinitionConceptSetExpressionRow()$name) == 0) {
       return(NULL)
     }
     validate(need(length(input$databaseOrVocabularySchema) > 0, "No data sources chosen"))
     
     data <- getOrphanConceptResult(dataSource = dataSource,
                                    cohortId = row$cohortId,
-                                   databaseIds = getDatabaseIDInCohortConceptSet())
-    data <- data %>%
+                                   databaseIds = getDatabaseIDInCohortConceptSet()) %>% 
       dplyr::filter(.data$conceptSetName == cohortDefinitionConceptSetExpressionRow()$name)
   })
   
@@ -890,11 +889,12 @@ shiny::shinyServer(function(input, output, session) {
                                                                       fileName = "orphanConcepts")
   
   output$cohortDefinitionOrphanConceptTable <- DT::renderDataTable(expr = {
-    
     data <- cohortDefinitionOrphanConceptTableData()
-    if (nrow(data) == 0) {
-      return(dplyr::tibble(Note = paste0("There is no data for the selected combination.")))
+    
+    if (nrow(data) == 0 || is.null(data)) {
+      return(NULL)
     }
+    
     databaseIds <- unique(data$databaseId)
   
     maxCount <- max(data$conceptCount, na.rm = TRUE)
