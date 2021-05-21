@@ -2075,25 +2075,7 @@ shiny::shinyServer(function(input, output, session) {
     validate(need((nrow(table) > 0),
              "There is no data for the selected combination."))
     
-    # 
-    # if (nrow(table) == 0) {
-    #   return(dplyr::tibble(
-    #     Note = paste0("No data available for selected combination")
-    #   ))
-    # }
-    
     databaseIds <- unique(table$databaseId)
-    
-    # if (!all(databaseIds() %in% databaseIds)) {
-    #   return(dplyr::tibble(
-    #     Note = paste0(
-    #       "There is no data for the databases:\n",
-    #       paste0(setdiff(databaseIds(), databaseIds),
-    #              collapse = ",\n "),
-    #       ".\n Please unselect them."
-    #     )
-    #   ))
-    # }
     
     table <- table %>%
       dplyr::inner_join(cohortCount %>% 
@@ -2208,15 +2190,6 @@ shiny::shinyServer(function(input, output, session) {
         class = "stripe nowrap compact"
       )
     }
-    
-    
-    
-    # table <- DT::formatStyle(table = table,
-    #                          columns = 2 + (1:(length(databaseIds) * 4)),
-    #                          background = DT::styleColorBar(lims, "lightblue"),
-    #                          backgroundSize = "98% 88%",
-    #                          backgroundRepeat = "no-repeat",
-    #                          backgroundPosition = "center")
     return(table)
   }, server = TRUE)
   
@@ -2543,33 +2516,15 @@ shiny::shinyServer(function(input, output, session) {
     
     validate(need(nrow(data) > 0,
              "No data available for selected combination."))
-    # 
-    # if (nrow(data) == 0) {
-    #   return(dplyr::tibble(
-    #     Note = paste0("No data available for selected databases and cohort")
-    #   ))
-    # }
     
     databaseIds <- sort(unique(data$databaseId))
     cohortCounts <- data %>% 
-      # dplyr::inner_join(cohortCount) %>% 
       dplyr::filter(.data$cohortId == cohortId()) %>% 
       dplyr::filter(.data$databaseId %in% databaseIds()) %>% 
       dplyr::select(.data$cohortSubjects) %>% 
       dplyr::pull(.data$cohortSubjects) %>% unique()
     
     databaseIdsWithCount <- paste(databaseIds, "(n = ", format(cohortCounts, big.mark = ","), ")")
-    
-    # if (!all(databaseIds() %in% databaseIds)) {
-    #   return(dplyr::tibble(
-    #     Note = paste0(
-    #       "There is no data for the databases:\n",
-    #       paste0(setdiff(databaseIds(), databaseIds),
-    #              collapse = ",\n "),
-    #       ".\n Please unselect them."
-    #     )
-    #   ))
-    # }
     
     maxSubjects <- max(data$subjects)
     visitContextReference <-
@@ -2596,8 +2551,7 @@ shiny::shinyServer(function(input, output, session) {
         values_from = .data$subjects,
         values_fill = 0
       ) %>%
-      dplyr::relocate(.data$visitConceptName) #%>%
-      # dplyr::mutate(visitConceptName = as.factor(visitConceptName))
+      dplyr::relocate(.data$visitConceptName)
     
     if (input$visitContextTableFilters == "Before") {
       table <- table %>% 
@@ -2704,7 +2658,6 @@ shiny::shinyServer(function(input, output, session) {
       backgroundRepeat = "no-repeat",
       backgroundPosition = "center"
     )
-    
   }, server = TRUE)
   
   # Characterization -------------------------------------------------
@@ -2830,16 +2783,6 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::pull(.data$cohortSubjects) %>% unique()
     
     databaseIdsWithCount <- paste(databaseIds, "(n = ", format(cohortCounts, big.mark = ","), ")")
-    # if (!all(databaseIds() %in% databaseIds)) {
-    #   return(dplyr::tibble(
-    #     Note = paste0(
-    #       "There is no data for the databases:\n",
-    #       paste0(setdiff(databaseIds(), databaseIds),
-    #              collapse = ",\n "),
-    #       ".\n Please unselect them."
-    #     )
-    #   ))
-    # }
     
     if (input$charType == "Pretty") {
       countData <- getCohortCountResult(
