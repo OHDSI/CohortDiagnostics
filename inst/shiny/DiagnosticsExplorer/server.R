@@ -498,8 +498,8 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$databaseId == getDatabaseIDInCohortConceptSet()) %>% 
         dplyr::select(.data$cohortSubjects, .data$cohortEntries)
       
-      if (is.null(data)) {
-        return(NULL)
+      if (nrow(data) == 0) {
+        return(0)
       } else {
         return(data)
       }
