@@ -378,6 +378,7 @@ bodyTabItems <- shinydashboard::tabItems(
                                             choices = c("Concept Set Expression",
                                                         "Resolved",
                                                         "Mapped",
+                                                        "Orphan concepts",
                                                         "Json"),
                                             selected = "Concept Set Expression",
                                             inline = TRUE
@@ -413,7 +414,8 @@ bodyTabItems <- shinydashboard::tabItems(
                 condition = "output.conceptSetExpressionRowSelected == true &
                 input.conceptSetsType != 'Resolved' &
                 input.conceptSetsType != 'Mapped' &
-                input.conceptSetsType != 'Json'",
+                input.conceptSetsType != 'Json' &
+                input.conceptSetsType != 'Orphan concepts'",
                 tags$table(width = "100%", 
                            tags$tr(
                              tags$td(align = "right",
@@ -459,6 +461,10 @@ bodyTabItems <- shinydashboard::tabItems(
                            )
                 ), 
                 DT::dataTableOutput(outputId = "cohortDefinitionMappedConceptsTable")
+              ),
+              shiny::conditionalPanel(
+                condition = "input.conceptSetsType == 'Orphan concepts'",
+                DT::dataTableOutput(outputId = "cohortDefinitionOrphanConceptTable")
               ),
               shiny::conditionalPanel(
                 condition = "input.conceptSetsType == 'Json'",
