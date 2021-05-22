@@ -506,21 +506,31 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  output$subjectCountInCohortConceptSet <- shiny::renderText({
+  output$subjectCountInCohortConceptSet <- shiny::renderUI({
     row <- getSubjectAndRecordCountForCohortConceptSet()
     if (is.null(row)) {
       return(NULL)
     } else {
-      paste("Subjects: ", scales::comma(row$cohortSubjects, accuracy = 1))
+      tags$table(
+        tags$tr(
+          tags$td("Subjects: "),
+          tags$td(scales::comma(row$cohortSubjects, accuracy = 1))
+        )
+      )
     }
   })
   
-  output$recordCountInCohortConceptSet <- shiny::renderText({
+  output$recordCountInCohortConceptSet <- shiny::renderUI({
     row <- getSubjectAndRecordCountForCohortConceptSet()
     if (is.null(row)) {
       return(NULL)
     } else {
-      paste("Records: ", scales::comma(row$cohortEntries, accuracy = 1))
+      tags$table(
+        tags$tr(
+          tags$td("Records: "),
+          tags$td(scales::comma(row$cohortEntries, accuracy = 1))
+        )
+      )
     }
   })
   

@@ -404,10 +404,10 @@ bodyTabItems <- shinydashboard::tabItems(
                                           )
                                         ),
                                         tags$td(
-                                          shiny::verbatimTextOutput(outputId = "subjectCountInCohortConceptSet")
+                                          shiny::htmlOutput("subjectCountInCohortConceptSet")
                                         ),
                                         tags$td(
-                                          shiny::verbatimTextOutput(outputId = "recordCountInCohortConceptSet")
+                                          shiny::htmlOutput("recordCountInCohortConceptSet")
                                         )
                                       ))),
               shiny::conditionalPanel(
