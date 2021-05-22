@@ -1230,7 +1230,7 @@ shiny::shinyServer(function(input, output, session) {
   
   getCohortIdOnCohortCountRowSelect <- reactive({
     idx <- input$cohortCountsTable_rows_selected
-    if(is.null(idx)) {
+    if (is.null(idx)) {
       return(NULL)
     } else {
       subset <- getCohortCountResultReactive()[idx,]
@@ -1238,6 +1238,14 @@ shiny::shinyServer(function(input, output, session) {
     }
     
   })
+  
+  output$cohortCountRowIsSelected <- reactive({
+    return(!is.null(getCohortIdOnCohortCountRowSelect()))
+  })
+  
+  outputOptions(output,
+                "cohortCountRowIsSelected",
+                suspendWhenHidden = FALSE)
   
   output$InclusionRuleStatForCohortSeletedTable <- DT::renderDataTable(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
