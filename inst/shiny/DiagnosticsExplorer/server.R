@@ -506,21 +506,31 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  output$subjectCountInCohortConceptSet <- shiny::renderText({
+  output$subjectCountInCohortConceptSet <- shiny::renderUI({
     row <- getSubjectAndRecordCountForCohortConceptSet()
     if (is.null(row)) {
       return(NULL)
     } else {
-      paste("Subjects: ", scales::comma(row$cohortSubjects, accuracy = 1))
+      tags$table(
+        tags$tr(
+          tags$td("Subjects: "),
+          tags$td(scales::comma(row$cohortSubjects, accuracy = 1))
+        )
+      )
     }
   })
   
-  output$recordCountInCohortConceptSet <- shiny::renderText({
+  output$recordCountInCohortConceptSet <- shiny::renderUI({
     row <- getSubjectAndRecordCountForCohortConceptSet()
     if (is.null(row)) {
       return(NULL)
     } else {
-      paste("Records: ", scales::comma(row$cohortEntries, accuracy = 1))
+      tags$table(
+        tags$tr(
+          tags$td("Records: "),
+          tags$td(scales::comma(row$cohortEntries, accuracy = 1))
+        )
+      )
     }
   })
   
@@ -1220,7 +1230,7 @@ shiny::shinyServer(function(input, output, session) {
   
   getCohortIdOnCohortCountRowSelect <- reactive({
     idx <- input$cohortCountsTable_rows_selected
-    if(is.null(idx)) {
+    if (is.null(idx)) {
       return(NULL)
     } else {
       subset <- getCohortCountResultReactive()[idx,]
@@ -1228,6 +1238,14 @@ shiny::shinyServer(function(input, output, session) {
     }
     
   })
+  
+  output$cohortCountRowIsSelected <- reactive({
+    return(!is.null(getCohortIdOnCohortCountRowSelect()))
+  })
+  
+  outputOptions(output,
+                "cohortCountRowIsSelected",
+                suspendWhenHidden = FALSE)
   
   output$InclusionRuleStatForCohortSeletedTable <- DT::renderDataTable(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))

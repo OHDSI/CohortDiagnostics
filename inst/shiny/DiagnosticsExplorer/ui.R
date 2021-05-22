@@ -404,10 +404,10 @@ bodyTabItems <- shinydashboard::tabItems(
                                           )
                                         ),
                                         tags$td(
-                                          shiny::verbatimTextOutput(outputId = "subjectCountInCohortConceptSet")
+                                          shiny::htmlOutput("subjectCountInCohortConceptSet")
                                         ),
                                         tags$td(
-                                          shiny::verbatimTextOutput(outputId = "recordCountInCohortConceptSet")
+                                          shiny::htmlOutput("recordCountInCohortConceptSet")
                                         )
                                       ))),
               shiny::conditionalPanel(
@@ -532,7 +532,10 @@ bodyTabItems <- shinydashboard::tabItems(
                )
     ),
     DT::dataTableOutput("cohortCountsTable"),
-    DT::dataTableOutput("InclusionRuleStatForCohortSeletedTable")
+    shiny::conditionalPanel(
+      condition = "output.cohortCountRowIsSelected == true",
+      DT::dataTableOutput("InclusionRuleStatForCohortSeletedTable")
+    )
   ),
   shinydashboard::tabItem(
     tabName = "incidenceRate",
