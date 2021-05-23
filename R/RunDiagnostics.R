@@ -815,7 +815,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                                                                                    (cohortDateRange$maxYear %>% as.integer())) 
                                                                                         + 1), 
                                                                  by = clock::duration_months(3))) %>% 
-      dplyr::mutate(periodEnd = clock::add_months(x = .data$periodBegin, n = 1) - 1) %>% 
+      dplyr::mutate(periodEnd = clock::add_months(x = .data$periodBegin, n = 3) - 1) %>% 
       dplyr::mutate(calendarInterval = 'q')
     
     calendarMonth <- dplyr::tibble(periodBegin = clock::date_seq(from = clock::date_build(year = max(2000,
@@ -847,7 +847,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     #                                                             by = clock::duration_weeks(n = 1))) %>% 
     #   dplyr::mutate(periodEnd = clock::add_days(x = .data$periodBegin, n = 6))
   
-    calendarPeriods <- dplyr::bind_rows(calendarMonth, calendarYear) %>%  #calendarWeek
+    calendarPeriods <- dplyr::bind_rows(calendarMonth, calendarQuarter, calendarYear) %>%  #calendarWeek
       dplyr::filter(periodBegin >= as.Date('1999-12-25')) %>% 
       dplyr::filter(periodEnd <= clock::date_today("")) %>% 
       dplyr::distinct()
