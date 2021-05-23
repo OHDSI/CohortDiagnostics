@@ -3,7 +3,7 @@
 
 library(magrittr)
 logFolder <-
-  "D:\\git\\github\\ohdsi\\outputFolder\\packageMode"
+  "D:\\temp\\outputFolder\\packageMode"
 diagnosticsFileName <- "CreatedDiagnostics.csv"
 
 listFiles <-
@@ -20,7 +20,7 @@ listFiles <-
 # "runCohortCharacterization", "runTemporalCohortCharacterization"
 
 
-# tasksToRemove <- c("runTemporalCohortCharacterization", "runCohortCharacterization")
+# tasksToRemove <- c("runTimeSeries")
 
 
 

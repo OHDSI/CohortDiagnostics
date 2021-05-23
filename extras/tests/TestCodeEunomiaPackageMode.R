@@ -37,7 +37,7 @@ connectionDetailsToUpload <- createConnectionDetails(dbms = "postgresql",
                                                                     sep = "/"),
                                                      port = Sys.getenv("shinydbPort"),
                                                      user = Sys.getenv("shinyDbUser"),
-                                                     password = Sys.getenv("shinyDbPassword"))
+                                                     password = Sys.getenv("shinydbPw"))
 
 
 resultsSchema <- "eunomiaCd"
