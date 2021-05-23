@@ -816,7 +816,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                                                                         + 1), 
                                                                  by = clock::duration_months(3))) %>% 
       dplyr::mutate(periodEnd = clock::add_months(x = .data$periodBegin, n = 1) - 1) %>% 
-      dplyr::mutate(interval = 'q')
+      dplyr::mutate(calendarInterval = 'q')
     
     calendarMonth <- dplyr::tibble(periodBegin = clock::date_seq(from = clock::date_build(year = max(2000,
                                                                                                      cohortDateRange$minYear %>% as.integer())), 
@@ -825,13 +825,13 @@ runCohortDiagnostics <- function(packageName = NULL,
                                                                                         + 1), 
                                                                  by = clock::duration_months(1))) %>% 
       dplyr::mutate(periodEnd = clock::add_months(x = .data$periodBegin, n = 1) - 1) %>% 
-      dplyr::mutate(interval = 'm')
+      dplyr::mutate(calendarInterval = 'm')
     
     calendarYear <- dplyr::tibble(periodBegin = clock::date_seq(from = clock::date_build(year = cohortDateRange$minYear %>% as.integer()), 
                                                                 to = clock::date_build(year = (cohortDateRange$maxYear %>% as.integer()) + 1), 
                                                                 by = clock::duration_years(1))) %>% 
       dplyr::mutate(periodEnd = clock::add_years(x = .data$periodBegin, n = 1) - 1) %>% 
-      dplyr::mutate(interval = 'y')
+      dplyr::mutate(calendarInterval = 'y')
     
     # calendarWeek <- dplyr::tibble(periodBegin = clock::date_seq(from = (clock::year_month_weekday(year = cohortDateRange$minYear %>% as.integer(),
     #                                                                                               month = clock::clock_months$january,

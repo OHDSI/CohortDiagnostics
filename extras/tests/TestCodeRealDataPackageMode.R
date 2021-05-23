@@ -8,7 +8,7 @@ outputLocation <- "D:\\temp"
 
 connectionSpecifications <- cdmSources %>%
   dplyr::filter(sequence == 1) %>%
-  dplyr::filter(database == 'optum_ehr')
+  dplyr::filter(database == 'jmdc')
 
 dbms <- connectionSpecifications$dbms # example: 'redshift'
 port <- connectionSpecifications$port # example: 2234
