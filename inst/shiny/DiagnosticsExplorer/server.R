@@ -489,7 +489,7 @@ shiny::shinyServer(function(input, output, session) {
   getSubjectAndRecordCountForCohortConceptSet <- shiny::reactive(x = {
     row <- selectedCohortDefinitionRow()
     
-    if (is.null(row)) {
+    if (is.null(row) || length(getDatabaseIDInCohortConceptSet()) == 0) {
       return(NULL)
     } else {
   
