@@ -191,7 +191,7 @@ time_distribution,database_id,varchar,Yes,Yes,No,Yes
 time_series,cohort_id,bigint,Yes,Yes,No,Yes
 time_series,database_id,varchar,Yes,Yes,No,Yes
 time_series,period_begin,Date,Yes,Yes,No,Yes
-time_series,period_end,Date,Yes,Yes,No,Yes
+time_series,calendar_interval,varchar(1),Yes,Yes,No,Yes
 time_series,records,bigint,Yes,No,No,Yes
 time_series,subjects,bigint,Yes,No,No,Yes
 time_series,person_days,bigint,Yes,No,No,Yes

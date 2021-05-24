@@ -1,8 +1,6 @@
-SELECT period_begin
-	,period_end
-	,cohort_definition_id cohort_id
-	,FLOOR((YEAR(cohort_start_date) - year_of_birth) / 10) AS age_group
-	,gender_concept_id
+SELECT cohort_definition_id cohort_id
+  ,period_begin
+	,calendar_interval
 	,COUNT_BIG(*) records
 	,COUNT_BIG(DISTINCT subject_id) subjects
 	,SUM(datediff(dd, CASE 
@@ -35,10 +33,7 @@ INNER JOIN #calendar_periods cp ON (
 		cohort_end_date >= period_begin
 		AND cohort_end_date <= period_end
 		)
-INNER JOIN @cdm_database_schema.person ON subject_id = person.person_id
 WHERE cohort_definition_id IN (@cohort_ids)
 GROUP BY period_begin
-	,period_end
-	,cohort_definition_id
-	,FLOOR((YEAR(cohort_start_date) - year_of_birth) / 10)
-	,gender_concept_id;
+	,calendar_interval
+	,cohort_definition_id;

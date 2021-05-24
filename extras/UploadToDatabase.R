@@ -13,14 +13,14 @@ connectionDetails <- createConnectionDetails(
   user = Sys.getenv("shinydbUser"),
   password = Sys.getenv("shinydbPW")
 )
-resultsSchema <- ''
+resultsSchema <- 'thrombosisthrombocytopenia'
 
 # commenting this function as it maybe accidentally run - loosing data.
 # createResultsDataModel(connectionDetails = connectionDetails, schema = resultsSchema)
 
 Sys.setenv("POSTGRES_PATH" = Sys.getenv('POSTGRES_PATH'))
 
-folderWithZipFilesToUpload <- ""
+folderWithZipFilesToUpload <- "D:\\results\\twt\\withInclusion"
 listOfZipFilesToUpload <-
   list.files(
     path = folderWithZipFilesToUpload,
