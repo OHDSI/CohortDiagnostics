@@ -160,25 +160,23 @@
 <li>Changes to improve app stability.</li>
 </ul>
 <ol>
-<li>Index event breakdown now has subject count</li>
-<li>Index event breakdown calculates _source_concept_id from source fields in CDM tables.</li>
-<li>Vocabulary database schema is now supported.</li>
-<li>Metadata (vocabulary version information from data source) is now collected.</li>
-<li>OracleTempSchema use deprecated in favor of tempEmulationSchema.</li>
-<li>Run against external concept count has been removed, as concept counts data is not available. Function ‘runCohortDiagnosticsUsingExternalCounts’ is removed.</li>
-<li>Removed code related to referentConceptId = phenotypeId/1000 as it does not always hold true.</li>
-<li>Create cohort table function is now private. Please use instantiate cohort.</li>
-<li>checkInputFileEncoding is not exported as a public function (as not the scope of CohortDiagnostics).</li>
-<li>Updated results data model to include new tables (resolved_concepts).</li>
-<li>Cohort Diagnostics results data model now compliant with standard characterization output.</li>
-<li>Support for cohort_censor_stats table in webapi 2.8.1 <a href='https://github.com/OHDSI/CohortDiagnostics/issues/387'>#387</a></li>
-<li>Add time series diagnostics computation. Output is not in Diagnostics explorer in this version.</li>
-<li>Any improvements to help with usability and stability. Informative messages to help with debugbing as needed.</li>
-</ol>
-<p>Bug fixes:</p>
-<ol>
-<li>databaseName and databaseDescription should be non NULL</li>
-<li>Fixed computation of standard deviation and standard difference of mean for binary covariates.</li>
+<li><p>Index event breakdown now has subject count</p></li>
+<li><p>Index event breakdown calculates _source_concept_id from source fields in CDM tables.</p></li>
+<li><p>Vocabulary database schema is now supported.</p></li>
+<li><p>Metadata (vocabulary version information from data source) is now collected.</p></li>
+<li><p>OracleTempSchema use deprecated in favor of tempEmulationSchema.</p></li>
+<li><p>Run against external concept count has been removed, as concept counts data is not available. Function ‘runCohortDiagnosticsUsingExternalCounts’ is removed.</p></li>
+<li><p>Removed code related to referentConceptId = phenotypeId/1000 as it does not always hold true.</p></li>
+<li><p>Create cohort table function is now private. Please use instantiate cohort.</p></li>
+<li><p>checkInputFileEncoding is not exported as a public function (as not the scope of CohortDiagnostics).</p></li>
+<li><p>Updated results data model to include new tables (resolved_concepts).</p></li>
+<li><p>Cohort Diagnostics results data model now compliant with standard characterization output.</p></li>
+<li><p>Support for cohort_censor_stats table in webapi 2.8.1 <a href='https://github.com/OHDSI/CohortDiagnostics/issues/387'>#387</a></p></li>
+<li><p>Add time series diagnostics computation. Output is not in Diagnostics explorer in this version.</p></li>
+<li><p>Any improvements to help with usability and stability. Informative messages to help with debugbing as needed.</p></li>
+<li><p>phenotypeDescription is no longer supported as input for cohort diagnostics. Bug fixes:</p></li>
+<li><p>databaseName and databaseDescription should be non NULL</p></li>
+<li><p>Fixed computation of standard deviation and standard difference of mean for binary covariates.</p></li>
 </ol>
 </div>
     <div id="cohortdiagnostics-200" class="section level1">

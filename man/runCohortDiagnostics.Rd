@@ -9,7 +9,6 @@ runCohortDiagnostics(
   cohortToCreateFile = "settings/CohortsToCreate.csv",
   baseUrl = NULL,
   cohortSetReference = NULL,
-  phenotypeDescriptionFile = NULL,
   connectionDetails = NULL,
   connection = NULL,
   cdmDatabaseSchema,
@@ -62,19 +61,6 @@ error message will be displayed and process stopped.}
 
 \item{cohortSetReference}{A data frame with four columns, as described in the details. Can be left NULL if 
 \code{packageName} and \code{cohortToCreateFile} have been specified.}
-
-\item{phenotypeDescriptionFile}{(Optional) The location of the phenotype description file within the package.
-The file must be .csv file and have the following columns that may be read into following
-data types: phenotypeId (double), phenotypeName (character),
-referentConceptId (double), clinicalDescription (character),
-literatureReview (character), phenotypeNotes (character). Note: the field
-names are in snake_case. Also, character fields should not have 'NA' in it.
-'NA's are commonly added by R when R functions exports data from dataframe
-into CSV. Instead please use '' (empty string) to represent absence of data.
-The literature_review field is expected to be a html link to page that contains
-resources related to literature review for the phenotype, and will be used
-to create link-out object. This csv file is expected to be encoded in either
-ASCII or UTF-8, if not, an error message will be displayed and process stopped.}
 
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the

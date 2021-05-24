@@ -24,7 +24,7 @@ Changes:
 13. Support for cohort_censor_stats table in webapi 2.8.1 #387
 14. Add time series diagnostics computation. Output is not in Diagnostics explorer in this version.
 15. Any improvements to help with usability and stability. Informative messages to help with debugbing as needed.
-
+16. phenotypeDescription is no longer supported as input for cohort diagnostics.
 Bug fixes:
 
 1. databaseName and databaseDescription should be non NULL
