@@ -480,20 +480,20 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  getDatabaseIDInCohortConceptSet <- shiny::reactive({
+  getDatabaseIdInCohortConceptSet <- shiny::reactive({
     return(database$databaseId[database$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchema])
   })
   
   getSubjectAndRecordCountForCohortConceptSet <- shiny::reactive(x = {
     row <- selectedCohortDefinitionRow()
     
-    if (is.null(row) || length(getDatabaseIDInCohortConceptSet()) == 0) {
+    if (is.null(row) || length(getDatabaseIdInCohortConceptSet()) == 0) {
       return(NULL)
     } else {
   
       data <- cohortCount %>%
         dplyr::filter(.data$cohortId == row$cohortId) %>% 
-        dplyr::filter(.data$databaseId == getDatabaseIDInCohortConceptSet()) %>% 
+        dplyr::filter(.data$databaseId == getDatabaseIdInCohortConceptSet()) %>% 
         dplyr::select(.data$cohortSubjects, .data$cohortEntries)
       
       if (nrow(data) == 0) {
@@ -917,7 +917,7 @@ shiny::shinyServer(function(input, output, session) {
     
     data <- getOrphanConceptResult(dataSource = dataSource,
                                    cohortId = row$cohortId,
-                                   databaseIds = getDatabaseIDInCohortConceptSet()) %>% 
+                                   databaseIds = getDatabaseIdInCohortConceptSet()) %>% 
       dplyr::filter(.data$conceptSetName == cohortDefinitionConceptSetExpressionRow()$name)
   })
   
