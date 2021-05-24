@@ -86,18 +86,11 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  downloadTableData <- function(data, fileName) {
+  getFormattedFileName <- function(fileName) {
     date <- stringr::str_replace_all(Sys.Date(),pattern = "-", replacement = "")
     time <- stringr::str_split(string = Sys.time(), pattern = " ", n = 2)[[1]][2]
     timeArray <- stringr::str_split(string = time, pattern = ":", n = 3)
-    downloadHandler(
-      filename = function() {
-        paste(fileName, "_",  date, "_", timeArray[[1]][1], timeArray[[1]][2], ".csv", sep = "")
-      },
-      content = function(file) {
-        write.csv(data, file)
-      }
-    )
+    return(paste(fileName, "_",  date, "_", timeArray[[1]][1], timeArray[[1]][2], ".csv", sep = ""))
   }
   
   cohortDefinitionTableData <- shiny::reactive(x = {
@@ -106,15 +99,20 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  output$saveCohortDefinitionButton <- downloadTableData(data = cohortDefinitionTableData(), fileName = "CohortDefinition") 
+  output$saveCohortDefinitionButton <- downloadHandler(
+    filename = function() {
+      getFormattedFileName(fileName = "CohortDefinition")
+    },
+    content = function(file) {
+      write.csv(cohortDefinitionTableData(), file)
+    }
+  )
   
   # Cohort Definition ---------------------------------------------------------
   output$cohortDefinitionTable <- DT::renderDataTable(expr = {
     data <- cohortDefinitionTableData()  %>%
       dplyr::mutate(
-        # cohort = as.factor(.data$cohort),
-        # cohortName = as.factor(.data$cohortName),
-        cohortId = as.character(.data$cohortId))
+      cohortId = as.character(.data$cohortId))
     
     options = list(
       pageLength = 100,
@@ -482,20 +480,20 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  getDatabaseIDInCohortConceptSet <- shiny::reactive({
+  getDatabaseIdInCohortConceptSet <- shiny::reactive({
     return(database$databaseId[database$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchema])
   })
   
   getSubjectAndRecordCountForCohortConceptSet <- shiny::reactive(x = {
     row <- selectedCohortDefinitionRow()
     
-    if (is.null(row)) {
+    if (is.null(row) || length(getDatabaseIdInCohortConceptSet()) == 0) {
       return(NULL)
     } else {
   
       data <- cohortCount %>%
         dplyr::filter(.data$cohortId == row$cohortId) %>% 
-        dplyr::filter(.data$databaseId == getDatabaseIDInCohortConceptSet()) %>% 
+        dplyr::filter(.data$databaseId == getDatabaseIdInCohortConceptSet()) %>% 
         dplyr::select(.data$cohortSubjects, .data$cohortEntries)
       
       if (nrow(data) == 0) {
@@ -736,7 +734,14 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  output$saveCohortDefinitionIncludedResolvedConceptsTable <- downloadTableData(data = getResolvedOrMappedConcepts(), fileName = "ResolvedConcepts") 
+  output$saveCohortDefinitionIncludedResolvedConceptsTable <-  downloadHandler(
+    filename = function() {
+      getFormattedFileName(fileName = "ResolvedConcepts")
+    },
+    content = function(file) {
+      write.csv(getResolvedOrMappedConcepts(), file)
+    }
+  )
   
   output$cohortDefinitionIncludedResolvedConceptsTable <-
     DT::renderDataTable(expr = {
@@ -777,7 +782,14 @@ shiny::shinyServer(function(input, output, session) {
       return(dataTable)
     }, server = TRUE)
   
-  output$saveCohortDefinitionMappedConceptsTable <- downloadTableData(data = getResolvedOrMappedConcepts(), fileName = "MappedConcepts")
+  output$saveCohortDefinitionMappedConceptsTable <-  downloadHandler(
+    filename = function() {
+      getFormattedFileName(fileName = "MappedConcepts")
+    },
+    content = function(file) {
+      write.csv(getResolvedOrMappedConcepts(), file)
+    }
+  )
   
   output$cohortDefinitionMappedConceptsTable <-
     DT::renderDataTable(expr = {
@@ -823,7 +835,14 @@ shiny::shinyServer(function(input, output, session) {
       return(dataTable)
     }, server = TRUE)
   
-  output$saveCohortDefinitionConceptSetsTable <- downloadTableData(data = cohortDefinitionConceptSets(), fileName = "ConceptSetsExpression") 
+  output$saveCohortDefinitionConceptSetsTable <-  downloadHandler(
+    filename = function() {
+      getFormattedFileName(fileName = "ConceptSetsExpression")
+    },
+    content = function(file) {
+      write.csv(cohortDefinitionConceptSets(), file)
+    }
+  )
   
   output$cohortDefinitionConceptSetsTable <-
     DT::renderDataTable(expr = {
@@ -879,9 +898,19 @@ shiny::shinyServer(function(input, output, session) {
     cohortDefinitionConceptSetExpressionRow()$json
   })
   
-  output$saveConceptSetButton <- downloadTableData(data = cohortDefinitionConceptSets(), fileName = "ConceptSetsExpression")
+  output$saveConceptSetButton <-  downloadHandler(
+    filename = function() {
+      getFormattedFileName(fileName = "ConceptSetsExpression")
+    },
+    content = function(file) {
+      write.csv(cohortDefinitionConceptSets(), file)
+    }
+  )
   
   cohortDefinitionOrphanConceptTableData <- shiny::reactive(x = {
+    validate(need(all(!is.null(getDatabaseIdInCohortConceptSet()),
+                      length(getDatabaseIdInCohortConceptSet()) > 0),
+             "Orphan codes are not available for reference vocabulary in this version."))
     row <- selectedCohortDefinitionRow()
     
     if (is.null(row) || length(cohortDefinitionConceptSetExpressionRow()$name) == 0) {
@@ -891,12 +920,18 @@ shiny::shinyServer(function(input, output, session) {
     
     data <- getOrphanConceptResult(dataSource = dataSource,
                                    cohortId = row$cohortId,
-                                   databaseIds = getDatabaseIDInCohortConceptSet()) %>% 
+                                   databaseIds = getDatabaseIdInCohortConceptSet()) %>% 
       dplyr::filter(.data$conceptSetName == cohortDefinitionConceptSetExpressionRow()$name)
   })
   
-  output$saveCohortDefinitionOrphanConceptsTable <- downloadTableData(data = cohortDefinitionOrphanConceptTableData(),
-                                                                      fileName = "orphanConcepts")
+  output$saveCohortDefinitionOrphanConceptsTable <-  downloadHandler(
+    filename = function() {
+      getFormattedFileName(fileName = "orphanConcepts")
+    },
+    content = function(file) {
+      write.csv(cohortDefinitionOrphanConceptTableData(), file)
+    }
+  )
   
   output$cohortDefinitionOrphanConceptTable <- DT::renderDataTable(expr = {
     data <- cohortDefinitionOrphanConceptTableData()
@@ -1044,11 +1079,15 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  output$saveCohortCountsTable <- downloadTableData(
-    data = getCohortCountResultReactive(),
-    fileName = "cohortCount"
+  output$saveCohortCountsTable <-  downloadHandler(
+    filename = function() {
+      getFormattedFileName(fileName = "cohortCount")
+    },
+    content = function(file) {
+      write.csv(getCohortCountResultReactive(), file)
+    }
   )
-  
+ 
   output$cohortCountsTable <- DT::renderDataTable(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
@@ -1492,7 +1531,14 @@ shiny::shinyServer(function(input, output, session) {
     return(incidenceRateFilter)
   })
   
-  output$saveIncidenceRatePlot <- downloadTableData(data = incidenceRateData(), fileName = "IncidenceRate") 
+  output$saveIncidenceRatePlot <-  downloadHandler(
+    filename = function() {
+      getFormattedFileName(fileName = "IncidenceRate")
+    },
+    content = function(file) {
+      write.csv(incidenceRateData(), file)
+    }
+  )
   
   output$incidenceRatePlot <- ggiraph::renderggiraph(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
@@ -1566,7 +1612,14 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
   })
   
-  output$saveTimeDistTable <- downloadTableData(data = timeDist(), fileName = "timeDistribution") 
+  output$saveTimeDistTable <-  downloadHandler(
+    filename = function() {
+      getFormattedFileName(fileName = "timeDistribution")
+    },
+    content = function(file) {
+      write.csv(timeDist(), file)
+    }
+  )
   
   output$timeDistTable <- DT::renderDataTable(expr = {
     data <- timeDist()  %>%
@@ -1641,10 +1694,14 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  output$saveIncludedConceptsTable <- downloadTableData(
-    data = includedConceptsData(),
-    fileName = "includedConcept"
-  ) 
+  output$saveIncludedConceptsTable <-  downloadHandler(
+    filename = function() {
+      getFormattedFileName(fileName = "includedConcept")
+    },
+    content = function(file) {
+      write.csv(includedConceptsData(), file)
+    }
+  )
   
   output$includedConceptsTable <- DT::renderDataTable(expr = {
     validate(need(all(!is.null(databaseIds()), length(databaseIds()) > 0), 
@@ -1841,10 +1898,14 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  output$saveOrphanConceptsTable <- downloadTableData(
-    data = orphanConceptsData(),
-    fileName = "orphanConcept"
-  ) 
+  output$saveOrphanConceptsTable <-  downloadHandler(
+    filename = function() {
+      getFormattedFileName(fileName = "orphanConcept")
+    },
+    content = function(file) {
+      write.csv(orphanConceptsData(), file)
+    }
+  )
   
   output$orphanConceptsTable <- DT::renderDataTable(expr = {
     
@@ -2076,11 +2137,18 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   # Inclusion rules table -----------------------------------------------------------------------
-  output$saveInclusionRuleTable <- downloadTableData(data = getInclusionRuleStats(
-    dataSource = dataSource,
-    cohortIds = cohortId(),
-    databaseIds = databaseIds()
-  ), fileName = "inclusionRule") 
+  output$saveInclusionRuleTable <-  downloadHandler(
+    filename = function() {
+      getFormattedFileName(fileName = "inclusionRule")
+    },
+    content = function(file) {
+      write.csv(getInclusionRuleStats(
+        dataSource = dataSource,
+        cohortIds = cohortId(),
+        databaseIds = databaseIds()
+      ), file)
+    }
+  )
   
   output$inclusionRuleTable <- DT::renderDataTable(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
@@ -2315,10 +2383,14 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  output$saveBreakdownTable <- downloadTableData(
-    data = indexEventBreakDownDataFilteredByRadioButton(),
-    fileName = "indexEventBreakdown"
-  ) 
+  output$saveBreakdownTable <-  downloadHandler(
+    filename = function() {
+      getFormattedFileName(fileName = "indexEventBreakdown")
+    },
+    content = function(file) {
+      write.csv(indexEventBreakDownDataFilteredByRadioButton(), file)
+    }
+  )
   
   output$breakdownTable <- DT::renderDataTable(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
@@ -2515,14 +2587,19 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   # Visit Context ---------------------------------------------------------------------------------------------
-  output$saveVisitContextTable <- downloadTableData(
-    data = getVisitContextResults(
-      dataSource = dataSource,
-      cohortIds = cohortId(),
-      databaseIds = databaseIds()
-    ),
-    fileName = "visitContext"
-  ) 
+  output$saveVisitContextTable <-  downloadHandler(
+    filename = function() {
+      getFormattedFileName(fileName = "visitContext")
+    },
+    content = function(file) {
+      write.csv(getVisitContextResults(
+        dataSource = dataSource,
+        cohortIds = cohortId(),
+        databaseIds = databaseIds()
+      ), file)
+    }
+  )
+  
   output$visitContextTable <- DT::renderDataTable(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
@@ -2776,9 +2853,13 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  output$saveCohortCharacterizationTable <- downloadTableData(
-    data = characterizationTableData(),
-    fileName = "cohortCharacterization"
+  output$saveCohortCharacterizationTable <-  downloadHandler(
+    filename = function() {
+      getFormattedFileName(fileName = "cohortCharacterization")
+    },
+    content = function(file) {
+      write.csv(characterizationTableData(), file)
+    }
   )
   
   output$characterizationTable <- DT::renderDataTable(expr = {
@@ -3070,15 +3151,19 @@ shiny::shinyServer(function(input, output, session) {
   
   # Temporal characterization -----------------------------------------------------------------
   
-  output$saveTemporalCharacterizationTable <- downloadTableData(
-    data = getCovariateValueResult(
-      dataSource = dataSource,
-      cohortIds = cohortId(),
-      databaseIds = input$database,
-      timeIds = timeIds(),
-      isTemporal = TRUE
-    ),
-    fileName = "temporalCharacterization"
+  output$saveTemporalCharacterizationTable <-  downloadHandler(
+    filename = function() {
+      getFormattedFileName(fileName = "temporalCharacterization")
+    },
+    content = function(file) {
+      write.csv(getCovariateValueResult(
+        dataSource = dataSource,
+        cohortIds = cohortId(),
+        databaseIds = input$database,
+        timeIds = timeIds(),
+        isTemporal = TRUE
+      ), file)
+    }
   )
   
   temporalAnalysisNameFilter <- shiny::reactive(x = {
@@ -3346,9 +3431,13 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  output$saveCompareCohortCharacterizationTable <- downloadTableData(
-    data = computeBalance(),
-    fileName = "compareCohortCharacterization"
+  output$saveCompareCohortCharacterizationTable <-  downloadHandler(
+    filename = function() {
+      getFormattedFileName(fileName = "compareCohortCharacterization")
+    },
+    content = function(file) {
+      write.csv(computeBalance(), file)
+    }
   )
   
   output$charCompareTable <- DT::renderDataTable(expr = {
@@ -3679,11 +3768,14 @@ shiny::shinyServer(function(input, output, session) {
       return(balance)
     })
   
-  output$saveCompareTemporalCharacterizationTable <- downloadTableData(
-    data = computeBalanceForCompareTemporalCharacterization(),
-    fileName = "compareTemporalCharacterization"
+  output$saveCompareTemporalCharacterizationTable <-  downloadHandler(
+    filename = function() {
+      getFormattedFileName(fileName = "compareTemporalCharacterization")
+    },
+    content = function(file) {
+      write.csv(computeBalanceForCompareTemporalCharacterization(), file)
+    }
   )
-  
   
   shiny::observe({
     subset <-
@@ -4276,16 +4368,5 @@ shiny::shinyServer(function(input, output, session) {
     shiny::renderUI({
       return(input$database)
     })
-  #Download
-  # download_box <- function(exportname, plot){
-  #   downloadHandler(
-  #     filename = function() {
-  #       paste(exportname, Sys.Date(), ".png", sep = "")
-  #     },
-  #     content = function(file) {
-  #       ggplot2::ggsave(file, plot = plot, device = "png", width = 9, height = 7, dpi = 400)
-  #     }
-  #   )
-  # }
   
 })

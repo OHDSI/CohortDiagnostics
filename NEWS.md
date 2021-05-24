@@ -22,7 +22,8 @@ Changes:
 11. Updated results data model to include new tables (resolved_concepts).
 12. Cohort Diagnostics results data model now compliant with standard characterization output.
 13. Support for cohort_censor_stats table in webapi 2.8.1 #387
-14. Add prevalence diagnostics.
+14. Add time series diagnostics computation. Output is not in Diagnostics explorer in this version.
+15. Any improvements to help with usability and stability. Informative messages to help with debugbing as needed.
 
 Bug fixes:
 
