@@ -908,6 +908,9 @@ shiny::shinyServer(function(input, output, session) {
   )
   
   cohortDefinitionOrphanConceptTableData <- shiny::reactive(x = {
+    validate(need(all(!is.null(getDatabaseIdInCohortConceptSet()),
+                      length(getDatabaseIdInCohortConceptSet()) > 0),
+             "Orphan codes are not available for reference vocabulary in this version."))
     row <- selectedCohortDefinitionRow()
     
     if (is.null(row) || length(cohortDefinitionConceptSetExpressionRow()$name) == 0) {
