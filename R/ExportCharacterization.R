@@ -26,6 +26,7 @@ exportCharacterization <- function(characteristics,
                                    counts,
                                    cutOff = 0.0001,
                                    minCellCount) {
+  minCellCount <- minCellCount # to avoid warning on OhdsiRTools::checkUsagePackage("CohortDiagnostics")
   if (!"covariates" %in% names(characteristics)) {
     warning("No characterization output for submitted cohorts")
   } else if (dplyr::pull(dplyr::count(characteristics$covariateRef)) > 0) {
