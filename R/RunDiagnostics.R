@@ -849,8 +849,8 @@ runCohortDiagnostics <- function(packageName = NULL,
       #   dplyr::mutate(periodEnd = clock::add_days(x = .data$periodBegin, n = 6))
       
       calendarPeriods <- dplyr::bind_rows(calendarMonth, calendarQuarter, calendarYear) %>%  #calendarWeek
-        dplyr::filter(periodBegin >= as.Date('1999-12-25')) %>% 
-        dplyr::filter(periodEnd <= clock::date_today("")) %>% 
+        dplyr::filter(.data$periodBegin >= as.Date('1999-12-25')) %>% 
+        dplyr::filter(.data$periodEnd <= clock::date_today("")) %>% 
         dplyr::distinct()
       
       ParallelLogger::logTrace("Inserting calendar periods into temporay table. This might take time.")
