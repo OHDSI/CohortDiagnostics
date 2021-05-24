@@ -17,21 +17,22 @@ if (exists("cdmSources")) {
   connectionSpecifications <- cdmSources %>%
     dplyr::filter(sequence == 1) %>%
     dplyr::filter(database == databaseId)
-  
-  userNameService = "OHDSI_USER" # example: "this is key ring service that securely stores credentials"
-  passwordService = "OHDSI_PASSWORD" # example: "this is key ring service that securely stores credentials"
-  
-  defaultSampleSize <- 10
-  defaultCohortDatabaseSchema <- paste0('scratch_', keyring::key_get(service = userNameService))
-  # scratch - usually something like 'scratch_grao'
-  defaultCohortTable <- # example: 'cohort'
-    paste0("s", connectionSpecifications$sourceId, "_", packageName)
-  defaultServer <- connectionSpecifications$server # example: 'fdsfd.yourdatabase.yourserver.com"
-  defaultCdmDatabaseSchema <- connectionSpecifications$cdmDatabaseSchema # example: "cdm"
-  defaultPort <- connectionSpecifications$port
-  defaultVocabularySchema <- connectionSpecifications$vocabDatabaseSchema # example: "vocabulary"
-  defaultDbms <- connectionSpecifications$dbms # example: 'redshift' please change
-}
+}  
+
+userNameService = "OHDSI_USER" # example: "this is key ring service that securely stores credentials"
+passwordService = "OHDSI_PASSWORD" # example: "this is key ring service that securely stores credentials"
+
+defaultSampleSize <- 10
+defaultCohortDatabaseSchema <- paste0('scratch_', keyring::key_get(service = userNameService))
+# scratch - usually something like 'scratch_grao'
+defaultCohortTable <- # example: 'cohort'
+  paste0("s", connectionSpecifications$sourceId, "_", packageName)
+defaultServer <- connectionSpecifications$server # example: 'fdsfd.yourdatabase.yourserver.com"
+defaultCdmDatabaseSchema <- connectionSpecifications$cdmDatabaseSchema # example: "cdm"
+defaultPort <- connectionSpecifications$port
+defaultVocabularySchema <- connectionSpecifications$vocabDatabaseSchema # example: "vocabulary"
+defaultDbms <- connectionSpecifications$dbms # example: 'redshift' please change
+
 
 if (exists("shinySettings")) {
   writeLines("Using user provided settings")
