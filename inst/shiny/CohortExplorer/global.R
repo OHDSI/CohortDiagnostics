@@ -1,7 +1,7 @@
 cohortDefinitionId <- 14907
 subjectIds <- NULL
 sampleSize <- 10
-source(Sys.getenv("startUpScriptLocation")) # this sources information for cdmSources and dataSourceInformation.
+# source(Sys.getenv("startUpScriptLocation")) # this sources information for cdmSources and dataSourceInformation.
 
 library(shiny)
 library(ggplot2)
