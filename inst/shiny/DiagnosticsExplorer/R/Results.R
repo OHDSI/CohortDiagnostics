@@ -69,6 +69,36 @@ getCohortCountResult <- function(dataSource = .GlobalEnv,
   return(data)
 }
 
+
+getTimeSeriesResult <- function(dataSource = .GlobalEnv,
+                                 cohortIds = NULL,
+                                 databaseIds) {
+  if (is(dataSource, "environment")) {
+    data <- timeSeries %>% 
+      dplyr::filter(.data$databaseId %in% !!databaseIds) 
+    if (!is.null(cohortIds)) {
+      data <- data %>% 
+        dplyr::filter(.data$cohortId %in% !!cohortIds) 
+    }
+  } else {
+    sql <- "SELECT *
+            FROM  @results_database_schema.time_series
+            WHERE database_id in (@database_id)
+            {@cohort_ids != ''} ? {  AND cohort_id in (@cohort_ids)}
+            ;"
+    data <- renderTranslateQuerySql(connection = dataSource$connection,
+                                    sql = sql,
+                                    results_database_schema = dataSource$resultsDatabaseSchema,
+                                    cohort_ids = cohortIds,
+                                    database_id = quoteLiterals(databaseIds), 
+                                    snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
+  }
+  data <- data %>% 
+    tsibble::as_tsibble(key = c(.data$cohortId,.data$databaseId,.data$calendarInterval), index = .data$periodBegin) 
+ return(data)
+}
+
 getTimeDistributionResult <- function(dataSource = .GlobalEnv,
                                       cohortIds,
                                       databaseIds) {
