@@ -67,7 +67,7 @@
 #' @param runVisitContext             Generate and export index-date visit context?
 #' @param runBreakdownIndexEvents     Generate and export the breakdown of index events?
 #' @param runIncidenceRate            Generate and export the cohort incidence  rates?
-#' @param runTimeSeries               Generate and export the cohort prevalence  rates?
+#' @param runTimeSeries           Generate and export the cohort prevalence  rates?
 #' @param runCohortOverlap            Generate and export the cohort overlap? Overlaps are checked within cohortIds
 #'                                    that have the same phenotype ID sourced from the CohortSetReference or
 #'                                    cohortToCreateFile.
@@ -779,158 +779,156 @@ runCohortDiagnostics <- function(packageName = NULL,
   }
 
   # Cohort time series -----------------------------------------------------------------------
-  if (runTimeSeries) {
-    ParallelLogger::logInfo("Calculating time series of subjects and records.")
-    startPrevalenceRate <- Sys.time()
-    subset <- subsetToRequiredCohorts(
-      cohorts = cohorts %>%
-        dplyr::filter(.data$cohortId %in% instantiatedCohorts),
-      task = "runTimeSeries",
-      incremental = incremental,
-      recordKeepingFile = recordKeepingFile
-    )
-    
-    if (incremental &&
-        (length(instantiatedCohorts) - nrow(subset)) > 0) {
-      ParallelLogger::logInfo(sprintf(
-        "Skipping %s cohorts in incremental mode.",
-        length(instantiatedCohorts) - nrow(subset)
-      ))
-    }
-    
-    subset <- subsetToRequiredCohorts(
-      cohorts = cohorts %>%
-        dplyr::filter(.data$cohortId %in% instantiatedCohorts),
-      task = "runTimeSeries",
-      incremental = incremental,
-      recordKeepingFile = recordKeepingFile
-    )
-    
-    if (incremental &&
-        (length(instantiatedCohorts) - nrow(subset)) > 0) {
-      ParallelLogger::logInfo(sprintf(
-        "Skipping %s cohorts in incremental mode.",
-        length(instantiatedCohorts) - nrow(subset)
-      ))
-    }
-    if (nrow(subset) > 0) {
-      cohortDateRange <- DatabaseConnector::renderTranslateQuerySql(
-        connection = connection,
-        sql = "SELECT MIN(year(cohort_start_date)) MIN_YEAR, 
+  ParallelLogger::logInfo("Calculating time series of subjects and records.")
+  startPrevalenceRate <- Sys.time()
+  subset <- subsetToRequiredCohorts(
+    cohorts = cohorts %>%
+      dplyr::filter(.data$cohortId %in% instantiatedCohorts),
+    task = "runTimeSeries",
+    incremental = incremental,
+    recordKeepingFile = recordKeepingFile
+  )
+  
+  if (incremental &&
+      (length(instantiatedCohorts) - nrow(subset)) > 0) {
+    ParallelLogger::logInfo(sprintf(
+      "Skipping %s cohorts in incremental mode.",
+      length(instantiatedCohorts) - nrow(subset)
+    ))
+  }
+  
+  subset <- subsetToRequiredCohorts(
+    cohorts = cohorts %>%
+      dplyr::filter(.data$cohortId %in% instantiatedCohorts),
+    task = "runTimeSeries",
+    incremental = incremental,
+    recordKeepingFile = recordKeepingFile
+  )
+  
+  if (incremental &&
+      (length(instantiatedCohorts) - nrow(subset)) > 0) {
+    ParallelLogger::logInfo(sprintf(
+      "Skipping %s cohorts in incremental mode.",
+      length(instantiatedCohorts) - nrow(subset)
+    ))
+  }
+  if (nrow(subset) > 0) {
+    cohortDateRange <- DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = "SELECT MIN(year(cohort_start_date)) MIN_YEAR, 
              MAX(year(cohort_end_date)) MAX_YEAR 
              FROM @cohort_database_schema.@cohort_table;",
-        cohort_database_schema = cohortDatabaseSchema,
-        cohort_table = cohortTable, 
-        snakeCaseToCamelCase = TRUE,
-        tempEmulationSchema = tempEmulationSchema
+      cohort_database_schema = cohortDatabaseSchema,
+      cohort_table = cohortTable, 
+      snakeCaseToCamelCase = TRUE,
+      tempEmulationSchema = tempEmulationSchema
+    )
+  
+    calendarMonth <- dplyr::tibble(periodBegin = clock::date_seq(from = clock::date_build(year = max(2000,
+                                                                                                     cohortDateRange$minYear %>% as.integer())), 
+                                                                 to = clock::date_build(year = min(clock::get_year(clock::date_today("")),
+                                                                                                   (cohortDateRange$maxYear %>% as.integer())) 
+                                                                                        + 1), 
+                                                                 by = clock::duration_months(1))) %>% 
+      dplyr::mutate(periodEnd = clock::add_months(x = .data$periodBegin, n = 1) - 1)
+    
+    calendarYear <- dplyr::tibble(periodBegin = clock::date_seq(from = clock::date_build(year = cohortDateRange$minYear %>% as.integer()), 
+                                                                to = clock::date_build(year = (cohortDateRange$maxYear %>% as.integer()) + 1), 
+                                                                by = clock::duration_years(1))) %>% 
+      dplyr::mutate(periodEnd = clock::add_years(x = .data$periodBegin, n = 1) - 1)
+    
+    # calendarWeek <- dplyr::tibble(periodBegin = clock::date_seq(from = (clock::year_month_weekday(year = cohortDateRange$minYear %>% as.integer(),
+    #                                                                                               month = clock::clock_months$january,
+    #                                                                                               day = clock::clock_weekdays$monday,
+    #                                                                                               index = 1) %>% 
+    #                                                                       clock::as_date() %>% 
+    #                                                                       clock::add_weeks(n = -1)),
+    #                                                             to = (clock::year_month_weekday(year = (cohortDateRange$maxYear  %>% as.integer()) + 1,
+    #                                                                                             month = clock::clock_months$january,
+    #                                                                                             day = clock::clock_weekdays$sunday,
+    #                                                                                             index = 1) %>% 
+    #                                                                     clock::as_date()), 
+    #                                                             by = clock::duration_weeks(n = 1))) %>% 
+    #   dplyr::mutate(periodEnd = clock::add_days(x = .data$periodBegin, n = 6))
+  
+    calendarPeriods <- dplyr::bind_rows(calendarMonth, calendarYear) %>%  #calendarWeek
+      dplyr::filter(periodBegin >= as.Date('1999-12-25')) %>% 
+      dplyr::filter(periodEnd <= clock::date_today("")) %>% 
+      dplyr::distinct()
+  
+    ParallelLogger::logTrace("Inserting calendar periods into temporay table. This might take time.")
+    DatabaseConnector::insertTable(
+      connection = connection,
+      tableName = "#calendar_periods",
+      data = calendarPeriods,
+      dropTableIfExists = TRUE,
+      createTable = TRUE,
+      progressBar = TRUE,
+      tempTable = TRUE,
+      tempEmulationSchema = tempEmulationSchema,
+      camelCaseToSnakeCase = TRUE
+    )
+    ParallelLogger::logTrace("Done inserting calendar periods")
+    
+    sql <-
+      SqlRender::loadRenderTranslateSql(
+        "ComputeTimeSeries.sql",
+        packageName = "CohortDiagnostics",
+        dbms = connection@dbms
       )
-      
-      calendarMonth <- dplyr::tibble(periodBegin = clock::date_seq(from = clock::date_build(year = max(2000,
-                                                                                                       cohortDateRange$minYear %>% as.integer())), 
-                                                                   to = clock::date_build(year = min(clock::get_year(clock::date_today("")),
-                                                                                                     (cohortDateRange$maxYear %>% as.integer())) 
-                                                                                          + 1), 
-                                                                   by = clock::duration_months(1))) %>% 
-        dplyr::mutate(periodEnd = clock::add_months(x = .data$periodBegin, n = 1) - 1)
-      
-      calendarYear <- dplyr::tibble(periodBegin = clock::date_seq(from = clock::date_build(year = cohortDateRange$minYear %>% as.integer()), 
-                                                                  to = clock::date_build(year = (cohortDateRange$maxYear %>% as.integer()) + 1), 
-                                                                  by = clock::duration_years(1))) %>% 
-        dplyr::mutate(periodEnd = clock::add_years(x = .data$periodBegin, n = 1) - 1)
-      
-      # calendarWeek <- dplyr::tibble(periodBegin = clock::date_seq(from = (clock::year_month_weekday(year = cohortDateRange$minYear %>% as.integer(),
-      #                                                                                               month = clock::clock_months$january,
-      #                                                                                               day = clock::clock_weekdays$monday,
-      #                                                                                               index = 1) %>% 
-      #                                                                       clock::as_date() %>% 
-      #                                                                       clock::add_weeks(n = -1)),
-      #                                                             to = (clock::year_month_weekday(year = (cohortDateRange$maxYear  %>% as.integer()) + 1,
-      #                                                                                             month = clock::clock_months$january,
-      #                                                                                             day = clock::clock_weekdays$sunday,
-      #                                                                                             index = 1) %>% 
-      #                                                                     clock::as_date()), 
-      #                                                             by = clock::duration_weeks(n = 1))) %>% 
-      #   dplyr::mutate(periodEnd = clock::add_days(x = .data$periodBegin, n = 6))
-      
-      calendarPeriods <- dplyr::bind_rows(calendarMonth, calendarYear) %>%  #calendarWeek
-        dplyr::filter(periodBegin >= as.Date('1999-12-25')) %>% 
-        dplyr::filter(periodEnd <= clock::date_today("")) %>% 
-        dplyr::distinct()
-      
-      ParallelLogger::logTrace("Inserting calendar periods into temporay table. This might take time.")
-      DatabaseConnector::insertTable(
-        connection = connection,
-        tableName = "#calendar_periods",
-        data = calendarPeriods,
-        dropTableIfExists = TRUE,
-        createTable = TRUE,
-        progressBar = TRUE,
-        tempTable = TRUE,
-        tempEmulationSchema = tempEmulationSchema,
-        camelCaseToSnakeCase = TRUE
+  
+    data <- DatabaseConnector::renderTranslateQuerySql(
+      connection = connection,
+      sql = sql,
+      cohort_database_schema = cohortDatabaseSchema,
+      cohort_table = cohortTable, 
+      snakeCaseToCamelCase = TRUE,
+      tempEmulationSchema = tempEmulationSchema,
+      cdm_database_schema = cdmDatabaseSchema,
+      cohort_ids = subset$cohortId
+    ) %>% 
+      dplyr::tibble()
+    
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = "IF OBJECT_ID('tempdb..#calendar_periods', 'U') IS NOT NULL DROP TABLE #calendar_periods;",
+      progressBar = TRUE, 
+      tempEmulationSchema = tempEmulationSchema
+    )
+    data <-
+      enforceMinCellValue(data, "records", minCellCount)
+    data <-
+      enforceMinCellValue(data, "subjects", minCellCount)
+    data <-
+      enforceMinCellValue(data, "personDays", minCellCount)
+    data <-
+      enforceMinCellValue(data, "recordsIncidence", minCellCount)
+    data <-
+      enforceMinCellValue(data, "subjectsIncidence", minCellCount)
+    
+    if (nrow(data) > 0) {
+      data <- data %>%
+        dplyr::mutate(databaseId = !!databaseId)
+      writeToCsv(
+        data = data,
+        fileName = file.path(exportFolder, "prevalence_rate.csv"),
+        incremental = incremental,
+        cohortId = subset$cohortId
       )
-      ParallelLogger::logTrace("Done inserting calendar periods")
-      
-      sql <-
-        SqlRender::loadRenderTranslateSql(
-          "ComputeTimeSeries.sql",
-          packageName = "CohortDiagnostics",
-          dbms = connection@dbms
-        )
-      
-      data <- DatabaseConnector::renderTranslateQuerySql(
-        connection = connection,
-        sql = sql,
-        cohort_database_schema = cohortDatabaseSchema,
-        cohort_table = cohortTable, 
-        snakeCaseToCamelCase = TRUE,
-        tempEmulationSchema = tempEmulationSchema,
-        cdm_database_schema = cdmDatabaseSchema,
-        cohort_ids = subset$cohortId
-      ) %>% 
-        dplyr::tibble()
-      
-      DatabaseConnector::renderTranslateExecuteSql(
-        connection = connection,
-        sql = "IF OBJECT_ID('tempdb..#calendar_periods', 'U') IS NOT NULL DROP TABLE #calendar_periods;",
-        progressBar = TRUE, 
-        tempEmulationSchema = tempEmulationSchema
-      )
-      data <-
-        enforceMinCellValue(data, "records", minCellCount)
-      data <-
-        enforceMinCellValue(data, "subjects", minCellCount)
-      data <-
-        enforceMinCellValue(data, "personDays", minCellCount)
-      data <-
-        enforceMinCellValue(data, "recordsIncidence", minCellCount)
-      data <-
-        enforceMinCellValue(data, "subjectsIncidence", minCellCount)
-      
-      if (nrow(data) > 0) {
-        data <- data %>%
-          dplyr::mutate(databaseId = !!databaseId)
-        writeToCsv(
-          data = data,
-          fileName = file.path(exportFolder, "prevalence_rate.csv"),
-          incremental = incremental,
-          cohortId = subset$cohortId
-        )
-      }
-      
-      recordTasksDone(
-        cohortId = subset$cohortId,
-        task = "runTimeSeries",
-        checksum = subset$checksum,
-        recordKeepingFile = recordKeepingFile,
-        incremental = incremental
-      )
-      delta <- Sys.time() - startPrevalenceRate
-      ParallelLogger::logInfo("Running Prevalence Rate took ",
-                              signif(delta, 3),
-                              " ",
-                              attr(delta, "units"))
     }
+    
+    recordTasksDone(
+      cohortId = subset$cohortId,
+      task = "runTimeSeries",
+      checksum = subset$checksum,
+      recordKeepingFile = recordKeepingFile,
+      incremental = incremental
+    )
+    delta <- Sys.time() - startPrevalenceRate
+    ParallelLogger::logInfo("Running Prevalence Rate took ",
+                            signif(delta, 3),
+                            " ",
+                            attr(delta, "units"))
   }
   
   # Cohort overlap ---------------------------------------------------------------------------------
