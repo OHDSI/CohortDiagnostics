@@ -1,44 +1,45 @@
 # Using the official uploading functions to get data from zip files into the postgres database
 library(CohortDiagnostics)
 
-# Martijn's local server:
-connectionDetails <- createConnectionDetails(dbms = "postgresql",
-                                             server = "localhost/ohdsi",
-                                             user = "postgres",
-                                             password = Sys.getenv("pwPostgres"))
-resultsSchema <- "phenotype_library"
-
 # OHDSI's server:
-connectionDetails <- createConnectionDetails(dbms = "postgresql",
-                                             server = paste(Sys.getenv("phenotypeLibraryDbServer"),
-                                                            Sys.getenv("phenotypeLibraryDbDatabase"),
-                                                            sep = "/"),
-                                             port = Sys.getenv("phenotypeLibraryDbPort"),
-                                             user = Sys.getenv("phenotypeLibraryDbUser"),
-                                             password = Sys.getenv("phenotypeLibraryDbPassword"))
-resultsSchema <- Sys.getenv("phenotypeLibraryDbResultsSchema")
+connectionDetails <- createConnectionDetails(
+  dbms = "postgresql",
+  server = paste(
+    Sys.getenv("shinydbServer"),
+    Sys.getenv("shinydbDatabase"),
+    sep = "/"
+  ),
+  port = Sys.getenv("shinydbPort"),
+  user = Sys.getenv("shinydbUser"),
+  password = Sys.getenv("shinydbPW")
+)
+resultsSchema <- 'thrombosisthrombocytopenia'
 
-createResultsDataModel(connectionDetails = connectionDetails, schema = resultsSchema)
+# commenting this function as it maybe accidentally run - loosing data.
+# createResultsDataModel(connectionDetails = connectionDetails, schema = resultsSchema)
 
+Sys.setenv("POSTGRES_PATH" = Sys.getenv('POSTGRES_PATH'))
 
+folderWithZipFilesToUpload <- "D:\\results\\twt\\withInclusion"
+listOfZipFilesToUpload <-
+  list.files(
+    path = folderWithZipFilesToUpload,
+    pattern = ".zip",
+    full.names = TRUE,
+    recursive = TRUE
+  )
 
-Sys.setenv("POSTGRES_PATH" = "C:/Program Files/PostgreSQL/11/bin")
-uploadResults(connectionDetails = connectionDetails,
-              schema = resultsSchema,
-              zipFileName = "S:/examplePackageOutput/CCAE/diagnosticsExport/Results_CCAE.zip")
+for (i in (1:length(listOfZipFilesToUpload))) {
+  CohortDiagnostics::uploadResults(
+    connectionDetails = connectionDetails,
+    schema = resultsSchema,
+    zipFileName = listOfZipFilesToUpload[[i]]
+  )
+}
 
-uploadResults(connectionDetails = connectionDetails,
-              schema = resultsSchema,
-              zipFileName = "S:/examplePackageOutput/MDCD/diagnosticsExport/Results_IBM_MDCD.zip")
+# uploadPrintFriendly was removed in version 2.1
+# uploadPrintFriendly(connectionDetails = connectionDetails,
+#                     schema = resultsSchema)
+
 launchDiagnosticsExplorer(connectionDetails = connectionDetails,
                           resultsDatabaseSchema = resultsSchema)
-
-
-uploadResults(connectionDetails = connectionDetails,
-              schema = resultsSchema,
-              zipFileName = "s:/immunology/Results_JMDC.zip")
-
-uploadResults(connectionDetails = connectionDetails,
-              schema = resultsSchema,
-              zipFileName = "s:/immunology/Results_OPTUM_PANTHER.zip")
-

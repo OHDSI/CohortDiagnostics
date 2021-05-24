@@ -159,7 +159,7 @@ must have the following columns:</p>
   connectionDetails <span class='op'>=</span> <span class='cn'>NULL</span>,
   connection <span class='op'>=</span> <span class='cn'>NULL</span>,
   <span class='va'>cdmDatabaseSchema</span>,
-  oracleTempSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
+  tempEmulationSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
   cohortIds <span class='op'>=</span> <span class='cn'>NULL</span>,
   conceptCountsDatabaseSchema <span class='op'>=</span> <span class='va'>cdmDatabaseSchema</span>,
   conceptCountsTable <span class='op'>=</span> <span class='st'>"concept_counts"</span>,
@@ -223,7 +223,7 @@ Note that for SQL Server, this should include both the database and
 schema name, for example 'cdm_data.dbo'.</p></td>
     </tr>
     <tr>
-      <th>oracleTempSchema</th>
+      <th>tempEmulationSchema</th>
       <td><p>Should be used in Oracle to specify a schema where the user has write
 privileges for storing temporary tables.</p></td>
     </tr>
@@ -290,7 +290,7 @@ the name of the study package, and the name of the cohortToCreate file within th
 connect to the WebApi, and which cohorts to fetch, respectively.</p>
 <p>Note: if the parameters for both Package Mode and WebApi Mode are provided, then Package mode is preferred.</p>
 <p>The <code>cohortSetReference</code> argument must be a data frame with  the following columns:</p><dl>
-<dt>referentConceptId</dt><dd><p>A standard omop concept id that serves as the referant phenotype definition for the cohort Id.</p></dd>
+<dt>referentConceptId</dt><dd><p>A standard OMOP concept id that serves as the referent phenotype definition for the cohort Id.</p></dd>
 <dt>cohortId</dt><dd><p>The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names. It is recommended to be (referrentConceptId * 1000) + a number between 3 to 999</p></dd>
 <dt>webApiCohortId</dt><dd><p>Cohort Id in the webApi/atlas instance. It is a required field to run Cohort Diagnostics in WebApi mode. It is discarded in package mode.</p></dd>
 <dt>cohortName</dt><dd><p>The full name of the cohort. This will be shown in the Shiny app.</p></dd>

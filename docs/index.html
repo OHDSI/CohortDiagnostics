@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.0</span>
       </span>
     </div>
 
@@ -39,7 +39,7 @@
       <ul class="nav navbar-nav">
 <li>
   <a href="index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -57,7 +57,22 @@
   </a>
   <ul class="dropdown-menu" role="menu">
 <li>
+      <a href="articles/CohortDiagnosticsInPackageMode.html">Runing Cohort Diagnostics in an OHDSI Package mode</a>
+    </li>
+    <li>
       <a href="articles/CohortDiagnosticsUsingWebApi.html">Running cohort diagnostics using WebAPI</a>
+    </li>
+    <li>
+      <a href="articles/DatabaseModeInDiagnosticsExplorer.html">Database mode in Diagnostics Explorer</a>
+    </li>
+    <li>
+      <a href="articles/RunningCohortDiagnostics.html">Running cohort diagnostics</a>
+    </li>
+    <li>
+      <a href="articles/ViewingResultsUsingDiagnosticsExplorer.html">Viewing results using Diagnostics Explorer</a>
+    </li>
+    <li>
+      <a href="articles/WhatIsCohortDiagnostics.html">What is Cohort Diagnostics?</a>
     </li>
   </ul>
 </li>
@@ -68,7 +83,7 @@
 </li>
 <li>
   <a href="https://github.com/OHDSI/CohortDiagnostics/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -106,7 +121,7 @@
 <li>Compute cohort incidence across calendar years, age, and gender.</li>
 <li>Break down index events into the specific concepts that triggered them.</li>
 <li>Compute overlap between two cohorts.</li>
-<li>Characterize cohorts, and compare these characterizations.</li>
+<li>Characterize cohorts, and compare these characterizations. Perform cohort comparison and temporal comparisons.</li>
 <li>Explore patient profiles of a random sample of subjects in a cohort.</li>
 </ul>
 </div>
@@ -132,7 +147,8 @@
 <li><p>See the instructions <a href="https://ohdsi.github.io/Hades/rSetup.html">here</a> for configuring your R environment, including Java.</p></li>
 <li><p>In R, use the following commands to download and install CohortDiagnostics:</p></li>
 </ol>
-<div class="sourceCode" id="cb1"><pre class="r"><span class="kw pkg">remotes</span><span class="kw ns">::</span><span class="fu">install.github</span>(<span class="st">"OHDSI/CohortDiagnostics"</span>)</pre></div>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html">install_github</a></span><span class="op">(</span><span class="st">"OHDSI/CohortDiagnostics"</span><span class="op">)</span></code></pre></div>
 </div>
 <div id="user-documentation" class="section level1">
 <h1 class="hasAnchor">
@@ -142,7 +158,17 @@
 <ul>
 <li>Package manual: <a href="https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/extras/CohortDiagnostics.pdf">CohortDiagnostics manual</a>
 </li>
+<li>Vignette: <a href="https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/WhatIsCohortDiagnostics.pdf">What is Cohort Diagnostics</a>
+</li>
+<li>Vignette: <a href="https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/RunningCohortDiagnostics.pdf">Running Cohort Diagnostics</a>
+</li>
 <li>Vignette: <a href="https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/CohortDiagnosticsUsingWebApi.pdf">Running cohort diagnostics using WebAPI</a>
+</li>
+<li>Vignette: <a href="https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/CohortDiagnosticsInPackageMode.pdf">Running cohort diagnostics in OHDSI Package mode WebAPI</a>
+</li>
+<li>Vignette: <a href="https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/CohortDiagnosticsUsingWebApi.pdf">Running cohort diagnostics using WebApi WebAPI</a>
+</li>
+<li>Vignette: <a href="https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/DatabaseModeInDiagnosticsExplorer.pdf">Database Mode in Diagnostics Explorer</a>
 </li>
 </ul>
 </div>
@@ -172,7 +198,7 @@
 <div id="development-status" class="section level3">
 <h3 class="hasAnchor">
 <a href="#development-status" class="anchor"></a>Development status</h3>
-<p>Beta testing</p>
+<p>Stable</p>
 </div>
 </div>
 
@@ -203,6 +229,7 @@
 <li>Martijn Schuemie <br><small class="roles"> Author </small>  </li>
 <li>Patrick Ryan <br><small class="roles"> Author </small>  </li>
 <li>James Weaver <br><small class="roles"> Author </small>  </li>
+<li>Jamie Gilbert <br><small class="roles"> Author </small>  </li>
 <li><a href="authors.html">All authors...</a></li>
 </ul>
 </div>
@@ -210,7 +237,7 @@
   <div class="dev-status">
 <h2>Dev status</h2>
 <ul class="list-unstyled">
-<li><a href="https://travis-ci.org/OHDSI/CohortDiagnostics"><img src="https://travis-ci.org/OHDSI/CohortDiagnostics.svg?branch=master" alt="Build Status"></a></li>
+<li><a href="https://github.com/OHDSI/CohortDiagnostics/actions?query=workflow%3AR-CMD-check"><img src="https://github.com/OHDSI/CohortDiagnostics/workflows/R-CMD-check/badge.svg" alt="Build Status"></a></li>
 <li><a href="https://codecov.io/github/OHDSI/CohortDiagnostics?branch=master"><img src="https://codecov.io/github/OHDSI/CohortDiagnostics/coverage.svg?branch=master" alt="codecov.io"></a></li>
 </ul>
 </div>
@@ -219,11 +246,11 @@
 
 
       <footer><div class="copyright">
-  <p>Developed by Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver.</p>
+  <p>Developed by Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver, Jamie Gilbert.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

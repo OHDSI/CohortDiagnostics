@@ -1,0 +1,46 @@
+---
+title: "What is Cohort Diagnostics?"
+author: "Gowtham Rao"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: 
+  toc: yes     
+html_document:
+  number_sections: yes
+toc: yes
+vignette: >
+  %\VignetteIndexEntry{WhatIsCohortDiagnostics}
+  %\VignetteEncoding{UTF-8}    
+  %\VignetteEngine{knitr::rmarkdown}
+---
+  
+  ```{r, echo = FALSE, message = FALSE}
+library(SqlRender)
+knitr::opts_chunk$set(
+  cache = FALSE,
+  comment = "#>",
+  error = FALSE,
+  tidy = FALSE)
+```
+
+# Introduction
+
+The CohortDiagnostics package allows one to generate a wide set of diagnostics to evaluate cohort definitions against a database in the Common Data Model (CDM). These diagnostics include incidence rates (optionally stratified by age, gender, and calendar year), cohort characteristics (comorbidities, drug use, etc.), and the codes found in the data triggering the various rules in the cohort definitions.
+
+The CohortDiagnostics package in general works in two steps:
+  
+1. Generate the diagnostics against a database in the CDM.
+2. Explore the generated diagnostics in a Shiny app included in the CohortDiagnostics package.
+
+The use of Cohort Diagnostics is a recommended best practice to help improve the confidence in your cohort definitions. 
+
+Features
+========
+- Show cohort inclusion rule attrition. 
+- List all source codes used when running a cohort definition on a specific database.
+- Find orphan codes, (source) codes that should be, but are not included in a particular concept set.
+- Compute cohort incidence across calendar years, age, and gender.
+- Break down index events into the specific concepts that triggered them.
+- Compute overlap between two cohorts.
+- Characterize cohorts, and compare these characterizations. Perform cohort comparison and temporal comparisons. 
+- Explore patient profiles of a random sample of subjects in a cohort.

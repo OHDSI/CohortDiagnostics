@@ -9,19 +9,20 @@ runCohortDiagnostics(
   cohortToCreateFile = "settings/CohortsToCreate.csv",
   baseUrl = NULL,
   cohortSetReference = NULL,
-  phenotypeDescriptionFile = NULL,
   connectionDetails = NULL,
   connection = NULL,
   cdmDatabaseSchema,
   oracleTempSchema = NULL,
+  tempEmulationSchema = NULL,
   cohortDatabaseSchema,
+  vocabularyDatabaseSchema = cdmDatabaseSchema,
   cohortTable = "cohort",
   cohortIds = NULL,
   inclusionStatisticsFolder = file.path(exportFolder, "inclusionStatistics"),
   exportFolder,
   databaseId,
-  databaseName = NULL,
-  databaseDescription = NULL,
+  databaseName = databaseId,
+  databaseDescription = databaseId,
   cdmVersion = 5,
   runInclusionStatistics = TRUE,
   runIncludedSourceConcepts = TRUE,
@@ -30,6 +31,7 @@ runCohortDiagnostics(
   runVisitContext = TRUE,
   runBreakdownIndexEvents = TRUE,
   runIncidenceRate = TRUE,
+  runTimeSeries = TRUE,
   runCohortOverlap = TRUE,
   runCohortCharacterization = TRUE,
   covariateSettings = createDefaultCovariateSettings(),
@@ -60,19 +62,6 @@ error message will be displayed and process stopped.}
 \item{cohortSetReference}{A data frame with four columns, as described in the details. Can be left NULL if 
 \code{packageName} and \code{cohortToCreateFile} have been specified.}
 
-\item{phenotypeDescriptionFile}{(Optional) The location of the phenotype description file within the package. 
-The file must be .csv file and have the following columns that may be read into following
-data types: phenotypeId (double), phenotypeName (character),
-referentConceptId (double), clinicalDescription (character),
-literatureReview (character), phenotypeNotes (character). Note: the field
-names are in snake_case. Also, character fields should not have 'NA' in it.
-'NA's are commonly added by R when R functions exports data from dataframe 
-into CSV. Instead please use '' (empty string) to represent absence of data. 
-The literature_review field is expected to be a html link to page that contains
-resources related to literature review for the phenotype, and will be used
-to create link-out object. This csv file is expected to be encoded in either 
-ASCII or UTF-8, if not, an error message will be displayed and process stopped.}
-
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
 DatabaseConnector package. Can be left NULL if \code{connection} is
@@ -88,12 +77,19 @@ of the function, and closed when the function finishes.}
 Note that for SQL Server, this should include both the database and
 schema name, for example 'cdm_data.dbo'.}
 
-\item{oracleTempSchema}{Should be used in Oracle to specify a schema where the user has write
-privileges for storing temporary tables.}
+\item{oracleTempSchema}{DEPRECATED by DatabaseConnector: use \code{tempEmulationSchema} instead.}
+
+\item{tempEmulationSchema}{Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
+tables, provide a schema with write privileges where temp tables can be created.}
 
 \item{cohortDatabaseSchema}{Schema name where your cohort table resides. Note that for SQL Server,
 this should include both the database and schema name, for example
 'scratch.dbo'.}
+
+\item{vocabularyDatabaseSchema}{Schema name where your OMOP vocabulary data resides. This is 
+commonly the same as cdmDatabaseSchema. Note that for 
+SQL Server, this should include both the database and
+schema name, for example 'vocabulary.dbo'.}
 
 \item{cohortTable}{Name of the cohort table.}
 
@@ -108,9 +104,9 @@ does not exist it will be created.}
 
 \item{databaseId}{A short string for identifying the database (e.g. 'Synpuf').}
 
-\item{databaseName}{The full name of the database.}
+\item{databaseName}{The full name of the database. If NULL, defaults to databaseId.}
 
-\item{databaseDescription}{A short description (several sentences) of the database.}
+\item{databaseDescription}{A short description (several sentences) of the database. If NULL, defaults to databaseId.}
 
 \item{cdmVersion}{The version of the OMOP CDM. Default 5. (Note: only 5 is supported.)}
 
@@ -128,11 +124,13 @@ does not exist it will be created.}
 
 \item{runIncidenceRate}{Generate and export the cohort incidence  rates?}
 
+\item{runTimeSeries}{Generate and export the cohort prevalence  rates?}
+
 \item{runCohortOverlap}{Generate and export the cohort overlap? Overlaps are checked within cohortIds
-that have the same phenotype ID sourced from the CohortSetReference or 
+that have the same phenotype ID sourced from the CohortSetReference or
 cohortToCreateFile.}
 
-\item{runCohortCharacterization}{Generate and export the cohort characterization? 
+\item{runCohortCharacterization}{Generate and export the cohort characterization?
 Only records with values greater than 0.0001 are returned.}
 
 \item{covariateSettings}{Either an object of type \code{covariateSettings} as created using one of
@@ -177,7 +175,7 @@ Note: if the parameters for both Package Mode and WebApi Mode are provided, then
 
 The \code{cohortSetReference} argument must be a data frame with  the following columns:
 \describe{
-\item{referentConceptId}{A standard omop concept id that serves as the referant phenotype definition for the cohort Id.}
+\item{referentConceptId}{A standard omop concept id that serves as the referent phenotype definition for the cohort Id.}
 \item{cohortId}{The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names. It is recommended to be (referrentConceptId * 1000) + a number between 3 to 999}
 \item{webApiCohortId}{Cohort Id in the webApi/atlas instance. It is a required field to run Cohort Diagnostics in WebApi mode. It is discarded in package mode.}
 \item{cohortName}{The full name of the cohort. This will be shown in the Shiny app.}

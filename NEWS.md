@@ -1,3 +1,36 @@
+CohortDiagnostics 2.1.0
+=======================
+
+Changes:
+
+1. Diagnostics explorer Shiny app enhancements: 
+- Improved tool tip
+- Various improvements to plots for consistent color, axis labels and labels
+- Visit context table addition
+- Diagnostic explorer is now a distinct shiny application from phenotype library. PhenotypeExplorer is a stand alone shiny app in package PhenotypeLibrarian.
+- Lot of UX changes. Reactivity deferred on drop down menus.
+- Changes to improve app stability.
+2. Index event breakdown now has subject count
+3. Index event breakdown calculates _source_concept_id from source fields in CDM tables.
+4. Vocabulary database schema is now supported.
+5. Metadata (vocabulary version information from data source) is now collected.
+6. OracleTempSchema use deprecated in favor of tempEmulationSchema.
+7. Run against external concept count has been removed, as concept counts data is not available. Function 'runCohortDiagnosticsUsingExternalCounts' is removed.
+8. Removed code related to referentConceptId = phenotypeId/1000 as it does not always hold true.
+9. Create cohort table function is now private. Please use instantiate cohort.
+10. checkInputFileEncoding is not exported as a public function (as not the scope of CohortDiagnostics).
+11. Updated results data model to include new tables (resolved_concepts).
+12. Cohort Diagnostics results data model now compliant with standard characterization output.
+13. Support for cohort_censor_stats table in webapi 2.8.1 #387
+14. Add time series diagnostics computation. Output is not in Diagnostics explorer in this version.
+15. Any improvements to help with usability and stability. Informative messages to help with debugbing as needed.
+16. phenotypeDescription is no longer supported as input for cohort diagnostics.
+Bug fixes:
+
+1. databaseName and databaseDescription should be non NULL
+2. Fixed computation of standard deviation and standard difference of mean for binary covariates.
+
+
 CohortDiagnostics 2.0.0
 =======================
 
@@ -55,6 +88,7 @@ Bug fixes:
 1. Fixed error when many concept sets have to be instantiated.
 2. Removed ohdsi/SqlRender from Remotes https://github.com/OHDSI/CohortDiagnostics/issues/189
 3. Fixed Digit precision for RJSONIO::toJson and fromJSON https://github.com/OHDSI/CohortDiagnostics/issues/161 This is an important fix. If digit precision is not explicitly specified in RJSONIO, then scientific notation is used. This issue seems to only happen when an integer id (conceptId, conceptSetId, cohortId etc) >= 10,000,000 (which is rare). Please use this update if you have id's > 10,000,000.
+
 
 CohortDiagnostics 1.2.2
 =======================
@@ -152,7 +186,7 @@ Bugfixes:
 
 2. Fixed error in index event breakdown when entry event contained multiple criteria for the same domain.
 
-3. Fixed error related to oracleTempSchema argument (needed on Oracle and BigQuery).
+3. Fixed error related to tempEmulationSchema argument (needed on Oracle and BigQuery).
 
 4. Fixed use of deprecated function, causing warnings and causing older versions of ParallelLogger to error.
 

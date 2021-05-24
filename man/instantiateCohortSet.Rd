@@ -8,6 +8,8 @@ instantiateCohortSet(
   connectionDetails = NULL,
   connection = NULL,
   cdmDatabaseSchema,
+  vocabularyDatabaseSchema = cdmDatabaseSchema,
+  tempEmulationSchema = NULL,
   oracleTempSchema = NULL,
   cohortDatabaseSchema = cdmDatabaseSchema,
   cohortTable = "cohort",
@@ -18,7 +20,7 @@ instantiateCohortSet(
   cohortSetReference = NULL,
   generateInclusionStats = FALSE,
   inclusionStatisticsFolder = NULL,
-  createCohortTable = FALSE,
+  createCohortTable = TRUE,
   incremental = FALSE,
   incrementalFolder = NULL
 )
@@ -39,8 +41,15 @@ of the function, and closed when the function finishes.}
 Note that for SQL Server, this should include both the database and
 schema name, for example 'cdm_data.dbo'.}
 
-\item{oracleTempSchema}{Should be used in Oracle to specify a schema where the user has write
-privileges for storing temporary tables.}
+\item{vocabularyDatabaseSchema}{Schema name where your OMOP vocabulary data resides. This is 
+commonly the same as cdmDatabaseSchema. Note that for 
+SQL Server, this should include both the database and
+schema name, for example 'vocabulary.dbo'.}
+
+\item{tempEmulationSchema}{Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
+tables, provide a schema with write privileges where temp tables can be created.}
+
+\item{oracleTempSchema}{DEPRECATED by DatabaseConnector: use \code{tempEmulationSchema} instead.}
 
 \item{cohortDatabaseSchema}{Schema name where your cohort table resides. Note that for SQL Server,
 this should include both the database and schema name, for example
@@ -103,7 +112,7 @@ Note: if the parameters for both Package Mode and WebApi Mode are provided, then
 
 The \code{cohortSetReference} argument must be a data frame with  the following columns:
 \describe{
-\item{referentConceptId}{A standard omop concept id that serves as the referant phenotype definition for the cohort Id.}
+\item{referentConceptId}{A standard omop concept id that serves as the referent phenotype definition for the cohort Id.}
 \item{cohortId}{The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names. It is recommended to be (referrentConceptId * 1000) + a number between 3 to 999}
 \item{webApiCohortId}{Cohort Id in the webApi/atlas instance. It is a required field to run Cohort Diagnostics in WebApi mode. It is discarded in package mode.}
 \item{cohortName}{The full name of the cohort. This will be shown in the Shiny app.}

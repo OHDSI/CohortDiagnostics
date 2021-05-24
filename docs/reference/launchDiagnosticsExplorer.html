@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.0</span>
       </span>
     </div>
 
@@ -80,7 +80,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -98,7 +98,22 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/CohortDiagnosticsInPackageMode.html">Runing Cohort Diagnostics in an OHDSI Package mode</a>
+    </li>
+    <li>
       <a href="../articles/CohortDiagnosticsUsingWebApi.html">Running cohort diagnostics using WebAPI</a>
+    </li>
+    <li>
+      <a href="../articles/DatabaseModeInDiagnosticsExplorer.html">Database mode in Diagnostics Explorer</a>
+    </li>
+    <li>
+      <a href="../articles/RunningCohortDiagnostics.html">Running cohort diagnostics</a>
+    </li>
+    <li>
+      <a href="../articles/ViewingResultsUsingDiagnosticsExplorer.html">Viewing results using Diagnostics Explorer</a>
+    </li>
+    <li>
+      <a href="../articles/WhatIsCohortDiagnostics.html">What is Cohort Diagnostics?</a>
     </li>
   </ul>
 </li>
@@ -109,7 +124,7 @@
 </li>
 <li>
   <a href="https://github.com/OHDSI/CohortDiagnostics/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -135,17 +150,18 @@
     <p>Launch the Diagnostics Explorer Shiny app</p>
     </div>
 
-    <pre class="usage"><span class='fu'>launchDiagnosticsExplorer</span>(
-  <span class='kw'>dataFolder</span> <span class='kw'>=</span> <span class='st'>"data"</span>,
-  <span class='kw'>connectionDetails</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>resultsDatabaseSchema</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>vocabularyDatabaseSchema</span> <span class='kw'>=</span> <span class='no'>resultsDatabaseSchema</span>,
-  <span class='kw'>cohortBaseUrl</span> <span class='kw'>=</span> <span class='st'>"https://atlas.ohdsi.org/#/cohortdefinition/"</span>,
-  <span class='kw'>conceptBaseUrl</span> <span class='kw'>=</span> <span class='st'>"https://athena.ohdsi.org/search-terms/terms/"</span>,
-  <span class='kw'>runOverNetwork</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>port</span> <span class='kw'>=</span> <span class='fl'>80</span>,
-  <span class='kw'>launch.browser</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
-)</pre>
+    <pre class="usage"><span class='fu'>launchDiagnosticsExplorer</span><span class='op'>(</span>
+  dataFolder <span class='op'>=</span> <span class='st'>"data"</span>,
+  dataFile <span class='op'>=</span> <span class='st'>"PreMerged.RData"</span>,
+  connectionDetails <span class='op'>=</span> <span class='cn'>NULL</span>,
+  resultsDatabaseSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
+  vocabularyDatabaseSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
+  vocabularyDatabaseSchemas <span class='op'>=</span> <span class='va'>resultsDatabaseSchema</span>,
+  aboutText <span class='op'>=</span> <span class='cn'>NULL</span>,
+  runOverNetwork <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  port <span class='op'>=</span> <span class='fl'>80</span>,
+  launch.browser <span class='op'>=</span> <span class='cn'>FALSE</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -156,32 +172,38 @@
 the <code><a href='preMergeDiagnosticsFiles.html'>preMergeDiagnosticsFiles</a></code> function to generate this file.</p></td>
     </tr>
     <tr>
+      <th>dataFile</th>
+      <td><p>(Optional) The name of the .RData file with results. It is commonly known as the
+Premerged file.</p></td>
+    </tr>
+    <tr>
       <th>connectionDetails</th>
       <td><p>An object of type <code>connectionDetails</code> as created using the
-<code><a href='https://rdrr.io/pkg/DatabaseConnector/man/createConnectionDetails.html'>createConnectionDetails</a></code> function in the
+<code><a href='https://ohdsi.github.io/DatabaseConnector/reference/createConnectionDetails.html'>createConnectionDetails</a></code> function in the
 DatabaseConnector package, specifying how to connect to the server where
-the CohortDiagnostics results have been uploaded using the 
+the CohortDiagnostics results have been uploaded using the
 <code><a href='uploadResults.html'>uploadResults</a></code> function.</p></td>
     </tr>
     <tr>
       <th>resultsDatabaseSchema</th>
-      <td><p>The schema on the database server where the CohortDiagnostics results 
+      <td><p>The schema on the database server where the CohortDiagnostics results
 have been uploaded.</p></td>
     </tr>
     <tr>
       <th>vocabularyDatabaseSchema</th>
-      <td><p>The schema on the database server where the vocabulary tables are located.</p></td>
+      <td><p>(Deprecated) Please use vocabularyDatabaseSchemas.</p></td>
     </tr>
     <tr>
-      <th>cohortBaseUrl</th>
-      <td><p>The base URL for constructing linkouts to an ATLAS instance, using the 
-webApiCohortId in the cohortsToCreate file. If NULL, no linkouts will be 
-created.</p></td>
+      <th>vocabularyDatabaseSchemas</th>
+      <td><p>(optional) A list of one or more schemas on the database server where the vocabulary tables are located.
+The default value is the value of the resultsDatabaseSchema. We can provide a list of vocabulary schema
+that might represent different versions of the OMOP vocabulary tables. It allows us to compare the impact
+of vocabulary changes on Diagnostics.</p></td>
     </tr>
     <tr>
-      <th>conceptBaseUrl</th>
-      <td><p>The base URL for constructing linkouts to an Athena instance, using the
-concept ID.</p></td>
+      <th>aboutText</th>
+      <td><p>Text (using HTML markup) that will be displayed in an About tab in the Shiny app.
+If not provided, no About tab will be shown.</p></td>
     </tr>
     <tr>
       <th>runOverNetwork</th>
@@ -213,11 +235,11 @@ Note: copying to clipboard will not work in a Shiny window.</p></td>
 
       <footer>
       <div class="copyright">
-  <p>Developed by Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver.</p>
+  <p>Developed by Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver, Jamie Gilbert.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

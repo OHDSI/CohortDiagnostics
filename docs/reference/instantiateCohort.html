@@ -41,8 +41,7 @@
 
 <meta property="og:title" content="Instantiate a cohort — instantiateCohort" />
 <meta property="og:description" content="This function instantiates the cohort in the cohort table. Optionally, the inclusion rule
-statistics are computed and stored in the inclusion rule statistics tables described in
-createCohortTable)." />
+statistics are computed and stored in the inclusion rule statistics tables." />
 
 
 
@@ -74,7 +73,7 @@ createCohortTable)." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.0</span>
       </span>
     </div>
 
@@ -82,7 +81,7 @@ createCohortTable)." />
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -100,7 +99,22 @@ createCohortTable)." />
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/CohortDiagnosticsInPackageMode.html">Runing Cohort Diagnostics in an OHDSI Package mode</a>
+    </li>
+    <li>
       <a href="../articles/CohortDiagnosticsUsingWebApi.html">Running cohort diagnostics using WebAPI</a>
+    </li>
+    <li>
+      <a href="../articles/DatabaseModeInDiagnosticsExplorer.html">Database mode in Diagnostics Explorer</a>
+    </li>
+    <li>
+      <a href="../articles/RunningCohortDiagnostics.html">Running cohort diagnostics</a>
+    </li>
+    <li>
+      <a href="../articles/ViewingResultsUsingDiagnosticsExplorer.html">Viewing results using Diagnostics Explorer</a>
+    </li>
+    <li>
+      <a href="../articles/WhatIsCohortDiagnostics.html">What is Cohort Diagnostics?</a>
     </li>
   </ul>
 </li>
@@ -111,7 +125,7 @@ createCohortTable)." />
 </li>
 <li>
   <a href="https://github.com/OHDSI/CohortDiagnostics/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -135,28 +149,29 @@ createCohortTable)." />
 
     <div class="ref-description">
     <p>This function instantiates the cohort in the cohort table. Optionally, the inclusion rule
-statistics are computed and stored in the inclusion rule statistics tables described in
-<code><a href='createCohortTable.html'>createCohortTable</a></code>).</p>
+statistics are computed and stored in the inclusion rule statistics tables.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>instantiateCohort</span>(
-  <span class='kw'>connectionDetails</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>connection</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='no'>cdmDatabaseSchema</span>,
-  <span class='kw'>oracleTempSchema</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cohortDatabaseSchema</span> <span class='kw'>=</span> <span class='no'>cdmDatabaseSchema</span>,
-  <span class='kw'>cohortTable</span> <span class='kw'>=</span> <span class='st'>"cohort"</span>,
-  <span class='kw'>baseUrl</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cohortJson</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cohortSql</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>cohortId</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
-  <span class='kw'>generateInclusionStats</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>resultsDatabaseSchema</span> <span class='kw'>=</span> <span class='no'>cohortDatabaseSchema</span>,
-  <span class='kw'>cohortInclusionTable</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span>(<span class='no'>cohortTable</span>, <span class='st'>"_inclusion"</span>),
-  <span class='kw'>cohortInclusionResultTable</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span>(<span class='no'>cohortTable</span>, <span class='st'>"_inclusion_result"</span>),
-  <span class='kw'>cohortInclusionStatsTable</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span>(<span class='no'>cohortTable</span>, <span class='st'>"_inclusion_stats"</span>),
-  <span class='kw'>cohortSummaryStatsTable</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span>(<span class='no'>cohortTable</span>, <span class='st'>"_summary_stats"</span>)
-)</pre>
+    <pre class="usage"><span class='fu'>instantiateCohort</span><span class='op'>(</span>
+  connectionDetails <span class='op'>=</span> <span class='cn'>NULL</span>,
+  connection <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>cdmDatabaseSchema</span>,
+  oracleTempSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
+  tempEmulationSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
+  cohortDatabaseSchema <span class='op'>=</span> <span class='va'>cdmDatabaseSchema</span>,
+  cohortTable <span class='op'>=</span> <span class='st'>"cohort"</span>,
+  baseUrl <span class='op'>=</span> <span class='cn'>NULL</span>,
+  cohortJson <span class='op'>=</span> <span class='cn'>NULL</span>,
+  cohortSql <span class='op'>=</span> <span class='cn'>NULL</span>,
+  cohortId <span class='op'>=</span> <span class='cn'>NULL</span>,
+  generateInclusionStats <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  resultsDatabaseSchema <span class='op'>=</span> <span class='va'>cohortDatabaseSchema</span>,
+  vocabularyDatabaseSchema <span class='op'>=</span> <span class='va'>cdmDatabaseSchema</span>,
+  cohortInclusionTable <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span><span class='op'>(</span><span class='va'>cohortTable</span>, <span class='st'>"_inclusion"</span><span class='op'>)</span>,
+  cohortInclusionResultTable <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span><span class='op'>(</span><span class='va'>cohortTable</span>, <span class='st'>"_inclusion_result"</span><span class='op'>)</span>,
+  cohortInclusionStatsTable <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span><span class='op'>(</span><span class='va'>cohortTable</span>, <span class='st'>"_inclusion_stats"</span><span class='op'>)</span>,
+  cohortSummaryStatsTable <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span><span class='op'>(</span><span class='va'>cohortTable</span>, <span class='st'>"_summary_stats"</span><span class='op'>)</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -164,14 +179,14 @@ statistics are computed and stored in the inclusion rule statistics tables descr
     <tr>
       <th>connectionDetails</th>
       <td><p>An object of type <code>connectionDetails</code> as created using the
-<code><a href='https://rdrr.io/pkg/DatabaseConnector/man/createConnectionDetails.html'>createConnectionDetails</a></code> function in the
+<code><a href='https://ohdsi.github.io/DatabaseConnector/reference/createConnectionDetails.html'>createConnectionDetails</a></code> function in the
 DatabaseConnector package. Can be left NULL if <code>connection</code> is
 provided.</p></td>
     </tr>
     <tr>
       <th>connection</th>
       <td><p>An object of type <code>connection</code> as created using the
-<code><a href='https://rdrr.io/pkg/DatabaseConnector/man/connect.html'>connect</a></code> function in the
+<code><a href='https://ohdsi.github.io/DatabaseConnector/reference/connect.html'>connect</a></code> function in the
 DatabaseConnector package. Can be left NULL if <code>connectionDetails</code>
 is provided, in which case a new connection will be opened at the start
 of the function, and closed when the function finishes.</p></td>
@@ -184,8 +199,12 @@ schema name, for example 'cdm_data.dbo'.</p></td>
     </tr>
     <tr>
       <th>oracleTempSchema</th>
-      <td><p>Should be used in Oracle to specify a schema where the user has write
-privileges for storing temporary tables.</p></td>
+      <td><p>DEPRECATED by DatabaseConnector: use <code>tempEmulationSchema</code> instead.</p></td>
+    </tr>
+    <tr>
+      <th>tempEmulationSchema</th>
+      <td><p>Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
+tables, provide a schema with write privileges where temp tables can be created.</p></td>
     </tr>
     <tr>
       <th>cohortDatabaseSchema</th>
@@ -228,6 +247,13 @@ SQL Server, this should include both the database and schema
 name, for example 'scratch.dbo'.</p></td>
     </tr>
     <tr>
+      <th>vocabularyDatabaseSchema</th>
+      <td><p>Schema name where your OMOP vocabulary data resides. This is 
+commonly the same as cdmDatabaseSchema. Note that for 
+SQL Server, this should include both the database and
+schema name, for example 'vocabulary.dbo'.</p></td>
+    </tr>
+    <tr>
       <th>cohortInclusionTable</th>
       <td><p>Name of the inclusion table, one of the tables for storing
 inclusion rule statistics.</p></td>
@@ -261,11 +287,11 @@ inclusion rule statistics.</p></td>
 
       <footer>
       <div class="copyright">
-  <p>Developed by Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver.</p>
+  <p>Developed by Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver, Jamie Gilbert.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.5.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
 </div>
 
       </footer>

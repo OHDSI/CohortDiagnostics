@@ -1,0 +1,38 @@
+---
+title: "Database mode in Diagnostics Explorer"
+author: "Gowtham Rao"
+date: "`r Sys.Date()`"
+output:
+  pdf_document: 
+    toc: yes     
+  html_document:
+    number_sections: yes
+    toc: yes
+vignette: >
+  %\VignetteIndexEntry{Database mode in Diagnostics Explorer}
+  %\VignetteEncoding{UTF-8}    
+  %\VignetteEngine{knitr::rmarkdown}
+---
+
+```{r, echo = FALSE, message = FALSE}
+library(SqlRender)
+knitr::opts_chunk$set(
+  cache = FALSE,
+  comment = "#>",
+  error = FALSE,
+  tidy = FALSE)
+```
+
+# Database mode
+
+We recommend the use of a database system, when file size of the cohort diagnostics output becomes large e.g. > 100mb, as using the premerged.RData may leading sluggish performance. Currently only postgres server is supported.
+
+
+We use DatabaseConnector and DbPool to manage connections between the shiny application and postgres. The recommended method to launch a Shiny application is to provide the connection details to the 'launchDiagnosticsExplorer()' shiny application. Please review the documentation of 'DatabaseConnector::createConnectionDetails()' function in the DatabaseConnector package on how to connect to the server.
+
+
+We have an example script on how to upload data to remote postgres server [here](https://github.com/OHDSI/CohortDiagnostics/blob/master/extras/UploadToDatabase.R). The 'createResultsDataModel()' function will execute a series of SQL statements to create empty target schema to hold the results of the Cohort Diagnostics. 
+
+To upload the results, we recommend that you use the 'uploadResults()' function, and provide it the path to your postgres driver.
+
+Once the data is uploaded into the postgres server - you can execute the shiny application using the 'launchDiagnosticsExplorer()' function. Please provide the connection details, along with the schema that you have uploaded your results (resultsDatabaseSchema). 

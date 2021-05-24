@@ -2,11 +2,12 @@
 .Rhistory
 .RData
 .Ruserdata
-*.RData
-inst/shiny/DiagnosticsExplorer/data/phenotypeDescription.csv
-inst/shiny/DiagnosticsExplorer/data/cohortDescription.csv
 *.zip
 errorReportSql.txt
 errorReportR.txt
 *.tex
 .DS_Store
+*.history
+.RDataTmp
+*.log
+*log.txt

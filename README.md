@@ -1,7 +1,7 @@
 CohortDiagnostics
 =================
 
-[![Build Status](https://travis-ci.org/OHDSI/CohortDiagnostics.svg?branch=master)](https://travis-ci.org/OHDSI/CohortDiagnostics)
+[![Build Status](https://github.com/OHDSI/CohortDiagnostics/workflows/R-CMD-check/badge.svg)](https://github.com/OHDSI/CohortDiagnostics/actions?query=workflow%3AR-CMD-check)
 [![codecov.io](https://codecov.io/github/OHDSI/CohortDiagnostics/coverage.svg?branch=master)](https://codecov.io/github/OHDSI/CohortDiagnostics?branch=master)
 
 CohortDiagnostics is part of [HADES](https://ohdsi.github.io/Hades).
@@ -18,7 +18,7 @@ Features
 - Compute cohort incidence across calendar years, age, and gender.
 - Break down index events into the specific concepts that triggered them.
 - Compute overlap between two cohorts.
-- Characterize cohorts, and compare these characterizations.
+- Characterize cohorts, and compare these characterizations. Perform cohort comparison and temporal comparisons. 
 - Explore patient profiles of a random sample of subjects in a cohort.
 
 Screenshot
@@ -41,7 +41,7 @@ Installation
 2. In R, use the following commands to download and install CohortDiagnostics:
 
   ```r
-  remotes::install.github("OHDSI/CohortDiagnostics")
+  remotes::install_github("OHDSI/CohortDiagnostics")
 ```
 
 User Documentation
@@ -50,7 +50,13 @@ Documentation can be found on the [package website](https://ohdsi.github.io/Coho
 
 PDF versions of the documentation are also available:
 * Package manual: [CohortDiagnostics manual](https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/extras/CohortDiagnostics.pdf) 
+* Vignette: [What is Cohort Diagnostics](https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/WhatIsCohortDiagnostics.pdf)
+* Vignette: [Running Cohort Diagnostics](https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/RunningCohortDiagnostics.pdf)
 * Vignette: [Running cohort diagnostics using WebAPI](https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/CohortDiagnosticsUsingWebApi.pdf)
+* Vignette: [Running cohort diagnostics in OHDSI Package mode WebAPI](https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/CohortDiagnosticsInPackageMode.pdf)
+* Vignette: [Running cohort diagnostics using WebApi WebAPI](https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/CohortDiagnosticsUsingWebApi.pdf)
+* Vignette: [Database Mode in Diagnostics Explorer](https://raw.githubusercontent.com/OHDSI/CohortDiagnostics/master/inst/doc/DatabaseModeInDiagnosticsExplorer.pdf)
+
 
 Support
 =======
@@ -71,4 +77,4 @@ CohortDiagnostics is being developed in R Studio.
 
 ### Development status
 
-Beta testing
+Stable

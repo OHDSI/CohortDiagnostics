@@ -6,6 +6,9 @@ IF OBJECT_ID('tempdb..#cohort_inc_stats', 'U') IS NOT NULL
   
 IF OBJECT_ID('tempdb..#cohort_summary_stats', 'U') IS NOT NULL 
   DROP TABLE #cohort_summary_stats;
+  
+IF OBJECT_ID('@results_schema.cohort_censor_stats', 'U') IS NOT NULL
+  DROP TABLE #cohort_censor_stats;
 
 CREATE TABLE #cohort_inc_result (
 	cohort_definition_id BIGINT NOT NULL,
@@ -29,3 +32,8 @@ CREATE TABLE #cohort_summary_stats (
 	final_count BIGINT NOT NULL,
 	mode_id INT
 	);
+
+CREATE TABLE #cohort_censor_stats (
+  cohort_definition_id int NOT NULL,
+  lost_count BIGINT NOT NULL
+);

@@ -6,11 +6,12 @@
 \usage{
 launchDiagnosticsExplorer(
   dataFolder = "data",
+  dataFile = "PreMerged.RData",
   connectionDetails = NULL,
   resultsDatabaseSchema = NULL,
-  vocabularyDatabaseSchema = resultsDatabaseSchema,
-  cohortBaseUrl = "https://atlas.ohdsi.org/#/cohortdefinition/",
-  conceptBaseUrl = "https://athena.ohdsi.org/search-terms/terms/",
+  vocabularyDatabaseSchema = NULL,
+  vocabularyDatabaseSchemas = resultsDatabaseSchema,
+  aboutText = NULL,
   runOverNetwork = FALSE,
   port = 80,
   launch.browser = FALSE
@@ -20,23 +21,27 @@ launchDiagnosticsExplorer(
 \item{dataFolder}{A folder where the premerged file is stored. Use
 the \code{\link{preMergeDiagnosticsFiles}} function to generate this file.}
 
+\item{dataFile}{(Optional) The name of the .RData file with results. It is commonly known as the
+Premerged file.}
+
 \item{connectionDetails}{An object of type \code{connectionDetails} as created using the
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
 DatabaseConnector package, specifying how to connect to the server where
-the CohortDiagnostics results have been uploaded using the 
+the CohortDiagnostics results have been uploaded using the
 \code{\link{uploadResults}} function.}
 
-\item{resultsDatabaseSchema}{The schema on the database server where the CohortDiagnostics results 
+\item{resultsDatabaseSchema}{The schema on the database server where the CohortDiagnostics results
 have been uploaded.}
 
-\item{vocabularyDatabaseSchema}{The schema on the database server where the vocabulary tables are located.}
+\item{vocabularyDatabaseSchema}{(Deprecated) Please use vocabularyDatabaseSchemas.}
 
-\item{cohortBaseUrl}{The base URL for constructing linkouts to an ATLAS instance, using the 
-webApiCohortId in the cohortsToCreate file. If NULL, no linkouts will be 
-created.}
+\item{vocabularyDatabaseSchemas}{(optional) A list of one or more schemas on the database server where the vocabulary tables are located.
+The default value is the value of the resultsDatabaseSchema. We can provide a list of vocabulary schema
+that might represent different versions of the OMOP vocabulary tables. It allows us to compare the impact
+of vocabulary changes on Diagnostics.}
 
-\item{conceptBaseUrl}{The base URL for constructing linkouts to an Athena instance, using the
-concept ID.}
+\item{aboutText}{Text (using HTML markup) that will be displayed in an About tab in the Shiny app.
+If not provided, no About tab will be shown.}
 
 \item{runOverNetwork}{(optional) Do you want the app to run over your network?}
 

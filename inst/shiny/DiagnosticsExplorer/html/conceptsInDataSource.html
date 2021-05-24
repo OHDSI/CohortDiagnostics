@@ -1,0 +1,14 @@
+<h3>Description</h3>
+<p>A table showing the concept ids observed in the database that are included in a concept set(s) of the selected cohort. The Subjects column contains the number of subjects in the entire database that have the specific concept. This count is <em>not</em> restricted to people in the cohort - but represents a database level characterization. Source concepts are identified in the _source_concept_id fields of the Common Data Model, (e.g. drug_source_concept_id) and are used to identify the specific source codes used in a database. Standard concepts are found using the _concept_id fields (e.g. drug_concept_id), and use the same coding system across all databases. Note: Per CDM conventions standard concept ids, may be used to populate _source_concept_id fields in domain tables, but non-standard concept ids may not be used to populate the standard fields in those domain tables. </p>
+
+<h3>Options</h3>
+<p>You can select a database in the side bar to see the concepts and counts observed in that database.</p>
+<p>Select the cohort and the specific concept set within that cohort to explore in the side bar.</p>
+<p>You can switch between Source Concepts and Standard Concepts at the top of the table.</p>
+
+<h3>What to look for</h3>
+<ul>
+<li>Are there source codes included that should not be? For example, in a concept set for hypertensive disorder, are hypotension codes included by accident?</li>
+<li>Are all expected codes present? For example, if we have a list of ICD-10 codes that have been used in literature to identify a cohort, are all those codes present?</li>
+</ul>
+

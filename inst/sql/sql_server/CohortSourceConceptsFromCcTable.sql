@@ -13,7 +13,7 @@ SELECT codeset_id AS concept_set_id,
 	source_concept.concept_count,
 	source_concept.concept_subjects
 FROM #Codesets codesets
-INNER JOIN @cdm_database_schema.concept standard_concept
+INNER JOIN @vocabulary_database_schema.concept standard_concept
 	ON standard_concept.concept_id = codesets.concept_id
 INNER JOIN (
   SELECT concept_id_2 AS standard_concept_id,
@@ -23,8 +23,8 @@ INNER JOIN (
     concept.vocabulary_id,
 	concept_count,
 	concept_subjects
-  FROM @cdm_database_schema.concept_relationship
-  INNER JOIN @cdm_database_schema.concept
+  FROM @vocabulary_database_schema.concept_relationship
+  INNER JOIN @vocabulary_database_schema.concept
   	ON concept.concept_id = concept_id_1
 {@concept_counts_table_is_temp} ? {		
   INNER JOIN @concept_counts_table concept_counts

@@ -1,0 +1,6 @@
+cohortName,ruleSequence,ruleName,cohortId
+14907,0,With no history of gastrointestinal hemorrhage,14907
+18349,0,Gender is male,18349
+18350,0,Gender is male,18350
+18350,1,Metabolic disease at any time,18350
+18352,0,With gastrointestinal hemorrhage at some point,18352

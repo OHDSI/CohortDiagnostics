@@ -141,7 +141,7 @@
   <span class='kw'>cdmDatabaseSchema</span>,
   <span class='kw'>databaseId</span>,
   conceptSetsConceptId = <span class='st'>"#resolved_concept_set"</span>,
-  oracleTempSchema = <span class='kw'>NULL</span>,
+  tempEmulationSchema = <span class='kw'>NULL</span>,
   <span class='kw'>cohort</span>
 )</pre>
 
@@ -165,7 +165,7 @@ provided.</p></td>
     </tr>
     <tr>
       <th>cdmDatabaseSchema</th>
-      <td><p>DatabaseSchema where the omop vocabulary files are located.</p></td>
+      <td><p>DatabaseSchema where the OMOP vocabulary files are located.</p></td>
     </tr>
     <tr>
       <th>databaseId</th>
@@ -176,7 +176,7 @@ provided.</p></td>
       <td><p>Table to store the output on the database system. This is a temporary table.</p></td>
     </tr>
     <tr>
-      <th>oracleTempSchema</th>
+      <th>tempEmulationSchema</th>
       <td><p>Should be used in Oracle to specify a schema where the user has write
 privileges for storing temporary tables.</p></td>
     </tr>
