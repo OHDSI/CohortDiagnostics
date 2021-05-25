@@ -1592,6 +1592,30 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
+  
+  # Time Series ----------------------------------------------------------------------------------
+  timeSeries <- reactive({
+    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
+    validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
+    data <- getTimeSeriesResult(
+      dataSource = dataSource,
+      cohortIds = cohortIds(),
+      databaseIds = databaseIds()
+    )
+    if(input$timeSeriesFilter != "None") 
+    {
+      calenderIntervalFirstLetter <- tolower(substr(input$timeSeriesFilter,1,1))
+      data <- data %>% 
+        dplyr::filter(.data$calendarInterval == calenderIntervalFirstLetter)
+    }
+    return(data)
+  })
+  
+  output$timeSeriesTable <- DT::renderDataTable({
+    data <- timeSeries()
+    return(data)
+  })
+  
   # Time distribution -----------------------------------------------------------------------------
   timeDist <- reactive({
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
@@ -4319,6 +4343,10 @@ shiny::shinyServer(function(input, output, session) {
       selectedCohorts()
     })
   output$incidenceRateSelectedCohorts <-
+    shiny::renderUI({
+      selectedCohorts()
+    })
+  output$timeSeriesSelectedCohorts <-
     shiny::renderUI({
       selectedCohorts()
     })
