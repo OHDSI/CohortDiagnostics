@@ -3437,6 +3437,15 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
   })
   
+  output$saveCohortOverlapTable <-  downloadHandler(
+    filename = function() {
+      getFormattedFileName(fileName = "cohortOverlap")
+    },
+    content = function(file) {
+      write.csv(cohortOverlapData(), file)
+    }
+  )
+  
   # Compare cohort characteristics --------------------------------------------
   charCompareAnalysisNameFilter <- shiny::reactive(x = {
     return(input$charCompareAnalysisNameFilter)

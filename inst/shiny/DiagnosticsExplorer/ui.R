@@ -990,12 +990,26 @@ bodyTabItems <- shinydashboard::tabItems(
       title = "Cohort Overlap (Subjects)",
       width = NULL,
       status = "primary",
-      shiny::radioButtons(
-        inputId = "overlapPlotType",
-        label = "",
-        choices = c("Percentages", "Counts"),
-        selected = "Percentages",
-        inline = TRUE
+      tags$table(width = "100%", 
+                 tags$tr(
+                   tags$td(
+                     shiny::radioButtons(
+                       inputId = "overlapPlotType",
+                       label = "",
+                       choices = c("Percentages", "Counts"),
+                       selected = "Percentages",
+                       inline = TRUE
+                     )
+                   ),
+                   tags$td(align = "right",
+                           shiny::downloadButton(
+                             "saveCohortOverlapTable",
+                             label = "",
+                             icon = shiny::icon("download"),
+                             style = "margin-top: 5px; margin-bottom: 5px;"
+                           )
+                   )
+                 )
       ),
       ggiraph::ggiraphOutput("overlapPlot", width = "100%", height = "100%")
     )
