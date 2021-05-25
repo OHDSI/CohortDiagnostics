@@ -198,8 +198,13 @@ CREATE TABLE database (
 			database_name VARCHAR,
 			description VARCHAR,
 			is_meta_analysis VARCHAR(1) NOT NULL,
+			observation_period_min_date DATE NOT NULL,
+			observation_period_max_date DATE NOT NULL,
+			persons BIGINT,
+			records BIGINT,
+			person_days BIGINT,,
 			vocabulary_version VARCHAR,
-			vocabulary_version_cdm VARCHAR,
+			vocabulary_version_cdm VARCHAR
 			PRIMARY KEY(database_id)
 );
 
