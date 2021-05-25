@@ -789,8 +789,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       
       calendarQuarter <- dplyr::tibble(periodBegin = clock::date_seq(from = clock::date_build(year = max(2000,
                                                                                                          cohortDateRange$minYear %>% as.integer())), 
-                                                                     to = clock::date_build(year = min(clock::get_year(clock::date_today("GMT")),
-                                                                                                       (cohortDateRange$maxYear %>% as.integer())) 
+                                                                     to = clock::date_build(year = cohortDateRange$maxYear %>% as.integer() 
                                                                                             + 1), 
                                                                      by = clock::duration_months(3))) %>% 
         dplyr::mutate(periodEnd = clock::add_months(x = .data$periodBegin, n = 3) - 1) %>% 
@@ -798,8 +797,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       
       calendarMonth <- dplyr::tibble(periodBegin = clock::date_seq(from = clock::date_build(year = max(2000,
                                                                                                        cohortDateRange$minYear %>% as.integer())), 
-                                                                   to = clock::date_build(year = min(clock::get_year(clock::date_today("GMT")),
-                                                                                                     (cohortDateRange$maxYear %>% as.integer())) 
+                                                                   to = clock::date_build(year = cohortDateRange$maxYear %>% as.integer()
                                                                                           + 1), 
                                                                    by = clock::duration_months(1))) %>% 
         dplyr::mutate(periodEnd = clock::add_months(x = .data$periodBegin, n = 1) - 1) %>% 
