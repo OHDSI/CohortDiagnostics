@@ -620,8 +620,8 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::rename("conceptId" = .data$sourceConceptId)
       ) %>% 
         dplyr::group_by(.data$conceptId) %>% 
-        dplyr::summarise(conceptSubjects = max(conceptSubjects),
-                         conceptCount = max(conceptCount)) %>% 
+        dplyr::summarise(conceptSubjects = conceptSubjects,
+                         conceptCount = conceptCount) %>% 
         dplyr::distinct() %>% 
         dplyr::ungroup() %>% 
         dplyr::arrange(dplyr::desc(.data$conceptCount))
@@ -753,6 +753,19 @@ shiny::shinyServer(function(input, output, session) {
       validate(need((all(!is.null(data), nrow(data) > 0)),
                     "No resolved or mapped concept ids"))
       
+      columnDef <- list(
+        truncateStringDef(1, 80)
+      )
+      maxCount <- NULL
+      maxSubject <- NULL
+      if ("subjects" %in% colnames(data) && "count" %in% colnames(data)) {
+        columnDef <- list(
+          truncateStringDef(1, 80),minCellCountDef(2:3))
+        
+        maxCount <- max(data$count)
+        maxSubject <- max(data$subjects)
+      }
+      
       options = list(
         pageLength = 1000,
         lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
@@ -764,9 +777,7 @@ shiny::shinyServer(function(input, output, session) {
         searchHighlight = TRUE,
         scrollX = TRUE,
         scrollY = "20vh",
-        columnDefs = list(
-          truncateStringDef(1, 80)
-        )
+        columnDefs = columnDef
       )
       
       dataTable <- DT::datatable(
@@ -778,6 +789,23 @@ shiny::shinyServer(function(input, output, session) {
         selection = 'single',
         filter = "top",
         class = "stripe nowrap compact"
+      )
+      
+      dataTable <- DT::formatStyle(
+        table = dataTable,
+        columns =  3,
+        background = DT::styleColorBar(c(0, maxSubject), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+      dataTable <- DT::formatStyle(
+        table = dataTable,
+        columns =  4,
+        background = DT::styleColorBar(c(0, maxCount), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
       )
       return(dataTable)
     }, server = TRUE)
@@ -806,6 +834,20 @@ shiny::shinyServer(function(input, output, session) {
           conceptId = as.character(.data$conceptId),
           # conceptName = as.factor(.data$conceptName),
           vocabularyId = as.factor(.data$vocabularyId))
+      
+      columnDef <- list(
+        truncateStringDef(2, 80)
+      )
+      
+      maxCount <- NULL
+      maxSubject <- NULL
+      if ("subjects" %in% colnames(data) && "count" %in% colnames(data)) {
+        columnDef <- list(
+          truncateStringDef(1, 80),minCellCountDef(2:3))
+        
+        maxCount <- max(data$count)
+        maxSubject <- max(data$subjects)
+      }
       options = list(
         pageLength = 100,
         lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
@@ -817,9 +859,7 @@ shiny::shinyServer(function(input, output, session) {
         searchHighlight = TRUE,
         scrollX = TRUE,
         scrollY = "20vh",
-        columnDefs = list(
-          truncateStringDef(2, 80)
-        )
+        columnDefs = columnDef
       )
       
       dataTable <- DT::datatable(
@@ -831,6 +871,24 @@ shiny::shinyServer(function(input, output, session) {
         selection = 'single',
         filter = "top",
         class = "stripe nowrap compact"
+      )
+      
+      dataTable <- DT::formatStyle(
+        table = dataTable,
+        columns =  3,
+        background = DT::styleColorBar(c(0, maxSubject), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+      
+      dataTable <- DT::formatStyle(
+        table = dataTable,
+        columns =  4,
+        background = DT::styleColorBar(c(0, maxCount), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
       )
       return(dataTable)
     }, server = TRUE)
