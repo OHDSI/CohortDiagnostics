@@ -38,7 +38,9 @@ runCohortDiagnostics(
   runTemporalCohortCharacterization = TRUE,
   temporalCovariateSettings = createTemporalCovariateSettings(useConditionOccurrence =
     TRUE, useDrugEraStart = TRUE, useProcedureOccurrence = TRUE, useMeasurement = TRUE,
-    temporalStartDays = c(-365, -30, 0, 1, 31), temporalEndDays = c(-31, -1, 0, 30, 365)),
+    temporalStartDays = c(-365, -30, 0, 1, 31, seq(from = -421, to = -31, by = 30),
+    seq(from = 0, to = 390, by = 30)), temporalEndDays = c(-31, -1, 0, 30, 365, seq(from
+    = -391, to = -1, by = 30), seq(from = 30, to = 420, by = 30))),
   minCellCount = 5,
   incremental = FALSE,
   incrementalFolder = file.path(exportFolder, "incremental")
