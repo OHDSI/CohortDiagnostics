@@ -789,7 +789,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       
       calendarQuarter <- dplyr::tibble(periodBegin = clock::date_seq(from = clock::date_build(year = max(2000,
                                                                                                          cohortDateRange$minYear %>% as.integer())), 
-                                                                     to = clock::date_build(year = min(clock::get_year(clock::date_today("")),
+                                                                     to = clock::date_build(year = min(clock::get_year(clock::date_today("GMT")),
                                                                                                        (cohortDateRange$maxYear %>% as.integer())) 
                                                                                             + 1), 
                                                                      by = clock::duration_months(3))) %>% 
@@ -798,7 +798,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       
       calendarMonth <- dplyr::tibble(periodBegin = clock::date_seq(from = clock::date_build(year = max(2000,
                                                                                                        cohortDateRange$minYear %>% as.integer())), 
-                                                                   to = clock::date_build(year = min(clock::get_year(clock::date_today("")),
+                                                                   to = clock::date_build(year = min(clock::get_year(clock::date_today("GMT")),
                                                                                                      (cohortDateRange$maxYear %>% as.integer())) 
                                                                                           + 1), 
                                                                    by = clock::duration_months(1))) %>% 
