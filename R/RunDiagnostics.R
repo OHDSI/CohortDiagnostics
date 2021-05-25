@@ -367,6 +367,18 @@ runCohortDiagnostics <- function(packageName = NULL,
   
   # Database metadata ---------------------------------------------
   ParallelLogger::logInfo("Saving database metadata")
+  observationPeriodDateRange <- DatabaseConnector::renderTranslateQuerySql(
+    connection = connection,
+    sql = "SELECT MIN(observation_period_start_date) observation_period_min_date, 
+             MAX(observation_period_end_date) observation_period_max_date,
+             COUNT(distinct person_id) persons,
+             COUNT(person_id) records,
+             SUM(DATEDIFF(dd, observation_period_start_date, observation_period_end_date)) personDays
+             FROM @cdm_database_schema.observation_period;",
+    cdm_database_schema = cdmDatabaseSchema,
+    snakeCaseToCamelCase = TRUE,
+    tempEmulationSchema = tempEmulationSchema
+  )
   startMetaData <- Sys.time()
   database <- dplyr::tibble(
     databaseId = databaseId,
@@ -374,7 +386,12 @@ runCohortDiagnostics <- function(packageName = NULL,
     description = dplyr::coalesce(databaseDescription, databaseId),
     vocabularyVersionCdm = !!vocabularyVersionCdm,
     vocabularyVersion = !!vocabularyVersion,
-    isMetaAnalysis = 0
+    isMetaAnalysis = 0,
+    observationPeriodMinDate = observationPeriodDateRange$observationPeriodMinDate,
+    observationPeriodMaxDate = observationPeriodDateRange$observationPeriodMaxDate,
+    persons = observationPeriodDateRange$persons,
+    records = observationPeriodDateRange$records,
+    personDays = observationPeriodDateRange$personDays
   )
   writeToCsv(data = database,
              fileName = file.path(exportFolder, "database.csv"))
