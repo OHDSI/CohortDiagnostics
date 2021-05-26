@@ -883,3 +883,24 @@ plotCohortOverlap <- function(data,
   )
   return(plot)
 }
+
+
+
+plotTsStlDecomposition <- function(data,
+                                   field) {
+  if (!field %in% colnames(data)) {
+    return(NULL)
+  }
+  data[["value"]] <- abs(data[[field]])
+  ts <- data %>% 
+    dplyr::select("value") %>% 
+    tsibble::fill_gaps(value = 0)
+  tsModel <- ts %>% 
+    fabletools::model(feasts::STL(value))
+  
+  plot <- fabletools::components(tsModel) %>% 
+    feasts::autoplot()
+  
+  return(plot)
+  
+}
