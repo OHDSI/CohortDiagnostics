@@ -73,7 +73,9 @@ getCohortCountResult <- function(dataSource = .GlobalEnv,
 getTimeSeriesResult <- function(dataSource = .GlobalEnv,
                                 cohortIds = NULL,
                                 databaseIds,
-                                calendarInterval = 'm'
+                                calendarInterval = 'm',
+                                minDate = NULL,
+                                maxDate = NULL
 ) {
   if (is(dataSource, "environment")) {
     data <- timeSeries %>% 
@@ -105,6 +107,18 @@ getTimeSeriesResult <- function(dataSource = .GlobalEnv,
     dplyr::arrange(.data$databaseId, .data$cohortId, .data$periodBegin) %>% 
     tsibble::as_tsibble(key = c(.data$cohortId,.data$databaseId), 
                         index = .data$periodBegin) 
+  
+  if (all(!is.null(minDate),
+          is.na.POSIXlt(minDate))) {
+    data <- data %>% 
+      dplyr::filter(.data$periodBegin >= minDate)
+  }
+  
+  if (all(!is.null(maxDate),
+          is.na.POSIXlt(maxDate))) {
+    data <- data %>% 
+      dplyr::filter(.data$periodBegin < maxDate)
+  }
   return(data)
 }
 

@@ -1660,7 +1660,9 @@ shiny::shinyServer(function(input, output, session) {
       dataSource = dataSource,
       cohortIds = cohortIds(),
       databaseIds = databaseIds(),
-      calendarInterval = calenderIntervalFirstLetter
+      calendarInterval = calenderIntervalFirstLetter,
+      minDate = NULL,
+      maxDate = NULL
     )
     return(data)
   })
