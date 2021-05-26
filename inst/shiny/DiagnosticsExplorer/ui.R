@@ -83,7 +83,7 @@ sidebarMenu <-
       ),
     if (exists("timeSeries"))
       addInfo(
-        item = shinydashboard::menuItem(text = "Time Seies", tabName = "timeSeries"),
+        item = shinydashboard::menuItem(text = "Time Series", tabName = "timeSeries"),
         infoId = "timeSeriesInfo"
       ),
     if (exists("timeDistribution"))
