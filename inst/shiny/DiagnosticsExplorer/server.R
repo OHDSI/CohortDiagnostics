@@ -2217,26 +2217,28 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   # Inclusion rules table -----------------------------------------------------------------------
+  
+  inclusionRuleTableData <- shiny::reactive(x = {
+    data <- getInclusionRuleStats(
+      dataSource = dataSource,
+      cohortIds = cohortId(),
+      databaseIds = databaseIds()
+    )
+    return(data)
+  })
+  
   output$saveInclusionRuleTable <-  downloadHandler(
     filename = function() {
       getFormattedFileName(fileName = "inclusionRule")
     },
     content = function(file) {
-      write.csv(getInclusionRuleStats(
-        dataSource = dataSource,
-        cohortIds = cohortId(),
-        databaseIds = databaseIds()
-      ), file)
+      write.csv(inclusionRuleTableData(), file)
     }
   )
   
   output$inclusionRuleTable <- DT::renderDataTable(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
-    table <- getInclusionRuleStats(
-      dataSource = dataSource,
-      cohortIds = cohortId(),
-      databaseIds = databaseIds()
-    )
+    table <- inclusionRuleTableData()
     
     validate(need((nrow(table) > 0),
              "There is no data for the selected combination."))
@@ -2358,6 +2360,14 @@ shiny::shinyServer(function(input, output, session) {
     }
     return(table)
   }, server = TRUE)
+  
+  output$inclusionRuleStatsContainsData <- shiny::reactive({
+    return(nrow(inclusionRuleTableData()) > 0)
+  })
+  
+  outputOptions(output,
+                "inclusionRuleStatsContainsData",
+                suspendWhenHidden = FALSE)
   
   # Index event breakdown ----------------------------------------------------------------
   
