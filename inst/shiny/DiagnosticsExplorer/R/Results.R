@@ -71,32 +71,41 @@ getCohortCountResult <- function(dataSource = .GlobalEnv,
 
 
 getTimeSeriesResult <- function(dataSource = .GlobalEnv,
-                                 cohortIds = NULL,
-                                 databaseIds) {
+                                cohortIds = NULL,
+                                databaseIds,
+                                calendarInterval = 'm'
+) {
   if (is(dataSource, "environment")) {
     data <- timeSeries %>% 
       dplyr::filter(.data$databaseId %in% !!databaseIds) 
     if (!is.null(cohortIds)) {
       data <- data %>% 
-        dplyr::filter(.data$cohortId %in% !!cohortIds) 
+        dplyr::filter(.data$cohortId %in% !!cohortIds) %>% 
+        dplyr::filter(.data$databaseId %in% !!databaseIds) %>% 
+        dplyr::filter(.data$calendarInterval %in% !!calendarInterval)
     }
   } else {
     sql <- "SELECT *
             FROM  @results_database_schema.time_series
-            WHERE database_id in (@database_id)
+            WHERE calendar_interval in (@calendar_interval)
+            {@database_ids != ''} ? {  AND database_id in (@database_ids)}
             {@cohort_ids != ''} ? {  AND cohort_id in (@cohort_ids)}
             ;"
     data <- renderTranslateQuerySql(connection = dataSource$connection,
                                     sql = sql,
                                     results_database_schema = dataSource$resultsDatabaseSchema,
                                     cohort_ids = cohortIds,
-                                    database_id = quoteLiterals(databaseIds), 
+                                    database_ids = quoteLiterals(databaseIds), 
+                                    calendar_interval = calendarInterval,
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   }
   data <- data %>% 
-    tsibble::as_tsibble(key = c(.data$cohortId,.data$databaseId,.data$calendarInterval), index = .data$periodBegin) 
- return(data)
+    dplyr::select(-.data$calendarInterval) %>% 
+    dplyr::arrange(.data$databaseId, .data$cohortId, .data$periodBegin) %>% 
+    tsibble::as_tsibble(key = c(.data$cohortId,.data$databaseId), 
+                        index = .data$periodBegin) 
+  return(data)
 }
 
 getTimeDistributionResult <- function(dataSource = .GlobalEnv,

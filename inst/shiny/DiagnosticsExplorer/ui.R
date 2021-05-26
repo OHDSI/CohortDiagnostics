@@ -711,9 +711,9 @@ bodyTabItems <- shinydashboard::tabItems(
       solidHeader = TRUE,
       shiny::radioButtons(
         inputId = "timeSeriesFilter",
-        label = "Filter By",
-        choices = c("None","Monthly", "Quaterly","Yearly"),
-        selected = "None",
+        label = "Aggregation period:",
+        choices = c("Monthly", "Quaterly","Yearly"),
+        selected = "Monthly",
         inline = TRUE
       ),
       shiny::conditionalPanel(

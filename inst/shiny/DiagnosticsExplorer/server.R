@@ -1655,17 +1655,13 @@ shiny::shinyServer(function(input, output, session) {
   timeSeries <- reactive({
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
+    calenderIntervalFirstLetter <- tolower(substr(input$timeSeriesFilter,1,1))
     data <- getTimeSeriesResult(
       dataSource = dataSource,
       cohortIds = cohortIds(),
-      databaseIds = databaseIds()
+      databaseIds = databaseIds(),
+      calendarInterval = calenderIntervalFirstLetter
     )
-    if(input$timeSeriesFilter != "None") 
-    {
-      calenderIntervalFirstLetter <- tolower(substr(input$timeSeriesFilter,1,1))
-      data <- data %>% 
-        dplyr::filter(.data$calendarInterval == calenderIntervalFirstLetter)
-    }
     return(data)
   })
   
