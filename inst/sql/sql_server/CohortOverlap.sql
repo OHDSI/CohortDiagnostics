@@ -1,4 +1,4 @@
-SELECT u.target_cohort_id,
+SELECT DISTINCT u.target_cohort_id,
 	u.comparator_cohort_id,
 	u.num_persons_in_either AS either_subjects,
 	u.num_persons_in_both AS both_subjects,
@@ -49,10 +49,11 @@ FROM (
 		FROM @cohort_database_schema.@cohort_table
 		WHERE cohort_definition_id IN (@comparator_cohort_ids)
 		) c1 ON all_persons.subject_id = c1.subject_id
+	WHERE t1.target_cohort_id != c1.comparator_cohort_id
 	GROUP BY t1.target_cohort_id,
 		c1.comparator_cohort_id
 	) u
-INNER JOIN (
+LEFT JOIN (
 	SELECT t1.target_cohort_id,
 		c1.comparator_cohort_id,
 		SUM(CASE 
@@ -103,7 +104,9 @@ INNER JOIN (
 			subject_id
 		) c1 ON t1.target_cohort_id = c1.comparator_cohort_id
 		AND t1.subject_id = c1.subject_id
+	WHERE t1.target_cohort_id != c1.comparator_cohort_id
 	GROUP BY t1.target_cohort_id,
 		c1.comparator_cohort_id
 	) i ON u.target_cohort_id = i.target_cohort_id
-	AND u.comparator_cohort_id = i.comparator_cohort_id;
+	AND u.comparator_cohort_id = i.comparator_cohort_id
+	ORDER BY u.target_cohort_id, u.comparator_cohort_id;

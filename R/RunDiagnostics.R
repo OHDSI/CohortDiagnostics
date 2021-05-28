@@ -939,7 +939,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     
     combis <- tidyr::crossing(combis %>% dplyr::rename("targetCohortId" = .data$cohortId),
                               combis %>% dplyr::rename("comparatorCohortId" = .data$cohortId)) %>%
-      dplyr::filter(.data$targetCohortId < .data$comparatorCohortId) %>%
+      dplyr::filter(.data$targetCohortId != .data$comparatorCohortId) %>%
       dplyr::select(.data$targetCohortId, .data$comparatorCohortId) %>%
       dplyr::distinct()
     
@@ -1015,7 +1015,11 @@ runCohortDiagnostics <- function(packageName = NULL,
         data <- data %>%
           dplyr::mutate(dplyr::across(.cols = everything(), ~ tidyr::replace_na(
             data = ., replace = 0
-          )))
+          ))) %>% 
+          dplyr::select(.data$eitherSubjects, .data$bothSubjects, .data$tOnlySubjects,
+                        .data$cOnlySubjects, .data$tBeforeCSubjects, .data$cBeforeTSubjects,
+                        .data$sameDaySubjects, .data$tInCSubjects, .data$cInTSubjects,
+                        .data$targetCohortId, .data$comparatorCohortId, .data$databaseId)
         
         writeToCsv(
           data = data,
