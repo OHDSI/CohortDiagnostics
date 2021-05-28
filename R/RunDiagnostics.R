@@ -934,14 +934,11 @@ runCohortDiagnostics <- function(packageName = NULL,
     startCohortOverlap <- Sys.time()
     
     combis <- cohorts %>%
-      dplyr::select(.data$phenotypeId, .data$cohortId) %>%
+      dplyr::select(.data$cohortId) %>%
       dplyr::distinct()
     
-    combis <- combis %>%
-      dplyr::rename(targetCohortId = .data$cohortId) %>%
-      dplyr::inner_join(combis %>%
-                          dplyr::rename(comparatorCohortId = .data$cohortId),
-                        by = "phenotypeId") %>%
+    combis <- tidyr::crossing(combis %>% dplyr::rename("targetCohortId" = .data$cohortId),
+                              combis %>% dplyr::rename("comparatorCohortId" = .data$cohortId)) %>%
       dplyr::filter(.data$targetCohortId < .data$comparatorCohortId) %>%
       dplyr::select(.data$targetCohortId, .data$comparatorCohortId) %>%
       dplyr::distinct()
@@ -978,32 +975,13 @@ runCohortDiagnostics <- function(packageName = NULL,
       ))
     }
     if (nrow(subset) > 0) {
-      runCohortOverlap <- function(row) {
-        ParallelLogger::logInfo(
-          "- Computing overlap for cohorts ",
-          row$targetCohortId,
-          " and ",
-          row$comparatorCohortId
-        )
-        data <- computeCohortOverlap(
-          connection = connection,
-          cohortDatabaseSchema = cohortDatabaseSchema,
-          cohortTable = cohortTable,
-          targetCohortId = row$targetCohortId,
-          comparatorCohortId = row$comparatorCohortId
-        )
-        if (nrow(data) > 0) {
-          data <- data %>%
-            dplyr::mutate(
-              targetCohortId = row$targetCohortId,
-              comparatorCohortId = row$comparatorCohortId
-            )
-        }
-        return(data)
-      }
-      data <-
-        lapply(split(subset, 1:nrow(subset)), runCohortOverlap)
-      data <- dplyr::bind_rows(data)
+      data <- computeCohortOverlap(
+        connection = connection,
+        cohortDatabaseSchema = cohortDatabaseSchema,
+        cohortTable = cohortTable,
+        targetCohortId = combis$targetCohortId %>% unique(),
+        comparatorCohortId = combis$comparatorCohortId %>% unique()
+      )
       if (nrow(data) > 0) {
         revData <- data
         revData <-

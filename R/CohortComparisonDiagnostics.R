@@ -21,56 +21,14 @@ computeCohortOverlap <- function(connectionDetails = NULL,
                                  targetCohortIds,
                                  comparatorCohortIds,
                                  batchSize = 200) {
-  start <- Sys.time()
+  startTime <- Sys.time()
   
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
   
-  ## commenting out checks if cohort is instantiated, as this is not essential.
-  ## if a cohort has 0 records, the overlap query will return NULL
-  # if (!checkIfCohortInstantiated(
-  #   connection = connection,
-  #   cohortDatabaseSchema = cohortDatabaseSchema,
-  #   cohortTable = cohortTable,
-  #   cohortId = targetCohortId
-  # )) {
-  #   warning(
-  #     "- Target cohort with ID ",
-  #     targetCohortId,
-  #     " appears to be empty. Was it instantiated? Skipping overlap computation."
-  #   )
-  #   delta <- Sys.time() - start
-  #   ParallelLogger::logInfo(paste(
-  #     "Computing overlap took",
-  #     signif(delta, 3),
-  #     attr(delta, "units")
-  #   ))
-  #   return(tidyr::tibble())
-  # }
-  
-  # if (!checkIfCohortInstantiated(
-  #   connection = connection,
-  #   cohortDatabaseSchema = cohortDatabaseSchema,
-  #   cohortTable = cohortTable,
-  #   cohortId = comparatorCohortId
-  # )) {
-  #   warning(
-  #     "- Comparator cohort with ID ",
-  #     comparatorCohortId,
-  #     " appears to be empty. Was it instantiated? Skipping overlap computation."
-  #   )
-  #   delta <- Sys.time() - start
-  #   ParallelLogger::logInfo(paste(
-  #     "Computing overlap took",
-  #     signif(delta, 3),
-  #     attr(delta, "units")
-  #   ))
-  #   return(tidyr::tibble())
-  # }
-  
-  cohortIds <- c(targetCohortIds, comparatorCohortIds) %>% unique() %>% arrange()
+  cohortIds <- c(targetCohortIds, comparatorCohortIds) %>% unique() %>% sort()
   
   results <- Andromeda::andromeda()
   for (start in seq(1, length(cohortIds), by = batchSize)) {
@@ -89,8 +47,8 @@ computeCohortOverlap <- function(connectionDetails = NULL,
       dbms = connection@dbms,
       cohort_database_schema = cohortDatabaseSchema,
       cohort_table = cohortTable,
-      target_cohort_id = targetCohortId,
-      comparator_cohort_id = comparatorCohortId
+      target_cohort_ids = targetCohortIds,
+      comparator_cohort_ids = comparatorCohortIds
     )
     overlap <- DatabaseConnector::querySql(
       connection = connection,
@@ -104,7 +62,7 @@ computeCohortOverlap <- function(connectionDetails = NULL,
     }
   }
   overlapAll <- results$overlap %>% dplyr::collect()
-  delta <- Sys.time() - start
+  delta <- Sys.time() - startTime
   ParallelLogger::logInfo(paste(
     "Computing overlap took",
     signif(delta, 3),
