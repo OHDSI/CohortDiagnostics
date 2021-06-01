@@ -283,6 +283,30 @@ shiny::shinyServer(function(input, output, session) {
       shiny::HTML()
   })
   
+  getCirceRPackageVersion <- shiny::reactive(x = {
+    row <- selectedCohortDefinitionRow()
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+      tags$table(
+        tags$tr(
+          tags$td(
+            paste("rendered using CirceR version: ", packageVersion('CirceR'))
+          )
+        )
+      )
+    }
+  })
+  
+  output$circerVersionInCohortDefinition <- shiny::renderUI(expr = {
+    version <- getCirceRPackageVersion() 
+    if (is.null(version)) {
+      return(NULL)
+    } else {
+      version
+    }
+  })
+  
   output$cohortDefinitionJson <- shiny::renderText({
     row <- selectedCohortDefinitionRow()
     if (is.null(row)) {
@@ -294,10 +318,29 @@ shiny::shinyServer(function(input, output, session) {
   
   output$cohortDefinitionSql <- shiny::renderText({
     row <- selectedCohortDefinitionRow()
+    
     if (is.null(row)) {
       return(NULL)
     } else {
-      row$sql
+      options <- CirceR::createGenerateOptions(
+        generateStats = TRUE
+      )
+      expression <- CirceR::cohortExpressionFromJson(expressionJson = row$json)
+      
+      if (!is.null(expression)) {
+        CirceR::buildCohortQuery(expression = expression, options = options)
+      } else {
+        return(NULL)
+      }
+    }
+  })
+  
+  output$circerVersionInCohortDefinitionSql <- shiny::renderUI(expr = {
+    version <- getCirceRPackageVersion() 
+    if (is.null(version)) {
+      return(NULL)
+    } else {
+      version
     }
   })
   

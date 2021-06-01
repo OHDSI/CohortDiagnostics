@@ -366,6 +366,7 @@ bodyTabItems <- shinydashboard::tabItems(
             shiny::tabPanel(title = "Cohort definition",
                             copyToClipboardButton(toCopyId = "cohortDefinitionText",
                                                   style = "margin-top: 5px; margin-bottom: 5px;"),
+                            shiny::htmlOutput("circerVersionInCohortDefinition"),
                             shiny::htmlOutput("cohortDefinitionText")),
             shiny::tabPanel(
               title = "Concept Sets",
@@ -510,6 +511,7 @@ bodyTabItems <- shinydashboard::tabItems(
             shiny::tabPanel(
               title = "SQL",
               copyToClipboardButton("cohortDefinitionSql", style = "margin-top: 5px; margin-bottom: 5px;"),
+              shiny::htmlOutput("circerVersionInCohortDefinitionSql"),
               shiny::verbatimTextOutput("cohortDefinitionSql"),
               tags$head(
                 tags$style("#cohortDefinitionSql { max-height:400px};")
