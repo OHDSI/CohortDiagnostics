@@ -42,16 +42,6 @@ createIfNotExist <-
     invisible(errorMessage)
   }
 
-swapColumnContents <-
-  function(df,
-           column1 = "targetId",
-           column2 = "comparatorId") {
-    temp <- df[, column1]
-    df[, column1] <- df[, column2]
-    df[, column2] <- temp
-    return(df)
-  }
-
 enforceMinCellValue <-
   function(data, fieldName, minValues, silent = FALSE) {
     toCensor <-
