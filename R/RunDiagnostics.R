@@ -983,16 +983,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         comparatorCohortId = combis$comparatorCohortId %>% unique()
       )
       if (nrow(data) > 0) {
-        revData <- data
-        revData <-
-          swapColumnContents(revData, "targetCohortId", "comparatorCohortId")
-        revData <-
-          swapColumnContents(revData, "tOnlySubjects", "cOnlySubjects")
-        revData <-
-          swapColumnContents(revData, "tBeforeCSubjects", "cBeforeTSubjects")
-        revData <-
-          swapColumnContents(revData, "tInCSubjects", "cInTSubjects")
-        data <- dplyr::bind_rows(data, revData) %>%
+        data <- data %>%
           dplyr::mutate(databaseId = !!databaseId)
         data <-
           enforceMinCellValue(data, "eitherSubjects", minCellCount)
