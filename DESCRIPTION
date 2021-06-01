@@ -33,7 +33,7 @@ Imports:
   ROhdsiWebApi (>= 1.2.0),
   SqlRender (>= 1.7.0),
   stringr,
-  tidyr (>= 1.0.0)
+  tidyr (>= 1.1.3)
 Suggests:
   DT,
   Eunomia,
