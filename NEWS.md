@@ -5,6 +5,7 @@ CohortDiagnostics 2.1.1
 Changes:
 
 1. Additional fields added to database_id (person_days, persons, records, observation_period_min_date, observation_period_max_date)
+2. Optimized cohort overlap.
 
 Bug fixes:
 1. 
