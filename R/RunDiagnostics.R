@@ -979,8 +979,8 @@ runCohortDiagnostics <- function(packageName = NULL,
         connection = connection,
         cohortDatabaseSchema = cohortDatabaseSchema,
         cohortTable = cohortTable,
-        targetCohortId = combis$targetCohortId %>% unique(),
-        comparatorCohortId = combis$comparatorCohortId %>% unique()
+        targetCohortIds = combis$targetCohortId %>% unique(),
+        comparatorCohortIds = combis$comparatorCohortId %>% unique()
       )
       if (nrow(data) > 0) {
         data <- data %>%
