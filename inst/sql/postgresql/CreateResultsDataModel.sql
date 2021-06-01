@@ -202,7 +202,7 @@ CREATE TABLE database (
 			observation_period_max_date DATE NOT NULL,
 			persons BIGINT,
 			records BIGINT,
-			person_days BIGINT,,
+			person_days BIGINT,
 			vocabulary_version VARCHAR,
 			vocabulary_version_cdm VARCHAR
 			PRIMARY KEY(database_id)
