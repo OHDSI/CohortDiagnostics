@@ -934,15 +934,12 @@ runCohortDiagnostics <- function(packageName = NULL,
     startCohortOverlap <- Sys.time()
     
     combis <- cohorts %>%
-      dplyr::select(.data$phenotypeId, .data$cohortId) %>%
+      dplyr::select(.data$cohortId) %>%
       dplyr::distinct()
     
-    combis <- combis %>%
-      dplyr::rename(targetCohortId = .data$cohortId) %>%
-      dplyr::inner_join(combis %>%
-                          dplyr::rename(comparatorCohortId = .data$cohortId),
-                        by = "phenotypeId") %>%
-      dplyr::filter(.data$targetCohortId < .data$comparatorCohortId) %>%
+    combis <- tidyr::crossing(combis %>% dplyr::rename("targetCohortId" = .data$cohortId),
+                              combis %>% dplyr::rename("comparatorCohortId" = .data$cohortId)) %>%
+      dplyr::filter(.data$targetCohortId != .data$comparatorCohortId) %>%
       dplyr::select(.data$targetCohortId, .data$comparatorCohortId) %>%
       dplyr::distinct()
     
@@ -978,43 +975,15 @@ runCohortDiagnostics <- function(packageName = NULL,
       ))
     }
     if (nrow(subset) > 0) {
-      runCohortOverlap <- function(row) {
-        ParallelLogger::logInfo(
-          "- Computing overlap for cohorts ",
-          row$targetCohortId,
-          " and ",
-          row$comparatorCohortId
-        )
-        data <- computeCohortOverlap(
-          connection = connection,
-          cohortDatabaseSchema = cohortDatabaseSchema,
-          cohortTable = cohortTable,
-          targetCohortId = row$targetCohortId,
-          comparatorCohortId = row$comparatorCohortId
-        )
-        if (nrow(data) > 0) {
-          data <- data %>%
-            dplyr::mutate(
-              targetCohortId = row$targetCohortId,
-              comparatorCohortId = row$comparatorCohortId
-            )
-        }
-        return(data)
-      }
-      data <-
-        lapply(split(subset, 1:nrow(subset)), runCohortOverlap)
-      data <- dplyr::bind_rows(data)
+      data <- computeCohortOverlap(
+        connection = connection,
+        cohortDatabaseSchema = cohortDatabaseSchema,
+        cohortTable = cohortTable,
+        targetCohortId = combis$targetCohortId %>% unique(),
+        comparatorCohortId = combis$comparatorCohortId %>% unique()
+      )
       if (nrow(data) > 0) {
-        revData <- data
-        revData <-
-          swapColumnContents(revData, "targetCohortId", "comparatorCohortId")
-        revData <-
-          swapColumnContents(revData, "tOnlySubjects", "cOnlySubjects")
-        revData <-
-          swapColumnContents(revData, "tBeforeCSubjects", "cBeforeTSubjects")
-        revData <-
-          swapColumnContents(revData, "tInCSubjects", "cInTSubjects")
-        data <- dplyr::bind_rows(data, revData) %>%
+        data <- data %>%
           dplyr::mutate(databaseId = !!databaseId)
         data <-
           enforceMinCellValue(data, "eitherSubjects", minCellCount)
@@ -1037,7 +1006,11 @@ runCohortDiagnostics <- function(packageName = NULL,
         data <- data %>%
           dplyr::mutate(dplyr::across(.cols = everything(), ~ tidyr::replace_na(
             data = ., replace = 0
-          )))
+          ))) %>% 
+          dplyr::select(.data$eitherSubjects, .data$bothSubjects, .data$tOnlySubjects,
+                        .data$cOnlySubjects, .data$tBeforeCSubjects, .data$cBeforeTSubjects,
+                        .data$sameDaySubjects, .data$tInCSubjects, .data$cInTSubjects,
+                        .data$targetCohortId, .data$comparatorCohortId, .data$databaseId)
         
         writeToCsv(
           data = data,
