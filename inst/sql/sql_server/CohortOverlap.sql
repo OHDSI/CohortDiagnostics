@@ -110,7 +110,7 @@ AS (
 	GROUP BY all1.target_cohort_id,
 		all1.comparator_cohort_id
 	)
-SELECT target_cohort_id,
+SELECT DISTINCT target_cohort_id,
 	comparator_cohort_id,
 	either_subjects,
 	both_subjects,
