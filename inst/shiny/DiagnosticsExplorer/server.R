@@ -3274,7 +3274,9 @@ shiny::shinyServer(function(input, output, session) {
       databaseIds = input$database,
       timeIds = timeIds(),
       isTemporal = TRUE
-    ) %>%
+    )
+    if (is.null(data)) {return(data)}
+    data <- data %>%
       dplyr::select(-.data$choices) %>% 
       dplyr::inner_join(temporalCovariateChoices, by = "timeId") %>%
       dplyr::arrange(.data$timeId) %>%
