@@ -204,7 +204,7 @@ CREATE TABLE database (
 			records BIGINT,
 			person_days BIGINT,
 			vocabulary_version VARCHAR,
-			vocabulary_version_cdm VARCHAR
+			vocabulary_version_cdm VARCHAR,
 			PRIMARY KEY(database_id)
 );
 
