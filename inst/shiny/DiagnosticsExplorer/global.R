@@ -20,7 +20,9 @@ defaultResultsSchema <- 'thrombosisthrombocytopenia'
 defaultVocabularySchema <- defaultResultsSchema
 alternateVocabularySchema <- c('vocabulary')
 
-defaultDatabaseMode <- TRUE # Use file system if FALSE
+defaultDatabaseMode <- FALSE # Use file system if FALSE
+
+showTimeSeries <- FALSE
 
 appInformationText <- "V 2.1"
 appInformationText <- "Powered by OHDSI Cohort Diagnostics application - Version 2.1. This app is working in"
@@ -175,6 +177,11 @@ if (exists("temporalTimeRef")) {
     dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
     dplyr::select(.data$timeId, .data$choices) %>%
     dplyr::arrange(.data$timeId)
+  if (!showTimeSeries) {
+    temporalCovariateChoices <- temporalCovariateChoices %>% 
+      dplyr::filter(stringr::str_detect(string = .data$choices,
+                                        pattern = 'Start -365 to end -31|Start -30 to end -1|Start 0 to end 0|Start 1 to end 30|Start 31 to end 365'))
+    }
 }
 
 if (exists("covariateRef")) {
@@ -186,4 +193,8 @@ if (exists("covariateRef")) {
   prettyAnalysisIds <- specifications$analysisId
 } else {
   prettyAnalysisIds <- c(0)
+}
+
+if (!showTimeSeries) {
+  if (exists("timeSeries")) {rm(timeSeries)}
 }

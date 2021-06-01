@@ -620,8 +620,8 @@ shiny::shinyServer(function(input, output, session) {
           dplyr::rename("conceptId" = .data$sourceConceptId)
       ) %>% 
         dplyr::group_by(.data$conceptId) %>% 
-        dplyr::summarise(conceptSubjects = max(conceptSubjects),
-                         conceptCount = max(conceptCount)) %>% 
+        dplyr::summarise(conceptSubjects = conceptSubjects,
+                         conceptCount = conceptCount) %>% 
         dplyr::distinct() %>% 
         dplyr::ungroup() %>% 
         dplyr::arrange(dplyr::desc(.data$conceptCount))
@@ -753,6 +753,19 @@ shiny::shinyServer(function(input, output, session) {
       validate(need((all(!is.null(data), nrow(data) > 0)),
                     "No resolved or mapped concept ids"))
       
+      columnDef <- list(
+        truncateStringDef(1, 80)
+      )
+      maxCount <- NULL
+      maxSubject <- NULL
+      if ("subjects" %in% colnames(data) && "count" %in% colnames(data)) {
+        columnDef <- list(
+          truncateStringDef(1, 80),minCellCountDef(2:3))
+        
+        maxCount <- max(data$count)
+        maxSubject <- max(data$subjects)
+      }
+      
       options = list(
         pageLength = 1000,
         lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
@@ -764,9 +777,7 @@ shiny::shinyServer(function(input, output, session) {
         searchHighlight = TRUE,
         scrollX = TRUE,
         scrollY = "20vh",
-        columnDefs = list(
-          truncateStringDef(1, 80)
-        )
+        columnDefs = columnDef
       )
       
       dataTable <- DT::datatable(
@@ -778,6 +789,23 @@ shiny::shinyServer(function(input, output, session) {
         selection = 'single',
         filter = "top",
         class = "stripe nowrap compact"
+      )
+      
+      dataTable <- DT::formatStyle(
+        table = dataTable,
+        columns =  3,
+        background = DT::styleColorBar(c(0, maxSubject), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+      dataTable <- DT::formatStyle(
+        table = dataTable,
+        columns =  4,
+        background = DT::styleColorBar(c(0, maxCount), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
       )
       return(dataTable)
     }, server = TRUE)
@@ -806,6 +834,20 @@ shiny::shinyServer(function(input, output, session) {
           conceptId = as.character(.data$conceptId),
           # conceptName = as.factor(.data$conceptName),
           vocabularyId = as.factor(.data$vocabularyId))
+      
+      columnDef <- list(
+        truncateStringDef(2, 80)
+      )
+      
+      maxCount <- NULL
+      maxSubject <- NULL
+      if ("subjects" %in% colnames(data) && "count" %in% colnames(data)) {
+        columnDef <- list(
+          truncateStringDef(1, 80),minCellCountDef(2:3))
+        
+        maxCount <- max(data$count)
+        maxSubject <- max(data$subjects)
+      }
       options = list(
         pageLength = 100,
         lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
@@ -817,9 +859,7 @@ shiny::shinyServer(function(input, output, session) {
         searchHighlight = TRUE,
         scrollX = TRUE,
         scrollY = "20vh",
-        columnDefs = list(
-          truncateStringDef(2, 80)
-        )
+        columnDefs = columnDef
       )
       
       dataTable <- DT::datatable(
@@ -831,6 +871,24 @@ shiny::shinyServer(function(input, output, session) {
         selection = 'single',
         filter = "top",
         class = "stripe nowrap compact"
+      )
+      
+      dataTable <- DT::formatStyle(
+        table = dataTable,
+        columns =  3,
+        background = DT::styleColorBar(c(0, maxSubject), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+      
+      dataTable <- DT::formatStyle(
+        table = dataTable,
+        columns =  4,
+        background = DT::styleColorBar(c(0, maxCount), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
       )
       return(dataTable)
     }, server = TRUE)
@@ -1592,6 +1650,28 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
+  
+  # Time Series ----------------------------------------------------------------------------------
+  timeSeries <- reactive({
+    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
+    validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
+    calenderIntervalFirstLetter <- tolower(substr(input$timeSeriesFilter,1,1))
+    data <- getTimeSeriesResult(
+      dataSource = dataSource,
+      cohortIds = cohortIds(),
+      databaseIds = databaseIds(),
+      calendarInterval = calenderIntervalFirstLetter,
+      minDate = NULL,
+      maxDate = NULL
+    )
+    return(data)
+  })
+  
+  output$timeSeriesTable <- DT::renderDataTable({
+    data <- timeSeries()
+    return(data)
+  })
+  
   # Time distribution -----------------------------------------------------------------------------
   timeDist <- reactive({
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
@@ -2137,26 +2217,28 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   # Inclusion rules table -----------------------------------------------------------------------
+  
+  inclusionRuleTableData <- shiny::reactive(x = {
+    data <- getInclusionRuleStats(
+      dataSource = dataSource,
+      cohortIds = cohortId(),
+      databaseIds = databaseIds()
+    )
+    return(data)
+  })
+  
   output$saveInclusionRuleTable <-  downloadHandler(
     filename = function() {
       getFormattedFileName(fileName = "inclusionRule")
     },
     content = function(file) {
-      write.csv(getInclusionRuleStats(
-        dataSource = dataSource,
-        cohortIds = cohortId(),
-        databaseIds = databaseIds()
-      ), file)
+      write.csv(inclusionRuleTableData(), file)
     }
   )
   
   output$inclusionRuleTable <- DT::renderDataTable(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
-    table <- getInclusionRuleStats(
-      dataSource = dataSource,
-      cohortIds = cohortId(),
-      databaseIds = databaseIds()
-    )
+    table <- inclusionRuleTableData()
     
     validate(need((nrow(table) > 0),
              "There is no data for the selected combination."))
@@ -2278,6 +2360,14 @@ shiny::shinyServer(function(input, output, session) {
     }
     return(table)
   }, server = TRUE)
+  
+  output$inclusionRuleStatsContainsData <- shiny::reactive({
+    return(nrow(inclusionRuleTableData()) > 0)
+  })
+  
+  outputOptions(output,
+                "inclusionRuleStatsContainsData",
+                suspendWhenHidden = FALSE)
   
   # Index event breakdown ----------------------------------------------------------------
   
@@ -3355,6 +3445,15 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
   })
   
+  output$saveCohortOverlapTable <-  downloadHandler(
+    filename = function() {
+      getFormattedFileName(fileName = "cohortOverlap")
+    },
+    content = function(file) {
+      write.csv(cohortOverlapData(), file)
+    }
+  )
+  
   # Compare cohort characteristics --------------------------------------------
   charCompareAnalysisNameFilter <- shiny::reactive(x = {
     return(input$charCompareAnalysisNameFilter)
@@ -4319,6 +4418,10 @@ shiny::shinyServer(function(input, output, session) {
       selectedCohorts()
     })
   output$incidenceRateSelectedCohorts <-
+    shiny::renderUI({
+      selectedCohorts()
+    })
+  output$timeSeriesSelectedCohorts <-
     shiny::renderUI({
       selectedCohorts()
     })

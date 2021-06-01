@@ -81,6 +81,11 @@ sidebarMenu <-
         item = shinydashboard::menuItem(text = "Incidence Rate", tabName = "incidenceRate"),
         infoId = "incidenceRateInfo"
       ),
+    if (exists("timeSeries"))
+      addInfo(
+        item = shinydashboard::menuItem(text = "Time Series", tabName = "timeSeries"),
+        infoId = "timeSeriesInfo"
+      ),
     if (exists("timeDistribution"))
       addInfo(
         item = shinydashboard::menuItem(text = "Time Distributions", tabName = "timeDistribution"),
@@ -130,6 +135,7 @@ sidebarMenu <-
     # Conditional dropdown boxes in the side bar ------------------------------------------------------
     shiny::conditionalPanel(
       condition = "input.tabs!='incidenceRate' &
+      input.tabs != 'timeSeries' &
       input.tabs != 'timeDistribution' &
       input.tabs != 'cohortCharacterization' &
       input.tabs != 'cohortCounts' &
@@ -160,6 +166,7 @@ sidebarMenu <-
     ),
     shiny::conditionalPanel(
       condition = "input.tabs=='incidenceRate' |
+      input.tabs =='timeSeries' |
       input.tabs == 'timeDistribution' |
       input.tabs =='cohortCharacterization' |
       input.tabs == 'cohortCounts' |
@@ -196,6 +203,8 @@ sidebarMenu <-
           multiple = TRUE,
           choicesOpt = list(style = rep_len("color: black;", 999)),
           selected = temporalCovariateChoices %>%
+            dplyr::filter(stringr::str_detect(string = .data$choices,
+pattern = 'Start -365 to end -31|Start -30 to end -1|Start 0 to end 0|Start 1 to end 30|Start 31 to end 365')) %>% 
             dplyr::filter(.data$timeId %in% (
               c(
                 min(temporalCovariateChoices$timeId),
@@ -223,6 +232,7 @@ sidebarMenu <-
       input.tabs != 'cohortCounts' &
       input.tabs != 'cohortOverlap'&
       input.tabs != 'incidenceRate' &
+      input.tabs !='timeSeries' &
       input.tabs != 'timeDistribution'",
       shinyWidgets::pickerInput(
         inputId = "cohort",
@@ -244,6 +254,7 @@ sidebarMenu <-
       condition = "input.tabs == 'cohortCounts' |
       input.tabs == 'cohortOverlap' |
       input.tabs == 'incidenceRate' |
+      input.tabs =='timeSeries' |
       input.tabs == 'timeDistribution'",
       shinyWidgets::pickerInput(
         inputId = "cohorts",
@@ -684,6 +695,50 @@ bodyTabItems <- shinydashboard::tabItems(
     )
   ),
   shinydashboard::tabItem(
+    tabName = "timeSeries",
+    cohortReference("timeSeriesSelectedCohorts"),
+    shiny::radioButtons(
+      inputId = "timeSeriesType",
+      label = "",
+      choices = c("Table", "Plot"),
+      selected = "Table",
+      inline = TRUE
+    ),
+    shinydashboard::box(
+      title = "Time Series",
+      width = NULL,
+      status = "primary",
+      solidHeader = TRUE,
+      shiny::radioButtons(
+        inputId = "timeSeriesFilter",
+        label = "Aggregation period:",
+        choices = c("Monthly", "Quaterly","Yearly"),
+        selected = "Monthly",
+        inline = TRUE
+      ),
+      shiny::conditionalPanel(
+        condition = "input.timeSeriesType=='Table'",
+        tags$table(width = "100%",
+                   tags$tr(
+                     tags$td(
+                       align = "right",
+                       shiny::downloadButton(
+                         "saveTimeSeriesTable",
+                         label = "",
+                         icon = shiny::icon("download"),
+                         style = "margin-top: 5px; margin-bottom: 5px;"
+                       )
+                     )
+                   )),
+        DT::dataTableOutput("timeSeriesTable")
+      ),
+      shiny::conditionalPanel(
+        condition = "input.timeSeriesType=='Plot'",
+        ggiraph::ggiraphOutput("timeSeriesPlot", width = "100%", height = "100%")
+      )
+    )
+  ),
+  shinydashboard::tabItem(
     tabName = "timeDistribution",
     cohortReference("timeDistSelectedCohorts"),
     shiny::radioButtons(
@@ -803,29 +858,31 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "inclusionRuleStats",
     cohortReference("inclusionRuleStatSelectedCohort"),
-    column(
-      6,
-      shiny::radioButtons(
-        inputId = "inclusionRuleTableFilters",
-        label = "Inclusion Rule Events",
-        choices = c("All", "Meet", "Gain", "Remain", "Totals"),
-        selected = "All",
-        inline = TRUE
-      )
-    ),
-    column(6,
-           tags$table(width = "100%",
-                      tags$tr(
-                        tags$td(
-                          align = "right",
-                          shiny::downloadButton(
-                            "saveInclusionRuleTable",
-                            label = "",
-                            icon = shiny::icon("download"),
-                            style = "margin-top: 5px; margin-bottom: 5px;"
+    shiny::conditionalPanel(
+      condition = "output.inclusionRuleStatsContainsData == true",
+      column(6,
+             shiny::radioButtons(
+               inputId = "inclusionRuleTableFilters",
+               label = "Inclusion Rule Events",
+               choices = c("All", "Meet", "Gain", "Remain", "Totals"),
+               selected = "All",
+               inline = TRUE
+             )
+      ),
+      column(6,
+             tags$table(width = "100%",
+                        tags$tr(
+                          tags$td(
+                            align = "right",
+                            shiny::downloadButton(
+                              "saveInclusionRuleTable",
+                              label = "",
+                              icon = shiny::icon("download"),
+                              style = "margin-top: 5px; margin-bottom: 5px;"
+                            )
                           )
-                        )
-                      ))),
+                        )))
+    ),
     DT::dataTableOutput(outputId = "inclusionRuleTable")
   ),
   shinydashboard::tabItem(
@@ -937,12 +994,26 @@ bodyTabItems <- shinydashboard::tabItems(
       title = "Cohort Overlap (Subjects)",
       width = NULL,
       status = "primary",
-      shiny::radioButtons(
-        inputId = "overlapPlotType",
-        label = "",
-        choices = c("Percentages", "Counts"),
-        selected = "Percentages",
-        inline = TRUE
+      tags$table(width = "100%", 
+                 tags$tr(
+                   tags$td(
+                     shiny::radioButtons(
+                       inputId = "overlapPlotType",
+                       label = "",
+                       choices = c("Percentages", "Counts"),
+                       selected = "Percentages",
+                       inline = TRUE
+                     )
+                   ),
+                   tags$td(align = "right",
+                           shiny::downloadButton(
+                             "saveCohortOverlapTable",
+                             label = "",
+                             icon = shiny::icon("download"),
+                             style = "margin-top: 5px; margin-bottom: 5px;"
+                           )
+                   )
+                 )
       ),
       ggiraph::ggiraphOutput("overlapPlot", width = "100%", height = "100%")
     )
