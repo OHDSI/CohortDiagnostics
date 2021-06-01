@@ -196,5 +196,11 @@ if (exists("covariateRef")) {
 }
 
 if (!showTimeSeries) {
-  if (exists("timeSeries")) {rm(timeSeries)}
+  if (exists("timeSeries")) {
+    rm(timeSeries)
+  }
+}
+
+if (exists("indexEventBreakdown")) {
+  rm(indexEventBreakdown)
 }

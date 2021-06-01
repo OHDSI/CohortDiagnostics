@@ -1,8 +1,11 @@
-createDatabaseDataSource <- function(connection, resultsDatabaseSchema, vocabularyDatabaseSchema = resultsDatabaseSchema) {
+createDatabaseDataSource <- function(connection, 
+                                     resultsDatabaseSchema, 
+                                     vocabularyDatabaseSchema = resultsDatabaseSchema) {
   return(list(connection = connectionPool,
               resultsDatabaseSchema = resultsDatabaseSchema,
               vocabularyDatabaseSchema = vocabularyDatabaseSchema))
 }
+
 
 createFileDataSource <- function(premergedDataFile, envir = new.env()) {
   load(premergedDataFile, envir = envir)
@@ -42,12 +45,23 @@ quoteLiterals <- function(x) {
   }
 }
 
+
 getCohortCountResult <- function(dataSource = .GlobalEnv,
                                  cohortIds = NULL,
                                  databaseIds) {
+  table <- 'cohortCount'
   if (is(dataSource, "environment")) {
-    data <- cohortCount %>% 
-      dplyr::filter(.data$databaseId %in% !!databaseIds) 
+    if (!exists(table)) {
+      return(NULL)
+    }
+    if (length(table) == 0) {
+      return(NULL)
+    }
+    if (nrow(get(table, envir = dataSource)) == 0) {
+      return(NULL)
+    }
+    data <- get(table, envir = dataSource) %>% 
+      dplyr::filter(.data$databaseId %in% !!databaseIds)
     if (!is.null(cohortIds)) {
       data <- data %>% 
         dplyr::filter(.data$cohortId %in% !!cohortIds) 
@@ -65,6 +79,9 @@ getCohortCountResult <- function(dataSource = .GlobalEnv,
                                     database_id = quoteLiterals(databaseIds), 
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
+    if (nrow(data) == 0) {
+      return(NULL)
+    }
   }
   return(data)
 }
@@ -77,9 +94,19 @@ getTimeSeriesResult <- function(dataSource = .GlobalEnv,
                                 minDate = NULL,
                                 maxDate = NULL
 ) {
+  table <- 'timeSeries'
   if (is(dataSource, "environment")) {
-    data <- timeSeries %>% 
-      dplyr::filter(.data$databaseId %in% !!databaseIds) 
+    if (!exists(table)) {
+      return(NULL)
+    }
+    if (length(table) == 0) {
+      return(NULL)
+    }
+    if (nrow(get(table, envir = dataSource)) == 0) {
+      return(NULL)
+    }
+    data <- get(table, envir = dataSource) %>% 
+      dplyr::filter(.data$databaseId %in% !!databaseIds)
     if (!is.null(cohortIds)) {
       data <- data %>% 
         dplyr::filter(.data$cohortId %in% !!cohortIds) %>% 
@@ -102,6 +129,11 @@ getTimeSeriesResult <- function(dataSource = .GlobalEnv,
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   }
+  
+  if (nrow(data) == 0) {
+    return(NULL)
+  }
+  
   data <- data %>% 
     dplyr::select(-.data$calendarInterval) %>% 
     dplyr::arrange(.data$databaseId, .data$cohortId, .data$periodBegin) %>% 
@@ -119,14 +151,30 @@ getTimeSeriesResult <- function(dataSource = .GlobalEnv,
     data <- data %>% 
       dplyr::filter(.data$periodBegin < maxDate)
   }
+  
+  if (nrow(data) == 0) {
+    return(NULL)
+  }
   return(data)
 }
+
+
 
 getTimeDistributionResult <- function(dataSource = .GlobalEnv,
                                       cohortIds,
                                       databaseIds) {
+  table <- 'timeDistribution'
   if (is(dataSource, "environment")) {
-    data <- get("timeDistribution", envir = dataSource) %>% 
+    if (!exists(table)) {
+      return(NULL)
+    }
+    if (length(table) == 0) {
+      return(NULL)
+    }
+    if (nrow(get(table, envir = dataSource)) == 0) {
+      return(NULL)
+    }
+    data <- get(table, envir = dataSource) %>% 
       dplyr::filter(.data$cohortId %in% !!cohortIds &
                       .data$databaseId %in% !!databaseIds)
   } else {
@@ -141,7 +189,10 @@ getTimeDistributionResult <- function(dataSource = .GlobalEnv,
                                     database_ids = quoteLiterals(databaseIds), 
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
-  } 
+  }
+  if (nrow(data) == 0) {
+    return(NULL)
+  }  
   return(data)
 }
 
@@ -154,30 +205,18 @@ getIncidenceRateResult <- function(dataSource = .GlobalEnv,
                                    stratifyByCalendarYear = c(TRUE,FALSE),
                                    minPersonYears = 1000,
                                    minSubjectCount = NA) {
-  # Perform error checks for input variables
-  errorMessage <- checkmate::makeAssertCollection()
-  errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = cohortIds,
-                                                 databaseIds = databaseIds,
-                                                 errorMessage = errorMessage)
-  checkmate::assertLogical(x = stratifyByGender,
-                           add = errorMessage,
-                           min.len = 1,
-                           max.len = 2,
-                           unique = TRUE)
-  checkmate::assertLogical(x = stratifyByAgeGroup,
-                           add = errorMessage,
-                           min.len = 1,
-                           max.len = 2,
-                           unique = TRUE)
-  checkmate::assertLogical(x = stratifyByCalendarYear,
-                           add = errorMessage,
-                           min.len = 1,
-                           max.len = 2,
-                           unique = TRUE)
-  checkmate::reportAssertions(collection = errorMessage)
-  
+  table <- 'incidenceRate'
   if (is(dataSource, "environment")) {
-    data <- get("incidenceRate", envir = dataSource) %>% 
+    if (!exists(table)) {
+      return(NULL)
+    }
+    if (length(table) == 0) {
+      return(NULL)
+    }
+    if (nrow(get(table, envir = dataSource)) == 0) {
+      return(NULL)
+    }
+    data <- get(table, envir = dataSource) %>% 
       dplyr::mutate(strataGender = !is.na(.data$gender),
                     strataAgeGroup = !is.na(.data$ageGroup),
                     strataCalendarYear = !is.na(.data$calendarYear)) %>% 
@@ -208,10 +247,16 @@ getIncidenceRateResult <- function(dataSource = .GlobalEnv,
                                     personYears = minPersonYears,
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
+    if (nrow(data) == 0) {
+      return(NULL)
+    }
     data <- data %>%
       dplyr::mutate(gender = dplyr::na_if(.data$gender, ""),
                     ageGroup = dplyr::na_if(.data$ageGroup, ""),
                     calendarYear = dplyr::na_if(.data$calendarYear, ""))
+  }
+  if (nrow(data) == 0) {
+    return(NULL)
   }
   data <- data %>% 
     dplyr::inner_join(cohortCount, 
@@ -223,15 +268,27 @@ getIncidenceRateResult <- function(dataSource = .GlobalEnv,
     data <- data %>% 
       dplyr::filter(.data$cohortSubjects > !!minSubjectCount)
   }
-  
+  if (nrow(data) == 0) {
+    return(NULL)
+  }
   return(data)
 }
 
 getInclusionRuleStats <- function(dataSource = .GlobalEnv,
                                   cohortIds = NULL,
                                   databaseIds) {
+  table <- 'inclusionRuleStats'
   if (is(dataSource, "environment")) {
-    data <- get("inclusionRuleStats", envir = dataSource) %>% 
+    if (!exists(table)) {
+      return(NULL)
+    }
+    if (length(table) == 0) {
+      return(NULL)
+    }
+    if (nrow(get(table, envir = dataSource)) == 0) {
+      return(NULL)
+    }
+    data <- get(table, envir = dataSource) %>% 
       dplyr::filter(.data$databaseId %in% !!databaseIds) 
     if (!is.null(cohortIds)) {
       data <- data %>% 
@@ -251,6 +308,9 @@ getInclusionRuleStats <- function(dataSource = .GlobalEnv,
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   }
+  if (nrow(data) == 0) {
+    return(NULL)
+  }
   data <- data %>% 
     dplyr::select(.data$cohortId,
                   .data$ruleSequenceId, 
@@ -268,29 +328,31 @@ getInclusionRuleStats <- function(dataSource = .GlobalEnv,
 getIndexEventBreakdown <- function(dataSource = .GlobalEnv,
                                    cohortIds,
                                    databaseIds) {
-  errorMessage <- checkmate::makeAssertCollection()
-  errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = cohortIds,
-                                                 databaseIds = databaseIds,
-                                                 errorMessage = errorMessage)
-  checkmate::reportAssertions(collection = errorMessage)
-  
+  table <- 'indexEventBreakdown'
   if (is(dataSource, "environment")) {
-    if (exists("indexEventBreakdown", envir = dataSource)) {
-      data <- get("indexEventBreakdown", envir = dataSource) %>% 
-        dplyr::filter(.data$databaseId %in% !!databaseIds) 
-      if (!is.null(cohortIds)) {
-        data <- data %>% 
-          dplyr::filter(.data$cohortId %in% !!cohortIds) 
-      }
-      data <- data %>%
-        dplyr::inner_join(dplyr::select(get("concept", envir = dataSource),
-                                        .data$conceptId,
-                                        .data$conceptName,
-                                        .data$domainId,
-                                        .data$vocabularyId,
-                                        .data$standardConcept),
-                          by = c("conceptId"))
+    if (!exists(table)) {
+      return(NULL)
     }
+    if (length(table) == 0) {
+      return(NULL)
+    }
+    if (nrow(get(table, envir = dataSource)) == 0) {
+      return(NULL)
+    }
+    data <- get(table, envir = dataSource) %>% 
+      dplyr::filter(.data$databaseId %in% !!databaseIds) 
+    if (!is.null(cohortIds)) {
+      data <- data %>% 
+        dplyr::filter(.data$cohortId %in% !!cohortIds) 
+    }
+    data <- data %>%
+      dplyr::inner_join(dplyr::select(get("concept", envir = dataSource),
+                                      .data$conceptId,
+                                      .data$conceptName,
+                                      .data$domainId,
+                                      .data$vocabularyId,
+                                      .data$standardConcept),
+                        by = c("conceptId"))
   } else {
     sql <- "SELECT index_event_breakdown.*,
               concept.concept_name,
@@ -311,27 +373,32 @@ getIndexEventBreakdown <- function(dataSource = .GlobalEnv,
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   }
-  
+  if (nrow(data) == 0) {
+    return(NULL)
+  }  
   data <- data %>% 
     dplyr::inner_join(cohortCount, 
                       by = c('databaseId', 'cohortId')) %>% 
     dplyr::mutate(subjectPercent = .data$subjectCount/.data$cohortSubjects,
                   conceptPercent = .data$conceptCount/.data$cohortEntries)
-  
   return(data)
 }
 
 getVisitContextResults <- function(dataSource = .GlobalEnv,
                                    cohortIds,
                                    databaseIds) {
-  errorMessage <- checkmate::makeAssertCollection()
-  errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = cohortIds,
-                                                 databaseIds = databaseIds,
-                                                 errorMessage = errorMessage)
-  checkmate::reportAssertions(collection = errorMessage)
-  
+  table <- 'visitContext'
   if (is(dataSource, "environment")) {
-    data <- get("visitContext", envir = dataSource) %>% 
+    if (!exists(table)) {
+      return(NULL)
+    }
+    if (length(table) == 0) {
+      return(NULL)
+    }
+    if (nrow(get(table, envir = dataSource)) == 0) {
+      return(NULL)
+    }
+    data <- get(table, envir = dataSource) %>% 
       dplyr::filter(.data$databaseId %in% !!databaseIds) 
     if (!is.null(cohortIds)) {
       data <- data %>% 
@@ -359,6 +426,9 @@ getVisitContextResults <- function(dataSource = .GlobalEnv,
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   }
+  if (nrow(data) == 0) {
+    return(NULL)
+  }
   data <- data %>%
     dplyr::inner_join(cohortCount,
                       by = c("cohortId", "databaseId")) %>% 
@@ -369,8 +439,18 @@ getVisitContextResults <- function(dataSource = .GlobalEnv,
 getIncludedConceptResult <- function(dataSource = .GlobalEnv,
                                      cohortId,
                                      databaseIds) {
+  table <- 'includedSourceConcept'
   if (is(dataSource, "environment")) {
-    data <- get("includedSourceConcept", envir = dataSource) %>% 
+    if (!exists(table)) {
+      return(NULL)
+    }
+    if (length(table) == 0) {
+      return(NULL)
+    }
+    if (nrow(get(table, envir = dataSource)) == 0) {
+      return(NULL)
+    }
+    data <- get(table, envir = dataSource) %>% 
       dplyr::filter(.data$cohortId == !!cohortId &
                       .data$databaseId %in% !!databaseIds) %>% 
       dplyr::inner_join(dplyr::select(get("conceptSets", envir = dataSource),
@@ -415,16 +495,28 @@ getIncludedConceptResult <- function(dataSource = .GlobalEnv,
                                     database_ids = quoteLiterals(databaseIds), 
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
-  } 
-  
+  }
+  if (nrow(data) == 0) {
+    return(NULL)
+  }
   return(data)
 }
 
 getOrphanConceptResult <- function(dataSource = .GlobalEnv,
                                    cohortId,
                                    databaseIds) {
+  table <- 'orphanConcept'
   if (is(dataSource, "environment")) {
-    data <- get("orphanConcept", envir = dataSource) %>% 
+    if (!exists(table)) {
+      return(NULL)
+    }
+    if (length(table) == 0) {
+      return(NULL)
+    }
+    if (nrow(get(table, envir = dataSource)) == 0) {
+      return(NULL)
+    }
+    data <- get(table, envir = dataSource) %>% 
       dplyr::filter(.data$cohortId == !!cohortId &
                       .data$databaseId %in% !!databaseIds) %>% 
       dplyr::inner_join(dplyr::select(get("conceptSets", envir = dataSource),
@@ -463,6 +555,9 @@ getOrphanConceptResult <- function(dataSource = .GlobalEnv,
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   }
+  if (nrow(data) == 0) {
+    return(NULL)
+  }
   return(data)
 }
 
@@ -471,16 +566,18 @@ getCohortOverlapResult <- function(dataSource = .GlobalEnv,
                                    targetCohortIds,
                                    comparatorCohortIds,
                                    databaseIds) {
-  errorMessage <- checkmate::makeAssertCollection()
-  errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = targetCohortIds,
-                                                 databaseIds = databaseIds,
-                                                 errorMessage = errorMessage)
-  errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = comparatorCohortIds,
-                                                 databaseIds = databaseIds,
-                                                 errorMessage = errorMessage)
-  
+  table <- 'cohortOverlap'
   if (is(dataSource, "environment")) {
-    data <- get("cohortOverlap", envir = dataSource) %>% 
+    if (!exists(table)) {
+      return(NULL)
+    }
+    if (length(table) == 0) {
+      return(NULL)
+    }
+    if (nrow(get(table, envir = dataSource)) == 0) {
+      return(NULL)
+    }
+    data <- get(table, envir = dataSource) %>% 
       dplyr::filter(.data$targetCohortId %in% !!targetCohortIds &
                       .data$comparatorCohortId %in% !!comparatorCohortIds &
                       .data$databaseId %in% !!databaseIds) %>% 
@@ -513,10 +610,9 @@ getCohortOverlapResult <- function(dataSource = .GlobalEnv,
                                     databaseId = quoteLiterals(databaseIds), 
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
-  } 
-  
+  }
   if (nrow(data) == 0) {
-    return(tidyr::tibble())
+    return(NULL)
   }
   return(data)
 }
@@ -527,27 +623,6 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
                                     databaseIds,
                                     timeIds = NULL,
                                     isTemporal = FALSE) {
-  
-  # Perform error checks for input variables
-  errorMessage <- checkmate::makeAssertCollection()
-  checkmate::assertLogical(x = isTemporal, 
-                           any.missing = FALSE, 
-                           min.len = 1, 
-                           max.len = 1, 
-                           add = errorMessage)
-  errorMessage <- checkErrorCohortIdsDatabaseIds(cohortIds = cohortIds,
-                                                 databaseIds = databaseIds,
-                                                 errorMessage = errorMessage)
-  if (isTemporal) {
-    checkmate::assertIntegerish(x = timeIds, 
-                                lower = 0, 
-                                any.missing = FALSE, 
-                                unique = TRUE, 
-                                null.ok = TRUE,
-                                add = errorMessage)
-  }
-  checkmate::reportAssertions(collection = errorMessage)
-  
 
   if (isTemporal) {
     table <- "temporalCovariateValue"
@@ -562,29 +637,34 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
   }
   
   if (is(dataSource, "environment")) {
-    if (exists(table, envir = dataSource)) {
-      data <- get(table, envir = dataSource) %>%
-        dplyr::filter(.data$cohortId %in% !!cohortIds) %>% 
-        dplyr::filter(.data$databaseId %in% !!databaseIds) %>%
-        dplyr::inner_join(get(covariateRefTable, envir = dataSource), by = "covariateId") %>% 
-        dplyr::inner_join(get(analysisRefTable, envir = dataSource), by = "analysisId")
-      if (!is.null(analysisIds)) {
+    if (!exists(table)) {
+      return(NULL)
+    }
+    if (length(table) == 0) {
+      return(NULL)
+    }
+    if (nrow(get(table, envir = dataSource)) == 0) {
+      return(NULL)
+    }
+    data <- get(table, envir = dataSource) %>%
+      dplyr::filter(.data$cohortId %in% !!cohortIds) %>% 
+      dplyr::filter(.data$databaseId %in% !!databaseIds) %>%
+      dplyr::inner_join(get(covariateRefTable, envir = dataSource), by = "covariateId") %>% 
+      dplyr::inner_join(get(analysisRefTable, envir = dataSource), by = "analysisId")
+    if (!is.null(analysisIds)) {
+      data <- data %>%
+        dplyr::filter(.data$analysisId %in% analysisIds)
+    }
+    if (isTemporal) {
+      data <- data %>%
+        dplyr::inner_join(get(timeRefTable, envir = dataSource), by = "timeId")
+      if (!is.null(timeIds)) {
         data <- data %>%
-          dplyr::filter(.data$analysisId %in% analysisIds)
-      }
-      if (isTemporal) {
-        data <- data %>%
-          dplyr::inner_join(get(timeRefTable, envir = dataSource), by = "timeId")
-        if (!is.null(timeIds)) {
-          data <- data %>%
-            dplyr::filter(.data$timeId %in% timeIds) 
-        }
-      } else {
-        data <- data %>%
-          dplyr::select(-.data$startDay, -.data$endDay)
+          dplyr::filter(.data$timeId %in% timeIds) 
       }
     } else {
-      return(NULL)
+      data <- data %>%
+        dplyr::select(-.data$startDay, -.data$endDay)
     }
   } else {
     sql <- "SELECT covariate.*,
@@ -633,6 +713,9 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   }
+  if (nrow(data) == 0) {
+    return(NULL)
+  }
   if (isTemporal) {
     data <- data %>%
       dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>% 
@@ -670,15 +753,18 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
 
 getConceptDetails <- function(dataSource = .GlobalEnv,
                               conceptIds) {
-  # Perform error checks for input variables
-  errorMessage <- checkmate::makeAssertCollection()
-  checkmate::assertIntegerish(x = conceptIds,
-                              min.len = 1, 
-                              null.ok = TRUE,
-                              add = errorMessage)
-  checkmate::reportAssertions(collection = errorMessage)
+  table <- 'concept'
   if (is(dataSource, "environment")) {
-    data <- get("concept", envir = dataSource) %>% 
+    if (!exists(table)) {
+      return(NULL)
+    }
+    if (length(table) == 0) {
+      return(NULL)
+    }
+    if (nrow(get(table, envir = dataSource)) == 0) {
+      return(NULL)
+    }
+    data <- get(table, envir = dataSource) %>% 
       dplyr::filter(.data$conceptId %in% conceptIds)
   } else {
     sql <- "SELECT *
@@ -691,8 +777,12 @@ getConceptDetails <- function(dataSource = .GlobalEnv,
                                     snakeCaseToCamelCase = TRUE) %>% 
       tidyr::tibble()
   }
+  if (nrow(data) == 0) {
+    return(NULL)
+  }
   return(data)
 }
+
 
 resolveMappedConceptSetFromVocabularyDatabaseSchema <- function(dataSource = .GlobalEnv, 
                                                                 conceptSets,
@@ -756,25 +846,18 @@ resolveMappedConceptSetFromVocabularyDatabaseSchema <- function(dataSource = .Gl
 resolveMappedConceptSet <- function(dataSource = .GlobalEnv, 
                                     databaseIds,
                                     cohortId) {
-  # Perform error checks for input variables
-  errorMessage <- checkmate::makeAssertCollection()
-  checkmate::assertIntegerish(x = cohortId,
-                              min.len = 1, 
-                              max.len = 1,
-                              null.ok = TRUE,
-                              add = errorMessage)
-  checkmate::assertCharacter(x = databaseIds,
-                             min.len = 1, 
-                             min.chars = 1,
-                             null.ok = TRUE,
-                             add = errorMessage)
-  checkmate::reportAssertions(collection = errorMessage)
-  
+  table <- 'resolvedConcepts'
   if (is(dataSource, "environment")) {
-    if (!exists("resolvedConcepts") || !exists("concept")) {
+    if (!exists(table)) {
       return(NULL)
     }
-    resolved <- get("resolvedConcepts", envir = dataSource) %>% 
+    if (length(table) == 0) {
+      return(NULL)
+    }
+    if (nrow(get(table, envir = dataSource)) == 0) {
+      return(NULL)
+    }
+    resolved <- get(table, envir = dataSource) %>% 
       dplyr::filter(.data$databaseId %in% !!databaseIds) %>% 
       dplyr::filter(.data$cohortId == !!cohortId) %>% 
       dplyr::inner_join(get("concept"), by = "conceptId") %>% 
@@ -860,89 +943,4 @@ resolveMappedConceptSet <- function(dataSource = .GlobalEnv,
   data <- list(resolved = resolved, 
                mapped = mapped)
   return(data)
-}
-
-
-checkErrorCohortIdsDatabaseIds <- function(errorMessage,
-                                           cohortIds,
-                                           databaseIds) {
-  checkmate::assertDouble(x = cohortIds,
-                          null.ok = FALSE,
-                          lower = 1,
-                          upper = 2^53,
-                          any.missing = FALSE,
-                          add = errorMessage)
-  checkmate::assertCharacter(x = databaseIds,
-                             min.len = 1,
-                             any.missing = FALSE,
-                             unique = TRUE,
-                             add = errorMessage)
-  checkmate::reportAssertions(collection = errorMessage)
-  return(errorMessage)
-}
-
-getSearchTerms <- function(dataSource, includeDescendants = FALSE) {
-  if (is(dataSource, "environment")) {
-    warning("Search terms not implemented when using in-memory objects")
-    return(dplyr::tibble(phenotypeId = -1, term = ""))
-  } else {
-    if (includeDescendants) {
-      sql <- "SELECT DISTINCT phenotype_id, 
-              LOWER(term) AS term
-              FROM (
-                SELECT phenotype_id,
-                  concept_synonym_name AS term
-                FROM @results_database_schema.phenotype_description
-                INNER JOIN @vocabulary_database_schema.concept_ancestor
-                  ON (phenotype_description.phenotype_id/1000) = ancestor_concept_id
-                INNER JOIN @vocabulary_database_schema.concept_synonym 
-                  ON descendant_concept_id = concept_synonym.concept_id
-                WHERE language_concept_id = 4180186 -- English
-                  
-                UNION
-                
-                SELECT phenotype_id,
-                  concept_synonym_name AS term
-                FROM @results_database_schema.phenotype_description
-                INNER JOIN @vocabulary_database_schema.concept_ancestor
-                  ON (phenotype_description.phenotype_id/1000) = ancestor_concept_id
-                INNER JOIN @vocabulary_database_schema.concept_relationship
-                  ON descendant_concept_id = concept_id_2
-                INNER JOIN @vocabulary_database_schema.concept_synonym 
-                  ON concept_id_1 = concept_synonym.concept_id
-                WHERE relationship_id = 'Maps to'
-                  AND language_concept_id = 4180186 -- English
-              ) tmp;"
-    } else {
-      sql <- "SELECT DISTINCT phenotype_id, 
-                LOWER(term) AS term
-              FROM (
-                SELECT phenotype_id,
-                  concept_synonym_name AS term
-                FROM @results_database_schema.phenotype_description
-                INNER JOIN @vocabulary_database_schema.concept_synonym 
-                  ON (phenotype_description.phenotype_id/1000) = concept_synonym.concept_id
-                WHERE language_concept_id = 4180186 -- English
-                  
-                UNION
-                
-                SELECT phenotype_id,
-                  concept_synonym_name AS term
-                FROM @results_database_schema.phenotype_description
-                INNER JOIN @vocabulary_database_schema.concept_relationship
-                  ON (phenotype_description.phenotype_id/1000) = concept_id_2
-                INNER JOIN @vocabulary_database_schema.concept_synonym 
-                  ON concept_id_1 = concept_synonym.concept_id
-                WHERE relationship_id = 'Maps to'
-                  AND language_concept_id = 4180186 -- English
-              ) tmp;"
-    }
-    data <- renderTranslateQuerySql(connection = dataSource$connection,
-                                    sql = sql,
-                                    results_database_schema = dataSource$resultsDatabaseSchema,
-                                    vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
-                                    snakeCaseToCamelCase = TRUE) %>% 
-      tidyr::tibble()
-    return(data)
-  }
 }
