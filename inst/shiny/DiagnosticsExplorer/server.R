@@ -1373,8 +1373,14 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(idx)) {
       return(NULL)
     } else {
-      subset <- getCohortCountResultReactive()[idx,]
-      return(subset)
+      subset <- getCohortCountResultReactive() %>%  
+        dplyr::distinct(.data$cohortId)
+      
+      if (!is.null(subset)) {
+        return(subset[idx,])
+      } else {
+        return(NULL)
+      }
     }
     
   })
