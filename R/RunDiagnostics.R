@@ -1144,6 +1144,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         covariateRefFileName = file.path(exportFolder, "temporal_covariate_ref.csv"),
         analysisRefFileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
         timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv"),
+        # add temporal_covariate_value_dist.csv, but timeId does not seem to be correctly returned
         counts = cohortCounts,
         minCellCount = minCellCount
       )
