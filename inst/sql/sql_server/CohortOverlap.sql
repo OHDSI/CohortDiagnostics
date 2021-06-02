@@ -38,8 +38,14 @@ AS (
 	SELECT DISTINCT target_cohort_id,
 		comparator_cohort_id,
 		subject_id
-	FROM (select distinct target_cohort_id from target_cohorts),
-		(select distinct comparator_cohort_id from comparator_cohorts),
+	FROM (
+		SELECT DISTINCT target_cohort_id
+		FROM target_cohorts
+		),
+		(
+			SELECT DISTINCT comparator_cohort_id
+			FROM comparator_cohorts
+			),
 		all_subjects
 	WHERE target_cohort_id != comparator_cohort_id
 		AND target_cohort_id IS NOT NULL
@@ -110,18 +116,113 @@ AS (
 		AND all1.subject_id = c1.subject_id
 	GROUP BY all1.target_cohort_id,
 		all1.comparator_cohort_id
+	),
+overlap_long
+AS (
+	SELECT DISTINCT target_cohort_id,
+		comparator_cohort_id,
+		'es' attribute,
+		either_subjects value
+	FROM OVERLAP
+	
+	UNION
+	
+	SELECT DISTINCT target_cohort_id,
+		comparator_cohort_id,
+		'bs' attribute,
+		both_subjects value
+	FROM OVERLAP
+	
+	UNION
+	
+	SELECT DISTINCT target_cohort_id,
+		comparator_cohort_id,
+		'ts' attribute,
+		t_only_subjects value
+	FROM OVERLAP
+	
+	UNION
+	
+	SELECT DISTINCT target_cohort_id,
+		comparator_cohort_id,
+		'cs' attribute,
+		c_only_subjects value
+	FROM OVERLAP
+	
+	UNION
+	
+	SELECT DISTINCT target_cohort_id,
+		comparator_cohort_id,
+		'tb' attribute,
+		t_before_c_subjects value
+	FROM OVERLAP
+	
+	UNION
+	
+	SELECT DISTINCT target_cohort_id,
+		comparator_cohort_id,
+		'cb' attribute,
+		c_before_t_subjects value
+	FROM OVERLAP
+	
+	UNION
+	
+	SELECT DISTINCT target_cohort_id,
+		comparator_cohort_id,
+		'sd' attribute,
+		same_day_subjects value
+	FROM OVERLAP
+	
+	UNION
+	
+	SELECT DISTINCT target_cohort_id,
+		comparator_cohort_id,
+		'tc' attribute,
+		t_in_c_subjects value
+	FROM OVERLAP
+	
+	UNION
+	
+	SELECT DISTINCT target_cohort_id,
+		comparator_cohort_id,
+		'ct' attribute,
+		c_in_t_subjects value
+	FROM OVERLAP
 	)
-SELECT DISTINCT target_cohort_id,
+temporal_relationship as
+(
+	SELECT target_cohort_id,
 	comparator_cohort_id,
-	either_subjects,
-	both_subjects,
-	t_only_subjects,
-	c_only_subjects,
-	t_before_c_subjects,
-	c_before_t_subjects,
-	same_day_subjects,
-	t_in_c_subjects,
-	c_in_t_subjects
-FROM OVERLAP
-ORDER BY target_cohort_id,
-	comparator_cohort_id;
+	CAST(FLOOR(DATEDIFF(dd, t1.cohort_start_date, c1.observation_date)/30)+1 AS VARCHAR(30)) attribute,
+	, COUNT_BIG(*) records
+	, COUNT_BIG(DISTINCT subject_id) subjects
+	,SUM(datediff(dd, CASE 
+				WHEN cohort_start_date >= period_begin
+					THEN cohort_start_date
+				ELSE period_begin
+				END, CASE 
+				WHEN cohort_end_date >= period_end
+					THEN period_end
+				ELSE cohort_end_date
+				END) + 1) person_days
+	,COUNT_BIG(CASE 
+			WHEN cohort_start_date >= period_begin
+				AND cohort_start_date <= period_end
+				THEN subject_id
+			ELSE NULL
+			END) records_incidence
+	,COUNT_BIG(DISTINCT CASE 
+			WHEN cohort_start_date >= period_begin
+				AND cohort_start_date <= period_end
+				THEN subject_id
+			ELSE NULL
+			END) subjects_incidence
+	FROM universe all1
+	LEFT JOIN target_cohorts t1 ON all1.target_cohort_id = t1.target_cohort_id
+		AND all1.subject_id = t1.subject_id
+	LEFT JOIN comparator_cohorts c1 ON all1.comparator_cohort_id = c1.comparator_cohort_id
+		AND all1.subject_id = c1.subject_id
+	GROUP BY all1.target_cohort_id,
+		all1.comparator_cohort_id,
+		CAST(FLOOR(DATEDIFF(dd, t1.cohort_start_date, c1.observation_date)/30)+1 AS VARCHAR(30))
+		)
