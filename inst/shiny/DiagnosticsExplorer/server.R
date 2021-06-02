@@ -3340,7 +3340,9 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(-.data$choices) %>% 
       dplyr::inner_join(temporalCovariateChoices, by = "timeId") %>%
       dplyr::arrange(.data$timeId) %>%
-      dplyr::select(-.data$cohortId, -.data$databaseId, -.data$covariateId)
+      dplyr::select(-.data$cohortId, -.data$databaseId) %>% 
+      dplyr::mutate(covariateName = gsub(".*: ","",.data$covariateName)) %>% 
+      dplyr::mutate(covariateName = paste0(.data$covariateName, " (", .data$covariateId, ")"))
     
     if (any(is.null(data), nrow(data) == 0)) {return(NULL)}
     
@@ -3394,7 +3396,10 @@ shiny::shinyServer(function(input, output, session) {
   
   output$temporalCharacterizationTable <-
     DT::renderDataTable(expr = {
-      data <- temporalCharacterization() %>%
+      data <- temporalCharacterization() 
+      validate(need(nrow(data) > 0,
+                    "No data available for selected combination."))
+      data <- data %>%
         dplyr::filter(.data$analysisName %in% temporalAnalysisNameFilter()) %>%
         dplyr::filter(.data$domainId %in% temporalDomainNameFilter())
       
@@ -3408,7 +3413,6 @@ shiny::shinyServer(function(input, output, session) {
       # }
       
       table <- data %>%
-        dplyr::mutate(covariateName = paste(.data$covariateName, "(", .data$conceptId, ")")) %>% 
         tidyr::pivot_wider(
           id_cols = c("covariateName"),
           names_from = "choices",
@@ -3911,7 +3915,9 @@ shiny::shinyServer(function(input, output, session) {
       validate(need((nrow(covs2) > 0), paste0("Target cohort id:", comparatorCohortId(), " does not have data.")))
       balance <-
         compareTemporalCohortCharacteristics(covs1, covs2) %>%
-        dplyr::mutate(absStdDiff = abs(.data$stdDiff))
+        dplyr::mutate(absStdDiff = abs(.data$stdDiff)) %>% 
+        dplyr::mutate(covariateName = gsub(".*: ","",.data$covariateName)) %>% 
+        dplyr::mutate(covariateName = paste0(.data$covariateName, " (", .data$covariateId, ")"))
       
       if (input$temporalCharacterizationType == "Raw table" &&
           input$temporalCharacterProportionOrContinuous == "Proportion") {
@@ -4096,7 +4102,7 @@ shiny::shinyServer(function(input, output, session) {
         
         if (input$temporalCharacterizationTypeColumnFilter == "Mean and Standard Deviation") {
           table <- balance %>%
-            dplyr::mutate(covariateName = paste(.data$covariateName, "(", .data$conceptId, ")")) %>% 
+            # dplyr::mutate(covariateName = paste(.data$covariateName, "(", .data$conceptId, ")")) %>% 
             dplyr::arrange(desc(abs(.data$stdDiff)))
           
           if (length(temporalCovariateChoicesSelected) == 1) {
@@ -4154,7 +4160,7 @@ shiny::shinyServer(function(input, output, session) {
         } else {
           
           table <- balance %>%
-            dplyr::mutate(covariateName = paste(.data$covariateName, "(", .data$conceptId, ")")) %>% 
+            # dplyr::mutate(covariateName = paste(.data$covariateName, "(", .data$conceptId, ")")) %>% 
             dplyr::arrange(desc(abs(.data$stdDiff))) 
           
           if (length(temporalCovariateChoicesSelected) == 1) {
