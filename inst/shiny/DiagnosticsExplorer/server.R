@@ -2945,6 +2945,9 @@ shiny::shinyServer(function(input, output, session) {
       databaseIds = databaseIds(),
       isTemporal = FALSE
     )
+    if (any(is.null(data), nrow(data) > 0)) {
+      return(NULL)
+    }
     return(data)
   })
   
@@ -3014,7 +3017,7 @@ shiny::shinyServer(function(input, output, session) {
   output$characterizationTable <- DT::renderDataTable(expr = {
     data <- characterizationTableData()
     
-    if (nrow(data) == 0) {
+    if (any(nrow(data) == 0, is.null(data))) {
       return(dplyr::tibble(
         Note = paste0("No data available for selected combination")
       ))
