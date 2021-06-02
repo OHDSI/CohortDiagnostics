@@ -2930,7 +2930,7 @@ shiny::shinyServer(function(input, output, session) {
     return(input$characterizationAnalysisNameFilter)
   })
   
-  characterizationTableData <- shiny::reactive(x = {
+  characterizationData <- shiny::reactive(x = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
     if (input$charType == "Pretty") {
@@ -2945,7 +2945,13 @@ shiny::shinyServer(function(input, output, session) {
       databaseIds = databaseIds(),
       isTemporal = FALSE
     )
-    
+    return(data)
+  })
+  
+  characterizationTableData <- shiny::reactive(x = {
+    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
+    validate(need(length(cohortId()) > 0, "No cohorts chosen"))
+    data <- characterizationData()
     if (!is.null(data)) {
       if (input$charType == "Raw" &&
           input$charProportionOrContinuous == "Proportion") {
@@ -3293,19 +3299,26 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   # Temporal characterization -----------------------------------------------------------------
+  temporalCharacterizationData <- shiny::reactive(x = {
+    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
+    validate(need(length(cohortId()) > 0, "No cohorts chosen"))
+    data <- getCovariateValueResult(
+      dataSource = dataSource,
+      cohortIds = cohortId(),
+      databaseIds = input$database,
+      timeIds = timeIds(),
+      isTemporal = TRUE
+    )
+    return(data)
+  })
+  
   
   output$saveTemporalCharacterizationTable <-  downloadHandler(
     filename = function() {
       getFormattedFileName(fileName = "temporalCharacterization")
     },
     content = function(file) {
-      write.csv(getCovariateValueResult(
-        dataSource = dataSource,
-        cohortIds = cohortId(),
-        databaseIds = input$database,
-        timeIds = timeIds(),
-        isTemporal = TRUE
-      ), file)
+      write.csv(temporalCharacterizationData(), file)
     }
   )
   
@@ -3321,19 +3334,15 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(length(timeIds()) > 0, "No time periods selected"))
     validate(need(length(input$database) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
-    data <- getCovariateValueResult(
-      dataSource = dataSource,
-      cohortIds = cohortId(),
-      databaseIds = input$database,
-      timeIds = timeIds(),
-      isTemporal = TRUE
-    )
-    if (is.null(data)) {return(data)}
+    data <- temporalCharacterizationData()
+    if (any(is.null(data), nrow(data) == 0)) {return(NULL)}
     data <- data %>%
       dplyr::select(-.data$choices) %>% 
       dplyr::inner_join(temporalCovariateChoices, by = "timeId") %>%
       dplyr::arrange(.data$timeId) %>%
       dplyr::select(-.data$cohortId, -.data$databaseId, -.data$covariateId)
+    
+    if (any(is.null(data), nrow(data) == 0)) {return(NULL)}
     
     if (input$temporalProportionOrContinuous == "Proportion") {
       data <- data %>%
@@ -3343,6 +3352,8 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$isBinary == 'N')
     }
     
+    if (any(is.null(data), nrow(data) == 0)) {return(NULL)}
+    
     if (!is.null(input$conceptSetsToFilterCharacterization)) {
       if (length(getResoledAndMappedConceptIdsForFilters()) > 0) {
         data <- data %>% 
@@ -3351,6 +3362,9 @@ shiny::shinyServer(function(input, output, session) {
         data <- data[0,]
       }
     }
+    
+    if (any(is.null(data), nrow(data) == 0)) {return(NULL)}
+    
     return(data)
   })
   
