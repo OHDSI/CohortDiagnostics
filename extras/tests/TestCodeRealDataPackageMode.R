@@ -64,6 +64,7 @@ execute(
   outputFolder = outputFolder,
   databaseId = databaseId,
   databaseName = dataSouceInformation$cdmSourceName,
+  verifyDependencies = FALSE,
   databaseDescription = dataSouceInformation$sourceDescription
 )
 

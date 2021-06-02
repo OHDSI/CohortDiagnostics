@@ -24,6 +24,7 @@ execute(
   outputFolder = outputFolder,
   databaseId = "Eunomia",
   databaseName = "Eunomia Test",
+  verifyDependencies = FALSE,
   databaseDescription = "This is a test data base called Eunomia"
 )
 
