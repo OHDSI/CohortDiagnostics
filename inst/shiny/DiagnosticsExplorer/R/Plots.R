@@ -416,15 +416,15 @@ plotCohortComparisonStandardizedDifference <- function(balance,
                                                        yLimitMax = 1,
                                                        domain = "all") {
   domains <-
-    c("condition",
-      "device",
-      "drug",
-      "measurement",
-      "observation",
-      "procedure")
-  balance$domain <-
-    tolower(stringr::str_extract(balance$covariateName, "[a-z]+"))
+    c("Condition",
+      "Device",
+      "Drug",
+      "Measurement",
+      "Observation",
+      "Procedure")
+  balance$domain <- balance$domainId
   balance$domain[!balance$domain %in% domains] <- "other"
+  
   if (domain != "all") {
     balance <- balance %>%
       dplyr::filter(.data$domain == !!domain)
@@ -448,7 +448,7 @@ plotCohortComparisonStandardizedDifference <- function(balance,
       cohortIdColumn = "cohortId2",
       shortNameColumn = "comparatorCohort"
     )
-  
+
   # ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 3, alpha = 0.6)
   balance$tooltip <-
     c(
@@ -458,7 +458,7 @@ plotCohortComparisonStandardizedDifference <- function(balance,
         "\nDomain: ",
         balance$domainId,
         "\nAnalysis: ",
-        balance$analysisName,
+        balance$analysisNameLong,
         "\nY ",
         balance$comparatorCohort,
         ": ",

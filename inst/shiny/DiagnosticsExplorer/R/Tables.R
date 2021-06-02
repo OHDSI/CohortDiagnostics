@@ -221,6 +221,7 @@ compareCohortCharacteristics <-
         "analysisId",
         "isBinary",
         "analysisName",
+        "analysisNameLong",
         "domainId"
       ),
       suffix = c("1", "2")

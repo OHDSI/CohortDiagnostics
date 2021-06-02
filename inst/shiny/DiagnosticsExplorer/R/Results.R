@@ -731,6 +731,11 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
       dplyr::arrange(.data$cohortId, .data$databaseId, .data$timeId, .data$covariateId, .data$covariateName)
   } else {
     data <- data %>% 
+      dplyr::left_join(analysisRef %>% 
+                         dplyr::select(.data$analysisId, .data$startDay, .data$endDay),
+                       by = "analysisId") %>% 
+      dplyr::mutate(analysisNameLong = paste0(.data$analysisName, " (", as.character(.data$startDay), " to ", as.character(.data$endDay), ")")) %>% 
+      dplyr::select(-.data$startDay, -.data$endDay) %>% 
       dplyr::relocate(.data$cohortId, 
                       .data$databaseId, 
                       .data$analysisId,

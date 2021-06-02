@@ -3581,8 +3581,19 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     
-    balance <- compareCohortCharacteristics(covs1, covs2) %>%
-      dplyr::mutate(absStdDiff = abs(.data$stdDiff))
+    balance <- compareCohortCharacteristics(covs1, covs2)
+    
+    if (any(is.null(balance), nrow(balance) == 0)) {
+      return(NULL)
+    }
+    balance <- balance %>%
+      dplyr::mutate(absStdDiff = abs(.data$stdDiff)) %>% 
+      dplyr::rename(covariateNameFull = .data$covariateName) %>% 
+      dplyr::mutate(covariateName = gsub(".*: ","",.data$covariateNameFull)) %>% 
+      dplyr::mutate(covariateName = dplyr::case_when(stringr::str_detect(string = tolower(.data$covariateNameFull), 
+                                                                         pattern = 'age group|gender') ~ .data$covariateNameFull,
+                                                     TRUE ~ gsub(".*: ","",.data$covariateNameFull))) %>% 
+      dplyr::mutate(covariateName = paste0(.data$covariateName, " (", .data$covariateId, ")"))
     
     if (input$charCompareType == "Raw table" &&
         input$charCompareProportionOrContinuous == "Proportion") {
@@ -3593,29 +3604,38 @@ shiny::shinyServer(function(input, output, session) {
       balance <- balance %>%
         dplyr::filter(.data$isBinary == 'N')
     }
+    if (any(is.null(balance), nrow(balance) == 0)) {
+      return(NULL)
+    }
     return(balance)
   })
   
   shiny::observe({
-    subset <- computeBalance()$analysisName %>% unique() %>% sort()
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "charCompareAnalysisNameFilter",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
-    )
+    data <- computeBalance()
+    if (all(!is.null(data), nrow(data) > 0)) {
+      subset <- data$analysisName %>% unique() %>% sort()
+      shinyWidgets::updatePickerInput(
+        session = session,
+        inputId = "charCompareAnalysisNameFilter",
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        choices = subset,
+        selected = subset
+      )
+    }
   })
   
   shiny::observe({
-    subset <- computeBalance()$domainId %>% unique() %>% sort()
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "charaCompareDomainNameFilter",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
-    )
+    data <- computeBalance()
+    if (all(!is.null(data), nrow(data) > 0)) {
+      subset <- data$domainId %>% unique() %>% sort()
+      shinyWidgets::updatePickerInput(
+        session = session,
+        inputId = "charaCompareDomainNameFilter",
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        choices = subset,
+        selected = subset
+      )
+    }
   })
   
   output$saveCompareCohortCharacterizationTable <-  downloadHandler(
@@ -3632,10 +3652,6 @@ shiny::shinyServer(function(input, output, session) {
     
     validate(need(all(!is.null(balance), nrow(balance) > 0),
              "No data available for selected combination."))
-    
-    # if (any(is.null(balance), nrow(balance) == 0)) {
-    #   return(dplyr::tibble(Note = "No data for the selected combination."))
-    # }
     
     targetCohortIdValue <- balance %>% dplyr::filter(!is.na(.data$cohortId1)) %>% dplyr::pull(.data$cohortId1) %>% unique()
     comparatorcohortIdValue <- balance %>% dplyr::filter(!is.na(.data$cohortId2)) %>% dplyr::pull(.data$cohortId2) %>% unique()
@@ -3674,7 +3690,11 @@ shiny::shinyServer(function(input, output, session) {
                                      ")")
     
     if (input$charCompareType == "Pretty table") {
-      table <- prepareTable1Comp(balance)
+      
+      data <- balance %>% 
+        dplyr::mutate(covariateName = .data$covariateNameFull)
+      
+      table <- prepareTable1Comp(data)
       
       validate(need(nrow(table) > 0,
                "No data available for selected combination."))
@@ -3735,12 +3755,7 @@ shiny::shinyServer(function(input, output, session) {
       validate(need(all(!is.null(balance), nrow(balance) > 0),
                "No data available for selected combination."))
       
-      # if (any(is.null(balance), nrow(balance) == 0)) {
-      #   return(dplyr::tibble(Note = "No data for the selected combination."))
-      # }
-      
       balance <- balance %>% 
-        dplyr::mutate(covariateName =  paste(.data$covariateName, "(", .data$conceptId, ")")) %>% 
         dplyr::rename("meanTarget" = mean1,
                       "sdTarget" = sd1,
                       "meanComparator" = mean2,
@@ -3842,12 +3857,12 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(nrow(data) > 0,
              "No data available for selected combination."))
     
-    # if (nrow(data) == 0) {
-    #   return(dplyr::tibble(Note = "No data for the selected combination."))
-    # }
     data <- data %>%
       dplyr::filter(.data$analysisName %in% charCompareAnalysisNameFilter()) %>%
       dplyr::filter(.data$domainId %in% charaCompareDomainNameFilter())
+    
+    validate(need(nrow(data) > 0,
+                  "No data available for selected combination."))
     
     if (!is.null(input$conceptSetsToFilterCharacterization)) {
       if (length(getResoledAndMappedConceptIdsForFilters()) > 0) {
@@ -3857,6 +3872,9 @@ shiny::shinyServer(function(input, output, session) {
         data <- data[0,]
       }
     }
+    
+    validate(need(nrow(data) > 0,
+                  "No data available for selected combination."))
     
     if (input$charCompareType == "Plot" &&
         input$charCompareProportionOrContinuous == "Proportion") {
@@ -3871,9 +3889,6 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(nrow(data) > 0,
              "No data available for selected combination."))
     
-    # if (nrow(data) == 0) {
-    #   return(dplyr::tibble(Note = "No data for the selected combination."))
-    # }
     plot <-
       plotCohortComparisonStandardizedDifference(
         balance = data,
