@@ -545,14 +545,13 @@ plotTemporalCompareStandardizedDifference <- function(balance,
                                                       yLimitMax = 1,
                                                       domain = "all") {
   domains <-
-    c("condition",
-      "device",
-      "drug",
-      "measurement",
-      "observation",
-      "procedure")
-  balance$domain <-
-    tolower(stringr::str_extract(balance$covariateName, "[a-z]+"))
+    c("Condition",
+      "Device",
+      "Drug",
+      "Measurement",
+      "Observation",
+      "Procedure")
+  balance$domain <- balance$domainId
   balance$domain[!balance$domain %in% domains] <- "other"
   if (domain != "all") {
     balance <- balance %>%
