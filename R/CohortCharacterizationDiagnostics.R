@@ -127,7 +127,9 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
     }
     
     if ("covariatesContinuous" %in% names(featureExtractionOutput) &&
-        dplyr::pull(dplyr::count(featureExtractionOutput$covariatesContinuous)) > 0) {
+        dplyr::pull(dplyr::count(featureExtractionOutput$covariatesContinuous)) > 0 &&
+        (!FeatureExtraction::isTemporalCovariateData(featureExtractionOutput))) { #'covariatesContinous' seems to return NA for timeId 
+                                                                                  # in featureExtractionOutput$covariatesContinuous
       covariates <- featureExtractionOutput$covariatesContinuous %>%
         dplyr::rename(
           mean = .data$averageValue,
@@ -141,7 +143,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
           dplyr::select(.data$cohortId,
                         .data$timeId,
                         .data$covariateId,
-                        .data$sum,
+                        .data$sumValue,
                         .data$mean,
                         .data$sd)
       } else {

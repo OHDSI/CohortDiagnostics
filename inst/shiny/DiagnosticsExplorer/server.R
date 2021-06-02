@@ -1495,10 +1495,13 @@ shiny::shinyServer(function(input, output, session) {
         stratifyByCalendarYear =  stratifyByCalendarYear,
         minPersonYears = input$minPersonYear,
         minSubjectCount = input$minSubjetCount
-      ) %>%
+      ) 
+      if (any(is.null(data), nrow(data) == 0)) {
+        return(NULL)
+      }
+      data <- data %>%
         dplyr::mutate(incidenceRate = dplyr::case_when(.data$incidenceRate < 0 ~ 0,
                                                        TRUE ~ .data$incidenceRate))
-      
     } else {
       data <- NULL
     }
@@ -1821,6 +1824,7 @@ shiny::shinyServer(function(input, output, session) {
       cohortId = cohortId(),
       databaseIds = databaseIds()
     )
+    return(data)
   })
   
   output$saveIncludedConceptsTable <-  downloadHandler(
