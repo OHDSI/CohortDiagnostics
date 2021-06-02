@@ -2945,7 +2945,7 @@ shiny::shinyServer(function(input, output, session) {
       databaseIds = databaseIds(),
       isTemporal = FALSE
     )
-    if (any(is.null(data), nrow(data) > 0)) {
+    if (any(is.null(data), nrow(data) == 0)) {
       return(NULL)
     }
     return(data)
@@ -2955,44 +2955,62 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
     data <- characterizationData()
-    if (!is.null(data)) {
-      if (input$charType == "Raw" &&
-          input$charProportionOrContinuous == "Proportion") {
-        data <- data %>%
-          dplyr::filter(.data$isBinary == 'Y')
-      } else if (input$charType == "Raw" &&
-                 input$charProportionOrContinuous == "Continuous") {
-        data <- data %>%
-          dplyr::filter(.data$isBinary == 'N')
-      }
-      return(data)
-    } else {
+    
+    if (any(is.null(data), nrow(data) == 0)) {
       return(NULL)
+    }
+    
+    if (input$charType == "Raw" &&
+        input$charProportionOrContinuous == "Proportion") {
+      data <- data %>%
+        dplyr::filter(.data$isBinary == 'Y')
+    } else if (input$charType == "Raw" &&
+               input$charProportionOrContinuous == "Continuous") {
+      data <- data %>%
+        dplyr::filter(.data$isBinary == 'N')
+    }
+    
+    if (any(is.null(data), nrow(data) == 0)) {
+      return(NULL)
+    }
+    data <- data %>% 
+      dplyr::rename(covariateNameFull = .data$covariateName) %>% 
+      dplyr::mutate(covariateName = gsub(".*: ","",.data$covariateNameFull)) %>% 
+      dplyr::mutate(covariateName = dplyr::case_when(stringr::str_detect(string = tolower(.data$covariateNameFull), 
+                                                                         pattern = 'age group|gender') ~ .data$covariateNameFull,
+                                                     TRUE ~ gsub(".*: ","",.data$covariateNameFull))) %>% 
+      dplyr::mutate(covariateName = paste0(.data$covariateName, " (", .data$covariateId, ")"))
+    return(data)
+  })
+  
+  shiny::observe({
+    data <- characterizationTableData()
+    if (all(!is.null(data), nrow(data) > 0)) {
+      subset <-
+        characterizationTableData()$analysisName %>% unique() %>% sort()
+      shinyWidgets::updatePickerInput(
+        session = session,
+        inputId = "characterizationAnalysisNameFilter",
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        choices = subset,
+        selected = subset
+      )
     }
   })
   
   shiny::observe({
-    subset <-
-      characterizationTableData()$analysisName %>% unique() %>% sort()
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "characterizationAnalysisNameFilter",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
-    )
-  })
-  
-  shiny::observe({
-    subset <-
-      characterizationTableData()$domainId %>% unique() %>% sort()
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "characterizationDomainNameFilter",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = subset,
-      selected = subset
-    )
+    data <- characterizationTableData()
+    if (all(!is.null(data), nrow(data) > 0)) {
+      subset <-
+        characterizationTableData()$domainId %>% unique() %>% sort()
+      shinyWidgets::updatePickerInput(
+        session = session,
+        inputId = "characterizationDomainNameFilter",
+        choicesOpt = list(style = rep_len("color: black;", 999)),
+        choices = subset,
+        selected = subset
+      )
+    }
   })
   
   shiny::observe({
@@ -3016,12 +3034,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$characterizationTable <- DT::renderDataTable(expr = {
     data <- characterizationTableData()
-    
-    if (any(nrow(data) == 0, is.null(data))) {
-      return(dplyr::tibble(
-        Note = paste0("No data available for selected combination")
-      ))
-    }
+    validate(need(!is.null(data), "No data for the combination"))
     
     databaseIds <- sort(unique(data$databaseId))
     
@@ -3200,7 +3213,6 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::inner_join(covariateNames,
           by = "covariateId"
         ) %>%
-        dplyr::mutate(covariateName = paste(.data$covariateName, "(",.data$conceptId, ")")) %>% 
         dplyr::select(-.data$covariateId, -.data$cohortId, -.data$conceptId) %>% 
         dplyr::relocate(.data$covariateName)
       
