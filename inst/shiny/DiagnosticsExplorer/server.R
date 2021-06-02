@@ -1368,6 +1368,14 @@ shiny::shinyServer(function(input, output, session) {
     return(dataTable)
   }, server = TRUE)
   
+  output$cohortCountTableContainsData <- shiny::reactive({
+    return(nrow(getCohortCountResultReactive()) > 0)
+  })
+  
+  shiny::outputOptions(output,
+                "cohortCountTableContainsData",
+                suspendWhenHidden = FALSE)
+  
   getCohortIdOnCohortCountRowSelect <- reactive({
     idx <- input$cohortCountsTable_rows_selected
     if (is.null(idx)) {
