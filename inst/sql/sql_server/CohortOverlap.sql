@@ -1,32 +1,51 @@
-WITH cohorts
+WITH target_cohorts
+AS (
+	SELECT cohort_definition_id target_cohort_id,
+		subject_id,
+		MIN(cohort_start_date) min_start,
+		MIN(cohort_end_date) min_end
+	FROM @cohort_database_schema.@cohort_table
+	WHERE cohort_definition_id IN (@target_cohort_ids)
+	GROUP BY cohort_definition_id,
+		subject_id
+	),
+comparator_cohorts
+AS (
+	SELECT cohort_definition_id comparator_cohort_id,
+		subject_id,
+		MIN(cohort_start_date) min_start,
+		MIN(cohort_end_date) min_end
+	FROM @cohort_database_schema.@cohort_table
+	WHERE cohort_definition_id IN (@comparator_cohort_ids)
+	GROUP BY cohort_definition_id,
+		subject_id
+	),
+all_subjects
+AS (
+	SELECT DISTINCT subject_id
+	FROM (
+		SELECT DISTINCT subject_id
+		FROM target_cohorts
+		
+		UNION
+		
+		SELECT DISTINCT subject_id
+		FROM comparator_cohorts
+		) subjects
+	),
+universe
 AS (
 	SELECT DISTINCT target_cohort_id,
 		comparator_cohort_id,
 		subject_id
-	FROM (
-		SELECT DISTINCT cohort_definition_id target_cohort_id
-		FROM @cohort_database_schema.@cohort_table
-		WHERE cohort_definition_id IN (@target_cohort_ids)
-		),
-		(
-			SELECT DISTINCT cohort_definition_id comparator_cohort_id
-			FROM @cohort_database_schema.@cohort_table
-			WHERE cohort_definition_id IN (@comparator_cohort_ids)
-			),
-		(
-			SELECT DISTINCT subject_id
-			FROM @cohort_database_schema.@cohort_table
-			WHERE cohort_definition_id IN (@target_cohort_ids)
-				OR cohort_definition_id IN (@comparator_cohort_ids)
-			)
+	FROM (select distinct target_cohort_id from target_cohorts),
+		(select distinct comparator_cohort_id from comparator_cohorts),
+		all_subjects
 	WHERE target_cohort_id != comparator_cohort_id
 		AND target_cohort_id IS NOT NULL
 		AND comparator_cohort_id IS NOT NULL
 		AND target_cohort_id > 0
 		AND comparator_cohort_id > 0
-	ORDER BY target_cohort_id,
-		comparator_cohort_id,
-		subject_id
 	),
 overlap
 AS (
@@ -84,28 +103,10 @@ AS (
 					THEN c1.subject_id
 				ELSE NULL
 				END) AS c_in_t_subjects
-	FROM cohorts all1
-	LEFT JOIN (
-		SELECT cohort_definition_id target_cohort_id,
-			subject_id,
-			MIN(cohort_start_date) min_start,
-			MIN(cohort_end_date) min_end
-		FROM @cohort_database_schema.@cohort_table
-		WHERE cohort_definition_id IN (@target_cohort_ids)
-		GROUP BY cohort_definition_id,
-			subject_id
-		) t1 ON all1.target_cohort_id = t1.target_cohort_id
+	FROM universe all1
+	LEFT JOIN target_cohorts t1 ON all1.target_cohort_id = t1.target_cohort_id
 		AND all1.subject_id = t1.subject_id
-	LEFT JOIN (
-		SELECT cohort_definition_id comparator_cohort_id,
-			subject_id,
-			MIN(cohort_start_date) min_start,
-			MIN(cohort_end_date) min_end
-		FROM @cohort_database_schema.@cohort_table
-		WHERE cohort_definition_id IN (@comparator_cohort_ids)
-		GROUP BY cohort_definition_id,
-			subject_id
-		) c1 ON all1.comparator_cohort_id = c1.comparator_cohort_id
+	LEFT JOIN comparator_cohorts c1 ON all1.comparator_cohort_id = c1.comparator_cohort_id
 		AND all1.subject_id = c1.subject_id
 	GROUP BY all1.target_cohort_id,
 		all1.comparator_cohort_id
