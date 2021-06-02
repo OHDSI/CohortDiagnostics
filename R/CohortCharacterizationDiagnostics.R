@@ -141,7 +141,7 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
           dplyr::select(.data$cohortId,
                         .data$timeId,
                         .data$covariateId,
-                        .data$sum,
+                        .data$sumValue,
                         .data$mean,
                         .data$sd)
       } else {
