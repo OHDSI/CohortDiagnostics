@@ -779,36 +779,66 @@ runCohortDiagnostics <- function(packageName = NULL,
                             attr(delta, "units"))
   }
 
-  # Cohort time series -----------------------------------------------------------------------
-  if (runTimeSeries) {
-    ParallelLogger::logInfo("Calculating time series of subjects and records.")
-    startPrevalenceRate <- Sys.time()
+
+  # Cohort overlap and Time Series ---------------------------------------------------------------------------------
+  if (any(runCohortOverlap, runTimeSeries)) {
+    ParallelLogger::logInfo("Computing cohort overlap and/or time series")
+    startCohortOverlap <- Sys.time()
     
-    subset <- subsetToRequiredCohorts(
-      cohorts = cohorts %>%
-        dplyr::filter(.data$cohortId %in% instantiatedCohorts),
-      task = "runTimeSeries",
+    combis <- cohorts %>%
+      dplyr::select(.data$cohortId) %>%
+      dplyr::distinct()
+    
+    combis <- tidyr::crossing(combis %>% dplyr::rename("targetCohortId" = .data$cohortId),
+                              combis %>% dplyr::rename("comparatorCohortId" = .data$cohortId)) %>%
+      dplyr::filter(.data$targetCohortId != .data$comparatorCohortId) %>%
+      dplyr::select(.data$targetCohortId, .data$comparatorCohortId) %>%
+      dplyr::distinct()
+    
+    if (incremental) {
+      combis <- combis %>%
+        dplyr::inner_join(
+          dplyr::tibble(
+            targetCohortId = cohorts$cohortId,
+            targetChecksum = cohorts$checksum
+          ),
+          by = "targetCohortId"
+        ) %>%
+        dplyr::inner_join(
+          dplyr::tibble(
+            comparatorCohortId = cohorts$cohortId,
+            comparatorChecksum = cohorts$checksum
+          ),
+          by = "comparatorCohortId"
+        ) %>%
+        dplyr::mutate(checksum = paste(.data$targetChecksum, .data$comparatorChecksum))
+    }
+    subset <- subsetToRequiredCombis(
+      combis = combis,
+      task = "runCohortOverlap",
       incremental = incremental,
       recordKeepingFile = recordKeepingFile
     )
     
-    if (incremental &&
-        (length(instantiatedCohorts) - nrow(subset)) > 0) {
+    if (incremental && (nrow(combis) - nrow(subset)) > 0) {
       ParallelLogger::logInfo(sprintf(
-        "Skipping %s cohorts in incremental mode.",
-        length(instantiatedCohorts) - nrow(subset)
+        "Skipping %s cohort combinations in incremental mode.",
+        nrow(combis) - nrow(subset)
       ))
     }
+    
     if (nrow(subset) > 0) {
       cohortDateRange <- DatabaseConnector::renderTranslateQuerySql(
         connection = connection,
         sql = "SELECT MIN(year(cohort_start_date)) MIN_YEAR, 
              MAX(year(cohort_end_date)) MAX_YEAR 
-             FROM @cohort_database_schema.@cohort_table;",
+             FROM @cohort_database_schema.@cohort_table
+             WHERE cohort_definition_id IN (@cohort_ids);",
         cohort_database_schema = cohortDatabaseSchema,
         cohort_table = cohortTable, 
         snakeCaseToCamelCase = TRUE,
-        tempEmulationSchema = tempEmulationSchema
+        tempEmulationSchema = tempEmulationSchema,
+        cohort_ids = c(subset$targetCohortId, subset$comparatorCohortId) %>% unique() %>% sort()
       )
       
       calendarQuarter <- dplyr::tibble(periodBegin = clock::date_seq(from = clock::date_build(year = max(2000,
@@ -877,15 +907,17 @@ runCohortDiagnostics <- function(packageName = NULL,
         connection = connection,
         sql = sql,
         cohort_database_schema = cohortDatabaseSchema,
+        cdm_database_schema = cdmDatabaseSchema,
         cohort_table = cohortTable, 
         snakeCaseToCamelCase = TRUE,
         tempEmulationSchema = tempEmulationSchema,
-        cohort_ids = subset$cohortId
+        cohort_ids = c(subset$targetCohortId, subset$comparatorCohortId) %>% unique()
       ) %>% 
         dplyr::tibble() %>% 
         dplyr::mutate(databaseId = !!databaseId) %>% 
         dplyr::select(.data$cohortId, .data$databaseId, 
                       .data$periodBegin, .data$calendarInterval,
+                      .data$prevalenceType,
                       .data$records, .data$subjects,
                       .data$personDays, .data$recordsIncidence,
                       .data$subjectsIncidence)
@@ -916,68 +948,6 @@ runCohortDiagnostics <- function(packageName = NULL,
         )
       }
       
-      recordTasksDone(
-        cohortId = subset$cohortId,
-        task = "runTimeSeries",
-        checksum = subset$checksum,
-        recordKeepingFile = recordKeepingFile,
-        incremental = incremental
-      )
-      delta <- Sys.time() - startPrevalenceRate
-      ParallelLogger::logInfo("Running Prevalence Rate took ",
-                              signif(delta, 3),
-                              " ",
-                              attr(delta, "units"))
-    }
-  }
-  
-  # Cohort overlap ---------------------------------------------------------------------------------
-  if (runCohortOverlap) {
-    ParallelLogger::logInfo("Computing cohort overlap")
-    startCohortOverlap <- Sys.time()
-    
-    combis <- cohorts %>%
-      dplyr::select(.data$cohortId) %>%
-      dplyr::distinct()
-    
-    combis <- tidyr::crossing(combis %>% dplyr::rename("targetCohortId" = .data$cohortId),
-                              combis %>% dplyr::rename("comparatorCohortId" = .data$cohortId)) %>%
-      dplyr::filter(.data$targetCohortId != .data$comparatorCohortId) %>%
-      dplyr::select(.data$targetCohortId, .data$comparatorCohortId) %>%
-      dplyr::distinct()
-    
-    if (incremental) {
-      combis <- combis %>%
-        dplyr::inner_join(
-          dplyr::tibble(
-            targetCohortId = cohorts$cohortId,
-            targetChecksum = cohorts$checksum
-          ),
-          by = "targetCohortId"
-        ) %>%
-        dplyr::inner_join(
-          dplyr::tibble(
-            comparatorCohortId = cohorts$cohortId,
-            comparatorChecksum = cohorts$checksum
-          ),
-          by = "comparatorCohortId"
-        ) %>%
-        dplyr::mutate(checksum = paste(.data$targetChecksum, .data$comparatorChecksum))
-    }
-    subset <- subsetToRequiredCombis(
-      combis = combis,
-      task = "runCohortOverlap",
-      incremental = incremental,
-      recordKeepingFile = recordKeepingFile
-    )
-    
-    if (incremental && (nrow(combis) - nrow(subset)) > 0) {
-      ParallelLogger::logInfo(sprintf(
-        "Skipping %s cohort combinations in incremental mode.",
-        nrow(combis) - nrow(subset)
-      ))
-    }
-    if (nrow(subset) > 0) {
       data <- computeCohortOverlap(
         connection = connection,
         cohortDatabaseSchema = cohortDatabaseSchema,
@@ -985,38 +955,100 @@ runCohortDiagnostics <- function(packageName = NULL,
         targetCohortIds = combis$targetCohortId %>% unique(),
         comparatorCohortIds = combis$comparatorCohortId %>% unique()
       )
+      
       if (nrow(data) > 0) {
-        data <- data %>%
-          dplyr::mutate(databaseId = !!databaseId)
         data <-
-          enforceMinCellValue(data, "eitherSubjects", minCellCount)
-        data <-
-          enforceMinCellValue(data, "bothSubjects", minCellCount)
-        data <-
-          enforceMinCellValue(data, "tOnlySubjects", minCellCount)
-        data <-
-          enforceMinCellValue(data, "cOnlySubjects", minCellCount)
-        data <-
-          enforceMinCellValue(data, "tBeforeCSubjects", minCellCount)
-        data <-
-          enforceMinCellValue(data, "cBeforeTSubjects", minCellCount)
-        data <-
-          enforceMinCellValue(data, "sameDaySubjects", minCellCount)
-        data <-
-          enforceMinCellValue(data, "tInCSubjects", minCellCount)
-        data <-
-          enforceMinCellValue(data, "cInTSubjects", minCellCount)
-        data <- data %>%
-          dplyr::mutate(dplyr::across(.cols = everything(), ~ tidyr::replace_na(
-            data = ., replace = 0
-          ))) %>% 
-          dplyr::select(.data$eitherSubjects, .data$bothSubjects, .data$tOnlySubjects,
-                        .data$cOnlySubjects, .data$tBeforeCSubjects, .data$cBeforeTSubjects,
-                        .data$sameDaySubjects, .data$tInCSubjects, .data$cInTSubjects,
-                        .data$targetCohortId, .data$comparatorCohortId, .data$databaseId)
-        
+          enforceMinCellValue(data, "value", minCellCount)
+      }
+      
+      #####################
+      cohortCalendarIncidence <- data %>% 
+        dplyr::filter(.data$attributeType %in% c('y', 'm', 'q')) %>% 
+        dplyr::mutate(calendarMonth = lubridate::as_date(.data$attribute)) %>% 
+        dplyr::rename(count = .data$value,
+                      periodType = .data$attributeType) %>% 
+        dplyr::mutate(databaseId = !!databaseId) %>% 
+        dplyr::select(.data$cohortId, 
+                      .data$databaseId,
+                      .data$periodType,
+                      .data$calendarMonth,
+                      .data$count) %>% 
+        dplyr::arrange(.data$cohortId,
+                       .data$databaseId,
+                       .data$periodType,
+                       .data$calendarMonth,
+                       .data$count)
+      
+      if (nrow(cohortCalendarIncidence) > 0) {
         writeToCsv(
-          data = data,
+          data = cohortCalendarIncidence,
+          fileName = file.path(exportFolder, "cohort_calendar_incidence.csv"),
+          incremental = incremental,
+          targetCohortId = subset$targetCohortId,
+          comparatorCohortId = subset$comparatorCohortId
+        )
+      }
+      
+      #####################
+      cohortRelationships <- data %>% 
+        dplyr::filter(attributeType == 'r')  %>% 
+        dplyr::rename(count = .data$value, targetCohortId = .data$cohortId) %>% 
+        dplyr::mutate(startDay = as.numeric(.data$attribute)*30) %>% 
+        dplyr::mutate(endDay = (as.numeric(.data$attribute)*30) + 29)  %>%
+        dplyr::mutate(databaseId = !!databaseId) %>% 
+        dplyr::select(.data$databaseId,
+                      .data$targetCohortId, 
+                      .data$comparatorCohortId,
+                      .data$startDay,
+                      .data$endDay,
+                      .data$count) %>% 
+        dplyr::arrange(.data$targetCohortId, 
+                       .data$comparatorCohortId,
+                       .data$startDay,
+                       .data$endDay,
+                       .data$count)
+      
+      if (nrow(cohortRelationships) > 0) {
+        writeToCsv(
+          data = cohortRelationships,
+          fileName = file.path(exportFolder, "cohort_relationships.csv"),
+          incremental = incremental,
+          targetCohortId = subset$targetCohortId,
+          comparatorCohortId = subset$comparatorCohortId
+        )
+      }
+      
+      #####################
+      cohortOverlap <- data %>% 
+        dplyr::filter(attributeType == 'o')  %>% 
+        dplyr::mutate(attribute = dplyr::case_when(.data$attribute == 'es' ~ 'eitherSubjects',
+                                                   .data$attribute == 'bs' ~ 'bothSubjects',
+                                                   .data$attribute == 'ts' ~ 'tOnlySubjects',
+                                                   .data$attribute == 'cs' ~ 'cOnlySubjects',
+                                                   .data$attribute == 'tb' ~ 'tBeforeCSubjects',
+                                                   .data$attribute == 'cb' ~ 'cBeforeTSubjects',
+                                                   .data$attribute == 'sd' ~ 'sameDaySubjects',
+                                                   .data$attribute == 'tc' ~ 'tInCSubjects',
+                                                   .data$attribute == 'ct' ~ 'cInTSubjects')
+        ) %>% 
+        dplyr::rename(targetCohortId = .data$cohortId) %>% 
+        dplyr::select(.data$targetCohortId, 
+                      .data$comparatorCohortId,
+                      .data$attribute,
+                      .data$value) %>%
+        tidyr::pivot_wider(id_cols = c("targetCohortId", "comparatorCohortId"),
+                           values_from = "value",
+                           values_fill = 0,
+                           names_from = "attribute") %>%
+        dplyr::mutate(databaseId = !!databaseId) %>% 
+        dplyr::select(.data$eitherSubjects, .data$bothSubjects, .data$tOnlySubjects,
+                      .data$cOnlySubjects, .data$tBeforeCSubjects, .data$cBeforeTSubjects,
+                      .data$sameDaySubjects, .data$tInCSubjects, .data$cInTSubjects,
+                      .data$targetCohortId, .data$comparatorCohortId, .data$databaseId)
+
+      if (nrow(cohortOverlap) > 0) {
+        writeToCsv(
+          data = cohortOverlap,
           fileName = file.path(exportFolder, "cohort_overlap.csv"),
           incremental = incremental,
           targetCohortId = subset$targetCohortId,
@@ -1034,7 +1066,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
     
     delta <- Sys.time() - startCohortOverlap
-    ParallelLogger::logInfo("Running Cohort Overlap took ",
+    ParallelLogger::logInfo("Computing cohort overlap and/or time series took ",
                             signif(delta, 3),
                             " ",
                             attr(delta, "units"))
