@@ -439,13 +439,14 @@ CREATE TABLE time_series (
 			cohort_id BIGINT NOT NULL,
 			database_id VARCHAR NOT NULL,
 			period_begin DATE NOT NULL,
-			calendar_interval VARCHAR(1) NOT NULL,
+			calendar_interval VARCHAR NOT NULL,
+			prevalence_type VARCHAR NOT NULL,
 			records BIGINT NOT NULL,
 			subjects BIGINT NOT NULL,
 			person_days BIGINT NOT NULL,
 			records_incidence BIGINT,
 			subjects_incidence BIGINT,
-			PRIMARY KEY(cohort_id, database_id, period_begin, calendar_interval)
+			PRIMARY KEY(cohort_id, database_id, period_begin, calendar_interval, prevalence_type)
 );
 
 --Table visit_context
