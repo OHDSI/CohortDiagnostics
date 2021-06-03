@@ -982,7 +982,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       if (nrow(cohortCalendarIncidence) > 0) {
         writeToCsv(
           data = cohortCalendarIncidence,
-          fileName = file.path(exportFolder, "cohort_calendar_incidence.csv"),
+          fileName = file.path(exportFolder, "calendar_incidence.csv"),
           incremental = incremental,
           targetCohortId = subset$targetCohortId,
           comparatorCohortId = c(subset$targetCohortId, subset$comparatorCohortId) %>% unique()

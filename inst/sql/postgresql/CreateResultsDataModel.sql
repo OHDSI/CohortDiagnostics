@@ -1,9 +1,11 @@
 -- Drop old tables if exist
 
 DROP TABLE IF EXISTS analysis_ref;
+DROP TABLE IF EXISTS calendar_incidence;
 DROP TABLE IF EXISTS cohort;
 DROP TABLE IF EXISTS cohort_count;
 DROP TABLE IF EXISTS cohort_overlap;
+DROP TABLE IF EXISTS cohort_relationships;
 DROP TABLE IF EXISTS concept;
 DROP TABLE IF EXISTS concept_ancestor;
 DROP TABLE IF EXISTS concept_relationship;
@@ -49,6 +51,18 @@ CREATE TABLE analysis_ref (
 			PRIMARY KEY(analysis_id)
 );
 
+--Table calendar_incidence
+
+CREATE TABLE calendar_incidence (
+			cohort_id BIGINT NOT NULL,
+			database_id VARCHAR NOT NULL,
+			period_type VARCHAR NOT NULL,
+			calendar_month DATE NOT NULL,
+			count FLOAT,
+			PRIMARY KEY(cohort_id, database_id, period_type, calendar_month)
+);
+
+
 --Table cohort
 
 CREATE TABLE cohort (
@@ -90,6 +104,19 @@ CREATE TABLE cohort_overlap (
 			comparator_cohort_id BIGINT NOT NULL,
 			database_id VARCHAR NOT NULL,
 			PRIMARY KEY(target_cohort_id, comparator_cohort_id, database_id)
+);
+
+
+--Table cohort_relationships
+
+CREATE TABLE cohort_relationships (
+			database_id VARCHAR NOT NULL,
+			target_cohort_id BIGINT NOT NULL,
+			comparator_cohort_id BIGINT NOT NULL,			
+			start_day FLOAT NOT NULL,
+			end_day FLOAT NOT NULL,
+			count FLOAT NOT NULL,			
+			PRIMARY KEY(database_id, target_cohort_id, comparator_cohort_id, start_day, end_day)
 );
 
 --Table concept
