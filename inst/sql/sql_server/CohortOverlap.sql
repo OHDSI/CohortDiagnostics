@@ -229,6 +229,82 @@ AS (
 	GROUP BY comparator_cohort_id,
 		DATEFROMPARTS(YEAR(min_start), 01, 1)
 	),
+incidence_calendar_quarter_long
+AS (
+	SELECT target_cohort_id cohort_id,
+		0 AS comparator_cohort_id,
+		CAST(CAST(DATEFROMPARTS(YEAR(min_start), CASE 
+						WHEN MONTH(min_start) > 0
+							AND MONTH(min_start) < 4
+							THEN 1
+						WHEN MONTH(min_start) > 3
+							AND MONTH(min_start) < 7
+							THEN 4
+						WHEN MONTH(min_start) > 6
+							AND MONTH(min_start) < 10
+							THEN 7
+						WHEN MONTH(min_start) > 10
+							AND MONTH(min_start) < 13
+							THEN 10
+						ELSE 1
+						END, 01) AS DATE) AS VARCHAR(30)) AS attribute,
+		COUNT_BIG(DISTINCT subject_id) value
+	FROM target_cohorts
+	GROUP BY target_cohort_id,
+		CAST(CAST(DATEFROMPARTS(YEAR(min_start), CASE 
+						WHEN MONTH(min_start) > 0
+							AND MONTH(min_start) < 4
+							THEN 1
+						WHEN MONTH(min_start) > 3
+							AND MONTH(min_start) < 7
+							THEN 4
+						WHEN MONTH(min_start) > 6
+							AND MONTH(min_start) < 10
+							THEN 7
+						WHEN MONTH(min_start) > 10
+							AND MONTH(min_start) < 13
+							THEN 10
+						ELSE 1
+						END, 01) AS DATE) AS VARCHAR(30))
+	
+	UNION
+	
+	SELECT comparator_cohort_id cohort_id,
+		0 AS comparator_cohort_id,
+		CAST(CAST(DATEFROMPARTS(YEAR(min_start), CASE 
+						WHEN MONTH(min_start) > 0
+							AND MONTH(min_start) < 4
+							THEN 1
+						WHEN MONTH(min_start) > 3
+							AND MONTH(min_start) < 7
+							THEN 4
+						WHEN MONTH(min_start) > 6
+							AND MONTH(min_start) < 10
+							THEN 7
+						WHEN MONTH(min_start) > 10
+							AND MONTH(min_start) < 13
+							THEN 10
+						ELSE 1
+						END, 01) AS DATE) AS VARCHAR(30)) AS attribute,
+		COUNT_BIG(DISTINCT subject_id) value
+	FROM comparator_cohorts
+	GROUP BY comparator_cohort_id,
+		CAST(CAST(DATEFROMPARTS(YEAR(min_start), CASE 
+						WHEN MONTH(min_start) > 0
+							AND MONTH(min_start) < 4
+							THEN 1
+						WHEN MONTH(min_start) > 3
+							AND MONTH(min_start) < 7
+							THEN 4
+						WHEN MONTH(min_start) > 6
+							AND MONTH(min_start) < 10
+							THEN 7
+						WHEN MONTH(min_start) > 10
+							AND MONTH(min_start) < 13
+							THEN 10
+						ELSE 1
+						END, 01) AS DATE) AS VARCHAR(30))
+	),
 temporal_relationship_long
 AS (
 	SELECT t1.target_cohort_id cohort_id,
@@ -266,6 +342,15 @@ SELECT DISTINCT cohort_id,
 	'y' attribute_type, -- calendar month count (incidence)
 	value
 FROM incidence_calendar_year_long
+
+UNION
+
+SELECT DISTINCT cohort_id,
+	comparator_cohort_id,
+	attribute,
+	'q' attribute_type, -- calendar quarter count (incidence)
+	value
+FROM incidence_calendar_quarter_long
 
 UNION
 
