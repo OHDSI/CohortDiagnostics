@@ -903,7 +903,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           dbms = connection@dbms
         )
       
-      data <- DatabaseConnector::renderTranslateQuerySql(
+      timeSeries <- DatabaseConnector::renderTranslateQuerySql(
         connection = connection,
         sql = sql,
         cohort_database_schema = cohortDatabaseSchema,
@@ -928,27 +928,27 @@ runCohortDiagnostics <- function(packageName = NULL,
         progressBar = TRUE, 
         tempEmulationSchema = tempEmulationSchema
       )
+      timeSeries <-
+        enforceMinCellValue(timeSeries, "records", minCellCount)
+      timeSeries <-
+        enforceMinCellValue(timeSeries, "subjects", minCellCount)
+      timeSeries <-
+        enforceMinCellValue(timeSeries, "personDays", minCellCount)
       data <-
-        enforceMinCellValue(data, "records", minCellCount)
-      data <-
-        enforceMinCellValue(data, "subjects", minCellCount)
-      data <-
-        enforceMinCellValue(data, "personDays", minCellCount)
-      data <-
-        enforceMinCellValue(data, "recordsIncidence", minCellCount)
-      data <-
-        enforceMinCellValue(data, "subjectsIncidence", minCellCount)
+        enforceMinCellValue(timeSeries, "recordsIncidence", minCellCount)
+      timeSeries <-
+        enforceMinCellValue(timeSeries, "subjectsIncidence", minCellCount)
       
-      if (nrow(data) > 0) {
+      if (nrow(timeSeries) > 0) {
         writeToCsv(
-          data = data,
+          data = timeSeries,
           fileName = file.path(exportFolder, "time_series.csv"),
           incremental = incremental,
-          cohortId = subset$cohortId
+          cohortId = c(subset$targetCohortId, subset$comparatorCohortId) %>% unique()
         )
       }
       
-      data <- computeCohortOverlap(
+      cohortOverlap <- computeCohortOverlap(
         connection = connection,
         cohortDatabaseSchema = cohortDatabaseSchema,
         cohortTable = cohortTable,
@@ -956,13 +956,13 @@ runCohortDiagnostics <- function(packageName = NULL,
         comparatorCohortIds = combis$comparatorCohortId %>% unique()
       )
       
-      if (nrow(data) > 0) {
-        data <-
-          enforceMinCellValue(data, "value", minCellCount)
+      if (nrow(cohortOverlap) > 0) {
+        cohortOverlap <-
+          enforceMinCellValue(cohortOverlap, "value", minCellCount)
       }
       
       #####################
-      cohortCalendarIncidence <- data %>% 
+      cohortCalendarIncidence <- cohortOverlap %>% 
         dplyr::filter(.data$attributeType %in% c('y', 'm', 'q')) %>% 
         dplyr::mutate(calendarMonth = lubridate::as_date(.data$attribute)) %>% 
         dplyr::rename(count = .data$value,
@@ -985,12 +985,12 @@ runCohortDiagnostics <- function(packageName = NULL,
           fileName = file.path(exportFolder, "cohort_calendar_incidence.csv"),
           incremental = incremental,
           targetCohortId = subset$targetCohortId,
-          comparatorCohortId = subset$comparatorCohortId
+          comparatorCohortId = c(subset$targetCohortId, subset$comparatorCohortId) %>% unique()
         )
       }
       
       #####################
-      cohortRelationships <- data %>% 
+      cohortRelationships <- cohortOverlap %>% 
         dplyr::filter(attributeType == 'r')  %>% 
         dplyr::rename(count = .data$value, targetCohortId = .data$cohortId) %>% 
         dplyr::mutate(startDay = as.numeric(.data$attribute)*30) %>% 
@@ -1019,7 +1019,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       }
       
       #####################
-      cohortOverlap <- data %>% 
+      cohortOverlap <- cohortOverlap %>% 
         dplyr::filter(attributeType == 'o')  %>% 
         dplyr::mutate(attribute = dplyr::case_when(.data$attribute == 'es' ~ 'eitherSubjects',
                                                    .data$attribute == 'bs' ~ 'bothSubjects',
