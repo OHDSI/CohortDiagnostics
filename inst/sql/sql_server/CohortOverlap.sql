@@ -193,7 +193,7 @@ incidence_calendar_month_long
 AS (
 	SELECT target_cohort_id cohort_id,
 		0 AS comparator_cohort_id,
-		CAST(CAST(DATEFROMPARTS(YEAR(min_start), MONTH(min_start), 01) AS DATE)AS VARCHAR(30)) AS attribute,
+		CAST(CAST(DATEFROMPARTS(YEAR(min_start), MONTH(min_start), 01) AS DATE) AS VARCHAR(30)) AS attribute,
 		COUNT_BIG(DISTINCT subject_id) value
 	FROM target_cohorts
 	GROUP BY target_cohort_id,
@@ -203,24 +203,45 @@ AS (
 	
 	SELECT comparator_cohort_id cohort_id,
 		0 AS comparator_cohort_id,
-		CAST(CAST(DATEFROMPARTS(YEAR(min_start), MONTH(min_start), 01) AS DATE)AS VARCHAR(30)) AS attribute,
+		CAST(CAST(DATEFROMPARTS(YEAR(min_start), MONTH(min_start), 01) AS DATE) AS VARCHAR(30)) AS attribute,
 		COUNT_BIG(DISTINCT subject_id) value
 	FROM comparator_cohorts
 	GROUP BY comparator_cohort_id,
 		DATEFROMPARTS(YEAR(min_start), MONTH(min_start), 1)
 	),
-	temporal_relationship_long AS (
-		SELECT t1.target_cohort_id cohort_id,
-			c1.comparator_cohort_id,
-			CAST(FLOOR(DATEDIFF(dd, t1.min_start, c1.min_start) / 30) + 1 AS VARCHAR(30)) attribute,
-			COUNT_BIG(t1.subject_id) value
-		FROM target_cohorts t1
-		INNER JOIN comparator_cohorts c1 ON t1.subject_id = c1.subject_id
-		WHERE t1.target_cohort_id != c1.comparator_cohort_id
-		GROUP BY t1.target_cohort_id,
-			c1.comparator_cohort_id,
-			CAST(FLOOR(DATEDIFF(dd, t1.min_start, c1.min_start) / 30) + 1 AS VARCHAR(30))
-		)
+incidence_calendar_year_long
+AS (
+	SELECT target_cohort_id cohort_id,
+		0 AS comparator_cohort_id,
+		CAST(CAST(DATEFROMPARTS(YEAR(min_start), 01, 01) AS DATE) AS VARCHAR(30)) AS attribute,
+		COUNT_BIG(DISTINCT subject_id) value
+	FROM target_cohorts
+	GROUP BY target_cohort_id,
+		DATEFROMPARTS(YEAR(min_start), 01, 01)
+	
+	UNION
+	
+	SELECT comparator_cohort_id cohort_id,
+		0 AS comparator_cohort_id,
+		CAST(CAST(DATEFROMPARTS(YEAR(min_start), 01, 01) AS DATE) AS VARCHAR(30)) AS attribute,
+		COUNT_BIG(DISTINCT subject_id) value
+	FROM comparator_cohorts
+	GROUP BY comparator_cohort_id,
+		DATEFROMPARTS(YEAR(min_start), 01, 1)
+	),
+temporal_relationship_long
+AS (
+	SELECT t1.target_cohort_id cohort_id,
+		c1.comparator_cohort_id,
+		CAST(FLOOR(DATEDIFF(dd, t1.min_start, c1.min_start) / 30) AS VARCHAR(30)) attribute,
+		COUNT_BIG(t1.subject_id) value
+	FROM target_cohorts t1
+	INNER JOIN comparator_cohorts c1 ON t1.subject_id = c1.subject_id
+	WHERE t1.target_cohort_id != c1.comparator_cohort_id
+	GROUP BY t1.target_cohort_id,
+		c1.comparator_cohort_id,
+		CAST(FLOOR(DATEDIFF(dd, t1.min_start, c1.min_start) / 30) AS VARCHAR(30))
+	)
 SELECT cohort_id,
 	comparator_cohort_id,
 	attribute,
@@ -230,12 +251,21 @@ FROM overlap_long
 
 UNION
 
-SELECT cohort_id,
+SELECT DISTINCT cohort_id,
 	comparator_cohort_id,
 	attribute,
-	'c' attribute_type, -- calendar month count (incidence)
+	'm' attribute_type, -- calendar month count (incidence)
 	value
 FROM incidence_calendar_month_long
+
+UNION
+
+SELECT DISTINCT cohort_id,
+	comparator_cohort_id,
+	attribute,
+	'y' attribute_type, -- calendar month count (incidence)
+	value
+FROM incidence_calendar_year_long
 
 UNION
 
