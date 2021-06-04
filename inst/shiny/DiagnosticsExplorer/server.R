@@ -1993,7 +1993,7 @@ shiny::shinyServer(function(input, output, session) {
                           columnDefs)
       )
       
-      if(input$includedConceptsTableColumnFilter == "Both") {
+      if (input$includedConceptsTableColumnFilter == "Both") {
         dataTable <- DT::datatable(
           data,
           options = options,
@@ -2026,6 +2026,14 @@ shiny::shinyServer(function(input, output, session) {
       )
     return(dataTable)
   }, server = TRUE)
+  
+  output$includeConceptsTableContainsData <- shiny::reactive({
+    return(nrow(includedConceptsData()) > 0)
+  })
+  
+  shiny::outputOptions(output,
+                       "includeConceptsTableContainsData",
+                       suspendWhenHidden = FALSE)
   
   # orphan concepts table -------------------------------------------------------------------------
   

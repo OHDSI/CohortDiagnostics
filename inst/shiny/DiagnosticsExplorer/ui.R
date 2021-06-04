@@ -794,29 +794,33 @@ bodyTabItems <- shinydashboard::tabItems(
           inline = TRUE
         )
       ),
-      column(
-        4,
-        shiny::radioButtons(
-          inputId = "includedConceptsTableColumnFilter",
-          label = "",
-          choices = c("Both", "Subjects only", "Records only"), # 
-          selected = "Subjects only",
-          inline = TRUE
-        )
-      ),
-      column(4,
-             tags$table(width = "100%",
-                        tags$tr(
-                          tags$td(
-                            align = "right",
-                            shiny::downloadButton(
-                              "saveIncludedConceptsTable",
-                              label = "",
-                              icon = shiny::icon("download"),
-                              style = "margin-top: 5px; margin-bottom: 5px;"
+      shiny::conditionalPanel(
+        condition = "output.includeConceptsTableContainsData == true",
+        column(
+          4,
+          shiny::radioButtons(
+            inputId = "includedConceptsTableColumnFilter",
+            label = "",
+            choices = c("Both", "Subjects only", "Records only"), # 
+            selected = "Subjects only",
+            inline = TRUE
+          )
+        ),
+        column(4,
+               tags$table(width = "100%",
+                          tags$tr(
+                            tags$td(
+                              align = "right",
+                              shiny::downloadButton(
+                                "saveIncludedConceptsTable",
+                                label = "",
+                                icon = shiny::icon("download"),
+                                style = "margin-top: 5px; margin-bottom: 5px;"
+                              )
                             )
-                          )
-                        ))),
+                          )))
+      ),
+      
     DT::dataTableOutput("includedConceptsTable")
     )
   ),
