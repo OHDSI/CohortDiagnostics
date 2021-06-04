@@ -2754,28 +2754,31 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   # Visit Context ---------------------------------------------------------------------------------------------
+  visitContexData <- shiny::reactive(x = {
+    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
+    validate(need(length(cohortId()) > 0, "No cohorts chosen"))
+    
+    data <- getVisitContextResults(
+      dataSource = dataSource,
+      cohortIds = cohortId(),
+      databaseIds = databaseIds()
+    )
+    return(data)
+  })
+  
   output$saveVisitContextTable <-  downloadHandler(
     filename = function() {
       getFormattedFileName(fileName = "visitContext")
     },
     content = function(file) {
-      write.csv(getVisitContextResults(
-        dataSource = dataSource,
-        cohortIds = cohortId(),
-        databaseIds = databaseIds()
-      ), file)
+      write.csv(visitContexData(), file)
     }
   )
   
   output$visitContextTable <- DT::renderDataTable(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
-    data <- getVisitContextResults(
-      dataSource = dataSource,
-      cohortIds = cohortId(),
-      databaseIds = databaseIds()
-    )
-    
+    data <- visitContexData()
     validate(need(nrow(data) > 0,
              "No data available for selected combination."))
     
@@ -2921,6 +2924,14 @@ shiny::shinyServer(function(input, output, session) {
       backgroundPosition = "center"
     )
   }, server = TRUE)
+  
+  output$visitContextContainData <- shiny::reactive({
+    return(nrow(visitContexData()) > 0)
+  })
+  
+  shiny::outputOptions(output,
+                       "visitContextContainData",
+                       suspendWhenHidden = FALSE)
   
   # Characterization -------------------------------------------------
   getConceptSetNameForFilter <- shiny::reactive(x = {

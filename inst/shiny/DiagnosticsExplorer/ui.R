@@ -976,29 +976,32 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "visitContext",
     cohortReference("visitContextSelectedCohort"),
-    column(
-      6,
-      shiny::radioButtons(
-        inputId = "visitContextTableFilters",
-        label = "Display",
-        choices = c("All", "Before", "During", "Simultaneous", "After"),
-        selected = "All",
-        inline = TRUE
-      )
-    ),
-    column(6,
-           tags$table(width = "100%",
-                      tags$tr(
-                        tags$td(
-                          align = "right",
-                          shiny::downloadButton(
-                            "saveVisitContextTable",
-                            label = "",
-                            icon = shiny::icon("download"),
-                            style = "margin-top: 5px; margin-bottom: 5px;"
+    shiny::conditionalPanel(
+      condition = "output.visitContextContainData == true",
+      shiny::column(
+        6,
+        shiny::radioButtons(
+          inputId = "visitContextTableFilters",
+          label = "Display",
+          choices = c("All", "Before", "During", "Simultaneous", "After"),
+          selected = "All",
+          inline = TRUE
+        )
+      ),
+      shiny::column(6,
+             tags$table(width = "100%",
+                        tags$tr(
+                          tags$td(
+                            align = "right",
+                            shiny::downloadButton(
+                              "saveVisitContextTable",
+                              label = "",
+                              icon = shiny::icon("download"),
+                              style = "margin-top: 5px; margin-bottom: 5px;"
+                            )
                           )
-                        )
-                      ))),
+                        )))
+    ),
     DT::dataTableOutput(outputId = "visitContextTable")
   ),
   shinydashboard::tabItem(
