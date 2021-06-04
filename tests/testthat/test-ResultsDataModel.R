@@ -1,30 +1,3 @@
-jdbcDriverFolder <- tempfile("jdbcDrivers")
-DatabaseConnector::downloadJdbcDrivers("postgresql", pathToDriver = jdbcDriverFolder)
-connectionDetails <-
-  DatabaseConnector::createConnectionDetails(
-    dbms = "postgresql",
-    user = Sys.getenv("CDM5_POSTGRESQL_USER"),
-    password = URLdecode(Sys.getenv("CDM5_POSTGRESQL_PASSWORD")),
-    server = Sys.getenv("CDM5_POSTGRESQL_SERVER"),
-    pathToDriver = jdbcDriverFolder
-  )
-
-cdmDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
-vocabularyDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
-cohortDiagnosticsSchema <-
-  Sys.getenv("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")
-oracleTempSchema <- NULL
-cohortTable <- "cohort"
-connection <-
-  DatabaseConnector::connect(connectionDetails = connectionDetails)
-folder <- tempfile("cohortDiagnosticsTest")
-
-withr::defer({
-  DatabaseConnector::disconnect(connection)
-  unlink(jdbcDriverFolder, recursive = TRUE, force = TRUE)
-  unlink(folder, recursive = TRUE, force = TRUE)
-}, testthat::teardown_env())
-
 
 #' Only works with postgres > 9.4
 .tableExists <- function(connection, schema, tableName) {
@@ -57,7 +30,7 @@ test_that("Results upload", {
     connectionDetails = connectionDetails,
     cdmDatabaseSchema = cdmDatabaseSchema,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    oracleTempSchema = oracleTempSchema,
+    tempEmulationSchema = tempEmulationSchema,
     cohortDatabaseSchema = cohortDiagnosticsSchema,
     cohortTable = cohortTable,
     cohortIds = c(17492, 17692),
@@ -72,7 +45,7 @@ test_that("Results upload", {
     connectionDetails = connectionDetails,
     cdmDatabaseSchema = cdmDatabaseSchema,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    oracleTempSchema = oracleTempSchema,
+    tempEmulationSchema = tempEmulationSchema,
     cohortDatabaseSchema = cohortDiagnosticsSchema,
     cohortTable = cohortTable,
     cohortIds = c(17492, 17692),

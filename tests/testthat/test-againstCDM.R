@@ -1,16 +1,12 @@
 # Disabling until new version of DatabaseConnector is released:
 library(testthat)
 library(CohortDiagnostics)
-library(Eunomia)
 
-connectionDetails <- Eunomia::getEunomiaConnectionDetails()
-cdmDatabaseSchema <- "main"
-cohortDatabaseSchema <- "main"
-vocabularyDatabaseSchema <- cohortDatabaseSchema
-cohortTable <- "cohort"
-tempEmulationSchema <- NULL
 folder <- tempfile()
 dir.create(folder, recursive = TRUE)
+withr::defer({
+  unlink(folder)
+}, testthat::teardown_env())
 
 test_that("Cohort instantiation", {
   CohortDiagnostics::instantiateCohortSet(
@@ -58,7 +54,7 @@ test_that("Cohort diagnostics in incremental mode", {
       cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
       inclusionStatisticsFolder = file.path(folder, "incStats"),
       exportFolder =  file.path(folder, "export"),
-      databaseId = "Eunomia",
+      databaseId = "cdmv5",
       runInclusionStatistics = TRUE,
       runBreakdownIndexEvents = TRUE,
       runCohortCharacterization = TRUE,
@@ -74,7 +70,7 @@ test_that("Cohort diagnostics in incremental mode", {
   )
   
   testthat::expect_true(file.exists(file.path(
-    folder, "export", "Results_Eunomia.zip"
+    folder, "export", "Results_CDMv5.zip"
   )))
   
   secondTime <- system.time(
@@ -88,7 +84,7 @@ test_that("Cohort diagnostics in incremental mode", {
       cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
       inclusionStatisticsFolder = file.path(folder, "incStats"),
       exportFolder =  file.path(folder, "export"),
-      databaseId = "Eunomia",
+      databaseId = "cdmv5",
       runInclusionStatistics = TRUE,
       runBreakdownIndexEvents = TRUE,
       runCohortCharacterization = TRUE,
@@ -108,4 +104,3 @@ test_that("Cohort diagnostics in incremental mode", {
   testthat::expect_true(file.exists(file.path(folder, "export", "PreMerged.RData")))
 })
 
-unlink(folder, recursive = TRUE)
