@@ -2285,6 +2285,14 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
+  output$orphanconceptContainData <- shiny::reactive({
+    return(nrow(orphanConceptsData()) > 0)
+  })
+  
+  shiny::outputOptions(output,
+                       "orphanconceptContainData",
+                       suspendWhenHidden = FALSE)
+  
   # Inclusion rules table -----------------------------------------------------------------------
   
   inclusionRuleTableData <- shiny::reactive(x = {

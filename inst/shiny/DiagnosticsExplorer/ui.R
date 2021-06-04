@@ -827,7 +827,7 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "orphanConcepts",
     cohortReference("orphanConceptsSelectedCohort"),
-    tags$table(
+    tags$table(width = "100%",
       tags$tr(
         tags$td(
           shiny::radioButtons(
@@ -840,27 +840,32 @@ bodyTabItems <- shinydashboard::tabItems(
         ),
         tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
         tags$td(
-          shiny::radioButtons(
-            inputId = "orphanConceptsColumFilterType",
-            label = "Display",
-            choices = c("All", "Subjects only","Records only"),
-            selected = "All",
-            inline = TRUE
+          shiny::conditionalPanel(
+            condition = "output.orphanconceptContainData == true",
+            tags$table(width = "100%",
+              tags$tr(
+                tags$td(
+                  shiny::radioButtons(
+                    inputId = "orphanConceptsColumFilterType",
+                    label = "Display",
+                    choices = c("All", "Subjects only","Records only"),
+                    selected = "All",
+                    inline = TRUE
+                  )
+                ),
+                tags$td(align = "right",
+                        shiny::downloadButton(
+                          "saveOrphanConceptsTable",
+                          label = "",
+                          icon = shiny::icon("download"),
+                          style = "margin-top: 5px; margin-bottom: 5px;"
+                        )
+                )
+              )
+            )
           )
         )
       )
-    ),
-    tags$table(width = "100%", 
-               tags$tr(
-                 tags$td(align = "right",
-                         shiny::downloadButton(
-                           "saveOrphanConceptsTable",
-                           label = "",
-                           icon = shiny::icon("download"),
-                           style = "margin-top: 5px; margin-bottom: 5px;"
-                         )
-                 )
-               )
     ),
     DT::dataTableOutput(outputId = "orphanConceptsTable")
   ),
