@@ -841,24 +841,23 @@ runCohortDiagnostics <- function(packageName = NULL,
         cohort_ids = c(subset$targetCohortId, subset$comparatorCohortId) %>% unique() %>% sort()
       )
       
-      calendarQuarter <- dplyr::tibble(periodBegin = clock::date_seq(from = clock::date_build(year = max(2000,
-                                                                                                         cohortDateRange$minYear %>% as.integer())), 
-                                                                     to = clock::date_build(year = cohortDateRange$maxYear %>% as.integer() 
-                                                                                            + 1), 
+      minYear <- (min(max(clock::get_year(observationPeriodDateRange$observationPeriodMinDate), 1990), cohortDateRange$minYear) %>% as.integer()) - 2
+      maxYear <- clock::get_year(observationPeriodDateRange$observationPeriodMaxDate) %>% as.integer()
+      
+      calendarQuarter <- dplyr::tibble(periodBegin = clock::date_seq(from = clock::date_build(year = minYear), 
+                                                                     to = clock::date_build(year = maxYear + 1), 
                                                                      by = clock::duration_months(3))) %>% 
         dplyr::mutate(periodEnd = clock::add_months(x = .data$periodBegin, n = 3) - 1) %>% 
         dplyr::mutate(calendarInterval = 'q')
       
-      calendarMonth <- dplyr::tibble(periodBegin = clock::date_seq(from = clock::date_build(year = max(2000,
-                                                                                                       cohortDateRange$minYear %>% as.integer())), 
-                                                                   to = clock::date_build(year = cohortDateRange$maxYear %>% as.integer()
-                                                                                          + 1), 
+      calendarMonth <- dplyr::tibble(periodBegin = clock::date_seq(from = clock::date_build(year = minYear), 
+                                                                   to = clock::date_build(year = maxYear + 1), 
                                                                    by = clock::duration_months(1))) %>% 
         dplyr::mutate(periodEnd = clock::add_months(x = .data$periodBegin, n = 1) - 1) %>% 
         dplyr::mutate(calendarInterval = 'm')
       
-      calendarYear <- dplyr::tibble(periodBegin = clock::date_seq(from = clock::date_build(year = cohortDateRange$minYear %>% as.integer()), 
-                                                                  to = clock::date_build(year = (cohortDateRange$maxYear %>% as.integer()) + 1), 
+      calendarYear <- dplyr::tibble(periodBegin = clock::date_seq(from = clock::date_build(year = minYear), 
+                                                                  to = clock::date_build(year = maxYear + 1 + 1), 
                                                                   by = clock::duration_years(1))) %>% 
         dplyr::mutate(periodEnd = clock::add_years(x = .data$periodBegin, n = 1) - 1) %>% 
         dplyr::mutate(calendarInterval = 'y')
@@ -878,8 +877,8 @@ runCohortDiagnostics <- function(packageName = NULL,
       #   dplyr::mutate(periodEnd = clock::add_days(x = .data$periodBegin, n = 6))
       
       calendarPeriods <- dplyr::bind_rows(calendarMonth, calendarQuarter, calendarYear) %>%  #calendarWeek
-        dplyr::filter(.data$periodBegin >= as.Date('1999-12-25')) %>% 
-        dplyr::filter(.data$periodEnd <= clock::date_today("")) %>% 
+        # dplyr::filter(.data$periodBegin >= as.Date('1999-12-25')) %>% 
+        # dplyr::filter(.data$periodEnd <= clock::date_today("")) %>% 
         dplyr::distinct()
       
       ParallelLogger::logTrace("Inserting calendar periods into temporay table. This might take time.")
@@ -917,7 +916,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         dplyr::mutate(databaseId = !!databaseId) %>% 
         dplyr::select(.data$cohortId, .data$databaseId, 
                       .data$periodBegin, .data$calendarInterval,
-                      .data$prevalenceType,
+                      .data$seriesType,
                       .data$records, .data$subjects,
                       .data$personDays, .data$recordsIncidence,
                       .data$subjectsIncidence)

@@ -440,7 +440,7 @@ CREATE TABLE time_series (
 			database_id VARCHAR NOT NULL,
 			period_begin DATE NOT NULL,
 			calendar_interval VARCHAR NOT NULL,
-			prevalence_type VARCHAR NOT NULL,
+			series_type VARCHAR NOT NULL,
 			records BIGINT NOT NULL,
 			subjects BIGINT NOT NULL,
 			person_days BIGINT NOT NULL,
