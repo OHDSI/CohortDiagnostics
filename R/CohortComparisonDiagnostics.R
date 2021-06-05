@@ -50,11 +50,22 @@ computeCohortOverlap <- function(connectionDetails = NULL,
       target_cohort_ids = targetCohortIds,
       comparator_cohort_ids = comparatorCohortIds
     )
-    overlap <- DatabaseConnector::querySql(
+    DatabaseConnector::executeSql(
       connection = connection,
-      sql = sql,
-      snakeCaseToCamelCase = TRUE
+      sql = sql
     )
+    
+    overlap <- DatabaseConnector::querySql(connection = connection, 
+                                           sql = "SELECT * FROM #cohort_overlap_long;", 
+                                           snakeCaseToCamelCase = TRUE)
+    
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = "IF OBJECT_ID('tempdb..#cohort_overlap_long', 'U') IS NOT NULL DROP TABLE #cohort_overlap_long;",
+      progressBar = TRUE
+    )
+    
+    
     if ("overlap" %in% names(results)) {
       Andromeda::appendToTable(results$overlap, overlap)
     } else {
