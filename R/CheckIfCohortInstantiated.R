@@ -45,7 +45,7 @@ checkIfCohortInstantiated <-
         sql,
         cohort_database_schema = cohortDatabaseSchema,
         cohort_table = cohortTable,
-        cohort_id = cohortId
+        cohort_id = cohortIds
       )
     count <- count %>% dplyr::pull(1)
     if (count > 0) {

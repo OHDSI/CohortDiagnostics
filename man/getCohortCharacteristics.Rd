@@ -48,15 +48,15 @@ diagnostics to.}
 \item{cdmVersion}{The version of the OMOP CDM. Default 5. (Note: only 5 is supported.)}
 
 \item{covariateSettings}{Either an object of type \code{covariateSettings} as created using one of
-the createCovariateSettings (createTemporalCovariateSettings if temporal 
+the createCovariateSettings (createTemporalCovariateSettings if temporal
 characterization) function in the FeatureExtraction package, or a list
 of such objects. If unspecified, default covariate settings as specified
 by FeatureExtraction is computed, this is sufficient for presenting default
-table 1. See documentation of FeatureExtraction on how to specify 
+table 1. See documentation of FeatureExtraction on how to specify
 CovariateSettings object.}
 
 \item{batchSize}{{Optional, default set to 100} If running characterization on larget set
-of cohorts, this function allows you to batch them into chunks that run 
+of cohorts, this function allows you to batch them into chunks that run
 as a batch.}
 
 \item{exportFolder}{The folder where the output will be exported to. If this folder

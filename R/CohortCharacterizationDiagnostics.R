@@ -22,38 +22,38 @@
 #' Given a set of instantiated cohorts get Characteristics for the cohort using \code{FeatureExtraction::getDbCovariateData}.
 #'
 #' If runTemporalCohortCharacterization argument is TRUE, then the following default covariateSettings object will be created
-#' using \code{RFeatureExtraction::createTemporalCovariateSettings}. 
+#' using \code{RFeatureExtraction::createTemporalCovariateSettings}.
 #'
 #' @template Connection
 #'
 #' @template CdmDatabaseSchema
-#' 
+#'
 #' @template CohortDatabaseSchema
-#' 
+#'
 #' @template TempEmulationSchema
 #'
 #' @template CohortTable
-#' 
+#'
 #' @param exportFolder                The folder where the output will be exported to. If this folder
 #'                                    does not exist it will be created.
-#'                                    
+#'
 #' @param cohortIds                   Optionally, provide a subset of cohort IDs to restrict the
 #'                                    diagnostics to.
-#'                                    
+#'
 #' @template cdmVersion
-#' 
+#'
 #' @param covariateSettings           Either an object of type \code{covariateSettings} as created using one of
-#'                                    the createCovariateSettings (createTemporalCovariateSettings if temporal 
+#'                                    the createCovariateSettings (createTemporalCovariateSettings if temporal
 #'                                    characterization) function in the FeatureExtraction package, or a list
 #'                                    of such objects. If unspecified, default covariate settings as specified
 #'                                    by FeatureExtraction is computed, this is sufficient for presenting default
-#'                                    table 1. See documentation of FeatureExtraction on how to specify 
+#'                                    table 1. See documentation of FeatureExtraction on how to specify
 #'                                    CovariateSettings object.
-#'                                    
+#'
 #' @param batchSize                   {Optional, default set to 100} If running characterization on larget set
-#'                                    of cohorts, this function allows you to batch them into chunks that run 
+#'                                    of cohorts, this function allows you to batch them into chunks that run
 #'                                    as a batch.
-#'                                    
+#'
 #' @export
 getCohortCharacteristics <- function(connectionDetails = NULL,
                                      connection = NULL,
@@ -75,28 +75,39 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
     cohortCounts <- getCohortCounts(
       connection = connection,
       cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTable = cohortTable,
-      cohortIds = cohorts$cohortId
+      cohortTable = cohortTable
     )
-    cohortIds <- cohortCounts$cohortId %>% unique()
+    cohortIdsNew <- cohortCounts$cohortId %>% unique()
   } else {
     cohortCounts <- getCohortCounts(
       connection = connection,
       cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTable = cohortTable
+      cohortTable = cohortTable,
+      cohortIds = !!cohortIds
     )
-    cohortIds <- cohortCounts$cohortId %>% unique()
+    cohortIdsNew <- cohortCounts$cohortId %>% unique()
   }
   
   if (is.null(cohortCounts)) {
-    warning("No cohorts found.")
+    warning("No instantiated cohorts found.")
     return(NULL)
+  } else if (any(is.null(cohortIds), length(cohortIds) == 0)) {
+    ParallelLogger::logInfo(paste0(
+      "No cohortIds provided. Found ",
+      scales::comma(length(cohortIdsNew), accuracy = 1),
+      " instantiated cohorts."
+    ))
   } else {
-    ParallelLogger::logInfo(paste0("No cohortIds provided. Found ", 
-                                   scales::comma(length(cohortCounts), accuracy = 1), 
-                                   " instantiated cohorts."
-                                   ))
-    }
+    ParallelLogger::logInfo(
+      paste0(
+        "Of the ",
+        scales::comma(length(cohortIds), accuracy = 1),
+        " provided, found ",
+        scales::comma(length(cohortIdsNew), accuracy = 1),
+        " to be instantiated."
+      )
+    )
+  }
   
   results <- Andromeda::andromeda()
   for (start in seq(1, length(cohortIds), by = batchSize)) {
@@ -174,12 +185,14 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
       
       if (FeatureExtraction::isTemporalCovariateData(featureExtractionOutput)) {
         covariates <- covariates %>%
-          dplyr::select(.data$cohortId,
-                        .data$timeId,
-                        .data$covariateId,
-                        .data$sumValue,
-                        .data$mean,
-                        .data$sd)
+          dplyr::select(
+            .data$cohortId,
+            .data$timeId,
+            .data$covariateId,
+            .data$sumValue,
+            .data$mean,
+            .data$sd
+          )
       } else {
         covariates <- covariates %>%
           dplyr::select(.data$cohortId,
@@ -197,8 +210,9 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
     
     if ("covariatesContinuous" %in% names(featureExtractionOutput) &&
         dplyr::pull(dplyr::count(featureExtractionOutput$covariatesContinuous)) > 0 &&
-        (!FeatureExtraction::isTemporalCovariateData(featureExtractionOutput))) { #'covariatesContinous' seems to return NA for timeId 
-                                                                                  # in featureExtractionOutput$covariatesContinuous
+        (!FeatureExtraction::isTemporalCovariateData(featureExtractionOutput))) {
+      #   covariatesContinous seems to return NA for timeId
+      #    in featureExtractionOutput$covariatesContinuous
       covariates <- featureExtractionOutput$covariatesContinuous %>%
         dplyr::rename(
           mean = .data$averageValue,
@@ -208,16 +222,18 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
       covariatesContinuous <- covariates
       if (FeatureExtraction::isTemporalCovariateData(featureExtractionOutput)) {
         covariates <- covariates %>%
-          dplyr::mutate(sumValue = -1) %>% 
-          dplyr::select(.data$cohortId,
-                        .data$timeId,
-                        .data$covariateId,
-                        .data$sumValue,
-                        .data$mean,
-                        .data$sd)
+          dplyr::mutate(sumValue = -1) %>%
+          dplyr::select(
+            .data$cohortId,
+            .data$timeId,
+            .data$covariateId,
+            .data$sumValue,
+            .data$mean,
+            .data$sd
+          )
       } else {
         covariates <- covariates %>%
-          dplyr::mutate(sumValue = -1) %>% 
+          dplyr::mutate(sumValue = -1) %>%
           dplyr::select(.data$cohortId,
                         .data$covariateId,
                         .data$sumValue,
