@@ -2,7 +2,7 @@
 % Please edit documentation in R/CohortConstruction.R
 \name{instantiateCohortSet}
 \alias{instantiateCohortSet}
-\title{Instantiate a set of cohort}
+\title{Instantiate a set of cohort(s)}
 \usage{
 instantiateCohortSet(
   connectionDetails = NULL,
@@ -94,7 +94,7 @@ of which definition has been executed.}
 A data frame with cohort counts
 }
 \description{
-This function instantiates a set of cohort in the cohort table, using definitions that are fetched from a WebApi interface.
+This function instantiates a set of cohort(s) in specified cohort table, using definitions that are fetched from a WebApi interface.
 Optionally, the inclusion rule statistics are computed and stored in the \code{inclusionStatisticsFolder}.
 }
 \details{

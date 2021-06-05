@@ -14,21 +14,90 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+
+#' Get Characteristics for a cohort
+#'
+#' @description
+#' Given a set of instantiated cohorts get Characteristics for the cohort using \code{FeatureExtraction::getDbCovariateData}.
+#'
+#' If runTemporalCohortCharacterization argument is TRUE, then the following default covariateSettings object will be created
+#' using \code{RFeatureExtraction::createTemporalCovariateSettings}. 
+#'
+#' @template Connection
+#'
+#' @template CdmDatabaseSchema
+#' 
+#' @template CohortDatabaseSchema
+#' 
+#' @template TempEmulationSchema
+#'
+#' @template CohortTable
+#' 
+#' @param exportFolder                The folder where the output will be exported to. If this folder
+#'                                    does not exist it will be created.
+#'                                    
+#' @param cohortIds                   Optionally, provide a subset of cohort IDs to restrict the
+#'                                    diagnostics to.
+#'                                    
+#' @template cdmVersion
+#' 
+#' @param covariateSettings           Either an object of type \code{covariateSettings} as created using one of
+#'                                    the createCovariateSettings (createTemporalCovariateSettings if temporal 
+#'                                    characterization) function in the FeatureExtraction package, or a list
+#'                                    of such objects. If unspecified, default covariate settings as specified
+#'                                    by FeatureExtraction is computed, this is sufficient for presenting default
+#'                                    table 1. See documentation of FeatureExtraction on how to specify 
+#'                                    CovariateSettings object.
+#'                                    
+#' @param batchSize                   {Optional, default set to 100} If running characterization on larget set
+#'                                    of cohorts, this function allows you to batch them into chunks that run 
+#'                                    as a batch.
+#'                                    
+#' @export
 getCohortCharacteristics <- function(connectionDetails = NULL,
                                      connection = NULL,
                                      cdmDatabaseSchema,
                                      tempEmulationSchema = NULL,
                                      cohortDatabaseSchema = cdmDatabaseSchema,
                                      cohortTable = "cohort",
-                                     cohortIds,
+                                     cohortIds = NULL,
                                      cdmVersion = 5,
-                                     covariateSettings,
+                                     covariateSettings = createDefaultCovariateSettings(),
                                      batchSize = 100) {
   startTime <- Sys.time()
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
+  
+  if (any(is.null(cohortIds), length(cohortIds) == 0)) {
+    cohortCounts <- getCohortCounts(
+      connection = connection,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTable,
+      cohortIds = cohorts$cohortId
+    )
+    cohortIds <- cohortCounts$cohortId %>% unique()
+  } else {
+    cohortCounts <- getCohortCounts(
+      connection = connection,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTable
+    )
+    cohortIds <- cohortCounts$cohortId %>% unique()
+  }
+  
+  if (is.null(cohortCounts)) {
+    warning("No cohorts found.")
+    return(NULL)
+  } else {
+    ParallelLogger::logInfo(paste0("No cohortIds provided. Found ", 
+                                   scales::comma(length(cohortCounts), accuracy = 1), 
+                                   " instantiated cohorts."
+                                   ))
+    }
+  
   results <- Andromeda::andromeda()
   for (start in seq(1, length(cohortIds), by = batchSize)) {
     end <- min(start + batchSize - 1, length(cohortIds))
