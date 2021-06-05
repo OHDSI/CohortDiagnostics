@@ -446,7 +446,7 @@ CREATE TABLE time_series (
 			person_days BIGINT NOT NULL,
 			records_incidence BIGINT,
 			subjects_incidence BIGINT,
-			PRIMARY KEY(cohort_id, database_id, period_begin, calendar_interval, prevalence_type)
+			PRIMARY KEY(cohort_id, database_id, period_begin, calendar_interval, series_type)
 );
 
 --Table visit_context
