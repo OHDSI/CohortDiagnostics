@@ -10,7 +10,7 @@ calendar_incidence,cohort_id,bigint,Yes,Yes,No,Yes
 calendar_incidence,database_id,varchar,Yes,Yes,No,Yes
 calendar_incidence,period_type,varchar,Yes,Yes,No,Yes
 calendar_incidence,calendar_month,Date,Yes,Yes,No,Yes
-calendar_incidence,count,float,Yes,No,No,Yes
+calendar_incidence,count_value,float,Yes,No,No,Yes
 cohort,phenotype_id,bigint,No,No,Yes,Yes
 cohort,cohort_id,bigint,Yes,Yes,No,Yes
 cohort,web_api_cohort_id,bigint,Yes,No,Yes,Yes

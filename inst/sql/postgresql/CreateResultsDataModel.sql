@@ -58,7 +58,7 @@ CREATE TABLE calendar_incidence (
 			database_id VARCHAR NOT NULL,
 			period_type VARCHAR NOT NULL,
 			calendar_month DATE NOT NULL,
-			count FLOAT,
+			count_value FLOAT,
 			PRIMARY KEY(cohort_id, database_id, period_type, calendar_month)
 );
 

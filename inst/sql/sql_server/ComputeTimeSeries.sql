@@ -1,3 +1,25 @@
+-- #time_series
+IF OBJECT_ID('tempdb..#time_series', 'U') IS NOT NULL
+	DROP TABLE #time_series;
+	
+IF OBJECT_ID('tempdb..#time_series1', 'U') IS NOT NULL
+	DROP TABLE #time_series1;
+
+IF OBJECT_ID('tempdb..#time_series2', 'U') IS NOT NULL
+	DROP TABLE #time_series2;
+
+IF OBJECT_ID('tempdb..#time_series3', 'U') IS NOT NULL
+	DROP TABLE #time_series3;
+
+IF OBJECT_ID('tempdb..#time_series4', 'U') IS NOT NULL
+	DROP TABLE #time_series4;
+
+IF OBJECT_ID('tempdb..#time_series5', 'U') IS NOT NULL
+	DROP TABLE #time_series5;
+
+IF OBJECT_ID('tempdb..#time_series6', 'U') IS NOT NULL
+	DROP TABLE #time_series6;
+
 SELECT cohort_definition_id cohort_id,
 	period_begin,
 	calendar_interval,
@@ -25,6 +47,7 @@ SELECT cohort_definition_id cohort_id,
 				THEN subject_id
 			ELSE NULL
 			END) subjects_incidence
+INTO #time_series1
 FROM @cohort_database_schema.@cohort_table
 INNER JOIN #calendar_periods cp ON (
 		cohort_start_date >= period_begin
@@ -37,9 +60,7 @@ INNER JOIN #calendar_periods cp ON (
 WHERE cohort_definition_id IN (@cohort_ids)
 GROUP BY period_begin,
 	calendar_interval,
-	cohort_definition_id
-
-UNION
+	cohort_definition_id;
 
 SELECT cohort_definition_id cohort_id,
 	period_begin,
@@ -68,6 +89,7 @@ SELECT cohort_definition_id cohort_id,
 				THEN subject_id
 			ELSE NULL
 			END) subjects_incidence
+INTO #time_series2
 FROM @cdm_database_schema.observation_period o
 INNER JOIN (
 	SELECT DISTINCT cohort_definition_id,
@@ -85,9 +107,7 @@ INNER JOIN #calendar_periods cp ON (
 		)
 GROUP BY period_begin,
 	calendar_interval,
-	cohort_definition_id
-
-UNION
+	cohort_definition_id;
 
 SELECT 0 cohort_id,
 	period_begin,
@@ -116,6 +136,7 @@ SELECT 0 cohort_id,
 				THEN person_id
 			ELSE NULL
 			END) subjects_incidence
+INTO #time_series3
 FROM @cdm_database_schema.observation_period o
 INNER JOIN #calendar_periods cp ON (
 		observation_period_start_date >= period_begin
@@ -126,9 +147,7 @@ INNER JOIN #calendar_periods cp ON (
 		AND observation_period_end_date <= period_end
 		)
 GROUP BY period_begin,
-	calendar_interval
-
-UNION
+	calendar_interval;
 
 SELECT cohort_definition_id cohort_id,
 	period_begin,
@@ -157,15 +176,14 @@ SELECT cohort_definition_id cohort_id,
 				THEN subject_id
 			ELSE NULL
 			END) subjects_incidence
+INTO #time_series4
 FROM @cohort_database_schema.@cohort_table
 INNER JOIN #calendar_periods cp ON cohort_start_date <= period_end
 	AND cohort_end_date >= period_begin
 WHERE cohort_definition_id IN (@cohort_ids)
 GROUP BY period_begin,
 	calendar_interval,
-	cohort_definition_id
-
-UNION
+	cohort_definition_id;
 
 SELECT cohort_definition_id cohort_id,
 	period_begin,
@@ -194,6 +212,7 @@ SELECT cohort_definition_id cohort_id,
 				THEN subject_id
 			ELSE NULL
 			END) subjects_incidence
+INTO #time_series5
 FROM @cdm_database_schema.observation_period o
 INNER JOIN (
 	SELECT DISTINCT cohort_definition_id,
@@ -205,9 +224,7 @@ INNER JOIN #calendar_periods cp ON observation_period_start_date <= period_end
 	AND observation_period_end_date >= period_begin
 GROUP BY period_begin,
 	calendar_interval,
-	cohort_definition_id
-
-UNION
+	cohort_definition_id;
 
 SELECT 0 cohort_id,
 	period_begin,
@@ -236,8 +253,62 @@ SELECT 0 cohort_id,
 				THEN person_id
 			ELSE NULL
 			END) subjects_incidence
+INTO #time_series6
 FROM @cdm_database_schema.observation_period o
 INNER JOIN #calendar_periods cp ON observation_period_start_date <= period_end
 	AND observation_period_end_date >= period_begin
 GROUP BY period_begin,
 	calendar_interval;
+
+SELECT *
+INTO #time_series
+FROM (
+	SELECT *
+	FROM #time_series1
+	
+	UNION
+	
+	SELECT *
+	FROM #time_series2
+	
+	UNION
+	
+	SELECT *
+	FROM #time_series3
+	
+	UNION
+	
+	SELECT *
+	FROM #time_series4
+	
+	UNION
+	
+	SELECT *
+	FROM #time_series5
+	
+	UNION
+	
+	SELECT *
+	FROM #time_series6
+	) f;
+	
+	
+
+	
+IF OBJECT_ID('tempdb..#time_series1', 'U') IS NOT NULL
+	DROP TABLE #time_series1;
+
+IF OBJECT_ID('tempdb..#time_series2', 'U') IS NOT NULL
+	DROP TABLE #time_series2;
+
+IF OBJECT_ID('tempdb..#time_series3', 'U') IS NOT NULL
+	DROP TABLE #time_series3;
+
+IF OBJECT_ID('tempdb..#time_series4', 'U') IS NOT NULL
+	DROP TABLE #time_series4;
+
+IF OBJECT_ID('tempdb..#time_series5', 'U') IS NOT NULL
+	DROP TABLE #time_series5;
+
+IF OBJECT_ID('tempdb..#time_series6', 'U') IS NOT NULL
+	DROP TABLE #time_series6;

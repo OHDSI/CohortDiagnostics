@@ -780,7 +780,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   }
 
 
-  # Cohort overlap and Time Series ---------------------------------------------------------------------------------
+  # Cohort overlap and Time Series timeSeries ---------------------------------------------------------------------------------
   if (any(runCohortOverlap, runTimeSeries)) {
     ParallelLogger::logInfo("Computing cohort overlap and/or time series")
     startCohortOverlap <- Sys.time()
@@ -902,16 +902,20 @@ runCohortDiagnostics <- function(packageName = NULL,
           dbms = connection@dbms
         )
       
-      timeSeries <- DatabaseConnector::renderTranslateQuerySql(
+      DatabaseConnector::renderTranslateExecuteSql(
         connection = connection,
         sql = sql,
         cohort_database_schema = cohortDatabaseSchema,
         cdm_database_schema = cdmDatabaseSchema,
         cohort_table = cohortTable, 
-        snakeCaseToCamelCase = TRUE,
         tempEmulationSchema = tempEmulationSchema,
         cohort_ids = c(subset$targetCohortId, subset$comparatorCohortId) %>% unique()
-      ) %>% 
+      ) 
+      timeSeries <- DatabaseConnector::renderTranslateQuerySql(
+        connection = connection,
+        sql = "SELECT * FROM #time_series;", 
+        tempEmulationSchema = tempEmulationSchema,
+        snakeCaseToCamelCase = TRUE) %>% 
         dplyr::tibble() %>% 
         dplyr::mutate(databaseId = !!databaseId) %>% 
         dplyr::select(.data$cohortId, .data$databaseId, 
@@ -924,6 +928,12 @@ runCohortDiagnostics <- function(packageName = NULL,
       DatabaseConnector::renderTranslateExecuteSql(
         connection = connection,
         sql = "IF OBJECT_ID('tempdb..#calendar_periods', 'U') IS NOT NULL DROP TABLE #calendar_periods;",
+        progressBar = TRUE, 
+        tempEmulationSchema = tempEmulationSchema
+      )
+      DatabaseConnector::renderTranslateExecuteSql(
+        connection = connection,
+        sql = "IF OBJECT_ID('tempdb..#time_series', 'U') IS NOT NULL DROP TABLE #time_series;",
         progressBar = TRUE, 
         tempEmulationSchema = tempEmulationSchema
       )
@@ -964,19 +974,19 @@ runCohortDiagnostics <- function(packageName = NULL,
       cohortCalendarIncidence <- cohortOverlap %>% 
         dplyr::filter(.data$attributeType %in% c('y', 'm', 'q')) %>% 
         dplyr::mutate(calendarMonth = lubridate::as_date(.data$attribute)) %>% 
-        dplyr::rename(count = .data$value,
+        dplyr::rename(countValue = .data$value,
                       periodType = .data$attributeType) %>% 
         dplyr::mutate(databaseId = !!databaseId) %>% 
         dplyr::select(.data$cohortId, 
                       .data$databaseId,
                       .data$periodType,
                       .data$calendarMonth,
-                      .data$count) %>% 
+                      .data$countValue) %>% 
         dplyr::arrange(.data$cohortId,
                        .data$databaseId,
                        .data$periodType,
                        .data$calendarMonth,
-                       .data$count)
+                       .data$countValue)
       
       if (nrow(cohortCalendarIncidence) > 0) {
         writeToCsv(
