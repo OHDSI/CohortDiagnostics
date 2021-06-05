@@ -47,12 +47,12 @@ SELECT DISTINCT subject_id
 INTO #all_subjects
 FROM (
 	SELECT DISTINCT subject_id
-	FROM target_cohorts
+	FROM #target_cohorts
 	
 	UNION
 	
 	SELECT DISTINCT subject_id
-	FROM comparator_cohorts
+	FROM #comparator_cohorts
 	) subjects;
 
 
