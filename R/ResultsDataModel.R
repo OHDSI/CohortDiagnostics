@@ -264,15 +264,6 @@ createResultsDataModel <- function(connection = NULL,
   DatabaseConnector::executeSql(connection, sql)
 }
 
-naToEmpty <- function(x) {
-  x[is.na(x)] <- ""
-  return(x)
-}
-
-naToZero <- function(x) {
-  x[is.na(x)] <- 0
-  return(x)
-}
 
 #' Upload results to the database server.
 #'

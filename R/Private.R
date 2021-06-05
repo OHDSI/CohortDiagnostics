@@ -68,3 +68,12 @@ enforceMinCellValue <-
   }
 
 
+naToEmpty <- function(x) {
+  x[is.na(x)] <- ""
+  return(x)
+}
+
+naToZero <- function(x) {
+  x[is.na(x)] <- 0
+  return(x)
+}
