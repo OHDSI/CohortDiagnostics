@@ -12,15 +12,17 @@ vocabularyDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
 cohortDiagnosticsSchema <- Sys.getenv("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")
 tempEmulationSchema <- NULL
 # Temp Random Schema to prevent collisions/issues when multiple test instances run
-cohortDatabaseSchema <- paste0("cohort_diagnostics_test", stringi::stri_rand_strings(1,5))
+cohortDatabaseSchema <-  Sys.getenv("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")
 
-cohortTable <- "cohort"
+cohortTable <- paste0("cohort_test_", .Platform$OS.type, stringi::stri_rand_strings(1,5))
 connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
-DatabaseConnector::renderTranslateExecuteSql(connection, "CREATE SCHEMA @cohort_database_schema", cohort_database_schema = cohortDatabaseSchema)
 folder <- tempfile("cohortDiagnosticsTest")
 
 withr::defer({
-  DatabaseConnector::renderTranslateExecuteSql(connection, "DROP SCHEMA @cohort_database_schema", cohort_database_schema = cohortDatabaseSchema)
+  DatabaseConnector::renderTranslateExecuteSql(connection,
+                                               "DROP TABLE @cohort_database_schema.@cohort_table CASCADE",
+                                               cohort_database_schema = cohortDatabaseSchema,
+                                               cohort_table = cohortTable)
   DatabaseConnector::disconnect(connection)
   unlink(jdbcDriverFolder, recursive = TRUE, force = TRUE)
   unlink(folder, recursive = TRUE, force = TRUE)
