@@ -55,9 +55,9 @@ computeCohortOverlap <- function(connectionDetails = NULL,
       sql = sql
     )
     
-    overlap <- DatabaseConnector::querySql(connection = connection, 
-                                           sql = "SELECT * FROM #cohort_overlap_long;", 
-                                           snakeCaseToCamelCase = TRUE)
+    overlap <- DatabaseConnector::renderTranslateQuerySql(connection = connection, 
+                                                          sql = "SELECT * FROM #cohort_overlap_long;", 
+                                                          snakeCaseToCamelCase = TRUE)
     
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
