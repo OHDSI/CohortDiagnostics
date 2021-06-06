@@ -2,7 +2,7 @@
 % Please edit documentation in R/CohortConstruction.R
 \name{instantiateCohortSet}
 \alias{instantiateCohortSet}
-\title{Instantiate a set of cohort}
+\title{Instantiate a set of cohort(s)}
 \usage{
 instantiateCohortSet(
   connectionDetails = NULL,
@@ -94,7 +94,7 @@ of which definition has been executed.}
 A data frame with cohort counts
 }
 \description{
-This function instantiates a set of cohort in the cohort table, using definitions that are fetched from a WebApi interface.
+This function instantiates a set of cohort(s) in specified cohort table, using definitions that are fetched from a WebApi interface.
 Optionally, the inclusion rule statistics are computed and stored in the \code{inclusionStatisticsFolder}.
 }
 \details{
@@ -113,7 +113,7 @@ Note: if the parameters for both Package Mode and WebApi Mode are provided, then
 The \code{cohortSetReference} argument must be a data frame with  the following columns:
 \describe{
 \item{referentConceptId}{A standard omop concept id that serves as the referent phenotype definition for the cohort Id.}
-\item{cohortId}{The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names. It is recommended to be (referrentConceptId * 1000) + a number between 3 to 999}
+\item{cohortId}{The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names. It is recommended to be (referentConceptId * 1000) + a number between 3 to 999}
 \item{webApiCohortId}{Cohort Id in the webApi/atlas instance. It is a required field to run Cohort Diagnostics in WebApi mode. It is discarded in package mode.}
 \item{cohortName}{The full name of the cohort. This will be shown in the Shiny app.}
 \item{logicDescription}{A human understandable brief description of the cohort definition. This logic does not have to a 

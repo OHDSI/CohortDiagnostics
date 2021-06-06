@@ -35,12 +35,14 @@ getIncidenceRate <- function(connectionDetails = NULL,
     on.exit(DatabaseConnector::disconnect(connection))
   }
   
-  if (!checkIfCohortInstantiated(
+  instantiatedCohortsCheck <- checkIfCohortInstantiated(
     connection = connection,
     cohortDatabaseSchema = cohortDatabaseSchema,
     cohortTable = cohortTable,
-    cohortId = cohortId
-  )) {
+    cohortIds = cohortId
+  )
+  
+  if (isTRUE(instantiatedCohortsCheck)) {
     warning(
       "Cohort with ID ",
       cohortId,
