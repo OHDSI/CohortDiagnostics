@@ -412,10 +412,10 @@ processInclusionStats <- function(inclusion,
   return(result)
 }
 
-#' Instantiate a set of cohort
+#' Instantiate a set of cohort(s)
 #'
 #' @description
-#' This function instantiates a set of cohort in the cohort table, using definitions that are fetched from a WebApi interface.
+#' This function instantiates a set of cohort(s) in specified cohort table, using definitions that are fetched from a WebApi interface.
 #' Optionally, the inclusion rule statistics are computed and stored in the \code{inclusionStatisticsFolder}.
 #'
 #' @template Connection

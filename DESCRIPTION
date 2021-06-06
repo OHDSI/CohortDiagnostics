@@ -20,13 +20,11 @@ Depends:
 Imports:
   Andromeda,
   checkmate,
-  CirceR,
   clock,
   digest,
   dplyr (>= 1.0.0),
   methods,
   ParallelLogger (>= 2.0.0),
-  pool,
   readr (>= 1.4.0),
   RJSONIO,
   rlang,
@@ -35,6 +33,7 @@ Imports:
   stringr,
   tidyr (>= 1.1.3)
 Suggests:
+  CirceR,
   DT,
   Eunomia,
   ggiraph,
@@ -43,6 +42,7 @@ Suggests:
   knitr,
   lubridate,
   plotly,
+  pool,
   purrr,
   RColorBrewer,
   rmarkdown,
