@@ -69,22 +69,3 @@ getCohortCounts <- function(connectionDetails = NULL,
     return(NULL)
   }
 }
-
-checkIfCohortInstantiated <-
-  function(connection,
-           cohortDatabaseSchema,
-           cohortTable,
-           cohortId) {
-    sql <-
-      "SELECT COUNT(*) COUNT FROM @cohort_database_schema.@cohort_table WHERE cohort_definition_id = @cohort_id;"
-    count <-
-      DatabaseConnector::renderTranslateQuerySql(
-        connection = connection,
-        sql,
-        cohort_database_schema = cohortDatabaseSchema,
-        cohort_table = cohortTable,
-        cohort_id = cohortId
-      )
-    count <- count %>% dplyr::pull(1)
-    return(count > 0)
-  }
