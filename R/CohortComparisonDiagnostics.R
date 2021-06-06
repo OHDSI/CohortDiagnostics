@@ -24,12 +24,8 @@
 #' Note: only the first occurrence of subject_id in the cohort is used.
 #'
 #' @template Connection
-#'
-#' @template CdmDatabaseSchema
 #' 
 #' @template CohortDatabaseSchema
-#' 
-#' @template TempEmulationSchema
 #'
 #' @template CohortTable
 #'                                    
@@ -43,12 +39,12 @@
 #'                                    
 #' @export
 computeCohortOverlap <- function(connectionDetails = NULL,
-                                   connection = NULL,
-                                   cohortDatabaseSchema,
-                                   cohortTable = "cohort",
-                                   targetCohortIds,
-                                   comparatorCohortIds,
-                                   batchSize = 200) {
+                                 connection = NULL,
+                                 cohortDatabaseSchema,
+                                 cohortTable = "cohort",
+                                 targetCohortIds,
+                                 comparatorCohortIds,
+                                 batchSize = 200) {
   startTime <- Sys.time()
   
   if (is.null(connection)) {

@@ -34,9 +34,6 @@
 #'
 #' @template CohortTable
 #'
-#' @param exportFolder                The folder where the output will be exported to. If this folder
-#'                                    does not exist it will be created.
-#'
 #' @param cohortIds                   Optionally, provide a subset of cohort IDs to restrict the
 #'                                    diagnostics to.
 #'
