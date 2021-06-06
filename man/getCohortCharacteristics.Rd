@@ -58,9 +58,6 @@ CovariateSettings object.}
 \item{batchSize}{{Optional, default set to 100} If running characterization on larget set
 of cohorts, this function allows you to batch them into chunks that run
 as a batch.}
-
-\item{exportFolder}{The folder where the output will be exported to. If this folder
-does not exist it will be created.}
 }
 \description{
 Given a set of instantiated cohorts get Characteristics for the cohort using \code{FeatureExtraction::getDbCovariateData}.

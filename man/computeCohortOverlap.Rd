@@ -39,13 +39,6 @@ this should include both the database and schema name, for example
 \item{batchSize}{{Optional, default set to 200} If running diagnostics on larget set
 of cohorts, this function allows you to batch them into chunks that run 
 as a batch.}
-
-\item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
-Note that for SQL Server, this should include both the database and
-schema name, for example 'cdm_data.dbo'.}
-
-\item{tempEmulationSchema}{Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
-tables, provide a schema with write privileges where temp tables can be created.}
 }
 \description{
 Given two cohorts, get data to compare relationships between the cohorts - such as overlap, temporal 
