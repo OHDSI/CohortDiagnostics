@@ -5,13 +5,19 @@
 \title{Checks if a set of cohortId(s) are instantiated in the cohort table}
 \usage{
 checkIfCohortInstantiated(
-  connection,
+  connectionDetails = NULL,
+  connection = NULL,
   cohortDatabaseSchema,
   cohortTable,
   cohortIds
 )
 }
 \arguments{
+\item{connectionDetails}{An object of type \code{connectionDetails} as created using the
+\code{\link[DatabaseConnector]{createConnectionDetails}} function in the
+DatabaseConnector package. Can be left NULL if \code{connection} is
+provided.}
+
 \item{connection}{An object of type \code{connection} as created using the
 \code{\link[DatabaseConnector]{connect}} function in the
 DatabaseConnector package. Can be left NULL if \code{connectionDetails}
@@ -25,11 +31,6 @@ this should include both the database and schema name, for example
 \item{cohortTable}{Name of the cohort table.}
 
 \item{cohortIds}{Provide a set of cohort IDs to check if instantiated.}
-
-\item{connectionDetails}{An object of type \code{connectionDetails} as created using the
-\code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-DatabaseConnector package. Can be left NULL if \code{connection} is
-provided.}
 }
 \value{
 Returns TRUE if all cohortIds are instantiated.

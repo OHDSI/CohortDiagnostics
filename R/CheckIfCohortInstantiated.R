@@ -33,10 +33,17 @@
 #' @return
 #' Returns TRUE if all cohortIds are instantiated.
 checkIfCohortInstantiated <-
-  function(connection,
+  function(connectionDetails = NULL,
+           connection = NULL,
            cohortDatabaseSchema,
            cohortTable,
            cohortIds) {
+    
+    if (is.null(connection)) {
+      connection <- DatabaseConnector::connect(connectionDetails)
+      on.exit(DatabaseConnector::disconnect(connection))
+    }
+    
     sql <-
       "SELECT COUNT(*) COUNT FROM @cohort_database_schema.@cohort_table WHERE cohort_definition_id = @cohort_id;"
     count <-
