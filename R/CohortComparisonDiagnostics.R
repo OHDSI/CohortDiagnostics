@@ -14,6 +14,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+
+#' Given two sets of cohorts get relationships between the cohorts.
+#'
+#' @description
+#' Given two cohorts, get data to compare relationships between the cohorts - such as overlap, temporal 
+#' relationships between cohort start date(s). 
+#' Note: only the first occurrence of subject_id in the cohort is used.
+#'
+#' @template Connection
+#' 
+#' @template CohortDatabaseSchema
+#'
+#' @template CohortTable
+#'                                    
+#' @param targetCohortIds             A list of cohort ids to be used as target cohorts.
+#' 
+#' @param comparatorCohortIds         A list of cohort ids to be used as comparator cohorts.
+#'                                    
+#' @param batchSize                   {Optional, default set to 200} If running diagnostics on larget set
+#'                                    of cohorts, this function allows you to batch them into chunks that run 
+#'                                    as a batch.
+#'                                    
+#' @export
 computeCohortOverlap <- function(connectionDetails = NULL,
                                  connection = NULL,
                                  cohortDatabaseSchema,
