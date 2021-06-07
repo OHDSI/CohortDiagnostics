@@ -288,6 +288,15 @@ shiny::shinyServer(function(input, output, session) {
                   "There is no data for the selected combination."))
     
     databaseIds <- unique(table$databaseId)
+    cohortCounts <- table %>% 
+      dplyr::inner_join(cohortCount,
+                        by = c("cohortId", "databaseId")) %>% 
+      dplyr::filter(.data$cohortId == selectedCohortDefinitionRow()$cohortId) %>% 
+      dplyr::filter(.data$databaseId %in% getSelectedCohortCountRow()$databaseId) %>% 
+      dplyr::select(.data$cohortSubjects) %>% 
+      dplyr::pull(.data$cohortSubjects) %>% unique()
+    
+    databaseIdsWithCount <- paste(databaseIds, "(n = ", format(cohortCounts, big.mark = ","), ")")
     
     table <- table %>%
       tidyr::pivot_longer(
@@ -313,7 +322,7 @@ shiny::shinyServer(function(input, output, session) {
                                           th(rowspan = 2, "Rule Sequence ID"),
                                           th(rowspan = 2, "Rule Name"),
                                           lapply(
-                                            databaseIds,
+                                            databaseIdsWithCount,
                                             th,
                                             colspan = 4,
                                             class = "dt-center",
