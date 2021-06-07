@@ -1170,7 +1170,7 @@ shiny::shinyServer(function(input, output, session) {
   getCohortCountResultReactive <- shiny::reactive(x = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
-    data <- getCohortCountResult(
+    data <- getResultsCohortCountFromEnvironment(
       dataSource = dataSource,
       databaseIds = databaseIds(),
       cohortIds = cohortIds()
@@ -3084,7 +3084,7 @@ shiny::shinyServer(function(input, output, session) {
     databaseIdsWithCount <- paste(databaseIds, "(n = ", format(cohortCounts, big.mark = ","), ")")
     
     if (input$charType == "Pretty") {
-      countData <- getCohortCountResult(
+      countData <- getResultsCohortCountFromEnvironment(
         dataSource = dataSource,
         databaseIds = databaseIds(),
         cohortIds = cohortId()
@@ -4484,7 +4484,7 @@ shiny::shinyServer(function(input, output, session) {
   # Cohort labels --------------------------------------------------------------------------------------------
   targetCohortCount <- shiny::reactive({
     targetCohortWithCount <-
-      getCohortCountResult(
+      getResultsCohortCountFromEnvironment(
         dataSource = dataSource,
         cohortIds = cohortId(),
         databaseIds = input$database

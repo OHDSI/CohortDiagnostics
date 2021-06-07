@@ -13,78 +13,78 @@ createFileDataSource <- function(premergedDataFile, envir = new.env()) {
 }
 
 
-renderTranslateQuerySql <- function(connection, sql, ..., snakeCaseToCamelCase = FALSE) {
-  if (is(connection, "Pool")) {
-    # Connection pool is used by Shiny app, which always uses PostgreSQL:
-    sql <- SqlRender::render(sql, ...)
-    sql <- SqlRender::translate(sql, targetDialect = "postgresql")
-  
-    tryCatch({
-      data <- DatabaseConnector::dbGetQuery(connection, sql)
-    }, error = function(err) {
-      writeLines(sql)
-      stop(err)
-    })
-    if (snakeCaseToCamelCase) {
-      colnames(data) <- SqlRender::snakeCaseToCamelCase(colnames(data))
-    }
-    return(data)
-  } else {
-    return(DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                                      sql = sql,
-                                                      ...,
-                                                      snakeCaseToCamelCase = snakeCaseToCamelCase))
-  }
-}
+# renderTranslateQuerySql <- function(connection, sql, ..., snakeCaseToCamelCase = FALSE) {
+#   if (is(connection, "Pool")) {
+#     # Connection pool is used by Shiny app, which always uses PostgreSQL:
+#     sql <- SqlRender::render(sql, ...)
+#     sql <- SqlRender::translate(sql, targetDialect = "postgresql")
+#   
+#     tryCatch({
+#       data <- DatabaseConnector::dbGetQuery(connection, sql)
+#     }, error = function(err) {
+#       writeLines(sql)
+#       stop(err)
+#     })
+#     if (snakeCaseToCamelCase) {
+#       colnames(data) <- SqlRender::snakeCaseToCamelCase(colnames(data))
+#     }
+#     return(data)
+#   } else {
+#     return(DatabaseConnector::renderTranslateQuerySql(connection = connection,
+#                                                       sql = sql,
+#                                                       ...,
+#                                                       snakeCaseToCamelCase = snakeCaseToCamelCase))
+#   }
+# }
 
-quoteLiterals <- function(x) {
-  if (is.null(x)) {
-    return("")
-  } else {
-    return(paste0("'", paste(x, collapse = "', '"), "'")) 
-  }
-}
+# quoteLiterals <- function(x) {
+#   if (is.null(x)) {
+#     return("")
+#   } else {
+#     return(paste0("'", paste(x, collapse = "', '"), "'")) 
+#   }
+# }
 
 
-getCohortCountResult <- function(dataSource = .GlobalEnv,
-                                 cohortIds = NULL,
-                                 databaseIds) {
-  table <- 'cohortCount'
-  if (is(dataSource, "environment")) {
-    if (!exists(table)) {
-      return(NULL)
-    }
-    if (length(table) == 0) {
-      return(NULL)
-    }
-    if (nrow(get(table, envir = dataSource)) == 0) {
-      return(NULL)
-    }
-    data <- get(table, envir = dataSource) %>% 
-      dplyr::filter(.data$databaseId %in% !!databaseIds)
-    if (!is.null(cohortIds)) {
-      data <- data %>% 
-        dplyr::filter(.data$cohortId %in% !!cohortIds) 
-    }
-  } else {
-    sql <- "SELECT *
-            FROM  @results_database_schema.cohort_count
-            WHERE database_id in (@database_id)
-            {@cohort_ids != ''} ? {  AND cohort_id in (@cohort_ids)}
-            ;"
-    data <- renderTranslateQuerySql(connection = dataSource$connection,
-                                    sql = sql,
-                                    results_database_schema = dataSource$resultsDatabaseSchema,
-                                    cohort_ids = cohortIds,
-                                    database_id = quoteLiterals(databaseIds), 
-                                    snakeCaseToCamelCase = TRUE) %>% 
-      tidyr::tibble()
-    if (nrow(data) == 0) {
-      return(NULL)
-    }
-  }
-  return(data)
-}
+# getCohortCountResult <- function(dataSource = .GlobalEnv,
+#                                  cohortIds = NULL,
+#                                  databaseIds) {
+#   table <- 'cohortCount'
+#   if (is(dataSource, "environment")) {
+#     if (!exists(table)) {
+#       return(NULL)
+#     }
+#     if (length(table) == 0) {
+#       return(NULL)
+#     }
+#     if (nrow(get(table, envir = dataSource)) == 0) {
+#       return(NULL)
+#     }
+#     data <- get(table, envir = dataSource) %>% 
+#       dplyr::filter(.data$databaseId %in% !!databaseIds)
+#     if (!is.null(cohortIds)) {
+#       data <- data %>% 
+#         dplyr::filter(.data$cohortId %in% !!cohortIds) 
+#     }
+#   } else {
+#     sql <- "SELECT *
+#             FROM  @results_database_schema.cohort_count
+#             WHERE database_id in (@database_id)
+#             {@cohort_ids != ''} ? {  AND cohort_id in (@cohort_ids)}
+#             ;"
+#     data <- renderTranslateQuerySql(connection = dataSource$connection,
+#                                     sql = sql,
+#                                     results_database_schema = dataSource$resultsDatabaseSchema,
+#                                     cohort_ids = cohortIds,
+#                                     database_id = quoteLiterals(databaseIds), 
+#                                     snakeCaseToCamelCase = TRUE) %>% 
+#       tidyr::tibble()
+#     if (nrow(data) == 0) {
+#       return(NULL)
+#     }
+#   }
+#   return(data)
+# }
 
 
 getTimeSeriesResult <- function(dataSource = .GlobalEnv,

@@ -71,3 +71,9 @@ OhdsiRTools::fixHadesLogo()
 file.copy(from = "inst/settings/resultsDataModelSpecification.csv", 
           to = "inst/shiny/DiagnosticsExplorer/resultsDataModelSpecification.csv",
           overwrite = TRUE)
+
+
+# Copy R script that queries data from results data model to Shiny app
+file.copy(from = "R/ResultsDataModelQueries.R", 
+          to = "inst/shiny/DiagnosticsExplorer/R/ResultsDataModelQueries.R",
+          overwrite = TRUE)

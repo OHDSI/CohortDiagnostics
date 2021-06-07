@@ -5,6 +5,7 @@ source("R/DisplayFunctions.R")
 source("R/Tables.R")
 source("R/Plots.R")
 source("R/Results.R")
+source("R/ResultsDataModelQueries.R")
 
 # Settings when running on server:
 defaultLocalDataFolder <- "data"
