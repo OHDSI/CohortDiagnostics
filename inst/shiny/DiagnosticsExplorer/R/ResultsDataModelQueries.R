@@ -683,3 +683,136 @@ getResultsTimeDistributionFromPremergedFile <- function(premergedFile,
     )
   return(timeDistributionResult)
 }
+
+
+
+
+###################################################################################
+###################################################################################
+################# Get incidence rate from results data model ########################
+###################################################################################
+###################################################################################
+
+# private function - not exported
+getResultsIncidenceRateFromAny <- function(dataSource = NULL,
+                                           connectionDetails = NULL,
+                                           connection = NULL,
+                                           premergedFile = NULL,
+                                           csvFile = NULL,
+                                           cohortIds,
+                                           databaseIds) {
+  incidenceRateResult <-
+    getDataForDatabaseIdsCohortIds(
+      dataSource = dataSource,
+      connectionDetails = connectionDetails,
+      connection = connection,
+      premergedFile = premergedFile,
+      csvFile = csvFile,
+      cohortIds = cohortIds,
+      databaseIds = databaseIds,
+      dataTableName = 'incidenceRate'
+    )
+  return(incidenceRateResult)
+}
+
+# private function - not exported
+# this function is for use with R shiny
+getResultsIncidenceRateFromEnvironment <-
+  function(dataSource,
+           cohortIds,
+           databaseIds) {
+    incidenceRateResult <-
+      getResultsIncidenceRateFromAny(dataSource = dataSource,
+                                     cohortIds = cohortIds,
+                                     databaseIds = databaseIds)
+    return(incidenceRateResult)
+  }
+
+#' Get incidence rates from Database with data in results data model format
+#'
+#' @description
+#' Given a set of one or more cohortIds and one or more databaseIds,
+#' return data from the cohort_count table in results data model
+#' with data filtered to the cohortIds and databaseIds.
+#'
+#' @template Connection
+#'
+#' @param cohortIds  One or more cohort ids to returns incidence rates
+#'
+#' @param databaseIds  One or more database ids to returns incidence rates
+#'
+#' @return
+#' Returns a tibble dataframe
+#' @export
+getResultsIncidenceRateFromDatabase <-
+  function(connectionDetails = NULL,
+           connection = NULL,
+           cohortIds,
+           databaseIds) {
+    incidenceRateResult <-
+      getResultsIncidenceRateFromAny(
+        connectionDetails = connectionDetails,
+        connection = connection,
+        cohortIds = cohortIds,
+        databaseIds = databaseIds
+      )
+    return(incidenceRateResult)
+  }
+
+
+
+#' Get incidence rates from csv file with data in results data model format
+#'
+#' @description
+#' Given a set of one or more cohortIds and one or more databaseIds,
+#' return data from the cohort_count table in results data model
+#' with data filtered to the cohortIds and databaseIds.
+#'
+#' @param csvFile  The full path to read the csv file.
+#'
+#' @param cohortIds  One or more cohort ids to returns incidence rates
+#'
+#' @param databaseIds  One or more database ids to returns incidence rates
+#'
+#' @return
+#' Returns a tibble dataframe
+#' @export
+getResultsIncidenceRateFromCsv <- function(csvFile,
+                                           cohortIds,
+                                           databaseIds) {
+  incidenceRateResult <- getResultsIncidenceRateFromAny(
+    csvFile = csvFile,
+    cohortIds = cohortIds,
+    databaseIds = databaseIds
+  )
+  return(incidenceRateResult)
+}
+
+
+#' Get incidence rates from premerged file with data in results data model format
+#'
+#' @description
+#' Given a set of one or more cohortIds and one or more databaseIds,
+#' return data from the cohort_count table in results data model
+#' with data filtered to the cohortIds and databaseIds.
+#'
+#' @param premergedFile  The full path to read the premerged file.
+#'
+#' @param cohortIds  One or more cohort ids to returns incidence rates
+#'
+#' @param databaseIds  One or more database ids to returns incidence rates
+#'
+#' @return
+#' Returns a tibble dataframe
+#' @export
+getResultsIncidenceRateFromPremergedFile <- function(premergedFile,
+                                                     cohortIds,
+                                                     databaseIds) {
+  incidenceRateResult <-
+    getResultsIncidenceRateFromAny(
+      premergedFile = premergedFile,
+      cohortIds = cohortIds,
+      databaseIds = databaseIds
+    )
+  return(incidenceRateResult)
+}
