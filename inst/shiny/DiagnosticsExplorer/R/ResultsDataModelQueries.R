@@ -264,3 +264,31 @@ getResultsFromCohortCount <- function(dataSource,
   )
   return(data)
 }
+
+#' Returns data from time_series table in cohort diagnostics
+#'
+#' @description
+#' Returns data from time_series table in cohort diagnostics
+#'
+#' @template DataSource
+#'
+#' @template CohortIds
+#'
+#' @template DatabaseIds
+#'
+#' @return
+#' Returns a data frame (tibble) with results that conform to time series
+#' table in Cohort Diagnostics results data model.
+#'
+#' @export
+getResultsFromTimeSeries <- function(dataSource,
+                                     cohortIds,
+                                     databaseIds) {
+  data <- getDataForDatabaseIdsCohortIds(
+    dataSource,
+    cohortIds = cohortIds,
+    databaseIds = databaseIds,
+    dataTableName = 'timeSeries'
+  )
+  return(data)
+}

@@ -1712,18 +1712,52 @@ shiny::shinyServer(function(input, output, session) {
   
   
   # Time Series ----------------------------------------------------------------------------------
-  timeSeries <- reactive({
+  timeSeriesData <- reactive({
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
-    calenderIntervalFirstLetter <- tolower(substr(input$timeSeriesFilter,1,1))
-    data <- getTimeSeriesResult(
+    data <- getResultsFromTimeSeries(
       dataSource = dataSource,
       cohortIds = cohortIds(),
-      databaseIds = databaseIds(),
-      calendarInterval = calenderIntervalFirstLetter,
-      minDate = NULL,
-      maxDate = NULL
+      databaseIds = databaseIds()
     )
+    return(data)
+  })
+  
+  timeSeries <- reactive({
+    calenderIntervalFirstLetter <- tolower(substr(input$timeSeriesFilter,1,1))
+    data <- timeSeriesData()
+    if (is.null(data)) {return(NULL)}
+  
+    data <- data %>% 
+      dplyr::filter(.data$calendarInterval %in% calenderIntervalFirstLetter)
+    
+    # if (!is.null(seriesType)) {
+    #   data <- data %>% 
+    #     dplyr::filter(.data$seriesType %in% seriesType)
+    # }
+    
+    # if (all(!is.null(minDate),
+    #         is.na.POSIXlt(minDate))) {
+    #   data <- data %>% 
+    #     dplyr::filter(.data$periodBegin >= minDate)
+    # }
+    # 
+    # if (all(!is.null(maxDate),
+    #         is.na.POSIXlt(maxDate))) {
+    #   data <- data %>% 
+    #     dplyr::filter(.data$periodBegin < maxDate)
+    # }
+    
+    data <- data %>% 
+      dplyr::arrange(.data$databaseId, .data$cohortId, .data$calendarInterval, 
+                     .data$seriesType, .data$periodBegin) %>% 
+      tsibble::as_tsibble(key = c(.data$databaseId, .data$cohortId, .data$calendarInterval, 
+                                  .data$seriesType), 
+                          index = .data$periodBegin)
+    
+    if (nrow(data) == 0) {
+      return(NULL)
+    }
     return(data)
   })
   
