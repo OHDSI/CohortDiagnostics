@@ -1746,7 +1746,7 @@ shiny::shinyServer(function(input, output, session) {
   timeDist <- reactive({
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
-    data <- getTimeDistributionResult(
+    data <- getResultsTimeDistributionFromEnvironment(
       dataSource = dataSource,
       cohortIds = cohortIds(),
       databaseIds = databaseIds()

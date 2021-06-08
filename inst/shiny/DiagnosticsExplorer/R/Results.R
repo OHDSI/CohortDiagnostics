@@ -87,114 +87,114 @@ createFileDataSource <- function(premergedDataFile, envir = new.env()) {
 # }
 
 
-getTimeSeriesResult <- function(dataSource = .GlobalEnv,
-                                cohortIds = NULL,
-                                databaseIds,
-                                calendarInterval = 'm',
-                                minDate = NULL,
-                                maxDate = NULL
-) {
-  table <- 'timeSeries'
-  if (is(dataSource, "environment")) {
-    if (!exists(table)) {
-      return(NULL)
-    }
-    if (length(table) == 0) {
-      return(NULL)
-    }
-    if (nrow(get(table, envir = dataSource)) == 0) {
-      return(NULL)
-    }
-    data <- get(table, envir = dataSource) %>% 
-      dplyr::filter(.data$databaseId %in% !!databaseIds)
-    if (!is.null(cohortIds)) {
-      data <- data %>% 
-        dplyr::filter(.data$cohortId %in% !!cohortIds) %>% 
-        dplyr::filter(.data$databaseId %in% !!databaseIds) %>% 
-        dplyr::filter(.data$calendarInterval %in% !!calendarInterval)
-    }
-  } else {
-    sql <- "SELECT *
-            FROM  @results_database_schema.time_series
-            WHERE calendar_interval in (@calendar_interval)
-            {@database_ids != ''} ? {  AND database_id in (@database_ids)}
-            {@cohort_ids != ''} ? {  AND cohort_id in (@cohort_ids)}
-            ;"
-    data <- renderTranslateQuerySql(connection = dataSource$connection,
-                                    sql = sql,
-                                    results_database_schema = dataSource$resultsDatabaseSchema,
-                                    cohort_ids = cohortIds,
-                                    database_ids = quoteLiterals(databaseIds), 
-                                    calendar_interval = calendarInterval,
-                                    snakeCaseToCamelCase = TRUE) %>% 
-      tidyr::tibble()
-  }
-  
-  if (nrow(data) == 0) {
-    return(NULL)
-  }
-  
-  data <- data %>% 
-    dplyr::select(-.data$calendarInterval) %>% 
-    dplyr::arrange(.data$databaseId, .data$cohortId, .data$periodBegin) %>% 
-    tsibble::as_tsibble(key = c(.data$cohortId,.data$databaseId), 
-                        index = .data$periodBegin) 
-  
-  if (all(!is.null(minDate),
-          is.na.POSIXlt(minDate))) {
-    data <- data %>% 
-      dplyr::filter(.data$periodBegin >= minDate)
-  }
-  
-  if (all(!is.null(maxDate),
-          is.na.POSIXlt(maxDate))) {
-    data <- data %>% 
-      dplyr::filter(.data$periodBegin < maxDate)
-  }
-  
-  if (nrow(data) == 0) {
-    return(NULL)
-  }
-  return(data)
-}
+# getTimeSeriesResult <- function(dataSource = .GlobalEnv,
+#                                 cohortIds = NULL,
+#                                 databaseIds,
+#                                 calendarInterval = 'm',
+#                                 minDate = NULL,
+#                                 maxDate = NULL
+# ) {
+#   table <- 'timeSeries'
+#   if (is(dataSource, "environment")) {
+#     if (!exists(table)) {
+#       return(NULL)
+#     }
+#     if (length(table) == 0) {
+#       return(NULL)
+#     }
+#     if (nrow(get(table, envir = dataSource)) == 0) {
+#       return(NULL)
+#     }
+#     data <- get(table, envir = dataSource) %>% 
+#       dplyr::filter(.data$databaseId %in% !!databaseIds)
+#     if (!is.null(cohortIds)) {
+#       data <- data %>% 
+#         dplyr::filter(.data$cohortId %in% !!cohortIds) %>% 
+#         dplyr::filter(.data$databaseId %in% !!databaseIds) %>% 
+#         dplyr::filter(.data$calendarInterval %in% !!calendarInterval)
+#     }
+#   } else {
+#     sql <- "SELECT *
+#             FROM  @results_database_schema.time_series
+#             WHERE calendar_interval in (@calendar_interval)
+#             {@database_ids != ''} ? {  AND database_id in (@database_ids)}
+#             {@cohort_ids != ''} ? {  AND cohort_id in (@cohort_ids)}
+#             ;"
+#     data <- renderTranslateQuerySql(connection = dataSource$connection,
+#                                     sql = sql,
+#                                     results_database_schema = dataSource$resultsDatabaseSchema,
+#                                     cohort_ids = cohortIds,
+#                                     database_ids = quoteLiterals(databaseIds), 
+#                                     calendar_interval = calendarInterval,
+#                                     snakeCaseToCamelCase = TRUE) %>% 
+#       tidyr::tibble()
+#   }
+#   
+#   if (nrow(data) == 0) {
+#     return(NULL)
+#   }
+#   
+#   data <- data %>% 
+#     dplyr::select(-.data$calendarInterval) %>% 
+#     dplyr::arrange(.data$databaseId, .data$cohortId, .data$periodBegin) %>% 
+#     tsibble::as_tsibble(key = c(.data$cohortId,.data$databaseId), 
+#                         index = .data$periodBegin) 
+#   
+#   if (all(!is.null(minDate),
+#           is.na.POSIXlt(minDate))) {
+#     data <- data %>% 
+#       dplyr::filter(.data$periodBegin >= minDate)
+#   }
+#   
+#   if (all(!is.null(maxDate),
+#           is.na.POSIXlt(maxDate))) {
+#     data <- data %>% 
+#       dplyr::filter(.data$periodBegin < maxDate)
+#   }
+#   
+#   if (nrow(data) == 0) {
+#     return(NULL)
+#   }
+#   return(data)
+# }
 
 
 
-getTimeDistributionResult <- function(dataSource = .GlobalEnv,
-                                      cohortIds,
-                                      databaseIds) {
-  table <- 'timeDistribution'
-  if (is(dataSource, "environment")) {
-    if (!exists(table)) {
-      return(NULL)
-    }
-    if (length(table) == 0) {
-      return(NULL)
-    }
-    if (nrow(get(table, envir = dataSource)) == 0) {
-      return(NULL)
-    }
-    data <- get(table, envir = dataSource) %>% 
-      dplyr::filter(.data$cohortId %in% !!cohortIds &
-                      .data$databaseId %in% !!databaseIds)
-  } else {
-    sql <-   "SELECT *
-              FROM  @results_database_schema.time_distribution
-              WHERE cohort_id in (@cohort_ids)
-            	AND database_id in (@database_ids);"
-    data <- renderTranslateQuerySql(connection = dataSource$connection,
-                                    sql = sql,
-                                    results_database_schema = dataSource$resultsDatabaseSchema,
-                                    cohort_ids = cohortIds,
-                                    database_ids = quoteLiterals(databaseIds), 
-                                    snakeCaseToCamelCase = TRUE) %>% 
-      tidyr::tibble()
-  }
-  if (nrow(data) == 0) {
-    return(NULL)
-  }  
-  return(data)
-}
+# getTimeDistributionResult <- function(dataSource = .GlobalEnv,
+#                                       cohortIds,
+#                                       databaseIds) {
+#   table <- 'timeDistribution'
+#   if (is(dataSource, "environment")) {
+#     if (!exists(table)) {
+#       return(NULL)
+#     }
+#     if (length(table) == 0) {
+#       return(NULL)
+#     }
+#     if (nrow(get(table, envir = dataSource)) == 0) {
+#       return(NULL)
+#     }
+#     data <- get(table, envir = dataSource) %>% 
+#       dplyr::filter(.data$cohortId %in% !!cohortIds &
+#                       .data$databaseId %in% !!databaseIds)
+#   } else {
+#     sql <-   "SELECT *
+#               FROM  @results_database_schema.time_distribution
+#               WHERE cohort_id in (@cohort_ids)
+#             	AND database_id in (@database_ids);"
+#     data <- renderTranslateQuerySql(connection = dataSource$connection,
+#                                     sql = sql,
+#                                     results_database_schema = dataSource$resultsDatabaseSchema,
+#                                     cohort_ids = cohortIds,
+#                                     database_ids = quoteLiterals(databaseIds), 
+#                                     snakeCaseToCamelCase = TRUE) %>% 
+#       tidyr::tibble()
+#   }
+#   if (nrow(data) == 0) {
+#     return(NULL)
+#   }  
+#   return(data)
+# }
 
 
 getIncidenceRateResult <- function(dataSource = .GlobalEnv,

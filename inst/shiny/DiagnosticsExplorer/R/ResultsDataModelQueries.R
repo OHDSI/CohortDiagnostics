@@ -460,7 +460,7 @@ getResultsTimeSeriesFromEnvironment <-
     return(timeSeriesResult)
   }
 
-#' Get cohort counts from Database with data in results data model format
+#' Get time series from Database with data in results data model format
 #'
 #' @description
 #' Given a set of one or more cohortIds and one or more databaseIds,
@@ -469,9 +469,9 @@ getResultsTimeSeriesFromEnvironment <-
 #'
 #' @template Connection
 #'
-#' @param cohortIds  One or more cohort ids to returns cohort counts
+#' @param cohortIds  One or more cohort ids to returns time series
 #'
-#' @param databaseIds  One or more database ids to returns cohort counts
+#' @param databaseIds  One or more database ids to returns time series
 #'
 #' @return
 #' Returns a tibble dataframe
@@ -493,7 +493,7 @@ getResultsTimeSeriesFromDatabase <-
 
 
 
-#' Get cohort counts from csv file with data in results data model format
+#' Get time series from csv file with data in results data model format
 #'
 #' @description
 #' Given a set of one or more cohortIds and one or more databaseIds,
@@ -502,9 +502,9 @@ getResultsTimeSeriesFromDatabase <-
 #'
 #' @param csvFile  The full path to read the csv file.
 #'
-#' @param cohortIds  One or more cohort ids to returns cohort counts
+#' @param cohortIds  One or more cohort ids to returns time series
 #'
-#' @param databaseIds  One or more database ids to returns cohort counts
+#' @param databaseIds  One or more database ids to returns time series
 #'
 #' @return
 #' Returns a tibble dataframe
@@ -521,7 +521,7 @@ getResultsTimeSeriesFromCsv <- function(csvFile,
 }
 
 
-#' Get cohort counts from premerged file with data in results data model format
+#' Get time series from premerged file with data in results data model format
 #'
 #' @description
 #' Given a set of one or more cohortIds and one or more databaseIds,
@@ -530,9 +530,9 @@ getResultsTimeSeriesFromCsv <- function(csvFile,
 #'
 #' @param premergedFile  The full path to read the premerged file.
 #'
-#' @param cohortIds  One or more cohort ids to returns cohort counts
+#' @param cohortIds  One or more cohort ids to returns time series
 #'
-#' @param databaseIds  One or more database ids to returns cohort counts
+#' @param databaseIds  One or more database ids to returns time series
 #'
 #' @return
 #' Returns a tibble dataframe
@@ -547,4 +547,139 @@ getResultsTimeSeriesFromPremergedFile <- function(premergedFile,
       databaseIds = databaseIds
     )
   return(timeSeriesResult)
+}
+
+
+
+
+
+
+###################################################################################
+###################################################################################
+################# Get time distribution from results data model ########################
+###################################################################################
+###################################################################################
+
+# private function - not exported
+getResultsTimeDistributionFromAny <- function(dataSource = NULL,
+                                              connectionDetails = NULL,
+                                              connection = NULL,
+                                              premergedFile = NULL,
+                                              csvFile = NULL,
+                                              cohortIds,
+                                              databaseIds) {
+  timeDistributionResult <-
+    getDataForDatabaseIdsCohortIds(
+      dataSource = dataSource,
+      connectionDetails = connectionDetails,
+      connection = connection,
+      premergedFile = premergedFile,
+      csvFile = csvFile,
+      cohortIds = cohortIds,
+      databaseIds = databaseIds,
+      dataTableName = 'timeDistribution'
+    )
+  return(timeDistributionResult)
+}
+
+# private function - not exported
+# this function is for use with R shiny
+getResultsTimeDistributionFromEnvironment <-
+  function(dataSource,
+           cohortIds,
+           databaseIds) {
+    timeDistributionResult <-
+      getResultsTimeDistributionFromAny(dataSource = dataSource,
+                                        cohortIds = cohortIds,
+                                        databaseIds = databaseIds)
+    return(timeDistributionResult)
+  }
+
+#' Get time distributions from Database with data in results data model format
+#'
+#' @description
+#' Given a set of one or more cohortIds and one or more databaseIds,
+#' return data from the cohort_count table in results data model
+#' with data filtered to the cohortIds and databaseIds.
+#'
+#' @template Connection
+#'
+#' @param cohortIds  One or more cohort ids to returns time distributions
+#'
+#' @param databaseIds  One or more database ids to returns time distributions
+#'
+#' @return
+#' Returns a tibble dataframe
+#' @export
+getResultsTimeDistributionFromDatabase <-
+  function(connectionDetails = NULL,
+           connection = NULL,
+           cohortIds,
+           databaseIds) {
+    timeDistributionResult <-
+      getResultsTimeDistributionFromAny(
+        connectionDetails = connectionDetails,
+        connection = connection,
+        cohortIds = cohortIds,
+        databaseIds = databaseIds
+      )
+    return(timeDistributionResult)
+  }
+
+
+
+#' Get time distributions from csv file with data in results data model format
+#'
+#' @description
+#' Given a set of one or more cohortIds and one or more databaseIds,
+#' return data from the cohort_count table in results data model
+#' with data filtered to the cohortIds and databaseIds.
+#'
+#' @param csvFile  The full path to read the csv file.
+#'
+#' @param cohortIds  One or more cohort ids to returns time distributions
+#'
+#' @param databaseIds  One or more database ids to returns time distributions
+#'
+#' @return
+#' Returns a tibble dataframe
+#' @export
+getResultsTimeDistributionFromCsv <- function(csvFile,
+                                              cohortIds,
+                                              databaseIds) {
+  timeDistributionResult <- getResultsTimeDistributionFromAny(
+    csvFile = csvFile,
+    cohortIds = cohortIds,
+    databaseIds = databaseIds
+  )
+  return(timeDistributionResult)
+}
+
+
+#' Get time distributions from premerged file with data in results data model format
+#'
+#' @description
+#' Given a set of one or more cohortIds and one or more databaseIds,
+#' return data from the cohort_count table in results data model
+#' with data filtered to the cohortIds and databaseIds.
+#'
+#' @param premergedFile  The full path to read the premerged file.
+#'
+#' @param cohortIds  One or more cohort ids to returns time distributions
+#'
+#' @param databaseIds  One or more database ids to returns time distributions
+#'
+#' @return
+#' Returns a tibble dataframe
+#' @export
+getResultsTimeDistributionFromPremergedFile <- function(premergedFile,
+                                                        cohortIds,
+                                                        databaseIds) {
+  timeDistributionResult <-
+    getResultsTimeDistributionFromAny(
+      premergedFile = premergedFile,
+      cohortIds = cohortIds,
+      databaseIds = databaseIds
+    )
+  return(timeDistributionResult)
 }

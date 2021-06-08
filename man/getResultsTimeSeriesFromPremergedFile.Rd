@@ -2,16 +2,16 @@
 % Please edit documentation in R/ResultsDataModelQueries.R
 \name{getResultsTimeSeriesFromPremergedFile}
 \alias{getResultsTimeSeriesFromPremergedFile}
-\title{Get cohort counts from premerged file with data in results data model format}
+\title{Get time series from premerged file with data in results data model format}
 \usage{
 getResultsTimeSeriesFromPremergedFile(premergedFile, cohortIds, databaseIds)
 }
 \arguments{
 \item{premergedFile}{The full path to read the premerged file.}
 
-\item{cohortIds}{One or more cohort ids to returns cohort counts}
+\item{cohortIds}{One or more cohort ids to returns time series}
 
-\item{databaseIds}{One or more database ids to returns cohort counts}
+\item{databaseIds}{One or more database ids to returns time series}
 }
 \value{
 Returns a tibble dataframe
