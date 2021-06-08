@@ -195,84 +195,84 @@ createFileDataSource <- function(premergedDataFile, envir = new.env()) {
 #   }  
 #   return(data)
 # }
-
-
-getIncidenceRateResult <- function(dataSource = .GlobalEnv,
-                                   cohortIds,
-                                   databaseIds,
-                                   stratifyByGender = c(TRUE,FALSE),
-                                   stratifyByAgeGroup = c(TRUE,FALSE),
-                                   stratifyByCalendarYear = c(TRUE,FALSE),
-                                   minPersonYears = 1000,
-                                   minSubjectCount = NA) {
-  table <- 'incidenceRate'
-  if (is(dataSource, "environment")) {
-    if (!exists(table)) {
-      return(NULL)
-    }
-    if (length(table) == 0) {
-      return(NULL)
-    }
-    if (nrow(get(table, envir = dataSource)) == 0) {
-      return(NULL)
-    }
-    data <- get(table, envir = dataSource) %>% 
-      dplyr::mutate(strataGender = !is.na(.data$gender),
-                    strataAgeGroup = !is.na(.data$ageGroup),
-                    strataCalendarYear = !is.na(.data$calendarYear)) %>% 
-      dplyr::filter(.data$cohortId %in% !!cohortIds &
-                      .data$databaseId %in% !!databaseIds &
-                      .data$strataGender %in% !!stratifyByGender &
-                      .data$strataAgeGroup %in% !!stratifyByAgeGroup &
-                      .data$strataCalendarYear %in% !!stratifyByCalendarYear &
-                      .data$personYears > !!minPersonYears) %>% 
-      dplyr::select(-tidyselect::starts_with('strata'))
-  } else {
-    sql <- "SELECT *
-            FROM  @results_database_schema.incidence_rate
-            WHERE cohort_id in (@cohort_ids)
-           	  AND database_id in (@database_ids)
-            {@gender == TRUE} ? {AND gender != ''} : {  AND gender = ''}
-            {@age_group == TRUE} ? {AND age_group != ''} : {  AND age_group = ''}
-            {@calendar_year == TRUE} ? {AND calendar_year != ''} : {  AND calendar_year = ''}
-              AND person_years > @personYears;"
-    data <- renderTranslateQuerySql(connection = dataSource$connection,
-                                    sql = sql,
-                                    results_database_schema = dataSource$resultsDatabaseSchema,
-                                    cohort_ids = cohortIds,
-                                    database_ids = quoteLiterals(databaseIds),
-                                    gender = stratifyByGender,
-                                    age_group = stratifyByAgeGroup,
-                                    calendar_year = stratifyByCalendarYear,
-                                    personYears = minPersonYears,
-                                    snakeCaseToCamelCase = TRUE) %>% 
-      tidyr::tibble()
-    if (nrow(data) == 0) {
-      return(NULL)
-    }
-    data <- data %>%
-      dplyr::mutate(gender = dplyr::na_if(.data$gender, ""),
-                    ageGroup = dplyr::na_if(.data$ageGroup, ""),
-                    calendarYear = dplyr::na_if(.data$calendarYear, ""))
-  }
-  if (nrow(data) == 0) {
-    return(NULL)
-  }
-  data <- data %>% 
-    dplyr::inner_join(cohortCount, 
-                      by = c("cohortId", "databaseId")) %>% 
-    dplyr::mutate(calendarYear = as.integer(.data$calendarYear)) %>%
-    dplyr::arrange(.data$cohortId, .data$databaseId)
-  
-  if (!is.na(minSubjectCount)) {
-    data <- data %>% 
-      dplyr::filter(.data$cohortSubjects > !!minSubjectCount)
-  }
-  if (nrow(data) == 0) {
-    return(NULL)
-  }
-  return(data)
-}
+# 
+# 
+# getIncidenceRateResult <- function(dataSource = .GlobalEnv,
+#                                    cohortIds,
+#                                    databaseIds,
+#                                    stratifyByGender = c(TRUE,FALSE),
+#                                    stratifyByAgeGroup = c(TRUE,FALSE),
+#                                    stratifyByCalendarYear = c(TRUE,FALSE),
+#                                    minPersonYears = 1000,
+#                                    minSubjectCount = NA) {
+#   table <- 'incidenceRate'
+#   if (is(dataSource, "environment")) {
+#     if (!exists(table)) {
+#       return(NULL)
+#     }
+#     if (length(table) == 0) {
+#       return(NULL)
+#     }
+#     if (nrow(get(table, envir = dataSource)) == 0) {
+#       return(NULL)
+#     }
+#     data <- get(table, envir = dataSource) %>% 
+#       dplyr::mutate(strataGender = !is.na(.data$gender),
+#                     strataAgeGroup = !is.na(.data$ageGroup),
+#                     strataCalendarYear = !is.na(.data$calendarYear)) %>% 
+#       dplyr::filter(.data$cohortId %in% !!cohortIds &
+#                       .data$databaseId %in% !!databaseIds &
+#                       .data$strataGender %in% !!stratifyByGender &
+#                       .data$strataAgeGroup %in% !!stratifyByAgeGroup &
+#                       .data$strataCalendarYear %in% !!stratifyByCalendarYear &
+#                       .data$personYears > !!minPersonYears) %>% 
+#       dplyr::select(-tidyselect::starts_with('strata'))
+#   } else {
+#     sql <- "SELECT *
+#             FROM  @results_database_schema.incidence_rate
+#             WHERE cohort_id in (@cohort_ids)
+#            	  AND database_id in (@database_ids)
+#             {@gender == TRUE} ? {AND gender != ''} : {  AND gender = ''}
+#             {@age_group == TRUE} ? {AND age_group != ''} : {  AND age_group = ''}
+#             {@calendar_year == TRUE} ? {AND calendar_year != ''} : {  AND calendar_year = ''}
+#               AND person_years > @personYears;"
+#     data <- renderTranslateQuerySql(connection = dataSource$connection,
+#                                     sql = sql,
+#                                     results_database_schema = dataSource$resultsDatabaseSchema,
+#                                     cohort_ids = cohortIds,
+#                                     database_ids = quoteLiterals(databaseIds),
+#                                     gender = stratifyByGender,
+#                                     age_group = stratifyByAgeGroup,
+#                                     calendar_year = stratifyByCalendarYear,
+#                                     personYears = minPersonYears,
+#                                     snakeCaseToCamelCase = TRUE) %>% 
+#       tidyr::tibble()
+#     if (nrow(data) == 0) {
+#       return(NULL)
+#     }
+#     data <- data %>%
+#       dplyr::mutate(gender = dplyr::na_if(.data$gender, ""),
+#                     ageGroup = dplyr::na_if(.data$ageGroup, ""),
+#                     calendarYear = dplyr::na_if(.data$calendarYear, ""))
+#   }
+#   if (nrow(data) == 0) {
+#     return(NULL)
+#   }
+#   data <- data %>% 
+#     dplyr::inner_join(cohortCount, 
+#                       by = c("cohortId", "databaseId")) %>% 
+#     dplyr::mutate(calendarYear = as.integer(.data$calendarYear)) %>%
+#     dplyr::arrange(.data$cohortId, .data$databaseId)
+#   
+#   if (!is.na(minSubjectCount)) {
+#     data <- data %>% 
+#       dplyr::filter(.data$cohortSubjects > !!minSubjectCount)
+#   }
+#   if (nrow(data) == 0) {
+#     return(NULL)
+#   }
+#   return(data)
+# }
 
 getInclusionRuleStats <- function(dataSource = .GlobalEnv,
                                   cohortIds = NULL,

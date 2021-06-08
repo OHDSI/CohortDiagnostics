@@ -816,3 +816,135 @@ getResultsIncidenceRateFromPremergedFile <- function(premergedFile,
     )
   return(incidenceRateResult)
 }
+
+
+
+###################################################################################
+###################################################################################
+################# Get inclusion rule from results data model ########################
+###################################################################################
+###################################################################################
+
+# private function - not exported
+getResultsInclusionRuleFromAny <- function(dataSource = NULL,
+                                           connectionDetails = NULL,
+                                           connection = NULL,
+                                           premergedFile = NULL,
+                                           csvFile = NULL,
+                                           cohortIds,
+                                           databaseIds) {
+  inclusionRuleResult <-
+    getDataForDatabaseIdsCohortIds(
+      dataSource = dataSource,
+      connectionDetails = connectionDetails,
+      connection = connection,
+      premergedFile = premergedFile,
+      csvFile = csvFile,
+      cohortIds = cohortIds,
+      databaseIds = databaseIds,
+      dataTableName = 'inclusionRuleStats'
+    )
+  return(inclusionRuleResult)
+}
+
+# private function - not exported
+# this function is for use with R shiny
+getResultsInclusionRuleFromEnvironment <-
+  function(dataSource,
+           cohortIds,
+           databaseIds) {
+    inclusionRuleResult <-
+      getResultsInclusionRuleFromAny(dataSource = dataSource,
+                                     cohortIds = cohortIds,
+                                     databaseIds = databaseIds)
+    return(inclusionRuleResult)
+  }
+
+#' Get inclusion rules from Database with data in results data model format
+#'
+#' @description
+#' Given a set of one or more cohortIds and one or more databaseIds,
+#' return data from the cohort_count table in results data model
+#' with data filtered to the cohortIds and databaseIds.
+#'
+#' @template Connection
+#'
+#' @param cohortIds  One or more cohort ids to returns inclusion rules
+#'
+#' @param databaseIds  One or more database ids to returns inclusion rules
+#'
+#' @return
+#' Returns a tibble dataframe
+#' @export
+getResultsInclusionRuleFromDatabase <-
+  function(connectionDetails = NULL,
+           connection = NULL,
+           cohortIds,
+           databaseIds) {
+    inclusionRuleResult <-
+      getResultsInclusionRuleFromAny(
+        connectionDetails = connectionDetails,
+        connection = connection,
+        cohortIds = cohortIds,
+        databaseIds = databaseIds
+      )
+    return(inclusionRuleResult)
+  }
+
+
+
+#' Get inclusion rules from csv file with data in results data model format
+#'
+#' @description
+#' Given a set of one or more cohortIds and one or more databaseIds,
+#' return data from the cohort_count table in results data model
+#' with data filtered to the cohortIds and databaseIds.
+#'
+#' @param csvFile  The full path to read the csv file.
+#'
+#' @param cohortIds  One or more cohort ids to returns inclusion rules
+#'
+#' @param databaseIds  One or more database ids to returns inclusion rules
+#'
+#' @return
+#' Returns a tibble dataframe
+#' @export
+getResultsInclusionRuleFromCsv <- function(csvFile,
+                                           cohortIds,
+                                           databaseIds) {
+  inclusionRuleResult <- getResultsInclusionRuleFromAny(
+    csvFile = csvFile,
+    cohortIds = cohortIds,
+    databaseIds = databaseIds
+  )
+  return(inclusionRuleResult)
+}
+
+
+#' Get inclusion rules from premerged file with data in results data model format
+#'
+#' @description
+#' Given a set of one or more cohortIds and one or more databaseIds,
+#' return data from the cohort_count table in results data model
+#' with data filtered to the cohortIds and databaseIds.
+#'
+#' @param premergedFile  The full path to read the premerged file.
+#'
+#' @param cohortIds  One or more cohort ids to returns inclusion rules
+#'
+#' @param databaseIds  One or more database ids to returns inclusion rules
+#'
+#' @return
+#' Returns a tibble dataframe
+#' @export
+getResultsInclusionRuleFromPremergedFile <- function(premergedFile,
+                                                     cohortIds,
+                                                     databaseIds) {
+  inclusionRuleResult <-
+    getResultsInclusionRuleFromAny(
+      premergedFile = premergedFile,
+      cohortIds = cohortIds,
+      databaseIds = databaseIds
+    )
+  return(inclusionRuleResult)
+}
