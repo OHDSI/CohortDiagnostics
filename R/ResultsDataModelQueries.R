@@ -239,7 +239,7 @@ getDataForDatabaseIdsCohortIds <- function(dataSource = NULL,
     }
   } else {
     sql <- "SELECT *
-            FROM  @results_database_schema.cohort_count
+            FROM  @results_database_schema.@data_table
             WHERE database_id in (@database_id)
             {@cohort_ids != ''} ? {  AND cohort_id in (@cohort_ids)}
             ;"
@@ -250,6 +250,7 @@ getDataForDatabaseIdsCohortIds <- function(dataSource = NULL,
         sql = sql,
         results_database_schema = dataSource$resultsDatabaseSchema,
         cohort_ids = cohortIds,
+        data_table = camelCaseToSnakeCase(dataTableName),
         database_id = quoteLiterals(databaseIds),
         snakeCaseToCamelCase = TRUE
       ) %>%
@@ -279,7 +280,7 @@ getDataForDatabaseIdsCohortIds <- function(dataSource = NULL,
       paste0(missingColumns, collapse = ", ")
     ))
   }
-  return(data)
+  return(data %>% dplyr::tibble())
 }
 
 
@@ -411,4 +412,139 @@ getResultsCohortCountFromPremergedFile <- function(premergedFile,
       databaseIds = databaseIds
     )
   return(cohortCountResult)
+}
+
+
+###################################################################################
+###################################################################################
+################# Get Time Series from results data model ########################
+###################################################################################
+###################################################################################
+
+# private function - not exported
+getResultsTimeSeriesFromAny <- function(dataSource = NULL,
+                                        connectionDetails = NULL,
+                                        connection = NULL,
+                                        premergedFile = NULL,
+                                        csvFile = NULL,
+                                        cohortIds,
+                                        databaseIds) {
+  timeSeriesResult <-
+    getDataForDatabaseIdsCohortIds(
+      dataSource = dataSource,
+      connectionDetails = connectionDetails,
+      connection = connection,
+      premergedFile = premergedFile,
+      csvFile = csvFile,
+      cohortIds = cohortIds,
+      databaseIds = databaseIds,
+      dataTableName = 'timeSeries'
+    )
+  timeSeriesResult <- timeSeriesResult %>% 
+    dplyr::arrange(.data$cohortId,.data$databaseId, .data$calendarInterval, .data$seriesType, .data$periodBegin) %>% 
+    tsibble::as_tsibble(key = c(.data$cohortId,.data$databaseId, .data$seriesType, .data$calendarInterval), 
+                        index = .data$periodBegin)
+  return(timeSeriesResult)
+}
+
+# private function - not exported
+# this function is for use with R shiny
+getResultsTimeSeriesFromEnvironment <-
+  function(dataSource,
+           cohortIds,
+           databaseIds) {
+    timeSeriesResult <-
+      getResultsTimeSeriesFromAny(dataSource = dataSource,
+                                  cohortIds = cohortIds,
+                                  databaseIds = databaseIds)
+    return(timeSeriesResult)
+  }
+
+#' Get cohort counts from Database with data in results data model format
+#'
+#' @description
+#' Given a set of one or more cohortIds and one or more databaseIds,
+#' return data from the cohort_count table in results data model
+#' with data filtered to the cohortIds and databaseIds.
+#'
+#' @template Connection
+#'
+#' @param cohortIds  One or more cohort ids to returns cohort counts
+#'
+#' @param databaseIds  One or more database ids to returns cohort counts
+#'
+#' @return
+#' Returns a tibble dataframe
+#' @export
+getResultsTimeSeriesFromDatabase <-
+  function(connectionDetails = NULL,
+           connection = NULL,
+           cohortIds,
+           databaseIds) {
+    timeSeriesResult <-
+      getResultsTimeSeriesFromAny(
+        connectionDetails = connectionDetails,
+        connection = connection,
+        cohortIds = cohortIds,
+        databaseIds = databaseIds
+      )
+    return(timeSeriesResult)
+  }
+
+
+
+#' Get cohort counts from csv file with data in results data model format
+#'
+#' @description
+#' Given a set of one or more cohortIds and one or more databaseIds,
+#' return data from the cohort_count table in results data model
+#' with data filtered to the cohortIds and databaseIds.
+#'
+#' @param csvFile  The full path to read the csv file.
+#'
+#' @param cohortIds  One or more cohort ids to returns cohort counts
+#'
+#' @param databaseIds  One or more database ids to returns cohort counts
+#'
+#' @return
+#' Returns a tibble dataframe
+#' @export
+getResultsTimeSeriesFromCsv <- function(csvFile,
+                                        cohortIds,
+                                        databaseIds) {
+  timeSeriesResult <- getResultsTimeSeriesFromAny(
+    csvFile = csvFile,
+    cohortIds = cohortIds,
+    databaseIds = databaseIds
+  )
+  return(timeSeriesResult)
+}
+
+
+#' Get cohort counts from premerged file with data in results data model format
+#'
+#' @description
+#' Given a set of one or more cohortIds and one or more databaseIds,
+#' return data from the cohort_count table in results data model
+#' with data filtered to the cohortIds and databaseIds.
+#'
+#' @param premergedFile  The full path to read the premerged file.
+#'
+#' @param cohortIds  One or more cohort ids to returns cohort counts
+#'
+#' @param databaseIds  One or more database ids to returns cohort counts
+#'
+#' @return
+#' Returns a tibble dataframe
+#' @export
+getResultsTimeSeriesFromPremergedFile <- function(premergedFile,
+                                                  cohortIds,
+                                                  databaseIds) {
+  timeSeriesResult <-
+    getResultsTimeSeriesFromAny(
+      premergedFile = premergedFile,
+      cohortIds = cohortIds,
+      databaseIds = databaseIds
+    )
+  return(timeSeriesResult)
 }

@@ -1712,18 +1712,28 @@ shiny::shinyServer(function(input, output, session) {
   
   
   # Time Series ----------------------------------------------------------------------------------
+  timeSeriesData <- reactive({
+    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
+    validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
+    data <- getResultsTimeSeriesFromEnvironment(
+      dataSource = dataSource,
+      cohortIds = cohortIds(),
+      databaseIds = databaseIds()
+    )
+  })
+  
   timeSeries <- reactive({
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
     calenderIntervalFirstLetter <- tolower(substr(input$timeSeriesFilter,1,1))
-    data <- getTimeSeriesResult(
-      dataSource = dataSource,
-      cohortIds = cohortIds(),
-      databaseIds = databaseIds(),
-      calendarInterval = calenderIntervalFirstLetter,
-      minDate = NULL,
-      maxDate = NULL
-    )
+    data <- timeSeriesData() %>% 
+      dplyr::filter(.data$calendarInterval == calenderIntervalFirstLetter)
+    if ('seriesType' %in% colnames(data)) {
+      data <- data %>% 
+        dplyr::filter(.data$seriesType == input$timeSeriesSelectionType)
+    }
+    #minDate = NULL,
+    #maxDate = NULL
     return(data)
   })
   

@@ -721,6 +721,13 @@ bodyTabItems <- shinydashboard::tabItems(
         selected = "Monthly",
         inline = TRUE
       ),
+      shiny::radioButtons(
+        inputId = "timeSeriesSelectionType",
+        label = "Series:",
+        choices = c( "ci", "cp", "oi", "op"),
+        selected = "ci",
+        inline = TRUE
+      ),
       shiny::conditionalPanel(
         condition = "input.timeSeriesType=='Table'",
         tags$table(width = "100%",
