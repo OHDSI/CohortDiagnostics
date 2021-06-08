@@ -274,55 +274,55 @@ createFileDataSource <- function(premergedDataFile, envir = new.env()) {
 #   return(data)
 # }
 
-getInclusionRuleStats <- function(dataSource = .GlobalEnv,
-                                  cohortIds = NULL,
-                                  databaseIds) {
-  table <- 'inclusionRuleStats'
-  if (is(dataSource, "environment")) {
-    if (!exists(table)) {
-      return(NULL)
-    }
-    if (length(table) == 0) {
-      return(NULL)
-    }
-    if (nrow(get(table, envir = dataSource)) == 0) {
-      return(NULL)
-    }
-    data <- get(table, envir = dataSource) %>% 
-      dplyr::filter(.data$databaseId %in% !!databaseIds) 
-    if (!is.null(cohortIds)) {
-      data <- data %>% 
-        dplyr::filter(.data$cohortId %in% !!cohortIds) 
-    }
-  } else {
-    sql <- "SELECT *
-    FROM  @resultsDatabaseSchema.inclusion_rule_stats
-    WHERE database_id in (@database_id)
-    {@cohort_ids != ''} ? {  AND cohort_id in (@cohort_ids)}
-    ;"
-    data <- renderTranslateQuerySql(connection = dataSource$connection,
-                                    sql = sql,
-                                    resultsDatabaseSchema = dataSource$resultsDatabaseSchema,
-                                    cohort_ids = cohortIds,
-                                    database_id = quoteLiterals(databaseIds), 
-                                    snakeCaseToCamelCase = TRUE) %>% 
-      tidyr::tibble()
-  }
-  if (nrow(data) == 0) {
-    return(NULL)
-  }
-  data <- data %>% 
-    dplyr::select(.data$cohortId,
-                  .data$ruleSequenceId, 
-                  .data$ruleName, 
-                  .data$meetSubjects, 
-                  .data$gainSubjects, 
-                  .data$remainSubjects, 
-                  .data$totalSubjects, 
-                  .data$databaseId) %>% 
-    dplyr::arrange(.data$cohortId, .data$ruleSequenceId)
-  return(data)
-}
+# getInclusionRuleStats <- function(dataSource = .GlobalEnv,
+#                                   cohortIds = NULL,
+#                                   databaseIds) {
+#   table <- 'inclusionRuleStats'
+#   if (is(dataSource, "environment")) {
+#     if (!exists(table)) {
+#       return(NULL)
+#     }
+#     if (length(table) == 0) {
+#       return(NULL)
+#     }
+#     if (nrow(get(table, envir = dataSource)) == 0) {
+#       return(NULL)
+#     }
+#     data <- get(table, envir = dataSource) %>% 
+#       dplyr::filter(.data$databaseId %in% !!databaseIds) 
+#     if (!is.null(cohortIds)) {
+#       data <- data %>% 
+#         dplyr::filter(.data$cohortId %in% !!cohortIds) 
+#     }
+#   } else {
+#     sql <- "SELECT *
+#     FROM  @resultsDatabaseSchema.inclusion_rule_stats
+#     WHERE database_id in (@database_id)
+#     {@cohort_ids != ''} ? {  AND cohort_id in (@cohort_ids)}
+#     ;"
+#     data <- renderTranslateQuerySql(connection = dataSource$connection,
+#                                     sql = sql,
+#                                     resultsDatabaseSchema = dataSource$resultsDatabaseSchema,
+#                                     cohort_ids = cohortIds,
+#                                     database_id = quoteLiterals(databaseIds), 
+#                                     snakeCaseToCamelCase = TRUE) %>% 
+#       tidyr::tibble()
+#   }
+#   if (nrow(data) == 0) {
+#     return(NULL)
+#   }
+#   data <- data %>% 
+#     dplyr::select(.data$cohortId,
+#                   .data$ruleSequenceId, 
+#                   .data$ruleName, 
+#                   .data$meetSubjects, 
+#                   .data$gainSubjects, 
+#                   .data$remainSubjects, 
+#                   .data$totalSubjects, 
+#                   .data$databaseId) %>% 
+#     dplyr::arrange(.data$cohortId, .data$ruleSequenceId)
+#   return(data)
+# }
 
 
 getIndexEventBreakdown <- function(dataSource = .GlobalEnv,
