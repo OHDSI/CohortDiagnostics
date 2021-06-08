@@ -132,7 +132,7 @@ test_that("Data removal works", {
         sql = sql,
         schema = cohortDiagnosticsSchema,
         table_name = tableName,
-        database_id = databaseId
+        database_id = "cdmv5"
       )
       databaseIdCount <-
         DatabaseConnector::querySql(connection, sql)[, 1]
