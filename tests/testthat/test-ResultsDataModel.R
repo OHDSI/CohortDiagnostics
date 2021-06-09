@@ -263,6 +263,20 @@ test_that("Retrieve results from remote database", {
     databaseIds = 'cdmV5'
   )
   expect_true(nrow(includedConceptFromFile) > 0)
+  
+  # orphan_concept
+  orphanConceptFromDb <- CohortDiagnostics::getResultsFromOrphanConcept(
+    dataSource = dataSourceDatabase,
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
+  )
+  expect_true(nrow(orphanConceptFromDb) > 0)
+  orphanConceptFromFile <- CohortDiagnostics::getResultsFromOrphanConcept(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
+  )
+  expect_true(nrow(orphanConceptFromFile) > 0)
 })
 
 test_that("Data removal works", {

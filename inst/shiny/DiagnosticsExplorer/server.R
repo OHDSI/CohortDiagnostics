@@ -1878,7 +1878,7 @@ shiny::shinyServer(function(input, output, session) {
                   "No cohort chosen"))
     includedConcepts <- getResultsFromIncludedConcept(
       dataSource = dataSource,
-      cohortId = cohortId(),
+      cohortIds = cohortId(),
       databaseIds = databaseIds()
     )
     includedConcepts <- includedConcepts %>% 
@@ -2111,11 +2111,28 @@ shiny::shinyServer(function(input, output, session) {
   orphanConceptsData <- shiny::reactive(x = {
     validate(need(all(!is.null(databaseIds()), length(databaseIds()) > 0), "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
-    getOrphanConceptResult(
+    orphanConcepts <- getResultsFromOrphanConcept(
       dataSource = dataSource,
-      cohortId = cohortId(),
+      cohortIds = cohortId(),
       databaseIds = databaseIds()
     )
+    orphanConcepts <- orphanConcepts %>% 
+    dplyr::inner_join(conceptSets %>% dplyr::select(
+                                    .data$cohortId,
+                                    .data$conceptSetId,
+                                    .data$conceptSetName), 
+                      by = c("cohortId", "conceptSetId"))
+    concepts <- getConceptDetails(dataSource = dataSource,
+                                  conceptIds = orphanConcepts$conceptId %>% unique())
+    orphanConcepts <- orphanConcepts %>% 
+      dplyr::inner_join(concepts %>% dplyr::select(
+                                      .data$conceptId,
+                                      .data$conceptName,
+                                      .data$vocabularyId,
+                                      .data$conceptCode,
+                                      .data$standardConcept),
+                        by = c("conceptId"))
+    return(orphanConcepts)
   })
   
   output$saveOrphanConceptsTable <-  downloadHandler(

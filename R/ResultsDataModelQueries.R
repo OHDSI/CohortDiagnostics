@@ -518,3 +518,32 @@ getResultsFromIncludedConcept <- function(dataSource,
   )
   return(data)
 }
+
+
+#' Returns data from orphan_concept table of Cohort Diagnostics results data model
+#'
+#' @description
+#' Returns data from orphan_concept table of Cohort Diagnostics results data model
+#'
+#' @template DataSource
+#'
+#' @template CohortIds
+#'
+#' @template DatabaseIds
+#'
+#' @return
+#' Returns a data frame (tibble) with results that conform to orphan_concept
+#' table in Cohort Diagnostics results data model.
+#'
+#' @export
+getResultsFromOrphanConcept <- function(dataSource,
+                                          cohortIds,
+                                          databaseIds) {
+  data <- getDataFromResultsDatabaseSchema(
+    dataSource,
+    cohortIds = cohortIds,
+    databaseIds = databaseIds,
+    dataTableName = 'orphanConcept'
+  )
+  return(data)
+}
