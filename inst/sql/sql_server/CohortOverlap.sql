@@ -64,12 +64,12 @@ INTO #universe
 FROM (
 	SELECT DISTINCT target_cohort_id
 	FROM #target_cohorts
-	),
+	) target,
 	(
 		SELECT DISTINCT comparator_cohort_id
 		FROM #comparator_cohorts
-		),
-	#all_subjects
+		) comparator,
+	#all_subjects subjects
 WHERE target_cohort_id != comparator_cohort_id
 	AND target_cohort_id IS NOT NULL
 	AND comparator_cohort_id IS NOT NULL
