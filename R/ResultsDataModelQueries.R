@@ -414,6 +414,8 @@ getResultsFromIndexEventBreakdown <- function(dataSource,
 #' @template DataSource
 #'
 #' @template ConceptIds
+#' 
+#' @template VocabularyDatabaseSchema
 #'
 #' @return
 #' Returns a data frame (tibble) with results that conform to concept
@@ -443,6 +445,9 @@ getConceptDetails <- function(dataSource = .GlobalEnv,
     sql <- "SELECT *
             FROM @vocabulary_database_schema.concept
             WHERE concept_id IN (@concept_ids);"
+    if (!is.null(vocabularyDatabaseSchema)) {
+      sql <- SqlRender::render(sql = sql, vocabularyDatabaseSchema = !!vocabularyDatabaseSchema)
+    }
     data <- renderTranslateQuerySql(connection = dataSource$connection,
                                     sql = sql,
                                     vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
