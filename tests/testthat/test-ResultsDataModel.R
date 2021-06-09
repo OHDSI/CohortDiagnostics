@@ -201,6 +201,20 @@ test_that("Retrieve results from remote database", {
     databaseIds = 'cdmV5'
   )
   # expect_true(nrow(incidenceRateFromFile) >= 0) - no data in eunomia
+  
+  # inclusion rules
+  inclusionRulesFromDb <- CohortDiagnostics::getResultsFromInclusionRuleStatistics(
+    dataSource = dataSourceDatabase,
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
+  )
+  expect_true(nrow(inclusionRulesFromDb) > 0)
+  inclusionRulesFromFile <- CohortDiagnostics::getResultsFromInclusionRuleStatistics(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
+  )
+  expect_true(nrow(inclusionRulesFromFile) > 0)
 })
 
 test_that("Data removal works", {

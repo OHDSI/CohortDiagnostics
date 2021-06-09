@@ -382,3 +382,32 @@ getResultsFromInclusionRuleStatistics <- function(dataSource,
   )
   return(data)
 }
+
+
+#' Returns data from index_event_breakdown table of Cohort Diagnostics results data model
+#'
+#' @description
+#' Returns data from index_event_breakdown table of Cohort Diagnostics results data model
+#'
+#' @template DataSource
+#'
+#' @template CohortIds
+#'
+#' @template DatabaseIds
+#'
+#' @return
+#' Returns a data frame (tibble) with results that conform to index_event_breakdown
+#' table in Cohort Diagnostics results data model.
+#'
+#' @export
+getResultsFromIndexEventBreakdown <- function(dataSource,
+                                                  cohortIds,
+                                                  databaseIds) {
+  data <- getDataForDatabaseIdsCohortIds(
+    dataSource,
+    cohortIds = cohortIds,
+    databaseIds = databaseIds,
+    dataTableName = 'indexEventBreakdown'
+  )
+  return(data)
+}

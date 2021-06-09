@@ -2497,29 +2497,25 @@ shiny::shinyServer(function(input, output, session) {
                 suspendWhenHidden = FALSE)
   
   # Index event breakdown ----------------------------------------------------------------
+  indexEventBreakDownDataFull <- shiny::reactive(x = {
+    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
+    validate(need(length(cohortId()) > 0, "No cohorts chosen"))
+    data <- getIndexEventBreakdown(
+      dataSource = dataSource,
+      cohortIds = cohortId(),
+      databaseIds = databaseIds())
+  })
   
   indexEventBreakDownData <- shiny::reactive(x = {
-    if (length(cohortId()) > 0 &&
-        length(databaseIds()) > 0) {
-      data <- getIndexEventBreakdown(
-        dataSource = dataSource,
-        cohortIds = cohortId(),
-        databaseIds = databaseIds()
-      )
-      if (!is.null(data)) {
-        if (!'domainTable' %in% colnames(data)) {
-          data$domainTable <- "Not in data"
-        }
-        if (!'domainField' %in% colnames(data)) {
-          data$domainField <- "Not in data"
-        }
-        return(data)
-      } else {
-        return(NULL)
-      }
-    } else {
-      return(NULL)
+    data <- indexEventBreakDownDataFull()
+    if (is.null(data)) {return(NULL)}
+    if (!'domainTable' %in% colnames(data)) {
+      data$domainTable <- "Not in data"
     }
+    if (!'domainField' %in% colnames(data)) {
+      data$domainField <- "Not in data"
+    }
+    return(data)
   })
   
   indexEventBreakDownDataFilteredByRadioButton <-
