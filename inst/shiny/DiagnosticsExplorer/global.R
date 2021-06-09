@@ -5,6 +5,7 @@ source("R/DisplayFunctions.R")
 source("R/Tables.R")
 source("R/Plots.R")
 source("R/Results.R")
+source("R/ResultsDataModelQueries.R")
 
 # Settings when running on server:
 defaultLocalDataFolder <- "data"
@@ -22,7 +23,7 @@ alternateVocabularySchema <- c('vocabulary')
 
 defaultDatabaseMode <- TRUE # Use file system if FALSE
 
-showTimeSeries <- FALSE
+showTimeSeries <- TRUE
 
 appInformationText <- "V 2.1"
 appInformationText <- "Powered by OHDSI Cohort Diagnostics application - Version 2.1. This app is working in"
@@ -200,8 +201,4 @@ if (!showTimeSeries) {
   if (exists("timeSeries")) {
     rm(timeSeries)
   }
-}
-
-if (exists("indexEventBreakdown")) {
-  rm(indexEventBreakdown)
 }
