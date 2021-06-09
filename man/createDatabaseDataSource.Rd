@@ -5,7 +5,8 @@
 \title{Return a database data source object}
 \usage{
 createDatabaseDataSource(
-  connection,
+  connection = NULL,
+  connectionDetails = NULL,
   resultsDatabaseSchema,
   vocabularyDatabaseSchema = resultsDatabaseSchema
 )
@@ -17,6 +18,11 @@ DatabaseConnector package. Can be left NULL if \code{connectionDetails}
 is provided, in which case a new connection will be opened at the start
 of the function, and closed when the function finishes.}
 
+\item{connectionDetails}{An object of type \code{connectionDetails} as created using the
+\code{\link[DatabaseConnector]{createConnectionDetails}} function in the
+DatabaseConnector package. Can be left NULL if \code{connection} is
+provided.}
+
 \item{resultsDatabaseSchema}{Schema name where the output of your Cohort Diagnostics result set it uploaded. This 
 is commonly uploaded using \code{CohortDiagnostics::uploadResults} function. The
 schema may be initiated using \code{CohortDiagnostics::resultsDatabaseSchema}.}
@@ -25,11 +31,6 @@ schema may be initiated using \code{CohortDiagnostics::resultsDatabaseSchema}.}
 commonly the same as cdmDatabaseSchema. Note that for 
 SQL Server, this should include both the database and
 schema name, for example 'vocabulary.dbo'.}
-
-\item{connectionDetails}{An object of type \code{connectionDetails} as created using the
-\code{\link[DatabaseConnector]{createConnectionDetails}} function in the
-DatabaseConnector package. Can be left NULL if \code{connection} is
-provided.}
 }
 \value{
 Returns a list with information on database data source

@@ -71,12 +71,14 @@ quoteLiterals <- function(x) {
 #' @return
 #' Returns a list with information on database data source
 #' @export
-createDatabaseDataSource <- function(connection,
+createDatabaseDataSource <- function(connection = NULL,
+                                     connectionDetails = NULL,
                                      resultsDatabaseSchema,
                                      vocabularyDatabaseSchema = resultsDatabaseSchema) {
   return(
     list(
       connection = connection,
+      connectionDetails = connectionDetails,
       resultsDatabaseSchema = resultsDatabaseSchema,
       vocabularyDatabaseSchema = vocabularyDatabaseSchema
     )
