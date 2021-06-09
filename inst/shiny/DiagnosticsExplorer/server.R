@@ -2344,6 +2344,8 @@ shiny::shinyServer(function(input, output, session) {
   
   # Inclusion rules table -----------------------------------------------------------------------
   inclusionRuleTableData <- shiny::reactive(x = {
+    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
+    validate(need(length(cohortId()) > 0, "No cohorts chosen"))
     data <- getResultsFromInclusionRuleStatistics(
       dataSource = dataSource,
       cohortIds = cohortId(),
