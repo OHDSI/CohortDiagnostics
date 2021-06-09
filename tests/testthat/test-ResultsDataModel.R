@@ -215,6 +215,21 @@ test_that("Retrieve results from remote database", {
     databaseIds = 'cdmV5'
   )
   expect_true(nrow(inclusionRulesFromFile) > 0)
+  
+  
+  # index_event_breakdown
+  indexEventBreakdownFromDb <- CohortDiagnostics::getResultsFromIndexEventBreakdown(
+    dataSource = dataSourceDatabase,
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
+  )
+  expect_true(nrow(indexEventBreakdownFromDb) > 0)
+  indexEventBreakdownFromFile <- CohortDiagnostics::getResultsFromIndexEventBreakdown(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
+  )
+  expect_true(nrow(indexEventBreakdownFromFile) > 0)
 })
 
 test_that("Data removal works", {
