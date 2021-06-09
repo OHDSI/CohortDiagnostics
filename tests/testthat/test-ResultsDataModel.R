@@ -135,6 +135,44 @@ test_that("Results upload", {
   }
 })
 
+test_that("Retrieve results from remote database", {
+  CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = folder)
+  
+  dataSourceDatabase <- CohortDiagnostics::createDatabaseDataSource(
+    connectionDetails = connectionDetails,
+    resultsDatabaseSchema = cohortDiagnosticsSchema
+  )
+  dataSourcePreMergedFile <- CohortDiagnostics::createFileDataSource(
+    premergedDataFile = file.path(folder, "PreMerged.RData")
+  )
+  
+  cohortCountFromDb <- CohortDiagnostics::getResultsFromCohortCount(
+    dataSource = dataSourceDatabase,
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
+    )
+  expect_true(nrow(cohortCountFromDb) > 0)
+  cohortCountFromFile <- CohortDiagnostics::getResultsFromCohortCount(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
+  )
+  expect_true(nrow(cohortCountFromFile) > 0)
+  
+  timeSeriesFromDb <- CohortDiagnostics::getResultsFromTimeSeries(
+    dataSource = dataSourceDatabase,
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
+  )
+  expect_true(nrow(timeSeriesFromDb) > 0)
+  timeSeriesFromFile <- CohortDiagnostics::getResultsFromTimeSeries(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
+  )
+  expect_true(nrow(timeSeriesFromFile) > 0)
+})
+
 test_that("Data removal works", {
   specifications <- getResultsDataModelSpecifications()
   
