@@ -1,1 +1,1 @@
-#' @param cohortIds             A vector of one or more Concept Ids.
+#' @param conceptIds             A vector of one or more Concept Ids.
