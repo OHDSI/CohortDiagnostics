@@ -1,14 +1,3 @@
-getCohortCountResult <- function(dataSource = .GlobalEnv,
-                                 cohortIds = NULL,
-                                 databaseIds) {
-  data <-  getResultsFromCohortCount(dataSource = dataSource,
-                                     cohortIds = cohortIds,
-                                     databaseIds = databaseIds)
-  return(data)
-}
-
-
-
 getVisitContextResults <- function(dataSource = .GlobalEnv,
                                    cohortIds,
                                    databaseIds) {

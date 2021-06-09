@@ -1170,7 +1170,7 @@ shiny::shinyServer(function(input, output, session) {
   getCohortCountResultReactive <- shiny::reactive(x = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
-    data <- getCohortCountResult(
+    data <- getResultsFromCohortCount(
       dataSource = dataSource,
       databaseIds = databaseIds(),
       cohortIds = cohortIds()

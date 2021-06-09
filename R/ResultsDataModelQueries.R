@@ -118,7 +118,7 @@ renderTranslateQuerySql <-
            connectionDetails = NULL,
            ...,
            snakeCaseToCamelCase = FALSE) {
-    # Set up connection to server ----------------------------------------------------
+    ## Set up connection to server ----------------------------------------------------
     if (is.null(connection)) {
       if (!is.null(connectionDetails)) {
         writeLines("Connecting to database using provided connection details.")
