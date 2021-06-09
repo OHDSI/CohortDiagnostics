@@ -1876,12 +1876,34 @@ shiny::shinyServer(function(input, output, session) {
                   "No data sources chosen"))
     validate(need(all(!is.null(cohortId()),length(cohortId()) > 0),
                   "No cohort chosen"))
-    data = getIncludedConceptResult(
+    includedConcepts <- getResultsFromIncludedConcept(
       dataSource = dataSource,
       cohortId = cohortId(),
       databaseIds = databaseIds()
     )
-    return(data)
+    includedConcepts <- includedConcepts %>% 
+      dplyr::inner_join(conceptSets %>% dplyr::select(.data$cohortId,
+                                                      .data$conceptSetId,
+                                                      .data$conceptSetName), 
+                        by = c("cohortId", "conceptSetId"))
+    concept <- getConceptDetails(dataSource = dataSource,
+                                 conceptIds = c(includedConcepts$conceptId, includedConcepts$sourceConceptId) %>% unique())
+    includedConcepts <- includedConcepts %>% 
+      dplyr::inner_join(concept %>% 
+                          dplyr::rename(sourceConceptId = .data$conceptId,
+                                        sourceConceptName = .data$conceptName,
+                                        sourceVocabularyId = .data$vocabularyId,
+                                        sourceConceptCode = .data$conceptCode) %>% 
+                          dplyr::select(.data$sourceConceptId, .data$sourceConceptName, 
+                                        .data$sourceVocabularyId, .data$sourceConceptCode),
+                        by = c("sourceConceptId")) %>%
+      dplyr::inner_join(concept %>% 
+                          dplyr::select(
+                            .data$conceptId,
+                            .data$conceptName,
+                            .data$vocabularyId),
+                        by = c("conceptId"))
+    return(includedConcepts)
   })
   
   output$saveIncludedConceptsTable <-  downloadHandler(

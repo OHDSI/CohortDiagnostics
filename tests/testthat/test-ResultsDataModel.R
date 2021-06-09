@@ -221,6 +221,48 @@ test_that("Retrieve results from remote database", {
     databaseIds = 'cdmV5'
   )
   expect_true(nrow(indexEventBreakdownFromFile) > 0)
+  
+  # visit_context
+  visitContextFromDb <- CohortDiagnostics::getResultsFromVisitContext(
+    dataSource = dataSourceDatabase,
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
+  )
+  expect_true(nrow(visitContextFromDb) > 0)
+  visitContextFromFile <- CohortDiagnostics::getResultsFromVisitContext(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
+  )
+  expect_true(nrow(visitContextFromFile) > 0)
+  
+  # visit_context
+  visitContextFromDb <- CohortDiagnostics::getResultsFromVisitContext(
+    dataSource = dataSourceDatabase,
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
+  )
+  expect_true(nrow(visitContextFromDb) > 0)
+  visitContextFromFile <- CohortDiagnostics::getResultsFromVisitContext(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
+  )
+  expect_true(nrow(visitContextFromFile) > 0)
+  
+  # included_concept
+  includedConceptFromDb <- CohortDiagnostics::getResultsFromIncludedConcept(
+    dataSource = dataSourceDatabase,
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
+  )
+  expect_true(nrow(includedConceptFromDb) > 0)
+  includedConceptFromFile <- CohortDiagnostics::getResultsFromIncludedConcept(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
+  )
+  expect_true(nrow(includedConceptFromFile) > 0)
 })
 
 test_that("Data removal works", {

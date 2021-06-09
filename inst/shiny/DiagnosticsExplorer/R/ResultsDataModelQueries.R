@@ -489,3 +489,32 @@ getResultsFromVisitContext <- function(dataSource,
   )
   return(data)
 }
+
+
+#' Returns data from included_concept table of Cohort Diagnostics results data model
+#'
+#' @description
+#' Returns data from included_concept table of Cohort Diagnostics results data model
+#'
+#' @template DataSource
+#'
+#' @template CohortIds
+#'
+#' @template DatabaseIds
+#'
+#' @return
+#' Returns a data frame (tibble) with results that conform to included_concept
+#' table in Cohort Diagnostics results data model.
+#'
+#' @export
+getResultsFromIncludedConcept <- function(dataSource,
+                                          cohortIds,
+                                          databaseIds) {
+  data <- getDataFromResultsDatabaseSchema(
+    dataSource,
+    cohortIds = cohortIds,
+    databaseIds = databaseIds,
+    dataTableName = 'includedSourceConcept'
+  )
+  return(data)
+}
