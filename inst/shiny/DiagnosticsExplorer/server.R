@@ -1499,17 +1499,27 @@ shiny::shinyServer(function(input, output, session) {
       "Calendar Year" %in% input$irStratification
     data <- incidenceRateDataFull()
     if (any(is.null(data), nrow(data) == 0)) {return(NULL)}
-    data <- data %>% 
-      dplyr::filter(stratifyByGender =  !!stratifyByGender) %>% 
-      dplyr::filter(stratifyByAgeGroup =  !!stratifyByAge) %>% 
-      dplyr::filter(stratifyByCalendarYear = !!stratifyByCalendarYear)
-    if (!is.null(input$minPersonYear)) {
+    
+    if (stratifyByGender) {
       data <- data %>% 
-        dplyr::filter(minPersYears = input$minPersonYear)
+        dplyr::filter(.data$gender != '')
     }
-    if (!is.null(input$minSubjetCount)) {
+    if (stratifyByAge) {
       data <- data %>% 
-        dplyr::filter(minSubjectCount = input$minSubjetCount)
+        dplyr::filter(.data$ageGroup != '')
+    }
+    if (stratifyByCalendarYear) {
+      data <- data %>% 
+        dplyr::filter(.data$calendarYear != '')
+    }
+    
+    if (!is.na(input$minPersonYear) && !is.null(input$minPersonYear)) {
+      data <- data %>% 
+        dplyr::filter(.data$personYears >= input$minPersonYear)
+    }
+    if (!is.na(input$minSubjetCount) && !is.null(input$minSubjetCount)) {
+      data <- data %>% 
+        dplyr::filter(.data$cohortCount >= input$minSubjetCount)
     }
     if (any(is.null(data), nrow(data) == 0)) {
       return(NULL)
@@ -1521,9 +1531,9 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   shiny::observe({
-    if (!is.null(incidenceRateData()) &&
-        nrow(incidenceRateData()) > 0) {
-      ageFilter <- incidenceRateData() %>%
+    if (!is.null(incidenceRateDataFull()) &&
+        nrow(incidenceRateDataFull()) > 0) {
+      ageFilter <- incidenceRateDataFull() %>%
         dplyr::select(.data$ageGroup) %>%
         dplyr::filter(.data$ageGroup != "NA", !is.na(.data$ageGroup)) %>%
         dplyr::distinct() %>%
@@ -1542,9 +1552,9 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   shiny::observe({
-    if (!is.null(incidenceRateData()) &&
-        nrow(incidenceRateData()) > 0) {
-      genderFilter <- incidenceRateData() %>%
+    if (!is.null(incidenceRateDataFull()) &&
+        nrow(incidenceRateDataFull()) > 0) {
+      genderFilter <- incidenceRateDataFull() %>%
         dplyr::select(.data$gender) %>%
         dplyr::filter(.data$gender != "NA",
                       !is.na(.data$gender)) %>%
@@ -1562,9 +1572,9 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   shiny::observe({
-    if (!is.null(incidenceRateData()) &&
-        nrow(incidenceRateData()) > 0) {
-      calenderFilter <- incidenceRateData() %>%
+    if (!is.null(incidenceRateDataFull()) &&
+        nrow(incidenceRateDataFull()) > 0) {
+      calenderFilter <- incidenceRateDataFull() %>%
         dplyr::select(.data$calendarYear) %>%
         dplyr::filter(.data$calendarYear != "NA",
                       !is.na(.data$calendarYear)) %>%
@@ -1583,9 +1593,9 @@ shiny::shinyServer(function(input, output, session) {
         value = c(2010, maxValue)
       )
       
-      minIncidenceRateValue <- round(min(incidenceRateData()$incidenceRate),digits = 2)
+      minIncidenceRateValue <- round(min(incidenceRateDataFull()$incidenceRate),digits = 2)
       
-      maxIncidenceRateValue <- round(max(incidenceRateData()$incidenceRate),digits = 2)
+      maxIncidenceRateValue <- round(max(incidenceRateDataFull()$incidenceRate),digits = 2)
       
       shiny::updateSliderInput(
         session = session,
@@ -1625,7 +1635,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   incidenceRateCalenderFilter <- shiny::reactive({
-    calenderFilter <- incidenceRateData() %>%
+    calenderFilter <- incidenceRateDataFull() %>%
       dplyr::select(.data$calendarYear) %>%
       dplyr::filter(.data$calendarYear != "NA",
                     !is.na(.data$calendarYear)) %>%
@@ -1640,7 +1650,7 @@ shiny::shinyServer(function(input, output, session) {
   
   
   incidenceRateYScaleFilter <- shiny::reactive({
-    incidenceRateFilter <- incidenceRateData() %>%
+    incidenceRateFilter <- incidenceRateDataFull() %>%
       dplyr::select(.data$incidenceRate) %>%
       dplyr::filter(.data$incidenceRate != "NA",
                     !is.na(.data$incidenceRate)) %>%
@@ -1658,7 +1668,7 @@ shiny::shinyServer(function(input, output, session) {
       getFormattedFileName(fileName = "IncidenceRate")
     },
     content = function(file) {
-      write.csv(incidenceRateData(), file)
+      write.csv(incidenceRateDataFull(), file)
     }
   )
   
@@ -1698,9 +1708,11 @@ shiny::shinyServer(function(input, output, session) {
           data <- data %>%
             dplyr::filter(.data$incidenceRate %in% incidenceRateYScaleFilter())
         }
+        
         if (all(!is.null(data), nrow(data) > 0)) {
           plot <- plotIncidenceRate(
             data = data,
+            cohortCount = cohortCount,
             shortNameRef = cohort,
             stratifyByAgeGroup = stratifyByAge,
             stratifyByGender = stratifyByGender,
@@ -1709,7 +1721,6 @@ shiny::shinyServer(function(input, output, session) {
           )
           return(plot)
         }
-        
       },detail = "Please Wait"
     )
   })
