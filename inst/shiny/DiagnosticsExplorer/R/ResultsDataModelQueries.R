@@ -354,3 +354,31 @@ getResultsFromIncidenceRate <- function(dataSource,
   )
   return(data)
 }
+
+#' Returns data from inclusion_rule_stats table of Cohort Diagnostics results data model
+#'
+#' @description
+#' Returns data from inclusion_rule_stats table of Cohort Diagnostics results data model
+#'
+#' @template DataSource
+#'
+#' @template CohortIds
+#'
+#' @template DatabaseIds
+#'
+#' @return
+#' Returns a data frame (tibble) with results that conform to inclusion_rule_stats
+#' table in Cohort Diagnostics results data model.
+#'
+#' @export
+getResultsFromInclusionRuleStatistics <- function(dataSource,
+                                                  cohortIds,
+                                                  databaseIds) {
+  data <- getDataForDatabaseIdsCohortIds(
+    dataSource,
+    cohortIds = cohortIds,
+    databaseIds = databaseIds,
+    dataTableName = 'inclusionRuleStats'
+  )
+  return(data)
+}

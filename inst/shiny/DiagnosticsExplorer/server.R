@@ -2343,9 +2343,8 @@ shiny::shinyServer(function(input, output, session) {
                        suspendWhenHidden = FALSE)
   
   # Inclusion rules table -----------------------------------------------------------------------
-  
   inclusionRuleTableData <- shiny::reactive(x = {
-    data <- getInclusionRuleStats(
+    data <- getResultsFromInclusionRuleStatistics(
       dataSource = dataSource,
       cohortIds = cohortId(),
       databaseIds = databaseIds()
