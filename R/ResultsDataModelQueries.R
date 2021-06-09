@@ -95,12 +95,15 @@ createDatabaseDataSource <- function(connection = NULL,
 #'
 #' @param premergedDataFile  an .RData/rds object the output
 #'                           of \code{CohortDiagnostics::preMergeDiagnosticsFiles}
+#'                           
+#' @param envir             (optional) R-environment to read premerged data. By default this is the 
+#'                          global environment.
 #'
 #' @return
 #' R environment containing data conforming to Cohort Diagnostics results data model specifications.
 #' @export
 createFileDataSource <-
-  function(premergedDataFile, envir = new.env()) {
+  function(premergedDataFile, envir = .GlobalEnv) {
     load(premergedDataFile, envir = envir)
     return(envir)
   }

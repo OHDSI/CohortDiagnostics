@@ -4,11 +4,14 @@
 \alias{createFileDataSource}
 \title{Return a file data source object}
 \usage{
-createFileDataSource(premergedDataFile, envir = new.env())
+createFileDataSource(premergedDataFile, envir = .GlobalEnv)
 }
 \arguments{
 \item{premergedDataFile}{an .RData/rds object the output
 of \code{CohortDiagnostics::preMergeDiagnosticsFiles}}
+
+\item{envir}{(optional) R-environment to read premerged data. By default this is the 
+global environment.}
 }
 \value{
 R environment containing data conforming to Cohort Diagnostics results data model specifications.
