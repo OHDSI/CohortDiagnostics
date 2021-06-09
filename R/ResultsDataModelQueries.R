@@ -65,8 +65,8 @@ quoteLiterals <- function(x) {
 #' @template Connection
 #'
 #' @template VocabularyDatabaseSchema
-#'
-#' @template CohortDatabaseSchema
+#' 
+#' @template resultsDatabaseSchema
 #'
 #' @return
 #' Returns a list with information on database data source

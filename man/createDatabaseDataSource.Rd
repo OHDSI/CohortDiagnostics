@@ -17,6 +17,10 @@ DatabaseConnector package. Can be left NULL if \code{connectionDetails}
 is provided, in which case a new connection will be opened at the start
 of the function, and closed when the function finishes.}
 
+\item{resultsDatabaseSchema}{Schema name where the output of your Cohort Diagnostics result set it uploaded. This 
+is commonly uploaded using \code{CohortDiagnostics::uploadResults} function. The
+schema may be initiated using \code{CohortDiagnostics::resultsDatabaseSchema}.}
+
 \item{vocabularyDatabaseSchema}{Schema name where your OMOP vocabulary data resides. This is 
 commonly the same as cdmDatabaseSchema. Note that for 
 SQL Server, this should include both the database and
@@ -26,18 +30,6 @@ schema name, for example 'vocabulary.dbo'.}
 \code{\link[DatabaseConnector]{createConnectionDetails}} function in the
 DatabaseConnector package. Can be left NULL if \code{connection} is
 provided.}
-
-\item{cohortDatabaseSchema}{Schema name where your user has write access (has CRUD privileges). This is the location,
-of the cohort tables. This is also the location for the optional table such as 
-the unique_concept_id table. 
-In incremental mode: It is assumed that the tables in this location have not been modified 
-outside this application, and the content was written by this application for current 
-project only. A good practice would be to ensure that the database table names are unique 
-for the project. e.g. 'EPI101_COHORT', 'EPI101_UNIQUE_CONCEPT_ID' (please try to keep 
-length < 22). Another assumption: the content of these tables were written by this application
-(i.e. they were not altered outside of this application) and the tables are available during the
-life cycle of this project. The local files that are created by the application during incremental
-mode such as the 'recordKeepingFile'.}
 }
 \value{
 Returns a list with information on database data source
