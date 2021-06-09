@@ -584,10 +584,10 @@ shiny::shinyServer(function(input, output, session) {
       }
       
       output <-
-        resolveMappedConceptSet(
+        getResultsResolveMappedConceptSet(
           dataSource = dataSource,
           databaseIds = database$databaseId,
-          cohortId =  row$cohortId
+          cohortIds =  row$cohortId
         )
       
       if (!is.null(output)) {
@@ -1134,10 +1134,10 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(all(!is.null(cohortId()),length(cohortId()) > 0),
                   "No cohort chosen"))
     output <-
-      resolveMappedConceptSet(
+      getResultsResolveMappedConceptSet(
         dataSource = dataSource,
         databaseIds = databaseIds(),
-        cohortId = cohortId()
+        cohortIds = cohortId()
       )
     if (is.null(output)) {
       return(NULL)
@@ -3055,7 +3055,45 @@ shiny::shinyServer(function(input, output, session) {
                        "visitContextContainData",
                        suspendWhenHidden = FALSE)
   
+  # Characterization and temporal characterization data for one cohortId and multiple database
+  covariateValueForSingleCohorts <- shiny::reactive(x = {
+    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
+    validate(need(length(cohortId()) > 0, "No cohorts chosen"))
+    data <- getResultsCovariateValue(
+      dataSource = dataSource,
+      cohortIds = cohortId(),
+      databaseIds = databaseIds()
+    )
+    return(data)
+  })
+  
+  
   # Characterization -------------------------------------------------
+  characterizationData <- shiny::reactive(x = {
+    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
+    validate(need(length(cohortId()) > 0, "No cohorts chosen"))
+    
+    if (input$charType == "Pretty") {
+      analysisIds <- prettyAnalysisIds
+    } else {
+      analysisIds <- NULL
+    }
+    
+    covariatesTofilter <- covariateRef
+    if (!is.null(analysisIds)) {
+      covariatesTofilter <- covariatesTofilter %>% 
+        dplyr::filter(.data$analysisId %in% analysisIds)
+    }
+    characterizationData <- covariateValueForSingleCohorts()$covariateValue %>% 
+      dplyr::inner_join(covariatesTofilter, by = 'covariateId') %>% 
+      dplyr::inner_join(analysisRef, by = 'analysisId')
+    
+    if (any(is.null(characterizationData), nrow(characterizationData) == 0)) {
+      return(NULL)
+    }
+    return(characterizationData)
+  })
+  
   getConceptSetNameForFilter <- shiny::reactive(x = {
     if (length(cohortId()) == 0 || length(databaseIds()) == 0) {
       return(NULL)
@@ -3085,27 +3123,6 @@ shiny::shinyServer(function(input, output, session) {
   
   characterizationAnalysisNameFilter <- shiny::reactive({
     return(input$characterizationAnalysisNameFilter)
-  })
-  
-  characterizationData <- shiny::reactive(x = {
-    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
-    validate(need(length(cohortId()) > 0, "No cohorts chosen"))
-    if (input$charType == "Pretty") {
-      analysisIds <- prettyAnalysisIds
-    } else {
-      analysisIds <- NULL
-    }
-    data <- getCovariateValueResult(
-      dataSource = dataSource,
-      analysisIds = analysisIds,
-      cohortIds = cohortId(),
-      databaseIds = databaseIds(),
-      isTemporal = FALSE
-    )
-    if (any(is.null(data), nrow(data) == 0)) {
-      return(NULL)
-    }
-    return(data)
   })
   
   characterizationTableData <- shiny::reactive(x = {
@@ -3206,7 +3223,7 @@ shiny::shinyServer(function(input, output, session) {
     databaseIdsWithCount <- paste(databaseIds, "(n = ", format(cohortCounts, big.mark = ","), ")")
     
     if (input$charType == "Pretty") {
-      countData <- getCohortCountResult(
+      countData <- getResultsFromCohortCount(
         dataSource = dataSource,
         databaseIds = databaseIds(),
         cohortIds = cohortId()
@@ -3474,16 +3491,12 @@ shiny::shinyServer(function(input, output, session) {
   temporalCharacterizationData <- shiny::reactive(x = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
-    data <- getCovariateValueResult(
-      dataSource = dataSource,
-      cohortIds = cohortId(),
-      databaseIds = input$database,
-      timeIds = timeIds(),
-      isTemporal = TRUE
-    )
+    data <- covariateValueForSingleCohorts()$covariateValue %>% 
+      dplyr::filter(.data$timeId %in% timeIds()) %>% 
+      dplyr::inner_join(covariateRef, by = 'covariateId') %>% 
+      dplyr::inner_join(temporalAnalysisRef, by = 'analysisId')
     return(data)
   })
-  
   
   output$saveTemporalCharacterizationTable <-  downloadHandler(
     filename = function() {
@@ -3509,7 +3522,6 @@ shiny::shinyServer(function(input, output, session) {
     data <- temporalCharacterizationData()
     if (any(is.null(data), nrow(data) == 0)) {return(NULL)}
     data <- data %>%
-      dplyr::select(-.data$choices) %>% 
       dplyr::inner_join(temporalCovariateChoices, by = "timeId") %>%
       dplyr::arrange(.data$timeId) %>%
       dplyr::select(-.data$cohortId, -.data$databaseId) %>% 

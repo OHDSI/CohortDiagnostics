@@ -129,6 +129,14 @@ if (databaseMode) {
   loadResultsTable("concept_sets")
   loadResultsTable("cohort_count", required = TRUE)
   loadResultsTable("analysis_ref")
+  loadResultsTable("temporal_analysis_ref")
+  loadResultsTable("covariate_ref")
+  loadResultsTable("temporal_covariate_ref")
+  
+  covariateRef <- dplyr::bind_rows(covariateRef, temporalCovariateRef) %>% 
+    dplyr::distinct() %>% 
+    dplyr::arrange(.data$covariateId)
+  rm(temporalCovariateRef)
   
   for (table in c(dataModelSpecifications$tableName)) {
     #, "recommender_set"
