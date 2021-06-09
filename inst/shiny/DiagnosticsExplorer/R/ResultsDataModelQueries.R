@@ -65,18 +65,20 @@ quoteLiterals <- function(x) {
 #' @template Connection
 #'
 #' @template VocabularyDatabaseSchema
-#'
-#' @template CohortDatabaseSchema
+#' 
+#' @template resultsDatabaseSchema
 #'
 #' @return
 #' Returns a list with information on database data source
 #' @export
-createDatabaseDataSource <- function(connection,
+createDatabaseDataSource <- function(connection = NULL,
+                                     connectionDetails = NULL,
                                      resultsDatabaseSchema,
                                      vocabularyDatabaseSchema = resultsDatabaseSchema) {
   return(
     list(
       connection = connection,
+      connectionDetails = connectionDetails,
       resultsDatabaseSchema = resultsDatabaseSchema,
       vocabularyDatabaseSchema = vocabularyDatabaseSchema
     )
@@ -93,12 +95,15 @@ createDatabaseDataSource <- function(connection,
 #'
 #' @param premergedDataFile  an .RData/rds object the output
 #'                           of \code{CohortDiagnostics::preMergeDiagnosticsFiles}
+#'                           
+#' @param envir             (optional) R-environment to read premerged data. By default this is the 
+#'                          global environment.
 #'
 #' @return
 #' R environment containing data conforming to Cohort Diagnostics results data model specifications.
 #' @export
 createFileDataSource <-
-  function(premergedDataFile, envir = new.env()) {
+  function(premergedDataFile, envir = .GlobalEnv) {
     load(premergedDataFile, envir = envir)
     return(envir)
   }
@@ -289,6 +294,34 @@ getResultsFromTimeSeries <- function(dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds,
     dataTableName = 'timeSeries'
+  )
+  return(data)
+}
+
+#' Returns data from time_distribution table in cohort diagnostics
+#'
+#' @description
+#' Returns data from time_distribution table in cohort diagnostics
+#'
+#' @template DataSource
+#'
+#' @template CohortIds
+#'
+#' @template DatabaseIds
+#'
+#' @return
+#' Returns a data frame (tibble) with results that conform to time_distribution
+#' table in Cohort Diagnostics results data model.
+#'
+#' @export
+getResultsFromTimeDistribution <- function(dataSource,
+                                     cohortIds,
+                                     databaseIds) {
+  data <- getDataForDatabaseIdsCohortIds(
+    dataSource,
+    cohortIds = cohortIds,
+    databaseIds = databaseIds,
+    dataTableName = 'timeDistribution'
   )
   return(data)
 }

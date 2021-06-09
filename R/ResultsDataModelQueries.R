@@ -297,3 +297,31 @@ getResultsFromTimeSeries <- function(dataSource,
   )
   return(data)
 }
+
+#' Returns data from time_distribution table in cohort diagnostics
+#'
+#' @description
+#' Returns data from time_distribution table in cohort diagnostics
+#'
+#' @template DataSource
+#'
+#' @template CohortIds
+#'
+#' @template DatabaseIds
+#'
+#' @return
+#' Returns a data frame (tibble) with results that conform to time_distribution
+#' table in Cohort Diagnostics results data model.
+#'
+#' @export
+getResultsFromTimeDistribution <- function(dataSource,
+                                     cohortIds,
+                                     databaseIds) {
+  data <- getDataForDatabaseIdsCohortIds(
+    dataSource,
+    cohortIds = cohortIds,
+    databaseIds = databaseIds,
+    dataTableName = 'timeDistribution'
+  )
+  return(data)
+}

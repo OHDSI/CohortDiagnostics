@@ -8,44 +8,6 @@ getCohortCountResult <- function(dataSource = .GlobalEnv,
 }
 
 
-
-getTimeDistributionResult <- function(dataSource = .GlobalEnv,
-                                      cohortIds,
-                                      databaseIds) {
-  table <- 'timeDistribution'
-  if (is(dataSource, "environment")) {
-    if (!exists(table)) {
-      return(NULL)
-    }
-    if (length(table) == 0) {
-      return(NULL)
-    }
-    if (nrow(get(table, envir = dataSource)) == 0) {
-      return(NULL)
-    }
-    data <- get(table, envir = dataSource) %>% 
-      dplyr::filter(.data$cohortId %in% !!cohortIds &
-                      .data$databaseId %in% !!databaseIds)
-  } else {
-    sql <-   "SELECT *
-              FROM  @results_database_schema.time_distribution
-              WHERE cohort_id in (@cohort_ids)
-            	AND database_id in (@database_ids);"
-    data <- renderTranslateQuerySql(connection = dataSource$connection,
-                                    sql = sql,
-                                    results_database_schema = dataSource$resultsDatabaseSchema,
-                                    cohort_ids = cohortIds,
-                                    database_ids = quoteLiterals(databaseIds), 
-                                    snakeCaseToCamelCase = TRUE) %>% 
-      tidyr::tibble()
-  }
-  if (nrow(data) == 0) {
-    return(NULL)
-  }  
-  return(data)
-}
-
-
 getIncidenceRateResult <- function(dataSource = .GlobalEnv,
                                    cohortIds,
                                    databaseIds,

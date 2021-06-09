@@ -146,6 +146,7 @@ test_that("Retrieve results from remote database", {
     premergedDataFile = file.path(folder, "PreMerged.RData")
   )
   
+  # cohort count
   cohortCountFromDb <- CohortDiagnostics::getResultsFromCohortCount(
     dataSource = dataSourceDatabase,
     cohortIds = c(17492, 17692),
@@ -159,6 +160,7 @@ test_that("Retrieve results from remote database", {
   )
   expect_true(nrow(cohortCountFromFile) > 0)
   
+  # time series
   timeSeriesFromDb <- CohortDiagnostics::getResultsFromTimeSeries(
     dataSource = dataSourceDatabase,
     cohortIds = c(17492, 17692),
@@ -171,6 +173,20 @@ test_that("Retrieve results from remote database", {
     databaseIds = 'cdmV5'
   )
   expect_true(nrow(timeSeriesFromFile) > 0)
+  
+  # time distribution
+  timeDistributionFromDb <- CohortDiagnostics::getResultsFromTimeDistribution(
+    dataSource = dataSourceDatabase,
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
+  )
+  expect_true(nrow(timeDistributionFromDb) > 0)
+  timeDistributionFromFile <- CohortDiagnostics::getResultsFromTimeDistribution(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
+  )
+  expect_true(nrow(timeDistributionFromFile) > 0)
 })
 
 test_that("Data removal works", {

@@ -1767,10 +1767,10 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   # Time distribution -----------------------------------------------------------------------------
-  timeDist <- reactive({
+  timeDistributionData <- reactive({
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
-    data <- getTimeDistributionResult(
+    data <- getResultsFromTimeDistribution(
       dataSource = dataSource,
       cohortIds = cohortIds(),
       databaseIds = databaseIds()
@@ -1780,7 +1780,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$timeDisPlot <- ggiraph::renderggiraph(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
-    data <- timeDist()
+    data <- timeDistributionData()
     validate(need(nrow(data) > 0, paste0("No data for this combination")))
     plot <- plotTimeDistribution(data = data, shortNameRef = cohort)
     return(plot)
@@ -1791,12 +1791,12 @@ shiny::shinyServer(function(input, output, session) {
       getFormattedFileName(fileName = "timeDistribution")
     },
     content = function(file) {
-      write.csv(timeDist(), file)
+      write.csv(timeDistributionData(), file)
     }
   )
   
   output$timeDistTable <- DT::renderDataTable(expr = {
-    data <- timeDist()  %>%
+    data <- timeDistributionData()  %>%
       addShortName(cohort) %>%
       dplyr::arrange(.data$databaseId, .data$cohortId) %>%
       dplyr::mutate(
