@@ -2820,13 +2820,23 @@ shiny::shinyServer(function(input, output, session) {
   visitContexData <- shiny::reactive(x = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
-    
-    data <- getVisitContextResults(
+    visitContext <- getResultsFromVisitContext(
       dataSource = dataSource,
       cohortIds = cohortId(),
       databaseIds = databaseIds()
     )
-    return(data)
+    concepts <- getConceptDetails(dataSource = dataSource, 
+                                  conceptIds = visitContext$visitConceptId %>% unique()
+                                  ) %>% 
+      dplyr::rename(visitConceptId = .data$conceptId,
+                    visitConceptName = .data$conceptName) %>% 
+      dplyr::filter(is.na(.data$invalidReason)) %>% 
+      dplyr::select(.data$visitConceptId, .data$visitConceptName)
+    
+    visitContext <- visitContext %>% 
+      dplyr::left_join(concepts,
+                        by = c('visitConceptId'))
+    return(visitContext)
   })
   
   output$saveVisitContextTable <-  downloadHandler(

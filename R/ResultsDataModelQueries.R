@@ -460,3 +460,32 @@ getConceptDetails <- function(dataSource = .GlobalEnv,
   }
   return(data)
 }
+
+
+#' Returns data from visit_context table of Cohort Diagnostics results data model
+#'
+#' @description
+#' Returns data from visit_context table of Cohort Diagnostics results data model
+#'
+#' @template DataSource
+#'
+#' @template CohortIds
+#'
+#' @template DatabaseIds
+#'
+#' @return
+#' Returns a data frame (tibble) with results that conform to visit_context
+#' table in Cohort Diagnostics results data model.
+#'
+#' @export
+getResultsFromVisitContext <- function(dataSource,
+                                              cohortIds,
+                                              databaseIds) {
+  data <- getDataFromResultsDatabaseSchema(
+    dataSource,
+    cohortIds = cohortIds,
+    databaseIds = databaseIds,
+    dataTableName = 'visitContext'
+  )
+  return(data)
+}

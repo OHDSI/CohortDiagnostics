@@ -118,7 +118,7 @@ renderTranslateQuerySql <-
            connectionDetails = NULL,
            ...,
            snakeCaseToCamelCase = FALSE) {
-    # Set up connection to server ----------------------------------------------------
+    ## Set up connection to server ----------------------------------------------------
     if (is.null(connection)) {
       if (!is.null(connectionDetails)) {
         writeLines("Connecting to database using provided connection details.")
@@ -458,5 +458,34 @@ getConceptDetails <- function(dataSource = .GlobalEnv,
   if (nrow(data) == 0) {
     return(NULL)
   }
+  return(data)
+}
+
+
+#' Returns data from visit_context table of Cohort Diagnostics results data model
+#'
+#' @description
+#' Returns data from visit_context table of Cohort Diagnostics results data model
+#'
+#' @template DataSource
+#'
+#' @template CohortIds
+#'
+#' @template DatabaseIds
+#'
+#' @return
+#' Returns a data frame (tibble) with results that conform to visit_context
+#' table in Cohort Diagnostics results data model.
+#'
+#' @export
+getResultsFromVisitContext <- function(dataSource,
+                                              cohortIds,
+                                              databaseIds) {
+  data <- getDataFromResultsDatabaseSchema(
+    dataSource,
+    cohortIds = cohortIds,
+    databaseIds = databaseIds,
+    dataTableName = 'visitContext'
+  )
   return(data)
 }
