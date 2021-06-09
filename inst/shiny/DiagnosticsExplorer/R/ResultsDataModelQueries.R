@@ -242,10 +242,10 @@ getDataForDatabaseIdsCohortIds <- function(dataSource,
 }
 
 
-#' Returns data from cohort_count table in cohort diagnostics
+#' Returns data from cohort_count table of Cohort Diagnostics results data model
 #'
 #' @description
-#' Returns data from cohort_count table in cohort diagnostics
+#' Returns data from cohort_count table of Cohort Diagnostics results data model
 #'
 #' @template DataSource
 #'
@@ -270,10 +270,10 @@ getResultsFromCohortCount <- function(dataSource,
   return(data)
 }
 
-#' Returns data from time_series table in cohort diagnostics
+#' Returns data from time_series table of Cohort Diagnostics results data model
 #'
 #' @description
-#' Returns data from time_series table in cohort diagnostics
+#' Returns data from time_series table of Cohort Diagnostics results data model
 #'
 #' @template DataSource
 #'
@@ -298,10 +298,10 @@ getResultsFromTimeSeries <- function(dataSource,
   return(data)
 }
 
-#' Returns data from time_distribution table in cohort diagnostics
+#' Returns data from time_distribution table of Cohort Diagnostics results data model
 #'
 #' @description
-#' Returns data from time_distribution table in cohort diagnostics
+#' Returns data from time_distribution table of Cohort Diagnostics results data model
 #'
 #' @template DataSource
 #'
@@ -315,13 +315,42 @@ getResultsFromTimeSeries <- function(dataSource,
 #'
 #' @export
 getResultsFromTimeDistribution <- function(dataSource,
-                                     cohortIds,
-                                     databaseIds) {
+                                           cohortIds,
+                                           databaseIds) {
   data <- getDataForDatabaseIdsCohortIds(
     dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds,
     dataTableName = 'timeDistribution'
+  )
+  return(data)
+}
+
+
+#' Returns data from incidence_rate table of Cohort Diagnostics results data model
+#'
+#' @description
+#' Returns data from incidence_rate table of Cohort Diagnostics results data model
+#'
+#' @template DataSource
+#'
+#' @template CohortIds
+#'
+#' @template DatabaseIds
+#'
+#' @return
+#' Returns a data frame (tibble) with results that conform to incidence_rate
+#' table in Cohort Diagnostics results data model.
+#'
+#' @export
+getResultsFromIncidenceRate <- function(dataSource,
+                                        cohortIds,
+                                        databaseIds) {
+  data <- getDataForDatabaseIdsCohortIds(
+    dataSource,
+    cohortIds = cohortIds,
+    databaseIds = databaseIds,
+    dataTableName = 'incidenceRate'
   )
   return(data)
 }

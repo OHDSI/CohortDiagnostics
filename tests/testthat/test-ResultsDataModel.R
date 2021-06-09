@@ -187,6 +187,20 @@ test_that("Retrieve results from remote database", {
     databaseIds = 'cdmV5'
   )
   expect_true(nrow(timeDistributionFromFile) > 0)
+  
+  # incidence rate result
+  incidenceRateFromDb <- CohortDiagnostics::getResultsFromIncidenceRate(
+    dataSource = dataSourceDatabase,
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
+  )
+  # expect_true(nrow(incidenceRateFromDb) >= 0) - no data in eunomia
+  incidenceRateFromFile <- CohortDiagnostics::getResultsFromIncidenceRate(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
+  )
+  # expect_true(nrow(incidenceRateFromFile) >= 0) - no data in eunomia
 })
 
 test_that("Data removal works", {

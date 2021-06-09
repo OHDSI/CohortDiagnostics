@@ -1482,37 +1482,41 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   # Incidence rate --------------------------------------------------------------------------------
-  
-  incidenceRateData <- reactive({
-    if (!exists('incidenceRate')) {
-      return(NULL)
-    }
+  incidenceRateDataFull <- reactive({
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
+    data <- getResultsFromIncidenceRate(
+      dataSource = dataSource,
+      cohortIds = cohortIds(),
+      databaseIds = databaseIds())
+    return(data)
+  })
+  
+  incidenceRateData <- reactive({
     stratifyByAge <- "Age" %in% input$irStratification
     stratifyByGender <- "Gender" %in% input$irStratification
     stratifyByCalendarYear <-
       "Calendar Year" %in% input$irStratification
-    if (length(cohortIds()) > 0) {
-      data <- getIncidenceRateResult(
-        dataSource = dataSource,
-        cohortIds = cohortIds(),
-        databaseIds = databaseIds(),
-        stratifyByGender =  stratifyByGender,
-        stratifyByAgeGroup =  stratifyByAge,
-        stratifyByCalendarYear =  stratifyByCalendarYear,
-        minPersonYears = input$minPersonYear,
-        minSubjectCount = input$minSubjetCount
-      ) 
-      if (any(is.null(data), nrow(data) == 0)) {
-        return(NULL)
-      }
-      data <- data %>%
-        dplyr::mutate(incidenceRate = dplyr::case_when(.data$incidenceRate < 0 ~ 0,
-                                                       TRUE ~ .data$incidenceRate))
-    } else {
-      data <- NULL
+    data <- incidenceRateDataFull()
+    if (any(is.null(data), nrow(data) == 0)) {return(NULL)}
+    data <- data %>% 
+      dplyr::filter(stratifyByGender =  !!stratifyByGender) %>% 
+      dplyr::filter(stratifyByAgeGroup =  !!stratifyByAge) %>% 
+      dplyr::filter(stratifyByCalendarYear = !!stratifyByCalendarYear)
+    if (!is.null(input$minPersonYear)) {
+      data <- data %>% 
+        dplyr::filter(minPersYears = input$minPersonYear)
     }
+    if (!is.null(input$minSubjetCount)) {
+      data <- data %>% 
+        dplyr::filter(minSubjectCount = input$minSubjetCount)
+    }
+    if (any(is.null(data), nrow(data) == 0)) {
+      return(NULL)
+    }
+    data <- data %>%
+      dplyr::mutate(incidenceRate = dplyr::case_when(.data$incidenceRate < 0 ~ 0,
+                                                     TRUE ~ .data$incidenceRate))
     return(data)
   })
   

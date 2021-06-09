@@ -2,7 +2,7 @@
 % Please edit documentation in R/ResultsDataModelQueries.R
 \name{getResultsFromTimeSeries}
 \alias{getResultsFromTimeSeries}
-\title{Returns data from time_series table in cohort diagnostics}
+\title{Returns data from time_series table of Cohort Diagnostics results data model}
 \usage{
 getResultsFromTimeSeries(dataSource, cohortIds, databaseIds)
 }
@@ -20,5 +20,5 @@ Returns a data frame (tibble) with results that conform to time series
 table in Cohort Diagnostics results data model.
 }
 \description{
-Returns data from time_series table in cohort diagnostics
+Returns data from time_series table of Cohort Diagnostics results data model
 }
