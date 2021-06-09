@@ -10,7 +10,7 @@ createFileDataSource(premergedDataFile, envir = .GlobalEnv)
 \item{premergedDataFile}{an .RData/rds object the output
 of \code{CohortDiagnostics::preMergeDiagnosticsFiles}}
 
-\item{envir}{(optional) R-environment to read premerged data. By default this is the 
+\item{envir}{(optional) R-environment to read premerged data. By default this is the
 global environment.}
 }
 \value{

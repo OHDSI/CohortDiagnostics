@@ -65,7 +65,7 @@ quoteLiterals <- function(x) {
 #' @template Connection
 #'
 #' @template VocabularyDatabaseSchema
-#' 
+#'
 #' @template resultsDatabaseSchema
 #'
 #' @return
@@ -95,8 +95,8 @@ createDatabaseDataSource <- function(connection = NULL,
 #'
 #' @param premergedDataFile  an .RData/rds object the output
 #'                           of \code{CohortDiagnostics::preMergeDiagnosticsFiles}
-#'                           
-#' @param envir             (optional) R-environment to read premerged data. By default this is the 
+#'
+#' @param envir             (optional) R-environment to read premerged data. By default this is the
 #'                          global environment.
 #'
 #' @return
@@ -160,17 +160,10 @@ renderTranslateQuerySql <-
   }
 
 # private function - not exported
-getDataForDatabaseIdsCohortIds <- function(dataSource,
-                                           cohortIds = NULL,
-                                           databaseIds = NULL,
-                                           dataTableName) {
-  if (any(is.null(databaseIds), length(databaseIds) == 0)) {
-    stop("Database Ids not correctly specified.")
-  }
-  
-  if (any(!exists('cohortIds'), length(cohortIds) == 0)) {
-    stop("Cohort Ids not correctly specified.")
-  }
+getDataFromResultsDatabaseSchema <- function(dataSource,
+                                             cohortIds = NULL,
+                                             databaseIds = NULL,
+                                             dataTableName) {
   
   if (is(dataSource, "environment")) {
     if (!exists(get(dataTableName, envir = dataSource))) {
@@ -198,10 +191,10 @@ getDataForDatabaseIdsCohortIds <- function(dataSource,
     }
     sql <- "SELECT *
             FROM  @results_database_schema.@data_table
-            WHERE database_id in (@database_id)
-            {@cohort_ids != ''} ? {  AND cohort_id in (@cohort_ids)}
+            {@cohort_ids == '' & @database_id !=''} ? { WHERE database_id in (@database_id)}
+            {@cohort_ids != '' & @database_id !=''} ? {  WHERE database_id in (@database_id) AND cohort_id in (@cohort_ids)}
+            {@cohort_ids != '' & @database_id ==''} ? {  WHERE cohort_id in (@cohort_ids)}
             ;"
-    
     data <-
       renderTranslateQuerySql(
         connection = dataSource$connection,
@@ -261,7 +254,7 @@ getDataForDatabaseIdsCohortIds <- function(dataSource,
 getResultsFromCohortCount <- function(dataSource,
                                       cohortIds,
                                       databaseIds) {
-  data <- getDataForDatabaseIdsCohortIds(
+  data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds,
@@ -289,7 +282,7 @@ getResultsFromCohortCount <- function(dataSource,
 getResultsFromTimeSeries <- function(dataSource,
                                      cohortIds,
                                      databaseIds) {
-  data <- getDataForDatabaseIdsCohortIds(
+  data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds,
@@ -317,7 +310,7 @@ getResultsFromTimeSeries <- function(dataSource,
 getResultsFromTimeDistribution <- function(dataSource,
                                            cohortIds,
                                            databaseIds) {
-  data <- getDataForDatabaseIdsCohortIds(
+  data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds,
@@ -346,7 +339,7 @@ getResultsFromTimeDistribution <- function(dataSource,
 getResultsFromIncidenceRate <- function(dataSource,
                                         cohortIds,
                                         databaseIds) {
-  data <- getDataForDatabaseIdsCohortIds(
+  data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds,
@@ -374,7 +367,7 @@ getResultsFromIncidenceRate <- function(dataSource,
 getResultsFromInclusionRuleStatistics <- function(dataSource,
                                                   cohortIds,
                                                   databaseIds) {
-  data <- getDataForDatabaseIdsCohortIds(
+  data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds,
@@ -401,13 +394,64 @@ getResultsFromInclusionRuleStatistics <- function(dataSource,
 #'
 #' @export
 getResultsFromIndexEventBreakdown <- function(dataSource,
-                                                  cohortIds,
-                                                  databaseIds) {
-  data <- getDataForDatabaseIdsCohortIds(
+                                              cohortIds,
+                                              databaseIds) {
+  data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds,
     dataTableName = 'indexEventBreakdown'
   )
+  return(data)
+}
+
+
+#' Returns data from concept table of Cohort Diagnostics results data model
+#'
+#' @description
+#' Returns data from concept table of Cohort Diagnostics results data model
+#'
+#' @template DataSource
+#'
+#' @template ConceptIds
+#'
+#' @return
+#' Returns a data frame (tibble) with results that conform to concept
+#' table in Cohort Diagnostics results data model.
+#'
+#' @export
+getConceptDetails <- function(dataSource = .GlobalEnv,
+                              vocabularyDatabaseSchema = NULL,
+                              conceptIds) {
+  table <- 'concept'
+  if (!is.null(vocabularyDatabaseSchema) && is(dataSource, "environment")) {
+    warning('vocabularyDatabaseSchema provided for function getConceptDetails in non database mode. This will be ignored.')
+  }
+  if (is(dataSource, "environment")) {
+    if (!exists(table)) {
+      return(NULL)
+    }
+    if (length(table) == 0) {
+      return(NULL)
+    }
+    if (nrow(get(table, envir = dataSource)) == 0) {
+      return(NULL)
+    }
+    data <- get(table, envir = dataSource) %>% 
+      dplyr::filter(.data$conceptId %in% conceptIds)
+  } else {
+    sql <- "SELECT *
+            FROM @vocabulary_database_schema.concept
+            WHERE concept_id IN (@concept_ids);"
+    data <- renderTranslateQuerySql(connection = dataSource$connection,
+                                    sql = sql,
+                                    vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
+                                    concept_ids = conceptIds, 
+                                    snakeCaseToCamelCase = TRUE) %>% 
+      tidyr::tibble()
+  }
+  if (nrow(data) == 0) {
+    return(NULL)
+  }
   return(data)
 }

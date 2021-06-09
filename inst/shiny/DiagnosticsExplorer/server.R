@@ -2500,22 +2500,39 @@ shiny::shinyServer(function(input, output, session) {
   indexEventBreakDownDataFull <- shiny::reactive(x = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
-    data <- getIndexEventBreakdown(
+    data <- getResultsFromIndexEventBreakdown(
       dataSource = dataSource,
       cohortIds = cohortId(),
       databaseIds = databaseIds())
   })
   
   indexEventBreakDownData <- shiny::reactive(x = {
-    data <- indexEventBreakDownDataFull()
-    if (is.null(data)) {return(NULL)}
-    if (!'domainTable' %in% colnames(data)) {
-      data$domainTable <- "Not in data"
+    indexEventBreakdown <- indexEventBreakDownDataFull()
+    if (is.null(indexEventBreakdown)) {return(NULL)}
+    if (!'domainTable' %in% colnames(indexEventBreakdown)) {
+      indexEventBreakdown$domainTable <- "Not in data"
     }
-    if (!'domainField' %in% colnames(data)) {
-      data$domainField <- "Not in data"
+    if (!'domainField' %in% colnames(indexEventBreakdown)) {
+      indexEventBreakdown$domainField <- "Not in data"
     }
-    return(data)
+    conceptIdDetails <- getConceptDetails(dataSource = dataSource,
+                                          conceptIds = indexEventBreakdown$conceptId %>% unique())
+    indexEventBreakdown <- indexEventBreakdown %>%
+      dplyr::inner_join(conceptIdDetails %>% 
+                          dplyr::select(
+                            .data$conceptId,
+                            .data$conceptName,
+                            .data$domainId,
+                            .data$vocabularyId,
+                            .data$standardConcept),
+                        by = c("conceptId"))
+    
+    indexEventBreakdown <- indexEventBreakdown %>% 
+      dplyr::inner_join(cohortCount, 
+                        by = c('databaseId', 'cohortId')) %>% 
+      dplyr::mutate(subjectPercent = .data$subjectCount/.data$cohortSubjects,
+                    conceptPercent = .data$conceptCount/.data$cohortEntries)
+    return(indexEventBreakdown)
   })
   
   indexEventBreakDownDataFilteredByRadioButton <-

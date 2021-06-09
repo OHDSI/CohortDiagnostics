@@ -8,64 +8,6 @@ getCohortCountResult <- function(dataSource = .GlobalEnv,
 }
 
 
-getIndexEventBreakdown <- function(dataSource = .GlobalEnv,
-                                   cohortIds,
-                                   databaseIds) {
-  table <- 'indexEventBreakdown'
-  if (is(dataSource, "environment")) {
-    if (!exists(table)) {
-      return(NULL)
-    }
-    if (length(table) == 0) {
-      return(NULL)
-    }
-    if (nrow(get(table, envir = dataSource)) == 0) {
-      return(NULL)
-    }
-    data <- get(table, envir = dataSource) %>% 
-      dplyr::filter(.data$databaseId %in% !!databaseIds) 
-    if (!is.null(cohortIds)) {
-      data <- data %>% 
-        dplyr::filter(.data$cohortId %in% !!cohortIds) 
-    }
-    data <- data %>%
-      dplyr::inner_join(dplyr::select(get("concept", envir = dataSource),
-                                      .data$conceptId,
-                                      .data$conceptName,
-                                      .data$domainId,
-                                      .data$vocabularyId,
-                                      .data$standardConcept),
-                        by = c("conceptId"))
-  } else {
-    sql <- "SELECT index_event_breakdown.*,
-              concept.concept_name,
-              concept.domain_id,
-              concept.vocabulary_id,
-              concept.standard_concept
-            FROM  @results_database_schema.index_event_breakdown
-            INNER JOIN  @vocabulary_database_schema.concept
-              ON index_event_breakdown.concept_id = concept.concept_id
-            WHERE database_id in (@database_id)
-              AND cohort_id in (@cohort_ids);"
-    data <- renderTranslateQuerySql(connection = dataSource$connection,
-                                    sql = sql,
-                                    results_database_schema = dataSource$resultsDatabaseSchema,
-                                    vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
-                                    cohort_ids = cohortIds,
-                                    database_id = quoteLiterals(databaseIds), 
-                                    snakeCaseToCamelCase = TRUE) %>% 
-      tidyr::tibble()
-  }
-  if (nrow(data) == 0) {
-    return(NULL)
-  }  
-  data <- data %>% 
-    dplyr::inner_join(cohortCount, 
-                      by = c('databaseId', 'cohortId')) %>% 
-    dplyr::mutate(subjectPercent = .data$subjectCount/.data$cohortSubjects,
-                  conceptPercent = .data$conceptCount/.data$cohortEntries)
-  return(data)
-}
 
 getVisitContextResults <- function(dataSource = .GlobalEnv,
                                    cohortIds,
@@ -435,38 +377,6 @@ getCovariateValueResult <- function(dataSource = .GlobalEnv,
                                           0,
                                           .data$mean)) %>% 
       dplyr::select(-.data$missingMeansZero)
-  }
-  return(data)
-}
-
-getConceptDetails <- function(dataSource = .GlobalEnv,
-                              conceptIds) {
-  table <- 'concept'
-  if (is(dataSource, "environment")) {
-    if (!exists(table)) {
-      return(NULL)
-    }
-    if (length(table) == 0) {
-      return(NULL)
-    }
-    if (nrow(get(table, envir = dataSource)) == 0) {
-      return(NULL)
-    }
-    data <- get(table, envir = dataSource) %>% 
-      dplyr::filter(.data$conceptId %in% conceptIds)
-  } else {
-    sql <- "SELECT *
-            FROM @vocabulary_database_schema.concept
-            WHERE concept_id IN (@concept_ids);"
-    data <- renderTranslateQuerySql(connection = dataSource$connection,
-                                    sql = sql,
-                                    vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
-                                    concept_ids = conceptIds, 
-                                    snakeCaseToCamelCase = TRUE) %>% 
-      tidyr::tibble()
-  }
-  if (nrow(data) == 0) {
-    return(NULL)
   }
   return(data)
 }

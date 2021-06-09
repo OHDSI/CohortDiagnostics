@@ -81,15 +81,6 @@ test_that("Results upload", {
     inclusionStatisticsFolder = file.path(folder, "incStats"),
     exportFolder = file.path(folder, "export"),
     databaseId = "cdmv5",
-    runInclusionStatistics = TRUE,
-    runBreakdownIndexEvents = TRUE,
-    runCohortCharacterization = TRUE,
-    runTemporalCohortCharacterization = TRUE,
-    runCohortOverlap = TRUE,
-    runIncidenceRate = TRUE,
-    runIncludedSourceConcepts = TRUE,
-    runOrphanConcepts = TRUE,
-    runTimeDistributions = TRUE,
     incremental = TRUE,
     incrementalFolder = file.path(folder, "incremental")
   )
