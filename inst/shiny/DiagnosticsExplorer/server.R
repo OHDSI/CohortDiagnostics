@@ -2825,6 +2825,11 @@ shiny::shinyServer(function(input, output, session) {
       cohortIds = cohortId(),
       databaseIds = databaseIds()
     )
+    
+    if (nrow(visitContext) == 0) {
+      return(NULL)
+    }
+    
     concepts <- getConceptDetails(dataSource = dataSource, 
                                   conceptIds = visitContext$visitConceptId %>% unique()
                                   ) %>% 
@@ -2836,6 +2841,11 @@ shiny::shinyServer(function(input, output, session) {
     visitContext <- visitContext %>% 
       dplyr::left_join(concepts,
                         by = c('visitConceptId'))
+
+    visitContext <- visitContext %>%
+      dplyr::inner_join(cohortCount,
+                        by = c("cohortId", "databaseId")) %>% 
+      dplyr::mutate(subjectPercent = .data$subjects/.data$cohortSubjects)
     return(visitContext)
   })
   
