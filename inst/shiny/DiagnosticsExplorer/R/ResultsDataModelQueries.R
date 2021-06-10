@@ -167,7 +167,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
   if (is(dataSource, "environment")) {
     if (!exists(get(dataTableName, envir = dataSource))) {
       stop(paste0(
-        'Please check if ',
+        "Please check if ",
         dataTableName,
         " is present in environment."
       ))
@@ -186,7 +186,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
     }
   } else {
     if (!DatabaseConnector::dbIsValid(dataSource$connection)) {
-      stop('Connection to database seems to be closed.')
+      stop("Connection to database seems to be closed.")
     }
     sql <- "SELECT *
             FROM  @results_database_schema.@data_table
@@ -216,7 +216,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
     dplyr::filter(.data$tableName == camelCaseToSnakeCase(!!dataTableName))
   
   requiredColumns <- resultsDataModelSpecifications %>%
-    dplyr::filter(.data$isRequired == 'Yes') %>%
+    dplyr::filter(.data$isRequired == "Yes") %>%
     dplyr::pull(.data$fieldName) %>%
     snakeCaseToCamelCase()
   
@@ -257,7 +257,7 @@ getResultsFromCohortCount <- function(dataSource,
     dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds,
-    dataTableName = 'cohortCount'
+    dataTableName = "cohortCount"
   )
   return(data)
 }
@@ -285,7 +285,7 @@ getResultsFromTimeSeries <- function(dataSource,
     dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds,
-    dataTableName = 'timeSeries'
+    dataTableName = "timeSeries"
   )
   return(data)
 }
@@ -313,7 +313,7 @@ getResultsFromTimeDistribution <- function(dataSource,
     dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds,
-    dataTableName = 'timeDistribution'
+    dataTableName = "timeDistribution"
   )
   return(data)
 }
@@ -342,7 +342,7 @@ getResultsFromIncidenceRate <- function(dataSource,
     dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds,
-    dataTableName = 'incidenceRate'
+    dataTableName = "incidenceRate"
   )
   return(data)
 }
@@ -370,7 +370,7 @@ getResultsFromInclusionRuleStatistics <- function(dataSource,
     dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds,
-    dataTableName = 'inclusionRuleStats'
+    dataTableName = "inclusionRuleStats"
   )
   return(data)
 }
@@ -399,7 +399,7 @@ getResultsFromIndexEventBreakdown <- function(dataSource,
     dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds,
-    dataTableName = 'indexEventBreakdown'
+    dataTableName = "indexEventBreakdown"
   )
   return(data)
 }
@@ -424,11 +424,11 @@ getResultsFromIndexEventBreakdown <- function(dataSource,
 getConceptDetails <- function(dataSource = .GlobalEnv,
                               vocabularyDatabaseSchema = NULL,
                               conceptIds) {
-  table <- 'concept'
+  table <- "concept"
   if (!is.null(vocabularyDatabaseSchema) &&
       is(dataSource, "environment")) {
     warning(
-      'vocabularyDatabaseSchema provided for function getConceptDetails in non database mode. This will be ignored.'
+      "vocabularyDatabaseSchema provided for function getConceptDetails in non database mode. This will be ignored."
     )
   }
   if (is(dataSource, "environment")) {
@@ -494,7 +494,7 @@ getResultsFromVisitContext <- function(dataSource,
     dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds,
-    dataTableName = 'visitContext'
+    dataTableName = "visitContext"
   )
   return(data)
 }
@@ -523,7 +523,7 @@ getResultsFromIncludedConcept <- function(dataSource,
     dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds,
-    dataTableName = 'includedSourceConcept'
+    dataTableName = "includedSourceConcept"
   )
   return(data)
 }
@@ -552,7 +552,7 @@ getResultsFromOrphanConcept <- function(dataSource,
     dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds,
-    dataTableName = 'orphanConcept'
+    dataTableName = "orphanConcept"
   )
   return(data)
 }
@@ -566,7 +566,7 @@ getResultsFromCovariateValue <- function(dataSource,
     dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds,
-    dataTableName = 'covariateValue'
+    dataTableName = "covariateValue"
   )
   return(data)
 }
@@ -579,7 +579,7 @@ getResultsFromCovariateValueDist <- function(dataSource,
     dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds,
-    dataTableName = 'covariateValueDist'
+    dataTableName = "covariateValueDist"
   )
   return(data)
 }
@@ -592,7 +592,7 @@ getResultsFromTemporalValue <- function(dataSource,
     dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds,
-    dataTableName = 'temporalCovariateValue'
+    dataTableName = "temporalCovariateValue"
   )
   return(data)
 }
@@ -605,7 +605,7 @@ getResultsFromTemporalValueDist <- function(dataSource,
     dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds,
-    dataTableName = 'temporalCovariateValueDist'
+    dataTableName = "temporalCovariateValueDist"
   )
   return(data)
 }
@@ -618,7 +618,7 @@ getResultsFromResolvedConcepts <- function(dataSource,
     dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds,
-    dataTableName = 'resolvedConcepts'
+    dataTableName = "resolvedConcepts"
   )
   return(data)
 }
@@ -646,7 +646,7 @@ getResultsFromResolvedConcepts <- function(dataSource,
 getResultsResolveMappedConceptSet <- function(dataSource,
                                               databaseIds,
                                               cohortIds) {
-  table <- 'resolvedConcepts'
+  table <- "resolvedConcepts"
   if (is(dataSource, "environment")) {
     if (!exists(table)) {
       return(NULL)
@@ -672,7 +672,7 @@ getResultsResolveMappedConceptSet <- function(dataSource,
         dplyr::distinct() %>%
         dplyr::inner_join(get("conceptRelationship"),
                           by = c("conceptId" = "conceptId2")) %>%
-        dplyr::filter(.data$relationshipId == 'Maps to') %>%
+        dplyr::filter(.data$relationshipId == "Maps to") %>%
         dplyr::filter(is.na(.data$invalidReason)) %>%
         dplyr::select(
           .data$conceptId,
@@ -826,7 +826,7 @@ getResultsCovariateValue <- function(dataSource = .GlobalEnv,
 resolveMappedConceptSetFromVocabularyDatabaseSchema <-
   function(dataSource = .GlobalEnv,
            conceptSets,
-           vocabularyDatabaseSchema = 'vocabulary') {
+           vocabularyDatabaseSchema = "vocabulary") {
     if (is(dataSource, "environment")) {
       stop("Cannot resolve concept sets without a database connection")
     } else {
