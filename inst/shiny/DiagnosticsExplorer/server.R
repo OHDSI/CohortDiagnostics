@@ -299,7 +299,7 @@ shiny::shinyServer(function(input, output, session) {
       tags$table(
         tags$tr(
           tags$td(
-            paste("rendered using CirceR version: ", packageVersion('CirceR'))
+            paste("rendered for cohort id:", row$cohortId, "using CirceR version: ", packageVersion('CirceR'))
           )
         )
       )
@@ -581,11 +581,12 @@ shiny::shinyServer(function(input, output, session) {
           is.null(cohortDefinitionConceptSetExpressionRow()$id)) {
         return(NULL)
       }
-      getIncludedConceptResult(
+      conceptCount <- getResultsFromIncludedConcept(
         dataSource = dataSource,
         databaseIds = database$databaseId,
         cohortId = row$cohortId
       )
+      return(conceptCount)
     })
   
   getResolvedOrMappedConcepts <- shiny::reactive({
@@ -965,10 +966,14 @@ shiny::shinyServer(function(input, output, session) {
     }
     validate(need(length(input$databaseOrVocabularySchema) > 0, "No data sources chosen"))
     
-    data <- getOrphanConceptResult(dataSource = dataSource,
-                                   cohortId = row$cohortId,
-                                   databaseIds = getDatabaseIdInCohortConceptSet()) %>% 
-      dplyr::filter(.data$conceptSetName == cohortDefinitionConceptSetExpressionRow()$name)
+    data <- getResultsFromOrphanConcept(dataSource = dataSource,
+                                        cohortId = row$cohortId,
+                                        databaseIds = getDatabaseIdInCohortConceptSet()) %>% 
+      dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id)
+    
+    validate(need(nrow(data) > 0, "No orphan codes returned"))
+    
+    return(data)
   })
   
   output$saveCohortDefinitionOrphanConceptsTable <-  downloadHandler(
@@ -1009,8 +1014,11 @@ shiny::shinyServer(function(input, output, session) {
                                                        replacement = ""))) %>% 
       tidyr::pivot_wider(id_cols = c(.data$conceptId),
                          names_from = .data$name,
-                         values_from = .data$value) %>%
-      dplyr::inner_join(data %>%
+                         values_from = .data$value)
+    conceptIdDetails <- getConceptDetails(dataSource = dataSource,
+                                          conceptIds = table$conceptId %>% unique())
+    table <- table %>% 
+      dplyr::inner_join(conceptIdDetails %>%
                           dplyr::select(.data$conceptId,
                                         .data$conceptName,
                                         .data$vocabularyId,
@@ -1019,13 +1027,10 @@ shiny::shinyServer(function(input, output, session) {
                         by = "conceptId") %>%
       dplyr::relocate(.data$conceptId, .data$conceptName, .data$vocabularyId, .data$conceptCode)
     
-    if (nrow(table) == 0) {
-      return(dplyr::tibble(Note = paste0('No data available for selected databases and cohorts')))
-    }
+    validate(need(nrow(table) > 0, "No orphan codes returned"))
     
     table <- table[order(-table[, 5]), ]
-    
-    
+
     sketch <- htmltools::withTags(table(
       class = "display",
       thead(
@@ -1071,7 +1076,8 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   getConceptSetIds <- shiny::reactive(x = {
-    return(conceptSets$conceptSetId[conceptSets$conceptSetName  %in% input$conceptSetsToFilterCharacterization])
+    return(conceptSets$conceptSetId[conceptSets$conceptSetName  %in% 
+                                      input$conceptSetsToFilterCharacterization])
   })
   
   getResoledAndMappedConceptIdsForFilters <- shiny::reactive({

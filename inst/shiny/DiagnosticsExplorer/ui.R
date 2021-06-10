@@ -48,7 +48,7 @@ if (is(dataSource, "environment")) {
     c(database$databaseIdWithVocabularyVersion)
 } else {
   choicesFordatabaseOrVocabularySchema <- list(
-    'From site' = database$databaseIdWithVocabularyVersion,
+    'From data source' = database$databaseIdWithVocabularyVersion,
     'Reference Vocabulary' = vocabularyDatabaseSchemas
   )
 }
