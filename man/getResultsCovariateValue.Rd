@@ -2,7 +2,7 @@
 % Please edit documentation in R/ResultsDataModelQueries.R
 \name{getResultsCovariateValue}
 \alias{getResultsCovariateValue}
-\title{Returns covariatevalue output of feature extraction}
+\title{Returns covariate_value and covariate_value_dist output of feature extraction}
 \usage{
 getResultsCovariateValue(dataSource = .GlobalEnv, cohortIds, databaseIds)
 }
@@ -14,22 +14,15 @@ getResultsCovariateValue(dataSource = .GlobalEnv, cohortIds, databaseIds)
 \item{databaseIds}{A vector one or more databaseIds to retrieve the results for. This is a 
 character field values from the `databaseId` field of the `database` table 
 of the results data model.}
-
-\item{isTemporal}{(optional) Set to TRUE if you would like temporalCovariates to be returned}
-
-\item{timeIds}{(optional) Provide timeIds to limit results.}
-
-\item{analysisIds}{(optional) Provide the analysisId to filter results}
 }
 \value{
-Returns a list object with resolved and mapped concepts for all concept sets in one 
-cohort from one or more data sources. There will be two objects in the returned
-list object resolved, mapped - each will be tibble.
+Returns a list object with two data frames (tibble) covariate_value and
+covariate_value_dist
 }
 \description{
-Returns a covariate value output of feature extraction from the Cohort Diagnostics
-results data model. This includes both covariate_value, covariate_value_dist and 
-temporal_covariate_value, temporal_covariate_value_dist. temporal_covariate represent
-the temporal characterization output - to return temporal characterization output
-please set isTemporal = TRUE.
+Returns covariate_value and covariate_value_dist output of feature extraction.
+The covariate_value and temporal_covariate_value are appended with timeId = 0
+assigned to covariate_value. Similarly, covariate_value_dist and
+temporal_covariate_value_dist are also appended with timeId = 0 in
+covariate_value_dist.
 }

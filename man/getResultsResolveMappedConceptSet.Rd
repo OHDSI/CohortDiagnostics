@@ -4,24 +4,24 @@
 \alias{getResultsResolveMappedConceptSet}
 \title{Returns resolved and mapped concepts for concept set expression in a cohort}
 \usage{
-getResultsResolveMappedConceptSet(dataSource, cohortIds, databaseIds)
+getResultsResolveMappedConceptSet(dataSource, databaseIds, cohortIds)
 }
 \arguments{
 \item{dataSource}{A list object that is the output of \code{createDatabaseDataSource} function.}
 
-\item{cohortIds}{A vector of one or more Cohort Ids.}
-
 \item{databaseIds}{A vector one or more databaseIds to retrieve the results for. This is a 
 character field values from the `databaseId` field of the `database` table 
 of the results data model.}
+
+\item{cohortIds}{A vector of one or more Cohort Ids.}
 }
 \value{
-Returns a list object with resolved and mapped concepts for all concept sets in one 
+Returns a list object with resolved and mapped concepts for all concept sets in one
 cohort from one or more data sources. There will be two objects in the returned
 list object resolved, mapped - each will be tibble.
 }
 \description{
-Returns a list object with resolved and mapped concepts for all concept sets in one 
+Returns a list object with resolved and mapped concepts for all concept sets in one
 cohort from one or more data sources. This is being returned from the results data model
 of Cohort Diagnostics and is precomputed.
 }

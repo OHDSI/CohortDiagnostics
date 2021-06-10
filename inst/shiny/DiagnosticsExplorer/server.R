@@ -93,6 +93,8 @@ shiny::shinyServer(function(input, output, session) {
     return(paste(fileName, "_",  date, "_", timeArray[[1]][1], timeArray[[1]][2], ".csv", sep = ""))
   }
   
+  
+  # Cohort Definition ---------------------------------------------------------
   cohortDefinitionTableData <- shiny::reactive(x = {
     data <-  cohortSubset() %>%
       dplyr::select(cohort = .data$shortName, .data$cohortId, .data$cohortName)
@@ -104,15 +106,24 @@ shiny::shinyServer(function(input, output, session) {
       getFormattedFileName(fileName = "CohortDefinition")
     },
     content = function(file) {
-      write.csv(cohortDefinitionTableData(), file)
+      write.csv(cohortSubset() %>%
+                  dplyr::select(cohort = .data$shortName, 
+                                .data$cohortId, 
+                                .data$cohortName,
+                                .data$logicDescription,
+                                .data$sql,
+                                .data$json), file)
     }
   )
-  
-  # Cohort Definition ---------------------------------------------------------
   output$cohortDefinitionTable <- DT::renderDataTable(expr = {
     data <- cohortDefinitionTableData()  %>%
       dplyr::mutate(
       cohortId = as.character(.data$cohortId))
+    if (nrow(data) < 20) {
+      scrollYHeight <- '15vh'
+    } else {
+      scrollYHeight <- '25vh'
+    }
     
     options = list(
       pageLength = 100,
@@ -121,7 +132,7 @@ shiny::shinyServer(function(input, output, session) {
       ordering = TRUE,
       paging = TRUE,
       scrollX = TRUE,
-      scrollY = '25vh',
+      scrollY = scrollYHeight,
       info = TRUE,
       searchHighlight = TRUE
     )
@@ -252,11 +263,10 @@ shiny::shinyServer(function(input, output, session) {
   cohortDefinitionCirceRDetails <- shiny::reactive(x = {
     progress <- shiny::Progress$new()
     on.exit(progress$close())
-    progress$set(message = "Rendering human readable cohort description using CirceR (may take time)", value = 0)
-    
+    progress$set(message = paste0("Rendering CirceR human readable description for cohort id: ",
+                                  selectedCohortDefinitionRow()$cohortId), value = 0)
     data <- selectedCohortDefinitionRow()
-    if (nrow(selectedCohortDefinitionRow()) > 0) {
-      details <- list()
+    if (nrow(selectedCohortDefinitionRow()) == 1) {
       circeExpression <-
         CirceR::cohortExpressionFromJson(expressionJson = data$json)
       circeExpressionMarkdown <-
@@ -270,8 +280,6 @@ shiny::shinyServer(function(input, output, session) {
         convertMdToHtml(circeExpressionMarkdown)
       details$htmlExpressionConceptSetExpression <-
         convertMdToHtml(circeConceptSetListmarkdown)
-      
-      details <- dplyr::bind_rows(details)
     } else {
       return(NULL)
     }
@@ -343,70 +351,6 @@ shiny::shinyServer(function(input, output, session) {
       version
     }
   })
-  
-  getConceptSetDataFrameFromConceptSetExpression <-
-    function(conceptSetExpression) {
-      if ("items" %in% names(conceptSetExpression)) {
-        items <- conceptSetExpression$items
-      } else {
-        items <- conceptSetExpression
-      }
-      conceptSetExpressionDetails <- items %>%
-        purrr::map_df(.f = purrr::flatten)
-      if ('CONCEPT_ID' %in% colnames(conceptSetExpressionDetails)) {
-        if ('isExcluded' %in% colnames(conceptSetExpressionDetails)) {
-          conceptSetExpressionDetails <- conceptSetExpressionDetails %>%
-            dplyr::rename(IS_EXCLUDED = .data$isExcluded)
-        }
-        if ('includeDescendants' %in% colnames(conceptSetExpressionDetails)) {
-          conceptSetExpressionDetails <- conceptSetExpressionDetails %>%
-            dplyr::rename(INCLUDE_DESCENDANTS = .data$includeDescendants)
-        }
-        if ('includeMapped' %in% colnames(conceptSetExpressionDetails)) {
-          conceptSetExpressionDetails <- conceptSetExpressionDetails %>%
-            dplyr::rename(INCLUDE_MAPPED = .data$includeMapped)
-        }
-        colnames(conceptSetExpressionDetails) <-
-          snakeCaseToCamelCase(colnames(conceptSetExpressionDetails))
-      }
-      return(conceptSetExpressionDetails)
-    }
-  
-  getConceptSetDetailsFromCohortDefinition <-
-    function(cohortDefinitionExpression) {
-      if ("expression" %in% names(cohortDefinitionExpression)) {
-        expression <- cohortDefinitionExpression$expression
-      }
-      else {
-        expression <- cohortDefinitionExpression
-      }
-      
-      if (is.null(expression$ConceptSets)) {
-        return(NULL)
-      }
-      
-      conceptSetExpression <- expression$ConceptSets %>%
-        dplyr::bind_rows() %>%
-        dplyr::mutate(json = RJSONIO::toJSON(x = .data$expression,
-                                             pretty = TRUE))
-      
-      conceptSetExpressionDetails <- list()
-      i <- 0
-      for (id in conceptSetExpression$id) {
-        i <- i + 1
-        conceptSetExpressionDetails[[i]] <-
-          getConceptSetDataFrameFromConceptSetExpression(conceptSetExpression =
-                                                           conceptSetExpression[i, ]$expression$items) %>%
-          dplyr::mutate(id = conceptSetExpression[i,]$id) %>%
-          dplyr::relocate(.data$id) %>%
-          dplyr::arrange(.data$id)
-      }
-      conceptSetExpressionDetails <-
-        dplyr::bind_rows(conceptSetExpressionDetails)
-      output <- list(conceptSetExpression = conceptSetExpression,
-                     conceptSetExpressionDetails = conceptSetExpressionDetails)
-      return(output)
-    }
   
   cohortDefinistionConceptSetExpression <- shiny::reactive({
     row <- selectedCohortDefinitionRow()
@@ -506,6 +450,8 @@ shiny::shinyServer(function(input, output, session) {
       cohortDefinistionConceptSetExpression()$conceptSetExpressionDetails
     data <- data %>%
       dplyr::filter(.data$id == cohortDefinitionConceptSetExpressionRow()$id)
+    validate(need((all(!is.null(data), nrow(data) > 0)),
+                  "No details available for the concept set expression."))
     data <- data %>%
       dplyr::select(
         .data$conceptId,
