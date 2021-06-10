@@ -1201,8 +1201,28 @@ runCohortDiagnostics <- function(packageName = NULL,
   delta <- Sys.time() - start
   metaData <- dplyr::tibble(
     databaseId = databaseId,
-    variableField = c('vocabularyVersionCdm', 'vocabularyVersion'),
-    valueField = c(vocabularyVersionCdm, vocabularyVersion)
+    variableField = c('vocabularyVersionCdm', 
+                      'vocabularyVersion', 
+                      'CohortDiagnosticsVersion', 
+                      'DatabaseConnectorVersion',
+                      'FeatureExtractionVersion',
+                      'SqlRenderVersion',
+                      'AndromedaVersion',
+                      'dplyrVersion',
+                      'tidyrVersion',
+                      'Rversion',
+                      'Platform'),
+    valueField = c(vocabularyVersionCdm, 
+                   vocabularyVersion, 
+                   packageVersion('CohortDiagnostics'), 
+                   packageVersion('DatabaseConnector'), 
+                   packageVersion('FeatureExtraction'), 
+                   packageVersion('SqlRender'), 
+                   packageVersion('Andromeda'), 
+                   packageVersion('dplyr'), 
+                   packageVersion('tidyr'), 
+                   R.Version()$version.string, 
+                   R.Version()$platform)
   )
   writeToCsv(data = metaData,
              fileName = "metaData.csv")
