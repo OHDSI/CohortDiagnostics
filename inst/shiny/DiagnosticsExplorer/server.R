@@ -1238,7 +1238,10 @@ shiny::shinyServer(function(input, output, session) {
       dataSource = dataSource,
       databaseIds = databaseIds(),
       cohortIds = cohortIds()
-    ) %>% 
+    ) 
+    validate(need(all(!is.null(data) && nrow(data) > 0), "No data on cohort counts."))
+    
+    data <- data %>% 
       addShortName(cohort) %>%
       dplyr::arrange(.data$shortName, .data$databaseId)
     return(data)
