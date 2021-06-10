@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Function reference • CohortDiagnostics</title>
+<title>Checks if a set of cohortId(s) are instantiated in the cohort table — checkIfCohortInstantiated • CohortDiagnostics</title>
 
 
 <!-- jquery -->
@@ -39,7 +39,9 @@
 
 
 
-<meta property="og:title" content="Function reference" />
+<meta property="og:title" content="Checks if a set of cohortId(s) are instantiated in the cohort table — checkIfCohortInstantiated" />
+<meta property="og:description" content="Given a set of one or more cohortIds and a single cohort table, checks if 
+all cohortIds in the set are instantiated." />
 
 
 
@@ -58,7 +60,7 @@
   </head>
 
   <body data-spy="scroll" data-target="#toc">
-    <div class="container template-reference-index">
+    <div class="container template-reference-topic">
       <header>
       <div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
@@ -138,114 +140,65 @@
       </header>
 
 <div class="row">
-  <div class="contents col-md-9">
+  <div class="col-md-9 contents">
     <div class="page-header">
-      <h1>Reference</h1>
+    <h1>Checks if a set of cohortId(s) are instantiated in the cohort table</h1>
+    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/CheckIfCohortInstantiated.R'><code>R/CheckIfCohortInstantiated.R</code></a></small>
+    <div class="hidden name"><code>checkIfCohortInstantiated.Rd</code></div>
     </div>
 
-    <table class="ref-index">
+    <div class="ref-description">
+    <p>Given a set of one or more cohortIds and a single cohort table, checks if 
+all cohortIds in the set are instantiated.</p>
+    </div>
 
-    <colgroup>
-      
-      <col class="alias" />
-      <col class="title" />
-    </colgroup>
+    <pre class="usage"><span class='fu'>checkIfCohortInstantiated</span><span class='op'>(</span>
+  connectionDetails <span class='op'>=</span> <span class='cn'>NULL</span>,
+  connection <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>cohortDatabaseSchema</span>,
+  <span class='va'>cohortTable</span>,
+  <span class='va'>cohortIds</span>
+<span class='op'>)</span></pre>
 
-    <tbody>
-      <tr>
-        <th colspan="2">
-          <h2 id="section-all-functions" class="hasAnchor"><a href="#section-all-functions" class="anchor"></a>All functions</h2>
-          <p class="section-desc"></p>
-        </th>
-      </tr>
-      
-      
-    </tbody><tbody>
-      
-      
-      <tr>
-        
-        <td>
-          <p><code><a href="checkIfCohortInstantiated.html">checkIfCohortInstantiated()</a></code> </p>
-        </td>
-        <td><p>Checks if a set of cohortId(s) are instantiated in the cohort table</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="checkInputFileEncoding.html">checkInputFileEncoding()</a></code> </p>
-        </td>
-        <td><p>Check character encoding of input file</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="computeCohortOverlap.html">computeCohortOverlap()</a></code> </p>
-        </td>
-        <td><p>Given two sets of cohorts get relationships between the cohorts.</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="createResultsDataModel.html">createResultsDataModel()</a></code> </p>
-        </td>
-        <td><p>Create the results data model tables on a database server.</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="getCohortCharacteristics.html">getCohortCharacteristics()</a></code> </p>
-        </td>
-        <td><p>Get Characteristics for a cohort</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="getCohortCounts.html">getCohortCounts()</a></code> </p>
-        </td>
-        <td><p>Count the cohort(s)</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="getResultsDataModelSpecifications.html">getResultsDataModelSpecifications()</a></code> </p>
-        </td>
-        <td><p>Get specifications for Cohort Diagnostics results data model</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="instantiateCohortSet.html">instantiateCohortSet()</a></code> </p>
-        </td>
-        <td><p>Instantiate a set of cohort(s)</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="launchCohortExplorer.html">launchCohortExplorer()</a></code> </p>
-        </td>
-        <td><p>Launch the CohortExplorer Shiny app</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="launchDiagnosticsExplorer.html">launchDiagnosticsExplorer()</a></code> </p>
-        </td>
-        <td><p>Launch the Diagnostics Explorer Shiny app</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="preMergeDiagnosticsFiles.html">preMergeDiagnosticsFiles()</a></code> </p>
-        </td>
-        <td><p>Premerge Shiny diagnostics files</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="runCohortDiagnostics.html">runCohortDiagnostics()</a></code> </p>
-        </td>
-        <td><p>Run cohort diagnostics</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="uploadResults.html">uploadResults()</a></code> </p>
-        </td>
-        <td><p>Upload results to the database server.</p></td>
-      </tr>
-    </tbody>
+    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
+    <table class="ref-arguments">
+    <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>connectionDetails</th>
+      <td><p>An object of type <code>connectionDetails</code> as created using the
+<code><a href='https://ohdsi.github.io/DatabaseConnector/reference/createConnectionDetails.html'>createConnectionDetails</a></code> function in the
+DatabaseConnector package. Can be left NULL if <code>connection</code> is
+provided.</p></td>
+    </tr>
+    <tr>
+      <th>connection</th>
+      <td><p>An object of type <code>connection</code> as created using the
+<code><a href='https://ohdsi.github.io/DatabaseConnector/reference/connect.html'>connect</a></code> function in the
+DatabaseConnector package. Can be left NULL if <code>connectionDetails</code>
+is provided, in which case a new connection will be opened at the start
+of the function, and closed when the function finishes.</p></td>
+    </tr>
+    <tr>
+      <th>cohortDatabaseSchema</th>
+      <td><p>Schema name where your cohort table resides. Note that for SQL Server,
+this should include both the database and schema name, for example
+'scratch.dbo'.</p></td>
+    </tr>
+    <tr>
+      <th>cohortTable</th>
+      <td><p>Name of the cohort table.</p></td>
+    </tr>
+    <tr>
+      <th>cohortIds</th>
+      <td><p>Provide a set of cohort IDs to check if instantiated.</p></td>
+    </tr>
     </table>
-  </div>
 
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>Returns TRUE if all cohortIds are instantiated.</p>
+
+  </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
     <nav id="toc" data-toggle="toc" class="sticky-top">
       <h2 data-toc-skip>Contents</h2>

@@ -16,11 +16,11 @@ defaultDatabase <- Sys.getenv("shinydbDatabase")
 defaultPort <- 5432
 defaultUser <- Sys.getenv("shinydbUser")
 defaultPassword <- Sys.getenv("shinydbPw")
-defaultResultsSchema <- 'thrombosisthrombocytopenia'
+defaultResultsSchema <- 'CdSkeletonCohortDiagnosticsStudy'
 defaultVocabularySchema <- defaultResultsSchema
 alternateVocabularySchema <- c('vocabulary')
 
-defaultDatabaseMode <- FALSE # Use file system if FALSE
+defaultDatabaseMode <- TRUE # Use file system if FALSE
 
 showTimeSeries <- FALSE
 
@@ -127,6 +127,7 @@ if (databaseMode) {
   loadResultsTable("temporal_time_ref")
   loadResultsTable("concept_sets")
   loadResultsTable("cohort_count", required = TRUE)
+  loadResultsTable("analysis_ref")
   
   for (table in c(dataModelSpecifications$tableName)) {
     #, "recommender_set"
