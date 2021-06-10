@@ -1,4 +1,5 @@
 jdbcDriverFolder <- tempfile("jdbcDrivers")
+dir.create(jdbcDriverFolder, showWarnings = FALSE)
 DatabaseConnector::downloadJdbcDrivers("postgresql", pathToDriver = jdbcDriverFolder)
 connectionDetails <- DatabaseConnector::createConnectionDetails(
     dbms = "postgresql",

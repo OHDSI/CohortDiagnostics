@@ -11,8 +11,8 @@ withr::defer({
 test_that("Cohort instantiation", {
   CohortDiagnostics::instantiateCohortSet(
     connectionDetails = connectionDetails,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+    cdmDatabaseSchema = "eunomia",
+    vocabularyDatabaseSchema = "eunomia",
     tempEmulationSchema = tempEmulationSchema,
     cohortDatabaseSchema = cohortDatabaseSchema,
     cohortTable = cohortTable,
@@ -45,8 +45,8 @@ test_that("Cohort diagnostics in incremental mode", {
   firstTime <- system.time(
     CohortDiagnostics::runCohortDiagnostics(
       connectionDetails = connectionDetails,
-      cdmDatabaseSchema = cdmDatabaseSchema,
-      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+      cdmDatabaseSchema = "eunomia",
+      vocabularyDatabaseSchema = "eunomia",
       tempEmulationSchema = tempEmulationSchema,
       cohortDatabaseSchema = cohortDatabaseSchema,
       cohortTable = cohortTable,
@@ -76,7 +76,7 @@ test_that("Cohort diagnostics in incremental mode", {
   secondTime <- system.time(
     CohortDiagnostics::runCohortDiagnostics(
       connectionDetails = connectionDetails,
-      cdmDatabaseSchema = cdmDatabaseSchema,
+      cdmDatabaseSchema = "eunomia",
       tempEmulationSchema = tempEmulationSchema,
       cohortDatabaseSchema = cohortDatabaseSchema,
       cohortTable = cohortTable,

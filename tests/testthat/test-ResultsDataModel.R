@@ -1,34 +1,9 @@
-
-#' Only works with postgres > 9.4
-.tableExists <- function(connection, schema, tableName) {
-  return(!is.na(
-    DatabaseConnector::renderTranslateQuerySql(
-      connection,
-      "SELECT to_regclass('@schema.@table');",
-      table = tableName,
-      schema = schema
-    )
-  )[[1]])
-}
-
-
-test_that("Create schema", {
-  createResultsDataModel(connectionDetails = connectionDetails, schema = cohortDiagnosticsSchema)
-  
-  specifications <- getResultsDataModelSpecifications()
-  
-  for (tableName in unique(specifications$tableName)) {
-    expect_true(.tableExists(connection, cohortDiagnosticsSchema, tableName))
-  }
-  # Bad schema name
-  expect_error(createResultsDataModel(connection = connection, schema = "non_existant_schema"))
-})
-
+createResultsDataModel(connectionDetails = connectionDetails, schema = cohortDiagnosticsSchema)
 
 test_that("Results upload", {
   instantiateCohortSet(
     connectionDetails = connectionDetails,
-    cdmDatabaseSchema = cdmDatabaseSchema,
+    cdmDatabaseSchema = "eunomia",
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     tempEmulationSchema = tempEmulationSchema,
     cohortDatabaseSchema = cohortDiagnosticsSchema,
@@ -43,7 +18,7 @@ test_that("Results upload", {
   
   runCohortDiagnostics(
     connectionDetails = connectionDetails,
-    cdmDatabaseSchema = cdmDatabaseSchema,
+    cdmDatabaseSchema = "eunomia",
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     tempEmulationSchema = tempEmulationSchema,
     cohortDatabaseSchema = cohortDiagnosticsSchema,
