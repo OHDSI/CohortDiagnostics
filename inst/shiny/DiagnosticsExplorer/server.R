@@ -289,14 +289,14 @@ shiny::shinyServer(function(input, output, session) {
       "No cohorts chosen"
     ))
     
-    table <- getInclusionRuleStats(
+    table <- getResultsFromInclusionRuleStatistics(
       dataSource = dataSource,
       cohortIds = selectedCohortDefinitionRow()$cohortId,
       databaseIds = getSelectedCohortCountRow()$databaseId
     )
     
     validate(need((nrow(table) > 0),
-                  "There is no data for the selected combination."))
+                  "There is no inclusion rule data for this cohort."))
     
     databaseIds <- unique(table$databaseId)
     cohortCounts <- table %>% 
@@ -1471,14 +1471,14 @@ shiny::shinyServer(function(input, output, session) {
       nrow(getCohortIdOnCohortCountRowSelect()) > 0,
       "No cohorts chosen"
     ))
-    table <- getInclusionRuleStats(
+    table <- getResultsFromInclusionRuleStatistics(
       dataSource = dataSource,
       cohortIds = getCohortIdOnCohortCountRowSelect()$cohortId,
       databaseIds = databaseIds()
     )
     
     validate(need((nrow(table) > 0),
-                  "There is no data for the selected combination."))
+                  "There is no inclusion rule data for this cohort."))
     
     databaseIds <- unique(table$databaseId)
     
