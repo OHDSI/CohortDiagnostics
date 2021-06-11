@@ -204,7 +204,7 @@ sidebarMenu <-
           choicesOpt = list(style = rep_len("color: black;", 999)),
           selected = temporalCovariateChoices %>%
             dplyr::filter(stringr::str_detect(string = .data$choices,
-pattern = 'Start -365 to end -31|Start -30 to end -1|Start 0 to end 0|Start 1 to end 30|Start 31 to end 365')) %>% 
+                                              pattern = 'Start -365 to end -31|Start -30 to end -1|Start 0 to end 0|Start 1 to end 30|Start 31 to end 365')) %>% 
             dplyr::filter(.data$timeId %in% (
               c(
                 min(temporalCovariateChoices$timeId),
@@ -825,51 +825,51 @@ bodyTabItems <- shinydashboard::tabItems(
                           )))
       ),
       
-    DT::dataTableOutput("includedConceptsTable")
+      DT::dataTableOutput("includedConceptsTable")
     )
   ),
   shinydashboard::tabItem(
     tabName = "orphanConcepts",
     cohortReference("orphanConceptsSelectedCohort"),
     tags$table(width = "100%",
-      tags$tr(
-        tags$td(
-          shiny::radioButtons(
-            inputId = "orphanConceptsType",
-            label = "Filters",
-            choices = c("All", "Standard Only", "Non Standard Only"),
-            selected = "All",
-            inline = TRUE
-          )
-        ),
-        tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
-        tags$td(
-          shiny::conditionalPanel(
-            condition = "output.orphanconceptContainData == true",
-            tags$table(width = "100%",
-              tags$tr(
-                tags$td(
-                  shiny::radioButtons(
-                    inputId = "orphanConceptsColumFilterType",
-                    label = "Display",
-                    choices = c("All", "Subjects only","Records only"),
-                    selected = "All",
-                    inline = TRUE
-                  )
-                ),
-                tags$td(align = "right",
-                        shiny::downloadButton(
-                          "saveOrphanConceptsTable",
-                          label = "",
-                          icon = shiny::icon("download"),
-                          style = "margin-top: 5px; margin-bottom: 5px;"
-                        )
-                )
-              )
-            )
-          )
-        )
-      )
+               tags$tr(
+                 tags$td(
+                   shiny::radioButtons(
+                     inputId = "orphanConceptsType",
+                     label = "Filters",
+                     choices = c("All", "Standard Only", "Non Standard Only"),
+                     selected = "All",
+                     inline = TRUE
+                   )
+                 ),
+                 tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
+                 tags$td(
+                   shiny::conditionalPanel(
+                     condition = "output.orphanconceptContainData == true",
+                     tags$table(width = "100%",
+                                tags$tr(
+                                  tags$td(
+                                    shiny::radioButtons(
+                                      inputId = "orphanConceptsColumFilterType",
+                                      label = "Display",
+                                      choices = c("All", "Subjects only","Records only"),
+                                      selected = "All",
+                                      inline = TRUE
+                                    )
+                                  ),
+                                  tags$td(align = "right",
+                                          shiny::downloadButton(
+                                            "saveOrphanConceptsTable",
+                                            label = "",
+                                            icon = shiny::icon("download"),
+                                            style = "margin-top: 5px; margin-bottom: 5px;"
+                                          )
+                                  )
+                                )
+                     )
+                   )
+                 )
+               )
     ),
     DT::dataTableOutput(outputId = "orphanConceptsTable")
   ),
@@ -993,18 +993,18 @@ bodyTabItems <- shinydashboard::tabItems(
         )
       ),
       shiny::column(6,
-             tags$table(width = "100%",
-                        tags$tr(
-                          tags$td(
-                            align = "right",
-                            shiny::downloadButton(
-                              "saveVisitContextTable",
-                              label = "",
-                              icon = shiny::icon("download"),
-                              style = "margin-top: 5px; margin-bottom: 5px;"
-                            )
-                          )
-                        )))
+                    tags$table(width = "100%",
+                               tags$tr(
+                                 tags$td(
+                                   align = "right",
+                                   shiny::downloadButton(
+                                     "saveVisitContextTable",
+                                     label = "",
+                                     icon = shiny::icon("download"),
+                                     style = "margin-top: 5px; margin-bottom: 5px;"
+                                   )
+                                 )
+                               )))
     ),
     DT::dataTableOutput(outputId = "visitContextTable")
   ),

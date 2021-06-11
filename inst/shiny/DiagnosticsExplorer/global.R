@@ -196,7 +196,7 @@ if (exists("temporalTimeRef")) {
     temporalCovariateChoices <- temporalCovariateChoices %>% 
       dplyr::filter(stringr::str_detect(string = .data$choices,
                                         pattern = 'Start -365 to end -31|Start -30 to end -1|Start 0 to end 0|Start 1 to end 30|Start 31 to end 365'))
-    }
+  }
 }
 
 if (exists("covariateRef")) {

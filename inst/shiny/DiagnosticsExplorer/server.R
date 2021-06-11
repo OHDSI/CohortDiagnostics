@@ -118,7 +118,7 @@ shiny::shinyServer(function(input, output, session) {
   output$cohortDefinitionTable <- DT::renderDataTable(expr = {
     data <- cohortDefinitionTableData()  %>%
       dplyr::mutate(
-      cohortId = as.character(.data$cohortId))
+        cohortId = as.character(.data$cohortId))
     if (nrow(data) < 20) {
       scrollYHeight <- '15vh'
     } else {
@@ -246,7 +246,7 @@ shiny::shinyServer(function(input, output, session) {
         backgroundRepeat = "no-repeat",
         backgroundPosition = "center"
       )
-
+      
       dataTable <- DT::formatStyle(
         table = dataTable,
         columns = 3,
@@ -591,7 +591,7 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(row) || length(getDatabaseIdInCohortConceptSet()) == 0) {
       return(NULL)
     } else {
-  
+      
       data <- cohortCount %>%
         dplyr::filter(.data$cohortId == row$cohortId) %>% 
         dplyr::filter(.data$databaseId == getDatabaseIdInCohortConceptSet()) %>% 
@@ -850,7 +850,7 @@ shiny::shinyServer(function(input, output, session) {
       data <- getResolvedOrMappedConcepts()
       
       validate(need(length(cohortDefinitionConceptSetExpressionRow()$id) > 0,
-               "Please select concept set"))
+                    "Please select concept set"))
       
       validate(need((all(!is.null(data), nrow(data) > 0)),
                     "No resolved or mapped concept ids"))
@@ -926,11 +926,11 @@ shiny::shinyServer(function(input, output, session) {
       data <- getResolvedOrMappedConcepts()
       
       validate(need(length(cohortDefinitionConceptSetExpressionRow()$id) > 0,
-               "Please select concept set"))
+                    "Please select concept set"))
       
       validate(need((all(!is.null(data), nrow(data) > 0)),
                     "No resolved or mapped concept ids"))
-
+      
       data <- data %>% 
         dplyr::mutate(
           conceptId = as.character(.data$conceptId),
@@ -1070,7 +1070,7 @@ shiny::shinyServer(function(input, output, session) {
   cohortDefinitionOrphanConceptTableData <- shiny::reactive(x = {
     validate(need(all(!is.null(getDatabaseIdInCohortConceptSet()),
                       length(getDatabaseIdInCohortConceptSet()) > 0),
-             "Orphan codes are not available for reference vocabulary in this version."))
+                  "Orphan codes are not available for reference vocabulary in this version."))
     row <- selectedCohortDefinitionRow()
     
     if (is.null(row) || length(cohortDefinitionConceptSetExpressionRow()$name) == 0) {
@@ -1105,7 +1105,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     databaseIds <- unique(data$databaseId)
-  
+    
     maxCount <- max(data$conceptCount, na.rm = TRUE)
     
     table <- data %>%
@@ -1142,7 +1142,7 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(nrow(table) > 0, "No orphan codes returned"))
     
     table <- table[order(-table[, 5]), ]
-
+    
     sketch <- htmltools::withTags(table(
       class = "display",
       thead(
@@ -1255,7 +1255,7 @@ shiny::shinyServer(function(input, output, session) {
       write.csv(getCohortCountResultReactive(), file)
     }
   )
- 
+  
   output$cohortCountsTable <- DT::renderDataTable(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
@@ -1268,14 +1268,14 @@ shiny::shinyServer(function(input, output, session) {
         .data$cohortId
       ) %>%
       dplyr::rename(cohort = .data$shortName) #%>%
-      # dplyr::mutate(cohort = as.factor(.data$cohort))
+    # dplyr::mutate(cohort = as.factor(.data$cohort))
     
     if (nrow(data) == 0) {
       return(tidyr::tibble("There is no data on any cohort"))
     }
     
     databaseIds <- sort(unique(data$databaseId))
-   
+    
     if (input$cohortCountsTableColumnFilter == "Both") {
       table <- dplyr::full_join(
         data %>%
@@ -1306,7 +1306,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::relocate(.data$cohort) %>%
         dplyr::arrange(.data$cohort)
       
-     sketch <- htmltools::withTags(table(class = "display",
+      sketch <- htmltools::withTags(table(class = "display",
                                           thead(tr(
                                             th(rowspan = 2, "Cohort"),
                                             lapply(databaseIds, th, colspan = 2, class = "dt-center", style = "border-right:1px solid silver;border-bottom:1px solid silver")
@@ -1440,8 +1440,8 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   shiny::outputOptions(output,
-                "cohortCountTableContainsData",
-                suspendWhenHidden = FALSE)
+                       "cohortCountTableContainsData",
+                       suspendWhenHidden = FALSE)
   
   getCohortIdOnCohortCountRowSelect <- reactive({
     idx <- input$cohortCountsTable_rows_selected
@@ -1809,7 +1809,7 @@ shiny::shinyServer(function(input, output, session) {
     calenderIntervalFirstLetter <- tolower(substr(input$timeSeriesFilter,1,1))
     data <- timeSeriesData()
     if (is.null(data)) {return(NULL)}
-  
+    
     data <- data %>% 
       dplyr::filter(.data$calendarInterval %in% calenderIntervalFirstLetter)
     
@@ -1902,7 +1902,7 @@ shiny::shinyServer(function(input, output, session) {
     
     
     validate(need(all(!is.null(data), nrow(data) > 0),
-             "No data available for selected combination."))
+                  "No data available for selected combination."))
     
     # if (is.null(data) || nrow(data) == 0) {
     #   return(dplyr::tibble(
@@ -1990,7 +1990,7 @@ shiny::shinyServer(function(input, output, session) {
     
     data <- includedConceptsData()
     validate(need(all(!is.null(data), nrow(data) > 0),
-             "No data available for selected combination"))
+                  "No data available for selected combination"))
     
     if (!is.null(input$conceptSetsToFilterCharacterization) && 
         length(input$conceptSetsToFilterCharacterization) > 0) {
@@ -2003,7 +2003,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     validate(need(all(!is.null(data), nrow(data) > 0),
-             "No data available for selected combination"))
+                  "No data available for selected combination"))
     
     databaseIdsWithCount <- getSubjectCountsByDatabasae(data = data, cohortId = cohortId(), databaseIds = databaseIds())
     
@@ -2059,109 +2059,109 @@ shiny::shinyServer(function(input, output, session) {
     data <- data %>%
       tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>%
       dplyr::mutate(name = paste0(
-          databaseId,
-          "_",
-          stringr::str_replace(
-            string = .data$name,
-            pattern = 'concept',
-            replacement = ''
-          )
-        )) %>%
-        tidyr::pivot_wider(
-          id_cols = c(.data$conceptId, .data$conceptName, .data$vocabularyId, .data$conceptCode),
-          names_from = .data$name,
-          values_from = .data$value,
-          values_fill = 0
-        ) %>%
-        dplyr::relocate(
-          .data$conceptId,
-          .data$conceptName,
-          .data$vocabularyId,
-          .data$conceptCode
+        databaseId,
+        "_",
+        stringr::str_replace(
+          string = .data$name,
+          pattern = 'concept',
+          replacement = ''
         )
-      
-      data <- data[order(-data[, 5]), ]
-      
-      if (input$includedConceptsTableColumnFilter == "Subjects only") {
-        data <- data %>% 
-          dplyr::select(-dplyr::contains("Count"))
-        columnDefs <- minCellCountDef(3 + (
-          1:(nrow(databaseIdsWithCount))
-        ))
-      } else if (input$includedConceptsTableColumnFilter == "Records only") {
-        data <- data %>% 
-          dplyr::select(-dplyr::contains("Subjects"))
-        columnDefs <- minCellCountDef(3 + (
-          1:(nrow(databaseIdsWithCount))
-        ))
-      } else {
-        sketch <- htmltools::withTags(table(class = "display",
-                                            thead(
-                                              tr(
-                                                th(rowspan = 2, 'Concept ID'),
-                                                th(rowspan = 2, 'Concept Name'),
-                                                th(rowspan = 2, 'Vocabulary ID'),
-                                                th(rowspan = 2, 'Concept Code'),
-                                                lapply(databaseIdsWithCount$databaseIdsWithCountWithoutBr, th, colspan = 2, class = "dt-center", style = "border-right:1px solid silver;border-bottom:1px solid silver")
-                                              ),
-                                              tr(lapply(rep(
-                                                c("Subjects", "Records"), nrow(databaseIdsWithCount)
-                                              ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver"))
-                                            )))
-        
-        columnDefs <- minCellCountDef(3 + (
-          1:(nrow(databaseIdsWithCount) * 2)
-        ))
-      }
-      
-      data$conceptId <- as.character(data$conceptId)
-      data$vocabularyId <- as.factor(data$vocabularyId)
-      
-      options = list(
-        pageLength = 1000,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        scrollX = TRUE,
-        scrollY = "30vh",
-        lengthChange = TRUE,
-        searchHighlight = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        columnDefs = list(truncateStringDef(1, 100),
-                          columnDefs)
+      )) %>%
+      tidyr::pivot_wider(
+        id_cols = c(.data$conceptId, .data$conceptName, .data$vocabularyId, .data$conceptCode),
+        names_from = .data$name,
+        values_from = .data$value,
+        values_fill = 0
+      ) %>%
+      dplyr::relocate(
+        .data$conceptId,
+        .data$conceptName,
+        .data$vocabularyId,
+        .data$conceptCode
       )
+    
+    data <- data[order(-data[, 5]), ]
+    
+    if (input$includedConceptsTableColumnFilter == "Subjects only") {
+      data <- data %>% 
+        dplyr::select(-dplyr::contains("Count"))
+      columnDefs <- minCellCountDef(3 + (
+        1:(nrow(databaseIdsWithCount))
+      ))
+    } else if (input$includedConceptsTableColumnFilter == "Records only") {
+      data <- data %>% 
+        dplyr::select(-dplyr::contains("Subjects"))
+      columnDefs <- minCellCountDef(3 + (
+        1:(nrow(databaseIdsWithCount))
+      ))
+    } else {
+      sketch <- htmltools::withTags(table(class = "display",
+                                          thead(
+                                            tr(
+                                              th(rowspan = 2, 'Concept ID'),
+                                              th(rowspan = 2, 'Concept Name'),
+                                              th(rowspan = 2, 'Vocabulary ID'),
+                                              th(rowspan = 2, 'Concept Code'),
+                                              lapply(databaseIdsWithCount$databaseIdsWithCountWithoutBr, th, colspan = 2, class = "dt-center", style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                            ),
+                                            tr(lapply(rep(
+                                              c("Subjects", "Records"), nrow(databaseIdsWithCount)
+                                            ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver"))
+                                          )))
       
-      if (input$includedConceptsTableColumnFilter == "Both") {
-        dataTable <- DT::datatable(
-          data,
-          options = options,
-   #       colnames = colnames(table),
-          rownames = FALSE,
-          container = sketch,
-          escape = FALSE,
-          filter = "top",
-          class = "stripe nowrap compact"
-        )
-      } else {
-        dataTable <- DT::datatable(
-          data,
-          colnames = c(camelCaseToTitleCase(colnames(data[,1:4])),databaseIdsWithCount$databaseIdsWithCount),
-          options = options,
-          rownames = FALSE,
-          escape = FALSE,
-          filter = "top",
-          class = "stripe nowrap compact"
-        )
-      }
-      
-      dataTable <- DT::formatStyle(
-        table = dataTable,
-        columns =  4 + (1:(nrow(databaseIdsWithCount) * 2)),
-        background = DT::styleColorBar(c(0, maxCount), "lightblue"),
-        backgroundSize = "98% 88%",
-        backgroundRepeat = "no-repeat",
-        backgroundPosition = "center"
+      columnDefs <- minCellCountDef(3 + (
+        1:(nrow(databaseIdsWithCount) * 2)
+      ))
+    }
+    
+    data$conceptId <- as.character(data$conceptId)
+    data$vocabularyId <- as.factor(data$vocabularyId)
+    
+    options = list(
+      pageLength = 1000,
+      lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+      searching = TRUE,
+      scrollX = TRUE,
+      scrollY = "30vh",
+      lengthChange = TRUE,
+      searchHighlight = TRUE,
+      ordering = TRUE,
+      paging = TRUE,
+      columnDefs = list(truncateStringDef(1, 100),
+                        columnDefs)
+    )
+    
+    if (input$includedConceptsTableColumnFilter == "Both") {
+      dataTable <- DT::datatable(
+        data,
+        options = options,
+        #       colnames = colnames(table),
+        rownames = FALSE,
+        container = sketch,
+        escape = FALSE,
+        filter = "top",
+        class = "stripe nowrap compact"
       )
+    } else {
+      dataTable <- DT::datatable(
+        data,
+        colnames = c(camelCaseToTitleCase(colnames(data[,1:4])),databaseIdsWithCount$databaseIdsWithCount),
+        options = options,
+        rownames = FALSE,
+        escape = FALSE,
+        filter = "top",
+        class = "stripe nowrap compact"
+      )
+    }
+    
+    dataTable <- DT::formatStyle(
+      table = dataTable,
+      columns =  4 + (1:(nrow(databaseIdsWithCount) * 2)),
+      background = DT::styleColorBar(c(0, maxCount), "lightblue"),
+      backgroundSize = "98% 88%",
+      backgroundRepeat = "no-repeat",
+      backgroundPosition = "center"
+    )
     return(dataTable)
   }, server = TRUE)
   
@@ -2184,21 +2184,21 @@ shiny::shinyServer(function(input, output, session) {
       databaseIds = databaseIds()
     )
     orphanConcepts <- orphanConcepts %>% 
-    dplyr::inner_join(conceptSets %>% dplyr::select(
-                                    .data$cohortId,
-                                    .data$conceptSetId,
-                                    .data$conceptSetName), 
-                      by = c("cohortId", "conceptSetId"))
+      dplyr::inner_join(conceptSets %>% dplyr::select(
+        .data$cohortId,
+        .data$conceptSetId,
+        .data$conceptSetName), 
+        by = c("cohortId", "conceptSetId"))
     concepts <- getConceptDetails(dataSource = dataSource,
                                   conceptIds = orphanConcepts$conceptId %>% unique())
     orphanConcepts <- orphanConcepts %>% 
       dplyr::inner_join(concepts %>% dplyr::select(
-                                      .data$conceptId,
-                                      .data$conceptName,
-                                      .data$vocabularyId,
-                                      .data$conceptCode,
-                                      .data$standardConcept),
-                        by = c("conceptId"))
+        .data$conceptId,
+        .data$conceptName,
+        .data$vocabularyId,
+        .data$conceptCode,
+        .data$standardConcept),
+        by = c("conceptId"))
     return(orphanConcepts)
   })
   
@@ -2219,7 +2219,7 @@ shiny::shinyServer(function(input, output, session) {
     
     data <- orphanConceptsData()
     validate(need(all(!is.null(data), nrow(data) > 0),
-             "There is no data for the selected combination."))
+                  "There is no data for the selected combination."))
     
     if (!is.null(input$conceptSetsToFilterCharacterization) && 
         length(input$conceptSetsToFilterCharacterization) > 0) {
@@ -2243,7 +2243,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     validate(need((nrow(data) > 0),
-             "There is no data for the selected combination."))
+                  "There is no data for the selected combination."))
     
     # databaseIds for data table names
     databaseIdsWithCount <- getSubjectCountsByDatabasae(data = data, cohortId = cohortId(), databaseIds = databaseIds())
@@ -2305,7 +2305,7 @@ shiny::shinyServer(function(input, output, session) {
           vocabularyId = as.factor(.data$vocabularyId))
       
       validate(need((nrow(table) > 0),
-               "There is no data for the selected combination."))
+                    "There is no data for the selected combination."))
       table <- table[order(-table[, 5]), ]
       
       sketch <- htmltools::withTags(table(class = "display",
@@ -2474,7 +2474,7 @@ shiny::shinyServer(function(input, output, session) {
     table <- inclusionRuleTableData()
     
     validate(need((nrow(table) > 0),
-             "There is no data for the selected combination."))
+                  "There is no data for the selected combination."))
     
     databaseIds <- unique(table$databaseId)
     
@@ -2734,7 +2734,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- indexEventBreakDownDataFilteredByRadioButton()
     
     validate(need(all(!is.null(data),nrow(data) > 0),
-             "There is no data for the selected combination."))
+                  "There is no data for the selected combination."))
     
     # if (is.null(data) || nrow(data) == 0) {
     #   return(dplyr::tibble("No data for the combination."))
@@ -2750,7 +2750,7 @@ shiny::shinyServer(function(input, output, session) {
       )
     
     validate(need(nrow(data) > 0,
-             "No data available for selected combination."))
+                  "No data available for selected combination."))
     
     maxCount <- max(data$conceptCount, na.rm = TRUE)
     databaseIds <- unique(data$databaseId)
@@ -2938,7 +2938,7 @@ shiny::shinyServer(function(input, output, session) {
     
     concepts <- getConceptDetails(dataSource = dataSource, 
                                   conceptIds = visitContext$visitConceptId %>% unique()
-                                  ) %>% 
+    ) %>% 
       dplyr::rename(visitConceptId = .data$conceptId,
                     visitConceptName = .data$conceptName) %>% 
       dplyr::filter(is.na(.data$invalidReason)) %>% 
@@ -2946,8 +2946,8 @@ shiny::shinyServer(function(input, output, session) {
     
     visitContext <- visitContext %>% 
       dplyr::left_join(concepts,
-                        by = c('visitConceptId'))
-
+                       by = c('visitConceptId'))
+    
     visitContext <- visitContext %>%
       dplyr::inner_join(cohortCount,
                         by = c("cohortId", "databaseId")) %>% 
@@ -2969,7 +2969,7 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
     data <- visitContexData()
     validate(need(nrow(data) > 0,
-             "No data available for selected combination."))
+                  "No data available for selected combination."))
     
     databaseIds <- sort(unique(data$databaseId))
     cohortCounts <- data %>% 
@@ -3308,7 +3308,7 @@ shiny::shinyServer(function(input, output, session) {
         prepareTable1()
       
       validate(need(nrow(table) > 0,
-               "No data available for selected combination."))
+                    "No data available for selected combination."))
       
       # if (nrow(table) == 0) {
       #   return(dplyr::tibble(Note = "There is no data to return."))
@@ -3418,7 +3418,7 @@ shiny::shinyServer(function(input, output, session) {
       }
       
       validate(need(nrow(data) > 0,
-               "No data available for selected combination."))
+                    "No data available for selected combination."))
       
       # if (nrow(data) == 0) {
       #   return(dplyr::tibble(
@@ -3432,7 +3432,7 @@ shiny::shinyServer(function(input, output, session) {
         .data$conceptId
       ) %>%
         dplyr::distinct()
-        
+      
       if (input$characterizationColumnFilters == "Mean and Standard Deviation") {
         data <- data %>%
           dplyr::arrange(.data$databaseId, .data$cohortId) %>%
@@ -3459,7 +3459,7 @@ shiny::shinyServer(function(input, output, session) {
       
       data <-  data %>%
         dplyr::inner_join(covariateNames,
-          by = "covariateId"
+                          by = "covariateId"
         ) %>%
         dplyr::select(-.data$covariateId, -.data$cohortId, -.data$conceptId) %>% 
         dplyr::relocate(.data$covariateName)
@@ -3662,7 +3662,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$domainId %in% temporalDomainNameFilter())
       
       validate(need(nrow(data) > 0,
-               "No data available for selected combination."))
+                    "No data available for selected combination."))
       # 
       # if (nrow(data) == 0) {
       #   return(dplyr::tibble(
@@ -3939,7 +3939,7 @@ shiny::shinyServer(function(input, output, session) {
     balance <- computeBalance()
     
     validate(need(all(!is.null(balance), nrow(balance) > 0),
-             "No data available for selected combination."))
+                  "No data available for selected combination."))
     
     targetCohortIdValue <- balance %>% dplyr::filter(!is.na(.data$cohortId1)) %>% dplyr::pull(.data$cohortId1) %>% unique()
     comparatorcohortIdValue <- balance %>% dplyr::filter(!is.na(.data$cohortId2)) %>% dplyr::pull(.data$cohortId2) %>% unique()
@@ -3985,13 +3985,13 @@ shiny::shinyServer(function(input, output, session) {
       table <- prepareTable1Comp(data)
       
       validate(need(nrow(table) > 0,
-               "No data available for selected combination."))
-    
+                    "No data available for selected combination."))
+      
       table <- table %>%
         dplyr::arrange(.data$sortOrder) %>%
         dplyr::select(-.data$sortOrder) %>%
         dplyr::select(-.data$cohortId1, -.data$cohortId2)
-    
+      
       options = list(
         pageLength = 100,
         lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
@@ -4041,7 +4041,7 @@ shiny::shinyServer(function(input, output, session) {
       }
       
       validate(need(all(!is.null(balance), nrow(balance) > 0),
-               "No data available for selected combination."))
+                    "No data available for selected combination."))
       
       balance <- balance %>% 
         dplyr::rename("meanTarget" = mean1,
@@ -4143,7 +4143,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- computeBalance()
     
     validate(need(nrow(data) > 0,
-             "No data available for selected combination."))
+                  "No data available for selected combination."))
     
     data <- data %>%
       dplyr::filter(.data$analysisName %in% charCompareAnalysisNameFilter()) %>%
@@ -4175,7 +4175,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     validate(need(nrow(data) > 0,
-             "No data available for selected combination."))
+                  "No data available for selected combination."))
     
     plot <-
       plotCohortComparisonStandardizedDifference(
@@ -4314,7 +4314,7 @@ shiny::shinyServer(function(input, output, session) {
       balance <- computeBalanceForCompareTemporalCharacterization()
       
       validate(need(nrow(balance) > 0,
-               "No data available for selected combination."))
+                    "No data available for selected combination."))
       
       # if (nrow(balance) == 0) {
       #   return(dplyr::tibble(Note = "No data for the selected combination."))
@@ -4379,7 +4379,7 @@ shiny::shinyServer(function(input, output, session) {
         }
         
         validate(need(all(!is.null(balance), nrow(balance) > 0),
-                 "No data available for selected combination."))
+                      "No data available for selected combination."))
         # 
         # if (nrow(balance) == 0) {
         #   return(dplyr::tibble(Note = "No data for the selected combination."))
@@ -4618,7 +4618,7 @@ shiny::shinyServer(function(input, output, session) {
   output$databaseInformationTable <- DT::renderDataTable(expr = {
     
     validate(need(all(!is.null(database), nrow(database) > 0),
-             "No data available for selected combination."))
+                  "No data available for selected combination."))
     
     # if (nrow(database) == 0) {
     #   return(dplyr::tibble("No information on the data source."))
