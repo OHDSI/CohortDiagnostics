@@ -3844,7 +3844,6 @@ shiny::shinyServer(function(input, output, session) {
     covs1 <- data %>% 
       dplyr::filter(.data$cohortId == cohortId()) %>% 
       dplyr::mutate(analysisNameLong = paste0(.data$analysisName, " (", as.character(.data$startDay), " to ", as.character(.data$endDay), ")")) %>% 
-      dplyr::select(-.data$startDay, -.data$endDay) %>% 
       dplyr::relocate(.data$cohortId, 
                       .data$databaseId, 
                       .data$analysisId,
@@ -3856,7 +3855,6 @@ shiny::shinyServer(function(input, output, session) {
     covs2 <- data %>% 
       dplyr::filter(.data$cohortId == comparatorCohortId()) %>% 
       dplyr::mutate(analysisNameLong = paste0(.data$analysisName, " (", as.character(.data$startDay), " to ", as.character(.data$endDay), ")")) %>% 
-      dplyr::select(-.data$startDay, -.data$endDay) %>% 
       dplyr::relocate(.data$cohortId, 
                       .data$databaseId, 
                       .data$analysisId,

@@ -466,8 +466,10 @@ plotCohortComparisonStandardizedDifference <- function(balance,
         balance$targetCohort,
         ": ",
         scales::comma(balance$mean1, accuracy = 0.01),
-        "\nStd diff.:",
-        scales::comma(balance$stdDiff, accuracy = 0.01)
+        "\nStd diff.: ",
+        scales::comma(balance$stdDiff, accuracy = 0.01),
+        "\nTime: ",
+        paste0("Start ", balance$startDay, " to end ", balance$endDay)
       )
     )
   
@@ -598,7 +600,7 @@ plotTemporalCompareStandardizedDifference <- function(balance,
         scales::comma(balance$mean1, accuracy = 0.01),
         "\nStd diff.: ",
         scales::comma(balance$stdDiff, accuracy = 0.01),
-        "\nTime Id: ",
+        "\nTime : ",
         balance$choices
       )
     )
