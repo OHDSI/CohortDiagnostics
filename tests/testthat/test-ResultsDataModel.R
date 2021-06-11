@@ -72,13 +72,13 @@ test_that("Results upload", {
         "SELECT COUNT(*) FROM @schema.@table_name WHERE database_id = '@database_id';"
       sql <- SqlRender::render(
         sql = sql,
-        schema = schema,
+        schema = cohortDiagnosticsSchema,
         table_name = tableName,
-        database_id = databaseId
+        database_id = "cdmv5"
       )
       databaseIdCount <-
         DatabaseConnector::querySql(connection, sql)[, 1]
-      expect_true(databaseIdCount = !0)
+      expect_gt(databaseIdCount, 0)
     }
   }
 })
