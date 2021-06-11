@@ -1188,6 +1188,34 @@ runCohortDiagnostics <- function(packageName = NULL,
     reportOverallTime = FALSE
   )
   
+  # Writing metadata file
+  metaData <- dplyr::tibble(
+    datbaseId = databaseId,
+    variableField = c('vocabularyVersionCdm', 
+                      'vocabularyVersion', 
+                      'CohortDiagnosticsVersion', 
+                      'DatabaseConnectorVersion',
+                      'FeatureExtractionVersion',
+                      'SqlRenderVersion',
+                      'AndromedaVersion',
+                      'dplyrVersion',
+                      'tidyrVersion',
+                      'Rversion'),
+    valueField = c(vocabularyVersionCdm, 
+                   vocabularyVersion, 
+                   as.character(packageVersion('CohortDiagnostics')), 
+                   as.character(packageVersion('DatabaseConnector')), 
+                   as.character(packageVersion('FeatureExtraction')), 
+                   as.character(packageVersion('SqlRender')), 
+                   as.character(packageVersion('Andromeda')), 
+                   as.character(packageVersion('dplyr')), 
+                   as.character(packageVersion('tidyr')), 
+                   as.character(R.Version()$version.string))
+  )
+  writeToCsv(data = metaData,
+             fileName = "metaData.csv")
+  
+  
   # Add all to zip file -------------------------------------------------------------------------------
   ParallelLogger::logInfo("Adding results to zip file")
   zipName <-
