@@ -3122,14 +3122,16 @@ shiny::shinyServer(function(input, output, session) {
                        "visitContextContainData",
                        suspendWhenHidden = FALSE)
   
-  # Characterization and temporal characterization data for one cohortId and multiple database
-  covariateValueForSingleCohorts <- shiny::reactive(x = {
+  # Characterization -------------------------------------------------
+  # Characterization and temporal characterization data for one cohortId and multiple databaseIds
+  covariateValueForCohortIdDatabaseIds <- shiny::reactive(x = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
     
     progress <- shiny::Progress$new()
     on.exit(progress$close())
-    progress$set(message = paste0("Extracting characterization (S) data: "), value = 0)
+    progress$set(message = paste0("Extracting characterization data for target cohort:", cohortId()), 
+                 value = 0)
     
     data <- getResultsCovariateValue(
       dataSource = dataSource,
@@ -3139,25 +3141,6 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  # Characterization and temporal characterization data for more than one cohortId and multiple database
-  covariateValueForMultipleCohorts <- shiny::reactive(x = {
-    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
-    validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
-    
-    progress <- shiny::Progress$new()
-    on.exit(progress$close())
-    progress$set(message = paste0("Extracting characterization (M) data: "), value = 0)
-    
-    data <- getResultsCovariateValue(
-      dataSource = dataSource,
-      cohortIds = cohortIds(),
-      databaseIds = databaseIds()
-    )
-    return(data)
-  })
-  
-
-  # Characterization -------------------------------------------------
   characterizationData <- shiny::reactive(x = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
@@ -3173,7 +3156,9 @@ shiny::shinyServer(function(input, output, session) {
       covariatesTofilter <- covariatesTofilter %>% 
         dplyr::filter(.data$analysisId %in% analysisIds)
     }
-    characterizationData <- covariateValueForSingleCohorts()$covariateValue %>% 
+    characterizationData <- covariateValueForCohortIdDatabaseIds()$covariateValue %>% 
+      dplyr::filter(.data$timeId == 0) %>% 
+      dplyr::select(-.data$timeId) %>% 
       dplyr::inner_join(covariatesTofilter, by = 'covariateId') %>% 
       dplyr::inner_join(analysisRef, by = 'analysisId')
     
@@ -3580,10 +3565,10 @@ shiny::shinyServer(function(input, output, session) {
   temporalCharacterizationData <- shiny::reactive(x = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
-    data <- covariateValueForSingleCohorts()$covariateValue %>% 
+    data <- covariateValueForCohortIdDatabaseIds()$covariateValue %>% 
       dplyr::filter(.data$timeId %in% timeIds()) %>% 
       dplyr::inner_join(covariateRef, by = 'covariateId') %>% 
-      dplyr::inner_join(temporalAnalysisRef, by = 'analysisId')
+      dplyr::inner_join(analysisRef, by = 'analysisId')
     return(data)
   })
   
@@ -3801,17 +3786,21 @@ shiny::shinyServer(function(input, output, session) {
   )
   
   # Compare cohort characteristics --------------------------------------------
-  covariateValueForCompareCharacterization <- shiny::reactive(x = {
+  # Characterization and temporal characterization data for target, comparator cohortId and one databaseIds
+  covariateValueForCohortIdsDatabaseId <- shiny::reactive(x = {
     validate(need(length(input$database) > 0, "No data sources chosen"))
-    validate(need(length(cohortId()) > 0, "No target cohorts chosen"))
-    validate(need(length(comparatorCohortId()) > 0, "No comparator cohorts chosen"))
+    validate(need(length(cohortId()) > 0, "No target cohort chosen"))
+    validate(need(length(comparatorCohortId()) > 0, "No target cohort chosen"))
     
     progress <- shiny::Progress$new()
     on.exit(progress$close())
-    progress$set(message = paste0("Extracting compare characterization data for cohortIds ", 
-                                  cohortId(), 
-                                  " and ", 
-                                  comparatorCohortId()), value = 0)
+    progress$set(message = paste0("Extracting characterization data for target cohort:", 
+                                  cohortId(),
+                                  " and comparator cohort:",
+                                  comparatorCohortId(),
+                                  ' for ',
+                                  input$database), 
+                 value = 0)
     
     data <- getResultsCovariateValue(
       dataSource = dataSource,
@@ -3846,7 +3835,7 @@ shiny::shinyServer(function(input, output, session) {
     on.exit(progress$close())
     progress$set(message = paste0("Computing balance for compare characterization."), value = 0)
     
-    data <- covariateValueForCompareCharacterization()$covariateValue %>% 
+    data <- covariateValueForCohortIdsDatabaseId()$covariateValue %>% 
       dplyr::filter(.data$timeId == 0) %>% 
       dplyr::select(-.data$timeId) %>% 
       dplyr::inner_join(covariateRef, by = "covariateId") %>% 
@@ -4226,21 +4215,37 @@ shiny::shinyServer(function(input, output, session) {
       ))
       validate(need((length(timeIds()) > 0), paste0("Please select time id")))
       
-      covs1 <- getCovariateValueResult(
-        dataSource = dataSource,
-        cohortIds = cohortId(),
-        databaseIds = input$database,
-        isTemporal = TRUE,
-        timeIds = timeIds()
-      )
+      data <- covariateValueForCohortIdsDatabaseId()$covariateValue %>% 
+        dplyr::filter(.data$timeId %in% timeIds()) %>% 
+        dplyr::inner_join(covariateRef, by = "covariateId") %>% 
+        dplyr::inner_join(analysisRef, by = "analysisId") %>% 
+        dplyr::select(-.data$startDay, -.data$endDay) %>% 
+        dplyr::inner_join(temporalTimeRef, by = 'timeId') %>% 
+        dplyr::inner_join(temporalCovariateChoices, by = 'timeId') %>% 
+        dplyr::select(-.data$missingMeansZero)
+      
+      covs1 <- data %>% 
+        dplyr::filter(.data$cohortId == cohortId()) %>% 
+        dplyr::mutate(analysisNameLong = paste0(.data$analysisName, " (", as.character(.data$startDay), " to ", as.character(.data$endDay), ")")) %>% 
+        dplyr::relocate(.data$cohortId, 
+                        .data$databaseId, 
+                        .data$analysisId,
+                        .data$covariateId, 
+                        .data$covariateName,
+                        .data$isBinary) %>% 
+        dplyr::arrange(.data$cohortId, .data$databaseId, .data$covariateId)
+      
       validate(need((nrow(covs1) > 0), paste0("Target cohort id:", cohortId(), " does not have data.")))
-      covs2 <- getCovariateValueResult(
-        dataSource = dataSource,
-        cohortIds = comparatorCohortId(),
-        databaseIds = input$database,
-        isTemporal = TRUE,
-        timeIds = timeIds()
-      )
+      covs2 <- data %>% 
+        dplyr::filter(.data$cohortId == comparatorCohortId()) %>% 
+        dplyr::mutate(analysisNameLong = paste0(.data$analysisName, " (", as.character(.data$startDay), " to ", as.character(.data$endDay), ")")) %>% 
+        dplyr::relocate(.data$cohortId, 
+                        .data$databaseId, 
+                        .data$analysisId,
+                        .data$covariateId, 
+                        .data$covariateName,
+                        .data$isBinary) %>% 
+        dplyr::arrange(.data$cohortId, .data$databaseId, .data$covariateId)
       validate(need((nrow(covs2) > 0), paste0("Target cohort id:", comparatorCohortId(), " does not have data.")))
       balance <-
         compareTemporalCohortCharacteristics(covs1, covs2) %>%

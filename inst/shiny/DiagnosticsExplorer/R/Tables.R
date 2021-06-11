@@ -248,6 +248,7 @@ compareTemporalCohortCharacteristics <-
           "analysisId",
           "isBinary",
           "analysisName",
+          "analysisNameLong",
           "domainId",
           "timeId",
           "startDay",
