@@ -1552,6 +1552,11 @@ shiny::shinyServer(function(input, output, session) {
   incidenceRateDataFull <- reactive({
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
+    
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(message = paste0("Getting incidence rate data."), value = 0)
+    
     data <- getResultsFromIncidenceRate(
       dataSource = dataSource,
       cohortIds = cohortIds(),
@@ -1672,8 +1677,6 @@ shiny::shinyServer(function(input, output, session) {
         value = c(minIncidenceRateValue, maxIncidenceRateValue),
         step = round((maxIncidenceRateValue - minIncidenceRateValue)/5,digits = 2)
       )
-      
-      
     }
   })
   
@@ -1742,6 +1745,11 @@ shiny::shinyServer(function(input, output, session) {
   output$incidenceRatePlot <- ggiraph::renderggiraph(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
+    
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(message = paste0("Rendering incidence rate plot."), value = 0)
+    
     stratifyByAge <- "Age" %in% input$irStratification
     stratifyByGender <- "Gender" %in% input$irStratification
     stratifyByCalendarYear <-
@@ -1797,6 +1805,11 @@ shiny::shinyServer(function(input, output, session) {
   timeSeriesData <- reactive({
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
+    
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(message = paste0("Getting time series data."), value = 0)
+    
     data <- getResultsFromTimeSeries(
       dataSource = dataSource,
       cohortIds = cohortIds(),
@@ -3297,6 +3310,11 @@ shiny::shinyServer(function(input, output, session) {
     databaseIdsWithCount <- paste(databaseIds, "(n = ", format(cohortCounts, big.mark = ","), ")")
     
     if (input$charType == "Pretty") {
+      
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(message = paste0("Rendering pretty table for cohort characterization."), value = 0)
+      
       countData <- getResultsFromCohortCount(
         dataSource = dataSource,
         databaseIds = databaseIds(),
@@ -3309,10 +3327,6 @@ shiny::shinyServer(function(input, output, session) {
       
       validate(need(nrow(table) > 0,
                     "No data available for selected combination."))
-      
-      # if (nrow(table) == 0) {
-      #   return(dplyr::tibble(Note = "There is no data to return."))
-      # }
       
       characteristics <- table %>%
         dplyr::select(.data$characteristic,
@@ -3404,6 +3418,11 @@ shiny::shinyServer(function(input, output, session) {
         backgroundPosition = "center"
       )
     } else {
+      
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(message = paste0("Rendering raw table for cohort characterization."), value = 0)
+      
       data <- data %>%
         dplyr::filter(.data$analysisName %in% characterizationAnalysisNameFilter()) %>%
         dplyr::filter(.data$domainId %in% characterizationDomainNameFilter())
@@ -3419,12 +3438,6 @@ shiny::shinyServer(function(input, output, session) {
       
       validate(need(nrow(data) > 0,
                     "No data available for selected combination."))
-      
-      # if (nrow(data) == 0) {
-      #   return(dplyr::tibble(
-      #     Note = paste0("No data available for selected combination")
-      #   ))
-      # }
       
       covariateNames <- data %>% dplyr::select(
         .data$covariateId,
@@ -3657,18 +3670,18 @@ shiny::shinyServer(function(input, output, session) {
       data <- temporalCharacterization() 
       validate(need(nrow(data) > 0,
                     "No data available for selected combination."))
+      
+      
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(message = paste0("Rendering raw table for temporal cohort characterization."), value = 0)
+      
       data <- data %>%
         dplyr::filter(.data$analysisName %in% temporalAnalysisNameFilter()) %>%
         dplyr::filter(.data$domainId %in% temporalDomainNameFilter())
       
       validate(need(nrow(data) > 0,
                     "No data available for selected combination."))
-      # 
-      # if (nrow(data) == 0) {
-      #   return(dplyr::tibble(
-      #     Note = paste0("No data available for selected combination")
-      #   ))
-      # }
       
       table <- data %>%
         tidyr::pivot_wider(
@@ -3730,6 +3743,11 @@ shiny::shinyServer(function(input, output, session) {
   cohortOverlapData <- reactive({
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 1, "Please select at least two cohorts."))
+    
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(message = paste0("Extracting cohort overlap data."), value = 0)
+    
     combisOfTargetComparator <- t(utils::combn(cohortIds(), 2)) %>% 
       as.data.frame() %>% 
       dplyr::tibble()
@@ -3757,6 +3775,10 @@ shiny::shinyServer(function(input, output, session) {
       length(cohortIds()) > 0,
       paste0("Please select Target Cohort(s)")
     ))
+    
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(message = paste0("Plotting cohort overlap."), value = 0)
     
     data <- cohortOverlapData()
     validate(need(
@@ -3833,7 +3855,7 @@ shiny::shinyServer(function(input, output, session) {
     
     progress <- shiny::Progress$new()
     on.exit(progress$close())
-    progress$set(message = paste0("Computing balance for compare characterization."), value = 0)
+    progress$set(message = paste0("Computing compare characterization."), value = 0)
     
     data <- covariateValueForCohortIdsDatabaseId()$covariateValue %>% 
       dplyr::filter(.data$timeId == 0) %>% 
@@ -3939,6 +3961,10 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(all(!is.null(balance), nrow(balance) > 0),
                   "No data available for selected combination."))
     
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(message = paste0("Rendering compare characterization data table."), value = 0)
+    
     targetCohortIdValue <- balance %>% dplyr::filter(!is.na(.data$cohortId1)) %>% dplyr::pull(.data$cohortId1) %>% unique()
     comparatorcohortIdValue <- balance %>% dplyr::filter(!is.na(.data$cohortId2)) %>% dplyr::pull(.data$cohortId2) %>% unique()
     databaseIdForCohortCharacterization <- balance$databaseId %>% unique()
@@ -3976,6 +4002,10 @@ shiny::shinyServer(function(input, output, session) {
                                      ")")
     
     if (input$charCompareType == "Pretty table") {
+      
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(message = paste0("Rendering pretty table for compare characterization."), value = 0)
       
       data <- balance %>% 
         dplyr::mutate(covariateName = .data$covariateNameFull)
@@ -4029,6 +4059,11 @@ shiny::shinyServer(function(input, output, session) {
       )
       table <- DT::formatRound(table, 4, digits = 2)
     } else {
+      
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(message = paste0("Rendering raw table for compare characterization."), value = 0)
+      
       balance <- balance %>%
         dplyr::filter(.data$analysisName %in% charCompareAnalysisNameFilter()) %>%
         dplyr::filter(.data$domainId %in% charaCompareDomainNameFilter())
@@ -4143,6 +4178,10 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(nrow(data) > 0,
                   "No data available for selected combination."))
     
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(message = paste0("Rendering plot for compare characterization."), value = 0)
+    
     data <- data %>%
       dplyr::filter(.data$analysisName %in% charCompareAnalysisNameFilter()) %>%
       dplyr::filter(.data$domainId %in% charaCompareDomainNameFilter())
@@ -4212,6 +4251,10 @@ shiny::shinyServer(function(input, output, session) {
                     paste0("Please select atleast one datasource.")
       ))
       validate(need((length(timeIds()) > 0), paste0("Please select time id")))
+      
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(message = paste0("Computing compare temporal characterization."), value = 0)
       
       data <- covariateValueForCohortIdsDatabaseId()$covariateValue %>% 
         dplyr::filter(.data$timeId %in% timeIds()) %>% 
@@ -4314,9 +4357,10 @@ shiny::shinyServer(function(input, output, session) {
       validate(need(nrow(balance) > 0,
                     "No data available for selected combination."))
       
-      # if (nrow(balance) == 0) {
-      #   return(dplyr::tibble(Note = "No data for the selected combination."))
-      # }
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(message = paste0("Rendering compare temporal characterization table."), value = 0)
+      
       if (input$temporalCharacterizationType == "Pretty table") {
         # table <- prepareTable1Comp(balance)
         # if (nrow(table) > 0) {
@@ -4583,6 +4627,10 @@ shiny::shinyServer(function(input, output, session) {
     data <- computeBalanceForCompareTemporalCharacterization()
     validate(need(nrow(data) != 0, paste0("No data for the selected combination.")))
     
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(message = paste0("Rendering plot for compare temporal characterization."), value = 0)
+    
     data <- data %>%
       dplyr::filter(.data$analysisName %in% temporalCompareAnalysisNameFilter()) %>%
       dplyr::filter(.data$domainId %in% temporalCompareDomainNameFilter()) 
@@ -4617,10 +4665,7 @@ shiny::shinyServer(function(input, output, session) {
     
     validate(need(all(!is.null(database), nrow(database) > 0),
                   "No data available for selected combination."))
-    
-    # if (nrow(database) == 0) {
-    #   return(dplyr::tibble("No information on the data source."))
-    # }
+
     data <- database 
     if (!'vocabularyVersionCdm' %in% colnames(database)) {
       data$vocabularyVersionCdm <- "Not in data"
