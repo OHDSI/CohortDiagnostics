@@ -5,6 +5,7 @@ source("R/DisplayFunctions.R")
 source("R/Tables.R")
 source("R/Plots.R")
 source("R/Results.R")
+source("R/ResultsDataModelQueries.R")
 
 # Settings when running on server:
 defaultLocalDataFolder <- "data"
@@ -22,7 +23,7 @@ alternateVocabularySchema <- c('vocabulary')
 
 defaultDatabaseMode <- TRUE # Use file system if FALSE
 
-showTimeSeries <- FALSE
+showTimeSeries <- TRUE
 
 appInformationText <- "V 2.1"
 appInformationText <- "Powered by OHDSI Cohort Diagnostics application - Version 2.1. This app is working in"
@@ -128,6 +129,19 @@ if (databaseMode) {
   loadResultsTable("concept_sets")
   loadResultsTable("cohort_count", required = TRUE)
   loadResultsTable("analysis_ref")
+  loadResultsTable("temporal_analysis_ref")
+  loadResultsTable("covariate_ref")
+  loadResultsTable("temporal_covariate_ref")
+  
+  covariateRef <- dplyr::bind_rows(covariateRef, temporalCovariateRef) %>% 
+    dplyr::distinct() %>% 
+    dplyr::arrange(.data$covariateId)
+  rm(temporalCovariateRef)
+  
+  analysisRef <- dplyr::bind_rows(analysisRef, temporalAnalysisRef) %>% 
+    dplyr::distinct() %>% 
+    dplyr::arrange(.data$analysisId)
+  rm(temporalAnalysisRef)
   
   for (table in c(dataModelSpecifications$tableName)) {
     #, "recommender_set"
@@ -182,7 +196,7 @@ if (exists("temporalTimeRef")) {
     temporalCovariateChoices <- temporalCovariateChoices %>% 
       dplyr::filter(stringr::str_detect(string = .data$choices,
                                         pattern = 'Start -365 to end -31|Start -30 to end -1|Start 0 to end 0|Start 1 to end 30|Start 31 to end 365'))
-    }
+  }
 }
 
 if (exists("covariateRef")) {
@@ -200,8 +214,4 @@ if (!showTimeSeries) {
   if (exists("timeSeries")) {
     rm(timeSeries)
   }
-}
-
-if (exists("indexEventBreakdown")) {
-  rm(indexEventBreakdown)
 }
