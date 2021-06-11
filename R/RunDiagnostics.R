@@ -1189,7 +1189,8 @@ runCohortDiagnostics <- function(packageName = NULL,
   )
   
   # Writing metadata file
-  metaData <- dplyr::tibble(
+  ParallelLogger::logInfo("Retrieving metadata information and writing metadata")
+  metadata <- dplyr::tibble(
     datbaseId = databaseId,
     variableField = c('vocabularyVersionCdm', 
                       'vocabularyVersion', 
@@ -1212,8 +1213,8 @@ runCohortDiagnostics <- function(packageName = NULL,
                    as.character(packageVersion('tidyr')), 
                    as.character(R.Version()$version.string))
   )
-  writeToCsv(data = metaData,
-             fileName = "metaData.csv")
+  writeToCsv(data = metadata,
+             fileName = file.path(exportFolder, "metadata.csv"))
   
   
   # Add all to zip file -------------------------------------------------------------------------------
