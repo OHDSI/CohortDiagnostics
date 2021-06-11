@@ -1232,7 +1232,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   # Writing metadata file
   ParallelLogger::logInfo("Retrieving metadata information and writing metadata")
   metadata <- dplyr::tibble(
-    datbaseId = databaseId,
+    database_id = databaseId,
     variableField = c('vocabularyVersionCdm', 
                       'vocabularyVersion', 
                       'CohortDiagnosticsVersion', 
