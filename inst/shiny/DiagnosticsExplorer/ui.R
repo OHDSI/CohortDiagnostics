@@ -362,7 +362,11 @@ bodyTabItems <- shinydashboard::tabItems(
                             shiny::htmlOutput("cohortDetailsText")),
             shiny::tabPanel(title = "Cohort Count",
                             tags$br(),
-                            DT::dataTableOutput(outputId = "cohortCountsTableInCohortDefinition")),
+                            DT::dataTableOutput(outputId = "cohortCountsTableInCohortDefinition"),
+                            shiny::conditionalPanel(
+                              condition = "output.cohortCountsTableInCohortDefinitionRowIsSelected",
+                              DT::dataTableOutput(outputId = "inclusionRuleInCohortDefinition")
+                            )),
             shiny::tabPanel(title = "Cohort definition",
                             copyToClipboardButton(toCopyId = "cohortDefinitionText",
                                                   style = "margin-top: 5px; margin-bottom: 5px;"),

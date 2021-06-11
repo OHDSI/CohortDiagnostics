@@ -7,6 +7,7 @@ Changes:
 1. Additional fields added to database_id (person_days, persons, records, observation_period_min_date, observation_period_max_date)
 2. Optimized cohort overlap.
 3. Exported functions computeCohortOverlap, getCohortCharacteristics, getCohortCount, instantiateCohortSet
+4. Metadata.csv now versions of OHDSI packages and R version.
 
 Bug fixes:
 1. Fixed inclusion rule display - when wrong inclusion rules were being shown in cohort counts

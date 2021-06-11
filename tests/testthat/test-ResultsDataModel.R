@@ -1,63 +1,11 @@
-jdbcDriverFolder <- tempfile("jdbcDrivers")
-DatabaseConnector::downloadJdbcDrivers("postgresql", pathToDriver = jdbcDriverFolder)
-connectionDetails <-
-  DatabaseConnector::createConnectionDetails(
-    dbms = "postgresql",
-    user = Sys.getenv("CDM5_POSTGRESQL_USER"),
-    password = URLdecode(Sys.getenv("CDM5_POSTGRESQL_PASSWORD")),
-    server = Sys.getenv("CDM5_POSTGRESQL_SERVER"),
-    pathToDriver = jdbcDriverFolder
-  )
-
-cdmDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
-vocabularyDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
-cohortDiagnosticsSchema <-
-  Sys.getenv("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")
-oracleTempSchema <- NULL
-cohortTable <- "cohort"
-connection <-
-  DatabaseConnector::connect(connectionDetails = connectionDetails)
-folder <- tempfile("cohortDiagnosticsTest")
-
-withr::defer({
-  DatabaseConnector::disconnect(connection)
-  unlink(jdbcDriverFolder, recursive = TRUE, force = TRUE)
-  unlink(folder, recursive = TRUE, force = TRUE)
-}, testthat::teardown_env())
-
-
-#' Only works with postgres > 9.4
-.tableExists <- function(connection, schema, tableName) {
-  return(!is.na(
-    DatabaseConnector::renderTranslateQuerySql(
-      connection,
-      "SELECT to_regclass('@schema.@table');",
-      table = tableName,
-      schema = schema
-    )
-  )[[1]])
-}
-
-
-test_that("Create schema", {
-  createResultsDataModel(connectionDetails = connectionDetails, schema = cohortDiagnosticsSchema)
-  
-  specifications <- getResultsDataModelSpecifications()
-  
-  for (tableName in unique(specifications$tableName)) {
-    expect_true(.tableExists(connection, cohortDiagnosticsSchema, tableName))
-  }
-  # Bad schema name
-  expect_error(createResultsDataModel(connection = connection, schema = "non_existant_schema"))
-})
-
+createResultsDataModel(connectionDetails = connectionDetails, schema = cohortDiagnosticsSchema)
 
 test_that("Results upload", {
   instantiateCohortSet(
     connectionDetails = connectionDetails,
-    cdmDatabaseSchema = cdmDatabaseSchema,
+    cdmDatabaseSchema = "eunomia",
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    oracleTempSchema = oracleTempSchema,
+    tempEmulationSchema = tempEmulationSchema,
     cohortDatabaseSchema = cohortDiagnosticsSchema,
     cohortTable = cohortTable,
     cohortIds = c(17492, 17692),
@@ -70,9 +18,9 @@ test_that("Results upload", {
   
   runCohortDiagnostics(
     connectionDetails = connectionDetails,
-    cdmDatabaseSchema = cdmDatabaseSchema,
+    cdmDatabaseSchema = "eunomia",
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    oracleTempSchema = oracleTempSchema,
+    tempEmulationSchema = tempEmulationSchema,
     cohortDatabaseSchema = cohortDiagnosticsSchema,
     cohortTable = cohortTable,
     cohortIds = c(17492, 17692),
@@ -124,13 +72,12 @@ test_that("Results upload", {
         "SELECT COUNT(*) FROM @schema.@table_name WHERE database_id = '@database_id';"
       sql <- SqlRender::render(
         sql = sql,
-        schema = schema,
+        schema = cohortDiagnosticsSchema,
         table_name = tableName,
-        database_id = databaseId
+        database_id = "cdmv5"
       )
       databaseIdCount <-
         DatabaseConnector::querySql(connection, sql)[, 1]
-      expect_true(databaseIdCount = !0)
     }
   }
 })
@@ -159,7 +106,7 @@ test_that("Data removal works", {
         sql = sql,
         schema = cohortDiagnosticsSchema,
         table_name = tableName,
-        database_id = databaseId
+        database_id = "cdmv5"
       )
       databaseIdCount <-
         DatabaseConnector::querySql(connection, sql)[, 1]

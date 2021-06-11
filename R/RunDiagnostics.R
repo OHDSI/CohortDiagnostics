@@ -1229,6 +1229,35 @@ runCohortDiagnostics <- function(packageName = NULL,
     reportOverallTime = FALSE
   )
   
+  # Writing metadata file
+  ParallelLogger::logInfo("Retrieving metadata information and writing metadata")
+  metadata <- dplyr::tibble(
+    datbaseId = databaseId,
+    variableField = c('vocabularyVersionCdm', 
+                      'vocabularyVersion', 
+                      'CohortDiagnosticsVersion', 
+                      'DatabaseConnectorVersion',
+                      'FeatureExtractionVersion',
+                      'SqlRenderVersion',
+                      'AndromedaVersion',
+                      'dplyrVersion',
+                      'tidyrVersion',
+                      'Rversion'),
+    valueField = c(vocabularyVersionCdm, 
+                   vocabularyVersion, 
+                   as.character(packageVersion('CohortDiagnostics')), 
+                   as.character(packageVersion('DatabaseConnector')), 
+                   as.character(packageVersion('FeatureExtraction')), 
+                   as.character(packageVersion('SqlRender')), 
+                   as.character(packageVersion('Andromeda')), 
+                   as.character(packageVersion('dplyr')), 
+                   as.character(packageVersion('tidyr')), 
+                   as.character(R.Version()$version.string))
+  )
+  writeToCsv(data = metadata,
+             fileName = file.path(exportFolder, "metadata.csv"))
+  
+  
   # Add all to zip file -------------------------------------------------------------------------------
   ParallelLogger::logInfo("Adding results to zip file")
   zipName <-
@@ -1240,13 +1269,6 @@ runCohortDiagnostics <- function(packageName = NULL,
   ParallelLogger::logInfo("Results are ready for sharing at: ", zipName)
   
   delta <- Sys.time() - start
-  metaData <- dplyr::tibble(
-    databaseId = databaseId,
-    variableField = c('vocabularyVersionCdm', 'vocabularyVersion'),
-    valueField = c(vocabularyVersionCdm, vocabularyVersion)
-  )
-  writeToCsv(data = metaData,
-             fileName = "metaData.csv")
   
   ParallelLogger::logInfo("Computing all diagnostics took ",
                           signif(delta, 3),
