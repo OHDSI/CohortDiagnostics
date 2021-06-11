@@ -38,8 +38,8 @@ AS (
 	SELECT DISTINCT target_cohort_id,
 		comparator_cohort_id,
 		subject_id
-	FROM (select distinct target_cohort_id from target_cohorts),
-		(select distinct comparator_cohort_id from comparator_cohorts),
+	FROM (select distinct target_cohort_id from target_cohorts) a,
+		(select distinct comparator_cohort_id from comparator_cohorts) b,
 		all_subjects
 	WHERE target_cohort_id != comparator_cohort_id
 		AND target_cohort_id IS NOT NULL

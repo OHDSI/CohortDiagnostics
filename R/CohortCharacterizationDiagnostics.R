@@ -67,23 +67,13 @@ getCohortCharacteristics <- function(connectionDetails = NULL,
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-  
-  if (any(is.null(cohortIds), length(cohortIds) == 0)) {
-    cohortCounts <- getCohortCounts(
-      connection = connection,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTable = cohortTable
-    )
-    cohortIdsNew <- cohortCounts$cohortId %>% unique()
-  } else {
-    cohortCounts <- getCohortCounts(
-      connection = connection,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTable = cohortTable,
-      cohortIds = !!cohortIds
-    )
-    cohortIdsNew <- cohortCounts$cohortId %>% unique()
-  }
+
+  cohortCounts <- getCohortCounts(
+    connection = connection,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    cohortTable = cohortTable
+  )
+  cohortIdsNew <- cohortCounts$cohortId %>% unique()
   
   if (is.null(cohortCounts)) {
     warning("No instantiated cohorts found.")
