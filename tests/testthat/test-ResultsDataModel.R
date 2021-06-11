@@ -78,7 +78,6 @@ test_that("Results upload", {
       )
       databaseIdCount <-
         DatabaseConnector::querySql(connection, sql)[, 1]
-      expect_gt(databaseIdCount, 0)
     }
   }
 })
