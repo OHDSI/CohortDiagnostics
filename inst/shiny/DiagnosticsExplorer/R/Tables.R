@@ -222,7 +222,9 @@ compareCohortCharacteristics <-
         "isBinary",
         "analysisName",
         "analysisNameLong",
-        "domainId"
+        "domainId",
+        "startDay",
+        "endDay"
       ),
       suffix = c("1", "2")
     ) %>%
@@ -248,6 +250,7 @@ compareTemporalCohortCharacteristics <-
           "analysisId",
           "isBinary",
           "analysisName",
+          "analysisNameLong",
           "domainId",
           "timeId",
           "startDay",

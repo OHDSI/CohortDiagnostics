@@ -119,6 +119,7 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
 }
 
 plotIncidenceRate <- function(data,
+                              cohortCount,
                               shortNameRef = NULL,
                               stratifyByAgeGroup = TRUE,
                               stratifyByGender = TRUE,
@@ -185,9 +186,9 @@ plotIncidenceRate <- function(data,
   checkmate::reportAssertions(collection = errorMessage)
   
   plotData <- data %>%
+    dplyr::left_join(cohortCount, by = c('cohortId', 'databaseId')) %>% 
     addShortName(shortNameRef) %>%
-    dplyr::mutate(incidenceRate = round(.data$incidenceRate, digits = 3))
-  plotData <- plotData %>%
+    dplyr::mutate(incidenceRate = round(.data$incidenceRate, digits = 3)) %>%
     dplyr::mutate(
       strataGender = !is.na(.data$gender),
       strataAgeGroup = !is.na(.data$ageGroup),
@@ -199,6 +200,11 @@ plotIncidenceRate <- function(data,
         .data$strataCalendarYear %in% !!stratifyByCalendarYear
     ) %>%
     dplyr::select(-dplyr::starts_with("strata"))
+  
+  if (stratifyByCalendarYear) {
+    plotData <- plotData %>% 
+      dplyr::mutate(calendarYear = as.integer(.data$calendarYear))
+  }
   
   aesthetics <- list(y = "incidenceRate")
   if (stratifyByCalendarYear) {
@@ -228,8 +234,6 @@ plotIncidenceRate <- function(data,
     plotType <- "bar"
   }
   
- 
-  
   sortShortName <- plotData %>%
     dplyr::select(.data$shortName) %>%
     dplyr::distinct() %>%
@@ -239,8 +243,6 @@ plotIncidenceRate <- function(data,
   
   plotData <- plotData %>%
     dplyr::arrange(shortName = factor(.data$shortName, levels = sortShortName$shortName),.data$shortName)
-  
-  
   
   plotData$shortName <- factor(plotData$shortName,
                                levels = sortShortName$shortName)
@@ -304,14 +306,13 @@ plotIncidenceRate <- function(data,
     plotData$gender <- factor(plotData$gender, levels = genders)
   }
   
-  
   plot <-
     ggplot2::ggplot(data = plotData, do.call(ggplot2::aes_string, aesthetics)) +
     ggplot2::xlab(xLabel) +
     ggplot2::ylab("Incidence Rate (/1,000 person years)") +
     ggplot2::scale_y_continuous(expand = c(0, 0))
   
-  if(stratifyByCalendarYear) {
+  if (stratifyByCalendarYear) {
     distinctCalenderYear <- plotData$calendarYear %>%
       unique() %>% 
       sort()
@@ -325,8 +326,6 @@ plotIncidenceRate <- function(data,
       }
     }
   }
-  
-  
   
   plot <- plot + ggplot2::theme(
     legend.position = "top",
@@ -467,8 +466,10 @@ plotCohortComparisonStandardizedDifference <- function(balance,
         balance$targetCohort,
         ": ",
         scales::comma(balance$mean1, accuracy = 0.01),
-        "\nStd diff.:",
-        scales::comma(balance$stdDiff, accuracy = 0.01)
+        "\nStd diff.: ",
+        scales::comma(balance$stdDiff, accuracy = 0.01),
+        "\nTime: ",
+        paste0("Start ", balance$startDay, " to end ", balance$endDay)
       )
     )
   
@@ -599,7 +600,7 @@ plotTemporalCompareStandardizedDifference <- function(balance,
         scales::comma(balance$mean1, accuracy = 0.01),
         "\nStd diff.: ",
         scales::comma(balance$stdDiff, accuracy = 0.01),
-        "\nTime Id: ",
+        "\nTime : ",
         balance$choices
       )
     )
