@@ -2949,17 +2949,19 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     
-    concepts <- getConceptDetails(dataSource = dataSource, 
-                                  conceptIds = visitContext$visitConceptId %>% unique()
-    ) %>% 
-      dplyr::rename(visitConceptId = .data$conceptId,
-                    visitConceptName = .data$conceptName) %>% 
-      dplyr::filter(is.na(.data$invalidReason)) %>% 
-      dplyr::select(.data$visitConceptId, .data$visitConceptName)
-    
-    visitContext <- visitContext %>% 
-      dplyr::left_join(concepts,
-                       by = c('visitConceptId'))
+    if (!'visitConceptName' %in% colnames(visitContext)) {
+      concepts <- getConceptDetails(dataSource = dataSource, 
+                                    conceptIds = visitContext$visitConceptId %>% unique()
+      ) %>% 
+        dplyr::rename(visitConceptId = .data$conceptId,
+                      visitConceptName = .data$conceptName) %>% 
+        dplyr::filter(is.na(.data$invalidReason)) %>% 
+        dplyr::select(.data$visitConceptId, .data$visitConceptName)
+      
+      visitContext <- visitContext %>% 
+        dplyr::left_join(concepts,
+                         by = c('visitConceptId'))
+    }
     
     visitContext <- visitContext %>%
       dplyr::inner_join(cohortCount,

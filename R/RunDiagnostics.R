@@ -603,6 +603,29 @@ runCohortDiagnostics <- function(packageName = NULL,
       conceptIdTable = "#concept_ids",
       recordKeepingFile = recordKeepingFile
     )
+    
+    ## Store information from the vocabulary on the concepts used -------------------------
+    ParallelLogger::logInfo("Retrieving concept information")
+    exportConceptInformation(
+      connection = connection,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
+      conceptIdTable = "#concept_ids",
+      incremental = incremental,
+      exportFolder = exportFolder
+    )
+    
+    ## Delete unique concept ID table ---------------------------------
+    ParallelLogger::logTrace("Deleting concept ID table")
+    sql <- "TRUNCATE TABLE @table;\nDROP TABLE @table;"
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = sql,
+      tempEmulationSchema = tempEmulationSchema,
+      table = "#concept_ids",
+      progressBar = FALSE,
+      reportOverallTime = FALSE
+    )
   }
   
   # Time distributions----
@@ -675,6 +698,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         tempEmulationSchema = tempEmulationSchema,
         cdmDatabaseSchema = cdmDatabaseSchema,
         cohortDatabaseSchema = cohortDatabaseSchema,
+        vocabularyDatabaseSchema = vocabularyDatabaseSchema,
         cohortTable = cohortTable,
         cdmVersion = cdmVersion,
         cohortIds = subset$cohortId,
@@ -1220,29 +1244,6 @@ runCohortDiagnostics <- function(packageName = NULL,
       attr(delta, "units")
     )
   }
-  
-  # Vocabulary details concepts----
-  ParallelLogger::logInfo("Retrieving concept information")
-  exportConceptInformation(
-    connection = connection,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    tempEmulationSchema = tempEmulationSchema,
-    conceptIdTable = "#concept_ids",
-    incremental = incremental,
-    exportFolder = exportFolder
-  )
-  
-  ## Delete unique concept ID table----
-  ParallelLogger::logTrace("Deleting concept ID table")
-  sql <- "TRUNCATE TABLE @table;\nDROP TABLE @table;"
-  DatabaseConnector::renderTranslateExecuteSql(
-    connection = connection,
-    sql = sql,
-    tempEmulationSchema = tempEmulationSchema,
-    table = "#concept_ids",
-    progressBar = FALSE,
-    reportOverallTime = FALSE
-  )
   
   # Writing metadata file
   ParallelLogger::logInfo("Retrieving metadata information and writing metadata")

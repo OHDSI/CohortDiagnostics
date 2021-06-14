@@ -3,6 +3,7 @@ IF OBJECT_ID('tempdb..@visit_context_table', 'U') IS NOT NULL
 
 SELECT c1.cohort_definition_id AS cohort_id,
 	vo1.visit_concept_id,
+	c.concept_name visit_concept_name,
 	CASE 
 		WHEN vo1.visit_end_date < c1.cohort_start_date
 			THEN 'Before'
@@ -22,9 +23,12 @@ INNER JOIN @cdm_database_schema.visit_occurrence vo1
 	ON c1.subject_id = vo1.person_id
 		AND vo1.visit_end_date >= dateadd(dd, - 30, c1.cohort_start_date)
 		AND vo1.visit_start_date <= dateadd(dd, 30, c1.cohort_start_date)
+INNER JOIN @vocabulary_database_schema.concept c
+ON vo1.visit_concept_id = c.concept_id
 WHERE cohort_definition_id IN (@cohort_ids)
 GROUP BY c1.cohort_definition_id,
 	vo1.visit_concept_id,
+	c.concept_name,
 	CASE 
 		WHEN vo1.visit_end_date < c1.cohort_start_date
 			THEN 'Before'
