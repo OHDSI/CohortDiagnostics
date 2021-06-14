@@ -178,13 +178,13 @@ SELECT 0 cohort_id,
 	COUNT_BIG(CASE 
 			WHEN observation_period_end_date >= period_begin
 				AND observation_period_end_date <= period_end
-				THEN subject_id
+				THEN person_id
 			ELSE NULL
 			END) records_terminate, -- records terminate within period
 	COUNT_BIG(DISTINCT CASE 
 			WHEN observation_period_end_date >= period_begin
 				AND observation_period_end_date <= period_end
-				THEN subject_id
+				THEN person_id
 			ELSE NULL
 			END) subjects_terminate -- subjects terminate within period
 INTO #d_time_series3
