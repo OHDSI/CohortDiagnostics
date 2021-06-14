@@ -309,7 +309,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     cohorts$phenotypeId <- NA
   }
   
-  # Set up connection to server ----------------------------------------------------
+  # Set up connection to server ----
   if (is.null(connection)) {
     if (!is.null(connectionDetails)) {
       connection <- DatabaseConnector::connect(connectionDetails)
@@ -319,7 +319,9 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
   }
   
-  tryCatch({
+  # Data Source meta information----
+  ## cdm_source information----
+  tryCatch(expr = {
     vocabularyVersionCdm <-
       DatabaseConnector::renderTranslateQuerySql(
         connection = connection,
@@ -348,6 +350,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     vocabularyVersionCdm <- NULL
   }
   
+  ## Vocabulary table----
   vocabularyVersion <-
     DatabaseConnector::renderTranslateQuerySql(
       connection = connection,
@@ -360,19 +363,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     dplyr::pull(.data$vocabularyVersion) %>%
     unique()
   
-  if (incremental) {
-    ParallelLogger::logDebug("Working in incremental mode.")
-    cohorts$checksum <- computeChecksum(cohorts$sql)
-    recordKeepingFile <-
-      file.path(incrementalFolder, "CreatedDiagnostics.csv")
-    if (file.exists(path = recordKeepingFile)) {
-      ParallelLogger::logInfo(
-        "Found existing record keeping file in incremental folder - CreatedDiagnostics.csv"
-      )
-    }
-  }
-  
-  # Database metadata ---------------------------------------------
+  ## Observation period----
   ParallelLogger::logInfo("Saving database metadata")
   observationPeriodDateRange <- DatabaseConnector::renderTranslateQuerySql(
     connection = connection,
@@ -409,7 +400,20 @@ runCohortDiagnostics <- function(packageName = NULL,
     attr(delta, "units")
   ))
   
-  # Create concept table ------------------------------------------
+  # Setting up incremental mode----
+  if (incremental) {
+    ParallelLogger::logDebug("Working in incremental mode.")
+    cohorts$checksum <- computeChecksum(cohorts$sql)
+    recordKeepingFile <-
+      file.path(incrementalFolder, "CreatedDiagnostics.csv")
+    if (file.exists(path = recordKeepingFile)) {
+      ParallelLogger::logInfo(
+        "Found existing record keeping file in incremental folder - CreatedDiagnostics.csv"
+      )
+    }
+  }
+  
+  # Create concept table----
   ParallelLogger::logTrace("Creating concept ID table for tracking concepts used in diagnostics")
   sql <-
     SqlRender::loadRenderTranslateSql(
@@ -425,7 +429,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
-  
+  ## Referent concepts----
   referentConceptIdToInsert <- dplyr::tibble()
   if ('referentConceptId' %in% colnames(cohorts)) {
     referentConceptIdToInsert <-
@@ -455,7 +459,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     ParallelLogger::logTrace("Done inserting")
   }
   
-  # Counting cohorts -----------------------------------------------------------------------
+  # Counting cohorts----
   ParallelLogger::logInfo("Counting cohort records and subjects")
   cohortCounts <- getCohortCounts(
     connection = connection,
@@ -482,7 +486,6 @@ runCohortDiagnostics <- function(packageName = NULL,
       incremental = FALSE,
       cohortId = subset$cohortId
     )
-    
     if (nrow(cohortCounts) > 0) {
       instantiatedCohorts <- cohortCounts %>%
         dplyr::pull(.data$cohortId)
@@ -505,7 +508,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     )
   }
   
-  # Inclusion statistics -----------------------------------------------------------------------
+  # Inclusion statistics----
   if (runInclusionStatistics) {
     ParallelLogger::logInfo("Fetching inclusion statistics from files")
     subset <- subsetToRequiredCohorts(
@@ -515,7 +518,6 @@ runCohortDiagnostics <- function(packageName = NULL,
       incremental = incremental,
       recordKeepingFile = recordKeepingFile
     )
-    
     if (incremental &&
         (length(instantiatedCohorts) - nrow(subset)) > 0) {
       ParallelLogger::logInfo(sprintf(
@@ -576,7 +578,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
   }
   
-  # Concept set diagnostics -----------------------------------------------
+  # Concept set diagnostics----
   if (runIncludedSourceConcepts ||
       runOrphanConcepts || runBreakdownIndexEvents) {
     runConceptSetDiagnostics(
@@ -603,7 +605,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     )
   }
   
-  # Time distributions ----------------------------------------------------------------------
+  # Time distributions----
   if (runTimeDistributions) {
     ParallelLogger::logInfo("Creating time distributions")
     subset <- subsetToRequiredCohorts(
@@ -613,7 +615,6 @@ runCohortDiagnostics <- function(packageName = NULL,
       incremental = incremental,
       recordKeepingFile = recordKeepingFile
     )
-    
     if (incremental &&
         (length(instantiatedCohorts) - nrow(subset)) > 0) {
       ParallelLogger::logInfo(sprintf(
@@ -651,7 +652,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
   }
   
-  # Visit context ----------------------------------------------------------------------------
+  # Visit context----
   if (runVisitContext) {
     ParallelLogger::logInfo("Retrieving visit context for index dates")
     subset <- subsetToRequiredCohorts(
@@ -661,7 +662,6 @@ runCohortDiagnostics <- function(packageName = NULL,
       incremental = incremental,
       recordKeepingFile = recordKeepingFile
     )
-    
     if (incremental &&
         (length(instantiatedCohorts) - nrow(subset)) > 0) {
       ParallelLogger::logInfo(sprintf(
@@ -701,7 +701,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
   }
   
-  # Incidence rates --------------------------------------------------------------------------------------
+  # Incidence rates----
   if (runIncidenceRate) {
     ParallelLogger::logInfo("Computing incidence rates")
     startIncidenceRate <- Sys.time()
@@ -712,7 +712,6 @@ runCohortDiagnostics <- function(packageName = NULL,
       incremental = incremental,
       recordKeepingFile = recordKeepingFile
     )
-    
     if (incremental &&
         (length(instantiatedCohorts) - nrow(subset)) > 0) {
       ParallelLogger::logInfo(sprintf(
@@ -780,7 +779,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   }
 
 
-  # Cohort overlap and Time Series timeSeries ---------------------------------------------------------------------------------
+  # Cohort overlap and Time Series timeSeries----
   if (any(runCohortOverlap, runTimeSeries)) {
     ParallelLogger::logInfo("Computing cohort overlap and/or time series")
     startCohortOverlap <- Sys.time()
@@ -788,7 +787,6 @@ runCohortDiagnostics <- function(packageName = NULL,
     combis <- cohorts %>%
       dplyr::select(.data$cohortId) %>%
       dplyr::distinct()
-    
     combis <- tidyr::crossing(combis %>% dplyr::rename("targetCohortId" = .data$cohortId),
                               combis %>% dplyr::rename("comparatorCohortId" = .data$cohortId)) %>%
       dplyr::filter(.data$targetCohortId != .data$comparatorCohortId) %>%
@@ -827,6 +825,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       ))
     }
     
+    ## cohort calendar period----
     if (nrow(subset) > 0) {
       cohortDateRange <- DatabaseConnector::renderTranslateQuerySql(
         connection = connection,
@@ -943,10 +942,14 @@ runCohortDiagnostics <- function(packageName = NULL,
         enforceMinCellValue(timeSeries, "subjects", minCellCount)
       timeSeries <-
         enforceMinCellValue(timeSeries, "personDays", minCellCount)
-      data <-
+      timeSeries <-
         enforceMinCellValue(timeSeries, "recordsIncidence", minCellCount)
       timeSeries <-
         enforceMinCellValue(timeSeries, "subjectsIncidence", minCellCount)
+      timeSeries <-
+        enforceMinCellValue(timeSeries, "recordsTerminate", minCellCount)
+      timeSeries <-
+        enforceMinCellValue(timeSeries, "subjectsTerminate", minCellCount)
       
       if (nrow(timeSeries) > 0) {
         writeToCsv(
@@ -955,6 +958,8 @@ runCohortDiagnostics <- function(packageName = NULL,
           incremental = incremental,
           cohortId = c(subset$targetCohortId, subset$comparatorCohortId) %>% unique()
         )
+      } else {
+        warning('No time series data')
       }
       
       cohortOverlap <- computeCohortOverlap(
@@ -968,9 +973,11 @@ runCohortDiagnostics <- function(packageName = NULL,
       if (nrow(cohortOverlap) > 0) {
         cohortOverlap <-
           enforceMinCellValue(cohortOverlap, "value", minCellCount)
+      } else {
+        warning('No cohort overlap data')
       }
       
-      #####################
+      ## calendar incidence----
       cohortCalendarIncidence <- cohortOverlap %>% 
         dplyr::filter(.data$attributeType %in% c('y', 'm', 'q')) %>% 
         dplyr::mutate(calendarMonth = lubridate::as_date(.data$attribute)) %>% 
@@ -996,9 +1003,11 @@ runCohortDiagnostics <- function(packageName = NULL,
           targetCohortId = subset$targetCohortId,
           comparatorCohortId = c(subset$targetCohortId, subset$comparatorCohortId) %>% unique()
         )
+      } else {
+        warning('No cohort calendar incidence data')
       }
       
-      #####################
+      ## cohort relationships----
       cohortRelationships <- cohortOverlap %>% 
         dplyr::filter(attributeType == 'r')  %>% 
         dplyr::rename(count = .data$value, targetCohortId = .data$cohortId) %>% 
@@ -1025,9 +1034,11 @@ runCohortDiagnostics <- function(packageName = NULL,
           targetCohortId = subset$targetCohortId,
           comparatorCohortId = subset$comparatorCohortId
         )
+      } else {
+        warning('No cohort relationship data')
       }
       
-      #####################
+      ## cohort overlap----
       cohortOverlap <- cohortOverlap %>% 
         dplyr::filter(attributeType == 'o')  %>% 
         dplyr::mutate(attribute = dplyr::case_when(.data$attribute == 'es' ~ 'eitherSubjects',
@@ -1063,7 +1074,10 @@ runCohortDiagnostics <- function(packageName = NULL,
           targetCohortId = subset$targetCohortId,
           comparatorCohortId = subset$comparatorCohortId
         )
+      } else {
+        warning('No cohort overlap data')
       }
+      
       recordTasksDone(
         cohortId = subset$targetCohortId,
         comparatorId = subset$comparatorCohortId,
@@ -1081,7 +1095,8 @@ runCohortDiagnostics <- function(packageName = NULL,
                             attr(delta, "units"))
   }
   
-  # Cohort characterization ---------------------------------------------------------------
+  # Characterization----
+  ## Cohort characterization----
   if (runCohortCharacterization) {
     ParallelLogger::logInfo("Characterizing cohorts")
     startCohortCharacterization <- Sys.time()
@@ -1142,7 +1157,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                             attr(delta, "units"))
   }
   
-  # Temporal Cohort characterization ---------------------------------------------------------------
+  ## Temporal Cohort characterization----
   if (runTemporalCohortCharacterization) {
     ParallelLogger::logInfo("Temporal Cohort characterization")
     startTemporalCohortCharacterization <- Sys.time()
@@ -1206,7 +1221,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     )
   }
   
-  # Store information from the vocabulary on the concepts used -------------------------
+  # Vocabulary details concepts----
   ParallelLogger::logInfo("Retrieving concept information")
   exportConceptInformation(
     connection = connection,
@@ -1217,7 +1232,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     exportFolder = exportFolder
   )
   
-  # Delete unique concept ID table ---------------------------------
+  ## Delete unique concept ID table----
   ParallelLogger::logTrace("Deleting concept ID table")
   sql <- "TRUNCATE TABLE @table;\nDROP TABLE @table;"
   DatabaseConnector::renderTranslateExecuteSql(
@@ -1258,7 +1273,7 @@ runCohortDiagnostics <- function(packageName = NULL,
              fileName = file.path(exportFolder, "metadata.csv"))
   
   
-  # Add all to zip file -------------------------------------------------------------------------------
+  # Add all to zip file----
   ParallelLogger::logInfo("Adding results to zip file")
   zipName <-
     file.path(exportFolder, paste0("Results_", databaseId, ".zip"))
