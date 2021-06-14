@@ -204,6 +204,7 @@ time_series,records_incidence,bigint,No,No,No,No
 time_series,subjects_incidence,bigint,No,No,No,No
 visit_context,cohort_id,bigint,Yes,Yes,No,Yes
 visit_context,visit_concept_id,int,Yes,Yes,No,Yes
+visit_context,visit_concept_name,varchar,Yes,No,No,Yes
 visit_context,visit_context,varchar,Yes,Yes,No,Yes
 visit_context,subjects,float,Yes,No,No,Yes
 visit_context,database_id,varchar,Yes,Yes,No,Yes

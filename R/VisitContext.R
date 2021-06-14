@@ -19,6 +19,7 @@ getVisitContext <- function(connectionDetails = NULL,
                             cdmDatabaseSchema,
                             tempEmulationSchema = NULL,
                             cohortDatabaseSchema = cdmDatabaseSchema,
+                            vocabularyDatabaseSchema = vocabularyDatabaseSchema,
                             cohortTable = "cohort",
                             cohortIds,
                             conceptIdTable = NULL,
@@ -56,20 +57,6 @@ getVisitContext <- function(connectionDetails = NULL,
       snakeCaseToCamelCase = TRUE
     )
   
-  if (!is.null(conceptIdTable)) {
-    sql <- "INSERT INTO @unique_concept_id_table (concept_id)
-            SELECT DISTINCT visit_concept_id
-            FROM @visit_context_table;"
-    DatabaseConnector::renderTranslateExecuteSql(
-      connection = connection,
-      sql = sql,
-      tempEmulationSchema = tempEmulationSchema,
-      unique_concept_id_table = conceptIdTable,
-      visit_context_table = "#visit_context",
-      progressBar = FALSE,
-      reportOverallTime = FALSE
-    )
-  }
   sql <-
     "TRUNCATE TABLE @visit_context_table;\nDROP TABLE @visit_context_table;"
   DatabaseConnector::renderTranslateExecuteSql(
