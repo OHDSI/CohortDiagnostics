@@ -136,7 +136,7 @@ INNER JOIN #calendar_periods cp ON (
 		AND observation_period_start_date <= period_end
 		)                                    -- observation period starts within calendar period, OR
 	OR (
-		cohort_end_date >= period_begin
+		observation_period_end_date >= period_begin
 		AND observation_period_end_date <= period_end
 		)                                    -- observation period end within calendar period, OR
 	OR (
@@ -196,7 +196,7 @@ INNER JOIN #calendar_periods cp ON (
 		AND observation_period_start_date <= period_end
 		)                                    -- observation period starts within calendar period, OR
 	OR (
-		cohort_end_date >= period_begin
+		observation_period_end_date >= period_begin
 		AND observation_period_end_date <= period_end
 		)                                    -- observation period end within calendar period, OR
 	OR (
