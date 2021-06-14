@@ -153,7 +153,7 @@ SELECT 0 cohort_id,
 	calendar_interval,
 	'3' series_type, -- observation period time series by calendar period
 	COUNT_BIG(*) records, -- records in calendar month
-	COUNT_BIG(DISTINCT subject_id) subjects, -- unique subjects
+	COUNT_BIG(DISTINCT person_id) subjects, -- unique subjects
 	SUM(datediff(dd, CASE 
 				WHEN observation_period_start_date >= period_begin
 					THEN observation_period_start_date
@@ -263,7 +263,7 @@ SELECT cohort_definition_id cohort_id,
 	calendar_interval,
 	'5' series_type, -- cohort time series by calendar period
 	COUNT_BIG(*) records, -- records in calendar month
-	COUNT_BIG(DISTINCT person) subjects, -- unique subjects
+	COUNT_BIG(DISTINCT subject_id) subjects, -- unique subjects
 	SUM(datediff(dd, CASE 
 				WHEN observation_period_start_date >= period_begin
 					THEN observation_period_start_date
