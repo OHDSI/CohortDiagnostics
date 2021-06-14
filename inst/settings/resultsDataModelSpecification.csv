@@ -214,6 +214,8 @@ time_series,subjects,bigint,Yes,No,No,Yes
 time_series,person_days,bigint,Yes,No,No,Yes
 time_series,records_incidence,bigint,No,No,No,No
 time_series,subjects_incidence,bigint,No,No,No,No
+time_series,records_terminate,bigint,No,No,No,No
+time_series,subjects_terminate,bigint,No,No,No,No
 visit_context,cohort_id,bigint,Yes,Yes,No,Yes
 visit_context,visit_concept_id,int,Yes,Yes,No,Yes
 visit_context,visit_context,varchar,Yes,Yes,No,Yes

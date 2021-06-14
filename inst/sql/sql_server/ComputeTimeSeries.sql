@@ -26,7 +26,7 @@ IF OBJECT_ID('tempdb..#d_time_series6', 'U') IS NOT NULL
 SELECT cohort_definition_id cohort_id,
 	period_begin,
 	calendar_interval,
-	'ci' series_type,                                           -- cohort time series by calendar period
+	'1' series_type,                                           -- cohort time series by calendar period
 	COUNT_BIG(*) records,                                       -- records in calendar month
 	COUNT_BIG(DISTINCT subject_id) subjects,                    -- unique subjects
 	SUM(datediff(dd, CASE 
@@ -49,7 +49,19 @@ SELECT cohort_definition_id cohort_id,
 				AND cohort_start_date <= period_end
 				THEN subject_id
 			ELSE NULL
-			END) subjects_incidence                                 -- subjects incidence within period
+			END) subjects_incidence,                                 -- subjects incidence within period
+	COUNT_BIG(CASE 
+			WHEN cohort_end_date >= period_begin
+				AND cohort_end_date <= period_end
+				THEN subject_id
+			ELSE NULL
+			END) records_terminate,                                  -- records terminate within period
+	COUNT_BIG(DISTINCT CASE 
+			WHEN cohort_end_date >= period_begin
+				AND cohort_end_date <= period_end
+				THEN subject_id
+			ELSE NULL
+			END) subjects_terminate                                 -- subjects terminate within period
 INTO #c_time_series1
 FROM @cohort_database_schema.@cohort_table
 INNER JOIN #calendar_periods cp ON (
@@ -75,7 +87,7 @@ GROUP BY period_begin,
 SELECT cohort_definition_id cohort_id,
 	period_begin,
 	calendar_interval,
-	'oi' series_type,                                           -- cohort time series by calendar period
+	'2' series_type,                                           -- cohort time series by calendar period
 	COUNT_BIG(*) records,                                       -- records in calendar month
 	COUNT_BIG(DISTINCT subject_id) subjects,                    -- unique subjects
 	SUM(datediff(dd, CASE 
@@ -98,7 +110,19 @@ SELECT cohort_definition_id cohort_id,
 				AND observation_period_start_date <= period_end
 				THEN subject_id
 			ELSE NULL
-			END) subjects_incidence
+			END) subjects_incidence,
+	COUNT_BIG(CASE 
+			WHEN observation_period_end_date >= period_begin
+				AND observation_period_end_date <= period_end
+				THEN subject_id
+			ELSE NULL
+			END) records_terminate,                                  -- records terminate within period
+	COUNT_BIG(DISTINCT CASE 
+			WHEN observation_period_end_date >= period_begin
+				AND observation_period_end_date <= period_end
+				THEN subject_id
+			ELSE NULL
+			END) subjects_terminate                                 -- subjects terminate within period
 INTO #c_time_series2
 FROM @cdm_database_schema.observation_period o              
 INNER JOIN (                                                -- limiting to the cohort
@@ -129,7 +153,7 @@ GROUP BY period_begin,
 SELECT 0 cohort_id,
 	period_begin,
 	calendar_interval,
-	'di' series_type,                                           -- observation period time series by calendar period
+	'3' series_type,                                           -- observation period time series by calendar period
 	COUNT_BIG(*) records,                                       -- records in calendar month
 	COUNT_BIG(DISTINCT subject_id) subjects,                    -- unique subjects
 	SUM(datediff(dd, CASE 
@@ -152,7 +176,19 @@ SELECT 0 cohort_id,
 				AND observation_period_start_date <= period_end
 				THEN person_id
 			ELSE NULL
-			END) subjects_incidence
+			END) subjects_incidence,
+	COUNT_BIG(CASE 
+			WHEN observation_period_end_date >= period_begin
+				AND observation_period_end_date <= period_end
+				THEN subject_id
+			ELSE NULL
+			END) records_terminate,                                  -- records terminate within period
+	COUNT_BIG(DISTINCT CASE 
+			WHEN observation_period_end_date >= period_begin
+				AND observation_period_end_date <= period_end
+				THEN subject_id
+			ELSE NULL
+			END) subjects_terminate                                 -- subjects terminate within period
 INTO #d_time_series3
 FROM @cdm_database_schema.observation_period o
 INNER JOIN #calendar_periods cp ON (
@@ -176,7 +212,7 @@ GROUP BY period_begin,
 SELECT cohort_definition_id cohort_id,
 	period_begin,
 	calendar_interval,
-	'cp' series_type,                                           -- cohort time series by calendar period
+	'4' series_type,                                           -- cohort time series by calendar period
 	COUNT_BIG(*) records,                                       -- records in calendar month
 	COUNT_BIG(DISTINCT subject_id) subjects,                    -- unique subjects
 	SUM(datediff(dd, CASE 
@@ -199,7 +235,19 @@ SELECT cohort_definition_id cohort_id,
 				AND cohort_start_date <= period_end
 				THEN subject_id
 			ELSE NULL
-			END) subjects_incidence
+			END) subjects_incidence,
+	COUNT_BIG(CASE 
+			WHEN cohort_end_date >= period_begin
+				AND cohort_end_date <= period_end
+				THEN subject_id
+			ELSE NULL
+			END) records_terminate,                                  -- records terminate within period
+	COUNT_BIG(DISTINCT CASE 
+			WHEN cohort_end_date >= period_begin
+				AND cohort_end_date <= period_end
+				THEN subject_id
+			ELSE NULL
+			END) subjects_terminate                                 -- subjects terminate within period
 INTO #c_time_series4
 FROM @cohort_database_schema.@cohort_table
 INNER JOIN #calendar_periods cp ON (
@@ -217,7 +265,7 @@ GROUP BY period_begin,
 SELECT cohort_definition_id cohort_id,
 	period_begin,
 	calendar_interval,
-	'op' series_type,                                           -- cohort time series by calendar period
+	'5' series_type,                                           -- cohort time series by calendar period
 	COUNT_BIG(*) records,                                       -- records in calendar month
 	COUNT_BIG(DISTINCT person) subjects,                        -- unique subjects
 	SUM(datediff(dd, CASE 
@@ -240,7 +288,19 @@ SELECT cohort_definition_id cohort_id,
 				AND observation_period_start_date <= period_end
 				THEN subject_id
 			ELSE NULL
-			END) subjects_incidence
+			END) subjects_incidence,
+	COUNT_BIG(CASE 
+			WHEN observation_period_end_date >= period_begin
+				AND observation_period_end_date <= period_end
+				THEN subject_id
+			ELSE NULL
+			END) records_terminate,                                  -- records terminate within period
+	COUNT_BIG(DISTINCT CASE 
+			WHEN observation_period_end_date >= period_begin
+				AND observation_period_end_date <= period_end
+				THEN subject_id
+			ELSE NULL
+			END) subjects_terminate                                 -- subjects terminate within period
 INTO #c_time_series5
 FROM @cdm_database_schema.observation_period o
 INNER JOIN (
@@ -263,7 +323,7 @@ GROUP BY period_begin,
 SELECT 0 cohort_id,
 	period_begin,
 	calendar_interval,
-	'dp' series_type,                                           -- cohort time series by calendar period
+	'6' series_type,                                           -- cohort time series by calendar period
 	COUNT_BIG(*) records,                                       -- records in calendar month
 	COUNT_BIG(DISTINCT person_id) subjects,                     -- unique subjects
 	SUM(datediff(dd, CASE 
@@ -286,7 +346,19 @@ SELECT 0 cohort_id,
 				AND observation_period_start_date <= period_end
 				THEN person_id
 			ELSE NULL
-			END) subjects_incidence
+			END) subjects_incidence,
+	COUNT_BIG(CASE 
+			WHEN observation_period_end_date >= period_begin
+				AND observation_period_end_date <= period_end
+				THEN person_id
+			ELSE NULL
+			END) records_terminate,                                  -- records terminate within period
+	COUNT_BIG(DISTINCT CASE 
+			WHEN observation_period_end_date >= period_begin
+				AND observation_period_end_date <= period_end
+				THEN person_id
+			ELSE NULL
+			END) subjects_terminate                                 -- subjects terminate within period
 INTO #d_time_series6
 FROM @cdm_database_schema.observation_period o
 INNER JOIN #calendar_periods cp ON 

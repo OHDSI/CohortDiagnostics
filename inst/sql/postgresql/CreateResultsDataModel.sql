@@ -446,6 +446,8 @@ CREATE TABLE time_series (
 			person_days BIGINT NOT NULL,
 			records_incidence BIGINT,
 			subjects_incidence BIGINT,
+			records_terminate BIGINT,
+			subjects_terminate BIGINT,
 			PRIMARY KEY(cohort_id, database_id, period_begin, calendar_interval, series_type)
 );
 
