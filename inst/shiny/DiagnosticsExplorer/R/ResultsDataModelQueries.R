@@ -165,7 +165,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
                                              databaseIds = NULL,
                                              dataTableName) {
   if (is(dataSource, "environment")) {
-    if (!exists(get(dataTableName, envir = dataSource))) {
+    if (!exists(dataTableName, envir = dataSource)) {
       stop(paste0(
         "Please check if ",
         dataTableName,
