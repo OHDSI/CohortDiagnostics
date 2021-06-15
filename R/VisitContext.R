@@ -43,6 +43,7 @@ getVisitContext <- function(connectionDetails = NULL,
     visit_context_table = "#visit_context",
     cdm_database_schema = cdmDatabaseSchema,
     cohort_database_schema = cohortDatabaseSchema,
+    vocabulary_database_schema = vocabularyDatabaseSchema,
     cohort_table = cohortTable,
     cohort_ids = cohortIds
   )
