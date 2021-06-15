@@ -42,7 +42,7 @@ getIncidenceRate <- function(connectionDetails = NULL,
     cohortIds = cohortId
   )
   
-  if (isTRUE(instantiatedCohortsCheck)) {
+  if (!isTRUE(instantiatedCohortsCheck)) {
     warning(
       "Cohort with ID ",
       cohortId,

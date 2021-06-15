@@ -21,7 +21,7 @@ defaultResultsSchema <- 'CdSkeletonCohortDiagnosticsStudy'
 defaultVocabularySchema <- defaultResultsSchema
 alternateVocabularySchema <- c('vocabulary')
 
-defaultDatabaseMode <- TRUE # Use file system if FALSE
+defaultDatabaseMode <- FALSE # Use file system if FALSE
 
 showTimeSeries <- TRUE
 
@@ -167,6 +167,16 @@ if (databaseMode) {
   }
   dataSource <-
     createFileDataSource(localDataPath, envir = .GlobalEnv)
+  
+  covariateRef <- dplyr::bind_rows(covariateRef, temporalCovariateRef) %>% 
+    dplyr::distinct() %>% 
+    dplyr::arrange(.data$covariateId)
+  rm(temporalCovariateRef)
+  
+  analysisRef <- dplyr::bind_rows(analysisRef, temporalAnalysisRef) %>% 
+    dplyr::distinct() %>% 
+    dplyr::arrange(.data$analysisId)
+  rm(temporalAnalysisRef)
 }
 
 if (exists("database")) {
