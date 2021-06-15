@@ -1248,29 +1248,40 @@ runCohortDiagnostics <- function(packageName = NULL,
   
   # Writing metadata file
   ParallelLogger::logInfo("Retrieving metadata information and writing metadata")
-  metadata <- dplyr::tibble(
-    databaseId = databaseId,
-    variableField = c('vocabularyVersionCdm', 
-                      'vocabularyVersion', 
-                      'CohortDiagnosticsVersion', 
-                      'DatabaseConnectorVersion',
-                      'FeatureExtractionVersion',
-                      'SqlRenderVersion',
-                      'AndromedaVersion',
-                      'dplyrVersion',
-                      'tidyrVersion',
-                      'Rversion'),
-    valueField = c(vocabularyVersionCdm, 
-                   vocabularyVersion, 
-                   as.character(packageVersion('CohortDiagnostics')), 
-                   as.character(packageVersion('DatabaseConnector')), 
-                   as.character(packageVersion('FeatureExtraction')), 
-                   as.character(packageVersion('SqlRender')), 
-                   as.character(packageVersion('Andromeda')), 
-                   as.character(packageVersion('dplyr')), 
-                   as.character(packageVersion('tidyr')), 
-                   as.character(R.Version()$version.string))
+  
+  variableField <- c(
+    "vocabularyVersionCdm",
+    "vocabularyVersion",
+    "CohortDiagnosticsVersion",
+    "DatabaseConnectorVersion",
+    "FeatureExtractionVersion",
+    "SqlRenderVersion",
+    "AndromedaVersion",
+    "dplyrVersion",
+    "tidyrVersion",
+    "Rversion"
   )
+  
+  valueField <- c(
+    vocabularyVersionCdm,
+    vocabularyVersion,
+    as.character(packageVersion("CohortDiagnostics")),
+    as.character(packageVersion("DatabaseConnector")),
+    as.character(packageVersion("FeatureExtraction")),
+    as.character(packageVersion("SqlRender")),
+    as.character(packageVersion("Andromeda")),
+    as.character(packageVersion("dplyr")),
+    as.character(packageVersion("tidyr")),
+    as.character(R.Version()$version.string)
+  )
+  
+  metadata <-
+    dplyr::tibble(
+      databaseId = !!databaseId,
+      variableField = !!variableField,
+      valueField = !!valueField
+      
+    )
   writeToCsv(data = metadata,
              fileName = file.path(exportFolder, "metadata.csv"))
   
