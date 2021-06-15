@@ -210,26 +210,6 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
   if (nrow(data) == 0) {
     return(NULL)
   }
-  
-  resultsDataModelSpecifications <-
-    CohortDiagnostics::getResultsDataModelSpecifications() %>%
-    dplyr::filter(.data$tableName == camelCaseToSnakeCase(!!dataTableName))
-  
-  requiredColumns <- resultsDataModelSpecifications %>%
-    dplyr::filter(.data$isRequired == "Yes") %>%
-    dplyr::pull(.data$fieldName) %>%
-    snakeCaseToCamelCase()
-  
-  missingColumns <- setdiff(requiredColumns, colnames(data))
-  
-  if (length(missingColumns) > 0) {
-    stop(paste0(
-      "Missing the following columns in ",
-      dataTableName,
-      ": ",
-      paste0(missingColumns, collapse = ", ")
-    ))
-  }
   return(data)
 }
 

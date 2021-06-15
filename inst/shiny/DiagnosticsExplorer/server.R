@@ -2974,7 +2974,7 @@ shiny::shinyServer(function(input, output, session) {
     if (nrow(visitContext) == 0) {
       return(NULL)
     }
-    
+    # to ensure backward compatibility to 2.1 when visitContext did not have visitConceptName
     if (!'visitConceptName' %in% colnames(visitContext)) {
       concepts <- getConceptDetails(dataSource = dataSource, 
                                     conceptIds = visitContext$visitConceptId %>% unique()
