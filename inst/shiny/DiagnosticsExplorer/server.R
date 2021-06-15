@@ -2219,6 +2219,7 @@ shiny::shinyServer(function(input, output, session) {
       cohortIds = cohortId(),
       databaseIds = databaseIds()
     )
+    validate(need(!is.null(orphanConcepts), "No orphan concepts"))
     orphanConcepts <- orphanConcepts %>% 
       dplyr::inner_join(conceptSets %>% dplyr::select(
         .data$cohortId,
@@ -3668,8 +3669,6 @@ shiny::shinyServer(function(input, output, session) {
       if (length(getResoledAndMappedConceptIdsForFilters()) > 0) {
         data <- data %>% 
           dplyr::filter(.data$conceptId %in% getResoledAndMappedConceptIdsForFilters())
-      } else {
-        data <- data[0,]
       }
     }
     
