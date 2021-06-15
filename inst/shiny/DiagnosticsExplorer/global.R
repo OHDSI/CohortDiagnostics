@@ -26,7 +26,7 @@ defaultDatabaseMode <- FALSE # Use file system if FALSE
 showTimeSeries <- TRUE
 
 appInformationText <- "V 2.2"
-appInformationText <- "Powered by OHDSI Cohort Diagnostics application - Version 2.1. This app is working in"
+appInformationText <- paste0("Powered by OHDSI Cohort Diagnostics application - ", appInformationText, ". This app is working in")
 if (defaultDatabaseMode) {
   appInformationText <- paste0(appInformationText, " database")
 } else {
