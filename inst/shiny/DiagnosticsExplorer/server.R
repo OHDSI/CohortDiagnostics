@@ -1829,8 +1829,14 @@ shiny::shinyServer(function(input, output, session) {
   timeSeries <- reactive({
     calenderIntervalFirstLetter <- tolower(substr(input$timeSeriesFilter,1,1))
     data <- timeSeriesData()
-    if (is.null(data)) {return(NULL)}
+    validate(need(!is.null(data) > 0, "No time series data"))
+    validate(need(nrow(data) > 0, "No time series data"))
     
+    # for backward compatibility with cohort diagnostics version 2.1
+    if (!'seriesType' %in% colnames(data)) {
+      data <- data %>% 
+        dplyr::mutate(seriesType = '1')
+    }
     data <- data %>% 
       dplyr::filter(.data$calendarInterval %in% calenderIntervalFirstLetter)
     
