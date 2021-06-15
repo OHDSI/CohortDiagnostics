@@ -701,8 +701,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         vocabularyDatabaseSchema = vocabularyDatabaseSchema,
         cohortTable = cohortTable,
         cdmVersion = cdmVersion,
-        cohortIds = subset$cohortId,
-        conceptIdTable = "#concept_ids"
+        cohortIds = subset$cohortId
       )
       if (nrow(data) > 0) {
         data <- data %>%
@@ -1034,7 +1033,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       
       ## cohort relationships----
       cohortRelationships <- cohortOverlap %>% 
-        dplyr::filter(attributeType == 'r')  %>% 
+        dplyr::filter(.data$attributeType == 'r')  %>% 
         dplyr::rename(count = .data$value, targetCohortId = .data$cohortId) %>% 
         dplyr::mutate(startDay = as.numeric(.data$attribute)*30) %>% 
         dplyr::mutate(endDay = (as.numeric(.data$attribute)*30) + 29)  %>%
@@ -1065,7 +1064,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       
       ## cohort overlap----
       cohortOverlap <- cohortOverlap %>% 
-        dplyr::filter(attributeType == 'o')  %>% 
+        dplyr::filter(.data$attributeType == 'o')  %>% 
         dplyr::mutate(attribute = dplyr::case_when(.data$attribute == 'es' ~ 'eitherSubjects',
                                                    .data$attribute == 'bs' ~ 'bothSubjects',
                                                    .data$attribute == 'ts' ~ 'tOnlySubjects',

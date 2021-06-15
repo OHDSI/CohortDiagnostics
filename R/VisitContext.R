@@ -22,7 +22,6 @@ getVisitContext <- function(connectionDetails = NULL,
                             vocabularyDatabaseSchema = vocabularyDatabaseSchema,
                             cohortTable = "cohort",
                             cohortIds,
-                            conceptIdTable = NULL,
                             cdmVersion = 5) {
   if (!cdmVersion == 5) {
     warning('Only OMOP CDM v5.x.x is supported. Continuing execution.')

@@ -915,14 +915,15 @@ resolveMappedConceptSetFromVocabularyDatabaseSchema <-
 # not exported
 getResultsCovariateRef <- function(dataSource,
                                    covariateIds) {
+  dataTableName <- 'covariateRef'
   if (is(dataSource, "environment")) {
-    if (!exists(covariateRef)) {
+    if (!exists(dataTableName)) {
       return(NULL)
     }
-    if (nrow(covariateRef) == 0) {
+    if (nrow(get(dataTableName, envir = dataSource)) == 0) {
       return(NULL)
     }
-    data <- covariateRef %>%
+    data <- get(dataTableName) %>%
       dplyr::filter(.data$covariateId %in% covariateIds)
   } else {
     sql <- "SELECT *
@@ -947,14 +948,15 @@ getResultsCovariateRef <- function(dataSource,
 # not exported
 getResultsTemporalCovariateRef <- function(dataSource,
                                            covariateIds) {
+  dataTableName <- 'temporalCovariateRef'
   if (is(dataSource, "environment")) {
-    if (!exists(temporalCovariateRef)) {
+    if (!exists(dataTableName)) {
       return(NULL)
     }
-    if (nrow(temporalCovariateRef) == 0) {
+    if (nrow(get(dataTableName, envir = dataSource)) == 0) {
       return(NULL)
     }
-    data <- temporalCovariateRef %>%
+    data <- get(dataTableName) %>%
       dplyr::filter(.data$covariateId %in% covariateIds)
   } else {
     sql <- "SELECT *
