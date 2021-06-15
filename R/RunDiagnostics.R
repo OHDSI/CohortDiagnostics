@@ -946,7 +946,8 @@ runCohortDiagnostics <- function(packageName = NULL,
                       .data$seriesType,
                       .data$records, .data$subjects,
                       .data$personDays, .data$recordsIncidence,
-                      .data$subjectsIncidence)
+                      .data$subjectsIncidence, .data$recordsTerminate,
+                      .data$subjectsTerminate)
       
       DatabaseConnector::renderTranslateExecuteSql(
         connection = connection,
