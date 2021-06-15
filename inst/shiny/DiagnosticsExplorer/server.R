@@ -1234,6 +1234,9 @@ shiny::shinyServer(function(input, output, session) {
   getCohortCountResultReactive <- shiny::reactive(x = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
+    if (all(is(dataSource, "environment"), !exists('cohortCount'))) {
+      return(NULL)
+    }
     data <- getResultsFromCohortCount(
       dataSource = dataSource,
       databaseIds = databaseIds(),
@@ -1552,7 +1555,9 @@ shiny::shinyServer(function(input, output, session) {
   incidenceRateDataFull <- reactive({
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
-    
+    if (all(is(dataSource, "environment"), !exists('incidenceRate'))) {
+      return(NULL)
+    }
     progress <- shiny::Progress$new()
     on.exit(progress$close())
     progress$set(message = paste0("Getting incidence rate data."), value = 0)
@@ -1805,6 +1810,9 @@ shiny::shinyServer(function(input, output, session) {
   timeSeriesData <- reactive({
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
+    if (all(is(dataSource, "environment"), !exists('timeSeries'))) {
+      return(NULL)
+    }
     
     progress <- shiny::Progress$new()
     on.exit(progress$close())
@@ -1865,6 +1873,9 @@ shiny::shinyServer(function(input, output, session) {
   timeDistributionData <- reactive({
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
+    if (all(is(dataSource, "environment"), !exists('timeDistribution'))) {
+      return(NULL)
+    }
     data <- getResultsFromTimeDistribution(
       dataSource = dataSource,
       cohortIds = cohortIds(),
@@ -1956,6 +1967,9 @@ shiny::shinyServer(function(input, output, session) {
                   "No data sources chosen"))
     validate(need(all(!is.null(cohortId()),length(cohortId()) > 0),
                   "No cohort chosen"))
+    if (all(is(dataSource, "environment"), !exists('includedSourceConcept'))) {
+      return(NULL)
+    }
     includedConcepts <- getResultsFromIncludedConcept(
       dataSource = dataSource,
       cohortIds = cohortId(),
@@ -2191,6 +2205,9 @@ shiny::shinyServer(function(input, output, session) {
   orphanConceptsData <- shiny::reactive(x = {
     validate(need(all(!is.null(databaseIds()), length(databaseIds()) > 0), "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
+    if (all(is(dataSource, "environment"), !exists('orphanConcept'))) {
+      return(NULL)
+    }
     orphanConcepts <- getResultsFromOrphanConcept(
       dataSource = dataSource,
       cohortIds = cohortId(),
@@ -2465,6 +2482,9 @@ shiny::shinyServer(function(input, output, session) {
   inclusionRuleTableData <- shiny::reactive(x = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
+    if (all(is(dataSource, "environment"), !exists('inclusionRuleStats'))) {
+      return(NULL)
+    }
     data <- getResultsFromInclusionRuleStatistics(
       dataSource = dataSource,
       cohortIds = cohortId(),
@@ -2619,6 +2639,9 @@ shiny::shinyServer(function(input, output, session) {
   indexEventBreakDownDataFull <- shiny::reactive(x = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
+    if (all(is(dataSource, "environment"), !exists('indexEventBreakdown'))) {
+      return(NULL)
+    }
     data <- getResultsFromIndexEventBreakdown(
       dataSource = dataSource,
       cohortIds = cohortId(),
@@ -2939,6 +2962,9 @@ shiny::shinyServer(function(input, output, session) {
   visitContexData <- shiny::reactive(x = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
+    if (all(is(dataSource, "environment"), !exists('visitContext'))) {
+      return(NULL)
+    }
     visitContext <- getResultsFromVisitContext(
       dataSource = dataSource,
       cohortIds = cohortId(),
@@ -3142,6 +3168,9 @@ shiny::shinyServer(function(input, output, session) {
   covariateValueForCohortIdDatabaseIds <- shiny::reactive(x = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
+    if (all(is(dataSource, "environment"), !any(exists('covariateValue'), exists('temporalCovariateValue')))) {
+      return(NULL)
+    }
     
     progress <- shiny::Progress$new()
     on.exit(progress$close())
@@ -3745,6 +3774,9 @@ shiny::shinyServer(function(input, output, session) {
   cohortOverlapData <- reactive({
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 1, "Please select at least two cohorts."))
+    if (all(is(dataSource, "environment"), !exists('cohortOverlap'))) {
+      return(NULL)
+    }
     
     progress <- shiny::Progress$new()
     on.exit(progress$close())
@@ -3815,6 +3847,9 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(length(input$database) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No target cohort chosen"))
     validate(need(length(comparatorCohortId()) > 0, "No target cohort chosen"))
+    if (all(is(dataSource, "environment"), !any(exists('covariateValue'), exists('temporalCovariateValue')))) {
+      return(NULL)
+    }
     
     progress <- shiny::Progress$new()
     on.exit(progress$close())
