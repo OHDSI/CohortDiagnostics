@@ -1258,7 +1258,8 @@ runCohortDiagnostics <- function(packageName = NULL,
     "AndromedaVersion",
     "dplyrVersion",
     "tidyrVersion",
-    "Rversion"
+    "Rversion",
+	"CurrentPackage"
   )
   
   valueField <- c(
@@ -1271,7 +1272,8 @@ runCohortDiagnostics <- function(packageName = NULL,
     as.character(packageVersion("Andromeda")),
     as.character(packageVersion("dplyr")),
     as.character(packageVersion("tidyr")),
-    as.character(R.Version()$version.string)
+    as.character(R.Version()$version.string),
+	as.character(packageName())
   )
   
   metadata <-
