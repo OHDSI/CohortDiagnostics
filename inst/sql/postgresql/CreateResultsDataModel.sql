@@ -115,7 +115,7 @@ CREATE TABLE cohort_relationships (
 			comparator_cohort_id BIGINT NOT NULL,			
 			start_day FLOAT NOT NULL,
 			end_day FLOAT NOT NULL,
-			count FLOAT NOT NULL,			
+			count_value FLOAT NOT NULL,			
 			PRIMARY KEY(database_id, target_cohort_id, comparator_cohort_id, start_day, end_day)
 );
 
