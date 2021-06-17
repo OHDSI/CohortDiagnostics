@@ -1004,7 +1004,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       ## calendar incidence----
       cohortCalendarIncidence <- cohortOverlap %>% 
         dplyr::filter(.data$attributeType %in% c('y', 'm', 'q')) %>% 
-        dplyr::mutate(calendarMonth = lubridate::as_date(.data$attribute)) %>% 
+        dplyr::mutate(calendarMonth = lubridate::as_date(.data$attributeName)) %>% 
         dplyr::rename(countValue = .data$value,
                       periodType = .data$attributeType) %>% 
         dplyr::mutate(databaseId = !!databaseId) %>% 
@@ -1035,8 +1035,8 @@ runCohortDiagnostics <- function(packageName = NULL,
       cohortRelationships <- cohortOverlap %>% 
         dplyr::filter(.data$attributeType == 'r')  %>% 
         dplyr::rename(count = .data$value, targetCohortId = .data$cohortId) %>% 
-        dplyr::mutate(startDay = as.numeric(.data$attribute)*30) %>% 
-        dplyr::mutate(endDay = (as.numeric(.data$attribute)*30) + 29)  %>%
+        dplyr::mutate(startDay = as.numeric(.data$attributeName)*30) %>% 
+        dplyr::mutate(endDay = (as.numeric(.data$attributeName)*30) + 29)  %>%
         dplyr::mutate(databaseId = !!databaseId) %>% 
         dplyr::select(.data$databaseId,
                       .data$targetCohortId, 
@@ -1065,31 +1065,31 @@ runCohortDiagnostics <- function(packageName = NULL,
       ## cohort overlap----
       cohortOverlap <- cohortOverlap %>% 
         dplyr::filter(.data$attributeType == 'o')  %>% 
-        dplyr::mutate(attribute = dplyr::case_when(.data$attribute == 'es' ~ 'eitherSubjects',
-                                                   .data$attribute == 'bs' ~ 'bothSubjects',
-                                                   .data$attribute == 'ts' ~ 'tOnlySubjects',
-                                                   .data$attribute == 'cs' ~ 'cOnlySubjects',
-                                                   .data$attribute == 'tb' ~ 'tBeforeCSubjects',
-                                                   .data$attribute == 'cb' ~ 'cBeforeTSubjects',
-                                                   .data$attribute == 'sd' ~ 'sameDaySubjects',
-                                                   .data$attribute == 'tc' ~ 'tInCSubjects',
-                                                   .data$attribute == 'ct' ~ 'cInTSubjects')
+        dplyr::mutate(attributeName = dplyr::case_when(.data$attributeName == 'es' ~ 'eitherSubjects',
+                                                       .data$attributeName == 'bs' ~ 'bothSubjects',
+                                                       .data$attributeName == 'ts' ~ 'tOnlySubjects',
+                                                       .data$attributeName == 'cs' ~ 'cOnlySubjects',
+                                                       .data$attributeName == 'tb' ~ 'tBeforeCSubjects',
+                                                       .data$attributeName == 'cb' ~ 'cBeforeTSubjects',
+                                                       .data$attributeName == 'sd' ~ 'sameDaySubjects',
+                                                       .data$attributeName == 'tc' ~ 'tInCSubjects',
+                                                       .data$attributeName == 'ct' ~ 'cInTSubjects')
         ) %>% 
         dplyr::rename(targetCohortId = .data$cohortId) %>% 
         dplyr::select(.data$targetCohortId, 
                       .data$comparatorCohortId,
-                      .data$attribute,
+                      .data$attributeName,
                       .data$value) %>%
         tidyr::pivot_wider(id_cols = c("targetCohortId", "comparatorCohortId"),
                            values_from = "value",
                            values_fill = 0,
-                           names_from = "attribute") %>%
+                           names_from = "attributeName") %>%
         dplyr::mutate(databaseId = !!databaseId) %>% 
         dplyr::select(.data$eitherSubjects, .data$bothSubjects, .data$tOnlySubjects,
                       .data$cOnlySubjects, .data$tBeforeCSubjects, .data$cBeforeTSubjects,
                       .data$sameDaySubjects, .data$tInCSubjects, .data$cInTSubjects,
                       .data$targetCohortId, .data$comparatorCohortId, .data$databaseId)
-
+      
       if (nrow(cohortOverlap) > 0) {
         writeToCsv(
           data = cohortOverlap,
