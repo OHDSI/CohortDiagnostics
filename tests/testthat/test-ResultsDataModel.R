@@ -1,4 +1,5 @@
 library(testthat)
+library(CohortDiagnostics)
 
 createResultsDataModel(connectionDetails = connectionDetails, schema = cohortDiagnosticsSchema)
 
@@ -30,7 +31,7 @@ test_that("Results upload", {
     cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
     inclusionStatisticsFolder = file.path(folder, "incStats"),
     exportFolder = file.path(folder, "export"),
-    databaseId = "cdmv5",
+    databaseId = "cdmV5",
     incremental = TRUE,
     incrementalFolder = file.path(folder, "incremental")
   )
@@ -68,11 +69,11 @@ test_that("Results upload", {
         sql = sql,
         schema = cohortDiagnosticsSchema,
         table_name = tableName,
-        database_id = "cdmv5"
+        database_id = "cdmV5"
       )
       databaseIdCount <-
         DatabaseConnector::querySql(connection, sql)[, 1]
-      testthat::expect_true(nrow(databaseIdCount) >= 0)
+      testthat::expect_true(length(databaseIdCount) == 1)
     }
   }
   DatabaseConnector::disconnect(connection)
@@ -172,7 +173,7 @@ test_that("Data removal works", {
         connection = connection,
         schema = cohortDiagnosticsSchema,
         tableName = tableName,
-        databaseId = "cdmv5"
+        databaseId = "cdmV5"
       )
       
       sql <-
@@ -181,7 +182,7 @@ test_that("Data removal works", {
         sql = sql,
         schema = cohortDiagnosticsSchema,
         table_name = tableName,
-        database_id = "cdmv5"
+        database_id = "cdmV5"
       )
       databaseIdCount <-
         DatabaseConnector::querySql(connection, sql)[, 1]
