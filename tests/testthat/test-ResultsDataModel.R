@@ -1,3 +1,5 @@
+library(testthat)
+
 createResultsDataModel(connectionDetails = connectionDetails, schema = cohortDiagnosticsSchema)
 
 test_that("Results upload", {
@@ -51,6 +53,7 @@ test_that("Results upload", {
   
   specifications <- getResultsDataModelSpecifications()
   
+  connection = DatabaseConnector::connect(connectionDetails = connectionDetails)
   for (tableName in unique(specifications$tableName)) {
     primaryKey <- specifications %>%
       dplyr::filter(.data$tableName == !!tableName &
@@ -69,48 +72,32 @@ test_that("Results upload", {
       )
       databaseIdCount <-
         DatabaseConnector::querySql(connection, sql)[, 1]
+      testthat::expect_true(nrow(databaseIdCount) >= 0)
     }
   }
+  DatabaseConnector::disconnect(connection)
 })
 
 test_that("Retrieve results from remote database", {
-  CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = folder)
-  
+
   dataSourceDatabase <- CohortDiagnostics::createDatabaseDataSource(
     connection = DatabaseConnector::connect(connectionDetails = connectionDetails),
     resultsDatabaseSchema = cohortDiagnosticsSchema
   )
-  dataSourcePreMergedFile <- CohortDiagnostics::createFileDataSource(
-    premergedDataFile = file.path(folder, "PreMerged.RData")
-  )
-  
+
   # cohort count
   cohortCountFromDb <- CohortDiagnostics::getResultsFromCohortCount(
     dataSource = dataSourceDatabase,
-    cohortIds = c(17492, 17692),
     databaseIds = 'cdmV5'
   )
   expect_true(nrow(cohortCountFromDb) > 0)
-  cohortCountFromFile <- CohortDiagnostics::getResultsFromCohortCount(
-    dataSource = dataSourcePreMergedFile,
-    cohortIds = c(17492, 17692),
-    databaseIds = 'cdmV5'
-  )
-  expect_true(nrow(cohortCountFromFile) > 0)
   
   # time series
   timeSeriesFromDb <- CohortDiagnostics::getResultsFromTimeSeries(
     dataSource = dataSourceDatabase,
-    cohortIds = c(17492, 17692),
     databaseIds = 'cdmV5'
   )
-  expect_true(nrow(timeSeriesFromDb) > 0)
-  timeSeriesFromFile <- CohortDiagnostics::getResultsFromTimeSeries(
-    dataSource = dataSourcePreMergedFile,
-    cohortIds = c(17492, 17692),
-    databaseIds = 'cdmV5'
-  )
-  expect_true(nrow(timeSeriesFromFile) > 0)
+  expect_true(nrow(timeSeriesFromDb) >= 0)
   
   # time distribution
   timeDistributionFromDb <- CohortDiagnostics::getResultsFromTimeDistribution(
@@ -118,13 +105,7 @@ test_that("Retrieve results from remote database", {
     cohortIds = c(17492, 17692),
     databaseIds = 'cdmV5'
   )
-  expect_true(nrow(timeDistributionFromDb) > 0)
-  timeDistributionFromFile <- CohortDiagnostics::getResultsFromTimeDistribution(
-    dataSource = dataSourcePreMergedFile,
-    cohortIds = c(17492, 17692),
-    databaseIds = 'cdmV5'
-  )
-  expect_true(nrow(timeDistributionFromFile) > 0)
+  expect_true(nrow(timeDistributionFromDb) >= 0)
   
   # incidence rate result
   incidenceRateFromDb <- CohortDiagnostics::getResultsFromIncidenceRate(
@@ -132,13 +113,7 @@ test_that("Retrieve results from remote database", {
     cohortIds = c(17492, 17692),
     databaseIds = 'cdmV5'
   )
-  # expect_true(nrow(incidenceRateFromDb) >= 0) - no data in eunomia
-  incidenceRateFromFile <- CohortDiagnostics::getResultsFromIncidenceRate(
-    dataSource = dataSourcePreMergedFile,
-    cohortIds = c(17492, 17692),
-    databaseIds = 'cdmV5'
-  )
-  # expect_true(nrow(incidenceRateFromFile) >= 0) - no data in eunomia
+  expect_true(nrow(incidenceRateFromDb) >= 0) # no data in eunomia
   
   # inclusion rules
   inclusionRulesFromDb <- CohortDiagnostics::getResultsFromInclusionRuleStatistics(
@@ -146,14 +121,7 @@ test_that("Retrieve results from remote database", {
     cohortIds = c(17492, 17692),
     databaseIds = 'cdmV5'
   )
-  expect_true(nrow(inclusionRulesFromDb) > 0)
-  inclusionRulesFromFile <- CohortDiagnostics::getResultsFromInclusionRuleStatistics(
-    dataSource = dataSourcePreMergedFile,
-    cohortIds = c(17492, 17692),
-    databaseIds = 'cdmV5'
-  )
-  expect_true(nrow(inclusionRulesFromFile) > 0)
-  
+  expect_true(nrow(inclusionRulesFromDb) >= 0)
   
   # index_event_breakdown
   indexEventBreakdownFromDb <- CohortDiagnostics::getResultsFromIndexEventBreakdown(
@@ -161,13 +129,7 @@ test_that("Retrieve results from remote database", {
     cohortIds = c(17492, 17692),
     databaseIds = 'cdmV5'
   )
-  expect_true(nrow(indexEventBreakdownFromDb) > 0)
-  indexEventBreakdownFromFile <- CohortDiagnostics::getResultsFromIndexEventBreakdown(
-    dataSource = dataSourcePreMergedFile,
-    cohortIds = c(17492, 17692),
-    databaseIds = 'cdmV5'
-  )
-  expect_true(nrow(indexEventBreakdownFromFile) > 0)
+  expect_true(nrow(indexEventBreakdownFromDb) >= 0)
   
   # visit_context
   visitContextFromDb <- CohortDiagnostics::getResultsFromVisitContext(
@@ -175,27 +137,7 @@ test_that("Retrieve results from remote database", {
     cohortIds = c(17492, 17692),
     databaseIds = 'cdmV5'
   )
-  expect_true(nrow(visitContextFromDb) > 0)
-  visitContextFromFile <- CohortDiagnostics::getResultsFromVisitContext(
-    dataSource = dataSourcePreMergedFile,
-    cohortIds = c(17492, 17692),
-    databaseIds = 'cdmV5'
-  )
-  expect_true(nrow(visitContextFromFile) > 0)
-  
-  # visit_context
-  visitContextFromDb <- CohortDiagnostics::getResultsFromVisitContext(
-    dataSource = dataSourceDatabase,
-    cohortIds = c(17492, 17692),
-    databaseIds = 'cdmV5'
-  )
-  expect_true(nrow(visitContextFromDb) > 0)
-  visitContextFromFile <- CohortDiagnostics::getResultsFromVisitContext(
-    dataSource = dataSourcePreMergedFile,
-    cohortIds = c(17492, 17692),
-    databaseIds = 'cdmV5'
-  )
-  expect_true(nrow(visitContextFromFile) > 0)
+  expect_true(nrow(visitContextFromDb) >= 0)
   
   # included_concept
   includedConceptFromDb <- CohortDiagnostics::getResultsFromIncludedConcept(
@@ -203,13 +145,7 @@ test_that("Retrieve results from remote database", {
     cohortIds = c(17492, 17692),
     databaseIds = 'cdmV5'
   )
-  expect_true(nrow(includedConceptFromDb) > 0)
-  includedConceptFromFile <- CohortDiagnostics::getResultsFromIncludedConcept(
-    dataSource = dataSourcePreMergedFile,
-    cohortIds = c(17492, 17692),
-    databaseIds = 'cdmV5'
-  )
-  expect_true(nrow(includedConceptFromFile) > 0)
+  expect_true(nrow(includedConceptFromDb) >= 0)
   
   # orphan_concept
   orphanConceptFromDb <- CohortDiagnostics::getResultsFromOrphanConcept(
@@ -217,13 +153,8 @@ test_that("Retrieve results from remote database", {
     cohortIds = c(17492, 17692),
     databaseIds = 'cdmV5'
   )
-  expect_true(nrow(orphanConceptFromDb) > 0)
-  orphanConceptFromFile <- CohortDiagnostics::getResultsFromOrphanConcept(
-    dataSource = dataSourcePreMergedFile,
-    cohortIds = c(17492, 17692),
-    databaseIds = 'cdmV5'
-  )
-  expect_true(nrow(orphanConceptFromFile) > 0)
+  expect_true(nrow(orphanConceptFromDb) >= 0)
+  
 })
 
 test_that("Data removal works", {

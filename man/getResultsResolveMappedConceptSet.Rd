@@ -4,7 +4,11 @@
 \alias{getResultsResolveMappedConceptSet}
 \title{Returns resolved and mapped concepts for concept set expression in a cohort}
 \usage{
-getResultsResolveMappedConceptSet(dataSource, databaseIds, cohortIds)
+getResultsResolveMappedConceptSet(
+  dataSource,
+  databaseIds = NULL,
+  cohortIds = NULL
+)
 }
 \arguments{
 \item{dataSource}{A list object that is the output of \code{createDatabaseDataSource} or \code{createFileDataSource} function. 
