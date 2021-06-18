@@ -184,28 +184,28 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
       data <- data %>%
         dplyr::filter(.data$databaseId %in% !!databaseIds)
     }
-  } else {
-    if (!DatabaseConnector::dbIsValid(dataSource$connection)) {
-      stop("Connection to database seems to be closed.")
-    }
-    sql <- "SELECT *
+  } else if (is.null(dataSource$connection)) {
+    stop("No connection provided. Unable to query database.") }
+  else if (!DatabaseConnector::dbIsValid(dataSource$connection)) {
+    stop("Connection to database seems to be closed.")
+  }
+  sql <- "SELECT *
             FROM  @results_database_schema.@data_table
             {@cohort_ids == '' & @database_id !=''} ? { WHERE database_id in (@database_id)}
             {@cohort_ids != '' & @database_id !=''} ? {  WHERE database_id in (@database_id) AND cohort_id in (@cohort_ids)}
             {@cohort_ids != '' & @database_id ==''} ? {  WHERE cohort_id in (@cohort_ids)}
             ;"
-    data <-
-      renderTranslateQuerySql(
-        connection = dataSource$connection,
-        sql = sql,
-        results_database_schema = dataSource$resultsDatabaseSchema,
-        cohort_ids = cohortIds,
-        data_table = camelCaseToSnakeCase(dataTableName),
-        database_id = quoteLiterals(databaseIds),
-        snakeCaseToCamelCase = TRUE
-      ) %>%
-      tidyr::tibble()
-  }
+  data <-
+    renderTranslateQuerySql(
+      connection = dataSource$connection,
+      sql = sql,
+      results_database_schema = dataSource$resultsDatabaseSchema,
+      cohort_ids = cohortIds,
+      data_table = camelCaseToSnakeCase(dataTableName),
+      database_id = quoteLiterals(databaseIds),
+      snakeCaseToCamelCase = TRUE
+    ) %>%
+    tidyr::tibble()
   
   if (nrow(data) == 0) {
     return(NULL)
