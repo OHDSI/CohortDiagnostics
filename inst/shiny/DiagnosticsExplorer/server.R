@@ -1733,7 +1733,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::arrange(.data$incidenceRate)
     incidenceRateFilter <-
       incidenceRateFilter[incidenceRateFilter$incidenceRate >= input$YscaleMinAndMax[1] &
-                            incidenceRateFilter$incidenceRate <= input$YscaleMinAndMax[2], , drop = FALSE] %>%
+                            incidenceRateFilter$incidenceRate <= input$YscaleMinAndMax[2], drop = FALSE] %>%
       dplyr::pull(.data$incidenceRate)
     return(incidenceRateFilter)
   })
@@ -1746,6 +1746,8 @@ shiny::shinyServer(function(input, output, session) {
       write.csv(incidenceRateDataFull(), file)
     }
   )
+  
+ 
   
   output$incidenceRatePlot <- ggiraph::renderggiraph(expr = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
@@ -4260,10 +4262,10 @@ shiny::shinyServer(function(input, output, session) {
       plotCohortComparisonStandardizedDifference(
         balance = data,
         shortNameRef = cohort,
-        xLimitMin = 0,
-        xLimitMax = 1,
-        yLimitMin = 0,
-        yLimitMax = 1
+        xLimitMin = input$compareCohortXMeanFilter[1],
+        xLimitMax = input$compareCohortXMeanFilter[2],
+        yLimitMin = input$compareCohortYMeanFilter[1],
+        yLimitMax = input$compareCohortYMeanFilter[2]
       )
     return(plot)
   })
@@ -4695,10 +4697,10 @@ shiny::shinyServer(function(input, output, session) {
       plotTemporalCompareStandardizedDifference(
         balance = data,
         shortNameRef = cohort,
-        xLimitMin = 0,
-        xLimitMax = 1,
-        yLimitMin = 0,
-        yLimitMax = 1
+        xLimitMin = input$temporalCharacterizationXMeanFilter[1],
+        xLimitMax = input$temporalCharacterizationXMeanFilter[2],
+        yLimitMin = input$temporalCharacterizationYMeanFilter[1],
+        yLimitMax = input$temporalCharacterizationYMeanFilter[2]
       )
     return(plot)
   })
