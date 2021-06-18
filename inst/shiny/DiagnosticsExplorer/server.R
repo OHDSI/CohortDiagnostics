@@ -4697,10 +4697,10 @@ shiny::shinyServer(function(input, output, session) {
       plotTemporalCompareStandardizedDifference(
         balance = data,
         shortNameRef = cohort,
-        xLimitMin = 0,
-        xLimitMax = 1,
-        yLimitMin = 0,
-        yLimitMax = 1
+        xLimitMin = input$temporalCharacterizationXMeanFilter[1],
+        xLimitMax = input$temporalCharacterizationXMeanFilter[2],
+        yLimitMin = input$temporalCharacterizationYMeanFilter[1],
+        yLimitMax = input$temporalCharacterizationYMeanFilter[2]
       )
     return(plot)
   })

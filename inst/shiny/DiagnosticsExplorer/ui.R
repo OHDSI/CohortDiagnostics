@@ -1357,6 +1357,39 @@ bodyTabItems <- shinydashboard::tabItems(
             inline = TRUE
           )
         ),
+        tags$td(
+          shiny::conditionalPanel(
+            condition = "input.temporalCharacterizationType == 'Plot'",
+            shiny::sliderInput(
+              inputId = "temporalCharacterizationXMeanFilter",
+              label = "Filter By X-axis Mean",
+              min = c(0.0),
+              max = c(1.0),
+              value = c(0.0, 1.0),
+              dragRange = TRUE,
+              pre = "Mean ",
+              step = 0.1,
+              sep = ""
+            )
+          )
+        ),
+        tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
+        tags$td(
+          shiny::conditionalPanel(
+            condition = "input.temporalCharacterizationType == 'Plot'",
+            shiny::sliderInput(
+              inputId = "temporalCharacterizationYMeanFilter",
+              label = "Filter By Y-axis Mean",
+              min = c(0.0),
+              max = c(1.0),
+              value = c(0.0, 1.0),
+              dragRange = TRUE,
+              pre = "Mean ",
+              step = 0.1,
+              sep = ""
+            )
+          )
+        ),
         tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
         tags$td(
           shiny::conditionalPanel(
