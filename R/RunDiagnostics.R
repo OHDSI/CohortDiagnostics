@@ -800,8 +800,8 @@ runCohortDiagnostics <- function(packageName = NULL,
                             " ",
                             attr(delta, "units"))
   }
-
-
+  
+  
   # Cohort overlap and Time Series timeSeries----
   if (any(runCohortOverlap, runTimeSeries)) {
     ParallelLogger::logInfo("Computing cohort overlap and/or time series")
@@ -1267,7 +1267,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     "dplyrVersion",
     "tidyrVersion",
     "Rversion",
-	"CurrentPackage"
+    "CurrentPackage"
   )
   
   valueField <- c(
@@ -1281,7 +1281,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     as.character(packageVersion("dplyr")),
     as.character(packageVersion("tidyr")),
     as.character(R.Version()$version.string),
-	as.character(packageName())
+    as.character(packageName())
   )
   
   metadata <-
