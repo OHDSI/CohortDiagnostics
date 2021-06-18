@@ -938,7 +938,9 @@ runCohortDiagnostics <- function(packageName = NULL,
         sql = "SELECT * FROM #time_series;", 
         tempEmulationSchema = tempEmulationSchema,
         snakeCaseToCamelCase = TRUE) %>% 
-        dplyr::tibble() %>% 
+        dplyr::tibble()
+      
+      timeSeries <- timeSeries %>% 
         dplyr::mutate(databaseId = !!databaseId) %>% 
         dplyr::select(.data$cohortId, .data$databaseId, 
                       .data$periodBegin, .data$calendarInterval,
