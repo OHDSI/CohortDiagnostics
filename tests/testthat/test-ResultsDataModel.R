@@ -77,7 +77,7 @@ test_that("Retrieve results from remote database", {
   CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = folder)
   
   dataSourceDatabase <- CohortDiagnostics::createDatabaseDataSource(
-    connectionDetails = connectionDetails,
+    connection = DatabaseConnector::connect(connectionDetails = connectionDetails),
     resultsDatabaseSchema = cohortDiagnosticsSchema
   )
   dataSourcePreMergedFile <- CohortDiagnostics::createFileDataSource(
@@ -89,7 +89,7 @@ test_that("Retrieve results from remote database", {
     dataSource = dataSourceDatabase,
     cohortIds = c(17492, 17692),
     databaseIds = 'cdmV5'
-    )
+  )
   expect_true(nrow(cohortCountFromDb) > 0)
   cohortCountFromFile <- CohortDiagnostics::getResultsFromCohortCount(
     dataSource = dataSourcePreMergedFile,

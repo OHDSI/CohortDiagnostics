@@ -1,5 +1,5 @@
 library(testthat)
 test_that("Check if package is installed", {
   expect_true(CohortDiagnostics:::is_installed('dplyr'))
-  expect_false(CohortDiagnostics:::is_installed('Hydra'))
+  expect_false(CohortDiagnostics:::is_installed('rqrwqrewrqwRANDOMSTRINGdfdsfdsfds')) # just a random string to represent package does not exst
 })
