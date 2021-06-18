@@ -601,14 +601,14 @@ bodyTabItems <- shinydashboard::tabItems(
                      shiny::checkboxInput("irYscaleFixed", "Use same y-scale across databases")
                    )
                  )),
-      tags$table(tags$tr(
+      tags$table(tags$tr(style = "width: 100%",
         tags$td(
           shiny::conditionalPanel(
             condition = "input.irStratification.indexOf('Age') > -1",
             shinyWidgets::pickerInput(
               inputId = "incidenceRateAgeFilter",
               label = "Filter By Age",
-              width = 400,
+              width = 300,
               choices = c("All"),
               selected = c("All"),
               multiple = TRUE,
@@ -631,7 +631,7 @@ bodyTabItems <- shinydashboard::tabItems(
             shinyWidgets::pickerInput(
               inputId = "incidenceRateGenderFilter",
               label = "Filter By Gender",
-              width = 200,
+              width = 300,
               choices = c("All"),
               selected = c("All"),
               multiple = TRUE,
@@ -648,8 +648,7 @@ bodyTabItems <- shinydashboard::tabItems(
             )
           )
         ),
-        tags$td(
-          style = "width:30% !important",
+        tags$td(style = "width: 30%",
           shiny::conditionalPanel(
             condition = "input.irStratification.indexOf('Calendar Year') > -1",
             shiny::sliderInput(
@@ -1215,6 +1214,39 @@ bodyTabItems <- shinydashboard::tabItems(
           ),
         ),
         tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
+        tags$td(
+          shiny::conditionalPanel(
+            condition = "input.charCompareType == 'Plot'",
+            shiny::sliderInput(
+              inputId = "compareCohortXMeanFilter",
+              label = "Filter By X-axis Mean",
+              min = c(0.0),
+              max = c(1.0),
+              value = c(0.0, 1.0),
+              dragRange = TRUE,
+              pre = "Mean ",
+              step = 0.1,
+              sep = ""
+            )
+          )
+        ),
+        tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
+        tags$td(
+          shiny::conditionalPanel(
+            condition = "input.charCompareType == 'Plot'",
+            shiny::sliderInput(
+              inputId = "compareCohortYMeanFilter",
+              label = "Filter By Y-axis Mean",
+              min = c(0.0),
+              max = c(1.0),
+              value = c(0.0, 1.0),
+              dragRange = TRUE,
+              pre = "Mean ",
+              step = 0.1,
+              sep = ""
+            )
+          )
+        ),
         tags$td(
           shiny::conditionalPanel(
             condition = "input.charCompareType == 'Raw table'",
