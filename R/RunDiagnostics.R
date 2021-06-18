@@ -1039,7 +1039,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       cohortRelationships <- cohortOverlap %>% 
         dplyr::filter(.data$attributeType == 'r')
       if (nrow(cohortOverlap) > 0) {
-        cohortOverlap <- cohortOverlap %>% 
+        cohortRelationships <- cohortRelationships %>% 
           dplyr::rename(countValue = .data$value, targetCohortId = .data$cohortId) %>% 
           dplyr::mutate(startDay = as.numeric(.data$attributeName)*30) %>% 
           dplyr::mutate(endDay = (as.numeric(.data$attributeName)*30) + 29)  %>%
@@ -1071,6 +1071,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       ## cohort overlap----
       cohortOverlap <- cohortOverlap %>% 
         dplyr::filter(.data$attributeType == 'o')
+      
       if (nrow(cohortOverlap) > 0) {
         cohortOverlap <- cohortOverlap %>% 
           dplyr::mutate(attributeName = dplyr::case_when(.data$attributeName == 'es' ~ 'eitherSubjects',
