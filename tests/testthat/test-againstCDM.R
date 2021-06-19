@@ -257,7 +257,7 @@ test_that("Retrieve results from remote database", {
     cohortIds = c(17492, 17692),
     databaseIds = 'cdmV5'
   )
-  expect_true(nrow(incidenceRateFromDb) >= 0) # no data in eunomia
+  #expect_true(nrow(incidenceRateFromDb) >= 0) # no data in eunomia
   
   # inclusion rules
   inclusionRulesFromDb <- CohortDiagnostics::getResultsFromInclusionRuleStatistics(
@@ -311,9 +311,7 @@ test_that("Retrieve results from remote database", {
   )
   
   resolvedMappedConceptSet <- CohortDiagnostics::getResultsResolveMappedConceptSet(
-    dataSource = dataSourceDatabase,
-    conceptIds = c(192671, 201826, 1124300, 1124300),
-    dataSource = 'cdmV5'
+    dataSource = dataSourceDatabase
   )
   expect_true(nrow(resolvedMappedConceptSet$resolved) > 0)
   expect_true(nrow(resolvedMappedConceptSet$mapped) > 0)

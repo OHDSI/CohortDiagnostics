@@ -438,7 +438,7 @@ getConceptDetails <- function(dataSource = .GlobalEnv,
       sql <-
         SqlRender::render(
           sql = sql,
-          vocabularyDatabaseSchema = !!vocabularyDatabaseSchema
+          vocabulary_database_schema = !!vocabularyDatabaseSchema
         )
     }
     data <-
@@ -717,9 +717,14 @@ getResultsResolveMappedConceptSet <- function(dataSource,
                     FROM @results_database_schema.resolved_concepts
                     INNER JOIN @results_database_schema.concept
                     ON resolved_concepts.concept_id = concept.concept_id
-                    WHERE database_id IN (@databaseIds)
-                    	AND cohort_id = @cohortId
+                    {@cohort_id == '' & @database_id !=''} ? { WHERE database_id in (@database_id)}
+                    {@cohort_id != '' & @database_id !=''} ? { WHERE database_id in (@database_id) AND cohort_id in (@cohort_id)}
+                    {@cohort_id != '' & @database_id ==''} ? { WHERE cohort_id in (@cohort_id)}
                     ORDER BY concept.concept_id;"
+    
+    
+    ;
+    
     resolved <-
       renderTranslateQuerySql(
         connection = dataSource$connection,
