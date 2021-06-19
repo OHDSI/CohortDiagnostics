@@ -2016,7 +2016,7 @@ shiny::shinyServer(function(input, output, session) {
       getFormattedFileName(fileName = "includedConcept")
     },
     content = function(file) {
-      if (nrow(includedConceptsData()) > 0) {
+      if (all(nrow(includedConceptsData()) > 0, !is.null(includedConceptsData()))) {
         write.csv(includedConceptsData(), file)
       }
     }
