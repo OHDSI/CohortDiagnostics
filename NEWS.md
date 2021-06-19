@@ -5,9 +5,10 @@ CohortDiagnostics 2.2.0
 Changes:
 
 1. Additional fields added to database_id (person_days, persons, records, observation_period_min_date, observation_period_max_date)
-2. Optimized cohort overlap.
+2. Optimized cohort overlap sql. Old SQL that was running only two cohorts at a time, is replaced by an optimized SQL that is able to run all cohorts at a time.
 3. Exported functions computeCohortOverlap, getCohortCharacteristics, getCohortCount, instantiateCohortSet
-4. Metadata.csv now versions of OHDSI packages and R version.
+4. Metadata.csv now collects the versions of OHDSI packages and R version used.
+5. Metadata from source data includes additional database level information - including distribution of persons by calendar period.
 
 Bug fixes:
 1. Fixed inclusion rule display - when wrong inclusion rules were being shown in cohort counts

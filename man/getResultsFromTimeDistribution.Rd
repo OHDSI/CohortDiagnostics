@@ -4,7 +4,11 @@
 \alias{getResultsFromTimeDistribution}
 \title{Returns data from time_distribution table of Cohort Diagnostics results data model}
 \usage{
-getResultsFromTimeDistribution(dataSource, cohortIds, databaseIds)
+getResultsFromTimeDistribution(
+  dataSource,
+  cohortIds = NULL,
+  databaseIds = NULL
+)
 }
 \arguments{
 \item{dataSource}{A list object that is the output of \code{createDatabaseDataSource} or \code{createFileDataSource} function. 

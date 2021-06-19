@@ -25,7 +25,7 @@ IF OBJECT_ID('tempdb..#d_time_series6', 'U') IS NOT NULL
 SELECT cohort_definition_id cohort_id,
 	period_begin,
 	calendar_interval,
-	'1' series_type, -- cohort time series by calendar period
+	'T1' series_type, -- cohort time series by calendar period
 	COUNT_BIG(*) records, -- records in calendar month
 	COUNT_BIG(DISTINCT subject_id) subjects, -- unique subjects
 	SUM(datediff(dd, CASE 
@@ -85,7 +85,7 @@ GROUP BY period_begin,
 SELECT cohort_definition_id cohort_id,
 	period_begin,
 	calendar_interval,
-	'2' series_type, -- cohort time series by calendar period
+	'T2' series_type, -- cohort time series by calendar period
 	COUNT_BIG(*) records, -- records in calendar month
 	COUNT_BIG(DISTINCT subject_id) subjects, -- unique subjects
 	SUM(datediff(dd, CASE 
@@ -151,7 +151,7 @@ GROUP BY period_begin,
 SELECT 0 cohort_id,
 	period_begin,
 	calendar_interval,
-	'3' series_type, -- observation period time series by calendar period
+	'T3' series_type, -- observation period time series by calendar period
 	COUNT_BIG(*) records, -- records in calendar month
 	COUNT_BIG(DISTINCT person_id) subjects, -- unique subjects
 	SUM(datediff(dd, CASE 
@@ -209,7 +209,7 @@ GROUP BY period_begin,
 SELECT cohort_definition_id cohort_id,
 	period_begin,
 	calendar_interval,
-	'4' series_type, -- cohort time series by calendar period
+	'T4' series_type, -- cohort time series by calendar period
 	COUNT_BIG(*) records, -- records in calendar month
 	COUNT_BIG(DISTINCT subject_id) subjects, -- unique subjects
 	SUM(datediff(dd, CASE 
@@ -261,7 +261,7 @@ GROUP BY period_begin,
 SELECT cohort_definition_id cohort_id,
 	period_begin,
 	calendar_interval,
-	'5' series_type, -- cohort time series by calendar period
+	'T5' series_type, -- cohort time series by calendar period
 	COUNT_BIG(*) records, -- records in calendar month
 	COUNT_BIG(DISTINCT subject_id) subjects, -- unique subjects
 	SUM(datediff(dd, CASE 
@@ -318,7 +318,7 @@ GROUP BY period_begin,
 SELECT 0 cohort_id,
 	period_begin,
 	calendar_interval,
-	'6' series_type, -- cohort time series by calendar period
+	'T6' series_type, -- cohort time series by calendar period
 	COUNT_BIG(*) records, -- records in calendar month
 	COUNT_BIG(DISTINCT person_id) subjects, -- unique subjects
 	SUM(datediff(dd, CASE 

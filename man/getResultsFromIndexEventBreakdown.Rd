@@ -4,7 +4,11 @@
 \alias{getResultsFromIndexEventBreakdown}
 \title{Returns data from index_event_breakdown table of Cohort Diagnostics results data model}
 \usage{
-getResultsFromIndexEventBreakdown(dataSource, cohortIds, databaseIds)
+getResultsFromIndexEventBreakdown(
+  dataSource,
+  cohortIds = NULL,
+  databaseIds = NULL
+)
 }
 \arguments{
 \item{dataSource}{A list object that is the output of \code{createDatabaseDataSource} or \code{createFileDataSource} function. 

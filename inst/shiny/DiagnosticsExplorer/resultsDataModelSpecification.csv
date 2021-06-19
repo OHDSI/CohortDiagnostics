@@ -40,7 +40,7 @@ cohort_relationships,target_cohort_id,bigint,Yes,Yes,No,Yes
 cohort_relationships,comparator_cohort_id,bigint,Yes,Yes,No,Yes
 cohort_relationships,start_day,float,Yes,Yes,No,Yes
 cohort_relationships,end_day,float,Yes,Yes,No,Yes
-cohort_relationships,count,float,Yes,No,No,Yes
+cohort_relationships,count_value,float,Yes,No,No,Yes
 concept,concept_id,int,Yes,Yes,No,Yes
 concept,concept_name,varchar(255),Yes,No,No,Yes
 concept,domain_id,varchar(20),Yes,No,No,Yes
