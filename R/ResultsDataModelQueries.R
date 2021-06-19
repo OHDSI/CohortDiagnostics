@@ -641,12 +641,22 @@ getResultsResolveMappedConceptSet <- function(dataSource,
     if (length(table) == 0) {
       return(NULL)
     }
-    if (nrow(get(table, envir = dataSource)) == 0) {
+    resolved <- get(table, envir = dataSource) 
+    if (any(is.null(resolved), nrow(resolved) == 0)) {
       return(NULL)
     }
-    resolved <- get(table, envir = dataSource) %>%
-      dplyr::filter(.data$databaseId %in% !!databaseIds) %>%
-      dplyr::filter(.data$cohortId == !!cohortIds) %>%
+    if (!is.null(databaseIds)) {
+      resolved <- resolved %>% 
+        dplyr::filter(.data$databaseId %in% !!databaseIds)
+    }
+    if (!is.null(cohortIds)) {
+      resolved <- resolved %>%
+        dplyr::filter(.data$cohortId == !!cohortIds)
+    }
+    if (any(is.null(resolved), nrow(resolved) == 0)) {
+      return(NULL)
+    }
+    resolved <- resolved %>%
       dplyr::inner_join(get("concept"), by = "conceptId") %>%
       dplyr::distinct() %>%
       dplyr::arrange(.data$conceptId)
@@ -686,6 +696,10 @@ getResultsResolveMappedConceptSet <- function(dataSource,
         ) %>%
         dplyr::distinct() %>%
         dplyr::arrange(.data$resolvedConceptId, .data$conceptId)
+      
+      if (nrow(mapped) == 0) {
+        mapped <- NULL
+      }
     } else {
       mapped <- NULL
     }

@@ -186,17 +186,13 @@ test_that("Retrieve results from premerged file", {
   expect_true(nrow(conceptIdDetails) >= 0)
   
   resolvedMappedConceptSet <- CohortDiagnostics::getResultsResolveMappedConceptSet(
-    dataSource = dataSourcePreMergedFile,
-    conceptIds = c(192671, 201826, 1124300, 1124300),
-    dataSource = 'cdmV5'
+    dataSource = dataSourcePreMergedFile
   )
-  expect_true(nrow(resolvedMappedConceptSet$resolved) > 0)
-  expect_true(nrow(resolvedMappedConceptSet$mapped) > 0)
+  expect_true(nrow(resolvedMappedConceptSet$resolved) >= 0)
+  expect_true(nrow(resolvedMappedConceptSet$mapped) >= 0)
   
   covariateValue <- CohortDiagnostics::getResultsCovariateValue(
-    dataSource = CohortDiagnostics,
-    conceptIds = c(192671, 201826, 1124300, 1124300),
-    dataSource = 'cdmV5'
+    dataSource = dataSourcePreMergedFile
   )
   expect_true(nrow(covariateValue$covariateValue) > 0)
   expect_true(nrow(covariateValue$covariateValueDist) >= 0)
