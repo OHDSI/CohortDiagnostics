@@ -1983,6 +1983,9 @@ shiny::shinyServer(function(input, output, session) {
       cohortIds = cohortId(),
       databaseIds = databaseIds()
     )
+    
+    if (is.null(includedConcepts)) {return(NULL)}
+    
     includedConcepts <- includedConcepts %>% 
       dplyr::inner_join(conceptSets %>% dplyr::select(.data$cohortId,
                                                       .data$conceptSetId,
@@ -2013,7 +2016,9 @@ shiny::shinyServer(function(input, output, session) {
       getFormattedFileName(fileName = "includedConcept")
     },
     content = function(file) {
-      write.csv(includedConceptsData(), file)
+      if (nrow(includedConceptsData()) > 0) {
+        write.csv(includedConceptsData(), file)
+      }
     }
   )
   
