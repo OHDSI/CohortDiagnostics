@@ -86,14 +86,7 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  getFormattedFileName <- function(fileName) {
-    date <- stringr::str_replace_all(Sys.Date(),pattern = "-", replacement = "")
-    time <- stringr::str_split(string = Sys.time(), pattern = " ", n = 2)[[1]][2]
-    timeArray <- stringr::str_split(string = time, pattern = ":", n = 3)
-    return(paste(fileName, "_",  date, "_", timeArray[[1]][1], timeArray[[1]][2], ".csv", sep = ""))
-  }
-  
-  
+
   # Cohort Definition ---------------------------------------------------------
   cohortDefinitionTableData <- shiny::reactive(x = {
     data <-  cohortSubset() %>%
@@ -106,13 +99,14 @@ shiny::shinyServer(function(input, output, session) {
       getFormattedFileName(fileName = "CohortDefinition")
     },
     content = function(file) {
-      write.csv(cohortSubset() %>%
-                  dplyr::select(cohort = .data$shortName, 
-                                .data$cohortId, 
-                                .data$cohortName,
-                                .data$logicDescription,
-                                .data$sql,
-                                .data$json), file)
+      x <- cohortSubset() %>%
+        dplyr::select(cohort = .data$shortName, 
+                      .data$cohortId, 
+                      .data$cohortName,
+                      .data$logicDescription,
+                      .data$sql,
+                      .data$json)
+      downloadCsv(x = x, fileName = file)
     }
   )
   output$cohortDefinitionTable <- DT::renderDataTable(expr = {
@@ -841,7 +835,7 @@ shiny::shinyServer(function(input, output, session) {
       getFormattedFileName(fileName = "ResolvedConcepts")
     },
     content = function(file) {
-      write.csv(getResolvedOrMappedConcepts(), file)
+      downloadCsv(x = getResolvedOrMappedConcepts(), fileName = file)
     }
   )
   
@@ -917,7 +911,7 @@ shiny::shinyServer(function(input, output, session) {
       getFormattedFileName(fileName = "MappedConcepts")
     },
     content = function(file) {
-      write.csv(getResolvedOrMappedConcepts(), file)
+      downloadCsv(x = getResolvedOrMappedConcepts(), fileName = file)
     }
   )
   
@@ -1000,7 +994,7 @@ shiny::shinyServer(function(input, output, session) {
       getFormattedFileName(fileName = "ConceptSetsExpression")
     },
     content = function(file) {
-      write.csv(cohortDefinitionConceptSets(), file)
+      downloadCsv(x = cohortDefinitionConceptSets(), fileName = file)
     }
   )
   
@@ -1063,7 +1057,7 @@ shiny::shinyServer(function(input, output, session) {
       getFormattedFileName(fileName = "ConceptSetsExpression")
     },
     content = function(file) {
-      write.csv(cohortDefinitionConceptSets(), file)
+      downloadCsv(x = cohortDefinitionConceptSets(), fileName = file)
     }
   )
   
@@ -1093,7 +1087,8 @@ shiny::shinyServer(function(input, output, session) {
       getFormattedFileName(fileName = "orphanConcepts")
     },
     content = function(file) {
-      write.csv(cohortDefinitionOrphanConceptTableData(), file)
+      downloadCsv(x = cohortDefinitionOrphanConceptTableData(), 
+                  fileName = file)
     }
   )
   
@@ -1255,7 +1250,8 @@ shiny::shinyServer(function(input, output, session) {
       getFormattedFileName(fileName = "cohortCount")
     },
     content = function(file) {
-      write.csv(getCohortCountResultReactive(), file)
+      downloadCsv(x = getCohortCountResultReactive(), 
+                  fileName = file)
     }
   )
   
@@ -1743,7 +1739,8 @@ shiny::shinyServer(function(input, output, session) {
       getFormattedFileName(fileName = "IncidenceRate")
     },
     content = function(file) {
-      write.csv(incidenceRateDataFull(), file)
+      downloadCsv(x = incidenceRateDataFull(), 
+                  fileName = file)
     }
   )
   
@@ -1905,7 +1902,8 @@ shiny::shinyServer(function(input, output, session) {
       getFormattedFileName(fileName = "timeDistribution")
     },
     content = function(file) {
-      write.csv(timeDistributionData(), file)
+      downloadCsv(x = timeDistributionData(), 
+                  fileName = file)
     }
   )
   
@@ -1983,6 +1981,9 @@ shiny::shinyServer(function(input, output, session) {
       cohortIds = cohortId(),
       databaseIds = databaseIds()
     )
+    
+    if (is.null(includedConcepts)) {return(NULL)}
+    
     includedConcepts <- includedConcepts %>% 
       dplyr::inner_join(conceptSets %>% dplyr::select(.data$cohortId,
                                                       .data$conceptSetId,
@@ -2013,7 +2014,8 @@ shiny::shinyServer(function(input, output, session) {
       getFormattedFileName(fileName = "includedConcept")
     },
     content = function(file) {
-      write.csv(includedConceptsData(), file)
+      downloadCsv(x = includedConceptsData(), 
+                  fileName = file)
     }
   )
   
@@ -2246,7 +2248,8 @@ shiny::shinyServer(function(input, output, session) {
       getFormattedFileName(fileName = "orphanConcept")
     },
     content = function(file) {
-      write.csv(orphanConceptsData(), file)
+      downloadCsv(x = orphanConceptsData(), 
+                  fileName = file)
     }
   )
   
@@ -2507,7 +2510,8 @@ shiny::shinyServer(function(input, output, session) {
       getFormattedFileName(fileName = "inclusionRule")
     },
     content = function(file) {
-      write.csv(inclusionRuleTableData(), file)
+      downloadCsv(x = inclusionRuleTableData(), 
+                  fileName = file)
     }
   )
   
@@ -2769,7 +2773,8 @@ shiny::shinyServer(function(input, output, session) {
       getFormattedFileName(fileName = "indexEventBreakdown")
     },
     content = function(file) {
-      write.csv(indexEventBreakDownDataFilteredByRadioButton(), file)
+      downloadCsv(x = indexEventBreakDownDataFilteredByRadioButton(), 
+                  fileName = file)
     }
   )
   
@@ -3010,7 +3015,8 @@ shiny::shinyServer(function(input, output, session) {
       getFormattedFileName(fileName = "visitContext")
     },
     content = function(file) {
-      write.csv(visitContexData(), file)
+      downloadCsv(x = visitContexData(), 
+                  fileName = file)
     }
   )
   
@@ -3329,7 +3335,8 @@ shiny::shinyServer(function(input, output, session) {
       getFormattedFileName(fileName = "cohortCharacterization")
     },
     content = function(file) {
-      write.csv(characterizationTableData(), file)
+      downloadCsv(x = characterizationTableData(), 
+                  fileName = file)
     }
   )
   
@@ -3630,7 +3637,8 @@ shiny::shinyServer(function(input, output, session) {
       getFormattedFileName(fileName = "temporalCharacterization")
     },
     content = function(file) {
-      write.csv(temporalCharacterizationData(), file)
+      downloadCsv(x = temporalCharacterizationData(), 
+                  fileName = file)
     }
   )
   
@@ -3844,7 +3852,8 @@ shiny::shinyServer(function(input, output, session) {
       getFormattedFileName(fileName = "cohortOverlap")
     },
     content = function(file) {
-      write.csv(cohortOverlapData(), file)
+      downloadCsv(x = cohortOverlapData(), 
+                  fileName = file)
     }
   )
   
@@ -3995,7 +4004,8 @@ shiny::shinyServer(function(input, output, session) {
       getFormattedFileName(fileName = "compareCohortCharacterization")
     },
     content = function(file) {
-      write.csv(computeBalance(), file)
+      downloadCsv(x = computeBalance(), 
+                  fileName = file)
     }
   )
   
@@ -4366,7 +4376,8 @@ shiny::shinyServer(function(input, output, session) {
       getFormattedFileName(fileName = "compareTemporalCharacterization")
     },
     content = function(file) {
-      write.csv(computeBalanceForCompareTemporalCharacterization(), file)
+      downloadCsv(x = computeBalanceForCompareTemporalCharacterization(), 
+                  fileName = file)
     }
   )
   
