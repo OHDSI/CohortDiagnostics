@@ -691,70 +691,6 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  getConceptSetDataFrameFromConceptSetExpression <-
-    function(conceptSetExpression) {
-      if ("items" %in% names(conceptSetExpression)) {
-        items <- conceptSetExpression$items
-      } else {
-        items <- conceptSetExpression
-      }
-      conceptSetExpressionDetails <- items %>%
-        purrr::map_df(.f = purrr::flatten)
-      if ('CONCEPT_ID' %in% colnames(conceptSetExpressionDetails)) {
-        if ('isExcluded' %in% colnames(conceptSetExpressionDetails)) {
-          conceptSetExpressionDetails <- conceptSetExpressionDetails %>%
-            dplyr::rename(IS_EXCLUDED = .data$isExcluded)
-        }
-        if ('includeDescendants' %in% colnames(conceptSetExpressionDetails)) {
-          conceptSetExpressionDetails <- conceptSetExpressionDetails %>%
-            dplyr::rename(INCLUDE_DESCENDANTS = .data$includeDescendants)
-        }
-        if ('includeMapped' %in% colnames(conceptSetExpressionDetails)) {
-          conceptSetExpressionDetails <- conceptSetExpressionDetails %>%
-            dplyr::rename(INCLUDE_MAPPED = .data$includeMapped)
-        }
-        colnames(conceptSetExpressionDetails) <-
-          snakeCaseToCamelCase(colnames(conceptSetExpressionDetails))
-      }
-      return(conceptSetExpressionDetails)
-    }
-  
-  getConceptSetDetailsFromCohortDefinition <-
-    function(cohortDefinitionExpression) {
-      if ("expression" %in% names(cohortDefinitionExpression)) {
-        expression <- cohortDefinitionExpression$expression
-      }
-      else {
-        expression <- cohortDefinitionExpression
-      }
-      
-      if (is.null(expression$ConceptSets)) {
-        return(NULL)
-      }
-      
-      conceptSetExpression <- expression$ConceptSets %>%
-        dplyr::bind_rows() %>%
-        dplyr::mutate(json = RJSONIO::toJSON(x = .data$expression,
-                                             pretty = TRUE))
-      
-      conceptSetExpressionDetails <- list()
-      i <- 0
-      for (id in conceptSetExpression$id) {
-        i <- i + 1
-        conceptSetExpressionDetails[[i]] <-
-          getConceptSetDataFrameFromConceptSetExpression(conceptSetExpression =
-                                                           conceptSetExpression[i, ]$expression$items) %>%
-          dplyr::mutate(id = conceptSetExpression[i,]$id) %>%
-          dplyr::relocate(.data$id) %>%
-          dplyr::arrange(.data$id)
-      }
-      conceptSetExpressionDetails <-
-        dplyr::bind_rows(conceptSetExpressionDetails)
-      output <- list(conceptSetExpression = conceptSetExpression,
-                     conceptSetExpressionDetails = conceptSetExpressionDetails)
-      return(output)
-    }
-  
   cohortDefinistionConceptSetExpression <- shiny::reactive({
     if (is.null(selectedCohortDefinitionRow())) {
       return(NULL)
@@ -1674,6 +1610,117 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::pull(.data$conceptId)
     return(output)
   })
+  
+  cohortDefinitionOrphanConceptSecondTableData <- shiny::reactive(x = {
+    validate(need(all(!is.null(getDatabaseIdInCohortConceptSet()),
+                      length(getDatabaseIdInCohortConceptSet()) > 0),
+                  "Orphan codes are not available for reference vocabulary in this version."))
+    row <- selectedCohortDefinitionRow()
+    
+    if (is.null(row) || length(cohortDefinitionConceptSetExpressionSecondRow()$name) == 0) {
+      return(NULL)
+    }
+    validate(need(length(input$databaseOrVocabularySchema) > 0, "No data sources chosen"))
+    
+    data <- getResultsFromOrphanConcept(dataSource = dataSource,
+                                        cohortId = row$cohortId,
+                                        databaseIds = getDatabaseIdInCohortConceptSet()) %>% 
+      dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionSecondRow()$id)
+    
+    validate(need(nrow(data) > 0, "No orphan codes returned"))
+    
+    return(data)
+  })
+  
+  output$cohortDefinitionOrphanConceptSecondTable <- DT::renderDataTable(expr = {
+    data <- cohortDefinitionOrphanConceptSecondTableData()
+    
+    if (nrow(data) == 0 || is.null(data)) {
+      return(NULL)
+    }
+    
+    databaseIds <- unique(data$databaseId)
+    
+    maxCount <- max(data$conceptCount, na.rm = TRUE)
+    
+    table <- data %>%
+      dplyr::select(.data$databaseId, 
+                    .data$conceptId,
+                    .data$conceptSubjects,
+                    .data$conceptCount) %>%
+      dplyr::group_by(.data$databaseId, 
+                      .data$conceptId) %>%
+      dplyr::summarise(conceptSubjects = sum(.data$conceptSubjects),
+                       conceptCount = sum(.data$conceptCount)) %>%
+      dplyr::ungroup() %>%
+      dplyr::arrange(.data$databaseId) %>% 
+      tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>% 
+      dplyr::mutate(name = paste0(databaseId, "_",
+                                  stringr::str_replace(string = .data$name, 
+                                                       pattern = "concept", 
+                                                       replacement = ""))) %>% 
+      tidyr::pivot_wider(id_cols = c(.data$conceptId),
+                         names_from = .data$name,
+                         values_from = .data$value)
+    conceptIdDetails <- getConceptDetails(dataSource = dataSource,
+                                          conceptIds = table$conceptId %>% unique())
+    table <- table %>% 
+      dplyr::inner_join(conceptIdDetails %>%
+                          dplyr::select(.data$conceptId,
+                                        .data$conceptName,
+                                        .data$vocabularyId,
+                                        .data$conceptCode) %>%
+                          dplyr::distinct(),
+                        by = "conceptId") %>%
+      dplyr::relocate(.data$conceptId, .data$conceptName, .data$vocabularyId, .data$conceptCode)
+    
+    validate(need(nrow(table) > 0, "No orphan codes returned"))
+    
+    table <- table[order(-table[, 5]), ]
+    
+    sketch <- htmltools::withTags(table(
+      class = "display",
+      thead(
+        tr(
+          th(rowspan = 2, "Concept ID"),
+          th(rowspan = 2, "Concept Name"),
+          th(rowspan = 2, "Vocabulary ID"),
+          th(rowspan = 2, "Concept Code"),
+          lapply(databaseIds, th, colspan = 2, class = "dt-center")
+        ),
+        tr(
+          lapply(rep(c("Subjects", "Counts"), length(databaseIds)), th)
+        )
+      )
+    ))
+    
+    options = list(pageLength = 10,
+                   searching = TRUE,
+                   scrollX = TRUE,
+                   scrollY = '50vh',
+                   lengthChange = TRUE,
+                   ordering = TRUE,
+                   paging = TRUE,
+                   columnDefs = list(truncateStringDef(1, 100),
+                                     minCellCountDef(3 + (1:(length(databaseIds) * 2)))))
+    
+    table <- DT::datatable(table,
+                           options = options,
+                           colnames = colnames(table),
+                           rownames = FALSE,
+                           container = sketch,
+                           escape = FALSE,
+                           filter = "top",
+                           class = "stripe nowrap compact")
+    
+    table <- DT::formatStyle(table = table,
+                             columns =  4 + (1:(length(databaseIds)*2)),
+                             background = DT::styleColorBar(c(0, maxCount), "lightblue"),
+                             backgroundSize = "98% 88%",
+                             backgroundRepeat = "no-repeat",
+                             backgroundPosition = "center")
+    return(table)
+  }, server = TRUE)
   
   # Cohort Counts ---------------------------------------------------------------------------
   
