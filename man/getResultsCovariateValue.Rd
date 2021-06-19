@@ -4,7 +4,11 @@
 \alias{getResultsCovariateValue}
 \title{Returns covariate_value and covariate_value_dist output of feature extraction}
 \usage{
-getResultsCovariateValue(dataSource = .GlobalEnv, cohortIds, databaseIds)
+getResultsCovariateValue(
+  dataSource = .GlobalEnv,
+  cohortIds = NULL,
+  databaseIds = NULL
+)
 }
 \arguments{
 \item{dataSource}{A list object that is the output of \code{createDatabaseDataSource} or \code{createFileDataSource} function. 

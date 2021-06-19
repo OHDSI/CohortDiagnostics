@@ -4,7 +4,7 @@
 \alias{getResultsFromIncidenceRate}
 \title{Returns data from incidence_rate table of Cohort Diagnostics results data model}
 \usage{
-getResultsFromIncidenceRate(dataSource, cohortIds, databaseIds)
+getResultsFromIncidenceRate(dataSource, cohortIds = NULL, databaseIds = NULL)
 }
 \arguments{
 \item{dataSource}{A list object that is the output of \code{createDatabaseDataSource} or \code{createFileDataSource} function. 

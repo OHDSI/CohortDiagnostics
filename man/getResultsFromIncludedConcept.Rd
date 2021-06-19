@@ -4,7 +4,7 @@
 \alias{getResultsFromIncludedConcept}
 \title{Returns data from included_concept table of Cohort Diagnostics results data model}
 \usage{
-getResultsFromIncludedConcept(dataSource, cohortIds, databaseIds)
+getResultsFromIncludedConcept(dataSource, cohortIds = NULL, databaseIds = NULL)
 }
 \arguments{
 \item{dataSource}{A list object that is the output of \code{createDatabaseDataSource} or \code{createFileDataSource} function. 
