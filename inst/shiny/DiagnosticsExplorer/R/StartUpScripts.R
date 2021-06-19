@@ -139,3 +139,18 @@ getConceptSetDetailsFromCohortDefinition <-
                    conceptSetExpressionDetails = conceptSetExpressionDetails)
     return(output)
   }
+
+
+getFormattedFileName <- function(fileName) {
+  date <- stringr::str_replace_all(Sys.Date(),pattern = "-", replacement = "")
+  time <- stringr::str_split(string = Sys.time(), pattern = " ", n = 2)[[1]][2]
+  timeArray <- stringr::str_split(string = time, pattern = ":", n = 3)
+  return(paste(fileName, "_",  date, "_", timeArray[[1]][1], timeArray[[1]][2], ".csv", sep = ""))
+}
+
+
+downloadCsv <- function(x, fileName) {
+  if (all(!is.null(x), nrow(x) > 0)) {
+    write.csv(x, fileName)
+  }
+}
