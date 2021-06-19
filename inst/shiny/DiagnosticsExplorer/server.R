@@ -5234,7 +5234,8 @@ shiny::shinyServer(function(input, output, session) {
         .data$observationPeriodMinDate,
         .data$observationPeriodMaxDate,
         .data$persons,
-        .data$records
+        .data$records,
+        .data$personDays
       ) 
     
     options = list(
@@ -5265,7 +5266,8 @@ shiny::shinyServer(function(input, output, session) {
                                             th(rowspan = 2, "Observation Period Min Date"),
                                             th(rowspan = 2, "Observation Period Max Date"),
                                             th(rowspan = 2, "Persons"),
-                                            th(rowspan = 2, "Records")
+                                            th(rowspan = 2, "Records"),
+                                            th(rowspan = 2, "Person Days")
                                           ),
                                           tr(lapply(
                                             c("CDM source", "Vocabulary table"), th, style = "border-right:1px solid silver;border-bottom:1px solid silver"
