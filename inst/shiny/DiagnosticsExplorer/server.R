@@ -2304,11 +2304,10 @@ shiny::shinyServer(function(input, output, session) {
   
   # calendar Incidence ----------------------------------------------------------------------------------
   calendarIncidenceData <- shiny::reactive({
-    data <- getDataFromResultsDatabaseSchema(
+    data <- getResultsFromCalendarIncidence(
       dataSource,
       cohortIds = cohortIds(),
-      databaseIds = databaseIds(),
-      dataTableName = "calendarIncidence"
+      databaseIds = databaseIds()
     )
     return(data);
   })
