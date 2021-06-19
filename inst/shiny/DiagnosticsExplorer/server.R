@@ -2098,20 +2098,20 @@ shiny::shinyServer(function(input, output, session) {
   shiny::observe({
     if (!is.null(incidenceRateDataFull()) &&
         nrow(incidenceRateDataFull()) > 0) {
-      calenderFilter <- incidenceRateDataFull() %>%
+      calendarFilter <- incidenceRateDataFull() %>%
         dplyr::select(.data$calendarYear) %>%
         dplyr::filter(.data$calendarYear != "NA",
                       !is.na(.data$calendarYear)) %>%
         dplyr::distinct(.data$calendarYear) %>%
         dplyr::arrange(.data$calendarYear)
       
-      minValue <- min(calenderFilter$calendarYear)
+      minValue <- min(calendarFilter$calendarYear)
       
-      maxValue <- max(calenderFilter$calendarYear)
+      maxValue <- max(calendarFilter$calendarYear)
       
       shiny::updateSliderInput(
         session = session,
-        inputId = "incidenceRateCalenderFilter",
+        inputId = "incidenceRateCalendarFilter",
         min = minValue,
         max = maxValue,
         value = c(2010, maxValue)
@@ -2156,18 +2156,18 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  incidenceRateCalenderFilter <- shiny::reactive({
-    calenderFilter <- incidenceRateDataFull() %>%
+  incidenceRateCalendarFilter <- shiny::reactive({
+    calendarFilter <- incidenceRateDataFull() %>%
       dplyr::select(.data$calendarYear) %>%
       dplyr::filter(.data$calendarYear != "NA",
                     !is.na(.data$calendarYear)) %>%
       dplyr::distinct(.data$calendarYear) %>%
       dplyr::arrange(.data$calendarYear)
-    calenderFilter <-
-      calenderFilter[calenderFilter$calendarYear >= input$incidenceRateCalenderFilter[1] &
-                       calenderFilter$calendarYear <= input$incidenceRateCalenderFilter[2], , drop = FALSE] %>%
+    calendarFilter <-
+      calendarFilter[calendarFilter$calendarYear >= input$incidenceRateCalendarFilter[1] &
+                       calendarFilter$calendarYear <= input$incidenceRateCalendarFilter[2], , drop = FALSE] %>%
       dplyr::pull(.data$calendarYear)
-    return(calenderFilter)
+    return(calendarFilter)
   })
   
   
@@ -2232,7 +2232,7 @@ shiny::shinyServer(function(input, output, session) {
         }
         if (stratifyByCalendarYear) {
           data <- data %>%
-            dplyr::filter(.data$calendarYear %in% incidenceRateCalenderFilter())
+            dplyr::filter(.data$calendarYear %in% incidenceRateCalendarFilter())
         }
         if (input$irYscaleFixed) {
           data <- data %>%
@@ -2254,6 +2254,50 @@ shiny::shinyServer(function(input, output, session) {
       },detail = "Please Wait"
     )
   })
+  
+  # calendar Incidence ----------------------------------------------------------------------------------
+  calendarIncidenceData <- shiny::reactive({
+    data <- getDataFromResultsDatabaseSchema(
+      dataSource,
+      cohortIds = cohortIds(),
+      databaseIds = databaseIds(),
+      dataTableName = "calendarIncidence"
+    )
+    return(data);
+  })
+  
+  output$calendarIncidencePlot <- ggiraph::renderggiraph(expr = {
+    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
+    validate(need(length(cohortIds()) > 0, "No cohorts chosen")) 
+    shiny::withProgress(
+      message = paste(
+        "Building calendar incidence plot data for ",
+        length(cohortIds()),
+        " cohorts and ",
+        length(databaseIds()),
+        " databases"
+      ),{
+        data <- calendarIncidenceData()
+        
+        validate(need(all(!is.null(data), nrow(data) > 0), paste0("No data for this combination"))) 
+        plot <- plotCalendarIncidence(
+          data = data,
+          cohortCount = cohortCount,
+          shortNameRef = cohort,
+          yscaleFixed = input$calendarIncidenceYscaleFixed
+        )
+        return(plot)
+      })
+    })
+  
+  output$saveCalendarIncidencePlot <-  downloadHandler(
+    filename = function() {
+      getFormattedFileName(fileName = "CalendarIncidence")
+    },
+    content = function(file) {
+      write.csv(calendarIncidenceData(), file)
+    }
+  )
   
   
   # Time Series ----------------------------------------------------------------------------------
@@ -2277,7 +2321,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   timeSeries <- reactive({
-    calenderIntervalFirstLetter <- tolower(substr(input$timeSeriesFilter,1,1))
+    calendarIntervalFirstLetter <- tolower(substr(input$timeSeriesFilter,1,1))
     data <- timeSeriesData()
     validate(need(!is.null(data) > 0, "No time series data"))
     validate(need(nrow(data) > 0, "No time series data"))
@@ -2288,7 +2332,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::mutate(seriesType = '1')
     }
     data <- data %>% 
-      dplyr::filter(.data$calendarInterval %in% calenderIntervalFirstLetter)
+      dplyr::filter(.data$calendarInterval %in% calendarIntervalFirstLetter)
     
     # if (!is.null(seriesType)) {
     #   data <- data %>% 

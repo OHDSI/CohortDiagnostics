@@ -407,6 +407,88 @@ plotIncidenceRate <- function(data,
   return(plot)
 }
 
+
+
+
+plotCalendarIncidence <- function(data,
+                              cohortCount = cohortCount,
+                              shortNameRef = cohort,
+                              yscaleFixed = FALSE) {
+  plotData <- data %>%
+    dplyr::left_join(cohortCount, by = c('cohortId', 'databaseId')) %>% 
+    addShortName(shortNameRef) 
+  aesthetics <- list(x = "calendarMonth", y = "countValue")
+  plotType <- "line"
+  sortShortName <- plotData %>%
+    dplyr::select(.data$shortName) %>%
+    dplyr::distinct() %>%
+    dplyr::arrange(as.integer(sub(
+      pattern = '^C', '', x = .data$shortName
+    )))
+  
+  plotData <- plotData %>%
+    dplyr::arrange(shortName = factor(.data$shortName, levels = sortShortName$shortName),.data$shortName)
+  
+  plotData$shortName <- factor(plotData$shortName,
+                               levels = sortShortName$shortName)
+  
+  plotData$tooltip <- c(
+    paste0(
+      plotData$shortName,
+      " ", 
+      plotData$databaseId,
+      "\nCount Value = ",
+      plotData$countValue,
+      "\nCalendar Month = ",
+      plotData$calendarMonth,
+      "\nPeriod Type = ",
+      plotData$periodType,
+      "\nCohort Subjects = ",
+      plotData$cohortSubjects
+    )
+  )
+  
+  plot <-
+    ggplot2::ggplot(data = plotData, do.call(ggplot2::aes_string, aesthetics)) +
+    ggplot2::xlab("Calendar Month") +
+    ggplot2::ylab("Count Value") +
+    ggplot2::scale_y_continuous(labels = scales::comma)
+  
+  plot <- plot + ggplot2::theme(
+    legend.position = "top",
+    legend.title = ggplot2::element_blank(),
+    axis.text.x = ggplot2::element_text(size = 12, angle = 90, vjust = 0.5),
+    axis.text.y = ggplot2::element_text(size = 12)) +
+    ggiraph::geom_line_interactive(ggplot2::aes(), size = 1, alpha = 0.6) +
+    ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip),
+                                    size = 2,
+                                    alpha = 0.6)
+  
+  if (!is.null(plotData$databaseId) && length(plotData$databaseId) > 1) {
+    if (yscaleFixed) {
+      scales <- "fixed"
+    } else {
+      scales <- "free_y"
+    }
+    # databaseId <- unique(plotData$databaseId)
+    # shortName <- unique(plotData$shortName)
+    # periodType <- unique(plotData$periodType)
+    # plot + ggplot2::facet_wrap(databaseId + shortName ~ periodType,scales = scales)
+    plot <- plot + ggplot2::facet_grid(databaseId + shortName ~  periodType,scales = scales,space = scales) +
+      ggplot2::theme(strip.text.x = ggplot2::element_text(size = 10),strip.text.y = ggplot2::element_text(size = 10))
+  }
+  height <-
+    1.5 + 2 * nrow(dplyr::distinct(plotData, .data$databaseId, .data$shortName))
+  plot <- ggiraph::girafe(
+    ggobj = plot,
+    options = list(ggiraph::opts_sizing(width = .7),
+                   ggiraph::opts_zoom(max = 5)),
+    width_svg = 15,
+    height_svg = height
+  )
+  return(plot)
+}
+
 plotCohortComparisonStandardizedDifference <- function(balance,
                                                        shortNameRef = NULL,
                                                        xLimitMin = 0,
