@@ -5430,8 +5430,41 @@ shiny::shinyServer(function(input, output, session) {
   selectedCohorts <- shiny::reactive({
     cohorts <- cohortSubset() %>%
       dplyr::filter(.data$cohortId %in% cohortIds()) %>%
-      dplyr::arrange(.data$cohortId) %>%
+      dplyr::arrange(.data$cohortId)
+    databaseIds <- cohortCount %>% 
+      dplyr::filter(.data$databaseId %in% databaseIds()) %>% 
+      dplyr::distinct(.data$cohortId,.data$databaseId)
+    distinctDatabaseIdsCount <- length(databaseIds$databaseId %>% unique())
+    
+    for (i in 1:nrow(cohorts)) {
+      filteredDatabaseIds <-
+        databaseIds[databaseIds$cohortId == cohorts$cohortId[i], ] %>%
+        dplyr::pull()
+      count <- length(filteredDatabaseIds)
+      if (distinctDatabaseIdsCount == count) {
+        cohorts$compoundName[i] <-
+          paste(cohorts$compoundName[i], "- in all data sources", sep = " ")
+      } else {
+        countPercentage <- round(count / distinctDatabaseIdsCount * 100, 2)
+        
+        cohorts$compoundName[i] <-
+          paste(
+            cohorts$compoundName[i],
+            " - in ",
+            count,
+            "/",
+            distinctDatabaseIdsCount,
+            " (",
+            countPercentage,
+            "%)",
+            " data sources ",
+            paste(unlist(filteredDatabaseIds), collapse = ', ')
+          )
+      }
+    }
+    cohorts <- cohorts %>% 
       dplyr::select(.data$compoundName)
+    
     return(apply(cohorts, 1, function(x)
       tags$tr(lapply(x, tags$td))))
   })
