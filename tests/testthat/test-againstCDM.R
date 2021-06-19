@@ -178,6 +178,11 @@ test_that("Retrieve results from premerged file", {
     dataSource = dataSourcePreMergedFile
   )
   expect_true(nrow(orphanConceptFromFile) >= 0)
+  
+  conceptIdDetails <- CohortDiagnostics::getConceptDetails(
+    dataSource = dataSourcePreMergedFile,
+    conceptIds = c(192671, 201826, 1124300, 1124300)
+  )
 })
 
 ####################### upload to database and test
@@ -277,6 +282,19 @@ test_that("Retrieve results from remote database", {
     databaseIds = 'cdmV5'
   )
   expect_true(nrow(orphanConceptFromDb) >= 0)
+  
+  # concept_id details with vocabulary schema
+  conceptIdDetails <- CohortDiagnostics::getConceptDetails(
+    dataSource = dataSourceDatabase,
+    conceptIds = c(192671, 201826, 1124300, 1124300), 
+    vocabularyDatabaseSchema = cohortDiagnosticsSchema
+  )
+  
+  # concept_id details without vocabulary schema
+  conceptIdDetails <- CohortDiagnostics::getConceptDetails(
+    dataSource = dataSourceDatabase,
+    conceptIds = c(192671, 201826, 1124300, 1124300)
+  )
 })
 
 test_that("Data removal works", {
