@@ -196,13 +196,13 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$cohortCountsTableInCohortDefinition <- DT::renderDataTable(expr = {
-    row <- selectedCohortDefinitionRow()
+    row <- selectedCohortDefinitionRow()[1,]
     if (is.null(row)) {
       return(NULL)
     } else {
       
       data <- cohortCount %>%
-        dplyr::filter(.data$cohortId == selectedCohortDefinitionRow()$cohortId) %>% 
+        dplyr::filter(.data$cohortId == row$cohortId) %>% 
         dplyr::filter(.data$databaseId %in% database$databaseId) %>% 
         dplyr::select(.data$databaseId, .data$cohortSubjects, .data$cohortEntries)
       
@@ -285,7 +285,7 @@ shiny::shinyServer(function(input, output, session) {
     
     table <- getResultsFromInclusionRuleStatistics(
       dataSource = dataSource,
-      cohortIds = selectedCohortDefinitionRow()$cohortId,
+      cohortIds = selectedCohortDefinitionRow()[1,]$cohortId,
       databaseIds = getSelectedCohortCountRow()$databaseId
     )
     
@@ -296,7 +296,7 @@ shiny::shinyServer(function(input, output, session) {
     cohortCounts <- table %>% 
       dplyr::inner_join(cohortCount,
                         by = c("cohortId", "databaseId")) %>% 
-      dplyr::filter(.data$cohortId == selectedCohortDefinitionRow()$cohortId) %>% 
+      dplyr::filter(.data$cohortId == selectedCohortDefinitionRow()[1,]$cohortId) %>% 
       dplyr::filter(.data$databaseId %in% getSelectedCohortCountRow()$databaseId) %>% 
       dplyr::select(.data$cohortSubjects) %>% 
       dplyr::pull(.data$cohortSubjects) %>% unique()
