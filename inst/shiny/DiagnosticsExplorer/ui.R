@@ -1168,7 +1168,7 @@ bodyTabItems <- shinydashboard::tabItems(
             condition = "input.charCompareType == 'Plot'",
             shiny::sliderInput(
               inputId = "compareCohortXMeanFilter",
-              label = "Filter By X-axis Mean",
+              label = "Filter X-axis",
               min = c(0.0),
               max = c(1.0),
               value = c(0.0, 1.0),
@@ -1185,7 +1185,7 @@ bodyTabItems <- shinydashboard::tabItems(
             condition = "input.charCompareType == 'Plot'",
             shiny::sliderInput(
               inputId = "compareCohortYMeanFilter",
-              label = "Filter By Y-axis Mean",
+              label = "Filter Y-axis",
               min = c(0.0),
               max = c(1.0),
               value = c(0.0, 1.0),
@@ -1311,7 +1311,7 @@ bodyTabItems <- shinydashboard::tabItems(
             condition = "input.temporalCharacterizationType == 'Plot'",
             shiny::sliderInput(
               inputId = "temporalCharacterizationXMeanFilter",
-              label = "Filter By X-axis Mean",
+              label = "Filter X-axis",
               min = c(0.0),
               max = c(1.0),
               value = c(0.0, 1.0),
@@ -1328,7 +1328,7 @@ bodyTabItems <- shinydashboard::tabItems(
             condition = "input.temporalCharacterizationType == 'Plot'",
             shiny::sliderInput(
               inputId = "temporalCharacterizationYMeanFilter",
-              label = "Filter By Y-axis Mean",
+              label = "Filter Y-axis",
               min = c(0.0),
               max = c(1.0),
               value = c(0.0, 1.0),
