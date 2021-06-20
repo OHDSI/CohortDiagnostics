@@ -117,9 +117,6 @@ test_that("Cohort diagnostics in incremental mode", {
 })
 
 
-
-
-
 test_that("Retrieve results from premerged file", {
   
   dataSourcePreMergedFile <- CohortDiagnostics::createFileDataSource(
@@ -178,6 +175,25 @@ test_that("Retrieve results from premerged file", {
     dataSource = dataSourcePreMergedFile
   )
   expect_true(nrow(orphanConceptFromFile) >= 0)
+  
+  conceptIdDetails <- CohortDiagnostics::getConceptDetails(
+    dataSource = dataSourcePreMergedFile,
+    conceptIds = c(192671, 201826, 1124300, 1124300)
+  )
+  expect_true(nrow(conceptIdDetails) >= 0)
+  
+  resolvedMappedConceptSet <- CohortDiagnostics::getResultsResolveMappedConceptSet(
+    dataSource = dataSourcePreMergedFile
+  )
+  expect_true(nrow(resolvedMappedConceptSet$resolved) >= 0)
+  expect_true(nrow(resolvedMappedConceptSet$mapped) >= 0)
+  
+  covariateValue <- CohortDiagnostics::getResultsCovariateValue(
+    dataSource = dataSourcePreMergedFile
+  )
+  expect_true(nrow(covariateValue$covariateValue) > 0)
+  expect_true(nrow(covariateValue$covariateValueDist) >= 0)
+  
 })
 
 ####################### upload to database and test
@@ -277,6 +293,31 @@ test_that("Retrieve results from remote database", {
     databaseIds = 'cdmV5'
   )
   expect_true(nrow(orphanConceptFromDb) >= 0)
+  
+  # concept_id details with vocabulary schema
+  # conceptIdDetails <- CohortDiagnostics::getConceptDetails(
+  #   dataSource = dataSourceDatabase,
+  #   conceptIds = c(192671, 201826, 1124300, 1124300), 
+  #   vocabularyDatabaseSchema = cohortDiagnosticsSchema
+  # )
+  
+  # concept_id details without vocabulary schema
+  conceptIdDetails <- CohortDiagnostics::getConceptDetails(
+    dataSource = dataSourceDatabase,
+    conceptIds = c(192671, 201826, 1124300, 1124300)
+  )
+  
+  resolvedMappedConceptSet <- CohortDiagnostics::getResultsResolveMappedConceptSet(
+    dataSource = dataSourceDatabase
+  )
+  expect_true(nrow(resolvedMappedConceptSet$resolved) > 0)
+  expect_true(nrow(resolvedMappedConceptSet$mapped) > 0)
+  
+  covariateValue <- CohortDiagnostics::getResultsCovariateValue(
+    dataSource = dataSourceDatabase
+  )
+  expect_true(nrow(covariateValue$covariateValue) > 0)
+  expect_true(nrow(covariateValue$covariateValueDist) >= 0)
 })
 
 test_that("Data removal works", {

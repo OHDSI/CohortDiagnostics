@@ -118,6 +118,7 @@ renderTranslateQuerySql <-
            connectionDetails = NULL,
            ...,
            snakeCaseToCamelCase = FALSE) {
+    
     ## Set up connection to server ----------------------------------------------------
     if (is.null(connection)) {
       if (!is.null(connectionDetails)) {
@@ -185,26 +186,32 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
         dplyr::filter(.data$databaseId %in% !!databaseIds)
     }
   } else {
-    if (!DatabaseConnector::dbIsValid(dataSource$connection)) {
-      stop("Connection to database seems to be closed.")
+    
+  if (is.null(dataSource$connection)) {
+    stop("No connection provided. Unable to query database.")
     }
-    sql <- "SELECT *
+  
+  if (!DatabaseConnector::dbIsValid(dataSource$connection)) {
+    stop("Connection to database seems to be closed.")
+  }
+    
+  sql <- "SELECT *
             FROM  @results_database_schema.@data_table
             {@cohort_ids == '' & @database_id !=''} ? { WHERE database_id in (@database_id)}
             {@cohort_ids != '' & @database_id !=''} ? {  WHERE database_id in (@database_id) AND cohort_id in (@cohort_ids)}
             {@cohort_ids != '' & @database_id ==''} ? {  WHERE cohort_id in (@cohort_ids)}
             ;"
-    data <-
-      renderTranslateQuerySql(
-        connection = dataSource$connection,
-        sql = sql,
-        results_database_schema = dataSource$resultsDatabaseSchema,
-        cohort_ids = cohortIds,
-        data_table = camelCaseToSnakeCase(dataTableName),
-        database_id = quoteLiterals(databaseIds),
-        snakeCaseToCamelCase = TRUE
-      ) %>%
-      tidyr::tibble()
+  data <-
+    renderTranslateQuerySql(
+      connection = dataSource$connection,
+      sql = sql,
+      results_database_schema = dataSource$resultsDatabaseSchema,
+      cohort_ids = cohortIds,
+      data_table = camelCaseToSnakeCase(dataTableName),
+      database_id = quoteLiterals(databaseIds),
+      snakeCaseToCamelCase = TRUE
+    ) %>%
+    tidyr::tibble()
   }
   
   if (nrow(data) == 0) {
@@ -231,8 +238,8 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
 #'
 #' @export
 getResultsFromCohortCount <- function(dataSource,
-                                      cohortIds,
-                                      databaseIds) {
+                                      cohortIds = NULL,
+                                      databaseIds = NULL) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortIds = cohortIds,
@@ -259,8 +266,8 @@ getResultsFromCohortCount <- function(dataSource,
 #'
 #' @export
 getResultsFromTimeSeries <- function(dataSource,
-                                     cohortIds,
-                                     databaseIds) {
+                                     cohortIds = NULL,
+                                     databaseIds = NULL) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortIds = cohortIds,
@@ -287,8 +294,8 @@ getResultsFromTimeSeries <- function(dataSource,
 #'
 #' @export
 getResultsFromTimeDistribution <- function(dataSource,
-                                           cohortIds,
-                                           databaseIds) {
+                                           cohortIds = NULL,
+                                           databaseIds = NULL) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortIds = cohortIds,
@@ -316,13 +323,41 @@ getResultsFromTimeDistribution <- function(dataSource,
 #'
 #' @export
 getResultsFromIncidenceRate <- function(dataSource,
-                                        cohortIds,
-                                        databaseIds) {
+                                        cohortIds = NULL,
+                                        databaseIds = NULL) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds,
     dataTableName = "incidenceRate"
+  )
+  return(data)
+}
+
+#' Returns data from calendar_incidence table of Cohort Diagnostics results data model
+#'
+#' @description
+#' Returns data from calendar_incidence table of Cohort Diagnostics results data model
+#'
+#' @template DataSource
+#'
+#' @template CohortIds
+#'
+#' @template DatabaseIds
+#'
+#' @return
+#' Returns a data frame (tibble) with results that conform to incidence_rate
+#' table in Cohort Diagnostics results data model.
+#'
+#' @export
+getResultsFromCalendarIncidence <- function(dataSource,
+                                        cohortIds = NULL,
+                                        databaseIds = NULL) {
+  data <- getDataFromResultsDatabaseSchema(
+    dataSource,
+    cohortIds = cohortIds,
+    databaseIds = databaseIds,
+    dataTableName = "calendarIncidence"
   )
   return(data)
 }
@@ -344,8 +379,8 @@ getResultsFromIncidenceRate <- function(dataSource,
 #'
 #' @export
 getResultsFromInclusionRuleStatistics <- function(dataSource,
-                                                  cohortIds,
-                                                  databaseIds) {
+                                                  cohortIds = NULL,
+                                                  databaseIds = NULL) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortIds = cohortIds,
@@ -373,8 +408,8 @@ getResultsFromInclusionRuleStatistics <- function(dataSource,
 #'
 #' @export
 getResultsFromIndexEventBreakdown <- function(dataSource,
-                                              cohortIds,
-                                              databaseIds) {
+                                              cohortIds = NULL,
+                                              databaseIds = NULL) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortIds = cohortIds,
@@ -431,7 +466,7 @@ getConceptDetails <- function(dataSource = .GlobalEnv,
       sql <-
         SqlRender::render(
           sql = sql,
-          vocabularyDatabaseSchema = !!vocabularyDatabaseSchema
+          vocabulary_database_schema = !!vocabularyDatabaseSchema
         )
     }
     data <-
@@ -468,8 +503,8 @@ getConceptDetails <- function(dataSource = .GlobalEnv,
 #'
 #' @export
 getResultsFromVisitContext <- function(dataSource,
-                                       cohortIds,
-                                       databaseIds) {
+                                       cohortIds = NULL,
+                                       databaseIds = NULL) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortIds = cohortIds,
@@ -497,8 +532,8 @@ getResultsFromVisitContext <- function(dataSource,
 #'
 #' @export
 getResultsFromIncludedConcept <- function(dataSource,
-                                          cohortIds,
-                                          databaseIds) {
+                                          cohortIds = NULL,
+                                          databaseIds = NULL) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortIds = cohortIds,
@@ -526,8 +561,8 @@ getResultsFromIncludedConcept <- function(dataSource,
 #'
 #' @export
 getResultsFromOrphanConcept <- function(dataSource,
-                                        cohortIds,
-                                        databaseIds) {
+                                        cohortIds = NULL,
+                                        databaseIds = NULL) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortIds = cohortIds,
@@ -624,8 +659,8 @@ getResultsFromResolvedConcepts <- function(dataSource,
 #'
 #' @export
 getResultsResolveMappedConceptSet <- function(dataSource,
-                                              databaseIds,
-                                              cohortIds) {
+                                              databaseIds = NULL,
+                                              cohortIds = NULL) {
   table <- "resolvedConcepts"
   if (is(dataSource, "environment")) {
     if (!exists(table)) {
@@ -634,12 +669,22 @@ getResultsResolveMappedConceptSet <- function(dataSource,
     if (length(table) == 0) {
       return(NULL)
     }
-    if (nrow(get(table, envir = dataSource)) == 0) {
+    resolved <- get(table, envir = dataSource) 
+    if (any(is.null(resolved), nrow(resolved) == 0)) {
       return(NULL)
     }
-    resolved <- get(table, envir = dataSource) %>%
-      dplyr::filter(.data$databaseId %in% !!databaseIds) %>%
-      dplyr::filter(.data$cohortId == !!cohortIds) %>%
+    if (!is.null(databaseIds)) {
+      resolved <- resolved %>% 
+        dplyr::filter(.data$databaseId %in% !!databaseIds)
+    }
+    if (!is.null(cohortIds)) {
+      resolved <- resolved %>%
+        dplyr::filter(.data$cohortId == !!cohortIds)
+    }
+    if (any(is.null(resolved), nrow(resolved) == 0)) {
+      return(NULL)
+    }
+    resolved <- resolved %>%
       dplyr::inner_join(get("concept"), by = "conceptId") %>%
       dplyr::distinct() %>%
       dplyr::arrange(.data$conceptId)
@@ -679,6 +724,10 @@ getResultsResolveMappedConceptSet <- function(dataSource,
         ) %>%
         dplyr::distinct() %>%
         dplyr::arrange(.data$resolvedConceptId, .data$conceptId)
+      
+      if (nrow(mapped) == 0) {
+        mapped <- NULL
+      }
     } else {
       mapped <- NULL
     }
@@ -696,9 +745,14 @@ getResultsResolveMappedConceptSet <- function(dataSource,
                     FROM @results_database_schema.resolved_concepts
                     INNER JOIN @results_database_schema.concept
                     ON resolved_concepts.concept_id = concept.concept_id
-                    WHERE database_id IN (@databaseIds)
-                    	AND cohort_id = @cohortId
+                    {@cohort_id == '' & @database_id !=''} ? { WHERE database_id in (@database_id)}
+                    {@cohort_id != '' & @database_id !=''} ? { WHERE database_id in (@database_id) AND cohort_id in (@cohort_id)}
+                    {@cohort_id != '' & @database_id ==''} ? { WHERE cohort_id in (@cohort_id)}
                     ORDER BY concept.concept_id;"
+    
+    
+    ;
+    
     resolved <-
       renderTranslateQuerySql(
         connection = dataSource$connection,
@@ -772,8 +826,8 @@ getResultsResolveMappedConceptSet <- function(dataSource,
 #'
 #' @export
 getResultsCovariateValue <- function(dataSource = .GlobalEnv,
-                                     cohortIds,
-                                     databaseIds) {
+                                     cohortIds = NULL,
+                                     databaseIds = NULL) {
   covariateValue <-
     getResultsFromCovariateValue(dataSource = dataSource,
                                  cohortIds = cohortIds,

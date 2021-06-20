@@ -334,6 +334,34 @@ getResultsFromIncidenceRate <- function(dataSource,
   return(data)
 }
 
+#' Returns data from calendar_incidence table of Cohort Diagnostics results data model
+#'
+#' @description
+#' Returns data from calendar_incidence table of Cohort Diagnostics results data model
+#'
+#' @template DataSource
+#'
+#' @template CohortIds
+#'
+#' @template DatabaseIds
+#'
+#' @return
+#' Returns a data frame (tibble) with results that conform to incidence_rate
+#' table in Cohort Diagnostics results data model.
+#'
+#' @export
+getResultsFromCalendarIncidence <- function(dataSource,
+                                        cohortIds = NULL,
+                                        databaseIds = NULL) {
+  data <- getDataFromResultsDatabaseSchema(
+    dataSource,
+    cohortIds = cohortIds,
+    databaseIds = databaseIds,
+    dataTableName = "calendarIncidence"
+  )
+  return(data)
+}
+
 #' Returns data from inclusion_rule_stats table of Cohort Diagnostics results data model
 #'
 #' @description
@@ -438,7 +466,7 @@ getConceptDetails <- function(dataSource = .GlobalEnv,
       sql <-
         SqlRender::render(
           sql = sql,
-          vocabularyDatabaseSchema = !!vocabularyDatabaseSchema
+          vocabulary_database_schema = !!vocabularyDatabaseSchema
         )
     }
     data <-
@@ -641,12 +669,22 @@ getResultsResolveMappedConceptSet <- function(dataSource,
     if (length(table) == 0) {
       return(NULL)
     }
-    if (nrow(get(table, envir = dataSource)) == 0) {
+    resolved <- get(table, envir = dataSource) 
+    if (any(is.null(resolved), nrow(resolved) == 0)) {
       return(NULL)
     }
-    resolved <- get(table, envir = dataSource) %>%
-      dplyr::filter(.data$databaseId %in% !!databaseIds) %>%
-      dplyr::filter(.data$cohortId == !!cohortIds) %>%
+    if (!is.null(databaseIds)) {
+      resolved <- resolved %>% 
+        dplyr::filter(.data$databaseId %in% !!databaseIds)
+    }
+    if (!is.null(cohortIds)) {
+      resolved <- resolved %>%
+        dplyr::filter(.data$cohortId == !!cohortIds)
+    }
+    if (any(is.null(resolved), nrow(resolved) == 0)) {
+      return(NULL)
+    }
+    resolved <- resolved %>%
       dplyr::inner_join(get("concept"), by = "conceptId") %>%
       dplyr::distinct() %>%
       dplyr::arrange(.data$conceptId)
@@ -686,6 +724,10 @@ getResultsResolveMappedConceptSet <- function(dataSource,
         ) %>%
         dplyr::distinct() %>%
         dplyr::arrange(.data$resolvedConceptId, .data$conceptId)
+      
+      if (nrow(mapped) == 0) {
+        mapped <- NULL
+      }
     } else {
       mapped <- NULL
     }
@@ -703,16 +745,20 @@ getResultsResolveMappedConceptSet <- function(dataSource,
                     FROM @results_database_schema.resolved_concepts
                     INNER JOIN @results_database_schema.concept
                     ON resolved_concepts.concept_id = concept.concept_id
-                    WHERE database_id IN (@databaseIds)
-                    	AND cohort_id = @cohortId
+                    {@cohort_id == '' & @database_id !=''} ? { WHERE database_id in (@database_id)}
+                    {@cohort_id != '' & @database_id !=''} ? { WHERE database_id in (@database_id) AND cohort_id in (@cohort_id)}
+                    {@cohort_id != '' & @database_id ==''} ? { WHERE cohort_id in (@cohort_id)}
                     ORDER BY concept.concept_id;"
+    
+   
+    
     resolved <-
       renderTranslateQuerySql(
         connection = dataSource$connection,
         sql = sqlResolved,
         results_database_schema = dataSource$resultsDatabaseSchema,
-        databaseIds = quoteLiterals(databaseIds),
-        cohortId = cohortIds,
+        database_id = quoteLiterals(databaseIds),
+        cohort_id = cohortIds,
         snakeCaseToCamelCase = TRUE
       ) %>%
       tidyr::tibble() %>%
@@ -731,8 +777,9 @@ getResultsResolveMappedConceptSet <- function(dataSource,
                   FROM (
                   	SELECT DISTINCT concept_id, database_id, concept_set_id
                   	FROM @results_database_schema.resolved_concepts
-                  	WHERE database_id IN (@databaseIds)
-                  		AND cohort_id = @cohortId
+                    {@cohort_id == '' & @database_id !=''} ? { WHERE database_id in (@database_id)}
+                    {@cohort_id != '' & @database_id !=''} ? { WHERE database_id in (@database_id) AND cohort_id in (@cohort_id)}
+                    {@cohort_id != '' & @database_id ==''} ? { WHERE cohort_id in (@cohort_id)}
                   	) concept_sets
                   INNER JOIN @results_database_schema.concept_relationship ON concept_sets.concept_id = concept_relationship.concept_id_2
                   INNER JOIN @results_database_schema.concept ON concept_relationship.concept_id_1 = concept.concept_id
@@ -744,8 +791,8 @@ getResultsResolveMappedConceptSet <- function(dataSource,
         connection = dataSource$connection,
         sql = sqlMapped,
         results_database_schema = dataSource$resultsDatabaseSchema,
-        databaseIds = quoteLiterals(databaseIds),
-        cohortId = cohortIds,
+        database_id = quoteLiterals(databaseIds),
+        cohort_id = cohortIds,
         snakeCaseToCamelCase = TRUE
       ) %>%
       tidyr::tibble() %>%
