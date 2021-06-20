@@ -117,9 +117,6 @@ test_that("Cohort diagnostics in incremental mode", {
 })
 
 
-
-
-
 test_that("Retrieve results from premerged file", {
   
   dataSourcePreMergedFile <- CohortDiagnostics::createFileDataSource(
@@ -317,9 +314,7 @@ test_that("Retrieve results from remote database", {
   expect_true(nrow(resolvedMappedConceptSet$mapped) > 0)
   
   covariateValue <- CohortDiagnostics::getResultsCovariateValue(
-    dataSource = dataSourceDatabase,
-    conceptIds = c(192671, 201826, 1124300, 1124300),
-    dataSource = 'cdmV5'
+    dataSource = dataSourceDatabase
   )
   expect_true(nrow(covariateValue$covariateValue) > 0)
   expect_true(nrow(covariateValue$covariateValueDist) >= 0)
