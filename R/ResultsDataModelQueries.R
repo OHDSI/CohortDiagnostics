@@ -722,16 +722,15 @@ getResultsResolveMappedConceptSet <- function(dataSource,
                     {@cohort_id != '' & @database_id ==''} ? { WHERE cohort_id in (@cohort_id)}
                     ORDER BY concept.concept_id;"
     
-    
-    ;
+   
     
     resolved <-
       renderTranslateQuerySql(
         connection = dataSource$connection,
         sql = sqlResolved,
         results_database_schema = dataSource$resultsDatabaseSchema,
-        databaseIds = quoteLiterals(databaseIds),
-        cohortId = cohortIds,
+        database_id = quoteLiterals(databaseIds),
+        cohort_id = cohortIds,
         snakeCaseToCamelCase = TRUE
       ) %>%
       tidyr::tibble() %>%

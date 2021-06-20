@@ -257,7 +257,7 @@ test_that("Retrieve results from remote database", {
     cohortIds = c(17492, 17692),
     databaseIds = 'cdmV5'
   )
-  #expect_true(nrow(incidenceRateFromDb) >= 0) # no data in eunomia
+  expect_true(nrow(incidenceRateFromDb) >= 0) # no data in eunomia
   
   # inclusion rules
   inclusionRulesFromDb <- CohortDiagnostics::getResultsFromInclusionRuleStatistics(
@@ -298,11 +298,11 @@ test_that("Retrieve results from remote database", {
   expect_true(nrow(orphanConceptFromDb) >= 0)
   
   # concept_id details with vocabulary schema
-  conceptIdDetails <- CohortDiagnostics::getConceptDetails(
-    dataSource = dataSourceDatabase,
-    conceptIds = c(192671, 201826, 1124300, 1124300), 
-    vocabularyDatabaseSchema = cohortDiagnosticsSchema
-  )
+  # conceptIdDetails <- CohortDiagnostics::getConceptDetails(
+  #   dataSource = dataSourceDatabase,
+  #   conceptIds = c(192671, 201826, 1124300, 1124300), 
+  #   vocabularyDatabaseSchema = cohortDiagnosticsSchema
+  # )
   
   # concept_id details without vocabulary schema
   conceptIdDetails <- CohortDiagnostics::getConceptDetails(
