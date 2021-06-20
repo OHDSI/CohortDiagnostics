@@ -187,31 +187,31 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
     }
   } else {
     
-  if (is.null(dataSource$connection)) {
-    stop("No connection provided. Unable to query database.")
+    if (is.null(dataSource$connection)) {
+      stop("No connection provided. Unable to query database.")
     }
-  
-  if (!DatabaseConnector::dbIsValid(dataSource$connection)) {
-    stop("Connection to database seems to be closed.")
-  }
     
-  sql <- "SELECT *
+    if (!DatabaseConnector::dbIsValid(dataSource$connection)) {
+      stop("Connection to database seems to be closed.")
+    }
+    
+    sql <- "SELECT *
             FROM  @results_database_schema.@data_table
             {@cohort_ids == '' & @database_id !=''} ? { WHERE database_id in (@database_id)}
             {@cohort_ids != '' & @database_id !=''} ? {  WHERE database_id in (@database_id) AND cohort_id in (@cohort_ids)}
             {@cohort_ids != '' & @database_id ==''} ? {  WHERE cohort_id in (@cohort_ids)}
             ;"
-  data <-
-    renderTranslateQuerySql(
-      connection = dataSource$connection,
-      sql = sql,
-      results_database_schema = dataSource$resultsDatabaseSchema,
-      cohort_ids = cohortIds,
-      data_table = camelCaseToSnakeCase(dataTableName),
-      database_id = quoteLiterals(databaseIds),
-      snakeCaseToCamelCase = TRUE
-    ) %>%
-    tidyr::tibble()
+    data <-
+      renderTranslateQuerySql(
+        connection = dataSource$connection,
+        sql = sql,
+        results_database_schema = dataSource$resultsDatabaseSchema,
+        cohort_ids = cohortIds,
+        data_table = camelCaseToSnakeCase(dataTableName),
+        database_id = quoteLiterals(databaseIds),
+        snakeCaseToCamelCase = TRUE
+      ) %>%
+      tidyr::tibble()
   }
   
   if (nrow(data) == 0) {
@@ -351,8 +351,8 @@ getResultsFromIncidenceRate <- function(dataSource,
 #'
 #' @export
 getResultsFromCalendarIncidence <- function(dataSource,
-                                        cohortIds = NULL,
-                                        databaseIds = NULL) {
+                                            cohortIds = NULL,
+                                            databaseIds = NULL) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortIds = cohortIds,
@@ -750,7 +750,7 @@ getResultsResolveMappedConceptSet <- function(dataSource,
                     {@cohort_id != '' & @database_id ==''} ? { WHERE cohort_id in (@cohort_id)}
                     ORDER BY concept.concept_id;"
     
-   
+    
     
     resolved <-
       renderTranslateQuerySql(

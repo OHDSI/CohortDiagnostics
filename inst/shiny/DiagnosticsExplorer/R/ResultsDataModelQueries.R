@@ -187,31 +187,31 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
     }
   } else {
     
-  if (is.null(dataSource$connection)) {
-    stop("No connection provided. Unable to query database.")
+    if (is.null(dataSource$connection)) {
+      stop("No connection provided. Unable to query database.")
     }
-  
-  if (!DatabaseConnector::dbIsValid(dataSource$connection)) {
-    stop("Connection to database seems to be closed.")
-  }
     
-  sql <- "SELECT *
+    if (!DatabaseConnector::dbIsValid(dataSource$connection)) {
+      stop("Connection to database seems to be closed.")
+    }
+    
+    sql <- "SELECT *
             FROM  @results_database_schema.@data_table
             {@cohort_ids == '' & @database_id !=''} ? { WHERE database_id in (@database_id)}
             {@cohort_ids != '' & @database_id !=''} ? {  WHERE database_id in (@database_id) AND cohort_id in (@cohort_ids)}
             {@cohort_ids != '' & @database_id ==''} ? {  WHERE cohort_id in (@cohort_ids)}
             ;"
-  data <-
-    renderTranslateQuerySql(
-      connection = dataSource$connection,
-      sql = sql,
-      results_database_schema = dataSource$resultsDatabaseSchema,
-      cohort_ids = cohortIds,
-      data_table = camelCaseToSnakeCase(dataTableName),
-      database_id = quoteLiterals(databaseIds),
-      snakeCaseToCamelCase = TRUE
-    ) %>%
-    tidyr::tibble()
+    data <-
+      renderTranslateQuerySql(
+        connection = dataSource$connection,
+        sql = sql,
+        results_database_schema = dataSource$resultsDatabaseSchema,
+        cohort_ids = cohortIds,
+        data_table = camelCaseToSnakeCase(dataTableName),
+        database_id = quoteLiterals(databaseIds),
+        snakeCaseToCamelCase = TRUE
+      ) %>%
+      tidyr::tibble()
   }
   
   if (nrow(data) == 0) {
@@ -351,8 +351,8 @@ getResultsFromIncidenceRate <- function(dataSource,
 #'
 #' @export
 getResultsFromCalendarIncidence <- function(dataSource,
-                                        cohortIds = NULL,
-                                        databaseIds = NULL) {
+                                            cohortIds = NULL,
+                                            databaseIds = NULL) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortIds = cohortIds,
@@ -751,15 +751,14 @@ getResultsResolveMappedConceptSet <- function(dataSource,
                     ORDER BY concept.concept_id;"
     
     
-    ;
     
     resolved <-
       renderTranslateQuerySql(
         connection = dataSource$connection,
         sql = sqlResolved,
         results_database_schema = dataSource$resultsDatabaseSchema,
-        databaseIds = quoteLiterals(databaseIds),
-        cohortId = cohortIds,
+        database_id = quoteLiterals(databaseIds),
+        cohort_id = cohortIds,
         snakeCaseToCamelCase = TRUE
       ) %>%
       tidyr::tibble() %>%
@@ -778,8 +777,9 @@ getResultsResolveMappedConceptSet <- function(dataSource,
                   FROM (
                   	SELECT DISTINCT concept_id, database_id, concept_set_id
                   	FROM @results_database_schema.resolved_concepts
-                  	WHERE database_id IN (@databaseIds)
-                  		AND cohort_id = @cohortId
+                    {@cohort_id == '' & @database_id !=''} ? { WHERE database_id in (@database_id)}
+                    {@cohort_id != '' & @database_id !=''} ? { WHERE database_id in (@database_id) AND cohort_id in (@cohort_id)}
+                    {@cohort_id != '' & @database_id ==''} ? { WHERE cohort_id in (@cohort_id)}
                   	) concept_sets
                   INNER JOIN @results_database_schema.concept_relationship ON concept_sets.concept_id = concept_relationship.concept_id_2
                   INNER JOIN @results_database_schema.concept ON concept_relationship.concept_id_1 = concept.concept_id
@@ -791,8 +791,8 @@ getResultsResolveMappedConceptSet <- function(dataSource,
         connection = dataSource$connection,
         sql = sqlMapped,
         results_database_schema = dataSource$resultsDatabaseSchema,
-        databaseIds = quoteLiterals(databaseIds),
-        cohortId = cohortIds,
+        database_id = quoteLiterals(databaseIds),
+        cohort_id = cohortIds,
         snakeCaseToCamelCase = TRUE
       ) %>%
       tidyr::tibble() %>%
