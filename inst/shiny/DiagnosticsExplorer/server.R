@@ -5269,6 +5269,21 @@ shiny::shinyServer(function(input, output, session) {
     if (!'vocabularyVersion' %in% colnames(database)) {
       data$vocabularyVersion <- "Not in data"
     }
+    if (!'persons' %in% colnames(data)) {
+      data$persons <- as.integer(NA)
+    }
+    if (!'records' %in% colnames(data)) {
+      data$records <- as.integer(NA)
+    }
+    if (!'personDays' %in% colnames(data)) {
+      data$personDays <- as.integer(NA)
+    }
+    if (!'observationPeriodMinDate' %in% colnames(data)) {
+      data$observationPeriodMinDate <- as.Date(NA)
+    }
+    if (!'observationPeriodMaxDate' %in% colnames(data)) {
+      data$observationPeriodMaxDate <- as.Date(NA)
+    }
     data <- data %>%
       dplyr::select(
         .data$databaseId,
@@ -5276,13 +5291,13 @@ shiny::shinyServer(function(input, output, session) {
         .data$vocabularyVersionCdm,
         .data$vocabularyVersion,
         .data$description,
-        .data$isMetaAnalysis,
+        # .data$isMetaAnalysis,
         .data$observationPeriodMinDate,
         .data$observationPeriodMaxDate,
         .data$persons,
         .data$records,
         .data$personDays
-      ) 
+      )
     
     options = list(
       pageLength = 100,
@@ -5308,7 +5323,7 @@ shiny::shinyServer(function(input, output, session) {
                                               style = "border-right:1px solid silver;border-bottom:1px solid silver"
                                             ),
                                             th(rowspan = 2, "Description"),
-                                            th(rowspan = 2, "Is Meta Analysis"),
+                                            # th(rowspan = 2, "Is Meta Analysis"),
                                             th(rowspan = 2, "Observation Period Min Date"),
                                             th(rowspan = 2, "Observation Period Max Date"),
                                             th(rowspan = 2, "Persons"),
