@@ -1722,6 +1722,350 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
+  getResolvedOrMappedConceptSetSecondForAllDatabase <-
+    shiny::reactive(x = {
+      row <- selectedCohortDefinitionRow()
+      if (is.null(row) ||
+          is.null(cohortDefinitionConceptSetExpressionSecondRow()$id)) {
+        return(NULL)
+      }
+      
+      output <-
+        getResultsResolveMappedConceptSet(
+          dataSource = dataSource,
+          databaseIds = database$databaseId,
+          cohortIds =  selectedCohortDefinitionRow()[2,]$cohortId
+        )
+      
+      if (!is.null(output)) {
+        return(output)
+      } else {
+        return(NULL)
+      }
+    })
+  
+  getResolvedOrMappedConceptSetForAllVocabulary <-
+    shiny::reactive(x = {
+      data <- NULL
+      row <- selectedCohortDefinitionRow()
+      if (is.null(row) ||
+          is.null(cohortDefinitionConceptSetExpressionSecondRow()$id)) {
+        return(NULL)
+      }
+      outputResolved <- list()
+      outputMapped <- list()
+      for (i in (1:length(vocabularyDatabaseSchemas))) {
+        vocabularyDatabaseSchema <- vocabularyDatabaseSchemas[[i]]
+        output <-
+          resolveMappedConceptSetFromVocabularyDatabaseSchema(
+            dataSource = dataSource,
+            conceptSets = conceptSets %>%
+              dplyr::filter(cohortId == selectedCohortDefinitionRow()[2,]$cohortId),
+            vocabularyDatabaseSchema = vocabularyDatabaseSchema
+          )
+        outputResolved <- output$resolved
+        outputMapped <- output$mapped
+        outputResolved$vocabularyDatabaseSchema <-
+          vocabularyDatabaseSchema
+        outputMapped$vocabularyDatabaseSchema <-
+          vocabularyDatabaseSchema
+      }
+      outputResolved <- dplyr::bind_rows(outputResolved)
+      outputMapped <- dplyr::bind_rows(outputMapped)
+      return(list(resolved = outputResolved, mapped = outputMapped))
+    })
+  
+  getConceptSecondCountForAllDatabase <- 
+    shiny::reactive(x = {
+      row <- selectedCohortDefinitionRow()
+      if (is.null(row) ||
+          is.null(cohortDefinitionConceptSetExpressionSecondRow()$id)) {
+        return(NULL)
+      }
+      conceptCount <- getResultsFromIncludedConcept(
+        dataSource = dataSource,
+        databaseIds = database$databaseId,
+        cohortId = selectedCohortDefinitionRow()[2,]$cohortId
+      )
+      return(conceptCount)
+    })
+  
+  getResolvedOrMappedConceptSecond <- shiny::reactive({
+    data <- NULL
+    databaseIdToFilter <- database %>%
+      dplyr::filter(.data$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchema) %>%
+      dplyr::pull(.data$databaseId)
+    
+    conceptCounts <- getConceptSecondCountForAllDatabase()
+    if (all(!is.null(conceptCounts),
+            nrow(conceptCounts) > 0)) {
+      conceptCounts <- conceptCounts %>% 
+        dplyr::filter(.data$databaseId %in% !!databaseIdToFilter) %>% 
+        dplyr::select(.data$conceptId, .data$sourceConceptId, .data$conceptSubjects, .data$conceptCount) %>% 
+        dplyr::distinct()
+      conceptCounts <- dplyr::bind_rows(
+        conceptCounts %>% 
+          dplyr::select(.data$conceptId, .data$conceptSubjects, .data$conceptCount),
+        conceptCounts %>% 
+          dplyr::select(.data$sourceConceptId, .data$conceptSubjects, .data$conceptCount) %>% 
+          dplyr::rename("conceptId" = .data$sourceConceptId)
+      ) %>% 
+        dplyr::group_by(.data$conceptId) %>% 
+        dplyr::summarise(conceptSubjects = conceptSubjects,
+                         conceptCount = conceptCount) %>% 
+        dplyr::distinct() %>% 
+        dplyr::ungroup() %>% 
+        dplyr::arrange(dplyr::desc(.data$conceptCount))
+    }
+    
+    if (length(databaseIdToFilter) > 0) {
+      resolvedOrMappedConceptSetForAllDatabase <-
+        getResolvedOrMappedConceptSetSecondForAllDatabase()
+      if (!is.null(resolvedOrMappedConceptSetForAllDatabase) &&
+          length(resolvedOrMappedConceptSetForAllDatabase) == 2) {
+        source <-
+          (input$conceptSetsTypeSecond == "Mapped")
+        if (source) {
+          data <- resolvedOrMappedConceptSetForAllDatabase$mapped 
+          if (!is.null(data) && nrow(data) > 0) {
+            data <- data %>%
+              dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionSecondRow()$id) %>%
+              dplyr::filter(.data$databaseId %in% !!databaseIdToFilter) %>%
+              dplyr::select(-.data$databaseId, -.data$conceptSetId) %>% 
+              dplyr::filter(.data$conceptId != .data$resolvedConceptId) %>% 
+              dplyr::relocate(.data$resolvedConceptId) %>% 
+              dplyr::inner_join(resolvedOrMappedConceptSetForAllDatabase$resolved %>% 
+                                  dplyr::select(.data$conceptId, .data$conceptName) %>% 
+                                  dplyr::distinct() %>% 
+                                  dplyr::rename("resolvedConceptId" = .data$conceptId,
+                                                "resolvedConceptName" = .data$conceptName),
+                                by = "resolvedConceptId") %>% 
+              dplyr::mutate(resolvedConcept = paste0(.data$resolvedConceptId, " (", .data$resolvedConceptName, ")")) %>% 
+              dplyr::select(-.data$resolvedConceptId, -.data$resolvedConceptName) %>% 
+              dplyr::relocate(.data$resolvedConcept)
+            # data$resolvedConcept <-
+            #   as.factor(data$resolvedConcept)
+          } else {
+            data <- NULL
+          }
+        } else {
+          data <- resolvedOrMappedConceptSetForAllDatabase$resolved %>%
+            dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionSecondRow()$id) %>%
+            dplyr::filter(.data$databaseId %in% !!databaseIdToFilter) %>%
+            dplyr::select(-.data$databaseId, -.data$conceptSetId, -.data$cohortId)
+        }
+      }
+    }
+    
+    if (exists("vocabularyDatabaseSchemas") &&
+        !is.null(input$databaseOrVocabularySchema) &&
+        length(input$databaseOrVocabularySchema) > 0) {
+      vocabularyDataSchemaToFilter <-
+        intersect(vocabularyDatabaseSchemas,
+                  input$databaseOrVocabularySchema)
+    } else {
+      vocabularyDataSchemaToFilter <- NULL
+    }
+    
+    if (length(vocabularyDataSchemaToFilter) > 0) {
+      resolvedOrMappedConceptSetForAllVocabulary <-
+        getResolvedOrMappedConceptSetForAllVocabulary()
+      if (!is.null(resolvedOrMappedConceptSetForAllVocabulary) &&
+          length(resolvedOrMappedConceptSetForAllVocabulary) == 2) {
+        source <-
+          (input$conceptSetsType == "Mapped")
+        if (source) {
+          data <- resolvedOrMappedConceptSetForAllVocabulary$mapped %>%
+            dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionSecondRow()$id) %>%
+            dplyr::filter(.data$vocabularyDatabaseSchema == !!vocabularyDataSchemaToFilter) %>%
+            dplyr::select(-.data$vocabularyDatabaseSchema, -.data$conceptSetId) %>% 
+            dplyr::filter(.data$conceptId != .data$resolvedConceptId) %>% 
+            dplyr::relocate(.data$resolvedConceptId) %>% 
+            dplyr::inner_join(resolvedOrMappedConceptSetForAllVocabulary$resolved %>% 
+                                dplyr::select(.data$conceptId, .data$conceptName) %>% 
+                                dplyr::distinct() %>% 
+                                dplyr::rename("resolvedConceptId" = .data$conceptId,
+                                              "resolvedConceptName" = .data$conceptName),
+                              by = "resolvedConceptId") %>% 
+            dplyr::mutate(resolvedConcept = paste0(.data$resolvedConceptId, " (", .data$resolvedConceptName, ")")) %>% 
+            dplyr::select(-.data$resolvedConceptId, -.data$resolvedConceptName) %>% 
+            dplyr::relocate(.data$resolvedConcept)
+          # data$resolvedConcept <-
+          #   as.factor(data$resolvedConcept)
+        } else {
+          data <- resolvedOrMappedConceptSetForAllVocabulary$resolved %>%
+            dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionSecondRow()$id) %>%
+            dplyr::filter(.data$vocabularyDatabaseSchema == !!vocabularyDataSchemaToFilter) %>%
+            dplyr::select(-.data$vocabularyDatabaseSchema, -.data$conceptSetId)
+        }
+      }
+    }
+    if (!is.null(data) && nrow(data) > 0) {
+      if (all(nrow(conceptCounts) > 0,
+              'conceptId' %in% colnames(conceptCounts))) {
+        data <- data %>% 
+          dplyr::left_join(conceptCounts, by = "conceptId") %>% 
+          dplyr::arrange(dplyr::desc(.data$conceptSubjects)) %>% 
+          dplyr::relocate(.data$conceptSubjects, .data$conceptCount) %>% 
+          dplyr::rename("subjects" = .data$conceptSubjects,
+                        "count" = .data$conceptCount)
+      }
+      
+      data$conceptClassId <- as.factor(data$conceptClassId)
+      data$domainId <- as.factor(data$domainId)
+      # data$conceptCode <- as.factor(data$conceptCode)
+      data$conceptId <- as.character(data$conceptId)
+      # data$conceptName <- as.factor(data$conceptName)
+      data$vocabularyId <- as.factor(data$vocabularyId)
+      data$standardConcept <- as.factor(data$standardConcept)
+      
+      data <- data %>% 
+        dplyr::relocate(.data$conceptId, .data$conceptName)
+    }
+    return(data)
+  })
+  
+  output$cohortDefinitionIncludedResolvedConceptsSecondTable <-
+    DT::renderDataTable(expr = {
+      data <- getResolvedOrMappedConceptSecond()
+      
+      validate(need(length(cohortDefinitionConceptSetExpressionSecondRow()$id) > 0,
+                    "Please select concept set"))
+      
+      validate(need((all(!is.null(data), nrow(data) > 0)),
+                    "No resolved or mapped concept ids"))
+      
+      columnDef <- list(
+        truncateStringDef(1, 80)
+      )
+      maxCount <- NULL
+      maxSubject <- NULL
+      if ("subjects" %in% colnames(data) && "count" %in% colnames(data)) {
+        columnDef <- list(
+          truncateStringDef(1, 80),minCellCountDef(2:3))
+        
+        maxCount <- max(data$count)
+        maxSubject <- max(data$subjects)
+      }
+      
+      options = list(
+        pageLength = 1000,
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        lengthChange = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        info = TRUE,
+        searchHighlight = TRUE,
+        scrollX = TRUE,
+        scrollY = "20vh",
+        columnDefs = columnDef
+      )
+      
+      dataTable <- DT::datatable(
+        data,
+        options = options,
+        rownames = FALSE,
+        colnames = colnames(data) %>% camelCaseToTitleCase(),
+        escape = FALSE,
+        selection = 'single',
+        filter = "top",
+        class = "stripe nowrap compact"
+      )
+      
+      dataTable <- DT::formatStyle(
+        table = dataTable,
+        columns =  3,
+        background = DT::styleColorBar(c(0, maxSubject), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+      dataTable <- DT::formatStyle(
+        table = dataTable,
+        columns =  4,
+        background = DT::styleColorBar(c(0, maxCount), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+      return(dataTable)
+    }, server = TRUE)
+  
+  output$cohortDefinitionMappedConceptsSecondTable <-
+    DT::renderDataTable(expr = {
+      data <- getResolvedOrMappedConceptSecond()
+      
+      validate(need(length(cohortDefinitionConceptSetExpressionSecondRow()$id) > 0,
+                    "Please select concept set"))
+      
+      validate(need((all(!is.null(data), nrow(data) > 0)),
+                    "No resolved or mapped concept ids"))
+      
+      data <- data %>% 
+        dplyr::mutate(
+          conceptId = as.character(.data$conceptId),
+          # conceptName = as.factor(.data$conceptName),
+          vocabularyId = as.factor(.data$vocabularyId))
+      
+      columnDef <- list(
+        truncateStringDef(2, 80)
+      )
+      
+      maxCount <- NULL
+      maxSubject <- NULL
+      if ("subjects" %in% colnames(data) && "count" %in% colnames(data)) {
+        columnDef <- list(
+          truncateStringDef(1, 80),minCellCountDef(2:3))
+        
+        maxCount <- max(data$count)
+        maxSubject <- max(data$subjects)
+      }
+      options = list(
+        pageLength = 100,
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        lengthChange = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        info = TRUE,
+        searchHighlight = TRUE,
+        scrollX = TRUE,
+        scrollY = "20vh",
+        columnDefs = columnDef
+      )
+      
+      dataTable <- DT::datatable(
+        data,
+        options = options,
+        colnames = colnames(data) %>% camelCaseToTitleCase(),
+        rownames = FALSE,
+        escape = FALSE,
+        selection = 'single',
+        filter = "top",
+        class = "stripe nowrap compact"
+      )
+      
+      dataTable <- DT::formatStyle(
+        table = dataTable,
+        columns =  3,
+        background = DT::styleColorBar(c(0, maxSubject), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+      
+      dataTable <- DT::formatStyle(
+        table = dataTable,
+        columns =  4,
+        background = DT::styleColorBar(c(0, maxCount), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
+      return(dataTable)
+    }, server = TRUE)
+  
   # Cohort Counts ---------------------------------------------------------------------------
   
   getCohortCountResultReactive <- shiny::reactive(x = {
