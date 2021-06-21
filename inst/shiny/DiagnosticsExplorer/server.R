@@ -2647,47 +2647,47 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   # calendar Incidence ----------------------------------------------------------------------------------
-  calendarIncidenceData <- shiny::reactive({
-    data <- getResultsFromCalendarIncidence(
-      dataSource,
-      cohortIds = cohortIds(),
-      databaseIds = databaseIds()
-    )
-    return(data);
-  })
-  
-  output$calendarIncidencePlot <- ggiraph::renderggiraph(expr = {
-    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
-    validate(need(length(cohortIds()) > 0, "No cohorts chosen")) 
-    shiny::withProgress(
-      message = paste(
-        "Building calendar incidence plot data for ",
-        length(cohortIds()),
-        " cohorts and ",
-        length(databaseIds()),
-        " databases"
-      ),{
-        data <- calendarIncidenceData()
-        
-        validate(need(all(!is.null(data), nrow(data) > 0), paste0("No data for this combination"))) 
-        plot <- plotCalendarIncidence(
-          data = data,
-          cohortCount = cohortCount,
-          shortNameRef = cohort,
-          yscaleFixed = input$calendarIncidenceYscaleFixed
-        )
-        return(plot)
-      })
-    })
-  
-  output$saveCalendarIncidencePlot <-  downloadHandler(
-    filename = function() {
-      getFormattedFileName(fileName = "CalendarIncidence")
-    },
-    content = function(file) {
-      write.csv(calendarIncidenceData(), file)
-    }
-  )
+  # calendarIncidenceData <- shiny::reactive({
+  #   data <- getResultsFromCalendarIncidence(
+  #     dataSource,
+  #     cohortIds = cohortIds(),
+  #     databaseIds = databaseIds()
+  #   )
+  #   return(data);
+  # })
+  # 
+  # output$calendarIncidencePlot <- ggiraph::renderggiraph(expr = {
+  #   validate(need(length(databaseIds()) > 0, "No data sources chosen"))
+  #   validate(need(length(cohortIds()) > 0, "No cohorts chosen")) 
+  #   shiny::withProgress(
+  #     message = paste(
+  #       "Building calendar incidence plot data for ",
+  #       length(cohortIds()),
+  #       " cohorts and ",
+  #       length(databaseIds()),
+  #       " databases"
+  #     ),{
+  #       data <- calendarIncidenceData()
+  #       
+  #       validate(need(all(!is.null(data), nrow(data) > 0), paste0("No data for this combination"))) 
+  #       plot <- plotCalendarIncidence(
+  #         data = data,
+  #         cohortCount = cohortCount,
+  #         shortNameRef = cohort,
+  #         yscaleFixed = input$calendarIncidenceYscaleFixed
+  #       )
+  #       return(plot)
+  #     })
+  #   })
+  # 
+  # output$saveCalendarIncidencePlot <-  downloadHandler(
+  #   filename = function() {
+  #     getFormattedFileName(fileName = "CalendarIncidence")
+  #   },
+  #   content = function(file) {
+  #     write.csv(calendarIncidenceData(), file)
+  #   }
+  # )
   
   
   # Time Series ----------------------------------------------------------------------------------
