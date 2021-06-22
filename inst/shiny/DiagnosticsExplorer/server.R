@@ -5787,32 +5787,32 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   selectedCohorts <- shiny::reactive({
-    cohorts <- cohortSubset() %>%
+    cohortSelected <- cohortSubset() %>%
       dplyr::filter(.data$cohortId %in% cohortIds()) %>%
       dplyr::arrange(.data$cohortId)
-    databaseIds <- cohortCount %>% 
+    databaseIdsWithCount <- cohortCount %>% 
       dplyr::filter(.data$databaseId %in% databaseIds()) %>% 
       dplyr::distinct(.data$cohortId,.data$databaseId)
-    distinctDatabaseIdsCount <- length(databaseIds$databaseId %>% unique())
+    distinctDatabaseIdsWithCount <- length(databaseIdsWithCount$databaseId %>% unique())
     
-    for (i in 1:nrow(cohorts)) {
+    for (i in 1:nrow(cohortSelected)) {
       filteredDatabaseIds <-
-        databaseIds[databaseIds$cohortId == cohorts$cohortId[i], ] %>%
+        databaseIdsWithCount[databaseIdsWithCount$cohortId == cohortSelected$cohortId[i], ] %>%
         dplyr::pull()
       count <- length(filteredDatabaseIds)
-      if (distinctDatabaseIdsCount == count) {
-        cohorts$compoundName[i] <-
-          paste(cohorts$compoundName[i], "- in all data sources", sep = " ")
+      if (distinctDatabaseIdsWithCount == count) {
+        cohortSelected$compoundName[i] <- cohortSelected$compoundName[i]
+          # paste( #, "- in all data sources", sep = " ")
       } else {
-        countPercentage <- round(count / distinctDatabaseIdsCount * 100, 2)
+        countPercentage <- round(count / distinctDatabaseIdsWithCount * 100, 2)
         
-        cohorts$compoundName[i] <-
+        cohortSelected$compoundName[i] <-
           paste(
-            cohorts$compoundName[i],
+            cohortSelected$compoundName[i],
             " - in ",
             count,
             "/",
-            distinctDatabaseIdsCount,
+            distinctDatabaseIdsWithCount,
             " (",
             countPercentage,
             "%)",
@@ -5821,10 +5821,10 @@ shiny::shinyServer(function(input, output, session) {
           )
       }
     }
-    cohorts <- cohorts %>% 
+    cohortSelected <- cohortSelected %>% 
       dplyr::select(.data$compoundName)
     
-    return(apply(cohorts, 1, function(x)
+    return(apply(cohortSelected, 1, function(x)
       tags$tr(lapply(x, tags$td))))
   })
   
