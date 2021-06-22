@@ -5821,7 +5821,11 @@ shiny::shinyServer(function(input, output, session) {
           )
       }
     }
-    cohortSelected <- cohortSelected %>% 
+    return(cohortSelected);
+  })
+  
+  renderedSelectedCohorts <- shiny::reactive({
+    cohortSelected <- selectedCohorts() %>% 
       dplyr::select(.data$compoundName)
     
     return(apply(cohortSelected, 1, function(x)
@@ -5836,10 +5840,64 @@ shiny::shinyServer(function(input, output, session) {
     return(input$comparatorCohort)
   })
   
+  buildCohortConditionTable <- function(messsege,cohortCompoundNameArray) {
+    tags$table(tags$tr(tags$td(tags$b(messsege))),
+               lapply(cohortCompoundNameArray, function(x)
+                 tags$tr(lapply(x, tags$td)))
+    )
+  }
+  
+  output$cohortCountsCohortCategories <-
+    shiny::renderUI({
+      cohortSelected <- selectedCohorts()
+      cohortCountSelected <- cohortSelected %>%
+        dplyr::inner_join(cohortCount) %>%
+        dplyr::filter(.data$databaseId %in% databaseIds())
+      lowSubjectCountCategory1 <- c()
+      lowSubjectCountCategory2 <- c()
+      lowSubjectCountCategory3 <- c()
+      for (i in 1:nrow(cohortCountSelected)) {
+        if (cohortCountSelected$cohortSubjects[i] == 0) {
+          lowSubjectCountCategory1 <- c(lowSubjectCountCategory1, cohortCountSelected$compoundName[i])
+        } else if (cohortCountSelected$cohortSubjects[i] > 0 &&
+                   cohortCountSelected$cohortSubjects[i] <= 100) {
+          lowSubjectCountCategory2 <- c(lowSubjectCountCategory2, cohortCountSelected$compoundName[i])
+        } else if (cohortCountSelected$cohortSubjects[i] > 100 &&
+                   cohortCountSelected$cohortSubjects[i] < 2500) {
+          lowSubjectCountCategory3 <- c(lowSubjectCountCategory3, cohortCountSelected$compoundName[i])
+        } 
+      }
+      
+      tags$div(tags$div(
+        if (length(lowSubjectCountCategory1) > 0) {
+        buildCohortConditionTable("cohorts were found to be empty", lowSubjectCountCategory1)
+      }),
+      tags$div(
+      if (length(lowSubjectCountCategory2) > 0) {
+        buildCohortConditionTable(
+          "cohorts were found to have low cohort counts and may not be suitable for most studies",
+          lowSubjectCountCategory2
+        )
+      }),
+      tags$div(
+      if (length(lowSubjectCountCategory3) > 0) {
+        buildCohortConditionTable(
+          "Cohorts were found to have counts less than 2,500. As a general rule of thumb - these cohorts may not be suitable for use as exposure cohorts",
+          lowSubjectCountCategory3
+        )
+      }),
+      tags$div(
+        if (length(lowSubjectCountCategory1) <= 0 && length(lowSubjectCountCategory2) <= 0 && length(lowSubjectCountCategory3) <= 0) {
+          tags$b(
+            "There is no cohorts which has subject count less than 2500"
+          )
+        }))
+    })
+  
   
   output$cohortCountsSelectedCohorts <-
     shiny::renderUI({
-      selectedCohorts()
+      renderedSelectedCohorts()
     })
   output$inclusionRuleStatSelectedCohort <-
     shiny::renderUI({
@@ -5867,19 +5925,19 @@ shiny::shinyServer(function(input, output, session) {
     })
   output$cohortOverlapSelectedCohort <-
     shiny::renderUI({
-      selectedCohorts()
+      renderedSelectedCohorts()
     })
   output$incidenceRateSelectedCohorts <-
     shiny::renderUI({
-      selectedCohorts()
+      renderedSelectedCohorts()
     })
   output$timeSeriesSelectedCohorts <-
     shiny::renderUI({
-      selectedCohorts()
+      renderedSelectedCohorts()
     })
   output$timeDistSelectedCohorts <-
     shiny::renderUI({
-      selectedCohorts()
+      renderedSelectedCohorts()
     })
   output$visitContextSelectedCohort <-
     shiny::renderUI({

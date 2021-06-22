@@ -433,6 +433,15 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "cohortCounts",
     cohortReference("cohortCountsSelectedCohorts"),
+    shinydashboard::box(
+      title = "cohorts with low subject counts",
+      status = "primary",
+      width = NULL,
+      solidHeader = TRUE,
+      collapsible = TRUE,
+      collapsed = TRUE,
+      shiny::uiOutput(outputId = "cohortCountsCohortCategories")
+    ), 
     shiny::conditionalPanel(
       condition = "output.cohortCountTableContainsData == true",
       shiny::radioButtons(
