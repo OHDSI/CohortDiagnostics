@@ -371,7 +371,7 @@ runCohortDiagnostics <- function(packageName = NULL,
              MAX(observation_period_end_date) observation_period_max_date,
              COUNT(distinct person_id) persons,
              COUNT(person_id) records,
-             SUM(DATEDIFF(dd, observation_period_start_date, observation_period_end_date)) personDays
+             SUM(DATEDIFF(dd, observation_period_start_date, observation_period_end_date)) person_days
              FROM @cdm_database_schema.observation_period;",
     cdm_database_schema = cdmDatabaseSchema,
     snakeCaseToCamelCase = TRUE,
@@ -1256,47 +1256,37 @@ runCohortDiagnostics <- function(packageName = NULL,
   
   # Writing metadata file
   ParallelLogger::logInfo("Retrieving metadata information and writing metadata")
-  
-  variableField <- c(
-    "vocabularyVersionCdm",
-    "vocabularyVersion",
-    "CohortDiagnosticsVersion",
-    "DatabaseConnectorVersion",
-    "FeatureExtractionVersion",
-    "SqlRenderVersion",
-    "AndromedaVersion",
-    "dplyrVersion",
-    "tidyrVersion",
-    "Rversion",
-    "CurrentPackage",
-    "CurrentPackageVersion",
-    "runTime",
-    "runTimeUnits"
-  )
-  
-  valueField <- c(
-    vocabularyVersionCdm,
-    vocabularyVersion,
-    as.character(packageVersion("CohortDiagnostics")),
-    as.character(packageVersion("DatabaseConnector")),
-    as.character(packageVersion("FeatureExtraction")),
-    as.character(packageVersion("SqlRender")),
-    as.character(packageVersion("Andromeda")),
-    as.character(packageVersion("dplyr")),
-    as.character(packageVersion("tidyr")),
-    as.character(R.Version()$version.string),
-    as.character(packageName()),
-    as.character(packageVersion(getPackageName())),
-    as.character(delta),
-    as.character(attr(delta, "units"))
-  )
-  
   metadata <-
     dplyr::tibble(
-      databaseId = !!databaseId,
-      variableField = !!variableField,
-      valueField = !!valueField
-      
+      databaseId = as.character(!!databaseId),
+      variableField = c(
+        "CohortDiagnosticsVersion",
+        "DatabaseConnectorVersion",
+        "FeatureExtractionVersion",
+        "SqlRenderVersion",
+        "AndromedaVersion",
+        "dplyrVersion",
+        "tidyrVersion",
+        "Rversion",
+        "CurrentPackage",
+        "CurrentPackageVersion",
+        "runTime",
+        "runTimeUnits"
+      ),
+      valueField =  c(
+        as.character(packageVersion("CohortDiagnostics")),
+        as.character(packageVersion("DatabaseConnector")),
+        as.character(packageVersion("FeatureExtraction")),
+        as.character(packageVersion("SqlRender")),
+        as.character(packageVersion("Andromeda")),
+        as.character(packageVersion("dplyr")),
+        as.character(packageVersion("tidyr")),
+        as.character(R.Version()$version.string),
+        as.character(packageName()),
+        as.character(packageVersion(getPackageName())),
+        as.character(delta),
+        as.character(attr(delta, "units"))
+      )
     )
   writeToCsv(data = metadata,
              fileName = file.path(exportFolder, "metadata.csv"))
