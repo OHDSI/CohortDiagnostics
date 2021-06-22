@@ -91,11 +91,11 @@ sidebarMenu <-
         item = shinydashboard::menuItem(text = "Time Distributions", tabName = "timeDistribution"),
         infoId = "timeDistributionInfo"
       ),
-    if (exists("inclusionRuleStats"))
-      addInfo(
-        item = shinydashboard::menuItem(text = "Inclusion Rule Statistics", tabName = "inclusionRuleStats"),
-        infoId = "inclusionRuleStatsInfo"
-      ),
+    # if (exists("inclusionRuleStats"))
+    #   addInfo(
+    #     item = shinydashboard::menuItem(text = "Inclusion Rule Statistics", tabName = "inclusionRuleStats"),
+    #     infoId = "inclusionRuleStatsInfo"
+    #   ),
     if (exists("indexEventBreakdown"))
       addInfo(
         item = shinydashboard::menuItem(text = "Index Event Breakdown", tabName = "indexEventBreakdown"),
