@@ -611,7 +611,6 @@ bodyTabItems <- shinydashboard::tabItems(
       )
     )
   ),
-  
   shinydashboard::tabItem(
     tabName = "timeSeries",
     cohortReference("timeSeriesSelectedCohorts"),
@@ -782,36 +781,36 @@ bodyTabItems <- shinydashboard::tabItems(
     ),
     DT::dataTableOutput(outputId = "orphanConceptsTable")
   ),
-  shinydashboard::tabItem(
-    tabName = "inclusionRuleStats",
-    cohortReference("inclusionRuleStatSelectedCohort"),
-    shiny::conditionalPanel(
-      condition = "output.inclusionRuleStatsContainsData == true",
-      column(6,
-             shiny::radioButtons(
-               inputId = "inclusionRuleTableFilters",
-               label = "Inclusion Rule Events",
-               choices = c("All", "Meet", "Gain", "Remain", "Totals"),
-               selected = "All",
-               inline = TRUE
-             )
-      ),
-      column(6,
-             tags$table(width = "100%",
-                        tags$tr(
-                          tags$td(
-                            align = "right",
-                            shiny::downloadButton(
-                              "saveInclusionRuleTable",
-                              label = "",
-                              icon = shiny::icon("download"),
-                              style = "margin-top: 5px; margin-bottom: 5px;"
-                            )
-                          )
-                        )))
-    ),
-    DT::dataTableOutput(outputId = "inclusionRuleTable")
-  ),
+  # shinydashboard::tabItem(
+  #   tabName = "inclusionRuleStats",
+  #   cohortReference("inclusionRuleStatSelectedCohort"),
+  #   shiny::conditionalPanel(
+  #     condition = "output.inclusionRuleStatsContainsData == true",
+  #     column(6,
+  #            shiny::radioButtons(
+  #              inputId = "inclusionRuleTableFilters",
+  #              label = "Inclusion Rule Events",
+  #              choices = c("All", "Meet", "Gain", "Remain", "Totals"),
+  #              selected = "All",
+  #              inline = TRUE
+  #            )
+  #     ),
+  #     column(6,
+  #            tags$table(width = "100%",
+  #                       tags$tr(
+  #                         tags$td(
+  #                           align = "right",
+  #                           shiny::downloadButton(
+  #                             "saveInclusionRuleTable",
+  #                             label = "",
+  #                             icon = shiny::icon("download"),
+  #                             style = "margin-top: 5px; margin-bottom: 5px;"
+  #                           )
+  #                         )
+  #                       )))
+  #   ),
+  #   DT::dataTableOutput(outputId = "inclusionRuleTable")
+  # ),
   shinydashboard::tabItem(
     tabName = "indexEventBreakdown",
     cohortReference("indexEventBreakdownSelectedCohort"),
