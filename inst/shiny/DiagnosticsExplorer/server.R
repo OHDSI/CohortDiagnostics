@@ -499,8 +499,8 @@ shiny::shinyServer(function(input, output, session) {
                                             inputId = "conceptSetsType",
                                             label = "",
                                             choices = c("Concept Set Expression",
-                                                        "Resolved",
-                                                        "Mapped",
+                                                        "Resolved (included)",
+                                                        "Mapped (source)",
                                                         "Orphan concepts",
                                                         "Json"),
                                             selected = "Concept Set Expression",
@@ -510,8 +510,8 @@ shiny::shinyServer(function(input, output, session) {
                                   )),
         shiny::conditionalPanel(
           condition = "output.conceptSetExpressionRowSelected == true &
-                input.conceptSetsType != 'Resolved' &
-                input.conceptSetsType != 'Mapped' &
+                input.conceptSetsType != 'Resolved (included)' &
+                input.conceptSetsType != 'Mapped (source)' &
                 input.conceptSetsType != 'Json' &
                 input.conceptSetsType != 'Orphan concepts'",
           tags$table(width = "100%", 
@@ -529,7 +529,7 @@ shiny::shinyServer(function(input, output, session) {
           DT::dataTableOutput(outputId = "cohortDefinitionConceptSetsTable")
         ),
         shiny::conditionalPanel(
-          condition = "input.conceptSetsType == 'Resolved'",
+          condition = "input.conceptSetsType == 'Resolved (included)'",
           tags$table(width = "100%", 
                      tags$tr(
                        tags$td(align = "right",
@@ -545,7 +545,7 @@ shiny::shinyServer(function(input, output, session) {
           DT::dataTableOutput(outputId = "cohortDefinitionIncludedResolvedConceptsTable")
         ),
         shiny::conditionalPanel(
-          condition = "input.conceptSetsType == 'Mapped'",
+          condition = "input.conceptSetsType == 'Mapped (source)'",
           tags$table(width = "100%", 
                      tags$tr(
                        tags$td(align = "right",
@@ -602,8 +602,8 @@ shiny::shinyServer(function(input, output, session) {
                                       inputId = "conceptSetsTypeSecond",
                                       label = "",
                                       choices = c("Concept Set Expression",
-                                                  "Resolved",
-                                                  "Mapped",
+                                                  "Resolved (included)",
+                                                  "Mapped (source)",
                                                   "Orphan concepts",
                                                   "Json"),
                                       selected = "Concept Set Expression",
@@ -613,8 +613,8 @@ shiny::shinyServer(function(input, output, session) {
                                 ))),
         shiny::conditionalPanel(
           condition = "output.conceptSetExpressionSecondRowSelected == true &
-                input.conceptSetsTypeSecond != 'Resolved' &
-                input.conceptSetsTypeSecond != 'Mapped' &
+                input.conceptSetsTypeSecond != 'Resolved (included)' &
+                input.conceptSetsTypeSecond != 'Mapped (source)' &
                 input.conceptSetsTypeSecond != 'Json' &
                 input.conceptSetsTypeSecond != 'Orphan concepts'",
           # tags$table(width = "100%",
@@ -632,7 +632,7 @@ shiny::shinyServer(function(input, output, session) {
           DT::dataTableOutput(outputId = "cohortDefinitionConceptSetsSecondTable")
         ),
         shiny::conditionalPanel(
-          condition = "input.conceptSetsTypeSecond == 'Resolved'",
+          condition = "input.conceptSetsTypeSecond == 'Resolved (included)'",
           # tags$table(width = "100%",
           #            tags$tr(
           #              tags$td(align = "right",
@@ -648,7 +648,7 @@ shiny::shinyServer(function(input, output, session) {
           DT::dataTableOutput(outputId = "cohortDefinitionIncludedResolvedConceptsSecondTable")
         ),
         shiny::conditionalPanel(
-          condition = "input.conceptSetsTypeSecond == 'Mapped'",
+          condition = "input.conceptSetsTypeSecond == 'Mapped (source)'",
           # tags$table(width = "100%",
           #            tags$tr(
           #              tags$td(align = "right",
@@ -969,7 +969,7 @@ shiny::shinyServer(function(input, output, session) {
       if (!is.null(resolvedOrMappedConceptSetForAllDatabase) &&
           length(resolvedOrMappedConceptSetForAllDatabase) == 2) {
         source <-
-          (input$conceptSetsType == "Mapped")
+          (input$conceptSetsType == "Mapped (source)")
         if (source) {
           data <- resolvedOrMappedConceptSetForAllDatabase$mapped 
           if (!is.null(data) && nrow(data) > 0) {
@@ -1018,7 +1018,7 @@ shiny::shinyServer(function(input, output, session) {
       if (!is.null(resolvedOrMappedConceptSetForAllVocabulary) &&
           length(resolvedOrMappedConceptSetForAllVocabulary) == 2) {
         source <-
-          (input$conceptSetsType == "Mapped")
+          (input$conceptSetsType == "Mapped (source)")
         if (source) {
           data <- resolvedOrMappedConceptSetForAllVocabulary$mapped %>%
             dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id) %>%
