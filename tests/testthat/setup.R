@@ -8,8 +8,8 @@ connectionDetails <- DatabaseConnector::createConnectionDetails(
     server = Sys.getenv("CDM5_POSTGRESQL_SERVER"),
     pathToDriver = jdbcDriverFolder)
 
-cdmDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
-vocabularyDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
+cdmDatabaseSchema <- 'eunomia' #Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
+vocabularyDatabaseSchema <- 'eunomia' #Sys.getenv("CDM5_POSTGRESQL_CDM_SCHEMA")
 cohortDiagnosticsSchema <- Sys.getenv("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")
 tempEmulationSchema <- NULL
 # Temp Random Schema to prevent collisions/issues when multiple test instances run
