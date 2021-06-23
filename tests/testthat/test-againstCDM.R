@@ -327,13 +327,15 @@ if (stringr::str_detect(string = tolower(.Platform$OS.type), pattern = "mac")) {
   
   test_that("Data removal works", {
     specifications <- getResultsDataModelSpecifications()
-    
+    connection <- DatabaseConnector::connect(connectionDetails)
     for (tableName in unique(specifications$tableName)) {
       primaryKey <- specifications %>%
         dplyr::filter(.data$tableName == !!tableName &
                         .data$primaryKey == "Yes") %>%
         dplyr::select(.data$fieldName) %>%
         dplyr::pull()
+      
+      
       
       if ("database_id" %in% primaryKey) {
         CohortDiagnostics:::deleteAllRecordsForDatabaseId(
@@ -356,6 +358,7 @@ if (stringr::str_detect(string = tolower(.Platform$OS.type), pattern = "mac")) {
         expect_true(databaseIdCount == 0)
       }
     }
+    DatabaseConnector::disconnect(connection)
   })
 }
 test_that("util functions", {
