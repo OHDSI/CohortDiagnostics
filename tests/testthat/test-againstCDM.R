@@ -198,8 +198,9 @@ test_that("Retrieve results from premerged file", {
   
 })
 
-if (.Platform$OS.type == 'windows') {
-  ## limiting upload tests to windows only
+if (stringr::str_detect(string = tolower(.Platform$OS.type), pattern = "mac")) {
+  ## limiting upload tests to Mac OS to avoid conflicts while uploading to shared schema
+  ## MacOs was chosen because test coversage is computed on MacOs
   ####################### upload to database and test
   test_that("Create and upload results to results data model", {
     createResultsDataModel(connectionDetails = connectionDetails, schema = cohortDiagnosticsSchema)
