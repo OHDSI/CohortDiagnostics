@@ -434,7 +434,7 @@ bodyTabItems <- shinydashboard::tabItems(
     tabName = "cohortCounts",
     cohortReference("cohortCountsSelectedCohorts"),
     shinydashboard::box(
-      title = "cohorts with low subject counts",
+      title = "Extra Information",
       status = "primary",
       width = NULL,
       solidHeader = TRUE,

@@ -5810,9 +5810,12 @@ shiny::shinyServer(function(input, output, session) {
       cohortCountSelected <- cohortSelected %>%
         dplyr::inner_join(cohortCount) %>%
         dplyr::filter(.data$databaseId %in% databaseIds())
-      lowSubjectCountCategory1 <- c()
-      lowSubjectCountCategory2 <- c()
-      lowSubjectCountCategory3 <- c()
+      lowSubjectCountCategory1 <- c()   # category 1 -> n == 0
+      lowSubjectCountCategory2 <- c()   # category 2 -> 0 < n < 100
+      lowSubjectCountCategory3 <- c()   # category 2 -> 100 < n < 2500
+      recordPerSubjectDatabasesCategory1 <- c()    # category 1 -> 1 record per subject (ratio = 1)
+      recordPerSubjectDatabasesCategory2 <- c()    # category 1 -> more than 1 record per subject (ratio > 1)
+      
       for (i in 1:nrow(cohortCountSelected)) {
         if (cohortCountSelected$cohortSubjects[i] == 0) {
           lowSubjectCountCategory1 <-
@@ -5847,28 +5850,66 @@ shiny::shinyServer(function(input, output, session) {
               )
             )
         }
+        
+        recordPerSubject <- cohortCountSelected$cohortEntries[i] / cohortCountSelected$cohortSubjects[i]
+        if (recordPerSubject == 1 && !(cohortCountSelected$databaseId[i] %in% recordPerSubjectDatabasesCategory1)) {
+          recordPerSubjectDatabasesCategory1 <- c(recordPerSubjectDatabasesCategory1,cohortCountSelected$databaseId[i])
+        } else if (recordPerSubject > 1 && !(cohortCountSelected$databaseId[i] %in% recordPerSubjectDatabasesCategory2)) {
+          recordPerSubjectDatabasesCategory2 <- c(recordPerSubjectDatabasesCategory2,cohortCountSelected$databaseId[i])
+        }
       }
       
-      tags$div(tags$div(if (length(lowSubjectCountCategory1) > 0) {
-        buildCohortConditionTable("cohorts were found to be empty", lowSubjectCountCategory1)
-      }),
-      tags$div(if (length(lowSubjectCountCategory2) > 0) {
-        buildCohortConditionTable(
-          "cohorts were found to have low cohort counts and may not be suitable for most studies",
-          lowSubjectCountCategory2
-        )
-      }),
-      tags$div(if (length(lowSubjectCountCategory3) > 0) {
-        buildCohortConditionTable(
-          "Cohorts were found to have counts less than 2,500. As a general rule of thumb - these cohorts may not be suitable for use as exposure cohorts",
-          lowSubjectCountCategory3
-        )
-      }),
-      tags$div(if (length(lowSubjectCountCategory1) <= 0 &&
-                   length(lowSubjectCountCategory2) <= 0 &&
-                   length(lowSubjectCountCategory3) <= 0) {
-        tags$b("There is no cohorts which has subject count less than 2500")
-      }))
+      tags$div(
+        tags$b("Cohorts with low subject count :"),
+        tags$div(if (length(lowSubjectCountCategory1) > 0) {
+          buildCohortConditionTable("cohorts were found to be empty", lowSubjectCountCategory1)
+        }),
+        tags$div(if (length(lowSubjectCountCategory2) > 0) {
+          buildCohortConditionTable(
+            "cohorts were found to have low cohort counts and may not be suitable for most studies",
+            lowSubjectCountCategory2
+          )
+        }),
+        tags$div(if (length(lowSubjectCountCategory3) > 0) {
+          buildCohortConditionTable(
+            "Cohorts were found to have counts less than 2,500. As a general rule of thumb - these cohorts may not be suitable for use as exposure cohorts",
+            lowSubjectCountCategory3
+          )
+        }),
+        tags$div(if (length(lowSubjectCountCategory1) <= 0 &&
+                     length(lowSubjectCountCategory2) <= 0 &&
+                     length(lowSubjectCountCategory3) <= 0) {
+          tags$p("There is no cohorts which has subject count less than 2500")
+        }),
+        tags$br(),
+        tags$b("Record per subjects :"),
+        tags$div(if (length(recordPerSubjectDatabasesCategory1) > 0) {
+          tags$p(
+            paste(
+              length(recordPerSubjectDatabasesCategory1),
+              "/",
+              length(databaseIds()),
+              " of the datasources has 1 record per subject count - ",
+              paste(
+                recordPerSubjectDatabasesCategory1, collapse =  ", "
+              )
+            )
+          )
+        }),
+        tags$div(if (length(recordPerSubjectDatabasesCategory2) > 0) {
+          tags$p(
+            paste(
+              length(recordPerSubjectDatabasesCategory2),
+              "/",
+              length(databaseIds()),
+              " of the datasources has more than 1 record per subject count - ",
+              paste(
+                recordPerSubjectDatabasesCategory2, collapse = ", "
+              )
+            )
+          )
+        }),
+      )
     })
   
   
