@@ -3671,9 +3671,6 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(all(!is.null(data),nrow(data) > 0),
                   "There is no data for the selected combination."))
     
-    # if (is.null(data) || nrow(data) == 0) {
-    #   return(dplyr::tibble("No data for the combination."))
-    # }
     data <- data %>%
       # dplyr::filter(.data$domainTable %in% selectedDomainTable()) %>%
       # dplyr::filter(.data$domainField %in% selectedDomainField()) %>%
@@ -3682,7 +3679,11 @@ shiny::shinyServer(function(input, output, session) {
         .data$domainField,
         -.data$domainId,
         #-.data$vocabularyId,-.data$standardConcept
-      )
+      ) %>% 
+      dplyr::mutate(databaseId = paste0(.data$databaseId, 
+                                        "(n = ", 
+                                        scales::comma(.data$cohortSubjects,accuracy = 1), 
+                                        ")"))
     
     validate(need(nrow(data) > 0,
                   "No data available for selected combination."))
@@ -3690,48 +3691,60 @@ shiny::shinyServer(function(input, output, session) {
     maxCount <- max(data$conceptCount, na.rm = TRUE)
     databaseIds <- unique(data$databaseId)
     
-    cohortCounts <- data %>% 
-      dplyr::filter(.data$cohortId == cohortId()) %>% 
-      dplyr::filter(.data$databaseId %in% databaseIds()) %>% 
-      dplyr::select(.data$cohortSubjects) %>% 
-      dplyr::pull(.data$cohortSubjects) %>% unique()
-    
-    databaseIdsWithCount <- paste(databaseIds, "(n = ", format(cohortCounts, big.mark = ","), ")")
-    
     if (!"subjectCount" %in% names(data)) {
       data$subjectCount <- 0
     }
     
-    if (input$indexEventBreakdownTableFilter == "Both") {
-      data <- data %>%
-        dplyr::arrange(.data$databaseId) %>%
-        dplyr::select(
-          .data$conceptId,
-          .data$conceptName,
-          .data$domainField,
-          .data$databaseId,
-          .data$vocabularyId,
-          .data$conceptCount,
-          .data$subjectCount 
-        ) %>%
-        dplyr::filter(.data$conceptId > 0) %>%
-        dplyr::distinct() %>% # distinct is needed here because many time condition_concept_id and condition_source_concept_id
-        # may have the same value leading to duplication of row records
-        tidyr::pivot_longer(names_to = "type", 
-                            cols = c("conceptCount", "subjectCount"), 
-                            values_to = "count") %>% 
-        dplyr::mutate(names = paste0(.data$databaseId, " ", .data$type)) %>% 
-        dplyr::arrange(.data$databaseId, .data$type) %>% 
-        tidyr::pivot_wider(id_cols = c("conceptId",
-                                       "conceptName",
-                                       "domainField",
-                                       "vocabularyId"),
-                           names_from = "names",
-                           values_from = count,
-                           values_fill = 0)
+    data <- data %>%
+      dplyr::arrange(.data$databaseId) %>%
+      dplyr::select(
+        .data$conceptId,
+        .data$conceptName,
+        .data$domainField,
+        .data$databaseId,
+        .data$vocabularyId,
+        .data$conceptCount,
+        .data$subjectCount,
+        .data$cohortSubjects 
+      ) %>%
+      dplyr::filter(.data$conceptId > 0) %>%
+      dplyr::distinct() %>% # distinct is needed here because many time condition_concept_id and condition_source_concept_id
+      # may have the same value leading to duplication of row records
+      tidyr::pivot_longer(names_to = "type", 
+                          cols = c("conceptCount", "subjectCount"), 
+                          values_to = "count") %>% 
+      dplyr::mutate(names = paste0(.data$databaseId, " ", .data$type)) %>% 
+      dplyr::arrange(.data$databaseId, .data$type) %>% 
+      tidyr::pivot_wider(id_cols = c("conceptId",
+                                     "conceptName",
+                                     "domainField",
+                                     "vocabularyId"),
+                         names_from = "names",
+                         values_from = count,
+                         values_fill = 0)
+    
+    data <- data[order(-data[5]), ]
+    
+    if (input$indexEventBreakdownTableFilter == "Records") {
       
-      data <- data[order(-data[5]), ]
+      data <- data %>% 
+        dplyr::select(-dplyr::contains("subjectCount"))
       
+      minimumCellPercent <- minCellCountDef(3 + 1:(length(databaseIds)))
+      
+      colnames(data) <- stringr::str_replace(string = colnames(data), pattern = 'conceptCount', replacement = '')
+      columnColor <- 4 + 1:(length(databaseIds))
+      
+    } else if (input$indexEventBreakdownTableFilter == "Persons") {
+      data <- data %>% 
+        dplyr::select(-dplyr::contains("conceptCount"))
+      
+      colnames(data) <- stringr::str_replace(string = colnames(data), pattern = 'subjectCount', replacement = '')
+      
+      minimumCellPercent <- minCellCountDef(3 + 1:(length(databaseIds)))
+      columnColor <- 4 + 1:(length(databaseIds))
+
+    } else {
       sketch <- htmltools::withTags(table(class = "display",
                                           thead(
                                             tr(
@@ -3739,101 +3752,45 @@ shiny::shinyServer(function(input, output, session) {
                                               th(rowspan = 2, "Concept Name"),
                                               th(rowspan = 2, "Domain field"),
                                               th(rowspan = 2, "Vocabulary Id"),
-                                              lapply(databaseIdsWithCount, th, colspan = 2, class = "dt-center", style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                              lapply(databaseIds, th, colspan = 2, class = "dt-center", style = "border-right:1px solid silver;border-bottom:1px solid silver")
                                             ),
                                             tr(lapply(rep(
                                               c("Records", "Persons"), length(databaseIds)
                                             ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver"))
                                           )))
       
-      options = list(
-        pageLength = 1000,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE,
-        scrollY = "50vh",
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        columnDefs = list(minCellCountDef(3 + 1:(
-          length(databaseIds) * 2
-        )), truncateStringDef(1, 80))
-      )
+      minimumCellPercent <- minCellCountDef(3 + 1:(
+        length(databaseIds) * 2
+      ))
       
-      dataTable <- DT::datatable(
+      columnColor <- 4 + 1:(length(databaseIds) * 2)
+    }
+    options = list(
+      pageLength = 1000,
+      lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+      searching = TRUE,
+      searchHighlight = TRUE,
+      scrollX = TRUE,
+      scrollY = "50vh",
+      lengthChange = TRUE,
+      ordering = TRUE,
+      paging = TRUE,
+      columnDefs = list(minimumCellPercent)
+    )
+    
+    if (input$indexEventBreakdownTableFilter == "Both") {
+      table <- DT::datatable(
         data,
         options = options,
+        colnames = colnames(table) %>%
+          camelCaseToTitleCase(),
         rownames = FALSE,
         container = sketch,
-        colnames = colnames(data) %>%
-          camelCaseToTitleCase(),
         escape = FALSE,
-        filter = "top",
-        class = "stripe nowrap compact"
+        filter = "top"
       )
-      
-      dataTable <- DT::formatStyle(
-        table = dataTable,
-        columns = 4 + 1:(length(databaseIds) * 2),
-        background = DT::styleColorBar(c(0, maxCount), "lightblue"),
-        backgroundSize = "98% 88%",
-        backgroundRepeat = "no-repeat",
-        backgroundPosition = "center"
-      )
-    } else if (input$indexEventBreakdownTableFilter == "Records" || input$indexEventBreakdownTableFilter == "Persons") {
-      data <-  data %>%
-        dplyr::arrange(.data$databaseId) %>%
-        dplyr::filter(.data$conceptId > 0) %>%
-        dplyr::distinct() # distinct is needed here because many time condition_concept_id and condition_source_concept_id
-      # may have the same value
-      
-      data <- data %>% 
-        dplyr::mutate(databaseId = paste0(.data$databaseId, 
-                                          "<br>(n = ", 
-                                          scales::comma(.data$cohortSubjects,accuracy = 1), 
-                                          ")"))
-      
-      if (input$indexEventBreakdownTableFilter == "Records") {
-        data <- data %>% 
-          tidyr::pivot_wider(
-            id_cols = c("conceptId",
-                        "conceptName",
-                        "domainField",
-                        "vocabularyId"),
-            names_from = "databaseId",
-            values_from = "conceptCount",
-            values_fill = 0
-          )
-      } else {
-        data <- data %>% 
-          tidyr::pivot_wider(
-            id_cols = c("conceptId",
-                        "conceptName",
-                        "domainField",
-                        "vocabularyId"),
-            names_from = "databaseId",
-            values_from = "subjectCount",
-            values_fill = 0
-          )
-      }
-      
-      data <- data[order(-data[5]), ]
-      
-      options = list(
-        pageLength = 1000,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        searchHighlight = TRUE,
-        scrollX = TRUE,
-        scrollY = "50vh",
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        columnDefs = list(minCellCountDef(3 + 1:(length(databaseIds))))
-      )
-      
-      dataTable <- DT::datatable(
+    } else {
+      table <- DT::datatable(
         data,
         options = options,
         rownames = FALSE,
@@ -3843,18 +3800,18 @@ shiny::shinyServer(function(input, output, session) {
         filter = "top",
         class = "stripe nowrap compact"
       )
-      
-      dataTable <- DT::formatStyle(
-        table = dataTable,
-        columns = 4 + 1:(length(databaseIds)),
-        background = DT::styleColorBar(c(0, maxCount), "lightblue"),
-        backgroundSize = "98% 88%",
-        backgroundRepeat = "no-repeat",
-        backgroundPosition = "center"
-      )
     }
+   
     
-    return(dataTable)
+    table <- DT::formatStyle(
+      table = table,
+      columns = columnColor,
+      background = DT::styleColorBar(c(0, maxCount), "lightblue"),
+      backgroundSize = "98% 88%",
+      backgroundRepeat = "no-repeat",
+      backgroundPosition = "center"
+    )
+    return(table)
   }, server = TRUE)
   
   # Visit Context ---------------------------------------------------------------------------------------------
