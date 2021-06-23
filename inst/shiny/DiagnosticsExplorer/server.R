@@ -3549,6 +3549,7 @@ shiny::shinyServer(function(input, output, session) {
   indexEventBreakDownData <- shiny::reactive(x = {
     indexEventBreakdown <- indexEventBreakDownDataFull()
     if (is.null(indexEventBreakdown)) {return(NULL)}
+    if (nrow(indexEventBreakdown) == 0) {return(NULL)}
     if (!'domainTable' %in% colnames(indexEventBreakdown)) {
       indexEventBreakdown$domainTable <- "Not in data"
     }
@@ -3557,6 +3558,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     conceptIdDetails <- getConceptDetails(dataSource = dataSource,
                                           conceptIds = indexEventBreakdown$conceptId %>% unique())
+    if (is.null(conceptIdDetails)) {return(NULL)}
     indexEventBreakdown <- indexEventBreakdown %>%
       dplyr::inner_join(conceptIdDetails %>% 
                           dplyr::select(
@@ -3567,6 +3569,7 @@ shiny::shinyServer(function(input, output, session) {
                             .data$standardConcept),
                         by = c("conceptId"))
     
+    if (is.null(cohortCount)) {return(NULL)}
     indexEventBreakdown <- indexEventBreakdown %>% 
       dplyr::inner_join(cohortCount, 
                         by = c('databaseId', 'cohortId')) %>% 
