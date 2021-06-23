@@ -5858,40 +5858,60 @@ shiny::shinyServer(function(input, output, session) {
       lowSubjectCountCategory3 <- c()
       for (i in 1:nrow(cohortCountSelected)) {
         if (cohortCountSelected$cohortSubjects[i] == 0) {
-          lowSubjectCountCategory1 <- c(lowSubjectCountCategory1, cohortCountSelected$compoundName[i])
+          lowSubjectCountCategory1 <-
+            c(
+              lowSubjectCountCategory1,
+              paste(
+                cohortCountSelected$compoundName[i],
+                cohortCountSelected$databaseId[i],
+                sep = " - "
+              )
+            )
         } else if (cohortCountSelected$cohortSubjects[i] > 0 &&
                    cohortCountSelected$cohortSubjects[i] <= 100) {
-          lowSubjectCountCategory2 <- c(lowSubjectCountCategory2, cohortCountSelected$compoundName[i])
+          lowSubjectCountCategory2 <-
+            c(
+              lowSubjectCountCategory2,
+              paste(
+                cohortCountSelected$compoundName[i],
+                cohortCountSelected$databaseId[i],
+                sep = " - "
+              )
+            )
         } else if (cohortCountSelected$cohortSubjects[i] > 100 &&
                    cohortCountSelected$cohortSubjects[i] < 2500) {
-          lowSubjectCountCategory3 <- c(lowSubjectCountCategory3, cohortCountSelected$compoundName[i])
-        } 
+          lowSubjectCountCategory3 <-
+            c(
+              lowSubjectCountCategory3,
+              paste(
+                cohortCountSelected$compoundName[i],
+                cohortCountSelected$databaseId[i],
+                sep = " - "
+              )
+            )
+        }
       }
       
-      tags$div(tags$div(
-        if (length(lowSubjectCountCategory1) > 0) {
+      tags$div(tags$div(if (length(lowSubjectCountCategory1) > 0) {
         buildCohortConditionTable("cohorts were found to be empty", lowSubjectCountCategory1)
       }),
-      tags$div(
-      if (length(lowSubjectCountCategory2) > 0) {
+      tags$div(if (length(lowSubjectCountCategory2) > 0) {
         buildCohortConditionTable(
           "cohorts were found to have low cohort counts and may not be suitable for most studies",
           lowSubjectCountCategory2
         )
       }),
-      tags$div(
-      if (length(lowSubjectCountCategory3) > 0) {
+      tags$div(if (length(lowSubjectCountCategory3) > 0) {
         buildCohortConditionTable(
           "Cohorts were found to have counts less than 2,500. As a general rule of thumb - these cohorts may not be suitable for use as exposure cohorts",
           lowSubjectCountCategory3
         )
       }),
-      tags$div(
-        if (length(lowSubjectCountCategory1) <= 0 && length(lowSubjectCountCategory2) <= 0 && length(lowSubjectCountCategory3) <= 0) {
-          tags$b(
-            "There is no cohorts which has subject count less than 2500"
-          )
-        }))
+      tags$div(if (length(lowSubjectCountCategory1) <= 0 &&
+                   length(lowSubjectCountCategory2) <= 0 &&
+                   length(lowSubjectCountCategory3) <= 0) {
+        tags$b("There is no cohorts which has subject count less than 2500")
+      }))
     })
   
   
