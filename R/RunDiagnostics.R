@@ -1040,17 +1040,17 @@ runCohortDiagnostics <- function(packageName = NULL,
         dplyr::filter(.data$attributeType == 'r')
       if (nrow(cohortOverlap) > 0) {
         cohortRelationships <- cohortRelationships %>% 
-          dplyr::rename(countValue = .data$value, targetCohortId = .data$cohortId) %>% 
+          dplyr::rename(countValue = .data$value) %>% 
           dplyr::mutate(startDay = as.numeric(.data$attributeName)*30) %>% 
           dplyr::mutate(endDay = (as.numeric(.data$attributeName)*30) + 29)  %>%
           dplyr::mutate(databaseId = !!databaseId) %>% 
           dplyr::select(.data$databaseId,
-                        .data$targetCohortId, 
+                        .data$cohortId, 
                         .data$comparatorCohortId,
                         .data$startDay,
                         .data$endDay,
                         .data$countValue) %>% 
-          dplyr::arrange(.data$targetCohortId, 
+          dplyr::arrange(.data$cohortId, 
                          .data$comparatorCohortId,
                          .data$startDay,
                          .data$endDay,
@@ -1061,7 +1061,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           data = cohortRelationships,
           fileName = file.path(exportFolder, "cohort_relationships.csv"),
           incremental = incremental,
-          targetCohortId = subset$targetCohortId,
+          cohortId = subset$cohortId,
           comparatorCohortId = subset$comparatorCohortId
         )
       } else {
