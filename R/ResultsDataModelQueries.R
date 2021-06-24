@@ -572,6 +572,34 @@ getResultsFromOrphanConcept <- function(dataSource,
   return(data)
 }
 
+#' Returns data from cohort_relationships table of Cohort Diagnostics results data model
+#'
+#' @description
+#' Returns data from cohort_relationships table of Cohort Diagnostics results data model
+#'
+#' @template DataSource
+#'
+#' @template cohortIds
+#' 
+#' @template DatabaseIds
+#'
+#' @return
+#' Returns a data frame (tibble) with results that conform to cohort_relationships
+#' table in Cohort Diagnostics results data model.
+#'
+#' @export
+getResultsFromCohortRelationships <- function(dataSource,
+                                              cohortIds = NULL,
+                                              databaseIds = NULL) {
+  data <- getDataFromResultsDatabaseSchema(
+    dataSource,
+    cohortIds = cohortIds,
+    databaseIds = databaseIds,
+    dataTableName = "cohortRelationships"
+  )
+  return(data)
+}
+
 
 # not exported
 getResultsFromCovariateValue <- function(dataSource,

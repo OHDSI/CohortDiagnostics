@@ -111,12 +111,12 @@ CREATE TABLE cohort_overlap (
 
 CREATE TABLE cohort_relationships (
 			database_id VARCHAR NOT NULL,
-			target_cohort_id BIGINT NOT NULL,
+			cohort_id BIGINT NOT NULL,
 			comparator_cohort_id BIGINT NOT NULL,			
 			start_day FLOAT NOT NULL,
 			end_day FLOAT NOT NULL,
 			count_value FLOAT NOT NULL,			
-			PRIMARY KEY(database_id, target_cohort_id, comparator_cohort_id, start_day, end_day)
+			PRIMARY KEY(database_id, cohort_id, comparator_cohort_id, start_day, end_day)
 );
 
 --Table concept
