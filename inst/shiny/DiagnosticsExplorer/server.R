@@ -3682,11 +3682,34 @@ shiny::shinyServer(function(input, output, session) {
         .data$domainField,
         -.data$domainId,
         #-.data$vocabularyId,-.data$standardConcept
-      ) %>% 
-      dplyr::mutate(databaseId = paste0(.data$databaseId, 
-                                        "(n = ", 
-                                        scales::comma(.data$cohortSubjects,accuracy = 1), 
-                                        ")"))
+      ) 
+    
+    if (input$indexEventBreakdownTableFilter == "Records") {
+      data <- data %>%
+        dplyr::mutate(databaseId = paste0(.data$databaseId,
+                                          "(",
+                                          scales::comma(.data$cohortEntries,accuracy = 1),
+                                          ")"))
+    } else if (input$indexEventBreakdownTableFilter == "Persons") {
+      data <- data %>%
+        dplyr::mutate(databaseId = paste0(.data$databaseId,
+                                          "(",
+                                          scales::comma(.data$cohortSubjects,accuracy = 1),
+                                          ")"))
+    }
+    
+
+    personCount <- data %>% 
+      dplyr::select(.data$cohortSubjects) %>% 
+      dplyr::distinct() %>% 
+      dplyr::mutate(cohortSubjects = scales::comma(.data$cohortSubjects,accuracy = 1)) %>% 
+      dplyr::pull()
+    
+    recordCount <- data %>% 
+      dplyr::select(.data$cohortEntries) %>% 
+      dplyr::distinct() %>% 
+      dplyr::mutate(cohortEntries = scales::comma(.data$cohortEntries,accuracy = 1)) %>% 
+      dplyr::pull()
     
     validate(need(nrow(data) > 0,
                   "No data available for selected combination."))
@@ -3748,6 +3771,15 @@ shiny::shinyServer(function(input, output, session) {
       columnColor <- 4 + 1:(length(databaseIds))
 
     } else {
+      recordAndPersonColumnName <- c()
+      for (i in 1:length(databaseIds())) {
+        recordAndPersonColumnName <-
+          c(
+            recordAndPersonColumnName,
+            paste0("Records (", recordCount[i],")"),
+            paste0("Person (", personCount[i],")")
+          )
+      }
       sketch <- htmltools::withTags(table(class = "display",
                                           thead(
                                             tr(
@@ -3757,9 +3789,7 @@ shiny::shinyServer(function(input, output, session) {
                                               th(rowspan = 2, "Vocabulary Id"),
                                               lapply(databaseIds, th, colspan = 2, class = "dt-center", style = "border-right:1px solid silver;border-bottom:1px solid silver")
                                             ),
-                                            tr(lapply(rep(
-                                              c("Records", "Persons"), length(databaseIds)
-                                            ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver"))
+                                            tr(lapply(recordAndPersonColumnName, th, style = "border-right:1px solid silver;border-bottom:1px solid silver"))
                                           )))
       
       minimumCellPercent <- minCellCountDef(3 + 1:(
