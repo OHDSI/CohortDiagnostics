@@ -150,12 +150,12 @@ renderTranslateQuerySql <-
         stop("dbms not provided. Unable to translate query.")
       }
       return(
-        DatabaseConnector::renderTranslateQuerySql(
+        renderTranslateQuerySql(
           connection = connection,
           sql = sql,
           ...,
           snakeCaseToCamelCase = snakeCaseToCamelCase
-        ) %>% dplyr::tibble()
+        )
       )
     }
   }
@@ -210,8 +210,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
         data_table = camelCaseToSnakeCase(dataTableName),
         database_id = quoteLiterals(databaseIds),
         snakeCaseToCamelCase = TRUE
-      ) %>%
-      tidyr::tibble()
+      )
   }
   
   if (nrow(data) == 0) {
@@ -476,8 +475,7 @@ getConceptDetails <- function(dataSource = .GlobalEnv,
         vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
         concept_ids = conceptIds,
         snakeCaseToCamelCase = TRUE
-      ) %>%
-      tidyr::tibble()
+      )
   }
   if (nrow(data) == 0) {
     return(NULL)
@@ -789,7 +787,6 @@ getResultsResolveMappedConceptSet <- function(dataSource,
         cohort_id = cohortIds,
         snakeCaseToCamelCase = TRUE
       ) %>%
-      tidyr::tibble() %>%
       dplyr::arrange(.data$conceptId)
     sqlMapped <-
       "SELECT DISTINCT concept_sets.concept_id AS resolved_concept_id,
@@ -823,7 +820,6 @@ getResultsResolveMappedConceptSet <- function(dataSource,
         cohort_id = cohortIds,
         snakeCaseToCamelCase = TRUE
       ) %>%
-      tidyr::tibble() %>%
       dplyr::arrange(.data$resolvedConceptId)
   }
   data <- list(resolved = resolved,
@@ -834,6 +830,7 @@ getResultsResolveMappedConceptSet <- function(dataSource,
 
 
 #' Returns covariate_value and covariate_value_dist output of feature extraction
+#' and cohort as features
 #'
 #' @description
 #' Returns covariate_value and covariate_value_dist output of feature extraction.
@@ -878,6 +875,11 @@ getResultsCovariateValue <- function(dataSource = .GlobalEnv,
                                      covariateValue %>% dplyr::mutate(timeId = 0))
   covariateValueDist <- dplyr::bind_rows(temporalCovariateValueDist,
                                          covariateValueDist %>% dplyr::mutate(timeId = 0))
+  
+  cohortRelationships <-
+    getResultsFromCohortRelationships(dataSource = dataSource,
+                                      cohortIds = cohortIds,
+                                      databaseIds = databaseIds)
   
   data <- list(covariateValue = covariateValue,
                covariateValueDist = covariateValueDist)
@@ -935,7 +937,6 @@ resolveMappedConceptSetFromVocabularyDatabaseSchema <-
           vocabulary_database_schema = vocabularyDatabaseSchema,
           snakeCaseToCamelCase = TRUE
         ) %>%
-        tidyr::tibble() %>%
         dplyr::select(
           .data$conceptSetId,
           .data$conceptId,
@@ -955,7 +956,6 @@ resolveMappedConceptSetFromVocabularyDatabaseSchema <-
           vocabulary_database_schema = vocabularyDatabaseSchema,
           snakeCaseToCamelCase = TRUE
         ) %>%
-        tidyr::tibble() %>%
         dplyr::select(
           .data$resolvedConceptId,
           .data$conceptId,
@@ -998,8 +998,7 @@ getResultsCovariateRef <- function(dataSource,
         results_database_schema = dataSource$results_database_schema,
         covariate_id = covariateIds,
         snakeCaseToCamelCase = TRUE
-      ) %>%
-      tidyr::tibble()
+      )
   }
   if (nrow(data) == 0) {
     return(NULL)
@@ -1031,8 +1030,7 @@ getResultsTemporalCovariateRef <- function(dataSource,
         results_database_schema = dataSource$results_database_schema,
         covariate_id = covariateIds,
         snakeCaseToCamelCase = TRUE
-      ) %>%
-      tidyr::tibble()
+      )
   }
   if (nrow(data) == 0) {
     return(NULL)
