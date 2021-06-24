@@ -3634,27 +3634,27 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  selectedDomainTable <- reactiveVal(NULL)
-  shiny::observeEvent(eventExpr = {
-    list(input$breakdownDomainTable_open,
-         input$tabs)
-  }, handlerExpr = {
-    if (isFALSE(input$breakdownDomainTable_open) ||
-        !is.null(input$tabs)) {
-      selectedDomainTable(input$breakdownDomainTable)
-    }
-  })
-  
-  selectedDomainField <- reactiveVal(NULL)
-  shiny::observeEvent(eventExpr = {
-    list(input$breakdownDomainField_open,
-         input$tabs)
-  }, handlerExpr = {
-    if (isFALSE(input$breakdownDomainField_open) ||
-        !is.null(input$tabs)) {
-      selectedDomainField(input$breakdownDomainField)
-    }
-  })
+  # selectedDomainTable <- reactiveVal(NULL)
+  # shiny::observeEvent(eventExpr = {
+  #   list(input$breakdownDomainTable_open,
+  #        input$tabs)
+  # }, handlerExpr = {
+  #   if (isFALSE(input$breakdownDomainTable_open) ||
+  #       !is.null(input$tabs)) {
+  #     selectedDomainTable(input$breakdownDomainTable)
+  #   }
+  # })
+  # 
+  # selectedDomainField <- reactiveVal(NULL)
+  # shiny::observeEvent(eventExpr = {
+  #   list(input$breakdownDomainField_open,
+  #        input$tabs)
+  # }, handlerExpr = {
+  #   if (isFALSE(input$breakdownDomainField_open) ||
+  #       !is.null(input$tabs)) {
+  #     selectedDomainField(input$breakdownDomainField)
+  #   }
+  # })
   
   output$saveBreakdownTable <-  downloadHandler(
     filename = function() {
@@ -3675,8 +3675,8 @@ shiny::shinyServer(function(input, output, session) {
                   "There is no data for the selected combination."))
     
     data <- data %>%
-      dplyr::filter(.data$domainTable %in% selectedDomainTable()) %>%
-      dplyr::filter(.data$domainField %in% selectedDomainField()) %>%
+      dplyr::filter(.data$domainTable %in% input$breakdownDomainTable) %>%
+      dplyr::filter(.data$domainField %in% input$breakdownDomainField) %>%
       dplyr::select(
         -.data$domainTable,
         .data$domainField,
