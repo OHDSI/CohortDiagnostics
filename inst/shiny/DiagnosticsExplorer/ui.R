@@ -844,6 +844,16 @@ bodyTabItems <- shinydashboard::tabItems(
             inline = TRUE
           )
         ),
+        tags$td(HTML("&nbsp;&nbsp;&nbsp;")),
+        tags$td(
+          shiny::radioButtons(
+            inputId = "indexEventBreakdownValueFilter",
+            label = "Display Value Type",
+            choices = c("Absolute", "Percentage"), 
+            selected = "Absolute",
+            inline = TRUE
+          )
+        ),
        tags$td(
          shinyWidgets::pickerInput(
            inputId = "breakdownDomainTable",

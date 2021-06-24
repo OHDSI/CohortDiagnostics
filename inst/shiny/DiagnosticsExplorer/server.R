@@ -3673,6 +3673,11 @@ shiny::shinyServer(function(input, output, session) {
     
     validate(need(all(!is.null(data),nrow(data) > 0),
                   "There is no data for the selected combination."))
+    if (input$indexEventBreakdownValueFilter == "Percentage") {
+      data <- data %>% 
+        dplyr::mutate(conceptCount = .data$conceptCount/.data$cohortEntries) %>% 
+        dplyr::mutate(subjectCount = .data$subjectCount/.data$cohortSubjects)
+    }
     
     data <- data %>%
       dplyr::filter(.data$domainTable %in% input$breakdownDomainTable) %>%
@@ -3751,12 +3756,11 @@ shiny::shinyServer(function(input, output, session) {
     
     data <- data[order(-data[5]), ]
     
+    noOfMergeColumns <- 1
     if (input$indexEventBreakdownTableFilter == "Records") {
       
       data <- data %>% 
         dplyr::select(-dplyr::contains("subjectCount"))
-      
-      minimumCellPercent <- minCellCountDef(3 + 1:(length(databaseIds)))
       
       colnames(data) <- stringr::str_replace(string = colnames(data), pattern = 'conceptCount', replacement = '')
       columnColor <- 4 + 1:(length(databaseIds))
@@ -3766,8 +3770,6 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::select(-dplyr::contains("conceptCount"))
       
       colnames(data) <- stringr::str_replace(string = colnames(data), pattern = 'subjectCount', replacement = '')
-      
-      minimumCellPercent <- minCellCountDef(3 + 1:(length(databaseIds)))
       columnColor <- 4 + 1:(length(databaseIds))
 
     } else {
@@ -3792,11 +3794,20 @@ shiny::shinyServer(function(input, output, session) {
                                             tr(lapply(recordAndPersonColumnName, th, style = "border-right:1px solid silver;border-bottom:1px solid silver"))
                                           )))
       
-      minimumCellPercent <- minCellCountDef(3 + 1:(
-        length(databaseIds) * 2
-      ))
+      
       
       columnColor <- 4 + 1:(length(databaseIds) * 2)
+      noOfMergeColumns <- 2
+    }
+    
+    if (input$indexEventBreakdownValueFilter == "Percentage") {
+      minimumCellPercent <- minCellPercentDef(3 + 1:(
+        length(databaseIds) * noOfMergeColumns
+      ))
+    } else {
+      minimumCellPercent <- minCellCountDef(3 + 1:(
+        length(databaseIds) * noOfMergeColumns
+      ))
     }
     options = list(
       pageLength = 1000,
