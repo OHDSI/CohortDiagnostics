@@ -3675,8 +3675,8 @@ shiny::shinyServer(function(input, output, session) {
                   "There is no data for the selected combination."))
     
     data <- data %>%
-      # dplyr::filter(.data$domainTable %in% selectedDomainTable()) %>%
-      # dplyr::filter(.data$domainField %in% selectedDomainField()) %>%
+      dplyr::filter(.data$domainTable %in% selectedDomainTable()) %>%
+      dplyr::filter(.data$domainField %in% selectedDomainField()) %>%
       dplyr::select(
         -.data$domainTable,
         .data$domainField,
