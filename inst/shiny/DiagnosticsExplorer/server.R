@@ -5895,11 +5895,18 @@ shiny::shinyServer(function(input, output, session) {
             )
         }
         
-        recordPerSubject <- cohortCountSelected$cohortEntries[i] / cohortCountSelected$cohortSubjects[i]
-        if (recordPerSubject == 1 && !(cohortCountSelected$databaseId[i] %in% recordPerSubjectDatabasesCategory1)) {
-          recordPerSubjectDatabasesCategory1 <- c(recordPerSubjectDatabasesCategory1,cohortCountSelected$databaseId[i])
-        } else if (recordPerSubject > 1 && !(cohortCountSelected$databaseId[i] %in% recordPerSubjectDatabasesCategory2)) {
-          recordPerSubjectDatabasesCategory2 <- c(recordPerSubjectDatabasesCategory2,cohortCountSelected$databaseId[i])
+        recordPerSubject <-
+          cohortCountSelected$cohortEntries[i] / cohortCountSelected$cohortSubjects[i]
+        if (recordPerSubject == 1 &&
+            !(cohortCountSelected$databaseId[i] %in% recordPerSubjectDatabasesCategory1)) {
+          recordPerSubjectDatabasesCategory1 <-
+            c(recordPerSubjectDatabasesCategory1,
+              cohortCountSelected$databaseId[i])
+        } else if (recordPerSubject > 1 &&
+                   !(cohortCountSelected$databaseId[i] %in% recordPerSubjectDatabasesCategory2)) {
+          recordPerSubjectDatabasesCategory2 <-
+            c(recordPerSubjectDatabasesCategory2,
+              cohortCountSelected$databaseId[i])
         }
       }
       
@@ -5923,17 +5930,15 @@ shiny::shinyServer(function(input, output, session) {
         tags$div(if (length(lowSubjectCountCategory1) <= 0 &&
                      length(lowSubjectCountCategory2) <= 0 &&
                      length(lowSubjectCountCategory3) <= 0) {
-          tags$p("There is no cohorts which has subject count less than 2500")
+          tags$p("There are no cohorts with subject count less than 2,500")
         }),
         tags$br(),
-        tags$b("Record per subjects :"),
+        tags$b("Records per subjects :"),
         tags$div(if (length(recordPerSubjectDatabasesCategory1) > 0) {
           tags$p(
-            paste(
-              length(recordPerSubjectDatabasesCategory1),
-              "/",
-              length(databaseIds()),
-              " of the datasources has 1 record per subject count - ",
+            paste0(
+              scales::percent(length(recordPerSubjectDatabasesCategory1)/length(databaseIds()), accuracy = 0.1),
+              " of the datasources have one record per subject - ",
               paste(
                 recordPerSubjectDatabasesCategory1, collapse =  ", "
               )
@@ -5942,11 +5947,12 @@ shiny::shinyServer(function(input, output, session) {
         }),
         tags$div(if (length(recordPerSubjectDatabasesCategory2) > 0) {
           tags$p(
-            paste(
+            paste0(
+              "    ",
               length(recordPerSubjectDatabasesCategory2),
               "/",
               length(databaseIds()),
-              " of the datasources has more than 1 record per subject count - ",
+              " of the datasources that have more than 1 record per subject count - ",
               paste(
                 recordPerSubjectDatabasesCategory2, collapse = ", "
               )
