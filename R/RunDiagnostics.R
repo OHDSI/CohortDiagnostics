@@ -322,33 +322,21 @@ runCohortDiagnostics <- function(packageName = NULL,
   # Data Source meta information----
   ## cdm_source information----
   tryCatch(expr = {
-    vocabularyVersionCdm <-
-      DatabaseConnector::renderTranslateQuerySql(
+    cdmSourceInformation <-
+      getDataSourceInformation(
         connection = connection,
-        sql = "select * from @cdm_database_schema.cdm_source;",
         cdm_database_schema = cdmDatabaseSchema,
         snakeCaseToCamelCase = TRUE
       ) %>%
       dplyr::tibble()
   }, error = function(...) {
-    warning("Problem getting vocabulary version. cdm_source table not found in the database.")
+    warning("Problem getting CDM data source information.")
+    cdmSourceInformation <- list()
     if (connection@dbms == "postgresql") { #this is for test that automated testing purpose
       DatabaseConnector::dbExecute(connection, "ABORT;")
     }
   })
   
-  if (all(exists('vocabularyVersionCdm'),
-          !is.null(vocabularyVersionCdm), 
-          nrow(vocabularyVersionCdm) > 0,
-          'vocabularyVersion' %in% colnames(vocabularyVersionCdm))) {
-    vocabularyVersionCdm <- vocabularyVersionCdm %>% 
-      dplyr::rename(vocabularyVersionCdm = .data$vocabularyVersion) %>%
-      dplyr::pull(vocabularyVersionCdm) %>%
-      unique()
-  } else {
-    warning("Problem getting vocabulary version. cdm_source table either does not have data, or does not have the field vocabulary_version.")
-    vocabularyVersionCdm <- NULL
-  }
   
   ## Vocabulary table----
   vocabularyVersion <-
@@ -382,7 +370,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     databaseId = databaseId,
     databaseName = dplyr::coalesce(databaseName, databaseId),
     description = dplyr::coalesce(databaseDescription, databaseId),
-    vocabularyVersionCdm = !!vocabularyVersionCdm,
+    vocabularyVersionCdm = cdmSourceInformation$vocabularyVersion,
     vocabularyVersion = !!vocabularyVersion,
     isMetaAnalysis = 0,
     observationPeriodMinDate = observationPeriodDateRange$observationPeriodMinDate,
@@ -1271,7 +1259,13 @@ runCohortDiagnostics <- function(packageName = NULL,
         "CurrentPackage",
         "CurrentPackageVersion",
         "runTime",
-        "runTimeUnits"
+        "runTimeUnits",
+        "sourceDescription",
+        "cdmSourceName",
+        "sourceReleaseDate",
+        "cdmVersion",
+        "cdmReleaseDate",
+        "vocabularyVersion"
       ),
       valueField =  c(
         as.character(packageVersion("CohortDiagnostics")),
@@ -1285,7 +1279,13 @@ runCohortDiagnostics <- function(packageName = NULL,
         as.character(packageName()),
         as.character(packageVersion(getPackageName())),
         as.character(delta),
-        as.character(attr(delta, "units"))
+        as.character(attr(delta, "units")),
+        as.character(cdmSourceInformation$sourceDescription),
+        as.character(cdmSourceInformation$cdmSourceName),
+        as.character(cdmSourceInformation$sourceReleaseDate),
+        as.character(cdmSourceInformation$cdmVersion),
+        as.character(cdmSourceInformation$cdmReleaseDate),
+        as.character(cdmSourceInformation$vocabularyVersion)
       )
     )
   writeToCsv(data = metadata,

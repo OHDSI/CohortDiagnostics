@@ -77,3 +77,65 @@ naToZero <- function(x) {
   x[is.na(x)] <- 0
   return(x)
 }
+
+
+
+### cdm source information
+getDataSourceInformation <-
+  function(connection,
+           cdm_database_schema) {
+    if (!DatabaseConnector::dbExistsTable(conn = connection, name = 'cdm_source')) {
+      ParallelLogger::logWarn("CDM Source table not found in CDM. Metadata on CDM source will be limited.")
+      return(NULL)
+    }
+    sqlCdmDataSource <- "select * from @cdm_database_schema.cdm_source;"
+    cdmDataSource <-
+      DatabaseConnector::renderTranslateQuerySql(
+        connection = connection,
+        sql = sqlCdmDataSource,
+        cdm_database_schema = cdmDatabaseSchema,
+        snakeCaseToCamelCase = TRUE
+      )
+    
+    if (nrow(cdmDataSource) == 0) {
+      ParallelLogger::logWarn("CDM Source table does not have any records. Metadata on CDM source will be limited.")
+      return(NULL)
+    }
+    
+    if ('sourceDescription' %in% colnames(cdmDataSource)) {
+      sourceDescription <- cdmDataSource$sourceDescription
+    } else {
+      sourceDescription <- as.character(NA)
+    }
+    if ('cdmSourceName' %in% colnames(cdmDataSource)) {
+      cdmSourceName <- cdmDataSource$cdmSourceName
+    } else {
+      sourceName <- as.character(NA)
+    }
+    if ('sourceReleaseDate' %in% colnames(cdmDataSource)) {
+      sourceReleaseDate <- cdmDataSource$sourceReleaseDate
+    } else {
+      sourceReleaseDate <- as.Date(NA)
+    }
+    if ('cdmReleaseDate' %in% colnames(cdmDataSource)) {
+      cdmReleaseDate <- cdmDataSource$cdmReleaseDate
+    } else {
+      cdmReleaseDate <- as.Date(NA)
+    }
+    if ('cdmVersion' %in% colnames(cdmDataSource)) {
+      cdmVersion <- cdmDataSource$cdmVersion
+    } else {
+      cdmVersion <- as.character(NA)
+    }
+    if ('vocabularyVersion' %in% colnames(cdmDataSource)) {
+      vocabularyVersion <- cdmDataSource$vocabularyVersion
+    } else {
+      vocabularyVersion <- as.character(NA)
+    }
+    return(list(sourceDescription = sourceDescription,
+                cdmSourceName = cdmSourceName,
+                sourceReleaseDate = sourceReleaseDate,
+                cdmReleaseDate = cdmReleaseDate,
+                cdmVersion = cdmVersion,
+                vocabularyVersion = vocabularyVersion))
+  }
