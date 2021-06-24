@@ -47,7 +47,7 @@ checkIfCohortInstantiated <-
     sql <-
       "SELECT COUNT(*) COUNT FROM @cohort_database_schema.@cohort_table WHERE cohort_definition_id = @cohort_id;"
     count <-
-      DatabaseConnector::renderTranslateQuerySql(
+      renderTranslateQuerySql(
         connection = connection,
         sql,
         cohort_database_schema = cohortDatabaseSchema,

@@ -319,41 +319,26 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
   }
   
-  # Data Source meta information----
-  ## cdm_source information----
-  tryCatch(expr = {
-    cdmSourceInformation <-
-      getDataSourceInformation(
-        connection = connection,
-        cdm_database_schema = cdmDatabaseSchema,
-        snakeCaseToCamelCase = TRUE
-      ) %>%
-      dplyr::tibble()
-  }, error = function(...) {
-    warning("Problem getting CDM data source information.")
-    cdmSourceInformation <- list()
-    if (connection@dbms == "postgresql") { #this is for test that automated testing purpose
-      DatabaseConnector::dbExecute(connection, "ABORT;")
-    }
-  })
-  
+  cdmSourceInformation <-
+    getCdmDataSourceInformation(
+      connection = connection,
+      cdm_database_schema = cdmDatabaseSchema
+    )
   
   ## Vocabulary table----
   vocabularyVersion <-
-    DatabaseConnector::renderTranslateQuerySql(
+    renderTranslateQuerySql(
       connection = connection,
       sql = "select * from @vocabulary_database_schema.vocabulary where vocabulary_id = 'None';",
       vocabulary_database_schema = vocabularyDatabaseSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
-    dplyr::tibble() %>%
-    dplyr::rename(vocabularyVersion = .data$vocabularyVersion) %>%
     dplyr::pull(.data$vocabularyVersion) %>%
     unique()
   
   ## Observation period----
   ParallelLogger::logInfo("Saving database metadata")
-  observationPeriodDateRange <- DatabaseConnector::renderTranslateQuerySql(
+  observationPeriodDateRange <- renderTranslateQuerySql(
     connection = connection,
     sql = "SELECT MIN(observation_period_start_date) observation_period_min_date, 
              MAX(observation_period_end_date) observation_period_max_date,
@@ -838,7 +823,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     
     ## cohort calendar period----
     if (nrow(subset) > 0) {
-      cohortDateRange <- DatabaseConnector::renderTranslateQuerySql(
+      cohortDateRange <- renderTranslateQuerySql(
         connection = connection,
         sql = "SELECT MIN(year(cohort_start_date)) MIN_YEAR, 
              MAX(year(cohort_end_date)) MAX_YEAR 
@@ -921,12 +906,11 @@ runCohortDiagnostics <- function(packageName = NULL,
         tempEmulationSchema = tempEmulationSchema,
         cohort_ids = c(subset$targetCohortId, subset$comparatorCohortId) %>% unique()
       ) 
-      timeSeries <- DatabaseConnector::renderTranslateQuerySql(
+      timeSeries <- renderTranslateQuerySql(
         connection = connection,
         sql = "SELECT * FROM #time_series;", 
         tempEmulationSchema = tempEmulationSchema,
-        snakeCaseToCamelCase = TRUE) %>% 
-        dplyr::tibble()
+        snakeCaseToCamelCase = TRUE)
       
       timeSeries <- timeSeries %>% 
         dplyr::mutate(databaseId = !!databaseId) %>% 

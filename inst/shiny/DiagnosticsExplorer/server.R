@@ -3584,7 +3584,7 @@ shiny::shinyServer(function(input, output, session) {
         visitConceptName = unique(data$visitConceptName),
         databaseId = databaseIds
       ) %>%
-      tidyr::tibble()
+      dplyr::tibble()
     
     table <- visitContextReference %>%
       dplyr::left_join(data,
