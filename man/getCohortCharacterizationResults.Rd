@@ -26,8 +26,9 @@ character field values from the `databaseId` field of the `database` table
 of the results data model.}
 }
 \value{
-Returns a list object with two data frames (tibble) covariate_value and
-covariate_value_dist
+Returns a list object with multiple data frames (tibble) including covariate_value,
+covariate_value_dist, temporalTimeRef, cohortCounts, covariateRef, 
+analysisRef, temporalAnalysisRef
 }
 \description{
 Returns covariate_value and covariate_value_dist output of feature extraction.
