@@ -880,16 +880,11 @@ getResultsResolveMappedConceptSet <- function(dataSource,
 }
 
 
-
-#' Returns covariate_value and covariate_value_dist output of feature extraction
-#' and cohort as features
+#' Returns cohort characterization output of feature extraction
 #'
 #' @description
-#' Returns covariate_value and covariate_value_dist output of feature extraction.
-#' The covariate_value and temporal_covariate_value are appended with timeId = 0
-#' assigned to covariate_value. Similarly, covariate_value_dist and
-#' temporal_covariate_value_dist are also appended with timeId = 0 in
-#' covariate_value_dist.
+#' Returns a list object with covariateValue, covariateValueDist,
+#' covariateRef, analysisRef output of feature extraction.
 #'
 #' @template DataSource
 #'
@@ -898,76 +893,188 @@ getResultsResolveMappedConceptSet <- function(dataSource,
 #' @template DatabaseIds
 #'
 #' @return
-#' Returns a list object with multiple data frames (tibble) including covariate_value,
-#' covariate_value_dist, temporalTimeRef, cohortCounts, covariateRef, 
-#' analysisRef, temporalAnalysisRef
+#' Returns a list object with covariateValue, covariateValueDist,
+#' covariateRef, analysisRef output of feature extraction.
 #'
 #' @export
-getCohortCharacterizationResults <- function(dataSource = .GlobalEnv,
-                                             cohortIds = NULL,
-                                             databaseIds = NULL) {
-  
-  # meta information
-  cohortCounts <- getResultsFromCohortCount(dataSource = dataSource, 
-                                            cohortIds = cohortIds, 
-                                            databaseIds = databaseIds)
-  cohort <- getResultsCohort(dataSource = dataSource)
-  temporalTimeRef <- getResultsTemporalTimeRef(dataSource = dataSource)
-  temporalCovariateRef <- getResultsTemporalCovariateRef(dataSource = dataSource)
-  covariateRef <- getResultsCovariateRef(dataSource = dataSource)
-  analysisRef <- getResultsAnalysisRef(dataSource = dataSource)
-  temporalAnalysisRef <- getResultsTemporalAnalysisRef(dataSource = dataSource)
-  
-  if (!is.null(temporalCovariateRef)) {
-    covariateRefCombined <- dplyr::bind_rows(covariateRef %>% dplyr::mutate(typeCovariate = 1), 
-                                             temporalCovariateRef %>% dplyr::mutate(typeCovariate = 2)) %>% 
-      dplyr::distinct() %>% 
-      dplyr::arrange(.data$covariateId) 
+getCohortCharacterizationResults <-
+  function(dataSource = .GlobalEnv,
+           cohortIds = NULL,
+           databaseIds = NULL) {
+    analysisRef <- getResultsAnalysisRef(dataSource = dataSource)
+    covariateRef <- getResultsCovariateRef(dataSource = dataSource)
+    
+    covariateValue <-
+      getResultsFromCovariateValue(dataSource = dataSource,
+                                   cohortIds = cohortIds,
+                                   databaseIds = databaseIds)
+    covariateValueDist <-
+      getResultsFromCovariateValueDist(dataSource = dataSource,
+                                       cohortIds = cohortIds,
+                                       databaseIds = databaseIds)
+    
+    return(
+      analysisRef = analysisRef,
+      covariateRef = covariateRef,
+      covariateValue = covariateValue,
+      covariateValueDist = covariateValueDist
+    )
   }
-  
-  cohortCovariateRef <- cohort %>% 
-    dplyr::mutate(covariateId = .data$cohortId,
-                  covariateName = .data$cohortName,
-                  analysisId = 0,
-                  conceptId = 0,
-                  typeCovariate = 3) %>% 
-    dplyr::select(.data$covariateId, .data$covariateName,
-                  .data$analysisId, .data$conceptId,
-                  .data$covariateType)
-  
-  covariateRefCombined <- dplyr::bind_rows(covariateRefCombined, cohortCovariateRef)
-  
-  covariateValue <-
-    getResultsFromCovariateValue(dataSource = dataSource,
-                                 cohortIds = cohortIds,
-                                 databaseIds = databaseIds)
-  covariateValueDist <-
-    getResultsFromCovariateValueDist(dataSource = dataSource,
-                                     cohortIds = cohortIds,
-                                     databaseIds = databaseIds)
-  temporalCovariateValue <-
-    getResultsFromTemporalValue(dataSource = dataSource,
-                                cohortIds = cohortIds,
-                                databaseIds = databaseIds)
-  # temporary till https://github.com/OHDSI/FeatureExtraction/issues/127
-  # temporalCovariateValueDist <- getResultsFromTemporalValueDist(dataSource = dataSource,
-  #                                                               cohortIds = cohortIds,
-  #                                                               databaseIds = databaseIds)
-  temporalCovariateValueDist <- covariateValueDist[0,] %>%
-    dplyr::mutate(timeId = 0)
-  
-  covariateValue <- dplyr::bind_rows(temporalCovariateValue %>% 
-                                       dplyr::mutate(typeCovariate = 2),
-                                     covariateValue %>% 
-                                       dplyr::mutate(timeId = 0) %>% 
-                                       dplyr::mutate(typeCovariate = 1))
-  
-  covariateValueDist <- dplyr::bind_rows(temporalCovariateValueDist %>% 
-                                           dplyr::mutate(typeCovariate = 2),
-                                         covariateValueDist %>% 
-                                           dplyr::mutate(timeId = 0) %>% 
-                                           dplyr::mutate(typeCovariate = 1))
-  
+
+
+
+#' Returns temporal cohort characterization output of feature extraction
+#'
+#' @description
+#' Returns a list object with temporalCovariateValue, temporalCovariateValueDist,
+#' temporalCovariateRef, temporalAnalysisRef, temporalRef output of feature extraction.
+#'
+#' @template DataSource
+#'
+#' @template CohortIds
+#'
+#' @template DatabaseIds
+#'
+#' @return
+#' Returns a list object with temporalCovariateValue, temporalCovariateValueDist,
+#' temporalCovariateRef, temporalAnalysisRef, temporalRef output of feature extraction.
+#'
+#' @export
+getTemporalCohortCharacterizationResults <-
+  function(dataSource = .GlobalEnv,
+           cohortIds = NULL,
+           databaseIds = NULL) {
+    temporalAnalysisRef <-
+      getResultsTemporalAnalysisRef(dataSource = dataSource)
+    temporalCovariateRef <-
+      getResultsTemporalCovariateRef(dataSource = dataSource)
+    
+    temporalCovariateValue <-
+      getResultsFromTemporalCovariateValue(dataSource = dataSource,
+                                           cohortIds = cohortIds,
+                                           databaseIds = databaseIds)
+    temporalCovariateValueDist <-
+      getResultsFromTemporalCovariateValueDist(dataSource = dataSource,
+                                               cohortIds = cohortIds,
+                                               databaseIds = databaseIds)
+    
+    # temporary till https://github.com/OHDSI/FeatureExtraction/issues/127
+    # temporalCovariateValueDist <- getResultsFromTemporalValueDist(dataSource = dataSource,
+    #                                                               cohortIds = cohortIds,
+    #                                                               databaseIds = databaseIds)
+    
+    return(
+      temporalAnalysisRef = temporalAnalysisRef,
+      temporalCovariateRef = temporalCovariateRef,
+      temporalCovariateValue = temporalCovariateValue,
+      temporalCovariateValueDist = temporalCovariateValueDist
+    )
+  }
+
+
+#' Returns cohort as feature characterization
+#'
+#' @description
+#' Returns a list object with covariateValue,
+#' covariateRef, analysisRef output of cohort as features.
+#'
+#' @template DataSource
+#'
+#' @template CohortIds
+#'
+#' @template DatabaseIds
+#'
+#' @return
+#' Returns a list object with temporal_covariate_value, temporal_covariate_value_dist,
+#' temporal_covariateRef, temporal_analysisRef output of feature extraction.
+#'
+#' @export
+getCohortAsFeatureCharacterizationResults <-
+  function(dataSource = .GlobalEnv,
+           cohortIds = NULL,
+           databaseIds = NULL) {
+    # meta information
+    cohortCounts <- getResultsFromCohortCount(dataSource = dataSource, 
+                                              cohortIds = cohortIds, 
+                                              databaseIds = databaseIds)
+    cohort <- getResultsCohort(dataSource = dataSource)
+    cohortCovariateRef <- cohort %>% 
+      dplyr::mutate(covariateId = .data$cohortId,
+                    covariateName = .data$cohortName,
+                    analysisId = 0,
+                    conceptId = 0,
+                    typeCovariate = 3) %>% 
+      dplyr::select(.data$covariateId, .data$covariateName,
+                    .data$analysisId, .data$conceptId,
+                    .data$covariateType)
+    
+  }
+
+#' Returns cohort temporal feature characterization
+#'
+#' @description
+#' Returns a list object with temporalCovariateValue,
+#' temporalCovariateRef, temporalAnalysisRef, temporalRef output of cohort as features.
+#'
+#' @template DataSource
+#'
+#' @template CohortIds
+#'
+#' @template DatabaseIds
+#'
+#' @return
+#' Returns a list object with temporalCovariateValue,
+#' temporalCovariateRef, temporalAnalysisRef, temporalRef output of cohort as features.
+#'
+#' @export
+getCohortAsFeatureTemporalCharacterizationResults <-
+  function(dataSource = .GlobalEnv,
+           cohortIds = NULL,
+           databaseIds = NULL) {
+    # meta information
+    cohortCounts <- getResultsFromCohortCount(dataSource = dataSource, 
+                                              cohortIds = cohortIds, 
+                                              databaseIds = databaseIds)
+    cohort <- getResultsCohort(dataSource = dataSource)
+    cohortCovariateRef <- cohort %>% 
+      dplyr::mutate(covariateId = .data$cohortId,
+                    covariateName = .data$cohortName,
+                    analysisId = 0,
+                    conceptId = 0,
+                    typeCovariate = 3) %>% 
+      dplyr::select(.data$covariateId, .data$covariateName,
+                    .data$analysisId, .data$conceptId,
+                    .data$covariateType)
+    
+  }
+
+
+#' Returns multiple characterization output
+#'
+#' @description
+#' Returns multiple characterization output
+#'
+#' @template DataSource
+#'
+#' @template CohortIds
+#'
+#' @template DatabaseIds
+#'
+#' @return
+#' Returns multiple characterization output
+#'
+#' @export
+getMultipleCharacterizationResults <- function(dataSource = .GlobalEnv,
+                                                cohortIds = NULL,
+                                                databaseIds = NULL) {
+  featureExtractioncharacterization <- getCohortCharacterizationResults(dataSource = dataSource,
+                                                                        cohortIds = cohortIds,
+                                                                        databaseIds = databaseIds)
+  featureExtractionTemporalcharacterization <- getTemporalCohortCharacterizationResults(dataSource = dataSource,
+                                                                                        cohortIds = cohortIds,
+                                                                                        databaseIds = databaseIds)
+
+
   cohortRelationships <-
     getResultsFromCohortRelationships(dataSource = dataSource,
                                       cohortIds = cohortIds,
