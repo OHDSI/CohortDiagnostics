@@ -273,7 +273,53 @@ getResultsFromTimeSeries <- function(dataSource,
     databaseIds = databaseIds,
     dataTableName = "timeSeries"
   )
-  return(data)
+  
+  if (nrow(data) > 0) {
+    intervals <- data$calendarInterval %>% unique()
+    dataList <- list()
+    for (i in (1:length(intervals))) {
+      intervalData <- data %>% 
+        dplyr::filter(.data$calendarInterval == intervals[[i]]) %>% 
+        dplyr::select(-.data$calendarInterval)
+      if (intervals[[i]] == 'y') {
+        intervalData %>% 
+          dplyr::mutate(periodBegin = clock::get_year(.data$periodBegin))
+      }
+      if (intervals[[i]] == 'q') {
+        intervalData <- intervalData %>% 
+          dplyr::mutate(periodBegin = tsibble::yearquarter(.data$periodBegin))
+      }
+      if (intervals[[i]] == 'm') {
+        intervalData <- intervalData %>% 
+          dplyr::mutate(periodBegin = tsibble::yearmonth(.data$periodBegin))
+      }
+      intervalData <- intervalData %>% 
+        dplyr::relocate(.data$databaseId, .data$cohortId, .data$seriesType) %>% 
+        dplyr::mutate(records = abs(.data$records),
+                      subjects = abs(.data$subjects),
+                      personDays = abs(.data$personDays),
+                      recordsIncidence = abs(.data$recordsIncidence),
+                      subjectsIncidence = abs(.data$subjectsIncidence),
+                      recordsTerminate = abs(.data$recordsTerminate),
+                      subjectsTerminate = abs(.data$subjectsTerminate)) %>% 
+        tsibble::as_tsibble(key = c(.data$databaseId, .data$cohortId, .data$seriesType), 
+                            index = .data$periodBegin) %>% 
+        tsibble::fill_gaps() %>% 
+        tidyr::replace_na(replace = list(records = 0,
+                                         subjects = 0,
+                                         personDays = 0,
+                                         recordsIncidence = 0,
+                                         subjectsIncidence = 0,
+                                         recordsTerminate = 0,
+                                         subjectsTerminate = 0)) %>% 
+        dplyr::arrange(.data$databaseId, .data$cohortId, .data$seriesType)
+      dataList[[intervals[[i]]]] <- intervalData
+    }
+    
+  } else {
+    return(NULL)
+  }
+  return(dataList)
 }
 
 #' Returns data from time_distribution table of Cohort Diagnostics results data model
