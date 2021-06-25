@@ -2,7 +2,8 @@
 % Please edit documentation in R/ResultsDataModelQueries.R
 \name{getResultsCovariateValue}
 \alias{getResultsCovariateValue}
-\title{Returns covariate_value and covariate_value_dist output of feature extraction}
+\title{Returns covariate_value and covariate_value_dist output of feature extraction
+and cohort as features}
 \usage{
 getResultsCovariateValue(
   dataSource = .GlobalEnv,

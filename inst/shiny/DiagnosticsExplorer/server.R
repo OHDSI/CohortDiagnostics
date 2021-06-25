@@ -3744,7 +3744,7 @@ shiny::shinyServer(function(input, output, session) {
     progress$set(message = paste0("Extracting characterization data for target cohort:", cohortId()), 
                  value = 0)
     
-    data <- getResultsCovariateValue(
+    data <- getCohortCharacterizationResults(
       dataSource = dataSource,
       cohortIds = cohortId(),
       databaseIds = databaseIds()
@@ -4429,7 +4429,7 @@ shiny::shinyServer(function(input, output, session) {
                                   input$database), 
                  value = 0)
     
-    data <- getResultsCovariateValue(
+    data <- getCohortCharacterizationResults(
       dataSource = dataSource,
       cohortIds = c(cohortId(), comparatorCohortId()) %>% unique(),
       databaseIds = input$database

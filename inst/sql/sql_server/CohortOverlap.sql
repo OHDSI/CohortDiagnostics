@@ -17,7 +17,7 @@ IF OBJECT_ID('tempdb..#cohort_overlap_long', 'U') IS NOT NULL
 	DROP TABLE #cohort_overlap_long;
 
 
-
+--- First occurrence of target cohorts
 --HINT DISTRIBUTE_ON_KEY(subject_id)
 SELECT cohort_definition_id target_cohort_id,
 	subject_id,
@@ -30,6 +30,7 @@ GROUP BY cohort_definition_id,
 	subject_id;
 
 
+--- First occurrence of comparator cohorts
 --HINT DISTRIBUTE_ON_KEY(subject_id)
 SELECT cohort_definition_id comparator_cohort_id,
 	subject_id,
@@ -42,6 +43,7 @@ GROUP BY cohort_definition_id,
 	subject_id;
 
 
+--- get all subjects in either target or comparator
 --HINT DISTRIBUTE_ON_KEY(subject_id)
 SELECT DISTINCT subject_id
 INTO #all_subjects
@@ -56,6 +58,7 @@ FROM (
 	) subjects;
 
 
+--- create the universe of all combis of target_cohort_id, comparator_cohort_id and subject_id
 --HINT DISTRIBUTE_ON_KEY(subject_id)
 SELECT DISTINCT target_cohort_id,
 	comparator_cohort_id,
@@ -231,8 +234,12 @@ FROM (
 		c_in_t_subjects  AS value
 	FROM #OVERLAP
 	
+	-------------------------------------------------------------
+	-------------------------------------------------------------
+	
 	UNION -- calendar month
 	
+	-- incidence of subjects in target cohort by calendar month
 	SELECT target_cohort_id AS cohort_id,
 		0  AS comparator_cohort_id,
 		CAST(CAST(DATEFROMPARTS(YEAR(min_start), MONTH(min_start), 01) AS DATE) AS VARCHAR(30))  AS attribute_name,
@@ -244,6 +251,7 @@ FROM (
 	
 	UNION
 	
+	-- incidence of subjects in comparator cohort by calendar month
 	SELECT comparator_cohort_id AS cohort_id,
 		0  AS comparator_cohort_id,
 		CAST(CAST(DATEFROMPARTS(YEAR(min_start), MONTH(min_start), 01) AS DATE) AS VARCHAR(30))  AS attribute_name,
@@ -255,6 +263,7 @@ FROM (
 	
 	UNION -- calendar year
 	
+	-- incidence of subjects in target cohort by calendar year
 	SELECT target_cohort_id AS cohort_id,
 		0  AS comparator_cohort_id,
 		CAST(CAST(DATEFROMPARTS(YEAR(min_start), 01, 01) AS DATE) AS VARCHAR(30))  AS attribute_name,
@@ -266,6 +275,7 @@ FROM (
 	
 	UNION
 	
+	-- incidence of subjects in comparator cohort by calendar year
 	SELECT comparator_cohort_id AS cohort_id,
 		0  AS comparator_cohort_id,
 		CAST(CAST(DATEFROMPARTS(YEAR(min_start), 01, 01) AS DATE) AS VARCHAR(30))  AS attribute_name,
@@ -277,6 +287,7 @@ FROM (
 	
 	UNION -- calendar quarter
 	
+	-- incidence of subjects in target cohort by calendar quarter
 	SELECT target_cohort_id AS cohort_id,
 		0  AS comparator_cohort_id,
 		CAST(CAST(DATEFROMPARTS(YEAR(min_start), CASE 
@@ -316,6 +327,7 @@ FROM (
 	
 	UNION
 	
+	-- incidence of subjects in comparator cohort by calendar quarter
 	SELECT comparator_cohort_id AS cohort_id,
 		0  AS comparator_cohort_id,
 		CAST(CAST(DATEFROMPARTS(YEAR(min_start), CASE 
@@ -354,6 +366,10 @@ FROM (
 						END, 01) AS DATE) AS VARCHAR(30))
 	
 	UNION -- temporal_relationship_long
+	
+	--- target cohort start date - comparator cohort start date. 
+	--- negative values indicate that target cohort start date < comparator cohort
+	--- positive values indicate that target cohort start date > comparator cohort
 	
 	SELECT t1.target_cohort_id  AS cohort_id,
 		c1.comparator_cohort_id,

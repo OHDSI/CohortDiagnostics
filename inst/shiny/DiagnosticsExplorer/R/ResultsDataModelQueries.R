@@ -897,9 +897,16 @@ getResultsResolveMappedConceptSet <- function(dataSource,
 #' covariate_value_dist
 #'
 #' @export
-getResultsCovariateValue <- function(dataSource = .GlobalEnv,
-                                     cohortIds = NULL,
-                                     databaseIds = NULL) {
+getCohortCharacterizationResults <- function(dataSource = .GlobalEnv,
+                                             cohortIds = NULL,
+                                             databaseIds = NULL) {
+  
+  cohortCounts <- getResultsFromCohortCount(dataSource = dataSource, 
+                                            cohortIds = cohortIds, 
+                                            databaseIds = databaseIds)
+  
+  timeRef <- getTemporalTimeRef(dataSource = dataSource)
+  
   covariateValue <-
     getResultsFromCovariateValue(dataSource = dataSource,
                                  cohortIds = cohortIds,
@@ -918,18 +925,67 @@ getResultsCovariateValue <- function(dataSource = .GlobalEnv,
   #                                                               databaseIds = databaseIds)
   temporalCovariateValueDist <- covariateValueDist[0,] %>%
     dplyr::mutate(timeId = 0)
+  
   covariateValue <- dplyr::bind_rows(temporalCovariateValue,
-                                     covariateValue %>% dplyr::mutate(timeId = 0))
+                                     covariateValue %>% dplyr::mutate(timeId = 0)) %>% 
+    dplyr::mutate(covariateType = 1) # 1 = concept id/covariate
+  
   covariateValueDist <- dplyr::bind_rows(temporalCovariateValueDist,
-                                         covariateValueDist %>% dplyr::mutate(timeId = 0))
+                                         covariateValueDist %>% dplyr::mutate(timeId = 0))%>% 
+    dplyr::mutate(covariateType = 1) # 1 = concept id/covariate
   
   cohortRelationships <-
     getResultsFromCohortRelationships(dataSource = dataSource,
                                       cohortIds = cohortIds,
                                       databaseIds = databaseIds)
   
+  # short term (-30 days to ), long term (-365 days to ), any time (to ) 
+  # comparator cohort was on or after target cohort
+  summarizeCohortRelationship <- function(data, startDayGte = NULL, endDayLte = NULL) {
+    
+    if (!is.null(startDayGte)) {
+      data <- data %>% 
+        dplyr::filter(.data$startDay >= startDayGte)
+    }
+    
+    if (!is.null(endDayLte)) {
+      data <- data %>% 
+        dplyr::filter(.data$endDay <= endDayLte)
+    }
+    
+    data <- data %>% 
+      dplyr::select(-.data$startDay, -.data$endDay) %>% 
+      dplyr::group_by(.data$databaseId, .data$cohortId, .data$comparatorCohortId) %>% 
+      dplyr::summarise(countValue = sum(.data$countValue), 
+                       .groups = 'keep') %>% 
+      dplyr::ungroup()
+    
+    data <- data %>% 
+      dplyr::rename(covariateId = .data$comparatorCohortId,
+                    sumValue = .data$countValue) %>% 
+      dplyr::select(.data$cohortId,
+                    .data$covariateId,
+                    .data$sumValue,
+                    .data$databaseId) %>% 
+      dplyr::mutate(covariateType = 2)  # 2 = cohort id
+    return(data)
+  }
+  comparatorOccurrenceShortTerm <- summarizeCohortRelationship(data = cohortRelationships,
+                                                               startDay = 0,
+                                                               endDay = 30)
+  comparatorOccurrenceShortTerm <- summarizeCohortRelationship(data = cohortRelationships,
+                                                               startDay = 0,
+                                                               endDay = 180)
+  comparatorOccurrenceLongTerm <- summarizeCohortRelationship(data = cohortRelationships,
+                                                              startDay = 0,
+                                                              endDay = 365)
+  comparatorOccurrenceAnyTime <- summarizeCohortRelationship(data = cohortRelationships,
+                                                             startDay = 0)
+  
   data <- list(covariateValue = covariateValue,
-               covariateValueDist = covariateValueDist)
+               covariateValueDist = covariateValueDist,
+               timeRef = timeRef,
+               cohortCounts = cohortCounts)
   return(data)
 }
 
@@ -1076,6 +1132,35 @@ getResultsTemporalCovariateRef <- function(dataSource,
         sql = sql,
         results_database_schema = dataSource$results_database_schema,
         covariate_id = covariateIds,
+        snakeCaseToCamelCase = TRUE
+      )
+  }
+  if (nrow(data) == 0) {
+    return(NULL)
+  }
+  return(data)
+}
+
+
+# not exported
+getTemporalTimeRef <- function(dataSource) {
+  dataTableName <- 'temporalTimeRef'
+  if (is(dataSource, "environment")) {
+    if (!exists(dataTableName)) {
+      return(NULL)
+    }
+    if (nrow(get(dataTableName, envir = dataSource)) == 0) {
+      return(NULL)
+    }
+    data <- get(dataTableName)
+  } else {
+    sql <- "SELECT *
+            FROM @results_database_schema.temporal_time_ref;"
+    data <-
+      DatabaseConnector::renderTranslateQuerySql(
+        connection = dataSource$connection,
+        sql = sql,
+        results_database_schema = dataSource$results_database_schema,
         snakeCaseToCamelCase = TRUE
       )
   }
