@@ -251,7 +251,10 @@ getResultsFromCohortCount <- function(dataSource,
 #' Returns data from time_series table of Cohort Diagnostics results data model
 #'
 #' @description
-#' Returns data from time_series table of Cohort Diagnostics results data model
+#' Returns data from time_series table of Cohort Diagnostics results data model.
+#' The returned object is a tsibble, but to use in time series analysis, gaps
+#' need to be filled. Only absolute values are returned i.e. negative values are
+#' converted to positives.
 #'
 #' @template DataSource
 #'
@@ -260,8 +263,11 @@ getResultsFromCohortCount <- function(dataSource,
 #' @template DatabaseIds
 #'
 #' @return
-#' Returns a data frame (tibble) with results that conform to time series
-#' table in Cohort Diagnostics results data model.
+#' Returns a list of tsibble (time series) objects with results that conform to time series
+#' table in Cohort Diagnostics results data model. There are three list objects, labelled
+#' m for monthly, q for quarterly and y for yearly. The periodBegin variable is in the 
+#' format of tsibble::yearmonth for monthly, tsibble::yearquarter for quarter and integer
+#' for year.
 #'
 #' @export
 getResultsFromTimeSeries <- function(dataSource,
@@ -275,6 +281,10 @@ getResultsFromTimeSeries <- function(dataSource,
   )
   
   if (nrow(data) > 0) {
+    
+    data <- data %>% 
+      dplyr::mutate(periodBeginRaw = .data$periodBegin)
+    
     intervals <- data$calendarInterval %>% unique()
     dataList <- list()
     for (i in (1:length(intervals))) {
@@ -282,7 +292,7 @@ getResultsFromTimeSeries <- function(dataSource,
         dplyr::filter(.data$calendarInterval == intervals[[i]]) %>% 
         dplyr::select(-.data$calendarInterval)
       if (intervals[[i]] == 'y') {
-        intervalData %>% 
+        intervalData <- intervalData %>% 
           dplyr::mutate(periodBegin = clock::get_year(.data$periodBegin))
       }
       if (intervals[[i]] == 'q') {
@@ -304,7 +314,6 @@ getResultsFromTimeSeries <- function(dataSource,
                       subjectsTerminate = abs(.data$subjectsTerminate)) %>% 
         tsibble::as_tsibble(key = c(.data$databaseId, .data$cohortId, .data$seriesType), 
                             index = .data$periodBegin) %>% 
-        tsibble::fill_gaps() %>% 
         tidyr::replace_na(replace = list(records = 0,
                                          subjects = 0,
                                          personDays = 0,
@@ -315,7 +324,6 @@ getResultsFromTimeSeries <- function(dataSource,
         dplyr::arrange(.data$databaseId, .data$cohortId, .data$seriesType)
       dataList[[intervals[[i]]]] <- intervalData
     }
-    
   } else {
     return(NULL)
   }
