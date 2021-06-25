@@ -919,26 +919,23 @@ getCohortCharacterizationResults <- function(dataSource = .GlobalEnv,
   temporalAnalysisRef <- getResultsTemporalAnalysisRef(dataSource = dataSource)
   
   if (!is.null(temporalCovariateRef)) {
-    covariateRef <- dplyr::bind_rows(covariateRef, temporalCovariateRef) %>% 
+    covariateRefCombined <- dplyr::bind_rows(covariateRef %>% dplyr::mutate(typeCovariate = 1), 
+                                             temporalCovariateRef %>% dplyr::mutate(typeCovariate = 2)) %>% 
       dplyr::distinct() %>% 
-      dplyr::arrange(.data$covariateId)    
+      dplyr::arrange(.data$covariateId) 
   }
-  rm(temporalCovariateRef)
-  
-  covariateRef <- covariateRef %>% 
-    dplyr::mutate(covariateType = 1)
   
   cohortCovariateRef <- cohort %>% 
     dplyr::mutate(covariateId = .data$cohortId,
                   covariateName = .data$cohortName,
                   analysisId = 0,
                   conceptId = 0,
-                  covariateType = 2) %>% 
+                  typeCovariate = 3) %>% 
     dplyr::select(.data$covariateId, .data$covariateName,
                   .data$analysisId, .data$conceptId,
                   .data$covariateType)
   
-  covariateRef <- dplyr::bind_rows(covariateRef, cohortCovariateRef)
+  covariateRefCombined <- dplyr::bind_rows(covariateRefCombined, cohortCovariateRef)
   
   covariateValue <-
     getResultsFromCovariateValue(dataSource = dataSource,
@@ -959,13 +956,17 @@ getCohortCharacterizationResults <- function(dataSource = .GlobalEnv,
   temporalCovariateValueDist <- covariateValueDist[0,] %>%
     dplyr::mutate(timeId = 0)
   
-  covariateValue <- dplyr::bind_rows(temporalCovariateValue,
-                                     covariateValue %>% dplyr::mutate(timeId = 0)) %>% 
-    dplyr::mutate(covariateType = 1) # 1 = concept id/covariate
+  covariateValue <- dplyr::bind_rows(temporalCovariateValue %>% 
+                                       dplyr::mutate(typeCovariate = 2),
+                                     covariateValue %>% 
+                                       dplyr::mutate(timeId = 0) %>% 
+                                       dplyr::mutate(typeCovariate = 1))
   
-  covariateValueDist <- dplyr::bind_rows(temporalCovariateValueDist,
-                                         covariateValueDist %>% dplyr::mutate(timeId = 0))%>% 
-    dplyr::mutate(covariateType = 1) # 1 = concept id/covariate
+  covariateValueDist <- dplyr::bind_rows(temporalCovariateValueDist %>% 
+                                           dplyr::mutate(typeCovariate = 2),
+                                         covariateValueDist %>% 
+                                           dplyr::mutate(timeId = 0) %>% 
+                                           dplyr::mutate(typeCovariate = 1))
   
   cohortRelationships <-
     getResultsFromCohortRelationships(dataSource = dataSource,
@@ -1017,7 +1018,7 @@ getCohortCharacterizationResults <- function(dataSource = .GlobalEnv,
                       .data$mean,
                       .data$sd,
                       .data$databaseId) %>% 
-        dplyr::mutate(covariateType = 2,
+        dplyr::mutate(typeCovariate = 3,
                       timeId = 0)  # 2 = cohort id
       return(data)
     }
@@ -1053,8 +1054,11 @@ getCohortCharacterizationResults <- function(dataSource = .GlobalEnv,
                temporalTimeRef = temporalTimeRef,
                cohortCounts = cohortCounts,
                covariateRef = covariateRef,
+               temporalCovariateRef = temporalCovariateRef,
+               covariateRefCombined = covariateRefCombined,
                analysisRef = analysisRef,
-               temporalAnalysisRef = temporalAnalysisRef)
+               temporalAnalysisRef = temporalAnalysisRef,
+               analysisRefCombined = analysisRefCombined)
   return(data)
 }
 
@@ -1184,7 +1188,7 @@ getResultsCovariateRef <- function(dataSource,
 
 # not exported
 getResultsTemporalCovariateRef <- function(dataSource,
-                                           covariateIds) {
+                                           covariateIds = NULL) {
   dataTableName <- 'temporalCovariateRef'
   if (is(dataSource, "environment")) {
     if (!exists(dataTableName)) {
@@ -1193,12 +1197,15 @@ getResultsTemporalCovariateRef <- function(dataSource,
     if (nrow(get(dataTableName, envir = dataSource)) == 0) {
       return(NULL)
     }
-    data <- get(dataTableName) %>%
-      dplyr::filter(.data$covariateId %in% covariateIds)
+    data <- get(dataTableName)
+    if (!is.null(covariateIds)) {
+      data <- data %>% 
+        dplyr::filter(.data$covariateId %in% covariateIds)
+    }
   } else {
     sql <- "SELECT *
             FROM @results_database_schema.temporal_covariate_ref
-            WHERE covariate_id IN (@covariate_ids);"
+            {@covariate_ids == ''} ? { WHERE covariate_id IN (@covariate_ids)};"
     data <-
       renderTranslateQuerySql(
         connection = dataSource$connection,
