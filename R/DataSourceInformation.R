@@ -34,7 +34,6 @@ getCdmDataSourceInformation <-
   function(connectionDetails = NULL,
            connection = NULL,
            cdmDatabaseSchema) {
-    
     # Set up connection to server ----
     if (is.null(connection)) {
       if (!is.null(connectionDetails)) {
@@ -49,7 +48,8 @@ getCdmDataSourceInformation <-
       ParallelLogger::logWarn("CDM Source table not found in CDM. Metadata on CDM source will be limited.")
       return(NULL)
     }
-    sqlCdmDataSource <- "select * from @cdm_database_schema.cdm_source;"
+    sqlCdmDataSource <-
+      "select * from @cdm_database_schema.cdm_source;"
     cdmDataSource <-
       renderTranslateQuerySql(
         connection = connection,
@@ -68,35 +68,53 @@ getCdmDataSourceInformation <-
     } else {
       sourceDescription <- as.character(NA)
     }
+    
     if ('cdmSourceName' %in% colnames(cdmDataSource)) {
       cdmSourceName <- cdmDataSource$cdmSourceName
     } else {
       sourceName <- as.character(NA)
     }
+    
+    sourceReleaseDate <- as.Date(NA)
     if ('sourceReleaseDate' %in% colnames(cdmDataSource)) {
-      sourceReleaseDate <- cdmDataSource$sourceReleaseDate
-    } else {
-      sourceReleaseDate <- as.Date(NA)
+      if (class(cdmDataSource$sourceReleaseDate) != 'Date') {
+        try(sourceReleaseDate <- as.Date(cdmDataSource$sourceReleaseDate),
+            silent = TRUE)
+      } else {
+        sourceReleaseDate <- as.Date(cdmDataSource$sourceReleaseDate)
+      }
     }
+    
+    cdmReleaseDate <- as.Date(NA)
     if ('cdmReleaseDate' %in% colnames(cdmDataSource)) {
-      cdmReleaseDate <- cdmDataSource$cdmReleaseDate
-    } else {
-      cdmReleaseDate <- as.Date(NA)
+      if (class(cdmDataSource$cdmReleaseDate) != 'Date') {
+        try(cdmReleaseDate <- as.Date(cdmDataSource$cdmReleaseDate),
+            silent = TRUE)
+      } else {
+        cdmReleaseDate <- as.Date(cdmDataSource$cdmReleaseDate)
+      }
     }
+    
     if ('cdmVersion' %in% colnames(cdmDataSource)) {
       cdmVersion <- cdmDataSource$cdmVersion
     } else {
       cdmVersion <- as.character(NA)
     }
+    
     if ('vocabularyVersion' %in% colnames(cdmDataSource)) {
       vocabularyVersion <- cdmDataSource$vocabularyVersion
     } else {
       vocabularyVersion <- as.character(NA)
     }
-    return(dplyr::tibble(sourceDescription = sourceDescription,
-                         cdmSourceName = cdmSourceName,
-                         sourceReleaseDate = sourceReleaseDate,
-                         cdmReleaseDate = cdmReleaseDate,
-                         cdmVersion = cdmVersion,
-                         vocabularyVersion = vocabularyVersion))
+    
+    return(
+      dplyr::tibble(
+        sourceDescription = !!sourceDescription,
+        cdmSourceName = !!cdmSourceName,
+        sourceReleaseDate = !!sourceReleaseDate,
+        cdmReleaseDate = !!cdmReleaseDate,
+        cdmVersion = !!cdmVersion,
+        vocabularyVersion = !!vocabularyVersion
+      )
+    )
   }
