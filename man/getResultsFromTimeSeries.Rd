@@ -23,7 +23,7 @@ of the results data model.}
 \value{
 Returns a list of tsibble (time series) objects with results that conform to time series
 table in Cohort Diagnostics results data model. There are three list objects, labelled
-m for monthly, q for quarterly and y for yearly. The periodBegin variable is in the 
+m for monthly, q for quarterly and y for yearly. The periodBegin variable is in the
 format of tsibble::yearmonth for monthly, tsibble::yearquarter for quarter and integer
 for year.
 }

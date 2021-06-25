@@ -25,8 +25,8 @@ character field values from the `databaseId` field of the `database` table
 of the results data model.}
 }
 \value{
-Returns a list object with temporal_covariate_value, temporal_covariate_value_dist,
-temporal_covariateRef, temporal_analysisRef output of feature extraction.
+Returns a list object with covariateValue,
+covariateRef, analysisRef output of cohort as features.
 }
 \description{
 Returns a list object with covariateValue,
