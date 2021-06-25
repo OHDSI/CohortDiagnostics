@@ -901,11 +901,22 @@ getCohortCharacterizationResults <- function(dataSource = .GlobalEnv,
                                              cohortIds = NULL,
                                              databaseIds = NULL) {
   
+  # meta information
   cohortCounts <- getResultsFromCohortCount(dataSource = dataSource, 
                                             cohortIds = cohortIds, 
                                             databaseIds = databaseIds)
+  cohort <- getResultsCohort(dataSource = dataSource)
+  temporalTimeRef <- getResultsTemporalTimeRef(dataSource = dataSource)
+  temporalCovariateRef <- getResultsTemporalCovariateRef(dataSource = dataSource)
+  covariateRef <- getResultsCovariateRef(dataSource = dataSource)
   
-  timeRef <- getTemporalTimeRef(dataSource = dataSource)
+  if (!is.null(temporalCovariateRef)) {
+    covariateRef <- dplyr::bind_rows(covariateRef, temporalCovariateRef) %>% 
+      dplyr::distinct() %>% 
+      dplyr::arrange(.data$covariateId)    
+  }
+  rm(temporalCovariateRef)
+  
   
   covariateValue <-
     getResultsFromCovariateValue(dataSource = dataSource,
@@ -941,7 +952,10 @@ getCohortCharacterizationResults <- function(dataSource = .GlobalEnv,
   
   # short term (-30 days to ), long term (-365 days to ), any time (to ) 
   # comparator cohort was on or after target cohort
-  summarizeCohortRelationship <- function(data, startDayGte = NULL, endDayLte = NULL) {
+  summarizeCohortRelationship <- function(data, 
+                                          startDayGte = NULL, 
+                                          endDayLte = NULL, 
+                                          cohortCounts = cohortCounts) {
     
     if (!is.null(startDayGte)) {
       data <- data %>% 
@@ -958,7 +972,10 @@ getCohortCharacterizationResults <- function(dataSource = .GlobalEnv,
       dplyr::group_by(.data$databaseId, .data$cohortId, .data$comparatorCohortId) %>% 
       dplyr::summarise(countValue = sum(.data$countValue), 
                        .groups = 'keep') %>% 
-      dplyr::ungroup()
+      dplyr::ungroup() %>% 
+      dplyr::inner_join(cohortCounts) %>% 
+      dplyr::mutate(mean = .data$sumValue/.data$subjectCount) %>% 
+      dplyr::mutate(sd = sqrt(.data$mean * (1 - .data$mean)))
     
     data <- data %>% 
       dplyr::rename(covariateId = .data$comparatorCohortId,
@@ -966,6 +983,8 @@ getCohortCharacterizationResults <- function(dataSource = .GlobalEnv,
       dplyr::select(.data$cohortId,
                     .data$covariateId,
                     .data$sumValue,
+                    .data$mean,
+                    .data$sd,
                     .data$databaseId) %>% 
       dplyr::mutate(covariateType = 2,
                     timeId = 0)  # 2 = cohort id
@@ -975,8 +994,8 @@ getCohortCharacterizationResults <- function(dataSource = .GlobalEnv,
                                                                startDay = 0,
                                                                endDay = 30)
   comparatorOccurrenceMediumTerm <- summarizeCohortRelationship(data = cohortRelationships,
-                                                               startDay = 0,
-                                                               endDay = 180)
+                                                                startDay = 0,
+                                                                endDay = 180)
   comparatorOccurrenceLongTerm <- summarizeCohortRelationship(data = cohortRelationships,
                                                               startDay = 0,
                                                               endDay = 365)
@@ -991,8 +1010,9 @@ getCohortCharacterizationResults <- function(dataSource = .GlobalEnv,
   
   data <- list(covariateValue = covariateValue,
                covariateValueDist = covariateValueDist,
-               timeRef = timeRef,
-               cohortCounts = cohortCounts)
+               temporalTimeRef = temporalTimeRef,
+               cohortCounts = cohortCounts,
+               covariateRef = covariateRef)
   return(data)
 }
 
@@ -1086,7 +1106,7 @@ resolveMappedConceptSetFromVocabularyDatabaseSchema <-
 
 # not exported
 getResultsCovariateRef <- function(dataSource,
-                                   covariateIds) {
+                                   covariateIds = NULL) {
   dataTableName <- 'covariateRef'
   if (is(dataSource, "environment")) {
     if (!exists(dataTableName)) {
@@ -1095,12 +1115,16 @@ getResultsCovariateRef <- function(dataSource,
     if (nrow(get(dataTableName, envir = dataSource)) == 0) {
       return(NULL)
     }
-    data <- get(dataTableName) %>%
-      dplyr::filter(.data$covariateId %in% covariateIds)
+    data <- get(dataTableName)
+    if (!is.null(covariateIds)) {
+      data <- data %>%
+        dplyr::filter(.data$covariateId %in% covariateIds)
+    }
   } else {
     sql <- "SELECT *
             FROM @results_database_schema.covariate_ref
-            WHERE covariate_id IN (@covariate_ids);"
+            {@covariate_ids == ''} ? { WHERE covariate_id IN (@covariate_ids)}
+            ;"
     data <-
       renderTranslateQuerySql(
         connection = dataSource$connection,
@@ -1150,7 +1174,7 @@ getResultsTemporalCovariateRef <- function(dataSource,
 
 
 # not exported
-getTemporalTimeRef <- function(dataSource) {
+getResultsTemporalTimeRef <- function(dataSource) {
   dataTableName <- 'temporalTimeRef'
   if (is(dataSource, "environment")) {
     if (!exists(dataTableName)) {
@@ -1164,7 +1188,36 @@ getTemporalTimeRef <- function(dataSource) {
     sql <- "SELECT *
             FROM @results_database_schema.temporal_time_ref;"
     data <-
-      DatabaseConnector::renderTranslateQuerySql(
+      renderTranslateQuerySql(
+        connection = dataSource$connection,
+        sql = sql,
+        results_database_schema = dataSource$results_database_schema,
+        snakeCaseToCamelCase = TRUE
+      )
+  }
+  if (nrow(data) == 0) {
+    return(NULL)
+  }
+  return(data)
+}
+
+
+# not exported
+getResultsCohort <- function(dataSource) {
+  dataTableName <- 'cohort'
+  if (is(dataSource, "environment")) {
+    if (!exists(dataTableName)) {
+      return(NULL)
+    }
+    if (nrow(get(dataTableName, envir = dataSource)) == 0) {
+      return(NULL)
+    }
+    data <- get(dataTableName)
+  } else {
+    sql <- "SELECT *
+            FROM @results_database_schema.cohort;"
+    data <-
+      renderTranslateQuerySql(
         connection = dataSource$connection,
         sql = sql,
         results_database_schema = dataSource$results_database_schema,
