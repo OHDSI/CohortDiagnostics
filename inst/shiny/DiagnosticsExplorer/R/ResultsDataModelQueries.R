@@ -314,13 +314,6 @@ getResultsFromTimeSeries <- function(dataSource,
                       subjectsTerminate = abs(.data$subjectsTerminate)) %>% 
         tsibble::as_tsibble(key = c(.data$databaseId, .data$cohortId, .data$seriesType), 
                             index = .data$periodBegin) %>% 
-        tidyr::replace_na(replace = list(records = 0,
-                                         subjects = 0,
-                                         personDays = 0,
-                                         recordsIncidence = 0,
-                                         subjectsIncidence = 0,
-                                         recordsTerminate = 0,
-                                         subjectsTerminate = 0)) %>% 
         dplyr::arrange(.data$databaseId, .data$cohortId, .data$seriesType)
       dataList[[intervals[[i]]]] <- intervalData
     }
