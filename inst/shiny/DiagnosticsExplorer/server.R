@@ -2366,7 +2366,7 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  timeSeriesDataFilteredToCalendarPeriod <- reactive({
+  timeSeriesDataFiltered <- reactive({
     calendarIntervalFirstLetter <- tolower(substr(input$timeSeriesFilter,1,1))
     data <- timeSeriesData()
     data <- data[[calendarIntervalFirstLetter]]
@@ -2379,14 +2379,15 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::mutate(seriesType = 'T1')
     }
     
-    if (nrow(data) == 0) {
-      return(NULL)
-    }
-    
+    ## filter -- to be replaced by filter in shiny UI
     # if (!is.null(seriesType)) {
     #   data <- data %>% 
     #     dplyr::filter(.data$seriesType %in% seriesType)
     # }
+    ## hard coding for now till UI filter
+    data <- data %>% 
+      dplyr::filter(.data$seriesType %in% 'T1') %>% 
+      dplyr::select(-.data$seriesType)
     
     # if (all(!is.null(minDate),
     #         is.na.POSIXlt(minDate))) {
@@ -2399,11 +2400,29 @@ shiny::shinyServer(function(input, output, session) {
     #   data <- data %>% 
     #     dplyr::filter(.data$periodBegin < maxDate)
     # }
+    
+    data <- data  %>%
+      tsibble::fill_gaps(
+        records = 0,
+        subjects = 0,
+        personDays = 0,
+        recordsIncidence = 0,
+        subjectsIncidence = 0,
+        recordsTerminate = 0,
+        subjectsTerminate = 0
+      )
+    if (nrow(data) == 0) {
+      return(NULL)
+    }
     return(data)
   })
   
   output$timeSeriesTable <- DT::renderDataTable({
-    data <- dplyr::tibble(timeSeriesDataFilteredToCalendarPeriod())
+    data <- timeSeriesDataFiltered() %>% 
+      dplyr::mutate(periodBegin = .data$periodBeginRaw) %>% 
+      dplyr::select(-.data$periodBeginRaw) %>% 
+      dplyr::relocate(.data$periodBegin) %>% 
+      dplyr::arrange(.data$periodBegin)
     return(data)
   })
   

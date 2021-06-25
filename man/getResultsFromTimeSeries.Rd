@@ -21,9 +21,15 @@ character field values from the `databaseId` field of the `database` table
 of the results data model.}
 }
 \value{
-Returns a data frame (tibble) with results that conform to time series
-table in Cohort Diagnostics results data model.
+Returns a list of tsibble (time series) objects with results that conform to time series
+table in Cohort Diagnostics results data model. There are three list objects, labelled
+m for monthly, q for quarterly and y for yearly. The periodBegin variable is in the 
+format of tsibble::yearmonth for monthly, tsibble::yearquarter for quarter and integer
+for year.
 }
 \description{
-Returns data from time_series table of Cohort Diagnostics results data model
+Returns data from time_series table of Cohort Diagnostics results data model.
+The returned object is a tsibble, but to use in time series analysis, gaps
+need to be filled. Only absolute values are returned i.e. negative values are
+converted to positives.
 }
