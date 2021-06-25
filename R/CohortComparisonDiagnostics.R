@@ -59,7 +59,7 @@ computeCohortOverlap <- function(connectionDetails = NULL,
     end <- min(start + batchSize - 1, length(cohortIds))
     if (length(cohortIds) > batchSize) {
       ParallelLogger::logInfo(sprintf(
-        "Batch characterization. Processing cohorts %s through %s",
+        "Batch Cohort Overlap Processing cohorts %s through %s",
         start,
         end
       ))

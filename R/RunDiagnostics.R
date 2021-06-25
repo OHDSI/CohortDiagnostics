@@ -890,13 +890,15 @@ runCohortDiagnostics <- function(packageName = NULL,
       )
       ParallelLogger::logTrace("Done inserting calendar periods")
       
+      
+      ####### ---
+      ParallelLogger::logInfo("Computing time series.")
       sql <-
         SqlRender::loadRenderTranslateSql(
           "ComputeTimeSeries.sql",
           packageName = "CohortDiagnostics",
           dbms = connection@dbms
         )
-      
       DatabaseConnector::renderTranslateExecuteSql(
         connection = connection,
         sql = sql,
@@ -959,7 +961,8 @@ runCohortDiagnostics <- function(packageName = NULL,
       } else {
         warning('No time series data')
       }
-      
+      ####### ---
+      ParallelLogger::logInfo("Computing Cohort overlap.")
       cohortOverlap <- computeCohortOverlap(
         connection = connection,
         cohortDatabaseSchema = cohortDatabaseSchema,
