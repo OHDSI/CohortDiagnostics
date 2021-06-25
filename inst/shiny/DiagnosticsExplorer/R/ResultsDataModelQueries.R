@@ -967,13 +967,14 @@ getCohortCharacterizationResults <- function(dataSource = .GlobalEnv,
                     .data$covariateId,
                     .data$sumValue,
                     .data$databaseId) %>% 
-      dplyr::mutate(covariateType = 2)  # 2 = cohort id
+      dplyr::mutate(covariateType = 2,
+                    timeId = 0)  # 2 = cohort id
     return(data)
   }
   comparatorOccurrenceShortTerm <- summarizeCohortRelationship(data = cohortRelationships,
                                                                startDay = 0,
                                                                endDay = 30)
-  comparatorOccurrenceShortTerm <- summarizeCohortRelationship(data = cohortRelationships,
+  comparatorOccurrenceMediumTerm <- summarizeCohortRelationship(data = cohortRelationships,
                                                                startDay = 0,
                                                                endDay = 180)
   comparatorOccurrenceLongTerm <- summarizeCohortRelationship(data = cohortRelationships,
@@ -981,6 +982,12 @@ getCohortCharacterizationResults <- function(dataSource = .GlobalEnv,
                                                               endDay = 365)
   comparatorOccurrenceAnyTime <- summarizeCohortRelationship(data = cohortRelationships,
                                                              startDay = 0)
+  
+  covariateValue <- dplyr::bind_rows(covariateValue,
+                                     comparatorOccurrenceShortTerm,
+                                     comparatorOccurrenceMediumTerm,
+                                     comparatorOccurrenceLongTerm,
+                                     comparatorOccurrenceAnyTime)
   
   data <- list(covariateValue = covariateValue,
                covariateValueDist = covariateValueDist,
