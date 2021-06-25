@@ -150,12 +150,12 @@ renderTranslateQuerySql <-
         stop("dbms not provided. Unable to translate query.")
       }
       return(
-        renderTranslateQuerySql(
+        DatabaseConnector::renderTranslateQuerySql(
           connection = connection,
           sql = sql,
           ...,
           snakeCaseToCamelCase = snakeCaseToCamelCase
-        )
+        ) %>% dplyr::tibble()
       )
     }
   }
