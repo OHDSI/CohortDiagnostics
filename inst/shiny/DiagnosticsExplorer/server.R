@@ -2366,19 +2366,22 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  timeSeries <- reactive({
+  timeSeriesDataFilteredToCalendarPeriod <- reactive({
     calendarIntervalFirstLetter <- tolower(substr(input$timeSeriesFilter,1,1))
     data <- timeSeriesData()
+    data <- data[[calendarIntervalFirstLetter]]
     validate(need(!is.null(data) > 0, "No time series data"))
     validate(need(nrow(data) > 0, "No time series data"))
     
     # for backward compatibility with cohort diagnostics version 2.1
     if (!'seriesType' %in% colnames(data)) {
       data <- data %>% 
-        dplyr::mutate(seriesType = '1')
+        dplyr::mutate(seriesType = 'T1')
     }
-    data <- data %>% 
-      dplyr::filter(.data$calendarInterval %in% calendarIntervalFirstLetter)
+    
+    if (nrow(data) == 0) {
+      return(NULL)
+    }
     
     # if (!is.null(seriesType)) {
     #   data <- data %>% 
@@ -2396,22 +2399,11 @@ shiny::shinyServer(function(input, output, session) {
     #   data <- data %>% 
     #     dplyr::filter(.data$periodBegin < maxDate)
     # }
-    
-    data <- data %>% 
-      dplyr::arrange(.data$databaseId, .data$cohortId, .data$calendarInterval, 
-                     .data$seriesType, .data$periodBegin) %>% 
-      tsibble::as_tsibble(key = c(.data$databaseId, .data$cohortId, .data$calendarInterval, 
-                                  .data$seriesType), 
-                          index = .data$periodBegin)
-    
-    if (nrow(data) == 0) {
-      return(NULL)
-    }
     return(data)
   })
   
   output$timeSeriesTable <- DT::renderDataTable({
-    data <- timeSeries()
+    data <- dplyr::tibble(timeSeriesDataFilteredToCalendarPeriod())
     return(data)
   })
   

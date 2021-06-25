@@ -44,3 +44,7 @@ that provides  inherent ordering from past to present. We support the following 
 <li>Subjects incidence: Count of first occurrence of the subject/person start in the calendar interval.</li>
 <li>Records terminate: Count of row records the ended in the calendar interval </li>
 <li>Subjects terminate: Count of first occurrence of subject/person end in the calendar interval</li>
+
+
+
+<h3>Note: </h3> Only absolute values are shown, i.e. if there are negative values, they are converted to positive. All measured variables are counts/sum of records, so cannot be negative values. In Cohort Diagnostics, when minimum cell size is specified, cell records with value below the minimum cell count are converted to the negative value of the minimum cell count. e.g. if 5 is specified as minimum cell count, the measured variable has a returned value of 3 - then the 3 is replaced by Cohort Diagnostics to -5. During time-series analysis, the -5 is converted to +5.
