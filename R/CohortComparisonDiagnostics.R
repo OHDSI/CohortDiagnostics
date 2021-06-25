@@ -59,7 +59,7 @@ computeCohortOverlap <- function(connectionDetails = NULL,
     end <- min(start + batchSize - 1, length(cohortIds))
     if (length(cohortIds) > batchSize) {
       ParallelLogger::logInfo(sprintf(
-        "Batch characterization. Processing cohorts %s through %s",
+        "Batch Cohort Overlap Processing cohorts %s through %s",
         start,
         end
       ))
@@ -79,16 +79,15 @@ computeCohortOverlap <- function(connectionDetails = NULL,
       sql = sql
     )
     
-    overlap <- DatabaseConnector::renderTranslateQuerySql(connection = connection, 
-                                                          sql = "SELECT * FROM #cohort_overlap_long;", 
-                                                          snakeCaseToCamelCase = TRUE)
+    overlap <- renderTranslateQuerySql(connection = connection, 
+                                       sql = "SELECT * FROM #cohort_overlap_long;", 
+                                       snakeCaseToCamelCase = TRUE)
     
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = "IF OBJECT_ID('tempdb..#cohort_overlap_long', 'U') IS NOT NULL DROP TABLE #cohort_overlap_long;",
       progressBar = TRUE
     )
-    
     
     if ("overlap" %in% names(results)) {
       Andromeda::appendToTable(results$overlap, overlap)

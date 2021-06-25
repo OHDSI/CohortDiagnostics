@@ -319,53 +319,26 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
   }
   
-  # Data Source meta information----
-  ## cdm_source information----
-  tryCatch(expr = {
-    vocabularyVersionCdm <-
-      DatabaseConnector::renderTranslateQuerySql(
-        connection = connection,
-        sql = "select * from @cdm_database_schema.cdm_source;",
-        cdm_database_schema = cdmDatabaseSchema,
-        snakeCaseToCamelCase = TRUE
-      ) %>%
-      dplyr::tibble()
-  }, error = function(...) {
-    warning("Problem getting vocabulary version. cdm_source table not found in the database.")
-    if (connection@dbms == "postgresql") { #this is for test that automated testing purpose
-      DatabaseConnector::dbExecute(connection, "ABORT;")
-    }
-  })
-  
-  if (all(exists('vocabularyVersionCdm'),
-          !is.null(vocabularyVersionCdm), 
-          nrow(vocabularyVersionCdm) > 0,
-          'vocabularyVersion' %in% colnames(vocabularyVersionCdm))) {
-    vocabularyVersionCdm <- vocabularyVersionCdm %>% 
-      dplyr::rename(vocabularyVersionCdm = .data$vocabularyVersion) %>%
-      dplyr::pull(vocabularyVersionCdm) %>%
-      unique()
-  } else {
-    warning("Problem getting vocabulary version. cdm_source table either does not have data, or does not have the field vocabulary_version.")
-    vocabularyVersionCdm <- NULL
-  }
+  cdmSourceInformation <-
+    getCdmDataSourceInformation(
+      connection = connection,
+      cdmDatabaseSchema = cdmDatabaseSchema
+    )
   
   ## Vocabulary table----
   vocabularyVersion <-
-    DatabaseConnector::renderTranslateQuerySql(
+    renderTranslateQuerySql(
       connection = connection,
       sql = "select * from @vocabulary_database_schema.vocabulary where vocabulary_id = 'None';",
       vocabulary_database_schema = vocabularyDatabaseSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
-    dplyr::tibble() %>%
-    dplyr::rename(vocabularyVersion = .data$vocabularyVersion) %>%
     dplyr::pull(.data$vocabularyVersion) %>%
     unique()
   
   ## Observation period----
   ParallelLogger::logInfo("Saving database metadata")
-  observationPeriodDateRange <- DatabaseConnector::renderTranslateQuerySql(
+  observationPeriodDateRange <- renderTranslateQuerySql(
     connection = connection,
     sql = "SELECT MIN(observation_period_start_date) observation_period_min_date, 
              MAX(observation_period_end_date) observation_period_max_date,
@@ -382,7 +355,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     databaseId = databaseId,
     databaseName = dplyr::coalesce(databaseName, databaseId),
     description = dplyr::coalesce(databaseDescription, databaseId),
-    vocabularyVersionCdm = !!vocabularyVersionCdm,
+    vocabularyVersionCdm = cdmSourceInformation$vocabularyVersion,
     vocabularyVersion = !!vocabularyVersion,
     isMetaAnalysis = 0,
     observationPeriodMinDate = observationPeriodDateRange$observationPeriodMinDate,
@@ -850,7 +823,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     
     ## cohort calendar period----
     if (nrow(subset) > 0) {
-      cohortDateRange <- DatabaseConnector::renderTranslateQuerySql(
+      cohortDateRange <- renderTranslateQuerySql(
         connection = connection,
         sql = "SELECT MIN(year(cohort_start_date)) MIN_YEAR, 
              MAX(year(cohort_end_date)) MAX_YEAR 
@@ -903,7 +876,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         # dplyr::filter(.data$periodEnd <= clock::date_today("")) %>% 
         dplyr::distinct()
       
-      ParallelLogger::logTrace("Inserting calendar periods into temporay table. This might take time.")
+      ParallelLogger::logInfo("-- Preparing calendar table for time series computation, this might take time.")
       DatabaseConnector::insertTable(
         connection = connection,
         tableName = "#calendar_periods",
@@ -917,13 +890,15 @@ runCohortDiagnostics <- function(packageName = NULL,
       )
       ParallelLogger::logTrace("Done inserting calendar periods")
       
+      
+      ####### ---
+      ParallelLogger::logInfo("Computing time series.")
       sql <-
         SqlRender::loadRenderTranslateSql(
           "ComputeTimeSeries.sql",
           packageName = "CohortDiagnostics",
           dbms = connection@dbms
         )
-      
       DatabaseConnector::renderTranslateExecuteSql(
         connection = connection,
         sql = sql,
@@ -933,12 +908,11 @@ runCohortDiagnostics <- function(packageName = NULL,
         tempEmulationSchema = tempEmulationSchema,
         cohort_ids = c(subset$targetCohortId, subset$comparatorCohortId) %>% unique()
       ) 
-      timeSeries <- DatabaseConnector::renderTranslateQuerySql(
+      timeSeries <- renderTranslateQuerySql(
         connection = connection,
         sql = "SELECT * FROM #time_series;", 
         tempEmulationSchema = tempEmulationSchema,
-        snakeCaseToCamelCase = TRUE) %>% 
-        dplyr::tibble()
+        snakeCaseToCamelCase = TRUE)
       
       timeSeries <- timeSeries %>% 
         dplyr::mutate(databaseId = !!databaseId) %>% 
@@ -987,7 +961,8 @@ runCohortDiagnostics <- function(packageName = NULL,
       } else {
         warning('No time series data')
       }
-      
+      ####### ---
+      ParallelLogger::logInfo("Computing Cohort overlap.")
       cohortOverlap <- computeCohortOverlap(
         connection = connection,
         cohortDatabaseSchema = cohortDatabaseSchema,
@@ -1061,7 +1036,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           data = cohortRelationships,
           fileName = file.path(exportFolder, "cohort_relationships.csv"),
           incremental = incremental,
-          cohortId = subset$cohortId,
+          cohortId = subset$targetCohortId,
           comparatorCohortId = subset$comparatorCohortId
         )
       } else {
@@ -1271,7 +1246,13 @@ runCohortDiagnostics <- function(packageName = NULL,
         "CurrentPackage",
         "CurrentPackageVersion",
         "runTime",
-        "runTimeUnits"
+        "runTimeUnits",
+        "sourceDescription",
+        "cdmSourceName",
+        "sourceReleaseDate",
+        "cdmVersion",
+        "cdmReleaseDate",
+        "vocabularyVersion"
       ),
       valueField =  c(
         as.character(packageVersion("CohortDiagnostics")),
@@ -1282,10 +1263,16 @@ runCohortDiagnostics <- function(packageName = NULL,
         as.character(packageVersion("dplyr")),
         as.character(packageVersion("tidyr")),
         as.character(R.Version()$version.string),
-        as.character(packageName()),
-        as.character(packageVersion(getPackageName())),
-        as.character(delta),
-        as.character(attr(delta, "units"))
+        as.character(nullToEmpty(packageName())),
+        as.character(if (!getPackageName() == ".GlobalEnv") {packageVersion(packageName())} else {''}),
+        as.character(as.numeric(x = delta, units = attr(delta, "units"))),
+        as.character(attr(delta, "units")),
+        as.character(nullToEmpty(cdmSourceInformation$sourceDescription)),
+        as.character(nullToEmpty(cdmSourceInformation$cdmSourceName)),
+        as.character(nullToEmpty(cdmSourceInformation$sourceReleaseDate)),
+        as.character(nullToEmpty(cdmSourceInformation$cdmVersion)),
+        as.character(nullToEmpty(cdmSourceInformation$cdmReleaseDate)),
+        as.character(nullToEmpty(cdmSourceInformation$vocabularyVersion))
       )
     )
   writeToCsv(data = metadata,

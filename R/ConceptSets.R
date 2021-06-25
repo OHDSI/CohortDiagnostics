@@ -60,7 +60,7 @@ extractConceptSetsSqlFromCohortSql <- function(cohortSql) {
                                  conceptSetSql = conceptsetSqls[i])
     }
   } else {
-    temp <- tidyr::tibble()
+    temp <- dplyr::tibble()
   }
   return(dplyr::bind_rows(temp))
 }
@@ -85,7 +85,7 @@ extractConceptSetsJsonFromCohortJson <- function(cohortJson) {
         )
     }
   } else {
-    conceptSetExpression <- tidyr::tibble()
+    conceptSetExpression <- dplyr::tibble()
   }
   return(dplyr::bind_rows(conceptSetExpression))
 }
@@ -366,42 +366,6 @@ runConceptSetDiagnostics <- function(connection,
     conceptSetsTable = "#inst_concept_sets"
   )
   
-  # Export concept IDs per concept set ------------------------------------------
-  # Disabling for now, since we don't have a diagnostic for it.
-  # If we do enable this, it should be a separate option (e.g. runConceptSetExpansion),
-  # and it should be tracked for incremental mode.
-  # sql <- "SELECT DISTINCT codeset_id AS unique_concept_set_id,
-  #             concept_id
-  #         FROM @concept_sets_table;"
-  # conceptSetConceptIds <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
-  #                                                                    sql = sql,
-  #                                                                    concept_sets_table = "#inst_concept_sets",
-  #                                                                    snakeCaseToCamelCase = TRUE) %>%
-  #   tidyr::tibble()
-  #
-  # conceptSetConceptIds <- conceptSetConceptIds %>%
-  #   dplyr::inner_join(conceptSets, by = "uniqueConceptSetId") %>%
-  #   dplyr::select(.data$cohortId, .data$conceptSetId, .data$conceptId)
-  #
-  # writeToCsv(data = conceptSetConceptIds,
-  #            fileName = file.path(exportFolder, "concept_sets_concept_id.csv"),
-  #            incremental = incremental,
-  #            cohortId = conceptSetConceptIds$cohortId)
-  #
-  #
-  # if (!is.null(conceptIdTable)) {
-  #   sql <- "INSERT INTO @concept_id_table (concept_id)
-  #           SELECT DISTINCT concept_id
-  #           FROM @concept_sets_table;"
-  #   DatabaseConnector::renderTranslateExecuteSql(connection = connection,
-  #                                                sql = sql,
-  #                                                tempEmulationSchema = tempEmulationSchema,
-  #                                                concept_id_table = conceptIdTable,
-  #                                                concept_sets_table = "#inst_concept_sets",
-  #                                                progressBar = FALSE,
-  #                                                reportOverallTime = FALSE)
-  # }
-  
   if ((runIncludedSourceConcepts && nrow(subsetIncluded) > 0) ||
       (runOrphanConcepts && nrow(subsetOrphans) > 0)) {
     createConceptCountsTable(
@@ -496,14 +460,13 @@ runConceptSetDiagnostics <- function(connection,
         )
         DatabaseConnector::executeSql(connection = connection, sql = sql)
         counts <-
-          DatabaseConnector::renderTranslateQuerySql(
+          renderTranslateQuerySql(
             connection = connection,
             sql = "SELECT * FROM @include_source_concept_table;",
             include_source_concept_table = "#inc_src_concepts",
             tempEmulationSchema = tempEmulationSchema,
             snakeCaseToCamelCase = TRUE
-          ) %>%
-          tidyr::tibble()
+          )
         
         counts <- counts  %>%
           dplyr::rename(uniqueConceptSetId = .data$conceptSetId) %>%
@@ -625,7 +588,7 @@ runConceptSetDiagnostics <- function(connection,
                   cohort$cohortId, " but,", "\nnone of the concept sets belong to the supported domains.", 
                   "\nThe supported domains are:\n", paste(domains$domain, 
                                                           collapse = ", "))
-          return(tidyr::tibble())
+          return(dplyr::tibble())
         }
         primaryCodesetIds <- conceptSets %>%
           dplyr::filter(.data$cohortId %in% cohort$cohortId) %>%
@@ -675,19 +638,18 @@ runConceptSetDiagnostics <- function(connection,
           )
           sql <- "SELECT * FROM @store_table;"
           counts <-
-            DatabaseConnector::renderTranslateQuerySql(
+            renderTranslateQuerySql(
               connection = connection,
               sql = sql,
               tempEmulationSchema = tempEmulationSchema,
               store_table = "#breakdown",
               snakeCaseToCamelCase = TRUE
-            ) %>%
-            tidyr::tibble()
+            )
           if (!is.null(conceptIdTable)) {
             sql <- "INSERT INTO @concept_id_table (concept_id)
                   SELECT DISTINCT concept_id
                   FROM @store_table;"
-            DatabaseConnector::renderTranslateExecuteSql(
+            renderTranslateExecuteSql(
               connection = connection,
               sql = sql,
               tempEmulationSchema = tempEmulationSchema,
@@ -699,7 +661,7 @@ runConceptSetDiagnostics <- function(connection,
           }
           sql <-
             "TRUNCATE TABLE @store_table;\nDROP TABLE @store_table;"
-          DatabaseConnector::renderTranslateExecuteSql(
+          renderTranslateExecuteSql(
             connection = connection,
             sql = sql,
             tempEmulationSchema = tempEmulationSchema,
@@ -881,14 +843,13 @@ runConceptSetDiagnostics <- function(connection,
   )
   
   resolvedConceptIds <-
-    DatabaseConnector::renderTranslateQuerySql(
+    renderTranslateQuerySql(
       connection = connection,
       sql = "SELECT *
                                                       FROM #inst_concept_sets;",
       tempEmulationSchema = tempEmulationSchema,
       snakeCaseToCamelCase = TRUE
     ) %>%
-    dplyr::tibble() %>%
     dplyr::rename(uniqueConceptSetId = .data$codesetId) %>%
     dplyr::inner_join(conceptSets,
                       by = "uniqueConceptSetId") %>%

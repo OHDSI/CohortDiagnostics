@@ -361,7 +361,7 @@ processInclusionStats <- function(inclusion,
                                   summaryStats) {
   if (simplify) {
     if (nrow(inclusion) == 0 || nrow(inclusionStats) == 0) {
-      return(tidyr::tibble())
+      return(dplyr::tibble())
     }
     
     result <- inclusion %>%
@@ -643,7 +643,7 @@ createTempInclusionStatsTables <-
       )
     DatabaseConnector::executeSql(connection, sql)
     
-    inclusionRules <- tidyr::tibble()
+    inclusionRules <- dplyr::tibble()
     for (i in 1:nrow(cohorts)) {
       cohortDefinition <-
         RJSONIO::fromJSON(content = cohorts$json[i], digits = 23)
@@ -714,14 +714,13 @@ saveAndDropTempInclusionStatsTables <- function(connection,
   fetchStats <- function(table, fileName) {
     ParallelLogger::logDebug("- Fetching data from ", table)
     sql <- "SELECT * FROM @table"
-    data <- DatabaseConnector::renderTranslateQuerySql(
+    data <- renderTranslateQuerySql(
       sql = sql,
       connection = connection,
       tempEmulationSchema = tempEmulationSchema,
       snakeCaseToCamelCase = TRUE,
       table = table
-    ) %>%
-      tidyr::tibble()
+    )
     fullFileName <- file.path(inclusionStatisticsFolder, fileName)
     if (incremental) {
       saveIncremental(data, fullFileName, cohortId = cohortIds)

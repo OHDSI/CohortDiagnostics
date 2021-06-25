@@ -56,7 +56,7 @@ getCohortCounts <- function(connectionDetails = NULL,
   if (tolower(cohortTable) %in% tablesInServer) {
     counts <-
       DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE) %>%
-      tidyr::tibble()
+      dplyr::tibble()
     delta <- Sys.time() - start
     ParallelLogger::logInfo(paste(
       "Counting cohorts took",

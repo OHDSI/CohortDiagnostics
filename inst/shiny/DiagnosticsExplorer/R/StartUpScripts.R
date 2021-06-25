@@ -104,6 +104,8 @@ getConceptSetDataFrameFromConceptSetExpression <-
     return(conceptSetExpressionDetails)
   }
 
+
+
 getConceptSetDetailsFromCohortDefinition <-
   function(cohortDefinitionExpression) {
     if ("expression" %in% names(cohortDefinitionExpression)) {
@@ -139,6 +141,7 @@ getConceptSetDetailsFromCohortDefinition <-
                    conceptSetExpressionDetails = conceptSetExpressionDetails)
     return(output)
   }
+
 
 
 getFormattedFileName <- function(fileName) {

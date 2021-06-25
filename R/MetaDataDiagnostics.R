@@ -50,14 +50,13 @@
   ParallelLogger::logTrace("- Fetching orphan concepts from server")
   sql <- "SELECT * FROM @orphan_concept_table;"
   orphanConcepts <-
-    DatabaseConnector::renderTranslateQuerySql(
+    renderTranslateQuerySql(
       sql = sql,
       connection = connection,
       tempEmulationSchema = tempEmulationSchema,
       orphan_concept_table = orphanConceptTable,
       snakeCaseToCamelCase = TRUE
-    ) %>%
-    tidyr::tibble()
+    )
   
   # For debugging:
   # x <- querySql(connection, "SELECT * FROM #starting_concepts;")

@@ -77,3 +77,8 @@ naToZero <- function(x) {
   x[is.na(x)] <- 0
   return(x)
 }
+
+nullToEmpty <- function(x) {
+  x[is.null(x)] <- ""
+  return(x)
+}

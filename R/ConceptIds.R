@@ -47,7 +47,7 @@ exportConceptInformation <- function(connection = NULL,
   }
   sql <- "SELECT DISTINCT concept_id FROM @unique_concept_id_table;"
   uniqueConceptIds <-
-    DatabaseConnector::renderTranslateQuerySql(
+    renderTranslateQuerySql(
       connection = connection,
       sql = sql,
       unique_concept_id_table = conceptIdTable,
@@ -87,7 +87,7 @@ exportConceptInformation <- function(connection = NULL,
                                "concept_ancestor",
                                "concept_relationship")) {
       data <-
-        DatabaseConnector::renderTranslateQuerySql(
+        renderTranslateQuerySql(
           connection = connection,
           sql = sql,
           tempEmulationSchema = tempEmulationSchema,
@@ -110,7 +110,7 @@ exportConceptInformation <- function(connection = NULL,
                                       "conceptClass")) {
       sql <- "SELECT * FROM @cdm_database_schema.@table;"
       data <-
-        DatabaseConnector::renderTranslateQuerySql(
+        renderTranslateQuerySql(
           connection = connection,
           sql = sql,
           tempEmulationSchema = tempEmulationSchema,

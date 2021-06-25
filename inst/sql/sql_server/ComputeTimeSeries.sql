@@ -20,8 +20,9 @@ IF OBJECT_ID('tempdb..#c_time_series5', 'U') IS NOT NULL
 IF OBJECT_ID('tempdb..#d_time_series6', 'U') IS NOT NULL
 	DROP TABLE #d_time_series6;
 
--- cohort time series
--- subjects in the cohort whose cohort period overlaps calendar period
+-- cohort time series T1: subjects in the cohort who have atleast one cohort day in calendar period
+--- (i.e. cohort start or cohort end is between (inclusive) calendar period, or 
+--- (cohort start is on/before calendar start AND cohort end is on/after calendar end))
 SELECT cohort_definition_id cohort_id,
 	period_begin,
 	calendar_interval,
@@ -70,7 +71,7 @@ INNER JOIN #calendar_periods cp ON (
 	OR (
 		cohort_end_date >= period_begin
 		AND cohort_end_date <= period_end
-		) -- cohort end within calendar period, OR
+		) -- cohort ends within calendar period, OR
 	OR (
 		cohort_end_date >= period_end
 		AND cohort_start_date <= period_begin
@@ -80,7 +81,9 @@ GROUP BY period_begin,
 	calendar_interval,
 	cohort_definition_id;
 
--- cohort time series
+-- cohort time series T2: subjects in the cohort who have atleast one observation day in calendar period
+--- (i.e. observation start or observation end is between (inclusive) calendar period, or 
+--- (observation start is on/before calendar start AND observation end is on/after calendar end))
 -- subjects in the cohort whose observation period overlaps calendar period
 SELECT cohort_definition_id cohort_id,
 	period_begin,
@@ -146,8 +149,9 @@ GROUP BY period_begin,
 	calendar_interval,
 	cohort_definition_id;
 
--- database time series
--- subjects in the database whose observation period overlaps calendar period
+-- database time series T3: persons in the data source who have atleast one observation day in calendar period
+--- (i.e. observation start or observation end is between (inclusive) calendar period, or 
+--- (observation start is on/before calendar start AND observation end is on/after calendar end))
 SELECT 0 cohort_id,
 	period_begin,
 	calendar_interval,
@@ -204,8 +208,10 @@ INNER JOIN #calendar_periods cp ON (
 GROUP BY period_begin,
 	calendar_interval;
 
--- cohort time series
--- subjects in cohort, whose cohort period is embeded within the calendar period
+
+-- cohort time series T4: subjects in the cohorts whose cohort period are embedded within calendar period
+--- (cohort start is between (inclusive) calendar period, AND 
+--- (cohort end is between (inclusive) calendar period)
 SELECT cohort_definition_id cohort_id,
 	period_begin,
 	calendar_interval,
@@ -256,8 +262,10 @@ GROUP BY period_begin,
 	calendar_interval,
 	cohort_definition_id;
 
--- cohort time series
--- subjects in cohort, whose observation period is embeded within the calendar period
+
+-- cohort time series T5: subjects in the cohorts whose observation period is embedded within calendar period
+--- (cohort start is between (inclusive) calendar period, AND 
+--- (cohort end is between (inclusive) calendar period)
 SELECT cohort_definition_id cohort_id,
 	period_begin,
 	calendar_interval,
@@ -313,8 +321,10 @@ GROUP BY period_begin,
 	calendar_interval,
 	cohort_definition_id;
 
--- database time series
--- subjects in the database whose observation period is embedded within calendar period
+
+-- datasource time series T5: subjects in the observation table whose observation period is embedded within calendar period
+--- (observation start is between (inclusive) calendar period, AND 
+--- (observation end is between (inclusive) calendar period)
 SELECT 0 cohort_id,
 	period_begin,
 	calendar_interval,

@@ -49,10 +49,9 @@ dir.create(path = outputFolder,
            recursive = TRUE)
 
 dataSouceInformation <-
-  getDataSourceInformation(
+  CohortDiagnostics::getCdmDataSourceInformation(
     connectionDetails = connectionDetails,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    vocabDatabaseSchema = vocabDatabaseSchema
+    cdmDatabaseSchema = cdmDatabaseSchema
   )
 
 execute(

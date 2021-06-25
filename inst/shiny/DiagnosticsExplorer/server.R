@@ -3929,7 +3929,7 @@ shiny::shinyServer(function(input, output, session) {
         visitConceptName = unique(data$visitConceptName),
         databaseId = databaseIds
       ) %>%
-      tidyr::tibble()
+      dplyr::tibble()
     
     table <- visitContextReference %>%
       dplyr::left_join(data,
@@ -5759,6 +5759,10 @@ shiny::shinyServer(function(input, output, session) {
   shiny::observeEvent(input$compareCohortCharacterizationInfo, {
     showInfoBox("Compare Cohort Characteristics",
                 "html/compareCohortCharacterization.html")
+  })
+  
+  shiny::observeEvent(input$timeSeriesInfo, {
+    showInfoBox("Time Series", "html/timeSeries.html")
   })
   
   # Cohort labels --------------------------------------------------------------------------------------------
