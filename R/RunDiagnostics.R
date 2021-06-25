@@ -322,7 +322,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   cdmSourceInformation <-
     getCdmDataSourceInformation(
       connection = connection,
-      cdm_database_schema = cdmDatabaseSchema
+      cdmDatabaseSchema = cdmDatabaseSchema
     )
   
   ## Vocabulary table----
