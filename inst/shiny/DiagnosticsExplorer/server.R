@@ -2729,9 +2729,8 @@ shiny::shinyServer(function(input, output, session) {
     #     dplyr::filter(.data$seriesType %in% seriesType)
     # }
     ## hard coding for now till UI filter
-    data <- data %>% 
-      dplyr::filter(.data$seriesType %in% 'T1') %>% 
-      dplyr::select(-.data$seriesType)
+    # data <- data %>% 
+    #   dplyr::filter(.data$seriesType %in% 'T1')
     
     # if (all(!is.null(minDate),
     #         is.na.POSIXlt(minDate))) {
@@ -2761,13 +2760,48 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
+  shiny::observe({
+    data <- timeSeriesDataFiltered() %>% 
+      dplyr::pull(.data$seriesType) %>% unique()
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "timeSeriesTypeFilter",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = data
+    )
+  })
+  
   output$timeSeriesTable <- DT::renderDataTable({
     data <- timeSeriesDataFiltered() %>% 
+      dplyr::filter(.data$seriesType %in% input$timeSeriesTypeFilter) %>% 
+      dplyr::select(-.data$seriesType) %>% 
       dplyr::mutate(periodBegin = .data$periodBeginRaw) %>% 
       dplyr::select(-.data$periodBeginRaw) %>% 
       dplyr::relocate(.data$periodBegin) %>% 
       dplyr::arrange(.data$periodBegin)
-    return(data)
+    
+    options = list(
+      pageLength = 100,
+      lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+      searching = TRUE,
+      ordering = TRUE,
+      paging = TRUE,
+      scrollX = TRUE,
+      info = TRUE,
+      searchHighlight = TRUE
+    )
+    
+    dataTable <- DT::datatable(
+      data,
+      options = options,
+      rownames = FALSE,
+      colnames = colnames(data) %>% camelCaseToTitleCase(),
+      escape = FALSE,
+      filter = "top",
+      selection = list(mode = "multiple", target = "row"),
+      class = "stripe compact"
+    )
+    return(dataTable)
   })
   
   # Time distribution -----------------------------------------------------------------------------

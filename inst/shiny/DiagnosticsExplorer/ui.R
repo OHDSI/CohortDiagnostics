@@ -623,23 +623,47 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "timeSeries",
     cohortReference("timeSeriesSelectedCohorts"),
-    shiny::radioButtons(
-      inputId = "timeSeriesType",
-      label = "",
-      choices = c("Table", "Plot"),
-      selected = "Table",
-      inline = TRUE
+    tags$table(
+      tags$tr(
+        tags$td(
+          shiny::radioButtons(
+            inputId = "timeSeriesFilter",
+            label = "Aggregation period:",
+            choices = c("Monthly", "Quaterly","Yearly"),
+            selected = "Monthly",
+            inline = TRUE
+          )
+        ),
+        tags$td(
+          shinyWidgets::pickerInput(
+            inputId = "timeSeriesTypeFilter",
+            label = "Time series Type",
+            choices = c(""),
+            width = 200,
+            choicesOpt = list(style = rep_len("color: black;", 999)),
+            options = shinyWidgets::pickerOptions(
+              actionsBox = TRUE,
+              liveSearch = TRUE,
+              liveSearchStyle = "contains",
+              size = 10,
+              liveSearchPlaceholder = "Type here to search",
+              virtualScroll = 50
+            )
+          )
+        )
+      )
     ),
     shinydashboard::box(
       title = "Time Series",
       width = NULL,
       status = "primary",
       solidHeader = TRUE,
+      
       shiny::radioButtons(
-        inputId = "timeSeriesFilter",
-        label = "Aggregation period:",
-        choices = c("Monthly", "Quaterly","Yearly"),
-        selected = "Monthly",
+        inputId = "timeSeriesType",
+        label = "",
+        choices = c("Table", "Plot"),
+        selected = "Table",
         inline = TRUE
       ),
       shiny::conditionalPanel(
