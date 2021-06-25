@@ -876,7 +876,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         # dplyr::filter(.data$periodEnd <= clock::date_today("")) %>% 
         dplyr::distinct()
       
-      ParallelLogger::logTrace("Inserting calendar periods into temporay table. This might take time.")
+      ParallelLogger::logInfo("-- Preparing calendar table for time series computation, this might take time.")
       DatabaseConnector::insertTable(
         connection = connection,
         tableName = "#calendar_periods",
@@ -1036,7 +1036,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           data = cohortRelationships,
           fileName = file.path(exportFolder, "cohort_relationships.csv"),
           incremental = incremental,
-          cohortId = subset$cohortId,
+          cohortId = subset$targetCohortId,
           comparatorCohortId = subset$comparatorCohortId
         )
       } else {
@@ -1255,24 +1255,24 @@ runCohortDiagnostics <- function(packageName = NULL,
         "vocabularyVersion"
       ),
       valueField =  c(
-        as.character(packageVersion("CohortDiagnostics")),
-        as.character(packageVersion("DatabaseConnector")),
-        as.character(packageVersion("FeatureExtraction")),
-        as.character(packageVersion("SqlRender")),
-        as.character(packageVersion("Andromeda")),
-        as.character(packageVersion("dplyr")),
-        as.character(packageVersion("tidyr")),
-        as.character(R.Version()$version.string),
-        as.character(packageName()),
-        as.character(packageVersion(getPackageName())),
+        as.character(nullToEmpty(packageVersion("CohortDiagnostics"))),
+        as.character(nullToEmpty(packageVersion("DatabaseConnector"))),
+        as.character(nullToEmpty(packageVersion("FeatureExtraction"))),
+        as.character(nullToEmpty(packageVersion("SqlRender"))),
+        as.character(nullToEmpty(packageVersion("Andromeda"))),
+        as.character(nullToEmpty(packageVersion("dplyr"))),
+        as.character(nullToEmpty(packageVersion("tidyr"))),
+        as.character(nullToEmpty(R.Version()$version.string)),
+        as.character(nullToEmpty(packageName())),
+        as.character(nullToEmpty(packageVersion(getPackageName()))),
         as.character(delta),
         as.character(attr(delta, "units")),
-        as.character(cdmSourceInformation$sourceDescription),
-        as.character(cdmSourceInformation$cdmSourceName),
-        as.character(cdmSourceInformation$sourceReleaseDate),
-        as.character(cdmSourceInformation$cdmVersion),
-        as.character(cdmSourceInformation$cdmReleaseDate),
-        as.character(cdmSourceInformation$vocabularyVersion)
+        as.character(nullToEmpty(cdmSourceInformation$sourceDescription)),
+        as.character(nullToEmpty(cdmSourceInformation$cdmSourceName)),
+        as.character(nullToEmpty(cdmSourceInformation$sourceReleaseDate)),
+        as.character(nullToEmpty(cdmSourceInformation$cdmVersion)),
+        as.character(nullToEmpty(cdmSourceInformation$cdmReleaseDate)),
+        as.character(nullToEmpty(cdmSourceInformation$vocabularyVersion))
       )
     )
   writeToCsv(data = metadata,
