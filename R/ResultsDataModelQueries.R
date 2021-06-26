@@ -1014,12 +1014,10 @@ getCohortAsFeatureCharacterizationResults <-
       dplyr::mutate(
         covariateId = .data$cohortId,
         covariateName = .data$cohortName,
-        analysisId = 0,
-        conceptId = 0
+        conceptId = .data$cohortId
       ) %>%
       dplyr::select(.data$covariateId,
                     .data$covariateName,
-                    .data$analysisId,
                     .data$conceptId)
     cohortRelationships <-
       getResultsFromCohortRelationships(dataSource = dataSource,
@@ -1128,10 +1126,10 @@ getCohortAsFeatureCharacterizationResults <-
         'CohortOccurrenceAnyTimePrior'
       ),
       description = c(
-        'CohortOccurrenceShortTerm',
-        'CohortOccurrenceMediumTerm',
-        'CohortOccurrenceLongTerm',
-        'CohortOccurrenceAnyTimePrior'
+        'Comparator cohort start date during day - 30 through 0 days relative to target cohort start date: ',
+        'Comparator cohort start date during day - 180 through 0 days relative to target cohort start date: ',
+        'Comparator cohort start date during day - 365 through 0 days relative to target cohort start date: ',
+        'Comparator cohort start date during any day prior through 0 days relative to target cohort start date: '
       ),
       domainId = c('Cohort','Cohort','Cohort','Cohort'),
       startDay = c(-30, -180, -365, NA),
@@ -1139,6 +1137,18 @@ getCohortAsFeatureCharacterizationResults <-
       isBinary = c('Y','Y','Y','Y'),
       missingMeansZero = c('Y','Y','Y','Y')
     )
+    
+    covariateRef <- tidyr::crossing(covariateRef,
+                                    analysisRef %>% 
+                                      dplyr::select(.data$analysisId, 
+                                                    .data$description)) %>% 
+      dplyr::mutate(covariateName = paste0(.data$description, covariateName)) %>% 
+      dplyr::select(-.data$description) %>% 
+      dplyr::arrange(.data$covariateId)
+    
+    anlaysisRef <- analysisRef %>% 
+      dplyr::select(-.data$description) %>% 
+      dplyr::arrange(.data$analysisId)
     
     return(
       list(
