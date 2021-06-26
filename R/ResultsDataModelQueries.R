@@ -1063,9 +1063,8 @@ getCohortAsFeatureCharacterizationResults <-
           dplyr::mutate(sd = sqrt(.data$mean * (1 - .data$mean)))
       }
       data <- data %>%
-        dplyr::mutate(conceptId = 0,
-                      analysisId = !!analysisId) %>%
-        dplyr::rename(covariateId = .data$comparatorCohortId) %>%
+        dplyr::mutate(analysisId = !!analysisId) %>%
+        dplyr::mutate(covariateId = (.data$comparatorCohortId*1000)+!!analysisId) %>%
         dplyr::select(
           .data$cohortId,
           .data$covariateId,
@@ -1073,9 +1072,7 @@ getCohortAsFeatureCharacterizationResults <-
           .data$mean,
           .data$sd,
           .data$databaseId
-        ) %>%
-        dplyr::mutate(typeCovariate = 3,
-                      timeId = 0)  # 2 = cohort id
+        )
       return(data)
     }
     comparatorOccurrenceShortTerm <-
@@ -1143,10 +1140,15 @@ getCohortAsFeatureCharacterizationResults <-
                                       dplyr::select(.data$analysisId, 
                                                     .data$description)) %>% 
       dplyr::mutate(covariateName = paste0(.data$description, covariateName)) %>% 
+      dplyr::mutate(covariateId = (.data$covariateId*1000)+.data$analysisId) %>% 
       dplyr::select(-.data$description) %>% 
-      dplyr::arrange(.data$covariateId)
+      dplyr::arrange(.data$covariateId) %>% 
+      dplyr::select(.data$covariateId,
+                    .data$covariateName,
+                    .data$analysisId,
+                    .data$conceptId)
     
-    anlaysisRef <- analysisRef %>% 
+    analysisRef <- analysisRef %>% 
       dplyr::select(-.data$description) %>% 
       dplyr::arrange(.data$analysisId)
     
