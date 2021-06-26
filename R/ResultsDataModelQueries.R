@@ -1152,12 +1152,25 @@ getCohortAsFeatureCharacterizationResults <-
       dplyr::select(-.data$description) %>% 
       dplyr::arrange(.data$analysisId)
     
+    concept <- cohort %>% 
+      dplyr::filter(.data$cohortId %in% covariateRef$conceptId %>% unique()) %>% 
+      dplyr::mutate(conceptId = .data$cohortId,
+                    conceptName = .data$cohortName,
+                    domainId = 'Cohort',
+                    vocabulary = 'Cohort',
+                    conceptClassId = 'Cohort',
+                    standardConcept = 'S',
+                    conceptCode = as.character(.data$cohortId),
+                    validStartDate = as.Date('2002-01-31'),
+                    validEndDate = as.Date('2099-12-31'),
+                    invalidReason = as.character(NA))
     return(
       list(
         covariateRef = covariateRef,
         covariateValue = covariateValue,
         covariateValueDist = NULL,
-        analysisRef = analysisRef
+        analysisRef = analysisRef,
+        concept = concept
       )
     )
     
@@ -1228,19 +1241,41 @@ getMultipleCharacterizationResults <-
   function(dataSource = .GlobalEnv,
            cohortIds = NULL,
            databaseIds = NULL) {
+    
+    ######################
     featureExtractioncharacterization <-
       getCohortCharacterizationResults(dataSource = dataSource,
                                        cohortIds = cohortIds,
                                        databaseIds = databaseIds)
+    featureExtractioncharacterization$analysisRef$characterizationSource == 1
+    featureExtractioncharacterization$covariateRef$characterizationSource == 1
+    featureExtractioncharacterization$covariateValue$characterizationSource == 1
+    featureExtractioncharacterization$covariateValueDist$characterizationSource == 1
+    featureExtractioncharacterization$concept$characterizationSource == 1
+    
+    
+    
+    ######################
     featureExtractionTemporalcharacterization <-
       getTemporalCohortCharacterizationResults(dataSource = dataSource,
                                                cohortIds = cohortIds,
                                                databaseIds = databaseIds)
+    featureExtractionTemporalcharacterization$temporalAnalysisRef$characterizationSource == 2
+    featureExtractionTemporalcharacterization$temporalCovariateRef$characterizationSource == 2
+    featureExtractionTemporalcharacterization$temporalCovariateValue$characterizationSource == 2
+    #featureExtractionTemporalcharacterization$temporalCovariateValueDist$characterizationSource == 2
+    featureExtractionTemporalcharacterization$concept$characterizationSource == 2
     
+    ######################
     cohortAsFeatureCharacterizationResults <-
       getCohortAsFeatureCharacterizationResults(dataSource = dataSource,
                                                 cohortIds = cohortIds,
                                                 databaseIds = databaseIds)
+    cohortAsFeatureCharacterizationResults$analysisRef$characterizationSource == 3
+    cohortAsFeatureCharacterizationResults$covariateRef$characterizationSource == 3
+    cohortAsFeatureCharacterizationResults$covariateValue$characterizationSource == 3
+    # cohortAsFeatureCharacterizationResults$covariateValueDist$characterizationSource == 3
+    cohortAsFeatureCharacterizationResults$concept$characterizationSource == 3
     
     cohortAsFeatureTemporalCharacterizationResults <-
       getCohortAsFeatureTemporalCharacterizationResults(dataSource = dataSource,
