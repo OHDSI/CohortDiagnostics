@@ -1163,7 +1163,11 @@ getCohortAsFeatureCharacterizationResults <-
                     conceptCode = as.character(.data$cohortId),
                     validStartDate = as.Date('2002-01-31'),
                     validEndDate = as.Date('2099-12-31'),
-                    invalidReason = as.character(NA))
+                    invalidReason = as.character(NA)) %>% 
+      dplyr::select(.data$conceptId, .data$conceptName, .data$domainId,
+                    .data$vocabularyId, .data$conceptClassId, .data$standardConcept,
+                    .data$conceptCode, .data$validStartDate, .data$validEndDate) %>% 
+      dplyr::arrange(.data$conceptId)
     return(
       list(
         covariateRef = covariateRef,
@@ -1243,7 +1247,9 @@ getMultipleCharacterizationResults <-
            databaseIds = NULL) {
     
     addCharacterizationSource <- function(x, characterizationSourceValue) {
-      exepectedDataTables <- c('analysisRef', 'covariateRef', 'covariateValue', 'covariateValueDist', 'concept')
+      exepectedDataTables <- c('analysisRef', 'covariateRef', 'covariateValue', 'covariateValueDist', 'concept',
+                               'temporalAnalysisRef', 'temporalCovariateRef', 'temporalCovariateValue', 
+                               'temporalCovariateValueDist')
       for (i in (1:length(exepectedDataTables))) {
         if (exepectedDataTables[[i]] %in% names(x)) {
           if (!is.null(x[[exepectedDataTables[[i]]]])) {
@@ -1252,6 +1258,7 @@ getMultipleCharacterizationResults <-
           }
         }
       }
+      return(x)
     }
     
     featureExtractioncharacterization <-
