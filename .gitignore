@@ -11,3 +11,4 @@ errorReportR.txt
 .RDataTmp
 *.log
 *log.txt
+inst/shiny/DiagnosticsExplorer/data/PreMerged.RData

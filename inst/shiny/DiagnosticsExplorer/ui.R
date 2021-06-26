@@ -91,11 +91,11 @@ sidebarMenu <-
         item = shinydashboard::menuItem(text = "Time Distributions", tabName = "timeDistribution"),
         infoId = "timeDistributionInfo"
       ),
-    if (exists("inclusionRuleStats"))
-      addInfo(
-        item = shinydashboard::menuItem(text = "Inclusion Rule Statistics", tabName = "inclusionRuleStats"),
-        infoId = "inclusionRuleStatsInfo"
-      ),
+    # if (exists("inclusionRuleStats"))
+    #   addInfo(
+    #     item = shinydashboard::menuItem(text = "Inclusion Rule Statistics", tabName = "inclusionRuleStats"),
+    #     infoId = "inclusionRuleStatsInfo"
+    #   ),
     if (exists("indexEventBreakdown"))
       addInfo(
         item = shinydashboard::menuItem(text = "Index Event Breakdown", tabName = "indexEventBreakdown"),
@@ -433,6 +433,15 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "cohortCounts",
     cohortReference("cohortCountsSelectedCohorts"),
+    shinydashboard::box(
+      title = "Notes",
+      status = "primary",
+      width = NULL,
+      solidHeader = TRUE,
+      collapsible = TRUE,
+      collapsed = TRUE,
+      shiny::uiOutput(outputId = "cohortCountsCohortCategories")
+    ), 
     shiny::conditionalPanel(
       condition = "output.cohortCountTableContainsData == true",
       shiny::radioButtons(
@@ -464,213 +473,197 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "incidenceRate",
     cohortReference("incidenceRateSelectedCohorts"),
-    shiny::tabsetPanel(
-      type = "tab",
-      shiny::tabPanel(
-        title = "Incidence Rate",
-        shinydashboard::box(
-          title = "Incidence Rate",
-          width = NULL,
-          status = "primary",
-          tags$table(
-            style = "width: 100%",
-            tags$tr(
-              tags$td(
-                valign = "bottom",
-                shiny::checkboxGroupInput(
-                  inputId = "irStratification",
-                  label = "Stratify by",
-                  choices = c("Age", "Gender", "Calendar Year"),
-                  selected = c("Age", "Gender", "Calendar Year"),
-                  inline = TRUE
-                )
-              ),
-              tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;")),
-              tags$td(
-                valign = "bottom",
-                style = "width:30% !important;margin-top:10px;",
-                shiny::conditionalPanel(
-                  condition = "input.irYscaleFixed",
-                  shiny::sliderInput(
-                    inputId = "YscaleMinAndMax",
-                    label = "Limit y-scale range to:",
-                    min = c(0),
-                    max = c(0),
-                    value = c(0, 0),
-                    dragRange = TRUE,
-                    width = 400,
-                    step = 1,
-                    sep = "",
-                  )
-                )
-              ),
-              tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;")),
-              tags$td(
-                valign = "bottom",
-                style = "text-align: right",
-                shiny::checkboxInput("irYscaleFixed", "Use same y-scale across databases")
+    shinydashboard::box(
+      title = "Incidence Rate",
+      width = NULL,
+      status = "primary",
+      tags$table(
+        style = "width: 100%",
+        tags$tr(
+          tags$td(
+            valign = "bottom",
+            shiny::checkboxGroupInput(
+              inputId = "irStratification",
+              label = "Stratify by",
+              choices = c("Age", "Gender", "Calendar Year"),
+              selected = c("Age", "Gender", "Calendar Year"),
+              inline = TRUE
+            )
+          ),
+          tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;")),
+          tags$td(
+            valign = "bottom",
+            style = "width:30% !important;margin-top:10px;",
+            shiny::conditionalPanel(
+              condition = "input.irYscaleFixed",
+              shiny::sliderInput(
+                inputId = "YscaleMinAndMax",
+                label = "Limit y-scale range to:",
+                min = c(0),
+                max = c(0),
+                value = c(0, 0),
+                dragRange = TRUE,
+                width = 400,
+                step = 1,
+                sep = "",
               )
             )
           ),
-          tags$table(
-            tags$tr(
-              style = "width: 100%",
-              tags$td(
-                shiny::conditionalPanel(
-                  condition = "input.irStratification.indexOf('Age') > -1",
-                  shinyWidgets::pickerInput(
-                    inputId = "incidenceRateAgeFilter",
-                    label = "Filter By Age",
-                    width = 300,
-                    choices = c("All"),
-                    selected = c("All"),
-                    multiple = TRUE,
-                    choicesOpt = list(style = rep_len("color: black;", 999)),
-                    options = shinyWidgets::pickerOptions(
-                      actionsBox = TRUE,
-                      liveSearch = TRUE,
-                      size = 10,
-                      dropupAuto = TRUE,
-                      liveSearchStyle = "contains",
-                      liveSearchPlaceholder = "Type here to search",
-                      virtualScroll = 50
-                    )
-                  )
-                )
-              ),
-              tags$td(
-                shiny::conditionalPanel(
-                  condition = "input.irStratification.indexOf('Gender') > -1",
-                  shinyWidgets::pickerInput(
-                    inputId = "incidenceRateGenderFilter",
-                    label = "Filter By Gender",
-                    width = 300,
-                    choices = c("All"),
-                    selected = c("All"),
-                    multiple = TRUE,
-                    choicesOpt = list(style = rep_len("color: black;", 999)),
-                    options = shinyWidgets::pickerOptions(
-                      actionsBox = TRUE,
-                      liveSearch = TRUE,
-                      size = 10,
-                      dropupAuto = TRUE,
-                      liveSearchStyle = "contains",
-                      liveSearchPlaceholder = "Type here to search",
-                      virtualScroll = 50
-                    )
-                  )
-                )
-              ),
-              tags$td(
-                style = "width: 30%",
-                shiny::conditionalPanel(
-                  condition = "input.irStratification.indexOf('Calendar Year') > -1",
-                  shiny::sliderInput(
-                    inputId = "incidenceRateCalendarFilter",
-                    label = "Filter By Calendar Year",
-                    min = c(0),
-                    max = c(0),
-                    value = c(0, 0),
-                    dragRange = TRUE,
-                    pre = "Year ",
-                    step = 1,
-                    sep = ""
-                  )
-                )
-              ),
-              tags$td(
-                shiny::numericInput(
-                  inputId = "minPersonYear",
-                  label = "Minimum person years",
-                  value = 1000,
-                  min = 0
-                )
-              ),
-              tags$td(
-                shiny::numericInput(
-                  inputId = "minSubjetCount",
-                  label = "Minimum subject count",
-                  value = NULL
-                )
-              ),
-              tags$td(tags$table(width = "100%",
-                                 tags$tr(
-                                   tags$td(
-                                     align = "right",
-                                     shiny::downloadButton(
-                                       "saveIncidenceRatePlot",
-                                       label = "",
-                                       icon = shiny::icon("download"),
-                                       style = "margin-top: 5px; margin-bottom: 5px;"
-                                     )
-                                   )
-                                 )), )
-            )
-          ),
-          shiny::htmlOutput(outputId = "hoverInfoIr"),
-          ggiraph::ggiraphOutput(
-            outputId = "incidenceRatePlot",
-            width = "100%",
-            height = "100%"
+          tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;")),
+          tags$td(
+            valign = "bottom",
+            style = "text-align: right",
+            shiny::checkboxInput("irYscaleFixed", "Use same y-scale across databases")
           )
         )
       ),
-      shiny::tabPanel(
-        title = "Calendar Incidence",
-        shinydashboard::box(
-          title = "Calendar Incidence",
-          width = NULL,
-          status = "primary",
-          tags$table(style = "width: 100%",
-                     tags$tr(
-                       tags$td(style = "width: 80%",
-                         valign = "bottom",
-                         style = "text-align: right",
-                         shiny::checkboxInput("calendarIncidenceYscaleFixed", "Use same y-scale across databases",value = TRUE)
-                       ),
-                       tags$td(style = "width: 20%",
-                               tags$table(width = "100%",
-                                          tags$tr(
-                                            tags$td(
-                                              align = "right",
-                                              shiny::downloadButton(
-                                                "saveCalendarIncidencePlot",
-                                                label = "",
-                                                icon = shiny::icon("download"),
-                                                style = "margin-top: 5px; margin-bottom: 5px;"
-                                              )
-                                            )
-                                          )))
-                     )),
-          ggiraph::ggiraphOutput(
-            outputId = "calendarIncidencePlot",
-            width = "100%",
-            height = "100%"
-          )
+      tags$table(
+        tags$tr(
+          style = "width: 100%",
+          tags$td(
+            shiny::conditionalPanel(
+              condition = "input.irStratification.indexOf('Age') > -1",
+              shinyWidgets::pickerInput(
+                inputId = "incidenceRateAgeFilter",
+                label = "Filter By Age",
+                width = 300,
+                choices = c("All"),
+                selected = c("All"),
+                multiple = TRUE,
+                choicesOpt = list(style = rep_len("color: black;", 999)),
+                options = shinyWidgets::pickerOptions(
+                  actionsBox = TRUE,
+                  liveSearch = TRUE,
+                  size = 10,
+                  dropupAuto = TRUE,
+                  liveSearchStyle = "contains",
+                  liveSearchPlaceholder = "Type here to search",
+                  virtualScroll = 50
+                )
+              )
+            )
+          ),
+          tags$td(
+            shiny::conditionalPanel(
+              condition = "input.irStratification.indexOf('Gender') > -1",
+              shinyWidgets::pickerInput(
+                inputId = "incidenceRateGenderFilter",
+                label = "Filter By Gender",
+                width = 300,
+                choices = c("All"),
+                selected = c("All"),
+                multiple = TRUE,
+                choicesOpt = list(style = rep_len("color: black;", 999)),
+                options = shinyWidgets::pickerOptions(
+                  actionsBox = TRUE,
+                  liveSearch = TRUE,
+                  size = 10,
+                  dropupAuto = TRUE,
+                  liveSearchStyle = "contains",
+                  liveSearchPlaceholder = "Type here to search",
+                  virtualScroll = 50
+                )
+              )
+            )
+          ),
+          tags$td(
+            style = "width: 30%",
+            shiny::conditionalPanel(
+              condition = "input.irStratification.indexOf('Calendar Year') > -1",
+              shiny::sliderInput(
+                inputId = "incidenceRateCalendarFilter",
+                label = "Filter By Calendar Year",
+                min = c(0),
+                max = c(0),
+                value = c(0, 0),
+                dragRange = TRUE,
+                pre = "Year ",
+                step = 1,
+                sep = ""
+              )
+            )
+          ),
+          tags$td(
+            shiny::numericInput(
+              inputId = "minPersonYear",
+              label = "Minimum person years",
+              value = 1000,
+              min = 0
+            )
+          ),
+          tags$td(
+            shiny::numericInput(
+              inputId = "minSubjetCount",
+              label = "Minimum subject count",
+              value = NULL
+            )
+          ),
+          tags$td(tags$table(width = "100%",
+                             tags$tr(
+                               tags$td(
+                                 align = "right",
+                                 shiny::downloadButton(
+                                   "saveIncidenceRatePlot",
+                                   label = "",
+                                   icon = shiny::icon("download"),
+                                   style = "margin-top: 5px; margin-bottom: 5px;"
+                                 )
+                               )
+                             )),)
         )
+      ),
+      shiny::htmlOutput(outputId = "hoverInfoIr"),
+      ggiraph::ggiraphOutput(
+        outputId = "incidenceRatePlot",
+        width = "100%",
+        height = "100%"
       )
     )
   ),
   shinydashboard::tabItem(
     tabName = "timeSeries",
     cohortReference("timeSeriesSelectedCohorts"),
-    shiny::radioButtons(
-      inputId = "timeSeriesType",
-      label = "",
-      choices = c("Table", "Plot"),
-      selected = "Table",
-      inline = TRUE
+    tags$table(
+      tags$tr(
+        tags$td(
+          shiny::radioButtons(
+            inputId = "timeSeriesFilter",
+            label = "Aggregation period:",
+            choices = c("Monthly", "Quaterly","Yearly"),
+            selected = "Monthly",
+            inline = TRUE
+          )
+        ),
+        tags$td(
+          shinyWidgets::pickerInput(
+            inputId = "timeSeriesTypeFilter",
+            label = "Time series Type",
+            choices = c(""),
+            width = 200,
+            choicesOpt = list(style = rep_len("color: black;", 999)),
+            options = shinyWidgets::pickerOptions(
+              actionsBox = TRUE,
+              liveSearch = TRUE,
+              liveSearchStyle = "contains",
+              size = 10,
+              liveSearchPlaceholder = "Type here to search",
+              virtualScroll = 50
+            )
+          )
+        )
+      )
     ),
     shinydashboard::box(
       title = "Time Series",
       width = NULL,
       status = "primary",
       solidHeader = TRUE,
+      
       shiny::radioButtons(
-        inputId = "timeSeriesFilter",
-        label = "Aggregation period:",
-        choices = c("Monthly", "Quaterly","Yearly"),
-        selected = "Monthly",
+        inputId = "timeSeriesType",
+        label = "",
+        choices = c("Table", "Plot"),
+        selected = "Table",
         inline = TRUE
       ),
       shiny::conditionalPanel(
@@ -821,75 +814,41 @@ bodyTabItems <- shinydashboard::tabItems(
     ),
     DT::dataTableOutput(outputId = "orphanConceptsTable")
   ),
-  shinydashboard::tabItem(
-    tabName = "inclusionRuleStats",
-    cohortReference("inclusionRuleStatSelectedCohort"),
-    shiny::conditionalPanel(
-      condition = "output.inclusionRuleStatsContainsData == true",
-      column(6,
-             shiny::radioButtons(
-               inputId = "inclusionRuleTableFilters",
-               label = "Inclusion Rule Events",
-               choices = c("All", "Meet", "Gain", "Remain", "Totals"),
-               selected = "All",
-               inline = TRUE
-             )
-      ),
-      column(6,
-             tags$table(width = "100%",
-                        tags$tr(
-                          tags$td(
-                            align = "right",
-                            shiny::downloadButton(
-                              "saveInclusionRuleTable",
-                              label = "",
-                              icon = shiny::icon("download"),
-                              style = "margin-top: 5px; margin-bottom: 5px;"
-                            )
-                          )
-                        )))
-    ),
-    DT::dataTableOutput(outputId = "inclusionRuleTable")
-  ),
+  # shinydashboard::tabItem(
+  #   tabName = "inclusionRuleStats",
+  #   cohortReference("inclusionRuleStatSelectedCohort"),
+  #   shiny::conditionalPanel(
+  #     condition = "output.inclusionRuleStatsContainsData == true",
+  #     column(6,
+  #            shiny::radioButtons(
+  #              inputId = "inclusionRuleTableFilters",
+  #              label = "Inclusion Rule Events",
+  #              choices = c("All", "Meet", "Gain", "Remain", "Totals"),
+  #              selected = "All",
+  #              inline = TRUE
+  #            )
+  #     ),
+  #     column(6,
+  #            tags$table(width = "100%",
+  #                       tags$tr(
+  #                         tags$td(
+  #                           align = "right",
+  #                           shiny::downloadButton(
+  #                             "saveInclusionRuleTable",
+  #                             label = "",
+  #                             icon = shiny::icon("download"),
+  #                             style = "margin-top: 5px; margin-bottom: 5px;"
+  #                           )
+  #                         )
+  #                       )))
+  #   ),
+  #   DT::dataTableOutput(outputId = "inclusionRuleTable")
+  # ),
   shinydashboard::tabItem(
     tabName = "indexEventBreakdown",
     cohortReference("indexEventBreakdownSelectedCohort"),
-    tags$table(
+    tags$table(width = '100%',
       tags$tr(
-        # tags$td(
-        #   shinyWidgets::pickerInput(
-        #     inputId = "breakdownDomainTable",
-        #     label = "Domain Table",
-        #     choices = c(""),
-        #     multiple = TRUE,
-        #     choicesOpt = list(style = rep_len("color: black;", 999)),
-        #     options = shinyWidgets::pickerOptions(
-        #       actionsBox = TRUE,
-        #       liveSearch = TRUE,
-        #       liveSearchStyle = "contains",
-        #       size = 10,
-        #       liveSearchPlaceholder = "Type here to search",
-        #       virtualScroll = 50
-        #     )
-        #   )
-        # ),
-        # tags$td(
-        #   shinyWidgets::pickerInput(
-        #     inputId = "breakdownDomainField",
-        #     label = "Domain Field",
-        #     choices = c(""),
-        #     multiple = TRUE,
-        #     choicesOpt = list(style = rep_len("color: black;", 999)),
-        #     options = shinyWidgets::pickerOptions(
-        #       actionsBox = TRUE,
-        #       liveSearch = TRUE,
-        #       liveSearchStyle = "contains",
-        #       size = 10,
-        #       liveSearchPlaceholder = "Type here to search",
-        #       virtualScroll = 50
-        #     )
-        #   )
-        # ),
         tags$td(
           shiny::radioButtons(
             inputId = "indexEventBreakdownTableRadioButton",
@@ -899,7 +858,7 @@ bodyTabItems <- shinydashboard::tabItems(
             inline = TRUE
           )
         ),
-        tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
+        tags$td(HTML("&nbsp;&nbsp;&nbsp;")),
         tags$td(
           shiny::radioButtons(
             inputId = "indexEventBreakdownTableFilter",
@@ -908,7 +867,53 @@ bodyTabItems <- shinydashboard::tabItems(
             selected = "Persons",
             inline = TRUE
           )
-        )
+        ),
+        tags$td(HTML("&nbsp;&nbsp;&nbsp;")),
+        tags$td(
+          shiny::radioButtons(
+            inputId = "indexEventBreakdownValueFilter",
+            label = "Display Value Type",
+            choices = c("Absolute", "Percentage"), 
+            selected = "Absolute",
+            inline = TRUE
+          )
+        ),
+       tags$td(
+         shinyWidgets::pickerInput(
+           inputId = "breakdownDomainTable",
+           label = "Domain Table",
+           choices = c(""),
+           multiple = TRUE,
+           width = 200,
+           choicesOpt = list(style = rep_len("color: black;", 999)),
+           options = shinyWidgets::pickerOptions(
+             actionsBox = TRUE,
+             liveSearch = TRUE,
+             liveSearchStyle = "contains",
+             size = 10,
+             liveSearchPlaceholder = "Type here to search",
+             virtualScroll = 50
+           )
+         )
+       ),
+       tags$td(
+         shinyWidgets::pickerInput(
+           inputId = "breakdownDomainField",
+           label = "Domain Field",
+           choices = c(""),
+           multiple = TRUE,
+           width = 200,
+           choicesOpt = list(style = rep_len("color: black;", 999)),
+           options = shinyWidgets::pickerOptions(
+             actionsBox = TRUE,
+             liveSearch = TRUE,
+             liveSearchStyle = "contains",
+             size = 10,
+             liveSearchPlaceholder = "Type here to search",
+             virtualScroll = 50
+           )
+         )
+       )
       )
     ),
     tags$table(width = "100%", 
@@ -1168,7 +1173,7 @@ bodyTabItems <- shinydashboard::tabItems(
             condition = "input.charCompareType == 'Plot'",
             shiny::sliderInput(
               inputId = "compareCohortXMeanFilter",
-              label = "Filter By X-axis Mean",
+              label = "Filter X-axis",
               min = c(0.0),
               max = c(1.0),
               value = c(0.0, 1.0),
@@ -1185,7 +1190,7 @@ bodyTabItems <- shinydashboard::tabItems(
             condition = "input.charCompareType == 'Plot'",
             shiny::sliderInput(
               inputId = "compareCohortYMeanFilter",
-              label = "Filter By Y-axis Mean",
+              label = "Filter Y-axis",
               min = c(0.0),
               max = c(1.0),
               value = c(0.0, 1.0),
@@ -1311,7 +1316,7 @@ bodyTabItems <- shinydashboard::tabItems(
             condition = "input.temporalCharacterizationType == 'Plot'",
             shiny::sliderInput(
               inputId = "temporalCharacterizationXMeanFilter",
-              label = "Filter By X-axis Mean",
+              label = "Filter X-axis",
               min = c(0.0),
               max = c(1.0),
               value = c(0.0, 1.0),
@@ -1328,7 +1333,7 @@ bodyTabItems <- shinydashboard::tabItems(
             condition = "input.temporalCharacterizationType == 'Plot'",
             shiny::sliderInput(
               inputId = "temporalCharacterizationYMeanFilter",
-              label = "Filter By Y-axis Mean",
+              label = "Filter Y-axis",
               min = c(0.0),
               max = c(1.0),
               value = c(0.0, 1.0),
