@@ -1014,7 +1014,7 @@ getCohortAsFeatureCharacterizationResults <-
       dplyr::mutate(
         covariateId = .data$cohortId,
         covariateName = .data$cohortName,
-        conceptId = .data$cohortId
+        conceptId = .data$cohortId*-1
       ) %>%
       dplyr::select(.data$covariateId,
                     .data$covariateName,
@@ -1064,7 +1064,7 @@ getCohortAsFeatureCharacterizationResults <-
       }
       data <- data %>%
         dplyr::mutate(analysisId = !!analysisId) %>%
-        dplyr::mutate(covariateId = (.data$comparatorCohortId*1000)+!!analysisId) %>%
+        dplyr::mutate(covariateId = (.data$comparatorCohortId*-1000)+!!analysisId) %>%
         dplyr::select(
           .data$cohortId,
           .data$covariateId,
@@ -1081,7 +1081,7 @@ getCohortAsFeatureCharacterizationResults <-
         startDay = 0,
         endDay = 30,
         cohortCounts = cohortCounts,
-        analysisId = 1
+        analysisId = -1
       )
     comparatorOccurrenceMediumTerm <-
       summarizeCohortRelationship(
@@ -1089,7 +1089,7 @@ getCohortAsFeatureCharacterizationResults <-
         startDay = 0,
         endDay = 180,
         cohortCounts = cohortCounts,
-        analysisId = 2
+        analysisId = -2
       )
     comparatorOccurrenceLongTerm <-
       summarizeCohortRelationship(
@@ -1097,14 +1097,14 @@ getCohortAsFeatureCharacterizationResults <-
         startDay = 0,
         cohortCounts = cohortCounts,
         endDay = 365,
-        analysisId = 3
+        analysisId = -3
       )
     comparatorOccurrenceAnyTime <-
       summarizeCohortRelationship(
         data = cohortRelationships,
         startDay = 0,
         cohortCounts = cohortCounts,
-        analysisId = 4
+        analysisId = -4
       )
     
     covariateValue <- dplyr::bind_rows(
@@ -1115,7 +1115,7 @@ getCohortAsFeatureCharacterizationResults <-
     )
     
     analysisRef <- dplyr::tibble(
-      analysisId = c(1, 2, 3, 4),
+      analysisId = c(-1, -2, -3, -4),
       analysisName = c(
         'CohortOccurrenceShortTerm',
         'CohortOccurrenceMediumTerm',
@@ -1140,7 +1140,7 @@ getCohortAsFeatureCharacterizationResults <-
                                       dplyr::select(.data$analysisId, 
                                                     .data$description)) %>% 
       dplyr::mutate(covariateName = paste0(.data$description, covariateName)) %>% 
-      dplyr::mutate(covariateId = (.data$covariateId*1000)+.data$analysisId) %>% 
+      dplyr::mutate(covariateId = (.data$covariateId*-1000)+.data$analysisId) %>% 
       dplyr::select(-.data$description) %>% 
       dplyr::arrange(.data$covariateId) %>% 
       dplyr::select(.data$covariateId,
@@ -1153,11 +1153,11 @@ getCohortAsFeatureCharacterizationResults <-
       dplyr::arrange(.data$analysisId)
     
     concept <- cohort %>% 
-      dplyr::filter(.data$cohortId %in% covariateRef$conceptId %>% unique()) %>% 
-      dplyr::mutate(conceptId = .data$cohortId,
+      dplyr::filter(.data$cohortId %in% abs(covariateRef$conceptId) %>% unique()) %>% 
+      dplyr::mutate(conceptId = .data$cohortId * -1,
                     conceptName = .data$cohortName,
                     domainId = 'Cohort',
-                    vocabulary = 'Cohort',
+                    vocabularyId = 'Cohort',
                     conceptClassId = 'Cohort',
                     standardConcept = 'S',
                     conceptCode = as.character(.data$cohortId),
@@ -1282,15 +1282,46 @@ getMultipleCharacterizationResults <-
     cohortAsFeatureCharacterizationResults <- addCharacterizationSource(x = cohortAsFeatureCharacterizationResults, 
                                                                         characterizationSourceValue = 3)
     
-    cohortAsFeatureTemporalCharacterizationResults <-
-      getCohortAsFeatureTemporalCharacterizationResults(dataSource = dataSource,
-                                                        cohortIds = cohortIds,
-                                                        databaseIds = databaseIds)
-    cohortAsFeatureTemporalCharacterizationResults <- addCharacterizationSource(x = cohortAsFeatureTemporalCharacterizationResults, 
-                                                                                characterizationSourceValue = 4)
+    # cohortAsFeatureTemporalCharacterizationResults <-
+    #   getCohortAsFeatureTemporalCharacterizationResults(dataSource = dataSource,
+    #                                                     cohortIds = cohortIds,
+    #                                                     databaseIds = databaseIds)
+    # cohortAsFeatureTemporalCharacterizationResults <- addCharacterizationSource(x = cohortAsFeatureTemporalCharacterizationResults, 
+    #                                                                             characterizationSourceValue = 4)
     
     
-
+    analysisRef <- dplyr::bind_rows(featureExtractioncharacterization$analysisRef,
+                                    featureExtractionTemporalcharacterization$temporalAnalysisRef,
+                                    cohortAsFeatureCharacterizationResults$analysisRef
+    )
+    
+    covariateRef <- dplyr::bind_rows(featureExtractioncharacterization$covariateRef,
+                                     featureExtractionTemporalcharacterization$temporalCovariateRef,
+                                     cohortAsFeatureCharacterizationResults$covariateRef
+    )
+    
+    covariateValue <- dplyr::bind_rows(featureExtractioncharacterization$covariateValue %>% 
+                                         dplyr::mutate(timeId = 0),
+                                       featureExtractionTemporalcharacterization$temporalCovariateValue,
+                                       cohortAsFeatureCharacterizationResults$covariateValue %>% 
+                                         dplyr::mutate(timeId = 0)
+    )
+    
+    covariateValueDist <- dplyr::bind_rows(featureExtractioncharacterization$covariateValueDist,
+                                           featureExtractionTemporalcharacterization$temporalCovariateValueDist,
+                                           cohortAsFeatureCharacterizationResults$covariateValueDist
+    )
+    
+    concept <- dplyr::bind_rows(featureExtractioncharacterization$concept,
+                                featureExtractionTemporalcharacterization$concept,
+                                cohortAsFeatureCharacterizationResults$concept
+    )
+    
+    return(list(analysisRef = analysisRef,
+                covariateRef = covariateRef, 
+                covariateValue = covariateValue,
+                covariateValueDist = covariateValueDist,
+                concept = concept))
   }
 
 
