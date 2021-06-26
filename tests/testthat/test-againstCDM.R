@@ -178,7 +178,7 @@ test_that("Retrieve results from premerged file", {
   )
   expect_true(nrow(orphanConceptFromFile) >= 0)
   
-  conceptIdDetails <- CohortDiagnostics::getConceptDetails(
+  conceptIdDetails <- CohortDiagnostics::getResultsFromConcept(
     dataSource = dataSourcePreMergedFile,
     conceptIds = c(192671, 201826, 1124300, 1124300)
   )
@@ -300,14 +300,14 @@ if (stringr::str_detect(string = tolower(.Platform$OS.type), pattern = "mac")) {
     expect_true(nrow(orphanConceptFromDb) >= 0)
     
     # concept_id details with vocabulary schema
-    # conceptIdDetails <- CohortDiagnostics::getConceptDetails(
+    # conceptIdDetails <- CohortDiagnostics::getResultsFromConcept(
     #   dataSource = dataSourceDatabase,
     #   conceptIds = c(192671, 201826, 1124300, 1124300), 
     #   vocabularyDatabaseSchema = cohortDiagnosticsSchema
     # )
     
     # concept_id details without vocabulary schema
-    conceptIdDetails <- CohortDiagnostics::getConceptDetails(
+    conceptIdDetails <- CohortDiagnostics::getResultsFromConcept(
       dataSource = dataSourceDatabase,
       conceptIds = c(192671, 201826, 1124300, 1124300)
     )

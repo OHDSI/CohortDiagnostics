@@ -1362,7 +1362,7 @@ shiny::shinyServer(function(input, output, session) {
       tidyr::pivot_wider(id_cols = c(.data$conceptId),
                          names_from = .data$name,
                          values_from = .data$value)
-    conceptIdDetails <- getConceptDetails(dataSource = dataSource,
+    conceptIdDetails <- getResultsFromConcept(dataSource = dataSource,
                                           conceptIds = table$conceptId %>% unique())
     table <- table %>% 
       dplyr::inner_join(conceptIdDetails %>%
@@ -1662,7 +1662,7 @@ shiny::shinyServer(function(input, output, session) {
       tidyr::pivot_wider(id_cols = c(.data$conceptId),
                          names_from = .data$name,
                          values_from = .data$value)
-    conceptIdDetails <- getConceptDetails(dataSource = dataSource,
+    conceptIdDetails <- getResultsFromConcept(dataSource = dataSource,
                                           conceptIds = table$conceptId %>% unique())
     table <- table %>% 
       dplyr::inner_join(conceptIdDetails %>%
@@ -2541,7 +2541,7 @@ shiny::shinyServer(function(input, output, session) {
                                                       .data$conceptSetId,
                                                       .data$conceptSetName), 
                         by = c("cohortId", "conceptSetId"))
-    concept <- getConceptDetails(dataSource = dataSource,
+    concept <- getResultsFromConcept(dataSource = dataSource,
                                  conceptIds = c(includedConcepts$conceptId, includedConcepts$sourceConceptId) %>% unique())
     includedConcepts <- includedConcepts %>% 
       dplyr::inner_join(concept %>% 
@@ -2782,7 +2782,7 @@ shiny::shinyServer(function(input, output, session) {
         .data$conceptSetId,
         .data$conceptSetName), 
         by = c("cohortId", "conceptSetId"))
-    concepts <- getConceptDetails(dataSource = dataSource,
+    concepts <- getResultsFromConcept(dataSource = dataSource,
                                   conceptIds = orphanConcepts$conceptId %>% unique())
     orphanConcepts <- orphanConcepts %>% 
       dplyr::inner_join(concepts %>% dplyr::select(
@@ -3222,7 +3222,7 @@ shiny::shinyServer(function(input, output, session) {
     if (!'domainField' %in% colnames(indexEventBreakdown)) {
       indexEventBreakdown$domainField <- "Not in data"
     }
-    conceptIdDetails <- getConceptDetails(dataSource = dataSource,
+    conceptIdDetails <- getResultsFromConcept(dataSource = dataSource,
                                           conceptIds = indexEventBreakdown$conceptId %>% unique())
     indexEventBreakdown <- indexEventBreakdown %>%
       dplyr::inner_join(conceptIdDetails %>% 
@@ -3542,7 +3542,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     # to ensure backward compatibility to 2.1 when visitContext did not have visitConceptName
     if (!'visitConceptName' %in% colnames(visitContext)) {
-      concepts <- getConceptDetails(dataSource = dataSource, 
+      concepts <- getResultsFromConcept(dataSource = dataSource, 
                                     conceptIds = visitContext$visitConceptId %>% unique()
       ) %>% 
         dplyr::rename(visitConceptId = .data$conceptId,

@@ -246,6 +246,7 @@ getResultsFromCohortCount <- function(dataSource,
   return(data)
 }
 
+
 #' Returns data from time_series table of Cohort Diagnostics results data model
 #'
 #' @description
@@ -487,14 +488,14 @@ getResultsFromIndexEventBreakdown <- function(dataSource,
 #' table in Cohort Diagnostics results data model.
 #'
 #' @export
-getConceptDetails <- function(dataSource = .GlobalEnv,
-                              vocabularyDatabaseSchema = NULL,
-                              conceptIds) {
+getResultsFromConcept <- function(dataSource = .GlobalEnv,
+                                  vocabularyDatabaseSchema = NULL,
+                                  conceptIds = NULL) {
   table <- "concept"
   if (!is.null(vocabularyDatabaseSchema) &&
       is(dataSource, "environment")) {
     warning(
-      "vocabularyDatabaseSchema provided for function getConceptDetails in non database mode. This will be ignored."
+      "vocabularyDatabaseSchema provided for function getResultsFromConcept in non database mode. This will be ignored."
     )
   }
   if (is(dataSource, "environment")) {
@@ -507,12 +508,15 @@ getConceptDetails <- function(dataSource = .GlobalEnv,
     if (nrow(get(table, envir = dataSource)) == 0) {
       return(NULL)
     }
-    data <- get(table, envir = dataSource) %>%
-      dplyr::filter(.data$conceptId %in% conceptIds)
+    data <- get(table, envir = dataSource)
+    if (!is.null(conceptIds)) {
+      data <- data %>%
+        dplyr::filter(.data$conceptId %in% conceptIds)
+    }
   } else {
     sql <- "SELECT *
             FROM @vocabulary_database_schema.concept
-            WHERE concept_id IN (@concept_ids);"
+            {@concept_ids == ''} ? { WHERE concept_id IN (@concept_ids)};"
     if (!is.null(vocabularyDatabaseSchema)) {
       sql <-
         SqlRender::render(
@@ -903,6 +907,8 @@ getCohortCharacterizationResults <-
            databaseIds = NULL) {
     analysisRef <- getResultsAnalysisRef(dataSource = dataSource)
     covariateRef <- getResultsCovariateRef(dataSource = dataSource)
+    concept <- getResultsFromConcept(dataSource = dataSource,
+                                     conceptIds = covariateRef$conceptId %>% unique())
     
     covariateValue <-
       getResultsFromCovariateValue(dataSource = dataSource,
@@ -918,7 +924,8 @@ getCohortCharacterizationResults <-
         analysisRef = analysisRef,
         covariateRef = covariateRef,
         covariateValue = covariateValue,
-        covariateValueDist = covariateValueDist
+        covariateValueDist = covariateValueDist,
+        concept = concept
       )
     )
   }
@@ -950,6 +957,8 @@ getTemporalCohortCharacterizationResults <-
       getResultsTemporalAnalysisRef(dataSource = dataSource)
     temporalCovariateRef <-
       getResultsTemporalCovariateRef(dataSource = dataSource)
+    concept <- getResultsFromConcept(dataSource = dataSource,
+                                     conceptIds = temporalCovariateRef$conceptId %>% unique())
     
     temporalCovariateValue <-
       getResultsFromTemporalCovariateValue(dataSource = dataSource,
@@ -967,7 +976,8 @@ getTemporalCohortCharacterizationResults <-
         temporalAnalysisRef = temporalAnalysisRef,
         temporalCovariateRef = temporalCovariateRef,
         temporalCovariateValue = temporalCovariateValue,
-        temporalCovariateValueDist = temporalCovariateValueDist
+        temporalCovariateValueDist = temporalCovariateValueDist,
+        concept = concept
       )
     )
   }
@@ -1036,7 +1046,7 @@ getCohortAsFeatureCharacterizationResults <-
       }
       
       data <- data %>%
-        dplyr::select(-.data$startDay,-.data$endDay) %>%
+        dplyr::select(-.data$startDay, -.data$endDay) %>%
         dplyr::group_by(.data$databaseId,
                         .data$cohortId,
                         .data$comparatorCohortId) %>%
@@ -1109,20 +1119,35 @@ getCohortAsFeatureCharacterizationResults <-
       comparatorOccurrenceAnyTime
     )
     
-    analysisRef <- dplyr::tibble(analysisId = c(1,2,3,4),
-                                 analysisName = c('cohortOccurrenceShortTerm',
-                                                  'cohortOccurrenceMediumTerm',
-                                                  'cohortOccurrenceLongTerm',
-                                                  'cohortOccurrenceAnyTimePrior'),
-                                 description = c('cohortOccurrenceShortTerm',
-                                                  'cohortOccurrenceMediumTerm',
-                                                  'cohortOccurrenceLongTerm',
-                                                  'cohortOccurrenceAnyTimePrior'))
+    analysisRef <- dplyr::tibble(
+      analysisId = c(1, 2, 3, 4),
+      analysisName = c(
+        'CohortOccurrenceShortTerm',
+        'CohortOccurrenceMediumTerm',
+        'CohortOccurrenceLongTerm',
+        'CohortOccurrenceAnyTimePrior'
+      ),
+      description = c(
+        'CohortOccurrenceShortTerm',
+        'CohortOccurrenceMediumTerm',
+        'CohortOccurrenceLongTerm',
+        'CohortOccurrenceAnyTimePrior'
+      ),
+      domainId = c('Cohort','Cohort','Cohort','Cohort'),
+      startDay = c(-30, -180, -365, NA),
+      endDay = c(0, 0, 0, 0),
+      isBinary = c('Y','Y','Y','Y'),
+      missingMeansZero = c('Y','Y','Y','Y')
+    )
     
-    return(list(covariateRef = covariateRef,
-                covariateValue = covariateValue,
-                covariateValueDist = NULL,
-                analysisRef = analysisRef))
+    return(
+      list(
+        covariateRef = covariateRef,
+        covariateValue = covariateValue,
+        covariateValueDist = NULL,
+        analysisRef = analysisRef
+      )
+    )
     
   }
 
@@ -1200,15 +1225,17 @@ getMultipleCharacterizationResults <-
                                                cohortIds = cohortIds,
                                                databaseIds = databaseIds)
     
-    cohortAsFeatureCharacterizationResults <- getCohortAsFeatureCharacterizationResults(dataSource = dataSource,
-                                                                                        cohortIds = cohortIds,
-                                                                                        databaseIds = databaseIds)
+    cohortAsFeatureCharacterizationResults <-
+      getCohortAsFeatureCharacterizationResults(dataSource = dataSource,
+                                                cohortIds = cohortIds,
+                                                databaseIds = databaseIds)
     
-    cohortAsFeatureTemporalCharacterizationResults <- getCohortAsFeatureTemporalCharacterizationResults(dataSource = dataSource,
-                                                                                                        cohortIds = cohortIds,
-                                                                                                        databaseIds = databaseIds)
+    cohortAsFeatureTemporalCharacterizationResults <-
+      getCohortAsFeatureTemporalCharacterizationResults(dataSource = dataSource,
+                                                        cohortIds = cohortIds,
+                                                        databaseIds = databaseIds)
     
- 
+    
     
     data <- list(
       covariateValue = covariateValue,
