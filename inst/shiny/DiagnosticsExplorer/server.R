@@ -3771,8 +3771,9 @@ shiny::shinyServer(function(input, output, session) {
     characterizationData <- covariateValueForCohortIdDatabaseIds()$covariateValue %>% 
       dplyr::filter(.data$timeId == 0) %>% 
       dplyr::select(-.data$timeId) %>% 
-      dplyr::inner_join(covariatesTofilter, by = c('covariateId', 'covariateType')) %>% 
-      dplyr::inner_join(covariateValueForCohortIdDatabaseIds()$analysisRef, by = 'analysisId')
+      dplyr::inner_join(covariatesTofilter, by = c('covariateId', 'characterizationSource')) %>% 
+      dplyr::inner_join(covariateValueForCohortIdDatabaseIds()$analysisRef, by = c('analysisId',
+                                                                                   'characterizationSource'))
     
     if (any(is.null(characterizationData), nrow(characterizationData) == 0)) {
       return(NULL)
