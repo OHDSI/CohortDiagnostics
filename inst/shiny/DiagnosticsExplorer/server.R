@@ -1362,7 +1362,7 @@ shiny::shinyServer(function(input, output, session) {
       tidyr::pivot_wider(id_cols = c(.data$conceptId),
                          names_from = .data$name,
                          values_from = .data$value)
-    conceptIdDetails <- getConceptDetails(dataSource = dataSource,
+    conceptIdDetails <- getResultsFromConcept(dataSource = dataSource,
                                           conceptIds = table$conceptId %>% unique())
     table <- table %>% 
       dplyr::inner_join(conceptIdDetails %>%
@@ -1662,7 +1662,7 @@ shiny::shinyServer(function(input, output, session) {
       tidyr::pivot_wider(id_cols = c(.data$conceptId),
                          names_from = .data$name,
                          values_from = .data$value)
-    conceptIdDetails <- getConceptDetails(dataSource = dataSource,
+    conceptIdDetails <- getResultsFromConcept(dataSource = dataSource,
                                           conceptIds = table$conceptId %>% unique())
     table <- table %>% 
       dplyr::inner_join(conceptIdDetails %>%
@@ -2919,7 +2919,7 @@ shiny::shinyServer(function(input, output, session) {
                                                       .data$conceptSetId,
                                                       .data$conceptSetName), 
                         by = c("cohortId", "conceptSetId"))
-    concept <- getConceptDetails(dataSource = dataSource,
+    concept <- getResultsFromConcept(dataSource = dataSource,
                                  conceptIds = c(includedConcepts$conceptId, includedConcepts$sourceConceptId) %>% unique())
     includedConcepts <- includedConcepts %>% 
       dplyr::inner_join(concept %>% 
@@ -3160,7 +3160,7 @@ shiny::shinyServer(function(input, output, session) {
         .data$conceptSetId,
         .data$conceptSetName), 
         by = c("cohortId", "conceptSetId"))
-    concepts <- getConceptDetails(dataSource = dataSource,
+    concepts <- getResultsFromConcept(dataSource = dataSource,
                                   conceptIds = orphanConcepts$conceptId %>% unique())
     orphanConcepts <- orphanConcepts %>% 
       dplyr::inner_join(concepts %>% dplyr::select(
@@ -3601,7 +3601,7 @@ shiny::shinyServer(function(input, output, session) {
     if (!'domainField' %in% colnames(indexEventBreakdown)) {
       indexEventBreakdown$domainField <- "Not in data"
     }
-    conceptIdDetails <- getConceptDetails(dataSource = dataSource,
+    conceptIdDetails <- getResultsFromConcept(dataSource = dataSource,
                                           conceptIds = indexEventBreakdown$conceptId %>% unique())
     if (is.null(conceptIdDetails)) {return(NULL)}
     indexEventBreakdown <- indexEventBreakdown %>%
@@ -3921,7 +3921,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     # to ensure backward compatibility to 2.1 when visitContext did not have visitConceptName
     if (!'visitConceptName' %in% colnames(visitContext)) {
-      concepts <- getConceptDetails(dataSource = dataSource, 
+      concepts <- getResultsFromConcept(dataSource = dataSource, 
                                     conceptIds = visitContext$visitConceptId %>% unique()
       ) %>% 
         dplyr::rename(visitConceptId = .data$conceptId,
@@ -4123,7 +4123,7 @@ shiny::shinyServer(function(input, output, session) {
     progress$set(message = paste0("Extracting characterization data for target cohort:", cohortId()), 
                  value = 0)
     
-    data <- getCohortCharacterizationResults(
+    data <- getMultipleCharacterizationResults(
       dataSource = dataSource,
       cohortIds = cohortId(),
       databaseIds = databaseIds()
@@ -4141,17 +4141,18 @@ shiny::shinyServer(function(input, output, session) {
       analysisIds <- NULL
     }
     
-    covariatesTofilter <- covariateRef
+    covariatesTofilter <- covariateValueForCohortIdDatabaseIds()$covariateRef
     if (!is.null(analysisIds)) {
       covariatesTofilter <- covariatesTofilter %>% 
         dplyr::filter(.data$analysisId %in% analysisIds)
     }
-    characterizationData <- covariateValueForCohortIdDatabaseIds()
-    characterizationData <- characterizationData$covariateValue %>% 
+    
+    characterizationData <- covariateValueForCohortIdDatabaseIds()$covariateValue %>% 
       dplyr::filter(.data$timeId == 0) %>% 
       dplyr::select(-.data$timeId) %>% 
-      dplyr::inner_join(characterizationData$covariateRef, by = c('covariateId', 'covariateType')) %>% 
-      dplyr::inner_join(characterizationData$analysisRef, by = 'analysisId')
+      dplyr::inner_join(covariatesTofilter, by = c('covariateId', 'characterizationSource')) %>% 
+      dplyr::inner_join(covariateValueForCohortIdDatabaseIds()$analysisRef, by = c('analysisId',
+                                                                                   'characterizationSource'))
     
     if (any(is.null(characterizationData), nrow(characterizationData) == 0)) {
       return(NULL)
@@ -4809,7 +4810,7 @@ shiny::shinyServer(function(input, output, session) {
                                   input$database), 
                  value = 0)
     
-    data <- getCohortCharacterizationResults(
+    data <- getMultipleCharacterizationResults(
       dataSource = dataSource,
       cohortIds = c(cohortId(), comparatorCohortId()) %>% unique(),
       databaseIds = input$database

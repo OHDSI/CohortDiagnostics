@@ -136,13 +136,8 @@ if (databaseMode) {
   covariateRef <- dplyr::bind_rows(covariateRef, temporalCovariateRef) %>% 
     dplyr::distinct() %>% 
     dplyr::arrange(.data$covariateId)
-  rm(temporalCovariateRef)
   
-  analysisRef <- dplyr::bind_rows(analysisRef, temporalAnalysisRef) %>% 
-    dplyr::distinct() %>% 
-    dplyr::arrange(.data$analysisId)
-  rm(temporalAnalysisRef)
-  
+
   for (table in c(dataModelSpecifications$tableName)) {
     #, "recommender_set"
     if (table %in% resultsTablesOnServer &&
@@ -171,12 +166,7 @@ if (databaseMode) {
   covariateRef <- dplyr::bind_rows(covariateRef, temporalCovariateRef) %>% 
     dplyr::distinct() %>% 
     dplyr::arrange(.data$covariateId)
-  rm(temporalCovariateRef)
   
-  analysisRef <- dplyr::bind_rows(analysisRef, temporalAnalysisRef) %>% 
-    dplyr::distinct() %>% 
-    dplyr::arrange(.data$analysisId)
-  rm(temporalAnalysisRef)
 }
 
 if (exists("database")) {
