@@ -1242,61 +1242,48 @@ getMultipleCharacterizationResults <-
            cohortIds = NULL,
            databaseIds = NULL) {
     
-    ######################
+    addCharacterizationSource <- function(x, characterizationSourceValue) {
+      exepectedDataTables <- c('analysisRef', 'covariateRef', 'covariateValue', 'covariateValueDist', 'concept')
+      for (i in (1:length(exepectedDataTables))) {
+        if (exepectedDataTables[[i]] %in% names(x)) {
+          if (!is.null(x[[exepectedDataTables[[i]]]])) {
+            x[[exepectedDataTables[[i]]]] <- x[[exepectedDataTables[[i]]]] %>% 
+              dplyr::mutate(characterizationSource = as.integer(!!characterizationSourceValue))
+          }
+        }
+      }
+    }
+    
     featureExtractioncharacterization <-
       getCohortCharacterizationResults(dataSource = dataSource,
                                        cohortIds = cohortIds,
                                        databaseIds = databaseIds)
-    featureExtractioncharacterization$analysisRef$characterizationSource == 1
-    featureExtractioncharacterization$covariateRef$characterizationSource == 1
-    featureExtractioncharacterization$covariateValue$characterizationSource == 1
-    featureExtractioncharacterization$covariateValueDist$characterizationSource == 1
-    featureExtractioncharacterization$concept$characterizationSource == 1
+    featureExtractioncharacterization <- addCharacterizationSource(x = featureExtractioncharacterization, 
+                                                                   characterizationSourceValue = 1)
     
-    
-    
-    ######################
     featureExtractionTemporalcharacterization <-
       getTemporalCohortCharacterizationResults(dataSource = dataSource,
                                                cohortIds = cohortIds,
                                                databaseIds = databaseIds)
-    featureExtractionTemporalcharacterization$temporalAnalysisRef$characterizationSource == 2
-    featureExtractionTemporalcharacterization$temporalCovariateRef$characterizationSource == 2
-    featureExtractionTemporalcharacterization$temporalCovariateValue$characterizationSource == 2
-    #featureExtractionTemporalcharacterization$temporalCovariateValueDist$characterizationSource == 2
-    featureExtractionTemporalcharacterization$concept$characterizationSource == 2
+    featureExtractionTemporalcharacterization <- addCharacterizationSource(x = featureExtractionTemporalcharacterization, 
+                                                                           characterizationSourceValue = 2)
     
-    ######################
     cohortAsFeatureCharacterizationResults <-
       getCohortAsFeatureCharacterizationResults(dataSource = dataSource,
                                                 cohortIds = cohortIds,
                                                 databaseIds = databaseIds)
-    cohortAsFeatureCharacterizationResults$analysisRef$characterizationSource == 3
-    cohortAsFeatureCharacterizationResults$covariateRef$characterizationSource == 3
-    cohortAsFeatureCharacterizationResults$covariateValue$characterizationSource == 3
-    # cohortAsFeatureCharacterizationResults$covariateValueDist$characterizationSource == 3
-    cohortAsFeatureCharacterizationResults$concept$characterizationSource == 3
+    cohortAsFeatureCharacterizationResults <- addCharacterizationSource(x = cohortAsFeatureCharacterizationResults, 
+                                                                        characterizationSourceValue = 3)
     
     cohortAsFeatureTemporalCharacterizationResults <-
       getCohortAsFeatureTemporalCharacterizationResults(dataSource = dataSource,
                                                         cohortIds = cohortIds,
                                                         databaseIds = databaseIds)
+    cohortAsFeatureTemporalCharacterizationResults <- addCharacterizationSource(x = cohortAsFeatureTemporalCharacterizationResults, 
+                                                                                characterizationSourceValue = 4)
     
     
-    
-    data <- list(
-      covariateValue = covariateValue,
-      covariateValueDist = covariateValueDist,
-      temporalTimeRef = temporalTimeRef,
-      cohortCounts = cohortCounts,
-      covariateRef = covariateRef,
-      temporalCovariateRef = temporalCovariateRef,
-      covariateRefCombined = covariateRefCombined,
-      analysisRef = analysisRef,
-      temporalAnalysisRef = temporalAnalysisRef,
-      analysisRefCombined = analysisRefCombined
-    )
-    return(data)
+
   }
 
 
