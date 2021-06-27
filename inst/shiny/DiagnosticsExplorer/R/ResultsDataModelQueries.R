@@ -1053,7 +1053,7 @@ getCohortAsFeatureCharacterizationResults <-
         dplyr::ungroup()
       
       if (nrow(cohortCounts) > 0) {
-        cohortCount <- cohortCounts %>%
+        cohortCounts <- cohortCounts %>%
           dplyr::select(.data$cohortId,
                         .data$databaseId,
                         .data$cohortSubjects)

@@ -1139,7 +1139,7 @@ getCohortAsFeatureCharacterizationResults <-
                                     analysisRef %>% 
                                       dplyr::select(.data$analysisId, 
                                                     .data$description)) %>% 
-      dplyr::mutate(covariateName = paste0(.data$description, covariateName)) %>% 
+      dplyr::mutate(covariateName = paste0(.data$description, .data$covariateName)) %>% 
       dplyr::mutate(covariateId = (.data$covariateId*-1000)+.data$analysisId) %>% 
       dplyr::select(-.data$description) %>% 
       dplyr::arrange(.data$covariateId) %>% 

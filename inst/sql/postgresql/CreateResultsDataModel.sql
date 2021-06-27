@@ -22,7 +22,6 @@ DROP TABLE IF EXISTS inclusion_rule_stats;
 DROP TABLE IF EXISTS index_event_breakdown;
 DROP TABLE IF EXISTS metadata;
 DROP TABLE IF EXISTS orphan_concept;
-DROP TABLE IF EXISTS phenotype_description;
 DROP TABLE IF EXISTS time_series;
 DROP TABLE IF EXISTS relationship;
 DROP TABLE IF EXISTS resolved_concepts;
@@ -66,7 +65,6 @@ CREATE TABLE calendar_incidence (
 --Table cohort
 
 CREATE TABLE cohort (
-			phenotype_id BIGINT,
 			cohort_id BIGINT NOT NULL,
 			web_api_cohort_id BIGINT NOT NULL,
 			cohort_name VARCHAR(255) NOT NULL,
@@ -317,16 +315,6 @@ CREATE TABLE orphan_concept (
 			concept_count FLOAT NOT NULL,
 			concept_subjects FLOAT NOT NULL,
 			PRIMARY KEY(cohort_id, concept_set_id, database_id, concept_id)
-);
-
---Table phenotype_description
-
-CREATE TABLE phenotype_description (
-			phenotype_id BIGINT NOT NULL,
-			phenotype_name VARCHAR NOT NULL,
-			clinical_description VARCHAR,
-			metadata VARCHAR,
-			PRIMARY KEY(phenotype_id)
 );
 
 --Table relationship

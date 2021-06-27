@@ -145,14 +145,13 @@ SELECT cohort_id,
 	comparator_cohort_id,
 	attribute_name,
 	attribute_type,
-	value
+	value_count
 INTO #cohort_overlap_long
 FROM (
 	SELECT DISTINCT target_cohort_id AS cohort_id,
 		comparator_cohort_id,
 		'es' AS attribute_name,
-		'o' AS attribute_type, -- overlap
-		either_subjects AS value
+		either_subjects value_count
 	FROM #OVERLAP
 	
 	UNION
@@ -160,8 +159,7 @@ FROM (
 	SELECT DISTINCT target_cohort_id AS cohort_id,
 		comparator_cohort_id,
 		'bs' AS attribute_name,
-		'o' AS attribute_type, -- overlap
-		both_subjects AS value
+		both_subjects value_count
 	FROM #OVERLAP
 	
 	UNION
@@ -169,8 +167,7 @@ FROM (
 	SELECT DISTINCT target_cohort_id AS cohort_id,
 		comparator_cohort_id,
 		'ts' AS attribute_name,
-		'o' AS attribute_type, -- overlap
-		t_only_subjects AS value
+		t_only_subjects value_count
 	FROM #OVERLAP
 	
 	UNION
@@ -178,8 +175,7 @@ FROM (
 	SELECT DISTINCT target_cohort_id AS cohort_id,
 		comparator_cohort_id,
 		'cs' AS attribute_name,
-		'o' AS attribute_type, -- overlap
-		c_only_subjects AS value
+		c_only_subjects value_count
 	FROM #OVERLAP
 	
 	UNION
@@ -187,8 +183,7 @@ FROM (
 	SELECT DISTINCT target_cohort_id AS cohort_id,
 		comparator_cohort_id,
 		'tb' AS attribute_name,
-		'o' AS attribute_type, -- overlap
-		t_before_c_subjects AS value
+		t_before_c_subjects value_count
 	FROM #OVERLAP
 	
 	UNION
@@ -196,8 +191,7 @@ FROM (
 	SELECT DISTINCT target_cohort_id AS cohort_id,
 		comparator_cohort_id,
 		'cb' AS attribute_name,
-		'o' AS attribute_type, -- overlap
-		c_before_t_subjects AS value
+		c_before_t_subjects value_count
 	FROM #OVERLAP
 	
 	UNION
@@ -205,8 +199,7 @@ FROM (
 	SELECT DISTINCT target_cohort_id AS cohort_id,
 		comparator_cohort_id,
 		'sd' AS attribute_name,
-		'o' AS attribute_type, -- overlap
-		same_day_subjects AS value
+		same_day_subjects value_count
 	FROM #OVERLAP
 	
 	UNION
@@ -214,8 +207,7 @@ FROM (
 	SELECT DISTINCT target_cohort_id AS cohort_id,
 		comparator_cohort_id,
 		'tc' AS attribute_name,
-		'o' AS attribute_type, -- overlap
-		t_in_c_subjects AS value
+		t_in_c_subjects value_count
 	FROM #OVERLAP
 	
 	UNION
@@ -223,8 +215,7 @@ FROM (
 	SELECT DISTINCT target_cohort_id AS cohort_id,
 		comparator_cohort_id,
 		'ct' AS attribute_name,
-		'o' AS attribute_type, -- overlap
-		c_in_t_subjects AS value
+		c_in_t_subjects value_count
 	FROM #OVERLAP
 	) f;
 

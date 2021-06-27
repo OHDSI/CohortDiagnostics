@@ -72,7 +72,7 @@ getCdmDataSourceInformation <-
     if ('cdmSourceName' %in% colnames(cdmDataSource)) {
       cdmSourceName <- cdmDataSource$cdmSourceName
     } else {
-      sourceName <- as.character(NA)
+      cdmSourceName <- as.character(NA)
     }
     
     sourceReleaseDate <- as.Date(NA)
