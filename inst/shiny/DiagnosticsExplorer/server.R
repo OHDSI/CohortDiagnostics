@@ -197,7 +197,6 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  
   output$cohortDetailsText <- shiny::renderUI({
     row <- cohortDetailsText()[[1]]
     if (!'logicDescription' %in% colnames(row)) {
@@ -384,23 +383,29 @@ shiny::shinyServer(function(input, output, session) {
   cohortDefinitionCirceRDetails <- shiny::reactive(x = {
     progress <- shiny::Progress$new()
     on.exit(progress$close())
-    progress$set(message = paste0("Rendering CirceR human readable description for cohort id: ",
-                                  selectedCohortDefinitionRow()$cohortId), value = 0)
-    data <- selectedCohortDefinitionRow()[1,]
-    if (nrow(selectedCohortDefinitionRow()[1,]) == 1) {
-      circeExpression <-
-        CirceR::cohortExpressionFromJson(expressionJson = data$json)
-      circeExpressionMarkdown <-
-        CirceR::cohortPrintFriendly(circeExpression)
-      circeConceptSetListmarkdown <-
-        CirceR::conceptSetListPrintFriendly(circeExpression$conceptSets)
-      details <- data
-      details$circeConceptSetListmarkdown <-
-        circeConceptSetListmarkdown
-      details$htmlExpressionCohort <-
-        convertMdToHtml(circeExpressionMarkdown)
-      details$htmlExpressionConceptSetExpression <-
-        convertMdToHtml(circeConceptSetListmarkdown)
+    progress$set(message = "Rendering human readable cohort description using CirceR", value = 0)
+  
+    data <- selectedCohortDefinitionRow()
+    if (nrow(selectedCohortDefinitionRow()) > 0) {
+      details <- list()
+      for (i in (1:nrow(data))) {
+        progress$inc(1/nrow(data), detail = paste("Doing part", i))
+        circeExpression <-
+          CirceR::cohortExpressionFromJson(expressionJson = data[i, ]$json)
+        circeExpressionMarkdown <-
+          CirceR::cohortPrintFriendly(circeExpression)
+        circeConceptSetListmarkdown <-
+          CirceR::conceptSetListPrintFriendly(circeExpression$conceptSets)
+        details[[i]] <- data[i, ]
+        details[[i]]$circeConceptSetListmarkdown <-
+          circeConceptSetListmarkdown
+        details[[i]]$htmlExpressionCohort <-
+          convertMdToHtml(circeExpressionMarkdown)
+        details[[i]]$htmlExpressionConceptSetExpression <-
+          convertMdToHtml(circeConceptSetListmarkdown)
+        
+      }
+      details <- dplyr::bind_rows(details)
     } else {
       return(NULL)
     }
@@ -408,7 +413,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$cohortDefinitionText <- shiny::renderUI(expr = {
-    cohortDefinitionCirceRDetails()$htmlExpressionCohort %>%
+    cohortDefinitionCirceRDetails()[1,]$htmlExpressionCohort %>%
       shiny::HTML()
   })
   
@@ -1588,6 +1593,20 @@ shiny::shinyServer(function(input, output, session) {
     } else {
       return(row)
     }
+  })
+  
+  output$circerVersionInCohortDefinitionSecond <- shiny::renderUI(expr = {
+    version <- getCirceRPackageVersion()[[2]]
+    if (is.null(version)) {
+      return(NULL)
+    } else {
+      version
+    }
+  })
+  
+  output$cohortDefinitionTextSecond <- shiny::renderUI(expr = {
+    cohortDefinitionCirceRDetails()[2,]$htmlExpressionCohort %>%
+      shiny::HTML()
   })
   
   output$cohortDefinitionJsonSecond <- shiny::renderText({
