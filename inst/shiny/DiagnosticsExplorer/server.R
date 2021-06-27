@@ -6111,43 +6111,83 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$databaseId %in% databaseIds())
       lowSubjectCountCategory1 <- c()   # category 1 -> n == 0
       lowSubjectCountCategory2 <- c()   # category 2 -> 0 < n < 100
-      lowSubjectCountCategory3 <- c()   # category 2 -> 100 < n < 2500
+      lowSubjectCountCategory3 <- c()   # category 3 -> 100 < n < 2500
       recordPerSubjectDatabasesCategory1 <- c()    # category 1 -> 1 record per subject (ratio = 1)
-      recordPerSubjectDatabasesCategory2 <- c()    # category 1 -> more than 1 record per subject (ratio > 1)
+      recordPerSubjectDatabasesCategory2 <- c()    # category 2 -> more than 1 record per subject (ratio > 1)
       
       for (i in 1:nrow(cohortCountSelected)) {
         if (cohortCountSelected$cohortSubjects[i] == 0) {
-          lowSubjectCountCategory1 <-
-            c(
-              lowSubjectCountCategory1,
-              paste(
-                cohortCountSelected$compoundName[i],
-                cohortCountSelected$databaseId[i],
-                sep = " - "
+          if (length(lowSubjectCountCategory1[grep(cohortCountSelected$compoundName[i],
+                                                   lowSubjectCountCategory1,
+                                                   fixed = TRUE)]) <= 0) {
+            lowSubjectCountCategory1 <-
+              c(
+                lowSubjectCountCategory1,
+                paste(
+                  cohortCountSelected$compoundName[i],
+                  cohortCountSelected$databaseId[i],
+                  sep = " - "
+                )
               )
-            )
+          } else {
+            lowSubjectCountCategory1[grep(cohortCountSelected$compoundName[i],
+                                          lowSubjectCountCategory1,
+                                          fixed = TRUE)] <-
+              paste(lowSubjectCountCategory1[grep(cohortCountSelected$compoundName[i],
+                                                  lowSubjectCountCategory1,
+                                                  fixed = TRUE)],
+                    cohortCountSelected$databaseId[i],
+                    sep = ",")
+          }
+          
         } else if (cohortCountSelected$cohortSubjects[i] > 0 &&
                    cohortCountSelected$cohortSubjects[i] <= 100) {
-          lowSubjectCountCategory2 <-
-            c(
-              lowSubjectCountCategory2,
-              paste(
-                cohortCountSelected$compoundName[i],
-                cohortCountSelected$databaseId[i],
-                sep = " - "
+          if (length(lowSubjectCountCategory2[grep(cohortCountSelected$compoundName[i],
+                                                   lowSubjectCountCategory2,
+                                                   fixed = TRUE)]) <= 0) {
+            lowSubjectCountCategory2 <-
+              c(
+                lowSubjectCountCategory2,
+                paste(
+                  cohortCountSelected$compoundName[i],
+                  cohortCountSelected$databaseId[i],
+                  sep = " - "
+                )
               )
-            )
+          } else {
+            lowSubjectCountCategory2[grep(cohortCountSelected$compoundName[i],
+                                          lowSubjectCountCategory2,
+                                          fixed = TRUE)] <-
+              paste(lowSubjectCountCategory2[grep(cohortCountSelected$compoundName[i],
+                                                  lowSubjectCountCategory2,
+                                                  fixed = TRUE)],
+                    cohortCountSelected$databaseId[i],
+                    sep = ",")
+          }
         } else if (cohortCountSelected$cohortSubjects[i] > 100 &&
                    cohortCountSelected$cohortSubjects[i] < 2500) {
-          lowSubjectCountCategory3 <-
-            c(
-              lowSubjectCountCategory3,
-              paste(
-                cohortCountSelected$compoundName[i],
-                cohortCountSelected$databaseId[i],
-                sep = " - "
+          if (length(lowSubjectCountCategory3[grep(cohortCountSelected$compoundName[i],
+                                                   lowSubjectCountCategory3,
+                                                   fixed = TRUE)]) <= 0) {
+            lowSubjectCountCategory3 <-
+              c(
+                lowSubjectCountCategory3,
+                paste(
+                  cohortCountSelected$compoundName[i],
+                  cohortCountSelected$databaseId[i],
+                  sep = " - "
+                )
               )
-            )
+          } else {
+            lowSubjectCountCategory3[grep(cohortCountSelected$compoundName[i],
+                                          lowSubjectCountCategory3,
+                                          fixed = TRUE)] <-
+              paste(lowSubjectCountCategory3[grep(cohortCountSelected$compoundName[i],
+                                                  lowSubjectCountCategory3,
+                                                  fixed = TRUE)],
+                    cohortCountSelected$databaseId[i],
+                    sep = ",")
+          }
         }
         
         recordPerSubject <-
