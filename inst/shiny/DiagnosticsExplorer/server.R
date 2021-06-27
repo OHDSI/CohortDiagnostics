@@ -6133,6 +6133,10 @@ shiny::shinyServer(function(input, output, session) {
       lowSubjectCountCategory3 <- c()   # category 3 -> 100 < n < 2500
       recordPerSubjectDatabasesCategory1 <- c()    # category 1 -> 1 record per subject (ratio = 1)
       recordPerSubjectDatabasesCategory2 <- c()    # category 2 -> more than 1 record per subject (ratio > 1)
+      leastSubjectCount <- c()
+      highestSubjectCount <- c()
+      
+      
       
       for (i in 1:nrow(cohortCountSelected)) {
         if (cohortCountSelected$cohortSubjects[i] == 0) {
@@ -6224,6 +6228,46 @@ shiny::shinyServer(function(input, output, session) {
         }
       }
       
+      distinctCohortIds <- cohortCountSelected$cohortId %>%  unique()
+      for (i in 1:length(distinctCohortIds)) {
+        cohortDetailsForDistinctCohortIds <- cohortCountSelected %>%
+          dplyr::filter(.data$cohortId == distinctCohortIds[i])
+        cohortNameOfDistinctCohortId <-
+          cohortDetailsForDistinctCohortIds$compoundName %>% unique()
+        if (nrow(cohortDetailsForDistinctCohortIds) >= 10) {
+          cohortPercentile <-
+            cohortDetailsForDistinctCohortIds$cohortSubjects %>%
+            quantile(c(0.1, 0.9)) %>%
+            round(0)
+          
+          filteredCohortDetailsWithLowPercentile <-
+            cohortDetailsForDistinctCohortIds %>%
+            dplyr::filter(.data$cohortSubjects < cohortPercentile[[1]])
+          
+          if (nrow(filteredCohortDetailsWithLowPercentile) > 0) {
+            leastSubjectCount <- c(leastSubjectCount,
+                                   paste(
+                                     cohortNameOfDistinctCohortId,
+                                     paste(filteredCohortDetailsWithLowPercentile$databaseId, collapse = ", "),
+                                     sep = " - "
+                                   ))
+          }
+          
+          filteredCohortDetailsWithHighPercentile <-
+            cohortDetailsForDistinctCohortIds %>%
+            dplyr::filter(.data$cohortSubjects > cohortPercentile[[2]])
+          if (nrow(filteredCohortDetailsWithHighPercentile) > 0) {
+            highestSubjectCount <- c(highestSubjectCount,
+                                     paste(
+                                       cohortNameOfDistinctCohortId,
+                                       paste(filteredCohortDetailsWithHighPercentile$databaseId, collapse = ", "),
+                                       sep = " - "
+                                     ))
+          }
+        }
+        
+      }
+      
       tags$div(
         tags$b("Cohorts with low subject count :"),
         tags$div(if (length(lowSubjectCountCategory1) > 0) {
@@ -6273,6 +6317,20 @@ shiny::shinyServer(function(input, output, session) {
             )
           )
         }),
+        tags$br(),
+        tags$div(if (length(leastSubjectCount) > 0) {
+          buildCohortConditionTable(
+            "Least Subject Count : ",
+            leastSubjectCount
+          )
+        }),
+        tags$br(),
+        tags$div(if (length(highestSubjectCount) > 0) {
+          buildCohortConditionTable(
+            "Highest Subject Count : ",
+            highestSubjectCount
+          )
+        })
       )
     })
   
