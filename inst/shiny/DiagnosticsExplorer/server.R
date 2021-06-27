@@ -166,32 +166,47 @@ shiny::shinyServer(function(input, output, session) {
                 "cohortDefinitionRowIsSelected",
                 suspendWhenHidden = FALSE)
   
+  cohortDetailsText <- shiny::reactive(x = {
+    data <- selectedCohortDefinitionRow()
+    
+    if (nrow(data) == 0) {
+      return(NULL)
+    } else {
+      details <- list()
+      for (i in 1:nrow(data)) {
+        details[[i]] <-  tags$table(
+          style = "margin-top: 5px;",
+          tags$tr(
+            tags$td(tags$strong("Cohort ID: ")),
+            tags$td(HTML("&nbsp;&nbsp;")),
+            tags$td(data[i, ]$cohortId)
+          ),
+          tags$tr(
+            tags$td(tags$strong("Cohort Name: ")),
+            tags$td(HTML("&nbsp;&nbsp;")),
+            tags$td(data[i, ]$cohortName)
+          ),
+          tags$tr(
+            tags$td(tags$strong("Logic: ")),
+            tags$td(HTML("&nbsp;&nbsp;")),
+            tags$td(data[i, ]$logicDescription)
+          )
+        )
+      }
+      return(details)
+    }
+  })
+  
+  
   output$cohortDetailsText <- shiny::renderUI({
-    row <- selectedCohortDefinitionRow()[1,]
+    row <- cohortDetailsText()[[1]]
     if (!'logicDescription' %in% colnames(row)) {
       row$logicDescription <- row$cohortName
     }
-    if (is.null(row)) {
+    if (is.null(row) || length(row) == 0) {
       return(NULL)
     } else {
-      tags$table(
-        style = "margin-top: 5px;",
-        tags$tr(
-          tags$td(tags$strong("Cohort ID: ")),
-          tags$td(HTML("&nbsp;&nbsp;")),
-          tags$td(row$cohortId)
-        ),
-        tags$tr(
-          tags$td(tags$strong("Cohort Name: ")),
-          tags$td(HTML("&nbsp;&nbsp;")),
-          tags$td(row$cohortName)
-        ),
-        tags$tr(
-          tags$td(tags$strong("Logic: ")),
-          tags$td(HTML("&nbsp;&nbsp;")),
-          tags$td(row$logicDescription)
-        )
-      )
+      return(row)
     }
   })
   
@@ -1559,6 +1574,18 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   # Concept set expression table two-----------------------
+  output$cohortDetailsTextSecond <- shiny::renderUI({
+    row <- cohortDetailsText()[[2]]
+    if (!'logicDescription' %in% colnames(row)) {
+      row$logicDescription <- row$cohortName
+    }
+    if (is.null(row) || length(row) == 0) {
+      return(NULL)
+    } else {
+      return(row)
+    }
+  })
+  
   output$conceptsetExpressionSecondTable <- DT::renderDataTable(expr = {
     if (length(cohortDefinistionConceptSetExpression()) != 2) {
       return(NULL)
