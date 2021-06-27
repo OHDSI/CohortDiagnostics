@@ -413,22 +413,26 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   getCirceRPackageVersion <- shiny::reactive(x = {
-    row <- selectedCohortDefinitionRow()[1,]
+    row <- selectedCohortDefinitionRow()
     if (is.null(row)) {
       return(NULL)
     } else {
-      tags$table(
-        tags$tr(
-          tags$td(
-            paste("rendered for cohort id:", row$cohortId, "using CirceR version: ", packageVersion('CirceR'))
+      details <- list()
+      for (i in 1:nrow(row)) {
+        details[[i]] <- tags$table(
+          tags$tr(
+            tags$td(
+              paste("rendered for cohort id:", row[i, ]$cohortId, "using CirceR version: ", packageVersion('CirceR'))
+            )
           )
         )
-      )
+      }
+      return(details)
     }
   })
   
   output$circerVersionInCohortDefinition <- shiny::renderUI(expr = {
-    version <- getCirceRPackageVersion() 
+    version <- getCirceRPackageVersion()[[1]]
     if (is.null(version)) {
       return(NULL)
     } else {
@@ -437,7 +441,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$cohortDefinitionJson <- shiny::renderText({
-    row <- selectedCohortDefinitionRow()
+    row <- selectedCohortDefinitionRow()[1,]
     if (is.null(row)) {
       return(NULL)
     } else {
@@ -465,7 +469,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$circerVersionInCohortDefinitionSql <- shiny::renderUI(expr = {
-    version <- getCirceRPackageVersion() 
+    version <- getCirceRPackageVersion()[[1]]
     if (is.null(version)) {
       return(NULL)
     } else {
@@ -1583,6 +1587,43 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     } else {
       return(row)
+    }
+  })
+  
+  output$cohortDefinitionJsonSecond <- shiny::renderText({
+    row <- selectedCohortDefinitionRow()[2,]
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+      row$json
+    }
+  })
+  
+  output$circerVersionInCohortDefinitionSqlSecond <- shiny::renderUI(expr = {
+    version <- getCirceRPackageVersion()[[2]]
+    if (is.null(version)) {
+      return(NULL)
+    } else {
+      version
+    }
+  })
+  
+  output$cohortDefinitionSqlSecond <- shiny::renderText({
+    row <- selectedCohortDefinitionRow()[2,]
+    
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+      options <- CirceR::createGenerateOptions(
+        generateStats = TRUE
+      )
+      expression <- CirceR::cohortExpressionFromJson(expressionJson = row$json)
+      
+      if (!is.null(expression)) {
+        CirceR::buildCohortQuery(expression = expression, options = options)
+      } else {
+        return(NULL)
+      }
     }
   })
   
