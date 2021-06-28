@@ -974,7 +974,6 @@ runCohortDiagnostics <- function(packageName = NULL,
       ))
     }
     if (nrow(subset) > 0) {
-      ## Overlap SQL----
       ParallelLogger::logTrace("Beginning Cohort overlap SQL")
       cohortOverlap <- computeCohortOverlap(
         connection = connection,
@@ -1038,7 +1037,6 @@ runCohortDiagnostics <- function(packageName = NULL,
                             attr(delta, "units"))
   }
   
-  browser()
   # Time Series----
   if (runTimeSeries) {
     ParallelLogger::logInfo("Computing Time Series")
@@ -1116,7 +1114,6 @@ runCohortDiagnostics <- function(packageName = NULL,
       )
       ParallelLogger::logTrace("Done inserting calendar periods")
       
-      #Time series SQL----
       ParallelLogger::logTrace("Beginning time series SQL")
       sql <-
         SqlRender::loadRenderTranslateSql(
@@ -1181,20 +1178,20 @@ runCohortDiagnostics <- function(packageName = NULL,
           data = timeSeries,
           fileName = file.path(exportFolder, "time_series.csv"),
           incremental = incremental,
-          cohortId = c(subset$targetCohortId, subset$comparatorCohortId) %>% unique()
+          cohortId = c(subset$cohortId) %>% unique()
         )
       } else {
         warning('No time series data')
       }
+      recordTasksDone(
+        cohortId = subset$targetCohortId,
+        comparatorId = subset$comparatorCohortId,
+        task = "runTimeSeries",
+        checksum = subset$checksum,
+        recordKeepingFile = recordKeepingFile,
+        incremental = incremental
+      )
     }
-    recordTasksDone(
-      cohortId = subset$targetCohortId,
-      comparatorId = subset$comparatorCohortId,
-      task = "runTimeSeries",
-      checksum = subset$checksum,
-      recordKeepingFile = recordKeepingFile,
-      incremental = incremental
-    )
     delta <- Sys.time() - startTimeSeries
     ParallelLogger::logInfo("Computing time series took ",
                             signif(delta, 3),
@@ -1202,6 +1199,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                             attr(delta, "units"))
   }
   
+  browser()
   # Cohort Relationship ----
   if (runCohortRelationship) {
     ParallelLogger::logInfo("Computing Cohort Relationship")
@@ -1221,9 +1219,6 @@ runCohortDiagnostics <- function(packageName = NULL,
       ))
     }
     
-    
-    
-    ## cohort relationships----
     cohortRelationships <- cohortOverlap %>% 
       dplyr::filter(.data$attributeType == 'r')
     if (nrow(cohortOverlap) > 0) {
