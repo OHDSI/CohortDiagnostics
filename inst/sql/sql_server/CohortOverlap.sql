@@ -36,7 +36,6 @@ SELECT cohort_definition_id comparator_cohort_id,
 	MIN(cohort_end_date) min_end
 INTO #comparator_cohorts
 FROM @cohort_database_schema.@cohort_table
-WHERE cohort_definition_id IN (@comparator_cohort_ids)
 GROUP BY cohort_definition_id,
 	subject_id;
 

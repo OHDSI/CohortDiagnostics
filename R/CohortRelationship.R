@@ -16,12 +16,11 @@
 
 
 
-#' Given two sets of cohorts get relationships between the cohorts.
+#' Given a set of cohorts get relationships between the cohorts.
 #'
 #' @description
-#' Given two cohorts, get data to compare relationships between the cohorts - such as overlap, temporal 
-#' relationships between cohort start date(s). 
-#' Note: only the first occurrence of subject_id in the cohort is used.
+#' Given a set of cohorts, get temporal relationships between the 
+#' cohort_start_date of the cohorts.
 #'
 #' @template Connection
 #' 
@@ -29,62 +28,54 @@
 #'
 #' @template CohortTable
 #'                                    
-#' @param targetCohortIds             A list of cohort ids to be used as target cohorts.
-#' 
-#' @param comparatorCohortIds         A list of cohort ids to be used as comparator cohorts.
+#' @template CohortIds
 #'                                    
 #' @param batchSize                   {Optional, default set to 200} If running diagnostics on larget set
 #'                                    of cohorts, this function allows you to batch them into chunks that run 
 #'                                    as a batch.
 #'                                    
 #' @export
-computeCohortOverlap <- function(connectionDetails = NULL,
-                                 connection = NULL,
-                                 cohortDatabaseSchema,
-                                 cohortTable = "cohort",
-                                 targetCohortIds,
-                                 comparatorCohortIds,
-                                 batchSize = 200) {
+computeCohortTemporalRelationship <- function(connectionDetails = NULL,
+                                              connection = NULL,
+                                              cohortDatabaseSchema,
+                                              cohortTable = "cohort",
+                                              cohortIds,
+                                              batchSize = 200) {
   startTime <- Sys.time()
-  cohortIds <- c(targetCohortIds, comparatorCohortIds) %>% unique() %>% sort()
   
   if (length(cohortIds) == 0) {
     return(NULL)
   }
+  
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-  
-  
   
   results <- Andromeda::andromeda()
   for (start in seq(1, length(cohortIds), by = batchSize)) {
     end <- min(start + batchSize - 1, length(cohortIds))
     if (length(cohortIds) > batchSize) {
       ParallelLogger::logInfo(sprintf(
-        "Batch Cohort Overlap Processing cohorts %s through %s",
+        "Batch Cohort Temporal Relationship Processing cohorts %s through %s",
         start,
         end
       ))
     }
-    
     sql <- SqlRender::loadRenderTranslateSql(
-      "CohortOverlap.sql",
+      "CohortRelationship.sql",
       packageName = "CohortDiagnostics",
       dbms = connection@dbms,
       cohort_database_schema = cohortDatabaseSchema,
       cohort_table = cohortTable,
-      target_cohort_ids = targetCohortIds,
-      comparator_cohort_ids = comparatorCohortIds
+      target_cohort_ids = cohortIds[[start:end]]
     )
     DatabaseConnector::executeSql(
       connection = connection,
       sql = sql
     )
-    
-    overlap <- renderTranslateQuerySql(connection = connection, 
-                                       sql = "SELECT * FROM #cohort_overlap_long;", 
+    temporalRelationship <- renderTranslateQuerySql(connection = connection, 
+                                       sql = "SELECT * FROM #cohort_rel_long;", 
                                        snakeCaseToCamelCase = TRUE)
     
     DatabaseConnector::renderTranslateExecuteSql(
