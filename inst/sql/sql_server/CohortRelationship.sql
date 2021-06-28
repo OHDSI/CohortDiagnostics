@@ -1,11 +1,11 @@
-IF OBJECT_ID('tempdb..#row_id_cohort_subject', 'U') IS NOT NULL
+IF OBJECT_ID('tempdb..#row_id_cs', 'U') IS NOT NULL
 	DROP TABLE #row_id_cohort_sub;
 
 IF OBJECT_ID('tempdb..#cohort_rel_long', 'U') IS NOT NULL
 	DROP TABLE #cohort_rel_long;
 
---- Assign row_id_cohort_subject for each unique subject_id and cohort_start_date combination
---HINT DISTRIBUTE_ON_KEY(row_id_cohort_subject)
+--- Assign row_id_cs for each unique subject_id and cohort_start_date combination
+--HINT DISTRIBUTE_ON_KEY(row_id_cs)
 WITH cohort_data
 AS (
 	SELECT cohort_definition_id,
@@ -14,26 +14,25 @@ AS (
 		cohort_end_date
 	FROM @cohort_database_schema.@cohort_table
 	WHERE cohort_definition_id IN (
-			@target_cohort_ids,
-			@comparator_cohort_ids
+			@target_cohort_ids
 			)
 	),
 cohort_first_occurrence
 AS (
 	SELECT cohort_definition_id,
 		subject_id,
-		MIN(cohort_start_date) min_start,
-		MIN(cohort_end_date) min_end
+		MIN(cohort_start_date) cohort_start_date,
+		MIN(cohort_end_date) cohort_end_date
 	FROM cohort_data
 	GROUP BY cohort_definition_id,
 		subject_id
 	),
-row_id_cohort_subject
+row_id_cs
 AS (
 	SELECT ROW_NUMBER() OVER (
 			ORDER BY subject_id ASC,
-				cohort_date ASC
-			) row_id_cohort_subject,
+				cohort_start_date ASC
+			) row_id_cs,
 		cohort_definition_id,
 		subject_id,
 		cohort_start_date
@@ -44,7 +43,7 @@ AS (
 		FROM cohort_data
 		) c
 	)
-SELECT rowid.row_id_cohort_subject,
+SELECT rowid.row_id_cs,
 	cd.cohort_definition_id,
 	cd.subject_id,
 	cd.cohort_start_date,
@@ -56,7 +55,7 @@ SELECT rowid.row_id_cohort_subject,
 		END first_occurrence
 INTO #row_id_cohort_sub
 FROM cohort_data cd
-INNER JOIN row_id_cohort_subject rowid
+INNER JOIN row_id_cs rowid
 	ON cd.cohort_definition_id = rowid.cohort_definition_id
 		AND cd.subject_id = rowid.subject_id
 		AND cd.cohort_start_date = rowid.cohort_start_date
@@ -146,7 +145,7 @@ FROM (
 		COUNT_BIG(DISTINCT subject_id) value
 	FROM #row_id_cohort_sub
 	WHERE first_occurrence = 1
-	GROUP BY target_cohort_id,
+	GROUP BY cohort_definition_id,
 		CAST(CAST(DATEFROMPARTS(YEAR(cohort_start_date), CASE 
 						WHEN MONTH(cohort_start_date) > 0
 							AND MONTH(cohort_start_date) < 4
@@ -186,7 +185,7 @@ FROM (
 		'q' AS attribute_type, -- calendar quarter count (incidence) : quarterly
 		COUNT_BIG(DISTINCT subject_id) value
 	FROM #row_id_cohort_sub
-	GROUP BY target_cohort_id,
+	GROUP BY cohort_definition_id,
 		CAST(CAST(DATEFROMPARTS(YEAR(cohort_start_date), CASE 
 						WHEN MONTH(cohort_start_date) > 0
 							AND MONTH(cohort_start_date) < 4
@@ -212,14 +211,12 @@ FROM (
 		c1.cohort_definition_id comparator_cohort_id,
 		CAST(FLOOR(DATEDIFF(dd, t1.cohort_start_date, c1.cohort_start_date) / 30) AS VARCHAR(30)) attribute_name, -- date diff
 		'ri' attribute_type, -- relationship between cohorts, : relationship incidence
-		COUNT_BIG(DISTINCT c1.row_id_cohort_subject) value -- the distinct here will not make a difference because first occurrence of comparator
+		COUNT_BIG(DISTINCT c1.row_id_cs) value -- the distinct here will not make a difference because first occurrence of comparator
 		-- count of DISTINCT comparator cohort_start_date that meet the temporal criteria
 	FROM #row_id_cohort_sub t1
 	INNER JOIN #row_id_cohort_sub c1
 		ON t1.subject_id = c1.subject_id
 	WHERE t1.cohort_definition_id != c1.cohort_definition_id
-		AND t1.cohort_definition_id IN (@target_cohort_ids)
-		AND c1.cohort_definition_id IN (@comparator_cohort_ids)
 		AND c1.first_occurrence = 1 --- first occurrence of comparator
 	GROUP BY t1.cohort_definition_id,
 		c1.cohort_definition_id,
@@ -234,21 +231,16 @@ FROM (
 		c1.cohort_definition_id comparator_cohort_id,
 		CAST(FLOOR(DATEDIFF(dd, t1.cohort_start_date, c1.cohort_start_date) / 30) AS VARCHAR(30)) attribute_name, -- date diff
 		'r' attribute_type, -- relationship between cohorts, : relationship
-		COUNT_BIG(DISTINCT c1.row_id_cohort_subject) value -- the distinct here will lead to counting unique cohort_start_date for comparator
+		COUNT_BIG(DISTINCT c1.row_id_cs) value -- the distinct here will lead to counting unique cohort_start_date for comparator
 		-- count of DISTINCT comparator cohort_start_date that meet the temporal criteria
 	FROM #row_id_cohort_sub t1
 	INNER JOIN #row_id_cohort_sub c1
 		ON t1.subject_id = c1.subject_id
 	WHERE t1.cohort_definition_id != c1.cohort_definition_id
-		AND t1.cohort_definition_id IN (@target_cohort_ids)
-		AND c1.cohort_definition_id IN (@comparator_cohort_ids)
 	GROUP BY t1.cohort_definition_id,
 		c1.cohort_definition_id,
 		CAST(FLOOR(DATEDIFF(dd, t1.cohort_start_date, c1.cohort_start_date) / 30) AS VARCHAR(30))
 	) f;
 
-IF OBJECT_ID('tempdb..#row_id_cohort_subject', 'U') IS NOT NULL
+IF OBJECT_ID('tempdb..#row_id_cs', 'U') IS NOT NULL
 	DROP TABLE #row_id_cohort_sub;
-
-IF OBJECT_ID('tempdb..#cohort_rel_long', 'U') IS NOT NULL
-	DROP TABLE #cohort_rel_long;

@@ -9,8 +9,7 @@ computeCohortTemporalRelationship(
   connection = NULL,
   cohortDatabaseSchema,
   cohortTable = "cohort",
-  cohortIds,
-  batchSize = 200
+  cohortIds
 )
 }
 \arguments{
@@ -32,12 +31,8 @@ this should include both the database and schema name, for example
 \item{cohortTable}{Name of the cohort table.}
 
 \item{cohortIds}{A vector of one or more Cohort Ids.}
-
-\item{batchSize}{{Optional, default set to 200} If running diagnostics on larget set
-of cohorts, this function allows you to batch them into chunks that run 
-as a batch.}
 }
 \description{
-Given a set of cohorts, get temporal relationships between the 
+Given a set of cohorts, get temporal relationships between the
 cohort_start_date of the cohorts.
 }

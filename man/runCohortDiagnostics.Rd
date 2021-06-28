@@ -33,7 +33,7 @@ runCohortDiagnostics(
   runIncidenceRate = TRUE,
   runTimeSeries = TRUE,
   runCohortOverlap = TRUE,
-  runCohortRelationship = TRUE,
+  runCohortTemporalRelationship = TRUE,
   runCohortCharacterization = TRUE,
   covariateSettings = createDefaultCovariateSettings(),
   runTemporalCohortCharacterization = TRUE,
@@ -134,7 +134,7 @@ does not exist it will be created.}
 that have the same phenotype ID sourced from the CohortSetReference or
 cohortToCreateFile.}
 
-\item{runCohortRelationship}{Do you want to compute temporal relationship between the cohorts being diagnosed. This
+\item{runCohortTemporalRelationship}{Do you want to compute temporal relationship between the cohorts being diagnosed. This
 diagnostics is needed for cohort as feature characterization.}
 
 \item{runCohortCharacterization}{Generate and export the cohort characterization?

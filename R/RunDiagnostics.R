@@ -59,7 +59,7 @@
 #' @param runCohortOverlap            Generate and export the cohort overlap? Overlaps are checked within cohortIds
 #'                                    that have the same phenotype ID sourced from the CohortSetReference or
 #'                                    cohortToCreateFile.
-#' @param runCohortRelationship       Do you want to compute temporal relationship between the cohorts being diagnosed. This
+#' @param runCohortTemporalRelationship       Do you want to compute temporal relationship between the cohorts being diagnosed. This
 #'                                    diagnostics is needed for cohort as feature characterization.
 #' @param runCohortCharacterization   Generate and export the cohort characterization?
 #'                                    Only records with values greater than 0.0001 are returned.
@@ -104,7 +104,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  runIncidenceRate = TRUE,
                                  runTimeSeries = TRUE,
                                  runCohortOverlap = TRUE,
-                                 runCohortRelationship = TRUE,
+                                 runCohortTemporalRelationship = TRUE,
                                  runCohortCharacterization = TRUE,
                                  covariateSettings = createDefaultCovariateSettings(),
                                  runTemporalCohortCharacterization = TRUE,
@@ -181,7 +181,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     runIncidenceRate,
     runCohortOverlap,
     runTimeSeries,
-    runCohortRelationship,
+    runCohortTemporalRelationship,
     runCohortCharacterization
   )) {
     checkmate::assertCharacter(x = cdmDatabaseSchema,
@@ -524,7 +524,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                             " ",
                             attr(delta, "units"))
   }
-
+  
   # Concept set diagnostics----
   if (runIncludedSourceConcepts ||
       runOrphanConcepts || runBreakdownIndexEvents) {
@@ -943,8 +943,8 @@ runCohortDiagnostics <- function(packageName = NULL,
     if (incremental &&
         (length(instantiatedCohorts) - nrow(subset)) > 0) {
       ParallelLogger::logInfo(sprintf(
-        " - Skipping %s cohort combinations in incremental mode.",
-        nrow(combis) - nrow(subset)
+        " - Skipping %s cohorts in incremental mode.",
+        nrow(cohorts) - nrow(subset)
       ))
     }
     if (nrow(subset) > 0) {
@@ -994,8 +994,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         warning('No cohort overlap data')
       }
       recordTasksDone(
-        cohortId = subset$targetCohortId,
-        comparatorId = subset$comparatorCohortId,
+        cohortId = subset$cohortId,
         task = "runCohortOverlap",
         checksum = subset$checksum,
         recordKeepingFile = recordKeepingFile,
@@ -1008,7 +1007,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                             " ",
                             attr(delta, "units"))
   }
-  browser()
+  
   # Time Series----
   if (runTimeSeries) {
     ParallelLogger::logInfo("Computing Time Series")
@@ -1156,8 +1155,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         warning('No time series data')
       }
       recordTasksDone(
-        cohortId = subset$targetCohortId,
-        comparatorId = subset$comparatorCohortId,
+        cohortId = subset$cohortId,
         task = "runTimeSeries",
         checksum = subset$checksum,
         recordKeepingFile = recordKeepingFile,
@@ -1172,44 +1170,33 @@ runCohortDiagnostics <- function(packageName = NULL,
   }
   
   browser()
-  # Cohort Relationship ----
-  if (runCohortRelationship) {
-    ParallelLogger::logInfo("Computing Cohort Relationship")
+  # Cohort Temporal Relationship ----
+  if (runCohortTemporalRelationship) {
+    ParallelLogger::logInfo("Computing Cohort Temporal Relationship")
     startCohortRelationship <- Sys.time()
     
-    combis <- cohorts  %>%
-      dplyr::filter(.data$cohortId %in% instantiatedCohorts) %>%
-      dplyr::select(.data$cohortId) %>%
-      dplyr::distinct()
-    combis <- tidyr::crossing(combis %>% dplyr::rename("targetCohortId" = .data$cohortId),
-                              combis %>% dplyr::rename("comparatorCohortId" = .data$cohortId)) %>%
-      dplyr::filter(.data$targetCohortId != .data$comparatorCohortId) %>%
-      dplyr::select(.data$targetCohortId, .data$comparatorCohortId) %>%
-      dplyr::distinct()
-    
-    subset <- subsetToRequiredCombis(
-      combis = combis,
-      task = "runCohortRelationship",
+    subset <- subsetToRequiredCohorts(
+      cohorts = cohorts %>%
+        dplyr::filter(.data$cohortId %in% instantiatedCohorts),
+      task = "runCohortTemporalRelationship",
       incremental = incremental,
       recordKeepingFile = recordKeepingFile
     )
-    
     if (incremental &&
         (length(instantiatedCohorts) - nrow(subset)) > 0) {
       ParallelLogger::logInfo(sprintf(
-        " - Skipping %s cohorts in incremental mode.",
-        length(instantiatedCohorts) - nrow(subset)
+        " - Skipping %s cohort combinations in incremental mode.",
+        nrow(combis) - nrow(subset)
       ))
     }
     
     if (nrow(subset) > 0) {
       ParallelLogger::logTrace("Beginning Cohort Relationship SQL")
-      cohortOverlap <- computeCohortTemporalRelationship(
+      cohortTemporalRelationship <- computeCohortTemporalRelationship(
         connection = connection,
         cohortDatabaseSchema = cohortDatabaseSchema,
         cohortTable = cohortTable,
-        targetCohortIds = subset$targetCohortId,
-        comparatorCohortIds = subset$comparatorCohortId
+        cohortIds = subset$cohortId
       )
       cohortRelationships <- cohortRelationships %>% 
         dplyr::rename(countValue = .data$value) %>% 

@@ -19,83 +19,61 @@
 #' Given a set of cohorts get relationships between the cohorts.
 #'
 #' @description
-#' Given a set of cohorts, get temporal relationships between the 
+#' Given a set of cohorts, get temporal relationships between the
 #' cohort_start_date of the cohorts.
 #'
 #' @template Connection
-#' 
+#'
 #' @template CohortDatabaseSchema
 #'
 #' @template CohortTable
-#'                                    
+#'
 #' @template CohortIds
-#'                                    
-#' @param batchSize                   {Optional, default set to 200} If running diagnostics on larget set
-#'                                    of cohorts, this function allows you to batch them into chunks that run 
-#'                                    as a batch.
-#'                                    
+#'
 #' @export
-computeCohortTemporalRelationship <- function(connectionDetails = NULL,
-                                              connection = NULL,
-                                              cohortDatabaseSchema,
-                                              cohortTable = "cohort",
-                                              cohortIds,
-                                              batchSize = 200) {
-  startTime <- Sys.time()
-  
-  if (length(cohortIds) == 0) {
-    return(NULL)
-  }
-  
-  if (is.null(connection)) {
-    connection <- DatabaseConnector::connect(connectionDetails)
-    on.exit(DatabaseConnector::disconnect(connection))
-  }
-  
-  results <- Andromeda::andromeda()
-  for (start in seq(1, length(cohortIds), by = batchSize)) {
-    end <- min(start + batchSize - 1, length(cohortIds))
-    if (length(cohortIds) > batchSize) {
-      ParallelLogger::logInfo(sprintf(
-        "Batch Cohort Temporal Relationship Processing cohorts %s through %s",
-        start,
-        end
-      ))
+computeCohortTemporalRelationship <-
+  function(connectionDetails = NULL,
+           connection = NULL,
+           cohortDatabaseSchema,
+           cohortTable = "cohort",
+           cohortIds) {
+    startTime <- Sys.time()
+    
+    if (length(cohortIds) == 0) {
+      return(NULL)
     }
+    
+    if (is.null(connection)) {
+      connection <- DatabaseConnector::connect(connectionDetails)
+      on.exit(DatabaseConnector::disconnect(connection))
+    }
+    
     sql <- SqlRender::loadRenderTranslateSql(
       "CohortRelationship.sql",
       packageName = "CohortDiagnostics",
       dbms = connection@dbms,
       cohort_database_schema = cohortDatabaseSchema,
       cohort_table = cohortTable,
-      target_cohort_ids = cohortIds[[start:end]]
+      target_cohort_ids = cohortIds
     )
-    DatabaseConnector::executeSql(
-      connection = connection,
-      sql = sql
-    )
-    temporalRelationship <- renderTranslateQuerySql(connection = connection, 
-                                       sql = "SELECT * FROM #cohort_rel_long;", 
-                                       snakeCaseToCamelCase = TRUE)
+    DatabaseConnector::executeSql(connection = connection,
+                                  sql = sql)
+    temporalRelationship <-
+      renderTranslateQuerySql(
+        connection = connection,
+        sql = "SELECT * FROM #cohort_rel_long;",
+        snakeCaseToCamelCase = TRUE
+      )
     
-    DatabaseConnector::renderTranslateExecuteSql(
-      connection = connection,
-      sql = "IF OBJECT_ID('tempdb..#cohort_overlap_long', 'U') IS NOT NULL DROP TABLE #cohort_overlap_long;",
-      progressBar = TRUE
-    )
-    
-    if ("overlap" %in% names(results)) {
-      Andromeda::appendToTable(results$overlap, overlap)
-    } else {
-      results$overlap <- overlap
-    }
+    dropSql = "IF OBJECT_ID('tempdb..#cohort_rel_long', 'U') IS NOT NULL DROP TABLE #cohort_rel_long;"
+    DatabaseConnector::renderTranslateExecuteSql(connection = connection,
+                                                 sql = dropSql,
+                                                 progressBar = TRUE)
+    delta <- Sys.time() - startTime
+    ParallelLogger::logInfo(paste(
+      "Computing cohort temporal relationship took",
+      signif(delta, 3),
+      attr(delta, "units")
+    ))
+    return(temporalRelationship)
   }
-  overlapAll <- results$overlap %>% dplyr::collect()
-  delta <- Sys.time() - startTime
-  ParallelLogger::logInfo(paste(
-    "Computing overlap took",
-    signif(delta, 3),
-    attr(delta, "units")
-  ))
-  return(overlapAll)
-}
