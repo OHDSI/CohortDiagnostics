@@ -1185,7 +1185,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         (length(instantiatedCohorts) - nrow(subset)) > 0) {
       ParallelLogger::logInfo(sprintf(
         " - Skipping %s cohort combinations in incremental mode.",
-        nrow(combis) - nrow(subset)
+        nrow(cohorts) - nrow(subset)
       ))
     }
     
