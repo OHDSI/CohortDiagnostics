@@ -283,10 +283,10 @@ exportConceptInformation <- function(connection = NULL,
                                      conceptIdTable = "#concept_ids",
                                      vocabularyTableNames = c(
                                        "concept",
-                                       "conceptAncestor",
-                                       "conceptClass",
-                                       "conceptRelationship",
-                                       "conceptSynonym",
+                                       "concept_ancestor",
+                                       "concept_class",
+                                       "concept_relationship",
+                                       "concept_synonym",
                                        "domain",
                                        "relationship",
                                        "vocabulary"
@@ -296,8 +296,6 @@ exportConceptInformation <- function(connection = NULL,
     warning('No connection provided')
   }
   
-  vocabularyTableNames <-
-    tolower(SqlRender::camelCaseToSnakeCase(vocabularyTableNames))
   tablesInCdmDatabaseSchema <-
     tolower(DatabaseConnector::getTableNames(connection, cdmDatabaseSchema))
   vocabularyTablesInCdmDatabaseSchema <-
@@ -361,7 +359,7 @@ exportConceptInformation <- function(connection = NULL,
     } else if (vocabularyTable %in% c("domain",
                                       "relationship",
                                       "vocabulary",
-                                      "conceptClass")) {
+                                      "concept_class")) {
       sql <- "SELECT * FROM @cdm_database_schema.@table;"
       data <-
         renderTranslateQuerySql(
@@ -943,17 +941,30 @@ runConceptSetDiagnostics <- function(connection = NULL,
     )
   }
   
+  if (is.null(exportedVocablary)) {
+    exportedVocablary <- list()
+  }
+  if (!is.null(resolvedConceptIds)) {
+    exportedVocablary$resolvedConceptIds = resolvedConceptIds
+  }
+  if (!is.null(includedSourceCodes)) {
+    exportedVocablary$includedSourceCodes = includedSourceCodes
+  }
+  if (!is.null(indexEventBreakdown)) {
+    exportedVocablary$indexEventBreakdown = indexEventBreakdown
+  }
+  if (!is.null(orphanCodes)) {
+    exportedVocablary$orphanCodes = orphanCodes
+  }
+  if (!is.null(conceptSets)) {
+    exportedVocablary$conceptSets = conceptSets
+  }
+  
   delta <- Sys.time() - startConceptSetDiagnostics
   ParallelLogger::logInfo("Running concept set diagnostics took ",
                           signif(delta, 3),
                           " ",
                           attr(delta, "units"))
-  if (is.null(exportedVocablary)) {
-    exportedVocablary <- list()
-  }
-  exportedVocablary$resolvedConceptIds = resolvedConceptIds
-  exportedVocablary$includedSourceCodes = includedSourceCodes
-  exportedVocablary$indexEventBreakdown = indexEventBreakdown
-  exportedVocablary$orphanCodes = orphanCodes
+  
   return(exportedVocablary)
 }

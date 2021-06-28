@@ -575,119 +575,159 @@ runCohortDiagnostics <- function(packageName = NULL,
       runOrphanConcepts = runOrphanConcepts,
       runBreakdownIndexEvents = runBreakdownIndexEvents
     )
-    browser()
-    
     # write vocabulary tables
     vocabularyTableNames = c(
       "concept",
-      "conceptAncestor",
-      "conceptClass",
-      "conceptRelationship",
-      "conceptSynonym",
+      "concept_ancestor",
+      "concept_class",
+      "concept_relationship",
+      "concept_synonym",
       "domain",
       "relationship",
       "vocabulary"
     )
+
     for (i in (1:length(vocabularyTableNames))) {
       if (vocabularyTableNames[[i]] %in% names(conceptSetDiagnostics)) {
-        writeToCsv(
-          data = conceptSetDiagnostics[[vocabularyTableNames[[i]]]],
-          fileName = file.path(exportFolder, paste(vocabularyTableNames[[i]], "csv", sep = ".")),
-          incremental = incremental
-        )
+        ParallelLogger::logInfo(paste0("- Writing extracted vocabulary data to file - ", vocabularyTableNames[[i]]), ".csv")
+        if (vocabularyTableNames[[i]] %in% c("domain",
+                                             "relationship",
+                                             "vocabulary",
+                                             "concept_class")) {
+          writeToCsv(
+            data = conceptSetDiagnostics[[vocabularyTableNames[[i]]]],
+            fileName = file.path(
+              exportFolder,
+              paste(vocabularyTableNames[[i]], "csv", sep = ".")
+            ),
+            incremental = FALSE
+          )
+        } else {
+          writeToCsv(
+            data = conceptSetDiagnostics[[vocabularyTableNames[[i]]]],
+            fileName = file.path(
+              exportFolder,
+              paste(vocabularyTableNames[[i]], "csv", sep = ".")
+            ),
+            incremental = incremental
+          )
+        }
         conceptSetDiagnostics[[vocabularyTableNames[[i]]]] <- NULL
       }
     }
-    browser()
+
+    if ('conceptSets' %in% names(conceptSetDiagnostics)) {
+      ParallelLogger::logInfo("- Writing concept_sets.csv")
+      writeToCsv(
+        data = conceptSetDiagnostics$conceptSets,
+        fileName = file.path(exportFolder, "concept_sets.csv"),
+        incremental = incremental,
+        cohortId = conceptSetDiagnostics$conceptSets$cohortId
+      )
+      conceptSetDiagnostics$conceptSets <- NULL
+    }
     
+    if ('resolvedConceptIds' %in% names(conceptSetDiagnostics)) {
+      ParallelLogger::logInfo("- Writing resolved_concepts.csv")
+      writeToCsv(
+        data = conceptSetDiagnostics$resolvedConceptIds %>% 
+          dplyr::mutate(databaseId = !!databaseId),
+        fileName = file.path(exportFolder, "resolved_concepts.csv"),
+        incremental = incremental,
+        cohortId = conceptSetDiagnostics$resolvedConceptIds$cohortId
+      )
+      conceptSetDiagnostics$resolvedConceptIds <- NULL
+    }
     
-    # writeToCsv(
-    #   data = conceptSets %>%
-    #     dplyr::select(-.data$uniqueConceptSetId),
-    #   fileName = file.path(exportFolder, "concept_sets.csv"),
-    #   incremental = incremental,
-    #   cohortId = conceptSets$cohortId
-    # )
-    # 
-    # 
-    # 
-    # if (nrow(counts) > 0) {
-    #   counts$databaseId <- databaseId
-    #   counts <-
-    #     enforceMinCellValue(counts, "conceptSubjects", minCellCount)
-    #   counts <-
-    #     enforceMinCellValue(counts, "conceptCount", minCellCount)
-    # }
-    # 
-    # writeToCsv(
-    #   counts,
-    #   file.path(exportFolder, "included_source_concept.csv"),
-    #   incremental = incremental,
-    #   cohortId = subsetIncluded$cohortId
-    # )
-    # recordTasksDone(
-    #   cohortId = subsetIncluded$cohortId,
-    #   task = "runIncludedSourceConcepts",
-    #   checksum = subsetIncluded$checksum,
-    #   recordKeepingFile = recordKeepingFile,
-    #   incremental = incremental
-    # )
-    # 
-    # 
-    # 
-    # if (nrow(data) > 0) {
-    #   data <- data %>%
-    #     dplyr::mutate(databaseId = !!databaseId)
-    #   data <-
-    #     enforceMinCellValue(data, "conceptCount", minCellCount)
-    #   if ('subjectCount' %in% colnames(data)) {
-    #     data <-
-    #       enforceMinCellValue(data, "subjectCount", minCellCount)
-    #   }
-    # }
-    # writeToCsv(
-    #   data = data,
-    #   fileName = file.path(exportFolder, "index_event_breakdown.csv"),
-    #   incremental = incremental,
-    #   cohortId = subset$cohortId
-    # )
-    # recordTasksDone(
-    #   cohortId = subset$cohortId,
-    #   task = "runBreakdownIndexEvents",
-    #   checksum = subset$checksum,
-    #   recordKeepingFile = recordKeepingFile,
-    #   incremental = incremental
-    # )
-    # 
-    # 
-    # 
-    # if (nrow(data) > 0) {
-    #   data <- enforceMinCellValue(data, "conceptCount", minCellCount)
-    #   data <-
-    #     enforceMinCellValue(data, "conceptSubjects", minCellCount)
-    # }
-    # writeToCsv(
-    #   data,
-    #   file.path(exportFolder, "orphan_concept.csv"),
-    #   incremental = incremental,
-    #   cohortId = subsetOrphans$cohortId
-    # )
-    # recordTasksDone(
-    #   cohortId = subsetOrphans$cohortId,
-    #   task = "runOrphanConcepts",
-    #   checksum = subsetOrphans$checksum,
-    #   recordKeepingFile = recordKeepingFile,
-    #   incremental = incremental
-    # )
-    # 
-    # 
-    # 
-    # 
-    # writeToCsv(
-    #   resolvedConceptIds,
-    #   file.path(exportFolder, "resolved_concepts.csv"),
-    #   incremental = TRUE
-    # )
+    if ('includedSourceCodes' %in% names(conceptSetDiagnostics) &&
+        runIncludedSourceConcepts) {
+      ParallelLogger::logInfo("- Writing included_source_concept.csv")
+      if (nrow(conceptSetDiagnostics$includedSourceCodes) > 0) {
+        conceptSetDiagnostics$includedSourceCodes$databaseId <- databaseId
+        conceptSetDiagnostics$includedSourceCodes <-
+          enforceMinCellValue(conceptSetDiagnostics$includedSourceCodes,
+                              "conceptSubjects",
+                              minCellCount)
+        conceptSetDiagnostics$includedSourceCodes <-
+          enforceMinCellValue(conceptSetDiagnostics$includedSourceCodes,
+                              "conceptCount",
+                              minCellCount)
+        writeToCsv(
+          data = conceptSetDiagnostics$includedSourceCodes,
+          fileName = file.path(exportFolder, "included_source_concept.csv"),
+          incremental = incremental,
+          cohortId = conceptSetDiagnostics$includedSourceCodes$cohortId
+        )
+      }
+      recordTasksDone(
+        cohortId = subset$cohortId,
+        task = "runIncludedSourceConcepts",
+        checksum = subset$checksum,
+        recordKeepingFile = recordKeepingFile,
+        incremental = incremental
+      )
+      conceptSetDiagnostics$includedSourceCodes <- NULL
+    }
+    
+    if ('indexEventBreakdown' %in% names(conceptSetDiagnostics) &&
+        runBreakdownIndexEvents) {
+      ParallelLogger::logInfo("- Writing index_event_breakdown.csv")
+      if (nrow(conceptSetDiagnostics$indexEventBreakdown) > 0) {
+        conceptSetDiagnostics$indexEventBreakdown$databaseId <- databaseId
+        conceptSetDiagnostics$indexEventBreakdown <-
+          enforceMinCellValue(conceptSetDiagnostics$indexEventBreakdown,
+                              "subjectCount",
+                              minCellCount)
+        conceptSetDiagnostics$indexEventBreakdown <-
+          enforceMinCellValue(conceptSetDiagnostics$indexEventBreakdown,
+                              "conceptCount",
+                              minCellCount)
+        writeToCsv(
+          data = conceptSetDiagnostics$indexEventBreakdown,
+          fileName = file.path(exportFolder, "index_event_breakdown.csv"),
+          incremental = incremental,
+          cohortId = conceptSetDiagnostics$includedSourceCodes$cohortId
+        )
+      }
+      recordTasksDone(
+        cohortId = subset$cohortId,
+        task = "runIncludedSourceConcepts",
+        checksum = subset$checksum,
+        recordKeepingFile = recordKeepingFile,
+        incremental = incremental
+      )
+      conceptSetDiagnostics$indexEventBreakdown <- NULL
+    }
+    
+    if ('orphanCodes' %in% names(conceptSetDiagnostics) &&
+        runOrphanConcepts) {
+      ParallelLogger::logInfo("- Writing orphan_concept.csv")
+      if (nrow(conceptSetDiagnostics$orphanCodes) > 0) {
+        conceptSetDiagnostics$orphanCodes$databaseId <- databaseId
+        conceptSetDiagnostics$orphanCodes <-
+          enforceMinCellValue(conceptSetDiagnostics$orphanCodes,
+                              "conceptSubjects",
+                              minCellCount)
+        conceptSetDiagnostics$orphanCodes <-
+          enforceMinCellValue(conceptSetDiagnostics$orphanCodes,
+                              "conceptCount",
+                              minCellCount)
+        writeToCsv(
+          data = conceptSetDiagnostics$orphanCodes,
+          fileName = file.path(exportFolder, "orphan_concept.csv"),
+          incremental = incremental,
+          cohortId = conceptSetDiagnostics$orphanCodes$cohortId %>% unique()
+        )
+      }
+      recordTasksDone(
+        cohortId = subset$cohortId,
+        task = "runOrphanConcepts",
+        checksum = subset$checksum,
+        recordKeepingFile = recordKeepingFile,
+        incremental = incremental
+      )
+      conceptSetDiagnostics$orphanCodes <- NULL
+    }
   }
   
   # Time distributions----
@@ -863,7 +903,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                             attr(delta, "units"))
   }
   
-  
+  browser()
   # Cohort overlap----
   if (runCohortOverlap) {
     ParallelLogger::logInfo("Computing cohort overlap")
