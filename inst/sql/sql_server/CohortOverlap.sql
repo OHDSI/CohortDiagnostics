@@ -144,7 +144,6 @@ GROUP BY all1.target_cohort_id,
 SELECT cohort_id,
 	comparator_cohort_id,
 	attribute_name,
-	attribute_type,
 	value_count
 INTO #cohort_overlap_long
 FROM (

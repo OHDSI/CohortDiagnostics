@@ -46,13 +46,17 @@ computeCohortOverlap <- function(connectionDetails = NULL,
                                  comparatorCohortIds,
                                  batchSize = 200) {
   startTime <- Sys.time()
+  cohortIds <- c(targetCohortIds, comparatorCohortIds) %>% unique() %>% sort()
   
+  if (length(cohortIds) == 0) {
+    return(NULL)
+  }
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
   
-  cohortIds <- c(targetCohortIds, comparatorCohortIds) %>% unique() %>% sort()
+  
   
   results <- Andromeda::andromeda()
   for (start in seq(1, length(cohortIds), by = batchSize)) {

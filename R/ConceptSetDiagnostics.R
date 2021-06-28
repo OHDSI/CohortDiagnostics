@@ -516,7 +516,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
                                      runBreakdownIndexEvents) {
   ParallelLogger::logInfo("Starting concept set diagnostics")
   startConceptSetDiagnostics <- Sys.time()
-  
+  if (length(cohortIds) == 0) {return(NULL)}
   # Set up connection to server----
   if (is.null(connection)) {
     if (!is.null(connectionDetails)) {
