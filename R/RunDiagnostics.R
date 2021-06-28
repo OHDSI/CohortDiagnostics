@@ -1169,7 +1169,6 @@ runCohortDiagnostics <- function(packageName = NULL,
                             attr(delta, "units"))
   }
   
-  browser()
   # Cohort Temporal Relationship ----
   if (runCohortTemporalRelationship) {
     ParallelLogger::logInfo("Computing Cohort Temporal Relationship")
@@ -1198,7 +1197,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         cohortTable = cohortTable,
         cohortIds = subset$cohortId
       )
-      cohortRelationships <- cohortRelationships %>% 
+      cohortTemporalRelationship <- cohortTemporalRelationship %>% 
         dplyr::rename(countValue = .data$value) %>% 
         dplyr::mutate(startDay = as.numeric(.data$attributeName)*30) %>% 
         dplyr::mutate(endDay = (as.numeric(.data$attributeName)*30) + 29)  %>%
@@ -1206,30 +1205,35 @@ runCohortDiagnostics <- function(packageName = NULL,
         dplyr::select(.data$databaseId,
                       .data$cohortId, 
                       .data$comparatorCohortId,
+                      .data$relationshipType,
                       .data$startDay,
                       .data$endDay,
                       .data$countValue) %>% 
         dplyr::arrange(.data$cohortId, 
                        .data$comparatorCohortId,
+                       .data$relationshipType,
                        .data$startDay,
                        .data$endDay,
                        .data$countValue)
-    }
-    if (nrow(cohortRelationships) > 0) {
-      writeToCsv(
-        data = cohortRelationships,
-        fileName = file.path(exportFolder, "cohort_relationships.csv"),
-        incremental = incremental,
-        cohortId = subset$targetCohortId,
-        comparatorCohortId = subset$comparatorCohortId
+      
+      if (nrow(cohortTemporalRelationship) > 0) {
+        writeToCsv(
+          data = cohortTemporalRelationship,
+          fileName = file.path(exportFolder, "cohort_relationships.csv"),
+          incremental = incremental,
+          cohortId = subset$cohortId
+        )
+      } else {
+        warning('No cohort relationship data')
+      }
+      recordTasksDone(
+        cohortId = subset$cohortId,
+        task = "runCohortTemporalRelationship",
+        checksum = subset$checksum,
+        recordKeepingFile = recordKeepingFile,
+        incremental = incremental
       )
-    } else {
-      warning('No cohort relationship data')
     }
-    
-    
-    
-    
     delta <- Sys.time() - startCohortRelationship
     ParallelLogger::logInfo("Computing cohort relationships took ",
                             signif(delta, 3),

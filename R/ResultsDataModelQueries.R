@@ -1024,6 +1024,9 @@ getCohortAsFeatureCharacterizationResults <-
                                         cohortIds = cohortIds,
                                         databaseIds = databaseIds)
     
+    cohortRelationships <- cohortRelationships %>% 
+      dplyr::filter(.data$relationshipType == 'a')
+    
     if (is.null(cohortRelationships)) {
       return(NULL)
     }
