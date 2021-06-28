@@ -623,14 +623,13 @@ runCohortDiagnostics <- function(packageName = NULL,
           conceptSetDiagnostics[[vocabularyTableNames[[i]]]] <- NULL
         }
       }
-      browser()
       if ('conceptSets' %in% names(conceptSetDiagnostics)) {
         ParallelLogger::logInfo("- Writing concept_sets.csv")
         writeToCsv(
           data = conceptSetDiagnostics$conceptSets %>% 
-            dplyr::select(.data$cohort_id, .data$concept_set_expression, 
-                          .data$concept_set_id, .data$concept_set_name, 
-                          .data$concept_set_sql) %>% 
+            dplyr::select(.data$cohortId, .data$conceptSetExpression, 
+                          .data$conceptSetId, .data$conceptSetName, 
+                          .data$conceptSetSql) %>% 
             dplyr::distinct(),
           fileName = file.path(exportFolder, "concept_sets.csv"),
           incremental = incremental,
