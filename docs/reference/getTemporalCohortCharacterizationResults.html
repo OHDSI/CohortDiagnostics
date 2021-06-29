@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Returns data from time_series table of Cohort Diagnostics results data model — getResultsFromTimeSeries • CohortDiagnostics</title>
+<title>Returns temporal cohort characterization output of feature extraction — getTemporalCohortCharacterizationResults • CohortDiagnostics</title>
 
 
 <!-- jquery -->
@@ -39,11 +39,9 @@
 
 
 
-<meta property="og:title" content="Returns data from time_series table of Cohort Diagnostics results data model — getResultsFromTimeSeries" />
-<meta property="og:description" content="Returns data from time_series table of Cohort Diagnostics results data model.
-The returned object is a tsibble, but to use in time series analysis, gaps
-need to be filled. Only absolute values are returned i.e. negative values are
-converted to positives." />
+<meta property="og:title" content="Returns temporal cohort characterization output of feature extraction — getTemporalCohortCharacterizationResults" />
+<meta property="og:description" content="Returns a list object with temporalCovariateValue, temporalCovariateValueDist,
+temporalCovariateRef, temporalAnalysisRef, temporalRef output of feature extraction." />
 
 
 
@@ -144,19 +142,21 @@ converted to positives." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Returns data from time_series table of Cohort Diagnostics results data model</h1>
+    <h1>Returns temporal cohort characterization output of feature extraction</h1>
     <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/ResultsDataModelQueries.R'><code>R/ResultsDataModelQueries.R</code></a></small>
-    <div class="hidden name"><code>getResultsFromTimeSeries.Rd</code></div>
+    <div class="hidden name"><code>getTemporalCohortCharacterizationResults.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Returns data from time_series table of Cohort Diagnostics results data model.
-The returned object is a tsibble, but to use in time series analysis, gaps
-need to be filled. Only absolute values are returned i.e. negative values are
-converted to positives.</p>
+    <p>Returns a list object with temporalCovariateValue, temporalCovariateValueDist,
+temporalCovariateRef, temporalAnalysisRef, temporalRef output of feature extraction.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>getResultsFromTimeSeries</span><span class='op'>(</span><span class='va'>dataSource</span>, cohortIds <span class='op'>=</span> <span class='cn'>NULL</span>, databaseIds <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>getTemporalCohortCharacterizationResults</span><span class='op'>(</span>
+  dataSource <span class='op'>=</span> <span class='va'>.GlobalEnv</span>,
+  cohortIds <span class='op'>=</span> <span class='cn'>NULL</span>,
+  databaseIds <span class='op'>=</span> <span class='cn'>NULL</span>
+<span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -184,11 +184,8 @@ of the results data model.</p></td>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Returns a list of tsibble (time series) objects with results that conform to time series
-table in Cohort Diagnostics results data model. There are three list objects, labelled
-m for monthly, q for quarterly and y for yearly. The periodBegin variable is in the
-format of tsibble::yearmonth for monthly, tsibble::yearquarter for quarter and integer
-for year.</p>
+    <p>Returns a list object with temporalCovariateValue, temporalCovariateValueDist,
+temporalCovariateRef, temporalAnalysisRef, temporalRef output of feature extraction.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

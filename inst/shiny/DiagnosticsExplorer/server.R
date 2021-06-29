@@ -3001,7 +3001,13 @@ shiny::shinyServer(function(input, output, session) {
     # for backward compatibility with cohort diagnostics version 2.1
     if (!'seriesType' %in% colnames(data)) {
       data <- data %>% 
-        dplyr::mutate(seriesType = 'T1')
+        dplyr::tibble() %>% 
+        dplyr::filter(.data$cohortId > 0) %>%
+        dplyr::mutate(seriesType = 'T1') %>% 
+        tsibble::as_tsibble(
+          key = c(.data$databaseId, .data$cohortId, .data$seriesType),
+          index = .data$periodBegin
+        )
     }
     
     ## filter -- to be replaced by filter in shiny UI
@@ -4500,6 +4506,9 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::mutate(covariateName = dplyr::case_when(stringr::str_detect(string = tolower(.data$covariateNameFull), 
                                                                          pattern = 'age group|gender') ~ .data$covariateNameFull,
                                                      TRUE ~ gsub(".*: ","",.data$covariateNameFull))) %>% 
+      dplyr::mutate(covariateName = dplyr::case_when(stringr::str_detect(string = tolower(.data$domainId), 
+                                                                         pattern = 'cohort') ~ .data$covariateNameFull,
+                                                     TRUE ~ .data$covariateName)) %>%
       dplyr::mutate(covariateName = paste0(.data$covariateName, " (", .data$covariateId, ")"))
     return(data)
   })

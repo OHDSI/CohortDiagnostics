@@ -189,6 +189,7 @@ Alternatively, a covariate setting object may be created using the above as an e
   runIncidenceRate <span class='op'>=</span> <span class='cn'>TRUE</span>,
   runTimeSeries <span class='op'>=</span> <span class='cn'>TRUE</span>,
   runCohortOverlap <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  runCohortTemporalRelationship <span class='op'>=</span> <span class='cn'>TRUE</span>,
   runCohortCharacterization <span class='op'>=</span> <span class='cn'>TRUE</span>,
   covariateSettings <span class='op'>=</span> <span class='fu'>createDefaultCovariateSettings</span><span class='op'>(</span><span class='op'>)</span>,
   runTemporalCohortCharacterization <span class='op'>=</span> <span class='cn'>TRUE</span>,
@@ -346,6 +347,11 @@ does not exist it will be created.</p></td>
       <td><p>Generate and export the cohort overlap? Overlaps are checked within cohortIds
 that have the same phenotype ID sourced from the CohortSetReference or
 cohortToCreateFile.</p></td>
+    </tr>
+    <tr>
+      <th>runCohortTemporalRelationship</th>
+      <td><p>Do you want to compute temporal relationship between the cohorts being diagnosed. This
+diagnostics is needed for cohort as feature characterization.</p></td>
     </tr>
     <tr>
       <th>runCohortCharacterization</th>

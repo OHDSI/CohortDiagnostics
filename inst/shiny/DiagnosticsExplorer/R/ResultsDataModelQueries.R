@@ -1024,6 +1024,9 @@ getCohortAsFeatureCharacterizationResults <-
                                         cohortIds = cohortIds,
                                         databaseIds = databaseIds)
     
+    cohortRelationships <- cohortRelationships %>% 
+      dplyr::filter(.data$relationshipType == 'a')
+    
     if (is.null(cohortRelationships)) {
       return(NULL)
     }
@@ -1053,7 +1056,7 @@ getCohortAsFeatureCharacterizationResults <-
         dplyr::ungroup()
       
       if (nrow(cohortCounts) > 0) {
-        cohortCount <- cohortCounts %>%
+        cohortCounts <- cohortCounts %>%
           dplyr::select(.data$cohortId,
                         .data$databaseId,
                         .data$cohortSubjects)
@@ -1139,7 +1142,7 @@ getCohortAsFeatureCharacterizationResults <-
                                     analysisRef %>% 
                                       dplyr::select(.data$analysisId, 
                                                     .data$description)) %>% 
-      dplyr::mutate(covariateName = paste0(.data$description, covariateName)) %>% 
+      dplyr::mutate(covariateName = paste0(.data$description, .data$covariateName)) %>% 
       dplyr::mutate(covariateId = (.data$covariateId*-1000)+.data$analysisId) %>% 
       dplyr::select(-.data$description) %>% 
       dplyr::arrange(.data$covariateId) %>% 

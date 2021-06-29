@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Given two sets of cohorts get overlap between the cohorts. — computeCohortOverlap • CohortDiagnostics</title>
+<title>Run concept set diagnostics — runConceptSetDiagnostics • CohortDiagnostics</title>
 
 
 <!-- jquery -->
@@ -39,9 +39,9 @@
 
 
 
-<meta property="og:title" content="Given two sets of cohorts get overlap between the cohorts. — computeCohortOverlap" />
-<meta property="og:description" content="Given two sets of cohorts, get data on overlap between the cohorts.
-Note: only the first occurrence of subject_id in the cohort is used." />
+<meta property="og:title" content="Run concept set diagnostics — runConceptSetDiagnostics" />
+<meta property="og:description" content="Runs concept set diagnostics on a set of cohorts. For index event breakdown, 
+the cohorts need to be instantiated." />
 
 
 
@@ -142,28 +142,42 @@ Note: only the first occurrence of subject_id in the cohort is used." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Given two sets of cohorts get overlap between the cohorts.</h1>
-    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/CohortOverlapDiagnostics.R'><code>R/CohortOverlapDiagnostics.R</code></a></small>
-    <div class="hidden name"><code>computeCohortOverlap.Rd</code></div>
+    <h1>Run concept set diagnostics</h1>
+    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/ConceptSetDiagnostics.R'><code>R/ConceptSetDiagnostics.R</code></a></small>
+    <div class="hidden name"><code>runConceptSetDiagnostics.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Given two sets of cohorts, get data on overlap between the cohorts.
-Note: only the first occurrence of subject_id in the cohort is used.</p>
+    <p>Runs concept set diagnostics on a set of cohorts. For index event breakdown, 
+the cohorts need to be instantiated.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>computeCohortOverlap</span><span class='op'>(</span>
-  connectionDetails <span class='op'>=</span> <span class='cn'>NULL</span>,
+    <pre class="usage"><span class='fu'>runConceptSetDiagnostics</span><span class='op'>(</span>
   connection <span class='op'>=</span> <span class='cn'>NULL</span>,
-  <span class='va'>cohortDatabaseSchema</span>,
-  cohortTable <span class='op'>=</span> <span class='st'>"cohort"</span>,
-  <span class='va'>cohortIds</span>,
-  batchSize <span class='op'>=</span> <span class='fl'>50</span>
+  connectionDetails <span class='op'>=</span> <span class='cn'>NULL</span>,
+  tempEmulationSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>cdmDatabaseSchema</span>,
+  vocabularyDatabaseSchema <span class='op'>=</span> <span class='va'>cdmDatabaseSchema</span>,
+  <span class='va'>cohorts</span>,
+  cohortIds <span class='op'>=</span> <span class='cn'>NULL</span>,
+  cohortDatabaseSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
+  cohortTable <span class='op'>=</span> <span class='cn'>NULL</span>,
+  <span class='va'>runIncludedSourceConcepts</span>,
+  <span class='va'>runOrphanConcepts</span>,
+  <span class='va'>runBreakdownIndexEvents</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
+    <tr>
+      <th>connection</th>
+      <td><p>An object of type <code>connection</code> as created using the
+<code><a href='https://ohdsi.github.io/DatabaseConnector/reference/connect.html'>connect</a></code> function in the
+DatabaseConnector package. Can be left NULL if <code>connectionDetails</code>
+is provided, in which case a new connection will be opened at the start
+of the function, and closed when the function finishes.</p></td>
+    </tr>
     <tr>
       <th>connectionDetails</th>
       <td><p>An object of type <code>connectionDetails</code> as created using the
@@ -172,12 +186,31 @@ DatabaseConnector package. Can be left NULL if <code>connection</code> is
 provided.</p></td>
     </tr>
     <tr>
-      <th>connection</th>
-      <td><p>An object of type <code>connection</code> as created using the
-<code><a href='https://ohdsi.github.io/DatabaseConnector/reference/connect.html'>connect</a></code> function in the
-DatabaseConnector package. Can be left NULL if <code>connectionDetails</code>
-is provided, in which case a new connection will be opened at the start
-of the function, and closed when the function finishes.</p></td>
+      <th>tempEmulationSchema</th>
+      <td><p>Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
+tables, provide a schema with write privileges where temp tables can be created.</p></td>
+    </tr>
+    <tr>
+      <th>cdmDatabaseSchema</th>
+      <td><p>Schema name where your patient-level data in OMOP CDM format resides.
+Note that for SQL Server, this should include both the database and
+schema name, for example 'cdm_data.dbo'.</p></td>
+    </tr>
+    <tr>
+      <th>vocabularyDatabaseSchema</th>
+      <td><p>Schema name where your OMOP vocabulary data resides. This is 
+commonly the same as cdmDatabaseSchema. Note that for 
+SQL Server, this should include both the database and
+schema name, for example 'vocabulary.dbo'.</p></td>
+    </tr>
+    <tr>
+      <th>cohorts</th>
+      <td><p>A dataframe object with required fields cohortId, sql, json, cohortName</p></td>
+    </tr>
+    <tr>
+      <th>cohortIds</th>
+      <td><p>Optionally, provide a subset of cohort IDs to restrict the
+diagnostics to.</p></td>
     </tr>
     <tr>
       <th>cohortDatabaseSchema</th>
@@ -190,16 +223,65 @@ this should include both the database and schema name, for example
       <td><p>Name of the cohort table.</p></td>
     </tr>
     <tr>
-      <th>cohortIds</th>
-      <td><p>A vector of one or more Cohort Ids.</p></td>
+      <th>runIncludedSourceConcepts</th>
+      <td><p>Generate and export the source concepts included in the cohorts?</p></td>
     </tr>
     <tr>
-      <th>batchSize</th>
-      <td><p>Optional, default set to 50 If running diagnostics on large set
-of cohorts, this function allows you to batch them into chunks that
-by default run over 50 target cohorts (and all comparator cohorts).</p></td>
+      <th>runOrphanConcepts</th>
+      <td><p>Generate and export potential orphan concepts?</p></td>
+    </tr>
+    <tr>
+      <th>runBreakdownIndexEvents</th>
+      <td><p>Generate and export the breakdown of index events? This is executed on 
+instantiated cohorts only.</p></td>
+    </tr>
+    <tr>
+      <th>packageName</th>
+      <td><p>The name of the package containing the cohort definitions. Can be left NULL if 
+<code>baseUrl</code> and <code>cohortSetReference</code> have been specified.</p></td>
+    </tr>
+    <tr>
+      <th>cohortToCreateFile</th>
+      <td><p>The location of the cohortToCreate file within the package. Is ignored if 
+<code>baseUrl</code> and <code>cohortSetReference</code> have been specified. The
+cohortToCreateFile must be .csv file that is expected to be read into 
+a dataframe object identical to requirements for <code>cohortSetReference</code> argument. 
+This csv file is expected to be encoded in either ASCII or UTF-8, if not, an 
+error message will be displayed and process stopped.</p></td>
+    </tr>
+    <tr>
+      <th>baseUrl</th>
+      <td><p>The base URL for the WebApi instance, for example:
+"http://server.org:80/WebAPI". Can be left NULL if 
+<code>packageName</code> and <code>cohortToCreateFile</code> have been specified.</p></td>
+    </tr>
+    <tr>
+      <th>cohortSetReference</th>
+      <td><p>A data frame with four columns, as described in the details. Can be left NULL if 
+<code>packageName</code> and <code>cohortToCreateFile</code> have been specified.</p></td>
     </tr>
     </table>
+
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>Currently two ways of executing this function are supported, either 
+(1) [Package Mode] embedded in a study package, assuming the cohort definitions are stored in that package using the <code><a href='https://ohdsi.github.io/ROhdsiWebApi/reference/insertCohortDefinitionSetInPackage.html'>ROhdsiWebApi::insertCohortDefinitionSetInPackage</a></code>, or 
+(2) [WebApi Mode] By using a WebApi interface to retrieve the cohort definitions.</p>
+<p>When using this function in Package Mode: Use the <code>packageName</code> and <code>cohortToCreateFile</code> to specify
+the name of the study package, and the name of the cohortToCreate file within that package, respectively</p>
+<p>When using this function in WebApi Mode: use the <code>baseUrl</code> and <code>cohortSetReference</code> to specify how to 
+connect to the WebApi, and which cohorts to fetch, respectively.</p>
+<p>Note: if the parameters for both Package Mode and WebApi Mode are provided, then Package mode is preferred.</p>
+<p>The <code>cohortSetReference</code> argument must be a data frame with  the following columns:</p><dl>
+<dt>referentConceptId</dt><dd><p>A standard omop concept id that serves as the referent phenotype definition for the cohort Id.</p></dd>
+<dt>cohortId</dt><dd><p>The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names. It is recommended to be (referentConceptId * 1000) + a number between 3 to 999</p></dd>
+<dt>webApiCohortId</dt><dd><p>Cohort Id in the webApi/atlas instance. It is a required field to run Cohort Diagnostics in WebApi mode. It is discarded in package mode.</p></dd>
+<dt>cohortName</dt><dd><p>The full name of the cohort. This will be shown in the Shiny app.</p></dd>
+<dt>logicDescription</dt><dd><p>A human understandable brief description of the cohort definition. This logic does not have to a 
+fully specified description of the cohort definition, but should provide enough context to help user understand the
+meaning of the cohort definition</p></dd>
+
+</dl>
 
 
   </div>

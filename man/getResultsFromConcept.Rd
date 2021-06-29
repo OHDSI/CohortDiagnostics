@@ -7,7 +7,7 @@
 getResultsFromConcept(
   dataSource = .GlobalEnv,
   vocabularyDatabaseSchema = NULL,
-  conceptIds
+  conceptIds = NULL
 )
 }
 \arguments{
