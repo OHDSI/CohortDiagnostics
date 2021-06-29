@@ -66,7 +66,7 @@ SELECT cohort_id,
 	comparator_cohort_id,
 	attribute_name,
 	relationship_type,
-	value
+	count_value
 INTO #cohort_rel_long
 FROM (
 	-- first start occurrence of comparator relative to target
@@ -77,7 +77,7 @@ FROM (
 		c1.cohort_definition_id comparator_cohort_id,
 		CAST(FLOOR(DATEDIFF(dd, t1.cohort_start_date, c1.cohort_start_date) / 30) AS VARCHAR(30)) attribute_name, -- date diff
 		'f' relationship_type, -- first occurrence (both target and comparator are first occurrence only)
-		COUNT_BIG(DISTINCT c1.row_id_cs) value -- the distinct here will not make a difference because first occurrence of comparator
+		COUNT_BIG(DISTINCT c1.row_id_cs) count_value -- the distinct here will not make a difference because first occurrence of comparator
 		-- count of DISTINCT comparator cohort_start_date that meet the temporal criteria
 	FROM #row_id_cohort_sub t1
 	INNER JOIN #row_id_cohort_sub c1
@@ -98,7 +98,7 @@ FROM (
 		c1.cohort_definition_id comparator_cohort_id,
 		CAST(FLOOR(DATEDIFF(dd, t1.cohort_start_date, c1.cohort_start_date) / 30) AS VARCHAR(30)) attribute_name, -- date diff
 		'a' relationship_type, -- all relationship (both target and comparator all records)
-		COUNT_BIG(DISTINCT c1.row_id_cs) value -- the distinct here will lead to counting unique cohort_start_date for comparator
+		COUNT_BIG(DISTINCT c1.row_id_cs) count_value -- the distinct here will lead to counting unique cohort_start_date for comparator
 		-- count of DISTINCT comparator cohort_start_date that meet the temporal criteria
 	FROM #row_id_cohort_sub t1
 	INNER JOIN #row_id_cohort_sub c1

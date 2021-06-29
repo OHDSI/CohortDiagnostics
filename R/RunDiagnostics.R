@@ -652,8 +652,8 @@ runCohortDiagnostics <- function(packageName = NULL,
       
       if ('includedSourceCodes' %in% names(conceptSetDiagnostics) &&
           runIncludedSourceConcepts) {
-        ParallelLogger::logInfo("- Writing included_source_concept.csv")
         if (nrow(conceptSetDiagnostics$includedSourceCodes) > 0) {
+          ParallelLogger::logInfo("- Writing included_source_concept.csv")
           conceptSetDiagnostics$includedSourceCodes$databaseId <- databaseId
           conceptSetDiagnostics$includedSourceCodes <-
             enforceMinCellValue(conceptSetDiagnostics$includedSourceCodes,
@@ -682,8 +682,8 @@ runCohortDiagnostics <- function(packageName = NULL,
       
       if ('indexEventBreakdown' %in% names(conceptSetDiagnostics) &&
           runBreakdownIndexEvents) {
-        ParallelLogger::logInfo("- Writing index_event_breakdown.csv")
         if (nrow(conceptSetDiagnostics$indexEventBreakdown) > 0) {
+          ParallelLogger::logInfo("- Writing index_event_breakdown.csv")
           conceptSetDiagnostics$indexEventBreakdown$databaseId <- databaseId
           conceptSetDiagnostics$indexEventBreakdown <-
             enforceMinCellValue(conceptSetDiagnostics$indexEventBreakdown,
@@ -697,7 +697,7 @@ runCohortDiagnostics <- function(packageName = NULL,
             data = conceptSetDiagnostics$indexEventBreakdown,
             fileName = file.path(exportFolder, "index_event_breakdown.csv"),
             incremental = incremental,
-            cohortId = conceptSetDiagnostics$includedSourceCodes$cohortId
+            cohortId = conceptSetDiagnostics$indexEventBreakdown$cohortId
           )
         }
         recordTasksDone(
@@ -712,8 +712,8 @@ runCohortDiagnostics <- function(packageName = NULL,
       
       if ('orphanCodes' %in% names(conceptSetDiagnostics) &&
           runOrphanConcepts) {
-        ParallelLogger::logInfo("- Writing orphan_concept.csv")
         if (nrow(conceptSetDiagnostics$orphanCodes) > 0) {
+          ParallelLogger::logInfo("- Writing orphan_concept.csv")
           conceptSetDiagnostics$orphanCodes$databaseId <- databaseId
           conceptSetDiagnostics$orphanCodes <-
             enforceMinCellValue(conceptSetDiagnostics$orphanCodes,
@@ -1201,7 +1201,6 @@ runCohortDiagnostics <- function(packageName = NULL,
         cohortIds = subset$cohortId
       )
       cohortTemporalRelationship <- cohortTemporalRelationship %>% 
-        dplyr::rename(countValue = .data$value) %>% 
         dplyr::mutate(startDay = as.numeric(.data$attributeName)*30) %>% 
         dplyr::mutate(endDay = (as.numeric(.data$attributeName)*30) + 29)  %>%
         dplyr::mutate(databaseId = !!databaseId) %>% 
