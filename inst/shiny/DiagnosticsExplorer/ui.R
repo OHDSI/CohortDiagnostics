@@ -352,81 +352,13 @@ bodyTabItems <- shinydashboard::tabItems(
                           )
                         ))),    
       DT::dataTableOutput(outputId = "cohortDefinitionTable"),
+      shiny::uiOutput(outputId = "dynamicUIGenerationCohortDefinitionConceptsetsOne"),
+      shiny::uiOutput(outputId = "dynamicUIGenerationCohortDefinitionConceptsetsTwo")),
       column(
         12,
         conditionalPanel(
           "output.cohortDefinitionRowIsSelected == true",
-          shiny::tabsetPanel(
-            type = "tab",
-            shiny::tabPanel(title = "Details",
-                            shiny::htmlOutput("cohortDetailsText")),
-            shiny::tabPanel(title = "Cohort Count",
-                            tags$br(),
-                            DT::dataTableOutput(outputId = "cohortCountsTableInCohortDefinition"),
-                            shiny::conditionalPanel(
-                              condition = "output.cohortCountsTableInCohortDefinitionRowIsSelected",
-                              DT::dataTableOutput(outputId = "inclusionRuleInCohortDefinition")
-                            )),
-            shiny::tabPanel(title = "Cohort definition",
-                            copyToClipboardButton(toCopyId = "cohortDefinitionText",
-                                                  style = "margin-top: 5px; margin-bottom: 5px;"),
-                            shiny::htmlOutput("circerVersionInCohortDefinition"),
-                            shiny::htmlOutput("cohortDefinitionText")),
-            shiny::tabPanel(
-              title = "Concept Sets",
-              shiny::conditionalPanel(
-                condition = "output.cohortDefinitionCountOfSelectedRows > 0",
-                tags$table(
-                  tags$tr(
-                    tags$td(
-                      shinyWidgets::pickerInput(
-                        inputId = "databaseOrVocabularySchema",
-                        label = "Vocabulary version choices:",
-                        choices = choicesFordatabaseOrVocabularySchema,
-                        multiple = FALSE,
-                        width = 200,
-                        inline = TRUE,
-                        choicesOpt = list(style = rep_len("color: black;", 999)),
-                        options = shinyWidgets::pickerOptions(
-                          actionsBox = TRUE,
-                          liveSearch = TRUE,
-                          size = 10,
-                          liveSearchStyle = "contains",
-                          liveSearchPlaceholder = "Type here to search",
-                          virtualScroll = 50
-                        )
-                      )
-                    ),
-                    tags$td(
-                      shiny::htmlOutput("subjectCountInCohortConceptSet")
-                    ),
-                    tags$td(
-                      shiny::htmlOutput("recordCountInCohortConceptSet")
-                    )
-                  )
-                )
-              ), 
-              shiny::uiOutput(outputId = "dynamicUIGenerationCohortDefinitionConceptsetsOne"),
-              shiny::uiOutput(outputId = "dynamicUIGenerationCohortDefinitionConceptsetsTwo")),
-              shiny::tabPanel(
-              title = "JSON",
-              copyToClipboardButton("cohortDefinitionJson", style = "margin-top: 5px; margin-bottom: 5px;"),
-              shiny::verbatimTextOutput("cohortDefinitionJson"),
-              tags$head(
-                tags$style("#cohortDefinitionJson { max-height:400px};")
-              )
-            ),
-            shiny::tabPanel(
-              title = "SQL",
-              copyToClipboardButton("cohortDefinitionSql", style = "margin-top: 5px; margin-bottom: 5px;"),
-              shiny::htmlOutput("circerVersionInCohortDefinitionSql"),
-              shiny::verbatimTextOutput("cohortDefinitionSql"),
-              tags$head(
-                tags$style("#cohortDefinitionSql { max-height:400px};")
-              )
-            )
-          )
-        )
+          
       )
     )
   ),
