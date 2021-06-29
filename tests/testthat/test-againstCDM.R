@@ -190,12 +190,6 @@ test_that("Retrieve results from premerged file", {
   expect_true(nrow(resolvedMappedConceptSet$resolved) >= 0)
   expect_true(nrow(resolvedMappedConceptSet$mapped) >= 0)
   
-  covariateValue <- CohortDiagnostics::getResultsCovariateValue(
-    dataSource = dataSourcePreMergedFile
-  )
-  expect_true(nrow(covariateValue$covariateValue) > 0)
-  expect_true(nrow(covariateValue$covariateValueDist) >= 0)
-  
 })
 
 if (stringr::str_detect(string = tolower(.Platform$OS.type), pattern = "mac")) {
@@ -317,12 +311,6 @@ if (stringr::str_detect(string = tolower(.Platform$OS.type), pattern = "mac")) {
     )
     expect_true(nrow(resolvedMappedConceptSet$resolved) > 0)
     expect_true(nrow(resolvedMappedConceptSet$mapped) > 0)
-    
-    covariateValue <- CohortDiagnostics::getResultsCovariateValue(
-      dataSource = dataSourceDatabase
-    )
-    expect_true(nrow(covariateValue$covariateValue) > 0)
-    expect_true(nrow(covariateValue$covariateValueDist) >= 0)
   })
   
   test_that("Data removal works", {
