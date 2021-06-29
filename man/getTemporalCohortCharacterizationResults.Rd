@@ -26,9 +26,10 @@ of the results data model.}
 }
 \value{
 Returns a list object with temporalCovariateValue, temporalCovariateValueDist,
-temporalCovariateRef, temporalAnalysisRef, temporalRef output of feature extraction.
+temporalCovariateRef, temporalAnalysisRef, temporalTimeRef, Concept output of feature extraction.
 }
 \description{
 Returns a list object with temporalCovariateValue, temporalCovariateValueDist,
-temporalCovariateRef, temporalAnalysisRef, temporalRef output of feature extraction.
+temporalCovariateRef, temporalAnalysisRef, temporalRef output of feature 
+extraction along with concept information.
 }

@@ -26,7 +26,8 @@ of the results data model.}
 }
 \value{
 Returns a list object with covariateValue, covariateValueDist,
-covariateRef, analysisRef output of feature extraction.
+covariateRef, analysisRef output of feature extraction along with
+concept information.
 }
 \description{
 Returns a list object with covariateValue, covariateValueDist,

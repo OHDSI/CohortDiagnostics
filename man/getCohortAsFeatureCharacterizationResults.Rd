@@ -26,7 +26,9 @@ of the results data model.}
 }
 \value{
 Returns a list object with covariateValue,
-covariateRef, analysisRef output of cohort as features.
+covariateRef, analysisRef output of cohort as features. To avoid clash
+with covaraiteId and conceptId returned from Feature Extraction
+the output is a negative integer.
 }
 \description{
 Returns a list object with covariateValue,
