@@ -16,7 +16,8 @@ SELECT c1.cohort_definition_id AS cohort_id,
 			THEN 'After'
 		ELSE 'Other'
 		END AS visit_context,
-	COUNT(DISTINCT vo1.person_id) AS subjects
+	COUNT(DISTINCT vo1.person_id) AS subjects,
+	COUNT(DISTINCT vo1.visit_occurrence_id) AS records
 INTO @visit_context_table
 FROM @cohort_database_schema.@cohort_table c1
 INNER JOIN @cdm_database_schema.visit_occurrence vo1

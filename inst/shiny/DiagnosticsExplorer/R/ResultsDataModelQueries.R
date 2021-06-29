@@ -898,7 +898,8 @@ getResultsResolveMappedConceptSet <- function(dataSource,
 #'
 #' @return
 #' Returns a list object with covariateValue, covariateValueDist,
-#' covariateRef, analysisRef output of feature extraction.
+#' covariateRef, analysisRef output of feature extraction along with
+#' concept information.
 #'
 #' @export
 getCohortCharacterizationResults <-
@@ -909,7 +910,6 @@ getCohortCharacterizationResults <-
     covariateRef <- getResultsCovariateRef(dataSource = dataSource)
     concept <- getResultsFromConcept(dataSource = dataSource,
                                      conceptIds = covariateRef$conceptId %>% unique())
-    
     covariateValue <-
       getResultsFromCovariateValue(dataSource = dataSource,
                                    cohortIds = cohortIds,
@@ -918,7 +918,6 @@ getCohortCharacterizationResults <-
       getResultsFromCovariateValueDist(dataSource = dataSource,
                                        cohortIds = cohortIds,
                                        databaseIds = databaseIds)
-    
     return(
       list(
         analysisRef = analysisRef,
@@ -936,7 +935,8 @@ getCohortCharacterizationResults <-
 #'
 #' @description
 #' Returns a list object with temporalCovariateValue, temporalCovariateValueDist,
-#' temporalCovariateRef, temporalAnalysisRef, temporalRef output of feature extraction.
+#' temporalCovariateRef, temporalAnalysisRef, temporalRef output of feature 
+#' extraction along with concept information.
 #'
 #' @template DataSource
 #'
@@ -946,7 +946,7 @@ getCohortCharacterizationResults <-
 #'
 #' @return
 #' Returns a list object with temporalCovariateValue, temporalCovariateValueDist,
-#' temporalCovariateRef, temporalAnalysisRef, temporalRef output of feature extraction.
+#' temporalCovariateRef, temporalAnalysisRef, temporalTimeRef, Concept output of feature extraction.
 #'
 #' @export
 getTemporalCohortCharacterizationResults <-
@@ -957,9 +957,9 @@ getTemporalCohortCharacterizationResults <-
       getResultsTemporalAnalysisRef(dataSource = dataSource)
     temporalCovariateRef <-
       getResultsTemporalCovariateRef(dataSource = dataSource)
+    temporalTimeRef <- getResultsTemporalTimeRef(dataSource = dataSource)
     concept <- getResultsFromConcept(dataSource = dataSource,
                                      conceptIds = temporalCovariateRef$conceptId %>% unique())
-    
     temporalCovariateValue <-
       getResultsFromTemporalCovariateValue(dataSource = dataSource,
                                            cohortIds = cohortIds,
@@ -975,6 +975,7 @@ getTemporalCohortCharacterizationResults <-
       list(
         temporalAnalysisRef = temporalAnalysisRef,
         temporalCovariateRef = temporalCovariateRef,
+        temporalTimeRef = temporalTimeRef,
         temporalCovariateValue = temporalCovariateValue,
         temporalCovariateValueDist = temporalCovariateValueDist,
         concept = concept
@@ -997,7 +998,9 @@ getTemporalCohortCharacterizationResults <-
 #'
 #' @return
 #' Returns a list object with covariateValue,
-#' covariateRef, analysisRef output of cohort as features.
+#' covariateRef, analysisRef output of cohort as features. To avoid clash
+#' with covaraiteId and conceptId returned from Feature Extraction
+#' the output is a negative integer.
 #'
 #' @export
 getCohortAsFeatureCharacterizationResults <-
@@ -1010,15 +1013,7 @@ getCohortAsFeatureCharacterizationResults <-
                                 cohortIds = cohortIds,
                                 databaseIds = databaseIds)
     cohort <- getResultsCohort(dataSource = dataSource)
-    covariateRef <- cohort %>%
-      dplyr::mutate(
-        covariateId = .data$cohortId,
-        covariateName = .data$cohortName,
-        conceptId = .data$cohortId*-1
-      ) %>%
-      dplyr::select(.data$covariateId,
-                    .data$covariateName,
-                    .data$conceptId)
+
     cohortRelationships <-
       getResultsFromCohortRelationships(dataSource = dataSource,
                                         cohortIds = cohortIds,
@@ -1137,13 +1132,14 @@ getCohortAsFeatureCharacterizationResults <-
       isBinary = c('Y','Y','Y','Y'),
       missingMeansZero = c('Y','Y','Y','Y')
     )
-    
-    covariateRef <- tidyr::crossing(covariateRef,
+
+    covariateRef <- tidyr::crossing(cohort,
                                     analysisRef %>% 
                                       dplyr::select(.data$analysisId, 
                                                     .data$description)) %>% 
-      dplyr::mutate(covariateName = paste0(.data$description, .data$covariateName)) %>% 
-      dplyr::mutate(covariateId = (.data$covariateId*-1000)+.data$analysisId) %>% 
+      dplyr::mutate(covariateName = paste0(.data$description, .data$cohortName)) %>% 
+      dplyr::mutate(covariateId = abs((.data$cohortId*1000)+.data$analysisId) * -1) %>% 
+      dplyr::mutate(conceptId = .data$cohortId * -1) %>% 
       dplyr::select(-.data$description) %>% 
       dplyr::arrange(.data$covariateId) %>% 
       dplyr::select(.data$covariateId,
@@ -1180,7 +1176,6 @@ getCohortAsFeatureCharacterizationResults <-
         concept = concept
       )
     )
-    
   }
 
 #' Returns cohort temporal feature characterization

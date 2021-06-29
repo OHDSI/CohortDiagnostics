@@ -448,6 +448,7 @@ CREATE TABLE visit_context (
 			visit_concept_NAME VARCHAR NOT NULL,
 			visit_context VARCHAR NOT NULL,
 			subjects FLOAT NOT NULL,
+			records FLOAT NOT NULL,
 			database_id VARCHAR NOT NULL,
 			PRIMARY KEY(cohort_id, visit_concept_id, visit_context, database_id)
 );
