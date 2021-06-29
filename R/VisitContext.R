@@ -49,7 +49,7 @@ getVisitContext <- function(connectionDetails = NULL,
   DatabaseConnector::executeSql(connection, sql)
   sql <- "SELECT * FROM @visit_context_table;"
   visitContext <-
-    DatabaseConnector::renderTranslateQuerySql(
+    renderTranslateQuerySql(
       connection = connection,
       sql = sql,
       tempEmulationSchema = tempEmulationSchema,

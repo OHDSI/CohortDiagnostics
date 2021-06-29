@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Given two sets of cohorts get relationships between the cohorts. — computeCohortOverlap • CohortDiagnostics</title>
+<title>Given two sets of cohorts get overlap between the cohorts. — computeCohortOverlap • CohortDiagnostics</title>
 
 
 <!-- jquery -->
@@ -39,9 +39,8 @@
 
 
 
-<meta property="og:title" content="Given two sets of cohorts get relationships between the cohorts. — computeCohortOverlap" />
-<meta property="og:description" content="Given two cohorts, get data to compare relationships between the cohorts - such as overlap, temporal 
-relationships between cohort start date(s). 
+<meta property="og:title" content="Given two sets of cohorts get overlap between the cohorts. — computeCohortOverlap" />
+<meta property="og:description" content="Given two sets of cohorts, get data on overlap between the cohorts.
 Note: only the first occurrence of subject_id in the cohort is used." />
 
 
@@ -143,14 +142,13 @@ Note: only the first occurrence of subject_id in the cohort is used." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Given two sets of cohorts get relationships between the cohorts.</h1>
-    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/CohortComparisonDiagnostics.R'><code>R/CohortComparisonDiagnostics.R</code></a></small>
+    <h1>Given two sets of cohorts get overlap between the cohorts.</h1>
+    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/CohortOverlapDiagnostics.R'><code>R/CohortOverlapDiagnostics.R</code></a></small>
     <div class="hidden name"><code>computeCohortOverlap.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Given two cohorts, get data to compare relationships between the cohorts - such as overlap, temporal 
-relationships between cohort start date(s). 
+    <p>Given two sets of cohorts, get data on overlap between the cohorts.
 Note: only the first occurrence of subject_id in the cohort is used.</p>
     </div>
 
@@ -159,9 +157,8 @@ Note: only the first occurrence of subject_id in the cohort is used.</p>
   connection <span class='op'>=</span> <span class='cn'>NULL</span>,
   <span class='va'>cohortDatabaseSchema</span>,
   cohortTable <span class='op'>=</span> <span class='st'>"cohort"</span>,
-  <span class='va'>targetCohortIds</span>,
-  <span class='va'>comparatorCohortIds</span>,
-  batchSize <span class='op'>=</span> <span class='fl'>200</span>
+  <span class='va'>cohortIds</span>,
+  batchSize <span class='op'>=</span> <span class='fl'>50</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -193,18 +190,14 @@ this should include both the database and schema name, for example
       <td><p>Name of the cohort table.</p></td>
     </tr>
     <tr>
-      <th>targetCohortIds</th>
-      <td><p>A list of cohort ids to be used as target cohorts.</p></td>
-    </tr>
-    <tr>
-      <th>comparatorCohortIds</th>
-      <td><p>A list of cohort ids to be used as comparator cohorts.</p></td>
+      <th>cohortIds</th>
+      <td><p>A vector of one or more Cohort Ids.</p></td>
     </tr>
     <tr>
       <th>batchSize</th>
-      <td><p>Optional, default set to 200 If running diagnostics on larget set
-of cohorts, this function allows you to batch them into chunks that run 
-as a batch.</p></td>
+      <td><p>Optional, default set to 50 If running diagnostics on large set
+of cohorts, this function allows you to batch them into chunks that
+by default run over 50 target cohorts (and all comparator cohorts).</p></td>
     </tr>
     </table>
 

@@ -11,7 +11,6 @@ calendar_incidence,database_id,varchar,Yes,Yes,No,Yes
 calendar_incidence,period_type,varchar,Yes,Yes,No,Yes
 calendar_incidence,calendar_month,Date,Yes,Yes,No,Yes
 calendar_incidence,count_value,float,Yes,No,No,Yes
-cohort,phenotype_id,bigint,No,No,Yes,Yes
 cohort,cohort_id,bigint,Yes,Yes,No,Yes
 cohort,web_api_cohort_id,bigint,Yes,No,Yes,Yes
 cohort,cohort_name,varchar,Yes,No,No,Yes
@@ -36,8 +35,9 @@ cohort_overlap,target_cohort_id,bigint,Yes,Yes,No,Yes
 cohort_overlap,comparator_cohort_id,bigint,Yes,Yes,No,Yes
 cohort_overlap,database_id,varchar,Yes,Yes,No,Yes
 cohort_relationships,database_id,varchar,Yes,Yes,No,Yes
-cohort_relationships,target_cohort_id,bigint,Yes,Yes,No,Yes
+cohort_relationships,cohort_id,bigint,Yes,Yes,No,Yes
 cohort_relationships,comparator_cohort_id,bigint,Yes,Yes,No,Yes
+cohort_relationships,relationship_type,varchar,Yes,Yes,No,Yes
 cohort_relationships,start_day,float,Yes,Yes,No,Yes
 cohort_relationships,end_day,float,Yes,Yes,No,Yes
 cohort_relationships,count_value,float,Yes,No,No,Yes
@@ -145,10 +145,6 @@ orphan_concept,database_id,varchar,Yes,Yes,No,Yes
 orphan_concept,concept_id,int,Yes,Yes,No,Yes
 orphan_concept,concept_count,float,Yes,No,No,Yes
 orphan_concept,concept_subjects,float,Yes,No,No,Yes
-phenotype_description,phenotype_id,bigint,Yes,Yes,No,Yes
-phenotype_description,phenotype_name,varchar,Yes,No,No,Yes
-phenotype_description,clinical_description,varchar,No,No,No,Yes
-phenotype_description,metadata,varchar,No,No,No,Yes
 relationship,relationship_id,varchar(20),Yes,Yes,No,Yes
 relationship,relationship_name,varchar(255),Yes,No,No,Yes
 relationship,is_hierarchical,varchar(1),Yes,No,No,Yes

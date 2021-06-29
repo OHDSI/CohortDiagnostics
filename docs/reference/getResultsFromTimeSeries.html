@@ -40,7 +40,10 @@
 
 
 <meta property="og:title" content="Returns data from time_series table of Cohort Diagnostics results data model — getResultsFromTimeSeries" />
-<meta property="og:description" content="Returns data from time_series table of Cohort Diagnostics results data model" />
+<meta property="og:description" content="Returns data from time_series table of Cohort Diagnostics results data model.
+The returned object is a tsibble, but to use in time series analysis, gaps
+need to be filled. Only absolute values are returned i.e. negative values are
+converted to positives." />
 
 
 
@@ -147,10 +150,13 @@
     </div>
 
     <div class="ref-description">
-    <p>Returns data from time_series table of Cohort Diagnostics results data model</p>
+    <p>Returns data from time_series table of Cohort Diagnostics results data model.
+The returned object is a tsibble, but to use in time series analysis, gaps
+need to be filled. Only absolute values are returned i.e. negative values are
+converted to positives.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>getResultsFromTimeSeries</span><span class='op'>(</span><span class='va'>dataSource</span>, <span class='va'>cohortIds</span>, <span class='va'>databaseIds</span><span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>getResultsFromTimeSeries</span><span class='op'>(</span><span class='va'>dataSource</span>, cohortIds <span class='op'>=</span> <span class='cn'>NULL</span>, databaseIds <span class='op'>=</span> <span class='cn'>NULL</span><span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
@@ -178,8 +184,11 @@ of the results data model.</p></td>
 
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>Returns a data frame (tibble) with results that conform to time series
-table in Cohort Diagnostics results data model.</p>
+    <p>Returns a list of tsibble (time series) objects with results that conform to time series
+table in Cohort Diagnostics results data model. There are three list objects, labelled
+m for monthly, q for quarterly and y for yearly. The periodBegin variable is in the
+format of tsibble::yearmonth for monthly, tsibble::yearquarter for quarter and integer
+for year.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

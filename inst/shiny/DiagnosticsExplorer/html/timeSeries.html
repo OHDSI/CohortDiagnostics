@@ -1,0 +1,50 @@
+<h3>Description</h3>
+<p>Tables and plots describing measurements of observations on subjects/persons counts by common time interval (observational unit).</p>
+
+<h3>Time intervals </h3> 
+All time intervals are calendar intervals (observational units). In time series analysis, this is referred to as 'index' 
+that provides  inherent ordering from past to present. We support the following time-intervals.
+<li>Calendar Year/Annual</li>
+<li>Calendar Quarter/Quarterly</li>
+<li>Calendar Month/monthly</li>
+
+
+<h3>Time series Keys </h3> Keys define eligiblity critieria (rules) that need to be met to be computed in time interval.
+<h4>T1 - Cohort Time Series: </h4> subjects in the cohort who have atleast one cohort day in calendar interval.
+<li>cohort start or cohort end is between (inclusive) calendar period, or </li>
+<li>(cohort start is on/before calendar start AND cohort end is on/after calendar end))</li>
+
+<h4>T2 - Cohort Time Series: </h4> subjects in the cohort who have atleast one observation day in calendar interval.
+<li>Observation start or Observation end is between (inclusive) calendar period, or </li>
+<li>(Observation start is on/before calendar start AND Observation end is on/after calendar end))</li>
+
+<h4>T3 - Datasource Time Series: </h4> persons in the observation_period table who have atleast one observation day in calendar interval.
+<li>Observation start or Observation end is between (inclusive) calendar period, or </li>
+<li>(Observation start is on/before calendar start AND Observation end is on/after calendar end))</li>
+
+<h4>T4 - Cohort Time Series: </h4> subjects in the cohort whose cohort period is embedded in calendar interval.
+<li>Cohort start is between (inclusive) calendar period, AND </li>
+<li>Cohort end is between (inclusive) calendar period</li>
+
+<h4>T5 - Cohort Time Series: </h4> subjects in the cohort whose observation period is embedded in calendar interval.
+<li>Observation start is between (inclusive) calendar period, AND </li>
+<li>Observation end is between (inclusive) calendar period</li>
+
+<h4>T6 - Datasource Time Series: </h4> persons in the observaiton_period table whose observation period is embedded in calendar interval.
+<li>Observation start is between (inclusive) calendar period, AND </li>
+<li>Observation end is between (inclusive) calendar period</li>
+
+
+
+<h3>Measured variables </h3>
+<li>Records: Count of row records that met the rule e.g. count of row records in cohort table (cohort time series) or observation table (datasource timeseries). SQL count(*) </li>
+<li>Unique Subjects: Count of distinct subjects/persons that met the rule e.g. count of distinct subject (cohort time series) or persons (datasource timeseries). SQL count(distinct person_id)</li>
+<li>Person Days: Sum of number of person days each person/subject was present in both cohort/observation period AND calendar interval.</li>
+<li>Records incidence: Count of row records that started in the calendar interval.</li>
+<li>Subjects incidence: Count of first occurrence of the subject/person start in the calendar interval.</li>
+<li>Records terminate: Count of row records the ended in the calendar interval </li>
+<li>Subjects terminate: Count of first occurrence of subject/person end in the calendar interval</li>
+
+
+
+<h3>Note: </h3> Only absolute values are shown, i.e. if there are negative values, they are converted to positive. All measured variables are counts/sum of records, so cannot be negative values. In Cohort Diagnostics, when minimum cell size is specified, cell records with value below the minimum cell count are converted to the negative value of the minimum cell count. e.g. if 5 is specified as minimum cell count, the measured variable has a returned value of 3 - then the 3 is replaced by Cohort Diagnostics to -5. During time-series analysis, the -5 is converted to +5.
