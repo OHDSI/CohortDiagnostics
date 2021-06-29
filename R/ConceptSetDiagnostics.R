@@ -490,8 +490,6 @@ createConceptCountsTable <- function(connectionDetails = NULL,
 #' @param    cohorts                 A dataframe object with required fields cohortId, sql, json, cohortName
 #' 
 #' @template CohortTable
-#'
-#' @template CohortSetSpecs
 #' 
 #' @param cohortIds                   Optionally, provide a subset of cohort IDs to restrict the
 #'                                    diagnostics to.
