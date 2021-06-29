@@ -492,8 +492,6 @@ createConceptCountsTable <- function(connectionDetails = NULL,
 #' @template CohortTable
 #'
 #' @template CohortSetSpecs
-#'
-#' @template CohortSetReference
 #' 
 #' @param cohortIds                   Optionally, provide a subset of cohort IDs to restrict the
 #'                                    diagnostics to.
