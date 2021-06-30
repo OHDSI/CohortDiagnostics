@@ -538,36 +538,34 @@ shiny::shinyServer(function(input, output, session) {
                           shiny::htmlOutput("cohortDefinitionText")),
           shiny::tabPanel(
             title = "Concept Sets",
-              tags$table(
-                tags$tr(
-                  tags$td(
-                    shinyWidgets::pickerInput(
-                      inputId = "databaseOrVocabularySchema",
-                      label = "Vocabulary version choices:",
-                      choices = choicesFordatabaseOrVocabularySchema,
-                      multiple = FALSE,
-                      width = 200,
-                      inline = TRUE,
-                      choicesOpt = list(style = rep_len("color: black;", 999)),
-                      options = shinyWidgets::pickerOptions(
-                        actionsBox = TRUE,
-                        liveSearch = TRUE,
-                        size = 10,
-                        liveSearchStyle = "contains",
-                        liveSearchPlaceholder = "Type here to search",
-                        virtualScroll = 50
-                      )
-                    )
-                  ),
-                  tags$td(
-                    shiny::htmlOutput("personAndRecordCountInCohortDefinitionConceptSet")
-                  )
-                )
-              ),
               DT::dataTableOutput(outputId = "conceptsetExpressionTable"),
               shiny::conditionalPanel(condition = "output.conceptSetExpressionRowSelected == true",
                                       tags$table(tags$tr(
                                         tags$td(
+                                          shinyWidgets::pickerInput(
+                                            inputId = "databaseOrVocabularySchema",
+                                            label = "Vocabulary version choices:",
+                                            choices = choicesFordatabaseOrVocabularySchema,
+                                            multiple = FALSE,
+                                            width = 200,
+                                            inline = TRUE,
+                                            choicesOpt = list(style = rep_len("color: black;", 999)),
+                                            options = shinyWidgets::pickerOptions(
+                                              actionsBox = TRUE,
+                                              liveSearch = TRUE,
+                                              size = 10,
+                                              liveSearchStyle = "contains",
+                                              liveSearchPlaceholder = "Type here to search",
+                                              virtualScroll = 50
+                                            )
+                                          )
+                                        ),
+                                        tags$td(
+                                          shiny::htmlOutput("personAndRecordCountInCohortDefinitionConceptSet")
+                                        )
+                                      ),
+                                        tags$tr(
+                                        tags$td(colspan = 2,
                                           shiny::radioButtons(
                                             inputId = "conceptSetsType",
                                             label = "",
@@ -706,36 +704,34 @@ shiny::shinyServer(function(input, output, session) {
                           shiny::htmlOutput("cohortDefinitionTextSecond")),
           shiny::tabPanel(
             title = "Concept Sets",
-            tags$table(
-              tags$tr(
-                tags$td(
-                  shinyWidgets::pickerInput(
-                    inputId = "databaseOrVocabularySchemaSecond",
-                    label = "Vocabulary version choices:",
-                    choices = choicesFordatabaseOrVocabularySchema,
-                    multiple = FALSE,
-                    width = 200,
-                    inline = TRUE,
-                    choicesOpt = list(style = rep_len("color: black;", 999)),
-                    options = shinyWidgets::pickerOptions(
-                      actionsBox = TRUE,
-                      liveSearch = TRUE,
-                      size = 10,
-                      liveSearchStyle = "contains",
-                      liveSearchPlaceholder = "Type here to search",
-                      virtualScroll = 50
-                    )
-                  )
-                ),
-                tags$td(
-                  shiny::htmlOutput("personAndRecordCountInCohortDefinitionConceptSetSecond")
-                )
-              )
-            ),
             DT::dataTableOutput(outputId = "conceptsetExpressionSecondTable"),
             shiny::conditionalPanel(condition = "output.conceptSetExpressionSecondRowSelected == true",
                                     tags$table(tags$tr(
                                       tags$td(
+                                        shinyWidgets::pickerInput(
+                                          inputId = "databaseOrVocabularySchemaSecond",
+                                          label = "Vocabulary version choices:",
+                                          choices = choicesFordatabaseOrVocabularySchema,
+                                          multiple = FALSE,
+                                          width = 200,
+                                          inline = TRUE,
+                                          choicesOpt = list(style = rep_len("color: black;", 999)),
+                                          options = shinyWidgets::pickerOptions(
+                                            actionsBox = TRUE,
+                                            liveSearch = TRUE,
+                                            size = 10,
+                                            liveSearchStyle = "contains",
+                                            liveSearchPlaceholder = "Type here to search",
+                                            virtualScroll = 50
+                                          )
+                                        )
+                                      ),
+                                      tags$td(
+                                        shiny::htmlOutput("personAndRecordCountInCohortDefinitionConceptSetSecond")
+                                      )
+                                    ),
+                                    tags$tr(
+                                      tags$td(colspan = 2,
                                         shiny::radioButtons(
                                           inputId = "conceptSetsTypeSecond",
                                           label = "",
