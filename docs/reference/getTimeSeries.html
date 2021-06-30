@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Given a set of instantiated cohorts get Incidence Rate for the cohorts. — getIncidenceRate • CohortDiagnostics</title>
+<title>Given a set of instantiated cohorts get time series for the cohorts. — getTimeSeries • CohortDiagnostics</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,13 @@
 
 
 
-<meta property="og:title" content="Given a set of instantiated cohorts get Incidence Rate for the cohorts. — getIncidenceRate" />
-<meta property="og:description" content="This function computes incidence rate, one cohort at a time." />
+<meta property="og:title" content="Given a set of instantiated cohorts get time series for the cohorts. — getTimeSeries" />
+<meta property="og:description" content="This function first generates a calendar period table, that has
+calendar intervals between the timeSeriesMinDate and timeSeriesMaxDate.
+Calendar Month, Quarter and year are supported. 
+For each of the calendar interval, time series data are computed. The returned
+object is a R dataframe that will need to be converted to a time series object
+to perform time series analysis." />
 
 
 
@@ -141,27 +146,30 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Given a set of instantiated cohorts get Incidence Rate for the cohorts.</h1>
-    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/IncidenceRates.R'><code>R/IncidenceRates.R</code></a></small>
-    <div class="hidden name"><code>getIncidenceRate.Rd</code></div>
+    <h1>Given a set of instantiated cohorts get time series for the cohorts.</h1>
+    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/TimeSeries.R'><code>R/TimeSeries.R</code></a></small>
+    <div class="hidden name"><code>getTimeSeries.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>This function computes incidence rate, one cohort at a time.</p>
+    <p>This function first generates a calendar period table, that has
+calendar intervals between the <code>timeSeriesMinDate</code> and <code>timeSeriesMaxDate</code>.
+Calendar Month, Quarter and year are supported. 
+For each of the calendar interval, time series data are computed. The returned
+object is a R dataframe that will need to be converted to a time series object
+to perform time series analysis.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>getIncidenceRate</span><span class='op'>(</span>
+    <pre class="usage"><span class='fu'>getTimeSeries</span><span class='op'>(</span>
   connectionDetails <span class='op'>=</span> <span class='cn'>NULL</span>,
   connection <span class='op'>=</span> <span class='cn'>NULL</span>,
-  <span class='va'>cohortDatabaseSchema</span>,
-  <span class='va'>cohortTable</span>,
+  tempEmulationSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
   <span class='va'>cdmDatabaseSchema</span>,
-  vocabularyDatabaseSchema <span class='op'>=</span> <span class='va'>cdmDatabaseSchema</span>,
-  cdmVersion <span class='op'>=</span> <span class='fl'>5</span>,
-  tempEmulationSchema <span class='op'>=</span> <span class='va'>tempEmulationSchema</span>,
-  firstOccurrenceOnly <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  washoutPeriod <span class='op'>=</span> <span class='fl'>365</span>,
-  <span class='va'>cohortId</span>
+  cohortDatabaseSchema <span class='op'>=</span> <span class='va'>cdmDatabaseSchema</span>,
+  cohortTable <span class='op'>=</span> <span class='st'>"cohort"</span>,
+  timeSeriesMinDate <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='st'>"1980-01-01"</span><span class='op'>)</span>,
+  timeSeriesMaxDate <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/Sys.time.html'>Sys.Date</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>,
+  <span class='va'>cohortIds</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -183,6 +191,17 @@ is provided, in which case a new connection will be opened at the start
 of the function, and closed when the function finishes.</p></td>
     </tr>
     <tr>
+      <th>tempEmulationSchema</th>
+      <td><p>Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
+tables, provide a schema with write privileges where temp tables can be created.</p></td>
+    </tr>
+    <tr>
+      <th>cdmDatabaseSchema</th>
+      <td><p>Schema name where your patient-level data in OMOP CDM format resides.
+Note that for SQL Server, this should include both the database and
+schema name, for example 'cdm_data.dbo'.</p></td>
+    </tr>
+    <tr>
       <th>cohortDatabaseSchema</th>
       <td><p>Schema name where your cohort table resides. Note that for SQL Server,
 this should include both the database and schema name, for example
@@ -193,34 +212,16 @@ this should include both the database and schema name, for example
       <td><p>Name of the cohort table.</p></td>
     </tr>
     <tr>
-      <th>vocabularyDatabaseSchema</th>
-      <td><p>Schema name where your OMOP vocabulary data resides. This is 
-commonly the same as cdmDatabaseSchema. Note that for 
-SQL Server, this should include both the database and
-schema name, for example 'vocabulary.dbo'.</p></td>
+      <th>timeSeriesMinDate</th>
+      <td><p>(optional) Minimum date for time series. Default value January 1st 1980.</p></td>
     </tr>
     <tr>
-      <th>cdmVersion</th>
-      <td><p>Only CDM version 5 is supported.</p></td>
+      <th>timeSeriesMaxDate</th>
+      <td><p>(optional) Maximum date for time series. Default value System date.</p></td>
     </tr>
     <tr>
-      <th>tempEmulationSchema</th>
-      <td><p>Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
-tables, provide a schema with write privileges where temp tables can be created.</p></td>
-    </tr>
-    <tr>
-      <th>firstOccurrenceOnly</th>
-      <td><p>Compute for first occurrence of subject in the cohort.</p></td>
-    </tr>
-    <tr>
-      <th>washoutPeriod</th>
-      <td><p>(Optional) Washout period to use. The default value is either
-365 days or minimum prior observation period requirement
-specified in cohort definition.</p></td>
-    </tr>
-    <tr>
-      <th>cohortId</th>
-      <td><p>A Cohort Id to compute time distribution for.</p></td>
+      <th>cohortIds</th>
+      <td><p>A vector of one or more Cohort Ids to compute time distribution for.</p></td>
     </tr>
     </table>
 

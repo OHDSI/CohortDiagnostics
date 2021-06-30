@@ -31,7 +31,7 @@
 #'
 #' @param cohortId               A Cohort Id to compute time distribution for.
 #' 
-#' @pram cdmVersion              Only CDM version 5 is supported.
+#' @param cdmVersion              Only CDM version 5 is supported.
 #' 
 #' @param firstOccurrenceOnly    Compute for first occurrence of subject in the cohort.
 #' 

@@ -1031,8 +1031,6 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
     
     if (nrow(subset) > 0) {
-      
-      browser()
       timeSeries <- getTimeSeries(connection = connection,
                                   tempEmulationSchema = tempEmulationSchema,
                                   cohortDatabaseSchema = cohortDatabaseSchema,
@@ -1040,30 +1038,32 @@ runCohortDiagnostics <- function(packageName = NULL,
                                   timeSeriesMinDate = observationPeriodDateRange$observationPeriodMinDate,
                                   timeSeriesMaxDate = observationPeriodDateRange$observationPeriodMaxDate,
                                   cohortIds)
-
-      timeSeries <-
-        enforceMinCellValue(timeSeries, "records", minCellCount)
-      timeSeries <-
-        enforceMinCellValue(timeSeries, "subjects", minCellCount)
-      timeSeries <-
-        enforceMinCellValue(timeSeries, "personDays", minCellCount)
-      timeSeries <-
-        enforceMinCellValue(timeSeries, "recordsIncidence", minCellCount)
-      timeSeries <-
-        enforceMinCellValue(timeSeries, "subjectsIncidence", minCellCount)
-      timeSeries <-
-        enforceMinCellValue(timeSeries, "recordsTerminate", minCellCount)
-      timeSeries <-
-        enforceMinCellValue(timeSeries, "subjectsTerminate", minCellCount)
       
-      if (nrow(timeSeries) > 0) {
+      if (!is.null(timeSeries) && nrow(timeSeries) > 0) {
+        timeSeries <- timeSeries %>% 
+          dplyr::mutate(databaseId = !!databaseId)
+        timeSeries <-
+          enforceMinCellValue(timeSeries, "records", minCellCount)
+        timeSeries <-
+          enforceMinCellValue(timeSeries, "subjects", minCellCount)
+        timeSeries <-
+          enforceMinCellValue(timeSeries, "personDays", minCellCount)
+        timeSeries <-
+          enforceMinCellValue(timeSeries, "recordsIncidence", minCellCount)
+        timeSeries <-
+          enforceMinCellValue(timeSeries, "subjectsIncidence", minCellCount)
+        timeSeries <-
+          enforceMinCellValue(timeSeries, "recordsTerminate", minCellCount)
+        timeSeries <-
+          enforceMinCellValue(timeSeries, "subjectsTerminate", minCellCount)
         writeToCsv(
           data = timeSeries,
           fileName = file.path(exportFolder, "time_series.csv"),
           incremental = incremental,
           cohortId = c(subset$cohortId) %>% unique()
         )
-      } else {
+      }
+      else {
         warning('No time series data')
       }
       recordTasksDone(
@@ -1080,7 +1080,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                             " ",
                             attr(delta, "units"))
   }
-
+  
   # Cohort Temporal Relationship ----
   if (runCohortTemporalRelationship) {
     ParallelLogger::logInfo("Computing Cohort Temporal Relationship")

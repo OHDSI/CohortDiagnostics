@@ -28,6 +28,8 @@
 #' @template Connection
 #'
 #' @template CohortDatabaseSchema
+#' 
+#' @template CdmDatabaseSchema
 #'
 #' @template TempEmulationSchema
 #'
@@ -43,7 +45,8 @@
 getTimeSeries <- function(connectionDetails = NULL,
                           connection = NULL,
                           tempEmulationSchema = NULL,
-                          cohortDatabaseSchema,
+                          cdmDatabaseSchema,
+                          cohortDatabaseSchema = cdmDatabaseSchema,
                           cohortTable = "cohort",
                           timeSeriesMinDate = as.Date('1980-01-01'),
                           timeSeriesMaxDate = as.Date(Sys.Date()),
@@ -153,7 +156,6 @@ getTimeSeries <- function(connectionDetails = NULL,
   )
   
   timeSeries <- timeSeries %>%
-    dplyr::mutate(databaseId = !!databaseId) %>%
     dplyr::select(
       .data$cohortId,
       .data$databaseId,
