@@ -235,7 +235,53 @@ this should include both the database and schema name, for example
       <td><p>Generate and export the breakdown of index events? This is executed on 
 instantiated cohorts only.</p></td>
     </tr>
+    <tr>
+      <th>packageName</th>
+      <td><p>The name of the package containing the cohort definitions. Can be left NULL if 
+<code>baseUrl</code> and <code>cohortSetReference</code> have been specified.</p></td>
+    </tr>
+    <tr>
+      <th>cohortToCreateFile</th>
+      <td><p>The location of the cohortToCreate file within the package. Is ignored if 
+<code>baseUrl</code> and <code>cohortSetReference</code> have been specified. The
+cohortToCreateFile must be .csv file that is expected to be read into 
+a dataframe object identical to requirements for <code>cohortSetReference</code> argument. 
+This csv file is expected to be encoded in either ASCII or UTF-8, if not, an 
+error message will be displayed and process stopped.</p></td>
+    </tr>
+    <tr>
+      <th>baseUrl</th>
+      <td><p>The base URL for the WebApi instance, for example:
+"http://server.org:80/WebAPI". Can be left NULL if 
+<code>packageName</code> and <code>cohortToCreateFile</code> have been specified.</p></td>
+    </tr>
+    <tr>
+      <th>cohortSetReference</th>
+      <td><p>A data frame with four columns, as described in the details. Can be left NULL if 
+<code>packageName</code> and <code>cohortToCreateFile</code> have been specified.</p></td>
+    </tr>
     </table>
+
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>Currently two ways of executing this function are supported, either 
+(1) [Package Mode] embedded in a study package, assuming the cohort definitions are stored in that package using the <code><a href='https://ohdsi.github.io/ROhdsiWebApi/reference/insertCohortDefinitionSetInPackage.html'>ROhdsiWebApi::insertCohortDefinitionSetInPackage</a></code>, or 
+(2) [WebApi Mode] By using a WebApi interface to retrieve the cohort definitions.</p>
+<p>When using this function in Package Mode: Use the <code>packageName</code> and <code>cohortToCreateFile</code> to specify
+the name of the study package, and the name of the cohortToCreate file within that package, respectively</p>
+<p>When using this function in WebApi Mode: use the <code>baseUrl</code> and <code>cohortSetReference</code> to specify how to 
+connect to the WebApi, and which cohorts to fetch, respectively.</p>
+<p>Note: if the parameters for both Package Mode and WebApi Mode are provided, then Package mode is preferred.</p>
+<p>The <code>cohortSetReference</code> argument must be a data frame with  the following columns:</p><dl>
+<dt>referentConceptId</dt><dd><p>A standard omop concept id that serves as the referent phenotype definition for the cohort Id.</p></dd>
+<dt>cohortId</dt><dd><p>The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names. It is recommended to be (referentConceptId * 1000) + a number between 3 to 999</p></dd>
+<dt>webApiCohortId</dt><dd><p>Cohort Id in the webApi/atlas instance. It is a required field to run Cohort Diagnostics in WebApi mode. It is discarded in package mode.</p></dd>
+<dt>cohortName</dt><dd><p>The full name of the cohort. This will be shown in the Shiny app.</p></dd>
+<dt>logicDescription</dt><dd><p>A human understandable brief description of the cohort definition. This logic does not have to a 
+fully specified description of the cohort definition, but should provide enough context to help user understand the
+meaning of the cohort definition</p></dd>
+
+</dl>
 
 
   </div>
