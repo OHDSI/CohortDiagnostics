@@ -365,15 +365,6 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "cohortCounts",
     cohortReference("cohortCountsSelectedCohorts"),
-    shinydashboard::box(
-      title = "Notes",
-      status = "primary",
-      width = NULL,
-      solidHeader = TRUE,
-      collapsible = TRUE,
-      collapsed = TRUE,
-      shiny::uiOutput(outputId = "cohortCountsCohortCategories")
-    ), 
     shiny::conditionalPanel(
       condition = "output.cohortCountTableContainsData == true",
       shiny::radioButtons(
@@ -397,6 +388,16 @@ bodyTabItems <- shinydashboard::tabItems(
       )
     ),
     DT::dataTableOutput("cohortCountsTable"),
+    tags$br(),
+    shinydashboard::box(
+      title = "Notes",
+      status = "primary",
+      width = NULL,
+      solidHeader = TRUE,
+      collapsible = TRUE,
+      collapsed = TRUE,
+      shiny::uiOutput(outputId = "cohortCountsCohortCategories")
+    ),
     shiny::conditionalPanel(
       condition = "output.cohortCountRowIsSelected == true",
       DT::dataTableOutput("InclusionRuleStatForCohortSeletedTable")
