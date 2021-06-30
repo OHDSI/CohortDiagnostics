@@ -1010,7 +1010,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                             " ",
                             attr(delta, "units"))
   }
-  browser()
+  
   # Time Series----
   if (runTimeSeries) {
     ParallelLogger::logInfo("Computing Time Series")
@@ -1034,10 +1034,11 @@ runCohortDiagnostics <- function(packageName = NULL,
       timeSeries <- getTimeSeries(connection = connection,
                                   tempEmulationSchema = tempEmulationSchema,
                                   cohortDatabaseSchema = cohortDatabaseSchema,
-                                  cohortTable = "cohort",
+                                  cdmDatabaseSchema = cdmDatabaseSchema,
+                                  cohortTable = cohortTable,
                                   timeSeriesMinDate = observationPeriodDateRange$observationPeriodMinDate,
                                   timeSeriesMaxDate = observationPeriodDateRange$observationPeriodMaxDate,
-                                  cohortIds)
+                                  cohortIds = subset$cohortId)
       
       if (!is.null(timeSeries) && nrow(timeSeries) > 0) {
         timeSeries <- timeSeries %>% 

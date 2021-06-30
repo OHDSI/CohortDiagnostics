@@ -158,7 +158,6 @@ getTimeSeries <- function(connectionDetails = NULL,
   timeSeries <- timeSeries %>%
     dplyr::select(
       .data$cohortId,
-      .data$databaseId,
       .data$periodBegin,
       .data$calendarInterval,
       .data$seriesType,
