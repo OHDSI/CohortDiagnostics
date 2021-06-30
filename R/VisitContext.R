@@ -14,6 +14,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+#' Given a set of instantiated cohorts get the visit context in relation to cohort start date.
+#'
+#' @description
+#' This function returns the types of visits experienced by persons in the cohort in 
+#' relation to cohort start date.
+#'
+#' @template Connection
+#'
+#' @template CohortDatabaseSchema
+#'
+#' @template TempEmulationSchema
+#'
+#' @template CohortTable
+#'
+#' @param cohortIds              A vector of one or more Cohort Ids to compute visit context for.
+#' 
+#' @param cdmVersion             Only CDM 5 is supported at this time.
+#'
+#' @export
 getVisitContext <- function(connectionDetails = NULL,
                             connection = NULL,
                             cdmDatabaseSchema,

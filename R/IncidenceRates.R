@@ -14,6 +14,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+#' Given a set of instantiated cohorts get Incidence Rate for the cohorts.
+#'
+#' @description
+#' This function computes incidence rate, one cohort at a time.
+#'
+#' @template Connection
+#'
+#' @template CohortDatabaseSchema
+#'
+#' @template VocabularyDatabaseSchema
+#' 
+#' @template TempEmulationSchema
+#'
+#' @template CohortTable
+#'
+#' @param cohortId               A Cohort Id to compute time distribution for.
+#' 
+#' @pram cdmVersion              Only CDM version 5 is supported.
+#' 
+#' @param firstOccurrenceOnly    Compute for first occurrence of subject in the cohort.
+#' 
+#' @param washoutPeriod          (Optional) Washout period to use. The default value is either
+#'                               365 days or minimum prior observation period requirement
+#'                               specified in cohort definition.
+#'
+#' @export
 getIncidenceRate <- function(connectionDetails = NULL,
                              connection = NULL,
                              cohortDatabaseSchema,
@@ -26,6 +52,7 @@ getIncidenceRate <- function(connectionDetails = NULL,
                              washoutPeriod = 365,
                              cohortId) {
   start <- Sys.time()
+  
   if (!cdmVersion == 5) {
     stop("Only CDM version 5 is supported. Terminating.")
   }

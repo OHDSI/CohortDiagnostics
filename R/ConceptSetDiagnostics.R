@@ -14,6 +14,511 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+#' Run concept set diagnostics
+#'
+#' @description
+#' Runs concept set diagnostics on a set of cohorts. For index event breakdown, 
+#' the cohorts need to be instantiated.
+#'
+#' @template Connection
+#'
+#' @template CdmDatabaseSchema
+#' 
+#' @template VocabularyDatabaseSchema
+#' 
+#' @template CohortDatabaseSchema
+#' 
+#' @template TempEmulationSchema
+#' 
+#' @param    cohorts                 A dataframe object with required fields cohortId, sql, json, cohortName
+#' 
+#' @template CohortTable
+#' 
+#' @param cohortIds                   Optionally, provide a subset of cohort IDs to restrict the
+#'                                    diagnostics to.
+#' @param runIncludedSourceConcepts   Generate and export the source concepts included in the cohorts?
+#' @param runOrphanConcepts           Generate and export potential orphan concepts?
+#' @param runBreakdownIndexEvents     Generate and export the breakdown of index events? This is executed on 
+#'                                    instantiated cohorts only.
+#' @export
+runConceptSetDiagnostics <- function(connection = NULL,
+                                     connectionDetails = NULL,
+                                     tempEmulationSchema = NULL,
+                                     cdmDatabaseSchema,
+                                     vocabularyDatabaseSchema = cdmDatabaseSchema,
+                                     cohorts,
+                                     cohortIds = NULL,
+                                     cohortDatabaseSchema = NULL,
+                                     cohortTable = NULL,
+                                     runIncludedSourceConcepts,
+                                     runOrphanConcepts,
+                                     runBreakdownIndexEvents) {
+  ParallelLogger::logInfo("Starting concept set diagnostics")
+  startConceptSetDiagnostics <- Sys.time()
+  if (length(cohortIds) == 0) {return(NULL)}
+  # Set up connection to server----
+  if (is.null(connection)) {
+    if (!is.null(connectionDetails)) {
+      connection <- DatabaseConnector::connect(connectionDetails)
+      on.exit(DatabaseConnector::disconnect(connection))
+    } else {
+      stop("No connection or connectionDetails provided.")
+    }
+  }  
+  
+  # Create concept table----
+  ParallelLogger::logTrace("Creating concept ID table for tracking concepts used in diagnostics")
+  sql <-
+    SqlRender::loadRenderTranslateSql(
+      "CreateConceptIdTable.sql",
+      packageName = "CohortDiagnostics",
+      dbms = connection@dbms,
+      tempEmulationSchema = tempEmulationSchema,
+      table_name = "#concept_ids"
+    )
+  DatabaseConnector::executeSql(
+    connection = connection,
+    sql = sql,
+    progressBar = FALSE,
+    reportOverallTime = FALSE
+  )
+  
+  # Cohorts to run the concept set diagnostics
+  if (!is.null(cohortIds)) {
+    subset <- cohorts %>% 
+      dplyr::filter(.data$cohortId %in% cohortIds)    
+  }
+  
+  # Get concept sets metadata----
+  conceptSets <- combineConceptSetsFromCohorts(subset)
+  if (is.null(conceptSets)) {
+    ParallelLogger::logInfo(
+      "Cohorts being diagnosed does not have concept ids. Skipping concept set diagnostics."
+    )
+    return(NULL)
+  }
+  
+  # Instantiate (resolve) unique concept sets----
+  uniqueConceptSets <-
+    conceptSets[!duplicated(conceptSets$uniqueConceptSetId), ] %>%
+    dplyr::select(-.data$cohortId, -.data$conceptSetId)
+  instantiateUniqueConceptSets(
+    uniqueConceptSets = uniqueConceptSets,
+    connection = connection,
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+    tempEmulationSchema = tempEmulationSchema,
+    conceptSetsTable = "#inst_concept_sets"
+  )
+  
+  resolvedConceptIds <-
+    renderTranslateQuerySql(
+      connection = connection,
+      sql = "SELECT DISTINCT * FROM #inst_concept_sets;",
+      tempEmulationSchema = tempEmulationSchema,
+      snakeCaseToCamelCase = TRUE
+    ) %>%
+    dplyr::rename(uniqueConceptSetId = .data$codesetId) %>%
+    dplyr::inner_join(conceptSets %>% dplyr::distinct(),
+                      by = "uniqueConceptSetId") %>%
+    dplyr::select(.data$cohortId,
+                  .data$conceptSetId,
+                  .data$conceptId) %>%
+    dplyr::distinct()
+  
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection = connection,
+    sql =  "INSERT INTO #concept_ids
+            SELECT DISTINCT concept_id
+            FROM #inst_concept_sets;",
+    tempEmulationSchema = tempEmulationSchema,
+    progressBar = FALSE,
+    reportOverallTime = FALSE
+  )
+  
+  if (runIncludedSourceConcepts || runOrphanConcepts) {
+    # Concept counts computation----
+    createConceptCountsTable(
+      connection = connection,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
+      conceptCountsTable = "#concept_counts"
+    )
+  }
+  
+  includedSourceCodes <- NULL
+  if (runIncludedSourceConcepts) {
+    # Included concepts----
+    ParallelLogger::logInfo("Fetching included source concepts")
+    startIncludedSourceConcepts <- Sys.time()
+    
+    ParallelLogger::logTrace("Included codes SQL")
+    sql <- SqlRender::loadRenderTranslateSql(
+      "CohortSourceCodes.sql",
+      packageName = "CohortDiagnostics",
+      dbms = connection@dbms,
+      tempEmulationSchema = tempEmulationSchema,
+      cdm_database_schema = cdmDatabaseSchema,
+      instantiated_concept_sets = "#inst_concept_sets",
+      include_source_concept_table = "#inc_src_concepts",
+      by_month = FALSE
+    )
+    DatabaseConnector::executeSql(connection = connection, sql = sql)
+    includedSourceCodes <-
+      renderTranslateQuerySql(
+        connection = connection,
+        sql = "SELECT * FROM @include_source_concept_table;",
+        include_source_concept_table = "#inc_src_concepts",
+        tempEmulationSchema = tempEmulationSchema,
+        snakeCaseToCamelCase = TRUE
+      )
+    ParallelLogger::logTrace("Included codes SQL complete")
+    includedSourceCodes <- includedSourceCodes  %>%
+      dplyr::rename(uniqueConceptSetId = .data$conceptSetId) %>%
+      dplyr::inner_join(
+        conceptSets %>% dplyr::select(
+          .data$uniqueConceptSetId,
+          .data$cohortId,
+          .data$conceptSetId
+        ),
+        by = "uniqueConceptSetId"
+      ) %>%
+      dplyr::select(-.data$uniqueConceptSetId) %>%
+      dplyr::relocate(.data$cohortId,
+                      .data$conceptSetId,
+                      .data$conceptId) %>%
+      dplyr::distinct()
+    
+    sqlInsertIncludedConcepts <- "INSERT INTO @concept_id_table (concept_id)
+                  SELECT DISTINCT concept_id
+                  FROM @include_source_concept_table;
+                  
+                  INSERT INTO @concept_id_table (concept_id)
+                  SELECT DISTINCT source_concept_id
+                  FROM @include_source_concept_table;"
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = sqlInsertIncludedConcepts,
+      tempEmulationSchema = tempEmulationSchema,
+      concept_id_table = '#concept_ids',
+      include_source_concept_table = "#inc_src_concepts",
+      progressBar = FALSE,
+      reportOverallTime = FALSE
+    )
+    
+    sql <-
+      "TRUNCATE TABLE @include_source_concept_table;\nDROP TABLE @include_source_concept_table;"
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = sql,
+      tempEmulationSchema = tempEmulationSchema,
+      include_source_concept_table = "#inc_src_concepts",
+      progressBar = FALSE,
+      reportOverallTime = FALSE
+    )
+    
+    delta <- Sys.time() - startIncludedSourceConcepts
+    ParallelLogger::logInfo(paste(
+      "----Finding source codes took",
+      signif(delta, 3),
+      attr(delta, "units")
+    ))
+  }
+  
+  if (runBreakdownIndexEvents) {
+    # Index event breakdown ----
+    ParallelLogger::logInfo("Breaking down index events")
+    startBreakdownEvents <- Sys.time()
+    domains <-
+      readr::read_csv(
+        system.file("csv", "domains.csv", package = "CohortDiagnostics"),
+        col_types = readr::cols(),
+        guess_max = min(1e7)
+      )
+    
+    runBreakdownIndexEvents <- function(cohort, 
+                                        connection, 
+                                        tempEmulationSchema) {
+      ParallelLogger::logInfo("- Breaking down index events for cohort '",
+                              cohort$cohortName,
+                              "'")
+      cohortDefinition <-
+        RJSONIO::fromJSON(cohort$json, digits = 23)
+      primaryCodesetIds <-
+        lapply(cohortDefinition$PrimaryCriteria$CriteriaList,
+               getCodeSetIds) %>%
+        dplyr::bind_rows()
+      if (nrow(primaryCodesetIds) == 0) {
+        warning("No primary event criteria concept sets found for cohort id: ",
+                cohort$cohortId)
+        return(tidyr::tibble())
+      }
+      primaryCodesetIds <- primaryCodesetIds %>% dplyr::filter(.data$domain %in% 
+                                                                 c(domains$domain %>% unique()))
+      if (nrow(primaryCodesetIds) == 0) {
+        warning("Primary event criteria concept sets found for cohort id: ", 
+                cohort$cohortId, " but,", "\nnone of the concept sets belong to the supported domains.", 
+                "\nThe supported domains are:\n", paste(domains$domain, 
+                                                        collapse = ", "))
+        return(dplyr::tibble())
+      }
+      primaryCodesetIds <- conceptSets %>%
+        dplyr::filter(.data$cohortId %in% cohort$cohortId) %>%
+        dplyr::select(codeSetIds = .data$conceptSetId, .data$uniqueConceptSetId) %>%
+        dplyr::inner_join(primaryCodesetIds, by = "codeSetIds")
+      
+      pasteIds <- function(row) {
+        return(dplyr::tibble(
+          domain = row$domain[1],
+          uniqueConceptSetId = paste(row$uniqueConceptSetId, collapse = ", ")
+        ))
+      }
+      primaryCodesetIds <-
+        lapply(split(primaryCodesetIds, primaryCodesetIds$domain),
+               pasteIds)
+      primaryCodesetIds <- dplyr::bind_rows(primaryCodesetIds)
+      
+      getCounts <- function(row, connection, tempEmulationSchema) {
+        domain <- domains[domains$domain == row$domain,]
+        sql <-
+          SqlRender::loadRenderTranslateSql(
+            "CohortEntryBreakdown.sql",
+            packageName = "CohortDiagnostics",
+            dbms = connection@dbms,
+            tempEmulationSchema = tempEmulationSchema,
+            cdm_database_schema = cdmDatabaseSchema,
+            vocabulary_database_schema = vocabularyDatabaseSchema,
+            cohort_database_schema = cohortDatabaseSchema,
+            cohort_table = cohortTable,
+            cohort_id = cohort$cohortId,
+            domain_table = domain$domainTable,
+            domain_start_date = domain$domainStartDate,
+            domain_concept_id = domain$domainConceptId,
+            domain_source_concept_id = domain$domainSourceConceptId,
+            use_source_concept_id = !is.null(domain$domainSourceConceptId),
+            primary_codeset_ids = row$uniqueConceptSetId,
+            concept_set_table = "#inst_concept_sets",
+            store = TRUE,
+            store_table = "#breakdown"
+          )
+        
+        DatabaseConnector::executeSql(
+          connection = connection,
+          sql = sql,
+          progressBar = FALSE,
+          reportOverallTime = FALSE
+        )
+        sql <- "SELECT * FROM @store_table;"
+        counts <-
+          renderTranslateQuerySql(
+            connection = connection,
+            sql = sql,
+            tempEmulationSchema = tempEmulationSchema,
+            store_table = "#breakdown",
+            snakeCaseToCamelCase = TRUE
+          )
+        sql <- "INSERT INTO @concept_id_table (concept_id)
+                  SELECT DISTINCT concept_id
+                  FROM @store_table;"
+        renderTranslateExecuteSql(
+          connection = connection,
+          sql = sql,
+          tempEmulationSchema = tempEmulationSchema,
+          concept_id_table = "#concept_ids",
+          store_table = "#breakdown",
+          progressBar = FALSE,
+          reportOverallTime = FALSE
+        )
+        sql <-
+          "TRUNCATE TABLE @store_table;\nDROP TABLE @store_table;"
+        renderTranslateExecuteSql(
+          connection = connection,
+          sql = sql,
+          tempEmulationSchema = tempEmulationSchema,
+          store_table = "#breakdown",
+          progressBar = FALSE,
+          reportOverallTime = FALSE
+        )
+        return(counts)
+      }
+      ParallelLogger::logTrace("Index event breakdown SQL")
+      counts <- list()
+      for (i in (1:nrow(primaryCodesetIds))) {
+        counts[[i]] <- getCounts(row = primaryCodesetIds[i,], 
+                                 connection = connection, 
+                                 tempEmulationSchema = tempEmulationSchema)
+      }
+      counts <- dplyr::bind_rows(counts) %>%
+        dplyr::arrange(.data$conceptCount)
+      ParallelLogger::logTrace("End Index event breakdown SQL")
+      
+      if (nrow(counts) > 0) {
+        counts$cohortId <- cohort$cohortId
+      } else {
+        ParallelLogger::logInfo("-- Index event breakdown results were not returned for: ",
+                                cohort$cohortId)
+        return(dplyr::tibble())
+      }
+      return(counts)
+    }
+    
+    data <- list()
+    for (i in (1:nrow(subset))) {
+      data[[i]] <- runBreakdownIndexEvents(cohort = subset[i,], 
+                                           connection = connection, 
+                                           tempEmulationSchema = tempEmulationSchema)
+    }
+    indexEventBreakdown <- dplyr::bind_rows(data)
+    delta <- Sys.time() - startBreakdownEvents
+    ParallelLogger::logInfo(paste(
+      "Breaking down index event took",
+      signif(delta, 3),
+      attr(delta, "units")
+    ))
+  }
+  
+  if (runOrphanConcepts) {
+    # Orphan concepts ----
+    ParallelLogger::logInfo("Finding orphan concepts")
+    startOrphanCodes <- Sys.time()
+    data <- list()
+    ParallelLogger::logTrace("Orphan concept SQL")
+    for (i in (1:nrow(uniqueConceptSets))) {
+      conceptSet <- uniqueConceptSets[i, ]
+      ParallelLogger::logInfo("- Finding orphan concepts for concept set '",
+                              conceptSet$conceptSetName,
+                              "'")
+      data[[i]] <- .findOrphanConcepts(
+        connection = connection,
+        cdmDatabaseSchema = cdmDatabaseSchema,
+        tempEmulationSchema = tempEmulationSchema,
+        useCodesetTable = TRUE,
+        codesetId = conceptSet$uniqueConceptSetId,
+        conceptCountsTable = "#concept_counts",
+        instantiatedCodeSets = "#inst_concept_sets",
+        orphanConceptTable = "#orphan_concepts"
+      )
+      
+      sql <- "INSERT INTO @concept_id_table (concept_id)
+                  SELECT DISTINCT concept_id
+                  FROM @orphan_concept_table;"
+      DatabaseConnector::renderTranslateExecuteSql(
+        connection = connection,
+        sql = sql,
+        tempEmulationSchema = tempEmulationSchema,
+        concept_id_table = "#concept_ids",
+        orphan_concept_table = "#orphan_concepts",
+        progressBar = FALSE,
+        reportOverallTime = FALSE
+      )
+      sql <-
+        "TRUNCATE TABLE @orphan_concept_table;\nDROP TABLE @orphan_concept_table;"
+      DatabaseConnector::renderTranslateExecuteSql(
+        connection = connection,
+        sql = sql,
+        tempEmulationSchema = tempEmulationSchema,
+        orphan_concept_table = "#orphan_concepts",
+        progressBar = FALSE,
+        reportOverallTime = FALSE
+      )
+    }
+    ParallelLogger::logTrace("End Orphan concept SQL")
+    orphanCodes <- dplyr::bind_rows(data) %>%
+      dplyr::distinct() %>%
+      dplyr::rename(uniqueConceptSetId = .data$codesetId) %>%
+      dplyr::inner_join(
+        conceptSets %>%
+          dplyr::select(
+            .data$uniqueConceptSetId,
+            .data$cohortId,
+            .data$conceptSetId
+          ),
+        by = "uniqueConceptSetId"
+      ) %>%
+      dplyr::select(-.data$uniqueConceptSetId) %>%
+      dplyr::relocate(.data$cohortId, .data$conceptSetId)
+    
+    delta <- Sys.time() - startOrphanCodes
+    ParallelLogger::logInfo("Finding orphan concepts took ",
+                            signif(delta, 3),
+                            " ",
+                            attr(delta, "units"))
+  }
+  
+  ParallelLogger::logInfo("Retrieving concept information")
+  exportedVocablary <- exportConceptInformation(
+    connection = connection,
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    tempEmulationSchema = tempEmulationSchema,
+    conceptIdTable = "#concept_ids"
+  )
+  
+  # Drop temporay tables
+  ParallelLogger::logTrace("Dropping temp concept set table")
+  sql <-
+    "TRUNCATE TABLE #inst_concept_sets; DROP TABLE #inst_concept_sets;"
+  DatabaseConnector::renderTranslateExecuteSql(
+    connection,
+    sql,
+    tempEmulationSchema = tempEmulationSchema,
+    progressBar = FALSE,
+    reportOverallTime = FALSE
+  )
+  
+  if (runIncludedSourceConcepts  || runOrphanConcepts) {
+    ParallelLogger::logTrace("Dropping temp concept count table")
+    countTable <- "#concept_counts"
+    
+    sql <- "TRUNCATE TABLE @count_table; DROP TABLE @count_table;"
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection,
+      sql,
+      tempEmulationSchema = tempEmulationSchema,
+      count_table = countTable,
+      progressBar = FALSE,
+      reportOverallTime = FALSE
+    )
+  }
+  
+  if (is.null(exportedVocablary)) {
+    exportedVocablary <- list()
+  }
+  if (!is.null(resolvedConceptIds)) {
+    exportedVocablary$resolvedConceptIds = resolvedConceptIds
+  }
+  if (!is.null(includedSourceCodes)) {
+    exportedVocablary$includedSourceCodes = includedSourceCodes
+  }
+  if (!is.null(indexEventBreakdown)) {
+    exportedVocablary$indexEventBreakdown = indexEventBreakdown
+  }
+  if (!is.null(orphanCodes)) {
+    exportedVocablary$orphanCodes = orphanCodes
+  }
+  if (!is.null(conceptSets)) {
+    exportedVocablary$conceptSets = conceptSets
+  }
+  
+  delta <- Sys.time() - startConceptSetDiagnostics
+  ParallelLogger::logInfo("Running concept set diagnostics took ",
+                          signif(delta, 3),
+                          " ",
+                          attr(delta, "units"))
+  
+  return(exportedVocablary)
+}
+
+
+
+
+
+
+
+
+
+##################### private function #########################
+
 extractConceptSetsSqlFromCohortSql <- function(cohortSql) {
   if (length(cohortSql) > 1) {
     stop("Please check if more than one cohort SQL was provided.")
@@ -470,497 +975,3 @@ createConceptCountsTable <- function(connectionDetails = NULL,
   return(orphanConcepts)
 }
 
-
-#' Run concept set diagnostics
-#'
-#' @description
-#' Runs concept set diagnostics on a set of cohorts. For index event breakdown, 
-#' the cohorts need to be instantiated.
-#'
-#' @template Connection
-#'
-#' @template CdmDatabaseSchema
-#' 
-#' @template VocabularyDatabaseSchema
-#' 
-#' @template CohortDatabaseSchema
-#' 
-#' @template TempEmulationSchema
-#' 
-#' @param    cohorts                 A dataframe object with required fields cohortId, sql, json, cohortName
-#' 
-#' @template CohortTable
-#' 
-#' @param cohortIds                   Optionally, provide a subset of cohort IDs to restrict the
-#'                                    diagnostics to.
-#' @param runIncludedSourceConcepts   Generate and export the source concepts included in the cohorts?
-#' @param runOrphanConcepts           Generate and export potential orphan concepts?
-#' @param runBreakdownIndexEvents     Generate and export the breakdown of index events? This is executed on 
-#'                                    instantiated cohorts only.
-#' @export
-runConceptSetDiagnostics <- function(connection = NULL,
-                                     connectionDetails = NULL,
-                                     tempEmulationSchema = NULL,
-                                     cdmDatabaseSchema,
-                                     vocabularyDatabaseSchema = cdmDatabaseSchema,
-                                     cohorts,
-                                     cohortIds = NULL,
-                                     cohortDatabaseSchema = NULL,
-                                     cohortTable = NULL,
-                                     runIncludedSourceConcepts,
-                                     runOrphanConcepts,
-                                     runBreakdownIndexEvents) {
-  ParallelLogger::logInfo("Starting concept set diagnostics")
-  startConceptSetDiagnostics <- Sys.time()
-  if (length(cohortIds) == 0) {return(NULL)}
-  # Set up connection to server----
-  if (is.null(connection)) {
-    if (!is.null(connectionDetails)) {
-      connection <- DatabaseConnector::connect(connectionDetails)
-      on.exit(DatabaseConnector::disconnect(connection))
-    } else {
-      stop("No connection or connectionDetails provided.")
-    }
-  }  
-  
-  # Create concept table----
-  ParallelLogger::logTrace("Creating concept ID table for tracking concepts used in diagnostics")
-  sql <-
-    SqlRender::loadRenderTranslateSql(
-      "CreateConceptIdTable.sql",
-      packageName = "CohortDiagnostics",
-      dbms = connection@dbms,
-      tempEmulationSchema = tempEmulationSchema,
-      table_name = "#concept_ids"
-    )
-  DatabaseConnector::executeSql(
-    connection = connection,
-    sql = sql,
-    progressBar = FALSE,
-    reportOverallTime = FALSE
-  )
-  
-  # Cohorts to run the concept set diagnostics
-  if (!is.null(cohortIds)) {
-    subset <- cohorts %>% 
-      dplyr::filter(.data$cohortId %in% cohortIds)    
-  }
-  
-  # Get concept sets metadata----
-  conceptSets <- combineConceptSetsFromCohorts(subset)
-  if (is.null(conceptSets)) {
-    ParallelLogger::logInfo(
-      "Cohorts being diagnosed does not have concept ids. Skipping concept set diagnostics."
-    )
-    return(NULL)
-  }
-  
-  # Instantiate (resolve) unique concept sets----
-  uniqueConceptSets <-
-    conceptSets[!duplicated(conceptSets$uniqueConceptSetId), ] %>%
-    dplyr::select(-.data$cohortId, -.data$conceptSetId)
-  instantiateUniqueConceptSets(
-    uniqueConceptSets = uniqueConceptSets,
-    connection = connection,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    tempEmulationSchema = tempEmulationSchema,
-    conceptSetsTable = "#inst_concept_sets"
-  )
-
-  resolvedConceptIds <-
-    renderTranslateQuerySql(
-      connection = connection,
-      sql = "SELECT DISTINCT * FROM #inst_concept_sets;",
-      tempEmulationSchema = tempEmulationSchema,
-      snakeCaseToCamelCase = TRUE
-    ) %>%
-    dplyr::rename(uniqueConceptSetId = .data$codesetId) %>%
-    dplyr::inner_join(conceptSets %>% dplyr::distinct(),
-                      by = "uniqueConceptSetId") %>%
-    dplyr::select(.data$cohortId,
-                  .data$conceptSetId,
-                  .data$conceptId) %>%
-    dplyr::distinct()
-  
-  DatabaseConnector::renderTranslateExecuteSql(
-    connection = connection,
-    sql =  "INSERT INTO #concept_ids
-            SELECT DISTINCT concept_id
-            FROM #inst_concept_sets;",
-    tempEmulationSchema = tempEmulationSchema,
-    progressBar = FALSE,
-    reportOverallTime = FALSE
-  )
-  
-  if (runIncludedSourceConcepts || runOrphanConcepts) {
-    # Concept counts computation----
-    createConceptCountsTable(
-      connection = connection,
-      cdmDatabaseSchema = cdmDatabaseSchema,
-      tempEmulationSchema = tempEmulationSchema,
-      conceptCountsTable = "#concept_counts"
-    )
-  }
-  
-  includedSourceCodes <- NULL
-  if (runIncludedSourceConcepts) {
-    # Included concepts----
-    ParallelLogger::logInfo("Fetching included source concepts")
-    startIncludedSourceConcepts <- Sys.time()
-    
-    ParallelLogger::logTrace("Included codes SQL")
-    sql <- SqlRender::loadRenderTranslateSql(
-      "CohortSourceCodes.sql",
-      packageName = "CohortDiagnostics",
-      dbms = connection@dbms,
-      tempEmulationSchema = tempEmulationSchema,
-      cdm_database_schema = cdmDatabaseSchema,
-      instantiated_concept_sets = "#inst_concept_sets",
-      include_source_concept_table = "#inc_src_concepts",
-      by_month = FALSE
-    )
-    DatabaseConnector::executeSql(connection = connection, sql = sql)
-    includedSourceCodes <-
-      renderTranslateQuerySql(
-        connection = connection,
-        sql = "SELECT * FROM @include_source_concept_table;",
-        include_source_concept_table = "#inc_src_concepts",
-        tempEmulationSchema = tempEmulationSchema,
-        snakeCaseToCamelCase = TRUE
-      )
-    ParallelLogger::logTrace("Included codes SQL complete")
-    includedSourceCodes <- includedSourceCodes  %>%
-      dplyr::rename(uniqueConceptSetId = .data$conceptSetId) %>%
-      dplyr::inner_join(
-        conceptSets %>% dplyr::select(
-          .data$uniqueConceptSetId,
-          .data$cohortId,
-          .data$conceptSetId
-        ),
-        by = "uniqueConceptSetId"
-      ) %>%
-      dplyr::select(-.data$uniqueConceptSetId) %>%
-      dplyr::relocate(.data$cohortId,
-                      .data$conceptSetId,
-                      .data$conceptId) %>%
-      dplyr::distinct()
-    
-    sqlInsertIncludedConcepts <- "INSERT INTO @concept_id_table (concept_id)
-                  SELECT DISTINCT concept_id
-                  FROM @include_source_concept_table;
-                  
-                  INSERT INTO @concept_id_table (concept_id)
-                  SELECT DISTINCT source_concept_id
-                  FROM @include_source_concept_table;"
-    DatabaseConnector::renderTranslateExecuteSql(
-      connection = connection,
-      sql = sqlInsertIncludedConcepts,
-      tempEmulationSchema = tempEmulationSchema,
-      concept_id_table = '#concept_ids',
-      include_source_concept_table = "#inc_src_concepts",
-      progressBar = FALSE,
-      reportOverallTime = FALSE
-    )
-    
-    sql <-
-      "TRUNCATE TABLE @include_source_concept_table;\nDROP TABLE @include_source_concept_table;"
-    DatabaseConnector::renderTranslateExecuteSql(
-      connection = connection,
-      sql = sql,
-      tempEmulationSchema = tempEmulationSchema,
-      include_source_concept_table = "#inc_src_concepts",
-      progressBar = FALSE,
-      reportOverallTime = FALSE
-    )
-    
-    delta <- Sys.time() - startIncludedSourceConcepts
-    ParallelLogger::logInfo(paste(
-      "----Finding source codes took",
-      signif(delta, 3),
-      attr(delta, "units")
-    ))
-  }
-  
-  if (runBreakdownIndexEvents) {
-    # Index event breakdown ----
-    ParallelLogger::logInfo("Breaking down index events")
-    startBreakdownEvents <- Sys.time()
-    domains <-
-      readr::read_csv(
-        system.file("csv", "domains.csv", package = "CohortDiagnostics"),
-        col_types = readr::cols(),
-        guess_max = min(1e7)
-      )
-    
-    runBreakdownIndexEvents <- function(cohort, 
-                                        connection, 
-                                        tempEmulationSchema) {
-      ParallelLogger::logInfo("- Breaking down index events for cohort '",
-                              cohort$cohortName,
-                              "'")
-      cohortDefinition <-
-        RJSONIO::fromJSON(cohort$json, digits = 23)
-      primaryCodesetIds <-
-        lapply(cohortDefinition$PrimaryCriteria$CriteriaList,
-               getCodeSetIds) %>%
-        dplyr::bind_rows()
-      if (nrow(primaryCodesetIds) == 0) {
-        warning("No primary event criteria concept sets found for cohort id: ",
-                cohort$cohortId)
-        return(tidyr::tibble())
-      }
-      primaryCodesetIds <- primaryCodesetIds %>% dplyr::filter(.data$domain %in% 
-                                                                 c(domains$domain %>% unique()))
-      if (nrow(primaryCodesetIds) == 0) {
-        warning("Primary event criteria concept sets found for cohort id: ", 
-                cohort$cohortId, " but,", "\nnone of the concept sets belong to the supported domains.", 
-                "\nThe supported domains are:\n", paste(domains$domain, 
-                                                        collapse = ", "))
-        return(dplyr::tibble())
-      }
-      primaryCodesetIds <- conceptSets %>%
-        dplyr::filter(.data$cohortId %in% cohort$cohortId) %>%
-        dplyr::select(codeSetIds = .data$conceptSetId, .data$uniqueConceptSetId) %>%
-        dplyr::inner_join(primaryCodesetIds, by = "codeSetIds")
-      
-      pasteIds <- function(row) {
-        return(dplyr::tibble(
-          domain = row$domain[1],
-          uniqueConceptSetId = paste(row$uniqueConceptSetId, collapse = ", ")
-        ))
-      }
-      primaryCodesetIds <-
-        lapply(split(primaryCodesetIds, primaryCodesetIds$domain),
-               pasteIds)
-      primaryCodesetIds <- dplyr::bind_rows(primaryCodesetIds)
-      
-      getCounts <- function(row, connection, tempEmulationSchema) {
-        domain <- domains[domains$domain == row$domain,]
-        sql <-
-          SqlRender::loadRenderTranslateSql(
-            "CohortEntryBreakdown.sql",
-            packageName = "CohortDiagnostics",
-            dbms = connection@dbms,
-            tempEmulationSchema = tempEmulationSchema,
-            cdm_database_schema = cdmDatabaseSchema,
-            vocabulary_database_schema = vocabularyDatabaseSchema,
-            cohort_database_schema = cohortDatabaseSchema,
-            cohort_table = cohortTable,
-            cohort_id = cohort$cohortId,
-            domain_table = domain$domainTable,
-            domain_start_date = domain$domainStartDate,
-            domain_concept_id = domain$domainConceptId,
-            domain_source_concept_id = domain$domainSourceConceptId,
-            use_source_concept_id = !is.null(domain$domainSourceConceptId),
-            primary_codeset_ids = row$uniqueConceptSetId,
-            concept_set_table = "#inst_concept_sets",
-            store = TRUE,
-            store_table = "#breakdown"
-          )
-        
-        DatabaseConnector::executeSql(
-          connection = connection,
-          sql = sql,
-          progressBar = FALSE,
-          reportOverallTime = FALSE
-        )
-        sql <- "SELECT * FROM @store_table;"
-        counts <-
-          renderTranslateQuerySql(
-            connection = connection,
-            sql = sql,
-            tempEmulationSchema = tempEmulationSchema,
-            store_table = "#breakdown",
-            snakeCaseToCamelCase = TRUE
-          )
-        sql <- "INSERT INTO @concept_id_table (concept_id)
-                  SELECT DISTINCT concept_id
-                  FROM @store_table;"
-        renderTranslateExecuteSql(
-          connection = connection,
-          sql = sql,
-          tempEmulationSchema = tempEmulationSchema,
-          concept_id_table = "#concept_ids",
-          store_table = "#breakdown",
-          progressBar = FALSE,
-          reportOverallTime = FALSE
-        )
-        sql <-
-          "TRUNCATE TABLE @store_table;\nDROP TABLE @store_table;"
-        renderTranslateExecuteSql(
-          connection = connection,
-          sql = sql,
-          tempEmulationSchema = tempEmulationSchema,
-          store_table = "#breakdown",
-          progressBar = FALSE,
-          reportOverallTime = FALSE
-        )
-        return(counts)
-      }
-      ParallelLogger::logTrace("Index event breakdown SQL")
-      counts <- list()
-      for (i in (1:nrow(primaryCodesetIds))) {
-        counts[[i]] <- getCounts(row = primaryCodesetIds[i,], 
-                                 connection = connection, 
-                                 tempEmulationSchema = tempEmulationSchema)
-      }
-      counts <- dplyr::bind_rows(counts) %>%
-        dplyr::arrange(.data$conceptCount)
-      ParallelLogger::logTrace("End Index event breakdown SQL")
-      
-      if (nrow(counts) > 0) {
-        counts$cohortId <- cohort$cohortId
-      } else {
-        ParallelLogger::logInfo("-- Index event breakdown results were not returned for: ",
-                                cohort$cohortId)
-        return(dplyr::tibble())
-      }
-      return(counts)
-    }
-    
-    data <- list()
-    for (i in (1:nrow(subset))) {
-      data[[i]] <- runBreakdownIndexEvents(cohort = subset[i,], 
-                                           connection = connection, 
-                                           tempEmulationSchema = tempEmulationSchema)
-    }
-    indexEventBreakdown <- dplyr::bind_rows(data)
-    delta <- Sys.time() - startBreakdownEvents
-    ParallelLogger::logInfo(paste(
-      "Breaking down index event took",
-      signif(delta, 3),
-      attr(delta, "units")
-    ))
-  }
-  
-  if (runOrphanConcepts) {
-    # Orphan concepts ----
-    ParallelLogger::logInfo("Finding orphan concepts")
-    startOrphanCodes <- Sys.time()
-    data <- list()
-    ParallelLogger::logTrace("Orphan concept SQL")
-    for (i in (1:nrow(uniqueConceptSets))) {
-      conceptSet <- uniqueConceptSets[i, ]
-      ParallelLogger::logInfo("- Finding orphan concepts for concept set '",
-                              conceptSet$conceptSetName,
-                              "'")
-      data[[i]] <- .findOrphanConcepts(
-        connection = connection,
-        cdmDatabaseSchema = cdmDatabaseSchema,
-        tempEmulationSchema = tempEmulationSchema,
-        useCodesetTable = TRUE,
-        codesetId = conceptSet$uniqueConceptSetId,
-        conceptCountsTable = "#concept_counts",
-        instantiatedCodeSets = "#inst_concept_sets",
-        orphanConceptTable = "#orphan_concepts"
-      )
-      
-      sql <- "INSERT INTO @concept_id_table (concept_id)
-                  SELECT DISTINCT concept_id
-                  FROM @orphan_concept_table;"
-      DatabaseConnector::renderTranslateExecuteSql(
-        connection = connection,
-        sql = sql,
-        tempEmulationSchema = tempEmulationSchema,
-        concept_id_table = "#concept_ids",
-        orphan_concept_table = "#orphan_concepts",
-        progressBar = FALSE,
-        reportOverallTime = FALSE
-      )
-      sql <-
-        "TRUNCATE TABLE @orphan_concept_table;\nDROP TABLE @orphan_concept_table;"
-      DatabaseConnector::renderTranslateExecuteSql(
-        connection = connection,
-        sql = sql,
-        tempEmulationSchema = tempEmulationSchema,
-        orphan_concept_table = "#orphan_concepts",
-        progressBar = FALSE,
-        reportOverallTime = FALSE
-      )
-    }
-    ParallelLogger::logTrace("End Orphan concept SQL")
-    orphanCodes <- dplyr::bind_rows(data) %>%
-      dplyr::distinct() %>%
-      dplyr::rename(uniqueConceptSetId = .data$codesetId) %>%
-      dplyr::inner_join(
-        conceptSets %>%
-          dplyr::select(
-            .data$uniqueConceptSetId,
-            .data$cohortId,
-            .data$conceptSetId
-          ),
-        by = "uniqueConceptSetId"
-      ) %>%
-      dplyr::select(-.data$uniqueConceptSetId) %>%
-      dplyr::relocate(.data$cohortId, .data$conceptSetId)
-    
-    delta <- Sys.time() - startOrphanCodes
-    ParallelLogger::logInfo("Finding orphan concepts took ",
-                            signif(delta, 3),
-                            " ",
-                            attr(delta, "units"))
-  }
- 
-  ParallelLogger::logInfo("Retrieving concept information")
-  exportedVocablary <- exportConceptInformation(
-    connection = connection,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    tempEmulationSchema = tempEmulationSchema,
-    conceptIdTable = "#concept_ids"
-  )
-  
-  # Drop temporay tables
-  ParallelLogger::logTrace("Dropping temp concept set table")
-  sql <-
-    "TRUNCATE TABLE #inst_concept_sets; DROP TABLE #inst_concept_sets;"
-  DatabaseConnector::renderTranslateExecuteSql(
-    connection,
-    sql,
-    tempEmulationSchema = tempEmulationSchema,
-    progressBar = FALSE,
-    reportOverallTime = FALSE
-  )
-  
-  if (runIncludedSourceConcepts  || runOrphanConcepts) {
-    ParallelLogger::logTrace("Dropping temp concept count table")
-    countTable <- "#concept_counts"
-    
-    sql <- "TRUNCATE TABLE @count_table; DROP TABLE @count_table;"
-    DatabaseConnector::renderTranslateExecuteSql(
-      connection,
-      sql,
-      tempEmulationSchema = tempEmulationSchema,
-      count_table = countTable,
-      progressBar = FALSE,
-      reportOverallTime = FALSE
-    )
-  }
-  
-  if (is.null(exportedVocablary)) {
-    exportedVocablary <- list()
-  }
-  if (!is.null(resolvedConceptIds)) {
-    exportedVocablary$resolvedConceptIds = resolvedConceptIds
-  }
-  if (!is.null(includedSourceCodes)) {
-    exportedVocablary$includedSourceCodes = includedSourceCodes
-  }
-  if (!is.null(indexEventBreakdown)) {
-    exportedVocablary$indexEventBreakdown = indexEventBreakdown
-  }
-  if (!is.null(orphanCodes)) {
-    exportedVocablary$orphanCodes = orphanCodes
-  }
-  if (!is.null(conceptSets)) {
-    exportedVocablary$conceptSets = conceptSets
-  }
-  
-  delta <- Sys.time() - startConceptSetDiagnostics
-  ParallelLogger::logInfo("Running concept set diagnostics took ",
-                          signif(delta, 3),
-                          " ",
-                          attr(delta, "units"))
-  
-  return(exportedVocablary)
-}

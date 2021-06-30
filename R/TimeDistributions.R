@@ -14,6 +14,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+#' Given a set of instantiated cohorts get time distribution for the cohorts.
+#'
+#' @description
+#' This function uses \code{\link[FeatureExtraction]{getDbCovariateData}}  to
+#' return distribution of time (in days) in prior observation, post observation
+#' and during cohort period.
+#'
+#' @template Connection
+#'
+#' @template CohortDatabaseSchema
+#'
+#' @template TempEmulationSchema
+#'
+#' @template CohortTable
+#'
+#' @param cohortIds              A vector of one or more Cohort Ids to compute time distribution for.
+#'
+#' @export
 getTimeDistributions <- function(connectionDetails = NULL,
                                  connection = NULL,
                                  cdmDatabaseSchema,
