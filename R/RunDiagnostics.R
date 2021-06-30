@@ -960,7 +960,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       )
       if (nrow(cohortOverlap) > 0) {
         cohortOverlap <-
-          enforceMinCellValue(cohortOverlap, "valueCount", minCellCount)
+          enforceMinCellValue(cohortOverlap, "countValue", minCellCount)
         
         cohortOverlap <- cohortOverlap %>% 
           dplyr::mutate(attributeName = dplyr::case_when(.data$attributeName == 'es' ~ 'eitherSubjects',
@@ -977,9 +977,9 @@ runCohortDiagnostics <- function(packageName = NULL,
           dplyr::select(.data$targetCohortId, 
                         .data$comparatorCohortId,
                         .data$attributeName,
-                        .data$valueCount) %>%
+                        .data$countValue) %>%
           tidyr::pivot_wider(id_cols = c("targetCohortId", "comparatorCohortId"),
-                             values_from = "valueCount",
+                             values_from = "countValue",
                              values_fill = 0,
                              names_from = "attributeName") %>%
           dplyr::mutate(databaseId = !!databaseId) %>% 
@@ -1171,7 +1171,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                             " ",
                             attr(delta, "units"))
   }
-  
+
   # Cohort Temporal Relationship ----
   if (runCohortTemporalRelationship) {
     ParallelLogger::logInfo("Computing Cohort Temporal Relationship")
@@ -1198,8 +1198,8 @@ runCohortDiagnostics <- function(packageName = NULL,
         connection = connection,
         cohortDatabaseSchema = cohortDatabaseSchema,
         cohortTable = cohortTable,
-        tragetChortIds = subset$cohortId,
-        comparatorCohortIds = cohort$cohortId
+        targetCohortIds = subset$cohortId,
+        comparatorCohortIds = cohorts$cohortId
       )
       cohortTemporalRelationship <- cohortTemporalRelationship %>% 
         dplyr::mutate(startDay = as.numeric(.data$attributeName)*30) %>% 

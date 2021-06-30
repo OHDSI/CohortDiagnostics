@@ -10,7 +10,7 @@ computeCohortTemporalRelationship(
   cohortDatabaseSchema,
   cohortTable = "cohort",
   targetCohortIds,
-  fetureCohortIds
+  comparatorCohortIds
 )
 }
 \arguments{

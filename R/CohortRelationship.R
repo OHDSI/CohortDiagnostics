@@ -39,10 +39,10 @@ computeCohortTemporalRelationship <-
            cohortDatabaseSchema,
            cohortTable = "cohort",
            targetCohortIds,
-           fetureCohortIds) {
+           comparatorCohortIds) {
     startTime <- Sys.time()
     
-    if (length(cohortIds) == 0) {
+    if (length(targetCohortIds) == 0) {
       return(NULL)
     }
     
@@ -52,13 +52,13 @@ computeCohortTemporalRelationship <-
     }
     
     sql <- SqlRender::loadRenderTranslateSql(
-      "CohortRelationship.sql",
+      "CohortTemporalRelationship.sql",
       packageName = "CohortDiagnostics",
       dbms = connection@dbms,
       cohort_database_schema = cohortDatabaseSchema,
       cohort_table = cohortTable,
-      target_cohort_ids = cohortIds,
-      feture_ohort_ids = fetureCohortIds
+      target_cohort_ids = targetCohortIds,
+      comparator_cohort_ids = comparatorCohortIds
     )
     DatabaseConnector::executeSql(connection = connection,
                                   sql = sql)
