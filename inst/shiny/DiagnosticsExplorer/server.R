@@ -49,6 +49,10 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  getDatabaseIdInCohortConceptSetSecond <- shiny::reactive({
+    return(database$databaseId[database$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchemaSecond])
+  })
+  
   cohortSubset <- shiny::reactive({
     return(cohort %>%
              dplyr::arrange(.data$cohortId))
@@ -556,10 +560,7 @@ shiny::shinyServer(function(input, output, session) {
                     )
                   ),
                   tags$td(
-                    shiny::htmlOutput("subjectCountInCohortConceptSet")
-                  ),
-                  tags$td(
-                    shiny::htmlOutput("recordCountInCohortConceptSet")
+                    shiny::htmlOutput("personAndRecordCountInCohortDefinitionConceptSet")
                   )
                 )
               ),
@@ -727,10 +728,7 @@ shiny::shinyServer(function(input, output, session) {
                   )
                 ),
                 tags$td(
-                  shiny::htmlOutput("subjectCountInCohortConceptSetSecond")
-                ),
-                tags$td(
-                  shiny::htmlOutput("recordCountInCohortConceptSetSecond")
+                  shiny::htmlOutput("personAndRecordCountInCohortDefinitionConceptSetSecond")
                 )
               )
             ),
@@ -979,6 +977,19 @@ shiny::shinyServer(function(input, output, session) {
     return(database$databaseId[database$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchema])
   })
   
+  getPersonAndRecordCountForVocabularySchema <-  function(cohortId, databaseId) {
+    data <- cohortCount %>%
+      dplyr::filter(.data$cohortId == !!cohortId) %>% 
+      dplyr::filter(.data$databaseId == !!databaseId) %>% 
+      dplyr::select(.data$cohortSubjects, .data$cohortEntries)
+    
+    if (nrow(data) == 0) {
+      return(NULL)
+    } else {
+      return(data)
+    }
+  }
+  
   getSubjectAndRecordCountForCohortConceptSet <- shiny::reactive(x = {
     row <- selectedCohortDefinitionRow()[1,]
     
@@ -986,10 +997,8 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     } else {
       
-      data <- cohortCount %>%
-        dplyr::filter(.data$cohortId == row$cohortId) %>% 
-        dplyr::filter(.data$databaseId == getDatabaseIdInCohortConceptSet()) %>% 
-        dplyr::select(.data$cohortSubjects, .data$cohortEntries)
+      data <- getPersonAndRecordCountForVocabularySchema(cohortId = row$cohortId, 
+                                                         databaseId = getDatabaseIdInCohortConceptSet())
       
       if (nrow(data) == 0) {
         return(NULL)
@@ -999,7 +1008,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  output$subjectCountInCohortConceptSet <- shiny::renderUI({
+  output$personAndRecordCountInCohortDefinitionConceptSet <- shiny::renderUI({
     row <- getSubjectAndRecordCountForCohortConceptSet()
     if (is.null(row)) {
       return(NULL)
@@ -1007,19 +1016,7 @@ shiny::shinyServer(function(input, output, session) {
       tags$table(
         tags$tr(
           tags$td("Subjects: "),
-          tags$td(scales::comma(row$cohortSubjects, accuracy = 1))
-        )
-      )
-    }
-  })
-  
-  output$recordCountInCohortConceptSet <- shiny::renderUI({
-    row <- getSubjectAndRecordCountForCohortConceptSet()
-    if (is.null(row)) {
-      return(NULL)
-    } else {
-      tags$table(
-        tags$tr(
+          tags$td(scales::comma(row$cohortSubjects, accuracy = 1)),
           tags$td("Records: "),
           tags$td(scales::comma(row$cohortEntries, accuracy = 1))
         )
@@ -1796,6 +1793,40 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
+  getSubjectAndRecordCountForCohortConceptSetSecond <- shiny::reactive(x = {
+    row <- selectedCohortDefinitionRow()[2,]
+    
+    if (is.null(row) || length(getDatabaseIdInCohortConceptSetSecond()) == 0) {
+      return(NULL)
+    } else {
+      
+      data <- getPersonAndRecordCountForVocabularySchema(cohortId = row$cohortId, 
+                                                         databaseId = getDatabaseIdInCohortConceptSetSecond())
+      
+      if (nrow(data) == 0) {
+        return(NULL)
+      } else {
+        return(data)
+      }
+    }
+  })
+  
+  output$personAndRecordCountInCohortDefinitionConceptSetSecond <- shiny::renderUI({
+    row <- getSubjectAndRecordCountForCohortConceptSetSecond()
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+      tags$table(
+        tags$tr(
+          tags$td("Subjects: "),
+          tags$td(scales::comma(row$cohortSubjects, accuracy = 1)),
+          tags$td("Records: "),
+          tags$td(scales::comma(row$cohortEntries, accuracy = 1))
+        )
+      )
+    }
+  })
+  
   output$cohortDefinitionConceptSetsSecondTable <-
     DT::renderDataTable(expr = {
       data <- cohortDefinitionConceptSetSecond()
@@ -1893,19 +1924,19 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   cohortDefinitionOrphanConceptSecondTableData <- shiny::reactive(x = {
-    validate(need(all(!is.null(getDatabaseIdInCohortConceptSet()),
-                      length(getDatabaseIdInCohortConceptSet()) > 0),
+    validate(need(all(!is.null(getDatabaseIdInCohortConceptSetSecond()),
+                      length(getDatabaseIdInCohortConceptSetSecond()) > 0),
                   "Orphan codes are not available for reference vocabulary in this version."))
     row <- selectedCohortDefinitionRow()
     
     if (is.null(row) || length(cohortDefinitionConceptSetExpressionSecondRow()$name) == 0) {
       return(NULL)
     }
-    validate(need(length(input$databaseOrVocabularySchema) > 0, "No data sources chosen"))
+    validate(need(length(input$databaseOrVocabularySchemaSecond) > 0, "No data sources chosen"))
     
     data <- getResultsFromOrphanConcept(dataSource = dataSource,
                                         cohortId = row$cohortId,
-                                        databaseIds = getDatabaseIdInCohortConceptSet()) %>% 
+                                        databaseIds = getDatabaseIdInCohortConceptSetSecond()) %>% 
       dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionSecondRow()$id)
     
     validate(need(nrow(data) > 0, "No orphan codes returned"))
@@ -2074,7 +2105,7 @@ shiny::shinyServer(function(input, output, session) {
   getResolvedOrMappedConceptSecond <- shiny::reactive({
     data <- NULL
     databaseIdToFilter <- database %>%
-      dplyr::filter(.data$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchema) %>%
+      dplyr::filter(.data$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchemaSecond) %>%
       dplyr::pull(.data$databaseId)
     
     conceptCounts <- getConceptSecondCountForAllDatabase()
@@ -2139,11 +2170,11 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     if (exists("vocabularyDatabaseSchemas") &&
-        !is.null(input$databaseOrVocabularySchema) &&
-        length(input$databaseOrVocabularySchema) > 0) {
+        !is.null(input$databaseOrVocabularySchemaSecond) &&
+        length(input$databaseOrVocabularySchemaSecond) > 0) {
       vocabularyDataSchemaToFilter <-
         intersect(vocabularyDatabaseSchemas,
-                  input$databaseOrVocabularySchema)
+                  input$databaseOrVocabularySchemaSecond)
     } else {
       vocabularyDataSchemaToFilter <- NULL
     }
