@@ -1198,7 +1198,8 @@ runCohortDiagnostics <- function(packageName = NULL,
         connection = connection,
         cohortDatabaseSchema = cohortDatabaseSchema,
         cohortTable = cohortTable,
-        cohortIds = subset$cohortId
+        tragetChortIds = subset$cohortId,
+        comparatorCohortIds = cohort$cohortId
       )
       cohortTemporalRelationship <- cohortTemporalRelationship %>% 
         dplyr::mutate(startDay = as.numeric(.data$attributeName)*30) %>% 

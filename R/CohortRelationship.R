@@ -28,7 +28,9 @@
 #'
 #' @template CohortTable
 #'
-#' @template CohortIds
+#' @param targetCohortIds              A vector of one or more Cohort Ids for use as target cohorts.
+#' 
+#' @param comparatorCohortIds          A vector of one or more Cohort Ids for use as feature/comparator cohorts.
 #'
 #' @export
 computeCohortTemporalRelationship <-
@@ -36,7 +38,8 @@ computeCohortTemporalRelationship <-
            connection = NULL,
            cohortDatabaseSchema,
            cohortTable = "cohort",
-           cohortIds) {
+           targetCohortIds,
+           fetureCohortIds) {
     startTime <- Sys.time()
     
     if (length(cohortIds) == 0) {
@@ -54,7 +57,8 @@ computeCohortTemporalRelationship <-
       dbms = connection@dbms,
       cohort_database_schema = cohortDatabaseSchema,
       cohort_table = cohortTable,
-      target_cohort_ids = cohortIds
+      target_cohort_ids = cohortIds,
+      feture_ohort_ids = fetureCohortIds
     )
     DatabaseConnector::executeSql(connection = connection,
                                   sql = sql)

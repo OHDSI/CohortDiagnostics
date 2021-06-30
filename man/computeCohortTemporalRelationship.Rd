@@ -9,7 +9,8 @@ computeCohortTemporalRelationship(
   connection = NULL,
   cohortDatabaseSchema,
   cohortTable = "cohort",
-  cohortIds
+  targetCohortIds,
+  fetureCohortIds
 )
 }
 \arguments{
@@ -30,7 +31,9 @@ this should include both the database and schema name, for example
 
 \item{cohortTable}{Name of the cohort table.}
 
-\item{cohortIds}{A vector of one or more Cohort Ids.}
+\item{targetCohortIds}{A vector of one or more Cohort Ids for use as target cohorts.}
+
+\item{comparatorCohortIds}{A vector of one or more Cohort Ids for use as feature/comparator cohorts.}
 }
 \description{
 Given a set of cohorts, get temporal relationships between the
