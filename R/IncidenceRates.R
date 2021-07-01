@@ -22,6 +22,8 @@
 #' @template Connection
 #'
 #' @template CohortDatabaseSchema
+#' 
+#' @template CdmDatabaseSchema
 #'
 #' @template VocabularyDatabaseSchema
 #' 

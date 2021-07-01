@@ -36,6 +36,10 @@ this should include both the database and schema name, for example
 
 \item{cohortTable}{Name of the cohort table.}
 
+\item{cdmDatabaseSchema}{Schema name where your patient-level data in OMOP CDM format resides.
+Note that for SQL Server, this should include both the database and
+schema name, for example 'cdm_data.dbo'.}
+
 \item{vocabularyDatabaseSchema}{Schema name where your OMOP vocabulary data resides. This is 
 commonly the same as cdmDatabaseSchema. Note that for 
 SQL Server, this should include both the database and

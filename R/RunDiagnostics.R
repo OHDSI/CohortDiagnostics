@@ -470,9 +470,9 @@ runCohortDiagnostics <- function(packageName = NULL,
             simplify = TRUE
           )
         if (!is.null(stats$simplifiedOutput)) {
-          stats <- stats$simplifiedOutput %>%
+          stats$simplifiedOutput <- stats$simplifiedOutput %>%
             dplyr::mutate(databaseId = !!databaseId)
-          if (nrow(stats) > 0) {
+          if (nrow(stats$simplifiedOutput) > 0) {
             stats$simplifiedOutput <-
               enforceMinCellValue(data = stats$simplifiedOutput,
                                   fieldName = "meetSubjects",
@@ -498,7 +498,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           colnames(stats$simplifiedOutput) <-
             SqlRender::camelCaseToSnakeCase(colnames(stats$simplifiedOutput))
           writeToCsv(
-            data = stats,
+            data = stats$simplifiedOutput,
             fileName = file.path(exportFolder, "inclusion_rule_stats.csv"),
             incremental = incremental,
             cohortId = subset$cohortId
