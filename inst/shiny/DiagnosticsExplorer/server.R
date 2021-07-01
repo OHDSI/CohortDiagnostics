@@ -170,6 +170,26 @@ shiny::shinyServer(function(input, output, session) {
                 "cohortDefinitionRowIsSelected",
                 suspendWhenHidden = FALSE)
   
+  output$selectedCohortInCohortDefinition <- shiny::renderText(expr = {
+    row <- selectedCohortDefinitionRow()[1,]
+    
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+      return(paste("Selected cohort: ", row$compoundName))
+    }
+  })
+  
+  output$selectedSecondCohortInCohortDefinition <- shiny::renderText(expr = {
+    row <- selectedCohortDefinitionRow()[2,]
+    
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+      return(paste("Selected cohort: ", row$compoundName))
+    }
+  })
+  
   cohortDetailsText <- shiny::reactive(x = {
     data <- selectedCohortDefinitionRow()
     
@@ -520,6 +540,7 @@ shiny::shinyServer(function(input, output, session) {
       shiny::conditionalPanel(
         condition = "output.cohortDefinitionCountOfSelectedRows > 0 & 
                      output.cohortDefinitionRowIsSelected == true",
+        shiny::textOutput(outputId = "selectedCohortInCohortDefinition"),
         shiny::tabsetPanel(
           type = "tab",
           shiny::tabPanel(title = "Details",
@@ -686,6 +707,7 @@ shiny::shinyServer(function(input, output, session) {
       shiny::conditionalPanel(
         condition = "output.cohortDefinitionCountOfSelectedRows == 2 & 
                      output.cohortDefinitionRowIsSelected == true",
+        shiny::textOutput(outputId = "selectedSecondCohortInCohortDefinition"),
         shiny::tabsetPanel(
           type = "tab",
           shiny::tabPanel(title = "Details",
