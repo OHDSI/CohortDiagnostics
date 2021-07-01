@@ -145,7 +145,7 @@ getCohortsJsonAndSqlFromPackage <-
       return(json)
     }
     cohorts$json <- sapply(cohorts$name, getJson)
-    return(selectColumnAccordingToResultsModel(cohorts))
+    return(cohorts)
   }
 
 
@@ -199,27 +199,7 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
         generateStats = generateStats
       )
   }
-  return(selectColumnAccordingToResultsModel(cohortSetReference))
-}
-
-selectColumnAccordingToResultsModel <- function(data) {
-  columsToInclude <- c()
-  if ("phenotypeId" %in% colnames(data)) {
-    columsToInclude <- c(columsToInclude, "phenotypeId")
-  }
-  columsToInclude <- c(columsToInclude, "cohortId", "cohortName")
-  if ("logicDescription" %in% colnames(data)) {
-    columsToInclude <- c(columsToInclude, "logicDescription")
-  }
-  if ("referentConceptId" %in% colnames(data)) {
-    columsToInclude <- c(columsToInclude, "referentConceptId")
-  }
-  if ("cohortType" %in% colnames(data)) {
-    columsToInclude <- c(columsToInclude, "cohortType")
-  }
-  columsToInclude <-
-    c(columsToInclude, "json" , "sql", "webApiCohortId")
-  return(data[, columsToInclude])
+  return(cohortSetReference)
 }
 
 getCohortsJsonAndSql <- function(packageName = NULL,
