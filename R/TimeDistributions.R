@@ -25,12 +25,16 @@
 #' @template Connection
 #'
 #' @template CohortDatabaseSchema
+#' 
+#' @template CdmDatabaseSchema
 #'
 #' @template TempEmulationSchema
 #'
 #' @template CohortTable
 #'
 #' @param cohortIds              A vector of one or more Cohort Ids to compute time distribution for.
+#' 
+#' @template CdmVersion
 #'
 #' @export
 getTimeDistributions <- function(connectionDetails = NULL,

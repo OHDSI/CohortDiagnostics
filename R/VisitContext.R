@@ -24,6 +24,10 @@
 #' @template Connection
 #'
 #' @template CohortDatabaseSchema
+#' 
+#' @template CdmDatabaseSchema
+#' 
+#' @template VocabularyDatabaseSchema
 #'
 #' @template TempEmulationSchema
 #'
@@ -31,7 +35,7 @@
 #'
 #' @param cohortIds              A vector of one or more Cohort Ids to compute visit context for.
 #' 
-#' @param cdmVersion             Only CDM 5 is supported at this time.
+#' @template CdmVersion
 #'
 #' @export
 getVisitContext <- function(connectionDetails = NULL,
