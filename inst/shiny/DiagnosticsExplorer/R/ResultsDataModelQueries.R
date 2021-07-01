@@ -1013,7 +1013,7 @@ getCohortAsFeatureCharacterizationResults <-
                                 cohortIds = cohortIds,
                                 databaseIds = databaseIds)
     cohort <- getResultsCohort(dataSource = dataSource)
-
+    
     cohortRelationships <-
       getResultsFromCohortRelationships(dataSource = dataSource,
                                         cohortIds = cohortIds,
@@ -1137,7 +1137,7 @@ getCohortAsFeatureCharacterizationResults <-
       isBinary = c('Y','Y','Y','Y'),
       missingMeansZero = c('Y','Y','Y','Y')
     )
-
+    
     covariateRef <- tidyr::crossing(cohort,
                                     analysisRef %>% 
                                       dplyr::select(.data$analysisId, 

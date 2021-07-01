@@ -469,39 +469,93 @@ runCohortDiagnostics <- function(packageName = NULL,
             folder = inclusionStatisticsFolder,
             simplify = TRUE
           )
-        if (!is.null(stats)) {
-          stats <- stats %>%
+        if (!is.null(stats$simplifiedOutput)) {
+          stats <- stats$simplifiedOutput %>%
             dplyr::mutate(databaseId = !!databaseId)
           if (nrow(stats) > 0) {
-            stats <-
-              enforceMinCellValue(data = stats,
+            stats$simplifiedOutput <-
+              enforceMinCellValue(data = stats$simplifiedOutput,
                                   fieldName = "meetSubjects",
                                   minValues = minCellCount)
-            stats <-
-              enforceMinCellValue(data = stats,
+            stats$simplifiedOutput <-
+              enforceMinCellValue(data = stats$simplifiedOutput,
                                   fieldName = "gainSubjects",
                                   minValues = minCellCount)
-            stats <-
-              enforceMinCellValue(data = stats,
+            stats$simplifiedOutput <-
+              enforceMinCellValue(data = stats$simplifiedOutput,
                                   fieldName = "totalSubjects",
                                   minValues = minCellCount)
-            stats <-
-              enforceMinCellValue(data = stats,
+            stats$simplifiedOutput <-
+              enforceMinCellValue(data = stats$simplifiedOutput,
                                   fieldName = "remainSubjects",
                                   minValues = minCellCount)
           }
-          if ("cohortDefinitionId" %in% (colnames(stats))) {
-            stats <- stats %>%
+
+          if ("cohortDefinitionId" %in% (colnames(stats$simplifiedOutput))) {
+            stats$simplifiedOutput <- stats$simplifiedOutput %>%
               dplyr::rename(cohortId = .data$cohortDefinitionId)
           }
-          colnames(stats) <-
-            SqlRender::camelCaseToSnakeCase(colnames(stats))
+          colnames(stats$simplifiedOutput) <-
+            SqlRender::camelCaseToSnakeCase(colnames(stats$simplifiedOutput))
           writeToCsv(
             data = stats,
             fileName = file.path(exportFolder, "inclusion_rule_stats.csv"),
             incremental = incremental,
             cohortId = subset$cohortId
           )
+          
+          listOfInclusionTables <- c('cohortInclusion', 
+                                     'cohortInclusionResult',
+                                     'cohortInclusionStats',
+                                     'cohortSummaryStats')
+          
+          for (k in (1:length(listOfInclusionTables))) {
+            data <- stats[[listOfInclusionTables[[k]]]]
+            if ('personCount' %in% colnames(data)) {
+              data <- enforceMinCellValue(data = data,
+                                          fieldName = "personCount",
+                                          minValues = minCellCount)
+            }
+            if ('gainCount' %in% colnames(data)) {
+              data <- enforceMinCellValue(data = data,
+                                          fieldName = "gainCount",
+                                          minValues = minCellCount)
+            }
+            if ('personTotal' %in% colnames(data)) {
+              data <- enforceMinCellValue(data = data,
+                                          fieldName = "personTotal",
+                                          minValues = minCellCount)
+            }
+            if ('baseCount' %in% colnames(data)) {
+              data <- enforceMinCellValue(data = data,
+                                          fieldName = "baseCount",
+                                          minValues = minCellCount)
+            }
+            if ('finalCount' %in% colnames(data)) {
+              data <- enforceMinCellValue(data = data,
+                                          fieldName = "finalCount",
+                                          minValues = minCellCount)
+            }
+            if ("cohortDefinitionId" %in% (colnames(data))) {
+              data <- data %>%
+                dplyr::rename(cohortId = .data$cohortDefinitionId)
+            }
+            if ("databaseId" %in% (colnames(data))) {
+              data <- data %>%
+                dplyr::mutate(databaseId = !!databaseId)
+            }
+            
+            colnames(data) <-
+              SqlRender::camelCaseToSnakeCase(colnames(data))
+            
+            writeToCsv(
+              data = data,
+              fileName = file.path(exportFolder, paste0(camelCaseToSnakeCase(listOfInclusionTables[[k]]),
+                                                        ".csv")),
+              incremental = incremental,
+              cohortId = subset$cohortId
+            )
+          }
           recordTasksDone(
             cohortId = subset$cohortId,
             task = "runInclusionStatistics",

@@ -4,6 +4,7 @@ DROP TABLE IF EXISTS analysis_ref;
 DROP TABLE IF EXISTS calendar_incidence;
 DROP TABLE IF EXISTS cohort;
 DROP TABLE IF EXISTS cohort_count;
+DROP TABLE IF EXISTS cohort_inclusion;
 DROP TABLE IF EXISTS cohort_overlap;
 DROP TABLE IF EXISTS cohort_relationships;
 DROP TABLE IF EXISTS concept;
@@ -84,6 +85,52 @@ CREATE TABLE cohort_count (
 			cohort_subjects FLOAT NOT NULL,
 			database_id VARCHAR NOT NULL,
 			PRIMARY KEY(cohort_id, database_id)
+);
+
+--Table cohort_inclusion
+
+CREATE TABLE cohort_inclusion (
+			cohort_id  BIGINT NOT NULL,
+			rule_sequence int NOT NULL,
+			name varchar NULL,
+			description varchar NULL,
+	    database_id VARCHAR NOT NULL,
+			PRIMARY KEY(cohort_id, rule_sequence)
+);
+
+--Table cohort_inclusion_result
+
+CREATE TABLE cohort_inclusion_result (
+  cohort_id BIGINT NOT NULL,
+  mode_id int NOT NULL,
+  inclusion_rule_mask bigint NOT NULL,
+  person_count bigint NOT NULL,
+	database_id VARCHAR NOT NULL,
+	PRIMARY KEY(cohort_id, database_id, inclusion_rule_mask, mode_id)
+);
+
+--Table cohort_inclusion_stats
+
+CREATE TABLE cohort_inclusion_stats(
+  cohort_id BIGINT NOT NULL,
+  rule_sequence int NOT NULL,
+  mode_id int NOT NULL,
+  person_count bigint NOT NULL,
+  gain_count bigint NOT NULL,
+  person_total bigint NOT NULL,
+	database_id VARCHAR NOT NULL,
+	PRIMARY KEY(cohort_id, database_id, rule_sequence, mode_id)
+)
+
+--Table cohort_summary_stats
+
+CREATE TABLE cohort_summary_stats(
+  cohort_id BIGINT NOT NULL,
+  mode_id int NOT NULL,
+  base_count bigint NOT NULL,
+  final_count bigint NOT NULL,
+	database_id VARCHAR NOT NULL,
+	PRIMARY KEY(cohort_id, database_id, mode_id)
 );
 
 --Table cohort_overlap

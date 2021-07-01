@@ -327,6 +327,7 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
     }
     return(stats)
   }
+  
   inclusion <- fetchStats(cohortInclusionFile) %>%
     tidyr::replace_na(replace = list(description = ''))
   summaryStats <- fetchStats(cohortSummaryStatsFile)
@@ -351,7 +352,13 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
     signif(delta, 3),
     attr(delta, "units")
   ))
-  return(result)
+  output <- list(simplifiedOutput = result,
+                 cohortInclusion = inclusion,
+                 cohortInclusionResult = inclusionResults,
+                 cohortInclusionStats = inclusionStats,
+                 cohortSummaryStats = summaryStats
+                 )
+  return(output)
 }
 
 processInclusionStats <- function(inclusion,
