@@ -588,7 +588,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
             results_database_schema.cohort_summary_stats = "#cohort_summary_stats"
           )
         } else {
-          ParallelLogger::logDebug('Cohort id ', cohorts$cohortId[i], " SQL does not have inclusion rule statistics tables.")
+          ParallelLogger::logDebug(' - Cohort id ', cohorts$cohortId[i], " SQL does not have inclusion rule statistics tables.")
         }
         # added for compatibility for 2.8.1
         # https://github.com/OHDSI/CohortDiagnostics/issues/387
