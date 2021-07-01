@@ -193,6 +193,12 @@ this should include both the database and schema name, for example
       <td><p>Name of the cohort table.</p></td>
     </tr>
     <tr>
+      <th>cdmDatabaseSchema</th>
+      <td><p>Schema name where your patient-level data in OMOP CDM format resides.
+Note that for SQL Server, this should include both the database and
+schema name, for example 'cdm_data.dbo'.</p></td>
+    </tr>
+    <tr>
       <th>vocabularyDatabaseSchema</th>
       <td><p>Schema name where your OMOP vocabulary data resides. This is 
 commonly the same as cdmDatabaseSchema. Note that for 
