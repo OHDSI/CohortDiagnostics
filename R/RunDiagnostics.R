@@ -264,11 +264,11 @@ runCohortDiagnostics <- function(packageName = NULL,
   if (length(obseveredButNotExpected) > 0) {
     ParallelLogger::logTrace(paste0("The following columns were found in cohort table, but are not expected - they will be removed:", obseveredButNotExpected))
   }
-  if ('logicDescription' %in% expectedButNotObsevered) {
-    cohorts$logicDescription <- cohorts$cohortName
-  }
-  if ('metadata' %in% expectedButNotObsevered) {
-    cohorts$metadata <- cohorts$cohortName
+  
+  for (i in (1:length(cohortTableColumnNamesExpected))) {
+    if (!cohortTableColumnNamesExpected[[i]] %in% colnames(cohorts)) {
+      cohorts[[cohortTableColumnNamesExpected[[i]]]] <- NA
+    }
   }
   
   cohorts <- cohorts %>%
