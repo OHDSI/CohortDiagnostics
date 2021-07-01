@@ -22,7 +22,7 @@ cohort_count,cohort_id,bigint,Yes,Yes,No,Yes
 cohort_count,cohort_entries,float,Yes,No,No,Yes
 cohort_count,cohort_subjects,float,Yes,No,No,Yes
 cohort_count,database_id,varchar,Yes,Yes,No,Yes
-cohort_inclusion,cohort_definition_id,bigint,Yes,Yes,No,Yes
+cohort_inclusion,cohort_id,bigint,Yes,Yes,No,Yes
 cohort_inclusion,rule_sequence,int,Yes,Yes,No,Yes
 cohort_inclusion,name,varchar,No,No,Yes,No
 cohort_inclusion,description,varchar,No,No,Yes,No

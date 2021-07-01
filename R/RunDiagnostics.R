@@ -540,7 +540,7 @@ runCohortDiagnostics <- function(packageName = NULL,
               data <- data %>%
                 dplyr::rename(cohortId = .data$cohortDefinitionId)
             }
-            if ("databaseId" %in% (colnames(data))) {
+            if (!"databaseId" %in% (colnames(data))) {
               data <- data %>%
                 dplyr::mutate(databaseId = !!databaseId)
             }
