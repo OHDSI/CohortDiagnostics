@@ -566,9 +566,9 @@ instantiateCohortSet <- function(connectionDetails = NULL,
       } else {
         ParallelLogger::logDebug('Cohort id ', cohorts$cohortId[i], " SQL does not have vocabularyDatabaseSchema.")
       }
-      if (stringr::str_detect(string = sql,
+      if (!stringr::str_detect(string = sql,
                               pattern = 'results_database_schema')) {
-        ParallelLogger::logDebug('Cohort id ', cohorts$cohortId[i], " SQL has inclusion rule statistics tables.")
+        ParallelLogger::logDebug('Cohort id ', cohorts$cohortId[i], " SQL does not have resultsDatabaseSchema.")
       }
       if (generateInclusionStats) {
         if (stringr::str_detect(string = sql,
