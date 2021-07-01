@@ -254,59 +254,21 @@ runCohortDiagnostics <- function(packageName = NULL,
     SqlRender::snakeCaseToCamelCase() %>%
     sort()
   
-  expectedButNotObsevered <-
-    setdiff(x = cohortTableColumnNamesExpected, y = cohortTableColumnNamesObserved)
-  if (length(expectedButNotObsevered) > 0) {
-    requiredButNotObsevered <-
-      setdiff(x = cohortTableColumnNamesRequired, y = cohortTableColumnNamesObserved)
+  requiredButNotObsevered <-
+    setdiff(x = cohortTableColumnNamesRequired, y = cohortTableColumnNamesObserved)
+  if (length(requiredButNotObsevered) > 0) {
+    stop(paste("The following required fields not found in cohort table:",paste0(requiredButNotObsevered, collapse = ", ")))
   }
   obseveredButNotExpected <-
     setdiff(x = cohortTableColumnNamesObserved, y = cohortTableColumnNamesExpected)
-  
-  if (length(requiredButNotObsevered) > 0) {
-    stop(paste(
-      "The following required fields not found in cohort table:",
-      paste0(requiredButNotObsevered, collapse = ", ")
-    ))
+  if (length(obseveredButNotExpected) > 0) {
+    ParallelLogger::logTrace(paste0("The following columns were found in cohort table, but are not expected - they will be removed:", obseveredButNotExpected))
   }
-  
   if ('logicDescription' %in% expectedButNotObsevered) {
     cohorts$logicDescription <- cohorts$cohortName
   }
-  
   if ('metadata' %in% expectedButNotObsevered) {
-    if (length(obseveredButNotExpected) > 0) {
-      writeLines(
-        paste(
-          "The following columns were observed in the cohort table, \n
-        that are not expected and will be available as part of json object \n
-        in a newly created 'metadata' column.",
-          paste0(obseveredButNotExpected, collapse = ", ")
-        )
-      )
-    }
-    columnsToAddToJson <-
-      setdiff(x = cohortTableColumnNamesObserved,
-              y = c('json', 'sql')) %>%
-      unique() %>%
-      sort()
-    cohorts <- cohorts %>%
-      dplyr::mutate(metadata = as.list(columnsToAddToJson) %>% RJSONIO::toJSON(digits = 23))
-  } else {
-    if (length(obseveredButNotExpected) > 0) {
-      writeLines(
-        paste(
-          "The following columns were observed in the cohort table, \n
-          that are not expected. If you would like to retain them please add \n
-          them as JSON objects in the 'metadata' column.",
-          paste0(obseveredButNotExpected, collapse = ", ")
-        )
-      )
-      stop(paste0(
-        "Terminating - please update the metadata column to include: ",
-        paste0(obseveredButNotExpected, collapse = ", ")
-      ))
-    }
+    cohorts$metadata <- cohorts$cohortName
   }
   
   cohorts <- cohorts %>%

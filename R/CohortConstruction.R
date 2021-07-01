@@ -235,18 +235,6 @@ getCohortsJsonAndSql <- function(packageName = NULL,
         cohortToCreateFile = cohortToCreateFile,
         cohortIds = cohortIds
       )
-    if (!is.null(baseUrl)) {
-      baseUrl <- NULL
-      ParallelLogger::logInfo(
-        "Ignoring parameter baseUrl because packageName is provided. Overiding user parameter baseUrl - setting to NULL"
-      )
-    }
-    if (!is.null(cohortSetReference)) {
-      cohortSetReference <- NULL
-      ParallelLogger::logInfo(
-        "Ignoring parameter cohortSetReference because packageName is provided. Overiding user parameter cohortSetReference - setting to NULL"
-      )
-    }
   } else {
     cohorts <- getCohortsJsonAndSqlFromWebApi(
       baseUrl = baseUrl,
@@ -260,9 +248,7 @@ getCohortsJsonAndSql <- function(packageName = NULL,
     warning("No cohorts founds")
   }
   if (nrow(cohorts) != length(cohorts$cohortId %>% unique())) {
-    warning(
-      "Please check input cohort specification. Is there duplication of cohortId? Returning empty cohort table."
-    )
+    warning("Please check input cohort specification. Is there duplication of cohortId? Returning empty cohort table.")
     return(cohorts[0, ])
   }
   return(cohorts)

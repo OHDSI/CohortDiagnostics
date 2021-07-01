@@ -27,17 +27,8 @@
 #'
 checkInputFileEncoding <- function(fileName) {
   encoding <- readr::guess_encoding(file = fileName, n_max = min(1e7))
-  
   if (!encoding$encoding[1] %in% c("UTF-8", "ASCII")) {
-    stop(
-      "Illegal encoding found in file ",
-      basename(fileName),
-      ". Should be 'ASCII' or 'UTF-8', found:",
-      paste(
-        paste0(encoding$encoding, " (", encoding$confidence, ")"),
-        collapse = ", "
-      )
-    )
+    stop("Illegal encoding found in file ",basename(fileName),". Should be 'ASCII' or 'UTF-8', found:",paste(paste0(encoding$encoding, " (", encoding$confidence, ")"),collapse = ", "))
   }
   invisible(TRUE)
 }
