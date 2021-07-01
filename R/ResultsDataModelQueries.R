@@ -1013,24 +1013,25 @@ getCohortAsFeatureCharacterizationResults <-
                                 cohortIds = cohortIds,
                                 databaseIds = databaseIds)
     cohort <- getResultsCohort(dataSource = dataSource)
-
+    
     cohortRelationships <-
       getResultsFromCohortRelationships(dataSource = dataSource,
                                         cohortIds = cohortIds,
                                         databaseIds = databaseIds)
-    
-    cohortRelationships <- cohortRelationships %>% 
-      dplyr::filter(.data$relationshipType == 'a')
-    
-    if (is.null(cohortRelationships)) {
-      return(NULL)
+    if (!is.null(cohortRelationships)) {
+      cohortRelationships <- cohortRelationships %>% 
+        dplyr::filter(.data$relationshipType == '11') 
     }
+    
     # comparator cohort was on or after target cohort
     summarizeCohortRelationship <- function(data,
                                             startDayGte = NULL,
                                             endDayLte = NULL,
                                             analysisId,
                                             cohortCounts) {
+      
+      if (is.null(data) || nrow(data) == 0) {return(NULL)}
+      
       if (!is.null(startDayGte)) {
         data <- data %>%
           dplyr::filter(.data$startDay >= startDayGte)
@@ -1112,6 +1113,10 @@ getCohortAsFeatureCharacterizationResults <-
       comparatorOccurrenceAnyTime
     )
     
+    if (nrow(covariateValue) == 0) {
+      covariateValue <- NULL
+    }
+    
     analysisRef <- dplyr::tibble(
       analysisId = c(-1, -2, -3, -4),
       analysisName = c(
@@ -1132,7 +1137,7 @@ getCohortAsFeatureCharacterizationResults <-
       isBinary = c('Y','Y','Y','Y'),
       missingMeansZero = c('Y','Y','Y','Y')
     )
-
+    
     covariateRef <- tidyr::crossing(cohort,
                                     analysisRef %>% 
                                       dplyr::select(.data$analysisId, 
@@ -1266,6 +1271,11 @@ getMultipleCharacterizationResults <-
     featureExtractioncharacterization <- addCharacterizationSource(x = featureExtractioncharacterization, 
                                                                    characterizationSourceValue = 1)
     
+    if (!is.null(featureExtractioncharacterization$covariateValue)) {
+      featureExtractioncharacterization$covariateValue <- featureExtractioncharacterization$covariateValue %>% 
+        dplyr::mutate(timeId = 0)
+    }
+    
     featureExtractionTemporalcharacterization <-
       getTemporalCohortCharacterizationResults(dataSource = dataSource,
                                                cohortIds = cohortIds,
@@ -1279,6 +1289,10 @@ getMultipleCharacterizationResults <-
                                                 databaseIds = databaseIds)
     cohortAsFeatureCharacterizationResults <- addCharacterizationSource(x = cohortAsFeatureCharacterizationResults, 
                                                                         characterizationSourceValue = 3)
+    if (!is.null(cohortAsFeatureCharacterizationResults$covariateValue)) {
+      cohortAsFeatureCharacterizationResults$covariateValue <- cohortAsFeatureCharacterizationResults$covariateValue %>% 
+        dplyr::mutate(timeId = 0)
+    }
     
     # cohortAsFeatureTemporalCharacterizationResults <-
     #   getCohortAsFeatureTemporalCharacterizationResults(dataSource = dataSource,
@@ -1292,28 +1306,41 @@ getMultipleCharacterizationResults <-
                                     featureExtractionTemporalcharacterization$temporalAnalysisRef,
                                     cohortAsFeatureCharacterizationResults$analysisRef
     )
+    if (nrow(analysisRef) == 0) {
+      analysisRef <- NULL
+    }
     
     covariateRef <- dplyr::bind_rows(featureExtractioncharacterization$covariateRef,
                                      featureExtractionTemporalcharacterization$temporalCovariateRef,
                                      cohortAsFeatureCharacterizationResults$covariateRef
     )
+    if (nrow(covariateRef) == 0) {
+      covariateRef <- NULL
+    }
     
-    covariateValue <- dplyr::bind_rows(featureExtractioncharacterization$covariateValue %>% 
-                                         dplyr::mutate(timeId = 0),
+    covariateValue <- dplyr::bind_rows(featureExtractioncharacterization$covariateValue,
                                        featureExtractionTemporalcharacterization$temporalCovariateValue,
-                                       cohortAsFeatureCharacterizationResults$covariateValue %>% 
-                                         dplyr::mutate(timeId = 0)
+                                       cohortAsFeatureCharacterizationResults$covariateValue
     )
+    if (nrow(covariateValue) == 0) {
+      covariateValue <- NULL
+    }
     
     covariateValueDist <- dplyr::bind_rows(featureExtractioncharacterization$covariateValueDist,
                                            featureExtractionTemporalcharacterization$temporalCovariateValueDist,
                                            cohortAsFeatureCharacterizationResults$covariateValueDist
     )
+    if (nrow(covariateValueDist) == 0) {
+      covariateValueDist <- NULL
+    }
     
     concept <- dplyr::bind_rows(featureExtractioncharacterization$concept,
                                 featureExtractionTemporalcharacterization$concept,
                                 cohortAsFeatureCharacterizationResults$concept
     )
+    if (nrow(concept) == 0) {
+      concept <- NULL
+    }
     
     return(list(analysisRef = analysisRef,
                 covariateRef = covariateRef, 
