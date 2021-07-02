@@ -176,7 +176,7 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(row)) {
       return(NULL)
     } else {
-      return(paste("Selected cohort: ", row$compoundName))
+      return(paste("<b>","Selected cohort: ", "</b>", row$compoundName))
     }
   })
   
@@ -186,7 +186,7 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(row)) {
       return(NULL)
     } else {
-      return(paste("Selected cohort: ", row$compoundName))
+      return(paste("<b>","Selected cohort: ", "</b>", row$compoundName))
     }
   })
   
@@ -6250,30 +6250,32 @@ shiny::shinyServer(function(input, output, session) {
     )
   }
   
-  output$cohortCountsCohortCategories <-
+  # Notes Cohort Count ----
+  output$cohortCountsCategories <-
     shiny::renderUI({
       cohortSelected <- selectedCohorts()
       cohortCountSelected <- cohortSelected %>%
-        dplyr::inner_join(cohortCount) %>%
+        dplyr::inner_join(cohortCount, by = c('cohortId')) %>%
         dplyr::filter(.data$databaseId %in% databaseIds())
-      lowSubjectCountCategory1 <- c()   # category 1 -> n == 0
-      lowSubjectCountCategory2 <- c()   # category 2 -> 0 < n < 100
-      lowSubjectCountCategory3 <- c()   # category 3 -> 100 < n < 2500
-      recordPerSubjectDatabasesCategory1 <- c()    # category 1 -> 1 record per subject (ratio = 1)
-      recordPerSubjectDatabasesCategory2 <- c()    # category 2 -> more than 1 record per subject (ratio > 1)
-      leastSubjectCount <- c()
-      highestSubjectCount <- c()
       
+      cohortSubjectCountEq0 <- c()   # category 1 -> n == 0
+      cohortSubjectCount0To100 <- c()   # category 2 -> 0 < n < 100
+      cohortSubjectCount100To2500 <- c()   # category 3 -> 100 < n < 2500
       
+      cohortSubjectRecordRatioEq1 <- c()    # category 1 -> 1 record per subject (ratio = 1)
+      cohortSubjectRecordRatioGt1 <- c()    # category 2 -> more than 1 record per subject (ratio > 1)
+      
+      cohortsWithLowestSubjectConts <- c()
+      cohortsWithHighestSubjectConts <- c()
       
       for (i in 1:nrow(cohortCountSelected)) {
         if (cohortCountSelected$cohortSubjects[i] == 0) {
-          if (length(lowSubjectCountCategory1[grep(cohortCountSelected$compoundName[i],
-                                                   lowSubjectCountCategory1,
-                                                   fixed = TRUE)]) <= 0) {
-            lowSubjectCountCategory1 <-
+          if (length(cohortSubjectCountEq0[grep(cohortCountSelected$compoundName[i],
+                                                cohortSubjectCountEq0,
+                                                fixed = TRUE)]) <= 0) {
+            cohortSubjectCountEq0 <-
               c(
-                lowSubjectCountCategory1,
+                cohortSubjectCountEq0,
                 paste(
                   cohortCountSelected$compoundName[i],
                   cohortCountSelected$databaseId[i],
@@ -6281,24 +6283,23 @@ shiny::shinyServer(function(input, output, session) {
                 )
               )
           } else {
-            lowSubjectCountCategory1[grep(cohortCountSelected$compoundName[i],
-                                          lowSubjectCountCategory1,
-                                          fixed = TRUE)] <-
-              paste(lowSubjectCountCategory1[grep(cohortCountSelected$compoundName[i],
-                                                  lowSubjectCountCategory1,
-                                                  fixed = TRUE)],
+            cohortSubjectCountEq0[grep(cohortCountSelected$compoundName[i],
+                                       cohortSubjectCountEq0,
+                                       fixed = TRUE)] <-
+              paste(cohortSubjectCountEq0[grep(cohortCountSelected$compoundName[i],
+                                               cohortSubjectCountEq0,
+                                               fixed = TRUE)],
                     cohortCountSelected$databaseId[i],
                     sep = ",")
           }
-          
         } else if (cohortCountSelected$cohortSubjects[i] > 0 &&
                    cohortCountSelected$cohortSubjects[i] <= 100) {
-          if (length(lowSubjectCountCategory2[grep(cohortCountSelected$compoundName[i],
-                                                   lowSubjectCountCategory2,
+          if (length(cohortSubjectCount0To100[grep(cohortCountSelected$compoundName[i],
+                                                   cohortSubjectCount0To100,
                                                    fixed = TRUE)]) <= 0) {
-            lowSubjectCountCategory2 <-
+            cohortSubjectCount0To100 <-
               c(
-                lowSubjectCountCategory2,
+                cohortSubjectCount0To100,
                 paste(
                   cohortCountSelected$compoundName[i],
                   cohortCountSelected$databaseId[i],
@@ -6306,23 +6307,23 @@ shiny::shinyServer(function(input, output, session) {
                 )
               )
           } else {
-            lowSubjectCountCategory2[grep(cohortCountSelected$compoundName[i],
-                                          lowSubjectCountCategory2,
+            cohortSubjectCount0To100[grep(cohortCountSelected$compoundName[i],
+                                          cohortSubjectCount0To100,
                                           fixed = TRUE)] <-
-              paste(lowSubjectCountCategory2[grep(cohortCountSelected$compoundName[i],
-                                                  lowSubjectCountCategory2,
+              paste(cohortSubjectCount0To100[grep(cohortCountSelected$compoundName[i],
+                                                  cohortSubjectCount0To100,
                                                   fixed = TRUE)],
                     cohortCountSelected$databaseId[i],
                     sep = ",")
           }
         } else if (cohortCountSelected$cohortSubjects[i] > 100 &&
                    cohortCountSelected$cohortSubjects[i] < 2500) {
-          if (length(lowSubjectCountCategory3[grep(cohortCountSelected$compoundName[i],
-                                                   lowSubjectCountCategory3,
-                                                   fixed = TRUE)]) <= 0) {
-            lowSubjectCountCategory3 <-
+          if (length(cohortSubjectCount100To2500[grep(cohortCountSelected$compoundName[i],
+                                                      cohortSubjectCount100To2500,
+                                                      fixed = TRUE)]) <= 0) {
+            cohortSubjectCount100To2500 <-
               c(
-                lowSubjectCountCategory3,
+                cohortSubjectCount100To2500,
                 paste(
                   cohortCountSelected$compoundName[i],
                   cohortCountSelected$databaseId[i],
@@ -6330,12 +6331,12 @@ shiny::shinyServer(function(input, output, session) {
                 )
               )
           } else {
-            lowSubjectCountCategory3[grep(cohortCountSelected$compoundName[i],
-                                          lowSubjectCountCategory3,
-                                          fixed = TRUE)] <-
-              paste(lowSubjectCountCategory3[grep(cohortCountSelected$compoundName[i],
-                                                  lowSubjectCountCategory3,
-                                                  fixed = TRUE)],
+            cohortSubjectCount100To2500[grep(cohortCountSelected$compoundName[i],
+                                             cohortSubjectCount100To2500,
+                                             fixed = TRUE)] <-
+              paste(cohortSubjectCount100To2500[grep(cohortCountSelected$compoundName[i],
+                                                     cohortSubjectCount100To2500,
+                                                     fixed = TRUE)],
                     cohortCountSelected$databaseId[i],
                     sep = ",")
           }
@@ -6344,19 +6345,20 @@ shiny::shinyServer(function(input, output, session) {
         recordPerSubject <-
           cohortCountSelected$cohortEntries[i] / cohortCountSelected$cohortSubjects[i]
         if (recordPerSubject == 1 &&
-            !(cohortCountSelected$databaseId[i] %in% recordPerSubjectDatabasesCategory1)) {
-          recordPerSubjectDatabasesCategory1 <-
-            c(recordPerSubjectDatabasesCategory1,
+            !(cohortCountSelected$databaseId[i] %in% cohortSubjectRecordRatioEq1)) {
+          cohortSubjectRecordRatioEq1 <-
+            c(cohortSubjectRecordRatioEq1,
               cohortCountSelected$databaseId[i])
         } else if (recordPerSubject > 1 &&
-                   !(cohortCountSelected$databaseId[i] %in% recordPerSubjectDatabasesCategory2)) {
-          recordPerSubjectDatabasesCategory2 <-
-            c(recordPerSubjectDatabasesCategory2,
+                   !(cohortCountSelected$databaseId[i] %in% cohortSubjectRecordRatioGt1)) {
+          cohortSubjectRecordRatioGt1 <-
+            c(cohortSubjectRecordRatioGt1,
               cohortCountSelected$databaseId[i])
         }
       }
       
       distinctCohortIds <- cohortCountSelected$cohortId %>%  unique()
+      
       for (i in 1:length(distinctCohortIds)) {
         cohortDetailsForDistinctCohortIds <- cohortCountSelected %>%
           dplyr::filter(.data$cohortId == distinctCohortIds[i])
@@ -6373,90 +6375,90 @@ shiny::shinyServer(function(input, output, session) {
             dplyr::filter(.data$cohortSubjects < cohortPercentile[[1]])
           
           if (nrow(filteredCohortDetailsWithLowPercentile) > 0) {
-            leastSubjectCount <- c(leastSubjectCount,
-                                   paste(
-                                     cohortNameOfDistinctCohortId,
-                                     paste(filteredCohortDetailsWithLowPercentile$databaseId, collapse = ", "),
-                                     sep = " - "
-                                   ))
+            cohortsWithLowestSubjectConts <- c(cohortsWithLowestSubjectConts,
+                                               paste(
+                                                 cohortNameOfDistinctCohortId,
+                                                 paste(filteredCohortDetailsWithLowPercentile$databaseId, collapse = ", "),
+                                                 sep = " - "
+                                               ))
           }
           
           filteredCohortDetailsWithHighPercentile <-
             cohortDetailsForDistinctCohortIds %>%
             dplyr::filter(.data$cohortSubjects > cohortPercentile[[2]])
+          
           if (nrow(filteredCohortDetailsWithHighPercentile) > 0) {
-            highestSubjectCount <- c(highestSubjectCount,
-                                     paste(
-                                       cohortNameOfDistinctCohortId,
-                                       paste(filteredCohortDetailsWithHighPercentile$databaseId, collapse = ", "),
-                                       sep = " - "
-                                     ))
+            cohortsWithHighestSubjectConts <- c(cohortsWithHighestSubjectConts,
+                                                paste(
+                                                  cohortNameOfDistinctCohortId,
+                                                  paste(filteredCohortDetailsWithHighPercentile$databaseId, collapse = ", "),
+                                                  sep = " - "
+                                                ))
           }
         }
-        
       }
       
       tags$div(
         tags$b("Cohorts with low subject count :"),
-        tags$div(if (length(lowSubjectCountCategory1) > 0) {
-          buildCohortConditionTable("cohorts were found to be empty", lowSubjectCountCategory1)
+        tags$div(if (length(cohortSubjectCountEq0) > 0) {
+          buildCohortConditionTable("cohorts were found to be empty", cohortSubjectCountEq0)
         }),
-        tags$div(if (length(lowSubjectCountCategory2) > 0) {
+        tags$div(if (length(cohortSubjectCount0To100) > 0) {
           buildCohortConditionTable(
             "cohorts were found to have low cohort counts and may not be suitable for most studies",
-            lowSubjectCountCategory2
+            cohortSubjectCount0To100
           )
         }),
-        tags$div(if (length(lowSubjectCountCategory3) > 0) {
+        tags$div(if (length(cohortSubjectCount100To2500) > 0) {
           buildCohortConditionTable(
             "Cohorts were found to have counts less than 2,500. As a general rule of thumb - these cohorts may not be suitable for use as exposure cohorts",
-            lowSubjectCountCategory3
+            cohortSubjectCount100To2500
           )
         }),
-        tags$div(if (length(lowSubjectCountCategory1) <= 0 &&
-                     length(lowSubjectCountCategory2) <= 0 &&
-                     length(lowSubjectCountCategory3) <= 0) {
-          tags$p("There are no cohorts with subject count less than 2,500")
+        tags$div(if (length(cohortSubjectCountEq0) <= 0 &&
+                     length(cohortSubjectCount0To100) <= 0 &&
+                     length(cohortSubjectCount100To2500) <= 0) {
+          tags$p("There are no cohorts with subject counts less than 2,500")
         }),
         tags$br(),
         tags$b("Records per subjects :"),
-        tags$div(if (length(recordPerSubjectDatabasesCategory1) > 0) {
+        tags$div(if (length(cohortSubjectRecordRatioEq1) > 0) {
           tags$p(
             paste0(
-              scales::percent(length(recordPerSubjectDatabasesCategory1)/length(databaseIds()), accuracy = 0.1),
+              scales::percent(length(cohortSubjectRecordRatioEq1)/length(databaseIds()), accuracy = 0.1),
               " of the datasources have one record per subject - ",
               paste(
-                recordPerSubjectDatabasesCategory1, collapse =  ", "
+                cohortSubjectRecordRatioEq1, collapse =  ", "
               )
             )
           )
         }),
-        tags$div(if (length(recordPerSubjectDatabasesCategory2) > 0) {
+        tags$div(if (length(cohortSubjectRecordRatioGt1) > 0) {
           tags$p(
             paste0(
               "    ",
-              length(recordPerSubjectDatabasesCategory2),
+              length(cohortSubjectRecordRatioGt1),
               "/",
               length(databaseIds()),
               " of the datasources that have more than 1 record per subject count - ",
               paste(
-                recordPerSubjectDatabasesCategory2, collapse = ", "
+                cohortSubjectRecordRatioGt1, collapse = ", "
               )
             )
           )
         }),
         tags$br(),
-        tags$div(if (length(leastSubjectCount) > 0) {
+        tags$div(if (length(cohortsWithLowestSubjectConts) > 0) {
           buildCohortConditionTable(
-            "Least Subject Count : ",
-            leastSubjectCount
+            "Cohorts with lowest subject count(s): ",
+            cohortsWithLowestSubjectConts
           )
         }),
         tags$br(),
-        tags$div(if (length(highestSubjectCount) > 0) {
+        tags$div(if (length(cohortsWithHighestSubjectConts) > 0) {
           buildCohortConditionTable(
-            "Highest Subject Count : ",
-            highestSubjectCount
+            "Cohorts with highest subject count(s): ",
+            cohortsWithHighestSubjectConts
           )
         })
       )
