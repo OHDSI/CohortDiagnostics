@@ -6243,7 +6243,7 @@ shiny::shinyServer(function(input, output, session) {
     shiny::renderUI({
       cohortSelected <- selectedCohorts()
       cohortCountSelected <- cohortSelected %>%
-        dplyr::inner_join(cohortCount, by = c('databaseId', 'cohortId')) %>%
+        dplyr::inner_join(cohortCount, by = c('cohortId')) %>%
         dplyr::filter(.data$databaseId %in% databaseIds())
       
       cohortSubjectCountEq0 <- c()   # category 1 -> n == 0
