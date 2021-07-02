@@ -34,6 +34,7 @@ getCdmDataSourceInformation <-
   function(connectionDetails = NULL,
            connection = NULL,
            cdmDatabaseSchema) {
+    
     # Set up connection to server ----
     if (is.null(connection)) {
       if (!is.null(connectionDetails)) {
@@ -63,16 +64,14 @@ getCdmDataSourceInformation <-
       return(NULL)
     }
     
+    sourceDescription <- as.character(NA)
     if ('sourceDescription' %in% colnames(cdmDataSource)) {
       sourceDescription <- cdmDataSource$sourceDescription
-    } else {
-      sourceDescription <- as.character(NA)
     }
     
+    cdmSourceName <- as.character(NA)
     if ('cdmSourceName' %in% colnames(cdmDataSource)) {
       cdmSourceName <- cdmDataSource$cdmSourceName
-    } else {
-      cdmSourceName <- as.character(NA)
     }
     
     sourceReleaseDate <- as.Date(NA)
@@ -95,16 +94,14 @@ getCdmDataSourceInformation <-
       }
     }
     
+    cdmVersion <- as.character(NA)
     if ('cdmVersion' %in% colnames(cdmDataSource)) {
       cdmVersion <- cdmDataSource$cdmVersion
-    } else {
-      cdmVersion <- as.character(NA)
     }
     
+    vocabularyVersion <- as.character(NA)
     if ('vocabularyVersion' %in% colnames(cdmDataSource)) {
       vocabularyVersion <- cdmDataSource$vocabularyVersion
-    } else {
-      vocabularyVersion <- as.character(NA)
     }
     
     return(
