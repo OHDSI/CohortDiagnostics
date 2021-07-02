@@ -49,6 +49,10 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  getDatabaseIdInCohortConceptSetSecond <- shiny::reactive({
+    return(database$databaseId[database$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchemaSecond])
+  })
+  
   cohortSubset <- shiny::reactive({
     return(cohort %>%
              dplyr::arrange(.data$cohortId))
@@ -165,6 +169,26 @@ shiny::shinyServer(function(input, output, session) {
   outputOptions(output,
                 "cohortDefinitionRowIsSelected",
                 suspendWhenHidden = FALSE)
+  
+  output$selectedCohortInCohortDefinition <- shiny::renderText(expr = {
+    row <- selectedCohortDefinitionRow()[1,]
+    
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+      return(paste("Selected cohort: ", row$compoundName))
+    }
+  })
+  
+  output$selectedSecondCohortInCohortDefinition <- shiny::renderText(expr = {
+    row <- selectedCohortDefinitionRow()[2,]
+    
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+      return(paste("Selected cohort: ", row$compoundName))
+    }
+  })
   
   cohortDetailsText <- shiny::reactive(x = {
     data <- selectedCohortDefinitionRow()
@@ -516,6 +540,7 @@ shiny::shinyServer(function(input, output, session) {
       shiny::conditionalPanel(
         condition = "output.cohortDefinitionCountOfSelectedRows > 0 & 
                      output.cohortDefinitionRowIsSelected == true",
+        shiny::textOutput(outputId = "selectedCohortInCohortDefinition"),
         shiny::tabsetPanel(
           type = "tab",
           shiny::tabPanel(title = "Details",
@@ -534,39 +559,34 @@ shiny::shinyServer(function(input, output, session) {
                           shiny::htmlOutput("cohortDefinitionText")),
           shiny::tabPanel(
             title = "Concept Sets",
-              tags$table(
-                tags$tr(
-                  tags$td(
-                    shinyWidgets::pickerInput(
-                      inputId = "databaseOrVocabularySchema",
-                      label = "Vocabulary version choices:",
-                      choices = choicesFordatabaseOrVocabularySchema,
-                      multiple = FALSE,
-                      width = 200,
-                      inline = TRUE,
-                      choicesOpt = list(style = rep_len("color: black;", 999)),
-                      options = shinyWidgets::pickerOptions(
-                        actionsBox = TRUE,
-                        liveSearch = TRUE,
-                        size = 10,
-                        liveSearchStyle = "contains",
-                        liveSearchPlaceholder = "Type here to search",
-                        virtualScroll = 50
-                      )
-                    )
-                  ),
-                  tags$td(
-                    shiny::htmlOutput("subjectCountInCohortConceptSet")
-                  ),
-                  tags$td(
-                    shiny::htmlOutput("recordCountInCohortConceptSet")
-                  )
-                )
-              ),
               DT::dataTableOutput(outputId = "conceptsetExpressionTable"),
               shiny::conditionalPanel(condition = "output.conceptSetExpressionRowSelected == true",
                                       tags$table(tags$tr(
                                         tags$td(
+                                          shinyWidgets::pickerInput(
+                                            inputId = "databaseOrVocabularySchema",
+                                            label = "Vocabulary version choices:",
+                                            choices = choicesFordatabaseOrVocabularySchema,
+                                            multiple = FALSE,
+                                            width = 200,
+                                            inline = TRUE,
+                                            choicesOpt = list(style = rep_len("color: black;", 999)),
+                                            options = shinyWidgets::pickerOptions(
+                                              actionsBox = TRUE,
+                                              liveSearch = TRUE,
+                                              size = 10,
+                                              liveSearchStyle = "contains",
+                                              liveSearchPlaceholder = "Type here to search",
+                                              virtualScroll = 50
+                                            )
+                                          )
+                                        ),
+                                        tags$td(
+                                          shiny::htmlOutput("personAndRecordCountInCohortDefinitionConceptSet")
+                                        )
+                                      ),
+                                        tags$tr(
+                                        tags$td(colspan = 2,
                                           shiny::radioButtons(
                                             inputId = "conceptSetsType",
                                             label = "",
@@ -687,6 +707,7 @@ shiny::shinyServer(function(input, output, session) {
       shiny::conditionalPanel(
         condition = "output.cohortDefinitionCountOfSelectedRows == 2 & 
                      output.cohortDefinitionRowIsSelected == true",
+        shiny::textOutput(outputId = "selectedSecondCohortInCohortDefinition"),
         shiny::tabsetPanel(
           type = "tab",
           shiny::tabPanel(title = "Details",
@@ -705,39 +726,34 @@ shiny::shinyServer(function(input, output, session) {
                           shiny::htmlOutput("cohortDefinitionTextSecond")),
           shiny::tabPanel(
             title = "Concept Sets",
-            tags$table(
-              tags$tr(
-                tags$td(
-                  shinyWidgets::pickerInput(
-                    inputId = "databaseOrVocabularySchemaSecond",
-                    label = "Vocabulary version choices:",
-                    choices = choicesFordatabaseOrVocabularySchema,
-                    multiple = FALSE,
-                    width = 200,
-                    inline = TRUE,
-                    choicesOpt = list(style = rep_len("color: black;", 999)),
-                    options = shinyWidgets::pickerOptions(
-                      actionsBox = TRUE,
-                      liveSearch = TRUE,
-                      size = 10,
-                      liveSearchStyle = "contains",
-                      liveSearchPlaceholder = "Type here to search",
-                      virtualScroll = 50
-                    )
-                  )
-                ),
-                tags$td(
-                  shiny::htmlOutput("subjectCountInCohortConceptSetSecond")
-                ),
-                tags$td(
-                  shiny::htmlOutput("recordCountInCohortConceptSetSecond")
-                )
-              )
-            ),
             DT::dataTableOutput(outputId = "conceptsetExpressionSecondTable"),
             shiny::conditionalPanel(condition = "output.conceptSetExpressionSecondRowSelected == true",
                                     tags$table(tags$tr(
                                       tags$td(
+                                        shinyWidgets::pickerInput(
+                                          inputId = "databaseOrVocabularySchemaSecond",
+                                          label = "Vocabulary version choices:",
+                                          choices = choicesFordatabaseOrVocabularySchema,
+                                          multiple = FALSE,
+                                          width = 200,
+                                          inline = TRUE,
+                                          choicesOpt = list(style = rep_len("color: black;", 999)),
+                                          options = shinyWidgets::pickerOptions(
+                                            actionsBox = TRUE,
+                                            liveSearch = TRUE,
+                                            size = 10,
+                                            liveSearchStyle = "contains",
+                                            liveSearchPlaceholder = "Type here to search",
+                                            virtualScroll = 50
+                                          )
+                                        )
+                                      ),
+                                      tags$td(
+                                        shiny::htmlOutput("personAndRecordCountInCohortDefinitionConceptSetSecond")
+                                      )
+                                    ),
+                                    tags$tr(
+                                      tags$td(colspan = 2,
                                         shiny::radioButtons(
                                           inputId = "conceptSetsTypeSecond",
                                           label = "",
@@ -979,6 +995,19 @@ shiny::shinyServer(function(input, output, session) {
     return(database$databaseId[database$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchema])
   })
   
+  getPersonAndRecordCountForVocabularySchema <-  function(cohortId, databaseId) {
+    data <- cohortCount %>%
+      dplyr::filter(.data$cohortId == !!cohortId) %>% 
+      dplyr::filter(.data$databaseId == !!databaseId) %>% 
+      dplyr::select(.data$cohortSubjects, .data$cohortEntries)
+    
+    if (nrow(data) == 0) {
+      return(NULL)
+    } else {
+      return(data)
+    }
+  }
+  
   getSubjectAndRecordCountForCohortConceptSet <- shiny::reactive(x = {
     row <- selectedCohortDefinitionRow()[1,]
     
@@ -986,10 +1015,8 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     } else {
       
-      data <- cohortCount %>%
-        dplyr::filter(.data$cohortId == row$cohortId) %>% 
-        dplyr::filter(.data$databaseId == getDatabaseIdInCohortConceptSet()) %>% 
-        dplyr::select(.data$cohortSubjects, .data$cohortEntries)
+      data <- getPersonAndRecordCountForVocabularySchema(cohortId = row$cohortId, 
+                                                         databaseId = getDatabaseIdInCohortConceptSet())
       
       if (nrow(data) == 0) {
         return(NULL)
@@ -999,7 +1026,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  output$subjectCountInCohortConceptSet <- shiny::renderUI({
+  output$personAndRecordCountInCohortDefinitionConceptSet <- shiny::renderUI({
     row <- getSubjectAndRecordCountForCohortConceptSet()
     if (is.null(row)) {
       return(NULL)
@@ -1007,19 +1034,7 @@ shiny::shinyServer(function(input, output, session) {
       tags$table(
         tags$tr(
           tags$td("Subjects: "),
-          tags$td(scales::comma(row$cohortSubjects, accuracy = 1))
-        )
-      )
-    }
-  })
-  
-  output$recordCountInCohortConceptSet <- shiny::renderUI({
-    row <- getSubjectAndRecordCountForCohortConceptSet()
-    if (is.null(row)) {
-      return(NULL)
-    } else {
-      tags$table(
-        tags$tr(
+          tags$td(scales::comma(row$cohortSubjects, accuracy = 1)),
           tags$td("Records: "),
           tags$td(scales::comma(row$cohortEntries, accuracy = 1))
         )
@@ -1796,6 +1811,40 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
+  getSubjectAndRecordCountForCohortConceptSetSecond <- shiny::reactive(x = {
+    row <- selectedCohortDefinitionRow()[2,]
+    
+    if (is.null(row) || length(getDatabaseIdInCohortConceptSetSecond()) == 0) {
+      return(NULL)
+    } else {
+      
+      data <- getPersonAndRecordCountForVocabularySchema(cohortId = row$cohortId, 
+                                                         databaseId = getDatabaseIdInCohortConceptSetSecond())
+      
+      if (nrow(data) == 0) {
+        return(NULL)
+      } else {
+        return(data)
+      }
+    }
+  })
+  
+  output$personAndRecordCountInCohortDefinitionConceptSetSecond <- shiny::renderUI({
+    row <- getSubjectAndRecordCountForCohortConceptSetSecond()
+    if (is.null(row)) {
+      return(NULL)
+    } else {
+      tags$table(
+        tags$tr(
+          tags$td("Subjects: "),
+          tags$td(scales::comma(row$cohortSubjects, accuracy = 1)),
+          tags$td("Records: "),
+          tags$td(scales::comma(row$cohortEntries, accuracy = 1))
+        )
+      )
+    }
+  })
+  
   output$cohortDefinitionConceptSetsSecondTable <-
     DT::renderDataTable(expr = {
       data <- cohortDefinitionConceptSetSecond()
@@ -1893,19 +1942,19 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   cohortDefinitionOrphanConceptSecondTableData <- shiny::reactive(x = {
-    validate(need(all(!is.null(getDatabaseIdInCohortConceptSet()),
-                      length(getDatabaseIdInCohortConceptSet()) > 0),
+    validate(need(all(!is.null(getDatabaseIdInCohortConceptSetSecond()),
+                      length(getDatabaseIdInCohortConceptSetSecond()) > 0),
                   "Orphan codes are not available for reference vocabulary in this version."))
     row <- selectedCohortDefinitionRow()
     
     if (is.null(row) || length(cohortDefinitionConceptSetExpressionSecondRow()$name) == 0) {
       return(NULL)
     }
-    validate(need(length(input$databaseOrVocabularySchema) > 0, "No data sources chosen"))
+    validate(need(length(input$databaseOrVocabularySchemaSecond) > 0, "No data sources chosen"))
     
     data <- getResultsFromOrphanConcept(dataSource = dataSource,
                                         cohortId = row$cohortId,
-                                        databaseIds = getDatabaseIdInCohortConceptSet()) %>% 
+                                        databaseIds = getDatabaseIdInCohortConceptSetSecond()) %>% 
       dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionSecondRow()$id)
     
     validate(need(nrow(data) > 0, "No orphan codes returned"))
@@ -2074,7 +2123,7 @@ shiny::shinyServer(function(input, output, session) {
   getResolvedOrMappedConceptSecond <- shiny::reactive({
     data <- NULL
     databaseIdToFilter <- database %>%
-      dplyr::filter(.data$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchema) %>%
+      dplyr::filter(.data$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchemaSecond) %>%
       dplyr::pull(.data$databaseId)
     
     conceptCounts <- getConceptSecondCountForAllDatabase()
@@ -2139,11 +2188,11 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     if (exists("vocabularyDatabaseSchemas") &&
-        !is.null(input$databaseOrVocabularySchema) &&
-        length(input$databaseOrVocabularySchema) > 0) {
+        !is.null(input$databaseOrVocabularySchemaSecond) &&
+        length(input$databaseOrVocabularySchemaSecond) > 0) {
       vocabularyDataSchemaToFilter <-
         intersect(vocabularyDatabaseSchemas,
-                  input$databaseOrVocabularySchema)
+                  input$databaseOrVocabularySchemaSecond)
     } else {
       vocabularyDataSchemaToFilter <- NULL
     }
