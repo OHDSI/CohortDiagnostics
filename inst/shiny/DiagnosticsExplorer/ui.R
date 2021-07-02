@@ -396,7 +396,7 @@ bodyTabItems <- shinydashboard::tabItems(
       solidHeader = TRUE,
       collapsible = TRUE,
       collapsed = TRUE,
-      shiny::uiOutput(outputId = "cohortCountsCohortCategories")
+      shiny::uiOutput(outputId = "cohortCountsCategories")
     ),
     shiny::conditionalPanel(
       condition = "output.cohortCountRowIsSelected == true",
