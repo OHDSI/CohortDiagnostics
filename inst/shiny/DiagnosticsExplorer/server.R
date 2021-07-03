@@ -2396,6 +2396,168 @@ shiny::shinyServer(function(input, output, session) {
       return(dataTable)
     }, server = TRUE)
   
+  
+  #Concept set comparision---------------------------------------------
+  output$ResolvedConceptsPresentInLeft <- DT::renderDT({
+    leftData <- getResolvedOrMappedConcepts()
+    rightData <- getResolvedOrMappedConceptSecond()
+    result <- dplyr::setdiff(leftData, rightData)
+    
+    if (nrow(result) == 0) {
+      return(NULL)
+    } else {
+      if (nrow(result) < 20) {
+        scrollYHeight <- TRUE
+      } else {
+        scrollYHeight <- '25vh'
+      }
+      
+      options = list(
+        pageLength = 100,
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        scrollX = TRUE,
+        scrollY = scrollYHeight,
+        info = TRUE,
+        searchHighlight = TRUE
+      )
+      
+      dataTable <- DT::datatable(
+        result,
+        options = options,
+        rownames = FALSE,
+        colnames = colnames(result) %>% camelCaseToTitleCase(),
+        escape = FALSE,
+        filter = "top",
+        selection = list(mode = "none"),
+        class = "stripe nowrap compact"
+      )
+      return(dataTable)
+    }
+  })
+  
+  output$ResolvedConceptsPresentInRight <- DT::renderDT({
+    leftData <- getResolvedOrMappedConcepts()
+    rightData <- getResolvedOrMappedConceptSecond()
+    result <- dplyr::setdiff(rightData, leftData)
+    
+    if (nrow(result) == 0) {
+      return(NULL)
+    } else {
+      if (nrow(result) < 20) {
+        scrollYHeight <- TRUE
+      } else {
+        scrollYHeight <- '25vh'
+      }
+      
+      options = list(
+        pageLength = 100,
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        scrollX = TRUE,
+        scrollY = scrollYHeight,
+        info = TRUE,
+        searchHighlight = TRUE
+      )
+      
+      dataTable <- DT::datatable(
+        result,
+        options = options,
+        rownames = FALSE,
+        colnames = colnames(result) %>% camelCaseToTitleCase(),
+        escape = FALSE,
+        filter = "top",
+        selection = list(mode = "none"),
+        class = "stripe nowrap compact"
+      )
+      return(dataTable)
+    }
+  })
+  
+  output$ResolvedConceptsPresentInBoth <- DT::renderDT({
+    leftData <- getResolvedOrMappedConcepts()
+    rightData <- getResolvedOrMappedConceptSecond()
+    result <- dplyr::intersect(leftData, rightData)
+    
+    if (nrow(result) == 0) {
+      return(NULL)
+    } else {
+      if (nrow(result) < 20) {
+        scrollYHeight <- TRUE
+      } else {
+        scrollYHeight <- '25vh'
+      }
+      
+      options = list(
+        pageLength = 100,
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        scrollX = TRUE,
+        scrollY = scrollYHeight,
+        info = TRUE,
+        searchHighlight = TRUE
+      )
+      
+      dataTable <- DT::datatable(
+        result,
+        options = options,
+        rownames = FALSE,
+        colnames = colnames(result) %>% camelCaseToTitleCase(),
+        escape = FALSE,
+        filter = "top",
+        selection = list(mode = "none"),
+        class = "stripe nowrap compact"
+      )
+      return(dataTable)
+    }
+  })
+  
+  output$ResolvedConceptsPresentInEither <- DT::renderDT({
+    leftData <- getResolvedOrMappedConcepts()
+    rightData <- getResolvedOrMappedConceptSecond()
+    result <- dplyr::union(leftData, rightData)
+    
+    if (nrow(result) == 0) {
+      return(NULL)
+    } else {
+      if (nrow(result) < 20) {
+        scrollYHeight <- TRUE
+      } else {
+        scrollYHeight <- '25vh'
+      }
+      
+      options = list(
+        pageLength = 100,
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        scrollX = TRUE,
+        scrollY = scrollYHeight,
+        info = TRUE,
+        searchHighlight = TRUE
+      )
+      
+      dataTable <- DT::datatable(
+        result,
+        options = options,
+        rownames = FALSE,
+        colnames = colnames(result) %>% camelCaseToTitleCase(),
+        escape = FALSE,
+        filter = "top",
+        selection = list(mode = "none"),
+        class = "stripe nowrap compact"
+      )
+      return(dataTable)
+    }
+  })
+  
   # Cohort Counts ---------------------------------------------------------------------------
   
   getCohortCountResultReactive <- shiny::reactive(x = {

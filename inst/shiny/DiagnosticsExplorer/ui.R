@@ -353,13 +353,37 @@ bodyTabItems <- shinydashboard::tabItems(
                         ))),    
       DT::dataTableOutput(outputId = "cohortDefinitionTable"),
       shiny::uiOutput(outputId = "dynamicUIGenerationCohortDefinitionConceptsetsOne"),
-      shiny::uiOutput(outputId = "dynamicUIGenerationCohortDefinitionConceptsetsTwo")),
-      column(
-        12,
-        conditionalPanel(
-          "output.cohortDefinitionRowIsSelected == true",
-          
-      )
+      shiny::uiOutput(outputId = "dynamicUIGenerationCohortDefinitionConceptsetsTwo"),
+      tags$br(),
+      shiny::column(width = 12,
+                    shiny::conditionalPanel(
+                      condition = "output.cohortDefinitionCountOfSelectedRows == 2 &
+                     input.conceptSetsType == 'Resolved (included)' &
+                     input.conceptSetsTypeSecond == 'Resolved (included)'",
+                      shiny::tabsetPanel(
+                        id = "resolvedConceptDifference",
+                        shiny::tabPanel(
+                          title = "Present in left",
+                          tags$br(),
+                          DT::dataTableOutput(outputId = "ResolvedConceptsPresentInLeft")
+                        ),
+                        shiny::tabPanel(
+                          title = "Present in Right",
+                          tags$br(),
+                          DT::dataTableOutput(outputId = "ResolvedConceptsPresentInRight")
+                        ),
+                        shiny::tabPanel(
+                          title = "Present in Both",
+                          tags$br(),
+                          DT::dataTableOutput(outputId = "ResolvedConceptsPresentInBoth")
+                        ),
+                        shiny::tabPanel(
+                          title = "Present in Either",
+                          tags$br(),
+                          DT::dataTableOutput(outputId = "ResolvedConceptsPresentInEither")
+                        )
+                      )
+                    ))
     )
   ),
   shinydashboard::tabItem(
