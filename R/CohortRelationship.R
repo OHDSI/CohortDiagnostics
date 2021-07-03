@@ -79,5 +79,21 @@ computeCohortTemporalRelationship <-
       signif(delta, 3),
       attr(delta, "units")
     ))
+    
+    temporalRelationship <- temporalRelationship %>% 
+      dplyr::mutate(startDay = as.numeric(.data$attributeName)*30) %>% 
+      dplyr::mutate(endDay = (as.numeric(.data$attributeName)*30) + 29) 
+      dplyr::select(.data$cohortId, 
+                    .data$comparatorCohortId,
+                    .data$relationshipType,
+                    .data$startDay,
+                    .data$endDay,
+                    .data$countValue) %>% 
+      dplyr::arrange(.data$cohortId, 
+                     .data$comparatorCohortId,
+                     .data$relationshipType,
+                     .data$startDay,
+                     .data$endDay,
+                     .data$countValue)
     return(temporalRelationship)
   }

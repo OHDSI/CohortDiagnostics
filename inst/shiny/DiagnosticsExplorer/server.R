@@ -4807,7 +4807,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     if (!is.null(covariateValueForCohortIdDatabaseIds()$covariateValue)) {
-      characterizationData <- covariateValueForCohortIdDatabaseIds()$covariateValue %>% 
+      characterizationData <- covariateValueForCohortIdDatabaseIds()$covariateValue %>%
         dplyr::filter(.data$timeId == 0) %>% 
         dplyr::select(-.data$timeId) %>% 
         dplyr::inner_join(covariatesTofilter, by = c('covariateId', 'characterizationSource')) %>% 
