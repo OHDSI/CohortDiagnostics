@@ -170,23 +170,41 @@ shiny::shinyServer(function(input, output, session) {
                 "cohortDefinitionRowIsSelected",
                 suspendWhenHidden = FALSE)
   
-  output$selectedCohortInCohortDefinition <- shiny::renderText(expr = {
+  output$selectedCohortInCohortDefinition <- shiny::renderUI(expr = {
     row <- selectedCohortDefinitionRow()[1,]
     
     if (is.null(row)) {
       return(NULL)
     } else {
-      return(paste("<b>","Selected cohort: ", "</b>", row$compoundName))
+      tags$table(
+        tags$tr(
+          tags$td(
+            tags$b( "Selected cohort: ")
+          ),
+          tags$td(
+            row$compoundName
+          )
+        )
+      )
     }
   })
   
-  output$selectedSecondCohortInCohortDefinition <- shiny::renderText(expr = {
+  output$selectedSecondCohortInCohortDefinition <- shiny::renderUI(expr = {
     row <- selectedCohortDefinitionRow()[2,]
     
     if (is.null(row)) {
       return(NULL)
     } else {
-      return(paste("<b>","Selected cohort: ", "</b>", row$compoundName))
+      tags$table(
+        tags$tr(
+          tags$td(
+           tags$b( "Selected cohort:")
+          ),
+          tags$td(
+            row$compoundName
+          )
+        )
+      )
     }
   })
   
@@ -540,7 +558,7 @@ shiny::shinyServer(function(input, output, session) {
       shiny::conditionalPanel(
         condition = "output.cohortDefinitionCountOfSelectedRows > 0 & 
                      output.cohortDefinitionRowIsSelected == true",
-        shiny::textOutput(outputId = "selectedCohortInCohortDefinition"),
+        shiny::htmlOutput(outputId = "selectedCohortInCohortDefinition"),
         shiny::tabsetPanel(
           type = "tab",
           shiny::tabPanel(title = "Details",
@@ -707,7 +725,7 @@ shiny::shinyServer(function(input, output, session) {
       shiny::conditionalPanel(
         condition = "output.cohortDefinitionCountOfSelectedRows == 2 & 
                      output.cohortDefinitionRowIsSelected == true",
-        shiny::textOutput(outputId = "selectedSecondCohortInCohortDefinition"),
+        shiny::htmlOutput(outputId = "selectedSecondCohortInCohortDefinition"),
         shiny::tabsetPanel(
           type = "tab",
           shiny::tabPanel(title = "Details",
