@@ -1069,19 +1069,19 @@ getCohortAsFeatureCharacterizationResults <-
             dplyr::select(.data$cohortId,
                           .data$databaseId,
                           .data$cohortSubjects)
-          data <- suppressWarnings(data %>%
-                                     dplyr::inner_join(cohortCounts, by = c('databaseId', 'cohortId')) %>%
-                                     dplyr::mutate(mean = .data$sumValue / .data$cohortSubjects) %>%
-                                     dplyr::mutate(sd = sqrt(.data$mean * (1 - .data$mean))))
+          data <- data %>%
+            dplyr::inner_join(cohortCounts, by = c('databaseId', 'cohortId')) %>%
+            dplyr::mutate(mean = .data$sumValue / .data$cohortSubjects) %>%
+            dplyr::mutate(sd = sqrt(.data$mean * (1 - .data$mean)))
         } else {
           cohortCounts <- cohortCounts %>%
             dplyr::select(.data$cohortId,
                           .data$databaseId,
                           .data$cohortEntries)
-          data <- suppressWarnings(data %>%
-                                     dplyr::inner_join(cohortCounts, by = c('databaseId', 'cohortId')) %>%
-                                     dplyr::mutate(mean = .data$sumValue / .data$cohortEntries) %>%
-                                     dplyr::mutate(sd = sqrt(.data$mean * (1 - .data$mean))))
+          data <- data %>%
+            dplyr::inner_join(cohortCounts, by = c('databaseId', 'cohortId')) %>%
+            dplyr::mutate(mean = .data$sumValue / .data$cohortEntries) %>%
+            dplyr::mutate(sd = sqrt(.data$mean * (1 - .data$mean)))
         }
       }
       
