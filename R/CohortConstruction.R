@@ -294,8 +294,11 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
     return(stats)
   }
   
-  inclusion <- fetchStats(cohortInclusionFile) %>%
-    tidyr::replace_na(replace = list(description = ''))
+  inclusion <- fetchStats(cohortInclusionFile)
+  if ('description' %in% colnames(inclusion)) {
+    inclusion <- inclusion %>% tidyr::replace_na(replace = list(description = ''))
+  } else {inclusion$description <- ''}
+    
   summaryStats <- fetchStats(cohortSummaryStatsFile)
   inclusionStats <- fetchStats(cohortInclusionStatsFile)
   inclusionResults <- fetchStats(cohortInclusionResultFile)
