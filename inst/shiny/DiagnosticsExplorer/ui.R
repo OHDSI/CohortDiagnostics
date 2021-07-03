@@ -365,22 +365,51 @@ bodyTabItems <- shinydashboard::tabItems(
                         shiny::tabPanel(
                           title = "Present in left",
                           tags$br(),
-                          DT::dataTableOutput(outputId = "ResolvedConceptsPresentInLeft")
+                          DT::dataTableOutput(outputId = "resolvedConceptsPresentInLeft")
                         ),
                         shiny::tabPanel(
                           title = "Present in Right",
                           tags$br(),
-                          DT::dataTableOutput(outputId = "ResolvedConceptsPresentInRight")
+                          DT::dataTableOutput(outputId = "resolvedConceptsPresentInRight")
                         ),
                         shiny::tabPanel(
                           title = "Present in Both",
                           tags$br(),
-                          DT::dataTableOutput(outputId = "ResolvedConceptsPresentInBoth")
+                          DT::dataTableOutput(outputId = "resolvedConceptsPresentInBoth")
                         ),
                         shiny::tabPanel(
                           title = "Present in Either",
                           tags$br(),
-                          DT::dataTableOutput(outputId = "ResolvedConceptsPresentInEither")
+                          DT::dataTableOutput(outputId = "resolvedConceptsPresentInEither")
+                        )
+                      )
+                    )),
+      shiny::column(width = 12,
+                    shiny::conditionalPanel(
+                      condition = "output.cohortDefinitionCountOfSelectedRows == 2 &
+                                   input.conceptSetsType == 'Mapped (source)' &
+                                   input.conceptSetsTypeSecond == 'Mapped (source)'",
+                      shiny::tabsetPanel(
+                        id = "mappedConceptDifference",
+                        shiny::tabPanel(
+                          title = "Present in left",
+                          tags$br(),
+                          DT::dataTableOutput(outputId = "mappedConceptsPresentInLeft")
+                        ),
+                        shiny::tabPanel(
+                          title = "Present in Right",
+                          tags$br(),
+                          DT::dataTableOutput(outputId = "mappedConceptsPresentInRight")
+                        ),
+                        shiny::tabPanel(
+                          title = "Present in Both",
+                          tags$br(),
+                          DT::dataTableOutput(outputId = "mappedConceptsPresentInBoth")
+                        ),
+                        shiny::tabPanel(
+                          title = "Present in Either",
+                          tags$br(),
+                          DT::dataTableOutput(outputId = "mappedConceptsPresentInEither")
                         )
                       )
                     ))

@@ -2154,7 +2154,7 @@ shiny::shinyServer(function(input, output, session) {
       if (!is.null(resolvedOrMappedConceptSetForAllDatabase) &&
           length(resolvedOrMappedConceptSetForAllDatabase) == 2) {
         source <-
-          (input$conceptSetsTypeSecond == "Mapped")
+          (input$conceptSetsTypeSecond == "Mapped (source)")
         if (source) {
           data <- resolvedOrMappedConceptSetForAllDatabase$mapped 
           if (!is.null(data) && nrow(data) > 0) {
@@ -2203,7 +2203,7 @@ shiny::shinyServer(function(input, output, session) {
       if (!is.null(resolvedOrMappedConceptSetForAllVocabulary) &&
           length(resolvedOrMappedConceptSetForAllVocabulary) == 2) {
         source <-
-          (input$conceptSetsType == "Mapped")
+          (input$conceptSetsTypeSecond == "Mapped (source)")
         if (source) {
           data <- resolvedOrMappedConceptSetForAllVocabulary$mapped %>%
             dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionSecondRow()$id) %>%
@@ -2397,11 +2397,18 @@ shiny::shinyServer(function(input, output, session) {
     }, server = TRUE)
   
   
-  #Concept set comparision---------------------------------------------
-  output$ResolvedConceptsPresentInLeft <- DT::renderDT({
+  #Concept set comparision ---------------------------------------------
+  conceptsetComparisonData <- shiny::reactive(x = {
     leftData <- getResolvedOrMappedConcepts()
     rightData <- getResolvedOrMappedConceptSecond()
-    result <- dplyr::setdiff(leftData, rightData)
+    data <- list(leftData = leftData, rightData = rightData)
+    return(data)
+  })
+  
+  output$resolvedConceptsPresentInLeft <- DT::renderDT({
+    
+    result <- dplyr::setdiff(conceptsetComparisonData()$leftData, 
+                             conceptsetComparisonData()$rightData)
     
     if (nrow(result) == 0) {
       return(NULL)
@@ -2438,10 +2445,9 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  output$ResolvedConceptsPresentInRight <- DT::renderDT({
-    leftData <- getResolvedOrMappedConcepts()
-    rightData <- getResolvedOrMappedConceptSecond()
-    result <- dplyr::setdiff(rightData, leftData)
+  output$resolvedConceptsPresentInRight <- DT::renderDT({
+    result <- dplyr::setdiff(conceptsetComparisonData()$rightData, 
+                             conceptsetComparisonData()$leftData)
     
     if (nrow(result) == 0) {
       return(NULL)
@@ -2478,10 +2484,9 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  output$ResolvedConceptsPresentInBoth <- DT::renderDT({
-    leftData <- getResolvedOrMappedConcepts()
-    rightData <- getResolvedOrMappedConceptSecond()
-    result <- dplyr::intersect(leftData, rightData)
+  output$resolvedConceptsPresentInBoth <- DT::renderDT({
+    result <- dplyr::intersect(conceptsetComparisonData()$leftData, 
+                               conceptsetComparisonData()$rightData)
     
     if (nrow(result) == 0) {
       return(NULL)
@@ -2518,10 +2523,166 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  output$ResolvedConceptsPresentInEither <- DT::renderDT({
-    leftData <- getResolvedOrMappedConcepts()
-    rightData <- getResolvedOrMappedConceptSecond()
-    result <- dplyr::union(leftData, rightData)
+  output$resolvedConceptsPresentInEither <- DT::renderDT({
+    result <- dplyr::union(conceptsetComparisonData()$leftData,
+                           conceptsetComparisonData()$rightData)
+    
+    if (nrow(result) == 0) {
+      return(NULL)
+    } else {
+      if (nrow(result) < 20) {
+        scrollYHeight <- TRUE
+      } else {
+        scrollYHeight <- '25vh'
+      }
+      
+      options = list(
+        pageLength = 100,
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        scrollX = TRUE,
+        scrollY = scrollYHeight,
+        info = TRUE,
+        searchHighlight = TRUE
+      )
+      
+      dataTable <- DT::datatable(
+        result,
+        options = options,
+        rownames = FALSE,
+        colnames = colnames(result) %>% camelCaseToTitleCase(),
+        escape = FALSE,
+        filter = "top",
+        selection = list(mode = "none"),
+        class = "stripe nowrap compact"
+      )
+      return(dataTable)
+    }
+  })
+  
+  output$mappedConceptsPresentInLeft <- DT::renderDT({
+    
+    result <- dplyr::setdiff(conceptsetComparisonData()$leftData, 
+                             conceptsetComparisonData()$rightData)
+    
+    if (nrow(result) == 0) {
+      return(NULL)
+    } else {
+      if (nrow(result) < 20) {
+        scrollYHeight <- TRUE
+      } else {
+        scrollYHeight <- '25vh'
+      }
+      
+      options = list(
+        pageLength = 100,
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        scrollX = TRUE,
+        scrollY = scrollYHeight,
+        info = TRUE,
+        searchHighlight = TRUE
+      )
+      
+      dataTable <- DT::datatable(
+        result,
+        options = options,
+        rownames = FALSE,
+        colnames = colnames(result) %>% camelCaseToTitleCase(),
+        escape = FALSE,
+        filter = "top",
+        selection = list(mode = "none"),
+        class = "stripe nowrap compact"
+      )
+      return(dataTable)
+    }
+  })
+  
+  output$mappedConceptsPresentInRight <- DT::renderDT({
+    result <- dplyr::setdiff(conceptsetComparisonData()$rightData, 
+                             conceptsetComparisonData()$leftData)
+    
+    if (nrow(result) == 0) {
+      return(NULL)
+    } else {
+      if (nrow(result) < 20) {
+        scrollYHeight <- TRUE
+      } else {
+        scrollYHeight <- '25vh'
+      }
+      
+      options = list(
+        pageLength = 100,
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        scrollX = TRUE,
+        scrollY = scrollYHeight,
+        info = TRUE,
+        searchHighlight = TRUE
+      )
+      
+      dataTable <- DT::datatable(
+        result,
+        options = options,
+        rownames = FALSE,
+        colnames = colnames(result) %>% camelCaseToTitleCase(),
+        escape = FALSE,
+        filter = "top",
+        selection = list(mode = "none"),
+        class = "stripe nowrap compact"
+      )
+      return(dataTable)
+    }
+  })
+  
+  output$mappedConceptsPresentInBoth <- DT::renderDT({
+    result <- dplyr::intersect(conceptsetComparisonData()$leftData, 
+                               conceptsetComparisonData()$rightData)
+    
+    if (nrow(result) == 0) {
+      return(NULL)
+    } else {
+      if (nrow(result) < 20) {
+        scrollYHeight <- TRUE
+      } else {
+        scrollYHeight <- '25vh'
+      }
+      
+      options = list(
+        pageLength = 100,
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        scrollX = TRUE,
+        scrollY = scrollYHeight,
+        info = TRUE,
+        searchHighlight = TRUE
+      )
+      
+      dataTable <- DT::datatable(
+        result,
+        options = options,
+        rownames = FALSE,
+        colnames = colnames(result) %>% camelCaseToTitleCase(),
+        escape = FALSE,
+        filter = "top",
+        selection = list(mode = "none"),
+        class = "stripe nowrap compact"
+      )
+      return(dataTable)
+    }
+  })
+  
+  output$mappedConceptsPresentInEither <- DT::renderDT({
+    result <- dplyr::union(conceptsetComparisonData()$leftData,
+                           conceptsetComparisonData()$rightData)
     
     if (nrow(result) == 0) {
       return(NULL)
