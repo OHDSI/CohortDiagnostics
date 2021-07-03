@@ -4780,7 +4780,8 @@ shiny::shinyServer(function(input, output, session) {
     visitContext <- visitContext %>%
       dplyr::inner_join(cohortCount,
                         by = c("cohortId", "databaseId")) %>% 
-      dplyr::mutate(subjectPercent = .data$subjects/.data$cohortSubjects)
+      dplyr::mutate(subjectPercent = .data$subjects/.data$cohortSubjects) %>% 
+      dplyr::mutate(recordPercent = .data$records / .data$cohortEntries)
     return(visitContext)
   })
   
@@ -4805,8 +4806,14 @@ shiny::shinyServer(function(input, output, session) {
     cohortCounts <- data %>% 
       dplyr::filter(.data$cohortId == cohortId()) %>% 
       dplyr::filter(.data$databaseId %in% databaseIds()) %>% 
-      dplyr::select(.data$cohortSubjects) %>% 
-      dplyr::pull(.data$cohortSubjects) %>% unique()
+      dplyr::select(.data$cohortSubjects, .data$cohortEntries) %>% unique()
+    
+    isPerson <- input$visitContextPersonOrRecords == 'Person'
+    if (isPerson) {
+      cohortCounts <- cohortCounts$cohortSubjects
+    } else {
+      cohortCounts <- cohortCounts$cohortEntries
+    }
     
     databaseIdsWithCount <- paste(databaseIds, "(n = ", format(cohortCounts, big.mark = ","), ")")
     
@@ -4825,17 +4832,32 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(.data$visitConceptName,
                     .data$visitContext,
                     .data$subjects,
+                    .data$records,
                     .data$databaseId) %>%
       dplyr::mutate(visitContext = paste0(.data$databaseId, "_", .data$visitContext)) %>%
       dplyr::select(-.data$databaseId) %>%
-      dplyr::arrange(.data$visitConceptName) %>%
-      tidyr::pivot_wider(
-        id_cols = c(.data$visitConceptName),
-        names_from = .data$visitContext,
-        values_from = .data$subjects,
-        values_fill = 0
-      ) %>%
-      dplyr::relocate(.data$visitConceptName)
+      dplyr::arrange(.data$visitConceptName)
+    
+    if (isPerson) {
+      table <- table %>% 
+        tidyr::pivot_wider(
+          id_cols = c(.data$visitConceptName),
+          names_from = .data$visitContext,
+          values_from = .data$subjects,
+          values_fill = 0
+        )
+    } else {
+      table <- table %>% 
+        tidyr::pivot_wider(
+          id_cols = c(.data$visitConceptName),
+          names_from = .data$visitContext,
+          values_from = .data$records,
+          values_fill = 0
+        )
+    }
+    table <- table %>% 
+         dplyr::relocate(.data$visitConceptName)
+      
     
     if (input$visitContextTableFilters == "Before") {
       table <- table %>% 
@@ -4936,7 +4958,7 @@ shiny::shinyServer(function(input, output, session) {
     
     table <- DT::formatStyle(
       table = table,
-      columns = 1:(length(databaseIds) * 4),
+      columns = 1+ 1:(length(databaseIds) * 4),
       background = DT::styleColorBar(c(0, maxSubjects), "lightblue"),
       backgroundSize = "98% 88%",
       backgroundRepeat = "no-repeat",
