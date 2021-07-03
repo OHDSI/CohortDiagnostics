@@ -56,7 +56,8 @@ CREATE TABLE #cohort_rel_long (
 	comparator_cohort_id BIGINT,
 	attribute_name VARCHAR,
 	relationship_type VARCHAR,
-	count_value FLOAT
+	subjects FLOAT,
+	records FLOAT
 	);
 
 --- temporal relationship: target cohort start date - comparator cohort start date. 
@@ -67,13 +68,15 @@ INSERT INTO #cohort_rel_long (
 	comparator_cohort_id,
 	attribute_name,
 	relationship_type,
-	count_value
+	subjects,
+	records
 	)
 SELECT t1.cohort_definition_id cohort_id,
 	c1.cohort_definition_id comparator_cohort_id,
 	CAST(FLOOR(DATEDIFF(dd, t1.cohort_start_date, c1.cohort_start_date) / 30) AS VARCHAR(30)) attribute_name, -- date diff
-	'11' relationship_type, -- first target, first comparator
-	COUNT_BIG(DISTINCT c1.row_id_cs) count_value -- the distinct here will not make a difference because first occurrence of comparator
+	'S1S1' relationship_type, -- first target start date, first comparator start date
+	COUNT_BIG(DISTINCT c1.cohort_definition_id) subjects, -- the distinct here will not make a difference because first occurrence of comparator
+	COUNT_BIG(DISTINCT c1.row_id_cs) records
 	-- count of DISTINCT comparator cohort_start_date that meet the temporal criteria
 FROM #cohort_row_id t1
 INNER JOIN #cohort_row_id c1
@@ -92,13 +95,15 @@ INSERT INTO #cohort_rel_long (
 	comparator_cohort_id,
 	attribute_name,
 	relationship_type,
-	count_value
+	subjects,
+	records
 	)
 SELECT t1.cohort_definition_id cohort_id,
 	c1.cohort_definition_id comparator_cohort_id,
 	CAST(FLOOR(DATEDIFF(dd, t1.cohort_start_date, c1.cohort_start_date) / 30) AS VARCHAR(30)) attribute_name, -- date diff
-	'1A' relationship_type, -- first target, all comparator
-	COUNT_BIG(DISTINCT c1.row_id_cs) count_value -- the distinct here will not make a difference because first occurrence of comparator
+	'S1SA' relationship_type, -- first target start date, all comparator start date
+	COUNT_BIG(DISTINCT c1.cohort_definition_id) subjects, -- the distinct here will not make a difference because first occurrence of comparator
+	COUNT_BIG(DISTINCT c1.row_id_cs) records
 	-- count of DISTINCT comparator cohort_start_date that meet the temporal criteria
 FROM #cohort_row_id t1
 INNER JOIN #cohort_row_id c1
@@ -116,14 +121,16 @@ INSERT INTO #cohort_rel_long (
 	comparator_cohort_id,
 	attribute_name,
 	relationship_type,
-	count_value
+	subjects,
+	records
 	)
 SELECT t1.cohort_definition_id cohort_id,
 	c1.cohort_definition_id comparator_cohort_id,
 	CAST(FLOOR(DATEDIFF(dd, t1.cohort_start_date, c1.cohort_start_date) / 30) AS VARCHAR(30)) attribute_name, -- date diff
-	'A1' relationship_type, -- All target, first comparator
-	COUNT_BIG(DISTINCT c1.row_id_cs) count_value -- the distinct here will not make a difference because first occurrence of comparator
+	'SAS1' relationship_type, -- All target start date, first comparator start date
+	COUNT_BIG(DISTINCT c1.cohort_definition_id) subjects, -- the distinct here will not make a difference because first occurrence of comparator
 	-- count of DISTINCT comparator cohort_start_date that meet the temporal criteria
+	COUNT_BIG(DISTINCT c1.row_id_cs) records
 FROM #cohort_row_id t1
 INNER JOIN #cohort_row_id c1
 	ON t1.subject_id = c1.subject_id
@@ -135,13 +142,21 @@ GROUP BY t1.cohort_definition_id,
 	c1.cohort_definition_id,
 	CAST(FLOOR(DATEDIFF(dd, t1.cohort_start_date, c1.cohort_start_date) / 30) AS VARCHAR(30));
 
-INSERT INTO #cohort_rel_long
+INSERT INTO #cohort_rel_long (
+	cohort_id,
+	comparator_cohort_id,
+	attribute_name,
+	relationship_type,
+	subjects,
+	records
+	)
 SELECT t1.cohort_definition_id cohort_id,
 	c1.cohort_definition_id comparator_cohort_id,
 	CAST(FLOOR(DATEDIFF(dd, t1.cohort_start_date, c1.cohort_start_date) / 30) AS VARCHAR(30)) attribute_name, -- date diff
-	'AA' relationship_type, -- All target, all compartor
-	COUNT_BIG(DISTINCT c1.row_id_cs) count_value -- the distinct here will not make a difference because first occurrence of comparator
+	'SASA' relationship_type, -- All target start date, all compartor start date
+	COUNT_BIG(DISTINCT c1.cohort_definition_id) subjects, -- the distinct here will not make a difference because first occurrence of comparator
 	-- count of DISTINCT comparator cohort_start_date that meet the temporal criteria
+	COUNT_BIG(DISTINCT c1.row_id_cs) records
 FROM #cohort_row_id t1
 INNER JOIN #cohort_row_id c1
 	ON t1.subject_id = c1.subject_id
