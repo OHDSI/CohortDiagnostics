@@ -2719,6 +2719,172 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  orphanConceptComparisonInCohortDefinition <- shiny::reactive(x = {
+    leftData <- cohortDefinitionOrphanConceptTableData()
+    rightData <- cohortDefinitionOrphanConceptSecondTableData()
+    
+    return(list(leftData = leftData, rightData = rightData))
+  })
+  
+  output$orphanConceptsPresentInLeft <- DT::renderDT({
+    
+    result <- dplyr::setdiff(orphanConceptComparisonInCohortDefinition()$leftData, 
+                             orphanConceptComparisonInCohortDefinition()$rightData)
+    
+    if (nrow(result) == 0) {
+      validate(need(nrow(result) > 0, "No data found"))
+    } else {
+      if (nrow(result) < 20) {
+        scrollYHeight <- TRUE
+      } else {
+        scrollYHeight <- '25vh'
+      }
+      
+      options = list(
+        pageLength = 100,
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        scrollX = TRUE,
+        scrollY = scrollYHeight,
+        info = TRUE,
+        searchHighlight = TRUE,
+        columnDefs = list(truncateStringDef(1, 100),
+                          minCellCountDef(3 + (1:(length(databaseIds) * 2))))
+      )
+      
+      dataTable <- DT::datatable(
+        result,
+        options = options,
+        rownames = FALSE,
+        colnames = colnames(result) %>% camelCaseToTitleCase(),
+        escape = FALSE,
+        filter = "top",
+        selection = list(mode = "none"),
+        class = "stripe nowrap compact"
+      )
+      return(dataTable)
+    }
+  })
+  
+  output$orphanConceptsPresentInRight <- DT::renderDT({
+    result <- dplyr::setdiff(orphanConceptComparisonInCohortDefinition()$rightData, 
+                             orphanConceptComparisonInCohortDefinition()$leftData)
+    
+    if (nrow(result) == 0) {
+      validate(need(nrow(result) > 0, "No data found"))
+    } else {
+      if (nrow(result) < 20) {
+        scrollYHeight <- TRUE
+      } else {
+        scrollYHeight <- '25vh'
+      }
+      
+      options = list(
+        pageLength = 100,
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        scrollX = TRUE,
+        scrollY = scrollYHeight,
+        info = TRUE,
+        searchHighlight = TRUE
+      )
+      
+      dataTable <- DT::datatable(
+        result,
+        options = options,
+        rownames = FALSE,
+        colnames = colnames(result) %>% camelCaseToTitleCase(),
+        escape = FALSE,
+        filter = "top",
+        selection = list(mode = "none"),
+        class = "stripe nowrap compact"
+      )
+      return(dataTable)
+    }
+  })
+  
+  output$orphanConceptsPresentInBoth <- DT::renderDT({
+    result <- dplyr::intersect(orphanConceptComparisonInCohortDefinition()$leftData, 
+                               orphanConceptComparisonInCohortDefinition()$rightData)
+    
+    if (nrow(result) == 0) {
+      validate(need(nrow(result) > 0, "No data found"))
+    } else {
+      if (nrow(result) < 20) {
+        scrollYHeight <- TRUE
+      } else {
+        scrollYHeight <- '25vh'
+      }
+      
+      options = list(
+        pageLength = 100,
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        scrollX = TRUE,
+        scrollY = scrollYHeight,
+        info = TRUE,
+        searchHighlight = TRUE
+      )
+      
+      dataTable <- DT::datatable(
+        result,
+        options = options,
+        rownames = FALSE,
+        colnames = colnames(result) %>% camelCaseToTitleCase(),
+        escape = FALSE,
+        filter = "top",
+        selection = list(mode = "none"),
+        class = "stripe nowrap compact"
+      )
+      return(dataTable)
+    }
+  })
+  
+  output$orphanConceptsPresentInEither <- DT::renderDT({
+    result <- dplyr::union(orphanConceptComparisonInCohortDefinition()$leftData,
+                           orphanConceptComparisonInCohortDefinition()$rightData)
+    
+    if (nrow(result) == 0) {
+      validate(need(nrow(result) > 0, "No data found"))
+    } else {
+      if (nrow(result) < 20) {
+        scrollYHeight <- TRUE
+      } else {
+        scrollYHeight <- '25vh'
+      }
+      
+      options = list(
+        pageLength = 100,
+        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        ordering = TRUE,
+        paging = TRUE,
+        scrollX = TRUE,
+        scrollY = scrollYHeight,
+        info = TRUE,
+        searchHighlight = TRUE
+      )
+      
+      dataTable <- DT::datatable(
+        result,
+        options = options,
+        rownames = FALSE,
+        colnames = colnames(result) %>% camelCaseToTitleCase(),
+        escape = FALSE,
+        filter = "top",
+        selection = list(mode = "none"),
+        class = "stripe nowrap compact"
+      )
+      return(dataTable)
+    }
+  })
+  
   # Cohort Counts ---------------------------------------------------------------------------
   
   getCohortCountResultReactive <- shiny::reactive(x = {

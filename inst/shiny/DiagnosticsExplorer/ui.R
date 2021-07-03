@@ -412,6 +412,35 @@ bodyTabItems <- shinydashboard::tabItems(
                           DT::dataTableOutput(outputId = "mappedConceptsPresentInEither")
                         )
                       )
+                    )),
+      shiny::column(width = 12,
+                    shiny::conditionalPanel(
+                      condition = "output.cohortDefinitionCountOfSelectedRows == 2 &
+                                   input.conceptSetsType == 'Orphan concepts' &
+                                   input.conceptSetsTypeSecond == 'Orphan concepts'",
+                      shiny::tabsetPanel(
+                        id = "orphanConceptsDifference",
+                        shiny::tabPanel(
+                          title = "Present in left",
+                          tags$br(),
+                          DT::dataTableOutput(outputId = "orphanConceptsPresentInLeft")
+                        ),
+                        shiny::tabPanel(
+                          title = "Present in right",
+                          tags$br(),
+                          DT::dataTableOutput(outputId = "orphanConceptsPresentInRight")
+                        ),
+                        shiny::tabPanel(
+                          title = "Present in both",
+                          tags$br(),
+                          DT::dataTableOutput(outputId = "orphanConceptsPresentInBoth")
+                        ),
+                        shiny::tabPanel(
+                          title = "Present in either",
+                          tags$br(),
+                          DT::dataTableOutput(outputId = "orphanConceptsPresentInEither")
+                        )
+                      )
                     ))
     )
   ),
