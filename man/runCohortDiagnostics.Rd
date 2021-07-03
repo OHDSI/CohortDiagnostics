@@ -35,7 +35,10 @@ runCohortDiagnostics(
   runCohortOverlap = TRUE,
   runCohortTemporalRelationship = TRUE,
   runCohortCharacterization = TRUE,
-  covariateSettings = createDefaultCovariateSettings(),
+  covariateSettings = list(createDefaultCovariateSettings(),
+    createCovariateSettings(useVisitCountLongTerm = TRUE, useVisitCountMediumTerm = TRUE,
+    useVisitCountShortTerm = TRUE, useVisitConceptCountLongTerm = TRUE,
+    useVisitConceptCountMediumTerm = TRUE, useVisitConceptCountShortTerm = TRUE)),
   runTemporalCohortCharacterization = TRUE,
   temporalCovariateSettings = createTemporalCovariateSettings(useConditionOccurrence =
     TRUE, useDrugEraStart = TRUE, useDrugEraOverlap = TRUE, useVisitCount = TRUE,

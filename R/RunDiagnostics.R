@@ -978,7 +978,8 @@ runCohortDiagnostics <- function(packageName = NULL,
         connection = connection,
         cohortDatabaseSchema = cohortDatabaseSchema,
         cohortTable = cohortTable,
-        cohortIds = subset$cohortId
+        targetCohortIds = subset$cohortId,
+        comparatorCohortIds = cohorts$cohortId
       )
       if (nrow(cohortOverlap) > 0) {
         cohortOverlap <-
