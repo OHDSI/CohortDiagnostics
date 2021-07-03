@@ -1018,28 +1018,40 @@ getCohortAsFeatureCharacterizationResults <-
       getResultsFromCohortRelationships(dataSource = dataSource,
                                         cohortIds = cohortIds,
                                         databaseIds = databaseIds)
-    if (!is.null(cohortRelationships)) {
-      cohortRelationships <- cohortRelationships %>% 
-        dplyr::filter(.data$relationshipType == '11') 
-    }
-    
+
     # comparator cohort was on or after target cohort
     summarizeCohortRelationship <- function(data,
-                                            startDayGte = NULL,
-                                            endDayLte = NULL,
+                                            startDay = NULL,
+                                            endDay = NULL,
+                                            incidentTarget = FALSE,
+                                            incidentComparator = FALSE,
                                             analysisId,
                                             cohortCounts) {
       
       if (is.null(data) || nrow(data) == 0) {return(NULL)}
-      
-      if (!is.null(startDayGte)) {
-        data <- data %>%
-          dplyr::filter(.data$startDay >= startDayGte)
+      if (incidentTarget) {
+        data <- data %>% 
+          dplyr::filter(.data$relationshipType == '1A') %>% 
+          dplyr::select(-.data$relationshipType)
+      } else {
+        data <- data %>% 
+          dplyr::filter(.data$relationshipType == 'AA') %>% 
+          dplyr::select(-.data$relationshipType)
       }
       
-      if (!is.null(endDayLte)) {
+      data <- data %>% 
+        dplyr::filter(.data$startDay >= 0)
+      
+      if (is.null(data) || nrow(data) == 0) {return(NULL)}
+      
+      if (!is.null(startDay) && !is.na(startDay) && length(startDay) > 0) {
         data <- data %>%
-          dplyr::filter(.data$endDay <= endDayLte)
+          dplyr::filter(.data$startDay <= !!startDay)
+      }
+      
+      if (!is.null(endDay) && !is.na(endDay) && length(endDay) > 0) {
+        data <- data %>%
+          dplyr::filter(.data$endDay >= !!endDay)
       }
       
       data <- data %>%
@@ -1052,18 +1064,30 @@ getCohortAsFeatureCharacterizationResults <-
         dplyr::ungroup()
       
       if (nrow(cohortCounts) > 0) {
-        cohortCounts <- cohortCounts %>%
-          dplyr::select(.data$cohortId,
-                        .data$databaseId,
-                        .data$cohortSubjects)
-        data <- data %>%
-          dplyr::inner_join(cohortCounts, by = c('databaseId', 'cohortId')) %>%
-          dplyr::mutate(mean = .data$sumValue / .data$cohortSubjects) %>%
-          dplyr::mutate(sd = sqrt(.data$mean * (1 - .data$mean)))
+        if (incidentTarget) {
+          cohortCounts <- cohortCounts %>%
+            dplyr::select(.data$cohortId,
+                          .data$databaseId,
+                          .data$cohortSubjects)
+          data <- suppressWarnings(data %>%
+                                     dplyr::inner_join(cohortCounts, by = c('databaseId', 'cohortId')) %>%
+                                     dplyr::mutate(mean = .data$sumValue / .data$cohortSubjects) %>%
+                                     dplyr::mutate(sd = sqrt(.data$mean * (1 - .data$mean))))
+        } else {
+          cohortCounts <- cohortCounts %>%
+            dplyr::select(.data$cohortId,
+                          .data$databaseId,
+                          .data$cohortEntries)
+          data <- suppressWarnings(data %>%
+                                     dplyr::inner_join(cohortCounts, by = c('databaseId', 'cohortId')) %>%
+                                     dplyr::mutate(mean = .data$sumValue / .data$cohortEntries) %>%
+                                     dplyr::mutate(sd = sqrt(.data$mean * (1 - .data$mean))))
+        }
       }
+      
       data <- data %>%
         dplyr::mutate(analysisId = !!analysisId) %>%
-        dplyr::mutate(covariateId = (.data$comparatorCohortId*-1000)+!!analysisId) %>%
+        dplyr::mutate(covariateId = (.data$comparatorCohortId*-1000)-999+!!analysisId) %>%
         dplyr::select(
           .data$cohortId,
           .data$covariateId,
@@ -1074,76 +1098,58 @@ getCohortAsFeatureCharacterizationResults <-
         )
       return(data)
     }
-    comparatorOccurrenceShortTerm <-
-      summarizeCohortRelationship(
-        data = cohortRelationships,
-        startDay = 0,
-        endDay = 30,
-        cohortCounts = cohortCounts,
-        analysisId = -1
-      )
-    comparatorOccurrenceMediumTerm <-
-      summarizeCohortRelationship(
-        data = cohortRelationships,
-        startDay = 0,
-        endDay = 180,
-        cohortCounts = cohortCounts,
-        analysisId = -2
-      )
-    comparatorOccurrenceLongTerm <-
-      summarizeCohortRelationship(
-        data = cohortRelationships,
-        startDay = 0,
-        cohortCounts = cohortCounts,
-        endDay = 365,
-        analysisId = -3
-      )
-    comparatorOccurrenceAnyTime <-
-      summarizeCohortRelationship(
-        data = cohortRelationships,
-        startDay = 0,
-        cohortCounts = cohortCounts,
-        analysisId = -4
-      )
     
-    covariateValue <- dplyr::bind_rows(
-      comparatorOccurrenceShortTerm,
-      comparatorOccurrenceMediumTerm,
-      comparatorOccurrenceLongTerm,
-      comparatorOccurrenceAnyTime
-    )
+    analysisId <- c(-1,-2,-3,-4,-5,-6,-7,-8,-9,-10,-11,-12,-13,-14,-15,-16)
+    analysisName <- c("ComparatorCohortStartAnyTimePrior","ComparatorCohortStartLongTerm","ComparatorCohortStartMediumTerm","ComparatorCohortStartShortTerm","ComparatorIncidentCohortStartAnyTimePrior","ComparatorIncidentCohortStartLongTerm","ComparatorIncidentCohortStartMediumTerm","ComparatorIncidentCohortStartShortTerm","ComparatorCohortStartAnyTimePriorIncidentTarget","ComparatorCohortStartLongTermIncidentTarget","ComparatorCohortStartMediumTermIncidentTarget","ComparatorCohortStartShortTermIncidentTarget","ComparatorIncidentCohortStartAnyTimePriorIncidentTarget","ComparatorIncidentCohortStartLongTermIncidentTarget","ComparatorIncidentCohortStartMediumTermIncidentTarget","ComparatorIncidentCohortStartShortTermIncidentTarget")
+    startDay <- c(NA,365,180,30,NA,365,180,30,NA,365,180,30,NA,365,180,30)
+    endDay <- c(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
+    description <- c("Count of distinct comparator cohort start dates any time prior to index.",
+                     "Count of distinct comparator cohort start dates in long term period prior to index.",
+                     "Count of distinct comparator cohort start dates in medium term period prior to index.",
+                     "Count of distinct comparator cohort start dates in short term period prior to index.",
+                     "Count of distinct incident comparator cohort start dates any time prior to index.",
+                     "Count of distinct incident comparator cohort start dates in long term period prior to index.",
+                     "Count of distinct incident comparator cohort start dates in medium term period prior to index.",
+                     "Count of distinct incident comparator cohort start dates in short term period prior to index.",
+                     "Count of distinct comparator cohort start dates any time prior to index date of incident target.",
+                     "Count of distinct comparator cohort start dates in long term period prior to index date of incident target.",
+                     "Count of distinct comparator cohort start dates in medium term period prior to index date of incident target.",
+                     "Count of distinct comparator cohort start dates in short term period prior to index date of incident target.",
+                     "Count of distinct incident comparator cohort start dates any time prior to index date of incident target.",
+                     "Count of distinct incident comparator cohort start dates in long term period prior to index date of incident target.",
+                     "Count of distinct incident comparator cohort start dates in medium term period prior to index date of incident target.",
+                     "Count of distinct incident comparator cohort start dates in short term period prior to index date of incident target.")
+    incidentTarget <- c(FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE)
+    incidentComparator <- c(FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,FALSE,TRUE,TRUE,TRUE,TRUE)
     
-    if (nrow(covariateValue) == 0) {
-      covariateValue <- NULL
+    analysisRef <- dplyr::tibble(analysisId, analysisName, startDay, endDay, description, incidentTarget, incidentComparator) %>% 
+      dplyr::mutate(isBinary = 'Y',
+                    missingMeansZero = 'Y') %>% 
+      dplyr::arrange(.data$analysisId)
+    
+    result <- list()
+    for (j in (1:nrow(analysisRef))) {
+      result[[j]] <- summarizeCohortRelationship(data = cohortRelationships,
+                                                 startDay = analysisRef[j,]$startDay,
+                                                 endDay = analysisRef[j,]$endDay,
+                                                 incidentTarget = analysisRef[j,]$incidentTarget,
+                                                 incidentComparator = analysisRef[j,]$incidentComparator,
+                                                 analysisId = analysisRef[j,]$analysisId,
+                                                 cohortCounts = cohortCounts)
     }
+    result <- dplyr::bind_rows(result)
     
-    analysisRef <- dplyr::tibble(
-      analysisId = c(-1, -2, -3, -4),
-      analysisName = c(
-        'CohortOccurrenceShortTerm',
-        'CohortOccurrenceMediumTerm',
-        'CohortOccurrenceLongTerm',
-        'CohortOccurrenceAnyTimePrior'
-      ),
-      description = c(
-        'Comparator cohort start date during day - 30 through 0 days relative to target cohort start date: ',
-        'Comparator cohort start date during day - 180 through 0 days relative to target cohort start date: ',
-        'Comparator cohort start date during day - 365 through 0 days relative to target cohort start date: ',
-        'Comparator cohort start date during any day prior through 0 days relative to target cohort start date: '
-      ),
-      domainId = c('Cohort','Cohort','Cohort','Cohort'),
-      startDay = c(-30, -180, -365, NA),
-      endDay = c(0, 0, 0, 0),
-      isBinary = c('Y','Y','Y','Y'),
-      missingMeansZero = c('Y','Y','Y','Y')
-    )
+    if (nrow(result) == 0) {
+      result <- NULL
+    }
     
     covariateRef <- tidyr::crossing(cohort,
                                     analysisRef %>% 
                                       dplyr::select(.data$analysisId, 
                                                     .data$description)) %>% 
-      dplyr::mutate(covariateName = paste0(.data$description, .data$cohortName)) %>% 
-      dplyr::mutate(covariateId = abs((.data$cohortId*1000)+.data$analysisId) * -1) %>% 
+      dplyr::mutate(covariateId = (.data$cohortId*-1000)-999+!!analysisId) %>% 
+      dplyr::mutate(covariateName = paste0(.data$cohortName, "(", .data$covariateId, ")")) %>% 
+      # dplyr::mutate(covariateName = paste0(.data$description, .data$cohortName)) %>% 
       dplyr::mutate(conceptId = .data$cohortId * -1) %>% 
       dplyr::select(-.data$description) %>% 
       dplyr::arrange(.data$covariateId) %>% 
@@ -1151,10 +1157,6 @@ getCohortAsFeatureCharacterizationResults <-
                     .data$covariateName,
                     .data$analysisId,
                     .data$conceptId)
-    
-    analysisRef <- analysisRef %>% 
-      dplyr::select(-.data$description) %>% 
-      dplyr::arrange(.data$analysisId)
     
     concept <- cohort %>% 
       dplyr::filter(.data$cohortId %in% abs(covariateRef$conceptId) %>% unique()) %>% 
@@ -1172,10 +1174,11 @@ getCohortAsFeatureCharacterizationResults <-
                     .data$vocabularyId, .data$conceptClassId, .data$standardConcept,
                     .data$conceptCode, .data$validStartDate, .data$validEndDate) %>% 
       dplyr::arrange(.data$conceptId)
+    
     return(
       list(
         covariateRef = covariateRef,
-        covariateValue = covariateValue,
+        covariateValue = result,
         covariateValueDist = NULL,
         analysisRef = analysisRef,
         concept = concept
@@ -1304,7 +1307,16 @@ getMultipleCharacterizationResults <-
     
     analysisRef <- dplyr::bind_rows(featureExtractioncharacterization$analysisRef,
                                     featureExtractionTemporalcharacterization$temporalAnalysisRef,
-                                    cohortAsFeatureCharacterizationResults$analysisRef
+                                    cohortAsFeatureCharacterizationResults$analysisRef %>% 
+                                      dplyr::mutate(domainId = 'Cohort') %>% 
+                                      dplyr::select(.data$analysisId,
+                                                    .data$analysisName,
+                                                    .data$domainId,
+                                                    .data$startDay,
+                                                    .data$endDay,
+                                                    .data$isBinary,
+                                                    .data$missingMeansZero,
+                                                    .data$characterizationSource)
     )
     if (nrow(analysisRef) == 0) {
       analysisRef <- NULL

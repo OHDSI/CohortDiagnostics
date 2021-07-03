@@ -1127,25 +1127,10 @@ runCohortDiagnostics <- function(packageName = NULL,
         targetCohortIds = subset$cohortId,
         comparatorCohortIds = cohorts$cohortId
       )
-      cohortTemporalRelationship <- cohortTemporalRelationship %>% 
-        dplyr::mutate(startDay = as.numeric(.data$attributeName)*30) %>% 
-        dplyr::mutate(endDay = (as.numeric(.data$attributeName)*30) + 29)  %>%
-        dplyr::mutate(databaseId = !!databaseId) %>% 
-        dplyr::select(.data$databaseId,
-                      .data$cohortId, 
-                      .data$comparatorCohortId,
-                      .data$relationshipType,
-                      .data$startDay,
-                      .data$endDay,
-                      .data$countValue) %>% 
-        dplyr::arrange(.data$cohortId, 
-                       .data$comparatorCohortId,
-                       .data$relationshipType,
-                       .data$startDay,
-                       .data$endDay,
-                       .data$countValue)
       
       if (nrow(cohortTemporalRelationship) > 0) {
+        cohortTemporalRelationship <- cohortTemporalRelationship %>%
+          dplyr::mutate(databaseId = !!databaseId)
         writeToCsv(
           data = cohortTemporalRelationship,
           fileName = file.path(exportFolder, "cohort_relationships.csv"),
@@ -1319,7 +1304,9 @@ runCohortDiagnostics <- function(packageName = NULL,
         "sourceReleaseDate",
         "cdmVersion",
         "cdmReleaseDate",
-        "vocabularyVersion"
+        "vocabularyVersion",
+        "covariateSettingsJson",
+        "temporalCovariateSettingsJson"
       ),
       valueField =  c(
         as.character(packageVersion("CohortDiagnostics")),
@@ -1339,7 +1326,9 @@ runCohortDiagnostics <- function(packageName = NULL,
         as.character(nullToEmpty(cdmSourceInformation$sourceReleaseDate)),
         as.character(nullToEmpty(cdmSourceInformation$cdmVersion)),
         as.character(nullToEmpty(cdmSourceInformation$cdmReleaseDate)),
-        as.character(nullToEmpty(cdmSourceInformation$vocabularyVersion))
+        as.character(nullToEmpty(cdmSourceInformation$vocabularyVersion)),
+        as.character(RJSONIO::toJSON(covariateSettings, digits = 23, pretty = TRUE)),
+        as.character(RJSONIO::toJSON(temporalCovariateSettings, digits = 23, pretty = TRUE))
       )
     )
   writeToCsv(data = metadata,
