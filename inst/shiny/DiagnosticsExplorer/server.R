@@ -791,66 +791,66 @@ shiny::shinyServer(function(input, output, session) {
                 input.conceptSetsTypeSecond != 'Mapped (source)' &
                 input.conceptSetsTypeSecond != 'Json' &
                 input.conceptSetsTypeSecond != 'Orphan concepts'",
-              # tags$table(width = "100%",
-              #            tags$tr(
-              #              tags$td(align = "right",
-              #                      shiny::downloadButton(
-              #                        "saveCohortDefinitionConceptSetsTable",
-              #                        label = "",
-              #                        icon = shiny::icon("download"),
-              #                        style = "margin-top: 5px; margin-bottom: 5px;"
-              #                      )
-              #              )
-              #            )
-              # ),
+              tags$table(width = "100%",
+                         tags$tr(
+                           tags$td(align = "right",
+                                   shiny::downloadButton(
+                                     "saveCohortDefinitionConceptSetsTableSecond",
+                                     label = "",
+                                     icon = shiny::icon("download"),
+                                     style = "margin-top: 5px; margin-bottom: 5px;"
+                                   )
+                           )
+                         )
+              ),
               DT::dataTableOutput(outputId = "cohortDefinitionConceptSetsSecondTable")
             ),
             shiny::conditionalPanel(
               condition = "input.conceptSetsTypeSecond == 'Resolved (included)'",
-              # tags$table(width = "100%",
-              #            tags$tr(
-              #              tags$td(align = "right",
-              #                      shiny::downloadButton(
-              #                        "saveCohortDefinitionIncludedResolvedConceptsTable",
-              #                        label = "",
-              #                        icon = shiny::icon("download"),
-              #                        style = "margin-top: 5px; margin-bottom: 5px;"
-              #                      )
-              #              )
-              #            )
-              # ),
+              tags$table(width = "100%",
+                         tags$tr(
+                           tags$td(align = "right",
+                                   shiny::downloadButton(
+                                     "saveCohortDefinitionIncludedResolvedConceptsSecondTable",
+                                     label = "",
+                                     icon = shiny::icon("download"),
+                                     style = "margin-top: 5px; margin-bottom: 5px;"
+                                   )
+                           )
+                         )
+              ),
               DT::dataTableOutput(outputId = "cohortDefinitionIncludedResolvedConceptsSecondTable")
             ),
             shiny::conditionalPanel(
               condition = "input.conceptSetsTypeSecond == 'Mapped (source)'",
-              # tags$table(width = "100%",
-              #            tags$tr(
-              #              tags$td(align = "right",
-              #                      shiny::downloadButton(
-              #                        "saveCohortDefinitionMappedConceptsTable",
-              #                        label = "",
-              #                        icon = shiny::icon("download"),
-              #                        style = "margin-top: 5px; margin-bottom: 5px;"
-              #                      )
-              #              )
-              #            )
-              # ),
+              tags$table(width = "100%",
+                         tags$tr(
+                           tags$td(align = "right",
+                                   shiny::downloadButton(
+                                     "saveCohortDefinitionMappedConceptsSecondTable",
+                                     label = "",
+                                     icon = shiny::icon("download"),
+                                     style = "margin-top: 5px; margin-bottom: 5px;"
+                                   )
+                           )
+                         )
+              ),
               DT::dataTableOutput(outputId = "cohortDefinitionMappedConceptsSecondTable")
             ),
             shiny::conditionalPanel(
               condition = "input.conceptSetsTypeSecond == 'Orphan concepts'",
-              # tags$table(width = "100%",
-              #            tags$tr(
-              #              tags$td(align = "right",
-              #                      shiny::downloadButton(
-              #                        "saveCohortDefinitionOrphanConceptsTable",
-              #                        label = "",
-              #                        icon = shiny::icon("download"),
-              #                        style = "margin-top: 5px; margin-bottom: 5px;"
-              #                      )
-              #              )
-              #            )
-              # ),
+              tags$table(width = "100%",
+                         tags$tr(
+                           tags$td(align = "right",
+                                   shiny::downloadButton(
+                                     "saveCohortDefinitionOrphanConceptsSecondTable",
+                                     label = "",
+                                     icon = shiny::icon("download"),
+                                     style = "margin-top: 5px; margin-bottom: 5px;"
+                                   )
+                           )
+                         )
+              ),
               DT::dataTableOutput(outputId = "cohortDefinitionOrphanConceptSecondTable")
             ),
             shiny::conditionalPanel(
@@ -1478,6 +1478,8 @@ shiny::shinyServer(function(input, output, session) {
       return(dataTable)
     }, server = TRUE)
   
+  
+  
   output$cohortConceptsetExpressionJson <- shiny::renderText({
     if (is.null(cohortDefinitionConceptSetExpressionRow())) {
       return(NULL)
@@ -2024,6 +2026,16 @@ shiny::shinyServer(function(input, output, session) {
       return(dataTable)
     }, server = TRUE)
   
+  output$saveCohortDefinitionConceptSetsTableSecond <-  downloadHandler(
+    filename = function() {
+      getFormattedFileName(fileName = "conceptset")
+    },
+    content = function(file) {
+      downloadCsv(x = cohortDefinitionConceptSetSecond(), 
+                  fileName = file)
+    }
+  )
+  
   output$cohortConceptsetExpressionJsonSecond <- shiny::renderText({
     if (is.null(cohortDefinitionConceptSetExpressionSecondRow())) {
       return(NULL)
@@ -2183,6 +2195,16 @@ shiny::shinyServer(function(input, output, session) {
                              backgroundPosition = "center")
     return(table)
   }, server = TRUE)
+  
+  output$saveCohortDefinitionOrphanConceptsSecondTable <-  downloadHandler(
+    filename = function() {
+      getFormattedFileName(fileName = "orphanconcepts")
+    },
+    content = function(file) {
+      downloadCsv(x = cohortDefinitionOrphanConceptSecondTableData(), 
+                  fileName = file)
+    }
+  )
   
   getResolvedOrMappedConceptSetSecondForAllDatabase <-
     shiny::reactive(x = {
@@ -2454,6 +2476,16 @@ shiny::shinyServer(function(input, output, session) {
       return(dataTable)
     }, server = TRUE)
   
+  output$saveCohortDefinitionIncludedResolvedConceptsSecondTable <-  downloadHandler(
+    filename = function() {
+      getFormattedFileName(fileName = "resolvedConceptSet")
+    },
+    content = function(file) {
+      downloadCsv(x = getResolvedOrMappedConceptSecond(), 
+                  fileName = file)
+    }
+  )
+  
   output$cohortDefinitionMappedConceptsSecondTable <-
     DT::renderDataTable(expr = {
       data <- getResolvedOrMappedConceptSecond()
@@ -2527,6 +2559,16 @@ shiny::shinyServer(function(input, output, session) {
       )
       return(dataTable)
     }, server = TRUE)
+  
+  output$saveCohortDefinitionMappedConceptsSecondTable <-  downloadHandler(
+    filename = function() {
+      getFormattedFileName(fileName = "mappedConceptSet")
+    },
+    content = function(file) {
+      downloadCsv(x = getResolvedOrMappedConceptSecond(), 
+                  fileName = file)
+    }
+  )
   
   
   #Concept set comparision ---------------------------------------------
