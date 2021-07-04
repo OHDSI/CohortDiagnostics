@@ -1051,9 +1051,9 @@ shiny::shinyServer(function(input, output, session) {
     } else {
       tags$table(
         tags$tr(
-          tags$td("Subjects: "),
+          tags$td(tags$b("Subjects: ")),
           tags$td(scales::comma(row$cohortSubjects, accuracy = 1)),
-          tags$td("Records: "),
+          tags$td(tags$b("Records: ")),
           tags$td(scales::comma(row$cohortEntries, accuracy = 1))
         )
       )
@@ -1970,9 +1970,9 @@ shiny::shinyServer(function(input, output, session) {
     } else {
       tags$table(
         tags$tr(
-          tags$td("Subjects: "),
+          tags$td(tags$b("Subjects: ")),
           tags$td(scales::comma(row$cohortSubjects, accuracy = 1)),
-          tags$td("Records: "),
+          tags$td(tags$b("Records: ")),
           tags$td(scales::comma(row$cohortEntries, accuracy = 1))
         )
       )
