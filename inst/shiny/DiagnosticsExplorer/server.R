@@ -551,7 +551,7 @@ shiny::shinyServer(function(input, output, session) {
   shiny::outputOptions(x = output,
                        name = "cohortDefinitionCountOfSelectedRows",
                        suspendWhenHidden = FALSE)
-  
+  #Dynamic UI rendering -----------------------------------------------------------
   output$dynamicUIGenerationCohortDefinitionConceptsetsOne <- shiny::renderUI(expr = {
     shiny::column(
       noOfRowSelectedInCohortDefinitionTable(),
@@ -1291,8 +1291,8 @@ shiny::shinyServer(function(input, output, session) {
         columnDef <- list(
           truncateStringDef(1, 80),minCellCountDef(2:3))
         
-        maxCount <- max(data$count)
-        maxSubject <- max(data$subjects)
+        maxCount <- max(data$count, na.rm = TRUE)
+        maxSubject <- max(data$subjects, na.rm = TRUE)
       }
       
       options = list(
@@ -1374,8 +1374,8 @@ shiny::shinyServer(function(input, output, session) {
         columnDef <- list(
           truncateStringDef(1, 80),minCellCountDef(2:3))
         
-        maxCount <- max(data$count)
-        maxSubject <- max(data$subjects)
+        maxCount <- max(data$count, na.rm = TRUE)
+        maxSubject <- max(data$subjects, na.rm = TRUE)
       }
       options = list(
         pageLength = 100,
@@ -2428,8 +2428,8 @@ shiny::shinyServer(function(input, output, session) {
         columnDef <- list(
           truncateStringDef(1, 80),minCellCountDef(2:3))
         
-        maxCount <- max(data$count)
-        maxSubject <- max(data$subjects)
+        maxCount <- max(data$count, na.rm = TRUE)
+        maxSubject <- max(data$subjects, na.rm = TRUE)
       }
       
       options = list(
@@ -2512,8 +2512,8 @@ shiny::shinyServer(function(input, output, session) {
         columnDef <- list(
           truncateStringDef(1, 80),minCellCountDef(2:3))
         
-        maxCount <- max(data$count)
-        maxSubject <- max(data$subjects)
+        maxCount <- max(data$count, na.rm = TRUE)
+        maxSubject <- max(data$subjects, na.rm = TRUE)
       }
       options = list(
         pageLength = 100,
