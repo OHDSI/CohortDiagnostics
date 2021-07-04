@@ -27,7 +27,6 @@ runCohortDiagnostics(
   runInclusionStatistics = TRUE,
   runIncludedSourceConcepts = TRUE,
   runOrphanConcepts = TRUE,
-  runTimeDistributions = TRUE,
   runVisitContext = TRUE,
   runBreakdownIndexEvents = TRUE,
   runIncidenceRate = TRUE,
@@ -35,17 +34,41 @@ runCohortDiagnostics(
   runCohortOverlap = TRUE,
   runCohortTemporalRelationship = TRUE,
   runCohortCharacterization = TRUE,
-  covariateSettings = list(createDefaultCovariateSettings(),
-    createCovariateSettings(useVisitCountLongTerm = TRUE, useVisitCountMediumTerm = TRUE,
-    useVisitCountShortTerm = TRUE, useVisitConceptCountLongTerm = TRUE,
-    useVisitConceptCountMediumTerm = TRUE, useVisitConceptCountShortTerm = TRUE)),
+  covariateSettings = FeatureExtraction::createCovariateSettings(useDemographicsGender
+    = TRUE, useDemographicsAge = FALSE, useDemographicsAgeGroup = TRUE,
+    useDemographicsRace = TRUE, useDemographicsEthnicity = TRUE, useDemographicsIndexYear
+    = TRUE, useDemographicsIndexMonth = TRUE, useDemographicsPriorObservationTime = TRUE,
+    useDemographicsPostObservationTime = TRUE, useDemographicsTimeInCohort = TRUE,
+    useDemographicsIndexYearMonth = TRUE, useConditionOccurrenceAnyTimePrior = TRUE,
+    useConditionOccurrenceLongTerm = TRUE,      useConditionOccurrenceShortTerm = TRUE,
+    useConditionGroupEraAnyTimePrior = TRUE, useConditionGroupEraLongTerm = TRUE,
+    useConditionGroupEraShortTerm = TRUE, useDrugGroupEraLongTerm = TRUE,
+    useDrugGroupEraShortTerm = TRUE, useDrugGroupEraOverlapping = TRUE,
+    useDrugGroupEraStartLongTerm = TRUE, useDrugGroupEraStartShortTerm = TRUE,
+    useProcedureOccurrenceLongTerm = TRUE, useProcedureOccurrenceShortTerm = TRUE,
+    useDeviceExposureLongTerm = TRUE, useDeviceExposureShortTerm = TRUE,
+    useMeasurementLongTerm = TRUE,      useMeasurementShortTerm = TRUE,
+    useMeasurementRangeGroupLongTerm = TRUE, useObservationAnyTimePrior = FALSE,
+    useObservationLongTerm = TRUE, useObservationMediumTerm = FALSE,
+    useObservationShortTerm = TRUE, useCharlsonIndex = TRUE, useDcsi = TRUE, useChads2 =
+    TRUE, useChads2Vasc = TRUE, useVisitCountLongTerm = TRUE, useVisitCountMediumTerm =
+    TRUE, useVisitCountShortTerm = TRUE, useVisitConceptCountLongTerm = TRUE,
+    useVisitConceptCountMediumTerm = TRUE, useVisitConceptCountShortTerm = TRUE,
+    longTermStartDays = -365,      mediumTermStartDays = -180, shortTermStartDays = -30,
+    endDays = 0, includedCovariateConceptIds = c(), addDescendantsToInclude = FALSE,
+    excludedCovariateConceptIds = c(), addDescendantsToExclude = FALSE,
+    includedCovariateIds = c()),
   runTemporalCohortCharacterization = TRUE,
-  temporalCovariateSettings = createTemporalCovariateSettings(useConditionOccurrence =
-    TRUE, useDrugEraStart = TRUE, useDrugEraOverlap = TRUE, useVisitCount = TRUE,
+ 
+    temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(useConditionOccurrence
+    = TRUE, useConditionEraOverlap = TRUE, useConditionEraGroupStart = TRUE,
+    useDrugExposure = TRUE, useDrugEraStart = TRUE, useDrugEraGroupStart = TRUE,
+    useDrugEraOverlap = TRUE, useDrugEraGroupOverlap = TRUE, useVisitCount = TRUE,
     useVisitConceptCount = TRUE, useProcedureOccurrence = TRUE, useMeasurement = TRUE,
-    temporalStartDays = c(-365, -30, 0, 1, 31, seq(from = -421, to = -31, by = 30),
-    seq(from = 0, to = 390, by = 30)), temporalEndDays = c(-31, -1, 0, 30, 365, seq(from
-    = -391, to = -1, by = 30), seq(from = 30, to = 420, by = 30))),
+    useCharlsonIndex = TRUE, temporalStartDays = c(-365, -30, 0, 1, 31, seq(from = -421,
+    to = -31, by = 30), seq(from = 0,      to = 390, by = 30)), temporalEndDays = c(-31,
+    -1, 0, 30, 365, seq(from = -391, to = -1, by = 30), seq(from = 30, to = 420, by =
+    30))),
   minCellCount = 5,
   incremental = FALSE,
   incrementalFolder = file.path(exportFolder, "incremental")
@@ -122,8 +145,6 @@ does not exist it will be created.}
 \item{runIncludedSourceConcepts}{Generate and export the source concepts included in the cohorts?}
 
 \item{runOrphanConcepts}{Generate and export potential orphan concepts?}
-
-\item{runTimeDistributions}{Generate and export cohort time distributions?}
 
 \item{runVisitContext}{Generate and export index-date visit context?}
 

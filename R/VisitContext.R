@@ -38,15 +38,15 @@
 #' @template CdmVersion
 #'
 #' @export
-getVisitContext <- function(connectionDetails = NULL,
-                            connection = NULL,
-                            cdmDatabaseSchema,
-                            tempEmulationSchema = NULL,
-                            cohortDatabaseSchema = cdmDatabaseSchema,
-                            vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-                            cohortTable = "cohort",
-                            cohortIds,
-                            cdmVersion = 5) {
+runVisitContextDiagnostics <- function(connectionDetails = NULL,
+                                       connection = NULL,
+                                       cdmDatabaseSchema,
+                                       tempEmulationSchema = NULL,
+                                       cohortDatabaseSchema = cdmDatabaseSchema,
+                                       vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+                                       cohortTable = "cohort",
+                                       cohortIds,
+                                       cdmVersion = 5) {
   if (!cdmVersion == 5) {
     warning('Only OMOP CDM v5.x.x is supported. Continuing execution.')
   }
