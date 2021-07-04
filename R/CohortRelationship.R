@@ -73,6 +73,25 @@ computeCohortTemporalRelationship <-
     DatabaseConnector::renderTranslateExecuteSql(connection = connection,
                                                  sql = dropSql,
                                                  progressBar = TRUE)
+    
+    temporalRelationship <- temporalRelationship %>% 
+      dplyr::mutate(startDay = as.numeric(.data$attributeName)*30) %>% 
+      dplyr::mutate(endDay = (as.numeric(.data$attributeName)*30) + 29) %>% 
+      dplyr::select(.data$cohortId, 
+                    .data$comparatorCohortId,
+                    .data$relationshipType,
+                    .data$startDay,
+                    .data$endDay,
+                    .data$subjects,
+                    .data$records) %>% 
+      dplyr::arrange(.data$cohortId, 
+                     .data$comparatorCohortId,
+                     .data$relationshipType,
+                     .data$startDay,
+                     .data$endDay,
+                     .data$subjects,
+                     .data$records)
+    
     delta <- Sys.time() - startTime
     ParallelLogger::logInfo(paste(
       "Computing cohort temporal relationship took",

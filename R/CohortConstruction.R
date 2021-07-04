@@ -294,8 +294,11 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
     return(stats)
   }
   
-  inclusion <- fetchStats(cohortInclusionFile) %>%
-    tidyr::replace_na(replace = list(description = ''))
+  inclusion <- fetchStats(cohortInclusionFile)
+  if ('description' %in% colnames(inclusion)) {
+    inclusion <- inclusion %>% tidyr::replace_na(replace = list(description = ''))
+  } else {inclusion$description <- ''}
+    
   summaryStats <- fetchStats(cohortSummaryStatsFile)
   inclusionStats <- fetchStats(cohortInclusionStatsFile)
   inclusionResults <- fetchStats(cohortInclusionResultFile)
@@ -537,11 +540,11 @@ instantiateCohortSet <- function(connectionDetails = NULL,
         sql <- SqlRender::render(sql,
                                  vocabulary_database_schema = vocabularyDatabaseSchema)
       } else {
-        ParallelLogger::logDebug('Cohort id ', cohorts$cohortId[i], " SQL does not have vocabularyDatabaseSchema.")
+        ParallelLogger::logDebug('- Cohort id ', cohorts$cohortId[i], " SQL does not have vocabularyDatabaseSchema.")
       }
       if (!stringr::str_detect(string = sql,
                               pattern = 'results_database_schema')) {
-        ParallelLogger::logDebug('Cohort id ', cohorts$cohortId[i], " SQL does not have resultsDatabaseSchema.")
+        ParallelLogger::logDebug('- Cohort id ', cohorts$cohortId[i], " SQL does not have resultsDatabaseSchema.")
       }
       if (generateInclusionStats) {
         if (stringr::str_detect(string = sql,

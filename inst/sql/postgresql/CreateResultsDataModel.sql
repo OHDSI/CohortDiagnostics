@@ -5,6 +5,9 @@ DROP TABLE IF EXISTS calendar_incidence;
 DROP TABLE IF EXISTS cohort;
 DROP TABLE IF EXISTS cohort_count;
 DROP TABLE IF EXISTS cohort_inclusion;
+DROP TABLE IF EXISTS cohort_inclusion_result;
+DROP TABLE IF EXISTS cohort_inclusion_stats;
+DROP TABLE IF EXISTS cohort_summary_stats;
 DROP TABLE IF EXISTS cohort_overlap;
 DROP TABLE IF EXISTS cohort_relationships;
 DROP TABLE IF EXISTS concept;
@@ -111,7 +114,7 @@ CREATE TABLE cohort_inclusion_result (
 
 --Table cohort_inclusion_stats
 
-CREATE TABLE cohort_inclusion_stats(
+CREATE TABLE cohort_inclusion_stats (
   cohort_id BIGINT NOT NULL,
   rule_sequence int NOT NULL,
   mode_id int NOT NULL,
@@ -120,7 +123,7 @@ CREATE TABLE cohort_inclusion_stats(
   person_total bigint NOT NULL,
 	database_id VARCHAR NOT NULL,
 	PRIMARY KEY(cohort_id, database_id, rule_sequence, mode_id)
-)
+);
 
 --Table cohort_summary_stats
 
@@ -161,7 +164,8 @@ CREATE TABLE cohort_relationships (
 			relationship_type VARCHAR NOT NULL,
 			start_day FLOAT NOT NULL,
 			end_day FLOAT NOT NULL,
-			count_value FLOAT NOT NULL,			
+			subjects FLOAT NOT NULL,	
+			records FLOAT NOT NULL,		
 			PRIMARY KEY(database_id, cohort_id, comparator_cohort_id, relationship_type, start_day, end_day)
 );
 

@@ -9,7 +9,8 @@ computeCohortOverlap(
   connection = NULL,
   cohortDatabaseSchema,
   cohortTable = "cohort",
-  cohortIds,
+  targetCohortIds,
+  comparatorCohortIds,
   batchSize = 50
 )
 }
@@ -31,7 +32,9 @@ this should include both the database and schema name, for example
 
 \item{cohortTable}{Name of the cohort table.}
 
-\item{cohortIds}{A vector of one or more Cohort Ids.}
+\item{targetCohortIds}{List of cohort ids that represent target cohorts}
+
+\item{comparatorCohortIds}{List of cohort ids that represent comparator cohorts}
 
 \item{batchSize}{{Optional, default set to 50} If running diagnostics on large set
 of cohorts, this function allows you to batch them into chunks that
