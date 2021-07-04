@@ -42,7 +42,7 @@
 #'                               specified in cohort definition.
 #'
 #' @export
-getIncidenceRate <- function(connectionDetails = NULL,
+runIncidenceRateDiagnostics <- function(connectionDetails = NULL,
                              connection = NULL,
                              cohortDatabaseSchema,
                              cohortTable,

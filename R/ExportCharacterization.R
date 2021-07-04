@@ -22,6 +22,7 @@ exportCharacterization <- function(characteristics,
                                    covariateValueContFileName,
                                    covariateRefFileName,
                                    analysisRefFileName,
+                                   timeDistributionFileName = NULL,
                                    timeRefFileName = NULL,
                                    counts,
                                    cutOff = 0.0001,
@@ -103,12 +104,34 @@ exportCharacterization <- function(characteristics,
       #               sd = round(.data$sd, digits = 4)) %>%
       dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
     
+    characteristics$timeDistribution <- characteristics$covariatesContinuous %>%
+      dplyr::inner_join(characteristics$covariateRef, by = "covariateId") %>%
+      dplyr::filter(.data$analysisId %in% c(8,9,10)) %>% 
+      dplyr::select(
+        -.data$conceptId,
+        -.data$analysisId,
+        -.data$covariateId,
+        -.data$result$countValue
+      ) %>%
+      dplyr::rename(timeMetric = .data$covariateName,
+                    cohortId = .data$cohortDefinitionId) %>%
+      dplyr::collect()
+    
     if (dplyr::pull(dplyr::count(characteristics$filteredCovariatesContinous)) > 0) {
       writeCovariateDataAndromedaToCsv(
         data = characteristics$filteredCovariatesContinous,
         fileName = covariateValueContFileName,
         incremental = incremental
       )
+    }
+    if (!is.null(timeDistributionFileName)) {
+      if (dplyr::pull(dplyr::count(characteristics$timeDistribution)) > 0) {
+        writeCovariateDataAndromedaToCsv(
+          data = characteristics$timeDistribution,
+          fileName = timeDistributionFileName,
+          incremental = incremental
+        )
+      }
     }
   }
 }

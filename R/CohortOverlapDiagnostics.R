@@ -37,13 +37,13 @@
 #'                                    by default run over 50 target cohorts (and all comparator cohorts).
 #'
 #' @export
-computeCohortOverlap <- function(connectionDetails = NULL,
-                                 connection = NULL,
-                                 cohortDatabaseSchema,
-                                 cohortTable = "cohort",
-                                 targetCohortIds,
-                                 comparatorCohortIds,
-                                 batchSize = 50) {
+runCohortOverlapDiagnostics <- function(connectionDetails = NULL,
+                                        connection = NULL,
+                                        cohortDatabaseSchema,
+                                        cohortTable = "cohort",
+                                        targetCohortIds,
+                                        comparatorCohortIds,
+                                        batchSize = 50) {
   startTime <- Sys.time()
   
   if (length(targetCohortIds) == 0) {

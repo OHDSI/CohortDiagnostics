@@ -42,15 +42,15 @@
 #' @param cohortIds              A vector of one or more Cohort Ids to compute time distribution for.
 #'
 #' @export
-getTimeSeries <- function(connectionDetails = NULL,
-                          connection = NULL,
-                          tempEmulationSchema = NULL,
-                          cdmDatabaseSchema,
-                          cohortDatabaseSchema = cdmDatabaseSchema,
-                          cohortTable = "cohort",
-                          timeSeriesMinDate = as.Date('1980-01-01'),
-                          timeSeriesMaxDate = as.Date(Sys.Date()),
-                          cohortIds) {
+runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
+                                           connection = NULL,
+                                           tempEmulationSchema = NULL,
+                                           cdmDatabaseSchema,
+                                           cohortDatabaseSchema = cdmDatabaseSchema,
+                                           cohortTable = "cohort",
+                                           timeSeriesMinDate = as.Date('1980-01-01'),
+                                           timeSeriesMaxDate = as.Date(Sys.Date()),
+                                           cohortIds) {
   start <- Sys.time()
   
   if (is.null(connection)) {
