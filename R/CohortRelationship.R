@@ -33,7 +33,7 @@
 #' @param comparatorCohortIds          A vector of one or more Cohort Ids for use as feature/comparator cohorts.
 #'
 #' @export
-computeCohortTemporalRelationship <-
+runCohortTemporalRelationshipDiagnostics <-
   function(connectionDetails = NULL,
            connection = NULL,
            cohortDatabaseSchema,

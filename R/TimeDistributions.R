@@ -37,7 +37,7 @@
 #' @template CdmVersion
 #'
 #' @export
-getTimeDistributions <- function(connectionDetails = NULL,
+runTimeDistributionDiagnostics <- function(connectionDetails = NULL,
                                  connection = NULL,
                                  cdmDatabaseSchema,
                                  tempEmulationSchema = NULL,

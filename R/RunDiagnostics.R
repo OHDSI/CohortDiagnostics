@@ -841,7 +841,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       ))
     }
     if (nrow(subset) > 0) {
-      data <- getTimeDistributions(
+      data <- runTimeDistributionDiagnostics(
         connection = connection,
         tempEmulationSchema = tempEmulationSchema,
         cdmDatabaseSchema = cdmDatabaseSchema,
@@ -959,7 +959,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         }, error = function(e) {
           0
         })
-        data <- getIncidenceRate(
+        data <- runIncidenceRateDiagnostics(
           connection = connection,
           cdmDatabaseSchema = cdmDatabaseSchema,
           tempEmulationSchema = tempEmulationSchema,
@@ -1027,7 +1027,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
     if (nrow(subset) > 0) {
       ParallelLogger::logTrace("Beginning Cohort overlap SQL")
-      cohortOverlap <- computeCohortOverlap(
+      cohortOverlap <- runCohortOverlapDiagnostics(
         connection = connection,
         cohortDatabaseSchema = cohortDatabaseSchema,
         cohortTable = cohortTable,
@@ -1107,14 +1107,14 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
     
     if (nrow(subset) > 0) {
-      timeSeries <- getTimeSeries(connection = connection,
-                                  tempEmulationSchema = tempEmulationSchema,
-                                  cohortDatabaseSchema = cohortDatabaseSchema,
-                                  cdmDatabaseSchema = cdmDatabaseSchema,
-                                  cohortTable = cohortTable,
-                                  timeSeriesMinDate = observationPeriodDateRange$observationPeriodMinDate,
-                                  timeSeriesMaxDate = observationPeriodDateRange$observationPeriodMaxDate,
-                                  cohortIds = subset$cohortId)
+      timeSeries <- runCohortTimeSeriesDiagnostics(connection = connection,
+                                                   tempEmulationSchema = tempEmulationSchema,
+                                                   cohortDatabaseSchema = cohortDatabaseSchema,
+                                                   cdmDatabaseSchema = cdmDatabaseSchema,
+                                                   cohortTable = cohortTable,
+                                                   timeSeriesMinDate = observationPeriodDateRange$observationPeriodMinDate,
+                                                   timeSeriesMaxDate = observationPeriodDateRange$observationPeriodMaxDate,
+                                                   cohortIds = subset$cohortId)
       
       if (!is.null(timeSeries) && nrow(timeSeries) > 0) {
         timeSeries <- timeSeries %>% 
@@ -1180,7 +1180,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     
     if (nrow(subset) > 0) {
       ParallelLogger::logTrace("Beginning Cohort Relationship SQL")
-      cohortTemporalRelationship <- computeCohortTemporalRelationship(
+      cohortTemporalRelationship <- runCohortTemporalRelationshipDiagnostics(
         connection = connection,
         cohortDatabaseSchema = cohortDatabaseSchema,
         cohortTable = cohortTable,
