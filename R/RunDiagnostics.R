@@ -210,7 +210,6 @@ runCohortDiagnostics <- function(packageName = NULL,
   checkmate::assertLogical(runInclusionStatistics, add = errorMessage)
   checkmate::assertLogical(runIncludedSourceConcepts, add = errorMessage)
   checkmate::assertLogical(runOrphanConcepts, add = errorMessage)
-  checkmate::assertLogical(runTimeDistributions, add = errorMessage)
   checkmate::assertLogical(runBreakdownIndexEvents, add = errorMessage)
   checkmate::assertLogical(runIncidenceRate, add = errorMessage)
   checkmate::assertLogical(runCohortOverlap, add = errorMessage)
@@ -231,7 +230,6 @@ runCohortDiagnostics <- function(packageName = NULL,
     runInclusionStatistics,
     runIncludedSourceConcepts,
     runOrphanConcepts,
-    runTimeDistributions,
     runBreakdownIndexEvents,
     runIncidenceRate,
     runCohortOverlap,
@@ -835,59 +833,6 @@ runCohortDiagnostics <- function(packageName = NULL,
                             " ",
                             attr(delta, "units"))
   }
-
-  # Time distributions----
-  # if (runTimeDistributions) {
-  #   ParallelLogger::logInfo("Creating time distributions")
-  #   startTimeDistribution <- Sys.time()
-  #   subset <- subsetToRequiredCohorts(
-  #     cohorts = cohorts %>%
-  #       dplyr::filter(.data$cohortId %in% instantiatedCohorts),
-  #     task = "runTimeDistributions",
-  #     incremental = incremental,
-  #     recordKeepingFile = recordKeepingFile
-  #   )
-  #   if (incremental &&
-  #       (length(instantiatedCohorts) - nrow(subset)) > 0) {
-  #     ParallelLogger::logInfo(sprintf(
-  #       " - Skipping %s cohorts in incremental mode.",
-  #       length(instantiatedCohorts) - nrow(subset)
-  #     ))
-  #   }
-  #   if (nrow(subset) > 0) {
-  #     data <- runTimeDistributionDiagnostics(
-  #       connection = connection,
-  #       tempEmulationSchema = tempEmulationSchema,
-  #       cdmDatabaseSchema = cdmDatabaseSchema,
-  #       cohortDatabaseSchema = cohortDatabaseSchema,
-  #       cohortTable = cohortTable,
-  #       cdmVersion = cdmVersion,
-  #       cohortIds = subset$cohortId
-  #     )
-  #     if (nrow(data) > 0) {
-  #       data <- data %>%
-  #         dplyr::mutate(databaseId = !!databaseId)
-  #       writeToCsv(
-  #         data = data,
-  #         fileName = file.path(exportFolder, "time_distribution.csv"),
-  #         incremental = incremental,
-  #         cohortId = subset$cohortId
-  #       )
-  #     }
-  #     recordTasksDone(
-  #       cohortId = subset$cohortId,
-  #       task = "runTimeDistributions",
-  #       checksum = subset$checksum,
-  #       recordKeepingFile = recordKeepingFile,
-  #       incremental = incremental
-  #     )
-  #   }
-  #   delta <- Sys.time() - startTimeDistribution
-  #   ParallelLogger::logInfo("Running Time Distribution took ",
-  #                           signif(delta, 3),
-  #                           " ",
-  #                           attr(delta, "units"))
-  # }
   
   # Visit context----
   if (runVisitContext) {
@@ -1265,6 +1210,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           covariateSettings = covariateSettings,
           cdmVersion = cdmVersion
         )
+      
       exportCharacterization(
         characteristics = characteristics,
         databaseId = databaseId,
@@ -1273,6 +1219,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         covariateValueContFileName = file.path(exportFolder, "covariate_value_dist.csv"),
         covariateRefFileName = file.path(exportFolder, "covariate_ref.csv"),
         analysisRefFileName = file.path(exportFolder, "analysis_ref.csv"),
+        timeDistributionFileName = file.path(exportFolder, 'time_distribution.csv'),
         counts = cohortCounts,
         minCellCount = minCellCount
       )
