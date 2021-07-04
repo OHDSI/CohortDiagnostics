@@ -116,7 +116,8 @@ exportCharacterization <- function(characteristics,
     if (!is.null(timeDistributionFileName)) {
       characteristics$timeDistribution <- characteristics$covariatesContinuous %>%
         dplyr::inner_join(characteristics$covariateRef, by = "covariateId") %>%
-        dplyr::filter(.data$analysisId %in% c(8,9,10)) %>% 
+        dplyr::filter(.data$analysisId %in% c(8,9,10)) %>%
+        dplyr::mutate(databaseId = !!databaseId) %>% 
         dplyr::select(
           -.data$conceptId,
           -.data$analysisId,

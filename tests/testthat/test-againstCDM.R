@@ -190,163 +190,162 @@ test_that("Retrieve results from premerged file", {
   
 })
 
-if (stringr::str_detect(string = tolower(.Platform$OS.type), pattern = "mac")) {
-  ## limiting upload tests to Mac OS to avoid conflicts while uploading to shared schema
-  ## MacOs was chosen because test coversage is computed on MacOs
-  ####################### upload to database and test
-  test_that("Create and upload results to results data model", {
-    createResultsDataModel(connectionDetails = connectionDetails, schema = cohortDiagnosticsSchema)
+
+####################### upload to database and test
+test_that("Create and upload results to results data model", {
+  createResultsDataModel(connectionDetails = connectionDetails, schema = cohortDiagnosticsSchema)
+  
+  listOfZipFilesToUpload <-
+    list.files(
+      path = file.path(folder, "export"),
+      pattern = ".zip",
+      full.names = TRUE,
+      recursive = TRUE
+    )
+  
+  for (i in (1:length(listOfZipFilesToUpload))) {
+    uploadResults(
+      connectionDetails = connectionDetails,
+      schema = cohortDiagnosticsSchema,
+      zipFileName = listOfZipFilesToUpload[[i]]
+    )
+  }
+})
+
+
+# Retrieve results
+test_that("Retrieve results from remote database", {
+  
+  dataSourceDatabase <- CohortDiagnostics::createDatabaseDataSource(
+    connection = DatabaseConnector::connect(connectionDetails = connectionDetails),
+    resultsDatabaseSchema = cohortDiagnosticsSchema
+  )
+  
+  # cohort count
+  cohortCountFromDb <- CohortDiagnostics::getResultsFromCohortCount(
+    dataSource = dataSourceDatabase,
+    databaseIds = 'cdmV5'
+  )
+  expect_true(nrow(cohortCountFromDb) > 0)
+  
+  # time series
+  timeSeriesFromDb <- CohortDiagnostics::getResultsFromTimeSeries(
+    dataSource = dataSourceDatabase,
+    databaseIds = 'cdmV5'
+  )
+  expect_true(nrow(timeSeriesFromDb) >= 0)
+  
+  # time distribution
+  timeDistributionFromDb <- CohortDiagnostics::getResultsFromTimeDistribution(
+    dataSource = dataSourceDatabase,
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
+  )
+  expect_true(nrow(timeDistributionFromDb) >= 0)
+  
+  # incidence rate result
+  incidenceRateFromDb <- CohortDiagnostics::getResultsFromIncidenceRate(
+    dataSource = dataSourceDatabase,
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
+  )
+  expect_true(nrow(incidenceRateFromDb) >= 0) # no data in eunomia
+  
+  # inclusion rules
+  inclusionRulesFromDb <- CohortDiagnostics::getResultsFromInclusionRuleStatistics(
+    dataSource = dataSourceDatabase,
+    databaseIds = 'cdmV5'
+  )
+  expect_true(nrow(inclusionRulesFromDb) >= 0)
+  
+  # index_event_breakdown
+  indexEventBreakdownFromDb <- CohortDiagnostics::getResultsFromIndexEventBreakdown(
+    dataSource = dataSourceDatabase,
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
+  )
+  expect_true(nrow(indexEventBreakdownFromDb) >= 0)
+  
+  # visit_context
+  visitContextFromDb <- CohortDiagnostics::getResultsFromVisitContext(
+    dataSource = dataSourceDatabase,
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
+  )
+  expect_true(nrow(visitContextFromDb) >= 0)
+  
+  # included_concept
+  includedConceptFromDb <- CohortDiagnostics::getResultsFromIncludedConcept(
+    dataSource = dataSourceDatabase,
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
+  )
+  expect_true(nrow(includedConceptFromDb) >= 0)
+  
+  # orphan_concept
+  orphanConceptFromDb <- CohortDiagnostics::getResultsFromOrphanConcept(
+    dataSource = dataSourceDatabase,
+    databaseIds = 'cdmV5'
+  )
+  expect_true(nrow(orphanConceptFromDb) >= 0)
+  
+  # concept_id details with vocabulary schema
+  # conceptIdDetails <- CohortDiagnostics::getResultsFromConcept(
+  #   dataSource = dataSourceDatabase,
+  #   conceptIds = c(192671, 201826, 1124300, 1124300), 
+  #   vocabularyDatabaseSchema = cohortDiagnosticsSchema
+  # )
+  
+  # concept_id details without vocabulary schema
+  conceptIdDetails <- CohortDiagnostics::getResultsFromConcept(
+    dataSource = dataSourceDatabase,
+    conceptIds = c(192671, 201826, 1124300, 1124300)
+  )
+  
+  resolvedMappedConceptSet <- CohortDiagnostics::getResultsResolveMappedConceptSet(
+    dataSource = dataSourceDatabase
+  )
+  expect_true(nrow(resolvedMappedConceptSet$resolved) > 0)
+  expect_true(nrow(resolvedMappedConceptSet$mapped) > 0)
+})
+
+test_that("Data removal works", {
+  specifications <- getResultsDataModelSpecifications()
+  connection <- DatabaseConnector::connect(connectionDetails)
+  for (tableName in unique(specifications$tableName)) {
+    primaryKey <- specifications %>%
+      dplyr::filter(.data$tableName == !!tableName &
+                      .data$primaryKey == "Yes") %>%
+      dplyr::select(.data$fieldName) %>%
+      dplyr::pull()
     
-    listOfZipFilesToUpload <-
-      list.files(
-        path = file.path(folder, "export"),
-        pattern = ".zip",
-        full.names = TRUE,
-        recursive = TRUE
-      )
     
-    for (i in (1:length(listOfZipFilesToUpload))) {
-      uploadResults(
-        connectionDetails = connectionDetails,
+    
+    if ("database_id" %in% primaryKey) {
+      CohortDiagnostics:::deleteAllRecordsForDatabaseId(
+        connection = connection,
         schema = cohortDiagnosticsSchema,
-        zipFileName = listOfZipFilesToUpload[[i]]
+        tableName = tableName,
+        databaseId = "cdmV5"
       )
+      
+      sql <-
+        "SELECT COUNT(*) FROM @schema.@table_name WHERE database_id = '@database_id';"
+      sql <- SqlRender::render(
+        sql = sql,
+        schema = cohortDiagnosticsSchema,
+        table_name = tableName,
+        database_id = "cdmV5"
+      )
+      databaseIdCount <-
+        DatabaseConnector::querySql(connection, sql)[, 1]
+      expect_true(databaseIdCount == 0)
     }
-  })
-  
-  
-  # Retrieve results
-  test_that("Retrieve results from remote database", {
-    
-    dataSourceDatabase <- CohortDiagnostics::createDatabaseDataSource(
-      connection = DatabaseConnector::connect(connectionDetails = connectionDetails),
-      resultsDatabaseSchema = cohortDiagnosticsSchema
-    )
-    
-    # cohort count
-    cohortCountFromDb <- CohortDiagnostics::getResultsFromCohortCount(
-      dataSource = dataSourceDatabase,
-      databaseIds = 'cdmV5'
-    )
-    expect_true(nrow(cohortCountFromDb) > 0)
-    
-    # time series
-    timeSeriesFromDb <- CohortDiagnostics::getResultsFromTimeSeries(
-      dataSource = dataSourceDatabase,
-      databaseIds = 'cdmV5'
-    )
-    expect_true(nrow(timeSeriesFromDb) >= 0)
-    
-    # time distribution
-    timeDistributionFromDb <- CohortDiagnostics::getResultsFromTimeDistribution(
-      dataSource = dataSourceDatabase,
-      cohortIds = c(17492, 17692),
-      databaseIds = 'cdmV5'
-    )
-    expect_true(nrow(timeDistributionFromDb) >= 0)
-    
-    # incidence rate result
-    incidenceRateFromDb <- CohortDiagnostics::getResultsFromIncidenceRate(
-      dataSource = dataSourceDatabase,
-      cohortIds = c(17492, 17692),
-      databaseIds = 'cdmV5'
-    )
-    expect_true(nrow(incidenceRateFromDb) >= 0) # no data in eunomia
-    
-    # inclusion rules
-    inclusionRulesFromDb <- CohortDiagnostics::getResultsFromInclusionRuleStatistics(
-      dataSource = dataSourceDatabase,
-      databaseIds = 'cdmV5'
-    )
-    expect_true(nrow(inclusionRulesFromDb) >= 0)
-    
-    # index_event_breakdown
-    indexEventBreakdownFromDb <- CohortDiagnostics::getResultsFromIndexEventBreakdown(
-      dataSource = dataSourceDatabase,
-      cohortIds = c(17492, 17692),
-      databaseIds = 'cdmV5'
-    )
-    expect_true(nrow(indexEventBreakdownFromDb) >= 0)
-    
-    # visit_context
-    visitContextFromDb <- CohortDiagnostics::getResultsFromVisitContext(
-      dataSource = dataSourceDatabase,
-      cohortIds = c(17492, 17692),
-      databaseIds = 'cdmV5'
-    )
-    expect_true(nrow(visitContextFromDb) >= 0)
-    
-    # included_concept
-    includedConceptFromDb <- CohortDiagnostics::getResultsFromIncludedConcept(
-      dataSource = dataSourceDatabase,
-      cohortIds = c(17492, 17692),
-      databaseIds = 'cdmV5'
-    )
-    expect_true(nrow(includedConceptFromDb) >= 0)
-    
-    # orphan_concept
-    orphanConceptFromDb <- CohortDiagnostics::getResultsFromOrphanConcept(
-      dataSource = dataSourceDatabase,
-      databaseIds = 'cdmV5'
-    )
-    expect_true(nrow(orphanConceptFromDb) >= 0)
-    
-    # concept_id details with vocabulary schema
-    # conceptIdDetails <- CohortDiagnostics::getResultsFromConcept(
-    #   dataSource = dataSourceDatabase,
-    #   conceptIds = c(192671, 201826, 1124300, 1124300), 
-    #   vocabularyDatabaseSchema = cohortDiagnosticsSchema
-    # )
-    
-    # concept_id details without vocabulary schema
-    conceptIdDetails <- CohortDiagnostics::getResultsFromConcept(
-      dataSource = dataSourceDatabase,
-      conceptIds = c(192671, 201826, 1124300, 1124300)
-    )
-    
-    resolvedMappedConceptSet <- CohortDiagnostics::getResultsResolveMappedConceptSet(
-      dataSource = dataSourceDatabase
-    )
-    expect_true(nrow(resolvedMappedConceptSet$resolved) > 0)
-    expect_true(nrow(resolvedMappedConceptSet$mapped) > 0)
-  })
-  
-  test_that("Data removal works", {
-    specifications <- getResultsDataModelSpecifications()
-    connection <- DatabaseConnector::connect(connectionDetails)
-    for (tableName in unique(specifications$tableName)) {
-      primaryKey <- specifications %>%
-        dplyr::filter(.data$tableName == !!tableName &
-                        .data$primaryKey == "Yes") %>%
-        dplyr::select(.data$fieldName) %>%
-        dplyr::pull()
-      
-      
-      
-      if ("database_id" %in% primaryKey) {
-        CohortDiagnostics:::deleteAllRecordsForDatabaseId(
-          connection = connection,
-          schema = cohortDiagnosticsSchema,
-          tableName = tableName,
-          databaseId = "cdmV5"
-        )
-        
-        sql <-
-          "SELECT COUNT(*) FROM @schema.@table_name WHERE database_id = '@database_id';"
-        sql <- SqlRender::render(
-          sql = sql,
-          schema = cohortDiagnosticsSchema,
-          table_name = tableName,
-          database_id = "cdmV5"
-        )
-        databaseIdCount <-
-          DatabaseConnector::querySql(connection, sql)[, 1]
-        expect_true(databaseIdCount == 0)
-      }
-    }
-    DatabaseConnector::disconnect(connection)
-  })
-}
+  }
+  DatabaseConnector::disconnect(connection)
+})
+
+
 test_that("util functions", {
   expect_true(naToEmpty(NA) == "")
   expect_true(naToZero(NA) == 0)
