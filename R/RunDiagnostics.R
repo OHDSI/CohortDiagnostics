@@ -51,7 +51,6 @@
 #' @param runInclusionStatistics      Generate and export statistic on the cohort inclusion rules?
 #' @param runIncludedSourceConcepts   Generate and export the source concepts included in the cohorts?
 #' @param runOrphanConcepts           Generate and export potential orphan concepts?
-#' @param runTimeDistributions        Generate and export cohort time distributions?
 #' @param runVisitContext             Generate and export index-date visit context?
 #' @param runBreakdownIndexEvents     Generate and export the breakdown of index events?
 #' @param runIncidenceRate            Generate and export the cohort incidence  rates?
@@ -98,7 +97,6 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  runInclusionStatistics = TRUE,
                                  runIncludedSourceConcepts = TRUE,
                                  runOrphanConcepts = TRUE,
-                                 runTimeDistributions = TRUE,
                                  runVisitContext = TRUE,
                                  runBreakdownIndexEvents = TRUE,
                                  runIncidenceRate = TRUE,
@@ -106,60 +104,60 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  runCohortOverlap = TRUE,
                                  runCohortTemporalRelationship = TRUE,
                                  runCohortCharacterization = TRUE,
-                                 covariateSettings = createCovariateSettings(useDemographicsGender = TRUE,
-                                                                             useDemographicsAge = FALSE,
-                                                                             useDemographicsAgeGroup = TRUE,
-                                                                             useDemographicsRace = TRUE,
-                                                                             useDemographicsEthnicity = TRUE,
-                                                                             useDemographicsIndexYear = TRUE,
-                                                                             useDemographicsIndexMonth = TRUE,
-                                                                             useDemographicsPriorObservationTime = TRUE,
-                                                                             useDemographicsPostObservationTime = TRUE,
-                                                                             useDemographicsTimeInCohort = TRUE,
-                                                                             useDemographicsIndexYearMonth = TRUE,
-                                                                             useConditionOccurrenceAnyTimePrior = TRUE,
-                                                                             useConditionOccurrenceLongTerm = TRUE,
-                                                                             useConditionOccurrenceShortTerm = TRUE,
-                                                                             useConditionGroupEraAnyTimePrior = TRUE,
-                                                                             useConditionGroupEraLongTerm = TRUE,
-                                                                             useConditionGroupEraShortTerm = TRUE,
-                                                                             useDrugGroupEraLongTerm = TRUE,
-                                                                             useDrugGroupEraShortTerm = TRUE,
-                                                                             useDrugGroupEraOverlapping = TRUE,
-                                                                             useDrugGroupEraStartLongTerm = TRUE,
-                                                                             useDrugGroupEraStartShortTerm = TRUE,
-                                                                             useProcedureOccurrenceLongTerm = TRUE,
-                                                                             useProcedureOccurrenceShortTerm = TRUE,
-                                                                             useDeviceExposureLongTerm = TRUE,
-                                                                             useDeviceExposureShortTerm = TRUE,
-                                                                             useMeasurementLongTerm = TRUE,
-                                                                             useMeasurementShortTerm = TRUE,
-                                                                             useMeasurementRangeGroupLongTerm = TRUE,
-                                                                             useObservationAnyTimePrior = FALSE,
-                                                                             useObservationLongTerm = TRUE,
-                                                                             useObservationMediumTerm = FALSE,
-                                                                             useObservationShortTerm = TRUE,
-                                                                             useCharlsonIndex = TRUE,
-                                                                             useDcsi = TRUE,
-                                                                             useChads2 = TRUE,
-                                                                             useChads2Vasc = TRUE,
-                                                                             useVisitCountLongTerm = TRUE,
-                                                                             useVisitCountMediumTerm = TRUE,
-                                                                             useVisitCountShortTerm = TRUE,
-                                                                             useVisitConceptCountLongTerm = TRUE,
-                                                                             useVisitConceptCountMediumTerm = TRUE,
-                                                                             useVisitConceptCountShortTerm = TRUE,
-                                                                             longTermStartDays = -365,
-                                                                             mediumTermStartDays = -180,
-                                                                             shortTermStartDays = -30,
-                                                                             endDays = 0,
-                                                                             includedCovariateConceptIds = c(),
-                                                                             addDescendantsToInclude = FALSE,
-                                                                             excludedCovariateConceptIds = c(),
-                                                                             addDescendantsToExclude = FALSE,
-                                                                             includedCovariateIds = c()),
+                                 covariateSettings = FeatureExtraction::createCovariateSettings(useDemographicsGender = TRUE,
+                                                                                                useDemographicsAge = FALSE,
+                                                                                                useDemographicsAgeGroup = TRUE,
+                                                                                                useDemographicsRace = TRUE,
+                                                                                                useDemographicsEthnicity = TRUE,
+                                                                                                useDemographicsIndexYear = TRUE,
+                                                                                                useDemographicsIndexMonth = TRUE,
+                                                                                                useDemographicsPriorObservationTime = TRUE,
+                                                                                                useDemographicsPostObservationTime = TRUE,
+                                                                                                useDemographicsTimeInCohort = TRUE,
+                                                                                                useDemographicsIndexYearMonth = TRUE,
+                                                                                                useConditionOccurrenceAnyTimePrior = TRUE,
+                                                                                                useConditionOccurrenceLongTerm = TRUE,
+                                                                                                useConditionOccurrenceShortTerm = TRUE,
+                                                                                                useConditionGroupEraAnyTimePrior = TRUE,
+                                                                                                useConditionGroupEraLongTerm = TRUE,
+                                                                                                useConditionGroupEraShortTerm = TRUE,
+                                                                                                useDrugGroupEraLongTerm = TRUE,
+                                                                                                useDrugGroupEraShortTerm = TRUE,
+                                                                                                useDrugGroupEraOverlapping = TRUE,
+                                                                                                useDrugGroupEraStartLongTerm = TRUE,
+                                                                                                useDrugGroupEraStartShortTerm = TRUE,
+                                                                                                useProcedureOccurrenceLongTerm = TRUE,
+                                                                                                useProcedureOccurrenceShortTerm = TRUE,
+                                                                                                useDeviceExposureLongTerm = TRUE,
+                                                                                                useDeviceExposureShortTerm = TRUE,
+                                                                                                useMeasurementLongTerm = TRUE,
+                                                                                                useMeasurementShortTerm = TRUE,
+                                                                                                useMeasurementRangeGroupLongTerm = TRUE,
+                                                                                                useObservationAnyTimePrior = FALSE,
+                                                                                                useObservationLongTerm = TRUE,
+                                                                                                useObservationMediumTerm = FALSE,
+                                                                                                useObservationShortTerm = TRUE,
+                                                                                                useCharlsonIndex = TRUE,
+                                                                                                useDcsi = TRUE,
+                                                                                                useChads2 = TRUE,
+                                                                                                useChads2Vasc = TRUE,
+                                                                                                useVisitCountLongTerm = TRUE,
+                                                                                                useVisitCountMediumTerm = TRUE,
+                                                                                                useVisitCountShortTerm = TRUE,
+                                                                                                useVisitConceptCountLongTerm = TRUE,
+                                                                                                useVisitConceptCountMediumTerm = TRUE,
+                                                                                                useVisitConceptCountShortTerm = TRUE,
+                                                                                                longTermStartDays = -365,
+                                                                                                mediumTermStartDays = -180,
+                                                                                                shortTermStartDays = -30,
+                                                                                                endDays = 0,
+                                                                                                includedCovariateConceptIds = c(),
+                                                                                                addDescendantsToInclude = FALSE,
+                                                                                                excludedCovariateConceptIds = c(),
+                                                                                                addDescendantsToExclude = FALSE,
+                                                                                                includedCovariateIds = c()),
                                  runTemporalCohortCharacterization = TRUE,
-                                 temporalCovariateSettings = createTemporalCovariateSettings(
+                                 temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(
                                    useConditionOccurrence = TRUE,
                                    useConditionEraOverlap = TRUE,
                                    useConditionEraGroupStart = TRUE,
@@ -635,6 +633,24 @@ runCohortDiagnostics <- function(packageName = NULL,
       )
       subset <- dplyr::bind_rows(subset, subsetOrphans)
     }
+    if (runCohortCharacterization) {
+      subsetCharacterization <- subsetToRequiredCohorts(
+        cohorts = cohorts,
+        task = "runCohortCharacterization",
+        incremental = incremental,
+        recordKeepingFile = recordKeepingFile
+      )
+      subset <- dplyr::bind_rows(subset, subsetCharacterization)
+    }
+    if (runTemporalCohortCharacterization) {
+      subsetTemporalCharacterization <- subsetToRequiredCohorts(
+        cohorts = cohorts,
+        task = "runTemporalCohortCharacterization",
+        incremental = incremental,
+        recordKeepingFile = recordKeepingFile
+      )
+      subset <- dplyr::bind_rows(subset, subsetTemporalCharacterization)
+    }
     subset <- dplyr::distinct(subset)
     ParallelLogger::logInfo(sprintf(
       " - Skipping %s cohorts in incremental mode.",
@@ -819,59 +835,59 @@ runCohortDiagnostics <- function(packageName = NULL,
                             " ",
                             attr(delta, "units"))
   }
-  
+
   # Time distributions----
-  if (runTimeDistributions) {
-    ParallelLogger::logInfo("Creating time distributions")
-    startTimeDistribution <- Sys.time()
-    subset <- subsetToRequiredCohorts(
-      cohorts = cohorts %>%
-        dplyr::filter(.data$cohortId %in% instantiatedCohorts),
-      task = "runTimeDistributions",
-      incremental = incremental,
-      recordKeepingFile = recordKeepingFile
-    )
-    if (incremental &&
-        (length(instantiatedCohorts) - nrow(subset)) > 0) {
-      ParallelLogger::logInfo(sprintf(
-        " - Skipping %s cohorts in incremental mode.",
-        length(instantiatedCohorts) - nrow(subset)
-      ))
-    }
-    if (nrow(subset) > 0) {
-      data <- runTimeDistributionDiagnostics(
-        connection = connection,
-        tempEmulationSchema = tempEmulationSchema,
-        cdmDatabaseSchema = cdmDatabaseSchema,
-        cohortDatabaseSchema = cohortDatabaseSchema,
-        cohortTable = cohortTable,
-        cdmVersion = cdmVersion,
-        cohortIds = subset$cohortId
-      )
-      if (nrow(data) > 0) {
-        data <- data %>%
-          dplyr::mutate(databaseId = !!databaseId)
-        writeToCsv(
-          data = data,
-          fileName = file.path(exportFolder, "time_distribution.csv"),
-          incremental = incremental,
-          cohortId = subset$cohortId
-        )
-      }
-      recordTasksDone(
-        cohortId = subset$cohortId,
-        task = "runTimeDistributions",
-        checksum = subset$checksum,
-        recordKeepingFile = recordKeepingFile,
-        incremental = incremental
-      )
-    }
-    delta <- Sys.time() - startTimeDistribution
-    ParallelLogger::logInfo("Running Time Distribution took ",
-                            signif(delta, 3),
-                            " ",
-                            attr(delta, "units"))
-  }
+  # if (runTimeDistributions) {
+  #   ParallelLogger::logInfo("Creating time distributions")
+  #   startTimeDistribution <- Sys.time()
+  #   subset <- subsetToRequiredCohorts(
+  #     cohorts = cohorts %>%
+  #       dplyr::filter(.data$cohortId %in% instantiatedCohorts),
+  #     task = "runTimeDistributions",
+  #     incremental = incremental,
+  #     recordKeepingFile = recordKeepingFile
+  #   )
+  #   if (incremental &&
+  #       (length(instantiatedCohorts) - nrow(subset)) > 0) {
+  #     ParallelLogger::logInfo(sprintf(
+  #       " - Skipping %s cohorts in incremental mode.",
+  #       length(instantiatedCohorts) - nrow(subset)
+  #     ))
+  #   }
+  #   if (nrow(subset) > 0) {
+  #     data <- runTimeDistributionDiagnostics(
+  #       connection = connection,
+  #       tempEmulationSchema = tempEmulationSchema,
+  #       cdmDatabaseSchema = cdmDatabaseSchema,
+  #       cohortDatabaseSchema = cohortDatabaseSchema,
+  #       cohortTable = cohortTable,
+  #       cdmVersion = cdmVersion,
+  #       cohortIds = subset$cohortId
+  #     )
+  #     if (nrow(data) > 0) {
+  #       data <- data %>%
+  #         dplyr::mutate(databaseId = !!databaseId)
+  #       writeToCsv(
+  #         data = data,
+  #         fileName = file.path(exportFolder, "time_distribution.csv"),
+  #         incremental = incremental,
+  #         cohortId = subset$cohortId
+  #       )
+  #     }
+  #     recordTasksDone(
+  #       cohortId = subset$cohortId,
+  #       task = "runTimeDistributions",
+  #       checksum = subset$checksum,
+  #       recordKeepingFile = recordKeepingFile,
+  #       incremental = incremental
+  #     )
+  #   }
+  #   delta <- Sys.time() - startTimeDistribution
+  #   ParallelLogger::logInfo("Running Time Distribution took ",
+  #                           signif(delta, 3),
+  #                           " ",
+  #                           attr(delta, "units"))
+  # }
   
   # Visit context----
   if (runVisitContext) {
@@ -892,7 +908,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       ))
     }
     if (nrow(subset) > 0) {
-      data <- getVisitContext(
+      data <- runVisitContextDiagnostics(
         connection = connection,
         tempEmulationSchema = tempEmulationSchema,
         cdmDatabaseSchema = cdmDatabaseSchema,
