@@ -734,7 +734,7 @@ shiny::shinyServer(function(input, output, session) {
                           tags$br(),
                           DT::dataTableOutput(outputId = "cohortCountsTableInCohortDefinitionSecond"),
                           shiny::conditionalPanel(
-                            condition = "output.cohortCountsTableInCohortDefinitionRowIsSelected",
+                            condition = "output.cohortCountsSecondTableInCohortDefinitionRowIsSelected",
                             DT::dataTableOutput(outputId = "inclusionRuleInCohortDefinitionSecond")
                           )),
           shiny::tabPanel(title = "Cohort definition",
@@ -1684,6 +1684,120 @@ shiny::shinyServer(function(input, output, session) {
       )
       return(dataTable)
     }
+  }, server = TRUE)
+  
+  getSelectedCohortCountSecondRow <- shiny::reactive(x = {
+    idx <- input$cohortCountsTableInCohortDefinitionSecond_rows_selected
+    
+    if (is.null(idx)) {
+      return(NULL)
+    } else {
+      subset <- database[idx,] %>% 
+        dplyr::select(.data$databaseId)
+      if (is.null(subset)) {
+        return(NULL)
+      } else {
+        return(subset)
+      }
+    }
+  })
+  
+  output$cohortCountsSecondTableInCohortDefinitionRowIsSelected <- shiny::reactive(x = {
+    return(!is.null(getSelectedCohortCountSecondRow()))
+  })
+  shiny::outputOptions(x = output,
+                       name = "cohortCountsSecondTableInCohortDefinitionRowIsSelected",
+                       suspendWhenHidden = FALSE)
+  
+  
+  output$inclusionRuleInCohortDefinitionSecond <- DT::renderDataTable(expr = {
+    validate(need(nrow(getSelectedCohortCountSecondRow()) > 0, "No data sources chosen"))
+    validate(need(
+      nrow(selectedCohortDefinitionRow()) > 0,
+      "No cohorts chosen"
+    ))
+    
+    table <- getResultsFromInclusionRuleStatistics(
+      dataSource = dataSource,
+      cohortIds = selectedCohortDefinitionRow()[2,]$cohortId,
+      databaseIds = getSelectedCohortCountSecondRow()$databaseId
+    )
+    
+    validate(need((nrow(table) > 0),
+                  "There is no inclusion rule data for this cohort."))
+    
+    databaseIds <- unique(table$databaseId)
+    cohortCounts <- table %>% 
+      dplyr::inner_join(cohortCount,
+                        by = c("cohortId", "databaseId")) %>% 
+      dplyr::filter(.data$cohortId == selectedCohortDefinitionRow()[2,]$cohortId) %>% 
+      dplyr::filter(.data$databaseId %in% getSelectedCohortCountRow()$databaseId) %>% 
+      dplyr::select(.data$cohortSubjects) %>% 
+      dplyr::pull(.data$cohortSubjects) %>% unique()
+    
+    databaseIdsWithCount <- paste(databaseIds, "(n = ", format(cohortCounts, big.mark = ","), ")")
+    
+    table <- table %>%
+      tidyr::pivot_longer(
+        cols = c(
+          .data$meetSubjects,
+          .data$gainSubjects,
+          .data$totalSubjects,
+          .data$remainSubjects
+        )
+      ) %>%
+      dplyr::mutate(name = paste0(databaseId, "_", .data$name)) %>%
+      tidyr::pivot_wider(
+        id_cols = c(.data$cohortId, .data$ruleSequenceId, .data$ruleName),
+        names_from = .data$name,
+        values_from = .data$value
+      ) %>%
+      dplyr::select(-.data$cohortId)
+    
+    
+    
+    sketch <- htmltools::withTags(table(class = "display",
+                                        thead(tr(
+                                          th(rowspan = 2, "Rule Sequence ID"),
+                                          th(rowspan = 2, "Rule Name"),
+                                          lapply(
+                                            databaseIdsWithCount,
+                                            th,
+                                            colspan = 4,
+                                            class = "dt-center",
+                                            style = "border-right:1px solid silver;border-bottom:1px solid silver"
+                                          )
+                                        ),
+                                        tr(
+                                          lapply(rep(
+                                            c("Meet", "Gain", "Remain", "Total"), length(databaseIds)
+                                          ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                        ))))
+    options = list(
+      pageLength = 100,
+      lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+      searching = TRUE,
+      searchHighlight = TRUE,
+      scrollX = TRUE,
+      lengthChange = TRUE,
+      ordering = TRUE,
+      paging = TRUE,
+      columnDefs = list(truncateStringDef(1, 100),
+                        minCellCountDef(1 + (1:(
+                          length(databaseIds) * 4
+                        ))))
+    )
+    table <- DT::datatable(
+      table,
+      options = options,
+      colnames = colnames(table) %>% camelCaseToTitleCase(),
+      rownames = FALSE,
+      container = sketch,
+      escape = FALSE,
+      filter = "top",
+      class = "stripe nowrap compact"
+    )
+    return(table)
   }, server = TRUE)
   
   output$circerVersionInCohortDefinitionSecond <- shiny::renderUI(expr = {
