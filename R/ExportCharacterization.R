@@ -104,7 +104,7 @@ exportCharacterization <- function(characteristics,
       #               sd = round(.data$sd, digits = 4)) %>%
       dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
     
-
+    
     
     if (dplyr::pull(dplyr::count(characteristics$filteredCovariatesContinous)) > 0) {
       writeCovariateDataAndromedaToCsv(
@@ -118,13 +118,15 @@ exportCharacterization <- function(characteristics,
         dplyr::inner_join(characteristics$covariateRef, by = "covariateId") %>%
         dplyr::filter(.data$analysisId %in% c(8,9,10)) %>%
         dplyr::mutate(databaseId = !!databaseId) %>% 
+        dplyr::rename(standardDeviation = .data$sd,
+                      averageValue = .data$mean,
+                      timeMetric = .data$covariateName) %>% 
         dplyr::select(
           -.data$conceptId,
           -.data$analysisId,
           -.data$covariateId,
           -.data$result$countValue
         ) %>%
-        dplyr::rename(timeMetric = .data$covariateName) %>%
         dplyr::collect()
       if (dplyr::pull(dplyr::count(characteristics$timeDistribution)) > 0) {
         writeCovariateDataAndromedaToCsv(
