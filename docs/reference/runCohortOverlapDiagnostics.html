@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Instantiate a set of cohort(s) — instantiateCohortSet • CohortDiagnostics</title>
+<title>Given two sets of cohorts get overlap between the cohorts. — runCohortOverlapDiagnostics • CohortDiagnostics</title>
 
 
 <!-- jquery -->
@@ -39,9 +39,9 @@
 
 
 
-<meta property="og:title" content="Instantiate a set of cohort(s) — instantiateCohortSet" />
-<meta property="og:description" content="This function instantiates a set of cohort(s) in specified cohort table, using definitions that are fetched from a WebApi interface.
-Optionally, the inclusion rule statistics are computed and stored in the inclusionStatisticsFolder." />
+<meta property="og:title" content="Given two sets of cohorts get overlap between the cohorts. — runCohortOverlapDiagnostics" />
+<meta property="og:description" content="Given two sets of cohorts, get data on overlap between the cohorts.
+Note: only the first occurrence of subject_id in the cohort is used." />
 
 
 
@@ -142,35 +142,24 @@ Optionally, the inclusion rule statistics are computed and stored in the inclusi
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Instantiate a set of cohort(s)</h1>
-    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/CohortConstruction.R'><code>R/CohortConstruction.R</code></a></small>
-    <div class="hidden name"><code>instantiateCohortSet.Rd</code></div>
+    <h1>Given two sets of cohorts get overlap between the cohorts.</h1>
+    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/CohortOverlapDiagnostics.R'><code>R/CohortOverlapDiagnostics.R</code></a></small>
+    <div class="hidden name"><code>runCohortOverlapDiagnostics.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>This function instantiates a set of cohort(s) in specified cohort table, using definitions that are fetched from a WebApi interface.
-Optionally, the inclusion rule statistics are computed and stored in the <code>inclusionStatisticsFolder</code>.</p>
+    <p>Given two sets of cohorts, get data on overlap between the cohorts.
+Note: only the first occurrence of subject_id in the cohort is used.</p>
     </div>
 
-    <pre class="usage"><span class='fu'>instantiateCohortSet</span><span class='op'>(</span>
+    <pre class="usage"><span class='fu'>runCohortOverlapDiagnostics</span><span class='op'>(</span>
   connectionDetails <span class='op'>=</span> <span class='cn'>NULL</span>,
   connection <span class='op'>=</span> <span class='cn'>NULL</span>,
-  <span class='va'>cdmDatabaseSchema</span>,
-  vocabularyDatabaseSchema <span class='op'>=</span> <span class='va'>cdmDatabaseSchema</span>,
-  tempEmulationSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
-  oracleTempSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
-  cohortDatabaseSchema <span class='op'>=</span> <span class='va'>cdmDatabaseSchema</span>,
+  <span class='va'>cohortDatabaseSchema</span>,
   cohortTable <span class='op'>=</span> <span class='st'>"cohort"</span>,
-  cohortIds <span class='op'>=</span> <span class='cn'>NULL</span>,
-  packageName <span class='op'>=</span> <span class='cn'>NULL</span>,
-  cohortToCreateFile <span class='op'>=</span> <span class='st'>"settings/CohortsToCreate.csv"</span>,
-  baseUrl <span class='op'>=</span> <span class='cn'>NULL</span>,
-  cohortSetReference <span class='op'>=</span> <span class='cn'>NULL</span>,
-  generateInclusionStats <span class='op'>=</span> <span class='cn'>FALSE</span>,
-  inclusionStatisticsFolder <span class='op'>=</span> <span class='cn'>NULL</span>,
-  createCohortTable <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  incremental <span class='op'>=</span> <span class='cn'>FALSE</span>,
-  incrementalFolder <span class='op'>=</span> <span class='cn'>NULL</span>
+  <span class='va'>targetCohortIds</span>,
+  <span class='va'>comparatorCohortIds</span>,
+  batchSize <span class='op'>=</span> <span class='fl'>50</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -192,28 +181,6 @@ is provided, in which case a new connection will be opened at the start
 of the function, and closed when the function finishes.</p></td>
     </tr>
     <tr>
-      <th>cdmDatabaseSchema</th>
-      <td><p>Schema name where your patient-level data in OMOP CDM format resides.
-Note that for SQL Server, this should include both the database and
-schema name, for example 'cdm_data.dbo'.</p></td>
-    </tr>
-    <tr>
-      <th>vocabularyDatabaseSchema</th>
-      <td><p>Schema name where your OMOP vocabulary data resides. This is 
-commonly the same as cdmDatabaseSchema. Note that for 
-SQL Server, this should include both the database and
-schema name, for example 'vocabulary.dbo'.</p></td>
-    </tr>
-    <tr>
-      <th>tempEmulationSchema</th>
-      <td><p>Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
-tables, provide a schema with write privileges where temp tables can be created.</p></td>
-    </tr>
-    <tr>
-      <th>oracleTempSchema</th>
-      <td><p>DEPRECATED by DatabaseConnector: use <code>tempEmulationSchema</code> instead.</p></td>
-    </tr>
-    <tr>
       <th>cohortDatabaseSchema</th>
       <td><p>Schema name where your cohort table resides. Note that for SQL Server,
 this should include both the database and schema name, for example
@@ -224,82 +191,20 @@ this should include both the database and schema name, for example
       <td><p>Name of the cohort table.</p></td>
     </tr>
     <tr>
-      <th>cohortIds</th>
-      <td><p>Optionally, provide a subset of cohort IDs to restrict the
-construction to.</p></td>
+      <th>targetCohortIds</th>
+      <td><p>List of cohort ids that represent target cohorts</p></td>
     </tr>
     <tr>
-      <th>packageName</th>
-      <td><p>The name of the package containing the cohort definitions. Can be left NULL if 
-<code>baseUrl</code> and <code>cohortSetReference</code> have been specified.</p></td>
+      <th>comparatorCohortIds</th>
+      <td><p>List of cohort ids that represent comparator cohorts</p></td>
     </tr>
     <tr>
-      <th>cohortToCreateFile</th>
-      <td><p>The location of the cohortToCreate file within the package. Is ignored if 
-<code>baseUrl</code> and <code>cohortSetReference</code> have been specified. The
-cohortToCreateFile must be .csv file that is expected to be read into 
-a dataframe object identical to requirements for <code>cohortSetReference</code> argument. 
-This csv file is expected to be encoded in either ASCII or UTF-8, if not, an 
-error message will be displayed and process stopped.</p></td>
-    </tr>
-    <tr>
-      <th>baseUrl</th>
-      <td><p>The base URL for the WebApi instance, for example:
-"http://server.org:80/WebAPI". Can be left NULL if 
-<code>packageName</code> and <code>cohortToCreateFile</code> have been specified.</p></td>
-    </tr>
-    <tr>
-      <th>cohortSetReference</th>
-      <td><p>A data frame with four columns, as described in the details. Can be left NULL if 
-<code>packageName</code> and <code>cohortToCreateFile</code> have been specified.</p></td>
-    </tr>
-    <tr>
-      <th>generateInclusionStats</th>
-      <td><p>Compute and store inclusion rule statistics?</p></td>
-    </tr>
-    <tr>
-      <th>inclusionStatisticsFolder</th>
-      <td><p>The folder where the inclusion rule statistics are stored. Can be
-left NULL if <code>generateInclusionStats = FALSE</code>.</p></td>
-    </tr>
-    <tr>
-      <th>createCohortTable</th>
-      <td><p>Create the cohort table? If <code>incremental = TRUE</code> and the table
-already exists this will be skipped.</p></td>
-    </tr>
-    <tr>
-      <th>incremental</th>
-      <td><p>Create only cohorts that haven't been created before?</p></td>
-    </tr>
-    <tr>
-      <th>incrementalFolder</th>
-      <td><p>If <code>incremental = TRUE</code>, specify a folder where records are kept
-of which definition has been executed.</p></td>
+      <th>batchSize</th>
+      <td><p>Optional, default set to 50 If running diagnostics on large set
+of cohorts, this function allows you to batch them into chunks that
+by default run over 50 target cohorts (and all comparator cohorts).</p></td>
     </tr>
     </table>
-
-    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
-
-    <p>A data frame with cohort counts</p>
-    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
-
-    <p>Currently two ways of executing this function are supported, either 
-(1) [Package Mode] embedded in a study package, assuming the cohort definitions are stored in that package using the <code><a href='https://ohdsi.github.io/ROhdsiWebApi/reference/insertCohortDefinitionSetInPackage.html'>ROhdsiWebApi::insertCohortDefinitionSetInPackage</a></code>, or 
-(2) [WebApi Mode] By using a WebApi interface to retrieve the cohort definitions.</p>
-<p>When using this function in Package Mode: Use the <code>packageName</code> and <code>cohortToCreateFile</code> to specify
-the name of the study package, and the name of the cohortToCreate file within that package, respectively</p>
-<p>When using this function in WebApi Mode: use the <code>baseUrl</code> and <code>cohortSetReference</code> to specify how to 
-connect to the WebApi, and which cohorts to fetch, respectively.</p>
-<p>Note: if the parameters for both Package Mode and WebApi Mode are provided, then Package mode is preferred.</p>
-<p>The <code>cohortSetReference</code> argument must be a data frame with  the following columns:</p><dl>
-<dt>cohortId</dt><dd><p>(required) The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names. It is recommended to be (referentConceptId * 1000) + a number between 3 to 999</p></dd>
-<dt>cohortName</dt><dd><p>(required) The full name of the cohort. This will be shown in the Shiny app.</p></dd>
-<dt>logicDescription</dt><dd><p>(optional) A human understandable brief description of the cohort definition. This logic does not have to a 
-fully specified description of the cohort definition, but should provide enough context to help user understand the
-meaning of the cohort definition</p></dd>
-<dt>metaData</dt><dd><p>(optional) A JSON with metadata of the cohort that you would like to provided. At this time these pairs are used: referentConceptId, tags, projectCode</p></dd>
-
-</dl>
 
 
   </div>
