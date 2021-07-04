@@ -458,7 +458,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                   fieldName = "remainSubjects",
                                   minValues = minCellCount)
           }
-
+          
           if ("cohortDefinitionId" %in% (colnames(stats$simplifiedOutput))) {
             stats$simplifiedOutput <- stats$simplifiedOutput %>%
               dplyr::rename(cohortId = .data$cohortDefinitionId)
@@ -1188,7 +1188,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         nrow(subset)
       ))
       characteristics <-
-        getCohortCharacteristics(
+        runCohortCharacterizationDiagnostics(
           connection = connection,
           cdmDatabaseSchema = cdmDatabaseSchema,
           tempEmulationSchema = tempEmulationSchema,
@@ -1249,7 +1249,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         nrow(subset)
       ))
       characteristics <-
-        getCohortCharacteristics(
+        runCohortCharacterizationDiagnostics(
           connection = connection,
           cdmDatabaseSchema = cdmDatabaseSchema,
           tempEmulationSchema = tempEmulationSchema,

@@ -52,22 +52,22 @@
 #'                                    as a batch.
 #'
 #' @export
-getCohortCharacteristics <- function(connectionDetails = NULL,
-                                     connection = NULL,
-                                     cdmDatabaseSchema,
-                                     tempEmulationSchema = NULL,
-                                     cohortDatabaseSchema = cdmDatabaseSchema,
-                                     cohortTable = "cohort",
-                                     cohortIds = NULL,
-                                     cdmVersion = 5,
-                                     covariateSettings = createDefaultCovariateSettings(),
-                                     batchSize = 100) {
+runCohortCharacterizationDiagnostics <- function(connectionDetails = NULL,
+                                                 connection = NULL,
+                                                 cdmDatabaseSchema,
+                                                 tempEmulationSchema = NULL,
+                                                 cohortDatabaseSchema = cdmDatabaseSchema,
+                                                 cohortTable = "cohort",
+                                                 cohortIds = NULL,
+                                                 cdmVersion = 5,
+                                                 covariateSettings = createDefaultCovariateSettings(),
+                                                 batchSize = 100) {
   startTime <- Sys.time()
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
-
+  
   cohortCounts <- getCohortCounts(
     connection = connection,
     cohortDatabaseSchema = cohortDatabaseSchema,
