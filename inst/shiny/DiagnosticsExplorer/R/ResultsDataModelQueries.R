@@ -1593,7 +1593,7 @@ getResultsAnalysisRef <- function(dataSource) {
     data <- get(dataTableName)
   } else {
     sql <- "SELECT *
-            FROM @results_database_schema.analysisRef;"
+            FROM @results_database_schema.analysis_ref;"
     data <-
       renderTranslateQuerySql(
         connection = dataSource$connection,
@@ -1622,7 +1622,7 @@ getResultsTemporalAnalysisRef <- function(dataSource) {
     data <- get(dataTableName)
   } else {
     sql <- "SELECT *
-            FROM @results_database_schema.temporalAnalysisRef;"
+            FROM @results_database_schema.temporal_analysis_ref;"
     data <-
       renderTranslateQuerySql(
         connection = dataSource$connection,
