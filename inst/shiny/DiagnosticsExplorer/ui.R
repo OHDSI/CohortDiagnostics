@@ -353,27 +353,100 @@ bodyTabItems <- shinydashboard::tabItems(
                         ))),    
       DT::dataTableOutput(outputId = "cohortDefinitionTable"),
       shiny::uiOutput(outputId = "dynamicUIGenerationCohortDefinitionConceptsetsOne"),
-      shiny::uiOutput(outputId = "dynamicUIGenerationCohortDefinitionConceptsetsTwo")),
-      column(
-        12,
-        conditionalPanel(
-          "output.cohortDefinitionRowIsSelected == true",
-          
-      )
+      shiny::uiOutput(outputId = "dynamicUIGenerationCohortDefinitionConceptsetsTwo"),
+      tags$br(),
+      shiny::column(width = 12,
+                    shiny::conditionalPanel(
+                      condition = "output.cohortDefinitionCountOfSelectedRows == 2 &
+                     input.conceptSetsType == 'Resolved (included)' &
+                     input.conceptSetsTypeSecond == 'Resolved (included)'",
+                      shiny::tabsetPanel(
+                        id = "resolvedConceptDifference",
+                        shiny::tabPanel(
+                          title = "Present in left",
+                          tags$br(),
+                          DT::dataTableOutput(outputId = "resolvedConceptsPresentInLeft")
+                        ),
+                        shiny::tabPanel(
+                          title = "Present in Right",
+                          tags$br(),
+                          DT::dataTableOutput(outputId = "resolvedConceptsPresentInRight")
+                        ),
+                        shiny::tabPanel(
+                          title = "Present in Both",
+                          tags$br(),
+                          DT::dataTableOutput(outputId = "resolvedConceptsPresentInBoth")
+                        ),
+                        shiny::tabPanel(
+                          title = "Present in Either",
+                          tags$br(),
+                          DT::dataTableOutput(outputId = "resolvedConceptsPresentInEither")
+                        )
+                      )
+                    )),
+      shiny::column(width = 12,
+                    shiny::conditionalPanel(
+                      condition = "output.cohortDefinitionCountOfSelectedRows == 2 &
+                                   input.conceptSetsType == 'Mapped (source)' &
+                                   input.conceptSetsTypeSecond == 'Mapped (source)'",
+                      shiny::tabsetPanel(
+                        id = "mappedConceptDifference",
+                        shiny::tabPanel(
+                          title = "Present in left",
+                          tags$br(),
+                          DT::dataTableOutput(outputId = "mappedConceptsPresentInLeft")
+                        ),
+                        shiny::tabPanel(
+                          title = "Present in Right",
+                          tags$br(),
+                          DT::dataTableOutput(outputId = "mappedConceptsPresentInRight")
+                        ),
+                        shiny::tabPanel(
+                          title = "Present in Both",
+                          tags$br(),
+                          DT::dataTableOutput(outputId = "mappedConceptsPresentInBoth")
+                        ),
+                        shiny::tabPanel(
+                          title = "Present in Either",
+                          tags$br(),
+                          DT::dataTableOutput(outputId = "mappedConceptsPresentInEither")
+                        )
+                      )
+                    )),
+      shiny::column(width = 12,
+                    shiny::conditionalPanel(
+                      condition = "output.cohortDefinitionCountOfSelectedRows == 2 &
+                                   input.conceptSetsType == 'Orphan concepts' &
+                                   input.conceptSetsTypeSecond == 'Orphan concepts'",
+                      shiny::tabsetPanel(
+                        id = "orphanConceptsDifference",
+                        shiny::tabPanel(
+                          title = "Present in left",
+                          tags$br(),
+                          DT::dataTableOutput(outputId = "orphanConceptsPresentInLeft")
+                        ),
+                        shiny::tabPanel(
+                          title = "Present in right",
+                          tags$br(),
+                          DT::dataTableOutput(outputId = "orphanConceptsPresentInRight")
+                        ),
+                        shiny::tabPanel(
+                          title = "Present in both",
+                          tags$br(),
+                          DT::dataTableOutput(outputId = "orphanConceptsPresentInBoth")
+                        ),
+                        shiny::tabPanel(
+                          title = "Present in either",
+                          tags$br(),
+                          DT::dataTableOutput(outputId = "orphanConceptsPresentInEither")
+                        )
+                      )
+                    ))
     )
   ),
   shinydashboard::tabItem(
     tabName = "cohortCounts",
     cohortReference("cohortCountsSelectedCohorts"),
-    shinydashboard::box(
-      title = "Notes",
-      status = "primary",
-      width = NULL,
-      solidHeader = TRUE,
-      collapsible = TRUE,
-      collapsed = TRUE,
-      shiny::uiOutput(outputId = "cohortCountsCohortCategories")
-    ), 
     shiny::conditionalPanel(
       condition = "output.cohortCountTableContainsData == true",
       shiny::radioButtons(
@@ -397,6 +470,16 @@ bodyTabItems <- shinydashboard::tabItems(
       )
     ),
     DT::dataTableOutput("cohortCountsTable"),
+    tags$br(),
+    shinydashboard::box(
+      title = "Notes",
+      status = "primary",
+      width = NULL,
+      solidHeader = TRUE,
+      collapsible = TRUE,
+      collapsed = TRUE,
+      shiny::uiOutput(outputId = "cohortCountsCategories")
+    ),
     shiny::conditionalPanel(
       condition = "output.cohortCountRowIsSelected == true",
       DT::dataTableOutput("InclusionRuleStatForCohortSeletedTable")
@@ -867,29 +950,37 @@ bodyTabItems <- shinydashboard::tabItems(
     cohortReference("visitContextSelectedCohort"),
     shiny::conditionalPanel(
       condition = "output.visitContextContainData == true",
-      shiny::column(
-        6,
-        shiny::radioButtons(
-          inputId = "visitContextTableFilters",
-          label = "Display",
-          choices = c("All", "Before", "During", "Simultaneous", "After"),
-          selected = "All",
-          inline = TRUE
+      tags$table(width = '100%',
+        tags$tr(
+          tags$td(
+            shiny::radioButtons(
+              inputId = "visitContextTableFilters",
+              label = "Display",
+              choices = c("All", "Before", "During", "Simultaneous", "After"),
+              selected = "All",
+              inline = TRUE
+            )
+          ),
+          tags$td(
+            shiny::radioButtons(
+              inputId = "visitContextPersonOrRecords",
+              label = "Display",
+              choices = c("Person", "Record"),
+              selected = "Person",
+              inline = TRUE
+            )
+          ),
+          tags$td(
+            align = "right",
+            shiny::downloadButton(
+              "saveVisitContextTable",
+              label = "",
+              icon = shiny::icon("download"),
+              style = "margin-top: 5px; margin-bottom: 5px;"
+            )
+          )
         )
-      ),
-      shiny::column(6,
-                    tags$table(width = "100%",
-                               tags$tr(
-                                 tags$td(
-                                   align = "right",
-                                   shiny::downloadButton(
-                                     "saveVisitContextTable",
-                                     label = "",
-                                     icon = shiny::icon("download"),
-                                     style = "margin-top: 5px; margin-bottom: 5px;"
-                                   )
-                                 )
-                               )))
+      )
     ),
     DT::dataTableOutput(outputId = "visitContextTable")
   ),
