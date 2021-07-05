@@ -133,7 +133,6 @@ runCohortDiagnostics <- function(packageName = NULL,
                                    useVisitConceptCount = TRUE,
                                    useProcedureOccurrence = TRUE,
                                    useMeasurement = TRUE,
-                                   useCharlsonIndex = TRUE,
                                    temporalStartDays = c(
                                      -365,
                                      -30,
@@ -650,16 +649,6 @@ runCohortDiagnostics <- function(packageName = NULL,
         recordKeepingFile = recordKeepingFile
       )
       subset <- dplyr::bind_rows(subset, subsetCharacterization)
-    }
-    if (runTemporalCohortCharacterization) {
-      subsetTemporalCharacterization <- subsetToRequiredCohorts(
-        cohorts = cohorts,
-        task = "runTemporalCohortCharacterization",
-        incremental = incremental,
-        recordKeepingFile = recordKeepingFile
-      )
-      subset <-
-        dplyr::bind_rows(subset, subsetTemporalCharacterization)
     }
     subset <- dplyr::distinct(subset)
     ParallelLogger::logInfo(sprintf(
