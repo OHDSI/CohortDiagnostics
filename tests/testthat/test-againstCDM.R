@@ -188,6 +188,41 @@ test_that("Retrieve results from premerged file", {
   expect_true(nrow(resolvedMappedConceptSet$resolved) >= 0)
   expect_true(nrow(resolvedMappedConceptSet$mapped) >= 0)
   
+  calendarIncidence <- CohortDiagnostics::getResultsFromCalendarIncidence(
+    dataSource = dataSourcePreMergedFile
+  )
+  expect_true(nrow(calendarIncidence) >= 0)
+  
+  cohortRelationships <- CohortDiagnostics::getResultsFromCohortRelationships(
+    dataSource = dataSourcePreMergedFile
+  )
+  expect_true(nrow(cohortRelationships) >= 0)
+  
+  cohortCharacterizationResults <- CohortDiagnostics::getCohortCharacterizationResults(
+    dataSource = dataSourcePreMergedFile
+  )
+  expect_true(nrow(cohortCharacterizationResults) >= 0)
+  
+  temporalCohortCharacterizationResults <- CohortDiagnostics::getTemporalCohortCharacterizationResults(
+    dataSource = dataSourcePreMergedFile
+  )
+  expect_true(nrow(temporalCohortCharacterizationResults) >= 0)
+  
+  cohortAsFeatureCharacterizationResults <- CohortDiagnostics::getCohortAsFeatureCharacterizationResults(
+    dataSource = dataSourcePreMergedFile
+  )
+  expect_true(nrow(cohortAsFeatureCharacterizationResults) >= 0)
+  
+  cohortAsFeatureTemporalCharacterizationResults <- CohortDiagnostics::getCohortAsFeatureTemporalCharacterizationResults(
+    dataSource = dataSourcePreMergedFile
+  )
+  expect_true(nrow(cohortAsFeatureTemporalCharacterizationResults) >= 0)
+  
+  multipleCharacterizationResults  <- CohortDiagnostics::getMultipleCharacterizationResults (
+    dataSource = dataSourcePreMergedFile
+  )
+  expect_true(nrow(multipleCharacterizationResults) >= 0)
+  
 })
 
 
@@ -307,7 +342,44 @@ test_that("Retrieve results from remote database", {
   )
   expect_true(nrow(resolvedMappedConceptSet$resolved) > 0)
   expect_true(nrow(resolvedMappedConceptSet$mapped) > 0)
+  
+  calendarIncidence <- CohortDiagnostics::getResultsFromCalendarIncidence(
+    dataSource = dataSourceDatabase
+  )
+  expect_true(nrow(calendarIncidence) >= 0)
+  
+  cohortRelationships <- CohortDiagnostics::getResultsFromCohortRelationships(
+    dataSource = dataSourceDatabase
+  )
+  expect_true(nrow(cohortRelationships) >= 0) 
+  
+  cohortCharacterizationResults <- CohortDiagnostics::getCohortCharacterizationResults(
+    dataSource = dataSourceDatabase
+  )
+  expect_true(nrow(cohortCharacterizationResults) >= 0)
+  
+  temporalCohortCharacterizationResults <- CohortDiagnostics::getTemporalCohortCharacterizationResults(
+    dataSource = dataSourceDatabase
+  )
+  expect_true(nrow(temporalCohortCharacterizationResults) >= 0)
+  
+  cohortAsFeatureCharacterizationResults <- CohortDiagnostics::getCohortAsFeatureCharacterizationResults(
+    dataSource = dataSourceDatabase
+  )
+  expect_true(nrow(cohortAsFeatureCharacterizationResults) >= 0)
+  
+  cohortAsFeatureTemporalCharacterizationResults <- CohortDiagnostics::getCohortAsFeatureTemporalCharacterizationResults(
+    dataSource = dataSourceDatabase
+  )
+  expect_true(nrow(cohortAsFeatureTemporalCharacterizationResults) >= 0)
+  
+  multipleCharacterizationResults  <- CohortDiagnostics::getMultipleCharacterizationResults (
+    dataSource = dataSourceDatabase
+  )
+  expect_true(nrow(multipleCharacterizationResults) >= 0)
 })
+
+
 
 test_that("Data removal works", {
   specifications <- getResultsDataModelSpecifications()
