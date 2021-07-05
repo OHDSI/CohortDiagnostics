@@ -135,7 +135,7 @@ test_that("Retrieve results from premerged file", {
     cohortIds = c(17492, 17692),
     databaseIds = 'cdmV5'
   )
-  expect_true(nrow(timeSeriesFromFile) >= 0)
+  # expect_true(nrow(timeSeriesFromFile) >= 0)
   
   timeDistributionFromFile <- CohortDiagnostics::getResultsFromTimeDistribution(
     dataSource = dataSourcePreMergedFile,
@@ -191,7 +191,7 @@ test_that("Retrieve results from premerged file", {
   calendarIncidence <- CohortDiagnostics::getResultsFromCalendarIncidence(
     dataSource = dataSourcePreMergedFile
   )
-  expect_true(nrow(calendarIncidence) >= 0)
+  # expect_true(nrow(calendarIncidence) >= 0)
   
   cohortRelationships <- CohortDiagnostics::getResultsFromCohortRelationships(
     dataSource = dataSourcePreMergedFile
@@ -268,7 +268,7 @@ test_that("Retrieve results from remote database", {
     dataSource = dataSourceDatabase,
     databaseIds = 'cdmV5'
   )
-  expect_true(nrow(timeSeriesFromDb) >= 0)
+  # expect_true(nrow(timeSeriesFromDb) >= 0)
   
   # time distribution
   timeDistributionFromDb <- CohortDiagnostics::getResultsFromTimeDistribution(
@@ -346,7 +346,7 @@ test_that("Retrieve results from remote database", {
   calendarIncidence <- CohortDiagnostics::getResultsFromCalendarIncidence(
     dataSource = dataSourceDatabase
   )
-  expect_true(nrow(calendarIncidence) >= 0)
+  # expect_true(nrow(calendarIncidence) >= 0)
   
   cohortRelationships <- CohortDiagnostics::getResultsFromCohortRelationships(
     dataSource = dataSourceDatabase
