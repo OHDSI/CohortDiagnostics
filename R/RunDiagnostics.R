@@ -282,17 +282,18 @@ runCohortDiagnostics <- function(packageName = NULL,
     setdiff(x = cohortTableColumnNamesRequired, y = cohortTableColumnNamesObserved)
   if (length(requiredButNotObsevered) > 0) {
     stop(paste(
-      "The following required fields not found in cohort table:",
-      paste0(requiredButNotObsevered, collapse = ", ")
+      "- The following required fields not found in cohort table:",
+      paste0(" '", requiredButNotObsevered,"'", collapse = ", ")
     ))
   }
+  
   obseveredButNotExpected <-
     setdiff(x = cohortTableColumnNamesObserved, y = cohortTableColumnNamesExpected)
   if (length(obseveredButNotExpected) > 0) {
     ParallelLogger::logTrace(
       paste0(
-        "The following columns were found in cohort table, but are not expected - they will be removed:",
-        obseveredButNotExpected
+        "- The following columns were found in cohort table, but are not expected - they will be removed:",
+        paste0(" '", obseveredButNotExpected,"'", collapse = ",")
       )
     )
   }
