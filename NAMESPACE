@@ -3,6 +3,7 @@
 export(createDatabaseDataSource)
 export(createFileDataSource)
 export(createResultsDataModel)
+export(exportFeatureExtractionOutput)
 export(getCdmDataSourceInformation)
 export(getCohortAsFeatureCharacterizationResults)
 export(getCohortAsFeatureTemporalCharacterizationResults)
