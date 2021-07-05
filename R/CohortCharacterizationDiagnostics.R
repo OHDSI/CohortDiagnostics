@@ -16,13 +16,16 @@
 
 
 
-#' Get Characteristics for a cohort
+#' Get Feature Extraction output for set of cohorts
 #'
 #' @description
 #' Given a set of instantiated cohorts get Characteristics for the cohort using \code{FeatureExtraction::getDbCovariateData}.
 #'
 #' If runTemporalCohortCharacterization argument is TRUE, then the following default covariateSettings object will be created
 #' using \code{RFeatureExtraction::createTemporalCovariateSettings}.
+#' 
+#' Because of the large file size, the returned object is an \code{Andromeda::andromeda} class object. Use
+#' \code{CohortDiagnostics::exportFeatureExtractionOutput} to export the characterization results to csv.
 #'
 #' @template Connection
 #'

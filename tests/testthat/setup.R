@@ -15,8 +15,8 @@ tempEmulationSchema <- NULL
 # Temp Random Schema to prevent collisions/issues when multiple test instances run
 cohortDatabaseSchema <-  Sys.getenv("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")
 
-cohortTable <- paste0("cohort_test_", .Platform$OS.type, stringi::stri_rand_strings(1,5))
-folder <- tempfile("cohortDiagnosticsTest")
+cohortTable <- paste0("cd_test_", .Platform$OS.type, stringi::stri_rand_strings(1,9))
+folder <- tempfile(paste0("cd_test_", .Platform$OS.type, stringi::stri_rand_strings(1,9)))
 
 if (stringr::str_detect(string = tolower(.Platform$OS.type), pattern = "mac")) {
   withr::defer({

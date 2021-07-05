@@ -2,7 +2,7 @@
 % Please edit documentation in R/CohortCharacterizationDiagnostics.R
 \name{runCohortCharacterizationDiagnostics}
 \alias{runCohortCharacterizationDiagnostics}
-\title{Get Characteristics for a cohort}
+\title{Get Feature Extraction output for set of cohorts}
 \usage{
 runCohortCharacterizationDiagnostics(
   connectionDetails = NULL,
@@ -64,4 +64,7 @@ Given a set of instantiated cohorts get Characteristics for the cohort using \co
 
 If runTemporalCohortCharacterization argument is TRUE, then the following default covariateSettings object will be created
 using \code{RFeatureExtraction::createTemporalCovariateSettings}.
+
+Because of the large file size, the returned object is an \code{Andromeda::andromeda} class object. Use
+\code{CohortDiagnostics::exportFeatureExtractionOutput} to export the characterization results to csv.
 }
