@@ -104,58 +104,21 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  runCohortOverlap = TRUE,
                                  runCohortTemporalRelationship = TRUE,
                                  runCohortCharacterization = TRUE,
-                                 covariateSettings = FeatureExtraction::createCovariateSettings(useDemographicsGender = TRUE,
-                                                                                                useDemographicsAge = FALSE,
-                                                                                                useDemographicsAgeGroup = TRUE,
-                                                                                                useDemographicsRace = TRUE,
-                                                                                                useDemographicsEthnicity = TRUE,
-                                                                                                useDemographicsIndexYear = TRUE,
-                                                                                                useDemographicsIndexMonth = TRUE,
-                                                                                                useDemographicsPriorObservationTime = TRUE,
-                                                                                                useDemographicsPostObservationTime = TRUE,
-                                                                                                useDemographicsTimeInCohort = TRUE,
-                                                                                                useDemographicsIndexYearMonth = TRUE,
-                                                                                                useConditionOccurrenceAnyTimePrior = TRUE,
-                                                                                                useConditionOccurrenceLongTerm = TRUE,
-                                                                                                useConditionOccurrenceShortTerm = TRUE,
-                                                                                                useConditionGroupEraAnyTimePrior = TRUE,
-                                                                                                useConditionGroupEraLongTerm = TRUE,
-                                                                                                useConditionGroupEraShortTerm = TRUE,
-                                                                                                useDrugGroupEraLongTerm = TRUE,
-                                                                                                useDrugGroupEraShortTerm = TRUE,
-                                                                                                useDrugGroupEraOverlapping = TRUE,
-                                                                                                useDrugGroupEraStartLongTerm = TRUE,
-                                                                                                useDrugGroupEraStartShortTerm = TRUE,
-                                                                                                useProcedureOccurrenceLongTerm = TRUE,
-                                                                                                useProcedureOccurrenceShortTerm = TRUE,
-                                                                                                useDeviceExposureLongTerm = TRUE,
-                                                                                                useDeviceExposureShortTerm = TRUE,
-                                                                                                useMeasurementLongTerm = TRUE,
-                                                                                                useMeasurementShortTerm = TRUE,
-                                                                                                useMeasurementRangeGroupLongTerm = TRUE,
-                                                                                                useObservationAnyTimePrior = FALSE,
-                                                                                                useObservationLongTerm = TRUE,
-                                                                                                useObservationMediumTerm = FALSE,
-                                                                                                useObservationShortTerm = TRUE,
-                                                                                                useCharlsonIndex = TRUE,
-                                                                                                useDcsi = TRUE,
-                                                                                                useChads2 = TRUE,
-                                                                                                useChads2Vasc = TRUE,
-                                                                                                useVisitCountLongTerm = TRUE,
-                                                                                                useVisitCountMediumTerm = TRUE,
-                                                                                                useVisitCountShortTerm = TRUE,
-                                                                                                useVisitConceptCountLongTerm = TRUE,
-                                                                                                useVisitConceptCountMediumTerm = TRUE,
-                                                                                                useVisitConceptCountShortTerm = TRUE,
-                                                                                                longTermStartDays = -365,
-                                                                                                mediumTermStartDays = -180,
-                                                                                                shortTermStartDays = -30,
-                                                                                                endDays = 0,
-                                                                                                includedCovariateConceptIds = c(),
-                                                                                                addDescendantsToInclude = FALSE,
-                                                                                                excludedCovariateConceptIds = c(),
-                                                                                                addDescendantsToExclude = FALSE,
-                                                                                                includedCovariateIds = c()),
+                                 covariateSettings = list(
+                                   FeatureExtraction::createDefaultCovariateSettings(),
+                                   FeatureExtraction::createCovariateSettings(
+                                     useVisitCountLongTerm = TRUE,
+                                     useVisitCountMediumTerm = TRUE,
+                                     useVisitCountShortTerm = TRUE,
+                                     useVisitConceptCountLongTerm = TRUE,
+                                     useVisitConceptCountMediumTerm = TRUE,
+                                     useVisitConceptCountShortTerm = TRUE,
+                                     useDemographicsPriorObservationTime = TRUE,
+                                     useDemographicsPostObservationTime = TRUE,
+                                     useDemographicsTimeInCohort = TRUE,
+                                     useDemographicsIndexYearMonth = TRUE,
+                                   )
+                                 ),
                                  runTemporalCohortCharacterization = TRUE,
                                  temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(
                                    useConditionOccurrence = TRUE,
@@ -171,17 +134,28 @@ runCohortDiagnostics <- function(packageName = NULL,
                                    useProcedureOccurrence = TRUE,
                                    useMeasurement = TRUE,
                                    useCharlsonIndex = TRUE,
-                                   temporalStartDays = c(-365, -30, 0, 1, 31, 
-                                                         seq(from = -421, to = -31, by = 30), 
-                                                         seq(from = 0, to = 390, by = 30)),
-                                   temporalEndDays = c(-31, -1, 0, 30, 365, 
-                                                       seq(from = -391, to = -1, by = 30),  
-                                                       seq(from = 30, to = 420, by = 30))
+                                   temporalStartDays = c(
+                                     -365,
+                                     -30,
+                                     0,
+                                     1,
+                                     31,
+                                     seq(from = -421, to = -31, by = 30),
+                                     seq(from = 0, to = 390, by = 30)
+                                   ),
+                                   temporalEndDays = c(
+                                     -31,
+                                     -1,
+                                     0,
+                                     30,
+                                     365,
+                                     seq(from = -391, to = -1, by = 30),
+                                     seq(from = 30, to = 420, by = 30)
+                                   )
                                  ),
                                  minCellCount = 5,
                                  incremental = FALSE,
                                  incrementalFolder = file.path(exportFolder, "incremental")) {
-  
   # Execution mode determination----
   if (!is.null(cohortSetReference)) {
     ParallelLogger::logInfo("Found cohortSetReference. Cohort Diagnostics is running in WebApi mode.")
@@ -310,12 +284,20 @@ runCohortDiagnostics <- function(packageName = NULL,
   requiredButNotObsevered <-
     setdiff(x = cohortTableColumnNamesRequired, y = cohortTableColumnNamesObserved)
   if (length(requiredButNotObsevered) > 0) {
-    stop(paste("The following required fields not found in cohort table:",paste0(requiredButNotObsevered, collapse = ", ")))
+    stop(paste(
+      "The following required fields not found in cohort table:",
+      paste0(requiredButNotObsevered, collapse = ", ")
+    ))
   }
   obseveredButNotExpected <-
     setdiff(x = cohortTableColumnNamesObserved, y = cohortTableColumnNamesExpected)
   if (length(obseveredButNotExpected) > 0) {
-    ParallelLogger::logTrace(paste0("The following columns were found in cohort table, but are not expected - they will be removed:", obseveredButNotExpected))
+    ParallelLogger::logTrace(
+      paste0(
+        "The following columns were found in cohort table, but are not expected - they will be removed:",
+        obseveredButNotExpected
+      )
+    )
   }
   
   for (i in (1:length(cohortTableColumnNamesExpected))) {
@@ -343,10 +325,8 @@ runCohortDiagnostics <- function(packageName = NULL,
   startMetaData <- Sys.time()
   ## CDM source information----
   cdmSourceInformation <-
-    getCdmDataSourceInformation(
-      connection = connection,
-      cdmDatabaseSchema = cdmDatabaseSchema
-    )
+    getCdmDataSourceInformation(connection = connection,
+                                cdmDatabaseSchema = cdmDatabaseSchema)
   
   ## Vocabulary information----
   vocabularyVersion <-
@@ -363,7 +343,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   ParallelLogger::logInfo("Saving database metadata")
   observationPeriodDateRange <- renderTranslateQuerySql(
     connection = connection,
-    sql = "SELECT MIN(observation_period_start_date) observation_period_min_date, 
+    sql = "SELECT MIN(observation_period_start_date) observation_period_min_date,
              MAX(observation_period_end_date) observation_period_max_date,
              COUNT(distinct person_id) persons,
              COUNT(person_id) records,
@@ -452,7 +432,9 @@ runCohortDiagnostics <- function(packageName = NULL,
       )
     } else {
       instantiatedCohorts <- NULL
-      ParallelLogger::logWarn("All cohorts were either not instantiated or all have 0 records. All diagnostics will be empty.")
+      ParallelLogger::logWarn(
+        "All cohorts were either not instantiated or all have 0 records. All diagnostics will be empty."
+      )
     }
   }
   
@@ -489,21 +471,29 @@ runCohortDiagnostics <- function(packageName = NULL,
             dplyr::mutate(databaseId = !!databaseId)
           if (nrow(stats$simplifiedOutput) > 0) {
             stats$simplifiedOutput <-
-              enforceMinCellValue(data = stats$simplifiedOutput,
-                                  fieldName = "meetSubjects",
-                                  minValues = minCellCount)
+              enforceMinCellValue(
+                data = stats$simplifiedOutput,
+                fieldName = "meetSubjects",
+                minValues = minCellCount
+              )
             stats$simplifiedOutput <-
-              enforceMinCellValue(data = stats$simplifiedOutput,
-                                  fieldName = "gainSubjects",
-                                  minValues = minCellCount)
+              enforceMinCellValue(
+                data = stats$simplifiedOutput,
+                fieldName = "gainSubjects",
+                minValues = minCellCount
+              )
             stats$simplifiedOutput <-
-              enforceMinCellValue(data = stats$simplifiedOutput,
-                                  fieldName = "totalSubjects",
-                                  minValues = minCellCount)
+              enforceMinCellValue(
+                data = stats$simplifiedOutput,
+                fieldName = "totalSubjects",
+                minValues = minCellCount
+              )
             stats$simplifiedOutput <-
-              enforceMinCellValue(data = stats$simplifiedOutput,
-                                  fieldName = "remainSubjects",
-                                  minValues = minCellCount)
+              enforceMinCellValue(
+                data = stats$simplifiedOutput,
+                fieldName = "remainSubjects",
+                minValues = minCellCount
+              )
           }
           
           if ("cohortDefinitionId" %in% (colnames(stats$simplifiedOutput))) {
@@ -519,37 +509,49 @@ runCohortDiagnostics <- function(packageName = NULL,
             cohortId = subset$cohortId
           )
           
-          listOfInclusionTables <- c('cohortInclusion', 
-                                     'cohortInclusionResult',
-                                     'cohortInclusionStats',
-                                     'cohortSummaryStats')
+          listOfInclusionTables <- c(
+            'cohortInclusion',
+            'cohortInclusionResult',
+            'cohortInclusionStats',
+            'cohortSummaryStats'
+          )
           
           for (k in (1:length(listOfInclusionTables))) {
             data <- stats[[listOfInclusionTables[[k]]]]
             if ('personCount' %in% colnames(data)) {
-              data <- enforceMinCellValue(data = data,
-                                          fieldName = "personCount",
-                                          minValues = minCellCount)
+              data <- enforceMinCellValue(
+                data = data,
+                fieldName = "personCount",
+                minValues = minCellCount
+              )
             }
             if ('gainCount' %in% colnames(data)) {
-              data <- enforceMinCellValue(data = data,
-                                          fieldName = "gainCount",
-                                          minValues = minCellCount)
+              data <- enforceMinCellValue(
+                data = data,
+                fieldName = "gainCount",
+                minValues = minCellCount
+              )
             }
             if ('personTotal' %in% colnames(data)) {
-              data <- enforceMinCellValue(data = data,
-                                          fieldName = "personTotal",
-                                          minValues = minCellCount)
+              data <- enforceMinCellValue(
+                data = data,
+                fieldName = "personTotal",
+                minValues = minCellCount
+              )
             }
             if ('baseCount' %in% colnames(data)) {
-              data <- enforceMinCellValue(data = data,
-                                          fieldName = "baseCount",
-                                          minValues = minCellCount)
+              data <- enforceMinCellValue(
+                data = data,
+                fieldName = "baseCount",
+                minValues = minCellCount
+              )
             }
             if ('finalCount' %in% colnames(data)) {
-              data <- enforceMinCellValue(data = data,
-                                          fieldName = "finalCount",
-                                          minValues = minCellCount)
+              data <- enforceMinCellValue(
+                data = data,
+                fieldName = "finalCount",
+                minValues = minCellCount
+              )
             }
             if ("cohortDefinitionId" %in% (colnames(data))) {
               data <- data %>%
@@ -565,8 +567,13 @@ runCohortDiagnostics <- function(packageName = NULL,
             
             writeToCsv(
               data = data,
-              fileName = file.path(exportFolder, paste0(camelCaseToSnakeCase(listOfInclusionTables[[k]]),
-                                                        ".csv")),
+              fileName = file.path(
+                exportFolder,
+                paste0(
+                  camelCaseToSnakeCase(listOfInclusionTables[[k]]),
+                  ".csv"
+                )
+              ),
               incremental = incremental,
               cohortId = subset$cohortId
             )
@@ -579,11 +586,15 @@ runCohortDiagnostics <- function(packageName = NULL,
             incremental = incremental
           )
         } else {
-          ParallelLogger::logWarn(paste0("Cohort Inclusion statistics files not found.\n",
-                                         "    This might mean that the instantiated cohort(s) did not have\n",
-                                         "    any inclusion statistics or the inclusion statistics files\n",
-                                         "    that were exported as part of cohort instantiation\n",
-                                         "    were not found."))
+          ParallelLogger::logWarn(
+            paste0(
+              "Cohort Inclusion statistics files not found.\n",
+              "    This might mean that the instantiated cohort(s) did not have\n",
+              "    any inclusion statistics or the inclusion statistics files\n",
+              "    that were exported as part of cohort instantiation\n",
+              "    were not found."
+            )
+          )
         }
       }
     }
@@ -647,7 +658,8 @@ runCohortDiagnostics <- function(packageName = NULL,
         incremental = incremental,
         recordKeepingFile = recordKeepingFile
       )
-      subset <- dplyr::bind_rows(subset, subsetTemporalCharacterization)
+      subset <-
+        dplyr::bind_rows(subset, subsetTemporalCharacterization)
     }
     subset <- dplyr::distinct(subset)
     ParallelLogger::logInfo(sprintf(
@@ -684,7 +696,13 @@ runCohortDiagnostics <- function(packageName = NULL,
       
       for (i in (1:length(vocabularyTableNames))) {
         if (vocabularyTableNames[[i]] %in% names(conceptSetDiagnostics)) {
-          ParallelLogger::logInfo(paste0("- Writing extracted vocabulary data to file - ", vocabularyTableNames[[i]]), ".csv")
+          ParallelLogger::logInfo(
+            paste0(
+              "- Writing extracted vocabulary data to file - ",
+              vocabularyTableNames[[i]]
+            ),
+            ".csv"
+          )
           if (vocabularyTableNames[[i]] %in% c("domain",
                                                "relationship",
                                                "vocabulary",
@@ -713,10 +731,14 @@ runCohortDiagnostics <- function(packageName = NULL,
       if ('conceptSets' %in% names(conceptSetDiagnostics)) {
         ParallelLogger::logInfo("- Writing concept_sets.csv")
         writeToCsv(
-          data = conceptSetDiagnostics$conceptSets %>% 
-            dplyr::select(.data$cohortId, .data$conceptSetExpression, 
-                          .data$conceptSetId, .data$conceptSetName, 
-                          .data$conceptSetSql) %>% 
+          data = conceptSetDiagnostics$conceptSets %>%
+            dplyr::select(
+              .data$cohortId,
+              .data$conceptSetExpression,
+              .data$conceptSetId,
+              .data$conceptSetName,
+              .data$conceptSetSql
+            ) %>%
             dplyr::distinct(),
           fileName = file.path(exportFolder, "concept_sets.csv"),
           incremental = incremental,
@@ -728,7 +750,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       if ('resolvedConceptIds' %in% names(conceptSetDiagnostics)) {
         ParallelLogger::logInfo("- Writing resolved_concepts.csv")
         writeToCsv(
-          data = conceptSetDiagnostics$resolvedConceptIds %>% 
+          data = conceptSetDiagnostics$resolvedConceptIds %>%
             dplyr::mutate(databaseId = !!databaseId),
           fileName = file.path(exportFolder, "resolved_concepts.csv"),
           incremental = incremental,
@@ -741,15 +763,20 @@ runCohortDiagnostics <- function(packageName = NULL,
           runIncludedSourceConcepts) {
         if (nrow(conceptSetDiagnostics$includedSourceCodes) > 0) {
           ParallelLogger::logInfo("- Writing included_source_concept.csv")
-          conceptSetDiagnostics$includedSourceCodes$databaseId <- databaseId
+          conceptSetDiagnostics$includedSourceCodes$databaseId <-
+            databaseId
           conceptSetDiagnostics$includedSourceCodes <-
-            enforceMinCellValue(conceptSetDiagnostics$includedSourceCodes,
-                                "conceptSubjects",
-                                minCellCount)
+            enforceMinCellValue(
+              conceptSetDiagnostics$includedSourceCodes,
+              "conceptSubjects",
+              minCellCount
+            )
           conceptSetDiagnostics$includedSourceCodes <-
-            enforceMinCellValue(conceptSetDiagnostics$includedSourceCodes,
-                                "conceptCount",
-                                minCellCount)
+            enforceMinCellValue(
+              conceptSetDiagnostics$includedSourceCodes,
+              "conceptCount",
+              minCellCount
+            )
           writeToCsv(
             data = conceptSetDiagnostics$includedSourceCodes,
             fileName = file.path(exportFolder, "included_source_concept.csv"),
@@ -771,15 +798,20 @@ runCohortDiagnostics <- function(packageName = NULL,
           runBreakdownIndexEvents) {
         if (nrow(conceptSetDiagnostics$indexEventBreakdown) > 0) {
           ParallelLogger::logInfo("- Writing index_event_breakdown.csv")
-          conceptSetDiagnostics$indexEventBreakdown$databaseId <- databaseId
+          conceptSetDiagnostics$indexEventBreakdown$databaseId <-
+            databaseId
           conceptSetDiagnostics$indexEventBreakdown <-
-            enforceMinCellValue(conceptSetDiagnostics$indexEventBreakdown,
-                                "subjectCount",
-                                minCellCount)
+            enforceMinCellValue(
+              conceptSetDiagnostics$indexEventBreakdown,
+              "subjectCount",
+              minCellCount
+            )
           conceptSetDiagnostics$indexEventBreakdown <-
-            enforceMinCellValue(conceptSetDiagnostics$indexEventBreakdown,
-                                "conceptCount",
-                                minCellCount)
+            enforceMinCellValue(
+              conceptSetDiagnostics$indexEventBreakdown,
+              "conceptCount",
+              minCellCount
+            )
           writeToCsv(
             data = conceptSetDiagnostics$indexEventBreakdown,
             fileName = file.path(exportFolder, "index_event_breakdown.csv"),
@@ -997,31 +1029,48 @@ runCohortDiagnostics <- function(packageName = NULL,
         cohortOverlap <-
           enforceMinCellValue(cohortOverlap, "countValue", minCellCount)
         
-        cohortOverlap <- cohortOverlap %>% 
-          dplyr::mutate(attributeName = dplyr::case_when(.data$attributeName == 'es' ~ 'eitherSubjects',
-                                                         .data$attributeName == 'bs' ~ 'bothSubjects',
-                                                         .data$attributeName == 'ts' ~ 'tOnlySubjects',
-                                                         .data$attributeName == 'cs' ~ 'cOnlySubjects',
-                                                         .data$attributeName == 'tb' ~ 'tBeforeCSubjects',
-                                                         .data$attributeName == 'cb' ~ 'cBeforeTSubjects',
-                                                         .data$attributeName == 'sd' ~ 'sameDaySubjects',
-                                                         .data$attributeName == 'tc' ~ 'tInCSubjects',
-                                                         .data$attributeName == 'ct' ~ 'cInTSubjects')
-          ) %>% 
-          dplyr::rename(targetCohortId = .data$cohortId) %>% 
-          dplyr::select(.data$targetCohortId, 
-                        .data$comparatorCohortId,
-                        .data$attributeName,
-                        .data$countValue) %>%
-          tidyr::pivot_wider(id_cols = c("targetCohortId", "comparatorCohortId"),
-                             values_from = "countValue",
-                             values_fill = 0,
-                             names_from = "attributeName") %>%
-          dplyr::mutate(databaseId = !!databaseId) %>% 
-          dplyr::select(.data$eitherSubjects, .data$bothSubjects, .data$tOnlySubjects,
-                        .data$cOnlySubjects, .data$tBeforeCSubjects, .data$cBeforeTSubjects,
-                        .data$sameDaySubjects, .data$tInCSubjects, .data$cInTSubjects,
-                        .data$targetCohortId, .data$comparatorCohortId, .data$databaseId)
+        cohortOverlap <- cohortOverlap %>%
+          dplyr::mutate(
+            attributeName = dplyr::case_when(
+              .data$attributeName == 'es' ~ 'eitherSubjects',
+              .data$attributeName == 'bs' ~ 'bothSubjects',
+              .data$attributeName == 'ts' ~ 'tOnlySubjects',
+              .data$attributeName == 'cs' ~ 'cOnlySubjects',
+              .data$attributeName == 'tb' ~ 'tBeforeCSubjects',
+              .data$attributeName == 'cb' ~ 'cBeforeTSubjects',
+              .data$attributeName == 'sd' ~ 'sameDaySubjects',
+              .data$attributeName == 'tc' ~ 'tInCSubjects',
+              .data$attributeName == 'ct' ~ 'cInTSubjects'
+            )
+          ) %>%
+          dplyr::rename(targetCohortId = .data$cohortId) %>%
+          dplyr::select(
+            .data$targetCohortId,
+            .data$comparatorCohortId,
+            .data$attributeName,
+            .data$countValue
+          ) %>%
+          tidyr::pivot_wider(
+            id_cols = c("targetCohortId", "comparatorCohortId"),
+            values_from = "countValue",
+            values_fill = 0,
+            names_from = "attributeName"
+          ) %>%
+          dplyr::mutate(databaseId = !!databaseId) %>%
+          dplyr::select(
+            .data$eitherSubjects,
+            .data$bothSubjects,
+            .data$tOnlySubjects,
+            .data$cOnlySubjects,
+            .data$tBeforeCSubjects,
+            .data$cBeforeTSubjects,
+            .data$sameDaySubjects,
+            .data$tInCSubjects,
+            .data$cInTSubjects,
+            .data$targetCohortId,
+            .data$comparatorCohortId,
+            .data$databaseId
+          )
         writeToCsv(
           data = cohortOverlap,
           fileName = file.path(exportFolder, "cohort_overlap.csv"),
@@ -1066,17 +1115,20 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
     
     if (nrow(subset) > 0) {
-      timeSeries <- runCohortTimeSeriesDiagnostics(connection = connection,
-                                                   tempEmulationSchema = tempEmulationSchema,
-                                                   cohortDatabaseSchema = cohortDatabaseSchema,
-                                                   cdmDatabaseSchema = cdmDatabaseSchema,
-                                                   cohortTable = cohortTable,
-                                                   timeSeriesMinDate = observationPeriodDateRange$observationPeriodMinDate,
-                                                   timeSeriesMaxDate = observationPeriodDateRange$observationPeriodMaxDate,
-                                                   cohortIds = subset$cohortId)
+      timeSeries <-
+        runCohortTimeSeriesDiagnostics(
+          connection = connection,
+          tempEmulationSchema = tempEmulationSchema,
+          cohortDatabaseSchema = cohortDatabaseSchema,
+          cdmDatabaseSchema = cdmDatabaseSchema,
+          cohortTable = cohortTable,
+          timeSeriesMinDate = observationPeriodDateRange$observationPeriodMinDate,
+          timeSeriesMaxDate = observationPeriodDateRange$observationPeriodMaxDate,
+          cohortIds = subset$cohortId
+        )
       
       if (!is.null(timeSeries) && nrow(timeSeries) > 0) {
-        timeSeries <- timeSeries %>% 
+        timeSeries <- timeSeries %>%
           dplyr::mutate(databaseId = !!databaseId)
         timeSeries <-
           enforceMinCellValue(timeSeries, "records", minCellCount)
@@ -1139,13 +1191,14 @@ runCohortDiagnostics <- function(packageName = NULL,
     
     if (nrow(subset) > 0) {
       ParallelLogger::logTrace("Beginning Cohort Relationship SQL")
-      cohortTemporalRelationship <- runCohortTemporalRelationshipDiagnostics(
-        connection = connection,
-        cohortDatabaseSchema = cohortDatabaseSchema,
-        cohortTable = cohortTable,
-        targetCohortIds = subset$cohortId,
-        comparatorCohortIds = cohorts$cohortId
-      )
+      cohortTemporalRelationship <-
+        runCohortTemporalRelationshipDiagnostics(
+          connection = connection,
+          cohortDatabaseSchema = cohortDatabaseSchema,
+          cohortTable = cohortTable,
+          targetCohortIds = subset$cohortId,
+          comparatorCohortIds = cohorts$cohortId
+        )
       
       if (nrow(cohortTemporalRelationship) > 0) {
         cohortTemporalRelationship <- cohortTemporalRelationship %>%
@@ -1339,17 +1392,37 @@ runCohortDiagnostics <- function(packageName = NULL,
         as.character(packageVersion("tidyr")),
         as.character(R.Version()$version.string),
         as.character(nullToEmpty(packageName())),
-        as.character(if (!getPackageName() == ".GlobalEnv") {packageVersion(packageName())} else {''}),
-        as.character(as.numeric(x = delta, units = attr(delta, "units"))),
+        as.character(if (!getPackageName() == ".GlobalEnv") {
+          packageVersion(packageName())
+        } else {
+          ''
+        }),
+        as.character(as.numeric(
+          x = delta, units = attr(delta, "units")
+        )),
         as.character(attr(delta, "units")),
-        as.character(nullToEmpty(cdmSourceInformation$sourceDescription)),
+        as.character(nullToEmpty(
+          cdmSourceInformation$sourceDescription
+        )),
         as.character(nullToEmpty(cdmSourceInformation$cdmSourceName)),
-        as.character(nullToEmpty(cdmSourceInformation$sourceReleaseDate)),
+        as.character(nullToEmpty(
+          cdmSourceInformation$sourceReleaseDate
+        )),
         as.character(nullToEmpty(cdmSourceInformation$cdmVersion)),
         as.character(nullToEmpty(cdmSourceInformation$cdmReleaseDate)),
-        as.character(nullToEmpty(cdmSourceInformation$vocabularyVersion)),
-        as.character(RJSONIO::toJSON(covariateSettings, digits = 23, pretty = TRUE)),
-        as.character(RJSONIO::toJSON(temporalCovariateSettings, digits = 23, pretty = TRUE))
+        as.character(nullToEmpty(
+          cdmSourceInformation$vocabularyVersion
+        )),
+        as.character(RJSONIO::toJSON(
+          covariateSettings, digits = 23, pretty = TRUE
+        )),
+        as.character(
+          RJSONIO::toJSON(
+            temporalCovariateSettings,
+            digits = 23,
+            pretty = TRUE
+          )
+        )
       )
     )
   writeToCsv(data = metadata,
