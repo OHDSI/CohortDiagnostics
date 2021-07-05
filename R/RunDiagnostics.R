@@ -1253,16 +1253,16 @@ runCohortDiagnostics <- function(packageName = NULL,
           cdmVersion = cdmVersion
         )
       
-      exportCharacterization(
-        characteristics = characteristics,
+      exportFeatureExtractionOutput(
+        featureExtractionDbCovariateData = characteristics,
         databaseId = databaseId,
         incremental = incremental,
         covariateValueFileName = file.path(exportFolder, "covariate_value.csv"),
         covariateValueContFileName = file.path(exportFolder, "covariate_value_dist.csv"),
         covariateRefFileName = file.path(exportFolder, "covariate_ref.csv"),
         analysisRefFileName = file.path(exportFolder, "analysis_ref.csv"),
-        timeDistributionFileName = file.path(exportFolder, 'time_distribution.csv'),
-        counts = cohortCounts,
+        timeDistributionFileName = file.path(exportFolder, "time_distribution.csv"),
+        cohortCounts = cohortCounts,
         minCellCount = minCellCount
       )
     }
@@ -1315,8 +1315,8 @@ runCohortDiagnostics <- function(packageName = NULL,
           covariateSettings = temporalCovariateSettings,
           cdmVersion = cdmVersion
         )
-      exportCharacterization(
-        characteristics = characteristics,
+      exportFeatureExtractionOutput(
+        featureExtractionDbCovariateData = characteristics,
         databaseId = databaseId,
         incremental = incremental,
         covariateValueFileName = file.path(exportFolder, "temporal_covariate_value.csv"),
@@ -1324,7 +1324,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         analysisRefFileName = file.path(exportFolder, "temporal_analysis_ref.csv"),
         timeRefFileName = file.path(exportFolder, "temporal_time_ref.csv"),
         # add temporal_covariate_value_dist.csv, but timeId does not seem to be correctly returned
-        counts = cohortCounts,
+        cohortCounts = cohortCounts,
         minCellCount = minCellCount
       )
     }
