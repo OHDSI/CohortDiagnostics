@@ -1130,6 +1130,7 @@ shiny::shinyServer(function(input, output, session) {
   
   getResolvedOrMappedConcepts <- shiny::reactive({
     data <- NULL
+    if (is.null(input$databaseOrVocabularySchema)) {return(NULL)}
     databaseIdToFilter <- database %>%
       dplyr::filter(.data$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchema) %>%
       dplyr::pull(.data$databaseId)
@@ -2276,6 +2277,7 @@ shiny::shinyServer(function(input, output, session) {
   
   getResolvedOrMappedConceptSecond <- shiny::reactive({
     data <- NULL
+    if (is.null(input$databaseOrVocabularySchemaSecond)) {return(NULL)}
     databaseIdToFilter <- database %>%
       dplyr::filter(.data$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchemaSecond) %>%
       dplyr::pull(.data$databaseId)
@@ -2584,7 +2586,7 @@ shiny::shinyServer(function(input, output, session) {
     result <- dplyr::setdiff(conceptsetComparisonData()$leftData, 
                              conceptsetComparisonData()$rightData)
     
-    if (nrow(result) == 0) {
+    if (all(is.null(result), nrow(result) == 0)) {
       return(NULL)
     } else {
       if (nrow(result) < 20) {
@@ -2741,7 +2743,7 @@ shiny::shinyServer(function(input, output, session) {
     result <- dplyr::setdiff(conceptsetComparisonData()$leftData, 
                              conceptsetComparisonData()$rightData)
     
-    if (nrow(result) == 0) {
+    if (any(is.null(result), nrow(result) == 0)) {
       return(NULL)
     } else {
       if (nrow(result) < 20) {
