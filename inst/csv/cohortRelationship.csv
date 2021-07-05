@@ -1,0 +1,17 @@
+analysisId,analysisName,startDay,endDay,description,incidentTarget,incidentComparator
+-1,ComparatorCohortStartAnyTimePrior,,0,Count of distinct comparator cohort start dates any time prior to index.,FALSE,FALSE
+-2,ComparatorCohortStartLongTerm,-365,0,Count of distinct comparator cohort start dates in long term period prior to index.,FALSE,FALSE
+-3,ComparatorCohortStartMediumTerm,-180,0,Count of distinct comparator cohort start dates in medium term period prior to index.,FALSE,FALSE
+-4,ComparatorCohortStartShortTerm,-30,0,Count of distinct comparator cohort start dates in short term period prior to index.,FALSE,FALSE
+-5,ComparatorIncidentCohortStartAnyTimePrior,,0,Count of distinct incident comparator cohort start dates any time prior to index.,FALSE,FALSE
+-6,ComparatorIncidentCohortStartLongTerm,-365,0,Count of distinct incident comparator cohort start dates in long term period prior to index.,FALSE,TRUE
+-7,ComparatorIncidentCohortStartMediumTerm,-180,0,Count of distinct incident comparator cohort start dates in medium term period prior to index.,FALSE,TRUE
+-8,ComparatorIncidentCohortStartShortTerm,-30,0,Count of distinct incident comparator cohort start dates in short term period prior to index.,FALSE,TRUE
+-9,ComparatorCohortStartAnyTimePriorIncidentTarget,,0,Count of distinct comparator cohort start dates any time prior to index date of incident target.,TRUE,FALSE
+-10,ComparatorCohortStartLongTermIncidentTarget,-365,0,Count of distinct comparator cohort start dates in long term period prior to index date of incident target.,TRUE,FALSE
+-11,ComparatorCohortStartMediumTermIncidentTarget,-180,0,Count of distinct comparator cohort start dates in medium term period prior to index date of incident target.,TRUE,FALSE
+-12,ComparatorCohortStartShortTermIncidentTarget,-30,0,Count of distinct comparator cohort start dates in short term period prior to index date of incident target.,TRUE,FALSE
+-13,ComparatorIncidentCohortStartAnyTimePriorIncidentTarget,,0,Count of distinct incident comparator cohort start dates any time prior to index date of incident target.,TRUE,TRUE
+-14,ComparatorIncidentCohortStartLongTermIncidentTarget,-365,0,Count of distinct incident comparator cohort start dates in long term period prior to index date of incident target.,TRUE,TRUE
+-15,ComparatorIncidentCohortStartMediumTermIncidentTarget,-180,0,Count of distinct incident comparator cohort start dates in medium term period prior to index date of incident target.,TRUE,TRUE
+-16,ComparatorIncidentCohortStartShortTermIncidentTarget,-30,0,Count of distinct incident comparator cohort start dates in short term period prior to index date of incident target.,TRUE,TRUE

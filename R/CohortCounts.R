@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#' Count the cohort(s)
+#' Count of unique subjects and records in the cohort(s)
 #'
 #' @description
 #' Computes the subject and entry count per cohort

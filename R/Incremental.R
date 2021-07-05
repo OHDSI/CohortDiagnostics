@@ -37,9 +37,7 @@ isTaskRequired <-
         return(TRUE)
       }
       if (nrow(task) > 1) {
-        stop("Duplicate key ",
-             as.character(list(...)),
-             " found in recordkeeping table")
+        stop("Duplicate key ",as.character(list(...))," found in recordkeeping table")
       }
       if (task$checksum == checksum) {
         if (verbose) {
@@ -67,9 +65,7 @@ getRequiredTasks <- function(..., checksum, recordKeepingFile) {
     tasks <- dplyr::as_tibble(tasks)
     if (all(names(tasks) %in% names(recordKeeping))) {
       idx <- getKeyIndex(recordKeeping[, names(tasks)], tasks)
-    } else {
-      idx = c()
-    }
+    } else {idx = c()}
     tasks$checksum <- NULL
     if (length(idx) > 0) {
       # text <- paste(sprintf("%s = %s", names(tasks), tasks[idx,]), collapse = ", ")
@@ -98,12 +94,11 @@ recordTasksDone <-
            checksum,
            recordKeepingFile,
            incremental = TRUE) {
-    if (!incremental) {
-      return()
-    }
-    if (length(list(...)[[1]]) == 0) {
-      return()
-    }
+    
+    if (!incremental) {return()}
+    
+    if (length(list(...)[[1]]) == 0) {return()}
+    
     if (file.exists(recordKeepingFile)) {
       recordKeeping <-  readr::read_csv(recordKeepingFile,
                                         col_types = readr::cols(),
@@ -224,9 +219,7 @@ saveIncremental <- function(data, fileName, ...) {
     if ((nrow(previousData)) > 0) {
       if (!length(list(...)) == 0) {
         idx <- getKeyIndex(list(...), previousData)
-      } else {
-        idx <- NULL
-      }
+      } else {idx <- NULL}
       if (length(idx) > 0) {
         previousData <- previousData[-idx,]
       }
@@ -261,27 +254,28 @@ subsetToRequiredCohorts <-
     }
   }
 
-subsetToRequiredCombis <-
-  function(combis,
-           task,
-           incremental,
-           recordKeepingFile) {
-    if (incremental) {
-      tasks <- getRequiredTasks(
-        cohortId = combis$targetCohortId,
-        comparatorId = combis$comparatorCohortId,
-        task = task,
-        checksum = combis$checksum,
-        recordKeepingFile = recordKeepingFile
-      )
-      return(merge(
-        combis,
-        dplyr::tibble(
-          targetCohortId = tasks$cohortId,
-          comparatorCohortId = tasks$comparatorId
-        )
-      ))
-    } else {
-      return(combis)
-    }
-  }
+# Commenting this function as it is currently not being used.
+# subsetToRequiredCombis <-
+#   function(combis,
+#            task,
+#            incremental,
+#            recordKeepingFile) {
+#     if (incremental) {
+#       tasks <- getRequiredTasks(
+#         cohortId = combis$targetCohortId,
+#         comparatorId = combis$comparatorCohortId,
+#         task = task,
+#         checksum = combis$checksum,
+#         recordKeepingFile = recordKeepingFile
+#       )
+#       return(merge(
+#         combis,
+#         dplyr::tibble(
+#           targetCohortId = tasks$cohortId,
+#           comparatorCohortId = tasks$comparatorId
+#         )
+#       ))
+#     } else {
+#       return(combis)
+#     }
+#   }

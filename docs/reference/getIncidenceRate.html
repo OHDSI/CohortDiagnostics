@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Compute incidence rate for a cohort — getIncidenceRate • CohortDiagnostics</title>
+<title>Given a set of instantiated cohorts get Incidence Rate for the cohorts. — getIncidenceRate • CohortDiagnostics</title>
 
 
 <!-- jquery -->
@@ -39,8 +39,8 @@
 
 
 
-<meta property="og:title" content="Compute incidence rate for a cohort — getIncidenceRate" />
-<meta property="og:description" content="Returns yearly incidence rate stratified by age and gender" />
+<meta property="og:title" content="Given a set of instantiated cohorts get Incidence Rate for the cohorts. — getIncidenceRate" />
+<meta property="og:description" content="This function computes incidence rate, one cohort at a time." />
 
 
 
@@ -72,7 +72,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">CohortDiagnostics</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.0.0</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.2.0</span>
       </span>
     </div>
 
@@ -80,7 +80,7 @@
       <ul class="nav navbar-nav">
         <li>
   <a href="../index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
+    <span class="fas fa-home fa-lg"></span>
      
   </a>
 </li>
@@ -98,7 +98,22 @@
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
+      <a href="../articles/CohortDiagnosticsInPackageMode.html">Runing Cohort Diagnostics in an OHDSI Package mode</a>
+    </li>
+    <li>
       <a href="../articles/CohortDiagnosticsUsingWebApi.html">Running cohort diagnostics using WebAPI</a>
+    </li>
+    <li>
+      <a href="../articles/DatabaseModeInDiagnosticsExplorer.html">Database mode in Diagnostics Explorer</a>
+    </li>
+    <li>
+      <a href="../articles/RunningCohortDiagnostics.html">Running cohort diagnostics</a>
+    </li>
+    <li>
+      <a href="../articles/ViewingResultsUsingDiagnosticsExplorer.html">Viewing results using Diagnostics Explorer</a>
+    </li>
+    <li>
+      <a href="../articles/WhatIsCohortDiagnostics.html">What is Cohort Diagnostics?</a>
     </li>
   </ul>
 </li>
@@ -109,7 +124,7 @@
 </li>
 <li>
   <a href="https://github.com/OHDSI/CohortDiagnostics/">
-    <span class="fab fa fab fa-github fa-lg"></span>
+    <span class="fab fa-github fa-lg"></span>
      
   </a>
 </li>
@@ -126,13 +141,13 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Compute incidence rate for a cohort</h1>
+    <h1>Given a set of instantiated cohorts get Incidence Rate for the cohorts.</h1>
     <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/IncidenceRates.R'><code>R/IncidenceRates.R</code></a></small>
     <div class="hidden name"><code>getIncidenceRate.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Returns yearly incidence rate stratified by age and gender</p>
+    <p>This function computes incidence rate, one cohort at a time.</p>
     </div>
 
     <pre class="usage"><span class='fu'>getIncidenceRate</span><span class='op'>(</span>
@@ -141,6 +156,7 @@
   <span class='va'>cohortDatabaseSchema</span>,
   <span class='va'>cohortTable</span>,
   <span class='va'>cdmDatabaseSchema</span>,
+  vocabularyDatabaseSchema <span class='op'>=</span> <span class='va'>cdmDatabaseSchema</span>,
   cdmVersion <span class='op'>=</span> <span class='fl'>5</span>,
   tempEmulationSchema <span class='op'>=</span> <span class='va'>tempEmulationSchema</span>,
   firstOccurrenceOnly <span class='op'>=</span> <span class='cn'>TRUE</span>,
@@ -183,38 +199,37 @@ Note that for SQL Server, this should include both the database and
 schema name, for example 'cdm_data.dbo'.</p></td>
     </tr>
     <tr>
+      <th>vocabularyDatabaseSchema</th>
+      <td><p>Schema name where your OMOP vocabulary data resides. This is 
+commonly the same as cdmDatabaseSchema. Note that for 
+SQL Server, this should include both the database and
+schema name, for example 'vocabulary.dbo'.</p></td>
+    </tr>
+    <tr>
       <th>cdmVersion</th>
-      <td><p>The version of the OMOP CDM. Default 5. (Note: only 5 is supported.)</p></td>
+      <td><p>Only CDM version 5 is supported.</p></td>
     </tr>
     <tr>
       <th>tempEmulationSchema</th>
-      <td><p>Should be used in Oracle to specify a schema where the user has write
-privileges for storing temporary tables.</p></td>
+      <td><p>Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
+tables, provide a schema with write privileges where temp tables can be created.</p></td>
     </tr>
     <tr>
       <th>firstOccurrenceOnly</th>
-      <td><p>Use only the first occurrence of the cohort per person?</p></td>
+      <td><p>Compute for first occurrence of subject in the cohort.</p></td>
     </tr>
     <tr>
       <th>washoutPeriod</th>
-      <td><p>The minimum amount of observation time required before the occurrence
-of a cohort entry. This is also used to eliminate immortal time from
-the denominator.</p></td>
+      <td><p>(Optional) Washout period to use. The default value is either
+365 days or minimum prior observation period requirement
+specified in cohort definition.</p></td>
     </tr>
     <tr>
       <th>cohortId</th>
-      <td><p>The cohort Id used to reference the cohort in the cohort
-table.</p></td>
+      <td><p>A Cohort Id to compute time distribution for.</p></td>
     </tr>
     </table>
 
-    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
-
-    <p>Returns a data frame of cohort count, person year count, and incidence rate per 1000 persons
-years with the following stratifications: 1) no stratification, 2) gender stratification,
-3) age (10-year) stratification, 4) calendar year and age (10-year) stratification, 5) calendar
-year and gender stratification, 6) calendar year, age (10-year), and gender stratification with
-option to save dataframes.</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
@@ -227,7 +242,7 @@ option to save dataframes.</p>
 
       <footer>
       <div class="copyright">
-  <p>Developed by Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver.</p>
+  <p>Developed by Gowtham Rao, Martijn Schuemie, Patrick Ryan, James Weaver, Jamie Gilbert.</p>
 </div>
 
 <div class="pkgdown">

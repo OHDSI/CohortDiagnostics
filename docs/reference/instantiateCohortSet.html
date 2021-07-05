@@ -292,13 +292,12 @@ the name of the study package, and the name of the cohortToCreate file within th
 connect to the WebApi, and which cohorts to fetch, respectively.</p>
 <p>Note: if the parameters for both Package Mode and WebApi Mode are provided, then Package mode is preferred.</p>
 <p>The <code>cohortSetReference</code> argument must be a data frame with  the following columns:</p><dl>
-<dt>referentConceptId</dt><dd><p>A standard omop concept id that serves as the referent phenotype definition for the cohort Id.</p></dd>
-<dt>cohortId</dt><dd><p>The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names. It is recommended to be (referentConceptId * 1000) + a number between 3 to 999</p></dd>
-<dt>webApiCohortId</dt><dd><p>Cohort Id in the webApi/atlas instance. It is a required field to run Cohort Diagnostics in WebApi mode. It is discarded in package mode.</p></dd>
-<dt>cohortName</dt><dd><p>The full name of the cohort. This will be shown in the Shiny app.</p></dd>
-<dt>logicDescription</dt><dd><p>A human understandable brief description of the cohort definition. This logic does not have to a 
+<dt>cohortId</dt><dd><p>(required) The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names. It is recommended to be (referentConceptId * 1000) + a number between 3 to 999</p></dd>
+<dt>cohortName</dt><dd><p>(required) The full name of the cohort. This will be shown in the Shiny app.</p></dd>
+<dt>logicDescription</dt><dd><p>(optional) A human understandable brief description of the cohort definition. This logic does not have to a 
 fully specified description of the cohort definition, but should provide enough context to help user understand the
 meaning of the cohort definition</p></dd>
+<dt>metaData</dt><dd><p>(optional) A JSON with metadata of the cohort that you would like to provided. At this time these pairs are used: referentConceptId, tags, projectCode</p></dd>
 
 </dl>
 

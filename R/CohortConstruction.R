@@ -145,7 +145,7 @@ getCohortsJsonAndSqlFromPackage <-
       return(json)
     }
     cohorts$json <- sapply(cohorts$name, getJson)
-    return(selectColumnAccordingToResultsModel(cohorts))
+    return(cohorts)
   }
 
 
@@ -199,27 +199,7 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
         generateStats = generateStats
       )
   }
-  return(selectColumnAccordingToResultsModel(cohortSetReference))
-}
-
-selectColumnAccordingToResultsModel <- function(data) {
-  columsToInclude <- c()
-  if ("phenotypeId" %in% colnames(data)) {
-    columsToInclude <- c(columsToInclude, "phenotypeId")
-  }
-  columsToInclude <- c(columsToInclude, "cohortId", "cohortName")
-  if ("logicDescription" %in% colnames(data)) {
-    columsToInclude <- c(columsToInclude, "logicDescription")
-  }
-  if ("referentConceptId" %in% colnames(data)) {
-    columsToInclude <- c(columsToInclude, "referentConceptId")
-  }
-  if ("cohortType" %in% colnames(data)) {
-    columsToInclude <- c(columsToInclude, "cohortType")
-  }
-  columsToInclude <-
-    c(columsToInclude, "json" , "sql", "webApiCohortId")
-  return(data[, columsToInclude])
+  return(cohortSetReference)
 }
 
 getCohortsJsonAndSql <- function(packageName = NULL,
@@ -235,18 +215,6 @@ getCohortsJsonAndSql <- function(packageName = NULL,
         cohortToCreateFile = cohortToCreateFile,
         cohortIds = cohortIds
       )
-    if (!is.null(baseUrl)) {
-      baseUrl <- NULL
-      ParallelLogger::logInfo(
-        "Ignoring parameter baseUrl because packageName is provided. Overiding user parameter baseUrl - setting to NULL"
-      )
-    }
-    if (!is.null(cohortSetReference)) {
-      cohortSetReference <- NULL
-      ParallelLogger::logInfo(
-        "Ignoring parameter cohortSetReference because packageName is provided. Overiding user parameter cohortSetReference - setting to NULL"
-      )
-    }
   } else {
     cohorts <- getCohortsJsonAndSqlFromWebApi(
       baseUrl = baseUrl,
@@ -260,9 +228,7 @@ getCohortsJsonAndSql <- function(packageName = NULL,
     warning("No cohorts founds")
   }
   if (nrow(cohorts) != length(cohorts$cohortId %>% unique())) {
-    warning(
-      "Please check input cohort specification. Is there duplication of cohortId? Returning empty cohort table."
-    )
+    warning("Please check input cohort specification. Is there duplication of cohortId? Returning empty cohort table.")
     return(cohorts[0, ])
   }
   return(cohorts)
@@ -327,8 +293,12 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
     }
     return(stats)
   }
-  inclusion <- fetchStats(cohortInclusionFile) %>%
-    tidyr::replace_na(replace = list(description = ''))
+  
+  inclusion <- fetchStats(cohortInclusionFile)
+  if ('description' %in% colnames(inclusion)) {
+    inclusion <- inclusion %>% tidyr::replace_na(replace = list(description = ''))
+  } else {inclusion$description <- ''}
+    
   summaryStats <- fetchStats(cohortSummaryStatsFile)
   inclusionStats <- fetchStats(cohortInclusionStatsFile)
   inclusionResults <- fetchStats(cohortInclusionResultFile)
@@ -351,7 +321,13 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
     signif(delta, 3),
     attr(delta, "units")
   ))
-  return(result)
+  output <- list(simplifiedOutput = result,
+                 cohortInclusion = inclusion,
+                 cohortInclusionResult = inclusionResults,
+                 cohortInclusionStats = inclusionStats,
+                 cohortSummaryStats = summaryStats
+                 )
+  return(output)
 }
 
 processInclusionStats <- function(inclusion,
@@ -564,11 +540,11 @@ instantiateCohortSet <- function(connectionDetails = NULL,
         sql <- SqlRender::render(sql,
                                  vocabulary_database_schema = vocabularyDatabaseSchema)
       } else {
-        ParallelLogger::logDebug('Cohort id ', cohorts$cohortId[i], " SQL does not have vocabularyDatabaseSchema.")
+        ParallelLogger::logDebug('- Cohort id ', cohorts$cohortId[i], " SQL does not have vocabularyDatabaseSchema.")
       }
-      if (stringr::str_detect(string = sql,
+      if (!stringr::str_detect(string = sql,
                               pattern = 'results_database_schema')) {
-        ParallelLogger::logDebug('Cohort id ', cohorts$cohortId[i], " SQL has inclusion rule statistics tables.")
+        ParallelLogger::logDebug('- Cohort id ', cohorts$cohortId[i], " SQL does not have resultsDatabaseSchema.")
       }
       if (generateInclusionStats) {
         if (stringr::str_detect(string = sql,
@@ -581,7 +557,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
             results_database_schema.cohort_summary_stats = "#cohort_summary_stats"
           )
         } else {
-          ParallelLogger::logDebug('Cohort id ', cohorts$cohortId[i], " SQL does not have inclusion rule statistics tables.")
+          ParallelLogger::logDebug(' - Cohort id ', cohorts$cohortId[i], " SQL does not have inclusion rule statistics tables.")
         }
         # added for compatibility for 2.8.1
         # https://github.com/OHDSI/CohortDiagnostics/issues/387

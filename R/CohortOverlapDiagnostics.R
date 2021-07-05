@@ -27,23 +27,26 @@
 #' @template CohortDatabaseSchema
 #'
 #' @template CohortTable
+#' 
+#' @param targetCohortIds             List of cohort ids that represent target cohorts
 #'
-#' @template CohortIds
+#' @param comparatorCohortIds          List of cohort ids that represent comparator cohorts
 #'
 #' @param batchSize                   {Optional, default set to 50} If running diagnostics on large set
 #'                                    of cohorts, this function allows you to batch them into chunks that
 #'                                    by default run over 50 target cohorts (and all comparator cohorts).
 #'
 #' @export
-computeCohortOverlap <- function(connectionDetails = NULL,
-                                 connection = NULL,
-                                 cohortDatabaseSchema,
-                                 cohortTable = "cohort",
-                                 cohortIds,
-                                 batchSize = 50) {
+runCohortOverlapDiagnostics <- function(connectionDetails = NULL,
+                                        connection = NULL,
+                                        cohortDatabaseSchema,
+                                        cohortTable = "cohort",
+                                        targetCohortIds,
+                                        comparatorCohortIds,
+                                        batchSize = 50) {
   startTime <- Sys.time()
   
-  if (length(cohortIds) == 0) {
+  if (length(targetCohortIds) == 0) {
     return(NULL)
   }
   if (is.null(connection)) {
@@ -52,9 +55,9 @@ computeCohortOverlap <- function(connectionDetails = NULL,
   }
   
   results <- Andromeda::andromeda()
-  for (start in seq(1, length(cohortIds), by = batchSize)) {
-    end <- min(start + batchSize - 1, length(cohortIds))
-    if (length(cohortIds) > batchSize) {
+  for (start in seq(1, length(targetCohortIds), by = batchSize)) {
+    end <- min(start + batchSize - 1, length(targetCohortIds))
+    if (length(targetCohortIds) > batchSize) {
       ParallelLogger::logInfo(sprintf(
         "Batch Cohort Overlap Processing cohorts %s through %s",
         start,
@@ -67,7 +70,8 @@ computeCohortOverlap <- function(connectionDetails = NULL,
       dbms = connection@dbms,
       cohort_database_schema = cohortDatabaseSchema,
       cohort_table = cohortTable,
-      target_cohort_ids = cohortIds
+      target_cohort_ids = targetCohortIds,
+      comparator_cohort_ids = comparatorCohortIds
     )
     DatabaseConnector::executeSql(connection = connection,
                                   sql = sql)

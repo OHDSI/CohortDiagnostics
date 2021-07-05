@@ -27,7 +27,6 @@ runCohortDiagnostics(
   runInclusionStatistics = TRUE,
   runIncludedSourceConcepts = TRUE,
   runOrphanConcepts = TRUE,
-  runTimeDistributions = TRUE,
   runVisitContext = TRUE,
   runBreakdownIndexEvents = TRUE,
   runIncidenceRate = TRUE,
@@ -35,14 +34,22 @@ runCohortDiagnostics(
   runCohortOverlap = TRUE,
   runCohortTemporalRelationship = TRUE,
   runCohortCharacterization = TRUE,
-  covariateSettings = createDefaultCovariateSettings(),
+  covariateSettings = list(FeatureExtraction::createDefaultCovariateSettings(),
+    FeatureExtraction::createCovariateSettings(useVisitCountLongTerm = TRUE,
+    useVisitCountShortTerm = TRUE, useVisitConceptCountLongTerm = TRUE,
+    useVisitConceptCountShortTerm = TRUE, useDemographicsPriorObservationTime = TRUE,
+    useDemographicsPostObservationTime = TRUE, useDemographicsTimeInCohort = TRUE,
+    useDemographicsIndexYearMonth = TRUE, )),
   runTemporalCohortCharacterization = TRUE,
-  temporalCovariateSettings = createTemporalCovariateSettings(useConditionOccurrence =
-    TRUE, useDrugEraStart = TRUE, useDrugEraOverlap = TRUE, useVisitCount = TRUE,
+ 
+    temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(useConditionOccurrence
+    = TRUE, useConditionEraOverlap = TRUE, useConditionEraGroupStart = TRUE,
+    useDrugExposure = TRUE, useDrugEraStart = TRUE, useDrugEraGroupStart = TRUE,
+    useDrugEraOverlap = TRUE, useDrugEraGroupOverlap = TRUE, useVisitCount = TRUE,
     useVisitConceptCount = TRUE, useProcedureOccurrence = TRUE, useMeasurement = TRUE,
     temporalStartDays = c(-365, -30, 0, 1, 31, seq(from = -421, to = -31, by = 30),
-    seq(from = 0, to = 390, by = 30)), temporalEndDays = c(-31, -1, 0, 30, 365, seq(from
-    = -391, to = -1, by = 30), seq(from = 30, to = 420, by = 30))),
+    seq(from = 0, to = 390, by = 30)),      temporalEndDays = c(-31, -1, 0, 30, 365,
+    seq(from = -391, to = -1, by = 30), seq(from = 30, to = 420, by = 30))),
   minCellCount = 5,
   incremental = FALSE,
   incrementalFolder = file.path(exportFolder, "incremental")
@@ -120,8 +127,6 @@ does not exist it will be created.}
 
 \item{runOrphanConcepts}{Generate and export potential orphan concepts?}
 
-\item{runTimeDistributions}{Generate and export cohort time distributions?}
-
 \item{runVisitContext}{Generate and export index-date visit context?}
 
 \item{runBreakdownIndexEvents}{Generate and export the breakdown of index events?}
@@ -182,12 +187,11 @@ Note: if the parameters for both Package Mode and WebApi Mode are provided, then
 
 The \code{cohortSetReference} argument must be a data frame with  the following columns:
 \describe{
-\item{referentConceptId}{A standard omop concept id that serves as the referent phenotype definition for the cohort Id.}
-\item{cohortId}{The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names. It is recommended to be (referentConceptId * 1000) + a number between 3 to 999}
-\item{webApiCohortId}{Cohort Id in the webApi/atlas instance. It is a required field to run Cohort Diagnostics in WebApi mode. It is discarded in package mode.}
-\item{cohortName}{The full name of the cohort. This will be shown in the Shiny app.}
-\item{logicDescription}{A human understandable brief description of the cohort definition. This logic does not have to a 
+\item{cohortId}{(required) The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names. It is recommended to be (referentConceptId * 1000) + a number between 3 to 999}
+\item{cohortName}{(required) The full name of the cohort. This will be shown in the Shiny app.}
+\item{logicDescription}{(optional) A human understandable brief description of the cohort definition. This logic does not have to a 
 fully specified description of the cohort definition, but should provide enough context to help user understand the
 meaning of the cohort definition}
+\item{metaData}{(optional) A JSON with metadata of the cohort that you would like to provided. At this time these pairs are used: referentConceptId, tags, projectCode}
 }
 }

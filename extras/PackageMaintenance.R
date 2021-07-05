@@ -76,3 +76,4 @@ file.copy(from = "inst/settings/resultsDataModelSpecification.csv",
 file.copy(from = "R/ResultsDataModelQueries.R", 
           to = "inst/shiny/DiagnosticsExplorer/R/ResultsDataModelQueries.R",
           overwrite = TRUE)
+

@@ -14,15 +14,39 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-getVisitContext <- function(connectionDetails = NULL,
-                            connection = NULL,
-                            cdmDatabaseSchema,
-                            tempEmulationSchema = NULL,
-                            cohortDatabaseSchema = cdmDatabaseSchema,
-                            vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-                            cohortTable = "cohort",
-                            cohortIds,
-                            cdmVersion = 5) {
+
+#' Given a set of instantiated cohorts get the visit context in relation to cohort start date.
+#'
+#' @description
+#' This function returns the types of visits experienced by persons in the cohort in 
+#' relation to cohort start date.
+#'
+#' @template Connection
+#'
+#' @template CohortDatabaseSchema
+#' 
+#' @template CdmDatabaseSchema
+#' 
+#' @template VocabularyDatabaseSchema
+#'
+#' @template TempEmulationSchema
+#'
+#' @template CohortTable
+#'
+#' @param cohortIds              A vector of one or more Cohort Ids to compute visit context for.
+#' 
+#' @template CdmVersion
+#'
+#' @export
+runVisitContextDiagnostics <- function(connectionDetails = NULL,
+                                       connection = NULL,
+                                       cdmDatabaseSchema,
+                                       tempEmulationSchema = NULL,
+                                       cohortDatabaseSchema = cdmDatabaseSchema,
+                                       vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+                                       cohortTable = "cohort",
+                                       cohortIds,
+                                       cdmVersion = 5) {
   if (!cdmVersion == 5) {
     warning('Only OMOP CDM v5.x.x is supported. Continuing execution.')
   }

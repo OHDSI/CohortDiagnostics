@@ -28,18 +28,21 @@
 #'
 #' @template CohortTable
 #'
-#' @template CohortIds
+#' @param targetCohortIds              A vector of one or more Cohort Ids for use as target cohorts.
+#' 
+#' @param comparatorCohortIds          A vector of one or more Cohort Ids for use as feature/comparator cohorts.
 #'
 #' @export
-computeCohortTemporalRelationship <-
+runCohortTemporalRelationshipDiagnostics <-
   function(connectionDetails = NULL,
            connection = NULL,
            cohortDatabaseSchema,
            cohortTable = "cohort",
-           cohortIds) {
+           targetCohortIds,
+           comparatorCohortIds) {
     startTime <- Sys.time()
     
-    if (length(cohortIds) == 0) {
+    if (length(targetCohortIds) == 0) {
       return(NULL)
     }
     
@@ -49,12 +52,13 @@ computeCohortTemporalRelationship <-
     }
     
     sql <- SqlRender::loadRenderTranslateSql(
-      "CohortRelationship.sql",
+      "CohortTemporalRelationship.sql",
       packageName = "CohortDiagnostics",
       dbms = connection@dbms,
       cohort_database_schema = cohortDatabaseSchema,
       cohort_table = cohortTable,
-      target_cohort_ids = cohortIds
+      target_cohort_ids = targetCohortIds,
+      comparator_cohort_ids = comparatorCohortIds
     )
     DatabaseConnector::executeSql(connection = connection,
                                   sql = sql)
@@ -69,6 +73,25 @@ computeCohortTemporalRelationship <-
     DatabaseConnector::renderTranslateExecuteSql(connection = connection,
                                                  sql = dropSql,
                                                  progressBar = TRUE)
+    
+    temporalRelationship <- temporalRelationship %>% 
+      dplyr::mutate(startDay = as.numeric(.data$attributeName)*30) %>% 
+      dplyr::mutate(endDay = (as.numeric(.data$attributeName)*30) + 29) %>% 
+      dplyr::select(.data$cohortId, 
+                    .data$comparatorCohortId,
+                    .data$relationshipType,
+                    .data$startDay,
+                    .data$endDay,
+                    .data$subjects,
+                    .data$records) %>% 
+      dplyr::arrange(.data$cohortId, 
+                     .data$comparatorCohortId,
+                     .data$relationshipType,
+                     .data$startDay,
+                     .data$endDay,
+                     .data$subjects,
+                     .data$records)
+    
     delta <- Sys.time() - startTime
     ParallelLogger::logInfo(paste(
       "Computing cohort temporal relationship took",

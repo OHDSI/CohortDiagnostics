@@ -36,6 +36,7 @@ SELECT cohort_definition_id comparator_cohort_id,
 	MIN(cohort_end_date) min_end
 INTO #comparator_cohorts
 FROM @cohort_database_schema.@cohort_table
+WHERE cohort_definition_id IN (@comparator_cohort_ids)
 GROUP BY cohort_definition_id,
 	subject_id;
 
@@ -139,83 +140,90 @@ LEFT JOIN #comparator_cohorts c1
 GROUP BY all1.target_cohort_id,
 	all1.comparator_cohort_id;
 
--- Inserting into final table
-SELECT cohort_id,
+IF OBJECT_ID('tempdb..#target_cohorts', 'U') IS NOT NULL
+	DROP TABLE #target_cohorts;
+
+IF OBJECT_ID('tempdb..#comparator_cohorts', 'U') IS NOT NULL
+	DROP TABLE #comparator_cohorts;
+
+IF OBJECT_ID('tempdb..#all_subjects', 'U') IS NOT NULL
+	DROP TABLE #all_subjects;
+
+IF OBJECT_ID('tempdb..#universe', 'U') IS NOT NULL
+	DROP TABLE #universe;
+
+IF OBJECT_ID('tempdb..#cohort_overlap_long', 'U') IS NOT NULL
+	DROP TABLE #cohort_overlap_long;
+
+CREATE TABLE #cohort_overlap_long (
+	cohort_id BIGINT,
+	comparator_cohort_id BIGINT,
+	attribute_name VARCHAR,
+	count_value FLOAT
+	);
+
+INSERT INTO #cohort_overlap_long
+SELECT DISTINCT target_cohort_id AS cohort_id,
 	comparator_cohort_id,
-	attribute_name,
-	value_count
-INTO #cohort_overlap_long
-FROM (
-	SELECT DISTINCT target_cohort_id AS cohort_id,
-		comparator_cohort_id,
-		'es' AS attribute_name,
-		either_subjects value_count
-	FROM #OVERLAP
-	
-	UNION
-	
-	SELECT DISTINCT target_cohort_id AS cohort_id,
-		comparator_cohort_id,
-		'bs' AS attribute_name,
-		both_subjects value_count
-	FROM #OVERLAP
-	
-	UNION
-	
-	SELECT DISTINCT target_cohort_id AS cohort_id,
-		comparator_cohort_id,
-		'ts' AS attribute_name,
-		t_only_subjects value_count
-	FROM #OVERLAP
-	
-	UNION
-	
-	SELECT DISTINCT target_cohort_id AS cohort_id,
-		comparator_cohort_id,
-		'cs' AS attribute_name,
-		c_only_subjects value_count
-	FROM #OVERLAP
-	
-	UNION
-	
-	SELECT DISTINCT target_cohort_id AS cohort_id,
-		comparator_cohort_id,
-		'tb' AS attribute_name,
-		t_before_c_subjects value_count
-	FROM #OVERLAP
-	
-	UNION
-	
-	SELECT DISTINCT target_cohort_id AS cohort_id,
-		comparator_cohort_id,
-		'cb' AS attribute_name,
-		c_before_t_subjects value_count
-	FROM #OVERLAP
-	
-	UNION
-	
-	SELECT DISTINCT target_cohort_id AS cohort_id,
-		comparator_cohort_id,
-		'sd' AS attribute_name,
-		same_day_subjects value_count
-	FROM #OVERLAP
-	
-	UNION
-	
-	SELECT DISTINCT target_cohort_id AS cohort_id,
-		comparator_cohort_id,
-		'tc' AS attribute_name,
-		t_in_c_subjects value_count
-	FROM #OVERLAP
-	
-	UNION
-	
-	SELECT DISTINCT target_cohort_id AS cohort_id,
-		comparator_cohort_id,
-		'ct' AS attribute_name,
-		c_in_t_subjects value_count
-	FROM #OVERLAP
-	) f;
+	'es' AS attribute_name,
+	either_subjects count_value
+FROM #OVERLAP;
+
+INSERT INTO #cohort_overlap_long
+SELECT DISTINCT target_cohort_id AS cohort_id,
+	comparator_cohort_id,
+	'bs' AS attribute_name,
+	both_subjects count_value
+FROM #OVERLAP;
+
+INSERT INTO #cohort_overlap_long
+SELECT DISTINCT target_cohort_id AS cohort_id,
+	comparator_cohort_id,
+	'ts' AS attribute_name,
+	t_only_subjects count_value
+FROM #OVERLAP;
+
+INSERT INTO #cohort_overlap_long
+SELECT DISTINCT target_cohort_id AS cohort_id,
+	comparator_cohort_id,
+	'cs' AS attribute_name,
+	c_only_subjects count_value
+FROM #OVERLAP;
+
+INSERT INTO #cohort_overlap_long
+SELECT DISTINCT target_cohort_id AS cohort_id,
+	comparator_cohort_id,
+	'tb' AS attribute_name,
+	t_before_c_subjects count_value
+FROM #OVERLAP;
+
+INSERT INTO #cohort_overlap_long
+SELECT DISTINCT target_cohort_id AS cohort_id,
+	comparator_cohort_id,
+	'cb' AS attribute_name,
+	c_before_t_subjects count_value
+FROM #OVERLAP;
+
+INSERT INTO #cohort_overlap_long
+SELECT DISTINCT target_cohort_id AS cohort_id,
+	comparator_cohort_id,
+	'sd' AS attribute_name,
+	same_day_subjects count_value
+FROM #OVERLAP;
+
+INSERT INTO #cohort_overlap_long
+SELECT DISTINCT target_cohort_id AS cohort_id,
+	comparator_cohort_id,
+	'tc' AS attribute_name,
+	t_in_c_subjects count_value
+FROM #OVERLAP;
+
+INSERT INTO #cohort_overlap_long
+SELECT DISTINCT target_cohort_id AS cohort_id,
+	comparator_cohort_id,
+	'ct' AS attribute_name,
+	c_in_t_subjects count_value
+FROM #OVERLAP;
 
 IF OBJECT_ID('tempdb..#target_cohorts', 'U') IS NOT NULL
 	DROP TABLE #target_cohorts;
