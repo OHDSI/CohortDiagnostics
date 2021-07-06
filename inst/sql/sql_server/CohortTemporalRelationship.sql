@@ -74,7 +74,7 @@ INSERT INTO #cohort_rel_long (
 SELECT t1.cohort_definition_id cohort_id,
 	c1.cohort_definition_id comparator_cohort_id,
 	CAST(FLOOR(DATEDIFF(dd, t1.cohort_start_date, c1.cohort_start_date) / 30) AS VARCHAR(30)) attribute_name, -- date diff
-	'S1S1' relationship_type, -- first target start date, first comparator start date
+	'T1T1' relationship_type, -- first target start date, first comparator start date
 	COUNT_BIG(DISTINCT c1.subject_id) subjects, -- the distinct here will not make a difference because first occurrence of comparator
 	COUNT_BIG(DISTINCT c1.row_id_cs) records
 	-- count of DISTINCT comparator cohort_start_date that meet the temporal criteria
@@ -101,7 +101,7 @@ INSERT INTO #cohort_rel_long (
 SELECT t1.cohort_definition_id cohort_id,
 	c1.cohort_definition_id comparator_cohort_id,
 	CAST(FLOOR(DATEDIFF(dd, t1.cohort_start_date, c1.cohort_start_date) / 30) AS VARCHAR(30)) attribute_name, -- date diff
-	'S1SA' relationship_type, -- first target start date, all comparator start date
+	'T1CA' relationship_type, -- first target start date, all comparator start date
 	COUNT_BIG(DISTINCT c1.subject_id) subjects, -- the distinct here will not make a difference because first occurrence of comparator
 	COUNT_BIG(DISTINCT c1.row_id_cs) records
 	-- count of DISTINCT comparator cohort_start_date that meet the temporal criteria
@@ -127,7 +127,7 @@ INSERT INTO #cohort_rel_long (
 SELECT t1.cohort_definition_id cohort_id,
 	c1.cohort_definition_id comparator_cohort_id,
 	CAST(FLOOR(DATEDIFF(dd, t1.cohort_start_date, c1.cohort_start_date) / 30) AS VARCHAR(30)) attribute_name, -- date diff
-	'SAS1' relationship_type, -- All target start date, first comparator start date
+	'TAC1' relationship_type, -- All target start date, first comparator start date
 	COUNT_BIG(DISTINCT c1.subject_id) subjects, -- the distinct here will not make a difference because first occurrence of comparator
 	-- count of DISTINCT comparator cohort_start_date that meet the temporal criteria
 	COUNT_BIG(DISTINCT c1.row_id_cs) records
@@ -153,7 +153,7 @@ INSERT INTO #cohort_rel_long (
 SELECT t1.cohort_definition_id cohort_id,
 	c1.cohort_definition_id comparator_cohort_id,
 	CAST(FLOOR(DATEDIFF(dd, t1.cohort_start_date, c1.cohort_start_date) / 30) AS VARCHAR(30)) attribute_name, -- date diff
-	'SASA' relationship_type, -- All target start date, all compartor start date
+	'TACA' relationship_type, -- All target start date, all compartor start date
 	COUNT_BIG(DISTINCT c1.subject_id) subjects, -- the distinct here will not make a difference because first occurrence of comparator
 	-- count of DISTINCT comparator cohort_start_date that meet the temporal criteria
 	COUNT_BIG(DISTINCT c1.row_id_cs) records
