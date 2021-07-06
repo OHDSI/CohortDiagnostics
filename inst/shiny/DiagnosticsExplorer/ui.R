@@ -473,7 +473,7 @@ bodyTabItems <- shinydashboard::tabItems(
     tags$br(),
     shinydashboard::box(
       title = "Notes",
-      status = "primary",
+      status = NULL,
       width = NULL,
       solidHeader = TRUE,
       collapsible = TRUE,
