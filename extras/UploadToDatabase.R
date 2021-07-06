@@ -13,7 +13,7 @@ connectionDetails <- createConnectionDetails(
   user = Sys.getenv("shinydbUser"),
   password = Sys.getenv("shinydbPW")
 )
-resultsSchema <- 'thrombosisthrombocytopenia'
+resultsSchema <- 'pheMyocardialinfarction'
 
 # commenting this function as it maybe accidentally run - loosing data.
 # createResultsDataModel(connectionDetails = connectionDetails, schema = resultsSchema)
