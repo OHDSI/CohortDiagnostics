@@ -98,7 +98,7 @@ CREATE TABLE cohort_inclusion (
 			name varchar NULL,
 			description varchar NULL,
 	    database_id VARCHAR NOT NULL,
-			PRIMARY KEY(cohort_id, rule_sequence)
+			PRIMARY KEY(cohort_id, rule_sequence, database_id)
 );
 
 --Table cohort_inclusion_result
