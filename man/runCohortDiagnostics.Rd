@@ -43,13 +43,10 @@ runCohortDiagnostics(
   runTemporalCohortCharacterization = TRUE,
  
     temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(useConditionOccurrence
-    = TRUE, useConditionEraOverlap = TRUE, useConditionEraGroupStart = TRUE,
-    useDrugExposure = TRUE, useDrugEraStart = TRUE, useDrugEraGroupStart = TRUE,
-    useDrugEraOverlap = TRUE, useDrugEraGroupOverlap = TRUE, useVisitCount = TRUE,
-    useVisitConceptCount = TRUE, useProcedureOccurrence = TRUE, useMeasurement = TRUE,
+    = TRUE, useDrugEraStart = TRUE, useProcedureOccurrence = TRUE, useMeasurement = TRUE,
     temporalStartDays = c(-365, -30, 0, 1, 31, seq(from = -421, to = -31, by = 30),
-    seq(from = 0, to = 390, by = 30)),      temporalEndDays = c(-31, -1, 0, 30, 365,
-    seq(from = -391, to = -1, by = 30), seq(from = 30, to = 420, by = 30))),
+    seq(from = 0, to = 390, by = 30)), temporalEndDays = c(-31, -1, 0, 30, 365, seq(from
+    = -391, to = -1, by = 30), seq(from = 30, to = 420, by = 30))),
   minCellCount = 5,
   incremental = FALSE,
   incrementalFolder = file.path(exportFolder, "incremental")
