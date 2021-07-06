@@ -1134,7 +1134,6 @@ getCohortAsFeatureCharacterizationResults <-
     
     result <- list()
     for (j in (1:nrow(analysisRef))) {
-      debug(summarizeCohortRelationship)
       result[[j]] <- summarizeCohortRelationship(data = cohortRelationships,
                                                  startDay = analysisRef[j,]$startDay,
                                                  endDay = analysisRef[j,]$endDay,
