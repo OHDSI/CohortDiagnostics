@@ -963,6 +963,15 @@ bodyTabItems <- shinydashboard::tabItems(
           ),
           tags$td(
             shiny::radioButtons(
+              inputId = "visitContextValueFilter",
+              label = "Display Value Type",
+              choices = c("Absolute", "Percentage"), 
+              selected = "Absolute",
+              inline = TRUE
+            )
+          ),
+          tags$td(
+            shiny::radioButtons(
               inputId = "visitContextPersonOrRecords",
               label = "Display",
               choices = c("Person", "Record"),
