@@ -5175,7 +5175,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::select(-.data$timeId) %>% 
         dplyr::inner_join(covariatesTofilter, by = c('covariateId', 'characterizationSource')) %>% 
         dplyr::inner_join(covariateValueForCohortIdDatabaseIds()$analysisRef, by = c('analysisId',
-                                                                                     'characterizationSource'))     
+                                                                                     'characterizationSource'))
     } else {
       characterizationData <- NULL
     }
@@ -5239,16 +5239,20 @@ shiny::shinyServer(function(input, output, session) {
     if (any(is.null(data), nrow(data) == 0)) {
       return(NULL)
     }
-    data <- data %>% 
-      dplyr::rename(covariateNameFull = .data$covariateName) %>% 
-      dplyr::mutate(covariateName = gsub(".*: ","",.data$covariateNameFull)) %>% 
-      dplyr::mutate(covariateName = dplyr::case_when(stringr::str_detect(string = tolower(.data$covariateNameFull), 
-                                                                         pattern = 'age group|gender') ~ .data$covariateNameFull,
-                                                     TRUE ~ gsub(".*: ","",.data$covariateNameFull))) %>% 
-      dplyr::mutate(covariateName = dplyr::case_when(stringr::str_detect(string = tolower(.data$domainId), 
-                                                                         pattern = 'cohort') ~ .data$covariateNameFull,
-                                                     TRUE ~ .data$covariateName)) %>%
-      dplyr::mutate(covariateName = paste0(.data$covariateName, " (", .data$covariateId, ")"))
+    
+    if (input$charType == "Raw") {
+      data <- data %>%
+        dplyr::rename(covariateNameFull = .data$covariateName) %>% 
+        dplyr::mutate(covariateName = gsub(".*: ","",.data$covariateNameFull)) %>% 
+        dplyr::mutate(covariateName = dplyr::case_when(stringr::str_detect(string = tolower(.data$covariateNameFull), 
+                                                                           pattern = 'age group|gender') ~ .data$covariateNameFull,
+                                                       TRUE ~ gsub(".*: ","",.data$covariateNameFull))) %>% 
+        dplyr::mutate(covariateName = dplyr::case_when(stringr::str_detect(string = tolower(.data$domainId), 
+                                                                           pattern = 'cohort') ~ .data$covariateNameFull,
+                                                       TRUE ~ .data$covariateName)) %>%
+        dplyr::mutate(covariateName = paste0(.data$covariateName, " (", .data$covariateId, ")"))
+    }
+    
     return(data)
   })
   
