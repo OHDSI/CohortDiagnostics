@@ -1150,6 +1150,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   }
   
   # Cohort Temporal Relationship ----
+  browser()
   if (runCohortTemporalRelationship) {
     ParallelLogger::logInfo("Computing Cohort Temporal Relationship")
     startCohortRelationship <- Sys.time()
@@ -1175,6 +1176,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         runCohortTemporalRelationshipDiagnostics(
           connection = connection,
           cohortDatabaseSchema = cohortDatabaseSchema,
+          tempEmulationSchema = tempEmulationSchema,
           cohortTable = cohortTable,
           targetCohortIds = subset$cohortId,
           comparatorCohortIds = cohorts$cohortId
