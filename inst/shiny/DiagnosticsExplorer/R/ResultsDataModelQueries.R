@@ -1025,12 +1025,12 @@ getCohortAsFeatureCharacterizationResults <-
                                             cohortCounts) {
       
       if (is.null(data) || nrow(data) == 0) {return(NULL)}
-
+      
       if (incidentTarget && incidentComparator) {relationshipType == 'S1C1'} #T1C1
       if (incidentTarget && !incidentComparator) {relationshipType == 'S1SA'} #T1CA
       if (!incidentTarget && incidentComparator) {relationshipType == 'SAS1'} #TAC1
       if (!incidentTarget && !incidentComparator) {relationshipType == 'SASA'} #TACA
-
+      
       data <- data %>% 
         dplyr::filter(.data$relationshipType == !!relationshipType) %>% 
         dplyr::select(-.data$relationshipType)
