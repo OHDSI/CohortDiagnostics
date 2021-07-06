@@ -61,8 +61,8 @@ CREATE TABLE #cohort_rel_long (
 	);
 
 --- temporal relationship: target cohort start date - comparator cohort start date. 
----     negative values indicate that target cohort start date < comparator cohort
----     positive values indicate that target cohort start date > comparator cohort
+---     negative values indicate that target cohort start date > comparator cohort - SELECT DATEDIFF(day, '2036-03-01', '2036-02-28'); returns -2
+---     positive values indicate that target cohort start date < comparator cohort
 INSERT INTO #cohort_rel_long (
 	cohort_id,
 	comparator_cohort_id,
@@ -74,7 +74,7 @@ INSERT INTO #cohort_rel_long (
 SELECT t1.cohort_definition_id cohort_id,
 	c1.cohort_definition_id comparator_cohort_id,
 	CAST(FLOOR(DATEDIFF(dd, t1.cohort_start_date, c1.cohort_start_date) / 30) AS VARCHAR(30)) attribute_name, -- date diff
-	'T1T1' relationship_type, -- first target start date, first comparator start date
+	'T1C1' relationship_type, -- first target start date, first comparator start date
 	COUNT_BIG(DISTINCT c1.subject_id) subjects, -- the distinct here will not make a difference because first occurrence of comparator
 	COUNT_BIG(DISTINCT c1.row_id_cs) records
 	-- count of DISTINCT comparator cohort_start_date that meet the temporal criteria

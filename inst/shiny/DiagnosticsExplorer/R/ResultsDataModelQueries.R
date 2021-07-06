@@ -1026,10 +1026,11 @@ getCohortAsFeatureCharacterizationResults <-
       
       if (is.null(data) || nrow(data) == 0) {return(NULL)}
       
-      if (incidentTarget && incidentComparator) {relationshipType == 'S1C1'} #T1C1
-      if (incidentTarget && !incidentComparator) {relationshipType == 'S1SA'} #T1CA
-      if (!incidentTarget && incidentComparator) {relationshipType == 'SAS1'} #TAC1
-      if (!incidentTarget && !incidentComparator) {relationshipType == 'SASA'} #TACA
+      relationshipType <- NULL
+      if (incidentTarget && incidentComparator) {relationshipType <- 'T1T1'} #should be T1C1
+      if (incidentTarget && !incidentComparator) {relationshipType <- 'T1CA'}
+      if (!incidentTarget && incidentComparator) {relationshipType <- 'TAC1'}
+      if (!incidentTarget && !incidentComparator) {relationshipType <- 'TACA'}
       
       data <- data %>% 
         dplyr::filter(.data$relationshipType == !!relationshipType) %>% 
@@ -1037,22 +1038,18 @@ getCohortAsFeatureCharacterizationResults <-
       
       if (is.null(data) || nrow(data) == 0) {return(NULL)}
       
-      if (!is.null(startDay) && !is.na(startDay) && length(startDay) > 0) {
+      if (!is.null(startDay) && !is.null(endDay)) {
         data <- data %>%
-          dplyr::filter(.data$startDay <= !!startDay)
+          dplyr::filter(dplyr::between(x = .data$startDay, left = !!startDay, right = !!endDay)) %>%
+          dplyr::filter(dplyr::between(x = .data$endDay, !!startDay, !!endDay))
       }
       
-      if (!is.null(endDay) && !is.na(endDay) && length(endDay) > 0) {
-        data <- data %>%
-          dplyr::filter(.data$endDay >= !!endDay)
-      }
-      
-      data <- data %>%
+      dataAggregation <- data %>%
         dplyr::select(-.data$startDay, -.data$endDay) %>%
         dplyr::group_by(.data$databaseId,
                         .data$cohortId,
                         .data$comparatorCohortId) %>%
-        dplyr::summarise(sumValue = sum(.data$countValue),
+        dplyr::summarise(sumValue = sum(.data$records),
                          .groups = 'keep') %>%
         dplyr::ungroup()
       
@@ -1062,7 +1059,7 @@ getCohortAsFeatureCharacterizationResults <-
             dplyr::select(.data$cohortId,
                           .data$databaseId,
                           .data$cohortSubjects)
-          data <- data %>%
+          dataAggregation <- dataAggregation %>%
             dplyr::inner_join(cohortCounts, by = c('databaseId', 'cohortId')) %>%
             dplyr::mutate(mean = .data$sumValue / .data$cohortSubjects) %>%
             dplyr::mutate(sd = sqrt(.data$mean * (1 - .data$mean)))
@@ -1071,16 +1068,16 @@ getCohortAsFeatureCharacterizationResults <-
             dplyr::select(.data$cohortId,
                           .data$databaseId,
                           .data$cohortEntries)
-          data <- data %>%
+          dataAggregation <- dataAggregation %>%
             dplyr::inner_join(cohortCounts, by = c('databaseId', 'cohortId')) %>%
             dplyr::mutate(mean = .data$sumValue / .data$cohortEntries) %>%
             dplyr::mutate(sd = sqrt(.data$mean * (1 - .data$mean)))
         }
       }
       
-      data <- data %>%
+      dataAggregation <- dataAggregation %>%
         dplyr::mutate(analysisId = !!analysisId) %>%
-        dplyr::mutate(covariateId = (.data$comparatorCohortId*-1000)-999+!!analysisId) %>%
+        dplyr::mutate(covariateId = (.data$comparatorCohortId*-1000)+!!analysisId) %>%
         dplyr::select(
           .data$cohortId,
           .data$covariateId,
@@ -1089,7 +1086,7 @@ getCohortAsFeatureCharacterizationResults <-
           .data$sd,
           .data$databaseId
         )
-      return(data)
+      return(dataAggregation)
     }
     
     analysisId <- c(-1,-2,-3,-4,-5,-6,-7,-8,-9,-10,-11,-12,-13,-14,-15,-16)
@@ -1109,24 +1106,24 @@ getCohortAsFeatureCharacterizationResults <-
                       "ComparatorIncidentCohortStartLongTermIncidentTarget",
                       "ComparatorIncidentCohortStartMediumTermIncidentTarget",
                       "ComparatorIncidentCohortStartShortTermIncidentTarget")
-    startDay <- c(NA,365,180,30,NA,365,180,30,NA,365,180,30,NA,365,180,30)
+    startDay <- c(NA,-365,-180,-30,NA,-365,-180,-30,NA,-365,-180,-30,NA,-365,-180,-30)
     endDay <- c(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
     description <- c("Count of comparator records that started at any time prior to index date.",
-                     "Count of comparator records that started at any time in long term period prior to index date.",
-                     "Count of comparator records that started at any time in medium term period prior to index date.",
-                     "Count of comparator records that started at any time in short term period prior to index date.",
-                     "Count of incident comparator cohorts with start dates at any time prior to index date.",
-                     "Count of incident comparator cohorts with start dates in the long term period prior to index date.",
-                     "Count of incident comparator cohorts with start dates in the medium term period prior to index date.",
-                     "Count of incident comparator cohorts with start dates in the short term period prior to index date.",
+                     "Count of comparator records that started at any time in long term window prior to index date.",
+                     "Count of comparator records that started at any time in medium term window prior to index date.",
+                     "Count of comparator records that started at any time in short term window prior to index date.",
+                     "Count of incident comparator subjects that started at any time prior to index date.",
+                     "Count of incident comparator subjects that started at any time in long term window prior to index date.",
+                     "Count of incident comparator subjects that started at any time in medium term window prior to index date.",
+                     "Count of incident comparator subjects that started at any time in short term window prior to index date.",
                      "Count of comparator records that started at any time prior to index date of incident target cohort.",
-                     "Count of comparator records that started at any time in long term period prior to index date of incident target cohort.",
-                     "Count of comparator records that started at any time in medium term period prior to index date of incident target cohort.",
-                     "Count of comparator records that started at any time in short term period prior to index date of incident target cohort.",
-                     "Count of incident comparator cohorts with start dates at any time prior to index date of incident target cohort.",
-                     "Count of incident comparator cohorts with start dates in the long term period prior to index date.of incident target cohort",
-                     "Count of incident comparator cohorts with start dates in the medium term period prior to index date of incident target cohort.",
-                     "Count of incident comparator cohorts with start dates in the short term period prior to index date of incident target cohort.")
+                     "Count of comparator records that started at any time in long term window prior to index date of incident target cohort.",
+                     "Count of comparator records that started at any time in medium term window prior to index date of incident target cohort.",
+                     "Count of comparator records that started at any time in short term window prior to index date of incident target cohort.",
+                     "Count of incident comparator subjects that started at any time prior to index date of incident target cohort.",
+                     "Count of incident comparator subjects that started at any time in long term window prior to index date of incident target cohort.",
+                     "Count of incident comparator subjects that started at any time in medium term window prior to index date of incident target cohort.",
+                     "Count of incident comparator subjects that started at any time in short term window prior to index date of incident target cohort.")
     incidentTarget <- c(FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE,TRUE)
     incidentComparator <- c(FALSE,FALSE,FALSE,FALSE,FALSE,TRUE,TRUE,TRUE,FALSE,FALSE,FALSE,FALSE,TRUE,TRUE,TRUE,TRUE)
     
@@ -1137,6 +1134,7 @@ getCohortAsFeatureCharacterizationResults <-
     
     result <- list()
     for (j in (1:nrow(analysisRef))) {
+      debug(summarizeCohortRelationship)
       result[[j]] <- summarizeCohortRelationship(data = cohortRelationships,
                                                  startDay = analysisRef[j,]$startDay,
                                                  endDay = analysisRef[j,]$endDay,
@@ -1155,7 +1153,7 @@ getCohortAsFeatureCharacterizationResults <-
                                     analysisRef %>% 
                                       dplyr::select(.data$analysisId, 
                                                     .data$description)) %>% 
-      dplyr::mutate(covariateId = (.data$cohortId*-1000)-999+!!analysisId) %>% 
+      dplyr::mutate(covariateId = (.data$cohortId*-1000)+!!analysisId) %>% 
       dplyr::mutate(covariateName = paste0(.data$cohortName, "(", .data$covariateId, ")")) %>% 
       # dplyr::mutate(covariateName = paste0(.data$description, .data$cohortName)) %>% 
       dplyr::mutate(conceptId = .data$cohortId * -1) %>% 
