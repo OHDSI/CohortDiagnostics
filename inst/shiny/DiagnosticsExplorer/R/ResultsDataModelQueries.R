@@ -1025,18 +1025,24 @@ getCohortAsFeatureCharacterizationResults <-
                                             cohortCounts) {
       
       if (is.null(data) || nrow(data) == 0) {return(NULL)}
+      
       if (incidentTarget) {
         data <- data %>% 
-          dplyr::filter(.data$relationshipType == '1A') %>% 
-          dplyr::select(-.data$relationshipType)
+          dplyr::filter(.data$relationshipType %in% c('T1CA', 'T1C1'))
       } else {
         data <- data %>% 
-          dplyr::filter(.data$relationshipType == 'AA') %>% 
-          dplyr::select(-.data$relationshipType)
+          dplyr::filter(.data$relationshipType %in% c('TACA', 'TAC1'))
       }
       
-      data <- data %>% 
-        dplyr::filter(.data$startDay >= 0)
+      if (incidentComparator) {
+        data <- data %>% 
+          dplyr::filter(.data$relationshipType %in% c('T1C1', 'TAC1'))
+      } else {
+        data <- data %>% 
+          dplyr::filter(.data$relationshipType %in% c('T1CA', 'TACA'))
+      }
+      
+      data$relationshipType <- NULL
       
       if (is.null(data) || nrow(data) == 0) {return(NULL)}
       
