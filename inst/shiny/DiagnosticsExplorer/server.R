@@ -1036,7 +1036,7 @@ shiny::shinyServer(function(input, output, session) {
       data <- getPersonAndRecordCountForVocabularySchema(cohortId = row$cohortId, 
                                                          databaseId = getDatabaseIdInCohortConceptSet())
       
-      if (nrow(data) == 0) {
+      if (nrow(data) == 0 || is.null(data)) {
         return(NULL)
       } else {
         return(data)
@@ -1956,7 +1956,7 @@ shiny::shinyServer(function(input, output, session) {
       data <- getPersonAndRecordCountForVocabularySchema(cohortId = row$cohortId, 
                                                          databaseId = getDatabaseIdInCohortConceptSetSecond())
       
-      if (nrow(data) == 0) {
+      if (nrow(data) == 0 || is.null(data)) {
         return(NULL)
       } else {
         return(data)
