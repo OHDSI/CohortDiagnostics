@@ -166,11 +166,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
                                              dataTableName) {
   if (is(dataSource, "environment")) {
     if (!exists(dataTableName, envir = dataSource)) {
-      stop(paste0(
-        "Please check if ",
-        dataTableName,
-        " is present in environment."
-      ))
+      return(NULL)
     }
     if (nrow(get(dataTableName, envir = dataSource)) == 0) {
       warning(paste0(dataTableName, " in environment was found to have o rows."))

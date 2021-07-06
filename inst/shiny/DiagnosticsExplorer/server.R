@@ -1036,7 +1036,7 @@ shiny::shinyServer(function(input, output, session) {
       data <- getPersonAndRecordCountForVocabularySchema(cohortId = row$cohortId, 
                                                          databaseId = getDatabaseIdInCohortConceptSet())
       
-      if (nrow(data) == 0) {
+      if (nrow(data) == 0 || is.null(data)) {
         return(NULL)
       } else {
         return(data)
@@ -1130,6 +1130,7 @@ shiny::shinyServer(function(input, output, session) {
   
   getResolvedOrMappedConcepts <- shiny::reactive({
     data <- NULL
+    if (is.null(input$databaseOrVocabularySchema)) {return(NULL)}
     databaseIdToFilter <- database %>%
       dplyr::filter(.data$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchema) %>%
       dplyr::pull(.data$databaseId)
@@ -1955,7 +1956,7 @@ shiny::shinyServer(function(input, output, session) {
       data <- getPersonAndRecordCountForVocabularySchema(cohortId = row$cohortId, 
                                                          databaseId = getDatabaseIdInCohortConceptSetSecond())
       
-      if (nrow(data) == 0) {
+      if (nrow(data) == 0 || is.null(data)) {
         return(NULL)
       } else {
         return(data)
@@ -2276,6 +2277,7 @@ shiny::shinyServer(function(input, output, session) {
   
   getResolvedOrMappedConceptSecond <- shiny::reactive({
     data <- NULL
+    if (is.null(input$databaseOrVocabularySchemaSecond)) {return(NULL)}
     databaseIdToFilter <- database %>%
       dplyr::filter(.data$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchemaSecond) %>%
       dplyr::pull(.data$databaseId)
@@ -2584,7 +2586,7 @@ shiny::shinyServer(function(input, output, session) {
     result <- dplyr::setdiff(conceptsetComparisonData()$leftData, 
                              conceptsetComparisonData()$rightData)
     
-    if (nrow(result) == 0) {
+    if (all(is.null(result), nrow(result) == 0)) {
       return(NULL)
     } else {
       if (nrow(result) < 20) {
@@ -2741,7 +2743,7 @@ shiny::shinyServer(function(input, output, session) {
     result <- dplyr::setdiff(conceptsetComparisonData()$leftData, 
                              conceptsetComparisonData()$rightData)
     
-    if (nrow(result) == 0) {
+    if (any(is.null(result), nrow(result) == 0)) {
       return(NULL)
     } else {
       if (nrow(result) < 20) {
@@ -4958,6 +4960,12 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(nrow(data) > 0,
                   "No data available for selected combination."))
     
+    if (input$visitContextValueFilter == "Percentage") {
+      data <- data %>% 
+        dplyr::mutate(subjects = .data$subjects/.data$cohortSubjects) %>% 
+        dplyr::mutate(records = .data$records / .data$cohortEntries)
+    }
+    
     databaseIds <- sort(unique(data$databaseId))
     cohortCounts <- data %>% 
       dplyr::filter(.data$cohortId == cohortId()) %>% 
@@ -5014,42 +5022,27 @@ shiny::shinyServer(function(input, output, session) {
     table <- table %>% 
          dplyr::relocate(.data$visitConceptName)
       
+    totalColumns <- 1
     
     if (input$visitContextTableFilters == "Before") {
       table <- table %>% 
         dplyr::select(-dplyr::contains("During"),-dplyr::contains("On visit"),-dplyr::contains("After"))
       colnames(table) <- stringr::str_replace(string = colnames(table), pattern = '_Before', replacement = '')
       
-      columnDefs <- minCellCountDef(1:(
-        length(databaseIds)
-      ))
-      
     } else if (input$visitContextTableFilters == "During") {
       table <- table %>% 
         dplyr::select(-dplyr::contains("Before"),-dplyr::contains("On visit"),-dplyr::contains("After"))
       colnames(table) <- stringr::str_replace(string = colnames(table), pattern = '_During visit', replacement = '')
-      
-      columnDefs <- minCellCountDef(1:(
-        length(databaseIds)
-      ))
       
     } else if (input$visitContextTableFilters == "Simultaneous") {
       table <- table %>% 
         dplyr::select(-dplyr::contains("During"),-dplyr::contains("Before"),-dplyr::contains("After"))
       colnames(table) <- stringr::str_replace(string = colnames(table), pattern = '_On visit start', replacement = '')
       
-      columnDefs <- minCellCountDef(1:(
-        length(databaseIds)
-      ))
-      
     } else if (input$visitContextTableFilters == "After") {
       table <- table %>% 
         dplyr::select(-dplyr::contains("During"),-dplyr::contains("Before"),-dplyr::contains("On visit"))
       colnames(table) <- stringr::str_replace(string = colnames(table), pattern = '_After', replacement = '')
-      
-      columnDefs <- minCellCountDef(1:(
-        length(databaseIds)
-      ))
       
     }  else {
       sketch <- htmltools::withTags(table(class = "display",
@@ -5069,8 +5062,16 @@ shiny::shinyServer(function(input, output, session) {
                                             ), th,style = "border-right:1px solid silver;border-bottom:1px solid silver")
                                           ))))
       
-      columnDefs <- minCellCountDef(1:(
-        length(databaseIds) * 4
+      totalColumns <- 4
+      }
+    
+    columnDefs <- minCellCountDef(1:(
+      length(databaseIds) * totalColumns
+    ))
+    
+    if (input$visitContextValueFilter == "Percentage") {
+      columnDefs <- minCellPercentDef(1:(
+        length(databaseIds) * totalColumns
       ))
     }
     

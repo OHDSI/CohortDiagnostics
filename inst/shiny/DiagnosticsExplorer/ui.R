@@ -473,7 +473,7 @@ bodyTabItems <- shinydashboard::tabItems(
     tags$br(),
     shinydashboard::box(
       title = "Notes",
-      status = "primary",
+      status = NULL,
       width = NULL,
       solidHeader = TRUE,
       collapsible = TRUE,
@@ -958,6 +958,15 @@ bodyTabItems <- shinydashboard::tabItems(
               label = "Display",
               choices = c("All", "Before", "During", "Simultaneous", "After"),
               selected = "All",
+              inline = TRUE
+            )
+          ),
+          tags$td(
+            shiny::radioButtons(
+              inputId = "visitContextValueFilter",
+              label = "Display Value Type",
+              choices = c("Absolute", "Percentage"), 
+              selected = "Absolute",
               inline = TRUE
             )
           ),
