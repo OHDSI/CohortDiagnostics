@@ -5890,8 +5890,9 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(-.data$timeId) %>% 
       dplyr::inner_join(covariateValueForCohortIdsDatabaseId()$covariateRef, 
                         by = c("covariateId", "characterizationSource")) %>% 
+      dplyr::select(-.data$startDay, -.data$endDay) %>% 
       dplyr::inner_join(covariateValueForCohortIdsDatabaseId()$analysisRef, 
-                        by = c("analysisId", "startDay", "endDay", "characterizationSource"))
+                        by = c("analysisId", "characterizationSource"))
     
     covs1 <- data %>% 
       dplyr::filter(.data$cohortId == cohortId()) %>% 
@@ -6297,7 +6298,8 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::inner_join(covariateValueForCohortIdsDatabaseId()$analysisRef, 
                           by = c("analysisId", "startDay", "endDay", "characterizationSource")) %>% 
         dplyr::select(-.data$startDay, -.data$endDay) %>% 
-        dplyr::inner_join(covariateValueForCohortIdsDatabaseId()$temporalTimeRef, by = 'timeId') %>% 
+        dplyr::inner_join(covariateValueForCohortIdsDatabaseId()$temporalTimeRef, 
+                          by = 'timeId') %>% 
         dplyr::inner_join(temporalCovariateChoices, by = 'timeId') %>% 
         dplyr::select(-.data$missingMeansZero)
       
