@@ -1141,7 +1141,6 @@ runCohortDiagnostics <- function(packageName = NULL,
   }
   
   # Cohort Temporal Relationship ----
-  browser()
   if (runCohortTemporalRelationship) {
     ParallelLogger::logInfo("Computing Cohort Temporal Relationship")
     startCohortRelationship <- Sys.time()
