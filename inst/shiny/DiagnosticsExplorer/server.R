@@ -3750,10 +3750,10 @@ shiny::shinyServer(function(input, output, session) {
         records = 0,
         subjects = 0,
         personDays = 0,
-        recordsIncidence = 0,
-        subjectsIncidence = 0,
-        recordsTerminate = 0,
-        subjectsTerminate = 0
+        recordsStart = 0,
+        subjectsStart = 0,
+        recordsEnd = 0,
+        subjectsEnd = 0
       )
     if (nrow(data) == 0) {
       return(NULL)
