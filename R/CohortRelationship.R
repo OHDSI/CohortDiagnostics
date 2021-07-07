@@ -107,7 +107,7 @@ runCohortTemporalRelationshipDiagnostics <-
       data = timePeriods,
       dropTableIfExists = TRUE,
       createTable = TRUE,
-      progressBar = TRUE,
+      progressBar = FALSE,
       tempTable = TRUE,
       tempEmulationSchema = tempEmulationSchema,
       camelCaseToSnakeCase = TRUE
