@@ -3712,17 +3712,6 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(!is.null(data) > 0, "No time series data"))
     validate(need(nrow(data) > 0, "No time series data"))
     
-    # for backward compatibility with cohort diagnostics version 2.1
-    if (!'seriesType' %in% colnames(data)) {
-      data <- data %>% 
-        dplyr::tibble() %>% 
-        dplyr::filter(.data$cohortId > 0) %>%
-        dplyr::mutate(seriesType = 'T1') %>% 
-        tsibble::as_tsibble(
-          key = c(.data$databaseId, .data$cohortId, .data$seriesType),
-          index = .data$periodBegin
-        )
-    }
     
     ## filter -- to be replaced by filter in shiny UI
     # if (!is.null(seriesType)) {
@@ -3755,6 +3744,15 @@ shiny::shinyServer(function(input, output, session) {
         recordsEnd = 0,
         subjectsEnd = 0
       )
+    
+    if (calendarIntervalFirstLetter == 'y') {
+      data <- data %>% 
+        dplyr::mutate(periodBeginRaw = as.Date(paste0(as.character(.data$periodBegin), '-01-01')))
+    } else {
+      data <- data %>% 
+        dplyr::mutate(periodBeginRaw = as.Date(.data$periodBegin))
+    }
+    
     if (nrow(data) == 0) {
       return(NULL)
     }
@@ -3777,9 +3775,9 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$seriesType %in% input$timeSeriesTypeFilter) %>% 
       dplyr::select(-.data$seriesType) %>% 
       dplyr::mutate(periodBegin = .data$periodBeginRaw) %>% 
-      dplyr::select(-.data$periodBeginRaw) %>% 
       dplyr::relocate(.data$periodBegin) %>% 
-      dplyr::arrange(.data$periodBegin)
+      dplyr::arrange(.data$periodBegin) %>% 
+      dplyr::select(-.data$periodBeginRaw)
     
     options = list(
       pageLength = 100,

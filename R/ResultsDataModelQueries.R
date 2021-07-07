@@ -280,8 +280,6 @@ getResultsFromTimeSeries <- function(dataSource,
   )
   
   if (nrow(data) > 0) {
-    data <- data %>%
-      dplyr::mutate(periodBeginRaw = .data$periodBegin)
     
     intervals <- data$calendarInterval %>% unique()
     dataList <- list()
