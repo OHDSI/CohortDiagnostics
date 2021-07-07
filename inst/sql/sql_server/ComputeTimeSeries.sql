@@ -126,7 +126,7 @@ WHERE cohort_definition_id IN (@cohort_ids)
 GROUP BY period_begin,
 	calendar_interval,
 	cohort_definition_id;
-
+/*
 -- cohort time series T2: subjects in the cohort who have atleast one observation day in calendar period
 --- (i.e. observation start or observation end is between (inclusive) calendar period, or 
 --- (observation start is on/before calendar start AND observation end is on/after calendar end))
@@ -371,7 +371,7 @@ GROUP BY period_begin,
 	calendar_interval,
 	cohort_definition_id;
 
-/*
+
 -- datasource time series T5: persons in the observation table whose observation period is embedded within calendar period
 --- (observation start is between (inclusive) calendar period, AND 
 --- (observation end is between (inclusive) calendar period)
@@ -429,7 +429,7 @@ INTO #time_series
 FROM (
 	SELECT *
 	FROM #c_time_series1
-	
+		/*	
 	UNION
 	
 	SELECT *
@@ -449,7 +449,7 @@ FROM (
 	
 	SELECT *
 	FROM #c_time_series5
-		/*	
+	
 	UNION
 	
 	SELECT *

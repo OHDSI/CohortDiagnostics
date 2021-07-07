@@ -146,7 +146,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
                                       cohort_ids = cohortIds)
   DatabaseConnector::executeSql(
     connection = connection,
-    sql = sql, profile = TRUE, progressBar = TRUE
+    sql = sql
   )
   timeSeries <- renderTranslateQuerySql(
     connection = connection,
@@ -164,10 +164,10 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       .data$records,
       .data$subjects,
       .data$personDays,
-      .data$recordsIncidence,
-      .data$subjectsIncidence,
-      .data$recordsTerminate,
-      .data$subjectsTerminate
+      .data$recordsStart,
+      .data$subjectsStart,
+      .data$recordsEnd,
+      .data$subjectsEnd
     )
   
   DatabaseConnector::renderTranslateExecuteSql(

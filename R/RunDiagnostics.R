@@ -1066,7 +1066,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                             attr(delta, "units"))
   }
   
-  browser()
+  
   # Time Series----
   if (runTimeSeries) {
     ParallelLogger::logInfo("Computing Time Series")
@@ -1109,13 +1109,13 @@ runCohortDiagnostics <- function(packageName = NULL,
         timeSeries <-
           enforceMinCellValue(timeSeries, "personDays", minCellCount)
         timeSeries <-
-          enforceMinCellValue(timeSeries, "recordsIncidence", minCellCount)
+          enforceMinCellValue(timeSeries, "recordsStart", minCellCount)
         timeSeries <-
-          enforceMinCellValue(timeSeries, "subjectsIncidence", minCellCount)
+          enforceMinCellValue(timeSeries, "subjectsStart", minCellCount)
         timeSeries <-
-          enforceMinCellValue(timeSeries, "recordsTerminate", minCellCount)
+          enforceMinCellValue(timeSeries, "recordsEnd", minCellCount)
         timeSeries <-
-          enforceMinCellValue(timeSeries, "subjectsTerminate", minCellCount)
+          enforceMinCellValue(timeSeries, "subjectsEnd", minCellCount)
         writeToCsv(
           data = timeSeries,
           fileName = file.path(exportFolder, "time_series.csv"),
