@@ -5590,11 +5590,17 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
     validate(need(!is.null( covariateValueForCohortIdDatabaseIds()$covariateValue) &&
-                    nrow( covariateValueForCohortIdDatabaseIds()$covariateValue) > 0, "No Temporal Characterization data"))
+                    nrow( covariateValueForCohortIdDatabaseIds()$covariateValue) > 0, 
+                  "No Temporal Characterization data"))
+    
     data <- covariateValueForCohortIdDatabaseIds()$covariateValue %>% 
       dplyr::filter(.data$timeId %in% timeIds()) %>% 
-      dplyr::inner_join(covariateRef, by = 'covariateId') %>% 
-      dplyr::inner_join(analysisRef, by = 'analysisId')
+      dplyr::inner_join(covariateValueForCohortIdDatabaseIds()$covariateRef, 
+                        by = c('covariateId', 'characterizationSource')) %>% 
+      dplyr::inner_join(covariateValueForCohortIdDatabaseIds()$analysisRef, 
+                        by = c('analysisId', 'startDay', 'endDay', 'characterizationSource')) %>% 
+      dplyr::distinct()
+    
     return(data)
   })
   
@@ -5882,8 +5888,10 @@ shiny::shinyServer(function(input, output, session) {
     data <- covariateValueForCohortIdsDatabaseId()$covariateValue %>% 
       dplyr::filter(.data$timeId == 0) %>% 
       dplyr::select(-.data$timeId) %>% 
-      dplyr::inner_join(covariateRef, by = "covariateId") %>% 
-      dplyr::inner_join(analysisRef, by = "analysisId")
+      dplyr::inner_join(covariateValueForCohortIdsDatabaseId()$covariateRef, 
+                        by = c("covariateId", "characterizationSource")) %>% 
+      dplyr::inner_join(covariateValueForCohortIdsDatabaseId()$analysisRef, 
+                        by = c("analysisId", "startDay", "endDay", "characterizationSource"))
     
     covs1 <- data %>% 
       dplyr::filter(.data$cohortId == cohortId()) %>% 
@@ -6284,10 +6292,12 @@ shiny::shinyServer(function(input, output, session) {
       
       data <- covariateValueForCohortIdsDatabaseId()$covariateValue %>% 
         dplyr::filter(.data$timeId %in% timeIds()) %>% 
-        dplyr::inner_join(covariateRef, by = "covariateId") %>% 
-        dplyr::inner_join(analysisRef, by = "analysisId") %>% 
+        dplyr::inner_join(covariateValueForCohortIdsDatabaseId()$covariateRef, 
+                          by = c("covariateId", "characterizationSource")) %>% 
+        dplyr::inner_join(covariateValueForCohortIdsDatabaseId()$analysisRef, 
+                          by = c("analysisId", "startDay", "endDay", "characterizationSource")) %>% 
         dplyr::select(-.data$startDay, -.data$endDay) %>% 
-        dplyr::inner_join(temporalTimeRef, by = 'timeId') %>% 
+        dplyr::inner_join(covariateValueForCohortIdsDatabaseId()$temporalTimeRef, by = 'timeId') %>% 
         dplyr::inner_join(temporalCovariateChoices, by = 'timeId') %>% 
         dplyr::select(-.data$missingMeansZero)
       
