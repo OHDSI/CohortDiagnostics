@@ -128,11 +128,11 @@ runCohortTemporalRelationshipDiagnostics <-
     temporalRelationship <-
       renderTranslateQuerySql(
         connection = connection,
-        sql = "SELECT * FROM #cohort_rel_long;",
+        sql = "SELECT * FROM #cohort_rel;",
         snakeCaseToCamelCase = TRUE
       )
     
-    dropSql = "IF OBJECT_ID('tempdb..#cohort_rel_long', 'U') IS NOT NULL DROP TABLE #cohort_rel_long;"
+    dropSql = "IF OBJECT_ID('tempdb..#cohort_rel', 'U') IS NOT NULL DROP TABLE #cohort_rel;"
     DatabaseConnector::renderTranslateExecuteSql(connection = connection,
                                                  sql = dropSql,
                                                  progressBar = TRUE)

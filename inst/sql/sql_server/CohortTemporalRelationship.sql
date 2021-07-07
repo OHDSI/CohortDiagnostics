@@ -4,8 +4,8 @@ IF OBJECT_ID('tempdb..#cohort_row_id', 'U') IS NOT NULL
 IF OBJECT_ID('tempdb..#target_cohort', 'U') IS NOT NULL
 	DROP TABLE #target_cohort;
 
-IF OBJECT_ID('tempdb..#cohort_rel_long', 'U') IS NOT NULL
-	DROP TABLE #cohort_rel_long;
+IF OBJECT_ID('tempdb..#cohort_rel', 'U') IS NOT NULL
+	DROP TABLE #cohort_rel;
 
 --- Assign row_id_cs for each unique subject_id and cohort_start_date combination
 --HINT DISTRIBUTE_ON_KEY(subject_id)
@@ -98,7 +98,7 @@ SELECT t.cohort_definition_id cohort_id,
 				THEN c.subject_id
 			ELSE NULL
 			END) subjects_terminate -- comparator cohort subjects terminate within period
-INTO #cohort_rel_long
+INTO #cohort_rel
 FROM #time_periods tp -- offset
 CROSS JOIN #cohort_row_id t
 INNER JOIN #cohort_row_id c
