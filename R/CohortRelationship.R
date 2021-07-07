@@ -70,9 +70,13 @@ runCohortTemporalRelationshipDiagnostics <-
                                                             comparator_cohort_ids = comparatorCohortIds,
                                                             snakeCaseToCamelCase = TRUE)
     
+    
+    dateRange$daysDiff <- min(421, dateRange$daysDiff)
+    
     # every 30 days
     daysDiff30 <- dateRange$daysDiff +
       (30 - (dateRange$daysDiff %% 30))
+    
     seqStart30 <- seq(daysDiff30 * -1, daysDiff30, by = 30)
     seqEnd30 <- seqStart30 + 30
     
@@ -88,8 +92,8 @@ runCohortTemporalRelationshipDiagnostics <-
     seqStart365 <- seq(daysDiff365 * -1, daysDiff365, by = 365)
     seqEnd365 <- seqStart365 + 365  
     
-    seqStart <- c(0, seqStart30, seqStart180, seqStart365)
-    seqEnd <- c(0, seqEnd30, seqEnd180, seqEnd365)
+    seqStart <- c(0, -99999, 0, 1, seqStart30, seqStart180, seqStart365)
+    seqEnd <- c(0, 0, 99999, 99999, seqEnd30, seqEnd180, seqEnd365)
     
     timePeriods <- dplyr::tibble(startDay = seqStart,
                                  endDay = seqEnd) %>% 

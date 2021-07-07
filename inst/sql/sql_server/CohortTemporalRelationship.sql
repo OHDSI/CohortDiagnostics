@@ -83,8 +83,8 @@ SELECT t.cohort_definition_id cohort_id,
 	c.cohort_definition_id comparator_cohort_id,
 	time_id,
 	'T1' relationship_type, -- cohort time series by calendar period
-	COUNT_BIG(*) records, -- records in calendar month
-	COUNT_BIG(DISTINCT subject_id) subjects, -- unique subjects
+	COUNT_BIG(DISTINCT row_id_cs) records, -- records in calendar month
+	COUNT_BIG(DISTINCT c.subject_id) subjects, -- unique subjects
 	SUM(datediff(dd, CASE 
 				WHEN c.cohort_start_date >= period_begin
 					THEN cohort_start_date
@@ -94,10 +94,10 @@ SELECT t.cohort_definition_id cohort_id,
 					THEN period_end
 				ELSE cohort_end_date
 				END) + 1) person_days, -- person days within period
-	COUNT_BIG(CASE 
+	COUNT_BIG(DISTINCT CASE 
 			WHEN c.cohort_start_date >= period_begin
 				AND c.cohort_start_date <= period_end
-				THEN subject_id
+				THEN row_id_cs
 			ELSE NULL
 			END) records_incidence, -- records incidence within period
 	COUNT_BIG(DISTINCT CASE 
@@ -112,10 +112,10 @@ SELECT t.cohort_definition_id cohort_id,
 				THEN subject_id
 			ELSE NULL
 			END) era_incidence, -- subjects incidence within period
-	COUNT_BIG(CASE 
+	COUNT_BIG(DISTINCT CASE 
 			WHEN c.cohort_end_date >= period_begin
 				AND c.cohort_end_date <= period_end
-				THEN subject_id
+				THEN row_id_cs
 			ELSE NULL
 			END) records_terminate, -- records terminate within period
 	COUNT_BIG(DISTINCT CASE 

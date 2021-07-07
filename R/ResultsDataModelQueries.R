@@ -1110,7 +1110,7 @@ getCohortAsFeatureCharacterizationResults <-
                       "14ComparatorIncidentCohortStartLongTermIncidentTarget",
                       "15ComparatorIncidentCohortStartMediumTermIncidentTarget",
                       "16ComparatorIncidentCohortStartShortTermIncidentTarget")
-    startDay <- c(-9999999,-365,-180,-30,-9999999,-365,-180,-30,-9999999,-365,-180,-30,-9999999,-365,-180,-30)
+    startDay <- c(-99999,-365,-180,-30,-99999,-365,-180,-30,-99999,-365,-180,-30,-99999,-365,-180,-30)
     endDay <- c(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)
     description <- c("Count of comparator records that started at any time prior to index date.",
                      "Count of comparator records that started at any time in long term window prior to index date.",
