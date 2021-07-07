@@ -124,7 +124,7 @@ runCohortTemporalRelationshipDiagnostics <-
       comparator_cohort_ids = comparatorCohortIds
     )
     DatabaseConnector::executeSql(connection = connection,
-                                  sql = sql, progressBar = TRUE, profile = TRUE)
+                                  sql = sql)
     temporalRelationship <-
       renderTranslateQuerySql(
         connection = connection,
