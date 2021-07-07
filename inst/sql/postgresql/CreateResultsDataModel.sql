@@ -164,8 +164,14 @@ CREATE TABLE cohort_relationships (
 			relationship_type VARCHAR NOT NULL,
 			start_day FLOAT NOT NULL,
 			end_day FLOAT NOT NULL,
-			subjects FLOAT NOT NULL,	
-			records FLOAT NOT NULL,		
+			records BIGINT NOT NULL,
+			subjects BIGINT NOT NULL,
+			person_days BIGINT NOT NULL,
+			records_incidence BIGINT,
+			subjects_incidence BIGINT,
+			era_incidence BIGINT,
+			records_terminate BIGINT,
+			subjects_terminate BIGINT,	
 			PRIMARY KEY(database_id, cohort_id, comparator_cohort_id, relationship_type, start_day, end_day)
 );
 
@@ -486,6 +492,7 @@ CREATE TABLE time_series (
 			person_days BIGINT NOT NULL,
 			records_incidence BIGINT,
 			subjects_incidence BIGINT,
+			era_incidence BIGINT,
 			records_terminate BIGINT,
 			subjects_terminate BIGINT,
 			PRIMARY KEY(cohort_id, database_id, period_begin, calendar_interval, series_type)

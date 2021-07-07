@@ -632,15 +632,6 @@ runCohortDiagnostics <- function(packageName = NULL,
       )
       subset <- dplyr::bind_rows(subset, subsetOrphans)
     }
-    if (runCohortCharacterization) {
-      subsetCharacterization <- subsetToRequiredCohorts(
-        cohorts = cohorts,
-        task = "runCohortCharacterization",
-        incremental = incremental,
-        recordKeepingFile = recordKeepingFile
-      )
-      subset <- dplyr::bind_rows(subset, subsetCharacterization)
-    }
     subset <- dplyr::distinct(subset)
     ParallelLogger::logInfo(sprintf(
       " - Skipping %s cohorts in incremental mode.",
@@ -1150,6 +1141,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   }
   
   # Cohort Temporal Relationship ----
+  browser()
   if (runCohortTemporalRelationship) {
     ParallelLogger::logInfo("Computing Cohort Temporal Relationship")
     startCohortRelationship <- Sys.time()
@@ -1175,6 +1167,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         runCohortTemporalRelationshipDiagnostics(
           connection = connection,
           cohortDatabaseSchema = cohortDatabaseSchema,
+          tempEmulationSchema = tempEmulationSchema,
           cohortTable = cohortTable,
           targetCohortIds = subset$cohortId,
           comparatorCohortIds = cohorts$cohortId
