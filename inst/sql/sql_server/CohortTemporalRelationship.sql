@@ -104,6 +104,7 @@ FROM #time_periods tp
 CROSS JOIN #cohort_row_id t
 INNER JOIN #cohort_row_id c
 	ON c.subject_id = t.subject_id
+	AND c.cohort_definition_id != t.cohort_definition_id
 		AND (
 			c.cohort_start_date >= DATEADD(day, tp.start_day, c.cohort_start_date)
 			AND c.cohort_start_date <= DATEADD(day, tp.end_day, c.cohort_end_date)
@@ -118,7 +119,6 @@ INNER JOIN #cohort_row_id c
 			) -- comparator cohort periods overlaps the calendar period
 WHERE c.cohort_definition_id IN (@comparator_cohort_ids)
 	AND t.cohort_definition_id IN (@target_cohort_ids)
-	AND c.cohort_definition_id != t.cohort_definition_id
 GROUP BY t.cohort_definition_id,
 	c.cohort_definition_id,
 	tp.time_id;
