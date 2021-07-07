@@ -107,10 +107,10 @@ runCohortTemporalRelationshipDiagnostics <-
       data = timePeriods,
       dropTableIfExists = TRUE,
       createTable = TRUE,
-      progressBar = TRUE,
       tempTable = TRUE,
       tempEmulationSchema = tempEmulationSchema,
-      camelCaseToSnakeCase = TRUE
+      camelCaseToSnakeCase = TRUE,
+      progressBar = FALSE
     )
     ParallelLogger::logTrace("Done inserting time periods")
     

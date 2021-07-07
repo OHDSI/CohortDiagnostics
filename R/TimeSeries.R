@@ -127,10 +127,10 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     data = calendarPeriods,
     dropTableIfExists = TRUE,
     createTable = TRUE,
-    progressBar = TRUE,
     tempTable = TRUE,
     tempEmulationSchema = tempEmulationSchema,
-    camelCaseToSnakeCase = TRUE
+    camelCaseToSnakeCase = TRUE,
+    progressBar = FALSE
   )
   ParallelLogger::logTrace("Done inserting calendar periods")
   
