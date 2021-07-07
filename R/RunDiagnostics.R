@@ -632,15 +632,6 @@ runCohortDiagnostics <- function(packageName = NULL,
       )
       subset <- dplyr::bind_rows(subset, subsetOrphans)
     }
-    if (runCohortCharacterization) {
-      subsetCharacterization <- subsetToRequiredCohorts(
-        cohorts = cohorts,
-        task = "runCohortCharacterization",
-        incremental = incremental,
-        recordKeepingFile = recordKeepingFile
-      )
-      subset <- dplyr::bind_rows(subset, subsetCharacterization)
-    }
     subset <- dplyr::distinct(subset)
     ParallelLogger::logInfo(sprintf(
       " - Skipping %s cohorts in incremental mode.",

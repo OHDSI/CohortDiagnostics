@@ -114,7 +114,6 @@ runCohortTemporalRelationshipDiagnostics <-
     )
     ParallelLogger::logTrace("Done inserting time periods")
     
-    
     sql <- SqlRender::loadRenderTranslateSql(
       "CohortTemporalRelationship.sql",
       packageName = "CohortDiagnostics",
@@ -140,6 +139,7 @@ runCohortTemporalRelationshipDiagnostics <-
     
     temporalRelationship <- temporalRelationship %>% 
       dplyr::inner_join(timePeriods, by = 'timeId') %>%
+      dplyr::mutate(relationship_type == 'T1') %>% 
       dplyr::select(.data$cohortId, 
                     .data$comparatorCohortId,
                     .data$relationshipType,

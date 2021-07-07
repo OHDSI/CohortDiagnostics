@@ -24,7 +24,7 @@ IF OBJECT_ID('tempdb..#cohort_row_id', 'U') IS NOT NULL
 	DROP TABLE #cohort_row_id;
 	
 --- Assign row_id_cs for each unique subject_id and cohort_start_date combination
---HINT DISTRIBUTE_ON_KEY(row_id_cs)
+--HINT DISTRIBUTE_ON_KEY(subject_id)
 WITH cohort_data
 AS (
 	SELECT ROW_NUMBER() OVER (
@@ -97,6 +97,11 @@ SELECT cohort_definition_id cohort_id,
 				THEN subject_id
 			ELSE NULL
 			END) subjects_incidence, -- subjects incidence within period
+	COUNT_BIG(DISTINCT CASE 
+			WHEN first_occurrence = 1
+				THEN subject_id
+			ELSE NULL
+			END) era_incidence, -- era incidence within period
 	COUNT_BIG(CASE 
 			WHEN cohort_end_date >= period_begin
 				AND cohort_end_date <= period_end
@@ -158,6 +163,7 @@ SELECT cohort_definition_id cohort_id,
 				THEN subject_id
 			ELSE NULL
 			END) subjects_incidence,
+	0 era_incidence,
 	COUNT_BIG(CASE 
 			WHEN observation_period_end_date >= period_begin
 				AND observation_period_end_date <= period_end
@@ -256,6 +262,7 @@ GROUP BY period_begin,
 
 */
 
+/*
 -- cohort time series T4: subjects in the cohorts whose cohort period are embedded within calendar period
 --- (cohort start is between (inclusive) calendar period, AND 
 --- (cohort end is between (inclusive) calendar period)
@@ -308,7 +315,9 @@ INNER JOIN #calendar_periods cp ON (
 GROUP BY period_begin,
 	calendar_interval,
 	cohort_definition_id;
+*/
 
+/*
 
 -- cohort time series T5: subjects in the cohorts whose observation period is embedded within calendar period
 --- (cohort start is between (inclusive) calendar period, AND 
@@ -367,6 +376,7 @@ GROUP BY period_begin,
 	calendar_interval,
 	cohort_definition_id;
 
+*/
 /*
 -- datasource time series T5: persons in the observation table whose observation period is embedded within calendar period
 --- (observation start is between (inclusive) calendar period, AND 
@@ -436,16 +446,18 @@ FROM (
 	SELECT *
 	FROM #d_time_series3
 	*/
-	
+	/*
 	UNION
 	
 	SELECT *
 	FROM #c_time_series4
-	
+	*/
+	/*
 	UNION
 	
 	SELECT *
 	FROM #c_time_series5
+	*/
 	/*	
 	UNION
 	
