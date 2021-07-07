@@ -6,7 +6,7 @@ IF OBJECT_ID('tempdb..#target_cohort', 'U') IS NOT NULL
 
 IF OBJECT_ID('tempdb..#cohort_rel_long', 'U') IS NOT NULL
 	DROP TABLE #cohort_rel_long;
-	
+
 --- Assign row_id_cs for each unique subject_id and cohort_start_date combination
 --HINT DISTRIBUTE_ON_KEY(subject_id)
 WITH cohort_data
@@ -50,7 +50,6 @@ FROM cohort_data cd
 INNER JOIN cohort_first_occurrence fo
 	ON fo.cohort_definition_id = cd.cohort_definition_id
 		AND fo.subject_id = cd.subject_id;
-
 
 -- subjects present in target and comparator cohorts who have atleast one cohort day in time period
 --- (i.e. comparator cohort start or comparator cohort end is between (inclusive) time period, or 
@@ -104,19 +103,21 @@ FROM #time_periods tp
 CROSS JOIN #cohort_row_id t
 INNER JOIN #cohort_row_id c
 	ON c.subject_id = t.subject_id
-	AND c.cohort_definition_id != t.cohort_definition_id
+		AND c.cohort_definition_id != t.cohort_definition_id
 		AND (
-			c.cohort_start_date >= DATEADD(day, tp.start_day, t.cohort_start_date)
-			AND c.cohort_start_date <= DATEADD(day, tp.end_day, t.cohort_start_date)
-			) -- comparator cohort starts within calendar period, OR
-		OR (
-			c.cohort_end_date >= DATEADD(day, tp.start_day, t.cohort_start_date)
-			AND c.cohort_end_date <= DATEADD(day, tp.end_day, t.cohort_start_date)
-			) -- comparator cohort ends within calendar period, OR
-		OR (
-			c.cohort_end_date >= DATEADD(day, tp.end_day, t.cohort_start_date)
-			AND c.cohort_start_date <= DATEADD(day, tp.start_day, t.cohort_start_date)
-			) -- comparator cohort periods overlaps the calendar period
+			   (
+				c.cohort_start_date >= DATEADD(day, tp.start_day, t.cohort_start_date)
+				AND c.cohort_start_date <= DATEADD(day, tp.end_day, t.cohort_start_date)
+				) -- comparator cohort starts within calendar period, OR
+			OR (
+				c.cohort_end_date >= DATEADD(day, tp.start_day, t.cohort_start_date)
+				AND c.cohort_end_date <= DATEADD(day, tp.end_day, t.cohort_start_date)
+				) -- comparator cohort ends within calendar period, OR
+			OR (
+				c.cohort_end_date >= DATEADD(day, tp.end_day, t.cohort_start_date)
+				AND c.cohort_start_date <= DATEADD(day, tp.start_day, t.cohort_start_date)
+				) -- comparator cohort periods overlaps the calendar period
+			)
 WHERE c.cohort_definition_id IN (@comparator_cohort_ids)
 	AND t.cohort_definition_id IN (@target_cohort_ids)
 GROUP BY t.cohort_definition_id,
