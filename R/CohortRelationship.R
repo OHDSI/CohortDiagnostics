@@ -124,7 +124,7 @@ runCohortTemporalRelationshipDiagnostics <-
       comparator_cohort_ids = comparatorCohortIds
     )
     DatabaseConnector::executeSql(connection = connection,
-                                  sql = sql)
+                                  sql = sql, progressBar = TRUE, profile = TRUE)
     temporalRelationship <-
       renderTranslateQuerySql(
         connection = connection,
@@ -139,7 +139,7 @@ runCohortTemporalRelationshipDiagnostics <-
     
     temporalRelationship <- temporalRelationship %>% 
       dplyr::inner_join(timePeriods, by = 'timeId') %>%
-      dplyr::mutate(relationship_type == 'T1') %>% 
+      dplyr::mutate(relationshipType = 'T1') %>% 
       dplyr::select(.data$cohortId, 
                     .data$comparatorCohortId,
                     .data$relationshipType,
@@ -148,11 +148,10 @@ runCohortTemporalRelationshipDiagnostics <-
                     .data$subjects,
                     .data$records,
                     .data$personDays,
-                    .data$recordsIncidence,
-                    .data$subjectsIncidence,
-                    .data$eraIncidence,
-                    .data$recordsTerminate,
-                    .data$subjectsTerminate) %>% 
+                    .data$recordsStart,
+                    .data$subjectsStart,
+                    .data$recordsEnd,
+                    .data$subjectsEnd) %>% 
       dplyr::arrange(.data$cohortId, 
                      .data$comparatorCohortId,
                      .data$relationshipType,

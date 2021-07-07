@@ -1140,7 +1140,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                             " ",
                             attr(delta, "units"))
   }
-  browser()
+  
   # Cohort Temporal Relationship ----
   if (runCohortTemporalRelationship) {
     ParallelLogger::logInfo("Computing Cohort Temporal Relationship")
@@ -1176,6 +1176,20 @@ runCohortDiagnostics <- function(packageName = NULL,
       if (nrow(cohortTemporalRelationship) > 0) {
         cohortTemporalRelationship <- cohortTemporalRelationship %>%
           dplyr::mutate(databaseId = !!databaseId)
+        cohortTemporalRelationship <-
+            enforceMinCellValue(cohortTemporalRelationship, "records", minCellCount)
+        cohortTemporalRelationship <-
+            enforceMinCellValue(cohortTemporalRelationship, "subjects", minCellCount)
+        cohortTemporalRelationship <-
+            enforceMinCellValue(cohortTemporalRelationship, "personDays", minCellCount)
+        cohortTemporalRelationship <-
+            enforceMinCellValue(cohortTemporalRelationship, "recordsStart", minCellCount)
+        cohortTemporalRelationship <-
+            enforceMinCellValue(cohortTemporalRelationship, "subjectsStart", minCellCount)
+        cohortTemporalRelationship <-
+            enforceMinCellValue(cohortTemporalRelationship, "recordsEnd", minCellCount)
+        cohortTemporalRelationship <-
+            enforceMinCellValue(cohortTemporalRelationship, "subjectsEnd", minCellCount)
         writeToCsv(
           data = cohortTemporalRelationship,
           fileName = file.path(exportFolder, "cohort_relationships.csv"),

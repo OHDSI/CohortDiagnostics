@@ -167,11 +167,10 @@ CREATE TABLE cohort_relationships (
 			records BIGINT NOT NULL,
 			subjects BIGINT NOT NULL,
 			person_days BIGINT NOT NULL,
-			records_incidence BIGINT,
-			subjects_incidence BIGINT,
-			era_incidence BIGINT,
-			records_terminate BIGINT,
-			subjects_terminate BIGINT,	
+			records_start BIGINT,
+			subjects_start BIGINT,
+			records_end BIGINT,
+			subjects_end BIGINT,	
 			PRIMARY KEY(database_id, cohort_id, comparator_cohort_id, relationship_type, start_day, end_day)
 );
 
