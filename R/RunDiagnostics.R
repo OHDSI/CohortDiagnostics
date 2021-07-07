@@ -1066,6 +1066,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                             attr(delta, "units"))
   }
   
+  browser()
   # Time Series----
   if (runTimeSeries) {
     ParallelLogger::logInfo("Computing Time Series")
@@ -1139,7 +1140,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                             " ",
                             attr(delta, "units"))
   }
-  
+  browser()
   # Cohort Temporal Relationship ----
   if (runCohortTemporalRelationship) {
     ParallelLogger::logInfo("Computing Cohort Temporal Relationship")

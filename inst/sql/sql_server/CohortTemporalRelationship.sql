@@ -1,9 +1,6 @@
 IF OBJECT_ID('tempdb..#cohort_row_id', 'U') IS NOT NULL
 	DROP TABLE #cohort_row_id;
 
-IF OBJECT_ID('tempdb..#target_cohort', 'U') IS NOT NULL
-	DROP TABLE #target_cohort;
-
 IF OBJECT_ID('tempdb..#cohort_rel', 'U') IS NOT NULL
 	DROP TABLE #cohort_rel;
 
@@ -12,8 +9,7 @@ IF OBJECT_ID('tempdb..#cohort_rel', 'U') IS NOT NULL
 WITH cohort_data
 AS (
 	SELECT ROW_NUMBER() OVER (
-			ORDER BY subject_id ASC,
-				cohort_start_date ASC
+			PARTITION BY subject_id, cohort_start_date
 			) row_id_cs,
 		cohort_definition_id,
 		subject_id,
@@ -29,8 +25,7 @@ cohort_first_occurrence
 AS (
 	SELECT cohort_definition_id,
 		subject_id,
-		MIN(cohort_start_date) cohort_start_date,
-		MIN(cohort_end_date) cohort_end_date
+		MIN(cohort_start_date) cohort_start_date
 	FROM cohort_data
 	GROUP BY cohort_definition_id,
 		subject_id

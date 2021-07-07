@@ -138,15 +138,15 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
   sql <-
     SqlRender::loadRenderTranslateSql("ComputeTimeSeries.sql",
                                       packageName = "CohortDiagnostics",
-                                      dbms = connection@dbms)
-  DatabaseConnector::renderTranslateExecuteSql(
+                                      dbms = connection@dbms,
+                                      cohort_database_schema = cohortDatabaseSchema,
+                                      cdm_database_schema = cdmDatabaseSchema,
+                                      cohort_table = cohortTable,
+                                      tempEmulationSchema = tempEmulationSchema,
+                                      cohort_ids = cohortIds)
+  DatabaseConnector::executeSql(
     connection = connection,
-    sql = sql,
-    cohort_database_schema = cohortDatabaseSchema,
-    cdm_database_schema = cdmDatabaseSchema,
-    cohort_table = cohortTable,
-    tempEmulationSchema = tempEmulationSchema,
-    cohort_ids = cohortIds
+    sql = sql, profile = TRUE, progressBar = TRUE
   )
   timeSeries <- renderTranslateQuerySql(
     connection = connection,

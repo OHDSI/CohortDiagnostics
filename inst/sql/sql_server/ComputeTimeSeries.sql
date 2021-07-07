@@ -19,7 +19,8 @@ IF OBJECT_ID('tempdb..#c_time_series5', 'U') IS NOT NULL
 
 IF OBJECT_ID('tempdb..#d_time_series6', 'U') IS NOT NULL
 	DROP TABLE #d_time_series6;
-	
+
+/*	
 IF OBJECT_ID('tempdb..#cohort_row_id', 'U') IS NOT NULL
 	DROP TABLE #cohort_row_id;
 	
@@ -28,8 +29,7 @@ IF OBJECT_ID('tempdb..#cohort_row_id', 'U') IS NOT NULL
 WITH cohort_data
 AS (
 	SELECT ROW_NUMBER() OVER (
-			ORDER BY subject_id ASC,
-				cohort_start_date ASC
+			PARTITION BY subject_id, cohort_start_date
 			) row_id_cs,
 		cohort_definition_id,
 		subject_id,
@@ -44,8 +44,7 @@ cohort_first_occurrence
 AS (
 	SELECT cohort_definition_id,
 		subject_id,
-		MIN(cohort_start_date) cohort_start_date,
-		MIN(cohort_end_date) cohort_end_date
+		MIN(cohort_start_date) cohort_start_date
 	FROM cohort_data
 	GROUP BY cohort_definition_id,
 		subject_id
@@ -65,7 +64,7 @@ FROM cohort_data cd
 INNER JOIN cohort_first_occurrence fo
 	ON fo.cohort_definition_id = cd.cohort_definition_id
 		AND fo.subject_id = cd.subject_id;
-
+*/
 -- cohort time series T1: subjects in the cohort who have atleast one cohort day in calendar period
 --- (i.e. cohort start or cohort end is between (inclusive) calendar period, or 
 --- (cohort start is on/before calendar start AND cohort end is on/after calendar end))
@@ -89,34 +88,29 @@ SELECT cohort_definition_id cohort_id,
 				AND cohort_start_date <= period_end
 				THEN subject_id
 			ELSE NULL
-			END) records_incidence, -- records incidence within period
+			END) records_start, -- records start within period
 	COUNT_BIG(DISTINCT CASE 
-			WHEN first_occurrence = 1
-			    AND cohort_start_date >= period_begin
+			WHEN cohort_start_date >= period_begin
 				AND cohort_start_date <= period_end
 				THEN subject_id
 			ELSE NULL
-			END) subjects_incidence, -- subjects incidence within period
-	COUNT_BIG(DISTINCT CASE 
-			WHEN first_occurrence = 1
-				THEN subject_id
-			ELSE NULL
-			END) era_incidence, -- era incidence within period
+			END) subjects_start, -- subjects start within period
 	COUNT_BIG(CASE 
 			WHEN cohort_end_date >= period_begin
 				AND cohort_end_date <= period_end
 				THEN subject_id
 			ELSE NULL
-			END) records_terminate, -- records terminate within period
+			END) records_end, -- records end within period
 	COUNT_BIG(DISTINCT CASE 
 			WHEN cohort_end_date >= period_begin
 				AND cohort_end_date <= period_end
 				THEN subject_id
 			ELSE NULL
-			END) subjects_terminate -- subjects terminate within period
+			END) subjects_end -- subjects end within period
 INTO #c_time_series1
-FROM #cohort_row_id
-INNER JOIN #calendar_periods cp ON (
+FROM @cohort_database_schema.@cohort_table
+INNER JOIN #calendar_periods cp
+	ON (
 		cohort_start_date >= period_begin
 		AND cohort_start_date <= period_end
 		) -- cohort starts within calendar period, OR
@@ -128,6 +122,7 @@ INNER JOIN #calendar_periods cp ON (
 		cohort_end_date >= period_end
 		AND cohort_start_date <= period_begin
 		) -- cohort periods overlaps the calendar period
+WHERE cohort_definition_id IN (@cohort_ids)
 GROUP BY period_begin,
 	calendar_interval,
 	cohort_definition_id;
@@ -156,35 +151,37 @@ SELECT cohort_definition_id cohort_id,
 				AND observation_period_start_date <= period_end
 				THEN subject_id
 			ELSE NULL
-			END) records_incidence,
+			END) records_start,
 	COUNT_BIG(DISTINCT CASE 
 			WHEN observation_period_start_date >= period_begin
 				AND observation_period_start_date <= period_end
 				THEN subject_id
 			ELSE NULL
-			END) subjects_incidence,
-	0 era_incidence,
+			END) subjects_start,
 	COUNT_BIG(CASE 
 			WHEN observation_period_end_date >= period_begin
 				AND observation_period_end_date <= period_end
 				THEN subject_id
 			ELSE NULL
-			END) records_terminate, -- records terminate within period
+			END) records_end, -- records end within period
 	COUNT_BIG(DISTINCT CASE 
 			WHEN observation_period_end_date >= period_begin
 				AND observation_period_end_date <= period_end
 				THEN subject_id
 			ELSE NULL
-			END) subjects_terminate -- subjects terminate within period
+			END) subjects_end -- subjects end within period
 INTO #c_time_series2
 FROM @cdm_database_schema.observation_period o
 INNER JOIN (
 	-- limiting to the cohort
 	SELECT DISTINCT cohort_definition_id,
 		subject_id
-	FROM #cohort_row_id
-	) c ON o.person_id = c.subject_id
-INNER JOIN #calendar_periods cp ON (
+	FROM @cohort_database_schema.@cohort_table
+	WHERE cohort_definition_id IN (@cohort_ids)
+	) c
+	ON o.person_id = c.subject_id
+INNER JOIN #calendar_periods cp
+	ON (
 		observation_period_start_date >= period_begin
 		AND observation_period_start_date <= period_end
 		) -- observation period starts within calendar period, OR
@@ -200,7 +197,6 @@ GROUP BY period_begin,
 	calendar_interval,
 	cohort_definition_id;
 
-/*
 -- database time series T3: persons in the data source who have atleast one observation day in calendar period
 --- (i.e. observation start or observation end is between (inclusive) calendar period, or 
 --- (observation start is on/before calendar start AND observation end is on/after calendar end))
@@ -224,28 +220,29 @@ SELECT 0 cohort_id,
 				AND observation_period_start_date <= period_end
 				THEN person_id
 			ELSE NULL
-			END) records_incidence,
+			END) records_start,
 	COUNT_BIG(DISTINCT CASE 
 			WHEN observation_period_start_date >= period_begin
 				AND observation_period_start_date <= period_end
 				THEN person_id
 			ELSE NULL
-			END) subjects_incidence,
+			END) subjects_start,
 	COUNT_BIG(CASE 
 			WHEN observation_period_end_date >= period_begin
 				AND observation_period_end_date <= period_end
 				THEN person_id
 			ELSE NULL
-			END) records_terminate, -- records terminate within period
+			END) records_end, -- records end within period
 	COUNT_BIG(DISTINCT CASE 
 			WHEN observation_period_end_date >= period_begin
 				AND observation_period_end_date <= period_end
 				THEN person_id
 			ELSE NULL
-			END) subjects_terminate -- subjects terminate within period
+			END) subjects_end -- subjects end within period
 INTO #d_time_series3
 FROM @cdm_database_schema.observation_period o
-INNER JOIN #calendar_periods cp ON (
+INNER JOIN #calendar_periods cp
+	ON (
 		observation_period_start_date >= period_begin
 		AND observation_period_start_date <= period_end
 		) -- observation period starts within calendar period, OR
@@ -260,9 +257,6 @@ INNER JOIN #calendar_periods cp ON (
 GROUP BY period_begin,
 	calendar_interval;
 
-*/
-
-/*
 -- cohort time series T4: subjects in the cohorts whose cohort period are embedded within calendar period
 --- (cohort start is between (inclusive) calendar period, AND 
 --- (cohort end is between (inclusive) calendar period)
@@ -286,38 +280,36 @@ SELECT cohort_definition_id cohort_id,
 				AND cohort_start_date <= period_end
 				THEN subject_id
 			ELSE NULL
-			END) records_incidence,
+			END) records_start,
 	COUNT_BIG(DISTINCT CASE 
-			WHEN first_occurrence = 1
-			    AND cohort_start_date >= period_begin
+			WHEN cohort_start_date >= period_begin
 				AND cohort_start_date <= period_end
 				THEN subject_id
 			ELSE NULL
-			END) subjects_incidence,
+			END) subjects_start,
 	COUNT_BIG(CASE 
 			WHEN cohort_end_date >= period_begin
 				AND cohort_end_date <= period_end
 				THEN subject_id
 			ELSE NULL
-			END) records_terminate, -- records terminate within period
+			END) records_end, -- records end within period
 	COUNT_BIG(DISTINCT CASE 
 			WHEN cohort_end_date >= period_begin
 				AND cohort_end_date <= period_end
 				THEN subject_id
 			ELSE NULL
-			END) subjects_terminate -- subjects terminate within period
+			END) subjects_end -- subjects end within period
 INTO #c_time_series4
-FROM #cohort_row_id
-INNER JOIN #calendar_periods cp ON (
+FROM @cohort_database_schema.@cohort_table
+INNER JOIN #calendar_periods cp
+	ON (
 		cohort_start_date <= period_end -- calendar period start on or before calendar period end, AND
 		AND cohort_end_date >= period_begin -- calendar period end on or after calendar period begins
 		)
+WHERE cohort_definition_id IN (@cohort_ids)
 GROUP BY period_begin,
 	calendar_interval,
 	cohort_definition_id;
-*/
-
-/*
 
 -- cohort time series T5: subjects in the cohorts whose observation period is embedded within calendar period
 --- (cohort start is between (inclusive) calendar period, AND 
@@ -342,33 +334,36 @@ SELECT cohort_definition_id cohort_id,
 				AND observation_period_start_date <= period_end
 				THEN subject_id
 			ELSE NULL
-			END) records_incidence,
+			END) records_start,
 	COUNT_BIG(DISTINCT CASE 
 			WHEN observation_period_start_date >= period_begin
 				AND observation_period_start_date <= period_end
 				THEN subject_id
 			ELSE NULL
-			END) subjects_incidence,
+			END) subjects_start,
 	COUNT_BIG(CASE 
 			WHEN observation_period_end_date >= period_begin
 				AND observation_period_end_date <= period_end
 				THEN subject_id
 			ELSE NULL
-			END) records_terminate, -- records terminate within period
+			END) records_end, -- records end within period
 	COUNT_BIG(DISTINCT CASE 
 			WHEN observation_period_end_date >= period_begin
 				AND observation_period_end_date <= period_end
 				THEN subject_id
 			ELSE NULL
-			END) subjects_terminate -- subjects terminate within period
+			END) subjects_end -- subjects end within period
 INTO #c_time_series5
 FROM @cdm_database_schema.observation_period o
 INNER JOIN (
 	SELECT DISTINCT cohort_definition_id,
 		subject_id
-	FROM #cohort_row_id
-	) c ON o.person_id = c.subject_id
-INNER JOIN #calendar_periods cp ON (
+	FROM @cohort_database_schema.@cohort_table
+	WHERE cohort_definition_id IN (@cohort_ids)
+	) c
+	ON o.person_id = c.subject_id
+INNER JOIN #calendar_periods cp
+	ON (
 		observation_period_start_date <= period_end -- observation period start on or before calendar period end, AND
 		AND observation_period_end_date >= period_begin -- observation period end on or before calendar period end
 		)
@@ -376,7 +371,6 @@ GROUP BY period_begin,
 	calendar_interval,
 	cohort_definition_id;
 
-*/
 /*
 -- datasource time series T5: persons in the observation table whose observation period is embedded within calendar period
 --- (observation start is between (inclusive) calendar period, AND 
@@ -401,25 +395,25 @@ SELECT 0 cohort_id,
 				AND observation_period_start_date <= period_end
 				THEN person_id
 			ELSE NULL
-			END) records_incidence,
+			END) records_start,
 	COUNT_BIG(DISTINCT CASE 
 			WHEN observation_period_start_date >= period_begin
 				AND observation_period_start_date <= period_end
 				THEN person_id
 			ELSE NULL
-			END) subjects_incidence,
+			END) subjects_start,
 	COUNT_BIG(CASE 
 			WHEN observation_period_end_date >= period_begin
 				AND observation_period_end_date <= period_end
 				THEN person_id
 			ELSE NULL
-			END) records_terminate, -- records terminate within period
+			END) records_end, -- records end within period
 	COUNT_BIG(DISTINCT CASE 
 			WHEN observation_period_end_date >= period_begin
 				AND observation_period_end_date <= period_end
 				THEN person_id
 			ELSE NULL
-			END) subjects_terminate -- subjects terminate within period
+			END) subjects_end -- subjects end within period
 INTO #d_time_series6
 FROM @cdm_database_schema.observation_period o
 INNER JOIN #calendar_periods cp ON (
@@ -440,25 +434,22 @@ FROM (
 	
 	SELECT *
 	FROM #c_time_series2
-	/*
+	
 	UNION
 	
 	SELECT *
 	FROM #d_time_series3
-	*/
-	/*
+	
 	UNION
 	
 	SELECT *
 	FROM #c_time_series4
-	*/
-	/*
+	
 	UNION
 	
 	SELECT *
 	FROM #c_time_series5
-	*/
-	/*	
+		/*	
 	UNION
 	
 	SELECT *
