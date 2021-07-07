@@ -52,7 +52,7 @@ INNER JOIN cohort_first_occurrence fo
 		AND fo.subject_id = cd.subject_id;
 
 
--- cohort time series T1: subjects present in target and comparator cohorts who have atleast one cohort day in time period
+-- subjects present in target and comparator cohorts who have atleast one cohort day in time period
 --- (i.e. comparator cohort start or comparator cohort end is between (inclusive) time period, or 
 --- (comparator cohort start is on/before time period start AND comparator cohort end is on/after time period end))
 SELECT t.cohort_definition_id cohort_id,
