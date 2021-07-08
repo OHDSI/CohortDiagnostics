@@ -1,16 +1,17 @@
+/*
 IF OBJECT_ID('tempdb..#cohort_row_id', 'U') IS NOT NULL
 	DROP TABLE #cohort_row_id;
+*/
+IF OBJECT_ID('tempdb..#cohort_rel', 'U') IS NOT NULL
+	DROP TABLE #cohort_rel;
 
-IF OBJECT_ID('tempdb..#cohort_rel_long', 'U') IS NOT NULL
-	DROP TABLE #cohort_rel_long;
-
+/*
 --- Assign row_id_cs for each unique subject_id and cohort_start_date combination
---HINT DISTRIBUTE_ON_KEY(row_id_cs)
+--HINT DISTRIBUTE_ON_KEY(subject_id)
 WITH cohort_data
 AS (
 	SELECT ROW_NUMBER() OVER (
-			ORDER BY subject_id ASC,
-				cohort_start_date ASC
+			PARTITION BY subject_id, cohort_start_date
 			) row_id_cs,
 		cohort_definition_id,
 		subject_id,
@@ -26,8 +27,7 @@ cohort_first_occurrence
 AS (
 	SELECT cohort_definition_id,
 		subject_id,
-		MIN(cohort_start_date) cohort_start_date,
-		MIN(cohort_end_date) cohort_end_date
+		MIN(cohort_start_date) cohort_start_date
 	FROM cohort_data
 	GROUP BY cohort_definition_id,
 		subject_id
@@ -47,125 +47,76 @@ FROM cohort_data cd
 INNER JOIN cohort_first_occurrence fo
 	ON fo.cohort_definition_id = cd.cohort_definition_id
 		AND fo.subject_id = cd.subject_id;
-
-IF OBJECT_ID('tempdb..#cohort_rel_long', 'U') IS NOT NULL
-	DROP TABLE #cohort_rel_long;
-
-CREATE TABLE #cohort_rel_long (
-	cohort_id BIGINT,
-	comparator_cohort_id BIGINT,
-	attribute_name VARCHAR,
-	relationship_type VARCHAR,
-	subjects FLOAT,
-	records FLOAT
-	);
-
---- temporal relationship: target cohort start date - comparator cohort start date. 
----     negative values indicate that target cohort start date < comparator cohort
----     positive values indicate that target cohort start date > comparator cohort
-INSERT INTO #cohort_rel_long (
-	cohort_id,
-	comparator_cohort_id,
-	attribute_name,
-	relationship_type,
-	subjects,
-	records
-	)
-SELECT t1.cohort_definition_id cohort_id,
-	c1.cohort_definition_id comparator_cohort_id,
-	CAST(FLOOR(DATEDIFF(dd, t1.cohort_start_date, c1.cohort_start_date) / 30) AS VARCHAR(30)) attribute_name, -- date diff
-	'T1T1' relationship_type, -- first target start date, first comparator start date
-	COUNT_BIG(DISTINCT c1.subject_id) subjects, -- the distinct here will not make a difference because first occurrence of comparator
-	COUNT_BIG(DISTINCT c1.row_id_cs) records
-	-- count of DISTINCT comparator cohort_start_date that meet the temporal criteria
-FROM #cohort_row_id t1
-INNER JOIN #cohort_row_id c1
-	ON t1.subject_id = c1.subject_id
-WHERE t1.cohort_definition_id != c1.cohort_definition_id
-	AND t1.first_occurrence = 1 --- first occurrence of comparator
-	AND c1.first_occurrence = 1 --- first occurrence of target
-	AND t1.cohort_definition_id IN (@target_cohort_ids)
-	AND c1.cohort_definition_id IN (@comparator_cohort_ids)
-GROUP BY t1.cohort_definition_id,
-	c1.cohort_definition_id,
-	CAST(FLOOR(DATEDIFF(dd, t1.cohort_start_date, c1.cohort_start_date) / 30) AS VARCHAR(30));
-
-INSERT INTO #cohort_rel_long (
-	cohort_id,
-	comparator_cohort_id,
-	attribute_name,
-	relationship_type,
-	subjects,
-	records
-	)
-SELECT t1.cohort_definition_id cohort_id,
-	c1.cohort_definition_id comparator_cohort_id,
-	CAST(FLOOR(DATEDIFF(dd, t1.cohort_start_date, c1.cohort_start_date) / 30) AS VARCHAR(30)) attribute_name, -- date diff
-	'T1CA' relationship_type, -- first target start date, all comparator start date
-	COUNT_BIG(DISTINCT c1.subject_id) subjects, -- the distinct here will not make a difference because first occurrence of comparator
-	COUNT_BIG(DISTINCT c1.row_id_cs) records
-	-- count of DISTINCT comparator cohort_start_date that meet the temporal criteria
-FROM #cohort_row_id t1
-INNER JOIN #cohort_row_id c1
-	ON t1.subject_id = c1.subject_id
-WHERE t1.cohort_definition_id != c1.cohort_definition_id
-	AND t1.first_occurrence = 1 --- first occurrence of target
-	AND t1.cohort_definition_id IN (@target_cohort_ids)
-	AND c1.cohort_definition_id IN (@comparator_cohort_ids)
-GROUP BY t1.cohort_definition_id,
-	c1.cohort_definition_id,
-	CAST(FLOOR(DATEDIFF(dd, t1.cohort_start_date, c1.cohort_start_date) / 30) AS VARCHAR(30));
-
-INSERT INTO #cohort_rel_long (
-	cohort_id,
-	comparator_cohort_id,
-	attribute_name,
-	relationship_type,
-	subjects,
-	records
-	)
-SELECT t1.cohort_definition_id cohort_id,
-	c1.cohort_definition_id comparator_cohort_id,
-	CAST(FLOOR(DATEDIFF(dd, t1.cohort_start_date, c1.cohort_start_date) / 30) AS VARCHAR(30)) attribute_name, -- date diff
-	'TAC1' relationship_type, -- All target start date, first comparator start date
-	COUNT_BIG(DISTINCT c1.subject_id) subjects, -- the distinct here will not make a difference because first occurrence of comparator
-	-- count of DISTINCT comparator cohort_start_date that meet the temporal criteria
-	COUNT_BIG(DISTINCT c1.row_id_cs) records
-FROM #cohort_row_id t1
-INNER JOIN #cohort_row_id c1
-	ON t1.subject_id = c1.subject_id
-WHERE t1.cohort_definition_id != c1.cohort_definition_id
-	AND c1.first_occurrence = 1 --- first occurrence of comparator
-	AND t1.cohort_definition_id IN (@target_cohort_ids)
-	AND c1.cohort_definition_id IN (@comparator_cohort_ids)
-GROUP BY t1.cohort_definition_id,
-	c1.cohort_definition_id,
-	CAST(FLOOR(DATEDIFF(dd, t1.cohort_start_date, c1.cohort_start_date) / 30) AS VARCHAR(30));
-
-INSERT INTO #cohort_rel_long (
-	cohort_id,
-	comparator_cohort_id,
-	attribute_name,
-	relationship_type,
-	subjects,
-	records
-	)
-SELECT t1.cohort_definition_id cohort_id,
-	c1.cohort_definition_id comparator_cohort_id,
-	CAST(FLOOR(DATEDIFF(dd, t1.cohort_start_date, c1.cohort_start_date) / 30) AS VARCHAR(30)) attribute_name, -- date diff
-	'TACA' relationship_type, -- All target start date, all compartor start date
-	COUNT_BIG(DISTINCT c1.subject_id) subjects, -- the distinct here will not make a difference because first occurrence of comparator
-	-- count of DISTINCT comparator cohort_start_date that meet the temporal criteria
-	COUNT_BIG(DISTINCT c1.row_id_cs) records
-FROM #cohort_row_id t1
-INNER JOIN #cohort_row_id c1
-	ON t1.subject_id = c1.subject_id
-WHERE t1.cohort_definition_id != c1.cohort_definition_id
-	AND t1.cohort_definition_id IN (@target_cohort_ids)
-	AND c1.cohort_definition_id IN (@comparator_cohort_ids)
-GROUP BY t1.cohort_definition_id,
-	c1.cohort_definition_id,
-	CAST(FLOOR(DATEDIFF(dd, t1.cohort_start_date, c1.cohort_start_date) / 30) AS VARCHAR(30));;
-
+		*/
+-- subjects present in target and comparator cohorts who have atleast one cohort day in time period
+--- (i.e. comparator cohort start or comparator cohort end is between (inclusive) time period, or 
+--- (comparator cohort start is on/before time period start AND comparator cohort end is on/after time period end))
+SELECT t.cohort_definition_id cohort_id,
+	c.cohort_definition_id comparator_cohort_id,
+	tp.time_id,
+	COUNT_BIG(*) records, -- comparator cohort records in time period (includes overlap)
+	COUNT_BIG(DISTINCT c.subject_id) subjects, -- comparator cohort subjects in time period (includes overlap)
+	SUM(datediff(dd, CASE 
+				WHEN c.cohort_start_date >= DATEADD(day, tp.start_day, t.cohort_start_date)
+					THEN c.cohort_start_date
+				ELSE DATEADD(day, tp.start_day, t.cohort_start_date)
+				END, CASE 
+				WHEN c.cohort_end_date >= DATEADD(day, tp.end_day, t.cohort_start_date)
+					THEN DATEADD(day, tp.end_day, t.cohort_start_date)
+				ELSE c.cohort_end_date
+				END) + 1) person_days, -- comparator cohort person days within period
+	COUNT_BIG(CASE 
+			WHEN c.cohort_start_date >= DATEADD(day, tp.start_day, t.cohort_start_date)
+				AND c.cohort_start_date <= DATEADD(day, tp.end_day, t.cohort_start_date)
+				THEN c.subject_id
+			ELSE NULL
+			END) records_start, -- comparator cohorts records incidence within period
+	COUNT_BIG(DISTINCT CASE 
+			WHEN c.cohort_start_date >= DATEADD(day, tp.start_day, t.cohort_start_date)
+				AND c.cohort_start_date <= DATEADD(day, tp.end_day, t.cohort_start_date)
+				THEN c.subject_id
+			ELSE NULL
+			END) subjects_start, -- comparator cohort subjects incidence within period (true incidence)
+	COUNT_BIG(CASE 
+			WHEN c.cohort_end_date >= DATEADD(day, tp.start_day, t.cohort_start_date)
+				AND c.cohort_end_date <= DATEADD(day, tp.end_day, t.cohort_start_date)
+				THEN c.subject_id
+			ELSE NULL
+			END) records_end, -- comparator cohort records terminate within period
+	COUNT_BIG(DISTINCT CASE 
+			WHEN c.cohort_end_date >= DATEADD(day, tp.start_day, t.cohort_start_date)
+				AND c.cohort_end_date <= DATEADD(day, tp.end_day, t.cohort_start_date)
+				THEN c.subject_id
+			ELSE NULL
+			END) subjects_end -- comparator cohort subjects terminate within period
+INTO #cohort_rel
+FROM #time_periods tp -- offset
+CROSS JOIN @cohort_database_schema.@cohort_table t
+INNER JOIN @cohort_database_schema.@cohort_table c
+	ON c.subject_id = t.subject_id
+		AND c.cohort_definition_id != t.cohort_definition_id
+		AND (
+			-- comparator cohort dates are computed in relation to target cohort start date + offset
+			-- Offset: is the time period
+			(
+				c.cohort_start_date >= DATEADD(day, tp.start_day, t.cohort_start_date)
+				AND c.cohort_start_date <= DATEADD(day, tp.end_day, t.cohort_start_date)
+				) -- comparator cohort starts within period, OR
+			OR (
+				c.cohort_end_date >= DATEADD(day, tp.start_day, t.cohort_start_date)
+				AND c.cohort_end_date <= DATEADD(day, tp.end_day, t.cohort_start_date)
+				) -- comparator cohort ends within period, OR
+			OR (
+				c.cohort_end_date >= DATEADD(day, tp.end_day, t.cohort_start_date)
+				AND c.cohort_start_date <= DATEADD(day, tp.start_day, t.cohort_start_date)
+				) -- comparator cohort periods overlaps the period
+			)
+WHERE c.cohort_definition_id IN (@comparator_cohort_ids)
+	AND t.cohort_definition_id IN (@target_cohort_ids)
+GROUP BY t.cohort_definition_id,
+	c.cohort_definition_id,
+	tp.time_id;
+	/*
 IF OBJECT_ID('tempdb..#cohort_row_id', 'U') IS NOT NULL
 	DROP TABLE #cohort_row_id;
+	*/
