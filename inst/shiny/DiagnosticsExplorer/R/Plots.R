@@ -502,7 +502,8 @@ plotCohortComparisonStandardizedDifference <- function(balance,
       "Drug",
       "Measurement",
       "Observation",
-      "Procedure")
+      "Procedure",
+      "Cohort")
   balance$domain <- balance$domainId
   balance$domain[!balance$domain %in% domains] <- "other"
   
@@ -566,6 +567,7 @@ plotCohortComparisonStandardizedDifference <- function(balance,
       "#E7298A",
       "#66A61E",
       "#E6AB02",
+      "#A6761D",
       "#444444")
   colors <- colors[c(domains, "other") %in% unique(balance$domain)]
   
@@ -633,7 +635,8 @@ plotTemporalCompareStandardizedDifference <- function(balance,
       "Drug",
       "Measurement",
       "Observation",
-      "Procedure")
+      "Procedure",
+      "Cohort")
   balance$domain <- balance$domainId
   balance$domain[!balance$domain %in% domains] <- "other"
   if (domain != "all") {
@@ -698,6 +701,7 @@ plotTemporalCompareStandardizedDifference <- function(balance,
       "#E7298A",
       "#66A61E",
       "#E6AB02",
+      "#A6761D",
       "#444444")
   colors <- colors[c(domains, "other") %in% unique(balance$domain)]
   

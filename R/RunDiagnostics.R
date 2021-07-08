@@ -129,8 +129,8 @@ runCohortDiagnostics <- function(packageName = NULL,
                                      0,
                                      1,
                                      31,
-                                     seq(from = -421, to = -31, by = 30),
-                                     seq(from = 0, to = 390, by = 30)
+                                     seq(from = -301, to = -31, by = 30),
+                                     seq(from = 0, to = 270, by = 30)
                                    ),
                                    temporalEndDays = c(
                                      -31,
@@ -138,8 +138,8 @@ runCohortDiagnostics <- function(packageName = NULL,
                                      0,
                                      30,
                                      365,
-                                     seq(from = -391, to = -1, by = 30),
-                                     seq(from = 30, to = 420, by = 30)
+                                     seq(from = -271, to = -1, by = 30),
+                                     seq(from = 30, to = 300, by = 30)
                                    )
                                  ),
                                  minCellCount = 5,
@@ -632,15 +632,6 @@ runCohortDiagnostics <- function(packageName = NULL,
       )
       subset <- dplyr::bind_rows(subset, subsetOrphans)
     }
-    if (runCohortCharacterization) {
-      subsetCharacterization <- subsetToRequiredCohorts(
-        cohorts = cohorts,
-        task = "runCohortCharacterization",
-        incremental = incremental,
-        recordKeepingFile = recordKeepingFile
-      )
-      subset <- dplyr::bind_rows(subset, subsetCharacterization)
-    }
     subset <- dplyr::distinct(subset)
     ParallelLogger::logInfo(sprintf(
       " - Skipping %s cohorts in incremental mode.",
@@ -1075,6 +1066,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                             attr(delta, "units"))
   }
   
+  
   # Time Series----
   if (runTimeSeries) {
     ParallelLogger::logInfo("Computing Time Series")
@@ -1117,13 +1109,13 @@ runCohortDiagnostics <- function(packageName = NULL,
         timeSeries <-
           enforceMinCellValue(timeSeries, "personDays", minCellCount)
         timeSeries <-
-          enforceMinCellValue(timeSeries, "recordsIncidence", minCellCount)
+          enforceMinCellValue(timeSeries, "recordsStart", minCellCount)
         timeSeries <-
-          enforceMinCellValue(timeSeries, "subjectsIncidence", minCellCount)
+          enforceMinCellValue(timeSeries, "subjectsStart", minCellCount)
         timeSeries <-
-          enforceMinCellValue(timeSeries, "recordsTerminate", minCellCount)
+          enforceMinCellValue(timeSeries, "recordsEnd", minCellCount)
         timeSeries <-
-          enforceMinCellValue(timeSeries, "subjectsTerminate", minCellCount)
+          enforceMinCellValue(timeSeries, "subjectsEnd", minCellCount)
         writeToCsv(
           data = timeSeries,
           fileName = file.path(exportFolder, "time_series.csv"),
@@ -1175,6 +1167,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         runCohortTemporalRelationshipDiagnostics(
           connection = connection,
           cohortDatabaseSchema = cohortDatabaseSchema,
+          tempEmulationSchema = tempEmulationSchema,
           cohortTable = cohortTable,
           targetCohortIds = subset$cohortId,
           comparatorCohortIds = cohorts$cohortId
@@ -1183,6 +1176,20 @@ runCohortDiagnostics <- function(packageName = NULL,
       if (nrow(cohortTemporalRelationship) > 0) {
         cohortTemporalRelationship <- cohortTemporalRelationship %>%
           dplyr::mutate(databaseId = !!databaseId)
+        cohortTemporalRelationship <-
+            enforceMinCellValue(cohortTemporalRelationship, "records", minCellCount)
+        cohortTemporalRelationship <-
+            enforceMinCellValue(cohortTemporalRelationship, "subjects", minCellCount)
+        cohortTemporalRelationship <-
+            enforceMinCellValue(cohortTemporalRelationship, "personDays", minCellCount)
+        cohortTemporalRelationship <-
+            enforceMinCellValue(cohortTemporalRelationship, "recordsStart", minCellCount)
+        cohortTemporalRelationship <-
+            enforceMinCellValue(cohortTemporalRelationship, "subjectsStart", minCellCount)
+        cohortTemporalRelationship <-
+            enforceMinCellValue(cohortTemporalRelationship, "recordsEnd", minCellCount)
+        cohortTemporalRelationship <-
+            enforceMinCellValue(cohortTemporalRelationship, "subjectsEnd", minCellCount)
         writeToCsv(
           data = cohortTemporalRelationship,
           fileName = file.path(exportFolder, "cohort_relationships.csv"),

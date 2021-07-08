@@ -3712,17 +3712,6 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(!is.null(data) > 0, "No time series data"))
     validate(need(nrow(data) > 0, "No time series data"))
     
-    # for backward compatibility with cohort diagnostics version 2.1
-    if (!'seriesType' %in% colnames(data)) {
-      data <- data %>% 
-        dplyr::tibble() %>% 
-        dplyr::filter(.data$cohortId > 0) %>%
-        dplyr::mutate(seriesType = 'T1') %>% 
-        tsibble::as_tsibble(
-          key = c(.data$databaseId, .data$cohortId, .data$seriesType),
-          index = .data$periodBegin
-        )
-    }
     
     ## filter -- to be replaced by filter in shiny UI
     # if (!is.null(seriesType)) {
@@ -3750,11 +3739,20 @@ shiny::shinyServer(function(input, output, session) {
         records = 0,
         subjects = 0,
         personDays = 0,
-        recordsIncidence = 0,
-        subjectsIncidence = 0,
-        recordsTerminate = 0,
-        subjectsTerminate = 0
+        recordsStart = 0,
+        subjectsStart = 0,
+        recordsEnd = 0,
+        subjectsEnd = 0
       )
+    
+    if (calendarIntervalFirstLetter == 'y') {
+      data <- data %>% 
+        dplyr::mutate(periodBeginRaw = as.Date(paste0(as.character(.data$periodBegin), '-01-01')))
+    } else {
+      data <- data %>% 
+        dplyr::mutate(periodBeginRaw = as.Date(.data$periodBegin))
+    }
+    
     if (nrow(data) == 0) {
       return(NULL)
     }
@@ -3777,9 +3775,9 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$seriesType %in% input$timeSeriesTypeFilter) %>% 
       dplyr::select(-.data$seriesType) %>% 
       dplyr::mutate(periodBegin = .data$periodBeginRaw) %>% 
-      dplyr::select(-.data$periodBeginRaw) %>% 
       dplyr::relocate(.data$periodBegin) %>% 
-      dplyr::arrange(.data$periodBegin)
+      dplyr::arrange(.data$periodBegin) %>% 
+      dplyr::select(-.data$periodBeginRaw)
     
     options = list(
       pageLength = 100,
@@ -5175,7 +5173,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::select(-.data$timeId) %>% 
         dplyr::inner_join(covariatesTofilter, by = c('covariateId', 'characterizationSource')) %>% 
         dplyr::inner_join(covariateValueForCohortIdDatabaseIds()$analysisRef, by = c('analysisId',
-                                                                                     'characterizationSource'))     
+                                                                                     'characterizationSource'))
     } else {
       characterizationData <- NULL
     }
@@ -5239,16 +5237,20 @@ shiny::shinyServer(function(input, output, session) {
     if (any(is.null(data), nrow(data) == 0)) {
       return(NULL)
     }
-    data <- data %>% 
-      dplyr::rename(covariateNameFull = .data$covariateName) %>% 
-      dplyr::mutate(covariateName = gsub(".*: ","",.data$covariateNameFull)) %>% 
-      dplyr::mutate(covariateName = dplyr::case_when(stringr::str_detect(string = tolower(.data$covariateNameFull), 
-                                                                         pattern = 'age group|gender') ~ .data$covariateNameFull,
-                                                     TRUE ~ gsub(".*: ","",.data$covariateNameFull))) %>% 
-      dplyr::mutate(covariateName = dplyr::case_when(stringr::str_detect(string = tolower(.data$domainId), 
-                                                                         pattern = 'cohort') ~ .data$covariateNameFull,
-                                                     TRUE ~ .data$covariateName)) %>%
-      dplyr::mutate(covariateName = paste0(.data$covariateName, " (", .data$covariateId, ")"))
+    
+    if (input$charType == "Raw") {
+      data <- data %>%
+        dplyr::rename(covariateNameFull = .data$covariateName) %>% 
+        dplyr::mutate(covariateName = gsub(".*: ","",.data$covariateNameFull)) %>% 
+        dplyr::mutate(covariateName = dplyr::case_when(stringr::str_detect(string = tolower(.data$covariateNameFull), 
+                                                                           pattern = 'age group|gender') ~ .data$covariateNameFull,
+                                                       TRUE ~ gsub(".*: ","",.data$covariateNameFull))) %>% 
+        dplyr::mutate(covariateName = dplyr::case_when(stringr::str_detect(string = tolower(.data$domainId), 
+                                                                           pattern = 'cohort') ~ .data$covariateNameFull,
+                                                       TRUE ~ .data$covariateName)) %>%
+        dplyr::mutate(covariateName = paste0(.data$covariateName, " (", .data$covariateId, ")"))
+    }
+    
     return(data)
   })
   
@@ -5588,11 +5590,17 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
     validate(need(!is.null( covariateValueForCohortIdDatabaseIds()$covariateValue) &&
-                    nrow( covariateValueForCohortIdDatabaseIds()$covariateValue) > 0, "No Temporal Characterization data"))
+                    nrow( covariateValueForCohortIdDatabaseIds()$covariateValue) > 0, 
+                  "No Temporal Characterization data"))
+    
     data <- covariateValueForCohortIdDatabaseIds()$covariateValue %>% 
       dplyr::filter(.data$timeId %in% timeIds()) %>% 
-      dplyr::inner_join(covariateRef, by = 'covariateId') %>% 
-      dplyr::inner_join(analysisRef, by = 'analysisId')
+      dplyr::inner_join(covariateValueForCohortIdDatabaseIds()$covariateRef, 
+                        by = c('covariateId', 'characterizationSource')) %>% 
+      dplyr::inner_join(covariateValueForCohortIdDatabaseIds()$analysisRef, 
+                        by = c('analysisId', 'startDay', 'endDay', 'characterizationSource')) %>% 
+      dplyr::distinct()
+    
     return(data)
   })
   
@@ -5880,8 +5888,11 @@ shiny::shinyServer(function(input, output, session) {
     data <- covariateValueForCohortIdsDatabaseId()$covariateValue %>% 
       dplyr::filter(.data$timeId == 0) %>% 
       dplyr::select(-.data$timeId) %>% 
-      dplyr::inner_join(covariateRef, by = "covariateId") %>% 
-      dplyr::inner_join(analysisRef, by = "analysisId")
+      dplyr::inner_join(covariateValueForCohortIdsDatabaseId()$covariateRef, 
+                        by = c("covariateId", "characterizationSource")) %>% 
+      dplyr::select(-.data$startDay, -.data$endDay) %>% 
+      dplyr::inner_join(covariateValueForCohortIdsDatabaseId()$analysisRef, 
+                        by = c("analysisId", "characterizationSource"))
     
     covs1 <- data %>% 
       dplyr::filter(.data$cohortId == cohortId()) %>% 
@@ -6282,10 +6293,13 @@ shiny::shinyServer(function(input, output, session) {
       
       data <- covariateValueForCohortIdsDatabaseId()$covariateValue %>% 
         dplyr::filter(.data$timeId %in% timeIds()) %>% 
-        dplyr::inner_join(covariateRef, by = "covariateId") %>% 
-        dplyr::inner_join(analysisRef, by = "analysisId") %>% 
+        dplyr::inner_join(covariateValueForCohortIdsDatabaseId()$covariateRef, 
+                          by = c("covariateId", "characterizationSource")) %>% 
+        dplyr::inner_join(covariateValueForCohortIdsDatabaseId()$analysisRef, 
+                          by = c("analysisId", "startDay", "endDay", "characterizationSource")) %>% 
         dplyr::select(-.data$startDay, -.data$endDay) %>% 
-        dplyr::inner_join(temporalTimeRef, by = 'timeId') %>% 
+        dplyr::inner_join(covariateValueForCohortIdsDatabaseId()$temporalTimeRef, 
+                          by = 'timeId') %>% 
         dplyr::inner_join(temporalCovariateChoices, by = 'timeId') %>% 
         dplyr::select(-.data$missingMeansZero)
       

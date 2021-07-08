@@ -127,7 +127,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     data = calendarPeriods,
     dropTableIfExists = TRUE,
     createTable = TRUE,
-    progressBar = TRUE,
+    progressBar = FALSE,
     tempTable = TRUE,
     tempEmulationSchema = tempEmulationSchema,
     camelCaseToSnakeCase = TRUE
@@ -138,15 +138,15 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
   sql <-
     SqlRender::loadRenderTranslateSql("ComputeTimeSeries.sql",
                                       packageName = "CohortDiagnostics",
-                                      dbms = connection@dbms)
-  DatabaseConnector::renderTranslateExecuteSql(
+                                      dbms = connection@dbms,
+                                      cohort_database_schema = cohortDatabaseSchema,
+                                      cdm_database_schema = cdmDatabaseSchema,
+                                      cohort_table = cohortTable,
+                                      tempEmulationSchema = tempEmulationSchema,
+                                      cohort_ids = cohortIds)
+  DatabaseConnector::executeSql(
     connection = connection,
-    sql = sql,
-    cohort_database_schema = cohortDatabaseSchema,
-    cdm_database_schema = cdmDatabaseSchema,
-    cohort_table = cohortTable,
-    tempEmulationSchema = tempEmulationSchema,
-    cohort_ids = cohortIds
+    sql = sql
   )
   timeSeries <- renderTranslateQuerySql(
     connection = connection,
@@ -164,10 +164,10 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       .data$records,
       .data$subjects,
       .data$personDays,
-      .data$recordsIncidence,
-      .data$subjectsIncidence,
-      .data$recordsTerminate,
-      .data$subjectsTerminate
+      .data$recordsStart,
+      .data$subjectsStart,
+      .data$recordsEnd,
+      .data$subjectsEnd
     )
   
   DatabaseConnector::renderTranslateExecuteSql(

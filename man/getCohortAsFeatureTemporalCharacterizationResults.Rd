@@ -7,7 +7,8 @@
 getCohortAsFeatureTemporalCharacterizationResults(
   dataSource = .GlobalEnv,
   cohortIds = NULL,
-  databaseIds = NULL
+  databaseIds = NULL,
+  temporalTimeRef = getResultsTemporalTimeRef(dataSource = dataSource)
 )
 }
 \arguments{
