@@ -55,10 +55,6 @@ FROM (
 			FROM #comparator_cohorts
 			) comparator
 	WHERE target_cohort_id != comparator_cohort_id
-		AND target_cohort_id IS NOT NULL
-		AND comparator_cohort_id IS NOT NULL
-		AND target_cohort_id > 0
-		AND comparator_cohort_id > 0
 	),
 	(
 		SELECT DISTINCT subject_id
