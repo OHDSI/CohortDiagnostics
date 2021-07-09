@@ -53,7 +53,7 @@ FROM (
 		) target
 	CROSS JOIN (
 		SELECT DISTINCT cohort_definition_id comparator_cohort_id
-		FROM #comparator_cohorts
+		FROM @cohort_database_schema.@cohort_table
 		WHERE cohort_definition_id IN (@comparator_cohort_ids)
 		) comparator
 	WHERE target_cohort_id != comparator_cohort_id
