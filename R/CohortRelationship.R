@@ -92,8 +92,8 @@ runCohortTemporalRelationshipDiagnostics <-
     seqStart365 <- seq(daysDiff365 * -1, daysDiff365, by = 365)
     seqEnd365 <- seqStart365 + 365  
     
-    seqStart <- c(-365,-30, 0,1,31, -99999, 0, 1, seqStart30, seqStart180, seqStart365)
-    seqEnd <- c( -31, -1, 0, 30, 365, 365, 99999, 99999, seqEnd30, seqEnd180, seqEnd365)
+    seqStart <- c(-365,-30, 0,1,31, -99999, 0, 1, seqStart30, seqStart180, seqStart365, -99999)
+    seqEnd <- c(-31, -1, 0, 30, 365, 365, 99999, 99999, seqEnd30, seqEnd180, seqEnd365, 99999)
     
     timePeriods <- dplyr::tibble(startDay = seqStart,
                                  endDay = seqEnd) %>% 
