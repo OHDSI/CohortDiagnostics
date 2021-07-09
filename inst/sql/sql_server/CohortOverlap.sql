@@ -47,12 +47,14 @@ FROM (
 	SELECT target_cohort_id,
 		comparator_cohort_id
 	FROM (
-		SELECT DISTINCT target_cohort_id
-		FROM #target_cohorts
+		SELECT DISTINCT cohort_definition_id target_cohort_id
+		FROM @cohort_database_schema.@cohort_table
+		WHERE cohort_definition_id IN (@target_cohort_ids)
 		) target
 	CROSS JOIN (
-		SELECT DISTINCT comparator_cohort_id
+		SELECT DISTINCT cohort_definition_id comparator_cohort_id
 		FROM #comparator_cohorts
+		WHERE cohort_definition_id IN (@comparator_cohort_ids)
 		) comparator
 	WHERE target_cohort_id != comparator_cohort_id
 	)
