@@ -24,6 +24,8 @@ and uploaded using \code{uploadResults}}
 \item{databaseIds}{A vector one or more databaseIds to retrieve the results for. This is a 
 character field values from the `databaseId` field of the `database` table 
 of the results data model.}
+
+\item{temporalTimeRef}{A dataframe object with three columns timeId (integer), startDay (integer), endDay (integer)}
 }
 \value{
 Returns a list object with temporalCovariateValue,

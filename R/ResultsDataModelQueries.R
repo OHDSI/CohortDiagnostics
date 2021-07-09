@@ -1162,6 +1162,8 @@ getCohortRelationshipCharacterizationResults <-
 #' @template CohortIds
 #'
 #' @template DatabaseIds
+#' 
+#' @param temporalTimeRef   A dataframe object with three columns timeId (integer), startDay (integer), endDay (integer)
 #'
 #' @return
 #' Returns a list object with temporalCovariateValue,

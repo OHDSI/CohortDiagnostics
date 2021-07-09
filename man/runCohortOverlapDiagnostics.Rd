@@ -10,8 +10,7 @@ runCohortOverlapDiagnostics(
   cohortDatabaseSchema,
   cohortTable = "cohort",
   targetCohortIds,
-  comparatorCohortIds,
-  batchSize = 50
+  comparatorCohortIds
 )
 }
 \arguments{
@@ -35,10 +34,6 @@ this should include both the database and schema name, for example
 \item{targetCohortIds}{List of cohort ids that represent target cohorts}
 
 \item{comparatorCohortIds}{List of cohort ids that represent comparator cohorts}
-
-\item{batchSize}{{Optional, default set to 50} If running diagnostics on large set
-of cohorts, this function allows you to batch them into chunks that
-by default run over 50 target cohorts (and all comparator cohorts).}
 }
 \description{
 Given two sets of cohorts, get data on overlap between the cohorts.
