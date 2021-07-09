@@ -4,9 +4,6 @@ IF OBJECT_ID('tempdb..#target_cohorts', 'U') IS NOT NULL
 IF OBJECT_ID('tempdb..#comparator_cohorts', 'U') IS NOT NULL
 	DROP TABLE #comparator_cohorts;
 
-IF OBJECT_ID('tempdb..#all_subjects', 'U') IS NOT NULL
-	DROP TABLE #all_subjects;
-
 IF OBJECT_ID('tempdb..#universe', 'U') IS NOT NULL
 	DROP TABLE #universe;
 
@@ -40,20 +37,6 @@ WHERE cohort_definition_id IN (@comparator_cohort_ids)
 GROUP BY cohort_definition_id,
 	subject_id;
 
---- get all subjects in either target or comparator
---HINT DISTRIBUTE_ON_KEY(subject_id)
-SELECT DISTINCT subject_id
-INTO #all_subjects
-FROM (
-	SELECT DISTINCT subject_id
-	FROM #target_cohorts
-	
-	UNION
-	
-	SELECT DISTINCT subject_id
-	FROM #comparator_cohorts
-	) subjects;
-
 --- create the universe of all combis of target_cohort_id, comparator_cohort_id and subject_id
 --HINT DISTRIBUTE_ON_KEY(subject_id)
 SELECT DISTINCT target_cohort_id,
@@ -61,19 +44,31 @@ SELECT DISTINCT target_cohort_id,
 	subject_id
 INTO #universe
 FROM (
-	SELECT DISTINCT target_cohort_id
-	FROM #target_cohorts
-	) target,
+	SELECT target_cohort_id,
+		comparator_cohort_id
+	FROM (
+		SELECT DISTINCT target_cohort_id
+		FROM #target_cohorts
+		) target,
+		(
+			SELECT DISTINCT comparator_cohort_id
+			FROM #comparator_cohorts
+			) comparator
+	WHERE target_cohort_id != comparator_cohort_id
+		AND target_cohort_id IS NOT NULL
+		AND comparator_cohort_id IS NOT NULL
+		AND target_cohort_id > 0
+		AND comparator_cohort_id > 0
+	),
 	(
-		SELECT DISTINCT comparator_cohort_id
+		SELECT DISTINCT subject_id
+		FROM #target_cohorts
+		
+		UNION
+		
+		SELECT DISTINCT subject_id
 		FROM #comparator_cohorts
-		) comparator,
-	#all_subjects subjects
-WHERE target_cohort_id != comparator_cohort_id
-	AND target_cohort_id IS NOT NULL
-	AND comparator_cohort_id IS NOT NULL
-	AND target_cohort_id > 0
-	AND comparator_cohort_id > 0;
+		) subjects;
 
 SELECT all1.target_cohort_id,
 	all1.comparator_cohort_id,
@@ -230,9 +225,6 @@ IF OBJECT_ID('tempdb..#target_cohorts', 'U') IS NOT NULL
 
 IF OBJECT_ID('tempdb..#comparator_cohorts', 'U') IS NOT NULL
 	DROP TABLE #comparator_cohorts;
-
-IF OBJECT_ID('tempdb..#all_subjects', 'U') IS NOT NULL
-	DROP TABLE #all_subjects;
 
 IF OBJECT_ID('tempdb..#universe', 'U') IS NOT NULL
 	DROP TABLE #universe;

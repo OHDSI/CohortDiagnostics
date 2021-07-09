@@ -27,14 +27,11 @@
 #' @template CohortDatabaseSchema
 #'
 #' @template CohortTable
-#' 
+#'
 #' @param targetCohortIds             List of cohort ids that represent target cohorts
 #'
 #' @param comparatorCohortIds          List of cohort ids that represent comparator cohorts
 #'
-#' @param batchSize                   {Optional, default set to 50} If running diagnostics on large set
-#'                                    of cohorts, this function allows you to batch them into chunks that
-#'                                    by default run over 50 target cohorts (and all comparator cohorts).
 #'
 #' @export
 runCohortOverlapDiagnostics <- function(connectionDetails = NULL,
@@ -42,8 +39,7 @@ runCohortOverlapDiagnostics <- function(connectionDetails = NULL,
                                         cohortDatabaseSchema,
                                         cohortTable = "cohort",
                                         targetCohortIds,
-                                        comparatorCohortIds,
-                                        batchSize = 50) {
+                                        comparatorCohortIds) {
   startTime <- Sys.time()
   
   if (length(targetCohortIds) == 0) {
@@ -53,51 +49,34 @@ runCohortOverlapDiagnostics <- function(connectionDetails = NULL,
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
+  sql <- SqlRender::loadRenderTranslateSql(
+    "CohortOverlap.sql",
+    packageName = "CohortDiagnostics",
+    dbms = connection@dbms,
+    cohort_database_schema = cohortDatabaseSchema,
+    cohort_table = cohortTable,
+    target_cohort_ids = targetCohortIds,
+    comparator_cohort_ids = comparatorCohortIds
+  )
+  DatabaseConnector::executeSql(connection = connection,
+                                sql = sql)
   
-  results <- Andromeda::andromeda()
-  for (start in seq(1, length(targetCohortIds), by = batchSize)) {
-    end <- min(start + batchSize - 1, length(targetCohortIds))
-    if (length(targetCohortIds) > batchSize) {
-      ParallelLogger::logInfo(sprintf(
-        "Batch Cohort Overlap Processing cohorts %s through %s",
-        start,
-        end
-      ))
-    }
-    sql <- SqlRender::loadRenderTranslateSql(
-      "CohortOverlap.sql",
-      packageName = "CohortDiagnostics",
-      dbms = connection@dbms,
-      cohort_database_schema = cohortDatabaseSchema,
-      cohort_table = cohortTable,
-      target_cohort_ids = targetCohortIds,
-      comparator_cohort_ids = comparatorCohortIds
-    )
-    DatabaseConnector::executeSql(connection = connection,
-                                  sql = sql)
-    
-    overlap <- renderTranslateQuerySql(
-      connection = connection,
-      sql = "SELECT * FROM #cohort_overlap_long;",
-      snakeCaseToCamelCase = TRUE
-    )
-    
-    DatabaseConnector::renderTranslateExecuteSql(connection = connection,
-                                                 sql = "IF OBJECT_ID('tempdb..#cohort_overlap_long', 'U') IS NOT NULL DROP TABLE #cohort_overlap_long;",
-                                                 progressBar = TRUE)
-    
-    if ("overlap" %in% names(results)) {
-      Andromeda::appendToTable(results$overlap, overlap)
-    } else {
-      results$overlap <- overlap
-    }
-  }
-  overlapAll <- results$overlap %>% dplyr::collect()
+  overlap <- renderTranslateQuerySql(
+    connection = connection,
+    sql = "SELECT * FROM #cohort_overlap_long;",
+    snakeCaseToCamelCase = TRUE
+  )
+  
+  DatabaseConnector::renderTranslateExecuteSql(connection = connection,
+                                               sql = "IF OBJECT_ID('tempdb..#cohort_overlap_long', 'U') IS NOT NULL 
+                                                       DROP TABLE #cohort_overlap_long;",
+                                               progressBar = TRUE)
+  
   delta <- Sys.time() - startTime
   ParallelLogger::logInfo(paste(
     "Computing overlap took",
     signif(delta, 3),
     attr(delta, "units")
   ))
-  return(overlapAll)
+  return(overlap)
 }
