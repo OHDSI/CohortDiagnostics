@@ -49,22 +49,21 @@ FROM (
 	FROM (
 		SELECT DISTINCT target_cohort_id
 		FROM #target_cohorts
-		) target,
-		(
-			SELECT DISTINCT comparator_cohort_id
-			FROM #comparator_cohorts
-			) comparator
-	WHERE target_cohort_id != comparator_cohort_id
-	),
-	(
-		SELECT DISTINCT subject_id
-		FROM #target_cohorts
-		
-		UNION
-		
-		SELECT DISTINCT subject_id
+		) target
+	CROSS JOIN (
+		SELECT DISTINCT comparator_cohort_id
 		FROM #comparator_cohorts
-		) subjects;
+		) comparator
+	WHERE target_cohort_id != comparator_cohort_id
+	)
+CROSS JOIN (
+	SELECT DISTINCT subject_id
+	FROM @cohort_database_schema.@cohort_table
+	WHERE cohort_definition_id IN (
+			@comparator_cohort_ids,
+			@target_cohort_ids
+			)
+	) subjects;
 
 SELECT all1.target_cohort_id,
 	all1.comparator_cohort_id,
