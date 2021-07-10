@@ -4931,8 +4931,6 @@ shiny::shinyServer(function(input, output, session) {
                                             tr(lapply(recordAndPersonColumnName, th, style = "border-right:1px solid silver;border-bottom:1px solid silver"))
                                           )))
       
-      
-      
       columnColor <- 4 + 1:(length(databaseIds) * 2)
       noOfMergeColumns <- 2
     }
@@ -5690,9 +5688,9 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::inner_join(covariateValueForCohortIdDatabaseIds()$covariateRef, 
                         by = c('covariateId', 'characterizationSource')) %>% 
       dplyr::inner_join(covariateValueForCohortIdDatabaseIds()$analysisRef, 
-                        by = c('analysisId', 'startDay', 'endDay', 'characterizationSource')) %>% 
+                        by = c('analysisId', 'startDay', 'endDay',
+                               'characterizationSource')) %>% 
       dplyr::distinct()
-    
     return(data)
   })
   

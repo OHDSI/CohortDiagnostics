@@ -1280,7 +1280,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   metadata <-
     dplyr::tibble(
       databaseId = as.character(!!databaseId),
-      startTime = as.character(start),
+      startTime = paste0("DT-", as.character(start)),
       variableField = c(
         "runTime",
         "runTimeUnits",
