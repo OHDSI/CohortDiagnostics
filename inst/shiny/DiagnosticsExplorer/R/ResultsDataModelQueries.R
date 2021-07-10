@@ -1405,7 +1405,7 @@ getMultipleCharacterizationResults <-
     if (!is.null(analysisRef)) {
       analysisRef <- analysisRef  %>% 
         dplyr::arrange(.data$analysisId, .data$characterizationSource)
-      }
+    }
     if (nrow(analysisRef) == 0) {
       analysisRef <- NULL
     }
@@ -1445,8 +1445,8 @@ getMultipleCharacterizationResults <-
     ) 
     if (!is.null(covariateValueDist)) {
       covariateValueDist <- covariateValueDist %>% 
-      dplyr::distinct() %>% 
-      dplyr::arrange(.data$cohortId, .data$covariateId, .data$characterizationSource)
+        dplyr::distinct() %>% 
+        dplyr::arrange(.data$cohortId, .data$covariateId, .data$characterizationSource)
     }
     if (nrow(covariateValueDist) == 0) {
       covariateValueDist <- NULL
@@ -1459,8 +1459,8 @@ getMultipleCharacterizationResults <-
     )
     if (!is.null(concept)) {
       concept <- concept %>%  
-      dplyr::distinct() %>% 
-      dplyr::arrange(.data$conceptId)
+        dplyr::distinct() %>% 
+        dplyr::arrange(.data$conceptId)
     }
     if (nrow(concept) == 0) {
       concept <- NULL
