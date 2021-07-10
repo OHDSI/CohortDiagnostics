@@ -8,7 +8,6 @@ DROP TABLE IF EXISTS cohort_inclusion;
 DROP TABLE IF EXISTS cohort_inclusion_result;
 DROP TABLE IF EXISTS cohort_inclusion_stats;
 DROP TABLE IF EXISTS cohort_summary_stats;
-DROP TABLE IF EXISTS cohort_overlap;
 DROP TABLE IF EXISTS cohort_relationships;
 DROP TABLE IF EXISTS concept;
 DROP TABLE IF EXISTS concept_ancestor;
@@ -136,24 +135,6 @@ CREATE TABLE cohort_summary_stats(
 	PRIMARY KEY(cohort_id, database_id, mode_id)
 );
 
---Table cohort_overlap
-
-CREATE TABLE cohort_overlap (
-			either_subjects FLOAT NOT NULL,
-			both_subjects FLOAT NOT NULL,
-			t_only_subjects FLOAT NOT NULL,
-			c_only_subjects FLOAT NOT NULL,
-			t_before_c_subjects FLOAT NOT NULL,
-			c_before_t_subjects FLOAT NOT NULL,
-			same_day_subjects FLOAT NOT NULL,
-			t_in_c_subjects FLOAT NOT NULL,
-			c_in_t_subjects FLOAT NOT NULL,
-			target_cohort_id BIGINT NOT NULL,
-			comparator_cohort_id BIGINT NOT NULL,
-			database_id VARCHAR NOT NULL,
-			PRIMARY KEY(target_cohort_id, comparator_cohort_id, database_id)
-);
-
 
 --Table cohort_relationships
 
@@ -164,13 +145,27 @@ CREATE TABLE cohort_relationships (
 			relationship_type VARCHAR NOT NULL,
 			start_day FLOAT NOT NULL,
 			end_day FLOAT NOT NULL,
-			records BIGINT NOT NULL,
-			subjects BIGINT NOT NULL,
-			person_days BIGINT NOT NULL,
-			records_start BIGINT,
-			subjects_start BIGINT,
-			records_end BIGINT,
-			subjects_end BIGINT,	
+			targetRecords BIGINT NOT NULL,
+			targetSubjects BIGINT NOT NULL,
+			comparatorRecords BIGINT NOT NULL,
+			comparatorSubjects BIGINT NOT NULL,
+			bothRecords BIGINT NOT NULL,
+			bothSubjects BIGINT NOT NULL,
+			tRecordsOnly BIGINT NOT NULL,
+			tSubjectsOnly BIGINT NOT NULL,
+			cBeforeTRecords BIGINT NOT NULL,
+			cBeforeTSubjects BIGINT NOT NULL,
+			tBeforeCRecords BIGINT NOT NULL,
+			tBeforeCSubjects BIGINT NOT NULL,
+			sameDayRecords BIGINT NOT NULL,
+			sameDaySubjects BIGINT NOT NULL,
+			cPersonDays BIGINT NOT NULL,
+			cRecordsStart BIGINT NOT NULL,
+			cSubjectsStart BIGINT NOT NULL,
+			cRecordsEnd BIGINT NOT NULL,
+			cSubjectsEnd BIGINT NOT NULL,
+			cInTRecords BIGINT NOT NULL,
+			cInTSubjects BIGINT NOT NULL,
 			PRIMARY KEY(database_id, cohort_id, comparator_cohort_id, relationship_type, start_day, end_day)
 );
 
@@ -357,9 +352,10 @@ CREATE TABLE index_event_breakdown (
 
 CREATE TABLE metadata (
 			database_id VARCHAR NOT NULL,
+			start_time TIMESTAMP NOT NULL,
 			variable_field VARCHAR NOT NULL,
 			value_field VARCHAR,
-			PRIMARY KEY(database_id, variable_field)
+			PRIMARY KEY(database_id, start_time, variable_field)
 );
 
 --Table orphan_concept

@@ -31,7 +31,6 @@ runCohortDiagnostics(
   runBreakdownIndexEvents = TRUE,
   runIncidenceRate = TRUE,
   runTimeSeries = TRUE,
-  runCohortOverlap = FALSE,
   runCohortTemporalRelationship = TRUE,
   runCohortCharacterization = TRUE,
   covariateSettings = list(FeatureExtraction::createDefaultCovariateSettings(),
@@ -131,10 +130,6 @@ does not exist it will be created.}
 \item{runIncidenceRate}{Generate and export the cohort incidence  rates?}
 
 \item{runTimeSeries}{Generate and export the cohort prevalence  rates?}
-
-\item{runCohortOverlap}{Generate and export the cohort overlap? Overlaps are checked within cohortIds
-that have the same phenotype ID sourced from the CohortSetReference or
-cohortToCreateFile.}
 
 \item{runCohortTemporalRelationship}{Do you want to compute temporal relationship between the cohorts being diagnosed. This
 diagnostics is needed for cohort as feature characterization.}

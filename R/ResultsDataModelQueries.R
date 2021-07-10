@@ -1017,7 +1017,7 @@ getCohortRelationshipCharacterizationResults <-
     summarizeCohortRelationship <- function(data,
                                             startDay = NULL,
                                             endDay = NULL,
-                                            domain = 'records',
+                                            valueField = 'records',
                                             analysisId,
                                             cohortCounts) {
       
@@ -1026,7 +1026,8 @@ getCohortRelationshipCharacterizationResults <-
       data <- data %>% 
         dplyr::filter(.data$relationshipType == 'T1') %>% 
         dplyr::select(-.data$relationshipType)
-      data$sumValue <- data[[domain]]
+      
+      data$sumValue <- data[[valueField]]
       data <- data  %>%
         dplyr::filter(.data$startDay == !!startDay) %>%
         dplyr::filter(.data$endDay == !!endDay) %>% 
@@ -1035,7 +1036,7 @@ getCohortRelationshipCharacterizationResults <-
                       .data$comparatorCohortId,
                       .data$sumValue)
       
-      if (stringr::str_detect(string = domain, pattern = 'record')) {
+      if (stringr::str_detect(string = valueField, pattern = 'record')) {
         denominator <- cohortCounts  %>% 
           dplyr::rename(denominator = .data$cohortEntries)%>%
           dplyr::select(.data$cohortId,
@@ -1076,15 +1077,24 @@ getCohortRelationshipCharacterizationResults <-
                       "CohortEraLongTerm",
                       "CohortEraMediumTerm",
                       "CohortEraShortTerm")
+    valueField <- c("cSubjectsStart",
+                    "cSubjectsStart",
+                    "cSubjectsStart",
+                    "cSubjectsStart",
+                    "comparatorSubjects",
+                    "comparatorSubjects",
+                    "comparatorSubjects",
+                    "comparatorSubjects")
     startDay <- c(-99999,-365,-180,-30,-99999,-365,-180,-30)
     endDay <- c(0,0,0,0,0,0,0,0)
-    analysisRef <- dplyr::tibble(analysisId, analysisName, startDay, endDay, 'Cohort') %>% 
+    analysisRef <- dplyr::tibble(analysisId, analysisName, valueField, startDay, endDay) %>% 
       dplyr::mutate(isBinary = 'Y',
                     missingMeansZero = 'Y') %>% 
       dplyr::arrange(.data$analysisId) %>% 
       dplyr::mutate(domainId = 'Cohort') %>% 
       dplyr::select(.data$analysisId,
                     .data$analysisName,
+                    .data$valueField,
                     .data$domainId,
                     .data$startDay,
                     .data$endDay,
@@ -1096,8 +1106,8 @@ getCohortRelationshipCharacterizationResults <-
       result[[j]] <- summarizeCohortRelationship(data = cohortRelationships,
                                                  startDay = analysisRef[j,]$startDay,
                                                  endDay = analysisRef[j,]$endDay,
-                                                 domain = analysisRef[j,]$domain,
                                                  analysisId = analysisRef[j,]$analysisId,
+                                                 valueField = analysisRef[j,]$valueField,
                                                  cohortCounts = cohortCounts)
     }
     result <- dplyr::bind_rows(result)
@@ -1170,6 +1180,7 @@ getCohortAsFeatureTemporalCharacterizationResults <-
            cohortIds = NULL,
            databaseIds = NULL,
            temporalTimeRef = getResultsTemporalTimeRef(dataSource = dataSource)) {
+    
     # meta information
     cohortCounts <-
       getResultsFromCohortCount(dataSource = dataSource,
@@ -1187,13 +1198,11 @@ getCohortAsFeatureTemporalCharacterizationResults <-
       return(NULL)
     }
     
-    cohortRelationships <- cohortRelationships %>% 
-      dplyr::inner_join(temporalTimeRef, by = c('startDay', 'endDay'))
-    
     # comparator cohort was on or after target cohort
     summarizeCohortRelationship <- function(data,
-                                            domain = 'records',
+                                            valueField = 'records',
                                             analysisId,
+                                            temporalTimeRef,
                                             cohortCounts) {
       
       if (is.null(data) || nrow(data) == 0) {return(NULL)}
@@ -1201,8 +1210,10 @@ getCohortAsFeatureTemporalCharacterizationResults <-
       data <- data %>% 
         dplyr::filter(.data$relationshipType == 'T1') %>% 
         dplyr::select(-.data$relationshipType)
-      data$sumValue <- data[[domain]]
+      data$sumValue <- data[[valueField]]
       data <- data  %>%
+        dplyr::inner_join(temporalTimeRef, 
+                          by = c("startDay", "endDay")) %>% 
         dplyr::select(.data$databaseId,
                       .data$cohortId,
                       .data$comparatorCohortId,
@@ -1211,19 +1222,11 @@ getCohortAsFeatureTemporalCharacterizationResults <-
                       .data$endDay,
                       .data$sumValue)
       
-      if (stringr::str_detect(string = domain, pattern = 'record')) {
-        denominator <- cohortCounts  %>% 
-          dplyr::rename(denominator = .data$cohortEntries)%>%
-          dplyr::select(.data$cohortId,
-                        .data$databaseId,
-                        .data$denominator)
-      } else {
-        denominator <- cohortCounts  %>% 
-          dplyr::rename(denominator = .data$cohortSubjects)%>%
-          dplyr::select(.data$cohortId,
-                        .data$databaseId,
-                        .data$denominator)        
-      }
+      denominator <- cohortCounts  %>% 
+        dplyr::rename(denominator = .data$cohortSubjects)%>%
+        dplyr::select(.data$cohortId,
+                      .data$databaseId,
+                      .data$denominator)
       
       data <- data %>% 
         dplyr::inner_join(denominator, by = c('databaseId', 'cohortId')) %>%
@@ -1248,16 +1251,17 @@ getCohortAsFeatureTemporalCharacterizationResults <-
     
     analysisId <- c(-101,-201)
     analysisName <- c("CohortEraStart", "CohortEraOverlap")
-    analysisRef <- dplyr::tibble(analysisId, analysisName, 'Cohort') %>% 
+    valueField <- c("cSubjectsStart",
+                    "comparatorSubjects")
+    analysisRef <- dplyr::tibble(analysisId, analysisName, valueField) %>% 
       dplyr::mutate(isBinary = 'Y',
                     missingMeansZero = 'Y') %>% 
       dplyr::arrange(.data$analysisId) %>% 
-      dplyr::mutate(domainId = 'Cohort') %>% 
+      dplyr::mutate(domainId = 'Cohort') %>%
       dplyr::select(.data$analysisId,
                     .data$analysisName,
+                    .data$valueField,
                     .data$domainId,
-                    .data$startDay,
-                    .data$endDay,
                     .data$isBinary,
                     .data$missingMeansZero) %>% 
       dplyr::distinct()
@@ -1265,8 +1269,9 @@ getCohortAsFeatureTemporalCharacterizationResults <-
     result <- list()
     for (j in (1:nrow(analysisRef))) {
       result[[j]] <- summarizeCohortRelationship(data = cohortRelationships,
-                                                 domain = analysisRef[j,]$domain,
+                                                 valueField = analysisRef[j,]$valueField,
                                                  analysisId = analysisRef[j,]$analysisId,
+                                                 temporalTimeRef = temporalTimeRef,
                                                  cohortCounts = cohortCounts)
     }
     result <- dplyr::bind_rows(result)
@@ -1274,10 +1279,6 @@ getCohortAsFeatureTemporalCharacterizationResults <-
     if (nrow(result) == 0) {
       result <- NULL
     }
-    
-    analysisRef <- tidyr::crossing(analysisRef, temporalTimeRef) %>% 
-      dplyr::select(-.data$timeId) %>% 
-      dplyr::distinct()
     
     covariateRef <- tidyr::crossing(cohort,
                                     analysisRef %>% 
