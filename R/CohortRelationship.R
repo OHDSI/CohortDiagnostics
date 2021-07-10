@@ -146,20 +146,34 @@ runCohortTemporalRelationshipDiagnostics <-
                     .data$relationshipType,
                     .data$startDay,
                     .data$endDay,
-                    .data$subjects,
-                    .data$records,
-                    .data$personDays,
-                    .data$recordsStart,
-                    .data$subjectsStart,
-                    .data$recordsEnd,
-                    .data$subjectsEnd) %>% 
+                    .data$targetRecords,
+                    .data$targetSubjects,
+                    .data$comparatorRecords,
+                    .data$comparatorSubjects,
+                    .data$bothRecords,
+                    .data$bothSubjects,
+                    .data$tRecordsOnly,
+                    .data$tSubjectsOnly,
+                    .data$cBeforeTRecords,
+                    .data$cBeforeTSubjects,
+                    .data$tBeforeCRecords,
+                    .data$tBeforeCSubjects,
+                    .data$sameDayRecords,
+                    .data$sameDaySubjects,
+                    .data$cPersonDays,
+                    .data$cRecordsStart,
+                    .data$cSubjectsStart,
+                    .data$cRecordsEnd,
+                    .data$cSubjectsEnd,
+                    .data$cInTRecords,
+                    .data$cInTSubjects) %>% 
       dplyr::arrange(.data$cohortId, 
                      .data$comparatorCohortId,
                      .data$relationshipType,
                      .data$startDay,
                      .data$endDay,
-                     .data$subjects,
-                     .data$records)
+                     .data$targetRecords,
+                     .data$targetSubjects)
     
     delta <- Sys.time() - startTime
     ParallelLogger::logInfo(paste(

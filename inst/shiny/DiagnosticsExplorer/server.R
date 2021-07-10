@@ -1510,8 +1510,11 @@ shiny::shinyServer(function(input, output, session) {
     
     data <- getResultsFromOrphanConcept(dataSource = dataSource,
                                         cohortId = row$cohortId,
-                                        databaseIds = getDatabaseIdInCohortConceptSet()) %>% 
-      dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id)
+                                        databaseIds = getDatabaseIdInCohortConceptSet())
+    if (!is.null(data)) {
+      data <- data %>% 
+        dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id)
+    }
     
     validate(need(nrow(data) > 0, "No orphan codes returned"))
     
@@ -5306,8 +5309,8 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   characterizationTableData <- shiny::reactive(x = {
-    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
-    validate(need(length(cohortId()) > 0, "No cohorts chosen"))
+    if (length(databaseIds()) > 0) {return(NULL)}
+    if (length(cohortId()) > 0) {return(NULL)}
     data <- characterizationData()
     
     if (any(is.null(data), nrow(data) == 0)) {
@@ -5346,17 +5349,16 @@ shiny::shinyServer(function(input, output, session) {
   
   shiny::observe({
     data <- characterizationTableData()
-    if (all(!is.null(data), nrow(data) > 0)) {
-      subset <-
-        characterizationTableData()$analysisName %>% unique() %>% sort()
-      shinyWidgets::updatePickerInput(
-        session = session,
-        inputId = "characterizationAnalysisNameFilter",
-        choicesOpt = list(style = rep_len("color: black;", 999)),
-        choices = subset,
-        selected = subset
-      )
-    }
+    if (any(is.null(data), nrow(data) == 0)) { return(NULL)}
+    subset <-
+      characterizationTableData()$analysisName %>% unique() %>% sort()
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "characterizationAnalysisNameFilter",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = subset,
+      selected = subset
+    )
   })
   
   shiny::observe({
