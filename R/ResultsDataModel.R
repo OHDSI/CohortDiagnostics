@@ -34,21 +34,24 @@ checkFixColumnNames <-
            tableName,
            zipFileName,
            specifications = getResultsDataModelSpecifications()) {
-    observeredNames <- colnames(table)[order(colnames(table))]
+    observeredNames <- colnames(table)[order(colnames(table))] %>% 
+      sort()
     
     tableSpecs <- specifications %>%
       dplyr::filter(.data$tableName == !!tableName)
     
     optionalNames <- tableSpecs %>%
       dplyr::filter(.data$optional == "Yes") %>%
-      dplyr::select(.data$fieldName)
+      dplyr::select(.data$fieldName) %>% 
+      sort()
     
     expectedNames <- tableSpecs %>%
       dplyr::select(.data$fieldName) %>%
       dplyr::anti_join(dplyr::filter(optionalNames, !.data$fieldName %in% observeredNames),
                        by = "fieldName") %>%
       dplyr::arrange(.data$fieldName) %>%
-      dplyr::pull()
+      dplyr::pull() %>% 
+      sort()
     
     if (!isTRUE(all.equal(expectedNames, observeredNames))) {
       stop(
