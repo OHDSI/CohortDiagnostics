@@ -43,15 +43,25 @@ checkFixColumnNames <-
     optionalNames <- tableSpecs %>%
       dplyr::filter(.data$optional == "Yes") %>%
       dplyr::select(.data$fieldName) %>% 
-      sort()
+      dplyr::arrange(.data$fieldName)
     
     expectedNames <- tableSpecs %>%
-      dplyr::select(.data$fieldName) %>%
+      dplyr::select(.data$fieldName) %>% 
+      dplyr::arrange(.data$fieldName)
+    
+    if (length(optionalNames) > 0) {
+      expectedNames <- expectedNames %>% 
       dplyr::anti_join(dplyr::filter(optionalNames, !.data$fieldName %in% observeredNames),
                        by = "fieldName") %>%
-      dplyr::arrange(.data$fieldName) %>%
-      dplyr::pull() %>% 
-      sort()
+        dplyr::arrange(.data$fieldName) %>%
+        dplyr::pull() %>% 
+        sort()
+    } else {
+      expectedNames <- expectedNames %>% 
+        dplyr::pull() %>% 
+        sort()
+    }
+      
     
     if (!isTRUE(all.equal(expectedNames, observeredNames))) {
       stop(
