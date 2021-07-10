@@ -5223,9 +5223,9 @@ shiny::shinyServer(function(input, output, session) {
   # Characterization -------------------------------------------------
   # Characterization and temporal characterization data for one cohortId and multiple databaseIds
   covariateValueForCohortIdDatabaseIds <- shiny::reactive(x = {
-    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
-    validate(need(length(cohortId()) > 0, "No cohorts chosen"))
-    if (all(is(dataSource, "environment"), !any(exists('covariateValue'), exists('temporalCovariateValue')))) {
+    if (all(is(dataSource, "environment"), 
+            !any(exists('covariateValue'), 
+                 exists('temporalCovariateValue')))) {
       return(NULL)
     }
     
@@ -5233,7 +5233,10 @@ shiny::shinyServer(function(input, output, session) {
     on.exit(progress$close())
     progress$set(message = paste0("Extracting characterization data for target cohort:", cohortId()), 
                  value = 0)
-    
+    if (any(length(cohortId()) != 1,
+            length(databaseIds()) == 0)) {
+      return(NULL)
+    }
     data <- getMultipleCharacterizationResults(
       dataSource = dataSource,
       cohortIds = cohortId(),
@@ -5243,40 +5246,41 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   characterizationData <- shiny::reactive(x = {
-    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
-    validate(need(length(cohortId()) > 0, "No cohorts chosen"))
-    
+    if (any(length(cohortId()) != 1,
+            length(databaseIds()) == 0)) {
+      return(NULL)
+    }
     if (input$charType == "Pretty") {
       analysisIds <- prettyAnalysisIds
     } else {
       analysisIds <- NULL
     }
-    
     covariatesTofilter <- covariateValueForCohortIdDatabaseIds()$covariateRef
     if (!is.null(analysisIds)) {
       covariatesTofilter <- covariatesTofilter %>% 
         dplyr::filter(.data$analysisId %in% analysisIds)
     }
-    
     if (!is.null(covariateValueForCohortIdDatabaseIds()$covariateValue)) {
-      characterizationData <- covariateValueForCohortIdDatabaseIds()$covariateValue %>%
+      characterizationDataValue <- covariateValueForCohortIdDatabaseIds()$covariateValue %>%
         dplyr::filter(.data$timeId == 0) %>% 
         dplyr::select(-.data$timeId) %>% 
-        dplyr::inner_join(covariatesTofilter, by = c('covariateId', 'characterizationSource')) %>% 
-        dplyr::inner_join(covariateValueForCohortIdDatabaseIds()$analysisRef, by = c('analysisId',
-                                                                                     'characterizationSource'))
+        dplyr::inner_join(covariatesTofilter, 
+                          by = c('covariateId', 'characterizationSource')) %>% 
+        dplyr::inner_join(covariateValueForCohortIdDatabaseIds()$analysisRef, 
+                          by = c('analysisId','characterizationSource'))
     } else {
-      characterizationData <- NULL
+      characterizationDataValue <- NULL
     }
-    
-    if (any(is.null(characterizationData), nrow(characterizationData) == 0)) {
+    if (any(is.null(characterizationDataValue), 
+            nrow(characterizationDataValue) == 0)) {
       return(NULL)
     }
-    return(characterizationData)
+    return(characterizationDataValue)
   })
   
   getConceptSetNameForFilter <- shiny::reactive(x = {
-    if (length(cohortId()) == 0 || length(databaseIds()) == 0) {
+    if (any(length(cohortId()) == 0,
+            length(databaseIds()) == 0)) {
       return(NULL)
     }
     
@@ -5307,14 +5311,10 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   characterizationTableData <- shiny::reactive(x = {
-    if (length(databaseIds()) > 0) {return(NULL)}
-    if (length(cohortId()) > 0) {return(NULL)}
     data <- characterizationData()
-    
     if (any(is.null(data), nrow(data) == 0)) {
       return(NULL)
     }
-    
     if (input$charType == "Raw" &&
         input$charProportionOrContinuous == "Proportion") {
       data <- data %>%
@@ -5324,32 +5324,42 @@ shiny::shinyServer(function(input, output, session) {
       data <- data %>%
         dplyr::filter(.data$isBinary == 'N')
     }
-    
     if (any(is.null(data), nrow(data) == 0)) {
       return(NULL)
     }
-    
     if (input$charType == "Raw") {
       data <- data %>%
-        dplyr::rename(covariateNameFull = .data$covariateName) %>% 
-        dplyr::mutate(covariateName = gsub(".*: ","",.data$covariateNameFull)) %>% 
-        dplyr::mutate(covariateName = dplyr::case_when(stringr::str_detect(string = tolower(.data$covariateNameFull), 
-                                                                           pattern = 'age group|gender') ~ .data$covariateNameFull,
-                                                       TRUE ~ gsub(".*: ","",.data$covariateNameFull))) %>% 
-        dplyr::mutate(covariateName = dplyr::case_when(stringr::str_detect(string = tolower(.data$domainId), 
-                                                                           pattern = 'cohort') ~ .data$covariateNameFull,
-                                                       TRUE ~ .data$covariateName)) %>%
+        dplyr::rename(covariateNameFull = .data$covariateName) %>%
+        dplyr::mutate(covariateName =
+                        gsub(".*: ", "", .data$covariateNameFull)) %>%
+        dplyr::mutate(
+          covariateName = dplyr::case_when(
+            stringr::str_detect(
+              string = tolower(.data$covariateNameFull),
+              pattern = 'age group|gender'
+            ) ~ .data$covariateNameFull,
+            TRUE ~ gsub(".*: ", "", .data$covariateNameFull)
+          )
+        ) %>%
+        dplyr::mutate(
+          covariateName = dplyr::case_when(
+            stringr::str_detect(string = tolower(.data$domainId),
+                                pattern = 'cohort') ~ .data$covariateNameFull,
+            TRUE ~ .data$covariateName
+          )
+        ) %>%
         dplyr::mutate(covariateName = paste0(.data$covariateName, " (", .data$covariateId, ")"))
     }
-    
     return(data)
   })
   
   shiny::observe({
     data <- characterizationTableData()
-    if (any(is.null(data), nrow(data) == 0)) { return(NULL)}
+    if (any(is.null(data), 
+            nrow(data$analysisName) == 0)) 
+      {return(NULL)}
     subset <-
-      characterizationTableData()$analysisName %>% unique() %>% sort()
+      data$analysisName %>% unique() %>% sort()
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "characterizationAnalysisNameFilter",
@@ -5361,9 +5371,10 @@ shiny::shinyServer(function(input, output, session) {
   
   shiny::observe({
     data <- characterizationTableData()
-    if (all(!is.null(data), nrow(data) > 0)) {
+    if (all(!is.null(data), 
+            nrow(data$domainId) > 0)) {
       subset <-
-        characterizationTableData()$domainId %>% unique() %>% sort()
+        data$domainId %>% unique() %>% sort()
       shinyWidgets::updatePickerInput(
         session = session,
         inputId = "characterizationDomainNameFilter",
@@ -5375,7 +5386,9 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   shiny::observe({
-    subset <- getConceptSetNameForFilter()$name %>% sort() %>% unique()
+    subset <- getConceptSetNameForFilter()$name %>% 
+      sort() %>% 
+      unique()
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "conceptSetsToFilterCharacterization",
@@ -5677,9 +5690,13 @@ shiny::shinyServer(function(input, output, session) {
   
   # Temporal characterization -----------------------------------------------------------------
   temporalCharacterizationData <- shiny::reactive(x = {
+    if (any(length(cohortId()) != 1,
+            length(databaseIds()) == 0)) {
+      return(NULL)
+    } 
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
-    validate(need(!is.null( covariateValueForCohortIdDatabaseIds()$covariateValue) &&
+    validate(need(!is.null(covariateValueForCohortIdDatabaseIds()$covariateValue) &&
                     nrow( covariateValueForCohortIdDatabaseIds()$covariateValue) > 0, 
                   "No Temporal Characterization data"))
     
