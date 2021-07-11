@@ -133,10 +133,15 @@ runCohortRelationshipDiagnostics <-
         snakeCaseToCamelCase = TRUE
       )
     
-    dropSql = "IF OBJECT_ID('tempdb..#cohort_rel', 'U') IS NOT NULL DROP TABLE #cohort_rel;"
+    dropSqlCohortRel = "IF OBJECT_ID('tempdb..#cohort_rel', 'U') IS NOT NULL DROP TABLE #cohort_rel;"
     DatabaseConnector::renderTranslateExecuteSql(connection = connection,
-                                                 sql = dropSql,
-                                                 progressBar = TRUE)
+                                                 sql = dropSqlCohortRel,
+                                                 progressBar = FALSE)
+    
+    dropSqlTimePeriods = "IF OBJECT_ID('tempdb..#time_periods', 'U') IS NOT NULL DROP TABLE #time_periods;"
+    DatabaseConnector::renderTranslateExecuteSql(connection = connection,
+                                                 sql = dropSqlTimePeriods,
+                                                 progressBar = FALSE)   
     
     temporalRelationship <- temporalRelationship %>% 
       dplyr::inner_join(timePeriods, by = 'timeId') %>%

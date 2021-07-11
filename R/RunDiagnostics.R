@@ -1062,10 +1062,10 @@ runCohortDiagnostics <- function(packageName = NULL,
                             " ",
                             attr(delta, "units"))
   }
- 
+
   # Cohort Relationship ----
   if (runCohortRelationship) {
-    ParallelLogger::logInfo("Computing Cohort Temporal Relationship")
+    ParallelLogger::logInfo("Computing Cohort Relationship")
     startCohortRelationship <- Sys.time()
     
     # no point in incremental for cohort relationship, because we have
