@@ -1537,49 +1537,9 @@ shiny::shinyServer(function(input, output, session) {
     if (nrow(data) == 0 || is.null(data)) {
       return(NULL)
     }
-    
-    databaseIds <- unique(data$databaseId)
-    
-    maxCount <- max(data$conceptCount, na.rm = TRUE)
-    
-    table <- data %>%
-      dplyr::select(.data$databaseId, 
-                    .data$conceptId,
-                    .data$conceptSubjects,
-                    .data$conceptCount) %>%
-      dplyr::group_by(.data$databaseId, 
-                      .data$conceptId) %>%
-      dplyr::summarise(conceptSubjects = sum(.data$conceptSubjects),
-                       conceptCount = sum(.data$conceptCount)) %>%
-      dplyr::ungroup() %>%
-      dplyr::arrange(.data$databaseId) %>% 
-      tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>% 
-      dplyr::mutate(name = paste0(databaseId, "_",
-                                  stringr::str_replace(string = .data$name, 
-                                                       pattern = "concept", 
-                                                       replacement = ""))) %>% 
-      tidyr::pivot_wider(id_cols = c(.data$conceptId),
-                         names_from = .data$name,
-                         values_from = .data$value)
-    conceptIdDetails <- getResultsFromConcept(dataSource = dataSource,
-                                              conceptIds = table$conceptId %>% unique())
-    table <- table %>% 
-      dplyr::inner_join(conceptIdDetails %>%
-                          dplyr::select(.data$conceptId,
-                                        .data$conceptName,
-                                        .data$vocabularyId,
-                                        .data$conceptCode) %>%
-                          dplyr::distinct(),
-                        by = "conceptId") %>%
-      dplyr::relocate(.data$conceptId, .data$conceptName, .data$vocabularyId, .data$conceptCode)
-    
-    validate(need(nrow(table) > 0, "No orphan codes returned"))
-    
-    table <- table[order(-table[, 5]), ]
-    
-    return(list(table = table,
-                databaseIds = databaseIds,
-                maxCount = maxCount))
+    data <- getOrphanConceptResult(data = data,
+                           dataSource = dataSource)
+    return(data)
   })
   
   output$cohortDefinitionOrphanConceptTable <- DT::renderDataTable(expr = {
@@ -2129,46 +2089,8 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     
-    databaseIds <- unique(data$databaseId)
-    
-    maxCount <- max(data$conceptCount, na.rm = TRUE)
-    
-    table <- data %>%
-      dplyr::select(.data$databaseId, 
-                    .data$conceptId,
-                    .data$conceptSubjects,
-                    .data$conceptCount) %>%
-      dplyr::group_by(.data$databaseId, 
-                      .data$conceptId) %>%
-      dplyr::summarise(conceptSubjects = sum(.data$conceptSubjects),
-                       conceptCount = sum(.data$conceptCount)) %>%
-      dplyr::ungroup() %>%
-      dplyr::arrange(.data$databaseId) %>% 
-      tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>% 
-      dplyr::mutate(name = paste0(databaseId, "_",
-                                  stringr::str_replace(string = .data$name, 
-                                                       pattern = "concept", 
-                                                       replacement = ""))) %>% 
-      tidyr::pivot_wider(id_cols = c(.data$conceptId),
-                         names_from = .data$name,
-                         values_from = .data$value)
-    conceptIdDetails <- getResultsFromConcept(dataSource = dataSource,
-                                              conceptIds = table$conceptId %>% unique())
-    table <- table %>% 
-      dplyr::inner_join(conceptIdDetails %>%
-                          dplyr::select(.data$conceptId,
-                                        .data$conceptName,
-                                        .data$vocabularyId,
-                                        .data$conceptCode) %>%
-                          dplyr::distinct(),
-                        by = "conceptId") %>%
-      dplyr::relocate(.data$conceptId, .data$conceptName, .data$vocabularyId, .data$conceptCode)
-    validate(need(nrow(table) > 0, "No orphan codes returned"))
-    
-    table <- table[order(-table[, 5]), ]
-    return(list(table = table,
-                databaseIds = databaseIds,
-                maxCount = maxCount))
+    data <- getOrphanConceptResult(data = data,
+                                   dataSource = dataSource)
   })
   
   output$cohortDefinitionOrphanConceptSecondTable <- DT::renderDataTable(expr = {
