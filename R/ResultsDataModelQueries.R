@@ -1112,6 +1112,9 @@ getCohortRelationshipCharacterizationResults <-
     }
     result <- dplyr::bind_rows(result)
     
+    analysisRef <- analysisRef %>% 
+      dplyr::select(-.data$valueField)
+    
     if (nrow(result) == 0) {
       result <- NULL
     }
