@@ -31,7 +31,7 @@ runCohortDiagnostics(
   runBreakdownIndexEvents = TRUE,
   runIncidenceRate = TRUE,
   runTimeSeries = TRUE,
-  runCohortTemporalRelationship = TRUE,
+  runCohortRelationship = TRUE,
   runCohortCharacterization = TRUE,
   covariateSettings = list(FeatureExtraction::createDefaultCovariateSettings(),
     FeatureExtraction::createCovariateSettings(useVisitCountLongTerm = TRUE,
@@ -131,7 +131,7 @@ does not exist it will be created.}
 
 \item{runTimeSeries}{Generate and export the cohort prevalence  rates?}
 
-\item{runCohortTemporalRelationship}{Do you want to compute temporal relationship between the cohorts being diagnosed. This
+\item{runCohortRelationship}{Do you want to compute temporal relationship between the cohorts being diagnosed. This
 diagnostics is needed for cohort as feature characterization.}
 
 \item{runCohortCharacterization}{Generate and export the cohort characterization?

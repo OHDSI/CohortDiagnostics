@@ -1068,6 +1068,14 @@ runCohortDiagnostics <- function(packageName = NULL,
     ParallelLogger::logInfo("Computing Cohort Temporal Relationship")
     startCohortRelationship <- Sys.time()
     
+    # no point in incremental for cohort relationship, because we have
+    # to compute the relationship between combinations of target and
+    # comparators. What do we increment on - target? Then we 
+    # will still have to read all the comparator cohorts which
+    # is the full cohort table
+    # The only purpose of incremental is to prevent re-run
+    # Its all or none - Even if one cohort need computation, everything is run
+    
     subset <- subsetToRequiredCohorts(
       cohorts = cohorts %>%
         dplyr::filter(.data$cohortId %in% instantiatedCohorts),
@@ -1098,26 +1106,26 @@ runCohortDiagnostics <- function(packageName = NULL,
         cohortRelationship <- cohortRelationship %>%
           dplyr::mutate(databaseId = !!databaseId)
         columnsInCohortRelationship <- c('targetRecords',
-                                                 'targetSubjects',
-                                                 'comparatorRecords',
-                                                 'comparatorSubjects',
-                                                 'bothRecords',
-                                                 'bothSubjects',
-                                                 'tRecordsOnly',
-                                                 'tSubjectsOnly',
-                                                 'cBeforeTRecords',
-                                                 'cBeforeTSubjects',
-                                                 'tBeforeCRecords',
-                                                 'tBeforeCSubjects',
-                                                 'sameDayRecords',
-                                                 'sameDaySubjects',
-                                                 'cPersonDays',
-                                                 'cRecordsStart',
-                                                 'cSubjectsStart',
-                                                 'cRecordsEnd',
-                                                 'cSubjectsEnd',
-                                                 'cInTRecords',
-                                                 'cInTSubjects')
+                                         'targetSubjects',
+                                         'comparatorRecords',
+                                         'comparatorSubjects',
+                                         'bothRecords',
+                                         'bothSubjects',
+                                         'tRecordsOnly',
+                                         'tSubjectsOnly',
+                                         'cBeforeTRecords',
+                                         'cBeforeTSubjects',
+                                         'tBeforeCRecords',
+                                         'tBeforeCSubjects',
+                                         'sameDayRecords',
+                                         'sameDaySubjects',
+                                         'cPersonDays',
+                                         'cRecordsStart',
+                                         'cSubjectsStart',
+                                         'cRecordsEnd',
+                                         'cSubjectsEnd',
+                                         'cInTRecords',
+                                         'cInTSubjects')
         for (i in (1:length(columnsInCohortRelationship))) {
           cohortRelationship <-
             enforceMinCellValue(cohortRelationship, 

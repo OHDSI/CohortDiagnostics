@@ -1,6 +1,11 @@
 IF OBJECT_ID('tempdb..#cohort_rel', 'U') IS NOT NULL
 	DROP TABLE #cohort_rel;
 
+WITH cohort_data as (
+  SELECT *
+  FROM @cohort_database_schema.@cohort_table
+  WHERE cohort_definition_id IN (@comparator_cohort_ids,@target_cohort_ids)
+)
 SELECT t.cohort_definition_id cohort_id,
 	c.cohort_definition_id comparator_cohort_id,
 	tp.time_id,
@@ -113,8 +118,8 @@ SELECT t.cohort_definition_id cohort_id,
 			END) c_in_t_subjects -- comparator cohort records embedded within period
 INTO #cohort_rel
 FROM #time_periods tp -- offset
-CROSS JOIN @cohort_database_schema.@cohort_table t
-LEFT JOIN @cohort_database_schema.@cohort_table c
+CROSS JOIN cohort_data t
+LEFT JOIN cohort_data c
 	ON c.subject_id = t.subject_id
 		AND c.cohort_definition_id != t.cohort_definition_id
 		AND (
@@ -133,8 +138,6 @@ LEFT JOIN @cohort_database_schema.@cohort_table c
 				AND c.cohort_start_date <= DATEADD(day, tp.start_day, t.cohort_start_date)
 				) -- comparator cohort periods overlaps the period
 			)
-WHERE c.cohort_definition_id IN (@comparator_cohort_ids)
-	AND t.cohort_definition_id IN (@target_cohort_ids)
 GROUP BY t.cohort_definition_id,
 	c.cohort_definition_id,
 	tp.time_id;

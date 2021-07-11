@@ -1792,8 +1792,10 @@ getCohortOverlapData <- function(dataSource,
     databaseIds = databaseIds
   )
   
+  data <- data %>% 
+    dplyr::filter(.data$comparatorCohortId %in% cohortIds)
+  
   dataSubset <- data %>% 
-    dplyr::filter(.data$comparatorCohortId %in% cohortIds) %>% 
     dplyr::filter(.data$startDay == -99999) %>% 
     dplyr::filter(.data$endDay == 99999) %>%  
     dplyr::select(.data$databaseId,
