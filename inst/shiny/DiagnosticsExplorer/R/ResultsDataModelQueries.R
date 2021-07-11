@@ -1823,8 +1823,11 @@ getCohortOverlapData <- function(dataSource,
                                       comparatorCohortId = .data$cohortId), 
                       by = c('databaseId', 'comparatorCohortId')) %>% 
     dplyr::mutate(cOnlySubjects = .data$comparatorCohortSubjects - .data$bothSubjects) %>% 
-    dplyr::mutate(eitherSubjects = .data$cOnlySubjects + .data$tOnlySubjects + .data$bothSubjects)
-    
+    dplyr::mutate(eitherSubjects = .data$cOnlySubjects + .data$tOnlySubjects + .data$bothSubjects) %>% 
+    dplyr::rename(targetCohortId = .data$cohortId) %>% 
+    dplyr::inner_join(combisOfTargetComparator, 
+                      by = c('targetCohortId', 'comparatorCohortId'))
+  
   
   beforeOffset <- cohortRelationship %>% 
     dplyr::filter(.data$comparatorCohortId %in% cohortIds) %>%  
@@ -1844,7 +1847,6 @@ getCohortOverlapData <- function(dataSource,
                   .data$comparatorCohortId,
                   .data$sameDaySubjects,
                   .data$cInTSubjects)
- 
-  return(fullOffSet %>% 
-           dplyr::rename(targetCohortId = .data$cohortId))
+  
+  return(fullOffSet)
 }
