@@ -4235,82 +4235,49 @@ shiny::shinyServer(function(input, output, session) {
         }
       }
     }
-    
+
     if (input$orphanConceptsType == "Standard Only") {
-      data <- data %>% 
+      data <- data %>%
         dplyr::filter(.data$standardConcept == "S")
     } else if (input$orphanConceptsType == "Non Standard Only") {
-      data <- data %>% 
-        dplyr::filter(is.na(.data$standardConcept) | 
+      data <- data %>%
+        dplyr::filter(is.na(.data$standardConcept) |
                         (!is.na(.data$standardConcept) && .data$standardConcept != "S"))
     }
-    
+
     validate(need((nrow(data) > 0),
                   "There is no data for the selected combination."))
-    
+
     # databaseIds for data table names
     databaseIdsWithCount <- getSubjectCountsByDatabasae(data = data, cohortId = cohortId(), databaseIds = databaseIds())
-    
+
     maxCount <- max(data$conceptCount, na.rm = TRUE)
-    table <- data %>%
-      dplyr::select(.data$databaseId,
-                    .data$conceptId,
-                    .data$conceptSubjects,
-                    .data$conceptCount) %>%
-      dplyr::group_by(.data$databaseId,
-                      .data$conceptId) %>%
-      dplyr::summarise(
-        conceptSubjects = sum(.data$conceptSubjects),
-        conceptCount = sum(.data$conceptCount), 
-        .groups = "keep"
-      ) %>%
-      dplyr::ungroup() %>%
-      dplyr::arrange(.data$databaseId)
     
-    if (input$orphanConceptsColumFilterType == "All") {
-      table <- table %>% 
-        tidyr::pivot_longer(cols = c(.data$conceptSubjects, .data$conceptCount)) %>%
-        dplyr::mutate(name = paste0(
-          databaseId,
-          "_",
-          stringr::str_replace(
-            string = .data$name,
-            pattern = "concept",
-            replacement = ""
-          )
-        )) %>%
-        dplyr::arrange(.data$databaseId) %>% 
-        tidyr::pivot_wider(
-          id_cols = c(.data$conceptId),
-          names_from = .data$name,
-          values_from = .data$value,
-          values_fill = 0
-        ) %>%
-        dplyr::inner_join(
-          data %>%
-            dplyr::select(
-              .data$conceptId,
-              .data$conceptName,
-              .data$vocabularyId,
-              .data$conceptCode
-            ) %>%
-            dplyr::distinct(),
-          by = "conceptId"
-        ) %>%
-        dplyr::relocate(.data$conceptId,
-                        .data$conceptName,
-                        .data$vocabularyId,
-                        .data$conceptCode) %>% 
-        dplyr::mutate(
-          conceptId = as.character(.data$conceptId),
-          # conceptName = as.factor(.data$conceptName),
-          # conceptCode = as.factor(.data$conceptCode),
-          vocabularyId = as.factor(.data$vocabularyId))
+    table <- getOrphanConceptResult(data = data,
+                                    dataSource = dataSource)
+    
+    if (input$orphanConceptsColumFilterType == "Subjects only") {
+      table <- table$table %>% 
+        dplyr::select(-dplyr::contains("Count"))
       
-      validate(need((nrow(table) > 0),
-                    "There is no data for the selected combination."))
-      table <- table[order(-table[, 5]), ]
+      colnames(table) <- stringr::str_replace(string = colnames(table), pattern = 'Subjects', replacement = '')
+      columDefs <- minCellCountDef(3 + (1:(
+                                nrow(databaseIdsWithCount)
+                              )))
       
+      colorableColumns <- (1:(nrow(databaseIdsWithCount)))
+    } else if (input$orphanConceptsColumFilterType == "Records only") {
+      table <- table$table %>% 
+        dplyr::select(-dplyr::contains("subject"))
+      
+      colnames(table) <- stringr::str_replace(string = colnames(table), pattern = 'Count', replacement = '')
+      columDefs <- minCellCountDef(3 + (1:(
+        nrow(databaseIdsWithCount)
+      )))
+      
+      colorableColumns <- (1:(nrow(databaseIdsWithCount)))
+    } else {
+      table <- table$table
       sketch <- htmltools::withTags(table(class = "display",
                                           thead(
                                             tr(
@@ -4325,120 +4292,57 @@ shiny::shinyServer(function(input, output, session) {
                                             ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver"))
                                           )))
       
-      options = list(
-        pageLength = 1000,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        scrollX = TRUE,
-        scrollY = "30vh",
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        columnDefs = list(truncateStringDef(1, 100),
-                          minCellCountDef(3 + (1:(
-                            nrow(databaseIdsWithCount) * 2
-                          ))))
-      )
+      columDefs <- minCellCountDef(3 + (1:(
+        nrow(databaseIdsWithCount) * 2
+      )))
       
-      table <- DT::datatable(
-        table,
-        options = options,
-        colnames = colnames(table),
-        rownames = FALSE,
-        container = sketch,
-        escape = FALSE,
-        filter = "top",
-        class = "stripe nowrap compact"
-      )
-      
-      table <- DT::formatStyle(
-        table = table,
-        columns =  4 + (1:(nrow(databaseIdsWithCount) * 2)),
-        background = DT::styleColorBar(c(0, maxCount), "lightblue"),
-        backgroundSize = "98% 88%",
-        backgroundRepeat = "no-repeat",
-        backgroundPosition = "center"
-      )
-    } else {
-      if (input$orphanConceptsColumFilterType == "Subjects only") {
-        table <- table %>% 
-          dplyr::arrange(.data$databaseId) %>% 
-          tidyr::pivot_wider(
-            id_cols = c(.data$conceptId),
-            names_from = .data$databaseId,
-            values_from = .data$conceptSubjects,
-            values_fill = 0
-          )
-      } else {
-        table <- table %>% 
-          dplyr::arrange(.data$databaseId) %>% 
-          tidyr::pivot_wider(
-            id_cols = c(.data$conceptId),
-            names_from = .data$databaseId,
-            values_from = .data$conceptCount,
-            values_fill = 0
-          )
-      }
-      
-      table <- table %>% 
-        dplyr::inner_join(
-          data %>%
-            dplyr::select(
-              .data$conceptId,
-              .data$conceptName,
-              .data$vocabularyId,
-              .data$conceptCode
-            ) %>%
-            dplyr::distinct(),
-          by = "conceptId"
-        ) %>%
-        dplyr::relocate(.data$conceptId,
-                        .data$conceptName,
-                        .data$vocabularyId,
-                        .data$conceptCode) %>% 
-        dplyr::mutate(
-          conceptId = as.character(.data$conceptId),
-          # conceptName = as.factor(.data$conceptName),
-          # conceptCode = as.factor(.data$conceptCode),
-          vocabularyId = as.factor(.data$vocabularyId))
-      
-      options = list(
-        pageLength = 1000,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-        searching = TRUE,
-        scrollX = TRUE,
-        scrollY = "30vh",
-        lengthChange = TRUE,
-        ordering = TRUE,
-        paging = TRUE,
-        columnDefs = list(truncateStringDef(1, 100),
-                          minCellCountDef(3 + (1:(
-                            nrow(databaseIdsWithCount)
-                          ))))
-      )
-      
-      validate(need((length(setdiff(y = databaseIdsWithCount$databaseId, x = colnames(table))) == 4),
-                    "There is inconsistency in the data, please change datasource selection."))
-      
-      table <- DT::datatable(
-        table,
-        options = options,
-        colnames = c(colnames(table[,1:4]),databaseIdsWithCount$databaseIdsWithCount),
-        rownames = FALSE,
-        escape = FALSE,
-        filter = "top",
-        class = "stripe nowrap compact"
-      )
-      
-      table <- DT::formatStyle(
-        table = table,
-        columns =  4 + (1:(nrow(databaseIdsWithCount))),
-        background = DT::styleColorBar(c(0, maxCount), "lightblue"),
-        backgroundSize = "98% 88%",
-        backgroundRepeat = "no-repeat",
-        backgroundPosition = "center"
-      )
+      colorableColumns <- (1:(nrow(databaseIdsWithCount) * 2))
     }
+    
+    options = list(
+          pageLength = 1000,
+          lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+          searching = TRUE,
+          scrollX = TRUE,
+          scrollY = "30vh",
+          lengthChange = TRUE,
+          ordering = TRUE,
+          paging = TRUE,
+          columnDefs = list(truncateStringDef(1, 100),
+                            columDefs)
+        )
+    
+    if (input$orphanConceptsColumFilterType == "All") {
+      table <- DT::datatable(
+            table,
+            options = options,
+            colnames = colnames(table),
+            rownames = FALSE,
+            container = sketch,
+            escape = FALSE,
+            filter = "top",
+            class = "stripe nowrap compact"
+          )
+    } else {
+      table <- DT::datatable(
+            table,
+            options = options,
+            colnames = c(colnames(table[,1:4]),databaseIdsWithCount$databaseIdsWithCount),
+            rownames = FALSE,
+            escape = FALSE,
+            filter = "top",
+            class = "stripe nowrap compact"
+          )
+    }
+    
+      table <- DT::formatStyle(
+        table = table,
+        columns =  4 + colorableColumns,
+        background = DT::styleColorBar(c(0, maxCount), "lightblue"),
+        backgroundSize = "98% 88%",
+        backgroundRepeat = "no-repeat",
+        backgroundPosition = "center"
+      )
     
     return(table)
   }, server = TRUE)

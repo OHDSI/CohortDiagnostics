@@ -141,7 +141,8 @@ getOrphanConceptResult <- function(data,
                                                      replacement = ""))) %>% 
     tidyr::pivot_wider(id_cols = c(.data$conceptId),
                        names_from = .data$name,
-                       values_from = .data$value)
+                       values_from = .data$value,
+                       values_fill = 0)
   conceptIdDetails <- getResultsFromConcept(dataSource = dataSource,
                                             conceptIds = table$conceptId %>% unique())
   table <- table %>% 
