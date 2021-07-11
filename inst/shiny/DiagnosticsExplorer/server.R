@@ -1504,17 +1504,15 @@ shiny::shinyServer(function(input, output, session) {
     }
   )
   
+  ## Orphan 1 concepts for cohort definition ----
   cohortDefinitionOrphanConceptTableData <- shiny::reactive(x = {
-    validate(need(all(!is.null(getDatabaseIdInCohortConceptSet()),
-                      length(getDatabaseIdInCohortConceptSet()) > 0),
-                  "Orphan codes are not available for reference vocabulary in this version."))
+    if (any(is.null(getDatabaseIdInCohortConceptSet()),
+            length(getDatabaseIdInCohortConceptSet()) == 0)) {return(NULL)}
     row <- selectedCohortDefinitionRow()
-    
     if (is.null(row) || length(cohortDefinitionConceptSetExpressionRow()$name) == 0) {
       return(NULL)
     }
-    validate(need(length(input$databaseOrVocabularySchema) > 0, "No data sources chosen"))
-    
+    if (length(input$databaseOrVocabularySchema) == 0) {return(NULL)}
     data <- getResultsFromOrphanConcept(dataSource = dataSource,
                                         cohortId = row$cohortId,
                                         databaseIds = getDatabaseIdInCohortConceptSet())
@@ -1522,12 +1520,10 @@ shiny::shinyServer(function(input, output, session) {
       data <- data %>% 
         dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionRow()$id)
     }
-    
-    validate(need(nrow(data) > 0, "No orphan codes returned"))
-    
     return(data)
   })
   
+  ### Save orphan concepts table ----
   output$saveCohortDefinitionOrphanConceptsTable <-  downloadHandler(
     filename = function() {
       getFormattedFileName(fileName = "orphanConcepts")
@@ -1538,23 +1534,22 @@ shiny::shinyServer(function(input, output, session) {
     }
   )
   
+  ### Left panel orphan concept ----
   orphanConceptComparisionLeftPanelData <- shiny::reactive(x = {
     data <- cohortDefinitionOrphanConceptTableData()
-    
-    if (nrow(data) == 0 || is.null(data)) {
-      return(NULL)
-    }
-    data <- getOrphanConceptResult(data = data,
-                           dataSource = dataSource)
+    if (any(nrow(data) == 0,is.null(data))) {return(NULL)}
+    data <- pivotOrphanConceptResult(data = data,
+                                     dataSource = dataSource)
     return(data)
   })
   
   output$cohortDefinitionOrphanConceptTable <- DT::renderDataTable(expr = {
-    data <- orphanConceptComparisionLeftPanelData()$table
+    orphanConceptData <- orphanConceptComparisionLeftPanelData()
+    orphanConceptDataDatabaseIds <- attr(x = orphanConceptData, which = 'databaseIds')
+    orphanConceptDataMaxCount <- attr(x = orphanConceptData, which = 'maxCount')
     
-    if (nrow(data) == 0 || is.null(data)) {
-      return(NULL)
-    }
+    if (any(nrow(orphanConceptData) == 0,
+            is.null(orphanConceptData))) {return(NULL)}
     
     sketch <- htmltools::withTags(table(
       class = "display",
@@ -1564,10 +1559,11 @@ shiny::shinyServer(function(input, output, session) {
           th(rowspan = 2, "Concept Name"),
           th(rowspan = 2, "Vocabulary ID"),
           th(rowspan = 2, "Concept Code"),
-          lapply(orphanConceptComparisionLeftPanelData()$databaseIds, th, colspan = 2, class = "dt-center")
+          lapply(orphanConceptDataDatabaseIds, th, colspan = 2, class = "dt-center")
         ),
         tr(
-          lapply(rep(c("Subjects", "Counts"), length(orphanConceptComparisionLeftPanelData()$databaseIds)), th)
+          lapply(rep(c("Subjects", "Counts"), 
+                     length(orphanConceptDataDatabaseIds)), th)
         )
       )
     ))
@@ -1580,11 +1576,11 @@ shiny::shinyServer(function(input, output, session) {
                    ordering = TRUE,
                    paging = TRUE,
                    columnDefs = list(truncateStringDef(1, 100),
-                                     minCellCountDef(3 + (1:(length(orphanConceptComparisionLeftPanelData()$databaseIds) * 2)))))
+                                     minCellCountDef(3 + (1:(length(orphanConceptDataDatabaseIds) * 2)))))
     
-    table <- DT::datatable(data,
+    table <- DT::datatable(orphanConceptData,
                            options = options,
-                           colnames = colnames(data),
+                           colnames = colnames(orphanConceptData),
                            rownames = FALSE,
                            container = sketch,
                            escape = FALSE,
@@ -1592,15 +1588,15 @@ shiny::shinyServer(function(input, output, session) {
                            class = "stripe nowrap compact")
     
     table <- DT::formatStyle(table = table,
-                             columns =  4 + (1:(length(orphanConceptComparisionLeftPanelData()$databaseIds)*2)),
-                             background = DT::styleColorBar(c(0, orphanConceptComparisionLeftPanelData()$maxCount), "lightblue"),
+                             columns =  4 + (1:(length(orphanConceptDataDatabaseIds)*2)),
+                             background = DT::styleColorBar(c(0, orphanConceptDataMaxCount), "lightblue"),
                              backgroundSize = "98% 88%",
                              backgroundRepeat = "no-repeat",
                              backgroundPosition = "center")
     return(table)
   }, server = TRUE)
   
-  # Concept set expression table two---------
+  # Concept set expression 2 ----
   output$cohortDetailsTextSecond <- shiny::renderUI({
     row <- cohortDetailsText()[[2]]
     if (!'logicDescription' %in% colnames(row)) {
@@ -2069,44 +2065,40 @@ shiny::shinyServer(function(input, output, session) {
     return(output)
   })
   
+  ## Orphan 2 concepts for cohort definition ----
   cohortDefinitionOrphanConceptSecondTableData <- shiny::reactive(x = {
-    validate(need(all(!is.null(getDatabaseIdInCohortConceptSetSecond()),
-                      length(getDatabaseIdInCohortConceptSetSecond()) > 0),
-                  "Orphan codes are not available for reference vocabulary in this version."))
+    if (any(is.null(getDatabaseIdInCohortConceptSetSecond()),
+            length(getDatabaseIdInCohortConceptSetSecond()) == 0)) {return(NULL)}
     row <- selectedCohortDefinitionRow()
-    
     if (is.null(row) || length(cohortDefinitionConceptSetExpressionSecondRow()$name) == 0) {
       return(NULL)
     }
-    validate(need(length(input$databaseOrVocabularySchemaSecond) > 0, "No data sources chosen"))
-    
+    # if (length(input$databaseOrVocabularySchema) == 0) {return(NULL)}
     data <- getResultsFromOrphanConcept(dataSource = dataSource,
                                         cohortId = row$cohortId,
-                                        databaseIds = getDatabaseIdInCohortConceptSetSecond()) %>% 
-      dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionSecondRow()$id)
-    
-    validate(need(nrow(data) > 0, "No orphan codes returned"))
-    
+                                        databaseIds = getDatabaseIdInCohortConceptSetSecond())
+    if (!is.null(data)) {
+      data <- data %>% 
+        dplyr::filter(.data$conceptSetId == cohortDefinitionConceptSetExpressionSecondRow()$id)
+    }
     return(data)
   })
   
+  ### Right panel orphan concept ----
   orphanConceptComparisionRightPanelData <- shiny::reactive(x = {
     data <- cohortDefinitionOrphanConceptSecondTableData()
-    
-    if (nrow(data) == 0 || is.null(data)) {
-      return(NULL)
-    }
-    
-    data <- getOrphanConceptResult(data = data,
-                                   dataSource = dataSource)
+    if (any(nrow(data) == 0,is.null(data))) {return(NULL)}
+    data <- pivotOrphanConceptResult(data = data,
+                                     dataSource = dataSource)
   })
   
   output$cohortDefinitionOrphanConceptSecondTable <- DT::renderDataTable(expr = {
-    data <- orphanConceptComparisionRightPanelData()$table
+    orphanConceptData <- orphanConceptComparisionRightPanelData()
+    orphanConceptDataDatabaseIds <- attr(x = orphanConceptData, which = 'databaseIds')
+    orphanConceptDataMaxCount <- attr(x = orphanConceptData, which = 'maxCount')
     
-    if (nrow(data) == 0 || is.null(data)) {
-      return(NULL)
-    }
+    if (any(nrow(orphanConceptData) == 0,
+            is.null(orphanConceptData))) {return(NULL)}
     
     sketch <- htmltools::withTags(table(
       class = "display",
@@ -2116,10 +2108,10 @@ shiny::shinyServer(function(input, output, session) {
           th(rowspan = 2, "Concept Name"),
           th(rowspan = 2, "Vocabulary ID"),
           th(rowspan = 2, "Concept Code"),
-          lapply(orphanConceptComparisionRightPanelData()$databaseIds, th, colspan = 2, class = "dt-center")
+          lapply(orphanConceptDataDatabaseIds, th, colspan = 2, class = "dt-center")
         ),
         tr(
-          lapply(rep(c("Subjects", "Counts"), length(orphanConceptComparisionRightPanelData()$databaseIds)), th)
+          lapply(rep(c("Subjects", "Counts"), length(orphanConceptDataDatabaseIds)), th)
         )
       )
     ))
@@ -2132,11 +2124,11 @@ shiny::shinyServer(function(input, output, session) {
                    ordering = TRUE,
                    paging = TRUE,
                    columnDefs = list(truncateStringDef(1, 100),
-                                     minCellCountDef(3 + (1:(length(orphanConceptComparisionRightPanelData()$databaseIds) * 2)))))
+                                     minCellCountDef(3 + (1:(length(orphanConceptDataDatabaseIds) * 2)))))
     
-    table <- DT::datatable(data,
+    table <- DT::datatable(orphanConceptData,
                            options = options,
-                           colnames = colnames(data),
+                           colnames = colnames(orphanConceptData),
                            rownames = FALSE,
                            container = sketch,
                            escape = FALSE,
@@ -2144,8 +2136,8 @@ shiny::shinyServer(function(input, output, session) {
                            class = "stripe nowrap compact")
     
     table <- DT::formatStyle(table = table,
-                             columns =  4 + (1:(length(orphanConceptComparisionRightPanelData()$databaseIds)*2)),
-                             background = DT::styleColorBar(c(0, orphanConceptComparisionRightPanelData()$maxCount), "lightblue"),
+                             columns =  4 + (1:(length(orphanConceptDataDatabaseIds)*2)),
+                             background = DT::styleColorBar(c(0, orphanConceptDataMaxCount), "lightblue"),
                              backgroundSize = "98% 88%",
                              backgroundRepeat = "no-repeat",
                              backgroundPosition = "center")
@@ -2153,6 +2145,7 @@ shiny::shinyServer(function(input, output, session) {
     
   }, server = TRUE)
   
+  ### Save orphan concepts table ----
   output$saveCohortDefinitionOrphanConceptsSecondTable <-  downloadHandler(
     filename = function() {
       getFormattedFileName(fileName = "orphanconcepts")
@@ -2528,8 +2521,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   )
   
-  
-  #Concept set comparision ---------
+  #Concept set comparison ---------
   conceptsetComparisonData <- shiny::reactive(x = {
     leftData <- getResolvedOrMappedConcepts()
     rightData <- getResolvedOrMappedConceptSecond()
@@ -2858,10 +2850,12 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$orphanConceptsPresentInLeft <- DT::renderDT({
-    validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
-    result <- dplyr::setdiff(orphanConceptComparisionLeftPanelData()$table, 
-                             orphanConceptComparisionRightPanelData()$table)
-    
+    validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, 
+                  "Please select same database for comparison"))
+    result <- dplyr::setdiff(orphanConceptComparisionLeftPanelData(), 
+                             orphanConceptComparisionRightPanelData())
+    orphanConceptDataDatabaseIds <- attr(x = orphanConceptComparisionLeftPanelData(), which = 'databaseIds')
+    orphanConceptDataMaxCount <- attr(x = orphanConceptComparisionLeftPanelData(), which = 'maxCount')
     if (nrow(result) == 0) {
       validate(need(nrow(result) > 0, "No data found"))
     } else {
@@ -2879,10 +2873,11 @@ shiny::shinyServer(function(input, output, session) {
             th(rowspan = 2, "Concept Name"),
             th(rowspan = 2, "Vocabulary ID"),
             th(rowspan = 2, "Concept Code"),
-            lapply(orphanConceptComparisionLeftPanelData()$databaseIds, th, colspan = 2, class = "dt-center")
+            lapply(attr(x = orphanConceptComparisionLeftPanelData(), 
+                        which = "databaseIds"), th, colspan = 2, class = "dt-center")
           ),
           tr(
-            lapply(rep(c("Subjects", "Counts"), length(orphanConceptComparisionLeftPanelData()$databaseIds)), th)
+            lapply(rep(c("Subjects", "Counts"), length(orphanConceptDataDatabaseIds)), th)
           )
         )
       ))
@@ -2895,7 +2890,7 @@ shiny::shinyServer(function(input, output, session) {
                      ordering = TRUE,
                      paging = TRUE,
                      columnDefs = list(truncateStringDef(1, 100),
-                                       minCellCountDef(3 + (1:(length(orphanConceptComparisionLeftPanelData()$databaseIds) * 2)))))
+                                       minCellCountDef(3 + (1:(length(orphanConceptDataDatabaseIds) * 2)))))
       
       table <- DT::datatable(result,
                              options = options,
@@ -2907,8 +2902,8 @@ shiny::shinyServer(function(input, output, session) {
                              class = "stripe nowrap compact")
       
       table <- DT::formatStyle(table = table,
-                               columns =  4 + (1:(length(orphanConceptComparisionLeftPanelData()$databaseIds)*2)),
-                               background = DT::styleColorBar(c(0, orphanConceptComparisionLeftPanelData()$maxCount), "lightblue"),
+                               columns =  4 + (1:(length(orphanConceptDataDatabaseIds)*2)),
+                               background = DT::styleColorBar(c(0, orphanConceptDataDatabaseIds), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
                                backgroundPosition = "center")
@@ -2917,9 +2912,12 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$orphanConceptsPresentInRight <- DT::renderDT({
-    validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
+    validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, 
+                  "Please select same database for comparison"))
     result <- dplyr::setdiff(orphanConceptComparisionRightPanelData()$table,
                              orphanConceptComparisionLeftPanelData()$table)
+    orphanConceptDataDatabaseIds <- attr(x = orphanConceptComparisionRightPanelData(), which = 'databaseIds')
+    orphanConceptDataMaxCount <- attr(x = orphanConceptComparisionRightPanelData(), which = 'maxCount')
     
     if (nrow(result) == 0) {
       validate(need(nrow(result) > 0, "No data found"))
@@ -2938,10 +2936,10 @@ shiny::shinyServer(function(input, output, session) {
             th(rowspan = 2, "Concept Name"),
             th(rowspan = 2, "Vocabulary ID"),
             th(rowspan = 2, "Concept Code"),
-            lapply(orphanConceptComparisionLeftPanelData()$databaseIds, th, colspan = 2, class = "dt-center")
+            lapply(orphanConceptDataDatabaseIds, th, colspan = 2, class = "dt-center")
           ),
           tr(
-            lapply(rep(c("Subjects", "Counts"), length(orphanConceptComparisionLeftPanelData()$databaseIds)), th)
+            lapply(rep(c("Subjects", "Counts"), length(orphanConceptDataDatabaseIds)), th)
           )
         )
       ))
@@ -2954,7 +2952,7 @@ shiny::shinyServer(function(input, output, session) {
                      ordering = TRUE,
                      paging = TRUE,
                      columnDefs = list(truncateStringDef(1, 100),
-                                       minCellCountDef(3 + (1:(length(orphanConceptComparisionLeftPanelData()$databaseIds) * 2)))))
+                                       minCellCountDef(3 + (1:(length(orphanConceptDataDatabaseIds) * 2)))))
       
       table <- DT::datatable(result,
                              options = options,
@@ -2966,8 +2964,8 @@ shiny::shinyServer(function(input, output, session) {
                              class = "stripe nowrap compact")
       
       table <- DT::formatStyle(table = table,
-                               columns =  4 + (1:(length(orphanConceptComparisionLeftPanelData()$databaseIds)*2)),
-                               background = DT::styleColorBar(c(0, orphanConceptComparisionLeftPanelData()$maxCount), "lightblue"),
+                               columns =  4 + (1:(length(orphanConceptDataDatabaseIds)*2)),
+                               background = DT::styleColorBar(c(0, orphanConceptDataMaxCount), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
                                backgroundPosition = "center")
@@ -2979,6 +2977,8 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
     result <- dplyr::intersect(orphanConceptComparisionLeftPanelData()$table, 
                                orphanConceptComparisionRightPanelData()$table)
+    orphanConceptDataDatabaseIds <- attr(x = orphanConceptComparisionLeftPanelData(), which = 'databaseIds')
+    orphanConceptDataMaxCount <- attr(x = orphanConceptComparisionLeftPanelData(), which = 'maxCount')
     
     if (nrow(result) == 0) {
       validate(need(nrow(result) > 0, "No data found"))
@@ -2997,10 +2997,10 @@ shiny::shinyServer(function(input, output, session) {
             th(rowspan = 2, "Concept Name"),
             th(rowspan = 2, "Vocabulary ID"),
             th(rowspan = 2, "Concept Code"),
-            lapply(orphanConceptComparisionLeftPanelData()$databaseIds, th, colspan = 2, class = "dt-center")
+            lapply(orphanConceptDataDatabaseIds, th, colspan = 2, class = "dt-center")
           ),
           tr(
-            lapply(rep(c("Subjects", "Counts"), length(orphanConceptComparisionLeftPanelData()$databaseIds)), th)
+            lapply(rep(c("Subjects", "Counts"), length(orphanConceptDataDatabaseIds)), th)
           )
         )
       ))
@@ -3013,7 +3013,7 @@ shiny::shinyServer(function(input, output, session) {
                      ordering = TRUE,
                      paging = TRUE,
                      columnDefs = list(truncateStringDef(1, 100),
-                                       minCellCountDef(3 + (1:(length(orphanConceptComparisionLeftPanelData()$databaseIds) * 2)))))
+                                       minCellCountDef(3 + (1:(length(orphanConceptDataDatabaseIds) * 2)))))
       
       table <- DT::datatable(result,
                              options = options,
@@ -3025,8 +3025,8 @@ shiny::shinyServer(function(input, output, session) {
                              class = "stripe nowrap compact")
       
       table <- DT::formatStyle(table = table,
-                               columns =  4 + (1:(length(orphanConceptComparisionLeftPanelData()$databaseIds)*2)),
-                               background = DT::styleColorBar(c(0, orphanConceptComparisionLeftPanelData()$maxCount), "lightblue"),
+                               columns =  4 + (1:(length(orphanConceptDataDatabaseIds)*2)),
+                               background = DT::styleColorBar(c(0, orphanConceptDataMaxCount), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
                                backgroundPosition = "center")
@@ -3038,6 +3038,8 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
     result <- dplyr::union(orphanConceptComparisionLeftPanelData()$table, 
                            orphanConceptComparisionRightPanelData()$table)
+    orphanConceptDataDatabaseIds <- attr(x = orphanConceptComparisionLeftPanelData(), which = 'databaseIds')
+    orphanConceptDataMaxCount <- attr(x = orphanConceptComparisionLeftPanelData(), which = 'maxCount')
     
     if (nrow(result) == 0) {
       validate(need(nrow(result) > 0, "No data found"))
@@ -3056,10 +3058,10 @@ shiny::shinyServer(function(input, output, session) {
             th(rowspan = 2, "Concept Name"),
             th(rowspan = 2, "Vocabulary ID"),
             th(rowspan = 2, "Concept Code"),
-            lapply(orphanConceptComparisionLeftPanelData()$databaseIds, th, colspan = 2, class = "dt-center")
+            lapply(orphanConceptDataDatabaseIds, th, colspan = 2, class = "dt-center")
           ),
           tr(
-            lapply(rep(c("Subjects", "Counts"), length(orphanConceptComparisionLeftPanelData()$databaseIds)), th)
+            lapply(rep(c("Subjects", "Counts"), length(orphanConceptDataDatabaseIds)), th)
           )
         )
       ))
@@ -3072,7 +3074,7 @@ shiny::shinyServer(function(input, output, session) {
                      ordering = TRUE,
                      paging = TRUE,
                      columnDefs = list(truncateStringDef(1, 100),
-                                       minCellCountDef(3 + (1:(length(orphanConceptComparisionLeftPanelData()$databaseIds) * 2)))))
+                                       minCellCountDef(3 + (1:(length(orphanConceptDataDatabaseIds) * 2)))))
       
       table <- DT::datatable(result,
                              options = options,
@@ -3084,8 +3086,8 @@ shiny::shinyServer(function(input, output, session) {
                              class = "stripe nowrap compact")
       
       table <- DT::formatStyle(table = table,
-                               columns =  4 + (1:(length(orphanConceptComparisionLeftPanelData()$databaseIds)*2)),
-                               background = DT::styleColorBar(c(0, orphanConceptComparisionLeftPanelData()$maxCount), "lightblue"),
+                               columns =  4 + (1:(length(orphanConceptDataDatabaseIds)*2)),
+                               background = DT::styleColorBar(c(0, orphanConceptDataMaxCount), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
                                backgroundPosition = "center")
@@ -3094,7 +3096,6 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   # Cohort Counts ---------
-  
   getCohortCountResultReactive <- shiny::reactive(x = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
@@ -4250,12 +4251,8 @@ shiny::shinyServer(function(input, output, session) {
 
     # databaseIds for data table names
     databaseIdsWithCount <- getSubjectCountsByDatabasae(data = data, cohortId = cohortId(), databaseIds = databaseIds())
-
-    maxCount <- max(data$conceptCount, na.rm = TRUE)
-    
-    table <- getOrphanConceptResult(data = data,
-                                    dataSource = dataSource)
-    
+    table <- pivotOrphanConceptResult(data = data,
+                                      dataSource = dataSource)
     if (input$orphanConceptsColumFilterType == "Subjects only") {
       table <- table$table %>% 
         dplyr::select(-dplyr::contains("Count"))
