@@ -926,7 +926,8 @@ shiny::shinyServer(function(input, output, session) {
       paging = TRUE,
       info = TRUE,
       searchHighlight = TRUE,
-      scrollX = TRUE
+      scrollX = TRUE, 
+      scrollY = '15vh'
     )
     
     dataTable <- DT::datatable(
@@ -1852,7 +1853,8 @@ shiny::shinyServer(function(input, output, session) {
       paging = TRUE,
       info = TRUE,
       searchHighlight = TRUE,
-      scrollX = TRUE
+      scrollX = TRUE,
+      scrollY = '15vh'
     )
     
     dataTable <- DT::datatable(
