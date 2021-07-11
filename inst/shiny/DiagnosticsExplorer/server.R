@@ -557,7 +557,7 @@ shiny::shinyServer(function(input, output, session) {
   shiny::outputOptions(x = output,
                        name = "cohortDefinitionCountOfSelectedRows",
                        suspendWhenHidden = FALSE)
-  #Dynamic UI rendering ---------
+  #Dynamic UI rendering -----
   output$dynamicUIGenerationCohortDefinitionConceptsetsOne <- shiny::renderUI(expr = {
     shiny::column(
       noOfRowSelectedInCohortDefinitionTable(),
@@ -2521,7 +2521,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   )
   
-  #Concept set comparison ---------
+  #Concept set comparison -----
   conceptsetComparisonData <- shiny::reactive(x = {
     leftData <- getResolvedOrMappedConcepts()
     rightData <- getResolvedOrMappedConceptSecond()
@@ -3095,7 +3095,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  # Cohort Counts ---------
+  # Cohort Counts -----
   getCohortCountResultReactive <- shiny::reactive(x = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
@@ -3674,7 +3674,7 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  # calendar Incidence ---------
+  # calendar Incidence -----
   # calendarIncidenceData <- shiny::reactive({
   #   data <- getResultsFromCalendarIncidence(
   #     dataSource,
@@ -3718,7 +3718,7 @@ shiny::shinyServer(function(input, output, session) {
   # )
   
   
-  # Time Series ---------
+  # Time Series -----
   timeSeriesData <- reactive({
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
@@ -3836,7 +3836,7 @@ shiny::shinyServer(function(input, output, session) {
     return(dataTable)
   })
   
-  # Time distribution -----------
+  # Time distribution -------
   timeDistributionData <- reactive({
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
@@ -3929,7 +3929,7 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
-  # included concepts table /concepts in data source---------
+  # included concepts table /concepts in data source-----
   includedConceptsData <- shiny::reactive(x = {
     validate(need(all(!is.null(databaseIds()), length(databaseIds()) > 0), 
                   "No data sources chosen"))
@@ -4352,7 +4352,7 @@ shiny::shinyServer(function(input, output, session) {
                        "orphanconceptContainData",
                        suspendWhenHidden = FALSE)
   
-  # Inclusion rules table ------------
+  # Inclusion rules table ----
   inclusionRuleTableData <- shiny::reactive(x = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
@@ -4510,7 +4510,7 @@ shiny::shinyServer(function(input, output, session) {
                 "inclusionRuleStatsContainsData",
                 suspendWhenHidden = FALSE)
   
-  # Index event breakdown ----------
+  # Index event breakdown ------
   indexEventBreakDownDataFull <- shiny::reactive(x = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
@@ -4833,7 +4833,7 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
-  # Visit Context ---------
+  # Visit Context -----
   visitContexData <- shiny::reactive(x = {
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortId()) > 0, "No cohorts chosen"))
@@ -5808,7 +5808,7 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  ## Characterization data --------
+  ## Characterization data ----
   # Characterization and temporal characterization data for target, comparator cohortId and one databaseIds
   charCompareAnalysisNameFilter <- shiny::reactive(x = {
     return(input$charCompareAnalysisNameFilter)
@@ -6234,7 +6234,7 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
   })
   
-  #Compare Temporal Characterization.---------
+  #Compare Temporal Characterization.-----
   temporalCompareAnalysisNameFilter <- shiny::reactive(x = {
     return(input$temporalCompareAnalysisNameFilter)
   })
@@ -6855,7 +6855,7 @@ shiny::shinyServer(function(input, output, session) {
     showInfoBox("Time Series", "html/timeSeries.html")
   })
   
-  # Cohort labels --------
+  # Cohort labels ----
   targetCohortCount <- shiny::reactive({
     targetCohortWithCount <-
       getCohortCountResult(
@@ -6882,19 +6882,28 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   selectedCohorts <- shiny::reactive({
+    
+    if (any(is.null(cohortIds()), length(cohortIds()) == 0)) {return(NULL)}
+    if (any(is.null(cohortSubset()), nrow(cohortSubset()) == 0)) {return(NULL)}
+    if (any(is.null(databaseIds()), nrow(databaseIds()) == 0)) {return(NULL)}
+    
     cohortSelected <- cohortSubset() %>%
       dplyr::filter(.data$cohortId %in% cohortIds()) %>%
       dplyr::arrange(.data$cohortId)
+    
     databaseIdsWithCount <- cohortCount %>% 
       dplyr::filter(.data$databaseId %in% databaseIds()) %>% 
       dplyr::distinct(.data$cohortId,.data$databaseId)
+    
     distinctDatabaseIdsWithCount <- length(databaseIdsWithCount$databaseId %>% unique())
     
     for (i in 1:nrow(cohortSelected)) {
       filteredDatabaseIds <-
         databaseIdsWithCount[databaseIdsWithCount$cohortId == cohortSelected$cohortId[i], ] %>%
         dplyr::pull()
+      
       count <- length(filteredDatabaseIds)
+      
       if (distinctDatabaseIdsWithCount == count) {
         cohortSelected$compoundName[i] <- cohortSelected$compoundName[i]
           # paste( #, "- in all data sources", sep = " ")

@@ -1801,7 +1801,7 @@ getCohortOverlapData <- function(dataSource,
   )
   
   if (any(is.null(cohortRelationship),
-          nrow(cohortRelationship) == 0)) {retunr(NULL)}
+          nrow(cohortRelationship) == 0)) {return(NULL)}
   
   fullOffSet <-  cohortRelationship %>% 
     dplyr::filter(.data$startDay == -99999) %>% 
@@ -1830,7 +1830,6 @@ getCohortOverlapData <- function(dataSource,
     dplyr::select(.data$databaseId,
                   .data$targetCohortId,
                   .data$comparatorCohortId,
-                  .data$targetSubjects,
                   .data$bothSubjects,
                   .data$tOnlySubjects,
                   .data$cOnlySubjects,
@@ -1853,10 +1852,6 @@ getCohortOverlapData <- function(dataSource,
                       by = c('databaseId', 'cohortId', 'comparatorCohortId')) %>% 
     dplyr::rename(targetCohortId = .data$cohortId)
   
-  result <- fullOffSet %>% 
-    dplyr::inner_join(beforeOffset, 
-                      by = c('databaseId', 'targetCohortId', 'comparatorCohortId'))
-  
   noOffset <- cohortRelationship %>% 
     dplyr::filter(.data$comparatorCohortId %in% cohortIds) %>%  
     dplyr::filter(.data$startDay == 0) %>% 
@@ -1866,6 +1861,20 @@ getCohortOverlapData <- function(dataSource,
                   .data$comparatorCohortId,
                   .data$sameDaySubjects,
                   .data$cInTSubjects)
+  noOffset <- noOffset %>% 
+    dplyr::inner_join(noOffset %>% 
+                        dplyr::rename(comparatorCohortId = .data$cohortId,
+                                      cohortId = .data$comparatorCohortId,
+                                      tInCSubjects = .data$cInTSubjects) %>% 
+                        dplyr::select(-.data$sameDaySubjects),
+                      by = c('databaseId', 'cohortId', 'comparatorCohortId')) %>% 
+    dplyr::rename(targetCohortId = .data$cohortId)
+  
+  result <- fullOffSet %>% 
+    dplyr::inner_join(beforeOffset, 
+                      by = c('databaseId', 'targetCohortId', 'comparatorCohortId')) %>% 
+    dplyr::inner_join(noOffset, 
+                      by = c('databaseId', 'targetCohortId', 'comparatorCohortId'))
   
   return(result)
 }
