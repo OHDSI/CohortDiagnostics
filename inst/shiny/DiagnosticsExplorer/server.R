@@ -2538,7 +2538,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$resolvedConceptsPresentInLeft <- DT::renderDT({
-    
+    validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
     result <- dplyr::setdiff(conceptsetComparisonData()$leftData, 
                              conceptsetComparisonData()$rightData)
     
@@ -2578,6 +2578,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$resolvedConceptsPresentInRight <- DT::renderDT({
+    validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
     result <- dplyr::setdiff(conceptsetComparisonData()$rightData, 
                              conceptsetComparisonData()$leftData)
     
@@ -2617,6 +2618,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$resolvedConceptsPresentInBoth <- DT::renderDT({
+    validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
     result <- dplyr::intersect(conceptsetComparisonData()$leftData, 
                                conceptsetComparisonData()$rightData)
     
@@ -2656,6 +2658,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$resolvedConceptsPresentInEither <- DT::renderDT({
+    validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
     result <- dplyr::union(conceptsetComparisonData()$leftData,
                            conceptsetComparisonData()$rightData)
     
@@ -2695,7 +2698,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$mappedConceptsPresentInLeft <- DT::renderDT({
-    
+    validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
     result <- dplyr::setdiff(conceptsetComparisonData()$leftData, 
                              conceptsetComparisonData()$rightData)
     
@@ -2735,6 +2738,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$mappedConceptsPresentInRight <- DT::renderDT({
+    validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
     result <- dplyr::setdiff(conceptsetComparisonData()$rightData, 
                              conceptsetComparisonData()$leftData)
     
@@ -2774,6 +2778,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$mappedConceptsPresentInBoth <- DT::renderDT({
+    validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
     result <- dplyr::intersect(conceptsetComparisonData()$leftData, 
                                conceptsetComparisonData()$rightData)
     
@@ -2813,6 +2818,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$mappedConceptsPresentInEither <- DT::renderDT({
+    validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
     result <- dplyr::union(conceptsetComparisonData()$leftData,
                            conceptsetComparisonData()$rightData)
     
@@ -2852,7 +2858,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$orphanConceptsPresentInLeft <- DT::renderDT({
-    
+    validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
     result <- dplyr::setdiff(orphanConceptComparisionLeftPanelData()$table, 
                              orphanConceptComparisionRightPanelData()$table)
     
@@ -2911,6 +2917,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$orphanConceptsPresentInRight <- DT::renderDT({
+    validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
     result <- dplyr::setdiff(orphanConceptComparisionRightPanelData()$table,
                              orphanConceptComparisionLeftPanelData()$table)
     
@@ -2969,6 +2976,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$orphanConceptsPresentInBoth <- DT::renderDT({
+    validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
     result <- dplyr::intersect(orphanConceptComparisionLeftPanelData()$table, 
                                orphanConceptComparisionRightPanelData()$table)
     
@@ -3027,6 +3035,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$orphanConceptsPresentInEither <- DT::renderDT({
+    validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
     result <- dplyr::union(orphanConceptComparisionLeftPanelData()$table, 
                            orphanConceptComparisionRightPanelData()$table)
     
