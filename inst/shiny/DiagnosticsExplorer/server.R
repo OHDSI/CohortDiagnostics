@@ -157,8 +157,14 @@ shiny::shinyServer(function(input, output, session) {
       if (nrow(subset) == 0) {
         return(NULL)
       }
-      row <- subset[idx,]
-      return(row)
+      if (length(idx) > 1) {
+        # get the last two rows selected
+        lastRowsSelected <- idx[c(length(idx), length(idx) - 1)]
+      } else {
+        lastRowsSelected <- idx
+      }
+      
+      return(subset[lastRowsSelected,])
     }
   })
   
