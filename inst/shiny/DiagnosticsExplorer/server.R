@@ -5870,25 +5870,17 @@ shiny::shinyServer(function(input, output, session) {
   
   # Cohort Overlap ------
   cohortOverlapData <- reactive({
-    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
-    validate(need(length(cohortIds()) > 1, "Please select at least two cohorts."))
-    if (all(is(dataSource, "environment"), !exists('cohortOverlap'))) {
+    if (all(is(dataSource, "environment"), 
+            !exists('cohortRelationships'))) {
       return(NULL)
     }
-    
     progress <- shiny::Progress$new()
     on.exit(progress$close())
     progress$set(message = paste0("Extracting cohort overlap data."), value = 0)
     
-    combisOfTargetComparator <- t(utils::combn(cohortIds(), 2)) %>% 
-      as.data.frame() %>% 
-      dplyr::tibble()
-    colnames(combisOfTargetComparator) <- c('targetCohortId', 'comparatorCohortId')
-    
-    data <- getCohortOverlapResult(
+    data <- getCohortOverlapData(
       dataSource = dataSource,
-      targetCohortIds = combisOfTargetComparator$targetCohortId,
-      comparatorCohortIds = combisOfTargetComparator$comparatorCohortId,
+      cohortIds = cohortIds(),
       databaseIds = databaseIds()
     )
     validate(need(

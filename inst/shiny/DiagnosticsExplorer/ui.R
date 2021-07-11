@@ -86,7 +86,7 @@ sidebarMenu <-
         item = shinydashboard::menuItem(text = "Time Series", tabName = "timeSeries"),
         infoId = "timeSeriesInfo"
       ),
-    if (exists("timeDistribution"))
+    if (exists("covariateValue"))
       addInfo(
         item = shinydashboard::menuItem(text = "Time Distributions", tabName = "timeDistribution"),
         infoId = "timeDistributionInfo"
@@ -106,7 +106,7 @@ sidebarMenu <-
         item = shinydashboard::menuItem(text = "Visit Context", tabName = "visitContext"),
         infoId = "visitContextInfo"
       ),
-    if (exists("cohortOverlap"))
+    if (exists("cohortRelationships"))
       addInfo(
         shinydashboard::menuItem(text = "Cohort Overlap", tabName = "cohortOverlap"),
         infoId = "cohortOverlapInfo"

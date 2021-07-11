@@ -55,7 +55,7 @@
 #' @param runBreakdownIndexEvents     Generate and export the breakdown of index events?
 #' @param runIncidenceRate            Generate and export the cohort incidence  rates?
 #' @param runTimeSeries               Generate and export the cohort prevalence  rates?
-#' @param runCohortTemporalRelationship       Do you want to compute temporal relationship between the cohorts being diagnosed. This
+#' @param runCohortRelationship       Do you want to compute temporal relationship between the cohorts being diagnosed. This
 #'                                    diagnostics is needed for cohort as feature characterization.
 #' @param runCohortCharacterization   Generate and export the cohort characterization?
 #'                                    Only records with values greater than 0.0001 are returned.
@@ -98,7 +98,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  runBreakdownIndexEvents = TRUE,
                                  runIncidenceRate = TRUE,
                                  runTimeSeries = TRUE,
-                                 runCohortTemporalRelationship = TRUE,
+                                 runCohortRelationship = TRUE,
                                  runCohortCharacterization = TRUE,
                                  covariateSettings = list(
                                    FeatureExtraction::createDefaultCovariateSettings(),
@@ -156,7 +156,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       runBreakdownIndexEvents = argumentsAtDiagnosticsInitiation$runBreakdownIndexEvents,
       runIncidenceRate = argumentsAtDiagnosticsInitiation$runIncidenceRate,
       runTimeSeries = argumentsAtDiagnosticsInitiation$runTimeSeries,
-      runCohortTemporalRelationship = argumentsAtDiagnosticsInitiation$runCohortTemporalRelationship,
+      runCohortRelationship = argumentsAtDiagnosticsInitiation$runCohortRelationship,
       runCohortCharacterization = argumentsAtDiagnosticsInitiation$runCohortCharacterization,
       runTemporalCohortCharacterization = argumentsAtDiagnosticsInitiation$runTemporalCohortCharacterization,
       minCellCount = argumentsAtDiagnosticsInitiation$minCellCount,
@@ -217,7 +217,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     runBreakdownIndexEvents,
     runIncidenceRate,
     runTimeSeries,
-    runCohortTemporalRelationship,
+    runCohortRelationship,
     runCohortCharacterization
   )) {
     checkmate::assertCharacter(x = cdmDatabaseSchema,
@@ -1063,15 +1063,15 @@ runCohortDiagnostics <- function(packageName = NULL,
                             attr(delta, "units"))
   }
  
-  # Cohort Temporal Relationship ----
-  if (runCohortTemporalRelationship) {
+  # Cohort Relationship ----
+  if (runCohortRelationship) {
     ParallelLogger::logInfo("Computing Cohort Temporal Relationship")
     startCohortRelationship <- Sys.time()
     
     subset <- subsetToRequiredCohorts(
       cohorts = cohorts %>%
         dplyr::filter(.data$cohortId %in% instantiatedCohorts),
-      task = "runCohortTemporalRelationship",
+      task = "runCohortRelationship",
       incremental = incremental,
       recordKeepingFile = recordKeepingFile
     )
@@ -1084,8 +1084,8 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
     if (nrow(subset) > 0) {
       ParallelLogger::logTrace("Beginning Cohort Relationship SQL")
-      cohortTemporalRelationship <-
-        runCohortTemporalRelationshipDiagnostics(
+      cohortRelationship <-
+        runCohortRelationshipDiagnostics(
           connection = connection,
           cohortDatabaseSchema = cohortDatabaseSchema,
           tempEmulationSchema = tempEmulationSchema,
@@ -1094,10 +1094,10 @@ runCohortDiagnostics <- function(packageName = NULL,
           comparatorCohortIds = cohorts$cohortId
         )
       
-      if (nrow(cohortTemporalRelationship) > 0) {
-        cohortTemporalRelationship <- cohortTemporalRelationship %>%
+      if (nrow(cohortRelationship) > 0) {
+        cohortRelationship <- cohortRelationship %>%
           dplyr::mutate(databaseId = !!databaseId)
-        columnsInCohortTemporalRelationship <- c('targetRecords',
+        columnsInCohortRelationship <- c('targetRecords',
                                                  'targetSubjects',
                                                  'comparatorRecords',
                                                  'comparatorSubjects',
@@ -1118,14 +1118,14 @@ runCohortDiagnostics <- function(packageName = NULL,
                                                  'cSubjectsEnd',
                                                  'cInTRecords',
                                                  'cInTSubjects')
-        for (i in (1:length(columnsInCohortTemporalRelationship))) {
-          cohortTemporalRelationship <-
-            enforceMinCellValue(cohortTemporalRelationship, 
-                                columnsInCohortTemporalRelationship[[i]], 
+        for (i in (1:length(columnsInCohortRelationship))) {
+          cohortRelationship <-
+            enforceMinCellValue(cohortRelationship, 
+                                columnsInCohortRelationship[[i]], 
                                 minCellCount)
         }
         writeToCsv(
-          data = cohortTemporalRelationship,
+          data = cohortRelationship,
           fileName = file.path(exportFolder, "cohort_relationships.csv"),
           incremental = incremental,
           cohortId = subset$cohortId
@@ -1135,7 +1135,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       }
       recordTasksDone(
         cohortId = subset$cohortId,
-        task = "runCohortTemporalRelationship",
+        task = "runCohortRelationship",
         checksum = subset$checksum,
         recordKeepingFile = recordKeepingFile,
         incremental = incremental

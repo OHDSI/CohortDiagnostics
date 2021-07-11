@@ -35,7 +35,7 @@
 #' @param comparatorCohortIds          A vector of one or more Cohort Ids for use as feature/comparator cohorts.
 #'
 #' @export
-runCohortTemporalRelationshipDiagnostics <-
+runCohortRelationshipDiagnostics <-
   function(connectionDetails = NULL,
            connection = NULL,
            cohortDatabaseSchema,
@@ -116,7 +116,7 @@ runCohortTemporalRelationshipDiagnostics <-
     ParallelLogger::logTrace("Done inserting time periods")
     
     sql <- SqlRender::loadRenderTranslateSql(
-      "CohortTemporalRelationship.sql",
+      "CohortRelationship.sql",
       packageName = "CohortDiagnostics",
       dbms = connection@dbms,
       cohort_database_schema = cohortDatabaseSchema,
