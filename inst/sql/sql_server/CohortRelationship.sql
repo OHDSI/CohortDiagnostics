@@ -102,17 +102,17 @@ SELECT t.cohort_definition_id cohort_id,
 			END) c_subjects_end, -- comparator cohort subjects terminate within period
 	COUNT_BIG(CASE 
 			WHEN c.cohort_start_date >= DATEADD(day, tp.start_day, t.cohort_start_date)
-				AND c.cohort_start_date <= DATEADD(day, tp.end_day, t.cohort_start_date)
+				AND c.cohort_start_date <= DATEADD(day, tp.end_day, t.cohort_end_date)
 				AND c.cohort_end_date >= DATEADD(day, tp.start_day, t.cohort_start_date)
-				AND c.cohort_end_date <= DATEADD(day, tp.end_day, t.cohort_start_date)
+				AND c.cohort_end_date <= DATEADD(day, tp.end_day, t.cohort_end_date)
 				THEN c.subject_id
 			ELSE NULL
 			END) c_in_t_records, -- comparator cohort records embedded within period
 	COUNT_BIG(DISTINCT CASE 
 			WHEN c.cohort_start_date >= DATEADD(day, tp.start_day, t.cohort_start_date)
-				AND c.cohort_start_date <= DATEADD(day, tp.end_day, t.cohort_start_date)
+				AND c.cohort_start_date <= DATEADD(day, tp.end_day, t.cohort_end_date)
 				AND c.cohort_end_date >= DATEADD(day, tp.start_day, t.cohort_start_date)
-				AND c.cohort_end_date <= DATEADD(day, tp.end_day, t.cohort_start_date)
+				AND c.cohort_end_date <= DATEADD(day, tp.end_day, t.cohort_end_date)
 				THEN c.subject_id
 			ELSE NULL
 			END) c_in_t_subjects -- comparator cohort records embedded within period
