@@ -119,7 +119,7 @@ SELECT t.cohort_definition_id cohort_id,
 INTO #cohort_rel
 FROM #time_periods tp -- offset
 CROSS JOIN cohort_data t
-LEFT JOIN cohort_data c
+INNER JOIN cohort_data c
 	ON c.subject_id = t.subject_id
 		AND c.cohort_definition_id != t.cohort_definition_id
 		AND (

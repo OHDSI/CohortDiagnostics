@@ -1786,27 +1786,40 @@ getCohortOverlapData <- function(dataSource,
     dplyr::tibble()
   colnames(combisOfTargetComparator) <- c('targetCohortId', 'comparatorCohortId')
   
-  data <- getResultsFromCohortRelationships(
+  cohortRelationship <- getResultsFromCohortRelationships(
     dataSource = dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds
   )
   
-  dataSubset <- data %>% 
-    dplyr::filter(.data$comparatorCohortId %in% cohortIds) %>% 
+  targetOnlySubjects <-  cohortRelationship %>% 
     dplyr::filter(.data$startDay == -99999) %>% 
-    dplyr::filter(.data$endDay == 99999) %>%  
+    dplyr::filter(.data$endDay == 99999) %>% 
+    dplyr::filter(is.na(.data$comparatorCohortId)) %>% 
     dplyr::select(.data$databaseId,
-                  .data$cohortId, 
+                  .data$cohortId,
+                  .data$tSubjectsOnly) %>% 
+    dplyr::rename(tOnlySubjects = .data$tSubjectsOnly)
+  
+  beforeSubjects <- cohortRelationship %>% 
+    dplyr::filter(.data$comparatorCohortId %in% cohortIds) %>%  
+    dplyr::filter(.data$startDay == -99999) %>% 
+    dplyr::filter(.data$endDay == -1) %>% 
+    dplyr::select(.data$databaseId,
+                  .data$cohortId,
+                  .data$comparatorCohortId,
+                  .data$cBeforeTSubjects,
+                  .data$tBeforeCSubjects)
+  
+  dataSubset <- data %>% 
+    dplyr::filter(!is.na(.data$comparatorCohortId)) %>% 
+    dplyr::select(.data$cohortId, 
                   .data$comparatorCohortId,
                   .data$bothSubjects,
-                  .data$tSubjectsOnly,
                   .data$tBeforeCSubjects,
                   .data$cBeforeTSubjects,
                   .data$sameDaySubjects,
-                  .data$cInTSubjects
-    ) %>% 
-    dplyr::rename(targetCohortId = .data$cohortId)
+                  .data$cInTSubjects)
   
   dataSubset2 <- dataSubset %>% 
     dplyr::select(.data$databaseId,
