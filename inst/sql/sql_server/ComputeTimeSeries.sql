@@ -273,6 +273,9 @@ GROUP BY period_begin,
 	calendar_interval,
 	cohort_definition_id;
 
+
+
+
 -- cohort time series T5: subjects in the cohorts whose observation period is embedded within calendar period
 --- (cohort start is between (inclusive) calendar period, AND 
 --- (cohort end is between (inclusive) calendar period)
@@ -334,6 +337,9 @@ GROUP BY period_begin,
 	cohort_definition_id;
 
 
+
+
+
 -- datasource time series T5: persons in the observation table whose observation period is embedded within calendar period
 --- (observation start is between (inclusive) calendar period, AND 
 --- (observation end is between (inclusive) calendar period)
@@ -386,6 +392,9 @@ GROUP BY period_begin,
 	calendar_interval;
 
 
+
+
+
 -- union all data
 SELECT *
 INTO #time_series
@@ -419,6 +428,10 @@ FROM (
 	FROM #d_time_series6
 	
 	) f;
+
+
+
+
 
 IF OBJECT_ID('tempdb..#c_time_series1', 'U') IS NOT NULL
 	DROP TABLE #c_time_series1;
