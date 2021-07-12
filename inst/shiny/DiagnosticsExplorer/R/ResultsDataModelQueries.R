@@ -1787,7 +1787,7 @@ getCohortOverlapData <- function(dataSource,
                               databaseIds = databaseIds)
   
   if (any(is.null(cohortCounts),
-          nrow(cohortCounts) == 0)) {retunr(NULL)}
+          nrow(cohortCounts) == 0)) {return(NULL)}
   
   combisOfTargetComparator <- t(utils::combn(cohortIds, 2)) %>% 
     as.data.frame() %>% 
