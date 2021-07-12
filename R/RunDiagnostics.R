@@ -54,7 +54,9 @@
 #' @param runVisitContext             Generate and export index-date visit context?
 #' @param runBreakdownIndexEvents     Generate and export the breakdown of index events?
 #' @param runIncidenceRate            Generate and export the cohort incidence  rates?
-#' @param runTimeSeries               Generate and export the cohort prevalence  rates?
+#' @param runCohortTimeSeries         Generate and export the cohort level time series?
+#' @param runDataSourceTimeSeries     Generate and export the Data source level time series? i.e. 
+#'                                    using all persons found in observation period table.
 #' @param runCohortRelationship       Do you want to compute temporal relationship between the cohorts being diagnosed. This
 #'                                    diagnostics is needed for cohort as feature characterization.
 #' @param runCohortCharacterization   Generate and export the cohort characterization?
@@ -97,7 +99,8 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  runVisitContext = TRUE,
                                  runBreakdownIndexEvents = TRUE,
                                  runIncidenceRate = TRUE,
-                                 runTimeSeries = TRUE,
+                                 runCohortTimeSeries = TRUE,
+                                 runDataSourceTimeSeries = TRUE,
                                  runCohortRelationship = TRUE,
                                  runCohortCharacterization = TRUE,
                                  covariateSettings = list(
@@ -155,7 +158,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       runVisitContext = argumentsAtDiagnosticsInitiation$runVisitContext,
       runBreakdownIndexEvents = argumentsAtDiagnosticsInitiation$runBreakdownIndexEvents,
       runIncidenceRate = argumentsAtDiagnosticsInitiation$runIncidenceRate,
-      runTimeSeries = argumentsAtDiagnosticsInitiation$runTimeSeries,
+      runCohortTimeSeries = argumentsAtDiagnosticsInitiation$runCohortTimeSeries,
       runCohortRelationship = argumentsAtDiagnosticsInitiation$runCohortRelationship,
       runCohortCharacterization = argumentsAtDiagnosticsInitiation$runCohortCharacterization,
       runTemporalCohortCharacterization = argumentsAtDiagnosticsInitiation$runTemporalCohortCharacterization,
@@ -216,7 +219,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     runOrphanConcepts,
     runBreakdownIndexEvents,
     runIncidenceRate,
-    runTimeSeries,
+    runCohortTimeSeries,
     runCohortRelationship,
     runCohortCharacterization
   )) {
@@ -988,24 +991,28 @@ runCohortDiagnostics <- function(packageName = NULL,
                             " ",
                             attr(delta, "units"))
   }
-  
+
   # Time Series----
-  if (runTimeSeries) {
+  if (any(runCohortTimeSeries, runDataSourceTimeSeries)) {
     ParallelLogger::logInfo("Computing Time Series")
     startTimeSeries <- Sys.time()
-    subset <- subsetToRequiredCohorts(
-      cohorts = cohorts %>%
-        dplyr::filter(.data$cohortId %in% instantiatedCohorts),
-      task = "runTimeSeries",
-      incremental = incremental,
-      recordKeepingFile = recordKeepingFile
-    )
-    if (incremental &&
-        (length(instantiatedCohorts) - nrow(subset)) > 0) {
-      ParallelLogger::logInfo(sprintf(
-        " - Skipping %s cohorts in incremental mode.",
-        length(instantiatedCohorts) - nrow(subset)
-      ))
+    cohortIds <- NULL
+    if (runCohortTimeSeries) {
+      subset <- subsetToRequiredCohorts(
+        cohorts = cohorts %>%
+          dplyr::filter(.data$cohortId %in% instantiatedCohorts),
+        task = "runCohortTimeSeries",
+        incremental = incremental,
+        recordKeepingFile = recordKeepingFile
+      )
+      if (incremental &&
+          (length(instantiatedCohorts) - nrow(subset)) > 0) {
+        ParallelLogger::logInfo(sprintf(
+          " - Skipping %s cohorts in incremental mode.",
+          length(instantiatedCohorts) - nrow(subset)
+        ))
+      }
+      cohortIds <- subset$cohortId
     }
     
     if (nrow(subset) > 0) {
@@ -1016,33 +1023,32 @@ runCohortDiagnostics <- function(packageName = NULL,
           cohortDatabaseSchema = cohortDatabaseSchema,
           cdmDatabaseSchema = cdmDatabaseSchema,
           cohortTable = cohortTable,
+          runDataSourceTimeSeries = runDataSourceTimeSeries,
+          runCohortTimeSeries = runCohortTimeSeries,
           timeSeriesMinDate = observationPeriodDateRange$observationPeriodMinDate,
           timeSeriesMaxDate = observationPeriodDateRange$observationPeriodMaxDate,
-          cohortIds = subset$cohortId
+          cohortIds = cohortIds
         )
       
       if (!is.null(timeSeries) && nrow(timeSeries) > 0) {
-        timeSeries <- timeSeries %>%
-          dplyr::mutate(databaseId = !!databaseId)
-        timeSeries <-
-          enforceMinCellValue(timeSeries, "records", minCellCount)
-        timeSeries <-
-          enforceMinCellValue(timeSeries, "subjects", minCellCount)
-        timeSeries <-
-          enforceMinCellValue(timeSeries, "personDays", minCellCount)
-        timeSeries <-
-          enforceMinCellValue(timeSeries, "recordsStart", minCellCount)
-        timeSeries <-
-          enforceMinCellValue(timeSeries, "subjectsStart", minCellCount)
-        timeSeries <-
-          enforceMinCellValue(timeSeries, "recordsEnd", minCellCount)
-        timeSeries <-
-          enforceMinCellValue(timeSeries, "subjectsEnd", minCellCount)
+        columnsInTimeSeries <- c('records',
+                                 'subjects',
+                                 'personDays',
+                                 'recordsStart',
+                                 'subjectsStart',
+                                 'recordsEnd',
+                                 'subjectsEnd')
+        for (i in (1:length(columnsInTimeSeries))) {
+          timeSeries <-
+            enforceMinCellValue(timeSeries, 
+                                columnsInTimeSeries[[i]], 
+                                minCellCount)
+        }
         writeToCsv(
           data = timeSeries,
           fileName = file.path(exportFolder, "time_series.csv"),
           incremental = incremental,
-          cohortId = c(subset$cohortId) %>% unique()
+          cohortId = subset$cohortId
         )
       }
       else {
@@ -1050,7 +1056,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       }
       recordTasksDone(
         cohortId = subset$cohortId,
-        task = "runTimeSeries",
+        task = "runCohortTimeSeries",
         checksum = subset$checksum,
         recordKeepingFile = recordKeepingFile,
         incremental = incremental
@@ -1062,7 +1068,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                             " ",
                             attr(delta, "units"))
   }
-
+  
   # Cohort Relationship ----
   if (runCohortRelationship) {
     ParallelLogger::logInfo("Computing Cohort Relationship")

@@ -11,9 +11,11 @@ runCohortTimeSeriesDiagnostics(
   cdmDatabaseSchema,
   cohortDatabaseSchema = cdmDatabaseSchema,
   cohortTable = "cohort",
+  runCohortTimeSeries = TRUE,
+  runDataSourceTimeSeries = TRUE,
   timeSeriesMinDate = as.Date("1980-01-01"),
   timeSeriesMaxDate = as.Date(Sys.Date()),
-  cohortIds
+  cohortIds = NULL
 )
 }
 \arguments{
@@ -41,6 +43,11 @@ this should include both the database and schema name, for example
 
 \item{cohortTable}{Name of the cohort table.}
 
+\item{runCohortTimeSeries}{Generate and export the cohort level time series?}
+
+\item{runDataSourceTimeSeries}{Generate and export the Data source level time series? i.e. 
+using all persons found in observation period table.}
+
 \item{timeSeriesMinDate}{(optional) Minimum date for time series. Default value January 1st 1980.}
 
 \item{timeSeriesMaxDate}{(optional) Maximum date for time series. Default value System date.}
@@ -54,4 +61,8 @@ Calendar Month, Quarter and year are supported.
 For each of the calendar interval, time series data are computed. The returned
 object is a R dataframe that will need to be converted to a time series object
 to perform time series analysis.
+
+Data Source time series: computes time series at the data source level i.e. observation
+period table. This output is NOT limited to individuals in the cohort table
+but is for ALL people in the datasource (i.e. present in observation period table)
 }
