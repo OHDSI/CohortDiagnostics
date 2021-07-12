@@ -1105,26 +1105,14 @@ runCohortDiagnostics <- function(packageName = NULL,
       if (nrow(cohortRelationship) > 0) {
         cohortRelationship <- cohortRelationship %>%
           dplyr::mutate(databaseId = !!databaseId)
-        columnsInCohortRelationship <- c('targetRecords',
-                                         'targetSubjects',
-                                         'comparatorRecords',
-                                         'comparatorSubjects',
-                                         'bothRecords',
-                                         'bothSubjects',
-                                         'tRecordsOnly',
+        columnsInCohortRelationship <- c('bothSubjects',
                                          'tSubjectsOnly',
-                                         'cBeforeTRecords',
                                          'cBeforeTSubjects',
-                                         'tBeforeCRecords',
                                          'tBeforeCSubjects',
-                                         'sameDayRecords',
                                          'sameDaySubjects',
                                          'cPersonDays',
-                                         'cRecordsStart',
                                          'cSubjectsStart',
-                                         'cRecordsEnd',
                                          'cSubjectsEnd',
-                                         'cInTRecords',
                                          'cInTSubjects')
         for (i in (1:length(columnsInCohortRelationship))) {
           cohortRelationship <-

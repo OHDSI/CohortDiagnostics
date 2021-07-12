@@ -72,7 +72,7 @@ SELECT cohort_definition_id cohort_id,
 	period_begin,
 	calendar_interval,
 	'T1' series_type, -- cohort time series by calendar period
-	COUNT_BIG(*) records, -- records in calendar month
+	COUNT_BIG(*) records, -- records in calendar period
 	COUNT_BIG(DISTINCT subject_id) subjects, -- unique subjects
 	SUM(datediff(dd, CASE 
 				WHEN cohort_start_date >= period_begin
@@ -126,7 +126,8 @@ WHERE cohort_definition_id IN (@cohort_ids)
 GROUP BY period_begin,
 	calendar_interval,
 	cohort_definition_id;
-/*
+	
+
 -- cohort time series T2: subjects in the cohort who have atleast one observation day in calendar period
 --- (i.e. observation start or observation end is between (inclusive) calendar period, or 
 --- (observation start is on/before calendar start AND observation end is on/after calendar end))
@@ -422,14 +423,15 @@ INNER JOIN #calendar_periods cp ON (
 		)
 GROUP BY period_begin,
 	calendar_interval;
-*/
+
+
 -- union all data
 SELECT *
 INTO #time_series
 FROM (
 	SELECT *
 	FROM #c_time_series1
-		/*	
+	
 	UNION
 	
 	SELECT *
@@ -454,7 +456,7 @@ FROM (
 	
 	SELECT *
 	FROM #d_time_series6
-	*/
+	
 	) f;
 
 IF OBJECT_ID('tempdb..#c_time_series1', 'U') IS NOT NULL
