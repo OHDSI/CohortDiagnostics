@@ -267,6 +267,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
                                       replacement = '' ) %>% 
       stringr::str_replace(pattern = '.sql', 
                            replacement = '') 
+    seriesId <- paste0('T', as.character(seriesId))
     
     sql <- SqlRender::render(sql = sql,
                              tempEmulationSchema = tempEmulationSchema, 
