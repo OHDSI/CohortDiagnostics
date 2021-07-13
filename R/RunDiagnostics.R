@@ -128,8 +128,8 @@ runCohortDiagnostics <- function(packageName = NULL,
                                      0,
                                      1,
                                      31,
-                                     seq(from = -301, to = -31, by = 30),
-                                     seq(from = 0, to = 270, by = 30)
+                                     seq(from = -421, to = -31, by = 30),
+                                     seq(from = 0, to = 390, by = 30)
                                    ),
                                    temporalEndDays = c(
                                      -31,
@@ -137,8 +137,8 @@ runCohortDiagnostics <- function(packageName = NULL,
                                      0,
                                      30,
                                      365,
-                                     seq(from = -271, to = -1, by = 30),
-                                     seq(from = 30, to = 300, by = 30)
+                                     seq(from = -391, to = -1, by = 30),
+                                     seq(from = 30, to = 420, by = 30)
                                    )
                                  ),
                                  minCellCount = 5,
@@ -146,7 +146,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  incrementalFolder = file.path(exportFolder, "incremental")) {
   
   start <- Sys.time()
-  ParallelLogger::logInfo("Run Cohort Diagnostics started at ", start)
+  ParallelLogger::logInfo("Run Cohort Diagnostics started at ", start, '. Initiating...')
   
   # collect arguments that were passed to cohort diagnostics at initiation
   argumentsAtDiagnosticsInitiation <- formals(runCohortDiagnostics)
@@ -176,22 +176,22 @@ runCohortDiagnostics <- function(packageName = NULL,
   
   # Execution mode determination----
   if (!is.null(cohortSetReference)) {
-    ParallelLogger::logInfo("Found cohortSetReference. Cohort Diagnostics is running in WebApi mode.")
+    ParallelLogger::logInfo(" - Found cohortSetReference. Cohort Diagnostics will run in WebApi mode.")
     cohortToCreateFile <- NULL
   }
   
   if (all(!is.null(oracleTempSchema), is.null(tempEmulationSchema))) {
     tempEmulationSchema <- oracleTempSchema
-    warning('OracleTempSchema has been deprecated by DatabaseConnector')
+    warning(' - OracleTempSchema has been deprecated by DatabaseConnector. Please use tempEmulationSchema instead.')
   }
   
   if (any(is.null(databaseName), is.na(databaseName))) {
     databaseName <- databaseId
-    ParallelLogger::logTrace('Databasename was not provided.')
+    ParallelLogger::logTrace(' - Databasename was not provided.')
   }
   if (any(is.null(databaseDescription), is.na(databaseDescription))) {
     databaseDescription <- databaseId
-    ParallelLogger::logTrace('Databasedescription was not provided.')
+    ParallelLogger::logTrace(' - Databasedescription was not provided.')
   }
   
   # Assert checks----
@@ -354,7 +354,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     unique()
   
   ## Observation period----
-  ParallelLogger::logInfo("Saving database metadata")
+  ParallelLogger::logTrace(" - Collecting date range from Observational period table.")
   observationPeriodDateRange <- renderTranslateQuerySql(
     connection = connection,
     sql = "SELECT MIN(observation_period_start_date) observation_period_min_date,
@@ -392,20 +392,19 @@ runCohortDiagnostics <- function(packageName = NULL,
   
   # Incremental mode----
   if (incremental) {
-    ParallelLogger::logTrace("Working in incremental mode.")
+    ParallelLogger::logTrace(" - Working in incremental mode.")
     cohorts$checksum <- computeChecksum(cohorts$sql)
     recordKeepingFile <-
       file.path(incrementalFolder, "CreatedDiagnostics.csv")
     if (file.exists(path = recordKeepingFile)) {
       ParallelLogger::logInfo(
-        "Found existing record keeping file in incremental folder - CreatedDiagnostics.csv"
+        " -  Found existing record keeping file in incremental folder - CreatedDiagnostics.csv"
       )
     }
   }
   
   # Counting cohorts----
-  # this is required step, no condition
-  ParallelLogger::logInfo("Counting cohort records and subjects")
+  ParallelLogger::logInfo(" - Checking if Cohorts are instantiated, and getting cohort counts")
   cohortCounts <- getCohortCounts(
     connection = connection,
     cohortDatabaseSchema = cohortDatabaseSchema,
@@ -453,12 +452,13 @@ runCohortDiagnostics <- function(packageName = NULL,
   }
   
   # Inclusion statistics----
+  ParallelLogger::logInfo(" - Looking for inclusion rule statistics files for instantiated cohorts.")
   if (runInclusionStatistics) {
     startInclusionStatistics <- Sys.time()
     if (is.null(instantiatedCohorts)) {
-      ParallelLogger::logInfo(" - Skipping inclusion statistics from files because no cohorts were instantiated.")
+      ParallelLogger::logInfo(" -- Skipping inclusion statistics from files because no cohorts were instantiated.")
     } else {
-      ParallelLogger::logInfo("Fetching inclusion statistics from files")
+      ParallelLogger::logInfo(" -- Found, fetching inclusion statistics from files")
       subset <- subsetToRequiredCohorts(
         cohorts = cohorts %>%
           dplyr::filter(.data$cohortId %in% instantiatedCohorts),
@@ -469,7 +469,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       if (incremental &&
           (length(instantiatedCohorts) - nrow(subset)) > 0) {
         ParallelLogger::logInfo(sprintf(
-          " - Skipping %s cohorts in incremental mode.",
+          " -- Skipping %s cohorts in incremental mode.",
           length(instantiatedCohorts) - nrow(subset)
         ))
       }
@@ -613,7 +613,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       }
     }
     delta <- Sys.time() - startInclusionStatistics
-    ParallelLogger::logInfo("Running Inclusion Statistics took ",
+    ParallelLogger::logInfo(" - Running Inclusion Statistics took ",
                             signif(delta, 3),
                             " ",
                             attr(delta, "units"))
