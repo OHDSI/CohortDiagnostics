@@ -6,18 +6,18 @@ packageName <- 'SkeletonCohortDiagnosticsStudy'
 
 outputLocation <- "D:\\temp"
 
-connectionSpecifications <- cdmSources %>%
+connectionSpecifications <- cdmSources2 %>%
   dplyr::filter(sequence == 1) %>%
   dplyr::filter(database == 'optum_extended_dod')
 
 dbms <- connectionSpecifications$dbms # example: 'redshift'
 port <- connectionSpecifications$port # example: 2234
 server <-
-  connectionSpecifications$serverRHealth # example: 'fdsfd.yourdatabase.yourserver.com"
+  connectionSpecifications$server # example: 'fdsfd.yourdatabase.yourserver.com"
 cdmDatabaseSchema <-
-  connectionSpecifications$cdmDatabaseSchemaRhealth # example: "cdm"
+  connectionSpecifications$cdmDatabaseSchema # example: "cdm"
 vocabDatabaseSchema <-
-  connectionSpecifications$vocabDatabaseSchemaRhealth # example: "vocabulary"
+  connectionSpecifications$vocabDatabaseSchema # example: "vocabulary"
 databaseId <-
   connectionSpecifications$database # example: "truven_ccae"
 userNameService = "OHDSI_USER" # example: "this is key ring service that securely stores credentials"

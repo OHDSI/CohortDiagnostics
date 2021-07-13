@@ -30,9 +30,9 @@ runCohortDiagnostics(
   runVisitContext = TRUE,
   runBreakdownIndexEvents = TRUE,
   runIncidenceRate = TRUE,
-  runTimeSeries = TRUE,
-  runCohortOverlap = TRUE,
-  runCohortTemporalRelationship = TRUE,
+  runCohortTimeSeries = TRUE,
+  runDataSourceTimeSeries = TRUE,
+  runCohortRelationship = TRUE,
   runCohortCharacterization = TRUE,
   covariateSettings = list(FeatureExtraction::createDefaultCovariateSettings(),
     FeatureExtraction::createCovariateSettings(useVisitCountLongTerm = TRUE,
@@ -43,13 +43,10 @@ runCohortDiagnostics(
   runTemporalCohortCharacterization = TRUE,
  
     temporalCovariateSettings = FeatureExtraction::createTemporalCovariateSettings(useConditionOccurrence
-    = TRUE, useConditionEraOverlap = TRUE, useConditionEraGroupStart = TRUE,
-    useDrugExposure = TRUE, useDrugEraStart = TRUE, useDrugEraGroupStart = TRUE,
-    useDrugEraOverlap = TRUE, useDrugEraGroupOverlap = TRUE, useVisitCount = TRUE,
-    useVisitConceptCount = TRUE, useProcedureOccurrence = TRUE, useMeasurement = TRUE,
+    = TRUE, useDrugEraStart = TRUE, useProcedureOccurrence = TRUE, useMeasurement = TRUE,
     temporalStartDays = c(-365, -30, 0, 1, 31, seq(from = -421, to = -31, by = 30),
-    seq(from = 0, to = 390, by = 30)),      temporalEndDays = c(-31, -1, 0, 30, 365,
-    seq(from = -391, to = -1, by = 30), seq(from = 30, to = 420, by = 30))),
+    seq(from = 0, to = 390, by = 30)), temporalEndDays = c(-31, -1, 0, 30, 365, seq(from
+    = -391, to = -1, by = 30), seq(from = 30, to = 420, by = 30))),
   minCellCount = 5,
   incremental = FALSE,
   incrementalFolder = file.path(exportFolder, "incremental")
@@ -133,13 +130,12 @@ does not exist it will be created.}
 
 \item{runIncidenceRate}{Generate and export the cohort incidence  rates?}
 
-\item{runTimeSeries}{Generate and export the cohort prevalence  rates?}
+\item{runCohortTimeSeries}{Generate and export the cohort level time series?}
 
-\item{runCohortOverlap}{Generate and export the cohort overlap? Overlaps are checked within cohortIds
-that have the same phenotype ID sourced from the CohortSetReference or
-cohortToCreateFile.}
+\item{runDataSourceTimeSeries}{Generate and export the Data source level time series? i.e. 
+using all persons found in observation period table.}
 
-\item{runCohortTemporalRelationship}{Do you want to compute temporal relationship between the cohorts being diagnosed. This
+\item{runCohortRelationship}{Do you want to compute temporal relationship between the cohorts being diagnosed. This
 diagnostics is needed for cohort as feature characterization.}
 
 \item{runCohortCharacterization}{Generate and export the cohort characterization?

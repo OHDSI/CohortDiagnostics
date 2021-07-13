@@ -8,7 +8,6 @@ DROP TABLE IF EXISTS cohort_inclusion;
 DROP TABLE IF EXISTS cohort_inclusion_result;
 DROP TABLE IF EXISTS cohort_inclusion_stats;
 DROP TABLE IF EXISTS cohort_summary_stats;
-DROP TABLE IF EXISTS cohort_overlap;
 DROP TABLE IF EXISTS cohort_relationships;
 DROP TABLE IF EXISTS concept;
 DROP TABLE IF EXISTS concept_ancestor;
@@ -98,7 +97,7 @@ CREATE TABLE cohort_inclusion (
 			name varchar NULL,
 			description varchar NULL,
 	    database_id VARCHAR NOT NULL,
-			PRIMARY KEY(cohort_id, rule_sequence)
+			PRIMARY KEY(cohort_id, rule_sequence, database_id)
 );
 
 --Table cohort_inclusion_result
@@ -136,24 +135,6 @@ CREATE TABLE cohort_summary_stats(
 	PRIMARY KEY(cohort_id, database_id, mode_id)
 );
 
---Table cohort_overlap
-
-CREATE TABLE cohort_overlap (
-			either_subjects FLOAT NOT NULL,
-			both_subjects FLOAT NOT NULL,
-			t_only_subjects FLOAT NOT NULL,
-			c_only_subjects FLOAT NOT NULL,
-			t_before_c_subjects FLOAT NOT NULL,
-			c_before_t_subjects FLOAT NOT NULL,
-			same_day_subjects FLOAT NOT NULL,
-			t_in_c_subjects FLOAT NOT NULL,
-			c_in_t_subjects FLOAT NOT NULL,
-			target_cohort_id BIGINT NOT NULL,
-			comparator_cohort_id BIGINT NOT NULL,
-			database_id VARCHAR NOT NULL,
-			PRIMARY KEY(target_cohort_id, comparator_cohort_id, database_id)
-);
-
 
 --Table cohort_relationships
 
@@ -161,11 +142,29 @@ CREATE TABLE cohort_relationships (
 			database_id VARCHAR NOT NULL,
 			cohort_id BIGINT NOT NULL,
 			comparator_cohort_id BIGINT NOT NULL,
-			relationship_type VARCHAR NOT NULL,
 			start_day FLOAT NOT NULL,
 			end_day FLOAT NOT NULL,
-			subjects FLOAT NOT NULL,	
-			records FLOAT NOT NULL,		
+			target_records BIGINT NOT NULL,
+			target_subjects BIGINT NOT NULL,
+			comparator_records BIGINT NOT NULL,
+			comparator_subjects BIGINT NOT NULL,
+			both_records BIGINT NOT NULL,
+			both_subjects BIGINT NOT NULL,
+			t_records_only BIGINT NOT NULL,
+			t_subjects_only BIGINT NOT NULL,
+			c_before_t_records BIGINT NOT NULL,
+			c_before_t_subjects BIGINT NOT NULL,
+			t_before_c_records BIGINT NOT NULL,
+			t_before_c_subjects BIGINT NOT NULL,
+			same_day_records BIGINT NOT NULL,
+			same_day_subjects BIGINT NOT NULL,
+			c_person_days BIGINT NOT NULL,
+			c_records_start BIGINT NOT NULL,
+			c_subjects_start BIGINT NOT NULL,
+			c_records_end BIGINT NOT NULL,
+			c_subjects_end BIGINT NOT NULL,
+			c_in_t_records BIGINT NOT NULL,
+			c_in_t_subjects BIGINT NOT NULL,
 			PRIMARY KEY(database_id, cohort_id, comparator_cohort_id, relationship_type, start_day, end_day)
 );
 
@@ -352,9 +351,10 @@ CREATE TABLE index_event_breakdown (
 
 CREATE TABLE metadata (
 			database_id VARCHAR NOT NULL,
+			start_time VARCHAR NOT NULL,
 			variable_field VARCHAR NOT NULL,
 			value_field VARCHAR,
-			PRIMARY KEY(database_id, variable_field)
+			PRIMARY KEY(database_id, start_time, variable_field)
 );
 
 --Table orphan_concept
@@ -484,10 +484,10 @@ CREATE TABLE time_series (
 			records BIGINT NOT NULL,
 			subjects BIGINT NOT NULL,
 			person_days BIGINT NOT NULL,
-			records_incidence BIGINT,
-			subjects_incidence BIGINT,
-			records_terminate BIGINT,
-			subjects_terminate BIGINT,
+			records_start BIGINT,
+			subjects_start BIGINT,
+			records_end BIGINT,
+			subjects_end BIGINT,
 			PRIMARY KEY(cohort_id, database_id, period_begin, calendar_interval, series_type)
 );
 

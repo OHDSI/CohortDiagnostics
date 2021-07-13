@@ -45,7 +45,10 @@ calendar intervals between the timeSeriesMinDate and timeSeriesMaxDate.
 Calendar Month, Quarter and year are supported. 
 For each of the calendar interval, time series data are computed. The returned
 object is a R dataframe that will need to be converted to a time series object
-to perform time series analysis." />
+to perform time series analysis.
+Data Source time series: computes time series at the data source level i.e. observation
+period table. This output is NOT limited to individuals in the cohort table
+but is for ALL people in the datasource (i.e. present in observation period table)" />
 
 
 
@@ -158,6 +161,9 @@ Calendar Month, Quarter and year are supported.
 For each of the calendar interval, time series data are computed. The returned
 object is a R dataframe that will need to be converted to a time series object
 to perform time series analysis.</p>
+<p>Data Source time series: computes time series at the data source level i.e. observation
+period table. This output is NOT limited to individuals in the cohort table
+but is for ALL people in the datasource (i.e. present in observation period table)</p>
     </div>
 
     <pre class="usage"><span class='fu'>runCohortTimeSeriesDiagnostics</span><span class='op'>(</span>
@@ -167,9 +173,11 @@ to perform time series analysis.</p>
   <span class='va'>cdmDatabaseSchema</span>,
   cohortDatabaseSchema <span class='op'>=</span> <span class='va'>cdmDatabaseSchema</span>,
   cohortTable <span class='op'>=</span> <span class='st'>"cohort"</span>,
+  runCohortTimeSeries <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  runDataSourceTimeSeries <span class='op'>=</span> <span class='cn'>TRUE</span>,
   timeSeriesMinDate <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='st'>"1980-01-01"</span><span class='op'>)</span>,
   timeSeriesMaxDate <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/as.Date.html'>as.Date</a></span><span class='op'>(</span><span class='fu'><a href='https://rdrr.io/r/base/Sys.time.html'>Sys.Date</a></span><span class='op'>(</span><span class='op'>)</span><span class='op'>)</span>,
-  <span class='va'>cohortIds</span>
+  cohortIds <span class='op'>=</span> <span class='cn'>NULL</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -210,6 +218,15 @@ this should include both the database and schema name, for example
     <tr>
       <th>cohortTable</th>
       <td><p>Name of the cohort table.</p></td>
+    </tr>
+    <tr>
+      <th>runCohortTimeSeries</th>
+      <td><p>Generate and export the cohort level time series?</p></td>
+    </tr>
+    <tr>
+      <th>runDataSourceTimeSeries</th>
+      <td><p>Generate and export the Data source level time series? i.e. 
+using all persons found in observation period table.</p></td>
     </tr>
     <tr>
       <th>timeSeriesMinDate</th>

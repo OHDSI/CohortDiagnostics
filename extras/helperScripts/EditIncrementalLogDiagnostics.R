@@ -20,7 +20,7 @@ listFiles <-
 # "runCohortCharacterization", "runTemporalCohortCharacterization"
 
 
-# tasksToRemove <- c("runTimeSeries")
+# tasksToRemove <- c("runTimeSeries", "runCohortRelationship")
 
 
 

@@ -133,9 +133,12 @@ if (databaseMode) {
   loadResultsTable("covariate_ref")
   loadResultsTable("temporal_covariate_ref")
   
-  covariateRef <- dplyr::bind_rows(covariateRef, temporalCovariateRef) %>% 
-    dplyr::distinct() %>% 
-    dplyr::arrange(.data$covariateId)
+  # if (exists("temporalCovariateRef")) {
+  #   covariateRef <- dplyr::bind_rows(covariateRef, temporalCovariateRef) %>% 
+  #     dplyr::distinct() %>% 
+  #     dplyr::arrange(.data$covariateId)
+  #   rm(temporalCovariateRef)
+  # }
   
 
   for (table in c(dataModelSpecifications$tableName)) {
@@ -163,9 +166,12 @@ if (databaseMode) {
   dataSource <-
     createFileDataSource(localDataPath, envir = .GlobalEnv)
   
-  covariateRef <- dplyr::bind_rows(covariateRef, temporalCovariateRef) %>% 
-    dplyr::distinct() %>% 
-    dplyr::arrange(.data$covariateId)
+  # if (exists("temporalCovariateRef")) {
+  #   covariateRef <- dplyr::bind_rows(covariateRef, temporalCovariateRef) %>% 
+  #     dplyr::distinct() %>% 
+  #     dplyr::arrange(.data$covariateId)
+  #   rm(temporalCovariateRef)
+  # }
   
 }
 

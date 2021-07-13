@@ -154,7 +154,7 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
                                            cohortIds = NULL,
                                            errorMessage = NULL,
                                            generateStats = TRUE) {
-  ParallelLogger::logDebug("Running Cohort Diagnostics on cohort specified in WebApi - ",
+  ParallelLogger::logDebug(" - Running Cohort Diagnostics on cohort specified in WebApi - ",
                            baseUrl)
   
   if (is.null(errorMessage) |
@@ -223,12 +223,12 @@ getCohortsJsonAndSql <- function(packageName = NULL,
       generateStats = generateStats
     )
   }
-  ParallelLogger::logInfo("Number of cohorts ", nrow(cohorts))
+  ParallelLogger::logInfo(" - Number of cohorts ", nrow(cohorts))
   if (nrow(cohorts) == 0) {
-    warning("No cohorts founds")
+    warning(" - No cohorts founds")
   }
   if (nrow(cohorts) != length(cohorts$cohortId %>% unique())) {
-    warning("Please check input cohort specification. Is there duplication of cohortId? Returning empty cohort table.")
+    warning(" - Please check input cohort specification. Is there duplication of cohortId? Returning empty cohort table.")
     return(cohorts[0, ])
   }
   return(cohorts)
@@ -443,18 +443,18 @@ instantiateCohortSet <- function(connectionDetails = NULL,
                                  incremental = FALSE,
                                  incrementalFolder = NULL) {
   if (!is.null(cohortSetReference)) {
-    ParallelLogger::logInfo("Found cohortSetReference. Cohort Diagnostics is running in WebApi mode.")
+    ParallelLogger::logInfo(" - Found cohortSetReference. Cohort Diagnostics is running in WebApi mode.")
     cohortToCreateFile <- NULL
   }
   
   if (!is.null(oracleTempSchema) && is.null(tempEmulationSchema)) {
     tempEmulationSchema <- oracleTempSchema
-    warning('OracleTempSchema has been deprecated by DatabaseConnector')
+    warning(' - OracleTempSchema has been deprecated by DatabaseConnector')
   }
   
   if (generateInclusionStats) {
     if (is.null(inclusionStatisticsFolder)) {
-      stop("Must specify inclusionStatisticsFolder when generateInclusionStats = TRUE")
+      stop(" - Must specify inclusionStatisticsFolder when generateInclusionStats = TRUE")
     }
     if (!file.exists(inclusionStatisticsFolder)) {
       dir.create(inclusionStatisticsFolder, recursive = TRUE)
@@ -462,7 +462,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
   }
   if (incremental) {
     if (is.null(incrementalFolder)) {
-      stop("Must specify incrementalFolder when incremental = TRUE")
+      stop(" - Must specify incrementalFolder when incremental = TRUE")
     }
     if (!file.exists(incrementalFolder)) {
       dir.create(incrementalFolder, recursive = TRUE)
@@ -480,7 +480,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
       tables <-
         DatabaseConnector::getTableNames(connection, cohortDatabaseSchema)
       if (toupper(cohortTable) %in% toupper(tables)) {
-        ParallelLogger::logInfo("Cohort table already exists and in incremental mode, so not recreating table.")
+        ParallelLogger::logInfo(" - Cohort table already exists and in incremental mode, so not recreating table.")
         needToCreate <- FALSE
       }
     }
@@ -520,7 +520,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
       recordKeepingFile = recordKeepingFile
     )) {
       ParallelLogger::logInfo(
-        "Instantiation cohort ",
+        " - Instantiation cohort ",
         cohorts$cohortName[i],
         " (Cohort id: ",
         cohorts$cohortId[i],
@@ -569,7 +569,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
                                    )
         }
       } else {
-        ParallelLogger::logDebug("Skipping inclusion rules for cohort id ", 
+        ParallelLogger::logDebug(" - Skipping inclusion rules for cohort id ", 
                                 cohorts$cohortId[i], 
                                 " because this diagnostics is set to FALSE.")
       }
@@ -601,7 +601,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
   
   delta <- Sys.time() - start
   writeLines(paste(
-    "Instantiating cohort set took",
+    " - Instantiating cohort set took",
     signif(delta, 3),
     attr(delta, "units")
   ))
@@ -609,7 +609,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
 
 createTempInclusionStatsTables <-
   function(connection, tempEmulationSchema, cohorts) {
-    ParallelLogger::logInfo("Creating temporary inclusion statistics tables")
+    ParallelLogger::logInfo(" - Creating temporary inclusion statistics tables")
     sql <-
       SqlRender::loadRenderTranslateSql(
         "inclusionStatsTables.sql",
@@ -617,7 +617,7 @@ createTempInclusionStatsTables <-
         dbms = connection@dbms,
         tempEmulationSchema = tempEmulationSchema
       )
-    DatabaseConnector::executeSql(connection, sql)
+    DatabaseConnector::executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
     
     inclusionRules <- dplyr::tibble()
     for (i in 1:nrow(cohorts)) {
@@ -629,7 +629,7 @@ createTempInclusionStatsTables <-
           for (j in 1:nrOfRules) {
             ruleName <- cohortDefinition$InclusionRules[[j]]$name
             if (length(ruleName) == 0) {
-              ruleName <- paste0("Unamed rule (Sequence ", j - 1, ")")
+              ruleName <- paste0(" -- Unamed rule (Sequence ", j - 1, ")")
             }
             inclusionRules <- dplyr::bind_rows(
               inclusionRules,
@@ -739,7 +739,7 @@ saveAndDropTempInclusionStatsTables <- function(connection,
     )) {
       if (isFALSE(generateInclusionStats)) {
         warning(
-          "The SQL template used to instantiate cohort was designed to output cohort inclusion statistics.
+          " - The SQL template used to instantiate cohort was designed to output cohort inclusion statistics.
               But, generateInclusionStats is set to False while instantiating cohort.
               This may cause error and terminate cohort diagnositcs."
         )
@@ -747,7 +747,7 @@ saveAndDropTempInclusionStatsTables <- function(connection,
     } else {
       if (isTRUE(generateInclusionStats)) {
         warning(
-          "The SQL template used to instantiate cohort was designed to NOT output cohort inclusion statistics.
+          " - The SQL template used to instantiate cohort was designed to NOT output cohort inclusion statistics.
               But, generateInclusionStats is set to TRUE while instantiating cohort.
               This may cause error and terminate cohort diagnositcs."
         )

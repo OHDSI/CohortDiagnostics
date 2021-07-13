@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Given a set of cohorts get relationships between the cohorts. — runCohortTemporalRelationshipDiagnostics • CohortDiagnostics</title>
+<title>Take a snapshot of the R environment — takepackageDependencySnapshot • CohortDiagnostics</title>
 
 
 <!-- jquery -->
@@ -39,9 +39,8 @@
 
 
 
-<meta property="og:title" content="Given a set of cohorts get relationships between the cohorts. — runCohortTemporalRelationshipDiagnostics" />
-<meta property="og:description" content="Given a set of cohorts, get temporal relationships between the
-cohort_start_date of the cohorts." />
+<meta property="og:title" content="Take a snapshot of the R environment — takepackageDependencySnapshot" />
+<meta property="og:description" content="Take a snapshot of the R environment" />
 
 
 
@@ -142,69 +141,26 @@ cohort_start_date of the cohorts." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Given a set of cohorts get relationships between the cohorts.</h1>
-    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/CohortRelationship.R'><code>R/CohortRelationship.R</code></a></small>
-    <div class="hidden name"><code>runCohortTemporalRelationshipDiagnostics.Rd</code></div>
+    <h1>Take a snapshot of the R environment</h1>
+    <small class="dont-index">Source: <a href='https://github.com/OHDSI/CohortDiagnostics/blob/master/R/TakepackageDependencySnapshot.R'><code>R/TakepackageDependencySnapshot.R</code></a></small>
+    <div class="hidden name"><code>takepackageDependencySnapshot.Rd</code></div>
     </div>
 
     <div class="ref-description">
-    <p>Given a set of cohorts, get temporal relationships between the
-cohort_start_date of the cohorts.</p>
+    <p>Take a snapshot of the R environment</p>
     </div>
 
-    <pre class="usage"><span class='fu'>runCohortTemporalRelationshipDiagnostics</span><span class='op'>(</span>
-  connectionDetails <span class='op'>=</span> <span class='cn'>NULL</span>,
-  connection <span class='op'>=</span> <span class='cn'>NULL</span>,
-  <span class='va'>cohortDatabaseSchema</span>,
-  tempEmulationSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
-  cohortTable <span class='op'>=</span> <span class='st'>"cohort"</span>,
-  <span class='va'>targetCohortIds</span>,
-  <span class='va'>comparatorCohortIds</span>
-<span class='op'>)</span></pre>
+    <pre class="usage"><span class='fu'>takepackageDependencySnapshot</span><span class='op'>(</span><span class='op'>)</span></pre>
 
-    <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
-    <table class="ref-arguments">
-    <colgroup><col class="name" /><col class="desc" /></colgroup>
-    <tr>
-      <th>connectionDetails</th>
-      <td><p>An object of type <code>connectionDetails</code> as created using the
-<code><a href='https://ohdsi.github.io/DatabaseConnector/reference/createConnectionDetails.html'>createConnectionDetails</a></code> function in the
-DatabaseConnector package. Can be left NULL if <code>connection</code> is
-provided.</p></td>
-    </tr>
-    <tr>
-      <th>connection</th>
-      <td><p>An object of type <code>connection</code> as created using the
-<code><a href='https://ohdsi.github.io/DatabaseConnector/reference/connect.html'>connect</a></code> function in the
-DatabaseConnector package. Can be left NULL if <code>connectionDetails</code>
-is provided, in which case a new connection will be opened at the start
-of the function, and closed when the function finishes.</p></td>
-    </tr>
-    <tr>
-      <th>cohortDatabaseSchema</th>
-      <td><p>Schema name where your cohort table resides. Note that for SQL Server,
-this should include both the database and schema name, for example
-'scratch.dbo'.</p></td>
-    </tr>
-    <tr>
-      <th>tempEmulationSchema</th>
-      <td><p>Some database platforms like Oracle and Impala do not truly support temp tables. To emulate temp 
-tables, provide a schema with write privileges where temp tables can be created.</p></td>
-    </tr>
-    <tr>
-      <th>cohortTable</th>
-      <td><p>Name of the cohort table.</p></td>
-    </tr>
-    <tr>
-      <th>targetCohortIds</th>
-      <td><p>A vector of one or more Cohort Ids for use as target cohorts.</p></td>
-    </tr>
-    <tr>
-      <th>comparatorCohortIds</th>
-      <td><p>A vector of one or more Cohort Ids for use as feature/comparator cohorts.</p></td>
-    </tr>
-    </table>
 
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>A data frame listing all the dependencies of the root package and their version numbers, in the
+order in which they should be installed.</p>
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>This function records all versions used in the R environment as used by runCohortDiagnostics. 
+This function was borrowed from OhdsiRTools</p>
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">

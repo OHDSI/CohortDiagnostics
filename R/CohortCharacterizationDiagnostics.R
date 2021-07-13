@@ -109,18 +109,107 @@ runCohortCharacterizationDiagnostics <- function(connectionDetails = NULL,
         end
       ))
     }
-    featureExtractionOutput <-
-      FeatureExtraction::getDbCovariateData(
-        connection = connection,
-        oracleTempSchema = tempEmulationSchema,
-        cdmDatabaseSchema = cdmDatabaseSchema,
-        cohortDatabaseSchema = cohortDatabaseSchema,
-        cdmVersion = cdmVersion,
-        cohortTable = cohortTable,
-        cohortId = cohortIds[start:end],
-        covariateSettings = covariateSettings,
-        aggregated = TRUE
-      )
+    
+    if (all(covariateSettings$temporal,
+            length(covariateSettings$temporalStartDays) > 5)) {
+      pb <- utils::txtProgressBar(style = 3)
+      
+      covariateSettingTemporal <- NULL
+      counterTemporal <- 0
+      resultsTemporalBatch <- Andromeda::andromeda()
+      
+      for (startTemporal in seq(1, length(covariateSettings$temporalStartDays), by = 5)) {
+        utils::setTxtProgressBar(pb, startTemporal/length(covariateSettings$temporalStartDays))
+        counterTemporal <- counterTemporal + 1
+        endTemporal <-
+          min(startTemporal + 5 - 1,
+              length(covariateSettings$temporalStartDays))
+        covariateSettingTemporal[[counterTemporal]] <-
+          covariateSettings
+        covariateSettingTemporal[[counterTemporal]]$temporalStartDays <-
+          covariateSettings$temporalStartDays[startTemporal:endTemporal]
+        covariateSettingTemporal[[counterTemporal]]$temporalEndDays <-
+          covariateSettings$temporalEndDays[startTemporal:endTemporal]
+        # cant seem to suppress messages, maybe create a parallel logger cluster of one thread?
+        featureExtractionOutput <-
+          suppressMessages(invisible(FeatureExtraction::getDbCovariateData(
+              connection = connection,
+              oracleTempSchema = tempEmulationSchema,
+              cdmDatabaseSchema = cdmDatabaseSchema,
+              cohortDatabaseSchema = cohortDatabaseSchema,
+              cdmVersion = cdmVersion,
+              cohortTable = cohortTable,
+              cohortId = cohortIds[start:end],
+              covariateSettings = covariateSettingTemporal[[counterTemporal]],
+              aggregated = TRUE
+            )))
+        
+        if (!"analysisRef" %in% names(resultsTemporalBatch)) {
+          resultsTemporalBatch$analysisRef <- featureExtractionOutput$analysisRef
+        } else {
+          analysisId <- resultsTemporalBatch$analysisRef %>%
+            dplyr::select(.data$analysisId) %>% 
+            dplyr::distinct()
+          Andromeda::appendToTable(
+            resultsTemporalBatch$analysisRef,
+            featureExtractionOutput$analysisRef %>%
+              dplyr::anti_join(analysisId, by = "analysisId", copy = TRUE)
+          )
+        }
+        
+        if (!"covariateRef" %in% names(resultsTemporalBatch)) {
+          resultsTemporalBatch$covariateRef <- featureExtractionOutput$covariateRef
+        } else {
+          covariateRef <- resultsTemporalBatch$covariateRef %>%
+            dplyr::select(.data$covariateId) %>% 
+            dplyr::distinct()
+          Andromeda::appendToTable(
+            resultsTemporalBatch$covariateRef,
+            featureExtractionOutput$covariateRef %>%
+              dplyr::anti_join(covariateRef, by = "covariateId", copy = TRUE)
+          )
+        }
+        
+        if (!"timeRef" %in% names(resultsTemporalBatch)) {
+          resultsTemporalBatch$timeRef <- featureExtractionOutput$timeRef
+        } else {
+          timeRef <- resultsTemporalBatch$timeRef %>%
+            dplyr::select(.data$timeId) %>% 
+            dplyr::distinct()
+          Andromeda::appendToTable(
+            resultsTemporalBatch$timeRef,
+            featureExtractionOutput$timeRef %>%
+              dplyr::anti_join(timeRef, by = "timeId", copy = TRUE)
+          )
+        }
+        
+        if (!"covariates" %in% names(resultsTemporalBatch)) {
+          resultsTemporalBatch$covariates <- featureExtractionOutput$covariates
+        } else {
+          Andromeda::appendToTable(
+            resultsTemporalBatch$covariates,
+            featureExtractionOutput$covariates
+          )
+        }
+      }
+      featureExtractionOutput$analysisRef <- resultsTemporalBatch$analysisRef
+      featureExtractionOutput$covariateRef <- resultsTemporalBatch$covariateRef
+      featureExtractionOutput$timeRef <- resultsTemporalBatch$timeRef
+      featureExtractionOutput$covariates <- resultsTemporalBatch$covariates
+    } else {
+      featureExtractionOutput <-
+        FeatureExtraction::getDbCovariateData(
+          connection = connection,
+          oracleTempSchema = tempEmulationSchema,
+          cdmDatabaseSchema = cdmDatabaseSchema,
+          cohortDatabaseSchema = cohortDatabaseSchema,
+          cdmVersion = cdmVersion,
+          cohortTable = cohortTable,
+          cohortId = cohortIds[start:end],
+          covariateSettings = covariateSettings,
+          aggregated = TRUE
+        )
+    }
     
     populationSize <-
       attr(x = featureExtractionOutput, which = "metaData")$populationSize

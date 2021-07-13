@@ -155,7 +155,8 @@ temporalCovariateRef, temporalAnalysisRef, temporalRef output of cohort as featu
     <pre class="usage"><span class='fu'>getCohortAsFeatureTemporalCharacterizationResults</span><span class='op'>(</span>
   dataSource <span class='op'>=</span> <span class='va'>.GlobalEnv</span>,
   cohortIds <span class='op'>=</span> <span class='cn'>NULL</span>,
-  databaseIds <span class='op'>=</span> <span class='cn'>NULL</span>
+  databaseIds <span class='op'>=</span> <span class='cn'>NULL</span>,
+  temporalTimeRef <span class='op'>=</span> <span class='fu'>getResultsTemporalTimeRef</span><span class='op'>(</span>dataSource <span class='op'>=</span> <span class='va'>dataSource</span><span class='op'>)</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -179,6 +180,10 @@ and uploaded using <code>uploadResults</code></p></td>
       <td><p>A vector one or more databaseIds to retrieve the results for. This is a 
 character field values from the `databaseId` field of the `database` table 
 of the results data model.</p></td>
+    </tr>
+    <tr>
+      <th>temporalTimeRef</th>
+      <td><p>A dataframe object with three columns timeId (integer), startDay (integer), endDay (integer)</p></td>
     </tr>
     </table>
 

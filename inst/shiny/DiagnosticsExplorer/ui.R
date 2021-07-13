@@ -86,7 +86,7 @@ sidebarMenu <-
         item = shinydashboard::menuItem(text = "Time Series", tabName = "timeSeries"),
         infoId = "timeSeriesInfo"
       ),
-    if (exists("timeDistribution"))
+    if (exists("covariateValue"))
       addInfo(
         item = shinydashboard::menuItem(text = "Time Distributions", tabName = "timeDistribution"),
         infoId = "timeDistributionInfo"
@@ -106,7 +106,7 @@ sidebarMenu <-
         item = shinydashboard::menuItem(text = "Visit Context", tabName = "visitContext"),
         infoId = "visitContextInfo"
       ),
-    if (exists("cohortOverlap"))
+    if (exists("cohortRelationships"))
       addInfo(
         shinydashboard::menuItem(text = "Cohort Overlap", tabName = "cohortOverlap"),
         infoId = "cohortOverlapInfo"
@@ -473,7 +473,7 @@ bodyTabItems <- shinydashboard::tabItems(
     tags$br(),
     shinydashboard::box(
       title = "Notes",
-      status = "primary",
+      status = NULL,
       width = NULL,
       solidHeader = TRUE,
       collapsible = TRUE,
@@ -958,6 +958,15 @@ bodyTabItems <- shinydashboard::tabItems(
               label = "Display",
               choices = c("All", "Before", "During", "Simultaneous", "After"),
               selected = "All",
+              inline = TRUE
+            )
+          ),
+          tags$td(
+            shiny::radioButtons(
+              inputId = "visitContextValueFilter",
+              label = "Display Value Type",
+              choices = c("Absolute", "Percentage"), 
+              selected = "Absolute",
               inline = TRUE
             )
           ),
