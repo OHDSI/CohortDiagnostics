@@ -189,7 +189,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
                      'ComputeTimeSeries5.sql'
     )
   }
-  if (runCohortTimeSeries) {
+  if (runDataSourceTimeSeries) {
     seriesToRun <- c(seriesToRun,
                      'ComputeTimeSeries3.sql',
                      'ComputeTimeSeries6.sql'
@@ -242,7 +242,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     if (seriesToRun[[i]] == 'ComputeTimeSeries5.sql') {
       ParallelLogger::logInfo(
         paste0(
-          "\n - ",
+          " - (",
           scales::percent(i / length(seriesToRun)),
           ") Running cohort time series T5: subjects in the cohorts whose observation period is embedded within calendar period."
         )
@@ -312,6 +312,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
         resultsInAndromeda$temp
       )
     }
+    ParallelLogger::logTrace(' --- Completed.')
   }
   results <- resultsInAndromeda$timeSeries %>% 
     dplyr::collect() %>%
@@ -352,5 +353,5 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
                           signif(delta, 3),
                           " ",
                           attr(delta, "units"))
-  return(timeSeries)
+  return(results)
 }

@@ -615,10 +615,9 @@ createTempInclusionStatsTables <-
         "inclusionStatsTables.sql",
         packageName = "CohortDiagnostics",
         dbms = connection@dbms,
-        tempEmulationSchema = tempEmulationSchema,
-        reportOverallTime = FALSE
+        tempEmulationSchema = tempEmulationSchema
       )
-    DatabaseConnector::executeSql(connection, sql)
+    DatabaseConnector::executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
     
     inclusionRules <- dplyr::tibble()
     for (i in 1:nrow(cohorts)) {

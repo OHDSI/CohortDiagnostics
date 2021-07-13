@@ -159,6 +159,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       runBreakdownIndexEvents = argumentsAtDiagnosticsInitiation$runBreakdownIndexEvents,
       runIncidenceRate = argumentsAtDiagnosticsInitiation$runIncidenceRate,
       runCohortTimeSeries = argumentsAtDiagnosticsInitiation$runCohortTimeSeries,
+      runDataSourceTimeSeries = argumentsAtDiagnosticsInitiation$runDataSourceTimeSeries,
       runCohortRelationship = argumentsAtDiagnosticsInitiation$runCohortRelationship,
       runCohortCharacterization = argumentsAtDiagnosticsInitiation$runCohortCharacterization,
       runTemporalCohortCharacterization = argumentsAtDiagnosticsInitiation$runTemporalCohortCharacterization,
@@ -991,7 +992,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                             " ",
                             attr(delta, "units"))
   }
-
+  
   # Time Series----
   if (any(runCohortTimeSeries, runDataSourceTimeSeries)) {
     ParallelLogger::logInfo("Computing Time Series")
