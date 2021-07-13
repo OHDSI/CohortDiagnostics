@@ -109,18 +109,83 @@ runCohortCharacterizationDiagnostics <- function(connectionDetails = NULL,
         end
       ))
     }
-    featureExtractionOutput <-
-      FeatureExtraction::getDbCovariateData(
-        connection = connection,
-        oracleTempSchema = tempEmulationSchema,
-        cdmDatabaseSchema = cdmDatabaseSchema,
-        cohortDatabaseSchema = cohortDatabaseSchema,
-        cdmVersion = cdmVersion,
-        cohortTable = cohortTable,
-        cohortId = cohortIds[start:end],
-        covariateSettings = covariateSettings,
-        aggregated = TRUE
-      )
+    
+    if (all(covariateSettings$temporal,
+            length(covariateSettings$temporalStartDays) > 5)) {
+      covariateSettingTemporal <- NULL
+      resultsTemporalBatch <- Andromeda::andromeda()
+      counterTemporal <- 0
+      
+      analysisRefTemporal <- NULL
+      covariateRefTemporal <- NULL
+      timeRefTemporal <- NULL
+      covariatesTemporal <- NULL
+      
+      for (startTemporal in seq(1, length(covariateSettings$temporalStartDays), by = 5)) {
+        counterTemporal <- counterTemporal + 1
+        endTemporal <-
+          min(startTemporal + 5 - 1,
+              length(covariateSettings$temporalStartDays))
+        
+        covariateSettingTemporal[[counterTemporal]] <-
+          covariateSettings
+        covariateSettingTemporal[[counterTemporal]]$temporalStartDays <-
+          covariateSettings$temporalStartDays[startTemporal:endTemporal]
+        covariateSettingTemporal[[counterTemporal]]$temporalEndDays <-
+          covariateSettings$temporalEndDays[startTemporal:endTemporal]
+        
+        featureExtractionOutput <-
+          FeatureExtraction::getDbCovariateData(
+            connection = connection,
+            oracleTempSchema = tempEmulationSchema,
+            cdmDatabaseSchema = cdmDatabaseSchema,
+            cohortDatabaseSchema = cohortDatabaseSchema,
+            cdmVersion = cdmVersion,
+            cohortTable = cohortTable,
+            cohortId = cohortIds[start:end],
+            covariateSettings = covariateSettingTemporal[[counterTemporal]],
+            aggregated = TRUE
+          )
+        
+        analysisRefTemporal <- dplyr::bind_rows(
+          analysisRefTemporal,
+          featureExtractionOutput$analysisRef %>%
+            dplyr::collect()
+        ) %>% dplyr::distinct()
+        
+        covariateRefTemporal <-
+          dplyr::bind_rows(
+            covariateRefTemporal,
+            featureExtractionOutput$covariateRef %>%
+              dplyr::collect()
+          ) %>% dplyr::distinct()
+        
+        timeRefTemporal <- dplyr::bind_rows(timeRefTemporal,
+                                            featureExtractionOutput$timeRef %>%
+                                              dplyr::collect()) %>% dplyr::distinct()
+        
+        covariatesTemporal <- dplyr::bind_rows(covariatesTemporal,
+                                               featureExtractionOutput$covariates %>%
+                                                 dplyr::collect()) %>% dplyr::distinct()
+      }
+      featureExtractionOutput$analysisRef <- analysisRefTemporal
+      featureExtractionOutput$covariateRef <- covariateRefTemporal
+      featureExtractionOutput$timeRef <- timeRefTemporal
+      featureExtractionOutput$covariates <- covariatesTemporal
+    } else {
+      featureExtractionOutput <-
+        FeatureExtraction::getDbCovariateData(
+          connection = connection,
+          oracleTempSchema = tempEmulationSchema,
+          cdmDatabaseSchema = cdmDatabaseSchema,
+          cohortDatabaseSchema = cohortDatabaseSchema,
+          cdmVersion = cdmVersion,
+          cohortTable = cohortTable,
+          cohortId = cohortIds[start:end],
+          covariateSettings = covariateSettings,
+          aggregated = TRUE
+        )
+    }
     
     populationSize <-
       attr(x = featureExtractionOutput, which = "metaData")$populationSize
