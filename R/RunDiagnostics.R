@@ -1030,6 +1030,8 @@ runCohortDiagnostics <- function(packageName = NULL,
           timeSeriesMaxDate = observationPeriodDateRange$observationPeriodMaxDate,
           cohortIds = cohortIds
         )
+      timeSeries <- timeSeries %>%
+        dplyr::mutate(databaseId = !!databaseId)
       
       if (!is.null(timeSeries) && nrow(timeSeries) > 0) {
         columnsInTimeSeries <- c('records',

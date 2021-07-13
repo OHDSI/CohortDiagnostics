@@ -142,7 +142,6 @@ CREATE TABLE cohort_relationships (
 			database_id VARCHAR NOT NULL,
 			cohort_id BIGINT NOT NULL,
 			comparator_cohort_id BIGINT NOT NULL,
-			relationship_type VARCHAR NOT NULL,
 			start_day FLOAT NOT NULL,
 			end_day FLOAT NOT NULL,
 			target_records BIGINT NOT NULL,

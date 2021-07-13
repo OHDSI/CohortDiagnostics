@@ -186,7 +186,8 @@ Alternatively, a covariate setting object may be created using the above as an e
   runVisitContext <span class='op'>=</span> <span class='cn'>TRUE</span>,
   runBreakdownIndexEvents <span class='op'>=</span> <span class='cn'>TRUE</span>,
   runIncidenceRate <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  runTimeSeries <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  runCohortTimeSeries <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  runDataSourceTimeSeries <span class='op'>=</span> <span class='cn'>TRUE</span>,
   runCohortRelationship <span class='op'>=</span> <span class='cn'>TRUE</span>,
   runCohortCharacterization <span class='op'>=</span> <span class='cn'>TRUE</span>,
   covariateSettings <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/list.html'>list</a></span><span class='op'>(</span><span class='fu'>FeatureExtraction</span><span class='fu'>::</span><span class='fu'><a href='https://rdrr.io/pkg/FeatureExtraction/man/createDefaultCovariateSettings.html'>createDefaultCovariateSettings</a></span><span class='op'>(</span><span class='op'>)</span>,
@@ -338,8 +339,13 @@ does not exist it will be created.</p></td>
       <td><p>Generate and export the cohort incidence  rates?</p></td>
     </tr>
     <tr>
-      <th>runTimeSeries</th>
-      <td><p>Generate and export the cohort prevalence  rates?</p></td>
+      <th>runCohortTimeSeries</th>
+      <td><p>Generate and export the cohort level time series?</p></td>
+    </tr>
+    <tr>
+      <th>runDataSourceTimeSeries</th>
+      <td><p>Generate and export the Data source level time series? i.e. 
+using all persons found in observation period table.</p></td>
     </tr>
     <tr>
       <th>runCohortRelationship</th>

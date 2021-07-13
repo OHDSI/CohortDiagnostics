@@ -47,7 +47,6 @@ cohort_summary_stats,database_id,varchar,Yes,Yes,No,Yes
 cohort_relationships,database_id,varchar,Yes,Yes,No,Yes
 cohort_relationships,cohort_id,bigint,Yes,Yes,No,Yes
 cohort_relationships,comparator_cohort_id,bigint,Yes,Yes,No,Yes
-cohort_relationships,relationship_type,varchar,Yes,Yes,No,Yes
 cohort_relationships,start_day,float,Yes,Yes,No,Yes
 cohort_relationships,end_day,float,Yes,Yes,No,Yes
 cohort_relationships,both_subjects,bigint,Yes,No,No,Yes
