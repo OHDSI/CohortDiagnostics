@@ -31,7 +31,7 @@ runCohortDiagnostics(
   runBreakdownIndexEvents = TRUE,
   runIncidenceRate = TRUE,
   runCohortTimeSeries = TRUE,
-  runDataSourceTimeSeries = TRUE,
+  runDataSourceTimeSeries = FALSE,
   runCohortRelationship = TRUE,
   runCohortCharacterization = TRUE,
   covariateSettings = list(FeatureExtraction::createDefaultCovariateSettings(),

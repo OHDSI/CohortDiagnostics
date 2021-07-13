@@ -2,8 +2,7 @@
 --- (i.e. cohort start or cohort end is between (inclusive) calendar period, or 
 --- (cohort start is on/before calendar start AND cohort end is on/after calendar end))
 SELECT cohort_definition_id cohort_id,
-	period_begin,
-	calendar_interval,
+	time_id,
 	COUNT_BIG(*) records, -- records in calendar period
 	COUNT_BIG(DISTINCT subject_id) subjects, -- unique subjects
 	SUM(datediff(dd, CASE 
@@ -54,6 +53,5 @@ INNER JOIN #calendar_periods cp
 		AND cohort_start_date <= period_begin
 		) -- cohort periods overlaps the calendar period
 WHERE cohort_definition_id IN (@cohort_ids)
-GROUP BY period_begin,
-	calendar_interval,
+GROUP BY time_id,
 	cohort_definition_id;
