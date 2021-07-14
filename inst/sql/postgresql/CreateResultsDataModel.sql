@@ -144,7 +144,6 @@ CREATE TABLE cohort_relationships (
 			comparator_cohort_id BIGINT NOT NULL,
 			start_day FLOAT NOT NULL,
 			end_day FLOAT NOT NULL,
-			both_records BIGINT NOT NULL,
 			both_subjects BIGINT NOT NULL,
 			c_before_t_subjects BIGINT NOT NULL,
 			t_before_c_subjects BIGINT NOT NULL,
