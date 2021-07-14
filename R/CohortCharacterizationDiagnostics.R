@@ -103,7 +103,7 @@ runCohortCharacterizationDiagnostics <- function(connectionDetails = NULL,
   
   if (all(covariateSettings$temporal,
           length(covariateSettings$temporalStartDays) > 5)) {
-    batchSize <- max(1, round(batchSize/round(length(covariateSettings$temporalStartDays)/5)))
+    batchSize <- max(1, round(batchSize/length(covariateSettings$temporalStartDays)))
   }
   
   for (start in seq(1, length(cohortIds), by = batchSize)) {
