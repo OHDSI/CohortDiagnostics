@@ -102,7 +102,7 @@ runCohortCharacterizationDiagnostics <- function(connectionDetails = NULL,
   
   results <- Andromeda::andromeda()
   
-  if (covariateSettings$temporal) {
+  if (all(!is.null(covariateSettings$temporal), isTRUE(covariateSettings$temporal))) {
     batchSize <- max(1, round(batchSize/length(covariateSettings$temporalStartDays)))
   }
   
