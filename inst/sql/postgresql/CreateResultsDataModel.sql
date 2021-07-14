@@ -165,7 +165,7 @@ CREATE TABLE cohort_relationships (
 			c_subjects_end BIGINT NOT NULL,
 			c_in_t_records BIGINT NOT NULL,
 			c_in_t_subjects BIGINT NOT NULL,
-			PRIMARY KEY(database_id, cohort_id, comparator_cohort_id, relationship_type, start_day, end_day)
+			PRIMARY KEY(database_id, cohort_id, comparator_cohort_id, start_day, end_day)
 );
 
 --Table concept

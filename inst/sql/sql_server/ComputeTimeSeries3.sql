@@ -2,8 +2,7 @@
 --- (i.e. observation start or observation end is between (inclusive) calendar period, or 
 --- (observation start is on/before calendar start AND observation end is on/after calendar end))
 SELECT 0 cohort_id,
-	period_begin,
-	calendar_interval,
+	time_id,
 	COUNT_BIG(*) records, -- records in calendar month
 	COUNT_BIG(DISTINCT person_id) subjects, -- unique subjects
 	SUM(datediff(dd, CASE 
@@ -53,5 +52,4 @@ INNER JOIN #calendar_periods cp
 		observation_period_end_date >= period_end
 		AND observation_period_start_date <= period_begin
 		) -- observation period overlaps the calendar period
-GROUP BY period_begin,
-	calendar_interval;
+GROUP BY time_id;

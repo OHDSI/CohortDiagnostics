@@ -8,7 +8,7 @@ outputLocation <- "D:\\temp"
 
 connectionSpecifications <- cdmSources2 %>%
   dplyr::filter(sequence == 1) %>%
-  dplyr::filter(database == 'optum_extended_dod')
+  dplyr::filter(database == 'truven_mdcd')
 
 dbms <- connectionSpecifications$dbms # example: 'redshift'
 port <- connectionSpecifications$port # example: 2234
@@ -95,3 +95,4 @@ execute(
 #                                    schema = resultsSchema,
 #                                    zipFileName = zipFilesToUpload[[i]])
 # }
+

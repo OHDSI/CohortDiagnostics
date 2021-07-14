@@ -317,6 +317,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
   }
   results <- resultsInAndromeda$timeSeries %>% 
     dplyr::collect() %>%
+    dplyr::inner_join(calendarPeriods, by = c('timeId')) %>% 
     dplyr::select(
       .data$cohortId,
       .data$periodBegin,
@@ -328,7 +329,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       .data$recordsStart,
       .data$subjectsStart,
       .data$recordsEnd,
-      .data$subjectsEnd) %>% 
+      .data$subjectsEnd) %>%
     dplyr::arrange(.data$cohortId,
                    .data$periodBegin,
                    .data$calendarInterval,
