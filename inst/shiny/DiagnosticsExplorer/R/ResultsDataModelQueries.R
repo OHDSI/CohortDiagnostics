@@ -1023,10 +1023,6 @@ getCohortRelationshipCharacterizationResults <-
       
       if (is.null(data) || nrow(data) == 0) {return(NULL)}
       
-      data <- data %>% 
-        dplyr::filter(.data$relationshipType == 'T1') %>% 
-        dplyr::select(-.data$relationshipType)
-      
       data$sumValue <- data[[valueField]]
       data <- data  %>%
         dplyr::filter(.data$startDay == !!startDay) %>%
