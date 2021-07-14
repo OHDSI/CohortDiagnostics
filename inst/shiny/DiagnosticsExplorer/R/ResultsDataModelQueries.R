@@ -1802,8 +1802,7 @@ getCohortOverlapData <- function(dataSource,
     dplyr::select(.data$databaseId,
                   .data$cohortId,
                   .data$comparatorCohortId,
-                  .data$targetSubjects) %>% 
-    dplyr::rename(bothSubjects = .data$targetSubjects) %>% 
+                  .data$bothSubjects) %>%
     dplyr::inner_join(cohortCounts %>% 
                         dplyr::select(-.data$cohortEntries) %>% 
                         dplyr::rename(targetCohortSubjects = .data$cohortSubjects), 

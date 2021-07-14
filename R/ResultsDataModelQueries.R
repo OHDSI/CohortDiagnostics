@@ -1077,10 +1077,10 @@ getCohortRelationshipCharacterizationResults <-
                     "cSubjectsStart",
                     "cSubjectsStart",
                     "cSubjectsStart",
-                    "comparatorSubjects",
-                    "comparatorSubjects",
-                    "comparatorSubjects",
-                    "comparatorSubjects")
+                    "bothSubjects",
+                    "bothSubjects",
+                    "bothSubjects",
+                    "bothSubjects")
     startDay <- c(-99999,-365,-180,-30,-99999,-365,-180,-30)
     endDay <- c(0,0,0,0,0,0,0,0)
     analysisRef <- dplyr::tibble(analysisId, analysisName, valueField, startDay, endDay) %>% 
@@ -1205,10 +1205,6 @@ getCohortAsFeatureTemporalCharacterizationResults <-
                                             cohortCounts) {
       
       if (is.null(data) || nrow(data) == 0) {return(NULL)}
-      
-      data <- data %>% 
-        dplyr::filter(.data$relationshipType == 'T1') %>% 
-        dplyr::select(-.data$relationshipType)
       data$sumValue <- data[[valueField]]
       data <- data  %>%
         dplyr::inner_join(temporalTimeRef, 
@@ -1251,7 +1247,7 @@ getCohortAsFeatureTemporalCharacterizationResults <-
     analysisId <- c(-101,-201)
     analysisName <- c("CohortEraStart", "CohortEraOverlap")
     valueField <- c("cSubjectsStart",
-                    "comparatorSubjects")
+                    "bothSubjects")
     analysisRef <- dplyr::tibble(analysisId, analysisName, valueField) %>% 
       dplyr::mutate(isBinary = 'Y',
                     missingMeansZero = 'Y') %>% 
@@ -1806,8 +1802,7 @@ getCohortOverlapData <- function(dataSource,
     dplyr::select(.data$databaseId,
                   .data$cohortId,
                   .data$comparatorCohortId,
-                  .data$targetSubjects) %>% 
-    dplyr::rename(bothSubjects = .data$targetSubjects) %>% 
+                  .data$bothSubjects) %>%
     dplyr::inner_join(cohortCounts %>% 
                         dplyr::select(-.data$cohortEntries) %>% 
                         dplyr::rename(targetCohortSubjects = .data$cohortSubjects), 
