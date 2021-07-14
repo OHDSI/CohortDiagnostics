@@ -85,7 +85,7 @@ runCohortCharacterizationDiagnostics <- function(connectionDetails = NULL,
   } else if (any(is.null(cohortIds), length(cohortIds) == 0)) {
     ParallelLogger::logInfo(" --- No cohortIds provided. Exiting characterization.")
     return(NULL)
-  } else if (any(is.null(cohortIdsNew), length(cohortIdsNew) = 0)) {
+  } else if (any(is.null(cohortIdsNew), length(cohortIdsNew) == 0)) {
     ParallelLogger::logInfo(" --- All cohorts are either not instantiated or have no records. Exiting Characterization.")
     return(NULL)
   } else {
