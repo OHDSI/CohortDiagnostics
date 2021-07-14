@@ -74,43 +74,43 @@ runCohortCharacterizationDiagnostics <- function(connectionDetails = NULL,
   cohortCounts <- getCohortCounts(
     connection = connection,
     cohortDatabaseSchema = cohortDatabaseSchema,
-    cohortTable = cohortTable
+    cohortTable = cohortTable,
+    cohortIds = cohortIds
   )
   cohortIdsNew <- cohortCounts$cohortId %>% unique()
   
   if (is.null(cohortCounts)) {
-    warning("No instantiated cohorts found.")
+    warning(" --- No instantiated cohorts found. Exiting characterization.")
     return(NULL)
   } else if (any(is.null(cohortIds), length(cohortIds) == 0)) {
-    ParallelLogger::logInfo(paste0(
-      "No cohortIds provided. Found ",
-      scales::comma(length(cohortIdsNew), accuracy = 1),
-      " instantiated cohorts."
-    ))
+    ParallelLogger::logInfo(" --- No cohortIds provided. Exiting characterization.")
+    return(NULL)
+  } else if (any(is.null(cohortIdsNew), length(cohortIdsNew) = 0)) {
+    ParallelLogger::logInfo(" --- All cohorts are either not instantiated or have no records. Exiting Characterization.")
+    return(NULL)
   } else {
     ParallelLogger::logInfo(
       paste0(
-        "Of the ",
+        " --- Of the ",
         scales::comma(length(cohortIds), accuracy = 1),
         " provided, found ",
         scales::comma(length(cohortIdsNew), accuracy = 1),
-        " to be instantiated."
+        " to be instantiated. Starting Characterization."
       )
     )
   }
   
   results <- Andromeda::andromeda()
   
-  if (all(covariateSettings$temporal,
-          length(covariateSettings$temporalStartDays) > 5)) {
+  if (covariateSettings$temporal) {
     batchSize <- max(1, round(batchSize/length(covariateSettings$temporalStartDays)))
   }
   
-  for (start in seq(1, length(cohortIds), by = batchSize)) {
-    end <- min(start + batchSize - 1, length(cohortIds))
-    if (length(cohortIds) > batchSize) {
+  for (start in seq(1, length(cohortIdsNew), by = batchSize)) {
+    end <- min(start + batchSize - 1, length(cohortIdsNew))
+    if (length(cohortIdsNew) > batchSize) {
       ParallelLogger::logInfo(sprintf(
-        "Batch characterization. Processing cohorts %s through %s",
+        " ---- Batch characterization. Processing cohorts %s through %s",
         start,
         end
       ))
@@ -124,7 +124,7 @@ runCohortCharacterizationDiagnostics <- function(connectionDetails = NULL,
         cohortDatabaseSchema = cohortDatabaseSchema,
         cdmVersion = cdmVersion,
         cohortTable = cohortTable,
-        cohortId = cohortIds[start:end],
+        cohortId = cohortIdsNew[start:end],
         covariateSettings = covariateSettings,
         aggregated = TRUE
       )
