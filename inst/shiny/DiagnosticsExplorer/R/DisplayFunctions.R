@@ -23,6 +23,15 @@ snakeCaseToCamelCase <- function(string) {
   return(string)
 }
 
+
+titleCaseToCamelCase <- function(string) {
+  string <- stringr::str_replace_all(string = string,
+                                     pattern = ' ',
+                                     replacement = '')
+  substr(string, 1, 1) <- tolower(substr(string, 1, 1))
+  return(string)
+}
+
 truncateStringDef <- function(columns, maxChars) {
   list(targets = columns,
        render = DT::JS(
