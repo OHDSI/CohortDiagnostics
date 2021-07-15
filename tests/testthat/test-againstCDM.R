@@ -173,12 +173,10 @@ test_that("Retrieve results from premerged file", {
   )
   testthat::expect_true(nrow(incidenceRateFromFile) >= 0) # no data in eunomia
   
-  # TODO: resolve before release
-  # Currently returning null, perhaps because no cohort definition had inclusion criteria?
-  # inclusionRulesFromFile <- CohortDiagnostics::getResultsFromInclusionRuleStatistics(
-  #   dataSource = dataSourcePreMergedFile
-  # )
-  # expect_true(nrow(inclusionRulesFromFile) >= 0)
+  inclusionRulesFromFile <- CohortDiagnostics::getResultsFromInclusionRuleStatistics(
+    dataSource = dataSourcePreMergedFile
+  )
+  testthat::expect_true(nrow(inclusionRulesFromFile) >= 0)
   
   indexEventBreakdownFromFile <- CohortDiagnostics::getResultsFromIndexEventBreakdown(
     dataSource = dataSourcePreMergedFile
@@ -214,10 +212,10 @@ test_that("Retrieve results from premerged file", {
   
   # TODO: resolve before release
   # Table does not exist in results, is not generated in Eunomia?
-  # calendarIncidence <- CohortDiagnostics::getResultsFromCalendarIncidence(
-  #   dataSource = dataSourcePreMergedFile
-  # )
-  # expect_true(nrow(calendarIncidence) >= 0)
+  calendarIncidence <- CohortDiagnostics::getResultsFromCalendarIncidence(
+    dataSource = dataSourcePreMergedFile
+  )
+  testthat::expect_true(any(is.null(calendarIncidence), nrow(calendarIncidence) >= 0))
   
   cohortRelationships <- CohortDiagnostics::getResultsFromCohortRelationships(
     dataSource = dataSourcePreMergedFile
@@ -226,18 +224,11 @@ test_that("Retrieve results from premerged file", {
   
   # TODO: resolve before release
   # Table does not exist in results, so this is throwing an error
-  # cohortCharacterizationResults <- CohortDiagnostics::getCohortCharacterizationResults(
+  # cohortCharacterizationResults <- CohortDiagnostics::getMultipleCharacterizationResults(
   #   dataSource = dataSourcePreMergedFile
   # )
   # expect_true(nrow(cohortCharacterizationResults) >= 0)
-  
-  # TODO: resolve before release
-  # Table does not exist in results, so this is throwing an error
-  # temporalCohortCharacterizationResults <- CohortDiagnostics::getTemporalCohortCharacterizationResults(
-  #   dataSource = dataSourcePreMergedFile
-  # )
-  # expect_true(nrow(temporalCohortCharacterizationResults) >= 0)
-  
+  # 
   # TODO: resolve before release
   # Table does not exist in results, so this is throwing an error
   # cohortAsFeatureCharacterizationResults <- CohortDiagnostics::getCohortAsFeatureCharacterizationResults(
