@@ -280,9 +280,9 @@ getResultsFromTimeSeries <- function(dataSource,
   )
   
   t1 <- data %>% 
-    dplyr::filter(.data$seriesType = 'T1')
+    dplyr::filter(.data$seriesType == 'T1')
   t1 <- data %>% 
-    dplyr::filter(.data$seriesType = 'T3')
+    dplyr::filter(.data$seriesType == 'T3')
   
   timeSeriesDescription <- dplyr::tibble(
     seriesType = c('T1', 'T2', 'T3', 'T4', 'T5', 'T6', 
