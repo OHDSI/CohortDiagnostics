@@ -3719,9 +3719,11 @@ shiny::shinyServer(function(input, output, session) {
   
   
   # Time Series -----
+  
+  timeSeriesTssibleData <- shiny::reactiveVal(NULL)
   timeSeriesData <- reactive({
-    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
-    validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
+    validate(need(length(input$database) > 0, "No data sources chosen"))
+    validate(need(length(input$cohort) > 0, "No cohorts chosen"))
     if (all(is(dataSource, "environment"), !exists('timeSeries'))) {
       return(NULL)
     }
@@ -3732,8 +3734,8 @@ shiny::shinyServer(function(input, output, session) {
     
     data <- getResultsFromTimeSeries(
       dataSource = dataSource,
-      cohortIds = cohortIds(),
-      databaseIds = databaseIds()
+      cohortIds = cohortId(),
+      databaseIds = input$database
     )
     return(data)
   })
@@ -3777,6 +3779,8 @@ shiny::shinyServer(function(input, output, session) {
         recordsEnd = 0,
         subjectsEnd = 0
       )
+    
+    timeSeriesTssibleData(data)
     
     if (calendarIntervalFirstLetter == 'y') {
       data <- data %>% 
@@ -3834,6 +3838,17 @@ shiny::shinyServer(function(input, output, session) {
       class = "stripe compact"
     )
     return(dataTable)
+  })
+  
+  output$timeSeriesPlot <- ggiraph::renderggiraph({
+    
+    data <- timeSeriesTssibleData() %>% 
+      dplyr::filter(.data$seriesType %in% input$timeSeriesTypeFilter) %>% 
+      dplyr::select(-.data$seriesType)
+    
+    plot <- plotTimeSeries(data, titleCaseToCamelCase(input$timeSeriesPlotFilters))
+    
+    return(plot)
   })
   
   # Time distribution -------
@@ -7204,7 +7219,7 @@ shiny::shinyServer(function(input, output, session) {
     })
   output$timeSeriesSelectedCohorts <-
     shiny::renderUI({
-      renderedSelectedCohorts()
+      selectedCohort()
     })
   output$timeDistSelectedCohorts <-
     shiny::renderUI({
