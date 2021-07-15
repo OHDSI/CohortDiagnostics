@@ -49,17 +49,7 @@ INNER JOIN (
 	) c
 	ON o.person_id = c.subject_id
 INNER JOIN #calendar_periods cp
-	ON (
-		observation_period_start_date >= period_begin
-		AND observation_period_start_date <= period_end
-		) -- observation period starts within calendar period, OR
-	OR (
-		observation_period_end_date >= period_begin
-		AND observation_period_end_date <= period_end
-		) -- observation period end within calendar period, OR
-	OR (
-		observation_period_end_date >= period_end
-		AND observation_period_start_date <= period_begin
-		) -- observation period overlaps the calendar period
+		AND cp.period_end >= observation_period_start_date
+		AND cp.period_begin <= observation_period_end_date
 GROUP BY time_id,
 	cohort_definition_id;
