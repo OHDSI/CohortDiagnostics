@@ -132,26 +132,46 @@ test_that("Retrieve results from premerged file", {
   )
   expect_true(nrow(cohortCountFromFile) > 0)
   
-  # timeSeriesFromFile <- CohortDiagnostics::getResultsFromTimeSeries(
-  #   dataSource = dataSourcePreMergedFile,
-  #   cohortIds = c(17492, 17692),
-  #   databaseIds = 'cdmV5'
-  # )
-  # expect_true(nrow(timeSeriesFromFile) >= 0)
+  timeSeriesFromFile <- CohortDiagnostics::getResultsFromTimeSeries(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(any(is.null(timeSeriesFromFile),
+                            nrow(timeSeriesFromFile) >= 0))
+  
+  timeSeriesFromFile <- CohortDiagnostics::getResultsFromTimeSeries(
+    dataSource = dataSourcePreMergedFile,
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(any(is.null(timeSeriesFromFile),
+                            nrow(timeSeriesFromFile) >= 0))
   
   timeDistributionFromFile <- CohortDiagnostics::getResultsFromTimeDistribution(
     dataSource = dataSourcePreMergedFile,
     cohortIds = c(17492, 17692),
     databaseIds = 'cdmV5'
   )
-  expect_true(nrow(timeDistributionFromFile) >= 0)
+  testthat::expect_true(nrow(timeDistributionFromFile) >= 0)
+  
+  timeDistributionFromFile <- CohortDiagnostics::getResultsFromTimeDistribution(
+    dataSource = dataSourcePreMergedFile,
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(nrow(timeDistributionFromFile) >= 0)
   
   incidenceRateFromFile <- CohortDiagnostics::getResultsFromIncidenceRate(
     dataSource = dataSourcePreMergedFile,
     cohortIds = c(17492, 17692),
     databaseIds = 'cdmV5'
   )
-  expect_true(nrow(incidenceRateFromFile) >= 0) # no data in eunomia
+  testthat::expect_true(nrow(incidenceRateFromFile) >= 0) # no data in eunomia
+  
+  incidenceRateFromFile <- CohortDiagnostics::getResultsFromIncidenceRate(
+    dataSource = dataSourcePreMergedFile,
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(nrow(incidenceRateFromFile) >= 0) # no data in eunomia
   
   # TODO: resolve before release
   # Currently returning null, perhaps because no cohort definition had inclusion criteria?
@@ -163,37 +183,37 @@ test_that("Retrieve results from premerged file", {
   indexEventBreakdownFromFile <- CohortDiagnostics::getResultsFromIndexEventBreakdown(
     dataSource = dataSourcePreMergedFile
   )
-  expect_true(nrow(indexEventBreakdownFromFile) >= 0)
+  testthat::expect_true(nrow(indexEventBreakdownFromFile) >= 0)
   
   visitContextFromFile <- CohortDiagnostics::getResultsFromVisitContext(
     dataSource = dataSourcePreMergedFile
   )
-  expect_true(nrow(visitContextFromFile) >= 0)
+  testthat::expect_true(nrow(visitContextFromFile) >= 0)
   
   includedConceptFromFile <- CohortDiagnostics::getResultsFromIncludedConcept(
     dataSource = dataSourcePreMergedFile
   )
-  expect_true(nrow(includedConceptFromFile) >= 0)
+  testthat::expect_true(nrow(includedConceptFromFile) >= 0)
   
   orphanConceptFromFile <- CohortDiagnostics::getResultsFromOrphanConcept(
     dataSource = dataSourcePreMergedFile
   )
-  expect_true(nrow(orphanConceptFromFile) >= 0)
+  testthat::expect_true(nrow(orphanConceptFromFile) >= 0)
   
   conceptIdDetails <- CohortDiagnostics::getResultsFromConcept(
     dataSource = dataSourcePreMergedFile,
     conceptIds = c(192671, 201826, 1124300, 1124300)
   )
-  expect_true(nrow(conceptIdDetails) >= 0)
+  testthat::expect_true(nrow(conceptIdDetails) >= 0)
   
   resolvedMappedConceptSet <- CohortDiagnostics::getResultsResolveMappedConceptSet(
     dataSource = dataSourcePreMergedFile
   )
-  expect_true(nrow(resolvedMappedConceptSet$resolved) >= 0)
-  expect_true(nrow(resolvedMappedConceptSet$mapped) >= 0)
+  testthat::expect_true(nrow(resolvedMappedConceptSet$resolved) >= 0)
+  testthat::expect_true(nrow(resolvedMappedConceptSet$mapped) >= 0)
   
   # TODO: resolve before release
-  # Table does not exist in results, so this is throwing an error
+  # Table does not exist in results, is not generated in Eunomia?
   # calendarIncidence <- CohortDiagnostics::getResultsFromCalendarIncidence(
   #   dataSource = dataSourcePreMergedFile
   # )
@@ -202,7 +222,7 @@ test_that("Retrieve results from premerged file", {
   cohortRelationships <- CohortDiagnostics::getResultsFromCohortRelationships(
     dataSource = dataSourcePreMergedFile
   )
-  expect_true(nrow(cohortRelationships) >= 0)
+  testthat::expect_true(nrow(cohortRelationships) >= 0)
   
   # TODO: resolve before release
   # Table does not exist in results, so this is throwing an error

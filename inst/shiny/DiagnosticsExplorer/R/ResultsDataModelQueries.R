@@ -278,6 +278,8 @@ getResultsFromTimeSeries <- function(dataSource,
     databaseIds = databaseIds,
     dataTableName = "timeSeries"
   )
+  if (is.null(data)) {return(NULL)}
+  if (nrow(data) == 0) {return(NULL)}
   
   t1 <- data %>% 
     dplyr::filter(.data$seriesType == 'T1')
@@ -295,7 +297,7 @@ getResultsFromTimeSeries <- function(dataSource,
                         'Persons observation embedded in period',
                         'Prevalence Proportion',
                         'Prevalence Rate'
-                        ),
+    ),
     seriesTypeLong = c('Subjects in the cohort who have atleast one cohort day in calendar period',
                        'Subjects in the cohort who have atleast one observation day in calendar period',
                        'Persons in the data source who have atleast one observation day in calendar period',
@@ -346,8 +348,6 @@ getResultsFromTimeSeries <- function(dataSource,
       attr(x = dataList[[intervals[[i]]]], 
            which = 'timeSeriesDescription') <- timeSeriesDescription
     }
-  } else {
-    return(NULL)
   }
   return(dataList)
 }
