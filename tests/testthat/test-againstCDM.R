@@ -230,11 +230,11 @@ test_that("Retrieve results from premerged file", {
   #   dataSource = dataSourcePreMergedFile
   # )
   # expect_true(nrow(cohortAsFeatureTemporalCharacterizationResults$temporalCovariateValue) >= 0)
-  # 
-  multipleCharacterizationResults  <- CohortDiagnostics::getMultipleCharacterizationResults (
-    dataSource = dataSourcePreMergedFile
-  )
-  expect_true(nrow(multipleCharacterizationResults$covariateValue) >= 0)
+  # # 
+  # multipleCharacterizationResults  <- CohortDiagnostics::getMultipleCharacterizationResults (
+  #   dataSource = dataSourcePreMergedFile
+  # )
+  # expect_true(nrow(multipleCharacterizationResults$covariateValue) >= 0)
 })
 
 
@@ -279,10 +279,10 @@ test_that("Retrieve results from remote database", {
   expect_true(nrow(cohortCountFromDb) > 0)
   
   # time series
-  timeSeriesFromDb <- CohortDiagnostics::getResultsFromTimeSeries(
-    dataSource = dataSourceDatabase,
-    databaseIds = 'cdmV5'
-  )
+  # timeSeriesFromDb <- CohortDiagnostics::getResultsFromTimeSeries(
+  #   dataSource = dataSourceDatabase,
+  #   databaseIds = 'cdmV5'
+  # )
   # expect_true(nrow(timeSeriesFromDb) >= 0)
   
   # time distribution
@@ -302,11 +302,11 @@ test_that("Retrieve results from remote database", {
   expect_true(nrow(incidenceRateFromDb) >= 0) # no data in eunomia
   
   # inclusion rules
-  inclusionRulesFromDb <- CohortDiagnostics::getResultsFromInclusionRuleStatistics(
-    dataSource = dataSourceDatabase,
-    databaseIds = 'cdmV5'
-  )
-  expect_true(nrow(inclusionRulesFromDb) >= 0)
+  # inclusionRulesFromDb <- CohortDiagnostics::getResultsFromInclusionRuleStatistics(
+  #   dataSource = dataSourceDatabase,
+  #   databaseIds = 'cdmV5'
+  # )
+  # expect_true(nrow(inclusionRulesFromDb) >= 0)
   
   # index_event_breakdown
   indexEventBreakdownFromDb <- CohortDiagnostics::getResultsFromIndexEventBreakdown(
@@ -368,30 +368,30 @@ test_that("Retrieve results from remote database", {
   )
   expect_true(nrow(cohortRelationships) >= 0) 
   
-  cohortCharacterizationResults <- CohortDiagnostics::getCohortCharacterizationResults(
-    dataSource = dataSourceDatabase
-  )
-  expect_true(nrow(cohortCharacterizationResults) >= 0)
-  
-  temporalCohortCharacterizationResults <- CohortDiagnostics::getTemporalCohortCharacterizationResults(
-    dataSource = dataSourceDatabase
-  )
-  expect_true(nrow(temporalCohortCharacterizationResults) >= 0)
-  
-  cohortAsFeatureCharacterizationResults <- CohortDiagnostics::getCohortAsFeatureCharacterizationResults(
-    dataSource = dataSourceDatabase
-  )
-  expect_true(nrow(cohortAsFeatureCharacterizationResults) >= 0)
-  
-  cohortAsFeatureTemporalCharacterizationResults <- CohortDiagnostics::getCohortAsFeatureTemporalCharacterizationResults(
-    dataSource = dataSourceDatabase
-  )
-  expect_true(nrow(cohortAsFeatureTemporalCharacterizationResults) >= 0)
-  
-  multipleCharacterizationResults  <- CohortDiagnostics::getMultipleCharacterizationResults (
-    dataSource = dataSourceDatabase
-  )
-  expect_true(nrow(multipleCharacterizationResults) >= 0)
+  # cohortCharacterizationResults <- CohortDiagnostics::getCohortCharacterizationResults(
+  #   dataSource = dataSourceDatabase
+  # )
+  # expect_true(nrow(cohortCharacterizationResults) >= 0)
+  # 
+  # temporalCohortCharacterizationResults <- CohortDiagnostics::getTemporalCohortCharacterizationResults(
+  #   dataSource = dataSourceDatabase
+  # )
+  # expect_true(nrow(temporalCohortCharacterizationResults) >= 0)
+  # 
+  # cohortAsFeatureCharacterizationResults <- CohortDiagnostics::getCohortAsFeatureCharacterizationResults(
+  #   dataSource = dataSourceDatabase
+  # )
+  # expect_true(nrow(cohortAsFeatureCharacterizationResults) >= 0)
+  # 
+  # cohortAsFeatureTemporalCharacterizationResults <- CohortDiagnostics::getCohortAsFeatureTemporalCharacterizationResults(
+  #   dataSource = dataSourceDatabase
+  # )
+  # expect_true(nrow(cohortAsFeatureTemporalCharacterizationResults) >= 0)
+  # 
+  # multipleCharacterizationResults  <- CohortDiagnostics::getMultipleCharacterizationResults (
+  #   dataSource = dataSourceDatabase
+  # )
+  # expect_true(nrow(multipleCharacterizationResults) >= 0)
 })
 
 
