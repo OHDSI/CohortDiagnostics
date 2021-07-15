@@ -3846,7 +3846,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$seriesType %in% input$timeSeriesTypeFilter) %>% 
       dplyr::select(-.data$seriesType)
     
-    plot <- plotTimeSeries(data,input$timeSeriesPlotFilters)
+    plot <- plotTimeSeries(data, titleCaseToCamelCase(input$timeSeriesPlotFilters))
     
     return(plot)
   })

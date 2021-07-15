@@ -25,9 +25,10 @@ snakeCaseToCamelCase <- function(string) {
 
 
 titleCaseToCamelCase <- function(string) {
-  # string <- gsub("([A-Z])", " \\1", string)
-  # string <- gsub("([a-z])([0-9])", "\\1 \\2", string)
-  # substr(string, 1, 1) <- toupper(substr(string, 1, 1))
+  string <- stringr::str_replace_all(string = string,
+                                     pattern = ' ',
+                                     replacement = '')
+  substr(string, 1, 1) <- tolower(substr(string, 1, 1))
   return(string)
 }
 

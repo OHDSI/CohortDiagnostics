@@ -23,7 +23,6 @@ plotTimeSeries <- function(data, columnFilter) {
   if(is.null(data)) {
     return(NULL)
   }
-  columnFilter <- columnFilter %>% snakecase::to_any_case(case = c("lower_camel"))
   data$Total <- data[[columnFilter]]
   
   plot <- data %>%
