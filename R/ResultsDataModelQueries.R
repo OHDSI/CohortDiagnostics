@@ -543,18 +543,30 @@ getResultsFromConcept <- function(dataSource = .GlobalEnv,
     sql <- "SELECT *
             FROM @vocabulary_database_schema.concept
             {@concept_ids == ''} ? { WHERE concept_id IN (@concept_ids)};"
+    if (!is.null(conceptIds)) {
+      sql <-
+        SqlRender::render(
+          sql = sql,
+          concept_ids = conceptIds
+        )
+    }
     if (!is.null(vocabularyDatabaseSchema)) {
       sql <-
         SqlRender::render(
           sql = sql,
           vocabulary_database_schema = vocabularyDatabaseSchema
         )
+    } else {
+      sql <-
+        SqlRender::render(
+          sql = sql,
+          vocabulary_database_schema = dataSource$vocabularyDatabaseSchema
+        ) 
     }
     data <-
       renderTranslateQuerySql(
         connection = dataSource$connection,
         sql = sql,
-        vocabulary_database_schema = dataSource$vocabularyDatabaseSchema,
         concept_ids = conceptIds,
         snakeCaseToCamelCase = TRUE
       )
@@ -1623,7 +1635,7 @@ getResultsCovariateRef <- function(dataSource,
       renderTranslateQuerySql(
         connection = dataSource$connection,
         sql = sql,
-        results_database_schema = dataSource$results_database_schema,
+        results_database_schema = dataSource$resultsDatabaseSchema,
         covariate_id = covariateIds,
         snakeCaseToCamelCase = TRUE
       )
@@ -1658,7 +1670,7 @@ getResultsTemporalCovariateRef <- function(dataSource,
       renderTranslateQuerySql(
         connection = dataSource$connection,
         sql = sql,
-        results_database_schema = dataSource$results_database_schema,
+        results_database_schema = dataSource$resultsDatabaseSchema,
         covariate_id = covariateIds,
         snakeCaseToCamelCase = TRUE
       )
@@ -1688,7 +1700,7 @@ getResultsTemporalTimeRef <- function(dataSource) {
       renderTranslateQuerySql(
         connection = dataSource$connection,
         sql = sql,
-        results_database_schema = dataSource$results_database_schema,
+        results_database_schema = dataSource$resultsDatabaseSchema,
         snakeCaseToCamelCase = TRUE
       )
   }
@@ -1717,7 +1729,7 @@ getResultsCohort <- function(dataSource) {
       renderTranslateQuerySql(
         connection = dataSource$connection,
         sql = sql,
-        results_database_schema = dataSource$results_database_schema,
+        results_database_schema = dataSource$resultsDatabaseSchema,
         snakeCaseToCamelCase = TRUE
       )
   }
@@ -1776,7 +1788,7 @@ getResultsTemporalAnalysisRef <- function(dataSource) {
       renderTranslateQuerySql(
         connection = dataSource$connection,
         sql = sql,
-        results_database_schema = dataSource$results_database_schema,
+        results_database_schema = dataSource$resultsDatabaseSchema,
         snakeCaseToCamelCase = TRUE
       )
   }
