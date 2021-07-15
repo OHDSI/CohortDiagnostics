@@ -3719,6 +3719,8 @@ shiny::shinyServer(function(input, output, session) {
   
   
   # Time Series -----
+  
+  timeSeriesTssibleData <- shiny::reactiveVal(NULL)
   timeSeriesData <- reactive({
     validate(need(length(databaseIds()) > 0, "No data sources chosen"))
     validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
@@ -3778,6 +3780,8 @@ shiny::shinyServer(function(input, output, session) {
         subjectsEnd = 0
       )
     
+    timeSeriesTssibleData(data)
+    
     if (calendarIntervalFirstLetter == 'y') {
       data <- data %>% 
         dplyr::mutate(periodBeginRaw = as.Date(paste0(as.character(.data$periodBegin), '-01-01')))
@@ -3834,6 +3838,11 @@ shiny::shinyServer(function(input, output, session) {
       class = "stripe compact"
     )
     return(dataTable)
+  })
+  
+  output$timeSeriesPlot <- shiny::renderPlot({
+    plot <- plotTimeSeries(timeSeriesTssibleData(),input$timeSeriesPlotFilters)
+    return(plot)
   })
   
   # Time distribution -------

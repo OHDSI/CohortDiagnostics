@@ -19,6 +19,18 @@ addShortName <-
     
   }
 
+plotTimeSeries <- function(data, columnFilter) {
+  if(is.null(data)) {
+    return(NULL)
+  }
+  data$timeSeriesValue <- data[[columnFilter]]
+  plot <- data %>%
+    fabletools::model(feasts::STL(timeSeriesValue ~ season(window = Inf))) %>% 
+    fabletools::components() %>% 
+    feasts::autoplot()
+  return(plot)
+}
+
 plotTimeDistribution <- function(data, shortNameRef = NULL) {
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertTibble(

@@ -674,12 +674,28 @@ bodyTabItems <- shinydashboard::tabItems(
       status = "primary",
       solidHeader = TRUE,
       
-      shiny::radioButtons(
-        inputId = "timeSeriesType",
-        label = "",
-        choices = c("Table", "Plot"),
-        selected = "Table",
-        inline = TRUE
+      shiny::column(
+        6,
+        shiny::radioButtons(
+          inputId = "timeSeriesType",
+          label = "",
+          choices = c("Table", "Plot"),
+          selected = "Table",
+          inline = TRUE
+        )
+      ),
+      shiny::column(
+        6,
+        shiny::conditionalPanel(
+          condition = "input.timeSeriesType=='Plot'",
+          shiny::radioButtons(
+            inputId = "timeSeriesPlotFilters",
+            label = "Filter By :",
+            choices = c("recordsStart", "subjectsStart", "recordsEnd", "subjectsEnd"),
+            selected = "recordsStart",
+            inline = TRUE
+          )
+        ),
       ),
       shiny::conditionalPanel(
         condition = "input.timeSeriesType=='Table'",
@@ -699,7 +715,7 @@ bodyTabItems <- shinydashboard::tabItems(
       ),
       shiny::conditionalPanel(
         condition = "input.timeSeriesType=='Plot'",
-        ggiraph::ggiraphOutput("timeSeriesPlot", width = "100%", height = "100%")
+        shiny::plotOutput("timeSeriesPlot",height = 700)
       )
     )
   ),
