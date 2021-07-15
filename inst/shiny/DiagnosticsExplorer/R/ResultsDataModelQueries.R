@@ -279,6 +279,33 @@ getResultsFromTimeSeries <- function(dataSource,
     dataTableName = "timeSeries"
   )
   
+  t1 <- data %>% 
+    dplyr::filter(.data$seriesType = 'T1')
+  t1 <- data %>% 
+    dplyr::filter(.data$seriesType = 'T3')
+  
+  timeSeriesDescription <- dplyr::tibble(
+    seriesType = c('T1', 'T2', 'T3', 'T4', 'T5', 'T6', 
+                   'R1', 'R2'),
+    seriesTypeShort = c('Subjects cohort period',
+                        'Subjects observation period',
+                        'Persons observed period',
+                        'Subjects cohort embedded in period',
+                        'Subjects observation embedded in period',
+                        'Persons observation embedded in period',
+                        'Prevalence Proportion',
+                        'Prevalence Rate'
+                        ),
+    seriesTypeLong = c('Subjects in the cohort who have atleast one cohort day in calendar period',
+                       'Subjects in the cohort who have atleast one observation day in calendar period',
+                       'Persons in the data source who have atleast one observation day in calendar period',
+                       'Subjects in the cohorts whose cohort period are embedded within calendar period',
+                       'Subjects in the cohorts whose observation period is embedded within calendar period',
+                       'Persons in the observation table whose observation period is embedded within calendar period',
+                       'Prevalence proportion - count of subjects in the cohort who have atleast one cohort day in calendar period divided by count of persons in the data source who have atleast one cohort day in calendar period',
+                       'Prevalence rate - calendar period persons days for subjects in the cohort who have atleast one cohort day in calendar period divided by calendar period person days for all persons in the data source who have atleast one cohort day in calendar period * 1,000 * 365t')
+  )
+  
   if (nrow(data) > 0) {
     
     intervals <- data$calendarInterval %>% unique()
@@ -316,6 +343,8 @@ getResultsFromTimeSeries <- function(dataSource,
         ) %>%
         dplyr::arrange(.data$databaseId, .data$cohortId, .data$seriesType)
       dataList[[intervals[[i]]]] <- intervalData
+      attr(x = dataList[[intervals[[i]]]], 
+           which = 'timeSeriesDescription') <- timeSeriesDescription
     }
   } else {
     return(NULL)
