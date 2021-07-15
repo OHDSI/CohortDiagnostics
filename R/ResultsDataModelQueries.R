@@ -1209,6 +1209,7 @@ getCohortAsFeatureTemporalCharacterizationResults <-
            databaseIds = NULL,
            temporalTimeRef = getResultsTemporalTimeRef(dataSource = dataSource)) {
     
+    if (is.null(temporalTimeRef)) {return(NULL)}
     # meta information
     cohortCounts <-
       getResultsFromCohortCount(dataSource = dataSource,

@@ -224,11 +224,11 @@ test_that("Retrieve results from premerged file", {
   
   # TODO: resolve before release
   # Table does not exist in results, so this is throwing an error
-  # cohortCharacterizationResults <- CohortDiagnostics::getMultipleCharacterizationResults(
-  #   dataSource = dataSourcePreMergedFile
-  # )
-  # expect_true(nrow(cohortCharacterizationResults) >= 0)
-  # 
+  cohortCharacterizationResults <- CohortDiagnostics::getMultipleCharacterizationResults(
+    dataSource = dataSourcePreMergedFile
+  )
+  testthat::expect_true(length(cohortCharacterizationResults) >= 0)
+  
   # TODO: resolve before release
   # Table does not exist in results, so this is throwing an error
   # cohortAsFeatureCharacterizationResults <- CohortDiagnostics::getCohortAsFeatureCharacterizationResults(
