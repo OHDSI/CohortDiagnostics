@@ -168,6 +168,9 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
     if (!exists(dataTableName, envir = dataSource)) {
       return(NULL)
     }
+    if (is.null(get(dataTableName))) {
+      return(NULL)
+    }
     if (nrow(get(dataTableName, envir = dataSource)) == 0) {
       warning(paste0(dataTableName, " in environment was found to have o rows."))
     }
@@ -544,7 +547,7 @@ getResultsFromConcept <- function(dataSource = .GlobalEnv,
       sql <-
         SqlRender::render(
           sql = sql,
-          vocabulary_database_schema = !!vocabularyDatabaseSchema
+          vocabulary_database_schema = vocabularyDatabaseSchema
         )
     }
     data <-
@@ -1744,7 +1747,7 @@ getResultsAnalysisRef <- function(dataSource) {
       renderTranslateQuerySql(
         connection = dataSource$connection,
         sql = sql,
-        results_database_schema = dataSource$results_database_schema,
+        results_database_schema = dataSource$resultsDatabaseSchema,
         snakeCaseToCamelCase = TRUE
       )
   }

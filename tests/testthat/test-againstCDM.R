@@ -176,7 +176,8 @@ test_that("Retrieve results from premerged file", {
   inclusionRulesFromFile <- CohortDiagnostics::getResultsFromInclusionRuleStatistics(
     dataSource = dataSourcePreMergedFile
   )
-  testthat::expect_true(nrow(inclusionRulesFromFile) >= 0)
+  testthat::expect_true(any(is.null(inclusionRulesFromFile), 
+                            nrow(inclusionRulesFromFile) >= 0))
   
   indexEventBreakdownFromFile <- CohortDiagnostics::getResultsFromIndexEventBreakdown(
     dataSource = dataSourcePreMergedFile
@@ -210,7 +211,6 @@ test_that("Retrieve results from premerged file", {
   testthat::expect_true(nrow(resolvedMappedConceptSet$resolved) >= 0)
   testthat::expect_true(nrow(resolvedMappedConceptSet$mapped) >= 0)
   
-  # TODO: resolve before release
   # Table does not exist in results, is not generated in Eunomia?
   calendarIncidence <- CohortDiagnostics::getResultsFromCalendarIncidence(
     dataSource = dataSourcePreMergedFile
@@ -222,30 +222,12 @@ test_that("Retrieve results from premerged file", {
   )
   testthat::expect_true(nrow(cohortRelationships) >= 0)
   
-  # TODO: resolve before release
   # Table does not exist in results, so this is throwing an error
   cohortCharacterizationResults <- CohortDiagnostics::getMultipleCharacterizationResults(
     dataSource = dataSourcePreMergedFile
   )
   testthat::expect_true(length(cohortCharacterizationResults) >= 0)
-  
-  # TODO: resolve before release
-  # Table does not exist in results, so this is throwing an error
-  # cohortAsFeatureCharacterizationResults <- CohortDiagnostics::getCohortAsFeatureCharacterizationResults(
-  #   dataSource = dataSourcePreMergedFile
-  # )
-  # expect_true(nrow(cohortAsFeatureCharacterizationResults) >= 0)
-  
-  # has a bug
-  # cohortAsFeatureTemporalCharacterizationResults <- CohortDiagnostics::getCohortAsFeatureTemporalCharacterizationResults(
-  #   dataSource = dataSourcePreMergedFile
-  # )
-  # expect_true(nrow(cohortAsFeatureTemporalCharacterizationResults$temporalCovariateValue) >= 0)
-  # # 
-  # multipleCharacterizationResults  <- CohortDiagnostics::getMultipleCharacterizationResults (
-  #   dataSource = dataSourcePreMergedFile
-  # )
-  # expect_true(nrow(multipleCharacterizationResults$covariateValue) >= 0)
+
 })
 
 
@@ -287,37 +269,38 @@ test_that("Retrieve results from remote database", {
     dataSource = dataSourceDatabase,
     databaseIds = 'cdmV5'
   )
-  expect_true(nrow(cohortCountFromDb) > 0)
+  testthat::expect_true(nrow(cohortCountFromDb) > 0)
   
   # time series
-  # timeSeriesFromDb <- CohortDiagnostics::getResultsFromTimeSeries(
-  #   dataSource = dataSourceDatabase,
-  #   databaseIds = 'cdmV5'
-  # )
-  # expect_true(nrow(timeSeriesFromDb) >= 0)
-  
+  timeSeriesFromDb <- CohortDiagnostics::getResultsFromTimeSeries(
+    dataSource = dataSourceDatabase,
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(any(is.null(timeSeriesFromDb),
+                            nrow(timeSeriesFromDb) >= 0))
+
   # time distribution
   timeDistributionFromDb <- CohortDiagnostics::getResultsFromTimeDistribution(
     dataSource = dataSourceDatabase,
     cohortIds = c(17492, 17692),
     databaseIds = 'cdmV5'
   )
-  expect_true(nrow(timeDistributionFromDb) >= 0)
+  testthat::expect_true(nrow(timeDistributionFromDb) >= 0)
   
   # incidence rate result
   incidenceRateFromDb <- CohortDiagnostics::getResultsFromIncidenceRate(
     dataSource = dataSourceDatabase,
-    cohortIds = c(17492, 17692),
     databaseIds = 'cdmV5'
   )
-  expect_true(nrow(incidenceRateFromDb) >= 0) # no data in eunomia
+  testthat::expect_true(nrow(incidenceRateFromDb) >= 0) # no data in eunomia
   
   # inclusion rules
-  # inclusionRulesFromDb <- CohortDiagnostics::getResultsFromInclusionRuleStatistics(
-  #   dataSource = dataSourceDatabase,
-  #   databaseIds = 'cdmV5'
-  # )
-  # expect_true(nrow(inclusionRulesFromDb) >= 0)
+  inclusionRulesFromDb <- CohortDiagnostics::getResultsFromInclusionRuleStatistics(
+    dataSource = dataSourceDatabase,
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(any(is.null(inclusionRulesFromDb),
+                            nrow(inclusionRulesFromDb) >= 0))
   
   # index_event_breakdown
   indexEventBreakdownFromDb <- CohortDiagnostics::getResultsFromIndexEventBreakdown(
@@ -325,7 +308,7 @@ test_that("Retrieve results from remote database", {
     cohortIds = c(17492, 17692),
     databaseIds = 'cdmV5'
   )
-  expect_true(nrow(indexEventBreakdownFromDb) >= 0)
+  testthat::expect_true(nrow(indexEventBreakdownFromDb) >= 0)
   
   # visit_context
   visitContextFromDb <- CohortDiagnostics::getResultsFromVisitContext(
@@ -333,7 +316,7 @@ test_that("Retrieve results from remote database", {
     cohortIds = c(17492, 17692),
     databaseIds = 'cdmV5'
   )
-  expect_true(nrow(visitContextFromDb) >= 0)
+  testthat::expect_true(nrow(visitContextFromDb) >= 0)
   
   # included_concept
   includedConceptFromDb <- CohortDiagnostics::getResultsFromIncludedConcept(
@@ -341,21 +324,21 @@ test_that("Retrieve results from remote database", {
     cohortIds = c(17492, 17692),
     databaseIds = 'cdmV5'
   )
-  expect_true(nrow(includedConceptFromDb) >= 0)
+  testthat::expect_true(nrow(includedConceptFromDb) >= 0)
   
   # orphan_concept
   orphanConceptFromDb <- CohortDiagnostics::getResultsFromOrphanConcept(
     dataSource = dataSourceDatabase,
     databaseIds = 'cdmV5'
   )
-  expect_true(nrow(orphanConceptFromDb) >= 0)
+  testthat::expect_true(nrow(orphanConceptFromDb) >= 0)
   
   # concept_id details with vocabulary schema
-  # conceptIdDetails <- CohortDiagnostics::getResultsFromConcept(
-  #   dataSource = dataSourceDatabase,
-  #   conceptIds = c(192671, 201826, 1124300, 1124300), 
-  #   vocabularyDatabaseSchema = cohortDiagnosticsSchema
-  # )
+  conceptIdDetails <- CohortDiagnostics::getResultsFromConcept(
+    dataSource = dataSourceDatabase,
+    conceptIds = c(192671, 201826, 1124300, 1124300),
+    vocabularyDatabaseSchema = cohortDiagnosticsSchema
+  )
   
   # concept_id details without vocabulary schema
   conceptIdDetails <- CohortDiagnostics::getResultsFromConcept(
@@ -366,43 +349,29 @@ test_that("Retrieve results from remote database", {
   resolvedMappedConceptSet <- CohortDiagnostics::getResultsResolveMappedConceptSet(
     dataSource = dataSourceDatabase
   )
-  expect_true(nrow(resolvedMappedConceptSet$resolved) > 0)
-  expect_true(nrow(resolvedMappedConceptSet$mapped) > 0)
+  testthat::expect_true(nrow(resolvedMappedConceptSet$resolved) > 0)
+  testthat::expect_true(nrow(resolvedMappedConceptSet$mapped) > 0)
   
   calendarIncidence <- CohortDiagnostics::getResultsFromCalendarIncidence(
     dataSource = dataSourceDatabase
   )
-  # expect_true(nrow(calendarIncidence) >= 0)
+  testthat::expect_true(any(is.null(calendarIncidence),
+                            nrow(calendarIncidence) >= 0))
   
   cohortRelationships <- CohortDiagnostics::getResultsFromCohortRelationships(
     dataSource = dataSourceDatabase
   )
-  expect_true(nrow(cohortRelationships) >= 0) 
+  testthat::expect_true(nrow(cohortRelationships) >= 0) 
   
-  # cohortCharacterizationResults <- CohortDiagnostics::getCohortCharacterizationResults(
-  #   dataSource = dataSourceDatabase
-  # )
-  # expect_true(nrow(cohortCharacterizationResults) >= 0)
-  # 
-  # temporalCohortCharacterizationResults <- CohortDiagnostics::getTemporalCohortCharacterizationResults(
-  #   dataSource = dataSourceDatabase
-  # )
-  # expect_true(nrow(temporalCohortCharacterizationResults) >= 0)
-  # 
-  # cohortAsFeatureCharacterizationResults <- CohortDiagnostics::getCohortAsFeatureCharacterizationResults(
-  #   dataSource = dataSourceDatabase
-  # )
-  # expect_true(nrow(cohortAsFeatureCharacterizationResults) >= 0)
-  # 
-  # cohortAsFeatureTemporalCharacterizationResults <- CohortDiagnostics::getCohortAsFeatureTemporalCharacterizationResults(
-  #   dataSource = dataSourceDatabase
-  # )
-  # expect_true(nrow(cohortAsFeatureTemporalCharacterizationResults) >= 0)
-  # 
-  # multipleCharacterizationResults  <- CohortDiagnostics::getMultipleCharacterizationResults (
-  #   dataSource = dataSourceDatabase
-  # )
-  # expect_true(nrow(multipleCharacterizationResults) >= 0)
+  cohortCharacterizationResults <- CohortDiagnostics::getCohortCharacterizationResults(
+    dataSource = dataSourceDatabase
+  )
+  testthat::expect_true(nrow(cohortCharacterizationResults) >= 0)
+
+  multipleCharacterizationResults  <- CohortDiagnostics::getMultipleCharacterizationResults (
+    dataSource = dataSourceDatabase
+  )
+  testthat::expect_true(nrow(multipleCharacterizationResults) >= 0)
 })
 
 
