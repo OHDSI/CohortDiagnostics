@@ -3722,8 +3722,8 @@ shiny::shinyServer(function(input, output, session) {
   
   timeSeriesTssibleData <- shiny::reactiveVal(NULL)
   timeSeriesData <- reactive({
-    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
-    validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
+    validate(need(length(input$database) > 0, "No data sources chosen"))
+    validate(need(length(input$cohort) > 0, "No cohorts chosen"))
     if (all(is(dataSource, "environment"), !exists('timeSeries'))) {
       return(NULL)
     }
@@ -3734,8 +3734,8 @@ shiny::shinyServer(function(input, output, session) {
     
     data <- getResultsFromTimeSeries(
       dataSource = dataSource,
-      cohortIds = cohortIds(),
-      databaseIds = databaseIds()
+      cohortIds = cohortId(),
+      databaseIds = input$database
     )
     return(data)
   })
@@ -3840,8 +3840,14 @@ shiny::shinyServer(function(input, output, session) {
     return(dataTable)
   })
   
-  output$timeSeriesPlot <- shiny::renderPlot({
-    plot <- plotTimeSeries(timeSeriesTssibleData(),input$timeSeriesPlotFilters)
+  output$timeSeriesPlot <- ggiraph::renderggiraph({
+    
+    data <- timeSeriesTssibleData() %>% 
+      dplyr::filter(.data$seriesType %in% input$timeSeriesTypeFilter) %>% 
+      dplyr::select(-.data$seriesType)
+    
+    plot <- plotTimeSeries(data,input$timeSeriesPlotFilters)
+    
     return(plot)
   })
   
@@ -7213,7 +7219,7 @@ shiny::shinyServer(function(input, output, session) {
     })
   output$timeSeriesSelectedCohorts <-
     shiny::renderUI({
-      renderedSelectedCohorts()
+      selectedCohort()
     })
   output$timeDistSelectedCohorts <-
     shiny::renderUI({

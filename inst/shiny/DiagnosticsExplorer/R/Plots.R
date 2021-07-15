@@ -23,11 +23,45 @@ plotTimeSeries <- function(data, columnFilter) {
   if(is.null(data)) {
     return(NULL)
   }
-  data$timeSeriesValue <- data[[columnFilter]]
+  columnFilter <- columnFilter %>% snakecase::to_any_case(case = c("lower_camel"))
+  data$Total <- data[[columnFilter]]
+  
   plot <- data %>%
-    fabletools::model(feasts::STL(timeSeriesValue ~ season(window = Inf))) %>% 
+    fabletools::model(feasts::STL(Total ~ season(window = Inf))) %>% 
     fabletools::components() %>% 
     feasts::autoplot()
+  
+  data$tooltip <- c(
+    paste0(
+      columnFilter,
+      " = ", 
+      data$Total,
+      "\nPeriod Begin = ",
+      data$periodBegin,
+      "\nDatabase ID = ",
+      data$databaseId,
+      "\nCohort ID = ",
+      data$cohortId
+    )
+  )
+  
+  
+  plot <- plot +
+    
+    ggplot2::theme_bw() +
+    ggplot2::theme(strip.text = ggplot2::element_text(size = 6),
+                   axis.text = ggplot2::element_text(size = 5),
+                   plot.title = ggplot2::element_text(size = 7),
+                   plot.subtitle =  ggplot2::element_text(size = 7)) +
+    ggplot2::labs(x = "Period Begin") + 
+    ggplot2::scale_y_continuous(labels = scales::comma) +
+    ggplot2::theme(legend.position = "none")
+  
+  
+  plot <- ggiraph::girafe(
+    ggobj = plot,
+    options = list(ggiraph::opts_sizing(width = .7),
+                   ggiraph::opts_zoom(max = 5)))
   return(plot)
 }
 

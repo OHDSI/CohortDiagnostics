@@ -135,7 +135,6 @@ sidebarMenu <-
     # Conditional dropdown boxes in the side bar ------------------------------------------------------
     shiny::conditionalPanel(
       condition = "input.tabs!='incidenceRate' &
-      input.tabs != 'timeSeries' &
       input.tabs != 'timeDistribution' &
       input.tabs != 'cohortCharacterization' &
       input.tabs != 'cohortCounts' &
@@ -166,7 +165,6 @@ sidebarMenu <-
     ),
     shiny::conditionalPanel(
       condition = "input.tabs=='incidenceRate' |
-      input.tabs =='timeSeries' |
       input.tabs == 'timeDistribution' |
       input.tabs =='cohortCharacterization' |
       input.tabs == 'cohortCounts' |
@@ -232,7 +230,6 @@ sidebarMenu <-
       input.tabs != 'cohortCounts' &
       input.tabs != 'cohortOverlap'&
       input.tabs != 'incidenceRate' &
-      input.tabs !='timeSeries' &
       input.tabs != 'timeDistribution'",
       shinyWidgets::pickerInput(
         inputId = "cohort",
@@ -254,7 +251,6 @@ sidebarMenu <-
       condition = "input.tabs == 'cohortCounts' |
       input.tabs == 'cohortOverlap' |
       input.tabs == 'incidenceRate' |
-      input.tabs =='timeSeries' |
       input.tabs == 'timeDistribution'",
       shinyWidgets::pickerInput(
         inputId = "cohorts",
@@ -691,8 +687,8 @@ bodyTabItems <- shinydashboard::tabItems(
           shiny::radioButtons(
             inputId = "timeSeriesPlotFilters",
             label = "Filter By :",
-            choices = c("recordsStart", "subjectsStart", "recordsEnd", "subjectsEnd"),
-            selected = "recordsStart",
+            choices = c("Records Start", "Subjects Start", "Records End", "Subjects End"),
+            selected = "Records Start",
             inline = TRUE
           )
         ),
@@ -715,7 +711,9 @@ bodyTabItems <- shinydashboard::tabItems(
       ),
       shiny::conditionalPanel(
         condition = "input.timeSeriesType=='Plot'",
-        shiny::plotOutput("timeSeriesPlot",height = 700)
+       shiny::column(12,
+          ggiraph::ggiraphOutput("timeSeriesPlot",width ="100%", height = "100%")
+        )
       )
     )
   ),
