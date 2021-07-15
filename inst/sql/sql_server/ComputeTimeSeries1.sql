@@ -40,18 +40,8 @@ SELECT cohort_definition_id cohort_id,
 			END) subjects_end -- subjects end within period
 FROM @cohort_database_schema.@cohort_table
 INNER JOIN #calendar_periods cp
-	ON (
-		cohort_start_date >= period_begin
-		AND cohort_start_date <= period_end
-		) -- cohort starts within calendar period, OR
-	OR (
-		cohort_end_date >= period_begin
-		AND cohort_end_date <= period_end
-		) -- cohort ends within calendar period, OR
-	OR (
-		cohort_end_date >= period_end
-		AND cohort_start_date <= period_begin
-		) -- cohort periods overlaps the calendar period
+		AND cp.period_end >= cohort_start_date
+		AND cp.period_begin <= cohort_end_date
 WHERE cohort_definition_id IN (@cohort_ids)
 GROUP BY time_id,
 	cohort_definition_id;

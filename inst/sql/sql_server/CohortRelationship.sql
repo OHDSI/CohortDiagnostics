@@ -50,21 +50,7 @@ FROM #cohort_subset t
 INNER JOIN #cohort_subset c
 	ON c.subject_id = t.subject_id
 		AND c.cohort_definition_id != t.cohort_definition_id
-		AND (
-			-- comparator cohort dates are computed in relation to target cohort start date + offset
-			-- Offset: is the time period
-			(
-				c.cohort_start_date >= DATEADD(day, @start_day_offset, t.cohort_start_date)
-				AND c.cohort_start_date <= DATEADD(day, @end_day_offset, t.cohort_start_date)
-				) -- comparator cohort starts within period, OR
-			OR (
-				c.cohort_end_date >= DATEADD(day, @start_day_offset, t.cohort_start_date)
-				AND c.cohort_end_date <= DATEADD(day, @end_day_offset, t.cohort_start_date)
-				) -- comparator cohort ends within period, OR
-			OR (
-				c.cohort_end_date >= DATEADD(day, @end_day_offset, t.cohort_start_date)
-				AND c.cohort_start_date <= DATEADD(day, @start_day_offset, t.cohort_start_date)
-				) -- comparator cohort periods overlaps the period
-			)
+		AND c.cohort_end_date >= t.cohort_start_date
+		AND c.cohort_start_date <= t.cohort_end_date
 GROUP BY t.cohort_definition_id,
 	c.cohort_definition_id;
