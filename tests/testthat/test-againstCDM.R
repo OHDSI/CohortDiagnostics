@@ -1,18 +1,13 @@
-# Disabling until new version of DatabaseConnector is released:
 library(testthat)
 library(CohortDiagnostics)
 
-folder <- tempfile()
-dir.create(folder, recursive = TRUE)
-withr::defer({
-  unlink(folder)
-}, testthat::teardown_env())
-
 test_that("Cohort instantiation", {
+  skip_if_not(runDatabaseTests)
+  
   CohortDiagnostics::instantiateCohortSet(
     connectionDetails = connectionDetails,
-    cdmDatabaseSchema = "eunomia",
-    vocabularyDatabaseSchema = "eunomia",
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     tempEmulationSchema = tempEmulationSchema,
     cohortDatabaseSchema = cohortDatabaseSchema,
     cohortTable = cohortTable,
@@ -27,33 +22,32 @@ test_that("Cohort instantiation", {
   testthat::expect_true(CohortDiagnostics:::checkIfCohortInstantiated(connectionDetails = connectionDetails,
                                                                       cohortDatabaseSchema = cohortDatabaseSchema,
                                                                       cohortTable = cohortTable,
-                                                                      cohortIds = 17492))
+                                                                      cohortIds = 18348))
   
   # Expect cohort table to have atleast 0 records
-  testthat::expect_gte(CohortDiagnostics:::renderTranslateQuerySql(connectionDetails = connectionDetails,
-                                                                   sql = "select count(*) from @cohort_database_schema.@cohort_table;",
-                                                                   cohort_database_schema = cohortDatabaseSchema,
-                                                                   cohort_table = cohortTable), 0)
+  sql <- "SELECT COUNT(*) FROM @cohort_database_schema.@cohort_table;"
+  count <- CohortDiagnostics:::renderTranslateQuerySql(connectionDetails = connectionDetails,
+                                                       sql = sql,
+                                                       cohort_database_schema = cohortDatabaseSchema,
+                                                       cohort_table = cohortTable)
+  testthat::expect_gte(count, 0)
   
   connection <- DatabaseConnector::connect(connectionDetails)
-  
-  sql <-
-    "SELECT COUNT(*) AS cohort_count, cohort_definition_id
+  sql <- "SELECT COUNT(*) AS cohort_count, cohort_definition_id
   FROM @cohort_database_schema.@cohort_table
   GROUP BY cohort_definition_id;"
-  counts <-
-    DatabaseConnector::renderTranslateQuerySql(
-      connection,
-      sql,
-      cohort_database_schema = cohortDatabaseSchema,
-      cohort_table = cohortTable,
-      snakeCaseToCamelCase = TRUE
-    )
+  counts <- DatabaseConnector::renderTranslateQuerySql(connection,
+                                                       sql,
+                                                       cohort_database_schema = cohortDatabaseSchema,
+                                                       cohort_table = cohortTable,
+                                                       snakeCaseToCamelCase = TRUE)
   testthat::expect_gt(nrow(counts), 2)
   DatabaseConnector::disconnect(connection)
 })
 
 test_that("Cohort diagnostics in incremental mode", {
+  skip_if_not(runDatabaseTests)
+  
   firstTime <- system.time(
     CohortDiagnostics::runCohortDiagnostics(
       connectionDetails = connectionDetails,
@@ -71,9 +65,9 @@ test_that("Cohort diagnostics in incremental mode", {
       runBreakdownIndexEvents = TRUE,
       runCohortCharacterization = TRUE,
       runTemporalCohortCharacterization = FALSE,
-      runCohortOverlap = TRUE,
+      # runCohortOverlap = TRUE,
       runIncidenceRate = FALSE,
-      runTimeSeries = FALSE,
+      # runTimeSeries = FALSE,
       runIncludedSourceConcepts = TRUE,
       runOrphanConcepts = TRUE,
       incremental = TRUE,
@@ -100,11 +94,11 @@ test_that("Cohort diagnostics in incremental mode", {
       runInclusionStatistics = TRUE,
       runBreakdownIndexEvents = TRUE,
       runCohortCharacterization = TRUE,
-      runCohortOverlap = TRUE,
+      # runCohortOverlap = TRUE,
       runIncidenceRate = TRUE,
       runIncludedSourceConcepts = TRUE,
       runOrphanConcepts = TRUE,
-      runTimeSeries = TRUE,
+      # runTimeSeries = TRUE,
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental")
     )
@@ -116,8 +110,8 @@ test_that("Cohort diagnostics in incremental mode", {
   testthat::expect_true(file.exists(file.path(folder, "export", "PreMerged.RData")))
 })
 
-
 test_that("Retrieve results from premerged file", {
+  skip_if_not(runDatabaseTests)
   
   dataSourcePreMergedFile <- CohortDiagnostics::createFileDataSource(
     premergedDataFile = file.path(folder, "export", "PreMerged.RData")
@@ -228,6 +222,8 @@ test_that("Retrieve results from premerged file", {
 
 ####################### upload to database and test
 test_that("Create and upload results to results data model", {
+  skip_if_not(runDatabaseTests)
+  
   createResultsDataModel(connectionDetails = connectionDetails, schema = cohortDiagnosticsSchema)
   
   listOfZipFilesToUpload <-
@@ -250,6 +246,7 @@ test_that("Create and upload results to results data model", {
 
 # Retrieve results
 test_that("Retrieve results from remote database", {
+  skip_if_not(runDatabaseTests)
   
   dataSourceDatabase <- CohortDiagnostics::createDatabaseDataSource(
     connection = DatabaseConnector::connect(connectionDetails = connectionDetails),
@@ -382,6 +379,8 @@ test_that("Retrieve results from remote database", {
 
 
 test_that("Data removal works", {
+  skip_if_not(runDatabaseTests)
+  
   specifications <- getResultsDataModelSpecifications()
   connection <- DatabaseConnector::connect(connectionDetails)
   for (tableName in unique(specifications$tableName)) {

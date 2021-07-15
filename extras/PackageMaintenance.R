@@ -77,3 +77,16 @@ file.copy(from = "R/ResultsDataModelQueries.R",
           to = "inst/shiny/DiagnosticsExplorer/R/ResultsDataModelQueries.R",
           overwrite = TRUE)
 
+# Delete orphan tables from testing server -----------------------------
+connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "postgresql",
+                                                                user = Sys.getenv("CDM5_POSTGRESQL_USER"),
+                                                                password = URLdecode(Sys.getenv("CDM5_POSTGRESQL_PASSWORD")),
+                                                                server = Sys.getenv("CDM5_POSTGRESQL_SERVER"))
+cohortDiagnosticsSchema <- Sys.getenv("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")
+connection <- DatabaseConnector::connect(connectionDetails)  
+tables <- DatabaseConnector::getTableNames(connection, cohortDiagnosticsSchema)
+sql <- paste(sprintf("TRUNCATE TABLE %s.%s;\nDROP TABLE %s.%s;", cohortDiagnosticsSchema, tables, cohortDiagnosticsSchema, tables),
+             collapse = "\n\n")
+writeLines(sql)
+DatabaseConnector::executeSql(connection, sql)
+DatabaseConnector::dbDisconnect(connection)
