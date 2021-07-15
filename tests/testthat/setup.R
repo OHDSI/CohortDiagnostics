@@ -1,7 +1,6 @@
 # On GitHub Actions, only run database tests on MacOS to avoid overloading database server:
 runDatabaseTests <- Sys.getenv("CDM5_POSTGRESQL_SERVER", unset = "") != "" &&
-  (Sys.getenv("GITHUB_ACTIONS", unset = "") == "" ||
-     Sys.getenv("RUNNER_OS", unset = "") == "macOS") 
+  (Sys.getenv("GITHUB_ACTIONS", unset = "") == "" || Sys.getenv("RUNNER_OS", unset = "") == "macOS") 
 
 if (runDatabaseTests) {
   

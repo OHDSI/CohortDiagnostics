@@ -48,62 +48,63 @@ test_that("Cohort instantiation", {
 test_that("Cohort diagnostics in incremental mode", {
   skip_if_not(runDatabaseTests)
   
-  firstTime <- system.time(
-    CohortDiagnostics::runCohortDiagnostics(
-      connectionDetails = connectionDetails,
-      cdmDatabaseSchema = "eunomia",
-      vocabularyDatabaseSchema = "eunomia",
-      tempEmulationSchema = tempEmulationSchema,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTable = cohortTable,
-      packageName = "CohortDiagnostics",
-      cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
-      inclusionStatisticsFolder = file.path(folder, "incStats"),
-      exportFolder =  file.path(folder, "export"),
-      databaseId = "cdmV5",
-      runInclusionStatistics = TRUE,
-      runBreakdownIndexEvents = TRUE,
-      runCohortCharacterization = TRUE,
-      runTemporalCohortCharacterization = FALSE,
-      # runCohortOverlap = TRUE,
-      runIncidenceRate = FALSE,
-      # runTimeSeries = FALSE,
-      runIncludedSourceConcepts = TRUE,
-      runOrphanConcepts = TRUE,
-      incremental = TRUE,
-      incrementalFolder = file.path(folder, "incremental")
-    )
+  start <- Sys.time()
+  
+  CohortDiagnostics::runCohortDiagnostics(
+    connectionDetails = connectionDetails,
+    cdmDatabaseSchema = "eunomia",
+    vocabularyDatabaseSchema = "eunomia",
+    tempEmulationSchema = tempEmulationSchema,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    cohortTable = cohortTable,
+    packageName = "CohortDiagnostics",
+    cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+    inclusionStatisticsFolder = file.path(folder, "incStats"),
+    exportFolder =  file.path(folder, "export"),
+    databaseId = "cdmV5",
+    runInclusionStatistics = TRUE,
+    runBreakdownIndexEvents = TRUE,
+    runCohortCharacterization = TRUE,
+    runTemporalCohortCharacterization = FALSE,
+    # runCohortOverlap = TRUE,
+    runIncidenceRate = FALSE,
+    # runTimeSeries = FALSE,
+    runIncludedSourceConcepts = TRUE,
+    runOrphanConcepts = TRUE,
+    incremental = TRUE,
+    incrementalFolder = file.path(folder, "incremental")
   )
+  timeToRunFirstTime <- Sys.time() - start
   
   testthat::expect_true(file.exists(file.path(
     folder, "export", "Results_CDMv5.zip"
   )))
   
-  secondTime <- system.time(
-    CohortDiagnostics::runCohortDiagnostics(
-      connectionDetails = connectionDetails,
-      cdmDatabaseSchema = "eunomia",
-      tempEmulationSchema = tempEmulationSchema,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTable = cohortTable,
-      packageName = "CohortDiagnostics",
-      cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
-      inclusionStatisticsFolder = file.path(folder, "incStats"),
-      exportFolder =  file.path(folder, "export"),
-      databaseId = "cdmV5",
-      runInclusionStatistics = TRUE,
-      runBreakdownIndexEvents = TRUE,
-      runCohortCharacterization = TRUE,
-      # runCohortOverlap = TRUE,
-      runIncidenceRate = TRUE,
-      runIncludedSourceConcepts = TRUE,
-      runOrphanConcepts = TRUE,
-      # runTimeSeries = TRUE,
-      incremental = TRUE,
-      incrementalFolder = file.path(folder, "incremental")
-    )
+  start <- Sys.time()
+  CohortDiagnostics::runCohortDiagnostics(
+    connectionDetails = connectionDetails,
+    cdmDatabaseSchema = "eunomia",
+    tempEmulationSchema = tempEmulationSchema,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    cohortTable = cohortTable,
+    packageName = "CohortDiagnostics",
+    cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+    inclusionStatisticsFolder = file.path(folder, "incStats"),
+    exportFolder =  file.path(folder, "export"),
+    databaseId = "cdmV5",
+    runInclusionStatistics = TRUE,
+    runBreakdownIndexEvents = TRUE,
+    runCohortCharacterization = TRUE,
+    # runCohortOverlap = TRUE,
+    runIncidenceRate = TRUE,
+    runIncludedSourceConcepts = TRUE,
+    runOrphanConcepts = TRUE,
+    # runTimeSeries = TRUE,
+    incremental = TRUE,
+    incrementalFolder = file.path(folder, "incremental")
   )
-  testthat::expect_lt(secondTime[1], firstTime[1])
+  timeToRunSecondTime <- Sys.time() - start
+  testthat::expect_true(timeToRunFirstTime > timeToRunSecondTime)
   
   # generate premerged file
   CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = file.path(folder, "export"))
