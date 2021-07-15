@@ -20,9 +20,9 @@
 #' @import DatabaseConnector
 #' @importFrom grDevices rgb
 #' @importFrom stats aggregate
-#' @importFrom utils write.csv install.packages menu unzip setTxtProgressBar txtProgressBar
+#' @importFrom utils write.csv install.packages menu unzip setTxtProgressBar txtProgressBar packageDescription packageVersion sessionInfo
 #' @import dplyr
 #' @importFrom rlang .data
-#' @importFrom methods is
+#' @importFrom methods is getPackageName
 #' @importFrom FeatureExtraction createDefaultCovariateSettings createTemporalCovariateSettings
 NULL
