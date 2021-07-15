@@ -44,6 +44,9 @@ createIfNotExist <-
 
 enforceMinCellValue <-
   function(data, fieldName, minValues, silent = FALSE) {
+    if (nrow(data) == 0) {
+      return(data)
+    }
     toCensor <-
       !is.na(data[, fieldName]) &
       data[, fieldName] < minValues & data[, fieldName] != 0
