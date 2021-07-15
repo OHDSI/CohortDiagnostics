@@ -59,7 +59,7 @@ Remotes:
   ohdsi/Eunomia,
   ohdsi/FeatureExtraction,
   ohdsi/ROhdsiWebApi,
-  ohdsi/CirceR
+  ohdsi/CirceR,
   ohdsi/ParallelLogger@develop
 License: Apache License
 VignetteBuilder: knitr
