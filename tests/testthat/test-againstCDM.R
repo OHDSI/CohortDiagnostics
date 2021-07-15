@@ -366,7 +366,7 @@ test_that("Retrieve results from remote database", {
   multipleCharacterizationResults  <- CohortDiagnostics::getMultipleCharacterizationResults(
     dataSource = dataSourceDatabase
   )
-  testthat::expect_true(nrow(multipleCharacterizationResults) >= 0)
+  testthat::expect_true(length(multipleCharacterizationResults) >= 0)
 })
 
 
