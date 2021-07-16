@@ -88,10 +88,9 @@ env_exists <- function(varname) {
   Sys.getenv(varname,unset = "") != ""
 }
 
+cohortDiagnosticsSchema <- "cohort_diagnostics"
 if (env_exists("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")) {
   cohortDiagnosticsSchema <- Sys.getenv("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")
-} else {
-  cohortDiagnosticsSchema <- "cohort_diagnostics"
 }
 
 connection <- DatabaseConnector::connect(connectionDetails)  

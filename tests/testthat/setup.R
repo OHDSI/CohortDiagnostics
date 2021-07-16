@@ -10,20 +10,13 @@ check_env <- function(varname) {
   }
 }
 
-if (env_exists("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")) {
-  cohortDiagnosticsSchema <- Sys.getenv("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA") 
-  cohortDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")  
-} else {
-  cohortDiagnosticsSchema <- "cohort_diagnostics"
-  cohortDatabaseSchema <- "cohort_diagnostics"
-}
-
 # Check for expected environment variables
 check_env("CDM5_POSTGRESQL_SERVER")
 check_env("CDM5_POSTGRESQL_USER")
 check_env("CDM5_POSTGRESQL_PASSWORD")
 check_env("CDM5_POSTGRESQL_CDM_SCHEMA")
 check_env("CDM5_POSTGRESQL_OHDSI_SCHEMA")
+
 
 # On GitHub Actions, only run database tests on MacOS to avoid overloading database server:
 runDatabaseTests <- env_exists("CDM5_POSTGRESQL_SERVER") &&
@@ -51,9 +44,19 @@ if (runDatabaseTests) {
     server = Sys.getenv("CDM5_POSTGRESQL_SERVER"),
     pathToDriver = jdbcDriverFolder)
   
+  # Set database  schemas
+
   cdmDatabaseSchema <- "eunomia"
   vocabularyDatabaseSchema <- "eunomia"
+
+  cohortDiagnosticsSchema <- "cohort_diagnostics"
+  # Set cohort diagnostics schema from environment variable if available
+  if (env_exists("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")) {
+    cohortDiagnosticsSchema <- Sys.getenv("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")
+  }
+
   tempEmulationSchema <- NULL
+  cohortDatabaseSchema <- cohortDiagnosticsSchema
   cohortTable <- tolower(paste0("cd_test_", gsub("[^a-zA-Z]", "", .Platform$OS.type), stringi::stri_rand_strings(1,9)))
   folder <- tempfile(paste0("cd_test_", gsub("[^a-zA-Z]", "", .Platform$OS.type), stringi::stri_rand_strings(1,9)))
   
