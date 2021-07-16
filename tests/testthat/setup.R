@@ -1,6 +1,26 @@
+# Function to check if environment variable exists that works across Windows and Linux systems
+env_exists <- function(varname) {
+   Sys.getenv(varname,unset = "") != ""
+}
+
+# Function which warns user if an expected environment variable is not defined
+check_env <- function(varname) {
+  if (!env_exists(varname)) {
+    warning(sprintf("Environment variable %s is not defined",varname))
+  }
+}
+
+# Check for expected environment variables
+check_env("CDM5_POSTGRESQL_SERVER")
+check_env("CDM5_POSTGRESQL_USER")
+check_env("CDM5_POSTGRESQL_PASSWORD")
+check_env("CDM5_POSTGRESQL_CDM_SCHEMA")
+check_env("CDM5_POSTGRESQL_OHDSI_SCHEMA")
+
+
 # On GitHub Actions, only run database tests on MacOS to avoid overloading database server:
-runDatabaseTests <- Sys.getenv("CDM5_POSTGRESQL_SERVER", unset = "") != "" &&
-  (Sys.getenv("GITHUB_ACTIONS", unset = "") == "" || Sys.getenv("RUNNER_OS", unset = "") == "macOS") 
+runDatabaseTests <- env_exists("CDM5_POSTGRESQL_SERVER") &&
+ (!env_exists("GITHUB_ACTIONS") || Sys.getenv("RUNNER_OS", unset = "") == "macOS") 
 
 if (runDatabaseTests) {
   
@@ -24,11 +44,19 @@ if (runDatabaseTests) {
     server = Sys.getenv("CDM5_POSTGRESQL_SERVER"),
     pathToDriver = jdbcDriverFolder)
   
+  # Set database  schemas
+
   cdmDatabaseSchema <- "eunomia"
   vocabularyDatabaseSchema <- "eunomia"
-  cohortDiagnosticsSchema <- Sys.getenv("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")
+
+  cohortDiagnosticsSchema <- "cohort_diagnostics"
+  # Set cohort diagnostics schema from environment variable if available
+  if (env_exists("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")) {
+    cohortDiagnosticsSchema <- Sys.getenv("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")
+  }
+
   tempEmulationSchema <- NULL
-  cohortDatabaseSchema <-  Sys.getenv("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")
+  cohortDatabaseSchema <- cohortDiagnosticsSchema
   cohortTable <- tolower(paste0("cd_test_", gsub("[^a-zA-Z]", "", .Platform$OS.type), stringi::stri_rand_strings(1,9)))
   folder <- tempfile(paste0("cd_test_", gsub("[^a-zA-Z]", "", .Platform$OS.type), stringi::stri_rand_strings(1,9)))
   
