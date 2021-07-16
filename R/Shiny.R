@@ -146,6 +146,9 @@ preMergeDiagnosticsFiles <-
         ),
         unzipFolder = ""
       )
+    
+    if (nrow(zipFiles) == 0) {stop('No zip files found in dataFolder. Please check. Aborting.')}
+    
     ParallelLogger::logInfo("Merging ", nrow(zipFiles), " zip files.")
     
     unzipMainFolder <-

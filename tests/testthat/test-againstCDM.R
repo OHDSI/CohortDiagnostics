@@ -75,9 +75,9 @@ test_that("Cohort instantiation", {
   
   ### Neg - cohort is not instantiated ----
   testthat::expect_false(CohortDiagnostics:::checkIfCohortInstantiated(connectionDetails = connectionDetails,
-                                                                      cohortDatabaseSchema = cohortDatabaseSchema,
-                                                                      cohortTable = cohortTable,
-                                                                      cohortIds = -1111))
+                                                                       cohortDatabaseSchema = cohortDatabaseSchema,
+                                                                       cohortTable = cohortTable,
+                                                                       cohortIds = -1111))
   
   
   ### Pos - should re run ----
@@ -180,32 +180,34 @@ test_that("Cohort diagnostics in not in incremental mode", {
   )
   
   ### Pos - one cohort -----
-  CohortDiagnostics::runCohortDiagnostics(
-    connectionDetails = connectionDetails,
-    cdmDatabaseSchema = "eunomia",
-    vocabularyDatabaseSchema = "eunomia",
-    tempEmulationSchema = tempEmulationSchema,
-    cohortDatabaseSchema = cohortDatabaseSchema,
-    cohortTable = cohortTable,
-    packageName = "CohortDiagnostics",
-    cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
-    inclusionStatisticsFolder = file.path(folder, "incStats"),
-    exportFolder =  file.path(folder, "export"),
-    databaseId = "cdmV5",
-    runInclusionStatistics = TRUE,
-    runIncludedSourceConcepts = TRUE,
-    runOrphanConcepts = TRUE,
-    runVisitContext = TRUE,
-    runBreakdownIndexEvents = TRUE,
-    runIncidenceRate = TRUE,
-    runCohortTimeSeries = FALSE,
-    runDataSourceTimeSeries = FALSE,
-    runCohortRelationship = TRUE,
-    runCohortCharacterization = TRUE,
-    runTemporalCohortCharacterization = FALSE,
-    incremental = FALSE,
-    cohortIds = 18348,
-    incrementalFolder = file.path(folder, "incremental")
+  testthat::expect_null(
+    CohortDiagnostics::runCohortDiagnostics(
+      connectionDetails = connectionDetails,
+      cdmDatabaseSchema = "eunomia",
+      vocabularyDatabaseSchema = "eunomia",
+      tempEmulationSchema = tempEmulationSchema,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTable,
+      packageName = "CohortDiagnostics",
+      cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+      inclusionStatisticsFolder = file.path(folder, "incStats"),
+      exportFolder =  file.path(folder, "export"),
+      databaseId = "cdmV5",
+      runInclusionStatistics = TRUE,
+      runIncludedSourceConcepts = TRUE,
+      runOrphanConcepts = TRUE,
+      runVisitContext = TRUE,
+      runBreakdownIndexEvents = TRUE,
+      runIncidenceRate = TRUE,
+      runCohortTimeSeries = FALSE,
+      runDataSourceTimeSeries = FALSE,
+      runCohortRelationship = TRUE,
+      runCohortCharacterization = TRUE,
+      runTemporalCohortCharacterization = FALSE,
+      incremental = FALSE,
+      cohortIds = 18348,
+      incrementalFolder = file.path(folder, "incremental")
+    )
   )
   timeToRunFirstTime <- Sys.time() - start
 })
@@ -216,32 +218,34 @@ test_that("Cohort diagnostics in incremental mode", {
   
   start <- Sys.time()
   ## Incremental -----
-  # run all except time series and temporal characterization
-  CohortDiagnostics::runCohortDiagnostics(
-    connectionDetails = connectionDetails,
-    cdmDatabaseSchema = "eunomia",
-    vocabularyDatabaseSchema = "eunomia",
-    tempEmulationSchema = tempEmulationSchema,
-    cohortDatabaseSchema = cohortDatabaseSchema,
-    cohortTable = cohortTable,
-    packageName = "CohortDiagnostics",
-    cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
-    inclusionStatisticsFolder = file.path(folder, "incStats"),
-    exportFolder =  file.path(folder, "export"),
-    databaseId = "cdmV5",
-    runInclusionStatistics = TRUE,
-    runIncludedSourceConcepts = TRUE,
-    runOrphanConcepts = TRUE,
-    runVisitContext = TRUE,
-    runBreakdownIndexEvents = TRUE,
-    runIncidenceRate = TRUE,
-    runCohortTimeSeries = FALSE,
-    runDataSourceTimeSeries = FALSE,
-    runCohortRelationship = TRUE,
-    runCohortCharacterization = TRUE,
-    runTemporalCohortCharacterization = FALSE,
-    incremental = TRUE,
-    incrementalFolder = file.path(folder, "incremental")
+  # run a subset of diagnostics
+  testthat::expect_null(
+    CohortDiagnostics::runCohortDiagnostics(
+      connectionDetails = connectionDetails,
+      cdmDatabaseSchema = "eunomia",
+      vocabularyDatabaseSchema = "eunomia",
+      tempEmulationSchema = tempEmulationSchema,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTable,
+      packageName = "CohortDiagnostics",
+      cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+      inclusionStatisticsFolder = file.path(folder, "incStats"),
+      exportFolder =  file.path(folder, "export"),
+      databaseId = "cdmV5",
+      runInclusionStatistics = TRUE,
+      runIncludedSourceConcepts = FALSE,
+      runOrphanConcepts = FALSE,
+      runVisitContext = TRUE,
+      runBreakdownIndexEvents = FALSE,
+      runIncidenceRate = FALSE,
+      runCohortTimeSeries = FALSE,
+      runDataSourceTimeSeries = FALSE,
+      runCohortRelationship = TRUE,
+      runCohortCharacterization = TRUE,
+      runTemporalCohortCharacterization = FALSE,
+      incremental = TRUE,
+      incrementalFolder = file.path(folder, "incremental")
+    )
   )
   timeToRunFirstTime <- Sys.time() - start
   
@@ -250,6 +254,41 @@ test_that("Cohort diagnostics in incremental mode", {
   )))
   
   start <- Sys.time()
+  ### Pos - incremental ----
+  # nothing should run, so should be fast
+  testthat::expect_null(
+    CohortDiagnostics::runCohortDiagnostics(
+      connectionDetails = connectionDetails,
+      cdmDatabaseSchema = "eunomia",
+      vocabularyDatabaseSchema = "eunomia",
+      tempEmulationSchema = tempEmulationSchema,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTable,
+      packageName = "CohortDiagnostics",
+      cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+      inclusionStatisticsFolder = file.path(folder, "incStats"),
+      exportFolder =  file.path(folder, "export"),
+      databaseId = "cdmV5",
+      runInclusionStatistics = TRUE,
+      runIncludedSourceConcepts = FALSE,
+      runOrphanConcepts = FALSE,
+      runVisitContext = TRUE,
+      runBreakdownIndexEvents = FALSE,
+      runIncidenceRate = FALSE,
+      runCohortTimeSeries = FALSE,
+      runDataSourceTimeSeries = FALSE,
+      runCohortRelationship = TRUE,
+      runCohortCharacterization = TRUE,
+      runTemporalCohortCharacterization = FALSE,
+      incremental = TRUE,
+      incrementalFolder = file.path(folder, "incremental")
+    )
+  )
+  #because its faster than first run - it should take less time
+  timeToRunSecondTime <- Sys.time() - start
+  testthat::expect_true(timeToRunFirstTime > timeToRunSecondTime)
+  
+  ### rest of diagnostics ----
   CohortDiagnostics::runCohortDiagnostics(
     connectionDetails = connectionDetails,
     cdmDatabaseSchema = "eunomia",
@@ -276,10 +315,12 @@ test_that("Cohort diagnostics in incremental mode", {
     incremental = TRUE,
     incrementalFolder = file.path(folder, "incremental")
   )
-  timeToRunSecondTime <- Sys.time() - start
-  testthat::expect_true(timeToRunFirstTime > timeToRunSecondTime)
   
-  # generate premerged file
+  ## Premerge file ----
+  ### Neg - test - no zip file ----
+  testthat::expect_error(CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = tempdir()))
+  
+  ### Pos - generate premerged file ----
   CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = file.path(folder, "export"))
   testthat::expect_true(file.exists(file.path(folder, "export", "PreMerged.RData")))
 })
@@ -287,7 +328,8 @@ test_that("Cohort diagnostics in incremental mode", {
 test_that("Negative tests on individual functions", {
   skip_if_not(runDatabaseTests)
   
-  #Characterization
+  # Neg - Individual Function ----
+  ## Characterization  ----
   testthat::expect_null(CohortDiagnostics::runCohortCharacterizationDiagnostics(connectionDetails = connectionDetails,
                                                                                 cdmDatabaseSchema = cdmDatabaseSchema,
                                                                                 tempEmulationSchema = tempEmulationSchema,
@@ -299,7 +341,6 @@ test_that("Negative tests on individual functions", {
                                                                                 tempEmulationSchema = tempEmulationSchema,
                                                                                 cohortDatabaseSchema = cohortDatabaseSchema,
                                                                                 cohortTable = cohortTable))
-  
 })
 
 test_that("Retrieve results from premerged file", {
@@ -437,7 +478,7 @@ test_that("Retrieve results from premerged file", {
     databaseIds = 'cdmV5'
   )
   testthat::expect_true(nrow(cohortOverlapData) >= 0) 
-
+  
 })
 
 
@@ -489,7 +530,7 @@ test_that("Retrieve results from remote database", {
   )
   testthat::expect_true(any(is.null(timeSeriesFromDb),
                             length(timeSeriesFromDb) >= 0))
-
+  
   # time distribution
   timeDistributionFromDb <- CohortDiagnostics::getResultsFromTimeDistribution(
     dataSource = dataSourceDatabase,
@@ -573,7 +614,7 @@ test_that("Retrieve results from remote database", {
     dataSource = dataSourceDatabase
   )
   testthat::expect_true(nrow(cohortRelationships) >= 0) 
-
+  
   multipleCharacterizationResults  <- CohortDiagnostics::getMultipleCharacterizationResults(
     dataSource = dataSourceDatabase
   )
