@@ -400,7 +400,13 @@ test_that("Data removal works", {
       dplyr::select(.data$fieldName) %>%
       dplyr::pull()
     
-    
+    # delete some selected records
+    CohortDiagnostics:::deleteFromServer(
+      connection = connection,
+      schema = cohortDiagnosticsSchema,
+      tableName = 'cohort',
+      keyValues = c(192671, 201826, 1124300, 1124300)
+    )
     
     if ("database_id" %in% primaryKey) {
       CohortDiagnostics:::deleteAllRecordsForDatabaseId(
