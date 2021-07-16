@@ -9,6 +9,6 @@ test_that("Check helper functions", {
   testthat::expect_equal(CohortDiagnostics:::quoteLiterals(NULL), '')
 })
 
-test_tha("Ensure Cohort Diagnostics is installed", {
+test_that("Ensure Cohort Diagnostics is installed", {
   testthat::expect_true(CohortDiagnostics:::ensure_installed('CohortDiagnostics'))
 })
