@@ -44,6 +44,7 @@ jobs:
       CDM5_SQL_SERVER_SERVER: ${{ secrets.CDM5_SQL_SERVER_SERVER }}
       CDM5_SQL_SERVER_USER: ${{ secrets.CDM5_SQL_SERVER_USER }}
       CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA: 'cohort_diagnostics'
+      WEBAPI_TEST_WEBAPI_URL: ${{ secrets.WEBAPI_TEST_WEBAPI_URL }}
 
     steps:
       - uses: actions/checkout@v2
