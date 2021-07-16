@@ -82,7 +82,7 @@ connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "postgres
                                                                 user = Sys.getenv("CDM5_POSTGRESQL_USER"),
                                                                 password = URLdecode(Sys.getenv("CDM5_POSTGRESQL_PASSWORD")),
                                                                 server = Sys.getenv("CDM5_POSTGRESQL_SERVER"))
-cohortDiagnosticsSchema <- Sys.getenv("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")
+cohortDiagnosticsSchema <- "cohort_diagnostics"
 connection <- DatabaseConnector::connect(connectionDetails)  
 tables <- DatabaseConnector::getTableNames(connection, cohortDiagnosticsSchema)
 sql <- paste(sprintf("TRUNCATE TABLE %s.%s;\nDROP TABLE %s.%s;", cohortDiagnosticsSchema, tables, cohortDiagnosticsSchema, tables),
