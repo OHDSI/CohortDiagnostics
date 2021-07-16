@@ -46,6 +46,7 @@ Suggests:
   pool,
   purrr,
   RColorBrewer,
+  markdown,
   rmarkdown,
   RSQLite (>= 2.2.1),
   scales,
