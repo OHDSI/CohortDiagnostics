@@ -478,6 +478,21 @@ instantiateCohortSet <- function(connectionDetails = NULL,
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
   }
+  
+  cohorts <- getCohortsJsonAndSql(
+    packageName = packageName,
+    cohortToCreateFile = cohortToCreateFile,
+    baseUrl = baseUrl,
+    cohortSetReference = cohortSetReference,
+    cohortIds = cohortIds,
+    generateStats = generateInclusionStats
+  )
+  
+  if (any(!is.null(cohorts),
+          nrow(cohorts) == 0)) {
+    stop("Cohort definitions not found for provided cohort ids. Please check. Aborting.")
+  }
+  
   if (createCohortTable) {
     needToCreate <- TRUE
     if (incremental) {
@@ -496,15 +511,6 @@ instantiateCohortSet <- function(connectionDetails = NULL,
       )
     }
   }
-  
-  cohorts <- getCohortsJsonAndSql(
-    packageName = packageName,
-    cohortToCreateFile = cohortToCreateFile,
-    baseUrl = baseUrl,
-    cohortSetReference = cohortSetReference,
-    cohortIds = cohortIds,
-    generateStats = generateInclusionStats
-  )
   
   if (incremental) {
     cohorts$checksum <- computeChecksum(cohorts$sql)

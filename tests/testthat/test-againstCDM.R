@@ -5,36 +5,81 @@ library(CohortDiagnostics)
 test_that("Cohort instantiation", {
   skip_if_not(runDatabaseTests)
   
-  ## No incremental mode
-  CohortDiagnostics::instantiateCohortSet(
-    connectionDetails = connectionDetails,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    tempEmulationSchema = tempEmulationSchema,
-    cohortDatabaseSchema = cohortDatabaseSchema,
-    cohortTable = cohortTable,
-    cohortIds = 18348,
-    packageName = "CohortDiagnostics",
-    cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
-    generateInclusionStats = TRUE,
-    createCohortTable = TRUE,
-    inclusionStatisticsFolder = file.path(folder, "incStats")
+  ## No incremental mode ----
+  ### Neg - no cohort table
+  testthat::expect_error(
+    CohortDiagnostics::instantiateCohortSet(
+      connectionDetails = connectionDetails,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTable,
+      cohortIds = 18348,
+      packageName = "CohortDiagnostics",
+      cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+      generateInclusionStats = TRUE,
+      createCohortTable = FALSE,
+      inclusionStatisticsFolder = file.path(folder, "incStats")
+    )
+  )
+  ### Neg - bad cohort ----
+  testthat::expect_null(
+    CohortDiagnostics::instantiateCohortSet(
+      connectionDetails = connectionDetails,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTable,
+      cohortIds = -1111,
+      packageName = "CohortDiagnostics",
+      cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+      generateInclusionStats = TRUE,
+      createCohortTable = TRUE,
+      inclusionStatisticsFolder = file.path(folder, "incStats")
+    )
+  )
+  ### Pos - skip create cohort table, instantiate one in incremental ----
+  testthat::expect_null(
+    CohortDiagnostics::instantiateCohortSet(
+      connectionDetails = connectionDetails,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTable,
+      cohortIds = 18348,
+      packageName = "CohortDiagnostics",
+      cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+      generateInclusionStats = TRUE,
+      createCohortTable = TRUE,
+      inclusionStatisticsFolder = file.path(folder, "incStats")
+    )
   )
   
-  ## Positive check ----
+  ### Positive check ----
+  # Expect cohort table to have atleast 0 records
+  sql <- "SELECT COUNT(*) FROM @cohort_database_schema.@cohort_table;"
+  count <- CohortDiagnostics:::renderTranslateQuerySql(connectionDetails = connectionDetails,
+                                                       sql = sql,
+                                                       cohort_database_schema = cohortDatabaseSchema,
+                                                       cohort_table = cohortTable)
+  testthat::expect_gte(count, 0)
+  
   # set up new connection and check if the cohort was instantiated Disconnect after
   testthat::expect_true(CohortDiagnostics:::checkIfCohortInstantiated(connectionDetails = connectionDetails,
                                                                       cohortDatabaseSchema = cohortDatabaseSchema,
                                                                       cohortTable = cohortTable,
                                                                       cohortIds = 18348))
   
-  ## Negative check ----
+  ### Negative check ----
   testthat::expect_false(CohortDiagnostics:::checkIfCohortInstantiated(connectionDetails = connectionDetails,
                                                                       cohortDatabaseSchema = cohortDatabaseSchema,
                                                                       cohortTable = cohortTable,
                                                                       cohortIds = -1111))
   
-  ## Incremental mode
+  ## Incremental mode ----
   CohortDiagnostics::instantiateCohortSet(
     connectionDetails = connectionDetails,
     cdmDatabaseSchema = cdmDatabaseSchema,
@@ -51,7 +96,6 @@ test_that("Cohort instantiation", {
     incrementalFolder = file.path(folder, "incremental"),
     inclusionStatisticsFolder = file.path(folder, "incStats")
   )
-  
   
   ## Positive check ----
   # set up new connection and check if the cohort was instantiated Disconnect after
@@ -82,14 +126,6 @@ test_that("Cohort instantiation", {
     incrementalFolder = file.path(folder, "incremental"),
     inclusionStatisticsFolder = file.path(folder, "incStats")
   )
-  
-  # Expect cohort table to have atleast 0 records
-  sql <- "SELECT COUNT(*) FROM @cohort_database_schema.@cohort_table;"
-  count <- CohortDiagnostics:::renderTranslateQuerySql(connectionDetails = connectionDetails,
-                                                       sql = sql,
-                                                       cohort_database_schema = cohortDatabaseSchema,
-                                                       cohort_table = cohortTable)
-  testthat::expect_gte(count, 0)
   
   connection <- DatabaseConnector::connect(connectionDetails)
   sql <- "SELECT COUNT(*) AS cohort_count, cohort_definition_id
