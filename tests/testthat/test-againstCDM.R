@@ -230,7 +230,8 @@ test_that("Retrieve results from premerged file", {
   
   cohortOverlapData <- CohortDiagnostics::getCohortOverlapData(
     dataSource = dataSourcePreMergedFile, 
-    cohortIds = c(17492, 17692)
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
   )
   testthat::expect_true(nrow(cohortOverlapData) >= 0) 
 
