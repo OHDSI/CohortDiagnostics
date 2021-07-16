@@ -142,6 +142,9 @@ test_that("Cohort instantiation", {
   DatabaseConnector::disconnect(connection)
 })
 
+
+
+
 test_that("Cohort diagnostics in not in incremental mode", {
   skip_if_not(runDatabaseTests)
   
@@ -211,6 +214,9 @@ test_that("Cohort diagnostics in not in incremental mode", {
   )
   timeToRunFirstTime <- Sys.time() - start
 })
+
+
+
 
 
 test_that("Cohort diagnostics in incremental mode", {
@@ -325,6 +331,9 @@ test_that("Cohort diagnostics in incremental mode", {
   testthat::expect_true(file.exists(file.path(folder, "export", "PreMerged.RData")))
 })
 
+
+
+
 test_that("Negative tests on individual functions", {
   skip_if_not(runDatabaseTests)
   
@@ -343,6 +352,9 @@ test_that("Negative tests on individual functions", {
                                                                                 cohortTable = cohortTable))
 })
 
+
+
+
 test_that("Retrieve results from premerged file", {
   skip_if_not(runDatabaseTests)
   
@@ -352,7 +364,8 @@ test_that("Retrieve results from premerged file", {
   
   cohortCountFromFile <- CohortDiagnostics::getResultsFromCohortCount(
     dataSource = dataSourcePreMergedFile,
-    cohortIds = c(14906, 14907, 14909, 17492, 17493, 18342, 18345, 18346, 18347, 18348, 18349, 18350, 21402),
+    cohortIds = c(14906, 14907, 14909, 17492, 17493, 18342, 
+                  18345, 18346, 18347, 18348, 18349, 18350, 21402),
     databaseIds = 'cdmV5'
   )
   testthat::expect_true(nrow(cohortCountFromFile) > 0)
@@ -480,6 +493,8 @@ test_that("Retrieve results from premerged file", {
   testthat::expect_true(nrow(cohortOverlapData) >= 0) 
   
 })
+
+
 
 
 ####################### upload to database and test
@@ -630,6 +645,9 @@ test_that("Retrieve results from remote database", {
 
 
 
+
+
+
 test_that("Data removal works", {
   skip_if_not(runDatabaseTests)
   
@@ -693,5 +711,3 @@ test_that("Data removal works", {
   }
   DatabaseConnector::disconnect(connection)
 })
-
-
