@@ -488,7 +488,3 @@ test_that("Data removal works", {
 })
 
 
-test_that("util functions", {
-  expect_true(naToEmpty(NA) == "")
-  expect_true(naToZero(NA) == 0)
-})
