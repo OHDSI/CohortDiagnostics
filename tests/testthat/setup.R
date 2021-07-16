@@ -45,9 +45,9 @@ if (runDatabaseTests) {
   
   cdmDatabaseSchema <- "eunomia"
   vocabularyDatabaseSchema <- "eunomia"
-  cohortDiagnosticsSchema <- "cohort_diagnostics"
+  cohortDiagnosticsSchema <- Sys.getenv("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")
   tempEmulationSchema <- NULL
-  cohortDatabaseSchema <- "cohort_diagnostics"
+  cohortDatabaseSchema <-  Sys.getenv("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")
   cohortTable <- tolower(paste0("cd_test_", gsub("[^a-zA-Z]", "", .Platform$OS.type), stringi::stri_rand_strings(1,9)))
   folder <- tempfile(paste0("cd_test_", gsub("[^a-zA-Z]", "", .Platform$OS.type), stringi::stri_rand_strings(1,9)))
   
