@@ -10,5 +10,5 @@ test_that("Check helper functions", {
 })
 
 test_that("Ensure Cohort Diagnostics is installed", {
-  testthat::expect_true(CohortDiagnostics:::ensure_installed('CohortDiagnostics'))
+  testthat::expect_null(CohortDiagnostics:::ensure_installed('CohortDiagnostics'))
 })
