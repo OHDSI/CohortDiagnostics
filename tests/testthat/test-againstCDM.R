@@ -102,11 +102,11 @@ test_that("Cohort diagnostics in incremental mode", {
     runVisitContext = TRUE,
     runBreakdownIndexEvents = TRUE,
     runIncidenceRate = TRUE,
-    runCohortTimeSeries = FALSE,
-    runDataSourceTimeSeries = FALSE,
+    runCohortTimeSeries = TRUE,
+    runDataSourceTimeSeries = TRUE,
     runCohortRelationship = TRUE,
     runCohortCharacterization = TRUE,
-    runTemporalCohortCharacterization = FALSE,
+    runTemporalCohortCharacterization = TRUE,
     incremental = TRUE,
     incrementalFolder = file.path(folder, "incremental")
   )
@@ -227,6 +227,12 @@ test_that("Retrieve results from premerged file", {
     dataSource = dataSourcePreMergedFile
   )
   testthat::expect_true(length(cohortCharacterizationResults) >= 0)
+  
+  cohortOverlapData <- CohortDiagnostics::getCohortOverlapData(
+    dataSource = dataSourcePreMergedFile, 
+    cohortIds = c(17492, 17692)
+  )
+  testthat::expect_true(nrow(cohortOverlapData) >= 0) 
 
 })
 
@@ -367,6 +373,12 @@ test_that("Retrieve results from remote database", {
     dataSource = dataSourceDatabase
   )
   testthat::expect_true(length(multipleCharacterizationResults) >= 0)
+  
+  cohortOverlapData <- CohortDiagnostics::getCohortOverlapData(
+    dataSource = dataSourceDatabase, 
+    cohortIds = c(17492, 17692)
+  )
+  testthat::expect_true(nrow(cohortOverlapData) >= 0) 
 })
 
 

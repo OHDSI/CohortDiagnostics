@@ -72,21 +72,3 @@ takepackageDependencySnapshot <- function() {
   snapshot <- rbind(rVersion, snapshot)
   return(snapshot)
 }
-
-comparable <- function(installedVersion, requiredVersion) {
-  parts1 <- strsplit(as.character(installedVersion), "[^0-9]")[[1]]
-  parts2 <- strsplit(as.character(requiredVersion), "[^0-9]")[[1]]
-  if (parts1[1] != parts2[1]) {
-    return(FALSE)
-  }
-  parts1 <- as.numeric(parts1)
-  parts2 <- as.numeric(parts2)
-  if (length(parts1) > 1 && parts1[2] > parts2[2]) {
-    return(TRUE)
-  } else if (length(parts1) > 2 && parts1[2] == parts2[2] && parts1[3] > parts2[3]) {
-    return(TRUE)
-  } else if (length(parts1) > 3 && parts1[2] == parts2[2] && parts1[3] == parts2[3] && parts1[4] > parts2[4]) {
-    return(TRUE)
-  }
-  return(FALSE)
-}
