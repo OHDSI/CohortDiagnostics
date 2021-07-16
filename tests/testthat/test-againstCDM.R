@@ -130,7 +130,7 @@ test_that("Retrieve results from premerged file", {
     cohortIds = c(14906, 14907, 14909, 17492, 17493, 18342, 18345, 18346, 18347, 18348, 18349, 18350, 21402),
     databaseIds = 'cdmV5'
   )
-  expect_true(nrow(cohortCountFromFile) > 0)
+  testthat::expect_true(nrow(cohortCountFromFile) > 0)
   
   timeSeriesFromFile <- CohortDiagnostics::getResultsFromTimeSeries(
     dataSource = dataSourcePreMergedFile,
@@ -145,7 +145,10 @@ test_that("Retrieve results from premerged file", {
     databaseIds = 'cdmV5'
   )
   testthat::expect_true(any(is.null(timeSeriesFromFile),
-                            nrow(timeSeriesFromFile) >= 0))
+                            length(timeSeriesFromFile) >= 0))
+  if (length(timeSeriesFromFile) > 0) {
+    testthat::expect_true(nrow(timeSeriesFromFile$y) > 0)
+  }
   
   timeDistributionFromFile <- CohortDiagnostics::getResultsFromTimeDistribution(
     dataSource = dataSourcePreMergedFile,
@@ -230,7 +233,7 @@ test_that("Retrieve results from premerged file", {
   
   cohortOverlapData <- CohortDiagnostics::getCohortOverlapData(
     dataSource = dataSourcePreMergedFile, 
-    cohortIds = c(17492, 17692),
+    cohortIds = c(17492, 18342),
     databaseIds = 'cdmV5'
   )
   testthat::expect_true(nrow(cohortOverlapData) >= 0) 
@@ -377,7 +380,7 @@ test_that("Retrieve results from remote database", {
   
   cohortOverlapData <- CohortDiagnostics::getCohortOverlapData(
     dataSource = dataSourceDatabase, 
-    cohortIds = c(17492, 17692),
+    cohortIds = c(17492, 18342),
     databaseIds = 'cdmV5'
   )
   testthat::expect_true(nrow(cohortOverlapData) >= 0) 
