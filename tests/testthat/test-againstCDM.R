@@ -428,7 +428,7 @@ test_that("Retrieve results from remote database", {
 test_that("Data removal works", {
   skip_if_not(runDatabaseTests)
   
-  specifications <- getResultsDataModelSpecifications()
+  specifications <- CohortDiagnostics::getResultsDataModelSpecifications()
   connection <- DatabaseConnector::connect(connectionDetails)
   
   dataSourceDatabase <- CohortDiagnostics::createDatabaseDataSource(
@@ -437,20 +437,23 @@ test_that("Data removal works", {
   )
   
   cohortTableDataBeforeDelete <- CohortDiagnostics::getResultsFromCohortCount(dataSource = dataSourceDatabase)
-  colnames(cohortTableDataBeforeDelete) <- 
-    CohortDiagnostics:::camelCaseToSnakeCase(colnames(cohortTableDataBeforeDelete))
   
-  # delete some selected records
-  CohortDiagnostics:::deleteFromServer(
-    connection = connection,
-    schema = cohortDiagnosticsSchema,
-    tableName = 'cohort_count',
-    keyValues = cohortTableDataBeforeDelete[1,]
-  )
-  cohortTableDataAfterDelete <- CohortDiagnostics::getResultsFromCohortCount(dataSource = dataSourceDatabase)
-  
-  testthat::expect_true(nrow(cohortTableDataBeforeDelete) > 
-                          nrow(cohortTableDataAfterDelete))
+  if (!is.null(cohortTableDataBeforeDelete)) {
+    colnames(cohortTableDataBeforeDelete) <- 
+      CohortDiagnostics:::camelCaseToSnakeCase(colnames(cohortTableDataBeforeDelete))
+    
+    # delete some selected records
+    CohortDiagnostics:::deleteFromServer(
+      connection = connection,
+      schema = cohortDiagnosticsSchema,
+      tableName = 'cohort_count',
+      keyValues = cohortTableDataBeforeDelete[1,]
+    )
+    cohortTableDataAfterDelete <- CohortDiagnostics::getResultsFromCohortCount(dataSource = dataSourceDatabase)
+    
+    testthat::expect_true(nrow(cohortTableDataBeforeDelete) > 
+                            nrow(cohortTableDataAfterDelete))
+  }
   
   
   for (tableName in unique(specifications$tableName)) {
