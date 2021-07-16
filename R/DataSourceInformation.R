@@ -46,7 +46,7 @@ getCdmDataSourceInformation <-
     }
     
     if (!DatabaseConnector::dbExistsTable(conn = connection, name = 'cdm_source')) {
-      ParallelLogger::logWarn("CDM Source table not found in CDM. Metadata on CDM source will be limited.")
+      warning("CDM Source table not found in CDM. Metadata on CDM source will be limited.")
       return(NULL)
     }
     sqlCdmDataSource <-
@@ -60,7 +60,7 @@ getCdmDataSourceInformation <-
       )
     
     if (nrow(cdmDataSource) == 0) {
-      ParallelLogger::logWarn("CDM Source table does not have any records. Metadata on CDM source will be limited.")
+      warning("CDM Source table does not have any records. Metadata on CDM source will be limited.")
       return(NULL)
     }
     

@@ -445,7 +445,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       )
     } else {
       instantiatedCohorts <- NULL
-      ParallelLogger::logWarn(
+      warning(
         "All cohorts were either not instantiated or all have 0 records. All diagnostics will be empty."
       )
     }
@@ -600,7 +600,7 @@ runCohortDiagnostics <- function(packageName = NULL,
             incremental = incremental
           )
         } else {
-          ParallelLogger::logWarn(
+          warning(
             paste0(
               "Cohort Inclusion statistics files not found.\n",
               "    This might mean that the instantiated cohort(s) did not have\n",

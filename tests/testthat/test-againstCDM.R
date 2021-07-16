@@ -1,9 +1,72 @@
 library(testthat)
 library(CohortDiagnostics)
 
+# Cohort Instantiation tests ----
 test_that("Cohort instantiation", {
   skip_if_not(runDatabaseTests)
   
+  ## No incremental mode
+  CohortDiagnostics::instantiateCohortSet(
+    connectionDetails = connectionDetails,
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+    tempEmulationSchema = tempEmulationSchema,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    cohortTable = cohortTable,
+    cohortIds = 18348,
+    packageName = "CohortDiagnostics",
+    cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+    generateInclusionStats = TRUE,
+    createCohortTable = TRUE,
+    inclusionStatisticsFolder = file.path(folder, "incStats")
+  )
+  
+  ## Positive check ----
+  # set up new connection and check if the cohort was instantiated Disconnect after
+  testthat::expect_true(CohortDiagnostics:::checkIfCohortInstantiated(connectionDetails = connectionDetails,
+                                                                      cohortDatabaseSchema = cohortDatabaseSchema,
+                                                                      cohortTable = cohortTable,
+                                                                      cohortIds = 18348))
+  
+  ## Negative check ----
+  testthat::expect_false(CohortDiagnostics:::checkIfCohortInstantiated(connectionDetails = connectionDetails,
+                                                                      cohortDatabaseSchema = cohortDatabaseSchema,
+                                                                      cohortTable = cohortTable,
+                                                                      cohortIds = -1111))
+  
+  ## Incremental mode
+  CohortDiagnostics::instantiateCohortSet(
+    connectionDetails = connectionDetails,
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+    tempEmulationSchema = tempEmulationSchema,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    cohortTable = cohortTable,
+    cohortIds = 18348,
+    packageName = "CohortDiagnostics",
+    cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+    generateInclusionStats = TRUE,
+    createCohortTable = TRUE,
+    incremental = TRUE,
+    incrementalFolder = file.path(folder, "incremental"),
+    inclusionStatisticsFolder = file.path(folder, "incStats")
+  )
+  
+  
+  ## Positive check ----
+  # set up new connection and check if the cohort was instantiated Disconnect after
+  testthat::expect_true(CohortDiagnostics:::checkIfCohortInstantiated(connectionDetails = connectionDetails,
+                                                                      cohortDatabaseSchema = cohortDatabaseSchema,
+                                                                      cohortTable = cohortTable,
+                                                                      cohortIds = 18348))
+  
+  ## Negative check ----
+  testthat::expect_false(CohortDiagnostics:::checkIfCohortInstantiated(connectionDetails = connectionDetails,
+                                                                       cohortDatabaseSchema = cohortDatabaseSchema,
+                                                                       cohortTable = cohortTable,
+                                                                       cohortIds = -1111))
+  
+  ## Incremental mode
   CohortDiagnostics::instantiateCohortSet(
     connectionDetails = connectionDetails,
     cdmDatabaseSchema = cdmDatabaseSchema,
@@ -15,21 +78,10 @@ test_that("Cohort instantiation", {
     cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
     generateInclusionStats = TRUE,
     createCohortTable = TRUE,
+    incremental = TRUE,
+    incrementalFolder = file.path(folder, "incremental"),
     inclusionStatisticsFolder = file.path(folder, "incStats")
   )
-  
-  # POSTIVE TEST
-  # set up new connection and check if the cohort was instantiated Disconnect after
-  testthat::expect_true(CohortDiagnostics:::checkIfCohortInstantiated(connectionDetails = connectionDetails,
-                                                                      cohortDatabaseSchema = cohortDatabaseSchema,
-                                                                      cohortTable = cohortTable,
-                                                                      cohortIds = 18348))
-  
-  # NEGATIVE TEST
-  testthat::expect_false(CohortDiagnostics:::checkIfCohortInstantiated(connectionDetails = connectionDetails,
-                                                                      cohortDatabaseSchema = cohortDatabaseSchema,
-                                                                      cohortTable = cohortTable,
-                                                                      cohortIds = -1111))
   
   # Expect cohort table to have atleast 0 records
   sql <- "SELECT COUNT(*) FROM @cohort_database_schema.@cohort_table;"
