@@ -184,6 +184,10 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
   cohortSetReference$sql <- ""
   
   ParallelLogger::logInfo("Retrieving cohort definitions from WebAPI")
+  if (nrow(cohortSetReference) == 0) {
+    stop(paste0("Provided cohortIds not found in WebApi. Aborting.."))
+  }
+  
   for (i in 1:nrow(cohortSetReference)) {
     ParallelLogger::logInfo("- Retrieving definitions for cohort ",
                             cohortSetReference$cohortName[i])

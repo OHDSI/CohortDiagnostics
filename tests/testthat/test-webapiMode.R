@@ -47,18 +47,37 @@ test_that("Check WebApi mode", {
     }
     cohortSetReference <- dplyr::bind_rows(cohortsToCreate)
     
-    CohortDiagnostics::instantiateCohortSet(
-      connectionDetails = connectionDetails,
-      cdmDatabaseSchema = cdmDatabaseSchema,
-      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-      tempEmulationSchema = tempEmulationSchema,
-      cohortDatabaseSchema = cohortDatabaseSchema,
-      cohortTable = cohortTable,
-      cohortSetReference = cohortSetReference,
-      generateInclusionStats = TRUE,
-      createCohortTable = TRUE,
-      baseUrl = baseUrl,
-      inclusionStatisticsFolder = file.path(folder, "incStats")
+    testthat::expect_null(
+      CohortDiagnostics::instantiateCohortSet(
+        connectionDetails = connectionDetails,
+        cdmDatabaseSchema = cdmDatabaseSchema,
+        vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+        tempEmulationSchema = tempEmulationSchema,
+        cohortDatabaseSchema = cohortDatabaseSchema,
+        cohortTable = cohortTable,
+        cohortSetReference = cohortSetReference,
+        generateInclusionStats = TRUE,
+        createCohortTable = TRUE,
+        baseUrl = baseUrl,
+        inclusionStatisticsFolder = file.path(folder, "incStats")
+      )
+    )
+    
+    testthat::expect_error(
+      CohortDiagnostics::instantiateCohortSet(
+        connectionDetails = connectionDetails,
+        cdmDatabaseSchema = cdmDatabaseSchema,
+        vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+        tempEmulationSchema = tempEmulationSchema,
+        cohortDatabaseSchema = cohortDatabaseSchema,
+        cohortTable = cohortTable,
+        cohortSetReference = cohortSetReference,
+        generateInclusionStats = TRUE,
+        createCohortTable = TRUE,
+        baseUrl = baseUrl,
+        cohortIds = -1,
+        inclusionStatisticsFolder = file.path(folder, "incStats")
+      )
     )
   }
 })

@@ -18,11 +18,18 @@ test_that("Cohort instantiation", {
     inclusionStatisticsFolder = file.path(folder, "incStats")
   )
   
+  # POSTIVE TEST
   # set up new connection and check if the cohort was instantiated Disconnect after
   testthat::expect_true(CohortDiagnostics:::checkIfCohortInstantiated(connectionDetails = connectionDetails,
                                                                       cohortDatabaseSchema = cohortDatabaseSchema,
                                                                       cohortTable = cohortTable,
                                                                       cohortIds = 18348))
+  
+  # NEGATIVE TEST
+  testthat::expect_true(CohortDiagnostics:::checkIfCohortInstantiated(connectionDetails = connectionDetails,
+                                                                      cohortDatabaseSchema = cohortDatabaseSchema,
+                                                                      cohortTable = cohortTable,
+                                                                      cohortIds = -1111))
   
   # Expect cohort table to have atleast 0 records
   sql <- "SELECT COUNT(*) FROM @cohort_database_schema.@cohort_table;"
@@ -116,6 +123,24 @@ test_that("Cohort diagnostics in incremental mode", {
   # generate premerged file
   CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = file.path(folder, "export"))
   testthat::expect_true(file.exists(file.path(folder, "export", "PreMerged.RData")))
+})
+
+test_that("Negative tests on individual functions", {
+  skip_if_not(runDatabaseTests)
+  
+  #Characterization
+  testthat::expect_null(CohortDiagnostics::runCohortCharacterizationDiagnostics(connectionDetails = connectionDetails,
+                                                                                cdmDatabaseSchema = cdmDatabaseSchema,
+                                                                                tempEmulationSchema = tempEmulationSchema,
+                                                                                cohortDatabaseSchema = cohortDatabaseSchema,
+                                                                                cohortTable = cohortTable,
+                                                                                cohortIds = -1111))
+  testthat::expect_null(CohortDiagnostics::runCohortCharacterizationDiagnostics(connectionDetails = connectionDetails,
+                                                                                cdmDatabaseSchema = cdmDatabaseSchema,
+                                                                                tempEmulationSchema = tempEmulationSchema,
+                                                                                cohortDatabaseSchema = cohortDatabaseSchema,
+                                                                                cohortTable = cohortTable))
+  
 })
 
 test_that("Retrieve results from premerged file", {
