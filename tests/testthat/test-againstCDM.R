@@ -80,12 +80,14 @@ test_that("Cohort instantiation", {
                                                                       cohortIds = -1111))
   
   
-  sql <- "DELETE FROM @cohort_database_schema.@cohort_table WHERE SUBJECT_ID < 1000;"
-  count <- CohortDiagnostics:::renderTranslateQuerySql(connectionDetails = connectionDetails,
-                                                       sql = sql,
-                                                       cohort_database_schema = cohortDatabaseSchema,
-                                                       cohort_table = cohortTable)
   ### Pos - should re run ----
+  # delete from cohort table, and repopulate. should have 830 again
+  sql <- "DELETE FROM @cohort_database_schema.@cohort_table WHERE SUBJECT_ID < 1000;"
+  DatabaseConnector::renderTranslateExecuteSql(connection = DatabaseConnector::connect(connectionDetails),
+                                               sql = sql,
+                                               cohort_database_schema = cohortDatabaseSchema,
+                                               cohort_table = cohortTable)
+  
   CohortDiagnostics::instantiateCohortSet(
     connectionDetails = connectionDetails,
     cdmDatabaseSchema = cdmDatabaseSchema,
@@ -102,19 +104,13 @@ test_that("Cohort instantiation", {
     incrementalFolder = file.path(folder, "incremental"),
     inclusionStatisticsFolder = file.path(folder, "incStats")
   )
-  
-  ## Positive check ----
-  # set up new connection and check if the cohort was instantiated Disconnect after
-  testthat::expect_true(CohortDiagnostics:::checkIfCohortInstantiated(connectionDetails = connectionDetails,
-                                                                      cohortDatabaseSchema = cohortDatabaseSchema,
-                                                                      cohortTable = cohortTable,
-                                                                      cohortIds = 18348))
-  
-  ## Negative check ----
-  testthat::expect_false(CohortDiagnostics:::checkIfCohortInstantiated(connectionDetails = connectionDetails,
-                                                                       cohortDatabaseSchema = cohortDatabaseSchema,
-                                                                       cohortTable = cohortTable,
-                                                                       cohortIds = -1111))
+  # Expect cohortId 18348 to have 830 records
+  sql <- "SELECT COUNT(*) FROM @cohort_database_schema.@cohort_table;"
+  count <- CohortDiagnostics:::renderTranslateQuerySql(connectionDetails = connectionDetails,
+                                                       sql = sql,
+                                                       cohort_database_schema = cohortDatabaseSchema,
+                                                       cohort_table = cohortTable)
+  testthat::expect_equal(count$COUNT, 830)
   
   ## Incremental mode
   CohortDiagnostics::instantiateCohortSet(
