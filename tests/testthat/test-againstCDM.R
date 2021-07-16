@@ -26,7 +26,7 @@ test_that("Cohort instantiation", {
                                                                       cohortIds = 18348))
   
   # NEGATIVE TEST
-  testthat::expect_true(CohortDiagnostics:::checkIfCohortInstantiated(connectionDetails = connectionDetails,
+  testthat::expect_false(CohortDiagnostics:::checkIfCohortInstantiated(connectionDetails = connectionDetails,
                                                                       cohortDatabaseSchema = cohortDatabaseSchema,
                                                                       cohortTable = cohortTable,
                                                                       cohortIds = -1111))
@@ -270,7 +270,8 @@ test_that("Retrieve results from premerged file", {
 test_that("Create and upload results to results data model", {
   skip_if_not(runDatabaseTests)
   
-  CohortDiagnostics::createResultsDataModel(connectionDetails = connectionDetails, schema = cohortDiagnosticsSchema)
+  CohortDiagnostics::createResultsDataModel(connectionDetails = connectionDetails, 
+                                            schema = cohortDiagnosticsSchema)
   
   listOfZipFilesToUpload <-
     list.files(
@@ -423,8 +424,10 @@ test_that("Data removal works", {
     connection = DatabaseConnector::connect(connectionDetails = connectionDetails),
     resultsDatabaseSchema = cohortDiagnosticsSchema
   )
-  
-  cohortTableDataBeforeDelete <- CohortDiagnostics::getResultsFromCohortCount(dataSource = dataSourceDatabase)
+  cohortTableDataBeforeDelete <- CohortDiagnostics::getResultsFromCohortCount(
+    dataSource = dataSourceDatabase,
+    databaseIds = 'cdmV5'
+  )
   
   if (!is.null(cohortTableDataBeforeDelete)) {
     colnames(cohortTableDataBeforeDelete) <- 
