@@ -6,7 +6,7 @@ env_exists <- function(varname) {
 # Function which warns user if an expected environment variable is not defined
 check_env <- function(varname) {
   if (!env_exists(varname)) {
-    warning(sprintf("Environment variable %s is not defined",varname))
+    warning(sprintf("Environment variable %s is not defined", varname))
   }
 }
 
@@ -22,7 +22,7 @@ folder <- tempfile(paste0("cd_test_", gsub("[^a-zA-Z]", "", .Platform$OS.type), 
 
 # On GitHub Actions, only run database tests on MacOS to avoid overloading database server:
 runDatabaseTests <- env_exists("CDM5_POSTGRESQL_SERVER") &&
- (!env_exists("GITHUB_ACTIONS") || Sys.getenv("RUNNER_OS", unset = "") == "macOS") 
+  (!env_exists("GITHUB_ACTIONS") || Sys.getenv("RUNNER_OS", unset = "") == "macOS")
 
 if (runDatabaseTests) {
   
@@ -37,7 +37,7 @@ if (runDatabaseTests) {
       unlink(jdbcDriverFolder, recursive = TRUE, force = TRUE)
     }, testthat::teardown_env())
   }
-  
+
   # Set connection details, and schema and table names --------------------------
   connectionDetails <- DatabaseConnector::createConnectionDetails(
     dbms = "postgresql",
@@ -45,7 +45,7 @@ if (runDatabaseTests) {
     password = URLdecode(Sys.getenv("CDM5_POSTGRESQL_PASSWORD")),
     server = Sys.getenv("CDM5_POSTGRESQL_SERVER"),
     pathToDriver = jdbcDriverFolder)
-  
+
   # Set database  schemas
 
   cdmDatabaseSchema <- "eunomia"
@@ -59,7 +59,7 @@ if (runDatabaseTests) {
 
   tempEmulationSchema <- NULL
   cohortDatabaseSchema <- cohortDiagnosticsSchema
-  
+
   # Clean up when exiting testing -----------------------------------
   withr::defer({
     connection <- DatabaseConnector::connect(connectionDetails = connectionDetails)
@@ -71,3 +71,11 @@ if (runDatabaseTests) {
     unlink(folder, recursive = TRUE, force = TRUE)
   }, testthat::teardown_env())
 }
+
+withr::defer({
+  if (getOption("use.devtools.sql_shim", FALSE)) {
+    # Remove symbolic link to sql folder created when devtools::test loads helpers
+    packageRoot <- normalizePath(system.file("..", package = "CohortDiagnostics"))
+    unlink(file.path(packageRoot, "sql"), recursive = FALSE)
+  }
+}, testthat::teardown_env())
