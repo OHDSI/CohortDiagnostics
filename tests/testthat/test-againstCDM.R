@@ -31,18 +31,6 @@ test_that("Cohort instantiation", {
                                                                       cohortTable = cohortTable,
                                                                       cohortIds = -1111))
   
-  # POSTIVE TEST
-  testthat::expect_true(nrow(CohortDiagnostics::getCohortCounts(connectionDetails = connectionDetails,
-                                                                cohortDatabaseSchema = cohortDatabaseSchema,
-                                                                cohortTable = cohortTable,
-                                                                cohortIds = 18348)) >= 0)
-  
-  # NEGATIVE TEST
-  testthat::expect_error(CohortDiagnostics:::getCohortCounts(connectionDetails = connectionDetails,
-                                                             cohortDatabaseSchema = cohortDatabaseSchema,
-                                                             cohortTable = 'nonSenseTableName',
-                                                             cohortIds = -1111))
-  
   # Expect cohort table to have atleast 0 records
   sql <- "SELECT COUNT(*) FROM @cohort_database_schema.@cohort_table;"
   count <- CohortDiagnostics:::renderTranslateQuerySql(connectionDetails = connectionDetails,

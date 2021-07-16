@@ -244,10 +244,10 @@ createCohortTable <- function(connectionDetails = NULL,
                               cohortTable = "cohort") {
   start <- Sys.time()
   ParallelLogger::logInfo("Creating cohort table")
-  
-  connection <- .setUpConnection(connection = connection,
-                                 connectionDetails = connectionDetails)
-  
+  if (is.null(connection)) {
+    connection <- DatabaseConnector::connect(connectionDetails)
+    on.exit(DatabaseConnector::disconnect(connection))
+  }
   sql <- SqlRender::loadRenderTranslateSql(
     "CreateCohortTable.sql",
     packageName = "CohortDiagnostics",

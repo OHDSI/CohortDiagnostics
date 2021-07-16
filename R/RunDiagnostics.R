@@ -325,8 +325,15 @@ runCohortDiagnostics <- function(packageName = NULL,
   writeToCsv(data = cohorts,
              fileName = file.path(exportFolder, "cohort.csv"))
   
-  connection <- .setUpConnection(connection = connection,
-                                 connectionDetails = connectionDetails)
+  # Set up connection to server----
+  if (is.null(connection)) {
+    if (!is.null(connectionDetails)) {
+      connection <- DatabaseConnector::connect(connectionDetails)
+      on.exit(DatabaseConnector::disconnect(connection))
+    } else {
+      stop("No connection or connectionDetails provided.")
+    }
+  }
   
   # Metadata----
   startMetaData <- Sys.time()

@@ -69,8 +69,10 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
   }
   start <- Sys.time()
   
-  connection <- .setUpConnection(connection = connection,
-                                 connectionDetails = connectionDetails)
+  if (is.null(connection)) {
+    connection <- DatabaseConnector::connect(connectionDetails)
+    on.exit(DatabaseConnector::disconnect(connection))
+  }
   
   ## Calendar period----
   ParallelLogger::logTrace("  --- Preparing calendar table for time series computation.")

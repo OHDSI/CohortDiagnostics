@@ -39,8 +39,10 @@ checkIfCohortInstantiated <-
            cohortTable,
            cohortIds) {
     
-    connection <- .setUpConnection(connection = connection,
-                                   connectionDetails = connectionDetails)
+    if (is.null(connection)) {
+      connection <- DatabaseConnector::connect(connectionDetails)
+      on.exit(DatabaseConnector::disconnect(connection))
+    }
     
     sql <-
       "SELECT COUNT(*) COUNT FROM @cohort_database_schema.@cohort_table WHERE cohort_definition_id = @cohort_id;"

@@ -207,10 +207,14 @@ appendNewRows <-
 createResultsDataModel <- function(connection = NULL,
                                    connectionDetails = NULL,
                                    schema) {
-  
-  
-  connection <- .setUpConnection(connection = connection,
-                                 connectionDetails = connectionDetails)
+  if (is.null(connection)) {
+    if (!is.null(connectionDetails)) {
+      connection <- DatabaseConnector::connect(connectionDetails)
+      on.exit(DatabaseConnector::disconnect(connection))
+    } else {
+      stop("No connection or connectionDetails provided.")
+    }
+  }
   schemas <- unlist(
     DatabaseConnector::querySql(
       connection,

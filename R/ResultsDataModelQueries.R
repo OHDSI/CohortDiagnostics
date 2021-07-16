@@ -15,19 +15,6 @@
 # limitations under the License.
 #
 
-.setUpConnection <- function(connection,
-                             connectionDetails) {
-  # Set up connection to server----
-  if (is.null(connection)) {
-    if (!is.null(connectionDetails)) {
-      connection <- DatabaseConnector::connect(connectionDetails)
-      on.exit(DatabaseConnector::disconnect(connection))
-    } else {
-      stop("No connection or connectionDetails provided.")
-    }
-  }
-  return(connection)
-}
 
 # this script is shared between Cohort Diagnostics and Diagnostics Explorer
 
@@ -131,9 +118,16 @@ renderTranslateQuerySql <-
            connectionDetails = NULL,
            ...,
            snakeCaseToCamelCase = FALSE) {
-    
-    connection <- .setUpConnection(connection = connection,
-                                   connectionDetails = connectionDetails)
+    ## Set up connection to server ----------------------------------------------------
+    if (is.null(connection)) {
+      if (!is.null(connectionDetails)) {
+        writeLines("Connecting to database using provided connection details.")
+        connection <- DatabaseConnector::connect(connectionDetails)
+        on.exit(DatabaseConnector::disconnect(connection))
+      } else {
+        stop("No connection or connectionDetails provided.")
+      }
+    }
     
     if (methods::is(connection, "Pool")) {
       # Connection pool is used by Shiny app, which always uses PostgreSQL:
