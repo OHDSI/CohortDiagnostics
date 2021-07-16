@@ -17,6 +17,7 @@ check_env("CDM5_POSTGRESQL_PASSWORD")
 check_env("CDM5_POSTGRESQL_CDM_SCHEMA")
 check_env("CDM5_POSTGRESQL_OHDSI_SCHEMA")
 
+
 # On GitHub Actions, only run database tests on MacOS to avoid overloading database server:
 runDatabaseTests <- env_exists("CDM5_POSTGRESQL_SERVER") &&
  (!env_exists("GITHUB_ACTIONS") || Sys.getenv("RUNNER_OS", unset = "") == "macOS") 
@@ -43,11 +44,19 @@ if (runDatabaseTests) {
     server = Sys.getenv("CDM5_POSTGRESQL_SERVER"),
     pathToDriver = jdbcDriverFolder)
   
+  # Set database  schemas
+
   cdmDatabaseSchema <- "eunomia"
   vocabularyDatabaseSchema <- "eunomia"
-  cohortDiagnosticsSchema <- Sys.getenv("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")
+
+  cohortDiagnosticsSchema <- "cohort_diagnostics"
+  # Set cohort diagnostics schema from environment variable if available
+  if (env_exists("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")) {
+    cohortDiagnosticsSchema <- Sys.getenv("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")
+  }
+
   tempEmulationSchema <- NULL
-  cohortDatabaseSchema <-  Sys.getenv("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")
+  cohortDatabaseSchema <- cohortDiagnosticsSchema
   cohortTable <- tolower(paste0("cd_test_", gsub("[^a-zA-Z]", "", .Platform$OS.type), stringi::stri_rand_strings(1,9)))
   folder <- tempfile(paste0("cd_test_", gsub("[^a-zA-Z]", "", .Platform$OS.type), stringi::stri_rand_strings(1,9)))
   
