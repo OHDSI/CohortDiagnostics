@@ -12,3 +12,9 @@ test_that("Check helper functions", {
 test_that("Ensure Cohort Diagnostics is installed", {
   testthat::expect_null(CohortDiagnostics:::ensure_installed('CohortDiagnostics'))
 })
+
+
+test_that("util functions", {
+  expect_true(naToEmpty(NA) == "")
+  expect_true(naToZero(NA) == 0)
+})
