@@ -112,7 +112,7 @@ test_that("Cohort instantiation", {
                                                        cohort_table = cohortTable)
   testthat::expect_equal(count$COUNT, 830)
   
-  ## Incremental mode
+  ## Incremental mode ----
   CohortDiagnostics::instantiateCohortSet(
     connectionDetails = connectionDetails,
     cdmDatabaseSchema = cdmDatabaseSchema,
@@ -146,6 +146,37 @@ test_that("Cohort diagnostics in not in incremental mode", {
   skip_if_not(runDatabaseTests)
   
   start <- Sys.time()
+  
+  ### Neg - bad cohort -----
+  testthat::expect_error(
+    CohortDiagnostics::runCohortDiagnostics(
+      connectionDetails = connectionDetails,
+      cdmDatabaseSchema = "eunomia",
+      vocabularyDatabaseSchema = "eunomia",
+      tempEmulationSchema = tempEmulationSchema,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTable,
+      packageName = "CohortDiagnostics",
+      cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+      inclusionStatisticsFolder = file.path(folder, "incStats"),
+      exportFolder =  file.path(folder, "export"),
+      databaseId = "cdmV5",
+      runInclusionStatistics = FALSE,
+      runIncludedSourceConcepts = FALSE,
+      runOrphanConcepts = FALSE,
+      runVisitContext = FALSE,
+      runBreakdownIndexEvents = FALSE,
+      runIncidenceRate = FALSE,
+      runCohortTimeSeries = FALSE,
+      runDataSourceTimeSeries = FALSE,
+      runCohortRelationship = FALSE,
+      runCohortCharacterization = FALSE,
+      runTemporalCohortCharacterization = FALSE,
+      incremental = FALSE,
+      cohortIds = -23423,
+      incrementalFolder = file.path(folder, "incremental")
+    )
+  )
   
   # run all except time series and temporal characterization
   CohortDiagnostics::runCohortDiagnostics(
