@@ -17,6 +17,8 @@ check_env("CDM5_POSTGRESQL_PASSWORD")
 check_env("CDM5_POSTGRESQL_CDM_SCHEMA")
 check_env("CDM5_POSTGRESQL_OHDSI_SCHEMA")
 
+cohortTable <- tolower(paste0("cd_test_", gsub("[^a-zA-Z]", "", .Platform$OS.type), stringi::stri_rand_strings(1,9)))
+folder <- tempfile(paste0("cd_test_", gsub("[^a-zA-Z]", "", .Platform$OS.type), stringi::stri_rand_strings(1,9)))
 
 # On GitHub Actions, only run database tests on MacOS to avoid overloading database server:
 runDatabaseTests <- env_exists("CDM5_POSTGRESQL_SERVER") &&
