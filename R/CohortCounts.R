@@ -37,10 +37,8 @@ getCohortCounts <- function(connectionDetails = NULL,
                             cohortIds = c()) {
   start <- Sys.time()
   
-  if (is.null(connection)) {
-    connection <- DatabaseConnector::connect(connectionDetails)
-    on.exit(DatabaseConnector::disconnect(connection))
-  }
+  connection <- .setUpConnection(connection = connection,
+                                 connectionDetails = connectionDetails)
   
   sql <-
     SqlRender::loadRenderTranslateSql(
@@ -65,7 +63,6 @@ getCohortCounts <- function(connectionDetails = NULL,
     ))
     return(counts)
   } else {
-    warning('Cohort table was not found. Was it created?')
-    return(NULL)
+    stop('Cohort table was not found. Was it created? Aborting')
   }
 }

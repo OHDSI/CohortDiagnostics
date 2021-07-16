@@ -59,10 +59,8 @@ runIncidenceRateDiagnostics <- function(connectionDetails = NULL,
     stop("Only CDM version 5 is supported. Terminating.")
   }
   
-  if (is.null(connection)) {
-    connection <- DatabaseConnector::connect(connectionDetails)
-    on.exit(DatabaseConnector::disconnect(connection))
-  }
+  connection <- .setUpConnection(connection = connection,
+                                 connectionDetails = connectionDetails)
   
   instantiatedCohortsCheck <- checkIfCohortInstantiated(
     connection = connection,

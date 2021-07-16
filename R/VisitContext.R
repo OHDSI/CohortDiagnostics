@@ -53,10 +53,8 @@ runVisitContextDiagnostics <- function(connectionDetails = NULL,
   
   start <- Sys.time()
   
-  if (is.null(connection)) {
-    connection <- DatabaseConnector::connect(connectionDetails)
-    on.exit(DatabaseConnector::disconnect(connection))
-  }
+  connection <- .setUpConnection(connection = connection,
+                                 connectionDetails = connectionDetails)
   
   sql <- SqlRender::loadRenderTranslateSql(
     "VisitContext.sql",

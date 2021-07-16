@@ -66,10 +66,9 @@ runCohortCharacterizationDiagnostics <- function(connectionDetails = NULL,
                                                  covariateSettings = createDefaultCovariateSettings(),
                                                  batchSize = 100) {
   startTime <- Sys.time()
-  if (is.null(connection)) {
-    connection <- DatabaseConnector::connect(connectionDetails)
-    on.exit(DatabaseConnector::disconnect(connection))
-  }
+  
+  connection <- .setUpConnection(connection = connection,
+                                 connectionDetails = connectionDetails)
   
   cohortCounts <- getCohortCounts(
     connection = connection,

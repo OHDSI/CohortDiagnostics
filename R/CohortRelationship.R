@@ -45,13 +45,10 @@ runCohortRelationshipDiagnostics <-
            comparatorCohortIds) {
     startTime <- Sys.time()
     
-    if (length(targetCohortIds) == 0) {
-      return(NULL)
-    }
-    if (is.null(connection)) {
-      connection <- DatabaseConnector::connect(connectionDetails)
-      on.exit(DatabaseConnector::disconnect(connection))
-    }
+    if (length(targetCohortIds) == 0) {return(NULL)}
+    
+    connection <- .setUpConnection(connection = connection,
+                                   connectionDetails = connectionDetails)
     
     ParallelLogger::logTrace(" - Creating cohort table subset")
     cohortSubsetSql <- "IF OBJECT_ID('tempdb..#cohort_subset', 'U') IS NOT NULL

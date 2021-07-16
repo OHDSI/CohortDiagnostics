@@ -57,15 +57,9 @@ runConceptSetDiagnostics <- function(connection = NULL,
   ParallelLogger::logInfo("Starting concept set diagnostics")
   startConceptSetDiagnostics <- Sys.time()
   if (length(cohortIds) == 0) {return(NULL)}
-  # Set up connection to server----
-  if (is.null(connection)) {
-    if (!is.null(connectionDetails)) {
-      connection <- DatabaseConnector::connect(connectionDetails)
-      on.exit(DatabaseConnector::disconnect(connection))
-    } else {
-      stop("No connection or connectionDetails provided.")
-    }
-  }  
+  
+  connection <- .setUpConnection(connection = connection,
+                                 connectionDetails = connectionDetails)
   
   # Create concept table----
   ParallelLogger::logTrace("Creating concept ID table for tracking concepts used in diagnostics")

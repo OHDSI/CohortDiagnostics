@@ -35,15 +35,8 @@ getCdmDataSourceInformation <-
            connection = NULL,
            cdmDatabaseSchema) {
     
-    # Set up connection to server ----
-    if (is.null(connection)) {
-      if (!is.null(connectionDetails)) {
-        connection <- DatabaseConnector::connect(connectionDetails)
-        on.exit(DatabaseConnector::disconnect(connection))
-      } else {
-        stop("No connection or connectionDetails provided.")
-      }
-    }
+    connection <- .setUpConnection(connection = connection,
+                                   connectionDetails = connectionDetails)
     
     if (!DatabaseConnector::dbExistsTable(conn = connection, name = 'cdm_source')) {
       ParallelLogger::logWarn("CDM Source table not found in CDM. Metadata on CDM source will be limited.")
