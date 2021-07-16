@@ -488,7 +488,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
     generateStats = generateInclusionStats
   )
   
-  if (any(!is.null(cohorts),
+  if (any(is.null(cohorts),
           nrow(cohorts) == 0)) {
     stop("Cohort definitions not found for provided cohort ids. Please check. Aborting.")
   }

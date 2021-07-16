@@ -24,7 +24,7 @@ test_that("Cohort instantiation", {
     )
   )
   ### Neg - bad cohort ----
-  testthat::expect_null(
+  testthat::expect_error(
     CohortDiagnostics::instantiateCohortSet(
       connectionDetails = connectionDetails,
       cdmDatabaseSchema = cdmDatabaseSchema,
@@ -40,7 +40,7 @@ test_that("Cohort instantiation", {
       inclusionStatisticsFolder = file.path(folder, "incStats")
     )
   )
-  ### Pos - skip create cohort table, instantiate one in incremental ----
+  ### Pos - good one cohort, will create cohort table, instantiate not incremental ----
   testthat::expect_null(
     CohortDiagnostics::instantiateCohortSet(
       connectionDetails = connectionDetails,
@@ -58,28 +58,34 @@ test_that("Cohort instantiation", {
     )
   )
   
-  ### Positive check ----
-  # Expect cohort table to have atleast 0 records
+  ### Pos - Expect cohort count ----
+  # Expect cohortId 18348 to have 830 records
   sql <- "SELECT COUNT(*) FROM @cohort_database_schema.@cohort_table;"
   count <- CohortDiagnostics:::renderTranslateQuerySql(connectionDetails = connectionDetails,
                                                        sql = sql,
                                                        cohort_database_schema = cohortDatabaseSchema,
                                                        cohort_table = cohortTable)
-  testthat::expect_gte(count, 0)
+  testthat::expect_equal(count$COUNT, 830)
   
-  # set up new connection and check if the cohort was instantiated Disconnect after
+  ### Pos - check cohort instantiated ----
   testthat::expect_true(CohortDiagnostics:::checkIfCohortInstantiated(connectionDetails = connectionDetails,
                                                                       cohortDatabaseSchema = cohortDatabaseSchema,
                                                                       cohortTable = cohortTable,
                                                                       cohortIds = 18348))
   
-  ### Negative check ----
+  ### Neg - cohort is not instantiated ----
   testthat::expect_false(CohortDiagnostics:::checkIfCohortInstantiated(connectionDetails = connectionDetails,
                                                                       cohortDatabaseSchema = cohortDatabaseSchema,
                                                                       cohortTable = cohortTable,
                                                                       cohortIds = -1111))
   
-  ## Incremental mode ----
+  
+  sql <- "DELETE FROM @cohort_database_schema.@cohort_table WHERE SUBJECT_ID < 1000;"
+  count <- CohortDiagnostics:::renderTranslateQuerySql(connectionDetails = connectionDetails,
+                                                       sql = sql,
+                                                       cohort_database_schema = cohortDatabaseSchema,
+                                                       cohort_table = cohortTable)
+  ### Pos - should re run ----
   CohortDiagnostics::instantiateCohortSet(
     connectionDetails = connectionDetails,
     cdmDatabaseSchema = cdmDatabaseSchema,

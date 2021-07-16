@@ -59,8 +59,6 @@ if (runDatabaseTests) {
 
   tempEmulationSchema <- NULL
   cohortDatabaseSchema <- cohortDiagnosticsSchema
-  cohortTable <- tolower(paste0("cd_test_", gsub("[^a-zA-Z]", "", .Platform$OS.type), stringi::stri_rand_strings(1,9)))
-  folder <- tempfile(paste0("cd_test_", gsub("[^a-zA-Z]", "", .Platform$OS.type), stringi::stri_rand_strings(1,9)))
   
   # Clean up when exiting testing -----------------------------------
   withr::defer({
