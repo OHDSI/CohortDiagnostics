@@ -52,6 +52,44 @@ test_that("Cohort instantiation", {
   DatabaseConnector::disconnect(connection)
 })
 
+test_that("Cohort diagnostics in not in incremental mode", {
+  skip_if_not(runDatabaseTests)
+  
+  start <- Sys.time()
+  
+  # run all except time series and temporal characterization
+  CohortDiagnostics::runCohortDiagnostics(
+    connectionDetails = connectionDetails,
+    cdmDatabaseSchema = "eunomia",
+    vocabularyDatabaseSchema = "eunomia",
+    tempEmulationSchema = tempEmulationSchema,
+    cohortDatabaseSchema = cohortDatabaseSchema,
+    cohortTable = cohortTable,
+    packageName = "CohortDiagnostics",
+    cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+    inclusionStatisticsFolder = file.path(folder, "incStats"),
+    exportFolder =  file.path(folder, "export"),
+    databaseId = "cdmV5",
+    runInclusionStatistics = TRUE,
+    runIncludedSourceConcepts = TRUE,
+    runOrphanConcepts = TRUE,
+    runVisitContext = TRUE,
+    runBreakdownIndexEvents = TRUE,
+    runIncidenceRate = TRUE,
+    runCohortTimeSeries = FALSE,
+    runDataSourceTimeSeries = FALSE,
+    runCohortRelationship = TRUE,
+    runCohortCharacterization = TRUE,
+    runTemporalCohortCharacterization = FALSE,
+    incremental = FALSE,
+    cohortIds = 14906,
+    incrementalFolder = file.path(folder, "incremental")
+  )
+  timeToRunFirstTime <- Sys.time() - start
+  
+})
+
+
 test_that("Cohort diagnostics in incremental mode", {
   skip_if_not(runDatabaseTests)
   
@@ -167,6 +205,14 @@ test_that("Retrieve results from premerged file", {
   
   timeSeriesFromFile <- CohortDiagnostics::getResultsFromTimeSeries(
     dataSource = dataSourcePreMergedFile,
+    cohortIds = c(-1111),
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(any(is.null(timeSeriesFromFile),
+                            length(timeSeriesFromFile) >= 0))
+  
+  timeSeriesFromFile <- CohortDiagnostics::getResultsFromTimeSeries(
+    dataSource = dataSourcePreMergedFile,
     databaseIds = 'cdmV5'
   )
   testthat::expect_true(any(is.null(timeSeriesFromFile),
@@ -230,6 +276,14 @@ test_that("Retrieve results from premerged file", {
   conceptIdDetails <- CohortDiagnostics::getResultsFromConcept(
     dataSource = dataSourcePreMergedFile,
     conceptIds = c(192671, 201826, 1124300, 1124300)
+  )
+  testthat::expect_true(nrow(conceptIdDetails) >= 0)
+  
+  # should provide warning
+  conceptIdDetails <- CohortDiagnostics::getResultsFromConcept(
+    dataSource = dataSourcePreMergedFile,
+    conceptIds = c(192671, 201826, 1124300, 1124300),
+    vocabularyDatabaseSchema = 'vocabulary'
   )
   testthat::expect_true(nrow(conceptIdDetails) >= 0)
   

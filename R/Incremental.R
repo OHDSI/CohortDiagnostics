@@ -104,6 +104,7 @@ recordTasksDone <-
                                         col_types = readr::cols(),
                                         guess_max = min(1e7))
       recordKeeping$timeStamp <- as.character(recordKeeping$timeStamp)
+      # ensure cohortId and comparatorId are always integer while reading
       if ('cohortId' %in% colnames(recordKeeping)) {
         recordKeeping <- recordKeeping %>%
           dplyr::mutate(cohortId = as.double(.data$cohortId))
@@ -122,6 +123,13 @@ recordTasksDone <-
     newRow <- dplyr::as_tibble(list(...))
     newRow$checksum <- checksum
     newRow$timeStamp <-  as.character(Sys.time())
+    # ensure cohortId and comparatorId are always integer while writing
+    if ('cohortId' %in% colnames(newRow)) {
+      newRow$cohortId <- as.double(newRow$cohortId)
+    }
+    if ('comparatorId' %in% colnames(newRow)) {
+      newRow$comparatorId <- as.double(newRow$comparatorId)
+    }
     recordKeeping <- dplyr::bind_rows(recordKeeping, newRow)
     readr::write_csv(recordKeeping, recordKeepingFile)
   }
@@ -230,7 +238,6 @@ saveIncremental <- function(data, fileName, ...) {
       } else {
         data <- data %>% dplyr::tibble()
       }
-      
     }
   }
   readr::write_csv(data, fileName)

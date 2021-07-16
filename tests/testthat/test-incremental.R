@@ -5,6 +5,8 @@ test_that("Record keeping of single type tasks", {
   
   sql1 <- "SELECT * FROM my_table WHERE x = 1;"
   checksum1 <- CohortDiagnostics:::computeChecksum(sql1)
+  
+  # should be TRUE
   expect_true(
     CohortDiagnostics:::isTaskRequired(
       cohortId = 1,
@@ -13,6 +15,15 @@ test_that("Record keeping of single type tasks", {
       recordKeepingFile = rkf
     )
   )
+
+  # if incremental is FALSE, then this should return NULL  
+  expect_true(is.null(CohortDiagnostics:::recordTasksDone(
+    cohortId = 1,
+    runSql = TRUE,
+    checksum = checksum1,
+    recordKeepingFile = rkf,
+    incremental = FALSE
+  )))
   
   CohortDiagnostics:::recordTasksDone(
     cohortId = 1,
@@ -20,7 +31,6 @@ test_that("Record keeping of single type tasks", {
     checksum = checksum1,
     recordKeepingFile = rkf
   )
-  
   
   expect_false(
     CohortDiagnostics:::isTaskRequired(
@@ -72,6 +82,20 @@ test_that("Record keeping of single type tasks", {
       cohortId = 1,
       runSql = TRUE,
       checksum = checksum1a,
+      recordKeepingFile = rkf
+    )
+  )
+  
+  # make duplication in rkf and check if it is recognized i.e. corrupted rkf
+  rkf2 <- readr::read_csv(file = rkf, 
+                          col_types = readr::cols())
+  rkf2 <- dplyr::bind_rows(rkf2, rkf2)
+  readr::write_excel_csv(x = rkf2, file = rkf)
+  expect_error(
+    CohortDiagnostics:::isTaskRequired(
+      cohortId = 1,
+      runSql = TRUE,
+      checksum = checksum1,
       recordKeepingFile = rkf
     )
   )
@@ -134,6 +158,24 @@ test_that("Record keeping of multiple type tasks", {
     CohortDiagnostics:::isTaskRequired(
       cohortId = 1,
       task = "Run SQL",
+      checksum = checksum1,
+      recordKeepingFile = rkf
+    )
+  )
+  
+  
+  # convert any comparatorId to numeric
+  CohortDiagnostics:::recordTasksDone(
+    cohortId = 1,
+    comparatorId = '2',
+    task = "Check Comparator Cohort id",
+    checksum = checksum2,
+    recordKeepingFile = rkf
+  )
+  expect_true(
+    CohortDiagnostics:::isTaskRequired(
+      comparatorId = 2,
+      task = "Check Comparator Cohort id",
       checksum = checksum1,
       recordKeepingFile = rkf
     )
