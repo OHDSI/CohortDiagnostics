@@ -10,6 +10,14 @@ check_env <- function(varname) {
   }
 }
 
+if (env_exists("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")) {
+  cohortDiagnosticsSchema <- Sys.getenv("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA") 
+  cohortDatabaseSchema <- Sys.getenv("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")  
+} else {
+  cohortDiagnosticsSchema <- "cohort_diagnostics"
+  cohortDatabaseSchema <- "cohort_diagnostics"
+}
+
 # Check for expected environment variables
 check_env("CDM5_POSTGRESQL_SERVER")
 check_env("CDM5_POSTGRESQL_USER")
@@ -45,9 +53,7 @@ if (runDatabaseTests) {
   
   cdmDatabaseSchema <- "eunomia"
   vocabularyDatabaseSchema <- "eunomia"
-  cohortDiagnosticsSchema <- "cohort_diagnostics"
   tempEmulationSchema <- NULL
-  cohortDatabaseSchema <- "cohort_diagnostics"
   cohortTable <- tolower(paste0("cd_test_", gsub("[^a-zA-Z]", "", .Platform$OS.type), stringi::stri_rand_strings(1,9)))
   folder <- tempfile(paste0("cd_test_", gsub("[^a-zA-Z]", "", .Platform$OS.type), stringi::stri_rand_strings(1,9)))
   

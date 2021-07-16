@@ -82,7 +82,18 @@ connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "postgres
                                                                 user = Sys.getenv("CDM5_POSTGRESQL_USER"),
                                                                 password = URLdecode(Sys.getenv("CDM5_POSTGRESQL_PASSWORD")),
                                                                 server = Sys.getenv("CDM5_POSTGRESQL_SERVER"))
-cohortDiagnosticsSchema <- "cohort_diagnostics"
+
+# Function to check if environment variable exists that works across Windows and Linux systems
+env_exists <- function(varname) {
+  Sys.getenv(varname,unset = "") != ""
+}
+
+if (env_exists("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")) {
+  cohortDiagnosticsSchema <- Sys.getenv("CDM5_POSTGRESQL_COHORT_DIAGNOSTICS_SCHEMA")
+} else {
+  cohortDiagnosticsSchema <- "cohort_diagnostics"
+}
+
 connection <- DatabaseConnector::connect(connectionDetails)  
 tables <- DatabaseConnector::getTableNames(connection, cohortDiagnosticsSchema)
 sql <- paste(sprintf("TRUNCATE TABLE %s.%s;\nDROP TABLE %s.%s;", cohortDiagnosticsSchema, tables, cohortDiagnosticsSchema, tables),
