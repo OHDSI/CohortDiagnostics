@@ -146,7 +146,8 @@ test_that("Cohort diagnostics in not in incremental mode", {
   skip_if_not(runDatabaseTests)
   
   start <- Sys.time()
-  
+  # Cohort Diagnostics -----
+  ## Not incremental -----
   ### Neg - bad cohort -----
   testthat::expect_error(
     CohortDiagnostics::runCohortDiagnostics(
@@ -178,7 +179,7 @@ test_that("Cohort diagnostics in not in incremental mode", {
     )
   )
   
-  # run all except time series and temporal characterization
+  ### Pos - one cohort -----
   CohortDiagnostics::runCohortDiagnostics(
     connectionDetails = connectionDetails,
     cdmDatabaseSchema = "eunomia",
@@ -203,11 +204,10 @@ test_that("Cohort diagnostics in not in incremental mode", {
     runCohortCharacterization = TRUE,
     runTemporalCohortCharacterization = FALSE,
     incremental = FALSE,
-    cohortIds = 14906,
+    cohortIds = 18348,
     incrementalFolder = file.path(folder, "incremental")
   )
   timeToRunFirstTime <- Sys.time() - start
-  
 })
 
 
@@ -215,7 +215,7 @@ test_that("Cohort diagnostics in incremental mode", {
   skip_if_not(runDatabaseTests)
   
   start <- Sys.time()
-  
+  ## Incremental -----
   # run all except time series and temporal characterization
   CohortDiagnostics::runCohortDiagnostics(
     connectionDetails = connectionDetails,

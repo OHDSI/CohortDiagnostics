@@ -272,7 +272,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   )
   
   if (nrow(cohorts) == 0) {
-    stop("No cohorts specified")
+    stop("No cohorts specified, or no matching cohorts found. Aborting.")
   }
   if ('name' %in% colnames(cohorts)) {
     cohorts <- cohorts %>%
