@@ -138,7 +138,7 @@ test_that("Retrieve results from premerged file", {
     databaseIds = 'cdmV5'
   )
   testthat::expect_true(any(is.null(timeSeriesFromFile),
-                            nrow(timeSeriesFromFile) >= 0))
+                            length(timeSeriesFromFile) >= 0))
   
   timeSeriesFromFile <- CohortDiagnostics::getResultsFromTimeSeries(
     dataSource = dataSourcePreMergedFile,
