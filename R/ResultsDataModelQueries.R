@@ -567,7 +567,6 @@ getResultsFromConcept <- function(dataSource = .GlobalEnv,
       renderTranslateQuerySql(
         connection = dataSource$connection,
         sql = sql,
-        concept_ids = conceptIds,
         snakeCaseToCamelCase = TRUE
       )
   }

@@ -241,7 +241,7 @@ test_that("Retrieve results from premerged file", {
 test_that("Create and upload results to results data model", {
   skip_if_not(runDatabaseTests)
   
-  createResultsDataModel(connectionDetails = connectionDetails, schema = cohortDiagnosticsSchema)
+  CohortDiagnostics::createResultsDataModel(connectionDetails = connectionDetails, schema = cohortDiagnosticsSchema)
   
   listOfZipFilesToUpload <-
     list.files(
@@ -252,7 +252,7 @@ test_that("Create and upload results to results data model", {
     )
   
   for (i in (1:length(listOfZipFilesToUpload))) {
-    uploadResults(
+    CohortDiagnostics::uploadResults(
       connectionDetails = connectionDetails,
       schema = cohortDiagnosticsSchema,
       zipFileName = listOfZipFilesToUpload[[i]]
@@ -283,7 +283,7 @@ test_that("Retrieve results from remote database", {
     databaseIds = 'cdmV5'
   )
   testthat::expect_true(any(is.null(timeSeriesFromDb),
-                            nrow(timeSeriesFromDb) >= 0))
+                            length(timeSeriesFromDb) >= 0))
 
   # time distribution
   timeDistributionFromDb <- CohortDiagnostics::getResultsFromTimeDistribution(
@@ -376,7 +376,8 @@ test_that("Retrieve results from remote database", {
   
   cohortOverlapData <- CohortDiagnostics::getCohortOverlapData(
     dataSource = dataSourceDatabase, 
-    cohortIds = c(17492, 17692)
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
   )
   testthat::expect_true(nrow(cohortOverlapData) >= 0) 
 })
