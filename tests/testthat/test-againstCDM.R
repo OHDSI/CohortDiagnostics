@@ -393,20 +393,35 @@ test_that("Data removal works", {
   
   specifications <- getResultsDataModelSpecifications()
   connection <- DatabaseConnector::connect(connectionDetails)
+  
+  dataSourceDatabase <- CohortDiagnostics::createDatabaseDataSource(
+    connection = DatabaseConnector::connect(connectionDetails = connectionDetails),
+    resultsDatabaseSchema = cohortDiagnosticsSchema
+  )
+  
+  cohortTableDataBeforeDelete <- CohortDiagnostics::getResultsFromCohortCount(dataSource = dataSourceDatabase)
+  colnames(cohortTableDataBeforeDelete) <- 
+    CohortDiagnostics:::camelCaseToSnakeCase(colnames(cohortTableDataBeforeDelete))
+  
+  # delete some selected records
+  CohortDiagnostics:::deleteFromServer(
+    connection = connection,
+    schema = cohortDiagnosticsSchema,
+    tableName = 'cohort_count',
+    keyValues = cohortTableDataBeforeDelete[1,]
+  )
+  cohortTableDataAfterDelete <- CohortDiagnostics::getResultsFromCohortCount(dataSource = dataSourceDatabase)
+  
+  testthat::expect_true(nrow(cohortTableDataBeforeDelete) > 
+                          nrow(cohortTableDataAfterDelete))
+  
+  
   for (tableName in unique(specifications$tableName)) {
     primaryKey <- specifications %>%
       dplyr::filter(.data$tableName == !!tableName &
                       .data$primaryKey == "Yes") %>%
       dplyr::select(.data$fieldName) %>%
       dplyr::pull()
-    
-    # delete some selected records
-    CohortDiagnostics:::deleteFromServer(
-      connection = connection,
-      schema = cohortDiagnosticsSchema,
-      tableName = 'cohort',
-      keyValues = c(192671, 201826, 1124300, 1124300)
-    )
     
     if ("database_id" %in% primaryKey) {
       CohortDiagnostics:::deleteAllRecordsForDatabaseId(
