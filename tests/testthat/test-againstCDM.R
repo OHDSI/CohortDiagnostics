@@ -233,7 +233,8 @@ test_that("Cohort diagnostics in incremental mode", {
   
   start <- Sys.time()
   ## Incremental -----
-  # run a subset of diagnostics
+  ### Pos - incremental ----
+  # run a subset of diagnostics and then rerun - check if second run took less time compared to first
   testthat::expect_null(
     CohortDiagnostics::runCohortDiagnostics(
       connectionDetails = connectionDetails,
@@ -269,7 +270,6 @@ test_that("Cohort diagnostics in incremental mode", {
   )))
   
   start <- Sys.time()
-  ### Pos - incremental ----
   # nothing should run, so should be fast
   testthat::expect_null(
     CohortDiagnostics::runCohortDiagnostics(
