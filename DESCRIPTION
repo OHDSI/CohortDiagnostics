@@ -55,7 +55,8 @@ Suggests:
   shinyWidgets,
   testthat,
   withr,
-  zip
+  zip,
+  R.utils
 Remotes:
   ohdsi/Eunomia,
   ohdsi/FeatureExtraction,
