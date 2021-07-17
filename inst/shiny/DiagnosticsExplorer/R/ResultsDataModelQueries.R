@@ -284,10 +284,15 @@ getResultsFromTimeSeries <- function(dataSource,
   if (is.null(data)) {return(NULL)}
   if (nrow(data) == 0) {return(NULL)}
   
-  t1 <- data %>% 
-    dplyr::filter(.data$seriesType == 'T1')
-  t1 <- data %>% 
-    dplyr::filter(.data$seriesType == 'T3')
+  # t1 <- data %>% 
+  #   dplyr::filter(.data$seriesType == 'T1')
+  # t3 <- data %>% 
+  #   dplyr::filter(.data$seriesType == 'T3')
+  # 
+  # if (all(nrow(t1) > 0,
+  #         nrow(t3) > 0)) {
+  #   r1 <- 
+  # }
   
   timeSeriesDescription <- dplyr::tibble(
     seriesType = c('T1', 'T2', 'T3', 'T4', 'T5', 'T6', 
@@ -567,7 +572,6 @@ getResultsFromConcept <- function(dataSource = .GlobalEnv,
       renderTranslateQuerySql(
         connection = dataSource$connection,
         sql = sql,
-        concept_ids = conceptIds,
         snakeCaseToCamelCase = TRUE
       )
   }

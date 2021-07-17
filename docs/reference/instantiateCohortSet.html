@@ -236,11 +236,8 @@ construction to.</p></td>
     <tr>
       <th>cohortToCreateFile</th>
       <td><p>The location of the cohortToCreate file within the package. Is ignored if 
-<code>baseUrl</code> and <code>cohortSetReference</code> have been specified. The
-cohortToCreateFile must be .csv file that is expected to be read into 
-a dataframe object identical to requirements for <code>cohortSetReference</code> argument. 
-This csv file is expected to be encoded in either ASCII or UTF-8, if not, an 
-error message will be displayed and process stopped.</p></td>
+<code>baseUrl</code> and <code>cohortSetReference</code> have been specified (i.e. webapi mode 
+takes precedence).</p></td>
     </tr>
     <tr>
       <th>baseUrl</th>
@@ -284,20 +281,30 @@ of which definition has been executed.</p></td>
     <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
 
     <p>Currently two ways of executing this function are supported, either 
-(1) [Package Mode] embedded in a study package, assuming the cohort definitions are stored in that package using the <code><a href='https://ohdsi.github.io/ROhdsiWebApi/reference/insertCohortDefinitionSetInPackage.html'>ROhdsiWebApi::insertCohortDefinitionSetInPackage</a></code>, or 
-(2) [WebApi Mode] By using a WebApi interface to retrieve the cohort definitions.</p>
+(1) [Package Mode] embedded in a study package, e.g. by hydrating a the <code>SkeletonCohortDiagnosticsStudy</code> package using <code><a href='https://ohdsi.github.io/Hydra/reference/hydrate.html'>Hydra::hydrate</a></code> or 
+     inserting cohort specifications using <code><a href='https://ohdsi.github.io/ROhdsiWebApi/reference/insertCohortDefinitionSetInPackage.html'>ROhdsiWebApi::insertCohortDefinitionSetInPackage</a></code>, or 
+(2) [WebApi Mode] By using a WebApi interface to retrieve the cohort definitions. Note: WebAPi mode takes precedence over package mode.</p>
+<p>Structure of <code>cohortSetReference</code> or <code>cohortToCreateFile</code></p><dl>
+<dt>cohortId</dt><dd><p>(required) The cohort Id in Atlas for the cohort you want to diagnose.</p></dd>
+<dt>cohortName</dt><dd><p>(optional) The full name of the cohort. This will be shown in the Shiny app. If not provided, the 
+ name used in Atlas will be displayed.</p></dd>
+
+</dl>
+
+<p>In addition - <code>cohortToCreateFile</code> is able to accept additional optional columns</p><dl>
+<dt>metaData</dt><dd><p>(optional) A JSON with metadata of the cohort that you would like to provided. 
+Logic description may be a metadata object. Other types of metadata objects may include project code, author, version, key words etc.</p></dd>
+
+</dl>
+ 
 <p>When using this function in Package Mode: Use the <code>packageName</code> and <code>cohortToCreateFile</code> to specify
 the name of the study package, and the name of the cohortToCreate file within that package, respectively</p>
 <p>When using this function in WebApi Mode: use the <code>baseUrl</code> and <code>cohortSetReference</code> to specify how to 
 connect to the WebApi, and which cohorts to fetch, respectively.</p>
-<p>Note: if the parameters for both Package Mode and WebApi Mode are provided, then Package mode is preferred.</p>
-<p>The <code>cohortSetReference</code> argument must be a data frame with  the following columns:</p><dl>
-<dt>cohortId</dt><dd><p>(required) The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names. It is recommended to be (referentConceptId * 1000) + a number between 3 to 999</p></dd>
-<dt>cohortName</dt><dd><p>(required) The full name of the cohort. This will be shown in the Shiny app.</p></dd>
-<dt>logicDescription</dt><dd><p>(optional) A human understandable brief description of the cohort definition. This logic does not have to a 
-fully specified description of the cohort definition, but should provide enough context to help user understand the
-meaning of the cohort definition</p></dd>
-<dt>metaData</dt><dd><p>(optional) A JSON with metadata of the cohort that you would like to provided. At this time these pairs are used: referentConceptId, tags, projectCode</p></dd>
+<p>The <code>cohortSetReference</code> argument maybe a vector of atlas ids or it maybe a data frame object. 
+If <code>cohortSetReference</code> is a data frame object:</p><dl>
+<dt>cohortId</dt><dd><p>(required) The cohort Id in Atlas for the cohort you want to diagnose.</p></dd>
+<dt>cohortName</dt><dd><p>(optional) The full name of the cohort. This will be shown in the Shiny app. If not provided, the cohort id will be displayed.</p></dd>
 
 </dl>
 
