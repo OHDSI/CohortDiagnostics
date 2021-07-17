@@ -37,7 +37,7 @@ test_that("Cohort instantiation", {
     )
   )
   ### Neg - bad cohort ----
-  testthat::expect_error(
+  testthat::expect_error(suppressWarnings(
     CohortDiagnostics::instantiateCohortSet(
       connectionDetails = connectionDetails,
       cdmDatabaseSchema = cdmDatabaseSchema,
@@ -52,7 +52,7 @@ test_that("Cohort instantiation", {
       createCohortTable = TRUE,
       inclusionStatisticsFolder = file.path(folder, "incStats")
     )
-  )
+  ))
   ### Pos - good one cohort, will create cohort table, instantiate not incremental ----
   testthat::expect_null(
     CohortDiagnostics::instantiateCohortSet(
@@ -131,7 +131,7 @@ test_that("Cohort instantiation", {
                                                        sql = sqlCount,
                                                        cohort_database_schema = cohortDatabaseSchema,
                                                        cohort_table = cohortTable)
-  testthat::expect_gte(count$COUNT, 0)
+  testthat::expect_gte(count3$COUNT, 830)
   
   ## Incremental mode ----
   testthat::expect_null(
@@ -168,14 +168,14 @@ test_that("Cohort instantiation", {
 
 
 
-test_that("Cohort diagnostics in not in incremental mode", {
+test_that("Testing Cohort diagnostics when not in incremental mode", {
   skip_if_not(runDatabaseTests)
   
   start <- Sys.time()
   # Cohort Diagnostics -----
   ## Not incremental -----
   ### Neg - bad cohort -----
-  testthat::expect_error(
+  testthat::expect_error(suppressWarnings(
     CohortDiagnostics::runCohortDiagnostics(
       connectionDetails = connectionDetails,
       cdmDatabaseSchema = "eunomia",
@@ -203,10 +203,10 @@ test_that("Cohort diagnostics in not in incremental mode", {
       cohortIds = -23423,
       incrementalFolder = file.path(folder, "incremental")
     )
-  )
+  ))
   
   ### Pos - one cohort -----
-  testthat::expect_null(
+  testthat::expect_null(suppressWarnings(
     CohortDiagnostics::runCohortDiagnostics(
       connectionDetails = connectionDetails,
       cdmDatabaseSchema = "eunomia",
@@ -234,9 +234,9 @@ test_that("Cohort diagnostics in not in incremental mode", {
       cohortIds = 18348,
       incrementalFolder = file.path(folder, "incremental")
     )
-  )
+  ))
   ### Pos - generate premerged file ----
-  CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = file.path(folder, "export"))
+  testthat::expect_null(suppressWarnings(CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = file.path(folder, "export"))))
   testthat::expect_true(file.exists(file.path(folder, "export", "PreMerged.RData")))
   unlink(file.path(folder, "export", "PreMerged.RData"))
 })
@@ -252,7 +252,7 @@ test_that("Cohort diagnostics in incremental mode", {
   ## Incremental -----
   ### Pos - incremental ----
   # run a subset of diagnostics and then rerun - check if second run took less time compared to first
-  testthat::expect_null(
+  testthat::expect_null(suppressWarnings(
     CohortDiagnostics::runCohortDiagnostics(
       connectionDetails = connectionDetails,
       cdmDatabaseSchema = "eunomia",
@@ -279,7 +279,7 @@ test_that("Cohort diagnostics in incremental mode", {
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental")
     )
-  )
+  ))
   timeToRunFirstTime <- Sys.time() - start
   
   testthat::expect_true(file.exists(file.path(
@@ -288,7 +288,7 @@ test_that("Cohort diagnostics in incremental mode", {
   
   start <- Sys.time()
   # nothing should run, so should be fast
-  testthat::expect_null(
+  testthat::expect_null(suppressWarnings(
     CohortDiagnostics::runCohortDiagnostics(
       connectionDetails = connectionDetails,
       cdmDatabaseSchema = "eunomia",
@@ -315,13 +315,13 @@ test_that("Cohort diagnostics in incremental mode", {
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental")
     )
-  )
+  ))
   #because its faster than first run - it should take less time
   timeToRunSecondTime <- Sys.time() - start
   testthat::expect_true(timeToRunFirstTime > timeToRunSecondTime)
   
   ### rest of diagnostics ----
-  CohortDiagnostics::runCohortDiagnostics(
+  testthat::expect_null(suppressWarnings(CohortDiagnostics::runCohortDiagnostics(
     connectionDetails = connectionDetails,
     cdmDatabaseSchema = "eunomia",
     vocabularyDatabaseSchema = "eunomia",
@@ -346,14 +346,15 @@ test_that("Cohort diagnostics in incremental mode", {
     runTemporalCohortCharacterization = TRUE,
     incremental = TRUE,
     incrementalFolder = file.path(folder, "incremental")
-  )
+  )))
   
   ## Premerge file ----
   ### Neg - test - no zip file ----
   testthat::expect_error(CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = tempdir()))
   
   ### Pos - generate premerged file ----
-  CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = file.path(folder, "export"))
+  testthat::expect_null(suppresswarnings(
+    CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = file.path(folder, "export"))))
   testthat::expect_true(file.exists(file.path(folder, "export", "PreMerged.RData")))
 })
 
