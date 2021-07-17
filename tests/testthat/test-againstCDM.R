@@ -2,13 +2,17 @@ library(testthat)
 library(CohortDiagnostics)
 
 # Clean up ----
-tryCatch(DatabaseConnector::renderTranslateExecuteSql(connection = DatabaseConnector::connect(connectionDetails = connectionDetails),
-                                                      "DROP TABLE @cohort_database_schema.@cohort_table CASCADE",
-                                                      cohort_database_schema = cohortDatabaseSchema,
-                                                      cohort_table = cohortTable, 
-                                                      progressBar = FALSE, 
-                                                      reportOverallTime = FALSE),
-         error = function(e) {})
+if (runDatabaseTests) {
+  tryCatch(DatabaseConnector::renderTranslateExecuteSql(connection = DatabaseConnector::connect(connectionDetails = connectionDetails),
+                                                        "DROP TABLE @cohort_database_schema.@cohort_table CASCADE",
+                                                        cohort_database_schema = cohortDatabaseSchema,
+                                                        cohort_table = cohortTable, 
+                                                        progressBar = FALSE, 
+                                                        reportOverallTime = FALSE),
+           error = function(e) {})
+  filesToDelete <- list.files(file.path(folder, "incremental"), full.names = TRUE, recursive = FALSE)
+  invisible(lapply(filesToDelete, unlink, force = TRUE))
+}
 
 # Cohort Instantiation tests ----
 test_that("Cohort instantiation", {
@@ -69,12 +73,12 @@ test_that("Cohort instantiation", {
   
   ### Pos - Expect cohort count ----
   # Expect cohortId 18348 to have 830 records
-  sql <- "SELECT COUNT(*) FROM @cohort_database_schema.@cohort_table;"
-  count <- CohortDiagnostics:::renderTranslateQuerySql(connectionDetails = connectionDetails,
-                                                       sql = sql,
+  sqlCount <- "SELECT COUNT(*) FROM @cohort_database_schema.@cohort_table where cohort_definition_id = 18348;"
+  count1 <- CohortDiagnostics:::renderTranslateQuerySql(connectionDetails = connectionDetails,
+                                                       sql = sqlCount,
                                                        cohort_database_schema = cohortDatabaseSchema,
                                                        cohort_table = cohortTable)
-  testthat::expect_equal(count$COUNT, 830)
+  testthat::expect_equal(count1$COUNT, 830)
   
   ### Pos - check cohort instantiated ----
   testthat::expect_true(CohortDiagnostics:::checkIfCohortInstantiated(connectionDetails = connectionDetails,
@@ -91,11 +95,16 @@ test_that("Cohort instantiation", {
   
   ### Pos - should re run ----
   # delete from cohort table, and repopulate. should have 830 again
-  sql <- "DELETE FROM @cohort_database_schema.@cohort_table WHERE SUBJECT_ID < 1000;"
+  sqlDelete <- "DELETE FROM @cohort_database_schema.@cohort_table WHERE cohort_definition_id = 18348 and subject_id < 1000;"
   DatabaseConnector::renderTranslateExecuteSql(connection = DatabaseConnector::connect(connectionDetails),
                                                sql = sql,
                                                cohort_database_schema = cohortDatabaseSchema,
                                                cohort_table = cohortTable)
+  count2 <- CohortDiagnostics:::renderTranslateQuerySql(connectionDetails = connectionDetails,
+                                                        sql = sqlCount,
+                                                        cohort_database_schema = cohortDatabaseSchema,
+                                                        cohort_table = cohortTable)
+  testthat::expect_true(count1$COUNT > count2$COUNT)
   
   CohortDiagnostics::instantiateCohortSet(
     connectionDetails = connectionDetails,
@@ -114,9 +123,8 @@ test_that("Cohort instantiation", {
     inclusionStatisticsFolder = file.path(folder, "incStats")
   )
   # Expect cohortId 18348 to have 830 records
-  sql <- "SELECT COUNT(*) FROM @cohort_database_schema.@cohort_table;"
-  count <- CohortDiagnostics:::renderTranslateQuerySql(connectionDetails = connectionDetails,
-                                                       sql = sql,
+  count3 <- CohortDiagnostics:::renderTranslateQuerySql(connectionDetails = connectionDetails,
+                                                       sql = sqlCount,
                                                        cohort_database_schema = cohortDatabaseSchema,
                                                        cohort_table = cohortTable)
   testthat::expect_equal(count$COUNT, 830)
