@@ -235,7 +235,7 @@ runCohortRelationshipDiagnostics <-
     
     delta <- Sys.time() - startTime
     ParallelLogger::logInfo(paste(
-      "Computing cohort temporal relationship took",
+      "Computing cohort relationship took",
       signif(delta, 3),
       attr(delta, "units")
     ))

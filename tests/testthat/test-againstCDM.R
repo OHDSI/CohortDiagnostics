@@ -287,7 +287,7 @@ test_that("Cohort diagnostics in incremental mode", {
   )))
   
   start <- Sys.time()
-  # nothing should run, so should be fast
+  # while in incremental mode: nothing should run during second run, so should be faster than first run
   testthat::expect_null(suppressWarnings(
     CohortDiagnostics::runCohortDiagnostics(
       connectionDetails = connectionDetails,
@@ -316,7 +316,7 @@ test_that("Cohort diagnostics in incremental mode", {
       incrementalFolder = file.path(folder, "incremental")
     )
   ))
-  #because its faster than first run - it should take less time
+  #because second run is faster than first run - it should take less time
   timeToRunSecondTime <- Sys.time() - start
   testthat::expect_true(timeToRunFirstTime > timeToRunSecondTime)
   
@@ -350,10 +350,10 @@ test_that("Cohort diagnostics in incremental mode", {
   
   ## Premerge file ----
   ### Neg - test - no zip file ----
-  testthat::expect_error(CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = tempdir()))
+  testthat::expect_error(CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = file.path(tempdir(), 'random')))
   
   ### Pos - generate premerged file ----
-  testthat::expect_null(suppresswarnings(
+  testthat::expect_null(suppressWarnings(
     CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = file.path(folder, "export"))))
   testthat::expect_true(file.exists(file.path(folder, "export", "PreMerged.RData")))
 })
