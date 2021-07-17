@@ -77,11 +77,11 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
   sqlCount <- "SELECT cohort_definition_id, COUNT(*) count FROM @cohort_database_schema.@cohort_table 
                {@cohort_ids != ''} ? { where cohort_definition_id IN (@cohort_ids)}
                GROUP BY cohort_definition_id;"
-  cohortCount <- CohortDiagnostics:::renderTranslateQuerySql(connection = connection,
-                                                             sql = sqlCount,
-                                                             cohort_database_schema = cohortDatabaseSchema,
-                                                             cohort_ids = cohortIds,
-                                                             cohort_table = cohortTable)
+  cohortCount <- renderTranslateQuerySql(connection = connection,
+                                         sql = sqlCount,
+                                         cohort_database_schema = cohortDatabaseSchema,
+                                         cohort_ids = cohortIds,
+                                         cohort_table = cohortTable)
   if (nrow(cohortCount) == 0) {
     warning("Please check if cohorts are instantiated. Exiting cohort time series.")
     return(NULL)

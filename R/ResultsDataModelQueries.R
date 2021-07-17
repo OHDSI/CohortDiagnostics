@@ -281,8 +281,7 @@ getResultsFromTimeSeries <- function(dataSource,
     databaseIds = databaseIds,
     dataTableName = "timeSeries"
   )
-  if (is.null(data)) {return(NULL)}
-  if (nrow(data) == 0) {return(NULL)}
+  if (any(is.null(data), nrow(data) == 0)) {return(NULL)}
   
   # t1 <- data %>% 
   #   dplyr::filter(.data$seriesType == 'T1')

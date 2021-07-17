@@ -450,7 +450,7 @@ test_that("Negative tests on individual functions", {
 })
 
 
-
+# Premerge Data model results tests ----
 test_that("Retrieve results from premerged file", {
   skip_if_not(runDatabaseTests)
   
@@ -458,6 +458,8 @@ test_that("Retrieve results from premerged file", {
     premergedDataFile = file.path(folder, "export", "PreMerged.RData")
   )
   
+  ## Cohort Count ----
+  #### Pos ----
   cohortCountFromFile <- CohortDiagnostics::getResultsFromCohortCount(
     dataSource = dataSourcePreMergedFile,
     cohortIds = c(14906, 14907, 14909, 17492, 17493, 18342, 
@@ -465,7 +467,15 @@ test_that("Retrieve results from premerged file", {
     databaseIds = 'cdmV5'
   )
   testthat::expect_true(nrow(cohortCountFromFile) > 0)
+  #### Neg ----
+  testthat::expect_null(CohortDiagnostics::getResultsFromCohortCount(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = c(-11111),
+    databaseIds = 'cdmV5'
+  ))
   
+  ## Time series ----
+  #### Pos ----
   timeSeriesFromFile <- CohortDiagnostics::getResultsFromTimeSeries(
     dataSource = dataSourcePreMergedFile,
     cohortIds = c(17492, 17692),
@@ -473,77 +483,146 @@ test_that("Retrieve results from premerged file", {
   )
   testthat::expect_true(any(is.null(timeSeriesFromFile),
                             length(timeSeriesFromFile) >= 0))
-  
-  timeSeriesFromFile <- CohortDiagnostics::getResultsFromTimeSeries(
-    dataSource = dataSourcePreMergedFile,
-    cohortIds = c(-1111),
-    databaseIds = 'cdmV5'
-  )
-  testthat::expect_true(any(is.null(timeSeriesFromFile),
-                            length(timeSeriesFromFile) >= 0))
-  
-  timeSeriesFromFile <- CohortDiagnostics::getResultsFromTimeSeries(
+  timeSeriesFromFile2 <- CohortDiagnostics::getResultsFromTimeSeries(
     dataSource = dataSourcePreMergedFile,
     databaseIds = 'cdmV5'
   )
-  testthat::expect_true(any(is.null(timeSeriesFromFile),
-                            length(timeSeriesFromFile) >= 0))
-  if (length(timeSeriesFromFile) > 0) {
-    testthat::expect_true(nrow(timeSeriesFromFile$y) > 0)
-  }
+  testthat::expect_true(any(is.null(timeSeriesFromFile2),
+                            length(timeSeriesFromFile2) >= 0))
+  #### Neg ----
+  testthat::expect_null(CohortDiagnostics::getResultsFromTimeSeries(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = -11111,
+    databaseIds = 'cdmV5d'
+  ))
   
+  ## Time Distribution ----
+  #### Pos ----
   timeDistributionFromFile <- CohortDiagnostics::getResultsFromTimeDistribution(
     dataSource = dataSourcePreMergedFile,
     cohortIds = c(17492, 17692),
     databaseIds = 'cdmV5'
   )
   testthat::expect_true(nrow(timeDistributionFromFile) >= 0)
-  
-  timeDistributionFromFile <- CohortDiagnostics::getResultsFromTimeDistribution(
+  #### Pos ----
+  testthat::expect_null(CohortDiagnostics::getResultsFromTimeDistribution(
     dataSource = dataSourcePreMergedFile,
-    databaseIds = 'cdmV5'
-  )
-  testthat::expect_true(nrow(timeDistributionFromFile) >= 0)
+    cohortIds = -11111,
+    databaseIds = 'cdmV5d'
+  ))
   
+  ## Incidence rate ----
+  #### Pos ----
   incidenceRateFromFile <- CohortDiagnostics::getResultsFromIncidenceRate(
     dataSource = dataSourcePreMergedFile,
     cohortIds = c(17492, 17692),
     databaseIds = 'cdmV5'
   )
-  testthat::expect_true(nrow(incidenceRateFromFile) >= 0) # no data in eunomia
-  
+  testthat::expect_true(any(is.null(incidenceRateFromFile),
+                            nrow(incidenceRateFromFile) >= 0)) # no data in eunomia
+  incidenceRateFromFile2 <- CohortDiagnostics::getResultsFromIncidenceRate(
+    dataSource = dataSourcePreMergedFile,
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(any(is.null(incidenceRateFromFile2),
+                            nrow(incidenceRateFromFile2) >= 0)) # no data in eunomia
   incidenceRateFromFile <- CohortDiagnostics::getResultsFromIncidenceRate(
     dataSource = dataSourcePreMergedFile,
     databaseIds = 'cdmV5'
   )
   testthat::expect_true(nrow(incidenceRateFromFile) >= 0) # no data in eunomia
+  #### Neg ----
+  testthat::expect_null(CohortDiagnostics::getResultsFromIncidenceRate(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = -11111,
+    databaseIds = 'cdmV5'
+  ))
   
+  ## Inclusion rules ----
+  #### Pos ----
   inclusionRulesFromFile <- CohortDiagnostics::getResultsFromInclusionRuleStatistics(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = 18348,
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(nrow(inclusionRulesFromFile) >= 0)
+  inclusionRulesFromFile2 <- CohortDiagnostics::getResultsFromInclusionRuleStatistics(
     dataSource = dataSourcePreMergedFile
   )
-  testthat::expect_true(any(is.null(inclusionRulesFromFile), 
-                            nrow(inclusionRulesFromFile) >= 0))
+  testthat::expect_true(nrow(inclusionRulesFromFile2) >= 0)
+  #### Neg ----
+  testthat::expect_null(CohortDiagnostics::getResultsFromInclusionRuleStatistics(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = -1111,
+    databaseIds = 'cdmV5'
+  ))
   
+  ## Index event breakdown ----
+  #### Pos ----
   indexEventBreakdownFromFile <- CohortDiagnostics::getResultsFromIndexEventBreakdown(
-    dataSource = dataSourcePreMergedFile
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = 18348,
+    databaseIds = 'cdmV5'
   )
   testthat::expect_true(nrow(indexEventBreakdownFromFile) >= 0)
-  
-  visitContextFromFile <- CohortDiagnostics::getResultsFromVisitContext(
+  indexEventBreakdownFromFile2 <- CohortDiagnostics::getResultsFromIndexEventBreakdown(
     dataSource = dataSourcePreMergedFile
   )
-  testthat::expect_true(nrow(visitContextFromFile) >= 0)
+  testthat::expect_true(nrow(indexEventBreakdownFromFile2) >= 0)
+  #### Neg ----
+  testthat::expect_null(CohortDiagnostics::getResultsFromIndexEventBreakdown(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = -1111,
+    databaseIds = 'cdmV5'
+  ))
   
+  ## Visit context ----
+  #### Pos ----
+  visitContextFromFile <- CohortDiagnostics::getResultsFromVisitContext(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = 18348,
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(nrow(visitContextFromFile) >= 0)
+  visitContextFromFile2 <- CohortDiagnostics::getResultsFromVisitContext(
+    dataSource = dataSourcePreMergedFile
+  )
+  testthat::expect_true(nrow(visitContextFromFile2) >= 0)
+  #### Neg ----
+  testthat::expect_null(CohortDiagnostics::getResultsFromVisitContext(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = -1111,
+    databaseIds = 'cdmV5'
+  ))
+  
+  ## Included concept ----
+  #### Pos ----
+  includedConceptFromFile <- CohortDiagnostics::getResultsFromIncludedConcept(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = 18348,
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(nrow(includedConceptFromFile) >= 0)
   includedConceptFromFile <- CohortDiagnostics::getResultsFromIncludedConcept(
     dataSource = dataSourcePreMergedFile
   )
   testthat::expect_true(nrow(includedConceptFromFile) >= 0)
+  #### Neg ----
+  testthat::expect_null(CohortDiagnostics::getResultsFromIncludedConcept(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = -1111,
+    databaseIds = 'cdmV5'
+  ))
   
+  ## Orphan concept ----
+  #### Pos ----
   orphanConceptFromFile <- CohortDiagnostics::getResultsFromOrphanConcept(
     dataSource = dataSourcePreMergedFile
   )
   testthat::expect_true(nrow(orphanConceptFromFile) >= 0)
   
+  
+  #### Pos ----
   conceptIdDetails <- CohortDiagnostics::getResultsFromConcept(
     dataSource = dataSourcePreMergedFile,
     conceptIds = c(192671, 201826, 1124300, 1124300)
@@ -558,29 +637,38 @@ test_that("Retrieve results from premerged file", {
   ))
   testthat::expect_true(nrow(conceptIdDetails) >= 0)
   
+  ## Resolved concept ----
+  #### Pos ----
   resolvedMappedConceptSet <- CohortDiagnostics::getResultsResolveMappedConceptSet(
     dataSource = dataSourcePreMergedFile
   )
   testthat::expect_true(nrow(resolvedMappedConceptSet$resolved) >= 0)
   testthat::expect_true(nrow(resolvedMappedConceptSet$mapped) >= 0)
   
+  ## Calendar incidence ----
   # Table does not exist in results, is not generated in Eunomia?
   calendarIncidence <- CohortDiagnostics::getResultsFromCalendarIncidence(
     dataSource = dataSourcePreMergedFile
   )
   testthat::expect_true(any(is.null(calendarIncidence), nrow(calendarIncidence) >= 0))
   
+  ## Cohort Relationship ----
+  #### Pos ----
   cohortRelationships <- CohortDiagnostics::getResultsFromCohortRelationships(
     dataSource = dataSourcePreMergedFile
   )
   testthat::expect_true(nrow(cohortRelationships) >= 0)
   
+  
+  #### Pos ----
   # Table does not exist in results, so this is throwing an error
   cohortCharacterizationResults <- CohortDiagnostics::getMultipleCharacterizationResults(
     dataSource = dataSourcePreMergedFile
   )
   testthat::expect_true(length(cohortCharacterizationResults) >= 0)
   
+  
+  #### Pos ----
   cohortOverlapData <- CohortDiagnostics::getCohortOverlapData(
     dataSource = dataSourcePreMergedFile, 
     cohortIds = c(17492, 18342),
