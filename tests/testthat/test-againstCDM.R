@@ -542,7 +542,7 @@ test_that("Retrieve results from premerged file", {
   #### Pos ----
   inclusionRulesFromFile <- CohortDiagnostics::getResultsFromInclusionRuleStatistics(
     dataSource = dataSourcePreMergedFile,
-    cohortIds = 18348,
+    cohortIds = 18350,
     databaseIds = 'cdmV5'
   )
   testthat::expect_true(nrow(inclusionRulesFromFile) >= 0)
@@ -617,33 +617,51 @@ test_that("Retrieve results from premerged file", {
   ## Orphan concept ----
   #### Pos ----
   orphanConceptFromFile <- CohortDiagnostics::getResultsFromOrphanConcept(
-    dataSource = dataSourcePreMergedFile
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = 18348,
+    databaseIds = 'cdmV5'
   )
   testthat::expect_true(nrow(orphanConceptFromFile) >= 0)
+  orphanConceptFromFile2 <- CohortDiagnostics::getResultsFromOrphanConcept(
+    dataSource = dataSourcePreMergedFile
+  )
+  testthat::expect_true(nrow(orphanConceptFromFile2) >= 0)
   
-  
+  ## Concept id details ----
   #### Pos ----
   conceptIdDetails <- CohortDiagnostics::getResultsFromConcept(
     dataSource = dataSourcePreMergedFile,
     conceptIds = c(192671, 201826, 1124300, 1124300)
   )
   testthat::expect_true(nrow(conceptIdDetails) >= 0)
-  
-  # should provide warning
-  conceptIdDetailsV <- suppressWarnings(CohortDiagnostics::getResultsFromConcept(
+  # should throw warning
+  conceptIdDetails <- suppressWarnings(CohortDiagnostics::getResultsFromConcept(
     dataSource = dataSourcePreMergedFile,
-    conceptIds = c(192671, 201826, 1124300, 1124300),
-    vocabularyDatabaseSchema = 'vocabulary'
+    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+    conceptIds = c(192671, 201826, 1124300, 1124300)
   ))
   testthat::expect_true(nrow(conceptIdDetails) >= 0)
+  #### Neg ----
+  testthat::expect_null(conceptIdDetails <- suppressWarnings(CohortDiagnostics::getResultsFromConcept(
+    dataSource = dataSourcePreMergedFile,
+    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+    conceptIds = c(-1111)
+  )))
   
   ## Resolved concept ----
   #### Pos ----
   resolvedMappedConceptSet <- CohortDiagnostics::getResultsResolveMappedConceptSet(
-    dataSource = dataSourcePreMergedFile
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = 18348,
+    databaseIds = 'cdmV5'
   )
   testthat::expect_true(nrow(resolvedMappedConceptSet$resolved) >= 0)
-  testthat::expect_true(nrow(resolvedMappedConceptSet$mapped) >= 0)
+  testthat::expect_null(resolvedMappedConceptSet$mapped)
+  resolvedMappedConceptSet2 <- CohortDiagnostics::getResultsResolveMappedConceptSet(
+    dataSource = dataSourcePreMergedFile
+  )
+  testthat::expect_true(nrow(resolvedMappedConceptSet2$resolved) >= 0)
+  testthat::expect_true(nrow(resolvedMappedConceptSet2$mapped) >= 0)
   
   ## Calendar incidence ----
   # Table does not exist in results, is not generated in Eunomia?
