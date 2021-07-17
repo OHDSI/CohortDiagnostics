@@ -370,6 +370,18 @@ test_that("Negative tests on individual functions", {
                                                                                 tempEmulationSchema = tempEmulationSchema,
                                                                                 cohortDatabaseSchema = cohortDatabaseSchema,
                                                                                 cohortTable = cohortTable))
+  ## Cohort relationship  ----
+  testthat::expect_null(CohortDiagnostics::runCohortRelationshipDiagnostics(connectionDetails = connectionDetails,
+                                                                            tempEmulationSchema = tempEmulationSchema,
+                                                                            cohortDatabaseSchema = cohortDatabaseSchema,
+                                                                            cohortTable = cohortTable,
+                                                                            targetCohortIds = -1111,
+                                                                            comparatorCohortIds = -1111))
+  testthat::expect_null(CohortDiagnostics::runCohortCharacterizationDiagnostics(connectionDetails = connectionDetails,
+                                                                                cdmDatabaseSchema = cdmDatabaseSchema,
+                                                                                tempEmulationSchema = tempEmulationSchema,
+                                                                                cohortDatabaseSchema = cohortDatabaseSchema,
+                                                                                cohortTable = cohortTable))
 })
 
 
