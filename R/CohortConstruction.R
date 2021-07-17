@@ -322,9 +322,7 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
       simplifyInclusionStats(
         inclusion = filter(inclusion, .data$cohortDefinitionId == cohortId),
         inclusionResults = filter(inclusionResults, .data$cohortDefinitionId == cohortId),
-        inclusionStats = filter(inclusionStats, .data$cohortDefinitionId == cohortId),
-        summaryStats = filter(summaryStats, .data$cohortDefinitionId == cohortId),
-        simplify = simplify
+        inclusionStats = filter(inclusionStats, .data$cohortDefinitionId == cohortId)
       )
     cohortResult$cohortDefinitionId <- cohortId
     result <- dplyr::bind_rows(result, cohortResult)
@@ -346,8 +344,7 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
 
 simplifyInclusionStats <- function(inclusion,
                                   inclusionResults,
-                                  inclusionStats,
-                                  summaryStats) {
+                                  inclusionStats) {
     if (nrow(inclusion) == 0 || nrow(inclusionStats) == 0) {return(dplyr::tibble())}
     
     result <- inclusion %>%

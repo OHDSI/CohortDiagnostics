@@ -180,9 +180,6 @@ Structure of \code{cohortSetReference} or \code{cohortToCreateFile}
 
 In addition - \code{cohortToCreateFile} is able to accept additional optional columns
 \describe{
-\item{cohortId}{(required) The cohort Id in Atlas for the cohort you want to diagnose.}
-\item{cohortName}{(optional) The full name of the cohort. This will be shown in the Shiny app. If not provided, the 
- name used in Atlas will be displayed.}
 \item{metaData}{(optional) A JSON with metadata of the cohort that you would like to provided. 
 Logic description may be a metadata object. Other types of metadata objects may include project code, author, version, key words etc.}
 }
