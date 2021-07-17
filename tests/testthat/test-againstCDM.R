@@ -108,23 +108,25 @@ test_that("Cohort instantiation", {
                                                         cohort_table = cohortTable)
   testthat::expect_true(count1$COUNT > count2$COUNT)
   
-  CohortDiagnostics::instantiateCohortSet(
-    connectionDetails = connectionDetails,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    tempEmulationSchema = tempEmulationSchema,
-    cohortDatabaseSchema = cohortDatabaseSchema,
-    cohortTable = cohortTable,
-    cohortIds = 18348,
-    packageName = "CohortDiagnostics",
-    cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
-    generateInclusionStats = TRUE,
-    createCohortTable = TRUE,
-    incremental = TRUE,
-    incrementalFolder = file.path(folder, "incremental"),
-    inclusionStatisticsFolder = file.path(folder, "incStats")
+  testthat::expect_null(
+    CohortDiagnostics::instantiateCohortSet(
+      connectionDetails = connectionDetails,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTable,
+      cohortIds = 18348,
+      packageName = "CohortDiagnostics",
+      cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+      generateInclusionStats = TRUE,
+      createCohortTable = TRUE,
+      incremental = TRUE,
+      incrementalFolder = file.path(folder, "incremental"),
+      inclusionStatisticsFolder = file.path(folder, "incStats")
+    )
   )
-
+  
   count3 <- CohortDiagnostics:::renderTranslateQuerySql(connectionDetails = connectionDetails,
                                                        sql = sqlCount,
                                                        cohort_database_schema = cohortDatabaseSchema,
@@ -132,20 +134,22 @@ test_that("Cohort instantiation", {
   testthat::expect_gte(count$COUNT, 0)
   
   ## Incremental mode ----
-  CohortDiagnostics::instantiateCohortSet(
-    connectionDetails = connectionDetails,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    tempEmulationSchema = tempEmulationSchema,
-    cohortDatabaseSchema = cohortDatabaseSchema,
-    cohortTable = cohortTable,
-    packageName = "CohortDiagnostics",
-    cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
-    generateInclusionStats = TRUE,
-    createCohortTable = TRUE,
-    incremental = TRUE,
-    incrementalFolder = file.path(folder, "incremental"),
-    inclusionStatisticsFolder = file.path(folder, "incStats")
+  testthat::expect_null(
+    CohortDiagnostics::instantiateCohortSet(
+      connectionDetails = connectionDetails,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTable,
+      packageName = "CohortDiagnostics",
+      cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+      generateInclusionStats = TRUE,
+      createCohortTable = TRUE,
+      incremental = TRUE,
+      incrementalFolder = file.path(folder, "incremental"),
+      inclusionStatisticsFolder = file.path(folder, "incStats")
+    )
   )
   
   connection <- DatabaseConnector::connect(connectionDetails)
