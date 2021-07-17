@@ -229,7 +229,10 @@ test_that("Cohort diagnostics in not in incremental mode", {
       incrementalFolder = file.path(folder, "incremental")
     )
   )
-  timeToRunFirstTime <- Sys.time() - start
+  ### Pos - generate premerged file ----
+  CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = file.path(folder, "export"))
+  testthat::expect_true(file.exists(file.path(folder, "export", "PreMerged.RData")))
+  unlink(file.path(folder, "export", "PreMerged.RData"))
 })
 
 
