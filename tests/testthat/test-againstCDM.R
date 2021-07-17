@@ -1,6 +1,15 @@
 library(testthat)
 library(CohortDiagnostics)
 
+# Clean up ----
+tryCatch(DatabaseConnector::renderTranslateExecuteSql(connection = DatabaseConnector::connect(connectionDetails = connectionDetails),
+                                                      "DROP TABLE @cohort_database_schema.@cohort_table CASCADE",
+                                                      cohort_database_schema = cohortDatabaseSchema,
+                                                      cohort_table = cohortTable, 
+                                                      progressBar = FALSE, 
+                                                      reportOverallTime = FALSE),
+         error = function(e) {})
+
 # Cohort Instantiation tests ----
 test_that("Cohort instantiation", {
   skip_if_not(runDatabaseTests)
