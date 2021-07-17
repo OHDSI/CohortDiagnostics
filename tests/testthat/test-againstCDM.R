@@ -493,11 +493,11 @@ test_that("Retrieve results from premerged file", {
   testthat::expect_true(nrow(conceptIdDetails) >= 0)
   
   # should provide warning
-  conceptIdDetails <- CohortDiagnostics::getResultsFromConcept(
+  conceptIdDetailsV <- suppressWarnings(CohortDiagnostics::getResultsFromConcept(
     dataSource = dataSourcePreMergedFile,
     conceptIds = c(192671, 201826, 1124300, 1124300),
     vocabularyDatabaseSchema = 'vocabulary'
-  )
+  ))
   testthat::expect_true(nrow(conceptIdDetails) >= 0)
   
   resolvedMappedConceptSet <- CohortDiagnostics::getResultsResolveMappedConceptSet(
@@ -529,7 +529,6 @@ test_that("Retrieve results from premerged file", {
     databaseIds = 'cdmV5'
   )
   testthat::expect_true(nrow(cohortOverlapData) >= 0) 
-  
 })
 
 
@@ -539,8 +538,8 @@ test_that("Retrieve results from premerged file", {
 test_that("Create and upload results to results data model", {
   skip_if_not(runDatabaseTests)
   
-  CohortDiagnostics::createResultsDataModel(connectionDetails = connectionDetails, 
-                                            schema = cohortDiagnosticsSchema)
+  testthat::expect_null(CohortDiagnostics::createResultsDataModel(connectionDetails = connectionDetails, 
+                                            schema = cohortDiagnosticsSchema))
   
   listOfZipFilesToUpload <-
     list.files(
@@ -549,13 +548,16 @@ test_that("Create and upload results to results data model", {
       full.names = TRUE,
       recursive = TRUE
     )
+  testthat::expect_true(length(listOfZipFilesToUpload) >= 0)
   
   for (i in (1:length(listOfZipFilesToUpload))) {
-    CohortDiagnostics::uploadResults(
-      connectionDetails = connectionDetails,
-      schema = cohortDiagnosticsSchema,
-      zipFileName = listOfZipFilesToUpload[[i]]
-    )
+    testthat::expect_null(suppressWarnings(
+      CohortDiagnostics::uploadResults(
+        connectionDetails = connectionDetails,
+        schema = cohortDiagnosticsSchema,
+        zipFileName = listOfZipFilesToUpload[[i]]
+      )
+    ))
   }
 })
 
@@ -587,7 +589,7 @@ test_that("Retrieve results from remote database", {
   # time distribution
   timeDistributionFromDb <- CohortDiagnostics::getResultsFromTimeDistribution(
     dataSource = dataSourceDatabase,
-    cohortIds = c(17492, 17692),
+    cohortIds = c(17492, 18342),
     databaseIds = 'cdmV5'
   )
   testthat::expect_true(nrow(timeDistributionFromDb) >= 0)
