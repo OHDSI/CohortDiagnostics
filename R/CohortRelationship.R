@@ -46,6 +46,11 @@ runCohortRelationshipDiagnostics <-
     startTime <- Sys.time()
     
     if (length(targetCohortIds) == 0) {
+      warning("No target cohort ids specified")
+      return(NULL)
+    }
+    if (length(comparatorCohortIds) == 0) {
+      warning("No comparator cohort ids specified")
       return(NULL)
     }
     if (is.null(connection)) {
@@ -53,35 +58,68 @@ runCohortRelationshipDiagnostics <-
       on.exit(DatabaseConnector::disconnect(connection))
     }
     
-    ParallelLogger::logTrace(" - Creating cohort table subset")
-    cohortSubsetSql <- "IF OBJECT_ID('tempdb..#cohort_subset', 'U') IS NOT NULL
-	                      DROP TABLE #cohort_subset;
+    sqlCount <- "SELECT COUNT(*) FROM @cohort_database_schema.@cohort_table where cohort_definition_id IN (@cohort_ids);"
+    targetCohortCount <- CohortDiagnostics:::renderTranslateQuerySql(connection = connection,
+                                                                     sql = sqlCount,
+                                                                     cohort_database_schema = cohortDatabaseSchema,
+                                                                     cohort_table = cohortTable,
+                                                                     cohort_ids = targetCohortIds)
+    if (targetCohortCount$COUNT == 0) {
+      warning("Please check if target cohorts are instantiated. Exiting cohort relationship.")
+      return(NULL)
+    }
+    comparatorCohortCount <- CohortDiagnostics:::renderTranslateQuerySql(connection = connection,
+                                                                         sql = sqlCount,
+                                                                         cohort_database_schema = cohortDatabaseSchema,
+                                                                         cohort_table = cohortTable,
+                                                                         cohort_ids = comparatorCohortIds)
+    if (comparatorCohortCount$COUNT == 0) {
+      warning("Please check if target cohorts are instantiated. Exiting cohort relationship.")
+      return(NULL)
+    }
+    
+    ParallelLogger::logTrace(" - Creating cohort table subsets")
+    cohortSubsetSql <- "IF OBJECT_ID('tempdb..@subset_cohort_table', 'U') IS NOT NULL
+	                      DROP TABLE @subset_cohort_table;
 	                      
 	                      --HINT DISTRIBUTE_ON_KEY(subject_id)
                         SELECT *
-                        INTO #cohort_subset
+                        INTO @subset_cohort_table
                         FROM @cohort_database_schema.@cohort_table
                         WHERE cohort_definition_id IN (@cohort_ids);"
     
     DatabaseConnector::renderTranslateExecuteSql(connection = connection,
-                                               sql = cohortSubsetSql, 
-                                               cohort_database_schema = cohortDatabaseSchema,
-                                               cohort_table = cohortTable,
-                                               cohort_ids = c(targetCohortIds,comparatorCohortIds) %>% unique(), 
-                                               progressBar = FALSE, 
-                                               reportOverallTime = FALSE)
+                                                 sql = cohortSubsetSql, 
+                                                 cohort_database_schema = cohortDatabaseSchema,
+                                                 cohort_table = cohortTable,
+                                                 subset_cohort_table = '#target_subset',
+                                                 cohort_ids = targetCohortIds, 
+                                                 progressBar = FALSE, 
+                                                 reportOverallTime = FALSE)
     
-    ParallelLogger::logTrace(" - Computing date range in cohort table")
+    DatabaseConnector::renderTranslateExecuteSql(connection = connection,
+                                                 sql = cohortSubsetSql, 
+                                                 cohort_database_schema = cohortDatabaseSchema,
+                                                 cohort_table = cohortTable,
+                                                 subset_cohort_table = '#comparator_subset',
+                                                 cohort_ids = comparatorCohortIds, 
+                                                 progressBar = FALSE, 
+                                                 reportOverallTime = FALSE)
+    
+    ParallelLogger::logTrace(" - Computing date range in target cohorts")
     dateRangeSql <- "SELECT DATEDIFF(day, min_date, max_date) days_diff,
                             min_date,
                             max_date
                     FROM 
                     (SELECT min(cohort_start_date) min_date,
 	                           max(cohort_end_date) max_date
-                     FROM #cohort_subset) f;"
+                     FROM #target_subset) f;"
     dateRange <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
                                                             sql = dateRangeSql,
                                                             snakeCaseToCamelCase = TRUE)
+    if (is.na(dateRange$daysDiff)) {
+      warning("Please check if the cohorts are instantiated. Exiting Cohort relationship.")
+    }
     dateRange$daysDiff <- min(421, dateRange$daysDiff)
     
     # every 30 days
@@ -198,7 +236,7 @@ runCohortRelationshipDiagnostics <-
     
     delta <- Sys.time() - startTime
     ParallelLogger::logInfo(paste(
-      "Computing cohort temporal relationship took",
+      "Computing cohort relationship took",
       signif(delta, 3),
       attr(delta, "units")
     ))

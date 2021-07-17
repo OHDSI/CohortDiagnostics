@@ -1,6 +1,19 @@
 library(testthat)
 library(CohortDiagnostics)
 
+# Clean up ----
+if (runDatabaseTests) {
+  tryCatch(DatabaseConnector::renderTranslateExecuteSql(connection = DatabaseConnector::connect(connectionDetails = connectionDetails),
+                                                        "DROP TABLE @cohort_database_schema.@cohort_table CASCADE",
+                                                        cohort_database_schema = cohortDatabaseSchema,
+                                                        cohort_table = cohortTable, 
+                                                        progressBar = FALSE, 
+                                                        reportOverallTime = FALSE),
+           error = function(e) {})
+  filesToDelete <- list.files(file.path(folder, "incremental"), full.names = TRUE, recursive = FALSE)
+  invisible(lapply(filesToDelete, unlink, force = TRUE))
+}
+
 # Cohort Instantiation tests ----
 test_that("Cohort instantiation", {
   skip_if_not(runDatabaseTests)
@@ -24,7 +37,7 @@ test_that("Cohort instantiation", {
     )
   )
   ### Neg - bad cohort ----
-  testthat::expect_error(
+  testthat::expect_error(suppressWarnings(
     CohortDiagnostics::instantiateCohortSet(
       connectionDetails = connectionDetails,
       cdmDatabaseSchema = cdmDatabaseSchema,
@@ -39,7 +52,7 @@ test_that("Cohort instantiation", {
       createCohortTable = TRUE,
       inclusionStatisticsFolder = file.path(folder, "incStats")
     )
-  )
+  ))
   ### Pos - good one cohort, will create cohort table, instantiate not incremental ----
   testthat::expect_null(
     CohortDiagnostics::instantiateCohortSet(
@@ -60,12 +73,12 @@ test_that("Cohort instantiation", {
   
   ### Pos - Expect cohort count ----
   # Expect cohortId 18348 to have 830 records
-  sql <- "SELECT COUNT(*) FROM @cohort_database_schema.@cohort_table;"
-  count <- CohortDiagnostics:::renderTranslateQuerySql(connectionDetails = connectionDetails,
-                                                       sql = sql,
+  sqlCount <- "SELECT COUNT(*) FROM @cohort_database_schema.@cohort_table where cohort_definition_id = 18348;"
+  count1 <- CohortDiagnostics:::renderTranslateQuerySql(connectionDetails = connectionDetails,
+                                                       sql = sqlCount,
                                                        cohort_database_schema = cohortDatabaseSchema,
                                                        cohort_table = cohortTable)
-  testthat::expect_equal(count$COUNT, 830)
+  testthat::expect_equal(count1$COUNT, 830)
   
   ### Pos - check cohort instantiated ----
   testthat::expect_true(CohortDiagnostics:::checkIfCohortInstantiated(connectionDetails = connectionDetails,
@@ -82,51 +95,61 @@ test_that("Cohort instantiation", {
   
   ### Pos - should re run ----
   # delete from cohort table, and repopulate. should have 830 again
-  sql <- "DELETE FROM @cohort_database_schema.@cohort_table WHERE SUBJECT_ID < 1000;"
+  sqlDelete <- "DELETE FROM @cohort_database_schema.@cohort_table WHERE cohort_definition_id = 18348 and subject_id < 1000;"
   DatabaseConnector::renderTranslateExecuteSql(connection = DatabaseConnector::connect(connectionDetails),
-                                               sql = sql,
+                                               sql = sqlDelete,
                                                cohort_database_schema = cohortDatabaseSchema,
-                                               cohort_table = cohortTable)
+                                               cohort_table = cohortTable, 
+                                               progressBar = FALSE, 
+                                               reportOverallTime = FALSE)
+  count2 <- CohortDiagnostics:::renderTranslateQuerySql(connectionDetails = connectionDetails,
+                                                        sql = sqlCount,
+                                                        cohort_database_schema = cohortDatabaseSchema,
+                                                        cohort_table = cohortTable)
+  testthat::expect_true(count1$COUNT > count2$COUNT)
   
-  CohortDiagnostics::instantiateCohortSet(
-    connectionDetails = connectionDetails,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    tempEmulationSchema = tempEmulationSchema,
-    cohortDatabaseSchema = cohortDatabaseSchema,
-    cohortTable = cohortTable,
-    cohortIds = 18348,
-    packageName = "CohortDiagnostics",
-    cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
-    generateInclusionStats = TRUE,
-    createCohortTable = TRUE,
-    incremental = TRUE,
-    incrementalFolder = file.path(folder, "incremental"),
-    inclusionStatisticsFolder = file.path(folder, "incStats")
+  testthat::expect_null(
+    CohortDiagnostics::instantiateCohortSet(
+      connectionDetails = connectionDetails,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTable,
+      cohortIds = 18348,
+      packageName = "CohortDiagnostics",
+      cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+      generateInclusionStats = TRUE,
+      createCohortTable = TRUE,
+      incremental = TRUE,
+      incrementalFolder = file.path(folder, "incremental"),
+      inclusionStatisticsFolder = file.path(folder, "incStats")
+    )
   )
-  # Expect cohortId 18348 to have 830 records
-  sql <- "SELECT COUNT(*) FROM @cohort_database_schema.@cohort_table;"
-  count <- CohortDiagnostics:::renderTranslateQuerySql(connectionDetails = connectionDetails,
-                                                       sql = sql,
+  
+  count3 <- CohortDiagnostics:::renderTranslateQuerySql(connectionDetails = connectionDetails,
+                                                       sql = sqlCount,
                                                        cohort_database_schema = cohortDatabaseSchema,
                                                        cohort_table = cohortTable)
-  testthat::expect_equal(count$COUNT, 830)
+  testthat::expect_gte(count3$COUNT, 830)
   
   ## Incremental mode ----
-  CohortDiagnostics::instantiateCohortSet(
-    connectionDetails = connectionDetails,
-    cdmDatabaseSchema = cdmDatabaseSchema,
-    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-    tempEmulationSchema = tempEmulationSchema,
-    cohortDatabaseSchema = cohortDatabaseSchema,
-    cohortTable = cohortTable,
-    packageName = "CohortDiagnostics",
-    cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
-    generateInclusionStats = TRUE,
-    createCohortTable = TRUE,
-    incremental = TRUE,
-    incrementalFolder = file.path(folder, "incremental"),
-    inclusionStatisticsFolder = file.path(folder, "incStats")
+  testthat::expect_null(
+    CohortDiagnostics::instantiateCohortSet(
+      connectionDetails = connectionDetails,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTable,
+      packageName = "CohortDiagnostics",
+      cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+      generateInclusionStats = TRUE,
+      createCohortTable = TRUE,
+      incremental = TRUE,
+      incrementalFolder = file.path(folder, "incremental"),
+      inclusionStatisticsFolder = file.path(folder, "incStats")
+    )
   )
   
   connection <- DatabaseConnector::connect(connectionDetails)
@@ -145,14 +168,14 @@ test_that("Cohort instantiation", {
 
 
 
-test_that("Cohort diagnostics in not in incremental mode", {
+test_that("Testing Cohort diagnostics when not in incremental mode", {
   skip_if_not(runDatabaseTests)
   
   start <- Sys.time()
   # Cohort Diagnostics -----
   ## Not incremental -----
   ### Neg - bad cohort -----
-  testthat::expect_error(
+  testthat::expect_error(suppressWarnings(
     CohortDiagnostics::runCohortDiagnostics(
       connectionDetails = connectionDetails,
       cdmDatabaseSchema = "eunomia",
@@ -180,10 +203,10 @@ test_that("Cohort diagnostics in not in incremental mode", {
       cohortIds = -23423,
       incrementalFolder = file.path(folder, "incremental")
     )
-  )
+  ))
   
   ### Pos - one cohort -----
-  testthat::expect_null(
+  testthat::expect_null(suppressWarnings(
     CohortDiagnostics::runCohortDiagnostics(
       connectionDetails = connectionDetails,
       cdmDatabaseSchema = "eunomia",
@@ -211,8 +234,11 @@ test_that("Cohort diagnostics in not in incremental mode", {
       cohortIds = 18348,
       incrementalFolder = file.path(folder, "incremental")
     )
-  )
-  timeToRunFirstTime <- Sys.time() - start
+  ))
+  ### Pos - generate premerged file ----
+  testthat::expect_null(suppressWarnings(CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = file.path(folder, "export"))))
+  testthat::expect_true(file.exists(file.path(folder, "export", "PreMerged.RData")))
+  unlink(file.path(folder, "export", "PreMerged.RData"))
 })
 
 
@@ -224,8 +250,9 @@ test_that("Cohort diagnostics in incremental mode", {
   
   start <- Sys.time()
   ## Incremental -----
-  # run a subset of diagnostics
-  testthat::expect_null(
+  ### Pos - incremental ----
+  # run a subset of diagnostics and then rerun - check if second run took less time compared to first
+  testthat::expect_null(suppressWarnings(
     CohortDiagnostics::runCohortDiagnostics(
       connectionDetails = connectionDetails,
       cdmDatabaseSchema = "eunomia",
@@ -252,7 +279,7 @@ test_that("Cohort diagnostics in incremental mode", {
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental")
     )
-  )
+  ))
   timeToRunFirstTime <- Sys.time() - start
   
   testthat::expect_true(file.exists(file.path(
@@ -260,9 +287,8 @@ test_that("Cohort diagnostics in incremental mode", {
   )))
   
   start <- Sys.time()
-  ### Pos - incremental ----
-  # nothing should run, so should be fast
-  testthat::expect_null(
+  # while in incremental mode: nothing should run during second run, so should be faster than first run
+  testthat::expect_null(suppressWarnings(
     CohortDiagnostics::runCohortDiagnostics(
       connectionDetails = connectionDetails,
       cdmDatabaseSchema = "eunomia",
@@ -289,13 +315,13 @@ test_that("Cohort diagnostics in incremental mode", {
       incremental = TRUE,
       incrementalFolder = file.path(folder, "incremental")
     )
-  )
-  #because its faster than first run - it should take less time
+  ))
+  #because second run is faster than first run - it should take less time
   timeToRunSecondTime <- Sys.time() - start
   testthat::expect_true(timeToRunFirstTime > timeToRunSecondTime)
   
   ### rest of diagnostics ----
-  CohortDiagnostics::runCohortDiagnostics(
+  testthat::expect_null(suppressWarnings(CohortDiagnostics::runCohortDiagnostics(
     connectionDetails = connectionDetails,
     cdmDatabaseSchema = "eunomia",
     vocabularyDatabaseSchema = "eunomia",
@@ -320,14 +346,15 @@ test_that("Cohort diagnostics in incremental mode", {
     runTemporalCohortCharacterization = TRUE,
     incremental = TRUE,
     incrementalFolder = file.path(folder, "incremental")
-  )
+  )))
   
   ## Premerge file ----
   ### Neg - test - no zip file ----
-  testthat::expect_error(CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = tempdir()))
+  testthat::expect_error(CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = file.path(tempdir(), 'random')))
   
   ### Pos - generate premerged file ----
-  CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = file.path(folder, "export"))
+  testthat::expect_null(suppressWarnings(
+    CohortDiagnostics::preMergeDiagnosticsFiles(dataFolder = file.path(folder, "export"))))
   testthat::expect_true(file.exists(file.path(folder, "export", "PreMerged.RData")))
 })
 
@@ -350,8 +377,19 @@ test_that("Negative tests on individual functions", {
                                                                                 tempEmulationSchema = tempEmulationSchema,
                                                                                 cohortDatabaseSchema = cohortDatabaseSchema,
                                                                                 cohortTable = cohortTable))
+  ## Cohort relationship  ----
+  testthat::expect_null(suppressWarnings(CohortDiagnostics::runCohortRelationshipDiagnostics(connectionDetails = connectionDetails,
+                                                                                             tempEmulationSchema = tempEmulationSchema,
+                                                                                             cohortDatabaseSchema = cohortDatabaseSchema,
+                                                                                             cohortTable = cohortTable,
+                                                                                             targetCohortIds = -1111,
+                                                                                             comparatorCohortIds = -1111)))
+  testthat::expect_null(suppressWarnings(CohortDiagnostics::runCohortCharacterizationDiagnostics(connectionDetails = connectionDetails,
+                                                                                                 cdmDatabaseSchema = cdmDatabaseSchema,
+                                                                                                 tempEmulationSchema = tempEmulationSchema,
+                                                                                                 cohortDatabaseSchema = cohortDatabaseSchema,
+                                                                                                 cohortTable = cohortTable)))
 })
-
 
 
 
@@ -455,11 +493,11 @@ test_that("Retrieve results from premerged file", {
   testthat::expect_true(nrow(conceptIdDetails) >= 0)
   
   # should provide warning
-  conceptIdDetails <- CohortDiagnostics::getResultsFromConcept(
+  conceptIdDetailsV <- suppressWarnings(CohortDiagnostics::getResultsFromConcept(
     dataSource = dataSourcePreMergedFile,
     conceptIds = c(192671, 201826, 1124300, 1124300),
     vocabularyDatabaseSchema = 'vocabulary'
-  )
+  ))
   testthat::expect_true(nrow(conceptIdDetails) >= 0)
   
   resolvedMappedConceptSet <- CohortDiagnostics::getResultsResolveMappedConceptSet(
@@ -491,7 +529,6 @@ test_that("Retrieve results from premerged file", {
     databaseIds = 'cdmV5'
   )
   testthat::expect_true(nrow(cohortOverlapData) >= 0) 
-  
 })
 
 
@@ -501,8 +538,8 @@ test_that("Retrieve results from premerged file", {
 test_that("Create and upload results to results data model", {
   skip_if_not(runDatabaseTests)
   
-  CohortDiagnostics::createResultsDataModel(connectionDetails = connectionDetails, 
-                                            schema = cohortDiagnosticsSchema)
+  testthat::expect_null(CohortDiagnostics::createResultsDataModel(connectionDetails = connectionDetails, 
+                                            schema = cohortDiagnosticsSchema))
   
   listOfZipFilesToUpload <-
     list.files(
@@ -511,13 +548,16 @@ test_that("Create and upload results to results data model", {
       full.names = TRUE,
       recursive = TRUE
     )
+  testthat::expect_true(length(listOfZipFilesToUpload) >= 0)
   
   for (i in (1:length(listOfZipFilesToUpload))) {
-    CohortDiagnostics::uploadResults(
-      connectionDetails = connectionDetails,
-      schema = cohortDiagnosticsSchema,
-      zipFileName = listOfZipFilesToUpload[[i]]
-    )
+    testthat::expect_null(suppressWarnings(
+      CohortDiagnostics::uploadResults(
+        connectionDetails = connectionDetails,
+        schema = cohortDiagnosticsSchema,
+        zipFileName = listOfZipFilesToUpload[[i]]
+      )
+    ))
   }
 })
 
@@ -549,7 +589,7 @@ test_that("Retrieve results from remote database", {
   # time distribution
   timeDistributionFromDb <- CohortDiagnostics::getResultsFromTimeDistribution(
     dataSource = dataSourceDatabase,
-    cohortIds = c(17492, 17692),
+    cohortIds = c(17492, 18342),
     databaseIds = 'cdmV5'
   )
   testthat::expect_true(nrow(timeDistributionFromDb) >= 0)

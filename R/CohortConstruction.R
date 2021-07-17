@@ -230,10 +230,11 @@ getCohortsJsonAndSql <- function(packageName = NULL,
   ParallelLogger::logInfo(" - Number of cohorts ", nrow(cohorts))
   if (nrow(cohorts) == 0) {
     warning(" - No cohorts founds")
+    return(NULL)
   }
   if (nrow(cohorts) != length(cohorts$cohortId %>% unique())) {
-    warning(" - Please check input cohort specification. Is there duplication of cohortId? Returning empty cohort table.")
-    return(cohorts[0, ])
+    warning(" - Please check input cohort specification. Is there duplication of cohortId?")
+    return(NULL)
   }
   return(cohorts)
 }

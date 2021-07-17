@@ -340,7 +340,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = "IF OBJECT_ID('tempdb..#calendar_periods', 'U') IS NOT NULL DROP TABLE #calendar_periods;",
-    progressBar = TRUE, 
+    progressBar = FALSE, 
     reportOverallTime = FALSE
   )
   DatabaseConnector::renderTranslateExecuteSql(

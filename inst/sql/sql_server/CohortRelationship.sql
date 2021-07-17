@@ -46,8 +46,8 @@ SELECT t.cohort_definition_id cohort_id,
 				THEN c.subject_id
 			ELSE NULL
 			END) c_in_t_subjects -- comparator cohort records embedded within period
-FROM #cohort_subset t
-INNER JOIN #cohort_subset c
+FROM #target_subset t
+INNER JOIN #comparator_subset c
 	ON c.subject_id = t.subject_id
 		AND c.cohort_definition_id != t.cohort_definition_id
 		AND c.cohort_end_date >= t.cohort_start_date
