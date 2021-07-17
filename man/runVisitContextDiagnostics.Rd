@@ -9,8 +9,8 @@ runVisitContextDiagnostics(
   connection = NULL,
   cdmDatabaseSchema,
   tempEmulationSchema = NULL,
-  cohortDatabaseSchema = cdmDatabaseSchema,
-  vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+  cohortDatabaseSchema,
+  vocabularyDatabaseSchema,
   cohortTable = "cohort",
   cohortIds,
   cdmVersion = 5

@@ -64,7 +64,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
                                            cohortIds = NULL) {
   
   if (all(!runCohortTimeSeries, !runDataSourceTimeSeries)) {
-    warning(' - Both Cohort Time Series and Data Source Time Series are set to FALSE. Time series is not run')
+    warning(' - Both Cohort Time Series and Data Source Time Series are set to FALSE. Exiting time series diagnostics.')
     return(NULL)
   }
   start <- Sys.time()
@@ -72,6 +72,19 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
+  }
+  
+  sqlCount <- "SELECT cohort_definition_id, COUNT(*) count FROM @cohort_database_schema.@cohort_table 
+               {@cohort_ids != ''} ? { where cohort_definition_id IN (@cohort_ids)}
+               GROUP BY cohort_definition_id;"
+  cohortCount <- CohortDiagnostics:::renderTranslateQuerySql(connection = connection,
+                                                             sql = sqlCount,
+                                                             cohort_database_schema = cohortDatabaseSchema,
+                                                             cohort_ids = cohortIds,
+                                                             cohort_table = cohortTable)
+  if (nrow(cohortCount) == 0) {
+    warning("Please check if cohorts are instantiated. Exiting cohort time series.")
+    return(NULL)
   }
   
   ## Calendar period----

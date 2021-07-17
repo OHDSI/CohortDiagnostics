@@ -75,9 +75,9 @@ test_that("Cohort instantiation", {
   # Expect cohortId 18348 to have 830 records
   sqlCount <- "SELECT COUNT(*) FROM @cohort_database_schema.@cohort_table where cohort_definition_id = 18348;"
   count1 <- CohortDiagnostics:::renderTranslateQuerySql(connectionDetails = connectionDetails,
-                                                       sql = sqlCount,
-                                                       cohort_database_schema = cohortDatabaseSchema,
-                                                       cohort_table = cohortTable)
+                                                        sql = sqlCount,
+                                                        cohort_database_schema = cohortDatabaseSchema,
+                                                        cohort_table = cohortTable)
   testthat::expect_equal(count1$COUNT, 830)
   
   ### Pos - check cohort instantiated ----
@@ -128,9 +128,9 @@ test_that("Cohort instantiation", {
   )
   
   count3 <- CohortDiagnostics:::renderTranslateQuerySql(connectionDetails = connectionDetails,
-                                                       sql = sqlCount,
-                                                       cohort_database_schema = cohortDatabaseSchema,
-                                                       cohort_table = cohortTable)
+                                                        sql = sqlCount,
+                                                        cohort_database_schema = cohortDatabaseSchema,
+                                                        cohort_table = cohortTable)
   testthat::expect_gte(count3$COUNT, 830)
   
   ## Incremental mode ----
@@ -200,7 +200,7 @@ test_that("Testing Cohort diagnostics when not in incremental mode", {
       runCohortCharacterization = FALSE,
       runTemporalCohortCharacterization = FALSE,
       incremental = FALSE,
-      cohortIds = -23423,
+      cohortIds = -11111,
       incrementalFolder = file.path(folder, "incremental")
     )
   ))
@@ -384,11 +384,50 @@ test_that("Negative tests on individual functions", {
                                                                                              cohortTable = cohortTable,
                                                                                              targetCohortIds = -1111,
                                                                                              comparatorCohortIds = -1111)))
-  testthat::expect_null(suppressWarnings(CohortDiagnostics::runCohortCharacterizationDiagnostics(connectionDetails = connectionDetails,
-                                                                                                 cdmDatabaseSchema = cdmDatabaseSchema,
-                                                                                                 tempEmulationSchema = tempEmulationSchema,
-                                                                                                 cohortDatabaseSchema = cohortDatabaseSchema,
-                                                                                                 cohortTable = cohortTable)))
+  testthat::expect_null(suppressWarnings(CohortDiagnostics::runCohortRelationshipDiagnostics(connectionDetails = connectionDetails,
+                                                                                             tempEmulationSchema = tempEmulationSchema,
+                                                                                             cohortDatabaseSchema = cohortDatabaseSchema,
+                                                                                             cohortTable = cohortTable,
+                                                                                             targetCohortIds = c(18348),
+                                                                                             comparatorCohortIds = -1111)))
+  testthat::expect_null(suppressWarnings(CohortDiagnostics::runCohortRelationshipDiagnostics(connectionDetails = connectionDetails,
+                                                                                             tempEmulationSchema = tempEmulationSchema,
+                                                                                             cohortDatabaseSchema = cohortDatabaseSchema,
+                                                                                             cohortTable = cohortTable,
+                                                                                             targetCohortIds = NULL,
+                                                                                             comparatorCohortIds = NULL)))
+  testthat::expect_null(suppressWarnings(CohortDiagnostics::runCohortRelationshipDiagnostics(connectionDetails = connectionDetails,
+                                                                                             tempEmulationSchema = tempEmulationSchema,
+                                                                                             cohortDatabaseSchema = cohortDatabaseSchema,
+                                                                                             cohortTable = cohortTable,
+                                                                                             targetCohortIds = 18348,
+                                                                                             comparatorCohortIds = NULL)))
+  ## Visit Context diagnostics  ----
+  testthat::expect_null(suppressWarnings(CohortDiagnostics::runVisitContextDiagnostics(connectionDetails = connectionDetails,
+                                                                                       tempEmulationSchema = tempEmulationSchema,
+                                                                                       cohortDatabaseSchema = cohortDatabaseSchema,
+                                                                                       cohortTable = cohortTable,
+                                                                                       cdmDatabaseSchema = cdmDatabaseSchema,
+                                                                                       vocabularyDatabaseSchema = cdmDatabaseSchema,
+                                                                                       cdmVersion = 6,
+                                                                                       cohortIds = -1111)))
+  ## Time Series diagnostics  ----
+  testthat::expect_null(suppressWarnings(CohortDiagnostics::runCohortTimeSeriesDiagnostics(connectionDetails = connectionDetails,
+                                                                                           tempEmulationSchema = tempEmulationSchema,
+                                                                                           cdmDatabaseSchema = cdmDatabaseSchema,
+                                                                                           cohortDatabaseSchema = cohortDatabaseSchema,
+                                                                                           cohortTable = cohortTable,
+                                                                                           runCohortTimeSeries = FALSE,
+                                                                                           runDataSourceTimeSeries = FALSE,
+                                                                                           cohortIds = -1111)))
+  testthat::expect_null(suppressWarnings(CohortDiagnostics::runCohortTimeSeriesDiagnostics(connectionDetails = connectionDetails,
+                                                                                           tempEmulationSchema = tempEmulationSchema,
+                                                                                           cdmDatabaseSchema = cdmDatabaseSchema,
+                                                                                           cohortDatabaseSchema = cohortDatabaseSchema,
+                                                                                           cohortTable = cohortTable,
+                                                                                           runCohortTimeSeries = TRUE,
+                                                                                           runDataSourceTimeSeries = FALSE,
+                                                                                           cohortIds = -1111)))
 })
 
 
@@ -539,7 +578,7 @@ test_that("Create and upload results to results data model", {
   skip_if_not(runDatabaseTests)
   
   testthat::expect_null(CohortDiagnostics::createResultsDataModel(connectionDetails = connectionDetails, 
-                                            schema = cohortDiagnosticsSchema))
+                                                                  schema = cohortDiagnosticsSchema))
   
   listOfZipFilesToUpload <-
     list.files(

@@ -74,7 +74,7 @@ runCohortRelationshipDiagnostics <-
                                                                          cohort_table = cohortTable,
                                                                          cohort_ids = comparatorCohortIds)
     if (comparatorCohortCount$COUNT == 0) {
-      warning("Please check if target cohorts are instantiated. Exiting cohort relationship.")
+      warning("Please check if comparator cohorts are instantiated. Exiting cohort relationship.")
       return(NULL)
     }
     

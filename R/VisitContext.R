@@ -42,13 +42,13 @@ runVisitContextDiagnostics <- function(connectionDetails = NULL,
                                        connection = NULL,
                                        cdmDatabaseSchema,
                                        tempEmulationSchema = NULL,
-                                       cohortDatabaseSchema = cdmDatabaseSchema,
-                                       vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+                                       cohortDatabaseSchema,
+                                       vocabularyDatabaseSchema,
                                        cohortTable = "cohort",
                                        cohortIds,
                                        cdmVersion = 5) {
   if (!cdmVersion == 5) {
-    warning('Only OMOP CDM v5.x.x is supported. Continuing execution.')
+    warning('Only OMOP CDM v5.x.x is supported. Continuing execution with the assumption of backward compatibility.')
   }
   
   start <- Sys.time()
@@ -56,6 +56,19 @@ runVisitContextDiagnostics <- function(connectionDetails = NULL,
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
+  }
+  
+  sqlCount <- "SELECT cohort_definition_id, COUNT(*) count FROM @cohort_database_schema.@cohort_table 
+               {@cohort_ids != ''} ? { where cohort_definition_id IN (@cohort_ids)}
+               GROUP BY cohort_definition_id;"
+  cohortCount <- CohortDiagnostics:::renderTranslateQuerySql(connection = connection,
+                                                             sql = sqlCount,
+                                                             cohort_database_schema = cohortDatabaseSchema,
+                                                             cohort_ids = cohortIds,
+                                                             cohort_table = cohortTable)
+  if (nrow(cohortCount) == 0) {
+    warning("Please check if cohorts are instantiated. Exiting Visit Context.")
+    return(NULL)
   }
   
   sql <- SqlRender::loadRenderTranslateSql(
