@@ -55,6 +55,7 @@ checkCohortReference <-
   }
 
 makeBackwardsCompatible <- function(cohorts) {
+  # make sure there is a column called name
   if (!"name" %in% colnames(cohorts)) {
     if ('cohortId' %in% colnames(cohorts)) {
       cohorts <- cohorts %>%
@@ -63,6 +64,10 @@ makeBackwardsCompatible <- function(cohorts) {
       cohorts <- cohorts %>%
         dplyr::mutate(name = as.character(.data$id)) %>%
         dplyr::mutate(cohortId = .data$id)
+    } else if ('webApiCohortId' %in% colnames(cohorts)) {
+      cohorts <- cohorts %>%
+        dplyr::mutate(name = as.character(.data$webApiCohortId)) %>%
+        dplyr::mutate(cohortId = .data$webApiCohortId)
     }
   }
   if (!"webApiCohortId" %in% colnames(cohorts) &&
@@ -70,10 +75,19 @@ makeBackwardsCompatible <- function(cohorts) {
     cohorts <- cohorts %>%
       dplyr::mutate(webApiCohortId = .data$atlasId)
   }
+  if (!"webApiCohortId" %in% colnames(cohorts) &&
+      !"atlasId" %in% colnames(cohorts) &&
+      "id" %in% colnames(cohorts)) {
+    cohorts <- cohorts %>%
+      dplyr::mutate(webApiCohortId = .data$id)
+  }
   if (!"cohortName" %in% colnames(cohorts) &&
       "atlasName" %in% colnames(cohorts)) {
     cohorts <- cohorts %>%
       dplyr::mutate(cohortName = .data$atlasName)
+  } else {
+    cohorts <- cohorts %>%
+      dplyr::mutate(cohortName = .data$name)
   }
   return(cohorts)
 }
@@ -175,11 +189,6 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
       dplyr::filter(.data$cohortId %in% cohortIds)
   }
   
-  if ("name" %in% names(cohortSetReference)) {
-    cohortSetReference <-
-      dplyr::rename(cohortSetReference, cohortName = "name")
-  }
-  cohortSetReference <- makeBackwardsCompatible(cohortSetReference)
   cohortSetReference$json <- ""
   cohortSetReference$sql <- ""
   
@@ -310,7 +319,7 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
   result <- dplyr::tibble()
   for (cohortId in unique(inclusion$cohortDefinitionId)) {
     cohortResult <-
-      processInclusionStats(
+      simplifyInclusionStats(
         inclusion = filter(inclusion, .data$cohortDefinitionId == cohortId),
         inclusionResults = filter(inclusionResults, .data$cohortDefinitionId == cohortId),
         inclusionStats = filter(inclusionStats, .data$cohortDefinitionId == cohortId),
@@ -335,15 +344,11 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
   return(output)
 }
 
-processInclusionStats <- function(inclusion,
+simplifyInclusionStats <- function(inclusion,
                                   inclusionResults,
-                                  simplify,
                                   inclusionStats,
                                   summaryStats) {
-  if (simplify) {
-    if (nrow(inclusion) == 0 || nrow(inclusionStats) == 0) {
-      return(dplyr::tibble())
-    }
+    if (nrow(inclusion) == 0 || nrow(inclusionStats) == 0) {return(dplyr::tibble())}
     
     result <- inclusion %>%
       dplyr::select(.data$ruleSequence, .data$name) %>%
@@ -379,17 +384,6 @@ processInclusionStats <- function(inclusion,
       "totalSubjects",
       "remainSubjects"
     )
-  } else {
-    if (nrow(inclusion) == 0) {
-      return(list())
-    }
-    result <- list(
-      inclusion = inclusion,
-      inclusionResults = inclusionResults,
-      inclusionStats = inclusionStats,
-      summaryStats = summaryStats
-    )
-  }
   return(result)
 }
 
@@ -450,6 +444,13 @@ instantiateCohortSet <- function(connectionDetails = NULL,
   if (!is.null(cohortSetReference)) {
     ParallelLogger::logInfo(" - Found cohortSetReference. Cohort Diagnostics is running in WebApi mode.")
     cohortToCreateFile <- NULL
+    if (all(is.null(dim(cohortSetReference)),
+            length(cohortSetReference) > 0,
+            typeof(cohortSetReference) %in% c('double', 'integer'))) {
+      ParallelLogger::logInfo(' - cohortSetReference found to be a vector of ids, instead of a data frame. Attempting to use it. Continuing.')
+      cohortSetReference <- dplyr::tibble(id = cohortSetReference)
+    }
+    cohortSetReference <- makeBackwardsCompatible(cohortSetReference)
   }
   
   if (!is.null(oracleTempSchema) && is.null(tempEmulationSchema)) {

@@ -64,11 +64,8 @@ construction to.}
 \code{baseUrl} and \code{cohortSetReference} have been specified.}
 
 \item{cohortToCreateFile}{The location of the cohortToCreate file within the package. Is ignored if 
-\code{baseUrl} and \code{cohortSetReference} have been specified. The
-cohortToCreateFile must be .csv file that is expected to be read into 
-a dataframe object identical to requirements for \code{cohortSetReference} argument. 
-This csv file is expected to be encoded in either ASCII or UTF-8, if not, an 
-error message will be displayed and process stopped.}
+\code{baseUrl} and \code{cohortSetReference} have been specified (i.e. webapi mode 
+takes precedence).}
 
 \item{baseUrl}{The base URL for the WebApi instance, for example:
 "http://server.org:80/WebAPI". Can be left NULL if 
@@ -99,24 +96,36 @@ Optionally, the inclusion rule statistics are computed and stored in the \code{i
 }
 \details{
 Currently two ways of executing this function are supported, either 
-(1) [Package Mode] embedded in a study package, assuming the cohort definitions are stored in that package using the \code{ROhdsiWebApi::insertCohortDefinitionSetInPackage}, or 
-(2) [WebApi Mode] By using a WebApi interface to retrieve the cohort definitions.
+(1) [Package Mode] embedded in a study package, e.g. by hydrating a the \code{SkeletonCohortDiagnosticsStudy} package using \code{Hydra::hydrate} or 
+     inserting cohort specifications using \code{ROhdsiWebApi::insertCohortDefinitionSetInPackage}, or 
+(2) [WebApi Mode] By using a WebApi interface to retrieve the cohort definitions. Note: WebAPi mode takes precedence over package mode.
 
+Structure of \code{cohortSetReference} or \code{cohortToCreateFile}
+\describe{
+\item{cohortId}{(required) The cohort Id in Atlas for the cohort you want to diagnose.}
+\item{cohortName}{(optional) The full name of the cohort. This will be shown in the Shiny app. If not provided, the 
+ name used in Atlas will be displayed.}
+}
+
+In addition - \code{cohortToCreateFile} is able to accept additional optional columns
+\describe{
+\item{cohortId}{(required) The cohort Id in Atlas for the cohort you want to diagnose.}
+\item{cohortName}{(optional) The full name of the cohort. This will be shown in the Shiny app. If not provided, the 
+ name used in Atlas will be displayed.}
+\item{metaData}{(optional) A JSON with metadata of the cohort that you would like to provided. 
+Logic description may be a metadata object. Other types of metadata objects may include project code, author, version, key words etc.}
+}
+ 
 When using this function in Package Mode: Use the \code{packageName} and \code{cohortToCreateFile} to specify
 the name of the study package, and the name of the cohortToCreate file within that package, respectively
 
 When using this function in WebApi Mode: use the \code{baseUrl} and \code{cohortSetReference} to specify how to 
 connect to the WebApi, and which cohorts to fetch, respectively.
 
-Note: if the parameters for both Package Mode and WebApi Mode are provided, then Package mode is preferred.
-
-The \code{cohortSetReference} argument must be a data frame with  the following columns:
+The \code{cohortSetReference} argument maybe a vector of atlas ids or it maybe a data frame object. 
+If \code{cohortSetReference} is a data frame object:
 \describe{
-\item{cohortId}{(required) The cohort Id is the id used to identify  a cohort definition. This is required to be unique. It will be used to create file names. It is recommended to be (referentConceptId * 1000) + a number between 3 to 999}
-\item{cohortName}{(required) The full name of the cohort. This will be shown in the Shiny app.}
-\item{logicDescription}{(optional) A human understandable brief description of the cohort definition. This logic does not have to a 
-fully specified description of the cohort definition, but should provide enough context to help user understand the
-meaning of the cohort definition}
-\item{metaData}{(optional) A JSON with metadata of the cohort that you would like to provided. At this time these pairs are used: referentConceptId, tags, projectCode}
+\item{cohortId}{(required) The cohort Id in Atlas for the cohort you want to diagnose.}
+\item{cohortName}{(optional) The full name of the cohort. This will be shown in the Shiny app. If not provided, the cohort id will be displayed.}
 }
 }

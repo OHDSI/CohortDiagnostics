@@ -23,7 +23,7 @@ test_that("Check WebApi mode", {
   if (nrow(cohorts) > 0) {
     # pick some cohort ids by random
     cohortIds <- cohorts %>% 
-      dplyr::sample_n(size = 3) %>% 
+      dplyr::sample_n(size = 1) %>% 
       dplyr::select(.data$id) %>% 
       dplyr::pull()
     
@@ -40,12 +40,20 @@ test_that("Check WebApi mode", {
                                           baseUrl = baseUrl)
       cohortsToCreate[[i]] <- tidyr::tibble(
         atlasId = webApiCohorts$id[[i]],
+        id = webApiCohorts$id[[i]],
         atlasName = stringr::str_trim(string = stringr::str_squish(cohortDefinition$name)),
         cohortId = webApiCohorts$id[[i]],
         name = stringr::str_trim(stringr::str_squish(cohortDefinition$name))
       )
     }
-    cohortSetReference <- dplyr::bind_rows(cohortsToCreate)
+    cohortSetReference <- dplyr::bind_rows(cohortsToCreate) %>% 
+      dplyr::select(.data$atlasId,
+                    .data$atlasName,
+                    .data$cohortId,
+                    .data$name)
+    
+    cohortSetReferenceBackwardCompatibilityTest <- dplyr::bind_rows(cohortsToCreate) %>% 
+      dplyr::select(.data$id)
     
     testthat::expect_null(
       CohortDiagnostics::instantiateCohortSet(
@@ -56,6 +64,38 @@ test_that("Check WebApi mode", {
         cohortDatabaseSchema = cohortDatabaseSchema,
         cohortTable = cohortTable,
         cohortSetReference = cohortSetReference,
+        generateInclusionStats = TRUE,
+        createCohortTable = TRUE,
+        baseUrl = baseUrl,
+        inclusionStatisticsFolder = file.path(folder, "incStats")
+      )
+    )
+    
+    testthat::expect_null(
+      CohortDiagnostics::instantiateCohortSet(
+        connectionDetails = connectionDetails,
+        cdmDatabaseSchema = cdmDatabaseSchema,
+        vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+        tempEmulationSchema = tempEmulationSchema,
+        cohortDatabaseSchema = cohortDatabaseSchema,
+        cohortTable = cohortTable,
+        cohortSetReference = cohortSetReferenceBackwardCompatibilityTest,
+        generateInclusionStats = TRUE,
+        createCohortTable = TRUE,
+        baseUrl = baseUrl,
+        inclusionStatisticsFolder = file.path(folder, "incStats")
+      )
+    )
+    
+    testthat::expect_null(
+      CohortDiagnostics::instantiateCohortSet(
+        connectionDetails = connectionDetails,
+        cdmDatabaseSchema = cdmDatabaseSchema,
+        vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+        tempEmulationSchema = tempEmulationSchema,
+        cohortDatabaseSchema = cohortDatabaseSchema,
+        cohortTable = cohortTable,
+        cohortSetReference = cohortSetReferenceBackwardCompatibilityTest$id,
         generateInclusionStats = TRUE,
         createCohortTable = TRUE,
         baseUrl = baseUrl,

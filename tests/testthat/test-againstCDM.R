@@ -15,6 +15,22 @@ if (runDatabaseTests) {
 }
 
 # Cohort Instantiation tests ----
+test_that("Cohort table creation", {
+  ## check creation of cohort table
+  testthat::expect_null(
+    CohortDiagnostics:::createCohortTable(connectionDetails = connectionDetails,
+                                          cohortDatabaseSchema = cohortDatabaseSchema, 
+                                          cohortTable = cohortTable))
+  tryCatch(DatabaseConnector::renderTranslateExecuteSql(connection = DatabaseConnector::connect(connectionDetails = connectionDetails),
+                                                        "DROP TABLE @cohort_database_schema.@cohort_table CASCADE",
+                                                        cohort_database_schema = cohortDatabaseSchema,
+                                                        cohort_table = cohortTable, 
+                                                        progressBar = FALSE, 
+                                                        reportOverallTime = FALSE),
+           error = function(e) {})
+})
+
+# Cohort Instantiation tests ----
 test_that("Cohort instantiation", {
   skip_if_not(runDatabaseTests)
   

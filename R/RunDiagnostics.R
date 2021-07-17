@@ -17,13 +17,13 @@
 #' Run cohort diagnostics
 #'
 #' @description
-#' Runs the cohort diagnostics on all (or a subset of) the cohorts instantiated using the
-#' \code{ROhdsiWebApi::insertCohortDefinitionSetInPackage} function. Assumes the cohorts have already been instantiated.
+#' Runs cohort diagnostics on cohorts specified in cohortToCreateFile (file) or cohortSetReference. The function 
+#' checks if the specified cohorts are instantiated, and only runs diagnostics on the instantiated 
+#' cohorts (i.e. > 0 rows in cohort table).
 #'
 #' Characterization:
-#' If runTemporalCohortCharacterization argument is TRUE, then the following default covariateSettings object will be created
-#' using \code{RFeatureExtraction::createTemporalCovariateSettings}
-#' Alternatively, a covariate setting object may be created using the above as an example.
+#' If runTemporalCohortCharacterization argument is TRUE, then \code{RFeatureExtraction::createTemporalCovariateSettings}
+#' is used as default.
 #'
 #' @template Connection
 #'
