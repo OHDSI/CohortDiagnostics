@@ -118,14 +118,14 @@ renderTranslateQuerySql <-
            connectionDetails = NULL,
            ...,
            snakeCaseToCamelCase = FALSE) {
+    if (all(is.null(connectionDetails),
+            is.null(connection))) { stop('Please provide either connection or connectionDetails to connect to database.')}
     ## Set up connection to server ----------------------------------------------------
     if (is.null(connection)) {
       if (!is.null(connectionDetails)) {
         writeLines("Connecting to database using provided connection details.")
         connection <- DatabaseConnector::connect(connectionDetails)
         on.exit(DatabaseConnector::disconnect(connection))
-      } else {
-        stop("No connection or connectionDetails provided.")
       }
     }
     
@@ -281,8 +281,7 @@ getResultsFromTimeSeries <- function(dataSource,
     databaseIds = databaseIds,
     dataTableName = "timeSeries"
   )
-  if (is.null(data)) {return(NULL)}
-  if (nrow(data) == 0) {return(NULL)}
+  if (any(is.null(data), nrow(data) == 0)) {return(NULL)}
   
   # t1 <- data %>% 
   #   dplyr::filter(.data$seriesType == 'T1')
@@ -530,15 +529,9 @@ getResultsFromConcept <- function(dataSource = .GlobalEnv,
     )
   }
   if (is(dataSource, "environment")) {
-    if (!exists(table)) {
-      return(NULL)
-    }
-    if (length(table) == 0) {
-      return(NULL)
-    }
-    if (nrow(get(table, envir = dataSource)) == 0) {
-      return(NULL)
-    }
+    if (!exists(table)) {return(NULL)}
+    if (length(table) == 0) {return(NULL)}
+    if (nrow(get(table, envir = dataSource)) == 0) {return(NULL)}
     data <- get(table, envir = dataSource)
     if (!is.null(conceptIds)) {
       data <- data %>%
@@ -749,19 +742,6 @@ getResultsFromTemporalCovariateValueDist <- function(dataSource,
   return(data)
 }
 
-# not exported
-getResultsFromResolvedConcepts <- function(dataSource,
-                                           cohortIds,
-                                           databaseIds) {
-  data <- getDataFromResultsDatabaseSchema(
-    dataSource,
-    cohortIds = cohortIds,
-    databaseIds = databaseIds,
-    dataTableName = "resolvedConcepts"
-  )
-  return(data)
-}
-
 
 #' Returns resolved and mapped concepts for concept set expression in a cohort
 #'
@@ -787,27 +767,27 @@ getResultsResolveMappedConceptSet <- function(dataSource,
                                               cohortIds = NULL) {
   table <- "resolvedConcepts"
   if (is(dataSource, "environment")) {
-    if (!exists(table)) {
-      return(NULL)
-    }
-    if (length(table) == 0) {
-      return(NULL)
-    }
+    
+    if (!exists(table)) {return(NULL)}
+    
+    if (length(table) == 0) {return(NULL)}
+    
     resolved <- get(table, envir = dataSource)
-    if (any(is.null(resolved), nrow(resolved) == 0)) {
-      return(NULL)
-    }
+    
+    if (any(is.null(resolved), nrow(resolved) == 0)) {return(NULL)}
+    
     if (!is.null(databaseIds)) {
       resolved <- resolved %>%
         dplyr::filter(.data$databaseId %in% !!databaseIds)
     }
+    
     if (!is.null(cohortIds)) {
       resolved <- resolved %>%
         dplyr::filter(.data$cohortId == !!cohortIds)
     }
-    if (any(is.null(resolved), nrow(resolved) == 0)) {
-      return(NULL)
-    }
+    
+    if (any(is.null(resolved), nrow(resolved) == 0)) {return(NULL)}
+    
     resolved <- resolved %>%
       dplyr::inner_join(get("concept"), by = "conceptId") %>%
       dplyr::distinct() %>%
@@ -1447,6 +1427,9 @@ getMultipleCharacterizationResults <-
                                     cohortRelationshipCharacterizationResults$analysisRef,
                                     cohortAsFeatureTemporalCharacterizationResults$temporalAnalysisRef
     ) 
+    if (nrow(analysisRef) == 0) {
+      analysisRef <- NULL
+    }
     if (!is.null(analysisRef)) {
       analysisRef <- analysisRef  %>% 
         dplyr::arrange(.data$analysisId, .data$characterizationSource)
@@ -1460,6 +1443,9 @@ getMultipleCharacterizationResults <-
                                      cohortRelationshipCharacterizationResults$covariateRef,
                                      cohortAsFeatureTemporalCharacterizationResults$temporalCovariateRef
     ) 
+    if (nrow(covariateRef) == 0) {
+      covariateRef <- NULL
+    }
     if (!is.null(covariateRef)) {
       covariateRef <- covariateRef %>% 
         dplyr::distinct() %>% 
@@ -1474,6 +1460,9 @@ getMultipleCharacterizationResults <-
                                        cohortRelationshipCharacterizationResults$covariateValue,
                                        cohortAsFeatureTemporalCharacterizationResults$temporalCovariateValue
     )
+    if (nrow(covariateValue) == 0) {
+      covariateValue <- NULL
+    }
     if (!is.null(covariateValue)) {
       covariateValue <- covariateValue %>% 
         dplyr::distinct() %>% 
@@ -1482,12 +1471,14 @@ getMultipleCharacterizationResults <-
     if (nrow(covariateValue) == 0) {
       covariateValue <- NULL
     }
-    
     covariateValueDist <- dplyr::bind_rows(featureExtractioncharacterization$covariateValueDist,
                                            featureExtractionTemporalcharacterization$temporalCovariateValueDist,
                                            cohortRelationshipCharacterizationResults$covariateValueDist,
                                            cohortAsFeatureTemporalCharacterizationResults$temporalCovariateValueDist
     ) 
+    if (nrow(covariateValueDist) == 0) {
+      covariateValueDist <- NULL
+    }
     if (!is.null(covariateValueDist)) {
       covariateValueDist <- covariateValueDist %>% 
         dplyr::distinct() %>% 
@@ -1502,6 +1493,9 @@ getMultipleCharacterizationResults <-
                                 cohortRelationshipCharacterizationResults$concept,
                                 cohortAsFeatureTemporalCharacterizationResults$concept
     )
+    if (nrow(concept) == 0) {
+      concept <- NULL
+    }
     if (!is.null(concept)) {
       concept <- concept %>%  
         dplyr::distinct() %>% 
@@ -1526,93 +1520,6 @@ getMultipleCharacterizationResults <-
                 temporalTimeRef = temporalTimeRef))
   }
 
-
-resolveMappedConceptSetFromVocabularyDatabaseSchema <-
-  function(dataSource = .GlobalEnv,
-           conceptSets,
-           vocabularyDatabaseSchema = "vocabulary") {
-    if (is(dataSource, "environment")) {
-      stop("Cannot resolve concept sets without a database connection")
-    } else {
-      sqlBase <-
-        paste(
-          "SELECT DISTINCT codeset_id AS concept_set_id, concept.*",
-          "FROM (",
-          paste(conceptSets$conceptSetSql, collapse = ("\nUNION ALL\n")),
-          ") concept_sets",
-          sep = "\n"
-        )
-      sqlResolved <- paste(
-        sqlBase,
-        "INNER JOIN @vocabulary_database_schema.concept",
-        "  ON concept_sets.concept_id = concept.concept_id;",
-        sep = "\n"
-      )
-      
-      sqlBaseMapped <-
-        paste(
-          "SELECT DISTINCT codeset_id AS concept_set_id,
-                           concept_sets.concept_id AS resolved_concept_id,
-                           concept.*",
-          "FROM (",
-          paste(conceptSets$conceptSetSql, collapse = ("\nUNION ALL\n")),
-          ") concept_sets",
-          sep = "\n"
-        )
-      sqlMapped <- paste(
-        sqlBaseMapped,
-        "INNER JOIN @vocabulary_database_schema.concept_relationship",
-        "  ON concept_sets.concept_id = concept_relationship.concept_id_2",
-        "INNER JOIN @vocabulary_database_schema.concept",
-        "  ON concept_relationship.concept_id_1 = concept.concept_id",
-        "WHERE relationship_id = 'Maps to'",
-        "  AND standard_concept IS NULL;",
-        sep = "\n"
-      )
-      
-      resolved <-
-        renderTranslateQuerySql(
-          connection = dataSource$connection,
-          sql = sqlResolved,
-          vocabulary_database_schema = vocabularyDatabaseSchema,
-          snakeCaseToCamelCase = TRUE
-        ) %>%
-        dplyr::select(
-          .data$conceptSetId,
-          .data$conceptId,
-          .data$conceptName,
-          .data$domainId,
-          .data$vocabularyId,
-          .data$conceptClassId,
-          .data$standardConcept,
-          .data$conceptCode,
-          .data$invalidReason
-        ) %>%
-        dplyr::arrange(.data$conceptId)
-      mapped <-
-        renderTranslateQuerySql(
-          connection = dataSource$connection,
-          sql = sqlMapped,
-          vocabulary_database_schema = vocabularyDatabaseSchema,
-          snakeCaseToCamelCase = TRUE
-        ) %>%
-        dplyr::select(
-          .data$resolvedConceptId,
-          .data$conceptId,
-          .data$conceptName,
-          .data$domainId,
-          .data$vocabularyId,
-          .data$conceptClassId,
-          .data$standardConcept,
-          .data$conceptCode,
-          .data$conceptSetId
-        ) %>%
-        dplyr::distinct() %>%
-        dplyr::arrange(.data$resolvedConceptId, .data$conceptId)
-    }
-    data <- list(resolved = resolved, mapped = mapped)
-    return(data)
-  }
 
 # not exported
 getResultsCovariateRef <- function(dataSource,

@@ -146,6 +146,10 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  incrementalFolder = file.path(exportFolder, "incremental")) {
   
   start <- Sys.time()
+  
+  if (all(is.null(connectionDetails),
+          is.null(connection))) { stop('Please provide either connection or connectionDetails to connect to database.')}
+  
   ParallelLogger::logInfo("Run Cohort Diagnostics started at ", start, '. Initiating...')
   
   # collect arguments that were passed to cohort diagnostics at initiation
@@ -330,8 +334,6 @@ runCohortDiagnostics <- function(packageName = NULL,
     if (!is.null(connectionDetails)) {
       connection <- DatabaseConnector::connect(connectionDetails)
       on.exit(DatabaseConnector::disconnect(connection))
-    } else {
-      stop("No connection or connectionDetails provided.")
     }
   }
   

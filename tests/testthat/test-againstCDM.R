@@ -39,12 +39,12 @@ test_that("Cohort instantiation", {
   
   ## No incremental mode ----
   ### Neg - no cohort table
-  testthat::expect_error(
+  testthat::expect_error(suppressWarnings(
     CohortDiagnostics::instantiateCohortSet(
       connectionDetails = connectionDetails,
       cdmDatabaseSchema = cdmDatabaseSchema,
       vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-      tempEmulationSchema = tempEmulationSchema,
+      oracleTempSchema = tempEmulationSchema,
       cohortDatabaseSchema = cohortDatabaseSchema,
       cohortTable = cohortTable,
       cohortIds = 18348,
@@ -54,7 +54,7 @@ test_that("Cohort instantiation", {
       createCohortTable = FALSE,
       inclusionStatisticsFolder = file.path(folder, "incStats")
     )
-  )
+  ))
   ### Neg - bad cohort ----
   testthat::expect_error(suppressWarnings(
     CohortDiagnostics::instantiateCohortSet(
@@ -193,13 +193,14 @@ test_that("Testing Cohort diagnostics when not in incremental mode", {
   start <- Sys.time()
   # Cohort Diagnostics -----
   ## Not incremental -----
-  ### Neg - bad cohort -----
+  ### Neg - no connection or connection details -----
   testthat::expect_error(suppressWarnings(
     CohortDiagnostics::runCohortDiagnostics(
-      connectionDetails = connectionDetails,
+      connectionDetails = NULL,
+      connection = NULL,
       cdmDatabaseSchema = "eunomia",
       vocabularyDatabaseSchema = "eunomia",
-      tempEmulationSchema = tempEmulationSchema,
+      oracleTempSchema = tempEmulationSchema,
       cohortDatabaseSchema = cohortDatabaseSchema,
       cohortTable = cohortTable,
       packageName = "CohortDiagnostics",
@@ -207,6 +208,40 @@ test_that("Testing Cohort diagnostics when not in incremental mode", {
       inclusionStatisticsFolder = file.path(folder, "incStats"),
       exportFolder =  file.path(folder, "export"),
       databaseId = "cdmV5",
+      databaseName = NULL, 
+      databaseDescription = NULL,
+      runInclusionStatistics = FALSE,
+      runIncludedSourceConcepts = FALSE,
+      runOrphanConcepts = FALSE,
+      runVisitContext = FALSE,
+      runBreakdownIndexEvents = FALSE,
+      runIncidenceRate = FALSE,
+      runCohortTimeSeries = FALSE,
+      runDataSourceTimeSeries = FALSE,
+      runCohortRelationship = FALSE,
+      runCohortCharacterization = FALSE,
+      runTemporalCohortCharacterization = FALSE,
+      incremental = FALSE,
+      cohortIds = -11111,
+      incrementalFolder = file.path(folder, "incremental")
+    )
+  ))
+  ### Neg - bad cohort -----
+  testthat::expect_error(suppressWarnings(
+    CohortDiagnostics::runCohortDiagnostics(
+      connectionDetails = connectionDetails,
+      cdmDatabaseSchema = "eunomia",
+      vocabularyDatabaseSchema = "eunomia",
+      oracleTempSchema = tempEmulationSchema,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTable,
+      packageName = "CohortDiagnostics",
+      cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+      inclusionStatisticsFolder = file.path(folder, "incStats"),
+      exportFolder =  file.path(folder, "export"),
+      databaseId = "cdmV5",
+      databaseName = NULL, 
+      databaseDescription = NULL,
       runInclusionStatistics = FALSE,
       runIncludedSourceConcepts = FALSE,
       runOrphanConcepts = FALSE,
@@ -662,6 +697,12 @@ test_that("Retrieve results from premerged file", {
   )
   testthat::expect_true(nrow(resolvedMappedConceptSet2$resolved) >= 0)
   testthat::expect_true(nrow(resolvedMappedConceptSet2$mapped) >= 0)
+  #### Neg ----
+  testthat::expect_null(conceptIdDetails <- suppressWarnings(CohortDiagnostics::getResultsResolveMappedConceptSet(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = -1111,
+    databaseIds = 'cdmV5'
+  )))
   
   ## Calendar incidence ----
   # Table does not exist in results, is not generated in Eunomia?
@@ -673,17 +714,41 @@ test_that("Retrieve results from premerged file", {
   ## Cohort Relationship ----
   #### Pos ----
   cohortRelationships <- CohortDiagnostics::getResultsFromCohortRelationships(
-    dataSource = dataSourcePreMergedFile
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = 18348,
+    databaseIds = 'cdmV5'
   )
   testthat::expect_true(nrow(cohortRelationships) >= 0)
+  cohortRelationships2 <- CohortDiagnostics::getResultsFromCohortRelationships(
+    dataSource = dataSourcePreMergedFile
+  )
+  testthat::expect_true(nrow(cohortRelationships2) >= 0)
+  #### Neg ----
+  testthat::expect_null(conceptIdDetails <- suppressWarnings(CohortDiagnostics::getResultsFromCohortRelationships(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = -1111,
+    databaseIds = 'cdmV5'
+  )))
   
   
   #### Pos ----
   # Table does not exist in results, so this is throwing an error
   cohortCharacterizationResults <- CohortDiagnostics::getMultipleCharacterizationResults(
-    dataSource = dataSourcePreMergedFile
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = 18348,
+    databaseIds = 'cdmV5'
   )
   testthat::expect_true(length(cohortCharacterizationResults) >= 0)
+  cohortCharacterizationResults2 <- CohortDiagnostics::getMultipleCharacterizationResults(
+    dataSource = dataSourcePreMergedFile
+  )
+  testthat::expect_true(length(cohortCharacterizationResults2) >= 0)
+  #### Neg ----
+  testthat::expect_null(conceptIdDetails <- suppressWarnings(CohortDiagnostics::getMultipleCharacterizationResults(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = -1111,
+    databaseIds = 'cdmV5'
+  )))
   
   
   #### Pos ----
@@ -692,7 +757,17 @@ test_that("Retrieve results from premerged file", {
     cohortIds = c(17492, 18342),
     databaseIds = 'cdmV5'
   )
-  testthat::expect_true(nrow(cohortOverlapData) >= 0) 
+  testthat::expect_true(nrow(cohortOverlapData) >= 0)
+  cohortOverlapData2 <- CohortDiagnostics::getCohortOverlapData(
+    dataSource = dataSourcePreMergedFile
+  )
+  testthat::expect_true(nrow(cohortOverlapData2) >= 0) 
+  #### Neg ----
+  testthat::expect_null(conceptIdDetails <- suppressWarnings(CohortDiagnostics::getCohortOverlapData(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = -1111,
+    databaseIds = 'cdmV5'
+  )))
 })
 
 
