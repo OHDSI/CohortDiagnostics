@@ -58,7 +58,6 @@ runCohortRelationshipDiagnostics <-
       on.exit(DatabaseConnector::disconnect(connection))
     }
     
-    
     sqlCount <- "SELECT COUNT(*) FROM @cohort_database_schema.@cohort_table where cohort_definition_id IN (@cohort_ids);"
     targetCohortCount <- CohortDiagnostics:::renderTranslateQuerySql(connection = connection,
                                                                      sql = sqlCount,
@@ -67,6 +66,7 @@ runCohortRelationshipDiagnostics <-
                                                                      cohort_ids = targetCohortIds)
     if (targetCohortCount$COUNT == 0) {
       warning("Please check if target cohorts are instantiated. Exiting cohort relationship.")
+      return(NULL)
     }
     comparatorCohortCount <- CohortDiagnostics:::renderTranslateQuerySql(connection = connection,
                                                                          sql = sqlCount,
@@ -75,6 +75,7 @@ runCohortRelationshipDiagnostics <-
                                                                          cohort_ids = comparatorCohortIds)
     if (comparatorCohortCount$COUNT == 0) {
       warning("Please check if target cohorts are instantiated. Exiting cohort relationship.")
+      return(NULL)
     }
     
     ParallelLogger::logTrace(" - Creating cohort table subsets")
