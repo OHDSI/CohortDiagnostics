@@ -60,7 +60,7 @@ runCohortRelationshipDiagnostics <-
     
     
     sqlCount <- "SELECT COUNT(*) FROM @cohort_database_schema.@cohort_table where cohort_definition_id IN (@cohort_ids);"
-    targetCohortCount <- CohortDiagnostics:::renderTranslateQuerySql(connectionDetails = connectionDetails,
+    targetCohortCount <- CohortDiagnostics:::renderTranslateQuerySql(connection = connection,
                                                                      sql = sqlCount,
                                                                      cohort_database_schema = cohortDatabaseSchema,
                                                                      cohort_table = cohortTable,
@@ -68,7 +68,7 @@ runCohortRelationshipDiagnostics <-
     if (targetCohortCount$COUNT == 0) {
       warning("Please check if target cohorts are instantiated. Exiting cohort relationship.")
     }
-    comparatorCohortCount <- CohortDiagnostics:::renderTranslateQuerySql(connectionDetails = connectionDetails,
+    comparatorCohortCount <- CohortDiagnostics:::renderTranslateQuerySql(connection = connection,
                                                                          sql = sqlCount,
                                                                          cohort_database_schema = cohortDatabaseSchema,
                                                                          cohort_table = cohortTable,
@@ -88,13 +88,13 @@ runCohortRelationshipDiagnostics <-
                         WHERE cohort_definition_id IN (@cohort_ids);"
     
     DatabaseConnector::renderTranslateExecuteSql(connection = connection,
-                                               sql = cohortSubsetSql, 
-                                               cohort_database_schema = cohortDatabaseSchema,
-                                               cohort_table = cohortTable,
-                                               subset_cohort_table = '#target_subset',
-                                               cohort_ids = targetCohortIds, 
-                                               progressBar = FALSE, 
-                                               reportOverallTime = FALSE)
+                                                 sql = cohortSubsetSql, 
+                                                 cohort_database_schema = cohortDatabaseSchema,
+                                                 cohort_table = cohortTable,
+                                                 subset_cohort_table = '#target_subset',
+                                                 cohort_ids = targetCohortIds, 
+                                                 progressBar = FALSE, 
+                                                 reportOverallTime = FALSE)
     
     DatabaseConnector::renderTranslateExecuteSql(connection = connection,
                                                  sql = cohortSubsetSql, 
