@@ -26,22 +26,22 @@ exportFeatureExtractionOutput(
 
 \item{incremental}{Create only cohort diagnostics that haven't been created before?}
 
-\item{covariateValueFileName}{The full path (including file name) for the csv file with covariate value data. 
+\item{covariateValueFileName}{The full path (including file name) for the csv file with covariate value data.
 e.g. "covariate_value.csv" or "temporal_covariate_value.csv"}
 
-\item{covariateValueContFileName}{The full path (including file name) for the csv file with covariate value distribution data. 
+\item{covariateValueContFileName}{The full path (including file name) for the csv file with covariate value distribution data.
 e.g. "covariate_value_dist.csv" or "temporal_covariate_value_dist.csv"}
 
-\item{covariateRefFileName}{The full path (including file name) for the csv file with covariate reference data. 
+\item{covariateRefFileName}{The full path (including file name) for the csv file with covariate reference data.
 e.g. "covariate_ref.csv" or "temporal_covariate_ref.csv"}
 
-\item{analysisRefFileName}{The full path (including file name) for the csv file with analysis reference data. 
+\item{analysisRefFileName}{The full path (including file name) for the csv file with analysis reference data.
 e.g. "analysis_ref.csv" or "temporal_analysis_ref.csv"}
 
-\item{timeDistributionFileName}{The full path (including file name) for the csv file with time distribution data. 
+\item{timeDistributionFileName}{The full path (including file name) for the csv file with time distribution data.
 e.g. "time_distribution.csv"}
 
-\item{timeRefFileName}{The full path (including file name) for the csv file with time reference data. 
+\item{timeRefFileName}{The full path (including file name) for the csv file with time reference data.
 e.g. "temporal_time_ref.csv"}
 
 \item{cohortCounts}{Output \code{CohortDiagnostics::getCohortCounts}}

@@ -36,6 +36,6 @@ this should include both the database and schema name, for example
 Returns TRUE if all cohortIds are instantiated.
 }
 \description{
-Given a set of one or more cohortIds and a single cohort table, checks if 
+Given a set of one or more cohortIds and a single cohort table, checks if
 all cohortIds in the set are instantiated.
 }

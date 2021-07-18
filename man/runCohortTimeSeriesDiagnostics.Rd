@@ -45,7 +45,7 @@ this should include both the database and schema name, for example
 
 \item{runCohortTimeSeries}{Generate and export the cohort level time series?}
 
-\item{runDataSourceTimeSeries}{Generate and export the Data source level time series? i.e. 
+\item{runDataSourceTimeSeries}{Generate and export the Data source level time series? i.e.
 using all persons found in observation period table.}
 
 \item{timeSeriesMinDate}{(optional) Minimum date for time series. Default value January 1st 1980.}
@@ -57,7 +57,7 @@ using all persons found in observation period table.}
 \description{
 This function first generates a calendar period table, that has
 calendar intervals between the \code{timeSeriesMinDate} and \code{timeSeriesMaxDate}.
-Calendar Month, Quarter and year are supported. 
+Calendar Month, Quarter and year are supported.
 For each of the calendar interval, time series data are computed. The returned
 object is a R dataframe that will need to be converted to a time series object
 to perform time series analysis.

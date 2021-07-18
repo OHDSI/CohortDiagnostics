@@ -61,8 +61,7 @@ Remotes:
   ohdsi/Eunomia,
   ohdsi/FeatureExtraction,
   ohdsi/ROhdsiWebApi,
-  ohdsi/CirceR,
-  ohdsi/ParallelLogger@develop
+  ohdsi/CirceR
 License: Apache License
 VignetteBuilder: knitr
 URL: https://ohdsi.github.io/CohortDiagnostics, https://github.com/OHDSI/CohortDiagnostics

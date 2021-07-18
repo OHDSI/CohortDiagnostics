@@ -129,7 +129,7 @@ does not exist it will be created.}
 
 \item{runCohortTimeSeries}{Generate and export the cohort level time series?}
 
-\item{runDataSourceTimeSeries}{Generate and export the Data source level time series? i.e. 
+\item{runDataSourceTimeSeries}{Generate and export the Data source level time series? i.e.
 using all persons found in observation period table.}
 
 \item{runCohortRelationship}{Do you want to compute temporal relationship between the cohorts being diagnosed. This
@@ -157,8 +157,8 @@ of such objects.}
 of which cohort diagnostics has been executed.}
 }
 \description{
-Runs cohort diagnostics on cohorts specified in cohortToCreateFile (file) or cohortSetReference. The function 
-checks if the specified cohorts are instantiated, and only runs diagnostics on the instantiated 
+Runs cohort diagnostics on cohorts specified in cohortToCreateFile (file) or cohortSetReference. The function
+checks if the specified cohorts are instantiated, and only runs diagnostics on the instantiated
 cohorts (i.e. > 0 rows in cohort table).
 
 Characterization:

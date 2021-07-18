@@ -58,10 +58,10 @@ this should include both the database and schema name, for example
 
 \item{runOrphanConcepts}{Generate and export potential orphan concepts?}
 
-\item{runBreakdownIndexEvents}{Generate and export the breakdown of index events? This is executed on 
+\item{runBreakdownIndexEvents}{Generate and export the breakdown of index events? This is executed on
 instantiated cohorts only.}
 }
 \description{
-Runs concept set diagnostics on a set of cohorts. For index event breakdown, 
+Runs concept set diagnostics on a set of cohorts. For index event breakdown,
 the cohorts need to be instantiated.
 }

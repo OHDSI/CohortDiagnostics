@@ -288,8 +288,7 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
                                             cohortInclusionStatsFile = file.path(folder,
                                                                                  "cohortIncStats.csv"),
                                             cohortSummaryStatsFile = file.path(folder,
-                                                                               "cohortSummaryStats.csv"),
-                                            simplify = TRUE) {
+                                                                               "cohortSummaryStats.csv")) {
   start <- Sys.time()
   
   if (!file.exists(cohortInclusionFile)) {

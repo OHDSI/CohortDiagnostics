@@ -51,6 +51,6 @@ schema name, for example 'vocabulary.dbo'.}
 \item{cdmVersion}{The version of the OMOP CDM. Default 5. (Note: only 5 is supported.)}
 }
 \description{
-This function returns the types of visits experienced by persons in the cohort in 
+This function returns the types of visits experienced by persons in the cohort in
 relation to cohort start date.
 }

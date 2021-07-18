@@ -30,6 +30,6 @@ temporalCovariateRef, temporalAnalysisRef, temporalTimeRef, Concept output of fe
 }
 \description{
 Returns a list object with temporalCovariateValue, temporalCovariateValueDist,
-temporalCovariateRef, temporalAnalysisRef, temporalRef output of feature 
+temporalCovariateRef, temporalAnalysisRef, temporalRef output of feature
 extraction along with concept information.
 }

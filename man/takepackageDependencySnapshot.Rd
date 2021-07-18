@@ -14,6 +14,6 @@ order in which they should be installed.
 Take a snapshot of the R environment
 }
 \details{
-This function records all versions used in the R environment as used by runCohortDiagnostics. 
+This function records all versions used in the R environment as used by runCohortDiagnostics.
 This function was borrowed from OhdsiRTools
 }
