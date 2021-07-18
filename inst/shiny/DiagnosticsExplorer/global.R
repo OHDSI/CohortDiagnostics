@@ -17,7 +17,7 @@ defaultDatabase <- Sys.getenv("shinydbDatabase")
 defaultPort <- 5432
 defaultUser <- Sys.getenv("shinydbUser")
 defaultPassword <- Sys.getenv("shinydbPw")
-defaultResultsSchema <- 'phemyocardialinfarction'
+defaultResultsSchema <- 'cdSkeletoncohortdiagnosticsstudy2'
 defaultVocabularySchema <- defaultResultsSchema
 alternateVocabularySchema <- c('vocabulary')
 
