@@ -34,7 +34,7 @@ checkFixColumnNames <-
            tableName,
            zipFileName,
            specifications = getResultsDataModelSpecifications()) {
-    observeredNames <- colnames(table)[order(colnames(table))] %>% 
+    observeredNames <- colnames(table)[order(colnames(table))] %>%
       sort()
     
     tableSpecs <- specifications %>%
@@ -42,26 +42,26 @@ checkFixColumnNames <-
     
     optionalNames <- tableSpecs %>%
       dplyr::filter(.data$optional == "Yes") %>%
-      dplyr::select(.data$fieldName) %>% 
+      dplyr::select(.data$fieldName) %>%
       dplyr::arrange(.data$fieldName)
     
     expectedNames <- tableSpecs %>%
-      dplyr::select(.data$fieldName) %>% 
+      dplyr::select(.data$fieldName) %>%
       dplyr::arrange(.data$fieldName)
     
     if (length(optionalNames) > 0) {
-      expectedNames <- expectedNames %>% 
-      dplyr::anti_join(dplyr::filter(optionalNames, !.data$fieldName %in% observeredNames),
-                       by = "fieldName") %>%
+      expectedNames <- expectedNames %>%
+        dplyr::anti_join(dplyr::filter(optionalNames, !.data$fieldName %in% observeredNames),
+                         by = "fieldName") %>%
         dplyr::arrange(.data$fieldName) %>%
-        dplyr::pull() %>% 
+        dplyr::pull() %>%
         sort()
     } else {
-      expectedNames <- expectedNames %>% 
-        dplyr::pull() %>% 
+      expectedNames <- expectedNames %>%
+        dplyr::pull() %>%
         sort()
     }
-      
+    
     
     if (!(all(expectedNames %in% observeredNames))) {
       stop(
@@ -208,7 +208,9 @@ createResultsDataModel <- function(connection = NULL,
                                    connectionDetails = NULL,
                                    schema) {
   if (all(is.null(connectionDetails),
-          is.null(connection))) { stop('Please provide either connection or connectionDetails to connect to database.')}
+          is.null(connection))) {
+    stop('Please provide either connection or connectionDetails to connect to database.')
+  }
   if (is.null(connection)) {
     if (!is.null(connectionDetails)) {
       connection <- DatabaseConnector::connect(connectionDetails)

@@ -18,15 +18,15 @@
 #' Given a set of instantiated cohorts get the visit context in relation to cohort start date.
 #'
 #' @description
-#' This function returns the types of visits experienced by persons in the cohort in 
+#' This function returns the types of visits experienced by persons in the cohort in
 #' relation to cohort start date.
 #'
 #' @template Connection
 #'
 #' @template CohortDatabaseSchema
-#' 
+#'
 #' @template CdmDatabaseSchema
-#' 
+#'
 #' @template VocabularyDatabaseSchema
 #'
 #' @template TempEmulationSchema
@@ -34,7 +34,7 @@
 #' @template CohortTable
 #'
 #' @param cohortIds              A vector of one or more Cohort Ids to compute visit context for.
-#' 
+#'
 #' @template CdmVersion
 #'
 #' @export
@@ -48,7 +48,9 @@ runVisitContextDiagnostics <- function(connectionDetails = NULL,
                                        cohortIds,
                                        cdmVersion = 5) {
   if (!cdmVersion == 5) {
-    warning('Only OMOP CDM v5.x.x is supported. Continuing execution with the assumption of backward compatibility.')
+    warning(
+      'Only OMOP CDM v5.x.x is supported. Continuing execution with the assumption of backward compatibility.'
+    )
   }
   
   start <- Sys.time()
@@ -58,14 +60,17 @@ runVisitContextDiagnostics <- function(connectionDetails = NULL,
     on.exit(DatabaseConnector::disconnect(connection))
   }
   
-  sqlCount <- "SELECT cohort_definition_id, COUNT(*) count FROM @cohort_database_schema.@cohort_table 
+  sqlCount <-
+    "SELECT cohort_definition_id, COUNT(*) count FROM @cohort_database_schema.@cohort_table
                {@cohort_ids != ''} ? { where cohort_definition_id IN (@cohort_ids)}
                GROUP BY cohort_definition_id;"
-  cohortCount <- renderTranslateQuerySql(connection = connection,
-                                         sql = sqlCount,
-                                         cohort_database_schema = cohortDatabaseSchema,
-                                         cohort_ids = cohortIds,
-                                         cohort_table = cohortTable)
+  cohortCount <- renderTranslateQuerySql(
+    connection = connection,
+    sql = sqlCount,
+    cohort_database_schema = cohortDatabaseSchema,
+    cohort_ids = cohortIds,
+    cohort_table = cohortTable
+  )
   if (nrow(cohortCount) == 0) {
     warning("Please check if cohorts are instantiated. Exiting Visit Context.")
     return(NULL)

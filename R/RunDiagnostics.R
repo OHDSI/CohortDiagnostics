@@ -17,8 +17,8 @@
 #' Run cohort diagnostics
 #'
 #' @description
-#' Runs cohort diagnostics on cohorts specified in cohortToCreateFile (file) or cohortSetReference. The function 
-#' checks if the specified cohorts are instantiated, and only runs diagnostics on the instantiated 
+#' Runs cohort diagnostics on cohorts specified in cohortToCreateFile (file) or cohortSetReference. The function
+#' checks if the specified cohorts are instantiated, and only runs diagnostics on the instantiated
 #' cohorts (i.e. > 0 rows in cohort table).
 #'
 #' Characterization:
@@ -55,7 +55,7 @@
 #' @param runBreakdownIndexEvents     Generate and export the breakdown of index events?
 #' @param runIncidenceRate            Generate and export the cohort incidence  rates?
 #' @param runCohortTimeSeries         Generate and export the cohort level time series?
-#' @param runDataSourceTimeSeries     Generate and export the Data source level time series? i.e. 
+#' @param runDataSourceTimeSeries     Generate and export the Data source level time series? i.e.
 #'                                    using all persons found in observation period table.
 #' @param runCohortRelationship       Do you want to compute temporal relationship between the cohorts being diagnosed. This
 #'                                    diagnostics is needed for cohort as feature characterization.
@@ -144,11 +144,12 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  minCellCount = 5,
                                  incremental = FALSE,
                                  incrementalFolder = file.path(exportFolder, "incremental")) {
-  
   start <- Sys.time()
   
   if (all(is.null(connectionDetails),
-          is.null(connection))) { stop('Please provide either connection or connectionDetails to connect to database.')}
+          is.null(connection))) {
+    stop('Please provide either connection or connectionDetails to connect to database.')
+  }
   
   ParallelLogger::logInfo("Run Cohort Diagnostics started at ", start, '. Initiating...')
   
@@ -175,7 +176,8 @@ runCohortDiagnostics <- function(packageName = NULL,
     RJSONIO::toJSON(digits = 23, pretty = TRUE)
   
   # take package dependency snapshot
-  packageDependencySnapShotJson <- takepackageDependencySnapshot() %>% 
+  packageDependencySnapShotJson <-
+    takepackageDependencySnapshot() %>%
     RJSONIO::toJSON(digits = 23, pretty = TRUE)
   
   # Execution mode determination----
@@ -186,7 +188,9 @@ runCohortDiagnostics <- function(packageName = NULL,
   
   if (all(!is.null(oracleTempSchema), is.null(tempEmulationSchema))) {
     tempEmulationSchema <- oracleTempSchema
-    warning(' - OracleTempSchema has been deprecated by DatabaseConnector. Please use tempEmulationSchema instead.')
+    warning(
+      ' - OracleTempSchema has been deprecated by DatabaseConnector. Please use tempEmulationSchema instead.'
+    )
   }
   
   if (any(is.null(databaseName), is.na(databaseName))) {
@@ -303,7 +307,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   if (length(requiredButNotObsevered) > 0) {
     stop(paste(
       "- The following required fields not found in cohort table:",
-      paste0(" '", requiredButNotObsevered,"'", collapse = ", ")
+      paste0(" '", requiredButNotObsevered, "'", collapse = ", ")
     ))
   }
   
@@ -313,7 +317,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     ParallelLogger::logTrace(
       paste0(
         "- The following columns were found in cohort table, but are not expected - they will be removed:",
-        paste0(" '", obseveredButNotExpected,"'", collapse = ",")
+        paste0(" '", obseveredButNotExpected, "'", collapse = ",")
       )
     )
   }
@@ -458,7 +462,9 @@ runCohortDiagnostics <- function(packageName = NULL,
   if (runInclusionStatistics) {
     startInclusionStatistics <- Sys.time()
     if (is.null(instantiatedCohorts)) {
-      ParallelLogger::logInfo(" -- Skipping inclusion statistics from files because no cohorts were instantiated.")
+      ParallelLogger::logInfo(
+        " -- Skipping inclusion statistics from files because no cohorts were instantiated."
+      )
     } else {
       ParallelLogger::logInfo(" -- Found, fetching inclusion statistics from files")
       subset <- subsetToRequiredCohorts(
@@ -477,10 +483,8 @@ runCohortDiagnostics <- function(packageName = NULL,
       }
       if (nrow(subset) > 0) {
         stats <-
-          getInclusionStatisticsFromFiles(
-            cohortIds = subset$cohortId,
-            folder = inclusionStatisticsFolder
-          )
+          getInclusionStatisticsFromFiles(cohortIds = subset$cohortId,
+                                          folder = inclusionStatisticsFolder)
         if (!is.null(stats$simplifiedOutput)) {
           stats$simplifiedOutput <- stats$simplifiedOutput %>%
             dplyr::mutate(databaseId = !!databaseId)
@@ -1035,17 +1039,19 @@ runCohortDiagnostics <- function(packageName = NULL,
         dplyr::mutate(databaseId = !!databaseId)
       
       if (!is.null(timeSeries) && nrow(timeSeries) > 0) {
-        columnsInTimeSeries <- c('records',
-                                 'subjects',
-                                 'personDays',
-                                 'recordsStart',
-                                 'subjectsStart',
-                                 'recordsEnd',
-                                 'subjectsEnd')
+        columnsInTimeSeries <- c(
+          'records',
+          'subjects',
+          'personDays',
+          'recordsStart',
+          'subjectsStart',
+          'recordsEnd',
+          'subjectsEnd'
+        )
         for (i in (1:length(columnsInTimeSeries))) {
           timeSeries <-
-            enforceMinCellValue(timeSeries, 
-                                columnsInTimeSeries[[i]], 
+            enforceMinCellValue(timeSeries,
+                                columnsInTimeSeries[[i]],
                                 minCellCount)
         }
         writeToCsv(
@@ -1080,7 +1086,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     
     # no point in incremental for cohort relationship, because we have
     # to compute the relationship between combinations of target and
-    # comparators. What do we increment on - target? Then we 
+    # comparators. What do we increment on - target? Then we
     # will still have to read all the comparator cohorts which
     # is the full cohort table
     # The only purpose of incremental is to prevent re-run
@@ -1115,18 +1121,20 @@ runCohortDiagnostics <- function(packageName = NULL,
       if (nrow(cohortRelationship) > 0) {
         cohortRelationship <- cohortRelationship %>%
           dplyr::mutate(databaseId = !!databaseId)
-        columnsInCohortRelationship <- c('bothSubjects',
-                                         'cBeforeTSubjects',
-                                         'tBeforeCSubjects',
-                                         'sameDaySubjects',
-                                         'cPersonDays',
-                                         'cSubjectsStart',
-                                         'cSubjectsEnd',
-                                         'cInTSubjects')
+        columnsInCohortRelationship <- c(
+          'bothSubjects',
+          'cBeforeTSubjects',
+          'tBeforeCSubjects',
+          'sameDaySubjects',
+          'cPersonDays',
+          'cSubjectsStart',
+          'cSubjectsEnd',
+          'cInTSubjects'
+        )
         for (i in (1:length(columnsInCohortRelationship))) {
           cohortRelationship <-
-            enforceMinCellValue(cohortRelationship, 
-                                columnsInCohortRelationship[[i]], 
+            enforceMinCellValue(cohortRelationship,
+                                columnsInCohortRelationship[[i]],
                                 minCellCount)
         }
         writeToCsv(
@@ -1312,7 +1320,9 @@ runCohortDiagnostics <- function(packageName = NULL,
         as.character(nullToEmpty(packageName())),
         as.character(if (!getPackageName() == ".GlobalEnv") {
           packageVersion(packageName())
-        } else {''}),
+        } else {
+          ''
+        }),
         as.character(nullToEmpty(
           cdmSourceInformation$sourceDescription
         )),
@@ -1328,10 +1338,12 @@ runCohortDiagnostics <- function(packageName = NULL,
       )
     )
   
-  writeToCsv(data = metadata,
-             fileName = file.path(exportFolder, "metadata.csv"), 
-             incremental = TRUE,
-             start_time = as.character(start))
+  writeToCsv(
+    data = metadata,
+    fileName = file.path(exportFolder, "metadata.csv"),
+    incremental = TRUE,
+    start_time = as.character(start)
+  )
   
   # Add all to zip file----
   ParallelLogger::logInfo("Adding results to zip file")

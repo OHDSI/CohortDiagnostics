@@ -34,9 +34,10 @@ getCdmDataSourceInformation <-
   function(connectionDetails = NULL,
            connection = NULL,
            cdmDatabaseSchema) {
-    
     if (all(is.null(connectionDetails),
-            is.null(connection))) { stop('Please provide either connection or connectionDetails to connect to database.')}
+            is.null(connection))) {
+      stop('Please provide either connection or connectionDetails to connect to database.')
+    }
     
     # Set up connection to server ----
     if (is.null(connection)) {

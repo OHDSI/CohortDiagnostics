@@ -310,9 +310,12 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
   
   inclusion <- fetchStats(cohortInclusionFile)
   if ('description' %in% colnames(inclusion)) {
-    inclusion <- inclusion %>% tidyr::replace_na(replace = list(description = ''))
-  } else {inclusion$description <- ''}
-    
+    inclusion <-
+      inclusion %>% tidyr::replace_na(replace = list(description = ''))
+  } else {
+    inclusion$description <- ''
+  }
+  
   summaryStats <- fetchStats(cohortSummaryStatsFile)
   inclusionStats <- fetchStats(cohortInclusionStatsFile)
   inclusionResults <- fetchStats(cohortInclusionResultFile)
@@ -333,54 +336,58 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
     signif(delta, 3),
     attr(delta, "units")
   ))
-  output <- list(simplifiedOutput = result,
-                 cohortInclusion = inclusion,
-                 cohortInclusionResult = inclusionResults,
-                 cohortInclusionStats = inclusionStats,
-                 cohortSummaryStats = summaryStats
-                 )
+  output <- list(
+    simplifiedOutput = result,
+    cohortInclusion = inclusion,
+    cohortInclusionResult = inclusionResults,
+    cohortInclusionStats = inclusionStats,
+    cohortSummaryStats = summaryStats
+  )
   return(output)
 }
 
 simplifyInclusionStats <- function(inclusion,
-                                  inclusionResults,
-                                  inclusionStats) {
-    if (nrow(inclusion) == 0 || nrow(inclusionStats) == 0) {return(dplyr::tibble())}
-    
-    result <- inclusion %>%
-      dplyr::select(.data$ruleSequence, .data$name) %>%
-      dplyr::distinct() %>%
-      dplyr::inner_join(
-        inclusionStats %>%
-          dplyr::filter(.data$modeId == 0) %>%
-          dplyr::select(
-            .data$ruleSequence,
-            .data$personCount,
-            .data$gainCount,
-            .data$personTotal
-          ),
-        by = "ruleSequence"
-      ) %>%
-      dplyr::mutate(remain = 0)
-    
-    inclusionResults <- inclusionResults %>%
-      dplyr::filter(.data$modeId == 0)
-    mask <- 0
-    for (ruleId in 0:(nrow(result) - 1)) {
-      mask <- bitwOr(mask, 2 ^ ruleId)
-      idx <-
-        bitwAnd(inclusionResults$inclusionRuleMask, mask) == mask
-      result$remain[result$ruleSequence == ruleId] <-
-        sum(inclusionResults$personCount[idx])
-    }
-    colnames(result) <- c(
-      "ruleSequenceId",
-      "ruleName",
-      "meetSubjects",
-      "gainSubjects",
-      "totalSubjects",
-      "remainSubjects"
-    )
+                                   inclusionResults,
+                                   inclusionStats) {
+  if (nrow(inclusion) == 0 ||
+      nrow(inclusionStats) == 0) {
+    return(dplyr::tibble())
+  }
+  
+  result <- inclusion %>%
+    dplyr::select(.data$ruleSequence, .data$name) %>%
+    dplyr::distinct() %>%
+    dplyr::inner_join(
+      inclusionStats %>%
+        dplyr::filter(.data$modeId == 0) %>%
+        dplyr::select(
+          .data$ruleSequence,
+          .data$personCount,
+          .data$gainCount,
+          .data$personTotal
+        ),
+      by = "ruleSequence"
+    ) %>%
+    dplyr::mutate(remain = 0)
+  
+  inclusionResults <- inclusionResults %>%
+    dplyr::filter(.data$modeId == 0)
+  mask <- 0
+  for (ruleId in 0:(nrow(result) - 1)) {
+    mask <- bitwOr(mask, 2 ^ ruleId)
+    idx <-
+      bitwAnd(inclusionResults$inclusionRuleMask, mask) == mask
+    result$remain[result$ruleSequence == ruleId] <-
+      sum(inclusionResults$personCount[idx])
+  }
+  colnames(result) <- c(
+    "ruleSequenceId",
+    "ruleName",
+    "meetSubjects",
+    "gainSubjects",
+    "totalSubjects",
+    "remainSubjects"
+  )
   return(result)
 }
 
@@ -441,13 +448,18 @@ instantiateCohortSet <- function(connectionDetails = NULL,
   if (!is.null(cohortSetReference)) {
     ParallelLogger::logInfo(" - Found cohortSetReference. Cohort Diagnostics is running in WebApi mode.")
     cohortToCreateFile <- NULL
-    if (all(is.null(dim(cohortSetReference)),
-            length(cohortSetReference) > 0,
-            typeof(cohortSetReference) %in% c('double', 'integer'))) {
-      ParallelLogger::logInfo(' - cohortSetReference found to be a vector of ids, instead of a data frame. Attempting to use it. Continuing.')
+    if (all(
+      is.null(dim(cohortSetReference)),
+      length(cohortSetReference) > 0,
+      typeof(cohortSetReference) %in% c('double', 'integer')
+    )) {
+      ParallelLogger::logInfo(
+        ' - cohortSetReference found to be a vector of ids, instead of a data frame. Attempting to use it. Continuing.'
+      )
       cohortSetReference <- dplyr::tibble(id = cohortSetReference)
     }
-    cohortSetReference <- makeBackwardsCompatible(cohortSetReference)
+    cohortSetReference <-
+      makeBackwardsCompatible(cohortSetReference)
   }
   
   if (!is.null(oracleTempSchema) && is.null(tempEmulationSchema)) {
@@ -549,11 +561,17 @@ instantiateCohortSet <- function(connectionDetails = NULL,
         sql <- SqlRender::render(sql,
                                  vocabulary_database_schema = vocabularyDatabaseSchema)
       } else {
-        ParallelLogger::logDebug('- Cohort id ', cohorts$cohortId[i], " SQL does not have vocabularyDatabaseSchema.")
+        ParallelLogger::logDebug(
+          '- Cohort id ',
+          cohorts$cohortId[i],
+          " SQL does not have vocabularyDatabaseSchema."
+        )
       }
       if (!stringr::str_detect(string = sql,
-                              pattern = 'results_database_schema')) {
-        ParallelLogger::logDebug('- Cohort id ', cohorts$cohortId[i], " SQL does not have resultsDatabaseSchema.")
+                               pattern = 'results_database_schema')) {
+        ParallelLogger::logDebug('- Cohort id ',
+                                 cohorts$cohortId[i],
+                                 " SQL does not have resultsDatabaseSchema.")
       }
       if (generateInclusionStats) {
         if (stringr::str_detect(string = sql,
@@ -566,21 +584,28 @@ instantiateCohortSet <- function(connectionDetails = NULL,
             results_database_schema.cohort_summary_stats = "#cohort_summary_stats"
           )
         } else {
-          ParallelLogger::logDebug(' - Cohort id ', cohorts$cohortId[i], " SQL does not have inclusion rule statistics tables.")
+          ParallelLogger::logDebug(
+            ' - Cohort id ',
+            cohorts$cohortId[i],
+            " SQL does not have inclusion rule statistics tables."
+          )
         }
         # added for compatibility for 2.8.1
         # https://github.com/OHDSI/CohortDiagnostics/issues/387
         # this table was introduced in v2.8.1, and does not exist in prior version of webapi
         if (stringr::str_detect(string = sql,
                                 pattern = 'cohort_censor_stats')) {
-          sql <- SqlRender::render(sql = sql,
-                                   results_database_schema.cohort_censor_stats = "#cohort_censor_stats"
-                                   )
+          sql <- SqlRender::render(
+            sql = sql,
+            results_database_schema.cohort_censor_stats = "#cohort_censor_stats"
+          )
         }
       } else {
-        ParallelLogger::logDebug(" - Skipping inclusion rules for cohort id ", 
-                                cohorts$cohortId[i], 
-                                " because this diagnostics is set to FALSE.")
+        ParallelLogger::logDebug(
+          " - Skipping inclusion rules for cohort id ",
+          cohorts$cohortId[i],
+          " because this diagnostics is set to FALSE."
+        )
       }
       sql <- SqlRender::translate(sql,
                                   targetDialect = connection@dbms,
@@ -626,7 +651,10 @@ createTempInclusionStatsTables <-
         dbms = connection@dbms,
         tempEmulationSchema = tempEmulationSchema
       )
-    DatabaseConnector::executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
+    DatabaseConnector::executeSql(connection,
+                                  sql,
+                                  progressBar = FALSE,
+                                  reportOverallTime = FALSE)
     
     inclusionRules <- dplyr::tibble()
     for (i in 1:nrow(cohorts)) {

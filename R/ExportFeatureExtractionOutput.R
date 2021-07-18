@@ -22,22 +22,22 @@
 #'
 #' @param featureExtractionDbCovariateData       An Andromeda object returned by \code{CohortDiagonstics::runCohortCharacterizationDiagnostics}
 #'
-#' @param covariateValueFileName                 The full path (including file name) for the csv file with covariate value data. 
+#' @param covariateValueFileName                 The full path (including file name) for the csv file with covariate value data.
 #'                                               e.g. "covariate_value.csv" or "temporal_covariate_value.csv"
 #'
-#' @param covariateValueContFileName             The full path (including file name) for the csv file with covariate value distribution data. 
+#' @param covariateValueContFileName             The full path (including file name) for the csv file with covariate value distribution data.
 #'                                               e.g. "covariate_value_dist.csv" or "temporal_covariate_value_dist.csv"
 #'
-#' @param covariateRefFileName                   The full path (including file name) for the csv file with covariate reference data. 
+#' @param covariateRefFileName                   The full path (including file name) for the csv file with covariate reference data.
 #'                                               e.g. "covariate_ref.csv" or "temporal_covariate_ref.csv"
 #'
-#' @param analysisRefFileName                    The full path (including file name) for the csv file with analysis reference data. 
+#' @param analysisRefFileName                    The full path (including file name) for the csv file with analysis reference data.
 #'                                               e.g. "analysis_ref.csv" or "temporal_analysis_ref.csv"
 #'
-#' @param timeDistributionFileName               The full path (including file name) for the csv file with time distribution data. 
+#' @param timeDistributionFileName               The full path (including file name) for the csv file with time distribution data.
 #'                                               e.g. "time_distribution.csv"
 #'
-#' @param timeRefFileName                        The full path (including file name) for the csv file with time reference data. 
+#' @param timeRefFileName                        The full path (including file name) for the csv file with time reference data.
 #'                                               e.g. "temporal_time_ref.csv"
 #'
 #' @param cohortCounts                           Output \code{CohortDiagnostics::getCohortCounts}
@@ -64,13 +64,14 @@ exportFeatureExtractionOutput <-
            cohortCounts,
            cutOff = 0.0001,
            minCellCount = 5) {
-    
     if (!'databaseId' %in% colnames(cohortCounts)) {
-      cohortCounts <- cohortCounts %>% 
+      cohortCounts <- cohortCounts %>%
         dplyr::mutate(databaseId = !!databaseId)
     }
     if (nrow(cohortCounts) == 0) {
-      stop('Cant export Feature Extraction output, because all cohorts are reported to have a zero record count.')
+      stop(
+        'Cant export Feature Extraction output, because all cohorts are reported to have a zero record count.'
+      )
     }
     
     minCellCount <-
@@ -96,7 +97,7 @@ exportFeatureExtractionOutput <-
         dplyr::mutate(sd = dplyr::case_when(.data$mean >= 0 ~ sd)) %>%
         dplyr::mutate(mean = round(.data$mean, digits = 4),
                       sd = round(.data$sd, digits = 4)) %>%
-        dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
+        dplyr::select(-.data$cohortEntries,-.data$cohortSubjects)
       
       if (dplyr::pull(dplyr::count(featureExtractionDbCovariateData$filteredCovariates)) > 0) {
         covariateRef <-
@@ -152,7 +153,7 @@ exportFeatureExtractionOutput <-
         dplyr::mutate(sd = dplyr::case_when(.data$mean >= 0 ~ sd)) %>%
         # dplyr::mutate(mean = round(.data$mean, digits = 4),
         #               sd = round(.data$sd, digits = 4)) %>%
-        dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
+        dplyr::select(-.data$cohortEntries,-.data$cohortSubjects)
       
       if (dplyr::pull(dplyr::count(
         featureExtractionDbCovariateData$filteredCovariatesContinous
@@ -176,10 +177,7 @@ exportFeatureExtractionOutput <-
             timeMetric = .data$covariateName
           ) %>%
           dplyr::select(
-            -.data$conceptId,
-            -.data$analysisId,
-            -.data$covariateId,
-            -.data$result$countValue
+            -.data$conceptId,-.data$analysisId,-.data$covariateId,-.data$result$countValue
           ) %>%
           dplyr::collect()
         if (dplyr::pull(dplyr::count(featureExtractionDbCovariateData$timeDistribution)) > 0) {
