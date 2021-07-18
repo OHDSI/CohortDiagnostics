@@ -739,22 +739,28 @@ test_that("Retrieve results from premerged file", {
     databaseIds = 'cdmV5'
   )
   testthat::expect_true(length(cohortCharacterizationResults) >= 0)
+  testthat::expect_true(nrow(cohortCharacterizationResults$analysisRef) > 0)
+  testthat::expect_true(nrow(cohortCharacterizationResults$covariateValue) > 0)
   cohortCharacterizationResults2 <- CohortDiagnostics::getMultipleCharacterizationResults(
     dataSource = dataSourcePreMergedFile
   )
   testthat::expect_true(length(cohortCharacterizationResults2) >= 0)
+  testthat::expect_true(nrow(cohortCharacterizationResults2$analysisRef) > 0)
+  testthat::expect_true(nrow(cohortCharacterizationResults2$covariateValue) > 0)
   #### Neg ----
-  testthat::expect_null(conceptIdDetails <- suppressWarnings(CohortDiagnostics::getMultipleCharacterizationResults(
+  negativeResults <- CohortDiagnostics::getMultipleCharacterizationResults(
     dataSource = dataSourcePreMergedFile,
     cohortIds = -1111,
     databaseIds = 'cdmV5'
-  )))
+  )
+  testthat::expect_true(nrow(negativeResults$analysisRef) > 0)
+  testthat::expect_null(negativeResults$covariateValue)
   
   
   #### Pos ----
   cohortOverlapData <- CohortDiagnostics::getCohortOverlapData(
     dataSource = dataSourcePreMergedFile, 
-    cohortIds = c(17492, 18342),
+    cohortIds = c(18348, 18350),
     databaseIds = 'cdmV5'
   )
   testthat::expect_true(nrow(cohortOverlapData) >= 0)

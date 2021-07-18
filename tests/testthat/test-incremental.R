@@ -1,13 +1,11 @@
-library(testthat)
-
-test_that("Record keeping of single type tasks", {
+testthat::test_that("Record keeping of single type tasks", {
   rkf <- tempfile()
   
   sql1 <- "SELECT * FROM my_table WHERE x = 1;"
   checksum1 <- CohortDiagnostics:::computeChecksum(sql1)
   
   # should be TRUE
-  expect_true(
+  testthat::expect_true(
     CohortDiagnostics:::isTaskRequired(
       cohortId = 1,
       runSql = TRUE,
@@ -17,7 +15,7 @@ test_that("Record keeping of single type tasks", {
   )
 
   # if incremental is FALSE, then this should return NULL  
-  expect_true(is.null(CohortDiagnostics:::recordTasksDone(
+  testthat::expect_true(is.null(CohortDiagnostics:::recordTasksDone(
     cohortId = 1,
     runSql = TRUE,
     checksum = checksum1,
@@ -32,7 +30,7 @@ test_that("Record keeping of single type tasks", {
     recordKeepingFile = rkf
   )
   
-  expect_false(
+  testthat::expect_false(
     CohortDiagnostics:::isTaskRequired(
       cohortId = 1,
       runSql = TRUE,
@@ -43,7 +41,7 @@ test_that("Record keeping of single type tasks", {
   
   sql2 <- "SELECT * FROM my_table WHERE x = 2;"
   checksum2 <- CohortDiagnostics:::computeChecksum(sql2)
-  expect_true(
+  testthat::expect_true(
     CohortDiagnostics:::isTaskRequired(
       cohortId = 2,
       runSql = TRUE,
@@ -61,7 +59,7 @@ test_that("Record keeping of single type tasks", {
   
   sql1a <- "SELECT * FROM my_table WHERE x = 1 AND y = 2;"
   checksum1a <- CohortDiagnostics:::computeChecksum(sql1a)
-  expect_true(
+  testthat::expect_true(
     CohortDiagnostics:::isTaskRequired(
       cohortId = 1,
       runSql = TRUE,
@@ -77,7 +75,7 @@ test_that("Record keeping of single type tasks", {
     recordKeepingFile = rkf
   )
   
-  expect_false(
+  testthat::expect_false(
     CohortDiagnostics:::isTaskRequired(
       cohortId = 1,
       runSql = TRUE,
@@ -91,7 +89,7 @@ test_that("Record keeping of single type tasks", {
                           col_types = readr::cols())
   rkf2 <- dplyr::bind_rows(rkf2, rkf2)
   readr::write_excel_csv(x = rkf2, file = rkf)
-  expect_error(
+  testthat::expect_error(
     CohortDiagnostics:::isTaskRequired(
       cohortId = 1,
       runSql = TRUE,
@@ -103,12 +101,12 @@ test_that("Record keeping of single type tasks", {
   unlink(rkf)
 })
 
-test_that("Record keeping of multiple type tasks", {
+testthat::test_that("Record keeping of multiple type tasks", {
   rkf <- tempfile()
   
   sql1 <- "SELECT * FROM my_table WHERE x = 1;"
   checksum1 <- CohortDiagnostics:::computeChecksum(sql1)
-  expect_true(
+  testthat::expect_true(
     CohortDiagnostics:::isTaskRequired(
       cohortId = 1,
       task = "Run SQL",
@@ -125,7 +123,7 @@ test_that("Record keeping of multiple type tasks", {
   )
   
   
-  expect_false(
+  testthat::expect_false(
     CohortDiagnostics:::isTaskRequired(
       cohortId = 1,
       task = "Run SQL",
@@ -136,7 +134,7 @@ test_that("Record keeping of multiple type tasks", {
   
   sql2 <- "SELECT * FROM my_table WHERE x = 1 AND y = 1;"
   checksum2 <- CohortDiagnostics:::computeChecksum(sql2)
-  expect_true(
+  testthat::expect_true(
     CohortDiagnostics:::isTaskRequired(
       cohortId = 1,
       cohortId2 = 2,
@@ -154,7 +152,7 @@ test_that("Record keeping of multiple type tasks", {
     recordKeepingFile = rkf
   )
   
-  expect_false(
+  testthat::expect_false(
     CohortDiagnostics:::isTaskRequired(
       cohortId = 1,
       task = "Run SQL",
@@ -172,7 +170,7 @@ test_that("Record keeping of multiple type tasks", {
     checksum = checksum2,
     recordKeepingFile = rkf
   )
-  expect_true(
+  testthat::expect_true(
     CohortDiagnostics:::isTaskRequired(
       comparatorId = 2,
       task = "Check Comparator Cohort id",
@@ -184,7 +182,7 @@ test_that("Record keeping of multiple type tasks", {
   
   sql2a <- "SELECT * FROM my_table WHERE x = 1 AND y = 2 AND z = 3;"
   checksum2a <- CohortDiagnostics:::computeChecksum(sql2a)
-  expect_true(
+  testthat::expect_true(
     CohortDiagnostics:::isTaskRequired(
       cohortId = 1,
       cohortId2 = 2,
@@ -202,7 +200,7 @@ test_that("Record keeping of multiple type tasks", {
     recordKeepingFile = rkf
   )
   
-  expect_false(
+  testthat::expect_false(
     CohortDiagnostics:::isTaskRequired(
       cohortId = 1,
       cohortId2 = 2,
@@ -215,7 +213,7 @@ test_that("Record keeping of multiple type tasks", {
   unlink(rkf)
 })
 
-test_that("Record keeping of multiple tasks at once", {
+testthat::test_that("Record keeping of multiple tasks at once", {
   rkf <- tempfile()
   
   task <- dplyr::tibble(
@@ -226,7 +224,7 @@ test_that("Record keeping of multiple tasks at once", {
     )
   )
   task$checksum <- CohortDiagnostics:::computeChecksum(task$sql)
-  expect_true(
+  testthat::expect_true(
     CohortDiagnostics:::isTaskRequired(
       cohortId = task$cohortId[1],
       checksum = task$checksum[1],
@@ -241,7 +239,7 @@ test_that("Record keeping of multiple tasks at once", {
   )
   
   
-  expect_false(
+  testthat::expect_false(
     CohortDiagnostics:::isTaskRequired(
       cohortId = task$cohortId[1],
       checksum = task$checksum[1],
@@ -249,7 +247,7 @@ test_that("Record keeping of multiple tasks at once", {
     )
   )
   
-  expect_false(
+  testthat::expect_false(
     CohortDiagnostics:::isTaskRequired(
       cohortId = task$cohortId[2],
       checksum = task$checksum[2],
@@ -268,7 +266,7 @@ test_that("Record keeping of multiple tasks at once", {
   )
   task$checksum <- CohortDiagnostics:::computeChecksum(task$sql)
   
-  expect_true(
+  testthat::expect_true(
     CohortDiagnostics:::isTaskRequired(
       cohortId = task$cohortId[1],
       checksum = task$checksum[1],
@@ -282,7 +280,7 @@ test_that("Record keeping of multiple tasks at once", {
       checksum = task$checksum,
       recordKeepingFile = rkf
     )
-  expect_equal(nrow(tasks), 3)
+  testthat::expect_equal(nrow(tasks), 3)
   
   CohortDiagnostics:::recordTasksDone(
     cohortId = task$cohortId,
@@ -290,7 +288,7 @@ test_that("Record keeping of multiple tasks at once", {
     recordKeepingFile = rkf
   )
   
-  expect_false(
+  testthat::expect_false(
     CohortDiagnostics:::isTaskRequired(
       cohortId = task$cohortId[1],
       checksum = task$checksum[1],
@@ -298,7 +296,7 @@ test_that("Record keeping of multiple tasks at once", {
     )
   )
   
-  expect_false(
+  testthat::expect_false(
     CohortDiagnostics:::isTaskRequired(
       cohortId = task$cohortId[2],
       checksum = task$checksum[2],
@@ -306,7 +304,7 @@ test_that("Record keeping of multiple tasks at once", {
     )
   )
   
-  expect_false(
+  testthat::expect_false(
     CohortDiagnostics:::isTaskRequired(
       cohortId = task$cohortId[3],
       checksum = task$checksum[3],
@@ -320,13 +318,13 @@ test_that("Record keeping of multiple tasks at once", {
       checksum = task$checksum[2],
       recordKeepingFile = rkf
     )
-  expect_equal(nrow(tasks), 0)
+  testthat::expect_equal(nrow(tasks), 0)
   
   unlink(rkf)
 })
 
 
-test_that("Incremental save", {
+testthat::test_that("Incremental save", {
   tmpFile <- tempfile()
   data <- dplyr::tibble(cohortId = c(1, 1, 2, 2, 3),
                         count = c(100, 200, 300, 400, 500))
@@ -342,8 +340,7 @@ test_that("Incremental save", {
   goldStandard <- dplyr::tibble(cohortId = c(3, 1, 2, 2),
                                 count = c(500, 600, 700, 800))
   
-  
-  expect_equivalent(readr::read_csv(
+  testthat::expect_equivalent(readr::read_csv(
     tmpFile,
     col_types = readr::cols(),
     guess_max = min(1e7)
@@ -352,7 +349,7 @@ test_that("Incremental save", {
   unlink(tmpFile)
 })
 
-test_that("Incremental save with empty key", {
+testthat::test_that("Incremental save with empty key", {
   tmpFile <- tempfile()
   data <- dplyr::tibble(cohortId = c(1, 1, 2, 2, 3),
                         count = c(100, 200, 300, 400, 500))
@@ -362,7 +359,7 @@ test_that("Incremental save with empty key", {
   
   CohortDiagnostics:::saveIncremental(newData, tmpFile, cohortId = c())
   
-  expect_equivalent(readr::read_csv(
+  testthat::expect_equivalent(readr::read_csv(
     tmpFile,
     col_types = readr::cols(),
     guess_max = min(1e7)

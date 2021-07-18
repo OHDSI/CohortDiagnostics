@@ -15,6 +15,6 @@ test_that("Ensure Cohort Diagnostics is installed", {
 
 
 test_that("util functions", {
-  expect_true(naToEmpty(NA) == "")
-  expect_true(naToZero(NA) == 0)
+  expect_true(CohortDiagnostics:::naToEmpty(NA) == "")
+  expect_true(CohortDiagnostics:::naToZero(NA) == 0)
 })
