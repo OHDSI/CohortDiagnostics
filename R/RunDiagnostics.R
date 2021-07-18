@@ -479,8 +479,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         stats <-
           getInclusionStatisticsFromFiles(
             cohortIds = subset$cohortId,
-            folder = inclusionStatisticsFolder,
-            simplify = TRUE
+            folder = inclusionStatisticsFolder
           )
         if (!is.null(stats$simplifiedOutput)) {
           stats$simplifiedOutput <- stats$simplifiedOutput %>%

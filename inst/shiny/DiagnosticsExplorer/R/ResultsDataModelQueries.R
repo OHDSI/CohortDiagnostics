@@ -1421,96 +1421,75 @@ getMultipleCharacterizationResults <-
                                                         temporalTimeRef = featureExtractionTemporalcharacterization$temporalTimeRef)
     cohortAsFeatureTemporalCharacterizationResults <- addCharacterizationSource(x = cohortAsFeatureTemporalCharacterizationResults,
                                                                                 characterizationSourceValue = 'CT')
-    
+    ##############
     analysisRef <- dplyr::bind_rows(featureExtractioncharacterization$analysisRef,
                                     featureExtractionTemporalcharacterization$temporalAnalysisRef,
                                     cohortRelationshipCharacterizationResults$analysisRef,
                                     cohortAsFeatureTemporalCharacterizationResults$temporalAnalysisRef
     ) 
-    if (nrow(analysisRef) == 0) {
-      analysisRef <- NULL
-    }
+    if (all(!is.null(analysisRef), nrow(analysisRef) == 0)) {analysisRef <- NULL}
     if (!is.null(analysisRef)) {
       analysisRef <- analysisRef  %>% 
         dplyr::arrange(.data$analysisId, .data$characterizationSource)
     }
-    if (nrow(analysisRef) == 0) {
-      analysisRef <- NULL
-    }
-    
+    if (all(!is.null(analysisRef), nrow(analysisRef) == 0)) {analysisRef <- NULL}
+    #############
     covariateRef <- dplyr::bind_rows(featureExtractioncharacterization$covariateRef,
                                      featureExtractionTemporalcharacterization$temporalCovariateRef,
                                      cohortRelationshipCharacterizationResults$covariateRef,
                                      cohortAsFeatureTemporalCharacterizationResults$temporalCovariateRef
     ) 
-    if (nrow(covariateRef) == 0) {
-      covariateRef <- NULL
-    }
+    if (all(!is.null(covariateRef), nrow(covariateRef) == 0)) {covariateRef <- NULL}
     if (!is.null(covariateRef)) {
       covariateRef <- covariateRef %>% 
         dplyr::distinct() %>% 
         dplyr::arrange(.data$covariateId, .data$characterizationSource)
     }
-    if (nrow(covariateRef) == 0) {
-      covariateRef <- NULL
-    }
-    
+    if (all(!is.null(covariateRef), nrow(covariateRef) == 0)) {covariateRef <- NULL}
+    ###############
     covariateValue <- dplyr::bind_rows(featureExtractioncharacterization$covariateValue,
                                        featureExtractionTemporalcharacterization$temporalCovariateValue,
                                        cohortRelationshipCharacterizationResults$covariateValue,
                                        cohortAsFeatureTemporalCharacterizationResults$temporalCovariateValue
     )
-    if (nrow(covariateValue) == 0) {
-      covariateValue <- NULL
-    }
+    if (all(!is.null(covariateValue), nrow(covariateValue) == 0)) {covariateValue <- NULL}
     if (!is.null(covariateValue)) {
       covariateValue <- covariateValue %>% 
         dplyr::distinct() %>% 
         dplyr::arrange(.data$cohortId, .data$covariateId, .data$characterizationSource)
     }
-    if (nrow(covariateValue) == 0) {
-      covariateValue <- NULL
-    }
+    if (all(!is.null(covariateValue), nrow(covariateValue) == 0)) {covariateValue <- NULL}
+    ###########
     covariateValueDist <- dplyr::bind_rows(featureExtractioncharacterization$covariateValueDist,
                                            featureExtractionTemporalcharacterization$temporalCovariateValueDist,
                                            cohortRelationshipCharacterizationResults$covariateValueDist,
                                            cohortAsFeatureTemporalCharacterizationResults$temporalCovariateValueDist
     ) 
-    if (nrow(covariateValueDist) == 0) {
-      covariateValueDist <- NULL
-    }
+    if (all(!is.null(covariateValueDist), nrow(covariateValueDist) == 0)) {covariateValueDist <- NULL}
     if (!is.null(covariateValueDist)) {
       covariateValueDist <- covariateValueDist %>% 
         dplyr::distinct() %>% 
         dplyr::arrange(.data$cohortId, .data$covariateId, .data$characterizationSource)
     }
-    if (nrow(covariateValueDist) == 0) {
-      covariateValueDist <- NULL
-    }
-    
+    if (all(!is.null(covariateValueDist), nrow(covariateValueDist) == 0)) {covariateValueDist <- NULL}
+    ##############
     concept <- dplyr::bind_rows(featureExtractioncharacterization$concept,
                                 featureExtractionTemporalcharacterization$concept,
                                 cohortRelationshipCharacterizationResults$concept,
                                 cohortAsFeatureTemporalCharacterizationResults$concept
     )
-    if (nrow(concept) == 0) {
-      concept <- NULL
-    }
+    if (all(!is.null(concept), nrow(concept) == 0)) {concept <- NULL}
     if (!is.null(concept)) {
       concept <- concept %>%  
         dplyr::distinct() %>% 
         dplyr::arrange(.data$conceptId)
     }
-    if (nrow(concept) == 0) {
-      concept <- NULL
-    }
-    
+    if (all(!is.null(concept), nrow(concept) == 0)) {concept <- NULL}
+    ###########
     temporalTimeRef <- dplyr::bind_rows(featureExtractionTemporalcharacterization$temporalTimeRef,
                                         cohortAsFeatureTemporalCharacterizationResults$temporalTimeRef
     )
-    if (nrow(temporalTimeRef) == 0) {
-      temporalTimeRef <- NULL
-    }
+    if (all(!is.null(temporalTimeRef), nrow(temporalTimeRef) == 0)) {temporalTimeRef <- NULL}
     
     return(list(analysisRef = analysisRef,
                 covariateRef = covariateRef, 
@@ -1818,9 +1797,9 @@ getCohortOverlapData <- function(dataSource,
     dplyr::rename(targetCohortId = .data$cohortId)
   
   result <- fullOffSet %>% 
-    dplyr::inner_join(beforeOffset, 
+    dplyr::left_join(beforeOffset, 
                       by = c('databaseId', 'targetCohortId', 'comparatorCohortId')) %>% 
-    dplyr::inner_join(noOffset, 
+    dplyr::left_join(noOffset, 
                       by = c('databaseId', 'targetCohortId', 'comparatorCohortId'))
   
   return(result)
