@@ -5141,7 +5141,7 @@ shiny::shinyServer(function(input, output, session) {
     if (!is.null(characterizationTemporalCharacterizationData()$covariateValue)) {
       characterizationDataValue <- characterizationTemporalCharacterizationData()$covariateValue %>%
         dplyr::filter(.data$characterizationSource %in% c('C', 'F')) %>% 
-        dplyr::select(-.data$timeId, -.data$startDay, -.data$endDay) %>% 
+        dplyr::select(-.data$timeId) %>% 
         dplyr::inner_join(covariatesTofilter, 
                           by = c('covariateId', 'characterizationSource')) %>% 
         dplyr::inner_join(characterizationTemporalCharacterizationData()$analysisRef, 
@@ -5587,7 +5587,6 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$characterizationSource %in% c('CT', 'FT')) %>% 
       dplyr::inner_join(characterizationTemporalCharacterizationData()$covariateRef, 
                         by = c('covariateId', 'characterizationSource')) %>% 
-      dplyr::select(-.data$startDay, -.data$endDay) %>% 
       dplyr::inner_join(characterizationTemporalCharacterizationData()$analysisRef, 
                         by = c('analysisId','characterizationSource')) %>% 
       dplyr::distinct()
