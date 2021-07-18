@@ -14,21 +14,24 @@ if (runDatabaseTests) {
   invisible(lapply(filesToDelete, unlink, force = TRUE))
 }
 
-# Cohort Instantiation tests ----
-test_that("Cohort table creation", {
-  ## check creation of cohort table
-  testthat::expect_null(
-    CohortDiagnostics:::createCohortTable(connectionDetails = connectionDetails,
-                                          cohortDatabaseSchema = cohortDatabaseSchema, 
-                                          cohortTable = cohortTable))
-  tryCatch(DatabaseConnector::renderTranslateExecuteSql(connection = DatabaseConnector::connect(connectionDetails = connectionDetails),
-                                                        "DROP TABLE @cohort_database_schema.@cohort_table CASCADE",
-                                                        cohort_database_schema = cohortDatabaseSchema,
-                                                        cohort_table = cohortTable, 
-                                                        progressBar = FALSE, 
-                                                        reportOverallTime = FALSE),
-           error = function(e) {})
-})
+
+if (runDatabaseTests) {
+  # Cohort Instantiation tests ----
+  test_that("Cohort table creation", {
+    ## check creation of cohort table
+    testthat::expect_null(
+      CohortDiagnostics:::createCohortTable(connectionDetails = connectionDetails,
+                                            cohortDatabaseSchema = cohortDatabaseSchema, 
+                                            cohortTable = cohortTable))
+    tryCatch(DatabaseConnector::renderTranslateExecuteSql(connection = DatabaseConnector::connect(connectionDetails = connectionDetails),
+                                                          "DROP TABLE @cohort_database_schema.@cohort_table CASCADE",
+                                                          cohort_database_schema = cohortDatabaseSchema,
+                                                          cohort_table = cohortTable, 
+                                                          progressBar = FALSE, 
+                                                          reportOverallTime = FALSE),
+             error = function(e) {})
+  })
+}
 
 # Cohort Instantiation tests ----
 test_that("Cohort instantiation", {
@@ -36,12 +39,12 @@ test_that("Cohort instantiation", {
   
   ## No incremental mode ----
   ### Neg - no cohort table
-  testthat::expect_error(
+  testthat::expect_error(suppressWarnings(
     CohortDiagnostics::instantiateCohortSet(
       connectionDetails = connectionDetails,
       cdmDatabaseSchema = cdmDatabaseSchema,
       vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-      tempEmulationSchema = tempEmulationSchema,
+      oracleTempSchema = tempEmulationSchema,
       cohortDatabaseSchema = cohortDatabaseSchema,
       cohortTable = cohortTable,
       cohortIds = 18348,
@@ -51,7 +54,7 @@ test_that("Cohort instantiation", {
       createCohortTable = FALSE,
       inclusionStatisticsFolder = file.path(folder, "incStats")
     )
-  )
+  ))
   ### Neg - bad cohort ----
   testthat::expect_error(suppressWarnings(
     CohortDiagnostics::instantiateCohortSet(
@@ -190,13 +193,14 @@ test_that("Testing Cohort diagnostics when not in incremental mode", {
   start <- Sys.time()
   # Cohort Diagnostics -----
   ## Not incremental -----
-  ### Neg - bad cohort -----
+  ### Neg - no connection or connection details -----
   testthat::expect_error(suppressWarnings(
     CohortDiagnostics::runCohortDiagnostics(
-      connectionDetails = connectionDetails,
+      connectionDetails = NULL,
+      connection = NULL,
       cdmDatabaseSchema = "eunomia",
       vocabularyDatabaseSchema = "eunomia",
-      tempEmulationSchema = tempEmulationSchema,
+      oracleTempSchema = tempEmulationSchema,
       cohortDatabaseSchema = cohortDatabaseSchema,
       cohortTable = cohortTable,
       packageName = "CohortDiagnostics",
@@ -204,6 +208,40 @@ test_that("Testing Cohort diagnostics when not in incremental mode", {
       inclusionStatisticsFolder = file.path(folder, "incStats"),
       exportFolder =  file.path(folder, "export"),
       databaseId = "cdmV5",
+      databaseName = NULL, 
+      databaseDescription = NULL,
+      runInclusionStatistics = FALSE,
+      runIncludedSourceConcepts = FALSE,
+      runOrphanConcepts = FALSE,
+      runVisitContext = FALSE,
+      runBreakdownIndexEvents = FALSE,
+      runIncidenceRate = FALSE,
+      runCohortTimeSeries = FALSE,
+      runDataSourceTimeSeries = FALSE,
+      runCohortRelationship = FALSE,
+      runCohortCharacterization = FALSE,
+      runTemporalCohortCharacterization = FALSE,
+      incremental = FALSE,
+      cohortIds = -11111,
+      incrementalFolder = file.path(folder, "incremental")
+    )
+  ))
+  ### Neg - bad cohort -----
+  testthat::expect_error(suppressWarnings(
+    CohortDiagnostics::runCohortDiagnostics(
+      connectionDetails = connectionDetails,
+      cdmDatabaseSchema = "eunomia",
+      vocabularyDatabaseSchema = "eunomia",
+      oracleTempSchema = tempEmulationSchema,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTable,
+      packageName = "CohortDiagnostics",
+      cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+      inclusionStatisticsFolder = file.path(folder, "incStats"),
+      exportFolder =  file.path(folder, "export"),
+      databaseId = "cdmV5",
+      databaseName = NULL, 
+      databaseDescription = NULL,
       runInclusionStatistics = FALSE,
       runIncludedSourceConcepts = FALSE,
       runOrphanConcepts = FALSE,
@@ -448,147 +486,6 @@ test_that("Negative tests on individual functions", {
 
 
 
-test_that("Retrieve results from premerged file", {
-  skip_if_not(runDatabaseTests)
-  
-  dataSourcePreMergedFile <- CohortDiagnostics::createFileDataSource(
-    premergedDataFile = file.path(folder, "export", "PreMerged.RData")
-  )
-  
-  cohortCountFromFile <- CohortDiagnostics::getResultsFromCohortCount(
-    dataSource = dataSourcePreMergedFile,
-    cohortIds = c(14906, 14907, 14909, 17492, 17493, 18342, 
-                  18345, 18346, 18347, 18348, 18349, 18350, 21402),
-    databaseIds = 'cdmV5'
-  )
-  testthat::expect_true(nrow(cohortCountFromFile) > 0)
-  
-  timeSeriesFromFile <- CohortDiagnostics::getResultsFromTimeSeries(
-    dataSource = dataSourcePreMergedFile,
-    cohortIds = c(17492, 17692),
-    databaseIds = 'cdmV5'
-  )
-  testthat::expect_true(any(is.null(timeSeriesFromFile),
-                            length(timeSeriesFromFile) >= 0))
-  
-  timeSeriesFromFile <- CohortDiagnostics::getResultsFromTimeSeries(
-    dataSource = dataSourcePreMergedFile,
-    cohortIds = c(-1111),
-    databaseIds = 'cdmV5'
-  )
-  testthat::expect_true(any(is.null(timeSeriesFromFile),
-                            length(timeSeriesFromFile) >= 0))
-  
-  timeSeriesFromFile <- CohortDiagnostics::getResultsFromTimeSeries(
-    dataSource = dataSourcePreMergedFile,
-    databaseIds = 'cdmV5'
-  )
-  testthat::expect_true(any(is.null(timeSeriesFromFile),
-                            length(timeSeriesFromFile) >= 0))
-  if (length(timeSeriesFromFile) > 0) {
-    testthat::expect_true(nrow(timeSeriesFromFile$y) > 0)
-  }
-  
-  timeDistributionFromFile <- CohortDiagnostics::getResultsFromTimeDistribution(
-    dataSource = dataSourcePreMergedFile,
-    cohortIds = c(17492, 17692),
-    databaseIds = 'cdmV5'
-  )
-  testthat::expect_true(nrow(timeDistributionFromFile) >= 0)
-  
-  timeDistributionFromFile <- CohortDiagnostics::getResultsFromTimeDistribution(
-    dataSource = dataSourcePreMergedFile,
-    databaseIds = 'cdmV5'
-  )
-  testthat::expect_true(nrow(timeDistributionFromFile) >= 0)
-  
-  incidenceRateFromFile <- CohortDiagnostics::getResultsFromIncidenceRate(
-    dataSource = dataSourcePreMergedFile,
-    cohortIds = c(17492, 17692),
-    databaseIds = 'cdmV5'
-  )
-  testthat::expect_true(nrow(incidenceRateFromFile) >= 0) # no data in eunomia
-  
-  incidenceRateFromFile <- CohortDiagnostics::getResultsFromIncidenceRate(
-    dataSource = dataSourcePreMergedFile,
-    databaseIds = 'cdmV5'
-  )
-  testthat::expect_true(nrow(incidenceRateFromFile) >= 0) # no data in eunomia
-  
-  inclusionRulesFromFile <- CohortDiagnostics::getResultsFromInclusionRuleStatistics(
-    dataSource = dataSourcePreMergedFile
-  )
-  testthat::expect_true(any(is.null(inclusionRulesFromFile), 
-                            nrow(inclusionRulesFromFile) >= 0))
-  
-  indexEventBreakdownFromFile <- CohortDiagnostics::getResultsFromIndexEventBreakdown(
-    dataSource = dataSourcePreMergedFile
-  )
-  testthat::expect_true(nrow(indexEventBreakdownFromFile) >= 0)
-  
-  visitContextFromFile <- CohortDiagnostics::getResultsFromVisitContext(
-    dataSource = dataSourcePreMergedFile
-  )
-  testthat::expect_true(nrow(visitContextFromFile) >= 0)
-  
-  includedConceptFromFile <- CohortDiagnostics::getResultsFromIncludedConcept(
-    dataSource = dataSourcePreMergedFile
-  )
-  testthat::expect_true(nrow(includedConceptFromFile) >= 0)
-  
-  orphanConceptFromFile <- CohortDiagnostics::getResultsFromOrphanConcept(
-    dataSource = dataSourcePreMergedFile
-  )
-  testthat::expect_true(nrow(orphanConceptFromFile) >= 0)
-  
-  conceptIdDetails <- CohortDiagnostics::getResultsFromConcept(
-    dataSource = dataSourcePreMergedFile,
-    conceptIds = c(192671, 201826, 1124300, 1124300)
-  )
-  testthat::expect_true(nrow(conceptIdDetails) >= 0)
-  
-  # should provide warning
-  conceptIdDetailsV <- suppressWarnings(CohortDiagnostics::getResultsFromConcept(
-    dataSource = dataSourcePreMergedFile,
-    conceptIds = c(192671, 201826, 1124300, 1124300),
-    vocabularyDatabaseSchema = 'vocabulary'
-  ))
-  testthat::expect_true(nrow(conceptIdDetails) >= 0)
-  
-  resolvedMappedConceptSet <- CohortDiagnostics::getResultsResolveMappedConceptSet(
-    dataSource = dataSourcePreMergedFile
-  )
-  testthat::expect_true(nrow(resolvedMappedConceptSet$resolved) >= 0)
-  testthat::expect_true(nrow(resolvedMappedConceptSet$mapped) >= 0)
-  
-  # Table does not exist in results, is not generated in Eunomia?
-  calendarIncidence <- CohortDiagnostics::getResultsFromCalendarIncidence(
-    dataSource = dataSourcePreMergedFile
-  )
-  testthat::expect_true(any(is.null(calendarIncidence), nrow(calendarIncidence) >= 0))
-  
-  cohortRelationships <- CohortDiagnostics::getResultsFromCohortRelationships(
-    dataSource = dataSourcePreMergedFile
-  )
-  testthat::expect_true(nrow(cohortRelationships) >= 0)
-  
-  # Table does not exist in results, so this is throwing an error
-  cohortCharacterizationResults <- CohortDiagnostics::getMultipleCharacterizationResults(
-    dataSource = dataSourcePreMergedFile
-  )
-  testthat::expect_true(length(cohortCharacterizationResults) >= 0)
-  
-  cohortOverlapData <- CohortDiagnostics::getCohortOverlapData(
-    dataSource = dataSourcePreMergedFile, 
-    cohortIds = c(17492, 18342),
-    databaseIds = 'cdmV5'
-  )
-  testthat::expect_true(nrow(cohortOverlapData) >= 0) 
-})
-
-
-
-
 ####################### upload to database and test
 test_that("Create and upload results to results data model", {
   skip_if_not(runDatabaseTests)
@@ -617,128 +514,611 @@ test_that("Create and upload results to results data model", {
 })
 
 
-# Retrieve results
-test_that("Retrieve results from remote database", {
+
+
+test_that("Data Retrieval", {
   skip_if_not(runDatabaseTests)
   
-  dataSourceDatabase <- CohortDiagnostics::createDatabaseDataSource(
-    connection = DatabaseConnector::connect(connectionDetails = connectionDetails),
-    resultsDatabaseSchema = cohortDiagnosticsSchema
+  # Data Retrieval Premerged file ----
+  dataSourcePreMergedFile <- CohortDiagnostics::createFileDataSource(
+    premergedDataFile = file.path(folder, "export", "PreMerged.RData")
   )
   
-  # cohort count
+  ## Cohort Count ----
+  #### Pos ----
+  cohortCountFromFile <- CohortDiagnostics::getResultsFromCohortCount(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = c(14906, 14907, 14909, 17492, 17493, 18342, 
+                  18345, 18346, 18347, 18348, 18349, 18350, 21402),
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(nrow(cohortCountFromFile) > 0)
+  #### Neg ----
+  testthat::expect_null(CohortDiagnostics::getResultsFromCohortCount(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = c(-11111),
+    databaseIds = 'cdmV5'
+  ))
+  
+  ## Time series ----
+  #### Pos ----
+  timeSeriesFromFile <- CohortDiagnostics::getResultsFromTimeSeries(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(any(is.null(timeSeriesFromFile),
+                            length(timeSeriesFromFile) >= 0))
+  timeSeriesFromFile2 <- CohortDiagnostics::getResultsFromTimeSeries(
+    dataSource = dataSourcePreMergedFile,
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(any(is.null(timeSeriesFromFile2),
+                            length(timeSeriesFromFile2) >= 0))
+  #### Neg ----
+  testthat::expect_null(CohortDiagnostics::getResultsFromTimeSeries(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = -11111,
+    databaseIds = 'cdmV5d'
+  ))
+  
+  ## Time Distribution ----
+  #### Pos ----
+  timeDistributionFromFile <- CohortDiagnostics::getResultsFromTimeDistribution(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(nrow(timeDistributionFromFile) >= 0)
+  #### Pos ----
+  testthat::expect_null(CohortDiagnostics::getResultsFromTimeDistribution(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = -11111,
+    databaseIds = 'cdmV5d'
+  ))
+  
+  ## Incidence rate ----
+  #### Pos ----
+  incidenceRateFromFile <- CohortDiagnostics::getResultsFromIncidenceRate(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = c(17492, 17692),
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(any(is.null(incidenceRateFromFile),
+                            nrow(incidenceRateFromFile) >= 0)) # no data in eunomia
+  incidenceRateFromFile2 <- CohortDiagnostics::getResultsFromIncidenceRate(
+    dataSource = dataSourcePreMergedFile,
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(any(is.null(incidenceRateFromFile2),
+                            nrow(incidenceRateFromFile2) >= 0)) # no data in eunomia
+  incidenceRateFromFile3 <- CohortDiagnostics::getResultsFromIncidenceRate(
+    dataSource = dataSourcePreMergedFile,
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(nrow(incidenceRateFromFile3) >= 0) # no data in eunomia
+  #### Neg ----
+  testthat::expect_null(CohortDiagnostics::getResultsFromIncidenceRate(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = -11111,
+    databaseIds = 'cdmV5'
+  ))
+  
+  ## Inclusion rules ----
+  #### Pos ----
+  inclusionRulesFromFile <- CohortDiagnostics::getResultsFromInclusionRuleStatistics(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = 18350,
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(nrow(inclusionRulesFromFile) >= 0)
+  inclusionRulesFromFile2 <- CohortDiagnostics::getResultsFromInclusionRuleStatistics(
+    dataSource = dataSourcePreMergedFile
+  )
+  testthat::expect_true(nrow(inclusionRulesFromFile2) >= 0)
+  #### Neg ----
+  testthat::expect_null(CohortDiagnostics::getResultsFromInclusionRuleStatistics(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = -1111,
+    databaseIds = 'cdmV5'
+  ))
+  
+  ## Index event breakdown ----
+  #### Pos ----
+  indexEventBreakdownFromFile <- CohortDiagnostics::getResultsFromIndexEventBreakdown(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = 18348,
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(nrow(indexEventBreakdownFromFile) >= 0)
+  indexEventBreakdownFromFile2 <- CohortDiagnostics::getResultsFromIndexEventBreakdown(
+    dataSource = dataSourcePreMergedFile
+  )
+  testthat::expect_true(nrow(indexEventBreakdownFromFile2) >= 0)
+  #### Neg ----
+  testthat::expect_null(CohortDiagnostics::getResultsFromIndexEventBreakdown(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = -1111,
+    databaseIds = 'cdmV5'
+  ))
+  
+  ## Visit context ----
+  #### Pos ----
+  visitContextFromFile <- CohortDiagnostics::getResultsFromVisitContext(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = 18348,
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(nrow(visitContextFromFile) >= 0)
+  visitContextFromFile2 <- CohortDiagnostics::getResultsFromVisitContext(
+    dataSource = dataSourcePreMergedFile
+  )
+  testthat::expect_true(nrow(visitContextFromFile2) >= 0)
+  #### Neg ----
+  testthat::expect_null(CohortDiagnostics::getResultsFromVisitContext(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = -1111,
+    databaseIds = 'cdmV5'
+  ))
+  
+  ## Included concept ----
+  #### Pos ----
+  includedConceptFromFile <- CohortDiagnostics::getResultsFromIncludedConcept(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = 18348,
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(nrow(includedConceptFromFile) >= 0)
+  includedConceptFromFile2 <- CohortDiagnostics::getResultsFromIncludedConcept(
+    dataSource = dataSourcePreMergedFile
+  )
+  testthat::expect_true(nrow(includedConceptFromFile2) >= 0)
+  #### Neg ----
+  testthat::expect_null(CohortDiagnostics::getResultsFromIncludedConcept(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = -1111,
+    databaseIds = 'cdmV5'
+  ))
+  
+  ## Orphan concept ----
+  #### Pos ----
+  orphanConceptFromFile <- CohortDiagnostics::getResultsFromOrphanConcept(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = 18348,
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(nrow(orphanConceptFromFile) >= 0)
+  orphanConceptFromFile2 <- CohortDiagnostics::getResultsFromOrphanConcept(
+    dataSource = dataSourcePreMergedFile
+  )
+  testthat::expect_true(nrow(orphanConceptFromFile2) >= 0)
+  
+  ## Concept id details ----
+  #### Pos ----
+  conceptIdDetailsFromFile <- CohortDiagnostics::getResultsFromConcept(
+    dataSource = dataSourcePreMergedFile,
+    conceptIds = c(192671, 201826, 1124300, 1124300)
+  )
+  testthat::expect_true(nrow(conceptIdDetailsFromFile) >= 0)
+  # should throw warning
+  conceptIdDetailsFromFile2 <- suppressWarnings(CohortDiagnostics::getResultsFromConcept(
+    dataSource = dataSourcePreMergedFile,
+    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+    conceptIds = c(192671, 201826, 1124300, 1124300)
+  ))
+  testthat::expect_true(nrow(conceptIdDetailsFromFile2) >= 0)
+  #### Neg ----
+  testthat::expect_null(suppressWarnings(CohortDiagnostics::getResultsFromConcept(
+    dataSource = dataSourcePreMergedFile,
+    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+    conceptIds = c(-1111)
+  )))
+  
+  ## Resolved concept ----
+  #### Pos ----
+  resolvedMappedConceptSetFromFile <- CohortDiagnostics::getResultsResolveMappedConceptSet(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = 18348,
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(nrow(resolvedMappedConceptSetFromFile$resolved) >= 0)
+  testthat::expect_null(resolvedMappedConceptSetFromFile$mapped)
+  resolvedMappedConceptSetFromFile2 <- CohortDiagnostics::getResultsResolveMappedConceptSet(
+    dataSource = dataSourcePreMergedFile
+  )
+  testthat::expect_true(nrow(resolvedMappedConceptSetFromFile2$resolved) >= 0)
+  testthat::expect_true(nrow(resolvedMappedConceptSetFromFile2$mapped) >= 0)
+  #### Neg ----
+  testthat::expect_null(conceptIdDetails <- suppressWarnings(CohortDiagnostics::getResultsResolveMappedConceptSet(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = -1111,
+    databaseIds = 'cdmV5'
+  )))
+  
+  ## Calendar incidence ----
+  # Table does not exist in results, is not generated in Eunomia?
+  calendarIncidenceFromFile <- CohortDiagnostics::getResultsFromCalendarIncidence(
+    dataSource = dataSourcePreMergedFile
+  )
+  testthat::expect_true(any(is.null(calendarIncidenceFromFile), nrow(calendarIncidenceFromFile) >= 0))
+  
+  ## Cohort Relationship ----
+  #### Pos ----
+  cohortRelationshipsFromFile <- CohortDiagnostics::getResultsFromCohortRelationships(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = 18348,
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(nrow(cohortRelationshipsFromFile) >= 0)
+  cohortRelationshipsFromFile2 <- CohortDiagnostics::getResultsFromCohortRelationships(
+    dataSource = dataSourcePreMergedFile
+  )
+  testthat::expect_true(nrow(cohortRelationshipsFromFile2) >= 0)
+  #### Neg ----
+  testthat::expect_null(conceptIdDetails <- suppressWarnings(CohortDiagnostics::getResultsFromCohortRelationships(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = -1111,
+    databaseIds = 'cdmV5'
+  )))
+  
+  
+  #### Pos ----
+  # Table does not exist in results, so this is throwing an error
+  cohortCharacterizationResultsFromFile <- CohortDiagnostics::getMultipleCharacterizationResults(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = 18348,
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(length(cohortCharacterizationResultsFromFile) >= 0)
+  testthat::expect_true(nrow(cohortCharacterizationResultsFromFile$analysisRef) > 0)
+  testthat::expect_true(nrow(cohortCharacterizationResultsFromFile$covariateValue) > 0)
+  cohortCharacterizationResultsFromFile2 <- CohortDiagnostics::getMultipleCharacterizationResults(
+    dataSource = dataSourcePreMergedFile
+  )
+  testthat::expect_true(length(cohortCharacterizationResultsFromFile2) >= 0)
+  testthat::expect_true(nrow(cohortCharacterizationResultsFromFile2$analysisRef) > 0)
+  testthat::expect_true(nrow(cohortCharacterizationResultsFromFile2$covariateValue) > 0)
+  #### Neg ----
+  cohortCharacterizationResultsFromFile3 <- CohortDiagnostics::getMultipleCharacterizationResults(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = -1111,
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(nrow(cohortCharacterizationResultsFromFile3$analysisRef) > 0)
+  testthat::expect_null(cohortCharacterizationResultsFromFile3$covariateValue)
+  
+  
+  #### Pos ----
+  cohortOverlapDataFromFile <- CohortDiagnostics::getCohortOverlapData(
+    dataSource = dataSourcePreMergedFile, 
+    cohortIds = c(18348, 18350),
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(nrow(cohortOverlapDataFromFile) >= 0)
+  #### Neg ----
+  testthat::expect_null(conceptIdDetails <- suppressWarnings(CohortDiagnostics::getCohortOverlapData(
+    dataSource = dataSourcePreMergedFile,
+    cohortIds = -1111,
+    databaseIds = 'cdmV5'
+  )))
+  
+  
+  
+  
+  # Data Retrieval Database mode ----
+  
+  skip_if_not(runDatabaseTests)
+  
+  dataSourceDatabase <- CohortDiagnostics::createFileDataSource(
+    premergedDataFile = file.path(folder, "export", "PreMerged.RData")
+  )
+  
+  ## Cohort Count ----
+  #### Pos ----
   cohortCountFromDb <- CohortDiagnostics::getResultsFromCohortCount(
     dataSource = dataSourceDatabase,
+    cohortIds = c(14906, 14907, 14909, 17492, 17493, 18342, 
+                  18345, 18346, 18347, 18348, 18349, 18350, 21402),
     databaseIds = 'cdmV5'
   )
   testthat::expect_true(nrow(cohortCountFromDb) > 0)
+  testthat::expect_equal(object = cohortCountFromDb, expected = cohortCountFromFile)
+  #### Neg ----
+  testthat::expect_null(CohortDiagnostics::getResultsFromCohortCount(
+    dataSource = dataSourceDatabase,
+    cohortIds = c(-11111),
+    databaseIds = 'cdmV5'
+  ))
   
-  # time series
+  ## Time series ----
+  #### Pos ----
   timeSeriesFromDb <- CohortDiagnostics::getResultsFromTimeSeries(
     dataSource = dataSourceDatabase,
+    cohortIds = c(17492, 17692),
     databaseIds = 'cdmV5'
   )
   testthat::expect_true(any(is.null(timeSeriesFromDb),
                             length(timeSeriesFromDb) >= 0))
+  testthat::expect_equal(object = timeSeriesFromDb, expected = timeSeriesFromFile)
+  timeSeriesFromDb2 <- CohortDiagnostics::getResultsFromTimeSeries(
+    dataSource = dataSourceDatabase,
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(any(is.null(timeSeriesFromDb2),
+                            length(timeSeriesFromDb2) >= 0))
+  testthat::expect_equal(object = timeSeriesFromDb2, expected = timeSeriesFromFile2)
+  #### Neg ----
+  testthat::expect_null(CohortDiagnostics::getResultsFromTimeSeries(
+    dataSource = dataSourceDatabase,
+    cohortIds = -11111,
+    databaseIds = 'cdmV5d'
+  ))
   
-  # time distribution
+  ## Time Distribution ----
+  #### Pos ----
   timeDistributionFromDb <- CohortDiagnostics::getResultsFromTimeDistribution(
     dataSource = dataSourceDatabase,
-    cohortIds = c(17492, 18342),
+    cohortIds = c(17492, 17692),
     databaseIds = 'cdmV5'
   )
   testthat::expect_true(nrow(timeDistributionFromDb) >= 0)
+  testthat::expect_equal(object = timeDistributionFromDb, expected = timeDistributionFromFile)
+  #### Pos ----
+  testthat::expect_null(CohortDiagnostics::getResultsFromTimeDistribution(
+    dataSource = dataSourceDatabase,
+    cohortIds = -11111,
+    databaseIds = 'cdmV5d'
+  ))
   
-  # incidence rate result
+  ## Incidence rate ----
+  #### Pos ----
   incidenceRateFromDb <- CohortDiagnostics::getResultsFromIncidenceRate(
     dataSource = dataSourceDatabase,
+    cohortIds = c(17492, 17692),
     databaseIds = 'cdmV5'
   )
-  testthat::expect_true(nrow(incidenceRateFromDb) >= 0) # no data in eunomia
+  testthat::expect_true(any(is.null(incidenceRateFromDb),
+                            nrow(incidenceRateFromDb) >= 0)) # no data in eunomia
+  testthat::expect_equal(object = incidenceRateFromDb, expected = incidenceRateFromFile)
+  incidenceRateFromDb2 <- CohortDiagnostics::getResultsFromIncidenceRate(
+    dataSource = dataSourceDatabase,
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(any(is.null(incidenceRateFromDb2),
+                            nrow(incidenceRateFromDb2) >= 0)) # no data in eunomia
+  testthat::expect_equal(object = incidenceRateFromDb2, expected = incidenceRateFromFile2)
+  incidenceRateFromDb3 <- CohortDiagnostics::getResultsFromIncidenceRate(
+    dataSource = dataSourceDatabase,
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(nrow(incidenceRateFromDb3) >= 0) # no data in eunomia
+  testthat::expect_equal(object = incidenceRateFromDb3, expected = incidenceRateFromFile3)
+  #### Neg ----
+  testthat::expect_null(CohortDiagnostics::getResultsFromIncidenceRate(
+    dataSource = dataSourceDatabase,
+    cohortIds = -11111,
+    databaseIds = 'cdmV5'
+  ))
   
-  # inclusion rules
+  ## Inclusion rules ----
+  #### Pos ----
   inclusionRulesFromDb <- CohortDiagnostics::getResultsFromInclusionRuleStatistics(
     dataSource = dataSourceDatabase,
+    cohortIds = 18350,
     databaseIds = 'cdmV5'
   )
-  testthat::expect_true(any(is.null(inclusionRulesFromDb),
-                            nrow(inclusionRulesFromDb) >= 0))
+  testthat::expect_true(nrow(inclusionRulesFromDb) >= 0)
+  testthat::expect_equal(object = inclusionRulesFromDb, expected = inclusionRulesFromFile)
+  inclusionRulesFromDb2 <- CohortDiagnostics::getResultsFromInclusionRuleStatistics(
+    dataSource = dataSourceDatabase
+  )
+  testthat::expect_true(nrow(inclusionRulesFromDb2) >= 0)
+  testthat::expect_equal(object = inclusionRulesFromDb2, expected = inclusionRulesFromFile2)
+  #### Neg ----
+  testthat::expect_null(CohortDiagnostics::getResultsFromInclusionRuleStatistics(
+    dataSource = dataSourceDatabase,
+    cohortIds = -1111,
+    databaseIds = 'cdmV5'
+  ))
   
-  # index_event_breakdown
+  ## Index event breakdown ----
+  #### Pos ----
   indexEventBreakdownFromDb <- CohortDiagnostics::getResultsFromIndexEventBreakdown(
     dataSource = dataSourceDatabase,
-    cohortIds = c(17492, 17692),
+    cohortIds = 18348,
     databaseIds = 'cdmV5'
   )
   testthat::expect_true(nrow(indexEventBreakdownFromDb) >= 0)
+  testthat::expect_equal(object = indexEventBreakdownFromDb, expected = indexEventBreakdownFromFile)
+  indexEventBreakdownFromDb2 <- CohortDiagnostics::getResultsFromIndexEventBreakdown(
+    dataSource = dataSourceDatabase
+  )
+  testthat::expect_true(nrow(indexEventBreakdownFromDb2) >= 0)
+  testthat::expect_equal(object = indexEventBreakdownFromDb2, expected = indexEventBreakdownFromFile2)
+  #### Neg ----
+  testthat::expect_null(CohortDiagnostics::getResultsFromIndexEventBreakdown(
+    dataSource = dataSourceDatabase,
+    cohortIds = -1111,
+    databaseIds = 'cdmV5'
+  ))
   
-  # visit_context
+  ## Visit context ----
+  #### Pos ----
   visitContextFromDb <- CohortDiagnostics::getResultsFromVisitContext(
     dataSource = dataSourceDatabase,
-    cohortIds = c(17492, 17692),
+    cohortIds = 18348,
     databaseIds = 'cdmV5'
   )
   testthat::expect_true(nrow(visitContextFromDb) >= 0)
+  testthat::expect_equal(object = visitContextFromDb, expected = visitContextFromFile)
+  visitContextFromDb2 <- CohortDiagnostics::getResultsFromVisitContext(
+    dataSource = dataSourceDatabase
+  )
+  testthat::expect_true(nrow(visitContextFromDb2) >= 0)
+  testthat::expect_equal(object = visitContextFromDb2, expected = visitContextFromFile2)
+  #### Neg ----
+  testthat::expect_null(CohortDiagnostics::getResultsFromVisitContext(
+    dataSource = dataSourceDatabase,
+    cohortIds = -1111,
+    databaseIds = 'cdmV5'
+  ))
   
-  # included_concept
+  ## Included concept ----
+  #### Pos ----
   includedConceptFromDb <- CohortDiagnostics::getResultsFromIncludedConcept(
     dataSource = dataSourceDatabase,
-    cohortIds = c(17492, 17692),
+    cohortIds = 18348,
     databaseIds = 'cdmV5'
   )
   testthat::expect_true(nrow(includedConceptFromDb) >= 0)
+  testthat::expect_equal(object = includedConceptFromDb, expected = includedConceptFromFile)
+  includedConceptFromDb2 <- CohortDiagnostics::getResultsFromIncludedConcept(
+    dataSource = dataSourceDatabase
+  )
+  testthat::expect_true(nrow(includedConceptFromDb2) >= 0)
+  testthat::expect_equal(object = includedConceptFromDb2, expected = includedConceptFromFile2)
+  #### Neg ----
+  testthat::expect_null(CohortDiagnostics::getResultsFromIncludedConcept(
+    dataSource = dataSourceDatabase,
+    cohortIds = -1111,
+    databaseIds = 'cdmV5'
+  ))
   
-  # orphan_concept
+  ## Orphan concept ----
+  #### Pos ----
   orphanConceptFromDb <- CohortDiagnostics::getResultsFromOrphanConcept(
     dataSource = dataSourceDatabase,
+    cohortIds = 18348,
     databaseIds = 'cdmV5'
   )
   testthat::expect_true(nrow(orphanConceptFromDb) >= 0)
-  
-  # concept_id details with vocabulary schema
-  conceptIdDetails <- CohortDiagnostics::getResultsFromConcept(
-    dataSource = dataSourceDatabase,
-    conceptIds = c(192671, 201826, 1124300, 1124300),
-    vocabularyDatabaseSchema = cohortDiagnosticsSchema
+  testthat::expect_equal(object = orphanConceptFromDb, expected = orphanConceptFromFile)
+  orphanConceptFromDb2 <- CohortDiagnostics::getResultsFromOrphanConcept(
+    dataSource = dataSourceDatabase
   )
+  testthat::expect_true(nrow(orphanConceptFromDb2) >= 0)
+  testthat::expect_equal(object = orphanConceptFromDb2, expected = orphanConceptFromFile2)
   
-  # concept_id details without vocabulary schema
-  conceptIdDetails <- CohortDiagnostics::getResultsFromConcept(
+  ## Concept id details ----
+  #### Pos ----
+  conceptIdDetailsFromDb <- CohortDiagnostics::getResultsFromConcept(
     dataSource = dataSourceDatabase,
     conceptIds = c(192671, 201826, 1124300, 1124300)
   )
+  testthat::expect_true(nrow(conceptIdDetailsFromDb) >= 0)
+  testthat::expect_equal(object = conceptIdDetailsFromDb, expected = conceptIdDetailsFromFile)
+  # should throw warning
+  conceptIdDetailsFromDb2 <- suppressWarnings(CohortDiagnostics::getResultsFromConcept(
+    dataSource = dataSourceDatabase,
+    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+    conceptIds = c(192671, 201826, 1124300, 1124300)
+  ))
+  testthat::expect_true(nrow(conceptIdDetailsFromDb2) >= 0)
+  testthat::expect_equal(object = conceptIdDetailsFromDb2, expected = conceptIdDetailsFromFile2)
+  #### Neg ----
+  testthat::expect_null(suppressWarnings(CohortDiagnostics::getResultsFromConcept(
+    dataSource = dataSourceDatabase,
+    vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+    conceptIds = c(-1111)
+  )))
   
-  resolvedMappedConceptSet <- CohortDiagnostics::getResultsResolveMappedConceptSet(
-    dataSource = dataSourceDatabase
-  )
-  testthat::expect_true(nrow(resolvedMappedConceptSet$resolved) > 0)
-  testthat::expect_true(nrow(resolvedMappedConceptSet$mapped) > 0)
-  
-  calendarIncidence <- CohortDiagnostics::getResultsFromCalendarIncidence(
-    dataSource = dataSourceDatabase
-  )
-  testthat::expect_true(any(is.null(calendarIncidence),
-                            nrow(calendarIncidence) >= 0))
-  
-  cohortRelationships <- CohortDiagnostics::getResultsFromCohortRelationships(
-    dataSource = dataSourceDatabase
-  )
-  testthat::expect_true(nrow(cohortRelationships) >= 0) 
-  
-  multipleCharacterizationResults  <- CohortDiagnostics::getMultipleCharacterizationResults(
-    dataSource = dataSourceDatabase
-  )
-  testthat::expect_true(length(multipleCharacterizationResults) >= 0)
-  
-  cohortOverlapData <- CohortDiagnostics::getCohortOverlapData(
-    dataSource = dataSourceDatabase, 
-    cohortIds = c(17492, 18342),
+  ## Resolved concept ----
+  #### Pos ----
+  resolvedMappedConceptSetFromDb <- CohortDiagnostics::getResultsResolveMappedConceptSet(
+    dataSource = dataSourceDatabase,
+    cohortIds = 18348,
     databaseIds = 'cdmV5'
   )
-  testthat::expect_true(nrow(cohortOverlapData) >= 0) 
+  testthat::expect_true(nrow(resolvedMappedConceptSetFromDb$resolved) >= 0)
+  testthat::expect_null(resolvedMappedConceptSetFromDb$mapped)
+  testthat::expect_equal(object = resolvedMappedConceptSetFromDb, expected = resolvedMappedConceptSetFromFile)
+  resolvedMappedConceptSetFromDb2 <- CohortDiagnostics::getResultsResolveMappedConceptSet(
+    dataSource = dataSourceDatabase
+  )
+  testthat::expect_equal(object = resolvedMappedConceptSetFromDb2, expected = resolvedMappedConceptSetFromDb2)
+  testthat::expect_true(nrow(resolvedMappedConceptSetFromDb2$resolved) >= 0)
+  testthat::expect_true(nrow(resolvedMappedConceptSetFromDb2$mapped) >= 0)
+  #### Neg ----
+  testthat::expect_null(conceptIdDetails <- suppressWarnings(CohortDiagnostics::getResultsResolveMappedConceptSet(
+    dataSource = dataSourceDatabase,
+    cohortIds = -1111,
+    databaseIds = 'cdmV5'
+  )))
+  
+  ## Calendar incidence ----
+  # Table does not exist in results, is not generated in Eunomia?
+  calendarIncidenceFromDb <- CohortDiagnostics::getResultsFromCalendarIncidence(
+    dataSource = dataSourceDatabase
+  )
+  testthat::expect_true(any(is.null(calendarIncidenceFromDb), nrow(calendarIncidenceFromDb) >= 0))
+  testthat::expect_equal(object = calendarIncidenceFromDb, expected = calendarIncidenceFromFile)
+  
+  ## Cohort Relationship ----
+  #### Pos ----
+  cohortRelationshipsFromDb <- CohortDiagnostics::getResultsFromCohortRelationships(
+    dataSource = dataSourceDatabase,
+    cohortIds = 18348,
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(nrow(cohortRelationshipsFromDb) >= 0)
+  testthat::expect_equal(object = cohortRelationshipsFromDb, expected = cohortRelationshipsFromFile)
+  cohortRelationshipsFromDb2 <- CohortDiagnostics::getResultsFromCohortRelationships(
+    dataSource = dataSourceDatabase
+  )
+  testthat::expect_true(nrow(cohortRelationshipsFromDb2) >= 0)
+  testthat::expect_equal(object = cohortRelationshipsFromDb2, expected = cohortRelationshipsFromFile2)
+  #### Neg ----
+  testthat::expect_null(conceptIdDetails <- suppressWarnings(CohortDiagnostics::getResultsFromCohortRelationships(
+    dataSource = dataSourceDatabase,
+    cohortIds = -1111,
+    databaseIds = 'cdmV5'
+  )))
+  
+  
+  #### Pos ----
+  # Table does not exist in results, so this is throwing an error
+  cohortCharacterizationResultsFromDb <- CohortDiagnostics::getMultipleCharacterizationResults(
+    dataSource = dataSourceDatabase,
+    cohortIds = 18348,
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(length(cohortCharacterizationResultsFromDb) >= 0)
+  testthat::expect_true(nrow(cohortCharacterizationResultsFromDb$analysisRef) > 0)
+  testthat::expect_true(nrow(cohortCharacterizationResultsFromDb$covariateValue) > 0)
+  testthat::expect_equal(object = cohortCharacterizationResultsFromDb, expected = cohortCharacterizationResultsFromFile)
+  cohortCharacterizationResultsFromDb2 <- CohortDiagnostics::getMultipleCharacterizationResults(
+    dataSource = dataSourceDatabase
+  )
+  testthat::expect_true(length(cohortCharacterizationResultsFromDb2) >= 0)
+  testthat::expect_true(nrow(cohortCharacterizationResultsFromDb2$analysisRef) > 0)
+  testthat::expect_true(nrow(cohortCharacterizationResultsFromDb2$covariateValue) > 0)
+  testthat::expect_equal(object = cohortCharacterizationResultsFromDb2, expected = cohortCharacterizationResultsFromFile2)
+  #### Neg ----
+  cohortCharacterizationResultsFromDb3 <- CohortDiagnostics::getMultipleCharacterizationResults(
+    dataSource = dataSourceDatabase,
+    cohortIds = -1111,
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(nrow(cohortCharacterizationResultsFromDb3$analysisRef) > 0)
+  testthat::expect_null(cohortCharacterizationResultsFromDb3$covariateValue)
+  
+  
+  #### Pos ----
+  cohortOverlapDataFromDb <- CohortDiagnostics::getCohortOverlapData(
+    dataSource = dataSourceDatabase, 
+    cohortIds = c(18348, 18350),
+    databaseIds = 'cdmV5'
+  )
+  testthat::expect_true(nrow(cohortOverlapDataFromDb) >= 0)
+  testthat::expect_equal(object = cohortOverlapDataFromDb, expected = cohortOverlapDataFromFile)
+  #### Neg ----
+  testthat::expect_null(conceptIdDetails <- suppressWarnings(CohortDiagnostics::getCohortOverlapData(
+    dataSource = dataSourceDatabase,
+    cohortIds = -1111,
+    databaseIds = 'cdmV5'
+  )))
+  
 })
-
-
 
 
 

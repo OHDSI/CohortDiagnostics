@@ -207,12 +207,12 @@ appendNewRows <-
 createResultsDataModel <- function(connection = NULL,
                                    connectionDetails = NULL,
                                    schema) {
+  if (all(is.null(connectionDetails),
+          is.null(connection))) { stop('Please provide either connection or connectionDetails to connect to database.')}
   if (is.null(connection)) {
     if (!is.null(connectionDetails)) {
       connection <- DatabaseConnector::connect(connectionDetails)
       on.exit(DatabaseConnector::disconnect(connection))
-    } else {
-      stop("No connection or connectionDetails provided.")
     }
   }
   schemas <- unlist(

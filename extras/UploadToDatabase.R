@@ -5,22 +5,22 @@ library(CohortDiagnostics)
 connectionDetails <- createConnectionDetails(
   dbms = "postgresql",
   server = paste(
-    Sys.getenv("shinydbServer"),
-    Sys.getenv("shinydbDatabase"),
+    keyring::key_get("shinydbServer"),
+    keyring::key_get("shinydbDatabase"),
     sep = "/"
   ),
-  port = Sys.getenv("shinydbPort"),
-  user = Sys.getenv("shinydbUser"),
-  password = Sys.getenv("shinydbPW")
+  port = keyring::key_get("shinydbPort"),
+  user = keyring::key_get("shinydbUser"),
+  password = keyring::key_get("shinydbPW")
 )
-resultsSchema <- 'cdskeletoncohortdiagnosticsstudy2'
+resultsSchema <- 'covidAesiDiagnosics22'
 
 # commenting this function as it maybe accidentally run - loosing data.
 # createResultsDataModel(connectionDetails = connectionDetails, schema = resultsSchema)
 
 Sys.setenv("POSTGRES_PATH" = Sys.getenv('POSTGRES_PATH'))
 
-folderWithZipFilesToUpload <- "D:\\temp/outputFolder/packageMode"
+folderWithZipFilesToUpload <- "D:\\studyResults\\Covid19VaccineAesiDiagnostics22"
 listOfZipFilesToUpload <-
   list.files(
     path = folderWithZipFilesToUpload,

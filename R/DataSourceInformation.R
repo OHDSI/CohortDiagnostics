@@ -35,13 +35,14 @@ getCdmDataSourceInformation <-
            connection = NULL,
            cdmDatabaseSchema) {
     
+    if (all(is.null(connectionDetails),
+            is.null(connection))) { stop('Please provide either connection or connectionDetails to connect to database.')}
+    
     # Set up connection to server ----
     if (is.null(connection)) {
       if (!is.null(connectionDetails)) {
         connection <- DatabaseConnector::connect(connectionDetails)
         on.exit(DatabaseConnector::disconnect(connection))
-      } else {
-        stop("No connection or connectionDetails provided.")
       }
     }
     
