@@ -18,28 +18,28 @@
 #' Run concept set diagnostics
 #'
 #' @description
-#' Runs concept set diagnostics on a set of cohorts. For index event breakdown, 
+#' Runs concept set diagnostics on a set of cohorts. For index event breakdown,
 #' the cohorts need to be instantiated.
 #'
 #' @template Connection
 #'
 #' @template CdmDatabaseSchema
-#' 
+#'
 #' @template VocabularyDatabaseSchema
-#' 
+#'
 #' @template CohortDatabaseSchema
-#' 
+#'
 #' @template TempEmulationSchema
-#' 
+#'
 #' @param    cohorts                 A dataframe object with required fields cohortId, sql, json, cohortName
-#' 
+#'
 #' @template CohortTable
-#' 
+#'
 #' @param cohortIds                   Optionally, provide a subset of cohort IDs to restrict the
 #'                                    diagnostics to.
 #' @param runIncludedSourceConcepts   Generate and export the source concepts included in the cohorts?
 #' @param runOrphanConcepts           Generate and export potential orphan concepts?
-#' @param runBreakdownIndexEvents     Generate and export the breakdown of index events? This is executed on 
+#' @param runBreakdownIndexEvents     Generate and export the breakdown of index events? This is executed on
 #'                                    instantiated cohorts only.
 #' @export
 runConceptSetDiagnostics <- function(connection = NULL,
@@ -56,10 +56,14 @@ runConceptSetDiagnostics <- function(connection = NULL,
                                      runBreakdownIndexEvents) {
   ParallelLogger::logInfo("Starting concept set diagnostics")
   startConceptSetDiagnostics <- Sys.time()
-  if (length(cohortIds) == 0) {return(NULL)}
+  if (length(cohortIds) == 0) {
+    return(NULL)
+  }
   
   if (all(is.null(connectionDetails),
-          is.null(connection))) { stop('Please provide either connection or connectionDetails to connect to database.')}
+          is.null(connection))) {
+    stop('Please provide either connection or connectionDetails to connect to database.')
+  }
   
   # Set up connection to server----
   if (is.null(connection)) {
@@ -67,7 +71,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
       connection <- DatabaseConnector::connect(connectionDetails)
       on.exit(DatabaseConnector::disconnect(connection))
     }
-  }  
+  }
   
   # Create concept table----
   ParallelLogger::logTrace("Creating concept ID table for tracking concepts used in diagnostics")
@@ -88,8 +92,8 @@ runConceptSetDiagnostics <- function(connection = NULL,
   
   # Cohorts to run the concept set diagnostics
   if (!is.null(cohortIds)) {
-    subset <- cohorts %>% 
-      dplyr::filter(.data$cohortId %in% cohortIds)    
+    subset <- cohorts %>%
+      dplyr::filter(.data$cohortId %in% cohortIds)
   }
   
   # Get concept sets metadata----
@@ -192,10 +196,11 @@ runConceptSetDiagnostics <- function(connection = NULL,
                       .data$conceptId) %>%
       dplyr::distinct()
     
-    sqlInsertIncludedConcepts <- "INSERT INTO @concept_id_table (concept_id)
+    sqlInsertIncludedConcepts <-
+      "INSERT INTO @concept_id_table (concept_id)
                   SELECT DISTINCT concept_id
                   FROM @include_source_concept_table;
-                  
+
                   INSERT INTO @concept_id_table (concept_id)
                   SELECT DISTINCT source_concept_id
                   FROM @include_source_concept_table;"
@@ -239,8 +244,8 @@ runConceptSetDiagnostics <- function(connection = NULL,
         guess_max = min(1e7)
       )
     
-    runBreakdownIndexEvents <- function(cohort, 
-                                        connection, 
+    runBreakdownIndexEvents <- function(cohort,
+                                        connection,
                                         tempEmulationSchema) {
       ParallelLogger::logInfo("- Breaking down index events for cohort '",
                               cohort$cohortName,
@@ -256,13 +261,19 @@ runConceptSetDiagnostics <- function(connection = NULL,
                 cohort$cohortId)
         return(tidyr::tibble())
       }
-      primaryCodesetIds <- primaryCodesetIds %>% dplyr::filter(.data$domain %in% 
-                                                                 c(domains$domain %>% unique()))
+      primaryCodesetIds <-
+        primaryCodesetIds %>% dplyr::filter(.data$domain %in%
+                                              c(domains$domain %>% unique()))
       if (nrow(primaryCodesetIds) == 0) {
-        warning("Primary event criteria concept sets found for cohort id: ", 
-                cohort$cohortId, " but,", "\nnone of the concept sets belong to the supported domains.", 
-                "\nThe supported domains are:\n", paste(domains$domain, 
-                                                        collapse = ", "))
+        warning(
+          "Primary event criteria concept sets found for cohort id: ",
+          cohort$cohortId,
+          " but,",
+          "\nnone of the concept sets belong to the supported domains.",
+          "\nThe supported domains are:\n",
+          paste(domains$domain,
+                collapse = ", ")
+        )
         return(dplyr::tibble())
       }
       primaryCodesetIds <- conceptSets %>%
@@ -281,7 +292,9 @@ runConceptSetDiagnostics <- function(connection = NULL,
                pasteIds)
       primaryCodesetIds <- dplyr::bind_rows(primaryCodesetIds)
       
-      getCounts <- function(row, connection, tempEmulationSchema) {
+      getCounts <- function(row,
+                            connection,
+                            tempEmulationSchema) {
         domain <- domains[domains$domain == row$domain,]
         sql <-
           SqlRender::loadRenderTranslateSql(
@@ -347,9 +360,11 @@ runConceptSetDiagnostics <- function(connection = NULL,
       ParallelLogger::logTrace("Index event breakdown SQL")
       counts <- list()
       for (i in (1:nrow(primaryCodesetIds))) {
-        counts[[i]] <- getCounts(row = primaryCodesetIds[i,], 
-                                 connection = connection, 
-                                 tempEmulationSchema = tempEmulationSchema)
+        counts[[i]] <- getCounts(
+          row = primaryCodesetIds[i,],
+          connection = connection,
+          tempEmulationSchema = tempEmulationSchema
+        )
       }
       counts <- dplyr::bind_rows(counts) %>%
         dplyr::arrange(.data$conceptCount)
@@ -367,9 +382,11 @@ runConceptSetDiagnostics <- function(connection = NULL,
     
     data <- list()
     for (i in (1:nrow(subset))) {
-      data[[i]] <- runBreakdownIndexEvents(cohort = subset[i,], 
-                                           connection = connection, 
-                                           tempEmulationSchema = tempEmulationSchema)
+      data[[i]] <- runBreakdownIndexEvents(
+        cohort = subset[i,],
+        connection = connection,
+        tempEmulationSchema = tempEmulationSchema
+      )
     }
     indexEventBreakdown <- dplyr::bind_rows(data)
     delta <- Sys.time() - startBreakdownEvents
@@ -876,7 +893,7 @@ exportConceptInformation <- function(connection = NULL,
           cdm_database_schema = cdmDatabaseSchema,
           table = vocabularyTable,
           snakeCaseToCamelCase = TRUE
-        ) %>% 
+        ) %>%
         dplyr::tibble()
     }
     vocabularyTablesData[[vocabularyTable]] <- data
@@ -976,4 +993,3 @@ createConceptCountsTable <- function(connectionDetails = NULL,
   )
   return(orphanConcepts)
 }
-

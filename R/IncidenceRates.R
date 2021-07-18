@@ -22,37 +22,37 @@
 #' @template Connection
 #'
 #' @template CohortDatabaseSchema
-#' 
+#'
 #' @template CdmDatabaseSchema
 #'
 #' @template VocabularyDatabaseSchema
-#' 
+#'
 #' @template TempEmulationSchema
 #'
 #' @template CohortTable
 #'
 #' @param cohortId               A Cohort Id to compute time distribution for.
-#' 
+#'
 #' @param cdmVersion              Only CDM version 5 is supported.
-#' 
+#'
 #' @param firstOccurrenceOnly    Compute for first occurrence of subject in the cohort.
-#' 
+#'
 #' @param washoutPeriod          (Optional) Washout period to use. The default value is either
 #'                               365 days or minimum prior observation period requirement
 #'                               specified in cohort definition.
 #'
 #' @export
 runIncidenceRateDiagnostics <- function(connectionDetails = NULL,
-                             connection = NULL,
-                             cohortDatabaseSchema,
-                             cohortTable,
-                             cdmDatabaseSchema,
-                             vocabularyDatabaseSchema = cdmDatabaseSchema,
-                             cdmVersion = 5,
-                             tempEmulationSchema = tempEmulationSchema,
-                             firstOccurrenceOnly = TRUE,
-                             washoutPeriod = 365,
-                             cohortId) {
+                                        connection = NULL,
+                                        cohortDatabaseSchema,
+                                        cohortTable,
+                                        cdmDatabaseSchema,
+                                        vocabularyDatabaseSchema = cdmDatabaseSchema,
+                                        cdmVersion = 5,
+                                        tempEmulationSchema = tempEmulationSchema,
+                                        firstOccurrenceOnly = TRUE,
+                                        washoutPeriod = 365,
+                                        cohortId) {
   start <- Sys.time()
   
   if (!cdmVersion == 5) {

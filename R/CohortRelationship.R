@@ -25,13 +25,13 @@
 #' @template Connection
 #'
 #' @template CohortDatabaseSchema
-#' 
+#'
 #' @template TempEmulationSchema
 #'
 #' @template CohortTable
 #'
 #' @param targetCohortIds              A vector of one or more Cohort Ids for use as target cohorts.
-#' 
+#'
 #' @param comparatorCohortIds          A vector of one or more Cohort Ids for use as feature/comparator cohorts.
 #'
 #' @export
@@ -58,67 +58,83 @@ runCohortRelationshipDiagnostics <-
       on.exit(DatabaseConnector::disconnect(connection))
     }
     
-    sqlCount <- "SELECT COUNT(*) FROM @cohort_database_schema.@cohort_table where cohort_definition_id IN (@cohort_ids);"
-    targetCohortCount <- renderTranslateQuerySql(connection = connection,
-                                                 sql = sqlCount,
-                                                 cohort_database_schema = cohortDatabaseSchema,
-                                                 cohort_table = cohortTable,
-                                                 cohort_ids = targetCohortIds)
+    sqlCount <-
+      "SELECT COUNT(*) FROM @cohort_database_schema.@cohort_table where cohort_definition_id IN (@cohort_ids);"
+    targetCohortCount <-
+      renderTranslateQuerySql(
+        connection = connection,
+        sql = sqlCount,
+        cohort_database_schema = cohortDatabaseSchema,
+        cohort_table = cohortTable,
+        cohort_ids = targetCohortIds
+      )
     if (targetCohortCount$COUNT == 0) {
       warning("Please check if target cohorts are instantiated. Exiting cohort relationship.")
       return(NULL)
     }
-    comparatorCohortCount <- renderTranslateQuerySql(connection = connection,
-                                                     sql = sqlCount,
-                                                     cohort_database_schema = cohortDatabaseSchema,
-                                                     cohort_table = cohortTable,
-                                                     cohort_ids = comparatorCohortIds)
+    comparatorCohortCount <-
+      renderTranslateQuerySql(
+        connection = connection,
+        sql = sqlCount,
+        cohort_database_schema = cohortDatabaseSchema,
+        cohort_table = cohortTable,
+        cohort_ids = comparatorCohortIds
+      )
     if (comparatorCohortCount$COUNT == 0) {
       warning("Please check if comparator cohorts are instantiated. Exiting cohort relationship.")
       return(NULL)
     }
     
     ParallelLogger::logTrace(" - Creating cohort table subsets")
-    cohortSubsetSql <- "IF OBJECT_ID('tempdb..@subset_cohort_table', 'U') IS NOT NULL
+    cohortSubsetSql <-
+      "IF OBJECT_ID('tempdb..@subset_cohort_table', 'U') IS NOT NULL
 	                      DROP TABLE @subset_cohort_table;
-	                      
+
 	                      --HINT DISTRIBUTE_ON_KEY(subject_id)
                         SELECT *
                         INTO @subset_cohort_table
                         FROM @cohort_database_schema.@cohort_table
                         WHERE cohort_definition_id IN (@cohort_ids);"
     
-    DatabaseConnector::renderTranslateExecuteSql(connection = connection,
-                                                 sql = cohortSubsetSql, 
-                                                 cohort_database_schema = cohortDatabaseSchema,
-                                                 tempEmulationSchema = tempEmulationSchema,
-                                                 cohort_table = cohortTable,
-                                                 subset_cohort_table = '#target_subset',
-                                                 cohort_ids = targetCohortIds, 
-                                                 progressBar = FALSE, 
-                                                 reportOverallTime = FALSE)
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = cohortSubsetSql,
+      cohort_database_schema = cohortDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
+      cohort_table = cohortTable,
+      subset_cohort_table = '#target_subset',
+      cohort_ids = targetCohortIds,
+      progressBar = FALSE,
+      reportOverallTime = FALSE
+    )
     
-    DatabaseConnector::renderTranslateExecuteSql(connection = connection,
-                                                 sql = cohortSubsetSql, 
-                                                 cohort_database_schema = cohortDatabaseSchema,
-                                                 tempEmulationSchema = tempEmulationSchema,
-                                                 cohort_table = cohortTable,
-                                                 subset_cohort_table = '#comparator_subset',
-                                                 cohort_ids = comparatorCohortIds, 
-                                                 progressBar = FALSE, 
-                                                 reportOverallTime = FALSE)
+    DatabaseConnector::renderTranslateExecuteSql(
+      connection = connection,
+      sql = cohortSubsetSql,
+      cohort_database_schema = cohortDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
+      cohort_table = cohortTable,
+      subset_cohort_table = '#comparator_subset',
+      cohort_ids = comparatorCohortIds,
+      progressBar = FALSE,
+      reportOverallTime = FALSE
+    )
     
     ParallelLogger::logTrace(" - Computing date range in target cohorts")
-    dateRangeSql <- "SELECT DATEDIFF(day, min_date, max_date) days_diff,
+    dateRangeSql <-
+      "SELECT DATEDIFF(day, min_date, max_date) days_diff,
                             min_date,
                             max_date
-                    FROM 
+                    FROM
                     (SELECT min(cohort_start_date) min_date,
 	                           max(cohort_end_date) max_date
                      FROM #target_subset) f;"
-    dateRange <- DatabaseConnector::renderTranslateQuerySql(connection = connection,
-                                                            sql = dateRangeSql,
-                                                            snakeCaseToCamelCase = TRUE)
+    dateRange <-
+      DatabaseConnector::renderTranslateQuerySql(
+        connection = connection,
+        sql = dateRangeSql,
+        snakeCaseToCamelCase = TRUE
+      )
     if (is.na(dateRange$daysDiff)) {
       warning("Please check if the cohorts are instantiated. Exiting Cohort relationship.")
     }
@@ -135,17 +151,17 @@ runCohortRelationshipDiagnostics <-
     daysDiff180 <- dateRange$daysDiff +
       (180 - (dateRange$daysDiff %% 180))
     seqStart180 <- seq(daysDiff180 * -1, daysDiff180, by = 180)
-    seqEnd180 <- seqStart180 + 180  
+    seqEnd180 <- seqStart180 + 180
     
     # every 365 days
     daysDiff365 <- dateRange$daysDiff +
       (365 - (dateRange$daysDiff %% 365))
     seqStart365 <- seq(daysDiff365 * -1, daysDiff365, by = 365)
-    seqEnd365 <- seqStart365 + 365  
+    seqEnd365 <- seqStart365 + 365
     
     # custom sequence 1 - for temporal characterization
-    seqStartCustom1 <- c(-365,-30, 0,1,31)
-    seqEndCustom1 <- c(-31, -1, 0, 30, 365)
+    seqStartCustom1 <- c(-365, -30, 0, 1, 31)
+    seqEndCustom1 <- c(-31,-1, 0, 30, 365)
     
     # custom sequence 2 - all time prior to day before index (not including index date)
     seqStartCustom2 <- c(-99999)
@@ -167,15 +183,35 @@ runCohortRelationshipDiagnostics <-
     seqStartCustom6 <- c(-99999)
     seqEndCustom6 <- c(99999)
     
-    seqStart <- c(seqStartCustom1, seqStartCustom2, seqStartCustom3, seqStartCustom4, 
-                  seqStartCustom5, seqStartCustom6, seqStart30, seqStart180, seqStart365)
-    seqEnd <- c(seqEndCustom1, seqEndCustom2, seqEndCustom3, seqEndCustom4, 
-                seqEndCustom5, seqEndCustom6, seqEnd30, seqEnd180, seqEnd365)
+    seqStart <-
+      c(
+        seqStartCustom1,
+        seqStartCustom2,
+        seqStartCustom3,
+        seqStartCustom4,
+        seqStartCustom5,
+        seqStartCustom6,
+        seqStart30,
+        seqStart180,
+        seqStart365
+      )
+    seqEnd <-
+      c(
+        seqEndCustom1,
+        seqEndCustom2,
+        seqEndCustom3,
+        seqEndCustom4,
+        seqEndCustom5,
+        seqEndCustom6,
+        seqEnd30,
+        seqEnd180,
+        seqEnd365
+      )
     
     timePeriods <- dplyr::tibble(startDay = seqStart,
-                                 endDay = seqEnd) %>% 
-      dplyr::distinct() %>% 
-      dplyr::arrange(.data$startDay, .data$endDay) %>% 
+                                 endDay = seqEnd) %>%
+      dplyr::distinct() %>%
+      dplyr::arrange(.data$startDay, .data$endDay) %>%
       dplyr::mutate(timeId = dplyr::row_number())
     
     
@@ -184,57 +220,65 @@ runCohortRelationshipDiagnostics <-
     pb <- utils::txtProgressBar(style = 3)
     
     for (i in (1:nrow(timePeriods))) {
-      ParallelLogger::logTrace(paste0(" ---- Working on Time id:",
-                                      timePeriods[i,]$timeId,
-                                      " start day: ",
-                                      timePeriods[i,]$startDay,
-                                      " to end day:",
-                                      timePeriods[i,]$endDay))
+      ParallelLogger::logTrace(
+        paste0(
+          " ---- Working on Time id:",
+          timePeriods[i, ]$timeId,
+          " start day: ",
+          timePeriods[i, ]$startDay,
+          " to end day:",
+          timePeriods[i, ]$endDay
+        )
+      )
       sql <- SqlRender::loadRenderTranslateSql(
         "CohortRelationship.sql",
         packageName = "CohortDiagnostics",
         dbms = connection@dbms,
-        time_id = timePeriods[i,]$timeId,
-        start_day_offset = timePeriods[i,]$startDay,
-        end_day_offset = timePeriods[i,]$endDay
+        time_id = timePeriods[i, ]$timeId,
+        start_day_offset = timePeriods[i, ]$startDay,
+        end_day_offset = timePeriods[i, ]$endDay
       )
-      DatabaseConnector::querySqlToAndromeda(connection = connection,
-                                             sql = sql, 
-                                             snakeCaseToCamelCase = TRUE,
-                                             andromeda = resultsInAndromeda, 
-                                             andromedaTableName = 'temp')
+      DatabaseConnector::querySqlToAndromeda(
+        connection = connection,
+        sql = sql,
+        snakeCaseToCamelCase = TRUE,
+        andromeda = resultsInAndromeda,
+        andromedaTableName = 'temp'
+      )
       
       if (!"cohortRelationship" %in% names(resultsInAndromeda)) {
         resultsInAndromeda$cohortRelationship <- resultsInAndromeda$temp
       } else {
-        Andromeda::appendToTable(
-          resultsInAndromeda$cohortRelationship,
-          resultsInAndromeda$temp
-        )
+        Andromeda::appendToTable(resultsInAndromeda$cohortRelationship,
+                                 resultsInAndromeda$temp)
       }
-      utils::setTxtProgressBar(pb, i/nrow(timePeriods))
+      utils::setTxtProgressBar(pb, i / nrow(timePeriods))
     }
     
-    results <- resultsInAndromeda$cohortRelationship %>% 
-      dplyr::collect() %>% 
+    results <- resultsInAndromeda$cohortRelationship %>%
+      dplyr::collect() %>%
       dplyr::inner_join(timePeriods, by = 'timeId') %>%
-      dplyr::select(.data$cohortId, 
-                    .data$comparatorCohortId,
-                    .data$startDay,
-                    .data$endDay,
-                    .data$bothSubjects,
-                    .data$cBeforeTSubjects,
-                    .data$tBeforeCSubjects,
-                    .data$sameDaySubjects,
-                    .data$cPersonDays,
-                    .data$cSubjectsStart,
-                    .data$cSubjectsEnd,
-                    .data$cInTSubjects) %>% 
-      dplyr::arrange(.data$cohortId, 
-                     .data$comparatorCohortId,
-                     .data$startDay,
-                     .data$endDay,
-                     .data$bothSubjects)
+      dplyr::select(
+        .data$cohortId,
+        .data$comparatorCohortId,
+        .data$startDay,
+        .data$endDay,
+        .data$bothSubjects,
+        .data$cBeforeTSubjects,
+        .data$tBeforeCSubjects,
+        .data$sameDaySubjects,
+        .data$cPersonDays,
+        .data$cSubjectsStart,
+        .data$cSubjectsEnd,
+        .data$cInTSubjects
+      ) %>%
+      dplyr::arrange(
+        .data$cohortId,
+        .data$comparatorCohortId,
+        .data$startDay,
+        .data$endDay,
+        .data$bothSubjects
+      )
     
     delta <- Sys.time() - startTime
     ParallelLogger::logInfo(paste(

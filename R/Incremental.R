@@ -32,12 +32,14 @@ isTaskRequired <-
       recordKeeping <-  readr::read_csv(recordKeepingFile,
                                         col_types = readr::cols(),
                                         guess_max = min(1e7))
-      task <- recordKeeping[getKeyIndex(list(...), recordKeeping),]
+      task <- recordKeeping[getKeyIndex(list(...), recordKeeping), ]
       if (nrow(task) == 0) {
         return(TRUE)
       }
       if (nrow(task) > 1) {
-        stop("Duplicate key ",as.character(list(...))," found in recordkeeping table")
+        stop("Duplicate key ",
+             as.character(list(...)),
+             " found in recordkeeping table")
       }
       if (task$checksum == checksum) {
         if (verbose) {
@@ -65,12 +67,14 @@ getRequiredTasks <- function(..., checksum, recordKeepingFile) {
     tasks <- dplyr::as_tibble(tasks)
     if (all(names(tasks) %in% names(recordKeeping))) {
       idx <- getKeyIndex(recordKeeping[, names(tasks)], tasks)
-    } else {idx = c()}
+    } else {
+      idx = c()
+    }
     tasks$checksum <- NULL
     if (length(idx) > 0) {
       # text <- paste(sprintf("%s = %s", names(tasks), tasks[idx,]), collapse = ", ")
       # ParallelLogger::logInfo("Skipping ", text, " because unchanged from earlier run")
-      tasks <- tasks[-idx,]
+      tasks <- tasks[-idx, ]
     }
   }
   return(tasks)
@@ -94,16 +98,20 @@ recordTasksDone <-
            checksum,
            recordKeepingFile,
            incremental = TRUE) {
+    if (!incremental) {
+      return()
+    }
     
-    if (!incremental) {return()}
-    
-    if (length(list(...)[[1]]) == 0) {return()}
+    if (length(list(...)[[1]]) == 0) {
+      return()
+    }
     
     if (file.exists(recordKeepingFile)) {
       recordKeeping <-  readr::read_csv(recordKeepingFile,
                                         col_types = readr::cols(),
                                         guess_max = min(1e7))
-      recordKeeping$timeStamp <- as.character(recordKeeping$timeStamp)
+      recordKeeping$timeStamp <-
+        as.character(recordKeeping$timeStamp)
       # ensure cohortId and comparatorId are always integer while reading
       if ('cohortId' %in% colnames(recordKeeping)) {
         recordKeeping <- recordKeeping %>%
@@ -115,7 +123,7 @@ recordTasksDone <-
       }
       idx <- getKeyIndex(list(...), recordKeeping)
       if (length(idx) > 0) {
-        recordKeeping <- recordKeeping[-idx,]
+        recordKeeping <- recordKeeping[-idx, ]
       }
     } else {
       recordKeeping <- dplyr::tibble()
@@ -227,9 +235,11 @@ saveIncremental <- function(data, fileName, ...) {
     if ((nrow(previousData)) > 0) {
       if (!length(list(...)) == 0) {
         idx <- getKeyIndex(list(...), previousData)
-      } else {idx <- NULL}
+      } else {
+        idx <- NULL
+      }
       if (length(idx) > 0) {
-        previousData <- previousData[-idx,]
+        previousData <- previousData[-idx, ]
       }
       if (nrow(previousData) > 0) {
         data <- dplyr::bind_rows(previousData, data) %>%
@@ -255,7 +265,7 @@ subsetToRequiredCohorts <-
         checksum = cohorts$checksum,
         recordKeepingFile = recordKeepingFile
       )
-      return(cohorts[cohorts$cohortId %in% tasks$cohortId,])
+      return(cohorts[cohorts$cohortId %in% tasks$cohortId, ])
     } else {
       return(cohorts)
     }

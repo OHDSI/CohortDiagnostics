@@ -19,17 +19,17 @@
 #' Checks if a set of cohortId(s) are instantiated in the cohort table
 #'
 #' @description
-#' Given a set of one or more cohortIds and a single cohort table, checks if 
+#' Given a set of one or more cohortIds and a single cohort table, checks if
 #' all cohortIds in the set are instantiated.
 #'
 #' @template Connection
-#' 
+#'
 #' @template CohortDatabaseSchema
-#' 
+#'
 #' @template CohortTable
-#' 
+#'
 #' @param cohortIds                   Provide a set of cohort IDs to check if instantiated.
-#' 
+#'
 #' @return
 #' Returns TRUE if all cohortIds are instantiated.
 checkIfCohortInstantiated <-
@@ -38,7 +38,6 @@ checkIfCohortInstantiated <-
            cohortDatabaseSchema,
            cohortTable,
            cohortIds) {
-    
     if (is.null(connection)) {
       connection <- DatabaseConnector::connect(connectionDetails)
       on.exit(DatabaseConnector::disconnect(connection))
