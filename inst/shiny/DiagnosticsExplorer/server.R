@@ -4259,6 +4259,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- orphanConceptsData()
     validate(need(all(!is.null(data), nrow(data) > 0),
                   "There is no data for the selected combination."))
+    maxCount <- max(data$conceptCount, na.rm = TRUE)
     
     if (!is.null(input$conceptSetsToFilterCharacterization) && 
         length(input$conceptSetsToFilterCharacterization) > 0) {
@@ -4288,8 +4289,9 @@ shiny::shinyServer(function(input, output, session) {
     databaseIdsWithCount <- getSubjectCountsByDatabasae(data = data, cohortId = cohortId(), databaseIds = databaseIds())
     table <- pivotOrphanConceptResult(data = data,
                                       dataSource = dataSource)
+    
     if (input$orphanConceptsColumFilterType == "Subjects only") {
-      table <- table$table %>% 
+      table <- table %>% 
         dplyr::select(-dplyr::contains("Count"))
       
       colnames(table) <- stringr::str_replace(string = colnames(table), pattern = 'Subjects', replacement = '')
@@ -4299,7 +4301,7 @@ shiny::shinyServer(function(input, output, session) {
       
       colorableColumns <- (1:(nrow(databaseIdsWithCount)))
     } else if (input$orphanConceptsColumFilterType == "Records only") {
-      table <- table$table %>% 
+      table <- table %>% 
         dplyr::select(-dplyr::contains("subject"))
       
       colnames(table) <- stringr::str_replace(string = colnames(table), pattern = 'Count', replacement = '')
@@ -4309,7 +4311,6 @@ shiny::shinyServer(function(input, output, session) {
       
       colorableColumns <- (1:(nrow(databaseIdsWithCount)))
     } else {
-      table <- table$table
       sketch <- htmltools::withTags(table(class = "display",
                                           thead(
                                             tr(
