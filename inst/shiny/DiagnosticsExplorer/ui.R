@@ -661,6 +661,19 @@ bodyTabItems <- shinydashboard::tabItems(
               virtualScroll = 50
             )
           )
+        ),
+        tags$td(
+          shiny::sliderInput(
+            inputId = "timeSeriesPeriodBeginFilter",
+            label = "Filter By Period Begin",
+            min = c(0),
+            max = c(0),
+            value = c(0, 0),
+            dragRange = TRUE,
+            pre = "Year ",
+            step = 1,
+            sep = ""
+          )
         )
       )
     ),

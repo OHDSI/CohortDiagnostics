@@ -3744,6 +3744,9 @@ shiny::shinyServer(function(input, output, session) {
     calendarIntervalFirstLetter <- tolower(substr(input$timeSeriesFilter,1,1))
     data <- timeSeriesData()
     data <- data[[calendarIntervalFirstLetter]]
+    data <- data[as.character(data$periodBegin) >= input$timeSeriesPeriodBeginFilter[1] &
+           as.character(data$periodBegin) <= input$timeSeriesPeriodBeginFilter[2],]
+    
     validate(need(!is.null(data) > 0, "No time series data"))
     validate(need(nrow(data) > 0, "No time series data"))
     
@@ -3804,6 +3807,23 @@ shiny::shinyServer(function(input, output, session) {
       inputId = "timeSeriesTypeFilter",
       choicesOpt = list(style = rep_len("color: black;", 999)),
       choices = data
+    )
+    
+  })
+  
+  shiny::observe({
+    calendarIntervalFirstLetter <- tolower(substr(input$timeSeriesFilter,1,1))
+    data <- timeSeriesData()
+    data <- data[[calendarIntervalFirstLetter]]
+    minValue <- as.integer(strsplit(min(as.character(data$periodBegin))," ")[[1]][1])
+    maxValue <- as.integer(strsplit(max(as.character(data$periodBegin))," ")[[1]][1])
+    
+    shiny::updateSliderInput(
+      session = session,
+      inputId = "timeSeriesPeriodBeginFilter",
+      min = minValue,
+      max = maxValue,
+      value = c(minValue, maxValue)
     )
   })
   

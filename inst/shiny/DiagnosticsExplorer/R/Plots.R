@@ -46,12 +46,12 @@ plotTimeSeries <- function(data, columnFilter) {
   
   
   plot <- plot +
-    
     ggplot2::theme_bw() +
     ggplot2::theme(strip.text = ggplot2::element_text(size = 6),
                    axis.text = ggplot2::element_text(size = 5),
                    plot.title = ggplot2::element_text(size = 7),
-                   plot.subtitle =  ggplot2::element_text(size = 7)) +
+                   plot.subtitle =  ggplot2::element_text(size = 7),
+                   axis.title = ggplot2::element_text(size = 7)) +
     ggplot2::labs(x = "Period Begin") + 
     ggplot2::scale_y_continuous(labels = scales::comma) +
     ggplot2::theme(legend.position = "none")
