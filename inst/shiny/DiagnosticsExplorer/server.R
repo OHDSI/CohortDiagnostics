@@ -3419,20 +3419,24 @@ shiny::shinyServer(function(input, output, session) {
   
   # Incidence rate -------
   incidenceRateDataFull <- reactive({
-    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
-    validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
-    if (all(is(dataSource, "environment"), !exists('incidenceRate'))) {
+    if (input$tabs == "incidenceRate") {
+      validate(need(length(databaseIds()) > 0, "No data sources chosen"))
+      validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
+      if (all(is(dataSource, "environment"), !exists('incidenceRate'))) {
+        return(NULL)
+      }
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(message = paste0("Getting incidence rate data."), value = 0)
+      
+      data <- getResultsFromIncidenceRate(
+        dataSource = dataSource,
+        cohortIds = cohortIds(),
+        databaseIds = databaseIds())
+      return(data)
+    } else {
       return(NULL)
     }
-    progress <- shiny::Progress$new()
-    on.exit(progress$close())
-    progress$set(message = paste0("Getting incidence rate data."), value = 0)
-    
-    data <- getResultsFromIncidenceRate(
-      dataSource = dataSource,
-      cohortIds = cohortIds(),
-      databaseIds = databaseIds())
-    return(data)
   })
   
   incidenceRateData <- reactive({
@@ -3720,22 +3724,26 @@ shiny::shinyServer(function(input, output, session) {
   
   # Time Series -----
   timeSeriesData <- reactive({
-    validate(need(length(databaseIds()) > 0, "No data sources chosen"))
-    validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
-    if (all(is(dataSource, "environment"), !exists('timeSeries'))) {
+    if (input$tabs == "timeSeries") {
+      validate(need(length(databaseIds()) > 0, "No data sources chosen"))
+      validate(need(length(cohortIds()) > 0, "No cohorts chosen"))
+      if (all(is(dataSource, "environment"), !exists('timeSeries'))) {
+        return(NULL)
+      }
+      
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(message = paste0("Getting time series data."), value = 0)
+      
+      data <- getResultsFromTimeSeries(
+        dataSource = dataSource,
+        cohortIds = cohortIds(),
+        databaseIds = databaseIds()
+      )
+      return(data)
+    } else {
       return(NULL)
     }
-    
-    progress <- shiny::Progress$new()
-    on.exit(progress$close())
-    progress$set(message = paste0("Getting time series data."), value = 0)
-    
-    data <- getResultsFromTimeSeries(
-      dataSource = dataSource,
-      cohortIds = cohortIds(),
-      databaseIds = databaseIds()
-    )
-    return(data)
   })
   
   timeSeriesDataFiltered <- reactive({
@@ -5064,33 +5072,38 @@ shiny::shinyServer(function(input, output, session) {
   # Characterization/Temporal Characterization ------
   # Characterization and temporal characterization data for one cohortId and multiple databaseIds
   characterizationTemporalCharacterizationData <- shiny::reactive(x = {
-    if (all(is(dataSource, "environment"), 
-            !any(exists('covariateValue'), 
-                 exists('temporalCovariateValue')))) {
+    if (input$tabs == "temporalCharacterization" || input$tabs == "cohortCharacterization") {
+      if (all(is(dataSource, "environment"), 
+              !any(exists('covariateValue'), 
+                   exists('temporalCovariateValue')))) {
+        return(NULL)
+      }
+      if (any(length(cohortId()) != 1,
+              length(databaseIds()) == 0)) {
+        return(NULL)
+      }
+      
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(message = paste0("Extracting characterization data for target cohort:", cohortId()), 
+                   value = 0)
+      
+      data <- getMultipleCharacterizationResults(
+        dataSource = dataSource,
+        cohortIds = cohortId(),
+        databaseIds = databaseIds()
+      )
+      return(data)
+    } else {
       return(NULL)
     }
-    if (any(length(cohortId()) != 1,
-            length(databaseIds()) == 0)) {
-      return(NULL)
-    }
-    
-    progress <- shiny::Progress$new()
-    on.exit(progress$close())
-    progress$set(message = paste0("Extracting characterization data for target cohort:", cohortId()), 
-                 value = 0)
-
-    data <- getMultipleCharacterizationResults(
-      dataSource = dataSource,
-      cohortIds = cohortId(),
-      databaseIds = databaseIds()
-    )
-    return(data)
   })
   
   ## Characterization data ------
   characterizationData <- shiny::reactive(x = {
     if (any(length(cohortId()) != 1,
-            length(databaseIds()) == 0)) {
+            length(databaseIds()) == 0,
+            length(characterizationTemporalCharacterizationData()) == 0)) {
       return(NULL)
     }
     if (input$charType == "Pretty") {
@@ -5775,38 +5788,42 @@ shiny::shinyServer(function(input, output, session) {
   
   # Compare Characterization/Temporal Characterization ------
   compareCharacterizationTemporalCharacterizationData <- shiny::reactive(x = {
-    if (all(is(dataSource, "environment"), 
-            !any(exists('covariateValue'), 
-                 exists('temporalCovariateValue')))) {
+    if (input$tabs == "temporalCharacterization" || input$tabs == "cohortCharacterization") {
+      if (all(is(dataSource, "environment"), 
+              !any(exists('covariateValue'), 
+                   exists('temporalCovariateValue')))) {
+        return(NULL)
+      }
+      if (any(length(cohortId()) != 1,
+              length(comparatorCohortId()) != 1,
+              length(databaseIds()) != 1)) {
+        return(NULL)
+      }
+      if (all(is(dataSource, "environment"), 
+              !any(exists('covariateValue'), 
+                   exists('temporalCovariateValue')))) {
+        return(NULL)
+      }
+      
+      progress <- shiny::Progress$new()
+      on.exit(progress$close())
+      progress$set(message = paste0("Extracting characterization data for target cohort:", 
+                                    cohortId(),
+                                    " and comparator cohort:",
+                                    comparatorCohortId(),
+                                    ' for ',
+                                    input$database), 
+                   value = 0)
+      
+      data <- getMultipleCharacterizationResults(
+        dataSource = dataSource,
+        cohortIds = c(cohortId(), comparatorCohortId()) %>% unique(),
+        databaseIds = input$database
+      )
+      return(data)
+    } else {
       return(NULL)
     }
-    if (any(length(cohortId()) != 1,
-            length(comparatorCohortId()) != 1,
-            length(databaseIds()) != 1)) {
-      return(NULL)
-    }
-    if (all(is(dataSource, "environment"), 
-            !any(exists('covariateValue'), 
-                 exists('temporalCovariateValue')))) {
-      return(NULL)
-    }
-    
-    progress <- shiny::Progress$new()
-    on.exit(progress$close())
-    progress$set(message = paste0("Extracting characterization data for target cohort:", 
-                                  cohortId(),
-                                  " and comparator cohort:",
-                                  comparatorCohortId(),
-                                  ' for ',
-                                  input$database), 
-                 value = 0)
-    
-    data <- getMultipleCharacterizationResults(
-      dataSource = dataSource,
-      cohortIds = c(cohortId(), comparatorCohortId()) %>% unique(),
-      databaseIds = input$database
-    )
-    return(data)
   })
   
   ## Characterization data ----
