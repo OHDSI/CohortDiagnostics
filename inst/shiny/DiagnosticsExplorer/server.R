@@ -567,6 +567,7 @@ shiny::shinyServer(function(input, output, session) {
         shiny::htmlOutput(outputId = "selectedCohortInCohortDefinition"),
         shiny::tabsetPanel(
           type = "tab",
+          id = "cohortDefinitionOneTabSetPanel",
           shiny::tabPanel(title = "Details",
                           shiny::htmlOutput("cohortDetailsText")),
           shiny::tabPanel(title = "Cohort Count",
@@ -583,6 +584,7 @@ shiny::shinyServer(function(input, output, session) {
                           shiny::htmlOutput("cohortDefinitionText")),
           shiny::tabPanel(
             title = "Concept Sets",
+            value = "conceptSetTwoTabPanel",
               DT::dataTableOutput(outputId = "conceptsetExpressionTable"),
               shiny::conditionalPanel(condition = "output.conceptSetExpressionRowSelected == true",
                                       tags$table(tags$tr(
@@ -733,6 +735,7 @@ shiny::shinyServer(function(input, output, session) {
                      output.cohortDefinitionRowIsSelected == true",
         shiny::htmlOutput(outputId = "selectedSecondCohortInCohortDefinition"),
         shiny::tabsetPanel(
+          id = "cohortDefinitionTwoTabSetPanel",
           type = "tab",
           shiny::tabPanel(title = "Details",
                           shiny::htmlOutput("cohortDetailsTextSecond")),
@@ -750,6 +753,7 @@ shiny::shinyServer(function(input, output, session) {
                           shiny::htmlOutput("cohortDefinitionTextSecond")),
           shiny::tabPanel(
             title = "Concept Sets",
+            value = "conceptSetTwoTabPanel",
             DT::dataTableOutput(outputId = "conceptsetExpressionSecondTable"),
             shiny::conditionalPanel(condition = "output.conceptSetExpressionSecondRowSelected == true",
                                     tags$table(tags$tr(

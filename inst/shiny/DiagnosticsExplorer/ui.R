@@ -359,7 +359,11 @@ bodyTabItems <- shinydashboard::tabItems(
                     shiny::conditionalPanel(
                       condition = "output.cohortDefinitionCountOfSelectedRows == 2 &
                      input.conceptSetsType == 'Resolved (included)' &
-                     input.conceptSetsTypeSecond == 'Resolved (included)'",
+                     input.conceptSetsTypeSecond == 'Resolved (included)' & 
+                     output.conceptSetExpressionRowSelected == true &
+                     output.conceptSetExpressionSecondRowSelected == true &
+                     input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
+                     input.cohortDefinitionOneTabSetPanel == 'conceptSetTwoTabPanel'",
                       shiny::tabsetPanel(
                         id = "resolvedConceptDifference",
                         shiny::tabPanel(
@@ -388,7 +392,11 @@ bodyTabItems <- shinydashboard::tabItems(
                     shiny::conditionalPanel(
                       condition = "output.cohortDefinitionCountOfSelectedRows == 2 &
                                    input.conceptSetsType == 'Mapped (source)' &
-                                   input.conceptSetsTypeSecond == 'Mapped (source)'",
+                                   input.conceptSetsTypeSecond == 'Mapped (source)' & 
+                                   output.conceptSetExpressionRowSelected == true &
+                                   output.conceptSetExpressionSecondRowSelected == true &
+                                   input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
+                                   input.cohortDefinitionOneTabSetPanel == 'conceptSetTwoTabPanel'",
                       shiny::tabsetPanel(
                         id = "mappedConceptDifference",
                         shiny::tabPanel(
@@ -417,7 +425,11 @@ bodyTabItems <- shinydashboard::tabItems(
                     shiny::conditionalPanel(
                       condition = "output.cohortDefinitionCountOfSelectedRows == 2 &
                                    input.conceptSetsType == 'Orphan concepts' &
-                                   input.conceptSetsTypeSecond == 'Orphan concepts'",
+                                   input.conceptSetsTypeSecond == 'Orphan concepts'& 
+                                   output.conceptSetExpressionRowSelected == true &
+                                   output.conceptSetExpressionSecondRowSelected == true &
+                                   input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
+                                   input.cohortDefinitionOneTabSetPanel == 'conceptSetTwoTabPanel'",
                       shiny::tabsetPanel(
                         id = "orphanConceptsDifference",
                         shiny::tabPanel(
