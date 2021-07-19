@@ -584,7 +584,7 @@ shiny::shinyServer(function(input, output, session) {
                           shiny::htmlOutput("cohortDefinitionText")),
           shiny::tabPanel(
             title = "Concept Sets",
-            value = "conceptSetTwoTabPanel",
+            value = "conceptSetOneTabPanel",
               DT::dataTableOutput(outputId = "conceptsetExpressionTable"),
               shiny::conditionalPanel(condition = "output.conceptSetExpressionRowSelected == true",
                                       tags$table(tags$tr(

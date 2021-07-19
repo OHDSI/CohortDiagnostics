@@ -363,7 +363,7 @@ bodyTabItems <- shinydashboard::tabItems(
                      output.conceptSetExpressionRowSelected == true &
                      output.conceptSetExpressionSecondRowSelected == true &
                      input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
-                     input.cohortDefinitionOneTabSetPanel == 'conceptSetTwoTabPanel'",
+                     input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
                       shiny::tabsetPanel(
                         id = "resolvedConceptDifference",
                         shiny::tabPanel(
@@ -396,7 +396,7 @@ bodyTabItems <- shinydashboard::tabItems(
                                    output.conceptSetExpressionRowSelected == true &
                                    output.conceptSetExpressionSecondRowSelected == true &
                                    input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
-                                   input.cohortDefinitionOneTabSetPanel == 'conceptSetTwoTabPanel'",
+                                   input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
                       shiny::tabsetPanel(
                         id = "mappedConceptDifference",
                         shiny::tabPanel(
@@ -429,7 +429,7 @@ bodyTabItems <- shinydashboard::tabItems(
                                    output.conceptSetExpressionRowSelected == true &
                                    output.conceptSetExpressionSecondRowSelected == true &
                                    input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
-                                   input.cohortDefinitionOneTabSetPanel == 'conceptSetTwoTabPanel'",
+                                   input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
                       shiny::tabsetPanel(
                         id = "orphanConceptsDifference",
                         shiny::tabPanel(
