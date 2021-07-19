@@ -3811,15 +3811,15 @@ shiny::shinyServer(function(input, output, session) {
     if (any(is.null(data), nrow(data) == 0)) {
       return(NULL)
     }
-    data <- data
-      dplyr::pull(.data$seriesType) %>% unique()
+    data <- data %>% 
+      dplyr::pull(.data$seriesType) %>% 
+      unique()
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "timeSeriesTypeFilter",
       choicesOpt = list(style = rep_len("color: black;", 999)),
       choices = data
     )
-    
   })
   
   shiny::observe({
