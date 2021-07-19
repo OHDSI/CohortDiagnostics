@@ -664,7 +664,7 @@ bodyTabItems <- shinydashboard::tabItems(
         ),
         tags$td(
           shiny::sliderInput(
-            inputId = "timeSeriesPeriodBeginFilter",
+            inputId = "timeSeriesPeriodRangeFilter",
             label = "Filter By Period Begin",
             min = c(0),
             max = c(0),
@@ -700,8 +700,14 @@ bodyTabItems <- shinydashboard::tabItems(
           shiny::radioButtons(
             inputId = "timeSeriesPlotFilters",
             label = "Filter By :",
-            choices = c("Records Start", "Subjects Start", "Records End", "Subjects End"),
-            selected = "Records Start",
+            choices = c("Records",
+                        "Subjects",
+                        "Person Days",
+                        "Records Start", 
+                        "Subjects Start", 
+                        "Records End", 
+                        "Subjects End"),
+            selected = "Subjects",
             inline = TRUE
           )
         ),

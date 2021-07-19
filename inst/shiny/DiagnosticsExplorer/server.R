@@ -218,7 +218,6 @@ shiny::shinyServer(function(input, output, session) {
   
   cohortDetailsText <- shiny::reactive(x = {
     data <- selectedCohortDefinitionRow()
-    
     if (nrow(data) == 0) {
       return(NULL)
     } else {
@@ -249,14 +248,11 @@ shiny::shinyServer(function(input, output, session) {
   
   output$cohortDetailsText <- shiny::renderUI({
     row <- cohortDetailsText()[[1]]
-    if (!'logicDescription' %in% colnames(row)) {
-      row$logicDescription <- row$cohortName
-    }
     if (is.null(row) || length(row) == 0) {
       return(NULL)
-    } else {
-      return(row)
     }
+    return(row)
+  
   })
   
   output$cohortCountsTableInCohortDefinition <- DT::renderDataTable(expr = {
@@ -1602,14 +1598,10 @@ shiny::shinyServer(function(input, output, session) {
   # Concept set expression 2 ----
   output$cohortDetailsTextSecond <- shiny::renderUI({
     row <- cohortDetailsText()[[2]]
-    if (!'logicDescription' %in% colnames(row)) {
-      row$logicDescription <- row$cohortName
-    }
     if (is.null(row) || length(row) == 0) {
       return(NULL)
-    } else {
-      return(row)
     }
+    return(row)
   })
   
   output$cohortCountsTableInCohortDefinitionSecond <- DT::renderDataTable(expr = {
@@ -3726,7 +3718,7 @@ shiny::shinyServer(function(input, output, session) {
   
   
   # Time Series -----
-  
+  ## Tssible data ----
   timeSeriesTssibleData <- shiny::reactiveVal(NULL)
   timeSeriesData <- reactive({
     if (input$tabs == "timeSeries") {
@@ -3751,6 +3743,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  ## Data filtered by calendarInterval + range ----
   timeSeriesDataFiltered <- reactive({
     calendarIntervalFirstLetter <- tolower(substr(input$timeSeriesFilter,1,1))
     data <- timeSeriesData()
@@ -3759,33 +3752,12 @@ shiny::shinyServer(function(input, output, session) {
             nrow(data) == 0)) {
       return(NULL)
     }
-    data <- data[as.character(data$periodBegin) >= input$timeSeriesPeriodBeginFilter[1] &
-           as.character(data$periodBegin) <= input$timeSeriesPeriodBeginFilter[2],]
+    data <- data[as.character(data$periodBegin) >= input$timeSeriesPeriodRangeFilter[1] &
+           as.character(data$periodBegin) <= input$timeSeriesPeriodRangeFilter[2],]
     if (any(is.null(data),
             nrow(data) == 0)) {
       return(NULL)
     }
-    
-    ## filter -- to be replaced by filter in shiny UI
-    # if (!is.null(seriesType)) {
-    #   data <- data %>% 
-    #     dplyr::filter(.data$seriesType %in% seriesType)
-    # }
-    ## hard coding for now till UI filter
-    # data <- data %>% 
-    #   dplyr::filter(.data$seriesType %in% 'T1')
-    
-    # if (all(!is.null(minDate),
-    #         is.na.POSIXlt(minDate))) {
-    #   data <- data %>% 
-    #     dplyr::filter(.data$periodBegin >= minDate)
-    # }
-    # 
-    # if (all(!is.null(maxDate),
-    #         is.na.POSIXlt(maxDate))) {
-    #   data <- data %>% 
-    #     dplyr::filter(.data$periodBegin < maxDate)
-    # }
     
     data <- data  %>%
       tsibble::fill_gaps(
@@ -3814,22 +3786,24 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
+  ## Filter: series type ----
   shiny::observe({
     data <- timeSeriesDataFiltered() 
     if (any(is.null(data), nrow(data) == 0)) {
       return(NULL)
     }
-    data <- data
-      dplyr::pull(.data$seriesType) %>% unique()
+    data <- data %>% 
+      dplyr::pull(.data$seriesType) %>% 
+      unique()
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "timeSeriesTypeFilter",
       choicesOpt = list(style = rep_len("color: black;", 999)),
       choices = data
     )
-    
   })
   
+  ## Filter: Period range ----
   shiny::observe({
     calendarIntervalFirstLetter <- tolower(substr(input$timeSeriesFilter,1,1))
     data <- timeSeriesData()
@@ -3842,30 +3816,30 @@ shiny::shinyServer(function(input, output, session) {
     
     shiny::updateSliderInput(
       session = session,
-      inputId = "timeSeriesPeriodBeginFilter",
+      inputId = "timeSeriesPeriodRangeFilter",
       min = minValue,
       max = maxValue,
       value = c(minValue, maxValue)
     )
   })
   
+  ## Output Data table ----
   output$timeSeriesTable <- DT::renderDataTable({
     data <- timeSeriesDataFiltered()
-    data <- timeSeriesDataFiltered() 
-    if (any(is.null(data), nrow(data) == 0)) {
-      return(NULL)
-    }
+    data <- timeSeriesDataFiltered()
+    validate(need(all(!is.null(data),
+                      nrow(data) > 0),
+                  "No timeseries data for the combination."))
     data <- data %>% 
       dplyr::filter(.data$seriesType %in% input$timeSeriesTypeFilter) %>% 
       dplyr::select(-.data$seriesType) %>% 
       dplyr::mutate(periodBegin = .data$periodBeginRaw) %>% 
       dplyr::relocate(.data$periodBegin) %>% 
       dplyr::arrange(.data$periodBegin) %>% 
-      dplyr::select(-.data$periodBeginRaw) 
-    if (any(is.null(data), nrow(data) == 0)) {
-      return(NULL)
-    }
-    
+      dplyr::select(-.data$periodBeginRaw)
+    validate(need(all(!is.null(data),
+                      nrow(data) > 0),
+                  "No timeseries data for the combination."))
     options = list(
       pageLength = 100,
       lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
@@ -3890,11 +3864,15 @@ shiny::shinyServer(function(input, output, session) {
     return(dataTable)
   })
   
+  ## Output Time series plot ----
   output$timeSeriesPlot <- ggiraph::renderggiraph({
     
     data <- timeSeriesTssibleData() %>% 
       dplyr::filter(.data$seriesType %in% input$timeSeriesTypeFilter) %>% 
       dplyr::select(-.data$seriesType)
+    
+    validate(need(nrow(data) > 0,
+                  "No timeseries data for the combination."))
     
     plot <- plotTimeSeries(data, titleCaseToCamelCase(input$timeSeriesPlotFilters))
     
