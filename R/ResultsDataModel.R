@@ -45,23 +45,21 @@ checkFixColumnNames <-
       dplyr::select(.data$fieldName) %>%
       dplyr::arrange(.data$fieldName)
     
-    expectedNames <- tableSpecs %>%
+    expectedNamesDf <- tableSpecs %>%
       dplyr::select(.data$fieldName) %>%
       dplyr::arrange(.data$fieldName)
+    expectedNames <- expectedNames %>%
+      dplyr::pull() %>%
+      sort()
     
     if (length(optionalNames) > 0) {
-      expectedNames <- expectedNames %>%
+      expectedNames <- expectedNamesDf %>%
         dplyr::anti_join(dplyr::filter(optionalNames, !.data$fieldName %in% observeredNames),
                          by = "fieldName") %>%
         dplyr::arrange(.data$fieldName) %>%
         dplyr::pull() %>%
         sort()
-    } else {
-      expectedNames <- expectedNames %>%
-        dplyr::pull() %>%
-        sort()
     }
-    
     
     if (!(all(expectedNames %in% observeredNames))) {
       stop(
@@ -102,7 +100,7 @@ checkAndFixDataTypes <-
               expectedType
             )
           )
-          table <- mutate_at(table, i, as.numeric)
+          table <- dplyr::mutate_at(table, i, as.numeric)
         }
       } else if (expectedType == "int") {
         if (observedTypes[i] != "integer") {
@@ -116,7 +114,7 @@ checkAndFixDataTypes <-
               expectedType
             )
           )
-          table <- mutate_at(table, i, as.integer)
+          table <- dplyr::mutate_at(table, i, strtoi)
         }
       } else if (expectedType == "varchar") {
         if (observedTypes[i] != "character") {

@@ -563,7 +563,7 @@ test_that("Negative tests on individual functions", {
 })
 
 
-
+# Upload Results test ----
 ####################### upload to database and test
 test_that("Create and upload results to results data model", {
   skip_if_not(runDatabaseTests)
@@ -931,7 +931,18 @@ test_that("Data Retrieval", {
   
   skip_if_not(runDatabaseTests)
   
-  dataSourceDatabase <- CohortDiagnostics::createFileDataSource(premergedDataFile = file.path(folder, "export", "PreMerged.RData"))
+  if (!exists('connection') ) {
+    connection <- DatabaseConnector::connect(connectionDetails)
+  }
+  if (!DatabaseConnector::dbIsValid(connection)) {
+    connection <- DatabaseConnector::connect(connectionDetails)
+  }
+  dataSourceDatabase <- CohortDiagnostics::createDatabaseDataSource(
+    connectionDetails = connectionDetails, 
+    connection = connection,
+    resultsDatabaseSchema = resultsDatabaseSchema, 
+    vocabularyDatabaseSchema = vocabularyDatabaseSchema
+  )
   
   ## Cohort Count ----
   #### Pos ----
