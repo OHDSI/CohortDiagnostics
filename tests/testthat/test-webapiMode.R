@@ -25,6 +25,7 @@ test_that("Check WebApi mode", {
     cohortIds <- cohorts %>% 
       dplyr::sample_n(size = 1) %>% 
       dplyr::select(.data$id) %>% 
+      dplyr::filter(!is.na(.data$id)) %>% 
       dplyr::pull()
     
     # get specifications for the cohortIds above
