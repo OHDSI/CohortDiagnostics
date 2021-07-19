@@ -54,40 +54,82 @@ checkCohortReference <-
     invisible(errorMessage)
   }
 
-makeBackwardsCompatible <- function(cohorts) {
-  # make sure there is a column called name
+makeBackwardsCompatible <- function(cohorts, forceWebApiCohortId = FALSE) {
+  # make sure there is a column called 'name' - used for finding sql in package
   if (!"name" %in% colnames(cohorts)) {
-    if ('cohortId' %in% colnames(cohorts)) {
-      cohorts <- cohorts %>%
-        dplyr::mutate(name = as.character(.data$cohortId))
-    } else if ('id' %in% colnames(cohorts)) {
-      cohorts <- cohorts %>%
-        dplyr::mutate(name = as.character(.data$id)) %>%
-        dplyr::mutate(cohortId = .data$id)
+    # id/cohortId takes precedence over webapiId/atlasId
+    if ('id' %in% colnames(cohorts)) {
+      if (typeof(cohorts$id) %in% c('integer','double')) {
+        cohorts <- cohorts %>%
+          dplyr::mutate(name = as.character(.data$id)) %>%
+          dplyr::mutate(cohortId = .data$id)
+      }
+    } else if ('cohortId' %in% colnames(cohorts)) {
+      if (typeof(cohorts$cohortId) %in% c('integer','double')) {
+        cohorts <- cohorts %>%
+          dplyr::mutate(name = as.character(.data$cohortId)) %>%
+          dplyr::mutate(cohortId = .data$cohortId)
+      }
     } else if ('webApiCohortId' %in% colnames(cohorts)) {
-      cohorts <- cohorts %>%
-        dplyr::mutate(name = as.character(.data$webApiCohortId)) %>%
-        dplyr::mutate(cohortId = .data$webApiCohortId)
+      if (typeof(cohorts$webApiCohortId) %in% c('integer','double')) {
+        cohorts <- cohorts %>%
+          dplyr::mutate(name = as.character(.data$webApiCohortId)) %>%
+          dplyr::mutate(cohortId = .data$webApiCohortId)
+      }
+    } else if ('atlasId' %in% colnames(cohorts)) {
+      if (typeof(cohorts$atlasId) %in% c('integer','double')) {
+        cohorts <- cohorts %>%
+          dplyr::mutate(name = as.character(.data$atlasId)) %>%
+          dplyr::mutate(cohortId = .data$atlasId)
+      }
     }
   }
-  if (!"webApiCohortId" %in% colnames(cohorts) &&
-      "atlasId" %in% colnames(cohorts)) {
-    cohorts <- cohorts %>%
-      dplyr::mutate(webApiCohortId = .data$atlasId)
+  
+  if (!'webApiCohortId' %in% colnames(cohorts)) {
+    if ('atlasId' %in% colnames(cohorts)) {
+      if (typeof(cohorts$atlasId) %in% c('integer','double')) {
+        cohorts <- cohorts %>%
+          dplyr::mutate(webApiCohortId = .data$atlasId)
+      }
+    } else if ('cohortId' %in% colnames(cohorts)) {
+      if (typeof(cohorts$atlasId) %in% c('integer','double')) {
+        cohorts <- cohorts %>%
+          dplyr::mutate(webApiCohortId = .data$cohortId)
+      }
+    } else if (all('name' %in% colnames(cohorts),
+                   typeof(strtoi(cohorts$name)) %in% c('integer','double'),
+                   strtoi(cohorts$name),
+                   forceWebApiCohortId)) {
+      warning('webapiCohortId not found. Forcing..')
+      cohorts <- cohorts %>%
+        dplyr::mutate(webApiCohortId = strtoi(cohorts$name))
+      #webApiCohortId should always be integer/double
+    }
   }
-  if (!"webApiCohortId" %in% colnames(cohorts) &&
-      !"atlasId" %in% colnames(cohorts) &&
-      "id" %in% colnames(cohorts)) {
-    cohorts <- cohorts %>%
-      dplyr::mutate(webApiCohortId = .data$id)
+  
+  # make sure there is a column called 'cohortName' - use to identify a cohort
+  if (!'cohortName' %in% colnames(cohorts)) {
+    if ('atlasName' %in% colnames(cohorts)) {
+      cohorts <- cohorts %>%
+        dplyr::mutate(cohortName = as.character(.data$atlasName))
+    } else if ('id' %in% colnames(cohorts)) {
+      cohorts <- cohorts %>%
+        dplyr::mutate(cohortName = as.character(.data$id))
+    } else if ('webApiCohortId' %in% colnames(cohorts)) {
+      cohorts <- cohorts %>%
+        dplyr::mutate(cohortName = as.character(.data$webApiCohortId))
+    } else if ('atlasId' %in% colnames(cohorts)) {
+      cohorts <- cohorts %>%
+        dplyr::mutate(cohortName = as.character(.data$atlasId))
+    }
   }
-  if (!"cohortName" %in% colnames(cohorts) &&
-      "atlasName" %in% colnames(cohorts)) {
-    cohorts <- cohorts %>%
-      dplyr::mutate(cohortName = .data$atlasName)
-  } else {
-    cohorts <- cohorts %>%
-      dplyr::mutate(cohortName = .data$name)
+  
+  # make sure there is a column called 'cohortId'
+  if (!'cohortId' %in% colnames(cohorts)) {
+    if (typeof(cohorts$name) %in% c('integer','double')) {
+      cohorts <- cohorts %>%
+        dplyr::mutate(cohortId = as.double(.data$name))
+    }
   }
   return(cohorts)
 }
@@ -124,7 +166,7 @@ getCohortsJsonAndSqlFromPackage <-
                                col_types = readr::cols(),
                                guess_max = min(1e7))
     
-    cohorts <- makeBackwardsCompatible(cohorts)
+    cohorts <- makeBackwardsCompatible(cohorts, forceWebApiCohortId = FALSE)
     if (!is.null(cohortIds)) {
       cohorts <- cohorts %>%
         dplyr::filter(.data$cohortId %in% cohortIds)
@@ -458,7 +500,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
       cohortSetReference <- dplyr::tibble(id = cohortSetReference)
     }
     cohortSetReference <-
-      makeBackwardsCompatible(cohortSetReference)
+      makeBackwardsCompatible(cohortSetReference, forceWebApiCohortId = TRUE)
   }
   
   if (!is.null(oracleTempSchema) && is.null(tempEmulationSchema)) {
