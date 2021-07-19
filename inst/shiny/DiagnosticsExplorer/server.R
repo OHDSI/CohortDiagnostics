@@ -3755,12 +3755,16 @@ shiny::shinyServer(function(input, output, session) {
     calendarIntervalFirstLetter <- tolower(substr(input$timeSeriesFilter,1,1))
     data <- timeSeriesData()
     data <- data[[calendarIntervalFirstLetter]]
+    if (any(is.null(data),
+            nrow(data) == 0)) {
+      return(NULL)
+    }
     data <- data[as.character(data$periodBegin) >= input$timeSeriesPeriodBeginFilter[1] &
            as.character(data$periodBegin) <= input$timeSeriesPeriodBeginFilter[2],]
-    
-    validate(need(!is.null(data) > 0, "No time series data"))
-    validate(need(nrow(data) > 0, "No time series data"))
-    
+    if (any(is.null(data),
+            nrow(data) == 0)) {
+      return(NULL)
+    }
     
     ## filter -- to be replaced by filter in shiny UI
     # if (!is.null(seriesType)) {
@@ -3811,7 +3815,11 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   shiny::observe({
-    data <- timeSeriesDataFiltered() %>% 
+    data <- timeSeriesDataFiltered() 
+    if (any(is.null(data), nrow(data) == 0)) {
+      return(NULL)
+    }
+    data <- data
       dplyr::pull(.data$seriesType) %>% unique()
     shinyWidgets::updatePickerInput(
       session = session,
@@ -3826,7 +3834,9 @@ shiny::shinyServer(function(input, output, session) {
     calendarIntervalFirstLetter <- tolower(substr(input$timeSeriesFilter,1,1))
     data <- timeSeriesData()
     data <- data[[calendarIntervalFirstLetter]]
-    if (is.null(data)) {return(NULL)}
+    if (any(is.null(data), nrow(data) == 0)) {
+      return(NULL)
+    }
     minValue <- as.integer(strsplit(min(as.character(data$periodBegin))," ")[[1]][1])
     maxValue <- as.integer(strsplit(max(as.character(data$periodBegin))," ")[[1]][1])
     
@@ -3840,13 +3850,21 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$timeSeriesTable <- DT::renderDataTable({
-    data <- timeSeriesDataFiltered() %>% 
+    data <- timeSeriesDataFiltered()
+    data <- timeSeriesDataFiltered() 
+    if (any(is.null(data), nrow(data) == 0)) {
+      return(NULL)
+    }
+    data <- data %>% 
       dplyr::filter(.data$seriesType %in% input$timeSeriesTypeFilter) %>% 
       dplyr::select(-.data$seriesType) %>% 
       dplyr::mutate(periodBegin = .data$periodBeginRaw) %>% 
       dplyr::relocate(.data$periodBegin) %>% 
       dplyr::arrange(.data$periodBegin) %>% 
-      dplyr::select(-.data$periodBeginRaw)
+      dplyr::select(-.data$periodBeginRaw) 
+    if (any(is.null(data), nrow(data) == 0)) {
+      return(NULL)
+    }
     
     options = list(
       pageLength = 100,

@@ -287,15 +287,32 @@ getResultsFromTimeSeries <- function(dataSource,
     return(NULL)
   }
   
-  # t1 <- data %>%
-  #   dplyr::filter(.data$seriesType == 'T1')
-  # t3 <- data %>%
-  #   dplyr::filter(.data$seriesType == 'T3')
-  #
-  # if (all(nrow(t1) > 0,
-  #         nrow(t3) > 0)) {
-  #   r1 <-
-  # }
+  t1 <- data %>%
+    dplyr::filter(.data$seriesType == 'T1') %>% 
+    dplyr::select(-.data$seriesType)
+  t3 <- data %>%
+    dplyr::filter(.data$seriesType == 'T3') %>% 
+    dplyr::select(-.data$seriesType)
+  
+  if (all(nrow(t1) > 0,
+          nrow(t3) > 0)) {
+    r1 <- t1 %>% 
+      dplyr::full_join(t3 %>% dplyr::select(-.data$cohortId), 
+                       by = c('databaseId', 'periodBegin', 'calendarInterval'),
+                       suffix = c("_1", 
+                                  "_2")) %>% 
+      dplyr::mutate(records = .data$records_1/.data$records_2,
+                    subjects = .data$subjects_1/.data$subjects_2,
+                    personDays = .data$personDays_1/.data$personDays_2,
+                    recordsStart = .data$recordsStart_1/.data$recordsStart_2,
+                    subjectsStart = .data$subjectsStart_1/.data$subjectsStart_2,
+                    recordsEnd = .data$recordsEnd_1/.data$recordsEnd_2,
+                    subjectsEnd = .data$subjectsEnd_1/.data$subjectsEnd_2) %>% 
+      dplyr::select(-dplyr::ends_with("1")) %>% 
+      dplyr::select(-dplyr::ends_with("2")) %>% 
+      dplyr::mutate(seriesType = 'R1')
+    data <- dplyr::bind_rows(data, r1)
+  }
   
   timeSeriesDescription <- dplyr::tibble(
     seriesType = c('T1', 'T2', 'T3', 'T4', 'T5', 'T6',
