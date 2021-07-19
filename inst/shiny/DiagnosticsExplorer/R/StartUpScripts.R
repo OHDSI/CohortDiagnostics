@@ -115,7 +115,8 @@ getConceptSetDetailsFromCohortDefinition <-
       expression <- cohortDefinitionExpression
     }
     
-    if (is.null(expression$ConceptSets)) {
+    if (any(is.null(expression$ConceptSets),
+            length(expression$ConceptSets) == 0)) {
       return(NULL)
     }
     

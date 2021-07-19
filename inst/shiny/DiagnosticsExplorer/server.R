@@ -20,7 +20,8 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   conceptSetIds <- shiny::reactive(x = {
-    return(conceptSets$conceptSetId[conceptSets$conceptSetName %in% input$conceptSetsToFilterCharacterization])
+    return(conceptSets$conceptSetId[conceptSets$conceptSetName %in% 
+                                      input$conceptSetsToFilterCharacterization])
   })
   
   timeIds <- reactiveVal(NULL)
@@ -50,7 +51,8 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   getDatabaseIdInCohortConceptSetSecond <- shiny::reactive({
-    return(database$databaseId[database$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchemaSecond])
+    return(database$databaseId[database$databaseIdWithVocabularyVersion == 
+                                 input$databaseOrVocabularySchemaSecond])
   })
   
   cohortSubset <- shiny::reactive({
@@ -895,14 +897,13 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(selectedCohortDefinitionRow())) {
       return(NULL)
     }
-    
     details <- list()
-    
     for (i in 1:nrow(selectedCohortDefinitionRow())) {
-      details[[i]] <-
+      conceptSetDetailsFromCohortDefinition <-
         getConceptSetDetailsFromCohortDefinition(
           cohortDefinitionExpression = RJSONIO::fromJSON(selectedCohortDefinitionRow()[i,]$json)
         )
+      details[[i]] <- conceptSetDetailsFromCohortDefinition
     }
     
     return(details)
@@ -910,15 +911,17 @@ shiny::shinyServer(function(input, output, session) {
   
   ##Concept set expression table one
   output$conceptsetExpressionTable <- DT::renderDataTable(expr = {
-    if (is.null(cohortDefinistionConceptSetExpression())) {
+    validate(need((any(is.null(cohortDefinistionConceptSetExpression()),
+                       length(cohortDefinistionConceptSetExpression()) == 0)),
+                  "Cohort definition does not appear to have concept set expression(s)."))
+    if (any(is.null(cohortDefinistionConceptSetExpression()),
+            length(cohortDefinistionConceptSetExpression()) == 0)) {
       return(NULL)
     }
-    
     if (!is.null(cohortDefinistionConceptSetExpression()[[1]]$conceptSetExpression) &&
         nrow(cohortDefinistionConceptSetExpression()[[1]]$conceptSetExpression) > 0) {
       data <- cohortDefinistionConceptSetExpression()[[1]]$conceptSetExpression %>%
         dplyr::select(.data$id, .data$name)
-      
     } else {
       return(NULL)
     }
@@ -3823,6 +3826,7 @@ shiny::shinyServer(function(input, output, session) {
     calendarIntervalFirstLetter <- tolower(substr(input$timeSeriesFilter,1,1))
     data <- timeSeriesData()
     data <- data[[calendarIntervalFirstLetter]]
+    if (is.null(data)) {return(NULL)}
     minValue <- as.integer(strsplit(min(as.character(data$periodBegin))," ")[[1]][1])
     maxValue <- as.integer(strsplit(max(as.character(data$periodBegin))," ")[[1]][1])
     
@@ -5278,6 +5282,9 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   shiny::observe({
+    if (is.null(getConceptSetNameForFilter())) {
+      return(NULL)
+    }
     subset <- getConceptSetNameForFilter()$name %>% 
       sort() %>% 
       unique()
