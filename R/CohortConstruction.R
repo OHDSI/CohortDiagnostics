@@ -55,39 +55,49 @@ checkCohortReference <-
   }
 
 makeBackwardsCompatible <- function(cohorts) {
-  # make sure there is a column called name
+  # make sure there is a column called 'name' - used for finding sql in package
   if (!"name" %in% colnames(cohorts)) {
-    if ('cohortId' %in% colnames(cohorts)) {
-      cohorts <- cohorts %>%
-        dplyr::mutate(name = as.character(.data$cohortId))
-    } else if ('id' %in% colnames(cohorts)) {
+    # id/cohortId takes precedence over webapiId/atlasId
+    if ('id' %in% colnames(cohorts)) {
       cohorts <- cohorts %>%
         dplyr::mutate(name = as.character(.data$id)) %>%
         dplyr::mutate(cohortId = .data$id)
+    } else if ('cohortId' %in% colnames(cohorts)) {
+      cohorts <- cohorts %>%
+        dplyr::mutate(name = as.character(.data$cohortId)) %>%
+        dplyr::mutate(cohortId = .data$cohortId)
     } else if ('webApiCohortId' %in% colnames(cohorts)) {
       cohorts <- cohorts %>%
         dplyr::mutate(name = as.character(.data$webApiCohortId)) %>%
         dplyr::mutate(cohortId = .data$webApiCohortId)
+    } else if ('atlasId' %in% colnames(cohorts)) {
+      cohorts <- cohorts %>%
+        dplyr::mutate(name = as.character(.data$atlasId)) %>%
+        dplyr::mutate(cohortId = .data$atlasId)
     }
   }
-  if (!"webApiCohortId" %in% colnames(cohorts) &&
-      "atlasId" %in% colnames(cohorts)) {
-    cohorts <- cohorts %>%
-      dplyr::mutate(webApiCohortId = .data$atlasId)
+  
+  # make sure there is a column called 'cohortName' - use to identify a cohort
+  if (!'cohortName' %in% colnames(cohorts)) {
+    if ('atlasName' %in% colnames(cohorts)) {
+      cohorts <- cohorts %>%
+        dplyr::mutate(cohortName = as.character(.data$atlasName))
+    } else if ('id' %in% colnames(cohorts)) {
+      cohorts <- cohorts %>%
+        dplyr::mutate(cohortName = as.character(.data$id))
+    } else if ('webApiCohortId' %in% colnames(cohorts)) {
+      cohorts <- cohorts %>%
+        dplyr::mutate(cohortName = as.character(.data$webApiCohortId))
+    } else if ('atlasId' %in% colnames(cohorts)) {
+      cohorts <- cohorts %>%
+        dplyr::mutate(cohortName = as.character(.data$atlasId))
+    }
   }
-  if (!"webApiCohortId" %in% colnames(cohorts) &&
-      !"atlasId" %in% colnames(cohorts) &&
-      "id" %in% colnames(cohorts)) {
-    cohorts <- cohorts %>%
-      dplyr::mutate(webApiCohortId = .data$id)
-  }
-  if (!"cohortName" %in% colnames(cohorts) &&
-      "atlasName" %in% colnames(cohorts)) {
-    cohorts <- cohorts %>%
-      dplyr::mutate(cohortName = .data$atlasName)
-  } else {
-    cohorts <- cohorts %>%
-      dplyr::mutate(cohortName = .data$name)
+  
+  # make sure there is a column called 'cohortId'
+  if (!'cohortId' %in% colnames(cohorts)) {
+  cohorts <- cohorts %>%
+    dplyr::mutate(cohortId = as.double(.data$name))
   }
   return(cohorts)
 }
