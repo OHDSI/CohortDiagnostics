@@ -3732,7 +3732,7 @@ shiny::shinyServer(function(input, output, session) {
       on.exit(progress$close())
       progress$set(message = paste0("Getting time series data."), value = 0)
       
-      data <- getResultsFromTimeSeries(
+      data <- getResultsFromFixedTimeSeries(
         dataSource = dataSource,
         cohortIds = cohortIds(),
         databaseIds = databaseIds()
