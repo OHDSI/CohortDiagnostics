@@ -20,20 +20,20 @@ addShortName <-
   }
 
 plotTimeSeries <- function(data, columnFilter) {
-  if(is.null(data)) {
+  if (is.null(data)) {
     return(NULL)
   }
   data$Total <- data[[columnFilter]]
   
   plot <- data %>%
-    fabletools::model(feasts::STL(Total ~ season(window = Inf))) %>% 
-    fabletools::components() %>% 
+    fabletools::model(feasts::STL(Total ~ season(window = Inf))) %>%
+    fabletools::components() %>%
     feasts::autoplot()
   
   data$tooltip <- c(
     paste0(
       columnFilter,
-      " = ", 
+      " = ",
       data$Total,
       "\nPeriod Begin = ",
       data$periodBegin,
@@ -47,12 +47,14 @@ plotTimeSeries <- function(data, columnFilter) {
   
   plot <- plot +
     ggplot2::theme_bw() +
-    ggplot2::theme(strip.text = ggplot2::element_text(size = 6),
-                   axis.text = ggplot2::element_text(size = 5),
-                   plot.title = ggplot2::element_text(size = 7),
-                   plot.subtitle =  ggplot2::element_text(size = 7),
-                   axis.title = ggplot2::element_text(size = 7)) +
-    ggplot2::labs(x = "Period Begin") + 
+    ggplot2::theme(
+      strip.text = ggplot2::element_text(size = 6),
+      axis.text = ggplot2::element_text(size = 5),
+      plot.title = ggplot2::element_text(size = 7),
+      plot.subtitle =  ggplot2::element_text(size = 7),
+      axis.title = ggplot2::element_text(size = 7)
+    ) +
+    ggplot2::labs(x = "Period Begin") +
     ggplot2::scale_y_continuous(labels = scales::comma) +
     ggplot2::theme(legend.position = "none")
   
@@ -60,7 +62,8 @@ plotTimeSeries <- function(data, columnFilter) {
   plot <- ggiraph::girafe(
     ggobj = plot,
     options = list(ggiraph::opts_sizing(width = .7),
-                   ggiraph::opts_zoom(max = 5)))
+                   ggiraph::opts_zoom(max = 5))
+  )
   return(plot)
 }
 
@@ -120,7 +123,8 @@ plotTimeDistribution <- function(data, shortNameRef = NULL) {
     )))
   
   plotData <- plotData %>%
-    dplyr::arrange(shortName = factor(.data$shortName, levels = sortShortName$shortName),.data$shortName)
+    dplyr::arrange(shortName = factor(.data$shortName, levels = sortShortName$shortName),
+                   .data$shortName)
   
   plotData$shortName <- factor(plotData$shortName,
                                levels = sortShortName$shortName)
@@ -231,7 +235,7 @@ plotIncidenceRate <- function(data,
   checkmate::reportAssertions(collection = errorMessage)
   
   plotData <- data %>%
-    dplyr::left_join(cohortCount, by = c('cohortId', 'databaseId')) %>% 
+    dplyr::left_join(cohortCount, by = c('cohortId', 'databaseId')) %>%
     addShortName(shortNameRef) %>%
     dplyr::mutate(incidenceRate = round(.data$incidenceRate, digits = 3)) %>%
     dplyr::mutate(
@@ -247,7 +251,7 @@ plotIncidenceRate <- function(data,
     dplyr::select(-dplyr::starts_with("strata"))
   
   if (stratifyByCalendarYear) {
-    plotData <- plotData %>% 
+    plotData <- plotData %>%
       dplyr::mutate(calendarYear = as.integer(.data$calendarYear))
   }
   
@@ -287,7 +291,8 @@ plotIncidenceRate <- function(data,
     )))
   
   plotData <- plotData %>%
-    dplyr::arrange(shortName = factor(.data$shortName, levels = sortShortName$shortName),.data$shortName)
+    dplyr::arrange(shortName = factor(.data$shortName, levels = sortShortName$shortName),
+                   .data$shortName)
   
   plotData$shortName <- factor(plotData$shortName,
                                levels = sortShortName$shortName)
@@ -301,7 +306,8 @@ plotIncidenceRate <- function(data,
       )))
     
     plotData <- plotData %>%
-      dplyr::arrange(ageGroup = factor(.data$ageGroup, levels = sortAgeGroup$ageGroup),.data$ageGroup)
+      dplyr::arrange(ageGroup = factor(.data$ageGroup, levels = sortAgeGroup$ageGroup),
+                     .data$ageGroup)
     
     plotData$ageGroup <- factor(plotData$ageGroup,
                                 levels = sortAgeGroup$ageGroup)
@@ -310,12 +316,13 @@ plotIncidenceRate <- function(data,
   plotData$tooltip <- c(
     paste0(
       plotData$shortName,
-      " ", 
+      " ",
       plotData$databaseId,
       "\nIncidence Rate = ",
-      scales::comma(plotData$incidenceRate, accuracy = 0.01), "/per 1k PY",
+      scales::comma(plotData$incidenceRate, accuracy = 0.01),
+      "/per 1k PY",
       "\nIncidence Proportion = ",
-      scales::percent(plotData$cohortCount/plotData$cohortSubjects, accuracy = 0.1),
+      scales::percent(plotData$cohortCount / plotData$cohortSubjects, accuracy = 0.1),
       "\nPerson years = ",
       scales::comma(plotData$personYears, accuracy = 0.01),
       "\nCohort count = ",
@@ -359,7 +366,7 @@ plotIncidenceRate <- function(data,
   
   if (stratifyByCalendarYear) {
     distinctCalenderYear <- plotData$calendarYear %>%
-      unique() %>% 
+      unique() %>%
       sort()
     if (all(!is.na(distinctCalenderYear))) {
       if (length(distinctCalenderYear) >= 8) {
@@ -437,7 +444,7 @@ plotIncidenceRate <- function(data,
     }
   } else {
     if (stratifyByAgeGroup) {
-      plot <- plot + ggplot2::facet_grid( ~ ageGroup)
+      plot <- plot + ggplot2::facet_grid(~ ageGroup)
     }
   }
   height <-
@@ -456,12 +463,12 @@ plotIncidenceRate <- function(data,
 
 
 plotCalendarIncidence <- function(data,
-                              cohortCount = cohortCount,
-                              shortNameRef = cohort,
-                              yscaleFixed = FALSE) {
+                                  cohortCount = cohortCount,
+                                  shortNameRef = cohort,
+                                  yscaleFixed = FALSE) {
   plotData <- data %>%
-    dplyr::left_join(cohortCount, by = c('cohortId', 'databaseId')) %>% 
-    addShortName(shortNameRef) 
+    dplyr::left_join(cohortCount, by = c('cohortId', 'databaseId')) %>%
+    addShortName(shortNameRef)
   aesthetics <- list(x = "calendarMonth", y = "countValue")
   plotType <- "line"
   sortShortName <- plotData %>%
@@ -472,7 +479,8 @@ plotCalendarIncidence <- function(data,
     )))
   
   plotData <- plotData %>%
-    dplyr::arrange(shortName = factor(.data$shortName, levels = sortShortName$shortName),.data$shortName)
+    dplyr::arrange(shortName = factor(.data$shortName, levels = sortShortName$shortName),
+                   .data$shortName)
   
   plotData$shortName <- factor(plotData$shortName,
                                levels = sortShortName$shortName)
@@ -480,7 +488,7 @@ plotCalendarIncidence <- function(data,
   plotData$tooltip <- c(
     paste0(
       plotData$shortName,
-      " ", 
+      " ",
       plotData$databaseId,
       "\nCount Value = ",
       plotData$countValue,
@@ -502,14 +510,20 @@ plotCalendarIncidence <- function(data,
   plot <- plot + ggplot2::theme(
     legend.position = "top",
     legend.title = ggplot2::element_blank(),
-    axis.text.x = ggplot2::element_text(size = 12, angle = 90, vjust = 0.5),
-    axis.text.y = ggplot2::element_text(size = 12)) +
+    axis.text.x = ggplot2::element_text(
+      size = 12,
+      angle = 90,
+      vjust = 0.5
+    ),
+    axis.text.y = ggplot2::element_text(size = 12)
+  ) +
     ggiraph::geom_line_interactive(ggplot2::aes(), size = 1, alpha = 0.6) +
     ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip),
                                     size = 2,
                                     alpha = 0.6)
   
-  if (!is.null(plotData$databaseId) && length(plotData$databaseId) > 1) {
+  if (!is.null(plotData$databaseId) &&
+      length(plotData$databaseId) > 1) {
     if (yscaleFixed) {
       scales <- "fixed"
     } else {
@@ -519,8 +533,14 @@ plotCalendarIncidence <- function(data,
     # shortName <- unique(plotData$shortName)
     # periodType <- unique(plotData$periodType)
     # plot + ggplot2::facet_wrap(databaseId + shortName ~ periodType,scales = scales)
-    plot <- plot + ggplot2::facet_grid(databaseId + shortName ~  periodType,scales = scales,space = scales) +
-      ggplot2::theme(strip.text.x = ggplot2::element_text(size = 10),strip.text.y = ggplot2::element_text(size = 10))
+    plot <-
+      plot + ggplot2::facet_grid(databaseId + shortName ~  periodType,
+                                 scales = scales,
+                                 space = scales) +
+      ggplot2::theme(
+        strip.text.x = ggplot2::element_text(size = 10),
+        strip.text.y = ggplot2::element_text(size = 10)
+      )
   }
   height <-
     1.5 + 2 * nrow(dplyr::distinct(plotData, .data$databaseId, .data$shortName))
@@ -575,7 +595,7 @@ plotCohortComparisonStandardizedDifference <- function(balance,
       cohortIdColumn = "cohortId2",
       shortNameColumn = "comparatorCohort"
     )
-
+  
   # ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip), size = 3, alpha = 0.6)
   balance$tooltip <-
     c(
@@ -606,14 +626,16 @@ plotCohortComparisonStandardizedDifference <- function(balance,
   
   # Make sure colors are consistent, no matter which domains are included:
   colors <-
-    c("#1B9E77",
+    c(
+      "#1B9E77",
       "#D95F02",
       "#7570B3",
       "#E7298A",
       "#66A61E",
       "#E6AB02",
       "#A6761D",
-      "#444444")
+      "#444444"
+    )
   colors <- colors[c(domains, "other") %in% unique(balance$domain)]
   
   balance$domain <-
@@ -622,11 +644,11 @@ plotCohortComparisonStandardizedDifference <- function(balance,
   # targetLabel <- paste(strwrap(targetLabel, width = 50), collapse = "\n")
   # comparatorLabel <- paste(strwrap(comparatorLabel, width = 50), collapse = "\n")
   
-  xCohort <- balance %>%  
-    dplyr::distinct(balance$targetCohort) %>% 
+  xCohort <- balance %>%
+    dplyr::distinct(balance$targetCohort) %>%
     dplyr::pull()
-  yCohort <- balance %>%  
-    dplyr::distinct(balance$comparatorCohort) %>% 
+  yCohort <- balance %>%
+    dplyr::distinct(balance$comparatorCohort) %>%
     dplyr::pull()
   
   plot <-
@@ -740,14 +762,16 @@ plotTemporalCompareStandardizedDifference <- function(balance,
   
   # Make sure colors are consistent, no matter which domains are included:
   colors <-
-    c("#1B9E77",
+    c(
+      "#1B9E77",
       "#D95F02",
       "#7570B3",
       "#E7298A",
       "#66A61E",
       "#E6AB02",
       "#A6761D",
-      "#444444")
+      "#444444"
+    )
   colors <- colors[c(domains, "other") %in% unique(balance$domain)]
   
   balance$domain <-
@@ -756,20 +780,20 @@ plotTemporalCompareStandardizedDifference <- function(balance,
   # targetLabel <- paste(strwrap(targetLabel, width = 50), collapse = "\n")
   # comparatorLabel <- paste(strwrap(comparatorLabel, width = 50), collapse = "\n")
   
-  xCohort <- balance %>%  
-    dplyr::distinct(balance$targetCohort) %>% 
+  xCohort <- balance %>%
+    dplyr::distinct(balance$targetCohort) %>%
     dplyr::pull()
-  yCohort <- balance %>%  
-    dplyr::distinct(balance$comparatorCohort) %>% 
+  yCohort <- balance %>%
+    dplyr::distinct(balance$comparatorCohort) %>%
     dplyr::pull()
   
-  # balance <- balance %>% 
+  # balance <- balance %>%
   #   dplyr::arrange(.data$startDay, .data$endDay)
   
-  # facetLabel <- balance %>% 
-  #   dplyr::select(.data$startDay, .data$choices) %>% 
-  #   dplyr::distinct() %>% 
-  #   dplyr::arrange(.data$startDay) %>% 
+  # facetLabel <- balance %>%
+  #   dplyr::select(.data$startDay, .data$choices) %>%
+  #   dplyr::distinct() %>%
+  #   dplyr::arrange(.data$startDay) %>%
   #   dplyr::pull(.data$choices)
   
   plot <-
@@ -790,25 +814,27 @@ plotTemporalCompareStandardizedDifference <- function(balance,
                          linetype = "dashed") +
     ggplot2::geom_hline(yintercept = 0) +
     ggplot2::geom_vline(xintercept = 0) +
-    ggplot2::xlab(paste("Covariate Mean in ",xCohort)) +
-    ggplot2::ylab(paste("Covariate Mean in ",yCohort)) +
+    ggplot2::xlab(paste("Covariate Mean in ", xCohort)) +
+    ggplot2::ylab(paste("Covariate Mean in ", yCohort)) +
     # ggplot2::scale_x_continuous("Mean") +
     # ggplot2::scale_y_continuous("Mean") +
     ggplot2::scale_color_manual("Domain", values = colors) +
     ggplot2::facet_grid(cols = ggplot2::vars(choices)) + # need to facet by 'startDay' that way it is arranged in numeric order.
     # but labels should be based on choices
     # ggplot2::facet_wrap(~choices) +
-    ggplot2::theme(strip.background = ggplot2::element_blank(),
-                   panel.spacing = ggplot2::unit(2, "lines")) +
+    ggplot2::theme(
+      strip.background = ggplot2::element_blank(),
+      panel.spacing = ggplot2::unit(2, "lines")
+    ) +
     ggplot2::xlim(xLimitMin, xLimitMax) +
-    ggplot2::ylim(yLimitMin, yLimitMax) 
+    ggplot2::ylim(yLimitMin, yLimitMax)
   
   numberOfTimeIds <- balance$timeId %>% unique() %>% length()
   
   plot <- ggiraph::girafe(
     ggobj = plot,
     options = list(ggiraph::opts_sizing(rescale = TRUE)),
-    width_svg = max(8, 3*numberOfTimeIds),
+    width_svg = max(8, 3 * numberOfTimeIds),
     height_svg = 3
   )
   return(plot)
@@ -872,7 +898,7 @@ plotCohortOverlap <- function(data,
     dplyr::mutate(
       tOnlyString = paste0(
         .data$signTOnlySubjects,
-        scales::comma(.data$absTOnlySubjects,accuracy = 1),
+        scales::comma(.data$absTOnlySubjects, accuracy = 1),
         " (",
         .data$signTOnlySubjects,
         scales::percent(.data$absTOnlySubjects /
@@ -882,7 +908,7 @@ plotCohortOverlap <- function(data,
       ),
       cOnlyString = paste0(
         .data$signCOnlySubjects,
-        scales::comma(.data$absCOnlySubjects,accuracy = 1),
+        scales::comma(.data$absCOnlySubjects, accuracy = 1),
         " (",
         .data$signCOnlySubjects,
         scales::percent(.data$absCOnlySubjects /
@@ -892,7 +918,7 @@ plotCohortOverlap <- function(data,
       ),
       bothString = paste0(
         .data$signBothSubjects,
-        scales::comma(.data$absBothSubjects,accuracy = 1),
+        scales::comma(.data$absBothSubjects, accuracy = 1),
         " (",
         .data$signBothSubjects,
         scales::percent(.data$absBothSubjects /
@@ -944,8 +970,10 @@ plotCohortOverlap <- function(data,
     )
   
   plotData$subjectsIn <-
-    factor(plotData$subjectsIn,
-           levels = c("Right cohort only", "Both cohorts", "Left cohort only"))
+    factor(
+      plotData$subjectsIn,
+      levels = c("Right cohort only", "Both cohorts", "Left cohort only")
+    )
   
   if (yAxis == "Percentages") {
     position = "fill"
@@ -968,14 +996,21 @@ plotCohortOverlap <- function(data,
     )))
   
   plotData <- plotData %>%
-    dplyr::arrange(targetShortName = factor(.data$targetShortName, levels = sortTargetShortName$targetShortName),.data$targetShortName) %>% 
-    dplyr::arrange(comparatorShortName = factor(.data$comparatorShortName, levels = sortComparatorShortName$comparatorShortName),.data$comparatorShortName)
+    dplyr::arrange(
+      targetShortName = factor(.data$targetShortName, levels = sortTargetShortName$targetShortName),
+      .data$targetShortName
+    ) %>%
+    dplyr::arrange(
+      comparatorShortName = factor(.data$comparatorShortName, levels = sortComparatorShortName$comparatorShortName),
+      .data$comparatorShortName
+    )
   
   plotData$targetShortName <- factor(plotData$targetShortName,
-                               levels = sortTargetShortName$targetShortName)
+                                     levels = sortTargetShortName$targetShortName)
   
-  plotData$comparatorShortName <- factor(plotData$comparatorShortName,
-                                     levels = sortComparatorShortName$comparatorShortName)
+  plotData$comparatorShortName <-
+    factor(plotData$comparatorShortName,
+           levels = sortComparatorShortName$comparatorShortName)
   
   plot <- ggplot2::ggplot(data = plotData) +
     ggplot2::aes(
@@ -1002,10 +1037,14 @@ plotCohortOverlap <- function(data,
   if (yAxis == "Percentages") {
     plot <- plot + ggplot2::scale_x_continuous(labels = scales::percent)
   } else {
-    plot <- plot + ggplot2::scale_x_continuous(labels = scales::comma, n.breaks = 3)
+    plot <-
+      plot + ggplot2::scale_x_continuous(labels = scales::comma, n.breaks = 3)
   }
   width <- length(unique(plotData$databaseId))
-  height <- nrow(plotData %>% dplyr::select(.data$targetShortName, .data$comparatorShortName) %>% dplyr::distinct())
+  height <-
+    nrow(
+      plotData %>% dplyr::select(.data$targetShortName, .data$comparatorShortName) %>% dplyr::distinct()
+    )
   plot <- ggiraph::girafe(
     ggobj = plot,
     options = list(ggiraph::opts_sizing(rescale = TRUE)),
@@ -1023,13 +1062,13 @@ plotTsStlDecomposition <- function(data,
     return(NULL)
   }
   data[["value"]] <- abs(data[[field]])
-  ts <- data %>% 
-    dplyr::select("value") %>% 
+  ts <- data %>%
+    dplyr::select("value") %>%
     tsibble::fill_gaps(value = 0)
-  tsModel <- ts %>% 
+  tsModel <- ts %>%
     fabletools::model(feasts::STL(value))
   
-  plot <- fabletools::components(tsModel) %>% 
+  plot <- fabletools::components(tsModel) %>%
     feasts::autoplot()
   
   return(plot)

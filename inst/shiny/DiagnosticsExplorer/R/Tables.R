@@ -11,12 +11,28 @@ prepareTable1 <- function(covariates,
       )
     ))
   
-  covariates <- covariates %>% 
-    dplyr::mutate(covariateName = stringr::str_replace(string = .data$covariateName, 
-                                                       pattern = "black or african american", 
-                                                       replacement = "Black or African American")) %>% 
-    dplyr::mutate(covariateName = stringr::str_replace(string = .data$covariateName, pattern = "white", replacement = "White")) %>% 
-    dplyr::mutate(covariateName = stringr::str_replace(string = .data$covariateName, pattern = "asian", replacement = "Asian"))
+  covariates <- covariates %>%
+    dplyr::mutate(
+      covariateName = stringr::str_replace(
+        string = .data$covariateName,
+        pattern = "black or african american",
+        replacement = "Black or African American"
+      )
+    ) %>%
+    dplyr::mutate(
+      covariateName = stringr::str_replace(
+        string = .data$covariateName,
+        pattern = "white",
+        replacement = "White"
+      )
+    ) %>%
+    dplyr::mutate(
+      covariateName = stringr::str_replace(
+        string = .data$covariateName,
+        pattern = "asian",
+        replacement = "Asian"
+      )
+    )
   
   space <- "&nbsp;"
   specifications <- readr::read_csv(
@@ -36,7 +52,7 @@ prepareTable1 <- function(covariates,
   }
   
   for (i in 1:nrow(specifications)) {
-    specification <- specifications[i, ]
+    specification <- specifications[i,]
     if (specification %>% dplyr::pull(.data$covariateIds) == "") {
       covariatesSubset <- covariates %>%
         dplyr::filter(.data$analysisId %in% specification$analysisId) %>%
@@ -132,7 +148,7 @@ prepareTable1Comp <- function(balance,
   }
   
   for (i in 1:nrow(specifications)) {
-    specification <- specifications[i, ]
+    specification <- specifications[i,]
     if (specification %>% dplyr::pull(.data$covariateIds) == "") {
       balanceSubset <- balance %>%
         dplyr::filter(.data$analysisId %in% specification$analysisId) %>%
@@ -193,16 +209,32 @@ prepareTable1Comp <- function(balance,
                      dplyr::desc(.data$header),
                      .data$sortOrder) %>%
       dplyr::mutate(sortOrder = dplyr::row_number()) %>%
-      dplyr::select(-.data$header, -.data$position) %>%
+      dplyr::select(-.data$header,-.data$position) %>%
       dplyr::distinct()
   }
   
-  resultsTable <- resultsTable %>% 
-    dplyr::mutate(characteristic = stringr::str_replace(string = .data$characteristic, 
-                                                        pattern = "black or african american", 
-                                                        replacement = "Black or African American")) %>% 
-    dplyr::mutate(characteristic = stringr::str_replace(string = .data$characteristic, pattern = "white", replacement = "White")) %>% 
-    dplyr::mutate(characteristic = stringr::str_replace(string = .data$characteristic, pattern = "asian", replacement = "Asian"))
+  resultsTable <- resultsTable %>%
+    dplyr::mutate(
+      characteristic = stringr::str_replace(
+        string = .data$characteristic,
+        pattern = "black or african american",
+        replacement = "Black or African American"
+      )
+    ) %>%
+    dplyr::mutate(
+      characteristic = stringr::str_replace(
+        string = .data$characteristic,
+        pattern = "white",
+        replacement = "White"
+      )
+    ) %>%
+    dplyr::mutate(
+      characteristic = stringr::str_replace(
+        string = .data$characteristic,
+        pattern = "asian",
+        replacement = "Asian"
+      )
+    )
   
   return(resultsTable)
 }
@@ -266,4 +298,3 @@ compareTemporalCohortCharacteristics <-
       dplyr::arrange(-abs(.data$stdDiff))
     return(m)
   }
-

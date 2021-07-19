@@ -100,19 +100,29 @@ getCohortOverlapResult <- function(dataSource = .GlobalEnv,
     if (nrow(get(table, envir = dataSource)) == 0) {
       return(NULL)
     }
-    data <- get(table, envir = dataSource) %>% 
-      dplyr::filter(.data$targetCohortId %in% !!targetCohortIds &
-                      .data$comparatorCohortId %in% !!comparatorCohortIds &
-                      .data$databaseId %in% !!databaseIds) %>% 
-      dplyr::inner_join(dplyr::select(get("cohort", envir = dataSource), 
-                                      targetCohortId = .data$cohortId,
-                                      targetCohortName = .data$cohortName,
-                                      cohortName = .data$cohortName),
-                        by = "targetCohortId") %>% 
-      dplyr::inner_join(dplyr::select(get("cohort", envir = dataSource), 
-                                      comparatorCohortId = .data$cohortId,
-                                     comparatorCohortName = .data$cohortName),
-                        by = "comparatorCohortId")
+    data <- get(table, envir = dataSource) %>%
+      dplyr::filter(
+        .data$targetCohortId %in% !!targetCohortIds &
+          .data$comparatorCohortId %in% !!comparatorCohortIds &
+          .data$databaseId %in% !!databaseIds
+      ) %>%
+      dplyr::inner_join(
+        dplyr::select(
+          get("cohort", envir = dataSource),
+          targetCohortId = .data$cohortId,
+          targetCohortName = .data$cohortName,
+          cohortName = .data$cohortName
+        ),
+        by = "targetCohortId"
+      ) %>%
+      dplyr::inner_join(
+        dplyr::select(
+          get("cohort", envir = dataSource),
+          comparatorCohortId = .data$cohortId,
+          comparatorCohortName = .data$cohortName
+        ),
+        by = "comparatorCohortId"
+      )
   } else {
     sql <-   "SELECT cohort_overlap.*,
                 target_cohort.cohort_name AS target_cohort_name,
@@ -125,13 +135,16 @@ getCohortOverlapResult <- function(dataSource = .GlobalEnv,
               WHERE target_cohort_id in (@targetCohortId)
               AND comparator_cohort_id in (@comparatorCohortId)
             	AND database_id in (@databaseId);"
-    data <- renderTranslateQuerySql(connection = dataSource$connection,
-                                    sql = sql,
-                                    results_database_schema = dataSource$resultsDatabaseSchema,
-                                    targetCohortId = targetCohortIds,
-                                    comparatorCohortId = comparatorCohortIds,
-                                    databaseId = quoteLiterals(databaseIds), 
-                                    snakeCaseToCamelCase = TRUE) %>% 
+    data <-
+      renderTranslateQuerySql(
+        connection = dataSource$connection,
+        sql = sql,
+        results_database_schema = dataSource$resultsDatabaseSchema,
+        targetCohortId = targetCohortIds,
+        comparatorCohortId = comparatorCohortIds,
+        databaseId = quoteLiterals(databaseIds),
+        snakeCaseToCamelCase = TRUE
+      ) %>%
       tidyr::tibble()
   }
   if (nrow(data) == 0) {
@@ -192,8 +205,8 @@ getConceptSetDetailsFromCohortDefinition <-
       i <- i + 1
       conceptSetExpressionDetails[[i]] <-
         getConceptSetDataFrameFromConceptSetExpression(conceptSetExpression =
-                                                         conceptSetExpression[i, ]$expression$items) %>%
-        dplyr::mutate(id = conceptSetExpression[i,]$id) %>%
+                                                         conceptSetExpression[i,]$expression$items) %>%
+        dplyr::mutate(id = conceptSetExpression[i, ]$id) %>%
         dplyr::relocate(.data$id) %>%
         dplyr::arrange(.data$id)
     }
@@ -256,7 +269,7 @@ pivotOrphanConceptResult <- function(data,
                     .data$conceptName,
                     .data$vocabularyId,
                     .data$conceptCode)
-  table <- table[order(-table[, 5]), ]
+  table <- table[order(-table[, 5]),]
   attr(x = table, which = "databaseIds") <- databaseIds
   attr(x = table, which = "maxCount") <- maxCount
   return(table)
