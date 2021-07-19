@@ -1024,11 +1024,13 @@ getFeatureExtractionTemporalCharacterization <-
                                            cohortIds = cohortIds,
                                            databaseIds = databaseIds)
     # temporary till https://github.com/OHDSI/FeatureExtraction/issues/127
-    # temporalCovariateValueDist <- getResultsFromTemporalValueDist(dataSource = dataSource,
-    #                                                               cohortIds = cohortIds,
-    #                                                               databaseIds = databaseIds)
-    
-    temporalCovariateValueDist <- NULL
+    temporalCovariateValueDist <- getResultsFromTemporalCovariateValueDist(dataSource = dataSource,
+                                                                           cohortIds = cohortIds,
+                                                                           databaseIds = databaseIds)
+    if (nrow(temporalCovariateValueDist) > 0) {
+      temporalCovariateValueDist <- temporalCovariateValueDist %>% 
+        dplyr::filter(!is.na(.data$timeId))
+    }
     
     return(
       list(
