@@ -218,7 +218,6 @@ shiny::shinyServer(function(input, output, session) {
   
   cohortDetailsText <- shiny::reactive(x = {
     data <- selectedCohortDefinitionRow()
-    
     if (nrow(data) == 0) {
       return(NULL)
     } else {
@@ -249,14 +248,11 @@ shiny::shinyServer(function(input, output, session) {
   
   output$cohortDetailsText <- shiny::renderUI({
     row <- cohortDetailsText()[[1]]
-    if (!'logicDescription' %in% colnames(row)) {
-      row$logicDescription <- row$cohortName
-    }
     if (is.null(row) || length(row) == 0) {
       return(NULL)
-    } else {
-      return(row)
     }
+    return(row)
+  
   })
   
   output$cohortCountsTableInCohortDefinition <- DT::renderDataTable(expr = {
@@ -1602,14 +1598,10 @@ shiny::shinyServer(function(input, output, session) {
   # Concept set expression 2 ----
   output$cohortDetailsTextSecond <- shiny::renderUI({
     row <- cohortDetailsText()[[2]]
-    if (!'logicDescription' %in% colnames(row)) {
-      row$logicDescription <- row$cohortName
-    }
     if (is.null(row) || length(row) == 0) {
       return(NULL)
-    } else {
-      return(row)
     }
+    return(row)
   })
   
   output$cohortCountsTableInCohortDefinitionSecond <- DT::renderDataTable(expr = {
