@@ -52,9 +52,7 @@ test_that("Check WebApi mode", {
                     .data$atlasName,
                     .data$cohortId,
                     .data$name)
-    
-    cohortSetReferenceBackwardCompatibilityTest <- dplyr::bind_rows(cohortsToCreate) %>% 
-      dplyr::select(.data$id)
+    cohortSetReference <- CohortDiagnostics:::makeBackwardsCompatible(cohortSetReference)
     
     testthat::expect_null(
       CohortDiagnostics::instantiateCohortSet(
@@ -65,38 +63,6 @@ test_that("Check WebApi mode", {
         cohortDatabaseSchema = cohortDatabaseSchema,
         cohortTable = cohortTable,
         cohortSetReference = cohortSetReference,
-        generateInclusionStats = TRUE,
-        createCohortTable = TRUE,
-        baseUrl = baseUrl,
-        inclusionStatisticsFolder = file.path(folder, "incStats")
-      )
-    )
-    
-    testthat::expect_null(
-      CohortDiagnostics::instantiateCohortSet(
-        connectionDetails = connectionDetails,
-        cdmDatabaseSchema = cdmDatabaseSchema,
-        vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-        tempEmulationSchema = tempEmulationSchema,
-        cohortDatabaseSchema = cohortDatabaseSchema,
-        cohortTable = cohortTable,
-        cohortSetReference = cohortSetReferenceBackwardCompatibilityTest,
-        generateInclusionStats = TRUE,
-        createCohortTable = TRUE,
-        baseUrl = baseUrl,
-        inclusionStatisticsFolder = file.path(folder, "incStats")
-      )
-    )
-    
-    testthat::expect_null(
-      CohortDiagnostics::instantiateCohortSet(
-        connectionDetails = connectionDetails,
-        cdmDatabaseSchema = cdmDatabaseSchema,
-        vocabularyDatabaseSchema = vocabularyDatabaseSchema,
-        tempEmulationSchema = tempEmulationSchema,
-        cohortDatabaseSchema = cohortDatabaseSchema,
-        cohortTable = cohortTable,
-        cohortSetReference = cohortSetReferenceBackwardCompatibilityTest$id,
         generateInclusionStats = TRUE,
         createCohortTable = TRUE,
         baseUrl = baseUrl,
