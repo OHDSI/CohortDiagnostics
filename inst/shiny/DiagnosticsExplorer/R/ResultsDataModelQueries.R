@@ -1027,7 +1027,8 @@ getFeatureExtractionTemporalCharacterization <-
     temporalCovariateValueDist <- getResultsFromTemporalCovariateValueDist(dataSource = dataSource,
                                                                            cohortIds = cohortIds,
                                                                            databaseIds = databaseIds)
-    if (nrow(temporalCovariateValueDist) > 0) {
+    if (all(!is.null(temporalCovariateValueDist), 
+            nrow(temporalCovariateValueDist) > 0)) {
       temporalCovariateValueDist <- temporalCovariateValueDist %>% 
         dplyr::filter(!is.na(.data$timeId))
     }

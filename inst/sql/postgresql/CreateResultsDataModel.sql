@@ -31,7 +31,7 @@ DROP TABLE IF EXISTS resolved_concepts;
 DROP TABLE IF EXISTS temporal_analysis_ref;
 DROP TABLE IF EXISTS temporal_covariate_ref;
 DROP TABLE IF EXISTS temporal_covariate_value;
-DROP TABLE IF EXISTS temporal_covariate_dist;
+DROP TABLE IF EXISTS temporal_covariate_value_dist;
 DROP TABLE IF EXISTS temporal_time_ref;
 DROP TABLE IF EXISTS time_distribution;
 DROP TABLE IF EXISTS visit_context;
@@ -412,9 +412,9 @@ CREATE TABLE temporal_covariate_value (
 			PRIMARY KEY(cohort_id, time_id, covariate_id, database_id)
 );
 
---Table temporal_covariate_dist
+--Table temporal_covariate_value_dist
 
-CREATE TABLE temporal_covariate_dist (
+CREATE TABLE temporal_covariate_value_dist (
 			cohort_id BIGINT NOT NULL,
 			time_id INT NOT NULL,
 			covariate_id BIGINT NOT NULL,
