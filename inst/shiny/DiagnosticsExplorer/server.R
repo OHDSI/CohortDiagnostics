@@ -5886,10 +5886,7 @@ shiny::shinyServer(function(input, output, session) {
             nrow(compareCharacterizationTemporalCharacterizationData()$analysisRef) == 0)) {
       return(NULL)
     }
-    data <- characterizationData()
-    if (any(is.null(data), nrow(data) == 0)) {
-      return(NULL)
-    }
+
     progress <- shiny::Progress$new()
     on.exit(progress$close())
     progress$set(message = paste0("Computing compare characterization."), value = 0)
@@ -6016,7 +6013,8 @@ shiny::shinyServer(function(input, output, session) {
                   paste0("Please select atleast one datasource.")
     ))
     validate(need(!is.null(compareCharacterizationTemporalCharacterizationData()$covariateValue) &&
-                    nrow(compareCharacterizationTemporalCharacterizationData()$covariateValue) > 0, "No Characterization data"))
+                    nrow(compareCharacterizationTemporalCharacterizationData()$covariateValue) > 0, 
+                  "No Characterization data"))
     
     
     balance <- computeBalance()
