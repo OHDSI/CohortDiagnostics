@@ -189,6 +189,8 @@ runIncidenceRateDiagnostics <- function(connectionDetails = NULL,
     irYearGender,
     irYearAgeGender
   )
+  result <- result %>% 
+    dplyr::filter(.data$cohortCount > 0 | .data$personYears > 0)
   result$incidenceRate <-
     1000 * result$cohortCount / result$personYears
   result$incidenceRate[is.nan(result$incidenceRate)] <- 0

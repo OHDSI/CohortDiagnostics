@@ -183,6 +183,7 @@ preMergeDiagnosticsFiles <-
             readr::read_csv(
               file.path(zipFiles$unzipFolder[i], csvFileName),
               col_types = readr::cols(),
+              na = character(),
               guess_max = min(1e6)
             )
           if (nrow(newData) > 0) {
@@ -210,7 +211,6 @@ preMergeDiagnosticsFiles <-
               tableName = tableName,
               specifications = specifications
             )
-            
           }
         }
       }

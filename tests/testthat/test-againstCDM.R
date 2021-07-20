@@ -16,9 +16,9 @@ if (runDatabaseTests) {
     }
   )
   filesToDelete <-
-    list.files(file.path(folder, "incremental"),
+    list.files(file.path(folder),
                full.names = TRUE,
-               recursive = FALSE)
+               recursive = TRUE)
   invisible(lapply(filesToDelete, unlink, force = TRUE))
 }
 
@@ -838,17 +838,16 @@ test_that("Data Retrieval", {
   testthat::expect_true(nrow(resolvedMappedConceptSetFromFile2$resolved) >= 0)
   testthat::expect_true(nrow(resolvedMappedConceptSetFromFile2$mapped) >= 0)
   #### Neg ----
-  #!!!!!!!! bug doesnt match
-  # testthat::expect_null(
-  #   conceptIdDetails <-
-  #     suppressWarnings(
-  #       CohortDiagnostics::getResultsResolveMappedConceptSet(
-  #         dataSource = dataSourcePreMergedFile,
-  #         cohortIds = -1111,
-  #         databaseIds = 'cdmV5'
-  #       )
-  #     )
-  # )
+  testthat::expect_null(
+    conceptIdDetails <-
+      suppressWarnings(
+        CohortDiagnostics::getResultsResolveMappedConceptSet(
+          dataSource = dataSourcePreMergedFile,
+          cohortIds = -1111,
+          databaseIds = 'cdmV5'
+        )
+      )
+  )
   
   ## Calendar incidence ----
   # Table does not exist in results, is not generated in Eunomia?
@@ -1038,7 +1037,7 @@ test_that("Data Retrieval", {
     nrow(incidenceRateFromDb) >= 0
   )) # no data in eunomia
   #!!!!!!!!!!!!!!! BUG
-  # testthat::expect_true(dplyr::all_equal(incidenceRateFromDb, incidenceRateFromFile))
+  testthat::expect_true(dplyr::all_equal(incidenceRateFromDb, incidenceRateFromFile))
   incidenceRateFromDb2 <-
     CohortDiagnostics::getResultsFromIncidenceRate(dataSource = dataSourceDatabase,
                                                    databaseIds = 'cdmV5')
