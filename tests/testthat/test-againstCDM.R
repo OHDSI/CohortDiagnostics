@@ -681,7 +681,7 @@ test_that("Negative tests on individual functions", {
       cdmDatabaseSchema = cdmDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
       vocabularyDatabaseSchema = cohortDatabaseSchema,
-      cohortIds = -1111
+      cohortId = -1111
     )
   ))
 })
