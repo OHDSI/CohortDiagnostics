@@ -573,7 +573,7 @@ getResultsFromConcept <- function(dataSource = .GlobalEnv,
   } else {
     sql <- "SELECT *
             FROM @vocabulary_database_schema.concept
-            {@concept_ids == ''} ? { WHERE concept_id IN (@concept_ids)};"
+            {@concept_ids != ''} ? { WHERE concept_id IN (@concept_ids)};"
     if (!is.null(conceptIds)) {
       sql <-
         SqlRender::render(sql = sql,
