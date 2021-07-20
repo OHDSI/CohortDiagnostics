@@ -33,9 +33,12 @@ testthat::test_that("Test file encoding - using latin", {
 })
 
 testthat::test_that("Check mismatch between SQL and inclusion rules", {
+  fileJson <- system.file("cohorts\\17492.json", package =
+                        'CohortDiagnostics')
+  
   cohortJson <-
-    SqlRender::readSql(sourceFile = system.file("cohorts\\17492.json", package =
-                                                  'CohortDiagnostics'))
+    readChar(con = fileJson, nchars = file.info(fileJson)$size)
+  
   expression <-
     CirceR::cohortExpressionFromJson(expressionJson = cohortJson)
   
