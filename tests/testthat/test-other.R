@@ -1,4 +1,5 @@
 
+
 testthat::test_that("Check if package is installed", {
   testthat::expect_true(CohortDiagnostics:::is_installed('dplyr'))
   testthat::expect_false(CohortDiagnostics:::is_installed('rqrwqrewrqwRANDOMSTRINGdfdsfdsfds')) # just a random string to represent package does not exst
@@ -50,14 +51,20 @@ testthat::test_that("Check mismatch between SQL and inclusion rules", {
     ) %>% SqlRender::render()
   
   # expect warning
-  testthat::expect_warning(CohortDiagnostics:::.warnMismatchSqlInclusionStats(sql = sqlWithoutInclusionRule, generateInclusionStats = TRUE))
+  testthat::expect_warning(
+    CohortDiagnostics:::.warnMismatchSqlInclusionStats(sql = sqlWithoutInclusionRule, generateInclusionStats = TRUE)
+  )
   # no warning
-  testthat::expect_null(CohortDiagnostics:::.warnMismatchSqlInclusionStats(sql = sqlWithoutInclusionRule, generateInclusionStats = FALSE))
+  testthat::expect_null(
+    CohortDiagnostics:::.warnMismatchSqlInclusionStats(sql = sqlWithoutInclusionRule, generateInclusionStats = FALSE)
+  )
   
   # no warning
   CohortDiagnostics:::.warnMismatchSqlInclusionStats(sql = sqlWithInclusionRule, generateInclusionStats = TRUE)
   # expect warning
-  testthat::expect_null(testthat::expect_warning(CohortDiagnostics:::.warnMismatchSqlInclusionStats(sql = sqlWithInclusionRule, 
-                                                                                                    generateInclusionStats = FALSE)))
+  testthat::expect_warning(
+    CohortDiagnostics:::.warnMismatchSqlInclusionStats(sql = sqlWithInclusionRule,
+                                                       generateInclusionStats = FALSE)
+  )
   
 })
