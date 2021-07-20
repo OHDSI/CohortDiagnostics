@@ -216,6 +216,9 @@ preMergeDiagnosticsFiles <-
       }
       if (nrow(data) == 0) {
         ParallelLogger::logInfo("- No data found for table ", tableName)
+        assign(SqlRender::snakeCaseToCamelCase(tableName),
+               NULL,
+               envir = env)
       } else {
         colnames(data) <- SqlRender::snakeCaseToCamelCase(colnames(data))
         assign(SqlRender::snakeCaseToCamelCase(tableName),

@@ -836,7 +836,7 @@ test_that("Data Retrieval", {
   resolvedMappedConceptSetFromFile2 <-
     CohortDiagnostics::getResultsResolveMappedConceptSet(dataSource = dataSourcePreMergedFile)
   testthat::expect_true(nrow(resolvedMappedConceptSetFromFile2$resolved) >= 0)
-  testthat::expect_true(nrow(resolvedMappedConceptSetFromFile2$mapped) >= 0)
+  testthat::expect_null(resolvedMappedConceptSetFromFile2$mapped)
   #### Neg ----
   testthat::expect_null(
     conceptIdDetails <-
@@ -1036,8 +1036,8 @@ test_that("Data Retrieval", {
     is.null(incidenceRateFromDb),
     nrow(incidenceRateFromDb) >= 0
   )) # no data in eunomia
-  #!!!!!!!!!!!!!!! BUG
-  testthat::expect_true(dplyr::all_equal(incidenceRateFromDb, incidenceRateFromFile))
+  # so expecting NULL
+  testthat::expect_true(is.null(incidenceRateFromDb) && is.null(incidenceRateFromFile))
   incidenceRateFromDb2 <-
     CohortDiagnostics::getResultsFromIncidenceRate(dataSource = dataSourceDatabase,
                                                    databaseIds = 'cdmV5')
@@ -1045,15 +1045,16 @@ test_that("Data Retrieval", {
     is.null(incidenceRateFromDb2),
     nrow(incidenceRateFromDb2) >= 0
   )) # no data in eunomia
-  #!!!!!!!!!!!!!!! BUG
-  # testthat::expect_true(dplyr::all_equal(incidenceRateFromDb2, incidenceRateFromFile2))
+  testthat::expect_true(is.null(incidenceRateFromDb2) && is.null(incidenceRateFromFile2))
   
   incidenceRateFromDb3 <-
     CohortDiagnostics::getResultsFromIncidenceRate(dataSource = dataSourceDatabase,
                                                    databaseIds = 'cdmV5')
-  testthat::expect_true(nrow(incidenceRateFromDb3) >= 0) # no data in eunomia
-  #!!!!!!!!!!!!!!! BUG
-  # testthat::expect_true(dplyr::all_equal(incidenceRateFromDb3, incidenceRateFromFile3))
+  testthat::expect_true(any(
+    is.null(incidenceRateFromDb3),
+    nrow(incidenceRateFromDb3) >= 0
+  )) # no data in eunomia
+  testthat::expect_true(is.null(incidenceRateFromDb3) && is.null(incidenceRateFromFile3))
   #### Neg ----
   testthat::expect_null(
     CohortDiagnostics::getResultsFromIncidenceRate(
@@ -1074,8 +1075,7 @@ test_that("Data Retrieval", {
   inclusionRulesFromDb2 <-
     CohortDiagnostics::getResultsFromInclusionRuleStatistics(dataSource = dataSourceDatabase)
   testthat::expect_true(nrow(inclusionRulesFromDb2) >= 0)
-  #!!!!!!!!!!!!!!! BUG
-  # testthat::expect_true(dplyr::all_equal(inclusionRulesFromDb2, inclusionRulesFromFile2))
+  testthat::expect_true(dplyr::all_equal(inclusionRulesFromDb2, inclusionRulesFromFile2))
   #### Neg ----
   testthat::expect_null(
     CohortDiagnostics::getResultsFromInclusionRuleStatistics(
@@ -1178,7 +1178,7 @@ test_that("Data Retrieval", {
       )
     )
   testthat::expect_true(nrow(conceptIdDetailsFromDb2) >= 0)
-  #!!!!!!!!!!!!!!! BUG
+  #!!!!!!!!!!!!!!! BUG -- NA is not handled in same way
   # testthat::expect_true(dplyr::all_equal(conceptIdDetailsFromDb2, conceptIdDetailsFromFile2))
   #### Neg ----
   testthat::expect_null(suppressWarnings(
@@ -1197,12 +1197,12 @@ test_that("Data Retrieval", {
                                                          databaseIds = 'cdmV5')
   testthat::expect_true(nrow(resolvedMappedConceptSetFromDb$resolved) >= 0)
   testthat::expect_null(resolvedMappedConceptSetFromDb$mapped)
-  #!!!!!!!!!!!!!!! BUG
+  #!!!!!!!!!!!!!!! BUG - for fields in file compared to db??
   # testthat::expect_true(dplyr::all_equal(resolvedMappedConceptSetFromDb$resolved, 
   #                                        resolvedMappedConceptSetFromFile$resolved))
   resolvedMappedConceptSetFromDb2 <-
     CohortDiagnostics::getResultsResolveMappedConceptSet(dataSource = dataSourceDatabase)
-  #!!!!!!!!!!!!!!! BUG
+  #!!!!!!!!!!!!!!! BUG - invalid reason is not in db?
   # testthat::expect_true(dplyr::all_equal(resolvedMappedConceptSetFromDb2$resolved, 
   #                                        resolvedMappedConceptSetFromFile2$resolved))
   testthat::expect_true(nrow(resolvedMappedConceptSetFromDb2$resolved) >= 0)
@@ -1213,8 +1213,6 @@ test_that("Data Retrieval", {
     cohortIds = -1111,
     databaseIds = 'cdmV5'
   )
-  #!!!!!!!!!!!!!!! BUG
-  # write test here
   
   ## Calendar incidence ----
   # Table does not exist in results, is not generated in Eunomia?
@@ -1224,7 +1222,7 @@ test_that("Data Retrieval", {
     is.null(calendarIncidenceFromDb),
     nrow(calendarIncidenceFromDb) >= 0
   ))
-  #!!!!!!!!!!!!!!! BUG
+  #! unomia has no data
   # testthat::expect_true(dplyr::all_equal(calendarIncidenceFromDb,calendarIncidenceFromFile))
   
   ## Cohort Relationship ----
@@ -1254,50 +1252,62 @@ test_that("Data Retrieval", {
   
   #### Pos ----
   # Table does not exist in results, so this is throwing an error
-  # cohortCharacterizationResultsFromDb <-
-  #   CohortDiagnostics::getMultipleCharacterizationResults(dataSource = dataSourceDatabase,
-  #                                                         cohortIds = 18348,
-  #                                                         databaseIds = 'cdmV5')
-  # testthat::expect_true(length(cohortCharacterizationResultsFromDb) >= 0)
-  # testthat::expect_true(nrow(cohortCharacterizationResultsFromDb$analysisRef) > 0)
-  # testthat::expect_true(nrow(cohortCharacterizationResultsFromDb$covariateValue) > 0)
-  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb, expected = cohortCharacterizationResultsFromFile)
-  # cohortCharacterizationResultsFromDb2 <-
-  #   CohortDiagnostics::getMultipleCharacterizationResults(dataSource = dataSourceDatabase)
-  # testthat::expect_true(length(cohortCharacterizationResultsFromDb2) >= 0)
-  # testthat::expect_true(nrow(cohortCharacterizationResultsFromDb2$analysisRef) > 0)
-  # testthat::expect_true(nrow(cohortCharacterizationResultsFromDb2$covariateValue) > 0)
-  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb2, expected = cohortCharacterizationResultsFromFile2)
-  # #### Neg ----
-  # cohortCharacterizationResultsFromDb3 <-
-  #   CohortDiagnostics::getMultipleCharacterizationResults(
-  #     dataSource = dataSourceDatabase,
-  #     cohortIds = -1111,
-  #     databaseIds = 'cdmV5'
-  #   )
-  # testthat::expect_true(nrow(cohortCharacterizationResultsFromDb3$analysisRef) > 0)
-  # testthat::expect_null(cohortCharacterizationResultsFromDb3$covariateValue)
-  # 
-  # 
-  # #### Pos ----
-  # cohortOverlapDataFromDb <-
-  #   CohortDiagnostics::getCohortOverlapData(
-  #     dataSource = dataSourceDatabase,
-  #     cohortIds = c(18348, 18350),
-  #     databaseIds = 'cdmV5'
-  #   )
-  # testthat::expect_true(nrow(cohortOverlapDataFromDb) >= 0)
-  # testthat::expect_equal(object = cohortOverlapDataFromDb, expected = cohortOverlapDataFromFile)
-  # #### Neg ----
-  # testthat::expect_null(conceptIdDetails <-
-  #                         suppressWarnings(
-  #                           CohortDiagnostics::getCohortOverlapData(
-  #                             dataSource = dataSourceDatabase,
-  #                             cohortIds = -1111,
-  #                             databaseIds = 'cdmV5'
-  #                           )
-  #                         ))
-  # 
+  cohortCharacterizationResultsFromDb <-
+    CohortDiagnostics::getMultipleCharacterizationResults(dataSource = dataSourceDatabase,
+                                                          cohortIds = 18348,
+                                                          databaseIds = 'cdmV5')
+  testthat::expect_true(length(cohortCharacterizationResultsFromDb) >= 0)
+  testthat::expect_true(nrow(cohortCharacterizationResultsFromDb$analysisRef) > 0)
+  testthat::expect_true(nrow(cohortCharacterizationResultsFromDb$covariateValue) > 0)
+  #!!!!!!!!!!!!!!! BUG
+  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb$analysisRef, 
+  #                        expected = cohortCharacterizationResultsFromFile$analysisRef)
+  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb$covariateRef, 
+  #                        expected = cohortCharacterizationResultsFromFile$covariateRef)
+  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb$covariateValue, 
+  #                        expected = cohortCharacterizationResultsFromFile$covariateValue)
+  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb$covariateValueDist, 
+  #                        expected = cohortCharacterizationResultsFromFile$covariateValueDist)
+  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb$concept, 
+  #                        expected = cohortCharacterizationResultsFromFile$concept)
+  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb$temporalTimeRef, 
+  #                        expected = cohortCharacterizationResultsFromFile$temporalTimeRef)
+  cohortCharacterizationResultsFromDb2 <-
+    CohortDiagnostics::getMultipleCharacterizationResults(dataSource = dataSourceDatabase)
+  testthat::expect_true(length(cohortCharacterizationResultsFromDb2) >= 0)
+  testthat::expect_true(nrow(cohortCharacterizationResultsFromDb2$analysisRef) > 0)
+  testthat::expect_true(nrow(cohortCharacterizationResultsFromDb2$covariateValue) > 0)
+  testthat::expect_equal(object = cohortCharacterizationResultsFromDb2, expected = cohortCharacterizationResultsFromFile2)
+  #### Neg ----
+  cohortCharacterizationResultsFromDb3 <-
+    CohortDiagnostics::getMultipleCharacterizationResults(
+      dataSource = dataSourceDatabase,
+      cohortIds = -1111,
+      databaseIds = 'cdmV5'
+    )
+  testthat::expect_true(nrow(cohortCharacterizationResultsFromDb3$analysisRef) > 0)
+  testthat::expect_null(cohortCharacterizationResultsFromDb3$covariateValue)
+
+
+  #### Pos ----
+  cohortOverlapDataFromDb <-
+    CohortDiagnostics::getCohortOverlapData(
+      dataSource = dataSourceDatabase,
+      cohortIds = c(18348, 18350),
+      databaseIds = 'cdmV5'
+    )
+  testthat::expect_true(nrow(cohortOverlapDataFromDb) >= 0)
+  testthat::expect_equal(object = cohortOverlapDataFromDb, expected = cohortOverlapDataFromFile)
+  #### Neg ----
+  testthat::expect_null(conceptIdDetails <-
+                          suppressWarnings(
+                            CohortDiagnostics::getCohortOverlapData(
+                              dataSource = dataSourceDatabase,
+                              cohortIds = -1111,
+                              databaseIds = 'cdmV5'
+                            )
+                          ))
+
 })
 
 
