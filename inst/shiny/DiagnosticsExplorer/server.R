@@ -5158,7 +5158,11 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::inner_join(covariatesTofilter, 
                           by = c('covariateId', 'characterizationSource')) %>% 
         dplyr::inner_join(characterizationTemporalCharacterizationData()$analysisRef, 
-                          by = c('analysisId','characterizationSource'))
+                          by = c('analysisId','characterizationSource')) %>%
+        dplyr::mutate(covariateNameShort = gsub(".*: ","",.data$covariateName)) %>% 
+        dplyr::mutate(covariateNameShortCovariateId = paste0(.data$covariateNameShort, 
+                                                             " (", 
+                                                             .data$covariateId, ")"))
     } else {
       characterizationDataValue <- NULL
     }
@@ -5599,18 +5603,37 @@ shiny::shinyServer(function(input, output, session) {
             nrow(characterizationTemporalCharacterizationData()$analysisRef) == 0)) {
       return(NULL)
     }
-    data <- characterizationTemporalCharacterizationData()$covariateValue %>% 
-      dplyr::filter(.data$characterizationSource %in% c('CT', 'FT')) %>% 
-      dplyr::inner_join(characterizationTemporalCharacterizationData()$covariateRef, 
-                        by = c('covariateId', 'characterizationSource')) %>% 
-      dplyr::inner_join(characterizationTemporalCharacterizationData()$analysisRef %>% 
-                          dplyr::select(-.data$startDay, -.data$endDay), 
-                        by = c('analysisId','characterizationSource')) %>% 
-      dplyr::distinct()
-    if (nrow(data) == 0) {
+    
+    if (!is.null(characterizationTemporalCharacterizationData()$covariateValue)) {
+      characterizationDataValue <-
+        characterizationTemporalCharacterizationData()$covariateValue %>%
+        dplyr::filter(.data$characterizationSource %in% c('CT', 'FT')) %>%
+        dplyr::inner_join(
+          characterizationTemporalCharacterizationData()$covariateRef,
+          by = c('covariateId', 'characterizationSource')
+        ) %>%
+        dplyr::inner_join(
+          characterizationTemporalCharacterizationData()$analysisRef %>%
+            dplyr::select(-.data$startDay,-.data$endDay),
+          by = c('analysisId', 'characterizationSource')
+        ) %>%
+        dplyr::distinct() %>%
+        dplyr::inner_join(temporalCovariateChoices, by = "timeId") %>%
+        dplyr::arrange(.data$timeId) %>%
+        dplyr::mutate(covariateNameShort = gsub(".*: ", "", .data$covariateName)) %>%
+        dplyr::mutate(
+          covariateNameShortCovariateId = paste0(.data$covariateNameShort,
+                                                 " (",
+                                                 .data$covariateId, ")")
+        )
+    } else {
+      characterizationDataValue <- NULL
+    }
+    if (any(is.null(characterizationDataValue), 
+            nrow(characterizationDataValue) == 0)) {
       return(NULL)
     }
-    return(data)
+    return(characterizationDataValue)
   })
   
   output$saveTemporalCharacterizationTable <-  downloadHandler(
@@ -5643,11 +5666,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$timeId %in% timeIds())
     }
     data <- data %>%
-      dplyr::inner_join(temporalCovariateChoices, by = "timeId") %>%
-      dplyr::arrange(.data$timeId) %>%
-      dplyr::select(-.data$cohortId, -.data$databaseId) %>% 
-      dplyr::mutate(covariateName = gsub(".*: ","",.data$covariateName)) %>% 
-      dplyr::mutate(covariateName = paste0(.data$covariateName, " (", .data$covariateId, ")"))
+      dplyr::select(-.data$cohortId, -.data$databaseId)
     if (input$temporalProportionOrContinuous == "Proportion") {
       data <- data %>%
         dplyr::filter(.data$isBinary == 'Y')
