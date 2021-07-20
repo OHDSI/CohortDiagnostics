@@ -5603,7 +5603,8 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$characterizationSource %in% c('CT', 'FT')) %>% 
       dplyr::inner_join(characterizationTemporalCharacterizationData()$covariateRef, 
                         by = c('covariateId', 'characterizationSource')) %>% 
-      dplyr::inner_join(characterizationTemporalCharacterizationData()$analysisRef, 
+      dplyr::inner_join(characterizationTemporalCharacterizationData()$analysisRef %>% 
+                          dplyr::select(-.data$startDay, -.data$endDay), 
                         by = c('analysisId','characterizationSource')) %>% 
       dplyr::distinct()
     if (nrow(data) == 0) {
