@@ -433,6 +433,11 @@ runCohortDiagnostics <- function(packageName = NULL,
                             fieldName = "cohortSubjects",
                             minValues = minCellCount)
     }
+    
+    cohortCounts <- cohortCounts %>%
+      dplyr::mutate(dplyr::across(is.character, ~ tidyr::replace_na(.x, as.character('')))) %>%
+      dplyr::mutate(dplyr::across(is.numeric, ~ tidyr::replace_na(.x, as.numeric(''))))
+    
     writeToCsv(
       data = cohortCounts,
       fileName = file.path(exportFolder, "cohort_count.csv"),
@@ -525,6 +530,11 @@ runCohortDiagnostics <- function(packageName = NULL,
           }
           colnames(stats$simplifiedOutput) <-
             SqlRender::camelCaseToSnakeCase(colnames(stats$simplifiedOutput))
+          
+          stats$simplifiedOutput <- stats$simplifiedOutput %>%
+            dplyr::mutate(dplyr::across(is.character, ~ tidyr::replace_na(.x, as.character('')))) %>%
+            dplyr::mutate(dplyr::across(is.numeric, ~ tidyr::replace_na(.x, as.numeric(''))))
+          
           writeToCsv(
             data = stats$simplifiedOutput,
             fileName = file.path(exportFolder, "inclusion_rule_stats.csv"),
@@ -541,6 +551,11 @@ runCohortDiagnostics <- function(packageName = NULL,
           
           for (k in (1:length(listOfInclusionTables))) {
             data <- stats[[listOfInclusionTables[[k]]]]
+            
+            data <- data %>%
+              dplyr::mutate(dplyr::across(is.character, ~ tidyr::replace_na(.x, as.character('')))) %>%
+              dplyr::mutate(dplyr::across(is.numeric, ~ tidyr::replace_na(.x, as.numeric(''))))
+            
             if ('personCount' %in% colnames(data)) {
               data <- enforceMinCellValue(
                 data = data,
@@ -587,6 +602,10 @@ runCohortDiagnostics <- function(packageName = NULL,
             
             colnames(data) <-
               SqlRender::camelCaseToSnakeCase(colnames(data))
+            
+            data <- data %>%
+              dplyr::mutate(dplyr::across(is.character, ~ tidyr::replace_na(.x, as.character('')))) %>%
+              dplyr::mutate(dplyr::across(is.numeric, ~ tidyr::replace_na(.x, as.numeric(''))))
             
             writeToCsv(
               data = data,
@@ -685,6 +704,16 @@ runCohortDiagnostics <- function(packageName = NULL,
         runOrphanConcepts = runOrphanConcepts,
         runBreakdownIndexEvents = runBreakdownIndexEvents
       )
+      
+      for (i in (1:length(conceptSetDiagnostics))) {
+        conceptSetDiagnostics[[i]] <- conceptSetDiagnostics[[i]] %>% 
+          dplyr::mutate(
+            dplyr::across(is.character, ~tidyr::replace_na(.x, as.character('')))
+          ) %>% 
+          dplyr::mutate(
+            dplyr::across(is.numeric, ~tidyr::replace_na(.x, as.numeric('')))
+          )
+      }
       
       # write vocabulary tables
       vocabularyTableNames = c(
@@ -903,6 +932,11 @@ runCohortDiagnostics <- function(packageName = NULL,
         data <- data %>%
           dplyr::mutate(databaseId = !!databaseId)
         data <- enforceMinCellValue(data, "subjects", minCellCount)
+        
+        data <- data %>%
+          dplyr::mutate(dplyr::across(is.character, ~ tidyr::replace_na(.x, as.character('')))) %>%
+          dplyr::mutate(dplyr::across(is.numeric, ~ tidyr::replace_na(.x, as.numeric(''))))
+        
         writeToCsv(
           data = data,
           fileName = file.path(exportFolder, "visit_context.csv"),
@@ -981,6 +1015,11 @@ runCohortDiagnostics <- function(packageName = NULL,
                               "incidenceRate",
                               1000 * minCellCount / data$personYears)
       }
+      
+      data <- data %>%
+        dplyr::mutate(dplyr::across(is.character, ~ tidyr::replace_na(.x, as.character('')))) %>%
+        dplyr::mutate(dplyr::across(is.numeric, ~ tidyr::replace_na(.x, as.numeric(''))))
+      
       writeToCsv(
         data = data,
         fileName = file.path(exportFolder, "incidence_rate.csv"),
@@ -1058,6 +1097,11 @@ runCohortDiagnostics <- function(packageName = NULL,
                                 columnsInTimeSeries[[i]],
                                 minCellCount)
         }
+        
+        data <- data %>%
+          dplyr::mutate(dplyr::across(is.character, ~ tidyr::replace_na(.x, as.character('')))) %>%
+          dplyr::mutate(dplyr::across(is.numeric, ~ tidyr::replace_na(.x, as.numeric(''))))
+        
         writeToCsv(
           data = timeSeries,
           fileName = file.path(exportFolder, "time_series.csv"),
@@ -1141,6 +1185,11 @@ runCohortDiagnostics <- function(packageName = NULL,
                                 columnsInCohortRelationship[[i]],
                                 minCellCount)
         }
+        
+        cohortRelationship <- cohortRelationship %>%
+          dplyr::mutate(dplyr::across(is.character, ~ tidyr::replace_na(.x, as.character('')))) %>%
+          dplyr::mutate(dplyr::across(is.numeric, ~ tidyr::replace_na(.x, as.numeric(''))))
+        
         writeToCsv(
           data = cohortRelationship,
           fileName = file.path(exportFolder, "cohort_relationships.csv"),
@@ -1341,6 +1390,10 @@ runCohortDiagnostics <- function(packageName = NULL,
         ))
       )
     )
+  
+  metadata <- metadata %>%
+    dplyr::mutate(dplyr::across(is.character, ~ tidyr::replace_na(.x, as.character('')))) %>%
+    dplyr::mutate(dplyr::across(is.numeric, ~ tidyr::replace_na(.x, as.numeric(''))))
   
   writeToCsv(
     data = metadata,

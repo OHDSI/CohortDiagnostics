@@ -197,6 +197,9 @@ writeCovariateDataAndromedaToCsv <-
       
       addChunk <- function(chunk) {
         colnames(chunk) <- SqlRender::camelCaseToSnakeCase(colnames(chunk))
+        chunk <- chunk %>%
+          dplyr::mutate(dplyr::across(is.character, ~ tidyr::replace_na(.x, as.character('')))) %>%
+          dplyr::mutate(dplyr::across(is.numeric, ~ tidyr::replace_na(.x, as.numeric(''))))
         readr::write_csv(chunk, tempName, append = TRUE)
       }
       Andromeda::batchApply(data, addChunk)
