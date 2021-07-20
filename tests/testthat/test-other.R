@@ -26,7 +26,7 @@ testthat::test_that("Test file encoding - using latin", {
   # Latin encoding
   tempfileLatin <- tempfile()
   latinEncoding <- "fa\xE7ile"
-  writeLines(latinEncoding, con = tempfileLatin, )
+  writeLines(latinEncoding, con = tempfileLatin)
   testthat::expect_error(CohortDiagnostics:::checkInputFileEncoding(fileName = tempfileLatin))
   unlink(tempfileLatin)
 })
