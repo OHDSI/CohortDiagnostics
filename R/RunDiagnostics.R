@@ -976,8 +976,13 @@ runCohortDiagnostics <- function(packageName = NULL,
           firstOccurrenceOnly = TRUE,
           washoutPeriod = washoutPeriod
         )
-        if (nrow(data) > 0) {
-          data <- data %>% dplyr::mutate(cohortId = row$cohortId)
+        if (all(!is.null(data), 
+                nrow(data) > 0)) {
+          data <- data %>% 
+            dplyr::mutate(cohortId = row$cohortId)
+        }
+        if (nrow(data) == 0) {
+          data <- NULL
         }
         return(data)
       }

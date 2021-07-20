@@ -200,6 +200,9 @@ runIncidenceRateDiagnostics <- function(connectionDetails = NULL,
     signif(delta, 3),
     attr(delta, "units")
   ))
+  if (nrow(result) == 0) {
+    return(NULL)
+  }
   return(result)
 }
 
