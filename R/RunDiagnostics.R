@@ -434,9 +434,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                             minValues = minCellCount)
     }
     
-    cohortCounts <- cohortCounts %>%
-      dplyr::mutate(dplyr::across(is.character, ~ tidyr::replace_na(.x, as.character('')))) %>%
-      dplyr::mutate(dplyr::across(is.numeric, ~ tidyr::replace_na(.x, as.numeric(''))))
+    cohortCounts <- .replaceNaInDataFrameWithEmptyString(cohortCounts)
     
     writeToCsv(
       data = cohortCounts,
@@ -531,9 +529,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           colnames(stats$simplifiedOutput) <-
             SqlRender::camelCaseToSnakeCase(colnames(stats$simplifiedOutput))
           
-          stats$simplifiedOutput <- stats$simplifiedOutput %>%
-            dplyr::mutate(dplyr::across(is.character, ~ tidyr::replace_na(.x, as.character('')))) %>%
-            dplyr::mutate(dplyr::across(is.numeric, ~ tidyr::replace_na(.x, as.numeric(''))))
+          stats$simplifiedOutput <- .replaceNaInDataFrameWithEmptyString(stats$simplifiedOutput)
           
           writeToCsv(
             data = stats$simplifiedOutput,
@@ -551,11 +547,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           
           for (k in (1:length(listOfInclusionTables))) {
             data <- stats[[listOfInclusionTables[[k]]]]
-            
-            data <- data %>%
-              dplyr::mutate(dplyr::across(is.character, ~ tidyr::replace_na(.x, as.character('')))) %>%
-              dplyr::mutate(dplyr::across(is.numeric, ~ tidyr::replace_na(.x, as.numeric(''))))
-            
+            data <- .replaceNaInDataFrameWithEmptyString(data)
             if ('personCount' %in% colnames(data)) {
               data <- enforceMinCellValue(
                 data = data,
@@ -602,11 +594,7 @@ runCohortDiagnostics <- function(packageName = NULL,
             
             colnames(data) <-
               SqlRender::camelCaseToSnakeCase(colnames(data))
-            
-            data <- data %>%
-              dplyr::mutate(dplyr::across(is.character, ~ tidyr::replace_na(.x, as.character('')))) %>%
-              dplyr::mutate(dplyr::across(is.numeric, ~ tidyr::replace_na(.x, as.numeric(''))))
-            
+            data <- .replaceNaInDataFrameWithEmptyString(data)
             writeToCsv(
               data = data,
               fileName = file.path(
@@ -706,13 +694,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       )
       
       for (i in (1:length(conceptSetDiagnostics))) {
-        conceptSetDiagnostics[[i]] <- conceptSetDiagnostics[[i]] %>% 
-          dplyr::mutate(
-            dplyr::across(is.character, ~tidyr::replace_na(.x, as.character('')))
-          ) %>% 
-          dplyr::mutate(
-            dplyr::across(is.numeric, ~tidyr::replace_na(.x, as.numeric('')))
-          )
+        conceptSetDiagnostics[[i]] <- .replaceNaInDataFrameWithEmptyString(conceptSetDiagnostics[[i]])
       }
       
       # write vocabulary tables
@@ -932,11 +914,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         data <- data %>%
           dplyr::mutate(databaseId = !!databaseId)
         data <- enforceMinCellValue(data, "subjects", minCellCount)
-        
-        data <- data %>%
-          dplyr::mutate(dplyr::across(is.character, ~ tidyr::replace_na(.x, as.character('')))) %>%
-          dplyr::mutate(dplyr::across(is.numeric, ~ tidyr::replace_na(.x, as.numeric(''))))
-        
+        data <- .replaceNaInDataFrameWithEmptyString(data)
         writeToCsv(
           data = data,
           fileName = file.path(exportFolder, "visit_context.csv"),
@@ -1015,11 +993,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                               "incidenceRate",
                               1000 * minCellCount / data$personYears)
       }
-      
-      data <- data %>%
-        dplyr::mutate(dplyr::across(is.character, ~ tidyr::replace_na(.x, as.character('')))) %>%
-        dplyr::mutate(dplyr::across(is.numeric, ~ tidyr::replace_na(.x, as.numeric(''))))
-      
+      data <- .replaceNaInDataFrameWithEmptyString(data)
       writeToCsv(
         data = data,
         fileName = file.path(exportFolder, "incidence_rate.csv"),
@@ -1098,9 +1072,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                 minCellCount)
         }
         
-        data <- data %>%
-          dplyr::mutate(dplyr::across(is.character, ~ tidyr::replace_na(.x, as.character('')))) %>%
-          dplyr::mutate(dplyr::across(is.numeric, ~ tidyr::replace_na(.x, as.numeric(''))))
+        data <- .replaceNaInDataFrameWithEmptyString(data)
         
         writeToCsv(
           data = timeSeries,
@@ -1185,11 +1157,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                 columnsInCohortRelationship[[i]],
                                 minCellCount)
         }
-        
-        cohortRelationship <- cohortRelationship %>%
-          dplyr::mutate(dplyr::across(is.character, ~ tidyr::replace_na(.x, as.character('')))) %>%
-          dplyr::mutate(dplyr::across(is.numeric, ~ tidyr::replace_na(.x, as.numeric(''))))
-        
+        cohortRelationship <- .replaceNaInDataFrameWithEmptyString(cohortRelationship)
         writeToCsv(
           data = cohortRelationship,
           fileName = file.path(exportFolder, "cohort_relationships.csv"),
@@ -1390,11 +1358,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         ))
       )
     )
-  
-  metadata <- metadata %>%
-    dplyr::mutate(dplyr::across(is.character, ~ tidyr::replace_na(.x, as.character('')))) %>%
-    dplyr::mutate(dplyr::across(is.numeric, ~ tidyr::replace_na(.x, as.numeric(''))))
-  
+  metadata <- .replaceNaInDataFrameWithEmptyString(metadata)
   writeToCsv(
     data = metadata,
     fileName = file.path(exportFolder, "metadata.csv"),

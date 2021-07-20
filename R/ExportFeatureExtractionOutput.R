@@ -102,9 +102,7 @@ exportFeatureExtractionOutput <-
       if (dplyr::pull(dplyr::count(featureExtractionDbCovariateData$filteredCovariates)) > 0) {
         covariateRef <-
           dplyr::collect(featureExtractionDbCovariateData$covariateRef)
-        covariateRef <- covariateRef %>%
-          dplyr::mutate(dplyr::across(is.character, ~ tidyr::replace_na(.x, as.character('')))) %>%
-          dplyr::mutate(dplyr::across(is.numeric, ~ tidyr::replace_na(.x, as.numeric(''))))
+        covariateRef <- .replaceNaInDataFrameWithEmptyString(covariateRef)
         
         writeToCsv(
           data = covariateRef,
@@ -114,9 +112,7 @@ exportFeatureExtractionOutput <-
         )
         analysisRef <-
           dplyr::collect(featureExtractionDbCovariateData$analysisRef)
-        analysisRef <- analysisRef %>%
-          dplyr::mutate(dplyr::across(is.character, ~ tidyr::replace_na(.x, as.character('')))) %>%
-          dplyr::mutate(dplyr::across(is.numeric, ~ tidyr::replace_na(.x, as.numeric(''))))
+        analysisRef <- .replaceNaInDataFrameWithEmptyString(analysisRef)
         writeToCsv(
           data = analysisRef,
           fileName = analysisRefFileName,
@@ -125,9 +121,7 @@ exportFeatureExtractionOutput <-
         )
         if (!is.null(timeRefFileName)) {
           timeRef <- dplyr::collect(featureExtractionDbCovariateData$timeRef)
-          timeRef <- timeRef %>%
-            dplyr::mutate(dplyr::across(is.character, ~ tidyr::replace_na(.x, as.character('')))) %>%
-            dplyr::mutate(dplyr::across(is.numeric, ~ tidyr::replace_na(.x, as.numeric(''))))
+          timeRef <- .replaceNaInDataFrameWithEmptyString(timeRef)
           writeToCsv(
             data = timeRef,
             fileName = timeRefFileName,
