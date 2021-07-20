@@ -48,7 +48,7 @@ checkFixColumnNames <-
     expectedNamesDf <- tableSpecs %>%
       dplyr::select(.data$fieldName) %>%
       dplyr::arrange(.data$fieldName)
-    expectedNames <- expectedNames %>%
+    expectedNames <- expectedNamesDf %>%
       dplyr::pull() %>%
       sort()
     
