@@ -13,6 +13,7 @@ if (runDatabaseTests) {
       reportOverallTime = FALSE
     ),
     error = function(e) {
+      
     }
   )
   filesToDelete <-
@@ -24,7 +25,9 @@ if (runDatabaseTests) {
 
 if (runDatabaseTests) {
   testthat::test_that("Run Cohort Diagnostics without instantiated cohorts", {
-    testthat::expect_error(suppressWarnings(
+    # Diagnostics before instantiation ----
+    ## no cohort table ----
+    testthat::expect_null(suppressWarnings(
       CohortDiagnostics::runCohortDiagnostics(
         connectionDetails = connectionDetails,
         cdmDatabaseSchema = "eunomia",
@@ -50,16 +53,10 @@ if (runDatabaseTests) {
         runTemporalCohortCharacterization = FALSE,
         incremental = TRUE,
         incrementalFolder = file.path(folder, "incremental")
-      )))
-  }
-}
-
-
-
-if (runDatabaseTests) {
-  # Cohort Instantiation tests ----
-  test_that("Cohort table creation", {
-    ## check creation of cohort table
+      )
+    ))
+    
+    ## check creation of cohort table ----
     testthat::expect_null(
       CohortDiagnostics:::createCohortTable(
         connectionDetails = connectionDetails,
@@ -67,6 +64,37 @@ if (runDatabaseTests) {
         cohortTable = cohortTable
       )
     )
+    
+    ## with cohort table ----
+    testthat::expect_null(suppressWarnings(
+      CohortDiagnostics::runCohortDiagnostics(
+        connectionDetails = connectionDetails,
+        cdmDatabaseSchema = "eunomia",
+        vocabularyDatabaseSchema = "eunomia",
+        tempEmulationSchema = tempEmulationSchema,
+        cohortDatabaseSchema = cohortDatabaseSchema,
+        cohortTable = cohortTable,
+        packageName = "CohortDiagnostics",
+        cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+        inclusionStatisticsFolder = file.path(folder, "incStats"),
+        exportFolder =  file.path(folder, "export"),
+        databaseId = "cdmV5",
+        runInclusionStatistics = TRUE,
+        runIncludedSourceConcepts = FALSE,
+        runOrphanConcepts = FALSE,
+        runVisitContext = TRUE,
+        runBreakdownIndexEvents = FALSE,
+        runIncidenceRate = FALSE,
+        runCohortTimeSeries = FALSE,
+        runDataSourceTimeSeries = FALSE,
+        runCohortRelationship = TRUE,
+        runCohortCharacterization = TRUE,
+        runTemporalCohortCharacterization = FALSE,
+        incremental = TRUE,
+        incrementalFolder = file.path(folder, "incremental")
+      )
+    ))
+    
     tryCatch(
       DatabaseConnector::renderTranslateExecuteSql(
         connection = DatabaseConnector::connect(connectionDetails = connectionDetails),
@@ -77,10 +105,12 @@ if (runDatabaseTests) {
         reportOverallTime = FALSE
       ),
       error = function(e) {
+        
       }
     )
   })
 }
+
 
 # Cohort Instantiation tests ----
 test_that("Cohort instantiation", {
@@ -967,16 +997,16 @@ test_that("Data Retrieval", {
   
   skip_if_not(runDatabaseTests)
   
-  if (!exists('connection') ) {
+  if (!exists('connection')) {
     connection <- DatabaseConnector::connect(connectionDetails)
   }
   if (!DatabaseConnector::dbIsValid(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
   }
   dataSourceDatabase <- CohortDiagnostics::createDatabaseDataSource(
-    connectionDetails = connectionDetails, 
+    connectionDetails = connectionDetails,
     connection = connection,
-    resultsDatabaseSchema = cohortDiagnosticsSchema, 
+    resultsDatabaseSchema = cohortDiagnosticsSchema,
     vocabularyDatabaseSchema = cohortDiagnosticsSchema
   )
   
@@ -1073,7 +1103,8 @@ test_that("Data Retrieval", {
     nrow(incidenceRateFromDb) >= 0
   )) # no data in eunomia
   # so expecting NULL
-  testthat::expect_true(is.null(incidenceRateFromDb) && is.null(incidenceRateFromFile))
+  testthat::expect_true(is.null(incidenceRateFromDb) &&
+                          is.null(incidenceRateFromFile))
   incidenceRateFromDb2 <-
     CohortDiagnostics::getResultsFromIncidenceRate(dataSource = dataSourceDatabase,
                                                    databaseIds = 'cdmV5')
@@ -1081,7 +1112,8 @@ test_that("Data Retrieval", {
     is.null(incidenceRateFromDb2),
     nrow(incidenceRateFromDb2) >= 0
   )) # no data in eunomia
-  testthat::expect_true(is.null(incidenceRateFromDb2) && is.null(incidenceRateFromFile2))
+  testthat::expect_true(is.null(incidenceRateFromDb2) &&
+                          is.null(incidenceRateFromFile2))
   
   incidenceRateFromDb3 <-
     CohortDiagnostics::getResultsFromIncidenceRate(dataSource = dataSourceDatabase,
@@ -1090,7 +1122,8 @@ test_that("Data Retrieval", {
     is.null(incidenceRateFromDb3),
     nrow(incidenceRateFromDb3) >= 0
   )) # no data in eunomia
-  testthat::expect_true(is.null(incidenceRateFromDb3) && is.null(incidenceRateFromFile3))
+  testthat::expect_true(is.null(incidenceRateFromDb3) &&
+                          is.null(incidenceRateFromFile3))
   #### Neg ----
   testthat::expect_null(
     CohortDiagnostics::getResultsFromIncidenceRate(
@@ -1235,22 +1268,23 @@ test_that("Data Retrieval", {
   #!!!!!!!!!!!!!!! BUG - resolvedMappedConcepSetFromFile$mapped is NULL
   # testthat::expect_null(resolvedMappedConceptSetFromDb$mapped)
   #!!!!!!!!!!!!!!! BUG - for fields in file compared to db??
-  # testthat::expect_true(dplyr::all_equal(resolvedMappedConceptSetFromDb$resolved, 
+  # testthat::expect_true(dplyr::all_equal(resolvedMappedConceptSetFromDb$resolved,
   #                                        resolvedMappedConceptSetFromFile$resolved))
   resolvedMappedConceptSetFromDb2 <-
     CohortDiagnostics::getResultsResolveMappedConceptSet(dataSource = dataSourceDatabase)
   #!!!!!!!!!!!!!!! BUG - invalid reason is not in db?
-  # testthat::expect_true(dplyr::all_equal(resolvedMappedConceptSetFromDb2$resolved, 
+  # testthat::expect_true(dplyr::all_equal(resolvedMappedConceptSetFromDb2$resolved,
   #                                        resolvedMappedConceptSetFromFile2$resolved))
   testthat::expect_true(nrow(resolvedMappedConceptSetFromDb2$resolved) >= 0)
   #!!!!!!!!!!!!!!! BUG - resolvedMappedConcepSetFromFile$mapped is NULL
   # testthat::expect_true(nrow(resolvedMappedConceptSetFromDb2$mapped) >= 0)
   #### Neg ----
-  negativeResolved <- CohortDiagnostics::getResultsResolveMappedConceptSet(
-    dataSource = dataSourceDatabase,
-    cohortIds = -1111,
-    databaseIds = 'cdmV5'
-  )
+  negativeResolved <-
+    CohortDiagnostics::getResultsResolveMappedConceptSet(
+      dataSource = dataSourceDatabase,
+      cohortIds = -1111,
+      databaseIds = 'cdmV5'
+    )
   
   ## Calendar incidence ----
   # Table does not exist in results, is not generated in Eunomia?
@@ -1270,11 +1304,11 @@ test_that("Data Retrieval", {
                                                          cohortIds = 18348,
                                                          databaseIds = 'cdmV5')
   testthat::expect_true(nrow(cohortRelationshipsFromDb) >= 0)
-  testthat::expect_true(dplyr::all_equal(cohortRelationshipsFromDb,cohortRelationshipsFromFile))
+  testthat::expect_true(dplyr::all_equal(cohortRelationshipsFromDb, cohortRelationshipsFromFile))
   cohortRelationshipsFromDb2 <-
     CohortDiagnostics::getResultsFromCohortRelationships(dataSource = dataSourceDatabase)
   testthat::expect_true(nrow(cohortRelationshipsFromDb2) >= 0)
-  testthat::expect_true(dplyr::all_equal(cohortRelationshipsFromDb2,cohortRelationshipsFromFile2))
+  testthat::expect_true(dplyr::all_equal(cohortRelationshipsFromDb2, cohortRelationshipsFromFile2))
   #### Neg ----
   testthat::expect_null(
     conceptIdDetails <-
@@ -1298,17 +1332,17 @@ test_that("Data Retrieval", {
   testthat::expect_true(nrow(cohortCharacterizationResultsFromDb$analysisRef) > 0)
   testthat::expect_true(nrow(cohortCharacterizationResultsFromDb$covariateValue) > 0)
   #!!!!!!!!!!!!!!! BUG
-  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb$analysisRef, 
+  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb$analysisRef,
   #                        expected = cohortCharacterizationResultsFromFile$analysisRef)
-  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb$covariateRef, 
+  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb$covariateRef,
   #                        expected = cohortCharacterizationResultsFromFile$covariateRef)
-  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb$covariateValue, 
+  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb$covariateValue,
   #                        expected = cohortCharacterizationResultsFromFile$covariateValue)
-  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb$covariateValueDist, 
+  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb$covariateValueDist,
   #                        expected = cohortCharacterizationResultsFromFile$covariateValueDist)
-  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb$concept, 
+  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb$concept,
   #                        expected = cohortCharacterizationResultsFromFile$concept)
-  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb$temporalTimeRef, 
+  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb$temporalTimeRef,
   #                        expected = cohortCharacterizationResultsFromFile$temporalTimeRef)
   cohortCharacterizationResultsFromDb2 <-
     CohortDiagnostics::getMultipleCharacterizationResults(dataSource = dataSourceDatabase)
@@ -1316,17 +1350,17 @@ test_that("Data Retrieval", {
   testthat::expect_true(nrow(cohortCharacterizationResultsFromDb2$analysisRef) > 0)
   testthat::expect_true(nrow(cohortCharacterizationResultsFromDb2$covariateValue) > 0)
   #!!!!!!!!!!!!!!! BUG
-  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb2$analysisRef, 
+  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb2$analysisRef,
   #                        expected = cohortCharacterizationResultsFromFile2$analysisRef)
-  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb2$covariateRef, 
+  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb2$covariateRef,
   #                        expected = cohortCharacterizationResultsFromFile2$covariateRef)
-  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb2$covariateValue, 
+  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb2$covariateValue,
   #                        expected = cohortCharacterizationResultsFromFile2$covariateValue)
-  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb2$covariateValueDist, 
+  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb2$covariateValueDist,
   #                        expected = cohortCharacterizationResultsFromFile2$covariateValueDist)
-  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb2$concept, 
+  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb2$concept,
   #                        expected = cohortCharacterizationResultsFromFile2$concept)
-  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb2$temporalTimeRef, 
+  # testthat::expect_equal(object = cohortCharacterizationResultsFromDb2$temporalTimeRef,
   #                        expected = cohortCharacterizationResultsFromFile2$temporalTimeRef)
   #### Neg ----
   cohortCharacterizationResultsFromDb3 <-
@@ -1337,7 +1371,7 @@ test_that("Data Retrieval", {
     )
   testthat::expect_true(nrow(cohortCharacterizationResultsFromDb3$analysisRef) > 0)
   testthat::expect_null(cohortCharacterizationResultsFromDb3$covariateValue)
-
+  
   ## Cohort Overlap ----
   #### Pos ----
   cohortOverlapDataFromDb <-
@@ -1357,7 +1391,7 @@ test_that("Data Retrieval", {
                               databaseIds = 'cdmV5'
                             )
                           ))
-
+  
 })
 
 
@@ -1387,7 +1421,7 @@ test_that("Data removal works", {
       connection = connection,
       schema = cohortDiagnosticsSchema,
       tableName = 'cohort_count',
-      keyValues = cohortTableDataBeforeDelete[1, ]
+      keyValues = cohortTableDataBeforeDelete[1,]
     )
     cohortTableDataAfterDelete <-
       CohortDiagnostics::getResultsFromCohortCount(dataSource = dataSourceDatabase)
