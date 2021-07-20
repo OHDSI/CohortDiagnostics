@@ -419,7 +419,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   )
   
   # Get instantiated cohorts ----
-  instantiatedCohorts <- -1 # set by default to non instantiated
+  instantiatedCohorts <- as.double(c(-1)) # set by default to non instantiated
   if (!is.null(cohortCounts)) {
     cohortCounts <- cohortCounts %>%
       dplyr::mutate(databaseId = !!databaseId)
@@ -465,7 +465,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   if (runInclusionStatistics) {
     startInclusionStatistics <- Sys.time()
     if (any(is.null(instantiatedCohorts),
-            instantiatedCohorts = -1)) {
+            -1 %in% instantiatedCohorts)) {
       ParallelLogger::logInfo(
         " -- Skipping inclusion statistics from files because no cohorts were instantiated."
       )
