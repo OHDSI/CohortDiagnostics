@@ -105,8 +105,8 @@ if (runDatabaseTests) {
       )
     ))
     
-    # no inclusion or incremental folder specified
-    testthat::expect_null(
+    # no inclusion folder specified
+    testthat::expect_error(
       CohortDiagnostics::instantiateCohortSet(
         connectionDetails = connectionDetails,
         cdmDatabaseSchema = cdmDatabaseSchema,
@@ -117,7 +117,29 @@ if (runDatabaseTests) {
         cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
         generateInclusionStats = TRUE,
         createCohortTable = TRUE,
-        incremental = TRUE,
+        incremental = TRUE, 
+        incrementalFolder = tempdir(),
+        inclusionStatisticsFolder = NULL,
+        baseUrl = baseUrl,
+        cohortIds = -1
+      )
+    )
+    
+    # no incremental folder specified
+    testthat::expect_error(
+      CohortDiagnostics::instantiateCohortSet(
+        connectionDetails = connectionDetails,
+        cdmDatabaseSchema = cdmDatabaseSchema,
+        vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+        tempEmulationSchema = tempEmulationSchema,
+        cohortDatabaseSchema = cohortDatabaseSchema,
+        cohortTable = cohortTable,
+        cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+        generateInclusionStats = TRUE,
+        createCohortTable = TRUE,
+        incremental = TRUE, 
+        incrementalFolder = NULL,
+        inclusionStatisticsFolder = tempdir(),
         baseUrl = baseUrl,
         cohortIds = -1
       )

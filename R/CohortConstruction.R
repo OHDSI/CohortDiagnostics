@@ -552,7 +552,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
   
   if (generateInclusionStats) {
     if (is.null(inclusionStatisticsFolder)) {
-      ParallelLogger::logInfo(" - Inclusion rule file folder not specified when generateInclusionStats = TRUE. Inclusion rule files will be saved in output folder.")
+      stop(" - Inclusion rule file folder not specified when generateInclusionStats = TRUE.")
     }
     if (!file.exists(inclusionStatisticsFolder)) {
       dir.create(inclusionStatisticsFolder, recursive = TRUE)
@@ -560,7 +560,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
   }
   if (incremental) {
     if (is.null(incrementalFolder)) {
-      ParallelLogger::logInfo(" - Incremental folder not specified while in incremental mode. Incremental files will be saved in the output folder.")
+      stop(" - Incremental folder not specified while in incremental mode.")
     }
     if (!file.exists(incrementalFolder)) {
       dir.create(incrementalFolder, recursive = TRUE)
