@@ -30,3 +30,34 @@ testthat::test_that("Test file encoding - using latin", {
   testthat::expect_error(CohortDiagnostics:::checkInputFileEncoding(fileName = tempfileLatin))
   unlink(tempfileLatin)
 })
+
+testthat::test_that("Check mismatch between SQL and inclusion rules", {
+  cohortJson <-
+    SqlRender::readSql(sourceFile = system.file("cohorts\\17492.json", package =
+                                                  'CohortDiagnostics'))
+  expression <-
+    CirceR::cohortExpressionFromJson(expressionJson = cohortJson)
+  
+  sqlWithoutInclusionRule <-
+    CirceR::buildCohortQuery(
+      expression = expression,
+      options = CirceR::createGenerateOptions(generateStats = FALSE)
+    ) %>% SqlRender::render()
+  sqlWithInclusionRule <-
+    CirceR::buildCohortQuery(
+      expression = expression,
+      options = CirceR::createGenerateOptions(generateStats = TRUE)
+    ) %>% SqlRender::render()
+  
+  # expect warning
+  testthat::expect_warning(CohortDiagnostics:::.warnMismatchSqlInclusionStats(sql = sqlWithoutInclusionRule, generateInclusionStats = TRUE))
+  # no warning
+  testthat::expect_null(CohortDiagnostics:::.warnMismatchSqlInclusionStats(sql = sqlWithoutInclusionRule, generateInclusionStats = FALSE))
+  
+  # no warning
+  CohortDiagnostics:::.warnMismatchSqlInclusionStats(sql = sqlWithInclusionRule, generateInclusionStats = TRUE)
+  # expect warning
+  testthat::expect_null(testthat::expect_warning(CohortDiagnostics:::.warnMismatchSqlInclusionStats(sql = sqlWithInclusionRule, 
+                                                                                                    generateInclusionStats = FALSE)))
+  
+})

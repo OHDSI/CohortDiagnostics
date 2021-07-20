@@ -25,8 +25,18 @@ if (runDatabaseTests) {
 
 if (runDatabaseTests) {
   testthat::test_that("Run Cohort Diagnostics without instantiated cohorts", {
+    
     # Diagnostics before instantiation ----
-    ## no cohort table ----
+    ## no cohort table get cohort count ----
+    testthat::expect_warning(
+      CohortDiagnostics::getCohortCounts(
+        connectionDetails = connectionDetails,
+        cohortDatabaseSchema = cohortDatabaseSchema,
+        cohortTable = cohortTable
+      )
+    )
+    
+    ## no cohort table run diagnostics----
     testthat::expect_null(suppressWarnings(
       CohortDiagnostics::runCohortDiagnostics(
         connectionDetails = connectionDetails,
@@ -94,6 +104,24 @@ if (runDatabaseTests) {
         incrementalFolder = file.path(folder, "incremental")
       )
     ))
+    
+    # no inclusion or incremental folder specified
+    testthat::expect_null(
+      CohortDiagnostics::instantiateCohortSet(
+        connectionDetails = connectionDetails,
+        cdmDatabaseSchema = cdmDatabaseSchema,
+        vocabularyDatabaseSchema = vocabularyDatabaseSchema,
+        tempEmulationSchema = tempEmulationSchema,
+        cohortDatabaseSchema = cohortDatabaseSchema,
+        cohortTable = cohortTable,
+        cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+        generateInclusionStats = TRUE,
+        createCohortTable = TRUE,
+        incremental = TRUE,
+        baseUrl = baseUrl,
+        cohortIds = -1
+      )
+    )
     
     tryCatch(
       DatabaseConnector::renderTranslateExecuteSql(

@@ -56,6 +56,22 @@ checkCohortReference <-
 
 makeBackwardsCompatible <- function(cohorts, forceWebApiCohortId = FALSE) {
   # make sure there is a column called 'name' - used for finding sql in package
+  if ('atlasId' %in% colnames(cohorts)) {
+    cohorts <- cohorts %>% 
+      dplyr::mutate(atlasId = as.double(.data$atlasId))
+  }
+  if ('cohortId' %in% colnames(cohorts)) {
+    cohorts <- cohorts %>% 
+      dplyr::mutate(cohortId = as.double(.data$cohortId))
+  }
+  if ('id' %in% colnames(cohorts)) {
+    cohorts <- cohorts %>% 
+      dplyr::mutate(id = as.double(.data$id))
+  }
+  if ('webApiCohortId' %in% colnames(cohorts)) {
+    cohorts <- cohorts %>% 
+      dplyr::mutate(webApiCohortId = as.double(.data$webApiCohortId))
+  }
   if (!"name" %in% colnames(cohorts)) {
     # id/cohortId takes precedence over webapiId/atlasId
     if ('id' %in% colnames(cohorts)) {
@@ -88,13 +104,14 @@ makeBackwardsCompatible <- function(cohorts, forceWebApiCohortId = FALSE) {
   if (!'webApiCohortId' %in% colnames(cohorts)) {
     if ('atlasId' %in% colnames(cohorts)) {
       if (typeof(cohorts$atlasId) %in% c('integer','double')) {
-        cohorts <- cohorts %>%
+        cohorts <- cohorts  %>% 
+          dplyr::mutate(atlasId = as.double(.data$atlasId)) %>%
           dplyr::mutate(webApiCohortId = .data$atlasId)
       }
     } else if ('cohortId' %in% colnames(cohorts)) {
-      if (typeof(cohorts$atlasId) %in% c('integer','double')) {
+      if (typeof(cohorts$cohortId) %in% c('integer','double')) {
         cohorts <- cohorts %>%
-          dplyr::mutate(webApiCohortId = .data$cohortId)
+          dplyr::mutate(webApiCohortId = as.double(.data$cohortId))
       }
     } else if (all('name' %in% colnames(cohorts),
                    typeof(strtoi(cohorts$name)) %in% c('integer','double'),
@@ -102,7 +119,7 @@ makeBackwardsCompatible <- function(cohorts, forceWebApiCohortId = FALSE) {
                    forceWebApiCohortId)) {
       warning('webapiCohortId not found. Forcing..')
       cohorts <- cohorts %>%
-        dplyr::mutate(webApiCohortId = strtoi(cohorts$name))
+        dplyr::mutate(webApiCohortId = as.double(strtoi(cohorts$name)))
       #webApiCohortId should always be integer/double
     }
   }
@@ -130,6 +147,31 @@ makeBackwardsCompatible <- function(cohorts, forceWebApiCohortId = FALSE) {
       cohorts <- cohorts %>%
         dplyr::mutate(cohortId = as.double(.data$name))
     }
+  }
+  
+  # make sure there is a column called 'atlasId'
+  if (!'atlasId' %in% colnames(cohorts)) {
+    if (typeof(cohorts$webApiCohortId) %in% c('integer','double')) {
+      cohorts <- cohorts %>%
+        dplyr::mutate(atlasId = as.double(.data$webApiCohortId))
+    }
+  }
+  
+  if ('atlasId' %in% colnames(cohorts)) {
+    cohorts <- cohorts %>% 
+      dplyr::mutate(atlasId = as.double(.data$atlasId))
+  }
+  if ('cohortId' %in% colnames(cohorts)) {
+    cohorts <- cohorts %>% 
+      dplyr::mutate(cohortId = as.double(.data$cohortId))
+  }
+  if ('id' %in% colnames(cohorts)) {
+    cohorts <- cohorts %>% 
+      dplyr::mutate(id = as.double(.data$id))
+  }
+  if ('webApiCohortId' %in% colnames(cohorts)) {
+    cohorts <- cohorts %>% 
+      dplyr::mutate(webApiCohortId = as.double(.data$webApiCohortId))
   }
   return(cohorts)
 }
@@ -510,7 +552,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
   
   if (generateInclusionStats) {
     if (is.null(inclusionStatisticsFolder)) {
-      stop(" - Must specify inclusionStatisticsFolder when generateInclusionStats = TRUE")
+      ParallelLogger::logInfo(" - Inclusion rule file folder not specified when generateInclusionStats = TRUE. Inclusion rule files will be saved in output folder.")
     }
     if (!file.exists(inclusionStatisticsFolder)) {
       dir.create(inclusionStatisticsFolder, recursive = TRUE)
@@ -518,7 +560,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
   }
   if (incremental) {
     if (is.null(incrementalFolder)) {
-      stop(" - Must specify incrementalFolder when incremental = TRUE")
+      ParallelLogger::logInfo(" - Incremental folder not specified while in incremental mode. Incremental files will be saved in the output folder.")
     }
     if (!file.exists(incrementalFolder)) {
       dir.create(incrementalFolder, recursive = TRUE)
@@ -817,7 +859,7 @@ saveAndDropTempInclusionStatsTables <- function(connection,
     )) {
       if (isFALSE(generateInclusionStats)) {
         warning(
-          " - The SQL template used to instantiate cohort was designed to output cohort inclusion statistics.
+          " - The cohort SQL was designed to output cohort inclusion statistics.
               But, generateInclusionStats is set to False while instantiating cohort.
               This may cause error and terminate cohort diagnositcs."
         )
@@ -825,7 +867,7 @@ saveAndDropTempInclusionStatsTables <- function(connection,
     } else {
       if (isTRUE(generateInclusionStats)) {
         warning(
-          " - The SQL template used to instantiate cohort was designed to NOT output cohort inclusion statistics.
+          " - The cohort SQL was designed to NOT output cohort inclusion statistics.
               But, generateInclusionStats is set to TRUE while instantiating cohort.
               This may cause error and terminate cohort diagnositcs."
         )
