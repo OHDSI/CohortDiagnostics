@@ -22,6 +22,39 @@ if (runDatabaseTests) {
   invisible(lapply(filesToDelete, unlink, force = TRUE))
 }
 
+if (runDatabaseTests) {
+  testthat::test_that("Run Cohort Diagnostics without instantiated cohorts", {
+    testthat::expect_error(suppressWarnings(
+      CohortDiagnostics::runCohortDiagnostics(
+        connectionDetails = connectionDetails,
+        cdmDatabaseSchema = "eunomia",
+        vocabularyDatabaseSchema = "eunomia",
+        tempEmulationSchema = tempEmulationSchema,
+        cohortDatabaseSchema = cohortDatabaseSchema,
+        cohortTable = cohortTable,
+        packageName = "CohortDiagnostics",
+        cohortToCreateFile = "settings/CohortsToCreateForTesting.csv",
+        inclusionStatisticsFolder = file.path(folder, "incStats"),
+        exportFolder =  file.path(folder, "export"),
+        databaseId = "cdmV5",
+        runInclusionStatistics = TRUE,
+        runIncludedSourceConcepts = FALSE,
+        runOrphanConcepts = FALSE,
+        runVisitContext = TRUE,
+        runBreakdownIndexEvents = FALSE,
+        runIncidenceRate = FALSE,
+        runCohortTimeSeries = FALSE,
+        runDataSourceTimeSeries = FALSE,
+        runCohortRelationship = TRUE,
+        runCohortCharacterization = TRUE,
+        runTemporalCohortCharacterization = FALSE,
+        incremental = TRUE,
+        incrementalFolder = file.path(folder, "incremental")
+      )))
+  }
+}
+
+
 
 if (runDatabaseTests) {
   # Cohort Instantiation tests ----

@@ -417,6 +417,9 @@ runCohortDiagnostics <- function(packageName = NULL,
     cohortTable = cohortTable,
     cohortIds = cohorts$cohortId
   )
+  
+  # Get instantiated cohorts ----
+  instantiatedCohorts <- -1 # set by default to non instantiated
   if (!is.null(cohortCounts)) {
     cohortCounts <- cohortCounts %>%
       dplyr::mutate(databaseId = !!databaseId)
@@ -436,6 +439,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       incremental = FALSE,
       cohortId = subset$cohortId
     )
+    
     if (nrow(cohortCounts) > 0) {
       instantiatedCohorts <- cohortCounts %>%
         dplyr::pull(.data$cohortId)
@@ -450,7 +454,6 @@ runCohortDiagnostics <- function(packageName = NULL,
         "Beginning cohort diagnostics for instantiated cohorts. "
       )
     } else {
-      instantiatedCohorts <- NULL
       warning(
         "All cohorts were either not instantiated or all have 0 records. All diagnostics will be empty."
       )
@@ -461,7 +464,8 @@ runCohortDiagnostics <- function(packageName = NULL,
   ParallelLogger::logInfo(" - Looking for inclusion rule statistics files for instantiated cohorts.")
   if (runInclusionStatistics) {
     startInclusionStatistics <- Sys.time()
-    if (is.null(instantiatedCohorts)) {
+    if (any(is.null(instantiatedCohorts),
+            instantiatedCohorts = -1)) {
       ParallelLogger::logInfo(
         " -- Skipping inclusion statistics from files because no cohorts were instantiated."
       )
