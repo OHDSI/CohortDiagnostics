@@ -37,7 +37,8 @@ testthat::test_that("Check mismatch between SQL and inclusion rules", {
                         'CohortDiagnostics')
   
   cohortJson <-
-    readChar(con = fileJson, nchars = file.info(fileJson)$size)
+    RJSONIO::fromJSON(content = fileJson, digits = 23) %>% 
+    RJSONIO::toJSON(digits = 23, pretty = TRUE)
   
   expression <-
     CirceR::cohortExpressionFromJson(expressionJson = cohortJson)
