@@ -673,6 +673,17 @@ test_that("Negative tests on individual functions", {
       cohortIds = -1111
     )
   ))
+  testthat::expect_null(suppressWarnings(
+    CohortDiagnostics::runIncidenceRateDiagnostics(
+      connectionDetails = connectionDetails,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTable,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
+      vocabularyDatabaseSchema = cohortDatabaseSchema,
+      cohortIds = -1111
+    )
+  ))
 })
 
 
