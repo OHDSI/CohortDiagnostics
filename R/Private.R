@@ -70,6 +70,19 @@ enforceMinCellValue <-
     return(data)
   }
 
+enforceMinCellValueInDataframe <- function(data,
+                                           columnNames = colnames(data),
+                                           minCellCount = 5) {
+  for (i in (1:length(columnNames))) {
+    if (columnNames[[i]] %in% colnames(data)) {
+      data <-
+        enforceMinCellValue(data = data,
+                            fieldName = columnNames[[i]],
+                            minValues = minCellCount)
+    }
+  }
+  return(data)
+}
 
 naToEmpty <- function(x) {
   x[is.na(x)] <- ""

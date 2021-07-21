@@ -426,18 +426,15 @@ runCohortDiagnostics <- function(packageName = NULL,
     cohortCounts <- cohortCounts %>%
       dplyr::mutate(databaseId = !!databaseId)
     if (nrow(cohortCounts) > 0) {
+      cohortCounts <- cohortCounts %>%
+        enforceMinCellValueInDataframe(
+          columnNames = c('cohortEntries',
+                          'cohortSubjects'),
+          minCellCount = minCellCount
+        )
       cohortCounts <-
-        enforceMinCellValue(data = cohortCounts,
-                            fieldName = "cohortEntries",
-                            minValues = minCellCount)
-      cohortCounts <-
-        enforceMinCellValue(data = cohortCounts,
-                            fieldName = "cohortSubjects",
-                            minValues = minCellCount)
+        .replaceNaInDataFrameWithEmptyString(cohortCounts)
     }
-    
-    cohortCounts <- .replaceNaInDataFrameWithEmptyString(cohortCounts)
-    
     writeToCsv(
       data = cohortCounts,
       fileName = file.path(exportFolder, "cohort_count.csv"),
@@ -498,29 +495,13 @@ runCohortDiagnostics <- function(packageName = NULL,
           stats$simplifiedOutput <- stats$simplifiedOutput %>%
             dplyr::mutate(databaseId = !!databaseId)
           if (nrow(stats$simplifiedOutput) > 0) {
-            stats$simplifiedOutput <-
-              enforceMinCellValue(
-                data = stats$simplifiedOutput,
-                fieldName = "meetSubjects",
-                minValues = minCellCount
-              )
-            stats$simplifiedOutput <-
-              enforceMinCellValue(
-                data = stats$simplifiedOutput,
-                fieldName = "gainSubjects",
-                minValues = minCellCount
-              )
-            stats$simplifiedOutput <-
-              enforceMinCellValue(
-                data = stats$simplifiedOutput,
-                fieldName = "totalSubjects",
-                minValues = minCellCount
-              )
-            stats$simplifiedOutput <-
-              enforceMinCellValue(
-                data = stats$simplifiedOutput,
-                fieldName = "remainSubjects",
-                minValues = minCellCount
+            stats$simplifiedOutput <- stats$simplifiedOutput %>%
+              enforceMinCellValueInDataframe(
+                columnNames = c("meetSubjects",
+                                "gainSubjects",
+                                "totalSubjects",
+                                "remainSubjects"),
+                minCellCount = minCellCount
               )
           }
           
@@ -550,41 +531,15 @@ runCohortDiagnostics <- function(packageName = NULL,
           for (k in (1:length(listOfInclusionTables))) {
             data <- stats[[listOfInclusionTables[[k]]]]
             data <- .replaceNaInDataFrameWithEmptyString(data)
-            if ('personCount' %in% colnames(data)) {
-              data <- enforceMinCellValue(
-                data = data,
-                fieldName = "personCount",
-                minValues = minCellCount
-              )
-            }
-            if ('gainCount' %in% colnames(data)) {
-              data <- enforceMinCellValue(
-                data = data,
-                fieldName = "gainCount",
-                minValues = minCellCount
-              )
-            }
-            if ('personTotal' %in% colnames(data)) {
-              data <- enforceMinCellValue(
-                data = data,
-                fieldName = "personTotal",
-                minValues = minCellCount
-              )
-            }
-            if ('baseCount' %in% colnames(data)) {
-              data <- enforceMinCellValue(
-                data = data,
-                fieldName = "baseCount",
-                minValues = minCellCount
-              )
-            }
-            if ('finalCount' %in% colnames(data)) {
-              data <- enforceMinCellValue(
-                data = data,
-                fieldName = "finalCount",
-                minValues = minCellCount
-              )
-            }
+            data <- data %>% 
+            enforceMinCellValueInDataframe(
+              columnNames = c("personCount",
+                              "gainCount",
+                              "personTotal",
+                              "baseCount",
+                              "finalCount"),
+              minCellCount = minCellCount
+            )
             if ("cohortDefinitionId" %in% (colnames(data))) {
               data <- data %>%
                 dplyr::rename(cohortId = .data$cohortDefinitionId)
@@ -777,18 +732,12 @@ runCohortDiagnostics <- function(packageName = NULL,
           ParallelLogger::logInfo("- Writing included_source_concept.csv")
           conceptSetDiagnostics$includedSourceCodes$databaseId <-
             databaseId
-          conceptSetDiagnostics$includedSourceCodes <-
-            enforceMinCellValue(
-              conceptSetDiagnostics$includedSourceCodes,
-              "conceptSubjects",
-              minCellCount
-            )
-          conceptSetDiagnostics$includedSourceCodes <-
-            enforceMinCellValue(
-              conceptSetDiagnostics$includedSourceCodes,
-              "conceptCount",
-              minCellCount
-            )
+          conceptSetDiagnostics$includedSourceCodes <- conceptSetDiagnostics$includedSourceCodes %>% 
+          enforceMinCellValueInDataframe(
+            columnNames = c("conceptSubjects",
+                            "conceptCount"),
+            minCellCount = minCellCount
+          )
           writeToCsv(
             data = conceptSetDiagnostics$includedSourceCodes,
             fileName = file.path(exportFolder, "included_source_concept.csv"),
@@ -813,17 +762,10 @@ runCohortDiagnostics <- function(packageName = NULL,
           conceptSetDiagnostics$indexEventBreakdown$databaseId <-
             databaseId
           conceptSetDiagnostics$indexEventBreakdown <-
-            enforceMinCellValue(
-              conceptSetDiagnostics$indexEventBreakdown,
-              "subjectCount",
-              minCellCount
-            )
-          conceptSetDiagnostics$indexEventBreakdown <-
-            enforceMinCellValue(
-              conceptSetDiagnostics$indexEventBreakdown,
-              "conceptCount",
-              minCellCount
-            )
+            conceptSetDiagnostics$indexEventBreakdown %>%
+            enforceMinCellValueInDataframe(columnNames = c("subjectCount",
+                                                           "conceptCount"),
+                                           minCellCount = minCellCount)
           writeToCsv(
             data = conceptSetDiagnostics$indexEventBreakdown,
             fileName = file.path(exportFolder, "index_event_breakdown.csv"),
@@ -863,14 +805,10 @@ runCohortDiagnostics <- function(packageName = NULL,
         if (nrow(conceptSetDiagnostics$orphanCodes) > 0) {
           ParallelLogger::logInfo("- Writing orphan_concept.csv")
           conceptSetDiagnostics$orphanCodes$databaseId <- databaseId
-          conceptSetDiagnostics$orphanCodes <-
-            enforceMinCellValue(conceptSetDiagnostics$orphanCodes,
-                                "conceptSubjects",
-                                minCellCount)
-          conceptSetDiagnostics$orphanCodes <-
-            enforceMinCellValue(conceptSetDiagnostics$orphanCodes,
-                                "conceptCount",
-                                minCellCount)
+          conceptSetDiagnostics$orphanCodes <- conceptSetDiagnostics$orphanCodes %>%
+            enforceMinCellValueInDataframe(columnNames = c("conceptSubjects",
+                                                           "conceptCount"),
+                                           minCellCount = minCellCount)
           writeToCsv(
             data = conceptSetDiagnostics$orphanCodes,
             fileName = file.path(exportFolder, "orphan_concept.csv"),
@@ -1012,7 +950,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         data <-
           enforceMinCellValue(data,
                               "incidenceRate",
-                              1000 * minCellCount / data$personYears)
+                              (1000 * minCellCount) / data$personYears)
       }
       data <- .replaceNaInDataFrameWithEmptyString(data)
       writeToCsv(
@@ -1077,24 +1015,16 @@ runCohortDiagnostics <- function(packageName = NULL,
         dplyr::mutate(databaseId = !!databaseId)
       
       if (!is.null(timeSeries) && nrow(timeSeries) > 0) {
-        columnsInTimeSeries <- c(
-          'records',
-          'subjects',
-          'personDays',
-          'recordsStart',
-          'subjectsStart',
-          'recordsEnd',
-          'subjectsEnd'
-        )
-        for (i in (1:length(columnsInTimeSeries))) {
-          timeSeries <-
-            enforceMinCellValue(timeSeries,
-                                columnsInTimeSeries[[i]],
-                                minCellCount)
-        }
-        
+        timeSeries <- timeSeries %>%
+          enforceMinCellValueInDataframe(columnNames = c("records",
+                                                         "subjects",
+                                                         "personDays",
+                                                         "recordsStart",
+                                                         "subjectsStart",
+                                                         "recordsEnd",
+                                                         "subjectsEnd"),
+                                         minCellCount = minCellCount)
         data <- .replaceNaInDataFrameWithEmptyString(data)
-        
         writeToCsv(
           data = timeSeries,
           fileName = file.path(exportFolder, "time_series.csv"),
