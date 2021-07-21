@@ -71,6 +71,11 @@ concept_ancestor,ancestor_concept_id,bigint,Yes,Yes,No,Yes
 concept_ancestor,descendant_concept_id,bigint,Yes,Yes,No,Yes
 concept_ancestor,min_levels_of_separation,int,Yes,No,No,Yes
 concept_ancestor,max_levels_of_separation,int,Yes,No,No,Yes
+concept_cooccurrence,database_id,varchar,Yes,Yes,No,Yes
+concept_cooccurrence,cohort_id,bigint,Yes,Yes,No,Yes
+concept_cooccurrence,concept_id,int,Yes,Yes,No,Yes
+concept_cooccurrence,co_concept_id,int,Yes,Yes,No,Yes
+concept_cooccurrence,count_value,bigint,Yes,Yes,No,Yes
 concept_relationship,concept_id_1,int,Yes,Yes,No,Yes
 concept_relationship,concept_id_2,int,Yes,Yes,No,Yes
 concept_relationship,relationship_id,varchar(20),Yes,Yes,No,Yes

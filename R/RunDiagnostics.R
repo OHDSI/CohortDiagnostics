@@ -636,7 +636,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                             " ",
                             attr(delta, "units"))
   }
-  
+ 
   # Concept set diagnostics----
   if (runIncludedSourceConcepts ||
       runOrphanConcepts || runBreakdownIndexEvents) {
@@ -679,7 +679,6 @@ runCohortDiagnostics <- function(packageName = NULL,
       " - Skipping %s cohorts in incremental mode.",
       nrow(cohorts) - nrow(subset)
     ))
-    
     if (nrow(subset) > 0) {
       conceptSetDiagnostics <- runConceptSetDiagnostics(
         connection = connection,
@@ -830,6 +829,23 @@ runCohortDiagnostics <- function(packageName = NULL,
             fileName = file.path(exportFolder, "index_event_breakdown.csv"),
             incremental = incremental,
             cohortId = conceptSetDiagnostics$indexEventBreakdown$cohortId
+          )
+        }
+        if (nrow(conceptSetDiagnostics$indexDateConceptCooccurrence) > 0) {
+          ParallelLogger::logInfo("- Writing index_date_concept_cooccurrence.csv")
+          conceptSetDiagnostics$indexDateConceptCooccurrence$databaseId <-
+            databaseId
+          conceptSetDiagnostics$indexDateConceptCooccurrence <-
+            enforceMinCellValue(
+              conceptSetDiagnostics$indexDateConceptCooccurrence,
+              "countValue",
+              minCellCount
+            )
+          writeToCsv(
+            data = conceptSetDiagnostics$indexDateConceptCooccurrence,
+            fileName = file.path(exportFolder, "concept_cooccurrence.csv"),
+            incremental = incremental,
+            cohortId = conceptSetDiagnostics$indexDateConceptCooccurrence$cohortId
           )
         }
         recordTasksDone(

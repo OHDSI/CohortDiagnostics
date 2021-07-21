@@ -11,6 +11,7 @@ DROP TABLE IF EXISTS cohort_summary_stats;
 DROP TABLE IF EXISTS cohort_relationships;
 DROP TABLE IF EXISTS concept;
 DROP TABLE IF EXISTS concept_ancestor;
+DROP TABLE IF EXISTS concept_cooccurrence;
 DROP TABLE IF EXISTS concept_relationship;
 DROP TABLE IF EXISTS concept_sets;
 DROP TABLE IF EXISTS concept_synonym;
@@ -180,6 +181,17 @@ CREATE TABLE concept_ancestor (
 			max_levels_of_separation INT NOT NULL,
 			PRIMARY KEY(ancestor_concept_id, descendant_concept_id)
 );
+
+--Table concept_cooccurrence
+CREATE TABLE concept_cooccurrence (
+			database_id VARCHAR NOT NULL,
+			cohort_id BIGINT NOT NULL,
+			concept_id BIGINT NOT NULL,
+			co_concept_id BIGINT NOT NULL,
+			count_value BIGINT NOT NULL,
+			PRIMARY KEY(database_id, cohort_id, concept_id, co_concept_id)
+);
+
 
 --Table concept_relationship
 

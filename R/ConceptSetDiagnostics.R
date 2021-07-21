@@ -389,6 +389,132 @@ runConceptSetDiagnostics <- function(connection = NULL,
       )
     }
     indexEventBreakdown <- dplyr::bind_rows(data)
+    
+    ### indexDateConceptCooccurrence -----
+    getIndexDateConceptCooccurrence <- function(connection,
+                                                cdmDatabaseSchema,
+                                                tempEmulationSchema,
+                                                cohortIds) {
+      sqlDdlDrop <-
+        "IF OBJECT_ID('tempdb..#concept_cooccurrence', 'U') IS NOT NULL
+                	      DROP TABLE #concept_cooccurrence;"
+      
+      renderTranslateExecuteSql(
+        connection = connection,
+        sql = sqlDdlDrop,
+        tempEmulationSchema = tempEmulationSchema,
+        progressBar = FALSE,
+        reportOverallTime = FALSE
+      )
+      
+      sqlDdl <- "CREATE TABLE #concept_cooccurrence (
+                                                    	cohort_id BIGINT,
+                                                    	concept_id INT,
+                                                    	person_id BIGINT
+                                                    	);"
+      renderTranslateExecuteSql(
+        connection = connection,
+        sql = sqlDdl,
+        tempEmulationSchema = tempEmulationSchema,
+        progressBar = FALSE,
+        reportOverallTime = FALSE
+      )
+      
+      sql <- "	INSERT INTO #concept_cooccurrence
+                SELECT DISTINCT cohort_definition_id cohort_id,
+                	@domain_concept_id concept_id,
+                	person_id
+                FROM @cohort_database_schema.@cohort_table
+                INNER JOIN @cdm_database_schema.@domain_table
+                	ON subject_id = person_id
+                		AND cohort_start_date = @domain_start_date
+                INNER JOIN @concept_set_table
+                	ON @domain_concept_id = concept_id
+                WHERE cohort_definition_id IN (@cohortIds);"
+      
+      for (i in (1:nrow(domains))) {
+        rowData <- domains[i,]
+        renderTranslateExecuteSql(
+          connection = connection,
+          sql = sql,
+          tempEmulationSchema = tempEmulationSchema,
+          domain_concept_id = rowData$domainConceptId,
+          cdm_database_schema = cdmDatabaseSchema,
+          cohort_database_schema = cohortDatabaseSchema,
+          domain_table = rowData$domainTable,
+          domain_start_date = rowData$domainStartDate,
+          concept_set_table = "#inst_concept_sets",
+          cohortIds = cohortIds,
+          cohort_table = cohortTable,
+          progressBar = FALSE,
+          reportOverallTime = FALSE
+        )
+        if (all(
+          !is.na(rowData$domainSourceConceptId),
+          length(rowData$domainSourceConceptId) > 0
+        )) {
+          renderTranslateExecuteSql(
+            connection = connection,
+            sql = sql,
+            tempEmulationSchema = tempEmulationSchema,
+            domain_concept_id = rowData$domainSourceConceptId,
+            cdm_database_schema = cdmDatabaseSchema,
+            cohort_database_schema = cohortDatabaseSchema,
+            domain_table = rowData$domainTable,
+            domain_start_date = rowData$domainStartDate,
+            concept_set_table = "#inst_concept_sets",
+            cohortIds = cohortIds,
+            cohort_table = cohortTable,
+            progressBar = FALSE,
+            reportOverallTime = FALSE
+          )
+        }
+      }
+      sqlCooccurrence <- "WITH cooccurrence
+                          AS (
+                          	SELECT DISTINCT *
+                          	FROM #concept_cooccurrence
+                          	)
+                          SELECT a.cohort_id,
+                          	a.concept_id,
+                          	b.concept_id co_concept_id,
+                          	count(*) count_value
+                          FROM cooccurrence a
+                          INNER JOIN cooccurrence b ON a.cohort_id = b.cohort_id
+                          	AND a.person_id = b.person_id
+                          	AND b.concept_id > a.concept_id
+                          GROUP BY a.cohort_id,
+                          	a.concept_id,
+                          	b.concept_id;"
+                                
+      indexDateConceptCooccurrence <-
+        renderTranslateQuerySql(
+          sql = sqlCooccurrence,
+          connection = connection,
+          snakeCaseToCamelCase = TRUE
+        )
+      
+      sql <- "INSERT INTO @concept_id_table (concept_id)
+                  SELECT DISTINCT concept_id
+                  FROM #concept_cooccurrence;"
+      DatabaseConnector::renderTranslateExecuteSql(
+        connection = connection,
+        sql = sql,
+        tempEmulationSchema = tempEmulationSchema,
+        concept_id_table = "#concept_ids",
+        progressBar = FALSE,
+        reportOverallTime = FALSE
+      )
+      return(indexDateConceptCooccurrence)
+    }
+    indexDateConceptCooccurrence <-
+      getIndexDateConceptCooccurrence(
+        connection = connection,
+        cdmDatabaseSchema = cdmDatabaseSchema,
+        tempEmulationSchema = tempEmulationSchema,
+        cohortIds = subset$cohortId
+      )
+    
     delta <- Sys.time() - startBreakdownEvents
     ParallelLogger::logInfo(paste(
       "Breaking down index event took",
@@ -517,6 +643,9 @@ runConceptSetDiagnostics <- function(connection = NULL,
   }
   if (!is.null(conceptSets)) {
     exportedVocablary$conceptSets = conceptSets
+  }
+  if (!is.null(indexDateConceptCooccurrence)) {
+    exportedVocablary$indexDateConceptCooccurrence = indexDateConceptCooccurrence
   }
   
   delta <- Sys.time() - startConceptSetDiagnostics
@@ -896,7 +1025,8 @@ exportConceptInformation <- function(connection = NULL,
         ) %>%
         dplyr::tibble()
     }
-    data <- CohortDiagnostics:::.replaceNaInDataFrameWithEmptyString(data)
+    data <-
+      CohortDiagnostics:::.replaceNaInDataFrameWithEmptyString(data)
     vocabularyTablesData[[vocabularyTable]] <- data
   }
   delta <- Sys.time() - start
