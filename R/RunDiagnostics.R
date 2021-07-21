@@ -695,10 +695,6 @@ runCohortDiagnostics <- function(packageName = NULL,
         runBreakdownIndexEvents = runBreakdownIndexEvents
       )
       
-      for (i in (1:length(conceptSetDiagnostics))) {
-        conceptSetDiagnostics[[i]] <- .replaceNaInDataFrameWithEmptyString(conceptSetDiagnostics[[i]])
-      }
-      
       # write vocabulary tables
       vocabularyTableNames = c(
         "concept",
