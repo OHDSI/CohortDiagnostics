@@ -387,6 +387,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     records = observationPeriodDateRange$records,
     personDays = observationPeriodDateRange$personDays
   )
+  database <- .replaceNaInDataFrameWithEmptyString(database)
   writeToCsv(data = database,
              fileName = file.path(exportFolder, "database.csv"))
   delta <- Sys.time() - startMetaData
