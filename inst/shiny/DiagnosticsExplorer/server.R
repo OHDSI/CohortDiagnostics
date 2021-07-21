@@ -573,8 +573,10 @@ shiny::shinyServer(function(input, output, session) {
           shiny::tabPanel(title = "Cohort Count",
                           tags$br(),
                           DT::dataTableOutput(outputId = "cohortCountsTableInCohortDefinition"),
+                          tags$br(),
                           shiny::conditionalPanel(
                             condition = "output.cohortCountsTableInCohortDefinitionRowIsSelected",
+                            tags$h3("Inclusion Rules"),
                             DT::dataTableOutput(outputId = "inclusionRuleInCohortDefinition")
                           )),
           shiny::tabPanel(title = "Cohort definition",
@@ -752,8 +754,10 @@ shiny::shinyServer(function(input, output, session) {
           shiny::tabPanel(title = "Cohort Count",
                           tags$br(),
                           DT::dataTableOutput(outputId = "cohortCountsTableInCohortDefinitionSecond"),
+                          tags$br(),
                           shiny::conditionalPanel(
                             condition = "output.cohortCountsSecondTableInCohortDefinitionRowIsSelected",
+                            tags$h3("Inclusion Rules"),
                             DT::dataTableOutput(outputId = "inclusionRuleInCohortDefinitionSecond")
                           )),
           shiny::tabPanel(title = "Cohort definition",
