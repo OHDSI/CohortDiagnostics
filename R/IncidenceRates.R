@@ -83,7 +83,7 @@ runIncidenceRateDiagnostics <- function(connectionDetails = NULL,
       signif(delta, 3),
       attr(delta, "units")
     ))
-    return(dplyr::tibble())
+    return(NULL)
   }
   
   ParallelLogger::logInfo("Calculating incidence rate per year by age and gender")
