@@ -1055,27 +1055,27 @@ test_that("Data Retrieval", {
   
   skip_if_not(runDatabaseTests)
   
-  ## Connection pool----
-  connectionPool <- pool::dbPool(
-    drv = jdbcDriverFolder,
-    dbms = connectionDetails$dbms,
-    server = connectionDetails$server(),
-    port = 5432,
-    user = connectionDetails$user(),
-    password = connectionDetails$password()
-  )
-  dataSourceDatabase <- CohortDiagnostics::createDatabaseDataSource(
-    connectionDetails = NULL,
-    connection = connectionPool,
-    resultsDatabaseSchema = cohortDiagnosticsSchema,
-    vocabularyDatabaseSchema = cohortDiagnosticsSchema
-  )
-  # get data on instantiated cohorts usin dbpool connection
-  testthat::expect_true(nrow(
-    CohortDiagnostics::getResultsFromCohortCount(dataSource = dataSourceDatabase)
-  ) >= 0)
-  pool::poolClose(connectionPool)
-  dataSourceDatabase <- NULL
+  # ## Connection pool----
+  # connectionPool <- pool::dbPool(
+  #   drv = jdbcDriverFolder,
+  #   dbms = connectionDetails$dbms,
+  #   server = connectionDetails$server(),
+  #   port = 5432,
+  #   user = connectionDetails$user(),
+  #   password = connectionDetails$password()
+  # )
+  # dataSourceDatabase <- CohortDiagnostics::createDatabaseDataSource(
+  #   connectionDetails = NULL,
+  #   connection = connectionPool,
+  #   resultsDatabaseSchema = cohortDiagnosticsSchema,
+  #   vocabularyDatabaseSchema = cohortDiagnosticsSchema
+  # )
+  # # get data on instantiated cohorts usin dbpool connection
+  # testthat::expect_true(nrow(
+  #   CohortDiagnostics::getResultsFromCohortCount(dataSource = dataSourceDatabase)
+  # ) >= 0)
+  # pool::poolClose(connectionPool)
+  # dataSourceDatabase <- NULL
   
   ## non pool connection -----
   if (!exists('connection')) {
