@@ -5,6 +5,10 @@ testthat::test_that("Check if package is installed", {
   testthat::expect_false(CohortDiagnostics:::is_installed('rqrwqrewrqwRANDOMSTRINGdfdsfdsfds')) # just a random string to represent package does not exst
 })
 
+testthat::test_that("Check if package is installed", {
+  testthat::expect_null(CohortDiagnostics:::ensure_installed('dplyr'))
+})
+
 testthat::test_that("Check helper functions", {
   testthat::expect_equal(CohortDiagnostics:::camelCaseToTitleCase('appleTree'),
                          'Apple Tree')

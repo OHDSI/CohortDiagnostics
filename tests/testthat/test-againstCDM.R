@@ -849,8 +849,7 @@ test_that("Data Retrieval", {
   testthat::expect_true(nrow(inclusionRulesFromFile) >= 0)
   inclusionRulesFromFile2 <-
     CohortDiagnostics::getResultsFromInclusionRuleStatistics(dataSource = dataSourcePreMergedFile)
-  #!!!BUG
-  # testthat::expect_true(nrow(inclusionRulesFromFile2) >= 0)
+  testthat::expect_true(nrow(inclusionRulesFromFile2) >= 0)
   #### Neg ----
   testthat::expect_null(
     CohortDiagnostics::getResultsFromInclusionRuleStatistics(
@@ -1059,6 +1058,29 @@ test_that("Data Retrieval", {
   
   skip_if_not(runDatabaseTests)
   
+  ## Connection pool----
+  connectionPool <- pool::dbPool(
+    drv = DatabaseConnector::DatabaseConnectorDriver(),
+    dbms = connectionDetails$dbms,
+    server = connectionDetails$server(),
+    port = 5432,
+    user = connectionDetails$user(),
+    password = connectionDetails$password()
+  )
+  dataSourceDatabase <- CohortDiagnostics::createDatabaseDataSource(
+    connectionDetails = NULL,
+    connection = connectionPool,
+    resultsDatabaseSchema = cohortDiagnosticsSchema,
+    vocabularyDatabaseSchema = cohortDiagnosticsSchema
+  )
+  # get data on instantiated cohorts usin dbpool connection
+  testthat::expect_true(nrow(
+    CohortDiagnostics::getResultsFromCohortCount(dataSource = dataSourceDatabase)
+  ) >= 0)
+  pool::poolClose(connectionPool)
+  dataSourceDatabase <- NULL
+  
+  ## non pool connection -----
   if (!exists('connection')) {
     connection <- DatabaseConnector::connect(connectionDetails)
   }
@@ -1327,19 +1349,17 @@ test_that("Data Retrieval", {
                                                          cohortIds = 18348,
                                                          databaseIds = 'cdmV5')
   testthat::expect_true(nrow(resolvedMappedConceptSetFromDb$resolved) >= 0)
-  #!!!!!!!!!!!!!!! BUG - resolvedMappedConcepSetFromFile$mapped is NULL
-  # testthat::expect_null(resolvedMappedConceptSetFromDb$mapped)
-  #!!!!!!!!!!!!!!! BUG - for fields in file compared to db??
+  testthat::expect_null(resolvedMappedConceptSetFromDb$mapped)
+  #!!!!!!!!!!!!!!! BUG - not same columns
   # testthat::expect_true(dplyr::all_equal(resolvedMappedConceptSetFromDb$resolved,
   #                                        resolvedMappedConceptSetFromFile$resolved))
   resolvedMappedConceptSetFromDb2 <-
     CohortDiagnostics::getResultsResolveMappedConceptSet(dataSource = dataSourceDatabase)
-  #!!!!!!!!!!!!!!! BUG - invalid reason is not in db?
+  #!!!!!!!!!!!!!!! BUG - invalid reason is not in db? - not same columns
   # testthat::expect_true(dplyr::all_equal(resolvedMappedConceptSetFromDb2$resolved,
   #                                        resolvedMappedConceptSetFromFile2$resolved))
   testthat::expect_true(nrow(resolvedMappedConceptSetFromDb2$resolved) >= 0)
-  #!!!!!!!!!!!!!!! BUG - resolvedMappedConcepSetFromFile$mapped is NULL
-  # testthat::expect_true(nrow(resolvedMappedConceptSetFromDb2$mapped) >= 0)
+  testthat::expect_true(nrow(resolvedMappedConceptSetFromDb2$mapped) >= 0)
   #### Neg ----
   negativeResolved <-
     CohortDiagnostics::getResultsResolveMappedConceptSet(
