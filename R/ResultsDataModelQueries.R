@@ -935,6 +935,15 @@ getResultsResolveMappedConceptSet <- function(dataSource,
         snakeCaseToCamelCase = TRUE
       ) %>%
       dplyr::arrange(.data$resolvedConceptId)
+    
+  }
+  if (all(!is.null(mapped),
+          nrow(mapped) == 0)) {
+    mapped <- NULL
+  }
+  if (all(!is.null(resolved),
+          nrow(resolved) == 0)) {
+    resolved <- NULL
   }
   data <- list(resolved = resolved,
                mapped = mapped)
