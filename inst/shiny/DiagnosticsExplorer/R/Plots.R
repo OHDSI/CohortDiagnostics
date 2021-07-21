@@ -19,22 +19,43 @@ addShortName <-
     
   }
 
-plotTimeSeries <- function(data, columnFilter) {
+plotTimeSeries <- function(data, columnFilter, timeSeriesAggressionPeriodFilter = "Monthly") {
   if (is.null(data)) {
     return(NULL)
   }
+  
   data$Total <- data[[columnFilter]]
   
-  plot <- data %>%
+  if (timeSeriesAggressionPeriodFilter == "Yearly") {
+    pivotBy <- c("Total", "trend", "remainder")
+  } else {
+    pivotBy <- c("Total", "trend", "season_year", "remainder")
+  }
+  data <- data %>%
     fabletools::model(feasts::STL(Total ~ season(window = Inf))) %>%
     fabletools::components() %>%
-    feasts::autoplot()
+    tidyr::pivot_longer(cols = pivotBy ,
+                        names_to = "fieldName",
+                        values_to = "fieldValues")
+  
+  if (timeSeriesAggressionPeriodFilter != "Yearly") {
+    data$periodBegin <- as.Date(data$periodBegin)
+  }
+  
+  
+  aesthetics <-
+    list(
+      x = "periodBegin",
+      y = "fieldValues",
+      group = "fieldName",
+      color = "fieldName"
+    )
   
   data$tooltip <- c(
     paste0(
-      columnFilter,
+      data$fieldName,
       " = ",
-      data$Total,
+      data$fieldValues,
       "\nPeriod Begin = ",
       data$periodBegin,
       "\nDatabase ID = ",
@@ -44,26 +65,31 @@ plotTimeSeries <- function(data, columnFilter) {
     )
   )
   
-  
-  plot <- plot +
+  plot <-
+    ggplot2::ggplot(data = data, do.call(ggplot2::aes_string, aesthetics)) +
     ggplot2::theme_bw() +
+    ggiraph::geom_line_interactive(ggplot2::aes(), size = 0.4, alpha = 0.6) +
+    ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip),
+                                    size = 0.6,
+                                    alpha = 0.6) +
+    ggplot2::labs(x = "Period Begin", y = "") +
+    ggplot2::scale_y_continuous(labels = scales::comma) +
+    ggplot2::theme(legend.position = "none") +
+    ggplot2::facet_grid(.~factor(
+      fieldName,
+      levels = c("Total", "trend", "season_year", "remainder")
+    ), scales = "free_y") +
     ggplot2::theme(
       strip.text = ggplot2::element_text(size = 6),
       axis.text = ggplot2::element_text(size = 5),
       plot.title = ggplot2::element_text(size = 7),
       plot.subtitle =  ggplot2::element_text(size = 7),
       axis.title = ggplot2::element_text(size = 7)
-    ) +
-    ggplot2::labs(x = "Period Begin") +
-    ggplot2::scale_y_continuous(labels = scales::comma) +
-    ggplot2::theme(legend.position = "none")
+    )
   
-  
-  plot <- ggiraph::girafe(
-    ggobj = plot,
-    options = list(ggiraph::opts_sizing(width = .7),
-                   ggiraph::opts_zoom(max = 5))
-  )
+  plot <- ggiraph::girafe(ggobj = plot,
+                          options = list(ggiraph::opts_sizing(width = .5),
+                                         ggiraph::opts_zoom(max = 5)))
   return(plot)
 }
 
