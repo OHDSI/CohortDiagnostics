@@ -585,125 +585,135 @@ shiny::shinyServer(function(input, output, session) {
           shiny::tabPanel(
             title = "Concept Sets",
             value = "conceptSetOneTabPanel",
-              DT::dataTableOutput(outputId = "conceptsetExpressionTable"),
-              shiny::conditionalPanel(condition = "output.conceptSetExpressionRowSelected == true",
-                                      tags$table(tags$tr(
-                                        tags$td(
-                                          shinyWidgets::pickerInput(
-                                            inputId = "databaseOrVocabularySchema",
-                                            label = "Vocabulary version choices:",
-                                            choices = choicesFordatabaseOrVocabularySchema,
-                                            multiple = FALSE,
-                                            width = 200,
-                                            inline = TRUE,
-                                            choicesOpt = list(style = rep_len("color: black;", 999)),
-                                            options = shinyWidgets::pickerOptions(
-                                              actionsBox = TRUE,
-                                              liveSearch = TRUE,
-                                              size = 10,
-                                              liveSearchStyle = "contains",
-                                              liveSearchPlaceholder = "Type here to search",
-                                              virtualScroll = 50
-                                            )
-                                          )
-                                        ),
-                                        tags$td(
-                                          shiny::htmlOutput("personAndRecordCountInCohortDefinitionConceptSet")
-                                        )
+            DT::dataTableOutput(outputId = "conceptsetExpressionTable"),
+            tags$br(),
+            shiny::conditionalPanel(condition = "output.conceptSetExpressionRowSelected == true",
+                                    shinydashboard::box(
+                                      title = "Left Panel",
+                                      width = NULL,
+                                      solidHeader = FALSE,
+                                      collapsible = TRUE,
+                                      collapsed = TRUE,
+                                      shiny::conditionalPanel(condition = "output.conceptSetExpressionRowSelected == true",
+                                                              tags$table(tags$tr(
+                                                                tags$td(
+                                                                  shinyWidgets::pickerInput(
+                                                                    inputId = "databaseOrVocabularySchema",
+                                                                    label = "Vocabulary version choices:",
+                                                                    choices = choicesFordatabaseOrVocabularySchema,
+                                                                    multiple = FALSE,
+                                                                    width = 200,
+                                                                    inline = TRUE,
+                                                                    choicesOpt = list(style = rep_len("color: black;", 999)),
+                                                                    options = shinyWidgets::pickerOptions(
+                                                                      actionsBox = TRUE,
+                                                                      liveSearch = TRUE,
+                                                                      size = 10,
+                                                                      liveSearchStyle = "contains",
+                                                                      liveSearchPlaceholder = "Type here to search",
+                                                                      virtualScroll = 50
+                                                                    )
+                                                                  )
+                                                                ),
+                                                                tags$td(
+                                                                  shiny::htmlOutput("personAndRecordCountInCohortDefinitionConceptSet")
+                                                                )
+                                                              ),
+                                                              tags$tr(
+                                                                tags$td(colspan = 2,
+                                                                        shiny::radioButtons(
+                                                                          inputId = "conceptSetsType",
+                                                                          label = "",
+                                                                          choices = c("Concept Set Expression",
+                                                                                      "Resolved (included)",
+                                                                                      "Mapped (source)",
+                                                                                      "Orphan concepts",
+                                                                                      "Json"),
+                                                                          selected = "Concept Set Expression",
+                                                                          inline = TRUE
+                                                                        )
+                                                                ))
+                                                              )),
+                                      shiny::conditionalPanel(
+                                        condition = "output.conceptSetExpressionRowSelected == true &
+                                                      input.conceptSetsType != 'Resolved (included)' &
+                                                      input.conceptSetsType != 'Mapped (source)' &
+                                                      input.conceptSetsType != 'Json' &
+                                                      input.conceptSetsType != 'Orphan concepts'",
+                                        tags$table(width = "100%", 
+                                                   tags$tr(
+                                                     tags$td(align = "right",
+                                                             shiny::downloadButton(
+                                                               "saveCohortDefinitionConceptSetsTable",
+                                                               label = "",
+                                                               icon = shiny::icon("download"),
+                                                               style = "margin-top: 5px; margin-bottom: 5px;"
+                                                             )
+                                                     )
+                                                   )
+                                        ), 
+                                        DT::dataTableOutput(outputId = "cohortDefinitionConceptSetsTable")
                                       ),
-                                        tags$tr(
-                                        tags$td(colspan = 2,
-                                          shiny::radioButtons(
-                                            inputId = "conceptSetsType",
-                                            label = "",
-                                            choices = c("Concept Set Expression",
-                                                        "Resolved (included)",
-                                                        "Mapped (source)",
-                                                        "Orphan concepts",
-                                                        "Json"),
-                                            selected = "Concept Set Expression",
-                                            inline = TRUE
-                                          )
-                                        ))
-                                      )),
-              shiny::conditionalPanel(
-                condition = "output.conceptSetExpressionRowSelected == true &
-                input.conceptSetsType != 'Resolved (included)' &
-                input.conceptSetsType != 'Mapped (source)' &
-                input.conceptSetsType != 'Json' &
-                input.conceptSetsType != 'Orphan concepts'",
-                tags$table(width = "100%", 
-                           tags$tr(
-                             tags$td(align = "right",
-                                     shiny::downloadButton(
-                                       "saveCohortDefinitionConceptSetsTable",
-                                       label = "",
-                                       icon = shiny::icon("download"),
-                                       style = "margin-top: 5px; margin-bottom: 5px;"
-                                     )
-                             )
-                           )
-                ), 
-                DT::dataTableOutput(outputId = "cohortDefinitionConceptSetsTable")
-              ),
-              shiny::conditionalPanel(
-                condition = "input.conceptSetsType == 'Resolved (included)'",
-                tags$table(width = "100%", 
-                           tags$tr(
-                             tags$td(align = "right",
-                                     shiny::downloadButton(
-                                       "saveCohortDefinitionIncludedResolvedConceptsTable",
-                                       label = "",
-                                       icon = shiny::icon("download"),
-                                       style = "margin-top: 5px; margin-bottom: 5px;"
-                                     )
-                             )
-                           )
-                ), 
-                DT::dataTableOutput(outputId = "cohortDefinitionIncludedResolvedConceptsTable")
-              ),
-              shiny::conditionalPanel(
-                condition = "input.conceptSetsType == 'Mapped (source)'",
-                tags$table(width = "100%", 
-                           tags$tr(
-                             tags$td(align = "right",
-                                     shiny::downloadButton(
-                                       "saveCohortDefinitionMappedConceptsTable",
-                                       label = "",
-                                       icon = shiny::icon("download"),
-                                       style = "margin-top: 5px; margin-bottom: 5px;"
-                                     )
-                             )
-                           )
-                ), 
-                DT::dataTableOutput(outputId = "cohortDefinitionMappedConceptsTable")
-              ),
-              shiny::conditionalPanel(
-                condition = "input.conceptSetsType == 'Orphan concepts'",
-                tags$table(width = "100%", 
-                           tags$tr(
-                             tags$td(align = "right",
-                                     shiny::downloadButton(
-                                       "saveCohortDefinitionOrphanConceptsTable",
-                                       label = "",
-                                       icon = shiny::icon("download"),
-                                       style = "margin-top: 5px; margin-bottom: 5px;"
-                                     )
-                             )
-                           )
-                ), 
-                DT::dataTableOutput(outputId = "cohortDefinitionOrphanConceptTable")
-              ),
-              shiny::conditionalPanel(
-                condition = "input.conceptSetsType == 'Json'",
-                copyToClipboardButton(toCopyId = "cohortConceptsetExpressionJson",
-                                      style = "margin-top: 5px; margin-bottom: 5px;"),
-                shiny::verbatimTextOutput(outputId = "cohortConceptsetExpressionJson"),
-                tags$head(
-                  tags$style("#cohortConceptsetExpressionJson { max-height:400px};")
-                )
-              )
-            ), 
+                                      shiny::conditionalPanel(
+                                        condition = "input.conceptSetsType == 'Resolved (included)'",
+                                        tags$table(width = "100%", 
+                                                   tags$tr(
+                                                     tags$td(align = "right",
+                                                             shiny::downloadButton(
+                                                               "saveCohortDefinitionIncludedResolvedConceptsTable",
+                                                               label = "",
+                                                               icon = shiny::icon("download"),
+                                                               style = "margin-top: 5px; margin-bottom: 5px;"
+                                                             )
+                                                     )
+                                                   )
+                                        ), 
+                                        DT::dataTableOutput(outputId = "cohortDefinitionIncludedResolvedConceptsTable")
+                                      ),
+                                      shiny::conditionalPanel(
+                                        condition = "input.conceptSetsType == 'Mapped (source)'",
+                                        tags$table(width = "100%", 
+                                                   tags$tr(
+                                                     tags$td(align = "right",
+                                                             shiny::downloadButton(
+                                                               "saveCohortDefinitionMappedConceptsTable",
+                                                               label = "",
+                                                               icon = shiny::icon("download"),
+                                                               style = "margin-top: 5px; margin-bottom: 5px;"
+                                                             )
+                                                     )
+                                                   )
+                                        ), 
+                                        DT::dataTableOutput(outputId = "cohortDefinitionMappedConceptsTable")
+                                      ),
+                                      shiny::conditionalPanel(
+                                        condition = "input.conceptSetsType == 'Orphan concepts'",
+                                        tags$table(width = "100%", 
+                                                   tags$tr(
+                                                     tags$td(align = "right",
+                                                             shiny::downloadButton(
+                                                               "saveCohortDefinitionOrphanConceptsTable",
+                                                               label = "",
+                                                               icon = shiny::icon("download"),
+                                                               style = "margin-top: 5px; margin-bottom: 5px;"
+                                                             )
+                                                     )
+                                                   )
+                                        ), 
+                                        DT::dataTableOutput(outputId = "cohortDefinitionOrphanConceptTable")
+                                      ),
+                                      shiny::conditionalPanel(
+                                        condition = "input.conceptSetsType == 'Json'",
+                                        copyToClipboardButton(toCopyId = "cohortConceptsetExpressionJson",
+                                                              style = "margin-top: 5px; margin-bottom: 5px;"),
+                                        shiny::verbatimTextOutput(outputId = "cohortConceptsetExpressionJson"),
+                                        tags$head(
+                                          tags$style("#cohortConceptsetExpressionJson { max-height:400px};")
+                                        )
+                                      )
+                                    ))
+            
+          ), 
             
             shiny::tabPanel(
               title = "JSON",
@@ -755,123 +765,133 @@ shiny::shinyServer(function(input, output, session) {
             title = "Concept Sets",
             value = "conceptSetTwoTabPanel",
             DT::dataTableOutput(outputId = "conceptsetExpressionSecondTable"),
+            tags$br(),
             shiny::conditionalPanel(condition = "output.conceptSetExpressionSecondRowSelected == true",
-                                    tags$table(tags$tr(
-                                      tags$td(
-                                        shinyWidgets::pickerInput(
-                                          inputId = "databaseOrVocabularySchemaSecond",
-                                          label = "Vocabulary version choices:",
-                                          choices = choicesFordatabaseOrVocabularySchema,
-                                          multiple = FALSE,
-                                          width = 200,
-                                          inline = TRUE,
-                                          choicesOpt = list(style = rep_len("color: black;", 999)),
-                                          options = shinyWidgets::pickerOptions(
-                                            actionsBox = TRUE,
-                                            liveSearch = TRUE,
-                                            size = 10,
-                                            liveSearchStyle = "contains",
-                                            liveSearchPlaceholder = "Type here to search",
-                                            virtualScroll = 50
-                                          )
-                                        )
+                                    shinydashboard::box(
+                                      title = "Right Panel",
+                                      solidHeader = FALSE,
+                                      width = NULL,
+                                      collapsible = TRUE,
+                                      collapsed = TRUE,
+                                      shiny::conditionalPanel(condition = "output.conceptSetExpressionSecondRowSelected == true",
+                                                              tags$table(tags$tr(
+                                                                tags$td(
+                                                                  shinyWidgets::pickerInput(
+                                                                    inputId = "databaseOrVocabularySchemaSecond",
+                                                                    label = "Vocabulary version choices:",
+                                                                    choices = choicesFordatabaseOrVocabularySchema,
+                                                                    multiple = FALSE,
+                                                                    width = 200,
+                                                                    inline = TRUE,
+                                                                    choicesOpt = list(style = rep_len("color: black;", 999)),
+                                                                    options = shinyWidgets::pickerOptions(
+                                                                      actionsBox = TRUE,
+                                                                      liveSearch = TRUE,
+                                                                      size = 10,
+                                                                      liveSearchStyle = "contains",
+                                                                      liveSearchPlaceholder = "Type here to search",
+                                                                      virtualScroll = 50
+                                                                    )
+                                                                  )
+                                                                ),
+                                                                tags$td(
+                                                                  shiny::htmlOutput("personAndRecordCountInCohortDefinitionConceptSetSecond")
+                                                                )
+                                                              ),
+                                                              tags$tr(
+                                                                tags$td(colspan = 2,
+                                                                        shiny::radioButtons(
+                                                                          inputId = "conceptSetsTypeSecond",
+                                                                          label = "",
+                                                                          choices = c("Concept Set Expression",
+                                                                                      "Resolved (included)",
+                                                                                      "Mapped (source)",
+                                                                                      "Orphan concepts",
+                                                                                      "Json"),
+                                                                          selected = "Concept Set Expression",
+                                                                          inline = TRUE
+                                                                        )
+                                                                )
+                                                              ))),
+                                      shiny::conditionalPanel(
+                                        condition = "output.conceptSetExpressionSecondRowSelected == true &
+                                                      input.conceptSetsTypeSecond != 'Resolved (included)' &
+                                                      input.conceptSetsTypeSecond != 'Mapped (source)' &
+                                                      input.conceptSetsTypeSecond != 'Json' &
+                                                      input.conceptSetsTypeSecond != 'Orphan concepts'",
+                                        tags$table(width = "100%",
+                                                   tags$tr(
+                                                     tags$td(align = "right",
+                                                             shiny::downloadButton(
+                                                               "saveCohortDefinitionConceptSetsTableSecond",
+                                                               label = "",
+                                                               icon = shiny::icon("download"),
+                                                               style = "margin-top: 5px; margin-bottom: 5px;"
+                                                             )
+                                                     )
+                                                   )
+                                        ),
+                                        DT::dataTableOutput(outputId = "cohortDefinitionConceptSetsSecondTable")
                                       ),
-                                      tags$td(
-                                        shiny::htmlOutput("personAndRecordCountInCohortDefinitionConceptSetSecond")
-                                      )
-                                    ),
-                                    tags$tr(
-                                      tags$td(colspan = 2,
-                                        shiny::radioButtons(
-                                          inputId = "conceptSetsTypeSecond",
-                                          label = "",
-                                          choices = c("Concept Set Expression",
-                                                      "Resolved (included)",
-                                                      "Mapped (source)",
-                                                      "Orphan concepts",
-                                                      "Json"),
-                                          selected = "Concept Set Expression",
-                                          inline = TRUE
+                                      shiny::conditionalPanel(
+                                        condition = "input.conceptSetsTypeSecond == 'Resolved (included)'",
+                                        tags$table(width = "100%",
+                                                   tags$tr(
+                                                     tags$td(align = "right",
+                                                             shiny::downloadButton(
+                                                               "saveCohortDefinitionIncludedResolvedConceptsSecondTable",
+                                                               label = "",
+                                                               icon = shiny::icon("download"),
+                                                               style = "margin-top: 5px; margin-bottom: 5px;"
+                                                             )
+                                                     )
+                                                   )
+                                        ),
+                                        DT::dataTableOutput(outputId = "cohortDefinitionIncludedResolvedConceptsSecondTable")
+                                      ),
+                                      shiny::conditionalPanel(
+                                        condition = "input.conceptSetsTypeSecond == 'Mapped (source)'",
+                                        tags$table(width = "100%",
+                                                   tags$tr(
+                                                     tags$td(align = "right",
+                                                             shiny::downloadButton(
+                                                               "saveCohortDefinitionMappedConceptsSecondTable",
+                                                               label = "",
+                                                               icon = shiny::icon("download"),
+                                                               style = "margin-top: 5px; margin-bottom: 5px;"
+                                                             )
+                                                     )
+                                                   )
+                                        ),
+                                        DT::dataTableOutput(outputId = "cohortDefinitionMappedConceptsSecondTable")
+                                      ),
+                                      shiny::conditionalPanel(
+                                        condition = "input.conceptSetsTypeSecond == 'Orphan concepts'",
+                                        tags$table(width = "100%",
+                                                   tags$tr(
+                                                     tags$td(align = "right",
+                                                             shiny::downloadButton(
+                                                               "saveCohortDefinitionOrphanConceptsSecondTable",
+                                                               label = "",
+                                                               icon = shiny::icon("download"),
+                                                               style = "margin-top: 5px; margin-bottom: 5px;"
+                                                             )
+                                                     )
+                                                   )
+                                        ),
+                                        DT::dataTableOutput(outputId = "cohortDefinitionOrphanConceptSecondTable")
+                                      ),
+                                      shiny::conditionalPanel(
+                                        condition = "input.conceptSetsTypeSecond == 'Json'",
+                                        copyToClipboardButton(toCopyId = "cohortConceptsetExpressionJsonSecond",
+                                                              style = "margin-top: 5px; margin-bottom: 5px;"),
+                                        shiny::verbatimTextOutput(outputId = "cohortConceptsetExpressionJsonSecond"),
+                                        tags$head(
+                                          tags$style("#cohortConceptsetExpressionJsonSecond { max-height:400px};")
                                         )
                                       )
-                                    ))),
-            shiny::conditionalPanel(
-              condition = "output.conceptSetExpressionSecondRowSelected == true &
-                input.conceptSetsTypeSecond != 'Resolved (included)' &
-                input.conceptSetsTypeSecond != 'Mapped (source)' &
-                input.conceptSetsTypeSecond != 'Json' &
-                input.conceptSetsTypeSecond != 'Orphan concepts'",
-              tags$table(width = "100%",
-                         tags$tr(
-                           tags$td(align = "right",
-                                   shiny::downloadButton(
-                                     "saveCohortDefinitionConceptSetsTableSecond",
-                                     label = "",
-                                     icon = shiny::icon("download"),
-                                     style = "margin-top: 5px; margin-bottom: 5px;"
-                                   )
-                           )
-                         )
-              ),
-              DT::dataTableOutput(outputId = "cohortDefinitionConceptSetsSecondTable")
-            ),
-            shiny::conditionalPanel(
-              condition = "input.conceptSetsTypeSecond == 'Resolved (included)'",
-              tags$table(width = "100%",
-                         tags$tr(
-                           tags$td(align = "right",
-                                   shiny::downloadButton(
-                                     "saveCohortDefinitionIncludedResolvedConceptsSecondTable",
-                                     label = "",
-                                     icon = shiny::icon("download"),
-                                     style = "margin-top: 5px; margin-bottom: 5px;"
-                                   )
-                           )
-                         )
-              ),
-              DT::dataTableOutput(outputId = "cohortDefinitionIncludedResolvedConceptsSecondTable")
-            ),
-            shiny::conditionalPanel(
-              condition = "input.conceptSetsTypeSecond == 'Mapped (source)'",
-              tags$table(width = "100%",
-                         tags$tr(
-                           tags$td(align = "right",
-                                   shiny::downloadButton(
-                                     "saveCohortDefinitionMappedConceptsSecondTable",
-                                     label = "",
-                                     icon = shiny::icon("download"),
-                                     style = "margin-top: 5px; margin-bottom: 5px;"
-                                   )
-                           )
-                         )
-              ),
-              DT::dataTableOutput(outputId = "cohortDefinitionMappedConceptsSecondTable")
-            ),
-            shiny::conditionalPanel(
-              condition = "input.conceptSetsTypeSecond == 'Orphan concepts'",
-              tags$table(width = "100%",
-                         tags$tr(
-                           tags$td(align = "right",
-                                   shiny::downloadButton(
-                                     "saveCohortDefinitionOrphanConceptsSecondTable",
-                                     label = "",
-                                     icon = shiny::icon("download"),
-                                     style = "margin-top: 5px; margin-bottom: 5px;"
-                                   )
-                           )
-                         )
-              ),
-              DT::dataTableOutput(outputId = "cohortDefinitionOrphanConceptSecondTable")
-            ),
-            shiny::conditionalPanel(
-              condition = "input.conceptSetsTypeSecond == 'Json'",
-              copyToClipboardButton(toCopyId = "cohortConceptsetExpressionJsonSecond",
-                                    style = "margin-top: 5px; margin-bottom: 5px;"),
-              shiny::verbatimTextOutput(outputId = "cohortConceptsetExpressionJsonSecond"),
-              tags$head(
-                tags$style("#cohortConceptsetExpressionJsonSecond { max-height:400px};")
-              )
-            )
+                                    ))
+            
           ), 
           
           shiny::tabPanel(
