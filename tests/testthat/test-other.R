@@ -7,7 +7,6 @@ testthat::test_that("Check if package is installed", {
 
 testthat::test_that("Check if package is installed", {
   testthat::expect_null(CohortDiagnostics:::ensure_installed('dplyr'))
-  testthat::expect_false(CohortDiagnostics:::ensure_installed('rqrwqrewrqwRANDOMSTRINGdfdsfdsfds')) # just a random string to represent package does not exst
 })
 
 testthat::test_that("Check helper functions", {
