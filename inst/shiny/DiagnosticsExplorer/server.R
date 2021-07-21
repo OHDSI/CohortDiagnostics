@@ -182,7 +182,7 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(row)) {
       return(NULL)
     } else {
-      tags$table(
+      tags$table(height = '60', style = "overflow : auto",
         tags$tr(
           tags$td(
             tags$b( "Selected cohort: ")
@@ -201,7 +201,7 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(row)) {
       return(NULL)
     } else {
-      tags$table(
+      tags$table(height = '60', style = "overflow : auto",
         tags$tr(
           tags$td(
            tags$b( "Selected cohort:")
