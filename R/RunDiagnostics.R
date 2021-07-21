@@ -330,6 +330,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   
   cohorts <- cohorts %>%
     dplyr::select(cohortTableColumnNamesExpected)
+  cohorts <- .replaceNaInDataFrameWithEmptyString(cohorts)
   writeToCsv(data = cohorts,
              fileName = file.path(exportFolder, "cohort.csv"))
   
