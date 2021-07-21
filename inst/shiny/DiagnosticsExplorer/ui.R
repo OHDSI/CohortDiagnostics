@@ -136,6 +136,7 @@ sidebarMenu <-
     shiny::conditionalPanel(
       condition = "input.tabs!='incidenceRate' &
       input.tabs != 'timeDistribution' &
+      input.tabs != 'timeSeries' &
       input.tabs != 'cohortCharacterization' &
       input.tabs != 'cohortCounts' &
       input.tabs != 'indexEventBreakdown' &
@@ -166,6 +167,7 @@ sidebarMenu <-
     shiny::conditionalPanel(
       condition = "input.tabs=='incidenceRate' |
       input.tabs == 'timeDistribution' |
+      input.tabs == 'timeSeries' |
       input.tabs =='cohortCharacterization' |
       input.tabs == 'cohortCounts' |
       input.tabs == 'indexEventBreakdown' |
@@ -227,6 +229,7 @@ sidebarMenu <-
     shiny::conditionalPanel(
       condition = "input.tabs != 'databaseInformation' &
       input.tabs != 'cohortDefinition' &
+      input.tabs != 'timeSeries' &
       input.tabs != 'cohortCounts' &
       input.tabs != 'cohortOverlap'&
       input.tabs != 'incidenceRate' &
@@ -249,6 +252,7 @@ sidebarMenu <-
     ),
     shiny::conditionalPanel(
       condition = "input.tabs == 'cohortCounts' |
+      input.tabs == 'timeSeries' |
       input.tabs == 'cohortOverlap' |
       input.tabs == 'incidenceRate' |
       input.tabs == 'timeDistribution'",
@@ -684,13 +688,37 @@ bodyTabItems <- shinydashboard::tabItems(
       solidHeader = TRUE,
       
       shiny::column(
-        6,
+        3,
         shiny::radioButtons(
           inputId = "timeSeriesType",
           label = "",
           choices = c("Table", "Plot"),
           selected = "Table",
           inline = TRUE
+        )
+      ),
+      shiny::column(
+        3,
+        shiny::conditionalPanel(
+          condition = "input.timeSeriesType=='Plot'",
+          shinyWidgets::pickerInput(
+            inputId = "timeSeriesPlotCategory",
+            label = "Show decomposition plot by:",
+            width = 300,
+            choices = c("Total", "trend", "season_year", "reminder"),
+            selected = c("trend"),
+            multiple = TRUE,
+            choicesOpt = list(style = rep_len("color: black;", 999)),
+            options = shinyWidgets::pickerOptions(
+              actionsBox = TRUE,
+              liveSearch = TRUE,
+              size = 10,
+              dropupAuto = TRUE,
+              liveSearchStyle = "contains",
+              liveSearchPlaceholder = "Type here to search",
+              virtualScroll = 50
+            )
+          )
         )
       ),
       shiny::column(

@@ -19,7 +19,7 @@ addShortName <-
     
   }
 
-plotTimeSeries <- function(data, columnFilter, timeSeriesAggressionPeriodFilter = "Monthly") {
+plotTimeSeries <- function(data, columnFilter, timeSeriesAggressionPeriodFilter = "Monthly", timeSeriesPlotCategory = c()) {
   if (is.null(data)) {
     return(NULL)
   }
@@ -65,6 +65,9 @@ plotTimeSeries <- function(data, columnFilter, timeSeriesAggressionPeriodFilter 
     )
   )
   
+  # Filtering by Decomposition plot category
+  data <- data[data$fieldName %in% timeSeriesPlotCategory,]
+  
   plot <-
     ggplot2::ggplot(data = data, do.call(ggplot2::aes_string, aesthetics)) +
     ggplot2::theme_bw() +
@@ -75,7 +78,7 @@ plotTimeSeries <- function(data, columnFilter, timeSeriesAggressionPeriodFilter 
     ggplot2::labs(x = "Period Begin", y = "") +
     ggplot2::scale_y_continuous(labels = scales::comma) +
     ggplot2::theme(legend.position = "none") +
-    ggplot2::facet_grid(.~factor(
+    ggplot2::facet_grid(databaseId + cohortId~factor(
       fieldName,
       levels = c("Total", "trend", "season_year", "remainder")
     ), scales = "free_y") +

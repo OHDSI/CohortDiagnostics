@@ -3734,8 +3734,8 @@ shiny::shinyServer(function(input, output, session) {
       
       data <- getResultsFromFixedTimeSeries(
         dataSource = dataSource,
-        cohortIds = cohortId(),
-        databaseIds = input$database
+        cohortIds = cohortIds(),
+        databaseIds = databaseIds()
       )
       return(data)
     } else {
@@ -3874,7 +3874,7 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(nrow(data) > 0,
                   "No timeseries data for the combination."))
     
-    plot <- plotTimeSeries(data, titleCaseToCamelCase(input$timeSeriesPlotFilters),input$timeSeriesFilter)
+    plot <- plotTimeSeries(data, titleCaseToCamelCase(input$timeSeriesPlotFilters),input$timeSeriesFilter,input$timeSeriesPlotCategory)
     
     # return(plot)
   })
