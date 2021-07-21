@@ -1057,7 +1057,7 @@ test_that("Data Retrieval", {
   
   ## Connection pool----
   connectionPool <- pool::dbPool(
-    drv = DatabaseConnector::DatabaseConnectorDriver(),
+    drv = jdbcDriverFolder,
     dbms = connectionDetails$dbms,
     server = connectionDetails$server(),
     port = 5432,
