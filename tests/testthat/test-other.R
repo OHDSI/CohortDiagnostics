@@ -1,5 +1,3 @@
-library(magrittr)
-
 testthat::test_that("Check if package is installed", {
   testthat::expect_true(CohortDiagnostics:::is_installed('dplyr'))
   testthat::expect_false(CohortDiagnostics:::is_installed('rqrwqrewrqwRANDOMSTRINGdfdsfdsfds')) # just a random string to represent package does not exst
@@ -77,3 +75,4 @@ testthat::test_that("Check mismatch between SQL and inclusion rules", {
   )
 
 })
+
