@@ -494,6 +494,8 @@ bodyTabItems <- shinydashboard::tabItems(
     ),
     shiny::conditionalPanel(
       condition = "output.cohortCountRowIsSelected == true",
+      tags$br(),
+      tags$h3("Inclusion Rules"),
       DT::dataTableOutput("InclusionRuleStatForCohortSeletedTable")
     )
   ),
