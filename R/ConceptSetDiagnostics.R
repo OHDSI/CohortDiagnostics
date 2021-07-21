@@ -505,6 +505,13 @@ runConceptSetDiagnostics <- function(connection = NULL,
         progressBar = FALSE,
         reportOverallTime = FALSE
       )
+	  renderTranslateExecuteSql(
+        connection = connection,
+        sql = sqlDdlDrop,
+        tempEmulationSchema = tempEmulationSchema,
+        progressBar = FALSE,
+        reportOverallTime = FALSE
+      )	  
       return(indexDateConceptCooccurrence)
     }
     indexDateConceptCooccurrence <-
