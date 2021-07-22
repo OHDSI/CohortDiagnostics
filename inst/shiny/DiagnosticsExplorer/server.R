@@ -2672,7 +2672,7 @@ shiny::shinyServer(function(input, output, session) {
   
   #Radio button synchronization
   shiny::observeEvent(eventExpr = {
-    list(input$conceptSetsType, input$conceptSetsTypeSecond)
+    input$conceptSetsType
   }, handlerExpr = {
     if (noOfRowSelectedInCohortDefinitionTable() == 6) {
       if (!is.null(input$conceptSetsType)) {
@@ -2686,6 +2686,26 @@ shiny::shinyServer(function(input, output, session) {
           updateRadioButtons(session = session, inputId = "conceptSetsTypeSecond", selected = "Orphan concepts")
         } else if (input$conceptSetsType == "Json") {
           updateRadioButtons(session = session, inputId = "conceptSetsTypeSecond", selected = "Json")
+        }
+      }
+    }
+  })
+  
+  shiny::observeEvent(eventExpr = {
+    input$conceptSetsTypeSecond
+  }, handlerExpr = {
+    if (noOfRowSelectedInCohortDefinitionTable() == 6) {
+      if (!is.null(input$conceptSetsTypeSecond)) {
+        if (input$conceptSetsTypeSecond == "Concept Set Expression") {
+          updateRadioButtons(session = session, inputId = "conceptSetsType", selected = "Concept Set Expression")
+        } else if (input$conceptSetsTypeSecond == "Resolved (included)") {
+          updateRadioButtons(session = session, inputId = "conceptSetsType", selected = "Resolved (included)")
+        } else if (input$conceptSetsTypeSecond == "Mapped (source)") {
+          updateRadioButtons(session = session, inputId = "conceptSetsType", selected = "Mapped (source)")
+        } else if (input$conceptSetsTypeSecond == "Orphan concepts") {
+          updateRadioButtons(session = session, inputId = "conceptSetsType", selected = "Orphan concepts")
+        } else if (input$conceptSetsTypeSecond == "Json") {
+          updateRadioButtons(session = session, inputId = "conceptSetsType", selected = "Json")
         }
       }
     }
