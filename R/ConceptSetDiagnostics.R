@@ -107,8 +107,8 @@ runConceptSetDiagnostics <- function(connection = NULL,
   }
   
   uniqueConceptSets <-
-    conceptSets[!duplicated(conceptSets$uniqueConceptSetId), ] %>%
-    dplyr::select(-.data$cohortId, -.data$conceptSetId)
+    conceptSets[!duplicated(conceptSets$uniqueConceptSetId),] %>%
+    dplyr::select(-.data$cohortId,-.data$conceptSetId)
   
   # andromeda object ----
   conceptSetDiagnosticsResults <- Andromeda::andromeda()
@@ -173,7 +173,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
       by = c("cohortId", "conceptSetId")
     )
   conceptSetWithExclude <-
-    conceptSetWithExclude[!duplicated(conceptSetWithExclude$uniqueConceptSetId), ] %>%
+    conceptSetWithExclude[!duplicated(conceptSetWithExclude$uniqueConceptSetId),] %>%
     dplyr::filter(.data$isExcluded == TRUE) %>%
     dplyr::select(.data$uniqueConceptSetId,
                   .data$conceptId,
@@ -285,49 +285,32 @@ runConceptSetDiagnostics <- function(connection = NULL,
     # Orphan concepts ----
     ParallelLogger::logInfo("Finding orphan concepts")
     startOrphanCodes <- Sys.time()
-    .findOrphanConcepts(
+    orphanConcepts <- findOrphanConcepts(
       connection = connection,
       cdmDatabaseSchema = cdmDatabaseSchema,
       vocabularyDatabaseSchema = vocabularyDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
       instantiatedCodeSets = "#inst_concept_sets",
-      orphanConceptTable = "#orphan_concepts"
-    )
-    orphanCodes <-
-      renderTranslateQuerySql(
-        sql = "SELECT * FROM @orphanConceptTable;",
-        connection = connection,
-        tempEmulationSchema = tempEmulationSchema,
-        orphanConceptTable = "#orphan_concepts"
-      )
-    
-    sql <- "INSERT INTO @concept_id_table (concept_id)
-                  SELECT DISTINCT concept_id
-                  FROM @orphan_concept_table;"
-    DatabaseConnector::renderTranslateExecuteSql(
-      connection = connection,
-      sql = sql,
-      tempEmulationSchema = tempEmulationSchema,
-      concept_id_table = "#concept_ids",
-      orphan_concept_table = "#orphan_concepts",
-      progressBar = FALSE,
-      reportOverallTime = FALSE
+      orphanConceptTable = "#orphan_concepts",
+      conceptIdUniverse = "#concept_ids"
     )
     
-    conceptSetDiagnosticsResults$orphanCodes <- orphanCodes %>%
+    orphanCodes <- orphanConcepts %>%
+      dplyr::inner_join(conceptSetDiagnosticsResults$resolvedConceptIds %>%
+                          dplyr::collect(),
+                        by = "conceptId") %>%
+      dplyr::select(.data$cohortId,
+                    .data$conceptSetId,
+                    .data$orphanConceptId) %>%
       dplyr::distinct() %>%
-      dplyr::rename(uniqueConceptSetId = .data$codesetId) %>%
-      dplyr::inner_join(
-        conceptSets %>%
-          dplyr::select(
-            .data$uniqueConceptSetId,
-            .data$cohortId,
-            .data$conceptSetId
-          ),
-        by = "uniqueConceptSetId"
+      dplyr::anti_join(
+        conceptSetDiagnosticsResults$resolvedConceptIds %>%
+          dplyr::collect() %>%
+          dplyr::rename(orphanConceptId = .data$conceptId),
+        by = c("cohortId", "conceptSetId", "orphanConceptId")
       ) %>%
-      dplyr::select(-.data$uniqueConceptSetId) %>%
-      dplyr::relocate(.data$cohortId, .data$conceptSetId)
+      dplyr::rename(conceptId = .data$orphanConceptId) %>%
+      dplyr::select(.data$cohortId, .data$conceptSetId, .data$conceptId)
     
     delta <- Sys.time() - startOrphanCodes
     ParallelLogger::logInfo("Finding orphan concepts took ",
@@ -335,8 +318,15 @@ runConceptSetDiagnostics <- function(connection = NULL,
                             " ",
                             attr(delta, "units"))
   }
-  browser()
-  debug(exportConceptInformation)
+
+  # get concept count----
+  conceptSetDiagnosticsResults$conceptCount <- getConceptsInDataSource(
+    connection = connection,
+    cdmDatabaseSchema = cdmDatabaseSchema,
+    tempEmulationSchema = tempEmulationSchema,
+    conceptIdUniverse = "#concept_ids"
+  )
+  
   ParallelLogger::logInfo("Retrieving concept information")
   exportedVocablary <- exportConceptInformation(
     connection = connection,
@@ -345,7 +335,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
     conceptIdTable = "#concept_ids"
   )
   
-  # Drop temporay tables
+  # Drop temporary tables
   ParallelLogger::logTrace("Dropping temp concept set table")
   sql <-
     "TRUNCATE TABLE #inst_concept_sets; DROP TABLE #inst_concept_sets;"
@@ -402,13 +392,6 @@ runConceptSetDiagnostics <- function(connection = NULL,
   
   return(exportedVocablary)
 }
-
-
-
-
-
-
-
 
 
 ##################### private function #########################
@@ -516,7 +499,7 @@ combineConceptSetsFromCohorts <- function(cohorts) {
   conceptSetCounter <- 0
   
   for (i in (1:nrow(cohorts))) {
-    cohort <- cohorts[i, ]
+    cohort <- cohorts[i,]
     sql <-
       extractConceptSetsSqlFromCohortSql(cohortSql = cohort$sql)
     json <-
@@ -602,13 +585,14 @@ mergeTempTables <-
     }
   }
 
+# function: resolveConceptSetsToTable ----
 resolveConceptSetsToTable <- function(uniqueConceptSets,
                                       connection,
                                       cdmDatabaseSchema,
                                       vocabularyDatabaseSchema = cdmDatabaseSchema,
                                       tempEmulationSchema,
                                       conceptSetsTable = '#inst_concept_sets') {
-  ParallelLogger::logInfo("Instantiating concept sets")
+  ParallelLogger::logInfo(" - Instantiating concept sets")
   sql <- sapply(split(uniqueConceptSets, 1:nrow(uniqueConceptSets)),
                 function(x) {
                   sub(
@@ -675,7 +659,7 @@ getCodeSetIds <- function(criterionList) {
   }
 }
 
-
+# function: exportConceptInformation ----
 exportConceptInformation <- function(connection = NULL,
                                      cdmDatabaseSchema,
                                      tempEmulationSchema,
@@ -783,42 +767,15 @@ exportConceptInformation <- function(connection = NULL,
   return(vocabularyTablesData)
 }
 
-
-createConceptCountsTable <- function(connectionDetails = NULL,
-                                     connection = NULL,
-                                     cdmDatabaseSchema,
-                                     tempEmulationSchema = NULL,
-                                     conceptCountsDatabaseSchema = cdmDatabaseSchema,
-                                     conceptCountsTable = "concept_counts") {
-  ParallelLogger::logInfo("Creating internal concept counts table")
-  if (is.null(connection)) {
-    connection <- DatabaseConnector::connect(connectionDetails)
-    on.exit(DatabaseConnector::disconnect(connection))
-  }
-  sql <-
-    SqlRender::loadRenderTranslateSql(
-      "CreateConceptCountTable.sql",
-      packageName = "CohortDiagnostics",
-      dbms = connection@dbms,
-      tempEmulationSchema = tempEmulationSchema,
-      cdm_database_schema = cdmDatabaseSchema,
-      work_database_schema = conceptCountsDatabaseSchema,
-      concept_counts_table = conceptCountsTable,
-      table_is_temp = TRUE
-    )
-  DatabaseConnector::executeSql(connection, sql)
-}
-
-
-
-
-.findOrphanConcepts <- function(connectionDetails = NULL,
-                                connection = NULL,
-                                cdmDatabaseSchema,
-                                vocabularyDatabaseSchema = cdmDatabaseSchema,
-                                tempEmulationSchema = NULL,
-                                instantiatedCodeSets = "#inst_concept_sets",
-                                orphanConceptTable = '#recommended_concepts') {
+# function: findOrphanConcepts ----
+findOrphanConcepts <- function(connectionDetails = NULL,
+                               connection = NULL,
+                               cdmDatabaseSchema,
+                               vocabularyDatabaseSchema = cdmDatabaseSchema,
+                               tempEmulationSchema = NULL,
+                               instantiatedCodeSets = "#inst_concept_sets",
+                               orphanConceptTable = '#recommended_concepts',
+                               conceptIdUniverse = "#concept_ids") {
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
@@ -830,7 +787,8 @@ createConceptCountsTable <- function(connectionDetails = NULL,
     tempEmulationSchema = tempEmulationSchema,
     vocabulary_database_schema = vocabularyDatabaseSchema,
     orphan_concept_table = orphanConceptTable,
-    instantiated_code_sets = instantiatedCodeSets
+    instantiated_code_sets = instantiatedCodeSets,
+    concept_id_universe = conceptIdUniverse
   )
   DatabaseConnector::executeSql(connection, sql)
   ParallelLogger::logTrace("- Fetching orphan concepts from server")
@@ -843,12 +801,10 @@ createConceptCountsTable <- function(connectionDetails = NULL,
       orphan_concept_table = orphanConceptTable,
       snakeCaseToCamelCase = TRUE
     )
-  
   ParallelLogger::logTrace("- Dropping orphan temp tables")
   sql <-
-    SqlRender::loadRenderTranslateSql(
     "IF OBJECT_ID('tempdb..@orphan_concept_table', 'U') IS NOT NULL
-    	DROP TABLE @orphan_concept_table;")
+    	DROP TABLE @orphan_concept_table;"
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = sql,
@@ -859,28 +815,28 @@ createConceptCountsTable <- function(connectionDetails = NULL,
   return(orphanConcepts)
 }
 
-
-
-
+# function: getConceptsInDataSource ----
 ### Concepts in data source -----
 getConceptsInDataSource <- function(connection,
                                     cdmDatabaseSchema,
                                     tempEmulationSchema,
                                     conceptIdUniverse = "#concept_ids") {
+  ParallelLogger::logInfo(" - Starting counts of concepts in datasource.")
+  ParallelLogger::logTrace(" - Reading domains.csv")
   domains <-
     readr::read_csv(
       system.file("csv", "domains.csv", package = "CohortDiagnostics"),
       col_types = readr::cols(),
       guess_max = min(1e7)
     )
-  sql <- "SELECT @domain_concept_id AS concept_id,
+  sql <- "SELECT @domain_concept_id concept_id,
         {@domain_source_concept_id != ''} ? {
-                	@domain_source_concept_id AS source_concept_id,
+                	@domain_source_concept_id source_concept_id,
         }
-                	YEAR(@domain_start_date) AS event_year,
-                	MONTH(@domain_start_date) AS event_month,
-                	COUNT_BIG(DISTINCT person_id) AS concept_subjects,
-                	COUNT_BIG(*) AS concept_count
+                	YEAR(@domain_start_date) event_year,
+                	MONTH(@domain_start_date) event_month,
+                	COUNT_BIG(DISTINCT person_id) concept_subjects,
+                	COUNT_BIG(*) concept_count
                 FROM @cdm_database_schema.@domain_table
                 INNER JOIN (
                 	SELECT DISTINCT concept_id
@@ -892,34 +848,41 @@ getConceptsInDataSource <- function(connection,
         }
                 GROUP BY @domain_concept_id,
         {@domain_source_concept_id != ''} ? {
-                	@domain_source_concept_id AS source_concept_id,
+                	@domain_source_concept_id,
         }
                 	YEAR(@domain_start_date),
                 	MONTH(@domain_start_date);"
   
+  conceptsInDataSource <- list()
   for (i in (1:nrow(domains))) {
-    rowData <- domains[i,]
-    DatabaseConnector::renderTranslateQuerySqlToAndromeda(
-      connection = connection,
-      sql = sql,
-      tempEmulationSchema = tempEmulationSchema,
-      domain_concept_id = rowData$domainConceptId,
-      cdm_database_schema = cdmDatabaseSchema,
-      cohort_database_schema = cohortDatabaseSchema,
-      domain_table = rowData$domainTable,
-      domain_start_date = rowData$domainStartDate,
-      concept_id_universe = conceptIdUniverse,
-      progressBar = FALSE,
-      reportOverallTime = FALSE
-    )
+    rowData <- domains[i, ]    
+    ParallelLogger::logTrace(paste0(
+      "   - Counting concepts in ",
+      rowData$domainTable
+    ))
+    conceptsInDataSource[[i]] <-
+      DatabaseConnector::renderTranslateQuerySql(
+        connection = connection,
+        sql = sql,
+        tempEmulationSchema = tempEmulationSchema,
+        domain_concept_id = rowData$domainConceptId,
+        domain_source_concept_id = rowData$domainSourceConceptId,
+        cdm_database_schema = cdmDatabaseSchema,
+        domain_table = rowData$domainTable,
+        domain_start_date = rowData$domainStartDate,
+        concept_id_universe = conceptIdUniverse
+      )
   }
+  conceptsInDataSource <- dplyr::bind_rows(conceptsInDataSource)
+  return(conceptsInDataSource)
 }
 
-
+# function: getBreakdownIndexEvents ----
 getBreakdownIndexEvents <- function(cohortIds,
                                     connection,
                                     tempEmulationSchema,
                                     conceptIdUniverse = "#concept_ids") {
+  ParallelLogger::logTrace("  - Reading domains.csv")
   domains <-
     readr::read_csv(
       system.file("csv", "domains.csv", package = "CohortDiagnostics"),
@@ -944,7 +907,13 @@ getBreakdownIndexEvents <- function(cohortIds,
   
   breakdownDataStandard <- list()
   for (i in (1:nrow(domains))) {
-    rowData <- domains[i, ]
+    rowData <- domains[i,]
+    ParallelLogger::logTrace(paste0(
+      "  - Working on ",
+      rowData$domainTable,
+      ".",
+      rowData$domainConceptId
+    ))
     breakdownDataStandard[[i]] <- renderTranslateQuerySql(
       connection = connection,
       sql = sql,
@@ -964,11 +933,18 @@ getBreakdownIndexEvents <- function(cohortIds,
   
   breakdownDataNonStandard <- list()
   for (i in (1:nrow(domains))) {
-    rowData <- domains[i, ]
+    rowData <- domains[i,]
     if (all(
-      nchar(rowData$domainSourceConceptId) > 4,
-      !is.na(rowData$domainSourceConceptId)
+      nchar(rowData$domainSourceConceptId) > 4,!is.na(rowData$domainSourceConceptId)
     )) {
+      ParallelLogger::logTrace(
+        paste0(
+          "  - Working on ",
+          rowData$domainTable,
+          ".",
+          rowData$domainSourceConceptId
+        )
+      )
       breakdownDataNonStandard[[i]] <- renderTranslateQuerySql(
         connection = connection,
         sql = sql,
@@ -994,7 +970,7 @@ getBreakdownIndexEvents <- function(cohortIds,
 }
 
 
-
+# function: getIndexDateConceptCooccurrence ----
 ### indexDateConceptCooccurrence -----
 getIndexDateConceptCooccurrence <- function(connection,
                                             cdmDatabaseSchema,
@@ -1045,8 +1021,13 @@ getIndexDateConceptCooccurrence <- function(connection,
                 WHERE cohort_definition_id IN (@cohortIds);"
   
   for (i in (1:nrow(domains))) {
-    rowData <- domains[i,]
-    ParallelLogger::logTrace(paste0("  - Working on ", rowData$domainTable, ".",rowData$domainConceptId))
+    rowData <- domains[i, ]
+    ParallelLogger::logTrace(paste0(
+      "  - Working on ",
+      rowData$domainTable,
+      ".",
+      rowData$domainConceptId
+    ))
     DatabaseConnector::renderTranslateExecuteSql(
       connection = connection,
       sql = sql,
@@ -1066,7 +1047,14 @@ getIndexDateConceptCooccurrence <- function(connection,
       !is.na(rowData$domainSourceConceptId),
       length(rowData$domainSourceConceptId) > 0
     )) {
-      ParallelLogger::logTrace(paste0("  - Working on ", rowData$domainTable, ".",rowData$domainSourceConceptId))
+      ParallelLogger::logTrace(
+        paste0(
+          "  - Working on ",
+          rowData$domainTable,
+          ".",
+          rowData$domainSourceConceptId
+        )
+      )
       DatabaseConnector::renderTranslateExecuteSql(
         connection = connection,
         sql = sql,
