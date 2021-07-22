@@ -2213,6 +2213,7 @@ shiny::shinyServer(function(input, output, session) {
     return(output)
   })
   
+  
   ## Orphan 2 concepts for cohort definition ----
   cohortDefinitionOrphanConceptSecondTableData <- shiny::reactive(x = {
     if (any(is.null(getDatabaseIdInCohortConceptSetSecond()),
@@ -2668,6 +2669,27 @@ shiny::shinyServer(function(input, output, session) {
                   fileName = file)
     }
   )
+  
+  #Radio button synchronization
+  shiny::observeEvent(eventExpr = {
+    list(input$conceptSetsType, input$conceptSetsTypeSecond)
+  }, handlerExpr = {
+    if (noOfRowSelectedInCohortDefinitionTable() == 6) {
+      if (!is.null(input$conceptSetsType)) {
+        if (input$conceptSetsType == "Concept Set Expression") {
+          updateRadioButtons(session = session, inputId = "conceptSetsTypeSecond", selected = "Concept Set Expression")
+        } else if (input$conceptSetsType == "Resolved (included)") {
+          updateRadioButtons(session = session, inputId = "conceptSetsTypeSecond", selected = "Resolved (included)")
+        } else if (input$conceptSetsType == "Mapped (source)") {
+          updateRadioButtons(session = session, inputId = "conceptSetsTypeSecond", selected = "Mapped (source)")
+        } else if (input$conceptSetsType == "Orphan concepts") {
+          updateRadioButtons(session = session, inputId = "conceptSetsTypeSecond", selected = "Orphan concepts")
+        } else if (input$conceptSetsType == "Json") {
+          updateRadioButtons(session = session, inputId = "conceptSetsTypeSecond", selected = "Json")
+        }
+      }
+    }
+  })
   
   #Concept set comparison -----
   conceptsetComparisonData <- shiny::reactive(x = {
