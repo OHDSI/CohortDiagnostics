@@ -3874,20 +3874,51 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  ## Filter: series type ----
-  shiny::observe({
-    data <- timeSeriesDataFiltered() 
+  getTimeSeriesDescription <- shiny::reactive({
+    data <- timeSeriesData()
     if (any(is.null(data), nrow(data) == 0)) {
       return(NULL)
     }
-    data <- data %>% 
-      dplyr::pull(.data$seriesType) %>% 
+    calendarIntervalFirstLetter <- tolower(substr(input$timeSeriesFilter,1,1))
+    
+    data <- data[[calendarIntervalFirstLetter]]
+    timeSeriesDescription <- attr(x = data,which = "timeSeriesDescription")
+    return(timeSeriesDescription)
+  })
+  
+  output$timeSeriesTypeLong <- shiny::renderUI({
+    timeSeriesDescription <- getTimeSeriesDescription()
+    if (any(is.null(timeSeriesDescription), 
+            nrow(timeSeriesDescription) == 0)) {
+      return(NULL)
+    }
+    
+    seriesTypeLong <- timeSeriesDescription %>% 
+      dplyr::filter(.data$seriesTypeShort %in% input$timeSeriesTypeFilter) %>% 
+      dplyr::pull(.data$seriesTypeLong) %>% 
       unique()
+    
+    return(seriesTypeLong)
+    
+  })
+  
+  ## Filter: series type ----
+  shiny::observe({
+    
+    timeSeriesDescription <- getTimeSeriesDescription()
+    if (any(is.null(timeSeriesDescription), 
+            nrow(timeSeriesDescription) == 0)) {
+      return(NULL)
+    }
+    seriesTypeShort <- timeSeriesDescription %>% 
+      dplyr::pull(.data$seriesTypeShort) %>% 
+      unique()
+  
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "timeSeriesTypeFilter",
       choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = data
+      choices = seriesTypeShort
     )
   })
   
@@ -3913,14 +3944,22 @@ shiny::shinyServer(function(input, output, session) {
   
   ## Output Data table ----
   output$timeSeriesTable <- DT::renderDataTable({
-    data <- timeSeriesDataFiltered()
-    data <- timeSeriesDataFiltered()
+    
+    timeSeriesDescription <- getTimeSeriesDescription()
+    
+    validate(need(all(!is.null(timeSeriesDescription),
+                      nrow(timeSeriesDescription) > 0,
+                  !is.null(timeSeriesDataFiltered()),
+                  nrow(timeSeriesDataFiltered()) > 0),
+                  "No timeseries data for the combination."))
+    data <- timeSeriesDataFiltered() %>% 
+      dplyr::inner_join(timeSeriesDescription)
     validate(need(all(!is.null(data),
                       nrow(data) > 0),
                   "No timeseries data for the combination."))
     data <- data %>% 
-      dplyr::filter(.data$seriesType %in% input$timeSeriesTypeFilter) %>% 
-      dplyr::select(-.data$seriesType) %>% 
+      dplyr::filter(.data$seriesTypeShort %in% input$timeSeriesTypeFilter) %>% 
+      dplyr::select(-.data$seriesType,-.data$seriesTypeShort,-.data$seriesTypeLong) %>% 
       dplyr::mutate(periodBegin = .data$periodBeginRaw) %>% 
       dplyr::relocate(.data$periodBegin) %>% 
       dplyr::arrange(.data$periodBegin) %>% 
@@ -3955,8 +3994,19 @@ shiny::shinyServer(function(input, output, session) {
   ## Output Time series plot ----
   output$timeSeriesPlot <- ggiraph::renderggiraph({
     
+    timeSeriesDescription <- getTimeSeriesDescription()
+    
+    validate(need(all(!is.null(timeSeriesDescription),
+                      nrow(timeSeriesDescription) > 0,
+                      !is.null(timeSeriesDataFiltered()),
+                      nrow(timeSeriesDataFiltered()) > 0),
+                  "No timeseries data for the combination."))
     data <- timeSeriesTssibleData() %>% 
-      dplyr::filter(.data$seriesType %in% input$timeSeriesTypeFilter) %>% 
+      dplyr::inner_join(timeSeriesDescription)
+    
+    
+    data <- data %>% 
+      dplyr::filter(.data$seriesTypeShort %in% input$timeSeriesTypeFilter) %>% 
       dplyr::select(-.data$seriesType)
     
     validate(need(nrow(data) > 0,
@@ -7365,7 +7415,7 @@ shiny::shinyServer(function(input, output, session) {
     })
   output$timeSeriesSelectedCohorts <-
     shiny::renderUI({
-      selectedCohort()
+      renderedSelectedCohorts()
     })
   output$timeDistSelectedCohorts <-
     shiny::renderUI({

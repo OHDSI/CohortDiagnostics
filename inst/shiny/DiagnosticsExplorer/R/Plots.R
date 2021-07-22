@@ -71,9 +71,9 @@ plotTimeSeries <- function(data, columnFilter, timeSeriesAggressionPeriodFilter 
   plot <-
     ggplot2::ggplot(data = data, do.call(ggplot2::aes_string, aesthetics)) +
     ggplot2::theme_bw() +
-    ggiraph::geom_line_interactive(ggplot2::aes(), size = 0.4, alpha = 0.6) +
+    ggiraph::geom_line_interactive(ggplot2::aes(), size = 0.2, alpha = 0.6) +
     ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip),
-                                    size = 0.6,
+                                    size = 0.1,
                                     alpha = 0.6) +
     ggplot2::labs(x = "Period Begin", y = "") +
     ggplot2::scale_y_continuous(labels = scales::comma) +

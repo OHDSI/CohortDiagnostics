@@ -692,8 +692,18 @@ bodyTabItems <- shinydashboard::tabItems(
             step = 1,
             sep = ""
           )
+        ),
+        tags$td(),
+        tags$td(),
+        tags$td(tags$b("Series Type Description :"),
+          shiny::uiOutput(outputId = "timeSeriesTypeLong")
         )
       )
+      # tags$tr(
+      #   tags$td(
+      #     shiny::uiOutput(outputId = "timeSeriesTypeLong")
+      #   )
+      # )
     ),
     shinydashboard::box(
       title = "Time Series",
@@ -719,7 +729,7 @@ bodyTabItems <- shinydashboard::tabItems(
             inputId = "timeSeriesPlotCategory",
             label = "Show decomposition plot by:",
             width = 300,
-            choices = c("Total", "trend", "season_year", "reminder"),
+            choices = c("Total", "trend", "season_year", "remainder"),
             selected = c("trend"),
             multiple = TRUE,
             choicesOpt = list(style = rep_len("color: black;", 999)),
