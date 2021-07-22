@@ -1205,7 +1205,8 @@ runCohortDiagnostics <- function(packageName = NULL,
   delta <- Sys.time() - start
   metaData <- dplyr::tibble(
     databaseId = databaseId,
-    variableField = c('vocabularyVersionCdm', 'vocabularyVersion'),
+    variableField = c(rep('vocabularyVersionCdm', length(vocabularyVersionCdm)),
+                      rep('vocabularyVersion', length(vocabularyVersion))),
     valueField = c(vocabularyVersionCdm, vocabularyVersion)
   )
   writeToCsv(data = metaData,
