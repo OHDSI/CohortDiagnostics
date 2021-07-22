@@ -830,51 +830,98 @@ getConceptsInDataSource <- function(connection,
       guess_max = min(1e7)
     )
   sql <- "SELECT @domain_concept_id concept_id,
-        {@domain_source_concept_id != ''} ? {
-                	@domain_source_concept_id source_concept_id,
-        }
-                	YEAR(@domain_start_date) event_year,
-                	MONTH(@domain_start_date) event_month,
-                	COUNT_BIG(DISTINCT person_id) concept_subjects,
-                	COUNT_BIG(*) concept_count
-                FROM @cdm_database_schema.@domain_table
-                INNER JOIN (
-                	SELECT DISTINCT concept_id
-                	FROM @concept_id_universe
-                	) c
-                	ON @domain_concept_id = concept_id
-        {@domain_source_concept_id != ''} ? {
-                		OR @domain_source_concept_id = concept_id
-        }
-                GROUP BY @domain_concept_id,
-        {@domain_source_concept_id != ''} ? {
-                	@domain_source_concept_id,
-        }
-                	YEAR(@domain_start_date),
-                	MONTH(@domain_start_date);"
+          	YEAR(@domain_start_date) event_year,
+          	MONTH(@domain_start_date) event_month,
+          	COUNT_BIG(DISTINCT person_id) concept_subject,
+          	COUNT_BIG(*) concept_count
+          FROM @cdm_database_schema.@domain_table
+          INNER JOIN (
+          	SELECT DISTINCT concept_id
+          	FROM @concept_id_universe
+          	) c
+          	ON @domain_concept_id = concept_id
+          WHERE YEAR(@domain_start_date) > 0
+          GROUP BY @domain_concept_id,
+          	YEAR(@domain_start_date),
+          	MONTH(@domain_start_date)
+          
+          UNION
+          
+          SELECT @domain_concept_id concept_id,
+          	0 event_year,
+          	0 event_month,
+          	COUNT_BIG(DISTINCT person_id) concept_subject,
+          	COUNT_BIG(*) concept_count
+          FROM @cdm_database_schema.@domain_table
+          INNER JOIN (
+          	SELECT DISTINCT concept_id
+          	FROM @concept_id_universe
+          	) c
+          	ON @domain_concept_id = concept_id
+          GROUP BY @domain_concept_id;"
   
-  conceptsInDataSource <- list()
+  standardConcepts <- list()
   for (i in (1:nrow(domains))) {
-    rowData <- domains[i, ]    
+    rowData <- domains[i,]
     ParallelLogger::logTrace(paste0(
-      "   - Counting concepts in ",
-      rowData$domainTable
+      "  - Working on ",
+      rowData$domainTable,
+      ".",
+      rowData$domainConceptId
     ))
-    conceptsInDataSource[[i]] <-
-      DatabaseConnector::renderTranslateQuerySql(
+    standardConcepts[[i]] <- renderTranslateQuerySql(
+      connection = connection,
+      sql = sql,
+      tempEmulationSchema = tempEmulationSchema,
+      domain_table = rowData$domainTable,
+      domain_concept_id = rowData$domainConceptId,
+      cdm_database_schema = cdmDatabaseSchema,
+      cohort_database_schema = cohortDatabaseSchema,
+      domain_start_date = rowData$domainStartDate,
+      concept_id_universe = conceptIdUniverse,
+      cohort_id = cohortIds,
+      cohort_table = cohortTable,
+      snakeCaseToCamelCase = TRUE
+    )
+  }
+  standardConcepts <- dplyr::bind_rows(standardConcepts)
+  
+  nonStandardConcepts <- list()
+  for (i in (1:nrow(domains))) {
+    rowData <- domains[i,]
+    if (all(
+      nchar(rowData$domainSourceConceptId) > 4,!is.na(rowData$domainSourceConceptId)
+    )) {
+      ParallelLogger::logTrace(
+        paste0(
+          "  - Working on ",
+          rowData$domainTable,
+          ".",
+          rowData$domainSourceConceptId
+        )
+      )
+      nonStandardConcepts[[i]] <- renderTranslateQuerySql(
         connection = connection,
         sql = sql,
         tempEmulationSchema = tempEmulationSchema,
-        domain_concept_id = rowData$domainConceptId,
-        domain_source_concept_id = rowData$domainSourceConceptId,
-        cdm_database_schema = cdmDatabaseSchema,
         domain_table = rowData$domainTable,
+        domain_concept_id = rowData$domainSourceConceptId,
+        cdm_database_schema = cdmDatabaseSchema,
+        cohort_database_schema = cohortDatabaseSchema,
         domain_start_date = rowData$domainStartDate,
-        concept_id_universe = conceptIdUniverse
+        concept_id_universe = conceptIdUniverse,
+        cohort_id = cohortIds,
+        cohort_table = cohortTable,
+        snakeCaseToCamelCase = TRUE
       )
+    }
   }
-  conceptsInDataSource <- dplyr::bind_rows(conceptsInDataSource)
-  return(conceptsInDataSource)
+  nonStandardConcepts <-
+    dplyr::bind_rows(nonStandardConcepts)
+  return(dplyr::bind_rows(standardConcepts, nonStandardConcepts) %>% 
+           dplyr::arrange(.data$conceptId, .data$eventYear, 
+                          .data$eventMonth, .data$conceptSubject,
+                          .data$conceptCount))
 }
 
 # function: getBreakdownIndexEvents ----
