@@ -73,8 +73,8 @@ file.copy(from = "inst/settings/resultsDataModelSpecification.csv",
           overwrite = TRUE)
 
 # Copy R script that queries data from results data model to Shiny app
-file.copy(from = "R/ResultsDataModelQueries.R", 
-          to = "inst/shiny/DiagnosticsExplorer/R/ResultsDataModelQueries.R",
+file.copy(from = "R/Shared.R", 
+          to = "inst/shiny/DiagnosticsExplorer/R/Shared.R",
           overwrite = TRUE)
 
 # Delete orphan tables from testing server -----------------------------

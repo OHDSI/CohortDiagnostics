@@ -889,7 +889,8 @@ shiny::shinyServer(function(input, output, session) {
       ))
   })
   
-  cohortDefinistionConceptSetExpression <- shiny::reactive({
+  # Cohort definition concept set expression ----
+  cohortDefinitionConceptSetExpression <- shiny::reactive({
     if (is.null(selectedCohortDefinitionRow())) {
       return(NULL)
     }
@@ -901,22 +902,21 @@ shiny::shinyServer(function(input, output, session) {
         )
       details[[i]] <- conceptSetDetailsFromCohortDefinition
     }
-    
     return(details)
   })
   
   ##Concept set expression table one
   output$conceptsetExpressionTable <- DT::renderDataTable(expr = {
-    validate(need((any(is.null(cohortDefinistionConceptSetExpression()),
-                       length(cohortDefinistionConceptSetExpression()) == 0)),
+    validate(need((any(is.null(cohortDefinitionConceptSetExpression()),
+                       length(cohortDefinitionConceptSetExpression()) == 0)),
                   "Cohort definition does not appear to have concept set expression(s)."))
-    if (any(is.null(cohortDefinistionConceptSetExpression()),
-            length(cohortDefinistionConceptSetExpression()) == 0)) {
+    if (any(is.null(cohortDefinitionConceptSetExpression()),
+            length(cohortDefinitionConceptSetExpression()) == 0)) {
       return(NULL)
     }
-    if (!is.null(cohortDefinistionConceptSetExpression()[[1]]$conceptSetExpression) &&
-        nrow(cohortDefinistionConceptSetExpression()[[1]]$conceptSetExpression) > 0) {
-      data <- cohortDefinistionConceptSetExpression()[[1]]$conceptSetExpression %>%
+    if (!is.null(cohortDefinitionConceptSetExpression()[[1]]$conceptSetExpression) &&
+        nrow(cohortDefinitionConceptSetExpression()[[1]]$conceptSetExpression) > 0) {
+      data <- cohortDefinitionConceptSetExpression()[[1]]$conceptSetExpression %>%
         dplyr::select(.data$id, .data$name)
     } else {
       return(NULL)
@@ -954,10 +954,10 @@ shiny::shinyServer(function(input, output, session) {
     if (length(idx) == 0 || is.null(idx)) {
       return(NULL)
     }
-    if (!is.null(cohortDefinistionConceptSetExpression()[[1]]$conceptSetExpression) &&
-        nrow(cohortDefinistionConceptSetExpression()[[1]]$conceptSetExpression) > 0) {
+    if (!is.null(cohortDefinitionConceptSetExpression()[[1]]$conceptSetExpression) &&
+        nrow(cohortDefinitionConceptSetExpression()[[1]]$conceptSetExpression) > 0) {
       data <-
-        cohortDefinistionConceptSetExpression()[[1]]$conceptSetExpression[idx,]
+        cohortDefinitionConceptSetExpression()[[1]]$conceptSetExpression[idx,]
       if (!is.null(data)) {
         return(data)
       } else {
@@ -993,7 +993,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     data <-
-      cohortDefinistionConceptSetExpression()[[1]]$conceptSetExpressionDetails
+      cohortDefinitionConceptSetExpression()[[1]]$conceptSetExpressionDetails
     data <- data %>%
       dplyr::filter(.data$id == cohortDefinitionConceptSetExpressionRow()$id)
     validate(need((all(!is.null(data), nrow(data) > 0)),
@@ -1828,13 +1828,13 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$conceptsetExpressionSecondTable <- DT::renderDataTable(expr = {
-    if (length(cohortDefinistionConceptSetExpression()) != 2) {
+    if (length(cohortDefinitionConceptSetExpression()) != 2) {
       return(NULL)
     }
     
-    if (!is.null(cohortDefinistionConceptSetExpression()[[2]]$conceptSetExpression) &&
-        nrow(cohortDefinistionConceptSetExpression()[[2]]$conceptSetExpression) > 0) {
-      data <- cohortDefinistionConceptSetExpression()[[2]]$conceptSetExpression %>%
+    if (!is.null(cohortDefinitionConceptSetExpression()[[2]]$conceptSetExpression) &&
+        nrow(cohortDefinitionConceptSetExpression()[[2]]$conceptSetExpression) > 0) {
+      data <- cohortDefinitionConceptSetExpression()[[2]]$conceptSetExpression %>%
         dplyr::select(.data$id, .data$name)
       
     } else {
@@ -1873,10 +1873,10 @@ shiny::shinyServer(function(input, output, session) {
     if (length(idx) == 0 || is.null(idx)) {
       return(NULL)
     }
-    if (!is.null(cohortDefinistionConceptSetExpression()[[2]]$conceptSetExpression) &&
-        nrow(cohortDefinistionConceptSetExpression()[[2]]$conceptSetExpression) > 0) {
+    if (!is.null(cohortDefinitionConceptSetExpression()[[2]]$conceptSetExpression) &&
+        nrow(cohortDefinitionConceptSetExpression()[[2]]$conceptSetExpression) > 0) {
       data <-
-        cohortDefinistionConceptSetExpression()[[2]]$conceptSetExpression[idx,]
+        cohortDefinitionConceptSetExpression()[[2]]$conceptSetExpression[idx,]
       if (!is.null(data)) {
         return(data)
       } else {
@@ -1898,7 +1898,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     data <-
-      cohortDefinistionConceptSetExpression()[[2]]$conceptSetExpressionDetails
+      cohortDefinitionConceptSetExpression()[[2]]$conceptSetExpressionDetails
     data <- data %>%
       dplyr::filter(.data$id == cohortDefinitionConceptSetExpressionSecondRow()$id)
     validate(need((all(!is.null(data), nrow(data) > 0)),
