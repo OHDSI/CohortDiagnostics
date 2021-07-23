@@ -816,6 +816,13 @@ shiny::shinyServer(function(input, output, session) {
                           shiny::conditionalPanel(
                             condition = "output.cohortCountsSecondTableInCohortDefinitionRowIsSelected",
                             tags$h3("Inclusion Rules"),
+                            shiny::radioButtons(
+                              inputId = "cohortDefinitionSecondInclusionRuleTableFilters",
+                              label = "Inclusion Rule Events",
+                              choices = c("All", "Meet", "Gain", "Remain", "Totals"),
+                              selected = "All",
+                              inline = TRUE
+                            ),
                             DT::dataTableOutput(outputId = "inclusionRuleInCohortDefinitionSecond")
                           )),
           shiny::tabPanel(title = "Cohort definition",
@@ -1802,6 +1809,9 @@ shiny::shinyServer(function(input, output, session) {
     databaseIdsWithCount <- paste(databaseIds, "(n = ", format(cohortCounts, big.mark = ","), ")")
     
     table <- table %>%
+      dplyr::inner_join(cohortCount %>% 
+                          dplyr::select(.data$databaseId, .data$cohortId, .data$cohortSubjects), 
+                        by = c('databaseId', 'cohortId')) %>% 
       tidyr::pivot_longer(
         cols = c(
           .data$meetSubjects,
@@ -1810,7 +1820,11 @@ shiny::shinyServer(function(input, output, session) {
           .data$remainSubjects
         )
       ) %>%
-      dplyr::mutate(name = paste0(databaseId, "_", .data$name)) %>%
+      dplyr::mutate(name = paste0(.data$databaseId, 
+                                  "<br>(n = ", 
+                                  scales::comma(x = .data$cohortSubjects, accuracy = 1),
+                                  ")_", 
+                                  .data$name)) %>%
       tidyr::pivot_wider(
         id_cols = c(.data$cohortId, .data$ruleSequenceId, .data$ruleName),
         names_from = .data$name,
@@ -1818,28 +1832,63 @@ shiny::shinyServer(function(input, output, session) {
       ) %>%
       dplyr::select(-.data$cohortId)
     
+    if (input$cohortDefinitionSecondInclusionRuleTableFilters == "Meet") {
+      table <- table %>% 
+        dplyr::select(-dplyr::contains("Total"),-dplyr::contains("Gain"),-dplyr::contains("Remain"))
+      colnames(table) <- stringr::str_replace(string = colnames(table), pattern = '_meetSubjects', replacement = '')
+      
+      columnDefs <- minCellCountDef(1 + (
+        1:(length(databaseIds))
+      ))
+      
+    } else if (input$cohortDefinitionSecondInclusionRuleTableFilters == "Totals") {
+      table <- table %>% 
+        dplyr::select(-dplyr::contains("Meet"),-dplyr::contains("Gain"),-dplyr::contains("Remain"))
+      colnames(table) <- stringr::str_replace(string = colnames(table), pattern = '_totalSubjects', replacement = '')
+      
+      columnDefs <- minCellCountDef(1 + (
+        1:(length(databaseIds))
+      ))
+      
+    } else if (input$cohortDefinitionSecondInclusionRuleTableFilters == "Gain") {
+      table <- table %>% 
+        dplyr::select(-dplyr::contains("Total"),-dplyr::contains("Meet"),-dplyr::contains("Remain"))
+      colnames(table) <- stringr::str_replace(string = colnames(table), pattern = '_gainSubjects', replacement = '')
+      
+      columnDefs <- minCellCountDef(1 + (
+        1:(length(databaseIds))
+      ))
+      
+    } else if (input$cohortDefinitionSecondInclusionRuleTableFilters == "Remain") {
+      table <- table %>% 
+        dplyr::select(-dplyr::contains("Total"),-dplyr::contains("Meet"),-dplyr::contains("Gain"))
+      colnames(table) <- stringr::str_replace(string = colnames(table), pattern = '_remainSubjects', replacement = '')
+      
+      columnDefs <- minCellCountDef(1 + (
+        1:(length(databaseIds))
+      ))
+      
+    }  else {
+      sketch <- htmltools::withTags(table(class = "display",
+                                          thead(tr(
+                                            th(rowspan = 2, "Rule Sequence ID"),
+                                            th(rowspan = 2, "Rule Name"),
+                                            lapply(databaseIdsWithCount, th, colspan = 4, class = "dt-center", style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                          ),
+                                          tr(
+                                            lapply(rep(
+                                              c("Meet", "Gain", "Remain", "Total"), length(databaseIds)
+                                            ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                          ))))
+      
+      columnDefs <- minCellCountDef(1 + (
+        1:(length(databaseIds) * 4)
+      ))
+    }
     
-    
-    sketch <- htmltools::withTags(table(class = "display",
-                                        thead(tr(
-                                          th(rowspan = 2, "Rule Sequence ID"),
-                                          th(rowspan = 2, "Rule Name"),
-                                          lapply(
-                                            databaseIdsWithCount,
-                                            th,
-                                            colspan = 4,
-                                            class = "dt-center",
-                                            style = "border-right:1px solid silver;border-bottom:1px solid silver"
-                                          )
-                                        ),
-                                        tr(
-                                          lapply(rep(
-                                            c("Meet", "Gain", "Remain", "Total"), length(databaseIds)
-                                          ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
-                                        ))))
     options = list(
       pageLength = 100,
-      lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+      lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
       searching = TRUE,
       searchHighlight = TRUE,
       scrollX = TRUE,
@@ -1847,20 +1896,31 @@ shiny::shinyServer(function(input, output, session) {
       ordering = TRUE,
       paging = TRUE,
       columnDefs = list(truncateStringDef(1, 100),
-                        minCellCountDef(1 + (1:(
-                          length(databaseIds) * 4
-                        ))))
+                        columnDefs)
     )
-    table <- DT::datatable(
-      table,
-      options = options,
-      colnames = colnames(table) %>% camelCaseToTitleCase(),
-      rownames = FALSE,
-      container = sketch,
-      escape = FALSE,
-      filter = "top",
-      class = "stripe nowrap compact"
-    )
+    
+    if (input$cohortDefinitionSecondInclusionRuleTableFilters == "All") {
+      table <- DT::datatable(
+        table,
+        options = options,
+        colnames = colnames(table) %>% camelCaseToTitleCase(),
+        rownames = FALSE,
+        container = sketch,
+        escape = FALSE,
+        filter = "top",
+        class = "stripe nowrap compact"
+      )
+    } else {
+      table <- DT::datatable(
+        table,
+        options = options,
+        colnames = colnames(table) %>% camelCaseToTitleCase(),
+        rownames = FALSE,
+        escape = FALSE,
+        filter = "top",
+        class = "stripe nowrap compact"
+      )
+    }
     return(table)
   }, server = TRUE)
   
@@ -2147,6 +2207,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::pull(.data$conceptId)
     return(output)
   })
+  
   
   ## Orphan 2 concepts for cohort definition ----
   cohortDefinitionOrphanConceptSecondTableData <- shiny::reactive(x = {
@@ -2603,6 +2664,47 @@ shiny::shinyServer(function(input, output, session) {
                   fileName = file)
     }
   )
+  
+  #Radio button synchronization
+  shiny::observeEvent(eventExpr = {
+    input$conceptSetsType
+  }, handlerExpr = {
+    if (noOfRowSelectedInCohortDefinitionTable() == 6) {
+      if (!is.null(input$conceptSetsType)) {
+        if (input$conceptSetsType == "Concept Set Expression") {
+          updateRadioButtons(session = session, inputId = "conceptSetsTypeSecond", selected = "Concept Set Expression")
+        } else if (input$conceptSetsType == "Resolved (included)") {
+          updateRadioButtons(session = session, inputId = "conceptSetsTypeSecond", selected = "Resolved (included)")
+        } else if (input$conceptSetsType == "Mapped (source)") {
+          updateRadioButtons(session = session, inputId = "conceptSetsTypeSecond", selected = "Mapped (source)")
+        } else if (input$conceptSetsType == "Orphan concepts") {
+          updateRadioButtons(session = session, inputId = "conceptSetsTypeSecond", selected = "Orphan concepts")
+        } else if (input$conceptSetsType == "Json") {
+          updateRadioButtons(session = session, inputId = "conceptSetsTypeSecond", selected = "Json")
+        }
+      }
+    }
+  })
+  
+  shiny::observeEvent(eventExpr = {
+    input$conceptSetsTypeSecond
+  }, handlerExpr = {
+    if (noOfRowSelectedInCohortDefinitionTable() == 6) {
+      if (!is.null(input$conceptSetsTypeSecond)) {
+        if (input$conceptSetsTypeSecond == "Concept Set Expression") {
+          updateRadioButtons(session = session, inputId = "conceptSetsType", selected = "Concept Set Expression")
+        } else if (input$conceptSetsTypeSecond == "Resolved (included)") {
+          updateRadioButtons(session = session, inputId = "conceptSetsType", selected = "Resolved (included)")
+        } else if (input$conceptSetsTypeSecond == "Mapped (source)") {
+          updateRadioButtons(session = session, inputId = "conceptSetsType", selected = "Mapped (source)")
+        } else if (input$conceptSetsTypeSecond == "Orphan concepts") {
+          updateRadioButtons(session = session, inputId = "conceptSetsType", selected = "Orphan concepts")
+        } else if (input$conceptSetsTypeSecond == "Json") {
+          updateRadioButtons(session = session, inputId = "conceptSetsType", selected = "Json")
+        }
+      }
+    }
+  })
   
   #Concept set comparison -----
   conceptsetComparisonData <- shiny::reactive(x = {
