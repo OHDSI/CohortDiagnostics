@@ -14,46 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-checkCohortReference <-
-  function(cohortReference, errorMessage = NULL) {
-    if (is.null(errorMessage) |
-        !class(errorMessage) == 'AssertColection') {
-      errorMessage <- checkmate::makeAssertCollection()
-    }
-    checkmate::assertDataFrame(
-      x = cohortReference,
-      types = c("integer", "character", "numeric"),
-      min.rows = 1,
-      min.cols = 4,
-      null.ok = FALSE,
-      col.names = "named",
-      add = errorMessage
-    )
-    if ("referentConceptId" %in% names(cohortReference)) {
-      checkmate::assertIntegerish(
-        x = cohortReference$referentConceptId,
-        lower = 0,
-        any.missing = FALSE,
-        unique = FALSE,
-        null.ok = FALSE,
-        add = errorMessage
-      )
-    }
-    checkmate::assertNames(
-      x = names(cohortReference),
-      subset.of =  c(
-        "referentConceptId",
-        "cohortId",
-        "webApiCohortId",
-        "cohortName",
-        "logicDescription",
-        "clinicalRationale"
-      ),
-      add = errorMessage
-    )
-    invisible(errorMessage)
-  }
-
 makeBackwardsCompatible <- function(cohorts, forceWebApiCohortId = FALSE) {
   # make sure there is a column called 'name' - used for finding sql in package
   if ('atlasId' %in% colnames(cohorts)) {
@@ -181,7 +141,7 @@ getCohortsJsonAndSqlFromPackage <-
            cohortToCreateFile = cohortToCreateFile,
            cohortIds = NULL,
            errorMessage = NULL) {
-    ParallelLogger::logDebug("Executing on cohorts specified in package - ", packageName)
+    ParallelLogger::logDebug(" - Executing on cohorts specified in package - ", packageName)
     
     if (is.null(errorMessage) |
         !class(errorMessage) == 'AssertColection') {
@@ -214,7 +174,6 @@ getCohortsJsonAndSqlFromPackage <-
         dplyr::filter(.data$cohortId %in% cohortIds)
     }
     
-    checkCohortReference(cohortReference = cohorts, errorMessage = errorMessage)
     checkmate::reportAssertions(collection = errorMessage)
     
     getSql <- function(name) {
@@ -320,13 +279,11 @@ getCohortsJsonAndSql <- function(packageName = NULL,
       generateStats = generateStats
     )
   }
-  ParallelLogger::logInfo(" - Number of cohorts ", nrow(cohorts))
   if (nrow(cohorts) == 0) {
-    warning(" - No cohorts founds")
     return(NULL)
   }
   if (nrow(cohorts) != length(cohorts$cohortId %>% unique())) {
-    warning(" - Please check input cohort specification. Is there duplication of cohortId?")
+    warning(" - Please check input cohort specification. Is there duplication of cohortId? Exiting.")
     return(NULL)
   }
   return(cohorts)
@@ -337,7 +294,7 @@ createCohortTable <- function(connectionDetails = NULL,
                               cohortDatabaseSchema,
                               cohortTable = "cohort") {
   start <- Sys.time()
-  ParallelLogger::logInfo("Creating cohort table")
+  ParallelLogger::logInfo("   - Note: Creating cohort table.")
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
@@ -353,10 +310,10 @@ createCohortTable <- function(connectionDetails = NULL,
                                 sql,
                                 progressBar = FALSE,
                                 reportOverallTime = FALSE)
-  ParallelLogger::logDebug("Created table ", cohortDatabaseSchema, ".", cohortTable)
+  ParallelLogger::logDebug(" - Created table ", cohortDatabaseSchema, ".", cohortTable)
   
   delta <- Sys.time() - start
-  writeLines(paste(
+  ParallelLogger::logTrace(paste(
     "Creating cohort table took",
     signif(delta, 3),
     attr(delta, "units")
@@ -586,6 +543,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
           nrow(cohorts) == 0)) {
     stop("Cohort definitions not found for provided cohort ids. Please check. Aborting.")
   }
+  ParallelLogger::logInfo(" - Number of cohorts to instantiate: ", nrow(cohorts))
   
   if (createCohortTable) {
     needToCreate <- TRUE
@@ -593,7 +551,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
       tables <-
         DatabaseConnector::getTableNames(connection, cohortDatabaseSchema)
       if (toupper(cohortTable) %in% toupper(tables)) {
-        ParallelLogger::logInfo(" - Cohort table already exists and in incremental mode, so not recreating table.")
+        ParallelLogger::logInfo("   - Note: Cohort table already exists. Running in incremental mode. Re-using cohort table.")
         needToCreate <- FALSE
       }
     }
@@ -617,6 +575,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
   }
   
   instantiatedCohortIds <- c()
+  ParallelLogger::logInfo(" - Instantiating:")
   for (i in 1:nrow(cohorts)) {
     if (!incremental || isTaskRequired(
       cohortId = cohorts$cohortId[i],
@@ -624,9 +583,13 @@ instantiateCohortSet <- function(connectionDetails = NULL,
       recordKeepingFile = recordKeepingFile
     )) {
       ParallelLogger::logInfo(
-        " - Instantiation cohort ",
+        "    (",
+        scales::comma(i),
+        "/",
+        scales::comma(nrow(cohorts)),
+        ") '",
         cohorts$cohortName[i],
-        " (Cohort id: ",
+        "' (",
         cohorts$cohortId[i],
         ")"
       )
@@ -693,7 +656,10 @@ instantiateCohortSet <- function(connectionDetails = NULL,
       sql <- SqlRender::translate(sql,
                                   targetDialect = connection@dbms,
                                   tempEmulationSchema = tempEmulationSchema)
-      DatabaseConnector::executeSql(connection, sql)
+      DatabaseConnector::executeSql(connection = connection, 
+                                    sql = sql, 
+                                    reportOverallTime = FALSE, 
+                                    progressBar = FALSE)
       instantiatedCohortIds <-
         c(instantiatedCohortIds, cohorts$cohortId[i])
     }
@@ -726,7 +692,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
 
 createTempInclusionStatsTables <-
   function(connection, tempEmulationSchema, cohorts) {
-    ParallelLogger::logInfo(" - Creating temporary inclusion statistics tables")
+    ParallelLogger::logTrace(" - Creating temporary inclusion statistics tables")
     sql <-
       SqlRender::loadRenderTranslateSql(
         "inclusionStatsTables.sql",

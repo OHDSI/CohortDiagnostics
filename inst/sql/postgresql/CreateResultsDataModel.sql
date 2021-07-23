@@ -7,12 +7,13 @@ DROP TABLE IF EXISTS cohort_count;
 DROP TABLE IF EXISTS cohort_inclusion;
 DROP TABLE IF EXISTS cohort_inclusion_result;
 DROP TABLE IF EXISTS cohort_inclusion_stats;
-DROP TABLE IF EXISTS cohort_summary_stats;
 DROP TABLE IF EXISTS cohort_relationships;
 DROP TABLE IF EXISTS concept;
 DROP TABLE IF EXISTS concept_ancestor;
 DROP TABLE IF EXISTS concept_cooccurrence;
 DROP TABLE IF EXISTS concept_relationship;
+DROP TABLE IF EXISTS concept_resolved;
+DROP TABLE IF EXISTS cohort_summary_stats;
 DROP TABLE IF EXISTS concept_sets;
 DROP TABLE IF EXISTS concept_synonym;
 DROP TABLE IF EXISTS covariate_ref;
@@ -21,14 +22,12 @@ DROP TABLE IF EXISTS covariate_value_dist;
 DROP TABLE IF EXISTS database;
 DROP TABLE IF EXISTS domain;
 DROP TABLE IF EXISTS incidence_rate;
-DROP TABLE IF EXISTS included_source_concept;
 DROP TABLE IF EXISTS inclusion_rule_stats;
 DROP TABLE IF EXISTS index_event_breakdown;
 DROP TABLE IF EXISTS metadata;
 DROP TABLE IF EXISTS orphan_concept;
 DROP TABLE IF EXISTS time_series;
 DROP TABLE IF EXISTS relationship;
-DROP TABLE IF EXISTS resolved_concepts;
 DROP TABLE IF EXISTS temporal_analysis_ref;
 DROP TABLE IF EXISTS temporal_covariate_ref;
 DROP TABLE IF EXISTS temporal_covariate_value;
@@ -61,7 +60,6 @@ CREATE TABLE calendar_incidence (
 			count_value FLOAT,
 			PRIMARY KEY(cohort_id, database_id, period_type, calendar_month)
 );
-
 
 --Table cohort
 CREATE TABLE cohort (
@@ -173,11 +171,11 @@ CREATE TABLE concept_ancestor (
 --Table concept_count
 CREATE TABLE concept_count (
 			database_id VARCHAR NOT NULL,
-			cohort_id BIGINT NOT NULL,
 			concept_id INT NOT NULL,
-			concept_subjects FLOAT NOT NULL,
-			concept_count FLOAT NOT NULL,
-			PRIMARY KEY(database_id, cohort_id, concept_id)
+			event_year INT NOT NULL,
+			event_month INT NOT NULL,
+			count_value FLOAT NOT NULL,
+			PRIMARY KEY(database_id, concept_id, event_year, event_month)
 );
 
 --Table concept_cooccurrence
@@ -188,6 +186,17 @@ CREATE TABLE concept_cooccurrence (
 			co_concept_id BIGINT NOT NULL,
 			count_value BIGINT NOT NULL,
 			PRIMARY KEY(database_id, cohort_id, concept_id, co_concept_id)
+);
+
+--Table concept_mapping
+CREATE TABLE concept_mapping (
+			database_id VARCHAR NOT NULL,
+			domain_table VARCHAR NOT NULL,
+			concept_id INT NOT NULL,
+			source_concept_id INT NOT NULL,
+			concept_subjects FLOAT NOT NULL,
+			concept_count FLOAT NOT NULL,
+			PRIMARY KEY(database_id, domain_table, concept_id, source_concept_id)
 );
 
 
@@ -227,6 +236,15 @@ CREATE TABLE covariate_ref (
 			analysis_id INT NOT NULL,
 			concept_id INT NOT NULL,
 			PRIMARY KEY(covariate_id)
+);
+
+--Table concept_resolved
+CREATE TABLE concept_resolved (
+			cohort_id BIGINT NOT NULL,
+			concept_set_id INT NOT NULL,
+			concept_id INT NOT NULL,
+			database_id VARCHAR NOT NULL,
+			PRIMARY KEY(cohort_id, concept_set_id, concept_id, database_id)
 );
 
 --Table covariate_value
@@ -295,17 +313,6 @@ CREATE TABLE incidence_rate (
 			PRIMARY KEY(gender, age_group, calendar_year, cohort_id, database_id)
 );
 
---Table included_source_concept
-CREATE TABLE included_source_concept (
-			database_id VARCHAR NOT NULL,
-			cohort_id BIGINT NOT NULL,
-			concept_set_id INT NOT NULL,
-			concept_id INT NOT NULL,
-			source_concept_id INT NOT NULL,
-			concept_subjects FLOAT NOT NULL,
-			concept_count FLOAT NOT NULL,
-			PRIMARY KEY(database_id, cohort_id, concept_set_id, concept_id, source_concept_id)
-);
 
 --Table inclusion_rule_stats
 CREATE TABLE inclusion_rule_stats (
@@ -361,14 +368,6 @@ CREATE TABLE relationship (
 			PRIMARY KEY(relationship_id, reverse_relationship_id, relationship_concept_id)
 );
 
---Table resolved_concepts
-CREATE TABLE resolved_concepts (
-			cohort_id BIGINT NOT NULL,
-			concept_set_id INT NOT NULL,
-			concept_id INT NOT NULL,
-			database_id VARCHAR NOT NULL,
-			PRIMARY KEY(cohort_id, concept_set_id, concept_id, database_id)
-);
 
 --Table temporal_analysis_ref
 CREATE TABLE temporal_analysis_ref (

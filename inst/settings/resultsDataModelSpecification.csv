@@ -77,9 +77,9 @@ concept_cooccurrence,concept_id,int,Yes,Yes,No,Yes
 concept_cooccurrence,co_concept_id,int,Yes,Yes,No,Yes
 concept_cooccurrence,count_value,bigint,Yes,Yes,No,Yes
 concept_count,database_id,varchar,Yes,Yes,No,Yes
-concept_count,cohort_id,bigint,Yes,Yes,No,Yes
 concept_count,concept_id,int,Yes,Yes,No,Yes
-concept_count,concept_subjects,float,Yes,No,No,Yes
+concept_count,event_year,int,Yes,Yes,No,Yes
+concept_count,event_month,int,Yes,Yes,No,Yes
 concept_count,concept_count,float,Yes,No,No,Yes
 concept_relationship,concept_id_1,int,Yes,Yes,No,Yes
 concept_relationship,concept_id_2,int,Yes,Yes,No,Yes
@@ -87,6 +87,10 @@ concept_relationship,relationship_id,varchar(20),Yes,Yes,No,Yes
 concept_relationship,valid_start_date,Date,Yes,No,No,Yes
 concept_relationship,valid_end_date,Date,Yes,No,No,Yes
 concept_relationship,invalid_reason,varchar(1),No,No,No,Yes
+concept_resolved,cohort_id,bigint,Yes,Yes,No,Yes
+concept_resolved,concept_set_id,int,Yes,Yes,No,Yes
+concept_resolved,concept_id,int,Yes,Yes,No,Yes
+concept_resolved,database_id,varchar,Yes,Yes,No,Yes
 concept_sets,cohort_id,bigint,Yes,Yes,No,Yes
 concept_sets,concept_set_id,int,Yes,Yes,No,Yes
 concept_sets,concept_set_sql,varchar,Yes,No,No,Yes
@@ -140,13 +144,6 @@ incidence_rate,calendar_year,varchar(4),No,Yes,No,No
 incidence_rate,incidence_rate,float,Yes,No,No,Yes
 incidence_rate,cohort_id,bigint,Yes,Yes,No,Yes
 incidence_rate,database_id,varchar,Yes,Yes,No,Yes
-included_source_concept,database_id,varchar,Yes,Yes,No,Yes
-included_source_concept,cohort_id,bigint,Yes,Yes,No,Yes
-included_source_concept,concept_set_id,int,Yes,Yes,No,Yes
-included_source_concept,concept_id,int,Yes,Yes,No,Yes
-included_source_concept,source_concept_id,int,No,Yes,Yes,No
-included_source_concept,concept_subjects,float,Yes,No,No,Yes
-included_source_concept,concept_count,float,Yes,No,No,Yes
 inclusion_rule_stats,rule_sequence_id,int,Yes,Yes,No,Yes
 inclusion_rule_stats,rule_name,varchar,Yes,No,No,Yes
 inclusion_rule_stats,meet_subjects,float,Yes,No,No,Yes
@@ -176,10 +173,6 @@ relationship,is_hierarchical,varchar(1),Yes,No,No,Yes
 relationship,defines_ancestry,varchar(1),Yes,No,No,Yes
 relationship,reverse_relationship_id,varchar(20),Yes,Yes,No,Yes
 relationship,relationship_concept_id,int,Yes,Yes,No,Yes
-resolved_concepts,cohort_id,bigint,Yes,Yes,No,Yes
-resolved_concepts,concept_set_id,int,Yes,Yes,No,Yes
-resolved_concepts,concept_id,int,Yes,Yes,No,Yes
-resolved_concepts,database_id,varchar,Yes,Yes,No,Yes
 temporal_analysis_ref,analysis_id,int,Yes,Yes,No,Yes
 temporal_analysis_ref,analysis_name,varchar,Yes,No,No,Yes
 temporal_analysis_ref,domain_id,varchar(20),Yes,Yes,No,Yes

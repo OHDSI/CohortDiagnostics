@@ -316,7 +316,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   if (length(obseveredButNotExpected) > 0) {
     ParallelLogger::logTrace(
       paste0(
-        "- The following columns were found in cohort table, but are not expected - they will be removed:",
+        " - The following columns were found in cohort table, but are not expected - they will be removed:",
         paste0(" '", obseveredButNotExpected, "'", collapse = ",")
       )
     )
@@ -392,27 +392,31 @@ runCohortDiagnostics <- function(packageName = NULL,
   writeToCsv(data = database,
              fileName = file.path(exportFolder, "database.csv"))
   delta <- Sys.time() - startMetaData
-  writeLines(paste(
-    "Saving database metadata took",
+  ParallelLogger::logTrace(paste(
+    " - Saving database metadata took",
     signif(delta, 3),
     attr(delta, "units")
   ))
   
   # Incremental mode----
   if (incremental) {
-    ParallelLogger::logTrace(" - Working in incremental mode.")
+    ParallelLogger::logInfo(" - Working in incremental mode.")
     cohorts$checksum <- computeChecksum(cohorts$sql)
     recordKeepingFile <-
       file.path(incrementalFolder, "CreatedDiagnostics.csv")
     if (file.exists(path = recordKeepingFile)) {
-      ParallelLogger::logInfo(
-        "  - Found existing record keeping file in incremental folder - CreatedDiagnostics.csv"
+      ParallelLogger::logTrace(
+        "  - Found existing record keeping file in incremental folder - CreatedDiagnostics.csv."
+      )
+    } else {
+      ParallelLogger::logTrace(
+        "  - Did not find existing record keeping file in incremental folder. Creating file CreatedDiagnostics.csv."
       )
     }
   }
   
   # Counting cohorts----
-  ParallelLogger::logInfo(" - Counting records & subjects for instantiated cohorts.")
+  ParallelLogger::logTrace(" - Counting records & subjects for instantiated cohorts.")
   cohortCounts <- getCohortCounts(
     connection = connection,
     cohortDatabaseSchema = cohortDatabaseSchema,
@@ -446,18 +450,18 @@ runCohortDiagnostics <- function(packageName = NULL,
       instantiatedCohorts <- cohortCounts %>%
         dplyr::pull(.data$cohortId)
       ParallelLogger::logInfo(
-        sprintf(
-          "Found %s of %s (%1.2f%%) submitted cohorts instantiated. ",
-          length(instantiatedCohorts),
-          nrow(cohorts),
-          100 * (length(instantiatedCohorts) /
-                   nrow(cohorts))
-        ),
-        "Beginning cohort diagnostics for instantiated cohorts. "
-      )
+        paste0(" - Found ",
+               scales::comma(length(instantiatedCohorts)),
+               " of ",
+               scales::comma(length(instantiatedCohorts)),
+               " (",
+               scales::percent(length(instantiatedCohorts) / nrow(cohorts),
+                               accuracy = 0.1),
+               ") submitted cohorts instantiated. Beginning cohort diagnostics for instantiated cohorts. "
+      ))
     } else {
       warning(
-        "All cohorts were either not instantiated or all have 0 records. All diagnostics will be empty."
+        " - All cohorts were either not instantiated or all have 0 records. All diagnostics will be empty."
       )
     }
   }
@@ -468,8 +472,8 @@ runCohortDiagnostics <- function(packageName = NULL,
     startInclusionStatistics <- Sys.time()
     if (any(is.null(instantiatedCohorts),
             -1 %in% instantiatedCohorts)) {
-      ParallelLogger::logInfo(
-        " -- Skipping inclusion statistics from files because no cohorts were instantiated."
+      ParallelLogger::logTrace(
+        "  - Skipping inclusion statistics from files because no cohorts were instantiated."
       )
     } else {
       ParallelLogger::logTrace(" -- Found inclusion rule statistics files")
@@ -483,7 +487,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       if (incremental &&
           (length(instantiatedCohorts) - nrow(subset)) > 0) {
         ParallelLogger::logInfo(sprintf(
-          " -- Skipping %s cohorts in incremental mode.",
+          "  - Skipping %s cohorts in incremental mode.",
           length(instantiatedCohorts) - nrow(subset)
         ))
       }
@@ -511,9 +515,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           }
           colnames(stats$simplifiedOutput) <-
             SqlRender::camelCaseToSnakeCase(colnames(stats$simplifiedOutput))
-          
           stats$simplifiedOutput <- .replaceNaInDataFrameWithEmptyString(stats$simplifiedOutput)
-          
           writeToCsv(
             data = stats$simplifiedOutput,
             fileName = file.path(exportFolder, "inclusion_rule_stats.csv"),
@@ -527,7 +529,6 @@ runCohortDiagnostics <- function(packageName = NULL,
             'cohortInclusionStats',
             'cohortSummaryStats'
           )
-          
           for (k in (1:length(listOfInclusionTables))) {
             data <- stats[[listOfInclusionTables[[k]]]]
             data <- .replaceNaInDataFrameWithEmptyString(data)
@@ -575,7 +576,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         } else {
           warning(
             paste0(
-              "Cohort Inclusion statistics files not found.\n",
+              "  - Cohort Inclusion statistics files not found.\n",
               "    This might mean that the instantiated cohort(s) did not have\n",
               "    any inclusion statistics or the inclusion statistics files\n",
               "    that were exported as part of cohort instantiation\n",
@@ -596,7 +597,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   if (runIncludedSourceConcepts ||
       runOrphanConcepts || runBreakdownIndexEvents) {
     # running together because share common process of needing to resolve concept sets
-    ParallelLogger::logInfo("Beginning concept set diagnostics.")
+    ParallelLogger::logInfo(" - Beginning concept set diagnostics.")
     # note for incremental mode - if a cohort id is eligible for computation for any diagnostics,
     # all diagnostics are computed for that cohort
     startConceptSetDiagnostics <- Sys.time()
@@ -715,16 +716,16 @@ runCohortDiagnostics <- function(packageName = NULL,
         conceptSetDiagnostics$conceptSets <- NULL
       }
       
-      if ('resolvedConceptIds' %in% names(conceptSetDiagnostics)) {
+      if ('conceptResolved' %in% names(conceptSetDiagnostics)) {
         ParallelLogger::logTrace(" - Writing resolved_concepts.csv")
         writeToCsv(
-          data = conceptSetDiagnostics$resolvedConceptIds %>%
+          data = conceptSetDiagnostics$conceptResolved %>%
             dplyr::mutate(databaseId = !!databaseId),
-          fileName = file.path(exportFolder, "resolved_concepts.csv"),
+          fileName = file.path(exportFolder, "concept_resolved.csv"),
           incremental = incremental,
-          cohortId = conceptSetDiagnostics$resolvedConceptIds$cohortId
+          cohortId = conceptSetDiagnostics$conceptResolved$cohortId
         )
-        conceptSetDiagnostics$resolvedConceptIds <- NULL
+        conceptSetDiagnostics$conceptResolved <- NULL
       }
       
       if ('includedSourceCodes' %in% names(conceptSetDiagnostics) &&

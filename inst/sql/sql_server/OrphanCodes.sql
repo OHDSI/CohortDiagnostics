@@ -142,10 +142,12 @@ WHERE i.codeset_id IS NULL
 ORDER BY ss.codeset_id,
 	c1.concept_id;
 
+{(@concept_id_universe != "")} ? {
 -- add the orphan codes to concept id universe table
 INSERT INTO @concept_id_universe
 SELECT DISTINCT concept_id
 FROM #orphan_concept_table;
+}
 
 IF OBJECT_ID('tempdb..#starting_concepts', 'U') IS NOT NULL
 	DROP TABLE #starting_concepts;

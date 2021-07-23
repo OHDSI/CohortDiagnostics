@@ -108,11 +108,54 @@ nullToEmpty <- function(x) {
 }
 
 
-
-
-
-
-
+getDomainInformation <- function(package = "CohortDiagnostics") {
+  ParallelLogger::logTrace("  - Reading domains.csv")
+  domains <- readr::read_csv(
+    system.file("csv", "domains.csv", package = "CohortDiagnostics"),
+    col_types = readr::cols(),
+    guess_max = min(1e7), 
+    na = "NA"
+  ) %>%
+    dplyr::mutate(domainTableShort = stringr::str_sub(
+      string = toupper(.data$domain),
+      start = 1,
+      end = 2
+    )) %>%
+    dplyr::mutate(
+      domainTableShort = dplyr::case_when(
+        stringr::str_detect(string = tolower(.data$domain), pattern = 'era') ~ paste0(.data$domainTableShort, 'E'),
+        TRUE ~ .data$domainTableShort
+      )
+    )
+  
+  domains$domainConceptIdShort <-
+    stringr::str_replace_all(
+      string = sapply(
+        stringr::str_extract_all(
+          string = camelCaseToTitleCase(snakeCaseToCamelCase(domains$domainConceptId)),
+          pattern = '[A-Z]'
+        ),
+        paste,
+        collapse = ' '
+      ),
+      pattern = " ",
+      replacement = ""
+    )
+  domains$domainSourceConceptIdShort <-
+    stringr::str_replace_all(
+      string = sapply(
+        stringr::str_extract_all(
+          string = camelCaseToTitleCase(snakeCaseToCamelCase(domains$domainSourceConceptId)),
+          pattern = '[A-Z]'
+        ),
+        paste,
+        collapse = ' '
+      ),
+      pattern = " ",
+      replacement = ""
+    )
+  return(domains)
+}
 
 
 
