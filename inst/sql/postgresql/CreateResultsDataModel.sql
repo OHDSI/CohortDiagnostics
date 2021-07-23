@@ -174,7 +174,7 @@ CREATE TABLE concept_count (
 			concept_id INT NOT NULL,
 			event_year INT NOT NULL,
 			event_month INT NOT NULL,
-			count_value FLOAT NOT NULL,
+			concept_count FLOAT NOT NULL,
 			PRIMARY KEY(database_id, concept_id, event_year, event_month)
 );
 
@@ -184,9 +184,10 @@ CREATE TABLE concept_cooccurrence (
 			cohort_id BIGINT NOT NULL,
 			concept_id BIGINT NOT NULL,
 			co_concept_id BIGINT NOT NULL,
-			count_value BIGINT NOT NULL,
+			concept_count BIGINT NOT NULL,
 			PRIMARY KEY(database_id, cohort_id, concept_id, co_concept_id)
 );
+
 
 --Table concept_mapping
 CREATE TABLE concept_mapping (
@@ -194,8 +195,8 @@ CREATE TABLE concept_mapping (
 			domain_table VARCHAR NOT NULL,
 			concept_id INT NOT NULL,
 			source_concept_id INT NOT NULL,
-			concept_subjects FLOAT NOT NULL,
 			concept_count FLOAT NOT NULL,
+			subject_count FLOAT NOT NULL,
 			PRIMARY KEY(database_id, domain_table, concept_id, source_concept_id)
 );
 
@@ -240,10 +241,10 @@ CREATE TABLE covariate_ref (
 
 --Table concept_resolved
 CREATE TABLE concept_resolved (
+			database_id VARCHAR NOT NULL,
 			cohort_id BIGINT NOT NULL,
 			concept_set_id INT NOT NULL,
 			concept_id INT NOT NULL,
-			database_id VARCHAR NOT NULL,
 			PRIMARY KEY(cohort_id, concept_set_id, concept_id, database_id)
 );
 

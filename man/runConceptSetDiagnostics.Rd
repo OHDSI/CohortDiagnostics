@@ -13,10 +13,7 @@ runConceptSetDiagnostics(
   cohorts,
   cohortIds = NULL,
   cohortDatabaseSchema = NULL,
-  cohortTable = NULL,
-  runIncludedSourceConcepts,
-  runOrphanConcepts,
-  runBreakdownIndexEvents
+  cohortTable = NULL
 )
 }
 \arguments{
@@ -53,13 +50,6 @@ this should include both the database and schema name, for example
 'scratch.dbo'.}
 
 \item{cohortTable}{Name of the cohort table.}
-
-\item{runIncludedSourceConcepts}{Generate and export the source concepts included in the cohorts?}
-
-\item{runOrphanConcepts}{Generate and export potential orphan concepts?}
-
-\item{runBreakdownIndexEvents}{Generate and export the breakdown of index events? This is executed on
-instantiated cohorts only.}
 }
 \description{
 Runs concept set diagnostics on a set of cohorts. For index event breakdown,

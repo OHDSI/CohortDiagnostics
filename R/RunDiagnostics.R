@@ -49,10 +49,14 @@
 #' @param databaseDescription         A short description (several sentences) of the database. If NULL, defaults to databaseId.
 #' @template cdmVersion
 #' @param runInclusionStatistics      Generate and export statistic on the cohort inclusion rules?
-#' @param runIncludedSourceConcepts   Generate and export the source concepts included in the cohorts?
-#' @param runOrphanConcepts           Generate and export potential orphan concepts?
+#' @param runConceptSetDiagnostics    Concept Set Diagnostics includes concept counts, concepts in data source,
+#'                                    index event breakdown, concept cooccurrence, excluded concepts,
+#'                                    resolved concepts. This function call now supersedes runIncludedSourceConcepts,
+#'                                    runOrphanConcepts, runBreakdownIndexEvents.
+#' @param runIncludedSourceConcepts   (Deprecated) Generate and export the source concepts included in the cohorts?
+#' @param runOrphanConcepts           (Deprecated) Generate and export potential orphan concepts?
 #' @param runVisitContext             Generate and export index-date visit context?
-#' @param runBreakdownIndexEvents     Generate and export the breakdown of index events?
+#' @param runBreakdownIndexEvents     (Deprecated) Generate and export the breakdown of index events?
 #' @param runIncidenceRate            Generate and export the cohort incidence  rates?
 #' @param runCohortTimeSeries         Generate and export the cohort level time series?
 #' @param runDataSourceTimeSeries     Generate and export the Data source level time series? i.e.
@@ -94,10 +98,11 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  databaseDescription = databaseId,
                                  cdmVersion = 5,
                                  runInclusionStatistics = TRUE,
-                                 runIncludedSourceConcepts = TRUE,
-                                 runOrphanConcepts = TRUE,
+                                 runConceptSetDiagnostics = TRUE,
+                                 runIncludedSourceConcepts = FALSE,
+                                 runOrphanConcepts = FALSE,
                                  runVisitContext = TRUE,
-                                 runBreakdownIndexEvents = TRUE,
+                                 runBreakdownIndexEvents = FALSE,
                                  runIncidenceRate = TRUE,
                                  runCohortTimeSeries = TRUE,
                                  runDataSourceTimeSeries = TRUE,
@@ -123,8 +128,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                    useProcedureOccurrence = TRUE,
                                    useMeasurement = TRUE,
                                    temporalStartDays = c(
-                                     -365,
-                                     -30,
+                                     -365,-30,
                                      0,
                                      1,
                                      31,
@@ -132,8 +136,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                      seq(from = 0, to = 390, by = 30)
                                    ),
                                    temporalEndDays = c(
-                                     -31,
-                                     -1,
+                                     -31,-1,
                                      0,
                                      30,
                                      365,
@@ -145,6 +148,23 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  incremental = FALSE,
                                  incrementalFolder = file.path(exportFolder, "incremental")) {
   start <- Sys.time()
+  
+  if (runIncludedSourceConcepts) {
+    warning(
+      "runIncludedSourceConcepts is deprecated. Running runConceptSetDiagnostics instead."
+    )
+    runConceptSetDiagnostics <- TRUE
+  }
+  if (runOrphanConcepts) {
+    warning("runOrphanConcepts is deprecated. Running runConceptSetDiagnostics instead.")
+    runConceptSetDiagnostics <- TRUE
+  }
+  if (runBreakdownIndexEvents) {
+    warning(
+      "runBreakdownIndexEvents is deprecated. Running runConceptSetDiagnostics instead."
+    )
+    runConceptSetDiagnostics <- TRUE
+  }
   
   if (all(is.null(connectionDetails),
           is.null(connection))) {
@@ -158,10 +178,8 @@ runCohortDiagnostics <- function(packageName = NULL,
   argumentsAtDiagnosticsInitiationJson <-
     list(
       runInclusionStatistics = argumentsAtDiagnosticsInitiation$runInclusionStatistics,
-      runIncludedSourceConcepts = argumentsAtDiagnosticsInitiation$runIncludedSourceConcepts,
-      runOrphanConcepts = argumentsAtDiagnosticsInitiation$runOrphanConcepts,
+      runConceptSetDiagnostics = argumentsAtDiagnosticsInitiation$runConceptSetDiagnostics,
       runVisitContext = argumentsAtDiagnosticsInitiation$runVisitContext,
-      runBreakdownIndexEvents = argumentsAtDiagnosticsInitiation$runBreakdownIndexEvents,
       runIncidenceRate = argumentsAtDiagnosticsInitiation$runIncidenceRate,
       runCohortTimeSeries = argumentsAtDiagnosticsInitiation$runCohortTimeSeries,
       runDataSourceTimeSeries = argumentsAtDiagnosticsInitiation$runDataSourceTimeSeries,
@@ -205,9 +223,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   # Assert checks----
   errorMessage <- checkmate::makeAssertCollection()
   checkmate::assertLogical(runInclusionStatistics, add = errorMessage)
-  checkmate::assertLogical(runIncludedSourceConcepts, add = errorMessage)
-  checkmate::assertLogical(runOrphanConcepts, add = errorMessage)
-  checkmate::assertLogical(runBreakdownIndexEvents, add = errorMessage)
+  checkmate::assertLogical(runConceptSetDiagnostics, add = errorMessage)
   checkmate::assertLogical(runIncidenceRate, add = errorMessage)
   checkmate::assertLogical(runCohortCharacterization, add = errorMessage)
   checkmate::assertInt(
@@ -224,9 +240,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   
   if (any(
     runInclusionStatistics,
-    runIncludedSourceConcepts,
-    runOrphanConcepts,
-    runBreakdownIndexEvents,
+    runConceptSetDiagnostics,
     runIncidenceRate,
     runCohortTimeSeries,
     runCohortRelationship,
@@ -312,7 +326,8 @@ runCohortDiagnostics <- function(packageName = NULL,
   }
   
   obseveredButNotExpected <-
-    setdiff(x = cohortTableColumnNamesObserved, y = cohortTableColumnNamesExpected)
+    setdiff(x = cohortTableColumnNamesObserved,
+            y = cohortTableColumnNamesExpected)
   if (length(obseveredButNotExpected) > 0) {
     ParallelLogger::logTrace(
       paste0(
@@ -425,7 +440,8 @@ runCohortDiagnostics <- function(packageName = NULL,
   )
   
   # Get instantiated cohorts ----
-  instantiatedCohorts <- as.double(c(-1)) # set by default to non instantiated
+  instantiatedCohorts <-
+    as.double(c(-1)) # set by default to non instantiated
   if (!is.null(cohortCounts)) {
     cohortCounts <- cohortCounts %>%
       dplyr::mutate(databaseId = !!databaseId)
@@ -450,15 +466,17 @@ runCohortDiagnostics <- function(packageName = NULL,
       instantiatedCohorts <- cohortCounts %>%
         dplyr::pull(.data$cohortId)
       ParallelLogger::logInfo(
-        paste0(" - Found ",
-               scales::comma(length(instantiatedCohorts)),
-               " of ",
-               scales::comma(length(instantiatedCohorts)),
-               " (",
-               scales::percent(length(instantiatedCohorts) / nrow(cohorts),
-                               accuracy = 0.1),
-               ") submitted cohorts instantiated. Beginning cohort diagnostics for instantiated cohorts. "
-      ))
+        paste0(
+          " - Found ",
+          scales::comma(length(instantiatedCohorts)),
+          " of ",
+          scales::comma(length(instantiatedCohorts)),
+          " (",
+          scales::percent(length(instantiatedCohorts) / nrow(cohorts),
+                          accuracy = 0.1),
+          ") submitted cohorts instantiated. Beginning cohort diagnostics for instantiated cohorts. "
+        )
+      )
     } else {
       warning(
         " - All cohorts were either not instantiated or all have 0 records. All diagnostics will be empty."
@@ -470,11 +488,8 @@ runCohortDiagnostics <- function(packageName = NULL,
   ParallelLogger::logInfo(" - Retrieving inclusion rules from file.")
   if (runInclusionStatistics) {
     startInclusionStatistics <- Sys.time()
-    if (any(is.null(instantiatedCohorts),
-            -1 %in% instantiatedCohorts)) {
-      ParallelLogger::logTrace(
-        "  - Skipping inclusion statistics from files because no cohorts were instantiated."
-      )
+    if (any(is.null(instantiatedCohorts),-1 %in% instantiatedCohorts)) {
+      ParallelLogger::logTrace("  - Skipping inclusion statistics from files because no cohorts were instantiated.")
     } else {
       ParallelLogger::logTrace(" -- Found inclusion rule statistics files")
       subset <- subsetToRequiredCohorts(
@@ -501,10 +516,12 @@ runCohortDiagnostics <- function(packageName = NULL,
           if (nrow(stats$simplifiedOutput) > 0) {
             stats$simplifiedOutput <- stats$simplifiedOutput %>%
               enforceMinCellValueInDataframe(
-                columnNames = c("meetSubjects",
-                                "gainSubjects",
-                                "totalSubjects",
-                                "remainSubjects"),
+                columnNames = c(
+                  "meetSubjects",
+                  "gainSubjects",
+                  "totalSubjects",
+                  "remainSubjects"
+                ),
                 minCellCount = minCellCount
               )
           }
@@ -515,7 +532,8 @@ runCohortDiagnostics <- function(packageName = NULL,
           }
           colnames(stats$simplifiedOutput) <-
             SqlRender::camelCaseToSnakeCase(colnames(stats$simplifiedOutput))
-          stats$simplifiedOutput <- .replaceNaInDataFrameWithEmptyString(stats$simplifiedOutput)
+          stats$simplifiedOutput <-
+            .replaceNaInDataFrameWithEmptyString(stats$simplifiedOutput)
           writeToCsv(
             data = stats$simplifiedOutput,
             fileName = file.path(exportFolder, "inclusion_rule_stats.csv"),
@@ -532,15 +550,17 @@ runCohortDiagnostics <- function(packageName = NULL,
           for (k in (1:length(listOfInclusionTables))) {
             data <- stats[[listOfInclusionTables[[k]]]]
             data <- .replaceNaInDataFrameWithEmptyString(data)
-            data <- data %>% 
-            enforceMinCellValueInDataframe(
-              columnNames = c("personCount",
-                              "gainCount",
-                              "personTotal",
-                              "baseCount",
-                              "finalCount"),
-              minCellCount = minCellCount
-            )
+            data <- data %>%
+              enforceMinCellValueInDataframe(
+                columnNames = c(
+                  "personCount",
+                  "gainCount",
+                  "personTotal",
+                  "baseCount",
+                  "finalCount"
+                ),
+                minCellCount = minCellCount
+              )
             if ("cohortDefinitionId" %in% (colnames(data))) {
               data <- data %>%
                 dplyr::rename(cohortId = .data$cohortDefinitionId)
@@ -588,54 +608,31 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
     delta <- Sys.time() - startInclusionStatistics
     ParallelLogger::logTrace(" - Running Inclusion Statistics took ",
-                            signif(delta, 3),
-                            " ",
-                            attr(delta, "units"))
+                             signif(delta, 3),
+                             " ",
+                             attr(delta, "units"))
   }
-
+  
+  browser()
   # Concept set diagnostics----
-  if (runIncludedSourceConcepts ||
-      runOrphanConcepts || runBreakdownIndexEvents) {
+  if (runConceptSetDiagnostics) {
     # running together because share common process of needing to resolve concept sets
     ParallelLogger::logInfo(" - Beginning concept set diagnostics.")
     # note for incremental mode - if a cohort id is eligible for computation for any diagnostics,
     # all diagnostics are computed for that cohort
     startConceptSetDiagnostics <- Sys.time()
     
-    subset <- dplyr::tibble()
-    if (runIncludedSourceConcepts) {
-      subsetIncluded <- subsetToRequiredCohorts(
-        cohorts = cohorts,
-        task = "runIncludedSourceConcepts",
-        incremental = incremental,
-        recordKeepingFile = recordKeepingFile
-      )
-      subset <- dplyr::bind_rows(subset, subsetIncluded)
-    }
-    if (runBreakdownIndexEvents) {
-      subsetBreakdown <- subsetToRequiredCohorts(
-        cohorts = cohorts,
-        task = "runBreakdownIndexEvents",
-        incremental = incremental,
-        recordKeepingFile = recordKeepingFile
-      )
-      subset <- dplyr::bind_rows(subset, subsetBreakdown)
-    }
-    if (runOrphanConcepts) {
-      subsetOrphans <- subsetToRequiredCohorts(
-        cohorts = cohorts,
-        task = "runOrphanConcepts",
-        incremental = incremental,
-        recordKeepingFile = recordKeepingFile
-      )
-      subset <- dplyr::bind_rows(subset, subsetOrphans)
-    }
-    subset <- dplyr::distinct(subset)
-    ParallelLogger::logInfo(sprintf(
-      "  - Skipping %s cohorts in incremental mode.",
-      nrow(cohorts) - nrow(subset)
-    ))
+    subset <- subsetToRequiredCohorts(
+      cohorts = cohorts,
+      task = "runConceptSetDiagnostics",
+      incremental = incremental,
+      recordKeepingFile = recordKeepingFile
+    )
     if (nrow(subset) > 0) {
+      ParallelLogger::logInfo(sprintf(
+        "  - Skipping %s cohorts in incremental mode.",
+        nrow(cohorts) - nrow(subset)
+      ))
       conceptSetDiagnostics <- runConceptSetDiagnostics(
         connection = connection,
         tempEmulationSchema = tempEmulationSchema,
@@ -644,15 +641,31 @@ runCohortDiagnostics <- function(packageName = NULL,
         cohorts = cohorts,
         cohortIds = subset$cohortId,
         cohortDatabaseSchema = cohortDatabaseSchema,
-        cohortTable = cohortTable,
-        runIncludedSourceConcepts = runIncludedSourceConcepts,
-        runOrphanConcepts = runOrphanConcepts,
-        runBreakdownIndexEvents = runBreakdownIndexEvents
+        cohortTable = cohortTable
       )
       browser()
+      a <- "conceptSourceStandardMapping"
+      browser()
       
-      # write vocabulary tables
-      vocabularyTableNames = c(
+      tablesOfInterest = c(
+        "concept",
+        "concept_ancestor",
+        "concept_class",
+        "concept_relationship",
+        "concept_synonym",
+        "domain",
+        "relationship",
+        "vocabulary",
+        "conceptCount",
+        "conceptResolved",
+        "conceptSourceStandardMapping",
+        "indexEventBreakdown",
+        "excludedConceptIds",
+        "indexDateConceptCooccurrence",
+        "orphanCodes",
+        "conceptSets"
+      )
+      vocabularyTables <- c(
         "concept",
         "concept_ancestor",
         "concept_class",
@@ -662,171 +675,43 @@ runCohortDiagnostics <- function(packageName = NULL,
         "relationship",
         "vocabulary"
       )
+      columnsToApplyMinCellValue <-
+        c('concept_count', 'subject_count')
       
-      for (i in (1:length(vocabularyTableNames))) {
-        if (vocabularyTableNames[[i]] %in% names(conceptSetDiagnostics)) {
-          ParallelLogger::logTrace(
-            paste0(
-              " - Writing extracted vocabulary data to file - ",
-              vocabularyTableNames[[i]]
-            ),
-            ".csv"
-          )
-          if (vocabularyTableNames[[i]] %in% c("domain",
-                                               "relationship",
-                                               "vocabulary",
-                                               "concept_class")) {
-            writeToCsv(
-              data = conceptSetDiagnostics[[vocabularyTableNames[[i]]]],
-              fileName = file.path(
-                exportFolder,
-                paste(vocabularyTableNames[[i]], "csv", sep = ".")
-              ),
-              incremental = FALSE
-            )
-          } else {
-            writeToCsv(
-              data = conceptSetDiagnostics[[vocabularyTableNames[[i]]]],
-              fileName = file.path(
-                exportFolder,
-                paste(vocabularyTableNames[[i]], "csv", sep = ".")
-              ),
-              incremental = incremental
-            )
+      resultsDataModel <- getResultsDataModelSpecifications()
+      
+      # write vocabulary tables
+      for (i in (1:length(tablesOfInterest))) {
+        if (tablesOfInterest[[i]] %in% names(conceptSetDiagnostics)) {
+          ParallelLogger::logTrace(paste0(" - Writing data to file: ", tablesOfInterest[[i]], ".csv"))
+          columns <- resultsDataModel %>%
+            dplyr::filter(tableName %in% tablesOfInterest[[i]]) %>%
+            dplyr::pull(.data$fieldName)
+          data <-
+            conceptSetDiagnostics[[tablesOfInterest[[i]]]] %>%
+            dplyr::select(columns)
+          if (!tablesOfInterest[[i]] %in% vocabularyTables) {
+            data <- data %>%
+              dplyr::mutate(databaseId = !!databaseId)
           }
-          conceptSetDiagnostics[[vocabularyTableNames[[i]]]] <- NULL
-        }
-      }
-      if ('conceptSets' %in% names(conceptSetDiagnostics)) {
-        ParallelLogger::logTrace( " - Writing concept_sets.csv")
-        writeToCsv(
-          data = conceptSetDiagnostics$conceptSets %>%
-            dplyr::select(
-              .data$cohortId,
-              .data$conceptSetExpression,
-              .data$conceptSetId,
-              .data$conceptSetName,
-              .data$conceptSetSql
-            ) %>%
-            dplyr::distinct(),
-          fileName = file.path(exportFolder, "concept_sets.csv"),
-          incremental = incremental,
-          cohortId = conceptSetDiagnostics$conceptSets$cohortId
-        )
-        conceptSetDiagnostics$conceptSets <- NULL
-      }
-      
-      if ('conceptResolved' %in% names(conceptSetDiagnostics)) {
-        ParallelLogger::logTrace(" - Writing resolved_concepts.csv")
-        writeToCsv(
-          data = conceptSetDiagnostics$conceptResolved %>%
-            dplyr::mutate(databaseId = !!databaseId),
-          fileName = file.path(exportFolder, "concept_resolved.csv"),
-          incremental = incremental,
-          cohortId = conceptSetDiagnostics$conceptResolved$cohortId
-        )
-        conceptSetDiagnostics$conceptResolved <- NULL
-      }
-      
-      if ('includedSourceCodes' %in% names(conceptSetDiagnostics) &&
-          runIncludedSourceConcepts) {
-        if (nrow(conceptSetDiagnostics$includedSourceCodes) > 0) {
-          ParallelLogger::logTrace(" - Writing included_source_concept.csv")
-          conceptSetDiagnostics$includedSourceCodes$databaseId <-
-            databaseId
-          conceptSetDiagnostics$includedSourceCodes <- conceptSetDiagnostics$includedSourceCodes %>% 
-          enforceMinCellValueInDataframe(
-            columnNames = c("conceptSubjects",
-                            "conceptCount"),
-            minCellCount = minCellCount
-          )
           writeToCsv(
-            data = conceptSetDiagnostics$includedSourceCodes,
-            fileName = file.path(exportFolder, "included_source_concept.csv"),
-            incremental = incremental,
-            cohortId = conceptSetDiagnostics$includedSourceCodes$cohortId
+            data = data,
+            fileName = file.path(
+              exportFolder,
+              paste0(tablesOfInterest[[i]], "csv", sep = ".")
+            ),
+            incremental = incremental
           )
+          conceptSetDiagnostics[[tablesOfInterest[[i]]]] <- NULL
         }
-        recordTasksDone(
-          cohortId = subset$cohortId,
-          task = "runIncludedSourceConcepts",
-          checksum = subset$checksum,
-          recordKeepingFile = recordKeepingFile,
-          incremental = incremental
-        )
-        conceptSetDiagnostics$includedSourceCodes <- NULL
       }
-      
-      if ('indexEventBreakdown' %in% names(conceptSetDiagnostics) &&
-          runBreakdownIndexEvents) {
-        if (nrow(conceptSetDiagnostics$indexEventBreakdown) > 0) {
-          ParallelLogger::logInfo("- Writing index_event_breakdown.csv")
-          conceptSetDiagnostics$indexEventBreakdown$databaseId <-
-            databaseId
-          conceptSetDiagnostics$indexEventBreakdown <-
-            conceptSetDiagnostics$indexEventBreakdown %>%
-            enforceMinCellValueInDataframe(columnNames = c("subjectCount",
-                                                           "conceptCount"),
-                                           minCellCount = minCellCount)
-          writeToCsv(
-            data = conceptSetDiagnostics$indexEventBreakdown,
-            fileName = file.path(exportFolder, "index_event_breakdown.csv"),
-            incremental = incremental,
-            cohortId = conceptSetDiagnostics$indexEventBreakdown$cohortId
-          )
-        }
-        if (nrow(conceptSetDiagnostics$indexDateConceptCooccurrence) > 0) {
-          ParallelLogger::logInfo("- Writing index_date_concept_cooccurrence.csv")
-          conceptSetDiagnostics$indexDateConceptCooccurrence$databaseId <-
-            databaseId
-          conceptSetDiagnostics$indexDateConceptCooccurrence <-
-            enforceMinCellValue(
-              conceptSetDiagnostics$indexDateConceptCooccurrence,
-              "countValue",
-              minCellCount
-            )
-          writeToCsv(
-            data = conceptSetDiagnostics$indexDateConceptCooccurrence,
-            fileName = file.path(exportFolder, "concept_cooccurrence.csv"),
-            incremental = incremental,
-            cohortId = conceptSetDiagnostics$indexDateConceptCooccurrence$cohortId
-          )
-        }
-        recordTasksDone(
-          cohortId = subset$cohortId,
-          task = "runBreakdownIndexEvents",
-          checksum = subset$checksum,
-          recordKeepingFile = recordKeepingFile,
-          incremental = incremental
-        )
-        conceptSetDiagnostics$indexEventBreakdown <- NULL
-      }
-      
-      if ('orphanCodes' %in% names(conceptSetDiagnostics) &&
-          runOrphanConcepts) {
-        if (nrow(conceptSetDiagnostics$orphanCodes) > 0) {
-          ParallelLogger::logInfo("- Writing orphan_concept.csv")
-          conceptSetDiagnostics$orphanCodes$databaseId <- databaseId
-          conceptSetDiagnostics$orphanCodes <- conceptSetDiagnostics$orphanCodes %>%
-            enforceMinCellValueInDataframe(columnNames = c("conceptSubjects",
-                                                           "conceptCount"),
-                                           minCellCount = minCellCount)
-          writeToCsv(
-            data = conceptSetDiagnostics$orphanCodes,
-            fileName = file.path(exportFolder, "orphan_concept.csv"),
-            incremental = incremental,
-            cohortId = conceptSetDiagnostics$orphanCodes$cohortId %>% unique()
-          )
-        }
-        recordTasksDone(
-          cohortId = subset$cohortId,
-          task = "runOrphanConcepts",
-          checksum = subset$checksum,
-          recordKeepingFile = recordKeepingFile,
-          incremental = incremental
-        )
-        conceptSetDiagnostics$orphanCodes <- NULL
-      }
+      recordTasksDone(
+        cohortId = subset$cohortId,
+        task = "runOrphanConcepts",
+        checksum = subset$checksum,
+        recordKeepingFile = recordKeepingFile,
+        incremental = incremental
+      )
     }
     delta <- Sys.time() - startConceptSetDiagnostics
     ParallelLogger::logInfo("Running Concept Set Diagnostics took ",
@@ -937,7 +822,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           data <- NULL
         }
         if (nrow(data) > 0) {
-          data <- data %>% 
+          data <- data %>%
             dplyr::mutate(cohortId = row$cohortId)
         }
         return(data)
@@ -1018,14 +903,18 @@ runCohortDiagnostics <- function(packageName = NULL,
       
       if (!is.null(timeSeries) && nrow(timeSeries) > 0) {
         timeSeries <- timeSeries %>%
-          enforceMinCellValueInDataframe(columnNames = c("records",
-                                                         "subjects",
-                                                         "personDays",
-                                                         "recordsStart",
-                                                         "subjectsStart",
-                                                         "recordsEnd",
-                                                         "subjectsEnd"),
-                                         minCellCount = minCellCount)
+          enforceMinCellValueInDataframe(
+            columnNames = c(
+              "records",
+              "subjects",
+              "personDays",
+              "recordsStart",
+              "subjectsStart",
+              "recordsEnd",
+              "subjectsEnd"
+            ),
+            minCellCount = minCellCount
+          )
         data <- .replaceNaInDataFrameWithEmptyString(data)
         writeToCsv(
           data = timeSeries,
@@ -1110,7 +999,8 @@ runCohortDiagnostics <- function(packageName = NULL,
                                 columnsInCohortRelationship[[i]],
                                 minCellCount)
         }
-        cohortRelationship <- .replaceNaInDataFrameWithEmptyString(cohortRelationship)
+        cohortRelationship <-
+          .replaceNaInDataFrameWithEmptyString(cohortRelationship)
         writeToCsv(
           data = cohortRelationship,
           fileName = file.path(exportFolder, "cohort_relationships.csv"),

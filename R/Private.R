@@ -161,6 +161,3 @@ getDomainInformation <- function(package = "CohortDiagnostics") {
 
 
 
-
-
-

@@ -25,10 +25,11 @@ runCohortDiagnostics(
   databaseDescription = databaseId,
   cdmVersion = 5,
   runInclusionStatistics = TRUE,
-  runIncludedSourceConcepts = TRUE,
-  runOrphanConcepts = TRUE,
+  runConceptSetDiagnostics = TRUE,
+  runIncludedSourceConcepts = FALSE,
+  runOrphanConcepts = FALSE,
   runVisitContext = TRUE,
-  runBreakdownIndexEvents = TRUE,
+  runBreakdownIndexEvents = FALSE,
   runIncidenceRate = TRUE,
   runCohortTimeSeries = TRUE,
   runDataSourceTimeSeries = TRUE,
@@ -117,13 +118,18 @@ does not exist it will be created.}
 
 \item{runInclusionStatistics}{Generate and export statistic on the cohort inclusion rules?}
 
-\item{runIncludedSourceConcepts}{Generate and export the source concepts included in the cohorts?}
+\item{runConceptSetDiagnostics}{Concept Set Diagnostics includes concept counts, concepts in data source,
+index event breakdown, concept cooccurrence, excluded concepts,
+resolved concepts. This function call now supersedes runIncludedSourceConcepts,
+runOrphanConcepts, runBreakdownIndexEvents.}
 
-\item{runOrphanConcepts}{Generate and export potential orphan concepts?}
+\item{runIncludedSourceConcepts}{(Deprecated) Generate and export the source concepts included in the cohorts?}
+
+\item{runOrphanConcepts}{(Deprecated) Generate and export potential orphan concepts?}
 
 \item{runVisitContext}{Generate and export index-date visit context?}
 
-\item{runBreakdownIndexEvents}{Generate and export the breakdown of index events?}
+\item{runBreakdownIndexEvents}{(Deprecated) Generate and export the breakdown of index events?}
 
 \item{runIncidenceRate}{Generate and export the cohort incidence  rates?}
 
