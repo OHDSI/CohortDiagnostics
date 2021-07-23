@@ -389,7 +389,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
     exportedVocablary$indexEventBreakdown = conceptSetDiagnosticsResults$indexEventBreakdown %>% 
       dplyr::collect()
   }
-  if (!is.null(orphanCodes)) {
+  if (!is.null(conceptSetDiagnosticsResults$orphanCodes)) {
     exportedVocablary$orphanCodes = conceptSetDiagnosticsResults$orphanCodes %>% 
       dplyr::collect()
   }

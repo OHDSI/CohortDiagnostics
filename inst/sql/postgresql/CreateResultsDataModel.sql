@@ -40,9 +40,7 @@ DROP TABLE IF EXISTS vocabulary;
 
 
 -- Create tables
-
 --Table analysis_ref
-
 CREATE TABLE analysis_ref (
 			analysis_id BIGINT NOT NULL,
 			analysis_name VARCHAR NOT NULL,
@@ -55,7 +53,6 @@ CREATE TABLE analysis_ref (
 );
 
 --Table calendar_incidence
-
 CREATE TABLE calendar_incidence (
 			cohort_id BIGINT NOT NULL,
 			database_id VARCHAR NOT NULL,
@@ -67,7 +64,6 @@ CREATE TABLE calendar_incidence (
 
 
 --Table cohort
-
 CREATE TABLE cohort (
 			cohort_id BIGINT NOT NULL,
 			web_api_cohort_id BIGINT NOT NULL,
@@ -81,7 +77,6 @@ CREATE TABLE cohort (
 
 
 --Table cohort_count
-
 CREATE TABLE cohort_count (
 			cohort_id BIGINT NOT NULL,
 			cohort_entries FLOAT NOT NULL,
@@ -91,7 +86,6 @@ CREATE TABLE cohort_count (
 );
 
 --Table cohort_inclusion
-
 CREATE TABLE cohort_inclusion (
 			cohort_id  BIGINT NOT NULL,
 			rule_sequence int NOT NULL,
@@ -102,7 +96,6 @@ CREATE TABLE cohort_inclusion (
 );
 
 --Table cohort_inclusion_result
-
 CREATE TABLE cohort_inclusion_result (
   cohort_id BIGINT NOT NULL,
   mode_id int NOT NULL,
@@ -113,7 +106,6 @@ CREATE TABLE cohort_inclusion_result (
 );
 
 --Table cohort_inclusion_stats
-
 CREATE TABLE cohort_inclusion_stats (
   cohort_id BIGINT NOT NULL,
   rule_sequence int NOT NULL,
@@ -126,7 +118,6 @@ CREATE TABLE cohort_inclusion_stats (
 );
 
 --Table cohort_summary_stats
-
 CREATE TABLE cohort_summary_stats(
   cohort_id BIGINT NOT NULL,
   mode_id int NOT NULL,
@@ -138,7 +129,6 @@ CREATE TABLE cohort_summary_stats(
 
 
 --Table cohort_relationships
-
 CREATE TABLE cohort_relationships (
 			database_id VARCHAR NOT NULL,
 			cohort_id BIGINT NOT NULL,
@@ -157,7 +147,6 @@ CREATE TABLE cohort_relationships (
 );
 
 --Table concept
-
 CREATE TABLE concept (
 			concept_id INT NOT NULL,
 			concept_name VARCHAR(255) NOT NULL,
@@ -173,13 +162,22 @@ CREATE TABLE concept (
 );
 
 --Table concept_ancestor
-
 CREATE TABLE concept_ancestor (
 			ancestor_concept_id BIGINT NOT NULL,
 			descendant_concept_id BIGINT NOT NULL,
 			min_levels_of_separation INT NOT NULL,
 			max_levels_of_separation INT NOT NULL,
 			PRIMARY KEY(ancestor_concept_id, descendant_concept_id)
+);
+
+--Table concept_count
+CREATE TABLE concept_count (
+			database_id VARCHAR NOT NULL,
+			cohort_id BIGINT NOT NULL,
+			concept_id INT NOT NULL,
+			concept_subjects FLOAT NOT NULL,
+			concept_count FLOAT NOT NULL,
+			PRIMARY KEY(database_id, cohort_id, concept_id)
 );
 
 --Table concept_cooccurrence
@@ -194,7 +192,6 @@ CREATE TABLE concept_cooccurrence (
 
 
 --Table concept_relationship
-
 CREATE TABLE concept_relationship (
 			concept_id_1 INT NOT NULL,
 			concept_id_2 INT NOT NULL,
@@ -206,7 +203,6 @@ CREATE TABLE concept_relationship (
 );
 
 --Table concept_sets
-
 CREATE TABLE concept_sets (
 			cohort_id BIGINT NOT NULL,
 			concept_set_id INT NOT NULL,
@@ -217,7 +213,6 @@ CREATE TABLE concept_sets (
 );
 
 --Table concept_synonym
-
 CREATE TABLE concept_synonym (
 			concept_id INT NOT NULL,
 			concept_synonym_name VARCHAR NOT NULL,
@@ -226,7 +221,6 @@ CREATE TABLE concept_synonym (
 );
 
 --Table covariate_ref
-
 CREATE TABLE covariate_ref (
 			covariate_id BIGINT NOT NULL,
 			covariate_name VARCHAR NOT NULL,
@@ -236,7 +230,6 @@ CREATE TABLE covariate_ref (
 );
 
 --Table covariate_value
-
 CREATE TABLE covariate_value (
 			cohort_id BIGINT NOT NULL,
 			covariate_id BIGINT NOT NULL,
@@ -248,7 +241,6 @@ CREATE TABLE covariate_value (
 );
 
 --Table covariate_value_dist
-
 CREATE TABLE covariate_value_dist (
 			cohort_id BIGINT NOT NULL,
 			covariate_id BIGINT NOT NULL,
@@ -267,7 +259,6 @@ CREATE TABLE covariate_value_dist (
 );
 
 --Table database
-
 CREATE TABLE database (
 			database_id VARCHAR NOT NULL,
 			database_name VARCHAR,
@@ -284,7 +275,6 @@ CREATE TABLE database (
 );
 
 --Table domain
-
 CREATE TABLE domain (
 			domain_id VARCHAR(20) NOT NULL,
 			domain_name VARCHAR(255) NOT NULL,
@@ -293,7 +283,6 @@ CREATE TABLE domain (
 );
 
 --Table incidence_rate
-
 CREATE TABLE incidence_rate (
 			cohort_count FLOAT NOT NULL,
 			person_years FLOAT NOT NULL,
@@ -307,7 +296,6 @@ CREATE TABLE incidence_rate (
 );
 
 --Table included_source_concept
-
 CREATE TABLE included_source_concept (
 			database_id VARCHAR NOT NULL,
 			cohort_id BIGINT NOT NULL,
@@ -320,7 +308,6 @@ CREATE TABLE included_source_concept (
 );
 
 --Table inclusion_rule_stats
-
 CREATE TABLE inclusion_rule_stats (
 			rule_sequence_id INT NOT NULL,
 			rule_name VARCHAR NOT NULL,
@@ -334,7 +321,6 @@ CREATE TABLE inclusion_rule_stats (
 );
 
 --Table index_event_breakdown
-
 CREATE TABLE index_event_breakdown (
 			concept_id INT NOT NULL,
 			concept_count FLOAT NOT NULL,
@@ -347,7 +333,6 @@ CREATE TABLE index_event_breakdown (
 );
 
 --Table metadata
-
 CREATE TABLE metadata (
 			database_id VARCHAR NOT NULL,
 			start_time VARCHAR NOT NULL,
@@ -357,19 +342,15 @@ CREATE TABLE metadata (
 );
 
 --Table orphan_concept
-
 CREATE TABLE orphan_concept (
 			cohort_id BIGINT NOT NULL,
 			concept_set_id INT NOT NULL,
 			database_id VARCHAR NOT NULL,
 			concept_id INT NOT NULL,
-			concept_count FLOAT NOT NULL,
-			concept_subjects FLOAT NOT NULL,
 			PRIMARY KEY(cohort_id, concept_set_id, database_id, concept_id)
 );
 
 --Table relationship
-
 CREATE TABLE relationship (
 			relationship_id VARCHAR(20) NOT NULL,
 			relationship_name VARCHAR(255) NOT NULL,
@@ -381,7 +362,6 @@ CREATE TABLE relationship (
 );
 
 --Table resolved_concepts
-
 CREATE TABLE resolved_concepts (
 			cohort_id BIGINT NOT NULL,
 			concept_set_id INT NOT NULL,
@@ -391,7 +371,6 @@ CREATE TABLE resolved_concepts (
 );
 
 --Table temporal_analysis_ref
-
 CREATE TABLE temporal_analysis_ref (
 			analysis_id INT NOT NULL,
 			analysis_name VARCHAR NOT NULL,
@@ -402,7 +381,6 @@ CREATE TABLE temporal_analysis_ref (
 );
 
 --Table temporal_covariate_ref
-
 CREATE TABLE temporal_covariate_ref (
 			covariate_id BIGINT NOT NULL,
 			covariate_name VARCHAR NOT NULL,
@@ -412,7 +390,6 @@ CREATE TABLE temporal_covariate_ref (
 );
 
 --Table temporal_covariate_value
-
 CREATE TABLE temporal_covariate_value (
 			cohort_id BIGINT NOT NULL,
 			time_id INT NOT NULL,
@@ -425,7 +402,6 @@ CREATE TABLE temporal_covariate_value (
 );
 
 --Table temporal_covariate_value_dist
-
 CREATE TABLE temporal_covariate_value_dist (
 			cohort_id BIGINT NOT NULL,
 			time_id INT NOT NULL,
@@ -445,7 +421,6 @@ CREATE TABLE temporal_covariate_value_dist (
 );
 
 --Table temporal_time_ref
-
 CREATE TABLE temporal_time_ref (
 			time_id INT NOT NULL,
 			start_day FLOAT NOT NULL,
@@ -454,7 +429,6 @@ CREATE TABLE temporal_time_ref (
 );
 
 --Table time_distribution
-
 CREATE TABLE time_distribution (
 			cohort_id BIGINT NOT NULL,
 			count_value FLOAT NOT NULL,
@@ -473,7 +447,6 @@ CREATE TABLE time_distribution (
 );
 
 --Table time_series
-
 CREATE TABLE time_series (
 			cohort_id BIGINT NOT NULL,
 			database_id VARCHAR NOT NULL,
@@ -491,7 +464,6 @@ CREATE TABLE time_series (
 );
 
 --Table visit_context
-
 CREATE TABLE visit_context (
 			cohort_id BIGINT NOT NULL,
 			visit_concept_id INT NOT NULL,
@@ -504,7 +476,6 @@ CREATE TABLE visit_context (
 );
 
 --Table vocabulary
-
 CREATE TABLE vocabulary (
 			vocabulary_id VARCHAR NOT NULL,
 			vocabulary_name VARCHAR(255) NOT NULL,
