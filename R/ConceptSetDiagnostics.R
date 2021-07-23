@@ -146,7 +146,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   }
   
   # Excluded concepts ----
-  ParallelLogger::logInfo(" - Identifying concept ids that were excluded in concept set expression.")
+  ParallelLogger::logInfo(" - Collecting excluded concepts.")
   excludedConceptIds <- getExcludedConceptSets(
     connection = connection,
     uniqueConceptSets = uniqueConceptSets,
@@ -168,7 +168,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   # Index event breakdown ----
   if (runBreakdownIndexEvents) {
     startBreakdownEvents <- Sys.time()
-    ParallelLogger::logInfo(" - Running index event breakdown.")
+    ParallelLogger::logInfo(" - Learning about the breakdown in index events.")
     
     conceptSetDiagnosticsResults$indexEventBreakdown <-
       getBreakdownIndexEvents(
@@ -177,7 +177,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
         tempEmulationSchema = tempEmulationSchema,
         conceptIdUniverse = "#concept_tracking"
       )
-    ParallelLogger::logInfo(" - Running concept co-occurrence.")
+    ParallelLogger::logInfo(" - Looking for concept co-occurrence on index date.")
     conceptSetDiagnosticsResults$indexDateConceptCooccurrence <-
       getIndexDateConceptCooccurrence(
         connection = connection,
@@ -195,7 +195,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   
   # Orphan concepts ----
   if (runOrphanConcepts) {
-    ParallelLogger::logInfo(" - Running orphan concepts")
+    ParallelLogger::logInfo(" - Searching for concepts that may have been orphaned.")
     startOrphanCodes <- Sys.time()
     orphanConcepts <- getOrphanConcepts(
       connection = connection,
@@ -238,8 +238,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
       tempEmulationSchema = tempEmulationSchema,
       conceptIdUniverse = "#concept_tracking"
     )
-  browser()
-  debug(getConceptSourceStandardMapping)
+  
   # get concept mapping----
   ParallelLogger::logInfo(" - Running concept mapping")
   conceptSetDiagnosticsResults$conceptSourceStandardMapping <-
@@ -285,12 +284,28 @@ runConceptSetDiagnostics <- function(connection = NULL,
   if (is.null(exportedVocablary)) {
     exportedVocablary <- list()
   }
+  if (!is.null(conceptSetDiagnosticsResults$conceptCount)) {
+    exportedVocablary$conceptCount = conceptSetDiagnosticsResults$conceptCount %>%
+      dplyr::collect()
+  }
   if (!is.null(conceptSetDiagnosticsResults$conceptResolved)) {
     exportedVocablary$conceptResolved = conceptSetDiagnosticsResults$conceptResolved %>%
       dplyr::collect()
   }
-  if (!is.null(conceptSetDiagnosticsResults$conceptCount)) {
-    exportedVocablary$conceptCount = conceptSetDiagnosticsResults$conceptCount %>%
+  if (!is.null(conceptSetDiagnosticsResults$conceptSourceStandardMapping)) {
+    exportedVocablary$conceptSourceStandardMapping = conceptSetDiagnosticsResults$conceptSourceStandardMapping %>%
+      dplyr::collect()
+  }
+  if (!is.null(conceptSetDiagnosticsResults$indexEventBreakdown)) {
+    exportedVocablary$indexEventBreakdown = conceptSetDiagnosticsResults$indexEventBreakdown %>%
+      dplyr::collect()
+  }
+  if (!is.null(conceptSetDiagnosticsResults$excludedConceptIds)) {
+    exportedVocablary$excludedConceptIds = conceptSetDiagnosticsResults$excludedConceptIds %>%
+      dplyr::collect()
+  }
+  if (!is.null(conceptSetDiagnosticsResults$indexDateConceptCooccurrence)) {
+    exportedVocablary$indexDateConceptCooccurrence = conceptSetDiagnosticsResults$indexDateConceptCooccurrence %>%
       dplyr::collect()
   }
   if (!is.null(conceptSetDiagnosticsResults$indexEventBreakdown)) {
@@ -304,17 +319,9 @@ runConceptSetDiagnostics <- function(connection = NULL,
   if (!is.null(conceptSets)) {
     exportedVocablary$conceptSets = conceptSets
   }
-  if (!is.null(conceptSetDiagnosticsResults$indexDateConceptCooccurrence)) {
-    exportedVocablary$indexDateConceptCooccurrence = conceptSetDiagnosticsResults$indexDateConceptCooccurrence %>%
-      dplyr::collect()
-  }
-  if (!is.null(conceptSetDiagnosticsResults$conceptSourceStandardMapping)) {
-    exportedVocablary$conceptSourceStandardMapping = conceptSetDiagnosticsResults$conceptSourceStandardMapping %>%
-      dplyr::collect()
-  }
   
   delta <- Sys.time() - startConceptSetDiagnostics
-  ParallelLogger::logTrace(" - Running concept set diagnostics took ",
+  ParallelLogger::logInfo(" - Running concept set diagnostics took ",
                            signif(delta, 3),
                            " ",
                            attr(delta, "units"))
@@ -523,7 +530,6 @@ resolveConceptSets <- function(uniqueConceptSets,
                                conceptSetsTable = "#resolved_concept_set",
                                conceptTrackingTable = NULL,
                                dropConceptSetsTable = TRUE) {
-  ParallelLogger::logInfo(" - Instantiating concept sets")
   sql <- sapply(split(uniqueConceptSets, 1:nrow(uniqueConceptSets)),
                 function(x) {
                   sub(
@@ -773,7 +779,9 @@ getOrphanConcepts <- function(connectionDetails = NULL,
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = sql,
-    tempEmulationSchema = tempEmulationSchema
+    tempEmulationSchema = tempEmulationSchema,
+    progressBar = FALSE,
+    reportOverallTime = FALSE
   )
   return(orphanCodes)
 }
@@ -1150,17 +1158,14 @@ getConceptSourceStandardMapping <- function(connection,
     )
     conceptMapping[[i]]$domainTable <- rowData$domainTableShort
   }
-  conceptMapping <- dplyr::bind_rows(conceptMapping)
-  delta <- Sys.time() - start
-  ParallelLogger::logTrace(paste(
-    " - computing source to standard concept mapping took",
-    signif(delta, 3),
-    attr(delta, "units")
-  ))
+  conceptMapping <- dplyr::bind_rows(conceptMapping) %>% 
+    dplyr::arrange(.data$domainTable,
+                   .data$conceptId,
+                   .data$sourceConceptId,
+                   .data$conceptCount,
+                   .data$subjectCount)
   return(conceptMapping)
 }
-
-
 
 
 # function:getExcludedConceptSets ----
