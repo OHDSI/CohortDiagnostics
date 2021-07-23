@@ -720,36 +720,25 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "timeDistribution",
     cohortReference("timeDistSelectedCohorts"),
-    shiny::radioButtons(
-      inputId = "timeDistributionType",
-      label = "",
-      choices = c("Table", "Plot"),
-      selected = "Plot",
-      inline = TRUE
-    ),
-    shiny::conditionalPanel(condition = "input.timeDistributionType=='Table'",
-                            tags$table(width = "100%", 
-                                       tags$tr(
-                                         tags$td(align = "right",
-                                                 shiny::downloadButton(
-                                                   "saveTimeDistTable",
-                                                   label = "",
-                                                   icon = shiny::icon("download"),
-                                                   style = "margin-top: 5px; margin-bottom: 5px;"
-                                                 )
-                                         )
-                                       )
-                            ),
-                            DT::dataTableOutput("timeDistTable")),
-    shiny::conditionalPanel(
-      condition = "input.timeDistributionType=='Plot'",
-      shinydashboard::box(
-        title = "Time Distributions",
-        width = NULL,
-        status = "primary",
-        tags$br(),
-        ggiraph::ggiraphOutput("timeDisPlot", width = "100%", height = "100%")
-      )
+    shinydashboard::box(
+      width = NULL,
+      status = "primary",
+      tags$br(),
+      tags$h4("Time distribution"),
+      ggiraph::ggiraphOutput("timeDisPlot", width = "100%", height = "100%"),
+      tags$table(width = "100%", 
+                 tags$tr(
+                   tags$td(align = "right",
+                           shiny::downloadButton(
+                             "saveTimeDistTable",
+                             label = "",
+                             icon = shiny::icon("download"),
+                             style = "margin-top: 5px; margin-bottom: 5px;"
+                           )
+                   )
+                 )
+      ),
+      DT::dataTableOutput("timeDistTable")
     )
   ),
   shinydashboard::tabItem(
