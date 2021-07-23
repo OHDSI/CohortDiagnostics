@@ -359,7 +359,11 @@ bodyTabItems <- shinydashboard::tabItems(
                     shiny::conditionalPanel(
                       condition = "output.cohortDefinitionCountOfSelectedRows == 2 &
                      input.conceptSetsType == 'Resolved (included)' &
-                     input.conceptSetsTypeSecond == 'Resolved (included)'",
+                     input.conceptSetsTypeSecond == 'Resolved (included)' & 
+                     output.conceptSetExpressionRowSelected == true &
+                     output.conceptSetExpressionSecondRowSelected == true &
+                     input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
+                     input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
                       shiny::tabsetPanel(
                         id = "resolvedConceptDifference",
                         shiny::tabPanel(
@@ -388,7 +392,11 @@ bodyTabItems <- shinydashboard::tabItems(
                     shiny::conditionalPanel(
                       condition = "output.cohortDefinitionCountOfSelectedRows == 2 &
                                    input.conceptSetsType == 'Mapped (source)' &
-                                   input.conceptSetsTypeSecond == 'Mapped (source)'",
+                                   input.conceptSetsTypeSecond == 'Mapped (source)' & 
+                                   output.conceptSetExpressionRowSelected == true &
+                                   output.conceptSetExpressionSecondRowSelected == true &
+                                   input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
+                                   input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
                       shiny::tabsetPanel(
                         id = "mappedConceptDifference",
                         shiny::tabPanel(
@@ -417,7 +425,11 @@ bodyTabItems <- shinydashboard::tabItems(
                     shiny::conditionalPanel(
                       condition = "output.cohortDefinitionCountOfSelectedRows == 2 &
                                    input.conceptSetsType == 'Orphan concepts' &
-                                   input.conceptSetsTypeSecond == 'Orphan concepts'",
+                                   input.conceptSetsTypeSecond == 'Orphan concepts'& 
+                                   output.conceptSetExpressionRowSelected == true &
+                                   output.conceptSetExpressionSecondRowSelected == true &
+                                   input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
+                                   input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
                       shiny::tabsetPanel(
                         id = "orphanConceptsDifference",
                         shiny::tabPanel(
@@ -482,6 +494,8 @@ bodyTabItems <- shinydashboard::tabItems(
     ),
     shiny::conditionalPanel(
       condition = "output.cohortCountRowIsSelected == true",
+      tags$br(),
+      tags$h3("Inclusion Rules"),
       DT::dataTableOutput("InclusionRuleStatForCohortSeletedTable")
     )
   ),
@@ -678,8 +692,18 @@ bodyTabItems <- shinydashboard::tabItems(
             step = 1,
             sep = ""
           )
+        ),
+        tags$td(),
+        tags$td(),
+        tags$td(tags$b("Series Type Description :"),
+          shiny::uiOutput(outputId = "timeSeriesTypeLong")
         )
       )
+      # tags$tr(
+      #   tags$td(
+      #     shiny::uiOutput(outputId = "timeSeriesTypeLong")
+      #   )
+      # )
     ),
     shinydashboard::box(
       title = "Time Series",
@@ -705,7 +729,7 @@ bodyTabItems <- shinydashboard::tabItems(
             inputId = "timeSeriesPlotCategory",
             label = "Show decomposition plot by:",
             width = 300,
-            choices = c("Total", "trend", "season_year", "reminder"),
+            choices = c("Total", "trend", "season_year", "remainder"),
             selected = c("trend"),
             multiple = TRUE,
             choicesOpt = list(style = rep_len("color: black;", 999)),
