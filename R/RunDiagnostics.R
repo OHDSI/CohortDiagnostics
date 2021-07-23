@@ -613,7 +613,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                              attr(delta, "units"))
   }
   
-  browser()
+  
   # Concept set diagnostics----
   if (runConceptSetDiagnostics) {
     # running together because share common process of needing to resolve concept sets
@@ -656,14 +656,14 @@ runCohortDiagnostics <- function(packageName = NULL,
         "domain",
         "relationship",
         "vocabulary",
-        "conceptCount",
-        "conceptResolved",
-        "conceptSourceStandardMapping",
-        "indexEventBreakdown",
-        "excludedConceptIds",
-        "indexDateConceptCooccurrence",
-        "orphanCodes",
-        "conceptSets"
+        "concept_count",
+        "concept_resolved",
+        "concept_mapping",
+        "index_event_breakdown",
+        "excluded_conceptIds",
+        "Concept_cooccurrence",
+        "orphan_codes",
+        "concept_sets"
       )
       vocabularyTables <- c(
         "concept",
@@ -689,7 +689,7 @@ runCohortDiagnostics <- function(packageName = NULL,
             dplyr::pull(.data$fieldName)
           data <-
             conceptSetDiagnostics[[tablesOfInterest[[i]]]] %>%
-            dplyr::select(columns)
+            dplyr::select(snakeCaseToCamelCase(columns))
           if (!tablesOfInterest[[i]] %in% vocabularyTables) {
             data <- data %>%
               dplyr::mutate(databaseId = !!databaseId)

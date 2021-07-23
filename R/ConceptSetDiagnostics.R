@@ -276,39 +276,39 @@ runConceptSetDiagnostics <- function(connection = NULL,
     exportedVocablary <- list()
   }
   if (!is.null(conceptSetDiagnosticsResults$conceptCount)) {
-    exportedVocablary$conceptCount = conceptSetDiagnosticsResults$conceptCount %>%
+    exportedVocablary$concept_count = conceptSetDiagnosticsResults$conceptCount %>%
       dplyr::collect()
   }
   if (!is.null(conceptSetDiagnosticsResults$conceptResolved)) {
-    exportedVocablary$conceptResolved = conceptSetDiagnosticsResults$conceptResolved %>%
+    exportedVocablary$concept_resolved = conceptSetDiagnosticsResults$conceptResolved %>%
       dplyr::collect()
   }
   if (!is.null(conceptSetDiagnosticsResults$conceptSourceStandardMapping)) {
-    exportedVocablary$conceptSourceStandardMapping = conceptSetDiagnosticsResults$conceptSourceStandardMapping %>%
+    exportedVocablary$concept_mapping = conceptSetDiagnosticsResults$conceptSourceStandardMapping %>%
       dplyr::collect()
   }
   if (!is.null(conceptSetDiagnosticsResults$indexEventBreakdown)) {
-    exportedVocablary$indexEventBreakdown = conceptSetDiagnosticsResults$indexEventBreakdown %>%
+    exportedVocablary$index_event_breakdown = conceptSetDiagnosticsResults$indexEventBreakdown %>%
       dplyr::collect()
   }
   if (!is.null(conceptSetDiagnosticsResults$excludedConceptIds)) {
-    exportedVocablary$excludedConceptIds = conceptSetDiagnosticsResults$excludedConceptIds %>%
+    exportedVocablary$concept_excluded = conceptSetDiagnosticsResults$excludedConceptIds %>%
       dplyr::collect()
   }
   if (!is.null(conceptSetDiagnosticsResults$indexDateConceptCooccurrence)) {
-    exportedVocablary$indexDateConceptCooccurrence = conceptSetDiagnosticsResults$indexDateConceptCooccurrence %>%
+    exportedVocablary$concept_cooccurrence = conceptSetDiagnosticsResults$indexDateConceptCooccurrence %>%
       dplyr::collect()
   }
   if (!is.null(conceptSetDiagnosticsResults$indexEventBreakdown)) {
-    exportedVocablary$indexEventBreakdown = conceptSetDiagnosticsResults$indexEventBreakdown %>%
+    exportedVocablary$index_event_breakdown = conceptSetDiagnosticsResults$indexEventBreakdown %>%
       dplyr::collect()
   }
   if (!is.null(conceptSetDiagnosticsResults$orphanCodes)) {
-    exportedVocablary$orphanCodes = conceptSetDiagnosticsResults$orphanCodes %>%
+    exportedVocablary$orphan_concept = conceptSetDiagnosticsResults$orphanCodes %>%
       dplyr::collect()
   }
   if (!is.null(conceptSets)) {
-    exportedVocablary$conceptSets = conceptSets
+    exportedVocablary$concept_sets = conceptSets
   }
   
   delta <- Sys.time() - startConceptSetDiagnostics
@@ -855,7 +855,7 @@ getConceptRecordCountByMonth <- function(connection,
         .data$conceptId,
         .data$eventYear,
         .data$eventMonth,
-        .data$countValue
+        .data$conceptCount
       ) %>%
       dplyr::distinct() %>%
       dplyr::arrange(.data$conceptId, .data$eventYear, .data$eventMonth)

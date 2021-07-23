@@ -53,20 +53,18 @@ CREATE TABLE analysis_ref (
 
 --Table calendar_incidence
 CREATE TABLE calendar_incidence (
-			cohort_id BIGINT NOT NULL,
 			database_id VARCHAR NOT NULL,
+			cohort_id BIGINT NOT NULL,
 			period_type VARCHAR NOT NULL,
 			calendar_month DATE NOT NULL,
 			count_value FLOAT,
-			PRIMARY KEY(cohort_id, database_id, period_type, calendar_month)
+			PRIMARY KEY(database_id, cohort_id, period_type, calendar_month)
 );
 
 --Table cohort
 CREATE TABLE cohort (
 			cohort_id BIGINT NOT NULL,
-			web_api_cohort_id BIGINT NOT NULL,
 			cohort_name VARCHAR(255) NOT NULL,
-			logic_description VARCHAR,
 			metadata VARCHAR,
 			sql VARCHAR NOT NULL,
 			json VARCHAR NOT NULL,
@@ -76,52 +74,52 @@ CREATE TABLE cohort (
 
 --Table cohort_count
 CREATE TABLE cohort_count (
+			database_id VARCHAR NOT NULL,
 			cohort_id BIGINT NOT NULL,
 			cohort_entries FLOAT NOT NULL,
 			cohort_subjects FLOAT NOT NULL,
-			database_id VARCHAR NOT NULL,
-			PRIMARY KEY(cohort_id, database_id)
+			PRIMARY KEY(database_id, cohort_id)
 );
 
 --Table cohort_inclusion
 CREATE TABLE cohort_inclusion (
+	    database_id VARCHAR NOT NULL,
 			cohort_id  BIGINT NOT NULL,
 			rule_sequence int NOT NULL,
 			name varchar NULL,
 			description varchar NULL,
-	    database_id VARCHAR NOT NULL,
-			PRIMARY KEY(cohort_id, rule_sequence, database_id)
+			PRIMARY KEY(database_id, cohort_id, rule_sequence)
 );
 
 --Table cohort_inclusion_result
 CREATE TABLE cohort_inclusion_result (
+	database_id VARCHAR NOT NULL,
   cohort_id BIGINT NOT NULL,
   mode_id int NOT NULL,
   inclusion_rule_mask bigint NOT NULL,
   person_count bigint NOT NULL,
-	database_id VARCHAR NOT NULL,
-	PRIMARY KEY(cohort_id, database_id, inclusion_rule_mask, mode_id)
+	PRIMARY KEY(database_id, cohort_id, inclusion_rule_mask, mode_id)
 );
 
 --Table cohort_inclusion_stats
 CREATE TABLE cohort_inclusion_stats (
+	database_id VARCHAR NOT NULL,
   cohort_id BIGINT NOT NULL,
   rule_sequence int NOT NULL,
   mode_id int NOT NULL,
   person_count bigint NOT NULL,
   gain_count bigint NOT NULL,
   person_total bigint NOT NULL,
-	database_id VARCHAR NOT NULL,
-	PRIMARY KEY(cohort_id, database_id, rule_sequence, mode_id)
+	PRIMARY KEY(database_id, cohort_id, rule_sequence, mode_id)
 );
 
 --Table cohort_summary_stats
 CREATE TABLE cohort_summary_stats(
+	database_id VARCHAR NOT NULL,
   cohort_id BIGINT NOT NULL,
   mode_id int NOT NULL,
   base_count bigint NOT NULL,
   final_count bigint NOT NULL,
-	database_id VARCHAR NOT NULL,
 	PRIMARY KEY(cohort_id, database_id, mode_id)
 );
 
@@ -220,6 +218,15 @@ CREATE TABLE concept_sets (
 			concept_set_name VARCHAR(255) NOT NULL,
 			concept_set_expression VARCHAR NOT NULL,
 			PRIMARY KEY(cohort_id, concept_set_id)
+);
+
+--Table concept_excluded
+CREATE TABLE concept_excluded (
+			database_id VARCHAR NOT NULL,
+			cohort_id BIGINT NOT NULL,
+			concept_set_id INT NOT NULL,
+			concept_id INT NOT NULL,
+			PRIMARY KEY(database_id, cohort_id, concept_set_id, concept_id)
 );
 
 --Table concept_synonym
