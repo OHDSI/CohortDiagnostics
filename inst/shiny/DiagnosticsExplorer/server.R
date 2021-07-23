@@ -338,7 +338,7 @@ shiny::shinyServer(function(input, output, session) {
                        name = "cohortCountsTableInCohortDefinitionRowIsSelected",
                        suspendWhenHidden = FALSE)
   
-  output$inclusionRuleInCohortDefinition <- DT::renderDataTable(expr = {
+  cohortDefinitionInclusionRuleData <- shiny::reactive(x = {
     validate(need(nrow(getSelectedCohortCountRow()) > 0, "No data sources chosen"))
     validate(need(
       nrow(selectedCohortDefinitionRow()) > 0,
@@ -350,6 +350,12 @@ shiny::shinyServer(function(input, output, session) {
       cohortIds = selectedCohortDefinitionRow()[1,]$cohortId,
       databaseIds = getSelectedCohortCountRow()$databaseId
     )
+    return(table)
+  })
+  
+  output$inclusionRuleInCohortDefinition <- DT::renderDataTable(expr = {
+   
+    table <- cohortDefinitionInclusionRuleData()
     
     validate(need((nrow(table) > 0),
                   "There is no inclusion rule data for this cohort."))
@@ -480,6 +486,15 @@ shiny::shinyServer(function(input, output, session) {
     }
     return(table)
   }, server = TRUE)
+  
+  output$saveCohortDefinitionInclusionRuleTable <-  downloadHandler(
+    filename = function() {
+      getFormattedFileName(fileName = "InclusionRule")
+    },
+    content = function(file) {
+      downloadCsv(x = cohortDefinitionInclusionRuleData(), fileName = file)
+    }
+  )
   
   cohortDefinitionCirceRDetails <- shiny::reactive(x = {
     progress <- shiny::Progress$new()
@@ -630,12 +645,26 @@ shiny::shinyServer(function(input, output, session) {
                           shiny::conditionalPanel(
                             condition = "output.cohortCountsTableInCohortDefinitionRowIsSelected",
                             tags$h3("Inclusion Rules"),
-                            shiny::radioButtons(
-                              inputId = "cohortDefinitionInclusionRuleTableFilters",
-                              label = "Inclusion Rule Events",
-                              choices = c("All", "Meet", "Gain", "Remain", "Totals"),
-                              selected = "All",
-                              inline = TRUE
+                            tags$table(width = "100%", 
+                                       tags$tr(
+                                         tags$td(
+                                           shiny::radioButtons(
+                                             inputId = "cohortDefinitionInclusionRuleTableFilters",
+                                             label = "Inclusion Rule Events",
+                                             choices = c("All", "Meet", "Gain", "Remain", "Totals"),
+                                             selected = "All",
+                                             inline = TRUE
+                                           )
+                                         ),
+                                         tags$td(align = "right",
+                                                 shiny::downloadButton(
+                                                   "saveCohortDefinitionInclusionRuleTable",
+                                                   label = "",
+                                                   icon = shiny::icon("download"),
+                                                   style = "margin-top: 5px; margin-bottom: 5px;"
+                                                 )
+                                         )
+                                       )
                             ),
                             DT::dataTableOutput(outputId = "inclusionRuleInCohortDefinition")
                           )),
@@ -818,12 +847,26 @@ shiny::shinyServer(function(input, output, session) {
                           shiny::conditionalPanel(
                             condition = "output.cohortCountsSecondTableInCohortDefinitionRowIsSelected",
                             tags$h3("Inclusion Rules"),
-                            shiny::radioButtons(
-                              inputId = "cohortDefinitionSecondInclusionRuleTableFilters",
-                              label = "Inclusion Rule Events",
-                              choices = c("All", "Meet", "Gain", "Remain", "Totals"),
-                              selected = "All",
-                              inline = TRUE
+                            tags$table(width = "100%", 
+                                       tags$tr(
+                                         tags$td(
+                                           shiny::radioButtons(
+                                             inputId = "cohortDefinitionSecondInclusionRuleTableFilters",
+                                             label = "Inclusion Rule Events",
+                                             choices = c("All", "Meet", "Gain", "Remain", "Totals"),
+                                             selected = "All",
+                                             inline = TRUE
+                                           )
+                                         ),
+                                         tags$td(align = "right",
+                                                 shiny::downloadButton(
+                                                   "saveCohortDefinitionSecondInclusionRuleTable",
+                                                   label = "",
+                                                   icon = shiny::icon("download"),
+                                                   style = "margin-top: 5px; margin-bottom: 5px;"
+                                                 )
+                                         )
+                                       )
                             ),
                             DT::dataTableOutput(outputId = "inclusionRuleInCohortDefinitionSecond")
                           )),
@@ -1785,8 +1828,7 @@ shiny::shinyServer(function(input, output, session) {
                        name = "cohortCountsSecondTableInCohortDefinitionRowIsSelected",
                        suspendWhenHidden = FALSE)
   
-  
-  output$inclusionRuleInCohortDefinitionSecond <- DT::renderDataTable(expr = {
+  cohortDefinitionSecondInclusionRuleData <- shiny::reactive(x = {
     validate(need(nrow(getSelectedCohortCountSecondRow()) > 0, "No data sources chosen"))
     validate(need(
       nrow(selectedCohortDefinitionRow()) > 0,
@@ -1798,7 +1840,12 @@ shiny::shinyServer(function(input, output, session) {
       cohortIds = selectedCohortDefinitionRow()[2,]$cohortId,
       databaseIds = getSelectedCohortCountSecondRow()$databaseId
     )
-    
+    return(table)
+  })
+  
+  output$inclusionRuleInCohortDefinitionSecond <- DT::renderDataTable(expr = {
+   
+    table <- cohortDefinitionSecondInclusionRuleData()
     validate(need((nrow(table) > 0),
                   "There is no inclusion rule data for this cohort."))
     
@@ -1928,6 +1975,15 @@ shiny::shinyServer(function(input, output, session) {
     }
     return(table)
   }, server = TRUE)
+  
+  output$saveCohortDefinitionSecondInclusionRuleTable <-  downloadHandler(
+    filename = function() {
+      getFormattedFileName(fileName = "InclusionRule")
+    },
+    content = function(file) {
+      downloadCsv(x = cohortDefinitionSecondInclusionRuleData(), fileName = file)
+    }
+  )
   
   output$circerVersionInCohortDefinitionSecond <- shiny::renderUI(expr = {
     version <- getCirceRPackageVersion()[[2]]
