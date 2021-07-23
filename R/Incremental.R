@@ -46,7 +46,7 @@ isTaskRequired <-
           key <- list(...)
           key <-
             paste(sprintf("%s = '%s'", names(key), key), collapse = ", ")
-          ParallelLogger::logInfo("Skipping ", key, " because unchanged from earlier run")
+          ParallelLogger::logInfo("  - Skipping ", key, " because unchanged from earlier run")
         }
         return(FALSE)
       } else {

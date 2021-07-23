@@ -52,8 +52,8 @@ enforceMinCellValue <-
       data[, fieldName] < minValues & data[, fieldName] != 0
     if (!silent) {
       percent <- round(100 * sum(toCensor) / nrow(data), 1)
-      ParallelLogger::logInfo(
-        "- Censoring ",
+      ParallelLogger::logTrace(
+        "  - Censoring ",
         sum(toCensor),
         " values (",
         percent,

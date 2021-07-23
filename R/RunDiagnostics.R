@@ -406,13 +406,13 @@ runCohortDiagnostics <- function(packageName = NULL,
       file.path(incrementalFolder, "CreatedDiagnostics.csv")
     if (file.exists(path = recordKeepingFile)) {
       ParallelLogger::logInfo(
-        " -  Found existing record keeping file in incremental folder - CreatedDiagnostics.csv"
+        "  - Found existing record keeping file in incremental folder - CreatedDiagnostics.csv"
       )
     }
   }
   
   # Counting cohorts----
-  ParallelLogger::logInfo(" - Checking if Cohorts are instantiated, and getting cohort counts")
+  ParallelLogger::logInfo(" - Counting records & subjects for instantiated cohorts.")
   cohortCounts <- getCohortCounts(
     connection = connection,
     cohortDatabaseSchema = cohortDatabaseSchema,
@@ -463,7 +463,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   }
   
   # Inclusion statistics----
-  ParallelLogger::logInfo(" - Looking for inclusion rule statistics files for instantiated cohorts.")
+  ParallelLogger::logInfo(" - Retrieving inclusion rules from file.")
   if (runInclusionStatistics) {
     startInclusionStatistics <- Sys.time()
     if (any(is.null(instantiatedCohorts),
@@ -472,7 +472,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         " -- Skipping inclusion statistics from files because no cohorts were instantiated."
       )
     } else {
-      ParallelLogger::logInfo(" -- Found, fetching inclusion statistics from files")
+      ParallelLogger::logTrace(" -- Found inclusion rule statistics files")
       subset <- subsetToRequiredCohorts(
         cohorts = cohorts %>%
           dplyr::filter(.data$cohortId %in% instantiatedCohorts),
@@ -586,7 +586,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       }
     }
     delta <- Sys.time() - startInclusionStatistics
-    ParallelLogger::logInfo(" - Running Inclusion Statistics took ",
+    ParallelLogger::logTrace(" - Running Inclusion Statistics took ",
                             signif(delta, 3),
                             " ",
                             attr(delta, "units"))
@@ -631,7 +631,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
     subset <- dplyr::distinct(subset)
     ParallelLogger::logInfo(sprintf(
-      " - Skipping %s cohorts in incremental mode.",
+      "  - Skipping %s cohorts in incremental mode.",
       nrow(cohorts) - nrow(subset)
     ))
     if (nrow(subset) > 0) {
@@ -648,6 +648,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         runOrphanConcepts = runOrphanConcepts,
         runBreakdownIndexEvents = runBreakdownIndexEvents
       )
+      browser()
       
       # write vocabulary tables
       vocabularyTableNames = c(
@@ -663,9 +664,9 @@ runCohortDiagnostics <- function(packageName = NULL,
       
       for (i in (1:length(vocabularyTableNames))) {
         if (vocabularyTableNames[[i]] %in% names(conceptSetDiagnostics)) {
-          ParallelLogger::logInfo(
+          ParallelLogger::logTrace(
             paste0(
-              "- Writing extracted vocabulary data to file - ",
+              " - Writing extracted vocabulary data to file - ",
               vocabularyTableNames[[i]]
             ),
             ".csv"
@@ -696,7 +697,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         }
       }
       if ('conceptSets' %in% names(conceptSetDiagnostics)) {
-        ParallelLogger::logInfo("- Writing concept_sets.csv")
+        ParallelLogger::logTrace( " - Writing concept_sets.csv")
         writeToCsv(
           data = conceptSetDiagnostics$conceptSets %>%
             dplyr::select(
@@ -715,7 +716,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       }
       
       if ('resolvedConceptIds' %in% names(conceptSetDiagnostics)) {
-        ParallelLogger::logInfo("- Writing resolved_concepts.csv")
+        ParallelLogger::logTrace(" - Writing resolved_concepts.csv")
         writeToCsv(
           data = conceptSetDiagnostics$resolvedConceptIds %>%
             dplyr::mutate(databaseId = !!databaseId),
@@ -729,7 +730,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       if ('includedSourceCodes' %in% names(conceptSetDiagnostics) &&
           runIncludedSourceConcepts) {
         if (nrow(conceptSetDiagnostics$includedSourceCodes) > 0) {
-          ParallelLogger::logInfo("- Writing included_source_concept.csv")
+          ParallelLogger::logTrace(" - Writing included_source_concept.csv")
           conceptSetDiagnostics$includedSourceCodes$databaseId <-
             databaseId
           conceptSetDiagnostics$includedSourceCodes <- conceptSetDiagnostics$includedSourceCodes %>% 
