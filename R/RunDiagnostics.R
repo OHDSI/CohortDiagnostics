@@ -128,7 +128,8 @@ runCohortDiagnostics <- function(packageName = NULL,
                                    useProcedureOccurrence = TRUE,
                                    useMeasurement = TRUE,
                                    temporalStartDays = c(
-                                     -365,-30,
+                                     -365,
+                                     -30,
                                      0,
                                      1,
                                      31,
@@ -136,7 +137,8 @@ runCohortDiagnostics <- function(packageName = NULL,
                                      seq(from = 0, to = 390, by = 30)
                                    ),
                                    temporalEndDays = c(
-                                     -31,-1,
+                                     -31,
+                                     -1,
                                      0,
                                      30,
                                      365,
@@ -488,7 +490,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   ParallelLogger::logInfo(" - Retrieving inclusion rules from file.")
   if (runInclusionStatistics) {
     startInclusionStatistics <- Sys.time()
-    if (any(is.null(instantiatedCohorts),-1 %in% instantiatedCohorts)) {
+    if (any(is.null(instantiatedCohorts), -1 %in% instantiatedCohorts)) {
       ParallelLogger::logTrace("  - Skipping inclusion statistics from files because no cohorts were instantiated.")
     } else {
       ParallelLogger::logTrace(" -- Found inclusion rule statistics files")
@@ -499,14 +501,14 @@ runCohortDiagnostics <- function(packageName = NULL,
         incremental = incremental,
         recordKeepingFile = recordKeepingFile
       )
-      if (incremental &&
-          (length(instantiatedCohorts) - nrow(subset)) > 0) {
-        ParallelLogger::logInfo(sprintf(
-          "  - Skipping %s cohorts in incremental mode.",
-          length(instantiatedCohorts) - nrow(subset)
-        ))
-      }
       if (nrow(subset) > 0) {
+        if (incremental &&
+            (length(instantiatedCohorts) - nrow(subset)) > 0) {
+          ParallelLogger::logInfo(sprintf(
+            "  - Skipping %s cohorts in incremental mode.",
+            length(instantiatedCohorts) - nrow(subset)
+          ))
+        }
         stats <-
           getInclusionStatisticsFromFiles(cohortIds = subset$cohortId,
                                           folder = inclusionStatisticsFolder)
@@ -644,9 +646,6 @@ runCohortDiagnostics <- function(packageName = NULL,
         cohortTable = cohortTable
       )
       browser()
-      a <- "conceptSourceStandardMapping"
-      browser()
-      
       tablesOfInterest = c(
         "concept",
         "concept_ancestor",
@@ -687,19 +686,20 @@ runCohortDiagnostics <- function(packageName = NULL,
           columns <- resultsDataModel %>%
             dplyr::filter(tableName %in% tablesOfInterest[[i]]) %>%
             dplyr::pull(.data$fieldName)
-          data <-
-            conceptSetDiagnostics[[tablesOfInterest[[i]]]] %>%
-            dplyr::select(snakeCaseToCamelCase(columns))
           if (!tablesOfInterest[[i]] %in% vocabularyTables) {
             data <- data %>%
               dplyr::mutate(databaseId = !!databaseId)
           }
+          data <-
+            conceptSetDiagnostics[[tablesOfInterest[[i]]]] %>%
+            dplyr::select(snakeCaseToCamelCase(columns))
+          data <- data %>%
+            enforceMinCellValueInDataframe(columnNames = columnsToApplyMinCellValue,
+                                           minCellCount = minCellCount)
           writeToCsv(
             data = data,
-            fileName = file.path(
-              exportFolder,
-              paste0(tablesOfInterest[[i]], "csv", sep = ".")
-            ),
+            fileName = file.path(exportFolder,
+                                 paste0(tablesOfInterest[[i]], ".csv")),
             incremental = incremental
           )
           conceptSetDiagnostics[[tablesOfInterest[[i]]]] <- NULL
@@ -707,7 +707,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       }
       recordTasksDone(
         cohortId = subset$cohortId,
-        task = "runOrphanConcepts",
+        task = "runConceptSetDiagnostics",
         checksum = subset$checksum,
         recordKeepingFile = recordKeepingFile,
         incremental = incremental
@@ -731,14 +731,14 @@ runCohortDiagnostics <- function(packageName = NULL,
       incremental = incremental,
       recordKeepingFile = recordKeepingFile
     )
-    if (incremental &&
-        (length(instantiatedCohorts) - nrow(subset)) > 0) {
-      ParallelLogger::logInfo(sprintf(
-        " - Skipping %s cohorts in incremental mode.",
-        length(instantiatedCohorts) - nrow(subset)
-      ))
-    }
     if (nrow(subset) > 0) {
+      if (incremental &&
+          (length(instantiatedCohorts) - nrow(subset)) > 0) {
+        ParallelLogger::logInfo(sprintf(
+          " - Skipping %s cohorts in incremental mode.",
+          length(instantiatedCohorts) - nrow(subset)
+        ))
+      }
       data <- runVisitContextDiagnostics(
         connection = connection,
         tempEmulationSchema = tempEmulationSchema,
@@ -787,14 +787,14 @@ runCohortDiagnostics <- function(packageName = NULL,
       incremental = incremental,
       recordKeepingFile = recordKeepingFile
     )
-    if (incremental &&
-        (length(instantiatedCohorts) - nrow(subset)) > 0) {
-      ParallelLogger::logInfo(sprintf(
-        " - Skipping %s cohorts in incremental mode.",
-        length(instantiatedCohorts) - nrow(subset)
-      ))
-    }
     if (nrow(subset) > 0) {
+      if (incremental &&
+          (length(instantiatedCohorts) - nrow(subset)) > 0) {
+        ParallelLogger::logInfo(sprintf(
+          " - Skipping %s cohorts in incremental mode.",
+          length(instantiatedCohorts) - nrow(subset)
+        ))
+      }
       runIncidenceRate <- function(row) {
         ParallelLogger::logInfo("  Computing incidence rate for cohort '",
                                 row$cohortName,
@@ -874,6 +874,10 @@ runCohortDiagnostics <- function(packageName = NULL,
         incremental = incremental,
         recordKeepingFile = recordKeepingFile
       )
+      cohortIds <- subset$cohortId
+    }
+    
+    if (nrow(subset) > 0) {
       if (incremental &&
           (length(instantiatedCohorts) - nrow(subset)) > 0) {
         ParallelLogger::logInfo(sprintf(
@@ -881,10 +885,6 @@ runCohortDiagnostics <- function(packageName = NULL,
           length(instantiatedCohorts) - nrow(subset)
         ))
       }
-      cohortIds <- subset$cohortId
-    }
-    
-    if (nrow(subset) > 0) {
       timeSeries <-
         runCohortTimeSeriesDiagnostics(
           connection = connection,
@@ -961,14 +961,14 @@ runCohortDiagnostics <- function(packageName = NULL,
       incremental = incremental,
       recordKeepingFile = recordKeepingFile
     )
-    if (incremental &&
-        (length(instantiatedCohorts) - nrow(subset)) > 0) {
-      ParallelLogger::logInfo(sprintf(
-        " - Skipping %s cohort combinations in incremental mode.",
-        nrow(cohorts) - nrow(subset)
-      ))
-    }
     if (nrow(subset) > 0) {
+      if (incremental &&
+          (length(instantiatedCohorts) - nrow(subset)) > 0) {
+        ParallelLogger::logInfo(sprintf(
+          " - Skipping %s cohort combinations in incremental mode.",
+          nrow(cohorts) - nrow(subset)
+        ))
+      }
       ParallelLogger::logTrace("Beginning Cohort Relationship SQL")
       cohortRelationship <-
         runCohortRelationshipDiagnostics(
@@ -1038,14 +1038,15 @@ runCohortDiagnostics <- function(packageName = NULL,
       recordKeepingFile = recordKeepingFile
     )
     
-    if (incremental &&
-        (length(instantiatedCohorts) - nrow(subset)) > 0) {
-      ParallelLogger::logInfo(sprintf(
-        " - Skipping %s cohorts in incremental mode.",
-        length(instantiatedCohorts) - nrow(subset)
-      ))
-    }
+    
     if (nrow(subset) > 0) {
+      if (incremental &&
+          (length(instantiatedCohorts) - nrow(subset)) > 0) {
+        ParallelLogger::logInfo(sprintf(
+          " - Skipping %s cohorts in incremental mode.",
+          length(instantiatedCohorts) - nrow(subset)
+        ))
+      }
       ParallelLogger::logInfo(sprintf(
         "Starting large scale characterization of %s cohort(s)",
         nrow(subset)
@@ -1101,14 +1102,15 @@ runCohortDiagnostics <- function(packageName = NULL,
       recordKeepingFile = recordKeepingFile
     )
     
-    if (incremental &&
-        (length(instantiatedCohorts) - nrow(subset)) > 0) {
-      ParallelLogger::logInfo(sprintf(
-        " - Skipping %s cohorts in incremental mode.",
-        length(instantiatedCohorts) - nrow(subset)
-      ))
-    }
+    
     if (nrow(subset) > 0) {
+      if (incremental &&
+          (length(instantiatedCohorts) - nrow(subset)) > 0) {
+        ParallelLogger::logInfo(sprintf(
+          " - Skipping %s cohorts in incremental mode.",
+          length(instantiatedCohorts) - nrow(subset)
+        ))
+      }
       ParallelLogger::logInfo(sprintf(
         "Starting large scale temporal characterization of %s cohort(s)",
         nrow(subset)
