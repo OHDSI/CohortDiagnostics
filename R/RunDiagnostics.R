@@ -645,7 +645,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         cohortDatabaseSchema = cohortDatabaseSchema,
         cohortTable = cohortTable
       )
-      browser()
+      
       tablesOfInterest = c(
         "concept",
         "concept_ancestor",
