@@ -182,7 +182,7 @@ CREATE TABLE concept_class (
   concept_class_id			VARCHAR		NOT NULL,
   concept_class_name		VARCHAR	NOT NULL,
   concept_class_concept_id	INTEGER			NOT NULL
-)
+);
 
 --Table concept_count
 --HINT DISTRIBUTE ON RANDOM
