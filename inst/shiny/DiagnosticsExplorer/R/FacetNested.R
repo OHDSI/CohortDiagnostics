@@ -303,7 +303,8 @@ FacetNested <- ggplot2::ggproto(
       )))
     }
     
-    base <- .int$reshape_add_margins(base, list(names(rows), names(cols)), params$margins)
+    base <-
+      .int$reshape_add_margins(base, list(names(rows), names(cols)), params$margins)
     base <- unique(base)
     
     panel <- .int$id(base, drop = TRUE)
@@ -484,7 +485,7 @@ merge_strips <- function(panel_table,
   # Make empty template
   template <- strp
   template$grobs <- list()
-  template$layout <- template$layout[0, ]
+  template$layout <- template$layout[0,]
   
   # Inflate strips
   for (i in seq_along(strp$grobs)) {
@@ -494,13 +495,13 @@ merge_strips <- function(panel_table,
       sub$layout$b <- rev(sub$layout$b)
     }
     n <- length(sub$grobs)
-    lay <- strp$layout[i, ]
-    lay <- lay[rep(1, n), ]
+    lay <- strp$layout[i,]
+    lay <- lay[rep(1, n),]
     rownames(lay) <- NULL
     sub <- lapply(seq_len(n), function(j) {
       x <- sub
       x$grobs <- x$grobs[j]
-      x$layout <- x$layout[j, ]
+      x$layout <- x$layout[j,]
       x
     })
     template <- gtable::gtable_add_grob(
@@ -574,12 +575,12 @@ merge_strips <- function(panel_table,
   
   # Do deletion
   template$grobs  <- template$grobs[!template$layout$delete]
-  strip_ids <- strip_ids[!template$layout$delete, ]
-  template$layout <- template$layout[!template$layout$delete, ]
+  strip_ids <- strip_ids[!template$layout$delete,]
+  template$layout <- template$layout[!template$layout$delete,]
   
   # Add nesting indicator
   if (params$nest_line) {
-    active <- ggplot2::unit(c(0, 1), "npc") + c(1, -1) * params$resect
+    active <- ggplot2::unit(c(0, 1), "npc") + c(1,-1) * params$resect
     passive <- if (switch)
       c(1, 1)
     else

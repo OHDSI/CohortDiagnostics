@@ -25,12 +25,12 @@ createIfNotExist <-
     }
     if (!is.null(type)) {
       if (length(name) == 0) {
-        stop(ParallelLogger::logError("Must specify ", name))
+        stop(ParallelLogger::logError("  - Must specify ", name))
       }
       if (type %in% c("folder")) {
         if (!file.exists(gsub("/$", "", name))) {
           dir.create(name, recursive = recursive)
-          ParallelLogger::logInfo("Created ", type, " at ", name)
+          ParallelLogger::logInfo("  - Created ", type, " at ", name)
         } else {
           # ParallelLogger::logInfo(type, " already exists at ", name)
         }
@@ -52,8 +52,8 @@ enforceMinCellValue <-
       data[, fieldName] < minValues & data[, fieldName] != 0
     if (!silent) {
       percent <- round(100 * sum(toCensor) / nrow(data), 1)
-      ParallelLogger::logInfo(
-        "- Censoring ",
+      ParallelLogger::logTrace(
+        "  - Censoring ",
         sum(toCensor),
         " values (",
         percent,
@@ -70,6 +70,19 @@ enforceMinCellValue <-
     return(data)
   }
 
+enforceMinCellValueInDataframe <- function(data,
+                                           columnNames = colnames(data),
+                                           minCellCount = 5) {
+  for (i in (1:length(columnNames))) {
+    if (columnNames[[i]] %in% colnames(data)) {
+      data <-
+        enforceMinCellValue(data = data,
+                            fieldName = columnNames[[i]],
+                            minValues = minCellCount)
+    }
+  }
+  return(data)
+}
 
 naToEmpty <- function(x) {
   x[is.na(x)] <- ""
@@ -85,3 +98,66 @@ nullToEmpty <- function(x) {
   x[is.null(x)] <- ""
   return(x)
 }
+
+
+.replaceNaInDataFrameWithEmptyString <- function(data) {
+  data %>%
+    dplyr::mutate(dplyr::across(tidyselect::where(is.character), ~ tidyr::replace_na(.x, as.character('')))) %>%
+    dplyr::mutate(dplyr::across(tidyselect::where(is.logical), ~ tidyr::replace_na(.x, as.character('')))) %>%
+    dplyr::mutate(dplyr::across(tidyselect::where(is.numeric), ~ tidyr::replace_na(.x, as.numeric(''))))
+}
+
+
+getDomainInformation <- function(package = "CohortDiagnostics") {
+  ParallelLogger::logTrace("  - Reading domains.csv")
+  domains <- readr::read_csv(
+    system.file("csv", "domains.csv", package = package),
+    col_types = readr::cols(),
+    guess_max = min(1e7), 
+    na = "NA"
+  ) %>%
+    dplyr::mutate(domainTableShort = stringr::str_sub(
+      string = toupper(.data$domain),
+      start = 1,
+      end = 2
+    )) %>%
+    dplyr::mutate(
+      domainTableShort = dplyr::case_when(
+        stringr::str_detect(string = tolower(.data$domain), pattern = 'era') ~ paste0(.data$domainTableShort, 'E'),
+        TRUE ~ .data$domainTableShort
+      )
+    )
+  
+  domains$domainConceptIdShort <-
+    stringr::str_replace_all(
+      string = sapply(
+        stringr::str_extract_all(
+          string = camelCaseToTitleCase(snakeCaseToCamelCase(domains$domainConceptId)),
+          pattern = '[A-Z]'
+        ),
+        paste,
+        collapse = ' '
+      ),
+      pattern = " ",
+      replacement = ""
+    )
+  domains$domainSourceConceptIdShort <-
+    stringr::str_replace_all(
+      string = sapply(
+        stringr::str_extract_all(
+          string = camelCaseToTitleCase(snakeCaseToCamelCase(domains$domainSourceConceptId)),
+          pattern = '[A-Z]'
+        ),
+        paste,
+        collapse = ' '
+      ),
+      pattern = " ",
+      replacement = ""
+    )
+  return(domains)
+}
+
+
+
+
+

@@ -14,48 +14,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-checkCohortReference <-
-  function(cohortReference, errorMessage = NULL) {
-    if (is.null(errorMessage) |
-        !class(errorMessage) == 'AssertColection') {
-      errorMessage <- checkmate::makeAssertCollection()
-    }
-    checkmate::assertDataFrame(
-      x = cohortReference,
-      types = c("integer", "character", "numeric"),
-      min.rows = 1,
-      min.cols = 4,
-      null.ok = FALSE,
-      col.names = "named",
-      add = errorMessage
-    )
-    if ("referentConceptId" %in% names(cohortReference)) {
-      checkmate::assertIntegerish(
-        x = cohortReference$referentConceptId,
-        lower = 0,
-        any.missing = FALSE,
-        unique = FALSE,
-        null.ok = FALSE,
-        add = errorMessage
-      )
-    }
-    checkmate::assertNames(
-      x = names(cohortReference),
-      subset.of =  c(
-        "referentConceptId",
-        "cohortId",
-        "webApiCohortId",
-        "cohortName",
-        "logicDescription",
-        "clinicalRationale"
-      ),
-      add = errorMessage
-    )
-    invisible(errorMessage)
-  }
-
 makeBackwardsCompatible <- function(cohorts, forceWebApiCohortId = FALSE) {
   # make sure there is a column called 'name' - used for finding sql in package
+  if ('atlasId' %in% colnames(cohorts)) {
+    cohorts <- cohorts %>% 
+      dplyr::mutate(atlasId = as.double(.data$atlasId))
+  }
+  if ('cohortId' %in% colnames(cohorts)) {
+    cohorts <- cohorts %>% 
+      dplyr::mutate(cohortId = as.double(.data$cohortId))
+  }
+  if ('id' %in% colnames(cohorts)) {
+    cohorts <- cohorts %>% 
+      dplyr::mutate(id = as.double(.data$id))
+  }
+  if ('webApiCohortId' %in% colnames(cohorts)) {
+    cohorts <- cohorts %>% 
+      dplyr::mutate(webApiCohortId = as.double(.data$webApiCohortId))
+  }
   if (!"name" %in% colnames(cohorts)) {
     # id/cohortId takes precedence over webapiId/atlasId
     if ('id' %in% colnames(cohorts)) {
@@ -88,13 +64,14 @@ makeBackwardsCompatible <- function(cohorts, forceWebApiCohortId = FALSE) {
   if (!'webApiCohortId' %in% colnames(cohorts)) {
     if ('atlasId' %in% colnames(cohorts)) {
       if (typeof(cohorts$atlasId) %in% c('integer','double')) {
-        cohorts <- cohorts %>%
+        cohorts <- cohorts  %>% 
+          dplyr::mutate(atlasId = as.double(.data$atlasId)) %>%
           dplyr::mutate(webApiCohortId = .data$atlasId)
       }
     } else if ('cohortId' %in% colnames(cohorts)) {
-      if (typeof(cohorts$atlasId) %in% c('integer','double')) {
+      if (typeof(cohorts$cohortId) %in% c('integer','double')) {
         cohorts <- cohorts %>%
-          dplyr::mutate(webApiCohortId = .data$cohortId)
+          dplyr::mutate(webApiCohortId = as.double(.data$cohortId))
       }
     } else if (all('name' %in% colnames(cohorts),
                    typeof(strtoi(cohorts$name)) %in% c('integer','double'),
@@ -102,7 +79,7 @@ makeBackwardsCompatible <- function(cohorts, forceWebApiCohortId = FALSE) {
                    forceWebApiCohortId)) {
       warning('webapiCohortId not found. Forcing..')
       cohorts <- cohorts %>%
-        dplyr::mutate(webApiCohortId = strtoi(cohorts$name))
+        dplyr::mutate(webApiCohortId = as.double(strtoi(cohorts$name)))
       #webApiCohortId should always be integer/double
     }
   }
@@ -131,6 +108,31 @@ makeBackwardsCompatible <- function(cohorts, forceWebApiCohortId = FALSE) {
         dplyr::mutate(cohortId = as.double(.data$name))
     }
   }
+  
+  # make sure there is a column called 'atlasId'
+  if (!'atlasId' %in% colnames(cohorts)) {
+    if (typeof(cohorts$webApiCohortId) %in% c('integer','double')) {
+      cohorts <- cohorts %>%
+        dplyr::mutate(atlasId = as.double(.data$webApiCohortId))
+    }
+  }
+  
+  if ('atlasId' %in% colnames(cohorts)) {
+    cohorts <- cohorts %>% 
+      dplyr::mutate(atlasId = as.double(.data$atlasId))
+  }
+  if ('cohortId' %in% colnames(cohorts)) {
+    cohorts <- cohorts %>% 
+      dplyr::mutate(cohortId = as.double(.data$cohortId))
+  }
+  if ('id' %in% colnames(cohorts)) {
+    cohorts <- cohorts %>% 
+      dplyr::mutate(id = as.double(.data$id))
+  }
+  if ('webApiCohortId' %in% colnames(cohorts)) {
+    cohorts <- cohorts %>% 
+      dplyr::mutate(webApiCohortId = as.double(.data$webApiCohortId))
+  }
   return(cohorts)
 }
 
@@ -139,7 +141,7 @@ getCohortsJsonAndSqlFromPackage <-
            cohortToCreateFile = cohortToCreateFile,
            cohortIds = NULL,
            errorMessage = NULL) {
-    ParallelLogger::logDebug("Executing on cohorts specified in package - ", packageName)
+    ParallelLogger::logDebug(" - Executing on cohorts specified in package - ", packageName)
     
     if (is.null(errorMessage) |
         !class(errorMessage) == 'AssertColection') {
@@ -172,7 +174,6 @@ getCohortsJsonAndSqlFromPackage <-
         dplyr::filter(.data$cohortId %in% cohortIds)
     }
     
-    checkCohortReference(cohortReference = cohorts, errorMessage = errorMessage)
     checkmate::reportAssertions(collection = errorMessage)
     
     getSql <- function(name) {
@@ -221,7 +222,7 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
                              min.chars = 1,
                              add = errorMessage)
   webApiVersion <- ROhdsiWebApi::getWebApiVersion(baseUrl)
-  ParallelLogger::logInfo("WebApi of version ", webApiVersion, " found at ", baseUrl)
+  ParallelLogger::logInfo("  - WebApi of version ", webApiVersion, " found at ", baseUrl)
   checkmate::assertCharacter(x = webApiVersion,
                              min.chars = 1,
                              add = errorMessage)
@@ -234,13 +235,13 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
   cohortSetReference$json <- ""
   cohortSetReference$sql <- ""
   
-  ParallelLogger::logInfo("Retrieving cohort definitions from WebAPI")
+  ParallelLogger::logInfo("  - Retrieving cohort definitions from WebAPI")
   if (nrow(cohortSetReference) == 0) {
     stop(paste0("Provided cohortIds not found in WebApi. Aborting.."))
   }
   
   for (i in 1:nrow(cohortSetReference)) {
-    ParallelLogger::logInfo("- Retrieving definitions for cohort ",
+    ParallelLogger::logInfo("  - Retrieving definitions for cohort ",
                             cohortSetReference$cohortName[i])
     cohortDefinition <-
       ROhdsiWebApi::getCohortDefinition(cohortId = cohortSetReference$webApiCohortId[i],
@@ -278,13 +279,11 @@ getCohortsJsonAndSql <- function(packageName = NULL,
       generateStats = generateStats
     )
   }
-  ParallelLogger::logInfo(" - Number of cohorts ", nrow(cohorts))
   if (nrow(cohorts) == 0) {
-    warning(" - No cohorts founds")
     return(NULL)
   }
   if (nrow(cohorts) != length(cohorts$cohortId %>% unique())) {
-    warning(" - Please check input cohort specification. Is there duplication of cohortId?")
+    warning(" - Please check input cohort specification. Is there duplication of cohortId? Exiting.")
     return(NULL)
   }
   return(cohorts)
@@ -295,7 +294,7 @@ createCohortTable <- function(connectionDetails = NULL,
                               cohortDatabaseSchema,
                               cohortTable = "cohort") {
   start <- Sys.time()
-  ParallelLogger::logInfo("Creating cohort table")
+  ParallelLogger::logInfo("   - Note: Creating cohort table.")
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
@@ -311,11 +310,11 @@ createCohortTable <- function(connectionDetails = NULL,
                                 sql,
                                 progressBar = FALSE,
                                 reportOverallTime = FALSE)
-  ParallelLogger::logDebug("Created table ", cohortDatabaseSchema, ".", cohortTable)
+  ParallelLogger::logDebug(" - Created table ", cohortDatabaseSchema, ".", cohortTable)
   
   delta <- Sys.time() - start
-  writeLines(paste(
-    "Creating cohort table took",
+  ParallelLogger::logTrace(paste(
+    " - Creating cohort table took",
     signif(delta, 3),
     attr(delta, "units")
   ))
@@ -338,7 +337,7 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
   }
   
   fetchStats <- function(file) {
-    ParallelLogger::logDebug("- Fetching data from ", file)
+    ParallelLogger::logDebug("  - Fetching data from ", file)
     stats <- readr::read_csv(file,
                              col_types = readr::cols(),
                              guess_max = min(1e7))
@@ -510,7 +509,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
   
   if (generateInclusionStats) {
     if (is.null(inclusionStatisticsFolder)) {
-      stop(" - Must specify inclusionStatisticsFolder when generateInclusionStats = TRUE")
+      stop(" - Inclusion rule file folder not specified when generateInclusionStats = TRUE.")
     }
     if (!file.exists(inclusionStatisticsFolder)) {
       dir.create(inclusionStatisticsFolder, recursive = TRUE)
@@ -518,7 +517,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
   }
   if (incremental) {
     if (is.null(incrementalFolder)) {
-      stop(" - Must specify incrementalFolder when incremental = TRUE")
+      stop(" - Incremental folder not specified while in incremental mode.")
     }
     if (!file.exists(incrementalFolder)) {
       dir.create(incrementalFolder, recursive = TRUE)
@@ -544,6 +543,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
           nrow(cohorts) == 0)) {
     stop("Cohort definitions not found for provided cohort ids. Please check. Aborting.")
   }
+  ParallelLogger::logInfo(" - Number of cohorts to instantiate: ", nrow(cohorts))
   
   if (createCohortTable) {
     needToCreate <- TRUE
@@ -551,7 +551,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
       tables <-
         DatabaseConnector::getTableNames(connection, cohortDatabaseSchema)
       if (toupper(cohortTable) %in% toupper(tables)) {
-        ParallelLogger::logInfo(" - Cohort table already exists and in incremental mode, so not recreating table.")
+        ParallelLogger::logInfo("   - Note: Cohort table already exists. Running in incremental mode. Re-using cohort table.")
         needToCreate <- FALSE
       }
     }
@@ -575,6 +575,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
   }
   
   instantiatedCohortIds <- c()
+  ParallelLogger::logInfo(" - Instantiating:")
   for (i in 1:nrow(cohorts)) {
     if (!incremental || isTaskRequired(
       cohortId = cohorts$cohortId[i],
@@ -582,9 +583,13 @@ instantiateCohortSet <- function(connectionDetails = NULL,
       recordKeepingFile = recordKeepingFile
     )) {
       ParallelLogger::logInfo(
-        " - Instantiation cohort ",
+        "    (",
+        scales::comma(i),
+        "/",
+        scales::comma(nrow(cohorts)),
+        ") '",
         cohorts$cohortName[i],
-        " (Cohort id: ",
+        "' (",
         cohorts$cohortId[i],
         ")"
       )
@@ -651,7 +656,10 @@ instantiateCohortSet <- function(connectionDetails = NULL,
       sql <- SqlRender::translate(sql,
                                   targetDialect = connection@dbms,
                                   tempEmulationSchema = tempEmulationSchema)
-      DatabaseConnector::executeSql(connection, sql)
+      DatabaseConnector::executeSql(connection = connection, 
+                                    sql = sql, 
+                                    reportOverallTime = FALSE, 
+                                    progressBar = FALSE)
       instantiatedCohortIds <-
         c(instantiatedCohortIds, cohorts$cohortId[i])
     }
@@ -684,7 +692,7 @@ instantiateCohortSet <- function(connectionDetails = NULL,
 
 createTempInclusionStatsTables <-
   function(connection, tempEmulationSchema, cohorts) {
-    ParallelLogger::logInfo(" - Creating temporary inclusion statistics tables")
+    ParallelLogger::logTrace(" - Creating temporary inclusion statistics tables")
     sql <-
       SqlRender::loadRenderTranslateSql(
         "inclusionStatsTables.sql",
@@ -766,7 +774,7 @@ saveAndDropTempInclusionStatsTables <- function(connection,
                                                 incremental,
                                                 cohortIds) {
   fetchStats <- function(table, fileName) {
-    ParallelLogger::logDebug("- Fetching data from ", table)
+    ParallelLogger::logDebug(" - Fetching data from ", table)
     sql <- "SELECT * FROM @table"
     data <- renderTranslateQuerySql(
       sql = sql,
@@ -817,7 +825,7 @@ saveAndDropTempInclusionStatsTables <- function(connection,
     )) {
       if (isFALSE(generateInclusionStats)) {
         warning(
-          " - The SQL template used to instantiate cohort was designed to output cohort inclusion statistics.
+          " - The cohort SQL was designed to output cohort inclusion statistics.
               But, generateInclusionStats is set to False while instantiating cohort.
               This may cause error and terminate cohort diagnositcs."
         )
@@ -825,7 +833,7 @@ saveAndDropTempInclusionStatsTables <- function(connection,
     } else {
       if (isTRUE(generateInclusionStats)) {
         warning(
-          " - The SQL template used to instantiate cohort was designed to NOT output cohort inclusion statistics.
+          " - The cohort SQL was designed to NOT output cohort inclusion statistics.
               But, generateInclusionStats is set to TRUE while instantiating cohort.
               This may cause error and terminate cohort diagnositcs."
         )

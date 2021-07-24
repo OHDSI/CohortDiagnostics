@@ -85,7 +85,7 @@ runCohortRelationshipDiagnostics <-
       return(NULL)
     }
     
-    ParallelLogger::logTrace(" - Creating cohort table subsets")
+    ParallelLogger::logTrace("  - Creating cohort table subsets")
     cohortSubsetSql <-
       "IF OBJECT_ID('tempdb..@subset_cohort_table', 'U') IS NOT NULL
 	                      DROP TABLE @subset_cohort_table;
@@ -120,7 +120,7 @@ runCohortRelationshipDiagnostics <-
       reportOverallTime = FALSE
     )
     
-    ParallelLogger::logTrace(" - Computing date range in target cohorts")
+    ParallelLogger::logTrace("  - Computing date range in target cohorts")
     dateRangeSql <-
       "SELECT DATEDIFF(day, min_date, max_date) days_diff,
                             min_date,
@@ -215,19 +215,19 @@ runCohortRelationshipDiagnostics <-
       dplyr::mutate(timeId = dplyr::row_number())
     
     
-    ParallelLogger::logTrace(" --- Creating Andromeda object to collect results")
+    ParallelLogger::logTrace("   - Creating Andromeda object to collect results")
     resultsInAndromeda <- Andromeda::andromeda()
     pb <- utils::txtProgressBar(style = 3)
     
     for (i in (1:nrow(timePeriods))) {
       ParallelLogger::logTrace(
         paste0(
-          " ---- Working on Time id:",
+          "    - Working on Time id:",
           timePeriods[i, ]$timeId,
           " start day: ",
-          timePeriods[i, ]$startDay,
+          scales::comma(timePeriods[i, ]$startDay),
           " to end day:",
-          timePeriods[i, ]$endDay
+          scales::comma(timePeriods[i, ]$endDay)
         )
       )
       sql <- SqlRender::loadRenderTranslateSql(
@@ -282,7 +282,7 @@ runCohortRelationshipDiagnostics <-
     
     delta <- Sys.time() - startTime
     ParallelLogger::logInfo(paste(
-      "Computing cohort relationship took",
+      " - Computing cohort relationship took",
       signif(delta, 3),
       attr(delta, "units")
     ))

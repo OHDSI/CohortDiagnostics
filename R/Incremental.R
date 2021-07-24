@@ -46,7 +46,7 @@ isTaskRequired <-
           key <- list(...)
           key <-
             paste(sprintf("%s = '%s'", names(key), key), collapse = ", ")
-          ParallelLogger::logInfo("Skipping ", key, " because unchanged from earlier run")
+          ParallelLogger::logInfo("  - Skipping ", key, " because unchanged from earlier run")
         }
         return(FALSE)
       } else {
@@ -150,14 +150,14 @@ writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
     params$data = data
     params$fileName = fileName
     do.call(saveIncremental, params)
-    ParallelLogger::logDebug("appending records to ", fileName)
+    ParallelLogger::logDebug("  - Appending records to ", fileName)
   } else {
     if (file.exists(fileName)) {
-      ParallelLogger::logDebug("Overwriting and replacing previous ",
+      ParallelLogger::logDebug("  - Overwriting and replacing previous ",
                                fileName,
                                " with new.")
     } else {
-      ParallelLogger::logDebug("creating ", fileName)
+      ParallelLogger::logDebug("  - creating ", fileName)
     }
     readr::write_excel_csv(
       x = data,
@@ -172,7 +172,7 @@ writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
 writeCovariateDataAndromedaToCsv <-
   function(data, fileName, incremental = FALSE) {
     if (incremental && file.exists(fileName)) {
-      ParallelLogger::logDebug("Appending records to ", fileName)
+      ParallelLogger::logDebug("  - Appending records to ", fileName)
       batchSize <- 1e5
       
       cohortIds <- data %>%
@@ -197,6 +197,7 @@ writeCovariateDataAndromedaToCsv <-
       
       addChunk <- function(chunk) {
         colnames(chunk) <- SqlRender::camelCaseToSnakeCase(colnames(chunk))
+        chunk <- .replaceNaInDataFrameWithEmptyString(chunk)
         readr::write_csv(chunk, tempName, append = TRUE)
       }
       Andromeda::batchApply(data, addChunk)
@@ -204,12 +205,12 @@ writeCovariateDataAndromedaToCsv <-
       file.rename(tempName, fileName)
     } else {
       if (file.exists(fileName)) {
-        ParallelLogger::logDebug("Overwriting and replacing previous ",
+        ParallelLogger::logDebug("  - Overwriting and replacing previous ",
                                  fileName,
                                  " with new.")
         unlink(fileName)
       } else {
-        ParallelLogger::logDebug("Creating ", fileName)
+        ParallelLogger::logDebug("  - Creating ", fileName)
       }
       writeToFile <- function(batch) {
         first <- !file.exists(fileName)

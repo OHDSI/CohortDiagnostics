@@ -102,6 +102,8 @@ exportFeatureExtractionOutput <-
       if (dplyr::pull(dplyr::count(featureExtractionDbCovariateData$filteredCovariates)) > 0) {
         covariateRef <-
           dplyr::collect(featureExtractionDbCovariateData$covariateRef)
+        covariateRef <- .replaceNaInDataFrameWithEmptyString(covariateRef)
+        
         writeToCsv(
           data = covariateRef,
           fileName = covariateRefFileName,
@@ -110,6 +112,7 @@ exportFeatureExtractionOutput <-
         )
         analysisRef <-
           dplyr::collect(featureExtractionDbCovariateData$analysisRef)
+        analysisRef <- .replaceNaInDataFrameWithEmptyString(analysisRef)
         writeToCsv(
           data = analysisRef,
           fileName = analysisRefFileName,
@@ -118,6 +121,7 @@ exportFeatureExtractionOutput <-
         )
         if (!is.null(timeRefFileName)) {
           timeRef <- dplyr::collect(featureExtractionDbCovariateData$timeRef)
+          timeRef <- .replaceNaInDataFrameWithEmptyString(timeRef)
           writeToCsv(
             data = timeRef,
             fileName = timeRefFileName,
@@ -134,7 +138,7 @@ exportFeatureExtractionOutput <-
     }
     
     if (!"covariatesContinuous" %in% names(featureExtractionDbCovariateData)) {
-      ParallelLogger::logInfo("No continuous characterization output for submitted cohorts")
+      ParallelLogger::logInfo("  - No continuous characterization output for submitted cohorts")
     } else if (dplyr::pull(dplyr::count(featureExtractionDbCovariateData$covariateRef)) > 0) {
       featureExtractionDbCovariateData$filteredCovariatesContinous <-
         featureExtractionDbCovariateData$covariatesContinuous %>%

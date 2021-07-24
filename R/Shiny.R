@@ -151,7 +151,7 @@ preMergeDiagnosticsFiles <-
       stop('No zip files found in dataFolder. Please check. Aborting.')
     }
     
-    ParallelLogger::logInfo("Merging ", nrow(zipFiles), " zip files.")
+    ParallelLogger::logInfo(" - Merging ", nrow(zipFiles), " zip files.")
     
     unzipMainFolder <-
       tempfile("unzipTempFolder", tmpdir = tempFolder)
@@ -159,7 +159,7 @@ preMergeDiagnosticsFiles <-
     on.exit(unlink(unzipMainFolder, recursive = TRUE))
     
     for (i in 1:nrow(zipFiles)) {
-      ParallelLogger::logInfo("- Unzipping ", basename(zipFiles$zipFile[i]))
+      ParallelLogger::logInfo("  - Unzipping ", basename(zipFiles$zipFile[i]))
       unzipFolder <-
         file.path(unzipMainFolder, sub(".zip", "", basename(zipFiles$zipFile[i])))
       dir.create(unzipFolder)
@@ -174,7 +174,7 @@ preMergeDiagnosticsFiles <-
     newEnvironment <- new.env()
     
     processTable <- function(tableName, env) {
-      ParallelLogger::logInfo("Processing table ", tableName)
+      ParallelLogger::logInfo("   - Processing table ", tableName)
       csvFileName <- paste0(tableName, ".csv")
       data <- dplyr::tibble()
       for (i in 1:nrow(zipFiles)) {
@@ -183,6 +183,7 @@ preMergeDiagnosticsFiles <-
             readr::read_csv(
               file.path(zipFiles$unzipFolder[i], csvFileName),
               col_types = readr::cols(),
+              na = character(),
               guess_max = min(1e6)
             )
           if (nrow(newData) > 0) {
@@ -210,12 +211,14 @@ preMergeDiagnosticsFiles <-
               tableName = tableName,
               specifications = specifications
             )
-            
           }
         }
       }
       if (nrow(data) == 0) {
-        ParallelLogger::logInfo("- No data found for table ", tableName)
+        ParallelLogger::logInfo("     - No data found for table ", tableName)
+        assign(SqlRender::snakeCaseToCamelCase(tableName),
+               NULL,
+               envir = env)
       } else {
         colnames(data) <- SqlRender::snakeCaseToCamelCase(colnames(data))
         assign(SqlRender::snakeCaseToCamelCase(tableName),
@@ -224,7 +227,7 @@ preMergeDiagnosticsFiles <-
       }
     }
     invisible(lapply(unique(specifications$tableName), processTable, env = newEnvironment))
-    ParallelLogger::logInfo("Creating PreMerged.Rdata file. This might take some time.")
+    ParallelLogger::logInfo(" - Creating PreMerged.Rdata file. This might take some time.")
     save(
       list = ls(newEnvironment),
       envir = newEnvironment,
@@ -233,7 +236,7 @@ preMergeDiagnosticsFiles <-
       file = file.path(dataFolder, "PreMerged.RData")
     )
     rm(list = ls(newEnvironment), envir = newEnvironment)
-    ParallelLogger::logInfo("Merged data saved in ",
+    ParallelLogger::logInfo(" - Merged data saved in ",
                             file.path(dataFolder, "PreMerged.RData"))
   }
 

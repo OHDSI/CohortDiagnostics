@@ -136,6 +136,7 @@ sidebarMenu <-
     shiny::conditionalPanel(
       condition = "input.tabs!='incidenceRate' &
       input.tabs != 'timeDistribution' &
+      input.tabs != 'timeSeries' &
       input.tabs != 'cohortCharacterization' &
       input.tabs != 'cohortCounts' &
       input.tabs != 'indexEventBreakdown' &
@@ -166,6 +167,7 @@ sidebarMenu <-
     shiny::conditionalPanel(
       condition = "input.tabs=='incidenceRate' |
       input.tabs == 'timeDistribution' |
+      input.tabs == 'timeSeries' |
       input.tabs =='cohortCharacterization' |
       input.tabs == 'cohortCounts' |
       input.tabs == 'indexEventBreakdown' |
@@ -227,6 +229,7 @@ sidebarMenu <-
     shiny::conditionalPanel(
       condition = "input.tabs != 'databaseInformation' &
       input.tabs != 'cohortDefinition' &
+      input.tabs != 'timeSeries' &
       input.tabs != 'cohortCounts' &
       input.tabs != 'cohortOverlap'&
       input.tabs != 'incidenceRate' &
@@ -249,6 +252,7 @@ sidebarMenu <-
     ),
     shiny::conditionalPanel(
       condition = "input.tabs == 'cohortCounts' |
+      input.tabs == 'timeSeries' |
       input.tabs == 'cohortOverlap' |
       input.tabs == 'incidenceRate' |
       input.tabs == 'timeDistribution'",
@@ -355,7 +359,11 @@ bodyTabItems <- shinydashboard::tabItems(
                     shiny::conditionalPanel(
                       condition = "output.cohortDefinitionCountOfSelectedRows == 2 &
                      input.conceptSetsType == 'Resolved (included)' &
-                     input.conceptSetsTypeSecond == 'Resolved (included)'",
+                     input.conceptSetsTypeSecond == 'Resolved (included)' & 
+                     output.conceptSetExpressionRowSelected == true &
+                     output.conceptSetExpressionSecondRowSelected == true &
+                     input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
+                     input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
                       shiny::tabsetPanel(
                         id = "resolvedConceptDifference",
                         shiny::tabPanel(
@@ -384,7 +392,11 @@ bodyTabItems <- shinydashboard::tabItems(
                     shiny::conditionalPanel(
                       condition = "output.cohortDefinitionCountOfSelectedRows == 2 &
                                    input.conceptSetsType == 'Mapped (source)' &
-                                   input.conceptSetsTypeSecond == 'Mapped (source)'",
+                                   input.conceptSetsTypeSecond == 'Mapped (source)' & 
+                                   output.conceptSetExpressionRowSelected == true &
+                                   output.conceptSetExpressionSecondRowSelected == true &
+                                   input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
+                                   input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
                       shiny::tabsetPanel(
                         id = "mappedConceptDifference",
                         shiny::tabPanel(
@@ -413,7 +425,11 @@ bodyTabItems <- shinydashboard::tabItems(
                     shiny::conditionalPanel(
                       condition = "output.cohortDefinitionCountOfSelectedRows == 2 &
                                    input.conceptSetsType == 'Orphan concepts' &
-                                   input.conceptSetsTypeSecond == 'Orphan concepts'",
+                                   input.conceptSetsTypeSecond == 'Orphan concepts'& 
+                                   output.conceptSetExpressionRowSelected == true &
+                                   output.conceptSetExpressionSecondRowSelected == true &
+                                   input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
+                                   input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
                       shiny::tabsetPanel(
                         id = "orphanConceptsDifference",
                         shiny::tabPanel(
@@ -478,6 +494,8 @@ bodyTabItems <- shinydashboard::tabItems(
     ),
     shiny::conditionalPanel(
       condition = "output.cohortCountRowIsSelected == true",
+      tags$br(),
+      tags$h3("Inclusion Rules"),
       DT::dataTableOutput("InclusionRuleStatForCohortSeletedTable")
     )
   ),
@@ -664,7 +682,7 @@ bodyTabItems <- shinydashboard::tabItems(
         ),
         tags$td(
           shiny::sliderInput(
-            inputId = "timeSeriesPeriodBeginFilter",
+            inputId = "timeSeriesPeriodRangeFilter",
             label = "Filter By Period Begin",
             min = c(0),
             max = c(0),
@@ -674,8 +692,18 @@ bodyTabItems <- shinydashboard::tabItems(
             step = 1,
             sep = ""
           )
+        ),
+        tags$td(),
+        tags$td(),
+        tags$td(tags$b("Series Type Description :"),
+          shiny::uiOutput(outputId = "timeSeriesTypeLong")
         )
       )
+      # tags$tr(
+      #   tags$td(
+      #     shiny::uiOutput(outputId = "timeSeriesTypeLong")
+      #   )
+      # )
     ),
     shinydashboard::box(
       title = "Time Series",
@@ -684,7 +712,7 @@ bodyTabItems <- shinydashboard::tabItems(
       solidHeader = TRUE,
       
       shiny::column(
-        6,
+        3,
         shiny::radioButtons(
           inputId = "timeSeriesType",
           label = "",
@@ -694,14 +722,44 @@ bodyTabItems <- shinydashboard::tabItems(
         )
       ),
       shiny::column(
+        3,
+        shiny::conditionalPanel(
+          condition = "input.timeSeriesType=='Plot'",
+          shinyWidgets::pickerInput(
+            inputId = "timeSeriesPlotCategory",
+            label = "Show decomposition plot by:",
+            width = 300,
+            choices = c("Total", "trend", "season_year", "remainder"),
+            selected = c("trend"),
+            multiple = TRUE,
+            choicesOpt = list(style = rep_len("color: black;", 999)),
+            options = shinyWidgets::pickerOptions(
+              actionsBox = TRUE,
+              liveSearch = TRUE,
+              size = 10,
+              dropupAuto = TRUE,
+              liveSearchStyle = "contains",
+              liveSearchPlaceholder = "Type here to search",
+              virtualScroll = 50
+            )
+          )
+        )
+      ),
+      shiny::column(
         6,
         shiny::conditionalPanel(
           condition = "input.timeSeriesType=='Plot'",
           shiny::radioButtons(
             inputId = "timeSeriesPlotFilters",
             label = "Filter By :",
-            choices = c("Records Start", "Subjects Start", "Records End", "Subjects End"),
-            selected = "Records Start",
+            choices = c("Records",
+                        "Subjects",
+                        "Person Days",
+                        "Records Start", 
+                        "Subjects Start", 
+                        "Records End", 
+                        "Subjects End"),
+            selected = "Subjects",
             inline = TRUE
           )
         ),
@@ -733,36 +791,25 @@ bodyTabItems <- shinydashboard::tabItems(
   shinydashboard::tabItem(
     tabName = "timeDistribution",
     cohortReference("timeDistSelectedCohorts"),
-    shiny::radioButtons(
-      inputId = "timeDistributionType",
-      label = "",
-      choices = c("Table", "Plot"),
-      selected = "Plot",
-      inline = TRUE
-    ),
-    shiny::conditionalPanel(condition = "input.timeDistributionType=='Table'",
-                            tags$table(width = "100%", 
-                                       tags$tr(
-                                         tags$td(align = "right",
-                                                 shiny::downloadButton(
-                                                   "saveTimeDistTable",
-                                                   label = "",
-                                                   icon = shiny::icon("download"),
-                                                   style = "margin-top: 5px; margin-bottom: 5px;"
-                                                 )
-                                         )
-                                       )
-                            ),
-                            DT::dataTableOutput("timeDistTable")),
-    shiny::conditionalPanel(
-      condition = "input.timeDistributionType=='Plot'",
-      shinydashboard::box(
-        title = "Time Distributions",
-        width = NULL,
-        status = "primary",
-        tags$br(),
-        ggiraph::ggiraphOutput("timeDisPlot", width = "100%", height = "100%")
-      )
+    shinydashboard::box(
+      width = NULL,
+      status = "primary",
+      tags$br(),
+      tags$h4("Time distribution"),
+      ggiraph::ggiraphOutput("timeDisPlot", width = "100%", height = "100%"),
+      tags$table(width = "100%", 
+                 tags$tr(
+                   tags$td(align = "right",
+                           shiny::downloadButton(
+                             "saveTimeDistTable",
+                             label = "",
+                             icon = shiny::icon("download"),
+                             style = "margin-top: 5px; margin-bottom: 5px;"
+                           )
+                   )
+                 )
+      ),
+      DT::dataTableOutput("timeDistTable")
     )
   ),
   shinydashboard::tabItem(

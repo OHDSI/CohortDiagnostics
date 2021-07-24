@@ -1,3 +1,7 @@
+library(magrittr)
+library(testthat)
+library(CohortDiagnostics)
+
 # Function to check if environment variable exists that works across Windows and Linux systems
 env_exists <- function(varname) {
    Sys.getenv(varname,unset = "") != ""

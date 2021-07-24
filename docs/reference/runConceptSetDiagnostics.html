@@ -161,10 +161,7 @@ the cohorts need to be instantiated.</p>
   <span class='va'>cohorts</span>,
   cohortIds <span class='op'>=</span> <span class='cn'>NULL</span>,
   cohortDatabaseSchema <span class='op'>=</span> <span class='cn'>NULL</span>,
-  cohortTable <span class='op'>=</span> <span class='cn'>NULL</span>,
-  <span class='va'>runIncludedSourceConcepts</span>,
-  <span class='va'>runOrphanConcepts</span>,
-  <span class='va'>runBreakdownIndexEvents</span>
+  cohortTable <span class='op'>=</span> <span class='cn'>NULL</span>
 <span class='op'>)</span></pre>
 
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -221,19 +218,6 @@ this should include both the database and schema name, for example
     <tr>
       <th>cohortTable</th>
       <td><p>Name of the cohort table.</p></td>
-    </tr>
-    <tr>
-      <th>runIncludedSourceConcepts</th>
-      <td><p>Generate and export the source concepts included in the cohorts?</p></td>
-    </tr>
-    <tr>
-      <th>runOrphanConcepts</th>
-      <td><p>Generate and export potential orphan concepts?</p></td>
-    </tr>
-    <tr>
-      <th>runBreakdownIndexEvents</th>
-      <td><p>Generate and export the breakdown of index events? This is executed on
-instantiated cohorts only.</p></td>
     </tr>
     </table>
 

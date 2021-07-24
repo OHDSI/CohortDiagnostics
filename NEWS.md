@@ -9,13 +9,14 @@ Changes:
 3. Exported functions computeCohortOverlap, getCohortCharacteristics, getCohortCount, instantiateCohortSet, getVisitContext, getTimeDistributions, getIncidenceRate, runConceptSetDiagnostics
 4. Metadata.csv now collects the versions of OHDSI packages and R version used.
 5. Metadata from source data includes additional database level information - including distribution of persons by calendar period.
-6. Added function getTimeSeries
-7. Added function computeCohortTemporalRelationship
+6. Added several new functions to get results from results data model
 8. Diagnostics explorer shiny app has a robust cohort comparison viewer - when two cohorts are selected.
 9. New modules added to Diagnostics explorer to support output of getTimeSeries and computeCohortTemporalRelationship.
+10. Add concept_cooccurrence diagnostic
 
 Bug fixes:
 1. Fixed inclusion rule display - when wrong inclusion rules were being shown in cohort counts
+
 
 CohortDiagnostics 2.1.0
 =======================

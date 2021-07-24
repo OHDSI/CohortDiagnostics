@@ -7,11 +7,13 @@ DROP TABLE IF EXISTS cohort_count;
 DROP TABLE IF EXISTS cohort_inclusion;
 DROP TABLE IF EXISTS cohort_inclusion_result;
 DROP TABLE IF EXISTS cohort_inclusion_stats;
-DROP TABLE IF EXISTS cohort_summary_stats;
 DROP TABLE IF EXISTS cohort_relationships;
 DROP TABLE IF EXISTS concept;
 DROP TABLE IF EXISTS concept_ancestor;
+DROP TABLE IF EXISTS concept_cooccurrence;
 DROP TABLE IF EXISTS concept_relationship;
+DROP TABLE IF EXISTS concept_resolved;
+DROP TABLE IF EXISTS cohort_summary_stats;
 DROP TABLE IF EXISTS concept_sets;
 DROP TABLE IF EXISTS concept_synonym;
 DROP TABLE IF EXISTS covariate_ref;
@@ -20,18 +22,16 @@ DROP TABLE IF EXISTS covariate_value_dist;
 DROP TABLE IF EXISTS database;
 DROP TABLE IF EXISTS domain;
 DROP TABLE IF EXISTS incidence_rate;
-DROP TABLE IF EXISTS included_source_concept;
 DROP TABLE IF EXISTS inclusion_rule_stats;
 DROP TABLE IF EXISTS index_event_breakdown;
 DROP TABLE IF EXISTS metadata;
 DROP TABLE IF EXISTS orphan_concept;
 DROP TABLE IF EXISTS time_series;
 DROP TABLE IF EXISTS relationship;
-DROP TABLE IF EXISTS resolved_concepts;
 DROP TABLE IF EXISTS temporal_analysis_ref;
 DROP TABLE IF EXISTS temporal_covariate_ref;
 DROP TABLE IF EXISTS temporal_covariate_value;
-DROP TABLE IF EXISTS temporal_covariate_dist;
+DROP TABLE IF EXISTS temporal_covariate_value_dist;
 DROP TABLE IF EXISTS temporal_time_ref;
 DROP TABLE IF EXISTS time_distribution;
 DROP TABLE IF EXISTS visit_context;
@@ -39,9 +39,8 @@ DROP TABLE IF EXISTS vocabulary;
 
 
 -- Create tables
-
 --Table analysis_ref
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE analysis_ref (
 			analysis_id BIGINT NOT NULL,
 			analysis_name VARCHAR NOT NULL,
@@ -54,24 +53,21 @@ CREATE TABLE analysis_ref (
 );
 
 --Table calendar_incidence
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE calendar_incidence (
-			cohort_id BIGINT NOT NULL,
 			database_id VARCHAR NOT NULL,
+			cohort_id BIGINT NOT NULL,
 			period_type VARCHAR NOT NULL,
 			calendar_month DATE NOT NULL,
 			count_value FLOAT,
-			PRIMARY KEY(cohort_id, database_id, period_type, calendar_month)
+			PRIMARY KEY(database_id, cohort_id, period_type, calendar_month)
 );
 
-
 --Table cohort
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE cohort (
 			cohort_id BIGINT NOT NULL,
-			web_api_cohort_id BIGINT NOT NULL,
 			cohort_name VARCHAR(255) NOT NULL,
-			logic_description VARCHAR,
 			metadata VARCHAR,
 			sql VARCHAR NOT NULL,
 			json VARCHAR NOT NULL,
@@ -80,64 +76,64 @@ CREATE TABLE cohort (
 
 
 --Table cohort_count
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE cohort_count (
+			database_id VARCHAR NOT NULL,
 			cohort_id BIGINT NOT NULL,
 			cohort_entries FLOAT NOT NULL,
 			cohort_subjects FLOAT NOT NULL,
-			database_id VARCHAR NOT NULL,
-			PRIMARY KEY(cohort_id, database_id)
+			PRIMARY KEY(database_id, cohort_id)
 );
 
 --Table cohort_inclusion
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE cohort_inclusion (
+	    database_id VARCHAR NOT NULL,
 			cohort_id  BIGINT NOT NULL,
 			rule_sequence int NOT NULL,
 			name varchar NULL,
 			description varchar NULL,
-	    database_id VARCHAR NOT NULL,
-			PRIMARY KEY(cohort_id, rule_sequence, database_id)
+			PRIMARY KEY(database_id, cohort_id, rule_sequence)
 );
 
 --Table cohort_inclusion_result
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE cohort_inclusion_result (
+	database_id VARCHAR NOT NULL,
   cohort_id BIGINT NOT NULL,
   mode_id int NOT NULL,
   inclusion_rule_mask bigint NOT NULL,
   person_count bigint NOT NULL,
-	database_id VARCHAR NOT NULL,
-	PRIMARY KEY(cohort_id, database_id, inclusion_rule_mask, mode_id)
+	PRIMARY KEY(database_id, cohort_id, inclusion_rule_mask, mode_id)
 );
 
 --Table cohort_inclusion_stats
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE cohort_inclusion_stats (
+	database_id VARCHAR NOT NULL,
   cohort_id BIGINT NOT NULL,
   rule_sequence int NOT NULL,
   mode_id int NOT NULL,
   person_count bigint NOT NULL,
   gain_count bigint NOT NULL,
   person_total bigint NOT NULL,
-	database_id VARCHAR NOT NULL,
-	PRIMARY KEY(cohort_id, database_id, rule_sequence, mode_id)
+	PRIMARY KEY(database_id, cohort_id, rule_sequence, mode_id)
 );
 
 --Table cohort_summary_stats
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE cohort_summary_stats(
+	database_id VARCHAR NOT NULL,
   cohort_id BIGINT NOT NULL,
   mode_id int NOT NULL,
   base_count bigint NOT NULL,
   final_count bigint NOT NULL,
-	database_id VARCHAR NOT NULL,
 	PRIMARY KEY(cohort_id, database_id, mode_id)
 );
 
 
 --Table cohort_relationships
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE cohort_relationships (
 			database_id VARCHAR NOT NULL,
 			cohort_id BIGINT NOT NULL,
@@ -156,7 +152,7 @@ CREATE TABLE cohort_relationships (
 );
 
 --Table concept
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE concept (
 			concept_id INT NOT NULL,
 			concept_name VARCHAR(255) NOT NULL,
@@ -172,7 +168,7 @@ CREATE TABLE concept (
 );
 
 --Table concept_ancestor
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE concept_ancestor (
 			ancestor_concept_id BIGINT NOT NULL,
 			descendant_concept_id BIGINT NOT NULL,
@@ -181,8 +177,51 @@ CREATE TABLE concept_ancestor (
 			PRIMARY KEY(ancestor_concept_id, descendant_concept_id)
 );
 
---Table concept_relationship
+--HINT DISTRIBUTE ON RANDOM
+CREATE TABLE concept_class (
+  concept_class_id			VARCHAR		NOT NULL,
+  concept_class_name		VARCHAR	NOT NULL,
+  concept_class_concept_id	INTEGER			NOT NULL
+);
 
+--Table concept_count
+--HINT DISTRIBUTE ON RANDOM
+CREATE TABLE concept_count (
+			database_id VARCHAR NOT NULL,
+			concept_id INT NOT NULL,
+			event_year INT NOT NULL,
+			event_month INT NOT NULL,
+			concept_count FLOAT NOT NULL,
+			PRIMARY KEY(database_id, concept_id, event_year, event_month)
+);
+
+--Table concept_cooccurrence
+--HINT DISTRIBUTE ON RANDOM
+CREATE TABLE concept_cooccurrence (
+			database_id VARCHAR NOT NULL,
+			cohort_id BIGINT NOT NULL,
+			concept_id BIGINT NOT NULL,
+			co_concept_id BIGINT NOT NULL,
+			concept_count BIGINT NOT NULL,
+			PRIMARY KEY(database_id, cohort_id, concept_id, co_concept_id)
+);
+
+
+--Table concept_mapping
+--HINT DISTRIBUTE ON RANDOM
+CREATE TABLE concept_mapping (
+			database_id VARCHAR NOT NULL,
+			domain_table VARCHAR NOT NULL,
+			concept_id INT NOT NULL,
+			source_concept_id INT NOT NULL,
+			concept_count FLOAT NOT NULL,
+			subject_count FLOAT NOT NULL,
+			PRIMARY KEY(database_id, domain_table, concept_id, source_concept_id)
+);
+
+
+--Table concept_relationship
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE concept_relationship (
 			concept_id_1 INT NOT NULL,
 			concept_id_2 INT NOT NULL,
@@ -194,7 +233,7 @@ CREATE TABLE concept_relationship (
 );
 
 --Table concept_sets
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE concept_sets (
 			cohort_id BIGINT NOT NULL,
 			concept_set_id INT NOT NULL,
@@ -204,8 +243,18 @@ CREATE TABLE concept_sets (
 			PRIMARY KEY(cohort_id, concept_set_id)
 );
 
---Table concept_synonym
+--Table concept_excluded
+--HINT DISTRIBUTE ON RANDOM
+CREATE TABLE concept_excluded (
+			database_id VARCHAR NOT NULL,
+			cohort_id BIGINT NOT NULL,
+			concept_set_id INT NOT NULL,
+			concept_id INT NOT NULL,
+			PRIMARY KEY(database_id, cohort_id, concept_set_id, concept_id)
+);
 
+--Table concept_synonym
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE concept_synonym (
 			concept_id INT NOT NULL,
 			concept_synonym_name VARCHAR NOT NULL,
@@ -214,7 +263,7 @@ CREATE TABLE concept_synonym (
 );
 
 --Table covariate_ref
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE covariate_ref (
 			covariate_id BIGINT NOT NULL,
 			covariate_name VARCHAR NOT NULL,
@@ -223,8 +272,18 @@ CREATE TABLE covariate_ref (
 			PRIMARY KEY(covariate_id)
 );
 
---Table covariate_value
+--Table concept_resolved
+--HINT DISTRIBUTE ON RANDOM
+CREATE TABLE concept_resolved (
+			database_id VARCHAR NOT NULL,
+			cohort_id BIGINT NOT NULL,
+			concept_set_id INT NOT NULL,
+			concept_id INT NOT NULL,
+			PRIMARY KEY(cohort_id, concept_set_id, concept_id, database_id)
+);
 
+--Table covariate_value
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE covariate_value (
 			cohort_id BIGINT NOT NULL,
 			covariate_id BIGINT NOT NULL,
@@ -236,7 +295,7 @@ CREATE TABLE covariate_value (
 );
 
 --Table covariate_value_dist
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE covariate_value_dist (
 			cohort_id BIGINT NOT NULL,
 			covariate_id BIGINT NOT NULL,
@@ -255,7 +314,7 @@ CREATE TABLE covariate_value_dist (
 );
 
 --Table database
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE database (
 			database_id VARCHAR NOT NULL,
 			database_name VARCHAR,
@@ -272,7 +331,7 @@ CREATE TABLE database (
 );
 
 --Table domain
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE domain (
 			domain_id VARCHAR(20) NOT NULL,
 			domain_name VARCHAR(255) NOT NULL,
@@ -281,7 +340,7 @@ CREATE TABLE domain (
 );
 
 --Table incidence_rate
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE incidence_rate (
 			cohort_count FLOAT NOT NULL,
 			person_years FLOAT NOT NULL,
@@ -294,21 +353,9 @@ CREATE TABLE incidence_rate (
 			PRIMARY KEY(gender, age_group, calendar_year, cohort_id, database_id)
 );
 
---Table included_source_concept
-
-CREATE TABLE included_source_concept (
-			database_id VARCHAR NOT NULL,
-			cohort_id BIGINT NOT NULL,
-			concept_set_id INT NOT NULL,
-			concept_id INT NOT NULL,
-			source_concept_id INT NOT NULL,
-			concept_subjects FLOAT NOT NULL,
-			concept_count FLOAT NOT NULL,
-			PRIMARY KEY(database_id, cohort_id, concept_set_id, concept_id, source_concept_id)
-);
 
 --Table inclusion_rule_stats
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE inclusion_rule_stats (
 			rule_sequence_id INT NOT NULL,
 			rule_name VARCHAR NOT NULL,
@@ -322,20 +369,20 @@ CREATE TABLE inclusion_rule_stats (
 );
 
 --Table index_event_breakdown
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE index_event_breakdown (
+			database_id VARCHAR NOT NULL,
+			cohort_id BIGINT NOT NULL,
+			domain_field VARCHAR NOT NULL,
+			domain_table VARCHAR NOT NULL,
 			concept_id INT NOT NULL,
 			concept_count FLOAT NOT NULL,
 			subject_count FLOAT NOT NULL,
-			cohort_id BIGINT NOT NULL,
-			database_id VARCHAR NOT NULL,
-			domain_field VARCHAR NOT NULL,
-			domain_table VARCHAR NOT NULL,
 			PRIMARY KEY(concept_id, cohort_id, database_id, domain_field, domain_table)
 );
 
 --Table metadata
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE metadata (
 			database_id VARCHAR NOT NULL,
 			start_time VARCHAR NOT NULL,
@@ -345,19 +392,17 @@ CREATE TABLE metadata (
 );
 
 --Table orphan_concept
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE orphan_concept (
 			cohort_id BIGINT NOT NULL,
 			concept_set_id INT NOT NULL,
 			database_id VARCHAR NOT NULL,
 			concept_id INT NOT NULL,
-			concept_count FLOAT NOT NULL,
-			concept_subjects FLOAT NOT NULL,
 			PRIMARY KEY(cohort_id, concept_set_id, database_id, concept_id)
 );
 
 --Table relationship
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE relationship (
 			relationship_id VARCHAR(20) NOT NULL,
 			relationship_name VARCHAR(255) NOT NULL,
@@ -368,18 +413,9 @@ CREATE TABLE relationship (
 			PRIMARY KEY(relationship_id, reverse_relationship_id, relationship_concept_id)
 );
 
---Table resolved_concepts
-
-CREATE TABLE resolved_concepts (
-			cohort_id BIGINT NOT NULL,
-			concept_set_id INT NOT NULL,
-			concept_id INT NOT NULL,
-			database_id VARCHAR NOT NULL,
-			PRIMARY KEY(cohort_id, concept_set_id, concept_id, database_id)
-);
 
 --Table temporal_analysis_ref
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE temporal_analysis_ref (
 			analysis_id INT NOT NULL,
 			analysis_name VARCHAR NOT NULL,
@@ -390,7 +426,7 @@ CREATE TABLE temporal_analysis_ref (
 );
 
 --Table temporal_covariate_ref
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE temporal_covariate_ref (
 			covariate_id BIGINT NOT NULL,
 			covariate_name VARCHAR NOT NULL,
@@ -400,7 +436,7 @@ CREATE TABLE temporal_covariate_ref (
 );
 
 --Table temporal_covariate_value
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE temporal_covariate_value (
 			cohort_id BIGINT NOT NULL,
 			time_id INT NOT NULL,
@@ -412,9 +448,9 @@ CREATE TABLE temporal_covariate_value (
 			PRIMARY KEY(cohort_id, time_id, covariate_id, database_id)
 );
 
---Table temporal_covariate_dist
-
-CREATE TABLE temporal_covariate_dist (
+--Table temporal_covariate_value_dist
+--HINT DISTRIBUTE ON RANDOM
+CREATE TABLE temporal_covariate_value_dist (
 			cohort_id BIGINT NOT NULL,
 			time_id INT NOT NULL,
 			covariate_id BIGINT NOT NULL,
@@ -433,7 +469,7 @@ CREATE TABLE temporal_covariate_dist (
 );
 
 --Table temporal_time_ref
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE temporal_time_ref (
 			time_id INT NOT NULL,
 			start_day FLOAT NOT NULL,
@@ -442,7 +478,7 @@ CREATE TABLE temporal_time_ref (
 );
 
 --Table time_distribution
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE time_distribution (
 			cohort_id BIGINT NOT NULL,
 			count_value FLOAT NOT NULL,
@@ -461,7 +497,7 @@ CREATE TABLE time_distribution (
 );
 
 --Table time_series
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE time_series (
 			cohort_id BIGINT NOT NULL,
 			database_id VARCHAR NOT NULL,
@@ -479,7 +515,7 @@ CREATE TABLE time_series (
 );
 
 --Table visit_context
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE visit_context (
 			cohort_id BIGINT NOT NULL,
 			visit_concept_id INT NOT NULL,
@@ -492,7 +528,7 @@ CREATE TABLE visit_context (
 );
 
 --Table vocabulary
-
+--HINT DISTRIBUTE ON RANDOM
 CREATE TABLE vocabulary (
 			vocabulary_id VARCHAR NOT NULL,
 			vocabulary_name VARCHAR(255) NOT NULL,

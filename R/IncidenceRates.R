@@ -78,15 +78,15 @@ runIncidenceRateDiagnostics <- function(connectionDetails = NULL,
       " appears to be empty. Was it instantiated? Skipping incidence rate computation."
     )
     delta <- Sys.time() - start
-    ParallelLogger::logInfo(paste(
-      "Computing incidence rates took",
+    ParallelLogger::logTrace(paste(
+      "  - Computing incidence rates took",
       signif(delta, 3),
       attr(delta, "units")
     ))
-    return(dplyr::tibble())
+    return(NULL)
   }
   
-  ParallelLogger::logInfo("Calculating incidence rate per year by age and gender")
+  ParallelLogger::logTrace("  - Calculating incidence rate per year by age and gender")
   sql <-
     SqlRender::loadRenderTranslateSql(
       sqlFilename = "GetCalendarYearRange.sql",
@@ -189,15 +189,20 @@ runIncidenceRateDiagnostics <- function(connectionDetails = NULL,
     irYearGender,
     irYearAgeGender
   )
+  result <- result %>% 
+    dplyr::filter(.data$cohortCount > 0 | .data$personYears > 0)
   result$incidenceRate <-
     1000 * result$cohortCount / result$personYears
   result$incidenceRate[is.nan(result$incidenceRate)] <- 0
   delta <- Sys.time() - start
   ParallelLogger::logInfo(paste(
-    "Computing incidence rates took",
+    "  - Computing incidence rates took",
     signif(delta, 3),
     attr(delta, "units")
   ))
+  if (nrow(result) == 0) {
+    return(NULL)
+  }
   return(result)
 }
 

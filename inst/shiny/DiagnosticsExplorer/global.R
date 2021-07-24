@@ -1,11 +1,11 @@
 library(magrittr)
 
+source("R/Shared.R")
 source("R/StartUpScripts.R")
 source("R/DisplayFunctions.R")
 source("R/Tables.R")
 source("R/Plots.R")
 source("R/Results.R")
-source("R/ResultsDataModelQueries.R")
 
 # Settings when running on server:
 defaultLocalDataFolder <- "data"
@@ -21,21 +21,28 @@ defaultResultsSchema <- 'cdSkeletoncohortdiagnosticsstudy2'
 defaultVocabularySchema <- defaultResultsSchema
 alternateVocabularySchema <- c('vocabulary')
 
-defaultDatabaseMode <- FALSE # Use file system if FALSE
+defaultDatabaseMode <- TRUE # Use file system if FALSE
 
 showTimeSeries <- TRUE
 
 appInformationText <- "V 2.2"
-appInformationText <- paste0("Powered by OHDSI Cohort Diagnostics application - ", appInformationText, ". This app is working in")
+appInformationText <-
+  paste0(
+    "Powered by OHDSI Cohort Diagnostics application - ",
+    appInformationText,
+    ". This app is working in"
+  )
 if (defaultDatabaseMode) {
   appInformationText <- paste0(appInformationText, " database")
 } else {
   appInformationText <- paste0(appInformationText, " local file")
 }
-appInformationText <- paste0(appInformationText, 
-                             " mode. Application was last initated on ", 
-                             lubridate::now(tzone = "EST"),
-                             " EST. Cohort Diagnostics website is at https://ohdsi.github.io/CohortDiagnostics/")
+appInformationText <- paste0(
+  appInformationText,
+  " mode. Application was last initated on ",
+  lubridate::now(tzone = "EST"),
+  " EST. Cohort Diagnostics website is at https://ohdsi.github.io/CohortDiagnostics/"
+)
 
 if (!exists("shinySettings")) {
   writeLines("Using default settings")
@@ -134,13 +141,13 @@ if (databaseMode) {
   loadResultsTable("temporal_covariate_ref")
   
   # if (exists("temporalCovariateRef")) {
-  #   covariateRef <- dplyr::bind_rows(covariateRef, temporalCovariateRef) %>% 
-  #     dplyr::distinct() %>% 
+  #   covariateRef <- dplyr::bind_rows(covariateRef, temporalCovariateRef) %>%
+  #     dplyr::distinct() %>%
   #     dplyr::arrange(.data$covariateId)
   #   rm(temporalCovariateRef)
   # }
   
-
+  
   for (table in c(dataModelSpecifications$tableName)) {
     #, "recommender_set"
     if (table %in% resultsTablesOnServer &&
@@ -167,8 +174,8 @@ if (databaseMode) {
     createFileDataSource(localDataPath, envir = .GlobalEnv)
   
   # if (exists("temporalCovariateRef")) {
-  #   covariateRef <- dplyr::bind_rows(covariateRef, temporalCovariateRef) %>% 
-  #     dplyr::distinct() %>% 
+  #   covariateRef <- dplyr::bind_rows(covariateRef, temporalCovariateRef) %>%
+  #     dplyr::distinct() %>%
   #     dplyr::arrange(.data$covariateId)
   #   rm(temporalCovariateRef)
   # }
@@ -190,7 +197,14 @@ if (exists("cohort")) {
   cohort <- cohort %>%
     dplyr::arrange(.data$cohortId) %>%
     dplyr::mutate(shortName = paste0("C", dplyr::row_number())) %>%
-    dplyr::mutate(compoundName = paste0(.data$shortName, ": ", .data$cohortName,"(", .data$cohortId, ")"))
+    dplyr::mutate(compoundName = paste0(
+      .data$shortName,
+      ": ",
+      .data$cohortName,
+      "(",
+      .data$cohortId,
+      ")"
+    ))
 }
 
 if (exists("temporalTimeRef")) {
@@ -199,9 +213,11 @@ if (exists("temporalTimeRef")) {
     dplyr::select(.data$timeId, .data$choices) %>%
     dplyr::arrange(.data$timeId)
   if (!showTimeSeries) {
-    temporalCovariateChoices <- temporalCovariateChoices %>% 
-      dplyr::filter(stringr::str_detect(string = .data$choices,
-                                        pattern = 'Start -365 to end -31|Start -30 to end -1|Start 0 to end 0|Start 1 to end 30|Start 31 to end 365'))
+    temporalCovariateChoices <- temporalCovariateChoices %>%
+      dplyr::filter(
+        stringr::str_detect(string = .data$choices,
+                            pattern = 'Start -365 to end -31|Start -30 to end -1|Start 0 to end 0|Start 1 to end 30|Start 31 to end 365')
+      )
   }
 }
 

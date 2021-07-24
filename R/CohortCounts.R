@@ -58,8 +58,8 @@ getCohortCounts <- function(connectionDetails = NULL,
       DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE) %>%
       dplyr::tibble()
     delta <- Sys.time() - start
-    ParallelLogger::logInfo(paste(
-      "Counting cohorts took",
+    ParallelLogger::logTrace(paste(
+      " - Counting cohorts took",
       signif(delta, 3),
       attr(delta, "units")
     ))
