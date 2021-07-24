@@ -222,7 +222,7 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
                              min.chars = 1,
                              add = errorMessage)
   webApiVersion <- ROhdsiWebApi::getWebApiVersion(baseUrl)
-  ParallelLogger::logInfo("WebApi of version ", webApiVersion, " found at ", baseUrl)
+  ParallelLogger::logInfo("  - WebApi of version ", webApiVersion, " found at ", baseUrl)
   checkmate::assertCharacter(x = webApiVersion,
                              min.chars = 1,
                              add = errorMessage)
@@ -235,13 +235,13 @@ getCohortsJsonAndSqlFromWebApi <- function(baseUrl = baseUrl,
   cohortSetReference$json <- ""
   cohortSetReference$sql <- ""
   
-  ParallelLogger::logInfo("Retrieving cohort definitions from WebAPI")
+  ParallelLogger::logInfo("  - Retrieving cohort definitions from WebAPI")
   if (nrow(cohortSetReference) == 0) {
     stop(paste0("Provided cohortIds not found in WebApi. Aborting.."))
   }
   
   for (i in 1:nrow(cohortSetReference)) {
-    ParallelLogger::logInfo("- Retrieving definitions for cohort ",
+    ParallelLogger::logInfo("  - Retrieving definitions for cohort ",
                             cohortSetReference$cohortName[i])
     cohortDefinition <-
       ROhdsiWebApi::getCohortDefinition(cohortId = cohortSetReference$webApiCohortId[i],
@@ -314,7 +314,7 @@ createCohortTable <- function(connectionDetails = NULL,
   
   delta <- Sys.time() - start
   ParallelLogger::logTrace(paste(
-    "Creating cohort table took",
+    " - Creating cohort table took",
     signif(delta, 3),
     attr(delta, "units")
   ))
@@ -337,7 +337,7 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
   }
   
   fetchStats <- function(file) {
-    ParallelLogger::logDebug("- Fetching data from ", file)
+    ParallelLogger::logDebug("  - Fetching data from ", file)
     stats <- readr::read_csv(file,
                              col_types = readr::cols(),
                              guess_max = min(1e7))
@@ -774,7 +774,7 @@ saveAndDropTempInclusionStatsTables <- function(connection,
                                                 incremental,
                                                 cohortIds) {
   fetchStats <- function(table, fileName) {
-    ParallelLogger::logDebug("- Fetching data from ", table)
+    ParallelLogger::logDebug(" - Fetching data from ", table)
     sql <- "SELECT * FROM @table"
     data <- renderTranslateQuerySql(
       sql = sql,

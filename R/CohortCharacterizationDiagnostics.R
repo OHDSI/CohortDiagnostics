@@ -84,17 +84,17 @@ runCohortCharacterizationDiagnostics <-
       warning(" --- No instantiated cohorts found. Exiting characterization.")
       return(NULL)
     } else if (any(is.null(cohortIds), length(cohortIds) == 0)) {
-      ParallelLogger::logInfo(" --- No cohortIds provided. Exiting characterization.")
+      ParallelLogger::logInfo("   - No cohortIds provided. Exiting characterization.")
       return(NULL)
     } else if (any(is.null(cohortIdsNew), length(cohortIdsNew) == 0)) {
       ParallelLogger::logInfo(
-        " --- All cohorts are either not instantiated or have no records. Exiting Characterization."
+        "   - All cohorts are either not instantiated or have no records. Exiting Characterization."
       )
       return(NULL)
     } else {
       ParallelLogger::logInfo(
         paste0(
-          " --- Of the ",
+          "   - Of the ",
           scales::comma(length(cohortIds), accuracy = 1),
           " provided, found ",
           scales::comma(length(cohortIdsNew), accuracy = 1),
@@ -118,7 +118,7 @@ runCohortCharacterizationDiagnostics <-
       if (length(cohortIdsNew) > batchSize) {
         ParallelLogger::logInfo(
           sprintf(
-            " ---- Batch characterization. Processing cohorts %s through %s",
+            "    - Batch characterization. Processing cohorts %s through %s",
             start,
             end
           )
@@ -260,7 +260,7 @@ runCohortCharacterizationDiagnostics <-
     }
     
     delta <- Sys.time() - startTime
-    ParallelLogger::logInfo("Cohort characterization took ",
+    ParallelLogger::logInfo(" - Cohort characterization took ",
                             signif(delta, 3),
                             " ",
                             attr(delta, "units"))

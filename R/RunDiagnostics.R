@@ -715,7 +715,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       )
     }
     delta <- Sys.time() - startConceptSetDiagnostics
-    ParallelLogger::logInfo("Running Concept Set Diagnostics took ",
+    ParallelLogger::logInfo(" - Running Concept Set Diagnostics took ",
                             signif(delta, 3),
                             " ",
                             attr(delta, "units"))
@@ -771,7 +771,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       }
     }
     delta <- Sys.time() - startVisitContext
-    ParallelLogger::logInfo("Running Visit Context took ",
+    ParallelLogger::logInfo(" - Running Visit Context took ",
                             signif(delta, 3),
                             " ",
                             attr(delta, "units"))
@@ -797,7 +797,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         ))
       }
       runIncidenceRate <- function(row) {
-        ParallelLogger::logInfo("  Computing incidence rate for cohort '",
+        ParallelLogger::logInfo(" - Computing incidence rate for cohort '",
                                 row$cohortName,
                                 "'")
         cohortExpression <- RJSONIO::fromJSON(row$json, digits = 23)
@@ -856,7 +856,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       )
     }
     delta <- Sys.time() - startIncidenceRate
-    ParallelLogger::logInfo("Running Incidence Rate took ",
+    ParallelLogger::logInfo(" - Running Incidence Rate took ",
                             signif(delta, 3),
                             " ",
                             attr(delta, "units"))
@@ -936,7 +936,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       )
     }
     delta <- Sys.time() - startTimeSeries
-    ParallelLogger::logInfo("Computing time series took ",
+    ParallelLogger::logInfo(" - Computing time series took ",
                             signif(delta, 3),
                             " ",
                             attr(delta, "units"))
@@ -970,7 +970,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           nrow(cohorts) - nrow(subset)
         ))
       }
-      ParallelLogger::logTrace("Beginning Cohort Relationship SQL")
+      ParallelLogger::logTrace(" - Beginning Cohort Relationship SQL")
       cohortRelationship <-
         runCohortRelationshipDiagnostics(
           connection = connection,
@@ -1020,7 +1020,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       )
     }
     delta <- Sys.time() - startCohortRelationship
-    ParallelLogger::logInfo("Computing cohort relationships took ",
+    ParallelLogger::logInfo(" - Computing cohort relationships took ",
                             signif(delta, 3),
                             " ",
                             attr(delta, "units"))
@@ -1048,10 +1048,6 @@ runCohortDiagnostics <- function(packageName = NULL,
           length(instantiatedCohorts) - nrow(subset)
         ))
       }
-      ParallelLogger::logInfo(sprintf(
-        "Starting large scale characterization of %s cohort(s)",
-        nrow(subset)
-      ))
       characteristics <-
         runCohortCharacterizationDiagnostics(
           connection = connection,
@@ -1085,7 +1081,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       incremental = incremental
     )
     delta <- Sys.time() - startCohortCharacterization
-    ParallelLogger::logInfo("Running Characterization took ",
+    ParallelLogger::logInfo(" - Running Characterization took ",
                             signif(delta, 3),
                             " ",
                             attr(delta, "units"))
@@ -1112,10 +1108,6 @@ runCohortDiagnostics <- function(packageName = NULL,
           length(instantiatedCohorts) - nrow(subset)
         ))
       }
-      ParallelLogger::logInfo(sprintf(
-        "Starting large scale temporal characterization of %s cohort(s)",
-        nrow(subset)
-      ))
       characteristics <-
         runCohortCharacterizationDiagnostics(
           connection = connection,
@@ -1149,7 +1141,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     )
     delta <- Sys.time() - startTemporalCohortCharacterization
     ParallelLogger::logInfo(
-      "Running Temporal Characterization took ",
+      " - Running Temporal Characterization took ",
       signif(delta, 3),
       " ",
       attr(delta, "units")
@@ -1220,7 +1212,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   oldWd <- setwd(exportFolder)
   on.exit(setwd(oldWd), add = TRUE)
   DatabaseConnector::createZipFile(zipFile = zipName, files = files)
-  ParallelLogger::logInfo("Results are ready for sharing at: ", zipName)
+  ParallelLogger::logInfo(" - Results are ready for sharing at: ", zipName)
   
   delta <- Sys.time() - start
   

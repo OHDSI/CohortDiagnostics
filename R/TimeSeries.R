@@ -92,7 +92,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
   }
   
   ## Calendar period----
-  ParallelLogger::logTrace("  --- Preparing calendar table for time series computation.")
+  ParallelLogger::logTrace(" - Preparing calendar table for time series computation.")
   # note calendar span is created based on all dates in observation period table,
   # with 1980 cut off/left censor (arbitrary choice)
   minYear <-
@@ -154,7 +154,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     dplyr::arrange(.data$periodBegin, .data$periodEnd, .data$calendarInterval) %>%
     dplyr::mutate(timeId = dplyr::row_number())
   
-  ParallelLogger::logTrace(" --- Inserting calendar periods")
+  ParallelLogger::logTrace(" - Inserting calendar periods")
   DatabaseConnector::insertTable(
     connection = connection,
     tableName = "#calendar_periods",
@@ -189,7 +189,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
                 IF OBJECT_ID('tempdb..#d_time_series6', 'U') IS NOT NULL
                 	DROP TABLE #d_time_series6;
   "
-  ParallelLogger::logTrace(" --- Dropping any time_series temporary tables that maybe present at start up.")
+  ParallelLogger::logTrace(" - Dropping any time_series temporary tables that maybe present at start up.")
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = tsSetUpSql,
@@ -213,17 +213,17 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
                      'ComputeTimeSeries6.sql')
   }
   seriesToRun <- seriesToRun %>% sort()
-  ParallelLogger::logTrace(" --- Beginning time series SQL")
+  ParallelLogger::logTrace(" - Beginning time series SQL")
   
-  ParallelLogger::logTrace(" --- Creating Andromeda object to collect results")
+  ParallelLogger::logTrace(" - Creating Andromeda object to collect results")
   resultsInAndromeda <- Andromeda::andromeda()
   
   for (i in (1:length(seriesToRun))) {
-    ParallelLogger::logTrace(paste0("Running ", seriesToRun[[i]]))
+    ParallelLogger::logTrace(paste0(" - Running ", seriesToRun[[i]]))
     if (seriesToRun[[i]] == 'ComputeTimeSeries1.sql') {
       ParallelLogger::logInfo(
         paste0(
-          " - (",
+          "  - (",
           scales::percent(i / length(seriesToRun)),
           ") Running cohort time series T1: subjects in the cohort who have atleast one cohort day in calendar period."
         )
@@ -232,7 +232,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     if (seriesToRun[[i]] == 'ComputeTimeSeries2.sql') {
       ParallelLogger::logInfo(
         paste0(
-          " - (",
+          "  - (",
           scales::percent(i / length(seriesToRun)),
           ") Running cohort time series T2: subjects in the cohort who have atleast one observation day in calendar period."
         )
@@ -250,7 +250,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     if (seriesToRun[[i]] == 'ComputeTimeSeries4.sql') {
       ParallelLogger::logInfo(
         paste0(
-          " - (",
+          "  - (",
           scales::percent(i / length(seriesToRun)),
           ") Running cohort time series T4: subjects in the cohorts whose cohort period are embedded within calendar period."
         )
@@ -259,7 +259,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     if (seriesToRun[[i]] == 'ComputeTimeSeries5.sql') {
       ParallelLogger::logInfo(
         paste0(
-          " - (",
+          "  - (",
           scales::percent(i / length(seriesToRun)),
           ") Running cohort time series T5: subjects in the cohorts whose observation period is embedded within calendar period."
         )
@@ -268,7 +268,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     if (seriesToRun[[i]] == 'ComputeTimeSeries6.sql') {
       ParallelLogger::logInfo(
         paste0(
-          " - (",
+          "  - (",
           scales::percent(i / length(seriesToRun)),
           ") Running datasource time series T6: persons in the observation table whose observation period is embedded within calendar period."
         )

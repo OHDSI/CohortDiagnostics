@@ -92,7 +92,7 @@ checkAndFixDataTypes <-
         if (observedTypes[i] != "numeric" && observedTypes[i] != "double") {
           ParallelLogger::logDebug(
             sprintf(
-              "Field %s in table %s in zip file %s is of type %s, but was expecting %s. Attempting to convert.",
+              " - Field %s in table %s in zip file %s is of type %s, but was expecting %s. Attempting to convert.",
               fieldName,
               tableName,
               zipFileName,
@@ -106,7 +106,7 @@ checkAndFixDataTypes <-
         if (observedTypes[i] != "integer") {
           ParallelLogger::logDebug(
             sprintf(
-              "Field %s in table %s in zip file %s is of type %s, but was expecting %s. Attempting to convert.",
+              " - Field %s in table %s in zip file %s is of type %s, but was expecting %s. Attempting to convert.",
               fieldName,
               tableName,
               zipFileName,
@@ -120,7 +120,7 @@ checkAndFixDataTypes <-
         if (observedTypes[i] != "character") {
           ParallelLogger::logDebug(
             sprintf(
-              "Field %s in table %s in zip file %s is of type %s, but was expecting %s. Attempting to convert.",
+              " - Field %s in table %s in zip file %s is of type %s, but was expecting %s. Attempting to convert.",
               fieldName,
               tableName,
               zipFileName,
@@ -134,7 +134,7 @@ checkAndFixDataTypes <-
         if (observedTypes[i] != "Date") {
           ParallelLogger::logDebug(
             sprintf(
-              "Field %s in table %s in zip file %s is of type %s, but was expecting %s. Attempting to convert.",
+              " - Field %s in table %s in zip file %s is of type %s, but was expecting %s. Attempting to convert.",
               fieldName,
               tableName,
               zipFileName,
@@ -282,7 +282,7 @@ uploadResults <- function(connectionDetails = NULL,
   dir.create(path = unzipFolder, recursive = TRUE)
   on.exit(unlink(unzipFolder, recursive = TRUE), add = TRUE)
   
-  ParallelLogger::logInfo("Unzipping ", zipFileName)
+  ParallelLogger::logTrace(" - Unzipping ", zipFileName)
   zip::unzip(zipFileName, exdir = unzipFolder)
   
   specifications <- getResultsDataModelSpecifications()
@@ -297,7 +297,7 @@ uploadResults <- function(connectionDetails = NULL,
   }
   
   uploadTable <- function(tableName) {
-    ParallelLogger::logInfo("Uploading table ", tableName)
+    ParallelLogger::logTrace(" - Uploading table ", tableName)
     
     primaryKey <- specifications %>%
       filter(.data$tableName == !!tableName &
@@ -340,10 +340,10 @@ uploadResults <- function(connectionDetails = NULL,
       }
       
       uploadChunk <- function(chunk, pos) {
-        ParallelLogger::logInfo("- Preparing to upload rows ",
-                                pos,
-                                " through ",
-                                pos + nrow(chunk) - 1)
+        ParallelLogger::logInfo(paste0("  - Preparing to upload rows ",
+                                       scales::comma(pos),
+                                       " through ",
+                                       scales::comma(pos + nrow(chunk) - 1)))
         
         chunk <- checkFixColumnNames(
           table = chunk,
@@ -400,7 +400,7 @@ uploadResults <- function(connectionDetails = NULL,
             if ("database_id" %in% env$primaryKey ||
                 forceOverWriteOfSpecifications) {
               ParallelLogger::logInfo(
-                "- Found ",
+                " - Found ",
                 nrow(duplicates),
                 " rows in database with the same primary key ",
                 "as the data to insert. Deleting from database before inserting."
@@ -414,8 +414,8 @@ uploadResults <- function(connectionDetails = NULL,
               
             } else {
               ParallelLogger::logInfo(
-                "- Found ",
-                nrow(duplicates),
+                " - Found ",
+                scales::comma(nrow(duplicates)),
                 " rows in database with the same primary key ",
                 "as the data to insert. Removing from data to insert."
               )
@@ -428,7 +428,7 @@ uploadResults <- function(connectionDetails = NULL,
           }
         }
         if (nrow(chunk) == 0) {
-          ParallelLogger::logInfo("- No data left to insert")
+          ParallelLogger::logInfo(" - No data left to insert")
         } else {
           DatabaseConnector::insertTable(
             connection = connection,
@@ -458,7 +458,7 @@ uploadResults <- function(connectionDetails = NULL,
   }
   invisible(lapply(unique(specifications$tableName), uploadTable))
   delta <- Sys.time() - start
-  writeLines(paste("Uploading data took", signif(delta, 3), attr(delta, "units")))
+  ParallelLogger::logInfo(paste(" - Uploading data took", signif(delta, 3), attr(delta, "units")))
 }
 
 deleteFromServer <-

@@ -181,10 +181,11 @@ is used as default.</p>
   databaseDescription <span class='op'>=</span> <span class='va'>databaseId</span>,
   cdmVersion <span class='op'>=</span> <span class='fl'>5</span>,
   runInclusionStatistics <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  runIncludedSourceConcepts <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  runOrphanConcepts <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  runConceptSetDiagnostics <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  runIncludedSourceConcepts <span class='op'>=</span> <span class='cn'>FALSE</span>,
+  runOrphanConcepts <span class='op'>=</span> <span class='cn'>FALSE</span>,
   runVisitContext <span class='op'>=</span> <span class='cn'>TRUE</span>,
-  runBreakdownIndexEvents <span class='op'>=</span> <span class='cn'>TRUE</span>,
+  runBreakdownIndexEvents <span class='op'>=</span> <span class='cn'>FALSE</span>,
   runIncidenceRate <span class='op'>=</span> <span class='cn'>TRUE</span>,
   runCohortTimeSeries <span class='op'>=</span> <span class='cn'>TRUE</span>,
   runDataSourceTimeSeries <span class='op'>=</span> <span class='cn'>TRUE</span>,
@@ -316,12 +317,19 @@ does not exist it will be created.</p></td>
       <td><p>Generate and export statistic on the cohort inclusion rules?</p></td>
     </tr>
     <tr>
+      <th>runConceptSetDiagnostics</th>
+      <td><p>Concept Set Diagnostics includes concept counts, concepts in data source,
+index event breakdown, concept cooccurrence, excluded concepts,
+resolved concepts. This function call now supersedes runIncludedSourceConcepts,
+runOrphanConcepts, runBreakdownIndexEvents.</p></td>
+    </tr>
+    <tr>
       <th>runIncludedSourceConcepts</th>
-      <td><p>Generate and export the source concepts included in the cohorts?</p></td>
+      <td><p>(Deprecated) Generate and export the source concepts included in the cohorts?</p></td>
     </tr>
     <tr>
       <th>runOrphanConcepts</th>
-      <td><p>Generate and export potential orphan concepts?</p></td>
+      <td><p>(Deprecated) Generate and export potential orphan concepts?</p></td>
     </tr>
     <tr>
       <th>runVisitContext</th>
@@ -329,7 +337,7 @@ does not exist it will be created.</p></td>
     </tr>
     <tr>
       <th>runBreakdownIndexEvents</th>
-      <td><p>Generate and export the breakdown of index events?</p></td>
+      <td><p>(Deprecated) Generate and export the breakdown of index events?</p></td>
     </tr>
     <tr>
       <th>runIncidenceRate</th>

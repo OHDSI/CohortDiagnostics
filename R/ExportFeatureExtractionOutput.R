@@ -138,7 +138,7 @@ exportFeatureExtractionOutput <-
     }
     
     if (!"covariatesContinuous" %in% names(featureExtractionDbCovariateData)) {
-      ParallelLogger::logInfo("No continuous characterization output for submitted cohorts")
+      ParallelLogger::logInfo("  - No continuous characterization output for submitted cohorts")
     } else if (dplyr::pull(dplyr::count(featureExtractionDbCovariateData$covariateRef)) > 0) {
       featureExtractionDbCovariateData$filteredCovariatesContinous <-
         featureExtractionDbCovariateData$covariatesContinuous %>%

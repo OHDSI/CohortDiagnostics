@@ -59,7 +59,7 @@ getCohortCounts <- function(connectionDetails = NULL,
       dplyr::tibble()
     delta <- Sys.time() - start
     ParallelLogger::logTrace(paste(
-      "Counting cohorts took",
+      " - Counting cohorts took",
       signif(delta, 3),
       attr(delta, "units")
     ))

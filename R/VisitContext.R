@@ -111,7 +111,7 @@ runVisitContextDiagnostics <- function(connectionDetails = NULL,
   )
   
   delta <- Sys.time() - start
-  ParallelLogger::logInfo("Retrieving visit context took ",
+  ParallelLogger::logInfo(" - Retrieving visit context took ",
                           signif(delta, 3),
                           " ",
                           attr(delta, "units"))
