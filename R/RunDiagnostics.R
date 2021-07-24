@@ -686,12 +686,13 @@ runCohortDiagnostics <- function(packageName = NULL,
           columns <- resultsDataModel %>%
             dplyr::filter(tableName %in% tablesOfInterest[[i]]) %>%
             dplyr::pull(.data$fieldName)
+          data <-
+            conceptSetDiagnostics[[tablesOfInterest[[i]]]] 
           if (!tablesOfInterest[[i]] %in% vocabularyTables) {
             data <- data %>%
               dplyr::mutate(databaseId = !!databaseId)
           }
-          data <-
-            conceptSetDiagnostics[[tablesOfInterest[[i]]]] %>%
+          data <- data %>%
             dplyr::select(snakeCaseToCamelCase(columns))
           data <- data %>%
             enforceMinCellValueInDataframe(columnNames = columnsToApplyMinCellValue,
