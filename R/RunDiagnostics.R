@@ -698,7 +698,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         if (tablesOfInterest[[i]] %in% names(conceptSetDiagnostics)) {
           ParallelLogger::logTrace(paste0(" - Writing data to file: ", tablesOfInterest[[i]], ".csv"))
           columns <- resultsDataModel %>%
-            dplyr::filter(tableName %in% tablesOfInterest[[i]]) %>%
+            dplyr::filter(.data$tableName %in% tablesOfInterest[[i]]) %>%
             dplyr::pull(.data$fieldName)
           data <-
             conceptSetDiagnostics[[tablesOfInterest[[i]]]] 

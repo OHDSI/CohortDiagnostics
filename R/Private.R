@@ -102,16 +102,16 @@ nullToEmpty <- function(x) {
 
 .replaceNaInDataFrameWithEmptyString <- function(data) {
   data %>%
-    dplyr::mutate(dplyr::across(where(is.character), ~ tidyr::replace_na(.x, as.character('')))) %>%
-    dplyr::mutate(dplyr::across(where(is.logical), ~ tidyr::replace_na(.x, as.character('')))) %>%
-    dplyr::mutate(dplyr::across(where(is.numeric), ~ tidyr::replace_na(.x, as.numeric(''))))
+    dplyr::mutate(dplyr::across(tidyselect::where(is.character), ~ tidyr::replace_na(.x, as.character('')))) %>%
+    dplyr::mutate(dplyr::across(tidyselect::where(is.logical), ~ tidyr::replace_na(.x, as.character('')))) %>%
+    dplyr::mutate(dplyr::across(tidyselect::where(is.numeric), ~ tidyr::replace_na(.x, as.numeric(''))))
 }
 
 
 getDomainInformation <- function(package = "CohortDiagnostics") {
   ParallelLogger::logTrace("  - Reading domains.csv")
   domains <- readr::read_csv(
-    system.file("csv", "domains.csv", package = "CohortDiagnostics"),
+    system.file("csv", "domains.csv", package = package),
     col_types = readr::cols(),
     guess_max = min(1e7), 
     na = "NA"

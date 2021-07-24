@@ -166,6 +166,9 @@ runConceptSetDiagnostics <- function(connection = NULL,
     getBreakdownIndexEvents(
       cohortIds = subset$cohortId,
       connection = connection,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      cohortDatabaseSchema = cohortDatabaseSchema,
+      cohortTable = cohortTable,
       tempEmulationSchema = tempEmulationSchema,
       conceptIdUniverse = "#concept_tracking"
     )
@@ -175,6 +178,8 @@ runConceptSetDiagnostics <- function(connection = NULL,
       connection = connection,
       cdmDatabaseSchema = cdmDatabaseSchema,
       tempEmulationSchema = tempEmulationSchema,
+      cohortDatabaseSchema = cohortDatabaseSchema, 
+      cohortTable = cohortTable,
       cohortIds = subset$cohortId,
       conceptIdUniverse = "#concept_tracking"
     )
@@ -865,6 +870,9 @@ getConceptRecordCountByMonth <- function(connection,
 # function: getBreakdownIndexEvents ----
 getBreakdownIndexEvents <- function(cohortIds,
                                     connection,
+                                    cdmDatabaseSchema,
+                                    cohortDatabaseSchema,
+                                    cohortTable,
                                     tempEmulationSchema,
                                     conceptIdUniverse = "#concept_tracking") {
   domains <- getDomainInformation(package = 'CohortDiagnostics')
@@ -958,6 +966,8 @@ getBreakdownIndexEvents <- function(cohortIds,
 getIndexDateConceptCooccurrence <- function(connection,
                                             cdmDatabaseSchema,
                                             tempEmulationSchema,
+                                            cohortTable,
+                                            cohortDatabaseSchema,
                                             cohortIds,
                                             conceptIdUniverse = "#concept_tracking") {
   domains <- getDomainInformation()
@@ -1089,7 +1099,6 @@ getIndexDateConceptCooccurrence <- function(connection,
 getConceptSourceStandardMapping <- function(connection,
                                             cdmDatabaseSchema,
                                             tempEmulationSchema,
-                                            cohortIds,
                                             sourceValue = FALSE,
                                             conceptIdUniverse = "#concept_tracking") {
   domains <- getDomainInformation()
