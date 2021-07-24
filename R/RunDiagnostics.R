@@ -682,6 +682,12 @@ runCohortDiagnostics <- function(packageName = NULL,
         "relationship",
         "vocabulary"
       )
+      vocabularyTablesNoIncremental <- c(
+        "concept_class",
+        "domain",
+        "relationship",
+        "vocabulary"
+      )
       columnsToApplyMinCellValue <-
         c('concept_count', 'subject_count')
       
@@ -705,12 +711,23 @@ runCohortDiagnostics <- function(packageName = NULL,
           data <- data %>%
             enforceMinCellValueInDataframe(columnNames = columnsToApplyMinCellValue,
                                            minCellCount = minCellCount)
-          writeToCsv(
-            data = data,
-            fileName = file.path(exportFolder,
-                                 paste0(tablesOfInterest[[i]], ".csv")),
-            incremental = incremental
-          )
+          if (tablesOfInterest[[i]] %in% vocabularyTablesNoIncremental) {
+            # these tables are never incremental, always full replace
+            writeToCsv(
+              data = data,
+              fileName = file.path(exportFolder,
+                                   paste0(tablesOfInterest[[i]], ".csv")),
+              incremental = FALSE
+            )
+          } else {
+            writeToCsv(
+              data = data,
+              fileName = file.path(exportFolder,
+                                   paste0(tablesOfInterest[[i]], ".csv")),
+              incremental = incremental
+            )
+          }
+          
           conceptSetDiagnostics[[tablesOfInterest[[i]]]] <- NULL
         }
       }
