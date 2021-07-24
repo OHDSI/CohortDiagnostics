@@ -1120,9 +1120,13 @@ getConceptSourceStandardMapping <- function(connection,
           {@domain_source_concept_id != '' } ? {
           LEFT JOIN concept_id_universe b
           	ON @domain_source_concept_id = b.concept_id}
-          WHERE a.concept_id IS NOT NULL
+          WHERE (@domain_concept_id IS NOT NULL AND
+            @domain_source_concept_id IS NOT NULL AND
+            @domain_concept_id > 0 AND
+            @domain_source_concept_id >0) AND
+            (a.concept_id IS NOT NULL
           {@domain_source_concept_id != '' } ? {
-          	OR b.concept_id IS NOT NULL}
+          	OR b.concept_id IS NOT NULL})
           GROUP BY @domain_concept_id
           {@domain_source_concept_id != ''} ? {
           	, @domain_source_concept_id }
