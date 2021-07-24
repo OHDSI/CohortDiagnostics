@@ -34,7 +34,7 @@ if (runDatabaseTests) {
     )
     
     ## no cohort table run diagnostics----
-    testthat::expect_null(suppressWarnings(
+    testthat::expect_error(suppressWarnings(
       CohortDiagnostics::runCohortDiagnostics(
         connectionDetails = connectionDetails,
         cdmDatabaseSchema = "eunomia",

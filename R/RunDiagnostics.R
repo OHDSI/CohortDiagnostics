@@ -151,6 +151,12 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  incrementalFolder = file.path(exportFolder, "incremental")) {
   start <- Sys.time()
   
+  tables <-
+    DatabaseConnector::getTableNames(connection, cohortDatabaseSchema)
+  if (!toupper(cohortTable) %in% toupper(tables)) {
+    stop("Cannot find cohort table. Did you instantiate cohorts? \n Try running function instantiateCohortSet with option createCohortTable = TRUE, or \n use function Try functions createCohortTable if you only want to create the cohort table without instantiating cohorts.")
+  }
+  
   if (runIncludedSourceConcepts) {
     warning(
       "runIncludedSourceConcepts is deprecated. Running runConceptSetDiagnostics instead."
@@ -606,6 +612,8 @@ runCohortDiagnostics <- function(packageName = NULL,
             )
           )
         }
+      } else {
+        ParallelLogger::logInfo("  - Skipping in incremental mode.")
       }
     }
     delta <- Sys.time() - startInclusionStatistics
@@ -713,6 +721,8 @@ runCohortDiagnostics <- function(packageName = NULL,
         recordKeepingFile = recordKeepingFile,
         incremental = incremental
       )
+    } else {
+      ParallelLogger::logInfo("  - Skipping in incremental mode.")
     }
     delta <- Sys.time() - startConceptSetDiagnostics
     ParallelLogger::logInfo(" - Running Concept Set Diagnostics took ",
@@ -769,6 +779,8 @@ runCohortDiagnostics <- function(packageName = NULL,
           incremental = incremental
         )
       }
+    } else {
+      ParallelLogger::logInfo("  - Skipping in incremental mode.")
     }
     delta <- Sys.time() - startVisitContext
     ParallelLogger::logInfo(" - Running Visit Context took ",
@@ -854,6 +866,8 @@ runCohortDiagnostics <- function(packageName = NULL,
         recordKeepingFile = recordKeepingFile,
         incremental = incremental
       )
+    } else {
+      ParallelLogger::logInfo("  - Skipping in incremental mode.")
     }
     delta <- Sys.time() - startIncidenceRate
     ParallelLogger::logInfo(" - Running Incidence Rate took ",
@@ -934,6 +948,8 @@ runCohortDiagnostics <- function(packageName = NULL,
         recordKeepingFile = recordKeepingFile,
         incremental = incremental
       )
+    } else {
+      ParallelLogger::logInfo("  - Skipping in incremental mode.")
     }
     delta <- Sys.time() - startTimeSeries
     ParallelLogger::logInfo(" - Computing time series took ",
@@ -1018,6 +1034,8 @@ runCohortDiagnostics <- function(packageName = NULL,
         recordKeepingFile = recordKeepingFile,
         incremental = incremental
       )
+    } else {
+      ParallelLogger::logInfo("  - Skipping in incremental mode.")
     }
     delta <- Sys.time() - startCohortRelationship
     ParallelLogger::logInfo(" - Computing cohort relationships took ",
@@ -1038,7 +1056,6 @@ runCohortDiagnostics <- function(packageName = NULL,
       incremental = incremental,
       recordKeepingFile = recordKeepingFile
     )
-    
     
     if (nrow(subset) > 0) {
       if (incremental &&
@@ -1072,6 +1089,8 @@ runCohortDiagnostics <- function(packageName = NULL,
         cohortCounts = cohortCounts,
         minCellCount = minCellCount
       )
+    } else {
+      ParallelLogger::logInfo("  - Skipping in incremental mode.")
     }
     recordTasksDone(
       cohortId = subset$cohortId,
@@ -1098,7 +1117,6 @@ runCohortDiagnostics <- function(packageName = NULL,
       incremental = incremental,
       recordKeepingFile = recordKeepingFile
     )
-    
     
     if (nrow(subset) > 0) {
       if (incremental &&
@@ -1131,6 +1149,8 @@ runCohortDiagnostics <- function(packageName = NULL,
         cohortCounts = cohortCounts,
         minCellCount = minCellCount
       )
+    } else {
+      ParallelLogger::logInfo("  - Skipping in incremental mode.")
     }
     recordTasksDone(
       cohortId = subset$cohortId,
@@ -1147,6 +1167,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       attr(delta, "units")
     )
   }
+  
   # Writing metadata file
   ParallelLogger::logInfo("Retrieving metadata information and writing metadata")
   metadata <-

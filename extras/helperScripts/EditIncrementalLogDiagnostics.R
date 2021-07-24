@@ -14,12 +14,12 @@ listFiles <-
     recursive = TRUE
   )
 
-# "getCohortCounts", "runInclusionStatistics", "runConceptSeDiagnostics", 
+# "getCohortCounts", "runInclusionStatistics", "runConceptSetDiagnostics", 
 # "runVisitContext", "runIncidenceRate", "runCohortOverlap","runCohortAsFeatures",
 # "runCohortCharacterization", "runTemporalCohortCharacterization"
 
 
-# tasksToRemove <- c("runConceptSeDiagnostics")
+# tasksToRemove <- c("runConceptSetDiagnostics")
 
 
 
