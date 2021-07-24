@@ -151,6 +151,17 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  incrementalFolder = file.path(exportFolder, "incremental")) {
   start <- Sys.time()
   
+  if (all(is.null(connectionDetails),
+          is.null(connection))) {
+    stop('Please provide either connection or connectionDetails to connect to database.')
+  }
+  # Set up connection to server----
+  if (is.null(connection)) {
+    if (!is.null(connectionDetails)) {
+      connection <- DatabaseConnector::connect(connectionDetails)
+      on.exit(DatabaseConnector::disconnect(connection))
+    }
+  }
   tables <-
     DatabaseConnector::getTableNames(connection, cohortDatabaseSchema)
   if (!toupper(cohortTable) %in% toupper(tables)) {
@@ -173,12 +184,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     )
     runConceptSetDiagnostics <- TRUE
   }
-  
-  if (all(is.null(connectionDetails),
-          is.null(connection))) {
-    stop('Please provide either connection or connectionDetails to connect to database.')
-  }
-  
+
   ParallelLogger::logInfo("Run Cohort Diagnostics started at ", start, '. Initiating...')
   
   # collect arguments that were passed to cohort diagnostics at initiation
@@ -356,14 +362,6 @@ runCohortDiagnostics <- function(packageName = NULL,
   cohorts <- .replaceNaInDataFrameWithEmptyString(cohorts)
   writeToCsv(data = cohorts,
              fileName = file.path(exportFolder, "cohort.csv"))
-  
-  # Set up connection to server----
-  if (is.null(connection)) {
-    if (!is.null(connectionDetails)) {
-      connection <- DatabaseConnector::connect(connectionDetails)
-      on.exit(DatabaseConnector::disconnect(connection))
-    }
-  }
   
   # Metadata----
   startMetaData <- Sys.time()
