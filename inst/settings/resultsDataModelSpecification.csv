@@ -69,6 +69,9 @@ concept_ancestor,ancestor_concept_id,bigint,Yes,Yes,No,Yes
 concept_ancestor,descendant_concept_id,bigint,Yes,Yes,No,Yes
 concept_ancestor,min_levels_of_separation,int,Yes,No,No,Yes
 concept_ancestor,max_levels_of_separation,int,Yes,No,No,Yes
+concept_class,concept_class_id,varchar,Yes,Yes,No,Yes
+concept_class,concept_class_name,varchar,Yes,Yes,No,Yes
+concept_class,concept_class_id,int,Yes,Yes,No,Yes
 concept_cooccurrence,database_id,varchar,Yes,Yes,No,Yes
 concept_cooccurrence,cohort_id,bigint,Yes,Yes,No,Yes
 concept_cooccurrence,concept_id,int,Yes,Yes,No,Yes
@@ -160,13 +163,13 @@ inclusion_rule_stats,total_subjects,float,Yes,No,No,Yes
 inclusion_rule_stats,remain_subjects,float,Yes,No,No,Yes
 inclusion_rule_stats,cohort_id,bigint,Yes,Yes,No,Yes
 inclusion_rule_stats,database_id,varchar,Yes,Yes,No,Yes
+index_event_breakdown,database_id,varchar,Yes,Yes,No,Yes
+index_event_breakdown,cohort_id,bigint,Yes,Yes,No,Yes
+index_event_breakdown,domain_field,varchar,Yes,Yes,No,Yes
+index_event_breakdown,domain_table,varchar,Yes,Yes,No,Yes
 index_event_breakdown,concept_id,int,Yes,Yes,No,Yes
 index_event_breakdown,concept_count,float,Yes,No,No,Yes
 index_event_breakdown,subject_count,float,Yes,No,No,Yes
-index_event_breakdown,cohort_id,bigint,Yes,Yes,No,Yes
-index_event_breakdown,database_id,varchar,Yes,Yes,No,Yes
-index_event_breakdown,domain_field,varchar,Yes,Yes,No,Yes
-index_event_breakdown,domain_table,varchar,Yes,Yes,No,Yes
 metadata,database_id,varchar,Yes,Yes,No,Yes
 metadata,start_time,varchar,Yes,Yes,No, Yes
 metadata,variable_field,varchar,Yes,Yes,No,Yes

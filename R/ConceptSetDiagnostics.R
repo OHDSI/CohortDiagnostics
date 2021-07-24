@@ -221,7 +221,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   
   
   # get concept count----
-  ParallelLogger::logInfo(" - Running concept count in data source")
+  ParallelLogger::logInfo(" - Counting concepts in data source")
   conceptSetDiagnosticsResults$conceptCount <-
     getConceptRecordCountByMonth(
       connection = connection,
@@ -231,7 +231,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
     )
   
   # get concept mapping----
-  ParallelLogger::logInfo(" - Running concept mapping")
+  ParallelLogger::logInfo(" - Mappings concepts")
   conceptSetDiagnosticsResults$conceptSourceStandardMapping <-
     getConceptSourceStandardMapping(
       connection = connection,

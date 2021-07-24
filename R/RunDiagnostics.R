@@ -660,9 +660,9 @@ runCohortDiagnostics <- function(packageName = NULL,
         "concept_resolved",
         "concept_mapping",
         "index_event_breakdown",
-        "excluded_conceptIds",
-        "Concept_cooccurrence",
-        "orphan_codes",
+        "concept_excluded",
+        "concept_cooccurrence",
+        "orphan_concept",
         "concept_sets"
       )
       vocabularyTables <- c(
