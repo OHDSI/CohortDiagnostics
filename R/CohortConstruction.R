@@ -377,7 +377,7 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
     attr(delta, "units")
   ))
   output <- list(
-    simplifiedOutput = result,
+    inclusionRuleStats = result,
     cohortInclusion = inclusion,
     cohortInclusionResult = inclusionResults,
     cohortInclusionStats = inclusionStats,

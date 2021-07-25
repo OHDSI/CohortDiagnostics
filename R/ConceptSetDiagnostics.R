@@ -1036,7 +1036,7 @@ getConceptSubjectCount <- function(connection,
       dplyr::select(
         .data$domainTable,
         .data$conceptId,
-        .data$conceptCount
+        .data$subjectCount
       ) %>%
       dplyr::distinct() %>%
       dplyr::arrange(.data$conceptId)

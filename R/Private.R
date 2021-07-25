@@ -160,4 +160,72 @@ getDomainInformation <- function(package = "CohortDiagnostics") {
 
 
 
-
+writeToAllOutputToCsv <- function(object,
+                                  exportFolder,
+                                  incremental,
+                                  databaseId) {
+  tablesOfInterest = getResultsDataModelSpecifications() %>% 
+    dplyr::pull(.data$tableNames) %>% 
+    unique()
+  
+  columnsToApplyMinCellValue <-
+    c("baseCount",
+      "cohortCount",
+      "cohortEntries.",
+      "finalCount",
+      "gainCount",
+      "gainSubjects",
+      "meetSubjects",
+      "personCount",
+      "personDays",
+      "personTotal",
+      "records",
+      "recordsEnd",
+      "recordsStart",
+      "remainSubjects",
+      "subjectCount",
+      "subjects",
+      "subjectsEnd",
+      "subjectsStart",
+      "totalSubjects"
+      )
+  
+  resultsDataModel <- getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')
+  
+  # write vocabulary tables
+  for (i in (1:length(tablesOfInterest))) {
+    if (tablesOfInterest[[i]] %in% names(object)) {
+      ParallelLogger::logTrace(paste0(" - Writing data to file: ", tablesOfInterest[[i]], ".csv"))
+      columns <- resultsDataModel %>%
+        dplyr::filter(.data$tableName %in% tablesOfInterest[[i]]) %>%
+        dplyr::pull(.data$fieldName)
+      data <-
+        object[[tablesOfInterest[[i]]]] 
+      if (!tablesOfInterest[[i]] %in% vocabularyTables) {
+        data <- data %>%
+          dplyr::mutate(databaseId = !!databaseId)
+      }
+      data <- data %>%
+        dplyr::select(snakeCaseToCamelCase(columns))
+      data <- data %>%
+        enforceMinCellValueInDataframe(columnNames = columnsToApplyMinCellValue,
+                                       minCellCount = minCellCount)
+      if (tablesOfInterest[[i]] %in% vocabularyTablesNoIncremental) {
+        # these tables are never incremental, always full replace
+        writeToCsv(
+          data = data,
+          fileName = file.path(exportFolder,
+                               paste0(tablesOfInterest[[i]], ".csv")),
+          incremental = FALSE
+        )
+      } else {
+        writeToCsv(
+          data = data,
+          fileName = file.path(exportFolder,
+                               paste0(tablesOfInterest[[i]], ".csv")),
+          incremental = incremental
+        )
+      }
+    }
+  }
+}
