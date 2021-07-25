@@ -139,7 +139,11 @@ recordTasksDone <-
       newRow$comparatorId <- as.double(newRow$comparatorId)
     }
     recordKeeping <- dplyr::bind_rows(recordKeeping, newRow)
-    readr::write_csv(recordKeeping, recordKeepingFile)
+    readr::write_excel_csv(x = recordKeeping, 
+                           file = recordKeepingFile,
+                           na = "",
+                           append = FALSE,
+                           delim = ",")
   }
 
 writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
@@ -184,7 +188,10 @@ writeCovariateDataAndromedaToCsv <-
       processChunk <- function(chunk, pos) {
         chunk <- chunk %>%
           filter(!.data$cohort_id %in% cohortIds)
-        readr::write_csv(chunk, tempName, append = (pos != 1))
+        readr::write_excel_csv(x = chunk, 
+                               file = tempName, 
+                               append = (pos != 1), 
+                               na = "")
       }
       
       readr::read_csv_chunked(
@@ -198,7 +205,11 @@ writeCovariateDataAndromedaToCsv <-
       addChunk <- function(chunk) {
         colnames(chunk) <- SqlRender::camelCaseToSnakeCase(colnames(chunk))
         chunk <- .replaceNaInDataFrameWithEmptyString(chunk)
-        readr::write_csv(chunk, tempName, append = TRUE)
+        readr::write_excel_csv(x = chunk, 
+                               fil = tempName, 
+                               append = TRUE,
+                               na = "",
+                               delim = ",")
       }
       Andromeda::batchApply(data, addChunk)
       unlink(fileName)
@@ -217,7 +228,11 @@ writeCovariateDataAndromedaToCsv <-
         if (first) {
           colnames(batch) <- SqlRender::camelCaseToSnakeCase(colnames(batch))
         }
-        readr::write_csv(batch, fileName, append = !first)
+        readr::write_excel_csv(x = batch, 
+                               file = fileName, 
+                               append = !first,
+                               na = "",
+                               delim = ",")
       }
       Andromeda::batchApply(data, writeToFile)
     }
@@ -251,7 +266,11 @@ saveIncremental <- function(data, fileName, ...) {
       }
     }
   }
-  readr::write_csv(data, fileName)
+  readr::write_excel_csv(x = data,
+                         file = fileName,
+                         na = "",
+                         append = TRUE,
+                         delim = ",")
 }
 
 subsetToRequiredCohorts <-

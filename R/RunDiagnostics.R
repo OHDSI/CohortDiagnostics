@@ -533,6 +533,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                              attr(delta, "units"))
   }
 
+browser()
 # Concept set diagnostics----
 if (runConceptSetDiagnostics) {
   # running together because share common process of needing to resolve concept sets
@@ -562,6 +563,8 @@ if (runConceptSetDiagnostics) {
       cohortTable = cohortTable,
       exportDetailedVocabulary = exportDetailedVocabulary
     )
+    browser()
+    debug(writeToAllOutputToCsv)
     writeToAllOutputToCsv(
       object = conceptSetDiagnostics,
       exportFolder = exportFolder,
