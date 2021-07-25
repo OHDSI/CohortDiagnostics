@@ -268,6 +268,20 @@ runConceptSetDiagnostics <- function(connection = NULL,
       dplyr::filter(.data$conceptId < 200000000)  
   }
   conceptSetDiagnosticsResults$conceptCount <- conceptCount
+  
+  conceptSubjectCount <-
+    getConceptSubjectCount(
+      connection = connection,
+      cdmDatabaseSchema = cdmDatabaseSchema,
+      tempEmulationSchema = tempEmulationSchema,
+      conceptIdUniverse = "#concept_tracking"
+    )
+  if (!keepCustomConceptId) {
+    conceptSubjectCount <- conceptSubjectCount %>% 
+      dplyr::filter(.data$conceptId < 200000000)  
+  }
+  conceptSetDiagnosticsResults$conceptSubjectCount <- conceptSubjectCount
+  
 
   # get concept mapping----
   ParallelLogger::logInfo(" - Mappings concepts")
@@ -324,6 +338,10 @@ runConceptSetDiagnostics <- function(connection = NULL,
   }
   if (!is.null(conceptSetDiagnosticsResults$conceptCount)) {
     exportedVocablary$concept_count = conceptSetDiagnosticsResults$conceptCount %>%
+      dplyr::collect()
+  }
+  if (!is.null(conceptSetDiagnosticsResults$conceptSubjectCount)) {
+    exportedVocablary$concept_subject = conceptSetDiagnosticsResults$conceptSubjectCount %>%
       dplyr::collect()
   }
   if (!is.null(conceptSetDiagnosticsResults$conceptResolved)) {
@@ -845,6 +863,7 @@ getConceptRecordCountByMonth <- function(connection,
                                          cdmDatabaseSchema,
                                          tempEmulationSchema,
                                          conceptIdUniverse = "#concept_tracking") {
+  ParallelLogger::logTrace(" - Counting concepts by person id, calendar month and year")
   domains <- getDomainInformation()
   sql <- "SELECT @domain_concept_id concept_id,
           	YEAR(@domain_start_date) event_year,
@@ -933,6 +952,98 @@ getConceptRecordCountByMonth <- function(connection,
       dplyr::arrange(.data$conceptId, .data$eventYear, .data$eventMonth)
   )
 }
+
+
+
+getConceptSubjectCount <- function(connection,
+                                         cdmDatabaseSchema,
+                                         tempEmulationSchema,
+                                         conceptIdUniverse = "#concept_tracking") {
+  ParallelLogger::logTrace(" - Counting unique person count by concept id")
+  domains <- getDomainInformation()
+  sql <- "SELECT @domain_concept_id concept_id,
+          	COUNT_BIG(DISTINCT subject_id) subject_count
+          FROM @cdm_database_schema.@domain_table
+          INNER JOIN (
+          	SELECT DISTINCT concept_id
+          	FROM @concept_id_universe
+          	) c
+          	ON @domain_concept_id = concept_id
+          WHERE YEAR(@domain_start_date) > 0
+          GROUP BY @domain_concept_id;"
+  
+  standardConcepts <- list()
+  for (i in (1:nrow(domains))) {
+    rowData <- domains[i, ]
+    ParallelLogger::logTrace(paste0(
+      "   - Working on ",
+      rowData$domainTable,
+      ".",
+      rowData$domainConceptId
+    ))
+    standardConcepts[[i]] <- renderTranslateQuerySql(
+      connection = connection,
+      sql = sql,
+      tempEmulationSchema = tempEmulationSchema,
+      domain_table = rowData$domainTable,
+      domain_concept_id = rowData$domainConceptId,
+      cdm_database_schema = cdmDatabaseSchema,
+      domain_start_date = rowData$domainStartDate,
+      concept_id_universe = conceptIdUniverse,
+      snakeCaseToCamelCase = TRUE
+    ) %>% 
+      dplyr::mutate(domainTable = rowData$domainTableShort)
+  }
+  standardConcepts <- dplyr::bind_rows(standardConcepts) %>% 
+    dplyr::distinct()
+  
+  nonStandardConcepts <- list()
+  for (i in (1:nrow(domains))) {
+    rowData <- domains[i, ]
+    if (nchar(rowData$domainSourceConceptId) > 4) {
+      ParallelLogger::logTrace(
+        paste0(
+          "   - Working on ",
+          rowData$domainTable,
+          ".",
+          rowData$domainSourceConceptId
+        )
+      )
+      
+      nonStandardConcepts[[i]] <- renderTranslateQuerySql(
+        connection = connection,
+        sql = sql,
+        tempEmulationSchema = tempEmulationSchema,
+        domain_table = rowData$domainTable,
+        domain_concept_id = rowData$domainSourceConceptId,
+        cdm_database_schema = cdmDatabaseSchema,
+        domain_start_date = rowData$domainStartDate,
+        concept_id_universe = conceptIdUniverse,
+        snakeCaseToCamelCase = TRUE
+      ) %>% 
+        # conceptIds - only keep concept id that were never found in standard fields
+        dplyr::anti_join(y = standardConcepts %>% 
+                           dplyr::select(.data$conceptId) %>% 
+                           dplyr::distinct(),
+                         by = 'conceptId') %>% 
+        dplyr::mutate(domainTable = rowData$domainTableShort)
+    }
+  }
+  nonStandardConcepts <-
+    dplyr::bind_rows(nonStandardConcepts)
+  return(
+    dplyr::bind_rows(standardConcepts, nonStandardConcepts) %>%
+      dplyr::select(
+        .data$domainTable,
+        .data$conceptId,
+        .data$conceptCount
+      ) %>%
+      dplyr::distinct() %>%
+      dplyr::arrange(.data$conceptId)
+  )
+}
+
+
 
 # function: getBreakdownIndexEvents ----
 getBreakdownIndexEvents <- function(cohortIds,

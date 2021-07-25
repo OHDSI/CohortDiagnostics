@@ -17,6 +17,7 @@ DROP TABLE IF EXISTS concept_excluded;
 DROP TABLE IF EXISTS concept_mapping;
 DROP TABLE IF EXISTS concept_relationship;
 DROP TABLE IF EXISTS concept_resolved;
+DROP TABLE IF EXISTS concept_subjects;
 DROP TABLE IF EXISTS cohort_summary_stats;
 DROP TABLE IF EXISTS concept_sets;
 DROP TABLE IF EXISTS concept_synonym;
@@ -247,6 +248,17 @@ CREATE TABLE concept_sets (
 			concept_set_expression VARCHAR NOT NULL,
 			PRIMARY KEY(cohort_id, concept_set_id)
 );
+
+--Table concept_count
+--HINT DISTRIBUTE ON RANDOM
+CREATE TABLE concept_subjects (
+			database_id VARCHAR NOT NULL,
+			domain_table VARCHAR NOT NULL,
+			concept_id INT NOT NULL,
+			subject_count FLOAT NOT NULL,
+			PRIMARY KEY(database_id, domain_table, concept_id)
+);
+
 
 --Table concept_excluded
 --HINT DISTRIBUTE ON RANDOM
