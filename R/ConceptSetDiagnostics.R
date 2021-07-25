@@ -30,6 +30,8 @@
 #' @template CohortDatabaseSchema
 #'
 #' @template TempEmulationSchema
+#' 
+#' @template ExportDetailedVocabulary
 #'
 #' @param    cohorts                 A dataframe object with required fields cohortId, sql, json, cohortName
 #'
@@ -46,6 +48,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
                                      cohorts,
                                      cohortIds = NULL,
                                      cohortDatabaseSchema = NULL,
+                                     exportDetailedVocabulary = TRUE,
                                      cohortTable = NULL) {
   ParallelLogger::logTrace(" - Running concept set diagnostics")
   startConceptSetDiagnostics <- Sys.time()
@@ -80,7 +83,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
     progressBar = FALSE,
     reportOverallTime = FALSE
   )
-  
+  browser()
   # Cohorts to run the concept set diagnostics----
   if (!is.null(cohortIds)) {
     subset <- cohorts %>%
@@ -251,6 +254,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
     connection = connection,
     cdmDatabaseSchema = cdmDatabaseSchema,
     tempEmulationSchema = tempEmulationSchema,
+    exportDetailedVocabulary = exportDetailedVocabulary,
     conceptIdTable = "#concept_tracking"
   )
   
@@ -631,20 +635,26 @@ getCodeSetIds <- function(criterionList) {
 exportConceptInformation <- function(connection = NULL,
                                      cdmDatabaseSchema,
                                      tempEmulationSchema,
-                                     conceptIdTable = "#concept_tracking",
-                                     vocabularyTableNames = c(
-                                       "concept",
-                                       "concept_ancestor",
-                                       "concept_class",
-                                       "concept_relationship",
-                                       "concept_synonym",
-                                       "domain",
-                                       "relationship",
-                                       "vocabulary"
-                                     )) {
+                                     exportDetailedVocabulary = TRUE,
+                                     conceptIdTable = "#concept_tracking") {
   start <- Sys.time()
   if (is.null(connection)) {
     stop('No connection provided')
+  }
+  
+  if (exportDetailedVocabulary) {
+    vocabularyTableNames = c(
+      "concept",
+      "concept_ancestor",
+      "concept_class",
+      "concept_relationship",
+      "concept_synonym",
+      "domain",
+      "relationship",
+      "vocabulary"
+    )
+  } else {
+    vocabularyTableNames <- c("conccept")
   }
   
   tablesInCdmDatabaseSchema <-

@@ -73,6 +73,7 @@
 #' @param temporalCovariateSettings   Either an object of type \code{covariateSettings} as created using one of
 #'                                    the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
 #'                                    of such objects.
+#' @template ExportDetailedVocabulary 
 #' @param minCellCount                The minimum cell count for fields contains person counts or fractions.
 #' @param incremental                 Create only cohort diagnostics that haven't been created before?
 #' @param incrementalFolder           If \code{incremental = TRUE}, specify a folder where records are kept
@@ -146,6 +147,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                      seq(from = 30, to = 420, by = 30)
                                    )
                                  ),
+                                 exportDetailedVocabulary = TRUE,
                                  minCellCount = 5,
                                  incremental = FALSE,
                                  incrementalFolder = file.path(exportFolder, "incremental")) {
@@ -621,7 +623,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                              attr(delta, "units"))
   }
   
-  
+  browser()
   # Concept set diagnostics----
   if (runConceptSetDiagnostics) {
     # running together because share common process of needing to resolve concept sets
@@ -649,7 +651,8 @@ runCohortDiagnostics <- function(packageName = NULL,
         cohorts = cohorts,
         cohortIds = subset$cohortId,
         cohortDatabaseSchema = cohortDatabaseSchema,
-        cohortTable = cohortTable
+        cohortTable = cohortTable,
+        exportDetailedVocabulary = exportDetailedVocabulary
       )
       
       tablesOfInterest = c(
