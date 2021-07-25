@@ -107,7 +107,8 @@ runIncidenceRateDiagnostics <- function(connectionDetails = NULL,
     createTable = TRUE,
     tempTable = TRUE,
     tempEmulationSchema = tempEmulationSchema,
-    camelCaseToSnakeCase = TRUE
+    camelCaseToSnakeCase = TRUE, 
+    progressBar = FALSE
   )
   
   sql <-
@@ -124,7 +125,7 @@ runIncidenceRateDiagnostics <- function(connectionDetails = NULL,
       washout_period = washoutPeriod,
       cohort_id = cohortId
     )
-  DatabaseConnector::executeSql(connection, sql)
+  DatabaseConnector::executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
   
   sql <- "SELECT * FROM #rates_summary;"
   ratesSummary <-
