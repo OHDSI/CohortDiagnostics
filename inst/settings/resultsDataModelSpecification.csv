@@ -78,6 +78,7 @@ concept_cooccurrence,concept_id,int,Yes,Yes,No,Yes,2.2
 concept_cooccurrence,co_concept_id,int,Yes,Yes,No,Yes,2.2
 concept_cooccurrence,concept_count,bigint,Yes,Yes,No,Yes,2.2
 concept_count,database_id,varchar,Yes,Yes,No,Yes,2.2
+concept_count,domain_table,varchar,Yes,Yes,No,Yes,2.2
 concept_count,concept_id,int,Yes,Yes,No,Yes,2.2
 concept_count,event_year,int,Yes,Yes,No,Yes,2.2
 concept_count,event_month,int,Yes,Yes,No,Yes,2.2

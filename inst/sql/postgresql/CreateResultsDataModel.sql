@@ -192,11 +192,12 @@ CREATE TABLE concept_class (
 --HINT DISTRIBUTE ON RANDOM
 CREATE TABLE concept_count (
 			database_id VARCHAR NOT NULL,
+			domain_table VARCHAR NOT NULL,
 			concept_id INT NOT NULL,
 			event_year INT NOT NULL,
 			event_month INT NOT NULL,
 			concept_count FLOAT NOT NULL,
-			PRIMARY KEY(database_id, concept_id, event_year, event_month)
+			PRIMARY KEY(database_id, domain_table, concept_id, event_year, event_month)
 );
 
 --Table concept_cooccurrence

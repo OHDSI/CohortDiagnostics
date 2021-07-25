@@ -623,7 +623,6 @@ runCohortDiagnostics <- function(packageName = NULL,
                              attr(delta, "units"))
   }
   
-  browser()
   # Concept set diagnostics----
   if (runConceptSetDiagnostics) {
     # running together because share common process of needing to resolve concept sets

@@ -14,6 +14,7 @@ runConceptSetDiagnostics(
   cohortIds = NULL,
   cohortDatabaseSchema = NULL,
   exportDetailedVocabulary = TRUE,
+  keepCustomConceptId = FALSE,
   cohortTable = NULL
 )
 }
@@ -49,6 +50,10 @@ diagnostics to.}
 \item{cohortDatabaseSchema}{Schema name where your cohort table resides. Note that for SQL Server,
 this should include both the database and schema name, for example
 'scratch.dbo'.}
+
+\item{keepCustomConceptId}{(Optional) Default FALSE. Do you want to keep concept id above 2 billion.
+Per OMOP conventions any conceptId >= 2 billion are considered site specific
+custom value that are not shipped as part of default OMOP vocabulary tables.}
 
 \item{cohortTable}{Name of the cohort table.}
 
