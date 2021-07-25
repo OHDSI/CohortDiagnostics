@@ -1033,12 +1033,13 @@ getFeatureExtractionTemporalCharacterization <-
                                            cohortIds = cohortIds,
                                            databaseIds = databaseIds)
     # temporary till https://github.com/OHDSI/FeatureExtraction/issues/127
-    temporalCovariateValueDist <- getResultsFromTemporalCovariateValueDist(dataSource = dataSource,
-                                                                           cohortIds = cohortIds,
-                                                                           databaseIds = databaseIds)
-    if (all(!is.null(temporalCovariateValueDist), 
+    temporalCovariateValueDist <-
+      getResultsFromTemporalCovariateValueDist(dataSource = dataSource,
+                                               cohortIds = cohortIds,
+                                               databaseIds = databaseIds)
+    if (all(!is.null(temporalCovariateValueDist),
             nrow(temporalCovariateValueDist) > 0)) {
-      temporalCovariateValueDist <- temporalCovariateValueDist %>% 
+      temporalCovariateValueDist <- temporalCovariateValueDist %>%
         dplyr::filter(!is.na(.data$timeId))
     }
     
@@ -1142,7 +1143,7 @@ getCohortRelationshipCharacterizationResults <-
       return(data)
     }
     
-    analysisId <- c(-101, -102, -103, -104, -201, -202, -203, -204)
+    analysisId <- c(-101,-102,-103,-104,-201,-202,-203,-204)
     analysisName <- c(
       "CohortOccurrenceAnyTimePrior",
       "CohortOccurrenceLongTerm",
@@ -1163,7 +1164,7 @@ getCohortRelationshipCharacterizationResults <-
       "bothSubjects",
       "bothSubjects"
     )
-    startDay <- c(-99999, -365, -180, -30, -99999, -365, -180, -30)
+    startDay <- c(-99999,-365,-180,-30,-99999,-365,-180,-30)
     endDay <- c(0, 0, 0, 0, 0, 0, 0, 0)
     analysisRef <-
       dplyr::tibble(analysisId, analysisName, valueField, startDay, endDay) %>%
@@ -1187,10 +1188,10 @@ getCohortRelationshipCharacterizationResults <-
       result[[j]] <-
         summarizeCohortRelationship(
           data = cohortRelationships,
-          startDay = analysisRef[j, ]$startDay,
-          endDay = analysisRef[j, ]$endDay,
-          analysisId = analysisRef[j, ]$analysisId,
-          valueField = analysisRef[j, ]$valueField,
+          startDay = analysisRef[j,]$startDay,
+          endDay = analysisRef[j,]$endDay,
+          analysisId = analysisRef[j,]$analysisId,
+          valueField = analysisRef[j,]$valueField,
           cohortCounts = cohortCounts
         )
     }
@@ -1347,7 +1348,7 @@ getCohortAsFeatureTemporalCharacterizationResults <-
       return(data)
     }
     
-    analysisId <- c(-101, -201)
+    analysisId <- c(-101,-201)
     analysisName <- c("CohortEraStart", "CohortEraOverlap")
     valueField <- c("cSubjectsStart",
                     "bothSubjects")
@@ -1372,8 +1373,8 @@ getCohortAsFeatureTemporalCharacterizationResults <-
       result[[j]] <-
         summarizeCohortRelationship(
           data = cohortRelationships,
-          valueField = analysisRef[j, ]$valueField,
-          analysisId = analysisRef[j, ]$analysisId,
+          valueField = analysisRef[j,]$valueField,
+          analysisId = analysisRef[j,]$analysisId,
           temporalTimeRef = temporalTimeRef,
           cohortCounts = cohortCounts
         )
@@ -2000,8 +2001,8 @@ getConceptSetDetailsFromCohortDefinition <-
       i <- i + 1
       conceptSetExpressionDetails[[i]] <-
         getConceptSetDataFrameFromConceptSetExpression(conceptSetExpression =
-                                                         conceptSetExpression[i,]$expression$items) %>%
-        dplyr::mutate(id = conceptSetExpression[i, ]$id) %>%
+                                                         conceptSetExpression[i, ]$expression$items) %>%
+        dplyr::mutate(id = conceptSetExpression[i,]$id) %>%
         dplyr::relocate(.data$id) %>%
         dplyr::arrange(.data$id)
     }
@@ -2040,3 +2041,68 @@ getConceptSetDataFrameFromConceptSetExpression <-
     }
     return(conceptSetExpressionDetails)
   }
+
+
+
+#' Get specifications for Cohort Diagnostics results data model
+#'
+#' @param versionNumber Which version of Cohort Diagnostics. Default will be the most recent version.
+#'
+#' @param packageName e.g. 'CohortDiagnostics'
+#'
+#' @return
+#' A tibble data frame object with specifications
+#'
+#' @export
+getResultsDataModelSpecifications <- function(versionNumber = NULL,
+                                              packageName = NULL) {
+  if (is.null(packageName)) {
+    if (file.exists("resultsDataModelSpecification.csv")) {
+      resultsDataModelSpecifications <-
+        readr::read_csv(file = pathToCsv, col_types = readr::cols())
+      ParallelLogger::logTrace(paste0("  - Retrieved results data model specifications from package ",
+                                      packageName))
+    } else {
+      stop("Can't find resultsDataModelSpecifications file.")
+    }
+  } else {
+    pathToCsv <-
+      system.file("settings",
+                  "resultsDataModelSpecification.csv",
+                  package = packageName)
+  }
+  resultsDataModelSpecifications <-
+    readr::read_csv(file = pathToCsv, col_types = readr::cols())
+  
+  #get various version options in csv file
+  versions <- resultsDataModelSpecifications$version %>% unique()
+  if (!is.null(versionNumber)) {
+    if (versionNumber %in% versions) {
+      ParallelLogger::logTrace(paste0(
+        "  - Retrieving data model specifications for version ",
+        version
+      ))
+      resultsDataModelSpecifications <-
+        resultsDataModelSpecifications %>%
+        dplyr::filter(.data$version == !!versionNumber)
+    } else {
+      stop(paste0(
+        "version requested", 
+        versionNumber, 
+        " not found. The available option are ",
+        paste0(versions, collapse = ", ")
+      ))
+    }
+  } else {
+    #max version/recent version if no version provided
+    versions <- max(as.numeric(versions))
+    ParallelLogger::logTrace(paste0(
+      "  - Retrieving data model specifications for version ",
+      versions
+    ))
+    resultsDataModelSpecifications <-
+      resultsDataModelSpecifications %>%
+      dplyr::filter(.data$version == !!versions)
+  }
+  return(resultsDataModelSpecifications)
+}

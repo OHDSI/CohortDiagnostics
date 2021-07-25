@@ -714,8 +714,10 @@ exportConceptInformation <- function(connection = NULL,
       tempEmulationSchema = tempEmulationSchema
     )
   if (nrow(uniqueConceptIds) > 0) {
-    uniqueConceptIds <- uniqueConceptIds %>% 
-      dplyr::filter(.data$conceptId < 200000000)
+    if (keepCustomConceptId) {
+      uniqueConceptIds <- uniqueConceptIds %>% 
+        dplyr::filter(.data$conceptId < 200000000)
+    }
   }
   if (nrow(uniqueConceptIds) == 0) {
     ParallelLogger::logInfo(" - No concept IDs in cohorts. No concept information exported.")
