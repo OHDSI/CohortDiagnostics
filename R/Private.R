@@ -113,7 +113,7 @@ getDomainInformation <- function(package = "CohortDiagnostics") {
   domains <- readr::read_csv(
     system.file("csv", "domains.csv", package = package),
     col_types = readr::cols(),
-    guess_max = min(1e7), 
+    guess_max = min(1e7),
     na = "NA"
   ) %>%
     dplyr::mutate(domainTableShort = stringr::str_sub(
@@ -165,12 +165,15 @@ writeToAllOutputToCsv <- function(object,
                                   incremental,
                                   minCellCount,
                                   databaseId) {
-  tablesOfInterest = getResultsDataModelSpecifications(packageName = 'CohortDiagnostics') %>% 
-    dplyr::pull(.data$tableName) %>% 
+  resultsDataModel <-
+    getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')
+  tablesOfInterest = resultsDataModel %>%
+    dplyr::pull(.data$tableName) %>%
     unique()
   
   columnsToApplyMinCellValue <-
-    c("baseCount",
+    c(
+      "baseCount",
       "cohortCount",
       "cohortEntries.",
       "finalCount",
@@ -189,7 +192,7 @@ writeToAllOutputToCsv <- function(object,
       "subjectsEnd",
       "subjectsStart",
       "totalSubjects"
-      )
+    )
   vocabularyTables <- c(
     "concept",
     "concept_ancestor",
@@ -200,14 +203,11 @@ writeToAllOutputToCsv <- function(object,
     "relationship",
     "vocabulary"
   )
-  vocabularyTablesNoIncremental <- c(
-    "concept_class",
-    "domain",
-    "relationship",
-    "vocabulary"
-  )
+  vocabularyTablesNoIncremental <- c("concept_class",
+                                     "domain",
+                                     "relationship",
+                                     "vocabulary")
   
-  resultsDataModel <- getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')
   
   # write vocabulary tables
   for (i in (1:length(tablesOfInterest))) {
@@ -217,7 +217,7 @@ writeToAllOutputToCsv <- function(object,
         dplyr::filter(.data$tableName %in% tablesOfInterest[[i]]) %>%
         dplyr::pull(.data$fieldName)
       data <-
-        object[[tablesOfInterest[[i]]]] 
+        object[[tablesOfInterest[[i]]]]
       if (!tablesOfInterest[[i]] %in% vocabularyTables) {
         data <- data %>%
           dplyr::mutate(databaseId = !!databaseId)
