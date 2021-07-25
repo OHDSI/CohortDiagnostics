@@ -2059,7 +2059,7 @@ getResultsDataModelSpecifications <- function(versionNumber = NULL,
   if (is.null(packageName)) {
     if (file.exists("resultsDataModelSpecification.csv")) {
       resultsDataModelSpecifications <-
-        readr::read_csv(file = pathToCsv, col_types = readr::cols())
+        readr::read_csv("resultsDataModelSpecification.csv", col_types = readr::cols())
       ParallelLogger::logTrace(paste0("  - Retrieved results data model specifications from package ",
                                       packageName))
     } else {
@@ -2070,9 +2070,14 @@ getResultsDataModelSpecifications <- function(versionNumber = NULL,
       system.file("settings",
                   "resultsDataModelSpecification.csv",
                   package = packageName)
+    if (!pathToCsv == "") {
+      resultsDataModelSpecifications <-
+        readr::read_csv(file = pathToCsv, col_types = readr::cols())
+    } else {
+      stop(paste0("resultsDataModelSpecification.csv was not found in installed package: ", 
+                  packageName))
+    }
   }
-  resultsDataModelSpecifications <-
-    readr::read_csv(file = pathToCsv, col_types = readr::cols())
   
   #get various version options in csv file
   versions <- resultsDataModelSpecifications$version %>% unique()

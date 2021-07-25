@@ -109,7 +109,6 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::select(cohort = .data$shortName, 
                       .data$cohortId, 
                       .data$cohortName,
-                      .data$logicDescription,
                       .data$sql,
                       .data$json)
       downloadCsv(x = x, fileName = file)
@@ -234,12 +233,13 @@ shiny::shinyServer(function(input, output, session) {
             tags$td(tags$strong("Cohort Name: ")),
             tags$td(HTML("&nbsp;&nbsp;")),
             tags$td(data[i, ]$cohortName)
-          ),
-          tags$tr(
-            tags$td(tags$strong("Logic: ")),
-            tags$td(HTML("&nbsp;&nbsp;")),
-            tags$td(data[i, ]$logicDescription)
           )
+          # , #need to part cohort.metadata (a json) and show all contents in that json
+          # tags$tr(
+          #   tags$td(tags$strong("Logic: ")),
+          #   tags$td(HTML("&nbsp;&nbsp;")),
+          #   tags$td(data[i, ]$logicDescription)
+          # )
         )
       }
       return(details)
