@@ -283,7 +283,7 @@ uploadResults <- function(connectionDetails = NULL,
   }
   
   uploadTable <- function(tableName) {
-    ParallelLogger::logTrace(" - Uploading table ", tableName)
+    ParallelLogger::logInfo(" - Uploading table ", tableName)
     
     primaryKey <- specifications %>%
       filter(.data$tableName == !!tableName &
@@ -326,7 +326,7 @@ uploadResults <- function(connectionDetails = NULL,
       }
       
       uploadChunk <- function(chunk, pos) {
-        ParallelLogger::logInfo(paste0("  - Preparing to upload rows ",
+        ParallelLogger::logTrace(paste0("  - Preparing to upload rows ",
                                        scales::comma(pos),
                                        " through ",
                                        scales::comma(pos + nrow(chunk) - 1)))
@@ -423,7 +423,7 @@ uploadResults <- function(connectionDetails = NULL,
             dropTableIfExists = FALSE,
             createTable = FALSE,
             tempTable = FALSE,
-            progressBar = TRUE
+            progressBar = FALSE
           )
         }
       }

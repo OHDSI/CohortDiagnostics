@@ -164,6 +164,7 @@ renderTranslateQuerySql <-
 # private function - not exported
 getDataFromResultsDatabaseSchema <- function(dataSource,
                                              cohortIds = NULL,
+                                             conceptIds = NULL,
                                              databaseIds = NULL,
                                              dataTableName) {
   if (is(dataSource, "environment")) {
@@ -185,6 +186,10 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
       data <- data %>%
         dplyr::filter(.data$databaseId %in% !!databaseIds)
     }
+    if (!is.null(conceptIds)) {
+      data <- data %>%
+        dplyr::filter(.data$conceptId %in% !!conceptIds)
+    }
   } else {
     if (is.null(dataSource$connection)) {
       stop("No connection provided. Unable to query database.")
@@ -196,6 +201,7 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
     
     sql <- "SELECT *
             FROM  @results_database_schema.@data_table
+            {@concept_ids != '' & @database_id !='' } ? { WHERE database_id in (@database_id) AND concept_id in (@concept_ids)}
             {@cohort_ids == '' & @database_id !=''} ? { WHERE database_id in (@database_id)}
             {@cohort_ids != '' & @database_id !=''} ? {  WHERE database_id in (@database_id) AND cohort_id in (@cohort_ids)}
             {@cohort_ids != '' & @database_id ==''} ? {  WHERE cohort_id in (@cohort_ids)}
@@ -633,31 +639,56 @@ getResultsFromVisitContext <- function(dataSource,
 }
 
 
-#' Returns data from included_concept table of Cohort Diagnostics results data model
+
+#' Returns data from concept_count table of Cohort Diagnostics results data model
 #'
 #' @description
-#' Returns data from included_concept table of Cohort Diagnostics results data model
+#' Returns data from concept_count table of Cohort Diagnostics results data model
 #'
 #' @template DataSource
 #'
 #' @template CohortIds
 #'
 #' @template DatabaseIds
+#' 
+#' @param conceptIds     A list of concept ids to get counts for
 #'
 #' @return
-#' Returns a data frame (tibble) with results that conform to included_concept
+#' Returns a data frame (tibble) with results that conform to concept_count
 #' table in Cohort Diagnostics results data model.
 #'
 #' @export
-getResultsFromIncludedConcept <- function(dataSource,
-                                          cohortIds = NULL,
-                                          databaseIds = NULL) {
+getResultsFromConceptCount <- function(dataSource,
+                                       cohortIds = NULL,
+                                       databaseIds = NULL,
+                                       conceptIds = NULL,
+                                       aggregateByYear = FALSE,
+                                       aggregateByMonth = FALSE) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds,
-    dataTableName = "includedSourceConcept"
+    conceptIds = conceptIds,
+    dataTableName = "conceptCount"
   )
+  if (all(aggregateByYear, aggregateByMonth)) {
+    return(data)
+  } else if (all(aggregateByYear)) {
+    data <- data %>% 
+             dplyr::group_by(.data$conceptId, .data$databaseId, .data$eventYear) %>% 
+             dplyr::summarise(conceptCount = sum(.data$conceptCount), .groups = "keep") %>% 
+             dplyr::ungroup()
+  } else if (all(aggregateByMonth)) {
+    data <- data %>% 
+             dplyr::group_by(.data$conceptId, .data$databaseId, .data$eventMonth) %>% 
+             dplyr::summarise(conceptCount = sum(.data$conceptCount), .groups = "keep") %>% 
+             dplyr::ungroup()
+  } else {
+    data <- data %>% 
+      dplyr::group_by(.data$conceptId, .data$databaseId) %>% 
+      dplyr::summarise(conceptCount = sum(.data$conceptCount), .groups = "keep") %>% 
+      dplyr::ungroup()
+  }
   return(data)
 }
 
@@ -687,6 +718,15 @@ getResultsFromOrphanConcept <- function(dataSource,
     databaseIds = databaseIds,
     dataTableName = "orphanConcept"
   )
+  conceptCount <- getResultsFromConceptCount(
+    dataSource = dataSource,
+    databaseIds = databaseIds,
+    conceptIds = data$conceptId %>% unique()
+  )
+  data <- data %>% 
+    dplyr::left_join(conceptCount,
+                     by = c('conceptId', 'databaseId')) %>% 
+    tidyr::replace_na(replace = list('conceptCount' = 0))
   return(data)
 }
 

@@ -1264,7 +1264,8 @@ shiny::shinyServer(function(input, output, session) {
           is.null(cohortDefinitionConceptSetExpressionRow()$id)) {
         return(NULL)
       }
-      conceptCount <- getResultsFromIncludedConcept(
+      browser()
+      conceptCount <- getResultsFromConceptCount(
         dataSource = dataSource,
         databaseIds = database$databaseId,
         cohortId = row$cohortId
@@ -1278,10 +1279,11 @@ shiny::shinyServer(function(input, output, session) {
     databaseIdToFilter <- database %>%
       dplyr::filter(.data$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchema) %>%
       dplyr::pull(.data$databaseId)
-    
+    browser()
     conceptCounts <- getConceptCountForAllDatabase()
     if (all(!is.null(conceptCounts),
             nrow(conceptCounts) > 0)) {
+      browser()
       conceptCounts <- conceptCounts %>% 
         dplyr::filter(.data$databaseId %in% !!databaseIdToFilter) %>% 
         dplyr::select(.data$conceptId, .data$sourceConceptId, .data$conceptSubjects, .data$conceptCount) %>% 
@@ -1650,6 +1652,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     if (length(input$databaseOrVocabularySchema) == 0) {return(NULL)}
+    browser()
     data <- getResultsFromOrphanConcept(dataSource = dataSource,
                                         cohortId = row$cohortId,
                                         databaseIds = getDatabaseIdInCohortConceptSet())
@@ -1673,6 +1676,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ### Left panel orphan concept ----
   orphanConceptComparisionLeftPanelData <- shiny::reactive(x = {
+    browser()
     data <- cohortDefinitionOrphanConceptTableData()
     if (any(nrow(data) == 0,is.null(data))) {return(NULL)}
     data <- pivotOrphanConceptResult(data = data,
@@ -2273,6 +2277,7 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(row) || length(cohortDefinitionConceptSetExpressionSecondRow()$name) == 0) {
       return(NULL)
     }
+    browser()
     # if (length(input$databaseOrVocabularySchema) == 0) {return(NULL)}
     data <- getResultsFromOrphanConcept(dataSource = dataSource,
                                         cohortId = row$cohortId,
@@ -2416,7 +2421,8 @@ shiny::shinyServer(function(input, output, session) {
           is.null(cohortDefinitionConceptSetExpressionSecondRow()$id)) {
         return(NULL)
       }
-      conceptCount <- getResultsFromIncludedConcept(
+      browser()
+      conceptCount <- getResultsFromConceptCount(
         dataSource = dataSource,
         databaseIds = database$databaseId,
         cohortId = selectedCohortDefinitionRow()[2,]$cohortId
@@ -4277,7 +4283,8 @@ shiny::shinyServer(function(input, output, session) {
     if (all(is(dataSource, "environment"), !exists('includedSourceConcept'))) {
       return(NULL)
     }
-    includedConcepts <- getResultsFromIncludedConcept(
+    browser()
+    includedConcepts <- getResultsFromConceptCount(
       dataSource = dataSource,
       cohortIds = cohortId(),
       databaseIds = databaseIds()
