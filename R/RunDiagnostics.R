@@ -317,13 +317,13 @@ runCohortDiagnostics <- function(packageName = NULL,
   cohortTableColumnNamesObserved <- colnames(cohorts) %>%
     sort()
   cohortTableColumnNamesExpected <-
-    getResultsDataModelSpecifications() %>%
+    getResultsDataModelSpecifications(packageName = 'CohortDiagnostics') %>%
     dplyr::filter(.data$tableName == 'cohort') %>%
     dplyr::pull(.data$fieldName) %>%
     SqlRender::snakeCaseToCamelCase() %>%
     sort()
   cohortTableColumnNamesRequired <-
-    getResultsDataModelSpecifications() %>%
+    getResultsDataModelSpecifications(packageName = 'CohortDiagnostics') %>%
     dplyr::filter(.data$tableName == 'cohort') %>%
     dplyr::filter(.data$isRequired == 'Yes') %>%
     dplyr::pull(.data$fieldName) %>%
@@ -689,7 +689,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       columnsToApplyMinCellValue <-
         c('concept_count', 'subject_count')
       
-      resultsDataModel <- getResultsDataModelSpecifications()
+      resultsDataModel <- getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')
       
       # write vocabulary tables
       for (i in (1:length(tablesOfInterest))) {

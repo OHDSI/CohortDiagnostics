@@ -167,7 +167,7 @@ preMergeDiagnosticsFiles <-
       zipFiles$unzipFolder[i] <- unzipFolder
     }
     
-    specifications <- getResultsDataModelSpecifications()
+    specifications <- getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')
     
     # Storing output in an environment for now. If things get too big, we may want to write
     # directly to CSV files for insertion into database:

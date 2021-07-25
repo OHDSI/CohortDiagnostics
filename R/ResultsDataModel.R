@@ -15,25 +15,11 @@
 # limitations under the License.
 #
 
-#' Get specifications for Cohort Diagnostics results data model
-#'
-#' @return
-#' A tibble data frame object with specifications
-#'
-#' @export
-getResultsDataModelSpecifications <- function() {
-  pathToCsv <-
-    system.file("settings", "resultsDataModelSpecification.csv", package = "CohortDiagnostics")
-  resultsDataModelSpecifications <-
-    readr::read_csv(file = pathToCsv, col_types = readr::cols())
-  return(resultsDataModelSpecifications)
-}
-
 checkFixColumnNames <-
   function(table,
            tableName,
            zipFileName,
-           specifications = getResultsDataModelSpecifications()) {
+           specifications = getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')) {
     observeredNames <- colnames(table)[order(colnames(table))] %>%
       sort()
     
@@ -79,7 +65,7 @@ checkAndFixDataTypes <-
   function(table,
            tableName,
            zipFileName,
-           specifications = getResultsDataModelSpecifications()) {
+           specifications = getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')) {
     tableSpecs <- specifications %>%
       filter(.data$tableName == !!tableName)
     
@@ -153,7 +139,7 @@ checkAndFixDuplicateRows <-
   function(table,
            tableName,
            zipFileName,
-           specifications = getResultsDataModelSpecifications()) {
+           specifications = getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')) {
     primaryKeys <- specifications %>%
       dplyr::filter(.data$tableName == !!tableName &
                       .data$primaryKey == "Yes") %>%
@@ -179,7 +165,7 @@ appendNewRows <-
   function(data,
            newData,
            tableName,
-           specifications = getResultsDataModelSpecifications()) {
+           specifications = getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')) {
     if (nrow(data) > 0) {
       primaryKeys <- specifications %>%
         dplyr::filter(.data$tableName == !!tableName &
@@ -285,7 +271,7 @@ uploadResults <- function(connectionDetails = NULL,
   ParallelLogger::logTrace(" - Unzipping ", zipFileName)
   zip::unzip(zipFileName, exdir = unzipFolder)
   
-  specifications <- getResultsDataModelSpecifications()
+  specifications <- getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')
   
   if (purgeSiteDataBeforeUploading) {
     database <-

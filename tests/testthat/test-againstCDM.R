@@ -1481,7 +1481,7 @@ test_that("Data removal works", {
   skip_if_not(runDatabaseTests)
   
   specifications <-
-    CohortDiagnostics::getResultsDataModelSpecifications()
+    CohortDiagnostics::getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')
   connection <- DatabaseConnector::connect(connectionDetails)
   
   dataSourceDatabase <- CohortDiagnostics::createDatabaseDataSource(

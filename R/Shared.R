@@ -2040,3 +2040,55 @@ getConceptSetDataFrameFromConceptSetExpression <-
     }
     return(conceptSetExpressionDetails)
   }
+
+
+
+#' Get specifications for Cohort Diagnostics results data model
+#'
+#' @param versionNumber Which version of Cohort Diagnostics. Default will be the most recent version.
+#' 
+#' @param packageName e.g. 'CohortDiagnostics'
+#' 
+#' @return
+#' A tibble data frame object with specifications
+#'
+#' @export
+getResultsDataModelSpecifications <- function(versionNumber = NULL,
+                                              packageName = NULL) {
+  
+  if (is.null(packageName)) {
+    if (file.exists("resultsDataModelSpecification.csv")) {
+      resultsDataModelSpecifications <-
+        readr::read_csv(file = pathToCsv, col_types = readr::cols())
+    } else {
+      stop("Can't find resultsDataModelSpecifications file.")
+    }
+    
+  } else {
+    pathToCsv <-
+      system.file("settings", "resultsDataModelSpecification.csv", 
+                  package = !!packageName)
+  }
+  resultsDataModelSpecifications <-
+    readr::read_csv(file = pathToCsv, col_types = readr::cols())
+  
+  #get various version options
+  versions <- resultsDataModelSpecifications$version %>% unique()
+  if (!is.null(versionNumber)) {
+    if (version %in% versions) {
+      resultsDataModelSpecifications <- 
+        resultsDataModelSpecifications %>% 
+        dplyr::filter(.data$version == !!versionNumber)
+    } else {
+      stop(paste0("version requested not found. The available option are ",
+                  paste0(versions, collapse = ", ")))
+    }
+  } else {
+    #max version/recent version if no version provided
+    versions <- max(as.numeric(versions))
+    resultsDataModelSpecifications <- 
+      resultsDataModelSpecifications %>% 
+      dplyr::filter(.data$version == !!versions)
+  }
+  return(resultsDataModelSpecifications)
+}
