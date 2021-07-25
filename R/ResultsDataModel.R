@@ -264,6 +264,7 @@ uploadResults <- function(connectionDetails = NULL,
   connection <- DatabaseConnector::connect(connectionDetails)
   on.exit(DatabaseConnector::disconnect(connection))
   
+  ParallelLogger::logInfo(paste0(" - Working on ", listOfZipFilesToUpload[[i]]))
   unzipFolder <- tempfile("unzipTempFolder", tmpdir = tempFolder)
   dir.create(path = unzipFolder, recursive = TRUE)
   on.exit(unlink(unzipFolder, recursive = TRUE), add = TRUE)
@@ -283,7 +284,7 @@ uploadResults <- function(connectionDetails = NULL,
   }
   
   uploadTable <- function(tableName) {
-    ParallelLogger::logInfo(" - Uploading table ", tableName)
+    ParallelLogger::logInfo("  - Uploading table ", tableName)
     
     primaryKey <- specifications %>%
       filter(.data$tableName == !!tableName &
