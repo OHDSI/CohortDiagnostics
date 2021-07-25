@@ -380,7 +380,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   }
   
   delta <- Sys.time() - startConceptSetDiagnostics
-  ParallelLogger::logInfo(" - Running concept set diagnostics took ",
+  ParallelLogger::logTrace(" - Running concept set diagnostics took ",
                           signif(delta, 3),
                           " ",
                           attr(delta, "units"))
@@ -807,7 +807,7 @@ exportConceptInformation <- function(connection = NULL,
     vocabularyTablesData[[vocabularyTable]] <- data
   }
   delta <- Sys.time() - start
-  ParallelLogger::logInfo(" - Retrieving concept information took ",
+  ParallelLogger::logTrace(" - Retrieving concept information took ",
                           signif(delta, 3),
                           " ",
                           attr(delta, "units"))

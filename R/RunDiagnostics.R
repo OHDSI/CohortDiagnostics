@@ -582,7 +582,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       ParallelLogger::logInfo("  - Skipping in incremental mode.")
     }
     delta <- Sys.time() - startConceptSetDiagnostics
-    ParallelLogger::logInfo(" - Running Concept Set Diagnostics took ",
+    ParallelLogger::logInfo(" - Running Concept Set Diagnostics and saving files took ",
                             signif(delta, 3),
                             " ",
                             attr(delta, "units"))
