@@ -183,8 +183,8 @@ preMergeDiagnosticsFiles <-
             readr::read_csv(
               file.path(zipFiles$unzipFolder[i], csvFileName),
               col_types = readr::cols(),
-              na = character(),
-              guess_max = min(1e6)
+              guess_max = min(1e6),
+              show_progress = FALSE
             )
           if (nrow(newData) > 0) {
             newData <- checkFixColumnNames(
