@@ -163,9 +163,10 @@ getDomainInformation <- function(package = "CohortDiagnostics") {
 writeToAllOutputToCsv <- function(object,
                                   exportFolder,
                                   incremental,
+                                  minCellCount,
                                   databaseId) {
-  tablesOfInterest = getResultsDataModelSpecifications() %>% 
-    dplyr::pull(.data$tableNames) %>% 
+  tablesOfInterest = getResultsDataModelSpecifications(packageName = 'CohortDiagnostics') %>% 
+    dplyr::pull(.data$tableName) %>% 
     unique()
   
   columnsToApplyMinCellValue <-
@@ -189,6 +190,22 @@ writeToAllOutputToCsv <- function(object,
       "subjectsStart",
       "totalSubjects"
       )
+  vocabularyTables <- c(
+    "concept",
+    "concept_ancestor",
+    "concept_class",
+    "concept_relationship",
+    "concept_synonym",
+    "domain",
+    "relationship",
+    "vocabulary"
+  )
+  vocabularyTablesNoIncremental <- c(
+    "concept_class",
+    "domain",
+    "relationship",
+    "vocabulary"
+  )
   
   resultsDataModel <- getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')
   

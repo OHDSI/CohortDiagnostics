@@ -105,7 +105,7 @@ if (!exists("shinySettings")) {
 dataModelSpecifications <-
   getResultsDataModelSpecifications()
 dataModelSpecifications21 <-
-  getResultsDataModelSpecifications(packageName = 'CohortDiagnostics', versionNumber = 2.1)
+  getResultsDataModelSpecifications(versionNumber = 2.1)
 # Cleaning up any tables in memory:
 suppressWarnings(rm(
   list = SqlRender::snakeCaseToCamelCase(dataModelSpecifications$tableName)

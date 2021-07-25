@@ -447,7 +447,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     cohortIds = cohorts$cohortId
   ) # cohortCounts is reused
   output <- list()
-  output$cohortCouns <- cohortCounts
+  output$cohortCounts <- cohortCounts
   # Get instantiated cohorts ----
   instantiatedCohorts <-
     as.double(c(-1)) # set by default to non instantiated
@@ -457,7 +457,8 @@ runCohortDiagnostics <- function(packageName = NULL,
         object = output,
         exportFolder = exportFolder,
         databaseId = databaseId,
-        incremental = incremental
+        incremental = incremental,
+        minCellCount = minCellCount
       )
       instantiatedCohorts <- output$cohortCounts %>%
         dplyr::pull(.data$cohortId)
@@ -510,7 +511,8 @@ runCohortDiagnostics <- function(packageName = NULL,
           object = stats,
           exportFolder = exportFolder,
           databaseId = databaseId,
-          incremental = incremental
+          incremental = incremental,
+          minCellCount = minCellCount
         )
         recordTasksDone(
           cohortId = subset$cohortId,
@@ -564,7 +566,8 @@ if (runConceptSetDiagnostics) {
       object = conceptSetDiagnostics,
       exportFolder = exportFolder,
       databaseId = databaseId,
-      incremental = incremental
+      incremental = incremental,
+      minCellCount = minCellCount
     )
     recordTasksDone(
       cohortId = subset$cohortId,
@@ -617,7 +620,8 @@ if (runVisitContext) {
       object = output,
       exportFolder = exportFolder,
       databaseId = databaseId,
-      incremental = incremental
+      incremental = incremental,
+      minCellCount = minCellCount
     )
     output <- NULL
   } else {
@@ -690,7 +694,8 @@ if (runIncidenceRate) {
       object = output,
       exportFolder = exportFolder,
       databaseId = databaseId,
-      incremental = incremental
+      incremental = incremental,
+      minCellCount = minCellCount
     )
     output <- NULL
     recordTasksDone(
@@ -751,7 +756,8 @@ if (runIncidenceRate) {
           object = output,
           exportFolder = exportFolder,
           databaseId = databaseId,
-          incremental = incremental
+          incremental = incremental,
+          minCellCount = minCellCount
         )
         output <- NULL
         recordTasksDone(
