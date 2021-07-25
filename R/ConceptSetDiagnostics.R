@@ -254,8 +254,6 @@ runConceptSetDiagnostics <- function(connection = NULL,
                            " ",
                            attr(delta, "units"))
   
-  browser()
-  debug(getConceptRecordCountByMonth)
   # get concept count----
   ParallelLogger::logInfo(" - Counting concepts in data source")
   conceptCount <-
@@ -270,7 +268,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
       dplyr::filter(.data$conceptId < 200000000)  
   }
   conceptSetDiagnosticsResults$conceptCount <- conceptCount
-  
+
   # get concept mapping----
   ParallelLogger::logInfo(" - Mappings concepts")
   conceptSourceStandardMapping <-
@@ -294,7 +292,8 @@ runConceptSetDiagnostics <- function(connection = NULL,
     cdmDatabaseSchema = cdmDatabaseSchema,
     tempEmulationSchema = tempEmulationSchema,
     exportDetailedVocabulary = exportDetailedVocabulary,
-    conceptIdTable = "#concept_tracking"
+    conceptIdTable = "#concept_tracking",
+    keepCustomConceptId = keepCustomConceptId
   )
   
   # Drop temporary tables
@@ -675,6 +674,7 @@ exportConceptInformation <- function(connection = NULL,
                                      cdmDatabaseSchema,
                                      tempEmulationSchema,
                                      exportDetailedVocabulary = TRUE,
+                                     keepCustomConceptId = FALSE,
                                      conceptIdTable = "#concept_tracking") {
   start <- Sys.time()
   if (is.null(connection)) {
@@ -693,7 +693,7 @@ exportConceptInformation <- function(connection = NULL,
       "vocabulary"
     )
   } else {
-    vocabularyTableNames <- c("conccept")
+    vocabularyTableNames <- c("concept")
   }
   
   tablesInCdmDatabaseSchema <-
@@ -704,7 +704,7 @@ exportConceptInformation <- function(connection = NULL,
   if (length(vocabularyTablesInCdmDatabaseSchema) == 0) {
     stop("Vocabulary tables not found in ", cdmDatabaseSchema)
   }
-  sql <- "SELECT DISTINCT concept_id FROM @unique_concept_id_table;"
+  sql <- "SELECT DISTINCT concept_id FROM @unique_concept_id_table ORDER BY concept_id;"
   uniqueConceptIds <-
     renderTranslateQuerySql(
       connection = connection,
@@ -712,11 +712,17 @@ exportConceptInformation <- function(connection = NULL,
       unique_concept_id_table = conceptIdTable,
       snakeCaseToCamelCase = TRUE,
       tempEmulationSchema = tempEmulationSchema
-    )[, 1]
-  if (length(uniqueConceptIds) == 0) {
+    )
+  if (nrow(uniqueConceptIds) > 0) {
+    uniqueConceptIds <- uniqueConceptIds %>% 
+      dplyr::filter(.data$conceptId < 200000000)
+  }
+  if (nrow(uniqueConceptIds) == 0) {
     ParallelLogger::logInfo(" - No concept IDs in cohorts. No concept information exported.")
     return(NULL)
   }
+  uniqueConceptIds <- uniqueConceptIds %>% 
+    dplyr::pull(.data$conceptId)
   
   vocabularyTablesData <- list()
   for (vocabularyTable in vocabularyTablesInCdmDatabaseSchema) {
@@ -1160,7 +1166,8 @@ getConceptSourceStandardMapping <- function(connection,
                                             tempEmulationSchema,
                                             sourceValue = FALSE,
                                             conceptIdUniverse = "#concept_tracking") {
-  domains <- getDomainInformation()
+  domains <- getDomainInformation() %>% 
+    dplyr::filter(nchar(.data$domainSourceConceptId) > 1)
   
   sql <- "WITH concept_id_universe
           AS (
