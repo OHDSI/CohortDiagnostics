@@ -962,7 +962,7 @@ getConceptSubjectCount <- function(connection,
   ParallelLogger::logTrace(" - Counting unique person count by concept id")
   domains <- getDomainInformation()
   sql <- "SELECT @domain_concept_id concept_id,
-          	COUNT_BIG(DISTINCT subject_id) subject_count
+          	COUNT_BIG(DISTINCT person_id) subject_count
           FROM @cdm_database_schema.@domain_table
           INNER JOIN (
           	SELECT DISTINCT concept_id
