@@ -785,9 +785,9 @@ saveAndDropTempInclusionStatsTables <- function(connection,
     )
     fullFileName <- file.path(inclusionStatisticsFolder, fileName)
     if (incremental) {
-      saveIncremental(data, fullFileName, cohortId = cohortIds)
+      saveIncremental(data = data, fileName = fullFileName, cohortId = cohortIds)
     } else {
-      readr::write_csv(x = data, file = fullFileName)
+      readr::write_excel_csv(x = data, file = fullFileName, na = "", append = FALSE)
     }
   }
   fetchStats("#cohort_inclusion", "cohortInclusion.csv")

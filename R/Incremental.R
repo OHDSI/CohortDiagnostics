@@ -291,7 +291,7 @@ saveIncremental <- function(data, fileName, ...) {
     x = data,
     file = fileName,
     na = "",
-    append = TRUE,
+    append = FALSE,
     delim = ","
   )
 }
