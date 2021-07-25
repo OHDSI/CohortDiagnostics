@@ -264,7 +264,6 @@ uploadResults <- function(connectionDetails = NULL,
   connection <- DatabaseConnector::connect(connectionDetails)
   on.exit(DatabaseConnector::disconnect(connection))
   
-  ParallelLogger::logInfo(paste0(" - Working on ", listOfZipFilesToUpload[[i]]))
   unzipFolder <- tempfile("unzipTempFolder", tmpdir = tempFolder)
   dir.create(path = unzipFolder, recursive = TRUE)
   on.exit(unlink(unzipFolder, recursive = TRUE), add = TRUE)

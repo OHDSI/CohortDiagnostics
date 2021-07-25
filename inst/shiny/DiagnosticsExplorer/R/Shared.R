@@ -675,14 +675,14 @@ getResultsFromConceptCount <- function(dataSource,
     return(data)
   } else if (all(aggregateByYear)) {
     data <- data %>% 
-             dplyr::group_by(.data$conceptId, .data$databaseId, .data$eventYear) %>% 
-             dplyr::summarise(conceptCount = sum(.data$conceptCount), .groups = "keep") %>% 
-             dplyr::ungroup()
+      dplyr::group_by(.data$conceptId, .data$databaseId, .data$eventYear) %>% 
+      dplyr::summarise(conceptCount = sum(.data$conceptCount), .groups = "keep") %>% 
+      dplyr::ungroup()
   } else if (all(aggregateByMonth)) {
     data <- data %>% 
-             dplyr::group_by(.data$conceptId, .data$databaseId, .data$eventMonth) %>% 
-             dplyr::summarise(conceptCount = sum(.data$conceptCount), .groups = "keep") %>% 
-             dplyr::ungroup()
+      dplyr::group_by(.data$conceptId, .data$databaseId, .data$eventMonth) %>% 
+      dplyr::summarise(conceptCount = sum(.data$conceptCount), .groups = "keep") %>% 
+      dplyr::ungroup()
   } else {
     data <- data %>% 
       dplyr::group_by(.data$conceptId, .data$databaseId) %>% 
