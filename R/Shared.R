@@ -624,6 +624,10 @@ getResultsFromVisitContext <- function(dataSource,
 #' @template DatabaseIds
 #' 
 #' @param conceptIds     A list of concept ids to get counts for
+#' 
+#' @param aggregateByYear  Do you want to aggregate by calendar year?
+#' 
+#' @param aggregateByMonth Do you want to aggregate by calendar month?
 #'
 #' @return
 #' Returns a data frame (tibble) with results that conform to concept_count

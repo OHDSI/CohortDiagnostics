@@ -156,14 +156,7 @@ Only records with values greater than 0.001 are returned.}
 the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
 of such objects.}
 
-\item{minCellCount}{The minimum cell count for fields contains person counts or fractions.}
-
-\item{incremental}{Create only cohort diagnostics that haven't been created before?}
-
-\item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
-of which cohort diagnostics has been executed.}
-
-\item{ExportDetailedVocabulary}{(optional) Default TRUE. Do you want to export from source site details of
+\item{exportDetailedVocabulary}{(optional) Default TRUE. Do you want to export from source site details of
 from all vocabulary tables including concept_ancestor, concept_relationship,
 concept_synonym etc. This is useful if you want to review the impact
 of the vocabulary used in the data source on cohort definitions, and
@@ -173,6 +166,13 @@ vocabulary and generating premerged file/deduplication takes significant process
 time. If set to FALSE then only 'concept' table  is exported. If set to TRUE (Default)
 then "concept", "concept_ancestor", "concept_class", "concept_relationship", "concept_synonym", "domain", "relationship"
 and "vocabulary" are exported.}
+
+\item{minCellCount}{The minimum cell count for fields contains person counts or fractions.}
+
+\item{incremental}{Create only cohort diagnostics that haven't been created before?}
+
+\item{incrementalFolder}{If \code{incremental = TRUE}, specify a folder where records are kept
+of which cohort diagnostics has been executed.}
 }
 \description{
 Runs cohort diagnostics on cohorts specified in cohortToCreateFile (file) or cohortSetReference. The function

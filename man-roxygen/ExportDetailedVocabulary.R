@@ -1,4 +1,4 @@
-#' @param ExportDetailedVocabulary    (optional) Default TRUE. Do you want to export from source site details of
+#' @param exportDetailedVocabulary    (optional) Default TRUE. Do you want to export from source site details of
 #'                                    from all vocabulary tables including concept_ancestor, concept_relationship,
 #'                                    concept_synonym etc. This is useful if you want to review the impact
 #'                                    of the vocabulary used in the data source on cohort definitions, and

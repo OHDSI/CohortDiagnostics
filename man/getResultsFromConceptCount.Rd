@@ -28,6 +28,10 @@ character field values from the `databaseId` field of the `database` table
 of the results data model.}
 
 \item{conceptIds}{A list of concept ids to get counts for}
+
+\item{aggregateByYear}{Do you want to aggregate by calendar year?}
+
+\item{aggregateByMonth}{Do you want to aggregate by calendar month?}
 }
 \value{
 Returns a data frame (tibble) with results that conform to concept_count

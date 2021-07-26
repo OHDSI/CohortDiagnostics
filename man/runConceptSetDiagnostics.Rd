@@ -51,13 +51,7 @@ diagnostics to.}
 this should include both the database and schema name, for example
 'scratch.dbo'.}
 
-\item{keepCustomConceptId}{(Optional) Default FALSE. Do you want to keep concept id above 2 billion.
-Per OMOP conventions any conceptId >= 2 billion are considered site specific
-custom value that are not shipped as part of default OMOP vocabulary tables.}
-
-\item{cohortTable}{Name of the cohort table.}
-
-\item{ExportDetailedVocabulary}{(optional) Default TRUE. Do you want to export from source site details of
+\item{exportDetailedVocabulary}{(optional) Default TRUE. Do you want to export from source site details of
 from all vocabulary tables including concept_ancestor, concept_relationship,
 concept_synonym etc. This is useful if you want to review the impact
 of the vocabulary used in the data source on cohort definitions, and
@@ -67,6 +61,12 @@ vocabulary and generating premerged file/deduplication takes significant process
 time. If set to FALSE then only 'concept' table  is exported. If set to TRUE (Default)
 then "concept", "concept_ancestor", "concept_class", "concept_relationship", "concept_synonym", "domain", "relationship"
 and "vocabulary" are exported.}
+
+\item{keepCustomConceptId}{(Optional) Default FALSE. Do you want to keep concept id above 2 billion.
+Per OMOP conventions any conceptId >= 2 billion are considered site specific
+custom value that are not shipped as part of default OMOP vocabulary tables.}
+
+\item{cohortTable}{Name of the cohort table.}
 }
 \description{
 Runs concept set diagnostics on a set of cohorts. For index event breakdown,

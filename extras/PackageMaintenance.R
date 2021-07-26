@@ -100,3 +100,4 @@ sql <- paste(sprintf("TRUNCATE TABLE %s.%s;\nDROP TABLE %s.%s;", cohortDiagnosti
 writeLines(sql)
 DatabaseConnector::executeSql(connection, sql)
 DatabaseConnector::dbDisconnect(connection)
+

@@ -201,7 +201,6 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
     
     sql <- "SELECT *
             FROM  @results_database_schema.@data_table
-            {@concept_ids != '' & @database_id !='' } ? { WHERE database_id in (@database_id) AND concept_id in (@concept_ids)}
             {@cohort_ids == '' & @database_id !=''} ? { WHERE database_id in (@database_id)}
             {@cohort_ids != '' & @database_id !=''} ? {  WHERE database_id in (@database_id) AND cohort_id in (@cohort_ids)}
             {@cohort_ids != '' & @database_id ==''} ? {  WHERE cohort_id in (@cohort_ids)}
@@ -625,6 +624,10 @@ getResultsFromVisitContext <- function(dataSource,
 #' @template DatabaseIds
 #' 
 #' @param conceptIds     A list of concept ids to get counts for
+#' 
+#' @param aggregateByYear  Do you want to aggregate by calendar year?
+#' 
+#' @param aggregateByMonth Do you want to aggregate by calendar month?
 #'
 #' @return
 #' Returns a data frame (tibble) with results that conform to concept_count
