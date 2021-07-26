@@ -201,7 +201,6 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
     
     sql <- "SELECT *
             FROM  @results_database_schema.@data_table
-            {@concept_ids != '' & @database_id !='' } ? { WHERE database_id in (@database_id) AND concept_id in (@concept_ids)}
             {@cohort_ids == '' & @database_id !=''} ? { WHERE database_id in (@database_id)}
             {@cohort_ids != '' & @database_id !=''} ? {  WHERE database_id in (@database_id) AND cohort_id in (@cohort_ids)}
             {@cohort_ids != '' & @database_id ==''} ? {  WHERE cohort_id in (@cohort_ids)}
