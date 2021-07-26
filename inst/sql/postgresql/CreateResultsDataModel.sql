@@ -1,7 +1,6 @@
 -- Drop old tables if exist
 
 DROP TABLE IF EXISTS analysis_ref;
-DROP TABLE IF EXISTS calendar_incidence;
 DROP TABLE IF EXISTS cohort;
 DROP TABLE IF EXISTS cohort_count;
 DROP TABLE IF EXISTS cohort_inclusion;
@@ -55,17 +54,6 @@ CREATE TABLE analysis_ref (
 			is_binary VARCHAR(1) NOT NULL,
 			missing_means_zero VARCHAR(1),
 			PRIMARY KEY(analysis_id)
-);
-
---Table calendar_incidence
---HINT DISTRIBUTE ON RANDOM
-CREATE TABLE calendar_incidence (
-			database_id VARCHAR NOT NULL,
-			cohort_id BIGINT NOT NULL,
-			period_type VARCHAR NOT NULL,
-			calendar_month DATE NOT NULL,
-			count_value FLOAT,
-			PRIMARY KEY(database_id, cohort_id, period_type, calendar_month)
 );
 
 --Table cohort

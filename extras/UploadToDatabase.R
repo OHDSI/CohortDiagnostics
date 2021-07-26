@@ -28,7 +28,7 @@ connectionDetails <- createConnectionDetails(
 resultsSchema <- 'cdSkeletoncohortdiagnosticsstudy2'
 
 # commenting this function as it maybe accidentally run - loosing data.
-# createResultsDataModel(connectionDetails = connectionDetails, schema = resultsSchema)
+createResultsDataModel(connectionDetails = connectionDetails, schema = resultsSchema)
 
 Sys.setenv("POSTGRES_PATH" = Sys.getenv('POSTGRES_PATH'))
 

@@ -449,33 +449,6 @@ getResultsFromIncidenceRate <- function(dataSource,
   return(data)
 }
 
-#' Returns data from calendar_incidence table of Cohort Diagnostics results data model
-#'
-#' @description
-#' Returns data from calendar_incidence table of Cohort Diagnostics results data model
-#'
-#' @template DataSource
-#'
-#' @template CohortIds
-#'
-#' @template DatabaseIds
-#'
-#' @return
-#' Returns a data frame (tibble) with results that conform to incidence_rate
-#' table in Cohort Diagnostics results data model.
-#'
-#' @export
-getResultsFromCalendarIncidence <- function(dataSource,
-                                            cohortIds = NULL,
-                                            databaseIds = NULL) {
-  data <- getDataFromResultsDatabaseSchema(
-    dataSource,
-    cohortIds = cohortIds,
-    databaseIds = databaseIds,
-    dataTableName = "calendarIncidence"
-  )
-  return(data)
-}
 
 #' Returns data from inclusion_rule_stats table of Cohort Diagnostics results data model
 #'

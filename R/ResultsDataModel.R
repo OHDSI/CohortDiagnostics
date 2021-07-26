@@ -268,7 +268,7 @@ uploadResults <- function(connectionDetails = NULL,
   dir.create(path = unzipFolder, recursive = TRUE)
   on.exit(unlink(unzipFolder, recursive = TRUE), add = TRUE)
   
-  ParallelLogger::logTrace(" - Unzipping ", zipFileName)
+  ParallelLogger::logInfo(" - Unzipping ", zipFileName)
   zip::unzip(zipFileName, exdir = unzipFolder)
   
   specifications <- getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')
