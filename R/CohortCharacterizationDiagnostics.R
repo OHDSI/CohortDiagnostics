@@ -66,6 +66,7 @@ runCohortCharacterizationDiagnostics <-
            cdmVersion = 5,
            covariateSettings = createDefaultCovariateSettings(),
            batchSize = 100) {
+    
     startTime <- Sys.time()
     if (is.null(connection)) {
       connection <- DatabaseConnector::connect(connectionDetails)
@@ -122,7 +123,7 @@ runCohortCharacterizationDiagnostics <-
     for (start in seq(1, length(cohortIdsNew), by = batchSize)) {
       end <- min(start + batchSize - 1, length(cohortIdsNew))
       if (length(cohortIdsNew) > batchSize) {
-        ParallelLogger::logInfo(
+        ParallelLogger::logTrace(
           sprintf(
             "    - Batch characterization. Processing cohorts %s through %s",
             start,
@@ -130,19 +131,18 @@ runCohortCharacterizationDiagnostics <-
           )
         )
       }
-      
       featureExtractionOutput <-
-        FeatureExtraction::getDbCovariateData(
-          connection = connection,
-          oracleTempSchema = tempEmulationSchema,
-          cdmDatabaseSchema = cdmDatabaseSchema,
-          cohortDatabaseSchema = cohortDatabaseSchema,
-          cdmVersion = cdmVersion,
-          cohortTable = cohortTable,
-          cohortId = cohortIdsNew[start:end],
-          covariateSettings = covariateSettings,
-          aggregated = TRUE
-        )
+          FeatureExtraction::getDbCovariateData(
+            connection = connection,
+            oracleTempSchema = tempEmulationSchema,
+            cdmDatabaseSchema = cdmDatabaseSchema,
+            cohortDatabaseSchema = cohortDatabaseSchema,
+            cdmVersion = cdmVersion,
+            cohortTable = cohortTable,
+            cohortId = cohortIdsNew[start:end],
+            covariateSettings = covariateSettings,
+            aggregated = TRUE
+          )
       
       populationSize <-
         attr(x = featureExtractionOutput, which = "metaData")$populationSize

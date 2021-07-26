@@ -185,7 +185,8 @@ runIncidenceRateDiagnostics <- function(connectionDetails = NULL,
     irYearAgeGender
   )
   result <- result %>% 
-    dplyr::filter(.data$cohortCount > 0 | .data$personYears > 0)
+    dplyr::filter(.data$cohortCount > 0 | .data$personYears > 0) %>% 
+    dplyr::mutate(cohortId = cohortId)
   result$incidenceRate <-
     1000 * result$cohortCount / result$personYears
   result$incidenceRate[is.nan(result$incidenceRate)] <- 0
@@ -195,9 +196,6 @@ runIncidenceRateDiagnostics <- function(connectionDetails = NULL,
     signif(delta, 3),
     attr(delta, "units")
   ))
-  if (nrow(result) == 0) {
-    return(NULL)
-  }
   return(result)
 }
 

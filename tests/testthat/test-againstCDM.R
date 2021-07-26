@@ -339,7 +339,6 @@ test_that("Cohort instantiation", {
 test_that("Testing Cohort diagnostics when not in incremental mode", {
   skip_if_not(runDatabaseTests)
   
-  start <- Sys.time()
   # Cohort Diagnostics -----
   ## Not incremental -----
   ### Neg - no connection or connection details -----

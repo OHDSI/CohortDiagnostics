@@ -209,6 +209,12 @@ writeToAllOutputToCsv <- function(object,
                                      "relationship",
                                      "vocabulary")
   
+  ParallelLogger::logTrace(paste0("  - Found ", paste0(names(object), collapse = ", ")))
+  presentInBoth <- intersect(tablesOfInterest, names(object))
+  presentInObjectOnly <- setdiff(names(object), tablesOfInterest)
+  if (!setequal(presentInBoth, names(object))) {
+    warning(" - Unexpected objects found ", paste(presentInObjectOnly, collapse = ", "), ". Please contact developer.")
+  }
   
   # write vocabulary tables
   for (i in (1:length(tablesOfInterest))) {

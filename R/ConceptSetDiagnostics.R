@@ -802,8 +802,7 @@ exportConceptInformation <- function(connection = NULL,
         ) %>%
         dplyr::tibble()
     }
-    data <-
-      CohortDiagnostics:::.replaceNaInDataFrameWithEmptyString(data)
+    data <- .replaceNaInDataFrameWithEmptyString(data)
     vocabularyTablesData[[vocabularyTable]] <- data
   }
   delta <- Sys.time() - start

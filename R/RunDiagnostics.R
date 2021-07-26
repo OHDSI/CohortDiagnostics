@@ -309,7 +309,8 @@ runCohortDiagnostics <- function(packageName = NULL,
     cohortIds = cohortIds
   )
   
-  if (nrow(cohorts) == 0) {
+  if (any(is.null(cohorts),
+          nrow(cohorts) == 0)) {
     stop("No cohorts specified, or no matching cohorts found. Aborting.")
   }
   if ('name' %in% colnames(cohorts)) {
@@ -462,18 +463,11 @@ runCohortDiagnostics <- function(packageName = NULL,
       )
       instantiatedCohorts <- output$cohort_count %>%
         dplyr::pull(.data$cohortId)
-      ParallelLogger::logInfo(
-        paste0(
-          " - Found ",
-          scales::comma(length(instantiatedCohorts)),
-          " of ",
-          scales::comma(length(instantiatedCohorts)),
-          " (",
-          scales::percent(length(instantiatedCohorts) / nrow(cohorts),
-                          accuracy = 0.1),
-          ") submitted cohorts instantiated. Beginning cohort diagnostics on instantiated cohorts. "
-        )
-      )
+      if (length(instantiatedCohorts) < nrow(cohorts)) {
+        ParallelLogger::logInfo(
+          paste0(" - Skipping diagnostics on following cohorts as they were either not instantiated or had no subjects: ",
+                 paste0(setdiff(cohorts$cohortId, instantiatedCohorts), collapse = ", ")))
+      }
       output <- NULL
     } else {
       warning(
@@ -553,6 +547,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           nrow(cohorts) - nrow(subset)
         ))
       }
+      
       conceptSetDiagnostics <- runConceptSetDiagnostics(
         connection = connection,
         tempEmulationSchema = tempEmulationSchema,
@@ -610,7 +605,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         ))
       }
       output <- list()
-      output$data <- runVisitContextDiagnostics(
+      output$visit_context <- runVisitContextDiagnostics(
         connection = connection,
         tempEmulationSchema = tempEmulationSchema,
         cdmDatabaseSchema = cdmDatabaseSchema,
@@ -677,12 +672,6 @@ runCohortDiagnostics <- function(packageName = NULL,
           firstOccurrenceOnly = TRUE,
           washoutPeriod = washoutPeriod
         )
-        if (is.null(data)) {
-          return(NULL)
-        }
-        if (nrow(data) == 0) {
-          data <- NULL
-        }
         if (nrow(data) > 0) {
           data <- data %>%
             dplyr::mutate(cohortId = row$cohortId)
@@ -811,7 +800,8 @@ runCohortDiagnostics <- function(packageName = NULL,
         ))
       }
       ParallelLogger::logTrace(" - Beginning Cohort Relationship SQL")
-      cohortRelationship <-
+      output <- list()
+      output$cohort_relationships <-
         runCohortRelationshipDiagnostics(
           connection = connection,
           cohortDatabaseSchema = cohortDatabaseSchema,
@@ -821,36 +811,11 @@ runCohortDiagnostics <- function(packageName = NULL,
           comparatorCohortIds = cohorts$cohortId
         )
       
-      if (nrow(cohortRelationship) > 0) {
-        cohortRelationship <- cohortRelationship %>%
-          dplyr::mutate(databaseId = !!databaseId)
-        columnsInCohortRelationship <- c(
-          'bothSubjects',
-          'cBeforeTSubjects',
-          'tBeforeCSubjects',
-          'sameDaySubjects',
-          'cPersonDays',
-          'cSubjectsStart',
-          'cSubjectsEnd',
-          'cInTSubjects'
-        )
-        for (i in (1:length(columnsInCohortRelationship))) {
-          cohortRelationship <-
-            enforceMinCellValue(cohortRelationship,
-                                columnsInCohortRelationship[[i]],
-                                minCellCount)
-        }
-        cohortRelationship <-
-          .replaceNaInDataFrameWithEmptyString(cohortRelationship)
-        writeToCsv(
-          data = cohortRelationship,
-          fileName = file.path(exportFolder, "cohort_relationships.csv"),
-          incremental = incremental,
-          cohortId = subset$cohortId
-        )
-      } else {
-        warning('No cohort relationship data')
-      }
+      writeToAllOutputToCsv(object = output,
+                            exportFolder = exportFolder,
+                            incremental = incremental,
+                            minCellCount = minCellCount,
+                            databaseId = databaseId)
       recordTasksDone(
         cohortId = subset$cohortId,
         task = "runCohortRelationship",
