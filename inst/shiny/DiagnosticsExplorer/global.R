@@ -21,7 +21,7 @@ defaultResultsSchema <- 'cdSkeletoncohortdiagnosticsstudy2'
 defaultVocabularySchema <- defaultResultsSchema
 alternateVocabularySchema <- c('vocabulary')
 
-defaultDatabaseMode <- TRUE # Use file system if FALSE
+defaultDatabaseMode <- FALSE # Use file system if FALSE
 
 showTimeSeries <- TRUE
 
@@ -103,7 +103,9 @@ if (!exists("shinySettings")) {
 }
 
 dataModelSpecifications <-
-  read.csv("resultsDataModelSpecification.csv")
+  getResultsDataModelSpecifications()
+dataModelSpecifications21 <-
+  getResultsDataModelSpecifications(versionNumber = 2.1)
 # Cleaning up any tables in memory:
 suppressWarnings(rm(
   list = SqlRender::snakeCaseToCamelCase(dataModelSpecifications$tableName)

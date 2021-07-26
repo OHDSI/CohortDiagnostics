@@ -339,7 +339,6 @@ test_that("Cohort instantiation", {
 test_that("Testing Cohort diagnostics when not in incremental mode", {
   skip_if_not(runDatabaseTests)
   
-  start <- Sys.time()
   # Cohort Diagnostics -----
   ## Not incremental -----
   ### Neg - no connection or connection details -----
@@ -894,35 +893,16 @@ test_that("Data Retrieval", {
     )
   )
   
-  ## Included concept ----
-  #### Pos ----
-  includedConceptFromFile <-
-    CohortDiagnostics::getResultsFromIncludedConcept(dataSource = dataSourcePreMergedFile,
-                                                     cohortIds = 18348,
-                                                     databaseIds = 'cdmV5')
-  testthat::expect_true(nrow(includedConceptFromFile) >= 0)
-  includedConceptFromFile2 <-
-    CohortDiagnostics::getResultsFromIncludedConcept(dataSource = dataSourcePreMergedFile)
-  testthat::expect_true(nrow(includedConceptFromFile2) >= 0)
-  #### Neg ----
-  testthat::expect_null(
-    CohortDiagnostics::getResultsFromIncludedConcept(
-      dataSource = dataSourcePreMergedFile,
-      cohortIds = -1111,
-      databaseIds = 'cdmV5'
-    )
-  )
-  
   ## Orphan concept ----
   #### Pos ----
-  orphanConceptFromFile <-
-    CohortDiagnostics::getResultsFromOrphanConcept(dataSource = dataSourcePreMergedFile,
-                                                   cohortIds = 18348,
-                                                   databaseIds = 'cdmV5')
-  testthat::expect_true(nrow(orphanConceptFromFile) >= 0)
-  orphanConceptFromFile2 <-
-    CohortDiagnostics::getResultsFromOrphanConcept(dataSource = dataSourcePreMergedFile)
-  testthat::expect_true(nrow(orphanConceptFromFile2) >= 0)
+  # orphanConceptFromFile <-
+  #   CohortDiagnostics::getResultsFromOrphanConcept(dataSource = dataSourcePreMergedFile,
+  #                                                  cohortIds = 18348,
+  #                                                  databaseIds = 'cdmV5')
+  # testthat::expect_true(nrow(orphanConceptFromFile) >= 0)
+  # orphanConceptFromFile2 <-
+  #   CohortDiagnostics::getResultsFromOrphanConcept(dataSource = dataSourcePreMergedFile)
+  # testthat::expect_true(nrow(orphanConceptFromFile2) >= 0)
   
   ## Concept id details ----
   #### Pos ----
@@ -949,40 +929,7 @@ test_that("Data Retrieval", {
     )
   ))
   
-  ## Resolved concept ----
-  #### Pos ----
-  resolvedMappedConceptSetFromFile <-
-    CohortDiagnostics::getResultsResolveMappedConceptSet(dataSource = dataSourcePreMergedFile,
-                                                         cohortIds = 18348,
-                                                         databaseIds = 'cdmV5')
-  testthat::expect_true(nrow(resolvedMappedConceptSetFromFile$resolved) >= 0)
-  testthat::expect_null(resolvedMappedConceptSetFromFile$mapped)
-  resolvedMappedConceptSetFromFile2 <-
-    CohortDiagnostics::getResultsResolveMappedConceptSet(dataSource = dataSourcePreMergedFile)
-  testthat::expect_true(nrow(resolvedMappedConceptSetFromFile2$resolved) >= 0)
-  testthat::expect_null(resolvedMappedConceptSetFromFile2$mapped)
-  #### Neg ----
-  testthat::expect_null(
-    conceptIdDetails <-
-      suppressWarnings(
-        CohortDiagnostics::getResultsResolveMappedConceptSet(
-          dataSource = dataSourcePreMergedFile,
-          cohortIds = -1111,
-          databaseIds = 'cdmV5'
-        )
-      )
-  )
-  
-  ## Calendar incidence ----
-  # Table does not exist in results, is not generated in Eunomia?
-  calendarIncidenceFromFile <-
-    CohortDiagnostics::getResultsFromCalendarIncidence(dataSource = dataSourcePreMergedFile)
-  testthat::expect_true(any(
-    is.null(calendarIncidenceFromFile),
-    nrow(calendarIncidenceFromFile) >= 0
-  ))
-  
-  ## Cohort Relationship ----
+   ## Cohort Relationship ----
   #### Pos ----
   cohortRelationshipsFromFile <-
     CohortDiagnostics::getResultsFromCohortRelationships(dataSource = dataSourcePreMergedFile,
@@ -1277,40 +1224,19 @@ test_that("Data Retrieval", {
     )
   )
   
-  ## Included concept ----
-  #### Pos ----
-  includedConceptFromDb <-
-    CohortDiagnostics::getResultsFromIncludedConcept(dataSource = dataSourceDatabase,
-                                                     cohortIds = 18348,
-                                                     databaseIds = 'cdmV5')
-  testthat::expect_true(nrow(includedConceptFromDb) >= 0)
-  testthat::expect_true(dplyr::all_equal(includedConceptFromDb, includedConceptFromFile))
-  includedConceptFromDb2 <-
-    CohortDiagnostics::getResultsFromIncludedConcept(dataSource = dataSourceDatabase)
-  testthat::expect_true(nrow(includedConceptFromDb2) >= 0)
-  testthat::expect_true(dplyr::all_equal(includedConceptFromDb2, includedConceptFromFile2))
-  #### Neg ----
-  testthat::expect_null(
-    CohortDiagnostics::getResultsFromIncludedConcept(
-      dataSource = dataSourceDatabase,
-      cohortIds = -1111,
-      databaseIds = 'cdmV5'
-    )
-  )
-  
   ## Orphan concept ----
   #### Pos ----
-  orphanConceptFromDb <-
-    CohortDiagnostics::getResultsFromOrphanConcept(dataSource = dataSourceDatabase,
-                                                   cohortIds = 18348,
-                                                   databaseIds = 'cdmV5')
-  testthat::expect_true(nrow(orphanConceptFromDb) >= 0)
-  testthat::expect_true(dplyr::all_equal(orphanConceptFromDb, orphanConceptFromFile))
-  orphanConceptFromDb2 <-
-    CohortDiagnostics::getResultsFromOrphanConcept(dataSource = dataSourceDatabase)
-  testthat::expect_true(nrow(orphanConceptFromDb2) >= 0)
-  testthat::expect_true(dplyr::all_equal(orphanConceptFromDb2, orphanConceptFromFile2))
-  
+  # orphanConceptFromDb <-
+  #   CohortDiagnostics::getResultsFromOrphanConcept(dataSource = dataSourceDatabase,
+  #                                                  cohortIds = 18348,
+  #                                                  databaseIds = 'cdmV5')
+  # testthat::expect_true(nrow(orphanConceptFromDb) >= 0)
+  # testthat::expect_true(dplyr::all_equal(orphanConceptFromDb, orphanConceptFromFile))
+  # orphanConceptFromDb2 <-
+  #   CohortDiagnostics::getResultsFromOrphanConcept(dataSource = dataSourceDatabase)
+  # testthat::expect_true(nrow(orphanConceptFromDb2) >= 0)
+  # testthat::expect_true(dplyr::all_equal(orphanConceptFromDb2, orphanConceptFromFile2))
+  # 
   ## Concept id details ----
   #### Pos ----
   conceptIdDetailsFromDb <-
@@ -1339,44 +1265,7 @@ test_that("Data Retrieval", {
     )
   ))
   
-  ## Resolved concept ----
-  #### Pos ----
-  resolvedMappedConceptSetFromDb <-
-    CohortDiagnostics::getResultsResolveMappedConceptSet(dataSource = dataSourceDatabase,
-                                                         cohortIds = 18348,
-                                                         databaseIds = 'cdmV5')
-  testthat::expect_true(nrow(resolvedMappedConceptSetFromDb$resolved) >= 0)
-  #!!!!!!!!!!!!!!! BUG -should be NULL
-  # testthat::expect_null(resolvedMappedConceptSetFromDb$mapped)
-  #!!!!!!!!!!!!!!! BUG - not same columns
-  # testthat::expect_true(dplyr::all_equal(resolvedMappedConceptSetFromDb$resolved,
-  #                                        resolvedMappedConceptSetFromFile$resolved))
-  resolvedMappedConceptSetFromDb2 <-
-    CohortDiagnostics::getResultsResolveMappedConceptSet(dataSource = dataSourceDatabase)
-  #!!!!!!!!!!!!!!! BUG - invalid reason is not in db? - not same columns
-  # testthat::expect_true(dplyr::all_equal(resolvedMappedConceptSetFromDb2$resolved,
-  #                                        resolvedMappedConceptSetFromFile2$resolved))
-  testthat::expect_true(nrow(resolvedMappedConceptSetFromDb2$resolved) >= 0)
-  testthat::expect_true(nrow(resolvedMappedConceptSetFromDb2$mapped) >= 0)
-  #### Neg ----
-  negativeResolved <-
-    CohortDiagnostics::getResultsResolveMappedConceptSet(
-      dataSource = dataSourceDatabase,
-      cohortIds = -1111,
-      databaseIds = 'cdmV5'
-    )
-  
-  ## Calendar incidence ----
-  # Table does not exist in results, is not generated in Eunomia?
-  calendarIncidenceFromDb <-
-    CohortDiagnostics::getResultsFromCalendarIncidence(dataSource = dataSourceDatabase)
-  testthat::expect_true(any(
-    is.null(calendarIncidenceFromDb),
-    nrow(calendarIncidenceFromDb) >= 0
-  ))
-  #! unomia has no data
-  # testthat::expect_true(dplyr::all_equal(calendarIncidenceFromDb,calendarIncidenceFromFile))
-  
+
   ## Cohort Relationship ----
   #### Pos ----
   cohortRelationshipsFromDb <-
@@ -1481,7 +1370,7 @@ test_that("Data removal works", {
   skip_if_not(runDatabaseTests)
   
   specifications <-
-    CohortDiagnostics::getResultsDataModelSpecifications()
+    CohortDiagnostics::getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')
   connection <- DatabaseConnector::connect(connectionDetails)
   
   dataSourceDatabase <- CohortDiagnostics::createDatabaseDataSource(

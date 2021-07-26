@@ -109,7 +109,6 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::select(cohort = .data$shortName, 
                       .data$cohortId, 
                       .data$cohortName,
-                      .data$logicDescription,
                       .data$sql,
                       .data$json)
       downloadCsv(x = x, fileName = file)
@@ -234,12 +233,13 @@ shiny::shinyServer(function(input, output, session) {
             tags$td(tags$strong("Cohort Name: ")),
             tags$td(HTML("&nbsp;&nbsp;")),
             tags$td(data[i, ]$cohortName)
-          ),
-          tags$tr(
-            tags$td(tags$strong("Logic: ")),
-            tags$td(HTML("&nbsp;&nbsp;")),
-            tags$td(data[i, ]$logicDescription)
           )
+          # , #need to part cohort.metadata (a json) and show all contents in that json
+          # tags$tr(
+          #   tags$td(tags$strong("Logic: ")),
+          #   tags$td(HTML("&nbsp;&nbsp;")),
+          #   tags$td(data[i, ]$logicDescription)
+          # )
         )
       }
       return(details)
@@ -1264,7 +1264,7 @@ shiny::shinyServer(function(input, output, session) {
           is.null(cohortDefinitionConceptSetExpressionRow()$id)) {
         return(NULL)
       }
-      conceptCount <- getResultsFromIncludedConcept(
+      conceptCount <- getResultsFromConceptCount(
         dataSource = dataSource,
         databaseIds = database$databaseId,
         cohortId = row$cohortId
@@ -1278,7 +1278,6 @@ shiny::shinyServer(function(input, output, session) {
     databaseIdToFilter <- database %>%
       dplyr::filter(.data$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchema) %>%
       dplyr::pull(.data$databaseId)
-    
     conceptCounts <- getConceptCountForAllDatabase()
     if (all(!is.null(conceptCounts),
             nrow(conceptCounts) > 0)) {
@@ -2416,7 +2415,7 @@ shiny::shinyServer(function(input, output, session) {
           is.null(cohortDefinitionConceptSetExpressionSecondRow()$id)) {
         return(NULL)
       }
-      conceptCount <- getResultsFromIncludedConcept(
+      conceptCount <- getResultsFromConceptCount(
         dataSource = dataSource,
         databaseIds = database$databaseId,
         cohortId = selectedCohortDefinitionRow()[2,]$cohortId
@@ -3919,50 +3918,6 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  # calendar Incidence -----
-  # calendarIncidenceData <- shiny::reactive({
-  #   data <- getResultsFromCalendarIncidence(
-  #     dataSource,
-  #     cohortIds = cohortIds(),
-  #     databaseIds = databaseIds()
-  #   )
-  #   return(data);
-  # })
-  # 
-  # output$calendarIncidencePlot <- ggiraph::renderggiraph(expr = {
-  #   validate(need(length(databaseIds()) > 0, "No data sources chosen"))
-  #   validate(need(length(cohortIds()) > 0, "No cohorts chosen")) 
-  #   shiny::withProgress(
-  #     message = paste(
-  #       "Building calendar incidence plot data for ",
-  #       length(cohortIds()),
-  #       " cohorts and ",
-  #       length(databaseIds()),
-  #       " databases"
-  #     ),{
-  #       data <- calendarIncidenceData()
-  #       
-  #       validate(need(all(!is.null(data), nrow(data) > 0), paste0("No data for this combination"))) 
-  #       plot <- plotCalendarIncidence(
-  #         data = data,
-  #         cohortCount = cohortCount,
-  #         shortNameRef = cohort,
-  #         yscaleFixed = input$calendarIncidenceYscaleFixed
-  #       )
-  #       return(plot)
-  #     })
-  #   })
-  # 
-  # output$saveCalendarIncidencePlot <-  downloadHandler(
-  #   filename = function() {
-  #     getFormattedFileName(fileName = "CalendarIncidence")
-  #   },
-  #   content = function(file) {
-  #     write.csv(calendarIncidenceData(), file)
-  #   }
-  # )
-  
-  
   # Time Series -----
   ## Tssible data ----
   timeSeriesTssibleData <- shiny::reactiveVal(NULL)
@@ -4277,7 +4232,7 @@ shiny::shinyServer(function(input, output, session) {
     if (all(is(dataSource, "environment"), !exists('includedSourceConcept'))) {
       return(NULL)
     }
-    includedConcepts <- getResultsFromIncludedConcept(
+    includedConcepts <- getResultsFromConceptCount(
       dataSource = dataSource,
       cohortIds = cohortId(),
       databaseIds = databaseIds()

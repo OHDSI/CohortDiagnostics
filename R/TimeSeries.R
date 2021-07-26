@@ -241,7 +241,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     if (seriesToRun[[i]] == 'ComputeTimeSeries3.sql') {
       ParallelLogger::logInfo(
         paste0(
-          " - (",
+          "  - (",
           scales::percent(i / length(seriesToRun)),
           ") Running database time series T3: persons in the data source who have atleast one observation day in calendar period."
         )
@@ -340,7 +340,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       Andromeda::appendToTable(resultsInAndromeda$timeSeries,
                                resultsInAndromeda$temp)
     }
-    ParallelLogger::logTrace(' --- Completed.')
+    ParallelLogger::logTrace('     Completed.')
   }
   results <- resultsInAndromeda$timeSeries %>%
     dplyr::collect() %>%
@@ -381,7 +381,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
   )
   
   delta <- Sys.time() - start
-  ParallelLogger::logInfo(" - Retrieving Time Series data took ",
+  ParallelLogger::logTrace(" - Retrieving Time Series data took ",
                           signif(delta, 3),
                           " ",
                           attr(delta, "units"))

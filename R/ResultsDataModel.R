@@ -15,25 +15,11 @@
 # limitations under the License.
 #
 
-#' Get specifications for Cohort Diagnostics results data model
-#'
-#' @return
-#' A tibble data frame object with specifications
-#'
-#' @export
-getResultsDataModelSpecifications <- function() {
-  pathToCsv <-
-    system.file("settings", "resultsDataModelSpecification.csv", package = "CohortDiagnostics")
-  resultsDataModelSpecifications <-
-    readr::read_csv(file = pathToCsv, col_types = readr::cols())
-  return(resultsDataModelSpecifications)
-}
-
 checkFixColumnNames <-
   function(table,
            tableName,
            zipFileName,
-           specifications = getResultsDataModelSpecifications()) {
+           specifications = getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')) {
     observeredNames <- colnames(table)[order(colnames(table))] %>%
       sort()
     
@@ -79,7 +65,7 @@ checkAndFixDataTypes <-
   function(table,
            tableName,
            zipFileName,
-           specifications = getResultsDataModelSpecifications()) {
+           specifications = getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')) {
     tableSpecs <- specifications %>%
       filter(.data$tableName == !!tableName)
     
@@ -153,7 +139,7 @@ checkAndFixDuplicateRows <-
   function(table,
            tableName,
            zipFileName,
-           specifications = getResultsDataModelSpecifications()) {
+           specifications = getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')) {
     primaryKeys <- specifications %>%
       dplyr::filter(.data$tableName == !!tableName &
                       .data$primaryKey == "Yes") %>%
@@ -179,7 +165,7 @@ appendNewRows <-
   function(data,
            newData,
            tableName,
-           specifications = getResultsDataModelSpecifications()) {
+           specifications = getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')) {
     if (nrow(data) > 0) {
       primaryKeys <- specifications %>%
         dplyr::filter(.data$tableName == !!tableName &
@@ -282,10 +268,10 @@ uploadResults <- function(connectionDetails = NULL,
   dir.create(path = unzipFolder, recursive = TRUE)
   on.exit(unlink(unzipFolder, recursive = TRUE), add = TRUE)
   
-  ParallelLogger::logTrace(" - Unzipping ", zipFileName)
+  ParallelLogger::logInfo(" - Unzipping ", zipFileName)
   zip::unzip(zipFileName, exdir = unzipFolder)
   
-  specifications <- getResultsDataModelSpecifications()
+  specifications <- getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')
   
   if (purgeSiteDataBeforeUploading) {
     database <-
@@ -297,7 +283,7 @@ uploadResults <- function(connectionDetails = NULL,
   }
   
   uploadTable <- function(tableName) {
-    ParallelLogger::logTrace(" - Uploading table ", tableName)
+    ParallelLogger::logInfo("  - Uploading table ", tableName)
     
     primaryKey <- specifications %>%
       filter(.data$tableName == !!tableName &
@@ -340,7 +326,7 @@ uploadResults <- function(connectionDetails = NULL,
       }
       
       uploadChunk <- function(chunk, pos) {
-        ParallelLogger::logInfo(paste0("  - Preparing to upload rows ",
+        ParallelLogger::logTrace(paste0("  - Preparing to upload rows ",
                                        scales::comma(pos),
                                        " through ",
                                        scales::comma(pos + nrow(chunk) - 1)))
@@ -400,7 +386,7 @@ uploadResults <- function(connectionDetails = NULL,
             if ("database_id" %in% env$primaryKey ||
                 forceOverWriteOfSpecifications) {
               ParallelLogger::logInfo(
-                " - Found ",
+                "   - Found ",
                 nrow(duplicates),
                 " rows in database with the same primary key ",
                 "as the data to insert. Deleting from database before inserting."
@@ -414,7 +400,7 @@ uploadResults <- function(connectionDetails = NULL,
               
             } else {
               ParallelLogger::logInfo(
-                " - Found ",
+                "   - Found ",
                 scales::comma(nrow(duplicates)),
                 " rows in database with the same primary key ",
                 "as the data to insert. Removing from data to insert."
@@ -428,7 +414,7 @@ uploadResults <- function(connectionDetails = NULL,
           }
         }
         if (nrow(chunk) == 0) {
-          ParallelLogger::logInfo(" - No data left to insert")
+          ParallelLogger::logInfo("   - No data left to insert. Moving to next.")
         } else {
           DatabaseConnector::insertTable(
             connection = connection,
@@ -437,7 +423,7 @@ uploadResults <- function(connectionDetails = NULL,
             dropTableIfExists = FALSE,
             createTable = FALSE,
             tempTable = FALSE,
-            progressBar = TRUE
+            progressBar = FALSE
           )
         }
       }
@@ -509,7 +495,7 @@ deleteAllRecordsForDatabaseId <- function(connection,
   if (databaseIdCount != 0) {
     ParallelLogger::logInfo(
       sprintf(
-        "- Found %s rows in  database with database ID '%s'. Deleting all before inserting.",
+        "   - Found %s rows in  database with database ID '%s'. Deleting all before inserting.",
         databaseIdCount,
         databaseId
       )

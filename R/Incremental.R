@@ -29,10 +29,13 @@ isTaskRequired <-
            recordKeepingFile,
            verbose = TRUE) {
     if (file.exists(recordKeepingFile)) {
-      recordKeeping <-  readr::read_csv(recordKeepingFile,
-                                        col_types = readr::cols(),
-                                        guess_max = min(1e7))
-      task <- recordKeeping[getKeyIndex(list(...), recordKeeping), ]
+      recordKeeping <-  readr::read_csv(
+        recordKeepingFile,
+        col_types = readr::cols(),
+        na = character(),
+        guess_max = min(1e7)
+      )
+      task <- recordKeeping[getKeyIndex(list(...), recordKeeping),]
       if (nrow(task) == 0) {
         return(TRUE)
       }
@@ -60,9 +63,12 @@ isTaskRequired <-
 getRequiredTasks <- function(..., checksum, recordKeepingFile) {
   tasks <- list(...)
   if (file.exists(recordKeepingFile) && length(tasks[[1]]) > 0) {
-    recordKeeping <-  readr::read_csv(recordKeepingFile,
-                                      col_types = readr::cols(),
-                                      guess_max = min(1e7))
+    recordKeeping <-  readr::read_csv(
+      recordKeepingFile,
+      col_types = readr::cols(),
+      na = character(),
+      guess_max = min(1e7)
+    )
     tasks$checksum <- checksum
     tasks <- dplyr::as_tibble(tasks)
     if (all(names(tasks) %in% names(recordKeeping))) {
@@ -74,7 +80,7 @@ getRequiredTasks <- function(..., checksum, recordKeepingFile) {
     if (length(idx) > 0) {
       # text <- paste(sprintf("%s = %s", names(tasks), tasks[idx,]), collapse = ", ")
       # ParallelLogger::logInfo("Skipping ", text, " because unchanged from earlier run")
-      tasks <- tasks[-idx, ]
+      tasks <- tasks[-idx,]
     }
   }
   return(tasks)
@@ -107,9 +113,12 @@ recordTasksDone <-
     }
     
     if (file.exists(recordKeepingFile)) {
-      recordKeeping <-  readr::read_csv(recordKeepingFile,
-                                        col_types = readr::cols(),
-                                        guess_max = min(1e7))
+      recordKeeping <-  readr::read_csv(
+        recordKeepingFile,
+        col_types = readr::cols(),
+        na = character(),
+        guess_max = min(1e7)
+      )
       recordKeeping$timeStamp <-
         as.character(recordKeeping$timeStamp)
       # ensure cohortId and comparatorId are always integer while reading
@@ -123,7 +132,7 @@ recordTasksDone <-
       }
       idx <- getKeyIndex(list(...), recordKeeping)
       if (length(idx) > 0) {
-        recordKeeping <- recordKeeping[-idx, ]
+        recordKeeping <- recordKeeping[-idx,]
       }
     } else {
       recordKeeping <- dplyr::tibble()
@@ -139,7 +148,13 @@ recordTasksDone <-
       newRow$comparatorId <- as.double(newRow$comparatorId)
     }
     recordKeeping <- dplyr::bind_rows(recordKeeping, newRow)
-    readr::write_csv(recordKeeping, recordKeepingFile)
+    readr::write_excel_csv(
+      x = recordKeeping,
+      file = recordKeepingFile,
+      na = "",
+      append = FALSE,
+      delim = ","
+    )
   }
 
 writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
@@ -184,13 +199,19 @@ writeCovariateDataAndromedaToCsv <-
       processChunk <- function(chunk, pos) {
         chunk <- chunk %>%
           filter(!.data$cohort_id %in% cohortIds)
-        readr::write_csv(chunk, tempName, append = (pos != 1))
+        readr::write_excel_csv(
+          x = chunk,
+          file = tempName,
+          append = (pos != 1),
+          na = ""
+        )
       }
       
       readr::read_csv_chunked(
         file = fileName,
         callback = processChunk,
         chunk_size = batchSize,
+        na = character(),
         col_types = readr::cols(),
         guess_max = batchSize
       )
@@ -198,7 +219,13 @@ writeCovariateDataAndromedaToCsv <-
       addChunk <- function(chunk) {
         colnames(chunk) <- SqlRender::camelCaseToSnakeCase(colnames(chunk))
         chunk <- .replaceNaInDataFrameWithEmptyString(chunk)
-        readr::write_csv(chunk, tempName, append = TRUE)
+        readr::write_excel_csv(
+          x = chunk,
+          fil = tempName,
+          append = TRUE,
+          na = "",
+          delim = ","
+        )
       }
       Andromeda::batchApply(data, addChunk)
       unlink(fileName)
@@ -217,7 +244,13 @@ writeCovariateDataAndromedaToCsv <-
         if (first) {
           colnames(batch) <- SqlRender::camelCaseToSnakeCase(colnames(batch))
         }
-        readr::write_csv(batch, fileName, append = !first)
+        readr::write_excel_csv(
+          x = batch,
+          file = fileName,
+          append = !first,
+          na = "",
+          delim = ","
+        )
       }
       Andromeda::batchApply(data, writeToFile)
     }
@@ -230,9 +263,12 @@ saveIncremental <- function(data, fileName, ...) {
     }
   }
   if (file.exists(fileName)) {
-    previousData <- readr::read_csv(fileName,
-                                    col_types = readr::cols(),
-                                    guess_max = min(1e7))
+    previousData <- readr::read_csv(
+      fileName,
+      col_types = readr::cols(),
+      na = character(),
+      guess_max = min(1e7)
+    )
     if ((nrow(previousData)) > 0) {
       if (!length(list(...)) == 0) {
         idx <- getKeyIndex(list(...), previousData)
@@ -240,7 +276,7 @@ saveIncremental <- function(data, fileName, ...) {
         idx <- NULL
       }
       if (length(idx) > 0) {
-        previousData <- previousData[-idx, ]
+        previousData <- previousData[-idx,]
       }
       if (nrow(previousData) > 0) {
         data <- dplyr::bind_rows(previousData, data) %>%
@@ -251,7 +287,13 @@ saveIncremental <- function(data, fileName, ...) {
       }
     }
   }
-  readr::write_csv(data, fileName)
+  readr::write_excel_csv(
+    x = data,
+    file = fileName,
+    na = "",
+    append = FALSE,
+    delim = ","
+  )
 }
 
 subsetToRequiredCohorts <-
@@ -266,7 +308,7 @@ subsetToRequiredCohorts <-
         checksum = cohorts$checksum,
         recordKeepingFile = recordKeepingFile
       )
-      return(cohorts[cohorts$cohortId %in% tasks$cohortId, ])
+      return(cohorts[cohorts$cohortId %in% tasks$cohortId,])
     } else {
       return(cohorts)
     }

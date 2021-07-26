@@ -77,12 +77,6 @@ runIncidenceRateDiagnostics <- function(connectionDetails = NULL,
       cohortId,
       " appears to be empty. Was it instantiated? Skipping incidence rate computation."
     )
-    delta <- Sys.time() - start
-    ParallelLogger::logTrace(paste(
-      "  - Computing incidence rates took",
-      signif(delta, 3),
-      attr(delta, "units")
-    ))
     return(NULL)
   }
   
@@ -107,7 +101,8 @@ runIncidenceRateDiagnostics <- function(connectionDetails = NULL,
     createTable = TRUE,
     tempTable = TRUE,
     tempEmulationSchema = tempEmulationSchema,
-    camelCaseToSnakeCase = TRUE
+    camelCaseToSnakeCase = TRUE, 
+    progressBar = FALSE
   )
   
   sql <-
@@ -124,7 +119,7 @@ runIncidenceRateDiagnostics <- function(connectionDetails = NULL,
       washout_period = washoutPeriod,
       cohort_id = cohortId
     )
-  DatabaseConnector::executeSql(connection, sql)
+  DatabaseConnector::executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
   
   sql <- "SELECT * FROM #rates_summary;"
   ratesSummary <-
@@ -190,19 +185,17 @@ runIncidenceRateDiagnostics <- function(connectionDetails = NULL,
     irYearAgeGender
   )
   result <- result %>% 
-    dplyr::filter(.data$cohortCount > 0 | .data$personYears > 0)
+    dplyr::filter(.data$cohortCount > 0 | .data$personYears > 0) %>% 
+    dplyr::mutate(cohortId = cohortId)
   result$incidenceRate <-
     1000 * result$cohortCount / result$personYears
   result$incidenceRate[is.nan(result$incidenceRate)] <- 0
   delta <- Sys.time() - start
-  ParallelLogger::logInfo(paste(
+  ParallelLogger::logTrace(paste(
     "  - Computing incidence rates took",
     signif(delta, 3),
     attr(delta, "units")
   ))
-  if (nrow(result) == 0) {
-    return(NULL)
-  }
   return(result)
 }
 

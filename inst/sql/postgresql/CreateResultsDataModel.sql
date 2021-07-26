@@ -1,7 +1,6 @@
 -- Drop old tables if exist
 
 DROP TABLE IF EXISTS analysis_ref;
-DROP TABLE IF EXISTS calendar_incidence;
 DROP TABLE IF EXISTS cohort;
 DROP TABLE IF EXISTS cohort_count;
 DROP TABLE IF EXISTS cohort_inclusion;
@@ -10,9 +9,14 @@ DROP TABLE IF EXISTS cohort_inclusion_stats;
 DROP TABLE IF EXISTS cohort_relationships;
 DROP TABLE IF EXISTS concept;
 DROP TABLE IF EXISTS concept_ancestor;
+DROP TABLE IF EXISTS concept_class;
+DROP TABLE IF EXISTS concept_count;
 DROP TABLE IF EXISTS concept_cooccurrence;
+DROP TABLE IF EXISTS concept_excluded;
+DROP TABLE IF EXISTS concept_mapping;
 DROP TABLE IF EXISTS concept_relationship;
 DROP TABLE IF EXISTS concept_resolved;
+DROP TABLE IF EXISTS concept_subjects;
 DROP TABLE IF EXISTS cohort_summary_stats;
 DROP TABLE IF EXISTS concept_sets;
 DROP TABLE IF EXISTS concept_synonym;
@@ -50,17 +54,6 @@ CREATE TABLE analysis_ref (
 			is_binary VARCHAR(1) NOT NULL,
 			missing_means_zero VARCHAR(1),
 			PRIMARY KEY(analysis_id)
-);
-
---Table calendar_incidence
---HINT DISTRIBUTE ON RANDOM
-CREATE TABLE calendar_incidence (
-			database_id VARCHAR NOT NULL,
-			cohort_id BIGINT NOT NULL,
-			period_type VARCHAR NOT NULL,
-			calendar_month DATE NOT NULL,
-			count_value FLOAT,
-			PRIMARY KEY(database_id, cohort_id, period_type, calendar_month)
 );
 
 --Table cohort
@@ -188,11 +181,12 @@ CREATE TABLE concept_class (
 --HINT DISTRIBUTE ON RANDOM
 CREATE TABLE concept_count (
 			database_id VARCHAR NOT NULL,
+			domain_table VARCHAR NOT NULL,
 			concept_id INT NOT NULL,
 			event_year INT NOT NULL,
 			event_month INT NOT NULL,
 			concept_count FLOAT NOT NULL,
-			PRIMARY KEY(database_id, concept_id, event_year, event_month)
+			PRIMARY KEY(database_id, domain_table, concept_id, event_year, event_month)
 );
 
 --Table concept_cooccurrence
@@ -242,6 +236,17 @@ CREATE TABLE concept_sets (
 			concept_set_expression VARCHAR NOT NULL,
 			PRIMARY KEY(cohort_id, concept_set_id)
 );
+
+--Table concept_count
+--HINT DISTRIBUTE ON RANDOM
+CREATE TABLE concept_subjects (
+			database_id VARCHAR NOT NULL,
+			domain_table VARCHAR NOT NULL,
+			concept_id INT NOT NULL,
+			subject_count FLOAT NOT NULL,
+			PRIMARY KEY(database_id, domain_table, concept_id)
+);
+
 
 --Table concept_excluded
 --HINT DISTRIBUTE ON RANDOM

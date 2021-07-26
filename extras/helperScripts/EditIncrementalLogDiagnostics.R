@@ -15,11 +15,11 @@ listFiles <-
   )
 
 # "getCohortCounts", "runInclusionStatistics", "runConceptSetDiagnostics", 
-# "runVisitContext", "runIncidenceRate", "runCohortOverlap","runCohortAsFeatures",
-# "runCohortCharacterization", "runTemporalCohortCharacterization"
+# "runVisitContext", "runIncidenceRate", "runCohortRelationship",
+# "runCohortCharacterization", "runTemporalCohortCharacterization", "runCohortTimeSeries"
 
 
-# tasksToRemove <- c("runConceptSetDiagnostics")
+tasksToRemove <- c("runCohortRelationship", "runCohortCharacterization", "runTemporalCohortCharacterization")
 
 
 

@@ -164,6 +164,7 @@ renderTranslateQuerySql <-
 # private function - not exported
 getDataFromResultsDatabaseSchema <- function(dataSource,
                                              cohortIds = NULL,
+                                             conceptIds = NULL,
                                              databaseIds = NULL,
                                              dataTableName) {
   if (is(dataSource, "environment")) {
@@ -184,6 +185,10 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
     if (!is.null(databaseIds)) {
       data <- data %>%
         dplyr::filter(.data$databaseId %in% !!databaseIds)
+    }
+    if (!is.null(conceptIds)) {
+      data <- data %>%
+        dplyr::filter(.data$conceptId %in% !!conceptIds)
     }
   } else {
     if (is.null(dataSource$connection)) {
@@ -443,33 +448,6 @@ getResultsFromIncidenceRate <- function(dataSource,
   return(data)
 }
 
-#' Returns data from calendar_incidence table of Cohort Diagnostics results data model
-#'
-#' @description
-#' Returns data from calendar_incidence table of Cohort Diagnostics results data model
-#'
-#' @template DataSource
-#'
-#' @template CohortIds
-#'
-#' @template DatabaseIds
-#'
-#' @return
-#' Returns a data frame (tibble) with results that conform to incidence_rate
-#' table in Cohort Diagnostics results data model.
-#'
-#' @export
-getResultsFromCalendarIncidence <- function(dataSource,
-                                            cohortIds = NULL,
-                                            databaseIds = NULL) {
-  data <- getDataFromResultsDatabaseSchema(
-    dataSource,
-    cohortIds = cohortIds,
-    databaseIds = databaseIds,
-    dataTableName = "calendarIncidence"
-  )
-  return(data)
-}
 
 #' Returns data from inclusion_rule_stats table of Cohort Diagnostics results data model
 #'
@@ -633,31 +611,60 @@ getResultsFromVisitContext <- function(dataSource,
 }
 
 
-#' Returns data from included_concept table of Cohort Diagnostics results data model
+
+#' Returns data from concept_count table of Cohort Diagnostics results data model
 #'
 #' @description
-#' Returns data from included_concept table of Cohort Diagnostics results data model
+#' Returns data from concept_count table of Cohort Diagnostics results data model
 #'
 #' @template DataSource
 #'
 #' @template CohortIds
 #'
 #' @template DatabaseIds
+#' 
+#' @param conceptIds     A list of concept ids to get counts for
+#' 
+#' @param aggregateByYear  Do you want to aggregate by calendar year?
+#' 
+#' @param aggregateByMonth Do you want to aggregate by calendar month?
 #'
 #' @return
-#' Returns a data frame (tibble) with results that conform to included_concept
+#' Returns a data frame (tibble) with results that conform to concept_count
 #' table in Cohort Diagnostics results data model.
 #'
 #' @export
-getResultsFromIncludedConcept <- function(dataSource,
-                                          cohortIds = NULL,
-                                          databaseIds = NULL) {
+getResultsFromConceptCount <- function(dataSource,
+                                       cohortIds = NULL,
+                                       databaseIds = NULL,
+                                       conceptIds = NULL,
+                                       aggregateByYear = FALSE,
+                                       aggregateByMonth = FALSE) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds,
-    dataTableName = "includedSourceConcept"
+    conceptIds = conceptIds,
+    dataTableName = "conceptCount"
   )
+  if (all(aggregateByYear, aggregateByMonth)) {
+    return(data)
+  } else if (all(aggregateByYear)) {
+    data <- data %>% 
+      dplyr::group_by(.data$conceptId, .data$databaseId, .data$eventYear) %>% 
+      dplyr::summarise(conceptCount = sum(.data$conceptCount), .groups = "keep") %>% 
+      dplyr::ungroup()
+  } else if (all(aggregateByMonth)) {
+    data <- data %>% 
+      dplyr::group_by(.data$conceptId, .data$databaseId, .data$eventMonth) %>% 
+      dplyr::summarise(conceptCount = sum(.data$conceptCount), .groups = "keep") %>% 
+      dplyr::ungroup()
+  } else {
+    data <- data %>% 
+      dplyr::group_by(.data$conceptId, .data$databaseId) %>% 
+      dplyr::summarise(conceptCount = sum(.data$conceptCount), .groups = "keep") %>% 
+      dplyr::ungroup()
+  }
   return(data)
 }
 
@@ -687,6 +694,15 @@ getResultsFromOrphanConcept <- function(dataSource,
     databaseIds = databaseIds,
     dataTableName = "orphanConcept"
   )
+  conceptCount <- getResultsFromConceptCount(
+    dataSource = dataSource,
+    databaseIds = databaseIds,
+    conceptIds = data$conceptId %>% unique()
+  )
+  data <- data %>% 
+    dplyr::left_join(conceptCount,
+                     by = c('conceptId', 'databaseId')) %>% 
+    tidyr::replace_na(replace = list('conceptCount' = 0))
   return(data)
 }
 
@@ -1033,12 +1049,13 @@ getFeatureExtractionTemporalCharacterization <-
                                            cohortIds = cohortIds,
                                            databaseIds = databaseIds)
     # temporary till https://github.com/OHDSI/FeatureExtraction/issues/127
-    temporalCovariateValueDist <- getResultsFromTemporalCovariateValueDist(dataSource = dataSource,
-                                                                           cohortIds = cohortIds,
-                                                                           databaseIds = databaseIds)
-    if (all(!is.null(temporalCovariateValueDist), 
+    temporalCovariateValueDist <-
+      getResultsFromTemporalCovariateValueDist(dataSource = dataSource,
+                                               cohortIds = cohortIds,
+                                               databaseIds = databaseIds)
+    if (all(!is.null(temporalCovariateValueDist),
             nrow(temporalCovariateValueDist) > 0)) {
-      temporalCovariateValueDist <- temporalCovariateValueDist %>% 
+      temporalCovariateValueDist <- temporalCovariateValueDist %>%
         dplyr::filter(!is.na(.data$timeId))
     }
     
@@ -1142,7 +1159,7 @@ getCohortRelationshipCharacterizationResults <-
       return(data)
     }
     
-    analysisId <- c(-101, -102, -103, -104, -201, -202, -203, -204)
+    analysisId <- c(-101,-102,-103,-104,-201,-202,-203,-204)
     analysisName <- c(
       "CohortOccurrenceAnyTimePrior",
       "CohortOccurrenceLongTerm",
@@ -1163,7 +1180,7 @@ getCohortRelationshipCharacterizationResults <-
       "bothSubjects",
       "bothSubjects"
     )
-    startDay <- c(-99999, -365, -180, -30, -99999, -365, -180, -30)
+    startDay <- c(-99999,-365,-180,-30,-99999,-365,-180,-30)
     endDay <- c(0, 0, 0, 0, 0, 0, 0, 0)
     analysisRef <-
       dplyr::tibble(analysisId, analysisName, valueField, startDay, endDay) %>%
@@ -1187,10 +1204,10 @@ getCohortRelationshipCharacterizationResults <-
       result[[j]] <-
         summarizeCohortRelationship(
           data = cohortRelationships,
-          startDay = analysisRef[j, ]$startDay,
-          endDay = analysisRef[j, ]$endDay,
-          analysisId = analysisRef[j, ]$analysisId,
-          valueField = analysisRef[j, ]$valueField,
+          startDay = analysisRef[j,]$startDay,
+          endDay = analysisRef[j,]$endDay,
+          analysisId = analysisRef[j,]$analysisId,
+          valueField = analysisRef[j,]$valueField,
           cohortCounts = cohortCounts
         )
     }
@@ -1347,7 +1364,7 @@ getCohortAsFeatureTemporalCharacterizationResults <-
       return(data)
     }
     
-    analysisId <- c(-101, -201)
+    analysisId <- c(-101,-201)
     analysisName <- c("CohortEraStart", "CohortEraOverlap")
     valueField <- c("cSubjectsStart",
                     "bothSubjects")
@@ -1372,8 +1389,8 @@ getCohortAsFeatureTemporalCharacterizationResults <-
       result[[j]] <-
         summarizeCohortRelationship(
           data = cohortRelationships,
-          valueField = analysisRef[j, ]$valueField,
-          analysisId = analysisRef[j, ]$analysisId,
+          valueField = analysisRef[j,]$valueField,
+          analysisId = analysisRef[j,]$analysisId,
           temporalTimeRef = temporalTimeRef,
           cohortCounts = cohortCounts
         )
@@ -2000,8 +2017,8 @@ getConceptSetDetailsFromCohortDefinition <-
       i <- i + 1
       conceptSetExpressionDetails[[i]] <-
         getConceptSetDataFrameFromConceptSetExpression(conceptSetExpression =
-                                                         conceptSetExpression[i,]$expression$items) %>%
-        dplyr::mutate(id = conceptSetExpression[i, ]$id) %>%
+                                                         conceptSetExpression[i, ]$expression$items) %>%
+        dplyr::mutate(id = conceptSetExpression[i,]$id) %>%
         dplyr::relocate(.data$id) %>%
         dplyr::arrange(.data$id)
     }
@@ -2040,3 +2057,73 @@ getConceptSetDataFrameFromConceptSetExpression <-
     }
     return(conceptSetExpressionDetails)
   }
+
+
+
+#' Get specifications for Cohort Diagnostics results data model
+#'
+#' @param versionNumber Which version of Cohort Diagnostics. Default will be the most recent version.
+#'
+#' @param packageName e.g. 'CohortDiagnostics'
+#'
+#' @return
+#' A tibble data frame object with specifications
+#'
+#' @export
+getResultsDataModelSpecifications <- function(versionNumber = NULL,
+                                              packageName = NULL) {
+  if (is.null(packageName)) {
+    if (file.exists("resultsDataModelSpecification.csv")) {
+      resultsDataModelSpecifications <-
+        readr::read_csv("resultsDataModelSpecification.csv", col_types = readr::cols())
+      ParallelLogger::logTrace(paste0("  - Retrieved results data model specifications from package ",
+                                      packageName))
+    } else {
+      stop("Can't find resultsDataModelSpecifications file.")
+    }
+  } else {
+    pathToCsv <-
+      system.file("settings",
+                  "resultsDataModelSpecification.csv",
+                  package = packageName)
+    if (!pathToCsv == "") {
+      resultsDataModelSpecifications <-
+        readr::read_csv(file = pathToCsv, col_types = readr::cols())
+    } else {
+      stop(paste0("resultsDataModelSpecification.csv was not found in installed package: ", 
+                  packageName))
+    }
+  }
+  
+  #get various version options in csv file
+  versions <- resultsDataModelSpecifications$version %>% unique()
+  if (!is.null(versionNumber)) {
+    if (versionNumber %in% versions) {
+      ParallelLogger::logTrace(paste0(
+        "  - Retrieving data model specifications for version ",
+        version
+      ))
+      resultsDataModelSpecifications <-
+        resultsDataModelSpecifications %>%
+        dplyr::filter(.data$version == !!versionNumber)
+    } else {
+      stop(paste0(
+        "version requested", 
+        versionNumber, 
+        " not found. The available option are ",
+        paste0(versions, collapse = ", ")
+      ))
+    }
+  } else {
+    #max version/recent version if no version provided
+    versions <- max(as.numeric(versions))
+    ParallelLogger::logTrace(paste0(
+      "  - Retrieving data model specifications for version ",
+      versions
+    ))
+    resultsDataModelSpecifications <-
+      resultsDataModelSpecifications %>%
+      dplyr::filter(.data$version == !!versions)
+  }
+  return(resultsDataModelSpecifications)
+}

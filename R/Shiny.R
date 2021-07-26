@@ -167,7 +167,7 @@ preMergeDiagnosticsFiles <-
       zipFiles$unzipFolder[i] <- unzipFolder
     }
     
-    specifications <- getResultsDataModelSpecifications()
+    specifications <- getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')
     
     # Storing output in an environment for now. If things get too big, we may want to write
     # directly to CSV files for insertion into database:
@@ -183,8 +183,8 @@ preMergeDiagnosticsFiles <-
             readr::read_csv(
               file.path(zipFiles$unzipFolder[i], csvFileName),
               col_types = readr::cols(),
-              na = character(),
-              guess_max = min(1e6)
+              guess_max = min(1e6),
+              progress = FALSE
             )
           if (nrow(newData) > 0) {
             newData <- checkFixColumnNames(
