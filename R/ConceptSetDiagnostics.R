@@ -256,7 +256,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
                            attr(delta, "units"))
   
   # get concept count----
-  ParallelLogger::logInfo(" - Counting concepts in data source")
+  ParallelLogger::logInfo(" - Counting concepts in data source.")
   conceptCount <-
     getConceptRecordCountByMonth(
       connection = connection,
@@ -286,7 +286,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   
   
   # get concept mapping----
-  ParallelLogger::logInfo(" - Mappings concepts")
+  ParallelLogger::logInfo(" - Mappings concepts.")
   conceptSourceStandardMapping <-
     getConceptSourceStandardMapping(
       connection = connection,
@@ -303,7 +303,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   conceptSetDiagnosticsResults$conceptSourceStandardMapping <-
     conceptSourceStandardMapping
   # get vocabulary details----
-  ParallelLogger::logInfo(" - Retrieving vocabulary details")
+  ParallelLogger::logInfo(" - Retrieving vocabulary details.")
   exportedVocablary <- exportConceptInformation(
     connection = connection,
     cdmDatabaseSchema = cdmDatabaseSchema,

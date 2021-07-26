@@ -129,8 +129,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                    useProcedureOccurrence = TRUE,
                                    useMeasurement = TRUE,
                                    temporalStartDays = c(
-                                     -365,
-                                     -30,
+                                     -365,-30,
                                      0,
                                      1,
                                      31,
@@ -138,8 +137,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                      seq(from = 0, to = 390, by = 30)
                                    ),
                                    temporalEndDays = c(
-                                     -31,
-                                     -1,
+                                     -31,-1,
                                      0,
                                      30,
                                      365,
@@ -449,12 +447,12 @@ runCohortDiagnostics <- function(packageName = NULL,
     cohortIds = cohorts$cohortId
   ) # cohortCounts is reused
   output <- list()
-  output$cohortCounts <- cohortCounts
+  output$cohort_count <- cohortCounts
   # Get instantiated cohorts ----
   instantiatedCohorts <-
     as.double(c(-1)) # set by default to non instantiated
   if (!is.null(cohortCounts)) {
-    if (nrow(output$cohortCounts) > 0) {
+    if (nrow(output$cohort_count) > 0) {
       writeToAllOutputToCsv(
         object = output,
         exportFolder = exportFolder,
@@ -462,7 +460,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         incremental = incremental,
         minCellCount = minCellCount
       )
-      instantiatedCohorts <- output$cohortCounts %>%
+      instantiatedCohorts <- output$cohort_count %>%
         dplyr::pull(.data$cohortId)
       ParallelLogger::logInfo(
         paste0(
@@ -473,7 +471,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           " (",
           scales::percent(length(instantiatedCohorts) / nrow(cohorts),
                           accuracy = 0.1),
-          ") submitted cohorts instantiated. Beginning cohort diagnostics for instantiated cohorts. "
+          ") submitted cohorts instantiated. Beginning cohort diagnostics on instantiated cohorts. "
         )
       )
       output <- NULL
@@ -488,7 +486,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   ParallelLogger::logInfo(" - Retrieving inclusion rules from file.")
   if (runInclusionStatistics) {
     startInclusionStatistics <- Sys.time()
-    if (any(is.null(instantiatedCohorts), -1 %in% instantiatedCohorts)) {
+    if (any(is.null(instantiatedCohorts),-1 %in% instantiatedCohorts)) {
       ParallelLogger::logTrace("  - Skipping inclusion statistics from files because no cohorts were instantiated.")
     } else {
       subset <- subsetToRequiredCohorts(
@@ -549,10 +547,12 @@ runCohortDiagnostics <- function(packageName = NULL,
       recordKeepingFile = recordKeepingFile
     )
     if (nrow(subset) > 0) {
-      ParallelLogger::logInfo(sprintf(
-        "  - Skipping %s cohorts in incremental mode.",
-        nrow(cohorts) - nrow(subset)
-      ))
+      if (nrow(cohorts) - nrow(subset) > 0) {
+        ParallelLogger::logInfo(sprintf(
+          "  - Skipping %s cohorts in incremental mode.",
+          nrow(cohorts) - nrow(subset)
+        ))
+      }
       conceptSetDiagnostics <- runConceptSetDiagnostics(
         connection = connection,
         tempEmulationSchema = tempEmulationSchema,
@@ -582,10 +582,12 @@ runCohortDiagnostics <- function(packageName = NULL,
       ParallelLogger::logInfo("  - Skipping in incremental mode.")
     }
     delta <- Sys.time() - startConceptSetDiagnostics
-    ParallelLogger::logInfo(" - Running Concept Set Diagnostics and saving files took ",
-                            signif(delta, 3),
-                            " ",
-                            attr(delta, "units"))
+    ParallelLogger::logInfo(
+      " - Running Concept Set Diagnostics and saving files took ",
+      signif(delta, 3),
+      " ",
+      attr(delta, "units")
+    )
   }
   
   # Visit context----
@@ -630,7 +632,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       ParallelLogger::logInfo("  - Skipping in incremental mode.")
     }
     delta <- Sys.time() - startVisitContext
-    ParallelLogger::logInfo(" - Running Visit Context took ",
+    ParallelLogger::logInfo(" - Running Visit Context and saving files took ",
                             signif(delta, 3),
                             " ",
                             attr(delta, "units"))
@@ -656,7 +658,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         ))
       }
       runIncidenceRate <- function(row) {
-        ParallelLogger::logInfo(" - Computing incidence rate for cohort '",
+        ParallelLogger::logInfo(" - '",
                                 row$cohortName,
                                 "'")
         cohortExpression <- RJSONIO::fromJSON(row$json, digits = 23)

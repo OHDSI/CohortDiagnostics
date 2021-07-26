@@ -14,127 +14,130 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-makeBackwardsCompatible <- function(cohorts, forceWebApiCohortId = FALSE) {
-  # make sure there is a column called 'name' - used for finding sql in package
-  if ('atlasId' %in% colnames(cohorts)) {
-    cohorts <- cohorts %>% 
-      dplyr::mutate(atlasId = as.double(.data$atlasId))
-  }
-  if ('cohortId' %in% colnames(cohorts)) {
-    cohorts <- cohorts %>% 
-      dplyr::mutate(cohortId = as.double(.data$cohortId))
-  }
-  if ('id' %in% colnames(cohorts)) {
-    cohorts <- cohorts %>% 
-      dplyr::mutate(id = as.double(.data$id))
-  }
-  if ('webApiCohortId' %in% colnames(cohorts)) {
-    cohorts <- cohorts %>% 
-      dplyr::mutate(webApiCohortId = as.double(.data$webApiCohortId))
-  }
-  if (!"name" %in% colnames(cohorts)) {
-    # id/cohortId takes precedence over webapiId/atlasId
-    if ('id' %in% colnames(cohorts)) {
-      if (typeof(cohorts$id) %in% c('integer','double')) {
-        cohorts <- cohorts %>%
-          dplyr::mutate(name = as.character(.data$id)) %>%
-          dplyr::mutate(cohortId = .data$id)
-      }
-    } else if ('cohortId' %in% colnames(cohorts)) {
-      if (typeof(cohorts$cohortId) %in% c('integer','double')) {
-        cohorts <- cohorts %>%
-          dplyr::mutate(name = as.character(.data$cohortId)) %>%
-          dplyr::mutate(cohortId = .data$cohortId)
-      }
-    } else if ('webApiCohortId' %in% colnames(cohorts)) {
-      if (typeof(cohorts$webApiCohortId) %in% c('integer','double')) {
-        cohorts <- cohorts %>%
-          dplyr::mutate(name = as.character(.data$webApiCohortId)) %>%
-          dplyr::mutate(cohortId = .data$webApiCohortId)
-      }
-    } else if ('atlasId' %in% colnames(cohorts)) {
-      if (typeof(cohorts$atlasId) %in% c('integer','double')) {
-        cohorts <- cohorts %>%
-          dplyr::mutate(name = as.character(.data$atlasId)) %>%
-          dplyr::mutate(cohortId = .data$atlasId)
-      }
-    }
-  }
-  
-  if (!'webApiCohortId' %in% colnames(cohorts)) {
+makeBackwardsCompatible <-
+  function(cohorts, forceWebApiCohortId = FALSE) {
+    # make sure there is a column called 'name' - used for finding sql in package
     if ('atlasId' %in% colnames(cohorts)) {
-      if (typeof(cohorts$atlasId) %in% c('integer','double')) {
-        cohorts <- cohorts  %>% 
-          dplyr::mutate(atlasId = as.double(.data$atlasId)) %>%
-          dplyr::mutate(webApiCohortId = .data$atlasId)
+      cohorts <- cohorts %>%
+        dplyr::mutate(atlasId = as.double(.data$atlasId))
+    }
+    if ('cohortId' %in% colnames(cohorts)) {
+      cohorts <- cohorts %>%
+        dplyr::mutate(cohortId = as.double(.data$cohortId))
+    }
+    if ('id' %in% colnames(cohorts)) {
+      cohorts <- cohorts %>%
+        dplyr::mutate(id = as.double(.data$id))
+    }
+    if ('webApiCohortId' %in% colnames(cohorts)) {
+      cohorts <- cohorts %>%
+        dplyr::mutate(webApiCohortId = as.double(.data$webApiCohortId))
+    }
+    if (!"name" %in% colnames(cohorts)) {
+      # id/cohortId takes precedence over webapiId/atlasId
+      if ('id' %in% colnames(cohorts)) {
+        if (typeof(cohorts$id) %in% c('integer', 'double')) {
+          cohorts <- cohorts %>%
+            dplyr::mutate(name = as.character(.data$id)) %>%
+            dplyr::mutate(cohortId = .data$id)
+        }
+      } else if ('cohortId' %in% colnames(cohorts)) {
+        if (typeof(cohorts$cohortId) %in% c('integer', 'double')) {
+          cohorts <- cohorts %>%
+            dplyr::mutate(name = as.character(.data$cohortId)) %>%
+            dplyr::mutate(cohortId = .data$cohortId)
+        }
+      } else if ('webApiCohortId' %in% colnames(cohorts)) {
+        if (typeof(cohorts$webApiCohortId) %in% c('integer', 'double')) {
+          cohorts <- cohorts %>%
+            dplyr::mutate(name = as.character(.data$webApiCohortId)) %>%
+            dplyr::mutate(cohortId = .data$webApiCohortId)
+        }
+      } else if ('atlasId' %in% colnames(cohorts)) {
+        if (typeof(cohorts$atlasId) %in% c('integer', 'double')) {
+          cohorts <- cohorts %>%
+            dplyr::mutate(name = as.character(.data$atlasId)) %>%
+            dplyr::mutate(cohortId = .data$atlasId)
+        }
       }
-    } else if ('cohortId' %in% colnames(cohorts)) {
-      if (typeof(cohorts$cohortId) %in% c('integer','double')) {
+    }
+    
+    if (!'webApiCohortId' %in% colnames(cohorts)) {
+      if ('atlasId' %in% colnames(cohorts)) {
+        if (typeof(cohorts$atlasId) %in% c('integer', 'double')) {
+          cohorts <- cohorts  %>%
+            dplyr::mutate(atlasId = as.double(.data$atlasId)) %>%
+            dplyr::mutate(webApiCohortId = .data$atlasId)
+        }
+      } else if ('cohortId' %in% colnames(cohorts)) {
+        if (typeof(cohorts$cohortId) %in% c('integer', 'double')) {
+          cohorts <- cohorts %>%
+            dplyr::mutate(webApiCohortId = as.double(.data$cohortId))
+        }
+      } else if (all(
+        'name' %in% colnames(cohorts),
+        typeof(strtoi(cohorts$name)) %in% c('integer', 'double'),
+        strtoi(cohorts$name),
+        forceWebApiCohortId
+      )) {
+        warning('webapiCohortId not found. Forcing..')
         cohorts <- cohorts %>%
-          dplyr::mutate(webApiCohortId = as.double(.data$cohortId))
+          dplyr::mutate(webApiCohortId = as.double(strtoi(cohorts$name)))
+        #webApiCohortId should always be integer/double
       }
-    } else if (all('name' %in% colnames(cohorts),
-                   typeof(strtoi(cohorts$name)) %in% c('integer','double'),
-                   strtoi(cohorts$name),
-                   forceWebApiCohortId)) {
-      warning('webapiCohortId not found. Forcing..')
-      cohorts <- cohorts %>%
-        dplyr::mutate(webApiCohortId = as.double(strtoi(cohorts$name)))
-      #webApiCohortId should always be integer/double
     }
-  }
-  
-  # make sure there is a column called 'cohortName' - use to identify a cohort
-  if (!'cohortName' %in% colnames(cohorts)) {
-    if ('atlasName' %in% colnames(cohorts)) {
-      cohorts <- cohorts %>%
-        dplyr::mutate(cohortName = as.character(.data$atlasName))
-    } else if ('id' %in% colnames(cohorts)) {
-      cohorts <- cohorts %>%
-        dplyr::mutate(cohortName = as.character(.data$id))
-    } else if ('webApiCohortId' %in% colnames(cohorts)) {
-      cohorts <- cohorts %>%
-        dplyr::mutate(cohortName = as.character(.data$webApiCohortId))
-    } else if ('atlasId' %in% colnames(cohorts)) {
-      cohorts <- cohorts %>%
-        dplyr::mutate(cohortName = as.character(.data$atlasId))
+    
+    # make sure there is a column called 'cohortName' - use to identify a cohort
+    if (!'cohortName' %in% colnames(cohorts)) {
+      if ('atlasName' %in% colnames(cohorts)) {
+        cohorts <- cohorts %>%
+          dplyr::mutate(cohortName = as.character(.data$atlasName))
+      } else if ('id' %in% colnames(cohorts)) {
+        cohorts <- cohorts %>%
+          dplyr::mutate(cohortName = as.character(.data$id))
+      } else if ('webApiCohortId' %in% colnames(cohorts)) {
+        cohorts <- cohorts %>%
+          dplyr::mutate(cohortName = as.character(.data$webApiCohortId))
+      } else if ('atlasId' %in% colnames(cohorts)) {
+        cohorts <- cohorts %>%
+          dplyr::mutate(cohortName = as.character(.data$atlasId))
+      }
     }
-  }
-  
-  # make sure there is a column called 'cohortId'
-  if (!'cohortId' %in% colnames(cohorts)) {
-    if (typeof(cohorts$name) %in% c('integer','double')) {
-      cohorts <- cohorts %>%
-        dplyr::mutate(cohortId = as.double(.data$name))
+    
+    # make sure there is a column called 'cohortId'
+    if (!'cohortId' %in% colnames(cohorts)) {
+      if (typeof(cohorts$name) %in% c('integer', 'double')) {
+        cohorts <- cohorts %>%
+          dplyr::mutate(cohortId = as.double(.data$name))
+      }
     }
-  }
-  
-  # make sure there is a column called 'atlasId'
-  if (!'atlasId' %in% colnames(cohorts)) {
-    if (typeof(cohorts$webApiCohortId) %in% c('integer','double')) {
-      cohorts <- cohorts %>%
-        dplyr::mutate(atlasId = as.double(.data$webApiCohortId))
+    
+    # make sure there is a column called 'atlasId'
+    if (!'atlasId' %in% colnames(cohorts)) {
+      if (typeof(cohorts$webApiCohortId) %in% c('integer', 'double')) {
+        cohorts <- cohorts %>%
+          dplyr::mutate(atlasId = as.double(.data$webApiCohortId))
+      }
     }
+    
+    if ('atlasId' %in% colnames(cohorts)) {
+      cohorts <- cohorts %>%
+        dplyr::mutate(atlasId = as.double(.data$atlasId))
+    }
+    if ('cohortId' %in% colnames(cohorts)) {
+      cohorts <- cohorts %>%
+        dplyr::mutate(cohortId = as.double(.data$cohortId))
+    }
+    if ('id' %in% colnames(cohorts)) {
+      cohorts <- cohorts %>%
+        dplyr::mutate(id = as.double(.data$id))
+    }
+    if ('webApiCohortId' %in% colnames(cohorts)) {
+      cohorts <- cohorts %>%
+        dplyr::mutate(webApiCohortId = as.double(.data$webApiCohortId))
+    }
+    return(cohorts)
   }
-  
-  if ('atlasId' %in% colnames(cohorts)) {
-    cohorts <- cohorts %>% 
-      dplyr::mutate(atlasId = as.double(.data$atlasId))
-  }
-  if ('cohortId' %in% colnames(cohorts)) {
-    cohorts <- cohorts %>% 
-      dplyr::mutate(cohortId = as.double(.data$cohortId))
-  }
-  if ('id' %in% colnames(cohorts)) {
-    cohorts <- cohorts %>% 
-      dplyr::mutate(id = as.double(.data$id))
-  }
-  if ('webApiCohortId' %in% colnames(cohorts)) {
-    cohorts <- cohorts %>% 
-      dplyr::mutate(webApiCohortId = as.double(.data$webApiCohortId))
-  }
-  return(cohorts)
-}
 
 getCohortsJsonAndSqlFromPackage <-
   function(packageName = packageName,
@@ -168,7 +171,8 @@ getCohortsJsonAndSqlFromPackage <-
                                col_types = readr::cols(),
                                guess_max = min(1e7))
     
-    cohorts <- makeBackwardsCompatible(cohorts, forceWebApiCohortId = FALSE)
+    cohorts <-
+      makeBackwardsCompatible(cohorts, forceWebApiCohortId = FALSE)
     if (!is.null(cohortIds)) {
       cohorts <- cohorts %>%
         dplyr::filter(.data$cohortId %in% cohortIds)
@@ -283,7 +287,9 @@ getCohortsJsonAndSql <- function(packageName = NULL,
     return(NULL)
   }
   if (nrow(cohorts) != length(cohorts$cohortId %>% unique())) {
-    warning(" - Please check input cohort specification. Is there duplication of cohortId? Exiting.")
+    warning(
+      " - Please check input cohort specification. Is there duplication of cohortId? Exiting."
+    )
     return(NULL)
   }
   return(cohorts)
@@ -343,7 +349,8 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
                              guess_max = min(1e7))
     if (!is.null(cohortIds)) {
       stats <- stats %>%
-        dplyr::filter(.data$cohortDefinitionId %in% cohortIds)
+        dplyr::filter(.data$cohortDefinitionId %in% cohortIds) %>%
+        dplyr::rename(cohortId = .data$cohortDefinitionId)
     }
     return(stats)
   }
@@ -360,28 +367,28 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
   inclusionStats <- fetchStats(cohortInclusionStatsFile)
   inclusionResults <- fetchStats(cohortInclusionResultFile)
   result <- dplyr::tibble()
-  for (cohortId in unique(inclusion$cohortDefinitionId)) {
+  for (cohortId in unique(inclusion$cohortId)) {
     cohortResult <-
       simplifyInclusionStats(
-        inclusion = filter(inclusion, .data$cohortDefinitionId == cohortId),
-        inclusionResults = filter(inclusionResults, .data$cohortDefinitionId == cohortId),
-        inclusionStats = filter(inclusionStats, .data$cohortDefinitionId == cohortId)
+        inclusion = inclusion %>% dplyr::filter(.data$cohortId == cohortId),
+        inclusionResults = inclusionResults %>% filter(.data$cohortId == cohortId),
+        inclusionStats = inclusionStats %>% filter(.data$cohortId == cohortId)
       )
-    cohortResult$cohortDefinitionId <- cohortId
+    cohortResult$cohortId <- cohortId
     result <- dplyr::bind_rows(result, cohortResult)
   }
   delta <- Sys.time() - start
-  writeLines(paste(
+  ParallelLogger::logTrace(paste(
     "Fetching inclusion statistics took",
     signif(delta, 3),
     attr(delta, "units")
   ))
   output <- list(
-    inclusionRuleStats = result,
-    cohortInclusion = inclusion,
-    cohortInclusionResult = inclusionResults,
-    cohortInclusionStats = inclusionStats,
-    cohortSummaryStats = summaryStats
+    inclusion_rule_stats = result,
+    cohort_inclusion = inclusion,
+    cohort_inclusion_result = inclusionResults,
+    cohort_inclusion_stats = inclusionStats,
+    cohort_summary_stats = summaryStats
   )
   return(output)
 }
@@ -551,7 +558,9 @@ instantiateCohortSet <- function(connectionDetails = NULL,
       tables <-
         DatabaseConnector::getTableNames(connection, cohortDatabaseSchema)
       if (toupper(cohortTable) %in% toupper(tables)) {
-        ParallelLogger::logInfo("   - Note: Cohort table already exists. Running in incremental mode. Re-using cohort table.")
+        ParallelLogger::logInfo(
+          "   - Note: Cohort table already exists. Running in incremental mode. Re-using cohort table."
+        )
         needToCreate <- FALSE
       }
     }
@@ -656,10 +665,12 @@ instantiateCohortSet <- function(connectionDetails = NULL,
       sql <- SqlRender::translate(sql,
                                   targetDialect = connection@dbms,
                                   tempEmulationSchema = tempEmulationSchema)
-      DatabaseConnector::executeSql(connection = connection, 
-                                    sql = sql, 
-                                    reportOverallTime = FALSE, 
-                                    progressBar = FALSE)
+      DatabaseConnector::executeSql(
+        connection = connection,
+        sql = sql,
+        reportOverallTime = FALSE,
+        progressBar = FALSE
+      )
       instantiatedCohortIds <-
         c(instantiatedCohortIds, cohorts$cohortId[i])
     }
@@ -785,9 +796,16 @@ saveAndDropTempInclusionStatsTables <- function(connection,
     )
     fullFileName <- file.path(inclusionStatisticsFolder, fileName)
     if (incremental) {
-      saveIncremental(data = data, fileName = fullFileName, cohortId = cohortIds)
+      saveIncremental(data = data,
+                      fileName = fullFileName,
+                      cohortId = cohortIds)
     } else {
-      readr::write_excel_csv(x = data, file = fullFileName, na = "", append = FALSE)
+      readr::write_excel_csv(
+        x = data,
+        file = fullFileName,
+        na = "",
+        append = FALSE
+      )
     }
   }
   fetchStats("#cohort_inclusion", "cohortInclusion.csv")
