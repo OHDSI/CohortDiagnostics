@@ -662,7 +662,6 @@ runCohortDiagnostics <- function(packageName = NULL,
         }, error = function(e) {
           0
         })
-        debug(runIncidenceRateDiagnostics)
         data <- runIncidenceRateDiagnostics(
           connection = connection,
           cdmDatabaseSchema = cdmDatabaseSchema,
