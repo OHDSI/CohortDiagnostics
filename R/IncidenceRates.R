@@ -77,12 +77,6 @@ runIncidenceRateDiagnostics <- function(connectionDetails = NULL,
       cohortId,
       " appears to be empty. Was it instantiated? Skipping incidence rate computation."
     )
-    delta <- Sys.time() - start
-    ParallelLogger::logTrace(paste(
-      "  - Computing incidence rates took",
-      signif(delta, 3),
-      attr(delta, "units")
-    ))
     return(NULL)
   }
   

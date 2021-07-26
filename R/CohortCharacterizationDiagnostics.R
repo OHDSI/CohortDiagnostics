@@ -91,7 +91,7 @@ runCohortCharacterizationDiagnostics <-
         "   - All cohorts are either not instantiated or have no records. Exiting Characterization."
       )
       return(NULL)
-    } else {
+    } else if (length(cohortIds) > length(cohortIdsNew)) {
       ParallelLogger::logInfo(
         paste0(
           "   - Of the ",
@@ -99,6 +99,12 @@ runCohortCharacterizationDiagnostics <-
           " provided, found ",
           scales::comma(length(cohortIdsNew), accuracy = 1),
           " to be instantiated. Starting Characterization."
+        )
+      )
+    } else if (length(cohortIds) == length(cohortIdsNew)) {
+      ParallelLogger::logInfo(
+        paste0(
+          "   - Starting Characterization."
         )
       )
     }
@@ -260,7 +266,7 @@ runCohortCharacterizationDiagnostics <-
     }
     
     delta <- Sys.time() - startTime
-    ParallelLogger::logInfo(" - Cohort characterization took ",
+    ParallelLogger::logTrace(" - Cohort characterization took ",
                             signif(delta, 3),
                             " ",
                             attr(delta, "units"))

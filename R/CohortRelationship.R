@@ -217,7 +217,6 @@ runCohortRelationshipDiagnostics <-
     
     ParallelLogger::logTrace("   - Creating Andromeda object to collect results")
     resultsInAndromeda <- Andromeda::andromeda()
-    pb <- utils::txtProgressBar(style = 3)
     
     for (i in (1:nrow(timePeriods))) {
       ParallelLogger::logTrace(
@@ -252,7 +251,6 @@ runCohortRelationshipDiagnostics <-
         Andromeda::appendToTable(resultsInAndromeda$cohortRelationship,
                                  resultsInAndromeda$temp)
       }
-      utils::setTxtProgressBar(pb, i / nrow(timePeriods))
     }
     
     results <- resultsInAndromeda$cohortRelationship %>%
@@ -281,7 +279,7 @@ runCohortRelationshipDiagnostics <-
       )
     
     delta <- Sys.time() - startTime
-    ParallelLogger::logInfo(paste(
+    ParallelLogger::logTrace(paste(
       " - Computing cohort relationship took",
       signif(delta, 3),
       attr(delta, "units")

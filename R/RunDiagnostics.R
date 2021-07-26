@@ -743,7 +743,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           ))
         }
         output <- list()
-        output$timeSeries <-
+        output$time_series <-
           runCohortTimeSeriesDiagnostics(
             connection = connection,
             tempEmulationSchema = tempEmulationSchema,
