@@ -462,18 +462,11 @@ runCohortDiagnostics <- function(packageName = NULL,
       )
       instantiatedCohorts <- output$cohort_count %>%
         dplyr::pull(.data$cohortId)
-      ParallelLogger::logInfo(
-        paste0(
-          " - Found ",
-          scales::comma(length(instantiatedCohorts)),
-          " of ",
-          scales::comma(length(instantiatedCohorts)),
-          " (",
-          scales::percent(length(instantiatedCohorts) / nrow(cohorts),
-                          accuracy = 0.1),
-          ") submitted cohorts instantiated. Beginning cohort diagnostics on instantiated cohorts. "
-        )
-      )
+      if (length(instantiatedCohorts) < nrow(cohorts)) {
+        ParallelLogger::logInfo(
+          paste0(" - Skipping diagnostics on following cohorts as they were either not instantiated or had no subjects: ",
+                 paste0(setdiff(cohorts$cohortId, instantiatedCohorts), collapse = ", ")))
+      }
       output <- NULL
     } else {
       warning(
@@ -813,7 +806,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       }
       ParallelLogger::logTrace(" - Beginning Cohort Relationship SQL")
       output <- list()
-      output$cohort_relationship <-
+      output$cohort_relationships <-
         runCohortRelationshipDiagnostics(
           connection = connection,
           cohortDatabaseSchema = cohortDatabaseSchema,
