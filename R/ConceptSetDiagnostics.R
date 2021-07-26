@@ -344,7 +344,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
       dplyr::collect()
   }
   if (!is.null(conceptSetDiagnosticsResults$conceptSubjectCount)) {
-    exportedVocablary$concept_subject = conceptSetDiagnosticsResults$conceptSubjectCount %>%
+    exportedVocablary$concept_subjects = conceptSetDiagnosticsResults$conceptSubjectCount %>%
       dplyr::collect()
   }
   if (!is.null(conceptSetDiagnosticsResults$conceptResolved)) {

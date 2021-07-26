@@ -553,6 +553,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           nrow(cohorts) - nrow(subset)
         ))
       }
+      
       conceptSetDiagnostics <- runConceptSetDiagnostics(
         connection = connection,
         tempEmulationSchema = tempEmulationSchema,

@@ -492,6 +492,9 @@ instantiateCohortSet <- function(connectionDetails = NULL,
                                  createCohortTable = TRUE,
                                  incremental = FALSE,
                                  incrementalFolder = NULL) {
+  start <- Sys.time()
+  ParallelLogger::logInfo("Cohort Instantiation started at ", start, '...')
+  
   if (!is.null(cohortSetReference)) {
     ParallelLogger::logInfo(" - Found cohortSetReference. Cohort Diagnostics is running in WebApi mode.")
     cohortToCreateFile <- NULL
@@ -531,7 +534,6 @@ instantiateCohortSet <- function(connectionDetails = NULL,
     }
   }
   
-  start <- Sys.time()
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
