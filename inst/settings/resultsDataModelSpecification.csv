@@ -6,11 +6,6 @@ analysis_ref,start_day,float,No,No,No,Yes,2.2
 analysis_ref,end_day,float,No,No,No,Yes,2.2
 analysis_ref,is_binary,varchar(1),Yes,No,No,Yes,2.2
 analysis_ref,missing_means_zero,varchar(1),No,No,No,Yes,2.2
-calendar_incidence,database_id,varchar,Yes,Yes,No,Yes,2.2
-calendar_incidence,cohort_id,bigint,Yes,Yes,No,Yes,2.2
-calendar_incidence,period_type,varchar,Yes,Yes,No,Yes,2.2
-calendar_incidence,calendar_month,Date,Yes,Yes,No,Yes,2.2
-calendar_incidence,count_value,float,Yes,No,No,Yes,2.2
 cohort,cohort_id,bigint,Yes,Yes,No,Yes,2.2
 cohort,cohort_name,varchar,Yes,No,No,Yes,2.2
 cohort,metadata,varchar,No,No,Yes,Yes,2.2
