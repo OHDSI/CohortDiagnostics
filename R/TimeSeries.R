@@ -340,7 +340,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       Andromeda::appendToTable(resultsInAndromeda$timeSeries,
                                resultsInAndromeda$temp)
     }
-    ParallelLogger::logTrace(' --- Completed.')
+    ParallelLogger::logTrace('     Completed.')
   }
   results <- resultsInAndromeda$timeSeries %>%
     dplyr::collect() %>%

@@ -165,6 +165,7 @@ writeToAllOutputToCsv <- function(object,
                                   incremental,
                                   minCellCount,
                                   databaseId) {
+  ParallelLogger::logTrace(paste0(" - Starting writeToAllOutputToCsv on ", paste0(object, collapse = ", ")))
   resultsDataModel <-
     getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')
   tablesOfInterest = resultsDataModel %>%

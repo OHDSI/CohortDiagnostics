@@ -692,7 +692,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       data <-
         lapply(split(subset, subset$cohortId), runIncidenceRate)
       output <- list()
-      output$data <- dplyr::bind_rows(data)
+      output$incidence_rate <- dplyr::bind_rows(data)
       data <- NULL
       writeToAllOutputToCsv(
         object = output,
