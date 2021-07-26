@@ -611,7 +611,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         ))
       }
       output <- list()
-      output$data <- runVisitContextDiagnostics(
+      output$visit_context <- runVisitContextDiagnostics(
         connection = connection,
         tempEmulationSchema = tempEmulationSchema,
         cdmDatabaseSchema = cdmDatabaseSchema,
@@ -693,7 +693,7 @@ runCohortDiagnostics <- function(packageName = NULL,
       data <-
         lapply(split(subset, subset$cohortId), runIncidenceRate)
       output <- list()
-      output$data <- dplyr::bind_rows(data)
+      output$incidence_rate <- dplyr::bind_rows(data)
       data <- NULL
       writeToAllOutputToCsv(
         object = output,
@@ -812,7 +812,8 @@ runCohortDiagnostics <- function(packageName = NULL,
         ))
       }
       ParallelLogger::logTrace(" - Beginning Cohort Relationship SQL")
-      cohortRelationship <-
+      output <- list()
+      output$cohort_relationship <-
         runCohortRelationshipDiagnostics(
           connection = connection,
           cohortDatabaseSchema = cohortDatabaseSchema,
@@ -822,36 +823,11 @@ runCohortDiagnostics <- function(packageName = NULL,
           comparatorCohortIds = cohorts$cohortId
         )
       
-      if (nrow(cohortRelationship) > 0) {
-        cohortRelationship <- cohortRelationship %>%
-          dplyr::mutate(databaseId = !!databaseId)
-        columnsInCohortRelationship <- c(
-          'bothSubjects',
-          'cBeforeTSubjects',
-          'tBeforeCSubjects',
-          'sameDaySubjects',
-          'cPersonDays',
-          'cSubjectsStart',
-          'cSubjectsEnd',
-          'cInTSubjects'
-        )
-        for (i in (1:length(columnsInCohortRelationship))) {
-          cohortRelationship <-
-            enforceMinCellValue(cohortRelationship,
-                                columnsInCohortRelationship[[i]],
-                                minCellCount)
-        }
-        cohortRelationship <-
-          .replaceNaInDataFrameWithEmptyString(cohortRelationship)
-        writeToCsv(
-          data = cohortRelationship,
-          fileName = file.path(exportFolder, "cohort_relationships.csv"),
-          incremental = incremental,
-          cohortId = subset$cohortId
-        )
-      } else {
-        warning('No cohort relationship data')
-      }
+      writeToAllOutputToCsv(object = output,
+                            exportFolder = exportFolder,
+                            incremental = incremental,
+                            minCellCount = minCellCount,
+                            databaseId = databaseId)
       recordTasksDone(
         cohortId = subset$cohortId,
         task = "runCohortRelationship",
