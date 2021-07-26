@@ -309,7 +309,8 @@ runCohortDiagnostics <- function(packageName = NULL,
     cohortIds = cohortIds
   )
   
-  if (nrow(cohorts) == 0) {
+  if (any(is.null(cohorts),
+          nrow(cohorts) == 0)) {
     stop("No cohorts specified, or no matching cohorts found. Aborting.")
   }
   if ('name' %in% colnames(cohorts)) {
@@ -661,6 +662,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         }, error = function(e) {
           0
         })
+        debug(runIncidenceRateDiagnostics)
         data <- runIncidenceRateDiagnostics(
           connection = connection,
           cdmDatabaseSchema = cdmDatabaseSchema,
@@ -671,12 +673,6 @@ runCohortDiagnostics <- function(packageName = NULL,
           firstOccurrenceOnly = TRUE,
           washoutPeriod = washoutPeriod
         )
-        if (is.null(data)) {
-          return(NULL)
-        }
-        if (nrow(data) == 0) {
-          data <- NULL
-        }
         if (nrow(data) > 0) {
           data <- data %>%
             dplyr::mutate(cohortId = row$cohortId)

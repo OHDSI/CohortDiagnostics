@@ -366,7 +366,17 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
   summaryStats <- fetchStats(cohortSummaryStatsFile)
   inclusionStats <- fetchStats(cohortInclusionStatsFile)
   inclusionResults <- fetchStats(cohortInclusionResultFile)
-  result <- dplyr::tibble()
+  inclusionRuleStats <- dplyr::tibble(
+    ruleSequenceId = 0,
+    ruleName = '',
+    meetSubjects = 0,
+    gainSubjects = 0,
+    totalSubjects = 0,
+    remainSubjects = 0,
+    cohortId = 0,
+    databaseId = ''
+  )[0,]
+  
   for (cohortId in unique(inclusion$cohortId)) {
     cohortResult <-
       simplifyInclusionStats(
@@ -375,7 +385,7 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
         inclusionStats = inclusionStats %>% filter(.data$cohortId == cohortId)
       )
     cohortResult$cohortId <- cohortId
-    result <- dplyr::bind_rows(result, cohortResult)
+    inclusionRuleStats <- dplyr::bind_rows(inclusionRuleStats, cohortResult)
   }
   delta <- Sys.time() - start
   ParallelLogger::logTrace(paste(
@@ -384,7 +394,7 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
     attr(delta, "units")
   ))
   output <- list(
-    inclusion_rule_stats = result,
+    inclusion_rule_stats = inclusionRuleStats,
     cohort_inclusion = inclusion,
     cohort_inclusion_result = inclusionResults,
     cohort_inclusion_stats = inclusionStats,

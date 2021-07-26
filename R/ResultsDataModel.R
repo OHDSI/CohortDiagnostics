@@ -386,7 +386,7 @@ uploadResults <- function(connectionDetails = NULL,
             if ("database_id" %in% env$primaryKey ||
                 forceOverWriteOfSpecifications) {
               ParallelLogger::logInfo(
-                " - Found ",
+                "   - Found ",
                 nrow(duplicates),
                 " rows in database with the same primary key ",
                 "as the data to insert. Deleting from database before inserting."
@@ -400,7 +400,7 @@ uploadResults <- function(connectionDetails = NULL,
               
             } else {
               ParallelLogger::logInfo(
-                " - Found ",
+                "   - Found ",
                 scales::comma(nrow(duplicates)),
                 " rows in database with the same primary key ",
                 "as the data to insert. Removing from data to insert."
@@ -414,7 +414,7 @@ uploadResults <- function(connectionDetails = NULL,
           }
         }
         if (nrow(chunk) == 0) {
-          ParallelLogger::logInfo(" - No data left to insert")
+          ParallelLogger::logInfo("   - No data left to insert. Moving to next.")
         } else {
           DatabaseConnector::insertTable(
             connection = connection,
@@ -495,7 +495,7 @@ deleteAllRecordsForDatabaseId <- function(connection,
   if (databaseIdCount != 0) {
     ParallelLogger::logInfo(
       sprintf(
-        "- Found %s rows in  database with database ID '%s'. Deleting all before inserting.",
+        "   - Found %s rows in  database with database ID '%s'. Deleting all before inserting.",
         databaseIdCount,
         databaseId
       )
