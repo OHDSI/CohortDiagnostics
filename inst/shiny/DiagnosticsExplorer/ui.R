@@ -1,49 +1,3 @@
-addInfo <- function(item, infoId) {
-  infoTag <- tags$small(
-    class = "badge pull-right action-button",
-    style = "padding: 1px 6px 2px 6px; background-color: steelblue;",
-    type = "button",
-    id = infoId,
-    "i"
-  )
-  item$children[[1]]$children <-
-    append(item$children[[1]]$children, list(infoTag))
-  return(item)
-}
-
-cohortReference <- function(outputId) {
-  shinydashboard::box(
-    # title = "Reference",
-    status = "warning",
-    width = "100%",
-    tags$div(style = "max-height: 100px; overflow-y: auto",
-             shiny::uiOutput(outputId = outputId))
-  )
-}
-
-cohortReferenceWithDatabaseId <- function(cohortOutputId, databaseOutputId) {
-  shinydashboard::box(
-    # title = "Reference",
-    status = "warning",
-    width = "100%",
-    tags$div(style = "max-height: 100px; overflow-y: auto",
-             tags$table(width = "100%",
-                        tags$tr(
-                          tags$td(width = "70%",
-                                  tags$b("Cohorts :"),
-                                  shiny::uiOutput(outputId = cohortOutputId)
-                          ),
-                          tags$td(style = "align: right !important;", width = "30%",
-                                  tags$b("Database :"),
-                                  shiny::uiOutput(outputId = databaseOutputId)
-                          )
-                        )
-             )
-    )
-  )
-}
-
-
 header <-
   shinydashboard::dashboardHeader(title = "Cohort Diagnostics")
 
@@ -449,7 +403,7 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "cohortCounts",
-    cohortReference("cohortCountsSelectedCohorts"),
+    createShinyBoxFromOutputId("cohortCountsSelectedCohorts"),
     shiny::conditionalPanel(
       condition = "output.cohortCountTableContainsData == true",
       shiny::radioButtons(
@@ -492,7 +446,7 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "incidenceRate",
-    cohortReference("incidenceRateSelectedCohorts"),
+    createShinyBoxFromOutputId("incidenceRateSelectedCohorts"),
     shinydashboard::box(
       title = "Incidence Rate",
       width = NULL,
@@ -642,7 +596,7 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "timeSeries",
-    cohortReference("timeSeriesSelectedCohorts"),
+    createShinyBoxFromOutputId("timeSeriesSelectedCohorts"),
     tags$table(
       tags$tr(
         tags$td(
@@ -781,7 +735,7 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "timeDistribution",
-    cohortReference("timeDistSelectedCohorts"),
+    createShinyBoxFromOutputId("timeDistSelectedCohorts"),
     shinydashboard::box(
       width = NULL,
       status = "primary",
@@ -805,7 +759,7 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "includedConcepts",
-    cohortReference("includedConceptsSelectedCohort"),
+    createShinyBoxFromOutputId("includedConceptsSelectedCohort"),
     shinydashboard::box(
       title = "Concepts in Data Source",
       width = NULL,
@@ -851,7 +805,7 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "orphanConcepts",
-    cohortReference("orphanConceptsSelectedCohort"),
+    createShinyBoxFromOutputId("orphanConceptsSelectedCohort"),
     tags$table(width = "100%",
                tags$tr(
                  tags$td(
@@ -896,7 +850,7 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   # shinydashboard::tabItem(
   #   tabName = "inclusionRuleStats",
-  #   cohortReference("inclusionRuleStatSelectedCohort"),
+  #   createShinyBoxFromOutputId("inclusionRuleStatSelectedCohort"),
   #   shiny::conditionalPanel(
   #     condition = "output.inclusionRuleStatsContainsData == true",
   #     column(6,
@@ -926,7 +880,7 @@ bodyTabItems <- shinydashboard::tabItems(
   # ),
   shinydashboard::tabItem(
     tabName = "indexEventBreakdown",
-    cohortReference("indexEventBreakdownSelectedCohort"),
+    createShinyBoxFromOutputId("indexEventBreakdownSelectedCohort"),
     tags$table(width = '100%',
       tags$tr(
         tags$td(
@@ -1012,7 +966,7 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "visitContext",
-    cohortReference("visitContextSelectedCohort"),
+    createShinyBoxFromOutputId("visitContextSelectedCohort"),
     shiny::conditionalPanel(
       condition = "output.visitContextContainData == true",
       tags$table(width = '100%',
@@ -1060,7 +1014,7 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "cohortOverlap",
-    cohortReference("cohortOverlapSelectedCohort"),
+    createShinyBoxFromOutputId("cohortOverlapSelectedCohort"),
     shinydashboard::box(
       title = "Cohort Overlap (Subjects)",
       width = NULL,
@@ -1091,7 +1045,7 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "cohortCharacterization",
-    cohortReference("characterizationSelectedCohort"),
+    createShinyBoxFromOutputId("characterizationSelectedCohort"),
     tags$table(
       tags$tr(
         tags$td(
@@ -1188,7 +1142,11 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "temporalCharacterization",
-    cohortReferenceWithDatabaseId("temporalCharacterizationSelectedCohort", "temporalCharacterizationSelectedDatabase"),
+    createShinyBoxWithSplitForTwoOutputIds(leftOutputId = "temporalCharacterizationSelectedCohort",
+                                           leftOutputLabel = "Cohort",
+                                           rightOutputId = "temporalCharacterizationSelectedDatabase",
+                                           rightOutputLabel = "Database",
+                                           leftUnits = 70),
     tags$table(tags$tr(
       tags$td(
         shinyWidgets::pickerInput(
@@ -1252,7 +1210,11 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "compareCohortCharacterization",
-    cohortReferenceWithDatabaseId("cohortCharCompareSelectedCohort", "cohortCharCompareSelectedDatabase"),
+    createShinyBoxWithSplitForTwoOutputIds(leftOutputId = "cohortCharCompareSelectedCohort", 
+                                           leftOutputLabel = "Cohort",
+                                           rightOutputId = "cohortCharCompareSelectedDatabase",
+                                           rightOutputLabel = "Database",
+                                           leftUnits = 70),
     tags$table(
       tags$tr(
         tags$td(
@@ -1394,7 +1356,11 @@ bodyTabItems <- shinydashboard::tabItems(
   ),
   shinydashboard::tabItem(
     tabName = "compareTemporalCharacterization",
-    cohortReferenceWithDatabaseId(cohortOutputId = "temporalCharCompareSelectedCohort", databaseOutputId = "temporalCharCompareSelectedDatabase"),
+    createShinyBoxWithSplitForTwoOutputIds(leftOutputId = "temporalCharCompareSelectedCohort", 
+                                           leftOutputLabel = "Cohort",
+                                           rightOutputId = "temporalCharCompareSelectedDatabase",
+                                           rightOutputLabel = "Database",
+                                           leftUnits = 70),
     tags$table(
       tags$tr(
         tags$td(

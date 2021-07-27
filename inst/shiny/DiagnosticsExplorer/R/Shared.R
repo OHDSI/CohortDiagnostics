@@ -46,6 +46,16 @@ camelCaseToSnakeCase <- function(string) {
 }
 
 # private function - not exported
+titleCaseToCamelCase <- function(string) {
+  string <- stringr::str_replace_all(string = string,
+                                     pattern = ' ',
+                                     replacement = '')
+  substr(string, 1, 1) <- tolower(substr(string, 1, 1))
+  return(string)
+}
+
+
+# private function - not exported
 quoteLiterals <- function(x) {
   if (is.null(x)) {
     return("")
