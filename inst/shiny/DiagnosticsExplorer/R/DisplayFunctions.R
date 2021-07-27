@@ -123,9 +123,11 @@ convertMdToHtml <- function(markdown) {
 }
 
 
-getFormattedFileName <- function(fileName) {
+getCsvFileNameWithDateTime <- function(string) {
   date <-
-    stringr::str_replace_all(Sys.Date(), pattern = "-", replacement = "")
+    stringr::str_replace_all(Sys.Date(),
+                             pattern = "-",
+                             replacement = "")
   time <-
     stringr::str_split(string = Sys.time(),
                        pattern = " ",
@@ -135,7 +137,7 @@ getFormattedFileName <- function(fileName) {
                        pattern = ":",
                        n = 3)
   return(paste(
-    fileName,
+    string,
     "_",
     date,
     "_",

@@ -59,7 +59,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   ## reactive: Cohort (single selection) ----
-  cohortSingleSelection <- shiny::reactive({
+  getCohortSortedByCohortId <- shiny::reactive({
     return(cohort %>%
              dplyr::arrange(.data$cohortId))
   })  
@@ -81,7 +81,7 @@ shiny::shinyServer(function(input, output, session) {
   # picker input----
   #### inputId: "cohort"----
   shiny::observe({
-    subset <- cohortSingleSelection()$compoundName
+    subset <- getCohortSortedByCohortId()$compoundName
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "cohort",
@@ -92,7 +92,7 @@ shiny::shinyServer(function(input, output, session) {
   
   #### inputId: "cohorts"----
   shiny::observe({
-    subset <- cohortSingleSelection()$compoundName
+    subset <- getCohortSortedByCohortId()$compoundName
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "cohorts",
@@ -104,7 +104,7 @@ shiny::shinyServer(function(input, output, session) {
   
   #### inputId: "comparatorCohort"----
   shiny::observe({
-    subset <- cohortSingleSelection()$compoundName
+    subset <- getCohortSortedByCohortId()$compoundName
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "comparatorCohort",
@@ -114,39 +114,40 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  # Cohort Definition -------
+  #Cohort Definition -------
   cohortDefinitionTableData <- shiny::reactive(x = {
-    data <-  cohortSingleSelection() %>%
-      dplyr::select(cohort = .data$shortName, 
-                    .data$cohortId, 
+    data <-  getCohortSortedByCohortId() %>%
+      dplyr::select(cohort = .data$shortName,
+                    .data$cohortId,
                     .data$cohortName)
     return(data)
   })
   
+  ## save button -----
   output$saveCohortDefinitionButton <- downloadHandler(
     filename = function() {
-      getFormattedFileName(fileName = "CohortDefinition")
+      getCsvFileNameWithDateTime(string = "CohortDefinition")
     },
     content = function(file) {
-      x <- cohortSingleSelection() %>%
-        dplyr::select(cohort = .data$shortName, 
-                      .data$cohortId, 
+      data <- getCohortSortedByCohortId() %>%
+        dplyr::select(cohort = .data$shortName,
+                      .data$cohortId,
                       .data$cohortName,
                       .data$sql,
                       .data$json)
-      downloadCsv(x = x, fileName = file)
+      downloadCsv(x = data, fileName = file)
     }
   )
+  
   output$cohortDefinitionTable <- DT::renderDataTable(expr = {
-    data <- cohortDefinitionTableData()  %>%
-      dplyr::mutate(
-        cohortId = as.character(.data$cohortId))
+    data <- cohortDefinitionTableData()
+    
     if (nrow(data) < 20) {
       scrollYHeight <- '15vh'
     } else {
       scrollYHeight <- '25vh'
     }
-    
+    #!!!!!!!!!!!!!!!!!! create new function for data table rendering
     options = list(
       pageLength = 100,
       lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
@@ -172,37 +173,33 @@ shiny::shinyServer(function(input, output, session) {
     return(dataTable)
   }, server = TRUE)
   
-  selectedCohortDefinitionRow <- reactive({
+  # What rows were selected in cohort table ----
+  getLastTwoRowSelectedInCohortTable <- reactive({
     idx <- input$cohortDefinitionTable_rows_selected
     if (is.null(idx)) {
       return(NULL)
     } else {
-      subset <- cohortSingleSelection()
-      if (nrow(subset) == 0) {
-        return(NULL)
-      }
+      cohortData <- getCohortSortedByCohortId()
       if (length(idx) > 1) {
         # get the last two rows selected
         lastRowsSelected <- idx[c(length(idx), length(idx) - 1)]
       } else {
         lastRowsSelected <- idx
       }
-      
-      return(subset[lastRowsSelected,])
+      return(cohortData[lastRowsSelected, ])
     }
   })
   
   output$cohortDefinitionRowIsSelected <- reactive({
-    return(!is.null(selectedCohortDefinitionRow()))
+    return(!is.null(getLastTwoRowSelectedInCohortTable()))
   })
-  
   outputOptions(output,
                 "cohortDefinitionRowIsSelected",
                 suspendWhenHidden = FALSE)
   
+  #Show cohort names in UI
   output$selectedCohortInCohortDefinition <- shiny::renderUI(expr = {
-    row <- selectedCohortDefinitionRow()[1,]
-    
+    row <- getLastTwoRowSelectedInCohortTable()[1,]
     if (is.null(row)) {
       return(NULL)
     } else {
@@ -218,10 +215,8 @@ shiny::shinyServer(function(input, output, session) {
       )
     }
   })
-  
   output$selectedSecondCohortInCohortDefinition <- shiny::renderUI(expr = {
-    row <- selectedCohortDefinitionRow()[2,]
-    
+    row <- getLastTwoRowSelectedInCohortTable()[2,]
     if (is.null(row)) {
       return(NULL)
     } else {
@@ -238,9 +233,11 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  cohortDetailsText <- shiny::reactive(x = {
-    data <- selectedCohortDefinitionRow()
-    if (nrow(data) == 0) {
+  
+  getDetailsOnSelectedCohorts <- shiny::reactive(x = {
+    data <- getLastTwoRowSelectedInCohortTable()
+    if (any(is.null(data),
+            nrow(data) == 0)) {
       return(NULL)
     } else {
       details <- list()
@@ -257,44 +254,45 @@ shiny::shinyServer(function(input, output, session) {
             tags$td(HTML("&nbsp;&nbsp;")),
             tags$td(data[i, ]$cohortName)
           )
-          # , #need to part cohort.metadata (a json) and show all contents in that json
-          # tags$tr(
-          #   tags$td(tags$strong("Logic: ")),
-          #   tags$td(HTML("&nbsp;&nbsp;")),
-          #   tags$td(data[i, ]$logicDescription)
-          # )
         )
+        #!!!!!!!!!!!!!!!!!!parse cohort[i,]$metadata from JSON to data table, iterate and present
       }
       return(details)
     }
   })
   
   output$cohortDetailsText <- shiny::renderUI({
-    row <- cohortDetailsText()[[1]]
+    row <- getDetailsOnSelectedCohorts()[[1]]
     if (is.null(row) || length(row) == 0) {
       return(NULL)
     }
     return(row)
-  
   })
   
-  output$cohortCountsTableInCohortDefinition <- DT::renderDataTable(expr = {
-    row <- selectedCohortDefinitionRow()[1,]
+  #get cohort count
+  getCountsForSelectedCohorts <- shiny::reactive(x = {
+    row <- getLastTwoRowSelectedInCohortTable()[1,]
     if (is.null(row)) {
       return(NULL)
-    } else {
-      
-      data <- cohortCount %>%
-        dplyr::filter(.data$cohortId == row$cohortId) %>% 
-        dplyr::filter(.data$databaseId %in% database$databaseId) %>% 
-        dplyr::select(.data$databaseId, .data$cohortSubjects, .data$cohortEntries)
+    }
+    data <- cohortCount %>%
+      dplyr::filter(.data$cohortId %in% row$cohortId) %>% 
+      dplyr::filter(.data$databaseId %in% database$databaseId) %>% 
+      dplyr::select(.data$databaseId, 
+                    .data$cohortSubjects, 
+                    .data$cohortEntries) %>% 
+      dplyr::arrange(.data$databaseId)
+  })
+  output$cohortCountsTableInCohortDefinition <-
+    DT::renderDataTable(expr = {
+      data <- getCountsForSelectedCohorts()
       
       maxCohortSubjects <- max(data$cohortSubjects)
       maxCohortEntries <- max(data$cohortEntries)
       
       options = list(
         pageLength = 100,
-        lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
         searching = TRUE,
         lengthChange = TRUE,
         ordering = TRUE,
@@ -333,49 +331,42 @@ shiny::shinyServer(function(input, output, session) {
         backgroundPosition = "center"
       )
       return(dataTable)
-    }
-  }, server = TRUE)
+    }, server = TRUE)
   
-  getSelectedCohortCountRow <- shiny::reactive(x = {
+  
+  #inclusion rule in cohort table
+  getSelectedDatabaseIdFromCohortCountTable <- shiny::reactive(x = {
     idx <- input$cohortCountsTableInCohortDefinition_rows_selected
-    
     if (is.null(idx)) {
       return(NULL)
-    } else {
-      subset <- database[idx,] %>% 
-        dplyr::select(.data$databaseId)
-      if (is.null(subset)) {
-        return(NULL)
-      } else {
-        return(subset)
-      }
     }
+    return(getCountsForSelectedCohorts()[idx,]$databaseId)
   })
   
   output$cohortCountsTableInCohortDefinitionRowIsSelected <- shiny::reactive(x = {
-    return(!is.null(getSelectedCohortCountRow()))
+    return(!is.null(getSelectedDatabaseIdFromCohortCountTable()))
   })
   shiny::outputOptions(x = output,
                        name = "cohortCountsTableInCohortDefinitionRowIsSelected",
                        suspendWhenHidden = FALSE)
   
   cohortDefinitionInclusionRuleData <- shiny::reactive(x = {
-    validate(need(nrow(getSelectedCohortCountRow()) > 0, "No data sources chosen"))
+    validate(need(nrow(getSelectedDatabaseIdFromCohortCountTable()) > 0, "No data sources chosen"))
     validate(need(
-      nrow(selectedCohortDefinitionRow()) > 0,
+      nrow(getLastTwoRowSelectedInCohortTable()) > 0,
       "No cohorts chosen"
     ))
-    
     table <- getResultsInclusionRuleStatistics(
       dataSource = dataSource,
-      cohortIds = selectedCohortDefinitionRow()[1,]$cohortId,
-      databaseIds = getSelectedCohortCountRow()$databaseId
+      cohortIds = getLastTwoRowSelectedInCohortTable()[1,]$cohortId,
+      databaseIds = getSelectedDatabaseIdFromCohortCountTable()
     )
     return(table)
   })
   
   output$inclusionRuleInCohortDefinition <- DT::renderDataTable(expr = {
-   
+    
+    
     table <- cohortDefinitionInclusionRuleData()
     
     validate(need((nrow(table) > 0),
@@ -385,8 +376,8 @@ shiny::shinyServer(function(input, output, session) {
     cohortCounts <- table %>% 
       dplyr::inner_join(cohortCount,
                         by = c("cohortId", "databaseId")) %>% 
-      dplyr::filter(.data$cohortId == selectedCohortDefinitionRow()[1,]$cohortId) %>% 
-      dplyr::filter(.data$databaseId %in% getSelectedCohortCountRow()$databaseId) %>% 
+      dplyr::filter(.data$cohortId == getLastTwoRowSelectedInCohortTable()[1,]$cohortId) %>% 
+      dplyr::filter(.data$databaseId %in% getSelectedDatabaseIdFromCohortCountTable()) %>% 
       dplyr::select(.data$cohortSubjects) %>% 
       dplyr::pull(.data$cohortSubjects) %>% unique()
     
@@ -510,7 +501,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$saveCohortDefinitionInclusionRuleTable <-  downloadHandler(
     filename = function() {
-      getFormattedFileName(fileName = "InclusionRule")
+      getCsvFileNameWithDateTime(string = "InclusionRule")
     },
     content = function(file) {
       downloadCsv(x = cohortDefinitionInclusionRuleData(), fileName = file)
@@ -522,8 +513,8 @@ shiny::shinyServer(function(input, output, session) {
     on.exit(progress$close())
     progress$set(message = "Rendering human readable cohort description using CirceR", value = 0)
   
-    data <- selectedCohortDefinitionRow()
-    if (nrow(selectedCohortDefinitionRow()) > 0) {
+    data <- getLastTwoRowSelectedInCohortTable()
+    if (nrow(getLastTwoRowSelectedInCohortTable()) > 0) {
       details <- list()
       for (i in (1:nrow(data))) {
         progress$inc(1/nrow(data), detail = paste("Doing part", i))
@@ -555,7 +546,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   getCirceRPackageVersion <- shiny::reactive(x = {
-    row <- selectedCohortDefinitionRow()
+    row <- getLastTwoRowSelectedInCohortTable()
     if (is.null(row)) {
       return(NULL)
     } else {
@@ -583,7 +574,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$cohortDefinitionJson <- shiny::renderText({
-    row <- selectedCohortDefinitionRow()[1,]
+    row <- getLastTwoRowSelectedInCohortTable()[1,]
     if (is.null(row)) {
       return(NULL)
     } else {
@@ -592,7 +583,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$cohortDefinitionSql <- shiny::renderText({
-    row <- selectedCohortDefinitionRow()[1,]
+    row <- getLastTwoRowSelectedInCohortTable()[1,]
     
     if (is.null(row)) {
       return(NULL)
@@ -1041,14 +1032,14 @@ shiny::shinyServer(function(input, output, session) {
   
   # Cohort definition concept set expression ----
   cohortDefinitionConceptSetExpression <- shiny::reactive({
-    if (is.null(selectedCohortDefinitionRow())) {
+    if (is.null(getLastTwoRowSelectedInCohortTable())) {
       return(NULL)
     }
     details <- list()
-    for (i in 1:nrow(selectedCohortDefinitionRow())) {
+    for (i in 1:nrow(getLastTwoRowSelectedInCohortTable())) {
       conceptSetDetailsFromCohortDefinition <-
         getConceptSetDetailsFromCohortDefinition(
-          cohortDefinitionExpression = RJSONIO::fromJSON(selectedCohortDefinitionRow()[i,]$json)
+          cohortDefinitionExpression = RJSONIO::fromJSON(getLastTwoRowSelectedInCohortTable()[i,]$json)
         )
       details[[i]] <- conceptSetDetailsFromCohortDefinition
     }
@@ -1181,7 +1172,7 @@ shiny::shinyServer(function(input, output, session) {
   }
   
   getSubjectAndRecordCountForCohortConceptSet <- shiny::reactive(x = {
-    row <- selectedCohortDefinitionRow()[1,]
+    row <- getLastTwoRowSelectedInCohortTable()[1,]
     
     if (is.null(row) || length(getDatabaseIdInCohortConceptSet()) == 0) {
       return(NULL)
@@ -1216,7 +1207,7 @@ shiny::shinyServer(function(input, output, session) {
   
   getResolvedOrMappedConceptSetForAllDatabase <-
     shiny::reactive(x = {
-      row <- selectedCohortDefinitionRow()
+      row <- getLastTwoRowSelectedInCohortTable()
       if (is.null(row) ||
           is.null(cohortDefinitionConceptSetExpressionRow()$id)) {
         return(NULL)
@@ -1239,7 +1230,7 @@ shiny::shinyServer(function(input, output, session) {
   getResolvedOrMappedConceptSetForAllVocabulary <-
     shiny::reactive(x = {
       data <- NULL
-      row <- selectedCohortDefinitionRow()
+      row <- getLastTwoRowSelectedInCohortTable()
       if (is.null(row) ||
           is.null(cohortDefinitionConceptSetExpressionRow()$id)) {
         return(NULL)
@@ -1252,7 +1243,7 @@ shiny::shinyServer(function(input, output, session) {
           resolveMappedConceptSetFromVocabularyDatabaseSchema(
             dataSource = dataSource,
             conceptSets = conceptSets %>%
-              dplyr::filter(cohortId == selectedCohortDefinitionRow()$cohortId),
+              dplyr::filter(cohortId == getLastTwoRowSelectedInCohortTable()$cohortId),
             vocabularyDatabaseSchema = vocabularyDatabaseSchema
           )
         outputResolved <- output$resolved
@@ -1269,7 +1260,7 @@ shiny::shinyServer(function(input, output, session) {
   
   getConceptCountForAllDatabase <- 
     shiny::reactive(x = {
-      row <- selectedCohortDefinitionRow()
+      row <- getLastTwoRowSelectedInCohortTable()
       if (is.null(row) ||
           is.null(cohortDefinitionConceptSetExpressionRow()$id)) {
         return(NULL)
@@ -1419,7 +1410,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$saveCohortDefinitionIncludedResolvedConceptsTable <-  downloadHandler(
     filename = function() {
-      getFormattedFileName(fileName = "ResolvedConcepts")
+      getCsvFileNameWithDateTime(string = "ResolvedConcepts")
     },
     content = function(file) {
       downloadCsv(x = getResolvedOrMappedConcepts(), fileName = file)
@@ -1495,7 +1486,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$saveCohortDefinitionMappedConceptsTable <-  downloadHandler(
     filename = function() {
-      getFormattedFileName(fileName = "MappedConcepts")
+      getCsvFileNameWithDateTime(string = "MappedConcepts")
     },
     content = function(file) {
       downloadCsv(x = getResolvedOrMappedConcepts(), fileName = file)
@@ -1578,7 +1569,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$saveCohortDefinitionConceptSetsTable <-  downloadHandler(
     filename = function() {
-      getFormattedFileName(fileName = "ConceptSetsExpression")
+      getCsvFileNameWithDateTime(string = "ConceptSetsExpression")
     },
     content = function(file) {
       downloadCsv(x = cohortDefinitionConceptSets(), fileName = file)
@@ -1643,7 +1634,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$saveConceptSetButton <-  downloadHandler(
     filename = function() {
-      getFormattedFileName(fileName = "ConceptSetsExpression")
+      getCsvFileNameWithDateTime(string = "ConceptSetsExpression")
     },
     content = function(file) {
       downloadCsv(x = cohortDefinitionConceptSets(), fileName = file)
@@ -1654,7 +1645,7 @@ shiny::shinyServer(function(input, output, session) {
   cohortDefinitionOrphanConceptTableData <- shiny::reactive(x = {
     if (any(is.null(getDatabaseIdInCohortConceptSet()),
             length(getDatabaseIdInCohortConceptSet()) == 0)) {return(NULL)}
-    row <- selectedCohortDefinitionRow()
+    row <- getLastTwoRowSelectedInCohortTable()
     if (is.null(row) || length(cohortDefinitionConceptSetExpressionRow()$name) == 0) {
       return(NULL)
     }
@@ -1672,7 +1663,7 @@ shiny::shinyServer(function(input, output, session) {
   ### Save orphan concepts table ----
   output$saveCohortDefinitionOrphanConceptsTable <-  downloadHandler(
     filename = function() {
-      getFormattedFileName(fileName = "orphanConcepts")
+      getCsvFileNameWithDateTime(string = "orphanConcepts")
     },
     content = function(file) {
       downloadCsv(x = cohortDefinitionOrphanConceptTableData(), 
@@ -1744,7 +1735,7 @@ shiny::shinyServer(function(input, output, session) {
   
   # Concept set expression 2 ----
   output$cohortDetailsTextSecond <- shiny::renderUI({
-    row <- cohortDetailsText()[[2]]
+    row <- getDetailsOnSelectedCohorts()[[2]]
     if (is.null(row) || length(row) == 0) {
       return(NULL)
     }
@@ -1752,7 +1743,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$cohortCountsTableInCohortDefinitionSecond <- DT::renderDataTable(expr = {
-    row <- selectedCohortDefinitionRow()[2,]
+    row <- getLastTwoRowSelectedInCohortTable()[2,]
     if (is.null(row)) {
       return(NULL)
     } else {
@@ -1835,13 +1826,13 @@ shiny::shinyServer(function(input, output, session) {
   cohortDefinitionSecondInclusionRuleData <- shiny::reactive(x = {
     validate(need(nrow(getSelectedCohortCountSecondRow()) > 0, "No data sources chosen"))
     validate(need(
-      nrow(selectedCohortDefinitionRow()) > 0,
+      nrow(getLastTwoRowSelectedInCohortTable()) > 0,
       "No cohorts chosen"
     ))
     
     table <- getResultsInclusionRuleStatistics(
       dataSource = dataSource,
-      cohortIds = selectedCohortDefinitionRow()[2,]$cohortId,
+      cohortIds = getLastTwoRowSelectedInCohortTable()[2,]$cohortId,
       databaseIds = getSelectedCohortCountSecondRow()$databaseId
     )
     return(table)
@@ -1857,8 +1848,8 @@ shiny::shinyServer(function(input, output, session) {
     cohortCounts <- table %>% 
       dplyr::inner_join(cohortCount,
                         by = c("cohortId", "databaseId")) %>% 
-      dplyr::filter(.data$cohortId == selectedCohortDefinitionRow()[2,]$cohortId) %>% 
-      dplyr::filter(.data$databaseId %in% getSelectedCohortCountRow()$databaseId) %>% 
+      dplyr::filter(.data$cohortId == getLastTwoRowSelectedInCohortTable()[2,]$cohortId) %>% 
+      dplyr::filter(.data$databaseId %in% getSelectedDatabaseIdFromCohortCountTable()) %>% 
       dplyr::select(.data$cohortSubjects) %>% 
       dplyr::pull(.data$cohortSubjects) %>% unique()
     
@@ -1982,7 +1973,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$saveCohortDefinitionSecondInclusionRuleTable <-  downloadHandler(
     filename = function() {
-      getFormattedFileName(fileName = "InclusionRule")
+      getCsvFileNameWithDateTime(string = "InclusionRule")
     },
     content = function(file) {
       downloadCsv(x = cohortDefinitionSecondInclusionRuleData(), fileName = file)
@@ -2004,7 +1995,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$cohortDefinitionJsonSecond <- shiny::renderText({
-    row <- selectedCohortDefinitionRow()[2,]
+    row <- getLastTwoRowSelectedInCohortTable()[2,]
     if (is.null(row)) {
       return(NULL)
     } else {
@@ -2022,7 +2013,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$cohortDefinitionSqlSecond <- shiny::renderText({
-    row <- selectedCohortDefinitionRow()[2,]
+    row <- getLastTwoRowSelectedInCohortTable()[2,]
     
     if (is.null(row)) {
       return(NULL)
@@ -2134,7 +2125,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   getSubjectAndRecordCountForCohortConceptSetSecond <- shiny::reactive(x = {
-    row <- selectedCohortDefinitionRow()[2,]
+    row <- getLastTwoRowSelectedInCohortTable()[2,]
     
     if (is.null(row) || length(getDatabaseIdInCohortConceptSetSecond()) == 0) {
       return(NULL)
@@ -2216,7 +2207,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$saveCohortDefinitionConceptSetsTableSecond <-  downloadHandler(
     filename = function() {
-      getFormattedFileName(fileName = "conceptset")
+      getCsvFileNameWithDateTime(string = "conceptset")
     },
     content = function(file) {
       downloadCsv(x = cohortDefinitionConceptSetSecond(), 
@@ -2278,7 +2269,7 @@ shiny::shinyServer(function(input, output, session) {
   cohortDefinitionOrphanConceptSecondTableData <- shiny::reactive(x = {
     if (any(is.null(getDatabaseIdInCohortConceptSetSecond()),
             length(getDatabaseIdInCohortConceptSetSecond()) == 0)) {return(NULL)}
-    row <- selectedCohortDefinitionRow()
+    row <- getLastTwoRowSelectedInCohortTable()
     if (is.null(row) || length(cohortDefinitionConceptSetExpressionSecondRow()$name) == 0) {
       return(NULL)
     }
@@ -2357,7 +2348,7 @@ shiny::shinyServer(function(input, output, session) {
   ### Save orphan concepts table ----
   output$saveCohortDefinitionOrphanConceptsSecondTable <-  downloadHandler(
     filename = function() {
-      getFormattedFileName(fileName = "orphanconcepts")
+      getCsvFileNameWithDateTime(string = "orphanconcepts")
     },
     content = function(file) {
       downloadCsv(x = cohortDefinitionOrphanConceptSecondTableData(), 
@@ -2367,7 +2358,7 @@ shiny::shinyServer(function(input, output, session) {
   
   getResolvedOrMappedConceptSetSecondForAllDatabase <-
     shiny::reactive(x = {
-      row <- selectedCohortDefinitionRow()
+      row <- getLastTwoRowSelectedInCohortTable()
       if (is.null(row) ||
           is.null(cohortDefinitionConceptSetExpressionSecondRow()$id)) {
         return(NULL)
@@ -2377,7 +2368,7 @@ shiny::shinyServer(function(input, output, session) {
         getResultsResolveMappedConceptSet(
           dataSource = dataSource,
           databaseIds = database$databaseId,
-          cohortIds =  selectedCohortDefinitionRow()[2,]$cohortId
+          cohortIds =  getLastTwoRowSelectedInCohortTable()[2,]$cohortId
         )
       
       if (!is.null(output)) {
@@ -2390,7 +2381,7 @@ shiny::shinyServer(function(input, output, session) {
   getResolvedOrMappedConceptSetForAllVocabulary <-
     shiny::reactive(x = {
       data <- NULL
-      row <- selectedCohortDefinitionRow()
+      row <- getLastTwoRowSelectedInCohortTable()
       if (is.null(row) ||
           is.null(cohortDefinitionConceptSetExpressionSecondRow()$id)) {
         return(NULL)
@@ -2403,7 +2394,7 @@ shiny::shinyServer(function(input, output, session) {
           resolveMappedConceptSetFromVocabularyDatabaseSchema(
             dataSource = dataSource,
             conceptSets = conceptSets %>%
-              dplyr::filter(cohortId == selectedCohortDefinitionRow()[2,]$cohortId),
+              dplyr::filter(cohortId == getLastTwoRowSelectedInCohortTable()[2,]$cohortId),
             vocabularyDatabaseSchema = vocabularyDatabaseSchema
           )
         outputResolved <- output$resolved
@@ -2420,7 +2411,7 @@ shiny::shinyServer(function(input, output, session) {
   
   getConceptSecondCountForAllDatabase <- 
     shiny::reactive(x = {
-      row <- selectedCohortDefinitionRow()
+      row <- getLastTwoRowSelectedInCohortTable()
       if (is.null(row) ||
           is.null(cohortDefinitionConceptSetExpressionSecondRow()$id)) {
         return(NULL)
@@ -2637,7 +2628,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$saveCohortDefinitionIncludedResolvedConceptsSecondTable <-  downloadHandler(
     filename = function() {
-      getFormattedFileName(fileName = "resolvedConceptSet")
+      getCsvFileNameWithDateTime(string = "resolvedConceptSet")
     },
     content = function(file) {
       downloadCsv(x = getResolvedOrMappedConceptSecond(), 
@@ -2721,7 +2712,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$saveCohortDefinitionMappedConceptsSecondTable <-  downloadHandler(
     filename = function() {
-      getFormattedFileName(fileName = "mappedConceptSet")
+      getCsvFileNameWithDateTime(string = "mappedConceptSet")
     },
     content = function(file) {
       downloadCsv(x = getResolvedOrMappedConceptSecond(), 
@@ -3366,7 +3357,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$saveCohortCountsTable <-  downloadHandler(
     filename = function() {
-      getFormattedFileName(fileName = "cohortCount")
+      getCsvFileNameWithDateTime(string = "cohortCount")
     },
     content = function(file) {
       downloadCsv(x = getCohortCountResultReactive(), 
@@ -3859,7 +3850,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$saveIncidenceRatePlot <-  downloadHandler(
     filename = function() {
-      getFormattedFileName(fileName = "IncidenceRate")
+      getCsvFileNameWithDateTime(string = "IncidenceRate")
     },
     content = function(file) {
       downloadCsv(x = incidenceRateDataFull(), 
@@ -4164,7 +4155,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$saveTimeDistTable <-  downloadHandler(
     filename = function() {
-      getFormattedFileName(fileName = "timeDistribution")
+      getCsvFileNameWithDateTime(string = "timeDistribution")
     },
     content = function(file) {
       downloadCsv(x = timeDistributionData(), 
@@ -4251,7 +4242,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$saveIncludedConceptsTable <-  downloadHandler(
     filename = function() {
-      getFormattedFileName(fileName = "includedConcept")
+      getCsvFileNameWithDateTime(string = "includedConcept")
     },
     content = function(file) {
       downloadCsv(x = resolvedConceptData(), 
@@ -4485,7 +4476,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$saveOrphanConceptsTable <-  downloadHandler(
     filename = function() {
-      getFormattedFileName(fileName = "orphanConcept")
+      getCsvFileNameWithDateTime(string = "orphanConcept")
     },
     content = function(file) {
       downloadCsv(x = orphanConceptsData(), 
@@ -4648,7 +4639,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$saveInclusionRuleTable <-  downloadHandler(
     filename = function() {
-      getFormattedFileName(fileName = "inclusionRule")
+      getCsvFileNameWithDateTime(string = "inclusionRule")
     },
     content = function(file) {
       downloadCsv(x = inclusionRuleTableData(), 
@@ -4914,7 +4905,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$saveBreakdownTable <-  downloadHandler(
     filename = function() {
-      getFormattedFileName(fileName = "indexEventBreakdown")
+      getCsvFileNameWithDateTime(string = "indexEventBreakdown")
     },
     content = function(file) {
       downloadCsv(x = indexEventBreakDownDataFilteredByRadioButton(), 
@@ -5153,7 +5144,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$saveVisitContextTable <-  downloadHandler(
     filename = function() {
-      getFormattedFileName(fileName = "visitContext")
+      getCsvFileNameWithDateTime(string = "visitContext")
     },
     content = function(file) {
       downloadCsv(x = visitContexData(), 
@@ -5414,7 +5405,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     
-    jsonExpression <- cohortSingleSelection() %>% 
+    jsonExpression <- getCohortSortedByCohortId() %>% 
       dplyr::filter(.data$cohortId == cohortId()) %>% 
       dplyr::select(.data$json)
     
@@ -5533,7 +5524,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$saveCohortCharacterizationTable <-  downloadHandler(
     filename = function() {
-      getFormattedFileName(fileName = "cohortCharacterization")
+      getCsvFileNameWithDateTime(string = "cohortCharacterization")
     },
     content = function(file) {
       downloadCsv(x = characterizationTableData(), 
@@ -5873,7 +5864,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$saveTemporalCharacterizationTable <-  downloadHandler(
     filename = function() {
-      getFormattedFileName(fileName = "temporalCharacterizationTableData")
+      getCsvFileNameWithDateTime(string = "temporalCharacterizationTableData")
     },
     content = function(file) {
       downloadCsv(x = temporalCharacterizationData(), 
@@ -6070,7 +6061,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$saveCohortOverlapTable <-  downloadHandler(
     filename = function() {
-      getFormattedFileName(fileName = "cohortOverlap")
+      getCsvFileNameWithDateTime(string = "cohortOverlap")
     },
     content = function(file) {
       downloadCsv(x = cohortOverlapData(), 
@@ -6249,7 +6240,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$saveCompareCohortCharacterizationTable <-  downloadHandler(
     filename = function() {
-      getFormattedFileName(fileName = "compareCohortCharacterization")
+      getCsvFileNameWithDateTime(string = "compareCohortCharacterization")
     },
     content = function(file) {
       downloadCsv(x = computeBalance(), 
@@ -6656,7 +6647,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$saveCompareTemporalCharacterizationTable <-  downloadHandler(
     filename = function() {
-      getFormattedFileName(fileName = "compareTemporalCharacterization")
+      getCsvFileNameWithDateTime(string = "compareTemporalCharacterization")
     },
     content = function(file) {
       downloadCsv(x = computeBalanceForCompareTemporalCharacterization(), 
@@ -7192,10 +7183,10 @@ shiny::shinyServer(function(input, output, session) {
   selectedCohorts <- shiny::reactive({
     
     if (any(is.null(cohortIds()), length(cohortIds()) == 0)) {return(NULL)}
-    if (any(is.null(cohortSingleSelection()), nrow(cohortSingleSelection()) == 0)) {return(NULL)}
+    if (any(is.null(getCohortSortedByCohortId()), nrow(getCohortSortedByCohortId()) == 0)) {return(NULL)}
     if (any(is.null(databaseIds()), nrow(databaseIds()) == 0)) {return(NULL)}
     
-    cohortSelected <- cohortSingleSelection() %>%
+    cohortSelected <- getCohortSortedByCohortId() %>%
       dplyr::filter(.data$cohortId %in% cohortIds()) %>%
       dplyr::arrange(.data$cohortId)
     
