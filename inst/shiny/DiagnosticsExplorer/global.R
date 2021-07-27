@@ -102,10 +102,12 @@ if (!exists("shinySettings")) {
   }
 }
 
+# expected tables based on data model specifications
 dataModelSpecifications <-
   getResultsDataModelSpecifications()
 dataModelSpecifications21 <-
   getResultsDataModelSpecifications(versionNumber = 2.1)
+
 # Cleaning up any tables in memory:
 suppressWarnings(rm(
   list = SqlRender::snakeCaseToCamelCase(dataModelSpecifications$tableName)
@@ -119,46 +121,39 @@ if (databaseMode) {
     }
   })
   
+  # tables observed in database
   resultsTablesOnServer <-
     tolower(DatabaseConnector::dbListTables(connectionPool, schema = resultsDatabaseSchema))
   
-  loadResultsTable("analysis_ref")
-  loadResultsTable("cohort", required = TRUE)
-  loadResultsTable("cohort_count", required = TRUE)
-  loadResultsTable("cohort_inclusion")
-  loadResultsTable("cohort_inclusion_result")
-  loadResultsTable("cohort_inclusion_stats")
-  loadResultsTable("cohort_summary_stats")
-  # loadResultsTable("concept")
-  # loadResultsTable("concept_ancestor")
-  # loadResultsTable("concept_relationship")
-  # loadResultsTable("concept_resolved")
-  loadResultsTable("concept_sets")
-  # loadResultsTable("concept_synonym")
-  # loadResultsTable("concept_count")
-  # loadResultsTable("concept_subjects")
-  # loadResultsTable("covariate_ref")
-  # loadResultsTable("concept_cooccurrence")
-  loadResultsTable("concept_class")
-  # loadResultsTable("concept_mapping")
-  # loadResultsTable("concept_excluded")
-  loadResultsTable("database", required = TRUE)
-  loadResultsTable("domain")
-  loadResultsTable("metadata")
-  # loadResultsTable("orphan_concept")
-  loadResultsTable("relationsip")
-  loadResultsTable("temporal_time_ref")
-  loadResultsTable("temporal_analysis_ref")
-  loadResultsTable("temporal_covariate_ref")
-  loadResultsTable("vocabulary")
-  
-  
-  for (table in c(dataModelSpecifications$tableName)) {
+  ####load tables into R memory ----
+  tablesToLoadRequired <- c("cohort", "cohort_count", "database")
+  tablesToLoad <-
+    c(
+      "analysis_ref",
+      "concept_sets",
+      "concept_class",
+      "domain",
+      "relationsip",
+      "temporal_time_ref",
+      "temporal_analysis_ref",
+      "temporal_covariate_ref",
+      "vocabulary"
+    )
+  lapply(tablesToLoadRequired,
+         loadResultsTable,
+         resultsTablesOnServer,
+         TRUE)
+  lapply(tablesToLoad,
+         loadResultsTable,
+         resultsTablesOnServer,
+         FALSE)
+  # compare expected to observed tables
+  for (table in c(dataModelSpecifications$tableName %>% unique())) {
     #, "recommender_set"
     if (table %in% resultsTablesOnServer &&
         !exists(SqlRender::snakeCaseToCamelCase(table)) &&
         !isEmpty(table)) {
-      #if table is empty, nothing is returned because type instability concerns.
+      #if table is empty in remote database, then this condition will be FALSE.
       assign(SqlRender::snakeCaseToCamelCase(table),
              dplyr::tibble())
     }
@@ -177,14 +172,6 @@ if (databaseMode) {
   }
   dataSource <-
     createFileDataSource(localDataPath, envir = .GlobalEnv)
-  
-  # if (exists("temporalCovariateRef")) {
-  #   covariateRef <- dplyr::bind_rows(covariateRef, temporalCovariateRef) %>%
-  #     dplyr::distinct() %>%
-  #     dplyr::arrange(.data$covariateId)
-  #   rm(temporalCovariateRef)
-  # }
-  
 }
 
 if (exists("database")) {

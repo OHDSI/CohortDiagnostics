@@ -1,5 +1,4 @@
-library(magrittr)
-
+#Prepare table 1 ----
 prepareTable1 <- function(covariates,
                           pathToCsv = "Table1Specs.csv") {
   covariates <- covariates %>%
@@ -52,7 +51,7 @@ prepareTable1 <- function(covariates,
   }
   
   for (i in 1:nrow(specifications)) {
-    specification <- specifications[i,]
+    specification <- specifications[i, ]
     if (specification %>% dplyr::pull(.data$covariateIds) == "") {
       covariatesSubset <- covariates %>%
         dplyr::filter(.data$analysisId %in% specification$analysisId) %>%
@@ -118,6 +117,7 @@ prepareTable1 <- function(covariates,
 }
 
 
+#Prepare table for comparision ----
 prepareTable1Comp <- function(balance,
                               pathToCsv = "Table1Specs.csv") {
   balance <- balance %>%
@@ -148,7 +148,7 @@ prepareTable1Comp <- function(balance,
   }
   
   for (i in 1:nrow(specifications)) {
-    specification <- specifications[i,]
+    specification <- specifications[i, ]
     if (specification %>% dplyr::pull(.data$covariateIds) == "") {
       balanceSubset <- balance %>%
         dplyr::filter(.data$analysisId %in% specification$analysisId) %>%
@@ -209,7 +209,7 @@ prepareTable1Comp <- function(balance,
                      dplyr::desc(.data$header),
                      .data$sortOrder) %>%
       dplyr::mutate(sortOrder = dplyr::row_number()) %>%
-      dplyr::select(-.data$header,-.data$position) %>%
+      dplyr::select(-.data$header, -.data$position) %>%
       dplyr::distinct()
   }
   
@@ -239,7 +239,7 @@ prepareTable1Comp <- function(balance,
   return(resultsTable)
 }
 
-
+# Compare cohort characteristics ----
 compareCohortCharacteristics <-
   function(characteristics1, characteristics2) {
     m <- dplyr::full_join(
@@ -268,7 +268,7 @@ compareCohortCharacteristics <-
     return(m)
   }
 
-
+#Compare temporal characteristics ----
 compareTemporalCohortCharacteristics <-
   function(characteristics1, characteristics2) {
     m <- characteristics1 %>%

@@ -1,37 +1,3 @@
-camelCaseToSnakeCase <- function(string) {
-  string <- gsub("([A-Z])", "_\\1", string)
-  string <- tolower(string)
-  string <- gsub("([a-z])([0-9])", "\\1_\\2", string)
-  return(string)
-}
-
-
-camelCaseToTitleCase <- function(string) {
-  string <- gsub("([A-Z])", " \\1", string)
-  string <- gsub("([a-z])([0-9])", "\\1 \\2", string)
-  substr(string, 1, 1) <- toupper(substr(string, 1, 1))
-  return(string)
-}
-
-snakeCaseToCamelCase <- function(string) {
-  string <- tolower(string)
-  for (letter in letters) {
-    string <-
-      gsub(paste("_", letter, sep = ""), toupper(letter), string)
-  }
-  string <- gsub("_([0-9])", "\\1", string)
-  return(string)
-}
-
-
-titleCaseToCamelCase <- function(string) {
-  string <- stringr::str_replace_all(string = string,
-                                     pattern = ' ',
-                                     replacement = '')
-  substr(string, 1, 1) <- tolower(substr(string, 1, 1))
-  return(string)
-}
-
 truncateStringDef <- function(columns, maxChars) {
   list(targets = columns,
        render = DT::JS(
@@ -106,15 +72,6 @@ styleAbsColorBar <-
     )
   }
 
-sumCounts <- function(counts) {
-  result <- sum(abs(counts))
-  if (any(counts < 0)) {
-    return(-result)
-  } else {
-    return(result)
-  }
-}
-
 copyToClipboardButton <-
   function(toCopyId,
            label = "Copy to clipboard",
@@ -163,4 +120,28 @@ convertMdToHtml <- function(markdown) {
   html <- gsub("%sq%", "'", html)
   
   return(html)
+}
+
+
+getFormattedFileName <- function(fileName) {
+  date <-
+    stringr::str_replace_all(Sys.Date(), pattern = "-", replacement = "")
+  time <-
+    stringr::str_split(string = Sys.time(),
+                       pattern = " ",
+                       n = 2)[[1]][2]
+  timeArray <-
+    stringr::str_split(string = time,
+                       pattern = ":",
+                       n = 3)
+  return(paste(
+    fileName,
+    "_",
+    date,
+    "_",
+    timeArray[[1]][1],
+    timeArray[[1]][2],
+    ".csv",
+    sep = ""
+  ))
 }
