@@ -1,5 +1,6 @@
 library(magrittr)
 
+#Source scripts ----
 source("R/Shared.R")
 source("R/StartUpScripts.R")
 source("R/DisplayFunctions.R")
@@ -7,10 +8,9 @@ source("R/Tables.R")
 source("R/Plots.R")
 source("R/Results.R")
 
-# Settings when running on server:
+#Load environment variables----
 defaultLocalDataFolder <- "data"
 defaultLocalDataFile <- "PreMerged.RData"
-
 connectionPool <- NULL
 defaultServer <- Sys.getenv("shinydbServer")
 defaultDatabase <- Sys.getenv("shinydbDatabase")
@@ -21,10 +21,22 @@ defaultResultsSchema <- 'cdSkeletoncohortdiagnosticsstudy2'
 defaultVocabularySchema <- defaultResultsSchema
 alternateVocabularySchema <- c('vocabulary')
 
+#Mode determination ----
 defaultDatabaseMode <- TRUE # Use file system if FALSE
 
+#Tab control variables ----
 showTimeSeries <- TRUE
+showTemporalCharacterization <- TRUE
+showCharacterization <- FALSE
+filterTemporalChoicesToPrimaryOptions <- FALSE
+#!!!!!!!!!!!!!!!!!!
+# showIndexEventBreakdown <- TRUE
+# showVisitContext <- TRUE
+# showMetadata <- TRUE
+# showDataSource <- TRUE
 
+
+# Foot note ----
 appInformationText <- "V 2.2"
 appInformationText <-
   paste0(
@@ -32,22 +44,13 @@ appInformationText <-
     appInformationText,
     ". This app is working in"
   )
-if (defaultDatabaseMode) {
-  appInformationText <- paste0(appInformationText, " database")
-} else {
-  appInformationText <- paste0(appInformationText, " local file")
-}
-appInformationText <- paste0(
-  appInformationText,
-  " mode. Application was last initated on ",
-  lubridate::now(tzone = "EST"),
-  " EST. Cohort Diagnostics website is at https://ohdsi.github.io/CohortDiagnostics/"
-)
 
+# launch settings
 if (!exists("shinySettings")) {
   writeLines("Using default settings")
   databaseMode <- defaultDatabaseMode & defaultServer != ""
   if (databaseMode) {
+    appInformationText <- paste0(appInformationText, " database")
     connectionPool <- pool::dbPool(
       drv = DatabaseConnector::DatabaseConnectorDriver(),
       dbms = "postgresql",
@@ -59,6 +62,7 @@ if (!exists("shinySettings")) {
     resultsDatabaseSchema <- defaultResultsSchema
   } else {
     dataFolder <- defaultLocalDataFolder
+    appInformationText <- paste0(appInformationText, " local file")
   }
   vocabularyDatabaseSchemas <-
     setdiff(x = c(defaultVocabularySchema, alternateVocabularySchema),
@@ -69,6 +73,7 @@ if (!exists("shinySettings")) {
   writeLines("Using settings provided by user")
   databaseMode <- !is.null(shinySettings$connectionDetails)
   if (databaseMode) {
+    appInformationText <- paste0(appInformationText, " database")
     connectionDetails <- shinySettings$connectionDetails
     if (is(connectionDetails$server, "function")) {
       connectionPool <-
@@ -82,6 +87,7 @@ if (!exists("shinySettings")) {
           connectionString = connectionDetails$connectionString()
         )
     } else {
+      appInformationText <- paste0(appInformationText, " local file")
       # For backwards compatibility with older versions of DatabaseConnector:
       connectionPool <-
         pool::dbPool(
@@ -102,18 +108,28 @@ if (!exists("shinySettings")) {
   }
 }
 
-# expected tables based on data model specifications
+appInformationText <- paste0(
+  appInformationText,
+  " mode. Application was last initated on ",
+  lubridate::now(tzone = "EST"),
+  " EST. Cohort Diagnostics website is at https://ohdsi.github.io/CohortDiagnostics/"
+)
+
+#Expected tables based on data model specifications
 dataModelSpecifications <-
   getResultsDataModelSpecifications()
 dataModelSpecifications21 <-
   getResultsDataModelSpecifications(versionNumber = 2.1)
 
-# Cleaning up any tables in memory:
+#Clean up shadows ----
 suppressWarnings(rm(
-  list = SqlRender::snakeCaseToCamelCase(dataModelSpecifications$tableName)
+  list = SqlRender::snakeCaseToCamelCase(dataModelSpecifications$tableName %>% unique())
 ))
 
+
+#Loading data ----
 if (databaseMode) {
+  # close connection to database on app stop
   onStop(function() {
     if (DBI::dbIsValid(connectionPool)) {
       writeLines("Closing database pool")
@@ -123,7 +139,8 @@ if (databaseMode) {
   
   # tables observed in database
   resultsTablesOnServer <-
-    tolower(DatabaseConnector::dbListTables(connectionPool, schema = resultsDatabaseSchema))
+    tolower(DatabaseConnector::dbListTables(connectionPool, 
+                                            schema = resultsDatabaseSchema))
   
   ####load tables into R memory ----
   tablesToLoadRequired <- c("cohort", "cohort_count", "database")
@@ -147,6 +164,7 @@ if (databaseMode) {
          loadResultsTable,
          resultsTablesOnServer,
          FALSE)
+  
   # compare expected to observed tables
   for (table in c(dataModelSpecifications$tableName %>% unique())) {
     #, "recommender_set"
@@ -158,7 +176,6 @@ if (databaseMode) {
              dplyr::tibble())
     }
   }
-  
   dataSource <-
     createDatabaseDataSource(
       connection = connectionPool,
@@ -174,6 +191,8 @@ if (databaseMode) {
     createFileDataSource(localDataPath, envir = .GlobalEnv)
 }
 
+#!!!!!!!!!!!!!!!!!!
+# modify objects that are always in R memory (enhancements)
 if (exists("database")) {
   if (nrow(database) > 0 &&
       "vocabularyVersion" %in% colnames(database)) {
@@ -185,7 +204,7 @@ if (exists("database")) {
 }
 
 if (exists("cohort")) {
-  cohort <- get("cohort")
+  # cohort is required and is always loaded into R memory
   cohort <- cohort %>%
     dplyr::arrange(.data$cohortId) %>%
     dplyr::mutate(shortName = paste0("C", dplyr::row_number())) %>%
@@ -199,37 +218,57 @@ if (exists("cohort")) {
     ))
 }
 
-if (exists("temporalTimeRef")) {
-  temporalCovariateChoices <- get("temporalTimeRef") %>%
-    dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
-    dplyr::select(.data$timeId, .data$choices) %>%
-    dplyr::arrange(.data$timeId)
-  if (!showTimeSeries) {
-    temporalCovariateChoices <- temporalCovariateChoices %>%
-      dplyr::filter(
-        stringr::str_detect(string = .data$choices,
-                            pattern = 'Start -365 to end -31|Start -30 to end -1|Start 0 to end 0|Start 1 to end 30|Start 31 to end 365')
-      )
-  }
-}
-
-if (exists("covariateRef")) {
-  specifications <- readr::read_csv(
-    file = "Table1Specs.csv",
-    col_types = readr::cols(),
-    guess_max = min(1e7)
-  )
-  prettyAnalysisIds <- specifications$analysisId
-} else {
-  prettyAnalysisIds <- c(0)
-}
-
+# disable tabs based on user preference ----
 if (!showTimeSeries) {
   if (exists("timeSeries")) {
     rm(timeSeries)
   }
 }
 
+if (exists("temporalTimeRef")) {
+  if (all(nrow(temporalTimeRef) > 0,
+          showTemporalCharacterization)) {
+    temporalCovariateChoices <- temporalTimeRef %>%
+      dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
+      dplyr::select(.data$timeId, .data$choices) %>%
+      dplyr::arrange(.data$timeId)
+    
+    if (filterTemporalChoicesToPrimaryOptions) {
+      temporalCovariateChoices <- temporalCovariateChoices %>%
+        dplyr::filter(
+          stringr::str_detect(string = .data$choices,
+                              pattern = 'Start -365 to end -31|Start -30 to end -1|Start 0 to end 0|Start 1 to end 30|Start 31 to end 365')
+        )
+    }
+  } else {
+    rm("temporalTimeRef")
+    rm("temporalAnalysisRef")
+    rm("temporalCovariateChoices")
+    rm("temporalCovariateRef")
+    rm("temporalCovariateValue")
+    filterTemporalCovariateChoicesToPrimaryOptions <- FALSE
+  }
+}
+
+if (exists("covariateRef")) {
+  if (all(nrow(covariateRef) > 0,
+          showCharacterization)) {
+    specifications <- readr::read_csv(
+      file = "Table1Specs.csv",
+      col_types = readr::cols(),
+      guess_max = min(1e7)
+    )
+    prettyAnalysisIds <- specifications$analysisId
+  } else {
+    rm("covariateValue")
+    rm("covariateRef")
+    rm("covariateValueDist")
+  }
+}
+
+
+#Extras -----
+# other objects in memory ----
 sourcesOfVocabularyTables <-
   getSourcesOfVocabularyTables(dataSource = dataSource,
                                database = database)
