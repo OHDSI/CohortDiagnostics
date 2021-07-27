@@ -145,3 +145,67 @@ getFormattedFileName <- function(fileName) {
     sep = ""
   ))
 }
+
+
+addInfo <- function(item, infoId) {
+  infoTag <- tags$small(
+    class = "badge pull-right action-button",
+    style = "padding: 1px 6px 2px 6px; background-color: steelblue;",
+    type = "button",
+    id = infoId,
+    "i"
+  )
+  item$children[[1]]$children <-
+    append(item$children[[1]]$children, list(infoTag))
+  return(item)
+}
+
+createShinyBoxFromOutputId <- function(outputId) {
+  shinydashboard::box(
+    # title = "Reference",
+    status = "warning",
+    width = "100%",
+    tags$div(style = "max-height: 100px; overflow-y: auto",
+             shiny::uiOutput(outputId = outputId))
+  )
+}
+
+
+createShinyBoxWithSplitForTwoOutputIds <- function(leftOutputId,
+                                                   leftOutputLabel,
+                                                   rightOutputId,
+                                                   rightOutputLabel,
+                                                   leftUnits = 70) {
+  leftUnits <- as.integer(leftUnits)
+  if (any(is.null(leftUnits),
+          leftUnits <= 0,
+          leftUnits >= 100)) {
+    leftUnits <- 70
+  }
+  rightUnits <- 100 - leftUnits
+  leftPercent <- paste0("'", leftUnits, "%'")
+  rightPercent <- paste0("'", rightUnits, "%'")
+  leftOutputLabel <- paste0(leftOutputLabel, " :")
+  rightOutputLabel <- paste0(rightOutputLabel, " :")
+  
+  shinydashboard::box(
+    # title = "Reference",
+    status = "warning",
+    width = "100%",
+    tags$div(style = "max-height: 100px; overflow-y: auto",
+             tags$table(width = "100%",
+                        tags$tr(
+                          tags$td(
+                            width = leftPercent,
+                            tags$b(leftOutputLabel),
+                            shiny::uiOutput(outputId = leftOutputId)
+                          ),
+                          tags$td(
+                            style = "align: right !important;",
+                            width = rightPercent,
+                            tags$b(rightOutputLabel),
+                            shiny::uiOutput(outputId = rightOutputId)
+                          )
+                        )))
+  )
+}

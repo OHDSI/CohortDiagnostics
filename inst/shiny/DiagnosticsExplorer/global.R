@@ -27,7 +27,7 @@ defaultDatabaseMode <- TRUE # Use file system if FALSE
 #Tab control variables ----
 showTimeSeries <- TRUE
 showTemporalCharacterization <- TRUE
-showCharacterization <- FALSE
+showCharacterization <- TRUE
 filterTemporalChoicesToPrimaryOptions <- FALSE
 #!!!!!!!!!!!!!!!!!!
 # showIndexEventBreakdown <- TRUE
