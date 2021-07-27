@@ -1,8 +1,12 @@
 shiny::shinyServer(function(input, output, session) {
+  
+  # Main Reactive objects ----
+  ## reactive: cohortId----
   cohortId <- shiny::reactive({
     return(cohort$cohortId[cohort$compoundName == input$cohort])
   })
   
+  ## reactive: cohortIds----
   cohortIds <- reactiveVal(NULL)
   shiny::observeEvent(eventExpr = {
     list(input$cohorts_open,
@@ -15,15 +19,18 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  ## reactive: comparatorCohortId----
   comparatorCohortId <- shiny::reactive({
     return(cohort$cohortId[cohort$compoundName == input$comparatorCohort])
   })
   
+  ## reactive: conceptSetIds----
   conceptSetIds <- shiny::reactive(x = {
     return(conceptSets$conceptSetId[conceptSets$conceptSetName %in% 
                                       input$conceptSetsToFilterCharacterization])
   })
   
+  ## reactive: conceptSetIds----
   timeIds <- reactiveVal(NULL)
   shiny::observeEvent(eventExpr = {
     list(input$timeIdChoices_open,
@@ -39,6 +46,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  ## reactive: databaseIds----
   databaseIds <- reactiveVal(NULL)
   shiny::observeEvent(eventExpr = {
     list(input$databases_open,
@@ -50,18 +58,30 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  ## reactive: Cohort (single selection) ----
+  cohortSingleSelection <- shiny::reactive({
+    return(cohort %>%
+             dplyr::arrange(.data$cohortId))
+  })  
+  
+  
+  #Filtered Reactive objects ----
+  ## selected database or vocabulary schema ----
+  getDatabaseIdInCohortConceptSet <- shiny::reactive({
+    return(database$databaseId[database$databaseIdWithVocabularyVersion == 
+                                 input$databaseOrVocabularySchema])
+  })
+  
   getDatabaseIdInCohortConceptSetSecond <- shiny::reactive({
     return(database$databaseId[database$databaseIdWithVocabularyVersion == 
                                  input$databaseOrVocabularySchemaSecond])
   })
   
-  cohortSubset <- shiny::reactive({
-    return(cohort %>%
-             dplyr::arrange(.data$cohortId))
-  })
-  
+
+  # picker input----
+  #### inputId: "cohort"----
   shiny::observe({
-    subset <- cohortSubset()$compoundName
+    subset <- cohortSingleSelection()$compoundName
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "cohort",
@@ -70,8 +90,9 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
+  #### inputId: "cohorts"----
   shiny::observe({
-    subset <- cohortSubset()$compoundName
+    subset <- cohortSingleSelection()$compoundName
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "cohorts",
@@ -81,8 +102,9 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
+  #### inputId: "comparatorCohort"----
   shiny::observe({
-    subset <- cohortSubset()$compoundName
+    subset <- cohortSingleSelection()$compoundName
     shinyWidgets::updatePickerInput(
       session = session,
       inputId = "comparatorCohort",
@@ -92,11 +114,12 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-
   # Cohort Definition -------
   cohortDefinitionTableData <- shiny::reactive(x = {
-    data <-  cohortSubset() %>%
-      dplyr::select(cohort = .data$shortName, .data$cohortId, .data$cohortName)
+    data <-  cohortSingleSelection() %>%
+      dplyr::select(cohort = .data$shortName, 
+                    .data$cohortId, 
+                    .data$cohortName)
     return(data)
   })
   
@@ -105,7 +128,7 @@ shiny::shinyServer(function(input, output, session) {
       getFormattedFileName(fileName = "CohortDefinition")
     },
     content = function(file) {
-      x <- cohortSubset() %>%
+      x <- cohortSingleSelection() %>%
         dplyr::select(cohort = .data$shortName, 
                       .data$cohortId, 
                       .data$cohortName,
@@ -154,7 +177,7 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(idx)) {
       return(NULL)
     } else {
-      subset <- cohortSubset()
+      subset <- cohortSingleSelection()
       if (nrow(subset) == 0) {
         return(NULL)
       }
@@ -606,17 +629,6 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  if (is(dataSource, "environment")) {
-    choicesFordatabaseOrVocabularySchema <-
-      c(database$databaseIdWithVocabularyVersion)
-  } else {
-    choicesFordatabaseOrVocabularySchema <- list(
-      'From site' = database$databaseIdWithVocabularyVersion,
-      'Reference Vocabulary' = vocabularyDatabaseSchemas
-    )
-  }
-  
-  
   output$cohortDefinitionCountOfSelectedRows <- shiny::reactive({
     return(length(input$cohortDefinitionTable_rows_selected))
   })
@@ -689,7 +701,7 @@ shiny::shinyServer(function(input, output, session) {
                                                                   shinyWidgets::pickerInput(
                                                                     inputId = "databaseOrVocabularySchema",
                                                                     label = "Vocabulary version choices:",
-                                                                    choices = choicesFordatabaseOrVocabularySchema,
+                                                                    choices = sourcesOfVocabularyTables,
                                                                     multiple = FALSE,
                                                                     width = 200,
                                                                     inline = TRUE,
@@ -891,7 +903,7 @@ shiny::shinyServer(function(input, output, session) {
                                                                   shinyWidgets::pickerInput(
                                                                     inputId = "databaseOrVocabularySchemaSecond",
                                                                     label = "Vocabulary version choices:",
-                                                                    choices = choicesFordatabaseOrVocabularySchema,
+                                                                    choices = sourcesOfVocabularyTables,
                                                                     multiple = FALSE,
                                                                     width = 200,
                                                                     inline = TRUE,
@@ -1153,9 +1165,7 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  getDatabaseIdInCohortConceptSet <- shiny::reactive({
-    return(database$databaseId[database$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchema])
-  })
+
   
   getPersonAndRecordCountForVocabularySchema <-  function(cohortId, databaseId) {
     data <- cohortCount %>%
@@ -1267,8 +1277,7 @@ shiny::shinyServer(function(input, output, session) {
       browser()
       conceptCount <- getResultsConceptCount(
         dataSource = dataSource,
-        databaseIds = database$databaseId,
-        cohortId = row$cohortId
+        databaseIds = database$databaseId
       )
       return(conceptCount)
     })
@@ -2418,8 +2427,7 @@ shiny::shinyServer(function(input, output, session) {
       }
       conceptCount <- getResultsConceptCount(
         dataSource = dataSource,
-        databaseIds = database$databaseId,
-        cohortId = selectedCohortDefinitionRow()[2,]$cohortId
+        databaseIds = database$databaseId
       )
       return(conceptCount)
     })
@@ -4224,8 +4232,8 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
-  # included concepts table /concepts in data source-----
-  includedConceptsData <- shiny::reactive(x = {
+  # resolved concepts in data source-----
+  resolvedConceptData <- shiny::reactive(x = {
     validate(need(all(!is.null(databaseIds()), length(databaseIds()) > 0), 
                   "No data sources chosen"))
     validate(need(all(!is.null(cohortId()),length(cohortId()) > 0),
@@ -4233,48 +4241,20 @@ shiny::shinyServer(function(input, output, session) {
     if (all(is(dataSource, "environment"), !exists('includedSourceConcept'))) {
       return(NULL)
     }
-    browser()
     resolvedConcepts <- getResultsResolvedConcepts(dataSource = dataSource,
                                                    databaseIds = databaseIds(), 
                                                    cohortIds = cohortId())
-    includedConcepts <- getResultsConceptCount(
-      dataSource = dataSource,
-      databaseIds = databaseIds()
-    )
-    
-    if (is.null(includedConcepts)) {return(NULL)}
-    
-    includedConcepts <- includedConcepts %>% 
-      dplyr::inner_join(conceptSets %>% dplyr::select(.data$cohortId,
-                                                      .data$conceptSetId,
-                                                      .data$conceptSetName), 
-                        by = c("cohortId", "conceptSetId"))
-    concept <- getConcept(dataSource = dataSource,
-                                 conceptIds = c(includedConcepts$conceptId, includedConcepts$sourceConceptId) %>% unique())
-    includedConcepts <- includedConcepts %>% 
-      dplyr::inner_join(concept %>% 
-                          dplyr::rename(sourceConceptId = .data$conceptId,
-                                        sourceConceptName = .data$conceptName,
-                                        sourceVocabularyId = .data$vocabularyId,
-                                        sourceConceptCode = .data$conceptCode) %>% 
-                          dplyr::select(.data$sourceConceptId, .data$sourceConceptName, 
-                                        .data$sourceVocabularyId, .data$sourceConceptCode),
-                        by = c("sourceConceptId")) %>%
-      dplyr::inner_join(concept %>% 
-                          dplyr::select(
-                            .data$conceptId,
-                            .data$conceptName,
-                            .data$vocabularyId),
-                        by = c("conceptId"))
-    return(includedConcepts)
+    return(resolvedConcepts)
   })
+  
+  
   
   output$saveIncludedConceptsTable <-  downloadHandler(
     filename = function() {
       getFormattedFileName(fileName = "includedConcept")
     },
     content = function(file) {
-      downloadCsv(x = includedConceptsData(), 
+      downloadCsv(x = resolvedConceptData(), 
                   fileName = file)
     }
   )
@@ -4285,7 +4265,7 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(all(!is.null(cohortId()),length(cohortId()) > 0),
                   "No cohort chosen"))
     
-    data <- includedConceptsData()
+    data <- resolvedConceptData()
     validate(need(all(!is.null(data), nrow(data) > 0),
                   "No data available for selected combination"))
     
@@ -4463,7 +4443,7 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$includeConceptsTableContainsData <- shiny::reactive({
-    return(nrow(includedConceptsData()) > 0)
+    return(nrow(resolvedConceptData()) > 0)
   })
   
   shiny::outputOptions(output,
@@ -5434,7 +5414,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     
-    jsonExpression <- cohortSubset() %>% 
+    jsonExpression <- cohortSingleSelection() %>% 
       dplyr::filter(.data$cohortId == cohortId()) %>% 
       dplyr::select(.data$json)
     
@@ -7212,10 +7192,10 @@ shiny::shinyServer(function(input, output, session) {
   selectedCohorts <- shiny::reactive({
     
     if (any(is.null(cohortIds()), length(cohortIds()) == 0)) {return(NULL)}
-    if (any(is.null(cohortSubset()), nrow(cohortSubset()) == 0)) {return(NULL)}
+    if (any(is.null(cohortSingleSelection()), nrow(cohortSingleSelection()) == 0)) {return(NULL)}
     if (any(is.null(databaseIds()), nrow(databaseIds()) == 0)) {return(NULL)}
     
-    cohortSelected <- cohortSubset() %>%
+    cohortSelected <- cohortSingleSelection() %>%
       dplyr::filter(.data$cohortId %in% cohortIds()) %>%
       dplyr::arrange(.data$cohortId)
     

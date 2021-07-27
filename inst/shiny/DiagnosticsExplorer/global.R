@@ -242,3 +242,7 @@ if (!showTimeSeries) {
     rm(timeSeries)
   }
 }
+
+sourcesOfVocabularyTables <-
+  getSourcesOfVocabularyTables(dataSource = dataSource,
+                               database = database)

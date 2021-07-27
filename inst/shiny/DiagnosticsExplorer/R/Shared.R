@@ -348,7 +348,7 @@ getResultsMetadata <- function(dataSource) {
 getResultsResolvedConcepts <- function(dataSource,
                                        databaseIds = NULL,
                                        cohortIds = NULL) {
-  table <- "resolvedConcepts"
+  table <- "conceptResolved"
   if (is(dataSource, "environment")) {
     if (any(!exists(table),
             length(table) == 0,
@@ -369,16 +369,16 @@ getResultsResolvedConcepts <- function(dataSource,
       return(NULL)
     }
   } else {
-    sqlResolved <- "SELECT DISTINCT resolved_concepts.*
-                    FROM @results_database_schema.resolved_concepts
-                    {@cohort_id == '' & @database_id !=''} ? { WHERE database_id in (@database_id)}
-                    {@cohort_id != '' & @database_id !=''} ? { WHERE database_id in (@database_id) AND cohort_id in (@cohort_id)}
-                    {@cohort_id != '' & @database_id ==''} ? { WHERE cohort_id in (@cohort_id)}
-                    ORDER BY concept_id;"
+    sql <- "SELECT *
+            FROM @results_database_schema.concept_resolved
+            {@cohort_id == '' & @database_id !=''} ? { WHERE database_id in (@database_id)}
+            {@cohort_id != '' & @database_id !=''} ? { WHERE database_id in (@database_id) AND cohort_id in (@cohort_id)}
+            {@cohort_id != '' & @database_id ==''} ? { WHERE cohort_id in (@cohort_id)}
+            ORDER BY concept_id;"
     resolved <-
       renderTranslateQuerySql(
         connection = dataSource$connection,
-        sql = sqlResolved,
+        sql = sql,
         results_database_schema = dataSource$resultsDatabaseSchema,
         database_id = quoteLiterals(databaseIds),
         cohort_id = cohortIds,
