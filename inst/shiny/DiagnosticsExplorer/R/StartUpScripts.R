@@ -29,6 +29,7 @@ getSubjectCountsByDatabasae <-
 
 
 loadResultsTable <- function(tableName, required = FALSE) {
+  writeLines(text = paste0(" - Loading data from ", tableName))
   if (required || tableName %in% resultsTablesOnServer) {
     tryCatch({
       table <- DatabaseConnector::dbReadTable(connectionPool,

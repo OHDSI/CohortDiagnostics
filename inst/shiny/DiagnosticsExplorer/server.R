@@ -343,7 +343,7 @@ shiny::shinyServer(function(input, output, session) {
       "No cohorts chosen"
     ))
     
-    table <- getResultsFromInclusionRuleStatistics(
+    table <- getResultsInclusionRuleStatistics(
       dataSource = dataSource,
       cohortIds = selectedCohortDefinitionRow()[1,]$cohortId,
       databaseIds = getSelectedCohortCountRow()$databaseId
@@ -1264,7 +1264,8 @@ shiny::shinyServer(function(input, output, session) {
           is.null(cohortDefinitionConceptSetExpressionRow()$id)) {
         return(NULL)
       }
-      conceptCount <- getResultsFromConceptCount(
+      browser()
+      conceptCount <- getResultsConceptCount(
         dataSource = dataSource,
         databaseIds = database$databaseId,
         cohortId = row$cohortId
@@ -1649,7 +1650,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     if (length(input$databaseOrVocabularySchema) == 0) {return(NULL)}
-    data <- getResultsFromOrphanConcept(dataSource = dataSource,
+    data <- getResultsOrphanConcept(dataSource = dataSource,
                                         cohortId = row$cohortId,
                                         databaseIds = getDatabaseIdInCohortConceptSet())
     if (!is.null(data)) {
@@ -1829,7 +1830,7 @@ shiny::shinyServer(function(input, output, session) {
       "No cohorts chosen"
     ))
     
-    table <- getResultsFromInclusionRuleStatistics(
+    table <- getResultsInclusionRuleStatistics(
       dataSource = dataSource,
       cohortIds = selectedCohortDefinitionRow()[2,]$cohortId,
       databaseIds = getSelectedCohortCountSecondRow()$databaseId
@@ -2273,7 +2274,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     # if (length(input$databaseOrVocabularySchema) == 0) {return(NULL)}
-    data <- getResultsFromOrphanConcept(dataSource = dataSource,
+    data <- getResultsOrphanConcept(dataSource = dataSource,
                                         cohortId = row$cohortId,
                                         databaseIds = getDatabaseIdInCohortConceptSetSecond())
     if (!is.null(data)) {
@@ -2415,7 +2416,7 @@ shiny::shinyServer(function(input, output, session) {
           is.null(cohortDefinitionConceptSetExpressionSecondRow()$id)) {
         return(NULL)
       }
-      conceptCount <- getResultsFromConceptCount(
+      conceptCount <- getResultsConceptCount(
         dataSource = dataSource,
         databaseIds = database$databaseId,
         cohortId = selectedCohortDefinitionRow()[2,]$cohortId
@@ -3583,7 +3584,7 @@ shiny::shinyServer(function(input, output, session) {
       nrow(getCohortIdOnCohortCountRowSelect()) > 0,
       "No cohorts chosen"
     ))
-    table <- getResultsFromInclusionRuleStatistics(
+    table <- getResultsInclusionRuleStatistics(
       dataSource = dataSource,
       cohortIds = getCohortIdOnCohortCountRowSelect()$cohortId,
       databaseIds = databaseIds()
@@ -4232,9 +4233,12 @@ shiny::shinyServer(function(input, output, session) {
     if (all(is(dataSource, "environment"), !exists('includedSourceConcept'))) {
       return(NULL)
     }
-    includedConcepts <- getResultsFromConceptCount(
+    browser()
+    resolvedConcepts <- getResultsResolvedConcepts(dataSource = dataSource,
+                                                   databaseIds = databaseIds(), 
+                                                   cohortIds = cohortId())
+    includedConcepts <- getResultsConceptCount(
       dataSource = dataSource,
-      cohortIds = cohortId(),
       databaseIds = databaseIds()
     )
     
@@ -4245,7 +4249,7 @@ shiny::shinyServer(function(input, output, session) {
                                                       .data$conceptSetId,
                                                       .data$conceptSetName), 
                         by = c("cohortId", "conceptSetId"))
-    concept <- getResultsFromConcept(dataSource = dataSource,
+    concept <- getConcept(dataSource = dataSource,
                                  conceptIds = c(includedConcepts$conceptId, includedConcepts$sourceConceptId) %>% unique())
     includedConcepts <- includedConcepts %>% 
       dplyr::inner_join(concept %>% 
@@ -4474,7 +4478,7 @@ shiny::shinyServer(function(input, output, session) {
     if (all(is(dataSource, "environment"), !exists('orphanConcept'))) {
       return(NULL)
     }
-    orphanConcepts <- getResultsFromOrphanConcept(
+    orphanConcepts <- getResultsOrphanConcept(
       dataSource = dataSource,
       cohortIds = cohortId(),
       databaseIds = databaseIds()
@@ -4486,7 +4490,7 @@ shiny::shinyServer(function(input, output, session) {
         .data$conceptSetId,
         .data$conceptSetName), 
         by = c("cohortId", "conceptSetId"))
-    concepts <- getResultsFromConcept(dataSource = dataSource,
+    concepts <- getConcept(dataSource = dataSource,
                                   conceptIds = orphanConcepts$conceptId %>% unique())
     orphanConcepts <- orphanConcepts %>% 
       dplyr::inner_join(concepts %>% dplyr::select(
@@ -4654,7 +4658,7 @@ shiny::shinyServer(function(input, output, session) {
     if (all(is(dataSource, "environment"), !exists('inclusionRuleStats'))) {
       return(NULL)
     }
-    data <- getResultsFromInclusionRuleStatistics(
+    data <- getResultsInclusionRuleStatistics(
       dataSource = dataSource,
       cohortIds = cohortId(),
       databaseIds = databaseIds()
@@ -4812,7 +4816,7 @@ shiny::shinyServer(function(input, output, session) {
     if (all(is(dataSource, "environment"), !exists('indexEventBreakdown'))) {
       return(NULL)
     }
-    data <- getResultsFromIndexEventBreakdown(
+    data <- getResultsIndexEventBreakdown(
       dataSource = dataSource,
       cohortIds = cohortId(),
       databaseIds = databaseIds())
@@ -4828,7 +4832,7 @@ shiny::shinyServer(function(input, output, session) {
     if (!'domainField' %in% colnames(indexEventBreakdown)) {
       indexEventBreakdown$domainField <- "Not in data"
     }
-    conceptIdDetails <- getResultsFromConcept(dataSource = dataSource,
+    conceptIdDetails <- getConcept(dataSource = dataSource,
                                           conceptIds = indexEventBreakdown$conceptId %>% unique())
     if (is.null(conceptIdDetails)) {return(NULL)}
     indexEventBreakdown <- indexEventBreakdown %>%
@@ -5135,7 +5139,7 @@ shiny::shinyServer(function(input, output, session) {
     if (all(is(dataSource, "environment"), !exists('visitContext'))) {
       return(NULL)
     }
-    visitContext <- getResultsFromVisitContext(
+    visitContext <- getResultsVisitContext(
       dataSource = dataSource,
       cohortIds = cohortId(),
       databaseIds = databaseIds()
@@ -5146,7 +5150,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     # to ensure backward compatibility to 2.1 when visitContext did not have visitConceptName
     if (!'visitConceptName' %in% colnames(visitContext)) {
-      concepts <- getResultsFromConcept(dataSource = dataSource, 
+      concepts <- getConcept(dataSource = dataSource, 
                                     conceptIds = visitContext$visitConceptId %>% unique()
       ) %>% 
         dplyr::rename(visitConceptId = .data$conceptId,

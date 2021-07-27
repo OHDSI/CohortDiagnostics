@@ -21,7 +21,7 @@ defaultResultsSchema <- 'cdSkeletoncohortdiagnosticsstudy2'
 defaultVocabularySchema <- defaultResultsSchema
 alternateVocabularySchema <- c('vocabulary')
 
-defaultDatabaseMode <- FALSE # Use file system if FALSE
+defaultDatabaseMode <- TRUE # Use file system if FALSE
 
 showTimeSeries <- TRUE
 
@@ -122,32 +122,35 @@ if (databaseMode) {
   resultsTablesOnServer <-
     tolower(DatabaseConnector::dbListTables(connectionPool, schema = resultsDatabaseSchema))
   
-  # vocabularyTablesOnServer <- list()
-  # vocabularyTablesInOmopCdm <- c('concept', 'concept_relationship', 'concept_ancestor',
-  #                                'concept_class', 'concept_synonym',
-  #                                'vocabulary', 'domain', 'relationship')
-  
-  # for (i in length(vocabularyDatabaseSchemas)) {
-  #
-  #     tolower(DatabaseConnector::dbListTables(connectionPool, schema = vocabularyDatabaseSchemas[[i]]))
-  # vocabularyTablesOnServer[[i]] <- intersect(x = )
-  # }
-  loadResultsTable("database", required = TRUE)
-  loadResultsTable("cohort", required = TRUE)
-  loadResultsTable("temporal_time_ref")
-  loadResultsTable("concept_sets")
-  loadResultsTable("cohort_count", required = TRUE)
   loadResultsTable("analysis_ref")
+  loadResultsTable("cohort", required = TRUE)
+  loadResultsTable("cohort_count", required = TRUE)
+  loadResultsTable("cohort_inclusion")
+  loadResultsTable("cohort_inclusion_result")
+  loadResultsTable("cohort_inclusion_stats")
+  loadResultsTable("cohort_summary_stats")
+  # loadResultsTable("concept")
+  # loadResultsTable("concept_ancestor")
+  # loadResultsTable("concept_relationship")
+  # loadResultsTable("concept_resolved")
+  loadResultsTable("concept_sets")
+  # loadResultsTable("concept_synonym")
+  # loadResultsTable("concept_count")
+  # loadResultsTable("concept_subjects")
+  # loadResultsTable("covariate_ref")
+  # loadResultsTable("concept_cooccurrence")
+  loadResultsTable("concept_class")
+  # loadResultsTable("concept_mapping")
+  # loadResultsTable("concept_excluded")
+  loadResultsTable("database", required = TRUE)
+  loadResultsTable("domain")
+  loadResultsTable("metadata")
+  # loadResultsTable("orphan_concept")
+  loadResultsTable("relationsip")
+  loadResultsTable("temporal_time_ref")
   loadResultsTable("temporal_analysis_ref")
-  loadResultsTable("covariate_ref")
   loadResultsTable("temporal_covariate_ref")
-  
-  # if (exists("temporalCovariateRef")) {
-  #   covariateRef <- dplyr::bind_rows(covariateRef, temporalCovariateRef) %>%
-  #     dplyr::distinct() %>%
-  #     dplyr::arrange(.data$covariateId)
-  #   rm(temporalCovariateRef)
-  # }
+  loadResultsTable("vocabulary")
   
   
   for (table in c(dataModelSpecifications$tableName)) {

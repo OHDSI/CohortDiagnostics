@@ -305,6 +305,29 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
   return(data)
 }
 
+#' Returns data from meta data table of Cohort Diagnostics results data model
+#'
+#' @description
+#' Returns data from meta data table of Cohort Diagnostics results data model
+#'
+#' @template DataSource
+#'
+#' @return
+#' Returns a data frame (tibble)
+#'
+#' @export
+getResultsMetadata <- function(dataSource) {
+  data <- getDataFromResultsDatabaseSchema(
+    dataSource,
+    cohortIds = cohortIds,
+    databaseIds = databaseIds,
+    conceptIds = conceptIds,
+    dataTableName = "metadata"
+  )
+  return(data)
+}
+
+
 # Concept ----
 #' Returns resolved concepts for a list of cohortIds and databaseIds combinations
 #'
@@ -351,7 +374,7 @@ getResultsResolvedConcepts <- function(dataSource,
                     {@cohort_id == '' & @database_id !=''} ? { WHERE database_id in (@database_id)}
                     {@cohort_id != '' & @database_id !=''} ? { WHERE database_id in (@database_id) AND cohort_id in (@cohort_id)}
                     {@cohort_id != '' & @database_id ==''} ? { WHERE cohort_id in (@cohort_id)}
-                    ORDER BY concept.concept_id;"
+                    ORDER BY concept_id;"
     resolved <-
       renderTranslateQuerySql(
         connection = dataSource$connection,
@@ -580,8 +603,6 @@ getConceptAncestor <- function(dataSource = .GlobalEnv,
 #'
 #' @template DataSource
 #'
-#' @template CohortIds
-#'
 #' @template DatabaseIds
 #'
 #' @param conceptIds     A list of concept ids to get counts for
@@ -591,12 +612,10 @@ getConceptAncestor <- function(dataSource = .GlobalEnv,
 #'
 #' @export
 getResultsConceptCount <- function(dataSource,
-                                   cohortIds = NULL,
                                    databaseIds = NULL,
                                    conceptIds = NULL) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
-    cohortIds = cohortIds,
     databaseIds = databaseIds,
     conceptIds = conceptIds,
     dataTableName = "conceptCount"
@@ -678,8 +697,8 @@ getConceptSetDetailsFromCohortDefinition <-
       i <- i + 1
       conceptSetExpressionDetails[[i]] <-
         getConceptSetDataFrameFromConceptSetExpression(conceptSetExpression =
-                                                         conceptSetExpression[i,]$expression$items) %>%
-        dplyr::mutate(id = conceptSetExpression[i, ]$id) %>%
+                                                         conceptSetExpression[i, ]$expression$items) %>%
+        dplyr::mutate(id = conceptSetExpression[i,]$id) %>%
         dplyr::relocate(.data$id) %>%
         dplyr::arrange(.data$id)
     }
@@ -1525,7 +1544,7 @@ getCohortRelationshipCharacterizationResults <-
       return(data)
     }
     
-    analysisId <- c(-101, -102, -103, -104, -201, -202, -203, -204)
+    analysisId <- c(-101,-102,-103,-104,-201,-202,-203,-204)
     analysisName <- c(
       "CohortOccurrenceAnyTimePrior",
       "CohortOccurrenceLongTerm",
@@ -1546,7 +1565,7 @@ getCohortRelationshipCharacterizationResults <-
       "bothSubjects",
       "bothSubjects"
     )
-    startDay <- c(-99999, -365, -180, -30, -99999, -365, -180, -30)
+    startDay <- c(-99999,-365,-180,-30,-99999,-365,-180,-30)
     endDay <- c(0, 0, 0, 0, 0, 0, 0, 0)
     analysisRef <-
       dplyr::tibble(analysisId, analysisName, valueField, startDay, endDay) %>%
@@ -1570,10 +1589,10 @@ getCohortRelationshipCharacterizationResults <-
       result[[j]] <-
         summarizeCohortRelationship(
           data = cohortRelationships,
-          startDay = analysisRef[j, ]$startDay,
-          endDay = analysisRef[j, ]$endDay,
-          analysisId = analysisRef[j, ]$analysisId,
-          valueField = analysisRef[j, ]$valueField,
+          startDay = analysisRef[j,]$startDay,
+          endDay = analysisRef[j,]$endDay,
+          analysisId = analysisRef[j,]$analysisId,
+          valueField = analysisRef[j,]$valueField,
           cohortCounts = cohortCounts
         )
     }
@@ -1730,7 +1749,7 @@ getCohortAsFeatureTemporalCharacterizationResults <-
       return(data)
     }
     
-    analysisId <- c(-101, -201)
+    analysisId <- c(-101,-201)
     analysisName <- c("CohortEraStart", "CohortEraOverlap")
     valueField <- c("cSubjectsStart",
                     "bothSubjects")
@@ -1755,8 +1774,8 @@ getCohortAsFeatureTemporalCharacterizationResults <-
       result[[j]] <-
         summarizeCohortRelationship(
           data = cohortRelationships,
-          valueField = analysisRef[j, ]$valueField,
-          analysisId = analysisRef[j, ]$analysisId,
+          valueField = analysisRef[j,]$valueField,
+          analysisId = analysisRef[j,]$analysisId,
           temporalTimeRef = temporalTimeRef,
           cohortCounts = cohortCounts
         )
