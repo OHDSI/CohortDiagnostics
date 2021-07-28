@@ -517,16 +517,21 @@ shiny::shinyServer(function(input, output, session) {
     }
   )
   
-  cohortDefinitionCirceRDetails <- shiny::reactive(x = {
+  #reactive getCirceRenderedExpressionDetails----
+  getCirceRenderedExpressionDetails <- shiny::reactive(x = {
     progress <- shiny::Progress$new()
     on.exit(progress$close())
     progress$set(message = "Rendering human readable cohort description using CirceR", value = 0)
   
-    data <- getLastTwoRowSelectedInCohortTable()
+    selectionsInCohortTable <- getLastTwoRowSelectedInCohortTable()
     if (nrow(getLastTwoRowSelectedInCohortTable()) > 0) {
       details <- list()
-      for (i in (1:nrow(data))) {
-        progress$inc(1/nrow(data), detail = paste("Doing part", i))
+      for (i in (1:nrow(selectionsInCohortTable))) {
+        progress$inc(1/nrow(selectionsInCohortTable), detail = paste("Doing part", i))
+   
+        f <-
+          getCirceRenderedExpression(cohortDefinition = RJSONIO::fromJSON(selectionsInCohortTable$json[[i]],
+                                                                          digits = 23))
         circeExpression <-
           CirceR::cohortExpressionFromJson(expressionJson = data[i, ]$json)
         circeExpressionMarkdown <-
@@ -550,7 +555,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$cohortDefinitionText <- shiny::renderUI(expr = {
-    cohortDefinitionCirceRDetails()[1,]$htmlExpressionCohort %>%
+    getCirceRenderedExpressionDetails()[1,]$htmlExpressionCohort %>%
       shiny::HTML()
   })
   
@@ -1274,7 +1279,6 @@ shiny::shinyServer(function(input, output, session) {
           is.null(cohortDefinitionConceptSetExpressionRow()$id)) {
         return(NULL)
       }
-      browser()
       conceptCount <- getResultsConceptCount(
         dataSource = dataSource,
         databaseIds = database$databaseId
@@ -1999,7 +2003,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   output$cohortDefinitionTextSecond <- shiny::renderUI(expr = {
-    cohortDefinitionCirceRDetails()[2,]$htmlExpressionCohort %>%
+    getCirceRenderedExpressionDetails()[2,]$htmlExpressionCohort %>%
       shiny::HTML()
   })
   
@@ -4282,7 +4286,9 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(all(!is.null(data), nrow(data) > 0),
                   "No data available for selected combination"))
     
-    databaseIdsWithCount <- getSubjectCountsByDatabasae(data = data, cohortId = cohortId(), databaseIds = databaseIds())
+    databaseIdsWithCount <- getSubjectCountsByDatabasae(data = data, 
+                                                        cohortId = cohortId(), 
+                                                        databaseIds = databaseIds())
     
     maxCount <- max(data$conceptCount, na.rm = TRUE)
     
