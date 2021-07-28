@@ -1,12 +1,11 @@
 shiny::shinyServer(function(input, output, session) {
   
-  # Main Reactive objects ----
-  ## reactive: cohortId----
+  #reactive: cohortId----
   cohortId <- shiny::reactive({
     return(cohort$cohortId[cohort$compoundName == input$cohort])
   })
   
-  ## reactive: cohortIds----
+  #reactiveVal: cohortIds----
   cohortIds <- reactiveVal(NULL)
   shiny::observeEvent(eventExpr = {
     list(input$cohorts_open,
@@ -19,18 +18,18 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  ## reactive: comparatorCohortId----
+  #reactive: comparatorCohortId----
   comparatorCohortId <- shiny::reactive({
     return(cohort$cohortId[cohort$compoundName == input$comparatorCohort])
   })
   
-  ## reactive: conceptSetIds----
+  #reactive: conceptSetIds----
   conceptSetIds <- shiny::reactive(x = {
     return(conceptSets$conceptSetId[conceptSets$conceptSetName %in% 
                                       input$conceptSetsToFilterCharacterization])
   })
   
-  ## reactive: conceptSetIds----
+  #reactiveVal: timeIds----
   timeIds <- reactiveVal(NULL)
   shiny::observeEvent(eventExpr = {
     list(input$timeIdChoices_open,
@@ -46,7 +45,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  ## reactive: databaseIds----
+  #reactiveVal: databaseIds----
   databaseIds <- reactiveVal(NULL)
   shiny::observeEvent(eventExpr = {
     list(input$databases_open,
@@ -58,28 +57,26 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  ## reactive: Cohort (single selection) ----
+  #reactive: getCohortSortedByCohortId ----
   getCohortSortedByCohortId <- shiny::reactive({
     return(cohort %>%
              dplyr::arrange(.data$cohortId))
   })  
   
   
-  #Filtered Reactive objects ----
-  ## selected database or vocabulary schema ----
+  #reactive: getDatabaseIdInCohortConceptSet ----
   getDatabaseIdInCohortConceptSet <- shiny::reactive({
     return(database$databaseId[database$databaseIdWithVocabularyVersion == 
                                  input$databaseOrVocabularySchema])
   })
   
+  #reactive: getDatabaseIdInCohortConceptSetSecond ----
   getDatabaseIdInCohortConceptSetSecond <- shiny::reactive({
     return(database$databaseId[database$databaseIdWithVocabularyVersion == 
                                  input$databaseOrVocabularySchemaSecond])
   })
   
-
-  # picker input----
-  #### inputId: "cohort"----
+  #inputId: cohort----
   shiny::observe({
     subset <- getCohortSortedByCohortId()$compoundName
     shinyWidgets::updatePickerInput(
@@ -90,7 +87,7 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  #### inputId: "cohorts"----
+  #inputId: cohorts----
   shiny::observe({
     subset <- getCohortSortedByCohortId()$compoundName
     shinyWidgets::updatePickerInput(
@@ -102,7 +99,7 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  #### inputId: "comparatorCohort"----
+  #inputId comparatorCohort----
   shiny::observe({
     subset <- getCohortSortedByCohortId()$compoundName
     shinyWidgets::updatePickerInput(
@@ -114,7 +111,7 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  #Cohort Definition -------
+  #reactive: cohortDefinitionTableData----
   cohortDefinitionTableData <- shiny::reactive(x = {
     data <-  getCohortSortedByCohortId() %>%
       dplyr::select(cohort = .data$shortName,
@@ -123,7 +120,7 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  ## save button -----
+  #output: saveCohortDefinitionButton----
   output$saveCohortDefinitionButton <- downloadHandler(
     filename = function() {
       getCsvFileNameWithDateTime(string = "CohortDefinition")
@@ -139,6 +136,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   )
   
+  #output: cohortDefinitionTable----
   output$cohortDefinitionTable <- DT::renderDataTable(expr = {
     data <- cohortDefinitionTableData()
     
@@ -173,7 +171,8 @@ shiny::shinyServer(function(input, output, session) {
     return(dataTable)
   }, server = TRUE)
   
-  # What rows were selected in cohort table ----
+  #reactive: getLastTwoRowSelectedInCohortTable----
+  # What rows were selected in cohort table
   getLastTwoRowSelectedInCohortTable <- reactive({
     idx <- input$cohortDefinitionTable_rows_selected
     if (is.null(idx)) {
@@ -190,13 +189,16 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  #output: cohortDefinitionRowIsSelected----
   output$cohortDefinitionRowIsSelected <- reactive({
     return(!is.null(getLastTwoRowSelectedInCohortTable()))
   })
-  outputOptions(output,
-                "cohortDefinitionRowIsSelected",
-                suspendWhenHidden = FALSE)
+  # send output to UI
+  shiny::outputOptions(x = output,
+                       name = "cohortDefinitionRowIsSelected",
+                       suspendWhenHidden = FALSE)
   
+  #output: selectedCohortInCohortDefinition----
   #Show cohort names in UI
   output$selectedCohortInCohortDefinition <- shiny::renderUI(expr = {
     row <- getLastTwoRowSelectedInCohortTable()[1,]
@@ -215,6 +217,7 @@ shiny::shinyServer(function(input, output, session) {
       )
     }
   })
+  #output: selectedSecondCohortInCohortDefinition----
   output$selectedSecondCohortInCohortDefinition <- shiny::renderUI(expr = {
     row <- getLastTwoRowSelectedInCohortTable()[2,]
     if (is.null(row)) {
@@ -233,7 +236,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  
+  #reactive: getDetailsOnSelectedCohorts----
   getDetailsOnSelectedCohorts <- shiny::reactive(x = {
     data <- getLastTwoRowSelectedInCohortTable()
     if (any(is.null(data),
@@ -261,6 +264,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  #output: cohortDetailsText----
   output$cohortDetailsText <- shiny::renderUI({
     row <- getDetailsOnSelectedCohorts()[[1]]
     if (is.null(row) || length(row) == 0) {
@@ -269,6 +273,7 @@ shiny::shinyServer(function(input, output, session) {
     return(row)
   })
   
+  #reactive: getCountsForSelectedCohorts----
   #get cohort count
   getCountsForSelectedCohorts <- shiny::reactive(x = {
     row <- getLastTwoRowSelectedInCohortTable()[1,]
@@ -283,6 +288,8 @@ shiny::shinyServer(function(input, output, session) {
                     .data$cohortEntries) %>% 
       dplyr::arrange(.data$databaseId)
   })
+  
+  #output: cohortCountsTableInCohortDefinition----
   output$cohortCountsTableInCohortDefinition <-
     DT::renderDataTable(expr = {
       data <- getCountsForSelectedCohorts()
@@ -334,6 +341,7 @@ shiny::shinyServer(function(input, output, session) {
     }, server = TRUE)
   
   
+  #reactive: getSelectedDatabaseIdFromCohortCountTable----
   #inclusion rule in cohort table
   getSelectedDatabaseIdFromCohortCountTable <- shiny::reactive(x = {
     idx <- input$cohortCountsTableInCohortDefinition_rows_selected
@@ -343,13 +351,14 @@ shiny::shinyServer(function(input, output, session) {
     return(getCountsForSelectedCohorts()[idx,]$databaseId)
   })
   
+  #output: cohortCountsTableInCohortDefinitionRowIsSelected----
   output$cohortCountsTableInCohortDefinitionRowIsSelected <- shiny::reactive(x = {
     return(!is.null(getSelectedDatabaseIdFromCohortCountTable()))
   })
   shiny::outputOptions(x = output,
                        name = "cohortCountsTableInCohortDefinitionRowIsSelected",
                        suspendWhenHidden = FALSE)
-  
+  #reactive: cohortDefinitionInclusionRuleData----
   cohortDefinitionInclusionRuleData <- shiny::reactive(x = {
     validate(need(nrow(getSelectedDatabaseIdFromCohortCountTable()) > 0, "No data sources chosen"))
     validate(need(
