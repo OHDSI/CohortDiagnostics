@@ -1046,6 +1046,7 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(getLastTwoRowSelectedInCohortTable())) {
       return(NULL)
     }
+    
     details <- list()
     for (i in 1:nrow(getLastTwoRowSelectedInCohortTable())) {
       conceptSetDetailsFromCohortDefinition <-
@@ -1059,8 +1060,8 @@ shiny::shinyServer(function(input, output, session) {
   
   ##Concept set expression table one
   output$conceptsetExpressionTable <- DT::renderDataTable(expr = {
-    validate(need((any(is.null(cohortDefinitionConceptSetExpression()),
-                       length(cohortDefinitionConceptSetExpression()) == 0)),
+    validate(need((any(!is.null(cohortDefinitionConceptSetExpression()),
+                       length(cohortDefinitionConceptSetExpression()) != 0)),
                   "Cohort definition does not appear to have concept set expression(s)."))
     if (any(is.null(cohortDefinitionConceptSetExpression()),
             length(cohortDefinitionConceptSetExpression()) == 0)) {
