@@ -529,16 +529,13 @@ shiny::shinyServer(function(input, output, session) {
       for (i in (1:nrow(selectionsInCohortTable))) {
         progress$inc(1/nrow(selectionsInCohortTable), detail = paste("Doing part", i))
    
-        f <-
-          getCirceRenderedExpression(cohortDefinition = RJSONIO::fromJSON(selectionsInCohortTable$json[[i]],
-                                                                          digits = 23))
         circeExpression <-
-          CirceR::cohortExpressionFromJson(expressionJson = data[i, ]$json)
+          CirceR::cohortExpressionFromJson(expressionJson = selectionsInCohortTable[i, ]$json)
         circeExpressionMarkdown <-
           CirceR::cohortPrintFriendly(circeExpression)
         circeConceptSetListmarkdown <-
           CirceR::conceptSetListPrintFriendly(circeExpression$conceptSets)
-        details[[i]] <- data[i, ]
+        details[[i]] <- selectionsInCohortTable[i, ]
         details[[i]]$circeConceptSetListmarkdown <-
           circeConceptSetListmarkdown
         details[[i]]$htmlExpressionCohort <-
