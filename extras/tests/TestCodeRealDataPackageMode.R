@@ -53,7 +53,6 @@ dataSouceInformation <-
     connectionDetails = connectionDetails,
     cdmDatabaseSchema = cdmDatabaseSchema
   )
-
 execute(
   connectionDetails = connectionDetails,
   cdmDatabaseSchema = cdmDatabaseSchema,

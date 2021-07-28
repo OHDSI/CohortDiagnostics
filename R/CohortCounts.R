@@ -36,7 +36,7 @@ getCohortCounts <- function(connectionDetails = NULL,
                             cohortTable = "cohort",
                             cohortIds = c()) {
   start <- Sys.time()
-  
+  results <- Andromeda::andromeda()
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
     on.exit(DatabaseConnector::disconnect(connection))
@@ -54,7 +54,7 @@ getCohortCounts <- function(connectionDetails = NULL,
   tablesInServer <-
     tolower(DatabaseConnector::dbListTables(conn = connection, schema = cohortDatabaseSchema))
   if (tolower(cohortTable) %in% tablesInServer) {
-    counts <-
+    results$cohortCount <-
       DatabaseConnector::querySql(connection, sql, snakeCaseToCamelCase = TRUE) %>%
       dplyr::tibble()
     delta <- Sys.time() - start
@@ -63,7 +63,7 @@ getCohortCounts <- function(connectionDetails = NULL,
       signif(delta, 3),
       attr(delta, "units")
     ))
-    return(counts)
+    return(results)
   } else {
     warning('Cohort table was not found. Was it created?')
     return(NULL)
