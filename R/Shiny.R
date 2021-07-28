@@ -37,6 +37,7 @@
 #'                         Note: copying to clipboard will not work in a Shiny window.
 #' @param aboutText        Text (using HTML markup) that will be displayed in an About tab in the Shiny app.
 #'                         If not provided, no About tab will be shown.
+#' @param appDir           Top directory of Shiny app
 #'
 #' @details
 #' Launches a Shiny app that allows the user to explore the diagnostics
@@ -51,7 +52,10 @@ launchDiagnosticsExplorer <- function(dataFolder = "data",
                                       aboutText = NULL,
                                       runOverNetwork = FALSE,
                                       port = 80,
-                                      launch.browser = FALSE) {
+                                      launch.browser = FALSE,
+                                      appDir = system.file("shiny", 
+                                                           "DiagnosticsExplorer", 
+                                                           package = "CohortDiagnostics")) {
   if (!is.null(connectionDetails) &&
       connectionDetails$dbms != "postgresql") {
     stop("Shiny application can only run against a Postgres database")
@@ -89,9 +93,6 @@ launchDiagnosticsExplorer <- function(dataFolder = "data",
   ensure_installed("stringr")
   ensure_installed("SqlRender")
   ensure_installed("tidyr")
-  
-  appDir <-
-    system.file("shiny", "DiagnosticsExplorer", package = "CohortDiagnostics")
   
   if (launch.browser) {
     options(shiny.launch.browser = TRUE)

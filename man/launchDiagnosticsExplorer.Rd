@@ -14,7 +14,8 @@ launchDiagnosticsExplorer(
   aboutText = NULL,
   runOverNetwork = FALSE,
   port = 80,
-  launch.browser = FALSE
+  launch.browser = FALSE,
+  appDir = system.file("shiny", "DiagnosticsExplorer", package = "CohortDiagnostics")
 )
 }
 \arguments{
@@ -49,6 +50,8 @@ If not provided, no About tab will be shown.}
 
 \item{launch.browser}{Should the app be launched in your default browser, or in a Shiny window.
 Note: copying to clipboard will not work in a Shiny window.}
+
+\item{appDir}{Top directory of Shiny app}
 }
 \description{
 Launch the Diagnostics Explorer Shiny app
