@@ -362,7 +362,6 @@ runCohortDiagnostics <- function(packageName = NULL,
   
   cohorts <- cohorts %>%
     dplyr::select(cohortTableColumnNamesExpected)
-  cohorts <- .replaceNaInDataFrameWithEmptyString(cohorts)
   writeToCsv(data = cohorts,
              fileName = file.path(exportFolder, "cohort.csv"))
   
@@ -413,8 +412,6 @@ runCohortDiagnostics <- function(packageName = NULL,
     personDays = observationPeriodDateRange$personDays
   )
   database <- .replaceNaInDataFrameWithEmptyString(database)
-  writeToCsv(data = database,
-             fileName = file.path(exportFolder, "database.csv"))
   delta <- Sys.time() - startMetaData
   ParallelLogger::logTrace(paste(
     " - Saving database metadata took",
@@ -441,19 +438,18 @@ runCohortDiagnostics <- function(packageName = NULL,
   
   # Counting cohorts----
   ParallelLogger::logTrace(" - Counting records & subjects for instantiated cohorts.")
-  cohortCounts <- getCohortCounts(
+  output <- getCohortCounts(
     connection = connection,
     cohortDatabaseSchema = cohortDatabaseSchema,
     cohortTable = cohortTable,
     cohortIds = cohorts$cohortId
   ) # cohortCounts is reused
-  output <- list()
-  output$cohort_count <- cohortCounts
+  cohortCounts <- output$cohortCount
   # Get instantiated cohorts ----
   instantiatedCohorts <-
     as.double(c(-1)) # set by default to non instantiated
   if (!is.null(cohortCounts)) {
-    if (nrow(output$cohort_count) > 0) {
+    if (cohortCounts %>% dplyr::summarise(n = dplyr::n()) %>% dplyr::pull(.data$n) > 0) {
       writeToAllOutputToCsv(
         object = output,
         exportFolder = exportFolder,
@@ -461,21 +457,21 @@ runCohortDiagnostics <- function(packageName = NULL,
         incremental = incremental,
         minCellCount = minCellCount
       )
-      instantiatedCohorts <- output$cohort_count %>%
+      instantiatedCohorts <- output$cohortCount %>%
         dplyr::pull(.data$cohortId)
       if (length(instantiatedCohorts) < nrow(cohorts)) {
         ParallelLogger::logInfo(
           paste0(" - Skipping diagnostics on following cohorts as they were either not instantiated or had no subjects: ",
                  paste0(setdiff(cohorts$cohortId, instantiatedCohorts), collapse = ", ")))
       }
-      output <- NULL
+      Andromeda::close(output)
+      rm("output")
     } else {
       warning(
         " - All cohorts were either not instantiated or all have 0 records. All diagnostics will be empty."
       )
     }
   }
-  
   # Inclusion statistics----
   ParallelLogger::logInfo(" - Retrieving inclusion rules from file.")
   if (runInclusionStatistics) {
@@ -498,11 +494,11 @@ runCohortDiagnostics <- function(packageName = NULL,
             length(instantiatedCohorts) - nrow(subset)
           ))
         }
-        stats <-
+        output <-
           getInclusionStatisticsFromFiles(cohortIds = subset$cohortId,
                                           folder = inclusionStatisticsFolder)
         writeToAllOutputToCsv(
-          object = stats,
+          object = output,
           exportFolder = exportFolder,
           databaseId = databaseId,
           incremental = incremental,
@@ -515,6 +511,8 @@ runCohortDiagnostics <- function(packageName = NULL,
           recordKeepingFile = recordKeepingFile,
           incremental = incremental
         )
+        Andromeda::close(output)
+        rm("output")
       } else {
         ParallelLogger::logInfo("  - Skipping in incremental mode.")
       }
@@ -527,12 +525,10 @@ runCohortDiagnostics <- function(packageName = NULL,
                              attr(delta, "units"))
   }
   
+  
   # Concept set diagnostics----
   if (runConceptSetDiagnostics) {
-    # running together because share common process of needing to resolve concept sets
     ParallelLogger::logInfo(" - Beginning concept set diagnostics.")
-    # note for incremental mode - if a cohort id is eligible for computation for any diagnostics,
-    # all diagnostics are computed for that cohort
     startConceptSetDiagnostics <- Sys.time()
     subset <- subsetToRequiredCohorts(
       cohorts = cohorts,
@@ -547,8 +543,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           nrow(cohorts) - nrow(subset)
         ))
       }
-      
-      conceptSetDiagnostics <- runConceptSetDiagnostics(
+      output <- runConceptSetDiagnostics(
         connection = connection,
         tempEmulationSchema = tempEmulationSchema,
         cdmDatabaseSchema = cdmDatabaseSchema,
@@ -560,12 +555,14 @@ runCohortDiagnostics <- function(packageName = NULL,
         exportDetailedVocabulary = exportDetailedVocabulary
       )
       writeToAllOutputToCsv(
-        object = conceptSetDiagnostics,
+        object = output,
         exportFolder = exportFolder,
         databaseId = databaseId,
         incremental = incremental,
         minCellCount = minCellCount
       )
+      Andromeda::close(output)
+      rm("output")
       recordTasksDone(
         cohortId = subset$cohortId,
         task = "runConceptSetDiagnostics",
@@ -604,8 +601,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           length(instantiatedCohorts) - nrow(subset)
         ))
       }
-      output <- list()
-      output$visit_context <- runVisitContextDiagnostics(
+      output <- runVisitContextDiagnostics(
         connection = connection,
         tempEmulationSchema = tempEmulationSchema,
         cdmDatabaseSchema = cdmDatabaseSchema,
@@ -622,7 +618,8 @@ runCohortDiagnostics <- function(packageName = NULL,
         incremental = incremental,
         minCellCount = minCellCount
       )
-      output <- NULL
+      Andromeda::close(output)
+      rm("output")
     } else {
       ParallelLogger::logInfo("  - Skipping in incremental mode.")
     }
@@ -690,7 +687,8 @@ runCohortDiagnostics <- function(packageName = NULL,
         incremental = incremental,
         minCellCount = minCellCount
       )
-      output <- NULL
+      Andromeda::close(output)
+      rm("output")
       recordTasksDone(
         cohortId = subset$cohortId,
         task = "runIncidenceRate",
@@ -752,7 +750,8 @@ runCohortDiagnostics <- function(packageName = NULL,
           incremental = incremental,
           minCellCount = minCellCount
         )
-        output <- NULL
+        Andromeda::close(output)
+        rm("output")
         recordTasksDone(
           cohortId = subset$cohortId,
           task = "runCohortTimeSeries",
@@ -1006,7 +1005,6 @@ runCohortDiagnostics <- function(packageName = NULL,
         ))
       )
     )
-  metadata <- .replaceNaInDataFrameWithEmptyString(metadata)
   writeToCsv(
     data = metadata,
     fileName = file.path(exportFolder, "metadata.csv"),

@@ -337,11 +337,11 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
                                             cohortSummaryStatsFile = file.path(folder,
                                                                                "cohortSummaryStats.csv")) {
   start <- Sys.time()
+  results <- Andromeda::andromeda()
   
   if (!file.exists(cohortInclusionFile)) {
     return(NULL)
   }
-  
   fetchStats <- function(file) {
     ParallelLogger::logDebug("  - Fetching data from ", file)
     stats <- readr::read_csv(file,
@@ -355,67 +355,61 @@ getInclusionStatisticsFromFiles <- function(cohortIds = NULL,
     return(stats)
   }
   
-  inclusion <- fetchStats(cohortInclusionFile)
-  if ('description' %in% colnames(inclusion)) {
-    inclusion <-
-      inclusion %>% tidyr::replace_na(replace = list(description = ''))
+  results$cohortInclusion <- fetchStats(cohortInclusionFile)
+  if ('description' %in% colnames(results$cohortInclusion)) {
+    results$cohortInclusion <-
+      results$cohortInclusion %>% tidyr::replace_na(replace = list(cohortInclusion = ''))
   } else {
-    inclusion$description <- ''
+    results$cohortInclusion <- results$cohortInclusion %>%
+      dplyr::mutate(description = "")
   }
   
-  summaryStats <- fetchStats(cohortSummaryStatsFile)
-  inclusionStats <- fetchStats(cohortInclusionStatsFile)
-  inclusionResults <- fetchStats(cohortInclusionResultFile)
-  inclusionRuleStats <- dplyr::tibble(
-    ruleSequenceId = 0,
-    ruleName = '',
-    meetSubjects = 0,
-    gainSubjects = 0,
-    totalSubjects = 0,
-    remainSubjects = 0,
-    cohortId = 0,
-    databaseId = ''
-  )[0,]
+  results$cohortSummaryStats <- fetchStats(cohortSummaryStatsFile)
+  results$cohortInclusionStats <-
+    fetchStats(cohortInclusionStatsFile)
+  results$cohortInclusionResult <-
+    fetchStats(cohortInclusionResultFile)
   
-  for (cohortId in unique(inclusion$cohortId)) {
-    cohortResult <-
+  cohortResult <- list()
+  for (cohortId in unique(results$cohortInclusion %>% dplyr::pull(.data$cohortId))) {
+    cohortResult[[cohortId]] <-
       simplifyInclusionStats(
-        inclusion = inclusion %>% dplyr::filter(.data$cohortId == cohortId),
-        inclusionResults = inclusionResults %>% filter(.data$cohortId == cohortId),
-        inclusionStats = inclusionStats %>% filter(.data$cohortId == cohortId)
-      )
-    cohortResult$cohortId <- cohortId
-    inclusionRuleStats <- dplyr::bind_rows(inclusionRuleStats, cohortResult)
+        cohortInclusion = results$cohortInclusion %>% dplyr::filter(.data$cohortId == cohortId),
+        cohortInclusionResult = results$cohortInclusionResult %>% filter(.data$cohortId == cohortId),
+        cohortInclusionStats = results$cohortInclusionStats %>% filter(.data$cohortId == cohortId)
+      ) %>%
+      dplyr::mutate(cohortId = !!cohortId)
   }
+  results$inclusionRuleStats <-
+    dplyr::bind_rows(cohortResult)
   delta <- Sys.time() - start
   ParallelLogger::logTrace(paste(
     "Fetching inclusion statistics took",
     signif(delta, 3),
     attr(delta, "units")
   ))
-  output <- list(
-    inclusion_rule_stats = inclusionRuleStats,
-    cohort_inclusion = inclusion,
-    cohort_inclusion_result = inclusionResults,
-    cohort_inclusion_stats = inclusionStats,
-    cohort_summary_stats = summaryStats
-  )
-  return(output)
+  return(results)
 }
 
-simplifyInclusionStats <- function(inclusion,
-                                   inclusionResults,
-                                   inclusionStats) {
-  if (nrow(inclusion) == 0 ||
-      nrow(inclusionStats) == 0) {
+simplifyInclusionStats <- function(cohortInclusion,
+                                   cohortInclusionResult,
+                                   cohortInclusionStats) {
+  cohortInclusion <- cohortInclusion %>% dplyr::collect()
+  cohortInclusionResult <-
+    cohortInclusionResult %>% dplyr::collect()
+  cohortInclusionStats <-
+    cohortInclusionStats %>% dplyr::collect()
+  
+  if (nrow(cohortInclusion) == 0 ||
+      nrow(cohortInclusionStats) == 0) {
     return(dplyr::tibble())
   }
   
-  result <- inclusion %>%
+  result <- cohortInclusion %>%
     dplyr::select(.data$ruleSequence, .data$name) %>%
     dplyr::distinct() %>%
     dplyr::inner_join(
-      inclusionStats %>%
+      cohortInclusionStats %>%
         dplyr::filter(.data$modeId == 0) %>%
         dplyr::select(
           .data$ruleSequence,
@@ -427,15 +421,15 @@ simplifyInclusionStats <- function(inclusion,
     ) %>%
     dplyr::mutate(remain = 0)
   
-  inclusionResults <- inclusionResults %>%
+  cohortInclusionResult <- cohortInclusionResult %>%
     dplyr::filter(.data$modeId == 0)
   mask <- 0
   for (ruleId in 0:(nrow(result) - 1)) {
     mask <- bitwOr(mask, 2 ^ ruleId)
     idx <-
-      bitwAnd(inclusionResults$inclusionRuleMask, mask) == mask
+      bitwAnd(cohortInclusionResult$inclusionRuleMask, mask) == mask
     result$remain[result$ruleSequence == ruleId] <-
-      sum(inclusionResults$personCount[idx])
+      sum(cohortInclusionResult$personCount[idx])
   }
   colnames(result) <- c(
     "ruleSequenceId",

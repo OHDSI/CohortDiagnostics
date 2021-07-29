@@ -100,19 +100,14 @@ exportFeatureExtractionOutput <-
         dplyr::select(-.data$cohortEntries,-.data$cohortSubjects)
       
       if (dplyr::pull(dplyr::count(featureExtractionDbCovariateData$filteredCovariates)) > 0) {
-        covariateRef <-
-          dplyr::collect(featureExtractionDbCovariateData$covariateRef)
-        covariateRef <- .replaceNaInDataFrameWithEmptyString(covariateRef)
-        
         writeToCsv(
-          data = covariateRef,
+          data = featureExtractionDbCovariateData$covariateRef,
           fileName = covariateRefFileName,
           incremental = incremental,
           covariateId = covariateRef$covariateId
         )
         analysisRef <-
           dplyr::collect(featureExtractionDbCovariateData$analysisRef)
-        analysisRef <- .replaceNaInDataFrameWithEmptyString(analysisRef)
         writeToCsv(
           data = analysisRef,
           fileName = analysisRefFileName,
@@ -121,7 +116,6 @@ exportFeatureExtractionOutput <-
         )
         if (!is.null(timeRefFileName)) {
           timeRef <- dplyr::collect(featureExtractionDbCovariateData$timeRef)
-          timeRef <- .replaceNaInDataFrameWithEmptyString(timeRef)
           writeToCsv(
             data = timeRef,
             fileName = timeRefFileName,

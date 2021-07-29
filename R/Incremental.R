@@ -158,6 +158,7 @@ recordTasksDone <-
   }
 
 writeToCsv <- function(data, fileName, incremental = FALSE, ...) {
+  data <- .replaceNaInDataFrameWithEmptyString(data)
   colnames(data) <- SqlRender::camelCaseToSnakeCase(colnames(data))
   if (incremental) {
     params <- list(...)
