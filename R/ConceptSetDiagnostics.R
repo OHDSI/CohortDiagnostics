@@ -76,15 +76,21 @@ runConceptSetDiagnostics <- function(connection = NULL,
   }
   
   # Create concept tracking table----
+  #For some domains (e.g. Vist download all vocabulary - as it is used in visit context etc)
   ParallelLogger::logTrace(" - Creating concept ID table for tracking concepts used in diagnostics")
   sql <-
     "IF OBJECT_ID('tempdb..#concept_tracking', 'U') IS NOT NULL
                       	DROP TABLE #concept_tracking;
-                      CREATE TABLE #concept_tracking (concept_id INT);"
+                      CREATE TABLE #concept_tracking (concept_id INT);
+                      SELECT DISTINCT CONCEPT_ID 
+                      FROM @vocabulary_database_schema.concept
+                      WHERE domain_id IN ('Visit', 'Ethnicity', 'Race', 'Gender', 'Place of Service', 'Type Concept');
+  "
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
     sql = sql,
     tempEmulationSchema = tempEmulationSchema,
+    vocabulary_database_schema = vocabularyDatabaseSchema,
     progressBar = FALSE,
     reportOverallTime = FALSE
   )

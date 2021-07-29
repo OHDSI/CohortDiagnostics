@@ -270,6 +270,11 @@ saveIncremental <- function(data, fileName, ...) {
       na = character(),
       guess_max = min(1e7)
     )
+    ParallelLogger::logTrace(paste0("    - Found previous file (",
+                                    fileName,
+                                    ") and it has ",
+                                    scales::comma(nrow(previousData)),
+                                    " records."))
     if ((nrow(previousData)) > 0) {
       if (!length(list(...)) == 0) {
         idx <- getKeyIndex(list(...), previousData)
@@ -277,12 +282,18 @@ saveIncremental <- function(data, fileName, ...) {
         idx <- NULL
       }
       if (length(idx) > 0) {
+        ParallelLogger::logTrace(paste0("     - Removing ",
+                                        length(idx),
+                                        " records."))
         previousData <- previousData[-idx,]
       }
       if (nrow(previousData) > 0) {
         data <- dplyr::bind_rows(previousData, data) %>%
           dplyr::distinct() %>%
           dplyr::tibble()
+        ParallelLogger::logTrace(paste0("     - New data has ",
+                                        nrow(data),
+                                        " records."))
       } else {
         data <- data %>% dplyr::tibble()
       }

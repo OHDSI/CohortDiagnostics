@@ -669,16 +669,12 @@ runCohortDiagnostics <- function(packageName = NULL,
           firstOccurrenceOnly = TRUE,
           washoutPeriod = washoutPeriod
         )
-        if (nrow(data) > 0) {
-          data <- data %>%
-            dplyr::mutate(cohortId = row$cohortId)
-        }
         return(data)
       }
       data <-
         lapply(split(subset, subset$cohortId), runIncidenceRate)
       output <- list()
-      output$incidence_rate <- dplyr::bind_rows(data)
+      output$incidenceRate <- dplyr::bind_rows(data)
       data <- NULL
       writeToAllOutputToCsv(
         object = output,
@@ -705,7 +701,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                             " ",
                             attr(delta, "units"))
   }
-  
+  browser()
   # Time Series----
   if (any(runCohortTimeSeries, runDataSourceTimeSeries)) {
     ParallelLogger::logInfo("Computing Time Series")
