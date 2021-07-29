@@ -704,7 +704,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                             " ",
                             attr(delta, "units"))
   }
-  browser()
+  
   # Time Series----
   if (any(runCohortTimeSeries, runDataSourceTimeSeries)) {
     ParallelLogger::logInfo("Computing Time Series")
@@ -831,6 +831,8 @@ runCohortDiagnostics <- function(packageName = NULL,
                             attr(delta, "units"))
   }
   
+  
+  browser()
   # Characterization----
   ## Cohort characterization----
   if (runCohortCharacterization) {
@@ -852,7 +854,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           length(instantiatedCohorts) - nrow(subset)
         ))
       }
-      characteristics <-
+      output <-
         runCohortCharacterizationDiagnostics(
           connection = connection,
           cdmDatabaseSchema = cdmDatabaseSchema,
@@ -865,7 +867,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         )
       
       exportFeatureExtractionOutput(
-        featureExtractionDbCovariateData = characteristics,
+        featureExtractionDbCovariateData = output,
         databaseId = databaseId,
         incremental = incremental,
         covariateValueFileName = file.path(exportFolder, "covariate_value.csv"),
@@ -876,6 +878,8 @@ runCohortDiagnostics <- function(packageName = NULL,
         cohortCounts = cohortCounts,
         minCellCount = minCellCount
       )
+      Andromeda::close(output)
+      rm("output")
     } else {
       ParallelLogger::logInfo("  - Skipping in incremental mode.")
     }
@@ -913,7 +917,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           length(instantiatedCohorts) - nrow(subset)
         ))
       }
-      characteristics <-
+      output <-
         runCohortCharacterizationDiagnostics(
           connection = connection,
           cdmDatabaseSchema = cdmDatabaseSchema,
@@ -925,7 +929,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           cdmVersion = cdmVersion
         )
       exportFeatureExtractionOutput(
-        featureExtractionDbCovariateData = characteristics,
+        featureExtractionDbCovariateData = output,
         databaseId = databaseId,
         incremental = incremental,
         covariateValueFileName = file.path(exportFolder, "temporal_covariate_value.csv"),
@@ -936,6 +940,8 @@ runCohortDiagnostics <- function(packageName = NULL,
         cohortCounts = cohortCounts,
         minCellCount = minCellCount
       )
+      Andromeda::close(output)
+      rm("output")
     } else {
       ParallelLogger::logInfo("  - Skipping in incremental mode.")
     }
