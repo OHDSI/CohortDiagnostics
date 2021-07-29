@@ -15,7 +15,6 @@ exportFeatureExtractionOutput(
   timeDistributionFileName = NULL,
   timeRefFileName = NULL,
   cohortCounts,
-  cutOff = 1e-04,
   minCellCount = 5
 )
 }
@@ -45,8 +44,6 @@ e.g. "time_distribution.csv"}
 e.g. "temporal_time_ref.csv"}
 
 \item{cohortCounts}{Output \code{CohortDiagnostics::getCohortCounts}}
-
-\item{cutOff}{Minimum value of the covariate value, below which data is censored.}
 
 \item{minCellCount}{(Optional). Default value = 5. The minimum cell count for fields contains person counts or fractions.}
 }

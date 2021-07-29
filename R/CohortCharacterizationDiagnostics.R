@@ -41,6 +41,8 @@
 #'                                    diagnostics to.
 #'
 #' @template cdmVersion
+#' 
+#' @param cutOff                                 Minimum value of the covariate value, below which data is censored.
 #'
 #' @param covariateSettings           Either an object of type \code{covariateSettings} as created using one of
 #'                                    the createCovariateSettings (createTemporalCovariateSettings if temporal
@@ -64,6 +66,7 @@ runCohortCharacterizationDiagnostics <-
            cohortTable = "cohort",
            cohortIds = NULL,
            cdmVersion = 5,
+           cutOff = 0.0001,
            covariateSettings = createDefaultCovariateSettings(),
            batchSize = 100) {
     
@@ -79,9 +82,11 @@ runCohortCharacterizationDiagnostics <-
       cohortTable = cohortTable,
       cohortIds = cohortIds
     )
-    cohortIdsNew <- cohortCounts$cohortId %>% unique()
+    cohortIdsNew <- cohortCounts$cohortCount %>% 
+      dplyr::pull(.data$cohortId) %>% 
+      unique()
     
-    if (is.null(cohortCounts)) {
+    if (is.null(cohortCounts$cohortCount)) {
       warning(" --- No instantiated cohorts found. Exiting characterization.")
       return(NULL)
     } else if (any(is.null(cohortIds), length(cohortIds) == 0)) {
@@ -173,7 +178,8 @@ runCohortCharacterizationDiagnostics <-
       
       if ("covariates" %in% names(featureExtractionOutput) &&
           dplyr::pull(dplyr::count(featureExtractionOutput$covariates)) > 0) {
-        covariates <- featureExtractionOutput$covariates %>%
+        covariates <- featureExtractionOutput$covariates  %>%
+          dplyr::filter(.data$averageValue >= !!cutOff) %>%
           dplyr::rename(cohortId = .data$cohortDefinitionId) %>%
           dplyr::left_join(populationSize, by = "cohortId", copy = TRUE) %>%
           dplyr::mutate(p = .data$sumValue / .data$populationSize)

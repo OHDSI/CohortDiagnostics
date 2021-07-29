@@ -444,7 +444,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     cohortTable = cohortTable,
     cohortIds = cohorts$cohortId
   ) # cohortCounts is reused
-  cohortCounts <- output$cohortCount
+  cohortCounts <- output$cohortCount %>% dplyr::collect()
   # Get instantiated cohorts ----
   instantiatedCohorts <-
     as.double(c(-1)) # set by default to non instantiated
@@ -620,6 +620,13 @@ runCohortDiagnostics <- function(packageName = NULL,
       )
       Andromeda::close(output)
       rm("output")
+      recordTasksDone(
+        cohortId = subset$cohortId,
+        task = "runVisitContext",
+        checksum = subset$checksum,
+        recordKeepingFile = recordKeepingFile,
+        incremental = incremental
+      )
     } else {
       ParallelLogger::logInfo("  - Skipping in incremental mode.")
     }
@@ -740,8 +747,6 @@ runCohortDiagnostics <- function(packageName = NULL,
             timeSeriesMaxDate = observationPeriodDateRange$observationPeriodMaxDate,
             cohortIds = cohortIds
           )
-        browser()
-        
         writeToAllOutputToCsv(
           object = output,
           exportFolder = exportFolder,
@@ -831,8 +836,6 @@ runCohortDiagnostics <- function(packageName = NULL,
                             attr(delta, "units"))
   }
   
-  
-  browser()
   # Characterization----
   ## Cohort characterization----
   if (runCohortCharacterization) {
@@ -861,11 +864,11 @@ runCohortDiagnostics <- function(packageName = NULL,
           tempEmulationSchema = tempEmulationSchema,
           cohortDatabaseSchema = cohortDatabaseSchema,
           cohortTable = cohortTable,
+          cutOff = 0.0001,
           cohortIds = subset$cohortId,
           covariateSettings = covariateSettings,
           cdmVersion = cdmVersion
         )
-      
       exportFeatureExtractionOutput(
         featureExtractionDbCovariateData = output,
         databaseId = databaseId,

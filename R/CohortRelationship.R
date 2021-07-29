@@ -246,9 +246,9 @@ runCohortRelationshipDiagnostics <-
       )
       
       if (!"cohortRelationship" %in% names(resultsInAndromeda)) {
-        resultsInAndromeda$cohortRelationship <- resultsInAndromeda$temp
+        resultsInAndromeda$cohortRelationships <- resultsInAndromeda$temp
       } else {
-        Andromeda::appendToTable(resultsInAndromeda$cohortRelationship,
+        Andromeda::appendToTable(resultsInAndromeda$cohortRelationships,
                                  resultsInAndromeda$temp)
       }
     }
@@ -256,7 +256,7 @@ runCohortRelationshipDiagnostics <-
     resultsInAndromeda$timePeriods <- timePeriods
     resultsInAndromeda$temp <- NULL
     
-    results <- resultsInAndromeda$cohortRelationship %>%
+    resultsInAndromeda$cohortRelationships <- resultsInAndromeda$cohortRelationships %>%
       dplyr::inner_join(resultsInAndromeda$timePeriods, by = 'timeId') %>%
       dplyr::select(
         .data$cohortId,
@@ -286,5 +286,5 @@ runCohortRelationshipDiagnostics <-
       signif(delta, 3),
       attr(delta, "units")
     ))
-    return(results)
+    return(resultsInAndromeda)
   }
