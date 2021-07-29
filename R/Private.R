@@ -42,19 +42,25 @@ createIfNotExist <-
     invisible(errorMessage)
   }
 
+
 enforceMinCellValue <-
   function(data, fieldName, minValues, silent = FALSE) {
-    if (nrow(data) == 0) {
-      return(data)
-    }
-    toCensor <-
-      !is.na(data[, fieldName]) &
-      data[, fieldName] < minValues & data[, fieldName] != 0
     if (!silent) {
-      percent <- round(100 * sum(toCensor) / nrow(data), 1)
+      censoredRecords <- data %>%
+        dplyr::filter(!is.na(.data[[fieldName]]) &&
+                        .data[[fieldName]] > !!minValues &&
+                        .data[[fieldName]] != 0) %>%
+        dplyr::summarize(n = dplyr::n()) %>%
+        dplyr::pull(.data$n)
+      
+      allRecords <- data %>%
+        dplyr::summarize(n = dplyr::n()) %>%
+        dplyr::pull(.data$n)
+      
+      percent <- round(100 * censoredRecords / allRecords, 1)
       ParallelLogger::logTrace(
         "  - Censoring ",
-        sum(toCensor),
+        censoredRecords,
         " values (",
         percent,
         "%) from ",
@@ -62,13 +68,20 @@ enforceMinCellValue <-
         " because value below minimum"
       )
     }
-    if (length(minValues) == 1) {
-      data[toCensor, fieldName] <- -minValues
-    } else {
-      data[toCensor, fieldName] <- -minValues[toCensor]
-    }
+    data <- data %>%
+      dplyr::mutate(
+        !!fieldName := dplyr::case_when(
+          !is.na(.data[[fieldName]]) &&
+            .data[[fieldName]] > !!minValues &&
+            .data[[fieldName]] != 0 ~ .data[[fieldName]],
+          TRUE ~ !!minValues *
+            -1
+        )
+      )
     return(data)
   }
+
+
 
 enforceMinCellValueInDataframe <- function(data,
                                            columnNames = colnames(data),
@@ -101,7 +114,11 @@ nullToEmpty <- function(x) {
 
 
 .replaceNaInDataFrameWithEmptyString <- function(data) {
+  
+  #https://github.com/r-lib/tidyselect/issues/201 
+  # tried utils::globalVariables("where") but get the message The namespace for package "CohortDiagnostics" is locked; no changes in the global variables list may be made.
   data %>%
+    dplyr::collect() %>% 
     dplyr::mutate(dplyr::across(where(is.character), ~ tidyr::replace_na(.x, as.character('')))) %>%
     dplyr::mutate(dplyr::across(where(is.logical), ~ tidyr::replace_na(.x, as.character('')))) %>%
     dplyr::mutate(dplyr::across(where(is.numeric), ~ tidyr::replace_na(.x, as.numeric(''))))
@@ -165,7 +182,8 @@ writeToAllOutputToCsv <- function(object,
                                   incremental,
                                   minCellCount,
                                   databaseId) {
-  ParallelLogger::logTrace(paste0(" - Starting writeToAllOutputToCsv on ", paste0(object, collapse = ", ")))
+  # ObjectIsAndromeda <- Andromeda::isAndromeda(object)
+  
   resultsDataModel <-
     getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')
   tablesOfInterest = resultsDataModel %>%
@@ -210,41 +228,46 @@ writeToAllOutputToCsv <- function(object,
                                      "vocabulary")
   
   ParallelLogger::logTrace(paste0("  - Found ", paste0(names(object), collapse = ", ")))
-  presentInBoth <- intersect(tablesOfInterest, names(object))
-  presentInObjectOnly <- setdiff(names(object), tablesOfInterest)
-  if (!setequal(presentInBoth, names(object))) {
-    warning(" - Unexpected objects found ", paste(presentInObjectOnly, collapse = ", "), ". Please contact developer.")
+  presentInBoth <- intersect(tablesOfInterest, camelCaseToSnakeCase(names(object)))
+  presentInObjectOnly <- setdiff(camelCaseToSnakeCase(names(object)), tablesOfInterest)
+  if (!setequal(presentInBoth, camelCaseToSnakeCase((names(object))))) {
+    warning(
+      " - Unexpected objects found ",
+      paste(presentInObjectOnly, collapse = ", "),
+      ". Please contact developer."
+    )
   }
   
   # write vocabulary tables
   for (i in (1:length(tablesOfInterest))) {
-    if (tablesOfInterest[[i]] %in% names(object)) {
+    if (tablesOfInterest[[i]] %in% camelCaseToSnakeCase(names(object))) {
       ParallelLogger::logTrace(paste0(" - Writing data to file: ", tablesOfInterest[[i]], ".csv"))
       columns <- resultsDataModel %>%
         dplyr::filter(.data$tableName %in% tablesOfInterest[[i]]) %>%
         dplyr::pull(.data$fieldName)
-      data <-
-        object[[tablesOfInterest[[i]]]]
       if (!tablesOfInterest[[i]] %in% vocabularyTables) {
-        data <- data %>%
+        object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] <-
+          object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] %>%
           dplyr::mutate(databaseId = !!databaseId)
       }
-      data <- data %>%
+      object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] <-
+        object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] %>%
         dplyr::select(snakeCaseToCamelCase(columns))
-      data <- data %>%
+      object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] <-
+        object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] %>%
         enforceMinCellValueInDataframe(columnNames = columnsToApplyMinCellValue,
                                        minCellCount = minCellCount)
       if (tablesOfInterest[[i]] %in% vocabularyTablesNoIncremental) {
         # these tables are never incremental, always full replace
         writeToCsv(
-          data = data,
+          data = object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]],
           fileName = file.path(exportFolder,
                                paste0(tablesOfInterest[[i]], ".csv")),
           incremental = FALSE
         )
       } else {
         writeToCsv(
-          data = data,
+          data = object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]],
           fileName = file.path(exportFolder,
                                paste0(tablesOfInterest[[i]], ".csv")),
           incremental = incremental

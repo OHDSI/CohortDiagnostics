@@ -167,6 +167,7 @@ using <code>RFeatureExtraction::createTemporalCovariateSettings</code>.</p>
   cohortTable <span class='op'>=</span> <span class='st'>"cohort"</span>,
   cohortIds <span class='op'>=</span> <span class='cn'>NULL</span>,
   cdmVersion <span class='op'>=</span> <span class='fl'>5</span>,
+  cutOff <span class='op'>=</span> <span class='fl'>1e-04</span>,
   covariateSettings <span class='op'>=</span> <span class='fu'>createDefaultCovariateSettings</span><span class='op'>(</span><span class='op'>)</span>,
   batchSize <span class='op'>=</span> <span class='fl'>100</span>
 <span class='op'>)</span></pre>
@@ -218,6 +219,10 @@ diagnostics to.</p></td>
     <tr>
       <th>cdmVersion</th>
       <td><p>The version of the OMOP CDM. Default 5. (Note: only 5 is supported.)</p></td>
+    </tr>
+    <tr>
+      <th>cutOff</th>
+      <td><p>Minimum value of the covariate value, below which data is censored.</p></td>
     </tr>
     <tr>
       <th>covariateSettings</th>

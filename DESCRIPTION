@@ -18,7 +18,7 @@ Depends:
 	FeatureExtraction (>= 3.1.1),
 	R (>= 4.0.0)
 Imports:
-  Andromeda,
+  Andromeda (>= 0.5.0),
   checkmate,
   clock,
   digest,

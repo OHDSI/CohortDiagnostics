@@ -1,34 +1,36 @@
-getSubjectCountsByDatabasae <-
-  function(data, cohortId, databaseIds) {
-    data %>%
-      dplyr::left_join(cohortCount, by = c('databaseId', 'cohortId')) %>%
-      dplyr::filter(.data$cohortId == cohortId) %>%
-      dplyr::filter(.data$databaseId %in% databaseIds) %>%
-      dplyr::arrange(.data$databaseId) %>%
-      dplyr::mutate(cohortSubjects = dplyr::coalesce(.data$cohortSubjects, 0)) %>%
-      dplyr::mutate(databaseIdsWithCount = paste0(
-        .data$databaseId,
-        "<br>(n = ",
-        scales::comma(.data$cohortSubjects, accuracy = 1),
-        ")"
-      )) %>%
-      dplyr::mutate(databaseIdsWithCountWithoutBr = paste0(
-        .data$databaseId,
-        " (n = ",
-        scales::comma(.data$cohortSubjects, accuracy = 1),
-        ")"
-      )) %>%
-      dplyr::select(
-        .data$databaseId,
-        .data$databaseIdsWithCount,
-        .data$databaseIdsWithCountWithoutBr
-      ) %>%
-      dplyr::distinct() %>%
-      dplyr::arrange(.data$databaseId)
-  }
+# getSubjectCountsByDatabasae <-
+#   function(data, cohortId, databaseIds) {
+#     data %>%
+#       dplyr::left_join(cohortCount, by = c('databaseId', 'cohortId')) %>%
+#       dplyr::filter(.data$cohortId == cohortId) %>%
+#       dplyr::filter(.data$databaseId %in% databaseIds) %>%
+#       dplyr::arrange(.data$databaseId) %>%
+#       dplyr::mutate(cohortSubjects = dplyr::coalesce(.data$cohortSubjects, 0)) %>%
+#       dplyr::mutate(databaseIdsWithCount = paste0(
+#         .data$databaseId,
+#         "<br>(n = ",
+#         scales::comma(.data$cohortSubjects, accuracy = 1),
+#         ")"
+#       )) %>%
+#       dplyr::mutate(databaseIdsWithCountWithoutBr = paste0(
+#         .data$databaseId,
+#         " (n = ",
+#         scales::comma(.data$cohortSubjects, accuracy = 1),
+#         ")"
+#       )) %>%
+#       dplyr::select(
+#         .data$databaseId,
+#         .data$databaseIdsWithCount,
+#         .data$databaseIdsWithCountWithoutBr
+#       ) %>%
+#       dplyr::distinct() %>%
+#       dplyr::arrange(.data$databaseId)
+#   }
 
-
-loadResultsTable <- function(tableName, required = FALSE) {
+#Load results table ----
+# used by global.R to load data into R memory
+loadResultsTable <- function(tableName, resultsTablesOnServer, required = FALSE) {
+  writeLines(text = paste0(" - Loading data from ", tableName))
   if (required || tableName %in% resultsTablesOnServer) {
     tryCatch({
       table <- DatabaseConnector::dbReadTable(connectionPool,
@@ -53,7 +55,7 @@ loadResultsTable <- function(tableName, required = FALSE) {
   }
 }
 
-
+# isEmpty ----
 # Create empty objects in memory for all other tables. This is used by the Shiny app to decide what tabs to show:
 isEmpty <- function(tableName) {
   sql <-
@@ -88,33 +90,33 @@ patternReplacement <-
   }
 
 
-
-getFormattedFileName <- function(fileName) {
-  date <-
-    stringr::str_replace_all(Sys.Date(), pattern = "-", replacement = "")
-  time <-
-    stringr::str_split(string = Sys.time(),
-                       pattern = " ",
-                       n = 2)[[1]][2]
-  timeArray <-
-    stringr::str_split(string = time,
-                       pattern = ":",
-                       n = 3)
-  return(paste(
-    fileName,
-    "_",
-    date,
-    "_",
-    timeArray[[1]][1],
-    timeArray[[1]][2],
-    ".csv",
-    sep = ""
-  ))
-}
-
-
 downloadCsv <- function(x, fileName) {
   if (all(!is.null(x), nrow(x) > 0)) {
     write.csv(x, fileName)
+  }
+}
+
+# where is the vocabulary tables ----
+getSourcesOfVocabularyTables <- function(dataSource,
+                                         database) {
+  if (is(dataSource, "environment")) {
+    sourceOfVocabularyTables <-
+      c(database$databaseIdWithVocabularyVersion)
+  } else {
+    sourceOfVocabularyTables <- list(
+      'From source data' = database$databaseIdWithVocabularyVersion,
+      'From external reference' = vocabularyDatabaseSchemas
+    )
+  }
+  return(sourceOfVocabularyTables)
+}
+
+
+sumCounts <- function(counts) {
+  result <- sum(abs(counts))
+  if (any(counts < 0)) {
+    return(-result)
+  } else {
+    return(result)
   }
 }

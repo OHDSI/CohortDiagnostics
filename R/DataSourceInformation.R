@@ -73,37 +73,37 @@ getCdmDataSourceInformation <-
     
     cdmSourceName <- as.character(NA)
     if ('cdmSourceName' %in% colnames(cdmDataSource)) {
-      cdmSourceName <- cdmDataSource$cdmSourceName
+      cdmSourceName <- max(cdmDataSource$cdmSourceName)
     }
     
     sourceReleaseDate <- as.Date(NA)
     if ('sourceReleaseDate' %in% colnames(cdmDataSource)) {
       if (class(cdmDataSource$sourceReleaseDate) != 'Date') {
-        try(sourceReleaseDate <- as.Date(cdmDataSource$sourceReleaseDate),
+        try(sourceReleaseDate <- max(as.Date(cdmDataSource$sourceReleaseDate)),
             silent = TRUE)
       } else {
-        sourceReleaseDate <- as.Date(cdmDataSource$sourceReleaseDate)
+        sourceReleaseDate <- max(as.Date(cdmDataSource$sourceReleaseDate))
       }
     }
     
     cdmReleaseDate <- as.Date(NA)
     if ('cdmReleaseDate' %in% colnames(cdmDataSource)) {
       if (class(cdmDataSource$cdmReleaseDate) != 'Date') {
-        try(cdmReleaseDate <- as.Date(cdmDataSource$cdmReleaseDate),
+        try(cdmReleaseDate <- max(as.Date(cdmDataSource$cdmReleaseDate)),
             silent = TRUE)
       } else {
-        cdmReleaseDate <- as.Date(cdmDataSource$cdmReleaseDate)
+        cdmReleaseDate <- max(as.Date(cdmDataSource$cdmReleaseDate))
       }
     }
     
     cdmVersion <- as.character(NA)
     if ('cdmVersion' %in% colnames(cdmDataSource)) {
-      cdmVersion <- cdmDataSource$cdmVersion
+      cdmVersion <- max(cdmDataSource$cdmVersion)
     }
     
     vocabularyVersion <- as.character(NA)
     if ('vocabularyVersion' %in% colnames(cdmDataSource)) {
-      vocabularyVersion <- cdmDataSource$vocabularyVersion
+      vocabularyVersion <- max(cdmDataSource$vocabularyVersion)
     }
     
     return(

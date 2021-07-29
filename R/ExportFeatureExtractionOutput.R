@@ -42,8 +42,6 @@
 #'
 #' @param cohortCounts                           Output \code{CohortDiagnostics::getCohortCounts}
 #'
-#' @param cutOff                                 Minimum value of the covariate value, below which data is censored.
-#'
 #' @param minCellCount                           (Optional). Default value = 5. The minimum cell count for fields contains person counts or fractions.
 #'
 #' @param incremental                            Create only cohort diagnostics that haven't been created before?
@@ -62,10 +60,10 @@ exportFeatureExtractionOutput <-
            timeDistributionFileName = NULL,
            timeRefFileName = NULL,
            cohortCounts,
-           cutOff = 0.0001,
            minCellCount = 5) {
     if (!'databaseId' %in% colnames(cohortCounts)) {
       cohortCounts <- cohortCounts %>%
+        dplyr::collect() %>% 
         dplyr::mutate(databaseId = !!databaseId)
     }
     if (nrow(cohortCounts) == 0) {
@@ -82,7 +80,6 @@ exportFeatureExtractionOutput <-
     } else if (dplyr::pull(dplyr::count(featureExtractionDbCovariateData$covariateRef)) > 0) {
       featureExtractionDbCovariateData$filteredCovariates <-
         featureExtractionDbCovariateData$covariates %>%
-        dplyr::filter(mean >= cutOff) %>%
         dplyr::mutate(databaseId = !!databaseId) %>%
         dplyr::left_join(cohortCounts,
                          by = c("cohortId", "databaseId"),
@@ -102,8 +99,6 @@ exportFeatureExtractionOutput <-
       if (dplyr::pull(dplyr::count(featureExtractionDbCovariateData$filteredCovariates)) > 0) {
         covariateRef <-
           dplyr::collect(featureExtractionDbCovariateData$covariateRef)
-        covariateRef <- .replaceNaInDataFrameWithEmptyString(covariateRef)
-        
         writeToCsv(
           data = covariateRef,
           fileName = covariateRefFileName,
@@ -112,7 +107,6 @@ exportFeatureExtractionOutput <-
         )
         analysisRef <-
           dplyr::collect(featureExtractionDbCovariateData$analysisRef)
-        analysisRef <- .replaceNaInDataFrameWithEmptyString(analysisRef)
         writeToCsv(
           data = analysisRef,
           fileName = analysisRefFileName,
@@ -120,8 +114,8 @@ exportFeatureExtractionOutput <-
           analysisId = analysisRef$analysisId
         )
         if (!is.null(timeRefFileName)) {
-          timeRef <- dplyr::collect(featureExtractionDbCovariateData$timeRef)
-          timeRef <- .replaceNaInDataFrameWithEmptyString(timeRef)
+          timeRef <-
+            dplyr::collect(featureExtractionDbCovariateData$timeRef)
           writeToCsv(
             data = timeRef,
             fileName = timeRefFileName,
@@ -142,7 +136,6 @@ exportFeatureExtractionOutput <-
     } else if (dplyr::pull(dplyr::count(featureExtractionDbCovariateData$covariateRef)) > 0) {
       featureExtractionDbCovariateData$filteredCovariatesContinous <-
         featureExtractionDbCovariateData$covariatesContinuous %>%
-        # dplyr::filter(mean >= cutOff) %>%
         dplyr::mutate(databaseId = !!databaseId) %>%
         dplyr::left_join(cohortCounts,
                          by = c("cohortId", "databaseId"),
@@ -155,8 +148,6 @@ exportFeatureExtractionOutput <-
           )
         ) %>%
         dplyr::mutate(sd = dplyr::case_when(.data$mean >= 0 ~ sd)) %>%
-        # dplyr::mutate(mean = round(.data$mean, digits = 4),
-        #               sd = round(.data$sd, digits = 4)) %>%
         dplyr::select(-.data$cohortEntries,-.data$cohortSubjects)
       
       if (dplyr::pull(dplyr::count(

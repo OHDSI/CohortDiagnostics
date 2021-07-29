@@ -48,7 +48,6 @@ runCohortDiagnostics(
     temporalStartDays = c(-365, -30, 0, 1, 31, seq(from = -421, to = -31, by = 30),
     seq(from = 0, to = 390, by = 30)), temporalEndDays = c(-31, -1, 0, 30, 365, seq(from
     = -391, to = -1, by = 30), seq(from = 30, to = 420, by = 30))),
-  exportDetailedVocabulary = TRUE,
   minCellCount = 5,
   incremental = FALSE,
   incrementalFolder = file.path(exportFolder, "incremental")
@@ -155,17 +154,6 @@ Only records with values greater than 0.001 are returned.}
 \item{temporalCovariateSettings}{Either an object of type \code{covariateSettings} as created using one of
 the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
 of such objects.}
-
-\item{exportDetailedVocabulary}{(optional) Default TRUE. Do you want to export from source site details of
-from all vocabulary tables including concept_ancestor, concept_relationship,
-concept_synonym etc. This is useful if you want to review the impact
-of the vocabulary used in the data source on cohort definitions, and
-compare it to the vocabulary used by other data sources or reference. 
-Please set to FALSE to reduce file size and speed up process - as exporting
-vocabulary and generating premerged file/deduplication takes significant processing
-time. If set to FALSE then only 'concept' table  is exported. If set to TRUE (Default)
-then "concept", "concept_ancestor", "concept_class", "concept_relationship", "concept_synonym", "domain", "relationship"
-and "vocabulary" are exported.}
 
 \item{minCellCount}{The minimum cell count for fields contains person counts or fractions.}
 

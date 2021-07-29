@@ -161,7 +161,6 @@
   timeDistributionFileName <span class='op'>=</span> <span class='cn'>NULL</span>,
   timeRefFileName <span class='op'>=</span> <span class='cn'>NULL</span>,
   <span class='va'>cohortCounts</span>,
-  cutOff <span class='op'>=</span> <span class='fl'>1e-04</span>,
   minCellCount <span class='op'>=</span> <span class='fl'>5</span>
 <span class='op'>)</span></pre>
 
@@ -213,10 +212,6 @@ e.g. "temporal_time_ref.csv"</p></td>
     <tr>
       <th>cohortCounts</th>
       <td><p>Output <code><a href='getCohortCounts.html'>CohortDiagnostics::getCohortCounts</a></code></p></td>
-    </tr>
-    <tr>
-      <th>cutOff</th>
-      <td><p>Minimum value of the covariate value, below which data is censored.</p></td>
     </tr>
     <tr>
       <th>minCellCount</th>

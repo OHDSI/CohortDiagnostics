@@ -204,7 +204,6 @@ is used as default.</p>
     temporalStartDays <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='op'>-</span><span class='fl'>365</span>, <span class='op'>-</span><span class='fl'>30</span>, <span class='fl'>0</span>, <span class='fl'>1</span>, <span class='fl'>31</span>, <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span><span class='op'>(</span>from <span class='op'>=</span> <span class='op'>-</span><span class='fl'>421</span>, to <span class='op'>=</span> <span class='op'>-</span><span class='fl'>31</span>, by <span class='op'>=</span> <span class='fl'>30</span><span class='op'>)</span>,
     <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span><span class='op'>(</span>from <span class='op'>=</span> <span class='fl'>0</span>, to <span class='op'>=</span> <span class='fl'>390</span>, by <span class='op'>=</span> <span class='fl'>30</span><span class='op'>)</span><span class='op'>)</span>, temporalEndDays <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span><span class='op'>(</span><span class='op'>-</span><span class='fl'>31</span>, <span class='op'>-</span><span class='fl'>1</span>, <span class='fl'>0</span>, <span class='fl'>30</span>, <span class='fl'>365</span>, <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span><span class='op'>(</span>from
     <span class='op'>=</span> <span class='op'>-</span><span class='fl'>391</span>, to <span class='op'>=</span> <span class='op'>-</span><span class='fl'>1</span>, by <span class='op'>=</span> <span class='fl'>30</span><span class='op'>)</span>, <span class='fu'><a href='https://rdrr.io/r/base/seq.html'>seq</a></span><span class='op'>(</span>from <span class='op'>=</span> <span class='fl'>30</span>, to <span class='op'>=</span> <span class='fl'>420</span>, by <span class='op'>=</span> <span class='fl'>30</span><span class='op'>)</span><span class='op'>)</span><span class='op'>)</span>,
-  exportDetailedVocabulary <span class='op'>=</span> <span class='cn'>TRUE</span>,
   minCellCount <span class='op'>=</span> <span class='fl'>5</span>,
   incremental <span class='op'>=</span> <span class='cn'>FALSE</span>,
   incrementalFolder <span class='op'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/file.path.html'>file.path</a></span><span class='op'>(</span><span class='va'>exportFolder</span>, <span class='st'>"incremental"</span><span class='op'>)</span>
@@ -379,19 +378,6 @@ Only records with values greater than 0.001 are returned.</p></td>
       <td><p>Either an object of type <code>covariateSettings</code> as created using one of
 the createTemporalCovariateSettings function in the FeatureExtraction package, or a list
 of such objects.</p></td>
-    </tr>
-    <tr>
-      <th>exportDetailedVocabulary</th>
-      <td><p>(optional) Default TRUE. Do you want to export from source site details of
-from all vocabulary tables including concept_ancestor, concept_relationship,
-concept_synonym etc. This is useful if you want to review the impact
-of the vocabulary used in the data source on cohort definitions, and
-compare it to the vocabulary used by other data sources or reference. 
-Please set to FALSE to reduce file size and speed up process - as exporting
-vocabulary and generating premerged file/deduplication takes significant processing
-time. If set to FALSE then only 'concept' table  is exported. If set to TRUE (Default)
-then "concept", "concept_ancestor", "concept_class", "concept_relationship", "concept_synonym", "domain", "relationship"
-and "vocabulary" are exported.</p></td>
     </tr>
     <tr>
       <th>minCellCount</th>

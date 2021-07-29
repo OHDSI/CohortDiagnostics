@@ -13,6 +13,7 @@ runCohortCharacterizationDiagnostics(
   cohortTable = "cohort",
   cohortIds = NULL,
   cdmVersion = 5,
+  cutOff = 1e-04,
   covariateSettings = createDefaultCovariateSettings(),
   batchSize = 100
 )
@@ -46,6 +47,8 @@ this should include both the database and schema name, for example
 diagnostics to.}
 
 \item{cdmVersion}{The version of the OMOP CDM. Default 5. (Note: only 5 is supported.)}
+
+\item{cutOff}{Minimum value of the covariate value, below which data is censored.}
 
 \item{covariateSettings}{Either an object of type \code{covariateSettings} as created using one of
 the createCovariateSettings (createTemporalCovariateSettings if temporal

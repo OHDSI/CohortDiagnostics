@@ -54,6 +54,7 @@ runVisitContextDiagnostics <- function(connectionDetails = NULL,
   }
   
   start <- Sys.time()
+  result <- Andromeda::andromeda()
   
   if (is.null(connection)) {
     connection <- DatabaseConnector::connect(connectionDetails)
@@ -93,7 +94,7 @@ runVisitContextDiagnostics <- function(connectionDetails = NULL,
                                 progressBar = FALSE, 
                                 reportOverallTime = FALSE)
   sql <- "SELECT * FROM @visit_context_table;"
-  visitContext <-
+  result$visitContext <-
     renderTranslateQuerySql(
       connection = connection,
       sql = sql,
@@ -118,5 +119,5 @@ runVisitContextDiagnostics <- function(connectionDetails = NULL,
                           signif(delta, 3),
                           " ",
                           attr(delta, "units"))
-  return(visitContext)
+  return(result)
 }

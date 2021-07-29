@@ -1,37 +1,3 @@
-camelCaseToSnakeCase <- function(string) {
-  string <- gsub("([A-Z])", "_\\1", string)
-  string <- tolower(string)
-  string <- gsub("([a-z])([0-9])", "\\1_\\2", string)
-  return(string)
-}
-
-
-camelCaseToTitleCase <- function(string) {
-  string <- gsub("([A-Z])", " \\1", string)
-  string <- gsub("([a-z])([0-9])", "\\1 \\2", string)
-  substr(string, 1, 1) <- toupper(substr(string, 1, 1))
-  return(string)
-}
-
-snakeCaseToCamelCase <- function(string) {
-  string <- tolower(string)
-  for (letter in letters) {
-    string <-
-      gsub(paste("_", letter, sep = ""), toupper(letter), string)
-  }
-  string <- gsub("_([0-9])", "\\1", string)
-  return(string)
-}
-
-
-titleCaseToCamelCase <- function(string) {
-  string <- stringr::str_replace_all(string = string,
-                                     pattern = ' ',
-                                     replacement = '')
-  substr(string, 1, 1) <- tolower(substr(string, 1, 1))
-  return(string)
-}
-
 truncateStringDef <- function(columns, maxChars) {
   list(targets = columns,
        render = DT::JS(
@@ -106,15 +72,6 @@ styleAbsColorBar <-
     )
   }
 
-sumCounts <- function(counts) {
-  result <- sum(abs(counts))
-  if (any(counts < 0)) {
-    return(-result)
-  } else {
-    return(result)
-  }
-}
-
 copyToClipboardButton <-
   function(toCopyId,
            label = "Copy to clipboard",
@@ -145,22 +102,112 @@ copyToClipboardButton <-
                 ...)
   }
 
-convertMdToHtml <- function(markdown) {
-  markdown <- gsub("'", "%sq%", markdown)
-  mdFile <- tempfile(fileext = ".md")
-  htmlFile <- tempfile(fileext = ".html")
-  SqlRender::writeSql(markdown, mdFile)
-  rmarkdown::render(
-    input = mdFile,
-    output_format = "html_fragment",
-    output_file = htmlFile,
-    clean = TRUE,
-    quiet = TRUE
+# convertMdToHtml <- function(markdown) {
+#   markdown <- gsub("'", "%sq%", markdown)
+#   mdFile <- tempfile(fileext = ".md")
+#   htmlFile <- tempfile(fileext = ".html")
+#   SqlRender::writeSql(markdown, mdFile)
+#   rmarkdown::render(
+#     input = mdFile,
+#     output_format = "html_fragment",
+#     output_file = htmlFile,
+#     clean = TRUE,
+#     quiet = TRUE
+#   )
+#   html <- SqlRender::readSql(htmlFile)
+#   unlink(mdFile)
+#   unlink(htmlFile)
+#   html <- gsub("%sq%", "'", html)
+#   
+#   return(html)
+# }
+
+
+getCsvFileNameWithDateTime <- function(string) {
+  date <-
+    stringr::str_replace_all(Sys.Date(),
+                             pattern = "-",
+                             replacement = "")
+  time <-
+    stringr::str_split(string = Sys.time(),
+                       pattern = " ",
+                       n = 2)[[1]][2]
+  timeArray <-
+    stringr::str_split(string = time,
+                       pattern = ":",
+                       n = 3)
+  return(paste(
+    string,
+    "_",
+    date,
+    "_",
+    timeArray[[1]][1],
+    timeArray[[1]][2],
+    ".csv",
+    sep = ""
+  ))
+}
+
+
+addInfo <- function(item, infoId) {
+  infoTag <- tags$small(
+    class = "badge pull-right action-button",
+    style = "padding: 1px 6px 2px 6px; background-color: steelblue;",
+    type = "button",
+    id = infoId,
+    "i"
   )
-  html <- SqlRender::readSql(htmlFile)
-  unlink(mdFile)
-  unlink(htmlFile)
-  html <- gsub("%sq%", "'", html)
+  item$children[[1]]$children <-
+    append(item$children[[1]]$children, list(infoTag))
+  return(item)
+}
+
+createShinyBoxFromOutputId <- function(outputId) {
+  shinydashboard::box(
+    # title = "Reference",
+    status = "warning",
+    width = "100%",
+    tags$div(style = "max-height: 100px; overflow-y: auto",
+             shiny::uiOutput(outputId = outputId))
+  )
+}
+
+
+createShinyBoxWithSplitForTwoOutputIds <- function(leftOutputId,
+                                                   leftOutputLabel,
+                                                   rightOutputId,
+                                                   rightOutputLabel,
+                                                   leftUnits = 70) {
+  leftUnits <- as.integer(leftUnits)
+  if (any(is.null(leftUnits),
+          leftUnits <= 0,
+          leftUnits >= 100)) {
+    leftUnits <- 70
+  }
+  rightUnits <- 100 - leftUnits
+  leftPercent <- paste0("'", leftUnits, "%'")
+  rightPercent <- paste0("'", rightUnits, "%'")
+  leftOutputLabel <- paste0(leftOutputLabel, " :")
+  rightOutputLabel <- paste0(rightOutputLabel, " :")
   
-  return(html)
+  shinydashboard::box(
+    # title = "Reference",
+    status = "warning",
+    width = "100%",
+    tags$div(style = "max-height: 100px; overflow-y: auto",
+             tags$table(width = "100%",
+                        tags$tr(
+                          tags$td(
+                            width = leftPercent,
+                            tags$b(leftOutputLabel),
+                            shiny::uiOutput(outputId = leftOutputId)
+                          ),
+                          tags$td(
+                            style = "align: right !important;",
+                            width = rightPercent,
+                            tags$b(rightOutputLabel),
+                            shiny::uiOutput(outputId = rightOutputId)
+                          )
+                        )))
+  )
 }
