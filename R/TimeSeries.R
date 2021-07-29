@@ -75,18 +75,20 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     on.exit(DatabaseConnector::disconnect(connection))
   }
   
+  resultsInAndromeda <- Andromeda::andromeda()
+  
   sqlCount <-
     "SELECT cohort_definition_id, COUNT(*) count FROM @cohort_database_schema.@cohort_table
                {@cohort_ids != ''} ? { where cohort_definition_id IN (@cohort_ids)}
                GROUP BY cohort_definition_id;"
-  cohortCount <- renderTranslateQuerySql(
+  resultsInAndromeda$cohortCount <- renderTranslateQuerySql(
     connection = connection,
     sql = sqlCount,
     cohort_database_schema = cohortDatabaseSchema,
     cohort_ids = cohortIds,
     cohort_table = cohortTable
   )
-  if (nrow(cohortCount) == 0) {
+  if (resultsInAndromeda$cohortCount %>% dplyr::summarise(n = dplyr::n()) %>% dplyr::pull(.data$n) == 0) {
     warning("Please check if cohorts are instantiated. Exiting cohort time series.")
     return(NULL)
   }
@@ -216,7 +218,6 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
   ParallelLogger::logTrace(" - Beginning time series SQL")
   
   ParallelLogger::logTrace(" - Creating Andromeda object to collect results")
-  resultsInAndromeda <- Andromeda::andromeda()
   
   for (i in (1:length(seriesToRun))) {
     ParallelLogger::logTrace(paste0(" - Running ", seriesToRun[[i]]))
@@ -342,9 +343,9 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
     }
     ParallelLogger::logTrace('     Completed.')
   }
-  results <- resultsInAndromeda$timeSeries %>%
-    dplyr::collect() %>%
-    dplyr::inner_join(calendarPeriods, by = c('timeId')) %>%
+  resultsInAndromeda$calendarPeriods <- calendarPeriods
+  resultsInAndromeda$timeSeries <- resultsInAndromeda$timeSeries %>%
+    dplyr::inner_join(resultsInAndromeda$calendarPeriods, by = c('timeId')) %>%
     dplyr::select(
       .data$cohortId,
       .data$periodBegin,
@@ -365,7 +366,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       .data$seriesType,
       .data$periodBegin
     )
-  
+  resultsInAndromeda$calendarPeriods <- NULL
   ParallelLogger::logTrace(" - Dropping any time_series temporary tables at end")
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,

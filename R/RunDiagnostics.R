@@ -449,7 +449,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   instantiatedCohorts <-
     as.double(c(-1)) # set by default to non instantiated
   if (!is.null(cohortCounts)) {
-    if (nrow(cohortCounts %>% dplyr::collect()) > 0) {
+    if (cohortCounts %>% dplyr::summarise(n = dplyr::n()) %>% dplyr::pull(.data$n) > 0) {
       writeToAllOutputToCsv(
         object = output,
         exportFolder = exportFolder,
@@ -464,6 +464,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           paste0(" - Skipping diagnostics on following cohorts as they were either not instantiated or had no subjects: ",
                  paste0(setdiff(cohorts$cohortId, instantiatedCohorts), collapse = ", ")))
       }
+      Andromeda::close(output)
       rm("output")
     } else {
       warning(
@@ -510,6 +511,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           recordKeepingFile = recordKeepingFile,
           incremental = incremental
         )
+        Andromeda::close(output)
         rm("output")
       } else {
         ParallelLogger::logInfo("  - Skipping in incremental mode.")
@@ -522,12 +524,11 @@ runCohortDiagnostics <- function(packageName = NULL,
                              " ",
                              attr(delta, "units"))
   }
+  
+  
   # Concept set diagnostics----
   if (runConceptSetDiagnostics) {
-    # running together because share common process of needing to resolve concept sets
     ParallelLogger::logInfo(" - Beginning concept set diagnostics.")
-    # note for incremental mode - if a cohort id is eligible for computation for any diagnostics,
-    # all diagnostics are computed for that cohort
     startConceptSetDiagnostics <- Sys.time()
     subset <- subsetToRequiredCohorts(
       cohorts = cohorts,
@@ -542,8 +543,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           nrow(cohorts) - nrow(subset)
         ))
       }
-      browser()
-      conceptSetDiagnostics <- runConceptSetDiagnostics(
+      output <- runConceptSetDiagnostics(
         connection = connection,
         tempEmulationSchema = tempEmulationSchema,
         cdmDatabaseSchema = cdmDatabaseSchema,
@@ -555,12 +555,14 @@ runCohortDiagnostics <- function(packageName = NULL,
         exportDetailedVocabulary = exportDetailedVocabulary
       )
       writeToAllOutputToCsv(
-        object = conceptSetDiagnostics,
+        object = output,
         exportFolder = exportFolder,
         databaseId = databaseId,
         incremental = incremental,
         minCellCount = minCellCount
       )
+      Andromeda::close(output)
+      rm("output")
       recordTasksDone(
         cohortId = subset$cohortId,
         task = "runConceptSetDiagnostics",
@@ -616,6 +618,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         incremental = incremental,
         minCellCount = minCellCount
       )
+      Andromeda::close(output)
       rm("output")
     } else {
       ParallelLogger::logInfo("  - Skipping in incremental mode.")
@@ -684,6 +687,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         incremental = incremental,
         minCellCount = minCellCount
       )
+      Andromeda::close(output)
       rm("output")
       recordTasksDone(
         cohortId = subset$cohortId,
@@ -746,6 +750,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           incremental = incremental,
           minCellCount = minCellCount
         )
+        Andromeda::close(output)
         rm("output")
         recordTasksDone(
           cohortId = subset$cohortId,

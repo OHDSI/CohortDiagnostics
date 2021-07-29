@@ -120,7 +120,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
       " - Note: There are ",
       scales::comma(length(uniqueConceptSets)),
       " unique concept set ids in ",
-      scales::comma(nrow(conceptSetDiagnosticsResults$conceptSets)),
+      scales::comma(conceptSetDiagnosticsResults$conceptSets %>% dplyr::summarise(n = dplyr::n()) %>% dplyr::pull(.data$n)),
       " concept sets in all cohort definitions."
     )
   )
@@ -154,20 +154,20 @@ runConceptSetDiagnostics <- function(connection = NULL,
   
   # Excluded concepts ----
   ParallelLogger::logInfo(" - Collecting excluded concepts.")
-  conceptSetDiagnosticsResults$excludedConceptIds <- getExcludedConceptSets(
+  conceptSetDiagnosticsResults$conceptExcluded <- getExcludedConceptSets(
     connection = connection,
     uniqueConceptSets = uniqueConceptSets,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     tempEmulationSchema = tempEmulationSchema,
     conceptTrackingTable = "#concept_tracking"
   )
-  if (!is.null(conceptSetDiagnosticsResults$excludedConceptIds)) {
+  if (!is.null(conceptSetDiagnosticsResults$conceptExcluded)) {
     if (!keepCustomConceptId) {
-      conceptSetDiagnosticsResults$excludedConceptIds <- conceptSetDiagnosticsResults$excludedConceptIds %>%
+      conceptSetDiagnosticsResults$conceptExcluded <- conceptSetDiagnosticsResults$conceptExcluded %>%
         dplyr::filter(.data$conceptId < 200000000)
     }
-    conceptSetDiagnosticsResults$excludedConceptIds <-
-      conceptSetDiagnosticsResults$excludedConceptIds %>%
+    conceptSetDiagnosticsResults$conceptExcluded <-
+      conceptSetDiagnosticsResults$conceptExcluded %>%
       dplyr::inner_join(conceptSetDiagnosticsResults$conceptSets %>% dplyr::distinct(),
                         by = "uniqueConceptSetId") %>%
       dplyr::select(.data$cohortId,
@@ -195,7 +195,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   }
   ParallelLogger::logInfo(" - Looking for concept co-occurrence on index date.")
   
-  conceptSetDiagnosticsResults$indexDateConceptCooccurrence <-
+  conceptSetDiagnosticsResults$conceptCooccurrence <-
     getIndexDateConceptCooccurrence(
       connection = connection,
       cdmDatabaseSchema = cdmDatabaseSchema,
@@ -206,7 +206,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
       conceptIdUniverse = "#concept_tracking"
     )
   if (!keepCustomConceptId) {
-    conceptSetDiagnosticsResults$indexDateConceptCooccurrence <- conceptSetDiagnosticsResults$indexDateConceptCooccurrence %>%
+    conceptSetDiagnosticsResults$conceptCooccurrence <- conceptSetDiagnosticsResults$conceptCooccurrence %>%
       dplyr::filter(.data$conceptId < 200000000)
   }
   
@@ -231,7 +231,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
     conceptSetDiagnosticsResults$orphanConcepts <- conceptSetDiagnosticsResults$orphanConcepts %>%
       dplyr::filter(.data$conceptId < 200000000)
   }
-  conceptSetDiagnosticsResults$orphanCodes <- conceptSetDiagnosticsResults$orphanConcepts %>%
+  conceptSetDiagnosticsResults$orphanConcepts <- conceptSetDiagnosticsResults$orphanConcepts %>%
     dplyr::rename(uniqueConceptSetId = .data$codesetId) %>%
     dplyr::inner_join(
       conceptSetDiagnosticsResults$conceptSets %>%
@@ -267,7 +267,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
       dplyr::filter(.data$conceptId < 200000000)
   }
   
-  conceptSetDiagnosticsResults$conceptSubjectCount <-
+  conceptSetDiagnosticsResults$conceptSubjects <-
     getConceptSubjectCount(
       connection = connection,
       cdmDatabaseSchema = cdmDatabaseSchema,
@@ -275,12 +275,12 @@ runConceptSetDiagnostics <- function(connection = NULL,
       conceptIdUniverse = "#concept_tracking"
     )
   if (!keepCustomConceptId) {
-    conceptSetDiagnosticsResults$conceptSubjectCount <- conceptSetDiagnosticsResults$conceptSubjectCount %>%
+    conceptSetDiagnosticsResults$conceptSubjects <- conceptSetDiagnosticsResults$conceptSubjects %>%
       dplyr::filter(.data$conceptId < 200000000)
   }
   # get concept mapping----
   ParallelLogger::logInfo(" - Mappings concepts.")
-  conceptSetDiagnosticsResults$conceptSourceStandardMapping <-
+  conceptSetDiagnosticsResults$conceptMapping <-
     getConceptSourceStandardMapping(
       connection = connection,
       cdmDatabaseSchema = cdmDatabaseSchema,
@@ -288,11 +288,19 @@ runConceptSetDiagnostics <- function(connection = NULL,
       conceptIdUniverse = "#concept_tracking"
     )
   if (!keepCustomConceptId) {
-    conceptSetDiagnosticsResults$conceptSourceStandardMapping <- conceptSetDiagnosticsResults$conceptSourceStandardMapping %>%
+    conceptSetDiagnosticsResults$conceptMapping <- conceptSetDiagnosticsResults$conceptMapping %>%
       dplyr::filter(.data$conceptId < 200000000) %>%
       dplyr::filter(is.na(.data$sourceConceptId) ||
                       .data$sourceConceptId < 200000000)
   }
+  
+  conceptSetDiagnosticsResults$conceptSets <- conceptSetDiagnosticsResults$conceptSets %>% 
+    dplyr::select(.data$cohortId,
+                  .data$conceptSetId,
+                  .data$conceptSetSql,
+                  .data$conceptSetName,
+                  .data$conceptSetExpression)
+  
   #get vocabulary details----
   ParallelLogger::logInfo(" - Retrieving vocabulary details.")
   #get full data -----

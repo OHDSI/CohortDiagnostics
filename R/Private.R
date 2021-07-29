@@ -42,19 +42,25 @@ createIfNotExist <-
     invisible(errorMessage)
   }
 
+
 enforceMinCellValue <-
   function(data, fieldName, minValues, silent = FALSE) {
-    if (nrow(data %>% dplyr::collect()) == 0) {
-      return(data)
-    }
-    toCensor <-
-      !is.na(data[, fieldName]) &
-      data[, fieldName] < minValues & data[, fieldName] != 0
     if (!silent) {
-      percent <- round(100 * sum(toCensor) / nrow(data %>% dplyr::collect()), 1)
+      censoredRecords <- data %>%
+        dplyr::filter(!is.na(.data[[fieldName]]) &&
+                        .data[[fieldName]] > !!minValues &&
+                        .data[[fieldName]] != 0) %>%
+        dplyr::summarize(n = dplyr::n()) %>%
+        dplyr::pull(.data$n)
+      
+      allRecords <- data %>%
+        dplyr::summarize(n = dplyr::n()) %>%
+        dplyr::pull(.data$n)
+      
+      percent <- round(100 * censoredRecords / allRecords, 1)
       ParallelLogger::logTrace(
         "  - Censoring ",
-        sum(toCensor),
+        censoredRecords,
         " values (",
         percent,
         "%) from ",
@@ -62,13 +68,20 @@ enforceMinCellValue <-
         " because value below minimum"
       )
     }
-    if (length(minValues) == 1) {
-      data[toCensor, fieldName] <- -minValues
-    } else {
-      data[toCensor, fieldName] <- -minValues[toCensor]
-    }
+    data <- data %>%
+      dplyr::mutate(
+        !!fieldName := dplyr::case_when(
+          !is.na(.data[[fieldName]]) &&
+            .data[[fieldName]] > !!minValues &&
+            .data[[fieldName]] != 0 ~ .data[[fieldName]],
+          TRUE ~ !!minValues *
+            -1
+        )
+      )
     return(data)
   }
+
+
 
 enforceMinCellValueInDataframe <- function(data,
                                            columnNames = colnames(data),
