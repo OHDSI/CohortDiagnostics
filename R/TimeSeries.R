@@ -367,6 +367,8 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
       .data$periodBegin
     )
   resultsInAndromeda$calendarPeriods <- NULL
+  resultsInAndromeda$temp <- NULL
+  resultsInAndromeda$cohortCount <- NULL
   ParallelLogger::logTrace(" - Dropping any time_series temporary tables at end")
   DatabaseConnector::renderTranslateExecuteSql(
     connection = connection,
@@ -386,5 +388,5 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
                           signif(delta, 3),
                           " ",
                           attr(delta, "units"))
-  return(results)
+  return(resultsInAndromeda)
 }

@@ -253,9 +253,11 @@ runCohortRelationshipDiagnostics <-
       }
     }
     
+    resultsInAndromeda$timePeriods <- timePeriods
+    resultsInAndromeda$temp <- NULL
+    
     results <- resultsInAndromeda$cohortRelationship %>%
-      dplyr::collect() %>%
-      dplyr::inner_join(timePeriods, by = 'timeId') %>%
+      dplyr::inner_join(resultsInAndromeda$timePeriods, by = 'timeId') %>%
       dplyr::select(
         .data$cohortId,
         .data$comparatorCohortId,
@@ -277,7 +279,7 @@ runCohortRelationshipDiagnostics <-
         .data$endDay,
         .data$bothSubjects
       )
-    
+    resultsInAndromeda$timePeriods <- NULL
     delta <- Sys.time() - startTime
     ParallelLogger::logTrace(paste(
       " - Computing cohort relationship took",

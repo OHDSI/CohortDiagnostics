@@ -649,6 +649,9 @@ runCohortDiagnostics <- function(packageName = NULL,
           length(instantiatedCohorts) - nrow(subset)
         ))
       }
+      #incidence rate does not follow the pattern used by other diagnostics 
+      # in this package because we plan to replace it with the new incidence
+      # rate package that will offer better ways to calculate incidence rate
       runIncidenceRate <- function(row) {
         ParallelLogger::logInfo(" - '",
                                 row$cohortName,
@@ -683,7 +686,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         incremental = incremental,
         minCellCount = minCellCount
       )
-      Andromeda::close(output)
+      # Andromeda::close(output) - not using Andromeda for incidence rate as we plan to replace it with incidence rate package in future
       rm("output")
       recordTasksDone(
         cohortId = subset$cohortId,
@@ -716,7 +719,6 @@ runCohortDiagnostics <- function(packageName = NULL,
         recordKeepingFile = recordKeepingFile
       )
       cohortIds <- subset$cohortId
-      
       if (nrow(subset) > 0) {
         if (incremental &&
             (length(instantiatedCohorts) - nrow(subset)) > 0) {
@@ -725,8 +727,7 @@ runCohortDiagnostics <- function(packageName = NULL,
             length(instantiatedCohorts) - nrow(subset)
           ))
         }
-        output <- list()
-        output$time_series <-
+        output <-
           runCohortTimeSeriesDiagnostics(
             connection = connection,
             tempEmulationSchema = tempEmulationSchema,
@@ -739,6 +740,8 @@ runCohortDiagnostics <- function(packageName = NULL,
             timeSeriesMaxDate = observationPeriodDateRange$observationPeriodMaxDate,
             cohortIds = cohortIds
           )
+        browser()
+        
         writeToAllOutputToCsv(
           object = output,
           exportFolder = exportFolder,
@@ -795,8 +798,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         ))
       }
       ParallelLogger::logTrace(" - Beginning Cohort Relationship SQL")
-      output <- list()
-      output$cohort_relationships <-
+      output <-
         runCohortRelationshipDiagnostics(
           connection = connection,
           cohortDatabaseSchema = cohortDatabaseSchema,
@@ -805,12 +807,13 @@ runCohortDiagnostics <- function(packageName = NULL,
           targetCohortIds = subset$cohortId,
           comparatorCohortIds = cohorts$cohortId
         )
-      
       writeToAllOutputToCsv(object = output,
                             exportFolder = exportFolder,
                             incremental = incremental,
                             minCellCount = minCellCount,
                             databaseId = databaseId)
+      Andromeda::close(output)
+      rm("output")
       recordTasksDone(
         cohortId = subset$cohortId,
         task = "runCohortRelationship",
