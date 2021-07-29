@@ -31,8 +31,6 @@
 #'
 #' @template TempEmulationSchema
 #'
-#' @template ExportDetailedVocabulary
-#'
 #' @param    cohorts                 A dataframe object with required fields cohortId, sql, json, cohortName
 #'
 #' @template CohortTable
@@ -52,7 +50,6 @@ runConceptSetDiagnostics <- function(connection = NULL,
                                      cohorts,
                                      cohortIds = NULL,
                                      cohortDatabaseSchema = NULL,
-                                     exportDetailedVocabulary = TRUE,
                                      keepCustomConceptId = FALSE,
                                      cohortTable = NULL) {
   ParallelLogger::logTrace(" - Running concept set diagnostics")

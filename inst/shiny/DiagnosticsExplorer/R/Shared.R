@@ -329,9 +329,6 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
 getResultsMetadata <- function(dataSource) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
-    cohortIds = cohortIds,
-    databaseIds = databaseIds,
-    conceptIds = conceptIds,
     dataTableName = "metadata"
   )
   return(data)
@@ -526,10 +523,8 @@ getConceptRelationship <- function(dataSource = .GlobalEnv,
     data <-
       renderTranslateQuerySql(
         connection = dataSource$connection,
-        sql = sqlMapped,
+        sql = sql,
         results_database_schema = dataSource$resultsDatabaseSchema,
-        database_id = quoteLiterals(databaseIds),
-        cohort_id = cohortIds,
         snakeCaseToCamelCase = TRUE
       )
   }
@@ -543,8 +538,6 @@ getConceptRelationship <- function(dataSource = .GlobalEnv,
 #' Returns data from concept ancestor table for list of concept ids
 #'
 #' @template DataSource
-#'
-#' @template ConceptIds
 #'
 #' @template VocabularyDatabaseSchema
 #'
@@ -593,10 +586,8 @@ getConceptAncestor <- function(dataSource = .GlobalEnv,
     data <-
       renderTranslateQuerySql(
         connection = dataSource$connection,
-        sql = sqlMapped,
+        sql = sql,
         results_database_schema = dataSource$resultsDatabaseSchema,
-        database_id = quoteLiterals(databaseIds),
-        cohort_id = cohortIds,
         snakeCaseToCamelCase = TRUE
       )
   }
@@ -707,8 +698,8 @@ getConceptSetDetailsFromCohortDefinition <-
       i <- i + 1
       conceptSetExpressionDetails[[i]] <-
         getConceptSetDataFrameFromConceptSetExpression(conceptSetExpression =
-                                                         conceptSetExpression[i, ]$expression$items) %>%
-        dplyr::mutate(id = conceptSetExpression[i,]$id) %>%
+                                                         conceptSetExpression[i,]$expression$items) %>%
+        dplyr::mutate(id = conceptSetExpression[i, ]$id) %>%
         dplyr::relocate(.data$id) %>%
         dplyr::arrange(.data$id)
     }
@@ -766,8 +757,6 @@ getConceptSetDataFrameFromConceptSetExpression <-
 getResultsCohort <- function(dataSource) {
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
-    cohortIds = cohortIds,
-    databaseIds = databaseIds,
     dataTableName = "cohort"
   )
   return(data)
@@ -1386,8 +1375,8 @@ getFeatureExtractionCharacterization <-
            databaseIds = NULL) {
     analysisRef <- getResultsAnalysisRef(dataSource = dataSource)
     covariateRef <- getResultsCovariateRef(dataSource = dataSource)
-    concept <- getResultsConcept(dataSource = dataSource,
-                                 conceptIds = covariateRef$conceptId %>% unique())
+    concept <- getConcept(dataSource = dataSource,
+                          conceptIds = covariateRef$conceptId %>% unique())
     covariateValue <-
       getResultsCovariateValue(dataSource = dataSource,
                                cohortIds = cohortIds,
@@ -1437,8 +1426,8 @@ getFeatureExtractionTemporalCharacterization <-
       getResultsTemporalCovariateRef(dataSource = dataSource)
     temporalTimeRef <-
       getResultsTemporalTimeRef(dataSource = dataSource)
-    concept <- getResultsConcept(dataSource = dataSource,
-                                 conceptIds = temporalCovariateRef$conceptId %>% unique())
+    concept <- getConcept(dataSource = dataSource,
+                          conceptIds = temporalCovariateRef$conceptId %>% unique())
     temporalCovariateValue <-
       getResultsTemporalCovariateValue(dataSource = dataSource,
                                        cohortIds = cohortIds,
@@ -1554,7 +1543,7 @@ getCohortRelationshipCharacterizationResults <-
       return(data)
     }
     
-    analysisId <- c(-101,-102,-103,-104,-201,-202,-203,-204)
+    analysisId <- c(-101, -102, -103, -104, -201, -202, -203, -204)
     analysisName <- c(
       "CohortOccurrenceAnyTimePrior",
       "CohortOccurrenceLongTerm",
@@ -1575,7 +1564,7 @@ getCohortRelationshipCharacterizationResults <-
       "bothSubjects",
       "bothSubjects"
     )
-    startDay <- c(-99999,-365,-180,-30,-99999,-365,-180,-30)
+    startDay <- c(-99999, -365, -180, -30, -99999, -365, -180, -30)
     endDay <- c(0, 0, 0, 0, 0, 0, 0, 0)
     analysisRef <-
       dplyr::tibble(analysisId, analysisName, valueField, startDay, endDay) %>%
@@ -1599,10 +1588,10 @@ getCohortRelationshipCharacterizationResults <-
       result[[j]] <-
         summarizeCohortRelationship(
           data = cohortRelationships,
-          startDay = analysisRef[j,]$startDay,
-          endDay = analysisRef[j,]$endDay,
-          analysisId = analysisRef[j,]$analysisId,
-          valueField = analysisRef[j,]$valueField,
+          startDay = analysisRef[j, ]$startDay,
+          endDay = analysisRef[j, ]$endDay,
+          analysisId = analysisRef[j, ]$analysisId,
+          valueField = analysisRef[j, ]$valueField,
           cohortCounts = cohortCounts
         )
     }
@@ -1759,7 +1748,7 @@ getCohortAsFeatureTemporalCharacterizationResults <-
       return(data)
     }
     
-    analysisId <- c(-101,-201)
+    analysisId <- c(-101, -201)
     analysisName <- c("CohortEraStart", "CohortEraOverlap")
     valueField <- c("cSubjectsStart",
                     "bothSubjects")
@@ -1784,8 +1773,8 @@ getCohortAsFeatureTemporalCharacterizationResults <-
       result[[j]] <-
         summarizeCohortRelationship(
           data = cohortRelationships,
-          valueField = analysisRef[j,]$valueField,
-          analysisId = analysisRef[j,]$analysisId,
+          valueField = analysisRef[j, ]$valueField,
+          analysisId = analysisRef[j, ]$analysisId,
           temporalTimeRef = temporalTimeRef,
           cohortCounts = cohortCounts
         )
@@ -2283,27 +2272,6 @@ getResultsTemporalAnalysisRef <- function(dataSource) {
 #'
 #' @export
 getCirceRenderedExpression <- function(cohortDefinition) {
-  
-  convertMdToHtml <- function(markdown) {
-    markdown <- gsub("'", "%sq%", markdown)
-    mdFile <- tempfile(fileext = ".md")
-    htmlFile <- tempfile(fileext = ".html")
-    SqlRender::writeSql(markdown, mdFile)
-    rmarkdown::render(
-      input = mdFile,
-      output_format = "html_fragment",
-      output_file = htmlFile,
-      clean = TRUE,
-      quiet = TRUE
-    )
-    html <- SqlRender::readSql(htmlFile)
-    unlink(mdFile)
-    unlink(htmlFile)
-    html <- gsub("%sq%", "'", html)
-    
-    return(html)
-  }
-  
   cohortJson <- RJSONIO::toJSON(x = cohortDefinition, digits = 23)
   circeExpression <-
     CirceR::cohortExpressionFromJson(expressionJson = cohortJson)
@@ -2324,4 +2292,24 @@ getCirceRenderedExpression <- function(cohortDefinition) {
       conceptSetHtmlExpression = htmlExpressionConceptSetExpression
     )
   )
+}
+
+convertMdToHtml <- function(markdown) {
+  markdown <- gsub("'", "%sq%", markdown)
+  mdFile <- tempfile(fileext = ".md")
+  htmlFile <- tempfile(fileext = ".html")
+  SqlRender::writeSql(markdown, mdFile)
+  rmarkdown::render(
+    input = mdFile,
+    output_format = "html_fragment",
+    output_file = htmlFile,
+    clean = TRUE,
+    quiet = TRUE
+  )
+  html <- SqlRender::readSql(htmlFile)
+  unlink(mdFile)
+  unlink(htmlFile)
+  html <- gsub("%sq%", "'", html)
+  
+  return(html)
 }
