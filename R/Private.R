@@ -114,11 +114,13 @@ nullToEmpty <- function(x) {
 
 
 .replaceNaInDataFrameWithEmptyString <- function(data) {
+  
+  #https://github.com/r-lib/tidyselect/issues/201
   data %>%
     dplyr::collect() %>% 
-    dplyr::mutate(dplyr::across(where(is.character), ~ tidyr::replace_na(.x, as.character('')))) %>%
-    dplyr::mutate(dplyr::across(where(is.logical), ~ tidyr::replace_na(.x, as.character('')))) %>%
-    dplyr::mutate(dplyr::across(where(is.numeric), ~ tidyr::replace_na(.x, as.numeric(''))))
+    dplyr::mutate(dplyr::across(utils::globalVariables("where")(is.character), ~ tidyr::replace_na(.x, as.character('')))) %>%
+    dplyr::mutate(dplyr::across(utils::globalVariables("where")(is.logical), ~ tidyr::replace_na(.x, as.character('')))) %>%
+    dplyr::mutate(dplyr::across(utils::globalVariables("where")(is.numeric), ~ tidyr::replace_na(.x, as.numeric(''))))
 }
 
 

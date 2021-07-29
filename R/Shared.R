@@ -2277,12 +2277,33 @@ getResultsTemporalAnalysisRef <- function(dataSource) {
 #' @description
 #' Returns list with circe generated documentation
 #'
-#' @cohortDefinitionExpression An object with a list representation of the cohort definition expression.
+#' @param cohortDefinitionExpression An object with a list representation of the cohort definition expression.
 #'
 #' @return list object
 #'
 #' @export
 getCirceRenderedExpression <- function(cohortDefinition) {
+  
+  convertMdToHtml <- function(markdown) {
+    markdown <- gsub("'", "%sq%", markdown)
+    mdFile <- tempfile(fileext = ".md")
+    htmlFile <- tempfile(fileext = ".html")
+    SqlRender::writeSql(markdown, mdFile)
+    rmarkdown::render(
+      input = mdFile,
+      output_format = "html_fragment",
+      output_file = htmlFile,
+      clean = TRUE,
+      quiet = TRUE
+    )
+    html <- SqlRender::readSql(htmlFile)
+    unlink(mdFile)
+    unlink(htmlFile)
+    html <- gsub("%sq%", "'", html)
+    
+    return(html)
+  }
+  
   cohortJson <- RJSONIO::toJSON(x = cohortDefinition, digits = 23)
   circeExpression <-
     CirceR::cohortExpressionFromJson(expressionJson = cohortJson)

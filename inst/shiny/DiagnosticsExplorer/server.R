@@ -529,6 +529,7 @@ shiny::shinyServer(function(input, output, session) {
       for (i in (1:nrow(selectionsInCohortTable))) {
         progress$inc(1/nrow(selectionsInCohortTable), detail = paste("Doing part", i))
    
+        #!!!!!!!!!!!!!! can this be replaced by function getCirceRenderedExpression in shared.R
         circeExpression <-
           CirceR::cohortExpressionFromJson(expressionJson = selectionsInCohortTable[i, ]$json)
         circeExpressionMarkdown <-

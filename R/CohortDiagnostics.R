@@ -22,7 +22,7 @@
 #' @importFrom stats aggregate
 #' @importFrom utils write.csv install.packages menu unzip setTxtProgressBar txtProgressBar packageDescription packageVersion sessionInfo
 #' @import dplyr
-#' @importFrom rlang .data
+#' @importFrom rlang .data :=
 #' @importFrom methods is getPackageName
 #' @importFrom FeatureExtraction createDefaultCovariateSettings createTemporalCovariateSettings
 NULL
