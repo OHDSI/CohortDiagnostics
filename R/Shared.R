@@ -46,6 +46,16 @@ camelCaseToSnakeCase <- function(string) {
 }
 
 # private function - not exported
+titleCaseToCamelCase <- function(string) {
+  string <- stringr::str_replace_all(string = string,
+                                     pattern = ' ',
+                                     replacement = '')
+  substr(string, 1, 1) <- tolower(substr(string, 1, 1))
+  return(string)
+}
+
+
+# private function - not exported
 quoteLiterals <- function(x) {
   if (is.null(x)) {
     return("")
@@ -2257,4 +2267,40 @@ getResultsTemporalAnalysisRef <- function(dataSource) {
     return(NULL)
   }
   return(data)
+}
+
+
+
+
+#' Returns list with circe generated documentation
+#'
+#' @description
+#' Returns list with circe generated documentation
+#'
+#' @cohortDefinitionExpression An object with a list representation of the cohort definition expression.
+#'
+#' @return list object
+#'
+#' @export
+getCirceRenderedExpression <- function(cohortDefinition) {
+  cohortJson <- RJSONIO::toJSON(x = cohortDefinition, digits = 23)
+  circeExpression <-
+    CirceR::cohortExpressionFromJson(expressionJson = cohortJson)
+  circeExpressionMarkdown <-
+    CirceR::cohortPrintFriendly(circeExpression)
+  circeConceptSetListmarkdown <-
+    CirceR::conceptSetListPrintFriendly(circeExpression$conceptSets)
+  htmlExpressionCohort <-
+    convertMdToHtml(circeExpressionMarkdown)
+  htmlExpressionConceptSetExpression <-
+    convertMdToHtml(circeConceptSetListmarkdown)
+  return(
+    dplyr::tibble(
+      cohortJson = cohortJson,
+      cohortMarkdown = circeExpressionMarkdown,
+      conceptSetMarkdown = circeConceptSetListmarkdown,
+      cohortHtmlExpression = htmlExpressionCohort,
+      conceptSetHtmlExpression = htmlExpressionConceptSetExpression
+    )
+  )
 }
