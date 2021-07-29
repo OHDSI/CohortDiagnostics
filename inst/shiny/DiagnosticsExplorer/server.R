@@ -529,16 +529,13 @@ shiny::shinyServer(function(input, output, session) {
       for (i in (1:nrow(selectionsInCohortTable))) {
         progress$inc(1/nrow(selectionsInCohortTable), detail = paste("Doing part", i))
    
-        f <-
-          getCirceRenderedExpression(cohortDefinition = RJSONIO::fromJSON(selectionsInCohortTable$json[[i]],
-                                                                          digits = 23))
         circeExpression <-
-          CirceR::cohortExpressionFromJson(expressionJson = data[i, ]$json)
+          CirceR::cohortExpressionFromJson(expressionJson = selectionsInCohortTable[i, ]$json)
         circeExpressionMarkdown <-
           CirceR::cohortPrintFriendly(circeExpression)
         circeConceptSetListmarkdown <-
           CirceR::conceptSetListPrintFriendly(circeExpression$conceptSets)
-        details[[i]] <- data[i, ]
+        details[[i]] <- selectionsInCohortTable[i, ]
         details[[i]]$circeConceptSetListmarkdown <-
           circeConceptSetListmarkdown
         details[[i]]$htmlExpressionCohort <-
@@ -1049,6 +1046,7 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(getLastTwoRowSelectedInCohortTable())) {
       return(NULL)
     }
+    
     details <- list()
     for (i in 1:nrow(getLastTwoRowSelectedInCohortTable())) {
       conceptSetDetailsFromCohortDefinition <-
@@ -1062,8 +1060,8 @@ shiny::shinyServer(function(input, output, session) {
   
   ##Concept set expression table one
   output$conceptsetExpressionTable <- DT::renderDataTable(expr = {
-    validate(need((any(is.null(cohortDefinitionConceptSetExpression()),
-                       length(cohortDefinitionConceptSetExpression()) == 0)),
+    validate(need((any(!is.null(cohortDefinitionConceptSetExpression()),
+                       length(cohortDefinitionConceptSetExpression()) != 0)),
                   "Cohort definition does not appear to have concept set expression(s)."))
     if (any(is.null(cohortDefinitionConceptSetExpression()),
             length(cohortDefinitionConceptSetExpression()) == 0)) {
