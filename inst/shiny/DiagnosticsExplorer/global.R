@@ -22,7 +22,7 @@ defaultVocabularySchema <- defaultResultsSchema
 alternateVocabularySchema <- c('vocabulary')
 
 #Mode determination ----
-defaultDatabaseMode <- TRUE # Use file system if FALSE
+defaultDatabaseMode <- FALSE # Use file system if FALSE
 
 #Tab control variables ----
 showTimeSeries <- TRUE
