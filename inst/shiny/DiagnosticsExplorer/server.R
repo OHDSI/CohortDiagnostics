@@ -650,8 +650,10 @@ shiny::shinyServer(function(input, output, session) {
           type = "tab",
           id = "cohortDefinitionOneTabSetPanel",
           shiny::tabPanel(title = "Details",
+                          value = "cohortDefinitionOneDetailsTextTabPanel",
                           shiny::htmlOutput("cohortDetailsText")),
           shiny::tabPanel(title = "Cohort Count",
+                          value = "cohortDefinitionOneCohortCountTabPanel",
                           tags$br(),
                           DT::dataTableOutput(outputId = "cohortCountsTableInCohortDefinition"),
                           tags$br(),
@@ -682,6 +684,7 @@ shiny::shinyServer(function(input, output, session) {
                             DT::dataTableOutput(outputId = "inclusionRuleInCohortDefinition")
                           )),
           shiny::tabPanel(title = "Cohort definition",
+                          value = "cohortDefinitionOneTextTabPanel",
                           copyToClipboardButton(toCopyId = "cohortDefinitionText",
                                                 style = "margin-top: 5px; margin-bottom: 5px;"),
                           shiny::htmlOutput("circerVersionInCohortDefinition"),
@@ -821,6 +824,7 @@ shiny::shinyServer(function(input, output, session) {
             
             shiny::tabPanel(
               title = "JSON",
+              value = "cohortDefinitionOneJsonTabPanel",
               copyToClipboardButton("cohortDefinitionJson", style = "margin-top: 5px; margin-bottom: 5px;"),
               shiny::verbatimTextOutput("cohortDefinitionJson"),
               tags$head(
@@ -829,6 +833,7 @@ shiny::shinyServer(function(input, output, session) {
             ),
             shiny::tabPanel(
               title = "SQL",
+              value = "cohortDefinitionOneSqlTabPanel",
               copyToClipboardButton("cohortDefinitionSql", style = "margin-top: 5px; margin-bottom: 5px;"),
               shiny::htmlOutput("circerVersionInCohortDefinitionSql"),
               shiny::verbatimTextOutput("cohortDefinitionSql"),
@@ -852,8 +857,10 @@ shiny::shinyServer(function(input, output, session) {
           id = "cohortDefinitionTwoTabSetPanel",
           type = "tab",
           shiny::tabPanel(title = "Details",
+                          value = "cohortDefinitionTwoDetailsTextTabPanel",
                           shiny::htmlOutput("cohortDetailsTextSecond")),
           shiny::tabPanel(title = "Cohort Count",
+                          value = "cohortDefinitionTwoCohortCountTabPanel",
                           tags$br(),
                           DT::dataTableOutput(outputId = "cohortCountsTableInCohortDefinitionSecond"),
                           tags$br(),
@@ -884,6 +891,7 @@ shiny::shinyServer(function(input, output, session) {
                             DT::dataTableOutput(outputId = "inclusionRuleInCohortDefinitionSecond")
                           )),
           shiny::tabPanel(title = "Cohort definition",
+                          value = "cohortDefinitionTwoTextTabPanel",
                           copyToClipboardButton(toCopyId = "cohortDefinitionTextSecond",
                                                 style = "margin-top: 5px; margin-bottom: 5px;"),
                           shiny::htmlOutput("circerVersionInCohortDefinitionSecond"),
@@ -1023,6 +1031,7 @@ shiny::shinyServer(function(input, output, session) {
           
           shiny::tabPanel(
             title = "JSON",
+            value = "cohortDefinitionTwoJsonTabPanel",
             copyToClipboardButton("cohortDefinitionJsonSecond", style = "margin-top: 5px; margin-bottom: 5px;"),
             shiny::verbatimTextOutput("cohortDefinitionJsonSecond"),
             tags$head(
@@ -1031,6 +1040,7 @@ shiny::shinyServer(function(input, output, session) {
           ),
           shiny::tabPanel(
             title = "SQL",
+            value = "cohortDefinitionTwoSqlTabPanel",
             copyToClipboardButton("cohortDefinitionSqlSecond", style = "margin-top: 5px; margin-bottom: 5px;"),
             shiny::htmlOutput("circerVersionInCohortDefinitionSqlSecond"),
             shiny::verbatimTextOutput("cohortDefinitionSqlSecond"),
@@ -2734,7 +2744,7 @@ shiny::shinyServer(function(input, output, session) {
   
   #Radio button synchronization
   shiny::observeEvent(eventExpr = {
-    input$conceptSetsType
+    list(input$conceptSetsType, input$cohortDefinitionOneTabSetPanel)
   }, handlerExpr = {
     if (noOfRowSelectedInCohortDefinitionTable() == 6) {
       if (!is.null(input$conceptSetsType)) {
@@ -2750,11 +2760,27 @@ shiny::shinyServer(function(input, output, session) {
           updateRadioButtons(session = session, inputId = "conceptSetsTypeSecond", selected = "Json")
         }
       }
+      
+      if (!is.null(input$cohortDefinitionOneTabSetPanel)) {
+        if (input$cohortDefinitionOneTabSetPanel == "cohortDefinitionOneDetailsTextTabPanel") {
+          shiny::updateTabsetPanel(session, inputId = "cohortDefinitionTwoTabSetPanel", selected = "cohortDefinitionTwoDetailsTextTabPanel")
+        } else if (input$cohortDefinitionOneTabSetPanel == "cohortDefinitionOneCohortCountTabPanel") {
+          shiny::updateTabsetPanel(session, inputId = "cohortDefinitionTwoTabSetPanel", selected = "cohortDefinitionTwoCohortCountTabPanel")
+        } else if (input$cohortDefinitionOneTabSetPanel == "cohortDefinitionOneTextTabPanel") {
+          shiny::updateTabsetPanel(session, inputId = "cohortDefinitionTwoTabSetPanel", selected = "cohortDefinitionTwoTextTabPanel")
+        } else if (input$cohortDefinitionOneTabSetPanel == "conceptSetOneTabPanel") {
+          shiny::updateTabsetPanel(session, inputId = "cohortDefinitionTwoTabSetPanel", selected = "conceptSetTwoTabPanel")
+        } else if (input$cohortDefinitionOneTabSetPanel == "cohortDefinitionOneJsonTabPanel") {
+          shiny::updateTabsetPanel(session, inputId = "cohortDefinitionTwoTabSetPanel", selected = "cohortDefinitionTwoJsonTabPanel")
+        } else if (input$cohortDefinitionOneTabSetPanel == "cohortDefinitionOneSqlTabPanel") {
+          shiny::updateTabsetPanel(session, inputId = "cohortDefinitionTwoTabSetPanel", selected = "cohortDefinitionTwoSqlTabPanel")
+        }
+      }
     }
   })
   
   shiny::observeEvent(eventExpr = {
-    input$conceptSetsTypeSecond
+    list(input$conceptSetsTypeSecond, input$cohortDefinitionTwoTabSetPanel)
   }, handlerExpr = {
     if (noOfRowSelectedInCohortDefinitionTable() == 6) {
       if (!is.null(input$conceptSetsTypeSecond)) {
@@ -2768,6 +2794,22 @@ shiny::shinyServer(function(input, output, session) {
           updateRadioButtons(session = session, inputId = "conceptSetsType", selected = "Orphan concepts")
         } else if (input$conceptSetsTypeSecond == "Json") {
           updateRadioButtons(session = session, inputId = "conceptSetsType", selected = "Json")
+        }
+      }
+      
+      if (!is.null(input$cohortDefinitionTwoTabSetPanel)) {
+        if (input$cohortDefinitionTwoTabSetPanel == "cohortDefinitionTwoDetailsTextTabPanel") {
+          shiny::updateTabsetPanel(session, inputId = "cohortDefinitionOneTabSetPanel", selected = "cohortDefinitionOneDetailsTextTabPanel")
+        } else if (input$cohortDefinitionTwoTabSetPanel == "cohortDefinitionTwoCohortCountTabPanel") {
+          shiny::updateTabsetPanel(session, inputId = "cohortDefinitionOneTabSetPanel", selected = "cohortDefinitionOneCohortCountTabPanel")
+        } else if (input$cohortDefinitionTwoTabSetPanel == "cohortDefinitionTwoTextTabPanel") {
+          shiny::updateTabsetPanel(session, inputId = "cohortDefinitionOneTabSetPanel", selected = "cohortDefinitionOneTextTabPanel")
+        } else if (input$cohortDefinitionTwoTabSetPanel == "conceptSetTwoTabPanel") {
+          shiny::updateTabsetPanel(session, inputId = "cohortDefinitionOneTabSetPanel", selected = "conceptSetOneTabPanel")
+        } else if (input$cohortDefinitionTwoTabSetPanel == "cohortDefinitionTwoJsonTabPanel") {
+          shiny::updateTabsetPanel(session, inputId = "cohortDefinitionOneTabSetPanel", selected = "cohortDefinitionOneJsonTabPanel")
+        } else if (input$cohortDefinitionTwoTabSetPanel == "cohortDefinitionTwoSqlTabPanel") {
+          shiny::updateTabsetPanel(session, inputId = "cohortDefinitionOneTabSetPanel", selected = "cohortDefinitionOneSqlTabPanel")
         }
       }
     }
