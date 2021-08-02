@@ -3398,7 +3398,7 @@ shiny::shinyServer(function(input, output, session) {
     if (all(is(dataSource, "environment"), !exists('cohortCount'))) {
       return(NULL)
     }
-    data <- getResultsFromCohortCount(
+    data <- getResultsCohortCount(
       dataSource = dataSource,
       databaseIds = getDatabaseIdsFromDropdown(),
       cohortIds =  getCohortIdsFromDrapdown()
