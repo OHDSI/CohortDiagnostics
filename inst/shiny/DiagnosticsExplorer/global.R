@@ -25,17 +25,17 @@ alternateVocabularySchema <- c('vocabulary')
 defaultDatabaseMode <- FALSE # Use file system if FALSE
 
 #Tab control variables ----
-showIncidenceRate <- FALSE
-showTimeSeries <- FALSE
-showTimeDistribution <- FALSE
-showIndexEventBreakdown <- FALSE
-showVisitContext <- FALSE
+showIncidenceRate <- TRUE
+showTimeSeries <- TRUE
+showTimeDistribution <- TRUE
+showIndexEventBreakdown <- TRUE
+showVisitContext <- TRUE
 
 #Since Characterization and CompareCharacterization uses the same table
-showCharacterizationAndCompareCharacterization <- FALSE
+showCharacterizationAndCompareCharacterization <- TRUE
 
 #Since TemporalCharacterization and CompareTemporalCharacterization uses the same table
-showTemporalCharacterizationAndCompareTemporalCharacterization <- FALSE
+showTemporalCharacterizationAndCompareTemporalCharacterization <- TRUE
 
 filterTemporalChoicesToPrimaryOptions <- FALSE
 
