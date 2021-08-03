@@ -7137,6 +7137,42 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
+  output$packageDependencySnapShotTable <- DT::renderDataTable(expr = {
+    data <- metadata %>% 
+      dplyr::filter(.data$variableField == "packageDependencySnapShotJson") %>% 
+      dplyr::pull(.data$valueField)
+    
+    if (length(data) == 0) {
+      return(NULL)
+    }
+    
+    result <- as.data.frame(RJSONIO::fromJSON(data[1]))
+    
+    options = list(
+      pageLength = 100,
+      lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+      searching = TRUE,
+      searchHighlight = TRUE,
+      scrollX = TRUE,
+      scrollY = "60vh",
+      lengthChange = TRUE,
+      ordering = TRUE,
+      paging = TRUE
+    )
+    
+    table <- DT::datatable(
+      result,
+      options = options,
+      rownames = FALSE,
+      colnames = colnames(result) %>%
+        camelCaseToTitleCase(),
+      escape = FALSE,
+      filter = "top",
+      class = "stripe nowrap compact"
+    )
+    return(table)
+  })
+  
   
   # Infoboxes ------
   showInfoBox <- function(title, htmlFileName) {

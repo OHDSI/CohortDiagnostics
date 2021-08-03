@@ -76,7 +76,7 @@ sidebarMenu <-
         shinydashboard::menuItem(text = "Compare Temporal Char.", tabName = "compareTemporalCharacterization"),
         infoId = "compareTemporalCharacterizationInfo"
       ),
-    shinydashboard::menuItem(text = "Data Source Information", tabName = "databaseInformation"),
+    shinydashboard::menuItem(text = "Meta data", tabName = "databaseInformation"),
     # Conditional dropdown boxes in the side bar ------------------------------------------------------
     shiny::conditionalPanel(
       condition = "input.tabs!='incidenceRate' &
@@ -1502,7 +1502,30 @@ bodyTabItems <- shinydashboard::tabItems(
     )
   ),
   shinydashboard::tabItem(tabName = "databaseInformation",
-                          DT::dataTableOutput("databaseInformationTable"))
+                          shiny::tabsetPanel(
+                            id = "metadataInformation",
+                            shiny::tabPanel(
+                              title = "Data source",
+                              tags$br(),
+                              DT::dataTableOutput("databaseInformationTable")
+                            ),
+                            shiny::tabPanel(
+                              title = "Environment snapshot",
+                              tags$br(),
+                              shiny::radioButtons(
+                                inputId = "environmentSnapshot",
+                                label = "Filter to:",
+                                choices = c("Arguments at diagnostics initiation", "Package dependency snapShot", "Rest of fields in metadata"),
+                                selected = "Package dependency snapShot",
+                                inline = TRUE
+                              ),
+                              shiny::conditionalPanel(
+                                condition = "input.environmentSnapshot == 'Package dependency snapShot'",
+                                DT::dataTableOutput("packageDependencySnapShotTable")
+                              )
+                            )
+                          )
+                     )
 )
 
 
