@@ -1522,6 +1522,10 @@ bodyTabItems <- shinydashboard::tabItems(
                               shiny::conditionalPanel(
                                 condition = "input.environmentSnapshot == 'Package dependency snapShot'",
                                 DT::dataTableOutput("packageDependencySnapShotTable")
+                              ),
+                              shiny::conditionalPanel(
+                                condition = "input.environmentSnapshot == 'Arguments at diagnostics initiation'",
+                                DT::dataTableOutput("argumentsAtDiagnosticsInitiationTable")
                               )
                             )
                           )
