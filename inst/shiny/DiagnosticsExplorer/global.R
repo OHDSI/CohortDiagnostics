@@ -25,15 +25,20 @@ alternateVocabularySchema <- c('vocabulary')
 defaultDatabaseMode <- FALSE # Use file system if FALSE
 
 #Tab control variables ----
-showTimeSeries <- TRUE
-showTemporalCharacterization <- TRUE
-showCharacterization <- TRUE
+showIncidenceRate <- FALSE
+showTimeSeries <- FALSE
+showTimeDistribution <- FALSE
+showIndexEventBreakdown <- FALSE
+showVisitContext <- FALSE
+
+#Since Characterization and CompareCharacterization uses the same table
+showCharacterizationAndCompareCharacterization <- FALSE
+
+#Since TemporalCharacterization and CompareTemporalCharacterization uses the same table
+showTemporalCharacterizationAndCompareTemporalCharacterization <- FALSE
+
 filterTemporalChoicesToPrimaryOptions <- FALSE
-#!!!!!!!!!!!!!!!!!!
-# showIndexEventBreakdown <- TRUE
-# showVisitContext <- TRUE
-# showMetadata <- TRUE
-# showDataSource <- TRUE
+
 
 
 # Foot note ----
@@ -219,15 +224,49 @@ if (exists("cohort")) {
 }
 
 # disable tabs based on user preference ----
-if (!showTimeSeries) {
-  if (exists("timeSeries")) {
-    rm(timeSeries)
+if (!showIncidenceRate) {
+  if (exists("showIncidenceRate")) {
+    rm("showIncidenceRate")
   }
 }
 
+if (!showTimeSeries) {
+  if (exists("timeSeries")) {
+    rm("timeSeries")
+  }
+}
+
+if (!showTimeDistribution) {
+  if (exists("timeDistribution")) {
+    rm("timeDistribution")
+  }
+}
+
+if (!showIndexEventBreakdown) {
+  if (exists("indexEventBreakdown")) {
+    rm("indexEventBreakdown")
+  }
+}
+
+if (!showVisitContext) {
+  if (exists("visitContext")) {
+    rm("visitContext")
+  }
+}
+
+
+
+# if (!showOverlap) {
+#   if (exists("visitContext")) {
+#     rm("visitContext")
+#   }
+# }
+
 if (exists("temporalTimeRef")) {
-  if (all(nrow(temporalTimeRef) > 0,
-          showTemporalCharacterization)) {
+  if (all(
+    nrow(temporalTimeRef) > 0,
+    showTemporalCharacterizationAndCompareTemporalCharacterization
+  )) {
     temporalCovariateChoices <- temporalTimeRef %>%
       dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
       dplyr::select(.data$timeId, .data$choices) %>%
@@ -251,8 +290,10 @@ if (exists("temporalTimeRef")) {
 }
 
 if (exists("covariateRef")) {
-  if (all(nrow(covariateRef) > 0,
-          showCharacterization)) {
+  if (all(
+    nrow(covariateRef) > 0,
+    showCharacterizationAndCompareCharacterization
+  )) {
     specifications <- readr::read_csv(
       file = "Table1Specs.csv",
       col_types = readr::cols(),

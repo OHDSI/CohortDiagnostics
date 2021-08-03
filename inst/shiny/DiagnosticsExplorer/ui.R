@@ -31,7 +31,7 @@ sidebarMenu <-
         item = shinydashboard::menuItem(text = "Time Series", tabName = "timeSeries"),
         infoId = "timeSeriesInfo"
       ),
-    if (exists("covariateValue"))
+    if (exists("timeDistribution"))
       addInfo(
         item = shinydashboard::menuItem(text = "Time Distributions", tabName = "timeDistribution"),
         infoId = "timeDistributionInfo"

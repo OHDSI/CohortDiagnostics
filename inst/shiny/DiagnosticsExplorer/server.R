@@ -7,8 +7,8 @@ shiny::shinyServer(function(input, output, session) {
     return(cohort$cohortId[cohort$compoundName == input$cohort])
   })
   
-  ###Reactive : getCohortIdsFromDrapdown----
-  getCohortIdsFromDrapdown <- reactiveVal(NULL)
+  ###Reactive : getCohortIdsFromDropdown----
+  getCohortIdsFromDropdown <- reactiveVal(NULL)
   shiny::observeEvent(eventExpr = {
     list(input$cohorts_open,
          input$tabs)
@@ -16,7 +16,7 @@ shiny::shinyServer(function(input, output, session) {
     if (isFALSE(input$cohorts_open) || !is.null(input$tabs)) {
       selectedCohortIds <-
         cohort$cohortId[cohort$compoundName  %in% input$cohorts]
-       getCohortIdsFromDrapdown(selectedCohortIds)
+       getCohortIdsFromDropdown(selectedCohortIds)
     }
   })
   
@@ -3394,14 +3394,14 @@ shiny::shinyServer(function(input, output, session) {
   # Cohort Counts -----
   getCohortCountResultReactive <- shiny::reactive(x = {
     validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
-    validate(need(length( getCohortIdsFromDrapdown()) > 0, "No cohorts chosen"))
+    validate(need(length( getCohortIdsFromDropdown()) > 0, "No cohorts chosen"))
     if (all(is(dataSource, "environment"), !exists('cohortCount'))) {
       return(NULL)
     }
     data <- getResultsCohortCount(
       dataSource = dataSource,
       databaseIds = getDatabaseIdsFromDropdown(),
-      cohortIds =  getCohortIdsFromDrapdown()
+      cohortIds =  getCohortIdsFromDropdown()
     ) 
     validate(need(all(!is.null(data) && nrow(data) > 0), "No data on cohort counts."))
     
@@ -3423,7 +3423,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$cohortCountsTable <- DT::renderDataTable(expr = {
     validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
-    validate(need(length( getCohortIdsFromDrapdown()) > 0, "No cohorts chosen"))
+    validate(need(length( getCohortIdsFromDropdown()) > 0, "No cohorts chosen"))
     data <- getCohortCountResultReactive() %>%
       dplyr::select(
         .data$databaseId,
@@ -3717,7 +3717,7 @@ shiny::shinyServer(function(input, output, session) {
   incidenceRateDataFull <- reactive({
     if (input$tabs == "incidenceRate") {
       validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
-      validate(need(length( getCohortIdsFromDrapdown()) > 0, "No cohorts chosen"))
+      validate(need(length( getCohortIdsFromDropdown()) > 0, "No cohorts chosen"))
       if (all(is(dataSource, "environment"), !exists('incidenceRate'))) {
         return(NULL)
       }
@@ -3727,7 +3727,7 @@ shiny::shinyServer(function(input, output, session) {
       
       data <- getResultsFromIncidenceRate(
         dataSource = dataSource,
-        cohortIds =  getCohortIdsFromDrapdown(),
+        cohortIds =  getCohortIdsFromDropdown(),
         databaseIds = getDatabaseIdsFromDropdown())
       return(data)
     } else {
@@ -3918,7 +3918,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$incidenceRatePlot <- ggiraph::renderggiraph(expr = {
     validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
-    validate(need(length( getCohortIdsFromDrapdown()) > 0, "No cohorts chosen"))
+    validate(need(length( getCohortIdsFromDropdown()) > 0, "No cohorts chosen"))
     
     progress <- shiny::Progress$new()
     on.exit(progress$close())
@@ -3931,7 +3931,7 @@ shiny::shinyServer(function(input, output, session) {
     shiny::withProgress(
       message = paste(
         "Building incidence rate plot data for ",
-        length( getCohortIdsFromDrapdown()),
+        length( getCohortIdsFromDropdown()),
         " cohorts and ",
         length(getDatabaseIdsFromDropdown()),
         " databases"
@@ -3980,7 +3980,7 @@ shiny::shinyServer(function(input, output, session) {
   timeSeriesData <- reactive({
     if (input$tabs == "timeSeries") {
       validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
-      validate(need(length( getCohortIdsFromDrapdown()) > 0, "No cohorts chosen"))
+      validate(need(length( getCohortIdsFromDropdown()) > 0, "No cohorts chosen"))
       if (all(is(dataSource, "environment"), !exists('timeSeries'))) {
         return(NULL)
       }
@@ -3991,7 +3991,7 @@ shiny::shinyServer(function(input, output, session) {
       
       data <- getResultsFromFixedTimeSeries(
         dataSource = dataSource,
-        cohortIds =  getCohortIdsFromDrapdown(),
+        cohortIds =  getCohortIdsFromDropdown(),
         databaseIds = getDatabaseIdsFromDropdown()
       )
       return(data)
@@ -4189,13 +4189,13 @@ shiny::shinyServer(function(input, output, session) {
   # Time distribution -------
   timeDistributionData <- reactive({
     validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
-    validate(need(length( getCohortIdsFromDrapdown()) > 0, "No cohorts chosen"))
+    validate(need(length( getCohortIdsFromDropdown()) > 0, "No cohorts chosen"))
     if (all(is(dataSource, "environment"), !exists('timeDistribution'))) {
       return(NULL)
     }
     data <- getResultsFromTimeDistribution(
       dataSource = dataSource,
-      cohortIds =  getCohortIdsFromDrapdown(),
+      cohortIds =  getCohortIdsFromDropdown(),
       databaseIds = getDatabaseIdsFromDropdown()
     )
     return(data)
@@ -5884,7 +5884,8 @@ shiny::shinyServer(function(input, output, session) {
             is.null(characterizationTemporalCharacterizationData()$covariateRef),
             nrow(characterizationTemporalCharacterizationData()$covariateRef) == 0,
             is.null(characterizationTemporalCharacterizationData()$analysisRef),
-            nrow(characterizationTemporalCharacterizationData()$analysisRef) == 0)) {
+            nrow(characterizationTemporalCharacterizationData()$analysisRef) == 0,
+            exists("temporalCovariateChoices"))) {
       return(NULL)
     }
     
@@ -6075,7 +6076,7 @@ shiny::shinyServer(function(input, output, session) {
     
     data <- getCohortOverlapData(
       dataSource = dataSource,
-      cohortIds =  getCohortIdsFromDrapdown(),
+      cohortIds =  getCohortIdsFromDropdown(),
       databaseIds = getDatabaseIdsFromDropdown()
     )
     validate(need(
@@ -6091,7 +6092,7 @@ shiny::shinyServer(function(input, output, session) {
   
   output$overlapPlot <- ggiraph::renderggiraph(expr = {
     validate(need(
-      length( getCohortIdsFromDrapdown()) > 0,
+      length( getCohortIdsFromDropdown()) > 0,
       paste0("Please select Target Cohort(s)")
     ))
     
@@ -7240,12 +7241,12 @@ shiny::shinyServer(function(input, output, session) {
   
   selectedCohorts <- shiny::reactive({
     
-    if (any(is.null( getCohortIdsFromDrapdown()), length( getCohortIdsFromDrapdown()) == 0)) {return(NULL)}
+    if (any(is.null( getCohortIdsFromDropdown()), length( getCohortIdsFromDropdown()) == 0)) {return(NULL)}
     if (any(is.null(getCohortSortedByCohortId()), nrow(getCohortSortedByCohortId()) == 0)) {return(NULL)}
     if (any(is.null(getDatabaseIdsFromDropdown()), nrow(getDatabaseIdsFromDropdown()) == 0)) {return(NULL)}
     
     cohortSelected <- getCohortSortedByCohortId() %>%
-      dplyr::filter(.data$cohortId %in%  getCohortIdsFromDrapdown()) %>%
+      dplyr::filter(.data$cohortId %in%  getCohortIdsFromDropdown()) %>%
       dplyr::arrange(.data$cohortId)
     
     databaseIdsWithCount <- cohortCount %>% 
