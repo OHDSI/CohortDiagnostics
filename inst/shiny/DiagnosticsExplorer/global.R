@@ -196,8 +196,7 @@ if (databaseMode) {
     createFileDataSource(localDataPath, envir = .GlobalEnv)
 }
 
-#!!!!!!!!!!!!!!!!!!
-# modify objects that are always in R memory (enhancements)
+#Adding enhancements to the objects, which are already loaded in R memory----
 if (exists("database")) {
   if (nrow(database) > 0 &&
       "vocabularyVersion" %in% colnames(database)) {
@@ -223,7 +222,54 @@ if (exists("cohort")) {
     ))
 }
 
-# disable tabs based on user preference ----
+#enchancement and removing the object both happens together based on the control variable
+if (exists("temporalTimeRef")) {
+  if (all(
+    nrow(temporalTimeRef) > 0,
+    showTemporalCharacterizationAndCompareTemporalCharacterization
+  )) {
+    temporalCovariateChoices <- temporalTimeRef %>%
+      dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
+      dplyr::select(.data$timeId, .data$choices) %>%
+      dplyr::arrange(.data$timeId)
+    
+    if (filterTemporalChoicesToPrimaryOptions) {
+      temporalCovariateChoices <- temporalCovariateChoices %>%
+        dplyr::filter(
+          stringr::str_detect(string = .data$choices,
+                              pattern = 'Start -365 to end -31|Start -30 to end -1|Start 0 to end 0|Start 1 to end 30|Start 31 to end 365')
+        )
+    }
+  } else {
+    rm("temporalTimeRef")
+    rm("temporalAnalysisRef")
+    rm("temporalCovariateChoices")
+    rm("temporalCovariateRef")
+    rm("temporalCovariateValue")
+    filterTemporalCovariateChoicesToPrimaryOptions <- FALSE
+  }
+}
+
+#enchancement and removing the object both happens together based on the control variable
+if (exists("covariateRef")) {
+  if (all(
+    nrow(covariateRef) > 0,
+    showCharacterizationAndCompareCharacterization
+  )) {
+    specifications <- readr::read_csv(
+      file = "Table1Specs.csv",
+      col_types = readr::cols(),
+      guess_max = min(1e7)
+    )
+    prettyAnalysisIds <- specifications$analysisId
+  } else {
+    rm("covariateValue")
+    rm("covariateRef")
+    rm("covariateValueDist")
+  }
+}
+
+# disable tabs based on user preference or control variable ----
 if (!showIncidenceRate) {
   if (exists("showIncidenceRate")) {
     rm("showIncidenceRate")
@@ -262,50 +308,7 @@ if (!showVisitContext) {
 #   }
 # }
 
-if (exists("temporalTimeRef")) {
-  if (all(
-    nrow(temporalTimeRef) > 0,
-    showTemporalCharacterizationAndCompareTemporalCharacterization
-  )) {
-    temporalCovariateChoices <- temporalTimeRef %>%
-      dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
-      dplyr::select(.data$timeId, .data$choices) %>%
-      dplyr::arrange(.data$timeId)
-    
-    if (filterTemporalChoicesToPrimaryOptions) {
-      temporalCovariateChoices <- temporalCovariateChoices %>%
-        dplyr::filter(
-          stringr::str_detect(string = .data$choices,
-                              pattern = 'Start -365 to end -31|Start -30 to end -1|Start 0 to end 0|Start 1 to end 30|Start 31 to end 365')
-        )
-    }
-  } else {
-    rm("temporalTimeRef")
-    rm("temporalAnalysisRef")
-    rm("temporalCovariateChoices")
-    rm("temporalCovariateRef")
-    rm("temporalCovariateValue")
-    filterTemporalCovariateChoicesToPrimaryOptions <- FALSE
-  }
-}
 
-if (exists("covariateRef")) {
-  if (all(
-    nrow(covariateRef) > 0,
-    showCharacterizationAndCompareCharacterization
-  )) {
-    specifications <- readr::read_csv(
-      file = "Table1Specs.csv",
-      col_types = readr::cols(),
-      guess_max = min(1e7)
-    )
-    prettyAnalysisIds <- specifications$analysisId
-  } else {
-    rm("covariateValue")
-    rm("covariateRef")
-    rm("covariateValueDist")
-  }
-}
 
 
 #Extras -----

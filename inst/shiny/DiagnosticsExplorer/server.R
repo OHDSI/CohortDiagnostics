@@ -78,7 +78,7 @@ shiny::shinyServer(function(input, output, session) {
                                  input$databaseOrVocabularySchemaSecond])
   })
   
-  #inputId: cohort----
+  #Update cohort dropdown by compound name----
   shiny::observe({
     subset <- getCohortSortedByCohortId()$compoundName
     shinyWidgets::updatePickerInput(
@@ -89,7 +89,7 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  #inputId: cohorts----
+  #Update cohort multi-select dropdown by compound name----
   shiny::observe({
     subset <- getCohortSortedByCohortId()$compoundName
     shinyWidgets::updatePickerInput(
@@ -101,7 +101,7 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  #inputId comparatorCohort----
+  #Update comparator dropdown by compound name----
   shiny::observe({
     subset <- getCohortSortedByCohortId()$compoundName
     shinyWidgets::updatePickerInput(
@@ -191,18 +191,18 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  #output: cohortDefinitionRowIsSelected----
-  output$cohortDefinitionRowIsSelected <- reactive({
+  #output: cohortDefinitionIsRowSelected----
+  output$cohortDefinitionIsRowSelected <- reactive({
     return(!is.null(getLastTwoRowSelectedInCohortTable()))
   })
   # send output to UI
   shiny::outputOptions(x = output,
-                       name = "cohortDefinitionRowIsSelected",
+                       name = "cohortDefinitionIsRowSelected",
                        suspendWhenHidden = FALSE)
   
-  #output: selectedCohortInCohortDefinition----
+  #output: selectedCohortInCohortDefinitionLeft----
   #Show cohort names in UI
-  output$selectedCohortInCohortDefinition <- shiny::renderUI(expr = {
+  output$selectedCohortInCohortDefinitionLeft <- shiny::renderUI(expr = {
     row <- getLastTwoRowSelectedInCohortTable()[1,]
     if (is.null(row)) {
       return(NULL)
@@ -219,8 +219,8 @@ shiny::shinyServer(function(input, output, session) {
       )
     }
   })
-  #output: selectedSecondCohortInCohortDefinition----
-  output$selectedSecondCohortInCohortDefinition <- shiny::renderUI(expr = {
+  #output: selectedCohortInCohortDefinitionRight----
+  output$selectedCohortInCohortDefinitionRight <- shiny::renderUI(expr = {
     row <- getLastTwoRowSelectedInCohortTable()[2,]
     if (is.null(row)) {
       return(NULL)
@@ -258,6 +258,11 @@ shiny::shinyServer(function(input, output, session) {
             tags$td(tags$strong("Cohort Name: ")),
             tags$td(HTML("&nbsp;&nbsp;")),
             tags$td(data[i, ]$cohortName)
+          ),
+          tags$tr(
+            tags$td(tags$strong("Metadata: ")),
+            tags$td(HTML("&nbsp;&nbsp;")),
+            tags$td(data[i, ]$metadata)
           )
         )
         #!!!!!!!!!!!!!!!!!!parse cohort[i,]$metadata from JSON to data table, iterate and present
@@ -266,8 +271,8 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  #output: cohortDetailsText----
-  output$cohortDetailsText <- shiny::renderUI({
+  #output: cohortDetailsTextLeft----
+  output$cohortDetailsTextLeft <- shiny::renderUI({
     row <- getDetailsOnSelectedCohorts()[[1]]
     if (is.null(row) || length(row) == 0) {
       return(NULL)
@@ -275,9 +280,9 @@ shiny::shinyServer(function(input, output, session) {
     return(row)
   })
   
-  #reactive: getCountsForSelectedCohorts----
+  #reactive: getCountsForSelectedCohortsLeft----
   #get cohort count
-  getCountsForSelectedCohorts <- shiny::reactive(x = {
+  getCountsForSelectedCohortsLeft <- shiny::reactive(x = {
     row <- getLastTwoRowSelectedInCohortTable()[1,]
     if (is.null(row)) {
       return(NULL)
@@ -291,10 +296,10 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::arrange(.data$databaseId)
   })
   
-  #output: cohortCountsTableInCohortDefinition----
-  output$cohortCountsTableInCohortDefinition <-
+  #output: cohortCountsTableInCohortDefinitionLeft----
+  output$cohortCountsTableInCohortDefinitionLeft <-
     DT::renderDataTable(expr = {
-      data <- getCountsForSelectedCohorts()
+      data <- getCountsForSelectedCohortsLeft()
       
       maxCohortSubjects <- max(data$cohortSubjects)
       maxCohortEntries <- max(data$cohortEntries)
@@ -343,26 +348,26 @@ shiny::shinyServer(function(input, output, session) {
     }, server = TRUE)
   
   
-  #reactive: getSelectedDatabaseIdFromCohortCountTable----
+  #reactive: getSelectedDatabaseIdFromCohortCountTableLeft----
   #inclusion rule in cohort table
-  getSelectedDatabaseIdFromCohortCountTable <- shiny::reactive(x = {
-    idx <- input$cohortCountsTableInCohortDefinition_rows_selected
+  getSelectedDatabaseIdFromCohortCountTableLeft <- shiny::reactive(x = {
+    idx <- input$cohortCountsTableInCohortDefinitionLeft_rows_selected
     if (is.null(idx)) {
       return(NULL)
     }
-    return(getCountsForSelectedCohorts()[idx,]$databaseId)
+    return(getCountsForSelectedCohortsLeft()[idx,]$databaseId)
   })
   
-  #output: cohortCountsTableInCohortDefinitionRowIsSelected----
-  output$cohortCountsTableInCohortDefinitionRowIsSelected <- shiny::reactive(x = {
-    return(!is.null(getSelectedDatabaseIdFromCohortCountTable()))
+  #output: cohortCountsTableInCohortDefinitionLeftIsRowSelected----
+  output$cohortCountsTableInCohortDefinitionLeftIsRowSelected <- shiny::reactive(x = {
+    return(!is.null(getSelectedDatabaseIdFromCohortCountTableLeft()))
   })
   shiny::outputOptions(x = output,
-                       name = "cohortCountsTableInCohortDefinitionRowIsSelected",
+                       name = "cohortCountsTableInCohortDefinitionLeftIsRowSelected",
                        suspendWhenHidden = FALSE)
-  #reactive: cohortDefinitionInclusionRuleData----
-  cohortDefinitionInclusionRuleData <- shiny::reactive(x = {
-    validate(need(nrow(getSelectedDatabaseIdFromCohortCountTable()) > 0, "No data sources chosen"))
+  #reactive: cohortDefinitionInclusionRuleDataLeft----
+  cohortDefinitionInclusionRuleDataLeft <- shiny::reactive(x = {
+    validate(need(nrow(getSelectedDatabaseIdFromCohortCountTableLeft()) > 0, "No data sources chosen"))
     validate(need(
       nrow(getLastTwoRowSelectedInCohortTable()) > 0,
       "No cohorts chosen"
@@ -370,15 +375,14 @@ shiny::shinyServer(function(input, output, session) {
     table <- getResultsInclusionRuleStatistics(
       dataSource = dataSource,
       cohortIds = getLastTwoRowSelectedInCohortTable()[1,]$cohortId,
-      databaseIds = getSelectedDatabaseIdFromCohortCountTable()
+      databaseIds = getSelectedDatabaseIdFromCohortCountTableLeft()
     )
     return(table)
   })
   
-  output$inclusionRuleInCohortDefinition <- DT::renderDataTable(expr = {
+  output$inclusionRuleTableInCohortDefinitionLeft <- DT::renderDataTable(expr = {
     
-    
-    table <- cohortDefinitionInclusionRuleData()
+    table <- cohortDefinitionInclusionRuleDataLeft()
     
     validate(need((nrow(table) > 0),
                   "There is no inclusion rule data for this cohort."))
@@ -388,7 +392,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::inner_join(cohortCount,
                         by = c("cohortId", "databaseId")) %>% 
       dplyr::filter(.data$cohortId == getLastTwoRowSelectedInCohortTable()[1,]$cohortId) %>% 
-      dplyr::filter(.data$databaseId %in% getSelectedDatabaseIdFromCohortCountTable()) %>% 
+      dplyr::filter(.data$databaseId %in% getSelectedDatabaseIdFromCohortCountTableLeft()) %>% 
       dplyr::select(.data$cohortSubjects) %>% 
       dplyr::pull(.data$cohortSubjects) %>% unique()
     
@@ -515,7 +519,7 @@ shiny::shinyServer(function(input, output, session) {
       getCsvFileNameWithDateTime(string = "InclusionRule")
     },
     content = function(file) {
-      downloadCsv(x = cohortDefinitionInclusionRuleData(), fileName = file)
+      downloadCsv(x = cohortDefinitionInclusionRuleDataLeft(), fileName = file)
     }
   )
   
@@ -646,21 +650,21 @@ shiny::shinyServer(function(input, output, session) {
       noOfRowSelectedInCohortDefinitionTable(),
       shiny::conditionalPanel(
         condition = "output.cohortDefinitionCountOfSelectedRows > 0 & 
-                     output.cohortDefinitionRowIsSelected == true",
-        shiny::htmlOutput(outputId = "selectedCohortInCohortDefinition"),
+                     output.cohortDefinitionIsRowSelected == true",
+        shiny::htmlOutput(outputId = "selectedCohortInCohortDefinitionLeft"),
         shiny::tabsetPanel(
           type = "tab",
           id = "cohortDefinitionOneTabSetPanel",
           shiny::tabPanel(title = "Details",
                           value = "cohortDefinitionOneDetailsTextTabPanel",
-                          shiny::htmlOutput("cohortDetailsText")),
+                          shiny::htmlOutput("cohortDetailsTextLeft")),
           shiny::tabPanel(title = "Cohort Count",
                           value = "cohortDefinitionOneCohortCountTabPanel",
                           tags$br(),
-                          DT::dataTableOutput(outputId = "cohortCountsTableInCohortDefinition"),
+                          DT::dataTableOutput(outputId = "cohortCountsTableInCohortDefinitionLeft"),
                           tags$br(),
                           shiny::conditionalPanel(
-                            condition = "output.cohortCountsTableInCohortDefinitionRowIsSelected",
+                            condition = "output.cohortCountsTableInCohortDefinitionLeftIsRowSelected",
                             tags$h3("Inclusion Rules"),
                             tags$table(width = "100%", 
                                        tags$tr(
@@ -683,7 +687,7 @@ shiny::shinyServer(function(input, output, session) {
                                          )
                                        )
                             ),
-                            DT::dataTableOutput(outputId = "inclusionRuleInCohortDefinition")
+                            DT::dataTableOutput(outputId = "inclusionRuleTableInCohortDefinitionLeft")
                           )),
           shiny::tabPanel(title = "Cohort definition",
                           value = "cohortDefinitionOneTextTabPanel",
@@ -853,8 +857,8 @@ shiny::shinyServer(function(input, output, session) {
       noOfRowSelectedInCohortDefinitionTable(),
       shiny::conditionalPanel(
         condition = "output.cohortDefinitionCountOfSelectedRows == 2 & 
-                     output.cohortDefinitionRowIsSelected == true",
-        shiny::htmlOutput(outputId = "selectedSecondCohortInCohortDefinition"),
+                     output.cohortDefinitionIsRowSelected == true",
+        shiny::htmlOutput(outputId = "selectedCohortInCohortDefinitionRight"),
         shiny::tabsetPanel(
           id = "cohortDefinitionTwoTabSetPanel",
           type = "tab",
@@ -1873,7 +1877,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::inner_join(cohortCount,
                         by = c("cohortId", "databaseId")) %>% 
       dplyr::filter(.data$cohortId == getLastTwoRowSelectedInCohortTable()[2,]$cohortId) %>% 
-      dplyr::filter(.data$databaseId %in% getSelectedDatabaseIdFromCohortCountTable()) %>% 
+      dplyr::filter(.data$databaseId %in% getSelectedDatabaseIdFromCohortCountTableLeft()) %>% 
       dplyr::select(.data$cohortSubjects) %>% 
       dplyr::pull(.data$cohortSubjects) %>% unique()
     
