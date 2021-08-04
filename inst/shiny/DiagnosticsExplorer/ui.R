@@ -302,7 +302,7 @@ bodyTabItems <- shinydashboard::tabItems(
       tags$br(),
       shiny::column(width = 12,
                     shiny::conditionalPanel(
-                      condition = "output.cohortDefinitionCountOfSelectedRows == 2 &
+                      condition = "output.cohortDefinitionSelectedRowCount == 2 &
                      input.conceptSetsType == 'Resolved (included)' &
                      input.conceptSetsTypeSecond == 'Resolved (included)' & 
                      output.conceptSetExpressionRowSelected == true &
@@ -335,7 +335,7 @@ bodyTabItems <- shinydashboard::tabItems(
                     )),
       shiny::column(width = 12,
                     shiny::conditionalPanel(
-                      condition = "output.cohortDefinitionCountOfSelectedRows == 2 &
+                      condition = "output.cohortDefinitionSelectedRowCount == 2 &
                                    input.conceptSetsType == 'Mapped (source)' &
                                    input.conceptSetsTypeSecond == 'Mapped (source)' & 
                                    output.conceptSetExpressionRowSelected == true &
@@ -368,7 +368,7 @@ bodyTabItems <- shinydashboard::tabItems(
                     )),
       shiny::column(width = 12,
                     shiny::conditionalPanel(
-                      condition = "output.cohortDefinitionCountOfSelectedRows == 2 &
+                      condition = "output.cohortDefinitionSelectedRowCount == 2 &
                                    input.conceptSetsType == 'Orphan concepts' &
                                    input.conceptSetsTypeSecond == 'Orphan concepts'& 
                                    output.conceptSetExpressionRowSelected == true &

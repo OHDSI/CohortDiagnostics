@@ -380,6 +380,7 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   })
   
+  #output: inclusionRuleTableInCohortDefinitionLeft----
   output$inclusionRuleTableInCohortDefinitionLeft <- DT::renderDataTable(expr = {
     
     table <- cohortDefinitionInclusionRuleDataLeft()
@@ -514,7 +515,8 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
-  output$saveCohortDefinitionInclusionRuleTable <-  downloadHandler(
+  #output: inclusionRuleTableInCohortDefinitionLeft----
+  output$saveCohortDefinitionInclusionRuleTableLeft <-  downloadHandler(
     filename = function() {
       getCsvFileNameWithDateTime(string = "InclusionRule")
     },
@@ -558,11 +560,13 @@ shiny::shinyServer(function(input, output, session) {
     return(details)
   })
   
-  output$cohortDefinitionText <- shiny::renderUI(expr = {
+  #output: inclusionRuleTableInCohortDefinitionLeft----
+  output$cohortDefinitionTextLeft <- shiny::renderUI(expr = {
     getCirceRenderedExpressionDetails()[1,]$htmlExpressionCohort %>%
       shiny::HTML()
   })
   
+  #reactive getCirceRPackageVersion----
   getCirceRPackageVersion <- shiny::reactive(x = {
     row <- getLastTwoRowSelectedInCohortTable()
     if (is.null(row)) {
@@ -582,7 +586,8 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  output$circerVersionInCohortDefinition <- shiny::renderUI(expr = {
+  #output: circerVersionInCohortDefinitionLeft----
+  output$circerVersionInCohortDefinitionLeft <- shiny::renderUI(expr = {
     version <- getCirceRPackageVersion()[[1]]
     if (is.null(version)) {
       return(NULL)
@@ -591,7 +596,8 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  output$cohortDefinitionJson <- shiny::renderText({
+  #output: circerVersionInCohortDefinitionLeft----
+  output$cohortDefinitionJsonLeft <- shiny::renderText({
     row <- getLastTwoRowSelectedInCohortTable()[1,]
     if (is.null(row)) {
       return(NULL)
@@ -600,7 +606,8 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  output$cohortDefinitionSql <- shiny::renderText({
+  #output: cohortDefinitionSqlLeft----
+  output$cohortDefinitionSqlLeft <- shiny::renderText({
     row <- getLastTwoRowSelectedInCohortTable()[1,]
     
     if (is.null(row)) {
@@ -619,7 +626,8 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  output$circerVersionInCohortDefinitionSql <- shiny::renderUI(expr = {
+  #output: circerVersionIncohortDefinitionSqlLeft----
+  output$circerVersionIncohortDefinitionSqlLeft <- shiny::renderUI(expr = {
     version <- getCirceRPackageVersion()[[1]]
     if (is.null(version)) {
       return(NULL)
@@ -628,9 +636,11 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  
+  #output: circerVersionIncohortDefinitionSqlLeft----
+  #Used to set the half view or full view
   noOfRowSelectedInCohortDefinitionTable <-  shiny::reactive(x = {
     length <- length(input$cohortDefinitionTable_rows_selected)
-    
     if (length == 2) {
       return(6)
     } else {
@@ -638,18 +648,21 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  output$cohortDefinitionCountOfSelectedRows <- shiny::reactive({
+  #output: circerVersionIncohortDefinitionSqlLeft----
+  output$cohortDefinitionSelectedRowCount <- shiny::reactive({
     return(length(input$cohortDefinitionTable_rows_selected))
   })
   shiny::outputOptions(x = output,
-                       name = "cohortDefinitionCountOfSelectedRows",
+                       name = "cohortDefinitionSelectedRowCount",
                        suspendWhenHidden = FALSE)
+  
+  
   #Dynamic UI rendering -----
   output$dynamicUIGenerationCohortDefinitionConceptsetsOne <- shiny::renderUI(expr = {
     shiny::column(
       noOfRowSelectedInCohortDefinitionTable(),
       shiny::conditionalPanel(
-        condition = "output.cohortDefinitionCountOfSelectedRows > 0 & 
+        condition = "output.cohortDefinitionSelectedRowCount > 0 & 
                      output.cohortDefinitionIsRowSelected == true",
         shiny::htmlOutput(outputId = "selectedCohortInCohortDefinitionLeft"),
         shiny::tabsetPanel(
@@ -679,7 +692,7 @@ shiny::shinyServer(function(input, output, session) {
                                          ),
                                          tags$td(align = "right",
                                                  shiny::downloadButton(
-                                                   "saveCohortDefinitionInclusionRuleTable",
+                                                   "saveCohortDefinitionInclusionRuleTableLeft",
                                                    label = "",
                                                    icon = shiny::icon("download"),
                                                    style = "margin-top: 5px; margin-bottom: 5px;"
@@ -691,10 +704,10 @@ shiny::shinyServer(function(input, output, session) {
                           )),
           shiny::tabPanel(title = "Cohort definition",
                           value = "cohortDefinitionOneTextTabPanel",
-                          copyToClipboardButton(toCopyId = "cohortDefinitionText",
+                          copyToClipboardButton(toCopyId = "cohortDefinitionTextLeft",
                                                 style = "margin-top: 5px; margin-bottom: 5px;"),
-                          shiny::htmlOutput("circerVersionInCohortDefinition"),
-                          shiny::htmlOutput("cohortDefinitionText")),
+                          shiny::htmlOutput("circerVersionInCohortDefinitionLeft"),
+                          shiny::htmlOutput("cohortDefinitionTextLeft")),
           shiny::tabPanel(
             title = "Concept Sets",
             value = "conceptSetOneTabPanel",
@@ -831,20 +844,20 @@ shiny::shinyServer(function(input, output, session) {
             shiny::tabPanel(
               title = "JSON",
               value = "cohortDefinitionOneJsonTabPanel",
-              copyToClipboardButton("cohortDefinitionJson", style = "margin-top: 5px; margin-bottom: 5px;"),
-              shiny::verbatimTextOutput("cohortDefinitionJson"),
+              copyToClipboardButton("cohortDefinitionJsonLeft", style = "margin-top: 5px; margin-bottom: 5px;"),
+              shiny::verbatimTextOutput("cohortDefinitionJsonLeft"),
               tags$head(
-                tags$style("#cohortDefinitionJson { max-height:400px};")
+                tags$style("#cohortDefinitionJsonLeft { max-height:400px};")
               )
             ),
             shiny::tabPanel(
               title = "SQL",
               value = "cohortDefinitionOneSqlTabPanel",
-              copyToClipboardButton("cohortDefinitionSql", style = "margin-top: 5px; margin-bottom: 5px;"),
+              copyToClipboardButton("cohortDefinitionSqlLeft", style = "margin-top: 5px; margin-bottom: 5px;"),
               shiny::htmlOutput("circerVersionInCohortDefinitionSql"),
-              shiny::verbatimTextOutput("cohortDefinitionSql"),
+              shiny::verbatimTextOutput("cohortDefinitionSqlLeft"),
               tags$head(
-                tags$style("#cohortDefinitionSql { max-height:400px};")
+                tags$style("#cohortDefinitionSqlLeft { max-height:400px};")
               )
             )
           )
@@ -856,7 +869,7 @@ shiny::shinyServer(function(input, output, session) {
     shiny::column(
       noOfRowSelectedInCohortDefinitionTable(),
       shiny::conditionalPanel(
-        condition = "output.cohortDefinitionCountOfSelectedRows == 2 & 
+        condition = "output.cohortDefinitionSelectedRowCount == 2 & 
                      output.cohortDefinitionIsRowSelected == true",
         shiny::htmlOutput(outputId = "selectedCohortInCohortDefinitionRight"),
         shiny::tabsetPanel(
