@@ -3742,7 +3742,7 @@ shiny::shinyServer(function(input, output, session) {
       on.exit(progress$close())
       progress$set(message = paste0("Getting incidence rate data."), value = 0)
       
-      data <- getResultsFromIncidenceRate(
+      data <- getResultsIncidenceRate(
         dataSource = dataSource,
         cohortIds =  getCohortIdsFromDropdown(),
         databaseIds = getDatabaseIdsFromDropdown())
@@ -4006,7 +4006,7 @@ shiny::shinyServer(function(input, output, session) {
       on.exit(progress$close())
       progress$set(message = paste0("Getting time series data."), value = 0)
       
-      data <- getResultsFromFixedTimeSeries(
+      data <- getResultsFixedTimeSeries(
         dataSource = dataSource,
         cohortIds =  getCohortIdsFromDropdown(),
         databaseIds = getDatabaseIdsFromDropdown()
@@ -4210,7 +4210,7 @@ shiny::shinyServer(function(input, output, session) {
     if (all(is(dataSource, "environment"), !exists('timeDistribution'))) {
       return(NULL)
     }
-    data <- getResultsFromTimeDistribution(
+    data <- getResultsTimeDistribution(
       dataSource = dataSource,
       cohortIds =  getCohortIdsFromDropdown(),
       databaseIds = getDatabaseIdsFromDropdown()
