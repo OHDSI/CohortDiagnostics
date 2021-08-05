@@ -297,15 +297,15 @@ bodyTabItems <- shinydashboard::tabItems(
                           )
                         ))),    
       DT::dataTableOutput(outputId = "cohortDefinitionTable"),
-      shiny::uiOutput(outputId = "dynamicUIGenerationCohortDefinitionConceptsetsOne"),
-      shiny::uiOutput(outputId = "dynamicUIGenerationCohortDefinitionConceptsetsTwo"),
+      shiny::uiOutput(outputId = "dynamicUIGenerationForCohortSelectedLeft"),
+      shiny::uiOutput(outputId = "dynamicUIGenerationForCohortSelectedRight"),
       tags$br(),
       shiny::column(width = 12,
                     shiny::conditionalPanel(
                       condition = "output.cohortDefinitionSelectedRowCount == 2 &
                      input.conceptSetsType == 'Resolved (included)' &
                      input.conceptSetsTypeSecond == 'Resolved (included)' & 
-                     output.conceptSetExpressionRowSelected == true &
+                     output.conceptSetExpressionIsRowSelectedLeft == true &
                      output.conceptSetExpressionSecondRowSelected == true &
                      input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
                      input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
@@ -338,7 +338,7 @@ bodyTabItems <- shinydashboard::tabItems(
                       condition = "output.cohortDefinitionSelectedRowCount == 2 &
                                    input.conceptSetsType == 'Mapped (source)' &
                                    input.conceptSetsTypeSecond == 'Mapped (source)' & 
-                                   output.conceptSetExpressionRowSelected == true &
+                                   output.conceptSetExpressionIsRowSelectedLeft == true &
                                    output.conceptSetExpressionSecondRowSelected == true &
                                    input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
                                    input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
@@ -371,7 +371,7 @@ bodyTabItems <- shinydashboard::tabItems(
                       condition = "output.cohortDefinitionSelectedRowCount == 2 &
                                    input.conceptSetsType == 'Orphan concepts' &
                                    input.conceptSetsTypeSecond == 'Orphan concepts'& 
-                                   output.conceptSetExpressionRowSelected == true &
+                                   output.conceptSetExpressionIsRowSelectedLeft == true &
                                    output.conceptSetExpressionSecondRowSelected == true &
                                    input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
                                    input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
