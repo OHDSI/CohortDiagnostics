@@ -792,7 +792,7 @@ getResultsCohortCount <- function(dataSource,
 
 
 #Private Function
-getPersonAndRecordCountForVocabularySchema <-  function(cohortId, databaseId) {
+filterCohortCountByCohortIdAndDatabaseId <-  function(cohortCount, cohortId, databaseId) {
   data <- cohortCount %>%
     dplyr::filter(.data$cohortId == !!cohortId) %>% 
     dplyr::filter(.data$databaseId == !!databaseId) %>% 
