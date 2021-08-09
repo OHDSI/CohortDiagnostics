@@ -636,9 +636,9 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   
-  #output: noOfRowSelectedInCohortDefinitionTable----
+  #output: widthOfLeftPanelBasedOnNoOfRowSelected----
   #Used to set the half view or full view
-  noOfRowSelectedInCohortDefinitionTable <-  shiny::reactive(x = {
+  widthOfLeftPanelBasedOnNoOfRowSelected <-  shiny::reactive(x = {
     length <- length(input$cohortDefinitionTable_rows_selected)
     if (length == 2) {
       return(6)
@@ -659,7 +659,7 @@ shiny::shinyServer(function(input, output, session) {
   #Dynamic UI rendering for left side -----
   output$dynamicUIGenerationForCohortSelectedLeft <- shiny::renderUI(expr = {
     shiny::column(
-      noOfRowSelectedInCohortDefinitionTable(),
+      widthOfLeftPanelBasedOnNoOfRowSelected(),
       shiny::conditionalPanel(
         condition = "output.cohortDefinitionSelectedRowCount > 0 & 
                      output.cohortDefinitionIsRowSelected == true",
@@ -747,7 +747,7 @@ shiny::shinyServer(function(input, output, session) {
                                                               tags$tr(
                                                                 tags$td(colspan = 2,
                                                                         shiny::radioButtons(
-                                                                          inputId = "conceptSetsType",
+                                                                          inputId = "conceptSetsTypeLeft",
                                                                           label = "",
                                                                           choices = c("Concept Set Expression",
                                                                                       "Resolved (included)",
@@ -761,10 +761,10 @@ shiny::shinyServer(function(input, output, session) {
                                                               )),
                                       shiny::conditionalPanel(
                                         condition = "output.doesConceptSetExpressionFoundForSelectedConceptSetLeft == true &
-                                                      input.conceptSetsType != 'Resolved (included)' &
-                                                      input.conceptSetsType != 'Mapped (source)' &
-                                                      input.conceptSetsType != 'Json' &
-                                                      input.conceptSetsType != 'Orphan concepts'",
+                                                      input.conceptSetsTypeLeft != 'Resolved (included)' &
+                                                      input.conceptSetsTypeLeft != 'Mapped (source)' &
+                                                      input.conceptSetsTypeLeft != 'Json' &
+                                                      input.conceptSetsTypeLeft != 'Orphan concepts'",
                                         tags$table(width = "100%", 
                                                    tags$tr(
                                                      tags$td(align = "right",
@@ -780,7 +780,7 @@ shiny::shinyServer(function(input, output, session) {
                                         DT::dataTableOutput(outputId = "conceptSetsExpressionTableLeft")
                                       ),
                                       shiny::conditionalPanel(
-                                        condition = "input.conceptSetsType == 'Resolved (included)'",
+                                        condition = "input.conceptSetsTypeLeft == 'Resolved (included)'",
                                         tags$table(width = "100%", 
                                                    tags$tr(
                                                      tags$td(align = "right",
@@ -796,7 +796,7 @@ shiny::shinyServer(function(input, output, session) {
                                         DT::dataTableOutput(outputId = "resolvedConceptsTableLeft")
                                       ),
                                       shiny::conditionalPanel(
-                                        condition = "input.conceptSetsType == 'Mapped (source)'",
+                                        condition = "input.conceptSetsTypeLeft == 'Mapped (source)'",
                                         tags$table(width = "100%", 
                                                    tags$tr(
                                                      tags$td(align = "right",
@@ -812,7 +812,7 @@ shiny::shinyServer(function(input, output, session) {
                                         DT::dataTableOutput(outputId = "mappedConceptsTableLeft")
                                       ),
                                       shiny::conditionalPanel(
-                                        condition = "input.conceptSetsType == 'Orphan concepts'",
+                                        condition = "input.conceptSetsTypeLeft == 'Orphan concepts'",
                                         tags$table(width = "100%", 
                                                    tags$tr(
                                                      tags$td(align = "right",
@@ -828,7 +828,7 @@ shiny::shinyServer(function(input, output, session) {
                                         DT::dataTableOutput(outputId = "cohortDefinitionOrphanConceptTableLeft")
                                       ),
                                       shiny::conditionalPanel(
-                                        condition = "input.conceptSetsType == 'Json'",
+                                        condition = "input.conceptSetsTypeLeft == 'Json'",
                                         copyToClipboardButton(toCopyId = "conceptsetExpressionJsonLeft",
                                                               style = "margin-top: 5px; margin-bottom: 5px;"),
                                         shiny::verbatimTextOutput(outputId = "conceptsetExpressionJsonLeft"),
@@ -867,7 +867,7 @@ shiny::shinyServer(function(input, output, session) {
   #Dynamic UI rendering for right side -----
   output$dynamicUIGenerationForCohortSelectedRight <- shiny::renderUI(expr = {
     shiny::column(
-      noOfRowSelectedInCohortDefinitionTable(),
+      widthOfLeftPanelBasedOnNoOfRowSelected(),
       shiny::conditionalPanel(
         condition = "output.cohortDefinitionSelectedRowCount == 2 & 
                      output.cohortDefinitionIsRowSelected == true",
@@ -955,7 +955,7 @@ shiny::shinyServer(function(input, output, session) {
                                                               tags$tr(
                                                                 tags$td(colspan = 2,
                                                                         shiny::radioButtons(
-                                                                          inputId = "conceptSetsTypeSecond",
+                                                                          inputId = "conceptSetsTypeRight",
                                                                           label = "",
                                                                           choices = c("Concept Set Expression",
                                                                                       "Resolved (included)",
@@ -969,10 +969,10 @@ shiny::shinyServer(function(input, output, session) {
                                                               ))),
                                       shiny::conditionalPanel(
                                         condition = "output.doesConceptSetExpressionFoundForSelectedConceptSetRight == true &
-                                                      input.conceptSetsTypeSecond != 'Resolved (included)' &
-                                                      input.conceptSetsTypeSecond != 'Mapped (source)' &
-                                                      input.conceptSetsTypeSecond != 'Json' &
-                                                      input.conceptSetsTypeSecond != 'Orphan concepts'",
+                                                      input.conceptSetsTypeRight != 'Resolved (included)' &
+                                                      input.conceptSetsTypeRight != 'Mapped (source)' &
+                                                      input.conceptSetsTypeRight != 'Json' &
+                                                      input.conceptSetsTypeRight != 'Orphan concepts'",
                                         tags$table(width = "100%",
                                                    tags$tr(
                                                      tags$td(align = "right",
@@ -988,7 +988,7 @@ shiny::shinyServer(function(input, output, session) {
                                         DT::dataTableOutput(outputId = "conceptSetsExpressionTableRight")
                                       ),
                                       shiny::conditionalPanel(
-                                        condition = "input.conceptSetsTypeSecond == 'Resolved (included)'",
+                                        condition = "input.conceptSetsTypeRight == 'Resolved (included)'",
                                         tags$table(width = "100%",
                                                    tags$tr(
                                                      tags$td(align = "right",
@@ -1004,7 +1004,7 @@ shiny::shinyServer(function(input, output, session) {
                                         DT::dataTableOutput(outputId = "resolvedConceptsTableRight")
                                       ),
                                       shiny::conditionalPanel(
-                                        condition = "input.conceptSetsTypeSecond == 'Mapped (source)'",
+                                        condition = "input.conceptSetsTypeRight == 'Mapped (source)'",
                                         tags$table(width = "100%",
                                                    tags$tr(
                                                      tags$td(align = "right",
@@ -1020,7 +1020,7 @@ shiny::shinyServer(function(input, output, session) {
                                         DT::dataTableOutput(outputId = "mappedConceptsTableRight")
                                       ),
                                       shiny::conditionalPanel(
-                                        condition = "input.conceptSetsTypeSecond == 'Orphan concepts'",
+                                        condition = "input.conceptSetsTypeRight == 'Orphan concepts'",
                                         tags$table(width = "100%",
                                                    tags$tr(
                                                      tags$td(align = "right",
@@ -1036,7 +1036,7 @@ shiny::shinyServer(function(input, output, session) {
                                         DT::dataTableOutput(outputId = "cohortDefinitionOrphanConceptTableRight")
                                       ),
                                       shiny::conditionalPanel(
-                                        condition = "input.conceptSetsTypeSecond == 'Json'",
+                                        condition = "input.conceptSetsTypeRight == 'Json'",
                                         copyToClipboardButton(toCopyId = "conceptsetExpressionJsonRight",
                                                               style = "margin-top: 5px; margin-bottom: 5px;"),
                                         shiny::verbatimTextOutput(outputId = "conceptsetExpressionJsonRight"),
@@ -1397,7 +1397,7 @@ shiny::shinyServer(function(input, output, session) {
       if (!is.null(resolvedOrMappedConceptSetForAllDatabase) &&
           length(resolvedOrMappedConceptSetForAllDatabase) == 2) {
         source <-
-          (input$conceptSetsType == "Mapped (source)")
+          (input$conceptSetsTypeLeft == "Mapped (source)")
         if (source) {
           data <- resolvedOrMappedConceptSetForAllDatabase$mapped 
           if (!is.null(data) && nrow(data) > 0) {
@@ -1446,7 +1446,7 @@ shiny::shinyServer(function(input, output, session) {
       if (!is.null(resolvedOrMappedConceptSetForAllVocabulary) &&
           length(resolvedOrMappedConceptSetForAllVocabulary) == 2) {
         source <-
-          (input$conceptSetsType == "Mapped (source)")
+          (input$conceptSetsTypeLeft == "Mapped (source)")
         if (source) {
           data <- resolvedOrMappedConceptSetForAllVocabulary$mapped %>%
             dplyr::filter(.data$conceptSetId == getConceptSetExpressionForSelectedConceptSetLeft()$id) %>%
@@ -2412,7 +2412,7 @@ shiny::shinyServer(function(input, output, session) {
       if (!is.null(resolvedOrMappedConceptSetForAllDatabase) &&
           length(resolvedOrMappedConceptSetForAllDatabase) == 2) {
         source <-
-          (input$conceptSetsTypeSecond == "Mapped (source)")
+          (input$conceptSetsTypeRight == "Mapped (source)")
         if (source) {
           data <- resolvedOrMappedConceptSetForAllDatabase$mapped 
           if (!is.null(data) && nrow(data) > 0) {
@@ -2461,7 +2461,7 @@ shiny::shinyServer(function(input, output, session) {
       if (!is.null(resolvedOrMappedConceptSetForAllVocabulary) &&
           length(resolvedOrMappedConceptSetForAllVocabulary) == 2) {
         source <-
-          (input$conceptSetsTypeSecond == "Mapped (source)")
+          (input$conceptSetsTypeRight == "Mapped (source)")
         if (source) {
           data <- resolvedOrMappedConceptSetForAllVocabulary$mapped %>%
             dplyr::filter(.data$conceptSetId == getConceptSetExpressionForSelectedConceptSetRight()$id) %>%
@@ -2788,20 +2788,20 @@ shiny::shinyServer(function(input, output, session) {
   
   #Radio button synchronization
   shiny::observeEvent(eventExpr = {
-    list(input$conceptSetsType, input$cohortDefinitionOneTabSetPanel)
+    list(input$conceptSetsTypeLeft, input$cohortDefinitionOneTabSetPanel)
   }, handlerExpr = {
-    if (noOfRowSelectedInCohortDefinitionTable() == 6) {
-      if (!is.null(input$conceptSetsType)) {
-        if (input$conceptSetsType == "Concept Set Expression") {
-          updateRadioButtons(session = session, inputId = "conceptSetsTypeSecond", selected = "Concept Set Expression")
-        } else if (input$conceptSetsType == "Resolved (included)") {
-          updateRadioButtons(session = session, inputId = "conceptSetsTypeSecond", selected = "Resolved (included)")
-        } else if (input$conceptSetsType == "Mapped (source)") {
-          updateRadioButtons(session = session, inputId = "conceptSetsTypeSecond", selected = "Mapped (source)")
-        } else if (input$conceptSetsType == "Orphan concepts") {
-          updateRadioButtons(session = session, inputId = "conceptSetsTypeSecond", selected = "Orphan concepts")
-        } else if (input$conceptSetsType == "Json") {
-          updateRadioButtons(session = session, inputId = "conceptSetsTypeSecond", selected = "Json")
+    if (widthOfLeftPanelBasedOnNoOfRowSelected() == 6) {
+      if (!is.null(input$conceptSetsTypeLeft)) {
+        if (input$conceptSetsTypeLeft == "Concept Set Expression") {
+          updateRadioButtons(session = session, inputId = "conceptSetsTypeRight", selected = "Concept Set Expression")
+        } else if (input$conceptSetsTypeLeft == "Resolved (included)") {
+          updateRadioButtons(session = session, inputId = "conceptSetsTypeRight", selected = "Resolved (included)")
+        } else if (input$conceptSetsTypeLeft == "Mapped (source)") {
+          updateRadioButtons(session = session, inputId = "conceptSetsTypeRight", selected = "Mapped (source)")
+        } else if (input$conceptSetsTypeLeft == "Orphan concepts") {
+          updateRadioButtons(session = session, inputId = "conceptSetsTypeRight", selected = "Orphan concepts")
+        } else if (input$conceptSetsTypeLeft == "Json") {
+          updateRadioButtons(session = session, inputId = "conceptSetsTypeRight", selected = "Json")
         }
       }
       
@@ -2824,20 +2824,20 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   shiny::observeEvent(eventExpr = {
-    list(input$conceptSetsTypeSecond, input$cohortDefinitionTwoTabSetPanel)
+    list(input$conceptSetsTypeRight, input$cohortDefinitionTwoTabSetPanel)
   }, handlerExpr = {
-    if (noOfRowSelectedInCohortDefinitionTable() == 6) {
-      if (!is.null(input$conceptSetsTypeSecond)) {
-        if (input$conceptSetsTypeSecond == "Concept Set Expression") {
-          updateRadioButtons(session = session, inputId = "conceptSetsType", selected = "Concept Set Expression")
-        } else if (input$conceptSetsTypeSecond == "Resolved (included)") {
-          updateRadioButtons(session = session, inputId = "conceptSetsType", selected = "Resolved (included)")
-        } else if (input$conceptSetsTypeSecond == "Mapped (source)") {
-          updateRadioButtons(session = session, inputId = "conceptSetsType", selected = "Mapped (source)")
-        } else if (input$conceptSetsTypeSecond == "Orphan concepts") {
-          updateRadioButtons(session = session, inputId = "conceptSetsType", selected = "Orphan concepts")
-        } else if (input$conceptSetsTypeSecond == "Json") {
-          updateRadioButtons(session = session, inputId = "conceptSetsType", selected = "Json")
+    if (widthOfLeftPanelBasedOnNoOfRowSelected() == 6) {
+      if (!is.null(input$conceptSetsTypeRight)) {
+        if (input$conceptSetsTypeRight == "Concept Set Expression") {
+          updateRadioButtons(session = session, inputId = "conceptSetsTypeLeft", selected = "Concept Set Expression")
+        } else if (input$conceptSetsTypeRight == "Resolved (included)") {
+          updateRadioButtons(session = session, inputId = "conceptSetsTypeLeft", selected = "Resolved (included)")
+        } else if (input$conceptSetsTypeRight == "Mapped (source)") {
+          updateRadioButtons(session = session, inputId = "conceptSetsTypeLeft", selected = "Mapped (source)")
+        } else if (input$conceptSetsTypeRight == "Orphan concepts") {
+          updateRadioButtons(session = session, inputId = "conceptSetsTypeLeft", selected = "Orphan concepts")
+        } else if (input$conceptSetsTypeRight == "Json") {
+          updateRadioButtons(session = session, inputId = "conceptSetsTypeLeft", selected = "Json")
         }
       }
       
@@ -2860,17 +2860,19 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   #Concept set comparison -----
-  conceptsetComparisonData <- shiny::reactive(x = {
+  ##reactive: getJoinedResolvedOrMappedConceptsList----
+  getJoinedResolvedOrMappedConceptsList <- shiny::reactive(x = {
     leftData <- getResolvedOrMappedConceptsLeft()
     rightData <- getResolvedOrMappedConceptRight()
     data <- list(leftData = leftData, rightData = rightData)
     return(data)
   })
   
+  ##output: resolvedConceptsPresentInLeft----
   output$resolvedConceptsPresentInLeft <- DT::renderDT({
     validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
-    result <- dplyr::setdiff(conceptsetComparisonData()$leftData, 
-                             conceptsetComparisonData()$rightData)
+    result <- dplyr::setdiff(getJoinedResolvedOrMappedConceptsList()$leftData, 
+                             getJoinedResolvedOrMappedConceptsList()$rightData)
     
     if (all(is.null(result), nrow(result) == 0)) {
       return(NULL)
@@ -2907,10 +2909,12 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  
+  ##output: resolvedConceptsPresentInRight----
   output$resolvedConceptsPresentInRight <- DT::renderDT({
     validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
-    result <- dplyr::setdiff(conceptsetComparisonData()$rightData, 
-                             conceptsetComparisonData()$leftData)
+    result <- dplyr::setdiff(getJoinedResolvedOrMappedConceptsList()$rightData, 
+                             getJoinedResolvedOrMappedConceptsList()$leftData)
     
     if (nrow(result) == 0) {
       return(NULL)
@@ -2947,10 +2951,11 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  ##output: resolvedConceptsPresentInBoth----
   output$resolvedConceptsPresentInBoth <- DT::renderDT({
     validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
-    result <- dplyr::intersect(conceptsetComparisonData()$leftData, 
-                               conceptsetComparisonData()$rightData)
+    result <- dplyr::intersect(getJoinedResolvedOrMappedConceptsList()$leftData, 
+                               getJoinedResolvedOrMappedConceptsList()$rightData)
     
     if (nrow(result) == 0) {
       return(NULL)
@@ -2987,10 +2992,11 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  ##output: resolvedConceptsPresentInEither----
   output$resolvedConceptsPresentInEither <- DT::renderDT({
     validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
-    result <- dplyr::union(conceptsetComparisonData()$leftData,
-                           conceptsetComparisonData()$rightData)
+    result <- dplyr::union(getJoinedResolvedOrMappedConceptsList()$leftData,
+                           getJoinedResolvedOrMappedConceptsList()$rightData)
     
     if (nrow(result) == 0) {
       return(NULL)
@@ -3027,10 +3033,11 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  ##output: mappedConceptsPresentInLeft----
   output$mappedConceptsPresentInLeft <- DT::renderDT({
     validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
-    result <- dplyr::setdiff(conceptsetComparisonData()$leftData, 
-                             conceptsetComparisonData()$rightData)
+    result <- dplyr::setdiff(getJoinedResolvedOrMappedConceptsList()$leftData, 
+                             getJoinedResolvedOrMappedConceptsList()$rightData)
     
     if (any(is.null(result), nrow(result) == 0)) {
       return(NULL)
@@ -3067,10 +3074,11 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  ##output: mappedConceptsPresentInRight----
   output$mappedConceptsPresentInRight <- DT::renderDT({
     validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
-    result <- dplyr::setdiff(conceptsetComparisonData()$rightData, 
-                             conceptsetComparisonData()$leftData)
+    result <- dplyr::setdiff(getJoinedResolvedOrMappedConceptsList()$rightData, 
+                             getJoinedResolvedOrMappedConceptsList()$leftData)
     
     if (nrow(result) == 0) {
       return(NULL)
@@ -3107,10 +3115,11 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  ##output: mappedConceptsPresentInBoth----
   output$mappedConceptsPresentInBoth <- DT::renderDT({
     validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
-    result <- dplyr::intersect(conceptsetComparisonData()$leftData, 
-                               conceptsetComparisonData()$rightData)
+    result <- dplyr::intersect(getJoinedResolvedOrMappedConceptsList()$leftData, 
+                               getJoinedResolvedOrMappedConceptsList()$rightData)
     
     if (nrow(result) == 0) {
       return(NULL)
@@ -3147,10 +3156,11 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  ##output: mappedConceptsPresentInEither----
   output$mappedConceptsPresentInEither <- DT::renderDT({
     validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
-    result <- dplyr::union(conceptsetComparisonData()$leftData,
-                           conceptsetComparisonData()$rightData)
+    result <- dplyr::union(getJoinedResolvedOrMappedConceptsList()$leftData,
+                           getJoinedResolvedOrMappedConceptsList()$rightData)
     
     if (nrow(result) == 0) {
       return(NULL)
@@ -3187,6 +3197,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  ##output: orphanConceptsPresentInLeft----
   output$orphanConceptsPresentInLeft <- DT::renderDT({
     validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, 
                   "Please select same database for comparison"))
@@ -3249,6 +3260,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  ##output: orphanConceptsPresentInRight----
   output$orphanConceptsPresentInRight <- DT::renderDT({
     validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, 
                   "Please select same database for comparison"))
@@ -3311,6 +3323,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  ##output: orphanConceptsPresentInBoth----
   output$orphanConceptsPresentInBoth <- DT::renderDT({
     validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
     result <- dplyr::intersect(getPivotOrphanConceptResultLeft()$table, 
@@ -3372,6 +3385,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  ##output: orphanConceptsPresentInEither----
   output$orphanConceptsPresentInEither <- DT::renderDT({
     validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
     result <- dplyr::union(getPivotOrphanConceptResultLeft()$table, 
@@ -3433,8 +3447,9 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  # Cohort Counts -----
-  getCohortCountResultReactive <- shiny::reactive(x = {
+  # Cohort Counts Tab -----
+  ##reactive: getSortedCohortCountResult----
+  getSortedCohortCountResult <- shiny::reactive(x = {
     validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
     validate(need(length( getCohortIdsFromDropdown()) > 0, "No cohorts chosen"))
     if (all(is(dataSource, "environment"), !exists('cohortCount'))) {
@@ -3453,20 +3468,22 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
+  ##output: saveCohortCountsTable----
   output$saveCohortCountsTable <-  downloadHandler(
     filename = function() {
       getCsvFileNameWithDateTime(string = "cohortCount")
     },
     content = function(file) {
-      downloadCsv(x = getCohortCountResultReactive(), 
+      downloadCsv(x = getSortedCohortCountResult(), 
                   fileName = file)
     }
   )
   
+  ##output: cohortCountsTable----
   output$cohortCountsTable <- DT::renderDataTable(expr = {
     validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
     validate(need(length( getCohortIdsFromDropdown()) > 0, "No cohorts chosen"))
-    data <- getCohortCountResultReactive() %>%
+    data <- getSortedCohortCountResult() %>%
       dplyr::select(
         .data$databaseId,
         .data$shortName,
@@ -3642,12 +3659,12 @@ shiny::shinyServer(function(input, output, session) {
     return(dataTable)
   }, server = TRUE)
   
-  output$cohortCountTableContainsData <- shiny::reactive({
-    return(nrow(getCohortCountResultReactive()) > 0)
+  output$doesCohortCountTableHasData <- shiny::reactive({
+    return(nrow(getSortedCohortCountResult()) > 0)
   })
   
   shiny::outputOptions(output,
-                       "cohortCountTableContainsData",
+                       "doesCohortCountTableHasData",
                        suspendWhenHidden = FALSE)
   
   getCohortIdOnCohortCountRowSelect <- reactive({
@@ -3655,7 +3672,7 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(idx)) {
       return(NULL)
     } else {
-      subset <- getCohortCountResultReactive() %>%  
+      subset <- getSortedCohortCountResult() %>%  
         dplyr::distinct(.data$cohortId)
       
       if (!is.null(subset)) {

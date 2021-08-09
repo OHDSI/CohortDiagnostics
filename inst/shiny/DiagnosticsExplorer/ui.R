@@ -405,7 +405,7 @@ bodyTabItems <- shinydashboard::tabItems(
     tabName = "cohortCounts",
     createShinyBoxFromOutputId("cohortCountsSelectedCohorts"),
     shiny::conditionalPanel(
-      condition = "output.cohortCountTableContainsData == true",
+      condition = "output.doesCohortCountTableHasData == true",
       shiny::radioButtons(
         inputId = "cohortCountsTableColumnFilter",
         label = "Display",
