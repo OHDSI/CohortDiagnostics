@@ -5674,7 +5674,7 @@ shiny::shinyServer(function(input, output, session) {
       on.exit(progress$close())
       progress$set(message = paste0("Rendering pretty table for cohort characterization."), value = 0)
       
-      countData <- getResultsFromCohortCount(
+      countData <- getResultsCohortCount(
         dataSource = dataSource,
         databaseIds = getDatabaseIdsFromDropdown(),
         cohortIds = getCohortIdFromDrapdown()
