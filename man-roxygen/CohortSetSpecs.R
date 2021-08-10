@@ -13,7 +13,7 @@
 #' Currently two ways of executing this function are supported, either 
 #' (1) [Package Mode] embedded in a study package, e.g. by hydrating a the \code{SkeletonCohortDiagnosticsStudy} package using \code{Hydra::hydrate} or 
 #'      inserting cohort specifications using \code{ROhdsiWebApi::insertCohortDefinitionSetInPackage}, or 
-#' (2) [WebApi Mode] By using a WebApi interface to retrieve the cohort definitions. Note: WebAPi mode takes precedence over package mode.
+#' (2) [WebApi Mode] By using a WebApi interface to retrieve the cohort definitions. Note: WebApi mode takes precedence over package mode.
 #' 
 #' Structure of \code{cohortSetReference} or \code{cohortToCreateFile}
 #' \describe{

@@ -27,12 +27,12 @@ knitr::opts_chunk$set(
 
 There are currently two approaches to run Cohort Diagnostics.
 - Embed in an OHDSI study package, where all the cohort definitions are stored as part of that study package, or 
-- WebAPi mode - where cohort diagnostics dynamically pulls the cohort definition from a webapi instance. WebAPI is the backend of the OHDSI ATLAS application, allowing programmatic access to the cohort definitions created in ATLAS. 
+- WebApi mode - where cohort diagnostics dynamically pulls the cohort definition from a webapi instance. WebApI is the backend of the OHDSI ATLAS application, allowing programmatic access to the cohort definitions created in ATLAS. 
 
-This vignette describes the former approach (package): how to run CohortDiagnostics using the WebAPI.
+This vignette describes the former approach (package): how to run CohortDiagnostics using the WebApI.
 
 
-There are currently two approaches one can take to step 1: The cohort diagnostics can be embedded in an OHDSI study package, where all the cohort definitions are stored as part of that study package, or the cohort diagnostics can be used as a stand-alone solution, relying on a WebAPI instance to provide the cohort definitions. WebAPI is the backend of the OHDSI ATLAS application, allowing programmatic access to the cohort definitions created in ATLAS. This vignette describes the latter approach: how to run CohortDiagnostics using the WebAPI.
+There are currently two approaches one can take to step 1: The cohort diagnostics can be embedded in an OHDSI study package, where all the cohort definitions are stored as part of that study package, or the cohort diagnostics can be used as a stand-alone solution, relying on a WebApI instance to provide the cohort definitions. WebApI is the backend of the OHDSI ATLAS application, allowing programmatic access to the cohort definitions created in ATLAS. This vignette describes the latter approach: how to run CohortDiagnostics using the WebApI.
 
 This vignette describes how to create a self contained shareable study package that can execute cohort diagnostics on a given set of cohort definitions. This is the recommended mode to run CohortDiagnostics for a study.
 
