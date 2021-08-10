@@ -222,7 +222,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   # Orphan concepts ----
   ParallelLogger::logInfo(" - Searching for concepts that may have been orphaned.")
   startOrphanCodes <- Sys.time()
-  conceptSetDiagnosticsResults$orphanConcepts <- getOrphanConcepts(
+  conceptSetDiagnosticsResults$orphanConcept <- getOrphanConcepts(
     connection = connection,
     cdmDatabaseSchema = cdmDatabaseSchema,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
@@ -231,10 +231,10 @@ runConceptSetDiagnostics <- function(connection = NULL,
     conceptIdUniverse = '#concept_tracking'
   )
   if (!keepCustomConceptId) {
-    conceptSetDiagnosticsResults$orphanConcepts <- conceptSetDiagnosticsResults$orphanConcepts %>%
+    conceptSetDiagnosticsResults$orphanConcept <- conceptSetDiagnosticsResults$orphanConcept %>%
       dplyr::filter(.data$conceptId < 200000000)
   }
-  conceptSetDiagnosticsResults$orphanConcepts <- conceptSetDiagnosticsResults$orphanConcepts %>%
+  conceptSetDiagnosticsResults$orphanConcept <- conceptSetDiagnosticsResults$orphanConcept %>%
     dplyr::rename(uniqueConceptSetId = .data$codesetId) %>%
     dplyr::inner_join(
       conceptSetDiagnosticsResults$conceptSets %>%
