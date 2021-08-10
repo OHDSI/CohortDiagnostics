@@ -244,15 +244,32 @@ writeToAllOutputToCsv <- function(object,
       ParallelLogger::logTrace(paste0(" - Writing data to file: ", tablesOfInterest[[i]], ".csv"))
       columns <- resultsDataModel %>%
         dplyr::filter(.data$tableName %in% tablesOfInterest[[i]]) %>%
-        dplyr::pull(.data$fieldName)
+        dplyr::pull(.data$fieldName) %>% 
+        snakeCaseToCamelCase()
+      columnsDate <- resultsDataModel %>%
+        dplyr::filter(.data$tableName %in% tablesOfInterest[[i]]) %>% 
+        dplyr::filter(.data$type == 'Date') %>% 
+        dplyr::pull(.data$fieldName) %>% 
+        snakeCaseToCamelCase()
       if (!tablesOfInterest[[i]] %in% vocabularyTables) {
         object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] <-
           object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] %>%
           dplyr::mutate(databaseId = !!databaseId)
       }
+      
+      if (length(columnsDate) > 0) {
+        # force convert columns expected to be dates to text. 
+        # this prevents converting dates to integer or other formats prior to writing to csv.
+        object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] <-
+          object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] %>%
+          dplyr::mutate(dplyr::across(.cols = columnsDate),
+                        as.character())
+      }
+      # select columns as required in data model
       object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] <-
         object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] %>%
-        dplyr::select(snakeCaseToCamelCase(columns))
+        dplyr::select(columns)
+      # enforce minimum cell count value
       object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] <-
         object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] %>%
         enforceMinCellValueInDataframe(columnNames = columnsToApplyMinCellValue,
