@@ -31,7 +31,7 @@ sidebarMenu <-
         item = shinydashboard::menuItem(text = "Time Series", tabName = "timeSeries"),
         infoId = "timeSeriesInfo"
       ),
-    if (exists("covariateValue"))
+    if (exists("timeDistribution"))
       addInfo(
         item = shinydashboard::menuItem(text = "Time Distributions", tabName = "timeDistribution"),
         infoId = "timeDistributionInfo"
@@ -76,7 +76,7 @@ sidebarMenu <-
         shinydashboard::menuItem(text = "Compare Temporal Char.", tabName = "compareTemporalCharacterization"),
         infoId = "compareTemporalCharacterizationInfo"
       ),
-    shinydashboard::menuItem(text = "Data Source Information", tabName = "databaseInformation"),
+    shinydashboard::menuItem(text = "Meta data", tabName = "databaseInformation"),
     # Conditional dropdown boxes in the side bar ------------------------------------------------------
     shiny::conditionalPanel(
       condition = "input.tabs!='incidenceRate' &
@@ -297,15 +297,15 @@ bodyTabItems <- shinydashboard::tabItems(
                           )
                         ))),    
       DT::dataTableOutput(outputId = "cohortDefinitionTable"),
-      shiny::uiOutput(outputId = "dynamicUIGenerationCohortDefinitionConceptsetsOne"),
-      shiny::uiOutput(outputId = "dynamicUIGenerationCohortDefinitionConceptsetsTwo"),
+      shiny::uiOutput(outputId = "dynamicUIGenerationForCohortSelectedLeft"),
+      shiny::uiOutput(outputId = "dynamicUIGenerationForCohortSelectedRight"),
       tags$br(),
       shiny::column(width = 12,
                     shiny::conditionalPanel(
-                      condition = "output.cohortDefinitionCountOfSelectedRows == 2 &
+                      condition = "output.cohortDefinitionSelectedRowCount == 2 &
                      input.conceptSetsType == 'Resolved (included)' &
                      input.conceptSetsTypeSecond == 'Resolved (included)' & 
-                     output.conceptSetExpressionRowSelected == true &
+                     output.conceptSetExpressionIsRowSelectedLeft == true &
                      output.conceptSetExpressionSecondRowSelected == true &
                      input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
                      input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
@@ -335,10 +335,10 @@ bodyTabItems <- shinydashboard::tabItems(
                     )),
       shiny::column(width = 12,
                     shiny::conditionalPanel(
-                      condition = "output.cohortDefinitionCountOfSelectedRows == 2 &
+                      condition = "output.cohortDefinitionSelectedRowCount == 2 &
                                    input.conceptSetsType == 'Mapped (source)' &
                                    input.conceptSetsTypeSecond == 'Mapped (source)' & 
-                                   output.conceptSetExpressionRowSelected == true &
+                                   output.conceptSetExpressionIsRowSelectedLeft == true &
                                    output.conceptSetExpressionSecondRowSelected == true &
                                    input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
                                    input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
@@ -368,10 +368,10 @@ bodyTabItems <- shinydashboard::tabItems(
                     )),
       shiny::column(width = 12,
                     shiny::conditionalPanel(
-                      condition = "output.cohortDefinitionCountOfSelectedRows == 2 &
+                      condition = "output.cohortDefinitionSelectedRowCount == 2 &
                                    input.conceptSetsType == 'Orphan concepts' &
                                    input.conceptSetsTypeSecond == 'Orphan concepts'& 
-                                   output.conceptSetExpressionRowSelected == true &
+                                   output.conceptSetExpressionIsRowSelectedLeft == true &
                                    output.conceptSetExpressionSecondRowSelected == true &
                                    input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
                                    input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
@@ -405,7 +405,7 @@ bodyTabItems <- shinydashboard::tabItems(
     tabName = "cohortCounts",
     createShinyBoxFromOutputId("cohortCountsSelectedCohorts"),
     shiny::conditionalPanel(
-      condition = "output.cohortCountTableContainsData == true",
+      condition = "output.doesCohortCountTableHasData == true",
       shiny::radioButtons(
         inputId = "cohortCountsTableColumnFilter",
         label = "Display",
@@ -1502,7 +1502,34 @@ bodyTabItems <- shinydashboard::tabItems(
     )
   ),
   shinydashboard::tabItem(tabName = "databaseInformation",
-                          DT::dataTableOutput("databaseInformationTable"))
+                          shiny::tabsetPanel(
+                            id = "metadataInformation",
+                            shiny::tabPanel(
+                              title = "Data source",
+                              tags$br(),
+                              DT::dataTableOutput("databaseInformationTable")
+                            ),
+                            shiny::tabPanel(
+                              title = "Environment snapshot",
+                              tags$br(),
+                              shiny::radioButtons(
+                                inputId = "environmentSnapshot",
+                                label = "Filter to:",
+                                choices = c("Arguments at diagnostics initiation", "Package dependency snapShot", "Rest of fields in metadata"),
+                                selected = "Package dependency snapShot",
+                                inline = TRUE
+                              ),
+                              shiny::conditionalPanel(
+                                condition = "input.environmentSnapshot == 'Package dependency snapShot'",
+                                DT::dataTableOutput("packageDependencySnapShotTable")
+                              ),
+                              shiny::conditionalPanel(
+                                condition = "input.environmentSnapshot == 'Arguments at diagnostics initiation'",
+                                DT::dataTableOutput("argumentsAtDiagnosticsInitiationTable")
+                              )
+                            )
+                          )
+                     )
 )
 
 

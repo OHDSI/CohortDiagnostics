@@ -40,7 +40,7 @@ checkFixColumnNames <-
     
     if (length(optionalNames) > 0) {
       expectedNames <- expectedNamesDf %>%
-        dplyr::anti_join(dplyr::filter(optionalNames, !.data$fieldName %in% observeredNames),
+        dplyr::anti_join(dplyr::filter(optionalNames,!.data$fieldName %in% observeredNames),
                          by = "fieldName") %>%
         dplyr::arrange(.data$fieldName) %>%
         dplyr::pull() %>%
@@ -155,7 +155,7 @@ checkAndFixDuplicateRows <-
           sum(duplicatedRows)
         )
       )
-      return(table[!duplicatedRows,])
+      return(table[!duplicatedRows, ])
     } else {
       return(table)
     }
@@ -271,7 +271,8 @@ uploadResults <- function(connectionDetails = NULL,
   ParallelLogger::logInfo(" - Unzipping ", zipFileName)
   zip::unzip(zipFileName, exdir = unzipFolder)
   
-  specifications <- getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')
+  specifications <-
+    getResultsDataModelSpecifications(packageName = 'CohortDiagnostics')
   
   if (purgeSiteDataBeforeUploading) {
     database <-
@@ -326,10 +327,14 @@ uploadResults <- function(connectionDetails = NULL,
       }
       
       uploadChunk <- function(chunk, pos) {
-        ParallelLogger::logTrace(paste0("  - Preparing to upload rows ",
-                                       scales::comma(pos),
-                                       " through ",
-                                       scales::comma(pos + nrow(chunk) - 1)))
+        ParallelLogger::logTrace(
+          paste0(
+            "  - Preparing to upload rows ",
+            scales::comma(pos),
+            " through ",
+            scales::comma(pos + nrow(chunk) - 1)
+          )
+        )
         
         chunk <- checkFixColumnNames(
           table = chunk,
@@ -457,7 +462,7 @@ deleteFromServer <-
         tableName,
         "\nWHERE ",
         paste(paste0(
-          colnames(keyValues), " = '", keyValues[i,], "'"
+          colnames(keyValues), " = '", keyValues[i, ], "'"
         ), collapse = " AND "),
         ";"
       )

@@ -8,10 +8,10 @@ source("R/Tables.R")
 source("R/Plots.R")
 source("R/Results.R")
 
-#Load environment variables----
+connectionPool <- NULL
+#Load default environment variables----
 defaultLocalDataFolder <- "data"
 defaultLocalDataFile <- "PreMerged.RData"
-connectionPool <- NULL
 defaultServer <- Sys.getenv("shinydbServer")
 defaultDatabase <- Sys.getenv("shinydbDatabase")
 defaultPort <- 5432
@@ -22,18 +22,23 @@ defaultVocabularySchema <- defaultResultsSchema
 alternateVocabularySchema <- c('vocabulary')
 
 #Mode determination ----
-defaultDatabaseMode <- TRUE # Use file system if FALSE
+defaultDatabaseMode <- FALSE # Use file system if FALSE
 
 #Tab control variables ----
+showIncidenceRate <- TRUE
 showTimeSeries <- TRUE
-showTemporalCharacterization <- TRUE
-showCharacterization <- TRUE
+showTimeDistribution <- TRUE
+showIndexEventBreakdown <- TRUE
+showVisitContext <- TRUE
+
+#Since Characterization and CompareCharacterization uses the same table
+showCharacterizationAndCompareCharacterization <- TRUE
+
+#Since TemporalCharacterization and CompareTemporalCharacterization uses the same table
+showTemporalCharacterizationAndCompareTemporalCharacterization <- TRUE
+
 filterTemporalChoicesToPrimaryOptions <- FALSE
-#!!!!!!!!!!!!!!!!!!
-# showIndexEventBreakdown <- TRUE
-# showVisitContext <- TRUE
-# showMetadata <- TRUE
-# showDataSource <- TRUE
+
 
 
 # Foot note ----
@@ -141,7 +146,6 @@ if (databaseMode) {
   resultsTablesOnServer <-
     tolower(DatabaseConnector::dbListTables(connectionPool, 
                                             schema = resultsDatabaseSchema))
-  
   ####load tables into R memory ----
   tablesToLoadRequired <- c("cohort", "cohort_count", "database")
   tablesToLoad <-
@@ -156,14 +160,16 @@ if (databaseMode) {
       "temporal_covariate_ref",
       "vocabulary"
     )
-  lapply(tablesToLoadRequired,
-         loadResultsTable,
-         resultsTablesOnServer,
-         TRUE)
-  lapply(tablesToLoad,
-         loadResultsTable,
-         resultsTablesOnServer,
-         FALSE)
+  for (i in (1:length(tablesToLoadRequired))) {
+    loadResultsTable(tableName = tablesToLoadRequired[[i]], 
+                     resultsTablesOnServer = resultsTablesOnServer, 
+                     required = TRUE)
+  }
+  for (i in (1:length(tablesToLoad))) {
+    loadResultsTable(tableName = tablesToLoad[[i]], 
+                     resultsTablesOnServer = resultsTablesOnServer, 
+                     required = FALSE)
+  }
   
   # compare expected to observed tables
   for (table in c(dataModelSpecifications$tableName %>% unique())) {
@@ -191,8 +197,7 @@ if (databaseMode) {
     createFileDataSource(localDataPath, envir = .GlobalEnv)
 }
 
-#!!!!!!!!!!!!!!!!!!
-# modify objects that are always in R memory (enhancements)
+#Adding enhancements to the objects, which are already loaded in R memory----
 if (exists("database")) {
   if (nrow(database) > 0 &&
       "vocabularyVersion" %in% colnames(database)) {
@@ -218,16 +223,12 @@ if (exists("cohort")) {
     ))
 }
 
-# disable tabs based on user preference ----
-if (!showTimeSeries) {
-  if (exists("timeSeries")) {
-    rm(timeSeries)
-  }
-}
-
+#enchancement and removing the object both happens together based on the control variable
 if (exists("temporalTimeRef")) {
-  if (all(nrow(temporalTimeRef) > 0,
-          showTemporalCharacterization)) {
+  if (all(
+    nrow(temporalTimeRef) > 0,
+    showTemporalCharacterizationAndCompareTemporalCharacterization
+  )) {
     temporalCovariateChoices <- temporalTimeRef %>%
       dplyr::mutate(choices = paste0("Start ", .data$startDay, " to end ", .data$endDay)) %>%
       dplyr::select(.data$timeId, .data$choices) %>%
@@ -250,9 +251,12 @@ if (exists("temporalTimeRef")) {
   }
 }
 
+#enchancement and removing the object both happens together based on the control variable
 if (exists("covariateRef")) {
-  if (all(nrow(covariateRef) > 0,
-          showCharacterization)) {
+  if (all(
+    nrow(covariateRef) > 0,
+    showCharacterizationAndCompareCharacterization
+  )) {
     specifications <- readr::read_csv(
       file = "Table1Specs.csv",
       col_types = readr::cols(),
@@ -265,6 +269,46 @@ if (exists("covariateRef")) {
     rm("covariateValueDist")
   }
 }
+
+# disable tabs based on user preference or control variable ----
+if (!showIncidenceRate) {
+  if (exists("showIncidenceRate")) {
+    rm("showIncidenceRate")
+  }
+}
+
+if (!showTimeSeries) {
+  if (exists("timeSeries")) {
+    rm("timeSeries")
+  }
+}
+
+if (!showTimeDistribution) {
+  if (exists("timeDistribution")) {
+    rm("timeDistribution")
+  }
+}
+
+if (!showIndexEventBreakdown) {
+  if (exists("indexEventBreakdown")) {
+    rm("indexEventBreakdown")
+  }
+}
+
+if (!showVisitContext) {
+  if (exists("visitContext")) {
+    rm("visitContext")
+  }
+}
+
+
+
+# if (!showOverlap) {
+#   if (exists("visitContext")) {
+#     rm("visitContext")
+#   }
+# }
+
 
 
 #Extras -----

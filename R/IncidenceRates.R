@@ -101,7 +101,7 @@ runIncidenceRateDiagnostics <- function(connectionDetails = NULL,
     createTable = TRUE,
     tempTable = TRUE,
     tempEmulationSchema = tempEmulationSchema,
-    camelCaseToSnakeCase = TRUE, 
+    camelCaseToSnakeCase = TRUE,
     progressBar = FALSE
   )
   
@@ -119,7 +119,10 @@ runIncidenceRateDiagnostics <- function(connectionDetails = NULL,
       washout_period = washoutPeriod,
       cohort_id = cohortId
     )
-  DatabaseConnector::executeSql(connection, sql, progressBar = FALSE, reportOverallTime = FALSE)
+  DatabaseConnector::executeSql(connection,
+                                sql,
+                                progressBar = FALSE,
+                                reportOverallTime = FALSE)
   
   sql <- "SELECT * FROM #rates_summary;"
   ratesSummary <-
@@ -184,8 +187,9 @@ runIncidenceRateDiagnostics <- function(connectionDetails = NULL,
     irYearGender,
     irYearAgeGender
   )
-  result <- result %>% 
-    dplyr::filter(.data$cohortCount > 0 | .data$personYears > 0) %>% 
+  result <- result %>%
+    dplyr::filter(.data$cohortCount > 0 |
+                    .data$personYears > 0) %>%
     dplyr::mutate(cohortId = cohortId)
   result$incidenceRate <-
     1000 * result$cohortCount / result$personYears

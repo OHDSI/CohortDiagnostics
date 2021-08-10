@@ -103,7 +103,7 @@
       <h1 data-toc-skip>Runing Cohort Diagnostics in an OHDSI Package mode</h1>
                         <h4 class="author">Gowtham A. Rao</h4>
             
-            <h4 class="date">2021-07-29</h4>
+            <h4 class="date">2021-08-10</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/OHDSI/CohortDiagnostics/blob/master/vignettes/CohortDiagnosticsInPackageMode.Rmd"><code>vignettes/CohortDiagnosticsInPackageMode.Rmd</code></a></small>
       <div class="hidden name"><code>CohortDiagnosticsInPackageMode.Rmd</code></div>
@@ -115,9 +115,9 @@
 <div id="introduction" class="section level1">
 <h1 class="hasAnchor">
 <a href="#introduction" class="anchor"></a>Introduction</h1>
-<p>There are currently two approaches to run Cohort Diagnostics. - Embed in an OHDSI study package, where all the cohort definitions are stored as part of that study package, or - WebAPi mode - where cohort diagnostics dynamically pulls the cohort definition from a webapi instance. WebAPI is the backend of the OHDSI ATLAS application, allowing programmatic access to the cohort definitions created in ATLAS.</p>
-<p>This vignette describes the former approach (package): how to run CohortDiagnostics using the WebAPI.</p>
-<p>There are currently two approaches one can take to step 1: The cohort diagnostics can be embedded in an OHDSI study package, where all the cohort definitions are stored as part of that study package, or the cohort diagnostics can be used as a stand-alone solution, relying on a WebAPI instance to provide the cohort definitions. WebAPI is the backend of the OHDSI ATLAS application, allowing programmatic access to the cohort definitions created in ATLAS. This vignette describes the latter approach: how to run CohortDiagnostics using the WebAPI.</p>
+<p>There are currently two approaches to run Cohort Diagnostics. - Embed in an OHDSI study package, where all the cohort definitions are stored as part of that study package, or - WebApi mode - where cohort diagnostics dynamically pulls the cohort definition from a webapi instance. WebApI is the backend of the OHDSI ATLAS application, allowing programmatic access to the cohort definitions created in ATLAS.</p>
+<p>This vignette describes the former approach (package): how to run CohortDiagnostics using the WebApI.</p>
+<p>There are currently two approaches one can take to step 1: The cohort diagnostics can be embedded in an OHDSI study package, where all the cohort definitions are stored as part of that study package, or the cohort diagnostics can be used as a stand-alone solution, relying on a WebApI instance to provide the cohort definitions. WebApI is the backend of the OHDSI ATLAS application, allowing programmatic access to the cohort definitions created in ATLAS. This vignette describes the latter approach: how to run CohortDiagnostics using the WebApI.</p>
 <p>This vignette describes how to create a self contained shareable study package that can execute cohort diagnostics on a given set of cohort definitions. This is the recommended mode to run CohortDiagnostics for a study.</p>
 <p>In this vignette, you will learn how to - use the Cohort Diagnostics template package - Hydrate the template package with the cohort definitions you want to diagnose. - Execute the diagnostics on one or more data sources. - Review the result set using the Diagnostics Explorer R shiny app of Cohort Diagnostics - (optional) Submit the results of your cohort diagnostics to the OHDSI Phenotype library.</p>
 <div id="assumptions" class="section level2">

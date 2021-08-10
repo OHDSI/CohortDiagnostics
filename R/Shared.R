@@ -45,6 +45,10 @@ camelCaseToSnakeCase <- function(string) {
   return(string)
 }
 
+is.date <- function(x) {
+  inherits(x, c("Date", "POSIXt"))
+}
+
 # private function - not exported
 titleCaseToCamelCase <- function(string) {
   string <- stringr::str_replace_all(string = string,
@@ -327,10 +331,8 @@ getDataFromResultsDatabaseSchema <- function(dataSource,
 #'
 #' @export
 getResultsMetadata <- function(dataSource) {
-  data <- getDataFromResultsDatabaseSchema(
-    dataSource,
-    dataTableName = "metadata"
-  )
+  data <- getDataFromResultsDatabaseSchema(dataSource,
+                                           dataTableName = "metadata")
   return(data)
 }
 
@@ -698,8 +700,8 @@ getConceptSetDetailsFromCohortDefinition <-
       i <- i + 1
       conceptSetExpressionDetails[[i]] <-
         getConceptSetDataFrameFromConceptSetExpression(conceptSetExpression =
-                                                         conceptSetExpression[i,]$expression$items) %>%
-        dplyr::mutate(id = conceptSetExpression[i, ]$id) %>%
+                                                         conceptSetExpression[i, ]$expression$items) %>%
+        dplyr::mutate(id = conceptSetExpression[i,]$id) %>%
         dplyr::relocate(.data$id) %>%
         dplyr::arrange(.data$id)
     }
@@ -755,10 +757,8 @@ getConceptSetDataFrameFromConceptSetExpression <-
 #'
 #' @export
 getResultsCohort <- function(dataSource) {
-  data <- getDataFromResultsDatabaseSchema(
-    dataSource,
-    dataTableName = "cohort"
-  )
+  data <- getDataFromResultsDatabaseSchema(dataSource,
+                                           dataTableName = "cohort")
   return(data)
 }
 
@@ -1543,7 +1543,7 @@ getCohortRelationshipCharacterizationResults <-
       return(data)
     }
     
-    analysisId <- c(-101, -102, -103, -104, -201, -202, -203, -204)
+    analysisId <- c(-101,-102,-103,-104,-201,-202,-203,-204)
     analysisName <- c(
       "CohortOccurrenceAnyTimePrior",
       "CohortOccurrenceLongTerm",
@@ -1564,7 +1564,7 @@ getCohortRelationshipCharacterizationResults <-
       "bothSubjects",
       "bothSubjects"
     )
-    startDay <- c(-99999, -365, -180, -30, -99999, -365, -180, -30)
+    startDay <- c(-99999,-365,-180,-30,-99999,-365,-180,-30)
     endDay <- c(0, 0, 0, 0, 0, 0, 0, 0)
     analysisRef <-
       dplyr::tibble(analysisId, analysisName, valueField, startDay, endDay) %>%
@@ -1588,10 +1588,10 @@ getCohortRelationshipCharacterizationResults <-
       result[[j]] <-
         summarizeCohortRelationship(
           data = cohortRelationships,
-          startDay = analysisRef[j, ]$startDay,
-          endDay = analysisRef[j, ]$endDay,
-          analysisId = analysisRef[j, ]$analysisId,
-          valueField = analysisRef[j, ]$valueField,
+          startDay = analysisRef[j,]$startDay,
+          endDay = analysisRef[j,]$endDay,
+          analysisId = analysisRef[j,]$analysisId,
+          valueField = analysisRef[j,]$valueField,
           cohortCounts = cohortCounts
         )
     }
@@ -1748,7 +1748,7 @@ getCohortAsFeatureTemporalCharacterizationResults <-
       return(data)
     }
     
-    analysisId <- c(-101, -201)
+    analysisId <- c(-101,-201)
     analysisName <- c("CohortEraStart", "CohortEraOverlap")
     valueField <- c("cSubjectsStart",
                     "bothSubjects")
@@ -1773,8 +1773,8 @@ getCohortAsFeatureTemporalCharacterizationResults <-
       result[[j]] <-
         summarizeCohortRelationship(
           data = cohortRelationships,
-          valueField = analysisRef[j, ]$valueField,
-          analysisId = analysisRef[j, ]$analysisId,
+          valueField = analysisRef[j,]$valueField,
+          analysisId = analysisRef[j,]$analysisId,
           temporalTimeRef = temporalTimeRef,
           cohortCounts = cohortCounts
         )
