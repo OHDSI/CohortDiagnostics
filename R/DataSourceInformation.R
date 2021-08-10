@@ -65,10 +65,14 @@ getCdmDataSourceInformation <-
       warning("CDM Source table does not have any records. Metadata on CDM source will be limited.")
       return(NULL)
     }
+    if (nrow(cdmDataSource) > 1) {
+      warning("CDM Source table has more than one record while only one is expected. This may represent an ETL convention issue.")
+      return(NULL)
+    }
     
     sourceDescription <- as.character(NA)
     if ('sourceDescription' %in% colnames(cdmDataSource)) {
-      sourceDescription <- cdmDataSource$sourceDescription
+      sourceDescription <- max(cdmDataSource$sourceDescription)
     }
     
     cdmSourceName <- as.character(NA)
