@@ -45,6 +45,10 @@ camelCaseToSnakeCase <- function(string) {
   return(string)
 }
 
+is.date <- function(x) {
+  inherits(x, c("Date", "POSIXt"))
+}
+
 # private function - not exported
 titleCaseToCamelCase <- function(string) {
   string <- stringr::str_replace_all(string = string,
