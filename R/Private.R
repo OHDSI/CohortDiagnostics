@@ -127,7 +127,8 @@ nullToEmpty <- function(x) {
 .convertDateToString <- function(data) {
   data %>%
     dplyr::collect() %>% 
-    dplyr::mutate(dplyr::across(where(is.date), ~ as.character()))
+    dplyr::mutate(dplyr::across(where(is.date), 
+                                as.character))
 }
 
 getDomainInformation <- function(package = "CohortDiagnostics") {
@@ -178,7 +179,6 @@ getDomainInformation <- function(package = "CohortDiagnostics") {
     )
   return(domains)
 }
-
 
 
 
@@ -251,9 +251,15 @@ writeToAllOutputToCsv <- function(object,
         dplyr::filter(.data$tableName %in% tablesOfInterest[[i]]) %>%
         dplyr::pull(.data$fieldName) %>% 
         snakeCaseToCamelCase()
+      ## because Andromeda is not handling date consistently - 
+      ## temporary solution is to collect data into R memory using dplyr::collect()
+      data <- object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] %>%
+        dplyr::collect()
       if (!tablesOfInterest[[i]] %in% vocabularyTables) {
-        object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] <-
-          object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] %>%
+        # object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] <-
+        #   object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] %>%
+        #   dplyr::mutate(databaseId = !!databaseId)
+        data <- data %>%
           dplyr::mutate(databaseId = !!databaseId)
       }
       # select columns as required in data model
@@ -263,22 +269,30 @@ writeToAllOutputToCsv <- function(object,
       #   object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] %>%
       #   dplyr::select(columns)
       
+      data <-
+        data %>%
+        dplyr::select(columns)
+      
       # enforce minimum cell count value
-      object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] <-
-        object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] %>%
+      # object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] <-
+      #   object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] %>%
+      #   enforceMinCellValueInDataframe(columnNames = columnsToApplyMinCellValue,
+      #                                  minCellCount = minCellCount)
+      data <-
+        data %>%
         enforceMinCellValueInDataframe(columnNames = columnsToApplyMinCellValue,
                                        minCellCount = minCellCount)
       if (tablesOfInterest[[i]] %in% vocabularyTablesNoIncremental) {
         # these tables are never incremental, always full replace
         writeToCsv(
-          data = object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]],
+          data = data, #object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]],
           fileName = file.path(exportFolder,
                                paste0(tablesOfInterest[[i]], ".csv")),
           incremental = FALSE
         )
       } else {
         writeToCsv(
-          data = object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]],
+          data = data, #object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]],
           fileName = file.path(exportFolder,
                                paste0(tablesOfInterest[[i]], ".csv")),
           incremental = incremental

@@ -282,7 +282,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
       dplyr::filter(.data$conceptId < 200000000)
   }
   # get concept mapping----
-  ParallelLogger::logInfo(" - Mappings concepts.")
+  ParallelLogger::logInfo(" - Mapping concepts.")
   conceptSetDiagnosticsResults$conceptMapping <-
     getConceptSourceStandardMapping(
       connection = connection,
@@ -312,7 +312,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
                           "vocabulary",
                           "conceptClass")
   for (i in (1:length(vocabularyTables1))) {
-    ParallelLogger::logInfo(paste0("  - Retrieving ", camelCaseToTitleCase(vocabularyTables1[[i]])))
+    ParallelLogger::logInfo(paste0("  - Retrieving '", camelCaseToTitleCase(vocabularyTables1[[i]])), "'")
     sql <- "SELECT * FROM @vocabulary_database_schema.@table;"
     conceptSetDiagnosticsResults[[vocabularyTables1[[i]]]] <-
       renderTranslateQuerySql(
@@ -326,7 +326,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   }
   vocabularyTables2 <- c('concept', "conceptSynonym")
   for (i in (1:length(vocabularyTables2))) {
-    ParallelLogger::logInfo(paste0("  - Retrieving ", camelCaseToTitleCase(vocabularyTables2[[i]])))
+    ParallelLogger::logInfo(paste0("  - Retrieving '", camelCaseToTitleCase(vocabularyTables2[[i]])), "'")
     sql <- "SELECT a.* FROM @vocabulary_database_schema.@table a
             INNER JOIN 
               (SELECT distinct concept_id FROM @unique_concept_id_table) b
@@ -342,9 +342,9 @@ runConceptSetDiagnostics <- function(connection = NULL,
       ) %>%
       dplyr::tibble()
   }
-  vocabularyTables3 <- c("conceptRelationship") 
+  vocabularyTables3 <- c("conceptRelationship")
   for (i in (1:length(vocabularyTables3))) {
-    ParallelLogger::logInfo(paste0("  - Retrieving ", camelCaseToTitleCase(vocabularyTables3[[i]])))
+    ParallelLogger::logInfo(paste0("  - Retrieving '", camelCaseToTitleCase(vocabularyTables3[[i]])), "'")
     sql <- "SELECT DISTINCT a.* FROM @vocabulary_database_schema.@table a
             LEFT JOIN (SELECT distinct concept_id FROM @unique_concept_id_table) b1
               ON a.concept_id_1 = b1.concept_id
@@ -362,9 +362,9 @@ runConceptSetDiagnostics <- function(connection = NULL,
       ) %>%
       dplyr::tibble()
   }
-  vocabularyTables4 <- c("conceptAncestor") 
+  vocabularyTables4 <- c("conceptAncestor")
   for (i in (1:length(vocabularyTables4))) {
-    ParallelLogger::logInfo(paste0("  - Retrieving ", camelCaseToTitleCase(vocabularyTables4[[i]])))
+    ParallelLogger::logInfo(paste0("  - Retrieving '", camelCaseToTitleCase(vocabularyTables4[[i]])), "'")
     sql <- "SELECT DISTINCT a.* FROM @vocabulary_database_schema.@table a
             LEFT JOIN (SELECT distinct concept_id FROM @unique_concept_id_table) b1
               ON a.ancestor_concept_id = b1.concept_id
@@ -382,7 +382,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
       ) %>%
       dplyr::tibble()
   }
-  
+
   # Drop temporary tables
   ParallelLogger::logTrace(" - Dropping temporary tables")
   sql <-
