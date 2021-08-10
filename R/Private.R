@@ -257,9 +257,12 @@ writeToAllOutputToCsv <- function(object,
           dplyr::mutate(databaseId = !!databaseId)
       }
       # select columns as required in data model
-      object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] <-
-        object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] %>%
-        dplyr::select(columns)
+      # !!!!!!!!!!commenting out this section because of
+      # https://github.com/OHDSI/Andromeda/issues/28
+      # object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] <-
+      #   object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] %>%
+      #   dplyr::select(columns)
+      
       # enforce minimum cell count value
       object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] <-
         object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] %>%
