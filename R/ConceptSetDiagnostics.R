@@ -312,6 +312,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
                           "vocabulary",
                           "conceptClass")
   for (i in (1:length(vocabularyTables1))) {
+    ParallelLogger::logInfo(paste0("  - Retrieving ", vocabularyTables1[[i]]))
     sql <- "SELECT * FROM @vocabulary_database_schema.@table;"
     conceptSetDiagnosticsResults[[vocabularyTables1[[i]]]] <-
       renderTranslateQuerySql(
@@ -325,6 +326,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   }
   vocabularyTables2 <- c('concept', "conceptSynonym")
   for (i in (1:length(vocabularyTables2))) {
+    ParallelLogger::logInfo(paste0("  - Retrieving ", vocabularyTables2[[i]]))
     sql <- "SELECT a.* FROM @vocabulary_database_schema.@table a
             INNER JOIN 
               (SELECT distinct concept_id FROM @unique_concept_id_table) b
@@ -342,6 +344,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   }
   vocabularyTables3 <- c("conceptRelationship") 
   for (i in (1:length(vocabularyTables3))) {
+    ParallelLogger::logInfo(paste0("  - Retrieving ", vocabularyTables3[[i]]))
     sql <- "SELECT a.* FROM @vocabulary_database_schema.@table a
             LEFT JOIN (SELECT distinct concept_id FROM @unique_concept_id_table) b1
               ON a.concept_id_1 = b1.concept_id
@@ -361,6 +364,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   }
   vocabularyTables4 <- c("conceptAncestor") 
   for (i in (1:length(vocabularyTables4))) {
+    ParallelLogger::logInfo(paste0("  - Retrieving ", vocabularyTables4[[i]]))
     sql <- "SELECT a.* FROM @vocabulary_database_schema.@table a
             LEFT JOIN (SELECT distinct concept_id FROM @unique_concept_id_table) b1
               ON a.ancestor_concept_id = b1.concept_id
