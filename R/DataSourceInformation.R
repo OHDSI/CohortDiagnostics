@@ -66,7 +66,9 @@ getCdmDataSourceInformation <-
       return(NULL)
     }
     if (nrow(cdmDataSource) > 1) {
-      warning("CDM Source table has more than one record while only one is expected. This may represent an ETL convention issue.")
+      warning(
+        "CDM Source table has more than one record while only one is expected. This may represent an ETL convention issue."
+      )
       return(NULL)
     }
     
@@ -83,7 +85,8 @@ getCdmDataSourceInformation <-
     sourceReleaseDate <- as.Date(NA)
     if ('sourceReleaseDate' %in% colnames(cdmDataSource)) {
       if (class(cdmDataSource$sourceReleaseDate) != 'Date') {
-        try(sourceReleaseDate <- max(as.Date(cdmDataSource$sourceReleaseDate)),
+        try(sourceReleaseDate <-
+              max(as.Date(cdmDataSource$sourceReleaseDate)),
             silent = TRUE)
       } else {
         sourceReleaseDate <- max(as.Date(cdmDataSource$sourceReleaseDate))

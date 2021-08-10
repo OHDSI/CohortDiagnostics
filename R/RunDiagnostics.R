@@ -459,8 +459,14 @@ runCohortDiagnostics <- function(packageName = NULL,
         dplyr::pull(.data$cohortId)
       if (length(instantiatedCohorts) < nrow(cohorts)) {
         ParallelLogger::logInfo(
-          paste0(" - Skipping diagnostics on following cohorts as they were either not instantiated or had no subjects: ",
-                 paste0(setdiff(cohorts$cohortId, instantiatedCohorts), collapse = ", ")))
+          paste0(
+            " - Skipping diagnostics on following cohorts as they were either not instantiated or had no subjects: ",
+            paste0(
+              setdiff(cohorts$cohortId, instantiatedCohorts),
+              collapse = ", "
+            )
+          )
+        )
       }
       Andromeda::close(output)
       rm("output")
@@ -515,7 +521,6 @@ runCohortDiagnostics <- function(packageName = NULL,
         ParallelLogger::logInfo("  - Skipping in incremental mode.")
       }
     }
-    
     delta <- Sys.time() - startInclusionStatistics
     ParallelLogger::logTrace(" - Running Inclusion Statistics took ",
                              signif(delta, 3),
@@ -628,10 +633,12 @@ runCohortDiagnostics <- function(packageName = NULL,
       ParallelLogger::logInfo("  - Skipping in incremental mode.")
     }
     delta <- Sys.time() - startVisitContext
-    ParallelLogger::logInfo(" - Running Visit Context and saving files took ",
-                            signif(delta, 3),
-                            " ",
-                            attr(delta, "units"))
+    ParallelLogger::logInfo(
+      " - Running Visit Context and saving files took ",
+      signif(delta, 3),
+      " ",
+      attr(delta, "units")
+    )
   }
   
   # Incidence rates----
@@ -653,7 +660,7 @@ runCohortDiagnostics <- function(packageName = NULL,
           length(instantiatedCohorts) - nrow(subset)
         ))
       }
-      #incidence rate does not follow the pattern used by other diagnostics 
+      #incidence rate does not follow the pattern used by other diagnostics
       # in this package because we plan to replace it with the new incidence
       # rate package that will offer better ways to calculate incidence rate
       runIncidenceRate <- function(row) {
@@ -809,11 +816,13 @@ runCohortDiagnostics <- function(packageName = NULL,
           targetCohortIds = subset$cohortId,
           comparatorCohortIds = cohorts$cohortId
         )
-      writeToAllOutputToCsv(object = output,
-                            exportFolder = exportFolder,
-                            incremental = incremental,
-                            minCellCount = minCellCount,
-                            databaseId = databaseId)
+      writeToAllOutputToCsv(
+        object = output,
+        exportFolder = exportFolder,
+        incremental = incremental,
+        minCellCount = minCellCount,
+        databaseId = databaseId
+      )
       Andromeda::close(output)
       rm("output")
       recordTasksDone(

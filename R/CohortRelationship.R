@@ -160,8 +160,8 @@ runCohortRelationshipDiagnostics <-
     seqEnd365 <- seqStart365 + 365
     
     # custom sequence 1 - for temporal characterization
-    seqStartCustom1 <- c(-365, -30, 0, 1, 31)
-    seqEndCustom1 <- c(-31,-1, 0, 30, 365)
+    seqStartCustom1 <- c(-365,-30, 0, 1, 31)
+    seqEndCustom1 <- c(-31, -1, 0, 30, 365)
     
     # custom sequence 2 - all time prior to day before index (not including index date)
     seqStartCustom2 <- c(-99999)
@@ -222,20 +222,20 @@ runCohortRelationshipDiagnostics <-
       ParallelLogger::logTrace(
         paste0(
           "    - Working on Time id:",
-          timePeriods[i, ]$timeId,
+          timePeriods[i,]$timeId,
           " start day: ",
-          scales::comma(timePeriods[i, ]$startDay),
+          scales::comma(timePeriods[i,]$startDay),
           " to end day:",
-          scales::comma(timePeriods[i, ]$endDay)
+          scales::comma(timePeriods[i,]$endDay)
         )
       )
       sql <- SqlRender::loadRenderTranslateSql(
         "CohortRelationship.sql",
         packageName = "CohortDiagnostics",
         dbms = connection@dbms,
-        time_id = timePeriods[i, ]$timeId,
-        start_day_offset = timePeriods[i, ]$startDay,
-        end_day_offset = timePeriods[i, ]$endDay
+        time_id = timePeriods[i,]$timeId,
+        start_day_offset = timePeriods[i,]$startDay,
+        end_day_offset = timePeriods[i,]$endDay
       )
       DatabaseConnector::querySqlToAndromeda(
         connection = connection,
@@ -256,7 +256,8 @@ runCohortRelationshipDiagnostics <-
     resultsInAndromeda$timePeriods <- timePeriods
     resultsInAndromeda$temp <- NULL
     
-    resultsInAndromeda$cohortRelationships <- resultsInAndromeda$cohortRelationships %>%
+    resultsInAndromeda$cohortRelationships <-
+      resultsInAndromeda$cohortRelationships %>%
       dplyr::inner_join(resultsInAndromeda$timePeriods, by = 'timeId') %>%
       dplyr::select(
         .data$cohortId,

@@ -62,7 +62,7 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
                                            timeSeriesMinDate = as.Date('1980-01-01'),
                                            timeSeriesMaxDate = as.Date(Sys.Date()),
                                            cohortIds = NULL) {
-  if (all(!runCohortTimeSeries,!runDataSourceTimeSeries)) {
+  if (all(!runCohortTimeSeries, !runDataSourceTimeSeries)) {
     warning(
       ' - Both Cohort Time Series and Data Source Time Series are set to FALSE. Exiting time series diagnostics.'
     )
@@ -385,8 +385,8 @@ runCohortTimeSeriesDiagnostics <- function(connectionDetails = NULL,
   
   delta <- Sys.time() - start
   ParallelLogger::logTrace(" - Retrieving Time Series data took ",
-                          signif(delta, 3),
-                          " ",
-                          attr(delta, "units"))
+                           signif(delta, 3),
+                           " ",
+                           attr(delta, "units"))
   return(resultsInAndromeda)
 }

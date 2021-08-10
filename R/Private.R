@@ -114,11 +114,10 @@ nullToEmpty <- function(x) {
 
 
 .replaceNaInDataFrameWithEmptyString <- function(data) {
-  
-  #https://github.com/r-lib/tidyselect/issues/201 
+  #https://github.com/r-lib/tidyselect/issues/201
   # tried utils::globalVariables("where") but get the message The namespace for package "CohortDiagnostics" is locked; no changes in the global variables list may be made.
   data %>%
-    dplyr::collect() %>% 
+    dplyr::collect() %>%
     dplyr::mutate(dplyr::across(where(is.character), ~ tidyr::replace_na(.x, as.character('')))) %>%
     dplyr::mutate(dplyr::across(where(is.logical), ~ tidyr::replace_na(.x, as.character('')))) %>%
     dplyr::mutate(dplyr::across(where(is.numeric), ~ tidyr::replace_na(.x, as.numeric(''))))
@@ -126,8 +125,8 @@ nullToEmpty <- function(x) {
 
 .convertDateToString <- function(data) {
   data %>%
-    dplyr::collect() %>% 
-    dplyr::mutate(dplyr::across(where(is.date), 
+    dplyr::collect() %>%
+    dplyr::mutate(dplyr::across(where(is.date),
                                 as.character))
 }
 
@@ -233,8 +232,10 @@ writeToAllOutputToCsv <- function(object,
                                      "vocabulary")
   
   ParallelLogger::logTrace(paste0("  - Found ", paste0(names(object), collapse = ", ")))
-  presentInBoth <- intersect(tablesOfInterest, camelCaseToSnakeCase(names(object)))
-  presentInObjectOnly <- setdiff(camelCaseToSnakeCase(names(object)), tablesOfInterest)
+  presentInBoth <-
+    intersect(tablesOfInterest, camelCaseToSnakeCase(names(object)))
+  presentInObjectOnly <-
+    setdiff(camelCaseToSnakeCase(names(object)), tablesOfInterest)
   if (!setequal(presentInBoth, camelCaseToSnakeCase((names(object))))) {
     warning(
       " - Unexpected objects found ",
@@ -249,11 +250,12 @@ writeToAllOutputToCsv <- function(object,
       ParallelLogger::logTrace(paste0(" - Writing data to file: ", tablesOfInterest[[i]], ".csv"))
       columns <- resultsDataModel %>%
         dplyr::filter(.data$tableName %in% tablesOfInterest[[i]]) %>%
-        dplyr::pull(.data$fieldName) %>% 
+        dplyr::pull(.data$fieldName) %>%
         snakeCaseToCamelCase()
-      ## because Andromeda is not handling date consistently - 
+      ## because Andromeda is not handling date consistently -
       ## temporary solution is to collect data into R memory using dplyr::collect()
-      data <- object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] %>%
+      data <-
+        object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] %>%
         dplyr::collect()
       if (!tablesOfInterest[[i]] %in% vocabularyTables) {
         # object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] <-
@@ -285,14 +287,16 @@ writeToAllOutputToCsv <- function(object,
       if (tablesOfInterest[[i]] %in% vocabularyTablesNoIncremental) {
         # these tables are never incremental, always full replace
         writeToCsv(
-          data = data, #object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]],
+          data = data,
+          #object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]],
           fileName = file.path(exportFolder,
                                paste0(tablesOfInterest[[i]], ".csv")),
           incremental = FALSE
         )
       } else {
         writeToCsv(
-          data = data, #object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]],
+          data = data,
+          #object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]],
           fileName = file.path(exportFolder,
                                paste0(tablesOfInterest[[i]], ".csv")),
           incremental = incremental

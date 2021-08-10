@@ -35,7 +35,7 @@ isTaskRequired <-
         na = character(),
         guess_max = min(1e7)
       )
-      task <- recordKeeping[getKeyIndex(list(...), recordKeeping),]
+      task <- recordKeeping[getKeyIndex(list(...), recordKeeping), ]
       if (nrow(task) == 0) {
         return(TRUE)
       }
@@ -80,7 +80,7 @@ getRequiredTasks <- function(..., checksum, recordKeepingFile) {
     if (length(idx) > 0) {
       # text <- paste(sprintf("%s = %s", names(tasks), tasks[idx,]), collapse = ", ")
       # ParallelLogger::logInfo("Skipping ", text, " because unchanged from earlier run")
-      tasks <- tasks[-idx,]
+      tasks <- tasks[-idx, ]
     }
   }
   return(tasks)
@@ -132,7 +132,7 @@ recordTasksDone <-
       }
       idx <- getKeyIndex(list(...), recordKeeping)
       if (length(idx) > 0) {
-        recordKeeping <- recordKeeping[-idx,]
+        recordKeeping <- recordKeeping[-idx, ]
       }
     } else {
       recordKeeping <- dplyr::tibble()
@@ -271,11 +271,15 @@ saveIncremental <- function(data, fileName, ...) {
       na = character(),
       guess_max = min(1e7)
     )
-    ParallelLogger::logTrace(paste0("    - Found previous file (",
-                                    fileName,
-                                    ") and it has ",
-                                    scales::comma(nrow(previousData)),
-                                    " records."))
+    ParallelLogger::logTrace(
+      paste0(
+        "    - Found previous file (",
+        fileName,
+        ") and it has ",
+        scales::comma(nrow(previousData)),
+        " records."
+      )
+    )
     if ((nrow(previousData)) > 0) {
       if (!length(list(...)) == 0) {
         idx <- getKeyIndex(list(...), previousData)
@@ -286,7 +290,7 @@ saveIncremental <- function(data, fileName, ...) {
         ParallelLogger::logTrace(paste0("     - Removing ",
                                         length(idx),
                                         " records."))
-        previousData <- previousData[-idx,]
+        previousData <- previousData[-idx, ]
       }
       if (nrow(previousData) > 0) {
         data <- dplyr::bind_rows(previousData, data) %>%
@@ -321,7 +325,7 @@ subsetToRequiredCohorts <-
         checksum = cohorts$checksum,
         recordKeepingFile = recordKeepingFile
       )
-      return(cohorts[cohorts$cohortId %in% tasks$cohortId,])
+      return(cohorts[cohorts$cohortId %in% tasks$cohortId, ])
     } else {
       return(cohorts)
     }
