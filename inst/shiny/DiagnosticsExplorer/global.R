@@ -8,10 +8,10 @@ source("R/Tables.R")
 source("R/Plots.R")
 source("R/Results.R")
 
-#Load environment variables----
+connectionPool <- NULL
+#Load default environment variables----
 defaultLocalDataFolder <- "data"
 defaultLocalDataFile <- "PreMerged.RData"
-connectionPool <- NULL
 defaultServer <- Sys.getenv("shinydbServer")
 defaultDatabase <- Sys.getenv("shinydbDatabase")
 defaultPort <- 5432
@@ -146,7 +146,6 @@ if (databaseMode) {
   resultsTablesOnServer <-
     tolower(DatabaseConnector::dbListTables(connectionPool, 
                                             schema = resultsDatabaseSchema))
-  
   ####load tables into R memory ----
   tablesToLoadRequired <- c("cohort", "cohort_count", "database")
   tablesToLoad <-
@@ -161,14 +160,16 @@ if (databaseMode) {
       "temporal_covariate_ref",
       "vocabulary"
     )
-  lapply(tablesToLoadRequired,
-         loadResultsTable,
-         resultsTablesOnServer,
-         TRUE)
-  lapply(tablesToLoad,
-         loadResultsTable,
-         resultsTablesOnServer,
-         FALSE)
+  for (i in (1:length(tablesToLoadRequired))) {
+    loadResultsTable(tableName = tablesToLoadRequired[[i]], 
+                     resultsTablesOnServer = resultsTablesOnServer, 
+                     required = TRUE)
+  }
+  for (i in (1:length(tablesToLoad))) {
+    loadResultsTable(tableName = tablesToLoad[[i]], 
+                     resultsTablesOnServer = resultsTablesOnServer, 
+                     required = FALSE)
+  }
   
   # compare expected to observed tables
   for (table in c(dataModelSpecifications$tableName %>% unique())) {
@@ -307,7 +308,6 @@ if (!showVisitContext) {
 #     rm("visitContext")
 #   }
 # }
-
 
 
 

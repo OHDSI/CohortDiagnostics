@@ -51,6 +51,12 @@ loadResultsTable <- function(tableName, resultsTablesOnServer, required = FALSE)
         dplyr::as_tibble(table),
         envir = .GlobalEnv
       )
+    } else {
+      if (required) {
+        stop(paste0("Required table '", tableName, "' has 0 records."))
+      } else {
+        warning(paste0("Optional table '", tableName, "' has 0 records."))
+      }
     }
   }
 }
