@@ -791,6 +791,21 @@ getResultsCohortCount <- function(dataSource,
 }
 
 
+#Private Function
+filterCohortCountByCohortIdAndDatabaseId <-  function(cohortCount, cohortId, databaseId) {
+  data <- cohortCount %>%
+    dplyr::filter(.data$cohortId == !!cohortId) %>% 
+    dplyr::filter(.data$databaseId == !!databaseId) %>% 
+    dplyr::select(.data$cohortSubjects, .data$cohortEntries)
+  
+  if (nrow(data) == 0) {
+    return(NULL)
+  } else {
+    return(data)
+  }
+}
+
+
 
 #' Returns data from inclusion_rule_stats table of Cohort Diagnostics results data model
 #'
