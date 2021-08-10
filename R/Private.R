@@ -124,6 +124,11 @@ nullToEmpty <- function(x) {
     dplyr::mutate(dplyr::across(where(is.numeric), ~ tidyr::replace_na(.x, as.numeric(''))))
 }
 
+.convertDateToString <- function(data) {
+  data %>%
+    dplyr::collect() %>% 
+    dplyr::mutate(dplyr::across(where(is.date), ~ as.character()))
+}
 
 getDomainInformation <- function(package = "CohortDiagnostics") {
   ParallelLogger::logTrace("  - Reading domains.csv")
@@ -246,24 +251,10 @@ writeToAllOutputToCsv <- function(object,
         dplyr::filter(.data$tableName %in% tablesOfInterest[[i]]) %>%
         dplyr::pull(.data$fieldName) %>% 
         snakeCaseToCamelCase()
-      columnsDate <- resultsDataModel %>%
-        dplyr::filter(.data$tableName %in% tablesOfInterest[[i]]) %>% 
-        dplyr::filter(.data$type == 'Date') %>% 
-        dplyr::pull(.data$fieldName) %>% 
-        snakeCaseToCamelCase()
       if (!tablesOfInterest[[i]] %in% vocabularyTables) {
         object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] <-
           object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] %>%
           dplyr::mutate(databaseId = !!databaseId)
-      }
-      
-      if (length(columnsDate) > 0) {
-        # force convert columns expected to be dates to text. 
-        # this prevents converting dates to integer or other formats prior to writing to csv.
-        object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] <-
-          object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] %>%
-          dplyr::mutate(dplyr::across(.cols = columnsDate),
-                        as.character())
       }
       # select columns as required in data model
       object[[snakeCaseToCamelCase(tablesOfInterest[[i]])]] <-
