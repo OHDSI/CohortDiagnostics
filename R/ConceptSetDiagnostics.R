@@ -97,7 +97,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
       dplyr::filter(.data$cohortId %in% cohortIds)
   }
   if (nrow(subset) == 0) {
-    ParallelLogger::logInfo(" - No cohorts to run concept set diagnostics. Exiting concept set diagnostics.")
+    ParallelLogger::logInfo("  - No cohorts to run concept set diagnostics. Exiting concept set diagnostics.")
     return(NULL)
   }
   
@@ -109,7 +109,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
     combineConceptSetsFromCohorts(subset)
   if (is.null(conceptSetDiagnosticsResults$conceptSets)) {
     ParallelLogger::logInfo(
-      " - Cohorts being diagnosed does not have concept ids. Exiting concept set diagnostics."
+      "  - Cohorts being diagnosed does not have concept ids. Exiting concept set diagnostics."
     )
     return(NULL)
   }
@@ -132,7 +132,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   )
   
   # Instantiate (resolve) unique concept sets----
-  ParallelLogger::logInfo(" - Resolving concept sets found in cohorts.")
+  ParallelLogger::logInfo("  - Resolving concept sets found in cohorts.")
   conceptSetDiagnosticsResults$conceptResolved <-
     resolveConceptSets(
       uniqueConceptSets = uniqueConceptSets,
@@ -161,7 +161,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   }
   
   # Excluded concepts ----
-  ParallelLogger::logInfo(" - Collecting excluded concepts.")
+  ParallelLogger::logInfo("  - Collecting excluded concepts.")
   conceptSetDiagnosticsResults$conceptExcluded <-
     getExcludedConceptSets(
       connection = connection,
@@ -188,7 +188,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   
   # Index event breakdown ----
   startBreakdownEvents <- Sys.time()
-  ParallelLogger::logInfo(" - Learning about the breakdown in index events.")
+  ParallelLogger::logInfo("  - Learning about the breakdown in index events.")
   conceptSetDiagnosticsResults$indexEventBreakdown <-
     getBreakdownIndexEvents(
       cohortIds = subset$cohortId,
@@ -204,7 +204,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
       conceptSetDiagnosticsResults$indexEventBreakdown %>%
       dplyr::filter(.data$conceptId < 200000000)
   }
-  ParallelLogger::logInfo(" - Looking for concept co-occurrence on index date.")
+  ParallelLogger::logInfo("  - Looking for concept co-occurrence on index date.")
   conceptSetDiagnosticsResults$conceptCooccurrence <-
     getIndexDateConceptCooccurrence(
       connection = connection,
@@ -228,7 +228,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
                            attr(delta, "units"))
   
   # Orphan concepts ----
-  ParallelLogger::logInfo(" - Searching for concepts that may have been orphaned.")
+  ParallelLogger::logInfo("  - Searching for concepts that may have been orphaned.")
   startOrphanCodes <- Sys.time()
   conceptSetDiagnosticsResults$orphanConcept <- getOrphanConcepts(
     connection = connection,
@@ -267,7 +267,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
                            attr(delta, "units"))
 
   # get concept record count----
-  ParallelLogger::logInfo(" - Counting concepts in data source.")
+  ParallelLogger::logInfo("  - Counting concepts in data source.")
   conceptSetDiagnosticsResults$conceptCount <-
     getConceptRecordCountByMonth(
       connection = connection,
@@ -295,7 +295,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
       dplyr::filter(.data$conceptId < 200000000)
   }
   # get concept mapping----
-  ParallelLogger::logInfo(" - Mapping concepts.")
+  ParallelLogger::logInfo("  - Mapping concepts.")
   conceptSetDiagnosticsResults$conceptMapping <-
     getConceptSourceStandardMapping(
       connection = connection,
@@ -322,7 +322,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
     )
   
   #get vocabulary details----
-  ParallelLogger::logInfo(" - Retrieving vocabulary details.")
+  ParallelLogger::logInfo("  - Retrieving vocabulary details.")
   #get full data -----
   vocabularyTables1 <- c("domain",
                          "relationship",
@@ -330,7 +330,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
                          "conceptClass")
   for (i in (1:length(vocabularyTables1))) {
     ParallelLogger::logInfo(paste0(
-      "  - Retrieving '",
+      "   - Retrieving '",
       camelCaseToTitleCase(vocabularyTables1[[i]])
     ), "'")
     sql <- "SELECT * FROM @vocabulary_database_schema.@table;"
@@ -347,7 +347,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   vocabularyTables2 <- c('concept', "conceptSynonym")
   for (i in (1:length(vocabularyTables2))) {
     ParallelLogger::logInfo(paste0(
-      "  - Retrieving '",
+      "   - Retrieving '",
       camelCaseToTitleCase(vocabularyTables2[[i]])
     ), "'")
     sql <- "SELECT a.* FROM @vocabulary_database_schema.@table a
@@ -368,7 +368,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   vocabularyTables3 <- c("conceptRelationship")
   for (i in (1:length(vocabularyTables3))) {
     ParallelLogger::logInfo(paste0(
-      "  - Retrieving '",
+      "   - Retrieving '",
       camelCaseToTitleCase(vocabularyTables3[[i]])
     ), "'")
     sql <-
@@ -392,7 +392,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
   vocabularyTables4 <- c("conceptAncestor")
   for (i in (1:length(vocabularyTables4))) {
     ParallelLogger::logInfo(paste0(
-      "  - Retrieving '",
+      "   - Retrieving '",
       camelCaseToTitleCase(vocabularyTables4[[i]])
     ), "'")
     sql <-
