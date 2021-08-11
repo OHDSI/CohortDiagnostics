@@ -185,8 +185,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
                     .data$conceptId) %>%
       dplyr::distinct()
   }
-  browser()
-  debug(getBreakdownIndexEvents)
+  
   # Index event breakdown ----
   startBreakdownEvents <- Sys.time()
   ParallelLogger::logInfo(" - Learning about the breakdown in index events.")
@@ -206,7 +205,6 @@ runConceptSetDiagnostics <- function(connection = NULL,
       dplyr::filter(.data$conceptId < 200000000)
   }
   ParallelLogger::logInfo(" - Looking for concept co-occurrence on index date.")
-  
   conceptSetDiagnosticsResults$conceptCooccurrence <-
     getIndexDateConceptCooccurrence(
       connection = connection,
@@ -267,8 +265,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
                            signif(delta, 3),
                            " ",
                            attr(delta, "units"))
-  browser()
-  debug(getConceptRecordCountByMonth)
+
   # get concept record count----
   ParallelLogger::logInfo(" - Counting concepts in data source.")
   conceptSetDiagnosticsResults$conceptCount <-
@@ -870,12 +867,12 @@ getConceptRecordCountByMonth <- function(connection,
         snakeCaseToCamelCase = TRUE
       ) %>%
         # conceptIds - only keep concept id that were never found in standard fields
-        # dplyr::anti_join(
-        #   y = standardConcepts %>%
-        #     dplyr::select(.data$conceptId) %>%
-        #     dplyr::distinct(),
-        #   by = 'conceptId'
-        # ) %>%
+        dplyr::anti_join(
+          y = standardConcepts %>%
+            dplyr::select(.data$conceptId) %>%
+            dplyr::distinct(),
+          by = 'conceptId'
+        ) %>%
         dplyr::mutate(domainTable = rowData$domainTableShort) %>%
         dplyr::mutate(domainField = rowData$domainConceptIdShort)
     }
@@ -984,16 +981,16 @@ getConceptSubjectCount <- function(connection,
   }
   nonStandardConcepts <-
     dplyr::bind_rows(nonStandardConcepts)
-  return(
+  data <-
     dplyr::bind_rows(standardConcepts, nonStandardConcepts) %>%
-      dplyr::select(.data$domainTable,
-                    .data$conceptId,
-                    .data$subjectCount) %>%
-      dplyr::distinct() %>%
-      dplyr::arrange(.data$conceptId)
-  )
+    dplyr::select(.data$domainTable,
+                  .data$domainField,
+                  .data$conceptId,
+                  .data$subjectCount) %>%
+    dplyr::distinct() %>%
+    dplyr::arrange(.data$domainTable, .data$domainField, .data$conceptId)
+  return(data)
 }
-
 
 
 # function: getBreakdownIndexEvents ----
@@ -1052,7 +1049,8 @@ getBreakdownIndexEvents <- function(cohortIds,
   breakdownDataNonStandard <- list()
   for (i in (1:nrow(domains))) {
     rowData <- domains[i,]
-    if (nchar(rowData$domainSourceConceptId) > 4) {
+    if (all(!is.na(rowData$domainSourceConceptId),
+        nchar(rowData$domainSourceConceptId) > 4)) {
       ParallelLogger::logTrace(
         paste0(
           "  - Working on ",
@@ -1151,7 +1149,8 @@ getIndexDateConceptCooccurrence <- function(connection,
       progressBar = FALSE,
       reportOverallTime = FALSE
     )
-    if (nchar(rowData$domainSourceConceptId) > 4) {
+    if (all(!is.na((rowData$domainSourceConceptId)),
+            nchar(rowData$domainSourceConceptId) > 4)) {
       ParallelLogger::logTrace(
         paste0(
           "  - Working on ",

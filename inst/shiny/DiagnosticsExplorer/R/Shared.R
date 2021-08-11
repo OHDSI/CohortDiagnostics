@@ -2379,6 +2379,7 @@ getDomainInformation <- function(versionNumber = NULL,
   }
   
   domains <- domains %>%
+    .replaceNaInDataFrameWithEmptyString() %>% 
     dplyr::mutate(domainTableShort = stringr::str_sub(
       string = toupper(.data$domain),
       start = 1,
