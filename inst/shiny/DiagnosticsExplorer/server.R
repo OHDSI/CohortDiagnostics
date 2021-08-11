@@ -4,7 +4,12 @@ shiny::shinyServer(function(input, output, session) {
   
   ###Reactive : getCohortIdFromDropdown----
   getCohortIdFromDropdown <- shiny::reactive({
-    return(cohort$cohortId[cohort$compoundName == input$cohort])
+    data <- cohort %>% 
+      dplyr::filter(.data$compoundName %in% input$cohort) %>% 
+      dplyr::arrange(.data$cohortId) %>% 
+      dplyr::pull(.data$cohortId) %>% 
+      unique()
+    return(data)
   })
   
   ###Reactive : getCohortIdsFromDropdown----
@@ -14,21 +19,34 @@ shiny::shinyServer(function(input, output, session) {
          input$tabs)
   }, handlerExpr = {
     if (isFALSE(input$cohorts_open) || !is.null(input$tabs)) {
-      selectedCohortIds <-
-        cohort$cohortId[cohort$compoundName  %in% input$cohorts]
-       getCohortIdsFromDropdown(selectedCohortIds)
+      selectedCohortIds <- cohort %>% 
+        dplyr::filter(.data$compoundName %in% input$cohorts) %>% 
+        dplyr::arrange(.data$cohortId) %>% 
+        dplyr::pull(.data$cohortId) %>% 
+        unique()
+      getCohortIdsFromDropdown(selectedCohortIds)
     }
   })
   
   ###Reactive : getComparatorCohortIdFromDropdowm----
   getComparatorCohortIdFromDropdowm <- shiny::reactive({
-    return(cohort$cohortId[cohort$compoundName == input$comparatorCohort])
+    data <- cohort %>% 
+      dplyr::filter(.data$compoundName %in% input$comparatorCohort) %>% 
+      dplyr::arrange(.data$cohortId) %>% 
+      dplyr::pull(.data$cohortId) %>% 
+      unique()
+    return(data)
   })
   
   ###Reactive : getConceptSetIdsfromDropdown----
   getConceptSetIdsfromDropdown <- shiny::reactive(x = {
-    return(conceptSets$conceptSetId[conceptSets$conceptSetName %in% 
-                                      input$conceptSetsToFilterCharacterization])
+    data <- conceptSets %>% 
+      dplyr::filter(.data$cohortId %in% c(getCohortIdFromDropdown()) %>% unique()) %>%
+      dplyr::filter(.data$conceptSetName %in% input$conceptSetsToFilterCharacterization) %>% 
+      dplyr::arrange(.data$conceptSetId) %>% 
+      dplyr::pull(.data$conceptSetId) %>% 
+      unique()
+    return(data)
   })
   
   ###Reactive : getTimeIdsFromDropdowm----
@@ -41,13 +59,13 @@ shiny::shinyServer(function(input, output, session) {
         (isFALSE(input$timeIdChoices_open) ||
          !is.null(input$tabs))) {
       selectedTimeIds <- temporalCovariateChoices %>%
-        dplyr::filter(choices %in% input$timeIdChoices) %>%
-        dplyr::pull(timeId)
+        dplyr::filter(.data$choices %in% input$timeIdChoices) %>%
+        dplyr::pull(.data$timeId)
       getTimeIdsFromDropdowm(selectedTimeIds)
     }
   })
   
-  ###Reactive : getTimeIdsFromDropdowm----
+  ###Reactive : getDatabaseIdsFromDropdown----
   getDatabaseIdsFromDropdown <- reactiveVal(NULL)
   shiny::observeEvent(eventExpr = {
     list(input$databases_open,
@@ -61,21 +79,25 @@ shiny::shinyServer(function(input, output, session) {
   
   #reactive: getCohortSortedByCohortId ----
   getCohortSortedByCohortId <- shiny::reactive({
-    return(cohort %>%
-             dplyr::arrange(.data$cohortId))
-  })  
-  
-  
-  #reactive: getDatabaseIdInCohortConceptSet ----
-  getDatabaseIdInCohortConceptSet <- shiny::reactive({
-    return(database$databaseId[database$databaseIdWithVocabularyVersion == 
-                                 input$databaseOrVocabularySchema])
+    data <- cohort %>%
+      dplyr::arrange(.data$cohortId)
+    return(data)
   })
   
-  #reactive: getDatabaseIdInCohortConceptSetSecond ----
-  getDatabaseIdInCohortConceptSetSecond <- shiny::reactive({
+  #reactive: getChosenDatabaseIdToFilterConceptSetDetails ----
+  getChosenDatabaseIdToFilterConceptSetDetails <- shiny::reactive({
+    data <- database %>% 
+      dplyr::filter(.data$databaseId == input$choiceForConceptSetDetails) %>% 
+      dplyr::arrange(.data$databaseId) %>% 
+      dplyr::pull(.data$databaseId) %>% 
+      unique()
+    return(data)
+  })
+  
+  #reactive: getChosenDatabaseIdToFilterConceptSetDetailsSecond ----
+  getChosenDatabaseIdToFilterConceptSetDetailsSecond <- shiny::reactive({
     return(database$databaseId[database$databaseIdWithVocabularyVersion == 
-                                 input$databaseOrVocabularySchemaSecond])
+                                 input$choiceForConceptSetDetailsSecond])
   })
   
   #Update cohort dropdown by compound name----
@@ -723,7 +745,7 @@ shiny::shinyServer(function(input, output, session) {
                                                               tags$table(tags$tr(
                                                                 tags$td(
                                                                   shinyWidgets::pickerInput(
-                                                                    inputId = "databaseOrVocabularySchema",
+                                                                    inputId = "choiceForConceptSetDetails",
                                                                     label = "Vocabulary version choices:",
                                                                     choices = sourcesOfVocabularyTables,
                                                                     multiple = FALSE,
@@ -931,7 +953,7 @@ shiny::shinyServer(function(input, output, session) {
                                                               tags$table(tags$tr(
                                                                 tags$td(
                                                                   shinyWidgets::pickerInput(
-                                                                    inputId = "databaseOrVocabularySchemaSecond",
+                                                                    inputId = "choiceForConceptSetDetailsSecond",
                                                                     label = "Vocabulary version choices:",
                                                                     choices = sourcesOfVocabularyTables,
                                                                     multiple = FALSE,
@@ -1255,13 +1277,13 @@ shiny::shinyServer(function(input, output, session) {
   getFilteredSubjectAndRecordCountForSelectedConceptSetLeft <- shiny::reactive(x = {
     row <- getLastTwoRowSelectedInCohortTable()[1,]
     
-    if (is.null(row) || length(getDatabaseIdInCohortConceptSet()) == 0) {
+    if (is.null(row) || length(getChosenDatabaseIdToFilterConceptSetDetails()) == 0) {
       return(NULL)
     } else {
       
       data <- filterCohortCountByCohortIdAndDatabaseId(cohortCount = cohortCount,
                                                          cohortId = row$cohortId, 
-                                                         databaseId = getDatabaseIdInCohortConceptSet())
+                                                         databaseId = getChosenDatabaseIdToFilterConceptSetDetails())
       
       if (nrow(data) == 0 || is.null(data)) {
         return(NULL)
@@ -1365,9 +1387,9 @@ shiny::shinyServer(function(input, output, session) {
   #reactive: getResolvedOrMappedConceptsLeft----
   getResolvedOrMappedConceptsLeft <- shiny::reactive({
     data <- NULL
-    if (is.null(input$databaseOrVocabularySchema)) {return(NULL)}
+    if (is.null(input$choiceForConceptSetDetails)) {return(NULL)}
     databaseIdToFilter <- database %>%
-      dplyr::filter(.data$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchema) %>%
+      dplyr::filter(.data$databaseIdWithVocabularyVersion == input$choiceForConceptSetDetails) %>%
       dplyr::pull(.data$databaseId)
     conceptCounts <- getConceptCountForAllDatabaseLeft()
     if (all(!is.null(conceptCounts),
@@ -1431,11 +1453,11 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     if (exists("vocabularyDatabaseSchemas") &&
-        !is.null(input$databaseOrVocabularySchema) &&
-        length(input$databaseOrVocabularySchema) > 0) {
+        !is.null(input$choiceForConceptSetDetails) &&
+        length(input$choiceForConceptSetDetails) > 0) {
       vocabularyDataSchemaToFilter <-
         intersect(vocabularyDatabaseSchemas,
-                  input$databaseOrVocabularySchema)
+                  input$choiceForConceptSetDetails)
     } else {
       vocabularyDataSchemaToFilter <- NULL
     }
@@ -1663,16 +1685,16 @@ shiny::shinyServer(function(input, output, session) {
   
   #output: getFilteredOrphanConceptForConceptSetRowSelectedLeft----
   getFilteredOrphanConceptForConceptSetRowSelectedLeft <- shiny::reactive(x = {
-    if (any(is.null(getDatabaseIdInCohortConceptSet()),
-            length(getDatabaseIdInCohortConceptSet()) == 0)) {return(NULL)}
+    if (any(is.null(getChosenDatabaseIdToFilterConceptSetDetails()),
+            length(getChosenDatabaseIdToFilterConceptSetDetails()) == 0)) {return(NULL)}
     row <- getLastTwoRowSelectedInCohortTable()
     if (is.null(row) || length(getConceptSetExpressionForSelectedConceptSetLeft()$name) == 0) {
       return(NULL)
     }
-    if (length(input$databaseOrVocabularySchema) == 0) {return(NULL)}
+    if (length(input$choiceForConceptSetDetails) == 0) {return(NULL)}
     data <- getResultsOrphanConcept(dataSource = dataSource,
                                         cohortIds = row$cohortId,
-                                        databaseIds = getDatabaseIdInCohortConceptSet())
+                                        databaseIds = getChosenDatabaseIdToFilterConceptSetDetails())
     if (!is.null(data)) {
       data <- data %>% 
         dplyr::filter(.data$conceptSetId == getConceptSetExpressionForSelectedConceptSetLeft()$id)
@@ -2235,13 +2257,13 @@ shiny::shinyServer(function(input, output, session) {
   getFilteredSubjectAndRecordCountForSelectedConceptSetRight <- shiny::reactive(x = {
     row <- getLastTwoRowSelectedInCohortTable()[2,]
     
-    if (is.null(row) || length(getDatabaseIdInCohortConceptSetSecond()) == 0) {
+    if (is.null(row) || length(getChosenDatabaseIdToFilterConceptSetDetailsSecond()) == 0) {
       return(NULL)
     } else {
       
       data <- filterCohortCountByCohortIdAndDatabaseId(cohortCount = cohortCount,
                                                          cohortId = row$cohortId, 
-                                                         databaseId = getDatabaseIdInCohortConceptSetSecond())
+                                                         databaseId = getChosenDatabaseIdToFilterConceptSetDetailsSecond())
       
       if (nrow(data) == 0 || is.null(data)) {
         return(NULL)
@@ -2379,9 +2401,9 @@ shiny::shinyServer(function(input, output, session) {
   ##reactive: getResolvedOrMappedConceptRight----
   getResolvedOrMappedConceptRight <- shiny::reactive({
     data <- NULL
-    if (is.null(input$databaseOrVocabularySchemaSecond)) {return(NULL)}
+    if (is.null(input$choiceForConceptSetDetailsSecond)) {return(NULL)}
     databaseIdToFilter <- database %>%
-      dplyr::filter(.data$databaseIdWithVocabularyVersion == input$databaseOrVocabularySchemaSecond) %>%
+      dplyr::filter(.data$databaseIdWithVocabularyVersion == input$choiceForConceptSetDetailsSecond) %>%
       dplyr::pull(.data$databaseId)
     
     conceptCounts <- getConceptCountForAllDatabaseRight()
@@ -2446,11 +2468,11 @@ shiny::shinyServer(function(input, output, session) {
     }
     
     if (exists("vocabularyDatabaseSchemas") &&
-        !is.null(input$databaseOrVocabularySchemaSecond) &&
-        length(input$databaseOrVocabularySchemaSecond) > 0) {
+        !is.null(input$choiceForConceptSetDetailsSecond) &&
+        length(input$choiceForConceptSetDetailsSecond) > 0) {
       vocabularyDataSchemaToFilter <-
         intersect(vocabularyDatabaseSchemas,
-                  input$databaseOrVocabularySchemaSecond)
+                  input$choiceForConceptSetDetailsSecond)
     } else {
       vocabularyDataSchemaToFilter <- NULL
     }
@@ -2680,16 +2702,16 @@ shiny::shinyServer(function(input, output, session) {
   
   ##reactive: getFilteredOrphanConceptForConceptSetRowSelectedRight----
   getFilteredOrphanConceptForConceptSetRowSelectedRight <- shiny::reactive(x = {
-    if (any(is.null(getDatabaseIdInCohortConceptSetSecond()),
-            length(getDatabaseIdInCohortConceptSetSecond()) == 0)) {return(NULL)}
+    if (any(is.null(getChosenDatabaseIdToFilterConceptSetDetailsSecond()),
+            length(getChosenDatabaseIdToFilterConceptSetDetailsSecond()) == 0)) {return(NULL)}
     row <- getLastTwoRowSelectedInCohortTable()
     if (is.null(row) || length(getConceptSetExpressionForSelectedConceptSetRight()$name) == 0) {
       return(NULL)
     }
-    # if (length(input$databaseOrVocabularySchema) == 0) {return(NULL)}
+    # if (length(input$choiceForConceptSetDetails) == 0) {return(NULL)}
     data <- getResultsOrphanConcept(dataSource = dataSource,
                                     cohortId = row$cohortId,
-                                    databaseIds = getDatabaseIdInCohortConceptSetSecond())
+                                    databaseIds = getChosenDatabaseIdToFilterConceptSetDetailsSecond())
     if (!is.null(data)) {
       data <- data %>% 
         dplyr::filter(.data$conceptSetId == getConceptSetExpressionForSelectedConceptSetRight()$id)
@@ -2870,7 +2892,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: resolvedConceptsPresentInLeft----
   output$resolvedConceptsPresentInLeft <- DT::renderDT({
-    validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
+    validate(need(input$choiceForConceptSetDetails == input$choiceForConceptSetDetailsSecond, "Please select same database for comparison"))
     result <- dplyr::setdiff(getJoinedResolvedOrMappedConceptsList()$leftData, 
                              getJoinedResolvedOrMappedConceptsList()$rightData)
     
@@ -2912,7 +2934,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: resolvedConceptsPresentInRight----
   output$resolvedConceptsPresentInRight <- DT::renderDT({
-    validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
+    validate(need(input$choiceForConceptSetDetails == input$choiceForConceptSetDetailsSecond, "Please select same database for comparison"))
     result <- dplyr::setdiff(getJoinedResolvedOrMappedConceptsList()$rightData, 
                              getJoinedResolvedOrMappedConceptsList()$leftData)
     
@@ -2953,7 +2975,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: resolvedConceptsPresentInBoth----
   output$resolvedConceptsPresentInBoth <- DT::renderDT({
-    validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
+    validate(need(input$choiceForConceptSetDetails == input$choiceForConceptSetDetailsSecond, "Please select same database for comparison"))
     result <- dplyr::intersect(getJoinedResolvedOrMappedConceptsList()$leftData, 
                                getJoinedResolvedOrMappedConceptsList()$rightData)
     
@@ -2994,7 +3016,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: resolvedConceptsPresentInEither----
   output$resolvedConceptsPresentInEither <- DT::renderDT({
-    validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
+    validate(need(input$choiceForConceptSetDetails == input$choiceForConceptSetDetailsSecond, "Please select same database for comparison"))
     result <- dplyr::union(getJoinedResolvedOrMappedConceptsList()$leftData,
                            getJoinedResolvedOrMappedConceptsList()$rightData)
     
@@ -3035,7 +3057,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: mappedConceptsPresentInLeft----
   output$mappedConceptsPresentInLeft <- DT::renderDT({
-    validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
+    validate(need(input$choiceForConceptSetDetails == input$choiceForConceptSetDetailsSecond, "Please select same database for comparison"))
     result <- dplyr::setdiff(getJoinedResolvedOrMappedConceptsList()$leftData, 
                              getJoinedResolvedOrMappedConceptsList()$rightData)
     
@@ -3076,7 +3098,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: mappedConceptsPresentInRight----
   output$mappedConceptsPresentInRight <- DT::renderDT({
-    validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
+    validate(need(input$choiceForConceptSetDetails == input$choiceForConceptSetDetailsSecond, "Please select same database for comparison"))
     result <- dplyr::setdiff(getJoinedResolvedOrMappedConceptsList()$rightData, 
                              getJoinedResolvedOrMappedConceptsList()$leftData)
     
@@ -3117,7 +3139,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: mappedConceptsPresentInBoth----
   output$mappedConceptsPresentInBoth <- DT::renderDT({
-    validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
+    validate(need(input$choiceForConceptSetDetails == input$choiceForConceptSetDetailsSecond, "Please select same database for comparison"))
     result <- dplyr::intersect(getJoinedResolvedOrMappedConceptsList()$leftData, 
                                getJoinedResolvedOrMappedConceptsList()$rightData)
     
@@ -3158,7 +3180,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: mappedConceptsPresentInEither----
   output$mappedConceptsPresentInEither <- DT::renderDT({
-    validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
+    validate(need(input$choiceForConceptSetDetails == input$choiceForConceptSetDetailsSecond, "Please select same database for comparison"))
     result <- dplyr::union(getJoinedResolvedOrMappedConceptsList()$leftData,
                            getJoinedResolvedOrMappedConceptsList()$rightData)
     
@@ -3199,7 +3221,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: orphanConceptsPresentInLeft----
   output$orphanConceptsPresentInLeft <- DT::renderDT({
-    validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, 
+    validate(need(input$choiceForConceptSetDetails == input$choiceForConceptSetDetailsSecond, 
                   "Please select same database for comparison"))
     result <- dplyr::setdiff(getPivotOrphanConceptResultLeft(), 
                              getPivotOrphanConceptResultRight())
@@ -3262,7 +3284,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: orphanConceptsPresentInRight----
   output$orphanConceptsPresentInRight <- DT::renderDT({
-    validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, 
+    validate(need(input$choiceForConceptSetDetails == input$choiceForConceptSetDetailsSecond, 
                   "Please select same database for comparison"))
     result <- dplyr::setdiff(getPivotOrphanConceptResultRight()$table,
                              getPivotOrphanConceptResultLeft()$table)
@@ -3325,7 +3347,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: orphanConceptsPresentInBoth----
   output$orphanConceptsPresentInBoth <- DT::renderDT({
-    validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
+    validate(need(input$choiceForConceptSetDetails == input$choiceForConceptSetDetailsSecond, "Please select same database for comparison"))
     result <- dplyr::intersect(getPivotOrphanConceptResultLeft()$table, 
                                getPivotOrphanConceptResultRight()$table)
     orphanConceptDataDatabaseIds <- attr(x = getPivotOrphanConceptResultLeft(), which = 'databaseIds')
@@ -3387,7 +3409,7 @@ shiny::shinyServer(function(input, output, session) {
   
   ##output: orphanConceptsPresentInEither----
   output$orphanConceptsPresentInEither <- DT::renderDT({
-    validate(need(input$databaseOrVocabularySchema == input$databaseOrVocabularySchemaSecond, "Please select same database for comparison"))
+    validate(need(input$choiceForConceptSetDetails == input$choiceForConceptSetDetailsSecond, "Please select same database for comparison"))
     result <- dplyr::union(getPivotOrphanConceptResultLeft()$table, 
                            getPivotOrphanConceptResultRight()$table)
     orphanConceptDataDatabaseIds <- attr(x = getPivotOrphanConceptResultLeft(), which = 'databaseIds')
