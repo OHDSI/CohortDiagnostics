@@ -390,7 +390,7 @@ CREATE TABLE index_event_breakdown (
 --HINT DISTRIBUTE ON RANDOM
 CREATE TABLE metadata (
 			database_id VARCHAR NOT NULL,
-			start_time VARCHAR NOT NULL,
+			start_time DATETIME NOT NULL,
 			variable_field VARCHAR NOT NULL,
 			value_field VARCHAR,
 			PRIMARY KEY(database_id, start_time, variable_field)

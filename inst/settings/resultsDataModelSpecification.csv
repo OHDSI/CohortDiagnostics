@@ -375,6 +375,7 @@ index_event_breakdown,database_id,varchar,Yes,Yes,No,Yes,2.1
 index_event_breakdown,domain_field,varchar,Yes,Yes,No,Yes,2.1
 index_event_breakdown,domain_table,varchar,Yes,Yes,No,Yes,2.1
 metadata,database_id,varchar,Yes,Yes,No,Yes,2.1
+metadata,start_time,DateTime,Yes,Yes,No,Yes,2.1
 metadata,variable_field,varchar,Yes,Yes,No,Yes,2.1
 metadata,value_field,varchar,Yes,No,No,Yes,2.1
 orphan_concept,cohort_id,bigint,Yes,Yes,No,Yes,2.1
