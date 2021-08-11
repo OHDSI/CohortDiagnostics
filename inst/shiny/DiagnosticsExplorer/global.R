@@ -34,7 +34,8 @@ showVisitContext <- TRUE
 #Since Characterization and CompareCharacterization uses the same table
 showCharacterizationAndCompareCharacterization <- TRUE
 #Since TemporalCharacterization and CompareTemporalCharacterization uses the same table
-showTemporalCharacterizationAndCompareTemporalCharacterization <- TRUE
+showTemporalCharacterizationAndCompareTemporalCharacterization <-
+  TRUE
 #show all time id choices or only the primary time id choices
 filterTemporalChoicesToPrimaryOptions <- FALSE
 
@@ -142,7 +143,7 @@ if (databaseMode) {
   
   # tables observed in database
   resultsTablesOnServer <-
-    tolower(DatabaseConnector::dbListTables(connectionPool, 
+    tolower(DatabaseConnector::dbListTables(connectionPool,
                                             schema = resultsDatabaseSchema))
   
   #!!!!!!!!! write logic to infer if the data model is 2.1 or 2.2 here - for backward compatibility
@@ -161,14 +162,18 @@ if (databaseMode) {
       "vocabulary"
     )
   for (i in (1:length(tablesToLoadRequired))) {
-    loadResultsTable(tableName = tablesToLoadRequired[[i]], 
-                     resultsTablesOnServer = resultsTablesOnServer, 
-                     required = TRUE)
+    loadResultsTable(
+      tableName = tablesToLoadRequired[[i]],
+      resultsTablesOnServer = resultsTablesOnServer,
+      required = TRUE
+    )
   }
   for (i in (1:length(tablesToLoad))) {
-    loadResultsTable(tableName = tablesToLoad[[i]], 
-                     resultsTablesOnServer = resultsTablesOnServer, 
-                     required = FALSE)
+    loadResultsTable(
+      tableName = tablesToLoad[[i]],
+      resultsTablesOnServer = resultsTablesOnServer,
+      required = FALSE
+    )
   }
   
   # compare expected to observed tables
@@ -253,10 +258,8 @@ if (exists("temporalTimeRef")) {
 
 #enhancement and removing the objects based on the control variable
 if (exists("covariateRef")) {
-  if (all(
-    nrow(covariateRef) > 0,
-    showCharacterizationAndCompareCharacterization
-  )) {
+  if (all(nrow(covariateRef) > 0,
+          showCharacterizationAndCompareCharacterization)) {
     specifications <- readr::read_csv(
       file = "Table1Specs.csv",
       col_types = readr::cols(),
