@@ -155,7 +155,7 @@ if (databaseMode) {
       "concept_sets",
       "concept_class",
       "domain",
-      "relationsip",
+      "relationship",
       "temporal_time_ref",
       "temporal_analysis_ref",
       "temporal_covariate_ref",
@@ -321,3 +321,30 @@ sourcesOfVocabularyTables <-
                                database = database)
 
 domainInformation <- getDomainInformation()
+
+domainInformationLong <- dplyr::bind_rows(
+  domainInformation %>%
+    dplyr::select(
+      .data$domainTableShort,
+      .data$domainTable,
+      .data$domainConceptIdShort,
+      .data$domainConceptId
+    ) %>%
+    dplyr::rename(
+      domainFieldShort = .data$domainConceptIdShort,
+      domainField = .data$domainConceptId
+    ),
+  domainInformation %>%
+    dplyr::select(
+      .data$domainTableShort,
+      .data$domainSourceConceptIdShort,
+      .data$domainTable,
+      .data$domainSourceConceptId
+    ) %>%
+    dplyr::rename(
+      domainFieldShort = .data$domainSourceConceptIdShort,
+      domainField = .data$domainSourceConceptId
+    )
+) %>%
+  dplyr::distinct() %>% 
+  dplyr::filter(.data$domainFieldShort != "")

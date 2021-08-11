@@ -74,6 +74,7 @@ concept_cooccurrence,co_concept_id,int,Yes,Yes,No,Yes,2.2
 concept_cooccurrence,concept_count,bigint,Yes,Yes,No,Yes,2.2
 concept_count,database_id,varchar,Yes,Yes,No,Yes,2.2
 concept_count,domain_table,varchar,Yes,Yes,No,Yes,2.2
+concept_count,domain_field,varchar,Yes,Yes,No,Yes,2.2
 concept_count,concept_id,int,Yes,Yes,No,Yes,2.2
 concept_count,event_year,int,Yes,Yes,No,Yes,2.2
 concept_count,event_month,int,Yes,Yes,No,Yes,2.2
@@ -94,6 +95,7 @@ concept_resolved,concept_set_id,int,Yes,Yes,No,Yes,2.2
 concept_resolved,concept_id,int,Yes,Yes,No,Yes,2.2
 concept_subjects,database_id,varchar,Yes,Yes,No,Yes,2.2
 concept_subjects,domain_table,varchar,Yes,Yes,No,Yes,2.2
+concept_subjects,domain_field,varchar,Yes,Yes,Yes,Yes,2.2
 concept_subjects,concept_id,int,Yes,Yes,No,Yes,2.2
 concept_subjects,subject_count,float,Yes,No,No,Yes,2.2
 concept_mapping,database_id,varchar,Yes,Yes,No,Yes,2.2
@@ -137,11 +139,6 @@ database,database_id,varchar,Yes,Yes,No,Yes,2.2
 database,database_name,varchar,No,No,No,Yes,2.2
 database,description,varchar,No,No,No,Yes,2.2
 database,is_meta_analysis,varchar(1),Yes,No,No,Yes,2.2
-database,observation_period_min_date,Date,Yes,No,No,Yes,2.2
-database,observation_period_max_date,Date,Yes,No,No,Yes,2.2
-database,persons,bigint,No,No,Yes,Yes,2.2
-database,records,bigint,No,No,Yes,Yes,2.2
-database,person_days,bigint,No,No,Yes,Yes,2.2
 database,vocabulary_version, varchar, No, No, Yes, Yes,2.2
 database,vocabulary_version_cdm, varchar, No, No, Yes, Yes,2.2
 domain,domain_id,varchar(20),Yes,Yes,No,Yes,2.2
@@ -375,6 +372,7 @@ index_event_breakdown,database_id,varchar,Yes,Yes,No,Yes,2.1
 index_event_breakdown,domain_field,varchar,Yes,Yes,No,Yes,2.1
 index_event_breakdown,domain_table,varchar,Yes,Yes,No,Yes,2.1
 metadata,database_id,varchar,Yes,Yes,No,Yes,2.1
+metadata,start_time,DateTime,Yes,Yes,No,Yes,2.1
 metadata,variable_field,varchar,Yes,Yes,No,Yes,2.1
 metadata,value_field,varchar,Yes,No,No,Yes,2.1
 orphan_concept,cohort_id,bigint,Yes,Yes,No,Yes,2.1
