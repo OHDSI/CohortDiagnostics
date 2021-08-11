@@ -319,3 +319,5 @@ if (!showVisitContext) {
 sourcesOfVocabularyTables <-
   getSourcesOfVocabularyTables(dataSource = dataSource,
                                database = database)
+
+domainInformation <- getDomainInformation()

@@ -268,7 +268,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
                            " ",
                            attr(delta, "units"))
   
-  # get concept count----
+  # get concept record count----
   ParallelLogger::logInfo(" - Counting concepts in data source.")
   conceptSetDiagnosticsResults$conceptCount <-
     getConceptRecordCountByMonth(
@@ -283,6 +283,7 @@ runConceptSetDiagnostics <- function(connection = NULL,
       dplyr::filter(.data$conceptId < 200000000)
   }
   
+  # get concept subject count----
   conceptSetDiagnosticsResults$conceptSubjects <-
     getConceptSubjectCount(
       connection = connection,
@@ -803,7 +804,7 @@ getConceptRecordCountByMonth <- function(connection,
                                          tempEmulationSchema,
                                          conceptIdUniverse = "#concept_tracking") {
   ParallelLogger::logTrace(" - Counting concepts by person id, calendar month and year")
-  domains <- getDomainInformation()
+  domains <- getDomainInformation(package = 'CohortDiagnostics')
   sql <- "SELECT @domain_concept_id concept_id,
           	YEAR(@domain_start_date) event_year,
           	MONTH(@domain_start_date) event_month,
@@ -821,7 +822,7 @@ getConceptRecordCountByMonth <- function(connection,
   
   standardConcepts <- list()
   for (i in (1:nrow(domains))) {
-    rowData <- domains[i, ]
+    rowData <- domains[i,]
     ParallelLogger::logTrace(paste0(
       "   - Working on ",
       rowData$domainTable,
@@ -839,23 +840,22 @@ getConceptRecordCountByMonth <- function(connection,
       concept_id_universe = conceptIdUniverse,
       snakeCaseToCamelCase = TRUE
     ) %>%
-      dplyr::mutate(domainTable = rowData$domainTableShort)
+      dplyr::mutate(domainTable = rowData$domainTableShort) %>%
+      dplyr::mutate(domainField = rowData$domainConceptIdShort)
   }
   standardConcepts <- dplyr::bind_rows(standardConcepts) %>%
     dplyr::distinct()
   
   nonStandardConcepts <- list()
   for (i in (1:nrow(domains))) {
-    rowData <- domains[i, ]
+    rowData <- domains[i,]
     if (nchar(rowData$domainSourceConceptId) > 4) {
-      ParallelLogger::logTrace(
-        paste0(
-          "   - Working on ",
-          rowData$domainTable,
-          ".",
-          rowData$domainSourceConceptId
-        )
-      )
+      ParallelLogger::logTrace(paste0(
+        "   - Working on ",
+        rowData$domainTable,
+        ".",
+        rowData$domainSourceConceptId
+      ))
       
       nonStandardConcepts[[i]] <- renderTranslateQuerySql(
         connection = connection,
@@ -869,31 +869,38 @@ getConceptRecordCountByMonth <- function(connection,
         snakeCaseToCamelCase = TRUE
       ) %>%
         # conceptIds - only keep concept id that were never found in standard fields
-        dplyr::anti_join(
-          y = standardConcepts %>%
-            dplyr::select(.data$conceptId) %>%
-            dplyr::distinct(),
-          by = 'conceptId'
-        ) %>%
-        dplyr::mutate(domainTable = rowData$domainTableShort)
+        # dplyr::anti_join(
+        #   y = standardConcepts %>%
+        #     dplyr::select(.data$conceptId) %>%
+        #     dplyr::distinct(),
+        #   by = 'conceptId'
+        # ) %>%
+        dplyr::mutate(domainTable = rowData$domainTableShort) %>%
+        dplyr::mutate(domainField = rowData$domainConceptIdShort)
     }
   }
   nonStandardConcepts <-
     dplyr::bind_rows(nonStandardConcepts)
-  return(
+  data <-
     dplyr::bind_rows(standardConcepts, nonStandardConcepts) %>%
-      dplyr::select(
-        .data$domainTable,
-        .data$conceptId,
-        .data$eventYear,
-        .data$eventMonth,
-        .data$conceptCount
-      ) %>%
-      dplyr::distinct() %>%
-      dplyr::arrange(.data$conceptId, .data$eventYear, .data$eventMonth)
-  )
+    dplyr::select(
+      .data$domainTable,
+      .data$domainField,
+      .data$conceptId,
+      .data$eventYear,
+      .data$eventMonth,
+      .data$conceptCount
+    ) %>%
+    dplyr::distinct() %>%
+    dplyr::arrange(
+      .data$domainTable,
+      .data$domainField,
+      .data$conceptId,
+      .data$eventYear,
+      .data$eventMonth
+    )
+  return(data)
 }
-
 
 
 getConceptSubjectCount <- function(connection,
@@ -901,7 +908,7 @@ getConceptSubjectCount <- function(connection,
                                    tempEmulationSchema,
                                    conceptIdUniverse = "#concept_tracking") {
   ParallelLogger::logTrace(" - Counting unique person count by concept id")
-  domains <- getDomainInformation()
+  domains <- getDomainInformation(package = 'CohortDiagnostics')
   sql <- "SELECT @domain_concept_id concept_id,
           	COUNT_BIG(DISTINCT person_id) subject_count
           FROM @cdm_database_schema.@domain_table
@@ -933,7 +940,8 @@ getConceptSubjectCount <- function(connection,
       concept_id_universe = conceptIdUniverse,
       snakeCaseToCamelCase = TRUE
     ) %>%
-      dplyr::mutate(domainTable = rowData$domainTableShort)
+      dplyr::mutate(domainTable = rowData$domainTableShort) %>%
+      dplyr::mutate(domainField = rowData$domainConceptIdShort)
   }
   standardConcepts <- dplyr::bind_rows(standardConcepts) %>%
     dplyr::distinct()
@@ -969,7 +977,8 @@ getConceptSubjectCount <- function(connection,
             dplyr::distinct(),
           by = 'conceptId'
         ) %>%
-        dplyr::mutate(domainTable = rowData$domainTableShort)
+        dplyr::mutate(domainTable = rowData$domainTableShort) %>%
+        dplyr::mutate(domainField = rowData$domainConceptIdShort)
     }
   }
   nonStandardConcepts <-
@@ -1089,7 +1098,7 @@ getIndexDateConceptCooccurrence <- function(connection,
                                             cohortDatabaseSchema,
                                             cohortIds,
                                             conceptIdUniverse = "#concept_tracking") {
-  domains <- getDomainInformation()
+  domains <- getDomainInformation(package = 'CohortDiagnostics')
   sqlDdlDrop <-
     "IF OBJECT_ID('tempdb..#concept_cooccurrence', 'U') IS NOT NULL
                 	      DROP TABLE #concept_cooccurrence;
@@ -1220,7 +1229,7 @@ getConceptSourceStandardMapping <- function(connection,
                                             tempEmulationSchema,
                                             sourceValue = FALSE,
                                             conceptIdUniverse = "#concept_tracking") {
-  domains <- getDomainInformation() %>%
+  domains <- getDomainInformation(package = 'CohortDiagnostics') %>%
     dplyr::filter(nchar(.data$domainSourceConceptId) > 1)
   
   sql <- "WITH concept_id_universe

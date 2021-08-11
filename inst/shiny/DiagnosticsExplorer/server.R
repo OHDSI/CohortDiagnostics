@@ -1381,11 +1381,19 @@ shiny::shinyServer(function(input, output, session) {
         dataSource = dataSource,
         databaseIds = database$databaseId
       )
+      conceptCount <- conceptCount %>% 
+        dplyr::rename(domainTableShort = .data$domainTable) %>% 
+        dplyr::inner_join(domainInformation %>% 
+                            dplyr::select(.data$domainTableShort,
+                                          .data$domainTable), 
+                          by = "domainTableShort") %>% 
+        dplyr::select(-.data$domainTableShort)
       return(conceptCount)
     })
   
   #reactive: getResolvedOrMappedConceptsLeft----
   getResolvedOrMappedConceptsLeft <- shiny::reactive({
+    browser()
     data <- NULL
     if (is.null(input$choiceForConceptSetDetails)) {return(NULL)}
     databaseIdToFilter <- database %>%
@@ -1395,7 +1403,6 @@ shiny::shinyServer(function(input, output, session) {
     if (all(!is.null(conceptCounts),
             nrow(conceptCounts) > 0)) {
       conceptCounts <- conceptCounts %>% 
-        dplyr::filter(.data$databaseId %in% !!databaseIdToFilter) %>% 
         dplyr::select(.data$conceptId, .data$sourceConceptId, .data$conceptSubjects, .data$conceptCount) %>% 
         dplyr::distinct()
       conceptCounts <- dplyr::bind_rows(
@@ -2395,6 +2402,13 @@ shiny::shinyServer(function(input, output, session) {
         dataSource = dataSource,
         databaseIds = database$databaseId
       )
+      conceptCount <- conceptCount %>% 
+        dplyr::rename(domainTableShort = .data$domainTable) %>% 
+        dplyr::inner_join(domainInformation %>% 
+                            dplyr::select(.data$domainTableShort,
+                                          .data$domainTable), 
+                          by = "domainTableShort") %>% 
+        dplyr::select(-.data$domainTableShort)
       return(conceptCount)
     })
   
