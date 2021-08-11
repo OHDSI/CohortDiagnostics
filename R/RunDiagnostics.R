@@ -128,8 +128,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                    useProcedureOccurrence = TRUE,
                                    useMeasurement = TRUE,
                                    temporalStartDays = c(
-                                     -365,
-                                     -30,
+                                     -365,-30,
                                      0,
                                      1,
                                      31,
@@ -137,8 +136,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                      seq(from = 0, to = 390, by = 30)
                                    ),
                                    temporalEndDays = c(
-                                     -31,
-                                     -1,
+                                     -31,-1,
                                      0,
                                      30,
                                      365,
@@ -149,7 +147,7 @@ runCohortDiagnostics <- function(packageName = NULL,
                                  minCellCount = 5,
                                  incremental = FALSE,
                                  incrementalFolder = file.path(exportFolder, "incremental")) {
-  start <- Sys.time()
+  startDateTime <- Sys.time()
   
   if (all(is.null(connectionDetails),
           is.null(connection))) {
@@ -187,7 +185,7 @@ runCohortDiagnostics <- function(packageName = NULL,
     runConceptSetDiagnostics <- TRUE
   }
   
-  ParallelLogger::logInfo("Run Cohort Diagnostics started at ", start, '. Initiating...')
+  ParallelLogger::logInfo("Run Cohort Diagnostics started at ", startDateTime, '. Initiating...')
   
   # collect arguments that were passed to cohort diagnostics at initiation
   argumentsAtDiagnosticsInitiation <- formals(runCohortDiagnostics)
@@ -404,14 +402,11 @@ runCohortDiagnostics <- function(packageName = NULL,
     description = dplyr::coalesce(databaseDescription, databaseId),
     vocabularyVersionCdm = cdmSourceInformation$vocabularyVersion,
     vocabularyVersion = !!vocabularyVersion,
-    isMetaAnalysis = 0,
-    observationPeriodMinDate = observationPeriodDateRange$observationPeriodMinDate,
-    observationPeriodMaxDate = observationPeriodDateRange$observationPeriodMaxDate,
-    persons = observationPeriodDateRange$persons,
-    records = observationPeriodDateRange$records,
-    personDays = observationPeriodDateRange$personDays
+    isMetaAnalysis = 0
   )
   database <- .replaceNaInDataFrameWithEmptyString(database)
+  writeToCsv(data = database,
+             fileName = file.path(exportFolder, "database.csv"))
   delta <- Sys.time() - startMetaData
   ParallelLogger::logTrace(paste(
     " - Saving database metadata took",
@@ -482,7 +477,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   ParallelLogger::logInfo(" - Retrieving inclusion rules from file.")
   if (runInclusionStatistics) {
     startInclusionStatistics <- Sys.time()
-    if (any(is.null(instantiatedCohorts), -1 %in% instantiatedCohorts)) {
+    if (any(is.null(instantiatedCohorts),-1 %in% instantiatedCohorts)) {
       ParallelLogger::logTrace("  - Skipping inclusion statistics from files because no cohorts were instantiated.")
     } else {
       subset <- subsetToRequiredCohorts(
@@ -971,65 +966,134 @@ runCohortDiagnostics <- function(packageName = NULL,
       attr(delta, "units")
     )
   }
-  
+
   # Writing metadata file
   ParallelLogger::logInfo("Retrieving metadata information and writing metadata")
-  metadata <-
-    dplyr::tibble(
-      databaseId = as.character(!!databaseId),
-      startTime = paste0(as.character(start)),
-      variableField = c(
-        "timeZone",
-        "runTime",
-        "runTimeUnits",
-        "packageDependencySnapShotJson",
-        "argumentsAtDiagnosticsInitiationJson",
-        "Rversion",
-        "CurrentPackage",
-        "CurrentPackageVersion",
-        "sourceDescription",
-        "cdmSourceName",
-        "sourceReleaseDate",
-        "cdmVersion",
-        "cdmReleaseDate",
-        "vocabularyVersion"
-      ),
-      valueField =  c(
-        as.character(Sys.timezone()),
-        as.character(as.numeric(
-          x = delta, units = attr(delta, "units")
-        )),
-        as.character(attr(delta, "units")),
-        packageDependencySnapShotJson,
-        argumentsAtDiagnosticsInitiationJson,
-        as.character(R.Version()$version.string),
-        as.character(nullToEmpty(packageName())),
-        as.character(if (!getPackageName() == ".GlobalEnv") {
-          packageVersion(packageName())
-        } else {
-          ''
-        }),
-        as.character(nullToEmpty(
-          cdmSourceInformation$sourceDescription
-        )),
-        as.character(nullToEmpty(cdmSourceInformation$cdmSourceName)),
-        as.character(nullToEmpty(
-          cdmSourceInformation$sourceReleaseDate
-        )),
-        as.character(nullToEmpty(cdmSourceInformation$cdmVersion)),
-        as.character(nullToEmpty(cdmSourceInformation$cdmReleaseDate)),
-        as.character(nullToEmpty(
-          cdmSourceInformation$vocabularyVersion
-        ))
-      )
-    )
+  
+  packageName <- packageName()
+  packageVersion <- if (!getPackageName() == ".GlobalEnv") {
+    as.character(packageVersion(packageName()))
+  } else {
+    ''
+  }
+  variableField <- c(
+    "timeZone",
+    #1
+    "runTime",
+    #2
+    "runTimeUnits",
+    #3
+    "packageDependencySnapShotJson",
+    #4
+    "argumentsAtDiagnosticsInitiationJson",
+    #5
+    "Rversion",
+    #6
+    "CurrentPackage",
+    #7
+    "CurrentPackageVersion",
+    #8
+    "sourceDescription",
+    #9
+    "cdmSourceName",
+    #10
+    "sourceReleaseDate",
+    #11
+    "cdmVersion",
+    #12
+    "cdmReleaseDate",
+    #13
+    "vocabularyVersion",
+    #14
+    "databaseId",
+    #15
+    "datasourceName",
+    #16
+    "datasourceDescription",
+    #17
+    "vocabularyVersionCdm",
+    #18
+    "vocabularyVersion",
+    #19
+    "observationPeriodMinDate",
+    #20
+    "observationPeriodMaxDate",
+    #21
+    "personsInDatasource",
+    #22
+    "recordsInDatasource",
+    #23
+    "personDaysInDatasource" #24
+  )
+  valueField <-   c(
+    as.character(Sys.timezone()),
+    #1
+    as.character(as.numeric(
+      x = delta, units = attr(delta, "units")
+    )),
+    #2
+    as.character(attr(delta, "units")),
+    #3
+    packageDependencySnapShotJson,
+    #4
+    argumentsAtDiagnosticsInitiationJson,
+    #5
+    as.character(R.Version()$version.string),
+    #6
+    as.character(nullToEmpty(packageName)),
+    #7
+    as.character(nullToEmpty(packageVersion)),
+    #8
+    as.character(nullToEmpty(
+      cdmSourceInformation$sourceDescription
+    )),
+    #9
+    as.character(nullToEmpty(cdmSourceInformation$cdmSourceName)),
+    #10
+    as.character(nullToEmpty(
+      cdmSourceInformation$sourceReleaseDate
+    )),
+    #11
+    as.character(nullToEmpty(cdmSourceInformation$cdmVersion)),
+    #12
+    as.character(nullToEmpty(cdmSourceInformation$cdmReleaseDate)),
+    #13
+    as.character(nullToEmpty(
+      cdmSourceInformation$vocabularyVersion
+    )),
+    #14
+    as.character(databaseId),
+    #15
+    as.character(databaseName),
+    #16
+    as.character(databaseDescription),
+    #17
+    as.character(nullToEmpty(cdmSourceInformation$vocabularyVersion)),
+    #18
+    as.character(vocabularyVersion),
+    #19
+    as.character(observationPeriodDateRange$observationPeriodMinDate),
+    #20
+    as.character(observationPeriodDateRange$observationPeriodMaxDate),
+    #21
+    as.character(observationPeriodDateRange$persons),
+    #22
+    as.character(observationPeriodDateRange$records),
+    #23
+    as.character(observationPeriodDateRange$personDays) #24
+  )
+  metadata <- dplyr::tibble(
+    databaseId = as.character(!!databaseId),
+    startTime = paste0(as.character(startDateTime)),
+    variableField = variableField,
+    valueField = valueField
+  )
   writeToCsv(
     data = metadata,
     fileName = file.path(exportFolder, "metadata.csv"),
     incremental = TRUE,
-    start_time = as.character(start)
+    start_time = as.character(startDateTime)
   )
-  
   # Add all to zip file----
   ParallelLogger::logInfo("Adding results to zip file")
   zipName <-
@@ -1040,7 +1104,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   DatabaseConnector::createZipFile(zipFile = zipName, files = files)
   ParallelLogger::logInfo(" - Results are ready for sharing at: ", zipName)
   
-  delta <- Sys.time() - start
+  delta <- Sys.time() - startDateTime
   
   ParallelLogger::logInfo("Computing all diagnostics took ",
                           signif(delta, 3),

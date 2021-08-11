@@ -281,6 +281,7 @@ saveIncremental <- function(data, fileName, ...) {
       )
     )
     if ((nrow(previousData)) > 0) {
+      previousData <- .convertDateToString(previousData)
       if (!length(list(...)) == 0) {
         idx <- getKeyIndex(list(...), previousData)
       } else {

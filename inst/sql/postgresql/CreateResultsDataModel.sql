@@ -325,11 +325,6 @@ CREATE TABLE database (
 			database_name VARCHAR,
 			description VARCHAR,
 			is_meta_analysis VARCHAR(1) NOT NULL,
-			observation_period_min_date DATE NOT NULL,
-			observation_period_max_date DATE NOT NULL,
-			persons BIGINT,
-			records BIGINT,
-			person_days BIGINT,
 			vocabulary_version VARCHAR,
 			vocabulary_version_cdm VARCHAR,
 			PRIMARY KEY(database_id)
@@ -390,7 +385,7 @@ CREATE TABLE index_event_breakdown (
 --HINT DISTRIBUTE ON RANDOM
 CREATE TABLE metadata (
 			database_id VARCHAR NOT NULL,
-			start_time DATETIME NOT NULL,
+			start_time TIMESTAMP NOT NULL,
 			variable_field VARCHAR NOT NULL,
 			value_field VARCHAR,
 			PRIMARY KEY(database_id, start_time, variable_field)
