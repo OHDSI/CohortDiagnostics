@@ -182,11 +182,12 @@ CREATE TABLE concept_class (
 CREATE TABLE concept_count (
 			database_id VARCHAR NOT NULL,
 			domain_table VARCHAR NOT NULL,
+			domain_field VARCHAR NOT NULL,
 			concept_id INT NOT NULL,
 			event_year INT NOT NULL,
 			event_month INT NOT NULL,
 			concept_count FLOAT NOT NULL,
-			PRIMARY KEY(database_id, domain_table, concept_id, event_year, event_month)
+			PRIMARY KEY(database_id, domain_table, domain_field, concept_id, event_year, event_month)
 );
 
 --Table concept_cooccurrence
@@ -242,9 +243,10 @@ CREATE TABLE concept_sets (
 CREATE TABLE concept_subjects (
 			database_id VARCHAR NOT NULL,
 			domain_table VARCHAR NOT NULL,
+			domain_field VARCHAR NULL,
 			concept_id INT NOT NULL,
 			subject_count FLOAT NOT NULL,
-			PRIMARY KEY(database_id, domain_table, concept_id)
+			PRIMARY KEY(database_id, domain_table, domain_field, concept_id)
 );
 
 
@@ -373,8 +375,8 @@ CREATE TABLE inclusion_rule_stats (
 CREATE TABLE index_event_breakdown (
 			database_id VARCHAR NOT NULL,
 			cohort_id BIGINT NOT NULL,
-			domain_field VARCHAR NOT NULL,
 			domain_table VARCHAR NOT NULL,
+			domain_field VARCHAR NOT NULL,
 			concept_id INT NOT NULL,
 			concept_count FLOAT NOT NULL,
 			subject_count FLOAT NOT NULL,

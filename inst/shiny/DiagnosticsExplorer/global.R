@@ -8,7 +8,9 @@ source("R/Tables.R")
 source("R/Plots.R")
 source("R/Results.R")
 
+#Set values to NULL
 connectionPool <- NULL
+
 #Load default environment variables----
 defaultLocalDataFolder <- "data"
 defaultLocalDataFile <- "PreMerged.RData"
@@ -20,26 +22,22 @@ defaultPassword <- Sys.getenv("shinydbPw")
 defaultResultsSchema <- 'cdSkeletoncohortdiagnosticsstudy2'
 defaultVocabularySchema <- defaultResultsSchema
 alternateVocabularySchema <- c('vocabulary')
-
-#Mode determination ----
+#Mode
 defaultDatabaseMode <- FALSE # Use file system if FALSE
 
-#Tab control variables ----
+#Configuration variables ----
 showIncidenceRate <- TRUE
 showTimeSeries <- TRUE
 showTimeDistribution <- TRUE
 showIndexEventBreakdown <- TRUE
 showVisitContext <- TRUE
-
 #Since Characterization and CompareCharacterization uses the same table
 showCharacterizationAndCompareCharacterization <- TRUE
-
 #Since TemporalCharacterization and CompareTemporalCharacterization uses the same table
-showTemporalCharacterizationAndCompareTemporalCharacterization <- TRUE
-
+showTemporalCharacterizationAndCompareTemporalCharacterization <-
+  TRUE
+#show all time id choices or only the primary time id choices
 filterTemporalChoicesToPrimaryOptions <- FALSE
-
-
 
 # Foot note ----
 appInformationText <- "V 2.2"
@@ -50,7 +48,7 @@ appInformationText <-
     ". This app is working in"
   )
 
-# launch settings
+#Launch settings ----
 if (!exists("shinySettings")) {
   writeLines("Using default settings")
   databaseMode <- defaultDatabaseMode & defaultServer != ""
@@ -113,6 +111,7 @@ if (!exists("shinySettings")) {
   }
 }
 
+## Launch information ----
 appInformationText <- paste0(
   appInformationText,
   " mode. Application was last initated on ",
@@ -144,8 +143,10 @@ if (databaseMode) {
   
   # tables observed in database
   resultsTablesOnServer <-
-    tolower(DatabaseConnector::dbListTables(connectionPool, 
+    tolower(DatabaseConnector::dbListTables(connectionPool,
                                             schema = resultsDatabaseSchema))
+  
+  #!!!!!!!!! write logic to infer if the data model is 2.1 or 2.2 here - for backward compatibility
   ####load tables into R memory ----
   tablesToLoadRequired <- c("cohort", "cohort_count", "database")
   tablesToLoad <-
@@ -161,14 +162,18 @@ if (databaseMode) {
       "vocabulary"
     )
   for (i in (1:length(tablesToLoadRequired))) {
-    loadResultsTable(tableName = tablesToLoadRequired[[i]], 
-                     resultsTablesOnServer = resultsTablesOnServer, 
-                     required = TRUE)
+    loadResultsTable(
+      tableName = tablesToLoadRequired[[i]],
+      resultsTablesOnServer = resultsTablesOnServer,
+      required = TRUE
+    )
   }
   for (i in (1:length(tablesToLoad))) {
-    loadResultsTable(tableName = tablesToLoad[[i]], 
-                     resultsTablesOnServer = resultsTablesOnServer, 
-                     required = FALSE)
+    loadResultsTable(
+      tableName = tablesToLoad[[i]],
+      resultsTablesOnServer = resultsTablesOnServer,
+      required = FALSE
+    )
   }
   
   # compare expected to observed tables
@@ -223,7 +228,7 @@ if (exists("cohort")) {
     ))
 }
 
-#enchancement and removing the object both happens together based on the control variable
+#enhancement and removing the objects based on the control variable
 if (exists("temporalTimeRef")) {
   if (all(
     nrow(temporalTimeRef) > 0,
@@ -251,12 +256,10 @@ if (exists("temporalTimeRef")) {
   }
 }
 
-#enchancement and removing the object both happens together based on the control variable
+#enhancement and removing the objects based on the control variable
 if (exists("covariateRef")) {
-  if (all(
-    nrow(covariateRef) > 0,
-    showCharacterizationAndCompareCharacterization
-  )) {
+  if (all(nrow(covariateRef) > 0,
+          showCharacterizationAndCompareCharacterization)) {
     specifications <- readr::read_csv(
       file = "Table1Specs.csv",
       col_types = readr::cols(),
@@ -270,6 +273,8 @@ if (exists("covariateRef")) {
   }
 }
 
+
+#!!!!!!!!!!!!reduce code lines here
 # disable tabs based on user preference or control variable ----
 if (!showIncidenceRate) {
   if (exists("showIncidenceRate")) {
@@ -301,8 +306,7 @@ if (!showVisitContext) {
   }
 }
 
-
-
+#!!!!!! incomplete logic
 # if (!showOverlap) {
 #   if (exists("visitContext")) {
 #     rm("visitContext")
@@ -310,9 +314,10 @@ if (!showVisitContext) {
 # }
 
 
-
 #Extras -----
 # other objects in memory ----
 sourcesOfVocabularyTables <-
   getSourcesOfVocabularyTables(dataSource = dataSource,
                                database = database)
+
+domainInformation <- getDomainInformation()

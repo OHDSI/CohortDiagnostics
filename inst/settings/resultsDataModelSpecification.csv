@@ -74,6 +74,7 @@ concept_cooccurrence,co_concept_id,int,Yes,Yes,No,Yes,2.2
 concept_cooccurrence,concept_count,bigint,Yes,Yes,No,Yes,2.2
 concept_count,database_id,varchar,Yes,Yes,No,Yes,2.2
 concept_count,domain_table,varchar,Yes,Yes,No,Yes,2.2
+concept_count,domain_field,varchar,Yes,Yes,No,Yes,2.2
 concept_count,concept_id,int,Yes,Yes,No,Yes,2.2
 concept_count,event_year,int,Yes,Yes,No,Yes,2.2
 concept_count,event_month,int,Yes,Yes,No,Yes,2.2
@@ -94,6 +95,7 @@ concept_resolved,concept_set_id,int,Yes,Yes,No,Yes,2.2
 concept_resolved,concept_id,int,Yes,Yes,No,Yes,2.2
 concept_subjects,database_id,varchar,Yes,Yes,No,Yes,2.2
 concept_subjects,domain_table,varchar,Yes,Yes,No,Yes,2.2
+concept_subjects,domain_field,varchar,Yes,Yes,Yes,Yes,2.2
 concept_subjects,concept_id,int,Yes,Yes,No,Yes,2.2
 concept_subjects,subject_count,float,Yes,No,No,Yes,2.2
 concept_mapping,database_id,varchar,Yes,Yes,No,Yes,2.2
