@@ -128,7 +128,8 @@ runCohortDiagnostics <- function(packageName = NULL,
                                    useProcedureOccurrence = TRUE,
                                    useMeasurement = TRUE,
                                    temporalStartDays = c(
-                                     -365,-30,
+                                     -365,
+                                     -30,
                                      0,
                                      1,
                                      31,
@@ -136,7 +137,8 @@ runCohortDiagnostics <- function(packageName = NULL,
                                      seq(from = 0, to = 390, by = 30)
                                    ),
                                    temporalEndDays = c(
-                                     -31,-1,
+                                     -31,
+                                     -1,
                                      0,
                                      30,
                                      365,
@@ -480,7 +482,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   ParallelLogger::logInfo(" - Retrieving inclusion rules from file.")
   if (runInclusionStatistics) {
     startInclusionStatistics <- Sys.time()
-    if (any(is.null(instantiatedCohorts),-1 %in% instantiatedCohorts)) {
+    if (any(is.null(instantiatedCohorts), -1 %in% instantiatedCohorts)) {
       ParallelLogger::logTrace("  - Skipping inclusion statistics from files because no cohorts were instantiated.")
     } else {
       subset <- subsetToRequiredCohorts(
@@ -975,8 +977,9 @@ runCohortDiagnostics <- function(packageName = NULL,
   metadata <-
     dplyr::tibble(
       databaseId = as.character(!!databaseId),
-      startTime = paste0("DT-", as.character(start)),
+      startTime = paste0(as.character(start)),
       variableField = c(
+        "timeZone",
         "runTime",
         "runTimeUnits",
         "packageDependencySnapShotJson",
@@ -992,6 +995,7 @@ runCohortDiagnostics <- function(packageName = NULL,
         "vocabularyVersion"
       ),
       valueField =  c(
+        as.character(Sys.timezone()),
         as.character(as.numeric(
           x = delta, units = attr(delta, "units")
         )),
