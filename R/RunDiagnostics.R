@@ -525,7 +525,6 @@ runCohortDiagnostics <- function(packageName = NULL,
                              attr(delta, "units"))
   }
   
-  
   # Concept set diagnostics----
   if (runConceptSetDiagnostics) {
     ParallelLogger::logInfo(" - Beginning concept set diagnostics.")

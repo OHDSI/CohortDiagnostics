@@ -57,7 +57,6 @@ runConceptSetDiagnostics <- function(connection = NULL,
   if (length(cohortIds) == 0) {
     return(NULL)
   }
-  
   if (all(is.null(connectionDetails),
           is.null(connection))) {
     stop('Please provide either connection or connectionDetails to connect to database.')
@@ -186,7 +185,8 @@ runConceptSetDiagnostics <- function(connection = NULL,
                     .data$conceptId) %>%
       dplyr::distinct()
   }
-  
+  browser()
+  debug(getBreakdownIndexEvents)
   # Index event breakdown ----
   startBreakdownEvents <- Sys.time()
   ParallelLogger::logInfo(" - Learning about the breakdown in index events.")
@@ -267,7 +267,8 @@ runConceptSetDiagnostics <- function(connection = NULL,
                            signif(delta, 3),
                            " ",
                            attr(delta, "units"))
-  
+  browser()
+  debug(getConceptRecordCountByMonth)
   # get concept record count----
   ParallelLogger::logInfo(" - Counting concepts in data source.")
   conceptSetDiagnosticsResults$conceptCount <-
@@ -804,7 +805,7 @@ getConceptRecordCountByMonth <- function(connection,
                                          tempEmulationSchema,
                                          conceptIdUniverse = "#concept_tracking") {
   ParallelLogger::logTrace(" - Counting concepts by person id, calendar month and year")
-  domains <- getDomainInformation(package = 'CohortDiagnostics')
+  domains <- getDomainInformation(packageName = 'CohortDiagnostics')
   sql <- "SELECT @domain_concept_id concept_id,
           	YEAR(@domain_start_date) event_year,
           	MONTH(@domain_start_date) event_month,
@@ -908,7 +909,7 @@ getConceptSubjectCount <- function(connection,
                                    tempEmulationSchema,
                                    conceptIdUniverse = "#concept_tracking") {
   ParallelLogger::logTrace(" - Counting unique person count by concept id")
-  domains <- getDomainInformation(package = 'CohortDiagnostics')
+  domains <- getDomainInformation(packageName = 'CohortDiagnostics')
   sql <- "SELECT @domain_concept_id concept_id,
           	COUNT_BIG(DISTINCT person_id) subject_count
           FROM @cdm_database_schema.@domain_table
@@ -1003,7 +1004,7 @@ getBreakdownIndexEvents <- function(cohortIds,
                                     cohortTable,
                                     tempEmulationSchema,
                                     conceptIdUniverse = "#concept_tracking") {
-  domains <- getDomainInformation(package = 'CohortDiagnostics')
+  domains <- getDomainInformation(packageName = 'CohortDiagnostics')
   sql <- "SELECT cohort_definition_id cohort_id,
               	@domain_concept_id AS concept_id,
               	COUNT(*) AS concept_count,
@@ -1098,7 +1099,7 @@ getIndexDateConceptCooccurrence <- function(connection,
                                             cohortDatabaseSchema,
                                             cohortIds,
                                             conceptIdUniverse = "#concept_tracking") {
-  domains <- getDomainInformation(package = 'CohortDiagnostics')
+  domains <- getDomainInformation(packageName = 'CohortDiagnostics')
   sqlDdlDrop <-
     "IF OBJECT_ID('tempdb..#concept_cooccurrence', 'U') IS NOT NULL
                 	      DROP TABLE #concept_cooccurrence;
@@ -1229,7 +1230,7 @@ getConceptSourceStandardMapping <- function(connection,
                                             tempEmulationSchema,
                                             sourceValue = FALSE,
                                             conceptIdUniverse = "#concept_tracking") {
-  domains <- getDomainInformation(package = 'CohortDiagnostics') %>%
+  domains <- getDomainInformation(packageName = 'CohortDiagnostics') %>%
     dplyr::filter(nchar(.data$domainSourceConceptId) > 1)
   
   sql <- "WITH concept_id_universe
