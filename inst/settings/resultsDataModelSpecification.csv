@@ -137,11 +137,6 @@ database,database_id,varchar,Yes,Yes,No,Yes,2.2
 database,database_name,varchar,No,No,No,Yes,2.2
 database,description,varchar,No,No,No,Yes,2.2
 database,is_meta_analysis,varchar(1),Yes,No,No,Yes,2.2
-database,observation_period_min_date,Date,Yes,No,No,Yes,2.2
-database,observation_period_max_date,Date,Yes,No,No,Yes,2.2
-database,persons,bigint,No,No,Yes,Yes,2.2
-database,records,bigint,No,No,Yes,Yes,2.2
-database,person_days,bigint,No,No,Yes,Yes,2.2
 database,vocabulary_version, varchar, No, No, Yes, Yes,2.2
 database,vocabulary_version_cdm, varchar, No, No, Yes, Yes,2.2
 domain,domain_id,varchar(20),Yes,Yes,No,Yes,2.2

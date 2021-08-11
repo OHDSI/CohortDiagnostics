@@ -58,7 +58,6 @@ titleCaseToCamelCase <- function(string) {
   return(string)
 }
 
-
 # private function - not exported
 quoteLiterals <- function(x) {
   if (is.null(x)) {
@@ -789,6 +788,22 @@ getResultsCohortCount <- function(dataSource,
   )
   return(data)
 }
+
+
+#Private Function
+filterCohortCountByCohortIdAndDatabaseId <-
+  function(cohortCount, cohortId, databaseId) {
+    data <- cohortCount %>%
+      dplyr::filter(.data$cohortId == !!cohortId) %>%
+      dplyr::filter(.data$databaseId == !!databaseId) %>%
+      dplyr::select(.data$cohortSubjects, .data$cohortEntries)
+    
+    if (nrow(data) == 0) {
+      return(NULL)
+    } else {
+      return(data)
+    }
+  }
 
 
 
