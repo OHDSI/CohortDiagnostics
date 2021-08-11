@@ -741,12 +741,12 @@ bodyTabItems <- shinydashboard::tabItems(
       status = "primary",
       tags$br(),
       tags$h4("Time distribution"),
-      ggiraph::ggiraphOutput("timeDisPlot", width = "100%", height = "100%"),
+      ggiraph::ggiraphOutput("timeDistributionPlot", width = "100%", height = "100%"),
       tags$table(width = "100%", 
                  tags$tr(
                    tags$td(align = "right",
                            shiny::downloadButton(
-                             "saveTimeDistTable",
+                             "saveTimeDistributionTable",
                              label = "",
                              icon = shiny::icon("download"),
                              style = "margin-top: 5px; margin-bottom: 5px;"
@@ -754,7 +754,7 @@ bodyTabItems <- shinydashboard::tabItems(
                    )
                  )
       ),
-      DT::dataTableOutput("timeDistTable")
+      DT::dataTableOutput("timeDistributionTable")
     )
   ),
   shinydashboard::tabItem(
@@ -774,7 +774,7 @@ bodyTabItems <- shinydashboard::tabItems(
         )
       ),
       shiny::conditionalPanel(
-        condition = "output.includeConceptsTableContainsData == true",
+        condition = "output.doesIncludeConceptsTableHasData == true",
         column(
           4,
           shiny::radioButtons(

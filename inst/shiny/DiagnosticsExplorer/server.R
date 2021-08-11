@@ -3943,8 +3943,8 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  ##reactiveVal: incidenceRateAgeFilterValues----
-  incidenceRateCalendarFilter <- shiny::reactive({
+  ##reactive: getIncidenceRateFilteredOnCalendarFilterValue----
+  getIncidenceRateFilteredOnCalendarFilterValue <- shiny::reactive({
     calendarFilter <- getIncidenceRateData() %>%
       dplyr::select(.data$calendarYear) %>%
       dplyr::filter(.data$calendarYear != "NA",
@@ -3958,8 +3958,8 @@ shiny::shinyServer(function(input, output, session) {
     return(calendarFilter)
   })
   
-  ##reactiveVal: incidenceRateAgeFilterValues----
-  incidenceRateYScaleFilter <- shiny::reactive({
+  ##reactive: getIncidenceRateFilteredOnYScaleFilterValue----
+  getIncidenceRateFilteredOnYScaleFilterValue <- shiny::reactive({
     incidenceRateFilter <- getIncidenceRateData() %>%
       dplyr::select(.data$incidenceRate) %>%
       dplyr::filter(.data$incidenceRate != "NA",
@@ -3968,11 +3968,12 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::arrange(.data$incidenceRate)
     incidenceRateFilter <-
       incidenceRateFilter[incidenceRateFilter$incidenceRate >= input$YscaleMinAndMax[1] &
-                            incidenceRateFilter$incidenceRate <= input$YscaleMinAndMax[2], drop = FALSE] %>%
+                            incidenceRateFilter$incidenceRate <= input$YscaleMinAndMax[2],] %>%
       dplyr::pull(.data$incidenceRate)
     return(incidenceRateFilter)
   })
-  ##reactiveVal: incidenceRateAgeFilterValues----
+  
+  ##output: saveIncidenceRatePlot----
   output$saveIncidenceRatePlot <-  downloadHandler(
     filename = function() {
       getCsvFileNameWithDateTime(string = "IncidenceRate")
@@ -3983,7 +3984,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   )
   
- 
+  ##output: incidenceRatePlot----
   output$incidenceRatePlot <- ggiraph::renderggiraph(expr = {
     validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
     validate(need(length( getCohortIdsFromDropdown()) > 0, "No cohorts chosen"))
@@ -4019,11 +4020,11 @@ shiny::shinyServer(function(input, output, session) {
         }
         if (stratifyByCalendarYear) {
           data <- data %>%
-            dplyr::filter(.data$calendarYear %in% incidenceRateCalendarFilter())
+            dplyr::filter(.data$calendarYear %in% getIncidenceRateFilteredOnCalendarFilterValue())
         }
         if (input$irYscaleFixed) {
           data <- data %>%
-            dplyr::filter(.data$incidenceRate %in% incidenceRateYScaleFilter())
+            dplyr::filter(.data$incidenceRate %in% getIncidenceRateFilteredOnYScaleFilterValue())
         }
         
         if (all(!is.null(data), nrow(data) > 0)) {
@@ -4043,9 +4044,9 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   # Time Series -----
-  ## Tssible data ----
+  ##reactive: getTimeSeriesData and Tssible data ----
   timeSeriesTssibleData <- shiny::reactiveVal(NULL)
-  timeSeriesData <- reactive({
+  getTimeSeriesData <- reactive({
     if (input$tabs == "timeSeries") {
       validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
       validate(need(length( getCohortIdsFromDropdown()) > 0, "No cohorts chosen"))
@@ -4068,10 +4069,10 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  ## Data filtered by calendarInterval + range ----
-  timeSeriesDataFiltered <- reactive({
+  ##reactive: getFilteredTimeSeriesData - calendarInterval + range ----
+  getFilteredTimeSeriesData <- reactive({
     calendarIntervalFirstLetter <- tolower(substr(input$timeSeriesFilter,1,1))
-    data <- timeSeriesData()
+    data <- getTimeSeriesData()
     data <- data[[calendarIntervalFirstLetter]]
     if (any(is.null(data),
             nrow(data) == 0)) {
@@ -4111,8 +4112,9 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
+  ##reactive: getTimeSeriesDescription----
   getTimeSeriesDescription <- shiny::reactive({
-    data <- timeSeriesData()
+    data <- getTimeSeriesData()
     if (any(is.null(data), nrow(data) == 0)) {
       return(NULL)
     }
@@ -4123,6 +4125,7 @@ shiny::shinyServer(function(input, output, session) {
     return(timeSeriesDescription)
   })
   
+  ##output: timeSeriesTypeLong----
   output$timeSeriesTypeLong <- shiny::renderUI({
     timeSeriesDescription <- getTimeSeriesDescription()
     if (any(is.null(timeSeriesDescription), 
@@ -4139,7 +4142,7 @@ shiny::shinyServer(function(input, output, session) {
     
   })
   
-  ## Filter: series type ----
+  ##update: timeSeriesTypeFilter----
   shiny::observe({
     
     timeSeriesDescription <- getTimeSeriesDescription()
@@ -4159,10 +4162,10 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  ## Filter: Period range ----
+  ##update: timeSeriesPeriodRangeFilter----
   shiny::observe({
     calendarIntervalFirstLetter <- tolower(substr(input$timeSeriesFilter,1,1))
-    data <- timeSeriesData()
+    data <- getTimeSeriesData()
     data <- data[[calendarIntervalFirstLetter]]
     if (any(is.null(data), nrow(data) == 0)) {
       return(NULL)
@@ -4179,17 +4182,17 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  ## Output Data table ----
+  ##output: timeSeriesTable----
   output$timeSeriesTable <- DT::renderDataTable({
     
     timeSeriesDescription <- getTimeSeriesDescription()
     
     validate(need(all(!is.null(timeSeriesDescription),
                       nrow(timeSeriesDescription) > 0,
-                  !is.null(timeSeriesDataFiltered()),
-                  nrow(timeSeriesDataFiltered()) > 0),
+                  !is.null(getFilteredTimeSeriesData()),
+                  nrow(getFilteredTimeSeriesData()) > 0),
                   "No timeseries data for the combination."))
-    data <- timeSeriesDataFiltered() %>% 
+    data <- getFilteredTimeSeriesData() %>% 
       dplyr::inner_join(timeSeriesDescription)
     validate(need(all(!is.null(data),
                       nrow(data) > 0),
@@ -4228,15 +4231,15 @@ shiny::shinyServer(function(input, output, session) {
     return(dataTable)
   })
   
-  ## Output Time series plot ----
+  ##output: timeSeriesPlot----
   output$timeSeriesPlot <- ggiraph::renderggiraph({
     
     timeSeriesDescription <- getTimeSeriesDescription()
     
     validate(need(all(!is.null(timeSeriesDescription),
                       nrow(timeSeriesDescription) > 0,
-                      !is.null(timeSeriesDataFiltered()),
-                      nrow(timeSeriesDataFiltered()) > 0),
+                      !is.null(getFilteredTimeSeriesData()),
+                      nrow(getFilteredTimeSeriesData()) > 0),
                   "No timeseries data for the combination."))
     data <- timeSeriesTssibleData() %>% 
       dplyr::inner_join(timeSeriesDescription)
@@ -4254,8 +4257,8 @@ shiny::shinyServer(function(input, output, session) {
     # return(plot)
   })
   
-  # Time distribution -------
-  timeDistributionData <- reactive({
+  ##output: getTimeDistributionData----
+  getTimeDistributionData <- reactive({
     validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
     validate(need(length( getCohortIdsFromDropdown()) > 0, "No cohorts chosen"))
     if (all(is(dataSource, "environment"), !exists('timeDistribution'))) {
@@ -4269,26 +4272,29 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  output$timeDisPlot <- ggiraph::renderggiraph(expr = {
+  ##output: timeSeriesPlot----
+  output$timeDistributionPlot <- ggiraph::renderggiraph(expr = {
     validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
-    data <- timeDistributionData()
+    data <- getTimeDistributionData()
     validate(need(nrow(data) > 0, paste0("No data for this combination")))
     plot <- plotTimeDistribution(data = data, shortNameRef = cohort)
     return(plot)
   })
   
-  output$saveTimeDistTable <-  downloadHandler(
+  ##output: saveTimeDistributionTable----
+  output$saveTimeDistributionTable <-  downloadHandler(
     filename = function() {
       getCsvFileNameWithDateTime(string = "timeDistribution")
     },
     content = function(file) {
-      downloadCsv(x = timeDistributionData(), 
+      downloadCsv(x = getTimeDistributionData(), 
                   fileName = file)
     }
   )
   
-  output$timeDistTable <- DT::renderDataTable(expr = {
-    data <- timeDistributionData()  %>%
+  ##output: timeDistributionTable----
+  output$timeDistributionTable <- DT::renderDataTable(expr = {
+    data <- getTimeDistributionData()  %>%
       addShortName(cohort) %>%
       dplyr::arrange(.data$databaseId, .data$cohortId) %>%
       dplyr::mutate(
@@ -4348,7 +4354,8 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   # resolved concepts in data source-----
-  resolvedConceptData <- shiny::reactive(x = {
+  ##reactive: getResolvedConceptData----
+  getResolvedConceptData <- shiny::reactive(x = {
     validate(need(all(!is.null(getDatabaseIdsFromDropdown()), length(getDatabaseIdsFromDropdown()) > 0), 
                   "No data sources chosen"))
     validate(need(all(!is.null( getCohortIdFromDrapdown()),length( getCohortIdFromDrapdown()) > 0),
@@ -4363,24 +4370,25 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   
-  
+  ##output: saveIncludedConceptsTable----
   output$saveIncludedConceptsTable <-  downloadHandler(
     filename = function() {
       getCsvFileNameWithDateTime(string = "includedConcept")
     },
     content = function(file) {
-      downloadCsv(x = resolvedConceptData(), 
+      downloadCsv(x = getResolvedConceptData(), 
                   fileName = file)
     }
   )
   
+  ##output: includedConceptsTable----
   output$includedConceptsTable <- DT::renderDataTable(expr = {
     validate(need(all(!is.null(getDatabaseIdsFromDropdown()), length(getDatabaseIdsFromDropdown()) > 0), 
                   "No data sources chosen"))
     validate(need(all(!is.null( getCohortIdFromDrapdown()),length( getCohortIdFromDrapdown()) > 0),
                   "No cohort chosen"))
     
-    data <- resolvedConceptData()
+    data <- getResolvedConceptData()
     validate(need(all(!is.null(data), nrow(data) > 0),
                   "No data available for selected combination"))
     
@@ -4559,17 +4567,19 @@ shiny::shinyServer(function(input, output, session) {
     return(dataTable)
   }, server = TRUE)
   
-  output$includeConceptsTableContainsData <- shiny::reactive({
-    return(nrow(resolvedConceptData()) > 0)
+  ##output: doesIncludeConceptsTableHasData----
+  output$doesIncludeConceptsTableHasData <- shiny::reactive({
+    return(nrow(getResolvedConceptData()) > 0)
   })
   
   shiny::outputOptions(output,
-                       "includeConceptsTableContainsData",
+                       "doesIncludeConceptsTableHasData",
                        suspendWhenHidden = FALSE)
   
-  # orphan concepts table -------
   
-  orphanConceptsData <- shiny::reactive(x = {
+  # orphan concepts table -------
+  ##reactive: getOrphanConceptsData----
+  getOrphanConceptsData <- shiny::reactive(x = {
     validate(need(all(!is.null(getDatabaseIdsFromDropdown()), length(getDatabaseIdsFromDropdown()) > 0), "No data sources chosen"))
     validate(need(length( getCohortIdFromDrapdown()) > 0, "No cohorts chosen"))
     if (all(is(dataSource, "environment"), !exists('orphanConcept'))) {
@@ -4600,23 +4610,25 @@ shiny::shinyServer(function(input, output, session) {
     return(orphanConcepts)
   })
   
+  ##reactive: saveOrphanConceptsTable----
   output$saveOrphanConceptsTable <-  downloadHandler(
     filename = function() {
       getCsvFileNameWithDateTime(string = "orphanConcept")
     },
     content = function(file) {
-      downloadCsv(x = orphanConceptsData(), 
+      downloadCsv(x = getOrphanConceptsData(), 
                   fileName = file)
     }
   )
   
+  ##reactive: orphanConceptsTable----
   output$orphanConceptsTable <- DT::renderDataTable(expr = {
     
     validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
     validate(need(all(!is.null( getCohortIdFromDrapdown()),
                       length( getCohortIdFromDrapdown()) > 0), "No cohorts chosen"))
     
-    data <- orphanConceptsData()
+    data <- getOrphanConceptsData()
     validate(need(all(!is.null(data), nrow(data) > 0),
                   "There is no data for the selected combination."))
     maxCount <- max(data$conceptCount, na.rm = TRUE)
@@ -4741,7 +4753,7 @@ shiny::shinyServer(function(input, output, session) {
   }, server = TRUE)
   
   output$orphanconceptContainData <- shiny::reactive({
-    return(nrow(orphanConceptsData()) > 0)
+    return(nrow(getOrphanConceptsData()) > 0)
   })
   
   shiny::outputOptions(output,
