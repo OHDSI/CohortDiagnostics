@@ -303,8 +303,8 @@ bodyTabItems <- shinydashboard::tabItems(
       shiny::column(width = 12,
                     shiny::conditionalPanel(
                       condition = "output.cohortDefinitionSelectedRowCount == 2 &
-                     input.conceptSetsType == 'Resolved (included)' &
-                     input.conceptSetsTypeSecond == 'Resolved (included)' & 
+                     input.conceptSetsType == 'Resolved' &
+                     input.conceptSetsTypeSecond == 'Resolved' & 
                      output.conceptSetExpressionIsRowSelectedLeft == true &
                      output.conceptSetExpressionSecondRowSelected == true &
                      input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
