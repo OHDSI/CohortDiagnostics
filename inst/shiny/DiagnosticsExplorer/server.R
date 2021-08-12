@@ -883,17 +883,16 @@ shiny::shinyServer(function(input, output, session) {
   
   ###getSimplifiedInclusionRuleResultsLeft----
   getSimplifiedInclusionRuleResultsLeft <- shiny::reactive(x = {
-    browser()
     if (length(getDatabaseIdForSelectedCohortCountLeft()) == 0) {
       return(NULL)
     }
     if (any(is.null(getLastTwoRowSelectedInCohortTable()),
-            nrow(getLastTwoRowSelectedInCohortTable() == 0))) {
+            nrow(getLastTwoRowSelectedInCohortTable()) == 0)) {
       return(NULL)
     }
     data <- getSimplifiedInclusionRuleData()
     if (any(is.null(data),
-            nrow(data))) {
+            nrow(data) == 0)) {
       return(NULL)
     }
     data <- data %>% 
@@ -914,7 +913,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- getSimplifiedInclusionRuleData()
     if (any(is.null(data),
-            nrow(data))) {
+            nrow(data) == 0)) {
       return(NULL)
     }
     data <- data %>% 
