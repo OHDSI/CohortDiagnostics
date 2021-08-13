@@ -2167,7 +2167,6 @@ shiny::shinyServer(function(input, output, session) {
              "There is no data for the selected combination."))
     
     databaseIds <- unique(table$databaseId)
-    
     table <- table %>%
       dplyr::inner_join(cohortCount %>% 
                           dplyr::select(.data$databaseId, .data$cohortId, .data$cohortSubjects), 
@@ -2237,7 +2236,7 @@ shiny::shinyServer(function(input, output, session) {
                                           ),
                                           tr(
                                             lapply(rep(
-                                              c("Meet", "Gain", "Remain", "Total"), length(databaseIds)
+                                              c("Meet", "Gain", "Total", "Remain"), length(databaseIds)
                                             ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
                                           ))))
       
