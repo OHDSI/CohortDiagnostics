@@ -63,7 +63,7 @@ exportFeatureExtractionOutput <-
            minCellCount = 5) {
     if (!'databaseId' %in% colnames(cohortCounts)) {
       cohortCounts <- cohortCounts %>%
-        dplyr::collect() %>% 
+        dplyr::collect() %>%
         dplyr::mutate(databaseId = !!databaseId)
     }
     if (nrow(cohortCounts) == 0) {
@@ -94,7 +94,7 @@ exportFeatureExtractionOutput <-
         dplyr::mutate(sd = dplyr::case_when(.data$mean >= 0 ~ sd)) %>%
         dplyr::mutate(mean = round(.data$mean, digits = 4),
                       sd = round(.data$sd, digits = 4)) %>%
-        dplyr::select(-.data$cohortEntries,-.data$cohortSubjects)
+        dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
       
       if (dplyr::pull(dplyr::count(featureExtractionDbCovariateData$filteredCovariates)) > 0) {
         covariateRef <-
@@ -148,7 +148,7 @@ exportFeatureExtractionOutput <-
           )
         ) %>%
         dplyr::mutate(sd = dplyr::case_when(.data$mean >= 0 ~ sd)) %>%
-        dplyr::select(-.data$cohortEntries,-.data$cohortSubjects)
+        dplyr::select(-.data$cohortEntries, -.data$cohortSubjects)
       
       if (dplyr::pull(dplyr::count(
         featureExtractionDbCovariateData$filteredCovariatesContinous
@@ -172,7 +172,10 @@ exportFeatureExtractionOutput <-
             timeMetric = .data$covariateName
           ) %>%
           dplyr::select(
-            -.data$conceptId,-.data$analysisId,-.data$covariateId,-.data$result$countValue
+            -.data$conceptId,
+            -.data$analysisId,
+            -.data$covariateId,
+            -.data$result$countValue
           ) %>%
           dplyr::collect()
         if (dplyr::pull(dplyr::count(featureExtractionDbCovariateData$timeDistribution)) > 0) {

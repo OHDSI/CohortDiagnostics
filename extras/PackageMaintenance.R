@@ -77,6 +77,11 @@ file.copy(from = "R/Shared.R",
           to = "inst/shiny/DiagnosticsExplorer/R/Shared.R",
           overwrite = TRUE)
 
+# Copy R script that queries data from results data model to Shiny app
+file.copy(from = "inst/csv/domains.csv", 
+          to = "inst/shiny/DiagnosticsExplorer/domains.csv",
+          overwrite = TRUE)
+
 # Delete orphan tables from testing server -----------------------------
 connectionDetails <- DatabaseConnector::createConnectionDetails(dbms = "postgresql",
                                                                 user = Sys.getenv("CDM5_POSTGRESQL_USER"),

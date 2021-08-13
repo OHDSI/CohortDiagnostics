@@ -41,7 +41,7 @@
 #'                                    diagnostics to.
 #'
 #' @template cdmVersion
-#' 
+#'
 #' @param cutOff                                 Minimum value of the covariate value, below which data is censored.
 #'
 #' @param covariateSettings           Either an object of type \code{covariateSettings} as created using one of
@@ -69,7 +69,6 @@ runCohortCharacterizationDiagnostics <-
            cutOff = 0.0001,
            covariateSettings = createDefaultCovariateSettings(),
            batchSize = 100) {
-    
     startTime <- Sys.time()
     if (is.null(connection)) {
       connection <- DatabaseConnector::connect(connectionDetails)
@@ -82,8 +81,8 @@ runCohortCharacterizationDiagnostics <-
       cohortTable = cohortTable,
       cohortIds = cohortIds
     )
-    cohortIdsNew <- cohortCounts$cohortCount %>% 
-      dplyr::pull(.data$cohortId) %>% 
+    cohortIdsNew <- cohortCounts$cohortCount %>%
+      dplyr::pull(.data$cohortId) %>%
       unique()
     
     if (is.null(cohortCounts$cohortCount)) {
@@ -108,11 +107,7 @@ runCohortCharacterizationDiagnostics <-
         )
       )
     } else if (length(cohortIds) == length(cohortIdsNew)) {
-      ParallelLogger::logInfo(
-        paste0(
-          "   - Starting Characterization."
-        )
-      )
+      ParallelLogger::logInfo(paste0("   - Starting Characterization."))
     }
     
     results <- Andromeda::andromeda()
@@ -128,26 +123,24 @@ runCohortCharacterizationDiagnostics <-
     for (start in seq(1, length(cohortIdsNew), by = batchSize)) {
       end <- min(start + batchSize - 1, length(cohortIdsNew))
       if (length(cohortIdsNew) > batchSize) {
-        ParallelLogger::logTrace(
-          sprintf(
-            "    - Batch characterization. Processing cohorts %s through %s",
-            start,
-            end
-          )
-        )
+        ParallelLogger::logTrace(sprintf(
+          "    - Batch characterization. Processing cohorts %s through %s",
+          start,
+          end
+        ))
       }
       featureExtractionOutput <-
-          FeatureExtraction::getDbCovariateData(
-            connection = connection,
-            oracleTempSchema = tempEmulationSchema,
-            cdmDatabaseSchema = cdmDatabaseSchema,
-            cohortDatabaseSchema = cohortDatabaseSchema,
-            cdmVersion = cdmVersion,
-            cohortTable = cohortTable,
-            cohortId = cohortIdsNew[start:end],
-            covariateSettings = covariateSettings,
-            aggregated = TRUE
-          )
+        FeatureExtraction::getDbCovariateData(
+          connection = connection,
+          oracleTempSchema = tempEmulationSchema,
+          cdmDatabaseSchema = cdmDatabaseSchema,
+          cohortDatabaseSchema = cohortDatabaseSchema,
+          cdmVersion = cdmVersion,
+          cohortTable = cohortTable,
+          cohortId = cohortIdsNew[start:end],
+          covariateSettings = covariateSettings,
+          aggregated = TRUE
+        )
       
       populationSize <-
         attr(x = featureExtractionOutput, which = "metaData")$populationSize
@@ -231,7 +224,8 @@ runCohortCharacterizationDiagnostics <-
           (!FeatureExtraction::isTemporalCovariateData(featureExtractionOutput))) {
         #   covariatesContinous seems to return NA for timeId
         #    in featureExtractionOutput$covariatesContinuous
-        covariates <- featureExtractionOutput$covariatesContinuous %>%
+        covariates <-
+          featureExtractionOutput$covariatesContinuous %>%
           dplyr::rename(
             mean = .data$averageValue,
             sd = .data$standardDeviation,
@@ -273,8 +267,8 @@ runCohortCharacterizationDiagnostics <-
     
     delta <- Sys.time() - startTime
     ParallelLogger::logTrace(" - Cohort characterization took ",
-                            signif(delta, 3),
-                            " ",
-                            attr(delta, "units"))
+                             signif(delta, 3),
+                             " ",
+                             attr(delta, "units"))
     return(results)
   }

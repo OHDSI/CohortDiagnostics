@@ -43,7 +43,8 @@ takepackageDependencySnapshot <- function() {
       description <- packageDescription(package)
       packages <- splitPackageList(description$Depends)
       packages <- c(packages, splitPackageList(description$Imports))
-      packages <- c(packages, splitPackageList(description$LinkingTo))
+      packages <-
+        c(packages, splitPackageList(description$LinkingTo))
       # Note: if we want to include suggests, we'll need to consider circular references packages <-
       # c(packages, splitPackageList(description$Suggests))
       packages <- packages[packages != "R"]
@@ -70,7 +71,7 @@ takepackageDependencySnapshot <- function() {
   
   packages <-
     fetchDependencies('CohortDiagnostics', recursive = TRUE)
-  packages <- packages[order(-packages$level),]
+  packages <- packages[order(-packages$level), ]
   getVersion <- function(package) {
     return(packageDescription(package)$Version)
   }

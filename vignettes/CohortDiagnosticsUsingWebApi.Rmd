@@ -27,7 +27,7 @@ knitr::opts_chunk$set(
 
 There are currently two approaches to run Cohort Diagnostics.
 - Embed in an OHDSI study package, where all the cohort definitions are stored as part of that study package, or 
-- WebAPi mode - where cohort diagnostics dynamically pulls the cohort definition from a webapi instance. WebAPI is the backend of the OHDSI ATLAS application, allowing programmatic access to the cohort definitions created in ATLAS. 
+- WebApi mode - where cohort diagnostics dynamically pulls the cohort definition from a webapi instance. WebAPI is the backend of the OHDSI ATLAS application, allowing programmatic access to the cohort definitions created in ATLAS. 
 
 This vignette describes the latter approach (webapi): how to run CohortDiagnostics using the WebAPI.
 

@@ -89,10 +89,12 @@ runVisitContextDiagnostics <- function(connectionDetails = NULL,
     cohort_table = cohortTable,
     cohort_ids = cohortIds
   )
-  DatabaseConnector::executeSql(connection = connection, 
-                                sql = sql, 
-                                progressBar = FALSE, 
-                                reportOverallTime = FALSE)
+  DatabaseConnector::executeSql(
+    connection = connection,
+    sql = sql,
+    progressBar = FALSE,
+    reportOverallTime = FALSE
+  )
   sql <- "SELECT * FROM @visit_context_table;"
   result$visitContext <-
     renderTranslateQuerySql(
@@ -116,8 +118,8 @@ runVisitContextDiagnostics <- function(connectionDetails = NULL,
   
   delta <- Sys.time() - start
   ParallelLogger::logTrace(" - Retrieving visit context took ",
-                          signif(delta, 3),
-                          " ",
-                          attr(delta, "units"))
+                           signif(delta, 3),
+                           " ",
+                           attr(delta, "units"))
   return(result)
 }
