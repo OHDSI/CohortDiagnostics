@@ -1272,7 +1272,11 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(idx)) {
       return(NULL)
     } else {
-      subset <- getCohortCountResultReactive()[idx,]
+      subset <- getCohortCountResultReactive() %>% 
+        dplyr::select(.data$cohortId, 
+                      .data$shortName) %>% 
+        dplyr::distinct()
+      subset <- subset[idx,]
       return(subset)
     }
     
@@ -1300,7 +1304,9 @@ shiny::shinyServer(function(input, output, session) {
     
     validate(need((nrow(table) > 0),
                   "There is no data for the selected combination."))
-    
+    table <- table %>% 
+      dplyr::mutate(shortName = getCohortIdOnCohortCountRowSelect()$shortName) %>% 
+      dplyr::relocate(.data$shortName)
     databaseIds <- unique(table$databaseId)
     
     table <- table %>%
@@ -1314,17 +1320,16 @@ shiny::shinyServer(function(input, output, session) {
       ) %>%
       dplyr::mutate(name = paste0(databaseId, "_", .data$name)) %>%
       tidyr::pivot_wider(
-        id_cols = c(.data$cohortId, .data$ruleSequenceId, .data$ruleName),
+        id_cols = c(.data$shortName, .data$cohortId, .data$ruleSequenceId, .data$ruleName),
         names_from = .data$name,
         values_from = .data$value
-      ) %>%
-      dplyr::select(-.data$cohortId)
-    
-    
+      )
     
     sketch <- htmltools::withTags(table(class = "display",
                                         thead(tr(
-                                          th(rowspan = 2, "Rule Sequence ID"),
+                                          th(rowspan = 2, "Short Name"),
+                                          th(rowspan = 2, "Cohort Id"),
+                                          th(rowspan = 2, "Rule Sequence Id"),
                                           th(rowspan = 2, "Rule Name"),
                                           lapply(
                                             databaseIds,
