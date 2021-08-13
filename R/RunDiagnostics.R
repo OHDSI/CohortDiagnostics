@@ -312,6 +312,12 @@ runCohortDiagnostics <- function(packageName = NULL,
     }
   }
   
+  if (all(runTimeSeries,
+          connection@dbms %in% c('bigquery'))) {
+    warning('TimeSeries is not supported for bigquery at this time. TimeSeries will not run.')
+    runTimeSeries <- FALSE
+  }
+  
   tryCatch({
     vocabularyVersionCdm <-
       DatabaseConnector::renderTranslateQuerySql(
