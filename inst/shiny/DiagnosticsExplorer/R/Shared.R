@@ -532,18 +532,6 @@ getResultsExcludedConcepts <- function(dataSource,
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 #' Returns data from concept relationship table for list of concept ids
 #'
 #' @description
@@ -563,6 +551,12 @@ getConceptRelationship <- function(dataSource = .GlobalEnv,
                                    vocabularyDatabaseSchema = NULL,
                                    conceptIds = NULL) {
   table <- "conceptRelationship"
+  if (!is.null(vocabularyDatabaseSchema) &&
+      is(dataSource, "environment")) {
+    warning(
+      "vocabularyDatabaseSchema provided for function 'getConceptRelationship', \nbut working in local file mode. VocabularyDatabaseSchema will be ignored."
+    )
+  }
   if (is(dataSource, "environment")) {
     if (any(!exists(table),
             length(table) == 0,
@@ -576,7 +570,7 @@ getConceptRelationship <- function(dataSource = .GlobalEnv,
   } else {
     sql <-
       "SELECT *
-       FROM @results_database_schema.concept_relationship
+       FROM @vocabulary_database_schema.concept_relationship
        WHERE concept_id_1 IN (@concept_ids)
            OR concept_id_2 IN (@concept_ids);"
     if (!is.null(conceptIds)) {
@@ -599,12 +593,12 @@ getConceptRelationship <- function(dataSource = .GlobalEnv,
       renderTranslateQuerySql(
         connection = dataSource$connection,
         sql = sql,
-        results_database_schema = dataSource$resultsDatabaseSchema,
         snakeCaseToCamelCase = TRUE
       )
   }
   return(data)
 }
+
 
 
 #' Returns data from concept ancestor table for list of concept ids
@@ -624,6 +618,12 @@ getConceptAncestor <- function(dataSource = .GlobalEnv,
                                vocabularyDatabaseSchema = NULL,
                                conceptIds = NULL) {
   table <- "conceptAncestor"
+  if (!is.null(vocabularyDatabaseSchema) &&
+      is(dataSource, "environment")) {
+    warning(
+      "vocabularyDatabaseSchema provided for function 'getConceptAncestor', \nbut working in local file mode. VocabularyDatabaseSchema will be ignored."
+    )
+  }
   if (is(dataSource, "environment")) {
     if (any(!exists(table),
             length(table) == 0,
@@ -639,7 +639,7 @@ getConceptAncestor <- function(dataSource = .GlobalEnv,
   } else {
     sql <-
       "SELECT *
-       FROM @results_database_schema.concept_ancestor
+       FROM @vocabulary_database_schema.concept_ancestor
        WHERE ancestor_concept_id IN (@concept_ids)
            OR descendant_concept_id IN (@concept_ids);"
     if (!is.null(conceptIds)) {
@@ -662,7 +662,6 @@ getConceptAncestor <- function(dataSource = .GlobalEnv,
       renderTranslateQuerySql(
         connection = dataSource$connection,
         sql = sql,
-        results_database_schema = dataSource$resultsDatabaseSchema,
         snakeCaseToCamelCase = TRUE
       )
   }
@@ -670,6 +669,70 @@ getConceptAncestor <- function(dataSource = .GlobalEnv,
 }
 
 
+#' Returns data from concept synonym table for list of concept ids
+#'
+#' @description
+#' Returns data from concept synonym table for list of concept ids
+#'
+#' @template DataSource
+#'
+#' @template ConceptIds
+#'
+#' @template VocabularyDatabaseSchema
+#'
+#' @return
+#' Returns a data frame (tibble)
+#'
+#' @export
+getConceptSynonym <- function(dataSource = .GlobalEnv,
+                              vocabularyDatabaseSchema = NULL,
+                              conceptIds = NULL) {
+  table <- "conceptSynonym"
+  if (!is.null(vocabularyDatabaseSchema) &&
+      is(dataSource, "environment")) {
+    warning(
+      "vocabularyDatabaseSchema provided for function 'getConceptSynonym', \nbut working in local file mode. VocabularyDatabaseSchema will be ignored."
+    )
+  }
+  if (is(dataSource, "environment")) {
+    if (any(!exists(table),
+            length(table) == 0,
+            nrow(table) == 0)) {
+      return(NULL)
+    }
+    data <- get(table, envir = dataSource) %>%
+      dplyr::filter(.data$conceptId %in% conceptIds)
+    
+  } else {
+    sql <-
+      "SELECT *
+       FROM @vocabulary_database_schema.concept_synonym
+       WHERE concept_id IN (@concept_ids);"
+    if (!is.null(conceptIds)) {
+      sql <-
+        SqlRender::render(sql = sql,
+                          concept_ids = conceptIds)
+    }
+    if (!is.null(vocabularyDatabaseSchema)) {
+      sql <-
+        SqlRender::render(sql = sql,
+                          vocabulary_database_schema = vocabularyDatabaseSchema)
+    } else {
+      sql <-
+        SqlRender::render(
+          sql = sql,
+          vocabulary_database_schema = dataSource$vocabularyDatabaseSchema
+        )
+    }
+    data <-
+      renderTranslateQuerySql(
+        connection = dataSource$connection,
+        sql = sql,
+        snakeCaseToCamelCase = TRUE
+      )
+  }
+  return(data)
+}
 
 
 #' Returns data from concept_count table of Cohort Diagnostics results data model

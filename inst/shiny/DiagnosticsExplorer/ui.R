@@ -303,10 +303,10 @@ bodyTabItems <- shinydashboard::tabItems(
       shiny::column(width = 12,
                     shiny::conditionalPanel(
                       condition = "output.cohortDefinitionSelectedRowCount == 2 &
-                     input.conceptSetsType == 'Resolved' &
-                     input.conceptSetsTypeSecond == 'Resolved' & 
-                     output.conceptSetExpressionIsRowSelectedLeft == true &
-                     output.conceptSetExpressionSecondRowSelected == true &
+                     input.conceptSetsTypeLeft == 'Resolved' &
+                     input.conceptSetsTypeRight == 'Resolved' & 
+                     output.isConceptSetExpressionPresentInSelectedCohortLeft == true &
+                     output.isConceptSetExpressionPresentInSelectedCohortRight == true &
                      input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
                      input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
                       shiny::tabsetPanel(
@@ -336,10 +336,10 @@ bodyTabItems <- shinydashboard::tabItems(
       shiny::column(width = 12,
                     shiny::conditionalPanel(
                       condition = "output.cohortDefinitionSelectedRowCount == 2 &
-                                   input.conceptSetsType == 'Mapped (source)' &
-                                   input.conceptSetsTypeSecond == 'Mapped (source)' & 
-                                   output.conceptSetExpressionIsRowSelectedLeft == true &
-                                   output.conceptSetExpressionSecondRowSelected == true &
+                                   input.conceptSetsTypeLeft == 'Excluded' &
+                                   input.conceptSetsTypeRight == 'Excluded' & 
+                                   output.isConceptSetExpressionPresentInSelectedCohortLeft == true &
+                                   output.isConceptSetExpressionPresentInSelectedCohortRight == true &
                                    input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
                                    input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
                       shiny::tabsetPanel(
@@ -347,32 +347,32 @@ bodyTabItems <- shinydashboard::tabItems(
                         shiny::tabPanel(
                           title = "Present in left",
                           tags$br(),
-                          DT::dataTableOutput(outputId = "mappedConceptsPresentInLeft")
+                          DT::dataTableOutput(outputId = "excludedConceptsPresentInLeft")
                         ),
                         shiny::tabPanel(
                           title = "Present in Right",
                           tags$br(),
-                          DT::dataTableOutput(outputId = "mappedConceptsPresentInRight")
+                          DT::dataTableOutput(outputId = "excludedConceptsPresentInRight")
                         ),
                         shiny::tabPanel(
                           title = "Present in Both",
                           tags$br(),
-                          DT::dataTableOutput(outputId = "mappedConceptsPresentInBoth")
+                          DT::dataTableOutput(outputId = "excludedConceptsPresentInBoth")
                         ),
                         shiny::tabPanel(
                           title = "Present in Either",
                           tags$br(),
-                          DT::dataTableOutput(outputId = "mappedConceptsPresentInEither")
+                          DT::dataTableOutput(outputId = "excludedConceptsPresentInEither")
                         )
                       )
                     )),
       shiny::column(width = 12,
                     shiny::conditionalPanel(
                       condition = "output.cohortDefinitionSelectedRowCount == 2 &
-                                   input.conceptSetsType == 'Orphan concepts' &
-                                   input.conceptSetsTypeSecond == 'Orphan concepts'& 
-                                   output.conceptSetExpressionIsRowSelectedLeft == true &
-                                   output.conceptSetExpressionSecondRowSelected == true &
+                                   input.conceptSetsTypeLeft == 'Orphan concepts' &
+                                   input.conceptSetsTypeRight == 'Orphan concepts'& 
+                                   output.isConceptSetExpressionPresentInSelectedCohortLeft == true &
+                                   output.isConceptSetExpressionPresentInSelectedCohortRight == true &
                                    input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
                                    input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
                       shiny::tabsetPanel(
@@ -601,7 +601,7 @@ bodyTabItems <- shinydashboard::tabItems(
       tags$tr(
         tags$td(
           shiny::radioButtons(
-            inputId = "timeSeriesFilter",
+            inputId = "timeSeriesAggregationPeriodSelection",
             label = "Aggregation period:",
             choices = c("Monthly", "Quaterly","Yearly"),
             selected = "Monthly",
@@ -641,7 +641,7 @@ bodyTabItems <- shinydashboard::tabItems(
         tags$td(),
         tags$td(),
         tags$td(tags$b("Series Type Description :"),
-                shiny::uiOutput(outputId = "timeSeriesTypeLong")
+          shiny::uiOutput(outputId = "timeSeriesTypeLong")
         )
       )
       # tags$tr(
@@ -727,8 +727,8 @@ bodyTabItems <- shinydashboard::tabItems(
       ),
       shiny::conditionalPanel(
         condition = "input.timeSeriesType=='Plot'",
-        shiny::column(12,
-                      ggiraph::ggiraphOutput("timeSeriesPlot",width ="100%", height = "100%")
+       shiny::column(12,
+          ggiraph::ggiraphOutput("timeSeriesPlot",width ="100%", height = "100%")
         )
       )
     )
@@ -778,7 +778,7 @@ bodyTabItems <- shinydashboard::tabItems(
         column(
           4,
           shiny::radioButtons(
-            inputId = "includedConceptsTableColumnFilter",
+            inputId = "includedConceptsTableColumnFilter", #!!!!!!!remove concepts in data source
             label = "",
             choices = c("Both", "Subjects only", "Records only"), # 
             selected = "Subjects only",
@@ -791,7 +791,7 @@ bodyTabItems <- shinydashboard::tabItems(
                             tags$td(
                               align = "right",
                               shiny::downloadButton(
-                                "saveIncludedConceptsTable",
+                                "saveIncludedConceptsTable", #!!!!!!!remove concepts in data source
                                 label = "",
                                 icon = shiny::icon("download"),
                                 style = "margin-top: 5px; margin-bottom: 5px;"
@@ -800,7 +800,7 @@ bodyTabItems <- shinydashboard::tabItems(
                           )))
       ),
       
-      DT::dataTableOutput("includedConceptsTable")
+      DT::dataTableOutput("includedConceptsTable") #!!!!!!!remove concepts in data source
     )
   ),
   shinydashboard::tabItem(
@@ -882,73 +882,73 @@ bodyTabItems <- shinydashboard::tabItems(
     tabName = "indexEventBreakdown",
     createShinyBoxFromOutputId("indexEventBreakdownSelectedCohort"),
     tags$table(width = '100%',
-               tags$tr(
-                 tags$td(
-                   shiny::radioButtons(
-                     inputId = "indexEventBreakdownTableRadioButton",
-                     label = "",
-                     choices = c("All", "Standard concepts", "Non Standard Concepts"),
-                     selected = "All",
-                     inline = TRUE
-                   )
-                 ),
-                 tags$td(HTML("&nbsp;&nbsp;&nbsp;")),
-                 tags$td(
-                   shiny::radioButtons(
-                     inputId = "indexEventBreakdownTableFilter",
-                     label = "Display",
-                     choices = c("Both", "Records", "Persons"), 
-                     selected = "Persons",
-                     inline = TRUE
-                   )
-                 ),
-                 tags$td(HTML("&nbsp;&nbsp;&nbsp;")),
-                 tags$td(
-                   shiny::radioButtons(
-                     inputId = "indexEventBreakdownValueFilter",
-                     label = "Display Value Type",
-                     choices = c("Absolute", "Percentage"), 
-                     selected = "Absolute",
-                     inline = TRUE
-                   )
-                 ),
-                 tags$td(
-                   shinyWidgets::pickerInput(
-                     inputId = "breakdownDomainTable",
-                     label = "Domain Table",
-                     choices = c(""),
-                     multiple = TRUE,
-                     width = 200,
-                     choicesOpt = list(style = rep_len("color: black;", 999)),
-                     options = shinyWidgets::pickerOptions(
-                       actionsBox = TRUE,
-                       liveSearch = TRUE,
-                       liveSearchStyle = "contains",
-                       size = 10,
-                       liveSearchPlaceholder = "Type here to search",
-                       virtualScroll = 50
-                     )
-                   )
-                 ),
-                 tags$td(
-                   shinyWidgets::pickerInput(
-                     inputId = "breakdownDomainField",
-                     label = "Domain Field",
-                     choices = c(""),
-                     multiple = TRUE,
-                     width = 200,
-                     choicesOpt = list(style = rep_len("color: black;", 999)),
-                     options = shinyWidgets::pickerOptions(
-                       actionsBox = TRUE,
-                       liveSearch = TRUE,
-                       liveSearchStyle = "contains",
-                       size = 10,
-                       liveSearchPlaceholder = "Type here to search",
-                       virtualScroll = 50
-                     )
-                   )
-                 )
-               )
+      tags$tr(
+        tags$td(
+          shiny::radioButtons(
+            inputId = "indexEventBreakdownTableRadioButton",
+            label = "",
+            choices = c("All", "Standard concepts", "Non Standard Concepts"),
+            selected = "All",
+            inline = TRUE
+          )
+        ),
+        tags$td(HTML("&nbsp;&nbsp;&nbsp;")),
+        tags$td(
+          shiny::radioButtons(
+            inputId = "indexEventBreakdownTableFilter",
+            label = "Display",
+            choices = c("Both", "Records", "Persons"), 
+            selected = "Persons",
+            inline = TRUE
+          )
+        ),
+        tags$td(HTML("&nbsp;&nbsp;&nbsp;")),
+        tags$td(
+          shiny::radioButtons(
+            inputId = "indexEventBreakdownValueFilter",
+            label = "Display Value Type",
+            choices = c("Absolute", "Percentage"), 
+            selected = "Absolute",
+            inline = TRUE
+          )
+        ),
+       tags$td(
+         shinyWidgets::pickerInput(
+           inputId = "breakdownDomainTable",
+           label = "Domain Table",
+           choices = c(""),
+           multiple = TRUE,
+           width = 200,
+           choicesOpt = list(style = rep_len("color: black;", 999)),
+           options = shinyWidgets::pickerOptions(
+             actionsBox = TRUE,
+             liveSearch = TRUE,
+             liveSearchStyle = "contains",
+             size = 10,
+             liveSearchPlaceholder = "Type here to search",
+             virtualScroll = 50
+           )
+         )
+       ),
+       tags$td(
+         shinyWidgets::pickerInput(
+           inputId = "breakdownDomainField",
+           label = "Domain Field",
+           choices = c(""),
+           multiple = TRUE,
+           width = 200,
+           choicesOpt = list(style = rep_len("color: black;", 999)),
+           options = shinyWidgets::pickerOptions(
+             actionsBox = TRUE,
+             liveSearch = TRUE,
+             liveSearchStyle = "contains",
+             size = 10,
+             liveSearchPlaceholder = "Type here to search",
+             virtualScroll = 50
+           )
+         )
+       )
+      )
     ),
     tags$table(width = "100%", 
                tags$tr(
@@ -970,44 +970,44 @@ bodyTabItems <- shinydashboard::tabItems(
     shiny::conditionalPanel(
       condition = "output.doesVisitContextContainData == true",
       tags$table(width = '100%',
-                 tags$tr(
-                   tags$td(
-                     shiny::radioButtons(
-                       inputId = "visitContextTableFilters",
-                       label = "Display",
-                       choices = c("All", "Before", "During", "Simultaneous", "After"),
-                       selected = "All",
-                       inline = TRUE
-                     )
-                   ),
-                   tags$td(
-                     shiny::radioButtons(
-                       inputId = "visitContextValueFilter",
-                       label = "Display Value Type",
-                       choices = c("Absolute", "Percentage"), 
-                       selected = "Absolute",
-                       inline = TRUE
-                     )
-                   ),
-                   tags$td(
-                     shiny::radioButtons(
-                       inputId = "visitContextPersonOrRecords",
-                       label = "Display",
-                       choices = c("Person", "Record"),
-                       selected = "Person",
-                       inline = TRUE
-                     )
-                   ),
-                   tags$td(
-                     align = "right",
-                     shiny::downloadButton(
-                       "saveVisitContextTable",
-                       label = "",
-                       icon = shiny::icon("download"),
-                       style = "margin-top: 5px; margin-bottom: 5px;"
-                     )
-                   )
-                 )
+        tags$tr(
+          tags$td(
+            shiny::radioButtons(
+              inputId = "visitContextTableFilters",
+              label = "Display",
+              choices = c("All", "Before", "During", "Simultaneous", "After"),
+              selected = "All",
+              inline = TRUE
+            )
+          ),
+          tags$td(
+            shiny::radioButtons(
+              inputId = "visitContextValueFilter",
+              label = "Display Value Type",
+              choices = c("Absolute", "Percentage"), 
+              selected = "Absolute",
+              inline = TRUE
+            )
+          ),
+          tags$td(
+            shiny::radioButtons(
+              inputId = "visitContextPersonOrRecords",
+              label = "Display",
+              choices = c("Person", "Record"),
+              selected = "Person",
+              inline = TRUE
+            )
+          ),
+          tags$td(
+            align = "right",
+            shiny::downloadButton(
+              "saveVisitContextTable",
+              label = "",
+              icon = shiny::icon("download"),
+              style = "margin-top: 5px; margin-bottom: 5px;"
+            )
+          )
+        )
       )
     ),
     DT::dataTableOutput(outputId = "visitContextTable")
@@ -1529,7 +1529,7 @@ bodyTabItems <- shinydashboard::tabItems(
                               )
                             )
                           )
-  )
+                     )
 )
 
 
