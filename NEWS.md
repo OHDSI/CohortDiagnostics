@@ -1,3 +1,12 @@
+CohortDiagnostics 2.1.1
+=======================
+
+Bug fixes:
+
+1. DiagnosticsExplorer shiny app bug fixes: inclusion rule display.
+2. Handle situation where cdm_source may have more than one row record. warning + use max value for vocabularyVersion.
+3. Switch off runTimeSeries for BigQuery because of SQL translation issue, to be addressed in version 2.3. https://github.com/OHDSI/CohortDiagnostics/issues/503 
+
 CohortDiagnostics 2.1.0
 =======================
 
