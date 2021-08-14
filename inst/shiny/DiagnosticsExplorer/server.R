@@ -828,6 +828,56 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   
+  
+  
+  
+  
+  
+  
+  
+  
+  ###getOrphanConceptsLeft----
+  getOrphanConceptsLeft <- shiny::reactive({
+    row <- getLastTwoRowSelectedInCohortTable()[1,]
+    data <- getResultsOrphanConcept(
+      dataSource = dataSource,
+      cohortIds = row$cohortId
+    )
+    if (is.null(data)) {
+      return(NULL)
+    }
+    if (nrow(data) > 0) {
+      data <- data %>% 
+        dplyr::select(.data$databaseId, .data$conceptSetId, .data$conceptId)
+    }
+    return(data)
+  })
+  
+  ###getOrphanConceptsRight----
+  getOrphanConceptsRight <- shiny::reactive({
+    row <- getLastTwoRowSelectedInCohortTable()
+    if (nrow(row) == 2) {
+      row <- row[2,]
+    } else {
+      return(NULL)
+    }
+    if (is.null(input$choiceForConceptSetDetailsRight)) {
+      return(NULL)
+    }
+    data <- getResultsOrphanConcept(
+      dataSource = dataSource,
+      cohortIds = row$cohortId
+    )
+    if (is.null(data)) {
+      return(NULL)
+    }
+    if (nrow(data) > 0) {
+      data <- data %>% 
+        dplyr::select(.data$databaseId, .data$conceptSetId, .data$conceptId)
+    }
+    return(data)
+  })
+  
   ###getConceptRelationshipsLeft----
   getConceptRelationshipsLeft <- shiny::reactive({
     conceptIds <- dplyr::bind_rows(getResolvedConceptsLeft(),
@@ -1276,9 +1326,6 @@ shiny::shinyServer(function(input, output, session) {
   #    - scrollable: packageDependencySnapShotJson (show pretty json with scroll bar vertical)
   #    - scrollable: argumentsAtDiagnosticsInitiation (show pretty json with scroll bar vertical)
   
-  #;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-----
-  #Output Functions----
-  #;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;-----
   
   
   #!!!!!!!!!!!!!!!!!! create new function for data table rendering
@@ -4000,65 +4047,86 @@ shiny::shinyServer(function(input, output, session) {
   ##reactive: getIncidenceRateData----
   getIncidenceRateData <- reactive({
     if (input$tabs == "incidenceRate") {
-      validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
-      validate(need(length( getCohortIdsFromDropdown()) > 0, "No cohorts chosen"))
       if (all(is(dataSource, "environment"), !exists('incidenceRate'))) {
+        return(NULL)
+      }
+      if (any(length(getCohortIdsFromDropdown()) == 0)) {
         return(NULL)
       }
       progress <- shiny::Progress$new()
       on.exit(progress$close())
-      progress$set(message = paste0("Getting incidence rate data."), value = 0)
+      progress$set(message = paste0("Getting incidence rate data."),
+                   value = 0)
       
-      data <- getResultsIncidenceRate(
-        dataSource = dataSource,
-        cohortIds =  getCohortIdsFromDropdown(),
-        databaseIds = getDatabaseIdsFromDropdown())
+      data <- getResultsIncidenceRate(dataSource = dataSource,
+                                      cohortIds =  getCohortIdsFromDropdown())
+      if (all(!is.null(data),
+              nrow(data) > 0)) {
+        data <- data %>%
+          dplyr::mutate(
+            incidenceRate = dplyr::case_when(.data$incidenceRate < 0 ~ 0,
+                                             TRUE ~ .data$incidenceRate)
+          )
+      }
       return(data)
     } else {
       return(NULL)
     }
   })
   
+  
   ##reactive: getFilteredIncidenceRateData----
   getFilteredIncidenceRateData <- reactive({
+    if (any(length(getDatabaseIdsFromDropdown()) == 0,
+            length(getCohortIdsFromDropdown()) == 0)) {
+      return(NULL)
+    }
     stratifyByAge <- "Age" %in% input$irStratification
     stratifyByGender <- "Gender" %in% input$irStratification
     stratifyByCalendarYear <-
       "Calendar Year" %in% input$irStratification
+    
     data <- getIncidenceRateData()
-    if (any(is.null(data), nrow(data) == 0)) {return(NULL)}
+    if (any(is.null(data), nrow(data) == 0)) {
+      return(NULL)
+    }
+    data <- data %>%
+      dplyr::filter(.data$databaseId %in% getDatabaseIdsFromDropdown())
+    if (any(is.null(data), nrow(data) == 0)) {
+      return(NULL)
+    }
     
     if (stratifyByGender) {
-      data <- data %>% 
+      data <- data %>%
         dplyr::filter(.data$gender != '')
     }
     if (stratifyByAge) {
-      data <- data %>% 
+      data <- data %>%
         dplyr::filter(.data$ageGroup != '')
     }
     if (stratifyByCalendarYear) {
-      data <- data %>% 
+      data <- data %>%
         dplyr::filter(.data$calendarYear != '')
     }
     
-    if (!is.na(input$minPersonYear) && !is.null(input$minPersonYear)) {
-      data <- data %>% 
+    if (!is.na(input$minPersonYear) &&
+        !is.null(input$minPersonYear)) {
+      data <- data %>%
         dplyr::filter(.data$personYears >= input$minPersonYear)
     }
-    if (!is.na(input$minSubjetCount) && !is.null(input$minSubjetCount)) {
-      data <- data %>% 
+    if (!is.na(input$minSubjetCount) &&
+        !is.null(input$minSubjetCount)) {
+      data <- data %>%
         dplyr::filter(.data$cohortCount >= input$minSubjetCount)
     }
     if (any(is.null(data), nrow(data) == 0)) {
       return(NULL)
     }
-    data <- data %>%
-      dplyr::mutate(incidenceRate = dplyr::case_when(.data$incidenceRate < 0 ~ 0,
-                                                     TRUE ~ .data$incidenceRate))
     return(data)
   })
   
-  ##update incidenceRateAgeFilter----
+  
+  ##pickerInput - incidenceRateAgeFilter----
   shiny::observe({
     if (!is.null(getIncidenceRateData()) &&
         nrow(getIncidenceRateData()) > 0) {
@@ -4080,7 +4148,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  ##update incidenceRateGenderFilter----
+  ##pickerInput - incidenceRateGenderFilter----
   shiny::observe({
     if (!is.null(getIncidenceRateData()) &&
         nrow(getIncidenceRateData()) > 0) {
@@ -4101,7 +4169,8 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  ##update incidenceRateCalendarFilter----
+  ##pickerInput - incidenceRateCalendarFilter & YscaleMinAndMax----
+  ##!!!why are two picker input in the same observe event - should it be seperate?
   shiny::observe({
     if (!is.null(getIncidenceRateData()) &&
         nrow(getIncidenceRateData()) > 0) {
@@ -4124,9 +4193,11 @@ shiny::shinyServer(function(input, output, session) {
         value = c(2010, maxValue)
       )
       
-      minIncidenceRateValue <- round(min(getIncidenceRateData()$incidenceRate),digits = 2)
+      minIncidenceRateValue <-
+        round(min(getIncidenceRateData()$incidenceRate), digits = 2)
       
-      maxIncidenceRateValue <- round(max(getIncidenceRateData()$incidenceRate),digits = 2)
+      maxIncidenceRateValue <-
+        round(max(getIncidenceRateData()$incidenceRate), digits = 2)
       
       shiny::updateSliderInput(
         session = session,
@@ -4134,7 +4205,9 @@ shiny::shinyServer(function(input, output, session) {
         min = 0,
         max = maxIncidenceRateValue,
         value = c(minIncidenceRateValue, maxIncidenceRateValue),
-        step = round((maxIncidenceRateValue - minIncidenceRateValue)/5,digits = 2)
+        step = round((maxIncidenceRateValue - minIncidenceRateValue) / 5,
+                     digits = 2
+        )
       )
     }
   })
@@ -4188,30 +4261,35 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::arrange(.data$incidenceRate)
     incidenceRateFilter <-
       incidenceRateFilter[incidenceRateFilter$incidenceRate >= input$YscaleMinAndMax[1] &
-                            incidenceRateFilter$incidenceRate <= input$YscaleMinAndMax[2],] %>%
+                            incidenceRateFilter$incidenceRate <= input$YscaleMinAndMax[2], ] %>%
       dplyr::pull(.data$incidenceRate)
     return(incidenceRateFilter)
   })
   
   ##output: saveIncidenceRatePlot----
+  ###!!!!!!!this is not 'plot' i.e. jpg, but a csv - change name
   output$saveIncidenceRatePlot <-  downloadHandler(
     filename = function() {
       getCsvFileNameWithDateTime(string = "IncidenceRate")
     },
     content = function(file) {
-      downloadCsv(x = getIncidenceRateData(), 
+      downloadCsv(x = getIncidenceRateData(),
                   fileName = file)
     }
   )
   
   ##output: incidenceRatePlot----
   output$incidenceRatePlot <- ggiraph::renderggiraph(expr = {
-    validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
-    validate(need(length( getCohortIdsFromDropdown()) > 0, "No cohorts chosen"))
+    validate(need(
+      length(getDatabaseIdsFromDropdown()) > 0,
+      "No data sources chosen"
+    ))
+    validate(need(length(getCohortIdsFromDropdown()) > 0, "No cohorts chosen"))
     
     progress <- shiny::Progress$new()
     on.exit(progress$close())
-    progress$set(message = paste0("Rendering incidence rate plot."), value = 0)
+    progress$set(message = paste0("Rendering incidence rate plot."),
+                 value = 0)
     
     stratifyByAge <- "Age" %in% input$irStratification
     stratifyByGender <- "Gender" %in% input$irStratification
@@ -4220,17 +4298,21 @@ shiny::shinyServer(function(input, output, session) {
     shiny::withProgress(
       message = paste(
         "Building incidence rate plot data for ",
-        length( getCohortIdsFromDropdown()),
+        length(getCohortIdsFromDropdown()),
         " cohorts and ",
         length(getDatabaseIdsFromDropdown()),
         " databases"
-      ),{
+      ),
+      {
         data <- getFilteredIncidenceRateData()
         
-        validate(need(all(!is.null(data), nrow(data) > 0), 
-                      paste0("No data for this combination")))
+        validate(need(
+          all(!is.null(data), nrow(data) > 0),
+          paste0("No data for this combination")
+        ))
         
-        if (stratifyByAge && !"All" %in% incidenceRateAgeFilterValues()) {
+        if (stratifyByAge &&
+            !"All" %in% incidenceRateAgeFilterValues()) {
           data <- data %>%
             dplyr::filter(.data$ageGroup %in% incidenceRateAgeFilterValues())
         }
@@ -4260,29 +4342,31 @@ shiny::shinyServer(function(input, output, session) {
           )
           return(plot)
         }
-      },detail = "Please Wait"
+      },
+      detail = "Please Wait"
     )
   })
   
   # Time Series -----
-  ##reactive: getTimeSeriesData and Tssible data ----
-  timeSeriesTssibleData <- shiny::reactiveVal(NULL)
-  getTimeSeriesData <- reactive({
+  ##reactive: getFixedTimeSeriesTsibble ----
+  getFixedTimeSeriesTsibble <- reactive({
     if (input$tabs == "timeSeries") {
-      validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
-      validate(need(length( getCohortIdsFromDropdown()) > 0, "No cohorts chosen"))
+      #!!!getCohortIdsFromDropdown() is returning '' -why?
+      if (any(length(getCohortIdsFromDropdown()) == 0)) {
+        return(NULL)
+      }
       if (all(is(dataSource, "environment"), !exists('timeSeries'))) {
         return(NULL)
       }
       
       progress <- shiny::Progress$new()
       on.exit(progress$close())
-      progress$set(message = paste0("Getting time series data."), value = 0)
-      
+      progress$set(message = paste0("Getting time series data."),
+                   value = 0)
+      browser()
       data <- getResultsFixedTimeSeries(
         dataSource = dataSource,
-        cohortIds =  getCohortIdsFromDropdown(),
-        databaseIds = getDatabaseIdsFromDropdown()
+        cohortIds =  getCohortIdsFromDropdown()
       )
       return(data)
     } else {
@@ -4290,17 +4374,39 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  ##reactive: getFilteredTimeSeriesData - calendarInterval + range ----
-  getFilteredTimeSeriesData <- reactive({
-    calendarIntervalFirstLetter <- tolower(substr(input$timeSeriesFilter,1,1))
-    data <- getTimeSeriesData()
+  ##reactive: getFixedTimeSeriesTsibbleFiltered----
+  getFixedTimeSeriesTsibbleFiltered <- reactive({
+    if (any(length(getDatabaseIdsFromDropdown()) == 0,
+            length(getCohortIdsFromDropdown()) == 0)) {
+      return(NULL)
+    }
+    calendarIntervalFirstLetter <-
+      tolower(substr(input$timeSeriesAggregationPeriodSelection, 1, 1))
+    data <- getFixedTimeSeriesTsibble()
+    if (is.null(data)) {
+      return(NULL)
+    }
+    browser()
+    
     data <- data[[calendarIntervalFirstLetter]]
+    if (any(is.null(data),
+            length(data) == 0)) {
+      return(NULL)
+    }
+    data <- data %>%
+      dplyr::filter(.data$databaseId %in% getDatabaseIdsFromDropdown())
     if (any(is.null(data),
             nrow(data) == 0)) {
       return(NULL)
     }
-    data <- data[as.character(data$periodBegin) >= input$timeSeriesPeriodRangeFilter[1] &
-                   as.character(data$periodBegin) <= input$timeSeriesPeriodRangeFilter[2],]
+    browser()
+    ###!!! there is a bug here input$timeSeriesPeriodRangeFilter - min and max is returning 0
+    if (any(input$timeSeriesPeriodRangeFilter[1] != 0,
+            input$timeSeriesPeriodRangeFilter[2] != 0)) {
+      data <-
+        data[as.character(data$periodBegin) >= input$timeSeriesPeriodRangeFilter[1] &
+               as.character(data$periodBegin) <= input$timeSeriesPeriodRangeFilter[2],]
+    }
     if (any(is.null(data),
             nrow(data) == 0)) {
       return(NULL)
@@ -4317,13 +4423,13 @@ shiny::shinyServer(function(input, output, session) {
         subjectsEnd = 0
       )
     
-    timeSeriesTssibleData(data)
-    
     if (calendarIntervalFirstLetter == 'y') {
-      data <- data %>% 
-        dplyr::mutate(periodBeginRaw = as.Date(paste0(as.character(.data$periodBegin), '-01-01')))
+      data <- data %>%
+        dplyr::mutate(periodBeginRaw = as.Date(paste0(
+          as.character(.data$periodBegin), '-01-01'
+        )))
     } else {
-      data <- data %>% 
+      data <- data %>%
         dplyr::mutate(periodBeginRaw = as.Date(.data$periodBegin))
     }
     
@@ -4335,44 +4441,43 @@ shiny::shinyServer(function(input, output, session) {
   
   ##reactive: getTimeSeriesDescription----
   getTimeSeriesDescription <- shiny::reactive({
-    data <- getTimeSeriesData()
+    data <- getFixedTimeSeriesTsibble()
     if (any(is.null(data), nrow(data) == 0)) {
       return(NULL)
     }
-    calendarIntervalFirstLetter <- tolower(substr(input$timeSeriesFilter,1,1))
+    calendarIntervalFirstLetter <-
+      tolower(substr(input$timeSeriesAggregationPeriodSelection, 1, 1))
     
     data <- data[[calendarIntervalFirstLetter]]
-    timeSeriesDescription <- attr(x = data,which = "timeSeriesDescription")
+    timeSeriesDescription <- attr(x = data,
+                                  which = "timeSeriesDescription")
     return(timeSeriesDescription)
   })
   
   ##output: timeSeriesTypeLong----
   output$timeSeriesTypeLong <- shiny::renderUI({
     timeSeriesDescription <- getTimeSeriesDescription()
-    if (any(is.null(timeSeriesDescription), 
+    if (any(is.null(timeSeriesDescription),
             nrow(timeSeriesDescription) == 0)) {
       return(NULL)
     }
-    
-    seriesTypeLong <- timeSeriesDescription %>% 
-      dplyr::filter(.data$seriesTypeShort %in% input$timeSeriesTypeFilter) %>% 
-      dplyr::pull(.data$seriesTypeLong) %>% 
+    seriesTypeLong <- timeSeriesDescription %>%
+      dplyr::filter(.data$seriesTypeShort %in% input$timeSeriesTypeFilter) %>%
+      dplyr::pull(.data$seriesTypeLong) %>%
       unique()
-    
     return(seriesTypeLong)
-    
   })
   
-  ##update: timeSeriesTypeFilter----
+  ##pickerInput: timeSeriesTypeFilter (short)----
   shiny::observe({
-    
     timeSeriesDescription <- getTimeSeriesDescription()
-    if (any(is.null(timeSeriesDescription), 
+    if (any(is.null(timeSeriesDescription),
             nrow(timeSeriesDescription) == 0)) {
       return(NULL)
     }
-    seriesTypeShort <- timeSeriesDescription %>% 
-      dplyr::pull(.data$seriesTypeShort) %>% 
+    
+    seriesTypeShort <- timeSeriesDescription %>%
+      dplyr::pull(.data$seriesTypeShort) %>%
       unique()
     
     shinyWidgets::updatePickerInput(
@@ -4383,16 +4488,29 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  ##update: timeSeriesPeriodRangeFilter----
+  ##sliderInput: timeSeriesPeriodRangeFilter----
   shiny::observe({
-    calendarIntervalFirstLetter <- tolower(substr(input$timeSeriesFilter,1,1))
-    data <- getTimeSeriesData()
+    #!!! should this be conditional on timeSeries tab selection? Otherwise,
+    #it is pulling time series data at start up
+    calendarIntervalFirstLetter <-
+      tolower(substr(input$timeSeriesAggregationPeriodSelection, 1, 1))
+    data <- getFixedTimeSeriesTsibble()
+    if (is.null(data)) {
+      return(NULL)
+    }
     data <- data[[calendarIntervalFirstLetter]]
     if (any(is.null(data), nrow(data) == 0)) {
       return(NULL)
     }
-    minValue <- as.integer(strsplit(min(as.character(data$periodBegin))," ")[[1]][1])
-    maxValue <- as.integer(strsplit(max(as.character(data$periodBegin))," ")[[1]][1])
+    if (calendarIntervalFirstLetter == 'y') {
+      minValue <- min(data$periodBegin) %>% as.integer()
+      maxValue <- max(data$periodBegin) %>% as.integer()
+    } else {
+      minValue <-
+        format(as.Date(data$periodBegin) %>% min(), "%Y") %>% as.integer()
+      maxValue <-
+        format(as.Date(data$periodBegin) %>% max(), "%Y") %>% as.integer()
+    }
     
     shiny::updateSliderInput(
       session = session,
@@ -4403,31 +4521,48 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  ##output: timeSeriesTable----
-  output$timeSeriesTable <- DT::renderDataTable({
-    
+  ##reactive: getFixedTimeSeriesDataForTablePlot----
+  getFixedTimeSeriesDataForTablePlot <- shiny::reactive({
+    if (any(is.null(input$timeSeriesTypeFilter),
+            length(input$timeSeriesTypeFilter) == 0)) {
+      return(NULL)
+    }
     timeSeriesDescription <- getTimeSeriesDescription()
+    browser()
+    data <- getFixedTimeSeriesTsibbleFiltered()
+    validate(need(all(!is.null(data),
+                      nrow(data) > 0),
+                  "No timeseries data for the cohort."))
     
-    validate(need(all(!is.null(timeSeriesDescription),
-                      nrow(timeSeriesDescription) > 0,
-                      !is.null(getFilteredTimeSeriesData()),
-                      nrow(getFilteredTimeSeriesData()) > 0),
-                  "No timeseries data for the combination."))
-    data <- getFilteredTimeSeriesData() %>% 
-      dplyr::inner_join(timeSeriesDescription)
-    validate(need(all(!is.null(data),
-                      nrow(data) > 0),
-                  "No timeseries data for the combination."))
-    data <- data %>% 
-      dplyr::filter(.data$seriesTypeShort %in% input$timeSeriesTypeFilter) %>% 
-      dplyr::select(-.data$seriesType,-.data$seriesTypeShort,-.data$seriesTypeLong) %>% 
-      dplyr::mutate(periodBegin = .data$periodBeginRaw) %>% 
-      dplyr::relocate(.data$periodBegin) %>% 
-      dplyr::arrange(.data$periodBegin) %>% 
+    data <- data %>%
+      dplyr::inner_join(timeSeriesDescription,
+                        by = "seriesType") %>%
+      dplyr::filter(.data$seriesTypeShort %in% input$timeSeriesTypeFilter) %>%
+      dplyr::select(-.data$seriesType,
+                    -.data$seriesTypeShort,
+                    -.data$seriesTypeLong) %>%
+      dplyr::mutate(periodBegin = .data$periodBeginRaw) %>%
+      dplyr::relocate(.data$periodBegin) %>%
+      dplyr::arrange(.data$periodBegin) %>%
       dplyr::select(-.data$periodBeginRaw)
-    validate(need(all(!is.null(data),
-                      nrow(data) > 0),
-                  "No timeseries data for the combination."))
+  })
+  
+  ##output: fixedTimeSeriesDataTable----
+  ####!!! conditional on input$timeSeriesTypeFilter having a value?
+  output$fixedTimeSeriesDataTable <- DT::renderDataTable({
+    validate(need(all(
+      !is.null(input$timeSeriesTypeFilter),
+      length(input$timeSeriesTypeFilter) > 0
+    ),
+    "Please select time series type."))
+    browser()
+    data <- getFixedTimeSeriesDataForTablePlot()
+    validate(need(
+      all(!is.null(data),
+          nrow(data) > 0),
+      "No timeseries data for the cohort of this series type"
+    ))
+    
     options = list(
       pageLength = 100,
       lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
@@ -4438,7 +4573,6 @@ shiny::shinyServer(function(input, output, session) {
       info = TRUE,
       searchHighlight = TRUE
     )
-    
     dataTable <- DT::datatable(
       data,
       options = options,
@@ -4452,35 +4586,30 @@ shiny::shinyServer(function(input, output, session) {
     return(dataTable)
   })
   
-  ##output: timeSeriesPlot----
-  output$timeSeriesPlot <- ggiraph::renderggiraph({
+  ##output: fixedTimeSeriesPlot----
+  output$fixedTimeSeriesPlot <- ggiraph::renderggiraph({
+    validate(need(all(
+      !is.null(input$timeSeriesTypeFilter),
+      length(input$timeSeriesTypeFilter) > 0
+    ),
+    "Please select time series type."))
+    data <- getFixedTimeSeriesDataForTablePlot()
+    validate(need(
+      all(!is.null(data),
+          nrow(data) > 0),
+      "No timeseries data for the cohort of this series type"
+    ))
     
-    timeSeriesDescription <- getTimeSeriesDescription()
-    
-    validate(need(all(!is.null(timeSeriesDescription),
-                      nrow(timeSeriesDescription) > 0,
-                      !is.null(getFilteredTimeSeriesData()),
-                      nrow(getFilteredTimeSeriesData()) > 0),
-                  "No timeseries data for the combination."))
-    data <- timeSeriesTssibleData() %>% 
-      dplyr::inner_join(timeSeriesDescription)
-    
-    
-    data <- data %>% 
-      dplyr::filter(.data$seriesTypeShort %in% input$timeSeriesTypeFilter) %>% 
-      dplyr::select(-.data$seriesType)
-    
-    validate(need(nrow(data) > 0,
-                  "No timeseries data for the combination."))
-    
-    plot <- plotTimeSeries(data = data, 
-                           columnFilter = titleCaseToCamelCase(input$timeSeriesPlotFilters),
-                           tableToFilterCohortShortName = cohort, 
-                           input$timeSeriesFilter,
+    plot <- plotTimeSeries(data, 
+                           titleCaseToCamelCase(input$timeSeriesPlotFilters),
+                           input$timeSeriesAggregationPeriodSelection,
                            input$timeSeriesPlotCategory)
     return(plot)
   })
   
+  
+  #Time Distribution----
+  ##!!!! time distribution may be moved as a tab in cohort definition - next to cohort count
   ##output: getTimeDistributionData----
   getTimeDistributionData <- reactive({
     validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
@@ -4494,15 +4623,6 @@ shiny::shinyServer(function(input, output, session) {
       databaseIds = getDatabaseIdsFromDropdown()
     )
     return(data)
-  })
-  
-  ##output: timeSeriesPlot----
-  output$timeDistributionPlot <- ggiraph::renderggiraph(expr = {
-    validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
-    data <- getTimeDistributionData()
-    validate(need(nrow(data) > 0, paste0("No data for this combination")))
-    plot <- plotTimeDistribution(data = data, shortNameRef = cohort)
-    return(plot)
   })
   
   ##output: saveTimeDistributionTable----
@@ -4540,7 +4660,6 @@ shiny::shinyServer(function(input, output, session) {
         Max = .data$maxValue
       )
     
-    
     validate(need(all(!is.null(data), nrow(data) > 0),
                   "No data available for selected combination."))
     
@@ -4577,6 +4696,15 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
+  ##output: timeDistributionPlot----
+  output$timeDistributionPlot <- ggiraph::renderggiraph(expr = {
+    validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
+    data <- getTimeDistributionData()
+    validate(need(nrow(data) > 0, paste0("No data for this combination")))
+    plot <- plotTimeDistribution(data = data, shortNameRef = cohort)
+    return(plot)
+  })
+  
   # resolved concepts in data source-----
   ##reactive: getResolvedConceptData---- !!!!!!!!!!REMOVE THE TAB
   getResolvedConceptData <- shiny::reactive(x = {
@@ -4595,6 +4723,7 @@ shiny::shinyServer(function(input, output, session) {
   
   
   ##output: saveIncludedConceptsTable----
+  ###!!!!!!!!!!!!!!remove concepts in data source
   output$saveIncludedConceptsTable <-  downloadHandler(
     filename = function() {
       getCsvFileNameWithDateTime(string = "includedConcept")
@@ -4606,6 +4735,7 @@ shiny::shinyServer(function(input, output, session) {
   )
   
   ##output: includedConceptsTable----
+  ###!!!!!!!!!!! this is concepts in data source - remove concepts in data source
   output$includedConceptsTable <- DT::renderDataTable(expr = {
     validate(need(all(!is.null(getDatabaseIdsFromDropdown()), length(getDatabaseIdsFromDropdown()) > 0), 
                   "No data sources chosen"))
@@ -7688,8 +7818,15 @@ shiny::shinyServer(function(input, output, session) {
     return(cohortSelected);
   })
   
+  
+  #!!!!!!!!what is the purpose of this?
   renderedSelectedCohorts <- shiny::reactive({
-    cohortSelected <- selectedCohorts() %>% 
+    cohortSelected <- selectedCohorts()
+    if (any(is.null(cohortSelected),
+            nrow(cohortSelected) == 0)) {
+      return(NULL)
+    }
+    cohortSelected <- cohortSelected %>%
       dplyr::select(.data$compoundName)
     
     return(apply(cohortSelected, 1, function(x)
