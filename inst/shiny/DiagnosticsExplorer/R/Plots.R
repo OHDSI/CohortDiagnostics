@@ -19,7 +19,7 @@ addShortName <-
     
   }
 
-plotTimeSeries <- function(data, columnFilter, timeSeriesAggressionPeriodFilter = "Monthly", timeSeriesPlotCategory = c()) {
+plotTimeSeries <- function(data, columnFilter, tableToFilterCohortShortName, timeSeriesAggressionPeriodFilter = "Monthly", timeSeriesPlotCategory = c()) {
   if (is.null(data)) {
     return(NULL)
   }
@@ -41,6 +41,10 @@ plotTimeSeries <- function(data, columnFilter, timeSeriesAggressionPeriodFilter 
   if (timeSeriesAggressionPeriodFilter != "Yearly") {
     data$periodBegin <- as.Date(data$periodBegin)
   }
+  data <- data %>% 
+    dplyr::left_join(dplyr::select(tableToFilterCohortShortName, shortName, cohortId)) %>% 
+    dplyr::mutate(cohortShortName = .data$shortName) %>% 
+    dplyr::select(-.data$shortName)
   
   
   aesthetics <-
@@ -78,17 +82,39 @@ plotTimeSeries <- function(data, columnFilter, timeSeriesAggressionPeriodFilter 
     ggplot2::labs(x = "Period Begin", y = "") +
     ggplot2::scale_y_continuous(labels = scales::comma) +
     ggplot2::theme(legend.position = "none") +
-    ggplot2::facet_grid(databaseId + cohortId~factor(
+    facet_nested(databaseId + cohortShortName ~ factor(
       fieldName,
       levels = c("Total", "trend", "season_year", "remainder")
     ), scales = "free_y") +
-    ggplot2::theme(
-      strip.text = ggplot2::element_text(size = 6),
-      axis.text = ggplot2::element_text(size = 5),
+   ggplot2::theme(
+      strip.text = ggplot2::element_text(size = 4),
+      axis.text = ggplot2::element_text(size = 4),
       plot.title = ggplot2::element_text(size = 7),
       plot.subtitle =  ggplot2::element_text(size = 7),
-      axis.title = ggplot2::element_text(size = 7)
+      axis.title = ggplot2::element_text(size = 5),
+      panel.border = ggplot2::element_blank()
     )
+  
+  spacing <- data %>%
+    dplyr::distinct(.data$databaseId, .data$cohortShortName) %>%
+    dplyr::arrange(.data$databaseId) %>%
+    dplyr::group_by(.data$databaseId) %>%
+    dplyr::summarise(count = dplyr::n()) %>%
+    dplyr::ungroup()
+  spacing <-
+    unlist(sapply(spacing$count, function(x)
+      c(1, rep(0.5, x - 1))))[-1]
+  
+  if (length(spacing) > 0) {
+    plot <-
+      plot + ggplot2::theme(
+        panel.spacing.y = ggplot2::unit(spacing, "lines"),
+        strip.background = ggplot2::element_blank()
+      )
+  } else {
+    plot <-
+      plot + ggplot2::theme(strip.background = ggplot2::element_blank())
+  }
   
   plot <- ggiraph::girafe(ggobj = plot,
                           options = list(ggiraph::opts_sizing(width = .5),

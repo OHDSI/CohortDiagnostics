@@ -4270,10 +4270,11 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::filter(.data$seriesTypeShort %in% input$timeSeriesTypeFilter) %>% 
       dplyr::select(-.data$seriesType)
     
+    
     validate(need(nrow(data) > 0,
                   "No timeseries data for the combination."))
     
-    plot <- plotTimeSeries(data, titleCaseToCamelCase(input$timeSeriesPlotFilters),input$timeSeriesFilter,input$timeSeriesPlotCategory)
+    plot <- plotTimeSeries(data = data, columnFilter = titleCaseToCamelCase(input$timeSeriesPlotFilters),tableToFilterCohortShortName = cohort, input$timeSeriesFilter,input$timeSeriesPlotCategory)
     
     # return(plot)
   })
