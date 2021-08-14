@@ -810,15 +810,28 @@ getConceptSetDataFrameFromConceptSetExpression <-
       if ('isExcluded' %in% colnames(conceptSetExpressionDetails)) {
         conceptSetExpressionDetails <- conceptSetExpressionDetails %>%
           dplyr::rename(IS_EXCLUDED = .data$isExcluded)
+      } else {
+        conceptSetExpressionDetails <- conceptSetExpressionDetails %>%
+          dplyr::mutate(IS_EXCLUDED = FALSE)
       }
       if ('includeDescendants' %in% colnames(conceptSetExpressionDetails)) {
         conceptSetExpressionDetails <- conceptSetExpressionDetails %>%
           dplyr::rename(INCLUDE_DESCENDANTS = .data$includeDescendants)
+      } else {
+        conceptSetExpressionDetails <- conceptSetExpressionDetails %>%
+          dplyr::mutate(INCLUDE_DESCENDANTS = FALSE)
       }
       if ('includeMapped' %in% colnames(conceptSetExpressionDetails)) {
         conceptSetExpressionDetails <- conceptSetExpressionDetails %>%
           dplyr::rename(INCLUDE_MAPPED = .data$includeMapped)
+      } else {
+        conceptSetExpressionDetails <- conceptSetExpressionDetails %>%
+          dplyr::mutate(INCLUDE_MAPPED = FALSE)
       }
+      conceptSetExpressionDetails <- conceptSetExpressionDetails %>% 
+        tidyr::replace_na(list(IS_EXCLUDED = FALSE,
+                               INCLUDE_DESCENDANTS = FALSE,
+                               INCLUDE_MAPPED = FALSE))
       colnames(conceptSetExpressionDetails) <-
         snakeCaseToCamelCase(colnames(conceptSetExpressionDetails))
     }

@@ -641,7 +641,7 @@ bodyTabItems <- shinydashboard::tabItems(
         tags$td(),
         tags$td(),
         tags$td(tags$b("Series Type Description :"),
-          shiny::uiOutput(outputId = "timeSeriesTypeLong")
+                shiny::uiOutput(outputId = "timeSeriesTypeLong")
         )
       )
       # tags$tr(
@@ -727,8 +727,8 @@ bodyTabItems <- shinydashboard::tabItems(
       ),
       shiny::conditionalPanel(
         condition = "input.timeSeriesType=='Plot'",
-       shiny::column(12,
-          ggiraph::ggiraphOutput("timeSeriesPlot",width ="100%", height = "100%")
+        shiny::column(12,
+                      ggiraph::ggiraphOutput("timeSeriesPlot",width ="100%", height = "100%")
         )
       )
     )
@@ -882,73 +882,73 @@ bodyTabItems <- shinydashboard::tabItems(
     tabName = "indexEventBreakdown",
     createShinyBoxFromOutputId("indexEventBreakdownSelectedCohort"),
     tags$table(width = '100%',
-      tags$tr(
-        tags$td(
-          shiny::radioButtons(
-            inputId = "indexEventBreakdownTableRadioButton",
-            label = "",
-            choices = c("All", "Standard concepts", "Non Standard Concepts"),
-            selected = "All",
-            inline = TRUE
-          )
-        ),
-        tags$td(HTML("&nbsp;&nbsp;&nbsp;")),
-        tags$td(
-          shiny::radioButtons(
-            inputId = "indexEventBreakdownTableFilter",
-            label = "Display",
-            choices = c("Both", "Records", "Persons"), 
-            selected = "Persons",
-            inline = TRUE
-          )
-        ),
-        tags$td(HTML("&nbsp;&nbsp;&nbsp;")),
-        tags$td(
-          shiny::radioButtons(
-            inputId = "indexEventBreakdownValueFilter",
-            label = "Display Value Type",
-            choices = c("Absolute", "Percentage"), 
-            selected = "Absolute",
-            inline = TRUE
-          )
-        ),
-       tags$td(
-         shinyWidgets::pickerInput(
-           inputId = "breakdownDomainTable",
-           label = "Domain Table",
-           choices = c(""),
-           multiple = TRUE,
-           width = 200,
-           choicesOpt = list(style = rep_len("color: black;", 999)),
-           options = shinyWidgets::pickerOptions(
-             actionsBox = TRUE,
-             liveSearch = TRUE,
-             liveSearchStyle = "contains",
-             size = 10,
-             liveSearchPlaceholder = "Type here to search",
-             virtualScroll = 50
-           )
-         )
-       ),
-       tags$td(
-         shinyWidgets::pickerInput(
-           inputId = "breakdownDomainField",
-           label = "Domain Field",
-           choices = c(""),
-           multiple = TRUE,
-           width = 200,
-           choicesOpt = list(style = rep_len("color: black;", 999)),
-           options = shinyWidgets::pickerOptions(
-             actionsBox = TRUE,
-             liveSearch = TRUE,
-             liveSearchStyle = "contains",
-             size = 10,
-             liveSearchPlaceholder = "Type here to search",
-             virtualScroll = 50
-           )
-         )
-       )
-      )
+               tags$tr(
+                 tags$td(
+                   shiny::radioButtons(
+                     inputId = "indexEventBreakdownTableRadioButton",
+                     label = "",
+                     choices = c("All", "Standard concepts", "Non Standard Concepts"),
+                     selected = "All",
+                     inline = TRUE
+                   )
+                 ),
+                 tags$td(HTML("&nbsp;&nbsp;&nbsp;")),
+                 tags$td(
+                   shiny::radioButtons(
+                     inputId = "indexEventBreakdownTableFilter",
+                     label = "Display",
+                     choices = c("Both", "Records", "Persons"), 
+                     selected = "Persons",
+                     inline = TRUE
+                   )
+                 ),
+                 tags$td(HTML("&nbsp;&nbsp;&nbsp;")),
+                 tags$td(
+                   shiny::radioButtons(
+                     inputId = "indexEventBreakdownValueFilter",
+                     label = "Display Value Type",
+                     choices = c("Absolute", "Percentage"), 
+                     selected = "Absolute",
+                     inline = TRUE
+                   )
+                 ),
+                 tags$td(
+                   shinyWidgets::pickerInput(
+                     inputId = "breakdownDomainTable",
+                     label = "Domain Table",
+                     choices = c(""),
+                     multiple = TRUE,
+                     width = 200,
+                     choicesOpt = list(style = rep_len("color: black;", 999)),
+                     options = shinyWidgets::pickerOptions(
+                       actionsBox = TRUE,
+                       liveSearch = TRUE,
+                       liveSearchStyle = "contains",
+                       size = 10,
+                       liveSearchPlaceholder = "Type here to search",
+                       virtualScroll = 50
+                     )
+                   )
+                 ),
+                 tags$td(
+                   shinyWidgets::pickerInput(
+                     inputId = "breakdownDomainField",
+                     label = "Domain Field",
+                     choices = c(""),
+                     multiple = TRUE,
+                     width = 200,
+                     choicesOpt = list(style = rep_len("color: black;", 999)),
+                     options = shinyWidgets::pickerOptions(
+                       actionsBox = TRUE,
+                       liveSearch = TRUE,
+                       liveSearchStyle = "contains",
+                       size = 10,
+                       liveSearchPlaceholder = "Type here to search",
+                       virtualScroll = 50
+                     )
+                   )
+                 )
+               )
     ),
     tags$table(width = "100%", 
                tags$tr(
@@ -968,46 +968,46 @@ bodyTabItems <- shinydashboard::tabItems(
     tabName = "visitContext",
     createShinyBoxFromOutputId("visitContextSelectedCohort"),
     shiny::conditionalPanel(
-      condition = "output.visitContextContainData == true",
+      condition = "output.doesVisitContextContainData == true",
       tags$table(width = '100%',
-        tags$tr(
-          tags$td(
-            shiny::radioButtons(
-              inputId = "visitContextTableFilters",
-              label = "Display",
-              choices = c("All", "Before", "During", "Simultaneous", "After"),
-              selected = "All",
-              inline = TRUE
-            )
-          ),
-          tags$td(
-            shiny::radioButtons(
-              inputId = "visitContextValueFilter",
-              label = "Display Value Type",
-              choices = c("Absolute", "Percentage"), 
-              selected = "Absolute",
-              inline = TRUE
-            )
-          ),
-          tags$td(
-            shiny::radioButtons(
-              inputId = "visitContextPersonOrRecords",
-              label = "Display",
-              choices = c("Person", "Record"),
-              selected = "Person",
-              inline = TRUE
-            )
-          ),
-          tags$td(
-            align = "right",
-            shiny::downloadButton(
-              "saveVisitContextTable",
-              label = "",
-              icon = shiny::icon("download"),
-              style = "margin-top: 5px; margin-bottom: 5px;"
-            )
-          )
-        )
+                 tags$tr(
+                   tags$td(
+                     shiny::radioButtons(
+                       inputId = "visitContextTableFilters",
+                       label = "Display",
+                       choices = c("All", "Before", "During", "Simultaneous", "After"),
+                       selected = "All",
+                       inline = TRUE
+                     )
+                   ),
+                   tags$td(
+                     shiny::radioButtons(
+                       inputId = "visitContextValueFilter",
+                       label = "Display Value Type",
+                       choices = c("Absolute", "Percentage"), 
+                       selected = "Absolute",
+                       inline = TRUE
+                     )
+                   ),
+                   tags$td(
+                     shiny::radioButtons(
+                       inputId = "visitContextPersonOrRecords",
+                       label = "Display",
+                       choices = c("Person", "Record"),
+                       selected = "Person",
+                       inline = TRUE
+                     )
+                   ),
+                   tags$td(
+                     align = "right",
+                     shiny::downloadButton(
+                       "saveVisitContextTable",
+                       label = "",
+                       icon = shiny::icon("download"),
+                       style = "margin-top: 5px; margin-bottom: 5px;"
+                     )
+                   )
+                 )
       )
     ),
     DT::dataTableOutput(outputId = "visitContextTable")
@@ -1529,7 +1529,7 @@ bodyTabItems <- shinydashboard::tabItems(
                               )
                             )
                           )
-                     )
+  )
 )
 
 
