@@ -723,12 +723,12 @@ bodyTabItems <- shinydashboard::tabItems(
                        )
                      )
                    )),
-        DT::dataTableOutput("timeSeriesTable")
+        DT::dataTableOutput("fixedTimeSeriesTable")
       ),
       shiny::conditionalPanel(
         condition = "input.timeSeriesType=='Plot'",
        shiny::column(12,
-          ggiraph::ggiraphOutput("timeSeriesPlot",width ="100%", height = "100%")
+          ggiraph::ggiraphOutput("fixedTimeSeriesPlot",width ="100%", height = "100%")
         )
       )
     )

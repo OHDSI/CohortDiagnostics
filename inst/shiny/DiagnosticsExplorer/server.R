@@ -4587,9 +4587,9 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(-.data$periodBeginRaw)
   })
   
-  ##output: fixedTimeSeriesDataTable----
+  ##output: fixedTimeSeriesTable----
   ####!!! conditional on input$timeSeriesTypeFilter having a value?
-  output$fixedTimeSeriesDataTable <- DT::renderDataTable({
+  output$fixedTimeSeriesTable <- DT::renderDataTable({
     validate(need(all(
       !is.null(input$timeSeriesTypeFilter),
       length(input$timeSeriesTypeFilter) > 0
@@ -4642,6 +4642,7 @@ shiny::shinyServer(function(input, output, session) {
     
     plot <- plotTimeSeries(data, 
                            titleCaseToCamelCase(input$timeSeriesPlotFilters),
+                           tableToFilterCohortShortName = cohort,
                            input$timeSeriesAggregationPeriodSelection,
                            input$timeSeriesPlotCategory)
     return(plot)

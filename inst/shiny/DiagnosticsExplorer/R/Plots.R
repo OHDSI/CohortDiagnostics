@@ -28,19 +28,39 @@ plotTimeSeries <- function(data, columnFilter, tableToFilterCohortShortName, tim
   
   if (timeSeriesAggressionPeriodFilter == "Yearly") {
     pivotBy <- c("Total", "trend", "remainder")
+    data <- data %>%
+      tsibble::group_by_key() %>%
+      tsibble::index_by(period = ~  tsibble::yearquarter(.) )
   } else {
     pivotBy <- c("Total", "trend", "season_year", "remainder")
+    if (timeSeriesAggressionPeriodFilter == "Quarterly") {
+      data <- data %>%
+        tsibble::group_by_key() %>%
+        tsibble::index_by(period = ~  tsibble::yearquarter(.))
+    } else {
+      data <- data %>%
+        tsibble::group_by_key() %>%
+        tsibble::index_by(period = ~  tsibble::yearmonth(.))
+    }
   }
-  data <- data %>%
-    fabletools::model(feasts::STL(Total ~ season(window = Inf))) %>%
+  
+  data <- data  %>%
+    dplyr::summarise(personDays = mean(.data$personDays, na.rm = TRUE),
+                     records = mean(.data$records, na.rm = TRUE),
+                     recordsEnd = mean(.data$recordsEnd, na.rm = TRUE),
+                     recordsStart = mean(.data$recordsStart, na.rm = TRUE),
+                     subjects = mean(.data$subjects, na.rm = TRUE),
+                     subjectsEnd = mean(.data$subjectsEnd, na.rm = TRUE),
+                     subjectsStart = mean(.data$subjectsStart, na.rm = TRUE),
+                     Total = mean(Total, na.rm = TRUE)) %>%
+    fabletools::model(feasts::STL(Total ~  season(window = Inf))) %>%
     fabletools::components() %>%
     tidyr::pivot_longer(cols = pivotBy ,
                         names_to = "fieldName",
                         values_to = "fieldValues")
+ 
+    data$period <- as.Date(data$period)
   
-  if (timeSeriesAggressionPeriodFilter != "Yearly") {
-    data$periodBegin <- as.Date(data$periodBegin)
-  }
   data <- data %>% 
     dplyr::left_join(dplyr::select(tableToFilterCohortShortName, shortName, cohortId)) %>% 
     dplyr::mutate(cohortShortName = .data$shortName) %>% 
@@ -49,7 +69,7 @@ plotTimeSeries <- function(data, columnFilter, tableToFilterCohortShortName, tim
   
   aesthetics <-
     list(
-      x = "periodBegin",
+      x = "period",
       y = "fieldValues",
       group = "fieldName",
       color = "fieldName"
@@ -61,7 +81,7 @@ plotTimeSeries <- function(data, columnFilter, tableToFilterCohortShortName, tim
       " = ",
       data$fieldValues,
       "\nPeriod Begin = ",
-      data$periodBegin,
+      data$period,
       "\nDatabase ID = ",
       data$databaseId,
       "\nCohort ID = ",
