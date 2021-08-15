@@ -4694,9 +4694,11 @@ shiny::shinyServer(function(input, output, session) {
   
   ##reactive: getFixedTimeSeriesDataForPlot----
   getFixedTimeSeriesDataForPlot <- shiny::reactive({
-    if (any(is.null(input$timeSeriesTypeFilter),
-            length(input$timeSeriesTypeFilter) == 0,
-            input$timeSeriesTypeFilter == '')) {
+    if (any(
+      is.null(input$timeSeriesTypeFilter),
+      length(input$timeSeriesTypeFilter) == 0,
+      input$timeSeriesTypeFilter == ''
+    )) {
       return(NULL)
     }
     timeSeriesDescription <- getTimeSeriesDescription()
@@ -4705,16 +4707,37 @@ shiny::shinyServer(function(input, output, session) {
                       nrow(data) > 0),
                   "No timeseries data for the cohort."))
     data <- data %>%
-      dplyr::inner_join(timeSeriesDescription %>% 
-                          dplyr::filter(.data$seriesTypeShort %in% input$timeSeriesTypeFilter) %>% 
-                          dplyr::select(.data$seriesType),
-                        by = "seriesType") %>%
-      dplyr::select(.data$databaseId,
-                    .data$cohortId,
-                    .data$seriesType,
-                    .data$periodBegin,
-                    titleCaseToCamelCase(input$timeSeriesPlotFilters)) %>% 
+      dplyr::inner_join(
+        timeSeriesDescription %>%
+          dplyr::filter(.data$seriesTypeShort %in% input$timeSeriesTypeFilter) %>%
+          dplyr::select(.data$seriesType),
+        by = "seriesType"
+      ) %>%
+      dplyr::select(
+        .data$databaseId,
+        .data$cohortId,
+        .data$seriesType,
+        .data$periodBegin,
+        titleCaseToCamelCase(input$timeSeriesPlotFilters)
+      ) %>%
       dplyr::rename(value = titleCaseToCamelCase(input$timeSeriesPlotFilters))
+    data <- data %>%
+      dplyr::left_join(
+        cohort %>%
+          dplyr::select(.data$shortName,
+                        .data$cohortId) %>%
+          dplyr::mutate(cohortShortName = .data$shortName),
+        by = "cohortId"
+      ) %>%
+      dplyr::select(-.data$cohortId,-.data$shortName) %>%
+      dplyr::relocate(.data$databaseId,
+                      .data$cohortShortName,
+                      .data$seriesType) %>% 
+      tsibble::as_tsibble(
+        key = c(.data$databaseId, .data$cohortShortName, .data$seriesType),
+        index = .data$periodBegin
+      ) %>%
+      tsibble::fill_gaps(value = 0)
     return(data)
   })
   
@@ -4773,11 +4796,12 @@ shiny::shinyServer(function(input, output, session) {
       "No timeseries data for the cohort of this series type"
     ))
     browser()
-    plot <- plotTimeSeries(tsibbleData = data, 
-                           yAxisLabel = input$timeSeriesPlotFilters,
-                           tableToFilterCohortShortName = cohort,
-                           timeSeriesAggressionPeriodFilter = input$timeSeriesAggregationPeriodSelection,
-                           timeSeriesPlotCategory = input$timeSeriesPlotCategory)
+    plot <- plotTimeSeriesFromTsibble(
+      tsibbleData = data,
+      yAxisLabel = titleCaseToCamelCase(input$timeSeriesPlotFilters),
+      indexAggregationType = input$timeSeriesAggregationPeriodSelection,
+      timeSeriesStatistics = input$timeSeriesStatistics
+    )
     return(plot)
   })
   

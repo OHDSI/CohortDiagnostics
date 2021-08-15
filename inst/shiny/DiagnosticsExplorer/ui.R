@@ -671,10 +671,10 @@ bodyTabItems <- shinydashboard::tabItems(
         shiny::conditionalPanel(
           condition = "input.timeSeriesType=='Plot'",
           shinyWidgets::pickerInput(
-            inputId = "timeSeriesPlotCategory",
-            label = "Show decomposition plot by:",
+            inputId = "timeSeriesStatistics",
+            label = "Time series statistics:",
             width = 300,
-            choices = c("Total", "trend", "season_year", "remainder"),
+            choices = c("Total", "trend", "season_year", "remainder"), ##!!! rename Total as Raw
             selected = c("trend"),
             multiple = TRUE,
             choicesOpt = list(style = rep_len("color: black;", 999)),

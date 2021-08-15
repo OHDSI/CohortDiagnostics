@@ -21,55 +21,34 @@ addShortName <-
 
 #!!!!!! make plotTimeSeries generic enough that it maybe used every where there is time series
 ###!! given an input tsibble, it should be smart enough to plot
-plotTimeSeries <-
+plotTimeSeriesFromTsibble <-
   function(tsibbleData,
            yAxisLabel,
            tableToFilterCohortShortName,
-           timeSeriesAggressionPeriodFilter = "Monthly",
-           timeSeriesPlotCategory = c()) {
+           indexAggregationType = "Monthly", #indexAggregationType -- can be inferred ?
+           timeSeriesStatistics = c()) {
     if (is.null(data)) {
       return(NULL)
     }
     browser()
-    data <- data %>% 
-      dplyr::mutate(Total = .data$value)
-    # 
-    # if (timeSeriesAggressionPeriodFilter == "Yearly") {
-    #   pivotBy <- c("Total", "trend", "remainder")
-    #   data <- data %>%
-    #     tsibble::group_by_key() %>%
-    #     tsibble::index_by(period = ~  tsibble::yearquarter(.))
-    # } else {
-    #   pivotBy <- c("Total", "trend", "season_year", "remainder")
-    #   if (timeSeriesAggressionPeriodFilter == "Quarterly") {
-    #     data <- data %>%
-    #       tsibble::group_by_key() %>%
-    #       tsibble::index_by(period = ~  tsibble::yearquarter(.))
-    #   } else {
-    #     data <- data %>%
-    #       tsibble::group_by_key() %>%
-    #       tsibble::index_by(period = ~  tsibble::yearmonth(.))
-    #   }
-    # }
+    data <- tsibbleData %>% 
+      dplyr::mutate(Total = .data$value) %>% 
+      dplyr::select(-.data$value)
+
+    #if aggregationPeriod is 'Year' then STL will not return 'season_year'
+    if (indexAggregationType == "Yearly") {
+      pivotBy <- c("Total", "trend", "remainder")
+    } else {
+      pivotBy <- c("Total", "trend", "season_year", "remainder")
+    }
     
-    data <- data  %>%
-      dplyr::summarise(
-        personDays = mean(.data$personDays, na.rm = TRUE),
-        records = mean(.data$records, na.rm = TRUE),
-        recordsEnd = mean(.data$recordsEnd, na.rm = TRUE),
-        recordsStart = mean(.data$recordsStart, na.rm = TRUE),
-        subjects = mean(.data$subjects, na.rm = TRUE),
-        subjectsEnd = mean(.data$subjectsEnd, na.rm = TRUE),
-        subjectsStart = mean(.data$subjectsStart, na.rm = TRUE),
-        Total = mean(Total, na.rm = TRUE)
-      ) %>%
+    data <- data %>%
       fabletools::model(feasts::STL(Total ~  season(window = Inf))) %>%
       fabletools::components() %>%
       tidyr::pivot_longer(cols = pivotBy ,
                           names_to = "fieldName",
-                          values_to = "fieldValues")
-    
-    data$period <- as.Date(data$period)
+                          values_to = "fieldValues") %>% 
+      dplyr::mutate(periodBegin = as.Date(.data$periodBegin))
     
     data <- data %>%
       dplyr::left_join(dplyr::select(tableToFilterCohortShortName, shortName, cohortId)) %>%
@@ -100,7 +79,7 @@ plotTimeSeries <-
     )
     
     # Filtering by Decomposition plot category
-    data <- data[data$fieldName %in% timeSeriesPlotCategory, ]
+    data <- data[data$fieldName %in% timeSeriesStatistics, ]
     
     plot <-
       ggplot2::ggplot(data = data, do.call(ggplot2::aes_string, aesthetics)) +
