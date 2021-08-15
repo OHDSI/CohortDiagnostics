@@ -1812,24 +1812,7 @@ shiny::shinyServer(function(input, output, session) {
         shiny::tabsetPanel(
           type = "tab",
           id = "cohortDefinitionOneTabSetPanel",
-          shiny::tabPanel(title = "Details",##!!!!!make second panel
-                          value = "cohortDefinitionOneDetailsTextTabPanel",
-                          tags$br(),
-                          shinydashboard::box(#!!!!!!!!fix height and vertical scroll bar
-                            #!!! remove boundary margin colors
-                            title = NULL, #"Readable definitions",
-                            width = NULL,
-                            status = NULL,
-                            collapsible = TRUE,
-                            collapsed = FALSE,
-                            solidHeader = FALSE,
-                            copyToClipboardButton(toCopyId = "cohortDefinitionTextLeft",
-                                                  style = "margin-top: 5px; margin-bottom: 5px;"),
-                            shiny::htmlOutput("circeRVersionInCohortDefinitionLeft"),
-                            shiny::htmlOutput("cohortDefinitionTextLeft")),
-                          #!!!!!!put metadata in its own shinydashboard box
-                          shiny::htmlOutput("cohortDetailsTextLeft")),
-          shiny::tabPanel(title = "Cohort Count",##!!!!!make first panel
+          shiny::tabPanel(title = "Cohort Count",
                           value = "cohortDefinitionOneCohortCountTabPanel",
                           tags$br(),
                           DT::dataTableOutput(outputId = "cohortCountsTableForSelectedCohortLeft"),
@@ -1841,13 +1824,22 @@ shiny::shinyServer(function(input, output, session) {
                                        tags$tr(
                                          tags$td(
                                            shiny::radioButtons(
+                                             inputId = "cohortDefinitionInclusionRuleType",
+                                             label = "Select: ",
+                                             choices = c("Simplified", "Detailed"),
+                                             selected = "Simplified",
+                                             inline = TRUE
+                                           )
+                                         ),
+                                         tags$td(
+                                           shiny::radioButtons(
                                              inputId = "cohortDefinitionInclusionRuleTableFilters",
                                              label = "Filter by",
                                              choices = c("All", "Meet", "Gain", "Remain", "Totals"),
                                              selected = "All",
                                              inline = TRUE
                                            )
-                                         ), #!! simplified vs detailed for inclusion rule
+                                         ), 
                                          tags$td(align = "right",
                                                  shiny::downloadButton(
                                                    "saveSimplifiedInclusionRuleTableForSelectedCohortCountLeft",
@@ -1858,7 +1850,30 @@ shiny::shinyServer(function(input, output, session) {
                                          )
                                        )
                             ),
-                            DT::dataTableOutput(outputId = "simplifiedInclusionRuleTableForSelectedCohortCountLeft")
+                            shiny::conditionalPanel(
+                              condition = "input.cohortDefinitionInclusionRuleType == 'Simplified'",
+                              DT::dataTableOutput(outputId = "simplifiedInclusionRuleTableForSelectedCohortCountLeft")
+                            )
+                          )),
+          shiny::tabPanel(title = "Details",
+                          value = "cohortDefinitionOneDetailsTextTabPanel",
+                          tags$br(),
+                          shinydashboard::box(#!!!!!!!!fix height and vertical scroll bar
+                            #!!! remove boundary margin colors
+                            title = "Readable definitions",
+                            width = NULL,
+                            status = NULL,
+                            collapsible = TRUE,
+                            collapsed = FALSE,
+                            solidHeader = FALSE,
+                            copyToClipboardButton(toCopyId = "cohortDefinitionTextLeft",
+                                                  style = "margin-top: 5px; margin-bottom: 5px;"),
+                            shiny::htmlOutput("circeRVersionInCohortDefinitionLeft"),
+                            shiny::htmlOutput("cohortDefinitionTextLeft")),
+                          #!!!!!!put metadata in its own shinydashboard box
+                          shiny::htmlOutput("cohortDetailsTextLeft"),
+                          tags$head(
+                            tags$style("#cohortDetailsTextLeft { max-height:400px};")
                           )),
           shiny::tabPanel(
             #!!!!!!!!!if cohort has no concept sets - make gray color or say 'No Concept sets'
@@ -2030,33 +2045,25 @@ shiny::shinyServer(function(input, output, session) {
         shiny::tabsetPanel(
           id = "cohortDefinitionTwoTabSetPanel",
           type = "tab",
-          shiny::tabPanel(title = "Details",#!!!!!!!!make Details second tab
-                          value = "cohortDefinitionTwoDetailsTextTabPanel",
-                          tags$br(),
-                          shinydashboard::box(#!!!!!!!!fix height and vertical scroll bar
-                            title = NULL, #"Readable definitions", 
-                            width = NULL,
-                            status = NULL,
-                            collapsible = TRUE,
-                            collapsed = FALSE,
-                            solidHeader = FALSE,
-                            copyToClipboardButton(toCopyId = "cohortDefinitionTextRight",
-                                                  style = "margin-top: 5px; margin-bottom: 5px;"),
-                            shiny::htmlOutput("circeRVersionInCohortDefinitionRight"),
-                            shiny::htmlOutput("cohortDefinitionTextRight")
-                          ),
-                          #!!!! put metadata in its own shiny dashboard box
-                          shiny::htmlOutput("cohortDetailsTextRight"),),
-          shiny::tabPanel(title = "Cohort Count", #!!!!!!!!make cohort count the first tab
+          shiny::tabPanel(title = "Cohort Count",
                           value = "cohortDefinitionTwoCohortCountTabPanel",
                           tags$br(),
                           DT::dataTableOutput(outputId = "cohortCountsTableForSelectedCohortRight"),
                           tags$br(),
                           shiny::conditionalPanel(
                             condition = "output.doesDatabaseIdFoundForSelectedCohortCountRight",
-                           tags$h3("Inclusion Rules"),
+                            tags$h3("Inclusion Rules"),
                             tags$table(width = "100%", #!!!!!!!!!!!!!if no inclusion rule data do not show
                                        tags$tr(
+                                         tags$td(
+                                           shiny::radioButtons(
+                                             inputId = "cohortDefinitionSecondInclusionRuleType",
+                                             label = "Filter by",
+                                             choices = c("Simplified", "Detailed"),
+                                             selected = "Simplified",
+                                             inline = TRUE
+                                           )
+                                         ),
                                          tags$td(
                                            shiny::radioButtons(
                                              inputId = "cohortDefinitionSecondInclusionRuleTableFilters",
@@ -2076,8 +2083,31 @@ shiny::shinyServer(function(input, output, session) {
                                          )
                                        )
                             ),
-                            DT::dataTableOutput(outputId = "simplifiedInclusionRuleTableForSelectedCohortCountRight")
+                            shiny::conditionalPanel(
+                              condition = "input.cohortDefinitionSecondInclusionRuleType == 'Simplified'",
+                              DT::dataTableOutput(outputId = "simplifiedInclusionRuleTableForSelectedCohortCountRight")
+                            )
                           )),
+          shiny::tabPanel(title = "Details",
+                          value = "cohortDefinitionTwoDetailsTextTabPanel",
+                          tags$br(),
+                          shinydashboard::box(
+                            title = "Readable definitions", 
+                            width = NULL,
+                            status = NULL,
+                            collapsible = TRUE,
+                            collapsed = FALSE,
+                            solidHeader = FALSE,
+                            copyToClipboardButton(toCopyId = "cohortDefinitionTextRight",
+                                                  style = "margin-top: 5px; margin-bottom: 5px;"),
+                            shiny::htmlOutput("circeRVersionInCohortDefinitionRight"),
+                            shiny::htmlOutput("cohortDefinitionTextRight"),
+                            tags$head(
+                              tags$style("#cohortDefinitionTextRight { max-height:400px};")
+                            )
+                          ),
+                          #!!!! put metadata in its own shiny dashboard box
+                          shiny::htmlOutput("cohortDetailsTextRight")),
           shiny::tabPanel(
             title = "Concept Sets",
             #!!!!!!!!!if cohort has no concept sets - make gray color or say 'No Concept sets'
@@ -3752,8 +3782,8 @@ shiny::shinyServer(function(input, output, session) {
     
     result <- dplyr::intersect(getConceptSetComparisionDetailsLeft(), 
                                getConceptSetComparisionDetailsRight())
-    orphanConceptDataDatabaseIds <- attr(x = getPivotOrphanConceptResultLeft(), which = 'databaseIds')
-    orphanConceptDataMaxCount <- attr(x = getPivotOrphanConceptResultLeft(), which = 'maxCount')
+    orphanConceptDataDatabaseIds <- attr(x = getConceptSetComparisionDetailsLeft(), which = 'databaseIds')
+    orphanConceptDataMaxCount <- attr(x = getConceptSetComparisionDetailsLeft(), which = 'maxCount')
     
     if (nrow(result) == 0) {
       validate(need(nrow(result) > 0, "No data found"))
