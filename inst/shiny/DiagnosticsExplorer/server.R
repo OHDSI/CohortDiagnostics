@@ -4523,6 +4523,39 @@ shiny::shinyServer(function(input, output, session) {
             nrow(data) == 0)) {
       return(NULL)
     }
+    if (calendarIntervalFirstLetter == 'y') {
+      data <- data %>%
+        dplyr::mutate(periodBeginRaw = as.Date(paste0(
+          as.character(.data$periodBegin), '-01-01'
+        )))
+    } else {
+      data <- data %>%
+        dplyr::mutate(periodBeginRaw = as.Date(.data$periodBegin))
+    }
+    
+    if (calendarIntervalFirstLetter == 'm') {
+      data <- data %>% 
+        dplyr::mutate(periodEnd = clock::add_months(x = as.Date(.data$periodBeginRaw), n = 1) %>% 
+                        clock::add_days(n = -1))
+    }
+    if (calendarIntervalFirstLetter == 'q') {
+      data <- data %>% 
+        dplyr::mutate(periodEnd = clock::add_quarters(x = as.Date(.data$periodBeginRaw), n = 1) %>% 
+                        clock::add_days(n = -1))
+    }
+    if (calendarIntervalFirstLetter == 'y') {
+      data <- data %>% 
+        dplyr::mutate(periodEnd = clock::add_years(x = as.Date(.data$periodBeginRaw), n = 1) %>% 
+                        clock::add_days(n = -1))
+    }
+    
+    data <- data %>% 
+      dplyr::relocate(.data$databaseId,
+                      .data$cohortId,
+                      .data$seriesType,
+                      .data$periodBegin,
+                      .data$periodEnd)
+    
     ###!!! there is a bug here input$timeSeriesPeriodRangeFilter - min and max is returning 0
     if (any(input$timeSeriesPeriodRangeFilter[1] != 0,
             input$timeSeriesPeriodRangeFilter[2] != 0)) {
@@ -4545,16 +4578,6 @@ shiny::shinyServer(function(input, output, session) {
         recordsEnd = 0,
         subjectsEnd = 0
       )
-    
-    if (calendarIntervalFirstLetter == 'y') {
-      data <- data %>%
-        dplyr::mutate(periodBeginRaw = as.Date(paste0(
-          as.character(.data$periodBegin), '-01-01'
-        )))
-    } else {
-      data <- data %>%
-        dplyr::mutate(periodBeginRaw = as.Date(.data$periodBegin))
-    }
     
     if (nrow(data) == 0) {
       return(NULL)
@@ -4644,10 +4667,11 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  ##reactive: getFixedTimeSeriesDataForTablePlot----
-  getFixedTimeSeriesDataForTablePlot <- shiny::reactive({
+  ##reactive: getFixedTimeSeriesDataForTable----
+  getFixedTimeSeriesDataForTable <- shiny::reactive({
     if (any(is.null(input$timeSeriesTypeFilter),
-            length(input$timeSeriesTypeFilter) == 0)) {
+            length(input$timeSeriesTypeFilter) == 0,
+            input$timeSeriesTypeFilter == '')) {
       return(NULL)
     }
     timeSeriesDescription <- getTimeSeriesDescription()
@@ -4655,18 +4679,43 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(all(!is.null(data),
                       nrow(data) > 0),
                   "No timeseries data for the cohort."))
-    
     data <- data %>%
-      dplyr::inner_join(timeSeriesDescription,
+      dplyr::inner_join(timeSeriesDescription %>% 
+                          dplyr::filter(.data$seriesTypeShort %in% input$timeSeriesTypeFilter) %>% 
+                          dplyr::select(.data$seriesType),
                         by = "seriesType") %>%
-      dplyr::filter(.data$seriesTypeShort %in% input$timeSeriesTypeFilter) %>%
-      dplyr::select(-.data$seriesType,
-                    -.data$seriesTypeShort,
-                    -.data$seriesTypeLong) %>%
+      dplyr::select(-.data$seriesType) %>%
       dplyr::mutate(periodBegin = .data$periodBeginRaw) %>%
-      dplyr::relocate(.data$periodBegin) %>%
+      dplyr::relocate(.data$periodBegin, .data$periodEnd) %>%
       dplyr::arrange(.data$periodBegin) %>%
       dplyr::select(-.data$periodBeginRaw)
+    return(data)
+  })
+  
+  ##reactive: getFixedTimeSeriesDataForPlot----
+  getFixedTimeSeriesDataForPlot <- shiny::reactive({
+    if (any(is.null(input$timeSeriesTypeFilter),
+            length(input$timeSeriesTypeFilter) == 0,
+            input$timeSeriesTypeFilter == '')) {
+      return(NULL)
+    }
+    timeSeriesDescription <- getTimeSeriesDescription()
+    data <- getFixedTimeSeriesTsibbleFiltered()
+    validate(need(all(!is.null(data),
+                      nrow(data) > 0),
+                  "No timeseries data for the cohort."))
+    data <- data %>%
+      dplyr::inner_join(timeSeriesDescription %>% 
+                          dplyr::filter(.data$seriesTypeShort %in% input$timeSeriesTypeFilter) %>% 
+                          dplyr::select(.data$seriesType),
+                        by = "seriesType") %>%
+      dplyr::select(.data$databaseId,
+                    .data$cohortId,
+                    .data$seriesType,
+                    .data$periodBegin,
+                    titleCaseToCamelCase(input$timeSeriesPlotFilters)) %>% 
+      dplyr::rename(value = titleCaseToCamelCase(input$timeSeriesPlotFilters))
+    return(data)
   })
   
   ##output: fixedTimeSeriesTable----
@@ -4674,11 +4723,12 @@ shiny::shinyServer(function(input, output, session) {
   output$fixedTimeSeriesTable <- DT::renderDataTable({
     validate(need(all(
       !is.null(input$timeSeriesTypeFilter),
-      length(input$timeSeriesTypeFilter) > 0
+      length(input$timeSeriesTypeFilter) > 0,
+      input$timeSeriesTypeFilter != ''
     ),
     "Please select time series type."))
     
-    data <- getFixedTimeSeriesDataForTablePlot()
+    data <- getFixedTimeSeriesDataForTable()
     validate(need(
       all(!is.null(data),
           nrow(data) > 0),
@@ -4712,21 +4762,22 @@ shiny::shinyServer(function(input, output, session) {
   output$fixedTimeSeriesPlot <- ggiraph::renderggiraph({
     validate(need(all(
       !is.null(input$timeSeriesTypeFilter),
-      length(input$timeSeriesTypeFilter) > 0
+      length(input$timeSeriesTypeFilter) > 0,
+      input$timeSeriesTypeFilter != ''
     ),
     "Please select time series type."))
-    data <- getFixedTimeSeriesDataForTablePlot()
+    data <- getFixedTimeSeriesDataForPlot()
     validate(need(
       all(!is.null(data),
           nrow(data) > 0),
       "No timeseries data for the cohort of this series type"
     ))
-    
-    plot <- plotTimeSeries(data, 
-                           titleCaseToCamelCase(input$timeSeriesPlotFilters),
+    browser()
+    plot <- plotTimeSeries(tsibbleData = data, 
+                           yAxisLabel = input$timeSeriesPlotFilters,
                            tableToFilterCohortShortName = cohort,
-                           input$timeSeriesAggregationPeriodSelection,
-                           input$timeSeriesPlotCategory)
+                           timeSeriesAggressionPeriodFilter = input$timeSeriesAggregationPeriodSelection,
+                           timeSeriesPlotCategory = input$timeSeriesPlotCategory)
     return(plot)
   })
   
