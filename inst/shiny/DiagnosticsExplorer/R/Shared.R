@@ -1339,9 +1339,7 @@ getResultsVisitContext <- function(dataSource,
   }
   data <- data %>%
     dplyr::inner_join(cohortCount,
-                      by = c("cohortId", "databaseId")) %>%
-    dplyr::mutate(subjectPercent = .data$subjects / .data$cohortSubjects) %>%
-    dplyr::mutate(recordPercent = .data$records / .data$cohortEntries)
+                      by = c("cohortId", "databaseId"))
   return(data)
 }
 

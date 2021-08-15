@@ -5281,6 +5281,7 @@ shiny::shinyServer(function(input, output, session) {
     if (all(is(dataSource, "environment"), !exists('visitContext'))) {
       return(NULL)
     }
+    
     visitContext <- getResultsVisitContext(
       dataSource = dataSource,
       cohortIds = getCohortIdFromDropdown(),
@@ -5328,8 +5329,8 @@ shiny::shinyServer(function(input, output, session) {
                   "No data available for selected combination."))
     
     if (input$visitContextValueFilter == "Percentage") {
-      data <- data %>% 
-        dplyr::mutate(subjects = .data$subjects/.data$cohortSubjects) %>% 
+       data <- data %>% 
+        dplyr::mutate(subjects = .data$subjects / .data$cohortSubjects) %>%
         dplyr::mutate(records = .data$records / .data$cohortEntries)
     }
     
@@ -5482,7 +5483,7 @@ shiny::shinyServer(function(input, output, session) {
     
     table <- DT::formatStyle(
       table = table,
-      columns = 1+ 1:(length(databaseIds) * 4),
+      columns = 1 + 1:(length(databaseIds) * 4),
       background = DT::styleColorBar(c(0, maxSubjects), "lightblue"),
       backgroundSize = "98% 88%",
       backgroundRepeat = "no-repeat",
