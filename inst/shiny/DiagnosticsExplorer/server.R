@@ -1273,6 +1273,29 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
+  ###getConceptSetComparisionDetailsLeft----
+  getConceptSetComparisionDetailsLeft <- shiny::reactive(x = {
+    data <- getConceptSetDetailsLeft()
+    if ("orphanConcepts" %in% names(data)) {
+      data <- pivotOrphanConceptResult(data = data$orphanConcepts,
+                                       dataSource = dataSource)
+      return(data)
+    } else {
+      return(NULL)
+    }
+  })
+  
+  ###getConceptSetComparisionDetailsRight----
+  getConceptSetComparisionDetailsRight <- shiny::reactive(x = {
+    data <- getConceptSetDetailsRight()
+    if ("orphanConcepts" %in% names(data)) {
+      data <- pivotOrphanConceptResult(data = data$orphanConcepts,
+                                       dataSource = dataSource)
+    } else {
+      return(NULL)
+    }
+  })
+  
   ###getDataForConceptSetComparison----
   getDataForConceptSetComparison <- shiny::reactive(x = {
     leftData <- getConceptSetDetailsLeft()$resolvedConcepts
@@ -3566,10 +3589,16 @@ shiny::shinyServer(function(input, output, session) {
   output$orphanConceptsPresentInLeft <- DT::renderDT({
     validate(need(input$choiceForConceptSetDetailsLeft == input$choiceForConceptSetDetailsRight, 
                   "Please select same database for comparison"))
-    result <- dplyr::setdiff(getPivotOrphanConceptResultLeft(), 
-                             getPivotOrphanConceptResultRight())
-    orphanConceptDataDatabaseIds <- attr(x = getPivotOrphanConceptResultLeft(), which = 'databaseIds')
-    orphanConceptDataMaxCount <- attr(x = getPivotOrphanConceptResultLeft(), which = 'maxCount')
+    
+    if (any(length(getConceptSetComparisionDetailsLeft()) == 0, length(getConceptSetComparisionDetailsRight()) == 0)) {
+      return(NULL)
+    }
+    
+    result <- dplyr::setdiff(getConceptSetComparisionDetailsLeft(), 
+                             getConceptSetComparisionDetailsRight())
+    
+    orphanConceptDataDatabaseIds <- attr(x = getConceptSetComparisionDetailsLeft(), which = 'databaseIds')
+    orphanConceptDataMaxCount <- attr(x = getConceptSetComparisionDetailsLeft(), which = 'maxCount')
     if (nrow(result) == 0) {
       validate(need(nrow(result) > 0, "No data found"))
     } else {
@@ -3587,8 +3616,7 @@ shiny::shinyServer(function(input, output, session) {
             th(rowspan = 2, "Concept Name"),
             th(rowspan = 2, "Vocabulary ID"),
             th(rowspan = 2, "Concept Code"),
-            lapply(attr(x = getPivotOrphanConceptResultLeft(), 
-                        which = "databaseIds"), th, colspan = 2, class = "dt-center")
+            lapply(orphanConceptDataDatabaseIds, th, colspan = 2, class = "dt-center")
           ),
           tr(
             lapply(rep(c("Subjects", "Counts"), length(orphanConceptDataDatabaseIds)), th)
@@ -3617,7 +3645,7 @@ shiny::shinyServer(function(input, output, session) {
       
       table <- DT::formatStyle(table = table,
                                columns =  4 + (1:(length(orphanConceptDataDatabaseIds)*2)),
-                               background = DT::styleColorBar(c(0, orphanConceptDataDatabaseIds), "lightblue"),
+                               background = DT::styleColorBar(c(0, orphanConceptDataMaxCount), "lightblue"),
                                backgroundSize = "98% 88%",
                                backgroundRepeat = "no-repeat",
                                backgroundPosition = "center")
@@ -3629,10 +3657,15 @@ shiny::shinyServer(function(input, output, session) {
   output$orphanConceptsPresentInRight <- DT::renderDT({
     validate(need(input$choiceForConceptSetDetailsLeft == input$choiceForConceptSetDetailsRight, 
                   "Please select same database for comparison"))
-    result <- dplyr::setdiff(getPivotOrphanConceptResultRight()$table,
-                             getPivotOrphanConceptResultLeft()$table)
-    orphanConceptDataDatabaseIds <- attr(x = getPivotOrphanConceptResultRight(), which = 'databaseIds')
-    orphanConceptDataMaxCount <- attr(x = getPivotOrphanConceptResultRight(), which = 'maxCount')
+    
+    if (any(length(getConceptSetComparisionDetailsLeft()) == 0, length(getConceptSetComparisionDetailsRight()) == 0)) {
+      return(NULL)
+    }
+    
+    result <- dplyr::setdiff(getConceptSetComparisionDetailsRight(),
+                             getConceptSetComparisionDetailsLeft())
+    orphanConceptDataDatabaseIds <- attr(x = getConceptSetComparisionDetailsRight(), which = 'databaseIds')
+    orphanConceptDataMaxCount <- attr(x = getConceptSetComparisionDetailsRight(), which = 'maxCount')
     
     if (nrow(result) == 0) {
       validate(need(nrow(result) > 0, "No data found"))
@@ -3691,8 +3724,13 @@ shiny::shinyServer(function(input, output, session) {
   ##output: orphanConceptsPresentInBoth----
   output$orphanConceptsPresentInBoth <- DT::renderDT({
     validate(need(input$choiceForConceptSetDetailsLeft == input$choiceForConceptSetDetailsRight, "Please select same database for comparison"))
-    result <- dplyr::intersect(getPivotOrphanConceptResultLeft()$table, 
-                               getPivotOrphanConceptResultRight()$table)
+    
+    if (any(length(getConceptSetComparisionDetailsLeft()) == 0, length(getConceptSetComparisionDetailsRight()) == 0)) {
+      return(NULL)
+    }
+    
+    result <- dplyr::intersect(getConceptSetComparisionDetailsLeft(), 
+                               getConceptSetComparisionDetailsRight())
     orphanConceptDataDatabaseIds <- attr(x = getPivotOrphanConceptResultLeft(), which = 'databaseIds')
     orphanConceptDataMaxCount <- attr(x = getPivotOrphanConceptResultLeft(), which = 'maxCount')
     
@@ -3753,10 +3791,15 @@ shiny::shinyServer(function(input, output, session) {
   ##output: orphanConceptsPresentInEither----
   output$orphanConceptsPresentInEither <- DT::renderDT({
     validate(need(input$choiceForConceptSetDetailsLeft == input$choiceForConceptSetDetailsRight, "Please select same database for comparison"))
-    result <- dplyr::union(getPivotOrphanConceptResultLeft()$table, 
-                           getPivotOrphanConceptResultRight()$table)
-    orphanConceptDataDatabaseIds <- attr(x = getPivotOrphanConceptResultLeft(), which = 'databaseIds')
-    orphanConceptDataMaxCount <- attr(x = getPivotOrphanConceptResultLeft(), which = 'maxCount')
+    
+    if (any(length(getConceptSetComparisionDetailsLeft()) == 0, length(getConceptSetComparisionDetailsRight()) == 0)) {
+      return(NULL)
+    }
+    
+    result <- dplyr::union(getConceptSetComparisionDetailsLeft(), 
+                           getConceptSetComparisionDetailsRight())
+    orphanConceptDataDatabaseIds <- attr(x = getConceptSetComparisionDetailsLeft(), which = 'databaseIds')
+    orphanConceptDataMaxCount <- attr(x = getConceptSetComparisionDetailsLeft(), which = 'maxCount')
     
     if (nrow(result) == 0) {
       validate(need(nrow(result) > 0, "No data found"))
@@ -3813,8 +3856,6 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   # Cohort Counts Tab -----
-
-  
   ##output: saveCohortCountsTable----
   output$saveCohortCountsTable <-  downloadHandler(
     filename = function() {
