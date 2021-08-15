@@ -4795,12 +4795,16 @@ shiny::shinyServer(function(input, output, session) {
           nrow(data) > 0),
       "No timeseries data for the cohort of this series type"
     ))
-    browser()
     plot <- plotTimeSeriesFromTsibble(
       tsibbleData = data,
       yAxisLabel = titleCaseToCamelCase(input$timeSeriesPlotFilters),
       indexAggregationType = input$timeSeriesAggregationPeriodSelection,
       timeSeriesStatistics = input$timeSeriesStatistics
+    )
+    plot <- ggiraph::girafe(
+      ggobj = plot,
+      options = list(ggiraph::opts_sizing(width = .5),
+                     ggiraph::opts_zoom(max = 5))
     )
     return(plot)
   })
