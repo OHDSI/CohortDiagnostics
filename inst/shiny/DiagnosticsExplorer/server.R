@@ -6722,6 +6722,10 @@ shiny::shinyServer(function(input, output, session) {
   
   # Cohort Overlap ------
   cohortOverlapData <- reactive({
+    if (any(length(getDatabaseIdsFromDropdown()) == 0,
+            length(getCohortIdsFromDropdown()) == 0)) {
+      return(NULL)
+    }
     if (all(is(dataSource, "environment"), 
             !exists('cohortRelationships'))) {
       return(NULL)

@@ -778,7 +778,7 @@ runCohortDiagnostics <- function(packageName = NULL,
   if (runCohortRelationship) {
     ParallelLogger::logInfo("Computing Cohort Relationship")
     startCohortRelationship <- Sys.time()
-    
+    browser() #!!! there is a bug here only 730 for startDay?
     # no point in incremental for cohort relationship, because we have
     # to compute the relationship between combinations of target and
     # comparators. What do we increment on - target? Then we
