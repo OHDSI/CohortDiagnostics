@@ -5822,7 +5822,7 @@ shiny::shinyServer(function(input, output, session) {
     visitContext <- getResultsVisitContext(
       dataSource = dataSource,
       cohortIds = getCohortIdFromDropdown(),
-      databaseIds = getDatabaseIdsFromDropdown()
+      databaseIds = getDatabaseIdsFromDropdown() #!!! remove databaseId to make return faster??
     )
     if (any(is.null(visitContext),
             nrow(visitContext) == 0)) {
@@ -6729,11 +6729,12 @@ shiny::shinyServer(function(input, output, session) {
     progress <- shiny::Progress$new()
     on.exit(progress$close())
     progress$set(message = paste0("Extracting cohort overlap data."), value = 0)
-    
+    browser()
+    #!!! why is data not returning
     data <- getCohortOverlapData(
       dataSource = dataSource,
       cohortIds =  getCohortIdsFromDropdown(),
-      databaseIds = getDatabaseIdsFromDropdown()
+      databaseIds = getDatabaseIdsFromDropdown() #!!! remove databaseId to make return faster?
     )
     validate(need(
       !is.null(data),
