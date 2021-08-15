@@ -1267,7 +1267,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::left_join(concept,
                          by = "conceptId") %>%
         dplyr::relocate(.data$conceptId, .data$conceptName) %>%
-        dplyr::select(-.data$databaseId, -.data$conceptSetId) %>%
+        dplyr::select(-.data$conceptSetId) %>%
         dplyr::arrange(dplyr::desc(.data$conceptCount))
     }
     return(data)
@@ -1277,14 +1277,6 @@ shiny::shinyServer(function(input, output, session) {
   getDataForConceptSetComparison <- shiny::reactive(x = {
     leftData <- getConceptSetDetailsLeft()$resolvedConcepts
     rightData <- getConceptSetDetailsRight()$resolvedConcepts
-    data <- list(leftData = leftData, rightData = rightData)
-    return(data)
-  })
-  
-  ###getDataForExcludedConceptSetComparison----
-  getDataForExcludedConceptSetComparison <- shiny::reactive(x = {
-    leftData <- getConceptSetDetailsLeft()$ExcludedConcepts
-    rightData <- getConceptSetDetailsRight()$ExcludedConcepts
     data <- list(leftData = leftData, rightData = rightData)
     return(data)
   })
@@ -2458,9 +2450,12 @@ shiny::shinyServer(function(input, output, session) {
   output$cohortDefinitionOrphanConceptTableLeft <- DT::renderDataTable(expr = {
     data <- getConceptSetDetailsLeft()
     if ("orphanConcepts" %in% names(data)) {
-      data <- data$orphanConcepts
-      orphanConceptDataDatabaseIds <- unique(data$databaseId) #!!!!!!doesnt exist orphanConceptDataDatabaseIds
-      orphanConceptDataMaxCount <- max(data$subjectCount, na.rm = TRUE)
+      orphanConceptDataDatabaseIds <- unique(data$orphanConcepts$databaseId)
+      orphanConceptDataMaxCount <- max(data$orphanConcepts$subjectCount , na.rm = TRUE)
+      data <- pivotOrphanConceptResult(data = data$orphanConcepts,
+                                       dataSource = dataSource)
+    } else {
+      return(NULL)
     }
     validate(need(any(!is.null(data),
                       nrow(data) > 0),
@@ -3063,7 +3058,12 @@ shiny::shinyServer(function(input, output, session) {
   output$cohortDefinitionOrphanConceptTableRight <- DT::renderDataTable(expr = {
     data <- getConceptSetDetailsRight()
     if ("orphanConcepts" %in% names(data)) {
-      data <- data$orphanConcepts
+      orphanConceptDataDatabaseIds <- unique(data$orphanConcepts$databaseId)
+      orphanConceptDataMaxCount <- max(data$orphanConcepts$subjectCount , na.rm = TRUE)
+      data <- pivotOrphanConceptResult(data = data$orphanConcepts,
+                                       dataSource = dataSource)
+    } else {
+      return(NULL)
     }
     validate(need(any(!is.null(data),
                       nrow(data) > 0),
@@ -3095,9 +3095,9 @@ shiny::shinyServer(function(input, output, session) {
                    columnDefs = list(truncateStringDef(1, 100),
                                      minCellCountDef(3 + (1:(length(orphanConceptDataDatabaseIds) * 2)))))
     
-    table <- DT::datatable(orphanConceptData,
+    table <- DT::datatable(data,
                            options = options,
-                           colnames = colnames(orphanConceptData),
+                           colnames = colnames(data),
                            rownames = FALSE,
                            container = sketch,
                            escape = FALSE,
@@ -3381,8 +3381,13 @@ shiny::shinyServer(function(input, output, session) {
   ##output: ExcludedConceptsPresentInLeft----
   output$excludedConceptsPresentInLeft <- DT::renderDT({
     validate(need(input$choiceForConceptSetDetailsLeft == input$choiceForConceptSetDetailsRight, "Please select same database for comparison"))
-    result <- dplyr::setdiff(getDataForExcludedConceptSetComparison()$leftData, 
-                             getDataForExcludedConceptSetComparison()$rightData)
+    
+    if (any(length(getConceptSetDetailsLeft()$ExcludedConcepts) == 0, length(getConceptSetDetailsRight()$ExcludedConcepts) == 0)) {
+      return(NULL)
+    }
+    
+    result <- dplyr::setdiff(getConceptSetDetailsLeft()$ExcludedConcepts, 
+                             getConceptSetDetailsRight()$ExcludedConcepts)
     
     if (any(is.null(result), nrow(result) == 0)) {
       return(NULL)
@@ -3422,8 +3427,13 @@ shiny::shinyServer(function(input, output, session) {
   ##output: excludedConceptsPresentInRight----
   output$excludedConceptsPresentInRight <- DT::renderDT({
     validate(need(input$choiceForConceptSetDetailsLeft == input$choiceForConceptSetDetailsRight, "Please select same database for comparison"))
-    result <- dplyr::setdiff(getDataForExcludedConceptSetComparison()$rightData, 
-                             getDataForExcludedConceptSetComparison()$leftData)
+    
+    if (any(length(getConceptSetDetailsLeft()$ExcludedConcepts) == 0, length(getConceptSetDetailsRight()$ExcludedConcepts) == 0)) {
+      return(NULL)
+    }
+    
+    result <- dplyr::setdiff(getConceptSetDetailsLeft()$ExcludedConcepts, 
+                             getConceptSetDetailsRight()$ExcludedConcepts)
     
     if (nrow(result) == 0) {
       return(NULL)
@@ -3463,8 +3473,13 @@ shiny::shinyServer(function(input, output, session) {
   ##output: excludedConceptsPresentInBoth----
   output$excludedConceptsPresentInBoth <- DT::renderDT({
     validate(need(input$choiceForConceptSetDetailsLeft == input$choiceForConceptSetDetailsRight, "Please select same database for comparison"))
-    result <- dplyr::intersect(getDataForExcludedConceptSetComparison()$leftData, 
-                               getDataForExcludedConceptSetComparison()$rightData)
+    
+    if (any(length(getConceptSetDetailsLeft()$ExcludedConcepts) == 0, length(getConceptSetDetailsRight()$ExcludedConcepts) == 0)) {
+      return(NULL)
+    }
+    
+    result <- dplyr::intersect(getConceptSetDetailsLeft()$ExcludedConcepts, 
+                               getConceptSetDetailsRight()$ExcludedConcepts)
     
     if (nrow(result) == 0) {
       return(NULL)
@@ -3504,8 +3519,13 @@ shiny::shinyServer(function(input, output, session) {
   ##output: excludedConceptsPresentInEither----
   output$excludedConceptsPresentInEither <- DT::renderDT({
     validate(need(input$choiceForConceptSetDetailsLeft == input$choiceForConceptSetDetailsRight, "Please select same database for comparison"))
-    result <- dplyr::union(getDataForExcludedConceptSetComparison()$leftData,
-                           getDataForExcludedConceptSetComparison()$rightData)
+    
+    if (any(length(getConceptSetDetailsLeft()$ExcludedConcepts) == 0, length(getConceptSetDetailsRight()$ExcludedConcepts) == 0)) {
+      return(NULL)
+    }
+    
+    result <- dplyr::union(getConceptSetDetailsLeft()$ExcludedConcepts,
+                           getConceptSetDetailsRight()$ExcludedConcepts)
     
     if (nrow(result) == 0) {
       return(NULL)
