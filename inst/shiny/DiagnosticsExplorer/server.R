@@ -5473,6 +5473,8 @@ shiny::shinyServer(function(input, output, session) {
   
   # Index event breakdown ------
   ###getIndexEventBreakDownForCohort----
+  ##!!! conditional on tab being index_event_breakdown
+  ###!!! why no data ?
   getIndexEventBreakDownForCohort <- shiny::reactive(x = {
     if (any(length(getDatabaseIdsFromDropdown()) > 0)) {
       return(NULL)
