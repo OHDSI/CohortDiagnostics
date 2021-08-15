@@ -1318,12 +1318,30 @@ getResultsIndexEventBreakdown <- function(dataSource,
 getResultsVisitContext <- function(dataSource,
                                    cohortIds = NULL,
                                    databaseIds = NULL) {
+  cohortCounts <-
+    getResultsCohortCount(dataSource = dataSource,
+                          cohortIds = cohortIds,
+                          databaseIds = databaseIds)
+  if (any(is.null(cohortCounts),
+          nrow(cohortCounts) == 0)) {
+    return(NULL)
+  }
+  
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortIds = cohortIds,
     databaseIds = databaseIds,
     dataTableName = "visitContext"
   )
+  if (any(is.null(data),
+          nrow(data) == 0)) {
+    return(NULL)
+  }
+  data <- data %>%
+    dplyr::inner_join(cohortCount,
+                      by = c("cohortId", "databaseId")) %>%
+    dplyr::mutate(subjectPercent = .data$subjects / .data$cohortSubjects) %>%
+    dplyr::mutate(recordPercent = .data$records / .data$cohortEntries)
   return(data)
 }
 

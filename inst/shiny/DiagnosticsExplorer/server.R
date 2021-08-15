@@ -5810,7 +5810,8 @@ shiny::shinyServer(function(input, output, session) {
   ###getVisitContexData----
   getVisitContexData <- shiny::reactive(x = {
     validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
-    validate(need(length( getCohortIdFromDropdown()) > 0, "No cohorts chosen"))
+    validate(need(all(!is.null( getCohortIdFromDropdown()),
+                      length( getCohortIdFromDropdown()) > 0), "No cohorts chosen"))
     if (all(is(dataSource, "environment"), !exists('visitContext'))) {
       return(NULL)
     }
@@ -5819,10 +5820,11 @@ shiny::shinyServer(function(input, output, session) {
       cohortIds = getCohortIdFromDropdown(),
       databaseIds = getDatabaseIdsFromDropdown()
     )
-    
-    if (is.null(visitContext) || nrow(visitContext) == 0) {
+    if (any(is.null(visitContext),
+            nrow(visitContext) == 0)) {
       return(NULL)
     }
+    
     # to ensure backward compatibility to 2.1 when visitContext did not have visitConceptName
     if (!'visitConceptName' %in% colnames(visitContext)) {
       concepts <- getConcept(dataSource = dataSource, 
@@ -5837,12 +5839,6 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::left_join(concepts,
                          by = c('visitConceptId'))
     }
-    
-    visitContext <- visitContext %>%
-      dplyr::inner_join(cohortCount,
-                        by = c("cohortId", "databaseId")) %>% 
-      dplyr::mutate(subjectPercent = .data$subjects/.data$cohortSubjects) %>% 
-      dplyr::mutate(recordPercent = .data$records / .data$cohortEntries)
     return(visitContext)
   })
   
