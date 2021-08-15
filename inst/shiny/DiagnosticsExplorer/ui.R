@@ -6,11 +6,6 @@ sidebarMenu <-
     id = "tabs",
     if (exists("cohort"))
       shinydashboard::menuItem(text = "Cohort Definition", tabName = "cohortDefinition"),
-    if (exists("includedSourceConcept"))
-      addInfo(
-        item = shinydashboard::menuItem(text = "Concepts in Data Source", tabName = "includedConcepts"),
-        infoId = "includedConceptsInfo"
-      ),
     if (exists("cohortCount"))
       addInfo(
         item = shinydashboard::menuItem(text = "Cohort Counts", tabName = "cohortCounts"),
@@ -31,11 +26,6 @@ sidebarMenu <-
         item = shinydashboard::menuItem(text = "Time Distributions", tabName = "timeDistribution"),
         infoId = "timeDistributionInfo"
       ),
-    # if (exists("inclusionRuleStats"))
-    #   addInfo(
-    #     item = shinydashboard::menuItem(text = "Inclusion Rule Statistics", tabName = "inclusionRuleStats"),
-    #     infoId = "inclusionRuleStatsInfo"
-    #   ),
     if (exists("indexEventBreakdown"))
       addInfo(
         item = shinydashboard::menuItem(text = "Index Event Breakdown", tabName = "indexEventBreakdown"),
@@ -82,8 +72,6 @@ sidebarMenu <-
       input.tabs != 'indexEventBreakdown' &
       input.tabs != 'databaseInformation' &
       input.tabs != 'cohortDefinition' &
-      input.tabs != 'includedConcepts' &
-      input.tabs != 'inclusionRuleStats' &
       input.tabs != 'visitContext' &
       input.tabs != 'cohortOverlap'",
       shinyWidgets::pickerInput(
@@ -110,8 +98,6 @@ sidebarMenu <-
       input.tabs =='cohortCharacterization' |
       input.tabs == 'cohortCounts' |
       input.tabs == 'indexEventBreakdown' |
-      input.tabs == 'includedConcepts' |
-      input.tabs == 'inclusionRuleStats' |
       input.tabs == 'visitContext' |
       input.tabs == 'cohortOverlap'",
       shinyWidgets::pickerInput(
@@ -236,8 +222,7 @@ sidebarMenu <-
       condition = "input.tabs == 'cohortCharacterization' |
       input.tabs == 'compareCohortCharacterization' |
       input.tabs == 'temporalCharacterization' |
-      input.tabs == 'compareTemporalCharacterization' |
-      input.tabs == 'includedConcepts'",
+      input.tabs == 'compareTemporalCharacterization'",
       shinyWidgets::pickerInput(
         inputId = "conceptSetsToFilterCharacterization",
         label = "Concept sets",
@@ -749,81 +734,6 @@ bodyTabItems <- shinydashboard::tabItems(
       DT::dataTableOutput("timeDistributionTable")
     )
   ),
-  shinydashboard::tabItem(
-    tabName = "includedConcepts",
-    createShinyBoxFromOutputId("includedConceptsSelectedCohort"),
-    shinydashboard::box(
-      title = "Concepts in Data Source",
-      width = NULL,
-      column(
-        4,
-        shiny::radioButtons(
-          inputId = "includedType",
-          label = "",
-          choices = c("Source fields", "Standard fields"),
-          selected = "Standard fields",
-          inline = TRUE
-        )
-      ),
-      shiny::conditionalPanel(
-        condition = "output.doesIncludeConceptsTableHasData == true",
-        column(
-          4,
-          shiny::radioButtons(
-            inputId = "includedConceptsTableColumnFilter", #!!!!!!!remove concepts in data source
-            label = "",
-            choices = c("Both", "Subjects only", "Records only"), # 
-            selected = "Subjects only",
-            inline = TRUE
-          )
-        ),
-        column(4,
-               tags$table(width = "100%",
-                          tags$tr(
-                            tags$td(
-                              align = "right",
-                              shiny::downloadButton(
-                                "saveIncludedConceptsTable", #!!!!!!!remove concepts in data source
-                                label = "",
-                                icon = shiny::icon("download"),
-                                style = "margin-top: 5px; margin-bottom: 5px;"
-                              )
-                            )
-                          )))
-      ),
-      DT::dataTableOutput("includedConceptsTable") #!!!!!!!remove concepts in data source
-    )
-  ),
-  # shinydashboard::tabItem(
-  #   tabName = "inclusionRuleStats",
-  #   createShinyBoxFromOutputId("inclusionRuleStatSelectedCohort"),
-  #   shiny::conditionalPanel(
-  #     condition = "output.inclusionRuleStatsContainsData == true",
-  #     column(6,
-  #            shiny::radioButtons(
-  #              inputId = "inclusionRuleTableFilters",
-  #              label = "Inclusion Rule Events",
-  #              choices = c("All", "Meet", "Gain", "Remain", "Totals"),
-  #              selected = "All",
-  #              inline = TRUE
-  #            )
-  #     ),
-  #     column(6,
-  #            tags$table(width = "100%",
-  #                       tags$tr(
-  #                         tags$td(
-  #                           align = "right",
-  #                           shiny::downloadButton(
-  #                             "saveInclusionRuleTable",
-  #                             label = "",
-  #                             icon = shiny::icon("download"),
-  #                             style = "margin-top: 5px; margin-bottom: 5px;"
-  #                           )
-  #                         )
-  #                       )))
-  #   ),
-  #   DT::dataTableOutput(outputId = "inclusionRuleTable")
-  # ),
   shinydashboard::tabItem(
     tabName = "indexEventBreakdown",
     createShinyBoxFromOutputId("indexEventBreakdownSelectedCohort"),
