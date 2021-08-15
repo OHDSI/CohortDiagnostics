@@ -670,6 +670,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   ###getSelectedDatabaseForConceptSetLeft
+  #!!! lets make this multiselect for databsaeId. Present the results in output by sketch on databaseId
   getSelectedDatabaseForConceptSetLeft <- shiny::reactive(x = {
     if (any(
       is.null(input$choiceForConceptSetDetailsLeft),
@@ -683,6 +684,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   ###getSelectedDatabaseForConceptSetRight
+  #!!! lets make this multiselect for databsaeId. Present the results in output by sketch on databaseId
   getSelectedDatabaseForConceptSetRight <- shiny::reactive(x = {
     if (any(
       is.null(input$choiceForConceptSetDetailsRight),
@@ -810,9 +812,18 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(data)) {
       return(NULL)
     }
+    excluded <- getExcludedConceptsLeft()
     if (nrow(data) > 0) {
       data <- data %>%
         dplyr::select(.data$databaseId, .data$conceptSetId, .data$conceptId)
+      if (all(!is.null(excluded),
+              nrow(excluded) > 0)) {
+        excludedConceptIds <- excluded %>% 
+          dplyr::select(.data$conceptId) %>% 
+          dplyr::distinct()
+        data <- data %>% 
+          dplyr::anti_join(y = excludedConceptIds, by = "conceptId")
+      }
     }
     return(data)
   })
@@ -833,9 +844,18 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(data)) {
       return(NULL)
     }
+    excluded <- getExcludedConceptsLeft()
     if (nrow(data) > 0) {
       data <- data %>%
         dplyr::select(.data$databaseId, .data$conceptSetId, .data$conceptId)
+      if (all(!is.null(excluded),
+              nrow(excluded) > 0)) {
+        excludedConceptIds <- excluded %>% 
+          dplyr::select(.data$conceptId) %>% 
+          dplyr::distinct()
+        data <- data %>% 
+          dplyr::anti_join(y = excludedConceptIds, by = "conceptId")
+      }
     }
     return(data)
   })
@@ -1167,10 +1187,8 @@ shiny::shinyServer(function(input, output, session) {
     }
     selectedCohort <- getLastTwoRowSelectedInCohortTable()[1,]
     
-    if (any(
-      is.null(getConceptSetExpressionRight()),
-      nrow(getConceptSetExpressionRight()) == 0
-    )) {
+    if (any(is.null(getConceptSetExpressionRight()),
+            nrow(getConceptSetExpressionRight()) == 0)) {
       return(NULL)
     }
     selectedConceptSetId <- getConceptSetExpressionRight() %>%
@@ -1182,8 +1200,7 @@ shiny::shinyServer(function(input, output, session) {
     )) {
       return(NULL)
     }
-    selectedDatabaseId <-
-      getSelectedDatabaseForConceptSetRight() %>%
+    selectedDatabaseId <- getSelectedDatabaseForConceptSetRight() %>%
       dplyr::pull(.data$databaseId)
     
     data <- list()
@@ -1860,6 +1877,7 @@ shiny::shinyServer(function(input, output, session) {
                                                               tags$table(tags$tr(
                                                                 tags$td(
                                                                   shinyWidgets::pickerInput(
+                                                                    #!!! lets make this multi-selected for databaseId/vocabulary choices
                                                                     inputId = "choiceForConceptSetDetailsLeft",
                                                                     label = "Vocabulary version choices:",
                                                                     choices = sourcesOfVocabularyTables,
@@ -2077,6 +2095,7 @@ shiny::shinyServer(function(input, output, session) {
                                                               tags$table(tags$tr(
                                                                 tags$td(
                                                                   shinyWidgets::pickerInput(
+                                                                    #!!! lets make this multi-selected for databaseId/vocabulary choices
                                                                     inputId = "choiceForConceptSetDetailsRight",
                                                                     label = "Vocabulary version choices:",
                                                                     choices = sourcesOfVocabularyTables,
@@ -2386,6 +2405,7 @@ shiny::shinyServer(function(input, output, session) {
   )
   
   #output: resolvedConceptsTableLeft----
+  #!!! lets make this like orphan concept with sketch over database/vocabulary choices + sketch. 
   output$resolvedConceptsTableLeft <-
     DT::renderDataTable(expr = {
       validate(need(length(getConceptSetExpressionLeft()$id) > 0,
@@ -2995,6 +3015,7 @@ shiny::shinyServer(function(input, output, session) {
 
   
   ##output: resolvedConceptsTableRight----
+  #!!! lets make this like orphan concept with sketch over database/vocabulary choices + sketch. 
   output$resolvedConceptsTableRight <-
     DT::renderDataTable(expr = {
       validate(need(length(getConceptSetExpressionRight()$id) > 0,
