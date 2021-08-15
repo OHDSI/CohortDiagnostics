@@ -24,13 +24,11 @@ addShortName <-
 plotTimeSeriesFromTsibble <-
   function(tsibbleData,
            yAxisLabel,
-           tableToFilterCohortShortName,
            indexAggregationType = "Monthly", #indexAggregationType -- can be inferred ?
            timeSeriesStatistics = c()) {
     if (is.null(data)) {
       return(NULL)
     }
-    browser()
     data <- tsibbleData %>% 
       dplyr::mutate(Total = .data$value) %>% 
       dplyr::select(-.data$value)
@@ -50,15 +48,10 @@ plotTimeSeriesFromTsibble <-
                           values_to = "fieldValues") %>% 
       dplyr::mutate(periodBegin = as.Date(.data$periodBegin))
     
-    data <- data %>%
-      dplyr::left_join(dplyr::select(tableToFilterCohortShortName, shortName, cohortId)) %>%
-      dplyr::mutate(cohortShortName = .data$shortName) %>%
-      dplyr::select(-.data$shortName)
-    
     
     aesthetics <-
       list(
-        x = "period",
+        x = "periodBegin",
         y = "fieldValues",
         group = "fieldName",
         color = "fieldName"
@@ -88,7 +81,7 @@ plotTimeSeriesFromTsibble <-
       ggiraph::geom_point_interactive(ggplot2::aes(tooltip = tooltip),
                                       size = 0.1,
                                       alpha = 0.6) +
-      ggplot2::labs(x = "Period Begin", y = "") +
+      ggplot2::labs(x = "Period Begin", y = yAxisLabel) +
       ggplot2::scale_y_continuous(labels = scales::comma) +
       ggplot2::theme(legend.position = "none") +
       facet_nested(databaseId + cohortShortName ~ factor(
@@ -125,12 +118,6 @@ plotTimeSeriesFromTsibble <-
       plot <-
         plot + ggplot2::theme(strip.background = ggplot2::element_blank())
     }
-    
-    plot <- ggiraph::girafe(
-      ggobj = plot,
-      options = list(ggiraph::opts_sizing(width = .5),
-                     ggiraph::opts_zoom(max = 5))
-    )
     return(plot)
   }
 
