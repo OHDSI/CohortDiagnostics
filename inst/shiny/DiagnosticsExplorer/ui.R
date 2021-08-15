@@ -11,11 +11,6 @@ sidebarMenu <-
         item = shinydashboard::menuItem(text = "Concepts in Data Source", tabName = "includedConcepts"),
         infoId = "includedConceptsInfo"
       ),
-    if (exists("orphanConcept"))
-      addInfo(
-        item = shinydashboard::menuItem(text = "Orphan Concepts", tabName = "orphanConcepts"),
-        infoId = "orphanConceptsInfo"
-      ),
     if (exists("cohortCount"))
       addInfo(
         item = shinydashboard::menuItem(text = "Cohort Counts", tabName = "cohortCounts"),
@@ -88,7 +83,6 @@ sidebarMenu <-
       input.tabs != 'databaseInformation' &
       input.tabs != 'cohortDefinition' &
       input.tabs != 'includedConcepts' &
-      input.tabs != 'orphanConcepts' &
       input.tabs != 'inclusionRuleStats' &
       input.tabs != 'visitContext' &
       input.tabs != 'cohortOverlap'",
@@ -117,7 +111,6 @@ sidebarMenu <-
       input.tabs == 'cohortCounts' |
       input.tabs == 'indexEventBreakdown' |
       input.tabs == 'includedConcepts' |
-      input.tabs == 'orphanConcepts' |
       input.tabs == 'inclusionRuleStats' |
       input.tabs == 'visitContext' |
       input.tabs == 'cohortOverlap'",
@@ -244,8 +237,7 @@ sidebarMenu <-
       input.tabs == 'compareCohortCharacterization' |
       input.tabs == 'temporalCharacterization' |
       input.tabs == 'compareTemporalCharacterization' |
-      input.tabs == 'includedConcepts' |
-      input.tabs == 'orphanConcepts'",
+      input.tabs == 'includedConcepts'",
       shinyWidgets::pickerInput(
         inputId = "conceptSetsToFilterCharacterization",
         label = "Concept sets",
@@ -799,54 +791,8 @@ bodyTabItems <- shinydashboard::tabItems(
                             )
                           )))
       ),
-      
       DT::dataTableOutput("includedConceptsTable") #!!!!!!!remove concepts in data source
     )
-  ),
-  shinydashboard::tabItem(
-    tabName = "orphanConcepts",
-    createShinyBoxFromOutputId("orphanConceptsSelectedCohort"),
-    tags$table(width = "100%",
-               tags$tr(
-                 tags$td(
-                   shiny::radioButtons(
-                     inputId = "orphanConceptsType",
-                     label = "Filters",
-                     choices = c("All", "Standard Only", "Non Standard Only"),
-                     selected = "All",
-                     inline = TRUE
-                   )
-                 ),
-                 tags$td(HTML("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;")),
-                 tags$td(
-                   shiny::conditionalPanel(
-                     condition = "output.orphanconceptContainData == true",
-                     tags$table(width = "100%",
-                                tags$tr(
-                                  tags$td(
-                                    shiny::radioButtons(
-                                      inputId = "orphanConceptsColumFilterType",
-                                      label = "Display",
-                                      choices = c("All", "Subjects only","Records only"),
-                                      selected = "All",
-                                      inline = TRUE
-                                    )
-                                  ),
-                                  tags$td(align = "right",
-                                          shiny::downloadButton(
-                                            "saveOrphanConceptsTable",
-                                            label = "",
-                                            icon = shiny::icon("download"),
-                                            style = "margin-top: 5px; margin-bottom: 5px;"
-                                          )
-                                  )
-                                )
-                     )
-                   )
-                 )
-               )
-    ),
-    DT::dataTableOutput(outputId = "orphanConceptsTable")
   ),
   # shinydashboard::tabItem(
   #   tabName = "inclusionRuleStats",
