@@ -114,12 +114,12 @@ recordTasksDone <-
     
     if (file.exists(recordKeepingFile)) {
       recordKeeping <-  readr::read_csv(
-        recordKeepingFile,
+        file = recordKeepingFile,
         col_types = readr::cols(),
         na = character(),
         guess_max = min(1e7), 
         lazy = FALSE
-      )
+      ) %>% dplyr::collect()
       recordKeeping$timeStamp <-
         as.character(recordKeeping$timeStamp)
       # ensure cohortId and comparatorId are always integer while reading
