@@ -778,15 +778,6 @@ runCohortDiagnostics <- function(packageName = NULL,
   if (runCohortRelationship) {
     ParallelLogger::logInfo("Computing Cohort Relationship")
     startCohortRelationship <- Sys.time()
-    browser() #!!! there is a bug here only 730 for startDay?
-    # no point in incremental for cohort relationship, because we have
-    # to compute the relationship between combinations of target and
-    # comparators. What do we increment on - target? Then we
-    # will still have to read all the comparator cohorts which
-    # is the full cohort table
-    # The only purpose of incremental is to prevent re-run
-    # Its all or none - Even if one cohort need computation, everything is run
-    
     subset <- subsetToRequiredCohorts(
       cohorts = cohorts %>%
         dplyr::filter(.data$cohortId %in% instantiatedCohorts),
