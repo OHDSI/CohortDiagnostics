@@ -111,15 +111,16 @@ recordTasksDone <-
     if (length(list(...)[[1]]) == 0) {
       return()
     }
-    
     if (file.exists(recordKeepingFile)) {
+      #reading record keeping file into memory
+      #prevent lazy loading to avoid lock on file
       recordKeeping <-  readr::read_csv(
         file = recordKeepingFile,
         col_types = readr::cols(),
         na = character(),
         guess_max = min(1e7), 
         lazy = FALSE
-      ) %>% dplyr::collect()
+      )
       recordKeeping$timeStamp <-
         as.character(recordKeeping$timeStamp)
       # ensure cohortId and comparatorId are always integer while reading
@@ -149,6 +150,13 @@ recordTasksDone <-
       newRow$comparatorId <- as.double(newRow$comparatorId)
     }
     recordKeeping <- dplyr::bind_rows(recordKeeping, newRow)
+    
+    #deleting record keeping file to avoid lock errors when rewriting later
+    if (file.exists(recordKeepingFile)) {
+      suppressWarnings(unlink(x = recordKeepingFile, force = TRUE))
+      suppressWarnings(file.remove(x = recordKeepingFile))
+    }
+  
     readr::write_excel_csv(
       x = recordKeeping,
       file = recordKeepingFile,
