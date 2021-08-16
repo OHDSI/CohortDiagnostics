@@ -107,20 +107,36 @@ recordTasksDone <-
     if (!incremental) {
       return()
     }
-    
     if (length(list(...)[[1]]) == 0) {
       return()
     }
+    packageVersionReadrIs2OrGreater <- packageVersion('readr') %>% 
+      as.character %>% 
+      substr(start = 1, stop = 1) %>% 
+      as.numeric() >= 2
+    
     if (file.exists(recordKeepingFile)) {
-      #reading record keeping file into memory
-      #prevent lazy loading to avoid lock on file
-      recordKeeping <-  readr::read_csv(
-        file = recordKeepingFile,
-        col_types = readr::cols(),
-        na = character(),
-        guess_max = min(1e7), 
-        lazy = FALSE
-      )
+      if (packageVersionReadrIs2OrGreater) {
+        warning("Package 'readr' version 2+ detected. readr introduced lazy loading in version 2.0+ that may cause file lock issues in windows")
+        #reading record keeping file into memory
+        #prevent lazy loading to avoid lock on file
+        recordKeeping <-  readr::read_csv(
+          file = recordKeepingFile,
+          col_types = readr::cols(),
+          na = character(),
+          guess_max = min(1e7), 
+          lazy = FALSE
+        ) %>% dplyr::collect()
+        #additionally deleting record keeping file to avoid lock errors when rewriting later
+          file.remove(x = recordKeepingFile) #file.remove will show an error if it couldnt delete the file.
+      } else {
+        recordKeeping <-  readr::read_csv(
+          file = recordKeepingFile,
+          col_types = readr::cols(),
+          na = character(),
+          guess_max = min(1e7)
+        )
+      }
       recordKeeping$timeStamp <-
         as.character(recordKeeping$timeStamp)
       # ensure cohortId and comparatorId are always integer while reading
@@ -150,12 +166,6 @@ recordTasksDone <-
       newRow$comparatorId <- as.double(newRow$comparatorId)
     }
     recordKeeping <- dplyr::bind_rows(recordKeeping, newRow)
-    
-    #deleting record keeping file to avoid lock errors when rewriting later
-    if (file.exists(recordKeepingFile)) {
-      suppressWarnings(unlink(x = recordKeepingFile, force = TRUE))
-      suppressWarnings(file.remove(x = recordKeepingFile))
-    }
   
     readr::write_excel_csv(
       x = recordKeeping,
