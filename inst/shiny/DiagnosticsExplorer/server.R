@@ -4940,10 +4940,8 @@ shiny::shinyServer(function(input, output, session) {
   
   # Index event breakdown ------
   ###getIndexEventBreakDownForCohort----
-  ##!!! conditional on tab being index_event_breakdown
-  ###!!! why no data ?
   getIndexEventBreakDownForCohort <- shiny::reactive(x = {
-    if (any(length(getDatabaseIdsFromDropdown()) > 0)) {
+    if (any(length(getDatabaseIdsFromDropdown()) == 0)) {
       return(NULL)
     }
     if (all(is(dataSource, "environment"), !exists('indexEventBreakdown'))) {
@@ -5163,13 +5161,15 @@ shiny::shinyServer(function(input, output, session) {
                           values_to = "count") %>% 
       dplyr::mutate(names = paste0(.data$databaseId, " ", .data$type)) %>% 
       dplyr::arrange(.data$databaseId, .data$type) %>% 
+      dplyr::group_by(.data$conceptId,.data$conceptName,.data$domainField,.data$vocabularyId,.data$names) %>% 
+      dplyr::summarise(count = mean(.data$count)) %>% 
       tidyr::pivot_wider(id_cols = c("conceptId",
                                      "conceptName",
                                      "domainField",
                                      "vocabularyId"),
-                         names_from = "names",
+                         names_from = names,
                          values_from = count,
-                         values_fill = 0)
+                         values_fill = 0) 
     
     data <- data[order(-data[5]), ]
     
