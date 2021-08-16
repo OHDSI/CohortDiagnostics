@@ -3934,6 +3934,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::rename(cohort = .data$shortName) #%>%
     # dplyr::mutate(cohort = as.factor(.data$cohort))
     
+    #!!!!!!!! add a radio button to toggle cohort short name vs cohort full name
     if (nrow(data) == 0) {
       return(tidyr::tibble("There is no data on any cohort"))
     }
