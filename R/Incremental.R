@@ -117,7 +117,8 @@ recordTasksDone <-
         recordKeepingFile,
         col_types = readr::cols(),
         na = character(),
-        guess_max = min(1e7)
+        guess_max = min(1e7), 
+        lazy = FALSE
       )
       recordKeeping$timeStamp <-
         as.character(recordKeeping$timeStamp)
