@@ -5197,8 +5197,9 @@ shiny::shinyServer(function(input, output, session) {
         .data$domainField,
         .data$vocabularyId
       ) %>%
-      dplyr::summarise(conceptValue = max(.data$conceptValue),
-                       subjectValue = max(.data$subjectValue)) %>% 
+      dplyr::summarise(conceptValue = sum(.data$conceptValue),
+                       subjectValue = max(.data$subjectValue),
+                       .groups = 'keep') %>% 
       dplyr::ungroup() %>% 
       dplyr::distinct() %>% # distinct is needed here because many time condition_concept_id and condition_source_concept_id
       # may have the same value leading to duplication of row records
@@ -5231,7 +5232,11 @@ shiny::shinyServer(function(input, output, session) {
         .data$domainField,
         .data$type
       ) %>%
-      dplyr::summarise(count = max(.data$count)) %>%
+      dplyr::summarise(conceptValue = sum(.data$conceptValue),
+                       subjectValue = max(.data$subjectValue),
+                       .groups = 'keep') %>% 
+      dplyr::ungroup() %>% 
+      dplyr::distinct() %>% 
       tidyr::pivot_wider(
         id_cols = c(
           "cohortId",
@@ -5326,12 +5331,12 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
     validate(need(length(getCohortIdFromDropdown()) > 0, "No cohorts chosen chosen"))
     
-    indexEventBreakdownDataTable <- getIndexEventBreakdownDataTable() %>% 
-      dplyr::select(-.data$cohortId)
+    indexEventBreakdownDataTable <- getIndexEventBreakdownDataTable()
     validate(need(all(!is.null(indexEventBreakdownDataTable),
                       nrow(indexEventBreakdownDataTable) > 0),
                   "No index event breakdown data for the chosen combination."))
-    
+    data <- indexEventBreakdownDataTable %>% 
+      dplyr::select(-.data$cohortId)
     maxCount <- max(indexEventBreakdownDataTable[7], na.rm = TRUE)
     databaseIds <- input$databases
     
@@ -5344,7 +5349,7 @@ shiny::shinyServer(function(input, output, session) {
                                              replacement = '')
       columnColor <- 4 + 1:(length(databaseIds))
     } else if (input$indexEventBreakdownTableFilter == "Persons") {
-      data <- indexEventBreakdownDataTable %>% 
+      data <- data %>% 
         dplyr::select(-dplyr::contains("conceptValue"))
       colnames(data) <- stringr::str_replace(string = colnames(data), 
                                              pattern = 'subjectValue', 
@@ -5915,7 +5920,8 @@ shiny::shinyServer(function(input, output, session) {
                       .data$sortOrder) %>%
         dplyr::distinct() %>%
         dplyr::group_by(.data$characteristic, .data$position, .data$header) %>%
-        dplyr::summarise(sortOrder = max(.data$sortOrder)) %>%
+        dplyr::summarise(sortOrder = max(.data$sortOrder),
+                         .groups = 'keep') %>%
         dplyr::ungroup() %>%
         dplyr::arrange(.data$position, desc(.data$header)) %>%
         dplyr::mutate(sortOrder = dplyr::row_number()) %>%
