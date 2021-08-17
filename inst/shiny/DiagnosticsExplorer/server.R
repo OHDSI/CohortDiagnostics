@@ -1415,6 +1415,12 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   #Metadata----
+  ###getMetadataInformation
+  getMetadataInformation <- shiny::reactive(x = {
+    data <- metadata %>% 
+      dplyr::filter(.data$databaseId == input$database)
+    return(data)
+  })
   #!!!!write reactive function to parse metadata and configuration information here
   # Construct texts:
   #   Drop down for databaseId
@@ -7427,12 +7433,6 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
-  getMetadataInformation <- shiny::reactive(x = {
-    data <- metadata %>% 
-      dplyr::filter(.data$databaseId == input$database)
-    return(data)
-  })
-  
   output$metadataInfoTitle <- shiny::renderUI(expr = {
     data <- getMetadataInformation() %>% 
       dplyr::filter(.data$variableField == "timeZone")
@@ -7446,6 +7446,33 @@ shiny::shinyServer(function(input, output, session) {
         tags$td(paste("Run on ", data$databaseId, "on ", data$startTime, data$valueField))
       )
     )
+  })
+  
+  output$metadataInfoDetailsText <- shiny::renderUI(expr = {
+    data <- getMetadataInformation()
+    
+    if (any(is.null(data), nrow(data) == 0)) {
+      return(NULL)
+    }
+    
+    runTime <- data %>% 
+      dplyr::filter(.data$variableField == "runTime")
+    
+    runTimeUnits <- data %>% 
+      dplyr::filter(.data$variableField == "runTimeUnits")
+    
+    currentPackage <- data %>% 
+      dplyr::filter(.data$variableField == "CurrentPackage")
+    
+    currentPackageVersion <- data %>% 
+      dplyr::filter(.data$variableField == "CurrentPackageVersion")
+    
+    tags$table(
+      tags$tr(
+        tags$td(paste("Ran for ", runTime$valueField, "on ", runTimeUnits$valueField, currentPackage$valueField, "(", currentPackageVersion$valueField, ")"))
+      )
+    )
+    
   })
   
   output$packageDependencySnapShotTable <- DT::renderDataTable(expr = {
