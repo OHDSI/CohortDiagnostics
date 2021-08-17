@@ -817,7 +817,7 @@ bodyTabItems <- shinydashboard::tabItems(
                  )
                )
     ),
-    DT::dataTableOutput(outputId = "breakdownTable")
+    DT::dataTableOutput(outputId = "indexEventBreakdownTable")
   ),
   shinydashboard::tabItem(
     tabName = "visitContext",
@@ -1385,11 +1385,11 @@ bodyTabItems <- shinydashboard::tabItems(
                                   collapsible = TRUE,
                                   width = NULL,
                                   collapsed = FALSE,
-                                  shiny::verbatimTextOutput(outputId = "argumentsAtDiagnosticsInitiationTable"),
+                                  shiny::verbatimTextOutput(outputId = "argumentsAtDiagnosticsInitiationJson"),
                                   tags$head(
-                                    tags$style("#argumentsAtDiagnosticsInitiationTable { max-height:400px};")
+                                    tags$style("#argumentsAtDiagnosticsInitiationJson { max-height:400px};")
                                   )
-                                  # DT::dataTableOutput("argumentsAtDiagnosticsInitiationTable")
+                                  # DT::dataTableOutput("argumentsAtDiagnosticsInitiationJson")
                                 )
                               ) 
                             )

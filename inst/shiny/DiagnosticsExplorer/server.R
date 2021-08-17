@@ -1,5 +1,6 @@
 shiny::shinyServer(function(input, output, session) {
   
+  #______________----
   #Reactive Functions for Dropdown ----
   
   ##getCohortIdFromDropdown----
@@ -77,6 +78,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  #______________----
   #Reactive functions that are initiated on start up----
   ##getOmopDomainInformation---
   getOmopDomainInformation <- shiny::reactive(x = {
@@ -86,7 +88,7 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  #getNonEraCdmTableNames----
+  ##getNonEraCdmTableNames----
   getNonEraCdmTableNames <- shiny::reactive({
     data <- getOmopDomainInformation() %>%
       dplyr::filter(.data$isEraTable == FALSE) %>%
@@ -337,7 +339,8 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  #Reactive functions used in Cohort tab----
+  #______________----
+  #Cohort tab----
   ##Cohort definition----
   ###cohortDefinitionTableData----
   cohortDefinitionTableData <- shiny::reactive(x = {
@@ -1414,26 +1417,9 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  #Metadata----
-  ###getMetadataInformation
-  getMetadataInformation <- shiny::reactive(x = {
-    data <- metadata %>% 
-      dplyr::filter(.data$databaseId == input$database)
-    return(data)
-  })
-  #!!!!write reactive function to parse metadata and configuration information here
-  # Construct texts:
-  #   Drop down for databaseId
-  #   Check number of startTime per databaseId - for each runTime create collapsible box
-  #   Title of collapsible box:  Run on <databaseId> on <startTime> <timeZone>
-  #    - Ran for <runTime> <runTimeUnits> on <CurrentPackage> (<CurrentPackageVersion>) <RVersion>
-  #    - scrollable: packageDependencySnapShotJson (show pretty json with scroll bar vertical)
-  #    - scrollable: argumentsAtDiagnosticsInitiation (show pretty json with scroll bar vertical)
-  
-  
+
   #!!!!!!!!!!!!!!!!!! create new function for data table rendering
-  #!!!!!!!!!!!!!!!!!! organize output based on app UI similar to reactive with indentation
-  
+
   #output: saveCohortDefinitionButton----
   output$saveCohortDefinitionButton <- downloadHandler(
     filename = function() {
@@ -3934,6 +3920,7 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  #______________----
   # Cohort Counts Tab -----
   ##output: saveCohortCountsTable----
   output$saveCohortCountsTable <-  downloadHandler(
@@ -4227,6 +4214,7 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
+  #______________----
   # Incidence rate -------
   ##reactive: getIncidenceRateData----
   getIncidenceRateData <- reactive({
@@ -4531,6 +4519,7 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
+  #______________----
   # Time Series -----
   ##reactive: getFixedTimeSeriesTsibble ------
   getFixedTimeSeriesTsibble <- reactive({
@@ -4751,6 +4740,8 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
+  #!!!!!!!!!BUG missing download csv
+  
   ##reactive: getFixedTimeSeriesDataForPlot----
   getFixedTimeSeriesDataForPlot <- shiny::reactive({
     if (any(
@@ -4868,14 +4859,16 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
   })
   
-  
+  #______________----
   #Time Distribution----
-  ##!!!! time distribution may be moved as a tab in cohort definition - next to cohort count
   ##output: getTimeDistributionData----
   getTimeDistributionData <- reactive({
-    validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
-    validate(need(length( getCohortIdsFromDropdown()) > 0, "No cohorts chosen"))
-    if (all(is(dataSource, "environment"), !exists('timeDistribution'))) {
+    if (any(is.null(getDatabaseIdsFromDropdown()),
+            length(getDatabaseIdsFromDropdown()) == 0)) {
+      return(NULL)
+    }
+    if (all(is(dataSource, "environment"), 
+            !exists('timeDistribution'))) {
       return(NULL)
     }
     data <- getResultsTimeDistribution(
@@ -4886,20 +4879,13 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  ##output: saveTimeDistributionTable----
-  output$saveTimeDistributionTable <-  downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "timeDistribution")
-    },
-    content = function(file) {
-      downloadCsv(x = getTimeDistributionData(), 
-                  fileName = file)
+  getTimeDistributionTableData <- reactive({
+    data <- getTimeDistributionData()
+    if (any(is.null(data),
+            nrow(data) == 0)) {
+      return(NULL)
     }
-  )
-  
-  ##output: timeDistributionTable----
-  output$timeDistributionTable <- DT::renderDataTable(expr = {
-    data <- getTimeDistributionData()  %>%
+    data <- data %>%
       addShortName(cohort) %>%
       dplyr::arrange(.data$databaseId, .data$cohortId) %>%
       dplyr::mutate(
@@ -4920,15 +4906,24 @@ shiny::shinyServer(function(input, output, session) {
         P90 = .data$p90Value,
         Max = .data$maxValue
       )
-    
+  })
+  
+  ##output: saveTimeDistributionTable----
+  output$saveTimeDistributionTable <-  downloadHandler(
+    filename = function() {
+      getCsvFileNameWithDateTime(string = "timeDistribution")
+    },
+    content = function(file) {
+      downloadCsv(x = getTimeDistributionTableData(), 
+                  fileName = file)
+    }
+  )
+  
+  ##output: timeDistributionTable----
+  output$timeDistributionTable <- DT::renderDataTable(expr = {
+    data <- getTimeDistributionTableData()
     validate(need(all(!is.null(data), nrow(data) > 0),
                   "No data available for selected combination."))
-    
-    # if (is.null(data) || nrow(data) == 0) {
-    #   return(dplyr::tibble(
-    #     Note = paste0("No data available for selected combination")
-    #   ))
-    # }
     
     options = list(
       pageLength = 100,
@@ -4966,6 +4961,7 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
   })
   
+  #______________----
   # Index event breakdown ------
   ##getIndexEventBreakdownData----
   getIndexEventBreakdownData <- shiny::reactive(x = {
@@ -5332,8 +5328,8 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  ###Update: breakdownTable----
-  output$breakdownTable <- DT::renderDataTable(expr = {
+  ##output: indexEventBreakdownTable----
+  output$indexEventBreakdownTable <- DT::renderDataTable(expr = {
     validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
     validate(need(length(getCohortIdFromDropdown()) > 0, "No cohorts chosen chosen"))
     
@@ -5444,6 +5440,7 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
+  #______________----
   # Visit Context -----
   ###getVisitContexData----
   getVisitContexData <- shiny::reactive(x = {
@@ -7346,32 +7343,23 @@ shiny::shinyServer(function(input, output, session) {
     return(plot)
   })
   
-  output$databaseInformationTable <- DT::renderDataTable(expr = {
-    
-    validate(need(all(!is.null(database), nrow(database) > 0),
-                  "No data available for selected combination."))
-
-    data <- database 
+  #______________----
+  #Metadata----
+  #getMetadataInformation----
+  getMetadataInformation <- shiny::reactive(x = {
+    data <- metadata %>%
+      dplyr::filter(.data$databaseId == input$database)
+    return(data)
+  })
+  
+  #getDataSourceInformation----
+  getDataSourceInformation <- shiny::reactive(x = {
+    data <- database
     if (!'vocabularyVersionCdm' %in% colnames(database)) {
-      data$vocabularyVersionCdm <- "Not in data"
+      data$vocabularyVersionCdm <- "NA"
     }
     if (!'vocabularyVersion' %in% colnames(database)) {
-      data$vocabularyVersion <- "Not in data"
-    }
-    if (!'persons' %in% colnames(data)) {
-      data$persons <- as.integer(NA)
-    }
-    if (!'records' %in% colnames(data)) {
-      data$records <- as.integer(NA)
-    }
-    if (!'personDays' %in% colnames(data)) {
-      data$personDays <- as.integer(NA)
-    }
-    if (!'observationPeriodMinDate' %in% colnames(data)) {
-      data$observationPeriodMinDate <- as.Date(NA)
-    }
-    if (!'observationPeriodMaxDate' %in% colnames(data)) {
-      data$observationPeriodMaxDate <- as.Date(NA)
+      data$vocabularyVersion <- "NA"
     }
     data <- data %>%
       dplyr::select(
@@ -7379,26 +7367,28 @@ shiny::shinyServer(function(input, output, session) {
         .data$databaseName,
         .data$vocabularyVersionCdm,
         .data$vocabularyVersion,
-        .data$description,
-        # .data$isMetaAnalysis,
-        .data$observationPeriodMinDate,
-        .data$observationPeriodMaxDate,
-        .data$persons,
-        .data$records,
-        .data$personDays
+        .data$description
       )
-    
+    return(data)
+  })
+  
+  ##output: databaseInformationTable----
+  output$databaseInformationTable <- DT::renderDataTable(expr = {
+    data <- getDataSourceInformation()
+    validate(need(
+      all(!is.null(data), 
+          nrow(data) > 0),
+      "Not available."
+    ))
     options = list(
       pageLength = 100,
-      lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+      lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
       searching = TRUE,
       lengthChange = TRUE,
       ordering = TRUE,
       paging = TRUE,
       searchHighlight = TRUE,
-      columnDefs = list(
-        list(width = "50%", targets = 4)
-      )
+      columnDefs = list(list(width = "50%", targets = 4))
     )
     sketch <- htmltools::withTags(table(class = "display",
                                         thead(
@@ -7411,17 +7401,11 @@ shiny::shinyServer(function(input, output, session) {
                                               class = "dt-center",
                                               style = "border-right:1px solid silver;border-bottom:1px solid silver"
                                             ),
-                                            th(rowspan = 2, "Description"),
-                                            # th(rowspan = 2, "Is Meta Analysis"),
-                                            th(rowspan = 2, "Observation Period Min Date"),
-                                            th(rowspan = 2, "Observation Period Max Date"),
-                                            th(rowspan = 2, "Persons"),
-                                            th(rowspan = 2, "Records"),
-                                            th(rowspan = 2, "Person Days")
+                                            th(rowspan = 2, "Description")
                                           ),
-                                          tr(lapply(
-                                            c("CDM source", "Vocabulary table"), th, style = "border-right:1px solid silver;border-bottom:1px solid silver"
-                                          ))
+                                          tr(
+                                            lapply(c("CDM source", "Vocabulary table"), th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                          )
                                         )))
     table <- DT::datatable(
       data ,
@@ -7429,98 +7413,169 @@ shiny::shinyServer(function(input, output, session) {
       container = sketch,
       rownames = FALSE,
       class = "stripe compact"
-    ) 
+    )
     return(table)
   }, server = TRUE)
   
+  # Construct texts:
+  #   Drop down for databaseId
+  #   Check number of startTime per databaseId - for each runTime create collapsible box
+  #   Title of collapsible box:  Run on <databaseId> on <startTime> <timeZone>
+  #    - Ran for <runTime> <runTimeUnits> on <CurrentPackage> (<CurrentPackageVersion>) <RVersion>
+  #    - scrollable: packageDependencySnapShotJson (show pretty json with scroll bar vertical)
+  #    - scrollable: argumentsAtDiagnosticsInitiation (show pretty json with scroll bar vertical)
+  
+  ##getAllStartTimeFromMetadata----
+  getAllStartTimeFromMetadata <- shiny::reactive(x = {
+    metadataInformation <- getMetadataInformation()
+    #startTime is a list object and can be more than 1
+    # this should have a dependency on databaseId
+    startTimes <- metadataInformation$startTime %>% 
+      #filter by selected databaseId
+      unique() %>% 
+      sort()
+    return(startTimes)
+  })
+  #!!!!!!!! should be part of picker input getAllStartTimeFromMetadata()
+  
+  ##getMetadataParsed----
+  getMetadataParsed <- shiny::reactive(x = {
+    data <- list()
+    metadataInformation <- getMetadataInformation()
+    if (any(is.null(metadataInformation),
+            nrow(metadataInformation) == 0)) {
+      return(NULL)
+    }
+    #get start time from picker input
+    # temporary solution till picker input is coded
+    startTime <- getAllStartTimeFromMetadata()[[1]]
+    metadataInformation <- metadataInformation %>% 
+      #filter by selected databaseId and then filter by selected startTime
+      dplyr::filter(.data$startTime == startTime)
+    
+    data$timeZone <- metadataInformation %>%
+      dplyr::filter(.data$variableField == "timeZone") %>% 
+      dplyr::pull(.data$valueField)
+    data$runTime <- metadataInformation %>%
+      dplyr::filter(.data$variableField == "runTime")  %>% 
+      dplyr::pull(.data$valueField) %>% 
+      as.numeric() %>% 
+      scales::comma(accuracy = 0.1)
+    data$runTimeUnits <- metadataInformation %>%
+      dplyr::filter(.data$variableField == "runTimeUnits") %>% 
+      dplyr::pull(.data$valueField)
+    data$currentPackage <- metadataInformation %>%
+      dplyr::filter(.data$variableField == "CurrentPackage") %>% 
+      dplyr::pull(.data$valueField)
+    data$currentPackageVersion <- metadataInformation %>%
+      dplyr::filter(.data$variableField == "CurrentPackageVersion") %>% 
+      dplyr::pull(.data$valueField)
+    data$databaseId <- metadataInformation %>%
+      dplyr::filter(.data$variableField == "databaseId") %>% 
+      dplyr::pull(.data$valueField)
+    return(data)
+  })
+  
+  ##output: metadataInfoTitle----
   output$metadataInfoTitle <- shiny::renderUI(expr = {
-    data <- getMetadataInformation() %>% 
-      dplyr::filter(.data$variableField == "timeZone")
-    
-    if (any(is.null(data), nrow(data) == 0)) {
+    data <- getMetadataParsed()
+    if (any(is.null(data), 
+            length(data) == 0)) {
       return(NULL)
-    }
-    
-    tags$table(
-      tags$tr(
-        tags$td(paste("Run on ", data$databaseId, "on ", data$startTime, data$valueField))
+    }    
+    tags$table(tags$tr(tags$td(
+      paste(
+        "Run on ",
+        data$databaseId,
+        "on ",
+        getAllStartTimeFromMetadata()[[1]], ##!!! replace with picker input
+        data$runTimeUnits
       )
-    )
+    )))
   })
-  
+  #!!!! whats the difference between metadataInfoDetailsText and metadataInfoTitle
+  ##output: metadataInfoDetailsText----
   output$metadataInfoDetailsText <- shiny::renderUI(expr = {
-    data <- getMetadataInformation()
-    
-    if (any(is.null(data), nrow(data) == 0)) {
+    data <- getMetadataParsed()
+    if (any(is.null(data), 
+            nrow(data) == 0)) {
       return(NULL)
     }
-    
-    runTime <- data %>% 
-      dplyr::filter(.data$variableField == "runTime")
-    
-    runTimeUnits <- data %>% 
-      dplyr::filter(.data$variableField == "runTimeUnits")
-    
-    currentPackage <- data %>% 
-      dplyr::filter(.data$variableField == "CurrentPackage")
-    
-    currentPackageVersion <- data %>% 
-      dplyr::filter(.data$variableField == "CurrentPackageVersion")
-    
-    tags$table(
-      tags$tr(
-        tags$td(paste("Ran for ", runTime$valueField, "on ", runTimeUnits$valueField, currentPackage$valueField, "(", currentPackageVersion$valueField, ")"))
+    tags$table(tags$tr(tags$td(
+      paste(
+        "Ran for ",
+        data$runTime,
+        "on ",
+        data$runTimeUnits,
+        data$currentPackage,
+        "(",
+        data$currentPackageVersion,
+        ")"
       )
-    )
-    
+    )))
   })
   
-  output$packageDependencySnapShotTable <- DT::renderDataTable(expr = {
-    data <- getMetadataInformation() %>% 
-      dplyr::filter(.data$variableField == "packageDependencySnapShotJson")
-    
-    if (length(data) == 0) {
-      return(NULL)
-    }
-    
-    result <- as.data.frame(RJSONIO::fromJSON(data$valueField))
-    
-    options = list(
-      pageLength = 100,
-      lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-      searching = TRUE,
-      searchHighlight = TRUE,
-      scrollX = TRUE,
-      scrollY = "40vh",
-      lengthChange = TRUE,
-      ordering = TRUE,
-      paging = TRUE
-    )
-    
-    table <- DT::datatable(
-      result,
-      options = options,
-      rownames = FALSE,
-      colnames = colnames(result) %>%
-        camelCaseToTitleCase(),
-      escape = FALSE,
-      filter = "top",
-      class = "stripe nowrap compact"
-    )
-    return(table)
-  })
+  ##output: packageDependencySnapShotTable----
+  output$packageDependencySnapShotTable <-
+    DT::renderDataTable(expr = {
+      data <- getMetadataInformation() 
+      if (all(!is.null(data),
+              nrow(data) == 0)) {
+        return(NULL)
+        }
+      data <- data %>%
+        dplyr::filter(.data$variableField == "packageDependencySnapShotJson") %>% 
+        dplyr::pull(.data$valueField)
+      if (any(is.null(data),
+              length(data) == 0)) {
+        return(NULL)
+      }
+      result <-
+        dplyr::as_tibble(RJSONIO::fromJSON(content = data,
+                                           digits = 23))
+      options = list(
+        pageLength = 100,
+        lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
+        searching = TRUE,
+        searchHighlight = TRUE,
+        scrollX = TRUE,
+        scrollY = "40vh",
+        lengthChange = TRUE,
+        ordering = TRUE,
+        paging = TRUE
+      )
+      
+      table <- DT::datatable(
+        result,
+        options = options,
+        rownames = FALSE,
+        colnames = colnames(result) %>%
+          camelCaseToTitleCase(),
+        escape = FALSE,
+        filter = "top",
+        class = "stripe nowrap compact"
+      )
+      return(table)
+    })
   
-  output$argumentsAtDiagnosticsInitiationTable <- shiny::renderText(expr = {
-    data <- metadata %>% 
-      dplyr::filter(.data$variableField == "argumentsAtDiagnosticsInitiationJson")
-    
-    if (length(data) == 0) {
-      return(NULL)
-    }
-    data$valueField
-  })
+  ##output: argumentsAtDiagnosticsInitiationJson----
+  output$argumentsAtDiagnosticsInitiationJson <-
+    shiny::renderText(expr = {
+      data <- getMetadataInformation()
+      if (any(is.null(data),
+              nrow(data) == 0)) {
+        return(NULL)
+      }
+      data <- data %>%
+        dplyr::filter(.data$variableField == "argumentsAtDiagnosticsInitiationJson") %>% 
+        dplyr::pull(.data$valueField) %>% 
+        RJSONIO::fromJSON(digits = 23) %>% 
+        RJSONIO::toJSON(digits = 23,
+                        pretty = TRUE)
+      return(data)
+    })
   
-  
+  #__________________----
   # Infoboxes ------
   showInfoBox <- function(title, htmlFileName) {
     shiny::showModal(shiny::modalDialog(
