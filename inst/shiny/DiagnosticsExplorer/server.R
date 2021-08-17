@@ -5480,6 +5480,10 @@ shiny::shinyServer(function(input, output, session) {
   
   ##getVisitContexDataEnhanced----
   getVisitContexDataEnhanced <- shiny::reactive(x = {
+    if (any(is.null(getDatabaseIdsFromDropdown()),
+            length(getDatabaseIdsFromDropdown()) == 0)) {
+      return(NULL)
+    }
     visitContextData <- getVisitContextData()
     if (any(is.null(visitContextData),
             nrow(visitContextData) == 0)) {
@@ -5530,6 +5534,10 @@ shiny::shinyServer(function(input, output, session) {
   
   ##getVisitContexDataFiltered----
   getVisitContexDataFiltered <- shiny::reactive(x = {
+    if (any(is.null(getDatabaseIdsFromDropdown()),
+            length(getDatabaseIdsFromDropdown()) == 0)) {
+      return(NULL)
+    }
     data <- getVisitContexDataEnhanced()
     if (any(is.null(data),
             nrow(data) == 0)) {
@@ -5561,6 +5569,10 @@ shiny::shinyServer(function(input, output, session) {
     
   ##getVisitContextDataWide----
   getVisitContextDataWide <- shiny::reactive(x = {
+    if (any(is.null(getDatabaseIdsFromDropdown()),
+            length(getDatabaseIdsFromDropdown()) == 0)) {
+      return(NULL)
+    }
     data <- getVisitContextDataLong()
     if (any(is.null(data),
             nrow(data) == 0)) {
@@ -5589,20 +5601,97 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
+  ##getVisitContextTableData----
+  getVisitContextTableData <- shiny::reactive(x = {
+    if (any(is.null(getDatabaseIdsFromDropdown()),
+            length(getDatabaseIdsFromDropdown()) == 0)) {
+      return(NULL)
+    }
+    data <- getVisitContextDataWide()
+    if (any(is.null(data),
+            nrow(data) == 0)) {
+      return(NULL)
+    }
+    isPerson <- input$visitContextPersonOrRecords == 'Person'
+    if (isPerson) {
+      data <- data %>%
+        dplyr::select(-dplyr::contains(" records"))
+      colnames(data) <- colnames(data) %>%
+        stringr::str_replace_all(pattern = " subjects",
+                                 replacement = "")
+    } else {
+      data <- data %>%
+        dplyr::select(-dplyr::contains(" subjects"))
+      colnames(data) <- colnames(data) %>%
+        stringr::str_replace_all(pattern = " records",
+                                 replacement = "")
+    }
+    
+    if (input$visitContextTableFilters == "Before") {
+      data <- data %>%
+        dplyr::select(
+          -dplyr::contains("During"),-dplyr::contains("On visit"),-dplyr::contains("After")
+        )
+      colnames(data) <-
+        stringr::str_replace(
+          string = colnames(data),
+          pattern = ' Before',
+          replacement = ''
+        )
+      
+    } else if (input$visitContextTableFilters == "During") {
+      data <- data %>%
+        dplyr::select(
+          -dplyr::contains("Before"),-dplyr::contains("On visit"),-dplyr::contains("After")
+        )
+      colnames(data) <-
+        stringr::str_replace(
+          string = colnames(data),
+          pattern = ' During visit',
+          replacement = ''
+        )
+      
+    } else if (input$visitContextTableFilters == "Simultaneous") {
+      data <- data %>%
+        dplyr::select(
+          -dplyr::contains("During"),-dplyr::contains("Before"),-dplyr::contains("After")
+        )
+      colnames(data) <-
+        stringr::str_replace(
+          string = colnames(data),
+          pattern = ' On visit start',
+          replacement = ''
+        )
+      
+    } else if (input$visitContextTableFilters == "After") {
+      data <- data %>%
+        dplyr::select(
+          -dplyr::contains("During"),-dplyr::contains("Before"),-dplyr::contains("On visit")
+        )
+      colnames(data) <-
+        stringr::str_replace(
+          string = colnames(data),
+          pattern = ' After',
+          replacement = ''
+        )
+    }
+    return(data)
+  })
+  
   ##saveVisitContextTable----
   output$saveVisitContextTable <-  downloadHandler(
     filename = function() {
       getCsvFileNameWithDateTime(string = "visitContext")
     },
     content = function(file) {
-      downloadCsv(x = getVisitContextDataWide(), 
+      downloadCsv(x = getVisitContextTableData(), 
                   fileName = file)
     }
   )
   
   ##doesVisitContextContainData----
   output$doesVisitContextContainData <- shiny::reactive({
-    return(nrow(getVisitContextDataWide()) > 0)
+    return(nrow(getVisitContextTableData()) > 0)
   })
   shiny::outputOptions(output,
                        "doesVisitContextContainData",
@@ -5610,38 +5699,46 @@ shiny::shinyServer(function(input, output, session) {
   
   ##visitContextTable----
   output$visitContextTable <- DT::renderDataTable(expr = {
-    validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
-    validate(need(length( getCohortIdFromDropdown()) > 0, "No cohorts chosen"))
-    data <- getVisitContextDataWide()
+    validate(need(
+      length(getDatabaseIdsFromDropdown()) > 0,
+      "No data sources chosen"
+    ))
+    validate(need(length(getCohortIdFromDropdown()) > 0, "No cohorts chosen"))
+    data <- getVisitContextTableData()
     validate(need(
       all(!is.null(data),
           nrow(data) > 0),
       "No data available for selected combination."
     ))
-    table <- data %>% 
+    table <- data %>%
       dplyr::select(-.data$cohortId)
     
     # header labels
-    cohortCounts <- cohortCount %>% 
-      dplyr::filter(.data$cohortId == getCohortIdFromDropdown()) %>% 
-      dplyr::filter(.data$databaseId %in% getDatabaseIdsFromDropdown()) %>% 
+    cohortCounts <- cohortCount %>%
+      dplyr::filter(.data$cohortId == getCohortIdFromDropdown()) %>%
+      dplyr::filter(.data$databaseId %in% getDatabaseIdsFromDropdown()) %>%
       dplyr::arrange(.data$cohortId, .data$databaseId)
     isPerson <- input$visitContextPersonOrRecords == 'Person'
     if (isPerson) {
-      databaseIdsWithCount <- cohortCounts %>% 
-        dplyr::mutate(databaseIdWithCount = paste0(.data$databaseId, 
-                                                  " (n = ", 
-                                                  scales::comma(.data$cohortSubjects), 
-                                                  ")")) %>% 
+      databaseIdsWithCount <- cohortCounts %>%
+        dplyr::mutate(databaseIdWithCount = paste0(
+          .data$databaseId,
+          " (n = ",
+          scales::comma(.data$cohortSubjects),
+          ")"
+        )) %>%
         dplyr::pull(.data$databaseIdWithCount)
     } else {
-      databaseIdsWithCount <- cohortCounts %>% 
-        dplyr::mutate(databaseIdWithCount = paste0(.data$databaseId, 
-                                                   " (n = ", 
-                                                   scales::comma(.data$cohortEntries), 
-                                                   ")")) %>% 
+      databaseIdsWithCount <- cohortCounts %>%
+        dplyr::mutate(databaseIdWithCount = paste0(
+          .data$databaseId,
+          " (n = ",
+          scales::comma(.data$cohortEntries),
+          ")"
+        )) %>%
         dplyr::pull(.data$databaseIdWithCount)
     }
+    
     #max count
     visitConceptLong <- getVisitContextDataLong()
     if (any(is.null(visitConceptLong),
@@ -5649,7 +5746,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     maxSubjects <- visitConceptLong$count %>% max()
-    visitContextSequence <- visitConceptLong$visitContext %>% 
+    visitContextSequence <- visitConceptLong$visitContext %>%
       unique()
     #ensure columns names are aligned
     for (i in (length(visitContextSequence):1)) {
@@ -5657,80 +5754,46 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::relocate(.data$visitConceptName,
                         dplyr::contains(visitContextSequence[[i]]))
     }
-    visitContextSequence <- visitContextSequence %>%  
+    visitContextSequence <- visitContextSequence %>%
       stringr::str_replace(pattern = "Before",
-                           replacement = "Visits Before") %>% 
+                           replacement = "Visits Before") %>%
       stringr::str_replace(pattern = "During visit",
-                           replacement = "Visits Ongoing") %>% 
+                           replacement = "Visits Ongoing") %>%
       stringr::str_replace(pattern = "On visit start",
-                           replacement = "Starting Simultaneous") %>% 
+                           replacement = "Starting Simultaneous") %>%
       stringr::str_replace(pattern = "After",
                            replacement = "Visits After")
     
     totalColumns <- 1
-    
-    if (input$visitContextTableFilters == "Before") {
-      table <- table %>% 
-        dplyr::select(-dplyr::contains("During"),
-                      -dplyr::contains("On visit"),
-                      -dplyr::contains("After"))
-      colnames(table) <- stringr::str_replace(string = colnames(table), 
-                                              pattern = '_Before', 
-                                              replacement = '')
-      
-    } else if (input$visitContextTableFilters == "During") {
-      table <- table %>% 
-        dplyr::select(-dplyr::contains("Before"),
-                      -dplyr::contains("On visit"),
-                      -dplyr::contains("After"))
-      colnames(table) <- stringr::str_replace(string = colnames(table), 
-                                              pattern = '_During visit', 
-                                              replacement = '')
-      
-    } else if (input$visitContextTableFilters == "Simultaneous") {
-      table <- table %>% 
-        dplyr::select(-dplyr::contains("During"),
-                      -dplyr::contains("Before"),
-                      -dplyr::contains("After"))
-      colnames(table) <- stringr::str_replace(string = colnames(table), 
-                                              pattern = '_On visit start', 
-                                              replacement = '')
-      
-    } else if (input$visitContextTableFilters == "After") {
-      table <- table %>% 
-        dplyr::select(-dplyr::contains("During"),
-                      -dplyr::contains("Before"),
-                      -dplyr::contains("On visit"))
-      colnames(table) <- stringr::str_replace(string = colnames(table), 
-                                              pattern = '_After', 
-                                              replacement = '')
-    }  else {
+    if (input$visitContextTableFilters == "All") {
       sketch <- htmltools::withTags(table(class = "display",
                                           thead(tr(
                                             th(rowspan = 2, "Visit"),
-                                            lapply(databaseIdsWithCount, th, colspan = 4, class = "dt-center",style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                            lapply(
+                                              databaseIdsWithCount,
+                                              th,
+                                              colspan = 4,
+                                              class = "dt-center",
+                                              style = "border-right:1px solid silver;border-bottom:1px solid silver"
+                                            )
                                           ),
                                           tr(
                                             lapply(rep(
                                               c(visitContextSequence), #avoid hard coding sequence
                                               length(databaseIdsWithCount)
-                                            ), th,style = "border-right:1px solid silver;border-bottom:1px solid silver")
+                                            ), th, style = "border-right:1px solid silver;border-bottom:1px solid silver")
                                           ))))
       totalColumns <- 4
-      }
-    columnDefs <- minCellCountDef(1:(
-      length(databaseIdsWithCount) * totalColumns
-    ))
+    }
+    columnDefs <- minCellCountDef(1:(length(databaseIdsWithCount) * totalColumns))
     
     if (input$visitContextValueFilter == "Percentage") {
-      columnDefs <- minCellPercentDef(1:(
-        length(databaseIdsWithCount) * totalColumns
-      ))
+      columnDefs <- minCellPercentDef(1:(length(databaseIdsWithCount) * totalColumns))
     }
     
     options = list(
       pageLength = 100,
-      lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
+      lengthMenu = list(c(10, 100, 1000,-1), c("10", "100", "1000", "All")),
       searching = TRUE,
       searchHighlight = TRUE,
       scrollX = TRUE,
@@ -5738,9 +5801,11 @@ shiny::shinyServer(function(input, output, session) {
       lengthChange = TRUE,
       ordering = TRUE,
       paging = TRUE,
-      columnDefs = list(truncateStringDef(0, 60),
-                        list(width = "40%", targets = 0),
-                        columnDefs)
+      columnDefs = list(
+        truncateStringDef(0, 60),
+        list(width = "40%", targets = 0),
+        columnDefs
+      )
     )
     
     if (input$visitContextTableFilters == "All") {
