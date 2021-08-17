@@ -7424,16 +7424,36 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   }, server = TRUE)
   
-  output$packageDependencySnapShotTable <- DT::renderDataTable(expr = {
+  getMetadataInformation <- shiny::reactive(x = {
     data <- metadata %>% 
-      dplyr::filter(.data$variableField == "packageDependencySnapShotJson") %>% 
-      dplyr::pull(.data$valueField)
+      dplyr::filter(.data$databaseId == input$database)
+    return(data)
+  })
+  
+  output$metadataInfoTitle <- shiny::renderUI(expr = {
+    data <- getMetadataInformation() %>% 
+      dplyr::filter(.data$variableField == "timeZone")
+    
+    if (any(is.null(data), nrow(data) == 0)) {
+      return(NULL)
+    }
+    
+    tags$table(
+      tags$tr(
+        tags$td(paste("Run on ", data$databaseId, "on ", data$startTime, data$valueField))
+      )
+    )
+  })
+  
+  output$packageDependencySnapShotTable <- DT::renderDataTable(expr = {
+    data <- getMetadataInformation() %>% 
+      dplyr::filter(.data$variableField == "packageDependencySnapShotJson")
     
     if (length(data) == 0) {
       return(NULL)
     }
     
-    result <- as.data.frame(RJSONIO::fromJSON(data[1]))
+    result <- as.data.frame(RJSONIO::fromJSON(data$valueField))
     
     options = list(
       pageLength = 100,
@@ -7441,7 +7461,7 @@ shiny::shinyServer(function(input, output, session) {
       searching = TRUE,
       searchHighlight = TRUE,
       scrollX = TRUE,
-      scrollY = "60vh",
+      scrollY = "40vh",
       lengthChange = TRUE,
       ordering = TRUE,
       paging = TRUE
@@ -7460,44 +7480,14 @@ shiny::shinyServer(function(input, output, session) {
     return(table)
   })
   
-  output$argumentsAtDiagnosticsInitiationTable <- DT::renderDataTable(expr = {
+  output$argumentsAtDiagnosticsInitiationTable <- shiny::renderText(expr = {
     data <- metadata %>% 
-      dplyr::filter(.data$variableField == "argumentsAtDiagnosticsInitiationJson") %>% 
-      dplyr::pull(.data$valueField)
+      dplyr::filter(.data$variableField == "argumentsAtDiagnosticsInitiationJson")
     
     if (length(data) == 0) {
       return(NULL)
     }
-    
-    result <- RJSONIO::fromJSON(data[1])
-    result$temporalCovariateSettings <- NULL
-    result$covariateSettings <- NULL
-    
-    result <- as.data.frame(result)
-    
-    options = list(
-      pageLength = 100,
-      lengthMenu = list(c(10, 100, 1000, -1), c("10", "100", "1000", "All")),
-      searching = TRUE,
-      searchHighlight = TRUE,
-      scrollX = TRUE,
-      scrollY = "60vh",
-      lengthChange = TRUE,
-      ordering = TRUE,
-      paging = TRUE
-    )
-    
-    table <- DT::datatable(
-      result,
-      options = options,
-      rownames = FALSE,
-      colnames = colnames(result) %>%
-        camelCaseToTitleCase(),
-      escape = FALSE,
-      filter = "top",
-      class = "stripe nowrap compact"
-    )
-    return(table)
+    data$valueField
   })
   
   
