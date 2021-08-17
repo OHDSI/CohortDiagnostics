@@ -4438,14 +4438,14 @@ shiny::shinyServer(function(input, output, session) {
     return(incidenceRateFilter)
   })
   
-  ##output: saveIncidenceRatePlot----
+  ##output: saveIncidenceRateData----
   ###!!!!!!!this is not 'plot' i.e. jpg, but a csv - change name
-  output$saveIncidenceRatePlot <-  downloadHandler(
+  output$saveIncidenceRateData <-  downloadHandler(
     filename = function() {
       getCsvFileNameWithDateTime(string = "IncidenceRate")
     },
     content = function(file) {
-      downloadCsv(x = getIncidenceRateData(),
+      downloadCsv(x = getFilteredIncidenceRateData(),
                   fileName = file)
     }
   )

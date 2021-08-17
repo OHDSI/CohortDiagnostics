@@ -553,7 +553,7 @@ bodyTabItems <- shinydashboard::tabItems(
                                tags$td(
                                  align = "right",
                                  shiny::downloadButton(
-                                   "saveIncidenceRatePlot",
+                                   "saveIncidenceRateData",
                                    label = "",
                                    icon = shiny::icon("download"),
                                    style = "margin-top: 5px; margin-bottom: 5px;"
