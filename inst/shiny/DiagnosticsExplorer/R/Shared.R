@@ -1381,8 +1381,8 @@ getResultsCohortRelationships <- function(dataSource,
 #'
 #' @export
 getCohortOverlapData <- function(dataSource,
-                                 cohortIds,
-                                 databaseIds) {
+                                 cohortIds = NULL,
+                                 databaseIds = NULL) {
   cohortCounts <-
     getResultsCohortCount(dataSource = dataSource,
                           cohortIds = cohortIds,

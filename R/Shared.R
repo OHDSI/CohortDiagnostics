@@ -1322,11 +1322,6 @@ getResultsVisitContext <- function(dataSource,
     getResultsCohortCount(dataSource = dataSource,
                           cohortIds = cohortIds,
                           databaseIds = databaseIds)
-  if (any(is.null(cohortCounts),
-          nrow(cohortCounts) == 0)) {
-    return(NULL)
-  }
-  
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortIds = cohortIds,
@@ -1337,18 +1332,8 @@ getResultsVisitContext <- function(dataSource,
           nrow(data) == 0)) {
     return(NULL)
   }
-  data <- data %>%
-    dplyr::inner_join(cohortCount,
-                      by = c("cohortId", "databaseId")) %>%
-    dplyr::mutate(subjectPercent = .data$subjects / .data$cohortSubjects) %>%
-    dplyr::mutate(recordPercent = .data$records / .data$cohortEntries)
   return(data)
 }
-
-
-
-
-
 
 
 
@@ -1396,8 +1381,8 @@ getResultsCohortRelationships <- function(dataSource,
 #'
 #' @export
 getCohortOverlapData <- function(dataSource,
-                                 cohortIds,
-                                 databaseIds) {
+                                 cohortIds = NULL,
+                                 databaseIds = NULL) {
   cohortCounts <-
     getResultsCohortCount(dataSource = dataSource,
                           cohortIds = cohortIds,

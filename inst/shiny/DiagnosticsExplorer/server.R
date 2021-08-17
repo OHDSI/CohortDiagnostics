@@ -5856,13 +5856,24 @@ shiny::shinyServer(function(input, output, session) {
     }
     data <- getCohortOverlapData(
       dataSource = dataSource,
-      cohortIds =  getCohortIdsFromDropdown(),
-      databaseIds = getDatabaseIdsFromDropdown() #!!! remove databaseId to make return faster?
+      cohortIds = getCohortIdsFromDropdown()
     )
     if (any(is.null(data),
             nrow(data) == 0)) {
       return(NULL)
     }
+    return(data)
+  })
+  
+  ##getCohortOverlapDataFiltered----
+  getCohortOverlapDataFiltered <- reactive(x = {
+    data <- getCohortOverlapData()
+    if (any(is.null(data),
+            nrow(data) == 0)) {
+      return(NULL)
+    }
+    data <- data %>%
+      dplyr::filter(.data$databaseId %in% getDatabaseIdsFromDropdown())
     return(data)
   })
   
@@ -5876,7 +5887,7 @@ shiny::shinyServer(function(input, output, session) {
     on.exit(progress$close())
     progress$set(message = paste0("Plotting cohort overlap."), value = 0)
     
-    data <- getCohortOverlapData()
+    data <- getCohortOverlapDataFiltered()
     validate(need(
       !is.null(data),
       paste0("No cohort overlap data for this combination")
@@ -5899,7 +5910,7 @@ shiny::shinyServer(function(input, output, session) {
       getCsvFileNameWithDateTime(string = "cohortOverlap")
     },
     content = function(file) {
-      downloadCsv(x = getCohortOverlapData(), 
+      downloadCsv(x = getCohortOverlapDataFiltered(), 
                   fileName = file)
     }
   )
