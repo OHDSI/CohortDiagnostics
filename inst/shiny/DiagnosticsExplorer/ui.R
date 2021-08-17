@@ -770,7 +770,7 @@ bodyTabItems <- shinydashboard::tabItems(
         ),
        tags$td(
          shinyWidgets::pickerInput(
-           inputId = "breakdownDomainTable",
+           inputId = "domainTableOptionsInIndexEventData",
            label = "Domain Table",
            choices = c(""),
            multiple = TRUE,
@@ -788,7 +788,7 @@ bodyTabItems <- shinydashboard::tabItems(
        ),
        tags$td(
          shinyWidgets::pickerInput(
-           inputId = "breakdownDomainField",
+           inputId = "domainFieldOptionsInIndexEventData",
            label = "Domain Field",
            choices = c(""),
            multiple = TRUE,

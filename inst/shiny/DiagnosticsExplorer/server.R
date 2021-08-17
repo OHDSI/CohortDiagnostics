@@ -4939,135 +4939,238 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   # Index event breakdown ------
-  ###getIndexEventBreakDownForCohort----
-  getIndexEventBreakDownForCohort <- shiny::reactive(x = {
+  ##getIndexEventBreakdownData----
+  getIndexEventBreakdownData <- shiny::reactive(x = {
     if (any(length(getDatabaseIdsFromDropdown()) == 0)) {
       return(NULL)
     }
-    if (all(is(dataSource, "environment"), !exists('indexEventBreakdown'))) {
+    if (all(is(dataSource, "environment"),!exists('indexEventBreakdown'))) {
       return(NULL)
     }
-    data <- getResultsIndexEventBreakdown(
-      dataSource = dataSource,
-      cohortIds = getCohortIdFromDropdown())
+    data <- getResultsIndexEventBreakdown(dataSource = dataSource,
+                                          cohortIds = getCohortIdFromDropdown())
     return(data)
   })
   
-  ###getMergedIndexEventBreakDownData----
-  getMergedIndexEventBreakDownData <- shiny::reactive(x = {
-    indexEventBreakdown <- getIndexEventBreakDownForCohort()
-    #!!!filter by getCohortIdFromDropdown()
-    if (is.null(indexEventBreakdown)) {return(NULL)}
-    if (nrow(indexEventBreakdown) == 0) {return(NULL)}
-    if (!'domainTable' %in% colnames(indexEventBreakdown)) {
-      indexEventBreakdown$domainTable <- "Not in data"
-    }
-    if (!'domainField' %in% colnames(indexEventBreakdown)) {
-      indexEventBreakdown$domainField <- "Not in data"
-    }
-    conceptIdDetails <- getConcept(dataSource = dataSource,
-                                          conceptIds = indexEventBreakdown$conceptId %>% unique())
-    if (is.null(conceptIdDetails)) {return(NULL)}
-    indexEventBreakdown <- indexEventBreakdown %>%
-      dplyr::inner_join(conceptIdDetails %>% 
-                          dplyr::select(
-                            .data$conceptId,
-                            .data$conceptName,
-                            .data$domainId,
-                            .data$vocabularyId,
-                            .data$standardConcept),
-                        by = c("conceptId"))
-    
-    if (is.null(cohortCount)) {return(NULL)}
-    indexEventBreakdown <- indexEventBreakdown %>% 
-      dplyr::inner_join(cohortCount, 
-                        by = c('databaseId', 'cohortId')) %>% 
-      dplyr::mutate(subjectPercent = .data$subjectCount/.data$cohortSubjects,
-                    conceptPercent = .data$conceptCount/.data$cohortEntries)
-    return(indexEventBreakdown)
-  })
-  
-  ###getFilteredIndexEventBreakDownDataByRadioButton----
-  getFilteredIndexEventBreakDownDataByRadioButton <-
-    shiny::reactive(x = {
-      data <- getMergedIndexEventBreakDownData()
-      if (!is.null(data) && nrow(data) > 0) {
-        if (input$indexEventBreakdownTableRadioButton == 'All') {
-          return(data)
-        } else if (input$indexEventBreakdownTableRadioButton == "Standard concepts") {
-          return(data %>% dplyr::filter(.data$standardConcept == 'S'))
-        } else {
-          return(data %>% dplyr::filter(is.na(.data$standardConcept)))
-        }
-      } else {
-        return(NULL)
-      }
-    })
-  
-  ###getdomainTableFromIndextEventBreakdownData----
-  getdomainTableFromIndextEventBreakdownData <- shiny::reactive(x = {
-    if (!is.null(getFilteredIndexEventBreakDownDataByRadioButton())) {
-      return(
-        getFilteredIndexEventBreakDownDataByRadioButton() %>%
-          dplyr::pull(.data$domainTable) %>% unique()
-      )
+  ##pickerInput: domainTableOptionsInIndexEventData----
+  shiny::observe({
+    if (all(!is.null(getIndexEventBreakdownData()),
+            nrow(getIndexEventBreakdownData()) > 0)) {
+      choices <- getIndexEventBreakdownData() %>%
+        dplyr::rename("domainTableShort" = .data$domainTable) %>%
+        dplyr::inner_join(
+          domainInformationLong %>%
+            dplyr::select(.data$domainTableShort,
+                          .data$domainTable),
+          by = "domainTableShort"
+        ) %>%
+        dplyr::pull(.data$domainTable) %>%
+        sort() %>%
+        unique() %>% 
+        snakeCaseToCamelCase() %>% 
+        camelCaseToTitleCase()
     } else {
       return(NULL)
     }
-  })
-  
-  ###Update: breakdownDomainTable----
-  shiny::observe({
-    data <- getdomainTableFromIndextEventBreakdownData()
     shinyWidgets::updatePickerInput(
       session = session,
-      inputId = "breakdownDomainTable",
+      inputId = "domainTableOptionsInIndexEventData",
       choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = data,
-      selected = data
+      choices = choices,
+      selected = choices
     )
   })
   
-  ###Update: breakdownDomainField----
+  ##pickerInput: domainFieldOptionsInIndexEventData----
   shiny::observe({
-    data <- getFilteredIndexEventBreakDownDataByRadioButton()
-    if (!is.null(data) &&
-        nrow(data) > 0) {
-      data <- data %>%
-        dplyr::filter(.data$domainTable %in% input$breakdownDomainTable) %>%
-        dplyr::pull(.data$domainField) %>% unique()
+    if (all(!is.null(getIndexEventBreakdownData()),
+            nrow(getIndexEventBreakdownData()) > 0)) {
+      choices <- getIndexEventBreakdownData() %>%
+        dplyr::rename("domainFieldShort" = .data$domainField) %>%
+        dplyr::inner_join(
+          domainInformationLong %>%
+            dplyr::select(.data$domainFieldShort,
+                          .data$domainField),
+          by = "domainFieldShort"
+        ) %>%
+        dplyr::pull(.data$domainField) %>%
+        sort() %>%
+        unique() %>% 
+        snakeCaseToCamelCase() %>% 
+        camelCaseToTitleCase()
+    } else {
+      return(NULL)
+    }
+    shinyWidgets::updatePickerInput(
+      session = session,
+      inputId = "domainFieldOptionsInIndexEventData",
+      choicesOpt = list(style = rep_len("color: black;", 999)),
+      choices = choices,
+      selected = choices
+    )
+  })
+
+  ##getIndexEventBreakdownDataEnhanced----
+  getIndexEventBreakdownDataEnhanced <- shiny::reactive(x = {
+    indexEventBreakdown <- getIndexEventBreakdownData()
+    if (any(is.null(indexEventBreakdown),
+            nrow(indexEventBreakdown) == 0)) {
+      return(NULL)
+    }
+    if (is.null(cohortCount)) {
+      return(NULL)
+    }
+    conceptIdDetails <- getConcept(dataSource = dataSource,
+                                   conceptIds = indexEventBreakdown$conceptId %>%
+                                     unique())
+    if (is.null(conceptIdDetails)) {
+      return(NULL)
+    }
+    indexEventBreakdown <- indexEventBreakdown %>%
+      dplyr::inner_join(
+        conceptIdDetails %>%
+          dplyr::select(
+            .data$conceptId,
+            .data$conceptName,
+            .data$domainId,
+            .data$vocabularyId,
+            .data$standardConcept
+          ),
+        by = c("conceptId")
+      )
+    
+    indexEventBreakdown <- indexEventBreakdown %>%
+      dplyr::inner_join(cohortCount,
+                        by = c('databaseId', 'cohortId')) %>%
+      dplyr::mutate(
+        subjectPercent = .data$subjectCount / .data$cohortSubjects,
+        conceptPercent = .data$conceptCount / .data$cohortEntries
+      ) %>%
+      dplyr::rename(domainFieldShort = .data$domainField,
+                    domainTableShort = .data$domainTable) %>% 
+      dplyr::inner_join(domainInformationLong,
+                        by = c('domainTableShort',
+                               'domainFieldShort')) %>% 
+      dplyr::select(-.data$domainTableShort,
+                    -.data$domainFieldShort)
+    return(indexEventBreakdown)
+  })
+  
+  ##getIndexEventBreakdownDataFiltered---
+  getIndexEventBreakdownDataFiltered <- shiny::reactive(x = {
+    indexEventBreakdown <- getIndexEventBreakdownDataEnhanced()
+    if (any(is.null(indexEventBreakdown),
+            nrow(indexEventBreakdown) == 0)) {
+      return(NULL)
+    }
+    if (is.null(input$domainTableOptionsInIndexEventData)) {
+      return(NULL)
+    }
+    if (is.null(input$domainFieldOptionsInIndexEventData)) {
+      return(NULL)
     }
     
-    shinyWidgets::updatePickerInput(
-      session = session,
-      inputId = "breakdownDomainField",
-      choicesOpt = list(style = rep_len("color: black;", 999)),
-      choices = data,
-      selected = data
-    )
+    domainTableSelected <- domainInformationLong %>%
+      dplyr::filter(
+        .data$domainTable %in% c(
+          input$domainTableOptionsInIndexEventData %>%
+            titleCaseToCamelCase() %>%
+            camelCaseToSnakeCase()
+        )
+      ) %>%
+      dplyr::pull(.data$domainTable) %>%
+      unique() %>%
+      sort()
+    if (any(is.null(domainTableSelected),
+            length(domainTableSelected) == 0)) {
+      return(NULL)
+    }
+    
+    domainFieldSelected <- domainInformationLong %>%
+      dplyr::filter(
+        .data$domainField %in% c(
+          input$domainFieldOptionsInIndexEventData %>%
+            titleCaseToCamelCase() %>%
+            camelCaseToSnakeCase()
+        )
+      ) %>%
+      dplyr::pull(.data$domainField) %>%
+      unique() %>%
+      sort()
+    if (any(is.null(domainFieldSelected),
+            length(domainFieldSelected) == 0)) {
+      return(NULL)
+    }
+    
+    indexEventBreakdown <- indexEventBreakdown %>%
+      dplyr::filter(.data$domainTable %in% domainTableSelected) %>%
+      dplyr::filter(.data$domainField %in% domainFieldSelected)
+    
+    if (input$indexEventBreakdownTableRadioButton == 'All') {
+      return(indexEventBreakdown)
+    } else if (input$indexEventBreakdownTableRadioButton == "Standard concepts") {
+      return(indexEventBreakdown %>% dplyr::filter(.data$standardConcept == 'S'))
+    } else {
+      return(indexEventBreakdown %>% dplyr::filter(is.na(.data$standardConcept)))
+    }
+    return(indexEventBreakdown)
   })
-  
-  # selectedDomainTable <- reactiveVal(NULL)
-  # shiny::observeEvent(eventExpr = {
-  #   list(input$breakdownDomainTable_open,
-  #        input$tabs)
-  # }, handlerExpr = {
-  #   if (isFALSE(input$breakdownDomainTable_open) ||
-  #       !is.null(input$tabs)) {
-  #     selectedDomainTable(input$breakdownDomainTable)
-  #   }
-  # })
-  # 
-  # selectedDomainField <- reactiveVal(NULL)
-  # shiny::observeEvent(eventExpr = {
-  #   list(input$breakdownDomainField_open,
-  #        input$tabs)
-  # }, handlerExpr = {
-  #   if (isFALSE(input$breakdownDomainField_open) ||
-  #       !is.null(input$tabs)) {
-  #     selectedDomainField(input$breakdownDomainField)
-  #   }
-  # })
+
+  ##getIndexEventBreakdownDataForTable----
+  getIndexEventBreakdownDataForTable <- shiny::reactive((x = {
+    data <- getIndexEventBreakdownDataFiltered()
+    if (any(is.null(data),
+            nrow(data) == 0)) {
+      return(NULL)
+    }
+    if (input$indexEventBreakdownValueFilter == "Percentage") {
+      data <- data %>%
+        dplyr::mutate(concept = .data$conceptPercent) %>%
+        dplyr::mutate(subject = .data$subjectPercent)
+    } else {
+      data <- data %>%
+        dplyr::mutate(concept = .data$conceptCount) %>%
+        dplyr::mutate(subject = .data$subjectCount)
+    }
+    data <- data %>%
+      dplyr::arrange(.data$databaseId) %>%
+      dplyr::select(
+        .data$conceptId,
+        .data$conceptName,
+        .data$domainTable,
+        .data$domainField,
+        .data$vocabularyId,
+        .data$databaseId,
+        .data$concept,
+        .data$subject,
+        .data$cohortSubjects 
+      ) %>%
+      dplyr::filter(.data$conceptId > 0) %>%
+      dplyr::distinct() %>% # distinct is needed here because many time condition_concept_id and condition_source_concept_id
+      # may have the same value leading to duplication of row records
+      tidyr::pivot_longer(names_to = "type", 
+                          cols = c("concept", "subject"), 
+                          values_to = "count") %>% 
+      dplyr::arrange(.data$databaseId, .data$type) %>% 
+      dplyr::group_by(.data$conceptId,
+                      .data$conceptName,
+                      .data$vocabularyId,
+                      .data$domainTable,
+                      .data$domainField,
+                      .data$type) %>% 
+      dplyr::summarise(count = max(.data$count)) %>% 
+      tidyr::pivot_wider(id_cols = c("conceptId",
+                                     "conceptName",
+                                     "vocabularyId",
+                                     "domainTable",
+                                     "domainField"),
+                         names_from = type,
+                         values_from = count,
+                         values_fill = 0) %>% 
+      dplyr::distinct()
+    data <- data[order(-data[6]), ]
+    return(data)
+  }))
   
   ###Update: saveBreakdownTable----
   output$saveBreakdownTable <-  downloadHandler(
@@ -5075,7 +5178,7 @@ shiny::shinyServer(function(input, output, session) {
       getCsvFileNameWithDateTime(string = "indexEventBreakdown")
     },
     content = function(file) {
-      downloadCsv(x = getFilteredIndexEventBreakDownDataByRadioButton(), 
+      downloadCsv(x = getIndexEventBreakdownDataForTable(), 
                   fileName = file)
     }
   )
@@ -5083,27 +5186,27 @@ shiny::shinyServer(function(input, output, session) {
   ###Update: breakdownTable----
   output$breakdownTable <- DT::renderDataTable(expr = {
     validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
-    validate(need(length( getCohortIdFromDropdown()) > 0, "No cohorts chosen chosen"))
-    data <- getFilteredIndexEventBreakDownDataByRadioButton()
+    validate(need(length(getCohortIdFromDropdown()) > 0, "No cohorts chosen chosen"))
     
-    validate(need(all(!is.null(data),nrow(data) > 0),
+    indexEventBreakdownDataFiltered <- getIndexEventBreakdownDataFiltered()
+    personCount <- indexEventBreakdownDataFiltered %>% 
+      dplyr::select(.data$cohortSubjects) %>% 
+      dplyr::distinct() %>% 
+      dplyr::mutate(cohortSubjects = scales::comma(.data$cohortSubjects,accuracy = 1)) %>% 
+      dplyr::pull()
+    
+    recordCount <- indexEventBreakdownDataFiltered %>% 
+      dplyr::select(.data$cohortEntries) %>% 
+      dplyr::distinct() %>% 
+      dplyr::mutate(cohortEntries = scales::comma(.data$cohortEntries,accuracy = 1)) %>% 
+      dplyr::pull()
+    
+   
+    indexEventBreakdownDataForTable <- getIndexEventBreakdownDataForTable()
+    validate(need(all(!is.null(indexEventBreakdownDataForTable),
+                      nrow(indexEventBreakdownDataForTable) > 0),
                   "There is no data for the selected combination."))
-    if (input$indexEventBreakdownValueFilter == "Percentage") {
-      data <- data %>% 
-        dplyr::mutate(conceptCount = .data$conceptCount/.data$cohortEntries) %>% 
-        dplyr::mutate(subjectCount = .data$subjectCount/.data$cohortSubjects)
-    }
-    
-    data <- data %>%
-      dplyr::filter(.data$domainTable %in% input$breakdownDomainTable) %>%
-      dplyr::filter(.data$domainField %in% input$breakdownDomainField) %>%
-      dplyr::select(
-        -.data$domainTable,
-        .data$domainField,
-        -.data$domainId,
-        #-.data$vocabularyId,-.data$standardConcept
-      ) 
-    
+    browser()
     if (input$indexEventBreakdownTableFilter == "Records") {
       data <- data %>%
         dplyr::mutate(databaseId = paste0(.data$databaseId,
@@ -5119,17 +5222,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     
 
-    personCount <- data %>% 
-      dplyr::select(.data$cohortSubjects) %>% 
-      dplyr::distinct() %>% 
-      dplyr::mutate(cohortSubjects = scales::comma(.data$cohortSubjects,accuracy = 1)) %>% 
-      dplyr::pull()
-    
-    recordCount <- data %>% 
-      dplyr::select(.data$cohortEntries) %>% 
-      dplyr::distinct() %>% 
-      dplyr::mutate(cohortEntries = scales::comma(.data$cohortEntries,accuracy = 1)) %>% 
-      dplyr::pull()
+
     
     validate(need(nrow(data) > 0,
                   "No data available for selected combination."))
@@ -5141,37 +5234,7 @@ shiny::shinyServer(function(input, output, session) {
       data$subjectCount <- 0
     }
     
-    data <- data %>%
-      dplyr::arrange(.data$databaseId) %>%
-      dplyr::select(
-        .data$conceptId,
-        .data$conceptName,
-        .data$domainField,
-        .data$databaseId,
-        .data$vocabularyId,
-        .data$conceptCount,
-        .data$subjectCount,
-        .data$cohortSubjects 
-      ) %>%
-      dplyr::filter(.data$conceptId > 0) %>%
-      dplyr::distinct() %>% # distinct is needed here because many time condition_concept_id and condition_source_concept_id
-      # may have the same value leading to duplication of row records
-      tidyr::pivot_longer(names_to = "type", 
-                          cols = c("conceptCount", "subjectCount"), 
-                          values_to = "count") %>% 
-      dplyr::mutate(names = paste0(.data$databaseId, " ", .data$type)) %>% 
-      dplyr::arrange(.data$databaseId, .data$type) %>% 
-      dplyr::group_by(.data$conceptId,.data$conceptName,.data$domainField,.data$vocabularyId,.data$names) %>% 
-      dplyr::summarise(count = mean(.data$count)) %>% 
-      tidyr::pivot_wider(id_cols = c("conceptId",
-                                     "conceptName",
-                                     "domainField",
-                                     "vocabularyId"),
-                         names_from = names,
-                         values_from = count,
-                         values_fill = 0) 
-    
-    data <- data[order(-data[5]), ]
+
     
     noOfMergeColumns <- 1
     if (input$indexEventBreakdownTableFilter == "Records") {
