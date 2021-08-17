@@ -5854,7 +5854,7 @@ shiny::shinyServer(function(input, output, session) {
             !exists('cohortRelationships'))) {
       return(NULL)
     }
-    data <- getCohortOverlapData(
+    data <- getCohortOverlap(
       dataSource = dataSource,
       cohortIds = getCohortIdsFromDropdown()
     )
