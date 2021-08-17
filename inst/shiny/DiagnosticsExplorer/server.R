@@ -5326,32 +5326,30 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
     validate(need(length(getCohortIdFromDropdown()) > 0, "No cohorts chosen chosen"))
     
-    indexEventBreakdownDataTable <- getIndexEventBreakdownDataTable()
+    indexEventBreakdownDataTable <- getIndexEventBreakdownDataTable() %>% 
+      dplyr::select(-.data$cohortId)
     validate(need(all(!is.null(indexEventBreakdownDataTable),
                       nrow(indexEventBreakdownDataTable) > 0),
                   "No index event breakdown data for the chosen combination."))
     
-    browser()
-    
     maxCount <- max(indexEventBreakdownDataTable[7], na.rm = TRUE)
-    databaseIds <- unique(indexEventBreakdownDataTable$databaseId)
+    databaseIds <- input$databases
     
     noOfMergeColumns <- 1
     if (input$indexEventBreakdownTableFilter == "Records") {
-      
       data <- data %>% 
-        dplyr::select(-dplyr::contains("subjectCount"))
-      
-      colnames(data) <- stringr::str_replace(string = colnames(data), pattern = 'conceptValue', replacement = '')
+        dplyr::select(-dplyr::contains("subjectValue"))
+      colnames(data) <- stringr::str_replace(string = colnames(data), 
+                                             pattern = 'conceptValue', 
+                                             replacement = '')
       columnColor <- 4 + 1:(length(databaseIds))
-      
     } else if (input$indexEventBreakdownTableFilter == "Persons") {
-      data <- data %>% 
-        dplyr::select(-dplyr::contains("conceptCount"))
-      
-      colnames(data) <- stringr::str_replace(string = colnames(data), pattern = 'subjectValue', replacement = '')
+      data <- indexEventBreakdownDataTable %>% 
+        dplyr::select(-dplyr::contains("conceptValue"))
+      colnames(data) <- stringr::str_replace(string = colnames(data), 
+                                             pattern = 'subjectValue', 
+                                             replacement = '')
       columnColor <- 4 + 1:(length(databaseIds))
-
     } else {
       recordAndPersonColumnName <- c()
       for (i in 1:length(getDatabaseIdsFromDropdown())) {
@@ -5373,7 +5371,6 @@ shiny::shinyServer(function(input, output, session) {
                                             ),
                                             tr(lapply(recordAndPersonColumnName, th, style = "border-right:1px solid silver;border-bottom:1px solid silver"))
                                           )))
-      
       columnColor <- 4 + 1:(length(databaseIds) * 2)
       noOfMergeColumns <- 2
     }
