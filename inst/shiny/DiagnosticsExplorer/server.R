@@ -7505,8 +7505,8 @@ shiny::shinyServer(function(input, output, session) {
       paste(
         "Ran for ",
         data$runTime,
-        "on ",
         data$runTimeUnits,
+        "on ",
         data$currentPackage,
         "(",
         data$currentPackageVersion,
