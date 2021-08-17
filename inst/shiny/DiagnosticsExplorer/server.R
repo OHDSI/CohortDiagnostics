@@ -5158,14 +5158,13 @@ shiny::shinyServer(function(input, output, session) {
     return(indexEventBreakdown)
   })
 
-  ##getIndexEventBreakdownDataForTable----
-  getIndexEventBreakdownDataForTable <- shiny::reactive((x = {
+  ##getIndexEventBreakdownDataLong----
+  getIndexEventBreakdownDataLong <- shiny::reactive(x = {
     data <- getIndexEventBreakdownDataFiltered()
     if (any(is.null(data),
             nrow(data) == 0)) {
       return(NULL)
     }
-    browser()
     if (input$indexEventBreakdownValueFilter == "Percentage") {
       data <- data %>%
         dplyr::mutate(conceptValue = .data$conceptPercent) %>%
@@ -5180,6 +5179,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::arrange(.data$databaseId) %>%
       dplyr::select(
         .data$databaseId,
+        .data$cohortId,
         .data$conceptId,
         .data$conceptName,
         .data$domainTable,
@@ -5188,98 +5188,153 @@ shiny::shinyServer(function(input, output, session) {
         .data$conceptValue,
         .data$subjectValue
       ) %>%
+      dplyr::group_by(
+        .data$databaseId,
+        .data$cohortId,
+        .data$conceptId,
+        .data$conceptName,
+        .data$domainTable,
+        .data$domainField,
+        .data$vocabularyId
+      ) %>%
+      dplyr::summarise(conceptValue = max(.data$conceptValue),
+                       subjectValue = max(.data$subjectValue)) %>% 
+      dplyr::ungroup() %>% 
       dplyr::distinct() %>% # distinct is needed here because many time condition_concept_id and condition_source_concept_id
       # may have the same value leading to duplication of row records
-      tidyr::pivot_longer(names_to = "type", 
-                          cols = c("conceptValue", "subjectValue"), 
-                          values_to = "count") %>% 
-      dplyr::arrange(.data$databaseId, .data$type) %>% 
-      dplyr::group_by(.data$databaseId,
-                      .data$conceptId,
-                      .data$conceptName,
-                      .data$vocabularyId,
-                      .data$domainTable,
-                      .data$domainField,
-                      .data$type) %>% 
-      dplyr::summarise(count = max(.data$count)) %>% 
-      tidyr::pivot_wider(id_cols = c("conceptId",
-                                     "conceptName",
-                                     "vocabularyId",
-                                     "domainTable",
-                                     "domainField"),
-                         names_from = type,
-                         values_from = count,
-                         values_fill = 0) %>% 
-      dplyr::distinct()
-    data <- data[order(-data[6]), ]
-    return(data)
-  }))
+      tidyr::pivot_longer(
+        names_to = "type",
+        cols = c("conceptValue", "subjectValue"),
+        values_to = "count"
+      ) %>%
+      dplyr::arrange(.data$databaseId, .data$cohortId, .data$type)
+  })
   
-  ###Update: saveBreakdownTable----
+  ##getIndexEventBreakdownDataWide----
+  getIndexEventBreakdownDataWide <- shiny::reactive(x = {
+    data <- getIndexEventBreakdownDataLong()
+    if (any(is.null(data),
+            nrow(data) == 0)) {
+      return(NULL)
+    }
+    data <- data %>%
+      dplyr::mutate(type = paste0(.data$databaseId,
+                                  " ",
+                                  .data$type)) %>% 
+      dplyr::group_by(
+        .data$databaseId,
+        .data$cohortId,
+        .data$conceptId,
+        .data$conceptName,
+        .data$vocabularyId,
+        .data$domainTable,
+        .data$domainField,
+        .data$type
+      ) %>%
+      dplyr::summarise(count = max(.data$count)) %>%
+      tidyr::pivot_wider(
+        id_cols = c(
+          "cohortId",
+          "conceptId",
+          "conceptName",
+          "vocabularyId",
+          "domainTable",
+          "domainField"
+        ),
+        names_from = type,
+        values_from = count,
+        values_fill = 0
+      ) %>%
+      dplyr::distinct()
+    data <- data[order(-data[6]),]
+    return(data)
+  })
+
+  ##output: saveBreakdownTable----
   output$saveBreakdownTable <-  downloadHandler(
     filename = function() {
       getCsvFileNameWithDateTime(string = "indexEventBreakdown")
     },
     content = function(file) {
-      downloadCsv(x = getIndexEventBreakdownDataForTable(), 
+      downloadCsv(x = getIndexEventBreakdownDataWide(), 
                   fileName = file)
     }
   )
+  
+  ##getIndexEventBreakdownDataTable----
+  getIndexEventBreakdownDataTable <- shiny::reactive(x = {
+    data <- getIndexEventBreakdownDataLong()
+    if (any(is.null(data),
+            nrow(data) == 0)) {
+      return(NULL)
+    }
+    cohortAndPersonCount <- data %>% 
+      dplyr::select(.data$cohortId,
+                    .data$databaseId) %>% 
+      dplyr::distinct() %>% 
+      dplyr::inner_join(cohortCount,
+                        by = c('databaseId',
+                               'cohortId')) %>% 
+      dplyr::distinct() %>% 
+      dplyr::mutate(cohortSubjects = scales::comma(.data$cohortSubjects,
+                                                   accuracy = 1)) %>% 
+      dplyr::mutate(cohortEntries = scales::comma(.data$cohortEntries,
+                                                   accuracy = 1))
+    
+    data <- data %>%
+      dplyr::inner_join(cohortAndPersonCount,
+                        by = c('cohortId',
+                               'databaseId'))
+    
+    if (input$indexEventBreakdownTableFilter == "Records") {
+      data <- data %>% 
+        dplyr::mutate(cohortCountValue = .data$cohortEntries)
+    }
+    if (input$indexEventBreakdownTableFilter == "Persons") {
+      data <- data %>% 
+        dplyr::mutate(cohortCountValue = .data$cohortSubjects)
+    }
+    
+    data <- data %>% 
+      dplyr::select(-.data$cohortEntries,
+                    -.data$cohortSubjects) %>% 
+      dplyr::mutate(type = paste0(.data$databaseId,
+                                  " (",
+                                  .data$cohortCountValue,
+                                  ") ",
+                                  .data$type)) %>% 
+      tidyr::pivot_wider(
+        id_cols = c(
+          "cohortId",
+          "conceptId",
+          "conceptName",
+          "vocabularyId",
+          "domainTable",
+          "domainField"
+        ),
+        names_from = type,
+        values_from = count,
+        values_fill = 0
+      ) %>%
+      dplyr::distinct()
+    data <- data[order(-data[7]),]
+    return(data)
+  })
   
   ###Update: breakdownTable----
   output$breakdownTable <- DT::renderDataTable(expr = {
     validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
     validate(need(length(getCohortIdFromDropdown()) > 0, "No cohorts chosen chosen"))
-    indexEventBreakdownDataFiltered <- getIndexEventBreakdownDataFiltered()
-    validate(need(all(!is.null(getIndexEventBreakdownDataFiltered()),
-                      nrow(getIndexEventBreakdownDataFiltered()) > 0),
+    
+    indexEventBreakdownDataTable <- getIndexEventBreakdownDataTable()
+    validate(need(all(!is.null(indexEventBreakdownDataTable),
+                      nrow(indexEventBreakdownDataTable) > 0),
                   "No index event breakdown data for the chosen combination."))
-    personCount <- indexEventBreakdownDataFiltered %>% 
-      dplyr::select(.data$cohortSubjects) %>% 
-      dplyr::distinct() %>% 
-      dplyr::mutate(cohortSubjects = scales::comma(.data$cohortSubjects,accuracy = 1)) %>% 
-      dplyr::pull()
     
-    recordCount <- indexEventBreakdownDataFiltered %>% 
-      dplyr::select(.data$cohortEntries) %>% 
-      dplyr::distinct() %>% 
-      dplyr::mutate(cohortEntries = scales::comma(.data$cohortEntries,accuracy = 1)) %>% 
-      dplyr::pull()
-    
-   
-    indexEventBreakdownDataForTable <- getIndexEventBreakdownDataForTable()
-    validate(need(all(!is.null(indexEventBreakdownDataForTable),
-                      nrow(indexEventBreakdownDataForTable) > 0),
-                  "There is no data for the selected combination."))
     browser()
-    if (input$indexEventBreakdownTableFilter == "Records") {
-      data <- data %>%
-        dplyr::mutate(databaseId = paste0(.data$databaseId,
-                                          "(",
-                                          scales::comma(.data$cohortEntries,accuracy = 1),
-                                          ")"))
-    } else if (input$indexEventBreakdownTableFilter == "Persons") {
-      data <- data %>%
-        dplyr::mutate(databaseId = paste0(.data$databaseId,
-                                          "(",
-                                          scales::comma(.data$cohortSubjects,accuracy = 1),
-                                          ")"))
-    }
     
-
-
-    
-    validate(need(nrow(data) > 0,
-                  "No data available for selected combination."))
-    
-    maxCount <- max(data$conceptCount, na.rm = TRUE)
-    databaseIds <- unique(data$databaseId)
-    
-    if (!"subjectCount" %in% names(data)) {
-      data$subjectCount <- 0
-    }
-    
-
+    maxCount <- max(indexEventBreakdownDataTable[7], na.rm = TRUE)
+    databaseIds <- unique(indexEventBreakdownDataTable$databaseId)
     
     noOfMergeColumns <- 1
     if (input$indexEventBreakdownTableFilter == "Records") {
@@ -5287,14 +5342,14 @@ shiny::shinyServer(function(input, output, session) {
       data <- data %>% 
         dplyr::select(-dplyr::contains("subjectCount"))
       
-      colnames(data) <- stringr::str_replace(string = colnames(data), pattern = 'conceptCount', replacement = '')
+      colnames(data) <- stringr::str_replace(string = colnames(data), pattern = 'conceptValue', replacement = '')
       columnColor <- 4 + 1:(length(databaseIds))
       
     } else if (input$indexEventBreakdownTableFilter == "Persons") {
       data <- data %>% 
         dplyr::select(-dplyr::contains("conceptCount"))
       
-      colnames(data) <- stringr::str_replace(string = colnames(data), pattern = 'subjectCount', replacement = '')
+      colnames(data) <- stringr::str_replace(string = colnames(data), pattern = 'subjectValue', replacement = '')
       columnColor <- 4 + 1:(length(databaseIds))
 
     } else {
