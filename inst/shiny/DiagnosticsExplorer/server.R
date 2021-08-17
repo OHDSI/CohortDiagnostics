@@ -80,9 +80,58 @@ shiny::shinyServer(function(input, output, session) {
   #Reactive functions that are initiated on start up----
   ##getOmopDomainInformation---
   getOmopDomainInformation <- shiny::reactive(x = {
-    data <- getDomainInformation()
+    data <- getDomainInformation() %>%
+      dplyr::mutate(isEraTable = stringr::str_detect(string = .data$domainTable,
+                                                   pattern = 'era'))
     return(data)
   })
+  
+  #getNonEraCdmTableNames----
+  getNonEraCdmTableNames <- shiny::reactive({
+    data <- getOmopDomainInformation() %>%
+      dplyr::filter(.data$isEraTable == FALSE) %>%
+      dplyr::select(.data$domainTableShort) %>%
+      dplyr::distinct() %>%
+      dplyr::arrange()
+    return(data)
+  })
+  
+  ##getOmopDomainInformationLong---
+  getOmopDomainInformationLong <- shiny::reactive(x = {
+    data <- dplyr::bind_rows(
+      getDomainInformation() %>%
+        dplyr::select(
+          .data$domainTableShort,
+          .data$domainTable,
+          .data$domainConceptIdShort,
+          .data$domainConceptId
+        ) %>%
+        dplyr::rename(
+          domainFieldShort = .data$domainConceptIdShort,
+          domainField = .data$domainConceptId
+        ),
+      getDomainInformation() %>%
+        dplyr::select(
+          .data$domainTableShort,
+          .data$domainSourceConceptIdShort,
+          .data$domainTable,
+          .data$domainSourceConceptId
+        ) %>%
+        dplyr::rename(
+          domainFieldShort = .data$domainSourceConceptIdShort,
+          domainField = .data$domainSourceConceptId
+        )
+    ) %>%
+      dplyr::distinct() %>%
+      dplyr::filter(.data$domainFieldShort != "") %>%
+      dplyr::mutate(eraTable = stringr::str_detect(string = .data$domainTable,
+                                                   pattern = 'era')) %>% 
+      dplyr::mutate(isSourceField = stringr::str_detect(string = .data$domainField,
+                                                       pattern = 'source'))
+    return(data)
+  })
+  
+  
   ##getConceptCountData----
   #loads the entire data into R memory.
   # an alternative design maybe to load into R memory on start up (global.R)
@@ -135,17 +184,8 @@ shiny::shinyServer(function(input, output, session) {
       progress$set(message = paste0("Aggregating concept counts"),
                    value = 0)
       
-      nonEraOmopTables <- getOmopDomainInformation() %>%
-        dplyr::filter(stringr::str_detect(
-          string = .data$domainTable,
-          pattern = 'era',
-          negate = TRUE
-        )) %>%
-        dplyr::select(.data$domainTableShort) %>%
-        dplyr::distinct()
-      
       conceptCount <- data$conceptCount %>%
-        dplyr::inner_join(nonEraOmopTables,
+        dplyr::inner_join(getNonEraCdmTableNames(),
                           by = c('domainTableShort')) %>%
         dplyr::group_by(.data$conceptId,
                         .data$databaseId) %>%
@@ -154,7 +194,7 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::ungroup()
       
       conceptSubjects <- data$conceptSubjects %>%
-        dplyr::inner_join(nonEraOmopTables,
+        dplyr::inner_join(getNonEraCdmTableNames(),
                           by = c('domainTableShort')) %>%
         dplyr::group_by(.data$conceptId,
                         .data$databaseId) %>%
@@ -187,17 +227,8 @@ shiny::shinyServer(function(input, output, session) {
       progress$set(message = paste0("Aggregating concept counts (Year & Month)"),
                    value = 0)
       
-      nonEraOmopTables <- getOmopDomainInformation() %>%
-        dplyr::filter(stringr::str_detect(
-          string = .data$domainTable,
-          pattern = 'era',
-          negate = TRUE
-        )) %>%
-        dplyr::select(.data$domainTableShort) %>%
-        dplyr::distinct()
-      
       conceptCount <- data$conceptCount %>%
-        dplyr::inner_join(nonEraOmopTables,
+        dplyr::inner_join(getNonEraCdmTableNames(),
                           by = c('domainTableShort')) %>%
         dplyr::mutate(periodBegin = ISOdate(
           year = .data$eventYear,
@@ -238,17 +269,8 @@ shiny::shinyServer(function(input, output, session) {
       progress$set(message = paste0("Aggregating concept counts (Year)"),
                    value = 0)
       
-      nonEraOmopTables <- getOmopDomainInformation() %>%
-        dplyr::filter(stringr::str_detect(
-          string = .data$domainTable,
-          pattern = 'era',
-          negate = TRUE
-        )) %>%
-        dplyr::select(.data$domainTableShort) %>%
-        dplyr::distinct()
-      
       conceptCount <- data$conceptCount %>%
-        dplyr::inner_join(nonEraOmopTables,
+        dplyr::inner_join(getNonEraCdmTableNames(),
                           by = c('domainTableShort')) %>%
         dplyr::mutate(periodBegin = ISOdate(
           year = .data$eventYear,
@@ -4956,17 +4978,28 @@ shiny::shinyServer(function(input, output, session) {
   shiny::observe({
     if (all(!is.null(getIndexEventBreakdownData()),
             nrow(getIndexEventBreakdownData()) > 0)) {
-      choices <- getIndexEventBreakdownData() %>%
+      data <- getIndexEventBreakdownData() %>%
         dplyr::rename("domainTableShort" = .data$domainTable) %>%
         dplyr::inner_join(
-          domainInformationLong %>%
+          getOmopDomainInformationLong() %>%
             dplyr::select(.data$domainTableShort,
-                          .data$domainTable),
+                          .data$domainTable,
+                          .data$eraTable),
           by = "domainTableShort"
-        ) %>%
-        dplyr::pull(.data$domainTable) %>%
-        sort() %>%
-        unique() %>% 
+        ) %>% 
+        dplyr::arrange(.data$domainTable, 
+                       .data$domainField)
+      choices <- data %>% 
+        dplyr::select(.data$domainTable) %>% 
+        dplyr::distinct() %>% 
+        dplyr::pull() %>% 
+        snakeCaseToCamelCase() %>% 
+        camelCaseToTitleCase()
+      choicesSelected <- data %>% 
+        dplyr::filter(.data$eraTable == FALSE) %>% 
+        dplyr::select(.data$domainTable) %>% 
+        dplyr::distinct() %>% 
+        dplyr::pull() %>% 
         snakeCaseToCamelCase() %>% 
         camelCaseToTitleCase()
     } else {
@@ -4977,7 +5010,7 @@ shiny::shinyServer(function(input, output, session) {
       inputId = "domainTableOptionsInIndexEventData",
       choicesOpt = list(style = rep_len("color: black;", 999)),
       choices = choices,
-      selected = choices
+      selected = choicesSelected
     )
   })
   
@@ -4985,17 +5018,26 @@ shiny::shinyServer(function(input, output, session) {
   shiny::observe({
     if (all(!is.null(getIndexEventBreakdownData()),
             nrow(getIndexEventBreakdownData()) > 0)) {
-      choices <- getIndexEventBreakdownData() %>%
+      data <- getIndexEventBreakdownData() %>%
         dplyr::rename("domainFieldShort" = .data$domainField) %>%
         dplyr::inner_join(
-          domainInformationLong %>%
+          getOmopDomainInformationLong() %>%
             dplyr::select(.data$domainFieldShort,
-                          .data$domainField),
+                          .data$domainField,
+                          .data$eraTable),
           by = "domainFieldShort"
-        ) %>%
-        dplyr::pull(.data$domainField) %>%
-        sort() %>%
-        unique() %>% 
+        ) 
+      choices <- data %>% 
+        dplyr::select(.data$domainField) %>% 
+        dplyr::distinct() %>% 
+        dplyr::pull() %>% 
+        snakeCaseToCamelCase() %>% 
+        camelCaseToTitleCase()
+      choicesSelected <- data %>% 
+        dplyr::filter(.data$eraTable == FALSE) %>% 
+        dplyr::select(.data$domainField) %>% 
+        dplyr::distinct() %>% 
+        dplyr::pull() %>% 
         snakeCaseToCamelCase() %>% 
         camelCaseToTitleCase()
     } else {
@@ -5006,7 +5048,7 @@ shiny::shinyServer(function(input, output, session) {
       inputId = "domainFieldOptionsInIndexEventData",
       choicesOpt = list(style = rep_len("color: black;", 999)),
       choices = choices,
-      selected = choices
+      selected = choicesSelected
     )
   })
 
@@ -5048,7 +5090,7 @@ shiny::shinyServer(function(input, output, session) {
       ) %>%
       dplyr::rename(domainFieldShort = .data$domainField,
                     domainTableShort = .data$domainTable) %>% 
-      dplyr::inner_join(domainInformationLong,
+      dplyr::inner_join(getOmopDomainInformationLong(),
                         by = c('domainTableShort',
                                'domainFieldShort')) %>% 
       dplyr::select(-.data$domainTableShort,
@@ -5070,7 +5112,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     
-    domainTableSelected <- domainInformationLong %>%
+    domainTableSelected <- getOmopDomainInformationLong() %>%
       dplyr::filter(
         .data$domainTable %in% c(
           input$domainTableOptionsInIndexEventData %>%
@@ -5086,7 +5128,7 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     
-    domainFieldSelected <- domainInformationLong %>%
+    domainFieldSelected <- getOmopDomainInformationLong() %>%
       dplyr::filter(
         .data$domainField %in% c(
           input$domainFieldOptionsInIndexEventData %>%
@@ -5123,36 +5165,37 @@ shiny::shinyServer(function(input, output, session) {
             nrow(data) == 0)) {
       return(NULL)
     }
+    browser()
     if (input$indexEventBreakdownValueFilter == "Percentage") {
       data <- data %>%
-        dplyr::mutate(concept = .data$conceptPercent) %>%
-        dplyr::mutate(subject = .data$subjectPercent)
+        dplyr::mutate(conceptValue = .data$conceptPercent) %>%
+        dplyr::mutate(subjectValue = .data$subjectPercent)
     } else {
       data <- data %>%
-        dplyr::mutate(concept = .data$conceptCount) %>%
-        dplyr::mutate(subject = .data$subjectCount)
+        dplyr::mutate(conceptValue = .data$conceptCount) %>%
+        dplyr::mutate(subjectValue = .data$subjectCount)
     }
     data <- data %>%
+      dplyr::filter(.data$conceptId > 0) %>%
       dplyr::arrange(.data$databaseId) %>%
       dplyr::select(
+        .data$databaseId,
         .data$conceptId,
         .data$conceptName,
         .data$domainTable,
         .data$domainField,
         .data$vocabularyId,
-        .data$databaseId,
-        .data$concept,
-        .data$subject,
-        .data$cohortSubjects 
+        .data$conceptValue,
+        .data$subjectValue
       ) %>%
-      dplyr::filter(.data$conceptId > 0) %>%
       dplyr::distinct() %>% # distinct is needed here because many time condition_concept_id and condition_source_concept_id
       # may have the same value leading to duplication of row records
       tidyr::pivot_longer(names_to = "type", 
-                          cols = c("concept", "subject"), 
+                          cols = c("conceptValue", "subjectValue"), 
                           values_to = "count") %>% 
       dplyr::arrange(.data$databaseId, .data$type) %>% 
-      dplyr::group_by(.data$conceptId,
+      dplyr::group_by(.data$databaseId,
+                      .data$conceptId,
                       .data$conceptName,
                       .data$vocabularyId,
                       .data$domainTable,
@@ -5187,8 +5230,10 @@ shiny::shinyServer(function(input, output, session) {
   output$breakdownTable <- DT::renderDataTable(expr = {
     validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
     validate(need(length(getCohortIdFromDropdown()) > 0, "No cohorts chosen chosen"))
-    
     indexEventBreakdownDataFiltered <- getIndexEventBreakdownDataFiltered()
+    validate(need(all(!is.null(getIndexEventBreakdownDataFiltered()),
+                      nrow(getIndexEventBreakdownDataFiltered()) > 0),
+                  "No index event breakdown data for the chosen combination."))
     personCount <- indexEventBreakdownDataFiltered %>% 
       dplyr::select(.data$cohortSubjects) %>% 
       dplyr::distinct() %>% 
