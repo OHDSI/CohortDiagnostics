@@ -1322,11 +1322,6 @@ getResultsVisitContext <- function(dataSource,
     getResultsCohortCount(dataSource = dataSource,
                           cohortIds = cohortIds,
                           databaseIds = databaseIds)
-  if (any(is.null(cohortCounts),
-          nrow(cohortCounts) == 0)) {
-    return(NULL)
-  }
-  
   data <- getDataFromResultsDatabaseSchema(
     dataSource,
     cohortIds = cohortIds,
@@ -1337,16 +1332,8 @@ getResultsVisitContext <- function(dataSource,
           nrow(data) == 0)) {
     return(NULL)
   }
-  data <- data %>%
-    dplyr::inner_join(cohortCount,
-                      by = c("cohortId", "databaseId"))
   return(data)
 }
-
-
-
-
-
 
 
 

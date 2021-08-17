@@ -5100,7 +5100,7 @@ shiny::shinyServer(function(input, output, session) {
     return(indexEventBreakdown)
   })
   
-  ##getIndexEventBreakdownDataFiltered---
+  ##getIndexEventBreakdownDataFiltered----
   getIndexEventBreakdownDataFiltered <- shiny::reactive(x = {
     indexEventBreakdown <- getIndexEventBreakdownDataEnhanced()
     if (any(is.null(indexEventBreakdown),
@@ -5211,6 +5211,7 @@ shiny::shinyServer(function(input, output, session) {
         values_to = "count"
       ) %>%
       dplyr::arrange(.data$databaseId, .data$cohortId, .data$type)
+    return(data)
   })
   
   ##getIndexEventBreakdownDataWide----
@@ -5442,19 +5443,18 @@ shiny::shinyServer(function(input, output, session) {
   
   #______________----
   # Visit Context -----
-  ###getVisitContexData----
-  getVisitContexData <- shiny::reactive(x = {
-    validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
-    validate(need(all(!is.null( getCohortIdFromDropdown()),
-                      length( getCohortIdFromDropdown()) > 0), "No cohorts chosen"))
+  ##getVisitContextData----
+  getVisitContextData <- shiny::reactive(x = {
+    if (any(is.null(getDatabaseIdsFromDropdown()),
+            length(getDatabaseIdsFromDropdown()) == 0)) {
+      return(NULL)
+    }
     if (all(is(dataSource, "environment"), !exists('visitContext'))) {
       return(NULL)
     }
-    
     visitContext <- getResultsVisitContext(
       dataSource = dataSource,
-      cohortIds = getCohortIdFromDropdown(),
-      databaseIds = getDatabaseIdsFromDropdown() #!!! remove databaseId to make return faster??
+      cohortIds = getCohortIdFromDropdown()
     )
     if (any(is.null(visitContext),
             nrow(visitContext) == 0)) {
@@ -5478,109 +5478,232 @@ shiny::shinyServer(function(input, output, session) {
     return(visitContext)
   })
   
-  ###saveVisitContextTable----
+  ##getVisitContexDataEnhanced----
+  getVisitContexDataEnhanced <- shiny::reactive(x = {
+    visitContextData <- getVisitContextData()
+    if (any(is.null(visitContextData),
+            nrow(visitContextData) == 0)) {
+      return(NULL)
+    }
+    if (is.null(cohortCount)) {
+      return(NULL)
+    }
+    visitContextData <- visitContextData %>%
+      dplyr::inner_join(cohortCount,
+                        by = c('databaseId', 'cohortId'))
+    if (input$visitContextValueFilter == "Percentage") {
+      visitContextData <- visitContextData %>%
+        dplyr::mutate(subjectsValue = .data$subjects / .data$cohortSubjects) %>%
+        dplyr::mutate(recordsValue = .data$records / .data$cohortEntries)
+    } else {
+      visitContextData <- visitContextData %>%
+        dplyr::mutate(subjectsValue = .data$subjects) %>%
+        dplyr::mutate(recordsValue = .data$records)
+    }
+    visitContextData <- visitContextData %>%
+      dplyr::select(-.data$subjects,-.data$records,-.data$cohortSubjects,-.data$cohortEntries) %>%
+      dplyr::rename(subjects = .data$subjectsValue,
+                    records = .data$recordsValue)
+    visitContextReference <-
+      expand.grid(
+        visitContext = c("Before", "During visit", "On visit start", "After"),
+        visitConceptName = unique(visitContextData$visitConceptName),
+        databaseId = unique(visitContextData$databaseId),
+        cohortId = unique(visitContextData$cohortId)
+      ) %>%
+      dplyr::tibble()
+    
+    visitContextReference <- visitContextReference %>%
+      dplyr::left_join(visitContextData,
+                       by = c("visitConceptName", "visitContext", "databaseId", "cohortId")) %>%
+      dplyr::select(
+        .data$databaseId,
+        .data$cohortId,
+        .data$visitConceptName,
+        .data$visitContext,
+        .data$subjects,
+        .data$records
+      )
+    # dplyr::mutate(visitContext = paste0(.data$databaseId, "_", .data$visitContext))
+    return(visitContextReference)
+  })
+  
+  ##getVisitContexDataFiltered----
+  getVisitContexDataFiltered <- shiny::reactive(x = {
+    data <- getVisitContexDataEnhanced()
+    if (any(is.null(data),
+            nrow(data) == 0)) {
+      return(NULL)
+    }
+    data <- data %>%
+      dplyr::filter(.data$cohortId == getCohortIdFromDropdown()) %>%
+      dplyr::filter(.data$databaseId %in% getDatabaseIdsFromDropdown())
+    return(data)
+  })
+  
+  ##getVisitContextDataLong----
+  getVisitContextDataLong <- shiny::reactive(x = {
+    data <- getVisitContexDataFiltered()
+    if (any(is.null(data),
+            nrow(data) == 0)) {
+      return(NULL)
+    }
+    data <- data %>%
+      tidyr::pivot_longer(
+        names_to = "type",
+        cols = c("records", "subjects"),
+        values_to = "count"
+      )
+    data <- tidyr::replace_na(data,
+                              replace = list("count" = 0))
+    return(data)
+  })
+    
+  ##getVisitContextDataWide----
+  getVisitContextDataWide <- shiny::reactive(x = {
+    data <- getVisitContextDataLong()
+    if (any(is.null(data),
+            nrow(data) == 0)) {
+      return(NULL)
+    }
+    data <- data %>%
+      dplyr::arrange(.data$databaseId,
+                     .data$visitContext,
+                     .data$type) %>% 
+      dplyr::mutate(type = paste0(.data$databaseId,
+                                  " ",
+                                  .data$visitContext,
+                                  " ",
+                                  .data$type)) %>% 
+      tidyr::pivot_wider(
+        id_cols = c(
+          "cohortId",
+          "visitConceptName"
+        ),
+        names_from = type,
+        values_from = count,
+        values_fill = 0
+      ) %>%
+      dplyr::distinct()
+    data <- data[order(-data[3]),]
+    return(data)
+  })
+  
+  ##saveVisitContextTable----
   output$saveVisitContextTable <-  downloadHandler(
     filename = function() {
       getCsvFileNameWithDateTime(string = "visitContext")
     },
     content = function(file) {
-      downloadCsv(x = getVisitContexData(), 
+      downloadCsv(x = getVisitContextDataWide(), 
                   fileName = file)
     }
   )
   
-  ###visitContextTable----
+  ##doesVisitContextContainData----
+  output$doesVisitContextContainData <- shiny::reactive({
+    return(nrow(getVisitContextDataWide()) > 0)
+  })
+  shiny::outputOptions(output,
+                       "doesVisitContextContainData",
+                       suspendWhenHidden = FALSE)
+  
+  ##visitContextTable----
   output$visitContextTable <- DT::renderDataTable(expr = {
     validate(need(length(getDatabaseIdsFromDropdown()) > 0, "No data sources chosen"))
     validate(need(length( getCohortIdFromDropdown()) > 0, "No cohorts chosen"))
-    data <- getVisitContexData()
-    validate(need(nrow(data) > 0,
-                  "No data available for selected combination."))
+    data <- getVisitContextDataWide()
+    validate(need(
+      all(!is.null(data),
+          nrow(data) > 0),
+      "No data available for selected combination."
+    ))
+    table <- data %>% 
+      dplyr::select(-.data$cohortId)
     
-    if (input$visitContextValueFilter == "Percentage") {
-       data <- data %>% 
-        dplyr::mutate(subjects = .data$subjects / .data$cohortSubjects) %>%
-        dplyr::mutate(records = .data$records / .data$cohortEntries)
-    }
-    
-    databaseIds <- sort(unique(data$databaseId))
-    cohortCounts <- data %>% 
+    # header labels
+    cohortCounts <- cohortCount %>% 
       dplyr::filter(.data$cohortId == getCohortIdFromDropdown()) %>% 
       dplyr::filter(.data$databaseId %in% getDatabaseIdsFromDropdown()) %>% 
-      dplyr::select(.data$cohortSubjects, .data$cohortEntries) %>% unique()
-    
+      dplyr::arrange(.data$cohortId, .data$databaseId)
     isPerson <- input$visitContextPersonOrRecords == 'Person'
     if (isPerson) {
-      cohortCounts <- cohortCounts$cohortSubjects
+      databaseIdsWithCount <- cohortCounts %>% 
+        dplyr::mutate(databaseIdWithCount = paste0(.data$databaseId, 
+                                                  " (n = ", 
+                                                  scales::comma(.data$cohortSubjects), 
+                                                  ")")) %>% 
+        dplyr::pull(.data$databaseIdWithCount)
     } else {
-      cohortCounts <- cohortCounts$cohortEntries
+      databaseIdsWithCount <- cohortCounts %>% 
+        dplyr::mutate(databaseIdWithCount = paste0(.data$databaseId, 
+                                                   " (n = ", 
+                                                   scales::comma(.data$cohortEntries), 
+                                                   ")")) %>% 
+        dplyr::pull(.data$databaseIdWithCount)
     }
-    
-    databaseIdsWithCount <- paste(databaseIds, "(n = ", format(cohortCounts, big.mark = ","), ")")
-    
-    maxSubjects <- max(data$subjects)
-    visitContextReference <-
-      expand.grid(
-        visitContext = c("Before", "During visit", "On visit start", "After"),
-        visitConceptName = unique(data$visitConceptName),
-        databaseId = databaseIds
-      ) %>%
-      dplyr::tibble()
-    
-    table <- visitContextReference %>%
-      dplyr::left_join(data,
-                       by = c("visitConceptName", "visitContext", "databaseId")) %>%
-      dplyr::select(.data$visitConceptName,
-                    .data$visitContext,
-                    .data$subjects,
-                    .data$records,
-                    .data$databaseId) %>%
-      dplyr::mutate(visitContext = paste0(.data$databaseId, "_", .data$visitContext)) %>%
-      dplyr::select(-.data$databaseId) %>%
-      dplyr::arrange(.data$visitConceptName)
-    
-    if (isPerson) {
-      table <- table %>% 
-        tidyr::pivot_wider(
-          id_cols = c(.data$visitConceptName),
-          names_from = .data$visitContext,
-          values_from = .data$subjects,
-          values_fill = 0
-        )
-    } else {
-      table <- table %>% 
-        tidyr::pivot_wider(
-          id_cols = c(.data$visitConceptName),
-          names_from = .data$visitContext,
-          values_from = .data$records,
-          values_fill = 0
-        )
+    #max count
+    visitConceptLong <- getVisitContextDataLong()
+    if (any(is.null(visitConceptLong),
+            nrow(visitConceptLong) == 0)) {
+      return(NULL)
     }
-    table <- table %>% 
-         dplyr::relocate(.data$visitConceptName)
-      
+    maxSubjects <- visitConceptLong$count %>% max()
+    visitContextSequence <- visitConceptLong$visitContext %>% 
+      unique()
+    #ensure columns names are aligned
+    for (i in (length(visitContextSequence):1)) {
+      table <- table %>%
+        dplyr::relocate(.data$visitConceptName,
+                        dplyr::contains(visitContextSequence[[i]]))
+    }
+    visitContextSequence <- visitContextSequence %>%  
+      stringr::str_replace(pattern = "Before",
+                           replacement = "Visits Before") %>% 
+      stringr::str_replace(pattern = "During visit",
+                           replacement = "Visits Ongoing") %>% 
+      stringr::str_replace(pattern = "On visit start",
+                           replacement = "Starting Simultaneous") %>% 
+      stringr::str_replace(pattern = "After",
+                           replacement = "Visits After")
+    
     totalColumns <- 1
     
     if (input$visitContextTableFilters == "Before") {
       table <- table %>% 
-        dplyr::select(-dplyr::contains("During"),-dplyr::contains("On visit"),-dplyr::contains("After"))
-      colnames(table) <- stringr::str_replace(string = colnames(table), pattern = '_Before', replacement = '')
+        dplyr::select(-dplyr::contains("During"),
+                      -dplyr::contains("On visit"),
+                      -dplyr::contains("After"))
+      colnames(table) <- stringr::str_replace(string = colnames(table), 
+                                              pattern = '_Before', 
+                                              replacement = '')
       
     } else if (input$visitContextTableFilters == "During") {
       table <- table %>% 
-        dplyr::select(-dplyr::contains("Before"),-dplyr::contains("On visit"),-dplyr::contains("After"))
-      colnames(table) <- stringr::str_replace(string = colnames(table), pattern = '_During visit', replacement = '')
+        dplyr::select(-dplyr::contains("Before"),
+                      -dplyr::contains("On visit"),
+                      -dplyr::contains("After"))
+      colnames(table) <- stringr::str_replace(string = colnames(table), 
+                                              pattern = '_During visit', 
+                                              replacement = '')
       
     } else if (input$visitContextTableFilters == "Simultaneous") {
       table <- table %>% 
-        dplyr::select(-dplyr::contains("During"),-dplyr::contains("Before"),-dplyr::contains("After"))
-      colnames(table) <- stringr::str_replace(string = colnames(table), pattern = '_On visit start', replacement = '')
+        dplyr::select(-dplyr::contains("During"),
+                      -dplyr::contains("Before"),
+                      -dplyr::contains("After"))
+      colnames(table) <- stringr::str_replace(string = colnames(table), 
+                                              pattern = '_On visit start', 
+                                              replacement = '')
       
     } else if (input$visitContextTableFilters == "After") {
       table <- table %>% 
-        dplyr::select(-dplyr::contains("During"),-dplyr::contains("Before"),-dplyr::contains("On visit"))
-      colnames(table) <- stringr::str_replace(string = colnames(table), pattern = '_After', replacement = '')
-      
+        dplyr::select(-dplyr::contains("During"),
+                      -dplyr::contains("Before"),
+                      -dplyr::contains("On visit"))
+      colnames(table) <- stringr::str_replace(string = colnames(table), 
+                                              pattern = '_After', 
+                                              replacement = '')
     }  else {
       sketch <- htmltools::withTags(table(class = "display",
                                           thead(tr(
@@ -5589,26 +5712,19 @@ shiny::shinyServer(function(input, output, session) {
                                           ),
                                           tr(
                                             lapply(rep(
-                                              c(
-                                                "Visits Before",
-                                                "Visits Ongoing",
-                                                "Starting Simultaneous",
-                                                "Visits After"
-                                              ),
-                                              length(databaseIds)
+                                              c(visitContextSequence), #avoid hard coding sequence
+                                              length(databaseIdsWithCount)
                                             ), th,style = "border-right:1px solid silver;border-bottom:1px solid silver")
                                           ))))
-      
       totalColumns <- 4
       }
-    
     columnDefs <- minCellCountDef(1:(
-      length(databaseIds) * totalColumns
+      length(databaseIdsWithCount) * totalColumns
     ))
     
     if (input$visitContextValueFilter == "Percentage") {
       columnDefs <- minCellPercentDef(1:(
-        length(databaseIds) * totalColumns
+        length(databaseIdsWithCount) * totalColumns
       ))
     }
     
@@ -5652,7 +5768,7 @@ shiny::shinyServer(function(input, output, session) {
     
     table <- DT::formatStyle(
       table = table,
-      columns = 1 + 1:(length(databaseIds) * 4),
+      columns = 1 + 1:(length(databaseIdsWithCount) * 4),
       background = DT::styleColorBar(c(0, maxSubjects), "lightblue"),
       backgroundSize = "98% 88%",
       backgroundRepeat = "no-repeat",
@@ -5660,15 +5776,70 @@ shiny::shinyServer(function(input, output, session) {
     )
   }, server = TRUE)
   
-  ###doesVisitContextContainData----
-  output$doesVisitContextContainData <- shiny::reactive({
-    return(nrow(getVisitContexData()) > 0)
+
+  #______________----
+  # Cohort Overlap ------
+  ##getCohortOverlapData----
+  getCohortOverlapData <- reactive({
+    if (any(length(getDatabaseIdsFromDropdown()) == 0,
+            length(getCohortIdsFromDropdown()) == 0)) {
+      return(NULL)
+    }
+    if (all(is(dataSource, "environment"), 
+            !exists('cohortRelationships'))) {
+      return(NULL)
+    }
+    data <- getCohortOverlapData(
+      dataSource = dataSource,
+      cohortIds =  getCohortIdsFromDropdown(),
+      databaseIds = getDatabaseIdsFromDropdown() #!!! remove databaseId to make return faster?
+    )
+    if (any(is.null(data),
+            nrow(data) == 0)) {
+      return(NULL)
+    }
+    return(data)
   })
   
-  shiny::outputOptions(output,
-                       "doesVisitContextContainData",
-                       suspendWhenHidden = FALSE)
+  ##output: overlapPlot----
+  output$overlapPlot <- ggiraph::renderggiraph(expr = {
+    validate(need(
+      length( getCohortIdsFromDropdown()) > 0,
+      paste0("Please select Target Cohort(s)")
+    ))
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(message = paste0("Plotting cohort overlap."), value = 0)
+    
+    data <- getCohortOverlapData()
+    validate(need(
+      !is.null(data),
+      paste0("No cohort overlap data for this combination")
+    ))
+    validate(need(
+      nrow(data) > 0,
+      paste0("No cohort overlap data for this combination.")
+    ))
+    plot <- plotCohortOverlap(
+      data = data,
+      shortNameRef = cohort,
+      yAxis = input$overlapPlotType
+    )
+    return(plot)
+  })
   
+  ##output: saveCohortOverlapTable----
+  output$saveCohortOverlapTable <-  downloadHandler(
+    filename = function() {
+      getCsvFileNameWithDateTime(string = "cohortOverlap")
+    },
+    content = function(file) {
+      downloadCsv(x = getCohortOverlapData(), 
+                  fileName = file)
+    }
+  )
+  
+  #______________----
   # Characterization/Temporal Characterization ------
   # Characterization and temporal characterization data for one cohortId and multiple databaseIds
   ###getMultipleCharacterizationData----
@@ -6353,73 +6524,7 @@ shiny::shinyServer(function(input, output, session) {
       return(table)
     }, server = TRUE)
   
-  # Cohort Overlap ------
-  cohortOverlapData <- reactive({
-    if (any(length(getDatabaseIdsFromDropdown()) == 0,
-            length(getCohortIdsFromDropdown()) == 0)) {
-      return(NULL)
-    }
-    if (all(is(dataSource, "environment"), 
-            !exists('cohortRelationships'))) {
-      return(NULL)
-    }
-    progress <- shiny::Progress$new()
-    on.exit(progress$close())
-    progress$set(message = paste0("Extracting cohort overlap data."), value = 0)
-    #!!! why is data not returning
-    data <- getCohortOverlapData(
-      dataSource = dataSource,
-      cohortIds =  getCohortIdsFromDropdown(),
-      databaseIds = getDatabaseIdsFromDropdown() #!!! remove databaseId to make return faster?
-    )
-    validate(need(
-      !is.null(data),
-      paste0("No cohort overlap data for this combination")
-    ))
-    validate(need(
-      nrow(data) > 0,
-      paste0("No cohort overlap data for this combination.")
-    ))
-    return(data)
-  })
   
-  output$overlapPlot <- ggiraph::renderggiraph(expr = {
-    validate(need(
-      length( getCohortIdsFromDropdown()) > 0,
-      paste0("Please select Target Cohort(s)")
-    ))
-    
-    progress <- shiny::Progress$new()
-    on.exit(progress$close())
-    progress$set(message = paste0("Plotting cohort overlap."), value = 0)
-    
-    data <- cohortOverlapData()
-    validate(need(
-      !is.null(data),
-      paste0("No cohort overlap data for this combination")
-    ))
-    validate(need(
-      nrow(data) > 0,
-      paste0("No cohort overlap data for this combination.")
-    ))
-    
-    plot <- plotCohortOverlap(
-      data = data,
-      shortNameRef = cohort,
-      yAxis = input$overlapPlotType
-    )
-    return(plot)
-  })
-  
-  output$saveCohortOverlapTable <-  downloadHandler(
-    filename = function() {
-      getCsvFileNameWithDateTime(string = "cohortOverlap")
-    },
-    content = function(file) {
-      downloadCsv(x = cohortOverlapData(), 
-                  fileName = file)
-    }
-  )
   
   # Compare Characterization/Temporal Characterization ------
   compareCharacterizationTemporalCharacterizationData <- shiny::reactive(x = {
