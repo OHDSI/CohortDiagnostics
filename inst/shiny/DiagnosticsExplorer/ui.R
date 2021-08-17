@@ -64,13 +64,12 @@ sidebarMenu <-
     shinydashboard::menuItem(text = "Meta data", tabName = "databaseInformation"),
     # Conditional dropdown boxes in the side bar ------------------------------------------------------
     shiny::conditionalPanel(
-      condition = "input.tabs!='incidenceRate' &
+      condition = "input.tabs !='incidenceRate' &
       input.tabs != 'timeDistribution' &
       input.tabs != 'timeSeries' &
       input.tabs != 'cohortCharacterization' &
       input.tabs != 'cohortCounts' &
       input.tabs != 'indexEventBreakdown' &
-      input.tabs != 'databaseInformation' &
       input.tabs != 'cohortDefinition' &
       input.tabs != 'visitContext' &
       input.tabs != 'cohortOverlap'",
@@ -1366,23 +1365,33 @@ bodyTabItems <- shinydashboard::tabItems(
                               DT::dataTableOutput("databaseInformationTable")
                             ),
                             shiny::tabPanel(
-                              title = "Environment snapshot",
+                              title = "Meta data information",
                               tags$br(),
-                              shiny::radioButtons(
-                                inputId = "environmentSnapshot",
-                                label = "Filter to:",
-                                choices = c("Arguments at diagnostics initiation", "Package dependency snapShot", "Rest of fields in metadata"),
-                                selected = "Package dependency snapShot",
-                                inline = TRUE
-                              ),
-                              shiny::conditionalPanel(
-                                condition = "input.environmentSnapshot == 'Package dependency snapShot'",
-                                DT::dataTableOutput("packageDependencySnapShotTable")
-                              ),
-                              shiny::conditionalPanel(
-                                condition = "input.environmentSnapshot == 'Arguments at diagnostics initiation'",
-                                DT::dataTableOutput("argumentsAtDiagnosticsInitiationTable")
-                              )
+                              shinydashboard::box(
+                                title = shiny::htmlOutput(outputId = "metadataInfoTitle"),
+                                collapsible = TRUE,
+                                width = NULL,
+                                collapsed = FALSE,
+                                shiny::htmlOutput(outputId = "metadataInfoDetailsText"),
+                                shinydashboard::box(
+                                  title = NULL,
+                                  collapsible = TRUE,
+                                  width = NULL,
+                                  collapsed = FALSE,
+                                  DT::dataTableOutput("packageDependencySnapShotTable")
+                                ),
+                                shinydashboard::box(
+                                  title = NULL,
+                                  collapsible = TRUE,
+                                  width = NULL,
+                                  collapsed = FALSE,
+                                  shiny::verbatimTextOutput(outputId = "argumentsAtDiagnosticsInitiationTable"),
+                                  tags$head(
+                                    tags$style("#argumentsAtDiagnosticsInitiationTable { max-height:400px};")
+                                  )
+                                  # DT::dataTableOutput("argumentsAtDiagnosticsInitiationTable")
+                                )
+                              ) 
                             )
                           )
                      )
