@@ -2295,27 +2295,31 @@ shiny::shinyServer(function(input, output, session) {
   getConceptSetDetailsData <- reactiveVal(NULL)
   getDatabaseIdsForselectedConceptSet <- reactiveVal(NULL)
   
-  output$dynamicUIForResolved <- shiny::renderUI({
-    shiny::column(8,
-                  shinydashboard::box(title = "Relationship Table",
-                                      collapsible = TRUE,
-                                      collapsed = FALSE,
-                                      width = NULL,
-                                      tags$table(width = "100%",
-                                                 tags$tr(
-                                                   tags$td(align = "right",
-                                                           shiny::downloadButton(
-                                                             "saveconceptRelationshipTable",
-                                                             label = "",
-                                                             icon = shiny::icon("download"),
-                                                             style = "margin-top: 5px; margin-bottom: 5px;"
-                                                           )
-                                                   )
-                                                 )
-                                      ),
-                                      DT::dataTableOutput(outputId = "conceptRelationshipTable")
-                                      )
-                  )
+  
+  output$dynamicUIForRelationshipTable <- shiny::renderUI({
+    shiny::conditionalPanel(condition = "output.isConceptIdFromLeftOrRightConceptTableSelected",
+                            shiny::column(
+                              8,
+                              shinydashboard::box(
+                                title = "Relationship Table",
+                                collapsible = TRUE,
+                                collapsed = FALSE,
+                                width = NULL,
+                                tags$table(width = "100%",
+                                           tags$tr(
+                                             tags$td(
+                                               align = "right",
+                                               shiny::downloadButton(
+                                                 "saveconceptRelationshipTable",
+                                                 label = "",
+                                                 icon = shiny::icon("download"),
+                                                 style = "margin-top: 5px; margin-bottom: 5px;"
+                                               )
+                                             )
+                                           )),
+                                DT::dataTableOutput(outputId = "conceptRelationshipTable")
+                              )
+                            ))
     
   })
   
@@ -2323,7 +2327,7 @@ shiny::shinyServer(function(input, output, session) {
     data <- getConceptSetDetailsData()
     selectedConceptId <- getMostRecentlySelectedConceptIdFromLeftOrRightConceptTable()
     
-    if (any(is.null(data),is.null(data))) {
+    if (any(is.null(data),is.null(selectedConceptId))) {
       return(NULL)
     } else {
       relationshipData <- data$conceptRelationship %>% 
@@ -2401,6 +2405,7 @@ shiny::shinyServer(function(input, output, session) {
       #If row is deselected in Left table, then search for the selected row in Right table
       idx <- input$resolvedConceptsTableRight_rows_selected
       if (is.null(idx)) {
+        getMostRecentlySelectedConceptIdFromLeftOrRightConceptTable(NULL)
         return(NULL)
       } else {
         data <- getConceptSetDetailsRight()
@@ -2430,6 +2435,7 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(idx)) {
       idx <- input$resolvedConceptsTableLeft_rows_selected
       if (is.null(idx)) {
+        getMostRecentlySelectedConceptIdFromLeftOrRightConceptTable(NULL)
         return(NULL)
       } else {
         data <- getConceptSetDetailsLeft()
@@ -2460,6 +2466,7 @@ shiny::shinyServer(function(input, output, session) {
       #If row is deselected in Left table, then search for the selected row in Right table
       idx <- input$cohortDefinitionOrphanConceptTableRight_rows_selected
       if (is.null(idx)) {
+        getMostRecentlySelectedConceptIdFromLeftOrRightConceptTable(NULL)
         return(NULL)
       } else {
         data <- getConceptSetDetailsRight()
@@ -2486,12 +2493,12 @@ shiny::shinyServer(function(input, output, session) {
     is.null(input$cohortDefinitionOrphanConceptTableRight_rows_selected)
   },
   handlerExpr = {
-    
     idx <- input$cohortDefinitionOrphanConceptTableRight_rows_selected
     if (is.null(idx)) {
       #If row is deselected in Left table, then search for the selected row in Right table
       idx <- input$cohortDefinitionOrphanConceptTableLeft_rows_selected
       if (is.null(idx)) {
+        getMostRecentlySelectedConceptIdFromLeftOrRightConceptTable(NULL)
         return(NULL)
       } else {
         data <- getConceptSetDetailsLeft()
@@ -2512,6 +2519,14 @@ shiny::shinyServer(function(input, output, session) {
       getMostRecentlySelectedConceptIdFromLeftOrRightConceptTable(selctedConceptId)
     }
   })
+  
+  ##output: isConceptIdFromLeftOrRightConceptTableSelected----
+  output$isConceptIdFromLeftOrRightConceptTableSelected <- shiny::reactive(x = {
+    return(!is.null(getMostRecentlySelectedConceptIdFromLeftOrRightConceptTable()))
+  })
+  shiny::outputOptions(x = output,
+                       name = "isConceptIdFromLeftOrRightConceptTableSelected",
+                       suspendWhenHidden = FALSE)
   
   #output: conceptSetExpressionLeftPanelTitle----
   output$conceptSetExpressionLeftPanelTitle <- shiny::renderText(expr = {

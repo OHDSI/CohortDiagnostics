@@ -282,7 +282,7 @@ bodyTabItems <- shinydashboard::tabItems(
                        input.conceptSetsTypeLeft != 'Concept Set Expression' &
                        input.conceptSetsTypeLeft != 'Json' &
                        input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
-                        shiny::uiOutput(outputId = "dynamicUIForResolved")
+                        shiny::uiOutput(outputId = "dynamicUIForRelationshipTable")
                         )
                         )
       # shiny::column(width = 12,
