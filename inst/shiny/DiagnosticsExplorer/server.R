@@ -1617,6 +1617,7 @@ shiny::shinyServer(function(input, output, session) {
                        suspendWhenHidden = FALSE)
 
   #!!!!!! inclusion rule needs simple and detailed tabs. detailed will replicate Atlas UI
+  #!!!!!!! the radio button for meet/gain/remain/total - should only be shown when 'simplified' radio button is selected
   #output: simplifiedInclusionRuleTableForSelectedCohortCountLeft----
   output$simplifiedInclusionRuleTableForSelectedCohortCountLeft <- DT::renderDataTable(expr = {
     table <- getSimplifiedInclusionRuleResultsLeft()
