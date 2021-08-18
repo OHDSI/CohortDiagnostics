@@ -766,7 +766,6 @@ getConceptMetadata <- function(dataSource,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     conceptIds = conceptIdList
   )
-  
   return(data)
 }
 

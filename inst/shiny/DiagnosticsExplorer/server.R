@@ -2333,8 +2333,8 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  #getConceptRelationshipTable----
-  getConceptRelationshipTable <- shiny::reactive(x = {    
+  #getConceptRelationshipForSelectedConceptId----
+  getConceptRelationshipForSelectedConceptId <- shiny::reactive(x = {    
     selectedConceptId <- getSelectedConceptIdActive()
     if (any(is.null(selectedConceptId),
             length(selectedConceptId) == 0)) {
@@ -2350,26 +2350,68 @@ shiny::shinyServer(function(input, output, session) {
             length(conceptMetadata) == 0)) {
       return(NULL)
     }
-    conceptRelationship <- conceptMetadata$concept %>%
-      dplyr::left_join(
-        conceptMetadata$conceptCount %>%
-          dplyr::filter(.data$databaseId %in% selectedDatabaseId),
-        by = c("conceptId")
-      ) %>%
-      tidyr::replace_na(list(conceptCount = 0,
-                             subjectCount = 0)) %>%
-      dplyr::select(
-        .data$conceptId,
-        .data$conceptCode,
-        .data$conceptName,
-        .data$conceptClassId,
-        .data$conceptCount,
-        .data$subjectCount,
-        .data$domainId,
-        .data$vocabularyId
-      ) %>% 
-      dplyr::arrange(dplyr::desc(.data$conceptCount))
+    conceptRelationship <- conceptMetadata$conceptRelationship %>% 
+      dplyr::filter(.data$conceptId1 %in% selectedConceptId) %>% 
+      dplyr::select(-.data$conceptId1) %>% 
+      dplyr::filter(is.na(.data$invalidReason)) %>% 
+      dplyr::rename("conceptId" = .data$conceptId2) %>% 
+      dplyr::select(.data$conceptId,
+                    .data$relationshipId)
     return(conceptRelationship)
+  })
+  
+  #getConceptAncestorForSelectedConceptId----
+  getConceptAncestorForSelectedConceptId <- shiny::reactive(x = {    
+    selectedConceptId <- getSelectedConceptIdActive()
+    if (any(is.null(selectedConceptId),
+            length(selectedConceptId) == 0)) {
+      return(NULL)
+    }
+    selectedDatabaseId <- getDatabaseIdsForselectedConceptSet()
+    if (any(is.null(selectedDatabaseId),
+            length(selectedDatabaseId) == 0)) {
+      return(NULL)
+    }
+    conceptMetadata <- getConceptMetadataDetails()
+    if (any(is.null(conceptMetadata),
+            length(conceptMetadata) == 0)) {
+      return(NULL)
+    }
+    conceptAncestor <- conceptMetadata$conceptAncestor %>% 
+      dplyr::filter(.data$descendantConceptId %in% selectedConceptId) %>% 
+      dplyr::rename("conceptId" = .data$ancestorConceptId,
+                    "levelsOfSeperation" = .data$minLevelsOfSeparation) %>% 
+      dplyr::select(.data$conceptId, 
+                    .data$levelsOfSeperation) %>% 
+      dplyr::distinct()
+    return(conceptAncestor)
+  })
+  
+  #getConceptDescendantForSelectedConceptId----
+  getConceptDescendantForSelectedConceptId <- shiny::reactive(x = {    
+    selectedConceptId <- getSelectedConceptIdActive()
+    if (any(is.null(selectedConceptId),
+            length(selectedConceptId) == 0)) {
+      return(NULL)
+    }
+    selectedDatabaseId <- getDatabaseIdsForselectedConceptSet()
+    if (any(is.null(selectedDatabaseId),
+            length(selectedDatabaseId) == 0)) {
+      return(NULL)
+    }
+    conceptMetadata <- getConceptMetadataDetails()
+    if (any(is.null(conceptMetadata),
+            length(conceptMetadata) == 0)) {
+      return(NULL)
+    }
+    conceptDescendant <- conceptMetadata$conceptAncestor %>% 
+      dplyr::filter(.data$ancestorConceptId %in% selectedConceptId) %>% 
+      dplyr::rename("conceptId" = .data$descendantConceptId,
+                    "levelsOfSeperation" = .data$minLevelsOfSeparation) %>% 
+      dplyr::select(.data$conceptId, 
+                    .data$levelsOfSeperation) %>% 
+      dplyr::distinct()
+    return(conceptDescendant)
   })
   
   #output: conceptRelationshipTable----
@@ -2391,7 +2433,29 @@ shiny::shinyServer(function(input, output, session) {
                                   getSelectedConceptIdActive()),
                  value = 0)
     
-    conceptRelationshipTableData <- getConceptRelationshipTable()
+    
+    conceptMetadata <- getConceptMetadataDetails()
+    if (any(is.null(conceptMetadata),
+            length(conceptMetadata) == 0)) {
+      return(NULL)
+    }
+    
+    concept <- conceptMetadata$concept %>% 
+      dplyr::left_join(conceptMetadata$conceptCount %>% 
+                         dplyr::filter(.data$databaseId %in% getDatabaseIdsForselectedConceptSet()),
+                       by = "conceptId") %>% 
+      dplyr::select(.data$conceptId,
+                    .data$conceptName,
+                    .data$conceptCount,
+                    .data$subjectCount,
+                    .data$conceptCode,
+                    .data$standardConcept,
+                    .data$vocabularyId) %>% 
+      dplyr::arrange(dplyr::desc(.data$conceptCount))
+    
+    #!!!! filter by picker input for relationship Id
+    
+    #!!! filter by picker input for distance
     
     options = list(
       pageLength = 10,
@@ -2403,9 +2467,9 @@ shiny::shinyServer(function(input, output, session) {
     )
     
     table <- DT::datatable(
-      conceptRelationshipTableData,
+      concept,
       options = options,
-      colnames = colnames(conceptRelationshipTableData) %>% camelCaseToTitleCase(),
+      colnames = colnames(concept) %>% camelCaseToTitleCase(),
       rownames = FALSE,
       escape = FALSE,
       filter = "top",
