@@ -2281,6 +2281,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   getSelectedConceptIdActive <- reactiveVal(NULL)
+  getSelectedConceptNameActive <- reactiveVal(NULL)
   getDatabaseIdsForselectedConceptSet <- reactiveVal(NULL) ### why make this reactive, this should be the input$ object
   
   #Dynamic UI rendering for relationship table -----
@@ -2289,12 +2290,58 @@ shiny::shinyServer(function(input, output, session) {
                             shiny::column(
                               8,
                               shinydashboard::box(
-                                title = "Concept Details", #!!!name of concept set + (cohort id) 
+                                 title = paste0(
+                                   getSelectedConceptNameActive(),
+                                   " (",
+                                   getSelectedConceptIdActive(),
+                                   ")"
+                                 ),
                                 collapsible = TRUE,
                                 collapsed = TRUE, # make collapsed, and only run if selected
                                 width = NULL,
+                                tags$h4(),
                                 tags$table(width = "100%",
                                            tags$tr(
+                                               tags$td(
+                                                 shinyWidgets::pickerInput(
+                                                   inputId = "choicesForRelationshipType",
+                                                   label = "Relationship Category:",
+                                                   choices = getConceptRelationshipChoices(),
+                                                   selected = getConceptRelationshipChoices(),
+                                                   multiple = TRUE,
+                                                   width = 200,
+                                                   inline = TRUE,
+                                                   choicesOpt = list(style = rep_len("color: black;", 999)),
+                                                   options = shinyWidgets::pickerOptions(
+                                                     actionsBox = TRUE,
+                                                     liveSearch = TRUE,
+                                                     size = 10,
+                                                     liveSearchStyle = "contains",
+                                                     liveSearchPlaceholder = "Type here to search",
+                                                     virtualScroll = 50
+                                                   )
+                                                 )
+                                               ),
+                                               
+                                               tags$td(
+                                                 shinyWidgets::pickerInput(
+                                                   inputId = "choicesForRelationshipDistance",
+                                                   label = "Distance:",
+                                                   choices = getConceptRelationshipDistanceChoices(),
+                                                   multiple = FALSE,
+                                                   width = 200,
+                                                   inline = TRUE,
+                                                   choicesOpt = list(style = rep_len("color: black;", 999)),
+                                                   options = shinyWidgets::pickerOptions(
+                                                     actionsBox = TRUE,
+                                                     liveSearch = TRUE,
+                                                     size = 10,
+                                                     liveSearchStyle = "contains",
+                                                     liveSearchPlaceholder = "Type here to search",
+                                                     virtualScroll = 50
+                                                   )
+                                                 )
+                                               ),
                                              tags$td(
                                                align = "right",
                                                shiny::downloadButton(
@@ -2332,6 +2379,8 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   #getConceptRelationshipForSelectedConceptId----
+  
+ 
   getConceptRelationshipForSelectedConceptId <- shiny::reactive(x = {    
     selectedConceptId <- getSelectedConceptIdActive()
     if (any(is.null(selectedConceptId),
@@ -2356,6 +2405,16 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(.data$conceptId,
                     .data$relationshipId)
     return(conceptRelationship)
+  })
+  
+  getConceptRelationshipChoices <- reactive({
+    data <- getConceptRelationshipForSelectedConceptId()
+    if (is.null(data)) {
+      return(NULL)
+    }
+    data <-
+      data %>% dplyr::distinct(.data$relationshipId) %>% dplyr::pull(.data$relationshipId)
+    return(data)
   })
   
   #getConceptAncestorForSelectedConceptId----
@@ -2383,6 +2442,16 @@ shiny::shinyServer(function(input, output, session) {
                     .data$levelsOfSeparation) %>% 
       dplyr::distinct()
     return(conceptAncestor)
+  })
+  
+  getConceptRelationshipDistanceChoices <- reactive({
+    data <- getConceptAncestorForSelectedConceptId()
+    if (is.null(data)) {
+      return(NULL)
+    }
+    data <-
+      data %>% dplyr::distinct(.data$levelsOfSeparation) %>% dplyr::pull(.data$levelsOfSeparation)
+    return(data)
   })
   
   #getConceptDescendantForSelectedConceptId----
@@ -2442,11 +2511,10 @@ shiny::shinyServer(function(input, output, session) {
                           dplyr::select(.data$relationshipId,
                                         .data$relationshipName),
                         by = "relationshipId") %>% 
-      dplyr::select(-.data$relationshipId) %>% 
       dplyr::group_by(.data$conceptId) %>% 
       dplyr::mutate(relationships = paste0(.data$relationshipName, collapse = ",<br> ")) %>%  #!!! collapse with line break if possible
       dplyr::ungroup() %>% 
-      dplyr::select(.data$conceptId, .data$relationships) %>% 
+      dplyr::select(.data$conceptId, .data$relationships, .data$relationshipId) %>% 
       dplyr::distinct() %>% 
       dplyr::arrange(.data$conceptId) 
     
@@ -2471,12 +2539,23 @@ shiny::shinyServer(function(input, output, session) {
                     .data$subjectCount,
                     .data$conceptCode,
                     .data$standardConcept,
-                    .data$vocabularyId) %>% 
+                    .data$vocabularyId,
+                    .data$relationshipId) %>% 
       dplyr::arrange(dplyr::desc(.data$conceptCount))
     
-    #!!!! filter by picker input for relationship Id
-    
-    #!!! filter by picker input for distance
+    if (any( !is.null(input$choicesForRelationshipType),
+             length(input$choicesForRelationshipType) > 0)) {
+      concept <- concept %>% 
+        dplyr::filter(.data$relationshipId %in% input$choicesForRelationshipType)
+    }
+    if (any( !is.null(input$choicesForRelationshipDistance),
+                    length(input$choicesForRelationshipDistance) > 0)) {
+      concept <- concept %>% 
+        dplyr::filter(.data$ancestorDistance == input$choicesForRelationshipDistance |
+                        .data$descendantDistance == input$choicesForRelationshipDistance)
+    }
+     concept <- concept %>% 
+       dplyr::select(-.data$relationshipId) 
     
     options = list(
       pageLength = 10,
@@ -2510,6 +2589,7 @@ shiny::shinyServer(function(input, output, session) {
       idx <- input$resolvedConceptsTableRight_rows_selected
       if (is.null(idx)) {
         getSelectedConceptIdActive(NULL)
+        getSelectedConceptNameActive(NULL)
         return(NULL)
       } else {
         data <- getConceptSetDetailsRight()
@@ -2525,7 +2605,10 @@ shiny::shinyServer(function(input, output, session) {
       getDatabaseIdsForselectedConceptSet(selectedDatabaseId)
       data <- data$resolvedConcepts
       selctedConceptId <- data$conceptId[idx]
+      selctedConceptName <- data$conceptName[idx]
       getSelectedConceptIdActive(selctedConceptId)
+      getSelectedConceptNameActive(selctedConceptName)
+      
     }
   })
   
@@ -2539,6 +2622,7 @@ shiny::shinyServer(function(input, output, session) {
       idx <- input$resolvedConceptsTableLeft_rows_selected
       if (is.null(idx)) {
         getSelectedConceptIdActive(NULL)
+        getSelectedConceptNameActive(NULL)
         return(NULL)
       } else {
         data <- getConceptSetDetailsLeft()
@@ -2554,7 +2638,9 @@ shiny::shinyServer(function(input, output, session) {
       getDatabaseIdsForselectedConceptSet(selectedDatabaseId)
       data <- data$resolvedConcepts
       selctedConceptId <- data$conceptId[idx]
+      selctedConceptName <- data$conceptName[idx]
       getSelectedConceptIdActive(selctedConceptId)
+      getSelectedConceptNameActive(selctedConceptName)
     }
   })
   
@@ -2569,6 +2655,7 @@ shiny::shinyServer(function(input, output, session) {
       idx <- input$cohortDefinitionOrphanConceptTableRight_rows_selected
       if (is.null(idx)) {
         getSelectedConceptIdActive(NULL)
+        getSelectedConceptNameActive(NULL)
         return(NULL)
       } else {
         data <- getConceptSetDetailsRight()
@@ -2585,7 +2672,9 @@ shiny::shinyServer(function(input, output, session) {
       data <- pivotOrphanConceptResult(data = data$orphanConcepts,
                                        dataSource = dataSource)
       selctedConceptId <- data$conceptId[idx]
+      selctedConceptName <- data$conceptName[idx]
       getSelectedConceptIdActive(selctedConceptId)
+      getSelectedConceptNameActive(selctedConceptName)
     }
   })
   
@@ -2600,6 +2689,7 @@ shiny::shinyServer(function(input, output, session) {
       idx <- input$cohortDefinitionOrphanConceptTableLeft_rows_selected
       if (is.null(idx)) {
         getSelectedConceptIdActive(NULL)
+        getSelectedConceptNameActive(NULL)
         return(NULL)
       } else {
         data <- getConceptSetDetailsLeft()
@@ -2616,7 +2706,9 @@ shiny::shinyServer(function(input, output, session) {
       data <- pivotOrphanConceptResult(data = data$orphanConcepts,
                                        dataSource = dataSource)
       selctedConceptId <- data$conceptId[idx]
+      selctedConceptName <- data$conceptName[idx]
       getSelectedConceptIdActive(selctedConceptId)
+      getSelectedConceptNameActive(selctedConceptName)
     }
   })
   
