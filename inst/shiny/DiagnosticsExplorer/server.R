@@ -672,11 +672,11 @@ shiny::shinyServer(function(input, output, session) {
       getConceptSetExpressionAndDetails()[[1]]$conceptSetExpressionDetails
     data <- data %>%
       dplyr::filter(.data$id == getConceptSetExpressionLeft()$id)
-    #!!! replace validate
-    validate(need((all(
-      !is.null(data), nrow(data) > 0
-    )),
-    "No details available for the concept set expression."))
+    
+    if (any(is.null(data), nrow(data) == 0)) {
+      return(NULL)
+    }
+    
     data <- data %>%
       dplyr::select(
         .data$conceptId,
@@ -731,11 +731,11 @@ shiny::shinyServer(function(input, output, session) {
       getConceptSetExpressionAndDetails()[[2]]$conceptSetExpressionDetails
     data <- data %>%
       dplyr::filter(.data$id == getConceptSetExpressionRight()$id)
-    #!!! replace validate with error handling
-    validate(need((all(
-      !is.null(data), nrow(data) > 0
-    )),
-    "No details available for the concept set expression."))
+    
+    if (any(is.null(data), nrow(data) == 0)) {
+      return(NULL)
+    }
+   
     data <- data %>%
       dplyr::select(
         .data$conceptId,
@@ -1382,7 +1382,6 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   ###getSimplifiedInclusionRuleResultsRight----
-  #!!!!!!! add radio button, show simple (default) and detailed
   getSimplifiedInclusionRuleResultsRight <- shiny::reactive(x = {
     if (length(getSelectedDatabaseIdFromCohortCountTableRight()) == 0) {
       return(NULL)
@@ -1405,7 +1404,6 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   ###getFullCohortInclusionResults----
-  #!!!!!!! add radio button, show simple (default) and detailed. this is detailed
   ##!!! table and visualization not created. similar to Atlas TO DO
   getFullCohortInclusionResults <- shiny::reactive({
     data <- list()
@@ -1599,7 +1597,6 @@ shiny::shinyServer(function(input, output, session) {
                        suspendWhenHidden = FALSE)
 
   #!!!!!! inclusion rule needs simple and detailed tabs. detailed will replicate Atlas UI
-  #!!!!!!! the radio button for meet/gain/remain/total - should only be shown when 'simplified' radio button is selected
   #output: simplifiedInclusionRuleTableForSelectedCohortCountLeft----
   output$simplifiedInclusionRuleTableForSelectedCohortCountLeft <- DT::renderDataTable(expr = {
     table <- getSimplifiedInclusionRuleResultsLeft()
@@ -1744,6 +1741,15 @@ shiny::shinyServer(function(input, output, session) {
     }
   )
   
+  ##output: getSimplifiedInclusionRuleResultsLeftHasData----
+  output$getSimplifiedInclusionRuleResultsLeftHasData <- shiny::reactive(x = {
+    return(nrow(getSimplifiedInclusionRuleResultsLeft()) > 0)
+  })
+  
+  shiny::outputOptions(x = output,
+                       name = "getSimplifiedInclusionRuleResultsLeftHasData",
+                       suspendWhenHidden = FALSE)
+  
   #output: cohortDefinitionTextLeft----
   output$cohortDefinitionTextLeft <- shiny::renderUI(expr = {
     getCirceRenderedExpressionDetails()[[1]]$cohortHtmlExpression %>%
@@ -1826,9 +1832,10 @@ shiny::shinyServer(function(input, output, session) {
                           DT::dataTableOutput(outputId = "cohortCountsTableForSelectedCohortLeft"),
                           tags$br(),
                           shiny::conditionalPanel(
-                            condition = "output.isDatabaseIdFoundForSelectedCohortCountLeft",
+                            condition = "output.isDatabaseIdFoundForSelectedCohortCountLeft &
+                                         output.getSimplifiedInclusionRuleResultsLeftHasData == true",
                             tags$h3("Inclusion Rules"),
-                            tags$table(width = "100%", #!!!!!!!!if no inclusion rule data, do not show
+                            tags$table(width = "100%",
                                        tags$tr(
                                          tags$td(
                                            shiny::radioButtons(
@@ -2062,9 +2069,10 @@ shiny::shinyServer(function(input, output, session) {
                           DT::dataTableOutput(outputId = "cohortCountsTableForSelectedCohortRight"),
                           tags$br(),
                           shiny::conditionalPanel(
-                            condition = "output.doesDatabaseIdFoundForSelectedCohortCountRight",
+                            condition = "output.doesDatabaseIdFoundForSelectedCohortCountRight & 
+                                         output.getSimplifiedInclusionRuleResultsRightHasData == true",
                             tags$h3("Inclusion Rules"),
-                            tags$table(width = "100%", #!!!!!!!!!!!!!if no inclusion rule data do not show
+                            tags$table(width = "100%",
                                        tags$tr(
                                          tags$td(
                                            shiny::radioButtons(
@@ -3261,6 +3269,15 @@ shiny::shinyServer(function(input, output, session) {
       downloadCsv(x = getSimplifiedInclusionRuleResultsRight(), fileName = file)
     }
   )
+  
+  ##output: getSimplifiedInclusionRuleResultsRightHasData----
+  output$getSimplifiedInclusionRuleResultsRightHasData <- shiny::reactive(x = {
+    return(!is.null(getSimplifiedInclusionRuleResultsRight()))
+  })
+  
+  shiny::outputOptions(x = output,
+                       name = "getSimplifiedInclusionRuleResultsRightHasData",
+                       suspendWhenHidden = FALSE)
   
   ##output: circeRVersionInCohortDefinitionRight----
   output$circeRVersionInCohortDefinitionRight <- shiny::renderUI(expr = {
