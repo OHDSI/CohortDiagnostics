@@ -2446,12 +2446,17 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     conceptRelationships <- getConceptRelationshipForSelectedConceptId() %>% 
+      dplyr::inner_join(relationship %>% 
+                          dplyr::select(.data$relationshipId,
+                                        .data$relationshipName),
+                        by = "relationshipId") %>% 
+      dplyr::select(-.data$relationshipId) %>% 
       dplyr::group_by(.data$conceptId) %>% 
-      dplyr::mutate(relationships = paste0(.data$relationshipId, collapse = ", ")) %>% 
+      dplyr::mutate(relationships = paste0(.data$relationshipName, collapse = ",<br> ")) %>%  #!!! collapse with line break if possible
       dplyr::ungroup() %>% 
       dplyr::select(.data$conceptId, .data$relationships) %>% 
       dplyr::distinct() %>% 
-      dplyr::arrange(.data$conceptId)
+      dplyr::arrange(.data$conceptId) 
     
     concept <- conceptMetadata$concept %>% 
       dplyr::left_join(conceptMetadata$conceptCount %>% 
