@@ -172,8 +172,8 @@ shiny::shinyServer(function(input, output, session) {
       return(data)
     })
   
-  ##getConceptCountTsibbleAtConceptIdLevel----
-  getConceptCountTsibbleAtConceptIdLevel <-
+  ##getConceptCountConceptIdLevel----
+  getConceptCountConceptIdLevel <-
     shiny::reactive(x = {
       data <- getConceptCountData()
       if (any(is.null(data),
@@ -1116,7 +1116,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::pull(.data$databaseId)
     
     data <- list()
-    conceptCountSummary <- getConceptCountTsibbleAtConceptIdLevel()
+    conceptCountSummary <- getConceptCountConceptIdLevel()
     resolvedConcepts <- getResolvedConceptsLeft()
     if (all(!is.null(resolvedConcepts),
             nrow(resolvedConcepts) > 0)) {
@@ -1229,7 +1229,7 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::pull(.data$databaseId)
     
     data <- list()
-    conceptCountSummary <- getConceptCountTsibbleAtConceptIdLevel()
+    conceptCountSummary <- getConceptCountConceptIdLevel()
     resolvedConcepts <- getResolvedConceptsRight()
     if (all(!is.null(resolvedConcepts),
             nrow(resolvedConcepts) > 0)) {
@@ -2292,17 +2292,17 @@ shiny::shinyServer(function(input, output, session) {
       ))
   })
   
-  getMostRecentlySelectedConceptIdFromLeftOrRightConceptTable <- reactiveVal(NULL)
+  getSelectedConceptIdActive <- reactiveVal(NULL)
   getConceptSetDetailsData <- reactiveVal(NULL)
   getDatabaseIdsForselectedConceptSet <- reactiveVal(NULL)
   
-  
+  #Dynamic UI rendering for relationship table -----
   output$dynamicUIForRelationshipTable <- shiny::renderUI({
     shiny::conditionalPanel(condition = "output.isConceptIdFromLeftOrRightConceptTableSelected",
                             shiny::column(
                               8,
                               shinydashboard::box(
-                                title = "Relationship Table",
+                                title = "Concept Relationship", #!!!name of concept set + (cohort id)
                                 collapsible = TRUE,
                                 collapsed = FALSE,
                                 width = NULL,
@@ -2321,80 +2321,84 @@ shiny::shinyServer(function(input, output, session) {
                                 DT::dataTableOutput(outputId = "conceptRelationshipTable")
                               )
                             ))
-    
   })
   
-  output$conceptRelationshipTable <- DT::renderDT(expr = {
-    data <- getConceptSetDetailsData()
-    selectedConceptId <- getMostRecentlySelectedConceptIdFromLeftOrRightConceptTable()
-    
-    if (any(is.null(data),is.null(selectedConceptId))) {
+  #getConceptRelationshipTable----
+  getConceptRelationshipTable <- shiny::reactive(x = {
+    selectedConceptId <- getSelectedConceptIdActive()
+    if (any(is.null(selectedConceptId),
+            length(selectedConceptId) == 0)) {
       return(NULL)
-    } else {
-      relationshipData <- data$conceptRelationship %>% 
-        dplyr::filter(.data$conceptId1 == selectedConceptId | .data$conceptId2 == selectedConceptId) 
-      
-      distinctConceptId1 <- relationshipData %>% 
-        dplyr::distinct(.data$conceptId1)
-      distinctConceptId2 <-  relationshipData %>% 
-        dplyr::distinct(.data$conceptId2)
-      
-      filteredConceptIds <- distinctConceptId1 %>% 
-        dplyr::left_join(distinctConceptId2, by = c("conceptId1" = "conceptId2")) %>% 
-        dplyr::rename(conceptId = "conceptId1") %>% 
-        dplyr::pull() %>% 
-        unique()
-      
-      selectedDatabaseId <- getDatabaseIdsForselectedConceptSet()
-      
-      filteredConceptDetails <- getConcept(
-        dataSource = dataSource,
-        vocabularyDatabaseSchema = NULL,
-        conceptIds = filteredConceptIds
-      ) %>% dplyr::left_join(getConceptCountTsibbleAtConceptIdLevel(),
-                              by = c("conceptId" = "conceptId")) %>% 
-        dplyr::filter(.data$databaseId == selectedDatabaseId) %>% 
-        dplyr::select(.data$conceptId,
-                      .data$conceptCode,
-                      .data$conceptName,
-                      .data$conceptClassId,
-                      .data$conceptCount,
-                      .data$domainId,
-                      .data$vocabularyId)
-      
-      options = list(pageLength = 10,
-                     searching = TRUE,
-                     scrollX = TRUE,
-                     lengthChange = TRUE,
-                     ordering = TRUE,
-                     paging = TRUE
-                    )
-      
-      table <- DT::datatable(filteredConceptDetails,
-                             options = options,
-                             colnames = colnames(filteredConceptDetails),
-                             rownames = FALSE,
-                             escape = FALSE,
-                             filter = "top",
-                             class = "stripe nowrap compact")
-      
-      return(table)
+    }
+    selectedDatabaseId <- getDatabaseIdsForselectedConceptSet()
+    if (any(is.null(selectedDatabaseId),
+            length(selectedDatabaseId) == 0)) {
+      return(NULL)
+    }
+    data <- getConceptMetadata(dataSource = dataSource,
+                               conceptIds = selectedConceptId)
+    if (any(is.null(data),
+            is.null(selectedConceptId))) {
+      return(NULL)
     }
     
+    conceptRelationship <- data$concept %>%
+      dplyr::left_join(
+        data$conceptCount %>%
+          dplyr::filter(.data$databaseId %in% selectedDatabaseId),
+        by = c("conceptId")
+      ) %>%
+      tidyr::replace_na(list(conceptCount = 0,
+                             subjectCount = 0)) %>%
+      dplyr::select(
+        .data$conceptId,
+        .data$conceptCode,
+        .data$conceptName,
+        .data$conceptClassId,
+        .data$conceptCount,
+        .data$subjectCount,
+        .data$domainId,
+        .data$vocabularyId
+      ) %>% 
+      dplyr::arrange(dplyr::desc(.data$conceptCount))
+    return(conceptRelationship)
   })
   
-  
-  
-  # getCohortIdFromLeftConceptSetTableOnRowSelect <- reactive({
-  #   idx <- input$resolvedConceptsTableLeft_rows_selected
-  #   data <- getConceptSetDetailsLeft()
-  #   if ("resolvedConcepts" %in% names(data)) {
-  #     data <- data$resolvedConcepts
-  #     selctedConceptId <- data$conceptId[idx]
-  #     getMostRecentConceptSetRowSelectedInLeftOrRightTable(selctedConceptId)
-  #     return(selctedConceptId)
-  #   }
-  # })
+  #output: conceptRelationshipTable----
+  #!!!! this is now a generic output object that may be used in many pages
+  output$conceptRelationshipTable <- DT::renderDT(expr = {
+    validate(need(
+      all(!is.null(getSelectedConceptIdActive()),
+          length(getSelectedConceptIdActive()) > 0),
+      "No concept id selected."
+    ))
+    validate(need(
+      all(!is.null(getDatabaseIdsForselectedConceptSet()),
+          length(getDatabaseIdsForselectedConceptSet()) > 0),
+      "No database id selected."
+    ))
+    conceptRelationshipTableData <- getConceptRelationshipTable()
+    
+    options = list(
+      pageLength = 10,
+      searching = TRUE,
+      scrollX = TRUE,
+      lengthChange = TRUE,
+      ordering = TRUE,
+      paging = TRUE
+    )
+    
+    table <- DT::datatable(
+      conceptRelationshipTableData,
+      options = options,
+      colnames = colnames(conceptRelationshipTableData) %>% camelCaseToTitleCase(),
+      rownames = FALSE,
+      escape = FALSE,
+      filter = "top",
+      class = "stripe nowrap compact"
+    )
+    return(table)
+  })
   
   ###Get the most recently selected Concept Id in resolved table Left ----
   observeEvent(eventExpr = {
@@ -2406,7 +2410,7 @@ shiny::shinyServer(function(input, output, session) {
       #If row is deselected in Left table, then search for the selected row in Right table
       idx <- input$resolvedConceptsTableRight_rows_selected
       if (is.null(idx)) {
-        getMostRecentlySelectedConceptIdFromLeftOrRightConceptTable(NULL)
+        getSelectedConceptIdActive(NULL)
         return(NULL)
       } else {
         data <- getConceptSetDetailsRight()
@@ -2423,7 +2427,7 @@ shiny::shinyServer(function(input, output, session) {
       getDatabaseIdsForselectedConceptSet(selectedDatabaseId)
       data <- data$resolvedConcepts
       selctedConceptId <- data$conceptId[idx]
-      getMostRecentlySelectedConceptIdFromLeftOrRightConceptTable(selctedConceptId)
+      getSelectedConceptIdActive(selctedConceptId)
     }
   })
   
@@ -2436,7 +2440,7 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(idx)) {
       idx <- input$resolvedConceptsTableLeft_rows_selected
       if (is.null(idx)) {
-        getMostRecentlySelectedConceptIdFromLeftOrRightConceptTable(NULL)
+        getSelectedConceptIdActive(NULL)
         return(NULL)
       } else {
         data <- getConceptSetDetailsLeft()
@@ -2453,7 +2457,7 @@ shiny::shinyServer(function(input, output, session) {
       getDatabaseIdsForselectedConceptSet(selectedDatabaseId)
       data <- data$resolvedConcepts
       selctedConceptId <- data$conceptId[idx]
-      getMostRecentlySelectedConceptIdFromLeftOrRightConceptTable(selctedConceptId)
+      getSelectedConceptIdActive(selctedConceptId)
     }
   })
   
@@ -2467,7 +2471,7 @@ shiny::shinyServer(function(input, output, session) {
       #If row is deselected in Left table, then search for the selected row in Right table
       idx <- input$cohortDefinitionOrphanConceptTableRight_rows_selected
       if (is.null(idx)) {
-        getMostRecentlySelectedConceptIdFromLeftOrRightConceptTable(NULL)
+        getSelectedConceptIdActive(NULL)
         return(NULL)
       } else {
         data <- getConceptSetDetailsRight()
@@ -2485,7 +2489,7 @@ shiny::shinyServer(function(input, output, session) {
       data <- pivotOrphanConceptResult(data = data$orphanConcepts,
                                        dataSource = dataSource)
       selctedConceptId <- data$conceptId[idx]
-      getMostRecentlySelectedConceptIdFromLeftOrRightConceptTable(selctedConceptId)
+      getSelectedConceptIdActive(selctedConceptId)
     }
   })
   
@@ -2499,7 +2503,7 @@ shiny::shinyServer(function(input, output, session) {
       #If row is deselected in Left table, then search for the selected row in Right table
       idx <- input$cohortDefinitionOrphanConceptTableLeft_rows_selected
       if (is.null(idx)) {
-        getMostRecentlySelectedConceptIdFromLeftOrRightConceptTable(NULL)
+        getSelectedConceptIdActive(NULL)
         return(NULL)
       } else {
         data <- getConceptSetDetailsLeft()
@@ -2517,13 +2521,13 @@ shiny::shinyServer(function(input, output, session) {
       data <- pivotOrphanConceptResult(data = data$orphanConcepts,
                                        dataSource = dataSource)
       selctedConceptId <- data$conceptId[idx]
-      getMostRecentlySelectedConceptIdFromLeftOrRightConceptTable(selctedConceptId)
+      getSelectedConceptIdActive(selctedConceptId)
     }
   })
   
   ##output: isConceptIdFromLeftOrRightConceptTableSelected----
   output$isConceptIdFromLeftOrRightConceptTableSelected <- shiny::reactive(x = {
-    return(!is.null(getMostRecentlySelectedConceptIdFromLeftOrRightConceptTable()))
+    return(!is.null(getSelectedConceptIdActive()))
   })
   shiny::outputOptions(x = output,
                        name = "isConceptIdFromLeftOrRightConceptTableSelected",
