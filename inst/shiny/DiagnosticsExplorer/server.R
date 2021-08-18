@@ -1848,12 +1848,15 @@ shiny::shinyServer(function(input, output, session) {
                                            )
                                          ),
                                          tags$td(
-                                           shiny::radioButtons(
-                                             inputId = "cohortDefinitionInclusionRuleTableFilters",
-                                             label = "Filter by",
-                                             choices = c("All", "Meet", "Gain", "Remain", "Totals"),
-                                             selected = "All",
-                                             inline = TRUE
+                                           shiny::conditionalPanel(
+                                             condition = "input.cohortDefinitionInclusionRuleType == 'Simplified'",
+                                             shiny::radioButtons(
+                                               inputId = "cohortDefinitionInclusionRuleTableFilters",
+                                               label = "Filter by",
+                                               choices = c("All", "Meet", "Gain", "Remain", "Totals"),
+                                               selected = "All",
+                                               inline = TRUE
+                                             )
                                            )
                                          ), 
                                          tags$td(align = "right",
@@ -2081,13 +2084,16 @@ shiny::shinyServer(function(input, output, session) {
                                            )
                                          ),
                                          tags$td(
-                                           shiny::radioButtons(
-                                             inputId = "cohortDefinitionSecondInclusionRuleTableFilters",
-                                             label = "Filter by",
-                                             choices = c("All", "Meet", "Gain", "Remain", "Totals"),
-                                             selected = "All",
-                                             inline = TRUE
-                                           )
+                                           shiny::conditionalPanel(
+                                             condition = "input.cohortDefinitionSecondInclusionRuleType == 'Simplified'",
+                                             shiny::radioButtons(
+                                               inputId = "cohortDefinitionSecondInclusionRuleTableFilters",
+                                               label = "Filter by",
+                                               choices = c("All", "Meet", "Gain", "Remain", "Totals"),
+                                               selected = "All",
+                                               inline = TRUE
+                                             )
+                                             )
                                          ),
                                          tags$td(align = "right",
                                                  shiny::downloadButton(
