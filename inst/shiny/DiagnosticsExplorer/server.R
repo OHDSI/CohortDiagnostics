@@ -6532,11 +6532,12 @@ shiny::shinyServer(function(input, output, session) {
       covariatesTofilter <- covariatesTofilter %>%
         dplyr::filter(.data$analysisId %in% analysisIds)
     }
-    
     characterizationDataValue <-
       getMultipleCharacterizationData()$covariateValue %>%
       dplyr::filter(.data$characterizationSource %in% c('C', 'F')) %>% #C - cohort, F is Feature
-      dplyr::select(-.data$timeId) %>% # remove temporal characterization data
+      dplyr::select(-.data$timeId,
+                    -.data$startDay,
+                    -.data$endDay) %>% # remove temporal characterization data
       dplyr::inner_join(covariatesTofilter,
                         by = c('covariateId', 'characterizationSource')) %>%
       dplyr::inner_join(
@@ -6610,7 +6611,6 @@ shiny::shinyServer(function(input, output, session) {
   ###getCharacterizationTable1Data----
   getCharacterizationTable1Data <- shiny::reactive(x = {
     data <- getCharacterizationTableData()
-    browser()
     if (any(is.null(data),
             nrow(data) == 0)) {
       return(NULL)
@@ -6703,7 +6703,6 @@ shiny::shinyServer(function(input, output, session) {
       progress <- shiny::Progress$new()
       on.exit(progress$close())
       progress$set(message = paste0("Rendering pretty table for cohort characterization."), value = 0)
-      browser()
       # countData <- getResultsCohortCount(
       #   dataSource = dataSource,
       #   databaseIds = getDatabaseIdsFromDropdown(),
