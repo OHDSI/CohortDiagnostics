@@ -905,7 +905,7 @@ shiny::shinyServer(function(input, output, session) {
     )
     return(data)
   })
-  
+
   ###getConceptRelationshipsRight----
   getConceptRelationshipsRight <- shiny::reactive({
     conceptIds <- dplyr::bind_rows(
@@ -928,7 +928,7 @@ shiny::shinyServer(function(input, output, session) {
     )
     return(data)
   })
-  
+
   ###getConceptAncestorLeft----
   getConceptAncestorLeft <- shiny::reactive({
     conceptIds <- dplyr::bind_rows(getResolvedConceptsLeft(),
@@ -949,7 +949,7 @@ shiny::shinyServer(function(input, output, session) {
     )
     return(data)
   })
-  
+
   ###getConceptAncestorRight----
   getConceptAncestorRight <- shiny::reactive({
     conceptIds <- dplyr::bind_rows(
@@ -972,7 +972,7 @@ shiny::shinyServer(function(input, output, session) {
     )
     return(data)
   })
-  
+
   ###getConceptIdOfInterestLeft----
   getConceptIdOfInterestLeft <- shiny::reactive({
     conceptIds <- dplyr::bind_rows(getResolvedConceptsLeft(),
@@ -1005,7 +1005,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     return(conceptIds %>% unique() %>% sort())
   })
-  
+
   ###getConceptIdOfInterestRight----
   getConceptIdOfInterestRight <- shiny::reactive({
     conceptIds <- dplyr::bind_rows(
@@ -1040,7 +1040,7 @@ shiny::shinyServer(function(input, output, session) {
     }
     return(conceptIds %>% unique() %>% sort())
   })
-  
+
   ###getConceptDetailsLeft----
   getConceptDetailsLeft <- shiny::reactive({
     conceptIds <- getConceptIdOfInterestLeft()
@@ -1156,15 +1156,9 @@ shiny::shinyServer(function(input, output, session) {
                                subjectCount = 0)) %>%
         dplyr::arrange(dplyr::desc(.data$conceptCount))
     }
-    data$conceptRelationship <- getConceptRelationshipsLeft()
-    data$conceptAncestor <- getConceptAncestorLeft()
     data$relationship <- relationship
     data$concept <- getConceptDetailsLeft()
-    data$conceptSynonym <- getConceptSynonymLeft()
-    data$conceptClass <- conceptClass
-    data$domain <- domain
-    data$vocabulary <- vocabulary
-    concept <- concept %>%
+    concept <- data$concep %>%
       dplyr::select(
         .data$conceptId,
         .data$conceptName,
@@ -1201,6 +1195,8 @@ shiny::shinyServer(function(input, output, session) {
     }
     return(data)
   })
+  
+  
   
   ###getConceptSetDetailsRight----
   getConceptSetDetailsRight <- shiny::reactive({
@@ -1269,15 +1265,9 @@ shiny::shinyServer(function(input, output, session) {
                                subjectCount = 0)) %>%
         dplyr::arrange(dplyr::desc(.data$conceptCount))
     }
-    data$conceptRelationship <- getConceptRelationshipsRight()
-    data$conceptAncestor <- getConceptAncestorRight()
     data$relationship <- relationship
     data$concept <- getConceptDetailsRight()
-    data$conceptSynonym <- getConceptSynonymRight()
-    data$conceptClass <- conceptClass
-    data$domain <- domain
-    data$vocabulary <- vocabulary
-    concept <- concept %>%
+    concept <- data$concep %>%
       dplyr::select(
         .data$conceptId,
         .data$conceptName,
@@ -2293,8 +2283,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   getSelectedConceptIdActive <- reactiveVal(NULL)
-  getConceptSetDetailsData <- reactiveVal(NULL)
-  getDatabaseIdsForselectedConceptSet <- reactiveVal(NULL)
+  getDatabaseIdsForselectedConceptSet <- reactiveVal(NULL) ### why make this reactive, this should be the input$ object
   
   #Dynamic UI rendering for relationship table -----
   output$dynamicUIForRelationshipTable <- shiny::renderUI({
@@ -2323,8 +2312,8 @@ shiny::shinyServer(function(input, output, session) {
                             ))
   })
   
-  #getConceptRelationshipTable----
-  getConceptRelationshipTable <- shiny::reactive(x = {
+  #getConceptMetadataDetails----
+  getConceptMetadataDetails <- shiny::reactive(x = {
     selectedConceptId <- getSelectedConceptIdActive()
     if (any(is.null(selectedConceptId),
             length(selectedConceptId) == 0)) {
@@ -2338,13 +2327,32 @@ shiny::shinyServer(function(input, output, session) {
     data <- getConceptMetadata(dataSource = dataSource,
                                conceptIds = selectedConceptId)
     if (any(is.null(data),
-            is.null(selectedConceptId))) {
+            length(data) == 0)) {
       return(NULL)
     }
-    
-    conceptRelationship <- data$concept %>%
+    return(data)
+  })
+  
+  #getConceptRelationshipTable----
+  getConceptRelationshipTable <- shiny::reactive(x = {    
+    selectedConceptId <- getSelectedConceptIdActive()
+    if (any(is.null(selectedConceptId),
+            length(selectedConceptId) == 0)) {
+      return(NULL)
+    }
+    selectedDatabaseId <- getDatabaseIdsForselectedConceptSet()
+    if (any(is.null(selectedDatabaseId),
+            length(selectedDatabaseId) == 0)) {
+      return(NULL)
+    }
+    conceptMetadata <- getConceptMetadataDetails()
+    if (any(is.null(conceptMetadata),
+            length(conceptMetadata) == 0)) {
+      return(NULL)
+    }
+    conceptRelationship <- conceptMetadata$concept %>%
       dplyr::left_join(
-        data$conceptCount %>%
+        conceptMetadata$conceptCount %>%
           dplyr::filter(.data$databaseId %in% selectedDatabaseId),
         by = c("conceptId")
       ) %>%
@@ -2429,7 +2437,6 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::pull(.data$databaseId)
     }
     if ("resolvedConcepts" %in% names(data)) {
-      getConceptSetDetailsData(data)
       getDatabaseIdsForselectedConceptSet(selectedDatabaseId)
       data <- data$resolvedConcepts
       selctedConceptId <- data$conceptId[idx]
@@ -2459,7 +2466,6 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::pull(.data$databaseId)
     }
     if ("resolvedConcepts" %in% names(data)) {
-      getConceptSetDetailsData(data)
       getDatabaseIdsForselectedConceptSet(selectedDatabaseId)
       data <- data$resolvedConcepts
       selctedConceptId <- data$conceptId[idx]
@@ -2490,7 +2496,6 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::pull(.data$databaseId)
     }
     if ("orphanConcepts" %in% names(data)) {
-      getConceptSetDetailsData(data)
       getDatabaseIdsForselectedConceptSet(selectedDatabaseId)
       data <- pivotOrphanConceptResult(data = data$orphanConcepts,
                                        dataSource = dataSource)
@@ -2522,7 +2527,6 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::pull(.data$databaseId)
     }
     if ("orphanConcepts" %in% names(data)) {
-      getConceptSetDetailsData(data)
       getDatabaseIdsForselectedConceptSet(selectedDatabaseId)
       data <- pivotOrphanConceptResult(data = data$orphanConcepts,
                                        dataSource = dataSource)
