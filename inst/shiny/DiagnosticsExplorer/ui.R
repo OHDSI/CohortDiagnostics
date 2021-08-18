@@ -276,105 +276,113 @@ bodyTabItems <- shinydashboard::tabItems(
       shiny::uiOutput(outputId = "dynamicUIGenerationForCohortSelectedLeft"),
       shiny::uiOutput(outputId = "dynamicUIGenerationForCohortSelectedRight"),
       tags$br(),
-      shiny::column(width = 12,
-                    shiny::conditionalPanel(
-                      condition = "output.cohortDefinitionSelectedRowCount == 2 &
-                     input.conceptSetsTypeLeft == 'Resolved' &
-                     input.conceptSetsTypeRight == 'Resolved' & 
-                     output.isConceptSetExpressionPresentInSelectedCohortLeft == true &
-                     output.isConceptSetExpressionPresentInSelectedCohortRight == true &
-                     input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
-                     input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
-                      shiny::tabsetPanel(
-                        id = "resolvedConceptDifference",
-                        shiny::tabPanel(
-                          title = "Present in left",
-                          tags$br(),
-                          DT::dataTableOutput(outputId = "resolvedConceptsPresentInLeft")
-                        ),
-                        shiny::tabPanel(
-                          title = "Present in Right",
-                          tags$br(),
-                          DT::dataTableOutput(outputId = "resolvedConceptsPresentInRight")
-                        ),
-                        shiny::tabPanel(
-                          title = "Present in Both",
-                          tags$br(),
-                          DT::dataTableOutput(outputId = "resolvedConceptsPresentInBoth")
-                        ),
-                        shiny::tabPanel(
-                          title = "Present in Either",
-                          tags$br(),
-                          DT::dataTableOutput(outputId = "resolvedConceptsPresentInEither")
+      shiny::column(12,
+      shiny::conditionalPanel(
+                        condition = "output.cohortDefinitionSelectedRowCount >= 1 &
+                       input.conceptSetsTypeLeft == 'Resolved' &
+                       input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
+                        shiny::uiOutput(outputId = "dynamicUIForResolved")
                         )
-                      )
-                    )),
-      shiny::column(width = 12,
-                    shiny::conditionalPanel(
-                      condition = "output.cohortDefinitionSelectedRowCount == 2 &
-                                   input.conceptSetsTypeLeft == 'Excluded' &
-                                   input.conceptSetsTypeRight == 'Excluded' & 
-                                   output.isConceptSetExpressionPresentInSelectedCohortLeft == true &
-                                   output.isConceptSetExpressionPresentInSelectedCohortRight == true &
-                                   input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
-                                   input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
-                      shiny::tabsetPanel(
-                        id = "mappedConceptDifference",
-                        shiny::tabPanel(
-                          title = "Present in left",
-                          tags$br(),
-                          DT::dataTableOutput(outputId = "excludedConceptsPresentInLeft")
-                        ),
-                        shiny::tabPanel(
-                          title = "Present in Right",
-                          tags$br(),
-                          DT::dataTableOutput(outputId = "excludedConceptsPresentInRight")
-                        ),
-                        shiny::tabPanel(
-                          title = "Present in Both",
-                          tags$br(),
-                          DT::dataTableOutput(outputId = "excludedConceptsPresentInBoth")
-                        ),
-                        shiny::tabPanel(
-                          title = "Present in Either",
-                          tags$br(),
-                          DT::dataTableOutput(outputId = "excludedConceptsPresentInEither")
                         )
-                      )
-                    )),
-      shiny::column(width = 12,
-                    shiny::conditionalPanel(
-                      condition = "output.cohortDefinitionSelectedRowCount == 2 &
-                                   input.conceptSetsTypeLeft == 'Orphan concepts' &
-                                   input.conceptSetsTypeRight == 'Orphan concepts'& 
-                                   output.isConceptSetExpressionPresentInSelectedCohortLeft == true &
-                                   output.isConceptSetExpressionPresentInSelectedCohortRight == true &
-                                   input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
-                                   input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
-                      shiny::tabsetPanel(
-                        id = "orphanConceptsDifference",
-                        shiny::tabPanel(
-                          title = "Present in left",
-                          tags$br(),
-                          DT::dataTableOutput(outputId = "orphanConceptsPresentInLeft")
-                        ),
-                        shiny::tabPanel(
-                          title = "Present in right",
-                          tags$br(),
-                          DT::dataTableOutput(outputId = "orphanConceptsPresentInRight")
-                        ),
-                        shiny::tabPanel(
-                          title = "Present in both",
-                          tags$br(),
-                          DT::dataTableOutput(outputId = "orphanConceptsPresentInBoth")
-                        ),
-                        shiny::tabPanel(
-                          title = "Present in either",
-                          tags$br(),
-                          DT::dataTableOutput(outputId = "orphanConceptsPresentInEither")
-                        )
-                      )
-                    ))
+      # shiny::column(width = 12,
+      #               shiny::conditionalPanel(
+      #                 condition = "output.cohortDefinitionSelectedRowCount == 2 &
+      #                input.conceptSetsTypeLeft == 'Resolved' &
+      #                input.conceptSetsTypeRight == 'Resolved' & 
+      #                output.isConceptSetExpressionPresentInSelectedCohortLeft == true &
+      #                output.isConceptSetExpressionPresentInSelectedCohortRight == true &
+      #                input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
+      #                input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
+      #                 shiny::tabsetPanel(
+      #                   id = "resolvedConceptDifference",
+      #                   shiny::tabPanel(
+      #                     title = "Present in left",
+      #                     tags$br(),
+      #                     DT::dataTableOutput(outputId = "resolvedConceptsPresentInLeft")
+      #                   ),
+      #                   shiny::tabPanel(
+      #                     title = "Present in Right",
+      #                     tags$br(),
+      #                     DT::dataTableOutput(outputId = "resolvedConceptsPresentInRight")
+      #                   ),
+      #                   shiny::tabPanel(
+      #                     title = "Present in Both",
+      #                     tags$br(),
+      #                     DT::dataTableOutput(outputId = "resolvedConceptsPresentInBoth")
+      #                   ),
+      #                   shiny::tabPanel(
+      #                     title = "Present in Either",
+      #                     tags$br(),
+      #                     DT::dataTableOutput(outputId = "resolvedConceptsPresentInEither")
+      #                   )
+      #                 )
+      #               )),
+      # shiny::column(width = 12,
+      #               shiny::conditionalPanel(
+      #                 condition = "output.cohortDefinitionSelectedRowCount == 2 &
+      #                              input.conceptSetsTypeLeft == 'Excluded' &
+      #                              input.conceptSetsTypeRight == 'Excluded' & 
+      #                              output.isConceptSetExpressionPresentInSelectedCohortLeft == true &
+      #                              output.isConceptSetExpressionPresentInSelectedCohortRight == true &
+      #                              input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
+      #                              input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
+      #                 shiny::tabsetPanel(
+      #                   id = "mappedConceptDifference",
+      #                   shiny::tabPanel(
+      #                     title = "Present in left",
+      #                     tags$br(),
+      #                     DT::dataTableOutput(outputId = "excludedConceptsPresentInLeft")
+      #                   ),
+      #                   shiny::tabPanel(
+      #                     title = "Present in Right",
+      #                     tags$br(),
+      #                     DT::dataTableOutput(outputId = "excludedConceptsPresentInRight")
+      #                   ),
+      #                   shiny::tabPanel(
+      #                     title = "Present in Both",
+      #                     tags$br(),
+      #                     DT::dataTableOutput(outputId = "excludedConceptsPresentInBoth")
+      #                   ),
+      #                   shiny::tabPanel(
+      #                     title = "Present in Either",
+      #                     tags$br(),
+      #                     DT::dataTableOutput(outputId = "excludedConceptsPresentInEither")
+      #                   )
+      #                 )
+      #               )),
+      # shiny::column(width = 12,
+      #               shiny::conditionalPanel(
+      #                 condition = "output.cohortDefinitionSelectedRowCount == 2 &
+      #                              input.conceptSetsTypeLeft == 'Orphan concepts' &
+      #                              input.conceptSetsTypeRight == 'Orphan concepts'& 
+      #                              output.isConceptSetExpressionPresentInSelectedCohortLeft == true &
+      #                              output.isConceptSetExpressionPresentInSelectedCohortRight == true &
+      #                              input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
+      #                              input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
+      #                 shiny::tabsetPanel(
+      #                   id = "orphanConceptsDifference",
+      #                   shiny::tabPanel(
+      #                     title = "Present in left",
+      #                     tags$br(),
+      #                     DT::dataTableOutput(outputId = "orphanConceptsPresentInLeft")
+      #                   ),
+      #                   shiny::tabPanel(
+      #                     title = "Present in right",
+      #                     tags$br(),
+      #                     DT::dataTableOutput(outputId = "orphanConceptsPresentInRight")
+      #                   ),
+      #                   shiny::tabPanel(
+      #                     title = "Present in both",
+      #                     tags$br(),
+      #                     DT::dataTableOutput(outputId = "orphanConceptsPresentInBoth")
+      #                   ),
+      #                   shiny::tabPanel(
+      #                     title = "Present in either",
+      #                     tags$br(),
+      #                     DT::dataTableOutput(outputId = "orphanConceptsPresentInEither")
+      #                   )
+      #                 )
+      #               ))
     )
   ),
   shinydashboard::tabItem(

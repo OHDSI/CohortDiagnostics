@@ -1346,6 +1346,17 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
+  ###getWidthOfRelationshipTableForSelectedConcepts----
+  getWidthOfRelationshipTableForSelectedConcepts <-
+    shiny::reactive(x = {
+      length <- length(input$cohortDefinitionTable_rows_selected)
+      if (length == 2) {
+        return(4)
+      } else {
+        return(8)
+      }
+    })
+  
   ##Inclusion rule ----
   ###getSimplifiedInclusionRuleData----
   getSimplifiedInclusionRuleData <- shiny::reactive(x = {
@@ -2278,6 +2289,161 @@ shiny::shinyServer(function(input, output, session) {
           )
         )
       ))
+  })
+  
+  getMostRecentlySelectedConceptIdFromLeftOrRightConceptTable <- reactiveVal(NULL)
+  getConceptSetDetailsData <- reactiveVal(NULL)
+  getDatabaseIdsForselectedConceptSet <- reactiveVal(NULL)
+  
+  output$dynamicUIForResolved <- shiny::renderUI({
+    shiny::column(getWidthOfRelationshipTableForSelectedConcepts(),
+                  shinydashboard::box(title = "Relationship Table",
+                                      collapsible = TRUE,
+                                      collapsed = FALSE,
+                                      width = NULL,
+                                      tags$table(width = "100%",
+                                                 tags$tr(
+                                                   tags$td(align = "right",
+                                                           shiny::downloadButton(
+                                                             "saveResolvedConceptRelationshipTable",
+                                                             label = "",
+                                                             icon = shiny::icon("download"),
+                                                             style = "margin-top: 5px; margin-bottom: 5px;"
+                                                           )
+                                                   )
+                                                 )
+                                      ),
+                                      DT::dataTableOutput(outputId = "resolvedConceptRelationshipTable")
+                                      )
+                  )
+    
+  })
+  
+  output$resolvedConceptRelationshipTable <- DT::renderDT(expr = {
+    data <- getConceptSetDetailsData()
+    selectedConceptId <- getMostRecentlySelectedConceptIdFromLeftOrRightConceptTable()
+    
+    if (any(is.null(data),is.null(data))) {
+      return(NULL)
+    } else {
+      relationshipData <- data$conceptRelationship %>% 
+        dplyr::filter(.data$conceptId1 == selectedConceptId | .data$conceptId2 == selectedConceptId) 
+      
+      distinctConceptId1 <- relationshipData %>% 
+        dplyr::distinct(.data$conceptId1)
+      distinctConceptId2 <-  relationshipData %>% 
+        dplyr::distinct(.data$conceptId2)
+      
+      filteredConceptIds <- distinctConceptId1 %>% 
+        dplyr::left_join(distinctConceptId2, by = c("conceptId1" = "conceptId2")) %>% 
+        dplyr::rename(conceptId = "conceptId1") %>% 
+        dplyr::pull() %>% 
+        unique()
+      
+      selectedDatabaseId <- getDatabaseIdsForselectedConceptSet()
+      
+      filteredConceptDetails <- getConcept(
+        dataSource = dataSource,
+        vocabularyDatabaseSchema = NULL,
+        conceptIds = filteredConceptIds
+      ) %>% dplyr::left_join(getConceptCountTsibbleAtConceptIdLevel(),
+                              by = c("conceptId" = "conceptId")) %>% 
+        dplyr::filter(.data$databaseId == selectedDatabaseId) %>% 
+        dplyr::select(.data$conceptId,
+                      .data$conceptCode,
+                      .data$conceptName,
+                      .data$conceptClassId,
+                      .data$conceptCount,
+                      .data$domainId,
+                      .data$vocabularyId)
+      
+      options = list(pageLength = 10,
+                     searching = TRUE,
+                     scrollX = TRUE,
+                     lengthChange = TRUE,
+                     ordering = TRUE,
+                     paging = TRUE
+                    )
+      
+      table <- DT::datatable(filteredConceptDetails,
+                             options = options,
+                             colnames = colnames(filteredConceptDetails),
+                             rownames = FALSE,
+                             escape = FALSE,
+                             filter = "top",
+                             class = "stripe nowrap compact")
+      
+      return(table)
+    }
+    
+  })
+  
+  
+  
+  # getCohortIdFromLeftConceptSetTableOnRowSelect <- reactive({
+  #   idx <- input$resolvedConceptsTableLeft_rows_selected
+  #   data <- getConceptSetDetailsLeft()
+  #   if ("resolvedConcepts" %in% names(data)) {
+  #     data <- data$resolvedConcepts
+  #     selctedConceptId <- data$conceptId[idx]
+  #     getMostRecentConceptSetRowSelectedInLeftOrRightTable(selctedConceptId)
+  #     return(selctedConceptId)
+  #   }
+  # })
+  
+  observeEvent(eventExpr = {
+    is.null(input$resolvedConceptsTableLeft_rows_selected)
+  },
+  handlerExpr = {
+    idx <- input$resolvedConceptsTableLeft_rows_selected
+    if (is.null(idx)) {
+      #If row is deselected in Left table, then search for the selected row in Right table
+      idx <- input$resolvedConceptsTableRight_rows_selected
+      if (is.null(idx)) {
+        return(NULL)
+      } else {
+        data <- getConceptSetDetailsRight()
+        selectedDatabaseId <- getSelectedDatabaseForConceptSetLeft() %>%
+          dplyr::pull(.data$databaseId)
+        getDatabaseIdsForselectedConceptSet(selectedDatabaseId)
+      }
+    } else {
+      data <- getConceptSetDetailsLeft()
+      selectedDatabaseId <- getSelectedDatabaseForConceptSetRight() %>%
+        dplyr::pull(.data$databaseId)
+      getDatabaseIdsForselectedConceptSet(selectedDatabaseId)
+    }
+    if ("resolvedConcepts" %in% names(data)) {
+      getConceptSetDetailsData(data)
+      data <- data$resolvedConcepts
+      selctedConceptId <- data$conceptId[idx]
+      getMostRecentlySelectedConceptIdFromLeftOrRightConceptTable(selctedConceptId)
+    }
+  })
+  
+  observeEvent(eventExpr = {
+    is.null(input$resolvedConceptsTableRight_rows_selected)
+  },
+  handlerExpr = {
+    idx <- input$resolvedConceptsTableRight_rows_selected
+    if (is.null(idx)) {
+      idx <- input$resolvedConceptsTableLeft_rows_selected
+      if (is.null(idx)) {
+        return(NULL)
+      } else {
+        data <- getConceptSetDetailsLeft()
+        selectedDatabaseId <- getSelectedDatabaseForConceptSetLeft() %>%
+          dplyr::pull(.data$databaseId)
+      }
+    } else {
+      data <- getConceptSetDetailsRight()
+    }
+    if ("resolvedConcepts" %in% names(data)) {
+      getConceptSetDetailsData(data)
+      data <- data$resolvedConcepts
+      selctedConceptId <- data$conceptId[idx]
+      getMostRecentlySelectedConceptIdFromLeftOrRightConceptTable(selctedConceptId)
+    }
   })
   
   #output: conceptSetExpressionLeftPanelTitle----
