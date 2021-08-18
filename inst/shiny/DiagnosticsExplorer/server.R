@@ -1418,21 +1418,13 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-
-  #!!!!!!!!!!!!!!!!!! create new function for data table rendering
-
   #output: saveCohortDefinitionButton----
   output$saveCohortDefinitionButton <- downloadHandler(
     filename = function() {
       getCsvFileNameWithDateTime(string = "CohortDefinition")
     },
     content = function(file) {
-      data <- getCohortSortedByCohortId() %>%
-        dplyr::select(cohort = .data$shortName,
-                      .data$cohortId,
-                      .data$cohortName,
-                      .data$sql,
-                      .data$json)
+      data <- getCohortSortedByCohortId()
       downloadCsv(x = data, fileName = file)
     }
   )
@@ -2297,7 +2289,7 @@ shiny::shinyServer(function(input, output, session) {
                             shiny::column(
                               8,
                               shinydashboard::box(
-                                title = "Concept Relationship", #!!!name of concept set + (cohort id) 
+                                title = "Concept Details", #!!!name of concept set + (cohort id) 
                                 collapsible = TRUE,
                                 collapsed = TRUE, # make collapsed, and only run if selected
                                 width = NULL,
@@ -2306,14 +2298,14 @@ shiny::shinyServer(function(input, output, session) {
                                              tags$td(
                                                align = "right",
                                                shiny::downloadButton(
-                                                 "saveconceptRelationshipTable",
+                                                 "saveDetailsOfSelectedConceptId",
                                                  label = "",
                                                  icon = shiny::icon("download"),
                                                  style = "margin-top: 5px; margin-bottom: 5px;"
                                                )
                                              )
                                            )),
-                                DT::dataTableOutput(outputId = "conceptRelationshipTable")
+                                DT::dataTableOutput(outputId = "detailsOfSelectedConceptId")
                               )
                             ))
   })
@@ -2420,9 +2412,9 @@ shiny::shinyServer(function(input, output, session) {
     return(conceptDescendant)
   })
   
-  #output: conceptRelationshipTable----
+  #output: detailsOfSelectedConceptId----
   #!!!! this is now a generic output object that may be used in many pages
-  output$conceptRelationshipTable <- DT::renderDT(expr = {
+  output$detailsOfSelectedConceptId <- DT::renderDT(expr = {
     validate(need(
       all(!is.null(getSelectedConceptIdActive()),
           length(getSelectedConceptIdActive()) > 0),
