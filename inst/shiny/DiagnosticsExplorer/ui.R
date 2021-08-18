@@ -279,7 +279,8 @@ bodyTabItems <- shinydashboard::tabItems(
       shiny::column(12,
       shiny::conditionalPanel(
                         condition = "output.cohortDefinitionSelectedRowCount >= 1 &
-                       input.conceptSetsTypeLeft == 'Resolved' &
+                       input.conceptSetsTypeLeft != 'Concept Set Expression' &
+                       input.conceptSetsTypeLeft != 'Json' &
                        input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
                         shiny::uiOutput(outputId = "dynamicUIForResolved")
                         )

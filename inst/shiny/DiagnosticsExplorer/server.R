@@ -2296,7 +2296,7 @@ shiny::shinyServer(function(input, output, session) {
   getDatabaseIdsForselectedConceptSet <- reactiveVal(NULL)
   
   output$dynamicUIForResolved <- shiny::renderUI({
-    shiny::column(getWidthOfRelationshipTableForSelectedConcepts(),
+    shiny::column(8,
                   shinydashboard::box(title = "Relationship Table",
                                       collapsible = TRUE,
                                       collapsed = FALSE,
@@ -2305,7 +2305,7 @@ shiny::shinyServer(function(input, output, session) {
                                                  tags$tr(
                                                    tags$td(align = "right",
                                                            shiny::downloadButton(
-                                                             "saveResolvedConceptRelationshipTable",
+                                                             "saveconceptRelationshipTable",
                                                              label = "",
                                                              icon = shiny::icon("download"),
                                                              style = "margin-top: 5px; margin-bottom: 5px;"
@@ -2313,13 +2313,13 @@ shiny::shinyServer(function(input, output, session) {
                                                    )
                                                  )
                                       ),
-                                      DT::dataTableOutput(outputId = "resolvedConceptRelationshipTable")
+                                      DT::dataTableOutput(outputId = "conceptRelationshipTable")
                                       )
                   )
     
   })
   
-  output$resolvedConceptRelationshipTable <- DT::renderDT(expr = {
+  output$conceptRelationshipTable <- DT::renderDT(expr = {
     data <- getConceptSetDetailsData()
     selectedConceptId <- getMostRecentlySelectedConceptIdFromLeftOrRightConceptTable()
     
@@ -2391,6 +2391,7 @@ shiny::shinyServer(function(input, output, session) {
   #   }
   # })
   
+  ###Get the most recently selected Concept Id in resolved table Left ----
   observeEvent(eventExpr = {
     is.null(input$resolvedConceptsTableLeft_rows_selected)
   },
@@ -2403,24 +2404,24 @@ shiny::shinyServer(function(input, output, session) {
         return(NULL)
       } else {
         data <- getConceptSetDetailsRight()
-        selectedDatabaseId <- getSelectedDatabaseForConceptSetLeft() %>%
+        selectedDatabaseId <- getSelectedDatabaseForConceptSetRight() %>%
           dplyr::pull(.data$databaseId)
-        getDatabaseIdsForselectedConceptSet(selectedDatabaseId)
       }
     } else {
       data <- getConceptSetDetailsLeft()
-      selectedDatabaseId <- getSelectedDatabaseForConceptSetRight() %>%
+      selectedDatabaseId <- getSelectedDatabaseForConceptSetLeft() %>%
         dplyr::pull(.data$databaseId)
-      getDatabaseIdsForselectedConceptSet(selectedDatabaseId)
     }
     if ("resolvedConcepts" %in% names(data)) {
       getConceptSetDetailsData(data)
+      getDatabaseIdsForselectedConceptSet(selectedDatabaseId)
       data <- data$resolvedConcepts
       selctedConceptId <- data$conceptId[idx]
       getMostRecentlySelectedConceptIdFromLeftOrRightConceptTable(selctedConceptId)
     }
   })
   
+  ###Get the most recently selected Concept Id in resolved table Right ----
   observeEvent(eventExpr = {
     is.null(input$resolvedConceptsTableRight_rows_selected)
   },
@@ -2437,10 +2438,76 @@ shiny::shinyServer(function(input, output, session) {
       }
     } else {
       data <- getConceptSetDetailsRight()
+      selectedDatabaseId <- getSelectedDatabaseForConceptSetRight() %>%
+        dplyr::pull(.data$databaseId)
     }
     if ("resolvedConcepts" %in% names(data)) {
       getConceptSetDetailsData(data)
+      getDatabaseIdsForselectedConceptSet(selectedDatabaseId)
       data <- data$resolvedConcepts
+      selctedConceptId <- data$conceptId[idx]
+      getMostRecentlySelectedConceptIdFromLeftOrRightConceptTable(selctedConceptId)
+    }
+  })
+  
+  ###Get the most recently selected Concept Id in orphanConcepts table Left ----
+  observeEvent(eventExpr = {
+    is.null(input$cohortDefinitionOrphanConceptTableLeft_rows_selected)
+  },
+  handlerExpr = {
+    idx <- input$cohortDefinitionOrphanConceptTableLeft_rows_selected
+    if (is.null(idx)) {
+      #If row is deselected in Left table, then search for the selected row in Right table
+      idx <- input$cohortDefinitionOrphanConceptTableRight_rows_selected
+      if (is.null(idx)) {
+        return(NULL)
+      } else {
+        data <- getConceptSetDetailsRight()
+        selectedDatabaseId <- getSelectedDatabaseForConceptSetRight() %>%
+          dplyr::pull(.data$databaseId)
+      }
+    } else {
+      data <- getConceptSetDetailsLeft()
+      selectedDatabaseId <- getSelectedDatabaseForConceptSetLeft() %>%
+        dplyr::pull(.data$databaseId)
+    }
+    if ("orphanConcepts" %in% names(data)) {
+      getConceptSetDetailsData(data)
+      getDatabaseIdsForselectedConceptSet(selectedDatabaseId)
+      data <- pivotOrphanConceptResult(data = data$orphanConcepts,
+                                       dataSource = dataSource)
+      selctedConceptId <- data$conceptId[idx]
+      getMostRecentlySelectedConceptIdFromLeftOrRightConceptTable(selctedConceptId)
+    }
+  })
+  
+  ###Get the most recently selected Concept Id in orphanConcepts table Right ----
+  observeEvent(eventExpr = {
+    is.null(input$cohortDefinitionOrphanConceptTableRight_rows_selected)
+  },
+  handlerExpr = {
+    
+    idx <- input$cohortDefinitionOrphanConceptTableRight_rows_selected
+    if (is.null(idx)) {
+      #If row is deselected in Left table, then search for the selected row in Right table
+      idx <- input$cohortDefinitionOrphanConceptTableLeft_rows_selected
+      if (is.null(idx)) {
+        return(NULL)
+      } else {
+        data <- getConceptSetDetailsLeft()
+        selectedDatabaseId <- getSelectedDatabaseForConceptSetLeft() %>%
+          dplyr::pull(.data$databaseId)
+      }
+    } else {
+      data <- getConceptSetDetailsRight()
+      selectedDatabaseId <- getSelectedDatabaseForConceptSetRight() %>%
+        dplyr::pull(.data$databaseId)
+    }
+    if ("orphanConcepts" %in% names(data)) {
+      getConceptSetDetailsData(data)
+      getDatabaseIdsForselectedConceptSet(selectedDatabaseId)
+      data <- pivotOrphanConceptResult(data = data$orphanConcepts,
+                                       dataSource = dataSource)
       selctedConceptId <- data$conceptId[idx]
       getMostRecentlySelectedConceptIdFromLeftOrRightConceptTable(selctedConceptId)
     }
@@ -2734,7 +2801,6 @@ shiny::shinyServer(function(input, output, session) {
     options = list(pageLength = 10,
                    searching = TRUE,
                    scrollX = TRUE,
-                   scrollY = '50vh',
                    lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
@@ -2747,6 +2813,7 @@ shiny::shinyServer(function(input, output, session) {
                            rownames = FALSE,
                            container = sketch,
                            escape = FALSE,
+                           selection = 'single',
                            filter = "top",
                            class = "stripe nowrap compact")
     
@@ -3342,7 +3409,6 @@ shiny::shinyServer(function(input, output, session) {
     options = list(pageLength = 10,
                    searching = TRUE,
                    scrollX = TRUE,
-                   scrollY = '50vh',
                    lengthChange = TRUE,
                    ordering = TRUE,
                    paging = TRUE,
@@ -3356,6 +3422,7 @@ shiny::shinyServer(function(input, output, session) {
                            container = sketch,
                            escape = FALSE,
                            filter = "top",
+                           selection = 'single',
                            class = "stripe nowrap compact")
     
     table <- DT::formatStyle(table = table,
