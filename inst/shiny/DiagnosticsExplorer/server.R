@@ -2380,9 +2380,9 @@ shiny::shinyServer(function(input, output, session) {
     conceptAncestor <- conceptMetadata$conceptAncestor %>% 
       dplyr::filter(.data$descendantConceptId %in% selectedConceptId) %>% 
       dplyr::rename("conceptId" = .data$ancestorConceptId,
-                    "levelsOfSeperation" = .data$minLevelsOfSeparation) %>% 
+                    "levelsOfSeparation" = .data$minLevelsOfSeparation) %>% 
       dplyr::select(.data$conceptId, 
-                    .data$levelsOfSeperation) %>% 
+                    .data$levelsOfSeparation) %>% 
       dplyr::distinct()
     return(conceptAncestor)
   })
@@ -2407,9 +2407,9 @@ shiny::shinyServer(function(input, output, session) {
     conceptDescendant <- conceptMetadata$conceptAncestor %>% 
       dplyr::filter(.data$ancestorConceptId %in% selectedConceptId) %>% 
       dplyr::rename("conceptId" = .data$descendantConceptId,
-                    "levelsOfSeperation" = .data$minLevelsOfSeparation) %>% 
+                    "levelsOfSeparation" = .data$minLevelsOfSeparation) %>% 
       dplyr::select(.data$conceptId, 
-                    .data$levelsOfSeperation) %>% 
+                    .data$levelsOfSeparation) %>% 
       dplyr::distinct()
     return(conceptDescendant)
   })
@@ -2439,13 +2439,31 @@ shiny::shinyServer(function(input, output, session) {
             length(conceptMetadata) == 0)) {
       return(NULL)
     }
+    conceptRelationships <- getConceptRelationshipForSelectedConceptId() %>% 
+      dplyr::group_by(.data$conceptId) %>% 
+      dplyr::mutate(relationships = paste0(.data$relationshipId, collapse = ", ")) %>% 
+      dplyr::ungroup() %>% 
+      dplyr::select(.data$conceptId, .data$relationships) %>% 
+      dplyr::distinct() %>% 
+      dplyr::arrange(.data$conceptId)
     
     concept <- conceptMetadata$concept %>% 
       dplyr::left_join(conceptMetadata$conceptCount %>% 
                          dplyr::filter(.data$databaseId %in% getDatabaseIdsForselectedConceptSet()),
                        by = "conceptId") %>% 
+      dplyr::left_join(conceptRelationships, 
+                       by = 'conceptId') %>% 
+      dplyr::left_join(getConceptAncestorForSelectedConceptId() %>% 
+                         dplyr::rename(ancestorDistance = .data$levelsOfSeparation),
+                       by = "conceptId") %>% 
+      dplyr::left_join(getConceptDescendantForSelectedConceptId() %>% 
+                         dplyr::rename(descendantDistance = .data$levelsOfSeparation),
+                       by = "conceptId") %>% 
       dplyr::select(.data$conceptId,
                     .data$conceptName,
+                    .data$relationships,
+                    .data$ancestorDistance,
+                    .data$descendantDistance,
                     .data$conceptCount,
                     .data$subjectCount,
                     .data$conceptCode,
