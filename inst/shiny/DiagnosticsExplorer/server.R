@@ -2302,9 +2302,9 @@ shiny::shinyServer(function(input, output, session) {
                             shiny::column(
                               8,
                               shinydashboard::box(
-                                title = "Concept Relationship", #!!!name of concept set + (cohort id)
+                                title = "Concept Relationship", #!!!name of concept set + (cohort id) 
                                 collapsible = TRUE,
-                                collapsed = FALSE,
+                                collapsed = TRUE, # make collapsed, and only run if selected
                                 width = NULL,
                                 tags$table(width = "100%",
                                            tags$tr(
@@ -2377,6 +2377,12 @@ shiny::shinyServer(function(input, output, session) {
           length(getDatabaseIdsForselectedConceptSet()) > 0),
       "No database id selected."
     ))
+    progress <- shiny::Progress$new()
+    on.exit(progress$close())
+    progress$set(message = paste0("Computing concept relationship for concept id:",
+                                  getSelectedConceptIdActive()),
+                 value = 0)
+    
     conceptRelationshipTableData <- getConceptRelationshipTable()
     
     options = list(
