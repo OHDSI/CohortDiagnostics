@@ -2297,17 +2297,17 @@ shiny::shinyServer(function(input, output, session) {
                                    ")"
                                  ),
                                 collapsible = TRUE,
-                                collapsed = TRUE, # make collapsed, and only run if selected
+                                collapsed = FALSE,
                                 width = NULL,
                                 tags$h4(),
                                 tags$table(width = "100%",
                                            tags$tr(
                                                tags$td(
                                                  shinyWidgets::pickerInput(
-                                                   inputId = "choicesForRelationshipType",
+                                                   inputId = "choicesForRelationshipName",
                                                    label = "Relationship Category:",
-                                                   choices = getConceptRelationshipChoices(),
-                                                   selected = getConceptRelationshipChoices(),
+                                                   choices = relationship$relationshipName %>% sort(),
+                                                   selected = relationship$relationshipName %>% sort(),
                                                    multiple = TRUE,
                                                    width = 200,
                                                    inline = TRUE,
@@ -2405,16 +2405,6 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::select(.data$conceptId,
                     .data$relationshipId)
     return(conceptRelationship)
-  })
-  
-  getConceptRelationshipChoices <- reactive({
-    data <- getConceptRelationshipForSelectedConceptId()
-    if (is.null(data)) {
-      return(NULL)
-    }
-    data <-
-      data %>% dplyr::distinct(.data$relationshipId) %>% dplyr::pull(.data$relationshipId)
-    return(data)
   })
   
   #getConceptAncestorForSelectedConceptId----
@@ -2543,19 +2533,34 @@ shiny::shinyServer(function(input, output, session) {
                     .data$relationshipId) %>% 
       dplyr::arrange(dplyr::desc(.data$conceptCount))
     
-    if (any( !is.null(input$choicesForRelationshipType),
-             length(input$choicesForRelationshipType) > 0)) {
-      concept <- concept %>% 
-        dplyr::filter(.data$relationshipId %in% input$choicesForRelationshipType)
+    if (any(
+      !is.null(input$choicesForRelationshipName),
+      length(input$choicesForRelationshipName) > 0
+    )) {
+      concept <- concept %>%
+        dplyr::filter(
+          .data$relationshipId %in%
+            c(relationship %>%
+            dplyr::filter(.data$relationshipName %in%
+                            input$choicesForRelationshipName) %>%
+            dplyr::pull(.data$relationshipId) %>% 
+            unique())
+        )
     }
-    if (any( !is.null(input$choicesForRelationshipDistance),
-                    length(input$choicesForRelationshipDistance) > 0)) {
-      concept <- concept %>% 
-        dplyr::filter(.data$ancestorDistance == input$choicesForRelationshipDistance |
-                        .data$descendantDistance == input$choicesForRelationshipDistance)
+    
+    if (any(
+      !is.null(input$choicesForRelationshipDistance),
+      length(input$choicesForRelationshipDistance) > 0
+    )) {
+      concept <- concept %>%
+        dplyr::filter(
+          .data$ancestorDistance == input$choicesForRelationshipDistance |
+            .data$descendantDistance == input$choicesForRelationshipDistance
+        )
     }
-     concept <- concept %>% 
-       dplyr::select(-.data$relationshipId) 
+    
+    concept <- concept %>%
+      dplyr::select(-.data$relationshipId) 
     
     options = list(
       pageLength = 10,
