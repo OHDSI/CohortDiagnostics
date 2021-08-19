@@ -1305,8 +1305,8 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  ###getConceptSetComparisionDetailsLeft----
-  getConceptSetComparisionDetailsLeft <- shiny::reactive(x = {
+  ###getConceptSetComparisonDetailsLeft----
+  getConceptSetComparisonDetailsLeft <- shiny::reactive(x = {
     data <- getConceptSetDetailsLeft()
     if ("orphanConcepts" %in% names(data)) {
       data <- pivotOrphanConceptResult(data = data$orphanConcepts,
@@ -1317,8 +1317,8 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
-  ###getConceptSetComparisionDetailsRight----
-  getConceptSetComparisionDetailsRight <- shiny::reactive(x = {
+  ###getConceptSetComparisonDetailsRight----
+  getConceptSetComparisonDetailsRight <- shiny::reactive(x = {
     data <- getConceptSetDetailsRight()
     if ("orphanConcepts" %in% names(data)) {
       data <- pivotOrphanConceptResult(data = data$orphanConcepts,
@@ -2288,84 +2288,196 @@ shiny::shinyServer(function(input, output, session) {
       ))
   })
   
+  
+  
   getSelectedConceptIdActive <- reactiveVal(NULL)
   getSelectedConceptNameActive <- reactiveVal(NULL)
   getDatabaseIdsForselectedConceptSet <- reactiveVal(NULL) ### why make this reactive, this should be the input$ object
   
+  
+  
   #Dynamic UI rendering for relationship table -----
-  output$dynamicUIForRelationshipTable <- shiny::renderUI({
-    shiny::conditionalPanel(condition = "output.isConceptIdFromLeftOrRightConceptTableSelected",
-                            shiny::column(
-                              8,
-                              shinydashboard::box(
-                                 title = paste0(
-                                   getSelectedConceptNameActive(),
-                                   " (",
-                                   getSelectedConceptIdActive(),
-                                   ")"
-                                 ),
-                                collapsible = TRUE,
-                                collapsed = FALSE,
-                                width = NULL,
-                                tags$h4(),
-                                tags$table(width = "100%",
-                                           tags$tr(
-                                               tags$td(
-                                                 shinyWidgets::pickerInput(
-                                                   inputId = "choicesForRelationshipName",
-                                                   label = "Relationship Category:",
-                                                   choices = c(relationship$relationshipName,
-                                                               "Not applicable") %>% sort(),
-                                                   selected = c(relationship$relationshipName,
-                                                                "Not applicable") %>% sort(),
-                                                   multiple = TRUE,
-                                                   width = 200,
-                                                   inline = TRUE,
-                                                   choicesOpt = list(style = rep_len("color: black;", 999)),
-                                                   options = shinyWidgets::pickerOptions(
-                                                     actionsBox = TRUE,
-                                                     liveSearch = TRUE,
-                                                     size = 10,
-                                                     liveSearchStyle = "contains",
-                                                     liveSearchPlaceholder = "Type here to search",
-                                                     virtualScroll = 50
-                                                   )
-                                                 )
-                                               ),
-                                               
-                                               tags$td(
-                                                 shinyWidgets::pickerInput(
-                                                   inputId = "choicesForRelationshipDistance",
-                                                   label = "Distance:",
-                                                   choices = getConceptRelationshipDistanceChoices(),
-                                                   selected = getConceptRelationshipDistanceChoices(),
-                                                   multiple = TRUE,
-                                                   width = 200,
-                                                   inline = TRUE,
-                                                   choicesOpt = list(style = rep_len("color: black;", 999)),
-                                                   options = shinyWidgets::pickerOptions(
-                                                     actionsBox = TRUE,
-                                                     liveSearch = TRUE,
-                                                     size = 10,
-                                                     liveSearchStyle = "contains",
-                                                     liveSearchPlaceholder = "Type here to search",
-                                                     virtualScroll = 50
-                                                   )
-                                                 )
-                                               ),
-                                             tags$td(
-                                               align = "right",
-                                               shiny::downloadButton(
-                                                 "saveDetailsOfSelectedConceptId",
-                                                 label = "",
-                                                 icon = shiny::icon("download"),
-                                                 style = "margin-top: 5px; margin-bottom: 5px;"
-                                               )
-                                             )
-                                           )),
-                                DT::dataTableOutput(outputId = "detailsOfSelectedConceptId")
-                              )
-                            ))
+  output$dynamicUIForRelationshipAndComparisonTable <- shiny::renderUI({
+    shiny::tabsetPanel(
+      type = "tab",
+      id = "conceptSetComparisonBrowserTimeSeries",
+      shiny::tabPanel(title = "Concept Set Browser",
+                      value = "conceptSetBrowser",
+                      shiny::conditionalPanel(
+                        condition = "output.isConceptIdFromLeftOrRightConceptTableSelected",
+                        shinydashboard::box(
+                          title = paste0(
+                            getSelectedConceptNameActive(),
+                            " (",
+                            getSelectedConceptIdActive(),
+                            ")"
+                          ),
+                          collapsible = TRUE,
+                          collapsed = FALSE,
+                          width = NULL,
+                          tags$h4(),
+                          tags$table(width = "100%",
+                                     tags$tr(
+                                       tags$td(
+                                         shinyWidgets::pickerInput(
+                                           inputId = "choicesForRelationshipName",
+                                           label = "Relationship Category:",
+                                           choices = relationship$relationshipName %>% sort(),
+                                           selected = relationship$relationshipName %>% sort(),
+                                           multiple = TRUE,
+                                           width = 200,
+                                           inline = TRUE,
+                                           choicesOpt = list(style = rep_len("color: black;", 999)),
+                                           options = shinyWidgets::pickerOptions(
+                                             actionsBox = TRUE,
+                                             liveSearch = TRUE,
+                                             size = 10,
+                                             liveSearchStyle = "contains",
+                                             liveSearchPlaceholder = "Type here to search",
+                                             virtualScroll = 50
+                                           )
+                                         )
+                                       ),
+                                       
+                                       tags$td(
+                                         shinyWidgets::pickerInput(
+                                           inputId = "choicesForRelationshipDistance",
+                                           label = "Distance:",
+                                           choices = getConceptRelationshipDistanceChoices(),
+                                           multiple = FALSE,
+                                           width = 200,
+                                           inline = TRUE,
+                                           choicesOpt = list(style = rep_len("color: black;", 999)),
+                                           options = shinyWidgets::pickerOptions(
+                                             actionsBox = TRUE,
+                                             liveSearch = TRUE,
+                                             size = 10,
+                                             liveSearchStyle = "contains",
+                                             liveSearchPlaceholder = "Type here to search",
+                                             virtualScroll = 50
+                                           )
+                                         )
+                                       ),
+                                       tags$td(
+                                         align = "right",
+                                         shiny::downloadButton(
+                                           "saveDetailsOfSelectedConceptId",
+                                           label = "",
+                                           icon = shiny::icon("download"),
+                                           style = "margin-top: 5px; margin-bottom: 5px;"
+                                         )
+                                       )
+                                     )),
+                          DT::dataTableOutput(outputId = "detailsOfSelectedConceptId")
+                        )
+                      )
+                      ),
+    shiny::tabPanel(title = "Concept Set Comparison",
+                    value = "conceptSetComparison",
+                    shinydashboard::box(width = NULL,
+                                            DT::dataTableOutput(outputId = "conceptSetComparisonTable")
+                                        )
+                    )
+    )
+    # shiny::column(
+    #   12,
+    #   shiny::column(
+    #     8,
+    #     
+    #   ),
+    #   shiny::column(
+    #     4,
+    #     shiny::conditionalPanel(
+    #       condition = "output.cohortDefinitionSelectedRowCount == 2 &
+    #                  input.conceptSetsTypeLeft == 'Resolved' &
+    #                  input.conceptSetsTypeRight == 'Resolved' &
+    #                  output.isConceptSetExpressionPresentInSelectedCohortLeft == true &
+    #                  output.isConceptSetExpressionPresentInSelectedCohortRight == true &
+    #                  input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
+    #                  input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
+    #       shinydashboard::box(title = "hello",width = NULL,
+    #                           DT::dataTableOutput(outputId = "conceptSetComparisonTable")
+    #                           )
+    #     )
+    #   )
+    # )
+  })
+  
+  observe({
+    if (is.null(getSelectedConceptIdActive()) && !is.null(getConceptSetExpressionLeft())) {
+      shiny::hideTab(inputId = "conceptSetComparisonBrowserTimeSeries",target = "conceptSetBrowser")
+    } else {
+      shiny::showTab(inputId = "conceptSetComparisonBrowserTimeSeries",target = "conceptSetBrowser")
+    }
+  })
+  
+  observe({
+    if (length(input$cohortDefinitionTable_rows_selected) != 2 || is.null(getConceptSetExpressionLeft()) || is.null(getConceptSetExpressionRight())) {
+      shiny::hideTab(inputId = "conceptSetComparisonBrowserTimeSeries",target = "conceptSetComparison")
+    } else {
+      shiny::showTab(inputId = "conceptSetComparisonBrowserTimeSeries",target = "conceptSetComparison")
+    }
+  })
+  
+  output$conceptSetComparisonTable <- DT::renderDT(expr = {
+    resolvedConceptsLeft <- getConceptSetDetailsLeft()$resolvedConcepts
+    resolvedConceptsRight <- getConceptSetDetailsRight()$resolvedConcepts
+    if (any(is.null(resolvedConceptsLeft),
+            length(resolvedConceptsLeft) == 0,
+        is.null(resolvedConceptsRight),
+        length(resolvedConceptsRight) == 0)) {
+      return(NULL)
+    }
+    
+    if (input$conceptSetsTypeLeft == "Resolved" &
+        input$conceptSetsTypeRight == 'Resolved') {
+      
+      combinedResult <-
+        resolvedConceptsLeft %>%
+        dplyr::union(resolvedConceptsRight) %>% 
+        dplyr::arrange(.data$conceptId) %>% 
+        dplyr::select(.data$conceptId, .data$conceptName) %>% 
+        dplyr::mutate(left = "",right = "")
+      
+      cohortIdsPresentInLeft <- resolvedConceptsLeft %>% 
+        dplyr::pull(.data$conceptId) %>% 
+        unique()
+      
+      cohortIdsPresentInRight <- resolvedConceptsRight %>% 
+        dplyr::pull(.data$conceptId) %>% 
+        unique()
+    }
+    
+    for (i in 1:nrow(combinedResult)) {
+      combinedResult$left[i] <- ifelse(combinedResult$conceptId[i] %in% cohortIdsPresentInLeft,as.character(icon("check")),"")
+      combinedResult$right[i] <- ifelse(combinedResult$conceptId[i] %in% cohortIdsPresentInRight,as.character(icon("check")),"")
+    }
+    options = list(
+      pageLength = 20,
+      searching = TRUE,
+      lengthChange = TRUE,
+      ordering = TRUE,
+      paging = TRUE,
+      info = TRUE,
+      searchHighlight = TRUE,
+      scrollX = TRUE,
+      scrollY = "20vh",
+      columnDefs = list(
+        truncateStringDef(1, 30)
+      )
+    )
+    
+    dataTable <- DT::datatable(
+      combinedResult,
+      options = options,
+      colnames = colnames(combinedResult) %>% camelCaseToTitleCase(),
+      rownames = FALSE,
+      escape = FALSE,
+      selection = 'single',
+      filter = "top",
+      class = "stripe nowrap compact"
+    )
+    return(dataTable)
   })
   
   #getConceptMetadataDetails----
@@ -2530,7 +2642,6 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::mutate(levelsOfSeparation = as.character(.data$levelsOfSeparation)) %>% 
       tidyr::replace_na(list(relationships = "Not applicable",
                              levelsOfSeparation = "Not applicable"))
-    browser()
     if (any(
       !is.null(input$choicesForRelationshipName),
       length(input$choicesForRelationshipName) > 0
@@ -2713,6 +2824,8 @@ shiny::shinyServer(function(input, output, session) {
       getSelectedConceptNameActive(selctedConceptName)
     }
   })
+  
+  
   
   ##output: isConceptIdFromLeftOrRightConceptTableSelected----
   output$isConceptIdFromLeftOrRightConceptTableSelected <- shiny::reactive(x = {
@@ -4106,15 +4219,15 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(input$choiceForConceptSetDetailsLeft == input$choiceForConceptSetDetailsRight, 
                   "Please select same database for comparison"))
     
-    if (any(length(getConceptSetComparisionDetailsLeft()) == 0, length(getConceptSetComparisionDetailsRight()) == 0)) {
+    if (any(length(getConceptSetComparisonDetailsLeft()) == 0, length(getConceptSetComparisonDetailsRight()) == 0)) {
       return(NULL)
     }
     
-    result <- dplyr::setdiff(getConceptSetComparisionDetailsLeft(), 
-                             getConceptSetComparisionDetailsRight())
+    result <- dplyr::setdiff(getConceptSetComparisonDetailsLeft(), 
+                             getConceptSetComparisonDetailsRight())
     
-    orphanConceptDataDatabaseIds <- attr(x = getConceptSetComparisionDetailsLeft(), which = 'databaseIds')
-    orphanConceptDataMaxCount <- attr(x = getConceptSetComparisionDetailsLeft(), which = 'maxCount')
+    orphanConceptDataDatabaseIds <- attr(x = getConceptSetComparisonDetailsLeft(), which = 'databaseIds')
+    orphanConceptDataMaxCount <- attr(x = getConceptSetComparisonDetailsLeft(), which = 'maxCount')
     if (nrow(result) == 0) {
       validate(need(nrow(result) > 0, "No data found"))
     } else {
@@ -4174,14 +4287,14 @@ shiny::shinyServer(function(input, output, session) {
     validate(need(input$choiceForConceptSetDetailsLeft == input$choiceForConceptSetDetailsRight, 
                   "Please select same database for comparison"))
     
-    if (any(length(getConceptSetComparisionDetailsLeft()) == 0, length(getConceptSetComparisionDetailsRight()) == 0)) {
+    if (any(length(getConceptSetComparisonDetailsLeft()) == 0, length(getConceptSetComparisonDetailsRight()) == 0)) {
       return(NULL)
     }
     
-    result <- dplyr::setdiff(getConceptSetComparisionDetailsRight(),
-                             getConceptSetComparisionDetailsLeft())
-    orphanConceptDataDatabaseIds <- attr(x = getConceptSetComparisionDetailsRight(), which = 'databaseIds')
-    orphanConceptDataMaxCount <- attr(x = getConceptSetComparisionDetailsRight(), which = 'maxCount')
+    result <- dplyr::setdiff(getConceptSetComparisonDetailsRight(),
+                             getConceptSetComparisonDetailsLeft())
+    orphanConceptDataDatabaseIds <- attr(x = getConceptSetComparisonDetailsRight(), which = 'databaseIds')
+    orphanConceptDataMaxCount <- attr(x = getConceptSetComparisonDetailsRight(), which = 'maxCount')
     
     if (nrow(result) == 0) {
       validate(need(nrow(result) > 0, "No data found"))
@@ -4241,14 +4354,14 @@ shiny::shinyServer(function(input, output, session) {
   output$orphanConceptsPresentInBoth <- DT::renderDT({
     validate(need(input$choiceForConceptSetDetailsLeft == input$choiceForConceptSetDetailsRight, "Please select same database for comparison"))
     
-    if (any(length(getConceptSetComparisionDetailsLeft()) == 0, length(getConceptSetComparisionDetailsRight()) == 0)) {
+    if (any(length(getConceptSetComparisonDetailsLeft()) == 0, length(getConceptSetComparisonDetailsRight()) == 0)) {
       return(NULL)
     }
     
-    result <- dplyr::intersect(getConceptSetComparisionDetailsLeft(), 
-                               getConceptSetComparisionDetailsRight())
-    orphanConceptDataDatabaseIds <- attr(x = getConceptSetComparisionDetailsLeft(), which = 'databaseIds')
-    orphanConceptDataMaxCount <- attr(x = getConceptSetComparisionDetailsLeft(), which = 'maxCount')
+    result <- dplyr::intersect(getConceptSetComparisonDetailsLeft(), 
+                               getConceptSetComparisonDetailsRight())
+    orphanConceptDataDatabaseIds <- attr(x = getConceptSetComparisonDetailsLeft(), which = 'databaseIds')
+    orphanConceptDataMaxCount <- attr(x = getConceptSetComparisonDetailsLeft(), which = 'maxCount')
     
     if (nrow(result) == 0) {
       validate(need(nrow(result) > 0, "No data found"))
@@ -4308,14 +4421,14 @@ shiny::shinyServer(function(input, output, session) {
   output$orphanConceptsPresentInEither <- DT::renderDT({
     validate(need(input$choiceForConceptSetDetailsLeft == input$choiceForConceptSetDetailsRight, "Please select same database for comparison"))
     
-    if (any(length(getConceptSetComparisionDetailsLeft()) == 0, length(getConceptSetComparisionDetailsRight()) == 0)) {
+    if (any(length(getConceptSetComparisonDetailsLeft()) == 0, length(getConceptSetComparisonDetailsRight()) == 0)) {
       return(NULL)
     }
     
-    result <- dplyr::union(getConceptSetComparisionDetailsLeft(), 
-                           getConceptSetComparisionDetailsRight())
-    orphanConceptDataDatabaseIds <- attr(x = getConceptSetComparisionDetailsLeft(), which = 'databaseIds')
-    orphanConceptDataMaxCount <- attr(x = getConceptSetComparisionDetailsLeft(), which = 'maxCount')
+    result <- dplyr::union(getConceptSetComparisonDetailsLeft(), 
+                           getConceptSetComparisonDetailsRight())
+    orphanConceptDataDatabaseIds <- attr(x = getConceptSetComparisonDetailsLeft(), which = 'databaseIds')
+    orphanConceptDataMaxCount <- attr(x = getConceptSetComparisonDetailsLeft(), which = 'maxCount')
     
     if (nrow(result) == 0) {
       validate(need(nrow(result) > 0, "No data found"))

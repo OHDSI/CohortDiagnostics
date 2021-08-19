@@ -282,14 +282,14 @@ bodyTabItems <- shinydashboard::tabItems(
                        input.conceptSetsTypeLeft != 'Concept Set Expression' &
                        input.conceptSetsTypeLeft != 'Json' &
                        input.cohortDefinitionOneTabSetPanel == 'conceptSetOneTabPanel'",
-                        shiny::uiOutput(outputId = "dynamicUIForRelationshipTable")
+                        shiny::uiOutput(outputId = "dynamicUIForRelationshipAndComparisonTable")
                         )
                         )
       # shiny::column(width = 12,
       #               shiny::conditionalPanel(
       #                 condition = "output.cohortDefinitionSelectedRowCount == 2 &
       #                input.conceptSetsTypeLeft == 'Resolved' &
-      #                input.conceptSetsTypeRight == 'Resolved' & 
+      #                input.conceptSetsTypeRight == 'Resolved' &
       #                output.isConceptSetExpressionPresentInSelectedCohortLeft == true &
       #                output.isConceptSetExpressionPresentInSelectedCohortRight == true &
       #                input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
@@ -322,7 +322,7 @@ bodyTabItems <- shinydashboard::tabItems(
       #               shiny::conditionalPanel(
       #                 condition = "output.cohortDefinitionSelectedRowCount == 2 &
       #                              input.conceptSetsTypeLeft == 'Excluded' &
-      #                              input.conceptSetsTypeRight == 'Excluded' & 
+      #                              input.conceptSetsTypeRight == 'Excluded' &
       #                              output.isConceptSetExpressionPresentInSelectedCohortLeft == true &
       #                              output.isConceptSetExpressionPresentInSelectedCohortRight == true &
       #                              input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
@@ -355,7 +355,7 @@ bodyTabItems <- shinydashboard::tabItems(
       #               shiny::conditionalPanel(
       #                 condition = "output.cohortDefinitionSelectedRowCount == 2 &
       #                              input.conceptSetsTypeLeft == 'Orphan concepts' &
-      #                              input.conceptSetsTypeRight == 'Orphan concepts'& 
+      #                              input.conceptSetsTypeRight == 'Orphan concepts'&
       #                              output.isConceptSetExpressionPresentInSelectedCohortLeft == true &
       #                              output.isConceptSetExpressionPresentInSelectedCohortRight == true &
       #                              input.cohortDefinitionTwoTabSetPanel == 'conceptSetTwoTabPanel' &
