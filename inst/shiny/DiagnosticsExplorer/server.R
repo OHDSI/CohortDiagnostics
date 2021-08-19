@@ -2336,7 +2336,8 @@ shiny::shinyServer(function(input, output, session) {
                                                    inputId = "choicesForRelationshipDistance",
                                                    label = "Distance:",
                                                    choices = getConceptRelationshipDistanceChoices(),
-                                                   multiple = FALSE,
+                                                   selected = getConceptRelationshipDistanceChoices(),
+                                                   multiple = TRUE,
                                                    width = 200,
                                                    inline = TRUE,
                                                    choicesOpt = list(style = rep_len("color: black;", 999)),
@@ -2387,8 +2388,6 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   #getConceptRelationshipForSelectedConceptId----
-  
- 
   getConceptRelationshipForSelectedConceptId <- shiny::reactive(x = {    
     selectedConceptId <- getSelectedConceptIdActive()
     if (any(is.null(selectedConceptId),
@@ -2432,13 +2431,26 @@ shiny::shinyServer(function(input, output, session) {
             length(conceptMetadata) == 0)) {
       return(NULL)
     }
+    browser()
     conceptAncestor <- conceptMetadata$conceptAncestor %>% 
       dplyr::filter(.data$descendantConceptId %in% selectedConceptId) %>% 
       dplyr::rename("conceptId" = .data$ancestorConceptId,
                     "levelsOfSeparation" = .data$minLevelsOfSeparation) %>% 
       dplyr::select(.data$conceptId, 
                     .data$levelsOfSeparation) %>% 
+      dplyr::distinct() %>% 
+      dplyr::mutate(levelsOfSeparation = levelsOfSeparation*-1)
+    conceptDescendant <- conceptMetadata$conceptAncestor %>% 
+      dplyr::filter(.data$ancestorConceptId %in% selectedConceptId) %>% 
+      dplyr::rename("conceptId" = .data$descendantConceptId,
+                    "levelsOfSeparation" = .data$minLevelsOfSeparation) %>% 
+      dplyr::select(.data$conceptId, 
+                    .data$levelsOfSeparation) %>% 
       dplyr::distinct()
+    conceptAncestor <- dplyr::bind_rows(conceptAncestor,
+                                        conceptDescendant) %>% 
+      dplyr::distinct() %>% 
+      dplyr::arrange(.data$levelsOfSeparation)
     return(conceptAncestor)
   })
   
@@ -2448,35 +2460,11 @@ shiny::shinyServer(function(input, output, session) {
       return(NULL)
     }
     data <-
-      data %>% dplyr::distinct(.data$levelsOfSeparation) %>% dplyr::pull(.data$levelsOfSeparation)
+      data %>% 
+      dplyr::distinct(.data$levelsOfSeparation) %>% 
+      dplyr::pull(.data$levelsOfSeparation) %>% 
+      sort()
     return(data)
-  })
-  
-  #getConceptDescendantForSelectedConceptId----
-  getConceptDescendantForSelectedConceptId <- shiny::reactive(x = {    
-    selectedConceptId <- getSelectedConceptIdActive()
-    if (any(is.null(selectedConceptId),
-            length(selectedConceptId) == 0)) {
-      return(NULL)
-    }
-    selectedDatabaseId <- getDatabaseIdsForselectedConceptSet()
-    if (any(is.null(selectedDatabaseId),
-            length(selectedDatabaseId) == 0)) {
-      return(NULL)
-    }
-    conceptMetadata <- getConceptMetadataDetails()
-    if (any(is.null(conceptMetadata),
-            length(conceptMetadata) == 0)) {
-      return(NULL)
-    }
-    conceptDescendant <- conceptMetadata$conceptAncestor %>% 
-      dplyr::filter(.data$ancestorConceptId %in% selectedConceptId) %>% 
-      dplyr::rename("conceptId" = .data$descendantConceptId,
-                    "levelsOfSeparation" = .data$minLevelsOfSeparation) %>% 
-      dplyr::select(.data$conceptId, 
-                    .data$levelsOfSeparation) %>% 
-      dplyr::distinct()
-    return(conceptDescendant)
   })
   
   #output: detailsOfSelectedConceptId----
@@ -2522,17 +2510,12 @@ shiny::shinyServer(function(input, output, session) {
                        by = "conceptId") %>% 
       dplyr::left_join(conceptRelationships, 
                        by = 'conceptId') %>% 
-      dplyr::left_join(getConceptAncestorForSelectedConceptId() %>% 
-                         dplyr::rename(ancestorDistance = .data$levelsOfSeparation),
-                       by = "conceptId") %>% 
-      dplyr::left_join(getConceptDescendantForSelectedConceptId() %>% 
-                         dplyr::rename(descendantDistance = .data$levelsOfSeparation),
+      dplyr::left_join(getConceptAncestorForSelectedConceptId(),
                        by = "conceptId") %>% 
       dplyr::select(.data$conceptId,
                     .data$conceptName,
                     .data$relationships,
-                    .data$ancestorDistance,
-                    .data$descendantDistance,
+                    .data$levelsOfSeparation,
                     .data$conceptCount,
                     .data$subjectCount,
                     .data$conceptCode,
@@ -2562,8 +2545,7 @@ shiny::shinyServer(function(input, output, session) {
     )) {
       concept <- concept %>%
         dplyr::filter(
-          .data$ancestorDistance == input$choicesForRelationshipDistance |
-            .data$descendantDistance == input$choicesForRelationshipDistance
+          .data$levelsOfSeparation == input$choicesForRelationshipDistance
         )
     }
     
