@@ -766,7 +766,6 @@ getConceptMetadata <- function(dataSource,
     vocabularyDatabaseSchema = vocabularyDatabaseSchema,
     conceptIds = conceptIdList
   )
-  
   return(data)
 }
 
@@ -2096,6 +2095,9 @@ getCohortAsFeatureTemporalCharacterizationResults <-
       ) %>%
       dplyr::arrange(.data$conceptId)
     
+    if ('valueField' %in% colnames(analysisRef)) {
+      analysisRef$valueField <- NULL
+    }
     return(
       list(
         temporalCovariateRef = covariateRef,
@@ -2205,7 +2207,7 @@ getMultipleCharacterizationResults <-
         featureExtractionTemporalcharacterization$temporalAnalysisRef,
         cohortRelationshipCharacterizationResults$analysisRef,
         cohortAsFeatureTemporalCharacterizationResults$temporalAnalysisRef
-      )
+      ) %>% dplyr::distinct()
     if (all(!is.null(analysisRef), nrow(analysisRef) == 0)) {
       analysisRef <- NULL
     }
@@ -2301,7 +2303,8 @@ getMultipleCharacterizationResults <-
       dplyr::bind_rows(
         featureExtractionTemporalcharacterization$temporalTimeRef,
         cohortAsFeatureTemporalCharacterizationResults$temporalTimeRef
-      )
+      ) %>% 
+      dplyr::distinct()
     if (all(!is.null(temporalTimeRef), nrow(temporalTimeRef) == 0)) {
       temporalTimeRef <- NULL
     }
