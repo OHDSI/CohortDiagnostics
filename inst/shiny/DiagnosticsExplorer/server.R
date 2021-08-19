@@ -2052,6 +2052,7 @@ shiny::shinyServer(function(input, output, session) {
       )
   })
   
+  #!!!!! inclusion rule - make by default selected and shown
   #Dynamic UI rendering for right side -----
   output$dynamicUIGenerationForCohortSelectedRight <- shiny::renderUI(expr = {
     shiny::column(
@@ -2320,8 +2321,10 @@ shiny::shinyServer(function(input, output, session) {
                          shinyWidgets::pickerInput(
                            inputId = "choicesForRelationshipName",
                            label = "Relationship Category:",
-                           choices = relationship$relationshipName %>% sort(),
-                           selected = relationship$relationshipName %>% sort(),
+                           choices = c('Not applicable',
+                                       relationship$relationshipName %>% sort()),
+                           selected = c('Not applicable',
+                                        relationship$relationshipName %>% sort()),
                            multiple = TRUE,
                            width = 200,
                            inline = TRUE,
@@ -2342,7 +2345,8 @@ shiny::shinyServer(function(input, output, session) {
                            inputId = "choicesForRelationshipDistance",
                            label = "Distance:",
                            choices = getConceptRelationshipDistanceChoices(),
-                           multiple = FALSE,
+                           selected = getConceptRelationshipDistanceChoices(),
+                           multiple = TRUE,
                            width = 200,
                            inline = TRUE,
                            choicesOpt = list(style = rep_len("color: black;", 999)),
@@ -2619,28 +2623,21 @@ shiny::shinyServer(function(input, output, session) {
       dplyr::mutate(levelsOfSeparation = as.character(.data$levelsOfSeparation)) %>% 
       tidyr::replace_na(list(relationships = "Not applicable",
                              levelsOfSeparation = "Not applicable"))
-    if (any(
-      !is.null(input$choicesForRelationshipName),
-      length(input$choicesForRelationshipName) > 0
-    )) {
-      concept <- concept %>%
-        dplyr::filter(
-          .data$relationshipId %in%
-            c(relationship %>%
-            dplyr::filter(.data$relationshipName %in%
-                            input$choicesForRelationshipName) %>%
-            dplyr::pull(.data$relationshipId) %>% 
-            unique())
-        )
+    
+    if (!is.null(input$choicesForRelationshipName)) {
+      concept <- concept %>% 
+        dplyr::rowwise() %>% 
+        dplyr::mutate(hits = sum(stringr::str_detect(string = .data$relationships, 
+                                                  pattern = input$choicesForRelationshipName))) %>% 
+        dplyr::filter(.data$hits > 0) %>% 
+        dplyr::select(-.data$hits)
     }
     
-    if (any(
-      !is.null(input$choicesForRelationshipDistance),
-      length(input$choicesForRelationshipDistance) > 0
-    )) {
+    if (!is.null(input$choicesForRelationshipDistance)) {
       concept <- concept %>%
         dplyr::filter(
-          .data$levelsOfSeparation == input$choicesForRelationshipDistance
+          .data$levelsOfSeparation %in% 
+            input$choicesForRelationshipDistance
         )
     }
     
