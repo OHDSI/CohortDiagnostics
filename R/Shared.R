@@ -508,7 +508,7 @@ getConceptAncestor <- function(dataSource = .GlobalEnv,
     }
     data <- get(table, envir = dataSource) %>%
       dplyr::filter(
-        .data$ancestorConceptId %in% conceptIds ||
+        .data$ancestorConceptId %in% conceptIds |
           .data$descendantConceptId %in% conceptIds
       )
     
