@@ -13,6 +13,46 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
+  ##getconceptDetailsForCohortId----
+  getconceptDetailsForCohortId <- shiny::reactive({
+    if (any(is.null(getCohortIdFromDropdown()),
+            length(getCohortIdFromDropdown()) == 0)) {
+      return(NULL)
+    }
+    resolvedConcepts <-
+      getResultsResolvedConcepts(dataSource = dataSource,
+                                 cohortIds = getCohortIdFromDropdown()) %>%
+      dplyr::select(.data$cohortId,
+                    .data$conceptId,
+                    .data$conceptSetId) %>%
+      dplyr::distinct()
+    conceptRelationship <-
+      getConceptRelationship(dataSource = dataSource,
+                             conceptIds = resolvedConcepts$conceptId %>% unique()) %>%
+      dplyr::filter(.data$conceptId1 %in% c(resolvedConcepts$conceptId)) %>%
+      dplyr::select(.data$conceptId2) %>%
+      dplyr::rename(conceptId = .data$conceptId2)
+    conceptIds <- dplyr::bind_rows(resolvedConcepts,
+                                   conceptRelationship) %>% unique()
+    return(conceptIds)
+  })
+  
+  getConceptDetailsForCohortIdFilteredToSelectedConceptSet <- shiny::reactive({
+    data <- getconceptDetailsForCohortId()
+    if (any(is.null(data),
+            nrow(data) == 0)) {
+      return(NULL)
+    }
+    data <- data %>% 
+      dplyr::inner_join(conceptSets %>% 
+                          dplyr::select(.data$cohortId,
+                                        .data$conceptSetId,
+                                        .data$conceptSetName) %>% 
+                          dplyr::filter(.data$conceptSetName %in%
+                                          input$conceptSetsSelectedFromOneCohort),
+                        by = c("cohortId", "conceptSetId"))
+    return(data)
+  })
   ##getCohortIdsFromDropdown----
   getCohortIdsFromDropdown <- reactiveVal(NULL)
   shiny::observeEvent(eventExpr = {
@@ -29,6 +69,30 @@ shiny::shinyServer(function(input, output, session) {
     }
   })
   
+  ##getconceptDetailsForCohortIds----
+  getconceptDetailsForCohortIds <- shiny::reactive({
+    if (any(is.null(getCohortIdsFromDropdown()),
+            length(getCohortIdsFromDropdown()) == 0)) {
+      return(NULL)
+    }
+    resolvedConcepts <-
+      getResultsResolvedConcepts(dataSource = dataSource,
+                                 cohortIds = getCohortIdsFromDropdown()) %>%
+      dplyr::select(.data$cohortId,
+                    .data$conceptId,
+                    .data$conceptSetId) %>%
+      dplyr::distinct()
+    conceptRelationship <-
+      getConceptRelationship(dataSource = dataSource,
+                             conceptIds = resolvedConcepts$conceptId %>% unique()) %>%
+      dplyr::filter(.data$conceptId1 %in% c(resolvedConcepts$conceptId)) %>%
+      dplyr::select(.data$conceptId2) %>%
+      dplyr::rename(conceptId = .data$conceptId2)
+    conceptIds <- dplyr::bind_rows(resolvedConcepts,
+                                   conceptRelationship) %>% unique()
+    return(conceptIds)
+  })
+  
   ##getComparatorCohortIdFromDropdown----
   getComparatorCohortIdFromDropdown <- shiny::reactive({
     data <- cohort %>%
@@ -39,11 +103,22 @@ shiny::shinyServer(function(input, output, session) {
     return(data)
   })
   
-  ##getConceptSetIdsfromDropdown----
-  getConceptSetIdsfromDropdown <- shiny::reactive(x = {
+  ##getConceptSetIdsForCohortId----
+  getConceptSetIdsForCohortId <- shiny::reactive(x = {
     data <- conceptSets %>%
-      dplyr::filter(.data$cohortId %in% c(getCohortIdFromDropdown()) %>% unique()) %>%
-      dplyr::filter(.data$conceptSetName %in% input$conceptSetsToFilterCharacterization) %>%
+      dplyr::filter(.data$cohortId %in% c(getCohortIdFromDropdown())) %>%
+      dplyr::filter(.data$conceptSetName %in% input$conceptSetMultiSelectDropdown) %>%
+      dplyr::arrange(.data$conceptSetId) %>%
+      dplyr::pull(.data$conceptSetId) %>%
+      unique()
+    return(data)
+  })
+  
+  ##getConceptSetIdsForCohortIds----
+  getConceptSetIdsForCohortIds <- shiny::reactive(x = {
+    data <- conceptSets %>%
+      dplyr::filter(.data$cohortId %in% c(getCohortIdsFromDropdown())) %>%
+      dplyr::filter(.data$conceptSetName %in% input$conceptSetMultiSelectDropdown) %>%
       dplyr::arrange(.data$conceptSetId) %>%
       dplyr::pull(.data$conceptSetId) %>%
       unique()
@@ -3556,44 +3631,6 @@ shiny::shinyServer(function(input, output, session) {
       )
     }
   })
-  
-  ##reactive: getResoledAndMappedConceptIdsForFilters----
-  getResoledAndMappedConceptIdsForFilters <- shiny::reactive({
-    validate(need(all(!is.null(getDatabaseIdsFromDropdown()), length(getDatabaseIdsFromDropdown()) > 0), 
-                  "No data sources chosen"))
-    validate(need(all(!is.null( getCohortIdFromDropdown()),length(getCohortIdFromDropdown()) > 0),
-                  "No cohort chosen"))
-    output <-
-      getResultsResolveMappedConceptSet(
-        dataSource = dataSource,
-        databaseIds = getDatabaseIdsFromDropdown(),
-        cohortIds = getCohortIdFromDropdown()
-      )
-    if (is.null(output)) {
-      return(NULL)
-    }
-    
-    conceptIdsForFilters <- output$resolved %>% 
-      dplyr::filter(.data$conceptSetId %in% getConceptSetIds()) %>% 
-      dplyr::select(.data$conceptId) %>% 
-      dplyr::distinct()
-    
-    if (!is.null(output$mapped) &&
-        nrow(output$mapped) > 0) {
-      mappedConceptSetIds <- output$mapped %>% 
-        dplyr::filter(.data$conceptSetId %in% getConceptSetIds()) %>% 
-        dplyr::select(.data$conceptId) %>% 
-        dplyr::distinct()
-      
-      conceptIdsForFilters <- conceptIdsForFilters %>% 
-        dplyr::bind_rows(mappedConceptSetIds) %>%
-        dplyr::distinct()
-    }
-    output <- conceptIdsForFilters %>% 
-      dplyr::distinct() %>% 
-      dplyr::pull(.data$conceptId)
-    return(output)
-  })
 
   
   ##output: resolvedConceptsTableRight----
@@ -3759,10 +3796,19 @@ shiny::shinyServer(function(input, output, session) {
     getConceptSetExpressionRight()$json
   })
   
-  
+  #!!!!!!!! this function need cohort id BUG
   getConceptSetIds <- shiny::reactive(x = {
-    return(conceptSets$conceptSetId[conceptSets$conceptSetName  %in% 
-                                      input$conceptSetsToFilterCharacterization])
+    if (any(is.null(input$conceptSetMultiSelectDropdown),
+            input$conceptSetMultiSelectDropdown == "",
+            length(input$conceptSetMultiSelectDropdown) == 0)) {
+      return(NULL)
+    }
+    data <- conceptSets %>% 
+      # dplyr::filter(cohortId %in% 0) %>% 
+      dplyr::filter(.data$conceptSetName %in% input$conceptSetMultiSelectDropdown) %>% 
+      dplyr::select(.data$cohortId,
+                    .data$conceptSetId)
+    return(data)
   })
   
   
@@ -3839,6 +3885,7 @@ shiny::shinyServer(function(input, output, session) {
   })
   
   #Concept set comparison -----
+  #!!!!!!!!!! should be only shown when there is left and right
   ##output: resolvedConceptsPresentInLeft----
   output$resolvedConceptsPresentInLeft <- DT::renderDT({
     validate(need(input$choiceForConceptSetDetailsLeft == input$choiceForConceptSetDetailsRight, "Please select same database for comparison"))
@@ -5651,7 +5698,14 @@ shiny::shinyServer(function(input, output, session) {
     if (is.null(input$domainFieldOptionsInIndexEventData)) {
       return(NULL)
     }
+    if (all(!is.null(input$conceptSetsSelectedFromOneCohort),
+            length(input$conceptSetsSelectedFromOneCohort) > 0)) {
+      indexEventBreakdown <- indexEventBreakdown %>% 
+        dplyr::inner_join(getConceptDetailsForCohortIdFilteredToSelectedConceptSet(),
+                          by = c("cohortId", "conceptSetId"))
+    }
     
+    # index event is computed for all the concept in concept universe getConceptSetNamesFromCohortDefinition()
     domainTableSelected <- getOmopDomainInformationLong() %>%
       dplyr::filter(
         .data$domainTable %in% c(
@@ -6456,8 +6510,8 @@ shiny::shinyServer(function(input, output, session) {
   #______________----
   # Characterization/Temporal Characterization ------
   ## Shared----
-  ###getConceptSetNamesFromCohortDefinition----
-  getConceptSetNamesFromCohortDefinition <- shiny::reactive(x = {
+  ###getConceptSetNamesFromOneCohort----
+  getConceptSetNamesFromOneCohort <- shiny::reactive(x = {
     if (any(length(getCohortIdFromDropdown()) == 0,
             length(getDatabaseIdsFromDropdown()) == 0)) {
       return(NULL)
@@ -6561,18 +6615,29 @@ shiny::shinyServer(function(input, output, session) {
     )
   })
   
-  ###Update: conceptSetsToFilterCharacterization----
+  ###Update: conceptSetsSelectedFromOneCohort----
+  ##!!!!!!!!!!!! if input tab is indexEventBreakdown - make all selected by default
   shiny::observe({
-    if (is.null(getConceptSetNamesFromCohortDefinition())) {
+    if (is.null(getConceptSetNamesFromOneCohort())) {
       return(NULL)
     }
-    subset <- getConceptSetNamesFromCohortDefinition()$name
+    subset <- getConceptSetNamesFromOneCohort()$name
     shinyWidgets::updatePickerInput(
       session = session,
-      inputId = "conceptSetsToFilterCharacterization",
+      inputId = "conceptSetsSelectedFromOneCohort",
       choicesOpt = list(style = rep_len("color: black;", 999)),
       choices = subset
     )
+  })
+  
+  conceptIdsInConceptSetsSelectedFromOneCohort <- shiny::reactive(x = {
+    conceptSets %>% 
+      dplyr::filter(.data$cohortId %in% getCohortIdFromDropdown()) %>% 
+      dplyr::filter(.data$conceptSetName %in% input$conceptSetsSelectedFromOneCohort) %>% 
+      dplyr::pull(.data$conceptSetId)
+    
+    resolvedConceptIds <- getResultsResolvedConcepts(dataSource = dataSource,
+                                                     cohortIds = getCohortIdFromDropdown())
   })
   
   ###getMultipleCharacterizationData----
@@ -6634,6 +6699,21 @@ shiny::shinyServer(function(input, output, session) {
     
     covariatesTofilter <-
       getMultipleCharacterizationData()$covariateRef
+    
+    if (all(
+      !is.null(input$conceptSetsSelectedFromOneCohort),
+      length(input$conceptSetsSelectedFromOneCohort) > 0,
+      input$conceptSetsSelectedFromOneCohort != ""
+    )) {
+      covariatesTofilter <- covariatesTofilter  %>%
+        dplyr::inner_join(
+          getConceptDetailsForCohortIdFilteredToSelectedConceptSet() %>% 
+            dplyr::select(.data$conceptId) %>% 
+            dplyr::distinct(),
+          by = c("conceptId")
+        )
+    }
+    
     #Pretty analysis
     if (input$charType == "Pretty") {
       covariatesTofilter <- covariatesTofilter %>%
@@ -6816,7 +6896,7 @@ shiny::shinyServer(function(input, output, session) {
       data <- data %>%
         dplyr::filter(.data$domainId %in% getCharacterizationDomainNameOptions())
     }
-    if (!is.null(input$conceptSetsToFilterCharacterization)) {
+    if (!is.null(input$conceptSetsSelectedFromOneCohort)) {
       ##!!! there is a bug here getResoledAndMappedConceptIdsForFilters() 
       if (length(getResoledAndMappedConceptIdsForFilters()) > 0) {
         data <- data %>% 
@@ -7116,6 +7196,22 @@ shiny::shinyServer(function(input, output, session) {
             nrow(data) == 0)) {
       return(NULL)
     }
+    
+    if (all(
+      !is.null(input$conceptSetsSelectedFromOneCohort),
+      length(input$conceptSetsSelectedFromOneCohort) > 0,
+      input$conceptSetsSelectedFromOneCohort != ""
+    )) {
+      browser()
+      covariatesTofilter <- covariatesTofilter  %>%
+        dplyr::inner_join(
+          getConceptDetailsForCohortIdFilteredToSelectedConceptSet() %>% 
+            dplyr::select(.data$conceptId) %>% 
+            dplyr::distinct(),
+          by = c("conceptId")
+        )
+    }
+    
     if (all(
       !is.null(getTemporalCharacterizationAnalysisNameOptions()),
       getTemporalCharacterizationAnalysisNameOptions() != "",
@@ -7147,9 +7243,9 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$isBinary == 'N')
     }
     
-    if (all(!is.null(input$conceptSetsToFilterCharacterization),
-            input$conceptSetsToFilterCharacterization != "",
-            length(input$conceptSetsToFilterCharacterization) > 0)) {
+    if (all(!is.null(input$conceptSetsSelectedFromOneCohort),
+            input$conceptSetsSelectedFromOneCohort != "",
+            length(input$conceptSetsSelectedFromOneCohort) > 0)) {
       browser()  #!!! bug here  getResoledAndMappedConceptIdsForFilters()
       if (length(getResoledAndMappedConceptIdsForFilters()) > 0) {
         data <- data %>%
@@ -7577,9 +7673,9 @@ shiny::shinyServer(function(input, output, session) {
         dplyr::filter(.data$analysisName %in% getCompareCharacterizationDomainNameFilter())
     }
     if (all(
-      !is.null(input$conceptSetsToFilterCharacterization),
-      input$conceptSetsToFilterCharacterization != "",
-      length(input$conceptSetsToFilterCharacterization) > 0
+      !is.null(input$conceptSetsSelectedFromOneCohort),
+      input$conceptSetsSelectedFromOneCohort!= "",
+      length(input$conceptSetsSelectedFromOneCohort) > 0
     )) {
       browser()
       data <- data %>% #!!! there is a bug here getResoledAndMappedConceptIdsForFilters
@@ -7995,9 +8091,9 @@ shiny::shinyServer(function(input, output, session) {
       }
       
       if (all(
-        !is.null(input$conceptSetsToFilterCharacterization),
-        input$conceptSetsToFilterCharacterization != "",
-        length(input$conceptSetsToFilterCharacterization) >= 0
+        !is.null(input$conceptSetsSelectedFromOneCohort),
+        input$conceptSetsSelectedFromOneCohort != "",
+        length(input$conceptSetsSelectedFromOneCohort) >= 0
       )) {
         browser() #!!! there is a bug here getResoledAndMappedConceptIdsForFilters
         balance <- balance %>%

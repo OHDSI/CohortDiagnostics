@@ -221,9 +221,10 @@ sidebarMenu <-
       condition = "input.tabs == 'cohortCharacterization' |
       input.tabs == 'compareCohortCharacterization' |
       input.tabs == 'temporalCharacterization' |
+      input.tabs == 'indexEventBreakdown' |
       input.tabs == 'compareTemporalCharacterization'",
       shinyWidgets::pickerInput(
-        inputId = "conceptSetsToFilterCharacterization",
+        inputId = "conceptSetsSelectedFromOneCohort",
         label = "Concept sets",
         choices = c(""),
         selected = c(""),
